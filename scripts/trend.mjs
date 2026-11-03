@@ -71,7 +71,7 @@ export function render(rows) {
   L.push(
     "報告書の PDF の ① は、工場に PDF の事実（別の読み手が取ったもの）が無いので、PDF の元の xlsx を MOYAI の Excel の読み手で読んだ表示の文字と、中身のある行ごとに比べた。",
   );
-  L.push("まだ測っていないもの（試験が無い）：写真の取り込み（要確認の数も）、④ 検査の正しさ、見ていない様式。CSV の ① は、比べる事実のファイルが無く測っていない。");
+  L.push("この表にまだ載せていないもの：写真の ③ と要確認の数（tests/unit/import/photo-measure.test.ts が測る）、④ 検査の正しさ（tests/unit/review/measure.test.ts が測る）。まだ測っていないもの：見ていない様式。CSV の ① は、比べる事実のファイルが無く測っていない。");
   return L.join("\n") + "\n";
 }
 
