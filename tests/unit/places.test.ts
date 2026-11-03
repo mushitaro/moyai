@@ -59,10 +59,10 @@ describe("状態フォルダの設定", () => {
     expect(validRoot("relative/path")).toBeNull();
     expect(validRoot("")).toBeNull();
     const abs = join(dir, "置き場所");
-    writeSettings(dir, { v: 1, root: validRoot(abs) });
+    writeSettings(dir, { v: 1, root: validRoot(abs), ledger: null });
     expect(readSettings(dir).root).toBe(abs);
-    writeSettings(dir, { v: 1, root: null });
-    expect(readSettings(dir).root).toBeNull();
+    writeSettings(dir, { v: 1, root: null, ledger: validRoot(abs) });
+    expect(readSettings(dir)).toEqual({ v: 1, root: null, ledger: abs });
   });
 
   it("輪のフォルダは rings.json の folders に入り、見張りのフック（ringFolders）がそのまま読む", () => {

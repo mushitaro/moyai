@@ -10,6 +10,8 @@ import { aiDecisions } from "../../src/plan/diff";
 import { HEADER_TAB_SECRET, ROUTES, ROUTE_IDS, type HumanAction, type RouteDef } from "../../src/shared/routes";
 import { EXPOSED_TOOL_NAMES, TOOL_NAMES } from "../../src/shared/tools";
 import { truthToPlan } from "../fixtures/chart/truth-to-plan.mjs";
+import { fileURLToPath } from "node:url";
+import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { FakeTab, SECRET_A, http, startTestBridge, type TestBridge } from "../helpers/bridge";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
@@ -48,7 +50,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planRevert", "planStatus", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planRevert", "planStatus", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -195,4 +197,66 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     const stale = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash, passphrase: "架空の合言葉 試験です" });
     expect(stale.reason).toBe("versionChanged");
   });
+});
+
+describe("受け手：似た施設と並べる（peers_compare）", () => {
+  it("設定で選んだ台帳の clone を受け手の関数で読み、立場ごとに場を並べる。入札の対象が無ければ聞く", async () => {
+    extra = join(tmpdir(), `moyai-peers-${process.pid}-${Date.now()}`);
+    mkdirSync(extra, { recursive: true });
+    const repo = join(extra, "台帳");
+    const demo = buildLedgerDemo({ repo: fileURLToPath(new URL("../../", import.meta.url)), out: repo, state: join(extra, "demo-state"), month: "2026-11" });
+    tb = await startTestBridge({ human: { shell: async () => ({ documents: join(extra, "Documents"), mounts: [] }) } });
+    const t = await tab(tb);
+    const call = async (id: "settingsSave" | "settingsRead" | "peersCompare", payload: unknown) => {
+      const text = JSON.stringify(payload);
+      const tok = await t.token(R(id).action, text);
+      const r = await post(tb!, R(id).path, good(tb!), { token: tok, payload: text });
+      expect(r.status, id).toBe(200);
+      return r.body;
+    };
+    const answers = { facility: { furnace: "STOKER", capacity_t_per_day: "C200_400", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true };
+    const base = { packId: "waste-incineration", axes: null, answers, target: null, facility: null };
+
+    // 台帳の場所をまだ選んでいない：場は missing、理由は notChosen
+    const before = await call("peersCompare", { ...base, position: "municipal" });
+    expect(before.places).toEqual([{ kind: "ledger", id: null, ok: false, reason: "ledger.notChosen", peers: 0, ng: 0 }]);
+    expect(before.comparison.places).toEqual([{ kind: "ledger", id: null, status: "missing" }]);
+
+    // 相対の道は断る。絶対の道を選ぶと、置き場所は前のまま
+    expect((await call("settingsSave", { root: null, ledger: "相対の道" })).reason).toBe("ledgerInvalid");
+    expect(await call("settingsSave", { root: null, ledger: repo })).toEqual({ ok: true, root: null, ledger: repo });
+    expect((await call("settingsRead", {})).ledger).toBe(repo);
+    expect((await call("settingsSave", { root: null })).ledger).toBe(repo);
+
+    // 市町村：主要の軸（炉の型・処理能力の帯）で、台帳の ✓ の束から似た施設を並べる
+    const m = await call("peersCompare", { ...base, position: "municipal" });
+    expect(m.chosenAxes).toEqual(["furnace", "capacity_t_per_day"]);
+    expect(m.places).toEqual([{ kind: "ledger", id: demo.ledgerId, ok: true, reason: null, peers: 10, ng: 0 }]);
+    const shown = m.comparison.places[0];
+    expect(shown).toMatchObject({ kind: "ledger", id: demo.ledgerId, status: "shown" });
+    expect(shown.agg.similar.length).toBeGreaterThanOrEqual(3);
+    expect(shown.agg.rows.length).toBeGreaterThan(0);
+
+    // 軸を足すと似た施設は減る（増えない）
+    const narrow = await call("peersCompare", { ...base, position: "municipal", axes: ["furnace", "capacity_t_per_day", "turbine", "ash", "contract"] });
+    const n0 = narrow.comparison.places[0];
+    expect(n0.status === "shown" ? n0.agg.similar.length : n0.similar).toBeLessThanOrEqual(shown.agg.similar.length);
+
+    // 保全子会社：輪に入っていないので輪は missing、台帳は並ぶ
+    const s = await call("peersCompare", { ...base, position: "subsidiary" });
+    expect(s.comparison.places.map((p: { kind: string; status: string }) => [p.kind, p.status])).toEqual([
+      ["ring", "missing"],
+      ["ledger", "shown"],
+    ]);
+
+    // O&M：入札の対象の答えが無ければ比べず、聞く。入れれば並ぶ
+    const o = await call("peersCompare", { ...base, position: "om" });
+    expect(o).toMatchObject({ ok: true, comparison: null, reason: "targetMissing" });
+    const o2 = await call("peersCompare", { ...base, position: "om", target: { ...answers, facility: { ...answers.facility, furnace: "FLUID" } } });
+    expect(o2.comparison.places[0].kind).toBe("ledger");
+
+    // 知らない立場・パックの形でないものは断る
+    const bad = await call("peersCompare", { ...base, position: "知らない立場" });
+    expect(bad).toMatchObject({ ok: false, reason: "payloadInvalid" });
+  }, 60_000);
 });

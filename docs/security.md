@@ -42,15 +42,16 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/plan-commit` | `plan_commit` | 計画を確定する（版のファイルを足し、差分レポートと人が見る様式の星取表の Excel を書く） |
 | `POST /human/plan-revert` | `plan_revert` | 前の版に戻す（前の版を指す記録を足す） |
 | `POST /human/settings-read` | `settings_read` | 置き場所・Documents の場所・輪の一覧を読む |
-| `POST /human/settings-save` | `settings_save` | 置き場所を保存する |
+| `POST /human/settings-save` | `settings_save` | 置き場所と、公開の台帳の clone の場所を保存する |
 | `POST /human/ring-create` | `ring_create` | 輪を作り、その輪の鍵の対を合言葉で包んで状態フォルダに置く |
 | `POST /human/checkpoint-preview` | `checkpoint_preview` | 検問所：出ていく束のバイト列とハッシュと数（送る処理と同じ関数） |
 | `POST /human/checkpoint-open-text` | `checkpoint_open_text` | 検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く |
 | `POST /human/checkpoint-send` | `checkpoint_send` | 検問所：合言葉で署名し、束を輪のフォルダに置く |
 | `POST /human/ring-verify` | `ring_verify` | 輪を受け手と同じ関数で確かめる |
+| `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 12 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 13 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

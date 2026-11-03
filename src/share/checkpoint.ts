@@ -114,7 +114,7 @@ export interface Question {
 }
 
 /** 検問所で人に聞く軸：パックの見え方の軸のうち、全国の表に列があるもの（順のまま）。 */
-export function questionsOf(pack: SharePack, plan: Plan | null): Question[] {
+export function questionsOf(pack: SharePack, plan: { facility: Pick<Plan["facility"], "scale" | "scaleUnit"> } | null): Question[] {
   const out: Question[] = [];
   for (const a of pack.spec.axes) {
     const info = pack.axes.find((x) => x.key === a.key);

@@ -13,6 +13,8 @@ import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, questionsOf, sendCheckpoint, verifyRing, type Answers } from "../share/checkpoint";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
+import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "../share/receive";
+import { loadPlaces } from "../share/receive-load";
 import { HEX16, HEX64, fingerprint } from "../share/sign";
 import { readFileSync, readdirSync } from "node:fs";
 import {
@@ -67,7 +69,7 @@ const SCHEMAS = {
   }),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable() }),
   settings_read: z.object({}),
-  settings_save: z.object({ root: z.string().max(1000).nullable() }),
+  settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional() }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID), passphrase: z.string().max(1000) }),
   checkpoint_preview: z.object({ planId: planIdSchema, ringId: ringIdSchema.nullable(), answers: answersSchema }),
   checkpoint_open_text: z.object({ planId: planIdSchema, ringId: ringIdSchema, answers: answersSchema }),
@@ -80,6 +82,18 @@ const SCHEMAS = {
     passphrase: z.string().max(1000),
   }),
   ring_verify: z.object({ ringId: ringIdSchema }),
+  peers_compare: z.object({
+    packId: z.string().regex(PACK_ID),
+    position: z.enum(POSITIONS),
+    /** 人が選んだ見え方の軸。null なら既定（主要の軸のうち答えのあるもの） */
+    axes: z.array(z.string().max(64)).max(16).nullable(),
+    /** 自分の施設の見え方の答え（市町村・保全子会社） */
+    answers: answersSchema,
+    /** 入札の対象の見え方の答え（O&M）。まだなら null */
+    target: answersSchema.nullable(),
+    /** 作業中の計画の規模（帯の答えの見込みに使う） */
+    facility: z.object({ scale: z.number().nullable(), scaleUnit: z.string().max(32).nullable() }).nullable(),
+  }),
 } satisfies Partial<Record<HumanAction, z.ZodType>>;
 
 export type HumanPayload<A extends keyof typeof SCHEMAS> = z.infer<(typeof SCHEMAS)[A]>;
@@ -198,15 +212,19 @@ export class HumanService {
           const w = readWrappedKey(sd, r.ringId);
           return { ringId: r.ringId, root: r.root, pack: r.pack, key: r.key, fingerprint: w ? fingerprint(w.pub) : null, synced: syncedOf(r.root, docs.syncRoots) };
         });
-        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, rings, packs: this.packs() };
+        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, rings, packs: this.packs() };
       }
       case "settings_save": {
         const p = parsePayload("settings_save", call.payload);
         if (!p) return no("payloadInvalid");
         const root = p.root === null ? null : validRoot(p.root);
         if (p.root !== null && root === null) return no("rootInvalid");
-        writeSettings(sd, { v: 1, root });
-        return { ok: true, root };
+        // 台帳の場所は送られたときだけ変える（送られなければ前のまま）
+        const prev = readSettings(sd);
+        const ledger = p.ledger === undefined ? prev.ledger : p.ledger === null ? null : validRoot(p.ledger);
+        if (p.ledger !== undefined && p.ledger !== null && ledger === null) return no("ledgerInvalid");
+        writeSettings(sd, { v: 1, root, ledger });
+        return { ok: true, root, ledger };
       }
       case "ring_create": {
         const p = parsePayload("ring_create", call.payload);
@@ -258,6 +276,30 @@ export class HumanService {
         const ring = await loadRing(sd, p.ringId, pack);
         if (!ring.ok) return no(ring.reason);
         return { ok: true, report: await verifyRing(entry.root, p.ringId, pack, ring.confirmed) };
+      }
+      case "peers_compare": {
+        const p = parsePayload("peers_compare", call.payload);
+        if (!p) return no("payloadInvalid");
+        const pack = this.pack(p.packId);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const s = readSettings(sd);
+        const loaded = await loadPlaces({ stateDir: sd, ledgerRoot: s.ledger, pack });
+        const base = {
+          packName: pack.name,
+          questions: questionsOf(pack, p.facility === null ? null : { facility: p.facility }),
+          classNames: pack.classNames,
+          axes: pack.axes,
+          spec: pack.spec.axes,
+          places: loaded.status,
+          ledgerRoot: s.ledger,
+        };
+        // 見え方の出どころは立場で決まる（自分の施設か、入札の対象か）。決まらなければ聞く（推測で埋めない）
+        const answers = PROFILE_FROM[p.position] === "self" ? p.answers : p.target;
+        if (answers === null) return { ok: true, ...base, chosenAxes: [], comparison: null, reason: "targetMissing" };
+        const chosen = p.axes ?? defaultAxes(pack.spec, pack.table, answers);
+        const prof = receiverProfile(pack.spec, pack.table, answers, chosen);
+        if (!prof.ok) return { ok: true, ...base, chosenAxes: chosen, comparison: null, reason: prof.reason };
+        return { ok: true, ...base, chosenAxes: chosen, comparison: compare({ table: pack.table, position: p.position, profile: prof.profile, places: loaded.places }), reason: null };
       }
       default:
         return no("unknownAction");

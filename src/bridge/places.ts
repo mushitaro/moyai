@@ -146,11 +146,14 @@ export interface Settings {
   v: 1;
   /** 人が選んだ置き場所。null は既定（Documents の下の MOYAI/） */
   root: string | null;
+  /** 人が選んだ公開の台帳の clone の場所（受け手が読む）。null はまだ選んでいない */
+  ledger: string | null;
 }
 
 export function readSettings(stateDir: string): Settings {
   const s = readJson<Partial<Settings>>(join(stateDir, "settings.json"));
-  return { v: 1, root: typeof s?.root === "string" && isAbsolute(s.root) ? s.root : null };
+  const abs = (x: unknown) => (typeof x === "string" && isAbsolute(x) ? x : null);
+  return { v: 1, root: abs(s?.root), ledger: abs(s?.ledger) };
 }
 
 export function writeSettings(stateDir: string, s: Settings): void {
