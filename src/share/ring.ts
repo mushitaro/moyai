@@ -4,7 +4,8 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, readdir, rename, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { BUNDLE_FILE_NAME, RULES_TYPE, bundleFileName, checkShape, type ShareContext } from "./bundle";
+import type { PeerBundle } from "./aggregate";
+import { BUNDLE_FILE_NAME, RULES_TYPE, bundleFileName, checkShape, type BundleBody, type ShareContext } from "./bundle";
 import { parseJsonStrict } from "./jcs";
 import type { PeerProfile, Profile } from "./k";
 import { isClean, recount, type RecountResult } from "./recount";
@@ -137,6 +138,8 @@ export interface RingRead {
   notBundleFiles: number;
   /** 確認済みの仲間の、✓ の最新の束の見え方（k に数える） */
   latest: PeerProfile[];
+  /** latest と同じ束の body（受け手の集計に使う。確認済みで ✓ の仲間だけ） */
+  latestBundles: PeerBundle[];
 }
 
 export interface ReadOptions {
@@ -203,7 +206,7 @@ export function checkChain<E extends ChainItem>(list: readonly E[], prevOf: Read
 /** 輪のフォルダを読み、束ごと・仲間ごとに ✓ か理由つきの ✗ か届きかけを出す。 */
 export async function readRing(root: string, ringId: string, o: ReadOptions): Promise<RingRead> {
   const dir = ringDir(root, ringId);
-  const out: RingRead = { circle: { status: "missing", reasons: [] }, bundles: [], members: [], notBundleFiles: 0, latest: [] };
+  const out: RingRead = { circle: { status: "missing", reasons: [] }, bundles: [], members: [], notBundleFiles: 0, latest: [], latestBundles: [] };
 
   // 決まりのファイル
   let circleBytes: Buffer | null = null;
@@ -266,6 +269,7 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
 
   // 束
   const prevOf = new Map<BundleEntry, unknown>();
+  const bodyOf = new Map<BundleEntry, BundleBody>();
   const folders = (await listDir(join(dir, BUNDLES_DIR))).filter((e) => e.dir).map((e) => e.name);
   const byKey = new Map<string, BundleEntry[]>();
   for (const folder of folders.sort()) {
@@ -310,6 +314,7 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
       else {
         entry.profile = body!.profile ?? null;
         prevOf.set(entry, (body as { prev?: unknown }).prev);
+        bodyOf.set(entry, body as unknown as BundleBody);
       }
     }
   }
@@ -336,6 +341,8 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
     if (uniq.length === 0 && maxSeq > 0) {
       const latest = list.find((b) => b.status === "ok" && b.seq === maxSeq)!;
       if (latest.profile) out.latest.push({ key, profile: latest.profile });
+      const b = bodyOf.get(latest);
+      if (b) out.latestBundles.push({ key, pub: b.pub, body: b });
     }
   }
   out.bundles = [...byKey.values()].flat();
