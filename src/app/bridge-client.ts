@@ -40,6 +40,8 @@ export class BridgeClient {
   private readonly listeners = new Set<(s: ConnectionState) => void>();
   private readonly pending = new Map<string, (t: { token: string; expiresAt: number } | null) => void>();
   private seq = 0;
+  /** 飛ばした、読めない通信の数 */
+  dropped = 0;
 
   constructor(private readonly wsUrl: string) {}
 
@@ -48,9 +50,12 @@ export class BridgeClient {
     this.ws = ws;
     ws.addEventListener("open", () => this.send("tab.hello", { secret: this.secret, build: __MOYAI_BUILD__.commit }));
     ws.addEventListener("message", (e) => {
-      if (typeof e.data !== "string") return;
-      const ev = decodeEvent(e.data, "bridge");
-      if (!ev) return;
+      const ev = typeof e.data === "string" ? decodeEvent(e.data, "bridge") : null;
+      if (!ev) {
+        // 読めない通信は飛ばして数える（1 件の不正で全体を止めない）
+        this.dropped++;
+        return;
+      }
       const h = BRIDGE_EVENT_HANDLERS[ev.type as BridgeToTab] as Handler<BridgeToTab> | undefined;
       h?.(this, ev.data as EventData<BridgeToTab>);
     });

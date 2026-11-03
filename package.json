@@ -10,7 +10,7 @@
     "npm": ">=11"
   },
   "scripts": {
-    "build": "vite build --config vite.config.ts && vite build --config vite.cli.config.ts",
+    "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node scripts/run-tests.mjs",
     "e2e": "playwright test",

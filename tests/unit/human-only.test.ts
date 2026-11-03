@@ -123,6 +123,20 @@ describe("人だけの経路（確定の試し）", () => {
     expect(r.body.error.code).toBe("content_type_not_allowed");
   });
 
+  it("人だけの経路のすべてで、秘密なし・印なしを拒む（経路ごとに書かず、共通の守りを通る）", async () => {
+    tb = await startTestBridge();
+    await tabWithToken(tb);
+    const human = Object.values(ROUTES).filter((r) => r.kind === "human");
+    expect(human.length).toBeGreaterThan(0);
+    const body = JSON.stringify({ payload: "{}" });
+    for (const r of human) {
+      const noSecret = await http(tb.bridge.port, "POST", r.path, { "content-type": "application/json", origin: tb.origin }, body);
+      expect(noSecret.body.error.code, r.path).toBe("secret_missing");
+      const noToken = await http(tb.bridge.port, "POST", r.path, { "content-type": "application/json", ...goodHeaders(tb) }, body);
+      expect(noToken.body.error.code, r.path).toBe("token_missing");
+    }
+  });
+
   it(".claude/settings.json に、127.0.0.1 への HTTP と状態フォルダの deny がある", () => {
     const deny: string[] = JSON.parse(readFileSync(".claude/settings.json", "utf8")).permissions.deny;
     expect(deny).toContain("Bash(curl http://127.0.0.1:*)");
@@ -231,6 +245,21 @@ describe("タブとの WebSocket", () => {
     await b.next("bridge.welcome");
   });
 
+  it("握手のあとの読めない通信は、切らずに飛ばして数える", async () => {
+    tb = await startTestBridge();
+    const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await a.opened;
+    a.send("tab.hello", { secret: SECRET_A, build: "t" });
+    await a.next("bridge.welcome");
+    a.ws.send("not json");
+    a.ws.send(Buffer.from([1, 2, 3]));
+    a.ws.send(JSON.stringify({ type: "bridge.ping", data: { at: 1 } }));
+    a.send("tab.token_request", { requestId: "r9", action: "commit_trial", payloadHash: sha("{}") });
+    await a.next("bridge.token");
+    expect(tb.bridge.tabs.dropped).toBe(3);
+    expect(tb.bridge.tabs.connected).toBe(true);
+  });
+
   it("握手の形が違えば断る", async () => {
     tb = await startTestBridge();
     const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
@@ -284,5 +313,8 @@ describe("中継の経路", () => {
     expect((await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "nope", args: {} })).body.error.code).toBe("unknown_tool");
     const bad = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "chart_rows", args: { limit: 201 } });
     expect(bad.body.error.code).toBe("invalid_input");
+    // F3 の画面を待つツールは、まだ受けない
+    const gated = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "skill_eval", args: { action: "list" } });
+    expect(gated.body.error.code).toBe("unknown_tool");
   });
 });

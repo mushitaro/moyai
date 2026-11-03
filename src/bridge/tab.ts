@@ -47,6 +47,8 @@ export const TAB_EVENT_HANDLERS: { [K in TabToBridge]: Handler<K> } = {
 
 export class TabHub {
   private active: ActiveTab | null = null;
+  /** 握手のあとに飛ばした、読めない通信の数 */
+  dropped = 0;
   private timer: NodeJS.Timeout | null = null;
 
   constructor(private readonly o: TabHubOptions) {}
@@ -86,11 +88,12 @@ export class TabHub {
     helloTimer.unref();
 
     ws.on("message", (raw, isBinary) => {
-      if (isBinary) return this.refuse(conn, "hello_invalid");
-      const ev = decodeEvent(raw.toString("utf8"), "tab");
+      const ev = isBinary ? null : decodeEvent(raw.toString("utf8"), "tab");
       if (!ev) {
-        // 握手の前の不正は断る。握手のあとの不正は飛ばす（1 件の不正で全体を止めない）
-        if (!conn.active) this.refuse(conn, "hello_invalid");
+        // 握手の前の不正は断る。握手のあとの不正は飛ばして数える（1 件の不正で全体を止めない）
+        if (!conn.active) return this.refuse(conn, "hello_invalid");
+        this.dropped++;
+        this.o.log(`タブからの読めない通信を飛ばしました（計 ${this.dropped} 件）`);
         return;
       }
       if (!conn.active && ev.type !== "tab.hello") return this.refuse(conn, "hello_invalid");

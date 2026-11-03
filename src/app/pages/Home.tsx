@@ -1,6 +1,6 @@
 // 作業画面（v0）：橋渡しとのつながりと、確定の試し（人だけの経路の守りを通す）。
 // 主ボタンは見出しの行の右端に 1 つだけ。副のボタンはその左。
-import { Alert, Anchor, Badge, Button, Container, Group, Modal, Stack, Text, Title, Tooltip, useMantineColorScheme } from "@mantine/core";
+import { Alert, Anchor, Badge, Button, Container, Group, Modal, Stack, Text, Title, useMantineColorScheme } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { sha256Hex, type BridgeClient, type ConnectionState } from "../bridge-client";
 import { ERROR_TEXT, TEXT } from "../text";
@@ -105,11 +105,14 @@ export function Home({ client }: { client: BridgeClient }) {
           <Button variant="default" onClick={toggleColorScheme}>
             {colorScheme === "dark" ? TEXT.scheme.toLight : TEXT.scheme.toDark}
           </Button>
-          <Tooltip label={TEXT.trial.disabledReason} disabled={canTrial}>
-            <Button onClick={() => setTrialOpen(true)} disabled={!canTrial} data-testid="trial-open">
-              {TEXT.trial.button}
-            </Button>
-          </Tooltip>
+          {!canTrial && (
+            <Text size="sm" c="dimmed" data-testid="trial-disabled-reason">
+              {TEXT.trial.disabledReason}
+            </Text>
+          )}
+          <Button onClick={() => setTrialOpen(true)} disabled={!canTrial} data-testid="trial-open">
+            {TEXT.trial.button}
+          </Button>
         </Group>
       </Group>
 

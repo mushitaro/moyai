@@ -5,8 +5,18 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { Duplex } from "node:stream";
 import { WebSocketServer } from "ws";
 import { errorBody, httpStatus, type ErrorCode } from "../shared/errors";
-import { HEADER_RELAY_KEY, HEADER_TAB_SECRET, ROUTES, matchRoute, type HumanAction, type RouteDef, type RouteId } from "../shared/routes";
-import { isToolName, toolDef } from "../shared/tools";
+import {
+  HEADER_RELAY_KEY,
+  HEADER_TAB_SECRET,
+  ROUTES,
+  matchRoute,
+  type HumanAction,
+  type HumanRouteId,
+  type RouteDef,
+  type RouteId,
+} from "../shared/routes";
+import { EXPOSED_TOOL_NAMES, isToolName, toolDef } from "../shared/tools";
+import { BRIDGE_TOOL_RECEIVERS, type ToolReceiver } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { makeEd25519Sample } from "./selftest";
 import { removeKeyFile, writeKeyFile } from "./state";
@@ -75,6 +85,7 @@ function csp(port: number): string {
 
 type Ctx = { req: IncomingMessage; res: ServerResponse; route: RouteDef; url: URL };
 type RouteHandler = (ctx: Ctx) => Promise<void> | void;
+type HumanCtx = { session: string; action: HumanAction; payload: string };
 
 export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   const now = opts.now ?? Date.now;
@@ -123,46 +134,66 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     return Array.isArray(v) ? v[0] : v;
   };
 
-  const handlers: { [K in RouteId]: RouteHandler } = {
+  /** 中継の経路の守り：ブラウザでないこと、鍵ファイルの鍵が合うこと。 */
+  const guardRelay = (req: IncomingMessage): ErrorCode | null => {
+    // 中継はブラウザではない。Origin や Sec-Fetch-Site があるのは、ブラウザのページからの要求なので断る
+    if (header(req, "origin") !== undefined) return "origin_not_allowed";
+    if (header(req, "sec-fetch-site") !== undefined) return "fetch_site_not_allowed";
+    const a = Buffer.from(String(header(req, HEADER_RELAY_KEY) ?? ""), "utf8");
+    const b = Buffer.from(relayKey, "utf8");
+    return a.length === b.length && timingSafeEqual(a, b) ? null : "relay_key_mismatch";
+  };
+
+  /**
+   * 人だけの経路の守り。kind が human の経路は、処理の前に必ずここを通る（経路ごとに書かない）。
+   * Origin・Sec-Fetch-Site・タブの秘密・1 回きりの印（操作の名前と中身のハッシュとタブの回に結ぶ）のすべてを求める。
+   */
+  const guardHuman = async (req: IncomingMessage, route: RouteDef): Promise<HumanCtx | ErrorCode> => {
+    if (!route.requires?.tabSecret || !route.requires.oneTimeToken || !route.action) return "internal";
+    const o = checkOrigin(header(req, "origin"), header(req, "host"), port, true);
+    if (o) return o;
+    const s = checkFetchSite(header(req, "sec-fetch-site"), false);
+    if (s) return s;
+    const tab = tabs.checkSecret(header(req, HEADER_TAB_SECRET));
+    if (typeof tab === "string") return tab;
+    const body = await readJson(req, route.maxBody ?? 0);
+    if (typeof body === "string") return body;
+    const { token, payload } = (body.value ?? {}) as { token?: unknown; payload?: unknown };
+    if (typeof payload !== "string") return "bad_json";
+    const hash = createHash("sha256").update(payload, "utf8").digest("hex");
+    const t = tokens.consume(typeof token === "string" ? token : undefined, route.action, hash, tab.session);
+    if (t) return t;
+    return { session: tab.session, action: route.action, payload };
+  };
+
+  const handlers: { [K in Exclude<RouteId, HumanRouteId>]: RouteHandler } = {
     app: async ({ res, url }) => serveStatic(res, url.pathname),
     assets: async ({ res, url }) => serveStatic(res, url.pathname),
     selftestEd25519: ({ res }) => sendJson(res, 200, makeEd25519Sample()),
     // WebSocket の経路に、Upgrade の無い GET が来たとき
     ws: ({ res }) => reject(res, "method_not_allowed"),
     relayTool: async ({ req, res, route }) => {
-      // 中継はブラウザではない。Origin や Sec-Fetch-Site があるのは、ブラウザのページからの要求なので断る
-      if (header(req, "origin") !== undefined) return reject(res, "origin_not_allowed");
-      if (header(req, "sec-fetch-site") !== undefined) return reject(res, "fetch_site_not_allowed");
-      const key = header(req, HEADER_RELAY_KEY);
-      const a = Buffer.from(String(key ?? ""), "utf8");
-      const b = Buffer.from(relayKey, "utf8");
-      if (a.length !== b.length || !timingSafeEqual(a, b)) return reject(res, "relay_key_mismatch");
+      const g = guardRelay(req);
+      if (g) return reject(res, g);
       const body = await readJson(req, route.maxBody ?? 0);
       if (typeof body === "string") return reject(res, body);
       const { name, args } = (body.value ?? {}) as { name?: unknown; args?: unknown };
-      if (typeof name !== "string" || !isToolName(name)) return reject(res, "unknown_tool");
+      if (typeof name !== "string" || !isToolName(name) || !(EXPOSED_TOOL_NAMES as string[]).includes(name)) {
+        return reject(res, "unknown_tool");
+      }
       if (!toolDef(name).input.safeParse(args ?? {}).success) return reject(res, "invalid_input");
-      // v0：どのツールも名前と型だけ。呼ばれたら「未実装」と型どおりに返す
-      return reject(res, "not_implemented");
+      // v0：どのツールも名前と型だけ。受け手が「未実装」なので、型どおりに「未実装」を返す
+      const receiver: ToolReceiver = BRIDGE_TOOL_RECEIVERS[name];
+      return reject(res, receiver);
     },
-    commitTrial: async ({ req, res, route }) => {
-      // 人だけの経路。Origin・Sec-Fetch-Site・タブの秘密・1 回きりの印のすべてを求める
-      const host = header(req, "host");
-      const o = checkOrigin(header(req, "origin"), host, port, true);
-      if (o) return reject(res, o);
-      const s = checkFetchSite(header(req, "sec-fetch-site"), false);
-      if (s) return reject(res, s);
-      const tab = tabs.checkSecret(header(req, HEADER_TAB_SECRET));
-      if (typeof tab === "string") return reject(res, tab);
-      const body = await readJson(req, route.maxBody ?? 0);
-      if (typeof body === "string") return reject(res, body);
-      const { token, payload } = (body.value ?? {}) as { token?: unknown; payload?: unknown };
-      if (typeof payload !== "string") return reject(res, "bad_json");
-      const hash = createHash("sha256").update(payload, "utf8").digest("hex");
-      const t = tokens.consume(typeof token === "string" ? token : undefined, route.action as HumanAction, hash, tab.session);
-      if (t) return reject(res, t);
+  };
+
+  /** 人だけの経路の処理。ここに来るのは guardHuman を通ったものだけ。 */
+  const humanHandlers: { [K in HumanRouteId]: (res: ServerResponse, h: HumanCtx) => void } = {
+    commitTrial: (res, h) => {
+      // 確定の試し：中身は何もしない。守りの形を試験するための経路
       log("確定の試しの経路を通りました（何も変えていません）");
-      return sendJson(res, 200, { ok: true, action: route.action, changed: false });
+      sendJson(res, 200, { ok: true, action: h.action, changed: false });
     },
   };
 
@@ -193,7 +224,12 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
         const s = checkFetchSite(header(req, "sec-fetch-site"), true);
         if (s) return reject(res, s);
       }
-      await handlers[m.id]({ req, res, route, url });
+      if (route.kind === "human") {
+        const h = await guardHuman(req, route);
+        if (typeof h === "string") return reject(res, h);
+        return humanHandlers[m.id as HumanRouteId](res, h);
+      }
+      await handlers[m.id as Exclude<RouteId, HumanRouteId>]({ req, res, route, url });
     } catch {
       if (!res.headersSent) reject(res, "internal");
       else res.destroy();
@@ -219,7 +255,13 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   await new Promise<void>((resolve, reject) => {
     const onError = (e: NodeJS.ErrnoException) => {
       server.off("listening", onListening);
-      reject(e.code === "EADDRINUSE" || e.code === "EACCES" ? new BridgeStartError("port_in_use", opts.port) : e);
+      reject(
+        e.code === "EADDRINUSE"
+          ? new BridgeStartError("port_in_use", opts.port)
+          : e.code === "EACCES"
+            ? new BridgeStartError("port_denied", opts.port)
+            : e,
+      );
     };
     const onListening = () => {
       server.off("error", onError);

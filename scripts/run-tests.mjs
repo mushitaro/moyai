@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // 試験を走らせる：tests/ の下の *.test.mjs を node --test で、*.test.ts(x) を vitest で。
 // どちらかで見つかった試験・走った試験が 0 件なら失敗にする。
-import { mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
@@ -38,9 +39,9 @@ if (vfiles.length === 0) {
   console.error("run-tests: vitest の試験のファイルが 0 件。失敗にする");
   process.exit(1);
 }
-mkdirSync(".cache", { recursive: true });
-const report = join(".cache", "vitest-report.json");
-rmSync(report, { force: true });
+// 報告は一時のフォルダに書き、読んだら消す
+const reportDir = mkdtempSync(join(tmpdir(), "moyai-vitest-"));
+const report = join(reportDir, "report.json");
 const v = spawnSync(
   process.execPath,
   [join("node_modules", "vitest", "vitest.mjs"), "run", "--reporter=default", "--reporter=json", `--outputFile.json=${report}`],
@@ -54,6 +55,7 @@ try {
   console.error("run-tests: vitest の報告を読めない");
   failed = true;
 }
+rmSync(reportDir, { recursive: true, force: true });
 if (vitestCount === 0) {
   console.error("run-tests: vitest で走った試験が 0 件。失敗にする");
   process.exit(1);

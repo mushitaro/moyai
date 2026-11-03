@@ -1,9 +1,9 @@
 // CLI のビルド（src/cli/main.ts → dist/cli.js）。Vite の SSR のビルドで、依存は node_modules から読む。
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
-import { buildStamp } from "./scripts/build-stamp.mjs";
+import { sharedBuildStamp } from "./scripts/build-stamp.mjs";
 
-const stamp = buildStamp();
+const stamp = sharedBuildStamp();
 
 export default defineConfig({
   define: {

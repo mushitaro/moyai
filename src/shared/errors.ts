@@ -27,6 +27,11 @@ export const ERRORS = {
     to: "ai",
     text: "作業画面からの答えが時間内に来ませんでした（1 回送り直しました）。作業画面が開いているかを利用者に確かめてください。",
   },
+  bridge_connection_lost: {
+    from: "relay",
+    to: "ai",
+    text: "橋渡しとの通信が途中で切れました（1 回送り直しました）。作業画面と橋渡しが動いているかを利用者に確かめてください。",
+  },
   result_unknown: {
     from: "relay",
     to: "ai",
@@ -79,6 +84,11 @@ export const ERRORS = {
     from: "cli",
     to: "terminal",
     text: "ポート {port} はほかのプログラムが使っています。起動を止めました。ほかの moyai start が動いていないか確かめるか、`--port 43111` のように別のポートを指定してください。",
+  },
+  port_denied: {
+    from: "cli",
+    to: "terminal",
+    text: "ポート {port} で待ち受けることを OS に断られました（権限）。起動を止めました。`--port 43111` のように別のポートを指定してください。",
   },
   bad_args: { from: "cli", to: "terminal", text: "コマンドの形が違います。`moyai --help` を見てください。" },
   app_missing: {

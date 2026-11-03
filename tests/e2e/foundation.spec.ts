@@ -1,13 +1,26 @@
 // 最小の画面を、この PC の Chrome と Edge で開く：ビルドの印、つながり、2 つ目のタブ、確定の試し、Ed25519 の試験。
-// 結果のスクリーンショットを docs/progress/shots/2026-11-03/ に残す。
+// 結果のスクリーンショットを docs/progress/shots/<走らせた日（日本時間）>/ に残す。前の日の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 
-const SHOTS = "docs/progress/shots/2026-11-03";
+const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+// 確かめるだけの走りでは MOYAI_SHOTS_DIR で一時のフォルダに向ける
+const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `docs/progress/shots/${jst}`;
+
+/** 撮る先。同じ名前がもうあれば、時刻を足した名前にして上書きしない。 */
+function shot(name: string): string {
+  mkdirSync(SHOTS, { recursive: true });
+  const p = `${SHOTS}/${name}.png`;
+  if (!existsSync(p)) return p;
+  const t = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" })
+    .format(new Date())
+    .replace(/:/g, "");
+  return `${SHOTS}/${name}-${t}.png`;
+}
 
 function freePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -70,7 +83,7 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
     await page.goto(base);
     await expect(page.getByTestId("build-stamp")).toHaveText(/^MOYAI · build \d{4}-\d{2}-\d{2} \d{2}:\d{2} JST · [0-9a-f]{7}\+?$/);
     await expect(page.getByTestId("connection")).toHaveAttribute("data-state", "open");
-    await page.screenshot({ path: `${SHOTS}/start-${tag}.png` });
+    await page.screenshot({ path: shot(`start-${tag}`) });
     if (process.platform === "win32") expect(fontRequests).toEqual([]);
   });
 
@@ -79,7 +92,9 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
     await second.goto(base);
     await expect(second.getByTestId("refused")).toBeVisible();
     await expect(second.getByTestId("connection")).toHaveAttribute("data-state", "refused");
-    await second.screenshot({ path: `${SHOTS}/second-tab-${tag}.png` });
+    await expect(second.getByTestId("trial-open")).toBeDisabled();
+    await expect(second.getByTestId("trial-disabled-reason")).toBeVisible();
+    await second.screenshot({ path: shot(`second-tab-${tag}`) });
     await second.close();
   });
 
@@ -89,7 +104,7 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
     await expect(page.getByTestId("trial-token")).toBeVisible();
     await page.getByTestId("trial-confirm").click();
     await expect(page.getByTestId("trial-done")).toBeVisible();
-    await page.screenshot({ path: `${SHOTS}/commit-trial-${tag}.png` });
+    await page.screenshot({ path: shot(`commit-trial-${tag}`) });
   });
 
   await test.step("Ed25519：Node の署名をブラウザの WebCrypto で検証する", async () => {
@@ -102,6 +117,6 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
     const ua = await page.getByTestId("browser").textContent();
     info.annotations.push({ type: "browser", description: String(ua) });
     console.log(`[${tag}] ${ua} → Ed25519 合格`);
-    await page.screenshot({ path: `${SHOTS}/ed25519-${tag}.png` });
+    await page.screenshot({ path: shot(`ed25519-${tag}`) });
   });
 });

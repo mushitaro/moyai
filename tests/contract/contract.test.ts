@@ -9,7 +9,8 @@ import { TAB_EVENT_HANDLERS } from "../../src/bridge/tab";
 import { ERRORS, ERROR_CODES, type ErrorSide } from "../../src/shared/errors";
 import { EVENTS, EVENT_TYPES, type EventSide } from "../../src/shared/events";
 import { ROUTES, ROUTE_IDS, type RouteDef } from "../../src/shared/routes";
-import { TOOLS, TOOL_NAMES } from "../../src/shared/tools";
+import { EXPOSED_TOOL_NAMES, TOOLS, TOOL_NAMES } from "../../src/shared/tools";
+import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
 import { createRelayServer } from "../../src/cli/relay";
 import toolNames from "../../src/shared/tool-names.json";
 
@@ -64,19 +65,24 @@ describe("誤りの送り手と受け手", () => {
 });
 
 describe("ツールの送り手と受け手", () => {
-  it("tool-names.json・TOOLS・中継が出す名前が同じ 12", async () => {
+  it("tool-names.json と TOOLS が同じ 12。中継が出すのは今見せるものだけ", () => {
     expect(toolNames).toHaveLength(12);
     expect(Object.keys(TOOLS).sort()).toEqual([...toolNames].sort());
     expect(TOOL_NAMES).toEqual(toolNames);
+    for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
     const server = createRelayServer({ stateDir: "unused" });
     const registered = Object.keys((server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools);
-    expect(registered.sort()).toEqual([...toolNames].sort());
+    expect(registered.sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
+    // 見せないものは、待っている画面の名前を持つ
+    for (const n of TOOL_NAMES.filter((x) => !EXPOSED_TOOL_NAMES.includes(x))) expect(TOOLS[n].waitsFor, n).not.toBeNull();
   });
 
-  it("どのツールも、受け手（橋渡しの中継の経路）が名前で受ける", () => {
-    const src = readFileSync("src/bridge/server.ts", "utf8");
-    expect(src).toContain("isToolName(name)");
-    for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
+  it("どのツールにも、橋渡しの側の受け手（処理か「未実装」）が一覧である。未実装の数を出す", () => {
+    expect(Object.keys(BRIDGE_TOOL_RECEIVERS).sort()).toEqual([...TOOL_NAMES].sort());
+    const notImplemented = TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "not_implemented");
+    console.log(`contract: ツール ${TOOL_NAMES.length} のうち未実装 ${notImplemented.length}（今見せるもの ${EXPOSED_TOOL_NAMES.length}）`);
+    // v0 はすべて未実装。処理を足したら、この数を減らす
+    expect(notImplemented).toHaveLength(12);
   });
 
   it("確定・送る・昇格・保存のツールが無い", () => {

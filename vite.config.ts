@@ -2,9 +2,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
-import { buildStamp } from "./scripts/build-stamp.mjs";
+import { sharedBuildStamp } from "./scripts/build-stamp.mjs";
 
-const stamp = buildStamp();
+const stamp = sharedBuildStamp();
 
 export default defineConfig({
   root: fileURLToPath(new URL("./src/app", import.meta.url)),

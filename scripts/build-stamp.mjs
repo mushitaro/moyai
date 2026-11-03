@@ -1,5 +1,5 @@
 // ビルドの印（`MOYAI · build <日時> JST · <コミット>`）の中身を、ビルドのときに作る。
-// 画面（vite.config.ts）と CLI（vite.cli.config.ts）の両方がこれを使い、同じ値を埋める。
+// scripts/build.mjs が 1 回だけ作り、画面（vite.config.ts）と CLI（vite.cli.config.ts）に同じ値を埋める。
 import { execFileSync } from "node:child_process";
 
 function git(args) {
@@ -29,4 +29,12 @@ export function buildStamp(now = new Date()) {
   const commit = git(["rev-parse", "--short=7", "HEAD"]) || "unknown";
   const dirty = git(["status", "--porcelain", "--untracked-files=no"]) !== "";
   return { time, commit: dirty ? `${commit}+` : commit };
+}
+
+export const STAMP_ENV = "MOYAI_BUILD_STAMP";
+
+/** scripts/build.mjs が 1 回だけ作って環境変数に入れた印を読む。無ければここで作る（設定を単独で使ったとき）。 */
+export function sharedBuildStamp(env = process.env) {
+  if (env[STAMP_ENV]) return JSON.parse(env[STAMP_ENV]);
+  return buildStamp();
 }

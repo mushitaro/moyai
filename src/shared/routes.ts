@@ -54,6 +54,8 @@ export const ROUTES = {
 } as const satisfies Record<string, RouteDef>;
 
 export type RouteId = keyof typeof ROUTES;
+/** 人だけの経路の ID */
+export type HumanRouteId = { [K in RouteId]: (typeof ROUTES)[K]["kind"] extends "human" ? K : never }[RouteId];
 export const ROUTE_IDS = Object.keys(ROUTES) as RouteId[];
 
 /** 方法と道から経路を引く。無ければ、道があるが方法が違うかどうかも返す。 */

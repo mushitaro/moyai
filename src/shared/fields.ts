@@ -14,6 +14,13 @@ export interface FieldDef {
   neverShared?: true;
 }
 
+/**
+ * 変更の作者の種類（docs/plan.md §2.9）。画面で人が答えたものだけを「人」とする。
+ * 人・AI・AI（チャットでの人の答え）・AI（読み取り）・決まり（コード）。
+ */
+export const AUTHOR_KINDS = ["human", "ai", "ai_relayed_human", "ai_reading", "rule_code"] as const;
+export type AuthorKind = (typeof AUTHOR_KINDS)[number];
+
 const f = (label: string, type: FieldType, extra: Partial<FieldDef> = {}): FieldDef => ({ label, type, ...extra });
 
 export const ENTITIES = {
@@ -40,7 +47,7 @@ export const ENTITIES = {
       parentKey: f("上の節", "code"),
       classCode: f("分類コード", "code"),
       commonItem: f("共通の設備項目", "code"),
-      commonItemAuthor: f("当てはめの作者", "enum", { values: ["human", "ai", "ai_relayed_human", "pack"] }),
+      commonItemAuthor: f("当てはめの作者", "enum", { values: AUTHOR_KINDS }),
       commonItemBasis: f("当てはめの根拠", "text"),
       specs: f("仕様", "list"),
       installedOn: f("設置", "date"),
@@ -83,7 +90,7 @@ export const ENTITIES = {
       performer: f("実施者", "text", { neverShared: true }),
       source: f("出どころ", "text"),
       basis: f("根拠", "text"),
-      author: f("作者", "enum", { values: ["human", "ai", "ai_relayed_human", "import"] }),
+      author: f("作者", "enum", { values: AUTHOR_KINDS }),
     },
   },
   meter: {

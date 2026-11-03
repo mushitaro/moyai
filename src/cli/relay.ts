@@ -6,7 +6,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { errorBody, errorBodySchema, type ErrorBody } from "../shared/errors";
 import { MCP_INSTRUCTIONS } from "../shared/instructions";
 import { HEADER_RELAY_KEY, ROUTES } from "../shared/routes";
-import { TOOL_NAMES, TOOL_TIMEOUTS, toolDef, type ToolKind, type ToolName } from "../shared/tools";
+import { EXPOSED_TOOL_NAMES, TOOL_TIMEOUTS, toolDef, type ToolKind, type ToolName } from "../shared/tools";
 import { readKeyFile } from "../bridge/state";
 
 export interface RelayOptions {
@@ -18,8 +18,11 @@ export interface RelayOptions {
 
 type BridgeAnswer = { ok: true; data: Record<string, unknown> } | ErrorBody;
 
-/** 橋渡しに 1 回送る。つながらなければ bridge_not_running、時間切れなら "timeout"。 */
-async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: number): Promise<BridgeAnswer | "timeout"> {
+/**
+ * 橋渡しに 1 回送る。接続を拒まれたら bridge_not_running（送れていない）。
+ * 時間切れは "timeout"、送ったあとに切れたなどは "lost"（どちらも、書けたかどうか分からない）。
+ */
+async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: number): Promise<BridgeAnswer | "timeout" | "lost"> {
   const key = readKeyFile(stateDir);
   if (!key) return errorBody("bridge_not_running");
   let res: Response;
@@ -31,9 +34,10 @@ async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: num
       signal: AbortSignal.timeout(ms),
     });
   } catch (e) {
-    const err = e as { name?: string };
+    const err = e as { name?: string; cause?: { code?: string } };
     if (err.name === "TimeoutError" || err.name === "AbortError") return "timeout";
-    return errorBody("bridge_not_running");
+    if (err.cause?.code === "ECONNREFUSED") return errorBody("bridge_not_running");
+    return "lost";
   }
   let body: unknown;
   try {
@@ -52,11 +56,15 @@ async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: num
 export async function callBridge(opts: RelayOptions, name: ToolName, args: unknown): Promise<BridgeAnswer> {
   const kind = toolDef(name).kind;
   const t = { ...TOOL_TIMEOUTS[kind], ...(opts.timeouts?.[kind] ?? {}) };
+  let last: "timeout" | "lost" = "timeout";
   for (let attempt = 0; attempt <= t.retries; attempt++) {
     const r = await postOnce(opts.stateDir, name, args, t.ms);
-    if (r !== "timeout") return r;
+    if (r !== "timeout" && r !== "lost") return r;
+    last = r;
   }
-  return errorBody(kind === "read" ? "bridge_timeout" : "result_unknown");
+  // 書くもの・始めるものは、送れたかどうか分からないので「結果不明」。読むものは送り直しても来なかった理由を返す
+  if (kind !== "read") return errorBody("result_unknown");
+  return errorBody(last === "timeout" ? "bridge_timeout" : "bridge_connection_lost");
 }
 
 export function toToolResult(answer: BridgeAnswer): CallToolResult {
@@ -73,7 +81,7 @@ export function createRelayServer(opts: RelayOptions): McpServer {
     { name: "moyai", version: opts.version ?? "0.0.0" },
     { instructions: MCP_INSTRUCTIONS, capabilities: { tools: {} } },
   );
-  for (const name of TOOL_NAMES) {
+  for (const name of EXPOSED_TOOL_NAMES) {
     const d = toolDef(name);
     server.registerTool(
       name,

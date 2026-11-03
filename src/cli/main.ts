@@ -68,7 +68,7 @@ async function start(argv: string[]): Promise<void> {
     process.on("SIGINT", stop);
     process.on("SIGTERM", stop);
   } catch (e) {
-    if (e instanceof BridgeStartError) return fail("port_in_use", { port: e.port });
+    if (e instanceof BridgeStartError) return fail(e.code === "port_denied" ? "port_denied" : "port_in_use", { port: e.port });
     throw e;
   }
 }

@@ -7,9 +7,39 @@ import { TokenStore } from "../../src/bridge/tokens";
 import { checkFetchSite, checkHost, checkOrigin } from "../../src/bridge/guard";
 import { parseStartArgs } from "../../src/cli/args";
 import { decodeEvent, encodeEvent } from "../../src/shared/events";
-import { ENTITIES, FIELD_REFS, fieldDef } from "../../src/shared/fields";
+import { AUTHOR_KINDS, ENTITIES, FIELD_REFS, fieldDef } from "../../src/shared/fields";
 import { errorBody } from "../../src/shared/errors";
-import { RULE_MAX_VALUES, ruleSchema } from "../../src/shared/tools";
+import { RULE_MAX_VALUES, TOOLS, ruleSchema, statRow } from "../../src/shared/tools";
+import { STAMP_ENV, sharedBuildStamp } from "../../scripts/build-stamp.mjs";
+
+describe("作者の種類", () => {
+  it("人・AI・AI（チャットでの人の答え）・AI（読み取り）・決まり（コード）の 5 つを、どの作者の欄も使う", () => {
+    expect(AUTHOR_KINDS).toEqual(["human", "ai", "ai_relayed_human", "ai_reading", "rule_code"]);
+    expect(fieldDef("assetNode.commonItemAuthor").values).toEqual(AUTHOR_KINDS);
+    expect(fieldDef("workDetail.author").values).toEqual(AUTHOR_KINDS);
+  });
+});
+
+describe("仲間の統計の行", () => {
+  it("帯のコードだけを通し、生の数を通さない", () => {
+    expect(statRow.safeParse({ shown: "x" }).success).toBe(true);
+    expect(statRow.safeParse({ shown: "range", n: 3, low: "I3", high: "I4_5" }).success).toBe(true);
+    expect(statRow.safeParse({ shown: "median", n: 7, median: "W10_29", q1: "W1_9", q3: "W1000P" }).success).toBe(true);
+    expect(statRow.safeParse({ shown: "median", n: 7, median: 12, q1: "W1_9", q3: "W30_99" }).success).toBe(false);
+    expect(statRow.safeParse({ shown: "median", n: 4, median: "D1_3", q1: "D1_3", q3: "D4_7" }).success).toBe(false);
+    expect(statRow.safeParse({ shown: "range", n: 2, low: "I1", high: "I2" }).success).toBe(false);
+    const agg = TOOLS.peer_reference.output.shape.aggregates.element;
+    expect(Object.keys(agg.shape).sort()).toEqual(["commonItem", "days", "interval", "manDays"]);
+  });
+});
+
+describe("ビルドの印", () => {
+  it("scripts/build.mjs が 1 回作った印を、画面と CLI の設定が同じに読む", () => {
+    const env = { [STAMP_ENV]: JSON.stringify({ time: "2026-11-03 12:34", commit: "abcdef0" }) };
+    expect(sharedBuildStamp(env)).toEqual({ time: "2026-11-03 12:34", commit: "abcdef0" });
+    expect(sharedBuildStamp({}).time).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+  });
+});
 
 describe("欄の名前", () => {
   it("芯のデータの形の 5 つ（施設・資産の節・作業・作業明細・計量値）がある", () => {

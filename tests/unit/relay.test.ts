@@ -1,4 +1,4 @@
-// 中継（moyai mcp）：MCP のクライアントからつなぎ、12 のツール・橋渡しが無いとき・未実装・待ちの上限を確かめる。
+// 中継（moyai mcp）：MCP のクライアントからつなぎ、今見せるツール・橋渡しが無いとき・未実装・待ちの上限を確かめる。
 // 状態フォルダは一時のフォルダ。ビルドした dist/cli.js があれば、標準入出力でもつなぐ（標準出力が MCP だけか）。
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer, type Server } from "node:http";
@@ -12,7 +12,7 @@ import { writeKeyFile } from "../../src/bridge/state";
 import { createRelayServer, type RelayOptions } from "../../src/cli/relay";
 import { ERRORS, type ErrorCode } from "../../src/shared/errors";
 import { MCP_INSTRUCTIONS } from "../../src/shared/instructions";
-import { TOOL_NAMES } from "../../src/shared/tools";
+import { EXPOSED_TOOL_NAMES, TOOL_NAMES } from "../../src/shared/tools";
 import { startTestBridge, type TestBridge } from "../helpers/bridge";
 
 const cleanups: (() => Promise<void> | void)[] = [];
@@ -42,11 +42,13 @@ async function connect(opts: RelayOptions): Promise<Client> {
 }
 
 describe("中継の MCP", () => {
-  it("12 のツールを、説明と入力・出力の型つきで出す", async () => {
+  it("今見せるツール（12 のうち、F3 の画面を待つ skill_eval を除く 11）を、説明と入力・出力の型つきで出す", async () => {
     const c = await connect({ stateDir: tempState() });
     const { tools } = await c.listTools();
-    expect(tools.map((t) => t.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(tools).toHaveLength(12);
+    expect(TOOL_NAMES).toHaveLength(12);
+    expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
+    expect(tools.map((t) => t.name)).not.toContain("skill_eval");
+    expect(tools).toHaveLength(11);
     for (const t of tools) {
       expect(t.description, t.name).toMatch(/人だけ/);
       expect(t.inputSchema.type).toBe("object");
@@ -94,9 +96,8 @@ describe("中継の MCP", () => {
         basis: "b",
       },
       note_for_human: { before: "confirm", text: "見てください" },
-      skill_eval: { action: "list" },
     };
-    for (const name of TOOL_NAMES) {
+    for (const name of EXPOSED_TOOL_NAMES) {
       const r = await c.callTool({ name, arguments: args[name] ?? {} });
       expect(r.isError, name).toBe(true);
       expectError(r, "not_implemented", name);
@@ -148,6 +149,38 @@ describe("待ちの上限と送り直し", () => {
     expect(srv.hits()).toBe(2);
   });
 
+  async function droppingServer(): Promise<{ port: number; hits: () => number }> {
+    let hits = 0;
+    const s: Server = createServer((req) => {
+      hits++;
+      req.socket.destroy(); // 受けてから、答えずに切る
+    });
+    await new Promise<void>((r) => s.listen(0, "127.0.0.1", () => r()));
+    cleanups.push(() => new Promise<void>((r) => s.close(() => r())));
+    const a = s.address();
+    return { port: typeof a === "object" && a ? a.port : 0, hits: () => hits };
+  }
+
+  it("送ったあとに切れたら、読むツールは 1 回送り直し、切れたと返す（起きていないとは言わない）", async () => {
+    const stateDir = tempState();
+    const srv = await droppingServer();
+    writeKeyFile(stateDir, { version: 1, port: srv.port, key: "k".repeat(43), pid: 1, startedAt: "" });
+    const c = await connect({ stateDir });
+    const r = await c.callTool({ name: "check_results", arguments: {} });
+    expectError(r, "bridge_connection_lost");
+    expect(srv.hits()).toBe(2);
+  });
+
+  it("送ったあとに切れたら、始めるツールは送り直さず「結果不明」を返す", async () => {
+    const stateDir = tempState();
+    const srv = await droppingServer();
+    writeKeyFile(stateDir, { version: 1, port: srv.port, key: "k".repeat(43), pid: 1, startedAt: "" });
+    const c = await connect({ stateDir });
+    const r = await c.callTool({ name: "intake_compose", arguments: {} });
+    expectError(r, "result_unknown");
+    expect(srv.hits()).toBe(1);
+  });
+
   it("案を置くツールは送り直さず「結果不明」を返す", async () => {
     const stateDir = tempState();
     const srv = await silentServer();
@@ -164,7 +197,7 @@ describe("待ちの上限と送り直し", () => {
 const dist = join(process.cwd(), "dist", "cli.js");
 const needDist = process.env.MOYAI_REQUIRE_DIST === "1";
 describe.skipIf(!existsSync(dist) && !needDist)("dist/cli.js mcp（標準入出力）", () => {
-  it("標準出力は MCP だけで、12 のツールを出し、橋渡しが無ければ先に start をと返す", async () => {
+  it("標準出力は MCP だけで、11 のツールを出し、橋渡しが無ければ先に start をと返す", async () => {
     const stateDir = tempState();
     const transport = new StdioClientTransport({
       command: process.execPath,
@@ -176,7 +209,7 @@ describe.skipIf(!existsSync(dist) && !needDist)("dist/cli.js mcp（標準入出�
     await client.connect(transport);
     cleanups.push(() => client.close());
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(12);
+    expect(tools).toHaveLength(11);
     const r = await client.callTool({ name: "share_preview", arguments: {} });
     expectError(r, "bridge_not_running");
   });
