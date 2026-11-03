@@ -19,6 +19,7 @@ import {
   rulesDocBodyType,
   type ShareContext,
 } from "./bundle";
+import { LEDGER_WITHHELD_FIELDS } from "./copyout";
 import { canonicalize, parseJsonStrict, type Json } from "./jcs";
 import { SEND_MIN_K, countPeers, isCountable, kNational, type Group } from "./k";
 import { checkRules, type Rules } from "./rules";
@@ -105,8 +106,9 @@ function kindOfDoc(v: Json): DocKind | null {
   return tag === BUNDLE_V ? "bundle" : tag === MEMBER_V ? "member" : tag === CIRCLE_V ? "circle" : tag === LEDGER_V ? "ledger" : null;
 }
 
-const UTF8 = new TextDecoder("utf-8", { fatal: true });
-const UTF8_LOOSE = new TextDecoder("utf-8", { fatal: false });
+// ignoreBOM：BOM を黙って捨てずに文字として残す（バイト列で受けた束の BOM も、形の外れ shape.bom に数えるため）
+const UTF8 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+const UTF8_LOOSE = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
 
 /**
  * 1 つのファイルを数え直す。送る側（署名の前と後）と受ける側（輪・台帳）が同じこの関数を使う。
@@ -229,6 +231,11 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
     if (body.national !== ctx.table.hash || body.national !== ctx.rules.national) chain("nationalMismatch");
     if (body.vocab !== ctx.vocab.hash || body.vocab !== ctx.rules.vocab) chain("vocabMismatch");
     if (body.pack !== ctx.rules.pack || ctx.vocab.pack !== ctx.rules.pack) chain("packMismatch");
+    // 粒度と、公開の台帳の決まり（型でも外れるが、理由を分けて出す）。形の外れに数える
+    for (const r of [...grainIssues(body), ...(ctx.to.kind === "ledger" ? ledgerIssues(body) : [])]) {
+      res.shape++;
+      res.reasons.push(r);
+    }
     countK(body, ctx, res, kShort);
   } else if (kind === "member") {
     if (typeof body.pub === "string" && /^[0-9a-f]{64}$/.test(body.pub) && keyIdOf(body.pub) !== body.key) chain("keyMismatch");
@@ -243,6 +250,39 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
     if (issues.length === 0) for (const v of checkRules(b.rules as Rules)) shape(`rules.${v}`);
   }
   return res;
+}
+
+function chunksOf(body: Record<string, Json>): Record<string, Json>[] {
+  const cs = body.chunks;
+  if (!Array.isArray(cs)) return [];
+  return cs.filter((c): c is Record<string, Json> => !!c && typeof c === "object" && !Array.isArray(c));
+}
+
+/**
+ * 粒度：塊の欄どうしが写し取りの作り方と合うか。N1（年度が 1 つ）の行に間隔は出さない。回数の帯は years の数から決まる。
+ * 理由のコード（値は入れない）を返す。
+ */
+export function grainIssues(body: Record<string, Json>): string[] {
+  const out = new Set<string>();
+  for (const c of chunksOf(body)) {
+    const years = Array.isArray(c.years) ? c.years.length : -1;
+    if (c.observed === "N1" && Object.hasOwn(c, "interval")) out.add("grain.intervalOnN1");
+    const want = years === 1 ? "N1" : years === 2 ? "N2" : years >= 3 ? "N3P" : null;
+    if (typeof c.observed === "string" && want !== null && c.observed !== want) out.add("grain.observedMismatch");
+  }
+  return [...out];
+}
+
+/** 公開の台帳の決まり（コードの定数。台帳の決まりで緩められない）：集団は NATIONAL だけ、UPGRADE と台帳に出さない欄は無い。 */
+export function ledgerIssues(body: Record<string, Json>): string[] {
+  const out: string[] = [];
+  const profile = body.profile;
+  const group = profile && typeof profile === "object" && !Array.isArray(profile) ? (profile as Record<string, Json>).group : undefined;
+  if (group !== "NATIONAL") out.push("ledger.groupNotNational");
+  const cs = chunksOf(body);
+  if (cs.some((c) => c.work === WORK_ATTRIBUTES[3])) out.push("ledger.upgrade");
+  if (cs.some((c) => LEDGER_WITHHELD_FIELDS.some((f) => Object.hasOwn(c, f)))) out.push("ledger.fieldWithheld");
+  return out;
 }
 
 function countK(body: Record<string, Json>, ctx: ShareContext, res: RecountResult, kShort: (r: string) => void): void {

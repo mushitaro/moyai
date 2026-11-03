@@ -242,6 +242,9 @@ export const HUMAN_TEXT = {
     upgradeLedger: "基幹改良は公開の台帳に出さない",
     upgradeBelowK: "基幹改良は紛れる数が下限に届くときだけ",
   } as Record<string, string>,
+  omit: {
+    ledgerWithheld: "公開の台帳には出さない欄（経過年の帯は、年度と合わせると使用開始の年が読めるため）",
+  } as Record<string, string>,
   withheld: {
     cost: "費用",
     performer: "実施者",

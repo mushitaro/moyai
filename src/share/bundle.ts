@@ -4,7 +4,7 @@
 // 同じ型の言葉で、輪の仲間のファイル（members/<鍵ID>.json）と決まりのファイル（circle.json）も書く。
 import { WORK_ATTRIBUTES } from "../shared/plan";
 import { BANDS_VERSION, BAND_DEFS, OBSERVED_CODES, ageCodes, bandCodes, type StatField } from "./bands";
-import { OPTIONAL_CHUNK_FIELDS, FY_MAX, FY_MIN, type Chunk, type Destination } from "./copyout";
+import { LEDGER_WITHHELD_FIELDS, OPTIONAL_CHUNK_FIELDS, FY_MAX, FY_MIN, type Chunk, type Destination } from "./copyout";
 import { canonicalize } from "./jcs";
 import { GROUPS, coarseCodes, type NationalTable, type PeerProfile, type Profile, type Vocab } from "./k";
 import type { Rules } from "./rules";
@@ -208,7 +208,11 @@ export function bundleBodyType(ctx: ShareContext): T {
     days: bandEnum("days", rules),
     ageAtWork: { t: "enum", vs: ageCodes() },
   };
-  for (const f of rules.fields) if (Object.hasOwn(all, f)) opt[f] = all[f];
+  for (const f of rules.fields) {
+    // 公開の台帳には、どの決まりでも出さない欄がある（場の決まりで足せない）
+    if (ledger && (LEDGER_WITHHELD_FIELDS as readonly string[]).includes(f)) continue;
+    if (Object.hasOwn(all, f)) opt[f] = all[f];
+  }
   const chunk: T = {
     t: "obj",
     req: {

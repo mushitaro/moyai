@@ -162,6 +162,44 @@ function isTempName(name: string): boolean {
   return name.startsWith(TEMP_PREFIX) || name.endsWith(TEMP_SUFFIX);
 }
 
+/** 鎖を確かめる束の 1 つ（輪と台帳が同じ形で渡す） */
+export interface ChainItem {
+  seq: number | null;
+  /** ファイルのバイト列の SHA-256（✓ の束には必ずある） */
+  hash: string | null;
+  status: string;
+  reasons: string[];
+}
+
+/**
+ * 1 つの鍵の束の鎖を確かめる（輪の受け手と台帳の検証が同じこの関数を使う）。✓ の束だけを seq の順に並べ、
+ * seq が 1 から抜けなく続き、prev が前の束のファイルのハッシュかを見る。切れたところから後ろは ✗。
+ */
+export function checkChain<E extends ChainItem>(list: readonly E[], prevOf: ReadonlyMap<E, unknown>): void {
+  const ok = list.filter((b) => b.status === "ok").sort((a, b) => a.seq! - b.seq!);
+  const seqCount = new Map<number, number>();
+  for (const b of ok) seqCount.set(b.seq!, (seqCount.get(b.seq!) ?? 0) + 1);
+  let expected = 1;
+  let prevHash: string | null = null;
+  let broken = false;
+  for (const b of ok) {
+    if (seqCount.get(b.seq!)! > 1) {
+      b.reasons.push("chain.duplicateSeq");
+      broken = true;
+    } else if (broken) b.reasons.push("chain.afterBreak");
+    else if (b.seq !== expected) {
+      b.reasons.push("chain.gap");
+      broken = true;
+    } else if (prevOf.get(b) !== prevHash) {
+      b.reasons.push("chain.broken");
+      broken = true;
+    }
+    if (b.reasons.length > 0) b.status = "ng";
+    expected = b.seq! + 1;
+    prevHash = b.hash;
+  }
+}
+
 /** 輪のフォルダを読み、束ごと・仲間ごとに ✓ か理由つきの ✗ か届きかけを出す。 */
 export async function readRing(root: string, ringId: string, o: ReadOptions): Promise<RingRead> {
   const dir = ringDir(root, ringId);
@@ -277,30 +315,7 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
   }
 
   // 鎖：鍵ごとに seq を 1 から順に、prev が前の束のファイルのハッシュか
-  for (const list of byKey.values()) {
-    const ok = list.filter((b) => b.status === "ok").sort((a, b) => a.seq! - b.seq!);
-    const seqCount = new Map<number, number>();
-    for (const b of ok) seqCount.set(b.seq!, (seqCount.get(b.seq!) ?? 0) + 1);
-    let expected = 1;
-    let prevHash: string | null = null;
-    let broken = false;
-    for (const b of ok) {
-      if (seqCount.get(b.seq!)! > 1) {
-        b.reasons.push("chain.duplicateSeq");
-        broken = true;
-      } else if (broken) b.reasons.push("chain.afterBreak");
-      else if (b.seq !== expected) {
-        b.reasons.push("chain.gap");
-        broken = true;
-      } else if (prevOf.get(b) !== prevHash) {
-        b.reasons.push("chain.broken");
-        broken = true;
-      }
-      if (b.reasons.length > 0) b.status = "ng";
-      expected = b.seq! + 1;
-      prevHash = b.hash;
-    }
-  }
+  for (const list of byKey.values()) checkChain(list, prevOf);
 
   // 仲間ごと
   const keys = [...new Set([...memberOk.keys(), ...byKey.keys()])].sort();
