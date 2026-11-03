@@ -2,12 +2,12 @@
 // 監査のエージェント：push の差分を、AGENTS.md と docs/plan.md の決まりに照らして読み、指摘を返す。
 // 書き込みはしない（指摘は Actions の要約と audit-result.json に出すだけ）。決めるのは人。
 // 使い方：BASE=<sha> HEAD=<sha> node scripts/audit/audit.mjs
-import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { AuditResult, costUsd, planDiff, renderMarkdown } from "./lib.mjs";
-import { appendLedger, budgetCheck, loadLedger } from "../api-spend.mjs";
+import { appendLedger, budgetCheck, loadLedger, pendingCiEstimate } from "../api-spend.mjs";
 
 const ROLE = "audit";
 const config = JSON.parse(readFileSync("config/models.json", "utf8"));
@@ -48,8 +48,26 @@ let usage = {};
 let stopReason = "";
 let failed = false;
 
-// 呼ぶ前に、費用の配分を確かめる（1 回の見込みは $2 として見る）
-const gate = budgetCheck(config.budgetUsd, loadLedger().rows, ROLE, 2);
+// 呼ぶ前に、費用の配分を確かめる（1 回の見込みは $2 として見る）。
+// CI では、台帳にまだ写していない終わった監査の回も、1 回 $2 として足して数える。
+const PER_RUN_USD = 2;
+const ledger = loadLedger();
+let pending = { count: 0, usd: 0 };
+if (process.env.GITHUB_ACTIONS) {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/workflows/audit.yml/runs?status=completed&per_page=100`,
+      { headers: { authorization: `Bearer ${process.env.GITHUB_TOKEN}`, accept: "application/vnd.github+json" } },
+    );
+    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+    const runs = (await res.json()).workflow_runs ?? [];
+    pending = pendingCiEstimate(runs, ledger.synced, process.env.GITHUB_RUN_ID, PER_RUN_USD);
+  } catch (e) {
+    // 数えられないときは、多めに見て止める側に倒す
+    pending = { count: NaN, usd: Infinity };
+  }
+}
+const gate = budgetCheck(config.budgetUsd, ledger.rows, ROLE, PER_RUN_USD + pending.usd, ledger);
 
 if (included.length === 0) {
   stopReason = "監査に入れる差分が無い";
@@ -83,14 +101,22 @@ if (included.length === 0) {
 // 値段が分からないときは $0 と書かず、計れないことを出す
 const called = Object.keys(usage).length > 0;
 const cost = called && price ? costUsd(usage, price) : called ? null : 0;
-if (called) {
-  // 手元で走らせた回だけを台帳に足す（CI の回は要約と artifact に残し、あとで台帳に写す）
-  if (!process.env.GITHUB_ACTIONS) {
-    appendLedger({ at: new Date().toISOString(), role: ROLE, where: "local", base, head, usd: cost ?? NaN, usage });
-  }
+if (called && !process.env.GITHUB_ACTIONS) {
+  // 手元の回はすぐ台帳に足す。CI の回は artifact に残し、scripts/api-spend-sync.mjs が写す
+  // （写すまでの間も、次の CI の回は上の pending で数える）。費用を計れない回は usd を null で残す。
+  appendLedger({ at: new Date().toISOString(), role: ROLE, where: "local", base, head, usd: cost, usage });
 }
 const md = renderMarkdown({ role: ROLE, base, head, result, skipped, usage, cost, stopReason });
-writeFileSync("audit-result.json", JSON.stringify({ base, head, role: ROLE, result, skipped, usage, costUsd: cost, stopReason }, null, 2));
+const outDir = ".cache/audit";
+mkdirSync(outDir, { recursive: true });
+writeFileSync(
+  `${outDir}/${base.slice(0, 7)}..${head.slice(0, 7)}.json`,
+  JSON.stringify(
+    { base, head, role: ROLE, runId: process.env.GITHUB_RUN_ID ?? null, pendingCiRuns: pending.count, result, skipped, usage, costUsd: cost, stopReason },
+    null,
+    2,
+  ),
+);
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, md + "\n");
 process.stdout.write(md + "\n");
 if (failed) process.exit(1);

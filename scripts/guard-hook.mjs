@@ -18,10 +18,12 @@ const FETCH_VERB =
 // MOYAI の CLI を呼ぶ形（node dist/cli.js、npm run cli、moyai）のあと、同じコマンドの中（; & | 改行の手前）に
 // 人だけの動詞が来たら当てる。間に別の引数があっても当てる。フォルダ名の Moyai だけでは当てない。
 const HUMAN_ONLY_VERBS = String.raw`(?:ledger\s+submit|keys?\s+(?:create|new|unwrap)|send|confirm|promote|accept-rules)\b`;
+// cli（拡張子は省いてもよい）・npm run cli・moyai のあと、同じコマンドの中に動詞が来たら当てる。引用符は外してから見る
 const HUMAN_ONLY_CLI = new RegExp(
-  String.raw`(?:cli\.(?:m?js|ts)\b|\bnpm\s+run\s+cli\b|(?:^|[\s;&|(])moyai(?:\.cmd|\.exe)?\s)[^;&|\n]*?\b` + HUMAN_ONLY_VERBS,
+  String.raw`(?:\bcli(?:\.(?:m?js|ts))?\b|\bnpm\s+run\s+cli\b|(?:^|[\s;&|(])moyai(?:\.cmd|\.exe)?\s)[^;&|\n]*?\b` + HUMAN_ONLY_VERBS,
   "i",
 );
+const unquote = (s) => String(s ?? "").replace(/["'`]/g, " ");
 const WRITE_VERB =
   /(>>?|\bcp\b|\bmv\b|\brm\b|\bdel\b|\btee\b|\btouch\b|\bmkdir\b|\bCopy-Item\b|\bMove-Item\b|\bRemove-Item\b|\bSet-Content\b|\bAdd-Content\b|\bOut-File\b|\bNew-Item\b|\brobocopy\b|\bxcopy\b|\brename\b|\bren\b|writeFile|appendFile)/i;
 const PREVIOUS_PRODUCT_URL = [
@@ -34,6 +36,36 @@ const PREVIOUS_PRODUCT_URL = [
   /^https?:\/\/(?:www\.)?npmjs\.(?:com|org)\/package\/\S*(?:mxstage|hoshutaro)/i,
   /^https?:\/\/registry\.npmjs\.org\/\S*(?:mxstage|hoshutaro)/i,
 ];
+
+/** ホストの名前が自分の PC（127.0.0.0/8・::1・IPv4 の写しの ::ffff:7f..・localhost・0.0.0.0）か。 */
+export function isLoopbackHost(hostname) {
+  const h = String(hostname ?? "").toLowerCase().replace(/^\[|\]$/g, "");
+  if (h === "localhost" || h.endsWith(".localhost") || h === "0.0.0.0") return true;
+  if (/^127\.\d+\.\d+\.\d+$/.test(h)) return true;
+  if (h === "::1" || h === "0:0:0:0:0:0:0:1") return true;
+  if (/^::ffff:(?:127\.|7f[0-9a-f]{2}:)/.test(h)) return true;
+  return false;
+}
+
+/**
+ * コマンドの中の URL やホスト:ポートを拾い、WHATWG の URL で読み直して自分の PC を指すかを見る。
+ * 8 進（0177.0.0.1）・10 進（2130706433）・16 進（0x7f000001）・短い形（127.1）・IPv6 の長い形も、読み直すと 127.0.0.1 や ::1 になる。
+ */
+export function mentionsLoopback(cmd) {
+  const s = String(cmd ?? "").replace(/["'`]/g, " ");
+  const candidates = [];
+  for (const m of s.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s<>()]+/gi)) candidates.push(m[0]);
+  // スキームの無いホスト:ポート（curl 127.1:43110 など）と、角かっこの IPv6
+  for (const m of s.matchAll(/(?:^|[\s=@])(\[[0-9a-f:.]+\]|[0-9a-z.]+):\d{1,5}\b/gi)) candidates.push(`http://${m[1]}:1`);
+  for (const c of candidates) {
+    try {
+      if (isLoopbackHost(new URL(c).hostname)) return true;
+    } catch {
+      /* URL として読めないものは下の文字の判定に任せる */
+    }
+  }
+  return LOOPBACK.test(s);
+}
 
 /** 文字列の中のパスを比べやすい形にする（小文字、/ 区切り、Git Bash の /d/ を d:/ に）。 */
 function norm(s) {
@@ -105,7 +137,7 @@ export function decide(input, ctx = {}) {
 
   if (tool === "Bash" || tool === "PowerShell") {
     const cmd = String(ti.command ?? "");
-    if (LOOPBACK.test(cmd) && HTTP_CLIENT.test(cmd)) {
+    if (mentionsLoopback(cmd) && HTTP_CLIENT.test(cmd)) {
       return deny("127.0.0.1 の橋渡しへの HTTP は人だけの経路を越えうるので、AI からは送りません。画面で操作してください。");
     }
     if (mentionsStateDir(cmd, env)) {
@@ -114,7 +146,7 @@ export function decide(input, ctx = {}) {
     if (PREVIOUS_PRODUCT.test(cmd) && FETCH_VERB.test(cmd)) {
       return deny("前の製品のリポジトリと配布物は取得しない決まりです。");
     }
-    if (HUMAN_ONLY_CLI.test(cmd)) {
+    if (HUMAN_ONLY_CLI.test(unquote(cmd))) {
       return deny("このコマンドは人だけの操作です。端末で人が打ってください。");
     }
     if (rings.length && WRITE_VERB.test(cmd) && rings.some((r) => norm(cmd).includes(norm(r).replace(/\/+$/, "")))) {

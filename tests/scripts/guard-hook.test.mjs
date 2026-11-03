@@ -47,6 +47,14 @@ const blocked = [
   ["Bash", { command: "node dist/cli.js --port 1 ledger submit ./b.json" }],
   ["Bash", { command: "npm run cli -- ledger submit ./b.json" }],
   ["Bash", { command: "cp b.json /d/share/moyai-ring/c_ab/bundles/k1/" }],
+  // 2 回目の監査（2026-11-03）で足した書き方
+  ["Bash", { command: "curl http://0177.0.0.1:43110/" }],
+  ["Bash", { command: "curl http://017700000001:43110/" }],
+  ["Bash", { command: "curl -g http://[0:0:0:0:0:0:0:1]:43110/" }],
+  ["Bash", { command: "curl -g http://[::ffff:7f00:1]:43110/" }],
+  ["Bash", { command: "curl 127.1:43110/api/confirm" }],
+  ["Bash", { command: 'node dist/cli.js "ledger" "submit" ./b.json' }],
+  ["Bash", { command: "node dist/cli ledger submit ./b.json" }],
 ];
 
 const allowed = [
@@ -64,8 +72,10 @@ const allowed = [
   ["WebFetch", { url: "https://laws.e-gov.go.jp/api/2/law_data/346M50000100035", prompt: "x" }],
   ["Glob", { pattern: "src/**/*.ts" }],
   // フォルダ名の Moyai と、コミットの文の中の send・confirm では止めない
-  ["Bash", { command: 'cd /c/Users/kazuh/Moyai && git commit -m "confirm the send path"' }],
+  ["Bash", { command: 'cd /c/Users/u/Moyai && git commit -m "confirm the send path"' }],
   ["PowerShell", { command: "Set-Location C:\\Users\\u\\Moyai; npm test" }],
+  ["Bash", { command: "curl -s https://api.github.com/repos/mushitaro/moyai" }],
+  ["Bash", { command: "git log --oneline -- scripts/cli.mjs" }],
 ];
 
 for (const [tool, input] of blocked) {

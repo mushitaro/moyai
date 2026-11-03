@@ -21,7 +21,8 @@
       "publisher": "厚生省（現 環境省の掲載）",
       "url": "https://www.env.go.jp/hourei/11/000510.html",
       "retrieved": "2026-11-03",
-      "sha256": "未確認（HTML の頁で、取った版のハッシュをまだ残していない）",
+      "sha256": null,
+      "unverified": ["sha256"],
       "terms": "行政の通知。条項の番号と短い引用で使う",
       "state": "原典照合済",
       "checked": [
@@ -63,9 +64,10 @@
       "name": "総務省の資料（精密機能検査の実施の状況を示す二次資料）",
       "publisher": "総務省",
       "url": "https://www.soumu.go.jp/main_content/000401742.pdf",
-      "retrieved": "未確認（まだ取っていない）",
-      "terms": "官公庁の公開資料。実施の状況を示す二次資料として、出典を書いて使う",
+      "retrieved": null,
+      "terms": null,
       "state": "要約のみ",
+      "unverified": ["retrieved", "terms", "name"],
       "checked": [],
       "note": "題・頁・取得日は、パックの検査を書くときに原本を取って照らし、ここに書く"
     }

@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { planDiff, costUsd, renderMarkdown, AuditResult } from "../../scripts/audit/lib.mjs";
+
+// 識別子は config/models.json から読む（試験のコードにモデルの名前を並べない）
+const MODEL_IDS = [...new Set(Object.values(JSON.parse(readFileSync("config/models.json", "utf8")).roles).map((r) => r.model))];
+const hasModelId = (s) => MODEL_IDS.some((id) => s.includes(id));
 
 const fileDiff = (name, body = "+x\n") => `diff --git a/${name} b/${name}\nindex 1..2 100644\n--- a/${name}\n+++ b/${name}\n@@ -0,0 +1 @@\n${body}`;
 
@@ -37,7 +42,7 @@ test("結果の型は重さを 3 つに閉じる", () => {
 test("結果があるときも、要約にモデルの識別子を書かない", () => {
   const result = { summary: "要約", findings: [{ severity: "minor", file: "a.ts", line: 3, rule: "AGENTS.md", problem: "p", fix: "f" }], unchecked: ["u"] };
   const md = renderMarkdown({ role: "audit", base: "a".repeat(40), head: "b".repeat(40), result, skipped: [], usage: { input_tokens: 1 }, cost: 0.1, stopReason: "end_turn" });
-  assert.doesNotMatch(md, /claude-|opus|sonnet|haiku|fable/i);
+  assert.equal(hasModelId(md), false);
   assert.match(md, /指摘 1 件/);
 });
 
@@ -50,5 +55,5 @@ test("値段が分からないときは費用を $0 と書かない", () => {
 test("要約にはモデルの識別子を書かず、受け取れなかったときはそう書く", () => {
   const md = renderMarkdown({ role: "audit", base: "a".repeat(40), head: "b".repeat(40), result: null, skipped: [], usage: {}, cost: 0, stopReason: "refusal" });
   assert.match(md, /受け取れませんでした/);
-  assert.doesNotMatch(md, /claude-|opus|sonnet/i);
+  assert.equal(hasModelId(md), false);
 });

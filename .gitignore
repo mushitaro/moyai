@@ -21,3 +21,6 @@ sources-raw/
 # Playwright
 test-results/
 playwright-report/
+
+# 監査の道具の結果（回ごとに .cache/audit/ に出す）
+audit-result.json

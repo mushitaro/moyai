@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # 台帳に写していない監査の回を数えるため（費用の配分の確かめ）
 
 concurrency:
   group: audit-${{ github.sha }}
@@ -39,6 +40,7 @@ jobs:
       - name: 監査
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
           BASE: ${{ github.event.before || inputs.base }}
           HEAD: ${{ github.event.after || inputs.head }}
         run: |
@@ -52,5 +54,5 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: audit-result
-          path: audit-result.json
+          path: .cache/audit/*.json
           if-no-files-found: ignore
