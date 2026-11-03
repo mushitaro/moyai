@@ -17,7 +17,7 @@ export interface ReadOutcome {
 
 /** 読み手のある拡張子（ここだけに置き、案内の文もここから作る） */
 export const READABLE = { xlsx: "excel", xlsm: "excel", csv: "csv", tsv: "csv", txt: "csv" } as const;
-const listed = Object.keys(READABLE).filter((e) => e !== "txt").map((e) => `.${e}`).join("・");
+const listed = Object.keys(READABLE).map((e) => `.${e}`).join("・");
 const RESAVE = `この形式は読めません。保存し直してください（今読める形式：${listed}）`;
 
 export function extensionOf(name: string): string {

@@ -11,6 +11,8 @@ export interface CsvReadOptions {
   /** 人が決めた文字コード（決まらなかったときの答え） */
   encoding?: CsvEncoding;
   delimiter?: CsvDelimiter;
+  /** 人が「区切りの無い 1 列の表」と決めた（区切りの候補がどの行にも無いとき） */
+  singleColumn?: boolean;
 }
 
 export interface CsvAmbiguity {
@@ -232,8 +234,15 @@ export function readCsv(file: string, bytes: Uint8Array, opts: CsvReadOptions = 
     ledger.push({ kind: "decided", what: "encoding", count: 1, detail: `文字コード ${ENCODING_LABEL[det.encoding]}（壊れずに読めるのがこれだけ）`, sheet: null });
   }
   if (text === null) return { source: null, ambiguity };
-  let delimiter: CsvDelimiter | null = opts.delimiter ?? null;
-  if (delimiter) ledger.push({ kind: "decided", what: "delimiter", count: 1, detail: `区切り「${delimiter === "\t" ? "タブ" : delimiter}」（人が決めた）`, sheet: null });
+  let delimiter: CsvDelimiter | null = opts.singleColumn ? "," : (opts.delimiter ?? null);
+  if (opts.singleColumn) {
+    // 区切りの候補（,・タブ・;・|）がどの行にも無いことを確かめてから、1 列として読む
+    if (detectDelimiter(text, ext).candidates.length) {
+      ambiguity.push({ what: "delimiter", candidates: [], detail: "1 列と決めたが、区切りの候補がある" });
+      return { source: null, ambiguity };
+    }
+    ledger.push({ kind: "decided", what: "delimiter", count: 1, detail: "区切りの無い 1 列の表として読んだ（人が決めた）", sheet: null });
+  } else if (delimiter) ledger.push({ kind: "decided", what: "delimiter", count: 1, detail: `区切り「${delimiter === "\t" ? "タブ" : delimiter}」（人が決めた）`, sheet: null });
   else {
     const d = detectDelimiter(text, ext);
     if (!d.delimiter) {
@@ -243,6 +252,7 @@ export function readCsv(file: string, bytes: Uint8Array, opts: CsvReadOptions = 
     delimiter = d.delimiter;
     ledger.push({ kind: "decided", what: "delimiter", count: 1, detail: `区切り「${delimiter === "\t" ? "タブ" : delimiter}」（${d.detail}）`, sheet: null });
   }
+  if (!delimiter) return { source: null, ambiguity };
   ledger.push({ kind: "decided", what: "newline", count: 1, detail: `改行 ${newlineOf(text)}`, sheet: null });
   ledger.push({ kind: "decided", what: "quote", count: 1, detail: "囲みは「\"」（中の「\"\"」は 1 つの「\"」）", sheet: null });
   let records: string[][];

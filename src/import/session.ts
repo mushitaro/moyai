@@ -114,10 +114,11 @@ export class IntakeSession {
       // CSV：文字コードと区切りが決まらなければ質問にする。読めないまま終わったら、黙って落とさず理由つきで外すか止める
       let encoding: CsvEncoding | undefined;
       let delimiter: CsvDelimiter | undefined;
+      let singleColumn = false;
       let done = false;
       let why = "";
       for (let pass = 0; pass < 3 && !done; pass++) {
-        const r = readCsv(f.name, f.bytes, { ...(encoding ? { encoding } : {}), ...(delimiter ? { delimiter } : {}) });
+        const r = readCsv(f.name, f.bytes, { ...(encoding ? { encoding } : {}), ...(delimiter ? { delimiter } : {}), singleColumn });
         if (r.source) {
           sources.push(r.source);
           done = true;
@@ -132,6 +133,7 @@ export class IntakeSession {
         const reject = { id: "reject", label: "この資料を外す（読めないため）" };
         const what = amb.what === "encoding" ? "文字コード" : "区切り";
         const single = amb.what === "delimiter" && amb.candidates.length === 0 ? [{ id: "single", label: "区切りの無い 1 列の表として読む" }] : [];
+        // 質問の鍵はファイルと問いの種類だけ（何回目の読み直しで出たかに依らない。前の答えが効くように）
         const a = ask.ask(`${amb.what}|${f.name}`, {
           kind: amb.what,
           text: `${f.name} の${what}が決まらない（${amb.detail}）`,
@@ -154,7 +156,8 @@ export class IntakeSession {
           break;
         }
         if (amb.what === "encoding") encoding = a as CsvEncoding;
-        else delimiter = (a === "tab" ? "\t" : a === "single" ? "," : a) as CsvDelimiter;
+        else if (a === "single") singleColumn = true;
+        else delimiter = (a === "tab" ? "\t" : a) as CsvDelimiter;
       }
       if (!done) unreadable.push(`${f.name}（${why || "読めない"}）`);
     }

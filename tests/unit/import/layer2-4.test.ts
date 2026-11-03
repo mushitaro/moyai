@@ -154,6 +154,26 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
     expect(c.plan?.assets.map((a) => a.name)).toEqual(["機器A", "機器B", "機器C", "機器D", "機器E", "機器F"]);
   });
 
+  test("上に置いた小計の値が合わなければ、下の区切りと比べた数で質問にする", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["名称", "台数"]]);
+      rows(ws, 2, [
+        ["小計", 5],
+        ["機器D", 2],
+        ["機器E", 3],
+        ["小計", 9],
+        ["機器F", 4],
+      ]);
+    });
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    acceptDefaults(s);
+    const c = s.compose();
+    expect(c.plan).toBeNull();
+    // 上に置いた表と見分けたので、1 つ目は合い、2 つ目は下の区切り（機器F の 4）と比べて合わない
+    expect(c.checks.map((x) => x.mismatches.map((m) => [m.written, m.counted]))).toEqual([[], [[9, 4]]]);
+  });
+
   test("段の列の 〃 は上と同じ節にし、〃 のセルも出どころに数える", async () => {
     const bytes = await xlsxOf((ws) => {
       rows(ws, 1, [["設備", "機器", "2024年度"]]);
@@ -209,9 +229,10 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
     const s = session();
     await s.add([{ name: "台帳.xlsx", bytes }]);
     const an = s.analyze();
-    // 乙設備のすぐ下の 〃 は、同じ親の下に上の行が無いので未解決のまま聞く
+    // 乙設備のすぐ下の 〃 は、同じ親の下に上の行が無いので未解決のまま聞く（資産を作らない）
     const q = an.open.find((x) => x.text.includes("〃"));
-    expect(q).toBeDefined();
+    expect(q?.options.map((o) => o.id)).toEqual(["above", "literal", "exclude"]);
+    expect(an.composition.status.get(["台帳.xlsx", "0", "B6"].join(String.fromCharCode(0)))?.s).toBe("unresolved");
     expect(s.compose().plan).toBeNull();
     s.settle([human(q?.questionId ?? "", "exclude")]);
     acceptDefaults(s);
@@ -219,7 +240,7 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
     const motors = plan?.assets.filter((a) => a.name === "電動機") ?? [];
     expect(motors.map((m) => m.specs[0]?.value)).toEqual(["10 kW", "15 kW"]);
     expect(plan?.assets.filter((a) => a.name === "乙設備").length).toBe(1);
-    expect(plan?.assets.some((a) => a.name === "乙設備" && a.level === 2)).toBe(false);
+    expect(plan?.assets.some((a) => a.name === "〃")).toBe(false);
   });
 });
 

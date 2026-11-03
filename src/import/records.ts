@@ -300,13 +300,20 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const tagUndecided = ts?.state === "undecided";
     // 〃：上の行と同じ名前（名前だけ同じの別の行）
     const dittoName = cue.isDitto(nc.text);
+    // 段の決まらない行は、段の質問の答えを待つ（〃 の読み方はそのあと）
     const parentId = r.parentRow ? idOf(r.parentRow) : null;
-    const prevName = r.level === null ? null : (rec.assets.filter((x) => x.tableId === t.id && x.level === r.level && x.parentId === parentId).at(-1)?.rawName ?? null);
-    if (dittoName && prevName === null) {
-      const a = ask.ask(`dittoNoAbove|${t.id}`, {
+    let prevName = r.level === null ? null : (rec.assets.filter((x) => x.tableId === t.id && x.level === r.level && x.parentId === parentId).at(-1)?.rawName ?? null);
+    let literalDitto = false;
+    if (dittoName && r.level !== null && prevName === null) {
+      const above = rec.assets.filter((x) => x.tableId === t.id).at(-1) ?? null;
+      const a = ask.ask(`dittoNoAbove|${t.id}|r${r.r}`, {
         kind: "stray",
-        text: "名前の欄の「〃」の上に、同じ親の下の同じ段の行が無い",
-        options: [{ id: "exclude", label: "外す" }],
+        text: `名前の欄の「〃」の上に、同じ親の下の同じ段の行が無い（すぐ上の行は「${above?.rawName ?? "なし"}」）。どう読むか`,
+        options: [
+          ...(above ? [{ id: "above", label: "すぐ上の行と同じ名前として読む" }] : []),
+          { id: "literal", label: "「〃」の文字のまま名前にする" },
+          { id: "exclude", label: "外す" },
+        ],
         valueKind: "option",
         defaultAnswer: null,
         sameShapeRows: 1,
@@ -316,8 +323,15 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         for (const c of cells) if (!off(c.ref)) exclude(c.ref, "上の行の無い 〃（決定で外した）");
         continue;
       }
+      if (a === "above" && above) prevName = above.rawName;
+      else if (a === "literal") literalDitto = true;
+      else {
+        // 答えを待つ：資産を作らず、この行を未解決にする
+        for (const c of cells) if (!off(c.ref)) pend(c.ref);
+        continue;
+      }
     }
-    const raw = dittoName ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
+    const raw = dittoName && !literalDitto ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
     const name = tagged ? tagged.name : raw;
     const a: AssetRec = {
       id: idOf(r.r),
@@ -339,7 +353,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       installed: null,
       refs: [nc.ref],
       excluded: null,
-      pending: r.level === null || tagUndecided || (dittoName && prevName === null),
+      pending: r.level === null || tagUndecided,
     };
     for (const c of cells) {
       if (c.c === nameCol.c || off(c.ref)) continue;

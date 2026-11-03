@@ -200,7 +200,8 @@ describe("CSV・TSV の読み手", () => {
     const q = s.analyze().open.find((x) => x.kind === "delimiter");
     expect(q?.defaultAnswer).toBe("single");
     s.settle([human(q?.questionId ?? "", "single")]);
-    const g = s.analyze().sources[0]?.sheets[0];
-    expect(g?.cells.map((c) => c.text)).toEqual(["名称", "機器甲", "機器乙"]);
+    const src = s.analyze().sources[0];
+    expect(src?.sheets[0]?.cells.map((c) => c.text)).toEqual(["名称", "機器甲", "機器乙"]);
+    expect(src?.ledger.some((e) => e.detail.includes("1 列の表として読んだ（人が決めた）"))).toBe(true);
   });
 });
