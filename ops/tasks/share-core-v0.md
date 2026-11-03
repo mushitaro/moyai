@@ -2,7 +2,7 @@
 id: share-core-v0
 role: dev-core
 agent: dev-core
-environment: env-factory
+environment: env-kinds
 budgetUsd: 25
 timeoutMin: 120
 verify: ["npm ci --ignore-scripts", "npm run typecheck", "node scripts/run-tests.mjs", "node scripts/check-publish.mjs"]
