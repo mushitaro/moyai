@@ -249,9 +249,9 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): Node[
   const byKey = new Map<string, Node>();
   // 同じ親の下に同じ名前の機器が 2 つ以上あるときだけ、名前に系列を添えて見分ける
   const sameName = new Map<string, number>();
-  for (const a of plan.assets) sameName.set(`${a.parentKey ?? ""} ${a.name}`, (sameName.get(`${a.parentKey ?? ""} ${a.name}`) ?? 0) + 1);
+  for (const a of plan.assets) sameName.set(`${a.parentKey ?? ""}\u0000${a.name}`, (sameName.get(`${a.parentKey ?? ""}\u0000${a.name}`) ?? 0) + 1);
   for (const a of plan.assets) {
-    const dup = (sameName.get(`${a.parentKey ?? ""} ${a.name}`) ?? 0) > 1;
+    const dup = (sameName.get(`${a.parentKey ?? ""}\u0000${a.name}`) ?? 0) > 1;
     const name = dup && a.series !== null ? `${a.name}（${labels.series(a.series)}）` : a.name;
     byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name, kind: "node", children: [], direct: [] });
   }
