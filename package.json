@@ -12,5 +12,9 @@
   "scripts": {
     "test": "node scripts/run-tests.mjs",
     "check-publish": "node scripts/check-publish.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.135.0",
+    "zod": "4.6.7"
   }
 }

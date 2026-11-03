@@ -1,0 +1,56 @@
+name: audit
+
+# 監査のエージェント：main への push の差分を、AGENTS.md と docs/plan.md に照らして読む。
+# 書き込みはしない。指摘は Actions の要約と audit-result.json（artifact）に出す。決めるのは人。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 比べるもとのコミット
+        required: true
+      head:
+        description: 比べる先のコミット
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.19.0
+      - name: 依存を入れる（npm 11、スクリプトは走らせない）
+        run: npx -y npm@11.21.1 ci --ignore-scripts
+      - name: 監査
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BASE: ${{ github.event.before || inputs.base }}
+          HEAD: ${{ github.event.after || inputs.head }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ANTHROPIC_API_KEY が無いので監査していません（未確認）" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node scripts/audit/audit.mjs
+      - name: 結果を残す
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: audit-result
+          path: audit-result.json
+          if-no-files-found: ignore
