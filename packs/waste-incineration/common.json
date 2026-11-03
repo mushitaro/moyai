@@ -12,9 +12,9 @@
       "code": "WI.RECV",
       "name": "受入れ供給設備",
       "items": [
-        { "code": "WI.RECV.SCALE", "name": "計量機", "kind": null, "kindReason": "車の重さを量る秤。16 種に秤は無い（計装は工程を測り制御する機器）" },
+        { "code": "WI.RECV.SCALE", "name": "計量機", "kind": null, "kindReason": "車の重さを量る秤。20 種に秤は無い（計装は工程を測り制御する機器）" },
         { "code": "WI.RECV.CRANE", "name": "ごみクレーン", "kind": "KD.CRANE" },
-        { "code": "WI.RECV.SHREDDER", "name": "可燃性粗大ごみ切断機", "kind": null, "kindReason": "切断機。16 種に切る・砕く機械は無い" }
+        { "code": "WI.RECV.SHREDDER", "name": "可燃性粗大ごみ切断機", "kind": "KD.CRUSHER" }
       ]
     },
     {
@@ -25,43 +25,43 @@
           "code": "STOKER",
           "name": "ストーカ式",
           "items": [
-            { "code": "WI.COMB.STK_GRATE", "name": "燃焼装置", "kind": null, "kindReason": "炉の中でごみを送りながら燃やす装置。16 種に当たる機器が無い" },
-            { "code": "WI.COMB.STK_FURNACE", "name": "焼却炉", "kind": null, "kindReason": "炉。16 種に炉は無い" },
-            { "code": "WI.COMB.STK_ASHMELT", "name": "灰溶融炉", "kind": null, "kindReason": "炉。16 種に炉は無い" }
+            { "code": "WI.COMB.STK_GRATE", "name": "燃焼装置", "kind": "KD.FURNACE" },
+            { "code": "WI.COMB.STK_FURNACE", "name": "焼却炉", "kind": "KD.FURNACE" },
+            { "code": "WI.COMB.STK_ASHMELT", "name": "灰溶融炉", "kind": "KD.FURNACE" }
           ]
         },
         {
           "code": "FLUID_INCIN",
           "name": "流動床式焼却炉",
           "items": [
-            { "code": "WI.COMB.FBI_PRETREAT", "name": "前処理装置", "kind": null, "kindReason": "炉に入れる前にごみを整える機器の組。主な機器が 16 種に無い" },
-            { "code": "WI.COMB.FBI_FURNACE", "name": "焼却炉", "kind": null, "kindReason": "炉。16 種に炉は無い" }
+            { "code": "WI.COMB.FBI_PRETREAT", "name": "前処理装置", "kind": null, "kindReason": "炉に入れる前にごみを整える機器の組。表Ⅱ-4 は中の機器を書かず、主な機器を 1 つに決められない" },
+            { "code": "WI.COMB.FBI_FURNACE", "name": "焼却炉", "kind": "KD.FURNACE" }
           ]
         },
         {
           "code": "SHAFT",
           "name": "シャフト式ガス化炉",
           "items": [
-            { "code": "WI.COMB.SHF_MELTER", "name": "ガス化溶融炉", "kind": null, "kindReason": "炉。16 種に炉は無い" },
-            { "code": "WI.COMB.SHF_CHAMBER", "name": "燃焼室", "kind": null, "kindReason": "炉の一部の室。16 種に炉は無い" }
+            { "code": "WI.COMB.SHF_MELTER", "name": "ガス化溶融炉", "kind": "KD.FURNACE" },
+            { "code": "WI.COMB.SHF_CHAMBER", "name": "燃焼室", "kind": "KD.FURNACE" }
           ]
         },
         {
           "code": "KILN",
           "name": "キルン式ガス化炉",
           "items": [
-            { "code": "WI.COMB.KLN_PRETREAT", "name": "前処理装置", "kind": null, "kindReason": "炉に入れる前にごみを整える機器の組。主な機器が 16 種に無い" },
-            { "code": "WI.COMB.KLN_GASIFIER", "name": "ガス化炉", "kind": null, "kindReason": "炉。16 種に炉は無い" },
-            { "code": "WI.COMB.KLN_MELTER", "name": "溶融炉", "kind": null, "kindReason": "炉。16 種に炉は無い" }
+            { "code": "WI.COMB.KLN_PRETREAT", "name": "前処理装置", "kind": null, "kindReason": "炉に入れる前にごみを整える機器の組。表Ⅱ-4 は中の機器を書かず、主な機器を 1 つに決められない" },
+            { "code": "WI.COMB.KLN_GASIFIER", "name": "ガス化炉", "kind": "KD.FURNACE" },
+            { "code": "WI.COMB.KLN_MELTER", "name": "溶融炉", "kind": "KD.FURNACE" }
           ]
         },
         {
           "code": "FLUID_GASIF",
           "name": "流動床式ガス化炉",
           "items": [
-            { "code": "WI.COMB.FBG_PRETREAT", "name": "前処理装置", "kind": null, "kindReason": "炉に入れる前にごみを整える機器の組。主な機器が 16 種に無い" },
-            { "code": "WI.COMB.FBG_GASIFIER", "name": "ガス化炉", "kind": null, "kindReason": "炉。16 種に炉は無い" },
-            { "code": "WI.COMB.FBG_MELTER", "name": "溶融炉", "kind": null, "kindReason": "炉。16 種に炉は無い" }
+            { "code": "WI.COMB.FBG_PRETREAT", "name": "前処理装置", "kind": null, "kindReason": "炉に入れる前にごみを整える機器の組。表Ⅱ-4 は中の機器を書かず、主な機器を 1 つに決められない" },
+            { "code": "WI.COMB.FBG_GASIFIER", "name": "ガス化炉", "kind": "KD.FURNACE" },
+            { "code": "WI.COMB.FBG_MELTER", "name": "溶融炉", "kind": "KD.FURNACE" }
           ]
         }
       ]
@@ -72,23 +72,23 @@
       "items": [
         { "code": "WI.COOL.BOILER", "name": "ボイラ", "kind": "KD.BOILER" },
         { "code": "WI.COOL.CONDENSER", "name": "蒸気復水器", "kind": "KD.HEAT_EXCHANGER" },
-        { "code": "WI.COOL.WATER_SPRAY", "name": "水噴射式燃焼ガス冷却設備", "kind": null, "kindReason": "水を噴いてガスを冷やす塔と噴霧の組。主な機器が 16 種に無い" }
+        { "code": "WI.COOL.WATER_SPRAY", "name": "水噴射式燃焼ガス冷却設備", "kind": null, "kindReason": "水を噴いてガスを冷やす塔と噴霧の組。主な機器が 20 種に無い" }
       ]
     },
     {
       "code": "WI.FLUE",
       "name": "排ガス処理設備",
       "items": [
-        { "code": "WI.FLUE.DUST", "name": "集じん装置", "kind": null, "kindReason": "排ガスからばいじんを除く装置。16 種に当たる機器が無い" },
-        { "code": "WI.FLUE.HCL_SOX", "name": "HCL、SOx 除去設備", "kind": null, "kindReason": "酸性のガスを除く機器の組。主な機器が 16 種に無い" },
-        { "code": "WI.FLUE.NOX", "name": "NOx 除去設備", "kind": null, "kindReason": "窒素酸化物を除く機器の組。主な機器が 16 種に無い" },
-        { "code": "WI.FLUE.DIOXIN", "name": "ダイオキシン類除去設備", "kind": null, "kindReason": "ダイオキシン類を除く機器の組。主な機器が 16 種に無い" }
+        { "code": "WI.FLUE.DUST", "name": "集じん装置", "kind": "KD.DUST_COLLECTOR" },
+        { "code": "WI.FLUE.HCL_SOX", "name": "HCL、SOx 除去設備", "kind": null, "kindReason": "酸性のガスを除く機器の組。主な機器が 20 種に無い" },
+        { "code": "WI.FLUE.NOX", "name": "NOx 除去設備", "kind": null, "kindReason": "窒素酸化物を除く機器の組。主な機器が 20 種に無い" },
+        { "code": "WI.FLUE.DIOXIN", "name": "ダイオキシン類除去設備", "kind": null, "kindReason": "ダイオキシン類を除く機器の組。主な機器が 20 種に無い" }
       ]
     },
     {
       "code": "WI.HEAT",
       "name": "余熱利用設備",
-      "items": [{ "code": "WI.HEAT.TURBINE", "name": "蒸気タービン発電設備", "kind": null, "kindReason": "蒸気タービンと発電機の組。16 種にタービンと発電機は無い" }]
+      "items": [{ "code": "WI.HEAT.TURBINE", "name": "蒸気タービン発電設備", "kind": "KD.GENERATOR" }]
     },
     {
       "code": "WI.DRAFT",
@@ -107,17 +107,17 @@
           "name": "溶融設備無し",
           "items": [
             { "code": "WI.ASHOUT.ASH_CRANE", "name": "灰クレーン", "kind": "KD.CRANE" },
-            { "code": "WI.ASHOUT.FLYASH_TREAT", "name": "飛灰処理設備", "kind": null, "kindReason": "飛灰を処理する機器の組。主な機器が 16 種に無い" }
+            { "code": "WI.ASHOUT.FLYASH_TREAT", "name": "飛灰処理設備", "kind": null, "kindReason": "飛灰を処理する機器の組。主な機器が 20 種に無い" }
           ]
         },
         {
           "code": "WITH_MELT",
           "name": "溶融設備有り",
           "items": [
-            { "code": "WI.ASHOUT.MELT", "name": "溶融設備", "kind": null, "kindReason": "灰を溶かす炉と付帯の機器の組。16 種に炉は無い" },
-            { "code": "WI.ASHOUT.MELT_FLUE", "name": "溶融排ガス処理設備", "kind": null, "kindReason": "溶融の排ガスを処理する機器の組。主な機器が 16 種に無い" },
-            { "code": "WI.ASHOUT.POST", "name": "後処理設備", "kind": null, "kindReason": "溶融の後の処理の機器の組。主な機器が 16 種に無い" },
-            { "code": "WI.ASHOUT.MELT_FLYASH", "name": "溶融飛灰処理設備", "kind": null, "kindReason": "溶融飛灰を処理する機器の組。主な機器が 16 種に無い" }
+            { "code": "WI.ASHOUT.MELT", "name": "溶融設備", "kind": "KD.FURNACE" },
+            { "code": "WI.ASHOUT.MELT_FLUE", "name": "溶融排ガス処理設備", "kind": null, "kindReason": "溶融の排ガスを処理する機器の組。表Ⅱ-4 は中の機器を書かず、主な機器を 1 つに決められない" },
+            { "code": "WI.ASHOUT.POST", "name": "後処理設備", "kind": null, "kindReason": "溶融の後の処理の機器の組。表Ⅱ-4 は中の機器を書かず、主な機器を 1 つに決められない" },
+            { "code": "WI.ASHOUT.MELT_FLYASH", "name": "溶融飛灰処理設備", "kind": null, "kindReason": "溶融飛灰を処理する機器の組。主な機器が 20 種に無い" }
           ]
         }
       ]
@@ -127,7 +127,7 @@
       "name": "電気設備",
       "items": [
         { "code": "WI.ELEC.SUBSTATION", "name": "受変電配電設備", "kind": "KD.SUBSTATION" },
-        { "code": "WI.ELEC.GENERATOR", "name": "発電機", "kind": null, "kindReason": "発電機。16 種に発電機は無い" }
+        { "code": "WI.ELEC.GENERATOR", "name": "発電機", "kind": "KD.GENERATOR" }
       ]
     },
     {

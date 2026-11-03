@@ -43,13 +43,16 @@ test("kinds.json の形と note", () => {
   assert.ok(Array.isArray(kindsDoc.kinds));
 });
 
-test("種類は 16 で、名前が docs/plan.md §2.1 の 16 種と同じ順で一致する", () => {
-  const expected = planKindNames();
-  assert.equal(expected.length, 16, "§2.1 から読んだ種類が 16 でない");
-  assert.equal(kindsDoc.kinds.length, 16);
+// v1 で足した 4 種（運営者の決定 2026-11-03）。§2.1 の 16 種のあとに、この順で並ぶ
+const V1_ADDED_NAMES = ["炉", "集じん装置", "発電機", "破砕・切断機"];
+
+test("種類は 20 で、名前が docs/plan.md §2.1 の 16 種のあとに、炉・集じん装置・発電機・破砕・切断機の順で一致する", () => {
+  const planNames = planKindNames();
+  assert.equal(planNames.length, 16, "§2.1 から読んだ種類が 16 でない");
+  assert.equal(kindsDoc.kinds.length, 20);
   assert.deepEqual(
     kindsDoc.kinds.map((k) => k.name),
-    expected,
+    [...planNames, ...V1_ADDED_NAMES],
   );
 });
 
