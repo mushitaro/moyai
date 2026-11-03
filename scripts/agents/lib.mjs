@@ -75,10 +75,11 @@ export function sessionBudget(usd) {
 /**
  * 呼ぶ前の確かめ。役が config に無い、または配分に届くなら止める。
  * 見込みには、そのセッションの上限の額をそのまま使う（上限を越えて使うことは、最後の 1 回の呼び出しの分しか無い）。
+ * 台帳に読めない行か費用を計れなかった回が 1 件でもあれば止める（flaws は loadLedger の broken と unknown）。
  */
-export function gate(config, ledgerRows, spec) {
+export function gate(config, ledgerRows, spec, flaws = { broken: 0, unknown: 0 }) {
   if (!config.roles?.[spec.role]) return { stop: true, reason: `役「${spec.role}」が config/models.json に無い` };
-  return budgetCheck(config.budgetUsd, ledgerRows, spec.role, spec.budgetUsd);
+  return budgetCheck(config.budgetUsd, ledgerRows, spec.role, spec.budgetUsd, flaws);
 }
 
 /** 安定した順の JSON（鍵を並べる）。 */
@@ -152,11 +153,14 @@ export function recomputeUsd(usage, price) {
   return { tokens: tokens + oneHour, runtime, total: tokens + oneHour + runtime };
 }
 
-/** 台帳の 1 行。usd は API が数えた額（list_cost）。無いときだけ数え直しの額を使い、どちらかを how に書く。 */
+/**
+ * 台帳の 1 行。usd は API が数えた額（list_cost）。無いときだけ数え直しの額を使い、どちらかを how に書く。
+ * どちらも無ければ usd を null にする（$0 と書かない。null の行があると、次からは人が直すまで呼ばない）。
+ */
 export function ledgerRow({ at, role, task, sessionId, base, usage, wallSeconds, stopReason, recomputed, note }) {
   const api = listCostUsd(usage?.list_cost);
-  const usd = api ?? recomputed?.total ?? null;
-  if (usd === null) throw new Error("費用が数えられない（list_cost も値段の表も無い）。台帳に $0 と書かない");
+  const raw = api ?? recomputed?.total ?? null;
+  const usd = typeof raw === "number" && Number.isFinite(raw) ? raw : null;
   const row = {
     at,
     role,
@@ -164,9 +168,14 @@ export function ledgerRow({ at, role, task, sessionId, base, usage, wallSeconds,
     task,
     session: sessionId,
     base,
-    usd: Math.round(usd * 10000) / 10000,
-    how: api !== null ? "session.usage.list_cost（API が公開の値段で数えた額。セントに丸めてある）" : "トークン×config の値段＋走った時間（list_cost が無かった）",
-    recomputedUsd: recomputed ? Math.round(recomputed.total * 10000) / 10000 : null,
+    usd: usd === null ? null : Math.round(usd * 10000) / 10000,
+    how:
+      api !== null
+        ? "session.usage.list_cost（API が公開の値段で数えた額。セントに丸めてある）"
+        : usd !== null
+          ? "トークン×config の値段＋走った時間（list_cost が無かった）"
+          : "計れなかった（list_cost も値段の表も無い）",
+    recomputedUsd: recomputed && Number.isFinite(recomputed.total) ? Math.round(recomputed.total * 10000) / 10000 : null,
     usage: {
       input_tokens: usage?.input_tokens ?? 0,
       cache_read_input_tokens: usage?.cache_read_input_tokens ?? 0,

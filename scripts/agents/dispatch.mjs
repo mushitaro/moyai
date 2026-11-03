@@ -243,16 +243,15 @@ async function finish(c, spec, sessionId, { base, wallSeconds, stopReason, note 
   else appendLedger(row, join(ROOT, LEDGER));
   const summary = { session: sessionId, status: s.status, base, stopReason, wallSeconds, usage: s.usage, ledger: row, saved, skipped };
   writeFileSync(join(outDir, "run.json"), JSON.stringify(summary, null, 2) + "\n");
-  log(`費用 $${row.usd}（数え直し $${row.recomputedUsd}）。落としたファイル ${saved.length}${skipped ? `、落とさなかった ${skipped}` : ""}。${outDir}`);
+  log(`費用 ${row.usd === null ? "計れなかった" : `$${row.usd}`}（数え直し $${row.recomputedUsd}）。落としたファイル ${saved.length}${skipped ? `、落とさなかった ${skipped}` : ""}。${outDir}`);
   return summary;
 }
 
 async function run(specPath, args) {
   const spec = loadSpec(specPath);
   const cfg = config();
-  const { rows, broken } = loadLedger(join(ROOT, LEDGER));
-  if (broken) throw new Error(`台帳に読めない行が ${broken} ある。直すまで呼ばない`);
-  const g = gate(cfg, rows, spec.meta);
+  const { rows, broken, unknown } = loadLedger(join(ROOT, LEDGER));
+  const g = gate(cfg, rows, spec.meta, { broken, unknown });
   if (g.stop) throw new Error(g.reason);
   log(`配分の確かめ：通る（「${g.pool}」で使った額 $${g.poolSpent.toFixed(2)}、全体 $${g.all.toFixed(2)}、この回の上限 $${spec.meta.budgetUsd}）`);
   const c = await client();

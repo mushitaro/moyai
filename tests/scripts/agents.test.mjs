@@ -74,7 +74,7 @@ test("上限の額はセントの整数の文字列", () => {
   assert.deepEqual(sessionBudget(20), { type: "limit", max_list_cost: { amount: "2000", currency: "USD" } });
 });
 
-test("呼ぶ前の確かめ：役が無ければ止め、dev の配分に届くなら止める", () => {
+test("呼ぶ前の確かめ：役が無い、dev の配分に届く、台帳に読めない行か計れなかった回がある、なら止める", () => {
   const meta = { role: "factory", budgetUsd: 12 };
   assert.equal(gate(config, [], meta).stop, false);
   assert.equal(gate(config, [], { ...meta, role: "nobody" }).stop, true);
@@ -84,6 +84,8 @@ test("呼ぶ前の確かめ：役が無ければ止め、dev の配分に届く�
   assert.match(r.reason, /dev/);
   const total = [{ role: "audit", usd: config.budgetUsd.stopAt - 1 }];
   assert.equal(gate(config, total, meta).stop, true);
+  assert.equal(gate(config, [], meta, { broken: 1, unknown: 0 }).stop, true);
+  assert.equal(gate(config, [], meta, { broken: 0, unknown: 1 }).stop, true);
 });
 
 test("エージェントの本体のモデルと effort は config の役からだけ取る", () => {
@@ -142,7 +144,7 @@ test("数え直し：トークン×値段＋1 時間のキャッシュ＋走っ�
   assert.equal(recomputeUsd({}, undefined), null);
 });
 
-test("台帳の行：API の額を取り、無ければ数え直しの額、どちらも無ければ止める", () => {
+test("台帳の行：API の額を取り、無ければ数え直しの額、どちらも無ければ null（$0 や NaN にしない）", () => {
   const base = { at: "2026-11-03T00:00:00Z", role: "factory", task: "t-1", sessionId: "sesn_x", base: SHA, wallSeconds: 10, stopReason: "end_turn" };
   const a = ledgerRow({ ...base, usage: { list_cost: { amount: "345", currency: "USD" }, input_tokens: 5 }, recomputed: { total: 3.3 } });
   assert.equal(a.usd, 3.45);
@@ -152,7 +154,10 @@ test("台帳の行：API の額を取り、無ければ数え直しの額、ど�
   const b = ledgerRow({ ...base, usage: {}, recomputed: { total: 1.23456 } });
   assert.equal(b.usd, 1.2346);
   assert.match(b.how, /トークン/);
-  assert.throws(() => ledgerRow({ ...base, usage: {}, recomputed: null }), /\$0/);
+  const c = ledgerRow({ ...base, usage: {}, recomputed: null });
+  assert.equal(c.usd, null);
+  assert.match(c.how, /計れなかった/);
+  assert.equal(ledgerRow({ ...base, usage: {}, recomputed: { total: NaN } }).usd, null);
   assert.throws(() => ledgerRow({ ...base, usage: {}, recomputed: { total: 1 }, note: "claude-opus で" }), /モデル/);
 });
 
