@@ -23,6 +23,9 @@ MOYAI のコードは、このリポジトリで会期中に新しく書いた�
 | @types/ws（開発用） | 8.18.2 | MIT | 型の定義（同上） |
 | @types/react（開発用） | 19.2.18 | MIT | 型の定義（同上） |
 | @types/react-dom（開発用） | 19.2.7 | MIT | 型の定義（同上） |
+| exceljs | 4.4.0 | MIT | 取り込みの Excel の読み手（`src/import/xlsx.ts`。全部を読む読み手だけを使い、版を固定して中の 3 か所に直しを当てる：`src/import/exceljs-setup.ts`）。書き出しにも使う予定 |
+| ssf | 0.11.2 | Apache-2.0 | 表示形式から表示の文字を作る（`src/import/numfmt.ts`。和暦・曜日・[DBNum] などは自分で足した） |
+| csv-parse | 7.0.3 | MIT | 取り込みの CSV・TSV の読み手（`src/import/csv.ts`。文字コードと区切りの判定は自分で書いた） |
 
 これから足す依存（docs/plan.md §2.16）は、入れたときにこの表に足します。依存の依存は package-lock.json にあります。
 
