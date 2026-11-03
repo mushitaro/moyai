@@ -9,6 +9,10 @@ import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
+import { getPeerView } from "../state/peers";
+import { STAT_FIELDS } from "../../share/bands";
+import { RECEIVE_MIN_K } from "../../share/k";
+import type { StatCell } from "../../share/aggregate";
 import { checkResultsOf, getReferenceDate } from "../state/review";
 import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
@@ -51,7 +55,36 @@ function chartRows(view: "base" | "adjusted", offset: number, limit: number, row
   };
 }
 
+/** 統計の行を、ツールの答えの形（low・high）にする */
+function statOut(c: StatCell): Record<string, unknown> {
+  if (c.shown === "x") return { shown: "x" };
+  if (c.shown === "range") return { shown: "range", n: c.n, low: c.lo, high: c.hi };
+  return { shown: "median", n: c.n, median: c.median, q1: c.q1, q3: c.q3 };
+}
+
+/** 人が星取表で開いた比べから、下限を守った集計と匿名の札だけを返す（鍵・見え方の値・年度・施設ごとの帯は返さない） */
+function peerReference(commonItem: string | undefined): TabToolResult {
+  const v = getPeerView();
+  if (!v) return { ok: false, code: "no_peer_view" };
+  const c = v.comparison;
+  const aggregates: Record<string, unknown>[] = [];
+  const cards: Record<string, unknown>[] = [];
+  for (const p of c.places) {
+    if (p.status !== "shown") continue;
+    for (const r of p.agg.rows) {
+      if (commonItem !== undefined && r.class !== commonItem) continue;
+      const a: Record<string, unknown> = { place: p.kind, commonItem: r.class, work: r.work };
+      for (const f of STAT_FIELDS) a[f] = statOut(r.stats[f]);
+      aggregates.push(a);
+      for (const peer of r.peers) cards.push({ place: p.kind, card: peer.label, commonItem: r.class, work: r.work });
+    }
+  }
+  const places = c.places.map((p) => ({ place: p.kind, status: p.status, similar: p.status === "shown" ? p.agg.similar.length : p.status === "belowShow" ? p.similar : null }));
+  return { ok: true, data: { position: c.position, floorK: RECEIVE_MIN_K, places, aggregates, cards } };
+}
+
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
+  peer_reference: (_ws, args) => peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined),
   intake_survey: (ws, args) => {
     const part = args.part as "all" | "questions" | "compose" | "crosswalk";
     // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）

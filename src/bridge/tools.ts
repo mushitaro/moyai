@@ -31,7 +31,7 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   check_results: "tab",
   note_for_human: "not_implemented",
   share_preview: "not_implemented",
-  peer_reference: "not_implemented",
+  peer_reference: "tab",
   skill_eval: "not_implemented",
 };
 

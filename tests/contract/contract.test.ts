@@ -82,9 +82,9 @@ describe("ツールの送り手と受け手", () => {
     expect(Object.keys(BRIDGE_TOOL_RECEIVERS).sort()).toEqual([...TOOL_NAMES].sort());
     const notImplemented = TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "not_implemented");
     console.log(`contract: ツール ${TOOL_NAMES.length} のうち未実装 ${notImplemented.length}（今見せるもの ${EXPOSED_TOOL_NAMES.length}）`);
-    // 作業画面へ渡すもの：取り込みの 3 つ、写真、星取表の行、当てはめの案、検査の結果。処理を足したら、この数を減らす
-    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "tab").sort()).toEqual(["chart_rows", "check_results", "crosswalk_propose", "intake_compose", "intake_settle", "intake_survey", "photo_transcribe"]);
-    expect(notImplemented).toHaveLength(5);
+    // 作業画面へ渡すもの：取り込みの 3 つ、写真、星取表の行、当てはめの案、検査の結果、似た施設の参考。処理を足したら、この数を減らす
+    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "tab").sort()).toEqual(["chart_rows", "check_results", "crosswalk_propose", "intake_compose", "intake_settle", "intake_survey", "peer_reference", "photo_transcribe"]);
+    expect(notImplemented).toHaveLength(4);
   });
 
   it("確定・送る・昇格・保存のツールが無い", () => {

@@ -472,19 +472,23 @@ export const TOOLS = {
     "peer_reference",
     "read",
     "仲間の参考を読む",
-    "仲間の束から、下限を守った集計と匿名の札だけを読む。施設を当てようとしない。",
-    z.object({ commonItem: z.string().optional() }),
+    "人が星取表の画面で開いた、似た施設との比べ（立場・見え方・場は人が選ぶ）から、下限を守った集計と匿名の札だけを読む。場（公開の台帳・輪）をまたいで混ぜない。施設を当てようとしない。",
+    z.object({ commonItem: z.string().max(64).optional() }),
     z.object({
+      position: z.enum(["municipal", "subsidiary", "om"]),
       floorK: z.number().int(),
+      places: z.array(z.object({ place: z.enum(["ledger", "ring"]), status: z.enum(["shown", "belowShow", "outsideGroup", "missing"]), similar: z.number().int().nullable() })),
       aggregates: z.array(
         z.object({
+          place: z.enum(["ledger", "ring"]),
           commonItem: z.string(),
+          work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]),
           interval: statRowOf("interval"),
           manDays: statRowOf("manDays"),
           days: statRowOf("days"),
         }),
       ),
-      cards: z.array(z.object({ card: z.string(), commonItem: z.string() })),
+      cards: z.array(z.object({ place: z.enum(["ledger", "ring"]), card: z.string(), commonItem: z.string(), work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]) })),
     }),
   ),
   skill_eval: def(

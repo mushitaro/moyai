@@ -38,7 +38,7 @@ describe("仲間の統計の行", () => {
     expect(interval.safeParse({ shown: "range", n: 3, low: "W1_9", high: "W1000P" }).success).toBe(false);
     expect(manDays.safeParse({ shown: "range", n: 3, low: "D1_3", high: "D121P" }).success).toBe(false);
     const agg = TOOLS.peer_reference.output.shape.aggregates.element;
-    expect(Object.keys(agg.shape).sort()).toEqual(["commonItem", "days", "interval", "manDays"]);
+    expect(Object.keys(agg.shape).sort()).toEqual(["commonItem", "days", "interval", "manDays", "place", "work"]);
   });
 });
 
