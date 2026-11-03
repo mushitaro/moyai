@@ -30,9 +30,72 @@ def find_soffice() -> str | None:
     return None
 
 
+_OBJ_RE = re.compile(rb"(\d+) 0 obj\n(.*?)endobj\n\n?", re.S)
+_REF_RE = re.compile(rb"(\d+) 0 R")
+
+
+def renumber_objects(data: bytes) -> bytes:
+    """オブジェクト番号を、trailer の /Root・/Info からたどった順に振り直し、xref を書き直す。
+    LibreOffice は字体の埋め込みを集合の順で書くので、同じ入力でも実行ごとに番号と並びが入れ替わる。
+    形が想定と違えば（オブジェクトが無い・数が合わない）そのまま返す。"""
+    xpos = data.rfind(b"\nxref\n")
+    tpos = data.rfind(b"trailer\n")
+    spos = data.rfind(b"startxref\n")
+    if min(xpos, tpos, spos) < 0:
+        return data
+    objs: dict[int, bytes] = {}
+    first = None
+    for m in _OBJ_RE.finditer(data, 0, xpos + 1):
+        if first is None:
+            first = m.start()
+        objs[int(m.group(1))] = m.group(2)
+    trailer = data[tpos + len(b"trailer\n"):spos]
+    size = re.search(rb"/Size (\d+)", trailer)
+    if not objs or size is None or int(size.group(1)) != len(objs) + 1:
+        return data
+
+    def split(body: bytes) -> tuple[bytes, bytes]:
+        i = body.find(b"stream\n")
+        return (body, b"") if i < 0 else (body[:i], body[i:])
+
+    order: list[int] = []
+    seen: set[int] = set()
+    stack = [int(n) for n in reversed(_REF_RE.findall(trailer))]
+    while stack:
+        n = stack.pop()
+        if n in seen or n not in objs:
+            continue
+        seen.add(n)
+        order.append(n)
+        stack.extend(int(r) for r in reversed(_REF_RE.findall(split(objs[n])[0])))
+    if len(order) != len(objs):
+        return data
+    new = {old: i + 1 for i, old in enumerate(order)}
+
+    def sub_refs(b: bytes) -> bytes:
+        return _REF_RE.sub(lambda m: b"%d 0 R" % new[int(m.group(1))], b)
+
+    out = bytearray(data[:first])
+    offsets = []
+    for old in order:
+        head, stream = split(objs[old])
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % new[old] + sub_refs(head) + stream + b"endobj\n\n"
+    xref_at = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(order) + 1)
+    for off in offsets:
+        out += b"%010d 00000 n \n" % off
+    out += b"trailer\n" + sub_refs(trailer) + b"startxref\n%d\n%%%%EOF\n" % xref_at
+    return bytes(out)
+
+
 def normalize_pdf(data: bytes) -> bytes:
-    """作成日時・更新日時と /ID を固定する（同じ長さで置くので xref の位置は動かない）。
+    """作成日時・更新日時と /ID を固定し、オブジェクト番号を決まった順に振り直す。
     /ID と /DocChecksum は、両方を 0 にした本文の MD5 から決める。"""
+    data = renumber_objects(data)
+    # XMP の日時（タイムゾーン付き）も固定する。同じ長さなので /Length は変わらない
+    data = re.sub(rb"(?<=>)\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d(?=<)", b"2026-10-01T00:00:00+00:00", data)
+
     def fix(m):
         old = m.group(2)
         return m.group(1) + FIXED_PDF_DATE[: len(old)].ljust(len(old), b"0")

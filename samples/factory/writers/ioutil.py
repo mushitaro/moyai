@@ -27,6 +27,10 @@ def rewrite_zip_fixed(path: Path) -> None:
                 # openpyxl は保存のたびに更新日時を今の時刻にする。物語の今日に戻す
                 data = re.sub(rb"(<dcterms:(created|modified)[^>]*>)[^<]*(</dcterms:\2>)",
                               rb"\g<1>2026-10-01T00:00:00Z\g<3>", data)
+            if name.endswith((".xml", ".rels")):
+                # Windows の openpyxl は、セルの中の改行 LF を CR+LF で書く。XML の読み手は CR+LF を LF と読むので、
+                # どの OS でも LF に揃える（コミットした出力と同じバイト列になる）
+                data = data.replace(b"\r\n", b"\n")
             zi = zipfile.ZipInfo(name, FIXED_ZIP_TIME)
             zi.compress_type = zipfile.ZIP_DEFLATED
             zi.create_system = 3

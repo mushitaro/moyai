@@ -16,6 +16,14 @@ from writers.names import ledger_name
 CREATOR = "【架空】工場 v1"
 HEADER = ["No.", "機器", "作業内容", "工期", "日数", "工数"]
 CONT = "（続き）"
+# 全セルに同じ字体を指定する。既定の Calibri だと、数字・英字は Calibri、漢字・かなは代替の字体に分かれ、
+# 字体を取り違えやすく、字体の組も OS で変わる。Windows では Yu Gothic が漢字・かな・英数字を全部持つ。
+# 無い環境（Linux）では LibreOffice が置き換える
+JP_FONT = "Yu Gothic"
+
+
+def _font(**kw) -> Font:
+    return Font(name=JP_FONT, **kw)
 
 
 def report_groups(world: dict) -> dict:
@@ -86,18 +94,18 @@ def write_report(world: dict, furnace: int, fy: int, works: list[dict], xlsx: Pa
     page_of_row = {}
     for page in range(1, n_pages + 1):
         top = r + 1
-        ws.cell(top, 1, title + (CONT if page > 1 else "")).font = Font(bold=True, size=14)
+        ws.cell(top, 1, title + (CONT if page > 1 else "")).font = _font(bold=True, size=14)
         ws.merge_cells(start_row=top, start_column=1, end_row=top, end_column=6)
         head = [("施設", f"【架空】{facility}"), ("件名", subject), ("工期", term), ("施工者", maker),
                 ("頁", f"{page} / {n_pages}")]
         for k, (lab, val) in enumerate(head, 1):
-            ws.cell(top + k, 1, lab).font = Font(bold=True)
-            ws.cell(top + k, 2, val)
+            ws.cell(top + k, 1, lab).font = _font(bold=True)
+            ws.cell(top + k, 2, val).font = _font()
             ws.merge_cells(start_row=top + k, start_column=2, end_row=top + k, end_column=6)
         hr = top + len(head) + 1
         for c, h in enumerate(HEADER, 1):
             cell = ws.cell(hr, c, h)
-            cell.font, cell.fill, cell.alignment, cell.border = Font(bold=True), fill, center, box
+            cell.font, cell.fill, cell.alignment, cell.border = _font(bold=True), fill, center, box
         r = hr
         for grp in rows[(page - 1) * per_page: page * per_page]:
             r += 1
@@ -116,8 +124,12 @@ def write_report(world: dict, furnace: int, fy: int, works: list[dict], xlsx: Pa
             for c, v in enumerate(vals, 1):
                 cell = ws.cell(r, c, v)
                 cell.border = box
-                cell.alignment = Alignment(wrap_text=True, vertical="center",
-                                           horizontal="center" if c in (1, 5, 6) else None)
+                cell.font = _font()
+                # 1 セル 1 行に収める。幅が足りなければ縮小して全体を見せる（字体が OS で変わっても欠けない）。
+                # 折り返すと行の高さが揃わず、PDF から文字を読むとき「延べ72」「人」のように途中で切れることがある。
+                # 中央・右の指定も、LibreOffice が文字を字ごとの塊に分けて書くので付けない（左だけ）
+                cell.alignment = Alignment(wrap_text=False, shrink_to_fit=True, vertical="center",
+                                           horizontal="left")
             truth_rows.append({
                 "no": no, "xlsx_row": r, "page": page, "work_ids": [w["id"] for w in grp],
                 "equipment_ids": [w["equipment_id"] for w in grp], "bundle": len(grp) > 1,
@@ -140,13 +152,13 @@ def write_report(world: dict, furnace: int, fy: int, works: list[dict], xlsx: Pa
     ws.cell(r, 6).number_format = '0"人・日"'
     for c in range(1, 7):
         cell = ws.cell(r, c)
-        cell.font, cell.border = Font(bold=True), box
+        cell.font, cell.border = _font(bold=True), box
         cell.alignment = center
     total_row = r
     r += 2
-    ws.cell(r, 1, "以上")
+    ws.cell(r, 1, "以上").font = _font()
 
-    for col, wd in zip("ABCDEF", (6, 44, 26, 38, 7, 12)):
+    for col, wd in zip("ABCDEF", (6, 60, 26, 32, 8, 18)):
         ws.column_dimensions[col].width = wd
     ws.page_setup.paperSize = 9
     ws.page_setup.orientation = "landscape"
