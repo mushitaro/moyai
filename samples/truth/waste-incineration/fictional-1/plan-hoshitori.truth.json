@@ -1,0 +1,1578 @@
+{
+  "cells": {
+    "D10": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0013"
+      ]
+    },
+    "D11": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0014"
+      ]
+    },
+    "D13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0003"
+      ]
+    },
+    "D14": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0015"
+      ]
+    },
+    "D15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0004"
+      ]
+    },
+    "D16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0005"
+      ]
+    },
+    "D17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0006"
+      ]
+    },
+    "D18": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0016"
+      ]
+    },
+    "D19": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0017"
+      ]
+    },
+    "D20": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0018"
+      ]
+    },
+    "D21": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0007"
+      ]
+    },
+    "D22": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0008"
+      ]
+    },
+    "D26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0010"
+      ]
+    },
+    "D5": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0012"
+      ]
+    },
+    "D6": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0009"
+      ]
+    },
+    "D8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0001"
+      ]
+    },
+    "D9": {
+      "kind": "actual",
+      "symbol": "◎",
+      "work_ids": [
+        "W0002",
+        "W0011"
+      ]
+    },
+    "F10": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0034"
+      ]
+    },
+    "F11": {
+      "kind": "actual",
+      "symbol": "◎",
+      "work_ids": [
+        "W0022",
+        "W0035"
+      ]
+    },
+    "F12": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0029"
+      ]
+    },
+    "F13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0025"
+      ]
+    },
+    "F14": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0036"
+      ]
+    },
+    "F15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0026"
+      ]
+    },
+    "F16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0027"
+      ]
+    },
+    "F17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0028"
+      ]
+    },
+    "F18": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0037"
+      ]
+    },
+    "F19": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0038"
+      ]
+    },
+    "F20": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0039"
+      ]
+    },
+    "F23": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0040"
+      ]
+    },
+    "F24": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0041"
+      ]
+    },
+    "F25": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0030"
+      ]
+    },
+    "F26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0020"
+      ]
+    },
+    "F27": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0031"
+      ]
+    },
+    "F28": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0032"
+      ]
+    },
+    "F29": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0033"
+      ]
+    },
+    "F6": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0019"
+      ]
+    },
+    "F7": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0021"
+      ]
+    },
+    "F8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0023"
+      ]
+    },
+    "F9": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0024"
+      ]
+    },
+    "H10": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0053"
+      ]
+    },
+    "H11": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0054"
+      ]
+    },
+    "H13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0044"
+      ]
+    },
+    "H14": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0055"
+      ]
+    },
+    "H15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0045"
+      ]
+    },
+    "H16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0046"
+      ]
+    },
+    "H17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0047"
+      ]
+    },
+    "H18": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0056"
+      ]
+    },
+    "H19": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0057"
+      ]
+    },
+    "H20": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0058"
+      ]
+    },
+    "H21": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0048"
+      ]
+    },
+    "H22": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0049"
+      ]
+    },
+    "H23": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0059"
+      ]
+    },
+    "H26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0051"
+      ]
+    },
+    "H5": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0052"
+      ]
+    },
+    "H6": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0050"
+      ]
+    },
+    "H8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0042"
+      ]
+    },
+    "H9": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0043"
+      ]
+    },
+    "J10": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0069"
+      ]
+    },
+    "J11": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0070"
+      ]
+    },
+    "J13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0062"
+      ]
+    },
+    "J14": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0071"
+      ]
+    },
+    "J15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0063"
+      ]
+    },
+    "J16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0064"
+      ]
+    },
+    "J17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0065"
+      ]
+    },
+    "J18": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0072"
+      ]
+    },
+    "J19": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0073"
+      ]
+    },
+    "J20": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0074"
+      ]
+    },
+    "J23": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0075"
+      ]
+    },
+    "J24": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0076"
+      ]
+    },
+    "J26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0067"
+      ]
+    },
+    "J7": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0068"
+      ]
+    },
+    "J8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0060"
+      ]
+    },
+    "J9": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0061"
+      ]
+    },
+    "K6": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0066"
+      ]
+    },
+    "L10": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0093"
+      ]
+    },
+    "L11": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0094"
+      ]
+    },
+    "L12": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0088"
+      ]
+    },
+    "L13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0082"
+      ]
+    },
+    "L14": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0095"
+      ]
+    },
+    "L15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0083"
+      ]
+    },
+    "L16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0084"
+      ]
+    },
+    "L17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0085"
+      ]
+    },
+    "L18": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0096"
+      ]
+    },
+    "L19": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0097"
+      ]
+    },
+    "L20": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0098"
+      ]
+    },
+    "L21": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0086"
+      ]
+    },
+    "L22": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0087"
+      ]
+    },
+    "L25": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0089"
+      ]
+    },
+    "L26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0078"
+      ]
+    },
+    "L27": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0090"
+      ]
+    },
+    "L28": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0091"
+      ]
+    },
+    "L29": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0092"
+      ]
+    },
+    "L5": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0079"
+      ]
+    },
+    "L6": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0077"
+      ]
+    },
+    "L8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0080"
+      ]
+    },
+    "L9": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0081"
+      ]
+    },
+    "N10": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0108"
+      ]
+    },
+    "N11": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0109"
+      ]
+    },
+    "N13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0101"
+      ]
+    },
+    "N14": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0110"
+      ]
+    },
+    "N15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0102"
+      ]
+    },
+    "N16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0103"
+      ]
+    },
+    "N17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0104"
+      ]
+    },
+    "N19": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0112"
+      ]
+    },
+    "N20": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0113"
+      ]
+    },
+    "N23": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0114"
+      ]
+    },
+    "N24": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0115"
+      ]
+    },
+    "N26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0106"
+      ]
+    },
+    "N6": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0105"
+      ]
+    },
+    "N7": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0107"
+      ]
+    },
+    "N8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0099"
+      ]
+    },
+    "N9": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0100"
+      ]
+    },
+    "O18": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0111"
+      ]
+    },
+    "P10": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0128"
+      ]
+    },
+    "P11": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0129"
+      ]
+    },
+    "P13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0118"
+      ]
+    },
+    "P14": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0130"
+      ]
+    },
+    "P15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0119"
+      ]
+    },
+    "P16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0120"
+      ]
+    },
+    "P17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0121"
+      ]
+    },
+    "P18": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0131"
+      ]
+    },
+    "P19": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0132"
+      ]
+    },
+    "P20": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0133"
+      ]
+    },
+    "P21": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0122"
+      ]
+    },
+    "P22": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0123"
+      ]
+    },
+    "P26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0125"
+      ]
+    },
+    "P29": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    "P5": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0127"
+      ]
+    },
+    "P6": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0124"
+      ]
+    },
+    "P8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0116"
+      ]
+    },
+    "P9": {
+      "kind": "actual",
+      "symbol": "◎",
+      "work_ids": [
+        "W0117",
+        "W0126"
+      ]
+    },
+    "R11": {
+      "kind": "actual",
+      "symbol": "◎",
+      "work_ids": [
+        "W0144"
+      ]
+    },
+    "R13": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0137"
+      ]
+    },
+    "R15": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0138"
+      ]
+    },
+    "R16": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0139"
+      ]
+    },
+    "R17": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0140"
+      ]
+    },
+    "R26": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0142"
+      ]
+    },
+    "R6": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0141"
+      ]
+    },
+    "R7": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0143"
+      ]
+    },
+    "R8": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0135"
+      ]
+    },
+    "R9": {
+      "kind": "actual",
+      "symbol": "●",
+      "work_ids": [
+        "W0136"
+      ]
+    },
+    "S10": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0145"
+      ]
+    },
+    "S11": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0146"
+      ]
+    },
+    "S14": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0147"
+      ]
+    },
+    "S18": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0148"
+      ]
+    },
+    "S19": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0149"
+      ]
+    },
+    "S20": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0150"
+      ]
+    },
+    "S22": {
+      "kind": "planned",
+      "symbol": "★",
+      "work_ids": [
+        "W0153"
+      ]
+    },
+    "S23": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0151"
+      ]
+    },
+    "S24": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0152"
+      ]
+    },
+    "U10": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0169"
+      ]
+    },
+    "U11": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0170"
+      ]
+    },
+    "U12": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0164"
+      ]
+    },
+    "U13": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0158"
+      ]
+    },
+    "U14": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0171"
+      ]
+    },
+    "U15": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0159"
+      ]
+    },
+    "U16": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0160"
+      ]
+    },
+    "U17": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0161"
+      ]
+    },
+    "U18": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0172"
+      ]
+    },
+    "U19": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0173"
+      ]
+    },
+    "U20": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0174"
+      ]
+    },
+    "U21": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0162"
+      ]
+    },
+    "U22": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0163"
+      ]
+    },
+    "U25": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0165"
+      ]
+    },
+    "U26": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0155"
+      ]
+    },
+    "U27": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0166"
+      ]
+    },
+    "U28": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0167"
+      ]
+    },
+    "U29": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0168"
+      ]
+    },
+    "U6": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0154"
+      ]
+    },
+    "U8": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0156"
+      ]
+    },
+    "U9": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0157"
+      ]
+    },
+    "W10": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0184"
+      ]
+    },
+    "W11": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0185"
+      ]
+    },
+    "W13": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0177"
+      ]
+    },
+    "W14": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0186"
+      ]
+    },
+    "W15": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0178"
+      ]
+    },
+    "W16": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0179"
+      ]
+    },
+    "W17": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0180"
+      ]
+    },
+    "W18": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0187"
+      ]
+    },
+    "W19": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0188"
+      ]
+    },
+    "W20": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0189"
+      ]
+    },
+    "W23": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0190"
+      ]
+    },
+    "W24": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0191"
+      ]
+    },
+    "W26": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0182"
+      ]
+    },
+    "W6": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0181"
+      ]
+    },
+    "W8": {
+      "kind": "planned",
+      "symbol": "○",
+      "work_ids": [
+        "W0175"
+      ]
+    },
+    "W9": {
+      "kind": "planned",
+      "symbol": "◎",
+      "work_ids": [
+        "W0176",
+        "W0183"
+      ]
+    }
+  },
+  "columns": {
+    "equipment": "B",
+    "first_year_col": "D",
+    "furnace": "C",
+    "system": "A"
+  },
+  "ditto_cells": [
+    "C6",
+    "C7",
+    "C9",
+    "C11",
+    "C16",
+    "C17",
+    "C19",
+    "C20",
+    "C22",
+    "C24",
+    "C28"
+  ],
+  "era_switch": {
+    "from_label": "H31",
+    "note": "2019 年度を H31、2020 年度を R2 と書く。令和元年度は 2019 年度に当たる",
+    "to_label": "R2"
+  },
+  "file": "plan-hoshitori.xlsx",
+  "first_data_row": 5,
+  "header_rows": [
+    3,
+    4
+  ],
+  "last_data_row": 29,
+  "legend": [
+    {
+      "meaning": "予定",
+      "row": 33,
+      "symbol": "○"
+    },
+    {
+      "meaning": "実績",
+      "row": 34,
+      "symbol": "●"
+    },
+    {
+      "meaning": "精密機能検査",
+      "row": 35,
+      "symbol": "◎"
+    }
+  ],
+  "legend_title_cell": "A32",
+  "merged_system_ranges": [
+    "A5:A7",
+    "A8:A11",
+    "A12:A14",
+    "A15:A20",
+    "A21:A24",
+    "A25",
+    "A26",
+    "A27:A28",
+    "A29"
+  ],
+  "rows": [
+    {
+      "equipment_id": "E01",
+      "row": 5
+    },
+    {
+      "equipment_id": "E02",
+      "row": 6
+    },
+    {
+      "equipment_id": "E03",
+      "row": 7
+    },
+    {
+      "equipment_id": "E04",
+      "row": 8
+    },
+    {
+      "equipment_id": "E05",
+      "row": 9
+    },
+    {
+      "equipment_id": "E06",
+      "row": 10
+    },
+    {
+      "equipment_id": "E07",
+      "row": 11
+    },
+    {
+      "equipment_id": "E08",
+      "row": 12
+    },
+    {
+      "equipment_id": "E09",
+      "row": 13
+    },
+    {
+      "equipment_id": "E10",
+      "row": 14
+    },
+    {
+      "equipment_id": "E11",
+      "row": 15
+    },
+    {
+      "equipment_id": "E12",
+      "row": 16
+    },
+    {
+      "equipment_id": "E13",
+      "row": 17
+    },
+    {
+      "equipment_id": "E14",
+      "row": 18
+    },
+    {
+      "equipment_id": "E15",
+      "row": 19
+    },
+    {
+      "equipment_id": "E16",
+      "row": 20
+    },
+    {
+      "equipment_id": "E17",
+      "row": 21
+    },
+    {
+      "equipment_id": "E18",
+      "row": 22
+    },
+    {
+      "equipment_id": "E19",
+      "row": 23
+    },
+    {
+      "equipment_id": "E20",
+      "row": 24
+    },
+    {
+      "equipment_id": "E21",
+      "row": 25
+    },
+    {
+      "equipment_id": "E22",
+      "row": 26
+    },
+    {
+      "equipment_id": "E23",
+      "row": 27
+    },
+    {
+      "equipment_id": "E24",
+      "row": 28
+    },
+    {
+      "equipment_id": "E25",
+      "row": 29
+    }
+  ],
+  "schema": "moyai.factory.truth.hoshitori/0",
+  "sheet": "星取表",
+  "subtotal": {
+    "meaning": "列ごとの、記号のあるセルの数（数の値）",
+    "row": 30,
+    "values": {
+      "D": 17,
+      "E": 0,
+      "F": 22,
+      "G": 0,
+      "H": 18,
+      "I": 0,
+      "J": 16,
+      "K": 1,
+      "L": 22,
+      "M": 0,
+      "N": 16,
+      "O": 1,
+      "P": 18,
+      "Q": 0,
+      "R": 10,
+      "S": 9,
+      "T": 0,
+      "U": 21,
+      "V": 0,
+      "W": 16
+    }
+  },
+  "title_cell": "A1",
+  "unknown_symbol": {
+    "cell": "S22",
+    "means": "PLANNED",
+    "symbol": "★",
+    "work_ids": [
+      "W0153"
+    ]
+  },
+  "year_columns": [
+    {
+      "actual_col": "D",
+      "fiscal_year": 2019,
+      "label": "H31",
+      "planned_col": "E"
+    },
+    {
+      "actual_col": "F",
+      "fiscal_year": 2020,
+      "label": "R2",
+      "planned_col": "G"
+    },
+    {
+      "actual_col": "H",
+      "fiscal_year": 2021,
+      "label": "令和3年度",
+      "planned_col": "I"
+    },
+    {
+      "actual_col": "J",
+      "fiscal_year": 2022,
+      "label": "2022年度",
+      "planned_col": "K"
+    },
+    {
+      "actual_col": "L",
+      "fiscal_year": 2023,
+      "label": "R5年度",
+      "planned_col": "M"
+    },
+    {
+      "actual_col": "N",
+      "fiscal_year": 2024,
+      "label": "令和6年度",
+      "planned_col": "O"
+    },
+    {
+      "actual_col": "P",
+      "fiscal_year": 2025,
+      "label": "2025年度",
+      "planned_col": "Q"
+    },
+    {
+      "actual_col": "R",
+      "fiscal_year": 2026,
+      "label": "R8",
+      "planned_col": "S"
+    },
+    {
+      "actual_col": "T",
+      "fiscal_year": 2027,
+      "label": "令和9年度",
+      "planned_col": "U"
+    },
+    {
+      "actual_col": "V",
+      "fiscal_year": 2028,
+      "label": "2028年度",
+      "planned_col": "W"
+    }
+  ]
+}

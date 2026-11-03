@@ -1,0 +1,7750 @@
+{
+  "author_line": 2,
+  "columns": [
+    "日付",
+    "工事名",
+    "機器",
+    "号炉",
+    "作業内容",
+    "工数",
+    "備考"
+  ],
+  "effort_rule": "工数は人・日に直す。人工と延べ人数は数をそのまま、時間は hours_per_man_day で割る",
+  "encoding": "cp932",
+  "file": "daily-report.csv",
+  "first_data_line": 6,
+  "header_line": 5,
+  "hours_per_man_day": 8,
+  "missing_note": "実績の無い行は書かない",
+  "newline": "CRLF",
+  "rows": [
+    {
+      "bundle": true,
+      "date": "2022-04-06",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 6,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-06",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 7,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-07",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 8,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-07",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 9,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-08",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 10,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-08",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 11,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-09",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 12,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-09",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 13,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-10",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 14,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-10",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 15,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 16,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 17,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-12",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 18,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-12",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 19,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-13",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 20,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 21,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-14",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 22,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-14",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 23,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-15",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 24,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-15",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 25,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-16",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 26,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-16",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 27,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-17",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 28,
+      "man_days": 9,
+      "work_ids": [
+        "W0060",
+        "W0061",
+        "W0062"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-04-17",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 29,
+      "man_days": 7,
+      "work_ids": [
+        "W0063",
+        "W0064",
+        "W0065"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2022-05-26",
+      "effort_style": "nobe",
+      "effort_text": "延べ2人",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 30,
+      "man_days": 2,
+      "work_ids": [
+        "W0067"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2022-05-27",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 31,
+      "man_days": 2,
+      "work_ids": [
+        "W0067"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2022-05-28",
+      "effort_style": "hours",
+      "effort_text": "16時間",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 32,
+      "man_days": 2,
+      "work_ids": [
+        "W0067"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2022-07-14",
+      "effort_style": "hours",
+      "effort_text": "8時間",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 33,
+      "man_days": 1,
+      "work_ids": [
+        "W0068"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2022-07-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ1人",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 34,
+      "man_days": 1,
+      "work_ids": [
+        "W0068"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2022-07-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ1人",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 35,
+      "man_days": 1,
+      "work_ids": [
+        "W0068"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-05",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 36,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-05",
+      "effort_style": "ninnichi",
+      "effort_text": "6人・日",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 37,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-05",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 38,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-06",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 39,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-06",
+      "effort_style": "hours",
+      "effort_text": "48時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 40,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-06",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 41,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-07",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 42,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-07",
+      "effort_style": "hours",
+      "effort_text": "48時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 43,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-07",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 44,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-08",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 45,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-08",
+      "effort_style": "hours",
+      "effort_text": "48時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 46,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-08",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 47,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 48,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-09",
+      "effort_style": "ninku",
+      "effort_text": "6人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 49,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-09",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 50,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 51,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-10",
+      "effort_style": "ninku",
+      "effort_text": "6人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 52,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-10",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 53,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-11",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 54,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-11",
+      "effort_style": "hours",
+      "effort_text": "48時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 55,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-11",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 56,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-12",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 57,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-12",
+      "effort_style": "nobe",
+      "effort_text": "延べ6人",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 58,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-12",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 59,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 60,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-13",
+      "effort_style": "hours",
+      "effort_text": "48時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 61,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-13",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 62,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-14",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 63,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-14",
+      "effort_style": "hours",
+      "effort_text": "48時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 64,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-14",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 65,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-15",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 66,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ6人",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 67,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 68,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-16",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 69,
+      "man_days": 9,
+      "work_ids": [
+        "W0069",
+        "W0070",
+        "W0071"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-16",
+      "effort_style": "ninku",
+      "effort_text": "6人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 70,
+      "man_days": 6,
+      "work_ids": [
+        "W0072",
+        "W0073",
+        "W0074"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2022-10-16",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 71,
+      "man_days": 4,
+      "work_ids": [
+        "W0075",
+        "W0076"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-05-12",
+      "effort_style": "ninku",
+      "effort_text": "3人工",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 72,
+      "man_days": 3,
+      "work_ids": [
+        "W0077"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-05-13",
+      "effort_style": "ninku",
+      "effort_text": "3人工",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 73,
+      "man_days": 3,
+      "work_ids": [
+        "W0077"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-05-14",
+      "effort_style": "ninnichi",
+      "effort_text": "3人・日",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 74,
+      "man_days": 3,
+      "work_ids": [
+        "W0077"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-05-26",
+      "effort_style": "nobe",
+      "effort_text": "延べ2人",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 75,
+      "man_days": 2,
+      "work_ids": [
+        "W0078"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-05-27",
+      "effort_style": "hours",
+      "effort_text": "16時間",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 76,
+      "man_days": 2,
+      "work_ids": [
+        "W0078"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-05-28",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 77,
+      "man_days": 2,
+      "work_ids": [
+        "W0078"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-07-08",
+      "effort_style": "hours",
+      "effort_text": "16時間",
+      "equipment_ids": [
+        "E01"
+      ],
+      "line": 78,
+      "man_days": 2,
+      "work_ids": [
+        "W0079"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2023-07-09",
+      "effort_style": "hours",
+      "effort_text": "16時間",
+      "equipment_ids": [
+        "E01"
+      ],
+      "line": 79,
+      "man_days": 2,
+      "work_ids": [
+        "W0079"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-08-31",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 80,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-08-31",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 81,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-08-31",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 82,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-01",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 83,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-01",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 84,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-01",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 85,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-02",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 86,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-02",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 87,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-02",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 88,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-03",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 89,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-03",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 90,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-03",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 91,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-04",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 92,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-04",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 93,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-04",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 94,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-05",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 95,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-05",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 96,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-05",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 97,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-06",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 98,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-06",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 99,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-06",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 100,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-07",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 101,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-07",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 102,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-07",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 103,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-08",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 104,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-08",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 105,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-08",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 106,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 107,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-09",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 108,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 109,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 110,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 111,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-10",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 112,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-11",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 113,
+      "man_days": 9,
+      "work_ids": [
+        "W0080",
+        "W0081",
+        "W0082"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-11",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 114,
+      "man_days": 7,
+      "work_ids": [
+        "W0083",
+        "W0084",
+        "W0085"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-11",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 115,
+      "man_days": 7,
+      "work_ids": [
+        "W0086",
+        "W0087"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-14",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 116,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-14",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 117,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 118,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-15",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 119,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 120,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-16",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 121,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-17",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 122,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-17",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 123,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-18",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 124,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-18",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 125,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-19",
+      "effort_style": "ninnichi",
+      "effort_text": "10人・日",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 126,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-19",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 127,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-20",
+      "effort_style": "ninku",
+      "effort_text": "10人工",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 128,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-20",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 129,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-21",
+      "effort_style": "ninnichi",
+      "effort_text": "10人・日",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 130,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-21",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 131,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-22",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 132,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-22",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 133,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-23",
+      "effort_style": "ninnichi",
+      "effort_text": "10人・日",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 134,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-23",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 135,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-24",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 136,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-24",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 137,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-25",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 138,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-25",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 139,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-26",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 140,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-26",
+      "effort_style": "ninku",
+      "effort_text": "11人工",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 141,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-27",
+      "effort_style": "ninnichi",
+      "effort_text": "10人・日",
+      "equipment_ids": [
+        "E08",
+        "E21"
+      ],
+      "line": 142,
+      "man_days": 10,
+      "work_ids": [
+        "W0088",
+        "W0089"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-27",
+      "effort_style": "ninku",
+      "effort_text": "11人工",
+      "equipment_ids": [
+        "E23",
+        "E24",
+        "E25"
+      ],
+      "line": 143,
+      "man_days": 11,
+      "work_ids": [
+        "W0090",
+        "W0091",
+        "W0092"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-30",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 144,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-09-30",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 145,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-01",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 146,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-01",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 147,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-02",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 148,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-02",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 149,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-03",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 150,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-03",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 151,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-04",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 152,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-04",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 153,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-05",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 154,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-05",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 155,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-06",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 156,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-06",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 157,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-07",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 158,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-07",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 159,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-08",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 160,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-08",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 161,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-09",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 162,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-09",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 163,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-10",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 164,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 165,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-11",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 166,
+      "man_days": 9,
+      "work_ids": [
+        "W0093",
+        "W0094",
+        "W0095"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2023-10-11",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 167,
+      "man_days": 5,
+      "work_ids": [
+        "W0096",
+        "W0097",
+        "W0098"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-06",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 168,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-06",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 169,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-07",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 170,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-07",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 171,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-08",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 172,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-08",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 173,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 174,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-09",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 175,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 176,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 177,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-11",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 178,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 179,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-12",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 180,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-12",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 181,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 182,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-13",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 183,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-14",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 184,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-14",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 185,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 186,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 187,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 188,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-16",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 189,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-17",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 190,
+      "man_days": 7,
+      "work_ids": [
+        "W0099",
+        "W0100",
+        "W0101"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-04-17",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 191,
+      "man_days": 4,
+      "work_ids": [
+        "W0102",
+        "W0103",
+        "W0104"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-05-12",
+      "effort_style": "hours",
+      "effort_text": "24時間",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 192,
+      "man_days": 3,
+      "work_ids": [
+        "W0105"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-05-13",
+      "effort_style": "hours",
+      "effort_text": "24時間",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 193,
+      "man_days": 3,
+      "work_ids": [
+        "W0105"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-05-14",
+      "effort_style": "hours",
+      "effort_text": "24時間",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 194,
+      "man_days": 3,
+      "work_ids": [
+        "W0105"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-05-26",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 195,
+      "man_days": 2,
+      "work_ids": [
+        "W0106"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-05-27",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 196,
+      "man_days": 2,
+      "work_ids": [
+        "W0106"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-05-28",
+      "effort_style": "nobe",
+      "effort_text": "延べ2人",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 197,
+      "man_days": 2,
+      "work_ids": [
+        "W0106"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-07-14",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 198,
+      "man_days": 2,
+      "work_ids": [
+        "W0107"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-07-15",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 199,
+      "man_days": 2,
+      "work_ids": [
+        "W0107"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2024-07-16",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 200,
+      "man_days": 2,
+      "work_ids": [
+        "W0107"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-05",
+      "effort_style": "ninku",
+      "effort_text": "11人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 201,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-05",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 202,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-05",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 203,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-06",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 204,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-06",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 205,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-06",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 206,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-07",
+      "effort_style": "ninku",
+      "effort_text": "11人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 207,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-07",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 208,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-07",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 209,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-08",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 210,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-08",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 211,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-08",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 212,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 213,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-09",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 214,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 215,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 216,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 217,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 218,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-11",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 219,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 220,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 221,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-12",
+      "effort_style": "ninku",
+      "effort_text": "11人工",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 222,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-12",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 223,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-12",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 224,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 225,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-13",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 226,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-13",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 227,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-14",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 228,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-14",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 229,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-14",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 230,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-15",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 231,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-15",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 232,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-15",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 233,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 234,
+      "man_days": 11,
+      "work_ids": [
+        "W0108",
+        "W0109",
+        "W0110"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-16",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E15",
+        "E16"
+      ],
+      "line": 235,
+      "man_days": 4,
+      "work_ids": [
+        "W0112",
+        "W0113"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2024-10-16",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E19",
+        "E20"
+      ],
+      "line": 236,
+      "man_days": 7,
+      "work_ids": [
+        "W0114",
+        "W0115"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-06",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 237,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-06",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 238,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-06",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 239,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-07",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 240,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-07",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 241,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-07",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 242,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-08",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 243,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-08",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 244,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-08",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 245,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-09",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 246,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 247,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-09",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 248,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ9人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 249,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-10",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 250,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-10",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 251,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-11",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 252,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 253,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-11",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 254,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-12",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 255,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-12",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 256,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-12",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 257,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-13",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 258,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 259,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-13",
+      "effort_style": "ninku",
+      "effort_text": "7人工",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 260,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-14",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 261,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-14",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 262,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-14",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 263,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-15",
+      "effort_style": "ninnichi",
+      "effort_text": "9人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 264,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-15",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 265,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-15",
+      "effort_style": "ninnichi",
+      "effort_text": "7人・日",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 266,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-16",
+      "effort_style": "ninku",
+      "effort_text": "9人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 267,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-16",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 268,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ7人",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 269,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-17",
+      "effort_style": "hours",
+      "effort_text": "72時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 270,
+      "man_days": 9,
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0118"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-17",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 271,
+      "man_days": 5,
+      "work_ids": [
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-04-17",
+      "effort_style": "hours",
+      "effort_text": "56時間",
+      "equipment_ids": [
+        "E17",
+        "E18"
+      ],
+      "line": 272,
+      "man_days": 7,
+      "work_ids": [
+        "W0122",
+        "W0123"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-05-12",
+      "effort_style": "ninku",
+      "effort_text": "3人工",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 273,
+      "man_days": 3,
+      "work_ids": [
+        "W0124"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-05-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ3人",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 274,
+      "man_days": 3,
+      "work_ids": [
+        "W0124"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-05-14",
+      "effort_style": "ninku",
+      "effort_text": "3人工",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 275,
+      "man_days": 3,
+      "work_ids": [
+        "W0124"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-05-26",
+      "effort_style": "ninku",
+      "effort_text": "2人工",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 276,
+      "man_days": 2,
+      "work_ids": [
+        "W0125"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-05-27",
+      "effort_style": "nobe",
+      "effort_text": "延べ2人",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 277,
+      "man_days": 2,
+      "work_ids": [
+        "W0125"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-05-28",
+      "effort_style": "nobe",
+      "effort_text": "延べ2人",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 278,
+      "man_days": 2,
+      "work_ids": [
+        "W0125"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-06-01",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E05"
+      ],
+      "line": 279,
+      "man_days": 4,
+      "work_ids": [
+        "W0126"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-06-02",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E05"
+      ],
+      "line": 280,
+      "man_days": 4,
+      "work_ids": [
+        "W0126"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-06-03",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E05"
+      ],
+      "line": 281,
+      "man_days": 4,
+      "work_ids": [
+        "W0126"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-06-04",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E05"
+      ],
+      "line": 282,
+      "man_days": 4,
+      "work_ids": [
+        "W0126"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-06-05",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E05"
+      ],
+      "line": 283,
+      "man_days": 4,
+      "work_ids": [
+        "W0126"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-07-08",
+      "effort_style": "nobe",
+      "effort_text": "延べ2人",
+      "equipment_ids": [
+        "E01"
+      ],
+      "line": 284,
+      "man_days": 2,
+      "work_ids": [
+        "W0127"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-07-09",
+      "effort_style": "ninku",
+      "effort_text": "2人工",
+      "equipment_ids": [
+        "E01"
+      ],
+      "line": 285,
+      "man_days": 2,
+      "work_ids": [
+        "W0127"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-05",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 286,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-05",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 287,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-06",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 288,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-06",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 289,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-07",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 290,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-07",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 291,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-08",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 292,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-08",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 293,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 294,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-09",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 295,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-10",
+      "effort_style": "ninnichi",
+      "effort_text": "11人・日",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 296,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-10",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 297,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-11",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 298,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-11",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 299,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-12",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 300,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-12",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 301,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 302,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-13",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 303,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-14",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 304,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-14",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 305,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-14",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 306,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-15",
+      "effort_style": "hours",
+      "effort_text": "88時間",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 307,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 308,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 309,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ11人",
+      "equipment_ids": [
+        "E06",
+        "E07",
+        "E10"
+      ],
+      "line": 310,
+      "man_days": 11,
+      "work_ids": [
+        "W0128",
+        "W0129",
+        "W0130"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2025-10-16",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E14",
+        "E15",
+        "E16"
+      ],
+      "line": 311,
+      "man_days": 5,
+      "work_ids": [
+        "W0131",
+        "W0132",
+        "W0133"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 312,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-17",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 313,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-18",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 314,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-19",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 315,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-20",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 316,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-21",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 317,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-22",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 318,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-23",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 319,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-24",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 320,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-25",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 321,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-26",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 322,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-27",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 323,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-28",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 324,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-29",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 325,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-30",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 326,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-10-31",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 327,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-01",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 328,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-02",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 329,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-03",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 330,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-04",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 331,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-05",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 332,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-06",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 333,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-07",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 334,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-08",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 335,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 336,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-10",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 337,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 338,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-12",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 339,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-13",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 340,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-14",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 341,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 342,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-16",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 343,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-17",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 344,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-18",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 345,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-19",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 346,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-20",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 347,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-21",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 348,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-22",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 349,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-23",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 350,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-24",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 351,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-25",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 352,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-26",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 353,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-27",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 354,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-28",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 355,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-29",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 356,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-11-30",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 357,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-01",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 358,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-02",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 359,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-03",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 360,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-04",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 361,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-05",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 362,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-06",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 363,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-07",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 364,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-08",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 365,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-09",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 366,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-10",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 367,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 368,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-12",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 369,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 370,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-14",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 371,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-15",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 372,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 373,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-17",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 374,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-18",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 375,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-19",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 376,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-20",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 377,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-21",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 378,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-22",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 379,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-23",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 380,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-24",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 381,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-25",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 382,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-26",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 383,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-27",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 384,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-28",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 385,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-29",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 386,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-30",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 387,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2025-12-31",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 388,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-01",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 389,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-02",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 390,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-03",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 391,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-04",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 392,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-05",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 393,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-06",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 394,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-07",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 395,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-08",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 396,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-09",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 397,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-10",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 398,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-11",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 399,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-12",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 400,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 401,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-14",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 402,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 403,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-16",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 404,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-17",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 405,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-18",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 406,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-19",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 407,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-20",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 408,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-21",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 409,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-22",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 410,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-23",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 411,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-24",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 412,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-25",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 413,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-26",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 414,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-27",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 415,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-28",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 416,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-29",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 417,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-30",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 418,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-01-31",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 419,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-01",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 420,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-02",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 421,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-03",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 422,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-04",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 423,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-05",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 424,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-06",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 425,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-07",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 426,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-08",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 427,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-09",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 428,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-10",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 429,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-11",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 430,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-12",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 431,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-13",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 432,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-14",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 433,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-15",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 434,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-16",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 435,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-17",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 436,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-18",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 437,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-19",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 438,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-20",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 439,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-21",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 440,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-22",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 441,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-23",
+      "effort_style": "ninku",
+      "effort_text": "4人工",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 442,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-24",
+      "effort_style": "ninnichi",
+      "effort_text": "4人・日",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 443,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-25",
+      "effort_style": "nobe",
+      "effort_text": "延べ4人",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 444,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-26",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 445,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-02-27",
+      "effort_style": "hours",
+      "effort_text": "32時間",
+      "equipment_ids": [
+        "E25"
+      ],
+      "line": 446,
+      "man_days": 4,
+      "work_ids": [
+        "W0134"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-06",
+      "effort_style": "ninku",
+      "effort_text": "10人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 447,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-06",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 448,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-07",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 449,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-07",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 450,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-08",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 451,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-08",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 452,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-09",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 453,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-09",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 454,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-10",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 455,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-10",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 456,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-11",
+      "effort_style": "ninku",
+      "effort_text": "10人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 457,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-11",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 458,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-12",
+      "effort_style": "nobe",
+      "effort_text": "延べ10人",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 459,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-12",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 460,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-13",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 461,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-13",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 462,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-14",
+      "effort_style": "ninnichi",
+      "effort_text": "10人・日",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 463,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-14",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 464,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-15",
+      "effort_style": "ninku",
+      "effort_text": "10人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 465,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-15",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 466,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-16",
+      "effort_style": "ninku",
+      "effort_text": "10人工",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 467,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-16",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 468,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-17",
+      "effort_style": "hours",
+      "effort_text": "80時間",
+      "equipment_ids": [
+        "E04",
+        "E05",
+        "E09"
+      ],
+      "line": 469,
+      "man_days": 10,
+      "work_ids": [
+        "W0135",
+        "W0136",
+        "W0137"
+      ]
+    },
+    {
+      "bundle": true,
+      "date": "2026-04-17",
+      "effort_style": "ninku",
+      "effort_text": "5人工",
+      "equipment_ids": [
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "line": 470,
+      "man_days": 5,
+      "work_ids": [
+        "W0138",
+        "W0139",
+        "W0140"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-05-12",
+      "effort_style": "hours",
+      "effort_text": "24時間",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 471,
+      "man_days": 3,
+      "work_ids": [
+        "W0141"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-05-13",
+      "effort_style": "ninku",
+      "effort_text": "3人工",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 472,
+      "man_days": 3,
+      "work_ids": [
+        "W0141"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-05-14",
+      "effort_style": "hours",
+      "effort_text": "24時間",
+      "equipment_ids": [
+        "E02"
+      ],
+      "line": 473,
+      "man_days": 3,
+      "work_ids": [
+        "W0141"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-05-26",
+      "effort_style": "nobe",
+      "effort_text": "延べ2人",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 474,
+      "man_days": 2,
+      "work_ids": [
+        "W0142"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-05-27",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 475,
+      "man_days": 2,
+      "work_ids": [
+        "W0142"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-05-28",
+      "effort_style": "ninnichi",
+      "effort_text": "2人・日",
+      "equipment_ids": [
+        "E22"
+      ],
+      "line": 476,
+      "man_days": 2,
+      "work_ids": [
+        "W0142"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-07-14",
+      "effort_style": "hours",
+      "effort_text": "24時間",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 477,
+      "man_days": 3,
+      "work_ids": [
+        "W0143"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-07-15",
+      "effort_style": "hours",
+      "effort_text": "24時間",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 478,
+      "man_days": 3,
+      "work_ids": [
+        "W0143"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-07-16",
+      "effort_style": "ninku",
+      "effort_text": "3人工",
+      "equipment_ids": [
+        "E03"
+      ],
+      "line": 479,
+      "man_days": 3,
+      "work_ids": [
+        "W0143"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-08-17",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E07"
+      ],
+      "line": 480,
+      "man_days": 5,
+      "work_ids": [
+        "W0144"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-08-18",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E07"
+      ],
+      "line": 481,
+      "man_days": 5,
+      "work_ids": [
+        "W0144"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-08-19",
+      "effort_style": "hours",
+      "effort_text": "40時間",
+      "equipment_ids": [
+        "E07"
+      ],
+      "line": 482,
+      "man_days": 5,
+      "work_ids": [
+        "W0144"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-08-20",
+      "effort_style": "nobe",
+      "effort_text": "延べ5人",
+      "equipment_ids": [
+        "E07"
+      ],
+      "line": 483,
+      "man_days": 5,
+      "work_ids": [
+        "W0144"
+      ]
+    },
+    {
+      "bundle": false,
+      "date": "2026-08-21",
+      "effort_style": "ninnichi",
+      "effort_text": "5人・日",
+      "equipment_ids": [
+        "E07"
+      ],
+      "line": 484,
+      "man_days": 5,
+      "work_ids": [
+        "W0144"
+      ]
+    }
+  ],
+  "schema": "moyai.factory.truth.daily/0",
+  "title_line": 1
+}
