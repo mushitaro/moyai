@@ -20,6 +20,8 @@ import {
   type ValueFormatterParams,
 } from "ag-grid-community";
 import type { ChartCell, ChartModel, ChartRow, Mark, Period } from "../../plan/chart";
+import type { StatField } from "../../share/bands";
+import { bandShort, statText } from "../../share/stat-text";
 import { TEXT } from "../text";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -86,9 +88,10 @@ export function formatCell(cell: ChartCell | undefined): string {
   return cell.summary && cell.count !== null ? `${head}${cell.count}` : head;
 }
 
-/** セルの aria-label：階層の道・期・印の意味 */
+/** セルの aria-label：階層の道・期・印の意味。似た施設の行と統計の行は、その行の名前も道に入れる */
 export function cellAria(row: ChartRow, p: Period, cell: ChartCell | undefined): string {
-  const path = row.path.filter((x): x is string => x !== null).join(T.pathSep);
+  const own = row.kind === "peer" || row.kind === "stat" ? [row.levelCells[row.levelCells.length - 1] ?? ""] : [];
+  const path = [...row.path.filter((x): x is string => x !== null), ...own].join(T.pathSep);
   const period = p.month === null ? T.fiscalYear(p.fiscalYear) : `${T.fiscalYear(p.fiscalYear)} ${T.month(p.month)}`;
   let mark: string = T.markNone;
   if (cell) {
@@ -100,9 +103,20 @@ export function cellAria(row: ChartRow, p: Period, cell: ChartCell | undefined):
   return T.cellAria(path, period, mark);
 }
 
-/** 段の列のセルの文字：畳んだ行は台数、未当てはめの行は件数を添える */
+/** 似た施設の帯の列の文字：似た施設の行はその施設の帯、統計の行はその場の統計。自分の行は空 */
+export function bandCellText(row: ChartRow | undefined, f: StatField): string {
+  if (row?.kind === "peer") {
+    const c = row.peerBands?.[f];
+    return c ? bandShort(c) : "";
+  }
+  if (row?.kind === "stat" && row.stats) return statText(row.stats[f]);
+  return "";
+}
+
+/** 段の列のセルの文字：畳んだ行は台数、未当てはめの行は件数、似た施設にだけある行はそのことを添える */
 function levelText(row: ChartRow, i: number): string {
   const name = row.levelCells[i] ?? "";
+  if (i === row.level - 1 && row.ownMissing) return `${name}（${T.peers.ownMissing}）`;
   if (i !== row.level - 1 || row.count === null) return name;
   return row.kind === "unmapped" ? `${name}（${T.records(row.count)}）` : `${name}（${T.units(row.count)}）`;
 }
@@ -219,11 +233,29 @@ function markColumn(p: Period, width: number, fyStart: boolean): ColDef<ChartRow
   };
 }
 
-function columns(model: ChartModel, foldLevel: number | null, h: GridHandlers): (ColDef<ChartRow> | ColGroupDef<ChartRow>)[] {
+/**
+ * 似た施設の帯の列。間隔・工数・日数のうち人が選んだ 1 つを、段の列のすぐ右に置く（3 つを並べると、狭い画面で年度の列が見えなくなるため）。
+ * 固定しない（左に固定した段の列と重ならないように）。3 つとも、行を選ぶと横の板に出る。
+ */
+function bandColumn(f: StatField): ColDef<ChartRow> {
+  return {
+    colId: `band.${f}`,
+    headerName: T.peers.bandCols[f],
+    width: 220,
+    cellClass: "moyai-band moyai-num",
+    headerClass: "moyai-band-head",
+    valueGetter: (p) => bandCellText(p.data, f),
+    tooltipValueGetter: (p) => bandCellText(p.data, f) || null,
+    editable: false,
+  };
+}
+
+function columns(model: ChartModel, foldLevel: number | null, h: GridHandlers, band: StatField): (ColDef<ChartRow> | ColGroupDef<ChartRow>)[] {
   const out: (ColDef<ChartRow> | ColGroupDef<ChartRow>)[] = levelColumns(model, foldLevel, h);
   const monthly = model.periods.some((p) => p.month !== null);
   if (!monthly) {
     // 年だけの表は縦の罫を引かない（どの列も年度の境なので、罫が並んでうるさくなる）
+    if (model.peersShown) out.push(bandColumn(band));
     for (const p of model.periods) out.push(markColumn(p, 112, false));
     return out;
   }
@@ -260,6 +292,9 @@ export class ChartGrid {
       rowClassRules: {
         "moyai-row-folded": (p) => !!p.data?.folded,
         "moyai-row-unmapped": (p) => p.data?.kind === "unmapped",
+        "moyai-row-peer": (p) => p.data?.kind === "peer",
+        "moyai-row-stat": (p) => p.data?.kind === "stat",
+        "moyai-row-own-missing": (p) => !!p.data?.ownMissing,
       },
       // 選んだ印：鍵盤で動かしたとき（focus）と、押したとき（click）の両方で受ける
       onCellFocused: (e) => {
@@ -278,15 +313,15 @@ export class ChartGrid {
   }
 
   private select(rowId: string, colId: string | null) {
-    this.h.onSelect(rowId, colId && !colId.startsWith("lv") ? colId : null);
+    this.h.onSelect(rowId, colId && !colId.startsWith("lv") && !colId.startsWith("band.") ? colId : null);
   }
 
-  /** 列（段の名前と期が変わったときだけ作り直す）と、見える行を渡す */
-  update(model: ChartModel, foldLevel: number | null) {
-    const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel]);
+  /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
+  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval") {
+    const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, band]);
     if (key !== this.colKey) {
       this.colKey = key;
-      this.api.setGridOption("columnDefs", columns(model, foldLevel, this.h));
+      this.api.setGridOption("columnDefs", columns(model, foldLevel, this.h, band));
     }
     this.api.setGridOption("rowData", model.rows);
     // 行の中身が同じ鍵のまま変わったとき（畳む・層の切り替え）に、セルの文字とクラスを描き直す

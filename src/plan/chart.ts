@@ -260,7 +260,7 @@ interface Node {
   /** この行に直に載る（記録, 機器の鍵）の組 */
   direct: { d: WorkDetailT; asset: string }[];
   /** この行に重ねる似た施設（場の順） */
-  overlay?: { place: PlaceKind; row: StarRow }[];
+  overlay?: { place: PlaceKind; index: number; row: StarRow }[];
 }
 
 interface Agg {
@@ -373,7 +373,7 @@ function commonTree(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, orph
       if (!sn) systems.set(code, (sn = { id: `c:${code}`, level: 1, parentId: null, name: catalog.systems.get(code)!.name, kind: "node", children: [], direct: [] }));
       return sn;
     };
-    for (const pl of overlay.places) {
+    for (const [pi, pl] of overlay.places.entries()) {
       for (const r of pl.rows) {
         const item = catalog.items.get(r.class);
         const sysCode = item ? item.systemCode : catalog.systems.has(r.class) ? r.class : null;
@@ -394,7 +394,7 @@ function commonTree(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, orph
           leaves.set(lk, (leaf = { id: `c:${lk}`, level: 3, parentId: inode.id, name: catalog.workLabels[r.work], kind: "node", children: [], direct: [] }));
           inode.children.push(leaf);
         }
-        (leaf.overlay ??= []).push({ place: pl.kind, row: r });
+        (leaf.overlay ??= []).push({ place: pl.kind, index: pi, row: r });
       }
     }
   }
@@ -453,6 +453,8 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   let total = 0;
   const collect = (n: Node): void => {
     total++;
+    // 重ねた似た施設の行と統計の行も、全部の行に数える（畳んで隠れても数は変わらない）
+    if (n.overlay) for (const o of n.overlay) total += o.row.peers.length + 1;
     const dm = new Map<string, Agg>();
     const sm = new Map<string, Agg>();
     const assets = new Set<string>();
@@ -528,7 +530,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   // 似た施設の行（場の順・札の順）と、場ごとの統計の行。段の列は最後の段にだけ名前を出す
   const emitPeers = (n: Node, path: (string | null)[]) => {
     const fullPath = Array.from({ length: width }, (_, i) => path[i] ?? null);
-    for (const { place, row } of n.overlay!) {
+    for (const { place, index, row } of n.overlay!) {
       for (const peer of row.peers) {
         const cells: Record<string, ChartCell> = {};
         for (const y of peer.years) {
@@ -538,10 +540,10 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
         const bands: Partial<Record<StatField, string>> = {};
         for (const f of STAT_FIELDS) if (peer[f] !== undefined) bands[f] = peer[f];
         const name = overlay!.labels.peer(place, peer.label);
-        rows.push({ id: `${n.id}|${place}|${peer.label}`, level: n.level + 1, parentId: n.id, kind: "peer", place, peerBands: bands, path: fullPath, levelCells: lastOnly(name), hasChildren: false, folded: false, count: null, detailKeys: [], cells });
+        rows.push({ id: `${n.id}|${place}${index}|${peer.label}`, level: n.level + 1, parentId: n.id, kind: "peer", place, peerBands: bands, path: fullPath, levelCells: lastOnly(name), hasChildren: false, folded: false, count: null, detailKeys: [], cells });
       }
       const name = overlay!.labels.stat(place);
-      rows.push({ id: `${n.id}|${place}|stat`, level: n.level + 1, parentId: n.id, kind: "stat", place, stats: row.stats, path: fullPath, levelCells: lastOnly(name), hasChildren: false, folded: false, count: null, detailKeys: [], cells: {} });
+      rows.push({ id: `${n.id}|${place}${index}|stat`, level: n.level + 1, parentId: n.id, kind: "stat", place, stats: row.stats, path: fullPath, levelCells: lastOnly(name), hasChildren: false, folded: false, count: null, detailKeys: [], cells: {} });
     }
   };
   const lastOnly = (name: string) => Array.from({ length: width }, (_, i) => (i === width - 1 ? name : ""));

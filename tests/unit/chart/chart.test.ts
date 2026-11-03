@@ -395,32 +395,44 @@ describe("似た施設を重ねる（共通の設備項目の行・年度の表�
       ["c:WI.COOL", "node", ["燃焼ガス冷却設備", "", ""]],
       ["c:WI.COOL:*", "node", ["", "WHOLE", ""]],
       ["c:WI.COOL:*:OVERHAUL", "node", ["", "", work.OVERHAUL.label]],
-      ["c:WI.COOL:*:OVERHAUL|ledger|P-A", "peer", ["", "", "ledger:P-A"]],
-      ["c:WI.COOL:*:OVERHAUL|ledger|stat", "stat", ["", "", "ledger:STAT"]],
+      ["c:WI.COOL:*:OVERHAUL|ledger0|P-A", "peer", ["", "", "ledger:P-A"]],
+      ["c:WI.COOL:*:OVERHAUL|ledger0|stat", "stat", ["", "", "ledger:STAT"]],
       ["c:WI.DRAFT", "node", ["通風設備", "", ""]],
       ["c:WI.DRAFT.FDF", "node", ["", "押込送風機", ""]],
       ["c:WI.DRAFT.FDF:INSPECT", "node", ["", "", work.INSPECT.label]],
-      ["c:WI.DRAFT.FDF:INSPECT|ledger|P-A", "peer", ["", "", "ledger:P-A"]],
-      ["c:WI.DRAFT.FDF:INSPECT|ledger|P-B", "peer", ["", "", "ledger:P-B"]],
-      ["c:WI.DRAFT.FDF:INSPECT|ledger|stat", "stat", ["", "", "ledger:STAT"]],
-      ["c:WI.DRAFT.FDF:INSPECT|ring|R-A", "peer", ["", "", "ring:R-A"]],
-      ["c:WI.DRAFT.FDF:INSPECT|ring|stat", "stat", ["", "", "ring:STAT"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ledger0|P-A", "peer", ["", "", "ledger:P-A"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ledger0|P-B", "peer", ["", "", "ledger:P-B"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ledger0|stat", "stat", ["", "", "ledger:STAT"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ring1|R-A", "peer", ["", "", "ring:R-A"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ring1|stat", "stat", ["", "", "ring:STAT"]],
       ["c:WI.DRAFT.FDF:OVERHAUL", "node", ["", "", work.OVERHAUL.label]],
       ["c:WI.DRAFT.IDF", "node", ["", "誘引通風機", ""]],
       ["c:WI.DRAFT.IDF:INSPECT", "node", ["", "", work.INSPECT.label]],
       ["c:unmapped", "unmapped", ["UNMAPPED", "", ""]],
     ]);
     const row = (id: string) => m.rows.find((r) => r.id === id)!;
-    expect(row("c:WI.DRAFT.FDF:INSPECT|ledger|P-A")).toMatchObject({ place: "ledger", peerBands: { interval: "I1" }, cells: { fy2019: { mark: "actual" }, fy2020: { mark: "actual" } } });
-    expect(row("c:WI.DRAFT.FDF:INSPECT|ledger|stat").stats).toEqual(stats);
+    expect(row("c:WI.DRAFT.FDF:INSPECT|ledger0|P-A")).toMatchObject({ place: "ledger", peerBands: { interval: "I1" }, cells: { fy2019: { mark: "actual" }, fy2020: { mark: "actual" } } });
+    expect(row("c:WI.DRAFT.FDF:INSPECT|ledger0|stat").stats).toEqual(stats);
     // 自分の計画に無い行は、そう分かる。自分の行は分からない印を持たない
     expect(row("c:WI.COOL:*:OVERHAUL").ownMissing).toBe(true);
     expect(row("c:WI.DRAFT.FDF:INSPECT").ownMissing).toBeUndefined();
     // パックに無い分類は行にせず、数える（黙って捨てない）
     expect(m.unknownPeerClasses).toEqual(["XX.NOPE"]);
+    // 全部の行には、似た施設の行と統計の行も入る（見えている行が全部の行を越えない）
+    expect(m.totalRows).toBe(m.rows.length);
+    expect(buildChart(small(), catalog, labels, { ...common, foldLevel: 1 }).totalRows).toBe(m.totalRows);
     // 似た施設の年度も列になる（自分の計画は 2020 から）
     expect(m.periods.map((p) => p.fiscalYear)).toContain(2019);
     expect(m.periods.map((p) => p.fiscalYear)).toContain(2024);
+  });
+
+  it("同じ種類の場が 2 つ（輪が 2 つ）でも、行の鍵はぶつからない（場ごとに分ける）", () => {
+    const ring = peers.places[1]!;
+    const two: PeerOverlay = { ...peers, places: [ring, ring] };
+    const ids = buildChart(small(), catalog, labels, { ...common, peers: two }).rows.map((r) => r.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain("c:WI.DRAFT.FDF:INSPECT|ring0|R-A");
+    expect(ids).toContain("c:WI.DRAFT.FDF:INSPECT|ring1|R-A");
   });
 
   it("畳むと似た施設の行も隠れる。月の表・台帳の段の行には重ねない", () => {

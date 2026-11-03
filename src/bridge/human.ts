@@ -290,6 +290,8 @@ export class HumanService {
           classNames: pack.classNames,
           axes: pack.axes,
           spec: pack.spec.axes,
+          /** 全国の表に列のある軸（受け手が選べるのはこの軸だけ） */
+          tableAxes: pack.table.axes.map((a) => a.key),
           places: loaded.status,
           ledgerRoot: s.ledger,
         };

@@ -22,6 +22,7 @@ export const HUMAN_TEXT = {
     exists: "同じ版のファイルがもうあります。閉じて開き直してください。",
     revertUnknown: "戻す先の版がありません。",
     rootInvalid: "置き場所は、ドライブから始まる絶対の道で書いてください（例 D:\\MOYAI）。",
+    ledgerInvalid: "公開の台帳の clone の場所は、ドライブから始まる絶対の道で書いてください（例 C:\\moyai-ledger）。",
     packNotReady: "このパックには、共有に使う公開語彙・見え方の軸・全国の表のどれかがありません（未実装）。",
     passphraseShort: "合言葉は 8 文字以上にしてください。",
     writeFailed: "輪のフォルダに書けませんでした。",
@@ -139,6 +140,10 @@ export const HUMAN_TEXT = {
     created: "輪を作りました。この指紋を仲間と電話で読み合わせてください。",
     fingerprint: "指紋",
     peersNotYet: "仲間の指紋を読み合わせて「確認済み」にする画面は未実装です。",
+    ledgerTitle: "公開の台帳の clone",
+    ledgerLead: "星取表で似た施設と並べるときに読む、公開の台帳のリポジトリを clone したフォルダです。読むのは、受け手の関数で確かめて ✓ になった束だけです。clone と git pull は、あなたが端末でします。",
+    ledgerInput: "台帳の clone の場所（絶対の道。空にすると使わない）",
+    ledgerNone: "選んでいません",
   },
 
   checkpoint: {

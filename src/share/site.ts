@@ -11,6 +11,9 @@ import { aggregate, latestPerKey, sectionsOf, type Aggregate, type StatCell } fr
 import type { Profile } from "./k";
 import type { LedgerRead } from "./ledger";
 import type { SharePack } from "./pack";
+import { bandShort, statText } from "./stat-text";
+
+export { bandShort };
 
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === '"' ? "&quot;" : "&#39;"));
@@ -63,21 +66,6 @@ export function siteCsp(css: string = SITE_CSS): string {
     "base-uri 'none'",
     "form-action 'none'",
   ].join("; ");
-}
-
-/** 帯のコードを、短い日本語にする（I6_7 → 6〜7 年、W1000P → 1000 人・日以上）。知らない形はコードのまま */
-export function bandShort(code: string): string {
-  const m = /^([IWD])(\d+)(?:_(\d+)|(P))?$/.exec(code);
-  if (!m) return code;
-  const unit = T.bandUnit[m[1]!] ?? "";
-  if (m[4] === "P") return T.bandAtLeast(m[2]!, unit);
-  return T.bandRange(m[2]!, m[3] ?? m[2]!, unit);
-}
-
-function statText(c: StatCell): string {
-  if (c.shown === "x") return T.statX;
-  if (c.shown === "range") return T.statRange(bandShort(c.lo), bandShort(c.hi), c.n);
-  return T.statMedian(bandShort(c.median), bandShort(c.q1), bandShort(c.q3), c.n);
 }
 
 /** 見え方の軸の値を日本語にする（全国の表の名前。粗くした帯は範囲から言う） */

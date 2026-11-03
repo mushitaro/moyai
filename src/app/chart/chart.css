@@ -143,3 +143,39 @@
   padding: var(--sp-6) var(--sp-5);
   background: var(--layer-2);
 }
+
+/* 似た施設の行：自分の行と混ぜない。地を 1 段沈め、段の名前を text-2 に（色相は足さない）。印は同じ形 */
+.moyai-row-peer {
+  background: var(--layer-1);
+}
+.moyai-row-peer .moyai-lv {
+  color: var(--text-2);
+}
+/* 統計の行：印ではなく帯で見せる。段の名前は太さで分け、帯の字は text-2 */
+.moyai-row-stat {
+  background: var(--layer-1);
+}
+.moyai-row-stat .moyai-lv {
+  color: var(--text-3);
+  font-weight: 500;
+}
+.moyai-row-stat .moyai-band {
+  color: var(--text-2);
+}
+/* 似た施設にだけある行（自分の計画に無い）：段の名前を text-3 に */
+.moyai-row-own-missing .moyai-lv {
+  color: var(--text-3);
+}
+
+/* 帯の列：段の列のすぐ右。数の書体。右に強い罫を引いて、年度の列と分ける */
+.moyai-band {
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moyai-band,
+.moyai-band-head {
+  border-right: 1px solid var(--line-strong) !important;
+}

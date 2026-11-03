@@ -4,12 +4,15 @@
 // 橋渡しとつながっていなければ押せず、理由を横に出す。
 import { Alert, Button, Group, Modal, Stack, Table, Text, Title } from "@mantine/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildChart, nextFoldLevel, type Layer, type PeriodMode, type RowMode } from "../../plan/chart";
+import { buildChart, nextFoldLevel, type ChartRow, type Layer, type PeerOverlay, type PeriodMode, type RowMode } from "../../plan/chart";
+import { STAT_FIELDS, type StatField } from "../../share/bands";
+import type { Comparison } from "../../share/receive";
 import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
-import { ChartGrid, cellAria, formatCell } from "../chart/grid";
+import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
+import { PeerPanel } from "../components/PeerPanel";
 import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
@@ -17,6 +20,7 @@ import { setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-s
 import { HUMAN_TEXT, TEXT } from "../text";
 
 const T = TEXT.chart;
+const P = T.peers;
 const DEV_PLAN_NAME = /^[a-z0-9-]{1,64}$/;
 const DETAILS_MAX = 300;
 
@@ -133,6 +137,31 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
   );
 }
 
+/** 似た施設の行と統計の行を選んだとき、横の板に出す帯と統計 */
+function PeerSide({ row }: { row: ChartRow }) {
+  const name = row.levelCells[row.levelCells.length - 1] ?? "";
+  return (
+    <Stack gap={4} data-testid="peer-side" data-kind={row.kind}>
+      <Text size="xs" c="dimmed">
+        {row.kind === "peer" ? P.side.peer : P.side.stat} · {P.side.place}：{row.place ? P.placeName[row.place] : P.side.none}
+      </Text>
+      <Text size="sm" fw={700}>
+        {name}
+      </Text>
+      {STAT_FIELDS.map((f) => (
+        <Text key={f} size="sm" className="moyai-num">
+          {P.bandCols[f]}：{bandCellText(row, f) || P.side.none}
+        </Text>
+      ))}
+      {row.kind === "stat" && (
+        <Text size="xs" c="dimmed">
+          {P.side.statNote}
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
 function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
   const { client, state: conn } = useConnection();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -153,6 +182,19 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
   const [selected, setSelected] = useState<{ rowId: string; periodKey: string | null } | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editNotice, setEditNotice] = useState(false);
+  const [peersOpen, setPeersOpen] = useState(false);
+  const [band, setBand] = useState<StatField>("interval");
+  const [comparison, setComparison] = useState<Comparison | null>(null);
+  const overlay = useMemo<PeerOverlay | undefined>(
+    () =>
+      comparison
+        ? {
+            places: comparison.places.flatMap((p) => (p.status === "shown" ? [{ kind: p.kind, rows: p.agg.rows }] : [])),
+            labels: { wholeSystem: P.wholeSystem, peer: (k, l) => P.peerRow(P.placeShort[k] ?? k, l), stat: (k) => P.statRow(P.placeShort[k] ?? k) },
+          }
+        : undefined,
+    [comparison],
+  );
   const gridEl = useRef<HTMLDivElement>(null);
   const grid = useRef<ChartGrid | null>(null);
   const firstPaint = useRef(true);
@@ -163,7 +205,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
       plan,
       catalog ?? emptyCatalog(),
       { levelFallback: T.levelFallback, commonLevels: T.commonLevels, unmapped: T.unmapped, series: T.series },
-      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel },
+      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel, ...(overlay ? { peers: overlay } : {}) },
     );
     try {
       performance.measure("moyai-chart-build", { start: t0, end: performance.now() });
@@ -171,7 +213,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
       // 測れない環境では測らない
     }
     return m;
-  }, [plan, catalog, mode, period, layer, foldLevel]);
+  }, [plan, catalog, mode, period, layer, foldLevel, overlay]);
 
   const onFold = useCallback(
     (level: number) => {
@@ -209,8 +251,8 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
   }, []);
 
   useEffect(() => {
-    grid.current?.update(model, foldLevel);
-  }, [model, foldLevel]);
+    grid.current?.update(model, foldLevel, band);
+  }, [model, foldLevel, band]);
 
   const switchMode = (v: string) => {
     const m = v as RowMode;
@@ -218,6 +260,8 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
     setMode(m);
     setFoldLevel(readFold(m));
     setSelected(null);
+    // 似た施設は共通の設備項目の行だけ。台帳の段の行へ移ったら閉じる（比べも AI の読める所から消える）
+    if (m !== "common") setPeersOpen(false);
   };
   const switchPeriod = (v: string) => {
     performance.mark("moyai-chart-update-start");
@@ -314,9 +358,34 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
             {T.adjustedSame}
           </Text>
         )}
-        {mode === "common" && (
+        {mode === "common" ? (
+          <Group gap="xs" wrap="nowrap">
+            <Button size="xs" variant="default" onClick={() => setPeersOpen((o) => !o)} disabled={!canConfirm || !catalog} data-testid="peers-toggle" aria-pressed={peersOpen}>
+              {peersOpen ? P.close : P.open}
+            </Button>
+            {peersOpen && period === "month" && (
+              <Text size="xs" c="orange" data-testid="peers-only-year">
+                {P.onlyYear}
+              </Text>
+            )}
+            {model.peersShown && (
+              <Switch
+                aria-label={P.bandLabel}
+                data-testid="peer-band"
+                value={band}
+                onChange={setBand}
+                data={STAT_FIELDS.map((f) => ({ value: f, label: P.bandCols[f] }))}
+              />
+            )}
+          </Group>
+        ) : (
           <Text size="xs" c="dimmed">
-            {T.similarNotYet}
+            {P.onlyCommon}
+          </Text>
+        )}
+        {model.unknownPeerClasses.length > 0 && (
+          <Text size="xs" c="orange" data-testid="peers-unknown">
+            {P.unknownClasses(model.unknownPeerClasses.length)}
           </Text>
         )}
         {!catalog && (
@@ -336,6 +405,8 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
         )}
       </Group>
 
+      {peersOpen && mode === "common" && catalog && <PeerPanel plan={plan} onComparison={setComparison} />}
+
       <div style={{ flex: 1, display: "flex", minHeight: 0, paddingBottom: 28 }}>
         <div style={{ flex: 1, minWidth: 0, paddingLeft: 16 }}>
           <div ref={gridEl} className="moyai-chart-grid" data-testid="chart-grid" data-mode={mode} data-fold={foldLevel ?? ""} />
@@ -344,7 +415,9 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
           <Title order={4} mb="xs">
             {T.source.title}
           </Title>
-          {!selRow || !selPeriod ? (
+          {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
+            <PeerSide row={selRow} />
+          ) : !selRow || !selPeriod ? (
             <Text size="sm" c="dimmed">
               {T.source.empty}
             </Text>

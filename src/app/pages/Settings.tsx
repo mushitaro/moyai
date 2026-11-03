@@ -1,4 +1,4 @@
-// 設定（docs/plan.md §2.14）：置き場所（Documents と同期フォルダの知らせ）、輪のフォルダと鍵。
+// 設定（docs/plan.md §2.14）：置き場所（Documents と同期フォルダの知らせ）、輪のフォルダと鍵、公開の台帳の clone の場所（受け手が読む）。
 // 主ボタンは「保存」（変えたときだけ）で、見出しの行の右端。輪を作るのは副のボタンから開くダイアログ。
 import { Alert, Button, Code, Container, Group, Modal, NativeSelect, PasswordInput, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useCallback, useEffect, useState } from "react";
@@ -22,6 +22,7 @@ interface SettingsBody {
   chosenRoot: string | null;
   root: string | null;
   rootSynced: Synced | null;
+  ledger: string | null;
   rings: { ringId: string; root: string; pack: string; key: string; fingerprint: string | null; synced: Synced | null }[];
   packs: { id: string; name: string; ready: boolean; reason: string | null }[];
 }
@@ -116,6 +117,7 @@ export function Settings() {
   const [s, setS] = useState<SettingsBody | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [root, setRoot] = useState("");
+  const [ledger, setLedger] = useState("");
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -126,17 +128,19 @@ export function Settings() {
     setError(null);
     setS(r.body);
     setRoot(r.body.chosenRoot ?? "");
+    setLedger(r.body.ledger ?? "");
   }, [client]);
 
   useEffect(() => {
     if (state.kind === "open") void load();
   }, [state.kind, load]);
 
-  const changed = s !== null && (root.trim() === "" ? null : root.trim()) !== s.chosenRoot;
+  const orNull = (v: string) => (v.trim() === "" ? null : v.trim());
+  const changed = s !== null && (orNull(root) !== s.chosenRoot || orNull(ledger) !== s.ledger);
   const save = async () => {
     if (!changed) return;
     setBusy(true);
-    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: root.trim() === "" ? null : root.trim() }));
+    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: orNull(root), ledger: orNull(ledger) }));
     setBusy(false);
     if (!r.ok) return setError(r.message);
     setSaved(true);
@@ -201,6 +205,19 @@ export function Settings() {
                   {T.saved}
                 </Text>
               )}
+            </Stack>
+            <Stack gap="xs" data-testid="ledger-setting">
+              <Title order={4}>{T.ledgerTitle}</Title>
+              <Text size="xs" c="dimmed">
+                {T.ledgerLead}
+              </Text>
+              <Group gap="xs">
+                <Text size="sm" fw={700}>
+                  {T.current}
+                </Text>
+                <Code data-testid="current-ledger">{s.ledger ?? T.ledgerNone}</Code>
+              </Group>
+              <TextInput label={T.ledgerInput} value={ledger} onChange={(e) => (setLedger(e.currentTarget.value), setSaved(false))} data-testid="ledger-input" />
             </Stack>
             <Stack gap="xs">
               <Title order={4}>{T.ringsTitle}</Title>
