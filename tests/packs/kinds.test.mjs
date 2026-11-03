@@ -18,15 +18,20 @@ const STATES = new Set(["照合済", "未確認"]);
 const ALLOWED_HOSTS = new Set(["laws.e-gov.go.jp", "elaws.e-gov.go.jp", "www.e-gov.go.jp", "env.go.jp", "www.env.go.jp", "www.mhlw.go.jp", "www.mlit.go.jp"]);
 const SOURCE_KEYS = ["title", "issuer", "url", "state", "checked"];
 
-/** docs/plan.md §2.1 の「16 種（…）」を、書かれた順に返す。 */
+/**
+ * docs/plan.md §2.1 の「20 種（…）」を、書かれた順に返す。
+ * 書き方は「16 種の名前を・でつないだもの」「、と運営者の決定（…）で足した」「足した 4 種を・でつないだもの」。
+ * 足した 4 種の「破砕・切断機」は名前の中に・を含むので、足した側は V1_ADDED_NAMES と照らす。
+ */
 function planKindNames() {
   const plan = read("docs/plan.md");
   const start = plan.indexOf("### 2.1 ");
   assert.ok(start >= 0, "docs/plan.md に §2.1 が無い");
   const end = plan.indexOf("\n### ", start + 1);
   const section = plan.slice(start, end < 0 ? undefined : end);
-  const m = /16 種（([^）]+)）/.exec(section);
-  assert.ok(m, "§2.1 に「16 種（…）」が無い");
+  const m = /20 種（([^、）]+)、と運営者の決定（[^）]*）で足した([^）]+)）/.exec(section);
+  assert.ok(m, "§2.1 に「20 種（…、と…足した…）」が無い");
+  assert.equal(m[2], V1_ADDED_NAMES.join("・"), "§2.1 の足した 4 種の書き方が kinds.json の順と合わない");
   return m[1].split("・");
 }
 

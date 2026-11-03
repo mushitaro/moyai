@@ -57,7 +57,15 @@ test("リポジトリの仕事の仕様はどれも読め、役が config にあ
   const files = readdirSync("ops/tasks").filter((f) => f.endsWith(".md"));
   assert.ok(files.length >= 2);
   for (const f of files) {
-    const s = parseTaskSpec(readFileSync(join("ops/tasks", f), "utf8"));
+    const text = readFileSync(join("ops/tasks", f), "utf8");
+    // この PC のサブエージェントに渡す仕様（runner: local-subagent）は、Managed Agents の定義を持たないので、
+    // 名前と役だけを確かめる
+    if (/^runner:\s*local-subagent\s*$/m.test(text)) {
+      assert.match(text, new RegExp(`^id:\\s*${f.replace(/\.md$/, "")}\\s*$`, "m"));
+      assert.ok(config.roles[/^role:\s*(\S+)/m.exec(text)?.[1]], `${f} の役が config に無い`);
+      continue;
+    }
+    const s = parseTaskSpec(text);
     assert.equal(`${s.meta.id}.md`, f);
     assert.ok(config.roles[s.meta.role], s.meta.role);
     assert.ok(readdirSync("ops/agents").includes(`${s.meta.agent}.json`));
