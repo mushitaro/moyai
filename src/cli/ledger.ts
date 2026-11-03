@@ -141,7 +141,7 @@ export const LEDGER_USAGE = `使い方：
 export const INIT_TEXT = {
   usage: "使い方：moyai ledger init --root <台帳のリポジトリの根（絶対の道）> --pack <パック> [--month YYYY-MM]（人だけ。端末から）",
   intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに合言葉で包んで置きます（台帳には書きません）。",
-  passphrase: "管理者の鍵の合言葉（打った文字は画面に出ません。打ち終えたら Enter）：",
+  passphrase: "管理者の鍵の合言葉（打った文字は「*」で出ます。日本語は変換を確定してから Enter）：",
   passphraseAgain: "もう一度：",
   mismatch: "合言葉が合いません。何も書いていません。",
   cancelled: "やめました。何も書いていません。",

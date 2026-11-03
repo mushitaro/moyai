@@ -33,7 +33,7 @@ export const CLI_TEXT = {
   summaryOk: "すべて ✓ です。",
   summaryNg: (n: number) => `✗ が ${n} 件あります。`,
   keysUsage: "使い方：moyai keys create --root <輪のフォルダ（絶対の道）> --pack <パック ID>",
-  passphrase: "合言葉（8 文字以上。打った文字は画面に出ません。打ち終えたら Enter）：",
+  passphrase: "合言葉（8 文字以上。打った文字は「*」で出ます。日本語は変換を確定してから Enter）：",
   passphraseAgain: "もう一度：",
   passphraseShort: `合言葉は ${PASSPHRASE_MIN} 文字以上にしてください。`,
   passphraseMismatch: "2 回の合言葉が違います。作りませんでした。",
@@ -141,6 +141,7 @@ export interface HiddenIO {
  * 合言葉を、画面に出さずに 1 行読む。Ctrl+C か、空のときの Ctrl+D なら null（やめた）。
  * readline は使わない（端末の行を描き直すときに問いの文字まで消すので、問いが見えず止まったように見えた）。
  * 端末を生のモードにして、Enter・Backspace・Ctrl+C を自分で読む。矢印などのエスケープの並びは捨てる。
+ * 受け取った 1 文字ごとに「*」を出す（日本語を変換して確定すると、変換の欄の文字が消えて、受け取れたかが見えなかった）。
  */
 export function askHidden(prompt: string, io: HiddenIO = { input: process.stdin, output: process.stderr }): Promise<string | null> {
   return new Promise((res) => {
@@ -163,12 +164,14 @@ export function askHidden(prompt: string, io: HiddenIO = { input: process.stdin,
           continue;
         }
         if (ch === "\u007f" || ch === "\b") {
+          if (buf.length > 0) output.write("\b \b");
           buf = buf.slice(0, -1);
           continue;
         }
         if (ch === "\u001b") break;
         if (ch < " ") continue;
         buf.push(ch);
+        output.write("*");
       }
     };
     output.write(prompt);

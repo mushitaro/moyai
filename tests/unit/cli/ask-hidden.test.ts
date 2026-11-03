@@ -1,5 +1,5 @@
 // 合言葉を画面に出さずに読む（人だけの CLI の ledger init・keys create が使う）。
-// 問いの文字が端末に残ること（readline の描き直しで消えて、止まったように見えたことがある）、打った文字を出さないこと、
+// 問いの文字が端末に残ること（readline の描き直しで消えて、止まったように見えたことがある）、打った文字の代わりに「*」を出すこと、
 // Backspace・日本語・貼り付け・Ctrl+C を、偽の端末で確かめる。
 import { EventEmitter } from "node:events";
 import { describe, expect, it } from "vitest";
@@ -23,14 +23,14 @@ function fakeTerminal() {
 }
 
 describe("askHidden", () => {
-  it("問いを出し、打った文字は出さず、Enter で返す。端末を生のモードから戻す", async () => {
+  it("問いを出し、打った文字の代わりに 1 文字ごとに「*」を出し、Enter で返す。端末を生のモードから戻す", async () => {
     const t = fakeTerminal();
     const p = askHidden("合言葉：", t.io);
     expect(t.written.join("")).toBe("合言葉：");
     t.type("架空の");
     t.type("合言葉\r");
     expect(await p).toBe("架空の合言葉");
-    expect(t.written.join("")).toBe("合言葉：\n");
+    expect(t.written.join("")).toBe("合言葉：******\n");
     expect(t.raw).toEqual([true, false]);
     expect(t.input.listenerCount("data")).toBe(0);
   });
@@ -43,6 +43,7 @@ describe("askHidden", () => {
     t.type("え\b\b");
     t.type("か\r");
     expect(await p).toBe("あか");
+    expect(t.written.join("")).toBe("？***\b \b*\b \b\b \b*\n");
   });
 
   it("貼り付けで改行まで 1 度に来ても、最初の改行までを返す", async () => {
