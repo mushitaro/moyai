@@ -8,7 +8,7 @@
 | 日付 | 時刻（JST） | コミット | node:test | vitest | 結果 |
 |---|---|---|---:|---:|---|
 | 2026-11-03 | 21:58 | `3f98947`+ | 138 | 599 | 通った |
-| 2026-11-04 | 08:13 | `5e02fe9`+ | 140 | 650 | 通った |
+| 2026-11-04 | 08:31 | `59fcad9`+ | 140 | 651 | 通った |
 
 ## 取り込みの物差し（import.dev、工場の開発用の資料）
 
@@ -79,9 +79,17 @@
 | heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | houkoku/R5-teiki-seibi_sagyo-houkoku.pdf | pdf | 0 | 155 | 計画なし（測れない） |
 | heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | houkoku/R7-DCS-koshin_kansei-houkoku.pdf | pdf | 0 | 17 | 計画なし（測れない） |
 | heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | shashin/IMG_20231012_houkoku-p1.jpg | jpg | 読んでいない | — | — |
+| heldout-2 | reader-freeze-2 | 2026-11-04 08:29 | daicho/setsubi-daicho_R8.xlsx | xlsx | 0 | 0 | 計画なし（測れない） |
+| heldout-2 | reader-freeze-2 | 2026-11-04 08:29 | hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx | xlsx | 0 | 0 | 計画なし（測れない） |
+| heldout-2 | reader-freeze-2 | 2026-11-04 08:29 | daily/hozen-system_WO-export_2022-2026.csv | csv | 0 | 713 | 計画なし（測れない） |
+| heldout-2 | reader-freeze-2 | 2026-11-04 08:29 | daily/sagyo-nippo-shukei_R8-kamiki.csv | csv | 0 | 86 | 計画なし（測れない） |
+| heldout-2 | reader-freeze-2 | 2026-11-04 08:29 | reports/kanryo-hokoku_R5_1go-zenkyushi.pdf | pdf | 15 | 90 | 計画なし（測れない） |
+| heldout-2 | reader-freeze-2 | 2026-11-04 08:29 | reports/sekou-keikaku_R8_2go-teiki.pdf | pdf | 167 | 28 | 計画なし（測れない） |
+| heldout-2 | reader-freeze-2 | 2026-11-04 08:29 | photos/IMG_20261003_0841.jpg | jpg | 読んでいない | — | — |
 
 | 組 | ⑤ 質問（台本が答えた・開いたまま） | 計画 | ⑥ 取り戻せた割合 | ⑥ のうち工数 | ⑥ のうち日数 |
 |---|---|---|---|---|---|
 | heldout-1 | 24（9・15） | 作らなかった（未解決のセル 1428・答えの無い質問 15） | 0%（0/142） | 0%（0/60） | 0%（0/73） |
+| heldout-2 | 63（22・41） | 作らなかった（未解決のセル 917・答えの無い質問 41） | 0%（0/142） | 0%（0/63） | 0%（0/83） |
 
 見ていない様式の結果は、測った値のまま出す（直したら、新しい組を新しい凍結の読み手で測る）。手順と正解の形は samples/heldout/README.md。写真は AI が読むので、この台本では読まない。
