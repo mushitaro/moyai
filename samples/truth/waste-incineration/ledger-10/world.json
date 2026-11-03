@@ -1,0 +1,3075 @@
+{
+  "documents": [
+    "ledger",
+    "hoshitori"
+  ],
+  "equipment": [
+    {
+      "base_name": "ごみ投入クレーン",
+      "code": "WI.RECV.CRANE",
+      "furnace": null,
+      "furnace_label": "共通",
+      "id": "E01",
+      "install_year": 1998,
+      "key": "crane",
+      "name": "ごみ投入クレーン",
+      "parts": [],
+      "path": [
+        "受入供給設備",
+        "ピット系",
+        "クレーン"
+      ],
+      "spec": [
+        "バケット容量 3 m3",
+        "吊上荷重 5 t"
+      ],
+      "system": "受入供給設備",
+      "system_key": "recv",
+      "tag": "CRN"
+    },
+    {
+      "base_name": "搬入計量装置",
+      "code": "WI.RECV.SCALE",
+      "furnace": null,
+      "furnace_label": "共通",
+      "id": "E02",
+      "install_year": 1998,
+      "key": "scale",
+      "name": "搬入計量装置",
+      "parts": [],
+      "path": [
+        "受入供給設備",
+        "搬入系",
+        "計量"
+      ],
+      "spec": [
+        "ロードセル式 20 t"
+      ],
+      "system": "受入供給設備",
+      "system_key": "recv",
+      "tag": "SCL"
+    },
+    {
+      "base_name": "ごみ破砕前処理装置",
+      "code": "WI.COMB.FBI_PRETREAT",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E03",
+      "install_year": 1998,
+      "key": "pretreat",
+      "name": "1系 ごみ破砕前処理装置",
+      "parts": [],
+      "path": [
+        "燃焼設備",
+        "流動床系",
+        "前処理"
+      ],
+      "spec": [
+        "二軸回転式",
+        "処理能力 8 t/h"
+      ],
+      "system": "燃焼設備",
+      "system_key": "comb",
+      "tag": "PRT"
+    },
+    {
+      "base_name": "流動床炉本体",
+      "code": "WI.COMB.FBI_FURNACE",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E04",
+      "install_year": 1998,
+      "key": "furnace",
+      "name": "1系 流動床炉本体",
+      "parts": [],
+      "path": [
+        "燃焼設備",
+        "流動床系",
+        "炉"
+      ],
+      "spec": [
+        "処理能力 60 t/日",
+        "流動砂 珪砂"
+      ],
+      "system": "燃焼設備",
+      "system_key": "comb",
+      "tag": "FBF"
+    },
+    {
+      "base_name": "廃熱ボイラ",
+      "code": "WI.COOL.BOILER",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E05",
+      "install_year": 1998,
+      "key": "boiler",
+      "name": "1系 廃熱ボイラ",
+      "parts": [],
+      "path": [
+        "冷却設備",
+        "廃熱回収系",
+        "ボイラ"
+      ],
+      "spec": [
+        "強制循環式",
+        "蒸気圧力 2.0 MPa"
+      ],
+      "system": "冷却設備",
+      "system_key": "cool",
+      "tag": "BLR"
+    },
+    {
+      "base_name": "ガス減温塔",
+      "code": "WI.COOL.WATER_SPRAY",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E06",
+      "install_year": 1998,
+      "key": "spray",
+      "name": "1系 ガス減温塔",
+      "parts": [],
+      "path": [
+        "冷却設備",
+        "減温系",
+        "噴霧"
+      ],
+      "spec": [
+        "水噴霧式"
+      ],
+      "system": "冷却設備",
+      "system_key": "cool",
+      "tag": "QNC"
+    },
+    {
+      "base_name": "バグフィルタ",
+      "code": "WI.FLUE.DUST",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E07",
+      "install_year": 1998,
+      "key": "dust",
+      "name": "1系 バグフィルタ",
+      "parts": [],
+      "path": [
+        "排ガス処理設備",
+        "集じん系",
+        "ろ過式"
+      ],
+      "spec": [
+        "ろ布面積 900 m2"
+      ],
+      "system": "排ガス処理設備",
+      "system_key": "flue",
+      "tag": "BGF"
+    },
+    {
+      "base_name": "脱塩装置",
+      "code": "WI.FLUE.HCL_SOX",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E08",
+      "install_year": 1998,
+      "key": "hcl",
+      "name": "1系 脱塩装置",
+      "parts": [],
+      "path": [
+        "排ガス処理設備",
+        "ガス処理系",
+        "酸性ガス"
+      ],
+      "spec": [
+        "乾式 消石灰吹込"
+      ],
+      "system": "排ガス処理設備",
+      "system_key": "flue",
+      "tag": "DSC"
+    },
+    {
+      "base_name": "脱硝装置",
+      "code": "WI.FLUE.NOX",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E09",
+      "install_year": 2010,
+      "key": "nox",
+      "name": "1系 脱硝装置",
+      "parts": [],
+      "path": [
+        "排ガス処理設備",
+        "ガス処理系",
+        "窒素酸化物"
+      ],
+      "spec": [
+        "無触媒脱硝"
+      ],
+      "system": "排ガス処理設備",
+      "system_key": "flue",
+      "tag": "NXR"
+    },
+    {
+      "base_name": "押込ファン",
+      "code": "WI.DRAFT.FDF",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E10",
+      "install_year": 1998,
+      "key": "fdf",
+      "name": "1系 押込ファン",
+      "parts": [],
+      "path": [
+        "送排風設備",
+        "給気系",
+        "押込"
+      ],
+      "spec": [
+        "風量 900 m3/min"
+      ],
+      "system": "送排風設備",
+      "system_key": "draft",
+      "tag": "FDF"
+    },
+    {
+      "base_name": "誘引送風機",
+      "code": "WI.DRAFT.IDF",
+      "furnace": 1,
+      "furnace_label": "1系",
+      "id": "E11",
+      "install_year": 1998,
+      "key": "idf",
+      "name": "1系 誘引送風機",
+      "parts": [],
+      "path": [
+        "送排風設備",
+        "排気系",
+        "誘引"
+      ],
+      "spec": [
+        "風量 1,600 m3/min",
+        "電動機 160 kW"
+      ],
+      "system": "送排風設備",
+      "system_key": "draft",
+      "tag": "IDF"
+    },
+    {
+      "base_name": "灰ピットクレーン",
+      "code": "WI.ASHOUT.ASH_CRANE",
+      "furnace": null,
+      "furnace_label": "共通",
+      "id": "E12",
+      "install_year": 1998,
+      "key": "ashcrane",
+      "name": "灰ピットクレーン",
+      "parts": [],
+      "path": [
+        "灰出し設備",
+        "灰搬出系",
+        "クレーン"
+      ],
+      "spec": [
+        "バケット容量 1.5 m3"
+      ],
+      "system": "灰出し設備",
+      "system_key": "ashout",
+      "tag": "ACR"
+    },
+    {
+      "base_name": "高圧受電盤",
+      "code": "WI.ELEC.SUBSTATION",
+      "furnace": null,
+      "furnace_label": "共通",
+      "id": "E13",
+      "install_year": 1998,
+      "key": "substation",
+      "name": "高圧受電盤",
+      "parts": [],
+      "path": [
+        "電気設備",
+        "受変電系",
+        "受電"
+      ],
+      "spec": [
+        "受電 6.6 kV"
+      ],
+      "system": "電気設備",
+      "system_key": "elec",
+      "tag": "SUB"
+    },
+    {
+      "base_name": "分散制御装置",
+      "code": "WI.INST.DCS",
+      "furnace": null,
+      "furnace_label": "共通",
+      "id": "E14",
+      "install_year": 1998,
+      "key": "dcs",
+      "name": "分散制御装置",
+      "parts": [],
+      "path": [
+        "計装設備",
+        "制御系",
+        "中央監視"
+      ],
+      "spec": [
+        "操作卓 2 台"
+      ],
+      "system": "計装設備",
+      "system_key": "inst",
+      "tag": "DCS"
+    }
+  ],
+  "equipment_to_code": {
+    "E01": "WI.RECV.CRANE",
+    "E02": "WI.RECV.SCALE",
+    "E03": "WI.COMB.FBI_PRETREAT",
+    "E04": "WI.COMB.FBI_FURNACE",
+    "E05": "WI.COOL.BOILER",
+    "E06": "WI.COOL.WATER_SPRAY",
+    "E07": "WI.FLUE.DUST",
+    "E08": "WI.FLUE.HCL_SOX",
+    "E09": "WI.FLUE.NOX",
+    "E10": "WI.DRAFT.FDF",
+    "E11": "WI.DRAFT.IDF",
+    "E12": "WI.ASHOUT.ASH_CRANE",
+    "E13": "WI.ELEC.SUBSTATION",
+    "E14": "WI.INST.DCS"
+  },
+  "facility": {
+    "answers": {
+      "ash": "OUT",
+      "capacity_t_per_day": "C100_200",
+      "contract": "SINGLE",
+      "furnace": "FLUID",
+      "turbine": "NO"
+    },
+    "capacity_t_per_day": 120,
+    "furnace_type": "流動床式",
+    "furnaces": [
+      {
+        "label": "1系",
+        "no": 1
+      }
+    ],
+    "id": "ledger-10",
+    "name": "【架空】シラナミ環境センター",
+    "pack": "waste-incineration"
+  },
+  "fictional": true,
+  "fiscal_years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026,
+    2027,
+    2028
+  ],
+  "gaps": [],
+  "inspections": [
+    {
+      "id": "INSP-INTERVAL",
+      "text": "精密機能検査の間が 3 年を越える（通知、第三の 11）"
+    },
+    {
+      "id": "INSP-NOACTUAL",
+      "text": "過去の予定に実績が無い"
+    },
+    {
+      "id": "INSP-NOPLAN",
+      "text": "計画の窓に予定が 1 つも無い機器"
+    }
+  ],
+  "man_day_hours": 8,
+  "plan_window": {
+    "fy_from": 2026,
+    "fy_to": 2028
+  },
+  "rules": {
+    "contractors": [
+      {
+        "from": "2021-04-01",
+        "id": "C1",
+        "name": "【架空】シラナミ保全"
+      }
+    ],
+    "dirt": {
+      "csv": {
+        "brackets_mixed_rate": 0.5,
+        "furnace_spellings": [
+          "{n}号炉",
+          "{zn}号炉",
+          "{n}号機",
+          "No.{n}炉"
+        ],
+        "halfwidth_kana_rate": 0.35,
+        "missing_note": "実績の無い行は書かない"
+      },
+      "sheet": {
+        "unknown_symbol": {
+          "match": {
+            "pattern": "P-REPL-FUT"
+          },
+          "means": "PLANNED",
+          "symbol": "△"
+        },
+        "year_label_styles": {
+          "2019": "long",
+          "2020": "short_nendo",
+          "2021": "seireki",
+          "2022": "short",
+          "2023": "long",
+          "2024": "seireki",
+          "2025": "short_nendo",
+          "2026": "short",
+          "2027": "seireki",
+          "2028": "long"
+        }
+      }
+    },
+    "documents": [
+      "ledger",
+      "hoshitori"
+    ],
+    "equipment_templates": [
+      {
+        "code": "WI.RECV.CRANE",
+        "groups": [
+          "ピット系",
+          "クレーン"
+        ],
+        "install": 1998,
+        "key": "crane",
+        "name": "ごみ投入クレーン",
+        "scope": "common",
+        "spec": [
+          "バケット容量 3 m3",
+          "吊上荷重 5 t"
+        ],
+        "system": "recv",
+        "tag": "CRN"
+      },
+      {
+        "code": "WI.RECV.SCALE",
+        "groups": [
+          "搬入系",
+          "計量"
+        ],
+        "install": 1998,
+        "key": "scale",
+        "name": "搬入計量装置",
+        "scope": "common",
+        "spec": [
+          "ロードセル式 20 t"
+        ],
+        "system": "recv",
+        "tag": "SCL"
+      },
+      {
+        "code": "WI.COMB.FBI_PRETREAT",
+        "groups": [
+          "流動床系",
+          "前処理"
+        ],
+        "install": 1998,
+        "key": "pretreat",
+        "name": "ごみ破砕前処理装置",
+        "scope": "furnace",
+        "spec": [
+          "二軸回転式",
+          "処理能力 8 t/h"
+        ],
+        "system": "comb",
+        "tag": "PRT"
+      },
+      {
+        "code": "WI.COMB.FBI_FURNACE",
+        "groups": [
+          "流動床系",
+          "炉"
+        ],
+        "install": 1998,
+        "key": "furnace",
+        "name": "流動床炉本体",
+        "scope": "furnace",
+        "spec": [
+          "処理能力 60 t/日",
+          "流動砂 珪砂"
+        ],
+        "system": "comb",
+        "tag": "FBF"
+      },
+      {
+        "code": "WI.COOL.BOILER",
+        "groups": [
+          "廃熱回収系",
+          "ボイラ"
+        ],
+        "install": 1998,
+        "key": "boiler",
+        "name": "廃熱ボイラ",
+        "scope": "furnace",
+        "spec": [
+          "強制循環式",
+          "蒸気圧力 2.0 MPa"
+        ],
+        "system": "cool",
+        "tag": "BLR"
+      },
+      {
+        "code": "WI.COOL.WATER_SPRAY",
+        "groups": [
+          "減温系",
+          "噴霧"
+        ],
+        "install": 1998,
+        "key": "spray",
+        "name": "ガス減温塔",
+        "scope": "furnace",
+        "spec": [
+          "水噴霧式"
+        ],
+        "system": "cool",
+        "tag": "QNC"
+      },
+      {
+        "code": "WI.FLUE.DUST",
+        "groups": [
+          "集じん系",
+          "ろ過式"
+        ],
+        "install": 1998,
+        "key": "dust",
+        "name": "バグフィルタ",
+        "scope": "furnace",
+        "spec": [
+          "ろ布面積 900 m2"
+        ],
+        "system": "flue",
+        "tag": "BGF"
+      },
+      {
+        "code": "WI.FLUE.HCL_SOX",
+        "groups": [
+          "ガス処理系",
+          "酸性ガス"
+        ],
+        "install": 1998,
+        "key": "hcl",
+        "name": "脱塩装置",
+        "scope": "furnace",
+        "spec": [
+          "乾式 消石灰吹込"
+        ],
+        "system": "flue",
+        "tag": "DSC"
+      },
+      {
+        "code": "WI.FLUE.NOX",
+        "groups": [
+          "ガス処理系",
+          "窒素酸化物"
+        ],
+        "install": 2010,
+        "key": "nox",
+        "name": "脱硝装置",
+        "scope": "furnace",
+        "spec": [
+          "無触媒脱硝"
+        ],
+        "system": "flue",
+        "tag": "NXR"
+      },
+      {
+        "code": "WI.DRAFT.FDF",
+        "groups": [
+          "給気系",
+          "押込"
+        ],
+        "install": 1998,
+        "key": "fdf",
+        "name": "押込ファン",
+        "scope": "furnace",
+        "spec": [
+          "風量 900 m3/min"
+        ],
+        "system": "draft",
+        "tag": "FDF"
+      },
+      {
+        "code": "WI.DRAFT.IDF",
+        "groups": [
+          "排気系",
+          "誘引"
+        ],
+        "install": 1998,
+        "key": "idf",
+        "name": "誘引送風機",
+        "scope": "furnace",
+        "spec": [
+          "風量 1,600 m3/min",
+          "電動機 160 kW"
+        ],
+        "system": "draft",
+        "tag": "IDF"
+      },
+      {
+        "code": "WI.ASHOUT.ASH_CRANE",
+        "groups": [
+          "灰搬出系",
+          "クレーン"
+        ],
+        "install": 1998,
+        "key": "ashcrane",
+        "name": "灰ピットクレーン",
+        "scope": "common",
+        "spec": [
+          "バケット容量 1.5 m3"
+        ],
+        "system": "ashout",
+        "tag": "ACR"
+      },
+      {
+        "code": "WI.ELEC.SUBSTATION",
+        "groups": [
+          "受変電系",
+          "受電"
+        ],
+        "install": 1998,
+        "key": "substation",
+        "name": "高圧受電盤",
+        "scope": "common",
+        "spec": [
+          "受電 6.6 kV"
+        ],
+        "system": "elec",
+        "tag": "SUB"
+      },
+      {
+        "code": "WI.INST.DCS",
+        "groups": [
+          "制御系",
+          "中央監視"
+        ],
+        "install": 1998,
+        "key": "dcs",
+        "name": "分散制御装置",
+        "scope": "common",
+        "spec": [
+          "操作卓 2 台"
+        ],
+        "system": "inst",
+        "tag": "DCS"
+      }
+    ],
+    "facility": {
+      "answers": {
+        "ash": "OUT",
+        "capacity_t_per_day": "C100_200",
+        "contract": "SINGLE",
+        "furnace": "FLUID",
+        "turbine": "NO"
+      },
+      "capacity_t_per_day": 120,
+      "furnace_type": "流動床式",
+      "furnaces": [
+        {
+          "label": "1系",
+          "no": 1
+        }
+      ],
+      "id": "ledger-10",
+      "name": "【架空】シラナミ環境センター",
+      "pack": "waste-incineration"
+    },
+    "fiscal_years": {
+      "from": 2019,
+      "to": 2028
+    },
+    "gap_injections": [],
+    "inspections": [
+      {
+        "id": "INSP-INTERVAL",
+        "text": "精密機能検査の間が 3 年を越える（通知、第三の 11）"
+      },
+      {
+        "id": "INSP-NOACTUAL",
+        "text": "過去の予定に実績が無い"
+      },
+      {
+        "id": "INSP-NOPLAN",
+        "text": "計画の窓に予定が 1 つも無い機器"
+      }
+    ],
+    "interval_limit_years": 3,
+    "ledger": {
+      "install_style": "wareki",
+      "name_format": "{tag} {name}",
+      "numbering": false,
+      "tag_furnace_suffix": false
+    },
+    "man_day_hours": 8,
+    "outage": {
+      "days": 12,
+      "furnace_overhaul": {
+        "1": {
+          "anchor": "outage_start",
+          "offset_days": -12
+        }
+      },
+      "note": "全休止。1 炉を止めて共通の設備を整備する年の決まり",
+      "start_md": "10-12",
+      "years": [
+        2021,
+        2024,
+        2027
+      ]
+    },
+    "patterns": [
+      {
+        "attr": "OVERHAUL",
+        "bundle": true,
+        "contractor": "C1",
+        "crew": {
+          "base": 4,
+          "jitter": 1
+        },
+        "cycle": {
+          "every": 1,
+          "from": 2019
+        },
+        "days": {
+          "1": 14
+        },
+        "id": "P-OVH",
+        "label": "定期整備（分解）",
+        "per": "furnace",
+        "schedule": {
+          "follow_outage": true,
+          "kind": "fixed",
+          "month_day": {
+            "1": "05-11"
+          }
+        },
+        "tag": "ANNUAL",
+        "targets": [
+          "furnace",
+          "boiler",
+          "pretreat"
+        ]
+      },
+      {
+        "attr": "INSPECT",
+        "bundle": false,
+        "contractor": "C1",
+        "crew": {
+          "base": 4,
+          "jitter": 1
+        },
+        "cycle": {
+          "every": 3,
+          "from": {
+            "1": 2020
+          }
+        },
+        "days": {
+          "1": 5
+        },
+        "id": "P-PREC",
+        "label": "精密機能検査",
+        "per": "furnace",
+        "schedule": {
+          "kind": "fixed",
+          "month_day": {
+            "1": "06-22"
+          }
+        },
+        "tag": "PRECISION",
+        "targets": [
+          "furnace"
+        ]
+      },
+      {
+        "attr": "INSPECT",
+        "bundle": true,
+        "contractor": "C1",
+        "crew": {
+          "base": 2,
+          "jitter": 1
+        },
+        "cycle": {
+          "every": 1,
+          "from": 2019
+        },
+        "id": "P-FLUE",
+        "label": "排ガス処理設備の点検",
+        "per": "furnace",
+        "schedule": {
+          "kind": "with",
+          "pattern": "P-OVH"
+        },
+        "tag": "ANNUAL",
+        "targets": [
+          "dust",
+          "hcl",
+          "nox",
+          "spray"
+        ]
+      },
+      {
+        "attr": "OVERHAUL",
+        "bundle": true,
+        "contractor": "C1",
+        "crew": {
+          "base": 3,
+          "jitter": 1
+        },
+        "cycle": {
+          "every": 2,
+          "from": {
+            "1": 2019
+          }
+        },
+        "id": "P-DRAFT",
+        "label": "送風機の分解整備",
+        "per": "furnace",
+        "schedule": {
+          "kind": "with",
+          "pattern": "P-OVH"
+        },
+        "tag": "ANNUAL",
+        "targets": [
+          "fdf",
+          "idf"
+        ]
+      },
+      {
+        "attr": "INSPECT",
+        "bundle": false,
+        "contractor": "C1",
+        "crew": {
+          "base": 3,
+          "jitter": 0
+        },
+        "cycle": {
+          "every": 1,
+          "from": 2019
+        },
+        "days": 3,
+        "id": "P-CRANE",
+        "label": "投入クレーンの年次点検",
+        "per": "common",
+        "schedule": {
+          "kind": "fixed",
+          "month_day": "06-03"
+        },
+        "tag": "ANNUAL",
+        "targets": [
+          "crane"
+        ]
+      },
+      {
+        "attr": "INSPECT",
+        "bundle": false,
+        "contractor": "C1",
+        "crew": {
+          "base": 2,
+          "jitter": 0
+        },
+        "cycle": {
+          "every": 2,
+          "from": 2019
+        },
+        "days": 2,
+        "id": "P-SCALE",
+        "label": "計量装置の定期検査",
+        "per": "common",
+        "schedule": {
+          "kind": "fixed",
+          "month_day": "07-21"
+        },
+        "tag": "LEGAL",
+        "targets": [
+          "scale"
+        ]
+      },
+      {
+        "attr": "INSPECT",
+        "bundle": false,
+        "contractor": "C1",
+        "crew": {
+          "base": 2,
+          "jitter": 0
+        },
+        "cycle": {
+          "every": 3,
+          "from": 2019
+        },
+        "days": 3,
+        "id": "P-ASHCRANE",
+        "label": "灰クレーンの点検",
+        "per": "common",
+        "schedule": {
+          "kind": "fixed",
+          "month_day": "06-17"
+        },
+        "tag": "ANNUAL",
+        "targets": [
+          "ashcrane"
+        ]
+      },
+      {
+        "attr": "INSPECT",
+        "bundle": true,
+        "contractor": "C1",
+        "crew": {
+          "base": 3,
+          "jitter": 1
+        },
+        "id": "P-OUT-ELEC",
+        "label": "全休止の電気・計装の点検",
+        "per": "common",
+        "schedule": {
+          "kind": "outage"
+        },
+        "tag": "SHUTDOWN",
+        "targets": [
+          "substation",
+          "dcs"
+        ]
+      },
+      {
+        "attr": "UPGRADE",
+        "bundle": false,
+        "contractor": "C1",
+        "crew": {
+          "base": 3,
+          "jitter": 0
+        },
+        "id": "P-UPG-DCS",
+        "label": "分散制御装置の更新（基幹改良）",
+        "note_text": "基幹改良",
+        "per": "common",
+        "schedule": {
+          "dates": [
+            [
+              "2024-10-07",
+              "2025-03-14"
+            ]
+          ],
+          "kind": "dates"
+        },
+        "tag": "MAJOR",
+        "targets": [
+          "dcs"
+        ]
+      },
+      {
+        "attr": "REPLACE",
+        "bundle": false,
+        "contractor": null,
+        "crew": {
+          "base": 4,
+          "jitter": 0
+        },
+        "id": "P-REPL-PAST",
+        "label": "押込ファンの電動機取替",
+        "note_text": "電動機取替",
+        "only_furnace": 1,
+        "per": "furnace",
+        "schedule": {
+          "dates": [
+            [
+              "2022-11-07",
+              "2022-11-18"
+            ]
+          ],
+          "kind": "dates"
+        },
+        "tag": "REPLACEMENT",
+        "targets": [
+          "fdf"
+        ]
+      },
+      {
+        "attr": "REPLACE",
+        "bundle": false,
+        "contractor": "C1",
+        "crew": {
+          "base": 5,
+          "jitter": 0
+        },
+        "id": "P-REPL-FUT",
+        "label": "誘引送風機の取替",
+        "note_text": "取替",
+        "only_furnace": 1,
+        "per": "furnace",
+        "schedule": {
+          "dates": [
+            [
+              "2027-01-12",
+              "2027-02-12"
+            ]
+          ],
+          "kind": "dates"
+        },
+        "tag": "REPLACEMENT",
+        "targets": [
+          "idf"
+        ]
+      }
+    ],
+    "plan_window": {
+      "fy_from": 2026,
+      "fy_to": 2028
+    },
+    "schema": "moyai.factory.rules/0",
+    "seed": 20261110,
+    "systems": [
+      {
+        "key": "recv",
+        "name": "受入供給設備"
+      },
+      {
+        "key": "comb",
+        "name": "燃焼設備"
+      },
+      {
+        "key": "cool",
+        "name": "冷却設備"
+      },
+      {
+        "key": "flue",
+        "name": "排ガス処理設備"
+      },
+      {
+        "key": "draft",
+        "name": "送排風設備"
+      },
+      {
+        "key": "heat",
+        "name": "発電設備"
+      },
+      {
+        "key": "ashout",
+        "name": "灰出し設備"
+      },
+      {
+        "key": "elec",
+        "name": "電気設備"
+      },
+      {
+        "key": "inst",
+        "name": "計装設備"
+      }
+    ],
+    "today": "2026-10-01",
+    "world_version": "v1"
+  },
+  "schema": "moyai.factory.world/0",
+  "seed": 20261110,
+  "today": "2026-10-01",
+  "works": [
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E03",
+      "fiscal_year": 2019,
+      "id": "W0001",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E04",
+      "fiscal_year": 2019,
+      "id": "W0002",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E05",
+      "fiscal_year": 2019,
+      "id": "W0003",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E06",
+      "fiscal_year": 2019,
+      "id": "W0004",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E07",
+      "fiscal_year": 2019,
+      "id": "W0005",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E08",
+      "fiscal_year": 2019,
+      "id": "W0006",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E09",
+      "fiscal_year": 2019,
+      "id": "W0007",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E10",
+      "fiscal_year": 2019,
+      "id": "W0008",
+      "label": "送風機の分解整備",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2019-05-24",
+      "equipment_id": "E11",
+      "fiscal_year": 2019,
+      "id": "W0009",
+      "label": "送風機の分解整備",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2019-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2019-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2019,
+      "id": "W0010",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2019-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 3,
+      "end": "2019-06-19",
+      "equipment_id": "E12",
+      "fiscal_year": 2019,
+      "id": "W0011",
+      "label": "灰クレーンの点検",
+      "man_days": 6,
+      "note_text": null,
+      "pattern": "P-ASHCRANE",
+      "start": "2019-06-17",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 2,
+      "end": "2019-07-22",
+      "equipment_id": "E02",
+      "fiscal_year": 2019,
+      "id": "W0012",
+      "label": "計量装置の定期検査",
+      "man_days": 4,
+      "note_text": null,
+      "pattern": "P-SCALE",
+      "start": "2019-07-21",
+      "status": "actual",
+      "tag": "LEGAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2020-05-24",
+      "equipment_id": "E03",
+      "fiscal_year": 2020,
+      "id": "W0013",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2020-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2020-05-24",
+      "equipment_id": "E04",
+      "fiscal_year": 2020,
+      "id": "W0014",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2020-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2020-05-24",
+      "equipment_id": "E05",
+      "fiscal_year": 2020,
+      "id": "W0015",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2020-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2020-05-24",
+      "equipment_id": "E06",
+      "fiscal_year": 2020,
+      "id": "W0016",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2020-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2020-05-24",
+      "equipment_id": "E07",
+      "fiscal_year": 2020,
+      "id": "W0017",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2020-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2020-05-24",
+      "equipment_id": "E08",
+      "fiscal_year": 2020,
+      "id": "W0018",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2020-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2020-05-24",
+      "equipment_id": "E09",
+      "fiscal_year": 2020,
+      "id": "W0019",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2020-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2020-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2020,
+      "id": "W0020",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2020-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 5,
+      "end": "2020-06-26",
+      "equipment_id": "E04",
+      "fiscal_year": 2020,
+      "id": "W0021",
+      "label": "精密機能検査",
+      "man_days": 20,
+      "note_text": null,
+      "pattern": "P-PREC",
+      "start": "2020-06-22",
+      "status": "actual",
+      "tag": "PRECISION"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2021-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2021,
+      "id": "W0022",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2021-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 2,
+      "end": "2021-07-22",
+      "equipment_id": "E02",
+      "fiscal_year": 2021,
+      "id": "W0023",
+      "label": "計量装置の定期検査",
+      "man_days": 4,
+      "note_text": null,
+      "pattern": "P-SCALE",
+      "start": "2021-07-21",
+      "status": "actual",
+      "tag": "LEGAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E03",
+      "fiscal_year": 2021,
+      "id": "W0024",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E04",
+      "fiscal_year": 2021,
+      "id": "W0025",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E05",
+      "fiscal_year": 2021,
+      "id": "W0026",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E06",
+      "fiscal_year": 2021,
+      "id": "W0027",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E07",
+      "fiscal_year": 2021,
+      "id": "W0028",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E08",
+      "fiscal_year": 2021,
+      "id": "W0029",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E09",
+      "fiscal_year": 2021,
+      "id": "W0030",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E10",
+      "fiscal_year": 2021,
+      "id": "W0031",
+      "label": "送風機の分解整備",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2021-10-13",
+      "equipment_id": "E11",
+      "fiscal_year": 2021,
+      "id": "W0032",
+      "label": "送風機の分解整備",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2021-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 12,
+      "end": "2021-10-23",
+      "equipment_id": "E13",
+      "fiscal_year": 2021,
+      "id": "W0033",
+      "label": "全休止の電気・計装の点検",
+      "man_days": 36,
+      "note_text": null,
+      "pattern": "P-OUT-ELEC",
+      "start": "2021-10-12",
+      "status": "actual",
+      "tag": "SHUTDOWN"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 12,
+      "end": "2021-10-23",
+      "equipment_id": "E14",
+      "fiscal_year": 2021,
+      "id": "W0034",
+      "label": "全休止の電気・計装の点検",
+      "man_days": 36,
+      "note_text": null,
+      "pattern": "P-OUT-ELEC",
+      "start": "2021-10-12",
+      "status": "actual",
+      "tag": "SHUTDOWN"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2022-05-24",
+      "equipment_id": "E03",
+      "fiscal_year": 2022,
+      "id": "W0035",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2022-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2022-05-24",
+      "equipment_id": "E04",
+      "fiscal_year": 2022,
+      "id": "W0036",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2022-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2022-05-24",
+      "equipment_id": "E05",
+      "fiscal_year": 2022,
+      "id": "W0037",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2022-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2022-05-24",
+      "equipment_id": "E06",
+      "fiscal_year": 2022,
+      "id": "W0038",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2022-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2022-05-24",
+      "equipment_id": "E07",
+      "fiscal_year": 2022,
+      "id": "W0039",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2022-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2022-05-24",
+      "equipment_id": "E08",
+      "fiscal_year": 2022,
+      "id": "W0040",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2022-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2022-05-24",
+      "equipment_id": "E09",
+      "fiscal_year": 2022,
+      "id": "W0041",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2022-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2022-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2022,
+      "id": "W0042",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2022-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 3,
+      "end": "2022-06-19",
+      "equipment_id": "E12",
+      "fiscal_year": 2022,
+      "id": "W0043",
+      "label": "灰クレーンの点検",
+      "man_days": 6,
+      "note_text": null,
+      "pattern": "P-ASHCRANE",
+      "start": "2022-06-17",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "REPLACE",
+      "bundle": false,
+      "contractor": null,
+      "crew": 4,
+      "duration_days": 12,
+      "end": "2022-11-18",
+      "equipment_id": "E10",
+      "fiscal_year": 2022,
+      "id": "W0044",
+      "label": "押込ファンの電動機取替",
+      "man_days": 48,
+      "note_text": "電動機取替",
+      "pattern": "P-REPL-PAST",
+      "start": "2022-11-07",
+      "status": "actual",
+      "tag": "REPLACEMENT"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E03",
+      "fiscal_year": 2023,
+      "id": "W0045",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E04",
+      "fiscal_year": 2023,
+      "id": "W0046",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E05",
+      "fiscal_year": 2023,
+      "id": "W0047",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E06",
+      "fiscal_year": 2023,
+      "id": "W0048",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E07",
+      "fiscal_year": 2023,
+      "id": "W0049",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E08",
+      "fiscal_year": 2023,
+      "id": "W0050",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E09",
+      "fiscal_year": 2023,
+      "id": "W0051",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E10",
+      "fiscal_year": 2023,
+      "id": "W0052",
+      "label": "送風機の分解整備",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2023-05-24",
+      "equipment_id": "E11",
+      "fiscal_year": 2023,
+      "id": "W0053",
+      "label": "送風機の分解整備",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2023-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2023-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2023,
+      "id": "W0054",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2023-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 5,
+      "end": "2023-06-26",
+      "equipment_id": "E04",
+      "fiscal_year": 2023,
+      "id": "W0055",
+      "label": "精密機能検査",
+      "man_days": 20,
+      "note_text": null,
+      "pattern": "P-PREC",
+      "start": "2023-06-22",
+      "status": "actual",
+      "tag": "PRECISION"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 2,
+      "end": "2023-07-22",
+      "equipment_id": "E02",
+      "fiscal_year": 2023,
+      "id": "W0056",
+      "label": "計量装置の定期検査",
+      "man_days": 4,
+      "note_text": null,
+      "pattern": "P-SCALE",
+      "start": "2023-07-21",
+      "status": "actual",
+      "tag": "LEGAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2024-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2024,
+      "id": "W0057",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2024-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2024-10-13",
+      "equipment_id": "E03",
+      "fiscal_year": 2024,
+      "id": "W0058",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2024-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2024-10-13",
+      "equipment_id": "E04",
+      "fiscal_year": 2024,
+      "id": "W0059",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2024-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2024-10-13",
+      "equipment_id": "E05",
+      "fiscal_year": 2024,
+      "id": "W0060",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2024-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2024-10-13",
+      "equipment_id": "E06",
+      "fiscal_year": 2024,
+      "id": "W0061",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2024-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2024-10-13",
+      "equipment_id": "E07",
+      "fiscal_year": 2024,
+      "id": "W0062",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2024-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2024-10-13",
+      "equipment_id": "E08",
+      "fiscal_year": 2024,
+      "id": "W0063",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2024-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2024-10-13",
+      "equipment_id": "E09",
+      "fiscal_year": 2024,
+      "id": "W0064",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2024-09-30",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "UPGRADE",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 159,
+      "end": "2025-03-14",
+      "equipment_id": "E14",
+      "fiscal_year": 2024,
+      "id": "W0065",
+      "label": "分散制御装置の更新（基幹改良）",
+      "man_days": 477,
+      "note_text": "基幹改良",
+      "pattern": "P-UPG-DCS",
+      "start": "2024-10-07",
+      "status": "actual",
+      "tag": "MAJOR"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 12,
+      "end": "2024-10-23",
+      "equipment_id": "E13",
+      "fiscal_year": 2024,
+      "id": "W0066",
+      "label": "全休止の電気・計装の点検",
+      "man_days": 24,
+      "note_text": null,
+      "pattern": "P-OUT-ELEC",
+      "start": "2024-10-12",
+      "status": "actual",
+      "tag": "SHUTDOWN"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 12,
+      "end": "2024-10-23",
+      "equipment_id": "E14",
+      "fiscal_year": 2024,
+      "id": "W0067",
+      "label": "全休止の電気・計装の点検",
+      "man_days": 36,
+      "note_text": null,
+      "pattern": "P-OUT-ELEC",
+      "start": "2024-10-12",
+      "status": "actual",
+      "tag": "SHUTDOWN"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E03",
+      "fiscal_year": 2025,
+      "id": "W0068",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E04",
+      "fiscal_year": 2025,
+      "id": "W0069",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E05",
+      "fiscal_year": 2025,
+      "id": "W0070",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E06",
+      "fiscal_year": 2025,
+      "id": "W0071",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E07",
+      "fiscal_year": 2025,
+      "id": "W0072",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E08",
+      "fiscal_year": 2025,
+      "id": "W0073",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E09",
+      "fiscal_year": 2025,
+      "id": "W0074",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E10",
+      "fiscal_year": 2025,
+      "id": "W0075",
+      "label": "送風機の分解整備",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2025-05-24",
+      "equipment_id": "E11",
+      "fiscal_year": 2025,
+      "id": "W0076",
+      "label": "送風機の分解整備",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2025-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2025-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2025,
+      "id": "W0077",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2025-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 3,
+      "end": "2025-06-19",
+      "equipment_id": "E12",
+      "fiscal_year": 2025,
+      "id": "W0078",
+      "label": "灰クレーンの点検",
+      "man_days": 6,
+      "note_text": null,
+      "pattern": "P-ASHCRANE",
+      "start": "2025-06-17",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 2,
+      "end": "2025-07-22",
+      "equipment_id": "E02",
+      "fiscal_year": 2025,
+      "id": "W0079",
+      "label": "計量装置の定期検査",
+      "man_days": 4,
+      "note_text": null,
+      "pattern": "P-SCALE",
+      "start": "2025-07-21",
+      "status": "actual",
+      "tag": "LEGAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2026-05-24",
+      "equipment_id": "E03",
+      "fiscal_year": 2026,
+      "id": "W0080",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2026-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2026-05-24",
+      "equipment_id": "E04",
+      "fiscal_year": 2026,
+      "id": "W0081",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2026-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2026-05-24",
+      "equipment_id": "E05",
+      "fiscal_year": 2026,
+      "id": "W0082",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2026-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2026-05-24",
+      "equipment_id": "E06",
+      "fiscal_year": 2026,
+      "id": "W0083",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2026-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2026-05-24",
+      "equipment_id": "E07",
+      "fiscal_year": 2026,
+      "id": "W0084",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2026-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2026-05-24",
+      "equipment_id": "E08",
+      "fiscal_year": 2026,
+      "id": "W0085",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2026-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2026-05-24",
+      "equipment_id": "E09",
+      "fiscal_year": 2026,
+      "id": "W0086",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2026-05-11",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2026-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2026,
+      "id": "W0087",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2026-06-03",
+      "status": "actual",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 5,
+      "end": "2026-06-26",
+      "equipment_id": "E04",
+      "fiscal_year": 2026,
+      "id": "W0088",
+      "label": "精密機能検査",
+      "man_days": 15,
+      "note_text": null,
+      "pattern": "P-PREC",
+      "start": "2026-06-22",
+      "status": "actual",
+      "tag": "PRECISION"
+    },
+    {
+      "attr": "REPLACE",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 32,
+      "end": "2027-02-12",
+      "equipment_id": "E11",
+      "fiscal_year": 2026,
+      "id": "W0089",
+      "label": "誘引送風機の取替",
+      "man_days": 160,
+      "note_text": "取替",
+      "pattern": "P-REPL-FUT",
+      "start": "2027-01-12",
+      "status": "planned",
+      "tag": "REPLACEMENT"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2027-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2027,
+      "id": "W0090",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2027-06-03",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 2,
+      "end": "2027-07-22",
+      "equipment_id": "E02",
+      "fiscal_year": 2027,
+      "id": "W0091",
+      "label": "計量装置の定期検査",
+      "man_days": 4,
+      "note_text": null,
+      "pattern": "P-SCALE",
+      "start": "2027-07-21",
+      "status": "planned",
+      "tag": "LEGAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E03",
+      "fiscal_year": 2027,
+      "id": "W0092",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 5,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E04",
+      "fiscal_year": 2027,
+      "id": "W0093",
+      "label": "定期整備（分解）",
+      "man_days": 70,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E05",
+      "fiscal_year": 2027,
+      "id": "W0094",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E06",
+      "fiscal_year": 2027,
+      "id": "W0095",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E07",
+      "fiscal_year": 2027,
+      "id": "W0096",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E08",
+      "fiscal_year": 2027,
+      "id": "W0097",
+      "label": "排ガス処理設備の点検",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E09",
+      "fiscal_year": 2027,
+      "id": "W0098",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E10",
+      "fiscal_year": 2027,
+      "id": "W0099",
+      "label": "送風機の分解整備",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2027-10-13",
+      "equipment_id": "E11",
+      "fiscal_year": 2027,
+      "id": "W0100",
+      "label": "送風機の分解整備",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-DRAFT",
+      "start": "2027-09-30",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 12,
+      "end": "2027-10-23",
+      "equipment_id": "E13",
+      "fiscal_year": 2027,
+      "id": "W0101",
+      "label": "全休止の電気・計装の点検",
+      "man_days": 36,
+      "note_text": null,
+      "pattern": "P-OUT-ELEC",
+      "start": "2027-10-12",
+      "status": "planned",
+      "tag": "SHUTDOWN"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 12,
+      "end": "2027-10-23",
+      "equipment_id": "E14",
+      "fiscal_year": 2027,
+      "id": "W0102",
+      "label": "全休止の電気・計装の点検",
+      "man_days": 48,
+      "note_text": null,
+      "pattern": "P-OUT-ELEC",
+      "start": "2027-10-12",
+      "status": "planned",
+      "tag": "SHUTDOWN"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2028-05-24",
+      "equipment_id": "E03",
+      "fiscal_year": 2028,
+      "id": "W0103",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2028-05-11",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 14,
+      "end": "2028-05-24",
+      "equipment_id": "E04",
+      "fiscal_year": 2028,
+      "id": "W0104",
+      "label": "定期整備（分解）",
+      "man_days": 42,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2028-05-11",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "OVERHAUL",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 4,
+      "duration_days": 14,
+      "end": "2028-05-24",
+      "equipment_id": "E05",
+      "fiscal_year": 2028,
+      "id": "W0105",
+      "label": "定期整備（分解）",
+      "man_days": 56,
+      "note_text": null,
+      "pattern": "P-OVH",
+      "start": "2028-05-11",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 14,
+      "end": "2028-05-24",
+      "equipment_id": "E06",
+      "fiscal_year": 2028,
+      "id": "W0106",
+      "label": "排ガス処理設備の点検",
+      "man_days": 28,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2028-05-11",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2028-05-24",
+      "equipment_id": "E07",
+      "fiscal_year": 2028,
+      "id": "W0107",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2028-05-11",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2028-05-24",
+      "equipment_id": "E08",
+      "fiscal_year": 2028,
+      "id": "W0108",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2028-05-11",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": true,
+      "contractor": "C1",
+      "crew": 1,
+      "duration_days": 14,
+      "end": "2028-05-24",
+      "equipment_id": "E09",
+      "fiscal_year": 2028,
+      "id": "W0109",
+      "label": "排ガス処理設備の点検",
+      "man_days": 14,
+      "note_text": null,
+      "pattern": "P-FLUE",
+      "start": "2028-05-11",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 3,
+      "duration_days": 3,
+      "end": "2028-06-05",
+      "equipment_id": "E01",
+      "fiscal_year": 2028,
+      "id": "W0110",
+      "label": "投入クレーンの年次点検",
+      "man_days": 9,
+      "note_text": null,
+      "pattern": "P-CRANE",
+      "start": "2028-06-03",
+      "status": "planned",
+      "tag": "ANNUAL"
+    },
+    {
+      "attr": "INSPECT",
+      "bundle": false,
+      "contractor": "C1",
+      "crew": 2,
+      "duration_days": 3,
+      "end": "2028-06-19",
+      "equipment_id": "E12",
+      "fiscal_year": 2028,
+      "id": "W0111",
+      "label": "灰クレーンの点検",
+      "man_days": 6,
+      "note_text": null,
+      "pattern": "P-ASHCRANE",
+      "start": "2028-06-17",
+      "status": "planned",
+      "tag": "ANNUAL"
+    }
+  ],
+  "world_version": "v1"
+}

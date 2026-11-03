@@ -68,7 +68,8 @@ describe("サイトの集計", () => {
     const html = render();
     const lift = want.rows.find((r) => r.class === "T.FEED.LIFT")!.stats.interval;
     if (lift.shown !== "median") throw new Error("中央の帯でない");
-    expect(html).toContain(escapeHtml(`中央 ${bandShort(lift.median)}（四分位 ${bandShort(lift.q1)}〜${bandShort(lift.q3)}）・n 7`));
+    expect(lift).toEqual({ shown: "median", n: 7, q1: "I1", median: "I2", q3: "I3" });
+    expect(html).toContain(escapeHtml(`中央 ${bandShort(lift.median)}（四分位 ${bandShort(lift.q1)} から ${bandShort(lift.q3)}）・n 7`));
     expect(html).toContain("幅 2 年・n 3");
     // 札は鍵ごとに 1 つで、施設の数だけ並ぶ
     expect(new Set(want.similar.map((s) => s.label)).size).toBe(7);

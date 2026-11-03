@@ -45,8 +45,9 @@ export const SITE_TEXT = {
   done: "●",
   statRow: (n: number) => `統計の行（この塊のある施設 ${n}）`,
   statX: "x",
-  statRange: (lo: string, hi: string, n: number) => (lo === hi ? `幅 ${lo}・n ${n}` : `幅 ${lo}〜${hi}・n ${n}`),
-  statMedian: (med: string, q1: string, q3: string, n: number) => `中央 ${med}（四分位 ${q1}〜${q3}）・n ${n}`,
+  statRange: (lo: string, hi: string, n: number) => (lo === hi ? `幅 ${lo}・n ${n}` : `幅 ${lo} から ${hi}・n ${n}`),
+  statMedian: (med: string, q1: string, q3: string, n: number) =>
+    q1 === med && q3 === med ? `中央 ${med}（四分位も同じ）・n ${n}` : `中央 ${med}（四分位 ${q1} から ${q3}）・n ${n}`,
   statNote:
     "統計の行の n は、その欄のある施設の数です。n が 0〜2 なら x、3〜4 なら幅の帯と n、5 以上なら中央の帯・四分位の帯・n を出します（帯の順の最近順位法）。集団を混ぜて数えません。",
   labelNote: "札は鍵の指紋の頭から作ります。同じ鍵なら、束が増えても同じ札です。",

@@ -22,7 +22,7 @@ export const SITE_CSS = `
 @media (prefers-color-scheme:dark){:root{--bg:#151a18;--surface:#1d2422;--fg:#e6ebe8;--muted:#a3aea9;--border:#33403b;--accent:#6fc7ad;--ok:#7fd49a;--ng:#ff8a80;--fiction-bg:#4a3a10;--fiction-fg:#ffe7a3;--head-bg:#222b28;--stat-bg:#1a2220}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:"BIZ UDPGothic","BIZ UDPゴシック","Hiragino Sans","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;font-size:15px;line-height:1.7}
-main{max-width:1200px;margin:0 auto;padding:16px}
+main{max-width:1320px;margin:0 auto;padding:16px}
 h1{font-size:1.5rem;margin:.5rem 0}
 h2{font-size:1.2rem;margin:2rem 0 .5rem;border-bottom:1px solid var(--border);padding-bottom:.25rem}
 h3{font-size:1.05rem;margin:1.5rem 0 .25rem}
@@ -41,7 +41,9 @@ table{border-collapse:collapse;width:max-content;min-width:100%}
 th,td{border:1px solid var(--border);padding:.2rem .45rem;text-align:left;vertical-align:top}
 thead th{background:var(--head-bg);position:sticky;top:0}
 td.fy,th.fy{text-align:center;min-width:3.2em}
+td.band{white-space:nowrap}
 tr.stat td,tr.stat th{background:var(--stat-bg)}
+tr.stat td.band{white-space:normal;min-width:10em;max-width:15em;font-size:.9rem}
 tr.first th,tr.first td{border-top:2px solid var(--muted)}
 footer{margin:3rem 0 1rem;color:var(--muted);font-size:.85rem}
 `;
@@ -94,8 +96,16 @@ export function axisValueText(pack: Pick<SharePack, "axes">, key: string, code: 
   return code;
 }
 
+/** 見え方を日本語にする（軸は全国の表の軸の順） */
 export function profileText(pack: Pick<SharePack, "axes">, p: Profile): string {
-  const axes = Object.entries(p.axes).map(([k, v]) => `${pack.axes.find((a) => a.key === k)?.name ?? k} ${axisValueText(pack, k, v)}`);
+  const keys = Object.keys(p.axes);
+  const order = (k: string) => {
+    const i = pack.axes.findIndex((a) => a.key === k);
+    return i < 0 ? pack.axes.length : i;
+  };
+  const axes = keys
+    .sort((a, b) => order(a) - order(b) || (a < b ? -1 : 1))
+    .map((k) => `${pack.axes.find((a) => a.key === k)?.name ?? k} ${axisValueText(pack, k, p.axes[k]!)}`);
   return [T.group[p.group] ?? p.group, T.stage(p.stage), ...axes].join("・");
 }
 
@@ -120,10 +130,15 @@ export function siteModel(i: Pick<SiteInput, "read" | "pack">): SiteModel {
   const okLines = i.read.bundles.filter((b) => b.status === "ok");
   const peers = latestPerKey(okLines);
   const bands = i.read.ledger.rules?.bands;
-  const sections = sectionsOf(peers).map((profile) => ({
-    profile,
-    aggregate: aggregate({ table: i.pack.table, profile, self: null, peers, ...(bands ? { bands } : {}) }),
-  }));
+  // 似た施設の多い節から並べる（同じ数なら見え方の順）
+  const sections = sectionsOf(peers)
+    .map((profile) => ({
+      profile,
+      aggregate: aggregate({ table: i.pack.table, profile, self: null, peers, ...(bands ? { bands } : {}) }),
+    }))
+    .map((s, k) => ({ s, k }))
+    .sort((a, b) => b.s.aggregate.similar.length - a.s.aggregate.similar.length || a.k - b.k)
+    .map(({ s }) => s);
   return { sections, ok: okLines.length, ng: i.read.bundles.length - okLines.length, keys: peers.length };
 }
 
