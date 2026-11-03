@@ -5,6 +5,10 @@ name: audit
 on:
   push:
     branches: [main]
+    # 日誌・撮影・費用の台帳だけの push では走らせない（費用を抑えるため。次にコードが変わった push で、その差分ごと見る）
+    paths-ignore:
+      - "docs/progress/**"
+      - "ops/api-spend.jsonl"
   workflow_dispatch:
     inputs:
       base:

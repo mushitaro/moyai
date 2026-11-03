@@ -12,6 +12,16 @@ test("台帳の壊れた行は捨てずに数え、費用を計れなかった�
   assert.equal(r.unknown, 1);
 });
 
+test("計れなかった回は、人が確かめた解決の行（resolves）があれば数えない", () => {
+  const text =
+    '{"role":"audit","runKey":"5-1","usd":null}\n' +
+    '{"role":"audit","runKey":"6-1","usd":null}\n' +
+    '{"role":"audit","usd":0.3,"resolves":"5-1"}\n';
+  const r = readLedger(text);
+  assert.equal(r.unknown, 1);
+  assert.equal(totals(r.rows).all, 0.3);
+});
+
 test("読めない行か費用を計れなかった回があれば、呼ぶ前に止める", () => {
   assert.equal(budgetCheck(budget, [], "audit", 0, { broken: 0, unknown: 1 }).stop, true);
   assert.equal(budgetCheck(budget, [], "audit", 0, { broken: 1, unknown: 0 }).stop, true);

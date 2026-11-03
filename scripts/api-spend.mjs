@@ -11,21 +11,26 @@ export const LEDGER = "ops/api-spend.jsonl";
  * 費用を計れなかった回（usd が null）は unknown に数える。どちらも 1 件でもあれば、呼ぶ前の確かめで止める。
  */
 export function readLedger(text) {
+  // 費用を計れなかった行は、人が確かめて「resolves」（その行の runKey）を持つ数の行を足すと解決する（台帳は書き換えない）
   const rows = [];
   let broken = 0;
-  let unknown = 0;
+  const unknownKeys = [];
+  const resolved = new Set();
   for (const line of text.split(/\r?\n/)) {
     if (!line.trim()) continue;
     try {
       const r = JSON.parse(line);
       if (typeof r.role !== "string") broken++;
-      else if (typeof r.usd === "number" && Number.isFinite(r.usd)) rows.push(r);
-      else if (r.usd === null) unknown++;
+      else if (typeof r.usd === "number" && Number.isFinite(r.usd)) {
+        rows.push(r);
+        if (r.resolves) resolved.add(String(r.resolves));
+      } else if (r.usd === null) unknownKeys.push(String(r.runKey ?? r.runId ?? `行${rows.length + unknownKeys.length + broken + 1}`));
       else broken++;
     } catch {
       broken++;
     }
   }
+  const unknown = unknownKeys.filter((k) => !resolved.has(k)).length;
   return { rows, broken, unknown };
 }
 
