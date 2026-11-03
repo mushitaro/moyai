@@ -26,6 +26,13 @@ fictional-2（機器台帳と星取表）。`samples/out/waste-incineration/fict
 
 施設の名前は造語（地名に見えないもの）。仕様の数値・設置年・工数はすべて作りもの。
 
+fictional-ns-1（し尿処理の架空の 1 施設。機器台帳・星取表・作業日報の 3 種）。`samples/out/night-soil/fictional-ns-1/` の下。ごみ焼却と同じ厚さのふりをしない：機器は 40、作業は 292、報告書・PDF・写真は作らない。
+
+- 機器の名前と記号（`NS.…`）は `packs/night-soil/common.json` の項目だけから選ぶ。水処理の 2 系列（1系・2系）が、焼却の炉の役をする（`rules-fictional-ns-1.json` の `facility.furnaces`。名前の「furnaces」は「同じ設備を並べて持つ単位」の意味で、データだけで系列に当てた）。
+- 星取表と日報の列の見出しは、`facility.line_header`（「系列」）で決める。書かなければ「号炉」。
+- 星取表は 2 段（設備／機器）。機器台帳は 3 段、番号あり、設置年は和暦の文字、名前の中の機器番号は角括弧。
+- 生成器のコードは、見出しの語と施設の一覧（`build.py` の `RULES_FILES`）を足しただけ。作業の組み方・欠け（4 件）・汚しはすべて `rules-fictional-ns-1.json`。
+
 正解（試験だけが読む。AI には渡さない）：`samples/truth/.../` の `world.json`、資料ごとの `*.truth.json`、`crossdoc.truth.json`（どの資料のどの行が同じ作業か。星取表のセル・報告書の表の行・日報の行・台帳の行・写真の印）。`samples/facts/.../` は書いた xlsx を openpyxl で読み直した原本の事実。
 
 ## LibreOffice が無いとき
@@ -51,4 +58,4 @@ cd samples/factory && /tmp/venv/bin/python -I -X utf8 -m unittest discover -s te
 
 ## 今の範囲
 
-機器台帳・工事報告書・写真・2 つ目の施設は作った。し尿処理の施設と、plan §2.5 の厚さ（機器が数百、作業が千を超える）は、まだ作っていない。fictional-1 の機器は 25、作業は 191。
+機器台帳・工事報告書・写真・2 つ目の施設・し尿処理の 1 施設は作った。plan §2.5 の厚さ（機器が数百、作業が千を超える）は、まだ作っていない。fictional-1 の機器は 25、作業は 191。

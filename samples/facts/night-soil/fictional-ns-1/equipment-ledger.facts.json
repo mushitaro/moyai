@@ -1,0 +1,1109 @@
+{
+  "creator": "【架空】工場 v1",
+  "file": "equipment-ledger.xlsx",
+  "reader": "openpyxl 3.1.5",
+  "schema": "moyai.factory.facts/0",
+  "sheets": [
+    {
+      "cells": [
+        {
+          "coord": "A1",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "【架空】トレンカ衛生処理センター 機器台帳"
+        },
+        {
+          "coord": "A2",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "令和8年10月1日 時点"
+        },
+        {
+          "coord": "A4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "名称"
+        },
+        {
+          "coord": "B4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "番号"
+        },
+        {
+          "coord": "C4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "仕様"
+        },
+        {
+          "coord": "D4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "設置年"
+        },
+        {
+          "coord": "E4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "備考"
+        },
+        {
+          "coord": "A5",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受入貯留設備"
+        },
+        {
+          "coord": "B5",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1"
+        },
+        {
+          "coord": "A6",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "搬入量計量装置 [WGH]"
+        },
+        {
+          "coord": "B6",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-1"
+        },
+        {
+          "coord": "C6",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電磁流量計式\n最大 30 m3/h"
+        },
+        {
+          "coord": "D6",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A7",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "投入槽"
+        },
+        {
+          "coord": "B7",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-2"
+        },
+        {
+          "coord": "C7",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 20 m3"
+        },
+        {
+          "coord": "D7",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A8",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受入槽"
+        },
+        {
+          "coord": "B8",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-3"
+        },
+        {
+          "coord": "C8",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 60 m3"
+        },
+        {
+          "coord": "D8",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A9",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "破砕機 [CRS]"
+        },
+        {
+          "coord": "B9",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-4"
+        },
+        {
+          "coord": "C9",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "二軸式\n電動機 11 kW"
+        },
+        {
+          "coord": "D9",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A10",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "夾雑物除去装置 [SCR]"
+        },
+        {
+          "coord": "B10",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-5"
+        },
+        {
+          "coord": "C10",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ドラムスクリーン式\n目幅 3 mm"
+        },
+        {
+          "coord": "D10",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A11",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "し渣コンベヤ [CNV]"
+        },
+        {
+          "coord": "B11",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-6"
+        },
+        {
+          "coord": "C11",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スクリュー式"
+        },
+        {
+          "coord": "D11",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A12",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "貯留槽"
+        },
+        {
+          "coord": "B12",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-7"
+        },
+        {
+          "coord": "C12",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 120 m3"
+        },
+        {
+          "coord": "D12",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A13",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "投入ポンプ [FDP]"
+        },
+        {
+          "coord": "B13",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-8"
+        },
+        {
+          "coord": "C13",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "一軸ねじ式\n電動機 5.5 kW"
+        },
+        {
+          "coord": "D13",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A14",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "主処理設備"
+        },
+        {
+          "coord": "B14",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2"
+        },
+        {
+          "coord": "A15",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "脱窒素槽"
+        },
+        {
+          "coord": "B15",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-1"
+        },
+        {
+          "coord": "C15",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 150 m3\n1系用"
+        },
+        {
+          "coord": "D15",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ガス撹拌ブロワ [GMB-1]"
+        },
+        {
+          "coord": "B16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-2"
+        },
+        {
+          "coord": "C16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ルーツ式\n電動機 7.5 kW\n1系用"
+        },
+        {
+          "coord": "D16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "硝化槽"
+        },
+        {
+          "coord": "B17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-3"
+        },
+        {
+          "coord": "C17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 300 m3\n1系用"
+        },
+        {
+          "coord": "D17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "曝気ブロワ [ABL-1]"
+        },
+        {
+          "coord": "B18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-4"
+        },
+        {
+          "coord": "C18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ルーツ式\n電動機 22 kW\n1系用"
+        },
+        {
+          "coord": "D18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A19",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "循環液移送ポンプ [RCP-1]"
+        },
+        {
+          "coord": "B19",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-5"
+        },
+        {
+          "coord": "C19",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水中式\n電動機 3.7 kW\n1系用"
+        },
+        {
+          "coord": "D19",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A20",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "沈殿槽"
+        },
+        {
+          "coord": "B20",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-6"
+        },
+        {
+          "coord": "C20",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 80 m3\n1系用"
+        },
+        {
+          "coord": "D20",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A21",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "沈殿槽汚泥掻寄機 [SSC-1]"
+        },
+        {
+          "coord": "B21",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-7"
+        },
+        {
+          "coord": "C21",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "中央駆動式\n1系用"
+        },
+        {
+          "coord": "D21",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A22",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "返送汚泥ポンプ [RSP-1]"
+        },
+        {
+          "coord": "B22",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-8"
+        },
+        {
+          "coord": "C22",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水中式\n電動機 2.2 kW\n1系用"
+        },
+        {
+          "coord": "D22",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "E22",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2022年11月 ポンプ取替"
+        },
+        {
+          "coord": "A23",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "余剰汚泥ポンプ [ESP-1]"
+        },
+        {
+          "coord": "B23",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-9"
+        },
+        {
+          "coord": "C23",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水中式\n電動機 1.5 kW\n1系用"
+        },
+        {
+          "coord": "D23",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A24",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "脱窒素槽"
+        },
+        {
+          "coord": "B24",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-10"
+        },
+        {
+          "coord": "C24",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 150 m3\n2系用"
+        },
+        {
+          "coord": "D24",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A25",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ガス撹拌ブロワ [GMB-2]"
+        },
+        {
+          "coord": "B25",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-11"
+        },
+        {
+          "coord": "C25",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ルーツ式\n電動機 7.5 kW\n2系用"
+        },
+        {
+          "coord": "D25",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A26",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "硝化槽"
+        },
+        {
+          "coord": "B26",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-12"
+        },
+        {
+          "coord": "C26",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 300 m3\n2系用"
+        },
+        {
+          "coord": "D26",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A27",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "曝気ブロワ [ABL-2]"
+        },
+        {
+          "coord": "B27",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-13"
+        },
+        {
+          "coord": "C27",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ルーツ式\n電動機 22 kW\n2系用"
+        },
+        {
+          "coord": "D27",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "E27",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2027年1月 取替予定"
+        },
+        {
+          "coord": "A28",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "循環液移送ポンプ [RCP-2]"
+        },
+        {
+          "coord": "B28",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-14"
+        },
+        {
+          "coord": "C28",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水中式\n電動機 3.7 kW\n2系用"
+        },
+        {
+          "coord": "D28",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A29",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "沈殿槽"
+        },
+        {
+          "coord": "B29",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-15"
+        },
+        {
+          "coord": "C29",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 80 m3\n2系用"
+        },
+        {
+          "coord": "D29",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A30",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "沈殿槽汚泥掻寄機 [SSC-2]"
+        },
+        {
+          "coord": "B30",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-16"
+        },
+        {
+          "coord": "C30",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "中央駆動式\n2系用"
+        },
+        {
+          "coord": "D30",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A31",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "返送汚泥ポンプ [RSP-2]"
+        },
+        {
+          "coord": "B31",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-17"
+        },
+        {
+          "coord": "C31",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水中式\n電動機 2.2 kW\n2系用"
+        },
+        {
+          "coord": "D31",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A32",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "余剰汚泥ポンプ [ESP-2]"
+        },
+        {
+          "coord": "B32",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-18"
+        },
+        {
+          "coord": "C32",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水中式\n電動機 1.5 kW\n2系用"
+        },
+        {
+          "coord": "D32",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A33",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高度処理設備"
+        },
+        {
+          "coord": "B33",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3"
+        },
+        {
+          "coord": "A34",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "混和槽"
+        },
+        {
+          "coord": "B34",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-1"
+        },
+        {
+          "coord": "C34",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 6 m3"
+        },
+        {
+          "coord": "D34",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A35",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "混和槽撹拌機 [MXS]"
+        },
+        {
+          "coord": "B35",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-2"
+        },
+        {
+          "coord": "C35",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動機 2.2 kW"
+        },
+        {
+          "coord": "D35",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A36",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "凝集槽"
+        },
+        {
+          "coord": "B36",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-3"
+        },
+        {
+          "coord": "C36",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "RC 造 容量 12 m3"
+        },
+        {
+          "coord": "D36",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "凝集槽撹拌機 [FLS]"
+        },
+        {
+          "coord": "B37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-4"
+        },
+        {
+          "coord": "C37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動機 1.5 kW"
+        },
+        {
+          "coord": "D37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A38",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "脱臭設備"
+        },
+        {
+          "coord": "B38",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4"
+        },
+        {
+          "coord": "A39",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低濃度臭気ファン [ODF]"
+        },
+        {
+          "coord": "B39",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-1"
+        },
+        {
+          "coord": "C39",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "風量 120 m3/min\n電動機 15 kW"
+        },
+        {
+          "coord": "D39",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低濃度活性炭脱臭塔"
+        },
+        {
+          "coord": "B40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-2"
+        },
+        {
+          "coord": "C40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "活性炭充填 2 m3"
+        },
+        {
+          "coord": "D40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A41",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "臭突"
+        },
+        {
+          "coord": "B41",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-3"
+        },
+        {
+          "coord": "C41",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "鋼板製 高さ 20 m"
+        },
+        {
+          "coord": "D41",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A42",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "給水設備"
+        },
+        {
+          "coord": "B42",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5"
+        },
+        {
+          "coord": "A43",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "取水ポンプ [ITP]"
+        },
+        {
+          "coord": "B43",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-1"
+        },
+        {
+          "coord": "C43",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "渦巻式\n電動機 5.5 kW"
+        },
+        {
+          "coord": "D43",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受水槽"
+        },
+        {
+          "coord": "B44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-2"
+        },
+        {
+          "coord": "C44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "FRP 製 容量 50 m3"
+        },
+        {
+          "coord": "D44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A45",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "プラント用水ポンプ [PWP]"
+        },
+        {
+          "coord": "B45",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-3"
+        },
+        {
+          "coord": "C45",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "渦巻式\n電動機 7.5 kW"
+        },
+        {
+          "coord": "D45",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A46",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電気計装設備"
+        },
+        {
+          "coord": "B46",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6"
+        },
+        {
+          "coord": "A47",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受変電設備"
+        },
+        {
+          "coord": "B47",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-1"
+        },
+        {
+          "coord": "C47",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受電 6.6 kV"
+        },
+        {
+          "coord": "D47",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "動力設備"
+        },
+        {
+          "coord": "B48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-2"
+        },
+        {
+          "coord": "C48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "動力制御盤 6 面"
+        },
+        {
+          "coord": "D48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "A49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計装設備"
+        },
+        {
+          "coord": "B49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-3"
+        },
+        {
+          "coord": "C49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "中央監視盤 1 面"
+        },
+        {
+          "coord": "D49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成16年"
+        },
+        {
+          "coord": "E49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2024年10月 基幹改良"
+        },
+        {
+          "coord": "A50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "非常用発電機 [EGN]"
+        },
+        {
+          "coord": "B50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-4"
+        },
+        {
+          "coord": "C50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "出力 150 kVA"
+        },
+        {
+          "coord": "D50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成17年"
+        }
+      ],
+      "hidden_cols": [],
+      "hidden_rows": [],
+      "merged": [],
+      "state": "visible",
+      "title": "機器台帳"
+    }
+  ]
+}

@@ -25,6 +25,7 @@ def write_hoshitori(world: dict, path: Path) -> dict:
     equip_col, furn_col = n_levels + 1, n_levels + 2
     FIRST_COL = n_levels + 3
     today = world["today"]
+    line_header = world["facility"].get("line_header", "号炉")  # 系列の列の見出し。し尿処理は「系列」
 
     wb = Workbook()
     ws = wb.active
@@ -44,7 +45,7 @@ def write_hoshitori(world: dict, path: Path) -> dict:
     ws["A2"] = f"{today} 時点。実績と予定の境は今日の日付"
 
     # 見出し 2 段
-    for col, text in enumerate(list(LEVEL_NAMES[:n_levels]) + ["機器", "号炉"], 1):
+    for col, text in enumerate(list(LEVEL_NAMES[:n_levels]) + ["機器", line_header], 1):
         ws.cell(HEADER_ROWS[0], col, text)
         ws.merge_cells(start_row=HEADER_ROWS[0], start_column=col, end_row=HEADER_ROWS[1], end_column=col)
     year_cols = []
