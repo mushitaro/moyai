@@ -1,6 +1,7 @@
 // 確定した計画の置き場（docs/plan.md §2.9）：<置き場所>/plans/<計画ID>/
 //   versions/<版 6 桁>.json        版の記録（足すだけ。戻すのは、前の版を指す記録を足すこと）
 //   reports/<版 6 桁>-diff.xlsx    差分レポート（機器名・作業名・年度・印の前後・誰が・なぜ）
+//   exports/<版 6 桁>-plan.xlsx    人が見る様式の星取表（入れ子・縦の結合・アウトライン・小計・A3 横。src/plan/export.ts）
 // 書くのは橋渡しの人だけの経路だけ。版のファイルは flag "wx" で書き、同じ版を 2 度書かない。
 import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
@@ -8,7 +9,16 @@ import { join } from "node:path";
 import ExcelJS from "exceljs";
 import type { AuthorKind } from "../shared/fields";
 import { Plan } from "../shared/plan";
+import type { ChartCatalog } from "./chart";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
+import { planWorkbook } from "./export";
+
+/** 書き出しに使う、パックの名前の表（無ければ共通の設備項目のシートを作らない）と、作業の属性の名前だけの表 */
+export interface ExportCatalogs {
+  catalog: ChartCatalog | null;
+  empty: ChartCatalog;
+}
+export type CatalogsFor = (packId: string) => ExportCatalogs;
 
 export const PLAN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 export const VERSION_FILE = /^(\d{6})\.json$/;
@@ -97,7 +107,7 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
 }
 
 export type CommitResult =
-  | { ok: true; version: number; record: VersionRecord; diff: PlanDiff; files: { version: string; report: string } }
+  | { ok: true; version: number; record: VersionRecord; diff: PlanDiff; files: { version: string; report: string; export: string | null } }
   | { ok: false; reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown"; pending?: number };
 
 export interface CommitInput {
@@ -109,6 +119,8 @@ export interface CommitInput {
   basedOn: number | null;
   client: string;
   now?: Date;
+  /** 人が見る様式の書き出しに使う名前の表を、パックの ID から引く（無ければ書き出しを作らない） */
+  catalogs?: CatalogsFor;
 }
 
 /** 計画を確定する：人が受けていない決定が残っていれば止める。版の記録と差分レポートを足す。 */
@@ -138,11 +150,21 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     acceptances: i.acceptances.map((a) => ({ id: a.id, hash: a.hash, reason: a.reason.trim(), author: "human" as const })),
     client: i.client,
     now: i.now ?? new Date(),
+    catalogs: i.catalogs ?? null,
   });
 }
 
 /** 前の版に戻す：戻した先の版の計画をそのまま持つ、新しい版の記録を足す（前の版は書き換えない）。 */
-export async function revertPlan(i: { root: string; planId: string; to: number; reason: string; basedOn: number | null; client: string; now?: Date }): Promise<CommitResult> {
+export async function revertPlan(i: {
+  root: string;
+  planId: string;
+  to: number;
+  reason: string;
+  basedOn: number | null;
+  client: string;
+  now?: Date;
+  catalogs?: CatalogsFor;
+}): Promise<CommitResult> {
   if (i.reason.trim().length === 0) return { ok: false, reason: "reasonEmpty" };
   if (!PLAN_ID.test(i.planId)) return { ok: false, reason: "planIdInvalid" };
   const hist = await readHistory(i.root, i.planId);
@@ -157,13 +179,23 @@ export async function revertPlan(i: { root: string; planId: string; to: number; 
     acceptances: [],
     client: i.client,
     now: i.now ?? new Date(),
+    catalogs: i.catalogs ?? null,
   });
 }
 
 async function writeVersion(
   root: string,
   hist: PlanHistory,
-  v: { kind: "confirm" | "revert"; revertOf: number | null; plan: Plan; reason: string; acceptances: VersionRecord["acceptances"]; client: string; now: Date },
+  v: {
+    kind: "confirm" | "revert";
+    revertOf: number | null;
+    plan: Plan;
+    reason: string;
+    acceptances: VersionRecord["acceptances"];
+    client: string;
+    now: Date;
+    catalogs: CatalogsFor | null;
+  },
 ): Promise<CommitResult> {
   const dir = planDir(root, v.plan.planId);
   const version = (hist.latest?.version ?? 0) + 1;
@@ -195,16 +227,27 @@ async function writeVersion(
     if ((e as NodeJS.ErrnoException).code === "EEXIST") return { ok: false, reason: "exists" };
     throw e;
   }
-  const xlsx = await diffReport(record, diff);
-  const tmp = `${reportPath}.part`;
-  await writeFile(tmp, xlsx, { flag: "wx" });
+  await writeAtomic(reportPath, await diffReport(record, diff));
+  let exportPath: string | null = null;
+  if (v.catalogs) {
+    await mkdir(join(dir, "exports"), { recursive: true });
+    exportPath = join(dir, "exports", `${pad(version)}-plan.xlsx`);
+    const c = v.catalogs(plan.packId);
+    await writeAtomic(exportPath, await planWorkbook({ plan, version, at: record.at, catalog: c.catalog, emptyCatalog: c.empty }));
+  }
+  return { ok: true, version, record, diff, files: { version: versionPath, report: reportPath, export: exportPath } };
+}
+
+/** 一時の名前で書いてから置き換える（書きかけを残さない。同じ名前のファイルがあれば書かない） */
+async function writeAtomic(path: string, bytes: Buffer): Promise<void> {
+  const tmp = `${path}.part`;
+  await writeFile(tmp, bytes, { flag: "wx" });
   try {
-    await rename(tmp, reportPath);
+    await rename(tmp, path);
   } catch (e) {
     await rm(tmp, { force: true });
     throw e;
   }
-  return { ok: true, version, record, diff, files: { version: versionPath, report: reportPath } };
 }
 
 // ─── 差分レポート（Excel） ──────────────────────────────────

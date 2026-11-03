@@ -8,12 +8,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
-import { commitPlan, readHistory, revertPlan, PLAN_ID } from "../plan/store";
+import { commitPlan, readHistory, revertPlan, PLAN_ID, type ExportCatalogs } from "../plan/store";
+import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, questionsOf, sendCheckpoint, verifyRing, type Answers } from "../share/checkpoint";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
 import { HEX16, HEX64, fingerprint } from "../share/sign";
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
   detectDocuments,
@@ -111,6 +112,19 @@ export class HumanService {
 
   constructor(private readonly e: HumanEnv) {}
 
+  /** 書き出しに使うパックの名前の表（packs/<パック>/common.json と packs/_kinds/work.json）。読めなければ共通のシートは作らない */
+  private catalogsFor(packId: string): ExportCatalogs {
+    const read = (p: string): unknown => JSON.parse(readFileSync(p, "utf8"));
+    const work = read(join(this.e.packsDir, "_kinds", "work.json"));
+    const empty = catalogFromPack({ systems: [] }, work);
+    if (!PACK_ID.test(packId)) return { catalog: null, empty };
+    try {
+      return { catalog: catalogFromPack(read(join(this.e.packsDir, packId, "common.json")), work), empty };
+    } catch {
+      return { catalog: null, empty };
+    }
+  }
+
   async documents(refresh = false): Promise<DocumentsInfo> {
     if (!this.docs || refresh) this.docs = await detectDocuments({ ...(this.e.shell ? { shell: this.e.shell } : {}), ...(this.e.platform ? { platform: this.e.platform } : {}), ...(this.e.env ? { env: this.e.env } : {}) });
     return this.docs;
@@ -162,7 +176,7 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        const r = await commitPlan({ root, plan: p.plan, reason: p.reason, acceptances: p.acceptances, basedOn: p.basedOn, client: call.session, now });
+        const r = await commitPlan({ root, plan: p.plan, reason: p.reason, acceptances: p.acceptances, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
       }
@@ -171,7 +185,7 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        const r = await revertPlan({ root, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now });
+        const r = await revertPlan({ root, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
         if (!r.ok) return no(r.reason);
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
       }

@@ -87,7 +87,7 @@ export function ConfirmDialog({
   const [accept, setAccept] = useState<Record<string, { reason: string; on: boolean }>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ version: number; files: { version: string; report: string } } | null>(null);
+  const [done, setDone] = useState<{ version: number; files: { version: string; report: string; export: string | null } } | null>(null);
 
   useEffect(() => {
     if (!opened) return;
@@ -118,7 +118,7 @@ export function ConfirmDialog({
       acceptances: accepted.map((d) => ({ id: d.id, hash: d.hash, reason: accept[d.id]!.reason.trim() })),
       basedOn: status.latest?.version ?? null,
     };
-    const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string } }>(
+    const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null } }>(
       await client.callHuman("plan_commit", ROUTES.planCommit.path, payload),
     );
     setBusy(false);
@@ -269,6 +269,11 @@ export function ConfirmDialog({
                   <Text size="xs" className="moyai-num">
                     {done.files.report}
                   </Text>
+                  {done.files.export && (
+                    <Text size="xs" className="moyai-num" data-testid="confirm-export">
+                      {done.files.export}
+                    </Text>
+                  )}
                 </Stack>
               </Alert>
             )}
