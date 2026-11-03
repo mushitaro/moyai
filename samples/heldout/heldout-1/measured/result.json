@@ -1,0 +1,293 @@
+{
+ "schema": "moyai.heldout.result/0",
+ "set": "heldout-1",
+ "bundle": "2a3ec16d0b9c6030b07f5fe5582bb098fe2181c5b2bd344a832ebdacbedba26e",
+ "reader": {
+  "tag": "reader-freeze-1",
+  "commit": "0d5405b72ef0ab42dc61499ef25461f7060b3550",
+  "src": "a7b9aa15f834f3559484218c868bfd25ac90583e",
+  "packs": "07790b48982c9dc5eb0b3de3b88df5de7e447702"
+ },
+ "measuredAt": "2026-11-03T22:16:10.655Z",
+ "result": {
+  "set": "heldout-1",
+  "files": [
+   {
+    "file": "daicho/setsubi-daicho_R8.xlsx",
+    "format": "xlsx",
+    "kind": "ledger",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 175,
+    "rows": {
+     "input": 50,
+     "imported": 12,
+     "excluded": 7,
+     "unresolved": 31,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "hoshitori/hozen-keikaku-hyo_R8-R10.xlsx",
+    "format": "xlsx",
+    "kind": "star",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 0,
+    "rows": {
+     "input": 62,
+     "imported": 51,
+     "excluded": 11,
+     "unresolved": 0,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "nippo/sagyo-jisseki-ichiran_R4-R7.csv",
+    "format": "csv",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 546,
+    "rows": {
+     "input": 58,
+     "imported": 0,
+     "excluded": 3,
+     "unresolved": 55,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "nippo/sagyo-nippo_2026-04_08.csv",
+    "format": "csv",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 535,
+    "rows": {
+     "input": 115,
+     "imported": 0,
+     "excluded": 2,
+     "unresolved": 113,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "houkoku/R5-teiki-seibi_sagyo-houkoku.pdf",
+    "format": "pdf",
+    "kind": "report",
+    "leak": 0,
+    "leakAgainst": "元の xlsx（列の位置のずれ 2）",
+    "leakDetail": [],
+    "unresolved": 155,
+    "rows": {
+     "input": 27,
+     "imported": 3,
+     "excluded": 6,
+     "unresolved": 18,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "houkoku/R7-DCS-koshin_kansei-houkoku.pdf",
+    "format": "pdf",
+    "kind": "report",
+    "leak": 0,
+    "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+    "leakDetail": [],
+    "unresolved": 17,
+    "rows": {
+     "input": 11,
+     "imported": 0,
+     "excluded": 6,
+     "unresolved": 5,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "shashin/IMG_20231012_houkoku-p1.jpg",
+    "format": "jpg",
+    "kind": "photo",
+    "leak": null,
+    "leakAgainst": null,
+    "leakDetail": [],
+    "unresolved": null,
+    "rows": null,
+    "accuracy": null,
+    "rejected": "読んでいない（写真は AI が読む）"
+   }
+  ],
+  "asked": 24,
+  "answered": 9,
+  "openAtEnd": [
+   {
+    "kind": "stray",
+    "rows": 31,
+    "text": "名前の欄が空で、ほかの欄だけに中身がある行がある"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 A（見出し「【架空】みどり台クリーンセンター　保守点検作業実績一覧（令和4年度～令和7年度）」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 C（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 E（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "levelSplit",
+    "rows": 26,
+    "text": "段の手がかりが割れている（名前の列の位置は 1 段目、番号は 2 段目）。この行は何段目か"
+   },
+   {
+    "kind": "levelSplit",
+    "rows": 26,
+    "text": "段の手がかりが割れている（名前の列の位置は 3 段目、番号は 2 段目）。この行は何段目か"
+   },
+   {
+    "kind": "stray",
+    "rows": 86,
+    "text": "名前の欄が空で、ほかの欄だけに中身がある行がある"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「機器番号」）の役目が決まらない"
+   },
+   {
+    "kind": "effortUnknown",
+    "rows": 18,
+    "text": "houkoku/R5-teiki-seibi_sagyo-houkoku.pdf と houkoku/R7-DCS-koshin_kansei-houkoku.pdf（同じ様式）の表に、工数が数だけで単位が無い行がある。単位は何か"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「区分」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「機器番号」）の役目が決まらない"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「工 期」は、先の資料の「工 期」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「受注者」は、先の資料の「受注者」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「発注者」は、先の資料の「発注者」と同じ機器か"
+   }
+  ],
+  "unresolvedBefore": 1782,
+  "unresolvedAfter": 1428,
+  "planMade": false,
+  "blockers": [
+   "未解決のセル 1428",
+   "答えの無い質問 15"
+  ],
+  "plan": null,
+  "markWorkCount": null,
+  "recovery": {
+   "denominator": 142,
+   "together": 0,
+   "inPlan": 0,
+   "manDays": {
+    "correct": 0,
+    "total": 60
+   },
+   "days": {
+    "correct": 0,
+    "total": 73
+   },
+   "marksOnly": 142,
+   "notCounted": {},
+   "misses": [
+    "作業 W0001（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0002（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0003（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0004（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0005（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0006（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0007（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0008（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0009（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0010（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0011（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0012（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0013（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0014（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0015（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0016（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0017（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0018（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0019（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0020（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0021（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0022（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0023（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0024（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0025（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0026（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0027（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0028（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0029（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0030（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0031（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0032（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0033（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0034（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0035（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0036（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0037（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0038（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0039（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0040（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0041（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0042（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0043（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0044（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0045（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0046（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0047（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0048（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0049（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0050（hoshitori/hozen-keikaku-hyo_R8-R10.xlsx）：1 つの明細にそろっていない"
+   ]
+  },
+  "unplaced": []
+ }
+}
