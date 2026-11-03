@@ -39,7 +39,8 @@ export function exportWorld(world, precisionIds) {
       install_year: e.install_year,
       spec: e.spec,
     })),
-    works: world.works.map((w) => ({
+    // 予定にも実績にも書かない作業（工場が検査の欠けとして入れたもの。status が planned・actual 以外）は写さない
+    works: world.works.filter((w) => w.status === "planned" || w.status === "actual").map((w) => ({
       id: w.id,
       equipment_id: w.equipment_id,
       fiscal_year: w.fiscal_year,
