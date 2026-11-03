@@ -3,8 +3,10 @@
 // 決定は、人の答えも AI の答えも、ここの同じ確かめ（その質問が今出している選択肢か）を通す。
 // React を持たない純粋な TS にして、試験（vitest）から工場の資料で動かせるようにする。
 import { IntakeSession, type Analysis, type IntakeOptions, type Survey } from "../../import";
+import { PhotoBook, photoMimeOf } from "../../import/photo";
 import type { Decision, QuestionKind, QuestionState } from "../../import/questions";
 import type { InputFile } from "../../import/read";
+import { PhotoDesk } from "./photos";
 import type { TabSentCode } from "../../shared/errors";
 import type { Plan } from "../../shared/plan";
 import { placeComposedPlan } from "../state/crosswalk";
@@ -94,9 +96,18 @@ export class IntakeWorkspace {
   version = 0;
   compose: ComposeState = { state: "idle" };
   notices: Notice[] = [];
+  /** 写真の一覧と読み取り（読み直しで取り込みを作り直しても、同じものを使う） */
+  readonly photoBook = new PhotoBook();
+  /** 写真を AI に渡す記録と、写真のツールの受け手・人の確かめの操作 */
+  readonly photos: PhotoDesk;
 
   constructor(public settings: WorkspaceSettings) {
-    this.session = new IntakeSession(this.optionsOf(settings));
+    this.session = new IntakeSession(this.optionsOf(settings), this.photoBook);
+    this.photos = new PhotoDesk(
+      () => this.photoBook,
+      (data) => this.changed(data, data),
+      (kind, text) => this.note(kind, text),
+    );
   }
 
   private optionsOf(s: WorkspaceSettings): IntakeOptions {
@@ -199,8 +210,9 @@ export class IntakeWorkspace {
   /** 施設の設定を変える。年度の始まりは読み方に効くので、入れた資料と決定で読み直す */
   async configure(next: WorkspaceSettings): Promise<void> {
     const decisions = this.session.decisionList();
-    const s = new IntakeSession(this.optionsOf(next));
-    await s.add(this.inputs);
+    // 写真は同じ一覧をそのまま使う（並べ直さない）
+    const s = new IntakeSession(this.optionsOf(next), this.photoBook);
+    await s.add(this.inputs.filter((f) => photoMimeOf(f.name) === null));
     for (const d of decisions) s.settle([d]);
     this.session = s;
     this.settings = next;
@@ -293,7 +305,7 @@ export class IntakeWorkspace {
           : c.state === "done"
             ? { state: "done", message: `作った：機器の節 ${c.plan.assets.length}・作業 ${c.plan.works.length}・明細 ${c.plan.details.length}` }
             : { state: "failed", message: c.blockers.join("・") };
-    return { ...base, notes: [...base.notes, ...this.tooLarge.map((r) => `${r.file}：${r.reason}`)], compose };
+    return { ...base, notes: [...base.notes, ...this.tooLarge.map((r) => `${r.file}：${r.reason}`), ...this.photos.surveyNotes()], compose };
   }
 
   /** AI だけで結んだもの（作者が AI か、AI が会話から写した人の答えの、結ぶ質問の決定）。人が画面で受けるまで確定できない */

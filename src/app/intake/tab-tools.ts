@@ -2,8 +2,9 @@
 // 引数は橋渡しが型で確かめてあるが、ここでも確かめ直し（既定の値もここで埋まる）、答えも出力の型で確かめてから返す。
 // AI に行のデータを引数で渡させない。返す行は星取表の行の一部だけで、上限は橋渡しが会話ごとに数える（§2.12）。
 // 当てはめ（crosswalk_propose）は規則で案を置くだけで、数と行の参照だけを返す。人が受ける道はここに無い（画面だけ）。
+// 写真（photo_transcribe）は、人が画面で許した写真の画像を 1 回だけ添えて返す（intake/photos.ts）。許す・確かめる道はここに無い。
 import type { TabSentCode } from "../../shared/errors";
-import { toolDef, type Rule, type ToolName } from "../../shared/tools";
+import { toolDef, type PhotoCellIn, type PhotoImage, type Rule, type ToolName } from "../../shared/tools";
 import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
@@ -13,7 +14,8 @@ import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
 import type { IntakeWorkspace } from "./workspace";
 
-export type TabToolResult = { ok: true; data: Record<string, unknown> } | { ok: false; code: TabSentCode };
+/** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
+export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
 export interface TabToolContext {
   conversation: string;
   /** この会話であと読める星取表の行（橋渡しが数える） */
@@ -90,6 +92,11 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     ws.note("ai", T.crosswalkPlaced(rules.length, r.placed, r.data.conflicts));
     return { ok: true, data: r.data as unknown as Record<string, unknown> };
   },
+  // 写真：人が許した写真を 1 枚受け取るか、受け取った写真に読んだ格子を置くだけ。許す・確かめる道はここに無い（画面だけ）
+  photo_transcribe: (ws, args, ctx) =>
+    args.mode === "receive"
+      ? ws.photos.receive(args.imageRef as string | undefined, ctx.conversation)
+      : ws.photos.place(args.grid as { imageRef: string; cells: PhotoCellIn[] }, ctx.conversation),
   // 検査の結果を読むだけ（画面と同じ基準日で、パックの検査の純粋な関数を走らせる）。検査を直す・判定を変える道は無い
   check_results: (ws, args) => {
     const working = getWorkingPlan();

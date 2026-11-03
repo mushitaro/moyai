@@ -4,3 +4,4 @@ export { readSource, type InputFile, type ReadOutcome } from "./read";
 export type { Decision, Question, QuestionState, QuestionKind, QuestionItem } from "./questions";
 export type { Composition, FileCounts, CellStatus, CheckResult } from "./compose";
 export type { SourceFile, SheetGrid, GridCell, LedgerEntry, RejectedFile } from "./grid";
+export { PhotoBook, scannedPageInput, photoState, type PhotoEntry, type PhotoInput, type PhotoReading, type PhotoState } from "./photo";

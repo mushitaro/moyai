@@ -134,7 +134,7 @@ export const TEXT = {
     },
     drop: {
       title: "資料を入れる",
-      hint: "ここに Excel（.xlsx・.xlsm）や CSV を落とします。1 ファイル 64 MB まで。資料はこのタブのメモリに置きます。AI クライアント（Claude Code など）には、ツールの結果として、資料の見本の行・凡例・注記・星取表の行が渡り、その先の AI の提供者にも渡ります。",
+      hint: "ここに Excel（.xlsx・.xlsm）や CSV、写真（JPEG・PNG）を落とします。1 ファイル 64 MB まで。資料はこのタブのメモリに置きます。AI クライアント（Claude Code など）には、ツールの結果として、資料の見本の行・凡例・注記・星取表の行が渡り、その先の AI の提供者にも渡ります。写真は、人が 1 枚ずつ許したものだけが渡ります。",
       pick: "ファイルを選ぶ",
       reading: "読んでいます",
       skipped: "読まなかった資料",
@@ -373,3 +373,5 @@ export { HUMAN_TEXT, bandText } from "./human";
 export { reasonText } from "./reasons";
 // 検査の画面と、検査の結果を AI に返すときの言葉
 export { REVIEW_TEXT, exampleText, numberLabel, numberValue } from "./review";
+// 写真の欄と、写真のツールの結果の言葉
+export { PHOTO_TEXT } from "./photo";

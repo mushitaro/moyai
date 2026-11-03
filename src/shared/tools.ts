@@ -86,6 +86,47 @@ export const RELAY_MARGIN_MS = 5_000;
 export const ROWS_PER_CALL = 200;
 export const ROWS_PER_CONVERSATION = 2_000;
 
+/**
+ * 写真を AI に渡す形（§2.12）：1 回に 1 枚。長辺 1,568〜2,000 px、JPEG で約 100 KB 以下（targetBytes）。
+ * maxBytes は運ぶときの上限（タブ → 橋渡しの WebSocket と、橋渡しの確かめ）。これを越える画像は渡さない。
+ */
+export const PHOTO_SEND = {
+  longSideMin: 1_568,
+  longSideMax: 2_000,
+  targetBytes: 100 * 1024,
+  maxBytes: 300 * 1024,
+  mimeType: "image/jpeg",
+} as const;
+/** 写真の格子の上限（置くセルの数・行と列の番号。行と列は 0 から） */
+export const PHOTO_GRID_MAX_CELLS = 2_000;
+export const PHOTO_GRID_MAX_ROW = 1_999;
+export const PHOTO_GRID_MAX_COL = 255;
+
+/**
+ * AI に渡す画像そのもの（photo_transcribe の receive だけ）。ツールの結果の JSON には入れず、
+ * タブ → 橋渡し → 中継を別の欄で運び、中継が MCP の画像の中身（type: image）として添える。
+ */
+export const photoImageSchema = z.object({
+  mimeType: z.literal(PHOTO_SEND.mimeType),
+  /** base64（改行なし） */
+  data: z
+    .string()
+    .min(4)
+    .max(Math.ceil(PHOTO_SEND.maxBytes / 3) * 4)
+    .regex(/^[A-Za-z0-9+/]+={0,2}$/),
+});
+export type PhotoImage = z.infer<typeof photoImageSchema>;
+
+/** 人だけの経路 photo_allow の中身：渡す画像（作業画面が描き直した JPEG）の SHA-256 と形。許しはこの画像だけに効く */
+export const photoAllowSchema = z.object({
+  imageRef: z.string().min(1).max(200),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  bytes: z.number().int().min(1).max(PHOTO_SEND.maxBytes),
+  width: z.number().int().min(1).max(PHOTO_SEND.longSideMax),
+  height: z.number().int().min(1).max(PHOTO_SEND.longSideMax),
+});
+export type PhotoAllow = z.infer<typeof photoAllowSchema>;
+
 /** 確かめた度合い（4 段）。画面と検査の結果に必ず出す。 */
 export const VERIFICATION_LEVELS = ["原典照合済", "要約のみ", "未確認", "プレビュー"] as const;
 /** 検査の種類（本線の 8 種）。種類を足すときはコードと試験を足す。 */
@@ -190,6 +231,48 @@ function def<N extends string, I extends z.ZodObject, O extends z.ZodObject>(
   return { name, kind, waitsFor, title, description: `${description} ${COMMON}`, input, output };
 }
 
+// ─── 写真の格子（photo_transcribe の place）─────────────────────────────
+// 型から外れたものは直さずに断る（plan §2.13）。画像の大きさに合うか（位置が画像の外にないか）は、作業画面が確かめる。
+
+const photoBoxSchema = z.object({
+  x: z.number().min(0),
+  y: z.number().min(0),
+  w: z.number().positive(),
+  h: z.number().positive(),
+});
+export const photoCellSchema = z.object({
+  row: z.number().int().min(0).max(PHOTO_GRID_MAX_ROW),
+  col: z.number().int().min(0).max(PHOTO_GRID_MAX_COL),
+  text: z.string().min(1).max(500),
+  box: photoBoxSchema,
+  confidence: z.number().min(0).max(1),
+});
+export type PhotoCellIn = z.infer<typeof photoCellSchema>;
+
+const photoTranscribeInput = z
+  .object({
+    mode: z.enum(["receive", "place"]),
+    /** receive で受け取る写真（省けば、人が許してまだ渡していない最初の 1 枚） */
+    imageRef: z.string().min(1).max(200).optional(),
+    grid: z
+      .object({
+        imageRef: z.string().min(1).max(200),
+        cells: z.array(photoCellSchema).min(1).max(PHOTO_GRID_MAX_CELLS),
+      })
+      .optional(),
+  })
+  .superRefine((a, ctx) => {
+    if (a.mode === "receive" && a.grid !== undefined) ctx.addIssue({ code: "custom", path: ["grid"], message: "receive では grid を渡さない" });
+    if (a.mode === "place" && a.grid === undefined) ctx.addIssue({ code: "custom", path: ["grid"], message: "place には grid が要る" });
+    if (a.mode === "place" && a.imageRef !== undefined) ctx.addIssue({ code: "custom", path: ["imageRef"], message: "place の写真は grid.imageRef で指す" });
+    const seen = new Set<string>();
+    a.grid?.cells.forEach((c, i) => {
+      const k = `${c.row},${c.col}`;
+      if (seen.has(k)) ctx.addIssue({ code: "custom", path: ["grid", "cells", i], message: "同じ行・列のセルが 2 つある" });
+      seen.add(k);
+    });
+  });
+
 // ─── 12 のツール ─────────────────────────────────────────────────
 
 export const TOOLS = {
@@ -254,30 +337,23 @@ export const TOOLS = {
     "photo_transcribe",
     "propose",
     "写真を読む",
-    "人が画面で許した写真を 1 枚受け取る（receive）か、読んだ格子を置く（place）。格子はセルの行・列・文字・位置・確からしさで書く。置いたものは、人が画像と並べて確かめるまで要確認。",
-    z.object({
-      mode: z.enum(["receive", "place"]),
-      grid: z
-        .object({
-          imageRef: z.string(),
-          cells: z
-            .array(
-              z.object({
-                row: z.number().int().min(0),
-                col: z.number().int().min(0),
-                text: z.string().max(500),
-                box: z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() }),
-                confidence: z.number().min(0).max(1),
-              }),
-            )
-            .max(2000),
-        })
-        .optional(),
-    }),
+    "人が画面で許した写真を 1 枚受け取る（receive）か、読んだ格子を置く（place）。格子はセルの行・列・文字・位置・確からしさで書く。置いたものは、人が画像と並べて確かめるまで要確認。" +
+      "receive は 1 回に 1 枚で、画像は結果の画像として添える（imageRef を省くと、許されてまだ渡していない最初の 1 枚）。許しは人が取り込みの画面で 1 枚ごとに押し、1 回渡すと使い終わる。許すツール・確かめるツールは無い。" +
+      "place の格子：行と列は 0 から、位置（box）は受け取った画像の画素（左上が原点）、文字は見えたとおりに書き、読めない所は推測で埋めず、置かないか確からしさを低くする。空のセルは置かない。型から外れたら、どれも置かずに断る（直さない）。同じ写真に置き直すと前の格子と入れ替わる（人が直したか確かめた写真は変えられない）。",
+    photoTranscribeInput,
     z.object({
       imageRef: z.string().nullable(),
       placedCells: z.number().int(),
       needsReview: z.literal(true),
+      mode: z.enum(["receive", "place"]),
+      /** receive：この結果に添えた画像の形（box はこの画像の画素で書く）。place は null */
+      image: z
+        .object({ width: z.number().int(), height: z.number().int(), bytes: z.number().int(), mimeType: z.literal(PHOTO_SEND.mimeType) })
+        .nullable(),
+      /** 人が許し、まだ渡していない写真の数 */
+      waiting: z.number().int(),
+      /** 次にすること（Claude Desktop では instructions が効かないので、結果にも書く） */
+      note: z.string(),
     }),
   ),
   crosswalk_propose: def(

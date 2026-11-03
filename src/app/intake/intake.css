@@ -92,3 +92,56 @@
 .moyai-swatch[data-s="unresolved"] {
   background: var(--moyai-cell-unresolved-bg);
 }
+
+/* 写真の欄：AI に渡す画像の見本と、読み取りを画像と並べて確かめる枠 */
+.moyai-photo-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  border: 1px solid var(--moyai-border);
+  background: var(--moyai-surface);
+}
+.moyai-photo-frame {
+  position: relative;
+  border: 1px solid var(--moyai-border);
+  background: var(--moyai-surface);
+  line-height: 0;
+}
+.moyai-photo-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.moyai-photo-box {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--moyai-accent);
+  background: transparent;
+  cursor: pointer;
+}
+.moyai-photo-box[data-low="true"] {
+  border-color: var(--moyai-warn);
+  border-style: dashed;
+}
+.moyai-photo-box[data-human="true"] {
+  border-color: var(--moyai-mark-changed);
+}
+.moyai-photo-box[data-sel="true"] {
+  border: 2px solid var(--moyai-cell-focus);
+  background: var(--moyai-chart-selected);
+}
+.moyai-photo-grid {
+  max-height: 360px;
+}
+.moyai-photo-grid td[data-low="true"] {
+  background: var(--moyai-mark-review-bg);
+  color: var(--moyai-mark-review-fg);
+}
+.moyai-photo-grid td[data-human="true"] {
+  box-shadow: inset 0 0 0 2px var(--moyai-mark-changed);
+}
+.moyai-photo-grid td[data-sel="true"] {
+  outline: 2px solid var(--moyai-cell-focus);
+  outline-offset: -2px;
+}

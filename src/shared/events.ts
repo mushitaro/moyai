@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { TAB_ERROR_CODES, TAB_SENT_CODES, type TabErrorCode, type TabSentCode } from "./errors";
 import { HUMAN_ACTIONS } from "./routes";
-import { TOOL_NAMES, type ToolName } from "./tools";
+import { TOOL_NAMES, photoImageSchema, type ToolName } from "./tools";
 
 export type EventSide = "tab" | "bridge";
 
@@ -64,13 +64,14 @@ export const EVENTS = {
       rowsRemaining: z.number().int().min(0),
     }),
   },
+  // image は photo_transcribe の receive だけが添える（人が許した写真 1 枚。橋渡しが許しと照らしてから中継へ渡す）
   "tab.tool_result": {
     from: "tab",
     to: "bridge",
     data: z.object({
       requestId,
       result: z.discriminatedUnion("ok", [
-        z.object({ ok: z.literal(true), data: z.record(z.string(), z.unknown()) }),
+        z.object({ ok: z.literal(true), data: z.record(z.string(), z.unknown()), image: photoImageSchema.optional() }),
         z.object({ ok: z.literal(false), code: z.enum(TAB_SENT_CODES as [TabSentCode, ...TabSentCode[]]) }),
       ]),
     }),

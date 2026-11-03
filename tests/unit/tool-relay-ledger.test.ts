@@ -31,16 +31,17 @@ describe("ToolRelay", () => {
     const relay = new ToolRelay(slowRowsTab());
     await relay.run("chart_rows", { offset: 0, limit: 3 }, "c1");
     await relay.run("chart_rows", { offset: 3, limit: 2 }, "c2");
-    await relay.run("photo_transcribe", {}, "c1"); // 未実装（誤りの答えも数える）
+    await relay.run("note_for_human", {}, "c1"); // 未実装（誤りの答えも数える）
     const log = relay.outboundLog();
     expect(log.map((e) => [e.tool, e.ok, e.rows, e.conversation])).toEqual([
       ["chart_rows", true, 3, "c1"],
       ["chart_rows", true, 2, "c2"],
-      ["photo_transcribe", false, null, "c1"],
+      ["note_for_human", false, null, "c1"],
     ]);
     for (const e of log) {
       expect(e.bytes).toBeGreaterThan(0);
-      expect(Object.keys(e).sort()).toEqual(["at", "bytes", "conversation", "ok", "rows", "tool"]);
+      expect(Object.keys(e).sort()).toEqual(["at", "bytes", "conversation", "imageBytes", "ok", "rows", "tool"]);
+      expect(e.imageBytes).toBeNull();
     }
     const t = relay.outboundTotals("c1");
     expect(t.calls).toBe(2);

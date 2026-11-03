@@ -6,7 +6,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { expect, type Page } from "@playwright/test";
@@ -77,7 +77,13 @@ export const FICTIONAL_1 = {
   files: ["equipment-ledger.xlsx", "plan-hoshitori.xlsx", "daily-report.csv"],
 };
 
-/** 取り込みの画面を開き、パックと施設の名前を入れ、資料を受け口に落とす */
+/** 写真（読まずに並べるもの）の拡張子 */
+const PHOTO_EXT = /\.(jpe?g|png)$/i;
+
+/**
+ * 取り込みの画面を開き、パックと施設の名前を入れ、資料を受け口に落とす。
+ * 資料はフォルダの下の道で書いてよい（落とすファイルの名前は最後の部分）。写真はセルの行き先ではなく写真の欄に並ぶ。
+ */
 export async function openIntakeAndDrop(page: Page, base: string, facilityName: string, set = FICTIONAL_1): Promise<void> {
   await page.goto(`${base}/#/intake`);
   await expect(page.getByTestId("intake-page")).toBeVisible();
@@ -85,14 +91,16 @@ export async function openIntakeAndDrop(page: Page, base: string, facilityName: 
   await page.getByTestId("pack").click();
   await page.getByRole("option", { name: /^waste-incineration/ }).click();
   await page.getByTestId("facility-name").fill(facilityName);
-  const files = set.files.map((name) => ({ name, b64: readFileSync(join(set.dir, name)).toString("base64") }));
+  const photos = set.files.filter((n) => PHOTO_EXT.test(n)).length;
+  const files = set.files.map((name) => ({ name: basename(name), b64: readFileSync(join(set.dir, name)).toString("base64") }));
   const dt = await page.evaluateHandle((fs) => {
     const d = new DataTransfer();
     for (const f of fs) d.items.add(new File([Uint8Array.from(atob(f.b64), (c) => c.charCodeAt(0))], f.name));
     return d;
   }, files);
   await page.getByTestId("drop").dispatchEvent("drop", { dataTransfer: dt });
-  await expect(page.getByTestId("dest-file")).toHaveCount(set.files.length, { timeout: 20_000 });
+  await expect(page.getByTestId("dest-file")).toHaveCount(set.files.length - photos, { timeout: 20_000 });
+  if (photos) await expect(page.getByTestId("photo-item")).toHaveCount(photos);
 }
 
 /** 本物の中継（dist/cli.js mcp）に MCP のクライアントでつなぎ、ツールの一覧（出力の型）を先に読む */

@@ -3,7 +3,7 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import type { WebSocket } from "ws";
 import { errorBody, type TabErrorCode, type TabSentCode } from "../shared/errors";
-import type { ToolName } from "../shared/tools";
+import type { PhotoImage, ToolName } from "../shared/tools";
 import { decodeEvent, encodeEvent, type BridgeToTab, type EventData, type TabToBridge } from "../shared/events";
 import type { TokenStore } from "./tokens";
 
@@ -39,9 +39,12 @@ interface Conn {
 
 type Handler<T extends TabToBridge> = (hub: TabHub, conn: Conn, data: EventData<T>) => void;
 
-/** タブにツールを渡した結果。no_tab は渡せなかった、no_answer は時間切れか途中で閉じた（渡したかもしれない）。 */
+/**
+ * タブにツールを渡した結果。no_tab は渡せなかった、no_answer は時間切れか途中で閉じた（渡したかもしれない）。
+ * ok の session は答えたタブの回（写真の許しはこの回に結ぶ）。image は photo_transcribe の receive だけが添える。
+ */
 export type TabCallOutcome =
-  | { kind: "ok"; data: Record<string, unknown> }
+  | { kind: "ok"; data: Record<string, unknown>; session: string; image?: PhotoImage }
   | { kind: "error"; code: TabSentCode }
   | { kind: "no_tab" }
   | { kind: "no_answer"; reason: "timeout" | "closed" };
@@ -49,6 +52,7 @@ export type TabCallOutcome =
 interface PendingCall {
   name: ToolName;
   ws: WebSocket;
+  session: string;
   timer: NodeJS.Timeout;
   resolve: (o: TabCallOutcome) => void;
 }
@@ -179,7 +183,7 @@ export class TabHub {
         resolve({ kind: "no_answer", reason: "timeout" });
       }, timeoutMs);
       timer.unref();
-      this.calls.set(requestId, { name, ws: tab.ws, timer, resolve });
+      this.calls.set(requestId, { name, ws: tab.ws, session: tab.session, timer, resolve });
       this.send(tab.ws, "bridge.tool_call", { requestId, name, args, conversation, rowsRemaining });
     });
   }
@@ -190,7 +194,8 @@ export class TabHub {
     if (!call || call.ws !== conn.ws) return;
     this.calls.delete(data.requestId);
     clearTimeout(call.timer);
-    call.resolve(data.result.ok ? { kind: "ok", data: data.result.data } : { kind: "error", code: data.result.code });
+    const r = data.result;
+    call.resolve(r.ok ? { kind: "ok", data: r.data, session: call.session, ...(r.image ? { image: r.image } : {}) } : { kind: "error", code: r.code });
   }
 
   /** タブが閉じた・切れたとき、そのタブに渡して答えを待っているものを終える（ws が null ならすべて） */
