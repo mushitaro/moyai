@@ -298,7 +298,10 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const ts = tags.get(r.r);
     const tagged = ts?.state === "split" ? ts.split : null;
     const tagUndecided = ts?.state === "undecided";
-    const raw = nc.text.replace(/\s*\n\s*/g, " ").trim();
+    // 〃：上の行と同じ名前（名前だけ同じの別の行）
+    const dittoName = cue.isDitto(nc.text);
+    const prevName = rec.assets.filter((x) => x.tableId === t.id).at(-1)?.rawName ?? null;
+    const raw = dittoName ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
     const name = tagged ? tagged.name : raw;
     const a: AssetRec = {
       id: idOf(r.r),
@@ -320,7 +323,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       installed: null,
       refs: [nc.ref],
       excluded: null,
-      pending: r.level === null || tagUndecided,
+      pending: r.level === null || tagUndecided || (dittoName && prevName === null),
     };
     for (const c of cells) {
       if (c.c === nameCol.c || off(c.ref)) continue;
@@ -461,7 +464,16 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       const merged = lay.index.merge(r.r, col.c);
       let text: string | null = null;
       let ref: string | null = null;
-      if (own && own.text !== "") {
+      let dittoRef: string | null = null;
+      const isLeafCol = i === hier.length - 1;
+      if (own && cue.isDitto(own.text)) {
+        // 〃：上の行と同じ名前。上の段の節は同じ節（〃 のセルも出どころに足す）、葉は名前だけ同じの別の行
+        if (pathPrev[i]) {
+          text = pathPrev[i] ?? null;
+          ref = isLeafCol ? own.ref : (pathPrevRef[i] ?? null);
+          dittoRef = isLeafCol ? null : own.ref;
+        } else undecided = true;
+      } else if (own && own.text !== "") {
         text = own.text;
         ref = own.ref;
       } else if (merged) {
@@ -522,6 +534,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         nodeOf.set(key, n);
         rec.assets.push(n);
       }
+      if (dittoRef && !n.refs.includes(dittoRef)) n.refs.push(dittoRef);
       parent = n;
       node = n;
     }

@@ -179,9 +179,21 @@ describe("CSV・TSV の読み手", () => {
     expect(q).toBeDefined();
     expect(s.compose().plan).toBeNull();
   });
-  test("UTF-8 でも Shift_JIS でも EUC-JP でも壊れずに読めないバイト列は、文字コードを質問にする", async () => {
+  test("UTF-8 でも Shift_JIS でも EUC-JP でも壊れずに読めないバイト列は、文字コードを質問にし、黙って落とさない", async () => {
     const s = session();
     await s.add([{ name: "bad.csv", bytes: new Uint8Array([0x82, 0xa0, 0xff, 0xfe, 0x0a, 0x80, 0x0a]) }]);
-    expect(s.analyze().open.some((q) => q.kind === "encoding")).toBe(true);
+    const q = s.analyze().open.find((x) => x.kind === "encoding");
+    expect(q?.options.map((o) => o.id)).toContain("reject");
+    const c = s.compose();
+    expect(c.plan).toBeNull();
+    expect(c.blockers.join("")).toContain("読めなかった資料 1");
+    s.settle([human(q?.questionId ?? "", "reject")]);
+    const an = s.analyze();
+    expect(an.rejected.map((r) => r.file)).toEqual(["bad.csv"]);
+    expect(an.composition.blockers.join("")).not.toContain("読めなかった資料");
+  });
+  test("区切りの無い 1 列の CSV は、そのまま 1 列として読む", () => {
+    const r = readCsv("one.csv", enc.encode("名称\n機器甲\n機器乙\n"));
+    expect(r.source?.sheets[0]?.cells.map((c) => c.text)).toEqual(["名称", "機器甲", "機器乙"]);
   });
 });

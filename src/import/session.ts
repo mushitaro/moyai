@@ -103,59 +103,72 @@ export class IntakeSession {
   analyze(): Analysis {
     const ask = new Asker(this.decisions);
     const sources: SourceFile[] = [];
+    const rejected: RejectedFile[] = [...this.rejectedFiles];
+    const unreadable: string[] = [];
     for (const f of this.files) {
       const x = this.xlsx.get(f.name);
       if (x) {
         sources.push(x);
         continue;
       }
-      // CSV：文字コードと区切りが決まらなければ質問にする
+      // CSV：文字コードと区切りが決まらなければ質問にする。読めないまま終わったら、黙って落とさず理由つきで外すか止める
       let encoding: CsvEncoding | undefined;
       let delimiter: CsvDelimiter | undefined;
-      for (let pass = 0; pass < 3; pass++) {
+      let done = false;
+      let why = "";
+      for (let pass = 0; pass < 3 && !done; pass++) {
         const r = readCsv(f.name, f.bytes, { ...(encoding ? { encoding } : {}), ...(delimiter ? { delimiter } : {}) });
         if (r.source) {
           sources.push(r.source);
+          done = true;
           break;
         }
         const amb = r.ambiguity[0];
-        if (!amb) break;
-        if (amb.what === "encoding") {
-          const a = ask.ask(`encoding|${f.name}`, {
-            kind: "encoding",
-            text: `${f.name} の文字コードが決まらない（${amb.detail}）`,
-            options: amb.candidates.map((c) => ({ id: c, label: ENCODING_LABEL[c as CsvEncoding] ?? c })),
-            valueKind: "option",
-            defaultAnswer: null,
-            sameShapeRows: 1,
-            items: [{ file: f.name, sheet: null, cells: [] }],
-          });
-          if (!a) break;
-          encoding = a as CsvEncoding;
-        } else {
-          const a = ask.ask(`delimiter|${f.name}`, {
-            kind: "delimiter",
-            text: `${f.name} の区切りが決まらない（${amb.detail}）`,
-            options: amb.candidates.map((c) => ({ id: c === "\t" ? "tab" : c, label: c === "\t" ? "タブ" : `「${c}」` })),
-            valueKind: "option",
-            defaultAnswer: amb.candidates[0] === "\t" ? "tab" : (amb.candidates[0] ?? null),
-            sameShapeRows: 1,
-            items: [{ file: f.name, sheet: null, cells: [] }],
-          });
-          if (!a) break;
-          delimiter = (a === "tab" ? "\t" : a) as CsvDelimiter;
+        if (!amb) {
+          why = "読めない";
+          break;
         }
+        why = amb.detail;
+        const reject = { id: "reject", label: "この資料を外す（読めないため）" };
+        const what = amb.what === "encoding" ? "文字コード" : "区切り";
+        const a = ask.ask(`${amb.what}|${f.name}|${pass}`, {
+          kind: amb.what,
+          text: `${f.name} の${what}が決まらない（${amb.detail}）`,
+          options: [
+            ...amb.candidates.map((c) =>
+              amb.what === "encoding" ? { id: c, label: ENCODING_LABEL[c as CsvEncoding] ?? c } : { id: c === "\t" ? "tab" : c, label: c === "\t" ? "タブ" : `「${c}」` },
+            ),
+            reject,
+          ],
+          valueKind: "option",
+          defaultAnswer: amb.what === "delimiter" && amb.candidates[0] ? (amb.candidates[0] === "\t" ? "tab" : amb.candidates[0]) : null,
+          sameShapeRows: 1,
+          items: [{ file: f.name, sheet: null, cells: [] }],
+        });
+        if (!a) break;
+        if (a === "reject") {
+          rejected.push({ file: f.name, reason: `読めないので外した（決定）：${amb.detail}` });
+          done = true;
+          break;
+        }
+        if (amb.what === "encoding") encoding = a as CsvEncoding;
+        else delimiter = (a === "tab" ? "\t" : a) as CsvDelimiter;
       }
+      if (!done) unreadable.push(`${f.name}（${why || "読めない"}）`);
     }
     const layouts = sources.flatMap((s) => layoutFile(s));
     const date1904 = new Map(sources.map((s) => [s.file, s.date1904]));
     const records = buildRecords(layouts, ask, { fiscalYearStartMonth: this.options.facility.fiscalYearStartMonth }, (f) => date1904.get(f) ?? false);
     const linked = link(records, ask);
     const composition = compose(sources, layouts, records, linked, ask, this.decisions, this.options);
+    if (unreadable.length) {
+      composition.blockers.push(`読めなかった資料 ${unreadable.length}（${unreadable.join("・")}）`);
+      composition.plan = null;
+    }
     const questions = [...ask.asked.values()];
     return {
       sources,
-      rejected: [...this.rejectedFiles],
+      rejected,
       layouts,
       records,
       linked,

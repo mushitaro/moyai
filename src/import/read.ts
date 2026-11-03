@@ -15,7 +15,7 @@ export interface ReadOutcome {
   ambiguity: CsvAmbiguity[];
 }
 
-const RESAVE = "この形式は読めません。Excel で .xlsx（Word の文書は .docx か PDF）に保存し直してください";
+const RESAVE = "この形式は読めません。保存し直してください（今読める形式：.xlsx・.xlsm・.csv・.tsv）";
 
 export function extensionOf(name: string): string {
   return (/\.([a-z0-9]+)$/i.exec(name)?.[1] ?? "").toLowerCase();

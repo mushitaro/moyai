@@ -117,6 +117,52 @@ describe("層 2 構造", () => {
   });
 });
 
+describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
+  test("小計は自分の区切りの中、合計は表全体と比べる", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["名称", "台数"]]);
+      rows(ws, 2, [
+        ["機器A", 2],
+        ["機器B", 3],
+        ["小計", 5],
+        ["機器C", 4],
+        ["小計", 4],
+        ["合計", 9],
+      ]);
+    });
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    acceptDefaults(s);
+    const c = s.compose();
+    expect(c.checks.map((x) => [x.kind, x.mismatches.length])).toEqual([
+      ["subtotal", 0],
+      ["subtotal", 0],
+      ["total", 0],
+    ]);
+    expect(c.plan?.assets.map((a) => a.name)).toEqual(["機器A", "機器B", "機器C"]);
+  });
+
+  test("段の列の 〃 は上と同じ節にし、〃 のセルも出どころに数える", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["設備", "機器", "2024年度"]]);
+      rows(ws, 2, [
+        ["甲設備", "機器A", "●"],
+        ["〃", "機器B", "●"],
+      ]);
+      rows(ws, 5, [["凡例"], [null, "●", "実績"]]);
+    });
+    const s = session();
+    await s.add([{ name: "表.xlsx", bytes }]);
+    acceptDefaults(s);
+    const plan = s.compose().plan;
+    const group = plan?.assets.filter((a) => a.name === "甲設備") ?? [];
+    expect(group.length).toBe(1);
+    expect(group[0]?.sources.map((x) => x.cell)).toEqual(["A2", "A3"]);
+    expect(plan?.assets.find((a) => a.name === "機器B")?.parentKey).toBe(group[0]?.nodeKey);
+    expect(plan?.assets.some((a) => a.name === "〃")).toBe(false);
+  });
+});
+
 describe("層 3 意味づけ：推測で埋めない", () => {
   test("備考の文の中の数を値にしない（「次回は 3 年後」の 3 を周期にしない）。年度末の書き方は年にしない", async () => {
     const bytes = await xlsxOf((ws) => {

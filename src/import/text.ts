@@ -16,7 +16,7 @@ const RE_UNIT_PREFIX = new RegExp(`^(?:${UNIT_PREFIX})\\s*(\\d{1,3})\\s*(\\p{Scr
 const RE_UNIT_MARK = new RegExp(`^(\\d{1,3})\\s*(?:${UNIT_MARK})\\s*(\\p{Script=Han}{0,2})$`, "u");
 const RE_UNIT_HAN = /^(\d{1,3})(\p{Script=Han})$/u;
 
-/** 号・系列の書き方を読む：1号機・１号機・No.1・No.2系・1系・共通・〃。数の書き方の形（spelling）も返す */
+/** 号・系列の書き方を読む：「{数}号{字}」「No.{数}{字}」「{数}{字}」・共通・〃（数は全角でもよい）。数の書き方の形（spelling）も返す */
 export function parseUnit(text: string): UnitValue | null {
   const s = nfkc(text).replace(/\s+/g, "");
   if (!s) return null;
@@ -31,7 +31,7 @@ export function parseUnit(text: string): UnitValue | null {
   return null;
 }
 
-/** 文字の中の号・系列（名前の後ろの括弧など）。「点検（1号機）」→ 1。見つからなければ null */
+/** 文字の中の号・系列（名前の後ろの括弧など）。「名前（{数}号）」→ 数。見つからなければ null */
 export function unitInText(text: string): number | null {
   const s = nfkc(text);
   const re = new RegExp(`(?:${UNIT_PREFIX})\\s*(\\d{1,3})|(\\d{1,3})\\s*(?:${UNIT_MARK})`, "gu");
@@ -105,7 +105,7 @@ export function splitTag(text: string): TagSplit | null {
   return null;
 }
 
-/** 機器番号の末尾の数（STK-1 → 1）。無ければ null */
+/** 機器番号の末尾の数（「ABC-1」「AB1」→ 1）。無ければ null */
 export function tagTrailingNumber(tag: string): number | null {
   const m = /-(\d{1,3})$/.exec(tag) ?? /[A-Z](\d{1,3})$/.exec(tag);
   return m ? Number(m[1]) : null;

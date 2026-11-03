@@ -68,11 +68,28 @@ function authorOf(qids: Iterable<string>, decisions: ReadonlyMap<string, Decisio
   return best;
 }
 
-/** 小計・合計の行を検算する。星取表の形は印のあるセルの数、ほかの形は数の和と比べる */
+/**
+ * 小計・合計の行を検算する。星取表の形は印のあるセルの数、ほかの形は数の和と比べる。
+ * 小計は自分の区切り（前の小計の行のあとから自分の前まで。上に置いた小計なら、自分のあとから次の小計の前まで）の中、
+ * 合計は表のデータの行すべて（小計の行は数えない）と比べる。
+ */
 function checkTotals(lay: SheetLayout, t: Table, ask: Asker, exclude: (ref: string, why: string) => void, pend: (ref: string, q: string) => void): CheckResult[] {
   const out: CheckResult[] = [];
-  const data = t.rows.filter((r) => r.role === "data" || r.role === "parent");
-  for (const row of t.rows.filter((r) => r.role === "subtotal" || r.role === "total")) {
+  const isData = (r: { role: string }) => r.role === "data" || r.role === "parent";
+  const allData = t.rows.filter(isData);
+  const sums = t.rows.filter((r) => r.role === "subtotal" || r.role === "total");
+  const subs = t.rows.filter((r) => r.role === "subtotal").map((r) => r.r);
+  for (const row of sums) {
+    let data = allData;
+    if (row.role === "subtotal") {
+      const prev = Math.max(t.top - 1, ...subs.filter((x) => x < row.r));
+      const before = allData.filter((r) => r.r > prev && r.r < row.r);
+      if (before.length) data = before;
+      else {
+        const next = Math.min(t.bottom + 1, ...subs.filter((x) => x > row.r));
+        data = allData.filter((r) => r.r > row.r && r.r < next);
+      }
+    }
     const cells = lay.index.rowCells(row.r);
     const res: CheckResult = { file: lay.file, sheet: lay.sheet, row: row.r, kind: row.role as "subtotal" | "total", columns: 0, matched: 0, mismatches: [] };
     for (const c of cells) {
@@ -451,7 +468,13 @@ export function compose(
     if (parsed.success) plan = parsed.data;
     else blockers.push(`計画の形が違う：${parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")} ${i.message}`).join("、")}`);
   }
-  const counts = countRows(sources, layouts, status, plan ?? draft);
+  // 保存した計画（作れなければ下書き）の出どころから数え直し、行の行き先が合わなければ計画を出さない
+  const counts = countRows(sources, layouts, status, plan ? (JSON.parse(JSON.stringify(plan)) as Plan) : draft);
+  const lost = counts.filter((c) => !c.holds);
+  if (lost.length) {
+    blockers.push(`行の数え直しが合わない資料 ${lost.length}（${lost.map((c) => c.file).join("・")}）`);
+    plan = null;
+  }
   return { plan, blockers, status, counts, checks };
 }
 
@@ -464,26 +487,32 @@ function levelNames(rec: Records, assets: AssetNodeT[]): string[] {
 }
 
 /**
- * 行を数える。取り込んだ行は、作った計画（または計画の下書き）の出どころから数え直す。
- * 外した行は、行のすべてのセルが外したもの（理由が 1 つならその理由、いくつかなら「混在」）。
+ * 行を数える。別々に数えて照らす：入れた行（格子から）、取り込んだ行（保存した計画の出どころだけから）、
+ * 外した行と未解決の行（セルの行き先だけから。外した行は、行のすべてのセルが外したもの）。
+ * 行は「未解決のセルがある」「計画に入った」「すべて外した」の順に 1 つへ数える。
+ * 計画に入った行がすべて外した行でもある・どこにも入らない行がある・データのセルが計画に無い、のどれかなら合わない。
  */
 function countRows(sources: SourceFile[], layouts: SheetLayout[], status: Map<string, CellStatus>, plan: { assets: { sources: { file: string; sheet: string | null; cell: string | null }[] }[]; details: { sources: { file: string; sheet: string | null; cell: string | null }[] }[] }): FileCounts[] {
+  const SEP = "\u0000";
   const rowsInPlan = new Set<string>();
   const cellsInPlan = new Set<string>();
   for (const x of [...plan.assets, ...plan.details])
     for (const s of x.sources) {
       const r = /\d+$/.exec(s.cell ?? "")?.[0];
-      rowsInPlan.add(`${s.file}\u0000${s.sheet ?? ""}\u0000${r}`);
-      cellsInPlan.add(`${s.file}\u0000${s.sheet ?? ""}\u0000${s.cell}`);
+      rowsInPlan.add([s.file, s.sheet ?? "", r].join(SEP));
+      cellsInPlan.add([s.file, s.sheet ?? "", s.cell].join(SEP));
     }
   const out: FileCounts[] = [];
   for (const src of sources) {
     const fc: FileCounts = { file: src.file, inputRows: 0, importedRows: 0, excludedRows: {}, unresolvedRows: 0, inputCells: 0, dataCells: 0, excludedCells: {}, unresolvedCells: 0, holds: false };
+    let overlap = 0;
+    let nowhere = 0;
+    let dataNotInPlan = 0;
     for (const lay of layouts.filter((l) => l.file === src.file)) {
       const idx = new CellIndex(lay.grid);
-      const rows = new Set(lay.grid.cells.map((c) => c.r));
+      const rows = [...new Set(lay.grid.cells.map((c) => c.r))];
+      fc.inputRows += rows.length;
       for (const r of rows) {
-        fc.inputRows++;
         const cells = idx.rowCells(r);
         const st = cells.map((c) => status.get(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref: c.ref })));
         for (const [i, s] of st.entries()) {
@@ -491,20 +520,26 @@ function countRows(sources: SourceFile[], layouts: SheetLayout[], status: Map<st
           const c = cells[i];
           if (!s || s.s === "unresolved") fc.unresolvedCells++;
           else if (s.s === "excluded") fc.excludedCells[s.reason] = (fc.excludedCells[s.reason] ?? 0) + 1;
-          else if (c && cellsInPlan.has(`${lay.file}\u0000${lay.sheet ?? ""}\u0000${c.ref}`)) fc.dataCells++;
-          else fc.unresolvedCells++;
+          else {
+            fc.dataCells++;
+            if (!c || !cellsInPlan.has([lay.file, lay.sheet ?? "", c.ref].join(SEP))) dataNotInPlan++;
+          }
         }
-        if (st.some((s) => !s || s.s === "unresolved")) fc.unresolvedRows++;
-        else if (rowsInPlan.has(`${lay.file}\u0000${lay.sheet ?? ""}\u0000${r}`)) fc.importedRows++;
-        else {
-          const reasons = [...new Set(st.map((s) => (s && s.s === "excluded" ? s.reason : "?")))];
-          const why = reasons.length === 1 ? (reasons[0] ?? "?") : `混在（${reasons.join("・")}）`;
+        const inPlan = rowsInPlan.has([lay.file, lay.sheet ?? "", String(r)].join(SEP));
+        const allExcluded = st.length > 0 && st.every((s) => s?.s === "excluded");
+        const anyUnresolved = st.some((s) => !s || s.s === "unresolved");
+        if (inPlan && allExcluded) overlap++;
+        if (anyUnresolved) fc.unresolvedRows++;
+        else if (inPlan) fc.importedRows++;
+        else if (allExcluded) {
+          const reasons = [...new Set(st.map((s) => (s && s.s === "excluded" ? s.reason : "")))];
+          const why = reasons.length === 1 ? (reasons[0] ?? "") : `混在（${reasons.join("・")}）`;
           fc.excludedRows[why] = (fc.excludedRows[why] ?? 0) + 1;
-        }
+        } else nowhere++;
       }
     }
     const ex = Object.values(fc.excludedRows).reduce((a, b) => a + b, 0);
-    fc.holds = fc.inputRows === fc.importedRows + ex + fc.unresolvedRows;
+    fc.holds = overlap === 0 && nowhere === 0 && dataNotInPlan === 0 && fc.inputRows === fc.importedRows + ex + fc.unresolvedRows;
     out.push(fc);
   }
   return out;
