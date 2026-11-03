@@ -10,6 +10,7 @@ import { ROW_ROLE_LABEL, type SheetLayout, type Table } from "./structure";
 import { seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
 import { daysInclusive, parseDayCount, type Ymd } from "./era";
 import { nameKey, parseEffort } from "./text";
+import { markPhotoRecords, type PhotoReview } from "./photo";
 
 export type CellStatus = { s: "data" } | { s: "excluded"; reason: string } | { s: "unresolved"; questionId: string | null };
 
@@ -52,6 +53,8 @@ export interface Composition {
   status: Map<string, CellStatus>;
   counts: FileCounts[];
   checks: CheckResult[];
+  /** 写真から作った記録の数（要確認のもの・写真ごと）。写真が無ければ 0 と空 */
+  photoReview: PhotoReview;
 }
 
 function hash(s: string): string {
@@ -578,6 +581,9 @@ export function compose(
     }
   }
 
+  // ─── 写真から読んだもの（photo.ts）：出どころに画像の位置を付け、人が画像と並べて確かめるまで要確認に数える ───
+  const photoReview = markPhotoRecords(sources, assets, details);
+
   // ─── 止める決まり ───
   const blockers: string[] = [];
   const unresolved = [...status.values()].filter((s) => s.s === "unresolved").length;
@@ -586,8 +592,10 @@ export function compose(
   if (open.length) blockers.push(`答えの無い質問 ${open.length}`);
   const invalid = ask.invalidDecisions();
   if (invalid.length) blockers.push(`当てはまらない決定 ${invalid.length}`);
-  const review = details.filter((d) => d.needsReview).length;
+  // 要確認：明細の印と、確かめていない写真から作った機器の節（機器の節には要確認の欄が無いので写真の側で数える）
+  const review = details.filter((d) => d.needsReview).length + photoReview.assets;
   if (review) blockers.push(`要確認 ${review}`);
+  if (photoReview.photos) blockers.push(`確かめていない写真 ${photoReview.photos}`);
   let plan: Plan | null = null;
   const draft = {
     schema: "moyai.plan/0" as const,
@@ -613,7 +621,7 @@ export function compose(
     blockers.push(`行の数え直しが合わない資料 ${lost.length}（${lost.map((c) => c.file).join("・")}）`);
     plan = null;
   }
-  return { plan, blockers, status, counts, checks };
+  return { plan, blockers, status, counts, checks, photoReview };
 }
 
 function levelNames(rec: Records, assets: AssetNodeT[]): string[] {

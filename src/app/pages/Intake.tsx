@@ -1,5 +1,6 @@
 // 取り込みの画面（plan §2.3・§2.14）：資料を入れる、全セルの行き先（色と数。未解決を押すとそのセルへ）、質問、
-// 決定の一覧（取り消せる）、AI だけで結んだものの一覧、AI の作業、当てはめ（AI の規則の案を人が受ける。components/CrosswalkPanel.tsx）。
+// 決定の一覧（取り消せる）、AI だけで結んだものの一覧、AI の作業、当てはめ（AI の規則の案を人が受ける。components/CrosswalkPanel.tsx）、
+// 写真（人が 1 枚ずつ AI クライアントに渡すことを許し、読み取りを画像と並べて確かめる。components/PhotoPanel.tsx）。
 // 主ボタン「計画を作る」は見出しの行の右端。止める決まりに当たる間は押せず、理由を横に出す。
 // 状態は取り込みの作業場（intake/workspace.ts。このタブのメモリだけ）が持ち、AI のツールも同じ作業場を使う。
 import {
@@ -34,9 +35,10 @@ import { CHART_HASH } from "../chart/route";
 import { packChoices, packFiscalStart } from "../chart/catalog";
 import { CrosswalkPanel } from "../components/CrosswalkPanel";
 import { FictionMark } from "../components/FictionMark";
+import { PhotoPanel } from "../components/PhotoPanel";
 import "../intake/intake.css";
 import { answerOffered, type IntakeWorkspace, type SettleOutcome } from "../intake/workspace";
-import { TEXT } from "../text";
+import { PHOTO_TEXT, TEXT } from "../text";
 
 const T = TEXT.intake;
 const KIND_LABEL: Record<QuestionKind, string> = T.questionKind;
@@ -627,6 +629,15 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
             </Stack>
           )}
         </Paper>
+
+        {ws.photoBook.entries().length > 0 && (
+          <Paper withBorder p="sm">
+            <Title order={4} mb="xs">
+              {PHOTO_TEXT.title}
+            </Title>
+            <PhotoPanel ws={ws} an={an} />
+          </Paper>
+        )}
 
         <Grid gap="md">
           <Grid.Col span={{ base: 12, md: 7 }}>

@@ -5,3 +5,4 @@ export type { Decision, Question, QuestionState, QuestionKind, QuestionItem } fr
 export type { Composition, FileCounts, CellStatus, CheckResult } from "./compose";
 export type { SourceFile, SheetGrid, GridCell, LedgerEntry, RejectedFile, PageInfo } from "./grid";
 export { renderPdfPage, type PageImage } from "./pdf";
+export { PhotoBook, scannedPageInput, photoState, type PhotoEntry, type PhotoInput, type PhotoReading, type PhotoState } from "./photo";

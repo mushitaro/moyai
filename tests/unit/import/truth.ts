@@ -22,6 +22,8 @@ export interface Truth {
   crossdoc: J | null;
   /** 工事報告書（PDF）の正解。report-f<炉>-fy<年度> ごとの行（No.・機器・作業・工期・日数・工数） */
   reports: J | null;
+  /** 写真の正解：どの報告書のどの頁を撮ったか（写真の格子の行は、その報告書の正解の行で照らす） */
+  photos: J | null;
   facts: Record<string, J>;
 }
 
@@ -42,6 +44,7 @@ export function loadTruth(pack: string, facility: string): Truth {
     daily: read("daily-report.truth.json"),
     crossdoc: read("crossdoc.truth.json"),
     reports: read("reports.truth.json"),
+    photos: read("photos.truth.json"),
     facts,
   };
 }
@@ -60,8 +63,15 @@ export class ReportRows {
     sources: SourceFile[],
   ) {
     this.files = ((t.reports?.reports ?? []) as J[]).map((r) => r.file_pdf as string);
+    // 写真は、撮った報告書の頁の正解の行で照らす（写真の資料の名前は、取り込みに入れたファイルの名前）
+    const photoOf = (r: J) => ((t.photos?.photos ?? []) as J[]).filter((ph) => ph.source_pdf === r.file_pdf);
+    const targets: { file: string; r: J }[] = [];
     for (const r of (t.reports?.reports ?? []) as J[]) {
-      const src = sources.find((s) => s.file === r.file_pdf);
+      targets.push({ file: r.file_pdf, r });
+      for (const ph of photoOf(r)) targets.push({ file: String(ph.file).split("/").pop() as string, r });
+    }
+    for (const { file, r } of targets) {
+      const src = sources.find((s) => s.file === file);
       const g = src?.sheets[0];
       const m = new Map<number, number>();
       const back = new Map<number, J>();
@@ -76,8 +86,8 @@ export class ReportRows {
           }
         }
       }
-      this.rowOf.set(r.file_pdf, m);
-      this.byRow.set(r.file_pdf, back);
+      this.rowOf.set(file, m);
+      this.byRow.set(file, back);
     }
   }
   report(file: string): J | null {
@@ -261,8 +271,10 @@ export function answer(q: QuestionState, t: Truth, ents: Entities, reps: ReportR
       if (!it) return null;
       if (q.options.some((o) => o.id === "c0") && q.options.length === 2) {
         const line = ev(it.file, it.cells[0] ?? "");
+        // 正解の行が分からない資料の行には答えない（外すと決めつけない。開いたままにする）
+        if (!line) return null;
         const e = eqOfEntity(targetEntity(it));
-        return line && e && line.equipment_ids.includes(e) ? "c0" : "exclude";
+        return e && line.equipment_ids.includes(e) ? "c0" : "exclude";
       }
       return null;
     }

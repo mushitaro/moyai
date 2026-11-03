@@ -68,7 +68,7 @@ export interface LedgerEntry {
   sheet: string | null;
 }
 
-export type SourceFormat = "xlsx" | "xlsm" | "csv" | "tsv" | "pdf";
+export type SourceFormat = "xlsx" | "xlsm" | "csv" | "tsv" | "pdf" | PhotoFormat;
 
 /** 頁のある資料の頁ごとの数（PDF）。文字の無い頁は写真の道に回す（推し量って読まない） */
 export interface PageInfo {
@@ -85,6 +85,26 @@ export interface PageInfo {
   scanned: boolean;
 }
 
+/** 写真（JPEG・PNG と、文字の無い PDF の頁）。層 1 の読み手ではなく、AI が読んだ格子から作る（photo.ts） */
+export type PhotoFormat = "photo";
+
+/**
+ * 写真から作った格子の付け足し（format が photo のときだけ）。層 2〜4 は形式を知らないので、
+ * 層 4（compose.ts）が出どころに画像の位置を付け、人が確かめるまで要確認に数えるのに使う。
+ */
+export interface PhotoMeta {
+  /** 人が画像と並べて確かめたか（確かめるまで、この写真から作った記録はどれも要確認） */
+  confirmed: boolean;
+  /** 人が確かめたときの一言の理由（確かめていなければ null） */
+  confirmedReason: string | null;
+  /** 元の画像の頁（文字の無い PDF の頁から来たもの。写真は null） */
+  page: number | null;
+  /** セル（"B3" など）→ 元の画像の上の位置 [x, y, w, h]（画素） */
+  boxes: Record<string, [number, number, number, number]>;
+  /** セル → 作者（AI が読んだまま、か人が直した） */
+  authors: Record<string, "ai_reading" | "human">;
+}
+
 export interface SourceFile {
   /** ファイルの名前（取り込みの中で一意。出どころに書く） */
   file: string;
@@ -94,6 +114,8 @@ export interface SourceFile {
   date1904: boolean;
   /** 頁のある資料（PDF）の頁ごとの数 */
   pages?: PageInfo[];
+  /** 写真から作った格子だけが持つ */
+  photo?: PhotoMeta;
 }
 
 /** 受け付けない形式（保存し直しを求める）か、読めなかった */

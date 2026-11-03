@@ -1,6 +1,7 @@
 // 取り込みの入口：資料を入れ、要約と質問を読み、決定を置き（取り消せる）、計画を作る。
 // 層 1（読み手）だけが形式を知る。層 2〜4 は決定の一覧とともに毎回はじめから読み直す（同じ入力と決定からはいつも同じ出力）。
 // AI に渡すのは要約・行番号つきの見本・凡例・注記・質問の候補だけ（plan §2.13）。行の中身をまとめて渡さない。
+// 写真は層 1 で読まず並べるだけ（photo.ts）。AI が読んだ格子を置いた写真だけが、ほかの形式と同じ格子として層 2〜4 に入る。
 import type { Plan } from "../shared/plan";
 import type { CrosswalkSurvey } from "../shared/tools";
 import { readCsv, ENCODING_LABEL, type CsvDelimiter, type CsvEncoding } from "./csv";
@@ -12,6 +13,7 @@ import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
 import { Asker, type Decision, type QuestionState } from "./questions";
+import { PhotoBook, photoMimeOf, photoState, type PhotoInput } from "./photo";
 
 export interface IntakeOptions {
   planId: string;
@@ -64,7 +66,17 @@ export class IntakeSession {
   private readonly rejectedFiles: RejectedFile[] = [];
   private decisions = new Map<string, Decision>();
   private composed: Composition | null = null;
-  constructor(readonly options: IntakeOptions) {}
+  /**
+   * 写真（photo.ts）。層 1 では読まず並べるだけで、AI が読んだ格子を置いたものだけを層 2〜4 に渡す。
+   * 読み直し（セッションを作り直す）をまたいで同じものを使えるよう、外から渡せる。
+   */
+  readonly photos: PhotoBook;
+  constructor(
+    readonly options: IntakeOptions,
+    photos?: PhotoBook,
+  ) {
+    this.photos = photos ?? new PhotoBook();
+  }
 
   /** 文字の無い頁（写真の道に回す頁）：資料と頁の番号 */
   scannedPages(): { file: string; page: number }[] {
@@ -78,12 +90,34 @@ export class IntakeSession {
     return renderPdfPage(f.bytes, page, scale === undefined ? {} : { scale });
   }
 
-  /** 資料を入れる（Excel と PDF はここで読む。CSV は文字コードと区切りの決定があるので読み直しのたびに読む） */
+  /** 写真を並べる（読まない）。文字の無い PDF の頁も、photo.ts の scannedPageInput で作ってここへ渡す */
+  async addPhotos(inputs: PhotoInput[]): Promise<RejectedFile[]> {
+    const rejected = await this.listPhotos(inputs);
+    this.rejectedFiles.push(...rejected);
+    this.composed = null;
+    return rejected;
+  }
+
+  private async listPhotos(inputs: PhotoInput[]): Promise<RejectedFile[]> {
+    const rejected: RejectedFile[] = [];
+    for (const p of inputs) {
+      const r = await this.photos.list(p);
+      if (r) rejected.push(r);
+    }
+    return rejected;
+  }
+
+  /** 資料を入れる（Excel と PDF はここで読む。CSV は文字コードと区切りの決定があるので読み直しのたびに読む。写真は並べるだけ） */
   async add(files: InputFile[]): Promise<RejectedFile[]> {
     const rejected: RejectedFile[] = [];
     for (const f of files) {
       if (this.files.some((x) => x.name === f.name)) {
         rejected.push({ file: f.name, reason: "同じ名前の資料がもう入っている" });
+        continue;
+      }
+      const mime = photoMimeOf(f.name);
+      if (mime) {
+        rejected.push(...(await this.listPhotos([{ name: f.name, bytes: f.bytes, mimeType: mime, origin: { kind: "file" } }])));
         continue;
       }
       const ext = extensionOf(f.name);
@@ -193,14 +227,14 @@ export class IntakeSession {
       }
       if (!done) unreadable.push(`${f.name}（${why || "読めない"}）`);
     }
-    // 文字の無い頁（スキャン）：推し量って読まず、写真の道に回す。写真の道につなぐまでは、人が外すと決めるまで計画を作らない
+    // 文字の無い頁（スキャン）：推し量って読まず、写真の道に回す。頁を写真の道に渡すつなぎができるまでは、人が外すと決めるまで計画を作らない
     const toPhoto: string[] = [];
     for (const s of sources) {
       const scanned = (s.pages ?? []).filter((p) => p.scanned).map((p) => p.page);
       if (!scanned.length) continue;
       const a = ask.ask(`photoRoute|${s.file}|${scanned.join(",")}`, {
         kind: "photoRoute",
-        text: `${s.file} の ${scanned.join("・")} 頁は文字が無い（スキャンの頁）。推し量って読まず、写真の道に回す（写真の読み取りは未実装）。どうするか`,
+        text: `${s.file} の ${scanned.join("・")} 頁は文字が無い（スキャンの頁）。推し量って読まず、写真の道に回す（文字の無い頁を写真の道に渡すつなぎは未実装）。どうするか`,
         options: [{ id: "exclude", label: "この頁を読まずに外す（理由を残す）" }],
         valueKind: "option",
         defaultAnswer: null,
@@ -209,6 +243,9 @@ export class IntakeSession {
       });
       if (a !== "exclude") toPhoto.push(`${s.file}（${scanned.join("・")} 頁）`);
     }
+    // 写真：AI が読んだ格子を置いたものだけを、ほかの形式と同じ格子として渡す。人が読まずに外したものは理由つきで数える
+    sources.push(...this.photos.sources());
+    rejected.push(...this.photos.excludedFiles());
     const layouts = sources.flatMap((s) => layoutFile(s));
     const date1904 = new Map(sources.map((s) => [s.file, s.date1904]));
     const records = buildRecords(layouts, ask, { fiscalYearStartMonth: this.options.facility.fiscalYearStartMonth }, (f) => date1904.get(f) ?? false);
@@ -219,7 +256,13 @@ export class IntakeSession {
       composition.plan = null;
     }
     if (toPhoto.length) {
-      composition.blockers.push(`写真の道に回した頁 ${toPhoto.length}（${toPhoto.join("・")}。写真の読み取りは未実装）`);
+      composition.blockers.push(`写真の道に回した頁 ${toPhoto.length}（${toPhoto.join("・")}。写真の道に渡すつなぎは未実装）`);
+      composition.plan = null;
+    }
+    // 読んでいない写真（人が AI に渡して読ませるか、読まずに外すまで）。黙って落とさない
+    const unreadPhotos = this.photos.unread();
+    if (unreadPhotos.length) {
+      composition.blockers.push(`読んでいない写真 ${unreadPhotos.length}（${unreadPhotos.map((e) => e.input.name).join("・")}）`);
       composition.plan = null;
     }
     const questions = [...ask.asked.values()];
@@ -261,6 +304,10 @@ export class IntakeSession {
       ...an.layouts.flatMap((l) => l.notes.map((n) => `${l.file} ${n.ref}：${n.text.slice(0, SAMPLE_TEXT)}`)),
       ...an.sources.flatMap((s) => s.ledger.map((e) => `${s.file}${e.sheet ? `「${e.sheet}」` : ""}：${e.detail}（${e.count}）`)),
       ...an.rejected.map((r) => `${r.file}：${r.reason}`),
+      ...this.photos
+        .entries()
+        .filter((e) => photoState(e) === "unread")
+        .map((e) => `${e.input.name}：写真（まだ読んでいない。人が画面で AI クライアントに渡すことを許した写真だけを、photo_transcribe で受け取れる）`),
     ];
     const unresolved = [...an.composition.status.values()].filter((s) => s.s === "unresolved").length;
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";

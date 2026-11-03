@@ -2,7 +2,7 @@
 // 手で書いた文は「決まりの説明」と「保証できないこと」だけで、ツール・上限・人だけの経路の表はコードの値から作る。
 // 画面の［AI に渡るもの］も、同じ関数から作る（未実装）。tests/contract/security-doc.test.ts が、docs/security.md と同じかを確かめる。
 import { HUMAN_ACTIONS, ROUTES, type RouteDef } from "./routes";
-import { EXAMPLES_MAX, ROWS_PER_CALL, ROWS_PER_CONVERSATION, SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, TOOL_NAMES, TOOL_TIMEOUTS, TOOLS, type ToolKind, type ToolName } from "./tools";
+import { EXAMPLES_MAX, PHOTO_SEND, ROWS_PER_CALL, ROWS_PER_CONVERSATION, SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, TOOL_NAMES, TOOL_TIMEOUTS, TOOLS, type ToolKind, type ToolName } from "./tools";
 
 const KIND: Record<ToolKind, string> = { read: "読む", propose: "案を置く", start: "始める" };
 
@@ -51,7 +51,11 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push(`- 星取表の行は、1 回 ${ROWS_PER_CALL} 行まで、会話（中継の 1 つの接続）で ${ROWS_PER_CONVERSATION.toLocaleString("ja-JP")} 行まで。数えるのは橋渡しで、タブを読み込み直しても数は戻りません。`);
   L.push(`- 要約の欄ごとの多い値は ${SURVEY_TOP_VALUES} まで、文字は ${SURVEY_TEXT_MAX} 字まで。行の参照の例は ${EXAMPLES_MAX} 件まで。`);
   L.push(`- 資料は 1 ファイル ${Math.round(i.maxFileBytes / 1024 / 1024)} MB まで（作業画面のタブのメモリに読みます）。`);
-  L.push("- 外へ出た台帳：橋渡しは、AI に返した結果ごとに、ツールの名前・大きさ（バイト）・行の数と、会話ごとの合計を残します。中身は残しません（画面に出すのは未実装）。");
+  L.push(
+    `- 写真は、人が作業画面で 1 枚ずつ許したものだけを、1 回に 1 枚渡します。作業画面が長辺 ${PHOTO_SEND.longSideMin.toLocaleString("ja-JP")}〜${PHOTO_SEND.longSideMax.toLocaleString("ja-JP")} px・JPEG で約 ${PHOTO_SEND.targetBytes / 1024} KB 以下に描き直し（切り抜かず、位置などの付け足しの情報は落とす）、` +
+      `橋渡しは、許した画像のハッシュと合うものだけを渡します（${PHOTO_SEND.maxBytes / 1024} KB を越えるものは渡しません）。許しは 1 回渡すと使い終わります。`,
+  );
+  L.push("- 外へ出た台帳：橋渡しは、AI に返した結果ごとに、ツールの名前・大きさ（バイト）・行の数・添えた画像の大きさと、会話ごとの合計を残します。中身は残しません（画面に出すのは未実装）。");
   L.push("");
   L.push("## 人だけの操作（AI のツールに無い）");
   L.push("");

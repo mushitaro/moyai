@@ -29,6 +29,8 @@ export const HUMAN_ACTIONS = [
   "checkpoint_open_text",
   "checkpoint_send",
   "ring_verify",
+  // 写真を AI クライアントに渡す許し（§2.3・§2.12。1 枚ごと、その画像のハッシュに結ぶ）
+  "photo_allow",
 ] as const;
 export type HumanAction = (typeof HUMAN_ACTIONS)[number];
 
@@ -82,6 +84,8 @@ export const ROUTES = {
   checkpointOpenText: human("/human/checkpoint-open-text", "checkpoint_open_text", 64 * 1024, "検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く"),
   checkpointSend: human("/human/checkpoint-send", "checkpoint_send", 64 * 1024, "検問所：合言葉で署名し、束を輪のフォルダに置く"),
   ringVerify: human("/human/ring-verify", "ring_verify", 64 * 1024, "輪を受け手と同じ関数で確かめる"),
+  // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）
+  photoAllow: human("/human/photo-allow", "photo_allow", 64 * 1024, "写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる）"),
 } as const satisfies Record<string, RouteDef>;
 
 export type RouteId = keyof typeof ROUTES;

@@ -227,6 +227,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     checkpointOpenText: delegate,
     checkpointSend: delegate,
     ringVerify: delegate,
+    // 写真を AI クライアントに渡す許し：タブの回と、渡す画像のハッシュに結んでメモリに置く（中身の画像は受けない）
+    photoAllow: (res, h) => sendJson(res, 200, tools.allowPhoto(h.session, h.payload)),
   };
 
   async function serveStatic(res: ServerResponse, pathname: string) {
