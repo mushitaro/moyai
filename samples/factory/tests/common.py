@@ -13,6 +13,7 @@ import build as factory_build  # noqa: E402
 
 SUB = Path("waste-incineration") / "fictional-1"
 SUB2 = Path("waste-incineration") / "fictional-2"
+SUB_NS = Path("night-soil") / "fictional-ns-1"
 _cache: dict = {}
 
 

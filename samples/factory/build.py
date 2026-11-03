@@ -20,7 +20,7 @@ from writers.photo import make_photo  # noqa: E402
 from writers.report_xlsx import write_reports  # noqa: E402
 
 REPO = HERE.parent.parent
-RULES_FILES = ("rules.json", "rules-fictional-2.json")
+RULES_FILES = ("rules.json", "rules-fictional-2.json", "rules-fictional-ns-1.json")
 NO_SOFFICE = "LibreOffice（soffice）が見つからない"
 
 

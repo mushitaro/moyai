@@ -1,0 +1,211 @@
+{
+  "schema": "moyai.factory.rules/0",
+  "world_version": "v1",
+  "seed": 20261103,
+  "today": "2026-10-01",
+  "fiscal_years": { "from": 2019, "to": 2028 },
+  "plan_window": { "fy_from": 2026, "fy_to": 2028 },
+  "man_day_hours": 8,
+  "facility": {
+    "id": "fictional-ns-1",
+    "pack": "night-soil",
+    "name": "【架空】トレンカ衛生処理センター",
+    "process_type": "標準脱窒素処理方式",
+    "line_header": "系列",
+    "furnaces": [
+      { "no": 1, "label": "1系" },
+      { "no": 2, "label": "2系" }
+    ],
+    "note": "furnaces は「同じ設備を並べて持つ単位」の名前。し尿処理では水処理の系列（1系・2系）がこれに当たる。line_header は星取表と日報の列の見出し"
+  },
+  "documents": ["ledger", "hoshitori", "daily"],
+  "ledger": { "numbering": true, "name_format": "{name} [{tag}]", "tag_furnace_suffix": true, "install_style": "wareki" },
+  "systems": [
+    { "key": "recv", "name": "受入貯留設備" },
+    { "key": "main", "name": "主処理設備" },
+    { "key": "adv", "name": "高度処理設備" },
+    { "key": "deod", "name": "脱臭設備" },
+    { "key": "water", "name": "給水設備" },
+    { "key": "elec", "name": "電気計装設備" }
+  ],
+  "equipment_templates": [
+    { "key": "weigh", "name": "搬入量計量装置", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.WEIGH", "tag": "WGH", "install": 2004, "spec": ["電磁流量計式", "最大 30 m3/h"] },
+    { "key": "dump", "name": "投入槽", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.DUMP_TANK", "install": 2004, "spec": ["RC 造 容量 20 m3"] },
+    { "key": "recvtank", "name": "受入槽", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.RECV_TANK", "install": 2004, "spec": ["RC 造 容量 60 m3"] },
+    { "key": "crusher", "name": "破砕機", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.CRUSHER", "tag": "CRS", "install": 2004, "spec": ["二軸式", "電動機 11 kW"] },
+    { "key": "screen", "name": "夾雑物除去装置", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.SCREEN", "tag": "SCR", "install": 2004, "spec": ["ドラムスクリーン式", "目幅 3 mm"] },
+    { "key": "conveyor", "name": "し渣コンベヤ", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.SCRN_CONVEYOR", "tag": "CNV", "install": 2004, "spec": ["スクリュー式"] },
+    { "key": "storage", "name": "貯留槽", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.STORAGE_TANK", "install": 2004, "spec": ["RC 造 容量 120 m3"] },
+    { "key": "feedpump", "name": "投入ポンプ", "system": "recv", "groups": [], "scope": "common", "code": "NS.RECV.FEED_PUMP", "tag": "FDP", "install": 2004, "spec": ["一軸ねじ式", "電動機 5.5 kW"] },
+
+    { "key": "denit", "name": "脱窒素槽", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.DENIT_TANK", "install": 2004, "spec": ["RC 造 容量 150 m3"] },
+    { "key": "gasmix", "name": "ガス撹拌ブロワ", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.GAS_MIX_BLOWER", "tag": "GMB", "install": 2004, "spec": ["ルーツ式", "電動機 7.5 kW"] },
+    { "key": "nitrif", "name": "硝化槽", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.NITRIF_TANK", "install": 2004, "spec": ["RC 造 容量 300 m3"] },
+    { "key": "aeblower", "name": "曝気ブロワ", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.AERATION_BLOWER", "tag": "ABL", "install": 2004, "spec": ["ルーツ式", "電動機 22 kW"] },
+    { "key": "recirc", "name": "循環液移送ポンプ", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.RECIRC_PUMP", "tag": "RCP", "install": 2004, "spec": ["水中式", "電動機 3.7 kW"] },
+    { "key": "settling", "name": "沈殿槽", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.SETTLING_TANK", "install": 2004, "spec": ["RC 造 容量 80 m3"] },
+    { "key": "scraper", "name": "沈殿槽汚泥掻寄機", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.SLUDGE_SCRAPER", "tag": "SSC", "install": 2004, "spec": ["中央駆動式"] },
+    { "key": "returnpump", "name": "返送汚泥ポンプ", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.RETURN_PUMP", "tag": "RSP", "install": 2004, "spec": ["水中式", "電動機 2.2 kW"] },
+    { "key": "excesspump", "name": "余剰汚泥ポンプ", "system": "main", "groups": [], "scope": "furnace", "code": "NS.MAIN.EXCESS_PUMP", "tag": "ESP", "install": 2004, "spec": ["水中式", "電動機 1.5 kW"] },
+
+    { "key": "mixtank", "name": "混和槽", "system": "adv", "groups": [], "scope": "common", "code": "NS.ADV.MIX_TANK", "install": 2004, "spec": ["RC 造 容量 6 m3"] },
+    { "key": "mixstir", "name": "混和槽撹拌機", "system": "adv", "groups": [], "scope": "common", "code": "NS.ADV.MIX_STIRRER", "tag": "MXS", "install": 2004, "spec": ["電動機 2.2 kW"] },
+    { "key": "floctank", "name": "凝集槽", "system": "adv", "groups": [], "scope": "common", "code": "NS.ADV.FLOC_TANK", "install": 2004, "spec": ["RC 造 容量 12 m3"] },
+    { "key": "flocstir", "name": "凝集槽撹拌機", "system": "adv", "groups": [], "scope": "common", "code": "NS.ADV.FLOC_STIRRER", "tag": "FLS", "install": 2004, "spec": ["電動機 1.5 kW"] },
+
+    { "key": "lowfan", "name": "低濃度臭気ファン", "system": "deod", "groups": [], "scope": "common", "code": "NS.DEOD.LOW_FAN", "tag": "ODF", "install": 2004, "spec": ["風量 120 m3/min", "電動機 15 kW"] },
+    { "key": "lowcarbon", "name": "低濃度活性炭脱臭塔", "system": "deod", "groups": [], "scope": "common", "code": "NS.DEOD.LOW_CARBON", "install": 2004, "spec": ["活性炭充填 2 m3"] },
+    { "key": "stack", "name": "臭突", "system": "deod", "groups": [], "scope": "common", "code": "NS.DEOD.STACK", "install": 2004, "spec": ["鋼板製 高さ 20 m"] },
+
+    { "key": "intake", "name": "取水ポンプ", "system": "water", "groups": [], "scope": "common", "code": "NS.WATER.INTAKE_PUMP", "tag": "ITP", "install": 2004, "spec": ["渦巻式", "電動機 5.5 kW"] },
+    { "key": "watertank", "name": "受水槽", "system": "water", "groups": [], "scope": "common", "code": "NS.WATER.RECV_TANK", "install": 2004, "spec": ["FRP 製 容量 50 m3"] },
+    { "key": "plantpump", "name": "プラント用水ポンプ", "system": "water", "groups": [], "scope": "common", "code": "NS.WATER.PLANT_PUMP", "tag": "PWP", "install": 2004, "spec": ["渦巻式", "電動機 7.5 kW"] },
+
+    { "key": "substation", "name": "受変電設備", "system": "elec", "groups": [], "scope": "common", "code": "NS.ELEC.SUBSTATION", "install": 2004, "spec": ["受電 6.6 kV"] },
+    { "key": "power", "name": "動力設備", "system": "elec", "groups": [], "scope": "common", "code": "NS.ELEC.POWER", "install": 2004, "spec": ["動力制御盤 6 面"] },
+    { "key": "instrument", "name": "計装設備", "system": "elec", "groups": [], "scope": "common", "code": "NS.ELEC.INSTRUMENT", "install": 2004, "spec": ["中央監視盤 1 面"] },
+    { "key": "emerg", "name": "非常用発電機", "system": "elec", "groups": [], "scope": "common", "code": "NS.ELEC.EMERG_GEN", "tag": "EGN", "install": 2005, "spec": ["出力 150 kVA"] }
+  ],
+  "contractors": [
+    { "id": "C1", "name": "【架空】みどり保全", "from": "2022-04-01" }
+  ],
+  "outage": {
+    "note": "全系停止。受電を止めて電気・計装を点検する年の決まり（水処理の系列の整備は、系列ごとの季節の窓で行う）",
+    "years": [2021, 2024, 2027],
+    "start_md": "10-12",
+    "days": 3
+  },
+  "patterns": [
+    {
+      "id": "P-BLW", "label": "ブロワの分解整備", "attr": "OVERHAUL", "tag": "ANNUAL",
+      "targets": ["aeblower", "gasmix"], "per": "furnace",
+      "cycle": { "every": 2, "from": { "1": 2019, "2": 2020 } },
+      "schedule": { "kind": "fixed", "month_day": { "1": "09-07", "2": "09-14" } },
+      "days": { "1": 4, "2": 4 }, "crew": { "base": 3, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-PUMP", "label": "汚泥ポンプの点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["recirc", "returnpump", "excesspump"], "per": "furnace",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": { "1": "06-08", "2": "06-15" } },
+      "days": { "1": 2, "2": 2 }, "crew": { "base": 2, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-SETTLE", "label": "沈殿槽と汚泥掻寄機の点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["settling", "scraper"], "per": "furnace",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": { "1": "11-09", "2": "11-16" } },
+      "days": { "1": 3, "2": 3 }, "crew": { "base": 2, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-TANK", "label": "反応槽の清掃と内部点検", "attr": "INSPECT", "tag": "INTERNAL",
+      "targets": ["denit", "nitrif"], "per": "furnace",
+      "cycle": { "every": 3, "from": { "1": 2019, "2": 2020 } },
+      "schedule": { "kind": "fixed", "month_day": { "1": "10-19", "2": "11-02" } },
+      "days": { "1": 6, "2": 6 }, "crew": { "base": 4, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-RECV", "label": "受入設備の年次点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["crusher", "screen", "conveyor", "feedpump"], "per": "common",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "05-11" },
+      "days": 3, "crew": { "base": 3, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-WEIGH", "label": "搬入量計量装置の定期検査", "attr": "INSPECT", "tag": "LEGAL",
+      "targets": ["weigh"], "per": "common",
+      "cycle": { "every": 2, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "07-21" },
+      "days": 2, "crew": { "base": 2, "jitter": 0 },
+      "contractor": "C1", "bundle": false
+    },
+    {
+      "id": "P-STORE", "label": "貯留槽・受水槽の清掃", "attr": "INSPECT", "tag": "INTERNAL",
+      "targets": ["dump", "recvtank", "storage", "watertank", "mixtank", "floctank"], "per": "common",
+      "cycle": { "every": 2, "from": 2020 },
+      "schedule": { "kind": "fixed", "month_day": "12-07" },
+      "days": 5, "crew": { "base": 3, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-ADV", "label": "撹拌機の点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["mixstir", "flocstir"], "per": "common",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "07-13" },
+      "days": 2, "crew": { "base": 2, "jitter": 0 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-DEOD", "label": "脱臭設備の点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["lowfan", "lowcarbon", "stack"], "per": "common",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "08-24" },
+      "days": 3, "crew": { "base": 2, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-WATER", "label": "給水ポンプの点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["intake", "plantpump"], "per": "common",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "05-18" },
+      "days": 2, "crew": { "base": 2, "jitter": 0 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-OUT-ELEC", "label": "全系停止の電気・計装の点検", "attr": "INSPECT", "tag": "SHUTDOWN",
+      "targets": ["substation", "power", "instrument", "emerg"], "per": "common",
+      "schedule": { "kind": "outage" },
+      "crew": { "base": 3, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-UPG-INST", "label": "計装設備の更新（基幹改良）", "attr": "UPGRADE", "tag": "MAJOR",
+      "targets": ["instrument"], "per": "common",
+      "schedule": { "kind": "dates", "dates": [["2024-10-21", "2025-02-28"]] },
+      "crew": { "base": 3, "jitter": 0 },
+      "contractor": "C1", "bundle": false, "note_text": "基幹改良"
+    },
+    {
+      "id": "P-REPL-PAST", "label": "返送汚泥ポンプの取替", "attr": "REPLACE", "tag": "REPLACEMENT",
+      "targets": ["returnpump"], "per": "furnace", "only_furnace": 1,
+      "schedule": { "kind": "dates", "dates": [["2022-11-07", "2022-11-11"]] },
+      "crew": { "base": 3, "jitter": 0 },
+      "contractor": null, "bundle": false, "note_text": "ポンプ取替"
+    },
+    {
+      "id": "P-REPL-FUT", "label": "曝気ブロワの取替", "attr": "REPLACE", "tag": "REPLACEMENT",
+      "targets": ["aeblower"], "per": "furnace", "only_furnace": 2,
+      "schedule": { "kind": "dates", "dates": [["2027-01-12", "2027-02-05"]] },
+      "crew": { "base": 4, "jitter": 0 },
+      "contractor": "C1", "bundle": false, "note_text": "取替"
+    }
+  ],
+  "inspections": [
+    { "id": "INSP-NOACTUAL", "text": "過去の予定に実績が無い" },
+    { "id": "INSP-NOPLAN", "text": "計画の窓に予定が 1 つも無い機器" }
+  ],
+  "interval_limit_years": 3,
+  "gap_injections": [
+    { "id": "GAP-01", "inspection": "INSP-NOACTUAL", "op": "unrecord", "match": { "pattern": "P-WEIGH", "fy": 2023 } },
+    { "id": "GAP-02", "inspection": "INSP-NOACTUAL", "op": "unrecord", "match": { "pattern": "P-DEOD", "equip_key": "lowcarbon", "fy": 2024 } },
+    { "id": "GAP-03", "inspection": "INSP-NOPLAN", "op": "remove", "match": { "pattern": "P-WEIGH", "fy": 2027 } },
+    { "id": "GAP-04", "inspection": "INSP-NOPLAN", "op": "remove", "match": { "pattern": "P-TANK", "equip_key": "denit", "furnace": 1, "fy": 2028 } }
+  ],
+  "dirt": {
+    "sheet": {
+      "year_label_styles": { "2019": "short", "2020": "long", "2021": "seireki", "2022": "short_nendo", "2023": "short", "2024": "long", "2025": "seireki", "2026": "short_nendo", "2027": "short", "2028": "seireki" },
+      "unknown_symbol": { "symbol": "△", "match": { "pattern": "P-REPL-FUT" }, "means": "PLANNED" }
+    },
+    "csv": {
+      "halfwidth_kana_rate": 0.35,
+      "brackets_mixed_rate": 0.5,
+      "furnace_spellings": ["{n}系", "{zn}系", "{n}系列", "第{n}系列"],
+      "missing_note": "実績の無い行は書かない"
+    }
+  }
+}

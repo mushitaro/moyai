@@ -10,7 +10,7 @@ from dirt import (DATE_STYLES, EFFORT_STYLES, date_text, effort_text, mixed_brac
 
 TITLE = "【架空】作業日報 書き出し（委託先 業務システム）"
 AUTHOR = "作成者,【架空】みどり保全 日報システム"
-COLUMNS = ["日付", "工事名", "機器", "号炉", "作業内容", "工数", "備考"]
+COLUMNS = ["日付", "工事名", "機器", "号炉", "作業内容", "工数", "備考"]  # 4 つ目の見出しは rules の facility.line_header があればそれにする
 
 
 def _groups(world: dict):
@@ -50,7 +50,8 @@ def write_daily(world: dict, path: Path) -> dict:
             d += timedelta(days=1)
     recs.sort(key=lambda x: (x[0], x[1][0]["id"]))
 
-    lines = [[TITLE], AUTHOR.split(","), ["出力日", date_text(today, "wareki_kanji")], [], COLUMNS]
+    columns = [world["facility"].get("line_header", c) if c == "号炉" else c for c in COLUMNS]
+    lines = [[TITLE], AUTHOR.split(","), ["出力日", date_text(today, "wareki_kanji")], [], columns]
     header_line = len(lines)
     truth_rows = []
     for d, ws in recs:
@@ -100,7 +101,7 @@ def write_daily(world: dict, path: Path) -> dict:
         "author_line": 2,
         "header_line": header_line,
         "first_data_line": header_line + 1,
-        "columns": COLUMNS,
+        "columns": columns,
         "hours_per_man_day": hours,
         "effort_rule": "工数は人・日に直す。人工と延べ人数は数をそのまま、時間は hours_per_man_day で割る",
         "missing_note": cfg["missing_note"],
