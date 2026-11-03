@@ -156,8 +156,8 @@ interface Gathered {
   yearsBySeries: Map<string, Set<number>>;
   /** 年度 → その年度の対象の設置の年度の幅（分からなければ null） */
   installByYear: Map<number, ([number, number] | null)[]>;
-  /** 作業明細のキー → 工数・日数・まとめ工事か */
-  visits: Map<string, { manDays: number | null; days: number | null; bundled: boolean }>;
+  /** 作業明細のキー → 工数・日数・まとめ工事か・入れ子の子か */
+  visits: Map<string, { manDays: number | null; days: number | null; bundled: boolean; child: boolean }>;
 }
 
 type Builder = (g: Gathered, rules: CopyRules, omit: (r: OmitReason, n?: number) => void) => string | string[] | undefined;
@@ -169,7 +169,8 @@ function allYears(g: Gathered): number[] {
 }
 
 function visitsOf(g: Gathered, field: "manDays" | "days"): Visit[] {
-  return [...g.visits.values()].map((v) => ({ value: v[field], bundled: v.bundled }));
+  // 入れ子の子は、自分の値が無ければ親の明細にある（まとめ工事に数え、親から割らない）。自分の値があればそれを使う
+  return [...g.visits.values()].map((v) => ({ value: v[field], bundled: v.bundled || (v.child && v[field] === null) }));
 }
 
 function perVisit(field: "manDays" | "days"): Builder {
@@ -206,11 +207,12 @@ const CHUNK_BUILDERS: Record<Exclude<ChunkField, "class" | "work">, Builder> = {
     // いちばん早い設置の幅。幅の両端で帯が同じときだけ出す
     const oldest = ageBand(first - Math.min(...installs.map((r) => r[0])), g.work);
     const youngest = ageBand(first - Math.min(...installs.map((r) => r[1])), g.work);
-    if (oldest === null || youngest === null) {
+    if (oldest === null) {
       omit("ageNegative");
       return undefined;
     }
-    if (oldest !== youngest) {
+    // 遅い方の端だけが負：暦年か年度かが決まらないだけ（設置より前の作業とは言えない）
+    if (youngest === null || oldest !== youngest) {
       omit("ageInstallAmbiguous");
       return undefined;
     }
@@ -235,9 +237,8 @@ export function copyOut(input: CopyInput): CopyResult {
   const assets = new Map<string, AssetNodeT>(plan.assets.map((a) => [a.nodeKey, a]));
   const works = new Map<string, WorkT>(plan.works.map((w) => [w.workKey, w]));
   const parents = new Set(plan.works.map((w) => w.parentWorkKey).filter((x): x is string => x !== null));
-  // まとめ工事：ほかの機器と一緒の作業、入れ子の親、入れ子の子（工数・日数は親の明細にあり、子には割らない）
-  const isBundled = (w: WorkT) =>
-    w.targets.length > 1 || parents.has(w.workKey) || w.parentWorkKey !== null || w.tagRange !== null || w.tagList.length > 1;
+  // まとめ工事：ほかの機器と一緒の作業、入れ子の親。入れ子の子は欄ごとに visitsOf で決める
+  const isBundled = (w: WorkT) => w.targets.length > 1 || parents.has(w.workKey) || w.tagRange !== null || w.tagList.length > 1;
   const startMonth = plan.facility.fiscalYearStartMonth;
 
   // 欄ごと写さないものを数える（読むのは null かどうかだけ）
@@ -309,7 +310,7 @@ export function copyOut(input: CopyInput): CopyResult {
       g.yearsBySeries.get(seriesKey)!.add(d.fiscalYear);
       if (!g.installByYear.has(d.fiscalYear)) g.installByYear.set(d.fiscalYear, []);
       g.installByYear.get(d.fiscalYear)!.push(installFiscalRange(a.installedOn, startMonth));
-      if (!g.visits.has(d.detailKey)) g.visits.set(d.detailKey, { manDays: d.manDays, days: d.days, bundled: isBundled(w) });
+      if (!g.visits.has(d.detailKey)) g.visits.set(d.detailKey, { manDays: d.manDays, days: d.days, bundled: isBundled(w), child: w.parentWorkKey !== null });
       copied++;
     }
   }

@@ -217,6 +217,15 @@ describe("share.stable", () => {
     expect(r2.chunks[0]!.ageAtWork).toBeUndefined();
     expect(r2.omitted.ageInstallAmbiguous).toBe(1);
     expect(r2.omitted.ageInstalledUnknown).toBe(0);
+    // 設置 "2015"・最初の作業 FY2014：暦年 2015 の 1〜3 月なら FY2014（0 年）。設置より前とは言えず、帯が割れるに数える
+    const edge = mk("2015", 2014);
+    const r3 = copyOut({ plan: edge, lift: liftFor(edge).lift, to: ring });
+    expect(r3.chunks[0]!.ageAtWork).toBeUndefined();
+    expect(r3.omitted.ageNegative).toBe(0);
+    expect(r3.omitted.ageInstallAmbiguous).toBe(1);
+    // 幅の両端とも設置より前なら「設置より前の作業」
+    const neg = mk("2016", 2014);
+    expect(copyOut({ plan: neg, lift: liftFor(neg).lift, to: ring }).omitted.ageNegative).toBe(1);
   });
 });
 
@@ -239,6 +248,28 @@ describe("share.grain（入れ子の作業）", () => {
     expect(r.omitted.manDaysUnconvertible).toBe(0);
     expect(r.omitted.daysUnconvertible).toBe(0);
     expect(r.omitted.manDaysBundled).toBe(3);
+    expect(r.omitted.daysBundled).toBe(3);
     expect(r.chunks[0]!.manDays).toBeUndefined();
+    expect(r.chunks[0]!.days).toBeUndefined();
+  });
+
+  it("入れ子の子が自分の工数を持つなら、その値を使う（親から割らない）", () => {
+    const p = plan({
+      assets: [asset("a1", "T.FEED.LIFT"), asset("a2", "T.FEED.LIFT")],
+      works: [
+        work("parent", "OVERHAUL", ["a1", "a2"]),
+        work("c1", "OVERHAUL", ["a1"], { parentWorkKey: "parent" }),
+        work("c2", "OVERHAUL", ["a2"], { parentWorkKey: "parent" }),
+      ],
+      details: [
+        detail("dp", "parent", 2015, { manDays: 40, days: 20 }),
+        detail("d1", "c1", 2015, { manDays: 20, days: null }),
+        detail("d2", "c2", 2015, { manDays: 20, days: null }),
+      ],
+    });
+    const r = copyOut({ plan: p, lift: liftFor(p).lift, to: { kind: "ring", id: "0123456789abcdef" } });
+    expect(r.omitted.manDaysBundled).toBe(1);
+    expect(r.omitted.daysBundled).toBe(3);
+    expect(r.chunks[0]!.manDays).toBeDefined();
   });
 });

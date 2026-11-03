@@ -1,6 +1,8 @@
-// cross-layer（docs/plan.md §4「層をまたぐ試験を置く」）：工場の資料を取り込んで作った計画を、そのまま写し取りに渡す。
+// 取り込み → 写し取りの層をまたぐ試験（docs/plan.md §4「層をまたぐ試験を置く」）。§5.1 の cross-layer（きっかけの次回）とは別のもの。
+// 工場の資料を取り込んで作った計画を、そのまま写し取りに渡す。
 // 取り込みの書き方（年だけの設置年、まとめ工事の子の作業）を、写し取りが黙って落とさないことを確かめる。
 // 当てはめ（1 段目の項目と作業の属性）は、人の代わりに試験の台本が正解の世界から置く（src/ は正解を読まない）。
+// 作者を「人」にするのは、試験の台本が人の操作の代わりに押すため（tests/unit/import/ の台本と同じ。根拠の文に台本と書く）。
 // 分類を上げる表（lift）は、この試験では項目をそのまま使う（数えられるかは share.k の試験が見る）。
 import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
@@ -51,7 +53,7 @@ async function importedPlan(): Promise<Plan> {
   return { ...plan, assets, works };
 }
 
-describe("cross-layer：取り込み → 写し取り", () => {
+describe("層をまたぐ：取り込み → 写し取り", () => {
   test("取り込んだ計画の設置年（年だけ）とまとめ工事の子が、写し取りで別の理由に落ちない", async () => {
     const plan = await importedPlan();
     const lift = new Map(plan.assets.filter((a) => a.commonItem).map((a) => [a.commonItem!, a.commonItem!]));
@@ -66,11 +68,13 @@ describe("cross-layer：取り込み → 写し取り", () => {
     expect(r.omitted.manDaysBundled).toBeGreaterThan(0);
     const childDetails = plan.details.filter((d) => children.some((w) => w.workKey === d.workKey) && d.planOrActual === "actual");
     expect(childDetails.length).toBeGreaterThan(0);
-    // 子の明細の工数は親にあるので、子は直せないに入らない（直せないは、子でない明細の空の工数だけ）
-    const nonChildNull = plan.details.filter(
-      (d) => d.planOrActual === "actual" && d.manDays === null && !children.some((w) => w.workKey === d.workKey) && !plan.works.some((w) => w.parentWorkKey === d.workKey),
-    ).length;
-    expect(r.omitted.manDaysUnconvertible).toBeLessThanOrEqual(nonChildNull);
+    // 子の入れ子を外した計画と比べ、子の空の工数の分だけ「直せない」が「まとめ工事」に移っている
+    const flat = { ...plan, works: plan.works.map((w) => ({ ...w, parentWorkKey: null })) };
+    const parents = new Set(children.map((w) => w.parentWorkKey));
+    const flatR = copyOut({ plan: { ...flat, works: flat.works.filter((w) => !parents.has(w.workKey)) }, lift, to: { kind: "ring", id: "0123456789abcdef" } });
+    expect(flatR.omitted.manDaysUnconvertible).toBeGreaterThan(r.omitted.manDaysUnconvertible);
+    // 年だけの設置年を持つ資産が、ageAtWork の出た塊の中にある
+    expect(plan.assets.some((a) => a.commonItemAccepted && a.installedOn !== null && /^\d{4}$/.test(a.installedOn))).toBe(true);
   });
 
   test("パックの公開語彙と見え方で、取り込んだ計画の段が決まり、塊が出る", async () => {
