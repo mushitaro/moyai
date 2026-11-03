@@ -1,0 +1,145 @@
+{
+  "schema": "moyai.common/0",
+  "pack": "waste-incineration",
+  "source": "MOE-GLPLE-PROV-R3",
+  "table": "表Ⅱ-4 主要設備・機器リスト例",
+  "page": { "printed": 29, "pdf": 37 },
+  "verification": "原典照合済",
+  "verifiedBy": "このリポジトリを作る Claude Code のセッション（PDF の 37 枚目を絵にして照らした）",
+  "verifiedAt": "2026-11-03",
+  "systems": [
+    {
+      "code": "WI.RECV",
+      "name": "受入れ供給設備",
+      "items": [
+        { "code": "WI.RECV.SCALE", "name": "計量機" },
+        { "code": "WI.RECV.CRANE", "name": "ごみクレーン" },
+        { "code": "WI.RECV.SHREDDER", "name": "可燃性粗大ごみ切断機" }
+      ]
+    },
+    {
+      "code": "WI.COMB",
+      "name": "燃焼・溶融設備",
+      "variants": [
+        {
+          "code": "STOKER",
+          "name": "ストーカ式",
+          "items": [
+            { "code": "WI.COMB.STK_GRATE", "name": "燃焼装置" },
+            { "code": "WI.COMB.STK_FURNACE", "name": "焼却炉" },
+            { "code": "WI.COMB.STK_ASHMELT", "name": "灰溶融炉" }
+          ]
+        },
+        {
+          "code": "FLUID_INCIN",
+          "name": "流動床式焼却炉",
+          "items": [
+            { "code": "WI.COMB.FBI_PRETREAT", "name": "前処理装置" },
+            { "code": "WI.COMB.FBI_FURNACE", "name": "焼却炉" }
+          ]
+        },
+        {
+          "code": "SHAFT",
+          "name": "シャフト式ガス化炉",
+          "items": [
+            { "code": "WI.COMB.SHF_MELTER", "name": "ガス化溶融炉" },
+            { "code": "WI.COMB.SHF_CHAMBER", "name": "燃焼室" }
+          ]
+        },
+        {
+          "code": "KILN",
+          "name": "キルン式ガス化炉",
+          "items": [
+            { "code": "WI.COMB.KLN_PRETREAT", "name": "前処理装置" },
+            { "code": "WI.COMB.KLN_GASIFIER", "name": "ガス化炉" },
+            { "code": "WI.COMB.KLN_MELTER", "name": "溶融炉" }
+          ]
+        },
+        {
+          "code": "FLUID_GASIF",
+          "name": "流動床式ガス化炉",
+          "items": [
+            { "code": "WI.COMB.FBG_PRETREAT", "name": "前処理装置" },
+            { "code": "WI.COMB.FBG_GASIFIER", "name": "ガス化炉" },
+            { "code": "WI.COMB.FBG_MELTER", "name": "溶融炉" }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "WI.COOL",
+      "name": "燃焼ガス冷却設備",
+      "items": [
+        { "code": "WI.COOL.BOILER", "name": "ボイラ" },
+        { "code": "WI.COOL.CONDENSER", "name": "蒸気復水器" },
+        { "code": "WI.COOL.WATER_SPRAY", "name": "水噴射式燃焼ガス冷却設備" }
+      ]
+    },
+    {
+      "code": "WI.FLUE",
+      "name": "排ガス処理設備",
+      "items": [
+        { "code": "WI.FLUE.DUST", "name": "集じん装置" },
+        { "code": "WI.FLUE.HCL_SOX", "name": "HCL、SOx 除去設備" },
+        { "code": "WI.FLUE.NOX", "name": "NOx 除去設備" },
+        { "code": "WI.FLUE.DIOXIN", "name": "ダイオキシン類除去設備" }
+      ]
+    },
+    {
+      "code": "WI.HEAT",
+      "name": "余熱利用設備",
+      "items": [{ "code": "WI.HEAT.TURBINE", "name": "蒸気タービン発電設備" }]
+    },
+    {
+      "code": "WI.DRAFT",
+      "name": "通風設備",
+      "items": [
+        { "code": "WI.DRAFT.FDF", "name": "押込送風機" },
+        { "code": "WI.DRAFT.IDF", "name": "誘引通風機" }
+      ]
+    },
+    {
+      "code": "WI.ASHOUT",
+      "name": "灰出し設備",
+      "variants": [
+        {
+          "code": "NO_MELT",
+          "name": "溶融設備無し",
+          "items": [
+            { "code": "WI.ASHOUT.ASH_CRANE", "name": "灰クレーン" },
+            { "code": "WI.ASHOUT.FLYASH_TREAT", "name": "飛灰処理設備" }
+          ]
+        },
+        {
+          "code": "WITH_MELT",
+          "name": "溶融設備有り",
+          "items": [
+            { "code": "WI.ASHOUT.MELT", "name": "溶融設備" },
+            { "code": "WI.ASHOUT.MELT_FLUE", "name": "溶融排ガス処理設備" },
+            { "code": "WI.ASHOUT.POST", "name": "後処理設備" },
+            { "code": "WI.ASHOUT.MELT_FLYASH", "name": "溶融飛灰処理設備" }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "WI.ELEC",
+      "name": "電気設備",
+      "items": [
+        { "code": "WI.ELEC.SUBSTATION", "name": "受変電配電設備" },
+        { "code": "WI.ELEC.GENERATOR", "name": "発電機" }
+      ]
+    },
+    {
+      "code": "WI.INST",
+      "name": "計装設備",
+      "items": [{ "code": "WI.INST.DCS", "name": "DCS" }]
+    }
+  ],
+  "work": {
+    "INSPECT": { "label": "点検" },
+    "OVERHAUL": { "label": "分解整備" },
+    "REPLACE": { "label": "更新" },
+    "UPGRADE": { "label": "基幹改良" }
+  }
+}

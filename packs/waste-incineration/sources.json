@@ -1,0 +1,69 @@
+{
+  "schema": "moyai.sources/0",
+  "pack": "waste-incineration",
+  "sources": [
+    {
+      "id": "MOE-GLPLE-PROV-R3",
+      "name": "廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）令和 3 年 3 月改訂",
+      "publisher": "環境省",
+      "url": "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf",
+      "retrieved": "2026-11-03",
+      "sha256": "0851fe8d23ad55de373001c50c9a71b68b455cf1d7b2a8800845fa6601b0bf73",
+      "terms": "官公庁の公開資料。出典を書いて事実として使う。表の文は写さず、設備と機器の名前だけを項目にする",
+      "state": "原典照合済",
+      "checked": [
+        { "what": "表Ⅱ-4 主要設備・機器リスト例", "page": "印刷頁 29（PDF の 37 枚目）", "by": "このリポジトリを作る Claude Code のセッション", "on": "2026-11-03" }
+      ]
+    },
+    {
+      "id": "MHW-NOTICE-S46-KANSEI45",
+      "name": "廃棄物の処理及び清掃に関する法律の運用に伴う留意事項について（昭和 46 年 10 月 25 日 環整第 45 号 厚生省環境衛生局環境整備課長通知）",
+      "publisher": "厚生省（現 環境省の掲載）",
+      "url": "https://www.env.go.jp/hourei/11/000510.html",
+      "retrieved": "2026-11-03",
+      "terms": "行政の通知。条項の番号と短い引用で使う",
+      "state": "原典照合済",
+      "checked": [
+        { "what": "第三の 11「規則第五条の精密機能検査は三年に一回以上行なうこと。」", "by": "運営者の別のセッションとこのセッション", "on": "2026-11-03" }
+      ]
+    },
+    {
+      "id": "EGOV-346M50000100035",
+      "name": "廃棄物の処理及び清掃に関する法律施行規則（昭和四十六年厚生省令第三十五号）",
+      "publisher": "e-Gov 法令検索",
+      "url": "https://laws.e-gov.go.jp/law/346M50000100035",
+      "retrieved": "2026-11-03",
+      "terms": "法令の本文は著作権の対象外。出典を書く",
+      "state": "原典照合済",
+      "checked": [
+        { "what": "第五条（精密機能検査）：「定期的に」精密な検査を行う。年数の定めは無い", "version": "2026-09-16 施行", "by": "このリポジトリを作る Claude Code のセッション", "on": "2026-11-03" }
+      ]
+    },
+    {
+      "id": "MOE-IPPAN-R6-FACILITY-01",
+      "name": "一般廃棄物処理実態調査結果（令和 6 年度）施設の表（焼却施設）",
+      "publisher": "環境省",
+      "url": "https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/01.xlsx",
+      "retrieved": "2026-11-03",
+      "sha256": "8d5493a1ccb88638abcc38133b14576f14acd10b2b72eff179eea4bac0e1ab7f",
+      "terms": "官公庁の統計。数だけを取り出して使い、施設名は持たない。「加工した」ことを書く。元のファイルはコミットしない",
+      "state": "原典照合済",
+      "checked": [
+        {
+          "what": "施設の数：見出しは 2〜6 行目（5 段）。施設の行は 1,014。施設の改廃が空＝稼働 844、休止 118、廃止 22（うち移管 1）、新設（建設中・新規稼働）30",
+          "by": "このリポジトリを作る Claude Code のセッション（openpyxl で数え直した）",
+          "on": "2026-11-03"
+        }
+      ],
+      "note": "見え方の軸ごとの数（紛れる数）は、scripts/ で national/ を作るときに数え直す"
+    },
+    {
+      "id": "SOUMU-000401742",
+      "name": "総務省の資料（精密機能検査の実施の状況を示す二次資料）",
+      "publisher": "総務省",
+      "url": "https://www.soumu.go.jp/main_content/000401742.pdf",
+      "state": "要約のみ",
+      "note": "題と頁は、パックの検査を書くときに照らして書く"
+    }
+  ]
+}
