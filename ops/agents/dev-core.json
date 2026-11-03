@@ -1,0 +1,21 @@
+{
+  "name": "moyai-dev-core",
+  "role": "dev-core",
+  "description": "MOYAI の芯の仕事（パックの 2 段目など）を作る。公の機関のサイトだけを読める。成果はパッチで返す。モデルと effort は config/models.json の役 dev-core から取る",
+  "system": ["system-common.md"],
+  "tools": [
+    {
+      "type": "agent_toolset_20260401",
+      "default_config": { "enabled": true, "permission_policy": { "type": "auto" } },
+      "configs": [
+        {
+          "name": "web_fetch",
+          "enabled": true,
+          "allowed_domains": ["e-gov.go.jp", "env.go.jp", "mhlw.go.jp", "mlit.go.jp"],
+          "max_content_tokens": 40000
+        },
+        { "name": "web_search", "enabled": false }
+      ]
+    }
+  ]
+}

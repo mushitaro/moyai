@@ -1,0 +1,23 @@
+{
+  "name": "moyai-kinds",
+  "description": "パックの 2 段目の仕事のサンドボックス。github.com、パッケージの置き場、e-Gov・環境省・厚生労働省・国土交通省のサイトだけに届く",
+  "config": {
+    "type": "cloud",
+    "networking": {
+      "type": "limited",
+      "allow_package_managers": true,
+      "allow_mcp_servers": false,
+      "allowed_hosts": [
+        "github.com",
+        "codeload.github.com",
+        "laws.e-gov.go.jp",
+        "elaws.e-gov.go.jp",
+        "www.e-gov.go.jp",
+        "www.env.go.jp",
+        "env.go.jp",
+        "www.mhlw.go.jp",
+        "www.mlit.go.jp"
+      ]
+    }
+  }
+}

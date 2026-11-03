@@ -1,0 +1,24 @@
+{
+  "agents": {
+    "dev-core": {
+      "id": "agent_019Xv2aGF1ustRVtizMsbH5H",
+      "version": 1,
+      "hash": "67145bb3c6776f7c8846fa7547c6f3fbfbf1fb2ea22289510bd05a9acf867e48"
+    },
+    "factory": {
+      "id": "agent_019nEq6c4wJimEEBjfg6rVw1",
+      "version": 1,
+      "hash": "9b325f758643820847d1b20c77d7bf861518372ecbbc1318043c7917bdeb0ed9"
+    }
+  },
+  "environments": {
+    "env-factory": {
+      "id": "env_014JY71YWc7HRda689utrE4m",
+      "hash": "6ebcc5293e123950e5e1bc5de7c75527647c68467444bbbd45b04d5ec1c46093"
+    },
+    "env-kinds": {
+      "id": "env_01NQpBDREGhvN3Es7iXHB5Xi",
+      "hash": "08cc55a1a7defc1bb248aadd371037f615bf74d5c8d4773a1e5e320f1c7f11ad"
+    }
+  }
+}
