@@ -27,3 +27,4 @@ audit-result.json
 
 # 道具の一時の出力（監査の結果など）
 .cache/
+.claude/worktrees/
