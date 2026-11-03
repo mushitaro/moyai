@@ -1,7 +1,7 @@
 // share.grain と share.stable：写し取りの粒度と、送るたびに変わらないこと。
 import { describe, expect, it } from "vitest";
 import { canonicalize } from "../../../src/share/jcs";
-import { CHUNK_FIELDS, SKIP_REASONS, candidateClasses, copyOut, fiscalYearOf, type CopyResult } from "../../../src/share/copyout";
+import { CHUNK_FIELDS, SKIP_REASONS, candidateClasses, copyOut, fiscalYearOf, installFiscalRange, type CopyResult } from "../../../src/share/copyout";
 import { chooseProfile } from "../../../src/share/k";
 import { FACILITY_COMMON, SPEC, asset, detail, plan, table, vocab, work } from "./fixtures";
 import type { Plan } from "../../../src/shared/plan";
@@ -193,5 +193,52 @@ describe("share.stable", () => {
     expect(fiscalYearOf("FY2003", 4)).toBe(2003);
     expect(fiscalYearOf("2000", 4)).toBe(null);
     expect(fiscalYearOf("平成12年", 4)).toBe(null);
+  });
+
+  it("設置が年だけ（取り込みの書き方）なら、暦年と年度の両方で帯が同じときだけ ageAtWork を出す", () => {
+    expect(installFiscalRange("2002", 4)).toEqual([2001, 2002]);
+    expect(installFiscalRange("2002", 1)).toEqual([2002, 2002]);
+    expect(installFiscalRange("2002-05-01", 4)).toEqual([2002, 2002]);
+    expect(installFiscalRange("平成14年", 4)).toBe(null);
+    const mk = (installedOn: string, firstFy: number) =>
+      plan({
+        assets: [asset("a1", "T.FEED.LIFT", { installedOn })],
+        works: [work("w1", "OVERHAUL", ["a1"])],
+        details: [detail("d1", "w1", firstFy, { manDays: 20, days: 10 }), detail("d2", "w1", firstFy + 3, { manDays: 20, days: 10 })],
+      });
+    const ring = { kind: "ring", id: "0123456789abcdef" } as const;
+    // 2014 − 2002 = 12、2014 − 2001 = 13：どちらも A10_14
+    const ok = mk("2002", 2014);
+    const r1 = copyOut({ plan: ok, lift: liftFor(ok).lift, to: ring });
+    expect(r1.chunks[0]!.ageAtWork).toBe("A10_14");
+    // 2011 − 2002 = 9（A5_9）と 2011 − 2001 = 10（A10_14）で帯が割れる
+    const amb = mk("2002", 2011);
+    const r2 = copyOut({ plan: amb, lift: liftFor(amb).lift, to: ring });
+    expect(r2.chunks[0]!.ageAtWork).toBeUndefined();
+    expect(r2.omitted.ageInstallAmbiguous).toBe(1);
+    expect(r2.omitted.ageInstalledUnknown).toBe(0);
+  });
+});
+
+describe("share.grain（入れ子の作業）", () => {
+  it("まとめ工事の子の作業は、人・日に直せないではなく、まとめ工事に数える", () => {
+    const p = plan({
+      assets: [asset("a1", "T.FEED.LIFT"), asset("a2", "T.FEED.LIFT")],
+      works: [
+        work("parent", "OVERHAUL", ["a1", "a2"]),
+        work("c1", "OVERHAUL", ["a1"], { parentWorkKey: "parent" }),
+        work("c2", "OVERHAUL", ["a2"], { parentWorkKey: "parent" }),
+      ],
+      details: [
+        detail("dp", "parent", 2015, { manDays: 40, days: 20 }),
+        detail("d1", "c1", 2015, { manDays: null, days: null }),
+        detail("d2", "c2", 2015, { manDays: null, days: null }),
+      ],
+    });
+    const r = copyOut({ plan: p, lift: liftFor(p).lift, to: { kind: "ring", id: "0123456789abcdef" } });
+    expect(r.omitted.manDaysUnconvertible).toBe(0);
+    expect(r.omitted.daysUnconvertible).toBe(0);
+    expect(r.omitted.manDaysBundled).toBe(3);
+    expect(r.chunks[0]!.manDays).toBeUndefined();
   });
 });

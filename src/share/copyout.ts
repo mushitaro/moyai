@@ -75,6 +75,7 @@ export const OMIT_REASONS = [
   "daysNone",
   "ageInstalledUnknown", // 最初の作業の対象の設置の年度が分からない
   "ageNegative", // 設置より前の作業（どちらかの誤り）
+  "ageInstallAmbiguous", // 設置が年だけで、暦年と年度のどちらに読むかで帯が変わる
   "fieldNotAllowed", // 場の決まりが欄を外している
 ] as const;
 export type OmitReason = (typeof OMIT_REASONS)[number];
@@ -132,14 +133,29 @@ export function fiscalYearOf(s: string | null, startMonth: number): number | nul
   return mo >= startMonth ? y : y - 1;
 }
 
+/**
+ * 設置の文字から、あり得る年度の幅 [早い方, 遅い方] を出す。年だけ（"2002"）は暦年か年度かが決まらないので、
+ * 年度の始まりが 1 月でなければ [y-1, y] の幅にする（どちらかに決めない）。読めなければ null。
+ */
+export function installFiscalRange(s: string | null, startMonth: number): [number, number] | null {
+  if (s === null) return null;
+  const y = /^(\d{4})$/.exec(s);
+  if (y) {
+    const n = Number(y[1]);
+    return startMonth === 1 ? [n, n] : [n - 1, n];
+  }
+  const fy = fiscalYearOf(s, startMonth);
+  return fy === null ? null : [fy, fy];
+}
+
 /** 集めた 1 塊分の中身。数とキーだけを持つ（系統のキーは間隔を数えるためだけに使い、写さない）。 */
 interface Gathered {
   cls: string;
   work: WorkAttribute;
   /** 系統のキー → 年度の集合 */
   yearsBySeries: Map<string, Set<number>>;
-  /** 年度 → その年度の対象の設置の年度（分からなければ null） */
-  installByYear: Map<number, (number | null)[]>;
+  /** 年度 → その年度の対象の設置の年度の幅（分からなければ null） */
+  installByYear: Map<number, ([number, number] | null)[]>;
   /** 作業明細のキー → 工数・日数・まとめ工事か */
   visits: Map<string, { manDays: number | null; days: number | null; bundled: boolean }>;
 }
@@ -182,14 +198,23 @@ const CHUNK_BUILDERS: Record<Exclude<ChunkField, "class" | "work">, Builder> = {
   days: perVisit("days"),
   ageAtWork: (g, _rules, omit) => {
     const first = allYears(g)[0]!;
-    const installs = (g.installByYear.get(first) ?? []).filter((x): x is number => x !== null);
+    const installs = (g.installByYear.get(first) ?? []).filter((x): x is [number, number] => x !== null);
     if (installs.length === 0) {
       omit("ageInstalledUnknown");
       return undefined;
     }
-    const band = ageBand(first - Math.min(...installs), g.work);
-    if (band === null) omit("ageNegative");
-    return band ?? undefined;
+    // いちばん早い設置の幅。幅の両端で帯が同じときだけ出す
+    const oldest = ageBand(first - Math.min(...installs.map((r) => r[0])), g.work);
+    const youngest = ageBand(first - Math.min(...installs.map((r) => r[1])), g.work);
+    if (oldest === null || youngest === null) {
+      omit("ageNegative");
+      return undefined;
+    }
+    if (oldest !== youngest) {
+      omit("ageInstallAmbiguous");
+      return undefined;
+    }
+    return oldest;
   },
 };
 
@@ -210,7 +235,9 @@ export function copyOut(input: CopyInput): CopyResult {
   const assets = new Map<string, AssetNodeT>(plan.assets.map((a) => [a.nodeKey, a]));
   const works = new Map<string, WorkT>(plan.works.map((w) => [w.workKey, w]));
   const parents = new Set(plan.works.map((w) => w.parentWorkKey).filter((x): x is string => x !== null));
-  const isBundled = (w: WorkT) => w.targets.length > 1 || parents.has(w.workKey) || w.tagRange !== null || w.tagList.length > 1;
+  // まとめ工事：ほかの機器と一緒の作業、入れ子の親、入れ子の子（工数・日数は親の明細にあり、子には割らない）
+  const isBundled = (w: WorkT) =>
+    w.targets.length > 1 || parents.has(w.workKey) || w.parentWorkKey !== null || w.tagRange !== null || w.tagList.length > 1;
   const startMonth = plan.facility.fiscalYearStartMonth;
 
   // 欄ごと写さないものを数える（読むのは null かどうかだけ）
@@ -281,7 +308,7 @@ export function copyOut(input: CopyInput): CopyResult {
       if (!g.yearsBySeries.has(seriesKey)) g.yearsBySeries.set(seriesKey, new Set());
       g.yearsBySeries.get(seriesKey)!.add(d.fiscalYear);
       if (!g.installByYear.has(d.fiscalYear)) g.installByYear.set(d.fiscalYear, []);
-      g.installByYear.get(d.fiscalYear)!.push(fiscalYearOf(a.installedOn, startMonth));
+      g.installByYear.get(d.fiscalYear)!.push(installFiscalRange(a.installedOn, startMonth));
       if (!g.visits.has(d.detailKey)) g.visits.set(d.detailKey, { manDays: d.manDays, days: d.days, bundled: isBundled(w) });
       copied++;
     }
