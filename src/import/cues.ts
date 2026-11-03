@@ -1,6 +1,6 @@
 // 書類の一般の手がかりの語（packs/_cues/cues.json）を読み、比べる道具にする。語はコードに置かない。
 import cuesJson from "../../packs/_cues/cues.json";
-import { nfkc } from "./era";
+import { nfkc, parseDateText, parseYearLabel } from "./era";
 
 export const CUES = cuesJson;
 
@@ -64,10 +64,12 @@ export const cue = {
     if (a === p) return null;
     return a ? "actual" : "plan";
   },
-  /** 見出しの語から列の役目の手がかり（一致した語の長いもの優先） */
+  /** 見出しの語から列の役目の手がかり（一致した語の長いもの優先）。末尾の括弧（単位など：「工数(人日)」「延工数(h)」）は除いて比べる */
   column(header: string): ColumnCue | null {
-    const h = norm(header);
+    const h = stripParen(norm(header));
     if (!h) return null;
+    // 年や日付そのもの（「令和8年度」「2026/10/01」）は見出しの語ではなく値
+    if (parseYearLabel(h) !== null || parseDateText(h) !== null) return null;
     let best: { k: ColumnCue; len: number } | null = null;
     for (const [k, words] of Object.entries(CUES.column) as [ColumnCue, string[]][]) {
       for (const w of normList(words)) {
@@ -78,6 +80,19 @@ export const cue = {
       }
     }
     return best?.k ?? null;
+  },
+  /** 見出しに書いた工数の単位（「工数(人日)」→ 人・日、「延工数(h)」「時間」→ 時間）。書いていなければ null */
+  headerUnit(header: string): "manDays" | "hours" | null {
+    const h = norm(header);
+    const paren = /[(（]([^()（）]*)[)）]$/.exec(h)?.[1] ?? null;
+    const inParen = (ws: readonly string[]) => paren !== null && ws.some((w) => norm(w).toLowerCase() === paren.toLowerCase());
+    if (inParen(CUES.headerUnit.manDays)) return "manDays";
+    if (inParen(CUES.headerUnit.hours)) return "hours";
+    // 括弧が無いとき：見出しそのものが単位の語を含む（「延べ時間」「作業時間」）
+    const bare = stripParen(h);
+    if (CUES.headerUnit.manDays.some((w) => bare.endsWith(norm(w)) && bare !== norm(w))) return "manDays";
+    if (CUES.headerUnit.hours.some((w) => norm(w).length > 1 && bare.endsWith(norm(w)))) return "hours";
+    return null;
   },
   /** 一式の印（「（一式）」など）を除いた文字と、印があったか */
   stripSet(t: string): { text: string; set: boolean } {
@@ -95,6 +110,12 @@ export const cue = {
   listSeparators: CUES.listSeparators,
   commonMeanings: CUES.commonMeanings,
 };
+
+/** 末尾の括弧（単位など）を除く。除くと空になるなら除かない */
+function stripParen(h: string): string {
+  const s = h.replace(/[(（][^()（）]*[)）]$/, "");
+  return s || h;
+}
 
 export function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

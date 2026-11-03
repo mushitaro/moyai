@@ -4,7 +4,7 @@
 // 層 2 は形式を知らない（格子だけを見る）。決まらないものは「問い」の種（Issue）として層 3 に渡す。
 import { CellIndex, cellRef, colLetter, type GridCell, type SheetGrid, type SourceFile } from "./grid";
 import { cue, norm, type ColumnCue } from "./cues";
-import { parseDateRange, parseDateText, parseDayCount, parseYearLabel, parseYearOnly, serialToYmd, type Ymd } from "./era";
+import { fiscalYearInText, parseDateRange, parseDateText, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, serialToYmd, type Ymd } from "./era";
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit } from "./text";
 
@@ -36,6 +36,12 @@ export type ColRole =
   | "installed"
   | "remark"
   | "label"
+  /** 機器番号（同一性の鍵）の列 */
+  | "tag"
+  /** 期間の終わりの日付（始まりと別の列に書く書き方：着手・完了） */
+  | "end"
+  /** 行ごとの予定・実績（星取表を予定の段と実績の段に分けて書く書き方） */
+  | "planActual"
   | "unknown";
 
 export type Shape = "tree" | "grid" | "events";
@@ -125,6 +131,8 @@ export interface SheetLayout {
   looseLegends: LegendEntry[];
   /** 行の役割のほかに、外した理由を決めた行（頭書き・頁ごとにくり返す見出し・続きの印） */
   rowReasons: Map<number, string>;
+  /** シートの中の文に書いた年度がただ 1 つなら、その年度（年の無い日付「4/6」の年を決めるため）。無い・2 つ以上なら null */
+  contextFiscalYear: number | null;
 }
 
 // ─── 値の読み方 ────────────────────────────────────────────────
@@ -258,6 +266,30 @@ interface BuildCtx {
   grid: SheetGrid;
   idx: CellIndex;
   date1904: boolean;
+  contextFiscalYear: number | null;
+}
+
+/** 日付として読めるセルか。年の無い日付（「4/6(月)」）は、シートに年度が 1 つだけ書いてあるときだけ日付にする */
+function isDateCell(ctx: BuildCtx, x: GridCell): boolean {
+  if (cellDate(x, ctx.date1904) !== null) return true;
+  return ctx.contextFiscalYear !== null && typeof x.value === "string" && parseMonthDay(x.value) !== null;
+}
+
+/** 日付の列らしいか：〃（上と同じ）を除いた中身の 6 割以上が日付 */
+function dateColumn(ctx: BuildCtx, cs: GridCell[]): boolean {
+  const own = cs.filter((x) => !cue.isDitto(x.text));
+  return own.length > 0 && ratio(own.filter((x) => isDateCell(ctx, x)).length, own.length) >= 0.6;
+}
+
+/** 号・系列の見出しの列の中身が、号の書き方か数だけか（「-」の号なしは数えない） */
+function seriesValues(cs: GridCell[]): boolean {
+  const own = cs.filter((x) => !/^[-－―—‐ー]+$/u.test(norm(x.text)));
+  return own.length > 0 && ratio(own.filter((x) => /^\d{1,3}$/.test(norm(x.text)) || parseUnit(x.text) !== null).length, own.length) >= 0.8;
+}
+
+/** 予定・実績の語だけでできた列か（行ごとに予定の段と実績の段を書く書き方） */
+function planActualColumn(cs: GridCell[]): boolean {
+  return cs.length >= 2 && ratio(cs.filter((x) => cue.planActual(x.text) !== null).length, cs.length) >= 0.9;
 }
 
 function headerExtent(ctx: BuildCtx, block: number[], top: number): number[] {
@@ -294,12 +326,22 @@ function dataCellsOf(ctx: BuildCtx, rows: number[], c: number): GridCell[] {
 }
 
 function detectYearBand(ctx: BuildCtx, cols: ColInfo[], dataRows: number[], headerRow: number): { kind: Table["yearKind"]; issue: Omit<Issue, "tableId"> | null } {
-  const years: { col: ColInfo; label: ReturnType<typeof parseYearLabel> }[] = [];
+  const years: { col: ColInfo; label: ReturnType<typeof parseYearLabel>; part: string }[] = [];
   for (const col of cols) {
-    const top = col.headerParts[0];
-    if (!top) continue;
-    const l = parseYearLabel(top);
-    if (l) years.push({ col, label: l });
+    // 年の見出しは、見出しのどの段にあってもよい（上の段に「実施済」「計画期間」などの帯を置く書き方）。
+    // 1 つのセルに年の書き方を改行で並べたもの（「H31⏎R1」）は、初めに読めたもの
+    let found: { label: NonNullable<ReturnType<typeof parseYearLabel>>; part: string } | null = null;
+    for (const part of col.headerParts) {
+      for (const tok of part.split(/[\n\r]+/)) {
+        const l = parseYearLabel(tok);
+        if (l) {
+          found = { label: l, part };
+          break;
+        }
+      }
+      if (found) break;
+    }
+    if (found) years.push({ col, label: found.label, part: found.part });
   }
   if (years.length < 1) return { kind: null, issue: null };
   // 年の列の中身が印（記号）であること。数や文の列（年度ごとの金額など）は星取表の印ではない
@@ -311,9 +353,11 @@ function detectYearBand(ctx: BuildCtx, cols: ColInfo[], dataRows: number[], head
   for (const y of years) {
     y.col.role = "mark";
     y.col.fiscalYear = y.label?.year ?? 0;
-    y.col.yearLabel = y.col.headerParts[0] ?? "";
-    const sub = y.col.headerParts[1];
-    y.col.planOrActual = sub ? cue.planActual(sub) : null;
+    y.col.yearLabel = y.part;
+    // 予定・実績は、年の見出しでない段の語から（年の下の「実績／予定」の段、年の上の「実施済」「計画期間」の帯）
+    const others = y.col.headerParts.filter((p) => p !== y.part);
+    const pas = [...new Set(others.map((p) => cue.planActual(p)).filter((x) => x !== null))];
+    y.col.planOrActual = pas.length === 1 ? (pas[0] ?? null) : null;
   }
   const flags = years.map((y) => y.label?.fiscal ?? null);
   const anyTrue = flags.includes(true);
@@ -377,10 +421,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   let shape: Shape;
   if (marks.length) shape = "grid";
   else {
-    const dateCol = cols.find((col) => {
-      const cs = dataCellsOf(ctx, dataRows, col.c);
-      return cs.length > 0 && ratio(cs.filter((x) => cellDate(x, ctx.date1904) !== null).length, cs.length) >= 0.6;
-    });
+    const dateCol = cols.find((col) => dateColumn(ctx, dataCellsOf(ctx, dataRows, col.c)));
     shape = dateCol ? "events" : "tree";
   }
   // 列の役目
@@ -400,15 +441,20 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       continue;
     }
     if (shape === "events") {
-      if (cs.length && ratio(cs.filter((x) => cellDate(x, ctx.date1904) !== null).length, cs.length) >= 0.6) col.role = "date";
+      if (dateColumn(ctx, cs)) col.role = col.cue === "end" ? "end" : "date";
       else if (cs.length && ratio(cs.filter((x) => parseEffort(typeof x.value === "number" ? x.value : x.text) !== null).length, cs.length) >= 0.6 && col.cue === "effort") col.role = "effort";
       else if (cs.length && col.cue === "days" && ratio(cs.filter((x) => parseDayCount(typeof x.value === "number" ? x.value : x.text) !== null).length, cs.length) >= 0.6) col.role = "days";
       // 行の通し番号（No.）：その資料の中で行を指すだけ。記録の出どころには入るが、値としては読まない
       else if (cs.length && col.cue === "number" && ratio(cs.filter((x) => numberDepth(typeof x.value === "number" ? x.value : x.text) === 1).length, cs.length) >= 0.8) col.role = "number";
+      // 管理番号（「R4-001」など）：行ごとに違う値なら、その資料の中で行を指すだけの番号
+      else if (cs.length && col.cue === "number" && new Set(cs.map((x) => norm(x.text))).size === cs.length) col.role = "number";
       else if (col.cue === "assetRef" || col.cue === "name") col.role = "assetRef";
       else if (col.cue === "workName") col.role = "workName";
       else if (col.cue === "workTitle") col.role = "workTitle";
-      else if (col.cue === "remark" || col.cue === "spec") col.role = "remark";
+      else if (col.cue === "tag") col.role = "tag";
+      // 号・系列の見出しの列で、中身が数だけ（「1」「2」）：号の列
+      else if (col.cue === "series" && seriesValues(cs)) col.role = "unit";
+      else if (col.cue === "remark" || col.cue === "spec" || col.cue === "category" || col.cue === "persons" || col.cue === "fiscal") col.role = "remark";
       else if (col.cue === "effort") col.role = "effort";
       else if (cs.length) {
         col.role = "unknown";
@@ -430,6 +476,14 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       continue;
     }
     // 木と星取表
+    if (shape === "grid" && planActualColumn(cs)) {
+      col.role = "planActual";
+      continue;
+    }
+    if (col.cue === "tag") {
+      col.role = "tag";
+      continue;
+    }
     if (col.cue === "number" || (cs.length && ratio(cs.filter((x) => typeof x.value === "string" && numberDepth(x.value) !== null).length, cs.length) >= 0.8 && cs.some((x) => /[-.]/.test(String(x.value))))) {
       col.role = "number";
       continue;
@@ -448,6 +502,35 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     }
     col.role = "label"; // 名前か階層の候補（下で決める）
   }
+  if (shape === "events") {
+    // 日付の列が 2 つ（着手・完了）で、終わりの手がかりが無ければ、右の列を終わりにする
+    const ds = cols.filter((c) => c.role === "date");
+    if (ds.length === 2 && !cols.some((c) => c.role === "end")) (ds[1] as ColInfo).role = "end";
+    // 日付の欄の空欄で、ほかの欄に中身がある行（同じ日の 2 行目から日付を書かない書き方）：上の行と同じか（まとめて問う）
+    for (const dc of cols.filter((c) => c.role === "date" || c.role === "end")) {
+      const blanks: number[] = [];
+      let seen = false;
+      for (const r of dataRows) {
+        const cell = ctx.idx.at(r, dc.c);
+        if (cell && cell.text !== "") seen = true;
+        else if (seen && rowTexts(ctx.idx, r).length > 0) blanks.push(r);
+      }
+      if (blanks.length)
+        issues.push({
+          kind: "blankSameAsAbove",
+          tableId: id,
+          pattern: `col:${dc.c}`,
+          rows: blanks,
+          cells: blanks.map((r) => cellRef(r, dc.c)),
+          detail: `「${dc.header || "日付"}」の列の空欄（${blanks.length} 行）`,
+          proposal: "same",
+          options: [
+            { id: "same", label: "上の行と同じ" },
+            { id: "none", label: "日付は無い" },
+          ],
+        });
+    }
+  }
   if (shape === "grid") {
     const firstMark = Math.min(...marks.map((m) => m.c));
     let lvl = 0;
@@ -463,8 +546,18 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     }
   } else if (shape === "tree") {
     const labels = cols.filter((c) => c.role === "label");
-    const named = labels.find((c) => c.cue === "name") ?? labels[0];
-    for (const col of labels) col.role = col === named ? "name" : "spec";
+    const group = nameGroup(ctx, labels, dataRows);
+    if (group) {
+      // 段ごとに名前を書く列を変える書き方：どの列も名前の列で、列の位置が段
+      group.forEach((col, i) => {
+        col.role = "name";
+        col.hierLevel = i + 1;
+      });
+      for (const col of labels) if (!group.includes(col)) col.role = "spec";
+    } else {
+      const named = labels.find((c) => c.cue === "name") ?? labels[0];
+      for (const col of labels) col.role = col === named ? "name" : "spec";
+    }
   } else {
     for (const col of cols) if (col.role === "label") col.role = "remark";
   }
@@ -493,17 +586,57 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   return table;
 }
 
+/**
+ * 名前の列の組：段ごとに名前を書く列を変える書き方（「名称」の下に「設備・機器・部位」など）。
+ * 隣り合う 2 つ以上の名前の候補の列で、見出しの上の段が同じ（結合した見出し）か、どの行もそのうち 1 つの列にだけ名前がある。
+ * どの列にも名前のある行があり、名前のある行がデータの行の 8 割以上。そうでなければ null
+ */
+function nameGroup(ctx: BuildCtx, labels: ColInfo[], dataRows: number[]): ColInfo[] | null {
+  const sorted = [...labels].sort((a, b) => a.c - b.c);
+  const filled = (r: number, c: ColInfo) => {
+    const x = ctx.idx.at(r, c.c);
+    return !!x && typeof x.value === "string" && x.text.trim() !== "";
+  };
+  for (let i = 0; i < sorted.length; i++) {
+    const run: ColInfo[] = [sorted[i] as ColInfo];
+    for (let j = i + 1; j < sorted.length && (sorted[j] as ColInfo).c === (run[run.length - 1] as ColInfo).c + 1; j++) run.push(sorted[j] as ColInfo);
+    if (run.length < 2) continue;
+    const top = run[0]?.headerParts[0];
+    const sharedHeader = !!top && run.every((c) => c.headerParts.length >= 2 && c.headerParts[0] === top);
+    let named = 0;
+    let multi = 0;
+    for (const r of dataRows) {
+      const n = run.filter((c) => filled(r, c)).length;
+      if (n >= 1) named++;
+      if (n >= 2) multi++;
+    }
+    const everyUsed = run.every((c) => dataRows.some((r) => filled(r, c)));
+    if (everyUsed && named >= 0.8 * dataRows.length && (sharedHeader || multi === 0)) return run;
+  }
+  return null;
+}
+
 /** 木の表：行ごとに票を入れる */
 function voteLevels(ctx: BuildCtx, t: Table) {
-  const nameCol = t.cols.find((c) => c.role === "name");
+  const nameCols = t.cols.filter((c) => c.role === "name");
+  const nameCol = nameCols[0];
   const numCol = t.cols.find((c) => c.role === "number");
   const data = t.rows.filter((r) => r.role === "data");
   if (!nameCol) return;
   const nameCells = new Map<number, GridCell>();
   for (const r of data) {
-    const x = ctx.idx.resolved(r.r, nameCol.c);
+    // 名前の列の組なら、その行で名前のある列
+    const x = nameCols.map((c) => ctx.idx.resolved(r.r, c.c)).find((y) => !!y && y.text !== "") ?? ctx.idx.resolved(r.r, nameCol.c);
     if (x) nameCells.set(r.r, x);
   }
+  // 番号の列が 1 段の番号だけ（通し番号）なら、段の票にしない（段を表さないため）
+  const numDepths = numCol
+    ? data
+        .map((r) => ctx.idx.at(r.r, numCol.c))
+        .filter((x): x is GridCell => !!x)
+        .map((x) => numberDepth(typeof x.value === "number" ? x.value : x.text))
+    : [];
+  const flatNumbers = numDepths.length > 0 && numDepths.every((d) => d === 1 || d === null);
   // 名前の列が空で、左右の別の列に名前がある行（段ごとに列をずらす書き方）を位置の票にする
   const positions = new Map<number, number>();
   for (const r of data) {
@@ -528,7 +661,7 @@ function voteLevels(ctx: BuildCtx, t: Table) {
       const p = positions.get(r.r);
       if (p !== undefined) votes.push({ signal: "position", level: posRank.get(p) ?? 1 });
     }
-    if (numCol) {
+    if (numCol && !flatNumbers) {
       const x = ctx.idx.at(r.r, numCol.c);
       const d = x ? numberDepth(typeof x.value === "number" ? x.value : x.text) : null;
       if (d !== null) votes.push({ signal: "number", level: d });
@@ -699,6 +832,22 @@ function headerLike(cells: GridCell[]): boolean {
   return cells.length >= 3 && cells.filter((c) => cue.column(c.text) !== null).length >= 2;
 }
 
+/**
+ * 項目と値を並べた行（帳票の頭書き：「工期｜R5.8.31〜」「出力日｜2026/10/01｜受託者｜…」）。
+ * 項目（短い文字。数・日付でない）と値の組が 1 つ以上で、最後に組にならない文が 1 つあってもよい。列の見出しの行や、
+ * 中身の半分を超えて見出しの語の行（2 列の表の見出し）は、頭書きにしない
+ */
+function kvRow(cells: GridCell[]): boolean {
+  if (cells.length < 2 || cells.length > 7 || headerLike(cells)) return false;
+  if (cells.filter((c) => cue.column(c.text) !== null).length * 2 > cells.length) return false;
+  for (let i = 0; i + 1 < cells.length; i += 2) {
+    const label = cells[i] as GridCell;
+    const t = norm(label.text);
+    if (typeof label.value !== "string" || t.length < 1 || t.length > 8 || /^[\d.,/\-:]+$/.test(t) || parseDateText(label.text) !== null) return false;
+  }
+  return true;
+}
+
 const exactSig = (cells: GridCell[]) => cells.map((c) => `${c.c}\u0001${norm(c.text)}`).join("\u0002");
 /** 頁ごとに変わる所（続きの印・頁の番号などの数）を除いた形 */
 const looseSig = (cells: GridCell[]) =>
@@ -779,7 +928,8 @@ function joinAcross(blocks: number[][], rows: number[], repeats: Map<number, Rep
 
 export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
   const idx = new CellIndex(grid);
-  const ctx: BuildCtx = { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, idx, date1904: src.date1904 };
+  const contextFiscalYear = fiscalYearInText(grid.cells.map((c) => c.text));
+  const ctx: BuildCtx = { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, idx, date1904: src.date1904, contextFiscalYear };
   const roles = new Map<number, RowRole>();
   const rowReasons = new Map<number, string>();
   const tables: Table[] = [];
@@ -815,7 +965,19 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
     const hasColumnCue = block.some((r) => rowTexts(idx, r).length >= 2 && rowTexts(idx, r).some((c) => cue.column(c.text) !== null));
     const otherTable = blocks.some((b) => b !== block && !(b.length <= 4 && b.every((r) => rowTexts(idx, r).length <= 2)));
     const small = fewCells && !hasColumnCue && (otherTable || block.every((r) => rowTexts(idx, r).length <= 1));
-    if (small) {
+    // 項目と値だけの塊（帳票の頭書き）：ほかに表があり、6 行まで、見出しの行が無く、どの行も 1 セルか項目と値の行。
+    // 小計・合計の項目がある塊や、値がどれも数の塊は、2 列の小さな表として読む（頭書きの値は日付・名前・文がまじる）
+    const kvRows = block.filter((r) => kvRow(rowTexts(idx, r)));
+    const kvValues = kvRows.flatMap((r) => rowTexts(idx, r).filter((_, i) => i % 2 === 1));
+    const kvBlock =
+      otherTable &&
+      block.length <= 6 &&
+      kvRows.length > 0 &&
+      !block.some((r) => headerLike(rowTexts(idx, r))) &&
+      block.every((r) => rowTexts(idx, r).length === 1 || kvRow(rowTexts(idx, r))) &&
+      !kvRows.some((r) => isSubtotalRow(rowTexts(idx, r)) !== null) &&
+      !(kvValues.length >= 2 && kvValues.every((c) => isNumberish(c)));
+    if (small || kvBlock) {
       block.forEach((r, i) => {
         const cells = rowTexts(idx, r);
         const text = cells.map((c) => c.text).join(" ");
@@ -842,7 +1004,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
     }
     // 帳票の頭書き：列の見出しの行の上にある、項目と値だけの行（どれも 2 セルまで）。表の外の項目なので記録には使わない
     const hi = rest.findIndex((r) => headerLike(rowTexts(idx, r)));
-    if (hi > 0 && rest.slice(0, hi).every((r) => rowTexts(idx, r).length <= 2)) {
+    if (hi > 0 && rest.slice(0, hi).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)))) {
       for (const r of rest.splice(0, hi)) {
         const cells = rowTexts(idx, r);
         roles.set(r, "note");
@@ -863,7 +1025,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
       target.legendRows.push(...lg.rows);
     } else looseLegends.push(...lg.entries);
   }
-  return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends, rowReasons };
+  return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends, rowReasons, contextFiscalYear };
 }
 
 export function layoutFile(src: SourceFile): SheetLayout[] {

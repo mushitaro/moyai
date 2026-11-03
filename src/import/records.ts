@@ -2,7 +2,7 @@
 // どのセルを何に使ったかを数えるため、記録はセルの位置を持つ。
 import { cellRef, type SheetGrid } from "./grid";
 import { cue, norm } from "./cues";
-import { fiscalYearOf, nfkc, parseDayCount, parseYearOnly, type Ymd } from "./era";
+import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFiscalYear, type Ymd } from "./era";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { assignParents, cellPeriod, type ColInfo, type SheetLayout, type Table } from "./structure";
 import { parseEffort, parseUnit, splitTag, tagTrailingNumber, type TagSplit, type UnitValue } from "./text";
@@ -79,6 +79,8 @@ export interface EventRec {
   /** 工数のセルに書いてあったが人・日に直せていない */
   effortPending: boolean;
   assetNames: string[];
+  /** 機器番号の列に書いた番号（同一性の鍵）。無ければ null */
+  tag: string | null;
   bundle: boolean;
   unit: UnitValue | null;
   workName: string;
@@ -270,8 +272,23 @@ function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; 
 /** 記録に使わないセル（外したもの・値の無い数式） */
 type Off = (ref: string) => boolean;
 
+/** 「-」だけのセル（号なし・該当なし） */
+function isNone(text: string): boolean {
+  return /^[-－―—‐ー]+$/u.test(nfkc(text).trim());
+}
+
+/** 名前の後ろの号（「ポンプ（1号機）」「ポンプ (1号機)」）。括弧の中が号の書き方なら、名前と号に分ける */
+function splitUnitSuffix(text: string): { name: string; n: number } | null {
+  const m = /^(.*\S)\s*[(（]([^()（）]+)[)）]$/u.exec(nfkc(text).trim());
+  if (!m) return null;
+  const u = parseUnit(m[2] ?? "");
+  return u?.kind === "number" ? { name: (m[1] ?? "").trim(), n: u.n } : null;
+}
+
 function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): number {
-  const nameCol = t.cols.find((c) => c.role === "name");
+  // 名前の列は 1 つか、段ごとに名前を書く列の組（どれも名前の列。行ごとに、名前のある列）
+  const nameCols = t.cols.filter((c) => c.role === "name");
+  const nameCol = nameCols[0];
   if (!nameCol) {
     for (const r of t.rows) for (const cell of lay.index.rowCells(r.r)) pend(cell.ref);
     ask.ask(`noName|${t.id}`, {
@@ -304,9 +321,13 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   }
   const dataRows = t.rows.filter((r) => r.role === "data" || r.role === "parent");
   const nameCells = dataRows
-    .map((r) => ({ r: r.r, cell: lay.index.resolved(r.r, nameCol.c) }))
+    .map((r) => ({ r: r.r, cell: nameCols.map((c) => lay.index.resolved(r.r, c.c)).find((x) => !!x && x.text !== "") ?? null }))
     .filter((x): x is { r: number; cell: NonNullable<typeof x.cell> } => !!x.cell && x.cell.text !== "");
   const tags = tagDecision(t, lay, ask, nameCells.map((x) => ({ r: x.r, text: x.cell.text, ref: x.cell.ref })));
+  // 号・系列の列：数の号と共通（〃 は上の行と同じ、「-」は号なし）
+  const unitCol = t.cols.find((c) => c.role === "unit");
+  let prevSeries: Series | null = null;
+  let prevInstalled: number | null = null;
   const idOf = (r: number) => `${t.id}:r${r}`;
   const yearUnknown: { ref: string; text: string }[] = [];
   // 名前の欄の 〃 を先に解く：同じ親の下の同じ段の上の行の名前。上の行が無いものはまとめて 1 回聞く
@@ -395,7 +416,8 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       else dittoPending = true; // 答えを待つ（「上と同じ」でも上の行が無ければここ）：資産は未解決のまま置く（子の行の親が欠けないように）
     }
     const raw = dittoName && !literalDitto ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
-    const name = tagged ? tagged.name : raw;
+    const unitInName = splitUnitSuffix(raw);
+    const name = tagged ? tagged.name : unitInName ? unitInName.name : raw;
     const a: AssetRec = {
       id: idOf(r.r),
       file: lay.file,
@@ -418,12 +440,37 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       excluded: null,
       pending: r.level === null || tagUndecided || dittoPending,
     };
+    if (unitInName && !tagged) a.series = { kind: "number", n: unitInName.n };
     for (const c of cells) {
-      if (c.c === nameCol.c || off(c.ref)) continue;
+      if (nameCols.some((k) => k.c === c.c) || off(c.ref)) continue;
       const col = t.cols.find((k) => k.c === c.c);
       const key = col?.header || `列${c.c}`;
       if (!col || col.role === "unknown") {
         pend(c.ref);
+        continue;
+      }
+      if (col === unitCol && !isNone(c.text)) {
+        const u = parseUnit(c.text);
+        const s: Series | null | undefined = !u ? undefined : u.kind === "ditto" ? prevSeries : u.kind === "common" ? { kind: "common", meaning: "" } : { kind: "number", n: u.n };
+        if (s !== undefined) {
+          a.series = s;
+          prevSeries = s;
+          a.refs.push(c.ref);
+          continue;
+        }
+      }
+      if (col.role === "installed" && cue.isDitto(c.text) && prevInstalled !== null) {
+        // 設置年の 〃：上の行と同じ年
+        a.installed = { year: prevInstalled, ref: c.ref };
+        a.refs.push(c.ref);
+        continue;
+      }
+      // 機器番号の列：名前から番号を分けていなければ、その番号を機器の番号にする（分けていれば仕様として持つ）
+      if (col.role === "tag" && !a.tag) {
+        const tag = nfkc(c.text).trim();
+        a.tag = tag;
+        a.tagNumber = tagTrailingNumber(tag);
+        a.refs.push(c.ref);
         continue;
       }
       if (col.role === "installed") {
@@ -431,6 +478,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         if (y !== null) {
           a.installed = { year: y, ref: c.ref };
           a.refs.push(c.ref);
+          prevInstalled = y;
         } else yearUnknown.push({ ref: c.ref, text: c.text });
         continue;
       }
@@ -476,6 +524,13 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const unitCol = t.cols.find((c) => c.role === "unit");
   const marks = t.cols.filter((c) => c.role === "mark");
   const specCols = t.cols.filter((c) => c.role === "spec" || c.role === "remark" || c.role === "installed" || c.role === "number");
+  const tagCol = t.cols.find((c) => c.role === "tag");
+  // 行ごとの予定・実績（予定の段と実績の段に分けて書く書き方）
+  const paCol = t.cols.find((c) => c.role === "planActual");
+  const rowPA = (r: number) => {
+    const c = paCol ? lay.index.at(r, paCol.c) : null;
+    return c ? cue.planActual(c.text) : null;
+  };
   rec.levelNames.set(t.id, hier.map((h) => h.header));
   const years = marks.map((m) => m.fiscalYear ?? 0);
   if (years.length) rec.gridYears.set(t.id, { from: Math.min(...years), to: Math.max(...years) });
@@ -542,9 +597,23 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const rowNode = new Map<number, AssetRec | null>();
   const pathPrev: (string | null)[] = hier.map(() => null);
   const pathPrevRef: (string | null)[] = hier.map(() => null);
+  const leafCol = hier[hier.length - 1];
+  let prevLeaf: { r: number; node: AssetRec } | null = null;
   for (const r of data) {
     if (lay.index.rowCells(r.r).every((c) => off(c.ref))) {
       rowNode.set(r.r, null);
+      prevLeaf = null;
+      continue;
+    }
+    // 名前の無い続きの段：葉の名前の欄が空で（結合でもなく）、すぐ上の行が機器の行で、2 つの行の予定・実績が違う。
+    // 予定の段と実績の段に分けて書く書き方の 2 段目。上の行の機器の印として読む
+    const leafCell = leafCol ? lay.index.at(r.r, leafCol.c) : null;
+    const leafMerged = leafCol ? lay.index.merge(r.r, leafCol.c) : null;
+    const pa = rowPA(r.r);
+    if (paCol && leafCol && (!leafCell || leafCell.text === "") && !leafMerged && prevLeaf && pa !== null && rowPA(prevLeaf.r) !== null && rowPA(prevLeaf.r) !== pa) {
+      const pc = lay.index.at(r.r, paCol.c);
+      if (pc && !prevLeaf.node.refs.includes(pc.ref)) prevLeaf.node.refs.push(pc.ref);
+      rowNode.set(r.r, prevLeaf.node);
       continue;
     }
     let parent = null as AssetRec | null;
@@ -599,7 +668,10 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       const key = isLeaf ? `${parent?.id ?? ""}>${norm(text)}#${seriesKey(series ?? null)}#r${r.r}` : `${parent?.id ?? ""}>${norm(text)}@${ref}`;
       let n = nodeOf.get(key);
       if (!n) {
-        const raw = text.replace(/\s*\n\s*/g, " ").trim();
+        const whole = text.replace(/\s*\n\s*/g, " ").trim();
+        // 葉の名前の後ろの号（「ポンプ（1号機）」）：号の列が無いか空なら、名前から号を分ける
+        const sfx = isLeaf && (series === null || series === undefined) ? splitUnitSuffix(whole) : null;
+        const raw = sfx ? sfx.name : whole;
         n = {
           id: isLeaf ? `${t.id}:r${r.r}` : `${t.id}:h${col.hierLevel}:${ref}`,
           file: lay.file,
@@ -615,12 +687,12 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
           tag: null,
           tagNumber: null,
           nameRef: ref,
-          series: series ?? null,
+          series: sfx ? { kind: "number", n: sfx.n } : (series ?? null),
           specs: [],
           installed: null,
           refs: [ref],
           excluded: null,
-          pending: series === undefined,
+          pending: !sfx && series === undefined,
         };
         if (isLeaf && unitCol) {
           const uc = lay.index.at(r.r, unitCol.c);
@@ -647,9 +719,24 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
           node.refs.push(c.ref);
         }
       }
+      if (tagCol) {
+        const c = lay.index.at(r.r, tagCol.c);
+        if (c && c.text !== "" && !off(c.ref)) {
+          if (!node.tag) {
+            node.tag = nfkc(c.text).trim();
+            node.tagNumber = tagTrailingNumber(node.tag);
+          } else node.specs.push({ key: tagCol.header || `列${tagCol.c}`, value: c.text, ref: c.ref });
+          node.refs.push(c.ref);
+        }
+      }
+      if (paCol) {
+        const c = lay.index.at(r.r, paCol.c);
+        if (c && !off(c.ref) && !node.refs.includes(c.ref)) node.refs.push(c.ref);
+      }
       if (node.pending) for (const ref of node.refs) pend(ref);
     } else for (const c of lay.index.rowCells(r.r)) pend(c.ref);
     rowNode.set(r.r, node);
+    prevLeaf = node && node.level === (leafCol?.hierLevel ?? -1) ? { r: r.r, node } : null;
   }
   // 印
   const legend = t.legend;
@@ -676,7 +763,8 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         pending: !node || node.pending || t.yearKind === null,
       };
       const entry = legend.find((e) => nfkc(e.symbol) === sym);
-      const colPA = col.planOrActual ?? null;
+      // 行の予定・実績の欄があれば、それを列の見出しより先に使う（行の方が細かいため）
+      const colPA = rowPA(r.r) ?? col.planOrActual ?? null;
       let answer: string | null = "ok";
       if (!entry) {
         const noLegend = legend.length === 0;
@@ -757,8 +845,13 @@ function seriesKey(s: Series | null): string {
 function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts: RecordOptions, date1904: boolean, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off) {
   const col = (role: ColInfo["role"]) => t.cols.find((c) => c.role === role);
   const dateCol = col("date");
+  const endCol = col("end");
+  const tagCol = col("tag");
+  const blankDecision = (t as Table & { blankDecision?: Map<number, string | null> }).blankDecision ?? new Map<number, string | null>();
   const daysCol = col("days");
   const effortCol = col("effort");
+  // 見出しに書いた工数の単位（「工数(人日)」「延工数(h)」）
+  const effortUnit = effortCol ? cue.headerUnit(effortCol.header) : null;
   const assetCol = col("assetRef");
   const unitCol = col("unit");
   const workCol = col("workName");
@@ -777,14 +870,41 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const badDates = new Map<string, string[]>();
   const badDays = new Map<string, string[]>();
   const evs: (EventRec & { _hours: number | null; _persons: number | null; _bare: number | null })[] = [];
+  // 日付のセルを読む：〃 は上の行と同じ、年の無い日付はシートに書いた年度から、空欄は「上と同じ」の答えに従う
+  const prevDate = new Map<number, { start: Ymd; end: Ymd; range: boolean } | null>();
+  const readDate = (r: number, c: ColInfo | undefined): { period: { start: Ymd; end: Ymd; range: boolean } | null; cell: ReturnType<typeof lay.index.at>; bad: boolean; blank: boolean } => {
+    if (!c) return { period: null, cell: null, bad: false, blank: false };
+    const cell = lay.index.at(r, c.c);
+    if (!cell || cell.text === "") {
+      const d = blankDecision.get(c.c);
+      return { period: d === "same" ? (prevDate.get(c.c) ?? null) : null, cell: null, bad: false, blank: true };
+    }
+    let p: { start: Ymd; end: Ymd; range: boolean } | null = null;
+    if (cue.isDitto(cell.text)) p = prevDate.get(c.c) ?? null;
+    else {
+      p = cellPeriod(cell, date1904);
+      if (!p && lay.contextFiscalYear !== null && typeof cell.value === "string") {
+        const md = parseMonthDay(cell.value);
+        const ymd = md ? withFiscalYear(md, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
+        if (ymd) p = { start: ymd, end: ymd, range: false };
+      }
+    }
+    if (p) prevDate.set(c.c, p);
+    return { period: p, cell, bad: !p, blank: false };
+  };
   for (const r of data) {
     const cells = lay.index.rowCells(r.r).filter((c) => !off(c.ref));
     if (!cells.length) continue;
     const refs = cells.map((c) => c.ref);
-    const dc = dateCol ? lay.index.at(r.r, dateCol.c) : null;
-    const period = dc ? cellPeriod(dc, date1904) : null;
+    const sd = readDate(r.r, dateCol);
+    const ed = readDate(r.r, endCol);
+    const dc = sd.cell;
+    // 始まりと終わりを別の列に書く書き方は、2 つの日付で期間にする
+    const period = sd.period && ed.period ? { start: sd.period.start, end: ed.period.end, range: true } : sd.period;
     const date = period?.start ?? null;
-    if (dc && !date) badDates.set(shapeOf(dc.text), [...(badDates.get(shapeOf(dc.text)) ?? []), dc.ref]);
+    if (dc && sd.bad) badDates.set(shapeOf(dc.text), [...(badDates.get(shapeOf(dc.text)) ?? []), dc.ref]);
+    if (ed.cell && ed.bad) badDates.set(shapeOf(ed.cell.text), [...(badDates.get(shapeOf(ed.cell.text)) ?? []), ed.cell.ref]);
+    if ((sd.blank && blankDecision.get(dateCol?.c ?? -1) === undefined) || (ed.blank && endCol && blankDecision.get(endCol.c) === undefined)) for (const ref of refs) pend(ref);
     const yc = daysCol ? lay.index.at(r.r, daysCol.c) : null;
     const days = yc && !off(yc.ref) ? parseDayCount(typeof yc.value === "number" ? yc.value : yc.text) : null;
     if (yc && !off(yc.ref) && days === null) badDays.set(shapeOf(yc.text), [...(badDays.get(shapeOf(yc.text)) ?? []), yc.ref]);
@@ -793,8 +913,10 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     let hours: number | null = null;
     let persons: number | null = null;
     let bare: number | null = null;
-    if (ec) {
-      const e = parseEffort(typeof ec.value === "number" ? ec.value : ec.text);
+    if (ec && !off(ec.ref)) {
+      const raw = parseEffort(typeof ec.value === "number" ? ec.value : nfkc(ec.text).replace(/,/g, ""));
+      // 数だけの工数は、見出しの単位で読む
+      const e = raw && raw.unit === "bare" && effortUnit ? { ...raw, unit: effortUnit } : raw;
       if (!e) badEffort.set(shapeOf(ec.text), [...(badEffort.get(shapeOf(ec.text)) ?? []), ec.ref]);
       else if (e.unit === "manDays") manDays = e.amount;
       else if (e.unit === "hours") {
@@ -809,8 +931,10 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       }
     }
     const uc = unitCol ? lay.index.at(r.r, unitCol.c) : null;
-    const unit = uc ? parseUnit(uc.text) : null;
-    if (uc && uc.text !== "" && !unit) unitBadEv.set(nfkc(uc.text).trim(), [...(unitBadEv.get(nfkc(uc.text).trim()) ?? []), { row: r.r, ref: uc.ref }]);
+    // 号・系列の見出しの列（「炉」「号炉」）の数だけの書き方は、その数の号
+    const bareNo = uc && unitCol?.cue === "series" ? /^\d{1,3}$/.exec(nfkc(uc.text).trim()) : null;
+    const unit: UnitValue | null = uc && !isNone(uc.text) ? (parseUnit(uc.text) ?? (bareNo ? { kind: "number", n: Number(bareNo[0]), spelling: "{n}" } : null)) : null;
+    if (uc && uc.text !== "" && !isNone(uc.text) && !unit) unitBadEv.set(nfkc(uc.text).trim(), [...(unitBadEv.get(nfkc(uc.text).trim()) ?? []), { row: r.r, ref: uc.ref }]);
     if (unit?.kind === "number") spellings.set(unit.spelling, [...(spellings.get(unit.spelling) ?? []), uc?.ref ?? ""]);
     const assetText = text(r.r, assetCol);
     const stripped = cue.stripSet(assetText);
@@ -830,8 +954,12 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       manDays,
       effortPending: false,
       assetNames: stripped.text ? [stripped.text] : [],
+      tag: (() => {
+        const tc = tagCol ? lay.index.at(r.r, tagCol.c) : null;
+        return tc && tc.text !== "" && !cue.isDitto(tc.text) ? nfkc(tc.text).trim() : null;
+      })(),
       bundle: stripped.set,
-      unit: uc && uc.text !== "" ? unit : null,
+      unit: uc && uc.text !== "" && !isNone(uc.text) ? unit : null,
       workName,
       workTitle: titleCol && workCol ? text(r.r, titleCol) || null : null,
       remark: remarkCols.map((c) => text(r.r, c)).filter(Boolean).join(" / ") || null,

@@ -130,6 +130,8 @@ function checkTotals(
           continue;
         }
         counted = evs.reduce((a, e) => a + (e.manDays ?? 0), 0);
+        // 時間で書いた列の合計は、人・日に直す前の数（その列の数の和）とも照らす
+        alt = data.reduce((a, r) => a + (numberOf(lay.index.at(r.r, c.c)?.value) ?? 0), 0);
       } else if (t.shape === "events" && col?.role === "days") {
         const evs = data.map((r) => eventOf(r.r)).filter((e): e is EventRec => !!e && !e.excluded);
         counted = evs.reduce((a, e) => a + (e.days ?? 0), 0);

@@ -97,6 +97,40 @@ export function parseDateText(text: string): Ymd | null {
   return null;
 }
 
+/**
+ * 年の無い日付：「4/6」「4/6(月)」「4月6日」「4月6日（月）」。曜日の括弧は読まない（年が決まらないので曜日では確かめない）。
+ * 年は、呼ぶ側が表の外（題や頭書き）に書いてある年度から決める。読めなければ null。
+ */
+export function parseMonthDay(text: string): { m: number; d: number } | null {
+  const s = nfkc(text).replace(/\s+/g, "").replace(/[(（][^()（）]{1,3}[)）]$/u, "");
+  const m = /^(\d{1,2})[/.](\d{1,2})$/.exec(s) ?? /^(\d{1,2})月(\d{1,2})日$/.exec(s);
+  if (!m) return null;
+  const mo = Number(m[1]);
+  const d = Number(m[2]);
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? { m: mo, d } : null;
+}
+
+/** 年の無い日付に年度から年を付ける（年度の始まりの月より前の月は、次の年） */
+export function withFiscalYear(md: { m: number; d: number }, fiscalYear: number, startMonth: number): Ymd | null {
+  const y = md.m >= startMonth ? fiscalYear : fiscalYear + 1;
+  return validYmd(y, md.m, md.d) ? { y, m: md.m, d: md.d } : null;
+}
+
+/**
+ * 文の中の年度の書き方（「2026年度」「令和8年度」「R8年度」）をすべて読み、1 つの年度にそろっていればその年度。
+ * 無い・2 つ以上の年度があるときは null（題に「令和4年度～令和7年度」とあれば、年の無い日付の年は決めない）。
+ */
+export function fiscalYearInText(texts: readonly string[]): number | null {
+  const found = new Set<number>();
+  const re = new RegExp(`(?:(\\d{4})|${ERA_TOKEN}(\\d{1,2}|元))年度`, "gu");
+  for (const t of texts)
+    for (const m of nfkc(t).replace(/\s+/g, "").matchAll(re)) {
+      const y = m[1] ? Number(m[1]) : eraYear(m[2] ?? "", m[3] ?? "");
+      if (y !== null && y >= 1868 && y <= 2200) found.add(y);
+    }
+  return found.size === 1 ? ([...found][0] ?? null) : null;
+}
+
 /** 期間の区切りの書き方（〜・～）。日付の「/」「.」と同じ、日付の書き方の一般の性質 */
 const RANGE_SEP = /\s*[〜~]\s*/u;
 

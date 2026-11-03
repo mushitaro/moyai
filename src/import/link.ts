@@ -365,7 +365,7 @@ export function link(rec: Records, ask: Asker): Linked {
       continue;
     }
     const whole = e.assetNames[0] ?? "";
-    if (!whole) {
+    if (!whole && !e.tag) {
       eventPending.add(e.id);
       continue;
     }
@@ -373,14 +373,21 @@ export function link(rec: Records, ask: Asker): Linked {
     // 引けないときは、全体が 1 つの機器の名前なら分けない（名前に「・」を含む機器）
     let names = [whole];
     const known = (nm: string) => byName.has(nameKey(nm)) || !!tagged(nm);
+    // 「まとまりの名前（A・B・C）」：括弧の中に並べた名前を、まとめた機器の名前として読む（括弧の前はまとまりの名前）
+    const inParen = /^(.*?)[(（]([^()（）]+)[)）]\s*$/u.exec(nfkc(whole));
+    const listed = inParen && cue.listSeparators.some((sep) => (inParen[2] ?? "").includes(sep)) && !known(whole) ? (inParen[2] ?? "") : whole;
     for (const sep of cue.listSeparators) {
-      const parts = nfkc(whole).split(sep).map((x) => x.trim()).filter(Boolean);
+      const parts = nfkc(listed).split(sep).map((x) => x.trim()).filter(Boolean);
       if (parts.length < 2) continue;
-      if (parts.every(known) || !known(whole)) {
+      // 分けたどれもが機器なら分ける。全体が機器でなく、分けたうちの 1 つでも機器なら分ける。どれも機器でなければ、
+      // 名前に「・」を含む 1 つの機器かもしれないので分けない（括弧の中の並びは、まとめた機器なので分ける）
+      if (parts.every(known) || (!known(listed) && (parts.some(known) || listed !== whole))) {
         names = parts;
         break;
       }
     }
+    // 機器番号の列に、どれかの機器の番号を書いた行：「名前（番号）」と同じに番号で引く（番号は同一性の鍵）
+    if (names.length === 1 && e.tag && byTag.has(nameKey(e.tag)) && !tagged(whole)) names = [`${whole}（${e.tag}）`];
     const unitKey = !e.unit ? "-" : e.unit.kind === "number" ? `n${e.unit.n}` : e.unit.kind === "common" ? "common" : "ditto";
     eventNames.set(e.id, { names, unitKey });
     for (const nm of names) {
@@ -424,16 +431,28 @@ export function link(rec: Records, ask: Asker): Linked {
     if (pattern === "ambiguous") {
       for (const cs of css) {
         const key = `eventAssetOne|${cs.key}`;
+        // 名前で当たる機器が無いときは、同じ号の機器と、号の無い・共通の機器を選択肢に出す（推し量らない。決めるのは人）
+        const none = cs.cands.length === 0;
+        const unitN = cs.unitKey.startsWith("n") ? Number(cs.unitKey.slice(1)) : null;
+        const choices = none
+          ? clusters.filter((c) => !c.excluded && !c.pending && c.recs.some((r) => r.level > 0) && (unitN === null || numberOf(c) === unitN || numberOf(c) === null)).slice(0, 40)
+          : cs.cands;
+        const ev0 = cs.events[0];
         const a = ask.ask(key, {
           kind: "eventAssetOne",
-          text: `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}）に当たる機器が ${cs.cands.length === 0 ? "無い" : `${cs.cands.length} つある`}（${cs.events.length} 行）。どの機器か`,
-          options: [...cs.cands.map((c, i) => ({ id: `c${i}`, label: `${c.name}${c.tag ? `（${c.tag}）` : ""}${seriesLabel(c.series)}` })), { id: "exclude", label: "外す" }],
+          text: none
+            ? `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}）に、名前の同じ機器が無い（${cs.events.length} 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）`
+            : `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}）に当たる機器が ${cs.cands.length} つある（${cs.events.length} 行）。どの機器か`,
+          options: [...choices.map((c, i) => ({ id: `c${i}`, label: `${c.name}${c.tag ? `（${c.tag}）` : ""}${seriesLabel(c.series)}` })), { id: "exclude", label: "外す" }],
           valueKind: "option",
           defaultAnswer: null,
           sameShapeRows: cs.events.length,
-          items: cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1) })),
+          // 選択肢ごとに、その行と、候補の機器の出どころ（items の i 番目が選択肢 c{i}）。候補が無ければ行だけ
+          items: choices.length
+            ? choices.map((c) => ({ file: ev0?.file ?? "", sheet: ev0?.sheet ?? null, cells: ev0?.refs.slice(0, 1) ?? [], target: c.recs.slice(0, 3).map((r) => ({ file: r.file, sheet: r.sheet, cells: [r.nameRef] })), note: cs.name }))
+            : cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), note: cs.name })),
         });
-        const pick = a?.startsWith("c") ? (cs.cands[Number(a.slice(1))] ?? null) : null;
+        const pick = a?.startsWith("c") ? (choices[Number(a.slice(1))] ?? null) : null;
         resolved.set(cs.key, { c: pick, qid: a ? questionIdOf(key) : null, excluded: a === "exclude" });
       }
       continue;
