@@ -79,15 +79,17 @@ function checkTotals(lay: SheetLayout, t: Table, ask: Asker, exclude: (ref: stri
   const allData = t.rows.filter(isData);
   const sums = t.rows.filter((r) => r.role === "subtotal" || r.role === "total");
   const subs = t.rows.filter((r) => r.role === "subtotal").map((r) => r.r);
+  // 小計を区切りの上に置く表か下に置く表か：最初の小計より前にデータの行が無ければ、上に置く表
+  const above = subs.length > 0 && !allData.some((r) => r.r < (subs[0] ?? 0));
   for (const row of sums) {
     let data = allData;
     if (row.role === "subtotal") {
-      const prev = Math.max(t.top - 1, ...subs.filter((x) => x < row.r));
-      const before = allData.filter((r) => r.r > prev && r.r < row.r);
-      if (before.length) data = before;
-      else {
+      if (above) {
         const next = Math.min(t.bottom + 1, ...subs.filter((x) => x > row.r));
         data = allData.filter((r) => r.r > row.r && r.r < next);
+      } else {
+        const prev = Math.max(t.top - 1, ...subs.filter((x) => x < row.r));
+        data = allData.filter((r) => r.r > prev && r.r < row.r);
       }
     }
     const cells = lay.index.rowCells(row.r);
@@ -492,7 +494,7 @@ function levelNames(rec: Records, assets: AssetNodeT[]): string[] {
  * 行は「未解決のセルがある」「計画に入った」「すべて外した」の順に 1 つへ数える。
  * 計画に入った行がすべて外した行でもある・どこにも入らない行がある・データのセルが計画に無い、のどれかなら合わない。
  */
-function countRows(sources: SourceFile[], layouts: SheetLayout[], status: Map<string, CellStatus>, plan: { assets: { sources: { file: string; sheet: string | null; cell: string | null }[] }[]; details: { sources: { file: string; sheet: string | null; cell: string | null }[] }[] }): FileCounts[] {
+export function countRows(sources: SourceFile[], layouts: SheetLayout[], status: Map<string, CellStatus>, plan: { assets: { sources: { file: string; sheet: string | null; cell: string | null }[] }[]; details: { sources: { file: string; sheet: string | null; cell: string | null }[] }[] }): FileCounts[] {
   const SEP = "\u0000";
   const rowsInPlan = new Set<string>();
   const cellsInPlan = new Set<string>();
@@ -520,10 +522,11 @@ function countRows(sources: SourceFile[], layouts: SheetLayout[], status: Map<st
           const c = cells[i];
           if (!s || s.s === "unresolved") fc.unresolvedCells++;
           else if (s.s === "excluded") fc.excludedCells[s.reason] = (fc.excludedCells[s.reason] ?? 0) + 1;
-          else {
-            fc.dataCells++;
-            if (!c || !cellsInPlan.has([lay.file, lay.sheet ?? "", c.ref].join(SEP))) dataNotInPlan++;
-          }
+          else if (!c || !cellsInPlan.has([lay.file, lay.sheet ?? "", c.ref].join(SEP))) {
+            // データの行き先なのに計画の出どころに無いセルは、データに数えず未解決に数える
+            dataNotInPlan++;
+            fc.unresolvedCells++;
+          } else fc.dataCells++;
         }
         const inPlan = rowsInPlan.has([lay.file, lay.sheet ?? "", String(r)].join(SEP));
         const allExcluded = st.length > 0 && st.every((s) => s?.s === "excluded");

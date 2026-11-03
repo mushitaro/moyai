@@ -300,7 +300,23 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const tagUndecided = ts?.state === "undecided";
     // 〃：上の行と同じ名前（名前だけ同じの別の行）
     const dittoName = cue.isDitto(nc.text);
-    const prevName = rec.assets.filter((x) => x.tableId === t.id).at(-1)?.rawName ?? null;
+    const parentId = r.parentRow ? idOf(r.parentRow) : null;
+    const prevName = r.level === null ? null : (rec.assets.filter((x) => x.tableId === t.id && x.level === r.level && x.parentId === parentId).at(-1)?.rawName ?? null);
+    if (dittoName && prevName === null) {
+      const a = ask.ask(`dittoNoAbove|${t.id}`, {
+        kind: "stray",
+        text: "名前の欄の「〃」の上に、同じ親の下の同じ段の行が無い",
+        options: [{ id: "exclude", label: "外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: 1,
+        items: [itemOf(lay, [nc.ref])],
+      });
+      if (a === "exclude") {
+        for (const c of cells) if (!off(c.ref)) exclude(c.ref, "上の行の無い 〃（決定で外した）");
+        continue;
+      }
+    }
     const raw = dittoName ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
     const name = tagged ? tagged.name : raw;
     const a: AssetRec = {
@@ -493,12 +509,14 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         if (i === hier.length - 1) break;
         continue;
       }
+      // 上の段の節が変わったときだけ、下の段の「上の行」を忘れる（結合の中の行では同じ節のまま）
+      if (pathPrev[i] !== text || pathPrevRef[i] !== ref)
+        for (let k = i + 1; k < hier.length; k++) {
+          pathPrev[k] = null;
+          pathPrevRef[k] = null;
+        }
       pathPrev[i] = text;
       pathPrevRef[i] = ref;
-      for (let k = i + 1; k < hier.length; k++) {
-        pathPrev[k] = null;
-        pathPrevRef[k] = null;
-      }
       const isLeaf = i === hier.length - 1;
       const series = isLeaf ? (unitCol ? unitOf.get(r.r) : null) : null;
       const key = isLeaf ? `${parent?.id ?? ""}>${norm(text)}#${seriesKey(series ?? null)}#r${r.r}` : `${parent?.id ?? ""}>${norm(text)}@${ref}`;
@@ -538,7 +556,12 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       parent = n;
       node = n;
     }
-    if (undecided && node) node.pending = true;
+    if (undecided) {
+      // この行の段が決まらない（空欄の上と同じ・〃 の答え待ち）。上の段の節は決まっているので、この行だけを未解決にする
+      for (const c of lay.index.rowCells(r.r)) if (!off(c.ref)) pend(c.ref);
+      rowNode.set(r.r, null);
+      continue;
+    }
     if (node) {
       for (const sc of specCols) {
         const c = lay.index.at(r.r, sc.c);

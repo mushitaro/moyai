@@ -147,8 +147,8 @@ export function detectDelimiter(text: string, ext: string): { delimiter: CsvDeli
   const second = scores[1];
   const name = (d: string) => (d === "\t" ? "タブ" : d);
   const detail = scores.map((s) => `${name(s.d)}：${s.lines} 行が ${s.mode} 個`).join("、") || "区切りが見つからない";
-  // どの行にも区切りの候補が無ければ 1 列の表。区切りは読み方に効かない
-  if (!top) return { delimiter: ",", candidates: [","], detail: "区切りの候補がどの行にも無い（1 列）" };
+  // どの行にも区切りの候補が無い：1 列の表か、候補に無い書き方（固定の幅など）。決めずに聞く
+  if (!top) return { delimiter: null, candidates: [], detail: "区切りの候補（,・タブ・;・|）がどの行にも無い" };
   // 拡張子が .tsv でタブが候補に入っていれば、タブを先にする（拡張子と中身が合うとき）
   if (ext === "tsv") {
     const tab = scores.find((s) => s.d === "\t");

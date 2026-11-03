@@ -192,8 +192,15 @@ describe("CSV・TSV の読み手", () => {
     expect(an.rejected.map((r) => r.file)).toEqual(["bad.csv"]);
     expect(an.composition.blockers.join("")).not.toContain("読めなかった資料");
   });
-  test("区切りの無い 1 列の CSV は、そのまま 1 列として読む", () => {
-    const r = readCsv("one.csv", enc.encode("名称\n機器甲\n機器乙\n"));
-    expect(r.source?.sheets[0]?.cells.map((c) => c.text)).toEqual(["名称", "機器甲", "機器乙"]);
+  test("区切りの候補がどの行にも無い CSV は、決めずに聞く（既定は 1 列の表）", async () => {
+    const bytes = enc.encode("名称\n機器甲\n機器乙\n");
+    expect(readCsv("one.csv", bytes).source).toBeNull();
+    const s = session();
+    await s.add([{ name: "one.csv", bytes }]);
+    const q = s.analyze().open.find((x) => x.kind === "delimiter");
+    expect(q?.defaultAnswer).toBe("single");
+    s.settle([human(q?.questionId ?? "", "single")]);
+    const g = s.analyze().sources[0]?.sheets[0];
+    expect(g?.cells.map((c) => c.text)).toEqual(["名称", "機器甲", "機器乙"]);
   });
 });

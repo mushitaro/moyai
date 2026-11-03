@@ -4,7 +4,7 @@
 import type { Plan } from "../shared/plan";
 import { readCsv, ENCODING_LABEL, type CsvDelimiter, type CsvEncoding } from "./csv";
 import type { RejectedFile, SourceFile } from "./grid";
-import { extensionOf, readSource, type InputFile } from "./read";
+import { extensionOf, READABLE, readSource, type InputFile } from "./read";
 import { layoutFile, type SheetLayout } from "./structure";
 import { buildRecords, type Records } from "./records";
 import { link, type Linked } from "./link";
@@ -62,7 +62,7 @@ export class IntakeSession {
         continue;
       }
       const ext = extensionOf(f.name);
-      if (ext === "csv" || ext === "tsv" || ext === "txt") {
+      if ((READABLE as Record<string, string>)[ext] === "csv") {
         this.files.push(f);
         continue;
       }
@@ -131,17 +131,19 @@ export class IntakeSession {
         why = amb.detail;
         const reject = { id: "reject", label: "この資料を外す（読めないため）" };
         const what = amb.what === "encoding" ? "文字コード" : "区切り";
-        const a = ask.ask(`${amb.what}|${f.name}|${pass}`, {
+        const single = amb.what === "delimiter" && amb.candidates.length === 0 ? [{ id: "single", label: "区切りの無い 1 列の表として読む" }] : [];
+        const a = ask.ask(`${amb.what}|${f.name}`, {
           kind: amb.what,
           text: `${f.name} の${what}が決まらない（${amb.detail}）`,
           options: [
             ...amb.candidates.map((c) =>
               amb.what === "encoding" ? { id: c, label: ENCODING_LABEL[c as CsvEncoding] ?? c } : { id: c === "\t" ? "tab" : c, label: c === "\t" ? "タブ" : `「${c}」` },
             ),
+            ...single,
             reject,
           ],
           valueKind: "option",
-          defaultAnswer: amb.what === "delimiter" && amb.candidates[0] ? (amb.candidates[0] === "\t" ? "tab" : amb.candidates[0]) : null,
+          defaultAnswer: amb.what === "delimiter" ? (amb.candidates[0] ? (amb.candidates[0] === "\t" ? "tab" : amb.candidates[0]) : "single") : null,
           sameShapeRows: 1,
           items: [{ file: f.name, sheet: null, cells: [] }],
         });
@@ -152,7 +154,7 @@ export class IntakeSession {
           break;
         }
         if (amb.what === "encoding") encoding = a as CsvEncoding;
-        else delimiter = (a === "tab" ? "\t" : a) as CsvDelimiter;
+        else delimiter = (a === "tab" ? "\t" : a === "single" ? "," : a) as CsvDelimiter;
       }
       if (!done) unreadable.push(`${f.name}（${why || "読めない"}）`);
     }

@@ -2,6 +2,7 @@
 // 備考の文の中の数を値にしない、日付に見えない書き方を日付と決めつけない、検算、止める決まり、取り消し、AI に渡す形。
 import { describe, expect, test } from "vitest";
 import { TOOLS } from "../../../src/shared/tools";
+import { countRows, type CellStatus } from "../../../src/import/compose";
 import { acceptDefaults, human, rows, session, xlsxOf } from "./helpers";
 
 describe("層 2 構造", () => {
@@ -129,6 +130,15 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
         ["小計", 4],
         ["合計", 9],
       ]);
+      // 小計を区切りの上に置く表
+      rows(ws, 10, [["名称", "台数"]]);
+      rows(ws, 11, [
+        ["小計", 5],
+        ["機器D", 2],
+        ["機器E", 3],
+        ["小計", 4],
+        ["機器F", 4],
+      ]);
     });
     const s = session();
     await s.add([{ name: "台帳.xlsx", bytes }]);
@@ -138,8 +148,10 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
       ["subtotal", 0],
       ["subtotal", 0],
       ["total", 0],
+      ["subtotal", 0],
+      ["subtotal", 0],
     ]);
-    expect(c.plan?.assets.map((a) => a.name)).toEqual(["機器A", "機器B", "機器C"]);
+    expect(c.plan?.assets.map((a) => a.name)).toEqual(["機器A", "機器B", "機器C", "機器D", "機器E", "機器F"]);
   });
 
   test("段の列の 〃 は上と同じ節にし、〃 のセルも出どころに数える", async () => {
@@ -160,6 +172,77 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
     expect(group[0]?.sources.map((x) => x.cell)).toEqual(["A2", "A3"]);
     expect(plan?.assets.find((a) => a.name === "機器B")?.parentKey).toBe(group[0]?.nodeKey);
     expect(plan?.assets.some((a) => a.name === "〃")).toBe(false);
+  });
+
+  test("葉の列の 〃 は、名前だけ同じの別の行（上の機器とまとめない）", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["設備", "機器", "号機", "2024年度"]]);
+      rows(ws, 2, [
+        ["甲設備", "機器A", "1号機", "●"],
+        [null, "〃", "2号機", "●"],
+      ]);
+      ws.mergeCells("A2:A3");
+      rows(ws, 5, [["凡例"], [null, "●", "実績"]]);
+    });
+    const s = session();
+    await s.add([{ name: "表.xlsx", bytes }]);
+    acceptDefaults(s);
+    const plan = s.compose().plan;
+    const leaves = plan?.assets.filter((a) => a.name === "機器A") ?? [];
+    expect(leaves.map((a) => a.series).sort()).toEqual(["1", "2"]);
+    expect(leaves.some((a) => a.sources.some((x) => x.cell === "B3"))).toBe(true);
+    expect(plan?.details.length).toBe(2);
+  });
+
+  test("字下げの木の 〃 は、同じ親の下の同じ段の上の行と同じ名前。親の名前は写さない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["名称", "仕様"]]);
+      rows(ws, 2, [
+        ["甲設備", null],
+        ["電動機", "10 kW"],
+        ["〃", "15 kW"],
+        ["乙設備", null],
+        ["〃", "20 kW"],
+      ]);
+      for (const r of [3, 4, 6]) ws.getCell(`A${r}`).alignment = { indent: 1 };
+    });
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    const an = s.analyze();
+    // 乙設備のすぐ下の 〃 は、同じ親の下に上の行が無いので未解決のまま聞く
+    const q = an.open.find((x) => x.text.includes("〃"));
+    expect(q).toBeDefined();
+    expect(s.compose().plan).toBeNull();
+    s.settle([human(q?.questionId ?? "", "exclude")]);
+    acceptDefaults(s);
+    const plan = s.compose().plan;
+    const motors = plan?.assets.filter((a) => a.name === "電動機") ?? [];
+    expect(motors.map((m) => m.specs[0]?.value)).toEqual(["10 kW", "15 kW"]);
+    expect(plan?.assets.filter((a) => a.name === "乙設備").length).toBe(1);
+    expect(plan?.assets.some((a) => a.name === "乙設備" && a.level === 2)).toBe(false);
+  });
+});
+
+describe("層 4：行の数え直しが合わないときは計画を出さない", () => {
+  test("計画の出どころに無いデータのセル・計画に入ったのに外した行を見つける", () => {
+    const cell = (r: number, text: string) => ({ r, c: 1, ref: `A${r}`, value: text, text, type: "string" as const, numFmt: "General", formula: null, formulaNoCache: false, error: null, bold: false, indent: 0, leadingSpaces: 0, note: null });
+    const grid = { name: "表", index: 0, state: "visible" as const, cells: [cell(1, "甲"), cell(2, "乙")], merges: [], rows: {}, cols: {}, maxRow: 2, maxCol: 1 };
+    const src = { file: "x.xlsx", format: "xlsx" as const, sheets: [grid], ledger: [], date1904: false };
+    const lay = { file: "x.xlsx", sheet: "表", sheetIndex: 0, grid } as unknown as Parameters<typeof countRows>[1][number];
+    const k = (ref: string) => ["x.xlsx", "0", ref].join(String.fromCharCode(0));
+    const plan = { assets: [{ sources: [{ file: "x.xlsx", sheet: "表", cell: "A1" }] }], details: [] };
+    const data: CellStatus = { s: "data" };
+    const ex: CellStatus = { s: "excluded", reason: "題" };
+    // A2 はデータの行き先なのに計画に無い：未解決に数え、合わない
+    const bad = countRows([src], [lay], new Map<string, CellStatus>([[k("A1"), data], [k("A2"), data]]), plan);
+    expect(bad[0]?.holds).toBe(false);
+    expect(bad[0]?.unresolvedCells).toBe(1);
+    // A2 を外せば合う
+    const ok = countRows([src], [lay], new Map<string, CellStatus>([[k("A1"), data], [k("A2"), ex]]), plan);
+    expect(ok[0]).toMatchObject({ holds: true, inputRows: 2, importedRows: 1, excludedRows: { 題: 1 } });
+    // 計画に入ったのに、行のすべてのセルが外した
+    const both = countRows([src], [lay], new Map<string, CellStatus>([[k("A1"), ex], [k("A2"), ex]]), plan);
+    expect(both[0]?.holds).toBe(false);
   });
 });
 

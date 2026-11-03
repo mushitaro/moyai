@@ -15,7 +15,10 @@ export interface ReadOutcome {
   ambiguity: CsvAmbiguity[];
 }
 
-const RESAVE = "この形式は読めません。保存し直してください（今読める形式：.xlsx・.xlsm・.csv・.tsv）";
+/** 読み手のある拡張子（ここだけに置き、案内の文もここから作る） */
+export const READABLE = { xlsx: "excel", xlsm: "excel", csv: "csv", tsv: "csv", txt: "csv" } as const;
+const listed = Object.keys(READABLE).filter((e) => e !== "txt").map((e) => `.${e}`).join("・");
+const RESAVE = `この形式は読めません。保存し直してください（今読める形式：${listed}）`;
 
 export function extensionOf(name: string): string {
   return (/\.([a-z0-9]+)$/i.exec(name)?.[1] ?? "").toLowerCase();
@@ -24,16 +27,17 @@ export function extensionOf(name: string): string {
 export async function readSource(f: InputFile, csvOptions: CsvReadOptions = {}): Promise<ReadOutcome> {
   const ext = extensionOf(f.name);
   if (ext === "xls" || ext === "doc") return { source: null, rejected: { file: f.name, reason: RESAVE }, ambiguity: [] };
-  if (ext === "xlsx" || ext === "xlsm") {
+  const kind = (READABLE as Record<string, "excel" | "csv">)[ext];
+  if (kind === "excel") {
     try {
-      return { source: await readXlsx(f.name, f.bytes, ext), rejected: null, ambiguity: [] };
+      return { source: await readXlsx(f.name, f.bytes, ext === "xlsm" ? "xlsm" : "xlsx"), rejected: null, ambiguity: [] };
     } catch (e) {
       return { source: null, rejected: { file: f.name, reason: `読めませんでした：${e instanceof Error ? e.message : String(e)}` }, ambiguity: [] };
     }
   }
-  if (ext === "csv" || ext === "tsv" || ext === "txt") {
+  if (kind === "csv") {
     const r = readCsv(f.name, f.bytes, csvOptions);
     return { source: r.source, rejected: null, ambiguity: r.ambiguity };
   }
-  return { source: null, rejected: { file: f.name, reason: `.${ext || "（拡張子なし）"} はこの取り込みの読み手がありません（Excel は .xlsx・.xlsm、表は .csv・.tsv）` }, ambiguity: [] };
+  return { source: null, rejected: { file: f.name, reason: `.${ext || "（拡張子なし）"} はこの取り込みの読み手がありません（今読める形式：${listed}）` }, ambiguity: [] };
 }
