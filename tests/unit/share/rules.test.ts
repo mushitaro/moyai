@@ -9,8 +9,9 @@ import { makeMember, makeRing, makeRingWith, sendInput, smallPlan, table, vocab 
 describe("share.rules", () => {
   const base = baseRules(vocab.pack, vocab.hash, table.hash);
 
-  it("コードの決まりそのものは通る", () => {
+  it("コードの決まりそのものは通る（欄は間隔・工数・日数。経過年は無い）", () => {
     expect(checkRules(base)).toEqual([]);
+    expect(base.fields).toEqual(["interval", "manDays", "days"]);
     const ring = makeRing();
     expect(isClean(recount(ring.circleText, ring.ctx))).toBe(true);
   });
@@ -40,6 +41,19 @@ describe("share.rules", () => {
     expect(isClean(r)).toBe(false);
   });
 
+  it("経過年の欄を許す circle.json は拒む（どこにも出さない欄。知らない欄とは分けて理由を出す）", () => {
+    const old = makeRing({ fields: [...base.fields, "ageAtWork"] as unknown as Rules["fields"] });
+    expect(checkRules(old.rules)).toEqual(["fieldRemoved"]);
+    // 文脈の決まりそのものが形の外れ：数えずに、理由を分けて出す
+    expect(recount(old.circleText, old.ctx).reasons).toEqual(["shape.contextRules.malformed", "shape.contextRules.fieldRemoved"]);
+    // コードの決まりの文脈で数え直すと（受け手の readRing と同じ）、決まりの欄の外れが出る
+    const r = recount(old.circleText, { ...old.ctx, rules: base });
+    expect(r.reasons).toEqual(expect.arrayContaining(["shape.type", "shape.rules.fieldRemoved"]));
+    expect(isClean(r)).toBe(false);
+    // 送る側：人が受け入れたハッシュと同じでも、送らない
+    expect(rulesGate(old.rules, old.ctx.rulesHash, old.ctx.rulesHash, old.rules)).toEqual({ ok: false, reason: "loosened", violations: ["fieldRemoved"] });
+  });
+
   it("帯を細かくする（コードに無い境目を足す）circle.json は拒む。粗くするのは通る", () => {
     const finer = makeRing({ bands: { ...base.bands, interval: [1, 2, 3, 4, 5, 6, 7, 8, 11, 16, 31] } });
     expect(checkRules(finer.rules)).toEqual(["bandsFiner"]);
@@ -54,7 +68,8 @@ describe("share.rules", () => {
 
   it("差を数える（緩くなった n、厳しくなった m）", () => {
     const strict: Rules = { ...base, minK: 7, fields: ["interval", "days"] };
-    expect(diffRules(base, strict)).toEqual({ loosened: 0, tightened: 3, changed: 0 });
+    // 下限を上げた 1 と、外した欄（工数）1
+    expect(diffRules(base, strict)).toEqual({ loosened: 0, tightened: 2, changed: 0 });
     expect(diffRules(strict, { ...strict, minK: 6 })).toEqual({ loosened: 1, tightened: 0, changed: 0 });
     expect(diffRules(base, { ...base, national: "f".repeat(64) })).toEqual({ loosened: 0, tightened: 0, changed: 1 });
   });

@@ -1,8 +1,10 @@
 // 数え直し：送る側と受ける側が同じ関数で、ファイル全体（束・仲間のファイル・決まりのファイル）のすべての文字列を数える。
 // 引数は、ファイルと文脈（全国の表・公開語彙・決まり・行き先）だけで、緩める切り替えを持たない。下限はコードの定数。
 // 数えるもの：形の外れ・自由記述（公開語彙に無い文字列、ASCII 以外を含む文字列）・金額の形・正確な日付（年月日・和暦）・k・署名と鎖。
+// どこにも出さない欄（経過年）がある束と決まり、前の帯の版の束は、型でも外れるが、輪でも台帳でも理由を分けて出す。
 // 固有名詞は、送る側だけの別の関数（countProperNouns）が数える。値そのものはログに出さない。
 import { WORK_ATTRIBUTES } from "../shared/plan";
+import { BANDS_VERSION } from "./bands";
 import {
   CIRCLE_V,
   FIXED_SHAPES,
@@ -19,10 +21,10 @@ import {
   rulesDocBodyType,
   type ShareContext,
 } from "./bundle";
-import { LEDGER_WITHHELD_FIELDS } from "./copyout";
+import { REMOVED_CHUNK_FIELDS } from "./copyout";
 import { canonicalize, parseJsonStrict, type Json } from "./jcs";
 import { SEND_MIN_K, countPeers, isCountable, kNational, type Group } from "./k";
-import { checkRules, type Rules } from "./rules";
+import { checkRules, rulesHaveRemovedField, type Rules } from "./rules";
 import { keyIdOf, sha256Hex, verifyBody } from "./sign";
 
 export type DocKind = "bundle" | "member" | "circle" | "ledger";
@@ -147,6 +149,7 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
   checkShape(ctx.rules, RULES_TYPE, "rules", ctxIssues);
   if (ctxIssues.length > 0) {
     shape("contextRules.malformed");
+    if (rulesHaveRemovedField(ctx.rules)) shape("contextRules.fieldRemoved");
     return res;
   }
 
@@ -231,8 +234,10 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
     if (body.national !== ctx.table.hash || body.national !== ctx.rules.national) chain("nationalMismatch");
     if (body.vocab !== ctx.vocab.hash || body.vocab !== ctx.rules.vocab) chain("vocabMismatch");
     if (body.pack !== ctx.rules.pack || ctx.vocab.pack !== ctx.rules.pack) chain("packMismatch");
-    // 粒度と、公開の台帳の決まり（型でも外れるが、理由を分けて出す）。形の外れに数える
-    for (const r of [...grainIssues(body), ...(ctx.to.kind === "ledger" ? ledgerIssues(body) : [])]) {
+    // 前の帯の版で作った束（型でも外れるが、理由を分けて出す）
+    if (body.bands !== BANDS_VERSION) shape("bandsVersion");
+    // 粒度・どこにも出さない欄・公開の台帳の決まり（型でも外れるが、理由を分けて出す）。形の外れに数える
+    for (const r of [...grainIssues(body), ...removedFieldIssues(body), ...(ctx.to.kind === "ledger" ? ledgerIssues(body) : [])]) {
       res.shape++;
       res.reasons.push(r);
     }
@@ -248,6 +253,8 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
       if (ctx.to.kind !== wantKind || id !== ctx.to.id) chain("otherDestination");
     }
     if (issues.length === 0) for (const v of checkRules(b.rules as Rules)) shape(`rules.${v}`);
+    // どこにも出さない欄を許す決まり（型でも外れるので checkRules まで来ない。理由を分けて出す）
+    else if (rulesHaveRemovedField(b.rules)) shape("rules.fieldRemoved");
   }
   return res;
 }
@@ -273,15 +280,18 @@ export function grainIssues(body: Record<string, Json>): string[] {
   return [...out];
 }
 
-/** 公開の台帳の決まり（コードの定数。台帳の決まりで緩められない）：集団は NATIONAL だけ、UPGRADE と台帳に出さない欄は無い。 */
+/** どこにも出さない欄（REMOVED_CHUNK_FIELDS。経過年）が塊にあるか。輪でも台帳でも同じ（場の決まりで足せない）。 */
+export function removedFieldIssues(body: Record<string, Json>): string[] {
+  return chunksOf(body).some((c) => REMOVED_CHUNK_FIELDS.some((f) => Object.hasOwn(c, f))) ? ["shape.fieldRemoved"] : [];
+}
+
+/** 公開の台帳の決まり（コードの定数。台帳の決まりで緩められない）：集団は NATIONAL だけ、UPGRADE の塊は無い。 */
 export function ledgerIssues(body: Record<string, Json>): string[] {
   const out: string[] = [];
   const profile = body.profile;
   const group = profile && typeof profile === "object" && !Array.isArray(profile) ? (profile as Record<string, Json>).group : undefined;
   if (group !== "NATIONAL") out.push("ledger.groupNotNational");
-  const cs = chunksOf(body);
-  if (cs.some((c) => c.work === WORK_ATTRIBUTES[3])) out.push("ledger.upgrade");
-  if (cs.some((c) => LEDGER_WITHHELD_FIELDS.some((f) => Object.hasOwn(c, f)))) out.push("ledger.fieldWithheld");
+  if (chunksOf(body).some((c) => c.work === WORK_ATTRIBUTES[3])) out.push("ledger.upgrade");
   return out;
 }
 

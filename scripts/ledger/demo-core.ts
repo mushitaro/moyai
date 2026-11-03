@@ -20,7 +20,7 @@ import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, signBody, wrapPrivate
 import { Plan } from "../../src/shared/plan";
 
 export const DEMO_PACK = "waste-incineration";
-/** 台帳の決まり：コードの決まりから経過年を外したもの（台帳はどのみち経過年を受けない。決まりの欄にも書かない） */
+/** 台帳の決まりの欄：間隔・工数・日数（コードの許可リストのすべて。経過年はどこにも出さないので、許可リストにも無い） */
 export const DEMO_FIELDS: Rules["fields"] = ["interval", "manDays", "days"];
 
 export interface DemoInput {

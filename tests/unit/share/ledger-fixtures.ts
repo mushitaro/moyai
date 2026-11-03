@@ -10,7 +10,7 @@ import { previewBundle, sealBundle, type SendInput } from "../../../src/share/se
 import { generateKeyPair, keyIdOf, sha256Hex, signBody, wrapPrivateKey, type KeyPair, type WrappedKey } from "../../../src/share/sign";
 import { FACILITY_COMMON, SPEC, table, vocab } from "./fixtures";
 
-/** 台帳の決まり：コードの決まりから、経過年を外したもの（台帳はどのみち経過年を受けない） */
+/** 台帳の決まりの欄：間隔・工数・日数（コードの許可リストのすべて。経過年はどこにも出さない） */
 export const LEDGER_FIELDS: Rules["fields"] = ["interval", "manDays", "days"];
 
 export interface Ledger {

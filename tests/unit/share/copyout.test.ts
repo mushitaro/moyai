@@ -1,9 +1,24 @@
 // share.grain と share.stable：写し取りの粒度と、送るたびに変わらないこと。
+// 経過年（ageAtWork）は 2026-11-03 にどこにも出さないと決めた：輪にも台帳にも写らず、受け手はこの欄のある束を ✗ にする。
 import { describe, expect, it } from "vitest";
+import { envelopeText } from "../../../src/share/bundle";
 import { canonicalize } from "../../../src/share/jcs";
-import { CHUNK_FIELDS, SKIP_REASONS, candidateClasses, copyOut, fiscalYearOf, installFiscalRange, type CopyResult } from "../../../src/share/copyout";
+import {
+  CHUNK_FIELDS,
+  OMIT_REASONS,
+  REMOVED_CHUNK_FIELDS,
+  SKIP_REASONS,
+  candidateClasses,
+  copyOut,
+  fiscalYearOf,
+  installFiscalRange,
+  type CopyResult,
+} from "../../../src/share/copyout";
 import { chooseProfile } from "../../../src/share/k";
-import { FACILITY_COMMON, SPEC, asset, detail, plan, table, vocab, work } from "./fixtures";
+import { isClean, recount } from "../../../src/share/recount";
+import { previewBundle } from "../../../src/share/seal";
+import { signBody } from "../../../src/share/sign";
+import { FACILITY_COMMON, SPEC, asset, detail, makeMember, makeRing, plan, sendInput, smallPlan, table, vocab, work } from "./fixtures";
 import type { Plan } from "../../../src/shared/plan";
 
 function liftFor(p: Plan) {
@@ -62,10 +77,20 @@ describe("share.grain", () => {
     expect(r.withheld.contractor).toBe(1);
     expect(r.withheld.notes).toBe(1);
     expect(r.withheld.names).toBe(6); // 資産 5 つと施設
+    expect(r.withheld.installed).toBe(5); // 設置の年も写さない（経過年はどこにも出さない）
   });
 
-  it("塊は許可リストの欄だけ", () => {
+  it("塊は許可リストの欄だけ。経過年は許可リストに無く、輪にも台帳にも出ない", () => {
     for (const ch of r.chunks) for (const k of Object.keys(ch)) expect(CHUNK_FIELDS as readonly string[]).toContain(k);
+    const ledger = copyOut({ plan: p, lift: c.lift, to: { kind: "ledger", id: "0123456789abcdef" } });
+    for (const out of [r, ledger]) {
+      expect(out.chunks.length).toBeGreaterThan(0);
+      for (const ch of out.chunks) for (const f of REMOVED_CHUNK_FIELDS) expect(Object.hasOwn(ch, f)).toBe(false);
+      expect(canonicalize(out.chunks)).not.toContain("ageAtWork");
+    }
+    for (const f of REMOVED_CHUNK_FIELDS) expect(CHUNK_FIELDS as readonly string[]).not.toContain(f);
+    // 経過年を出さなかった理由の数も無い（作り手が無いので、数えるものも無い）
+    expect(OMIT_REASONS.some((x) => x.startsWith("age"))).toBe(false);
   });
 
   it("まとめ工事と人・日に直せない工数は、工数と日数の中央に使わず、理由に数える", () => {
@@ -129,9 +154,8 @@ describe("share.grain", () => {
     for (const ch of out.chunks) {
       expect(ch.manDays).toBeUndefined();
       expect(ch.days).toBeUndefined();
-      expect(ch.ageAtWork).toBeUndefined();
     }
-    expect(out.omitted.fieldNotAllowed).toBe(out.chunks.length * 3);
+    expect(out.omitted.fieldNotAllowed).toBe(out.chunks.length * 2);
   });
 });
 
@@ -155,7 +179,7 @@ describe("share.stable", () => {
     });
   }
 
-  it("同じ施設を 1 年ずらして 2 回送っても、見え方と ageAtWork が変わらない", () => {
+  it("同じ施設を 1 年ずらして 2 回送っても、見え方と塊の帯が変わらない（経過年は出ない）", () => {
     const p1 = history(2024);
     const p2 = history(2025);
     const c1 = liftFor(p1);
@@ -163,8 +187,10 @@ describe("share.stable", () => {
     expect(c2.profile).toEqual(c1.profile);
     const r1 = copyOut({ plan: p1, lift: c1.lift, to: { kind: "ring", id: "0123456789abcdef" } });
     const r2 = copyOut({ plan: p2, lift: c2.lift, to: { kind: "ring", id: "0123456789abcdef" } });
-    expect(r2.chunks.map((x) => x.ageAtWork)).toEqual(r1.chunks.map((x) => x.ageAtWork));
-    expect(r1.chunks.find((x) => x.work === "OVERHAUL")!.ageAtWork).toBe("A10_14"); // 2010 − 1998 = 12
+    const bands = (r: CopyResult) => r.chunks.map(({ years: _years, ...rest }) => rest);
+    expect(bands(r2)).toEqual(bands(r1));
+    const { years: _y, ...ov } = r1.chunks.find((x) => x.work === "OVERHAUL")!;
+    expect(ov).toEqual({ class: "T.FEED.LIFT", work: "OVERHAUL", observed: "N3P", interval: "I3", manDays: "W10_29", days: "D8_14" });
     // 年度の一覧は伸びる（星取表の列）
     expect(r2.chunks[0]!.years.length).toBeGreaterThan(r1.chunks[0]!.years.length);
   });
@@ -182,8 +208,6 @@ describe("share.stable", () => {
     expect(one.observed).toBe("N1");
     expect(one.interval).toBeUndefined();
     expect(r.omitted.intervalSingle).toBe(1);
-    // 2000-03-31 は 1999 年度（4 月始まり）→ 2012 − 1999 = 13
-    expect(one.ageAtWork).toBe("A10_14");
   });
 
   it("年度の出し方（4 月始まり）。読めない書き方は推測しない", () => {
@@ -195,37 +219,57 @@ describe("share.stable", () => {
     expect(fiscalYearOf("平成12年", 4)).toBe(null);
   });
 
-  it("設置が年だけ（取り込みの書き方）なら、暦年と年度の両方で帯が同じときだけ ageAtWork を出す", () => {
+  it("設置の年は、どの書き方でも写さず、欄ごと写さなかった数に数える（経過年はどこにも出さない）", () => {
+    // 設置の文字の読み方（測りが使う。写し取りは使わない）：年だけは暦年か年度かが決まらないので幅にする
     expect(installFiscalRange("2002", 4)).toEqual([2001, 2002]);
     expect(installFiscalRange("2002", 1)).toEqual([2002, 2002]);
     expect(installFiscalRange("2002-05-01", 4)).toEqual([2002, 2002]);
     expect(installFiscalRange("平成14年", 4)).toBe(null);
-    const mk = (installedOn: string, firstFy: number) =>
+    const mk = (installedOn: string | null, firstFy: number) =>
       plan({
         assets: [asset("a1", "T.FEED.LIFT", { installedOn })],
         works: [work("w1", "OVERHAUL", ["a1"])],
         details: [detail("d1", "w1", firstFy, { manDays: 20, days: 10 }), detail("d2", "w1", firstFy + 3, { manDays: 20, days: 10 })],
       });
-    const ring = { kind: "ring", id: "0123456789abcdef" } as const;
-    // 2014 − 2002 = 12、2014 − 2001 = 13：どちらも A10_14
-    const ok = mk("2002", 2014);
-    const r1 = copyOut({ plan: ok, lift: liftFor(ok).lift, to: ring });
-    expect(r1.chunks[0]!.ageAtWork).toBe("A10_14");
-    // 2011 − 2002 = 9（A5_9）と 2011 − 2001 = 10（A10_14）で帯が割れる
-    const amb = mk("2002", 2011);
-    const r2 = copyOut({ plan: amb, lift: liftFor(amb).lift, to: ring });
-    expect(r2.chunks[0]!.ageAtWork).toBeUndefined();
-    expect(r2.omitted.ageInstallAmbiguous).toBe(1);
-    expect(r2.omitted.ageInstalledUnknown).toBe(0);
-    // 設置 "2015"・最初の作業 FY2014：暦年 2015 の 1〜3 月なら FY2014（0 年）。設置より前とは言えず、帯が割れるに数える
-    const edge = mk("2015", 2014);
-    const r3 = copyOut({ plan: edge, lift: liftFor(edge).lift, to: ring });
-    expect(r3.chunks[0]!.ageAtWork).toBeUndefined();
-    expect(r3.omitted.ageNegative).toBe(0);
-    expect(r3.omitted.ageInstallAmbiguous).toBe(1);
-    // 幅の両端とも設置より前なら「設置より前の作業」
-    const neg = mk("2016", 2014);
-    expect(copyOut({ plan: neg, lift: liftFor(neg).lift, to: ring }).omitted.ageNegative).toBe(1);
+    const cases: [string, number][] = [
+      ["2002", 2014],
+      ["2002", 2011],
+      ["2015", 2014],
+      ["2016", 2014],
+      ["2002-05-01", 2014],
+    ];
+    for (const to of [{ kind: "ring", id: "0123456789abcdef" }, { kind: "ledger", id: "0123456789abcdef" }] as const) {
+      for (const [installedOn, firstFy] of cases) {
+        const q = mk(installedOn, firstFy);
+        const r = copyOut({ plan: q, lift: liftFor(q).lift, to });
+        expect(Object.keys(r.chunks[0]!).sort()).toEqual(["class", "days", "interval", "manDays", "observed", "work", "years"]);
+        expect(canonicalize(r.chunks)).not.toContain(installedOn.slice(0, 4));
+        expect(r.withheld.installed).toBe(1);
+      }
+      const none = mk(null, 2014);
+      expect(copyOut({ plan: none, lift: liftFor(none).lift, to }).withheld.installed).toBe(0);
+    }
+  });
+});
+
+describe("share.grain（経過年の欄がある束は、受け手が ✗ にする）", () => {
+  it("輪の束の塊に経過年を足して署名し直すと、数え直しが理由つきで ✗（shape.fieldRemoved）", () => {
+    const ring = makeRing();
+    const m = makeMember(ring);
+    const pv = previewBundle(sendInput(ring, m, smallPlan()));
+    if (!pv.ok) throw new Error(`プレビューができない: ${pv.reason}`);
+    const sign = (body: unknown) => envelopeText(body, signBody(body, m.pair.privateKey));
+    // 写し取りが作った束はそのまま ✓（経過年は無い）
+    expect(canonicalize(pv.body)).not.toContain("ageAtWork");
+    expect(isClean(recount(sign(pv.body), ring.ctx))).toBe(true);
+    // 前の版の写し取りが作っていた形（経過年の帯つき）に書き換える
+    const body = JSON.parse(canonicalize(pv.body)) as { chunks: Record<string, unknown>[] };
+    body.chunks[0]!.ageAtWork = "A15_19";
+    const r = recount(sign(body), ring.ctx);
+    expect(isClean(r)).toBe(false);
+    expect(r.reasons).toEqual(expect.arrayContaining(["shape.fieldRemoved", "shape.type"]));
+    // 署名と鎖は正しい（外れは中身だけ）
+    expect(r.chain).toBe(0);
   });
 });
 

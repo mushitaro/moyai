@@ -1,6 +1,6 @@
 // share.k：境目の値、k < 5 で段が上がる、推せる属性で絞ると k が下がる、段 3 でも足りなければ送らない、分からない分類は出さない。
 import { describe, expect, it } from "vitest";
-import { BAND_DEFS, ageBand, bandCodes, bandOf, intervalBand, observedBand, perVisitBand } from "../../../src/share/bands";
+import { BAND_DEFS, bandCodes, bandOf, intervalBand, observedBand, perVisitBand } from "../../../src/share/bands";
 import {
   RECEIVE_MIN_K,
   SEND_MIN_K,
@@ -52,18 +52,11 @@ describe("share.k 境目の値", () => {
     expect(bandOf(D, 121)).toBe("D121P");
   });
 
-  it("回数・経過年（UPGRADE は 10 年帯）", () => {
+  it("回数（経過年の帯は無い。どこにも出さない）", () => {
     expect(observedBand(1)).toBe("N1");
     expect(observedBand(2)).toBe("N2");
     expect(observedBand(3)).toBe("N3P");
     expect(observedBand(40)).toBe("N3P");
-    expect(ageBand(4, "OVERHAUL")).toBe("A0_4");
-    expect(ageBand(5, "OVERHAUL")).toBe("A5_9");
-    expect(ageBand(15, "INSPECT")).toBe("A15_19");
-    expect(ageBand(15, "UPGRADE")).toBe("A10_19");
-    expect(ageBand(9, "UPGRADE")).toBe("A0_9");
-    expect(ageBand(41, "REPLACE")).toBe("A40P");
-    expect(ageBand(-1, "REPLACE")).toBe(null);
   });
 
   it("処理能力の帯：境目ちょうどは上の帯", () => {

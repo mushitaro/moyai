@@ -1,13 +1,15 @@
 // 取り込み → 写し取りの層をまたぐ試験（docs/plan.md §4「層をまたぐ試験を置く」）。§5.1 の cross-layer（きっかけの次回）とは別のもの。
 // 工場の資料を取り込んで作った計画を、そのまま写し取りに渡す。
 // 取り込みの書き方（年だけの設置年、まとめ工事の子の作業）を、写し取りが黙って落とさないことを確かめる。
+// 経過年は 2026-11-03 にどこにも出さないと決めた：設置年は塊に写らず、欄ごと写さなかった数（installed）に数える。
 // 当てはめ（1 段目の項目と作業の属性）は、人の代わりに試験の台本が正解の世界から置く（src/ は正解を読まない）。
 // 作者を「人」にするのは、試験の台本が人の操作の代わりに押すため（tests/unit/import/ の台本と同じ。根拠の文に台本と書く）。
 // 分類を上げる表（lift）は、この試験では項目をそのまま使う（数えられるかは share.k の試験が見る）。
 import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import { IntakeSession } from "../../../src/import";
-import { candidateClasses, copyOut } from "../../../src/share/copyout";
+import { REMOVED_CHUNK_FIELDS, candidateClasses, copyOut } from "../../../src/share/copyout";
+import { canonicalize } from "../../../src/share/jcs";
 import { chooseProfile, isCountable, loadNational, loadVocab, type ProfileSpec } from "../../../src/share/k";
 import type { Plan } from "../../../src/shared/plan";
 import { Entities, loadTruth, runScript } from "../import/truth";
@@ -64,9 +66,6 @@ describe("層をまたぐ：取り込み → 写し取り", () => {
     const lift = new Map(plan.assets.filter((a) => a.commonItem).map((a) => [a.commonItem!, a.commonItem!]));
     const r = copyOut({ plan, lift, to: { kind: "ring", id: "0123456789abcdef" } });
     expect(r.chunks.length).toBeGreaterThan(0);
-    // 年だけの設置年でも、帯が割れない塊では ageAtWork が出る。設置が分からないとは数えない
-    expect(r.omitted.ageInstalledUnknown).toBe(0);
-    expect(r.chunks.some((c) => c.ageAtWork !== undefined)).toBe(true);
     // まとめ工事の子は「まとめ工事」に数え、「人・日に直せない」に数えない
     const children = plan.works.filter((w) => w.parentWorkKey !== null);
     expect(children.length).toBeGreaterThan(0);
@@ -78,11 +77,15 @@ describe("層をまたぐ：取り込み → 写し取り", () => {
     const parents = new Set(children.map((w) => w.parentWorkKey));
     const flatR = copyOut({ plan: { ...flat, works: flat.works.filter((w) => !parents.has(w.workKey)) }, lift, to: { kind: "ring", id: "0123456789abcdef" } });
     expect(flatR.omitted.manDaysUnconvertible).toBeGreaterThan(r.omitted.manDaysUnconvertible);
-    // 取り込みの設置年は年だけ（"2002"）。その資産の分類の塊に ageAtWork が出ている
+    // 取り込みの設置年は年だけ（"2002"）。輪にも台帳にも経過年は出ず、設置年は欄ごと写さなかった数に数える（黙って捨てない）
     const yearOnly = plan.assets.filter((a) => a.commonItemAccepted && a.installedOn !== null && /^\d{4}$/.test(a.installedOn));
     expect(yearOnly.length).toBeGreaterThan(0);
-    const withAge = new Set(r.chunks.filter((c) => c.ageAtWork !== undefined).map((c) => c.class));
-    expect(yearOnly.some((a) => withAge.has(a.commonItem!))).toBe(true);
+    const ledger = copyOut({ plan, lift, to: { kind: "ledger", id: "0123456789abcdef" } });
+    for (const out of [r, ledger]) {
+      for (const c of out.chunks) for (const f of REMOVED_CHUNK_FIELDS) expect(Object.hasOwn(c, f)).toBe(false);
+      expect(canonicalize(out.chunks)).not.toContain("ageAtWork");
+      expect(out.withheld.installed).toBe(plan.assets.filter((a) => a.installedOn !== null).length);
+    }
   });
 
   test("パックの公開語彙と見え方で、取り込んだ計画の段が決まり、塊が出る", async () => {

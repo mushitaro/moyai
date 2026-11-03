@@ -3,8 +3,8 @@
 // 型は閉じている：列挙・上下限つきの整数・決まった形のハッシュだけで、知らないキーは形の外れ。
 // 同じ型の言葉で、輪の仲間のファイル（members/<鍵ID>.json）と決まりのファイル（circle.json）も書く。
 import { WORK_ATTRIBUTES } from "../shared/plan";
-import { BANDS_VERSION, BAND_DEFS, OBSERVED_CODES, ageCodes, bandCodes, type StatField } from "./bands";
-import { LEDGER_WITHHELD_FIELDS, OPTIONAL_CHUNK_FIELDS, FY_MAX, FY_MIN, type Chunk, type Destination } from "./copyout";
+import { BANDS_VERSION, BAND_DEFS, OBSERVED_CODES, bandCodes, type StatField } from "./bands";
+import { OPTIONAL_CHUNK_FIELDS, FY_MAX, FY_MIN, type Chunk, type Destination } from "./copyout";
 import { canonicalize } from "./jcs";
 import { GROUPS, coarseCodes, type NationalTable, type PeerProfile, type Profile, type Vocab } from "./k";
 import type { Rules } from "./rules";
@@ -197,7 +197,10 @@ function bandEnum(field: StatField, rules: Rules): T {
   return { t: "enum", vs: bandCodes(BAND_DEFS[field], rules.bands[field]) };
 }
 
-/** 束の body の型（文脈で、分類・軸・帯・欄・行き先の種類が決まる） */
+/**
+ * 束の body の型（文脈で、分類・軸・帯・欄・行き先の種類が決まる）。
+ * 塊の欄は許可リスト（OPTIONAL_CHUNK_FIELDS）の中の、場の決まりが許すものだけ。どこにも出さない欄（REMOVED_CHUNK_FIELDS）は型に無い。
+ */
 export function bundleBodyType(ctx: ShareContext): T {
   const { table, vocab, rules } = ctx;
   const ledger = ctx.to.kind === "ledger";
@@ -206,13 +209,8 @@ export function bundleBodyType(ctx: ShareContext): T {
     interval: bandEnum("interval", rules),
     manDays: bandEnum("manDays", rules),
     days: bandEnum("days", rules),
-    ageAtWork: { t: "enum", vs: ageCodes() },
   };
-  for (const f of rules.fields) {
-    // 公開の台帳には、どの決まりでも出さない欄がある（場の決まりで足せない）
-    if (ledger && (LEDGER_WITHHELD_FIELDS as readonly string[]).includes(f)) continue;
-    if (Object.hasOwn(all, f)) opt[f] = all[f];
-  }
+  for (const f of rules.fields) if (Object.hasOwn(all, f)) opt[f] = all[f];
   const chunk: T = {
     t: "obj",
     req: {

@@ -12,7 +12,7 @@ import { parseJsonStrict } from "./jcs";
 import type { NationalTable, Vocab } from "./k";
 import { isClean, recount } from "./recount";
 import { checkChain } from "./ring";
-import type { Rules } from "./rules";
+import { baseRules, rulesHaveRemovedField, type Rules } from "./rules";
 import { HEX16, fingerprint, sha256Hex } from "./sign";
 
 export const LEDGER_DIR = "ledger";
@@ -118,6 +118,34 @@ export function ledgerContext(ledgerBytes: Uint8Array, pack: { table: NationalTa
   };
 }
 
+/**
+ * ledger.json を決まりとして読めないときに、理由だけを出す：コードの決まりで数え直す（輪の受け手の readRing と同じ考え。この台帳の束は数えない）。
+ * 台帳 ID は、body の変わらない部分（v・founder・nonce）が読めればそこから決める（読めなければ、数え直しは行き先を照らさない）。
+ */
+export function ledgerRulesReasons(ledgerBytes: Uint8Array, pack: { table: NationalTable; vocab: Vocab }): string[] {
+  const p = parseJsonStrict(Buffer.from(ledgerBytes).toString("utf8"));
+  const body = p.ok ? (p.value as { body?: { v?: unknown; founder?: unknown; nonce?: unknown } }).body : undefined;
+  const id =
+    body && typeof body.v === "string" && typeof body.founder === "string" && typeof body.nonce === "string"
+      ? ringIdOf({ v: body.v, founder: body.founder, nonce: body.nonce })
+      : "0".repeat(16);
+  const safe: ShareContext = {
+    table: pack.table,
+    vocab: pack.vocab,
+    rules: baseRules(pack.vocab.pack, pack.vocab.hash, pack.table.hash),
+    rulesHash: sha256Hex(ledgerBytes),
+    to: { kind: "ledger", id },
+  };
+  return recount(ledgerBytes, safe).reasons;
+}
+
+/** ledger.json の決まりが、どこにも出さない欄（経過年）を許しているか（パックが無くても言える。CLI がパックを選ぶ前に使う） */
+export function ledgerRulesHaveRemovedField(bytes: Uint8Array | string | null): boolean {
+  if (bytes === null) return false;
+  const p = parseJsonStrict(typeof bytes === "string" ? bytes : Buffer.from(bytes).toString("utf8"));
+  return p.ok && rulesHaveRemovedField((p.value as { body?: { rules?: unknown } })?.body?.rules);
+}
+
 function kindReason(kind: LedgerFile["kind"]): string {
   return kind === "symlink" ? "file.symlink" : kind === "submodule" ? "file.submodule" : "file.notRegular";
 }
@@ -143,7 +171,8 @@ export function verifyLedgerFiles(files: readonly LedgerFile[], pack: { table: N
       ctx = ledgerContext(lf.bytes, pack);
       if (!ctx) {
         ledger.status = "ng";
-        ledger.reasons.push("ledger.unreadable");
+        // 読めない理由も出す（どこにも出さない欄を許す決まりなど）。この台帳の束は数えない
+        ledger.reasons = [...new Set(["ledger.unreadable", ...ledgerRulesReasons(lf.bytes, pack)])];
       } else {
         ledger.id = ctx.to.id;
         ledger.rules = ctx.rules;

@@ -1,12 +1,12 @@
 // 写し取り：計画の書類（Plan）から、塊の並びを作る。塊は 1 つの施設の、1 段目の項目 × 作業の属性ごとに 1 行。
 // 写すのは許可リストの欄だけで、欄ごとの作り手（CHUNK_BUILDERS）が数とコードからだけ値を作る。
-// 費用・人・日付・備考・名前・系統の名前は、作り手が読まないので構造上写らない（写さなかった数は withheld に数える）。
+// 費用・人・日付・備考・名前・系統の名前・設置の年は、作り手が読まないので構造上写らない（写さなかった数は withheld に数える）。
+// 経過年（最初の作業のときの設置からの年）の欄は無い（2026-11-03 の運営者の判断。REMOVED_CHUNK_FIELDS）。
 // 写すのは、当てはめを人が受けた（commonItemAccepted が true の）資産の、作業の属性を人が受けた（attributeAccepted が true の）作業の、
 // 実績の作業明細だけ。写さなかった行は理由ごとに数える。
 import { WORK_ATTRIBUTES, type AssetNodeT, type Plan, type WorkT } from "../shared/plan";
 import {
   BAND_DEFS,
-  ageBand,
   intervalBand,
   observedBand,
   perVisitBand,
@@ -19,16 +19,18 @@ import { SEND_MIN_K } from "./k";
 export type WorkAttribute = (typeof WORK_ATTRIBUTES)[number];
 
 /** 塊の欄の許可リスト（順もこのとおり）。class・work・years・observed は必ず写す。 */
-export const CHUNK_FIELDS = ["class", "work", "years", "observed", "interval", "manDays", "days", "ageAtWork"] as const;
+export const CHUNK_FIELDS = ["class", "work", "years", "observed", "interval", "manDays", "days"] as const;
 export type ChunkField = (typeof CHUNK_FIELDS)[number];
 export const REQUIRED_CHUNK_FIELDS = ["class", "work", "years", "observed"] as const satisfies readonly ChunkField[];
-export const OPTIONAL_CHUNK_FIELDS = ["interval", "manDays", "days", "ageAtWork"] as const satisfies readonly ChunkField[];
+export const OPTIONAL_CHUNK_FIELDS = ["interval", "manDays", "days"] as const satisfies readonly ChunkField[];
 export type OptionalChunkField = (typeof OPTIONAL_CHUNK_FIELDS)[number];
 /**
- * 公開の台帳には、どの決まりでも出さない欄（コードの定数。場の決まりで足せない）。
- * ageAtWork：塊の years と合わせると設置の年度の幅が読め、全国の表の使用開始年度で施設が絞れる（docs/sharing.md）。
+ * どこにも出さない欄（輪にも公開の台帳にも。コードの定数で、場の決まりで足せない）。写し取りに作り手は無い。
+ * 受ける側は、この欄がある束（shape.fieldRemoved）と、この欄を許す決まり（shape.rules.fieldRemoved）を理由つきで ✗ にする。
+ * ageAtWork（最初の作業のときの経過年の帯）：2026-11-03 の運営者の判断で外した。塊の years と合わせると設置の年度が 3〜4 年の幅に絞れ、
+ * 全国の表の使用開始年度と合わせると、多くの施設が 5 施設未満に落ちる（docs/sharing.md §1.4）。
  */
-export const LEDGER_WITHHELD_FIELDS = ["ageAtWork"] as const satisfies readonly OptionalChunkField[];
+export const REMOVED_CHUNK_FIELDS = ["ageAtWork"] as const;
 
 export interface Chunk {
   class: string;
@@ -39,7 +41,6 @@ export interface Chunk {
   interval?: string;
   manDays?: string;
   days?: string;
-  ageAtWork?: string;
 }
 
 /** 年度の上下限（束の型と同じ） */
@@ -66,7 +67,7 @@ export const SKIP_REASONS = [
 export type SkipReason = (typeof SKIP_REASONS)[number];
 
 /** 原本にあるが、欄ごと写さないもの（費用は帯にもしない）。 */
-export const WITHHELD_FIELDS = ["cost", "performer", "dates", "contractor", "series", "notes", "names"] as const;
+export const WITHHELD_FIELDS = ["cost", "performer", "dates", "contractor", "series", "notes", "names", "installed"] as const;
 export type WithheldField = (typeof WITHHELD_FIELDS)[number];
 
 /** 塊の欄を出さなかった理由 */
@@ -80,11 +81,7 @@ export const OMIT_REASONS = [
   "daysBundled",
   "daysUnconvertible",
   "daysNone",
-  "ageInstalledUnknown", // 最初の作業の対象の設置の年度が分からない
-  "ageNegative", // 設置より前の作業（どちらかの誤り）
-  "ageInstallAmbiguous", // 設置が年だけで、暦年と年度のどちらに読むかで帯が変わる
   "fieldNotAllowed", // 場の決まりが欄を外している
-  "ledgerWithheld", // 公開の台帳には出さない欄（LEDGER_WITHHELD_FIELDS）
 ] as const;
 export type OmitReason = (typeof OMIT_REASONS)[number];
 
@@ -144,6 +141,8 @@ export function fiscalYearOf(s: string | null, startMonth: number): number | nul
 /**
  * 設置の文字から、あり得る年度の幅 [早い方, 遅い方] を出す。年だけ（"2002"）は暦年か年度かが決まらないので、
  * 年度の始まりが 1 月でなければ [y-1, y] の幅にする（どちらかに決めない）。読めなければ null。
+ * 写し取りは使わない（設置の年は写さない）。経過年をどこにも出さないと決めた測り（tests/unit/share/bands-measure.ts）が、
+ * 設置の年度の幅を読むのに使う。
  */
 export function installFiscalRange(s: string | null, startMonth: number): [number, number] | null {
   if (s === null) return null;
@@ -162,8 +161,6 @@ interface Gathered {
   work: WorkAttribute;
   /** 系統のキー → 年度の集合 */
   yearsBySeries: Map<string, Set<number>>;
-  /** 年度 → その年度の対象の設置の年度の幅（分からなければ null） */
-  installByYear: Map<number, ([number, number] | null)[]>;
   /** 作業明細のキー → 工数・日数・まとめ工事か・入れ子の子か */
   visits: Map<string, { manDays: number | null; days: number | null; bundled: boolean; child: boolean }>;
 }
@@ -205,27 +202,6 @@ const CHUNK_BUILDERS: Record<Exclude<ChunkField, "class" | "work">, Builder> = {
   },
   manDays: perVisit("manDays"),
   days: perVisit("days"),
-  ageAtWork: (g, _rules, omit) => {
-    const first = allYears(g)[0]!;
-    const installs = (g.installByYear.get(first) ?? []).filter((x): x is [number, number] => x !== null);
-    if (installs.length === 0) {
-      omit("ageInstalledUnknown");
-      return undefined;
-    }
-    // いちばん早い設置の幅。幅の両端で帯が同じときだけ出す
-    const oldest = ageBand(first - Math.min(...installs.map((r) => r[0])), g.work);
-    const youngest = ageBand(first - Math.min(...installs.map((r) => r[1])), g.work);
-    if (oldest === null) {
-      omit("ageNegative");
-      return undefined;
-    }
-    // 遅い方の端だけが負：暦年か年度かが決まらないだけ（設置より前の作業とは言えない）
-    if (youngest === null || oldest !== youngest) {
-      omit("ageInstallAmbiguous");
-      return undefined;
-    }
-    return oldest;
-  },
 };
 
 function zeros<K extends string>(keys: readonly K[]): Record<K, number> {
@@ -247,7 +223,6 @@ export function copyOut(input: CopyInput): CopyResult {
   const parents = new Set(plan.works.map((w) => w.parentWorkKey).filter((x): x is string => x !== null));
   // まとめ工事：ほかの機器と一緒の作業、入れ子の親。入れ子の子は欄ごとに visitsOf で決める
   const isBundled = (w: WorkT) => w.targets.length > 1 || parents.has(w.workKey) || w.tagRange !== null || w.tagList.length > 1;
-  const startMonth = plan.facility.fiscalYearStartMonth;
 
   // 欄ごと写さないものを数える（読むのは null かどうかだけ）
   for (const d of plan.details) {
@@ -260,6 +235,7 @@ export function copyOut(input: CopyInput): CopyResult {
   for (const a of plan.assets) {
     if (a.series !== null) withheld.series++;
     if (a.name !== "" || a.tag !== null) withheld.names++;
+    if (a.installedOn !== null) withheld.installed++;
   }
   if (plan.facility.name !== "") withheld.names++;
 
@@ -312,14 +288,12 @@ export function copyOut(input: CopyInput): CopyResult {
       const key = `${cls}\u0000${attr}`;
       let g = groups.get(key);
       if (!g) {
-        g = { cls, work: attr, yearsBySeries: new Map(), installByYear: new Map(), visits: new Map() };
+        g = { cls, work: attr, yearsBySeries: new Map(), visits: new Map() };
         groups.set(key, g);
       }
       const seriesKey = a.series ?? `\u0000${a.nodeKey}`;
       if (!g.yearsBySeries.has(seriesKey)) g.yearsBySeries.set(seriesKey, new Set());
       g.yearsBySeries.get(seriesKey)!.add(d.fiscalYear);
-      if (!g.installByYear.has(d.fiscalYear)) g.installByYear.set(d.fiscalYear, []);
-      g.installByYear.get(d.fiscalYear)!.push(installFiscalRange(a.installedOn, startMonth));
       if (!g.visits.has(d.detailKey)) g.visits.set(d.detailKey, { manDays: d.manDays, days: d.days, bundled: isBundled(w), child: w.parentWorkKey !== null });
       copied++;
     }
@@ -331,10 +305,6 @@ export function copyOut(input: CopyInput): CopyResult {
     const out: Record<string, unknown> = { class: g.cls, work: g.work };
     for (const f of CHUNK_FIELDS) {
       if (f === "class" || f === "work") continue;
-      if (to.kind === "ledger" && (LEDGER_WITHHELD_FIELDS as readonly string[]).includes(f)) {
-        omit("ledgerWithheld");
-        continue;
-      }
       if ((OPTIONAL_CHUNK_FIELDS as readonly string[]).includes(f) && !rules.fields.includes(f as OptionalChunkField)) {
         omit("fieldNotAllowed");
         continue;

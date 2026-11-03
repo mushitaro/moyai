@@ -1,16 +1,19 @@
 {
   "schema": "moyai.bands-decision/0",
-  "note": "帯の境目を決めたときに測った数（docs/sharing.md）。edges・ladder・truth は tests/unit/share/bands-decision.test.ts が試験の実行から作り直して照らす。startYear と capacityEdges は、元の全国の表（リポジトリに入れない）をこの PC で読んだ結果で、試験は段の数だけを ladder と照らす",
+  "note": "帯の境目を決めたときに測った数（docs/sharing.md）。edges・wouldBeAgeEdges・ladder・truth は tests/unit/share/bands-decision.test.ts が試験の実行から作り直して照らす。startYear と capacityEdges は、元の全国の表（リポジトリに入れない）をこの PC で読んだ結果で、試験は段の数だけを ladder と照らす。経過年（ageAtWork）は 2026-11-03 にどこにも出さないと決めた（bands-2）。truth の ageWouldBe と installWindowWouldBe は、経過年があったとしたら（bands-1 の写し取りと同じ作り方）の帯を、試験のコードが計画から作り直したもの",
   "decided": "2026-11-03",
-  "bandsVersion": "bands-1",
+  "bandsVersion": "bands-2",
   "edges": {
     "interval": [1, 2, 3, 4, 5, 6, 8, 11, 16, 31],
     "manDays": [1, 10, 30, 100, 300, 1000],
-    "days": [1, 4, 8, 15, 31, 61, 121],
-    "ageNormal": [0, 5, 10, 15, 20, 25, 30, 35, 40],
-    "ageUpgrade": [0, 10, 20, 30, 40]
+    "days": [1, 4, 8, 15, 31, 61, 121]
   },
-  "ledgerWithheld": ["ageAtWork"],
+  "removedFields": ["ageAtWork"],
+  "removedOn": "2026-11-03",
+  "wouldBeAgeEdges": {
+    "normal": [0, 5, 10, 15, 20, 25, 30, 35, 40],
+    "upgrade": [0, 10, 20, 30, 40]
+  },
   "ladder": {
     "of": 844,
     "rungs": [
@@ -34,11 +37,11 @@
       "days": { "D1_3": 2, "D4_7": 1, "D8_14": 1 },
       "daysRaw": [3, 5, 12],
       "daysNearEdge": 0,
-      "ageRing": { "A15_19": 11, "A20_29": 1 },
-      "ageLedger": 0,
+      "ageWouldBe": { "A15_19": 11, "A20_29": 1 },
+      "ageInBundles": { "ring": 0, "ledger": 0 },
       "installFiscalYears": [2001, 2008],
-      "installWindowFromRing": [2001, 2004],
-      "ledgerWithheld": 12
+      "installWindowWouldBe": [2001, 2004],
+      "installedWithheld": { "ring": 25, "ledger": 25 }
     },
     "fictional-2": {
       "chunks": { "ring": 14, "ledger": 13 },
@@ -50,11 +53,11 @@
       "days": { "D1_3": 2, "D4_7": 1, "D8_14": 2 },
       "daysRaw": [3, 5, 12],
       "daysNearEdge": 0,
-      "ageRing": { "A20_24": 12, "A20_29": 1 },
-      "ageLedger": 0,
+      "ageWouldBe": { "A20_24": 12, "A20_29": 1 },
+      "ageInBundles": { "ring": 0, "ledger": 0 },
       "installFiscalYears": [1997, 2010],
-      "installWindowFromRing": [1997, 1999],
-      "ledgerWithheld": 13
+      "installWindowWouldBe": [1997, 1999],
+      "installedWithheld": { "ring": 16, "ledger": 16 }
     }
   },
   "startYear": {

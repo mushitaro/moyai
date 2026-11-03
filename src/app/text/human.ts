@@ -225,7 +225,6 @@ export const HUMAN_TEXT = {
     interval: (a: string, b: string | null) => (b === null ? `間隔 ${a} 年` : `間隔 ${a}〜${b} 年`),
     manDays: (a: string, b: string | null, open: boolean) => (open ? `工数 ${a} 人・日以上` : `工数 ${a}〜${b} 人・日`),
     days: (a: string, b: string | null, open: boolean) => (open ? `日数 ${a} 日以上` : `日数 ${a}〜${b} 日`),
-    age: (a: string, b: string | null, open: boolean) => (open ? `経過 ${a} 年以上` : `経過 ${a}〜${b} 年`),
     observed: { N1: "1 回", N2: "2 回", N3P: "3 回以上" } as Record<string, string>,
   },
   skip: {
@@ -242,9 +241,6 @@ export const HUMAN_TEXT = {
     upgradeLedger: "基幹改良は公開の台帳に出さない",
     upgradeBelowK: "基幹改良は紛れる数が下限に届くときだけ",
   } as Record<string, string>,
-  omit: {
-    ledgerWithheld: "公開の台帳には出さない欄（経過年の帯は、年度と合わせると使用開始の年が読めるため）",
-  } as Record<string, string>,
   withheld: {
     cost: "費用",
     performer: "実施者",
@@ -253,6 +249,7 @@ export const HUMAN_TEXT = {
     series: "系統",
     notes: "備考",
     names: "名前",
+    installed: "設置の年",
   } as Record<string, string>,
 };
 
@@ -260,12 +257,11 @@ export const HUMAN_TEXT = {
 export function bandText(code: string): string {
   const B = HUMAN_TEXT.bands;
   if (B.observed[code]) return B.observed[code] as string;
-  const m = /^([IWDA])(\d+)(?:_(\d+)|(P))?$/.exec(code);
+  const m = /^([IWD])(\d+)(?:_(\d+)|(P))?$/.exec(code);
   if (!m) return code;
   const [, p, a, b, open] = m as unknown as [string, string, string, string | undefined, string | undefined];
   const hi = b ?? null;
   if (p === "I") return B.interval(a, hi);
   if (p === "W") return B.manDays(a, hi ?? a, open === "P");
-  if (p === "D") return B.days(a, hi ?? a, open === "P");
-  return B.age(a, hi ?? a, open === "P");
+  return B.days(a, hi ?? a, open === "P");
 }
