@@ -130,7 +130,7 @@ export function formGroups(layouts: SheetLayout[]): Map<string, FormGroup> {
 
 /** 資料の名前の並び（多ければ「ほか n 冊」） */
 export function filesLabel(files: string[]): string {
-  return files.length <= 2 ? files.join(" と ") : `${files.slice(0, 2).join("・")} ほか ${files.length - 2} 冊（同じ様式）`;
+  return files.length <= 2 ? files.join(" と ") : `${files.slice(0, 2).join("・")} ほか ${files.length - 2} 冊`;
 }
 
 export interface RecordOptions {
@@ -847,7 +847,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const form = rec.formOf.get(t.id);
   const fkey = form?.key ?? t.id;
   const many = (form?.tables.length ?? 1) > 1;
-  const where = many ? `${filesLabel(form?.files ?? [])}の表に、` : "";
+  const where = many ? `${filesLabel(form?.files ?? [])}（同じ様式）の表に、` : "";
   let hoursPer: number | null = null;
   if (hourCells.length) {
     const a = ask.ask(`hoursPerManDay|${fkey}`, {
