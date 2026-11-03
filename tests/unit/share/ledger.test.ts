@@ -9,9 +9,11 @@ import { canonicalize } from "../../../src/share/jcs";
 import { LEDGER_JSON_PATH, jsonDepth, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../../src/share/ledger";
 import { isClean, recount } from "../../../src/share/recount";
 import { signBody } from "../../../src/share/sign";
-import { formatLedger, ledgerRootOf, verifyLedgerCli } from "../../../src/cli/ledger";
+import { formatLedger, ledgerRootOf, loadLedger, verifyLedgerCli } from "../../../src/cli/ledger";
+import { reasonText } from "../../../src/app/text/reasons";
+import type { Rules } from "../../../src/share/rules";
 import { SPEC, TABLE_TEXT, VOCAB_TEXT, detail, plan, smallPlan, table, vocab, work, asset } from "./fixtures";
-import { forge, makeLedger, makeSigner, sealLedger, writeRepo, type Sealed } from "./ledger-fixtures";
+import { LEDGER_FIELDS, forge, makeLedger, makeSigner, sealLedger, writeRepo, type Sealed } from "./ledger-fixtures";
 
 const pack = { table, vocab };
 const L = makeLedger();
@@ -182,18 +184,6 @@ describe("verify ledger：台帳だけの決まり", () => {
     expect(lineOf(r, x).reasons).toEqual(expect.arrayContaining(["ledger.groupNotNational", "shape.type"]));
   });
 
-  it("経過年の欄は ✗（台帳の決まりが欄を許していても）", () => {
-    const loose = makeLedger({ fields: ["interval", "manDays", "days", "ageAtWork"] });
-    const s = sealLedger(loose, A, smallPlan());
-    expect(JSON.parse(s.text).body.chunks.every((c: Record<string, unknown>) => c.ageAtWork === undefined)).toBe(true);
-    const x = forge(s, A, (body) => {
-      (body.chunks as Record<string, unknown>[])[0]!.ageAtWork = "A15_19";
-    });
-    const r = verifyLedgerFiles(files([x], [], loose.text), pack);
-    expect(r.ledger.status).toBe("ok");
-    expect(lineOf(r, x).reasons).toEqual(expect.arrayContaining(["ledger.fieldWithheld", "shape.type"]));
-  });
-
   it("k < 5（数え直すと下限に届かない見え方）は ✗", () => {
     // 全国の表で数の少ない見え方に書き換え、送る側の k も合わせる（受ける側で数え直して ✗）
     const x = forge(a[0]!, A, (body) => {
@@ -295,6 +285,44 @@ describe("verify ledger：台帳だけの決まり", () => {
     mkdirSync(d2);
     symlinkSync(join(d, "ledger"), join(d2, "ledger"), process.platform === "win32" ? "junction" : "dir");
     expect(await readLedgerDir(d2)).toEqual({ ok: false, reason: "ledgerDirSymlink" });
+  });
+});
+
+describe("verify ledger：経過年はどこにも出さない（輪と同じ数え直し）", () => {
+  it("塊に経過年の欄がある束は ✗（shape.fieldRemoved）。写し取りは作らない", () => {
+    expect(a.every((s) => !s.text.includes("ageAtWork"))).toBe(true);
+    const x = forge(a[0]!, A, (body) => {
+      (body.chunks as Record<string, unknown>[])[0]!.ageAtWork = "A15_19";
+    });
+    const r = verifyLedgerFiles(files([x]), pack);
+    expect(r.ledger.status).toBe("ok");
+    expect(lineOf(r, x).status).toBe("ng");
+    expect(lineOf(r, x).reasons).toEqual(expect.arrayContaining(["shape.fieldRemoved", "shape.type"]));
+    expect(lineOf(r, x).reasons.some((y) => y.startsWith("chain."))).toBe(false);
+  });
+
+  it("経過年の欄を許す台帳の決まり（ledger.json）は ✗。理由を出し、束は数えない", async () => {
+    const loose = makeLedger({ fields: [...LEDGER_FIELDS, "ageAtWork"] as unknown as Rules["fields"] });
+    const r = verifyLedgerFiles(files([a[0]!], [], loose.text), pack);
+    expect(r.ledger.status).toBe("ng");
+    expect(r.ledger.reasons).toEqual(expect.arrayContaining(["ledger.unreadable", "shape.rules.fieldRemoved"]));
+    expect(lineOf(r, a[0]!).reasons).toEqual(["ledger"]);
+    expect(r.ok).toBe(false);
+    // CLI は決まりを読めないので（パックを選ぶ前に）2 で止まり、理由を添える
+    const l = await loadLedger(repo([a[0]!], loose), { packsDir: join(tmp, "読まないパック") });
+    expect(l.ok).toBe(false);
+    if (l.ok) return;
+    expect(l.code).toBe(2);
+    expect(l.message).toContain(reasonText("shape.rules.fieldRemoved"));
+  });
+
+  it("前の帯の版（bands-1）で作った束は ✗（shape.bandsVersion）", () => {
+    const x = forge(a[0]!, A, (body) => {
+      body.bands = "bands-1";
+    });
+    const r = verifyLedgerFiles(files([x]), pack);
+    expect(lineOf(r, x).reasons).toEqual(expect.arrayContaining(["shape.bandsVersion"]));
+    expect(reasonText("shape.bandsVersion")).not.toBe("shape.bandsVersion");
   });
 });
 

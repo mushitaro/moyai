@@ -308,3 +308,56 @@ describe("share.tamper", () => {
     await rm(d, { recursive: true, force: true });
   });
 });
+
+describe("share.tamper：経過年はどこにも出さない（輪の受け手）", () => {
+  /** 正しい束の body を書き換え、本人の鍵で署名し直す（前の版の写し取りが作っていた形の束） */
+  function resigned(base: { text: string }, m: Member, edit: (body: Record<string, unknown>) => void) {
+    const body = JSON.parse(base.text).body as Record<string, unknown>;
+    edit(body);
+    const text = envelopeText(body, signBody(body, m.pair.privateKey));
+    return { text, fileName: bundleFileName(body.seq as number, fileHash(text)) };
+  }
+
+  it("塊に経過年の欄がある束は、署名が正しくても ✗（shape.fieldRemoved）", async () => {
+    expect([...a, b1].every((s) => !s.text.includes("ageAtWork"))).toBe(true);
+    const x = resigned(a[0]!, A, (body) => {
+      (body.chunks as Record<string, unknown>[])[0]!.ageAtWork = "A15_19";
+    });
+    const d = await copyRing();
+    await unlink(bundlePath(d, A.key, a[0]!.fileName));
+    await writeFile(bundlePath(d, A.key, x.fileName), x.text);
+    const rr = await readRing(d, ring.ringId, opts());
+    const e = entryOf(rr, A.key, x.fileName);
+    expect(e.status).toBe("ng");
+    expect(e.reasons).toEqual(expect.arrayContaining(["shape.fieldRemoved", "shape.type"]));
+    expect(e.reasons.some((y) => y.startsWith("chain."))).toBe(false);
+    expect(memberOf(rr, A.key).reasons).toContain("shape.fieldRemoved");
+    // 送る側の置き場所も、この形の束は置かない
+    expect((await writeBundle(d, x.text, ring.ctx)).ok).toBe(false);
+    await rm(d, { recursive: true, force: true });
+  });
+
+  it("前の帯の版（bands-1）で作った束は ✗（shape.bandsVersion）", async () => {
+    const x = resigned(b1, B, (body) => {
+      body.bands = "bands-1";
+    });
+    const r = recount(x.text, ring.ctx);
+    expect(r.reasons).toEqual(expect.arrayContaining(["shape.bandsVersion"]));
+    expect(r.chain).toBe(0);
+    expect(isClean(r)).toBe(false);
+  });
+
+  it("経過年の欄を許す circle.json（作った人が署名していても）→ 理由つきで輪の全員が ✗", async () => {
+    const rules = { ...ring.rules, fields: [...ring.rules.fields, "ageAtWork"] };
+    const body = makeRulesDocBody(CIRCLE_V, ring.founder.pub, ring.nonce, 1, "2026-11", rules as never);
+    const text = envelopeText(body, signBody(body, ring.founder.privateKey));
+    const d = await copyRing();
+    await writeFile(join(d, ring.ringId, "circle.json"), text);
+    const rr = await readRing(d, ring.ringId, opts());
+    expect(rr.circle.status).toBe("ng");
+    expect(rr.circle.reasons).toEqual(expect.arrayContaining(["shape.rules", "shape.rules.fieldRemoved"]));
+    expect(rr.bundles.every((x) => x.status === "ng" && x.reasons.includes("circle"))).toBe(true);
+    expect(rr.members.every((m) => m.status === "ng")).toBe(true);
+    await rm(d, { recursive: true, force: true });
+  });
+});

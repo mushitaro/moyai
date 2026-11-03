@@ -2,10 +2,13 @@
 // 境目は 2026-11-03 に、工場の正解の世界と全国の表で測ってから決めた（設計の初めの値のまま。理由と測った数は docs/sharing.md）。
 // 境目を変えると束の型と台帳の検証の版が変わるので、BANDS_VERSION も上げ、docs/sharing.md と tests/fixtures/share/bands-decision.json を直す。
 // 帯は下の端を含み、上の端を含まない（[下, 上)）。場の決まりは、内側の境目を外す（粗くする）向きにだけ変えられる。
-import { WORK_ATTRIBUTES } from "../shared/plan";
+// 経過年の帯は無い（2026-11-03 の運営者の判断で、経過年はどこにも出さない。測った帯は試験の tests/unit/share/bands-measure.ts にだけある）。
 
-/** 帯の境目の版。束の body に入る（bands-1：測ってから決めた最初の版）。 */
-export const BANDS_VERSION = "bands-1";
+/**
+ * 帯の境目の版。束の body に入る。受け手は、この版でない束を形の外れ（shape.bandsVersion）で ✗ にする。
+ * bands-1：測ってから決めた最初の版（経過年の帯があった）。bands-2：経過年の帯と欄を外した版（2026-11-03）。
+ */
+export const BANDS_VERSION = "bands-2";
 
 export interface BandDef {
   /** コードの頭の文字 */
@@ -31,19 +34,6 @@ export const BAND_DEFS = {
 } as const satisfies Record<string, BandDef>;
 export type StatField = keyof typeof BAND_DEFS;
 export const STAT_FIELDS = Object.keys(BAND_DEFS) as StatField[];
-
-/**
- * 最初の作業のときの経過年の帯。ふつうは 5 年、UPGRADE は 10 年。40 年以上は 1 つにまとめる。
- * 公開の台帳には出さない（LEDGER_WITHHELD_FIELDS）：塊の years（最初の年度）と経過年の帯がそろうと設置の年度の幅が読め、
- * 塊ごとに最初の年度がずれると幅の重なりで 1〜4 年に絞れる。全国の表には使用開始年度の列があるので、
- * その幅で見え方の中の施設を数えると、多くの施設が 5 未満に落ちる（帯を広げても重なりで絞れる。docs/sharing.md）。
- */
-export const AGE_DEFS = {
-  normal: { prefix: "A", edges: [0, 5, 10, 15, 20, 25, 30, 35, 40], lowOpen: false, highOpen: true },
-  upgrade: { prefix: "A", edges: [0, 10, 20, 30, 40], lowOpen: false, highOpen: true },
-} as const satisfies Record<string, BandDef>;
-/** 10 年帯にする作業の属性 */
-export const AGE_WIDE_ATTRIBUTE: (typeof WORK_ATTRIBUTES)[number] = "UPGRADE";
 
 /** 回数の帯。生の回数は出さない。 */
 export const OBSERVED_CODES = ["N1", "N2", "N3P"] as const;
@@ -155,15 +145,4 @@ export function perVisitBand(field: "manDays" | "days", visits: readonly Visit[]
   }
   const m = median(vals);
   return { band: m === null ? null : bandOf(BAND_DEFS[field], m, edges), used: vals.length, bundled, unconvertible };
-}
-
-/** 最初の作業のときの経過年の帯。UPGRADE は 10 年帯。負の値は null。 */
-export function ageBand(age: number, attribute: (typeof WORK_ATTRIBUTES)[number]): string | null {
-  if (!Number.isInteger(age) || age < 0) return null;
-  return bandOf(attribute === AGE_WIDE_ATTRIBUTE ? AGE_DEFS.upgrade : AGE_DEFS.normal, age);
-}
-
-/** 経過年の帯の全部のコード（公開語彙に入れる） */
-export function ageCodes(): string[] {
-  return [...new Set([...bandCodes(AGE_DEFS.normal), ...bandCodes(AGE_DEFS.upgrade)])];
 }

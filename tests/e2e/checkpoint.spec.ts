@@ -163,6 +163,9 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     const bodyText = (await page.getByTestId("body-text").textContent()) ?? "";
     expect(bodyText).toContain('"v":"moyai.bundle/0"');
     expect(bodyText).not.toMatch(/[^\x20-\x7e]/);
+    // 経過年はどこにも出さない（2026-11-03）。帯と束の型の版は bands-2
+    expect(bodyText).toContain('"bands":"bands-2"');
+    expect(bodyText).not.toContain("ageAtWork");
     await expect(page.getByTestId("plain-chunk").first()).toBeVisible();
     await expect(page.getByTestId("their-chart")).toBeVisible();
     // ［送る］は合言葉の欄のすぐ右

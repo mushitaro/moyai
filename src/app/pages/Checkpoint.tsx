@@ -107,7 +107,6 @@ interface Chunk {
   interval?: string;
   manDays?: string;
   days?: string;
-  ageAtWork?: string;
 }
 
 const Sumi = () => <span className="moyai-sumi">■■■■</span>;
@@ -493,7 +492,7 @@ export function Checkpoint() {
                         <Text size="xs" className="moyai-num">
                           {T.col3Years(c.years.map((y) => y.slice(2)).join("・"))}
                         </Text>
-                        <Text size="xs">{[c.observed, c.interval, c.manDays, c.days, c.ageAtWork].filter((x): x is string => !!x).map(bandText).join("　")}</Text>
+                        <Text size="xs">{[c.observed, c.interval, c.manDays, c.days].filter((x): x is string => !!x).map(bandText).join("　")}</Text>
                       </Stack>
                     ))}
                   </Stack>

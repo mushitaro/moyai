@@ -1,10 +1,12 @@
 // 帯の境目を決めた測り（docs/sharing.md）を、試験の実行から作り直す道具。数え方は写し取り（copyout.ts）と同じ組み方で、
 // 帯にする前の生の値（中央の値）も出す。生の値は工場の正解の世界（架空）からだけ作り、試験の中でだけ使う。
+// 経過年は 2026-11-03 にどこにも出さないと決めた（src に作る道は無い）。その理由の数を作り直すため、経過年があったとしたらの帯
+// （bands-1 の写し取りと同じ作り方）を、ここで計画から作る。束には入れない。
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { planFromWorld } from "../../../scripts/ledger/truth-plan.mjs";
-import { AGE_DEFS, BAND_DEFS, median } from "../../../src/share/bands";
-import { copyOut, installFiscalRange, type Chunk } from "../../../src/share/copyout";
+import { BAND_DEFS, bandOf, median, type BandDef } from "../../../src/share/bands";
+import { FY_MAX, FY_MIN, REMOVED_CHUNK_FIELDS, copyOut, installFiscalRange, type Chunk } from "../../../src/share/copyout";
 import { SEND_MIN_K, coarseOf, kNational, ladder, liftClass, loadNational, loadVocab, type NationalTable } from "../../../src/share/k";
 import { Plan } from "../../../src/shared/plan";
 import { ROOT } from "./fixtures";
@@ -100,23 +102,73 @@ function nearEdge(v: number, edges: readonly number[]): number {
   return Math.min(...edges.slice(1).map((e) => Math.abs(v - e) / e));
 }
 
-/** 受け手が、塊の years と ageAtWork から読める設置の年度の幅（塊ごとの幅の重なり。重ならなければ null） */
-export function installWindow(chunks: readonly Chunk[]): [number, number] | null {
+/**
+ * 経過年の帯（bands-1 の写し取りが作っていた欄の境目。src には無い）。ふつうは 5 年、UPGRADE は 10 年。40 年以上は 1 つにまとめる。
+ * 測りのためだけにここに置く。
+ */
+export const WOULD_BE_AGE_DEFS = {
+  normal: { prefix: "A", edges: [0, 5, 10, 15, 20, 25, 30, 35, 40], lowOpen: false, highOpen: true },
+  upgrade: { prefix: "A", edges: [0, 10, 20, 30, 40], lowOpen: false, highOpen: true },
+} as const satisfies Record<string, BandDef>;
+
+/** 経過年があったとしたらの帯。UPGRADE は 10 年帯。負の値は null。 */
+export function wouldBeAgeBand(age: number, work: string): string | null {
+  if (!Number.isInteger(age) || age < 0) return null;
+  return bandOf(work === "UPGRADE" ? WOULD_BE_AGE_DEFS.upgrade : WOULD_BE_AGE_DEFS.normal, age);
+}
+
+/**
+ * 塊ごとに、経過年があったとしたらの帯（bands-1 の写し取りと同じ作り方）。最初の年度の、その塊に写った行の対象の設置の年度の幅を集め、
+ * いちばん早い設置の幅の両端で帯が同じときだけ出す（設置が分からない・設置より前・暦年か年度かで帯が割れるなら undefined）。
+ * 行の選び方は写し取りと同じ（実績・確かめ済み・属性と当てはめを人が受けた・年度が上下限の内・上げた分類がその塊）。
+ */
+export function wouldBeAges(plan: Plan, lift: ReadonlyMap<string, string | null>, chunks: readonly Chunk[]): (string | undefined)[] {
+  const assets = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+  const works = new Map(plan.works.map((w) => [w.workKey, w]));
+  const startMonth = plan.facility.fiscalYearStartMonth;
+  return chunks.map((c) => {
+    const first = Number(c.years[0]!.slice(2));
+    const installs: [number, number][] = [];
+    for (const d of plan.details) {
+      const w = works.get(d.workKey);
+      if (!w || d.fiscalYear !== first || d.planOrActual !== "actual" || d.needsReview) continue;
+      if (w.attribute !== c.work || !w.attributeAccepted || d.fiscalYear < FY_MIN || d.fiscalYear > FY_MAX) continue;
+      for (const t of w.targets) {
+        const a = assets.get(t);
+        if (!a?.commonItem || !a.commonItemAccepted || (lift.get(a.commonItem) ?? null) !== c.class) continue;
+        const r = installFiscalRange(a.installedOn, startMonth);
+        if (r) installs.push(r);
+      }
+    }
+    if (installs.length === 0) return undefined;
+    const oldest = wouldBeAgeBand(first - Math.min(...installs.map((r) => r[0])), c.work);
+    const youngest = wouldBeAgeBand(first - Math.min(...installs.map((r) => r[1])), c.work);
+    return oldest !== null && oldest === youngest ? oldest : undefined;
+  });
+}
+
+/** 受け手が、塊の years と経過年の帯から読めたはずの設置の年度の幅（塊ごとの幅の重なり。重ならなければ null） */
+export function installWindow(chunks: readonly Chunk[], ages: readonly (string | undefined)[]): [number, number] | null {
   let lo = -Infinity;
   let hi = Infinity;
   let any = false;
-  for (const c of chunks) {
-    if (!c.ageAtWork) continue;
-    const m = /^A(\d+)(?:_(\d+)|P)$/.exec(c.ageAtWork);
-    if (!m) continue;
+  chunks.forEach((c, i) => {
+    const age = ages[i];
+    const m = age ? /^A(\d+)(?:_(\d+)|P)$/.exec(age) : null;
+    if (!m) return;
     const first = Number(c.years[0]!.slice(2));
     const aLo = Number(m[1]);
     const aHi = m[2] !== undefined ? Number(m[2]) : Infinity;
     lo = Math.max(lo, first - aHi);
     hi = Math.min(hi, first - aLo);
     any = true;
-  }
+  });
   return any && lo <= hi ? [lo, hi] : null;
+}
+
+/** 束の塊に、どこにも出さない欄が出ている数（0 のはず） */
+function removedFieldCount(chunks: readonly Chunk[]): number {
+  return chunks.filter((c) => REMOVED_CHUNK_FIELDS.some((f) => Object.hasOwn(c, f))).length;
 }
 
 /** 1 つの正解の世界を測る */
@@ -127,6 +179,7 @@ export function measureWorld(rel: string) {
   const ring = copyOut({ plan, lift, to: { kind: "ring", id: "0000000000000000" }, ringK: SEND_MIN_K });
   const ledger = copyOut({ plan, lift, to: { kind: "ledger", id: "0000000000000000" } });
   const raw = rawOf(plan, lift);
+  const ages = wouldBeAges(plan, lift, ring.chunks);
   const installs = plan.assets.map((a) => installFiscalRange(a.installedOn, 4)).filter((x): x is [number, number] => x !== null);
   const within = (field: "manDays" | "days") =>
     raw.filter((r) => r[field] !== null && nearEdge(r[field]!, BAND_DEFS[field].edges) < 0.15).length;
@@ -140,11 +193,11 @@ export function measureWorld(rel: string) {
     days: tally(ledger.chunks.map((c) => c.days)),
     daysRaw: uniq(raw.map((r) => r.days)),
     daysNearEdge: within("days"),
-    ageRing: tally(ring.chunks.map((c) => c.ageAtWork)),
-    ageLedger: ledger.chunks.filter((c) => c.ageAtWork !== undefined).length,
+    ageWouldBe: tally(ages),
+    ageInBundles: { ring: removedFieldCount(ring.chunks), ledger: removedFieldCount(ledger.chunks) },
     installFiscalYears: [Math.min(...installs.map((r) => r[0])), Math.max(...installs.map((r) => r[1]))],
-    installWindowFromRing: installWindow(ring.chunks),
-    ledgerWithheld: ledger.omitted.ledgerWithheld,
+    installWindowWouldBe: installWindow(ring.chunks, ages),
+    installedWithheld: { ring: ring.withheld.installed, ledger: ledger.withheld.installed },
   };
 }
 
@@ -154,7 +207,5 @@ export function decidedEdges() {
     interval: [...BAND_DEFS.interval.edges],
     manDays: [...BAND_DEFS.manDays.edges],
     days: [...BAND_DEFS.days.edges],
-    ageNormal: [...AGE_DEFS.normal.edges],
-    ageUpgrade: [...AGE_DEFS.upgrade.edges],
   };
 }

@@ -1,8 +1,9 @@
 // 場の決まり（輪の circle.json と台帳の ledger.json の rules）。できるのは厳しくすることだけ：
 // 下限は SEND_MIN_K より下げられない、欄はコードの許可リストの中から外すだけ、帯は内側の境目を外す（粗くする）だけ。
+// どこにも出さない欄（REMOVED_CHUNK_FIELDS。経過年）を許す決まりは、知らない欄とは分けて fieldRemoved で拒む。
 // 公開語彙と全国の表は、ハッシュで固定する。各 PC は人が受け入れた決まりのハッシュを覚え、変わったら送らない。
 import { BAND_DEFS, STAT_FIELDS, isCoarserEdges, type StatField } from "./bands";
-import { OPTIONAL_CHUNK_FIELDS, type OptionalChunkField } from "./copyout";
+import { OPTIONAL_CHUNK_FIELDS, REMOVED_CHUNK_FIELDS, type OptionalChunkField } from "./copyout";
 import { SEND_MIN_K } from "./k";
 
 /** 下限の上の端（型の上下限） */
@@ -31,7 +32,15 @@ export function baseRules(pack: string, vocab: string, national: string): Rules 
   };
 }
 
-export type RulesViolation = "malformed" | "minKLowered" | "minKTooHigh" | "fieldUnknown" | "fieldDuplicated" | "bandsFiner";
+export type RulesViolation = "malformed" | "minKLowered" | "minKTooHigh" | "fieldUnknown" | "fieldRemoved" | "fieldDuplicated" | "bandsFiner";
+
+const isRemoved = (f: unknown) => typeof f === "string" && (REMOVED_CHUNK_FIELDS as readonly string[]).includes(f);
+
+/** 決まり（形を問わない値）の欄に、どこにも出さない欄があるか。形の外れた決まりでも理由を分けて出すために使う */
+export function rulesHaveRemovedField(r: unknown): boolean {
+  const fields = r && typeof r === "object" && !Array.isArray(r) ? (r as { fields?: unknown }).fields : undefined;
+  return Array.isArray(fields) && fields.some(isRemoved);
+}
 
 /** 決まりが、コードの決まりより緩くしていないか。緩くしていれば理由を返す（空なら通る）。 */
 export function checkRules(r: Rules): RulesViolation[] {
@@ -39,7 +48,8 @@ export function checkRules(r: Rules): RulesViolation[] {
   if (!r || typeof r !== "object" || !Array.isArray(r.fields) || !r.bands || typeof r.bands !== "object") return ["malformed"];
   if (!Number.isInteger(r.minK) || r.minK < SEND_MIN_K) out.push("minKLowered");
   else if (r.minK > MAX_MIN_K) out.push("minKTooHigh");
-  if (r.fields.some((f) => !(OPTIONAL_CHUNK_FIELDS as readonly string[]).includes(f))) out.push("fieldUnknown");
+  if (r.fields.some(isRemoved)) out.push("fieldRemoved");
+  if (r.fields.some((f) => !isRemoved(f) && !(OPTIONAL_CHUNK_FIELDS as readonly string[]).includes(f))) out.push("fieldUnknown");
   if (new Set(r.fields).size !== r.fields.length) out.push("fieldDuplicated");
   for (const f of STAT_FIELDS) {
     const e = r.bands[f];

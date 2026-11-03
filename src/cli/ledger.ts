@@ -13,7 +13,18 @@ import { reasonText } from "../app/text/reasons";
 import { bundleFileName } from "../share/bundle";
 import { fingerprint, sha256Hex } from "../share/sign";
 import { requireTerminal } from "./human";
-import { LEDGER_DIR, LEDGER_FILE, LEDGER_JSON_PATH, LEDGER_LIMITS, ledgerRulesOf, readLedgerDir, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "../share/ledger";
+import {
+  LEDGER_DIR,
+  LEDGER_FILE,
+  LEDGER_JSON_PATH,
+  LEDGER_LIMITS,
+  ledgerRulesHaveRemovedField,
+  ledgerRulesOf,
+  readLedgerDir,
+  verifyLedgerFiles,
+  type LedgerFile,
+  type LedgerRead,
+} from "../share/ledger";
 import { loadSharePack, resolvePacksDir, type SharePack } from "../share/pack";
 import { PR_LIMITS, displayablePath, validateAll, validatePr, type PrResult } from "../share/prdiff";
 import { profileText, renderLedgerSite } from "../share/site";
@@ -24,6 +35,8 @@ export const LEDGER_CLI_TEXT = {
   dirSymlink: "ledger/ が symlink です。たどらずに止めました。",
   tooMany: "ledger/ の下のファイルが多すぎます（上限を越えたので止めました）。",
   rulesUnreadable: "台帳の決まり（ledger/ledger.json）を読めません。",
+  /** 決まりが、どこにも出さない欄（経過年）を許している（前の版の決まり） */
+  rulesFieldRemoved: (reason: string) => `台帳の決まり（ledger/ledger.json）を読めません：${reason}。`,
   packNotReady: (pack: string, reason: string) => `パック ${pack} の共有の部品を読めません（${reason}）`,
   head: (id: string | null, version: number | null, hash: string | null) =>
     `台帳 ${id ?? "（ID 不明）"}${version !== null ? `（決まり 版 ${version}` : "（決まり"}、SHA-256 ${hash ? hash.slice(0, 16) : "不明"}…）`,
@@ -45,6 +58,13 @@ export function ledgerRootOf(folder: string): string | null {
   return null;
 }
 
+/** 決まりを読めないときの知らせ。どこにも出さない欄を許す決まりなら、その理由を添える */
+function rulesUnreadableText(lf: LedgerFile | undefined): string {
+  return lf && lf.kind === "file" && ledgerRulesHaveRemovedField(lf.bytes)
+    ? LEDGER_CLI_TEXT.rulesFieldRemoved(reasonText("shape.rules.fieldRemoved"))
+    : LEDGER_CLI_TEXT.rulesUnreadable;
+}
+
 export type LedgerLoad =
   | { ok: true; files: LedgerFile[]; pack: SharePack; read: LedgerRead }
   | { ok: false; code: 2; message: string };
@@ -58,7 +78,7 @@ export async function loadLedger(root: string, o: { packsDir?: string } = {}): P
   const lf = d.files.find((f) => f.path === LEDGER_JSON_PATH);
   if (!lf) return { ok: false, code: 2, message: LEDGER_CLI_TEXT.noLedger(root) };
   const rules = lf.kind === "file" ? ledgerRulesOf(lf.bytes) : null;
-  if (!rules) return { ok: false, code: 2, message: LEDGER_CLI_TEXT.rulesUnreadable };
+  if (!rules) return { ok: false, code: 2, message: rulesUnreadableText(lf) };
   const pack = loadSharePack(o.packsDir ?? resolvePacksDir(), rules.pack);
   if (!pack.ok) return { ok: false, code: 2, message: LEDGER_CLI_TEXT.packNotReady(rules.pack, pack.reason) };
   return { ok: true, files: d.files, pack: pack.pack, read: verifyLedgerFiles(d.files, pack.pack) };
@@ -332,7 +352,7 @@ export async function validatePrCli(argv: string[], o: { packsDir?: string; git?
   // 決まりとパックは base（既定のブランチ）の ledger.json から決める（PR は決まりを変えられない）
   const lf = baseFiles.find((f) => f.path === LEDGER_JSON_PATH);
   const rules = lf && lf.kind === "file" ? ledgerRulesOf(lf.bytes) : null;
-  if (!rules) return done(null, LEDGER_CLI_TEXT.rulesUnreadable);
+  if (!rules) return done(null, rulesUnreadableText(lf));
   const pack = loadSharePack(o.packsDir ?? resolvePacksDir(), rules.pack);
   if (!pack.ok) return done(null, LEDGER_CLI_TEXT.packNotReady(rules.pack, pack.reason));
 
@@ -514,7 +534,7 @@ export async function submitCli(argv: string[], o: { packsDir?: string; stdin?: 
   const lf = files.find((f) => f.path === LEDGER_JSON_PATH);
   const rules = lf && lf.kind === "file" ? ledgerRulesOf(lf.bytes) : null;
   if (!rules) {
-    say(LEDGER_CLI_TEXT.rulesUnreadable);
+    say(rulesUnreadableText(lf));
     return 1;
   }
   const pack = loadSharePack(o.packsDir ?? resolvePacksDir(), rules.pack);
