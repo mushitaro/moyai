@@ -187,6 +187,8 @@ export interface ChartLabels {
   commonLevels: [string, string, string];
   /** 未当てはめの行の名前 */
   unmapped: string;
+  /** 系列（号炉・系統など）の見出し。計画の series（"1" か "common.<意味>"）から。同じ名前の機器を見分けるため名前に添える */
+  series: (series: string) => string;
 }
 
 export interface ChartOptions {
@@ -243,10 +245,11 @@ function addAgg(map: Map<string, Agg>, key: string, d: WorkDetailT, asset: strin
 const markOf = (a: { plan: boolean; actual: boolean }): Mark | null => (a.plan && a.actual ? "both" : a.plan ? "plan" : a.actual ? "actual" : null);
 
 /** 自分の台帳の段の木。対象が計画の機器に無い記録は orphan に数える。 */
-function ledgerTree(plan: Plan, orphan: Set<string>): Node[] {
+function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): Node[] {
   const byKey = new Map<string, Node>();
   for (const a of plan.assets) {
-    byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name: a.name, kind: "node", children: [], direct: [] });
+    const name = a.series !== null ? `${a.name}（${labels.series(a.series)}）` : a.name;
+    byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name, kind: "node", children: [], direct: [] });
   }
   const roots: Node[] = [];
   for (const a of plan.assets) {
@@ -337,7 +340,7 @@ function changeKey(nodeKey: string, periodKey: string) {
 /** 計画から、見える行・列の期・段の名前を作る。 */
 export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, opts: ChartOptions): ChartModel {
   const orphan = new Set<string>();
-  const roots = opts.mode === "ledger" ? ledgerTree(plan, orphan) : commonTree(plan, catalog, labels, orphan);
+  const roots = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan) : commonTree(plan, catalog, labels, orphan);
 
   let maxLevel = 0;
   const walkMax = (ns: Node[]) => {

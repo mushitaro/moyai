@@ -149,7 +149,7 @@ function Chart({ plan }: { plan: Plan }) {
     const m = buildChart(
       plan,
       catalog ?? emptyCatalog(),
-      { levelFallback: T.levelFallback, commonLevels: T.commonLevels, unmapped: T.unmapped },
+      { levelFallback: T.levelFallback, commonLevels: T.commonLevels, unmapped: T.unmapped, series: T.series },
       { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel },
     );
     try {

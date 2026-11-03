@@ -17,7 +17,7 @@ import { truthToPlan } from "../../fixtures/chart/truth-to-plan.mjs";
 
 const json = (p: string) => JSON.parse(readFileSync(p, "utf8"));
 const catalog = catalogFromPack(json("packs/waste-incineration/common.json"), json("packs/_kinds/work.json"));
-const labels: ChartLabels = { levelFallback: (n) => `L${n}`, commonLevels: ["S", "I", "A"], unmapped: "UNMAPPED" };
+const labels: ChartLabels = { levelFallback: (n) => `L${n}`, commonLevels: ["S", "I", "A"], unmapped: "UNMAPPED", series: (s) => `S${s}` };
 const base: ChartOptions = { mode: "ledger", period: "year", layer: "original", foldLevel: null };
 
 function asset(nodeKey: string, level: number, parentKey: string | null, name: string, extra: Partial<AssetNodeT> = {}): AssetNodeT {
@@ -327,5 +327,19 @@ describe("工場の正解から組んだ計画（試験の道具）", () => {
     expect(p.assets.length).toBeGreaterThan(1000);
     const m = buildChart(p, catalog, labels, { ...base, period: "month" });
     expect(new Set(m.rows.flatMap((r) => r.detailKeys)).size).toBe(p.details.length);
+  });
+});
+
+describe("系列の見出し", () => {
+  it("同じ名前の機器でも、系列が違えば名前に系列を添えて見分けられる", () => {
+    const p = small();
+    const two = {
+      ...p,
+      assets: [...p.assets, asset("E4", 2, "S2", "eq3", { series: "2" }), asset("E5", 2, "S2", "eq3", { series: "common.共通" })],
+    };
+    const names = buildChart(two, catalog, labels, base).rows.map((r) => r.levelCells.join("/"));
+    expect(names.some((n) => n.includes("eq3（S2）"))).toBe(true);
+    expect(names.some((n) => n.includes("eq3（Scommon.共通）"))).toBe(true);
+    expect(names).toContain("/eq3/");
   });
 });

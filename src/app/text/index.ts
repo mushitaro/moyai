@@ -54,6 +54,7 @@ export const TEXT = {
     levelFallback: (n: number) => `第 ${n} 階層`,
     commonLevels: ["共通の設備", "共通の設備項目", "作業の属性"] as [string, string, string],
     unmapped: "未当てはめ",
+    series: (s: string) => (s.startsWith("common.") ? s.slice("common.".length) || "共通" : `系列 ${s}`),
     mark: { plan: "○", actual: "●", both: "◎" },
     markName: { plan: "計画", actual: "実施", both: "計画と実施" },
     markNone: "印なし",

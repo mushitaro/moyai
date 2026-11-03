@@ -28,7 +28,7 @@ function chartRows(view: "base" | "adjusted", offset: number, limit: number, row
   const model = buildChart(
     plan,
     catalogFor(plan.packId) ?? emptyCatalog(),
-    { levelFallback: TEXT.chart.levelFallback, commonLevels: TEXT.chart.commonLevels, unmapped: TEXT.chart.unmapped },
+    { levelFallback: TEXT.chart.levelFallback, commonLevels: TEXT.chart.commonLevels, unmapped: TEXT.chart.unmapped, series: TEXT.chart.series },
     { mode: "ledger", period: "year", layer: view === "base" ? "original" : "adjusted", foldLevel: null },
   );
   const take = Math.max(0, Math.min(limit, rowsRemaining));
