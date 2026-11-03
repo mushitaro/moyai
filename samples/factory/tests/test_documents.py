@@ -248,6 +248,56 @@ class PdfAndPhotos(unittest.TestCase):
             finally:
                 doc.close()
 
+    def test_report_xlsx_row_cells_share_one_row(self):
+        """同じ行の No.・機器・作業内容・工期・日数・工数は、xlsx の同じ行（行番号が同じ）にある。"""
+        for rep in self.t["reports"]:
+            ws = load_workbook(self.root / "out" / SUB / rep["file_xlsx"]).worksheets[0]
+            for row in rep["rows"]:
+                r = row["xlsx_row"]
+                self.assertEqual(ws.cell(r, 1).value, row["no"], (rep["id"], r))
+                self.assertEqual(ws.cell(r, 2).value, row["equipment_text"], (rep["id"], r))
+                self.assertEqual(ws.cell(r, 3).value, row["label_text"], (rep["id"], r))
+                self.assertEqual(ws.cell(r, 5).value, row["duration_days"], (rep["id"], r))
+                self.assertEqual(ws.cell(r, 6).value, row["effort_text"], (rep["id"], r))
+            # 明細の行は、見出しの行の直後から切れ目なく並ぶ
+            for page in range(1, rep["pages"] + 1):
+                rows = [x["xlsx_row"] for x in rep["rows"] if x["page"] == page]
+                hdr = [r for r in range(1, ws.max_row + 1) if ws.cell(r, 1).value == "No."]
+                self.assertEqual(rows, list(range(hdr[page - 1] + 1, hdr[page - 1] + 1 + len(rows))), rep["id"])
+
+    def test_pdf_row_cells_share_one_line(self):
+        """PDF でも、同じ行の機器（左）と工数（右）は同じ高さにあり、行は上から順に並ぶ。"""
+        import pypdfium2 as pdfium
+
+        def hits(page, text):
+            tp = page.get_textpage()
+            s = tp.search(text)
+            out = []
+            while True:
+                h = s.get_next()
+                if not h:
+                    return out
+                boxes = [tp.get_charbox(i) for i in range(h[0], h[0] + h[1])]
+                out.append((min(b[1] for b in boxes) + max(b[3] for b in boxes)) / 2)  # 文字の中心の高さ（pt）
+
+        for rep, p in zip(self.t["reports"], self.pdfs):
+            doc = pdfium.PdfDocument(str(p))
+            try:
+                for i in range(len(doc)):
+                    prev = None
+                    for row in (x for x in rep["rows"] if x["page"] == i + 1):
+                        eq = hits(doc[i], row["equipment_text"][:5])
+                        ef = hits(doc[i], row["effort_text"])
+                        self.assertTrue(eq and ef, (rep["id"], row["no"]))
+                        # 行の高さは約 14pt。機器の行と同じ高さ（半行以内）に工数がある
+                        y = min(eq, key=lambda v: min(abs(v - e) for e in ef))
+                        self.assertLess(min(abs(y - e) for e in ef), 5, (rep["id"], row["no"]))
+                        if prev is not None:
+                            self.assertLess(y, prev, (rep["id"], row["no"]))  # 下の行ほど y は小さい
+                        prev = y
+            finally:
+                doc.close()
+
     def test_photos(self):
         from PIL import Image
         t = load(self.root, "truth", "photos.truth.json")
