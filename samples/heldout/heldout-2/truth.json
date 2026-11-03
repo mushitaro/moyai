@@ -1,0 +1,7797 @@
+{
+ "schema": "moyai.heldout.truth/0",
+ "set": "heldout-2",
+ "world": "world.json",
+ "files": [
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "format": "xlsx",
+   "kind": "ledger",
+   "note": "1 シートに機械設備と電気・計装設備の 2 つの表を上下に置いた台帳。段は項番の枝番（1／1-1／1-1-1）と名称の字下げで表し、機器番号は名称の（ ）内に書く。設置年は西暦の数値で、経過年数の列がある。"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "format": "xlsx",
+   "kind": "star",
+   "note": "機器 1 行で、年度を上期・下期の 2 列に分けた星取表。記号は作業の種類（点・整・精・取・更）で、（ ）付きが予定、記号だけが実施済。まとまりは塗りつぶしの見出し行で、号炉と管理番号は別の列。"
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "format": "csv",
+   "kind": "daily",
+   "encoding": "utf-8",
+   "delimiter": ",",
+   "note": "保全管理システムの WO 一覧の書き出し（UTF-8、BOM 無し、カンマ）。1 行 1 WO で、排ガス処理と電気・計装は「一式」に束ねた行。工数は h:mm の時間で、予定と実績の列が分かれ、備考には囲みの中の改行がある。"
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "format": "csv",
+   "kind": "daily",
+   "encoding": "cp932",
+   "delimiter": "\t",
+   "note": "委託先の作業日報を月ごとに集計した表（Shift_JIS、タブ）。1 行が 1 日 × 1 機器で、日付は R8.4.6 の和暦、曜は別の列、機器名は半角カナまじり。工数は人工の小数で、月計と上期累計の行がある。"
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "format": "pdf",
+   "kind": "report",
+   "source_xlsx": "reports/kanryo-hokoku_R5_1go-zenkyushi.xlsx",
+   "note": "受託者から所長あての「記」書きの完了報告書（縦の A4）。表は設備の見出し行の下に機器の行を並べ、小計と合計の行がある。実施期間は R5.8.31～R5.9.11 の和暦の 1 セル、工数は延人員(人)。"
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "format": "pdf",
+   "kind": "report",
+   "source_xlsx": "reports/sekou-keikaku_R8_2go-teiki.xlsx",
+   "note": "定期整備工事の着手前に出す実施工程表（横の A4、予定）。左に工種・機器・作業・人員・日数・延人員、右に日ごとの列を塗った帯（文字無し）のガント図。年は頭書きにだけあり、表の中の日付は日と曜だけ。"
+  },
+  {
+   "file": "photos/IMG_20261003_0841.jpg",
+   "format": "jpg",
+   "kind": "photo",
+   "photo_of": {
+    "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+    "page": 1
+   },
+   "note": "実施工程表（予定）の 1 頁をクリップボードに挟み、ほぼ真上から少し傾けて撮った写真。赤ペンのチェックと丸印の書き込み、照明のむら、手の影、軽いぼけがある。"
+  }
+ ],
+ "assets": [
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B7",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "受入供給設備"
+   ],
+   "name_text": "受入供給設備",
+   "name": "受入供給設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B8",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B7",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E01",
+   "name_text": "計量機（SCL）",
+   "name": "計量機",
+   "tag": "SCL",
+   "install_year": 2002,
+   "spec_texts": [
+    "ロードセル式 30 t",
+    "2 台"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B9",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B7",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E02",
+   "name_text": "ごみクレーン（CRN）",
+   "name": "ごみクレーン",
+   "tag": "CRN",
+   "install_year": 2002,
+   "spec_texts": [
+    "バケット容量 4 m3",
+    "吊上荷重 6 t"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B10",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B7",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E03",
+   "name_text": "可燃性粗大ごみ切断機（SHR）",
+   "name": "可燃性粗大ごみ切断機",
+   "tag": "SHR",
+   "install_year": 2002,
+   "spec_texts": [
+    "2 軸せん断式",
+    "処理能力 5 t/h"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B11",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "燃焼設備"
+   ],
+   "name_text": "燃焼設備",
+   "name": "燃焼設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B12",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B11",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E04",
+   "name_text": "1号炉ストーカ（STK-1）",
+   "name": "1号炉ストーカ",
+   "tag": "STK-1",
+   "install_year": 2002,
+   "spec_texts": [
+    "階段式 3 段",
+    "火格子面積 18 m2"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B13",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B11",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E05",
+   "name_text": "1号炉焼却炉本体（FNC-1）",
+   "name": "1号炉焼却炉本体",
+   "tag": "FNC-1",
+   "install_year": 2002,
+   "spec_texts": [
+    "処理能力 75 t/日",
+    "耐火物 キャスタブル"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B14",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B13",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E05",
+   "name_text": "耐火物",
+   "name": "耐火物",
+   "tag": null,
+   "spec_texts": [
+    "炉壁 キャスタブル",
+    "補修周期 3 年"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B15",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B11",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E06",
+   "name_text": "2号炉ストーカ（STK-2）",
+   "name": "2号炉ストーカ",
+   "tag": "STK-2",
+   "install_year": 2002,
+   "spec_texts": [
+    "階段式 3 段",
+    "火格子面積 18 m2"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B16",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B11",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E07",
+   "name_text": "2号炉焼却炉本体（FNC-2）",
+   "name": "2号炉焼却炉本体",
+   "tag": "FNC-2",
+   "install_year": 2002,
+   "spec_texts": [
+    "処理能力 75 t/日",
+    "耐火物 キャスタブル"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B17",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B16",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E07",
+   "name_text": "耐火物",
+   "name": "耐火物",
+   "tag": null,
+   "spec_texts": [
+    "炉壁 キャスタブル",
+    "補修周期 3 年"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B18",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "燃焼ガス冷却設備"
+   ],
+   "name_text": "燃焼ガス冷却設備",
+   "name": "燃焼ガス冷却設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B19",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B18",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E08",
+   "name_text": "蒸気復水器（CND）",
+   "name": "蒸気復水器",
+   "tag": "CND",
+   "install_year": 2003,
+   "spec_texts": [
+    "空冷式",
+    "処理蒸気量 25 t/h"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B20",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B18",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E09",
+   "name_text": "1号炉ボイラ（BLR-1）",
+   "name": "1号炉ボイラ",
+   "tag": "BLR-1",
+   "install_year": 2002,
+   "spec_texts": [
+    "自然循環式",
+    "蒸気圧力 3.0 MPa"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B21",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B18",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E10",
+   "name_text": "2号炉ボイラ（BLR-2）",
+   "name": "2号炉ボイラ",
+   "tag": "BLR-2",
+   "install_year": 2002,
+   "spec_texts": [
+    "自然循環式",
+    "蒸気圧力 3.0 MPa"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B22",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "排ガス処理設備"
+   ],
+   "name_text": "排ガス処理設備",
+   "name": "排ガス処理設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B23",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B22",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E11",
+   "name_text": "1号炉集じん装置（BGF-1）",
+   "name": "1号炉集じん装置",
+   "tag": "BGF-1",
+   "install_year": 2002,
+   "spec_texts": [
+    "ろ過式",
+    "ろ布面積 1,200 m2"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B24",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B22",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E12",
+   "name_text": "1号炉HCL、SOx 除去設備（DSC-1）",
+   "name": "1号炉HCL、SOx 除去設備",
+   "tag": "DSC-1",
+   "install_year": 2002,
+   "spec_texts": [
+    "乾式 消石灰吹込",
+    "処理ガス量 28,000 m3N/h"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B25",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B22",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E13",
+   "name_text": "1号炉NOx 除去設備（NXR-1）",
+   "name": "1号炉NOx 除去設備",
+   "tag": "NXR-1",
+   "install_year": 2008,
+   "spec_texts": [
+    "無触媒脱硝",
+    "尿素水噴霧"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B26",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B22",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E14",
+   "name_text": "2号炉集じん装置（BGF-2）",
+   "name": "2号炉集じん装置",
+   "tag": "BGF-2",
+   "install_year": 2002,
+   "spec_texts": [
+    "ろ過式",
+    "ろ布面積 1,200 m2"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B27",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B22",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E15",
+   "name_text": "2号炉HCL、SOx 除去設備（DSC-2）",
+   "name": "2号炉HCL、SOx 除去設備",
+   "tag": "DSC-2",
+   "install_year": 2002,
+   "spec_texts": [
+    "乾式 消石灰吹込",
+    "処理ガス量 28,000 m3N/h"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B28",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B22",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E16",
+   "name_text": "2号炉NOx 除去設備（NXR-2）",
+   "name": "2号炉NOx 除去設備",
+   "tag": "NXR-2",
+   "install_year": 2008,
+   "spec_texts": [
+    "無触媒脱硝",
+    "尿素水噴霧"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B29",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "通風設備"
+   ],
+   "name_text": "通風設備",
+   "name": "通風設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B30",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B29",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E17",
+   "name_text": "1号炉押込送風機（FDF-1）",
+   "name": "1号炉押込送風機",
+   "tag": "FDF-1",
+   "install_year": 2002,
+   "spec_texts": [
+    "ターボ形",
+    "風量 1,200 m3/min"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B31",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B30",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E17",
+   "name_text": "電動機",
+   "name": "電動機",
+   "tag": null,
+   "spec_texts": [
+    "90 kW"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B32",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B29",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E18",
+   "name_text": "1号炉誘引通風機（IDF-1）",
+   "name": "1号炉誘引通風機",
+   "tag": "IDF-1",
+   "install_year": 2002,
+   "spec_texts": [
+    "ターボ形",
+    "風量 2,100 m3/min"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B33",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B32",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E18",
+   "name_text": "電動機",
+   "name": "電動機",
+   "tag": null,
+   "spec_texts": [
+    "200 kW 4 極"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B34",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B32",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E18",
+   "name_text": "軸受",
+   "name": "軸受",
+   "tag": null,
+   "spec_texts": [
+    "すべり軸受"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B35",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B29",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E19",
+   "name_text": "2号炉押込送風機（FDF-2）",
+   "name": "2号炉押込送風機",
+   "tag": "FDF-2",
+   "install_year": 2002,
+   "spec_texts": [
+    "ターボ形",
+    "風量 1,200 m3/min"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B36",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B35",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E19",
+   "name_text": "電動機",
+   "name": "電動機",
+   "tag": null,
+   "spec_texts": [
+    "90 kW"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B37",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B35",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E19",
+   "name_text": "旧電動機",
+   "name": "旧電動機",
+   "tag": null,
+   "spec_texts": [
+    "90 kW",
+    "R3.12 電動機取替により撤去、予備品として倉庫保管"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B38",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B29",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E20",
+   "name_text": "2号炉誘引通風機（IDF-2）",
+   "name": "2号炉誘引通風機",
+   "tag": "IDF-2",
+   "install_year": 2002,
+   "spec_texts": [
+    "ターボ形",
+    "風量 2,100 m3/min"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B39",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B38",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E20",
+   "name_text": "電動機",
+   "name": "電動機",
+   "tag": null,
+   "spec_texts": [
+    "200 kW 4 極"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B40",
+    "sheet": "設備台帳"
+   },
+   "kind": "part",
+   "level": 3,
+   "parent": {
+    "cell": "B38",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E20",
+   "name_text": "軸受",
+   "name": "軸受",
+   "tag": null,
+   "spec_texts": [
+    "すべり軸受"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B41",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "余熱利用設備"
+   ],
+   "name_text": "余熱利用設備",
+   "name": "余熱利用設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B42",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B41",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E21",
+   "name_text": "蒸気タービン発電設備（TBN）",
+   "name": "蒸気タービン発電設備",
+   "tag": "TBN",
+   "install_year": 2003,
+   "spec_texts": [
+    "復水式",
+    "定格出力 1,990 kW"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B43",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "灰出し設備"
+   ],
+   "name_text": "灰出し設備",
+   "name": "灰出し設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B44",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B43",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E22",
+   "name_text": "灰クレーン（ACR）",
+   "name": "灰クレーン",
+   "tag": "ACR",
+   "install_year": 2002,
+   "spec_texts": [
+    "バケット容量 2 m3",
+    "吊上荷重 4 t"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B49",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "電気設備"
+   ],
+   "name_text": "電気設備",
+   "name": "電気設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B50",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B49",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E23",
+   "name_text": "受変電配電設備（SUB）",
+   "name": "受変電配電設備",
+   "tag": "SUB",
+   "install_year": 2002,
+   "spec_texts": [
+    "受電 6.6 kV",
+    "変圧器 3 台"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B51",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B49",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E24",
+   "name_text": "発電機（GEN）",
+   "name": "発電機",
+   "tag": "GEN",
+   "install_year": 2003,
+   "spec_texts": [
+    "非常用 ディーゼル",
+    "出力 300 kVA"
+   ]
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B52",
+    "sheet": "設備台帳"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "計装設備"
+   ],
+   "name_text": "計装設備",
+   "name": "計装設備",
+   "tag": null
+  },
+  {
+   "file": "daicho/setsubi-daicho_R8.xlsx",
+   "at": {
+    "cell": "B53",
+    "sheet": "設備台帳"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B52",
+    "sheet": "設備台帳"
+   },
+   "equipment_id": "E25",
+   "name_text": "DCS（DCS）",
+   "name": "DCS",
+   "tag": "DCS",
+   "install_year": 2002,
+   "spec_texts": [
+    "監視操作卓 3 台",
+    "制御盤 4 面"
+   ]
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B8",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "受入供給設備"
+   ],
+   "name_text": "受入供給設備",
+   "name": "受入供給設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B9",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B8",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E01",
+   "name_text": "計量機",
+   "name": "計量機",
+   "tag": "SCL"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B10",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B8",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E02",
+   "name_text": "ごみクレーン",
+   "name": "ごみクレーン",
+   "tag": "CRN"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B11",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B8",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E03",
+   "name_text": "可燃性粗大ごみ切断機",
+   "name": "可燃性粗大ごみ切断機",
+   "tag": "SHR"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B12",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "燃焼設備"
+   ],
+   "name_text": "燃焼設備",
+   "name": "燃焼設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B13",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B12",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E04",
+   "name_text": "ストーカ",
+   "name": "ストーカ",
+   "tag": "STK-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B14",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B12",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E05",
+   "name_text": "焼却炉本体",
+   "name": "焼却炉本体",
+   "tag": "FNC-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B15",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B12",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E06",
+   "name_text": "ストーカ",
+   "name": "ストーカ",
+   "tag": "STK-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B16",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B12",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E07",
+   "name_text": "焼却炉本体",
+   "name": "焼却炉本体",
+   "tag": "FNC-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B17",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "燃焼ガス冷却設備"
+   ],
+   "name_text": "燃焼ガス冷却設備",
+   "name": "燃焼ガス冷却設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B18",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B17",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E08",
+   "name_text": "蒸気復水器",
+   "name": "蒸気復水器",
+   "tag": "CND"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B19",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B17",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E09",
+   "name_text": "ボイラ",
+   "name": "ボイラ",
+   "tag": "BLR-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B20",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B17",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E10",
+   "name_text": "ボイラ",
+   "name": "ボイラ",
+   "tag": "BLR-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B21",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "排ガス処理設備"
+   ],
+   "name_text": "排ガス処理設備",
+   "name": "排ガス処理設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B22",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B21",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E11",
+   "name_text": "集じん装置",
+   "name": "集じん装置",
+   "tag": "BGF-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B23",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B21",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E12",
+   "name_text": "HCL、SOx 除去設備",
+   "name": "HCL、SOx 除去設備",
+   "tag": "DSC-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B24",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B21",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E13",
+   "name_text": "NOx 除去設備",
+   "name": "NOx 除去設備",
+   "tag": "NXR-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B25",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B21",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E14",
+   "name_text": "集じん装置",
+   "name": "集じん装置",
+   "tag": "BGF-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B26",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B21",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E15",
+   "name_text": "HCL、SOx 除去設備",
+   "name": "HCL、SOx 除去設備",
+   "tag": "DSC-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B27",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B21",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E16",
+   "name_text": "NOx 除去設備",
+   "name": "NOx 除去設備",
+   "tag": "NXR-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B28",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "通風設備"
+   ],
+   "name_text": "通風設備",
+   "name": "通風設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B29",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B28",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E17",
+   "name_text": "押込送風機",
+   "name": "押込送風機",
+   "tag": "FDF-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B30",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B28",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E18",
+   "name_text": "誘引通風機",
+   "name": "誘引通風機",
+   "tag": "IDF-1"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B31",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B28",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E19",
+   "name_text": "押込送風機",
+   "name": "押込送風機",
+   "tag": "FDF-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B32",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B28",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E20",
+   "name_text": "誘引通風機",
+   "name": "誘引通風機",
+   "tag": "IDF-2"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B33",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "余熱利用設備"
+   ],
+   "name_text": "余熱利用設備",
+   "name": "余熱利用設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B34",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B33",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E21",
+   "name_text": "蒸気タービン発電設備",
+   "name": "蒸気タービン発電設備",
+   "tag": "TBN"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B35",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "灰出し設備"
+   ],
+   "name_text": "灰出し設備",
+   "name": "灰出し設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B36",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B35",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E22",
+   "name_text": "灰クレーン",
+   "name": "灰クレーン",
+   "tag": "ACR"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B37",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "電気設備"
+   ],
+   "name_text": "電気設備",
+   "name": "電気設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B38",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B37",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E23",
+   "name_text": "受変電配電設備",
+   "name": "受変電配電設備",
+   "tag": "SUB"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B39",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B37",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E24",
+   "name_text": "発電機",
+   "name": "発電機",
+   "tag": "GEN"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B40",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "group",
+   "level": 1,
+   "parent": null,
+   "equipment_id": null,
+   "path": [
+    "計装設備"
+   ],
+   "name_text": "計装設備",
+   "name": "計装設備",
+   "tag": null,
+   "measure": false
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "B41",
+    "sheet": "保全実績・計画"
+   },
+   "kind": "equipment",
+   "level": 2,
+   "parent": {
+    "cell": "B40",
+    "sheet": "保全実績・計画"
+   },
+   "equipment_id": "E25",
+   "name_text": "DCS",
+   "name": "DCS",
+   "tag": "DCS"
+  }
+ ],
+ "marks": [
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E9",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E01",
+   "work_ids": [
+    "W0012"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I9",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E01",
+   "work_ids": [
+    "W0052"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M9",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E01",
+   "work_ids": [
+    "W0079"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q9",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E01",
+   "work_ids": [
+    "W0127"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0009"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0019"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0050"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0077"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0105"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0124"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0141"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0154"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W10",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E02",
+   "work_ids": [
+    "W0181"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G11",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E03",
+   "work_ids": [
+    "W0021"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K11",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E03",
+   "work_ids": [
+    "W0068"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O11",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E03",
+   "work_ids": [
+    "W0107"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S11",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E03",
+   "work_ids": [
+    "W0143"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0001"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0023"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0042"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0060"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0080"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0099"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0116"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0135"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0156"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W13",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E04",
+   "work_ids": [
+    "W0175"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0002",
+    "W0011"
+   ],
+   "symbol": "整・精"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0024"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0043"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0061"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0081"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0100"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0117",
+    "W0126"
+   ],
+   "symbol": "整・精"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0136"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0157"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W14",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E05",
+   "work_ids": [
+    "W0176",
+    "W0183"
+   ],
+   "symbol": "（整・精）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "F15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0013"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0034"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "J15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0053"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0069"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0093"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "P15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0108"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "R15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0128"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0145"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0169"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X15",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E06",
+   "work_ids": [
+    "W0184"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "F16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0014"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0022",
+    "W0035"
+   ],
+   "symbol": "精・整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "J16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0054"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0070"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0094"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "P16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0109"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "R16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0129"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0144"
+   ],
+   "symbol": "精"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0146"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0170"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X16",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E07",
+   "work_ids": [
+    "W0185"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G18",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E08",
+   "work_ids": [
+    "W0029"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M18",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E08",
+   "work_ids": [
+    "W0088"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U18",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E08",
+   "work_ids": [
+    "W0164"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0003"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0025"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0044"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0062"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0082"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0101"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0118"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0137"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0158"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W19",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E09",
+   "work_ids": [
+    "W0177"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "F20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0015"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0036"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "J20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0055"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0071"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0095"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "P20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0110"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "R20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0130"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0147"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0171"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X20",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E10",
+   "work_ids": [
+    "W0186"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0004"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0026"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0045"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0063"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0083"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0102"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0119"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0138"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0159"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W22",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E11",
+   "work_ids": [
+    "W0178"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0005"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0027"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0046"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0064"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0084"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0103"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0120"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0139"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0160"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W23",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E12",
+   "work_ids": [
+    "W0179"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0006"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0028"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0047"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0065"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0085"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0104"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0121"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0140"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0161"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W24",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E13",
+   "work_ids": [
+    "W0180"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "F25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0016"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0037"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "J25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0056"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0072"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0096"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "R25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0131"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0148"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0172"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X25",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E14",
+   "work_ids": [
+    "W0187"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "F26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0017"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0038"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "J26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0057"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0073"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0097"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "P26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0112"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "R26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0132"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0149"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0173"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X26",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E15",
+   "work_ids": [
+    "W0188"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "F27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0018"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0039"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "J27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0058"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0074"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0098"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "P27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0113"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "R27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0133"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0150"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0174"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X27",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E16",
+   "work_ids": [
+    "W0189"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E29",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E17",
+   "work_ids": [
+    "W0007"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I29",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E17",
+   "work_ids": [
+    "W0048"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M29",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E17",
+   "work_ids": [
+    "W0086"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q29",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E17",
+   "work_ids": [
+    "W0122"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U29",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E17",
+   "work_ids": [
+    "W0162"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E30",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E18",
+   "work_ids": [
+    "W0008"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I30",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E18",
+   "work_ids": [
+    "W0049"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M30",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E18",
+   "work_ids": [
+    "W0087"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q30",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E18",
+   "work_ids": [
+    "W0123"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T30",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E18",
+   "work_ids": [
+    "W0153"
+   ],
+   "symbol": "（取）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U30",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E18",
+   "work_ids": [
+    "W0163"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G31",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E19",
+   "work_ids": [
+    "W0040"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "J31",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E19",
+   "work_ids": [
+    "W0059"
+   ],
+   "symbol": "取"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L31",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E19",
+   "work_ids": [
+    "W0075"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "P31",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E19",
+   "work_ids": [
+    "W0114"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T31",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E19",
+   "work_ids": [
+    "W0151"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X31",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E19",
+   "work_ids": [
+    "W0190"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G32",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E20",
+   "work_ids": [
+    "W0041"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "L32",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E20",
+   "work_ids": [
+    "W0076"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "P32",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E20",
+   "work_ids": [
+    "W0115"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "T32",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "planned",
+   "equipment_id": "E20",
+   "work_ids": [
+    "W0152"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "X32",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E20",
+   "work_ids": [
+    "W0191"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G34",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E21",
+   "work_ids": [
+    "W0030"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M34",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E21",
+   "work_ids": [
+    "W0089"
+   ],
+   "symbol": "整"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U34",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E21",
+   "work_ids": [
+    "W0165"
+   ],
+   "symbol": "（整）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "E36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2019,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0010"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0020"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "I36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2021,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0051"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "K36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2022,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0067"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0078"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "O36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2024,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0106"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "Q36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0125"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "S36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2026,
+   "status": "actual",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0142"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0155"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "W36",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2028,
+   "status": "planned",
+   "equipment_id": "E22",
+   "work_ids": [
+    "W0182"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G38",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E23",
+   "work_ids": [
+    "W0031"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M38",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E23",
+   "work_ids": [
+    "W0090"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U38",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E23",
+   "work_ids": [
+    "W0166"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G39",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E24",
+   "work_ids": [
+    "W0032"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M39",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E24",
+   "work_ids": [
+    "W0091"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U39",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E24",
+   "work_ids": [
+    "W0167"
+   ],
+   "symbol": "（点）"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "G41",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2020,
+   "status": "actual",
+   "equipment_id": "E25",
+   "work_ids": [
+    "W0033"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "M41",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2023,
+   "status": "actual",
+   "equipment_id": "E25",
+   "work_ids": [
+    "W0092"
+   ],
+   "symbol": "点"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "R41",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2025,
+   "status": "actual",
+   "equipment_id": "E25",
+   "work_ids": [
+    "W0134"
+   ],
+   "symbol": "更"
+  },
+  {
+   "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+   "at": {
+    "cell": "U41",
+    "sheet": "保全実績・計画"
+   },
+   "fiscal_year": 2027,
+   "status": "planned",
+   "equipment_id": "E25",
+   "work_ids": [
+    "W0168"
+   ],
+   "symbol": "（点）"
+  }
+ ],
+ "events": [
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 4,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0060"
+   ],
+   "start": "2022-04-06",
+   "end": "2022-04-17",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 5,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0061"
+   ],
+   "start": "2022-04-06",
+   "end": "2022-04-17",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 6,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0062"
+   ],
+   "start": "2022-04-06",
+   "end": "2022-04-17",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 7,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "work_ids": [
+    "W0063",
+    "W0064",
+    "W0065"
+   ],
+   "start": "2022-04-06",
+   "end": "2022-04-17",
+   "man_days": 84,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 8,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0067"
+   ],
+   "start": "2022-05-26",
+   "end": "2022-05-28",
+   "man_days": 6,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 9,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E03"
+   ],
+   "work_ids": [
+    "W0068"
+   ],
+   "start": "2022-07-14",
+   "end": "2022-07-16",
+   "man_days": 3,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 10,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E06"
+   ],
+   "work_ids": [
+    "W0069"
+   ],
+   "start": "2022-10-05",
+   "end": "2022-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 11,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0070"
+   ],
+   "start": "2022-10-05",
+   "end": "2022-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 12,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E10"
+   ],
+   "work_ids": [
+    "W0071"
+   ],
+   "start": "2022-10-05",
+   "end": "2022-10-16",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 13,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E14",
+    "E15",
+    "E16"
+   ],
+   "work_ids": [
+    "W0072",
+    "W0073",
+    "W0074"
+   ],
+   "start": "2022-10-05",
+   "end": "2022-10-16",
+   "man_days": 72,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 14,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E19"
+   ],
+   "work_ids": [
+    "W0075"
+   ],
+   "start": "2022-10-05",
+   "end": "2022-10-16",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 15,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment_ids": [
+    "E20"
+   ],
+   "work_ids": [
+    "W0076"
+   ],
+   "start": "2022-10-05",
+   "end": "2022-10-16",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 16,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E02"
+   ],
+   "work_ids": [
+    "W0077"
+   ],
+   "start": "2023-05-12",
+   "end": "2023-05-14",
+   "man_days": 9,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 17,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0078"
+   ],
+   "start": "2023-05-26",
+   "end": "2023-05-28",
+   "man_days": 6,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 18,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E01"
+   ],
+   "work_ids": [
+    "W0079"
+   ],
+   "start": "2023-07-08",
+   "end": "2023-07-09",
+   "man_days": 4,
+   "days": 2,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 19,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0080"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 20,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0081"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 21,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0082"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 22,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "work_ids": [
+    "W0083",
+    "W0084",
+    "W0085"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 84,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 23,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E17"
+   ],
+   "work_ids": [
+    "W0086"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 24,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E18"
+   ],
+   "work_ids": [
+    "W0087"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 25,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E08"
+   ],
+   "work_ids": [
+    "W0088"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 56,
+   "days": 14,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 26,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E21"
+   ],
+   "work_ids": [
+    "W0089"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 84,
+   "days": 14,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 27,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E23",
+    "E24",
+    "E25"
+   ],
+   "work_ids": [
+    "W0090",
+    "W0091",
+    "W0092"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 154,
+   "days": 14,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 28,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E06"
+   ],
+   "work_ids": [
+    "W0093"
+   ],
+   "start": "2023-09-30",
+   "end": "2023-10-11",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 29,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0094"
+   ],
+   "start": "2023-09-30",
+   "end": "2023-10-11",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 30,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E10"
+   ],
+   "work_ids": [
+    "W0095"
+   ],
+   "start": "2023-09-30",
+   "end": "2023-10-11",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 31,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E14",
+    "E15",
+    "E16"
+   ],
+   "work_ids": [
+    "W0096",
+    "W0097",
+    "W0098"
+   ],
+   "start": "2023-09-30",
+   "end": "2023-10-11",
+   "man_days": 60,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 32,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0099"
+   ],
+   "start": "2024-04-06",
+   "end": "2024-04-17",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 33,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0100"
+   ],
+   "start": "2024-04-06",
+   "end": "2024-04-17",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 34,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0101"
+   ],
+   "start": "2024-04-06",
+   "end": "2024-04-17",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 35,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "work_ids": [
+    "W0102",
+    "W0103",
+    "W0104"
+   ],
+   "start": "2024-04-06",
+   "end": "2024-04-17",
+   "man_days": 48,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 36,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E02"
+   ],
+   "work_ids": [
+    "W0105"
+   ],
+   "start": "2024-05-12",
+   "end": "2024-05-14",
+   "man_days": 9,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 37,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0106"
+   ],
+   "start": "2024-05-26",
+   "end": "2024-05-28",
+   "man_days": 6,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 38,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E03"
+   ],
+   "work_ids": [
+    "W0107"
+   ],
+   "start": "2024-07-14",
+   "end": "2024-07-16",
+   "man_days": 6,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 39,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E06"
+   ],
+   "work_ids": [
+    "W0108"
+   ],
+   "start": "2024-10-05",
+   "end": "2024-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 40,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0109"
+   ],
+   "start": "2024-10-05",
+   "end": "2024-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 41,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E10"
+   ],
+   "work_ids": [
+    "W0110"
+   ],
+   "start": "2024-10-05",
+   "end": "2024-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 42,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E15",
+    "E16"
+   ],
+   "work_ids": [
+    "W0112",
+    "W0113"
+   ],
+   "start": "2024-10-05",
+   "end": "2024-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 43,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E19"
+   ],
+   "work_ids": [
+    "W0114"
+   ],
+   "start": "2024-10-05",
+   "end": "2024-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 44,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment_ids": [
+    "E20"
+   ],
+   "work_ids": [
+    "W0115"
+   ],
+   "start": "2024-10-05",
+   "end": "2024-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 45,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0116"
+   ],
+   "start": "2025-04-06",
+   "end": "2025-04-17",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 46,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0117"
+   ],
+   "start": "2025-04-06",
+   "end": "2025-04-17",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 47,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0118"
+   ],
+   "start": "2025-04-06",
+   "end": "2025-04-17",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 48,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "work_ids": [
+    "W0119",
+    "W0120",
+    "W0121"
+   ],
+   "start": "2025-04-06",
+   "end": "2025-04-17",
+   "man_days": 60,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 49,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E17"
+   ],
+   "work_ids": [
+    "W0122"
+   ],
+   "start": "2025-04-06",
+   "end": "2025-04-17",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 50,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E18"
+   ],
+   "work_ids": [
+    "W0123"
+   ],
+   "start": "2025-04-06",
+   "end": "2025-04-17",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 51,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E02"
+   ],
+   "work_ids": [
+    "W0124"
+   ],
+   "start": "2025-05-12",
+   "end": "2025-05-14",
+   "man_days": 9,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 52,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0125"
+   ],
+   "start": "2025-05-26",
+   "end": "2025-05-28",
+   "man_days": 6,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 53,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0126"
+   ],
+   "start": "2025-06-01",
+   "end": "2025-06-05",
+   "man_days": 20,
+   "days": 5,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 55,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E01"
+   ],
+   "work_ids": [
+    "W0127"
+   ],
+   "start": "2025-07-08",
+   "end": "2025-07-09",
+   "man_days": 4,
+   "days": 2,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 56,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E06"
+   ],
+   "work_ids": [
+    "W0128"
+   ],
+   "start": "2025-10-05",
+   "end": "2025-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 57,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0129"
+   ],
+   "start": "2025-10-05",
+   "end": "2025-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 58,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E10"
+   ],
+   "work_ids": [
+    "W0130"
+   ],
+   "start": "2025-10-05",
+   "end": "2025-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 59,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E14",
+    "E15",
+    "E16"
+   ],
+   "work_ids": [
+    "W0131",
+    "W0132",
+    "W0133"
+   ],
+   "start": "2025-10-05",
+   "end": "2025-10-16",
+   "man_days": 60,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 60,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment_ids": [
+    "E25"
+   ],
+   "work_ids": [
+    "W0134"
+   ],
+   "start": "2025-10-14",
+   "end": "2026-02-27",
+   "man_days": 548,
+   "days": 137,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 62,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-17",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 63,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-17",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 64,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-17",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 65,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "work_ids": [
+    "W0138",
+    "W0139",
+    "W0140"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-17",
+   "man_days": 60,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 66,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E02"
+   ],
+   "work_ids": [
+    "W0141"
+   ],
+   "start": "2026-05-12",
+   "end": "2026-05-14",
+   "man_days": 9,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 67,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0142"
+   ],
+   "start": "2026-05-26",
+   "end": "2026-05-28",
+   "man_days": 6,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 68,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E03"
+   ],
+   "work_ids": [
+    "W0143"
+   ],
+   "start": "2026-07-14",
+   "end": "2026-07-16",
+   "man_days": 9,
+   "days": 3,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 69,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0144"
+   ],
+   "start": "2026-08-17",
+   "end": "2026-08-21",
+   "man_days": 25,
+   "days": 5,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 71,
+    "sheet": null
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E06"
+   ],
+   "work_ids": [
+    "W0145"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 72,
+    "sheet": null
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0146"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 73,
+    "sheet": null
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E10"
+   ],
+   "work_ids": [
+    "W0147"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 74,
+    "sheet": null
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E14",
+    "E15",
+    "E16"
+   ],
+   "work_ids": [
+    "W0148",
+    "W0149",
+    "W0150"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 60,
+   "days": 12,
+   "bundle": true
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 75,
+    "sheet": null
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E19"
+   ],
+   "work_ids": [
+    "W0151"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 76,
+    "sheet": null
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E20"
+   ],
+   "work_ids": [
+    "W0152"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "daily/hozen-system_WO-export_2022-2026.csv",
+   "at": {
+    "row": 77,
+    "sheet": null
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E18"
+   ],
+   "work_ids": [
+    "W0153"
+   ],
+   "start": "2027-02-01",
+   "end": "2027-02-26",
+   "man_days": 130,
+   "days": 26,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 5,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-06",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 6,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-06",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 7,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-06",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 8,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-06",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 9,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-06",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 10,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-06",
+   "end": "2026-04-06",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 11,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-07",
+   "end": "2026-04-07",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 12,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-07",
+   "end": "2026-04-07",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 13,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-07",
+   "end": "2026-04-07",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 14,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-07",
+   "end": "2026-04-07",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 15,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-07",
+   "end": "2026-04-07",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 16,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-07",
+   "end": "2026-04-07",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 17,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-08",
+   "end": "2026-04-08",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 18,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-08",
+   "end": "2026-04-08",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 19,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-08",
+   "end": "2026-04-08",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 20,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-08",
+   "end": "2026-04-08",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 21,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-08",
+   "end": "2026-04-08",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 22,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-08",
+   "end": "2026-04-08",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 23,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-09",
+   "end": "2026-04-09",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 24,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-09",
+   "end": "2026-04-09",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 25,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-09",
+   "end": "2026-04-09",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 26,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-09",
+   "end": "2026-04-09",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 27,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-09",
+   "end": "2026-04-09",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 28,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-09",
+   "end": "2026-04-09",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 29,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-10",
+   "end": "2026-04-10",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 30,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-10",
+   "end": "2026-04-10",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 31,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-10",
+   "end": "2026-04-10",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 32,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-10",
+   "end": "2026-04-10",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 33,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-10",
+   "end": "2026-04-10",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 34,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-10",
+   "end": "2026-04-10",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 35,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-11",
+   "end": "2026-04-11",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 36,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-11",
+   "end": "2026-04-11",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 37,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-11",
+   "end": "2026-04-11",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 38,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-11",
+   "end": "2026-04-11",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 39,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-11",
+   "end": "2026-04-11",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 40,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-11",
+   "end": "2026-04-11",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 41,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-12",
+   "end": "2026-04-12",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 42,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-12",
+   "end": "2026-04-12",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 43,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-12",
+   "end": "2026-04-12",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 44,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-12",
+   "end": "2026-04-12",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 45,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-12",
+   "end": "2026-04-12",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 46,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-12",
+   "end": "2026-04-12",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 47,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-13",
+   "end": "2026-04-13",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 48,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-13",
+   "end": "2026-04-13",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 49,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-13",
+   "end": "2026-04-13",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 50,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-13",
+   "end": "2026-04-13",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 51,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-13",
+   "end": "2026-04-13",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 52,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-13",
+   "end": "2026-04-13",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 53,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-14",
+   "end": "2026-04-14",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 54,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-14",
+   "end": "2026-04-14",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 55,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-14",
+   "end": "2026-04-14",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 56,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-14",
+   "end": "2026-04-14",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 57,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-14",
+   "end": "2026-04-14",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 58,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-14",
+   "end": "2026-04-14",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 59,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-15",
+   "end": "2026-04-15",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 60,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-15",
+   "end": "2026-04-15",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 61,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-15",
+   "end": "2026-04-15",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 62,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-15",
+   "end": "2026-04-15",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 63,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-15",
+   "end": "2026-04-15",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 64,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-15",
+   "end": "2026-04-15",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 65,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-16",
+   "end": "2026-04-16",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 66,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-16",
+   "end": "2026-04-16",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 67,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-16",
+   "end": "2026-04-16",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 68,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-16",
+   "end": "2026-04-16",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 69,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-16",
+   "end": "2026-04-16",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 70,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-16",
+   "end": "2026-04-16",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 71,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0135"
+   ],
+   "start": "2026-04-17",
+   "end": "2026-04-17",
+   "man_days": 4,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 72,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0136"
+   ],
+   "start": "2026-04-17",
+   "end": "2026-04-17",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 73,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0137"
+   ],
+   "start": "2026-04-17",
+   "end": "2026-04-17",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 74,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0138"
+   ],
+   "start": "2026-04-17",
+   "end": "2026-04-17",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 75,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0139"
+   ],
+   "start": "2026-04-17",
+   "end": "2026-04-17",
+   "man_days": 1,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 76,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0140"
+   ],
+   "start": "2026-04-17",
+   "end": "2026-04-17",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 78,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E02"
+   ],
+   "work_ids": [
+    "W0141"
+   ],
+   "start": "2026-05-12",
+   "end": "2026-05-12",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 79,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E02"
+   ],
+   "work_ids": [
+    "W0141"
+   ],
+   "start": "2026-05-13",
+   "end": "2026-05-13",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 80,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E02"
+   ],
+   "work_ids": [
+    "W0141"
+   ],
+   "start": "2026-05-14",
+   "end": "2026-05-14",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 81,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0142"
+   ],
+   "start": "2026-05-26",
+   "end": "2026-05-26",
+   "man_days": 2,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 82,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0142"
+   ],
+   "start": "2026-05-27",
+   "end": "2026-05-27",
+   "man_days": 2,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 83,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E22"
+   ],
+   "work_ids": [
+    "W0142"
+   ],
+   "start": "2026-05-28",
+   "end": "2026-05-28",
+   "man_days": 2,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 85,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E03"
+   ],
+   "work_ids": [
+    "W0143"
+   ],
+   "start": "2026-07-14",
+   "end": "2026-07-14",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 86,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E03"
+   ],
+   "work_ids": [
+    "W0143"
+   ],
+   "start": "2026-07-15",
+   "end": "2026-07-15",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 87,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E03"
+   ],
+   "work_ids": [
+    "W0143"
+   ],
+   "start": "2026-07-16",
+   "end": "2026-07-16",
+   "man_days": 3,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 89,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0144"
+   ],
+   "start": "2026-08-17",
+   "end": "2026-08-17",
+   "man_days": 5,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 90,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0144"
+   ],
+   "start": "2026-08-18",
+   "end": "2026-08-18",
+   "man_days": 5,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 91,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0144"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 5,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 92,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0144"
+   ],
+   "start": "2026-08-20",
+   "end": "2026-08-20",
+   "man_days": 5,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+   "at": {
+    "row": 93,
+    "sheet": null
+   },
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0144"
+   ],
+   "start": "2026-08-21",
+   "end": "2026-08-21",
+   "man_days": 5,
+   "days": null,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "1",
+     "1号炉ストーカ〔STK-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E04"
+   ],
+   "work_ids": [
+    "W0080"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "2",
+     "1号炉焼却炉本体〔FNC-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E05"
+   ],
+   "work_ids": [
+    "W0081"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "3",
+     "1号炉ボイラ〔BLR-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E09"
+   ],
+   "work_ids": [
+    "W0082"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "4",
+     "蒸気復水器〔CND〕",
+     "R5.9.14～R5.9.27"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E08"
+   ],
+   "work_ids": [
+    "W0088"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 56,
+   "days": 14,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "5",
+     "1号炉集じん装置〔BGF-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E11"
+   ],
+   "work_ids": [
+    "W0083"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "6",
+     "1号炉HCL、SOx 除去設備〔DSC-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E12"
+   ],
+   "work_ids": [
+    "W0084"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 12,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "7",
+     "1号炉NOx 除去設備〔NXR-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E13"
+   ],
+   "work_ids": [
+    "W0085"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "8",
+     "1号炉押込送風機〔FDF-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E17"
+   ],
+   "work_ids": [
+    "W0086"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "9",
+     "1号炉誘引通風機〔IDF-1〕",
+     "R5.8.31～R5.9.11"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E18"
+   ],
+   "work_ids": [
+    "W0087"
+   ],
+   "start": "2023-08-31",
+   "end": "2023-09-11",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "10",
+     "蒸気タービン発電設備〔TBN〕",
+     "R5.9.14～R5.9.27"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E21"
+   ],
+   "work_ids": [
+    "W0089"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 84,
+   "days": 14,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "11",
+     "受変電配電設備〔SUB〕",
+     "R5.9.14～R5.9.27"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E23"
+   ],
+   "work_ids": [
+    "W0090"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 56,
+   "days": 14,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "12",
+     "発電機〔GEN〕",
+     "R5.9.14～R5.9.27"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E24"
+   ],
+   "work_ids": [
+    "W0091"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 56,
+   "days": 14,
+   "bundle": false
+  },
+  {
+   "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+   "at": {
+    "texts": [
+     "13",
+     "DCS〔DCS〕",
+     "R5.9.14～R5.9.27"
+    ]
+   },
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment_ids": [
+    "E25"
+   ],
+   "work_ids": [
+    "W0092"
+   ],
+   "start": "2023-09-14",
+   "end": "2023-09-27",
+   "man_days": 42,
+   "days": 14,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "1",
+     "2号炉ストーカ〔STK-2〕",
+     "定期整備（分解）"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E06"
+   ],
+   "work_ids": [
+    "W0145"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "2",
+     "2号炉焼却炉本体〔FNC-2〕",
+     "定期整備（分解）"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E07"
+   ],
+   "work_ids": [
+    "W0146"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "3",
+     "2号炉ボイラ〔BLR-2〕",
+     "定期整備（分解）"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E10"
+   ],
+   "work_ids": [
+    "W0147"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 48,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "4",
+     "2号炉集じん装置〔BGF-2〕",
+     "排ガス処理設備の点検"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E14"
+   ],
+   "work_ids": [
+    "W0148"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "5",
+     "2号炉HCL、SOx 除去設備〔DSC-2〕",
+     "排ガス処理設備の点検"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E15"
+   ],
+   "work_ids": [
+    "W0149"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 24,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "6",
+     "2号炉NOx 除去設備〔NXR-2〕",
+     "排ガス処理設備の点検"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E16"
+   ],
+   "work_ids": [
+    "W0150"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 12,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "7",
+     "2号炉押込送風機〔FDF-2〕",
+     "通風機の分解整備"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E19"
+   ],
+   "work_ids": [
+    "W0151"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  },
+  {
+   "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+   "at": {
+    "texts": [
+     "8",
+     "2号炉誘引通風機〔IDF-2〕",
+     "通風機の分解整備"
+    ]
+   },
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment_ids": [
+    "E20"
+   ],
+   "work_ids": [
+    "W0152"
+   ],
+   "start": "2026-10-05",
+   "end": "2026-10-16",
+   "man_days": 36,
+   "days": 12,
+   "bundle": false
+  }
+ ]
+}

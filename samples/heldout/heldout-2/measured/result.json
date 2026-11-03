@@ -1,0 +1,490 @@
+{
+ "schema": "moyai.heldout.result/0",
+ "set": "heldout-2",
+ "bundle": "d3c4e5c7c266a13ff6d210bcbc763e552d5ecff90304e4b667767e2c8d46f08a",
+ "reader": {
+  "tag": "reader-freeze-2",
+  "commit": "0e4a641a773e53d523e2e06df17b7a1bc235dcf0",
+  "src": "66298b9308d1bb87d49c9444478f28a48f2e8e32",
+  "packs": "7ea73cee50fb8002e5635d494ca55452a6317c6a"
+ },
+ "measuredAt": "2026-11-03T23:29:56.243Z",
+ "result": {
+  "set": "heldout-2",
+  "files": [
+   {
+    "file": "daicho/setsubi-daicho_R8.xlsx",
+    "format": "xlsx",
+    "kind": "ledger",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 0,
+    "rows": {
+     "input": 52,
+     "imported": 42,
+     "excluded": 10,
+     "unresolved": 0,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx",
+    "format": "xlsx",
+    "kind": "star",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 0,
+    "rows": {
+     "input": 43,
+     "imported": 34,
+     "excluded": 9,
+     "unresolved": 0,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "daily/hozen-system_WO-export_2022-2026.csv",
+    "format": "csv",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 713,
+    "rows": {
+     "input": 75,
+     "imported": 0,
+     "excluded": 5,
+     "unresolved": 70,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "daily/sagyo-nippo-shukei_R8-kamiki.csv",
+    "format": "csv",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 86,
+    "rows": {
+     "input": 94,
+     "imported": 0,
+     "excluded": 8,
+     "unresolved": 86,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "reports/kanryo-hokoku_R5_1go-zenkyushi.pdf",
+    "format": "pdf",
+    "kind": "report",
+    "leak": 15,
+    "leakAgainst": "元の xlsx（列の位置のずれ 3）",
+    "leakDetail": [
+     "xlsx の 2 行の「【架空】みどり台クリーンセンター 所長 様」が PDF の 2 行に無い",
+     "PDF の 2 行の「【架空】みどり台クリーンセンター」が xlsx の 2 行に無い",
+     "PDF の 2 行の「所長 様」が xlsx の 2 行に無い",
+     "xlsx の 3 行の「受託者 【架空】みどり保全 現場代理人」が PDF の 3 行に無い",
+     "PDF の 3 行の「受託者」が xlsx の 3 行に無い",
+     "PDF の 3 行の「【架空】みどり保全 現場代理人」が xlsx の 3 行に無い",
+     "xlsx の 10 行の「1. 業 務 名 令和5年度 焼却施設定期整備業務（1号炉定期整備及び全休止整備）」が PDF の 10 行に無い",
+     "PDF の 10 行の「1. 業 務 名」が xlsx の 10 行に無い",
+     "PDF の 10 行の「令和5年度 焼却施設定期整備業務（1号炉定期整備及び全休止整備）」が xlsx の 10 行に無い",
+     "xlsx の 11 行の「2. 履行期間 令和5年8月31日 から 令和5年9月27日 まで」が PDF の 11 行に無い",
+     "PDF の 11 行の「2. 履行期間」が xlsx の 11 行に無い",
+     "PDF の 11 行の「令和5年8月31日 から 令和5年9月27日 まで」が xlsx の 11 行に無い",
+     "xlsx の 12 行の「3. 実施内容 下表のとおり（延人員は 1 人 1 日 8 時間で換算）」が PDF の 12 行に無い",
+     "PDF の 12 行の「3. 実施内容」が xlsx の 12 行に無い",
+     "PDF の 12 行の「下表のとおり（延人員は 1 人 1 日 8 時間で換算）」が xlsx の 12 行に無い"
+    ],
+    "unresolved": 90,
+    "rows": {
+     "input": 40,
+     "imported": 0,
+     "excluded": 20,
+     "unresolved": 20,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "reports/sekou-keikaku_R8_2go-teiki.pdf",
+    "format": "pdf",
+    "kind": "report",
+    "leak": 167,
+    "leakAgainst": "元の xlsx（列の位置のずれ 5）",
+    "leakDetail": [
+     "中身のある行の数が違う（xlsx 17・PDF 20）",
+     "xlsx の 1 行の「【架空】令和8年度 2号炉定期整備工事 実施工程表（予定）」が PDF の 1 行に無い",
+     "PDF の 1 行の「【架空】令和8年度 2号炉定期整備工事」が xlsx の 1 行に無い",
+     "PDF の 1 行の「実施工程表（予定）」が xlsx の 1 行に無い",
+     "xlsx の 4 行の「予定工期：令和8年10月5日（月）～ 令和8年10月16日（金） 12日間（炉停止期間中は土日も作業）」が PDF の 4 行に無い",
+     "PDF の 4 行の「予定工期：令和8年10月5日（月）～ 令和8年10月16日（金）」が xlsx の 4 行に無い",
+     "PDF の 4 行の「12日間（炉停止期間中は土日も作業）」が xlsx の 4 行に無い",
+     "xlsx の 5 行の「施 工：【架空】みどり保全」が PDF の 5 行に無い",
+     "PDF の 5 行の「施」が xlsx の 5 行に無い",
+     "PDF の 5 行の「工：【架空】みどり保全」が xlsx の 5 行に無い",
+     "xlsx の 7 行の「No.」が PDF の 7 行に無い",
+     "xlsx の 7 行の「工種」が PDF の 7 行に無い",
+     "xlsx の 7 行の「機器名称〔番号〕」が PDF の 7 行に無い",
+     "xlsx の 7 行の「作業内容」が PDF の 7 行に無い",
+     "xlsx の 7 行の「人員 (人/日)」が PDF の 7 行に無い",
+     "xlsx の 7 行の「日数」が PDF の 7 行に無い",
+     "xlsx の 7 行の「延人員 (人)」が PDF の 7 行に無い",
+     "xlsx の 7 行の「備考」が PDF の 7 行に無い",
+     "xlsx の 8 行の「5 月」が PDF の 8 行に無い",
+     "xlsx の 8 行の「6 火」が PDF の 8 行に無い",
+     "xlsx の 8 行の「7 水」が PDF の 8 行に無い",
+     "xlsx の 8 行の「8 木」が PDF の 8 行に無い",
+     "xlsx の 8 行の「9 金」が PDF の 8 行に無い",
+     "xlsx の 8 行の「10 土」が PDF の 8 行に無い",
+     "xlsx の 8 行の「11 日」が PDF の 8 行に無い",
+     "xlsx の 8 行の「12 月」が PDF の 8 行に無い",
+     "xlsx の 8 行の「13 火」が PDF の 8 行に無い",
+     "xlsx の 8 行の「14 水」が PDF の 8 行に無い",
+     "xlsx の 8 行の「15 木」が PDF の 8 行に無い",
+     "xlsx の 8 行の「16 金」が PDF の 8 行に無い",
+     "PDF の 8 行の「人員」が xlsx の 8 行に無い",
+     "PDF の 8 行の「延人員」が xlsx の 8 行に無い",
+     "xlsx の 9 行の「1」が PDF の 9 行に無い",
+     "xlsx の 9 行の「燃焼設備」が PDF の 9 行に無い",
+     "xlsx の 9 行の「2号炉ストーカ〔STK-2〕」が PDF の 9 行に無い",
+     "xlsx の 9 行の「定期整備（分解）」が PDF の 9 行に無い",
+     "xlsx の 9 行の「4」が PDF の 9 行に無い",
+     "xlsx の 9 行の「12」が PDF の 9 行に無い",
+     "xlsx の 9 行の「48」が PDF の 9 行に無い",
+     "PDF の 9 行の「No.」が xlsx の 9 行に無い",
+     "PDF の 9 行の「工種」が xlsx の 9 行に無い",
+     "PDF の 9 行の「機器名称〔番号〕」が xlsx の 9 行に無い",
+     "PDF の 9 行の「作業内容」が xlsx の 9 行に無い",
+     "PDF の 9 行の「日数」が xlsx の 9 行に無い",
+     "PDF の 9 行の「備考」が xlsx の 9 行に無い",
+     "xlsx の 10 行の「2」が PDF の 10 行に無い",
+     "xlsx の 10 行の「燃焼設備」が PDF の 10 行に無い",
+     "xlsx の 10 行の「2号炉焼却炉本体〔FNC-2〕」が PDF の 10 行に無い",
+     "xlsx の 10 行の「定期整備（分解）」が PDF の 10 行に無い",
+     "xlsx の 10 行の「4」が PDF の 10 行に無い"
+    ],
+    "unresolved": 28,
+    "rows": {
+     "input": 20,
+     "imported": 8,
+     "excluded": 9,
+     "unresolved": 3,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "photos/IMG_20261003_0841.jpg",
+    "format": "jpg",
+    "kind": "photo",
+    "leak": null,
+    "leakAgainst": null,
+    "leakDetail": [],
+    "unresolved": null,
+    "rows": null,
+    "accuracy": null,
+    "rejected": "読んでいない（写真は AI が読む）"
+   }
+  ],
+  "asked": 63,
+  "answered": 22,
+  "openAtEnd": [
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 A（見出し「出力日時」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「2026/10/01 09:15」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 C（見出し「抽出条件」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「着手日 2022/04/01～2027/03/31、状態＝完了・計画中」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 I（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 J（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 K（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 L（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 M（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 A（見出し「WO-2025-0022」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「完了」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 C（見出し「SCL」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「計量機」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 E（見出し「計量機の定期検査」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 F（見出し「点検」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 I（見出し「2」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 K（見出し「32:00」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 L（見出し「委託」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 M（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 A（見出し「WO-2026-0001」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「完了」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 C（見出し「STK-1」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「1号炉ストーカ」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 E（見出し「定期整備（分解）」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 F（見出し「整備」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 I（見出し「12」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 K（見出し「384:00」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 L（見出し「委託」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 M（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 A（見出し「WO-2026-0022」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「計画中」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 C（見出し「STK-2」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「2号炉ストーカ」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 E（見出し「定期整備（分解）」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 F（見出し「整備」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 I（見出し「12」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 J（見出し「384:00」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 L（見出し「委託」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 M（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「曜」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「設備／機器〔番号〕」）の役目が決まらない"
+   }
+  ],
+  "unresolvedBefore": 2019,
+  "unresolvedAfter": 917,
+  "planMade": false,
+  "blockers": [
+   "未解決のセル 917",
+   "答えの無い質問 41"
+  ],
+  "plan": null,
+  "markWorkCount": null,
+  "recovery": {
+   "denominator": 142,
+   "together": 0,
+   "inPlan": 0,
+   "manDays": {
+    "correct": 0,
+    "total": 63
+   },
+   "days": {
+    "correct": 0,
+    "total": 83
+   },
+   "marksOnly": 142,
+   "notCounted": {},
+   "misses": [
+    "作業 W0001（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0002（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0003（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0004（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0005（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0006（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0007（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0008（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0009（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0010（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0011（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0012（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0013（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0014（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0015（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0016（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0017（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0018（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0019（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0020（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0021（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0022（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0023（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0024（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0025（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0026（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0027（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0028（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0029（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0030（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0031（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0032（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0033（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0034（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0035（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0036（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0037（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0038（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0039（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0040（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0041（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0042（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0043（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0044（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0045（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0046（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0047（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0048（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0049（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない",
+    "作業 W0050（hoshitori/hozen-jisseki-keikaku_R1-R10.xlsx）：1 つの明細にそろっていない"
+   ]
+  },
+  "unplaced": []
+ }
+}
