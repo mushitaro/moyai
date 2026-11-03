@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { sha256Hex, type BridgeClient, type ConnectionState } from "../bridge-client";
 import { ERROR_TEXT, TEXT } from "../text";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
+import { CHART_HASH } from "../chart/route";
 
 function useConnection(client: BridgeClient): { state: ConnectionState; dropped: number } {
   const [v, setV] = useState<{ state: ConnectionState; dropped: number }>({ state: { kind: "connecting" }, dropped: 0 });
@@ -133,6 +134,7 @@ export function Home({ client }: { client: BridgeClient }) {
           </Text>
         )}
         <Text>{TEXT.home.lead}</Text>
+        <Anchor href={CHART_HASH}>{TEXT.home.chartLink}</Anchor>
         <Anchor href={APP_PAGES.selftest}>{TEXT.home.selftestLink}</Anchor>
       </Stack>
 

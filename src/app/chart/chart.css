@@ -1,0 +1,87 @@
+/* 星取表の印と行のクラス。色は theme.css の変数だけを使う（plan §2.2 の印と色の表）。 */
+
+.moyai-chart-grid {
+  height: 100%;
+  width: 100%;
+}
+
+.moyai-fold-header {
+  all: unset;
+  cursor: pointer;
+  font-weight: 700;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moyai-fold-header:focus-visible {
+  outline: 2px solid var(--moyai-accent);
+  outline-offset: 2px;
+}
+.moyai-fold-header[data-folded="true"] {
+  color: var(--moyai-accent);
+}
+
+.moyai-lv {
+  background: var(--moyai-chart-level-bg);
+}
+.moyai-lv-own {
+  font-weight: 700;
+}
+.moyai-lv-folded {
+  color: var(--moyai-muted);
+}
+
+.moyai-row-unmapped .moyai-lv,
+.moyai-row-unmapped .moyai-mark {
+  background: var(--moyai-chart-unmapped-bg);
+}
+
+/* 印：実施 ●・計画 ○・両方 ◎ は本文の色（色の無い印刷でも形で分かる） */
+.moyai-mark {
+  text-align: center;
+  color: var(--moyai-mark-fg);
+  font-size: 15px;
+  padding: 0 !important;
+}
+
+/* 畳んだ行のまとめ：薄い印＋台数 */
+.moyai-mark-summary {
+  color: var(--moyai-mark-summary);
+  font-size: 13px;
+}
+
+/* 変更（調整後）：印の右肩の点＋セルの罫 */
+.moyai-mark-changed {
+  box-shadow: inset 0 0 0 2px var(--moyai-mark-changed);
+  position: relative;
+}
+.moyai-mark-changed::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--moyai-mark-changed);
+}
+
+/* 要確認（写真から読んだもの）：印の前の「?」と黄 */
+.moyai-mark-review {
+  background: var(--moyai-mark-review-bg);
+  color: var(--moyai-mark-review-fg);
+}
+
+.moyai-fy-group {
+  font-weight: 700;
+}
+
+.moyai-chart-side {
+  width: 340px;
+  flex: none;
+  overflow: auto;
+  border-left: 1px solid var(--moyai-border);
+  padding: 12px;
+  background: var(--moyai-surface);
+}

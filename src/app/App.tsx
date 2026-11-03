@@ -1,11 +1,15 @@
-// 画面の外枠：Mantine の設定、hash での画面の切り替え、右下のビルドの印。
+// 画面の外枠：Mantine の設定、hash での画面の切り替え（作業画面・星取表・Ed25519 の試験）、右下のビルドの印。
 import { MantineProvider, createTheme } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { BridgeClient } from "./bridge-client";
 import { BuildStamp } from "./components/BuildStamp";
 import { Home } from "./pages/Home";
 import { SelfTest } from "./pages/SelfTest";
+import { CHART_HASH } from "./chart/route";
 import { APP_PAGES } from "../shared/routes";
+
+// 星取表は AG Grid を含むので、開いたときに読む
+const StarTable = lazy(() => import("./pages/StarTable").then((m) => ({ default: m.StarTable })));
 
 const theme = createTheme({
   fontFamily: "var(--moyai-font)",
@@ -32,7 +36,15 @@ export function App() {
   const hash = useHash();
   return (
     <MantineProvider theme={theme} defaultColorScheme="light">
-      {hash === APP_PAGES.selftest ? <SelfTest /> : <Home client={client} />}
+      {hash === APP_PAGES.selftest ? (
+        <SelfTest />
+      ) : hash === CHART_HASH ? (
+        <Suspense fallback={null}>
+          <StarTable />
+        </Suspense>
+      ) : (
+        <Home client={client} />
+      )}
       <BuildStamp />
     </MantineProvider>
   );

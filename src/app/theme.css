@@ -25,6 +25,16 @@
   --moyai-warn: #8a5a00;
   --moyai-fiction-bg: #fff1c2;
   --moyai-fiction-fg: #5c3d00;
+  /* 星取表（plan §2.2 の印と色） */
+  --moyai-chart-header-bg: #eef1ed;
+  --moyai-chart-level-bg: #fbfbf9;
+  --moyai-mark-fg: var(--moyai-fg);
+  --moyai-mark-summary: #9aa39e;
+  --moyai-mark-changed: #d9730d;
+  --moyai-mark-review-bg: #fff3b0;
+  --moyai-mark-review-fg: #6b5200;
+  --moyai-chart-unmapped-bg: #f3efe6;
+  --moyai-chart-selected: #1f6f5c33;
 }
 
 :root[data-mantine-color-scheme="dark"] {
@@ -39,6 +49,15 @@
   --moyai-warn: #f2c66d;
   --moyai-fiction-bg: #4a3a10;
   --moyai-fiction-fg: #ffe7a3;
+  --moyai-chart-header-bg: #222b28;
+  --moyai-chart-level-bg: #1a201e;
+  --moyai-mark-fg: var(--moyai-fg);
+  --moyai-mark-summary: #6f7a75;
+  --moyai-mark-changed: #ff9f43;
+  --moyai-mark-review-bg: #4a3f10;
+  --moyai-mark-review-fg: #ffe58a;
+  --moyai-chart-unmapped-bg: #2a2620;
+  --moyai-chart-selected: #6fc7ad33;
 }
 
 body {
