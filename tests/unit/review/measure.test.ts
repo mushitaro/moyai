@@ -5,21 +5,12 @@
 // 欠けに当たらない検査の結果も、正解の世界から期待を作って照らす（計画の窓・保全方式・判定の値の有無）。
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { IntakeWorkspace } from "../../../src/app/intake/workspace";
-import { runTabTool } from "../../../src/app/intake/tab-tools";
-import { acceptByHuman } from "../../../src/app/state/crosswalk";
 import { clearWorkingPlan, getWorkingPlan } from "../../../src/app/state/plan-store";
 import { fiscalYearOfDate, runChecks, type CheckRun } from "../../../src/review/checks";
 import { loadPackChecks } from "../../../src/review/spec";
 import type { Plan } from "../../../src/shared/plan";
-import { f1Rules } from "../../fixtures/crosswalk/rules";
 import { Entities, loadTruth, type Truth } from "../import/truth";
-
-const PACK = "waste-incineration";
-const FACILITY = "fictional-1";
-const FILES = ["equipment-ledger.xlsx", "plan-hoshitori.xlsx", "daily-report.csv"];
-const CTX = { conversation: "c-measure", rowsRemaining: 2000 };
-const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
+import { FACILITY, PACK, composeFictional1 } from "./compose";
 
 /** 正解の検査の印 → パックの検査（この試験だけが持つ対応） */
 const GAP_CHECK: Record<string, string> = {
@@ -34,11 +25,6 @@ interface Gap {
   equipment_id: string;
   fiscal_year: number;
 }
-
-const ok = (r: ReturnType<typeof runTabTool>): any => {
-  if (!r.ok) throw new Error(`誤り：${r.code}`);
-  return r.data;
-};
 
 let truth: Truth;
 let plan: Plan;
@@ -55,24 +41,7 @@ const resultOf = (r: CheckRun, id: string) => r.results.find((x) => x.checkId ==
 beforeAll(async () => {
   truth = loadTruth(PACK, FACILITY);
   reference = truth.world.today as string;
-  const ws = new IntakeWorkspace({ packId: PACK, facilityName: truth.world.facility.name, fiscalYearStartMonth: 4, fictional: true });
-  const dir = `samples/out/${PACK}/${FACILITY}/`;
-  await ws.addFiles(
-    FILES.map((n) => {
-      const b = new Uint8Array(readFileSync(dir + n));
-      return { name: n, size: b.length, bytes: async () => b };
-    }),
-  );
-  for (let i = 0; i < 15; i++) {
-    const s = ok(runTabTool(ws, "intake_survey", { part: "questions" }, CTX));
-    if (!s.questions.length) break;
-    ok(runTabTool(ws, "intake_settle", { decisions: s.questions.map((q: any) => ({ questionId: q.questionId, answer: q.defaultAnswer, author: "ai_relayed_human", reason: "利用者がチャットで既定の答えでよいと言った" })) }, CTX));
-  }
-  ok(runTabTool(ws, "intake_compose", {}, CTX));
-  await ws.whenComposed();
-  const { nodes, works } = f1Rules();
-  ok(runTabTool(ws, "crosswalk_propose", { rules: [...nodes, ...works], basedOnVersion: getWorkingPlan()!.revision }, CTX));
-  for (const p of getWorkingPlan()!.proposals) expect(acceptByHuman(p.ruleId, HUMAN).ok).toBe(true);
+  await composeFictional1(truth.world.facility.name);
   plan = structuredClone(getWorkingPlan()!.plan);
   // 正解の機器 → 計画の資産の節（台帳のセルの出どころで結ぶ）
   const ents = new Entities(truth);

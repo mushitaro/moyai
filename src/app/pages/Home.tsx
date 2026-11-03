@@ -136,6 +136,7 @@ export function Home({ client }: { client: BridgeClient }) {
         <Text>{TEXT.home.lead}</Text>
         <Anchor href={APP_PAGES.intake}>{TEXT.home.intakeLink}</Anchor>
         <Anchor href={CHART_HASH}>{TEXT.home.chartLink}</Anchor>
+        <Anchor href={APP_PAGES.review}>{TEXT.home.reviewLink}</Anchor>
         <Anchor href={APP_PAGES.checkpoint}>{HUMAN_TEXT.checkpoint.title}</Anchor>
         <Anchor href={APP_PAGES.settings}>{HUMAN_TEXT.settings.title}</Anchor>
         <Anchor href={APP_PAGES.selftest}>{TEXT.home.selftestLink}</Anchor>

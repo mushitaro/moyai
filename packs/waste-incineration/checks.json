@@ -11,7 +11,7 @@
       "thresholdOrigin": "source",
       "source": { "id": "MHW-NOTICE-S46-KANSEI45", "clause": "第三の 11（規則第五条の精密機能検査は三年に一回以上）", "page": null },
       "unimplemented": null,
-      "note": "課長通知は行政指導なので水準は推奨。規則第五条は「定期的に」とだけ書き、年数は通知にある。延長の定めは通知に無いので、延長は認めない（承認の記録があっても notMet）。年度の差で数える",
+      "note": "課長通知は行政指導なので水準は推奨。規則第五条は「定期的に」とだけ書き、年数は通知にある。延長の定めは通知に無いので、延長は認めない（承認の記録があっても外れとする）。年度の差で数える",
       "params": {
         "kind": "interval_max",
         "works": [{ "field": "work.kind", "op": "in", "values": ["精密機能検査"] }],

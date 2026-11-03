@@ -16,7 +16,7 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   crosswalk_propose: "tab",
   chart_rows: "tab",
   chart_propose: "not_implemented",
-  check_results: "not_implemented",
+  check_results: "tab",
   note_for_human: "not_implemented",
   share_preview: "not_implemented",
   peer_reference: "not_implemented",

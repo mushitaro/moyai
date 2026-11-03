@@ -328,23 +328,48 @@ export const TOOLS = {
     "check_results",
     "read",
     "検査の結果を読む",
-    "検査ごとの結果（met・notMet・notApplicable）、根拠の数字、例 10 件まで、出典、水準、確かめた度合いを読む。数字を丸めず言い換えず、出典を添えて説明する。自己点検であって、審査の判断ではない。",
-    z.object({ checkId: z.string().optional() }),
+    "作業中の計画に、パックの検査を、作業画面の基準日で走らせた結果を読む（読むだけ。検査を直す・判定を変える道は無い）。検査ごとの結果（met・notMet・notApplicable）、根拠の数字、例 10 件まで（段の道と年度）、外れの数、出典（資料・条項・頁・URL）、水準（requirement・recommendation・app）、閾値の出どころ（source・app）、確かめた度合いが入る。数字を丸めず言い換えず、自分で計算し直さず、出典を添えて説明する。notice のとおり、自己点検であって、審査の判断ではない。checkId を渡すと、その検査だけ。",
+    z.object({ checkId: z.string().max(60).optional() }),
     z.object({
-      checks: z.array(
-        z.object({
-          checkId: z.string(),
-          kind: z.enum(CHECK_KINDS),
-          result: z.enum(["met", "notMet", "notApplicable"]),
-          numbers: z.record(z.string(), z.union([z.number(), z.string()])),
-          count: z.number().int(),
-          examples: z.array(z.string()).max(EXAMPLES_MAX),
-          source: z.object({ document: z.string(), clause: z.string(), url: z.string().nullable() }),
-          level: z.enum(["requirement", "recommendation", "app"]),
-          thresholdOrigin: z.enum(["source", "app"]),
-          verification: z.enum(VERIFICATION_LEVELS),
-        }),
-      ),
+      notice: z.string(),
+      packId: z.string(),
+      /** パックに検査があるか（loaded）、無いか（none）、読めないか（invalid） */
+      packChecks: z.enum(["loaded", "none", "invalid"]),
+      packChecksProblem: z.string().nullable(),
+      checksVersion: z.number().int().nullable(),
+      /** 作業中の計画の版（intake_survey の crosswalk.version と同じ数） */
+      planVersion: z.number().int(),
+      referenceDate: z.string(),
+      referenceFiscalYear: z.number().int().nullable(),
+      checks: z
+        .array(
+          z.object({
+            checkId: z.string(),
+            kind: z.enum(CHECK_KINDS),
+            name: z.string(),
+            what: z.string(),
+            result: z.enum(["met", "notMet", "notApplicable"]),
+            /** notApplicable の理由（ほかは null） */
+            notApplicableReason: z.string().nullable(),
+            numbers: z.record(z.string(), z.union([z.number(), z.string()])),
+            /** 外れの数（例はこのうちの 10 件まで） */
+            count: z.number().int(),
+            examples: z
+              .array(z.object({ rowRef: z.string().nullable(), path: z.string(), fiscalYears: z.array(z.number().int()), text: z.string() }))
+              .max(EXAMPLES_MAX),
+            source: z.object({ document: z.string(), clause: z.string(), page: z.string().nullable(), url: z.string() }).nullable(),
+            level: z.enum(["requirement", "recommendation", "app"]),
+            thresholdOrigin: z.enum(["source", "app"]),
+            /** 出典の確かめた度合い。出典の無いアプリの目安は null */
+            verification: z.enum(VERIFICATION_LEVELS).nullable(),
+            unimplemented: z.string().nullable(),
+            note: z.string().nullable(),
+          }),
+        )
+        .max(50),
+      /** パックで作っていない検査と理由、検査の仕組みでまだ無いもの */
+      notMade: z.array(z.object({ what: z.string(), why: z.string() })).max(20),
+      notImplemented: z.array(z.string()).max(20),
     }),
   ),
   note_for_human: def(

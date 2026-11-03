@@ -472,7 +472,7 @@ export function runChecks(loaded: Extract<LoadedChecks, { ok: true }>, input: Ch
   };
 }
 
-/** 例の節の道（名前の段の並び。画面とツールの結果が使う） */
+/** 例の節の道（名前の段の並び。表示の番号があれば名前に添える。同じ名前の機器が系列ごとにあっても見分けるため。画面とツールの結果が使う） */
 export function nodePath(plan: Plan, nodeKey: string | null): string[] {
   const byKey = new Map(plan.assets.map((a) => [a.nodeKey, a]));
   const out: string[] = [];
@@ -480,7 +480,7 @@ export function nodePath(plan: Plan, nodeKey: string | null): string[] {
   for (let i = 0; k && i < 20; i++) {
     const a = byKey.get(k);
     if (!a) break;
-    out.unshift(a.name);
+    out.unshift(a.tag ? `${a.name}（${a.tag}）` : a.name);
     k = a.parentKey;
   }
   return out;
