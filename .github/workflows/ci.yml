@@ -39,7 +39,13 @@ jobs:
         run: npx -y npm@11.21.1 ci --ignore-scripts
       - name: 使わない依存（AG Grid の Enterprise）が無いか
         run: node scripts/check-deps.mjs
-      - name: 試験（0 件なら失敗）
+      - name: ビルド（画面は Vite、dist/cli.js は Vite の SSR のビルド）
+        run: npm run build
+      - name: 型の検査（TypeScript 7 の tsc --noEmit）
+        run: npm run typecheck
+      - name: 試験（node:test と vitest。どちらかが 0 件なら失敗）
+        env:
+          MOYAI_REQUIRE_DIST: "1"
         run: node scripts/run-tests.mjs
       - name: 公開の前の検査
         run: node scripts/check-publish.mjs

@@ -8,6 +8,21 @@ MOYAI のコードは、このリポジトリで会期中に新しく書いた�
 |---|---|---|---|
 | zod | 4.6.7 | MIT | 型の検査と、構造化出力の型 |
 | @anthropic-ai/sdk（開発用） | 0.135.0 | MIT | 監査のエージェント（`scripts/audit/`）。F3 の採点でも使う予定 |
+| react・react-dom | 19.2.9 | MIT | 画面 |
+| @mantine/core・@mantine/hooks・@mantine/notifications | 9.7.3 | MIT | 画面の部品 |
+| ag-grid-community・ag-grid-react | 36.2.0 | MIT | 表（Community だけ。Enterprise は入れない） |
+| @modelcontextprotocol/sdk | 1.32.1 | MIT | 中継（`moyai mcp`）の MCP |
+| ws | 8.22.0 | MIT | 橋渡しとタブの WebSocket |
+| @fontsource/biz-udpgothic | 5.3.0 | OFL-1.1 | Windows 以外の BIZ UDPゴシック |
+| vite（開発用） | 8.3.4 | MIT | 画面のビルドと、`dist/cli.js` の SSR のビルド |
+| @vitejs/plugin-react（開発用） | 6.1.2 | MIT | 画面のビルド |
+| typescript（開発用） | 7.0.2 | Apache-2.0 | 型の検査（`tsc --noEmit`） |
+| vitest（開発用） | 4.1.12 | MIT | 試験 |
+| @playwright/test（開発用） | 1.64.1 | Apache-2.0 | 画面の試験（この PC の Chrome と Edge を channel で使う。ブラウザは落とさない） |
+| @types/node（開発用） | 22.20.5 | MIT | 型の定義（2026-10-20 より前の公開） |
+| @types/ws（開発用） | 8.18.2 | MIT | 型の定義（同上） |
+| @types/react（開発用） | 19.2.18 | MIT | 型の定義（同上） |
+| @types/react-dom（開発用） | 19.2.7 | MIT | 型の定義（同上） |
 
 これから足す依存（docs/plan.md §2.16）は、入れたときにこの表に足します。依存の依存は package-lock.json にあります。
 

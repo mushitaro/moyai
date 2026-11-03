@@ -1,0 +1,115 @@
+// 誤りの型の一覧。どの誤りにも送り手（from）と受け手（to）を書く。
+// tests/contract/ が、送り手のコードがその誤りを出し、受け手がその誤りを人に見せることを数える。
+// 受け手が tab のものは、画面の言葉（src/app/text/）に文がある。ai と terminal のものは、ここの text をそのまま返す。
+import { z } from "zod";
+
+export type ErrorSide = "bridge" | "relay" | "cli";
+export type ErrorReceiver = "ai" | "tab" | "terminal";
+
+interface ErrorDef {
+  from: ErrorSide;
+  to: ErrorReceiver;
+  /** HTTP で返すときの状態の番号 */
+  http?: number;
+  /** ai と terminal に返す文。tab の文は src/app/text/ にある */
+  text: string;
+}
+
+export const ERRORS = {
+  // 中継 → AI
+  bridge_not_running: {
+    from: "relay",
+    to: "ai",
+    text: "MOYAI の橋渡しが起きていません。先に、利用者の端末で `moyai start`（node dist/cli.js start）を走らせてもらってください。",
+  },
+  bridge_timeout: {
+    from: "relay",
+    to: "ai",
+    text: "作業画面からの答えが時間内に来ませんでした（1 回送り直しました）。作業画面が開いているかを利用者に確かめてください。",
+  },
+  result_unknown: {
+    from: "relay",
+    to: "ai",
+    text: "時間内に答えが来なかったので、結果は不明です。書き込みは自動で送り直しません。作業画面で結果を確かめてもらってください。",
+  },
+  // 橋渡し → AI（中継を通る）
+  not_implemented: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "このツールは名前と型だけがあり、まだ動きません（未実装）。",
+  },
+  invalid_input: {
+    from: "bridge",
+    to: "ai",
+    http: 400,
+    text: "引数が型に合いません。直さずに、型を読み直してから呼び直してください。",
+  },
+  unknown_tool: { from: "bridge", to: "ai", http: 404, text: "そのツールはありません。" },
+  relay_key_mismatch: {
+    from: "bridge",
+    to: "ai",
+    http: 401,
+    text: "中継の鍵が橋渡しと合いません。橋渡しを起こし直してから、AI クライアントをつなぎ直してください。",
+  },
+  // 橋渡し → タブ（WebSocket）
+  tab_already_open: { from: "bridge", to: "tab", text: "作業画面はほかのタブで開いています。" },
+  hello_invalid: { from: "bridge", to: "tab", text: "最初の握手の形が違います。" },
+  hello_timeout: { from: "bridge", to: "tab", text: "最初の握手が時間内に来ませんでした。" },
+  // 橋渡し → タブ（HTTP。正しいタブだけがこれらの経路を呼ぶ）
+  host_not_allowed: { from: "bridge", to: "tab", http: 421, text: "宛先の名前が違います。" },
+  origin_missing: { from: "bridge", to: "tab", http: 403, text: "要求の出どころ（Origin）がありません。" },
+  origin_not_allowed: { from: "bridge", to: "tab", http: 403, text: "要求の出どころ（Origin）が違います。" },
+  fetch_site_not_allowed: { from: "bridge", to: "tab", http: 403, text: "ほかのサイトからの要求は受けません。" },
+  route_not_allowed: { from: "bridge", to: "tab", http: 404, text: "許可の一覧に無い経路です。" },
+  method_not_allowed: { from: "bridge", to: "tab", http: 405, text: "この経路では受けない呼び方です。" },
+  content_type_not_allowed: { from: "bridge", to: "tab", http: 415, text: "中身の形が JSON ではありません。" },
+  body_too_large: { from: "bridge", to: "tab", http: 413, text: "中身が大きすぎます。" },
+  bad_json: { from: "bridge", to: "tab", http: 400, text: "中身を読めません。" },
+  internal: { from: "bridge", to: "tab", http: 500, text: "橋渡しの中で誤りが起きました。" },
+  tab_not_open: { from: "bridge", to: "tab", http: 409, text: "作業画面が橋渡しにつながっていません。" },
+  secret_missing: { from: "bridge", to: "tab", http: 403, text: "タブの秘密がありません。" },
+  secret_mismatch: { from: "bridge", to: "tab", http: 403, text: "タブの秘密が違います。" },
+  token_missing: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印がありません。" },
+  token_unknown: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が無効です（使い終えたか、出していないもの）。" },
+  token_expired: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が切れました。" },
+  token_mismatch: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が、この操作か中身と結ばれていません。" },
+  // CLI → 端末
+  port_in_use: {
+    from: "cli",
+    to: "terminal",
+    text: "ポート {port} はほかのプログラムが使っています。起動を止めました。ほかの moyai start が動いていないか確かめるか、`--port 43111` のように別のポートを指定してください。",
+  },
+  bad_args: { from: "cli", to: "terminal", text: "コマンドの形が違います。`moyai --help` を見てください。" },
+  app_missing: {
+    from: "cli",
+    to: "terminal",
+    text: "画面のファイル（dist/app）がありません。先に `npm run build` を走らせてください。",
+  },
+} as const satisfies Record<string, ErrorDef>;
+
+export type ErrorCode = keyof typeof ERRORS;
+export const ERROR_CODES = Object.keys(ERRORS) as ErrorCode[];
+
+export type TabErrorCode = { [K in ErrorCode]: (typeof ERRORS)[K]["to"] extends "tab" ? K : never }[ErrorCode];
+export const TAB_ERROR_CODES = ERROR_CODES.filter((c) => ERRORS[c].to === "tab") as TabErrorCode[];
+
+/** 誤りの中身。HTTP の答え、WebSocket の断り、ツールの結果（isError）で同じ形を使う。 */
+export const errorBodySchema = z.object({
+  error: z.object({
+    code: z.enum(ERROR_CODES as [ErrorCode, ...ErrorCode[]]),
+    message: z.string(),
+  }),
+});
+export type ErrorBody = z.infer<typeof errorBodySchema>;
+
+export function errorBody(code: ErrorCode, vars: Record<string, string | number> = {}): ErrorBody {
+  let message: string = ERRORS[code].text;
+  for (const [k, v] of Object.entries(vars)) message = message.replaceAll(`{${k}}`, String(v));
+  return { error: { code, message } };
+}
+
+export function httpStatus(code: ErrorCode): number {
+  const def: ErrorDef = ERRORS[code];
+  return def.http ?? 400;
+}

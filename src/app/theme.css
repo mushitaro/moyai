@@ -1,0 +1,80 @@
+/* 色・書体のトークンはここだけに置く。明るいのが既定で、暗いのは Mantine の印で切り替える。 */
+
+/* Windows に入っている BIZ UDPゴシック を先に使う。無ければ @fontsource/biz-udpgothic（"BIZ UDPGothic"）を読む。 */
+@font-face {
+  font-family: "MOYAI Local Gothic";
+  font-weight: 400;
+  src: local("BIZ UDPGothic"), local("BIZUDPGothic");
+}
+@font-face {
+  font-family: "MOYAI Local Gothic";
+  font-weight: 700;
+  src: local("BIZ UDPGothic Bold"), local("BIZUDPGothic-Bold");
+}
+
+:root {
+  --moyai-font: "MOYAI Local Gothic", "BIZ UDPGothic", sans-serif;
+  --moyai-bg: #f7f7f4;
+  --moyai-surface: #ffffff;
+  --moyai-fg: #1d2421;
+  --moyai-muted: #5b6661;
+  --moyai-border: #d9ddd8;
+  --moyai-accent: #1f6f5c;
+  --moyai-ok: #1f7a3f;
+  --moyai-ng: #b3261e;
+  --moyai-warn: #8a5a00;
+  --moyai-fiction-bg: #fff1c2;
+  --moyai-fiction-fg: #5c3d00;
+}
+
+:root[data-mantine-color-scheme="dark"] {
+  --moyai-bg: #151a18;
+  --moyai-surface: #1d2422;
+  --moyai-fg: #e6ebe8;
+  --moyai-muted: #a3aea9;
+  --moyai-border: #33403b;
+  --moyai-accent: #6fc7ad;
+  --moyai-ok: #7fd49a;
+  --moyai-ng: #ff8a80;
+  --moyai-warn: #f2c66d;
+  --moyai-fiction-bg: #4a3a10;
+  --moyai-fiction-fg: #ffe7a3;
+}
+
+body {
+  background: var(--moyai-bg);
+  color: var(--moyai-fg);
+  font-family: var(--moyai-font);
+}
+
+/* 番号と年月の列は桁をそろえる */
+.moyai-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.moyai-build-stamp {
+  position: fixed;
+  right: 12px;
+  bottom: 8px;
+  font-size: 12px;
+  color: var(--moyai-muted);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: text;
+}
+
+.moyai-fiction {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--moyai-fiction-bg);
+  color: var(--moyai-fiction-fg);
+  font-weight: 700;
+}
+
+.moyai-ok {
+  color: var(--moyai-ok);
+}
+.moyai-ng {
+  color: var(--moyai-ng);
+}

@@ -1,0 +1,14 @@
+[
+  "intake_survey",
+  "intake_settle",
+  "intake_compose",
+  "photo_transcribe",
+  "crosswalk_propose",
+  "chart_rows",
+  "chart_propose",
+  "check_results",
+  "note_for_human",
+  "share_preview",
+  "peer_reference",
+  "skill_eval"
+]
