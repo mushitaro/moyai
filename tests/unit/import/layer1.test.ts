@@ -1,7 +1,7 @@
 // layer1.*（docs/plan.md §5.1）：和暦の書式、数式があって値の無いセル、.xls、Shift_JIS の CSV、区切りと文字コード、読まない物の台帳。
 import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
-import { readSource } from "../../../src/import/read";
+import { READABLE, readSource } from "../../../src/import/read";
 import { readCsv, detectDelimiter } from "../../../src/import/csv";
 import { formatValue } from "../../../src/import/numfmt";
 import { parseDateText, parseYearLabel, parseYearOnly } from "../../../src/import/era";
@@ -137,11 +137,12 @@ describe("Excel の読み手", () => {
     expect(r.source?.sheets[0]?.cells.find((c) => c.ref === "A2")?.value).toBe("機器甲");
   });
 
-  test(".xls と .doc は保存し直しを求める", async () => {
+  test(".xls と .doc は保存し直しを求め、案内には今読める形式をすべて出す", async () => {
     for (const name of ["古い.xls", "文書.doc"]) {
       const r = await readSource({ name, bytes: new Uint8Array([0xd0, 0xcf, 0x11, 0xe0]) });
       expect(r.source).toBeNull();
       expect(r.rejected?.reason).toContain("保存し直してください");
+      for (const ext of Object.keys(READABLE)) expect(r.rejected?.reason).toContain(`.${ext}`);
     }
   });
 });
@@ -203,5 +204,9 @@ describe("CSV・TSV の読み手", () => {
     const src = s.analyze().sources[0];
     expect(src?.sheets[0]?.cells.map((c) => c.text)).toEqual(["名称", "機器甲", "機器乙"]);
     expect(src?.ledger.some((e) => e.detail.includes("1 列の表として読んだ（人が決めた）"))).toBe(true);
+    // 1 列と決めたのに区切りの候補がある読み方には、候補を出して聞き直す
+    const r2 = readCsv("one.csv", enc.encode("a,b\nc,d\n"), { singleColumn: true });
+    expect(r2.source).toBeNull();
+    expect(r2.ambiguity[0]?.candidates).toEqual([","]);
   });
 });

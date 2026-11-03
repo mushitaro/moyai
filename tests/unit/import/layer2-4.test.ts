@@ -168,6 +168,7 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
     const s = session();
     await s.add([{ name: "台帳.xlsx", bytes }]);
     acceptDefaults(s);
+    expect(s.analyze().open.filter((q) => q.kind === "subtotalMismatch").length).toBe(1);
     const c = s.compose();
     expect(c.plan).toBeNull();
     // 上に置いた表と見分けたので、1 つ目は合い、2 つ目は下の区切り（機器F の 4）と比べて合わない
@@ -229,18 +230,57 @@ describe("層 2・4：区切りごとの小計と、段の列の 〃", () => {
     const s = session();
     await s.add([{ name: "台帳.xlsx", bytes }]);
     const an = s.analyze();
-    // 乙設備のすぐ下の 〃 は、同じ親の下に上の行が無いので未解決のまま聞く（資産を作らない）
+    // 乙設備のすぐ下の 〃 は、同じ親の下に上の行が無いので、答えるまで未解決（名前を親から写さない）
     const q = an.open.find((x) => x.text.includes("〃"));
     expect(q?.options.map((o) => o.id)).toEqual(["above", "literal", "exclude"]);
-    expect(an.composition.status.get(["台帳.xlsx", "0", "B6"].join(String.fromCharCode(0)))?.s).toBe("unresolved");
+    expect(q?.sameShapeRows).toBe(1);
+    const key = (ref: string) => ["台帳.xlsx", "0", ref].join(String.fromCharCode(0));
+    expect(an.composition.status.get(key("A6"))?.s).toBe("unresolved");
+    expect(an.composition.status.get(key("B6"))?.s).toBe("unresolved");
     expect(s.compose().plan).toBeNull();
-    s.settle([human(q?.questionId ?? "", "exclude")]);
-    acceptDefaults(s);
-    const plan = s.compose().plan;
+    const check = (answer: string) => {
+      s.settle([human(q?.questionId ?? "", answer)]);
+      acceptDefaults(s);
+      return s.compose().plan;
+    };
+    // 外す
+    let plan = check("exclude");
     const motors = plan?.assets.filter((a) => a.name === "電動機") ?? [];
     expect(motors.map((m) => m.specs[0]?.value)).toEqual(["10 kW", "15 kW"]);
     expect(plan?.assets.filter((a) => a.name === "乙設備").length).toBe(1);
     expect(plan?.assets.some((a) => a.name === "〃")).toBe(false);
+    expect(plan?.assets.some((a) => a.name === "乙設備" && a.level === 2)).toBe(false);
+    // すぐ上の行と同じ名前（人がそう決めたときだけ親の名前になる）
+    plan = check("above");
+    expect(plan?.assets.find((a) => a.sources.some((x) => x.cell === "A6"))).toMatchObject({ name: "乙設備", level: 2 });
+    // 〃 の文字のまま
+    plan = check("literal");
+    expect(plan?.assets.find((a) => a.sources.some((x) => x.cell === "A6"))?.name).toBe("〃");
+  });
+});
+
+describe("層 2：段の決まらない行の 〃", () => {
+  test("段の票が割れた行の 〃 は、段を決めるまで 〃 の質問を出さない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["名称", "番号"]]);
+      rows(ws, 2, [
+        ["甲設備", "1"],
+        ["機器A", "1-1"],
+        ["〃", "1-1-1"],
+      ]);
+      ws.getCell("A3").alignment = { indent: 1 };
+      ws.getCell("A4").alignment = { indent: 1 }; // 番号は 3 段目、字下げは 2 段目
+    });
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    const open = s.analyze().open;
+    expect(open.some((q) => q.kind === "levelSplit")).toBe(true);
+    expect(open.some((q) => q.text.includes("〃"))).toBe(false);
+    // 2 段目と決めれば、同じ親の下の上の行（機器A）と同じ名前
+    s.settle([human(open.find((q) => q.kind === "levelSplit")?.questionId ?? "", "level:2")]);
+    acceptDefaults(s);
+    const plan = s.compose().plan;
+    expect(plan?.assets.filter((a) => a.name === "機器A").length).toBe(2);
   });
 });
 

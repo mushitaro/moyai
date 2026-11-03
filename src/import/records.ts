@@ -273,6 +273,43 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const tags = tagDecision(t, lay, ask, nameCells.map((x) => ({ r: x.r, text: x.cell.text, ref: x.cell.ref })));
   const idOf = (r: number) => `${t.id}:r${r}`;
   const yearUnknown: { ref: string; text: string }[] = [];
+  // 名前の欄の 〃 を先に解く：同じ親の下の同じ段の上の行の名前。上の行が無いものはまとめて 1 回聞く
+  const resolvedName = new Map<number, string | null>();
+  const lastAt = new Map<string, string>();
+  const orphans: { r: number; ref: string; above: string | null }[] = [];
+  let aboveName: string | null = null;
+  for (const r of dataRows) {
+    const nc = nameCells.find((x) => x.r === r.r)?.cell;
+    if (!nc) continue;
+    const k = `${r.level}|${r.parentRow ?? ""}`;
+    let nm: string | null = nc.text.replace(/\s*\n\s*/g, " ").trim();
+    if (cue.isDitto(nc.text)) {
+      nm = r.level === null ? null : (lastAt.get(k) ?? null);
+      if (r.level !== null && nm === null) orphans.push({ r: r.r, ref: nc.ref, above: aboveName });
+      resolvedName.set(r.r, nm);
+    }
+    if (nm !== null) {
+      lastAt.set(k, nm);
+      aboveName = nm;
+    }
+  }
+  let orphanAnswer: string | null = null;
+  if (orphans.length) {
+    const canAbove = orphans.every((o) => o.above !== null);
+    orphanAnswer = ask.ask(`dittoNoAbove|${t.id}`, {
+      kind: "stray",
+      text: `名前の欄の「〃」で、同じ親の下の同じ段に上の行が無いものが ${orphans.length} 行ある（例：すぐ上の行は「${orphans[0]?.above ?? "なし"}」）。どう読むか`,
+      options: [
+        ...(canAbove ? [{ id: "above", label: "すぐ上の行と同じ名前として読む" }] : []),
+        { id: "literal", label: "「〃」の文字のまま名前にする" },
+        { id: "exclude", label: "外す" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: orphans.length,
+      items: orphans.map((o) => itemOf(lay, [o.ref], { note: o.above ?? "" })),
+    });
+  }
   for (const r of dataRows) {
     const cells = lay.index.rowCells(r.r);
     if (cells.every((c) => off(c.ref))) continue;
@@ -298,38 +335,20 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const ts = tags.get(r.r);
     const tagged = ts?.state === "split" ? ts.split : null;
     const tagUndecided = ts?.state === "undecided";
-    // 〃：上の行と同じ名前（名前だけ同じの別の行）
+    // 〃：同じ親の下の同じ段の上の行と同じ名前（名前だけ同じの別の行）。段の決まらない行は、段の質問を先にする
     const dittoName = cue.isDitto(nc.text);
-    // 段の決まらない行は、段の質問の答えを待つ（〃 の読み方はそのあと）
-    const parentId = r.parentRow ? idOf(r.parentRow) : null;
-    let prevName = r.level === null ? null : (rec.assets.filter((x) => x.tableId === t.id && x.level === r.level && x.parentId === parentId).at(-1)?.rawName ?? null);
+    let prevName = r.level === null ? null : (resolvedName.get(r.r) ?? null);
+    let dittoPending = false;
     let literalDitto = false;
-    if (dittoName && r.level !== null && prevName === null) {
-      const above = rec.assets.filter((x) => x.tableId === t.id).at(-1) ?? null;
-      const a = ask.ask(`dittoNoAbove|${t.id}|r${r.r}`, {
-        kind: "stray",
-        text: `名前の欄の「〃」の上に、同じ親の下の同じ段の行が無い（すぐ上の行は「${above?.rawName ?? "なし"}」）。どう読むか`,
-        options: [
-          ...(above ? [{ id: "above", label: "すぐ上の行と同じ名前として読む" }] : []),
-          { id: "literal", label: "「〃」の文字のまま名前にする" },
-          { id: "exclude", label: "外す" },
-        ],
-        valueKind: "option",
-        defaultAnswer: null,
-        sameShapeRows: 1,
-        items: [itemOf(lay, [nc.ref])],
-      });
-      if (a === "exclude") {
+    const orphan = orphans.find((o) => o.r === r.r);
+    if (orphan) {
+      if (orphanAnswer === "exclude") {
         for (const c of cells) if (!off(c.ref)) exclude(c.ref, "上の行の無い 〃（決定で外した）");
         continue;
       }
-      if (a === "above" && above) prevName = above.rawName;
-      else if (a === "literal") literalDitto = true;
-      else {
-        // 答えを待つ：資産を作らず、この行を未解決にする
-        for (const c of cells) if (!off(c.ref)) pend(c.ref);
-        continue;
-      }
+      if (orphanAnswer === "above") prevName = orphan.above;
+      else if (orphanAnswer === "literal") literalDitto = true;
+      else dittoPending = true; // 答えを待つ：資産は未解決のまま置く（子の行の親が欠けないように）
     }
     const raw = dittoName && !literalDitto ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
     const name = tagged ? tagged.name : raw;
@@ -353,7 +372,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       installed: null,
       refs: [nc.ref],
       excluded: null,
-      pending: r.level === null || tagUndecided,
+      pending: r.level === null || tagUndecided || dittoPending,
     };
     for (const c of cells) {
       if (c.c === nameCol.c || off(c.ref)) continue;

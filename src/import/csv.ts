@@ -96,6 +96,8 @@ export function decodeAs(bytes: Uint8Array, e: CsvEncoding): string | null {
   }
 }
 
+const NO_DELIMITER = "区切りの候補（,・タブ・;・|）がどの行にも無い";
+
 /** 囲みの外の区切りの数を行ごとに数える（囲みの中の改行は続きとして数えない） */
 function countOutsideQuotes(text: string, ch: string): number[] {
   const out: number[] = [];
@@ -150,7 +152,7 @@ export function detectDelimiter(text: string, ext: string): { delimiter: CsvDeli
   const name = (d: string) => (d === "\t" ? "タブ" : d);
   const detail = scores.map((s) => `${name(s.d)}：${s.lines} 行が ${s.mode} 個`).join("、") || "区切りが見つからない";
   // どの行にも区切りの候補が無い：1 列の表か、候補に無い書き方（固定の幅など）。決めずに聞く
-  if (!top) return { delimiter: null, candidates: [], detail: "区切りの候補（,・タブ・;・|）がどの行にも無い" };
+  if (!top) return { delimiter: null, candidates: [], detail: NO_DELIMITER };
   // 拡張子が .tsv でタブが候補に入っていれば、タブを先にする（拡張子と中身が合うとき）
   if (ext === "tsv") {
     const tab = scores.find((s) => s.d === "\t");
@@ -237,8 +239,10 @@ export function readCsv(file: string, bytes: Uint8Array, opts: CsvReadOptions = 
   let delimiter: CsvDelimiter | null = opts.singleColumn ? "," : (opts.delimiter ?? null);
   if (opts.singleColumn) {
     // 区切りの候補（,・タブ・;・|）がどの行にも無いことを確かめてから、1 列として読む
-    if (detectDelimiter(text, ext).candidates.length) {
-      ambiguity.push({ what: "delimiter", candidates: [], detail: "1 列と決めたが、区切りの候補がある" });
+    const d = detectDelimiter(text, ext);
+    if (d.candidates.length && d.detail !== NO_DELIMITER) {
+      // 1 列と決めたのに区切りの候補がある（中身の違うファイルなど）：候補を出して聞き直す
+      ambiguity.push({ what: "delimiter", candidates: d.candidates, detail: `1 列と決めたが、区切りの候補がある（${d.detail}）` });
       return { source: null, ambiguity };
     }
     ledger.push({ kind: "decided", what: "delimiter", count: 1, detail: "区切りの無い 1 列の表として読んだ（人が決めた）", sheet: null });

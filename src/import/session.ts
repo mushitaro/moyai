@@ -133,8 +133,8 @@ export class IntakeSession {
         const reject = { id: "reject", label: "この資料を外す（読めないため）" };
         const what = amb.what === "encoding" ? "文字コード" : "区切り";
         const single = amb.what === "delimiter" && amb.candidates.length === 0 ? [{ id: "single", label: "区切りの無い 1 列の表として読む" }] : [];
-        // 質問の鍵はファイルと問いの種類だけ（何回目の読み直しで出たかに依らない。前の答えが効くように）
-        const a = ask.ask(`${amb.what}|${f.name}`, {
+        // 質問の鍵はファイルの名前と中身の指紋と問いの種類（何回目の読み直しで出たかに依らない。中身の違うファイルには前の答えを当てない）
+        const a = ask.ask(`${amb.what}|${f.name}|${fingerprint(f.bytes)}`, {
           kind: amb.what,
           text: `${f.name} の${what}が決まらない（${amb.detail}）`,
           options: [
@@ -222,6 +222,16 @@ export class IntakeSession {
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },
     };
   }
+}
+
+/** バイト列の指紋（長さと FNV-1a）。中身が同じなら同じ */
+function fingerprint(b: Uint8Array): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < b.length; i++) {
+    h ^= b[i] ?? 0;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `${b.length}.${h.toString(36)}`;
 }
 
 function diff(before: Map<string, { s: string }>, after: Map<string, { s: string }>) {
