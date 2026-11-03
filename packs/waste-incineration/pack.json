@@ -8,8 +8,8 @@
     "common": "原典照合済",
     "shareVocab": "未確認",
     "national": "原典照合済",
-    "checks": "未実装",
-    "note": "common は表Ⅱ-4 を原本で照らした。shareVocab（universal と implies の当て方）は作る側のセッションが決め、運営者の確認は未確認。national は全国の表を数え直し、出典の起点と照らした（docs/progress/2026-11-03.md）。検査（checks.json）はまだ無い"
+    "checks": "原典照合済",
+    "note": "common は表Ⅱ-4 を原本で照らした。shareVocab（universal と implies の当て方）は作る側のセッションが決め、運営者の確認は未確認。national は全国の表を数え直し、出典の起点と照らした（docs/progress/2026-11-03.md）。検査（checks.json）は 7 件。要件・推奨の出典（課長通知 第三の 11、手引きの表Ⅱ-7・表Ⅱ-9）は、検査を作るセッションが 2026-11-03 に原文で照らした（sources.json）。出典の無い 2 件と、年数がアプリの目安の 1 件は水準 app"
   },
   "sharing": "on",
   "fiscalYearStartMonth": 4,
@@ -23,7 +23,7 @@
   "units": {
     "capacity_t_per_day": "t/日"
   },
-  "undecided": "identityKey（同一性の鍵の宣言）と scale（判定の尺度）は未実装。取り込みは今、表示の番号と段の道で機器を結ぶ",
+  "undecided": "identityKey（同一性の鍵の宣言）と scale（取り込みが読む判定の尺度）は未実装（検査が見る健全度の段は checks.json に置いた）。取り込みは今、表示の番号と段の道で機器を結ぶ",
   "profile": {
     "note": "見え方の軸とその順（docs/plan.md §2.8）。主要＝炉の型・処理能力の帯、次＝蒸気タービン・集じん・灰処理、絞り込み＝運営の形。集じんは全国の表に列が無い軸（national: false。公開の台帳には出さない）。基幹改良の実施の軸は未実装",
     "axes": [

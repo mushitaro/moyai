@@ -8,7 +8,8 @@ import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
-import { TEXT } from "../text";
+import { checkResultsOf, getReferenceDate } from "../state/review";
+import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
 import type { IntakeWorkspace } from "./workspace";
 
@@ -88,6 +89,15 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     }
     ws.note("ai", T.crosswalkPlaced(rules.length, r.placed, r.data.conflicts));
     return { ok: true, data: r.data as unknown as Record<string, unknown> };
+  },
+  // 検査の結果を読むだけ（画面と同じ基準日で、パックの検査の純粋な関数を走らせる）。検査を直す・判定を変える道は無い
+  check_results: (ws, args) => {
+    const working = getWorkingPlan();
+    if (!working) return { ok: false, code: "no_working_plan" };
+    const date = getReferenceDate();
+    const data = checkResultsOf(working.plan, working.revision, date, args.checkId as string | undefined);
+    ws.note("ai", REVIEW_TEXT.aiRead((data.checks as unknown[]).length, date));
+    return { ok: true, data };
   },
 };
 

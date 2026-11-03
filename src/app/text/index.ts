@@ -7,7 +7,8 @@ export const TEXT = {
   fictionMark: "【架空】",
   home: {
     title: "作業画面",
-    lead: "v0：橋渡しとのつながり、人だけの経路の守り、ビルドの印を確かめる最小の画面です。取り込みで資料から計画を作り、星取表で見られます（確定と保存は未実装）。検査はまだありません（未実装）。",
+    lead: "v0：橋渡しとのつながり、人だけの経路の守り、ビルドの印を確かめる最小の画面です。取り込みで資料から計画を作り、星取表で見られます（確定と保存は未実装）。検査で、作業中の計画をパックの基準で自己点検できます。",
+    reviewLink: "検査",
     selftestLink: "Ed25519 の試験のページ",
     chartLink: "星取表",
     intakeLink: "取り込み",
@@ -370,3 +371,5 @@ export const ERROR_TEXT: Record<TabErrorCode, string> = {
 // 人だけの画面（確定・版・設定・検問所）の言葉と、輪を確かめた理由の言葉
 export { HUMAN_TEXT, bandText } from "./human";
 export { reasonText } from "./reasons";
+// 検査の画面と、検査の結果を AI に返すときの言葉
+export { REVIEW_TEXT, exampleText, numberLabel, numberValue } from "./review";

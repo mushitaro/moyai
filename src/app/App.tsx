@@ -25,6 +25,8 @@ const theme = createTheme({
 // 検問所と設定は人だけの画面（開いたときに読む）
 const Checkpoint = lazy(() => import("./pages/Checkpoint").then((m) => ({ default: m.Checkpoint })));
 const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
+// 検査（開いたときに読む）
+const Review = lazy(() => import("./pages/Review").then((m) => ({ default: m.Review })));
 
 // タブの秘密を持つ接続は、このタブで 1 つだけ作る（state/bridge.ts。星取表・検問所・設定も同じ接続を使う）
 // AI のツールの受け手は、つなぐ前に登録する
@@ -49,6 +51,10 @@ export function App() {
         <SelfTest />
       ) : hash === APP_PAGES.checkpoint || hash === APP_PAGES.settings ? (
         <Suspense fallback={null}>{hash === APP_PAGES.checkpoint ? <Checkpoint /> : <Settings />}</Suspense>
+      ) : hash === APP_PAGES.review ? (
+        <Suspense fallback={null}>
+          <Review />
+        </Suspense>
       ) : hash === APP_PAGES.intake ? (
         <Intake ws={workspace} />
       ) : hash === CHART_HASH ? (

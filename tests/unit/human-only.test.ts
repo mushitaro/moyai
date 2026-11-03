@@ -310,7 +310,7 @@ describe("中継の経路", () => {
     tb = await startTestBridge();
     const r = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "chart_rows", args: { limit: 10 } });
     expect(r.body.error.code).toBe("work_screen_not_open");
-    const ni = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "check_results", args: {} });
+    const ni = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "note_for_human", args: { before: "confirm", text: "見てください" } });
     expect(ni.body.error.code).toBe("not_implemented");
     expect((await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "nope", args: {} })).body.error.code).toBe("unknown_tool");
     const bad = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "chart_rows", args: { limit: 201 } });
