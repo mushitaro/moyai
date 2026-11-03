@@ -1,0 +1,198 @@
+{
+  "schema": "moyai.kinds/0",
+  "note": "業種を越える機器の種類（2 段目）。16 種を平らに持つ。docs/plan.md §2.1。1 段目の項目には、その項目が名前か働きで 16 種の 1 つに当たる機器ならその種類を当てる。いくつもの機器の組（炉・集じん装置など）は、組の主な機器が 16 種にあればそれを当て、無ければ null と理由にする",
+  "kinds": [
+    {
+      "code": "KD.PUMP",
+      "name": "ポンプ",
+      "basis": {
+        "type": "source",
+        "title": "危険物の規制に関する政令（昭和三十四年政令第三百六号）",
+        "issuer": "内閣（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/334CO0000000306",
+        "state": "照合済",
+        "checked": { "what": "第九条第一項第二十二号の「ポンプ、弁、継手等」の語", "version": "2026-04-04 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.BLOWER",
+      "name": "送風機",
+      "basis": {
+        "type": "source",
+        "title": "建築基準法施行令（昭和二十五年政令第三百三十八号）",
+        "issuer": "内閣（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/325CO0000000338",
+        "state": "照合済",
+        "checked": { "what": "第百二十六条の三第二項の「送風機を設けた排煙設備」の語", "version": "2026-11-01 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.COMPRESSOR",
+      "name": "圧縮機",
+      "basis": {
+        "type": "source",
+        "title": "一般高圧ガス保安規則（昭和四十一年通商産業省令第五十三号）",
+        "issuer": "通商産業省（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/341M50000400053",
+        "state": "照合済",
+        "checked": { "what": "第六条第一項第十五号の「配管、ポンプ、圧縮機」の語", "version": "2025-10-01 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.CRANE",
+      "name": "クレーン",
+      "basis": {
+        "type": "source",
+        "title": "労働安全衛生法施行令（昭和四十七年政令第三百十八号）",
+        "issuer": "内閣（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/347CO0000000318",
+        "state": "照合済",
+        "checked": { "what": "第十二条第一項第三号（特定機械等）の「クレーン」の語", "version": "2026-10-01 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.CONVEYOR",
+      "name": "コンベヤ",
+      "basis": {
+        "type": "source",
+        "title": "廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）令和 3 年 3 月改訂",
+        "issuer": "環境省",
+        "url": "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf",
+        "state": "照合済",
+        "checked": { "what": "表Ⅱ-6 機能診断技術例の「適用可能な設備・機器」の欄の「コンベヤ」の語", "page": "印刷頁 32（PDF の 40 枚目）", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.MOTOR",
+      "name": "電動機",
+      "basis": {
+        "type": "source",
+        "title": "電気設備に関する技術基準を定める省令（平成九年通商産業省令第五十二号）",
+        "issuer": "通商産業省（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/409M50000400052",
+        "state": "照合済",
+        "checked": { "what": "第六十五条の見出し「電動機の過負荷保護」と本文の「電動機」の語", "version": "2023-03-20 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.VALVE",
+      "name": "弁",
+      "basis": {
+        "type": "source",
+        "title": "危険物の規制に関する政令（昭和三十四年政令第三百六号）",
+        "issuer": "内閣（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/334CO0000000306",
+        "state": "照合済",
+        "checked": { "what": "第九条第一項第二十二号の「ポンプ、弁、継手等」の語", "version": "2026-04-04 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.PIPING",
+      "name": "配管",
+      "basis": {
+        "type": "source",
+        "title": "建築基準法施行令（昭和二十五年政令第三百三十八号）",
+        "issuer": "内閣（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/325CO0000000338",
+        "state": "照合済",
+        "checked": { "what": "第百二十九条の二の四の見出しと第一項の「給水、排水その他の配管設備」の語", "version": "2026-11-01 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.TANK",
+      "name": "タンク",
+      "basis": {
+        "type": "source",
+        "title": "危険物の規制に関する政令（昭和三十四年政令第三百六号）",
+        "issuer": "内閣（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/334CO0000000306",
+        "state": "照合済",
+        "checked": { "what": "第二条第一項第二号の「屋外にあるタンク」の語", "version": "2026-04-04 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.HEAT_EXCHANGER",
+      "name": "熱交換器",
+      "basis": {
+        "type": "source",
+        "title": "一般高圧ガス保安規則（昭和四十一年通商産業省令第五十三号）",
+        "issuer": "通商産業省（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/341M50000400053",
+        "state": "照合済",
+        "checked": { "what": "第九十四条の九第一項第一号の「凝縮器及び熱交換器」の語", "version": "2025-10-01 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.BOILER",
+      "name": "ボイラー",
+      "basis": {
+        "type": "source",
+        "title": "労働安全衛生法施行令（昭和四十七年政令第三百十八号）",
+        "issuer": "内閣（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/347CO0000000318",
+        "state": "照合済",
+        "checked": { "what": "第一条第三号の「ボイラー」の定義の語", "version": "2026-10-01 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.SUBSTATION",
+      "name": "受変電",
+      "basis": {
+        "type": "source",
+        "title": "廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）令和 3 年 3 月改訂",
+        "issuer": "環境省",
+        "url": "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf",
+        "state": "照合済",
+        "checked": { "what": "本文の「受変電設備」の語", "page": "印刷頁 14（PDF の 20 枚目）", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.PANEL",
+      "name": "盤",
+      "basis": {
+        "type": "source",
+        "title": "廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）令和 3 年 3 月改訂",
+        "issuer": "環境省",
+        "url": "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf",
+        "state": "照合済",
+        "checked": { "what": "表Ⅱ-6 機能診断技術例の「適用可能な設備・機器」の欄の「電気機器・盤など」の語", "page": "印刷頁 32（PDF の 40 枚目）", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.INSTRUMENT",
+      "name": "計装",
+      "basis": {
+        "type": "source",
+        "title": "廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）令和 3 年 3 月改訂",
+        "issuer": "環境省",
+        "url": "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf",
+        "state": "照合済",
+        "checked": { "what": "表Ⅱ-4 主要設備・機器リスト例の設備の欄の「計装設備」の語", "page": "印刷頁 29（PDF の 37 枚目）", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.ELEVATOR",
+      "name": "昇降機",
+      "basis": {
+        "type": "source",
+        "title": "建築基準法（昭和二十五年法律第二百一号）",
+        "issuer": "国会（e-Gov 法令検索）",
+        "url": "https://laws.e-gov.go.jp/law/325AC0000000201",
+        "state": "照合済",
+        "checked": { "what": "第三十四条の見出し「昇降機」と第一項の語", "version": "2026-05-27 施行", "on": "2026-11-03" }
+      }
+    },
+    {
+      "code": "KD.HVAC",
+      "name": "空調",
+      "basis": {
+        "type": "source",
+        "title": "廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）令和 3 年 3 月改訂",
+        "issuer": "環境省",
+        "url": "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf",
+        "state": "照合済",
+        "checked": { "what": "表 2-19 機器別管理基準 土木建築設備の「空調設備」の語", "page": "印刷頁 81（PDF の 91 枚目）", "on": "2026-11-03" }
+      }
+    }
+  ]
+}
