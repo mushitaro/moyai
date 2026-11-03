@@ -1,0 +1,341 @@
+{
+  "schema": "moyai.share-vocab/0",
+  "pack": "waste-incineration",
+  "note": "共有の公開語彙：分類ごとの上の分類・どの施設にもあるか（universal、出典つき）・推せる全国の表の軸の値（implies）。universal は、表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、どの炉型にもある群（余熱利用設備を除く 8 群）だけ。implies は、表Ⅱ-4 で炉型・溶融設備の有無に分かれる項目と蒸気タービン発電設備だけで、全国の表の処理方式の書き方と同じと言えるものに限る（流動床式ガス化炉・キルン式ガス化炉は、全国の表でどの処理方式に書かれるかを照らしていないので推さない）。どちらでもない分類は、写し取りで数えられる上の群まで上がる。",
+  "decidedBy": "このリポジトリを作る Claude Code のセッション（2026-11-03）。運営者の確認は未確認",
+  "classes": [
+    {
+      "code": "WI.RECV",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.RECV.SCALE",
+      "parent": "WI.RECV",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.RECV.CRANE",
+      "parent": "WI.RECV",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.RECV.SHREDDER",
+      "parent": "WI.RECV",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COMB",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.COMB.STK_GRATE",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "furnace": "STOKER"
+      }
+    },
+    {
+      "code": "WI.COMB.STK_FURNACE",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "furnace": "STOKER"
+      }
+    },
+    {
+      "code": "WI.COMB.STK_ASHMELT",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "furnace": "STOKER",
+        "ash": "MELT"
+      }
+    },
+    {
+      "code": "WI.COMB.FBI_PRETREAT",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "furnace": "FLUID"
+      }
+    },
+    {
+      "code": "WI.COMB.FBI_FURNACE",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "furnace": "FLUID"
+      }
+    },
+    {
+      "code": "WI.COMB.SHF_MELTER",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "furnace": "SHAFT"
+      }
+    },
+    {
+      "code": "WI.COMB.SHF_CHAMBER",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "furnace": "SHAFT"
+      }
+    },
+    {
+      "code": "WI.COMB.KLN_PRETREAT",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COMB.KLN_GASIFIER",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COMB.KLN_MELTER",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COMB.FBG_PRETREAT",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COMB.FBG_GASIFIER",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COMB.FBG_MELTER",
+      "parent": "WI.COMB",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COOL",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.COOL.BOILER",
+      "parent": "WI.COOL",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COOL.CONDENSER",
+      "parent": "WI.COOL",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.COOL.WATER_SPRAY",
+      "parent": "WI.COOL",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.FLUE",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.FLUE.DUST",
+      "parent": "WI.FLUE",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.FLUE.HCL_SOX",
+      "parent": "WI.FLUE",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.FLUE.NOX",
+      "parent": "WI.FLUE",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.FLUE.DIOXIN",
+      "parent": "WI.FLUE",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.HEAT",
+      "parent": null,
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.HEAT.TURBINE",
+      "parent": "WI.HEAT",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "turbine": "YES"
+      }
+    },
+    {
+      "code": "WI.DRAFT",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.DRAFT.FDF",
+      "parent": "WI.DRAFT",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.DRAFT.IDF",
+      "parent": "WI.DRAFT",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.ASHOUT",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.ASHOUT.ASH_CRANE",
+      "parent": "WI.ASHOUT",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.ASHOUT.FLYASH_TREAT",
+      "parent": "WI.ASHOUT",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.ASHOUT.MELT",
+      "parent": "WI.ASHOUT",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "ash": "MELT"
+      }
+    },
+    {
+      "code": "WI.ASHOUT.MELT_FLUE",
+      "parent": "WI.ASHOUT",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "ash": "MELT"
+      }
+    },
+    {
+      "code": "WI.ASHOUT.POST",
+      "parent": "WI.ASHOUT",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "ash": "MELT"
+      }
+    },
+    {
+      "code": "WI.ASHOUT.MELT_FLYASH",
+      "parent": "WI.ASHOUT",
+      "universal": false,
+      "source": null,
+      "implies": {
+        "ash": "MELT"
+      }
+    },
+    {
+      "code": "WI.ELEC",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.ELEC.SUBSTATION",
+      "parent": "WI.ELEC",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.ELEC.GENERATOR",
+      "parent": "WI.ELEC",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    },
+    {
+      "code": "WI.INST",
+      "parent": null,
+      "universal": true,
+      "source": "MOE-GLPLE-PROV-R3",
+      "implies": {}
+    },
+    {
+      "code": "WI.INST.DCS",
+      "parent": "WI.INST",
+      "universal": false,
+      "source": null,
+      "implies": {}
+    }
+  ]
+}

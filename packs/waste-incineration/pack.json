@@ -1,0 +1,42 @@
+{
+  "schema": "moyai.pack/0",
+  "id": "waste-incineration",
+  "name": "ごみ焼却施設",
+  "sharing": "on",
+  "fiscalYearStartMonth": 4,
+  "profile": {
+    "note": "見え方の軸とその順（docs/plan.md §2.8）。主要＝炉の型・処理能力の帯、次＝蒸気タービン・集じん・灰処理、絞り込み＝運営の形。集じんは全国の表に列が無い軸（公開の台帳には出さない）。基幹改良の実施の軸は未実装",
+    "axes": [
+      {
+        "key": "furnace",
+        "tier": "primary"
+      },
+      {
+        "key": "capacity_t_per_day",
+        "tier": "primary"
+      },
+      {
+        "key": "turbine",
+        "tier": "secondary"
+      },
+      {
+        "key": "dust",
+        "tier": "secondary"
+      },
+      {
+        "key": "ash",
+        "tier": "secondary"
+      },
+      {
+        "key": "contract",
+        "tier": "refine"
+      }
+    ]
+  },
+  "common": "common.json",
+  "vocab": "vocab.json",
+  "national": {
+    "table": "national/table.json",
+    "columns": "national/columns.json"
+  }
+}

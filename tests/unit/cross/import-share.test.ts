@@ -5,7 +5,8 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import { IntakeSession } from "../../../src/import";
-import { copyOut } from "../../../src/share/copyout";
+import { candidateClasses, copyOut } from "../../../src/share/copyout";
+import { chooseProfile, loadNational, loadVocab, type ProfileSpec } from "../../../src/share/k";
 import type { Plan } from "../../../src/shared/plan";
 import { Entities, loadTruth, runScript } from "../import/truth";
 
@@ -71,4 +72,28 @@ describe("cross-layer：取り込み → 写し取り", () => {
     ).length;
     expect(r.omitted.manDaysUnconvertible).toBeLessThanOrEqual(nonChildNull);
   });
+
+  test("パックの公開語彙と見え方で、取り込んだ計画の段が決まり、塊が出る", async () => {
+    const dir = `packs/${PACK}/`;
+    const vocab = loadVocab(readFileSync(dir + "vocab.json", "utf8"));
+    const table = loadNational(readFileSync(dir + "national/table.json", "utf8"));
+    const spec = (JSON.parse(readFileSync(dir + "pack.json", "utf8")) as { profile: ProfileSpec }).profile;
+    // 共通の設備項目のどのコードも公開語彙にある
+    const common = JSON.parse(readFileSync(dir + "common.json", "utf8")) as unknown;
+    const codes = JSON.stringify(common).match(/"code":"WI\.[A-Z0-9_.]+"/g)?.map((x) => x.slice(8, -1)) ?? [];
+    expect(codes.length).toBe(44);
+    for (const c of codes) expect(vocab.byCode.has(c)).toBe(true);
+    for (const c of vocab.byCode.values()) if (c.universal) expect(c.source).not.toBeNull();
+    const plan = await importedPlan();
+    // 施設の見え方の値：炉の型は正解の世界（ストーカ式）、ほかは試験の台本が置く（架空）
+    const facility = { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" };
+    const c = chooseProfile({ table, vocab, spec, facility, group: "NATIONAL", classes: candidateClasses(plan) });
+    expect(c.ok).toBe(true);
+    if (!c.ok) return;
+    const r = copyOut({ plan, lift: c.lift, to: { kind: "ring", id: "0123456789abcdef" } });
+    expect(r.chunks.length).toBeGreaterThan(0);
+    // 数えられない項目は群へ上がり、出る分類はどれも語彙で数えられるもの
+    for (const ch of r.chunks) expect(vocab.byCode.has(ch.class)).toBe(true);
+  });
 });
+
