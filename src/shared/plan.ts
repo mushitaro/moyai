@@ -1,0 +1,101 @@
+// 計画の書類の型（取り込み・星取表・確定・写し取りの共通の約束）。欄の名前は fields.ts の ENTITIES と同じ。
+// 取り込みが作り、星取表が描き、確定がファイルに残し、写し取りが読む。ここを変えるときは 4 つの側を同じ変更で直す。
+import { z } from "zod";
+import { AUTHOR_KINDS } from "./fields";
+
+const code = z.string().min(1);
+const author = z.enum(AUTHOR_KINDS);
+// 出どころ：どの資料のどこか（写真なら画像の位置）
+export const SourceRef = z.object({
+  file: z.string().min(1),
+  sheet: z.string().nullable(),
+  page: z.number().int().nullable(),
+  cell: z.string().nullable(), // 例 "C12"。PDF・写真は null
+  box: z.tuple([z.number(), z.number(), z.number(), z.number()]).nullable(), // 画像や頁の上の位置（x, y, w, h）
+});
+export type SourceRef = z.infer<typeof SourceRef>;
+
+export const Facility = z.object({
+  facilityKey: code,
+  name: z.string(),
+  fiscalYearStartMonth: z.number().int().min(1).max(12),
+  scale: z.number().nullable(),
+  scaleUnit: z.string().nullable(),
+  legalFlags: z.array(code),
+  fictional: z.boolean(),
+  inNationalTable: z.boolean().nullable(), // 人が答えるまで null
+});
+
+export const AssetNode = z.object({
+  nodeKey: code,
+  tag: z.string().nullable(),
+  name: z.string(),
+  level: z.number().int().min(1),
+  parentKey: z.string().nullable(),
+  classCode: z.string().nullable(),
+  commonItem: z.string().nullable(), // 共通の設備項目（1 段目のコード）。決まるまで null
+  commonItemAuthor: author.nullable(),
+  commonItemBasis: z.string().nullable(),
+  commonItemAccepted: z.boolean(), // 人が画面で受けたか（写し取りは true だけを写す）
+  specs: z.array(z.object({ key: z.string(), value: z.string() })),
+  installedOn: z.string().nullable(),
+  removedOn: z.string().nullable(),
+  replacedOn: z.string().nullable(),
+  series: z.string().nullable(),
+  sources: z.array(SourceRef),
+});
+
+export const WORK_ATTRIBUTES = ["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"] as const;
+
+export const Work = z.object({
+  workKey: code,
+  kind: z.string(), // 資料に書いてあった作業の名前
+  attribute: z.enum(WORK_ATTRIBUTES).nullable(), // 作業の属性。決まるまで null
+  strategy: z.enum(["time_based", "condition_based", "corrective"]).nullable(),
+  targets: z.array(code).min(1),
+  trigger: z.unknown().nullable(), // きっかけ（plan §2.4 の形。計算は src/plan/）
+  checkIds: z.array(z.string()),
+  contractor: z.string().nullable(),
+  parentWorkKey: z.string().nullable(),
+  tagRange: z.string().nullable(),
+  tagList: z.array(z.string()),
+});
+
+export const WorkDetail = z.object({
+  detailKey: code,
+  workKey: code,
+  planOrActual: z.enum(["plan", "actual"]),
+  step: z.enum(["inspection", "diagnosis", "action"]).nullable(),
+  startDate: z.string().nullable(), // 時刻帯の無い文字（YYYY-MM-DD）。年度だけの印は null
+  endDate: z.string().nullable(),
+  fiscalYear: z.number().int(),
+  cost: z.number().nullable(), // 共有しない
+  manDays: z.number().nullable(), // 工数（人・日）
+  days: z.number().nullable(), // 日数（工期）
+  resultScale: z.string().nullable(),
+  resultValue: z.string().nullable(),
+  measuredValue: z.string().nullable(),
+  previousValue: z.string().nullable(),
+  performer: z.string().nullable(), // 共有しない
+  sources: z.array(SourceRef).min(1), // 出どころはいくつも持てる（資料をまたぐ同じ作業）
+  basis: z.string().min(1),
+  author: author,
+  needsReview: z.boolean(), // 写真から読んだものは、人が画像と並べて確かめるまで true
+});
+
+export const Plan = z.object({
+  schema: z.literal("moyai.plan/0"),
+  planId: code,
+  displayName: z.string(),
+  packId: code,
+  version: z.number().int().min(0),
+  levelNames: z.array(z.string()), // 段の名前（計画が持つ。パックの段の名前は既定値）
+  facility: Facility,
+  assets: z.array(AssetNode),
+  works: z.array(Work),
+  details: z.array(WorkDetail),
+});
+export type Plan = z.infer<typeof Plan>;
+export type AssetNodeT = z.infer<typeof AssetNode>;
+export type WorkT = z.infer<typeof Work>;
+export type WorkDetailT = z.infer<typeof WorkDetail>;
