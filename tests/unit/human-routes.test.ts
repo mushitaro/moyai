@@ -2,7 +2,7 @@
 // どの経路も、素の HTTP・タブの秘密の無い要求・Origin の無い要求・偽った Origin で秘密なし・使い終えた印・切れた印を拒む。拒む試験は消さない。
 // あわせて、正しいタブから、Documents が日本語の OneDrive の下にある PC の形で、確定 → 輪を作る → 検問所 → 送る → 確かめるを通す。
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -124,7 +124,9 @@ describe("新しい人だけの経路は、どれも守りを越えさせない"
 
 describe("正しいタブから：確定 → 輪を作る → 検問所 → 送る → 確かめる（Documents が日本語の OneDrive の下）", () => {
   it("端まで通る。中身の形が違う・理由が空・合言葉が違うものは断る", async () => {
-    extra = mkdtempSync(join(tmpdir(), "moyai-human-"));
+    // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の英字（計画の語と偶然重なる）を入れない名前にする（数だけは照らさない）
+    extra = join(tmpdir(), `moyai-human-${process.pid}-${Date.now()}`);
+    mkdirSync(extra, { recursive: true });
     const docs = join(extra, "利用者", "OneDrive", "ドキュメント");
     const onedrive = join(extra, "利用者", "OneDrive");
     tb = await startTestBridge({ human: { platform: "win32", env: { OneDrive: onedrive }, shell: async () => ({ documents: docs, mounts: [] }), openText: () => {} } });
