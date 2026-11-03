@@ -10,6 +10,7 @@ import { resolveStateDir } from "../bridge/state";
 import { errorBody, type ErrorCode } from "../shared/errors";
 import { parseStartArgs } from "./args";
 import { keysCli, sendCli, verifyRingCli } from "./human";
+import { ledgerCli, verifyLedgerCli } from "./ledger";
 import { createRelayServer } from "./relay";
 
 declare const __MOYAI_BUILD__: { time: string; commit: string };
@@ -28,6 +29,13 @@ const HELP = `使い方：
   moyai start [--port 43110] [--no-open]   橋渡しを起こし、作業画面を開く
   moyai mcp                                 AI クライアントとつなぐ中継（標準入出力の MCP）
   moyai verify ring <輪のフォルダ>           輪の決まり・仲間・束を、受け手と同じ関数で確かめる（✓／✗ と理由）
+  moyai verify ledger <台帳のリポジトリの根>  公開の台帳の決まりと束を、受け手と同じ関数で確かめる（✓／✗ と理由）
+  moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
+                                            台帳の PR の変更を、checkout せずに git の木から確かめる（Actions の検証）
+  moyai ledger site <台帳のリポジトリの根> <出すフォルダ>
+                                            束を確かめ直し、似た施設の星取表と統計の行の静的なページを書く
+  moyai ledger submit --bundle <束> --repo <台帳の clone>
+                                            署名済みの束を出す PR の支度をし、gh のコマンドを出す（人だけ。端末から）
   moyai keys create --root <輪のフォルダ> --pack <パック>
                                             輪を作り、その輪の鍵を合言葉で包む（人だけ。端末から）
   moyai send                                束を送る（人だけ。検問所の画面から送る。端末からは未実装）
@@ -91,7 +99,8 @@ async function main(argv: string[]): Promise<void> {
     if (rest.length) return fail("bad_args");
     return mcp();
   }
-  if (cmd === "verify") return process.exit(await verifyRingCli(rest));
+  if (cmd === "verify") return process.exit(rest[0] === "ledger" ? await verifyLedgerCli(rest) : await verifyRingCli(rest));
+  if (cmd === "ledger") return process.exit(await ledgerCli(rest));
   if (cmd === "keys") return process.exit(await keysCli(rest));
   if (cmd === "send") return process.exit(sendCli());
   if (cmd === "--version" || cmd === "-v") return say(BUILD);

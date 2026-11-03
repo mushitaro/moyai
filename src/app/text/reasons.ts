@@ -38,6 +38,29 @@ const EXACT: Record<string, string> = {
   "k.mismatch": "送る側の紛れる数と、数え直した数が違う",
   "k.upgradeBelowMin": "基幹改良の塊を出せる紛れる数に届かない",
   "shape.rules": "決まりの形でない",
+  "shape.type": "形の外れ（型に合わない値か、知らないキー）",
+  "shape.duplicateKey": "形の外れ（キーの重複）",
+  "shape.protoKey": "形の外れ（__proto__ のキー）",
+  "shape.notCanonical": "形の外れ（正規形のバイト列でない。改行・空白・並び）",
+  "shape.bom": "形の外れ（BOM）",
+  "shape.truncated": "途中で切れている",
+  "shape.syntax": "JSON として読めない",
+  "shape.notUtf8": "UTF-8 でない",
+  "grain.intervalOnN1": "粒度の外れ（1 回だけの行に間隔がある）",
+  "grain.observedMismatch": "粒度の外れ（回数の帯が年度の数と合わない）",
+  "ledger.groupNotNational": "公開の台帳は全国の表に載る施設（NATIONAL）だけを受ける",
+  "ledger.upgrade": "基幹改良（UPGRADE）の塊は公開の台帳に出さない",
+  "ledger.fieldWithheld": "公開の台帳に出さない欄がある（経過年）",
+  "ledger.unreadable": "台帳の決まり（ledger.json）を読めない",
+  "ledger.kind": "台帳の決まりの形でない",
+  ledger: "台帳の決まり（ledger.json）が ✓ でないので確かめられない",
+  "file.symlink": "symlink（たどらない）",
+  "file.submodule": "submodule",
+  "file.notRegular": "ふつうのファイルでない",
+  "file.tooLarge": "大きすぎる",
+  "file.tooDeep": "入れ子が深すぎる",
+  "file.notAllowed": "許した形の外のファイル",
+  "file.notBundle": "束の形でない",
 };
 
 const PREFIX: [string, string][] = [
@@ -47,6 +70,10 @@ const PREFIX: [string, string][] = [
   ["k.", "紛れる数"],
   ["member.", "仲間のファイル"],
   ["file.", "ファイル"],
+  ["grain.", "粒度の外れ"],
+  ["ledger.", "公開の台帳の決まり"],
+  ["path.", "道（ファイル名）"],
+  ["diff.", "PR の変更"],
 ];
 
 export function reasonText(code: string): string {
