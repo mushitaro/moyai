@@ -13,7 +13,10 @@ import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
 import { Asker, type Decision, type QuestionState } from "./questions";
-import { PhotoBook, photoMimeOf, photoState, type PhotoInput } from "./photo";
+import { PhotoBook, photoMimeOf, photoState, scannedPageInput, type PhotoInput } from "./photo";
+
+/** 文字の無い PDF の頁を画像に描く倍率（pt → 画素。A4 の頁で長辺がおよそ 1,700 画素。AI に渡すときは写真の道がさらに描き直す） */
+const SCANNED_PAGE_SCALE = 2;
 
 export interface IntakeOptions {
   planId: string;
@@ -71,6 +74,8 @@ export class IntakeSession {
    * 読み直し（セッションを作り直す）をまたいで同じものを使えるよう、外から渡せる。
    */
   readonly photos: PhotoBook;
+  /** 写真の一覧に並べた、文字の無い PDF の頁（"<資料>#<頁>"） */
+  private readonly toPhotoBook = new Set<string>();
   constructor(
     readonly options: IntakeOptions,
     photos?: PhotoBook,
@@ -131,6 +136,23 @@ export class IntakeSession {
       else if (r.source) {
         this.files.push(f);
         this.xlsx.set(f.name, r.source);
+        // 文字の無い頁（スキャン）：頁を画像に描き、写真の一覧に並べる（人が 1 枚ずつ許して AI クライアントに読ませるか、外す）。
+        // 描けなかった頁だけは、写真の道に渡せないので質問に残す（黙って落とさない）
+        for (const p of (r.source.pages ?? []).filter((x) => x.scanned)) {
+          const key = `${f.name}#${p.page}`;
+          // 読み直し（同じ写真の一覧を渡したセッション）では、もう並んでいる
+          if (this.photos.get(scannedPageInput(f.name, p.page, { bytes: new Uint8Array(), mimeType: "image/png" }).name)) {
+            this.toPhotoBook.add(key);
+            continue;
+          }
+          try {
+            const img = await renderPdfPage(f.bytes, p.page, { scale: SCANNED_PAGE_SCALE });
+            rejected.push(...(await this.listPhotos([scannedPageInput(f.name, p.page, { bytes: img.png, mimeType: "image/png" })])));
+            this.toPhotoBook.add(key);
+          } catch {
+            // 描けない頁（復号に wasm の要る画像など）：質問に残す
+          }
+        }
       }
     }
     this.rejectedFiles.push(...rejected);
@@ -227,14 +249,14 @@ export class IntakeSession {
       }
       if (!done) unreadable.push(`${f.name}（${why || "読めない"}）`);
     }
-    // 文字の無い頁（スキャン）：推し量って読まず、写真の道に回す。頁を写真の道に渡すつなぎができるまでは、人が外すと決めるまで計画を作らない
+    // 文字の無い頁（スキャン）のうち、画像に描けず写真の一覧に並べられなかった頁：推し量って読まず、人が外すと決めるまで計画を作らない
     const toPhoto: string[] = [];
     for (const s of sources) {
-      const scanned = (s.pages ?? []).filter((p) => p.scanned).map((p) => p.page);
+      const scanned = (s.pages ?? []).filter((p) => p.scanned && !this.toPhotoBook.has(`${s.file}#${p.page}`)).map((p) => p.page);
       if (!scanned.length) continue;
       const a = ask.ask(`photoRoute|${s.file}|${scanned.join(",")}`, {
         kind: "photoRoute",
-        text: `${s.file} の ${scanned.join("・")} 頁は文字が無い（スキャンの頁）。推し量って読まず、写真の道に回す（文字の無い頁を写真の道に渡すつなぎは未実装）。どうするか`,
+        text: `${s.file} の ${scanned.join("・")} 頁は文字が無い（スキャンの頁）が、画像に描けなかったので写真の道に渡せない。推し量って読まない。どうするか`,
         options: [{ id: "exclude", label: "この頁を読まずに外す（理由を残す）" }],
         valueKind: "option",
         defaultAnswer: null,
@@ -256,7 +278,7 @@ export class IntakeSession {
       composition.plan = null;
     }
     if (toPhoto.length) {
-      composition.blockers.push(`写真の道に回した頁 ${toPhoto.length}（${toPhoto.join("・")}。写真の道に渡すつなぎは未実装）`);
+      composition.blockers.push(`画像に描けなかった文字の無い頁 ${toPhoto.length}（${toPhoto.join("・")}）`);
       composition.plan = null;
     }
     // 読んでいない写真（人が AI に渡して読ませるか、読まずに外すまで）。黙って落とさない

@@ -159,7 +159,7 @@ describe("頁をまたぐ表（層 2 のくり返す領域）", () => {
 });
 
 describe("文字の無い頁（スキャン）", () => {
-  test("推し量って読まず、台帳に「写真の道に回す」と数え、質問にする。頁の画像は取り出せる。外すと決めれば計画を作る", async () => {
+  test("推し量って読まず、頁を画像にして写真の一覧に並べる（人が許すか外すまで計画を作らない）。外すと決めれば計画を作る", async () => {
     const pages = [...ledgerPages("repeat").slice(0, 1), { image: true }];
     const bytes = pdfOf(pages);
     const s = session();
@@ -170,20 +170,22 @@ describe("文字の無い頁（スキャン）", () => {
     const led = src?.ledger.find((e) => e.what === "scannedPage");
     expect(led?.kind).toBe("unread");
     expect(led?.detail).toContain("写真の道に回す");
-    expect(led?.detail).toContain("未実装");
     expect(s.scannedPages()).toEqual([{ file: "scan.pdf", page: 2 }]);
-    // 頁の画像（PNG）：写真の道の入口に渡すもの
-    const img = await s.pageImage("scan.pdf", 2, 1);
-    expect([...img.png.slice(0, 4)]).toEqual([0x89, 0x50, 0x4e, 0x47]);
-    expect(img.width).toBeGreaterThan(100);
+    // 頁の画像（PNG）が写真の一覧に並ぶ。名前は「資料#p頁」、出どころは PDF の頁
+    const e = s.photos.get("scan.pdf#p2");
+    expect(e).toBeDefined();
+    expect(e?.input.origin).toEqual({ kind: "pdf_page", file: "scan.pdf", page: 2 });
+    expect([...e!.input.bytes.slice(0, 4)]).toEqual([0x89, 0x50, 0x4e, 0x47]);
+    // 描けた頁には「写真の道に渡せない」の質問を出さない
     acceptDefaults(s);
-    const q = s.analyze().open.find((x) => x.kind === "photoRoute");
-    expect(q?.defaultAnswer).toBeNull();
+    expect(s.analyze().open.find((x) => x.kind === "photoRoute")).toBeUndefined();
     const c = s.compose();
     expect(c.plan).toBeNull();
-    expect(c.blockers.join("")).toContain("写真の道に回した頁 1");
-    s.settle([human(q?.questionId ?? "", "exclude")]);
+    expect(c.blockers.join("")).toContain("読んでいない写真 1");
+    // 人が読まずに外すと、計画を作る（外した頁は理由つきで数える）
+    expect(s.photos.exclude("scan.pdf#p2", new Date().toISOString())).toBe("ok");
     expect(s.compose().plan?.assets).toHaveLength(3);
+    expect(s.analyze().rejected.map((r) => r.file)).toContain("scan.pdf#p2");
   });
 });
 
