@@ -21,6 +21,10 @@ export interface FieldDef {
 export const AUTHOR_KINDS = ["human", "ai", "ai_relayed_human", "ai_reading", "rule_code"] as const;
 export type AuthorKind = (typeof AUTHOR_KINDS)[number];
 
+/** 作業の属性のコード（docs/plan.md §2.1）。画面に出す名前はパック（packs/_kinds/work.json）が持つ。 */
+export const WORK_ATTRIBUTES = ["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"] as const;
+export type WorkAttribute = (typeof WORK_ATTRIBUTES)[number];
+
 const f = (label: string, type: FieldType, extra: Partial<FieldDef> = {}): FieldDef => ({ label, type, ...extra });
 
 export const ENTITIES = {
@@ -61,6 +65,9 @@ export const ENTITIES = {
     fields: {
       workKey: f("作業の鍵", "code"),
       kind: f("種類", "code"),
+      attribute: f("作業の属性", "enum", { values: WORK_ATTRIBUTES }),
+      attributeAuthor: f("作業の属性の当てはめの作者", "enum", { values: AUTHOR_KINDS }),
+      attributeBasis: f("作業の属性の当てはめの根拠", "text"),
       strategy: f("保全方式", "enum", { values: ["time_based", "condition_based", "corrective"] }),
       targets: f("対象の資産", "list"),
       trigger: f("きっかけ", "text"),

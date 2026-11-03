@@ -233,6 +233,7 @@ export const HUMAN_TEXT = {
     planned: "計画（予定）の印（写すのは実績だけ）",
     needsReview: "写真から読み、人がまだ確かめていない",
     attributeUndecided: "作業の属性が決まらない",
+    attributeNotAccepted: "作業の属性の当てはめを人が受けていない",
     fiscalYearInvalid: "年度が範囲の外",
     targetMissing: "対象の機器が無い",
     commonItemUndecided: "共通の設備項目が決まらない",

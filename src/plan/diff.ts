@@ -109,13 +109,13 @@ export function diffPlans(before: Plan | null, after: Plan): PlanDiff {
 export const NEEDS_HUMAN_AUTHORS: readonly AuthorKind[] = ["ai", "ai_relayed_human"];
 
 export interface Decision {
-  /** 決定の ID（何の決定か）："item:<資産の鍵>" か "detail:<明細の鍵>" */
+  /** 決定の ID（何の決定か）："item:<資産の鍵>"・"attr:<作業の鍵>"・"detail:<明細の鍵>" */
   id: string;
-  kind: "commonItem" | "detail";
+  kind: "commonItem" | "attribute" | "detail";
   author: AuthorKind;
   /** 画面に出す対象（機器の名前・作業の名前） */
   target: string;
-  /** 決めた値（共通の設備項目のコード、または「計画／実施 · 年度」） */
+  /** 決めた値（共通の設備項目のコード、作業の属性のコード、または「計画／実施 · 年度」） */
   value: string;
   basis: string;
   /** 中身の指紋。受けたあとに中身が変われば、また受けていない決定になる */
@@ -157,6 +157,19 @@ export function aiDecisions(plan: Plan): Decision[] {
   }
   const works = new Map(plan.works.map((w) => [w.workKey, w]));
   const names = new Map(plan.assets.map((a) => [a.nodeKey, a.name]));
+  for (const w of plan.works) {
+    if (w.attribute === null || w.attributeAuthor === null || !NEEDS_HUMAN_AUTHORS.includes(w.attributeAuthor)) continue;
+    if (w.attributeAccepted) continue;
+    out.push({
+      id: `attr:${w.workKey}`,
+      kind: "attribute",
+      author: w.attributeAuthor,
+      target: `${w.targets.map((k) => names.get(k) ?? k).join("、")} · ${w.kind}`,
+      value: w.attribute,
+      basis: w.attributeBasis ?? "",
+      hash: fnv64(JSON.stringify([w.workKey, w.attribute, w.attributeAuthor, w.attributeBasis])),
+    });
+  }
   for (const d of plan.details) {
     if (!NEEDS_HUMAN_AUTHORS.includes(d.author)) continue;
     const w = works.get(d.workKey);
@@ -179,9 +192,14 @@ export function pendingDecisions(plan: Plan, accepted: readonly { id: string; ha
   return aiDecisions(plan).filter((d) => !ok.has(`${d.id}\u0000${d.hash}`));
 }
 
-/** 受けた決定を計画に効かせる：共通の設備項目の当てはめは「人が受けた」にする（作者は AI のまま残す）。 */
+/** 受けた決定を計画に効かせる：共通の設備項目と作業の属性の当てはめは「人が受けた」にする（作者は AI のまま残す）。 */
 export function applyAcceptances(plan: Plan, acceptances: readonly Acceptance[]): Plan {
   const items = new Set(acceptances.filter((a) => a.id.startsWith("item:")).map((a) => a.id.slice("item:".length)));
-  if (items.size === 0) return plan;
-  return { ...plan, assets: plan.assets.map((a) => (items.has(a.nodeKey) ? { ...a, commonItemAccepted: true } : a)) };
+  const attrs = new Set(acceptances.filter((a) => a.id.startsWith("attr:")).map((a) => a.id.slice("attr:".length)));
+  if (items.size === 0 && attrs.size === 0) return plan;
+  return {
+    ...plan,
+    assets: plan.assets.map((a) => (items.has(a.nodeKey) ? { ...a, commonItemAccepted: true } : a)),
+    works: plan.works.map((w) => (attrs.has(w.workKey) ? { ...w, attributeAccepted: true } : w)),
+  };
 }

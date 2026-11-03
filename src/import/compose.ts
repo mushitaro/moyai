@@ -215,7 +215,11 @@ export function compose(
       works.set(wk, {
         workKey: wk,
         kind,
+        // 作業の属性は取り込みでは決めない（当てはめで AI が案を置き、人が受ける。plan §2.1）
         attribute: null,
+        attributeAuthor: null,
+        attributeBasis: null,
+        attributeAccepted: false,
         strategy: null,
         targets,
         trigger: null,

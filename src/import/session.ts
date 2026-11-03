@@ -2,6 +2,7 @@
 // 層 1（読み手）だけが形式を知る。層 2〜4 は決定の一覧とともに毎回はじめから読み直す（同じ入力と決定からはいつも同じ出力）。
 // AI に渡すのは要約・行番号つきの見本・凡例・注記・質問の候補だけ（plan §2.13）。行の中身をまとめて渡さない。
 import type { Plan } from "../shared/plan";
+import type { CrosswalkSurvey } from "../shared/tools";
 import { readCsv, ENCODING_LABEL, type CsvDelimiter, type CsvEncoding } from "./csv";
 import type { RejectedFile, SourceFile } from "./grid";
 import { extensionOf, READABLE, readSource, type InputFile } from "./read";
@@ -30,7 +31,7 @@ export interface Analysis {
   unusedDecisions: Decision[];
 }
 
-/** intake_survey の返すものと同じ形（src/shared/tools.ts） */
+/** intake_survey の返すものと同じ形（src/shared/tools.ts）。当てはめの要約（crosswalk）は作業画面の側が足す（app/state/crosswalk.ts） */
 export interface Survey {
   files: { fileRef: string; sheets: number; rows: number }[];
   samples: { fileRef: string; row: number; cells: string[] }[];
@@ -46,6 +47,8 @@ export interface Survey {
   }[];
   unresolvedCells: number;
   compose: { state: "idle" | "running" | "done" | "failed"; message: string | null };
+  /** 取り込みは当てはめを持たないので null。作業画面の側が作業中の計画から足す */
+  crosswalk: CrosswalkSurvey | null;
 }
 
 const SAMPLE_ROWS = 20;
@@ -243,6 +246,7 @@ export class IntakeSession {
       })),
       unresolvedCells: unresolved,
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },
+      crosswalk: null,
     };
   }
 }

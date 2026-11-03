@@ -2,10 +2,8 @@
 // 本物の中継（dist/cli.js mcp。標準入出力の MCP）を、MCP のクライアントでつなぐ。
 // 人が資料を画面に落とし、AI が intake_survey → intake_settle → intake_compose → intake_survey → chart_rows を呼ぶ。
 // 先に npm run build を走らせておく。
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { expect, test } from "@playwright/test";
-import { openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { callTool as call, mcpClient as connect, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 let bridge: StartedBridge;
 test.beforeAll(async () => {
@@ -13,27 +11,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(() => bridge?.stop());
 
-async function mcpClient(stateDir: string): Promise<Client> {
-  const transport = new StdioClientTransport({
-    command: process.execPath,
-    args: ["dist/cli.js", "mcp"],
-    env: { ...(process.env as Record<string, string>), MOYAI_STATE_DIR: stateDir },
-    stderr: "pipe",
-  });
-  const client = new Client({ name: "moyai-e2e", version: "0" });
-  await client.connect(transport);
-  // 本物のクライアントと同じく、ツールの一覧（出力の型）を先に読む。以後の結果は SDK が出力の型で確かめる
-  const { tools } = await client.listTools();
-  expect(tools.map((t) => t.name)).toEqual(expect.arrayContaining(["intake_survey", "intake_settle", "intake_compose", "chart_rows"]));
-  return client;
-}
-
-async function call(c: Client, name: string, args: Record<string, unknown> = {}): Promise<any> {
-  const r: any = await c.callTool({ name, arguments: args });
-  expect(r.isError, `${name}: ${JSON.stringify(r.content)}`).toBeFalsy();
-  expect(r.structuredContent, name).toBeTruthy();
-  return r.structuredContent;
-}
+const mcpClient = (stateDir: string) => connect(stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows"]);
 
 test("AI が MCP で取り込みを最後まで動かし、星取表の行を読む", async ({ page }, info) => {
   const tag = info.project.name;

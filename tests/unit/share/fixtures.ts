@@ -79,6 +79,10 @@ export function work(workKey: string, attribute: WorkT["attribute"], targets: st
     workKey,
     kind: "架空の作業",
     attribute,
+    // 属性があれば、人が画面で受けたもの（資産の節の既定と同じ）
+    attributeAuthor: attribute === null ? null : "human",
+    attributeBasis: attribute === null ? null : "人が画面で受けた",
+    attributeAccepted: attribute !== null,
     strategy: "time_based",
     targets,
     trigger: null,

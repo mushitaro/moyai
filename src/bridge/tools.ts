@@ -13,7 +13,7 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   intake_settle: "tab",
   intake_compose: "tab",
   photo_transcribe: "not_implemented",
-  crosswalk_propose: "not_implemented",
+  crosswalk_propose: "tab",
   chart_rows: "tab",
   chart_propose: "not_implemented",
   check_results: "not_implemented",

@@ -111,7 +111,7 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
       <Text size="xs">
         {T.source.planOrActual[d.planOrActual]} · {T.fiscalYear(d.fiscalYear)}
         {d.startDate ? ` · ${d.startDate}${d.endDate && d.endDate !== d.startDate ? `〜${d.endDate}` : ""}` : ""}
-        {work?.attribute ? ` · ${T.commonLevels[2]}：${ix.workLabels[work.attribute]}` : ""}
+        {work?.attribute ? ` · ${T.commonLevels[2]}：${ix.workLabels[work.attribute]}${work.attributeAccepted ? "" : T.source.proposal}` : ""}
       </Text>
       {(d.manDays !== null || d.days !== null) && (
         <Text size="xs">
@@ -403,7 +403,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
                 <Table.Tr key={d.detailKey}>
                   <Table.Td>{(w?.targets ?? []).map(ix.assetName).join("、")}</Table.Td>
                   <Table.Td>{w?.kind}</Table.Td>
-                  <Table.Td>{w?.attribute ? ix.workLabels[w.attribute] : ""}</Table.Td>
+                  <Table.Td>{w?.attribute ? `${ix.workLabels[w.attribute]}${w.attributeAccepted ? "" : T.source.proposal}` : ""}</Table.Td>
                   <Table.Td>{d.fiscalYear}</Table.Td>
                   <Table.Td>{T.source.planOrActual[d.planOrActual]}</Table.Td>
                   <Table.Td>{d.startDate ?? ""}</Table.Td>
@@ -429,7 +429,8 @@ export function StarTable() {
   const working = useWorkingPlan();
   const load = usePlan();
   // 取り込みが置いた作業中の計画を先に使い、無ければ開発用の見本（?plan=）を読む
-  if (working) return <Chart key={working.revision} plan={working.plan} origin={working.origin} />;
+  // 置き直したときだけ表を作り直す（当てはめで中身が変わっただけなら、行の切り替えや畳んだ段をそのまま残す）
+  if (working) return <Chart key={working.generation} plan={working.plan} origin={working.origin} />;
   if (load.kind === "ready") return <Chart plan={load.plan} origin="dev" />;
   return (
     <Stack p="lg" gap="md">

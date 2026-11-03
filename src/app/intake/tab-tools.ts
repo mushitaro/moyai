@@ -1,10 +1,12 @@
 // AI のツールの、タブの側の受け手（橋渡し → このタブ）。どれも取り込みの作業場（workspace.ts）か、作業中の計画の置き場を使う。
 // 引数は橋渡しが型で確かめてあるが、ここでも確かめ直し（既定の値もここで埋まる）、答えも出力の型で確かめてから返す。
 // AI に行のデータを引数で渡させない。返す行は星取表の行の一部だけで、上限は橋渡しが会話ごとに数える（§2.12）。
+// 当てはめ（crosswalk_propose）は規則で案を置くだけで、数と行の参照だけを返す。人が受ける道はここに無い（画面だけ）。
 import type { TabSentCode } from "../../shared/errors";
-import { toolDef, type ToolName } from "../../shared/tools";
+import { toolDef, type Rule, type ToolName } from "../../shared/tools";
 import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
+import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
 import { TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
@@ -48,10 +50,11 @@ function chartRows(view: "base" | "adjusted", offset: number, limit: number, row
 
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   intake_survey: (ws, args) => {
-    const s: Record<string, unknown> = { ...ws.survey() };
-    const part = args.part as "all" | "questions" | "compose";
+    const part = args.part as "all" | "questions" | "compose" | "crosswalk";
+    // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
+    const s: Record<string, unknown> = { ...ws.survey(), crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null };
     ws.note("ai", T.surveyed);
-    if (part === "compose") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [] } };
+    if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [] } };
     if (part === "questions") return { ok: true, data: { ...s, samples: [], legends: [], notes: [] } };
     return { ok: true, data: s };
   },
@@ -74,6 +77,17 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     const r = chartRows(args.view as "base" | "adjusted", Number(args.offset), Number(args.limit), ctx.rowsRemaining);
     if (r.ok) ws.note("ai", T.rowsRead((r.data.rows as unknown[]).length, Number(r.data.remainingInConversation)));
     return r;
+  },
+  // 案を置くだけ（作者「AI」・人が受けていない）。受ける・断るは画面の当てはめの欄だけにあり、ここからは呼ばない
+  crosswalk_propose: (ws, args) => {
+    const rules = args.rules as Rule[];
+    const r = proposeFromAi(rules, Number(args.basedOnVersion));
+    if (!r.ok) {
+      ws.note("ai", T.crosswalkRefused(rules.length));
+      return { ok: false, code: r.code };
+    }
+    ws.note("ai", T.crosswalkPlaced(rules.length, r.placed, r.data.conflicts));
+    return { ok: true, data: r.data as unknown as Record<string, unknown> };
   },
 };
 

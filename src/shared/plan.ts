@@ -1,7 +1,10 @@
 // 計画の書類の型（取り込み・星取表・確定・写し取りの共通の約束）。欄の名前は fields.ts の ENTITIES と同じ。
-// 取り込みが作り、星取表が描き、確定がファイルに残し、写し取りが読む。ここを変えるときは 4 つの側を同じ変更で直す。
+// 取り込みが作り、当てはめ（src/plan/crosswalk.ts）が案を置いて人が受け、星取表が描き、確定がファイルに残し、写し取りが読む。
+// ここを変えるときは、どの側も同じ変更で直す。
 import { z } from "zod";
-import { AUTHOR_KINDS } from "./fields";
+import { AUTHOR_KINDS, WORK_ATTRIBUTES } from "./fields";
+
+export { WORK_ATTRIBUTES } from "./fields";
 
 const code = z.string().min(1);
 const author = z.enum(AUTHOR_KINDS);
@@ -45,12 +48,13 @@ export const AssetNode = z.object({
   sources: z.array(SourceRef),
 });
 
-export const WORK_ATTRIBUTES = ["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"] as const;
-
 export const Work = z.object({
   workKey: code,
   kind: z.string(), // 資料に書いてあった作業の名前
   attribute: z.enum(WORK_ATTRIBUTES).nullable(), // 作業の属性。決まるまで null
+  attributeAuthor: author.nullable(),
+  attributeBasis: z.string().nullable(),
+  attributeAccepted: z.boolean(), // 人が画面で受けたか（写し取りは true だけを写す。資産の節の commonItemAccepted と同じ）
   strategy: z.enum(["time_based", "condition_based", "corrective"]).nullable(),
   targets: z.array(code).min(1),
   trigger: z.unknown().nullable(), // きっかけ（plan §2.4 の形。計算は src/plan/）

@@ -49,7 +49,12 @@ async function importedPlan(): Promise<Plan> {
       : a;
   });
   const attrOf = new Map<string, string>((t.world.works as { label: string; attr: string }[]).map((w) => [w.label, w.attr]));
-  const works = plan.works.map((w) => ({ ...w, attribute: (attrOf.get(w.kind) ?? null) as Plan["works"][number]["attribute"] }));
+  const works = plan.works.map((w) => {
+    const attribute = (attrOf.get(w.kind) ?? null) as Plan["works"][number]["attribute"];
+    return attribute
+      ? { ...w, attribute, attributeAuthor: "human" as const, attributeBasis: "試験の台本が押した（正解の世界から）", attributeAccepted: true }
+      : w;
+  });
   return { ...plan, assets, works };
 }
 
