@@ -3,6 +3,7 @@
 import { describe, expect, test } from "vitest";
 import { TOOLS } from "../../../src/shared/tools";
 import { countRows, type CellStatus } from "../../../src/import/compose";
+import type { IntakeSession } from "../../../src/import/session";
 import { acceptDefaults, human, rows, session, xlsxOf } from "./helpers";
 
 describe("層 2 構造", () => {
@@ -400,4 +401,51 @@ describe("AI に渡す要約と、決定の数", () => {
     expect(TOOLS.intake_settle.output.safeParse(r).success).toBe(true);
     expect(r).toMatchObject({ cellsAffected: 1, rowsAffected: 1, unresolved: 0 });
   });
+
+  test("上の行の無い 〃 が 2 行あれば 1 回の質問にまとめ、1 つの答えが全部に効く", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["名称", "仕様"]]);
+      rows(ws, 2, [
+        ["甲設備", null],
+        ["〃", "10 kW"],
+        ["乙設備", null],
+        ["〃", "20 kW"],
+      ]);
+      for (const r of [3, 5]) ws.getCell(`A${r}`).alignment = { indent: 1 };
+    });
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    const qs = s.analyze().open.filter((x) => x.text.includes("〃"));
+    expect(qs.length).toBe(1);
+    const q = qs[0]!;
+    expect(q.sameShapeRows).toBe(2);
+    expect(q.options.map((o) => o.id)).toEqual(["above", "literal", "exclude"]);
+    const at = (plan: ReturnType<IntakeSession["compose"]>["plan"], cell: string) => plan?.assets.find((a) => a.sources.some((x) => x.cell === cell))?.name;
+    s.settle([human(q.questionId, "above")]);
+    acceptDefaults(s);
+    let plan = s.compose().plan;
+    expect([at(plan, "A3"), at(plan, "A5")]).toEqual(["甲設備", "乙設備"]);
+    s.settle([human(q.questionId, "literal")]);
+    acceptDefaults(s);
+    plan = s.compose().plan;
+    expect([at(plan, "A3"), at(plan, "A5")]).toEqual(["〃", "〃"]);
+  });
+
+  test("上の行がまったく無い 〃 が混ざれば「上と同じ」を出さない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["名称", "仕様"]]);
+      rows(ws, 2, [
+        ["〃", "5 kW"],
+        ["甲設備", null],
+        ["〃", "10 kW"],
+      ]);
+      ws.getCell("A4").alignment = { indent: 1 };
+    });
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    const q = s.analyze().open.find((x) => x.text.includes("〃"));
+    expect(q?.sameShapeRows).toBe(2);
+    expect(q?.options.map((o) => o.id)).toEqual(["literal", "exclude"]);
+  });
 });
+

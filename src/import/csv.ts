@@ -240,7 +240,7 @@ export function readCsv(file: string, bytes: Uint8Array, opts: CsvReadOptions = 
   if (opts.singleColumn) {
     // 区切りの候補（,・タブ・;・|）がどの行にも無いことを確かめてから、1 列として読む
     const d = detectDelimiter(text, ext);
-    if (d.candidates.length && d.detail !== NO_DELIMITER) {
+    if (d.candidates.length) {
       // 1 列と決めたのに区切りの候補がある（中身の違うファイルなど）：候補を出して聞き直す
       ambiguity.push({ what: "delimiter", candidates: d.candidates, detail: `1 列と決めたが、区切りの候補がある（${d.detail}）` });
       return { source: null, ambiguity };

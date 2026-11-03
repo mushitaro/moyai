@@ -209,4 +209,17 @@ describe("CSV・TSV の読み手", () => {
     expect(r2.source).toBeNull();
     expect(r2.ambiguity[0]?.candidates).toEqual([","]);
   });
+  test("同じ名前でも中身の違う CSV には、前の答えを当てずに聞き直す（質問の鍵に中身の SHA-256）", async () => {
+    const idOf = async (text: string) => {
+      const s = session();
+      await s.add([{ name: "x.csv", bytes: enc.encode(text) }]);
+      return s.analyze().open.find((x) => x.kind === "delimiter")?.questionId;
+    };
+    const a = await idOf("a;b,c\nd;e,f\n");
+    expect(a).toBeDefined();
+    expect(await idOf("a;b,c\nd;e,f\n")).toBe(a);
+    // 長さが同じで中身の違うファイル
+    expect(await idOf("a;b,c\nd;e,g\n")).not.toBe(a);
+  });
 });
+

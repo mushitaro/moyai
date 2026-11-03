@@ -47,6 +47,8 @@ const SAMPLE_TEXT = 60;
 
 export class IntakeSession {
   private readonly files: InputFile[] = [];
+  /** 資料の名前 → 中身の SHA-256（質問の鍵に使う。中身の違うファイルに前の答えを当てない） */
+  private readonly digests = new Map<string, string>();
   private readonly xlsx = new Map<string, SourceFile>();
   private readonly rejectedFiles: RejectedFile[] = [];
   private decisions = new Map<string, Decision>();
@@ -63,6 +65,7 @@ export class IntakeSession {
       }
       const ext = extensionOf(f.name);
       if ((READABLE as Record<string, string>)[ext] === "csv") {
+        this.digests.set(f.name, await sha256Hex(f.bytes));
         this.files.push(f);
         continue;
       }
@@ -134,7 +137,7 @@ export class IntakeSession {
         const what = amb.what === "encoding" ? "文字コード" : "区切り";
         const single = amb.what === "delimiter" && amb.candidates.length === 0 ? [{ id: "single", label: "区切りの無い 1 列の表として読む" }] : [];
         // 質問の鍵はファイルの名前と中身の指紋と問いの種類（何回目の読み直しで出たかに依らない。中身の違うファイルには前の答えを当てない）
-        const a = ask.ask(`${amb.what}|${f.name}|${fingerprint(f.bytes)}`, {
+        const a = ask.ask(`${amb.what}|${f.name}|${this.digests.get(f.name) ?? ""}`, {
           kind: amb.what,
           text: `${f.name} の${what}が決まらない（${amb.detail}）`,
           options: [
@@ -224,14 +227,10 @@ export class IntakeSession {
   }
 }
 
-/** バイト列の指紋（長さと FNV-1a）。中身が同じなら同じ */
-function fingerprint(b: Uint8Array): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < b.length; i++) {
-    h ^= b[i] ?? 0;
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return `${b.length}.${h.toString(36)}`;
+/** バイト列の SHA-256（16 進）。ブラウザでも Node でも WebCrypto で取る */
+async function sha256Hex(b: Uint8Array): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", b as Uint8Array<ArrayBuffer>);
+  return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
 function diff(before: Map<string, { s: string }>, after: Map<string, { s: string }>) {
