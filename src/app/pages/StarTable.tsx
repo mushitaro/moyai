@@ -1,6 +1,7 @@
 // 星取表（v0）：plan §2.2 と §2.14。表は AG Grid Community（chart/grid.ts）、行と印は src/plan/chart.ts。
 // 開閉の状態はこの画面が持ち、見える行だけを表に渡す。畳んだ段はブラウザに覚える。
-// 主ボタン「確定する…」は見出しの行の右端。v0 は確定の経路が無いので押せず、理由を横に出す。
+// 主ボタン「確定する…」は見出しの行の右端。押すと確定のダイアログ（components/ConfirmDialog.tsx）を開く。
+// 橋渡しとつながっていなければ押せず、理由を横に出す。
 import { Alert, Anchor, Button, Group, Modal, SegmentedControl, Stack, Table, Text, Title, useMantineColorScheme } from "@mantine/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildChart, nextFoldLevel, type Layer, type PeriodMode, type RowMode } from "../../plan/chart";
@@ -10,8 +11,10 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, cellAria, formatCell } from "../chart/grid";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
-import { useWorkingPlan } from "../state/plan-store";
-import { TEXT } from "../text";
+import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
+import { useConnection } from "../state/bridge";
+import { setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
+import { HUMAN_TEXT, TEXT } from "../text";
 
 const T = TEXT.chart;
 const DEV_PLAN_NAME = /^[a-z0-9-]{1,64}$/;
@@ -130,8 +133,19 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
   );
 }
 
-function Chart({ plan }: { plan: Plan }) {
+function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const { client, state: conn } = useConnection();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const canConfirm = conn.kind === "open";
+  // 確定・戻したあとの計画は、ダイアログを閉じてから置く（置くと表を描き直し、ダイアログの結果が消えるため）
+  const nextPlan = useRef<Plan | null>(null);
+  const closeAnd = (close: () => void) => () => {
+    close();
+    if (nextPlan.current) setWorkingPlan(nextPlan.current, origin);
+    nextPlan.current = null;
+  };
   const catalog = useMemo(() => catalogFor(plan.packId), [plan.packId]);
   const [mode, setMode] = useState<RowMode>("ledger");
   const [period, setPeriod] = useState<PeriodMode>("year");
@@ -243,14 +257,21 @@ function Chart({ plan }: { plan: Plan }) {
           <Button variant="default" onClick={toggleColorScheme}>
             {colorScheme === "dark" ? TEXT.scheme.toLight : TEXT.scheme.toDark}
           </Button>
-          <Text size="xs" c="dimmed" data-testid="confirm-disabled-reason">
-            {T.confirmDisabled}
-          </Text>
-          <Button disabled data-testid="confirm-open">
+          <Button variant="default" onClick={() => setHistoryOpen(true)} disabled={!canConfirm} data-testid="history-open">
+            {HUMAN_TEXT.confirm.history}
+          </Button>
+          {!canConfirm && (
+            <Text size="xs" c="dimmed" data-testid="confirm-disabled-reason">
+              {HUMAN_TEXT.notConnected}
+            </Text>
+          )}
+          <Button onClick={() => setConfirmOpen(true)} disabled={!canConfirm} data-testid="confirm-open">
             {T.confirm}
           </Button>
         </Group>
       </Group>
+      <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />
+      <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
 
       <Group px="md" pb={6} gap="sm" wrap="wrap">
         <SegmentedControl
@@ -408,8 +429,8 @@ export function StarTable() {
   const working = useWorkingPlan();
   const load = usePlan();
   // 取り込みが置いた作業中の計画を先に使い、無ければ開発用の見本（?plan=）を読む
-  if (working) return <Chart key={working.revision} plan={working.plan} />;
-  if (load.kind === "ready") return <Chart plan={load.plan} />;
+  if (working) return <Chart key={working.revision} plan={working.plan} origin={working.origin} />;
+  if (load.kind === "ready") return <Chart plan={load.plan} origin="dev" />;
   return (
     <Stack p="lg" gap="md">
       <Group justify="space-between">

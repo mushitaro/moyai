@@ -42,7 +42,8 @@ export async function sha256Hex(text: string): Promise<string> {
   return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-export type HumanResult = { ok: true } | { ok: false; code: TabErrorCode | "network" };
+/** 人だけの経路の答え。通れば橋渡しが返した中身（{ ok: false, reason } で断ることもある）を body に入れる。 */
+export type HumanResult = { ok: true; body: unknown } | { ok: false; code: TabErrorCode | "network" };
 
 export class BridgeClient {
   private readonly secret = randomSecret();
@@ -155,10 +156,18 @@ export class BridgeClient {
       return { ok: false, code: "network" };
     }
     const body: unknown = await res.json().catch(() => null);
-    if (res.ok && (body as { ok?: unknown } | null)?.ok === true) return { ok: true };
+    if (res.ok && body !== null && typeof body === "object" && typeof (body as { ok?: unknown }).ok === "boolean") return { ok: true, body };
     const err = errorBodySchema.safeParse(body);
     if (err.success && ERRORS[err.data.error.code].to === "tab") return { ok: false, code: err.data.error.code as TabErrorCode };
     return { ok: false, code: "internal" };
+  }
+
+  /** 人が押したその場で、中身に結んだ印をもらって人だけの経路を呼ぶ（印は 1 回きり）。 */
+  async callHuman(action: HumanAction, path: string, payload: unknown): Promise<HumanResult> {
+    const text = JSON.stringify(payload);
+    const t = await this.requestToken(action, await sha256Hex(text));
+    if (!t) return { ok: false, code: "token_missing" };
+    return this.postHuman(path, t.token, text);
   }
 
   private setState(s: ConnectionState): void {

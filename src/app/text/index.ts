@@ -296,3 +296,7 @@ export const ERROR_TEXT: Record<TabErrorCode, string> = {
   token_expired: "1 回きりの印が切れました。もう一度開き直してください。",
   token_mismatch: "1 回きりの印が、この操作か中身と結ばれていません。",
 };
+
+// 人だけの画面（確定・版・設定・検問所）の言葉と、輪を確かめた理由の言葉
+export { HUMAN_TEXT, bandText } from "./human";
+export { reasonText } from "./reasons";

@@ -1,0 +1,187 @@
+// 版どうしの差（印の前後）と、人が受けていない決定（docs/plan.md §2.9）。
+// 画面（確定のダイアログ）と橋渡し（版のファイルと差分レポート）が同じこの関数を使う。純粋な TS（UI もネットも持たない）。
+import type { AuthorKind } from "../shared/fields";
+import type { Plan } from "../shared/plan";
+
+export type DiffMark = "plan" | "actual" | "both";
+
+/** 差の 1 行：機器 × 作業 × 年度の印の前後 */
+export interface DiffRow {
+  nodeKey: string;
+  workKey: string;
+  fiscalYear: number;
+  /** 機器の名前・作業の名前（資料に書いてあったもの） */
+  equipment: string;
+  work: string;
+  before: DiffMark | null;
+  after: DiffMark | null;
+  /** 後（消えたものは前）の印のもとの記録の作者と根拠（重ねない、出てきた順） */
+  authors: AuthorKind[];
+  basis: string[];
+}
+
+export interface PlanDiff {
+  rows: DiffRow[];
+  added: number;
+  removed: number;
+  changed: number;
+  /** 前と同じ印の数 */
+  same: number;
+}
+
+interface Cell {
+  equipment: string;
+  work: string;
+  plan: boolean;
+  actual: boolean;
+  authors: AuthorKind[];
+  basis: string[];
+}
+
+function cells(plan: Plan | null): Map<string, Cell & { nodeKey: string; workKey: string; fiscalYear: number }> {
+  const out = new Map<string, Cell & { nodeKey: string; workKey: string; fiscalYear: number }>();
+  if (!plan) return out;
+  const names = new Map(plan.assets.map((a) => [a.nodeKey, a.name]));
+  const works = new Map(plan.works.map((w) => [w.workKey, w]));
+  for (const d of plan.details) {
+    const w = works.get(d.workKey);
+    if (!w) continue;
+    for (const nodeKey of w.targets) {
+      const key = `${nodeKey}\u0000${w.workKey}\u0000${d.fiscalYear}`;
+      let c = out.get(key);
+      if (!c) {
+        c = { nodeKey, workKey: w.workKey, fiscalYear: d.fiscalYear, equipment: names.get(nodeKey) ?? nodeKey, work: w.kind, plan: false, actual: false, authors: [], basis: [] };
+        out.set(key, c);
+      }
+      if (d.planOrActual === "plan") c.plan = true;
+      else c.actual = true;
+      if (!c.authors.includes(d.author)) c.authors.push(d.author);
+      if (!c.basis.includes(d.basis)) c.basis.push(d.basis);
+    }
+  }
+  return out;
+}
+
+const markOf = (c: Cell | undefined): DiffMark | null => (!c ? null : c.plan && c.actual ? "both" : c.actual ? "actual" : c.plan ? "plan" : null);
+
+/** 前の版（無ければ null）から後の版への、印の差。並びは機器・作業・年度の順。 */
+export function diffPlans(before: Plan | null, after: Plan): PlanDiff {
+  const a = cells(before);
+  const b = cells(after);
+  const keys = [...new Set([...a.keys(), ...b.keys()])];
+  const rows: DiffRow[] = [];
+  let added = 0;
+  let removed = 0;
+  let changed = 0;
+  let same = 0;
+  for (const k of keys) {
+    const x = a.get(k);
+    const y = b.get(k);
+    const mx = markOf(x);
+    const my = markOf(y);
+    if (mx === my) {
+      same++;
+      continue;
+    }
+    if (mx === null) added++;
+    else if (my === null) removed++;
+    else changed++;
+    const src = (y ?? x)!;
+    rows.push({
+      nodeKey: src.nodeKey,
+      workKey: src.workKey,
+      fiscalYear: src.fiscalYear,
+      equipment: src.equipment,
+      work: src.work,
+      before: mx,
+      after: my,
+      authors: [...src.authors],
+      basis: [...src.basis],
+    });
+  }
+  rows.sort((p, q) => (p.equipment !== q.equipment ? (p.equipment < q.equipment ? -1 : 1) : p.work !== q.work ? (p.work < q.work ? -1 : 1) : p.fiscalYear - q.fiscalYear));
+  return { rows, added, removed, changed, same };
+}
+
+// ─── 人が受けていない決定 ─────────────────────────────────
+
+/** 人が画面で受けるまで確定できない作者（AI と、AI が会話から写した人の答え） */
+export const NEEDS_HUMAN_AUTHORS: readonly AuthorKind[] = ["ai", "ai_relayed_human"];
+
+export interface Decision {
+  /** 決定の ID（何の決定か）："item:<資産の鍵>" か "detail:<明細の鍵>" */
+  id: string;
+  kind: "commonItem" | "detail";
+  author: AuthorKind;
+  /** 画面に出す対象（機器の名前・作業の名前） */
+  target: string;
+  /** 決めた値（共通の設備項目のコード、または「計画／実施 · 年度」） */
+  value: string;
+  basis: string;
+  /** 中身の指紋。受けたあとに中身が変われば、また受けていない決定になる */
+  hash: string;
+}
+
+export interface Acceptance {
+  id: string;
+  hash: string;
+  reason: string;
+}
+
+/** 64 ビットの FNV-1a（16 進 16 文字）。暗号ではなく、受けた中身と今の中身を照らすだけ。 */
+export function fnv64(text: string): string {
+  let h = 0xcbf29ce484222325n;
+  const p = 0x100000001b3n;
+  for (const b of new TextEncoder().encode(text)) {
+    h ^= BigInt(b);
+    h = (h * p) & 0xffffffffffffffffn;
+  }
+  return h.toString(16).padStart(16, "0");
+}
+
+/** 計画の中の、AI が決めたもの（作者が AI か AI（チャットでの人の答え））の一覧。 */
+export function aiDecisions(plan: Plan): Decision[] {
+  const out: Decision[] = [];
+  for (const a of plan.assets) {
+    if (a.commonItem === null || a.commonItemAuthor === null || !NEEDS_HUMAN_AUTHORS.includes(a.commonItemAuthor)) continue;
+    if (a.commonItemAccepted) continue;
+    out.push({
+      id: `item:${a.nodeKey}`,
+      kind: "commonItem",
+      author: a.commonItemAuthor,
+      target: a.name,
+      value: a.commonItem,
+      basis: a.commonItemBasis ?? "",
+      hash: fnv64(JSON.stringify([a.nodeKey, a.commonItem, a.commonItemAuthor, a.commonItemBasis])),
+    });
+  }
+  const works = new Map(plan.works.map((w) => [w.workKey, w]));
+  const names = new Map(plan.assets.map((a) => [a.nodeKey, a.name]));
+  for (const d of plan.details) {
+    if (!NEEDS_HUMAN_AUTHORS.includes(d.author)) continue;
+    const w = works.get(d.workKey);
+    out.push({
+      id: `detail:${d.detailKey}`,
+      kind: "detail",
+      author: d.author,
+      target: `${(w?.targets ?? []).map((k) => names.get(k) ?? k).join("、")} · ${w?.kind ?? d.workKey}`,
+      value: `${d.planOrActual}:${d.fiscalYear}`,
+      basis: d.basis,
+      hash: fnv64(JSON.stringify([d.detailKey, d.workKey, d.planOrActual, d.fiscalYear, d.startDate, d.endDate, d.author, d.basis])),
+    });
+  }
+  return out;
+}
+
+/** 人が受けていない決定：AI の決定のうち、前の版までに同じ中身で受けていないもの。 */
+export function pendingDecisions(plan: Plan, accepted: readonly { id: string; hash: string }[]): Decision[] {
+  const ok = new Set(accepted.map((a) => `${a.id}\u0000${a.hash}`));
+  return aiDecisions(plan).filter((d) => !ok.has(`${d.id}\u0000${d.hash}`));
+}
+
+/** 受けた決定を計画に効かせる：共通の設備項目の当てはめは「人が受けた」にする（作者は AI のまま残す）。 */
+export function applyAcceptances(plan: Plan, acceptances: readonly Acceptance[]): Plan {
+  const items = new Set(acceptances.filter((a) => a.id.startsWith("item:")).map((a) => a.id.slice("item:".length)));
+  if (items.size === 0) return plan;
+  return { ...plan, assets: plan.assets.map((a) => (items.has(a.nodeKey) ? { ...a, commonItemAccepted: true } : a)) };
+}

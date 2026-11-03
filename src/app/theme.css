@@ -35,6 +35,9 @@
   --moyai-mark-review-fg: #6b5200;
   --moyai-chart-unmapped-bg: #f3efe6;
   --moyai-chart-selected: #1f6f5c33;
+  /* 検問所の ① 原本（墨：出ない欄、朱：変えて写す値） */
+  --moyai-sumi: #1d2421;
+  --moyai-shu: #c0392b;
   /* 取り込み：セルの行き先（データ・外した・未解決） */
   --moyai-cell-data-bg: #d6efe4;
   --moyai-cell-excluded-bg: #e7e8e4;
@@ -63,6 +66,8 @@
   --moyai-mark-review-fg: #ffe58a;
   --moyai-chart-unmapped-bg: #2a2620;
   --moyai-chart-selected: #6fc7ad33;
+  --moyai-sumi: #000000;
+  --moyai-shu: #ff7b6b;
   --moyai-cell-data-bg: #1f4a3c;
   --moyai-cell-excluded-bg: #2c3330;
   --moyai-cell-unresolved-bg: #5a2420;
@@ -105,4 +110,17 @@ body {
 }
 .moyai-ng {
   color: var(--moyai-ng);
+}
+
+/* 検問所 */
+.moyai-sumi {
+  background: var(--moyai-sumi);
+  color: transparent;
+  border-radius: 2px;
+  padding: 0 0.6em;
+  user-select: none;
+}
+.moyai-shu {
+  color: var(--moyai-shu);
+  font-weight: 700;
 }

@@ -2,8 +2,8 @@
 // 取り込みの作業場はこのタブで 1 つだけ作り、画面と AI のツールの受け手（intake/tab-tools.ts）が同じものを使う。
 import { MantineProvider, createTheme } from "@mantine/core";
 import { Suspense, lazy, useEffect, useState } from "react";
-import { BridgeClient } from "./bridge-client";
 import { BuildStamp } from "./components/BuildStamp";
+import { bridgeClient } from "./state/bridge";
 import { Home } from "./pages/Home";
 import { Intake } from "./pages/Intake";
 import { IntakeWorkspace } from "./intake/workspace";
@@ -22,11 +22,14 @@ const theme = createTheme({
   defaultRadius: "sm",
 });
 
-// タブの秘密を持つ接続は、このタブで 1 つだけ作る
-const client = new BridgeClient(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
+// 検問所と設定は人だけの画面（開いたときに読む）
+const Checkpoint = lazy(() => import("./pages/Checkpoint").then((m) => ({ default: m.Checkpoint })));
+const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
+
+// タブの秘密を持つ接続は、このタブで 1 つだけ作る（state/bridge.ts。星取表・検問所・設定も同じ接続を使う）
+// AI のツールの受け手は、つなぐ前に登録する
 const workspace = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
-connectTabTools(client, workspace);
-client.connect();
+const client = bridgeClient((c) => connectTabTools(c, workspace));
 
 function useHash(): string {
   const [hash, setHash] = useState(location.hash || APP_PAGES.home);
@@ -44,6 +47,8 @@ export function App() {
     <MantineProvider theme={theme} defaultColorScheme="light">
       {hash === APP_PAGES.selftest ? (
         <SelfTest />
+      ) : hash === APP_PAGES.checkpoint || hash === APP_PAGES.settings ? (
+        <Suspense fallback={null}>{hash === APP_PAGES.checkpoint ? <Checkpoint /> : <Settings />}</Suspense>
       ) : hash === APP_PAGES.intake ? (
         <Intake ws={workspace} />
       ) : hash === CHART_HASH ? (

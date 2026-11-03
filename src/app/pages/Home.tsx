@@ -3,7 +3,7 @@
 import { Alert, Anchor, Badge, Button, Container, Group, Modal, Stack, Text, Title, useMantineColorScheme } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { sha256Hex, type BridgeClient, type ConnectionState } from "../bridge-client";
-import { ERROR_TEXT, TEXT } from "../text";
+import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { CHART_HASH } from "../chart/route";
 
@@ -136,6 +136,8 @@ export function Home({ client }: { client: BridgeClient }) {
         <Text>{TEXT.home.lead}</Text>
         <Anchor href={APP_PAGES.intake}>{TEXT.home.intakeLink}</Anchor>
         <Anchor href={CHART_HASH}>{TEXT.home.chartLink}</Anchor>
+        <Anchor href={APP_PAGES.checkpoint}>{HUMAN_TEXT.checkpoint.title}</Anchor>
+        <Anchor href={APP_PAGES.settings}>{HUMAN_TEXT.settings.title}</Anchor>
         <Anchor href={APP_PAGES.selftest}>{TEXT.home.selftestLink}</Anchor>
       </Stack>
 

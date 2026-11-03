@@ -93,12 +93,13 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
   const tag = info.project.name;
   await openPlan(page, "fictional-1");
 
-  await test.step("見出しの行：【架空】、ビルドの印、押せない主ボタンと理由", async () => {
+  await test.step("見出しの行：【架空】、ビルドの印、右端の主ボタン", async () => {
     await expect(page.getByTestId("fiction-mark")).toBeVisible();
     await expect(page.getByTestId("build-stamp")).toHaveText(/^MOYAI · build /);
-    await expect(page.getByTestId("confirm-open")).toBeDisabled();
+    // 橋渡しとつながっていれば押せる（確定の流れは checkpoint.spec.ts）
+    await expect(page.getByTestId("confirm-open")).toBeEnabled();
     await expect(page.getByTestId("confirm-open")).toHaveText("確定する…");
-    await expect(page.getByTestId("confirm-disabled-reason")).toBeVisible();
+    await expect(page.getByTestId("confirm-disabled-reason")).toHaveCount(0);
     // 主ボタンは見出しの行の右端
     const btn = await page.getByTestId("confirm-open").boundingBox();
     const vp = page.viewportSize();

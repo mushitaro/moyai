@@ -18,11 +18,13 @@ import {
 import { EXPOSED_TOOL_NAMES, isToolName, toolDef, type ToolKind } from "../shared/tools";
 import { ToolRelay } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
+import { HumanService, type HumanEnv } from "./human";
 import { makeEd25519Sample } from "./selftest";
 import { removeKeyFile, writeKeyFile } from "./state";
 import { loadStatic } from "./static";
 import { DEAD_MS, HEARTBEAT_MS, HELLO_TIMEOUT_MS, TabHub } from "./tab";
 import { TOKEN_TTL_MS, TokenStore } from "./tokens";
+import { resolvePacksDir } from "../share/pack";
 
 export const DEFAULT_PORT = 43110;
 export const BIND_HOST = "127.0.0.1";
@@ -42,6 +44,10 @@ export interface BridgeOptions {
   toolTimeouts?: Partial<Record<ToolKind, number>>;
   now?: () => number;
   log?: (msg: string) => void;
+  /** パックのフォルダ（共有の公開語彙・見え方・全国の表）。無ければリポジトリの packs/ */
+  packsDir?: string;
+  /** 人だけの経路の、外とつながる部品（Documents の調べ方・テキストエディタ）。試験は差し替える */
+  human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText">;
 }
 
 export interface Bridge {
@@ -113,6 +119,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   });
   const tools = new ToolRelay(tabs, opts.toolTimeouts);
   const relayKey = randomBytes(32).toString("base64url");
+  const human = new HumanService({ stateDir: opts.stateDir, packsDir: opts.packsDir ?? resolvePacksDir(), now, ...opts.human });
   let port = opts.port;
 
   const sendJson = (res: ServerResponse, status: number, body: unknown, extra: Record<string, string> = {}) => {
@@ -202,12 +209,24 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   };
 
   /** 人だけの経路の処理。ここに来るのは guardHuman を通ったものだけ。 */
-  const humanHandlers: { [K in HumanRouteId]: (res: ServerResponse, h: HumanCtx) => void } = {
+  // 確定・設定・輪と鍵・検問所の処理は src/bridge/human.ts（同じ守りを通ったあとで呼ぶ）
+  const delegate = async (res: ServerResponse, h: HumanCtx) => sendJson(res, 200, await human.handle(h));
+  const humanHandlers: { [K in HumanRouteId]: (res: ServerResponse, h: HumanCtx) => void | Promise<void> } = {
     commitTrial: (res, h) => {
       // 確定の試し：中身は何もしない。守りの形を試験するための経路
       log("確定の試しの経路を通りました（何も変えていません）");
       sendJson(res, 200, { ok: true, action: h.action, changed: false });
     },
+    planStatus: delegate,
+    planCommit: delegate,
+    planRevert: delegate,
+    settingsRead: delegate,
+    settingsSave: delegate,
+    ringCreate: delegate,
+    checkpointPreview: delegate,
+    checkpointOpenText: delegate,
+    checkpointSend: delegate,
+    ringVerify: delegate,
   };
 
   async function serveStatic(res: ServerResponse, pathname: string) {
@@ -240,7 +259,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (route.kind === "human") {
         const h = await guardHuman(req, route);
         if (typeof h === "string") return reject(res, h);
-        return humanHandlers[m.id as HumanRouteId](res, h);
+        return await humanHandlers[m.id as HumanRouteId](res, h);
       }
       await handlers[m.id as Exclude<RouteId, HumanRouteId>]({ req, res, route, url });
     } catch {
