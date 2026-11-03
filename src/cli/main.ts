@@ -100,7 +100,7 @@ async function main(argv: string[]): Promise<void> {
     return mcp();
   }
   if (cmd === "verify") return process.exit(rest[0] === "ledger" ? await verifyLedgerCli(rest) : await verifyRingCli(rest));
-  if (cmd === "ledger") return process.exit(await ledgerCli(rest));
+  if (cmd === "ledger") return process.exit(await ledgerCli(rest, { build: BUILD }));
   if (cmd === "keys") return process.exit(await keysCli(rest));
   if (cmd === "send") return process.exit(sendCli());
   if (cmd === "--version" || cmd === "-v") return say(BUILD);

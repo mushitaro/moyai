@@ -4,12 +4,13 @@
 //   git の木から blob だけを読む。結果を JSON（機械が読む）と日本語の markdown（PR のコメント）に書く。
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。終わりの値：すべて ✓ なら 0、どれかが ✗ なら 1、引数や読めない台帳・道具の誤りは 2。
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { reasonText } from "../app/text/reasons";
 import { LEDGER_DIR, LEDGER_FILE, LEDGER_JSON_PATH, LEDGER_LIMITS, ledgerRulesOf, readLedgerDir, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "../share/ledger";
 import { loadSharePack, resolvePacksDir, type SharePack } from "../share/pack";
 import { PR_LIMITS, displayablePath, validateAll, validatePr, type PrResult } from "../share/prdiff";
+import { renderLedgerSite } from "../share/site";
 
 export const LEDGER_CLI_TEXT = {
   verifyUsage: "使い方：moyai verify ledger <台帳のリポジトリの根>（その下に ledger/ledger.json と ledger/bundles/ がある）",
@@ -332,10 +333,92 @@ export async function validatePrCli(argv: string[], o: { packsDir?: string; git?
   return done(r, null);
 }
 
+// ─── site ──────────────────────────────────────────────────
+
+export const SITE_CLI_TEXT = {
+  usage: "使い方：moyai ledger site <台帳のリポジトリの根> <出すフォルダ>",
+  outSymlink: "出すフォルダか index.html が symlink です。たどらずに止めました。",
+  outNotDir: "出す先がフォルダではありません。",
+  written: (p: string, ok: number, ng: number) => `書きました：${p}（✓ ${ok} 件・✗ ${ng} 件）`,
+  writeFailed: "ページを書けませんでした。",
+};
+
+/** 作業の属性の名前（packs/_kinds/work.json）。読めなければコードのまま見せる */
+function workNamesOf(packsDir: string): Record<string, string> {
+  try {
+    const j = JSON.parse(readFileSync(join(packsDir, "_kinds", "work.json"), "utf8")) as { work?: Record<string, { label?: unknown }> };
+    return Object.fromEntries(Object.entries(j.work ?? {}).flatMap(([k, v]) => (typeof v?.label === "string" ? [[k, v.label]] : [])));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * site：台帳を受け手と同じ関数で確かめ直し、確かめた束から集計した 1 枚の HTML（index.html）だけを書く。生のファイルは写さない。
+ * 出すフォルダ・index.html が symlink なら書かない。終わりの値：すべて ✓ なら 0、✗ があれば 1（✗ の束は集計に入れずに書く）、書けなければ 2。
+ */
+export async function siteCli(argv: string[], o: { packsDir?: string; build?: string } = {}): Promise<number> {
+  const [rootArg, outArg, ...rest] = argv;
+  if (!rootArg || !outArg || rest.length > 0) {
+    say(SITE_CLI_TEXT.usage);
+    return 2;
+  }
+  const root = ledgerRootOf(rootArg);
+  if (!root) {
+    say(LEDGER_CLI_TEXT.noLedger(rootArg));
+    return 2;
+  }
+  const packsDir = o.packsDir ?? resolvePacksDir();
+  const l = await loadLedger(root, { packsDir });
+  if (!l.ok) {
+    say(l.message);
+    return l.code;
+  }
+  const out = resolve(outArg);
+  const st = lstatOrNull(out);
+  if (st?.isSymbolicLink()) {
+    say(SITE_CLI_TEXT.outSymlink);
+    return 2;
+  }
+  if (st && !st.isDirectory()) {
+    say(SITE_CLI_TEXT.outNotDir);
+    return 2;
+  }
+  if (!st) mkdirSync(out, { recursive: true });
+  const target = join(out, "index.html");
+  const ts = lstatOrNull(target);
+  if (ts && (ts.isSymbolicLink() || !ts.isFile())) {
+    say(SITE_CLI_TEXT.outSymlink);
+    return 2;
+  }
+  const html = renderLedgerSite({ read: l.read, pack: l.pack, workNames: workNamesOf(packsDir), build: o.build ?? "MOYAI" });
+  const tmp = join(out, `.index-${process.pid}-${Date.now()}.tmp`);
+  try {
+    writeFileSync(tmp, html, { encoding: "utf8", flag: "wx" });
+    renameSync(tmp, target);
+  } catch {
+    rmSync(tmp, { force: true });
+    say(SITE_CLI_TEXT.writeFailed);
+    return 2;
+  }
+  const ok = l.read.bundles.filter((b) => b.status === "ok").length;
+  say(SITE_CLI_TEXT.written(target, ok, l.read.bundles.length - ok + l.read.others.length));
+  return l.read.ok ? 0 : 1;
+}
+
+function lstatOrNull(p: string) {
+  try {
+    return lstatSync(p);
+  } catch {
+    return null;
+  }
+}
+
 /** ledger の下のコマンド。argv は ledger のあと */
-export async function ledgerCli(argv: string[], o: { packsDir?: string } = {}): Promise<number> {
+export async function ledgerCli(argv: string[], o: { packsDir?: string; build?: string } = {}): Promise<number> {
   const [sub, ...rest] = argv;
   if (sub === "validate-pr") return validatePrCli(rest, o);
+  if (sub === "site") return siteCli(rest, o);
   say(LEDGER_USAGE);
   return 2;
 }
