@@ -31,9 +31,9 @@ export function loadTruth(pack: string, facility: string): Truth {
   const base = `samples/truth/${pack}/${facility}/`;
   const read = (n: string) => (existsSync(base + n) ? JSON.parse(readFileSync(base + n, "utf8")) : null);
   const facts: Record<string, J> = {};
-  for (const n of ["equipment-ledger", "plan-hoshitori"]) {
+  for (const [n, ext] of [["equipment-ledger", "xlsx"], ["plan-hoshitori", "xlsx"], ["daily-report", "csv"]] as const) {
     const p = `samples/facts/${pack}/${facility}/${n}.facts.json`;
-    if (existsSync(p)) facts[`${n}.xlsx`] = JSON.parse(readFileSync(p, "utf8"));
+    if (existsSync(p)) facts[`${n}.${ext}`] = JSON.parse(readFileSync(p, "utf8"));
   }
   return {
     pack,
@@ -357,6 +357,7 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
 // ─── 物差し ① 原本の漏れ ─────────────────────────────────────────
 
 export function measureFacts(src: SourceFile, facts: J): { diffs: number; detail: string[] } {
+  if (facts.schema === "moyai.factory.facts.csv/0") return measureCsvFacts(src, facts);
   const detail: string[] = [];
   for (const fs of facts.sheets as J[]) {
     const g = src.sheets.find((s) => s.name === fs.title);
@@ -391,6 +392,31 @@ export function measureFacts(src: SourceFile, facts: J): { diffs: number; detail
     if (hcMine.length !== hc.size) detail.push(`隠した列の数が違う`);
     if ((fs.state ?? "visible") !== g.state) detail.push(`シートの表示の状態が違う`);
   }
+  return { diffs: detail.length, detail };
+}
+
+/**
+ * CSV の ①：別の読み手（Python の csv。書き手が宣言した文字コードで読む）が取った記録と、MOYAI の格子を比べる。
+ * 記録の始まりの物理の行の番号と、欄の位置ごとの文字が同じか。空の欄はセルにしないので、空でない欄だけを比べる。
+ * 同じと見なす書き方の違いは無い（文字コードと区切りを MOYAI が自分で決めた結果も、ここで比べることになる）。
+ */
+export function measureCsvFacts(src: SourceFile, facts: J): { diffs: number; detail: string[] } {
+  const detail: string[] = [];
+  const g = src.sheets[0];
+  if (!g) return { diffs: 1, detail: ["格子が無い"] };
+  const mine = new Map(g.cells.map((c) => [`${c.r}:${c.c}`, c]));
+  const seen = new Set<string>();
+  for (const rec of facts.records as { line: number; fields: string[] }[]) {
+    rec.fields.forEach((f, i) => {
+      if (f === "") return;
+      const k = `${rec.line}:${i + 1}`;
+      seen.add(k);
+      const c = mine.get(k);
+      if (!c) detail.push(`${rec.line} 行 ${i + 1} 欄が無い`);
+      else if (c.text !== f) detail.push(`${rec.line} 行 ${i + 1} 欄の文字が違う`);
+    });
+  }
+  for (const k of mine.keys()) if (!seen.has(k)) detail.push(`${k.replace(":", " 行 ")} 欄が余分`);
   return { diffs: detail.length, detail };
 }
 
