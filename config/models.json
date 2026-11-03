@@ -12,5 +12,5 @@
     "claude-opus-5-5": { "input": 4, "output": 20, "cacheRead": 0.2, "cacheWrite": 5 },
     "claude-sonnet-5-5": { "input": 2, "output": 10, "cacheRead": 0.2, "cacheWrite": 2.5 }
   },
-  "budgetUsd": { "stopAt": 400, "f3": 60, "audit": 40, "dev": 300, "reserve": 100 }
+  "budgetUsd": { "stopAt": 400, "f3": 60, "audit": 80, "dev": 300, "reserve": 60 }
 }
