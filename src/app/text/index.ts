@@ -132,7 +132,7 @@ export const TEXT = {
     },
     drop: {
       title: "資料を入れる",
-      hint: "ここに Excel（.xlsx・.xlsm）や CSV を落とします。1 ファイル 64 MB まで。資料はこのタブのメモリだけに置き、どこにも送りません。",
+      hint: "ここに Excel（.xlsx・.xlsm）や CSV を落とします。1 ファイル 64 MB まで。資料はこのタブのメモリに置きます。AI クライアント（Claude Code など）には、ツールの結果として、資料の見本の行・凡例・注記・星取表の行が渡り、その先の AI の提供者にも渡ります。",
       pick: "ファイルを選ぶ",
       reading: "読んでいます",
       skipped: "読まなかった資料",

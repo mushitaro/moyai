@@ -31,7 +31,7 @@ import { cellKey } from "../../import/records";
 import type { SheetLayout } from "../../import/structure";
 import { APP_PAGES } from "../../shared/routes";
 import { CHART_HASH } from "../chart/route";
-import { packChoices } from "../chart/catalog";
+import { packChoices, packFiscalStart } from "../chart/catalog";
 import { FictionMark } from "../components/FictionMark";
 import "../intake/intake.css";
 import { answerOffered, type IntakeWorkspace, type SettleOutcome } from "../intake/workspace";
@@ -524,7 +524,12 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
               placeholder={T.settings.packPlaceholder}
               data={packs.map((p) => ({ value: p.id, label: T.settings.packLabel(p.id, p.table) }))}
               value={ws.settings.packId || null}
-              onChange={(v) => ws.setFacility({ packId: v ?? "" })}
+              onChange={(v) => {
+                ws.setFacility({ packId: v ?? "" });
+                // パックの年度の始まり（pack.json）を案として出す。効かせるのは人が［読み直す］を押したとき
+                const m = v ? packFiscalStart(v) : null;
+                if (m !== null) setMonth(m);
+              }}
               w={360}
               data-testid="pack"
             />
@@ -535,7 +540,7 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
               w={260}
               data-testid="facility-name"
             />
-            <NumberInput label={T.settings.startMonth} min={1} max={12} value={month} onChange={(v) => setMonth(Number(v) || 4)} w={140} />
+            <NumberInput label={T.settings.startMonth} min={1} max={12} value={month} onChange={(v) => setMonth(Number(v) || month)} w={140} />
             {month !== ws.settings.fiscalYearStartMonth && (
               <Button
                 variant="default"

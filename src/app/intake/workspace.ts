@@ -68,6 +68,16 @@ export function answerOffered(q: Pick<QuestionState, "valueKind" | "options">, a
   return q.options.some((o) => o.id === answer);
 }
 
+/** 施設の名前から作る短い鍵（FNV-1a。秘密ではなく、ぶつかりにくい名前を作るだけ） */
+function nameKey(name: string): string {
+  let h = 0x811c9dc5;
+  for (const ch of name.normalize("NFKC").trim()) {
+    h ^= ch.codePointAt(0) ?? 0;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36);
+}
+
 function now(): string {
   return new Date().toISOString();
 }
@@ -90,7 +100,8 @@ export class IntakeWorkspace {
   }
 
   private optionsOf(s: WorkspaceSettings): IntakeOptions {
-    const key = `intake-${s.packId}`;
+    // 計画の ID は、パックと施設の名前から作る（同じパックの別の施設とぶつからない。同じ施設は版を重ねる）
+    const key = `intake-${s.packId}-${nameKey(s.facilityName)}`;
     return {
       planId: key,
       displayName: s.facilityName,
@@ -106,6 +117,11 @@ export class IntakeWorkspace {
         inNationalTable: null,
       },
     };
+  }
+
+  /** 今の計画の ID（試験で、施設ごとに違うことを確かめる） */
+  planIdForTest(): string {
+    return this.session.options.planId;
   }
 
   subscribe(fn: () => void): () => void {
@@ -149,8 +165,9 @@ export class IntakeWorkspace {
     this.changed(true, true);
   }
 
-  /** パック・施設の名前・架空の印を変える（読み方には効かないので読み直さない） */
+  /** パック・施設の名前・架空の印を変える。パックは読み方（手がかりの語）に効くので、変えたら読み直す */
   setFacility(patch: Partial<Pick<WorkspaceSettings, "packId" | "facilityName" | "fictional">>): void {
+    const packChanged = patch.packId !== undefined && patch.packId !== this.settings.packId;
     this.settings = { ...this.settings, ...patch };
     const next = this.optionsOf(this.settings);
     const o = this.session.options;
@@ -158,7 +175,7 @@ export class IntakeWorkspace {
     o.packId = next.packId;
     o.displayName = next.displayName;
     o.facility = { ...next.facility, fiscalYearStartMonth: o.facility.fiscalYearStartMonth };
-    this.changed();
+    this.changed(true, packChanged);
   }
 
   /** 資料のどこかに「【架空】」の印があるか（あれば画面は架空の資料として扱う） */
@@ -277,11 +294,11 @@ export class IntakeWorkspace {
     return { ...base, notes: [...base.notes, ...this.tooLarge.map((r) => `${r.file}：${r.reason}`)], compose };
   }
 
-  /** AI だけで結んだもの（作者が AI だけの、結ぶ質問の決定）。人が受けるまで確定できない */
+  /** AI だけで結んだもの（作者が AI か、AI が会話から写した人の答えの、結ぶ質問の決定）。人が画面で受けるまで確定できない */
   aiOnlyLinks(): { question: QuestionState; decision: Decision }[] {
     const an = this.analysis();
     return an.questions
-      .filter((q) => q.decision && q.decision.author === "ai" && LINK_KINDS.has(q.kind))
+      .filter((q) => q.decision && (q.decision.author === "ai" || q.decision.author === "ai_relayed_human") && LINK_KINDS.has(q.kind))
       .map((q) => ({ question: q, decision: q.decision as Decision }));
   }
 

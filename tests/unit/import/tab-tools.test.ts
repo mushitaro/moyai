@@ -184,6 +184,32 @@ describe("決定の確かめ（AI も人も同じ確かめを通る）", () => {
     for (const x of ws.aiOnlyLinks()) expect(x.decision.author).toBe("ai");
   });
 
+  test("AI が会話から写した人の答え（ai_relayed_human）で結んだものも、AI だけで結んだものの一覧に出る", async () => {
+    const ws = await workspace(CASES[0]!);
+    for (let i = 0; i < 10; i++) {
+      const s = ok(runTabTool(ws, "intake_survey", { part: "questions" }, CTX));
+      if (!s.questions.length) break;
+      ok(runTabTool(ws, "intake_settle", { decisions: s.questions.map((q: any) => ({ questionId: q.questionId, answer: q.defaultAnswer, author: "ai_relayed_human", reason: "利用者がチャットで答えた" })) }, CTX));
+    }
+    const links = ws.aiOnlyLinks();
+    expect(links.length).toBeGreaterThan(0);
+    for (const x of links) expect(x.decision.author).toBe("ai_relayed_human");
+  });
+
+  test("パックを変えたら読み直し、計画の ID は施設の名前ごとに違う", async () => {
+    const ws = await workspace(CASES[1]!);
+    const before = ws.analysis();
+    ws.setFacility({ facilityName: "【架空】別の名前" });
+    expect(ws.analysis()).toBe(before); // 名前だけなら読み直さない
+    ws.setFacility({ packId: "night-soil" });
+    expect(ws.analysis()).not.toBe(before);
+    const a = new IntakeWorkspace({ packId: PACK, facilityName: "【架空】甲", fiscalYearStartMonth: 4, fictional: true });
+    const b = new IntakeWorkspace({ packId: PACK, facilityName: "【架空】乙", fiscalYearStartMonth: 4, fictional: true });
+    const c = new IntakeWorkspace({ packId: PACK, facilityName: "【架空】甲", fiscalYearStartMonth: 4, fictional: true });
+    expect(a.planIdForTest()).not.toBe(b.planIdForTest());
+    expect(a.planIdForTest()).toBe(c.planIdForTest());
+  });
+
   test("止める決まりに当たる間は、AI が作り始めても計画を作らず、理由を返す", async () => {
     const ws = await workspace(CASES[1]!);
     ok(runTabTool(ws, "intake_compose", {}, CTX));

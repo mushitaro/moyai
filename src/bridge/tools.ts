@@ -24,10 +24,47 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
 };
 
 export type ToolAnswer = { ok: true; data: Record<string, unknown> } | ErrorBody;
+const isOk = (a: ToolAnswer): a is { ok: true; data: Record<string, unknown> } => "ok" in a && a.ok === true;
+
+/** 外へ出た台帳の 1 行（AI に返した結果の種類・件数・大きさ。中身は残さない。§2.12） */
+export interface OutboundEntry {
+  at: string;
+  conversation: string;
+  tool: ToolName;
+  ok: boolean;
+  /** 返した JSON の UTF-8 のバイト数 */
+  bytes: number;
+  /** 星取表の行の数（chart_rows だけ） */
+  rows: number | null;
+}
+
+/** 台帳に残す行の数の上限（古いものから捨てる。会話ごとの合計は捨てない） */
+const OUTBOUND_MAX = 2000;
 
 export class ToolRelay {
-  /** 会話 → 読んだ星取表の行の数 */
+  /** 会話 → 読んだ星取表の行の数（答えを待つ間は、頼んだ数を先に取っておく） */
   private readonly rowsRead = new Map<string, number>();
+  private readonly outbound: OutboundEntry[] = [];
+  private readonly totals = new Map<string, { calls: number; bytes: number; rows: number }>();
+
+  /** 外へ出た台帳（新しいものが後ろ） */
+  outboundLog(): readonly OutboundEntry[] {
+    return this.outbound;
+  }
+
+  /** 会話ごとの合計 */
+  outboundTotals(conversation: string): { calls: number; bytes: number; rows: number } {
+    return this.totals.get(conversation) ?? { calls: 0, bytes: 0, rows: 0 };
+  }
+
+  private record(conversation: string, tool: ToolName, answer: ToolAnswer, rows: number | null): ToolAnswer {
+    const bytes = new TextEncoder().encode(JSON.stringify(isOk(answer) ? answer.data : answer)).length;
+    this.outbound.push({ at: new Date().toISOString(), conversation, tool, ok: isOk(answer), bytes, rows });
+    if (this.outbound.length > OUTBOUND_MAX) this.outbound.splice(0, this.outbound.length - OUTBOUND_MAX);
+    const t = this.outboundTotals(conversation);
+    this.totals.set(conversation, { calls: t.calls + 1, bytes: t.bytes + bytes, rows: t.rows + (rows ?? 0) });
+    return answer;
+  }
 
   constructor(
     private readonly tabs: TabHub,
@@ -40,6 +77,21 @@ export class ToolRelay {
 
   /** 型を確かめた引数でツールを動かす。答えはいつも ToolAnswer（誤りも型どおり）。 */
   async run(name: ToolName, args: Record<string, unknown>, conversation: string): Promise<ToolAnswer> {
+    let reserved = 0;
+    let rows: number | null = null;
+    const answer = await this.runInner(name, args, conversation, (n) => (reserved = n), (n) => (rows = n));
+    // 取っておいた行の数を、実際に返した行の数に置き換える（誤りなら 0）
+    if (reserved) this.rowsRead.set(conversation, this.rowsReadIn(conversation) - reserved + (isOk(answer) ? (rows ?? 0) : 0));
+    return this.record(conversation, name, answer, isOk(answer) ? rows : null);
+  }
+
+  private async runInner(
+    name: ToolName,
+    args: Record<string, unknown>,
+    conversation: string,
+    reserve: (n: number) => void,
+    setRows: (n: number) => void,
+  ): Promise<ToolAnswer> {
     if (BRIDGE_TOOL_RECEIVERS[name] === "not_implemented") return errorBody("not_implemented");
     const def = toolDef(name);
     const fail = (code: ErrorCode) => errorBody(code);
@@ -49,8 +101,11 @@ export class ToolRelay {
     const remaining = Math.max(0, ROWS_PER_CONVERSATION - used);
     if (name === "chart_rows") {
       if (remaining === 0) return fail("rows_limit_reached");
-      // 1 回の上限は型が縛る。会話の残りより多くは渡させない
-      sendArgs = { ...args, limit: Math.min(Number(args.limit), remaining) };
+      // 1 回の上限は型が縛る。会話の残りより多くは渡させない。並べて呼ばれても越えないよう、頼む数を先に取っておく
+      const limit = Math.min(Number(args.limit), remaining);
+      sendArgs = { ...args, limit };
+      this.rowsRead.set(conversation, used + limit);
+      reserve(limit);
     }
 
     const ms = this.timeouts[def.kind] ?? TOOL_TIMEOUTS[def.kind].ms;
@@ -63,10 +118,10 @@ export class ToolRelay {
     if (!parsed.success) return fail("tab_bad_result");
     const data = parsed.data as Record<string, unknown>;
     if (name === "chart_rows") {
-      const rows = (data.rows as unknown[]).length;
+      const n = (data.rows as unknown[]).length;
       // タブが上限を越えて返した・残りの数を違えて返したものは渡さない
-      if (rows > Number(sendArgs.limit) || data.remainingInConversation !== remaining - rows) return fail("tab_bad_result");
-      this.rowsRead.set(conversation, used + rows);
+      if (n > Number(sendArgs.limit) || data.remainingInConversation !== remaining - n) return fail("tab_bad_result");
+      setRows(n);
     }
     return { ok: true, data };
   }

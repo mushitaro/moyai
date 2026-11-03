@@ -4,6 +4,7 @@ import kindsWork from "../../../packs/_kinds/work.json";
 import { catalogFromPack, type ChartCatalog } from "../../plan/chart";
 
 const commons = import.meta.glob<unknown>("../../../packs/*/common.json", { eager: true, import: "default" });
+const packJsons = import.meta.glob<unknown>("../../../packs/*/pack.json", { eager: true, import: "default" });
 
 const byPack = new Map<string, unknown>();
 for (const [path, json] of Object.entries(commons)) {
@@ -26,6 +27,13 @@ let empty: ChartCatalog | null = null;
 /** パックが無いときも台帳の行は描けるように、作業の属性の名前だけを持つ表 */
 export function emptyCatalog(): ChartCatalog {
   return (empty ??= catalogFromPack({ systems: [] }, kindsWork));
+}
+
+/** パックの年度の始まりの月（pack.json）。無ければ null（画面は今の値のまま） */
+export function packFiscalStart(packId: string): number | null {
+  const json = packJsons[`../../../packs/${packId}/pack.json`] as { fiscalYearStartMonth?: unknown } | undefined;
+  const m = json?.fiscalYearStartMonth;
+  return typeof m === "number" && Number.isInteger(m) && m >= 1 && m <= 12 ? m : null;
 }
 
 /** 選べるパック（packs/<パック>/common.json があるもの）。名前はデータの表の名前から出す */
