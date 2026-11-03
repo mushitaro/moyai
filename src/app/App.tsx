@@ -7,8 +7,7 @@ import { BuildStamp } from "./components/BuildStamp";
 import { Home } from "./pages/Home";
 import { Intake } from "./pages/Intake";
 import { IntakeWorkspace } from "./intake/workspace";
-import { runTabTool } from "./intake/tab-tools";
-import { TEXT } from "./text";
+import { connectTabTools } from "./intake/tab-tools";
 import { SelfTest } from "./pages/SelfTest";
 import { CHART_HASH } from "./chart/route";
 import { APP_PAGES } from "../shared/routes";
@@ -26,10 +25,7 @@ const theme = createTheme({
 // タブの秘密を持つ接続は、このタブで 1 つだけ作る
 const client = new BridgeClient(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
 const workspace = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
-client.setToolHandlers({
-  call: async (name, args, ctx) => runTabTool(workspace, name, args, ctx),
-  unknown: (name) => workspace.note("unknown", TEXT.intake.activity.unknown(name)),
-});
+connectTabTools(client, workspace);
 client.connect();
 
 function useHash(): string {

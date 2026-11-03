@@ -4,7 +4,9 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, test } from "vitest";
 import { IntakeWorkspace } from "../../../src/app/intake/workspace";
-import { runTabTool, TAB_TOOL_RECEIVERS } from "../../../src/app/intake/tab-tools";
+import { connectTabTools, runTabTool, TAB_TOOL_RECEIVERS } from "../../../src/app/intake/tab-tools";
+import { BridgeClient } from "../../../src/app/bridge-client";
+import { encodeEvent } from "../../../src/shared/events";
 import { clearWorkingPlan, getWorkingPlan } from "../../../src/app/state/plan-store";
 import { BRIDGE_TOOL_RECEIVERS } from "../../../src/bridge/tools";
 import { TOOL_NAMES, TOOLS } from "../../../src/shared/tools";
@@ -195,6 +197,24 @@ describe("決定の確かめ（AI も人も同じ確かめを通る）", () => {
   test("施設の名前が空なら作らない（画面の理由と同じ）", async () => {
     const ws = new IntakeWorkspace({ packId: PACK, facilityName: "", fiscalYearStartMonth: 4, fictional: false });
     expect(ws.composeBlockers()).toEqual(expect.arrayContaining(["資料がまだ無い", "施設の名前が空"]));
+  });
+
+  test("橋渡しとの接続に受け手をつなぐ：呼び出しに答え、「結果不明」の知らせを画面の作業の一覧に出す", async () => {
+    const ws = await workspace(CASES[1]!);
+    const client = new BridgeClient("ws://127.0.0.1:1/ws"); // つながない。届いた通信を receive で渡す
+    const sent: any[] = [];
+    (client as any).send = (type: string, data: unknown) => sent.push({ type, data });
+    connectTabTools(client, ws);
+    client.receive(encodeEvent("bridge.tool_call", { requestId: "t1", name: "intake_survey", args: { part: "compose" }, conversation: "c", rowsRemaining: 2000 }));
+    await expect.poll(() => sent.length).toBe(1);
+    expect(sent[0]).toMatchObject({ type: "tab.tool_result", data: { requestId: "t1", result: { ok: true } } });
+    client.receive(encodeEvent("bridge.tool_call", { requestId: "t2", name: "chart_rows", args: { offset: 0, limit: 10, view: "adjusted" }, conversation: "c", rowsRemaining: 2000 }));
+    await expect.poll(() => sent.length).toBe(2);
+    expect(sent[1].data.result).toEqual({ ok: false, code: "no_working_plan" });
+    client.receive(encodeEvent("bridge.tool_unknown", { requestId: "t3", name: "intake_settle" }));
+    expect(ws.notices[0]).toMatchObject({ kind: "unknown" });
+    expect(ws.notices[0]?.text).toContain("結果不明");
+    expect(ws.notices[0]?.text).toContain("intake_settle");
   });
 
   test("64 MB を越えるファイルは読まずに理由を残す", async () => {

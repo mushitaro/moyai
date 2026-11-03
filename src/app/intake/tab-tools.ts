@@ -7,6 +7,7 @@ import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { getWorkingPlan } from "../state/plan-store";
 import { TEXT } from "../text";
+import type { BridgeClient } from "../bridge-client";
 import type { IntakeWorkspace } from "./workspace";
 
 export type TabToolResult = { ok: true; data: Record<string, unknown> } | { ok: false; code: TabSentCode };
@@ -86,4 +87,12 @@ export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<
   const r = receiver(ws, args.data as Record<string, unknown>, ctx);
   if (r.ok && !def.output.safeParse(r.data).success) return { ok: false, code: "tool_failed" };
   return r;
+}
+
+/** 橋渡しとの接続に、このタブの作業場を AI のツールの受け手としてつなぐ（App が 1 回だけ呼ぶ） */
+export function connectTabTools(client: BridgeClient, ws: IntakeWorkspace): void {
+  client.setToolHandlers({
+    call: async (name, args, ctx) => runTabTool(ws, name, args, ctx),
+    unknown: (name) => ws.note("unknown", TEXT.intake.activity.unknown(name)),
+  });
 }
