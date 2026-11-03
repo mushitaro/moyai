@@ -26,7 +26,7 @@ MOYAI のコードは、このリポジトリで会期中に新しく書いた�
 
 これから足す依存（docs/plan.md §2.16）は、入れたときにこの表に足します。依存の依存は package-lock.json にあります。
 
-## Python の依存（サンプルの工場。samples/factory/requirements.txt で版を固定）
+## Python の依存（サンプルの工場と、全国の表から数を取り出す道具 scripts/national/。samples/factory/requirements.txt で版を固定）
 
 | 名前 | 版 | ライセンス |
 |---|---|---|

@@ -1,0 +1,306 @@
+{
+  "schema": "moyai.national-table/0",
+  "pack": "waste-incineration",
+  "source": {
+    "id": "MOE-IPPAN-R6-FACILITY-01",
+    "name": "一般廃棄物処理実態調査結果（令和 6 年度）施設の表（焼却施設）",
+    "publisher": "環境省",
+    "url": "https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/01.xlsx",
+    "retrieved": "2026-11-03",
+    "sha256": "8d5493a1ccb88638abcc38133b14576f14acd10b2b72eff179eea4bac0e1ab7f",
+    "processed": "加工した。元の表の値を軸ごとのコードと帯に読み替え、稼働の施設を軸の値の組ごとに数えた数だけを残した。施設名・地方公共団体・所在地・コードは持たない"
+  },
+  "rules": {
+    "file": "columns.json",
+    "sha256": "530cb8e72be3f6ba6ee112b30aebddd4d280ffcd1de76ae3392af506094752a9",
+    "edgesFrom": "columns.json"
+  },
+  "tool": "scripts/national/build.py",
+  "counting": [
+    "見出しは 2〜6 行目の 5 段。結合したセルは、結合の範囲のすべてのセルに同じ見出しがあるとして読んだ。列は見出しの名前で探し、列の番号では決めていない",
+    "「施設コード」に値がある行を施設の行として数えた。値が無いのにほかの欄に値がある行は notFacilityRows に数えた",
+    "「施設の改廃」が空の行を稼働として数えた。空でない行は、値を「,」で分け、群の語で分けた（知らない語、2 つの群の語、下の語だけの行があれば止める）",
+    "休止（SUSPENDED）：休止",
+    "廃止（CLOSED）：廃止。うち移管（TRANSFERRED）：移管 を含む行",
+    "新設（NEW）：新設（建設中）・新設（新規稼働）",
+    "furnace：「処理方式」の値を、columns.json の map の値がちょうど同じもので読み替えた。空のセルがあれば止める",
+    "capacity_t_per_day：「施設全体の処理能力 / (t/日)」の数を、境目 50・100・200・400 t/日 で帯にした。帯は下の端を含み上の端を含まない（50 は「50 t/日 以上」の側）",
+    "turbine：「余熱利用の状況」に「発電」を含めば YES、含まなければ NO。空のセルがあれば止める",
+    "ash：「灰処理設備の有無 / （焼却灰）」「灰処理設備の有無 / （飛灰）」のセルを「,」で分け、どれかに「溶融処理」があれば MELT、そうでなくどれかに「セメント固化」があれば CEMENT、ほかは OUT。空のセル（決まりに当たらないもの）は OUT に入れ、その数を cells の blank に出した",
+    "contract：「ごみ処理事業実施方式」の値を、columns.json の map の値の頭が同じもので読み替えた。空のセル（決まりに当たらないもの）は SINGLE に入れ、その数を cells の blank に出した",
+    "rows は、稼働の施設を furnace・capacity_t_per_day・turbine・ash・contract の値の組ごとに数えたもの。1 施設ごとの行は出さない",
+    "k の steps は、その段の軸の値の組が同じ施設が 5 以上ある施設の数。of は稼働の施設の数"
+  ],
+  "population": {
+    "rows": 1014,
+    "notFacilityRows": 0,
+    "active": 844,
+    "status": [
+      {"code": "SUSPENDED", "name": "休止", "n": 118},
+      {
+        "code": "CLOSED",
+        "name": "廃止",
+        "n": 22,
+        "sub": {"code": "TRANSFERRED", "name": "移管", "n": 1}
+      },
+      {"code": "NEW", "name": "新設", "n": 30}
+    ]
+  },
+  "axes": [
+    {
+      "key": "furnace",
+      "name": "炉の型",
+      "codes": [
+        {"code": "STOKER", "name": "ストーカ"},
+        {"code": "FLUID", "name": "流動床"},
+        {"code": "SHAFT", "name": "シャフト"},
+        {"code": "ROTARY", "name": "回転"},
+        {"code": "FIXED", "name": "固定床"},
+        {"code": "OTHER", "name": "その他"}
+      ]
+    },
+    {
+      "key": "capacity_t_per_day",
+      "name": "処理能力",
+      "unit": "t/日",
+      "edges": [50, 100, 200, 400],
+      "codes": [
+        {"code": "CLT50", "name": "50 t/日 未満", "below": 50},
+        {"code": "C50_100", "name": "50 t/日 以上 100 t/日 未満", "atLeast": 50, "below": 100},
+        {"code": "C100_200", "name": "100 t/日 以上 200 t/日 未満", "atLeast": 100, "below": 200},
+        {"code": "C200_400", "name": "200 t/日 以上 400 t/日 未満", "atLeast": 200, "below": 400},
+        {"code": "C400P", "name": "400 t/日 以上", "atLeast": 400}
+      ]
+    },
+    {
+      "key": "turbine",
+      "name": "発電",
+      "codes": [
+        {"code": "YES", "name": "発電あり"},
+        {"code": "NO", "name": "発電なし"}
+      ]
+    },
+    {
+      "key": "ash",
+      "name": "灰処理",
+      "codes": [
+        {"code": "MELT", "name": "溶融"},
+        {"code": "CEMENT", "name": "セメント固化"},
+        {"code": "OUT", "name": "搬出"}
+      ]
+    },
+    {
+      "key": "contract",
+      "name": "運営の形",
+      "codes": [
+        {"code": "OM", "name": "O&M"},
+        {"code": "SINGLE", "name": "単年度"}
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "key": "furnace",
+      "to": {"STOKER": 626, "FLUID": 142, "SHAFT": 53, "ROTARY": 8, "FIXED": 5, "OTHER": 10},
+      "blank": 0,
+      "from": [
+        {"from": "ストーカ式（可動）", "to": "STOKER", "n": 626},
+        {"from": "流動床式", "to": "FLUID", "n": 142},
+        {"from": "シャフト式", "to": "SHAFT", "n": 53},
+        {"from": "回転式", "to": "ROTARY", "n": 8},
+        {"from": "固定床式", "to": "FIXED", "n": 5},
+        {"from": "その他", "to": "OTHER", "n": 10}
+      ]
+    },
+    {
+      "key": "capacity_t_per_day",
+      "to": {"CLT50": 177, "C50_100": 157, "C100_200": 236, "C200_400": 171, "C400P": 103},
+      "blank": 0
+    },
+    {
+      "key": "turbine",
+      "to": {"YES": 392, "NO": 452},
+      "blank": 0
+    },
+    {
+      "key": "ash",
+      "to": {"MELT": 95, "CEMENT": 129, "OUT": 620},
+      "blank": 1
+    },
+    {
+      "key": "contract",
+      "to": {"OM": 196, "SINGLE": 648},
+      "blank": 2,
+      "from": [
+        {"from": "①", "to": "SINGLE", "n": 155},
+        {"from": "②", "to": "SINGLE", "n": 120},
+        {"from": "③", "to": "SINGLE", "n": 292},
+        {"from": "④", "to": "SINGLE", "n": 17},
+        {"from": "⑤", "to": "SINGLE", "n": 12},
+        {"from": "⑥", "to": "SINGLE", "n": 50},
+        {"from": "⑦", "to": "OM", "n": 91},
+        {"from": "⑧", "to": "OM", "n": 90},
+        {"from": "⑨", "to": "OM", "n": 7},
+        {"from": "⑩", "to": "OM", "n": 4},
+        {"from": "⑪", "to": "OM", "n": 2},
+        {"from": "⑫", "to": "OM", "n": 1},
+        {"from": "⑬", "to": "OM", "n": 1}
+      ]
+    }
+  ],
+  "rows": [
+    {"furnace": "STOKER", "capacity_t_per_day": "CLT50", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 1},
+    {"furnace": "STOKER", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "MELT", "contract": "OM", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "CEMENT", "contract": "OM", "n": 1},
+    {"furnace": "STOKER", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 10},
+    {"furnace": "STOKER", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 15},
+    {"furnace": "STOKER", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 125},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "CEMENT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 13},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 8},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "MELT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "MELT", "contract": "SINGLE", "n": 1},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "CEMENT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 9},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 7},
+    {"furnace": "STOKER", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 62},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "CEMENT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 32},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 22},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "MELT", "contract": "SINGLE", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "CEMENT", "contract": "OM", "n": 4},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 15},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 69},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 5},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 6},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "CEMENT", "contract": "OM", "n": 1},
+    {
+      "furnace": "STOKER",
+      "capacity_t_per_day": "C200_400",
+      "turbine": "YES",
+      "ash": "CEMENT",
+      "contract": "SINGLE",
+      "n": 11
+    },
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 32},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 38},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "NO", "ash": "MELT", "contract": "SINGLE", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "C200_400", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 17},
+    {"furnace": "STOKER", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 3},
+    {"furnace": "STOKER", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 11},
+    {"furnace": "STOKER", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "CEMENT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 14},
+    {"furnace": "STOKER", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 2},
+    {"furnace": "STOKER", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 53},
+    {"furnace": "STOKER", "capacity_t_per_day": "C400P", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 2},
+    {"furnace": "FLUID", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "MELT", "contract": "SINGLE", "n": 2},
+    {"furnace": "FLUID", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 3},
+    {"furnace": "FLUID", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 2},
+    {"furnace": "FLUID", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "MELT", "contract": "OM", "n": 2},
+    {"furnace": "FLUID", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "MELT", "contract": "SINGLE", "n": 8},
+    {"furnace": "FLUID", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 9},
+    {"furnace": "FLUID", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 3},
+    {"furnace": "FLUID", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 18},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 5},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 3},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "CEMENT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 4},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 6},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 8},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "CEMENT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 11},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C100_200", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 11},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 5},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 3},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "CEMENT", "contract": "OM", "n": 2},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 9},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 4},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 5},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "NO", "ash": "CEMENT", "contract": "SINGLE", "n": 3},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C200_400", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 2},
+    {"furnace": "FLUID", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 2},
+    {"furnace": "FLUID", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 1},
+    {"furnace": "FLUID", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 2},
+    {"furnace": "SHAFT", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "MELT", "contract": "SINGLE", "n": 2},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C50_100", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 3},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "MELT", "contract": "SINGLE", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C50_100", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "CEMENT", "contract": "OM", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 3},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 3},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 14},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 5},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 3},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 5},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 1},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "OUT", "contract": "OM", "n": 3},
+    {"furnace": "SHAFT", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 3},
+    {"furnace": "ROTARY", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 1},
+    {"furnace": "ROTARY", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 1},
+    {"furnace": "ROTARY", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "CEMENT", "contract": "SINGLE", "n": 1},
+    {"furnace": "ROTARY", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 1},
+    {"furnace": "ROTARY", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 1},
+    {"furnace": "ROTARY", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 1},
+    {"furnace": "ROTARY", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "MELT", "contract": "OM", "n": 1},
+    {"furnace": "ROTARY", "capacity_t_per_day": "C400P", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 1},
+    {"furnace": "FIXED", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 5},
+    {"furnace": "OTHER", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "OM", "n": 2},
+    {"furnace": "OTHER", "capacity_t_per_day": "CLT50", "turbine": "NO", "ash": "OUT", "contract": "SINGLE", "n": 4},
+    {"furnace": "OTHER", "capacity_t_per_day": "C100_200", "turbine": "YES", "ash": "MELT", "contract": "SINGLE", "n": 3},
+    {"furnace": "OTHER", "capacity_t_per_day": "C200_400", "turbine": "YES", "ash": "OUT", "contract": "SINGLE", "n": 1}
+  ],
+  "k": {
+    "min": 5,
+    "of": 844,
+    "steps": [
+      {
+        "axes": ["furnace", "capacity_t_per_day"],
+        "facilities": 830
+      },
+      {
+        "axes": ["furnace", "capacity_t_per_day", "turbine"],
+        "facilities": 823
+      },
+      {
+        "axes": ["furnace", "capacity_t_per_day", "turbine", "ash"],
+        "facilities": 772
+      },
+      {
+        "axes": ["furnace", "capacity_t_per_day", "turbine", "ash", "contract"],
+        "facilities": 698
+      }
+    ]
+  },
+  "nameCheck": {
+    "columns": [
+      ["都道府県名"],
+      ["地方公共団体コード"],
+      ["施設コード"],
+      ["地方公共団体名"],
+      ["施設名称"],
+      ["施設所在地"]
+    ],
+    "method": "持たない列の値（重なりを除く）を、書き出すもの（table.json と columns.json）に照らした。数字だけの値は、文字列の中の数字の並びと数の値にちょうど同じものがあるかで照らした（SHA-256 は除く）。ほかは NFKC にして 2 文字以上のものを、文字列の部分で照らした。ただし source の欄は sources.json の写しなので、文字列がちょうど同じかだけで照らした",
+    "values": 4571,
+    "hits": 0
+  }
+}

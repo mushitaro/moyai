@@ -1,0 +1,135 @@
+{
+  "schema": "moyai.national-columns/0",
+  "pack": "waste-incineration",
+  "source": "MOE-IPPAN-R6-FACILITY-01",
+  "note": "全国の表の列の名前と、軸への読み替え。scripts/national/build.py がこれを読んで table.json を作る。パックを足すときは、この形のファイルを足し、コードは足さない。列は見出しの名前（段を上から並べ、結合を広げ、同じ語が続けば 1 つにしたもの）で探す。名前は NFKC にして空白を除いて比べる。値は空白を除くだけで比べる",
+  "sheet": "焼却",
+  "header": { "first": 2, "last": 6 },
+  "rowKey": ["施設コード"],
+  "withhold": [
+    ["都道府県名"],
+    ["地方公共団体コード"],
+    ["施設コード"],
+    ["地方公共団体名"],
+    ["施設名称"],
+    ["施設所在地"]
+  ],
+  "status": {
+    "column": ["施設の改廃"],
+    "split": ",",
+    "activeName": "稼働",
+    "groups": [
+      { "code": "SUSPENDED", "name": "休止", "parts": ["休止"] },
+      { "code": "CLOSED", "name": "廃止", "parts": ["廃止"], "sub": { "code": "TRANSFERRED", "name": "移管", "parts": ["移管"] } },
+      { "code": "NEW", "name": "新設", "parts": ["新設（建設中）", "新設（新規稼働）"] }
+    ]
+  },
+  "axes": [
+    {
+      "key": "furnace",
+      "name": "炉の型",
+      "kind": "map",
+      "column": ["処理方式"],
+      "match": "exact",
+      "blank": null,
+      "codes": [
+        { "code": "STOKER", "name": "ストーカ" },
+        { "code": "FLUID", "name": "流動床" },
+        { "code": "SHAFT", "name": "シャフト" },
+        { "code": "ROTARY", "name": "回転" },
+        { "code": "FIXED", "name": "固定床" },
+        { "code": "OTHER", "name": "その他" }
+      ],
+      "map": [
+        { "from": "ストーカ式（可動）", "to": "STOKER" },
+        { "from": "流動床式", "to": "FLUID" },
+        { "from": "シャフト式", "to": "SHAFT" },
+        { "from": "回転式", "to": "ROTARY" },
+        { "from": "固定床式", "to": "FIXED" },
+        { "from": "その他", "to": "OTHER" }
+      ]
+    },
+    {
+      "key": "capacity_t_per_day",
+      "name": "処理能力",
+      "kind": "band",
+      "column": ["施設全体の処理能力", "(t/日)"],
+      "unit": "t/日",
+      "prefix": "C",
+      "edges": [50, 100, 200, 400],
+      "edgesNote": "帯の境目は docs/plan.md §2.8 の設計の案。決まるまでは案。build.py の --edges で外から渡せる"
+    },
+    {
+      "key": "turbine",
+      "name": "発電",
+      "kind": "contains",
+      "column": ["余熱利用の状況"],
+      "text": "発電",
+      "yes": "YES",
+      "no": "NO",
+      "blank": null,
+      "codes": [
+        { "code": "YES", "name": "発電あり" },
+        { "code": "NO", "name": "発電なし" }
+      ]
+    },
+    {
+      "key": "ash",
+      "name": "灰処理",
+      "kind": "parts",
+      "columns": [
+        ["灰処理設備の有無", "（焼却灰）"],
+        ["灰処理設備の有無", "（飛灰）"]
+      ],
+      "split": ",",
+      "known": ["溶融処理", "セメント固化", "薬剤処理", "その他", "無し"],
+      "first": [
+        { "parts": ["溶融処理"], "to": "MELT" },
+        { "parts": ["セメント固化"], "to": "CEMENT" }
+      ],
+      "else": "OUT",
+      "blank": "OUT",
+      "blankNote": "仕様の「ほかは搬出」に従い、どれかのセルが空で、上の決まりに当たらない施設も搬出に入れる。その数は table.json の cells に出す",
+      "codes": [
+        { "code": "MELT", "name": "溶融" },
+        { "code": "CEMENT", "name": "セメント固化" },
+        { "code": "OUT", "name": "搬出" }
+      ]
+    },
+    {
+      "key": "contract",
+      "name": "運営の形",
+      "kind": "map",
+      "column": ["ごみ処理事業実施方式"],
+      "match": "prefix",
+      "blank": "SINGLE",
+      "blankNote": "仕様の「ほかは単年度」に従い、空のセルも単年度に入れる。その数は table.json の cells に出す",
+      "note": "値の頭の丸数字で読む。①〜⑥ は公設公営、⑦ DB+O・⑧ DBO・⑨ その他公設民営・⑩〜⑬ PFI",
+      "codes": [
+        { "code": "OM", "name": "O&M" },
+        { "code": "SINGLE", "name": "単年度" }
+      ],
+      "map": [
+        { "from": "①", "to": "SINGLE" },
+        { "from": "②", "to": "SINGLE" },
+        { "from": "③", "to": "SINGLE" },
+        { "from": "④", "to": "SINGLE" },
+        { "from": "⑤", "to": "SINGLE" },
+        { "from": "⑥", "to": "SINGLE" },
+        { "from": "⑦", "to": "OM" },
+        { "from": "⑧", "to": "OM" },
+        { "from": "⑨", "to": "OM" },
+        { "from": "⑩", "to": "OM" },
+        { "from": "⑪", "to": "OM" },
+        { "from": "⑫", "to": "OM" },
+        { "from": "⑬", "to": "OM" }
+      ]
+    }
+  ],
+  "steps": [
+    ["furnace", "capacity_t_per_day"],
+    ["furnace", "capacity_t_per_day", "turbine"],
+    ["furnace", "capacity_t_per_day", "turbine", "ash"],
+    ["furnace", "capacity_t_per_day", "turbine", "ash", "contract"]
+  ]
+}
