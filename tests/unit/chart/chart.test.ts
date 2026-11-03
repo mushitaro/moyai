@@ -11,6 +11,7 @@ import {
   periodKeyOf,
   type ChartLabels,
   type ChartOptions,
+  type PeerOverlay,
 } from "../../../src/plan/chart";
 import { Plan, type AssetNodeT, type WorkDetailT, type WorkT } from "../../../src/shared/plan";
 import { truthToPlan } from "../../fixtures/chart/truth-to-plan.mjs";
@@ -363,5 +364,76 @@ describe("系列の見出し", () => {
     expect(names).toContain("/eq3/");
     // 同じ名前の兄弟が無ければ、系列があっても添えない
     expect(names).toContain("/eq9/");
+  });
+});
+
+describe("似た施設を重ねる（共通の設備項目の行・年度の表）", () => {
+  const x = { shown: "x" } as const;
+  const stats = { interval: { shown: "range", n: 3, lo: "I1", hi: "I2" }, manDays: x, days: x } as const;
+  const peers: PeerOverlay = {
+    places: [
+      {
+        kind: "ledger",
+        rows: [
+          { class: "WI.DRAFT.FDF", work: "INSPECT", peers: [{ label: "P-A", years: ["FY2019", "FY2020"], observed: "N2", interval: "I1" }, { label: "P-B", years: ["FY2021"], observed: "N1" }], stats },
+          { class: "WI.COOL", work: "OVERHAUL", peers: [{ label: "P-A", years: ["FY2024"], observed: "N1", manDays: "W10_29" }], stats: { interval: x, manDays: x, days: x } },
+          { class: "XX.NOPE", work: "INSPECT", peers: [{ label: "P-C", years: ["FY2020"], observed: "N1" }], stats: { interval: x, manDays: x, days: x } },
+        ],
+      },
+      { kind: "ring", rows: [{ class: "WI.DRAFT.FDF", work: "INSPECT", peers: [{ label: "R-A", years: ["FY2020"], observed: "N1" }], stats: { interval: x, manDays: x, days: x } }] },
+    ],
+    labels: { wholeSystem: "WHOLE", peer: (k, l) => `${k}:${l}`, stat: (k) => `${k}:STAT` },
+  };
+  const common: ChartOptions = { ...base, mode: "common", peers };
+
+  it("同じ項目 × 作業の属性の自分の行の下に、場の順・札の順で似た施設の行と統計の行を並べる", () => {
+    const m = buildChart(small(), catalog, labels, common);
+    expect(m.peersShown).toBe(true);
+    const work = json("packs/_kinds/work.json").work;
+    // 設備はパックの表の並び（燃焼ガス冷却設備が通風設備より前）
+    expect(m.rows.map((r) => [r.id, r.kind, r.levelCells])).toEqual([
+      ["c:WI.COOL", "node", ["燃焼ガス冷却設備", "", ""]],
+      ["c:WI.COOL:*", "node", ["", "WHOLE", ""]],
+      ["c:WI.COOL:*:OVERHAUL", "node", ["", "", work.OVERHAUL.label]],
+      ["c:WI.COOL:*:OVERHAUL|ledger|P-A", "peer", ["", "", "ledger:P-A"]],
+      ["c:WI.COOL:*:OVERHAUL|ledger|stat", "stat", ["", "", "ledger:STAT"]],
+      ["c:WI.DRAFT", "node", ["通風設備", "", ""]],
+      ["c:WI.DRAFT.FDF", "node", ["", "押込送風機", ""]],
+      ["c:WI.DRAFT.FDF:INSPECT", "node", ["", "", work.INSPECT.label]],
+      ["c:WI.DRAFT.FDF:INSPECT|ledger|P-A", "peer", ["", "", "ledger:P-A"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ledger|P-B", "peer", ["", "", "ledger:P-B"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ledger|stat", "stat", ["", "", "ledger:STAT"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ring|R-A", "peer", ["", "", "ring:R-A"]],
+      ["c:WI.DRAFT.FDF:INSPECT|ring|stat", "stat", ["", "", "ring:STAT"]],
+      ["c:WI.DRAFT.FDF:OVERHAUL", "node", ["", "", work.OVERHAUL.label]],
+      ["c:WI.DRAFT.IDF", "node", ["", "誘引通風機", ""]],
+      ["c:WI.DRAFT.IDF:INSPECT", "node", ["", "", work.INSPECT.label]],
+      ["c:unmapped", "unmapped", ["UNMAPPED", "", ""]],
+    ]);
+    const row = (id: string) => m.rows.find((r) => r.id === id)!;
+    expect(row("c:WI.DRAFT.FDF:INSPECT|ledger|P-A")).toMatchObject({ place: "ledger", peerBands: { interval: "I1" }, cells: { fy2019: { mark: "actual" }, fy2020: { mark: "actual" } } });
+    expect(row("c:WI.DRAFT.FDF:INSPECT|ledger|stat").stats).toEqual(stats);
+    // 自分の計画に無い行は、そう分かる。自分の行は分からない印を持たない
+    expect(row("c:WI.COOL:*:OVERHAUL").ownMissing).toBe(true);
+    expect(row("c:WI.DRAFT.FDF:INSPECT").ownMissing).toBeUndefined();
+    // パックに無い分類は行にせず、数える（黙って捨てない）
+    expect(m.unknownPeerClasses).toEqual(["XX.NOPE"]);
+    // 似た施設の年度も列になる（自分の計画は 2020 から）
+    expect(m.periods.map((p) => p.fiscalYear)).toContain(2019);
+    expect(m.periods.map((p) => p.fiscalYear)).toContain(2024);
+  });
+
+  it("畳むと似た施設の行も隠れる。月の表・台帳の段の行には重ねない", () => {
+    expect(buildChart(small(), catalog, labels, { ...common, foldLevel: 1 }).rows.some((r) => r.kind === "peer" || r.kind === "stat")).toBe(false);
+    const month = buildChart(small(), catalog, labels, { ...common, period: "month" });
+    expect(month.peersShown).toBe(false);
+    expect(month.rows.some((r) => r.kind === "peer")).toBe(false);
+    const ledger = buildChart(small(), catalog, labels, { ...common, mode: "ledger" });
+    expect(ledger.peersShown).toBe(false);
+    expect(ledger.rows.some((r) => r.kind === "peer")).toBe(false);
+    // 重ねないときは、今までと同じ行
+    expect(buildChart(small(), catalog, labels, { ...base, mode: "common" }).rows.map((r) => r.id)).toEqual(
+      buildChart(small(), catalog, labels, { ...common, period: "month", peers: undefined }).rows.map((r) => r.id),
+    );
   });
 });

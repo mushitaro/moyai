@@ -3,7 +3,10 @@
 // - 段ごとに列を立て、上の行と同じ名前は空ける（ピボット表の表形式）。
 // - 列は年度（施設の始まりの月）と、その下の月。印は ○ 計画、● 実施、◎ 同じ期に両方。
 // - 自分の台帳の段の行と、共通の設備項目 × 作業の属性の行を切り替える。決まっていない記録は 1 行に集める。
+// - 共通の設備項目の行には、似た施設の行と統計の行を場ごとに重ねられる（PeerOverlay）。
 // 画面の言葉と業種の名前はここに置かない（言葉は呼ぶ側から、名前はパックのデータから受ける）。
+import type { StarRow, StatCell } from "../share/aggregate";
+import { STAT_FIELDS, type StatField } from "../share/bands";
 import { WORK_ATTRIBUTES, type Plan, type WorkDetailT } from "../shared/plan";
 import type { AuthorKind } from "../shared/fields";
 
@@ -165,7 +168,8 @@ export interface ChartRow {
   id: string;
   level: number;
   parentId: string | null;
-  kind: "node" | "unmapped";
+  /** node：自分の行、unmapped：未当てはめ、peer：似た施設の 1 施設、stat：その場の統計の行 */
+  kind: "node" | "unmapped" | "peer" | "stat";
   /** 1 段目からこの行までの名前（その段の列の位置に。飛ばした段は null） */
   path: (string | null)[];
   /** 段ごとの列に見せる名前。上の行と同じ名前は ""（この行の段の列は空けない） */
@@ -178,6 +182,33 @@ export interface ChartRow {
   detailKeys: string[];
   /** 期の鍵 → 印。印の無い期は持たない */
   cells: Record<string, ChartCell>;
+  /** 似た施設の行と統計の行：どの場のものか */
+  place?: PlaceKind;
+  /** 似た施設の行：その施設の帯（間隔・工数・日数のうちあるもの） */
+  peerBands?: Partial<Record<StatField, string>>;
+  /** 統計の行：欄ごとの統計（n は自分を除いた施設の数） */
+  stats?: Record<StatField, StatCell>;
+  /** 似た施設にだけある行（自分の計画にこの項目 × 作業の属性が無い） */
+  ownMissing?: boolean;
+}
+
+export type PlaceKind = "ledger" | "ring";
+
+/**
+ * 星取表に重ねる似た施設（docs/plan.md §2.2 行の切り替え・§2.8 受け取りと 3 つの立場）。共通の設備項目の行で、年度の表のときだけ重ねる。
+ * 場ごとの行（aggregate の StarRow）を、同じ項目 × 作業の属性の自分の行の下に、場の順に並べる。場をまたいで混ぜない。
+ * 塊の分類が設備（1 段目の上）なら「設備全体」の行に、パックに無い分類なら行にせず数える。
+ */
+export interface PeerOverlay {
+  places: readonly { kind: PlaceKind; rows: readonly StarRow[] }[];
+  labels: {
+    /** 設備の分類の塊を載せる行の名前 */
+    wholeSystem: string;
+    /** 似た施設の行の名前 */
+    peer: (place: PlaceKind, label: string) => string;
+    /** 統計の行の名前 */
+    stat: (place: PlaceKind) => string;
+  };
 }
 
 export interface ChartLabels {
@@ -200,6 +231,8 @@ export interface ChartOptions {
   /** 行ごとに畳んだ行（段で畳むのと重ねて使える） */
   collapsed?: ReadonlySet<string>;
   changes?: ChartChange[];
+  /** 似た施設を重ねる（共通の設備項目の行・年度の表のときだけ効く） */
+  peers?: PeerOverlay;
 }
 
 export interface ChartModel {
@@ -211,6 +244,10 @@ export interface ChartModel {
   totalRows: number;
   /** 行に載せられなかった記録（対象の機器が計画に無い・パックに無い項目）。黙って捨てない */
   orphanDetails: string[];
+  /** 似た施設を重ねたか（帯の列を出す） */
+  peersShown: boolean;
+  /** 似た施設の塊のうち、パックに無い分類（行にしなかったもの）。黙って捨てない */
+  unknownPeerClasses: string[];
 }
 
 interface Node {
@@ -222,6 +259,8 @@ interface Node {
   children: Node[];
   /** この行に直に載る（記録, 機器の鍵）の組 */
   direct: { d: WorkDetailT; asset: string }[];
+  /** この行に重ねる似た施設（場の順） */
+  overlay?: { place: PlaceKind; row: StarRow }[];
 }
 
 interface Agg {
@@ -281,7 +320,7 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): Node[
 }
 
 /** 共通の設備項目 × 作業の属性の木。人が受けた当てはめと作業の属性の両方がある記録だけを項目に載せ、残りは 1 行に集める。 */
-function commonTree(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, orphan: Set<string>): Node[] {
+function commonTree(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, orphan: Set<string>, overlay: PeerOverlay | null, unknownPeer: Set<string>): Node[] {
   const assets = new Map(plan.assets.map((a) => [a.nodeKey, a]));
   const works = new Map(plan.works.map((w) => [w.workKey, w]));
   const systems = new Map<string, Node>();
@@ -327,11 +366,44 @@ function commonTree(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, orph
       leaf.direct.push({ d, asset: t });
     }
   }
-  // パックの表の並び、作業の属性はコードの並び
+  // 似た施設の塊：同じ項目 × 作業の属性の行に重ねる。自分に無い行は作る（自分の計画に無いことが見える）
+  if (overlay) {
+    const sysNode = (code: string): Node => {
+      let sn = systems.get(code);
+      if (!sn) systems.set(code, (sn = { id: `c:${code}`, level: 1, parentId: null, name: catalog.systems.get(code)!.name, kind: "node", children: [], direct: [] }));
+      return sn;
+    };
+    for (const pl of overlay.places) {
+      for (const r of pl.rows) {
+        const item = catalog.items.get(r.class);
+        const sysCode = item ? item.systemCode : catalog.systems.has(r.class) ? r.class : null;
+        if (sysCode === null || !catalog.systems.has(sysCode)) {
+          unknownPeer.add(r.class);
+          continue;
+        }
+        const sn = sysNode(sysCode);
+        const itemKey = item ? item.code : `${sysCode}:*`;
+        let inode = items.get(itemKey);
+        if (!inode) {
+          items.set(itemKey, (inode = { id: `c:${itemKey}`, level: 2, parentId: sn.id, name: item ? item.name : overlay.labels.wholeSystem, kind: "node", children: [], direct: [] }));
+          sn.children.push(inode);
+        }
+        const lk = `${itemKey}:${r.work}`;
+        let leaf = leaves.get(lk);
+        if (!leaf) {
+          leaves.set(lk, (leaf = { id: `c:${lk}`, level: 3, parentId: inode.id, name: catalog.workLabels[r.work], kind: "node", children: [], direct: [] }));
+          inode.children.push(leaf);
+        }
+        (leaf.overlay ??= []).push({ place: pl.kind, row: r });
+      }
+    }
+  }
+  // パックの表の並び、作業の属性はコードの並び（設備全体の行は、その設備の項目の前）
   const attrOrder = (n: Node) => WORK_ATTRIBUTES.findIndex((a) => n.id.endsWith(`:${a}`));
   const roots = [...systems.values()].sort((a, b) => (catalog.systems.get(a.id.slice(2))?.order ?? 0) - (catalog.systems.get(b.id.slice(2))?.order ?? 0));
   for (const s of roots) {
-    s.children.sort((a, b) => (catalog.items.get(a.id.slice(2))?.order ?? 0) - (catalog.items.get(b.id.slice(2))?.order ?? 0));
+    const itemOrder = (n: Node) => (n.id.endsWith(":*") ? -1 : (catalog.items.get(n.id.slice(2))?.order ?? 0));
+    s.children.sort((a, b) => itemOrder(a) - itemOrder(b));
     for (const i of s.children) i.children.sort((a, b) => attrOrder(a) - attrOrder(b));
   }
   if (unmapped.direct.length > 0) roots.push(unmapped);
@@ -345,7 +417,10 @@ function changeKey(nodeKey: string, periodKey: string) {
 /** 計画から、見える行・列の期・段の名前を作る。 */
 export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, opts: ChartOptions): ChartModel {
   const orphan = new Set<string>();
-  const roots = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan) : commonTree(plan, catalog, labels, orphan);
+  // 似た施設は、共通の設備項目の行・年度の表のときだけ重ねる（塊は年度の粒度しか持たない）
+  const overlay = opts.peers && opts.mode === "common" && opts.period === "year" ? opts.peers : null;
+  const unknownPeer = new Set<string>();
+  const roots = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan) : commonTree(plan, catalog, labels, orphan, overlay, unknownPeer);
 
   let maxLevel = 0;
   const walkMax = (ns: Node[]) => {
@@ -432,11 +507,13 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
       }
     }
     const count = folded ? (subtreeAssets.get(n.id) as Set<string>).size : n.kind === "unmapped" ? (subtreeDetails.get(n.id) as Set<string>).size : null;
+    const ownMissing = n.overlay !== undefined && n.direct.length === 0 && n.children.length === 0;
     rows.push({
       id: n.id,
       level: n.level,
       parentId: n.parentId,
       kind: n.kind,
+      ...(ownMissing ? { ownMissing } : {}),
       path: Array.from({ length: width }, (_, i) => p[i] ?? null),
       levelCells: [],
       hasChildren,
@@ -446,12 +523,34 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
       cells,
     });
     if (!folded) for (const c of n.children) emit(c, p);
+    if (!folded && n.overlay && overlay) emitPeers(n, p);
   };
+  // 似た施設の行（場の順・札の順）と、場ごとの統計の行。段の列は最後の段にだけ名前を出す
+  const emitPeers = (n: Node, path: (string | null)[]) => {
+    const fullPath = Array.from({ length: width }, (_, i) => path[i] ?? null);
+    for (const { place, row } of n.overlay!) {
+      for (const peer of row.peers) {
+        const cells: Record<string, ChartCell> = {};
+        for (const y of peer.years) {
+          const fy = Number(y.slice(2));
+          if (Number.isInteger(fy)) cells[yearKey(fy)] = { mark: "actual", summary: false, count: null, review: false, change: null, detailKeys: [] };
+        }
+        const bands: Partial<Record<StatField, string>> = {};
+        for (const f of STAT_FIELDS) if (peer[f] !== undefined) bands[f] = peer[f];
+        const name = overlay!.labels.peer(place, peer.label);
+        rows.push({ id: `${n.id}|${place}|${peer.label}`, level: n.level + 1, parentId: n.id, kind: "peer", place, peerBands: bands, path: fullPath, levelCells: lastOnly(name), hasChildren: false, folded: false, count: null, detailKeys: [], cells });
+      }
+      const name = overlay!.labels.stat(place);
+      rows.push({ id: `${n.id}|${place}|stat`, level: n.level + 1, parentId: n.id, kind: "stat", place, stats: row.stats, path: fullPath, levelCells: lastOnly(name), hasChildren: false, folded: false, count: null, detailKeys: [], cells: {} });
+    }
+  };
+  const lastOnly = (name: string) => Array.from({ length: width }, (_, i) => (i === width - 1 ? name : ""));
   for (const r of roots) emit(r, []);
 
   // 上の行と同じ名前は空ける。比べるのは 1 段目からその段までの名前の並び。この行の段の列は空けない
   let prev: ChartRow | null = null;
   for (const r of rows) {
+    if (r.kind === "peer" || r.kind === "stat") continue;
     r.levelCells = r.path.map((name, i) => {
       if (name === null) return "";
       if (i === r.level - 1 || prev === null) return name;
@@ -461,12 +560,16 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
     prev = r;
   }
 
+  // 似た施設の年度も列にする（自分の計画より前や後の年度でも、印が見えるように）
+  const peerYears = overlay ? overlay.places.flatMap((pl) => pl.rows.flatMap((r) => r.peers.flatMap((x) => x.years.map((y) => Number(y.slice(2)))))).filter(Number.isInteger) : [];
   return {
     levelNames,
-    periods: buildPeriods(plan, opts.period, (opts.layer === "adjusted" ? (opts.changes ?? []) : []).map((c) => c.fiscalYear)),
+    periods: buildPeriods(plan, opts.period, [...(opts.layer === "adjusted" ? (opts.changes ?? []) : []).map((c) => c.fiscalYear), ...peerYears]),
     rows,
     totalRows: total,
     orphanDetails: [...orphan],
+    peersShown: overlay !== null,
+    unknownPeerClasses: [...unknownPeer].sort(),
   };
 }
 
