@@ -24,3 +24,6 @@ playwright-report/
 
 # 監査の道具の結果（回ごとに .cache/audit/ に出す）
 audit-result.json
+
+# 道具の一時の出力（監査の結果など）
+.cache/

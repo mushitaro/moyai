@@ -68,7 +68,7 @@
 - 行は平らにして `level` と `parentId` を持たせ、開閉は自前の状態で持ち、見える行だけを表に渡す。印は書式の関数と CSS のクラスで描き、セルごとに React の部品を持たない（数千のセルでも軽く動かすため）。セルの aria-label に階層の道を入れる。
 - マウスを載せると「誰が・なぜ・前→後」。選んだ印の出どころ（どの資料のどのセル、写真なら画像のその位置。誰がなぜ変えたか）を横に出す。元の計画と調整後を切り替えられる。
 - 周期で計画を引くダイアログ（「5 年ごとの 7 月」など）。文字の入力は Enter か F2 で編集欄を開いてから（IME の最初の 1 文字を落とさないため）。
-- 表は AG Grid Community だけで作る。木の表示・行のまとめ・Excel の書き出しは Enterprise の機能なので使わず、上の自前の形と exceljs で作る。CI で `npm ls ag-grid-enterprise` が空であることを確かめる。
+- 表は AG Grid Community だけで作る。木の表示・行のまとめ・Excel の書き出しは Enterprise の機能なので使わず、上の自前の形と exceljs で作る。CI で、固定した依存の一覧（package-lock.json）に ag-grid-enterprise が無いことを確かめる（`scripts/check-deps.mjs`。別名で入れた依存も見る。npm ls の終了コードは版によって変わり、「見つからない」と誤りを見分けにくいため。日誌 2026-11-03）。
 
 印と色（色だけに頼らず、どれも印か罫か見出しを持つ。色は CSS 変数の 1 か所）：
 
@@ -600,7 +600,7 @@ MOYAI を作るときの決まりです。
 | `e2e.daily` | Playwright で §6.1 の 1〜6（5 は手元の台帳の写しを検証するところまで。PR とマージは含めない） | 毎日通る |
 | `windows` | windows-latest で、起動・ツール 1 つ・確定・書き出し・日本語のパス・OneDrive に移された Documents・使われているポート | 毎日通る |
 | `eval` | 試験用の問題で v1 と v2（1 問 3 回、点と費用） | 差が揺れの幅の内なら「差なし」 |
-| `publish` | check-publish、`npm ls ag-grid-enterprise` | 当たり 0 |
+| `publish` | check-publish、check-deps（package-lock.json に ag-grid-enterprise が無いか） | 当たり 0 |
 
 ### 5.2 「できた」と言える条件
 

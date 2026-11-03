@@ -11,7 +11,7 @@
         {
           "name": "web_fetch",
           "enabled": true,
-          "allowed_domains": ["e-gov.go.jp", "env.go.jp", "mhlw.go.jp", "mlit.go.jp"],
+          "allowed_domains": ["laws.e-gov.go.jp", "elaws.e-gov.go.jp", "www.e-gov.go.jp", "env.go.jp", "www.mhlw.go.jp", "www.mlit.go.jp"],
           "max_content_tokens": 40000
         },
         { "name": "web_search", "enabled": false }

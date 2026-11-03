@@ -29,29 +29,56 @@ export function readLedger(text) {
   return { rows, broken, unknown };
 }
 
-/** 台帳に入っている CI の回の番号（同じ回を二度足さないため）。 */
+/**
+ * 台帳に入っている CI の回の鍵（「回の番号-試みの番号」）。同じ回を二度足さないため。
+ * 古い行は runId だけを持つので、試み 1 と見なす。
+ */
 export function syncedRunIds(text) {
-  const ids = new Set();
+  const keys = new Set();
   for (const line of text.split(/\r?\n/)) {
     try {
       const r = JSON.parse(line);
-      if (r?.runId != null) ids.add(String(r.runId));
+      if (r?.runKey) keys.add(String(r.runKey));
+      else if (r?.runId != null) keys.add(`${r.runId}-1`);
     } catch {
       /* 壊れた行は readLedger が数える */
     }
   }
-  return ids;
+  return keys;
+}
+
+/** 回の情報（id と run_attempt）から、試みごとの鍵の一覧を作る。再実行した回は試みの数だけ鍵がある。 */
+export function runKeys(run) {
+  const attempts = Math.max(1, Number(run.run_attempt ?? run.attempt ?? 1));
+  return Array.from({ length: attempts }, (_, i) => `${run.id ?? run.databaseId}-${i + 1}`);
 }
 
 /**
- * まだ台帳に写していない CI の回の費用の見込み。
- * @param {Array<{id: number|string}>} runs 終わった CI の回
- * @param {Set<string>} synced 台帳に入っている回の番号
- * @param {number|string|undefined} currentRunId いま走っている回（数えない）
+ * まだ台帳に写していない CI の試みの費用の見込み。
+ * @param {Array<{id: number|string, run_attempt?: number}>} runs 終わった CI の回
+ * @param {Set<string>} synced 台帳に入っている鍵
+ * @param {string|undefined} currentKey いま走っている試み（数えない）
  */
-export function pendingCiEstimate(runs, synced, currentRunId, perRunUsd) {
-  const pending = runs.filter((r) => !synced.has(String(r.id)) && String(r.id) !== String(currentRunId ?? ""));
+export function pendingCiEstimate(runs, synced, currentKey, perRunUsd) {
+  const pending = runs.flatMap(runKeys).filter((k) => !synced.has(k) && k !== String(currentKey ?? ""));
   return { count: pending.length, usd: pending.length * perRunUsd };
+}
+
+/**
+ * CI の 1 つの試みの artifact の中身から、台帳の行を作る（写す道具の判定。純粋な関数）。
+ * artifact が無いか、別の試みのものなら、費用は計れない（null）として人に返す。
+ * @param {{key: string, createdAt: string}} attempt
+ * @param {object|null} artifact その試みが上げた結果（無ければ null）
+ */
+export function ledgerRowForAttempt(attempt, artifact) {
+  const base = { at: attempt.createdAt, role: "audit", where: "ci", runKey: attempt.key };
+  if (!artifact) return { ...base, usd: null, note: "その試みの記録（artifact）が無い。人が確かめる" };
+  if (String(artifact.runKey ?? "") !== attempt.key) return { ...base, usd: null, note: "artifact の試みの鍵が合わない。人が確かめる" };
+  if (artifact.called === false) return { ...base, usd: 0, note: `API を呼んでいない（${artifact.reason ?? "理由の記録なし"}）` };
+  if (typeof artifact.costUsd === "number" && Number.isFinite(artifact.costUsd)) {
+    return { ...base, base: artifact.base, head: artifact.head, usd: artifact.costUsd, usage: artifact.usage ?? {} };
+  }
+  return { ...base, base: artifact.base, head: artifact.head, usd: null, usage: artifact.usage ?? {}, note: "費用を計れない。人が確かめる" };
 }
 
 /** 役ごとの合計と全体の合計。 */

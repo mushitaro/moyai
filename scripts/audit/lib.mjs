@@ -65,6 +65,14 @@ export function costUsd(usage, price) {
   );
 }
 
+/**
+ * 回ごとの結果の記録（.cache/audit/ に出し、CI では artifact に上げる）。モデルの識別子は書かない。
+ * runKey は「回の番号-試みの番号」。手元の回は null。called は API を呼んだか。
+ */
+export function resultRecord({ base, head, role, runKey, called, pendingCount, result, skipped, usage, cost, stopReason }) {
+  return { base, head, role, runKey, called, pendingCiRuns: pendingCount, result, skipped, usage, costUsd: cost, stopReason };
+}
+
 /** 結果を Markdown にする（Actions の要約に出す）。モデルの識別子は書かない。 */
 export function renderMarkdown({ role, base, head, result, skipped, usage, cost, stopReason }) {
   const lines = [];

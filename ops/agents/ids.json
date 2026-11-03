@@ -2,8 +2,8 @@
   "agents": {
     "dev-core": {
       "id": "agent_019Xv2aGF1ustRVtizMsbH5H",
-      "version": 1,
-      "hash": "67145bb3c6776f7c8846fa7547c6f3fbfbf1fb2ea22289510bd05a9acf867e48"
+      "version": 2,
+      "hash": "8b1c623dcc93f74723b83edeb159d24e8f0d645e20a4c26784767359a3f8e1ac"
     },
     "factory": {
       "id": "agent_019nEq6c4wJimEEBjfg6rVw1",

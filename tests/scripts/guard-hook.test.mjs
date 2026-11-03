@@ -55,6 +55,7 @@ const blocked = [
   ["Bash", { command: "curl 127.1:43110/api/confirm" }],
   ["Bash", { command: 'node dist/cli.js "ledger" "submit" ./b.json' }],
   ["Bash", { command: "node dist/cli ledger submit ./b.json" }],
+  ["Bash", { command: "curl -g http://[::]:43110/" }],
 ];
 
 const allowed = [
@@ -76,6 +77,8 @@ const allowed = [
   ["PowerShell", { command: "Set-Location C:\\Users\\u\\Moyai; npm test" }],
   ["Bash", { command: "curl -s https://api.github.com/repos/mushitaro/moyai" }],
   ["Bash", { command: "git log --oneline -- scripts/cli.mjs" }],
+  ["Bash", { command: 'git commit -m "cli: confirm the send path"' }],
+  ["Bash", { command: 'gh issue create --title "fix cli send" --body "x"' }],
 ];
 
 for (const [tool, input] of blocked) {

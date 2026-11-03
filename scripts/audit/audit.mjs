@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs"
 import { execFileSync } from "node:child_process";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { AuditResult, costUsd, planDiff, renderMarkdown } from "./lib.mjs";
+import { AuditResult, costUsd, planDiff, renderMarkdown, resultRecord } from "./lib.mjs";
 import { appendLedger, budgetCheck, loadLedger, pendingCiEstimate } from "../api-spend.mjs";
 
 const ROLE = "audit";
@@ -49,23 +49,38 @@ let stopReason = "";
 let failed = false;
 
 // 呼ぶ前に、費用の配分を確かめる（1 回の見込みは $2 として見る）。
-// CI では、台帳にまだ写していない終わった監査の回も、1 回 $2 として足して数える。
+// 台帳にまだ写していない、終わった CI の監査の試みも、1 回 $2 として足して数える（CI でも手元でも）。
 const PER_RUN_USD = 2;
 const ledger = loadLedger();
-let pending = { count: 0, usd: 0 };
-if (process.env.GITHUB_ACTIONS) {
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/workflows/audit.yml/runs?status=completed&per_page=100`,
-      { headers: { authorization: `Bearer ${process.env.GITHUB_TOKEN}`, accept: "application/vnd.github+json" } },
-    );
-    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    const runs = (await res.json()).workflow_runs ?? [];
-    pending = pendingCiEstimate(runs, ledger.synced, process.env.GITHUB_RUN_ID, PER_RUN_USD);
-  } catch (e) {
-    // 数えられないときは、多めに見て止める側に倒す
-    pending = { count: NaN, usd: Infinity };
+const runKey = process.env.GITHUB_RUN_ID ? `${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT ?? 1}` : null;
+let pending;
+try {
+  pending = pendingCiEstimate(await listCompletedAuditRuns(), ledger.synced, runKey, PER_RUN_USD);
+} catch {
+  // 数えられないときは、多めに見て止める側に倒す
+  pending = { count: NaN, usd: Infinity };
+}
+
+/** 終わった監査の回を全部読む（ページをたどる）。CI では GitHub API、手元では gh を使う。 */
+async function listCompletedAuditRuns() {
+  if (process.env.GITHUB_ACTIONS) {
+    const runs = [];
+    for (let page = 1; page <= 50; page++) {
+      const res = await fetch(
+        `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/workflows/audit.yml/runs?status=completed&per_page=100&page=${page}`,
+        { headers: { authorization: `Bearer ${process.env.GITHUB_TOKEN}`, accept: "application/vnd.github+json" } },
+      );
+      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+      const batch = (await res.json()).workflow_runs ?? [];
+      runs.push(...batch);
+      if (batch.length < 100) return runs;
+    }
+    throw new Error("回が多すぎて読み切れない");
   }
+  const out = execFileSync("gh", ["run", "list", "--workflow", "audit", "--status", "completed", "--limit", "5000", "--json", "databaseId,attempt"], {
+    encoding: "utf8",
+  });
+  return JSON.parse(out).map((r) => ({ id: r.databaseId, run_attempt: r.attempt }));
 }
 const gate = budgetCheck(config.budgetUsd, ledger.rows, ROLE, PER_RUN_USD + pending.usd, ledger);
 
@@ -112,7 +127,7 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(
   `${outDir}/${base.slice(0, 7)}..${head.slice(0, 7)}.json`,
   JSON.stringify(
-    { base, head, role: ROLE, runId: process.env.GITHUB_RUN_ID ?? null, pendingCiRuns: pending.count, result, skipped, usage, costUsd: cost, stopReason },
+    resultRecord({ base, head, role: ROLE, runKey, called, pendingCount: pending.count, result, skipped, usage, cost, stopReason }),
     null,
     2,
   ),

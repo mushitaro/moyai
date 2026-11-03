@@ -311,7 +311,7 @@ function verify(specPath, patchPath, args) {
   const check = git("-C", dir, "apply", "--check", "--whitespace=nowarn", patch);
   const result = { base, dir, applyCheck: check.status === 0, applyStderr: check.stderr.trim(), steps: [] };
   if (result.applyCheck) {
-    const am = spawnSync("git", ["-C", dir, "-c", "user.name=moyai-verify", "-c", "user.email=verify@moyai.invalid", "am", "--quiet", patch], { encoding: "utf8" });
+    const am = spawnSync("git", ["-C", dir, "-c", "user.name=moyai-verify", "-c", "user.email=verify@moyai.invalid", "am", "--quiet", "--keep-cr", patch], { encoding: "utf8" });
     result.am = am.status === 0;
     if (!result.am) {
       git("-C", dir, "am", "--abort");

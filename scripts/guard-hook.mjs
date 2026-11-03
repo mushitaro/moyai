@@ -15,14 +15,12 @@ const HTTP_CLIENT =
 const PREVIOUS_PRODUCT = /(mxstage|hoshutaro)/i;
 const FETCH_VERB =
   /(\bclone\b|\bfetch\b|\bpull\b|\bsubmodule\b|\binstall\b|\bnpm\s+i\b|\bnpm\s+view\b|\bnpx\b|\bpnpm\b|\byarn\b|\bcurl\b|\bwget\b|\biwr\b|\birm\b|\bInvoke-WebRequest\b|\bInvoke-RestMethod\b|\bgh\s+(?:api|repo|release)\b|\bdownload\b|\bls-remote\b|\barchive\b|\bsvn\b)/i;
-// MOYAI の CLI を呼ぶ形（node dist/cli.js、npm run cli、moyai）のあと、同じコマンドの中（; & | 改行の手前）に
-// 人だけの動詞が来たら当てる。間に別の引数があっても当てる。フォルダ名の Moyai だけでは当てない。
+// MOYAI の CLI を「実行する位置」にあるときだけ見る：node（や npx tsx など）の直後の …cli(.js|.mjs|.ts) のパス、
+// npm run cli、コマンドの先頭の moyai。そのあと、同じコマンドの中（; & | 改行の手前）に人だけの動詞が来たら当てる。
+// 間に別の引数があっても当てる。引用符は外してから見る。コミットの文やフォルダ名の中の cli・Moyai では当てない。
 const HUMAN_ONLY_VERBS = String.raw`(?:ledger\s+submit|keys?\s+(?:create|new|unwrap)|send|confirm|promote|accept-rules)\b`;
-// cli（拡張子は省いてもよい）・npm run cli・moyai のあと、同じコマンドの中に動詞が来たら当てる。引用符は外してから見る
-const HUMAN_ONLY_CLI = new RegExp(
-  String.raw`(?:\bcli(?:\.(?:m?js|ts))?\b|\bnpm\s+run\s+cli\b|(?:^|[\s;&|(])moyai(?:\.cmd|\.exe)?\s)[^;&|\n]*?\b` + HUMAN_ONLY_VERBS,
-  "i",
-);
+const CLI_AT_EXEC = String.raw`(?:(?:^|[\s;&|(])(?:node|tsx|npx\s+tsx|bun|deno\s+run)\s+(?:--?\S+\s+)*\S*?\bcli(?:\.(?:m?js|ts))?(?=\s|$)|\bnpm\s+run\s+cli\b|(?:^|[;&|(]\s*)moyai(?:\.cmd|\.exe)?\s)`;
+const HUMAN_ONLY_CLI = new RegExp(CLI_AT_EXEC + String.raw`[^;&|\n]*?\b` + HUMAN_ONLY_VERBS, "i");
 const unquote = (s) => String(s ?? "").replace(/["'`]/g, " ");
 const WRITE_VERB =
   /(>>?|\bcp\b|\bmv\b|\brm\b|\bdel\b|\btee\b|\btouch\b|\bmkdir\b|\bCopy-Item\b|\bMove-Item\b|\bRemove-Item\b|\bSet-Content\b|\bAdd-Content\b|\bOut-File\b|\bNew-Item\b|\brobocopy\b|\bxcopy\b|\brename\b|\bren\b|writeFile|appendFile)/i;
@@ -43,6 +41,8 @@ export function isLoopbackHost(hostname) {
   if (h === "localhost" || h.endsWith(".localhost") || h === "0.0.0.0") return true;
   if (/^127\.\d+\.\d+\.\d+$/.test(h)) return true;
   if (h === "::1" || h === "0:0:0:0:0:0:0:1") return true;
+  // 「すべてのアドレス」（::・0.0.0.0）も、多くの OS で自分の PC につながる
+  if (h === "::" || h === "0:0:0:0:0:0:0:0") return true;
   if (/^::ffff:(?:127\.|7f[0-9a-f]{2}:)/.test(h)) return true;
   return false;
 }

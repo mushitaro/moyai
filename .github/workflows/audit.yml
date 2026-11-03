@@ -46,6 +46,9 @@ jobs:
         run: |
           if [ -z "$ANTHROPIC_API_KEY" ]; then
             echo "ANTHROPIC_API_KEY が無いので監査していません（未確認）" >> "$GITHUB_STEP_SUMMARY"
+            # 呼んでいないことを、その回の記録として残す（費用を写す道具が $0 の根拠に使う）
+            mkdir -p .cache/audit
+            printf '{"runKey":"%s-%s","called":false,"reason":"no-key"}\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > ".cache/audit/run-$GITHUB_RUN_ID.json"
             exit 0
           fi
           node scripts/audit/audit.mjs

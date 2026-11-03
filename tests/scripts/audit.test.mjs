@@ -7,6 +7,20 @@ import { planDiff, costUsd, renderMarkdown, AuditResult } from "../../scripts/au
 const MODEL_IDS = [...new Set(Object.values(JSON.parse(readFileSync("config/models.json", "utf8")).roles).map((r) => r.model))];
 const hasModelId = (s) => MODEL_IDS.some((id) => s.includes(id));
 
+test("config からモデルの識別子が読めている（空振りの試験にしない）", () => {
+  assert.ok(MODEL_IDS.length > 0);
+});
+
+test("回ごとの記録にもモデルの識別子を書かない", async () => {
+  const { resultRecord } = await import("../../scripts/audit/lib.mjs");
+  const rec = resultRecord({
+    base: "a", head: "b", role: "audit", runKey: "1-1", called: true, pendingCount: 0,
+    result: { summary: "s", findings: [], unchecked: [] }, skipped: [], usage: { input_tokens: 1 }, cost: 0.1, stopReason: "end_turn",
+  });
+  assert.equal(hasModelId(JSON.stringify(rec)), false);
+  assert.equal(rec.runKey, "1-1");
+});
+
 const fileDiff = (name, body = "+x\n") => `diff --git a/${name} b/${name}\nindex 1..2 100644\n--- a/${name}\n+++ b/${name}\n@@ -0,0 +1 @@\n${body}`;
 
 test("差分をファイルごとに分け、生成物とバイナリは理由つきで外す", () => {

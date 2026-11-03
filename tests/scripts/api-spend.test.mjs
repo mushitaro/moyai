@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readLedger, totals, budgetCheck, syncedRunIds, pendingCiEstimate } from "../../scripts/api-spend.mjs";
+import { readLedger, totals, budgetCheck, syncedRunIds, pendingCiEstimate, runKeys, ledgerRowForAttempt } from "../../scripts/api-spend.mjs";
 
 const budget = { stopAt: 400, f3: 60, audit: 40, dev: 300, reserve: 100 };
 const rows = (pairs) => pairs.map(([role, usd]) => ({ role, usd }));
@@ -21,10 +21,32 @@ test("打ち消しの行（負の費用）も合計に入る", () => {
   assert.equal(totals(rows([["audit", 0.8], ["audit", -0.8]])).all, 0);
 });
 
-test("CI の回のうち、台帳に写していないものだけを見込みに数える（いまの回は数えない）", () => {
-  const synced = syncedRunIds('{"role":"audit","usd":0,"runId":"1"}\n{"role":"audit","usd":0.5,"runId":"2"}\n');
-  const p = pendingCiEstimate([{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }], synced, 4, 2);
+test("CI の試みのうち、台帳に写していないものだけを見込みに数える（いまの試みは数えない）", () => {
+  const synced = syncedRunIds('{"role":"audit","usd":0,"runId":"1"}\n{"role":"audit","usd":0.5,"runKey":"2-1"}\n');
+  const p = pendingCiEstimate([{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }], synced, "4-1", 2);
   assert.deepEqual(p, { count: 1, usd: 2 });
+});
+
+test("再実行した回は、試みの数だけ数える", () => {
+  assert.deepEqual(runKeys({ id: 9, run_attempt: 3 }), ["9-1", "9-2", "9-3"]);
+  assert.deepEqual(pendingCiEstimate([{ id: 9, run_attempt: 2 }], new Set(["9-2"]), null, 2), { count: 1, usd: 2 });
+});
+
+const at = { key: "7-1", createdAt: "2026-11-03T05:00:00Z" };
+test("写す判定：記録が無ければ費用は計れない（$0 にしない）", () => {
+  assert.equal(ledgerRowForAttempt(at, null).usd, null);
+});
+test("写す判定：別の試みの記録なら計れない", () => {
+  assert.equal(ledgerRowForAttempt(at, { runKey: "6-1", costUsd: 1 }).usd, null);
+});
+test("写す判定：呼んでいない記録なら $0（理由つき）", () => {
+  const r = ledgerRowForAttempt(at, { runKey: "7-1", called: false, reason: "no-key" });
+  assert.equal(r.usd, 0);
+  assert.match(r.note, /no-key/);
+});
+test("写す判定：費用があればそれを、使ったトークンがあって費用が無ければ計れない", () => {
+  assert.equal(ledgerRowForAttempt(at, { runKey: "7-1", costUsd: 0.4, usage: { input_tokens: 1 } }).usd, 0.4);
+  assert.equal(ledgerRowForAttempt(at, { runKey: "7-1", costUsd: null, usage: { input_tokens: 1 } }).usd, null);
 });
 
 test("役ごとと全体の合計", () => {
