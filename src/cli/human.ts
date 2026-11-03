@@ -132,7 +132,7 @@ export async function verifyRingCli(argv: string[], o: { packsDir?: string; stat
 }
 
 /** 合言葉を、画面に出さずに 1 行読む。 */
-function askHidden(prompt: string): Promise<string> {
+export function askHidden(prompt: string): Promise<string> {
   return new Promise((res) => {
     const out = process.stderr;
     const rl = createInterface({ input: process.stdin, output: out, terminal: true });

@@ -8,11 +8,13 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { reasonText } from "../app/text/reasons";
 import { bundleFileName } from "../share/bundle";
 import { fingerprint, sha256Hex } from "../share/sign";
-import { requireTerminal } from "./human";
+import { askHidden, requireTerminal } from "./human";
+import { createLedger } from "../share/ledger-init";
+import { resolveStateDir } from "../bridge/state";
 import {
   LEDGER_DIR,
   LEDGER_FILE,
@@ -132,7 +134,76 @@ export async function verifyLedgerCli(argv: string[], o: { packsDir?: string } =
 export const LEDGER_USAGE = `使い方：
   moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
   moyai ledger site <台帳のリポジトリの根> <出すフォルダ>
-  moyai ledger submit --bundle <束> --repo <台帳の clone>（人だけ。端末から）`;
+  moyai ledger submit --bundle <束> --repo <台帳の clone>（人だけ。端末から）
+  moyai ledger init --root <台帳のリポジトリの根> --pack <パック> [--month YYYY-MM]（人だけ。端末から。管理者の鍵で台帳の決まりに署名する）`;
+
+/** ledger init の言葉 */
+export const INIT_TEXT = {
+  usage: "使い方：moyai ledger init --root <台帳のリポジトリの根（絶対の道）> --pack <パック> [--month YYYY-MM]（人だけ。端末から）",
+  intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに合言葉で包んで置きます（台帳には書きません）。",
+  passphrase: "管理者の鍵の合言葉：",
+  passphraseAgain: "もう一度：",
+  mismatch: "合言葉が合いません。何も書いていません。",
+  failed: (r: string) =>
+    ({
+      exists: "ledger/ledger.json がもうあります（足すだけの台帳なので、上書きしません）。",
+      passphraseShort: "合言葉が短すぎます。",
+      monthInvalid: "月の形が違います（YYYY-MM）。",
+      keyExists: "この台帳の鍵がもう状態フォルダにあります。",
+      selfCheck: "作った決まりを、受け手と同じ関数で読めませんでした。何も書いていません。",
+    })[r] ?? r,
+  done: (id: string, fp: string, path: string) =>
+    [
+      `台帳の決まりを書きました：${path}`,
+      `台帳 ID：${id}`,
+      `管理者の鍵の指紋：${fp}（台帳の README に載せ、電話などで読み合わせると、なりすましに気づけます）`,
+      "次に、このファイルを台帳のリポジトリに commit して push してください（このコマンドは git を走らせません）。",
+    ].join("\n"),
+};
+
+/** ledger init：人だけ。端末でなければ断る（3）。書けたら 0、断ったら 1、引数の誤りは 2 */
+export async function initCli(
+  argv: string[],
+  o: { packsDir?: string; stdin?: { isTTY?: boolean }; ask?: (p: string) => Promise<string>; now?: Date; stateDir?: string } = {},
+): Promise<number> {
+  if (!requireTerminal(o.stdin)) return 3;
+  let root: string | null = null;
+  let packId: string | null = null;
+  let month: string | null = null;
+  let bad = false;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === "--root") root = argv[++i] ?? null;
+    else if (argv[i] === "--pack") packId = argv[++i] ?? null;
+    else if (argv[i] === "--month") month = argv[++i] ?? null;
+    else bad = true;
+  }
+  if (bad || !root || !packId || !isAbsolute(root)) {
+    say(INIT_TEXT.usage);
+    return 2;
+  }
+  const pack = loadSharePack(o.packsDir ?? resolvePacksDir(), packId);
+  if (!pack.ok) {
+    say(INIT_TEXT.failed(pack.reason));
+    return 2;
+  }
+  say(INIT_TEXT.intro);
+  const ask = o.ask ?? askHidden;
+  const a = await ask(INIT_TEXT.passphrase);
+  const b = await ask(INIT_TEXT.passphraseAgain);
+  if (a !== b) {
+    say(INIT_TEXT.mismatch);
+    return 1;
+  }
+  const now = o.now ?? new Date();
+  const m = month ?? `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const r = createLedger({ root: resolve(root), pack: pack.pack, passphrase: a, stateDir: o.stateDir ?? resolveStateDir(), month: m });
+  if (!r.ok) {
+    say(INIT_TEXT.failed(r.reason));
+    return 1;
+  }
+  say(INIT_TEXT.done(r.ledgerId, r.fingerprint, r.path));
+  return 0;
+}
 
 // ─── git の木を読む（checkout しない。head の側のコードを走らせない） ─────────────────
 
@@ -619,6 +690,7 @@ export async function ledgerCli(argv: string[], o: { packsDir?: string; build?: 
   if (sub === "validate-pr") return validatePrCli(rest, o);
   if (sub === "site") return siteCli(rest, o);
   if (sub === "submit") return submitCli(rest, o);
+  if (sub === "init") return initCli(rest, o);
   say(LEDGER_USAGE);
   return 2;
 }

@@ -18,7 +18,7 @@ const FETCH_VERB =
 // MOYAI の CLI を「実行する位置」にあるときだけ見る：node（や npx tsx など）の直後の …cli(.js|.mjs|.ts) のパス、
 // npm run cli、コマンドの先頭の moyai。そのあと、同じコマンドの中（; & | 改行の手前）に人だけの動詞が来たら当てる。
 // 間に別の引数があっても当てる。引用符は外してから見る。コミットの文やフォルダ名の中の cli・Moyai では当てない。
-const HUMAN_ONLY_VERBS = String.raw`(?:ledger\s+submit|keys?\s+(?:create|new|unwrap)|send|confirm|promote|accept-rules)\b`;
+const HUMAN_ONLY_VERBS = String.raw`(?:ledger\s+(?:submit|init)|keys?\s+(?:create|new|unwrap)|send|confirm|promote|accept-rules)\b`;
 const CLI_AT_EXEC = String.raw`(?:(?:^|[\s;&|(])(?:node|tsx|npx\s+tsx|bun|deno\s+run)\s+(?:--?\S+\s+)*\S*?\bcli(?:\.(?:m?js|ts))?(?=\s|$)|\bnpm\s+run\s+cli\b|(?:^|[;&|(]\s*)moyai(?:\.cmd|\.exe)?\s)`;
 const HUMAN_ONLY_CLI = new RegExp(CLI_AT_EXEC + String.raw`[^;&|\n]*?\b` + HUMAN_ONLY_VERBS, "i");
 const unquote = (s) => String(s ?? "").replace(/["'`]/g, " ");

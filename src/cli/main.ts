@@ -36,6 +36,8 @@ const HELP = `使い方：
                                             束を確かめ直し、似た施設の星取表と統計の行の静的なページを書く
   moyai ledger submit --bundle <束> --repo <台帳の clone>
                                             署名済みの束を出す PR の支度をし、gh のコマンドを出す（人だけ。端末から）
+  moyai ledger init --root <台帳のリポジトリの根> --pack <パック> [--month YYYY-MM]
+                                            台帳の決まり（ledger.json）を作り、管理者の鍵で署名する（人だけ。端末から）
   moyai keys create --root <輪のフォルダ> --pack <パック>
                                             輪を作り、その輪の鍵を合言葉で包む（人だけ。端末から）
   moyai send                                束を送る（人だけ。検問所の画面から送る。端末からは未実装）

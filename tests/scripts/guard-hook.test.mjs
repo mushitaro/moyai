@@ -34,6 +34,7 @@ const blocked = [
   ["WebFetch", { url: "https://mxstage.tsunagi.app/docs", prompt: "x" }],
   ["Bash", { command: "node dist/cli.js ledger submit ./bundle.json" }],
   ["Bash", { command: "node dist/cli.js keys create --circle c_ab" }],
+  ["Bash", { command: "node dist/cli.js ledger init --root C:/x --pack waste-incineration" }],
   ["PowerShell", { command: "moyai send --to ring" }],
   // 監査の指摘（2026-11-03）で足した、すり抜けの書き方
   ["Bash", { command: "curl http://127.1:43110/api/confirm" }],
