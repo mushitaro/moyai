@@ -178,6 +178,18 @@ export function answer(q: QuestionState, ix: Index): string | null {
     case "eventAssetOne": {
       const it = q.items[0];
       if (!it) return null;
+      // 選択肢から選ぶ形（items の i 番目が選択肢 c{i} の候補）：その行の機器のうち、候補になっているもの。
+      // 一式の行の 1 つの名前に、その行の機器がいくつも候補に出たら、名前の字がいちばん重なる候補（正解は行ごとで、名前ごとではないため）
+      if (q.options.filter((o) => o.id.startsWith("c")).length >= 2 || (q.options.some((o) => o.id === "c0") && it.target?.length)) {
+        const ids = eqIdsAt(it);
+        if (!ids) return null;
+        const hits = q.items.map((x, i) => ({ i, e: eqOfKey(targetEnt(x)) })).filter((h) => h.e !== null && ids.includes(h.e) && q.options.some((o) => o.id === `c${h.i}`));
+        if (!hits.length) return "exclude";
+        const frag = nf(it.note ?? "");
+        const overlap = (e: string) => [...new Set(frag)].filter((ch) => nf(ix.eq.get(e)?.name ?? "").includes(ch)).length;
+        hits.sort((a, b) => overlap(b.e!) - overlap(a.e!) || a.i - b.i);
+        return `c${hits[0]!.i}`;
+      }
       if (q.options.some((o) => o.id === "c0") && q.options.length === 2) {
         const ids = eqIdsAt(it);
         if (!ids) return null;
@@ -205,7 +217,8 @@ export function answer(q: QuestionState, ix: Index): string | null {
         const cellWorks = tg ? (ix.markAt(tg.file, tg.sheet, tg.cells[0] ?? "")?.work_ids ?? []) : [];
         return lines.length > 0 && lines.every((l) => l.work_ids.some((w) => cellWorks.includes(w)));
       });
-      return ok ? "yes" : isNoMark ? null : "split";
+      // 印の無い作業を「日報・報告書だけの記録」として入れるかの問いは、正解で印があっても「入れる」（人は記録を捨てない。結べなかった分は ⑥ が数える）
+      return ok ? "yes" : isNoMark ? "yes" : "split";
     }
     case "workLinkOne": {
       const it = q.items[0];
@@ -219,9 +232,19 @@ export function answer(q: QuestionState, ix: Index): string | null {
       }
       return "eventOnly";
     }
+    case "effortConflict": {
+      // 資料で違う工数・日数：世界の作業の値と同じ選択肢（無ければ空にする）
+      const works = [...new Set(q.items.flatMap((it) => it.cells.flatMap((c) => ix.eventAt(it.file, it.sheet, c)?.work_ids ?? [])))];
+      const days = q.text.includes("日数");
+      const truth = [...new Set(works.map((w) => (days ? ix.work.get(w)?.duration_days : ix.work.get(w)?.man_days) ?? null))];
+      if (truth.length !== 1 || truth[0] === null) return "none";
+      const o = q.options.find((x) => x.id.startsWith("v") && Math.abs(Number(x.label) - (truth[0] as number)) < 1e-9);
+      return o ? o.id : "none";
+    }
     default:
-      // 行き先の決まらないセル・小計の食い違い・計算済みの値の無い数式などは、正解から答えられない。開いたままにする
-      return null;
+      // 選択肢が 1 つだけの問い（「合わないまま外す」など）は、人もその 1 つを押すしかない。押して先へ進み、結果は物差しが数える。
+      // ほかは、正解から答えられない（行き先の決まらないセル・計算済みの値の無い数式など）。開いたままにする
+      return q.options.length === 1 ? (q.options[0]?.id ?? null) : null;
   }
 }
 
@@ -369,7 +392,9 @@ export function measureMarks(plan: Plan, ix: Index): Record<string, Accuracy> {
       const want = x.status === "planned" ? "plan" : "actual";
       if (ds.some((d) => d.planOrActual !== want)) why.push("予定と実績");
       if (ds.some((d) => d.fiscalYear !== x.fiscal_year)) why.push("年度");
-      const leafPlace = ix.assets.find((a) => a.at && a.item.file === x.file && a.item.kind === "equipment" && a.item.equipment_id === x.equipment_id && a.at.sheet === p.at!.sheet && a.at.row === p.at!.row);
+      // 印の機器の節：同じ資料の、その機器の名前のセル（同じ行を先に。予定の段と実績の段に分けて書く表は、名前が上の段にだけある）
+      const sameEq = ix.assets.filter((a) => a.at && a.item.file === x.file && a.item.kind === "equipment" && a.item.equipment_id === x.equipment_id && a.at.sheet === p.at!.sheet);
+      const leafPlace = sameEq.find((a) => a.at!.row === p.at!.row) ?? (sameEq.length === 1 ? sameEq[0] : undefined);
       const leaf = leafPlace?.at ? nodeAt(plan, x.file, leafPlace.at) : null;
       if (ds.some((d) => !workOf.get(d.workKey)?.targets.includes(leaf?.nodeKey ?? "?"))) why.push("対象の機器");
       const wantPrecision = x.work_ids.some((w) => ix.work.get(w)?.precision);
