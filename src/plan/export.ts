@@ -35,6 +35,16 @@ const HEADER_ROW = 6;
 const OUTLINE_MAX = 7;
 const FILL_HEAD = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE6EEF0" } } as const;
 const FILL_SUB = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF3F3F3" } } as const;
+/** 印刷で行を追いやすくする細い罫（行の下、段の列と年度の列の境） */
+const RULE = { style: "hair", color: { argb: "FFBBBBBB" } } as const;
+const EDGE = { style: "thin", color: { argb: "FF888888" } } as const;
+
+function ruleRow(row: ExcelJS.Row, nLevels: number, nYears: number): void {
+  for (let c = 1; c <= nLevels + nYears; c++) {
+    const cell = row.getCell(c);
+    cell.border = { ...(cell.border ?? {}), bottom: RULE, ...(c === nLevels + 1 ? { left: EDGE } : {}) };
+  }
+}
 
 export interface ExportInput {
   plan: Plan;
@@ -67,7 +77,8 @@ function writeSheet(ws: ExcelJS.Worksheet, model: ChartModel, input: ExportInput
     c.border = { bottom: { style: "thin" } };
     c.alignment = { vertical: "middle", horizontal: "center" };
   });
-  ws.columns = [...model.levelNames.map(() => ({ width: 22 })), ...years.map(() => ({ width: 9 }))];
+  // 年度の列は「2019 年度」が 1 行で収まる幅（Excel と LibreOffice の両方で確かめた幅）
+  ws.columns = [...model.levelNames.map(() => ({ width: 22 })), ...years.map(() => ({ width: 11.5 }))];
 
   let r = HEADER_ROW + 1;
   /** 段の列の縦の結合：段 j の名前を書いた行と、その下の子孫の行の最後 */
@@ -98,6 +109,7 @@ function writeSheet(ws: ExcelJS.Worksheet, model: ChartModel, input: ExportInput
     row.font = { italic: true };
     row.eachCell({ includeEmpty: true }, (c) => (c.fill = FILL_SUB));
     row.outlineLevel = 0;
+    ruleRow(row, nLevels, years.length);
     r++;
     group = null;
   };
@@ -128,6 +140,7 @@ function writeSheet(ws: ExcelJS.Worksheet, model: ChartModel, input: ExportInput
       if (group) group.counts[i]! += 1;
     });
     xr.outlineLevel = Math.min(OUTLINE_MAX, Math.max(0, row.level - 1));
+    ruleRow(xr, nLevels, years.length);
     r++;
   }
   flushGroup();
