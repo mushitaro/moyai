@@ -8,6 +8,7 @@
 | 日付 | 時刻（JST） | コミット | node:test | vitest | 結果 |
 |---|---|---|---:|---:|---|
 | 2026-11-03 | 21:58 | `3f98947`+ | 138 | 599 | 通った |
+| 2026-11-04 | 06:56 | `7bba7db`+ | 139 | 639 | 通った |
 
 ## 取り込みの物差し（import.dev、工場の開発用の資料）
 
@@ -34,12 +35,35 @@
 | 2026-11-03 | 通った | fictional-1 | reports/report-f2-fy2026.pdf | 0 | 0 | 100%（1/1） |
 | 2026-11-03 | 通った | fictional-2 | equipment-ledger.xlsx | 0 | 0 | 100%（55/55） |
 | 2026-11-03 | 通った | fictional-2 | plan-hoshitori.xlsx | 0 | 0 | 100%（127/127） |
+| 2026-11-04 | 通った | fictional-1 | equipment-ledger.xlsx | 0 | 0 | 100%（43/43） |
+| 2026-11-04 | 通った | fictional-1 | plan-hoshitori.xlsx | 0 | 0 | 100%（212/212） |
+| 2026-11-04 | 通った | fictional-1 | daily-report.csv | 0 | 0 | 100%（479/479） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2019.pdf | 0 | 0 | 100%（7/7） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2020.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2021.pdf | 0 | 0 | 100%（6/6） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2022.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2023.pdf | 0 | 0 | 100%（6/6） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2024.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2025.pdf | 0 | 0 | 100%（7/7） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f1-fy2026.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2019.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2020.pdf | 0 | 0 | 100%（7/7） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2021.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2022.pdf | 0 | 0 | 100%（6/6） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2023.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2024.pdf | 0 | 0 | 100%（6/6） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2025.pdf | 0 | 0 | 100%（4/4） |
+| 2026-11-04 | 通った | fictional-1 | reports/report-f2-fy2026.pdf | 0 | 0 | 100%（1/1） |
+| 2026-11-04 | 通った | fictional-2 | equipment-ledger.xlsx | 0 | 0 | 100%（55/55） |
+| 2026-11-04 | 通った | fictional-2 | plan-hoshitori.xlsx | 0 | 0 | 100%（127/127） |
 
 | 日付 | 施設 | ⑤ 質問 | 計画 | 資料をまたいで 1 つの明細に結べた作業 | ⑥ 取り戻せた割合 | ⑥ のうち工数 | ⑥ のうち日数 |
 |---|---|---:|---|---|---|---|---|
 | 2026-11-03 | fictional-1 | 20 | 作った | 100%（83/83） | 100%（142/142） | 100%（78/78） | 100%（107/107） |
 | 2026-11-03 | fictional-2 | 4 | 作った | 測っていない | 100%（89/89） | 測っていない | 測っていない |
+| 2026-11-04 | fictional-1 | 20 | 作った | 100%（83/83） | 100%（142/142） | 100%（78/78） | 100%（107/107） |
+| 2026-11-04 | fictional-2 | 4 | 作った | 測っていない | 100%（89/89） | 測っていない | 測っていない |
 
 ⑥ の分母は、正解の世界の実績の作業のうち、その回に読んだ資料のどれかに書いてあるもの。戻せた＝読んだ資料の出どころ（星取表の印・日報の行・報告書の行）を 1 つの実績の明細がすべて持つ。工数・日数は、作業ごとに書いてある作業だけを分母にする。
 報告書の PDF の ① は、工場に PDF の事実（別の読み手が取ったもの）が無いので、PDF の元の xlsx を MOYAI の Excel の読み手で読んだ表示の文字と、中身のある行ごとに比べた。
-この表にまだ載せていないもの：写真の ③ と要確認の数（tests/unit/import/photo-measure.test.ts が測る）、④ 検査の正しさ（tests/unit/review/measure.test.ts が測る）。まだ測っていないもの：見ていない様式。CSV の ① は、比べる事実のファイルが無く測っていない。
+この表にまだ載せていないもの：写真の ③ と要確認の数（tests/unit/import/photo-measure.test.ts が測る）、④ 検査の正しさ（tests/unit/review/measure.test.ts が測る）。まだ測っていないもの：見ていない様式。CSV の ① は、工場の別の読み手（Python の csv。samples/factory/csv_facts.py）が取った記録と比べる。
