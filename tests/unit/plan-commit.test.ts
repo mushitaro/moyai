@@ -112,6 +112,24 @@ describe("確定：版と差分レポート", () => {
     expect(rows.some((r) => r.includes("2022 の分解整備を足した"))).toBe(true);
   });
 
+  it("AI が置いた作業の属性（人が受けていない案）も、受けるまで確定しない。受けると「人が受けた」になり、作者は AI のまま", async () => {
+    const base = aiPlan();
+    const p: Plan = {
+      ...base,
+      works: base.works.map((w) => (w.workKey === "w1" ? { ...w, attribute: "OVERHAUL", attributeAuthor: "ai", attributeBasis: "案 1：作業の名前が分解整備", attributeAccepted: false } : w)),
+    };
+    const ds = aiDecisions(p);
+    expect(ds.map((d) => d.id).sort()).toEqual(["attr:w1", "detail:d2", "item:a2"]);
+    expect(ds.find((d) => d.id === "attr:w1")).toMatchObject({ kind: "attribute", value: "OVERHAUL", author: "ai" });
+    const rt = root();
+    expect(await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: [], basedOn: null, client: "t" })).toMatchObject({ ok: false, reason: "pendingDecisions", pending: 3 });
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null, client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    expect(v1.record.plan.works.find((w) => w.workKey === "w1")).toMatchObject({ attributeAccepted: true, attributeAuthor: "ai" });
+    // 当てはめの欄で人が受けたもの（attributeAccepted が true）は、もう受けていない決定に並ばない
+    expect(aiDecisions(v1.record.plan).filter((d) => d.kind === "attribute")).toEqual([]);
+  });
+
   it("差は機器・作業・年度ごとの印（計画と実施が重なれば ◎）", () => {
     const before = aiPlan();
     const after: Plan = { ...before, details: [...before.details, detail("d5", "w2", 2018)] };

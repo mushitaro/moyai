@@ -107,6 +107,18 @@ export const ERRORS = {
     http: 200,
     text: "その質問には人が画面で答えています。どの決定も置いていません。変えるときは、利用者に画面で直してもらってください。",
   },
+  stale_version: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "もとにした版（basedOnVersion）が、作業画面の今の計画の版と違います。どの案も置いていません。intake_survey（part: crosswalk）の version を読み直してから置き直してください。",
+  },
+  code_not_in_pack: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "置く 1 段目の項目のコードが、この計画のパックの一覧にありません（型に合いません）。どの案も置いていません。intake_survey（part: crosswalk）の items のコードから選んでください。",
+  },
   tool_failed: {
     from: "tab",
     to: "ai",

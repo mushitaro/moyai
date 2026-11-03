@@ -88,7 +88,7 @@ describe("中継の MCP", () => {
       intake_settle: { decisions: [{ questionId: "q1", answer: "a", author: "ai", reason: "r" }] },
       photo_transcribe: { mode: "receive" },
       crosswalk_propose: {
-        rules: [{ when: [{ field: "work.kind", op: "equals", values: ["x"] }], set: { field: "work.strategy", value: "time_based" }, reason: "r" }],
+        rules: [{ when: [{ field: "work.kind", op: "equals", values: ["x"] }], set: { field: "work.attribute", value: "INSPECT" }, reason: "r" }],
         basedOnVersion: 0,
       },
       chart_propose: {

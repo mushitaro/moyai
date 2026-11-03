@@ -68,6 +68,7 @@ const SURVEY = {
   questions: [],
   unresolvedCells: 0,
   compose: { state: "idle", message: null },
+  crosswalk: null,
 };
 
 /** 星取表の行を、上限どおりに返すタブ（全部で total 行） */

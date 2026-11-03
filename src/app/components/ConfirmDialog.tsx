@@ -7,7 +7,7 @@ import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../
 import type { Plan } from "../../shared/plan";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import type { BridgeClient, HumanResult } from "../bridge-client";
-import { catalogFor } from "../chart/catalog";
+import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
 
 const T = HUMAN_TEXT.confirm;
@@ -105,6 +105,7 @@ export function ConfirmDialog({
   // 共通の設備項目はコードでなくパックの名前で見せる（名前が無ければコードのまま）
   const catalog = useMemo(() => catalogFor(plan.packId), [plan.packId]);
   const itemName = (code: string) => catalog?.items.get(code)?.name ?? catalog?.systems.get(code)?.name ?? code;
+  const attrName = (code: string) => ((catalog ?? emptyCatalog()).workLabels as Record<string, string>)[code] ?? code;
   const canSubmit = !!status && reason.trim().length > 0 && left === 0 && !busy && !done;
 
   const submit = async () => {
@@ -198,7 +199,9 @@ export function ConfirmDialog({
                         return (
                           <Table.Tr key={d.id} data-testid="pending-row">
                             <Table.Td>{d.target}</Table.Td>
-                            <Table.Td className="moyai-num">{d.kind === "detail" ? `${T.pendingValue[pa ?? ""] ?? ""} · ${T.pendingFiscal(fy ?? "")}` : itemName(d.value)}</Table.Td>
+                            <Table.Td className="moyai-num">
+                              {d.kind === "detail" ? `${T.pendingValue[pa ?? ""] ?? ""} · ${T.pendingFiscal(fy ?? "")}` : d.kind === "attribute" ? attrName(d.value) : itemName(d.value)}
+                            </Table.Td>
                             <Table.Td>
                               <Badge variant="light" color="orange">
                                 {TEXT.author[d.author]}

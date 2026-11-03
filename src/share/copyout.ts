@@ -1,7 +1,8 @@
 // 写し取り：計画の書類（Plan）から、塊の並びを作る。塊は 1 つの施設の、1 段目の項目 × 作業の属性ごとに 1 行。
 // 写すのは許可リストの欄だけで、欄ごとの作り手（CHUNK_BUILDERS）が数とコードからだけ値を作る。
 // 費用・人・日付・備考・名前・系統の名前は、作り手が読まないので構造上写らない（写さなかった数は withheld に数える）。
-// 写すのは、当てはめを人が受けた（commonItemAccepted が true の）資産の、実績の作業明細だけ。写さなかった行は理由ごとに数える。
+// 写すのは、当てはめを人が受けた（commonItemAccepted が true の）資産の、作業の属性を人が受けた（attributeAccepted が true の）作業の、
+// 実績の作業明細だけ。写さなかった行は理由ごとに数える。
 import { WORK_ATTRIBUTES, type AssetNodeT, type Plan, type WorkT } from "../shared/plan";
 import {
   BAND_DEFS,
@@ -48,6 +49,7 @@ export const SKIP_REASONS = [
   "planned", // 計画（予定）の印。写すのは実績だけ
   "needsReview", // 写真から読み、人がまだ確かめていない
   "attributeUndecided", // 作業の属性が決まらない
+  "attributeNotAccepted", // 作業の属性の当てはめを人が受けていない（案のまま）
   "fiscalYearInvalid", // 年度が上下限の外
   "targetMissing", // 対象の資産が無い
   "commonItemUndecided", // 1 段目の項目が決まらない
@@ -274,7 +276,9 @@ export function copyOut(input: CopyInput): CopyResult {
           ? "needsReview"
           : w.attribute === null
             ? "attributeUndecided"
-            : !Number.isInteger(d.fiscalYear) || d.fiscalYear < FY_MIN || d.fiscalYear > FY_MAX
+            : !w.attributeAccepted
+              ? "attributeNotAccepted"
+              : !Number.isInteger(d.fiscalYear) || d.fiscalYear < FY_MIN || d.fiscalYear > FY_MAX
               ? "fiscalYearInvalid"
               : null;
     if (detailSkip !== null) {

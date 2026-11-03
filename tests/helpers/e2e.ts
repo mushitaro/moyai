@@ -1,11 +1,14 @@
 // Playwright の試験の道具（取り込みの画面と MCP の通し）：ビルドした dist/cli.js start を空きのポートで起こし、
 // 一時の状態フォルダに向ける。工場の資料を、画面の受け口へ File API の「落とす」で渡す。
+// MCP のクライアント（本物の中継 dist/cli.js mcp を標準入出力でつなぐ）と、設定の画面で置き場所と輪を作る人の操作も置く。
 // スクリーンショットは一時のフォルダの moyai-shots/<走らせた日（日本時間）>/（日誌に残すときは MOYAI_SHOTS_DIR=docs/progress/shots/<日付> を渡す）。前の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { expect, type Page } from "@playwright/test";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -90,4 +93,47 @@ export async function openIntakeAndDrop(page: Page, base: string, facilityName: 
   }, files);
   await page.getByTestId("drop").dispatchEvent("drop", { dataTransfer: dt });
   await expect(page.getByTestId("dest-file")).toHaveCount(set.files.length, { timeout: 20_000 });
+}
+
+/** 本物の中継（dist/cli.js mcp）に MCP のクライアントでつなぎ、ツールの一覧（出力の型）を先に読む */
+export async function mcpClient(stateDir: string, expectTools: string[] = []): Promise<Client> {
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: ["dist/cli.js", "mcp"],
+    env: { ...(process.env as Record<string, string>), MOYAI_STATE_DIR: stateDir },
+    stderr: "pipe",
+  });
+  const client = new Client({ name: "moyai-e2e", version: "0" });
+  await client.connect(transport);
+  // 本物のクライアントと同じく、ツールの一覧（出力の型）を先に読む。以後の結果は SDK が出力の型で確かめる
+  const { tools } = await client.listTools();
+  expect(tools.map((t) => t.name)).toEqual(expect.arrayContaining(expectTools));
+  return client;
+}
+
+/** ツールを呼び、誤りでないことと、型どおりの結果があることを確かめて返す */
+export async function callTool(c: Client, name: string, args: Record<string, unknown> = {}): Promise<any> {
+  const r: any = await c.callTool({ name, arguments: args });
+  expect(r.isError, `${name}: ${JSON.stringify(r.content)}`).toBeFalsy();
+  expect(r.structuredContent, name).toBeTruthy();
+  return r.structuredContent;
+}
+
+/** 人が設定の画面で、置き場所を選んで保存し、輪を作ってこの輪の鍵を合言葉で包む */
+export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string, passphrase: string): Promise<void> {
+  await page.goto(`${base}/#/settings`);
+  await expect(page.getByTestId("settings-page")).toBeVisible();
+  await page.getByTestId("root-input").fill(root);
+  await page.getByTestId("settings-save").click();
+  await expect(page.getByTestId("settings-saved")).toBeVisible();
+  await expect(page.getByTestId("current-root")).toHaveText(root);
+  await page.getByTestId("ring-create-open").click();
+  await page.getByTestId("ring-folder").fill(ringRoot);
+  await page.getByTestId("ring-pack").selectOption("waste-incineration");
+  await page.getByTestId("ring-pass").fill(passphrase);
+  await page.getByTestId("ring-pass2").fill(passphrase);
+  await page.getByTestId("ring-create-submit").click();
+  await expect(page.getByTestId("ring-created")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("rings-table")).toBeVisible();
 }

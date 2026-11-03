@@ -11,5 +11,6 @@ export const MCP_INSTRUCTIONS = [
   "6. 橋渡しが起きていなければ、利用者に端末で moyai start を走らせてもらいます。",
   "7. 作業画面が開いていなければ、利用者に moyai start が出した URL を開いてもらいます。資料は利用者が作業画面に落とします（チャットに添付させません）。",
   "取り込みの流れ：intake_survey で要約と質問（選択肢つき）を読む → 利用者に聞いて intake_settle で決定を置く（答えは選択肢の id だけ。作者は ai か ai_relayed_human、理由を添える）→ 質問が無くなるまで繰り返す → intake_compose で作り始める → intake_survey の compose で結果を読む → chart_rows で星取表の行を読む。",
-  "今動くのは intake_survey・intake_settle・intake_compose・chart_rows です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。",
+  "当てはめの流れ：intake_survey（part: crosswalk）でパックの 1 段目の項目・作業の属性・欄ごとの多い値・版を読む → chart_rows で節の段の道を読む → crosswalk_propose で規則を置く（節 → 項目のコード、作業 → INSPECT・OVERHAUL・REPLACE・UPGRADE）→ 返った未当てはめの数を見て、決まらないものは利用者に聞く。案は人が画面で受けるまで決まりません。受けてほしいときは、利用者に取り込みの画面の当てはめの欄を見てもらいます。",
+  "今動くのは intake_survey・intake_settle・intake_compose・chart_rows・crosswalk_propose です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。",
 ].join("\n");

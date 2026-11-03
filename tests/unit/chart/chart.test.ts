@@ -42,7 +42,22 @@ function asset(nodeKey: string, level: number, parentKey: string | null, name: s
   };
 }
 function work(workKey: string, targets: string[], attribute: WorkT["attribute"] = "INSPECT"): WorkT {
-  return { workKey, kind: "k", attribute, strategy: null, targets, trigger: null, checkIds: [], contractor: null, parentWorkKey: null, tagRange: null, tagList: [] };
+  return {
+    workKey,
+    kind: "k",
+    attribute,
+    attributeAuthor: attribute === null ? null : "human",
+    attributeBasis: attribute === null ? null : "b",
+    attributeAccepted: attribute !== null,
+    strategy: null,
+    targets,
+    trigger: null,
+    checkIds: [],
+    contractor: null,
+    parentWorkKey: null,
+    tagRange: null,
+    tagList: [],
+  };
 }
 function detail(detailKey: string, workKey: string, fiscalYear: number, planOrActual: "plan" | "actual", startDate: string | null = null, needsReview = false): WorkDetailT {
   return {

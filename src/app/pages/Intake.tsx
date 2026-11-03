@@ -1,5 +1,5 @@
 // 取り込みの画面（plan §2.3・§2.14）：資料を入れる、全セルの行き先（色と数。未解決を押すとそのセルへ）、質問、
-// 決定の一覧（取り消せる）、AI だけで結んだものの一覧、AI の作業。
+// 決定の一覧（取り消せる）、AI だけで結んだものの一覧、AI の作業、当てはめ（AI の規則の案を人が受ける。components/CrosswalkPanel.tsx）。
 // 主ボタン「計画を作る」は見出しの行の右端。止める決まりに当たる間は押せず、理由を横に出す。
 // 状態は取り込みの作業場（intake/workspace.ts。このタブのメモリだけ）が持ち、AI のツールも同じ作業場を使う。
 import {
@@ -32,6 +32,7 @@ import type { SheetLayout } from "../../import/structure";
 import { APP_PAGES } from "../../shared/routes";
 import { CHART_HASH } from "../chart/route";
 import { packChoices, packFiscalStart } from "../chart/catalog";
+import { CrosswalkPanel } from "../components/CrosswalkPanel";
 import { FictionMark } from "../components/FictionMark";
 import "../intake/intake.css";
 import { answerOffered, type IntakeWorkspace, type SettleOutcome } from "../intake/workspace";
@@ -513,6 +514,13 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
             {compose.blockers.join("・")}
           </Alert>
         )}
+
+        <Paper withBorder p="sm">
+          <Title order={4} mb="xs">
+            {TEXT.crosswalk.title}
+          </Title>
+          <CrosswalkPanel />
+        </Paper>
 
         <Paper withBorder p="sm">
           <Title order={4} mb="xs">

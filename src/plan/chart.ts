@@ -300,7 +300,8 @@ function commonTree(plan: Plan, catalog: ChartCatalog, labels: ChartLabels, orph
         orphan.add(d.detailKey);
         continue;
       }
-      if (a.commonItem === null || !a.commonItemAccepted || w.attribute === null) {
+      // 共通の行に入るのは、1 段目の項目と作業の属性の両方を人が受けたものだけ（crosswalk.ts の inCommonRows と同じ）。案のままは未当てはめ
+      if (a.commonItem === null || !a.commonItemAccepted || w.attribute === null || !w.attributeAccepted) {
         unmapped.direct.push({ d, asset: t });
         continue;
       }
