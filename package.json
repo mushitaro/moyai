@@ -1,0 +1,16 @@
+{
+  "name": "moyai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "保全の履歴を公の設備・機器のリスト × 作業の属性にそろえ、星取表で似た施設と比べる",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "test": "node scripts/run-tests.mjs",
+    "check-publish": "node scripts/check-publish.mjs"
+  }
+}
