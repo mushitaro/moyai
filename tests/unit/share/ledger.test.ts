@@ -9,7 +9,7 @@ import { canonicalize } from "../../../src/share/jcs";
 import { LEDGER_JSON_PATH, jsonDepth, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../../src/share/ledger";
 import { isClean, recount } from "../../../src/share/recount";
 import { signBody } from "../../../src/share/sign";
-import { ledgerRootOf, verifyLedgerCli } from "../../../src/cli/ledger";
+import { formatLedger, ledgerRootOf, verifyLedgerCli } from "../../../src/cli/ledger";
 import { SPEC, TABLE_TEXT, VOCAB_TEXT, detail, plan, smallPlan, table, vocab, work, asset } from "./fixtures";
 import { forge, makeLedger, makeSigner, sealLedger, writeRepo, type Sealed } from "./ledger-fixtures";
 
@@ -132,12 +132,12 @@ describe("verify ledger：share.tamper（輪と同じ外れ）", () => {
 
   it("改行の変換・余分な空白・BOM・書きかけ", () => {
     const t = a[0]!.text;
-    for (const text of [t + "\n", t.replace(/,/g, ",\r\n"), "﻿" + t]) {
+    for (const text of [t + "\n", t.replace(/,/g, ",\r\n"), "\ufeff" + t]) {
       const r = verifyLedgerFiles(files([{ ...a[0]!, text }]), pack);
       expect(lineOf(r, a[0]!).reasons).toContain("shape.notCanonical");
     }
     // バイト列で受けても BOM を黙って捨てない
-    expect(lineOf(verifyLedgerFiles(files([{ ...a[0]!, text: "﻿" + t }]), pack), a[0]!).reasons).toContain("shape.bom");
+    expect(lineOf(verifyLedgerFiles(files([{ ...a[0]!, text: "\ufeff" + t }]), pack), a[0]!).reasons).toContain("shape.bom");
     const half = verifyLedgerFiles(files([{ ...a[0]!, text: t.slice(0, Math.floor(t.length / 2)) }]), pack);
     expect(lineOf(half, a[0]!).reasons).toContain("shape.truncated");
     expect(lineOf(half, a[0]!).status).toBe("ng");
@@ -324,6 +324,13 @@ describe("CLI：verify ledger", () => {
     expect(await verifyLedgerCli(["ring", good], { packsDir: pd })).toBe(2);
     // 決まりのパックが無ければ 2
     expect(await verifyLedgerCli(["ledger", good], { packsDir: join(tmp, "空のパック") })).toBe(2);
+  });
+
+  it("端末に出す道の制御文字は ? にする（台帳に置いた人がファイル名で端末を操れないように）", () => {
+    const r = verifyLedgerFiles(files([], [{ path: "ledger/\u001b[2Jx\u0007.txt", kind: "file", bytes: Buffer.from("x") }]), pack);
+    const lines = formatLedger(r);
+    for (const l of lines) expect(l).not.toMatch(/[\u0000-\u001f]/);
+    expect(lines.join("\n")).toContain("ledger/?[2Jx?.txt");
   });
 
   it("束が 0 件でも、決まりが ✓ なら 0", async () => {

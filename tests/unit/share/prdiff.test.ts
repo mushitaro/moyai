@@ -133,8 +133,8 @@ describe("PR の照らし（純粋な関数）", () => {
     const r2 = run([rec("A", upper, { dst: blobSha(a1.text) })], blobsOf(a1), [], [...baseFiles().map((f) => f.path), a1.path]);
     expect(r2.files[0]!.reasons).toContain("path.collides");
     // NFC と NFD だけが違う 2 つの道（どちらも ASCII の外）
-    const nfc = `ledger/bundles/${A.key}/café.json`;
-    const nfd = `ledger/bundles/${A.key}/café.json`;
+    const nfc = `ledger/bundles/${A.key}/caf\u00e9.json`;
+    const nfd = `ledger/bundles/${A.key}/cafe\u0301.json`;
     expect(foldPath(nfc)).toBe(foldPath(nfd));
     const r3 = run([rec("A", nfd, { dst: blobSha("x") })], { [blobSha("x")]: "x" }, [], [...baseFiles().map((f) => f.path), nfc]);
     expect(r3.files[0]!.reasons).toEqual(expect.arrayContaining(["path.notAscii", "path.collides"]));

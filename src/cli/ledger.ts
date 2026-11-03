@@ -66,12 +66,22 @@ export async function loadLedger(root: string, o: { packsDir?: string } = {}): P
 
 const reasonsText = (rs: readonly string[]) => [...new Set(rs.map(reasonText))].join("、");
 
+/** 端末に出す道：制御文字（端末の逃がし列など）を ? にする（ファイル名は台帳に置いた人が決められるため） */
+export function terminalSafe(p: string): string {
+  return [...p].map((c) => (isControl(c.codePointAt(0)!) ? "?" : c)).join("");
+}
+
+/** 制御文字か（C0・DEL・C1・行と段落の区切り） */
+function isControl(n: number): boolean {
+  return n < 0x20 || (n >= 0x7f && n <= 0x9f) || n === 0x2028 || n === 0x2029;
+}
+
 /** 台帳の確かめの結果を行にする（✓／✗ と理由） */
 export function formatLedger(r: LedgerRead): string[] {
   const lines = [LEDGER_CLI_TEXT.head(r.ledger.id, r.ledger.version, r.ledger.hash)];
   lines.push(r.ledger.status === "ok" ? `  ✓ ${LEDGER_CLI_TEXT.rules}` : `  ✗ ${LEDGER_CLI_TEXT.rules}：${reasonsText(r.ledger.reasons.length ? r.ledger.reasons : ["ledger.unreadable"])}`);
-  for (const b of r.bundles) lines.push(b.status === "ok" ? `  ✓ ${LEDGER_CLI_TEXT.bundle(b.path)}` : `  ✗ ${LEDGER_CLI_TEXT.bundle(b.path)}：${reasonsText(b.reasons)}`);
-  for (const o of r.others) lines.push(`  ✗ ${LEDGER_CLI_TEXT.other(o.path)}：${reasonsText(o.reasons)}`);
+  for (const b of r.bundles) lines.push(b.status === "ok" ? `  ✓ ${LEDGER_CLI_TEXT.bundle(b.path)}` : `  ✗ ${LEDGER_CLI_TEXT.bundle(terminalSafe(b.path))}：${reasonsText(b.reasons)}`);
+  for (const o of r.others) lines.push(`  ✗ ${LEDGER_CLI_TEXT.other(terminalSafe(o.path))}：${reasonsText(o.reasons)}`);
   if (r.bundles.length === 0) lines.push(`  ${LEDGER_CLI_TEXT.noBundles}`);
   const ng = (r.ledger.status === "ok" ? 0 : 1) + r.bundles.filter((b) => b.status !== "ok").length + r.others.length;
   lines.push(ng === 0 ? LEDGER_CLI_TEXT.summaryOk(r.bundles.length) : LEDGER_CLI_TEXT.summaryNg(ng));
