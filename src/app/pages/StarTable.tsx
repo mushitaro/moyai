@@ -10,6 +10,7 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, cellAria, formatCell } from "../chart/grid";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
+import { useWorkingPlan } from "../state/plan-store";
 import { TEXT } from "../text";
 
 const T = TEXT.chart;
@@ -404,7 +405,10 @@ function Chart({ plan }: { plan: Plan }) {
 }
 
 export function StarTable() {
+  const working = useWorkingPlan();
   const load = usePlan();
+  // 取り込みが置いた作業中の計画を先に使い、無ければ開発用の見本（?plan=）を読む
+  if (working) return <Chart key={working.revision} plan={working.plan} />;
   if (load.kind === "ready") return <Chart plan={load.plan} />;
   return (
     <Stack p="lg" gap="md">
