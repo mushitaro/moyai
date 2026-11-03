@@ -26,6 +26,7 @@
     "ag-grid-react": "36.2.0",
     "csv-parse": "7.0.3",
     "exceljs": "4.4.0",
+    "pdfjs-dist": "6.4.299",
     "react": "19.2.9",
     "react-dom": "19.2.9",
     "ssf": "0.11.2",
@@ -46,5 +47,8 @@
   },
   "bin": {
     "moyai": "dist/cli.js"
+  },
+  "overrides": {
+    "@napi-rs/canvas": "1.0.11"
   }
 }

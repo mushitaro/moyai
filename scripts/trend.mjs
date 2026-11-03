@@ -57,12 +57,21 @@ export function render(rows) {
       for (const x of f.files)
         L.push(`| ${d.date} | ${d.passed ? "通った" : "落ちた"} | ${f.facility} | ${x.file} | ${val(x.leak)} | ${val(x.unresolved)} | ${pct(x.accuracy)} |`);
   L.push("");
-  L.push("| 日付 | 施設 | ⑤ 質問 | 計画 | 資料をまたいで 1 つの明細に結べた作業 |");
-  L.push("|---|---|---:|---|---|");
+  L.push("| 日付 | 施設 | ⑤ 質問 | 計画 | 資料をまたいで 1 つの明細に結べた作業 | ⑥ 取り戻せた割合 | ⑥ のうち工数 | ⑥ のうち日数 |");
+  L.push("|---|---|---:|---|---|---|---|---|");
   for (const d of days)
-    for (const f of d.import ?? []) L.push(`| ${d.date} | ${f.facility} | ${f.asked} | ${f.planMade ? "作った" : "作らなかった"} | ${pct(f.cross)} |`);
+    for (const f of d.import ?? [])
+      L.push(
+        `| ${d.date} | ${f.facility} | ${f.asked} | ${f.planMade ? "作った" : "作らなかった"} | ${pct(f.cross)} | ${pct(f.recovery ? { correct: f.recovery.together, total: f.recovery.denominator } : null)} | ${pct(f.recovery?.manDays)} | ${pct(f.recovery?.days)} |`,
+      );
   L.push("");
-  L.push("まだ測っていないもの（試験が無い）：報告書の PDF と写真の取り込み（写真は要確認の数も）、④ 検査の正しさ、⑥ 取り戻せた割合、見ていない様式。CSV の ① は、比べる事実のファイルが無く測っていない。");
+  L.push(
+    "⑥ の分母は、正解の世界の実績の作業のうち、その回に読んだ資料のどれかに書いてあるもの。戻せた＝読んだ資料の出どころ（星取表の印・日報の行・報告書の行）を 1 つの実績の明細がすべて持つ。工数・日数は、作業ごとに書いてある作業だけを分母にする。",
+  );
+  L.push(
+    "報告書の PDF の ① は、工場に PDF の事実（別の読み手が取ったもの）が無いので、PDF の元の xlsx を MOYAI の Excel の読み手で読んだ表示の文字と、中身のある行ごとに比べた。",
+  );
+  L.push("まだ測っていないもの（試験が無い）：写真の取り込み（要確認の数も）、④ 検査の正しさ、見ていない様式。CSV の ① は、比べる事実のファイルが無く測っていない。");
   return L.join("\n") + "\n";
 }
 

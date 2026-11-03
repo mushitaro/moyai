@@ -4,8 +4,8 @@
 import { nfkc } from "./era";
 import { cue } from "./cues";
 import { Asker, questionIdOf, type QuestionItem, YES_SPLIT } from "./questions";
-import type { AssetRec, EventRec, MarkRec, Records, Series } from "./records";
-import { nameKey } from "./text";
+import { filesLabel, type AssetRec, type EventRec, type MarkRec, type Records, type Series } from "./records";
+import { nameKey, splitTag } from "./text";
 
 export interface Cluster {
   id: string;
@@ -35,14 +35,30 @@ export interface Occurrence {
   start: string | null;
   end: string | null;
   manDays: number | null;
+  /** 日数（工期の日数の欄。期間の行だけ） */
+  days: number | null;
+  /** 期間（「始まり〜終わり」）の 1 行でできたまとまり */
+  period: boolean;
   bundle: boolean;
   decidedBy: Set<string>;
+}
+
+/** 1 つの機器の上の 1 回の作業。資料をまたいで同じ作業と決めたまとまりを、資料ごとに 1 つまで持つ */
+export interface Job {
+  id: string;
+  cluster: Cluster;
+  fiscalYear: number;
+  /** 資料の名前の順。先頭が作業の名前の代表 */
+  units: Occurrence[];
+  decidedBy: Set<string>;
+  /** 結ぶかどうかの答えを待っている */
+  pending: boolean;
 }
 
 export type LinkMode = "mark" | "eventOnly" | "excluded" | "pending";
 
 export interface WorkLink {
-  occurrence: Occurrence;
+  job: Job;
   cluster: Cluster;
   mode: LinkMode;
   mark: MarkRec | null;
@@ -53,6 +69,7 @@ export interface Linked {
   clusters: Cluster[];
   clusterOf: Map<string, Cluster>;
   occurrences: Occurrence[];
+  jobs: Job[];
   links: WorkLink[];
   /** 日報の行で、機器が決まらない・外したもの */
   eventPending: Set<string>;
@@ -324,11 +341,18 @@ export function link(rec: Records, ask: Asker): Linked {
   const eventPending = new Set<string>();
   const eventExcluded = new Map<string, string>();
   const byName = new Map<string, Cluster[]>();
+  // 機器番号（同一性の鍵）でも引く：日報や報告書が「名前（機器番号）」と書く機器
+  const byTag = new Map<string, Cluster[]>();
   for (const c of clusters) {
     if (c.excluded) continue;
     const k = nameKey(c.name);
     byName.set(k, [...(byName.get(k) ?? []), c]);
+    if (c.tag) byTag.set(nameKey(c.tag), [...(byTag.get(nameKey(c.tag)) ?? []), c]);
   }
+  const tagged = (nm: string) => {
+    const sp = splitTag(nm);
+    return sp && byTag.has(nameKey(sp.tag)) ? sp : null;
+  };
   type Case = { key: string; tableId: string; name: string; unitKey: string; cands: Cluster[]; events: EventRec[]; pattern: string };
   const cases = new Map<string, Case>();
   const eventNames = new Map<string, { names: string[]; unitKey: string }>();
@@ -345,14 +369,16 @@ export function link(rec: Records, ask: Asker): Linked {
       eventPending.add(e.id);
       continue;
     }
+    // 並べた機器（「A・B・C（一式）」）：分けたどれもが機器の名前か機器番号で引ければ分ける。
+    // 引けないときは、全体が 1 つの機器の名前なら分けない（名前に「・」を含む機器）
     let names = [whole];
-    if (!byName.has(nameKey(whole))) {
-      for (const sep of cue.listSeparators) {
-        const parts = nfkc(whole).split(sep).map((x) => x.trim()).filter(Boolean);
-        if (parts.length > 1) {
-          names = parts;
-          break;
-        }
+    const known = (nm: string) => byName.has(nameKey(nm)) || !!tagged(nm);
+    for (const sep of cue.listSeparators) {
+      const parts = nfkc(whole).split(sep).map((x) => x.trim()).filter(Boolean);
+      if (parts.length < 2) continue;
+      if (parts.every(known) || !known(whole)) {
+        names = parts;
+        break;
       }
     }
     const unitKey = !e.unit ? "-" : e.unit.kind === "number" ? `n${e.unit.n}` : e.unit.kind === "common" ? "common" : "ditto";
@@ -361,10 +387,20 @@ export function link(rec: Records, ask: Asker): Linked {
       const k = `${e.tableId}|${nameKey(nm)}|${unitKey}`;
       let cs = cases.get(k);
       if (!cs) {
-        let cands = byName.get(nameKey(nm)) ?? [];
-        if (unitKey.startsWith("n")) cands = cands.filter((c) => numberOf(c) === Number(unitKey.slice(1)));
-        else if (unitKey === "common") cands = cands.filter((c) => c.series?.kind === "common" || numberOf(c) === null);
-        const pattern = cands.length === 1 ? (unitKey === "-" ? "nameOnly" : "nameUnit") : "ambiguous";
+        const sp = tagged(nm);
+        let cands: Cluster[];
+        let pattern: string;
+        if (sp) {
+          // 名前の中の機器番号が、どれか 1 つの機器の番号と同じ（番号は同一性の鍵。号の欄は見ない）
+          cands = byTag.get(nameKey(sp.tag)) ?? [];
+          const c0 = cands[0];
+          pattern = cands.length === 1 && c0 ? (nameKey(c0.name) === nameKey(sp.name) ? "tagName" : "tagOnly") : "ambiguous";
+        } else {
+          cands = byName.get(nameKey(nm)) ?? [];
+          if (unitKey.startsWith("n")) cands = cands.filter((c) => numberOf(c) === Number(unitKey.slice(1)));
+          else if (unitKey === "common") cands = cands.filter((c) => c.series?.kind === "common" || numberOf(c) === null);
+          pattern = cands.length === 1 ? (unitKey === "-" ? "nameOnly" : "nameUnit") : "ambiguous";
+        }
         cs = { key: k, tableId: e.tableId, name: nm, unitKey, cands, events: [], pattern };
         cases.set(k, cs);
       }
@@ -372,16 +408,18 @@ export function link(rec: Records, ask: Asker): Linked {
     }
   }
   const resolved = new Map<string, { c: Cluster | null; qid: string | null; excluded: boolean }>();
+  // 同じ様式の表（同じ様式の帳票を何冊も入れたとき）は、同じ形の問いをまとめて聞く
+  const formKey = (tableId: string) => rec.formOf.get(tableId)?.key ?? tableId;
   const caseGroups = new Map<string, Case[]>();
   for (const cs of cases.values()) {
-    const g = `${cs.tableId}|${cs.pattern}`;
+    const g = `${formKey(cs.tableId)}|${cs.pattern}`;
     caseGroups.set(g, [...(caseGroups.get(g) ?? []), cs]);
   }
   const unitLabel = (u: string) => (u === "-" ? "号の欄が空" : u === "common" ? "共通" : `${u.slice(1)} 号`);
   for (const [g, css] of caseGroups) {
     const [tableId, pattern] = g.split("|") as [string, string];
     const ev0 = css[0]?.events[0];
-    const fileName = ev0?.file ?? "";
+    const fileName = filesLabel([...new Set(css.flatMap((c) => c.events.map((e) => e.file)))].sort()) || (ev0?.file ?? "");
     const rows = css.reduce((a, c) => a + c.events.length, 0);
     if (pattern === "ambiguous") {
       for (const cs of css) {
@@ -401,9 +439,15 @@ export function link(rec: Records, ask: Asker): Linked {
       continue;
     }
     const gkey = `eventAsset|${tableId}|${pattern}`;
+    const how: Record<string, string> = {
+      nameUnit: "名前と号が同じ",
+      nameOnly: "号の欄は空で、名前が同じ",
+      tagName: "名前の中の機器番号と名前が同じ",
+      tagOnly: "名前の中の機器番号が同じ（名前の書き方は違う）",
+    };
     const a = ask.ask(gkey, {
       kind: "eventAsset",
-      text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）を、${pattern === "nameUnit" ? "名前と号が同じ" : "号の欄は空で、名前が同じ"}機器 1 つに当てるか`,
+      text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）を、${how[pattern] ?? pattern}機器 1 つに当てるか`,
       options: YES_SPLIT,
       valueKind: "option",
       defaultAnswer: "yes",
@@ -467,7 +511,8 @@ export function link(rec: Records, ask: Asker): Linked {
     }
     const tkey = [...new Set(targets.map((t) => t.id))].sort().join(",");
     const wk = nameKey(e.workName);
-    const k = `${e.tableId}|${wk}|${tkey}|${e.fiscalYear}`;
+    // 期間を持つ行（「始まり〜終わり」）は、その行だけで 1 回の作業。1 日の日付の行は、同じ作業・機器・年度でまとめる
+    const k = `${e.tableId}|${wk}|${tkey}|${e.fiscalYear}${e.end ? `|r${e.row}` : ""}`;
     let o = occMap.get(k);
     if (!o) {
       o = {
@@ -483,6 +528,8 @@ export function link(rec: Records, ask: Asker): Linked {
         start: null,
         end: null,
         manDays: null,
+        days: null,
+        period: e.end !== null,
         bundle: new Set(targets.map((t) => t.id)).size > 1,
         decidedBy: new Set(),
       };
@@ -497,13 +544,21 @@ export function link(rec: Records, ask: Asker): Linked {
     const freq = new Map<string, number>();
     for (const e of o.events) freq.set(e.workName, (freq.get(e.workName) ?? 0) + 1);
     o.workName = [...freq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? o.workName;
-    const dates = o.events.map((e) => (e.date ? ymd(e.date) : "")).filter(Boolean).sort();
-    o.start = dates[0] ?? null;
-    o.end = dates[dates.length - 1] ?? null;
+    const starts = o.events.map((e) => (e.date ? ymd(e.date) : "")).filter(Boolean).sort();
+    const ends = o.events.map((e) => (e.end ? ymd(e.end) : e.date ? ymd(e.date) : "")).filter(Boolean).sort();
+    o.start = starts[0] ?? null;
+    o.end = ends[ends.length - 1] ?? null;
     const md = o.events.map((e) => e.manDays).filter((x): x is number => x !== null);
     o.manDays = md.length ? Math.round(md.reduce((a, b) => a + b, 0) * 1000) / 1000 : null;
+    // 日数は、期間の行の日数の欄に書いてあるときだけ。1 日の日付の行をまとめたものからは数えない（推し量らない）
+    o.days = o.period ? (o.events[0]?.days ?? null) : null;
   }
-  // ─── 作業のまとまり → 星取表の印 ───
+
+  // ─── 資料をまたぐ同じ作業（機器ごと） ───
+  const groupKey = (units: Occurrence[]) => [...new Set(units.map((u) => formKey(u.tableId)))].sort().join("+");
+  const jobs = joinAcrossDocuments(occurrences, ask, groupKey);
+
+  // ─── 作業 → 星取表の印 ───
   const markIndex = new Map<string, MarkRec[]>();
   for (const m of rec.marks) {
     if (m.excluded || m.pending || !m.assetId || m.planOrActual !== "actual") continue;
@@ -512,85 +567,94 @@ export function link(rec: Records, ask: Asker): Linked {
     const k = `${c.id}|${m.fiscalYear}`;
     markIndex.set(k, [...(markIndex.get(k) ?? []), m]);
   }
-  const occPer = new Map<string, number>();
-  for (const o of occurrences) for (const t of o.targets) occPer.set(`${t.id}|${o.fiscalYear}`, (occPer.get(`${t.id}|${o.fiscalYear}`) ?? 0) + 1);
+  const jobsPer = new Map<string, number>();
+  for (const j of jobs) jobsPer.set(`${j.cluster.id}|${j.fiscalYear}`, (jobsPer.get(`${j.cluster.id}|${j.fiscalYear}`) ?? 0) + 1);
   const covered = (c: Cluster, fy: number) =>
     c.recs.some((r) => {
       if (r.shape !== "grid") return false;
       const yr = rec.gridYears.get(r.tableId);
       return !!yr && fy >= yr.from && fy <= yr.to;
     });
-  type LP = { o: Occurrence; c: Cluster; m: MarkRec | null; pattern: string; options: MarkRec[] };
+  type LP = { j: Job; m: MarkRec | null; pattern: string; options: MarkRec[] };
   const lps: LP[] = [];
-  for (const o of occurrences)
-    for (const c of o.targets) {
-      const ms = markIndex.get(`${c.id}|${o.fiscalYear}`) ?? [];
-      if (ms.length === 0) lps.push({ o, c, m: null, pattern: covered(c, o.fiscalYear) ? "noMark" : "uncovered", options: [] });
-      else if (ms.length === 1) {
-        const m = ms[0] ?? null;
-        const multi = (occPer.get(`${c.id}|${o.fiscalYear}`) ?? 0) > 1;
-        if (m?.workName && nameKey(m.workName) === nameKey(o.workName)) lps.push({ o, c, m, pattern: "named", options: ms });
-        else if (m && !m.workName && !multi) lps.push({ o, c, m, pattern: "plain", options: ms });
-        else lps.push({ o, c, m, pattern: "ambiguous", options: ms });
-      } else lps.push({ o, c, m: null, pattern: "ambiguous", options: ms });
-    }
   const links: WorkLink[] = [];
+  for (const j of jobs) {
+    if (j.pending) {
+      links.push({ job: j, cluster: j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
+      continue;
+    }
+    const ms = markIndex.get(`${j.cluster.id}|${j.fiscalYear}`) ?? [];
+    if (ms.length === 0) lps.push({ j, m: null, pattern: covered(j.cluster, j.fiscalYear) ? "noMark" : "uncovered", options: [] });
+    else if (ms.length === 1) {
+      const m = ms[0] ?? null;
+      const multi = (jobsPer.get(`${j.cluster.id}|${j.fiscalYear}`) ?? 0) > 1;
+      const match = m?.workName ? nameMatch(m.workName, j.units.map((u) => u.workName)) : null;
+      if (m && match) lps.push({ j, m, pattern: match, options: ms });
+      else if (m && !m.workName && !multi) lps.push({ j, m, pattern: "plain", options: ms });
+      else lps.push({ j, m, pattern: "ambiguous", options: ms });
+    } else lps.push({ j, m: null, pattern: "ambiguous", options: ms });
+  }
   const lgroups = new Map<string, LP[]>();
-  for (const lp of lps) lgroups.set(`${lp.o.tableId}|${lp.pattern}`, [...(lgroups.get(`${lp.o.tableId}|${lp.pattern}`) ?? []), lp]);
+  for (const lp of lps) lgroups.set(`${groupKey(lp.j.units)}|${lp.pattern}`, [...(lgroups.get(`${groupKey(lp.j.units)}|${lp.pattern}`) ?? []), lp]);
+  const primary = (j: Job) => j.units[0] as Occurrence;
   const lpItem = (lp: LP): QuestionItem => ({
-    file: lp.o.file,
-    sheet: lp.o.sheet,
-    cells: lp.o.events.slice(0, 3).map((e) => e.refs[0] ?? ""),
+    file: primary(lp.j).file,
+    sheet: primary(lp.j).sheet,
+    cells: primary(lp.j).events.slice(0, 3).map((e) => e.refs[0] ?? ""),
     target: lp.options.map((m) => ({ file: m.file, sheet: m.sheet, cells: [m.ref] })),
-    note: lp.c.name,
+    note: lp.j.cluster.name,
   });
+  const rowsOf = (j: Job) => j.units.reduce((a, u) => a + u.events.length, 0);
+  const filesOf = (j: Job) => [...new Set(j.units.map((u) => u.file))].join("・");
   for (const [g, items] of lgroups) {
-    const [tableId, pattern] = g.split("|") as [string, string];
-    const fileName = items[0]?.o.file ?? "";
-    const rows = items.reduce((a, x) => a + x.o.events.length, 0);
+    const pattern = g.slice(g.lastIndexOf("|") + 1);
+    const tablesKey = g.slice(0, g.lastIndexOf("|"));
+    const fileName = filesLabel([...new Set(items.flatMap((x) => x.j.units.map((u) => u.file)))].sort());
+    const rows = items.reduce((a, x) => a + rowsOf(x.j), 0);
     if (pattern === "uncovered") {
-      for (const lp of items) links.push({ occurrence: lp.o, cluster: lp.c, mode: "eventOnly", mark: null, decidedBy: new Set() });
+      for (const lp of items) links.push({ job: lp.j, cluster: lp.j.cluster, mode: "eventOnly", mark: null, decidedBy: new Set() });
       continue;
     }
     if (pattern === "ambiguous") {
       for (const lp of items) {
-        const key = `workLinkOne|${lp.o.id}|${lp.c.id}`;
+        const key = `workLinkOne|${primary(lp.j).id}|${lp.j.cluster.id}`;
         const a = ask.ask(key, {
           kind: "workLinkOne",
-          text: `${fileName} の作業「${lp.o.workName}」（${lp.c.name}、${lp.o.fiscalYear} 年度、${lp.o.events.length} 行）に当たる星取表の印が、ほかの作業の印と同じか、いくつかある。どうするか`,
+          text: `${filesOf(lp.j)} の作業「${primary(lp.j).workName}」（${lp.j.cluster.name}、${lp.j.fiscalYear} 年度、${rowsOf(lp.j)} 行）に当たる星取表の印が、ほかの作業の印と同じか、いくつかある。どうするか`,
           options: [
             ...lp.options.map((m, i) => ({ id: `m${i}`, label: `星取表の印「${m.symbol}」${m.workName ? `（${m.workName}）` : ""}も出どころにする（同じ作業）` })),
-            { id: "eventOnly", label: "日報だけの記録にする" },
+            { id: "eventOnly", label: "日報・報告書だけの記録にする" },
             { id: "exclude", label: "外す" },
           ],
           valueKind: "option",
           defaultAnswer: lp.options.length === 1 ? "m0" : null,
-          sameShapeRows: lp.o.events.length,
+          sameShapeRows: rowsOf(lp.j),
           items: [lpItem(lp)],
         });
         const qid = questionIdOf(key);
-        if (a?.startsWith("m")) links.push({ occurrence: lp.o, cluster: lp.c, mode: "mark", mark: lp.options[Number(a.slice(1))] ?? null, decidedBy: new Set([qid]) });
-        else if (a === "eventOnly") links.push({ occurrence: lp.o, cluster: lp.c, mode: "eventOnly", mark: null, decidedBy: new Set([qid]) });
-        else if (a === "exclude") links.push({ occurrence: lp.o, cluster: lp.c, mode: "excluded", mark: null, decidedBy: new Set([qid]) });
-        else links.push({ occurrence: lp.o, cluster: lp.c, mode: "pending", mark: null, decidedBy: new Set() });
+        if (a?.startsWith("m")) links.push({ job: lp.j, cluster: lp.j.cluster, mode: "mark", mark: lp.options[Number(a.slice(1))] ?? null, decidedBy: new Set([qid]) });
+        else if (a === "eventOnly") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "eventOnly", mark: null, decidedBy: new Set([qid]) });
+        else if (a === "exclude") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "excluded", mark: null, decidedBy: new Set([qid]) });
+        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
       }
       continue;
     }
     const label: Record<string, string> = {
       named: "同じ機器・同じ年度で、星取表の印の凡例の意味と作業の名前が同じ",
-      plain: "同じ機器・同じ年度に、星取表の実績の印が 1 つと日報の作業が 1 つ",
+      namedPart: "同じ機器・同じ年度で、星取表の印の凡例の意味が作業の名前に含まれる（または作業の名前が凡例の意味に含まれる）",
+      plain: "同じ機器・同じ年度に、星取表の実績の印が 1 つと作業が 1 つ",
       noMark: "星取表に、同じ機器・同じ年度の実績の印が無い",
     };
-    const gkey = `workLink|${tableId}|${pattern}`;
+    const gkey = `workLink|${tablesKey}|${pattern}`;
     const isNoMark = pattern === "noMark";
     const a = ask.ask(gkey, {
       kind: "workLink",
       text: isNoMark
-        ? `${fileName} の作業 ${items.length} 件（${rows} 行）は、${label[pattern]}。日報だけの記録として入れるか`
+        ? `${fileName} の作業 ${items.length} 件（${rows} 行）は、${label[pattern]}。日報・報告書だけの記録として入れるか`
         : `${fileName} の作業 ${items.length} 件（${rows} 行）を、星取表の印と同じ作業として 1 つの記録に結ぶか。結び方：${label[pattern] ?? pattern}`,
       options: isNoMark
         ? [
-            { id: "yes", label: "日報だけの記録として入れる" },
+            { id: "yes", label: "日報・報告書だけの記録として入れる" },
             { id: "exclude", label: "外す" },
           ]
         : YES_SPLIT,
@@ -602,36 +666,210 @@ export function link(rec: Records, ask: Asker): Linked {
     const gq = questionIdOf(gkey);
     for (const lp of items) {
       if (isNoMark) {
-        if (a === "yes") links.push({ occurrence: lp.o, cluster: lp.c, mode: "eventOnly", mark: null, decidedBy: new Set([gq]) });
-        else if (a === "exclude") links.push({ occurrence: lp.o, cluster: lp.c, mode: "excluded", mark: null, decidedBy: new Set([gq]) });
-        else links.push({ occurrence: lp.o, cluster: lp.c, mode: "pending", mark: null, decidedBy: new Set() });
+        if (a === "yes") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "eventOnly", mark: null, decidedBy: new Set([gq]) });
+        else if (a === "exclude") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "excluded", mark: null, decidedBy: new Set([gq]) });
+        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
         continue;
       }
-      if (a === "yes") links.push({ occurrence: lp.o, cluster: lp.c, mode: "mark", mark: lp.m, decidedBy: new Set([gq]) });
+      if (a === "yes") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "mark", mark: lp.m, decidedBy: new Set([gq]) });
       else if (a === "split") {
-        const k1 = `workLinkOne|${lp.o.id}|${lp.c.id}`;
+        const k1 = `workLinkOne|${primary(lp.j).id}|${lp.j.cluster.id}`;
         const b = ask.ask(k1, {
           kind: "workLinkOne",
-          text: `${fileName} の作業「${lp.o.workName}」（${lp.c.name}、${lp.o.fiscalYear} 年度、${lp.o.events.length} 行）は、星取表の印「${lp.m?.symbol ?? ""}」と同じ作業か`,
+          text: `${filesOf(lp.j)} の作業「${primary(lp.j).workName}」（${lp.j.cluster.name}、${lp.j.fiscalYear} 年度、${rowsOf(lp.j)} 行）は、星取表の印「${lp.m?.symbol ?? ""}」と同じ作業か`,
           options: [
             { id: "m0", label: "同じ作業（1 つの記録に結ぶ）" },
-            { id: "eventOnly", label: "別の作業（日報だけの記録）" },
+            { id: "eventOnly", label: "別の作業（日報・報告書だけの記録）" },
             { id: "exclude", label: "外す" },
           ],
           valueKind: "option",
           defaultAnswer: null,
-          sameShapeRows: lp.o.events.length,
+          sameShapeRows: rowsOf(lp.j),
           items: [lpItem(lp)],
         });
         const q1 = questionIdOf(k1);
-        if (b === "m0") links.push({ occurrence: lp.o, cluster: lp.c, mode: "mark", mark: lp.m, decidedBy: new Set([q1]) });
-        else if (b === "eventOnly") links.push({ occurrence: lp.o, cluster: lp.c, mode: "eventOnly", mark: null, decidedBy: new Set([q1]) });
-        else if (b === "exclude") links.push({ occurrence: lp.o, cluster: lp.c, mode: "excluded", mark: null, decidedBy: new Set([q1]) });
-        else links.push({ occurrence: lp.o, cluster: lp.c, mode: "pending", mark: null, decidedBy: new Set() });
-      } else links.push({ occurrence: lp.o, cluster: lp.c, mode: "pending", mark: null, decidedBy: new Set() });
+        if (b === "m0") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "mark", mark: lp.m, decidedBy: new Set([q1]) });
+        else if (b === "eventOnly") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "eventOnly", mark: null, decidedBy: new Set([q1]) });
+        else if (b === "exclude") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "excluded", mark: null, decidedBy: new Set([q1]) });
+        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
+      } else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
     }
   }
-  return { clusters, clusterOf, occurrences, links, eventPending, eventExcluded, assetExcluded };
+  return { clusters, clusterOf, occurrences, jobs, links, eventPending, eventExcluded, assetExcluded };
+}
+
+/** 凡例の意味と作業の名前：同じなら named、どちらかがもう一方を含むなら namedPart、どれとも違えば null */
+function nameMatch(meaning: string, names: string[]): "named" | "namedPart" | null {
+  const m = nameKey(meaning);
+  if (!m) return null;
+  if (names.some((n) => nameKey(n) === m)) return "named";
+  if (names.some((n) => nameKey(n).includes(m) || (nameKey(n).length > 0 && m.includes(nameKey(n))))) return "namedPart";
+  return null;
+}
+
+const byFile = (a: Occurrence, b: Occurrence) => a.file.localeCompare(b.file) || a.tableId.localeCompare(b.tableId) || a.id.localeCompare(b.id);
+
+/**
+ * 資料をまたいで同じ作業を結ぶ（機器ごと）。同じ機器・同じ年度の作業のまとまりが、ちがう表に 1 つずつあり、
+ * 日付の範囲が重なれば、同じ作業の案にする（呼び名は資料ごとに違うので、名前では決めない）。案は形ごとにまとめて聞き、
+ * 人（か AI）が受けたものだけを結ぶ。重なる相手がいくつかあるもの・日付が重ならないものも、推し量らずに聞く。
+ */
+function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (units: Occurrence[]) => string): Job[] {
+  const groups = new Map<string, { c: Cluster; fy: number; units: Occurrence[] }>();
+  for (const o of occurrences)
+    for (const c of o.targets) {
+      const k = `${c.id}|${o.fiscalYear}`;
+      const g = groups.get(k) ?? { c, fy: o.fiscalYear, units: [] };
+      g.units.push(o);
+      groups.set(k, g);
+    }
+  const jobs: Job[] = [];
+  const mk = (c: Cluster, fy: number, units: Occurrence[], decided: string[], pending = false) => {
+    const us = [...units].sort(byFile);
+    jobs.push({ id: `j:${c.id}|${fy}|${us.map((u) => u.id).join("+")}`, cluster: c, fiscalYear: fy, units: us, decidedBy: new Set(decided), pending });
+  };
+  const overlap = (a: Occurrence, b: Occurrence) => !!a.start && !!a.end && !!b.start && !!b.end && a.start <= b.end && b.start <= a.end;
+  type Prop = { c: Cluster; fy: number; units: Occurrence[]; pattern: "overlap" | "apart" };
+  const props: Prop[] = [];
+  type Pick = { c: Cluster; fy: number; anchor: Occurrence; table: string; cands: Occurrence[] };
+  const picks: Pick[] = [];
+  /** 重なる相手がいくつかあるまとまりの、選ばれる側の作業（選ばれなければ 1 つで入れる） */
+  const leftovers = new Map<string, { c: Cluster; fy: number; u: Occurrence }>();
+  for (const { c, fy, units } of groups.values()) {
+    const us = [...units].sort(byFile);
+    if (new Set(us.map((u) => u.tableId)).size < 2) {
+      for (const u of us) mk(c, fy, [u], []);
+      continue;
+    }
+    // 重なりでつながるまとまり（ちがう表どうしの重なりだけを辺にする）
+    const parent = us.map((_, i) => i);
+    const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i] ?? i)));
+    for (let i = 0; i < us.length; i++)
+      for (let k = i + 1; k < us.length; k++) {
+        const a = us[i] as Occurrence;
+        const b = us[k] as Occurrence;
+        if (a.tableId !== b.tableId && overlap(a, b)) parent[find(i)] = find(k);
+      }
+    const comps = new Map<number, Occurrence[]>();
+    us.forEach((u, i) => comps.set(find(i), [...(comps.get(find(i)) ?? []), u]));
+    const singles: Occurrence[] = [];
+    for (const comp of comps.values()) {
+      if (comp.length === 1) {
+        singles.push(comp[0] as Occurrence);
+        continue;
+      }
+      const perTable = new Map<string, Occurrence[]>();
+      for (const u of comp) perTable.set(u.tableId, [...(perTable.get(u.tableId) ?? []), u]);
+      if ([...perTable.values()].every((x) => x.length === 1)) {
+        props.push({ c, fy, units: comp, pattern: "overlap" });
+        continue;
+      }
+      // 重なる相手がいくつかある：数のいちばん少ない表の作業ごとに、ほかの表のどれと同じかを聞く
+      const tables = [...perTable.entries()].sort((a, b) => a[1].length - b[1].length || a[0].localeCompare(b[0]));
+      const [anchorTable, anchors] = tables[0] as [string, Occurrence[]];
+      for (const u of comp) if (u.tableId !== anchorTable) leftovers.set(`${c.id}|${u.id}`, { c, fy, u });
+      for (const anchor of anchors) {
+        let any = false;
+        for (const [table, cands] of tables) {
+          const near = cands.filter((x) => overlap(x, anchor));
+          if (table === anchorTable || near.length === 0) continue;
+          picks.push({ c, fy, anchor, table, cands: near });
+          any = true;
+        }
+        if (!any) mk(c, fy, [anchor], []);
+      }
+    }
+    // 重なる相手の無い作業：同じ機器・同じ年度に、どの表にも 1 つずつしか無ければ、日付のずれかもしれないので聞く
+    const singleTables = new Set(singles.map((u) => u.tableId));
+    if (singles.length >= 2 && singleTables.size === singles.length && singles.length === us.length) props.push({ c, fy, units: singles, pattern: "apart" });
+    else for (const u of singles) mk(c, fy, [u], []);
+  }
+  const datesOf = (o: Occurrence) => (o.start === o.end ? (o.start ?? "") : `${o.start ?? ""}〜${o.end ?? ""}`);
+  const itemOf = (p: { units: Occurrence[]; c: Cluster }): QuestionItem => {
+    const [u0, ...rest] = p.units;
+    return {
+      file: u0?.file ?? "",
+      sheet: u0?.sheet ?? null,
+      cells: (u0?.events ?? []).slice(0, 3).map((e) => e.refs[0] ?? ""),
+      target: rest.map((u) => ({ file: u.file, sheet: u.sheet, cells: u.events.slice(0, 3).map((e) => e.refs[0] ?? "") })),
+      note: p.c.name,
+    };
+  };
+  // 形ごと（どの表とどの表か × 重なるか）にまとめて聞く
+  const pgroups = new Map<string, Prop[]>();
+  for (const p of props) pgroups.set(`${groupKey(p.units)}|${p.pattern}`, [...(pgroups.get(`${groupKey(p.units)}|${p.pattern}`) ?? []), p]);
+  for (const [g, ps] of pgroups) {
+    const pattern = g.slice(g.lastIndexOf("|") + 1) as Prop["pattern"];
+    const files = [...new Set(ps.flatMap((p) => p.units.map((u) => u.file)))];
+    const gkey = `workJoin|${g}`;
+    const how =
+      pattern === "overlap"
+        ? "同じ機器・同じ年度で日付の範囲が重なり、資料ごとに 1 つずつある"
+        : "同じ機器・同じ年度に資料ごとに 1 つずつあるが、日付の範囲は重ならない";
+    const a = ask.ask(gkey, {
+      kind: "workJoin",
+      text: `${filesLabel(files.sort())} の作業 ${ps.length} 件（機器ごと）は、${how}。同じ作業として 1 つの記録に結ぶか（呼び名は資料ごとに違ってよい）`,
+      options: [...YES_SPLIT, { id: "no", label: "いいえ（どれも別の作業として入れる）" }],
+      valueKind: "option",
+      defaultAnswer: pattern === "overlap" ? "yes" : null,
+      sameShapeRows: ps.reduce((n, p) => n + p.units.reduce((m, u) => m + u.events.length, 0), 0),
+      items: ps.map(itemOf),
+    });
+    const gq = questionIdOf(gkey);
+    for (const p of ps) {
+      if (a === "yes") mk(p.c, p.fy, p.units, [gq]);
+      else if (a === "no") for (const u of p.units) mk(p.c, p.fy, [u], [gq]);
+      else if (a === "split") {
+        const k1 = `workJoinOne|${p.c.id}|${[...p.units].sort(byFile).map((u) => u.id).join("+")}`;
+        const b = ask.ask(k1, {
+          kind: "workJoin",
+          text: `「${p.c.name}」の ${p.fy} 年度の作業（${p.units.map((u) => `${u.file}「${u.workName}」${datesOf(u)}`).join("、")}）は、同じ作業か`,
+          options: [
+            { id: "yes", label: "同じ作業（1 つの記録に結ぶ）" },
+            { id: "no", label: "別の作業（別々に入れる）" },
+          ],
+          valueKind: "option",
+          defaultAnswer: null,
+          sameShapeRows: p.units.reduce((m, u) => m + u.events.length, 0),
+          items: [itemOf(p)],
+        });
+        const q1 = questionIdOf(k1);
+        if (b === "yes") mk(p.c, p.fy, p.units, [q1]);
+        else if (b === "no") for (const u of p.units) mk(p.c, p.fy, [u], [q1]);
+        else mk(p.c, p.fy, p.units, [], true);
+      } else mk(p.c, p.fy, p.units, [], true);
+    }
+  }
+  // 重なる相手がいくつかあるもの：1 件ずつ聞く。同じ相手を 2 度選んだら、あとの方は決まらないまま（推し量らない）
+  const taken = new Map<string, string>();
+  const joinedWith = new Map<Occurrence, { units: Occurrence[]; decided: string[]; pending: boolean; c: Cluster; fy: number }>();
+  for (const p of picks) {
+    const key = `workJoinPick|${p.c.id}|${p.anchor.id}|${p.table}`;
+    const a = ask.ask(key, {
+      kind: "workJoin",
+      text: `「${p.c.name}」の ${p.fy} 年度の作業「${p.anchor.workName}」（${p.anchor.file}、${datesOf(p.anchor)}）と日付の重なる作業が、${p.cands[0]?.file ?? ""} に ${p.cands.length} つある。どれと同じ作業か`,
+      options: [...p.cands.map((x, i) => ({ id: `c${i}`, label: `「${x.workName}」${datesOf(x)}` })), { id: "none", label: "どれとも別の作業" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: p.anchor.events.length,
+      items: p.cands.map((x) => itemOf({ c: p.c, units: [p.anchor, x] })),
+    });
+    const q = questionIdOf(key);
+    const cur = joinedWith.get(p.anchor) ?? { units: [p.anchor], decided: [], pending: false, c: p.c, fy: p.fy };
+    joinedWith.set(p.anchor, cur);
+    if (a?.startsWith("c")) {
+      const x = p.cands[Number(a.slice(1))];
+      if (x && !taken.has(`${p.c.id}|${x.id}`)) {
+        taken.set(`${p.c.id}|${x.id}`, p.anchor.id);
+        cur.units.push(x);
+        cur.decided.push(q);
+      } else cur.pending = true;
+    } else if (a === "none") cur.decided.push(q);
+    else cur.pending = true;
+  }
+  for (const j of joinedWith.values()) mk(j.c, j.fy, j.units, j.decided, j.pending);
+  for (const [k, l] of leftovers) if (!taken.has(k)) mk(l.c, l.fy, [l.u], []);
+  return jobs;
 }
 
 export function seriesLabel(s: Series | null): string {

@@ -46,6 +46,12 @@ export const cue = {
   },
   isNote: (t: string) => sets.notePrefix.some((p) => norm(t).startsWith(p)),
   isContinued: (t: string) => containsAny(t, sets.continued),
+  /** 続きの印（「（続き）」など）を除いた文字（頁ごとにくり返す題を 1 頁目の題と比べるため） */
+  stripContinued(t: string): string {
+    let s = nfkc(t);
+    for (const w of CUES.rowRole.continued) s = s.replace(new RegExp(`[(（]?\\s*${escapeRe(nfkc(w))}\\s*[)）]?`, "g"), "");
+    return s.trim();
+  },
   isAsOf: (t: string) => containsAny(t, sets.asOf),
   isDitto: (t: string) => sets.ditto.includes(norm(t)),
   isCommon: (t: string) => sets.common.includes(norm(t)),

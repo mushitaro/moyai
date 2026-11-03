@@ -54,6 +54,7 @@ export const LINK_KINDS: ReadonlySet<QuestionKind> = new Set<QuestionKind>([
   "eventAssetOne",
   "workLink",
   "workLinkOne",
+  "workJoin",
   "duplicateAsset",
 ]);
 

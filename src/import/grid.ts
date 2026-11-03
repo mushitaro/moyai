@@ -26,6 +26,10 @@ export interface GridCell {
   leadingSpaces: number;
   /** メモ（コメント）の文 */
   note: string | null;
+  /** 頁（1 から）。頁のある資料（PDF）だけ。Excel・CSV は無い */
+  page?: number;
+  /** 頁の上の位置（頁の左上を原点に、右と下へ pt。x, y, 幅, 高さ）。頁のある資料だけ */
+  box?: [number, number, number, number];
 }
 
 export interface MergeRange {
@@ -64,7 +68,22 @@ export interface LedgerEntry {
   sheet: string | null;
 }
 
-export type SourceFormat = "xlsx" | "xlsm" | "csv" | "tsv";
+export type SourceFormat = "xlsx" | "xlsm" | "csv" | "tsv" | "pdf";
+
+/** 頁のある資料の頁ごとの数（PDF）。文字の無い頁は写真の道に回す（推し量って読まない） */
+export interface PageInfo {
+  page: number;
+  /** 頁の幅と高さ（pt） */
+  width: number;
+  height: number;
+  /** 格子の何行目から何行目か（文字の無い頁は null） */
+  rows: { from: number; to: number } | null;
+  /** 文字の並び（空白だけのものを除く）の数と、セルに置いた数 */
+  runs: number;
+  placed: number;
+  /** 文字が無い（スキャンの頁）。写真の道に回す */
+  scanned: boolean;
+}
 
 export interface SourceFile {
   /** ファイルの名前（取り込みの中で一意。出どころに書く） */
@@ -73,6 +92,8 @@ export interface SourceFile {
   sheets: SheetGrid[];
   ledger: LedgerEntry[];
   date1904: boolean;
+  /** 頁のある資料（PDF）の頁ごとの数 */
+  pages?: PageInfo[];
 }
 
 /** 受け付けない形式（保存し直しを求める）か、読めなかった */

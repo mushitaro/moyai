@@ -20,6 +20,8 @@ export interface Truth {
   star: J | null;
   daily: J | null;
   crossdoc: J | null;
+  /** 工事報告書（PDF）の正解。report-f<炉>-fy<年度> ごとの行（No.・機器・作業・工期・日数・工数） */
+  reports: J | null;
   facts: Record<string, J>;
 }
 
@@ -39,8 +41,62 @@ export function loadTruth(pack: string, facility: string): Truth {
     star: read("plan-hoshitori.truth.json"),
     daily: read("daily-report.truth.json"),
     crossdoc: read("crossdoc.truth.json"),
+    reports: read("reports.truth.json"),
     facts,
   };
+}
+
+// ─── 報告書の PDF の格子の行 ↔ 正解の行 ─────────────────────────────────
+// 正解は報告書の No. と機器の文字で行を持つ。読み手の格子の行の番号は読み手が決めるので、
+// 格子の行の中に「No. の数」と「機器の文字」が両方あるものを、その正解の行とする（比べるためだけ）。
+
+export class ReportRows {
+  /** 資料（PDF）→ 正解の行 → 格子の行の番号 */
+  private readonly rowOf = new Map<string, Map<number, number>>();
+  private readonly byRow = new Map<string, Map<number, J>>();
+  readonly files: string[];
+  constructor(
+    private readonly t: Truth,
+    sources: SourceFile[],
+  ) {
+    this.files = ((t.reports?.reports ?? []) as J[]).map((r) => r.file_pdf as string);
+    for (const r of (t.reports?.reports ?? []) as J[]) {
+      const src = sources.find((s) => s.file === r.file_pdf);
+      const g = src?.sheets[0];
+      const m = new Map<number, number>();
+      const back = new Map<number, J>();
+      if (g) {
+        const rows = new Map<number, string[]>();
+        for (const c of g.cells) rows.set(c.r, [...(rows.get(c.r) ?? []), nf(c.text)]);
+        for (const x of r.rows as J[]) {
+          const hit = [...rows.entries()].find(([, ts]) => ts.includes(String(x.no)) && ts.includes(nf(x.equipment_text)));
+          if (hit) {
+            m.set(x.no, hit[0]);
+            back.set(hit[0], x);
+          }
+        }
+      }
+      this.rowOf.set(r.file_pdf, m);
+      this.byRow.set(r.file_pdf, back);
+    }
+  }
+  report(file: string): J | null {
+    return ((this.t.reports?.reports ?? []) as J[]).find((r) => r.file_pdf === file) ?? null;
+  }
+  /** 格子のセル → 正解の行 */
+  rowAt(file: string, ref: string): J | null {
+    return this.byRow.get(file)?.get(rowOf(ref)) ?? null;
+  }
+  /** 正解の行 → 格子の行の番号 */
+  gridRow(file: string, no: number): number | null {
+    return this.rowOf.get(file)?.get(no) ?? null;
+  }
+}
+
+/** 日報か報告書のセルが指す正解の行（機器と作業の id） */
+function eventTruth(t: Truth, reps: ReportRows | null, file: string, ref: string): { equipment_ids: string[]; work_ids: string[] } | null {
+  if (t.daily && file === t.daily.file) return ((t.daily.rows as J[]).find((x) => x.line === rowOf(ref)) as J) ?? null;
+  return reps?.rowAt(file, ref) ?? null;
 }
 
 // ─── 正解の「もの」：セルが指す機器・段の道 ─────────────────────────
@@ -96,9 +152,16 @@ export class Entities {
 
 const AUTHOR_REASON = "試験の台本が押した（正解の世界から）";
 
-export function answer(q: QuestionState, t: Truth, ents: Entities): string | null {
+export function answer(q: QuestionState, t: Truth, ents: Entities, reps: ReportRows | null = null): string | null {
   const dailyLine = (ref: string) => (t.daily?.rows as J[] | undefined)?.find((x) => x.line === rowOf(ref));
+  const ev = (file: string, ref: string) => eventTruth(t, reps, file, ref);
   const eqOfEntity = (e: string | null) => (e && e.startsWith("e:") ? e.slice(2) : null);
+  /** 2 つの出どころが指す正解の作業が重なるか（資料をまたぐ同じ作業） */
+  const sameWork = (a: { file: string; cells: string[] }, b: { file: string; cells: string[] }) => {
+    const wa = new Set(a.cells.flatMap((c) => ev(a.file, c)?.work_ids ?? []));
+    const wb = b.cells.flatMap((c) => ev(b.file, c)?.work_ids ?? []);
+    return wa.size > 0 && wb.some((w) => wa.has(w));
+  };
   const targetEntity = (it: QuestionItem) => {
     const tg = it.target?.[0];
     return tg ? ents.of(tg.file, tg.cells[0] ?? "") : null;
@@ -158,7 +221,8 @@ export function answer(q: QuestionState, t: Truth, ents: Entities): string | nul
       return ok ? "yes" : "no";
     }
     case "hoursPerManDay":
-      return t.daily ? String(t.daily.hours_per_man_day) : null;
+      // 1 人・日の時間は世界の決まり（日報も報告書も同じ）
+      return t.world?.man_day_hours ? String(t.world.man_day_hours) : t.daily ? String(t.daily.hours_per_man_day) : null;
     case "assetLink": {
       const ok = q.items.every((it) => {
         const a = ents.of(it.file, it.cells[0] ?? "");
@@ -186,7 +250,7 @@ export function answer(q: QuestionState, t: Truth, ents: Entities): string | nul
     }
     case "eventAsset": {
       const ok = q.items.every((it) => {
-        const line = dailyLine(it.cells[0] ?? "");
+        const line = ev(it.file, it.cells[0] ?? "");
         const e = eqOfEntity(targetEntity(it));
         return !!line && !!e && line.equipment_ids.includes(e);
       });
@@ -196,16 +260,26 @@ export function answer(q: QuestionState, t: Truth, ents: Entities): string | nul
       const it = q.items[0];
       if (!it) return null;
       if (q.options.some((o) => o.id === "c0") && q.options.length === 2) {
-        const line = dailyLine(it.cells[0] ?? "");
+        const line = ev(it.file, it.cells[0] ?? "");
         const e = eqOfEntity(targetEntity(it));
         return line && e && line.equipment_ids.includes(e) ? "c0" : "exclude";
       }
       return null;
     }
+    case "workJoin": {
+      // まとめた問い（はい／1 件ずつ／いいえ）・1 件の問い（はい／いいえ）・相手を選ぶ問い（c0…／どれとも別）
+      if (q.options.some((o) => o.id === "c0")) {
+        const i = q.items.findIndex((it) => it.target?.[0] && sameWork(it, it.target[0]));
+        return i >= 0 ? `c${i}` : "none";
+      }
+      const ok = q.items.every((it) => (it.target ?? []).length > 0 && (it.target ?? []).every((tg) => sameWork(it, tg)));
+      if (q.options.some((o) => o.id === "split")) return ok ? "yes" : "split";
+      return ok ? "yes" : "no";
+    }
     case "workLink": {
       const isNoMark = q.options.some((o) => o.id === "exclude");
       const ok = q.items.every((it) => {
-        const lines = it.cells.map(dailyLine).filter(Boolean) as J[];
+        const lines = it.cells.map((c) => ev(it.file, c)).filter(Boolean) as J[];
         if (isNoMark) return lines.every((l) => (l.work_ids as string[]).every((w) => !starRefOf(t, w)));
         const mk = it.target?.[0]?.cells[0];
         const cellWorks: string[] = mk ? (t.star?.cells?.[mk]?.work_ids ?? []) : [];
@@ -216,7 +290,7 @@ export function answer(q: QuestionState, t: Truth, ents: Entities): string | nul
     case "workLinkOne": {
       const it = q.items[0];
       if (!it) return null;
-      const lines = it.cells.map(dailyLine).filter(Boolean) as J[];
+      const lines = it.cells.map((c) => ev(it.file, c)).filter(Boolean) as J[];
       const marks = it.target ?? [];
       for (let i = 0; i < marks.length; i++) {
         const mk = marks[i]?.cells[0];
@@ -251,11 +325,12 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
   const answered = new Map<string, Decision>();
   let rounds = 0;
   let an = session.analyze();
+  const reps = t.reports ? new ReportRows(t, an.sources) : null;
   for (; rounds < 30; rounds++) {
     const ds: Decision[] = [];
     for (const q of an.open) {
       if (answered.has(q.questionId)) continue;
-      const a = answer(q, t, ents);
+      const a = answer(q, t, ents, reps);
       if (a !== null) ds.push({ questionId: q.questionId, answer: a, author: "human", reason: AUTHOR_REASON });
     }
     if (!ds.length) break;
@@ -467,7 +542,10 @@ export function measureDaily(plan: Plan, t: Truth, ents: Entities): Accuracy {
       const want = new Set<string>(r.equipment_ids);
       if (targets.size !== want.size || [...want].some((x) => !targets.has(x))) why.push(`機器 ${[...targets].join(",")}≠${[...want].join(",")}`);
       if (ds.some((d) => !d.startDate || !d.endDate || d.startDate > r.date || d.endDate < r.date)) why.push("日付の範囲");
-      const withEffort = ds.filter((d) => d.manDays !== null);
+      // 日報の行の工数を持つ明細：一式の行はまとめ工事の明細、そうでない行は機器の明細。
+      // 一式の行の機器ごとの明細は、ほかの資料（報告書）の工数を持ってよい（同じ工数を 2 度数えない）
+      const isBundleDetail = (d: Plan["details"][number]) => (workOf.get(d.workKey)?.targets.length ?? 0) > 1;
+      const withEffort = ds.filter((d) => d.manDays !== null && isBundleDetail(d) === !!r.bundle);
       if (withEffort.length !== 1) why.push(`工数の明細が ${withEffort.length}`);
       else if (Math.abs((withEffort[0]?.manDays ?? -1) - (sumTruth.get(withEffort[0]?.detailKey ?? "") ?? -2)) > 1e-6) why.push("工数の和");
     }
@@ -498,3 +576,197 @@ export function measureCrossdoc(plan: Plan, t: Truth): Accuracy {
 }
 
 export const pct = (a: Accuracy) => (a.total ? Math.round((a.correct / a.total) * 10000) / 100 : null);
+
+// ─── 報告書の PDF：① 原本の漏れ（元の xlsx と比べる） ─────────────────────────
+// 工場は報告書の PDF の事実（別の読み手が取ったもの）を持たない。PDF は工場が xlsx を LibreOffice で書き出したものなので、
+// 元の xlsx を MOYAI の Excel の読み手で読んだ表示の文字と比べる。中身のある行を上から順に組にし、行ごとの文字の集まりが
+// 同じかを見る（列の位置は数えない：結合して中央に寄せた文字は、PDF では別の列の罫線の間に描かれるため。参考に数だけ出す）。
+// 同じと見なす書き方の違い：前後の空白と、空白の連なり（セルの中の文字の並びの間）だけ。
+
+export function measurePdfAgainstXlsx(pdf: SourceFile, xlsx: SourceFile): { diffs: number; columnShifts: number; detail: string[] } {
+  const detail: string[] = [];
+  const sp = (s: string) => s.replace(/\s+/g, " ").trim();
+  const rowsOf = (src: SourceFile) => {
+    const g = src.sheets[0];
+    const m = new Map<number, { c: number; t: string }[]>();
+    for (const c of g?.cells ?? []) if (sp(c.text) !== "") m.set(c.r, [...(m.get(c.r) ?? []), { c: c.c, t: sp(c.text) }]);
+    return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([r, cs]) => ({ r, cs: cs.sort((a, b) => a.c - b.c) }));
+  };
+  const a = rowsOf(xlsx);
+  const b = rowsOf(pdf);
+  if (a.length !== b.length) detail.push(`中身のある行の数が違う（xlsx ${a.length}・PDF ${b.length}）`);
+  let shifts = 0;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const x = a[i];
+    const y = b[i];
+    if (!x || !y) {
+      detail.push(`${x ? `xlsx の ${x.r} 行` : `PDF の ${y?.r} 行`}に組む相手が無い`);
+      continue;
+    }
+    const left = [...y.cs.map((c) => c.t)];
+    for (const c of x.cs) {
+      const k = left.indexOf(c.t);
+      if (k < 0) detail.push(`xlsx の ${x.r} 行の「${c.t}」が PDF の ${y.r} 行に無い`);
+      else left.splice(k, 1);
+    }
+    for (const t of left) detail.push(`PDF の ${y.r} 行の「${t}」が xlsx の ${x.r} 行に無い`);
+    for (const c of x.cs) {
+      const d = y.cs.find((z) => z.t === c.t);
+      if (d && d.c !== c.c) shifts++;
+    }
+  }
+  return { diffs: detail.length, columnShifts: shifts, detail };
+}
+
+// ─── 報告書の PDF：③ 読み取りの正しさ ─────────────────────────────────────
+// 正解の行ごとに：その行のセルを出どころに持つ実績の明細があり、機器・年度・工期・工数・日数が合うか。
+// まとめ工事（一式）の行は、機器ごとの明細（年度・工期・日数）と、まとめ工事の明細（工数と機器の組）を見る。
+
+function eqOfNodeFn(plan: Plan, t: Truth) {
+  const byKey = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+  const ledgerRowOf = new Map<string, number>(Object.entries((t.ledger?.equipment_rows ?? {}) as Record<string, number>));
+  return (k: string): string | null => {
+    const a = byKey.get(k);
+    for (const [eq, row] of ledgerRowOf) if (a?.sources.some((s) => s.file === t.ledger?.file && s.cell === `A${row}`)) return eq;
+    return null;
+  };
+}
+
+export function measureReport(plan: Plan, t: Truth, reps: ReportRows, file: string, sources: SourceFile[]): Accuracy {
+  const acc: Accuracy = { total: 0, correct: 0, extra: 0, misses: [] };
+  const rep = reps.report(file);
+  if (!rep) return acc;
+  const workOf = new Map(plan.works.map((w) => [w.workKey, w]));
+  const eqOf = eqOfNodeFn(plan, t);
+  const grid = sources.find((s) => s.file === file)?.sheets[0];
+  const refsOfRow = (r: number) => new Set((grid?.cells ?? []).filter((c) => c.r === r).map((c) => c.ref));
+  const targetsOf = (d: Plan["details"][number]) => (workOf.get(d.workKey)?.targets ?? []).map(eqOf);
+  const seen = new Set<string>();
+  for (const x of rep.rows as J[]) {
+    acc.total++;
+    const why: string[] = [];
+    const gr = reps.gridRow(file, x.no);
+    if (gr === null) {
+      acc.misses.push(`${file} No.${x.no}：格子に行が無い`);
+      continue;
+    }
+    const refs = refsOfRow(gr);
+    const ds = plan.details.filter((d) => d.sources.some((s) => s.file === file && s.cell !== null && refs.has(s.cell)));
+    for (const d of ds) seen.add(d.detailKey);
+    const eqs: string[] = x.equipment_ids;
+    const perAsset = ds.filter((d) => targetsOf(d).length === 1);
+    if (!ds.length) why.push("明細が無い");
+    else {
+      for (const eq of eqs) {
+        const d = perAsset.find((z) => targetsOf(z)[0] === eq);
+        if (!d) {
+          why.push(`機器 ${eq} の明細が無い`);
+          continue;
+        }
+        if (d.planOrActual !== "actual") why.push("実績でない");
+        if (d.fiscalYear !== rep.fiscal_year) why.push(`年度 ${d.fiscalYear}`);
+        if (!d.startDate || !d.endDate || d.startDate > x.start || d.endDate < x.end) why.push(`工期 ${d.startDate}〜${d.endDate}`);
+        if (d.days !== x.duration_days) why.push(`日数 ${d.days}≠${x.duration_days}`);
+        if (!x.bundle && d.manDays !== x.man_days) why.push(`工数 ${d.manDays}≠${x.man_days}`);
+      }
+      if (x.bundle) {
+        const b = ds.find((d) => (workOf.get(d.workKey)?.targets.length ?? 0) > 1);
+        if (!b) why.push("まとめ工事の明細が無い");
+        else {
+          const tg = new Set(targetsOf(b));
+          if (eqs.some((e) => !tg.has(e)) || tg.size !== eqs.length) why.push(`まとめ工事の機器 ${[...tg].join(",")}≠${eqs.join(",")}`);
+          if (b.manDays !== x.man_days) why.push(`まとめ工事の工数 ${b.manDays}≠${x.man_days}`);
+          if (b.days !== x.duration_days) why.push(`まとめ工事の日数 ${b.days}≠${x.duration_days}`);
+        }
+      }
+    }
+    if (why.length) acc.misses.push(`${file} No.${x.no}：${why.join("・")}`);
+    else acc.correct++;
+  }
+  // 正解の行のどれでもないセルを出どころに持つ明細（頭書き・合計の行などを記録にしていないか）
+  const rowCells = new Set<string>();
+  for (const x of rep.rows as J[]) {
+    const gr = reps.gridRow(file, x.no);
+    if (gr !== null) for (const r of refsOfRow(gr)) rowCells.add(r);
+  }
+  for (const d of plan.details) if (!seen.has(d.detailKey) && d.sources.some((s) => s.file === file && s.cell !== null && !rowCells.has(s.cell))) acc.extra++;
+  return acc;
+}
+
+// ─── ⑥ 取り戻せた割合 ─────────────────────────────────────────────────
+// 分母：正解の世界の実績の作業のうち、この回に読んだ資料のどれかに書いてあるもの。読んでいない資料（写真）だけに書いてあるもの・
+// どの資料にも書いていないものは分母に入れず、理由ごとに数える。
+// 戻せた：その作業の、読んだ資料の出どころ（星取表の印・日報の行・報告書の行）を 1 つの実績の明細がすべて持つ。
+// 工数：作業ごとの工数が書いてある（報告書の一式でない行・日報の一式でない行）作業のうち、その明細の工数が正解と同じ。
+// 日数：報告書の行に日数がある作業のうち、その明細の日数が正解と同じ。参考：星取表だけで戻せる割合（実績の印がある作業）。
+
+export interface Recovery {
+  denominator: number;
+  together: number;
+  inPlan: number;
+  manDays: { correct: number; total: number };
+  days: { correct: number; total: number };
+  starOnly: number;
+  notCounted: Record<string, number>;
+  misses: string[];
+}
+
+export function measureRecovery(plan: Plan, t: Truth, read: Set<string>, reps: ReportRows | null, sources: SourceFile[]): Recovery {
+  const out: Recovery = { denominator: 0, together: 0, inPlan: 0, manDays: { correct: 0, total: 0 }, days: { correct: 0, total: 0 }, starOnly: 0, notCounted: {}, misses: [] };
+  const C = t.crossdoc;
+  if (!C) return out;
+  const status = new Map<string, string>(((t.world.works ?? []) as J[]).map((w) => [w.id, w.status]));
+  const refsByWork = new Map<string, J[]>(((C.works ?? []) as J[]).map((w) => [w.work_id, w.refs]));
+  const gridRefs = (file: string, r: number) => new Set((sources.find((s) => s.file === file)?.sheets[0]?.cells ?? []).filter((c) => c.r === r).map((c) => c.ref));
+  const daily = new Map<number, J>(((t.daily?.rows ?? []) as J[]).map((x) => [x.line, x]));
+  const actualDetails = plan.details.filter((d) => d.planOrActual === "actual");
+  const workOf = new Map(plan.works.map((w) => [w.workKey, w]));
+  for (const w of (t.world.works ?? []) as J[]) {
+    if (status.get(w.id) !== "actual") continue;
+    const refs = refsByWork.get(w.id) ?? [];
+    const readRefs = refs.filter((r) => read.has(r.doc));
+    if (!refs.length) {
+      out.notCounted["どの資料にも書いていない"] = (out.notCounted["どの資料にも書いていない"] ?? 0) + 1;
+      continue;
+    }
+    if (!readRefs.length) {
+      const why = `読んでいない資料だけに書いてある（${[...new Set(refs.map((r) => r.doc))].join("・")}）`;
+      out.notCounted[why] = (out.notCounted[why] ?? 0) + 1;
+      continue;
+    }
+    out.denominator++;
+    // 出どころごとに「明細がそれを持つか」の判定
+    const hits: ((d: Plan["details"][number]) => boolean)[] = readRefs.map((r) => {
+      if (r.doc === t.star?.file) return (d) => d.sources.some((s) => s.file === r.doc && s.cell === r.cell);
+      if (r.doc === t.daily?.file) return (d) => d.sources.some((s) => s.file === r.doc && s.cell === `A${r.line}`);
+      const gr = reps?.gridRow(r.doc, r.table_row_no) ?? null;
+      const cells = gr === null ? new Set<string>() : gridRefs(r.doc, gr);
+      return (d) => d.sources.some((s) => s.file === r.doc && s.cell !== null && cells.has(s.cell));
+    });
+    const anyHit = actualDetails.filter((d) => hits.some((h) => h(d)));
+    const all = actualDetails.filter((d) => hits.every((h) => h(d)));
+    if (anyHit.length) out.inPlan++;
+    // 1 つの機器の明細（まとめ工事の親の明細でない）を先に選ぶ
+    const single = (d: Plan["details"][number]) => (workOf.get(d.workKey)?.targets.length ?? 0) === 1;
+    const one = all.find((d) => single(d) && d.fiscalYear === w.fiscal_year) ?? all.find(single) ?? all[0];
+    if (one) out.together++;
+    else out.misses.push(`作業 ${w.id}（${[...new Set(readRefs.map((r) => r.doc))].join("・")}）：1 つの明細にそろっていない（出どころを持つ明細 ${anyHit.length}）`);
+    if (readRefs.some((r) => r.doc === t.star?.file && t.star?.cells?.[r.cell]?.kind === "actual")) out.starOnly++;
+    // 工数・日数が作業ごとに書いてあるか
+    const repRef = readRefs.find((r) => r.doc !== t.star?.file && r.doc !== t.daily?.file);
+    const repRow = repRef ? (((t.reports?.reports ?? []) as J[]).find((x) => x.file_pdf === repRef.doc)?.rows as J[] | undefined)?.find((x) => x.no === repRef.table_row_no) : null;
+    const dLines = readRefs.filter((r) => r.doc === t.daily?.file).map((r) => daily.get(r.line)).filter(Boolean) as J[];
+    const mdWritten = (repRow && !repRow.bundle) || (dLines.length > 0 && dLines.every((l) => (l.equipment_ids as string[]).length === 1));
+    if (mdWritten) {
+      out.manDays.total++;
+      if (one && one.manDays === w.man_days) out.manDays.correct++;
+      else out.misses.push(`作業 ${w.id}：工数 ${one?.manDays ?? "なし"}≠${w.man_days}`);
+    }
+    if (repRow) {
+      out.days.total++;
+      if (one && one.days === w.duration_days) out.days.correct++;
+      else out.misses.push(`作業 ${w.id}：日数 ${one?.days ?? "なし"}≠${w.duration_days}`);
+    }
+  }
+  return out;
+}

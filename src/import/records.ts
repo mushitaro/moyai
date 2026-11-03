@@ -2,9 +2,9 @@
 // どのセルを何に使ったかを数えるため、記録はセルの位置を持つ。
 import { cellRef, type SheetGrid } from "./grid";
 import { cue, norm } from "./cues";
-import { fiscalYearOf, nfkc, parseYearOnly, type Ymd } from "./era";
+import { fiscalYearOf, nfkc, parseDayCount, parseYearOnly, type Ymd } from "./era";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
-import { assignParents, cellDate, type ColInfo, type SheetLayout, type Table } from "./structure";
+import { assignParents, cellPeriod, type ColInfo, type SheetLayout, type Table } from "./structure";
 import { parseEffort, parseUnit, splitTag, tagTrailingNumber, type TagSplit, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
@@ -68,7 +68,12 @@ export interface EventRec {
   sheetIndex: number;
   tableId: string;
   row: number;
+  /** 日付。期間（「始まり〜終わり」）の行は始まり */
   date: Ymd | null;
+  /** 期間の行の終わり（1 日の日付の行は null） */
+  end: Ymd | null;
+  /** 日数の欄（工期の日数）。書いてなければ null */
+  days: number | null;
   fiscalYear: number | null;
   manDays: number | null;
   /** 工数のセルに書いてあったが人・日に直せていない */
@@ -95,6 +100,37 @@ export interface Records {
   pending: Set<string>;
   /** 星取表の年の範囲（表ごと） */
   gridYears: Map<string, { from: number; to: number }>;
+  /** 表 → 同じ様式の表のまとまり（問いをまとめる鍵）。まとまりの表の顔ぶれが変われば鍵も変わる（聞き直す） */
+  formOf: Map<string, FormGroup>;
+}
+
+export interface FormGroup {
+  key: string;
+  /** まとまりの表（id）と資料 */
+  tables: string[];
+  files: string[];
+}
+
+/** 同じ様式の表（列の見出しの文字と位置が同じ）をまとめる。1 つだけの様式は、その表だけのまとまり */
+export function formGroups(layouts: SheetLayout[]): Map<string, FormGroup> {
+  const byForm = new Map<string, { id: string; file: string }[]>();
+  for (const lay of layouts) for (const t of lay.tables) byForm.set(t.form, [...(byForm.get(t.form) ?? []), { id: t.id, file: t.file }]);
+  const out = new Map<string, FormGroup>();
+  for (const ms of byForm.values()) {
+    const tables = ms.map((m) => m.id).sort();
+    const g: FormGroup = {
+      key: tables.length === 1 ? (tables[0] ?? "") : `form:${questionIdOf(tables.join("\u0000")).slice(2)}`,
+      tables,
+      files: [...new Set(ms.map((m) => m.file))].sort(),
+    };
+    for (const id of tables) out.set(id, g);
+  }
+  return out;
+}
+
+/** 資料の名前の並び（多ければ「ほか n 冊」） */
+export function filesLabel(files: string[]): string {
+  return files.length <= 2 ? files.join(" と ") : `${files.slice(0, 2).join("・")} ほか ${files.length - 2} 冊（同じ様式）`;
 }
 
 export interface RecordOptions {
@@ -113,7 +149,7 @@ function shapeOf(text: string): string {
 }
 
 export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOptions, date1904Of: (file: string) => boolean): Records {
-  const rec: Records = { assets: [], marks: [], events: [], levelNames: new Map(), excluded: new Map(), pending: new Set(), gridYears: new Map() };
+  const rec: Records = { assets: [], marks: [], events: [], levelNames: new Map(), excluded: new Map(), pending: new Set(), gridYears: new Map(), formOf: formGroups(layouts) };
   let order = 0;
   for (const lay of layouts) {
     const pos = (ref: string): CellPos => ({ file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, ref });
@@ -721,6 +757,7 @@ function seriesKey(s: Series | null): string {
 function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts: RecordOptions, date1904: boolean, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off) {
   const col = (role: ColInfo["role"]) => t.cols.find((c) => c.role === role);
   const dateCol = col("date");
+  const daysCol = col("days");
   const effortCol = col("effort");
   const assetCol = col("assetRef");
   const unitCol = col("unit");
@@ -738,14 +775,19 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   /** 系列の欄の、読めない書き方 → その行（書き方ごとに聞く） */
   const unitBadEv = new Map<string, { row: number; ref: string }[]>();
   const badDates = new Map<string, string[]>();
+  const badDays = new Map<string, string[]>();
   const evs: (EventRec & { _hours: number | null; _persons: number | null; _bare: number | null })[] = [];
   for (const r of data) {
     const cells = lay.index.rowCells(r.r).filter((c) => !off(c.ref));
     if (!cells.length) continue;
     const refs = cells.map((c) => c.ref);
     const dc = dateCol ? lay.index.at(r.r, dateCol.c) : null;
-    const date = dc ? cellDate(dc, date1904) : null;
+    const period = dc ? cellPeriod(dc, date1904) : null;
+    const date = period?.start ?? null;
     if (dc && !date) badDates.set(shapeOf(dc.text), [...(badDates.get(shapeOf(dc.text)) ?? []), dc.ref]);
+    const yc = daysCol ? lay.index.at(r.r, daysCol.c) : null;
+    const days = yc && !off(yc.ref) ? parseDayCount(typeof yc.value === "number" ? yc.value : yc.text) : null;
+    if (yc && !off(yc.ref) && days === null) badDays.set(shapeOf(yc.text), [...(badDays.get(shapeOf(yc.text)) ?? []), yc.ref]);
     const ec = effortCol ? lay.index.at(r.r, effortCol.c) : null;
     let manDays: number | null = null;
     let hours: number | null = null;
@@ -782,6 +824,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       tableId: t.id,
       row: r.r,
       date,
+      end: period?.range ? period.end : null,
+      days,
       fiscalYear: fy,
       manDays,
       effortPending: false,
@@ -799,11 +843,16 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       _bare: bare,
     });
   }
+  // 工数の単位の問いは、同じ様式の表をまとめて 1 回聞く（同じ鍵で聞くと、件数と見本は足される）
+  const form = rec.formOf.get(t.id);
+  const fkey = form?.key ?? t.id;
+  const many = (form?.tables.length ?? 1) > 1;
+  const where = many ? `${filesLabel(form?.files ?? [])}の表に、` : "";
   let hoursPer: number | null = null;
   if (hourCells.length) {
-    const a = ask.ask(`hoursPerManDay|${t.id}`, {
+    const a = ask.ask(`hoursPerManDay|${fkey}`, {
       kind: "hoursPerManDay",
-      text: `工数が時間で書いてある行が ${hourCells.length} 行ある。1 人・日を何時間として人・日に直すか`,
+      text: many ? `${where}工数が時間で書いてある行がある。1 人・日を何時間として人・日に直すか` : `工数が時間で書いてある行が ${hourCells.length} 行ある。1 人・日を何時間として人・日に直すか`,
       options: [],
       valueKind: "number",
       defaultAnswer: "8",
@@ -814,9 +863,11 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   }
   let personsAsMD: string | null = null;
   if (personCells.length) {
-    personsAsMD = ask.ask(`effortPersons|${t.id}`, {
+    personsAsMD = ask.ask(`effortPersons|${fkey}`, {
       kind: "effortUnknown",
-      text: `工数が「N 人」（延べの印なし）で書いてある行が ${personCells.length} 行ある。1 行が 1 日なら人・日と同じ。どう読むか`,
+      text: many
+        ? `${where}工数が「N 人」（延べの印なし）で書いてある行がある。1 行が 1 日なら人・日と同じ。どう読むか`
+        : `工数が「N 人」（延べの印なし）で書いてある行が ${personCells.length} 行ある。1 行が 1 日なら人・日と同じ。どう読むか`,
       options: [
         { id: "manDays", label: "1 行 1 日として人・日に読む" },
         { id: "exclude", label: "工数を外す（人数だけ分かる）" },
@@ -829,9 +880,9 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   }
   let bareAs: string | null = null;
   if (bareCells.length) {
-    bareAs = ask.ask(`effortBare|${t.id}`, {
+    bareAs = ask.ask(`effortBare|${fkey}`, {
       kind: "effortUnknown",
-      text: `工数が数だけで単位が無い行が ${bareCells.length} 行ある。単位は何か`,
+      text: many ? `${where}工数が数だけで単位が無い行がある。単位は何か` : `工数が数だけで単位が無い行が ${bareCells.length} 行ある。単位は何か`,
       options: [
         { id: "manDays", label: "人・日" },
         { id: "hours", label: "時間" },
@@ -868,6 +919,20 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     });
     if (a === "exclude")
       for (const e of evs) if (refs.some((ref) => e.refs.includes(ref))) e.excluded = "日付として読めない行（決定で外した）";
+  }
+  // 日数の欄の、日数として読めない書き方（書き方ごとに 1 回聞く。答えるまで、そのセルは未解決）
+  for (const [shape, refs] of badDays) {
+    const a = ask.ask(`daysBad|${t.id}|${shape}`, {
+      kind: "dateUnknown",
+      text: `「${daysCol?.header ?? "日数"}」の列に、日数として読めない書き方がある（${refs.length} 行）。日数を推し量らない`,
+      options: [{ id: "exclude", label: "日数を外す（理由を残す）" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: refs.length,
+      items: [itemOf(lay, refs.slice(0, 10))],
+    });
+    for (const ref of refs) a === "exclude" ? exclude(ref, "日数として読めない（決定で外した）") : pend(ref);
+    if (a === "exclude") for (const e of evs) e.refs = e.refs.filter((x) => !refs.includes(x));
   }
   // 系列の欄の、号・系列として読めない書き方（書き方ごとに 1 回聞く。答えるまで、その行は未解決）
   for (const [text, cells] of unitBadEv) {
