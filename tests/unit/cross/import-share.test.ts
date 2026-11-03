@@ -8,7 +8,7 @@ import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import { IntakeSession } from "../../../src/import";
 import { candidateClasses, copyOut } from "../../../src/share/copyout";
-import { chooseProfile, loadNational, loadVocab, type ProfileSpec } from "../../../src/share/k";
+import { chooseProfile, isCountable, loadNational, loadVocab, type ProfileSpec } from "../../../src/share/k";
 import type { Plan } from "../../../src/shared/plan";
 import { Entities, loadTruth, runScript } from "../import/truth";
 
@@ -73,8 +73,11 @@ describe("層をまたぐ：取り込み → 写し取り", () => {
     const parents = new Set(children.map((w) => w.parentWorkKey));
     const flatR = copyOut({ plan: { ...flat, works: flat.works.filter((w) => !parents.has(w.workKey)) }, lift, to: { kind: "ring", id: "0123456789abcdef" } });
     expect(flatR.omitted.manDaysUnconvertible).toBeGreaterThan(r.omitted.manDaysUnconvertible);
-    // 年だけの設置年を持つ資産が、ageAtWork の出た塊の中にある
-    expect(plan.assets.some((a) => a.commonItemAccepted && a.installedOn !== null && /^\d{4}$/.test(a.installedOn))).toBe(true);
+    // 取り込みの設置年は年だけ（"2002"）。その資産の分類の塊に ageAtWork が出ている
+    const yearOnly = plan.assets.filter((a) => a.commonItemAccepted && a.installedOn !== null && /^\d{4}$/.test(a.installedOn));
+    expect(yearOnly.length).toBeGreaterThan(0);
+    const withAge = new Set(r.chunks.filter((c) => c.ageAtWork !== undefined).map((c) => c.class));
+    expect(yearOnly.some((a) => withAge.has(a.commonItem!))).toBe(true);
   });
 
   test("パックの公開語彙と見え方で、取り込んだ計画の段が決まり、塊が出る", async () => {
@@ -96,8 +99,14 @@ describe("層をまたぐ：取り込み → 写し取り", () => {
     if (!c.ok) return;
     const r = copyOut({ plan, lift: c.lift, to: { kind: "ring", id: "0123456789abcdef" } });
     expect(r.chunks.length).toBeGreaterThan(0);
-    // 数えられない項目は群へ上がり、出る分類はどれも語彙で数えられるもの
-    for (const ch of r.chunks) expect(vocab.byCode.has(ch.class)).toBe(true);
+    // 出る分類はどれも、全国の表で数えられるもの（出典つきの universal か、推せる軸がすべて表にある）
+    for (const ch of r.chunks) expect(isCountable(vocab, table, ch.class), ch.class).toBe(true);
+    // 数えられない項目（例：計量機・余熱利用設備の群）は塊に出ない。上の群へ上がるか、上がり先が無ければ理由に数える
+    expect(r.chunks.some((ch) => ch.class === "WI.RECV.SCALE")).toBe(false);
+    expect(r.chunks.some((ch) => ch.class === "WI.HEAT")).toBe(false);
+    expect(r.chunks.some((ch) => ch.class === "WI.RECV")).toBe(true);
+    // implies を持つ分類は、出典と読み方を持つ
+    for (const cl of vocab.byCode.values()) if (Object.keys(cl.implies).length) expect(cl.source, cl.code).not.toBeNull();
   });
 });
 

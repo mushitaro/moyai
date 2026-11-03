@@ -468,18 +468,22 @@ describe("AI に渡す要約と、決定の数", () => {
     expect(jump).toBeDefined();
     s.settle([human(jump!.questionId, "exclude")]);
     const key = (ref: string) => ["台帳.xlsx", "0", ref].join(String.fromCharCode(0));
-    let an = s.analyze();
+    const an = s.analyze();
     expect(an.composition.status.get(key("A5"))?.s).toBe("excluded");
-    // 外した「送風機」ではなく、資産になる行（乙設備）を「すぐ上の行」として聞く
+    expect(an.composition.status.get(key("B5"))?.s).toBe("excluded");
+    // 外した「送風機」を参照先にせず、ほかの行を「すぐ上」と言い換えもしない：「上と同じ」を出さずに聞く
     const q = an.open.find((x) => x.text.includes("〃"));
-    expect(q?.text).toContain("乙設備");
     expect(q?.text).not.toContain("送風機");
+    expect(q?.options.map((o) => o.id)).toEqual(["literal", "exclude"]);
     expect(an.composition.status.get(key("A6"))?.s).toBe("unresolved");
-    s.settle([human(q!.questionId, "above")]);
+    s.settle([human(q!.questionId, "literal")]);
     acceptDefaults(s);
     const plan = s.compose().plan;
-    expect(plan?.assets.find((a) => a.sources.some((x) => x.cell === "A6"))?.name).toBe("乙設備");
+    expect(plan?.assets.find((a) => a.sources.some((x) => x.cell === "A6"))?.name).toBe("〃");
     expect(plan?.assets.some((a) => a.name === "送風機")).toBe(false);
+    // 段の決定を取り消すと、送風機の行は戻り、〃 はその下の行として読み直す
+    s.undo(jump!.questionId);
+    expect(s.analyze().composition.status.get(key("A5"))?.s).not.toBe("excluded");
   });
 });
 

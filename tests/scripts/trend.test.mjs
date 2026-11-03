@@ -22,3 +22,10 @@ test("日ごとに最後の行を出し、落ちた回は「落ちた」、無�
   assert.match(md, /\| x\.csv \| 測っていない \| 0 \| 測っていない \|/);
   assert.match(md, /作らなかった/);
 });
+
+test("③ に余分な記録の数を出し、物差しの行に試験の結果を添える（形は dev.test.ts の TrendRecord）", () => {
+  const rec = { pack: "p", facility: "f", files: [{ file: "a.xlsx", leak: 0, unresolved: 0, accuracy: { correct: 10, total: 10, extra: 2 } }], asked: 1, planMade: true, cross: { correct: 3, total: 4 } };
+  const md = render([{ date: "2026-11-04", time: "09:00", commit: "c", dirty: false, passed: true, counts: { node: 1, vitest: 1 }, import: [rec] }]);
+  assert.match(md, /\| 2026-11-04 \| 通った \| f \| a\.xlsx \| 0 \| 0 \| 100%（10\/10、余分 2） \|/);
+  assert.match(md, /75%（3\/4）/);
+});

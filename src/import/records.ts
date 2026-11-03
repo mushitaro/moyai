@@ -279,10 +279,14 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const orphans: { r: number; ref: string; above: string | null }[] = [];
   let aboveName: string | null = null;
   for (const r of dataRows) {
-    // 本処理で資産にならない行（決定で外した行・名前の欄を外した行・段を外した行）は、〃 の参照先にしない
-    if (r.level === -1 || lay.index.rowCells(r.r).every((c) => off(c.ref))) continue;
+    // 本処理で資産にならない行（決定で外した行・名前の欄を外した行・段を外した行）は、〃 の参照先にしない。
+    // そのすぐ下の 〃 には「すぐ上の行と同じ」を出さない（外した行を飛ばして別の行を「すぐ上」と言わない）
     const nc = nameCells.find((x) => x.r === r.r)?.cell;
-    if (!nc || off(nc.ref)) continue;
+    if (r.level === -1 || lay.index.rowCells(r.r).every((c) => off(c.ref)) || (nc && off(nc.ref))) {
+      aboveName = null;
+      continue;
+    }
+    if (!nc) continue;
     const k = `${r.level}|${r.parentRow ?? ""}`;
     let nm: string | null = nc.text.replace(/\s*\n\s*/g, " ").trim();
     if (cue.isDitto(nc.text)) {

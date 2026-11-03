@@ -9,6 +9,7 @@ import { appendFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFil
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const DATA = "ops/trend.jsonl";
 const OUT = "docs/trend.md";
@@ -24,7 +25,9 @@ export function jst(d) {
   return { date: t.slice(0, 10), time: t.slice(11, 16) };
 }
 
-const pct = (a) => (a && a.total ? `${Math.round((a.correct / a.total) * 1000) / 10}%（${a.correct}/${a.total}）` : "測っていない");
+// ③ は正解に無い余分な記録も出す（余分があれば 100% でも合格ではない）
+const pct = (a) =>
+  a && a.total ? `${Math.round((a.correct / a.total) * 1000) / 10}%（${a.correct}/${a.total}${a.extra ? `、余分 ${a.extra}` : ""}）` : "測っていない";
 const val = (v) => (v === null || v === undefined ? "測っていない" : String(v));
 
 /** 行の一覧（古い順）から、日ごとの最後の行で表を作る */
@@ -47,18 +50,19 @@ export function render(rows) {
   L.push("");
   L.push("## 取り込みの物差し（import.dev、工場の開発用の資料）");
   L.push("");
-  L.push("| 日付 | 施設 | 資料 | ① 原本の漏れ | ② 未解決のセル | ③ 読み取りの正しさ |");
-  L.push("|---|---|---|---:|---:|---|");
+  L.push("| 日付 | 試験 | 施設 | 資料 | ① 原本の漏れ | ② 未解決のセル | ③ 読み取りの正しさ |");
+  L.push("|---|---|---|---|---:|---:|---|");
   for (const d of days)
     for (const f of d.import ?? [])
-      for (const x of f.files) L.push(`| ${d.date} | ${f.facility} | ${x.file} | ${val(x.leak)} | ${val(x.unresolved)} | ${pct(x.accuracy)} |`);
+      for (const x of f.files)
+        L.push(`| ${d.date} | ${d.passed ? "通った" : "落ちた"} | ${f.facility} | ${x.file} | ${val(x.leak)} | ${val(x.unresolved)} | ${pct(x.accuracy)} |`);
   L.push("");
   L.push("| 日付 | 施設 | ⑤ 質問 | 計画 | 資料をまたいで 1 つの明細に結べた作業 |");
   L.push("|---|---|---:|---|---|");
   for (const d of days)
     for (const f of d.import ?? []) L.push(`| ${d.date} | ${f.facility} | ${f.asked} | ${f.planMade ? "作った" : "作らなかった"} | ${pct(f.cross)} |`);
   L.push("");
-  L.push("④ 検査の正しさ・⑥ 取り戻せた割合・見ていない様式は、まだ測っていない（試験が無い）。");
+  L.push("まだ測っていないもの（試験が無い）：報告書の PDF と写真の取り込み（写真は要確認の数も）、④ 検査の正しさ、⑥ 取り戻せた割合、見ていない様式。CSV の ① は、比べる事実のファイルが無く測っていない。");
   return L.join("\n") + "\n";
 }
 
@@ -76,7 +80,7 @@ function main() {
     : [];
   rmSync(dir, { recursive: true, force: true });
   const commit = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
-  const dirty = execFileSync("git", ["status", "--porcelain", "--", "src", "tests", "packs", "samples"], { encoding: "utf8" }).trim() !== "";
+  const dirty = execFileSync("git", ["status", "--porcelain", "--", "src", "tests", "packs", "samples", "scripts"], { encoding: "utf8" }).trim() !== "";
   const at = new Date();
   const row = { at: at.toISOString(), ...jst(at), commit, dirty, passed: r.status === 0 && counts !== null, counts, import: imp };
   appendFileSync(DATA, JSON.stringify(row) + "\n");
@@ -86,4 +90,5 @@ function main() {
   if (!row.passed) process.exit(1);
 }
 
-if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, "/").replace(/^\//, "")}`) main();
+// 直に走らせたときだけ（試験が import したときは走らない）。日本語や空白を含む道でも合うよう URL で比べる
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

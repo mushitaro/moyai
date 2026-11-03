@@ -1,6 +1,6 @@
 // Playwright の試験の道具（取り込みの画面と MCP の通し）：ビルドした dist/cli.js start を空きのポートで起こし、
 // 一時の状態フォルダに向ける。工場の資料を、画面の受け口へ File API の「落とす」で渡す。
-// スクリーンショットは docs/progress/shots/<走らせた日（日本時間）>/。前の画像は上書きしない。
+// スクリーンショットは一時のフォルダの moyai-shots/<走らせた日（日本時間）>/（日誌に残すときは MOYAI_SHOTS_DIR=docs/progress/shots/<日付> を渡す）。前の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { expect, type Page } from "@playwright/test";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `docs/progress/shots/${jst}`;
+const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/moyai-shots/${jst}`;
 
 export function shot(name: string): string {
   mkdirSync(SHOTS, { recursive: true });

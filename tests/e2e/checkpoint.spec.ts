@@ -11,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `docs/progress/shots/${jst}`;
+const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/moyai-shots/${jst}`;
 
 function shot(name: string): string {
   mkdirSync(SHOTS, { recursive: true });

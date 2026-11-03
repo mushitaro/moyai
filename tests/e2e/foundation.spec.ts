@@ -1,5 +1,5 @@
 // 最小の画面を、この PC の Chrome と Edge で開く：ビルドの印、つながり、2 つ目のタブ、確定の試し、Ed25519 の試験。
-// 結果のスクリーンショットを docs/progress/shots/<走らせた日（日本時間）>/ に残す。前の日の画像は上書きしない。
+// 結果のスクリーンショットを一時のフォルダの moyai-shots/<走らせた日（日本時間）>/ に残す（日誌に残すときは MOYAI_SHOTS_DIR を渡す）。前の日の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -9,7 +9,7 @@ import { expect, test } from "@playwright/test";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 // 確かめるだけの走りでは MOYAI_SHOTS_DIR で一時のフォルダに向ける
-const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `docs/progress/shots/${jst}`;
+const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/moyai-shots/${jst}`;
 
 /** 撮る先。同じ名前がもうあれば、時刻を足した名前にして上書きしない。 */
 function shot(name: string): string {

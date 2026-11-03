@@ -1,7 +1,7 @@
 // 星取表 v0 を、この PC の Chrome と Edge で開く：工場の正解から組んだ架空の計画（試験の道具）を読み、
 // 段で畳む・畳んだ深さを覚える・畳んだ行の明細・出どころ・編集欄（Enter）・共通の設備項目の行・月の表・厚い計画の重さ。
 // 試しの計画は、ビルドの横のファイルの代わりに、試験の中で tests/fixtures/chart/truth-to-plan.mjs から返す。
-// スクリーンショットは docs/progress/shots/<走らせた日（日本時間）>/chart-*.png。前の画像は上書きしない。
+// スクリーンショットは一時のフォルダの moyai-shots/<走らせた日（日本時間）>/（日誌に残すときは MOYAI_SHOTS_DIR=docs/progress/shots/<日付> を渡す）chart-*.png。前の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -11,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `docs/progress/shots/${jst}`;
+const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/moyai-shots/${jst}`;
 
 function shot(name: string): string {
   mkdirSync(SHOTS, { recursive: true });

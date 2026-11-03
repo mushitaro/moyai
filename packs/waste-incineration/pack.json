@@ -2,34 +2,60 @@
   "schema": "moyai.pack/0",
   "id": "waste-incineration",
   "name": "ごみ焼却施設",
+  "version": 1,
+  "group": "A",
+  "verification": {
+    "common": "原典照合済",
+    "shareVocab": "未確認",
+    "national": "原典照合済",
+    "checks": "未実装",
+    "note": "common は表Ⅱ-4 を原本で照らした。shareVocab（universal と implies の当て方）は作る側のセッションが決め、運営者の確認は未確認。national は全国の表を数え直し、出典の起点と照らした（docs/progress/2026-11-03.md）。検査（checks.json）はまだ無い"
+  },
   "sharing": "on",
   "fiscalYearStartMonth": 4,
+  "levelNames": [
+    "設備",
+    "機器",
+    "部位"
+  ],
+  "identityKey": null,
+  "scale": null,
+  "units": {
+    "capacity_t_per_day": "t/日"
+  },
+  "undecided": "identityKey（同一性の鍵の宣言）と scale（判定の尺度）は未実装。取り込みは今、表示の番号と段の道で機器を結ぶ",
   "profile": {
-    "note": "見え方の軸とその順（docs/plan.md §2.8）。主要＝炉の型・処理能力の帯、次＝蒸気タービン・集じん・灰処理、絞り込み＝運営の形。集じんは全国の表に列が無い軸（公開の台帳には出さない）。基幹改良の実施の軸は未実装",
+    "note": "見え方の軸とその順（docs/plan.md §2.8）。主要＝炉の型・処理能力の帯、次＝蒸気タービン・集じん・灰処理、絞り込み＝運営の形。集じんは全国の表に列が無い軸（national: false。公開の台帳には出さない）。基幹改良の実施の軸は未実装",
     "axes": [
       {
         "key": "furnace",
-        "tier": "primary"
+        "tier": "primary",
+        "national": true
       },
       {
         "key": "capacity_t_per_day",
-        "tier": "primary"
+        "tier": "primary",
+        "national": true
       },
       {
         "key": "turbine",
-        "tier": "secondary"
+        "tier": "secondary",
+        "national": true
       },
       {
         "key": "dust",
-        "tier": "secondary"
+        "tier": "secondary",
+        "national": false
       },
       {
         "key": "ash",
-        "tier": "secondary"
+        "tier": "secondary",
+        "national": true
       },
       {
         "key": "contract",
-        "tier": "refine"
+        "tier": "refine",
+        "national": true
       }
     ]
   },

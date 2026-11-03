@@ -67,13 +67,34 @@ async function run(c: Case) {
   };
 }
 
+// 資料 → 正解の種類（名前の頭で推さない。表に無い資料は測っていない）
+const TRUTH_KIND: Record<string, "ledger" | "star" | "daily"> = {
+  "equipment-ledger.xlsx": "ledger",
+  "plan-hoshitori.xlsx": "star",
+  "daily-report.csv": "daily",
+};
+function accuracyOf(f: string, r: Awaited<ReturnType<typeof run>>) {
+  const k = TRUTH_KIND[f];
+  return k === "ledger" ? r.ledger : k === "star" ? r.star : k === "daily" ? r.daily : null;
+}
+
+/** scripts/trend.mjs が読む 1 施設分の形（tests/scripts/trend.test.mjs が同じ形で render を試す） */
+export interface TrendRecord {
+  pack: string;
+  facility: string;
+  files: { file: string; leak: number | null; unresolved: number | null; accuracy: { correct: number; total: number; extra: number } | null }[];
+  asked: number;
+  planMade: boolean;
+  cross: { correct: number; total: number } | null;
+}
+
 function report(c: Case, r: Awaited<ReturnType<typeof run>>) {
   const lines: string[] = [];
   lines.push(`== ${PACK}/${c.facility}`);
   for (const f of c.files) {
     const fc = r.comp.counts.find((x) => x.file === f);
     const one = r.facts[f] ? String(r.facts[f].diffs) : "事実なし（測っていない）";
-    const acc = f.startsWith("equipment") ? r.ledger : f.startsWith("plan") ? r.star : r.daily;
+    const acc = accuracyOf(f, r);
     const two = fc?.unresolvedCells ?? "?";
     const three = acc ? `${pct(acc)}%（${acc.correct}/${acc.total}、余分 ${acc.extra}）` : "計画なし（測れない）";
     lines.push(`${f}：① ${one}／② ${two}／③ ${three}`);
@@ -97,9 +118,9 @@ function report(c: Case, r: Awaited<ReturnType<typeof run>>) {
   // scripts/trend.mjs が読む数（docs/trend.md の物差しの行）。走らせたときだけ書く
   const out = process.env.MOYAI_TREND_OUT;
   if (out) {
-    const files = c.files.map((f) => {
+    const files: TrendRecord["files"] = c.files.map((f) => {
       const fc = r.comp.counts.find((x) => x.file === f);
-      const acc = f.startsWith("equipment") ? r.ledger : f.startsWith("plan") ? r.star : r.daily;
+      const acc = accuracyOf(f, r);
       return {
         file: f,
         leak: r.facts[f] ? r.facts[f].diffs : null,
@@ -108,7 +129,8 @@ function report(c: Case, r: Awaited<ReturnType<typeof run>>) {
       };
     });
     const cross = r.cross && r.cross.total ? { correct: r.cross.correct, total: r.cross.total } : null;
-    appendFileSync(out, JSON.stringify({ pack: PACK, facility: c.facility, files, asked: r.script.asked, planMade: r.plan !== null, cross }) + "\n");
+    const rec: TrendRecord = { pack: PACK, facility: c.facility, files, asked: r.script.asked, planMade: r.plan !== null, cross };
+    appendFileSync(out, JSON.stringify(rec) + "\n");
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "schema": "moyai.share-vocab/0",
   "pack": "waste-incineration",
-  "note": "共有の公開語彙：分類ごとの上の分類・どの施設にもあるか（universal、出典つき）・推せる全国の表の軸の値（implies）。universal は、表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、どの炉型にもある群（余熱利用設備を除く 8 群）だけ。implies は、表Ⅱ-4 で炉型・溶融設備の有無に分かれる項目と蒸気タービン発電設備だけで、全国の表の処理方式の書き方と同じと言えるものに限る（流動床式ガス化炉・キルン式ガス化炉は、全国の表でどの処理方式に書かれるかを照らしていないので推さない）。どちらでもない分類は、写し取りで数えられる上の群まで上がる。",
+  "note": "共有の公開語彙：分類ごとの上の分類・どの施設にもあるか（universal、出典つき）・推せる全国の表の軸の値（implies）。source は推す根拠の表、basis はその読み方。universal は、表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、どの炉型にもある群（余熱利用設備を除く 8 群）だけ。implies は、表Ⅱ-4 で炉型・溶融設備の有無に分かれる項目と蒸気タービン発電設備だけで、全国の表の処理方式の書き方と同じと言えるものに限る（流動床式ガス化炉・キルン式ガス化炉は、全国の表でどの処理方式に書かれるかを照らしていないので推さない）。どちらでもない分類は、写し取りで数えられる上の群まで上がる。",
   "decidedBy": "このリポジトリを作る Claude Code のセッション（2026-11-03）。運営者の確認は未確認",
   "classes": [
     {
@@ -9,7 +9,8 @@
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.RECV.SCALE",
@@ -37,71 +38,79 @@
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.COMB.STK_GRATE",
       "parent": "WI.COMB",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "furnace": "STOKER"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は炉型ごとに分かれた組（ストーカ式・流動床式焼却炉・シャフト式ガス化炉）の中にある。全国の表の処理方式の書き方（ストーカ式（可動）・流動床式・シャフト式）と同じ炉型"
     },
     {
       "code": "WI.COMB.STK_FURNACE",
       "parent": "WI.COMB",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "furnace": "STOKER"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は炉型ごとに分かれた組（ストーカ式・流動床式焼却炉・シャフト式ガス化炉）の中にある。全国の表の処理方式の書き方（ストーカ式（可動）・流動床式・シャフト式）と同じ炉型"
     },
     {
       "code": "WI.COMB.STK_ASHMELT",
       "parent": "WI.COMB",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "furnace": "STOKER",
         "ash": "MELT"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は炉型ごとに分かれた組（ストーカ式・流動床式焼却炉・シャフト式ガス化炉）の中にある。全国の表の処理方式の書き方（ストーカ式（可動）・流動床式・シャフト式）と同じ炉型。表Ⅱ-4 で、この項目は灰出し設備の「溶融設備有り」の組の中にある（灰溶融炉は燃焼設備の中の溶融の炉）。全国の表の灰の処理で、焼却灰か飛灰が溶融"
     },
     {
       "code": "WI.COMB.FBI_PRETREAT",
       "parent": "WI.COMB",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "furnace": "FLUID"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は炉型ごとに分かれた組（ストーカ式・流動床式焼却炉・シャフト式ガス化炉）の中にある。全国の表の処理方式の書き方（ストーカ式（可動）・流動床式・シャフト式）と同じ炉型"
     },
     {
       "code": "WI.COMB.FBI_FURNACE",
       "parent": "WI.COMB",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "furnace": "FLUID"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は炉型ごとに分かれた組（ストーカ式・流動床式焼却炉・シャフト式ガス化炉）の中にある。全国の表の処理方式の書き方（ストーカ式（可動）・流動床式・シャフト式）と同じ炉型"
     },
     {
       "code": "WI.COMB.SHF_MELTER",
       "parent": "WI.COMB",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "furnace": "SHAFT"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は炉型ごとに分かれた組（ストーカ式・流動床式焼却炉・シャフト式ガス化炉）の中にある。全国の表の処理方式の書き方（ストーカ式（可動）・流動床式・シャフト式）と同じ炉型"
     },
     {
       "code": "WI.COMB.SHF_CHAMBER",
       "parent": "WI.COMB",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "furnace": "SHAFT"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は炉型ごとに分かれた組（ストーカ式・流動床式焼却炉・シャフト式ガス化炉）の中にある。全国の表の処理方式の書き方（ストーカ式（可動）・流動床式・シャフト式）と同じ炉型"
     },
     {
       "code": "WI.COMB.KLN_PRETREAT",
@@ -150,7 +159,8 @@
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.COOL.BOILER",
@@ -178,7 +188,8 @@
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.FLUE.DUST",
@@ -219,17 +230,19 @@
       "code": "WI.HEAT.TURBINE",
       "parent": "WI.HEAT",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "turbine": "YES"
-      }
+      },
+      "basis": "表Ⅱ-4 の余熱利用設備の蒸気タービン発電設備。全国の表の余熱利用の状況に「発電」を含む"
     },
     {
       "code": "WI.DRAFT",
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.DRAFT.FDF",
@@ -250,7 +263,8 @@
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.ASHOUT.ASH_CRANE",
@@ -270,44 +284,49 @@
       "code": "WI.ASHOUT.MELT",
       "parent": "WI.ASHOUT",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "ash": "MELT"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は灰出し設備の「溶融設備有り」の組の中にある（灰溶融炉は燃焼設備の中の溶融の炉）。全国の表の灰の処理で、焼却灰か飛灰が溶融"
     },
     {
       "code": "WI.ASHOUT.MELT_FLUE",
       "parent": "WI.ASHOUT",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "ash": "MELT"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は灰出し設備の「溶融設備有り」の組の中にある（灰溶融炉は燃焼設備の中の溶融の炉）。全国の表の灰の処理で、焼却灰か飛灰が溶融"
     },
     {
       "code": "WI.ASHOUT.POST",
       "parent": "WI.ASHOUT",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "ash": "MELT"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は灰出し設備の「溶融設備有り」の組の中にある（灰溶融炉は燃焼設備の中の溶融の炉）。全国の表の灰の処理で、焼却灰か飛灰が溶融"
     },
     {
       "code": "WI.ASHOUT.MELT_FLYASH",
       "parent": "WI.ASHOUT",
       "universal": false,
-      "source": null,
+      "source": "MOE-GLPLE-PROV-R3",
       "implies": {
         "ash": "MELT"
-      }
+      },
+      "basis": "表Ⅱ-4 で、この項目は灰出し設備の「溶融設備有り」の組の中にある（灰溶融炉は燃焼設備の中の溶融の炉）。全国の表の灰の処理で、焼却灰か飛灰が溶融"
     },
     {
       "code": "WI.ELEC",
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.ELEC.SUBSTATION",
@@ -328,7 +347,8 @@
       "parent": null,
       "universal": true,
       "source": "MOE-GLPLE-PROV-R3",
-      "implies": {}
+      "implies": {},
+      "basis": "表Ⅱ-4 がごみ焼却施設の設備の群として挙げ、炉型や溶融設備の有無で分かれない群"
     },
     {
       "code": "WI.INST.DCS",
