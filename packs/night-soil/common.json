@@ -1,0 +1,117 @@
+{
+  "schema": "moyai.common/0",
+  "pack": "night-soil",
+  "source": "MOE-GLPLE-HW-R3",
+  "table": "表Ⅱ-4 主要設備・機器リスト例",
+  "page": { "printed": 27, "pdf": 35 },
+  "verification": "原典照合済",
+  "verifiedBy": "仕事 night-soil-v0 を受けたサンドボックスのエージェント（PDF の 35 枚目を絵にして照らし、文字の層とも比べた）",
+  "verifiedAt": "2026-11-03",
+  "kindNote": "当て方は packs/_kinds/kinds.json の note と同じ。槽は液を溜めるか、液を入れて処理する入れ物なので、働きでタンクに当てる。ホッパは固いものの入れ物なので、タンクに当てない",
+  "hidden": [
+    {
+      "after": "NS.ADV.FLOC_STIRRER",
+      "before": "NS.DEOD.LOW_FAN",
+      "how": "表の中ほどを波線の帯が覆う（省略の印）。帯の中の行は、設備の欄も装置名の欄も見えない",
+      "partlyVisible": 2,
+      "note": "帯の上と下の端で、字の半分だけ見える行が 1 つずつある。名前が読み切れないので項目にしない。帯の下に何行あるか、どの設備に属すかは、絵から読めない（未確認）"
+    }
+  ],
+  "emptyRows": [{ "system": "NS.ELEC", "count": 2, "note": "電気計装設備の装置名の欄の終わりに、空の行が 2 つある。項目にしない" }],
+  "systems": [
+    {
+      "code": "NS.RECV",
+      "name": "受入貯留設備",
+      "items": [
+        { "code": "NS.RECV.WEIGH", "name": "搬入量計量装置", "kind": null, "kindReason": "搬入の量を量る装置。表Ⅱ-4 は量り方を書かず、秤か流量の計器かを 1 つに決められない" },
+        { "code": "NS.RECV.INLET", "name": "受入口", "kind": null, "kindReason": "車からし尿を受ける口の構え。表Ⅱ-4 は中の機器を書かず、20 種のどれにも名前でも働きでも当たらない" },
+        { "code": "NS.RECV.DUMP_TANK", "name": "投入槽", "kind": "KD.TANK" },
+        { "code": "NS.RECV.GRIT_TANK", "name": "沈砂槽", "kind": "KD.TANK" },
+        { "code": "NS.RECV.GRIT_REMOVER", "name": "沈砂除去装置", "kind": null, "kindReason": "沈んだ砂を除く機器の組。表Ⅱ-4 は中の機器を書かず、主な機器を 1 つに決められない" },
+        { "code": "NS.RECV.RECV_TANK", "name": "受入槽", "kind": "KD.TANK" },
+        { "code": "NS.RECV.CRUSHER", "name": "破砕機", "kind": "KD.CRUSHER" },
+        { "code": "NS.RECV.SCREEN", "name": "夾雑物除去装置", "kind": null, "kindReason": "夾雑物をこし分ける機器の組。表Ⅱ-4 は中の機器を書かず、主な機器を 1 つに決められない" },
+        { "code": "NS.RECV.SCREEN_PRESS", "name": "夾雑物脱水装置", "kind": null, "kindReason": "夾雑物の水を絞る機器。20 種に脱水の機器は無い" },
+        { "code": "NS.RECV.SCRN_CONVEYOR", "name": "し渣コンベヤ", "kind": "KD.CONVEYOR" },
+        { "code": "NS.RECV.SCRN_HOPPER", "name": "し渣ホッパ", "kind": null, "kindReason": "し渣を溜めて落とす固いものの入れ物。20 種に固いものの入れ物は無い（タンクは液の入れ物に当てる）" },
+        { "code": "NS.RECV.STORAGE_TANK", "name": "貯留槽", "kind": "KD.TANK" },
+        { "code": "NS.RECV.STORAGE_MIX_PUMP", "name": "貯留槽撹拌ポンプ", "kind": "KD.PUMP" },
+        { "code": "NS.RECV.FEED_PUMP", "name": "投入ポンプ", "kind": "KD.PUMP" }
+      ]
+    },
+    {
+      "code": "NS.MAIN",
+      "name": "主処理設備",
+      "items": [
+        { "code": "NS.MAIN.DILUTION_TANK", "name": "希釈調整槽", "kind": "KD.TANK" },
+        { "code": "NS.MAIN.DENIT_TANK", "name": "脱窒素槽", "kind": "KD.TANK" },
+        { "code": "NS.MAIN.GAS_MIX_BLOWER", "name": "ガス撹拌ブロワ", "kind": "KD.BLOWER" },
+        { "code": "NS.MAIN.NITRIF_TANK", "name": "硝化槽", "kind": "KD.TANK" },
+        { "code": "NS.MAIN.AERATION_BLOWER", "name": "曝気ブロワ", "kind": "KD.BLOWER" },
+        { "code": "NS.MAIN.MECH_AERATOR", "name": "機械曝気装置", "kind": null, "kindReason": "槽の液を機械でかき回して空気を入れる機器。20 種にかき回す機器は無い" },
+        { "code": "NS.MAIN.RECIRC_PUMP", "name": "循環液移送ポンプ", "kind": "KD.PUMP" },
+        { "code": "NS.MAIN.DENIT2_TANK", "name": "二次脱窒素槽", "kind": "KD.TANK" },
+        { "code": "NS.MAIN.REAERATION_TANK", "name": "再曝気槽", "kind": "KD.TANK" },
+        { "code": "NS.MAIN.SETTLING_TANK", "name": "沈殿槽", "kind": "KD.TANK" },
+        { "code": "NS.MAIN.SLUDGE_SCRAPER", "name": "沈殿槽汚泥掻寄機", "kind": null, "kindReason": "槽の底に沈んだ汚泥をかき寄せる機器。20 種にかき寄せる機器は無い" },
+        { "code": "NS.MAIN.SCUM_TANK", "name": "スカム槽", "kind": "KD.TANK" },
+        { "code": "NS.MAIN.SCUM_PUMP", "name": "スカム移送ポンプ", "kind": "KD.PUMP" },
+        { "code": "NS.MAIN.RETURN_PUMP", "name": "返送汚泥ポンプ", "kind": "KD.PUMP" },
+        { "code": "NS.MAIN.EXCESS_PUMP", "name": "余剰汚泥ポンプ", "kind": "KD.PUMP" }
+      ]
+    },
+    {
+      "code": "NS.ADV",
+      "name": "高度処理設備",
+      "items": [
+        { "code": "NS.ADV.MIX_TANK", "name": "混和槽", "kind": "KD.TANK" },
+        { "code": "NS.ADV.MIX_STIRRER", "name": "混和槽撹拌機", "kind": null, "kindReason": "槽の液をかき回す機器。20 種にかき回す機器は無い" },
+        { "code": "NS.ADV.FLOC_TANK", "name": "凝集槽", "kind": "KD.TANK" },
+        { "code": "NS.ADV.FLOC_STIRRER", "name": "凝集槽撹拌機", "kind": null, "kindReason": "槽の液をかき回す機器。20 種にかき回す機器は無い" }
+      ]
+    },
+    {
+      "code": "NS.DEOD",
+      "name": "脱臭設備",
+      "items": [
+        { "code": "NS.DEOD.LOW_FAN", "name": "低濃度臭気ファン", "kind": "KD.BLOWER" },
+        { "code": "NS.DEOD.LOW_CARBON", "name": "低濃度活性炭脱臭塔", "kind": null, "kindReason": "活性炭に臭気を通して除く塔。臭気を除く機器の組で、主な機器が 20 種に無い" },
+        { "code": "NS.DEOD.STACK", "name": "臭突", "kind": null, "kindReason": "除いた後の気体を高い所から出す筒。20 種に筒の種類は無い" }
+      ]
+    },
+    {
+      "code": "NS.WATER",
+      "name": "給水設備",
+      "items": [
+        { "code": "NS.WATER.INTAKE_PUMP", "name": "取水ポンプ", "kind": "KD.PUMP" },
+        { "code": "NS.WATER.RECV_TANK", "name": "受水槽", "kind": "KD.TANK" },
+        { "code": "NS.WATER.PLANT_PUMP", "name": "プラント用水ポンプ", "kind": "KD.PUMP" },
+        { "code": "NS.WATER.MISC_PUMP", "name": "雑用水ポンプ", "kind": "KD.PUMP" }
+      ]
+    },
+    {
+      "code": "NS.PIPE",
+      "name": "配管設備",
+      "note": "表Ⅱ-4 では設備の欄だけの行で、装置名の欄が無い。設備をそのまま 1 つの項目にした",
+      "items": [{ "code": "NS.PIPE.PIPING", "name": "配管設備", "kind": "KD.PIPING" }]
+    },
+    {
+      "code": "NS.DUCT",
+      "name": "ダクト設備",
+      "note": "表Ⅱ-4 では設備の欄だけの行で、装置名の欄が無い。設備をそのまま 1 つの項目にした",
+      "items": [
+        { "code": "NS.DUCT.DUCT", "name": "ダクト設備", "kind": null, "kindReason": "空気と臭気を送る風道。20 種に風道は無い。表Ⅱ-4 は配管設備と別の行に置くので、配管に寄せない" }
+      ]
+    },
+    {
+      "code": "NS.ELEC",
+      "name": "電気計装設備",
+      "items": [
+        { "code": "NS.ELEC.SUBSTATION", "name": "受変電設備", "kind": "KD.SUBSTATION" },
+        { "code": "NS.ELEC.POWER", "name": "動力設備", "kind": null, "kindReason": "機器を動かす電気の設備の組。表Ⅱ-4 は中の機器を書かず、盤か電動機かを 1 つに決められない" },
+        { "code": "NS.ELEC.INSTRUMENT", "name": "計装設備", "kind": "KD.INSTRUMENT" },
+        { "code": "NS.ELEC.EMERG_GEN", "name": "非常用発電機", "kind": "KD.GENERATOR" }
+      ]
+    }
+  ]
+}
