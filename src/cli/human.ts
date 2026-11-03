@@ -6,7 +6,6 @@
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。合言葉は画面に出さない。
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
-import { createInterface } from "node:readline";
 import { readRings, readWrappedKey } from "../bridge/places";
 import { resolveStateDir } from "../bridge/state";
 import { reasonText } from "../app/text/reasons";
@@ -34,12 +33,13 @@ export const CLI_TEXT = {
   summaryOk: "すべて ✓ です。",
   summaryNg: (n: number) => `✗ が ${n} 件あります。`,
   keysUsage: "使い方：moyai keys create --root <輪のフォルダ（絶対の道）> --pack <パック ID>",
-  passphrase: "合言葉（8 文字以上。画面には出ません）：",
+  passphrase: "合言葉（8 文字以上。打った文字は画面に出ません。打ち終えたら Enter）：",
   passphraseAgain: "もう一度：",
   passphraseShort: `合言葉は ${PASSPHRASE_MIN} 文字以上にしてください。`,
   passphraseMismatch: "2 回の合言葉が違います。作りませんでした。",
   created: (ringId: string, fp: string, dir: string) => `輪 ${ringId} を作りました：${dir}\n自分の鍵の指紋：${fp}（仲間と電話で読み合わせてください）`,
   createFailed: (r: string) => `作れませんでした（${r}）`,
+  cancelled: "やめました。何も書いていません。",
   sendNotHere: "束を送るのは、作業画面の検問所からです（端末から送るのは未実装）。",
 };
 
@@ -131,19 +131,51 @@ export async function verifyRingCli(argv: string[], o: { packsDir?: string; stat
   return ng === 0 ? 0 : 1;
 }
 
-/** 合言葉を、画面に出さずに 1 行読む。 */
-export function askHidden(prompt: string): Promise<string> {
+/** askHidden が読む端末の形（試験では偽の端末を渡す） */
+export interface HiddenIO {
+  input: NodeJS.EventEmitter & { isRaw?: boolean; setRawMode?: (on: boolean) => unknown; setEncoding(e: BufferEncoding): unknown; resume(): unknown; pause(): unknown };
+  output: { write(s: string): unknown };
+}
+
+/**
+ * 合言葉を、画面に出さずに 1 行読む。Ctrl+C か、空のときの Ctrl+D なら null（やめた）。
+ * readline は使わない（端末の行を描き直すときに問いの文字まで消すので、問いが見えず止まったように見えた）。
+ * 端末を生のモードにして、Enter・Backspace・Ctrl+C を自分で読む。矢印などのエスケープの並びは捨てる。
+ */
+export function askHidden(prompt: string, io: HiddenIO = { input: process.stdin, output: process.stderr }): Promise<string | null> {
   return new Promise((res) => {
-    const out = process.stderr;
-    const rl = createInterface({ input: process.stdin, output: out, terminal: true });
-    const w = rl as unknown as { _writeToOutput?: (s: string) => void };
-    out.write(prompt);
-    w._writeToOutput = () => {};
-    rl.question("", (a) => {
-      rl.close();
-      out.write("\n");
-      res(a);
-    });
+    const { input, output } = io;
+    const wasRaw = input.isRaw === true;
+    let buf: string[] = [];
+    const finish = (v: string | null) => {
+      input.off("data", onData);
+      input.setRawMode?.(wasRaw);
+      input.pause();
+      output.write("\n");
+      res(v);
+    };
+    const onData = (chunk: string | Buffer) => {
+      for (const ch of String(chunk)) {
+        if (ch === "\r" || ch === "\n") return finish(buf.join(""));
+        if (ch === "\u0003") return finish(null);
+        if (ch === "\u0004") {
+          if (buf.length === 0) return finish(null);
+          continue;
+        }
+        if (ch === "\u007f" || ch === "\b") {
+          buf = buf.slice(0, -1);
+          continue;
+        }
+        if (ch === "\u001b") break;
+        if (ch < " ") continue;
+        buf.push(ch);
+      }
+    };
+    output.write(prompt);
+    input.setRawMode?.(true);
+    input.setEncoding("utf8");
+    input.on("data", onData);
+    input.resume();
   });
 }
 
@@ -168,11 +200,19 @@ export async function keysCli(argv: string[], o: { stdin?: { isTTY?: boolean } }
     return 1;
   }
   const a = await askHidden(CLI_TEXT.passphrase);
+  if (a === null) {
+    say(CLI_TEXT.cancelled);
+    return 130;
+  }
   if (a.length < PASSPHRASE_MIN) {
     say(CLI_TEXT.passphraseShort);
     return 1;
   }
   const b = await askHidden(CLI_TEXT.passphraseAgain);
+  if (b === null) {
+    say(CLI_TEXT.cancelled);
+    return 130;
+  }
   if (a !== b) {
     say(CLI_TEXT.passphraseMismatch);
     return 1;

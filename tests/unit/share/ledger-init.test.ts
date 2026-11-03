@@ -62,6 +62,13 @@ describe("ledger init（人だけのコマンド）", () => {
     const tty = { isTTY: true };
     expect(await initCli(["--root", root, "--pack", "waste-incineration"], { stdin: tty, ask: answers([PASS, "違う合言葉 です です"]), stateDir: state })).toBe(1);
     expect(existsSync(join(root, "ledger"))).toBe(false);
+    const cancelAt = (n: number) => {
+      let i = 0;
+      return async () => (i++ < n ? PASS : null);
+    };
+    expect(await initCli(["--root", root, "--pack", "waste-incineration"], { stdin: tty, ask: cancelAt(0), stateDir: state })).toBe(130);
+    expect(await initCli(["--root", root, "--pack", "waste-incineration"], { stdin: tty, ask: cancelAt(1), stateDir: state })).toBe(130);
+    expect(existsSync(join(root, "ledger"))).toBe(false);
     expect(await initCli(["--root", "相対の道", "--pack", "waste-incineration"], { stdin: tty, ask: answers([PASS, PASS]), stateDir: state })).toBe(2);
     expect(await initCli(["--root", root, "--pack", "waste-incineration", "--month", "2026-11"], { stdin: tty, ask: answers([PASS, PASS]), stateDir: state })).toBe(0);
     expect(existsSync(join(root, "ledger", "ledger.json"))).toBe(true);
