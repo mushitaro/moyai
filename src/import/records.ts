@@ -735,6 +735,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const bareCells: string[] = [];
   const badEffort = new Map<string, string[]>();
   const spellings = new Map<string, string[]>();
+  /** 系列の欄の、読めない書き方 → その行（書き方ごとに聞く） */
+  const unitBadEv = new Map<string, { row: number; ref: string }[]>();
   const badDates = new Map<string, string[]>();
   const evs: (EventRec & { _hours: number | null; _persons: number | null; _bare: number | null })[] = [];
   for (const r of data) {
@@ -766,6 +768,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     }
     const uc = unitCol ? lay.index.at(r.r, unitCol.c) : null;
     const unit = uc ? parseUnit(uc.text) : null;
+    if (uc && uc.text !== "" && !unit) unitBadEv.set(nfkc(uc.text).trim(), [...(unitBadEv.get(nfkc(uc.text).trim()) ?? []), { row: r.r, ref: uc.ref }]);
     if (unit?.kind === "number") spellings.set(unit.spelling, [...(spellings.get(unit.spelling) ?? []), uc?.ref ?? ""]);
     const assetText = text(r.r, assetCol);
     const stripped = cue.stripSet(assetText);
@@ -790,7 +793,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       remark: remarkCols.map((c) => text(r.r, c)).filter(Boolean).join(" / ") || null,
       refs,
       excluded: null,
-      pending: !date || !workName || (uc !== null && uc.text !== "" && !unit),
+      pending: !date || !workName,
       _hours: hours,
       _persons: persons,
       _bare: bare,
@@ -865,6 +868,25 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     });
     if (a === "exclude")
       for (const e of evs) if (refs.some((ref) => e.refs.includes(ref))) e.excluded = "日付として読めない行（決定で外した）";
+  }
+  // 系列の欄の、号・系列として読めない書き方（書き方ごとに 1 回聞く。答えるまで、その行は未解決）
+  for (const [text, cells] of unitBadEv) {
+    const a = ask.ask(`unitUnknownEv|${t.id}|${text}`, {
+      kind: "unitMissing",
+      text: `「${unitCol?.header ?? "号"}」の列の「${text}」（${cells.length} 行）は、号・系列として読めない`,
+      options: [{ id: "none", label: "号・系列なしとして読む" }, { id: "exclude", label: "この行を外す" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: cells.length,
+      items: [itemOf(lay, cells.slice(0, 10).map((c) => c.ref))],
+    });
+    const rows = new Set(cells.map((c) => c.row));
+    for (const e of evs) {
+      if (!rows.has(e.row)) continue;
+      if (a === "none") e.unit = null;
+      else if (a === "exclude") e.excluded = "号・系列として読めない行（決定で外した）";
+      else e.pending = true;
+    }
   }
   let spellOk: string | null = "yes";
   if (spellings.size > 1) {

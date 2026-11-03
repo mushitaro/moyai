@@ -39,7 +39,8 @@
   },
   "unit": {
     "numberPrefix": ["No.", "No", "NO.", "№", "#"],
-    "numberMark": ["号"]
+    "numberMark": ["号"],
+    "ordinalPrefix": ["第"]
   },
   "commonMeanings": [
     { "id": "parts", "label": "系統に共通の部品" },

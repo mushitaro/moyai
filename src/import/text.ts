@@ -14,9 +14,11 @@ const UNIT_PREFIX = CUES.unit.numberPrefix.map((p) => escapeRe(nfkc(p))).join("|
 const UNIT_MARK = CUES.unit.numberMark.map((p) => escapeRe(nfkc(p))).join("|");
 const RE_UNIT_PREFIX = new RegExp(`^(?:${UNIT_PREFIX})\\s*(\\d{1,3})\\s*(\\p{Script=Han}{0,2})$`, "u");
 const RE_UNIT_MARK = new RegExp(`^(\\d{1,3})\\s*(?:${UNIT_MARK})\\s*(\\p{Script=Han}{0,2})$`, "u");
-const RE_UNIT_HAN = /^(\d{1,3})(\p{Script=Han})$/u;
+const UNIT_ORDINAL = CUES.unit.ordinalPrefix.map((p) => escapeRe(nfkc(p))).join("|");
+// 「{数}{字}」（字は 2 つまで。「1系」「1系列」）。頭に順の字があってもよい（「第1系列」）
+const RE_UNIT_HAN = new RegExp(`^(${UNIT_ORDINAL})?(\\d{1,3})(\\p{Script=Han}{1,2})$`, "u");
 
-/** 号・系列の書き方を読む：「{数}号{字}」「No.{数}{字}」「{数}{字}」・共通・〃（数は全角でもよい）。数の書き方の形（spelling）も返す */
+/** 号・系列の書き方を読む：「{数}号{字}」「No.{数}{字}」「{数}{字}」「第{数}{字}」・共通・〃（数は全角でもよい）。数の書き方の形（spelling）も返す */
 export function parseUnit(text: string): UnitValue | null {
   const s = nfkc(text).replace(/\s+/g, "");
   if (!s) return null;
@@ -27,7 +29,7 @@ export function parseUnit(text: string): UnitValue | null {
   m = RE_UNIT_MARK.exec(s);
   if (m) return { kind: "number", n: Number(m[1]), spelling: `{n}号${m[2] ?? ""}` };
   m = RE_UNIT_HAN.exec(s);
-  if (m) return { kind: "number", n: Number(m[1]), spelling: `{n}${m[2] ?? ""}` };
+  if (m) return { kind: "number", n: Number(m[2]), spelling: `${m[1] ?? ""}{n}${m[3] ?? ""}` };
   return null;
 }
 

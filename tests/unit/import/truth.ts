@@ -171,8 +171,13 @@ export function answer(q: QuestionState, t: Truth, ents: Entities): string | nul
       const it = q.items[0];
       if (!it) return null;
       const a = ents.of(it.file, it.cells[0] ?? "");
-      if (it.target?.length) return a !== null && a === targetEntity(it) ? "c0" : "none";
-      // 選択肢から選ぶ形（名前の同じ候補がいくつか）：試験の台本は選択肢の出どころを持たないので答えない
+      if (a === null) return null;
+      // 候補がいくつか：items の i 番目が選択肢 c{i} の候補（この行と、候補の出どころのセル）
+      if (q.options.some((o) => o.id === "c1")) {
+        const i = q.items.findIndex((x) => targetEntity(x) === a);
+        return i >= 0 && q.options.some((o) => o.id === `c${i}`) ? `c${i}` : "none";
+      }
+      if (it.target?.length) return a === targetEntity(it) ? "c0" : "none";
       return null;
     }
     case "assetUnmatched": {

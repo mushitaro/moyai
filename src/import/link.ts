@@ -63,6 +63,21 @@ export interface Linked {
 const numberOf = (c: { series: Series | null; tagNumber: number | null }): number | null =>
   c.series?.kind === "number" ? c.series.n : c.tagNumber;
 
+/**
+ * 候補の機器の選択肢の文。名前と番号だけでは同じ文になることがある（番号の無い台帳で、系列ごとに同じ名前の機器）ので、
+ * 見分けに使える系列・仕様の最初の行・出どころのセルを添える（人が台帳を見なくても選べるように）。
+ */
+function candidateLabel(c: Cluster): string {
+  const head = `${c.name}${c.tag ? `（${c.tag}）` : ""}`;
+  const r = c.recs[0];
+  const parts: string[] = [];
+  if (c.series) parts.push(c.series.kind === "number" ? `系列 ${c.series.n}` : `共通${c.series.meaning ? `（${c.series.meaning}）` : ""}`);
+  const spec = r?.specs.find((s) => s.value.trim() !== "")?.value.split(/\r?\n/).find((x) => x.trim() !== "");
+  if (spec) parts.push(spec.trim().slice(0, 30));
+  if (r) parts.push(`${r.file}${r.sheet ? ` ${r.sheet}` : ""} ${r.nameRef}`);
+  return parts.length ? `${head}：${parts.join("・")}` : head;
+}
+
 function itemOfRec(r: AssetRec, target?: Cluster): QuestionItem {
   return {
     file: r.file,
@@ -203,11 +218,12 @@ export function link(rec: Records, ask: Asker): Linked {
           const a = ask.ask(key, {
             kind: "assetLinkOne",
             text: `「${p.r.name}」に当たる機器が先の資料に ${p.options.length} つある。どれと同じ機器か`,
-            options: [...p.options.map((c, i) => ({ id: `c${i}`, label: `${c.name}${c.tag ? `（${c.tag}）` : ""}` })), { id: "none", label: "どれとも違う（別の機器）" }],
+            options: [...p.options.map((c, i) => ({ id: `c${i}`, label: candidateLabel(c) })), { id: "none", label: "どれとも違う（別の機器）" }],
             valueKind: "option",
             defaultAnswer: null,
             sameShapeRows: 1,
-            items: [itemOfRec(p.r)],
+            // 候補ごとに 1 つ（i 番目が選択肢 c{i}）：この行と、その候補の出どころのセル
+            items: p.options.map((c) => itemOfRec(p.r, c)),
           });
           if (a && a.startsWith("c")) {
             const c = p.options[Number(a.slice(1))];
