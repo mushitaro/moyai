@@ -17,7 +17,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `crosswalk_propose` | 案を置く | 動く | 資産の節を共通の設備項目の 1 段目に（set.field は assetNode.commonItem、値は intake_survey の crosswalk.items のコード）、作業を作業の属性に（set.field は work.attribute、値は INSPECT・OVERHAUL・REPLACE・UPGRADE）当てる規則を案として置く。 | 30 秒、送り直さない（来なければ「結果不明」） |
 | `chart_rows` | 読む | 動く | 星取表の行の一部を読む。 | 20 秒、1 回だけ送り直す |
 | `chart_propose` | 案を置く | 未実装 | 規則で星取表の変更の案を置く。 | 30 秒、送り直さない（来なければ「結果不明」） |
-| `check_results` | 読む | 未実装 | 検査ごとの結果（met・notMet・notApplicable）、根拠の数字、例 10 件まで、出典、水準、確かめた度合いを読む。 | 20 秒、1 回だけ送り直す |
+| `check_results` | 読む | 動く | 作業中の計画に、パックの検査を、作業画面の基準日で走らせた結果を読む（読むだけ。 | 20 秒、1 回だけ送り直す |
 | `note_for_human` | 案を置く | 未実装 | 確定・昇格・送るの前に人に見てほしいことをメモに置く。 | 30 秒、送り直さない（来なければ「結果不明」） |
 | `share_preview` | 読む | 未実装 | 共有の束に写す数、写さなかった理由ごとの数、k の段を読む。 | 20 秒、1 回だけ送り直す |
 | `peer_reference` | 読む | 未実装 | 仲間の束から、下限を守った集計と匿名の札だけを読む。 | 20 秒、1 回だけ送り直す |
