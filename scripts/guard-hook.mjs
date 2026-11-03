@@ -7,14 +7,21 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const LOOPBACK = /(\b127(?:\.\d{1,3}){3}\b|\blocalhost\b|\[::1\]|(?<![\w:])::1(?![\w:])|\b0\.0\.0\.0\b)/i;
+// 127 の短い書き方（127.1）・10 進（2130706433 から）・16 進（0x7f000001）・IPv6 の写し（::ffff:127.0.0.1）も含める
+const LOOPBACK =
+  /(\b127(?:\.\d{1,3}){1,3}\b|\blocalhost\b|\[::1\]|(?<![\w:])::1(?![\w:])|\b0\.0\.0\.0\b|\b0x7f[0-9a-f]{6}\b|\b21307064\d\d\b|::ffff:127\.)/i;
 const HTTP_CLIENT =
-  /(\bcurl\b|\bwget\b|\bInvoke-WebRequest\b|\bInvoke-RestMethod\b|\biwr\b|\birm\b|\bhttpie\b|\bhttp\s+(?:get|post|put)\b|\bfetch\s*\(|\bNet\.WebClient\b|\bHttpClient\b|\bXMLHttpRequest\b|\baxios\b|\bundici\b|\bhttp\.request\b|\bhttp\.get\b|\bnc\b|\bncat\b|\btelnet\b|\bwebsocat\b|\bWebSocket\s*\()/i;
+  /(\bcurl\b|\bwget\b|\bInvoke-WebRequest\b|\bInvoke-RestMethod\b|\biwr\b|\birm\b|\bhttpie\b|\bhttp\s+(?:get|post|put)\b|\bfetch\s*\(|\bNet\.WebClient\b|\bHttpClient\b|\bXMLHttpRequest\b|\baxios\b|\bundici\b|\bhttp\.request\b|\bhttp\.get\b|\bnc\b|\bncat\b|\btelnet\b|\bwebsocat\b|\bWebSocket\s*\(|\burllib\b|\brequests\.|\bhttp\.client\b|\bhttpx\b|\baiohttp\b|\bNet\.Sockets\b|\bTcpClient\b|\bsocket\.(?:create_connection|socket)\b|\bnet\.connect\b|\bTest-NetConnection\b)/i;
 const PREVIOUS_PRODUCT = /(mxstage|hoshutaro)/i;
 const FETCH_VERB =
-  /(\bclone\b|\bfetch\b|\bpull\b|\bsubmodule\b|\binstall\b|\bnpm\s+i\b|\bnpm\s+view\b|\bnpx\b|\bpnpm\b|\byarn\b|\bcurl\b|\bwget\b|\biwr\b|\birm\b|\bInvoke-WebRequest\b|\bInvoke-RestMethod\b|\bgh\s+(?:api|repo|release)\b|\bdownload\b)/i;
-const HUMAN_ONLY_CLI =
-  /(?:cli\.(?:m?js|ts)|\bmoyai)\s+(?:ledger\s+submit|keys?\s+(?:create|new|unwrap)|send|confirm|promote|accept-rules)\b/i;
+  /(\bclone\b|\bfetch\b|\bpull\b|\bsubmodule\b|\binstall\b|\bnpm\s+i\b|\bnpm\s+view\b|\bnpx\b|\bpnpm\b|\byarn\b|\bcurl\b|\bwget\b|\biwr\b|\birm\b|\bInvoke-WebRequest\b|\bInvoke-RestMethod\b|\bgh\s+(?:api|repo|release)\b|\bdownload\b|\bls-remote\b|\barchive\b|\bsvn\b)/i;
+// MOYAI の CLI を呼ぶ形（node dist/cli.js、npm run cli、moyai）のあと、同じコマンドの中（; & | 改行の手前）に
+// 人だけの動詞が来たら当てる。間に別の引数があっても当てる。フォルダ名の Moyai だけでは当てない。
+const HUMAN_ONLY_VERBS = String.raw`(?:ledger\s+submit|keys?\s+(?:create|new|unwrap)|send|confirm|promote|accept-rules)\b`;
+const HUMAN_ONLY_CLI = new RegExp(
+  String.raw`(?:cli\.(?:m?js|ts)\b|\bnpm\s+run\s+cli\b|(?:^|[\s;&|(])moyai(?:\.cmd|\.exe)?\s)[^;&|\n]*?\b` + HUMAN_ONLY_VERBS,
+  "i",
+);
 const WRITE_VERB =
   /(>>?|\bcp\b|\bmv\b|\brm\b|\bdel\b|\btee\b|\btouch\b|\bmkdir\b|\bCopy-Item\b|\bMove-Item\b|\bRemove-Item\b|\bSet-Content\b|\bAdd-Content\b|\bOut-File\b|\bNew-Item\b|\brobocopy\b|\bxcopy\b|\brename\b|\bren\b|writeFile|appendFile)/i;
 const PREVIOUS_PRODUCT_URL = [
@@ -22,11 +29,18 @@ const PREVIOUS_PRODUCT_URL = [
   /^https?:\/\/(?:www\.)?github\.com\/woodygaragelab\/hoshutaro(?:\/|$|\.git)/i,
   /^https?:\/\/raw\.githubusercontent\.com\/(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
   /^https?:\/\/(?:[\w-]+\.)*mxstage\.tsunagi\.app(?:\/|$)/i,
+  /^https?:\/\/api\.github\.com\/(?:repos\/)?(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
+  /^https?:\/\/codeload\.github\.com\/(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
+  /^https?:\/\/(?:www\.)?npmjs\.(?:com|org)\/package\/\S*(?:mxstage|hoshutaro)/i,
+  /^https?:\/\/registry\.npmjs\.org\/\S*(?:mxstage|hoshutaro)/i,
 ];
 
-/** 文字列の中のパスを比べやすい形にする（小文字、/ 区切り）。 */
+/** 文字列の中のパスを比べやすい形にする（小文字、/ 区切り、Git Bash の /d/ を d:/ に）。 */
 function norm(s) {
-  return String(s ?? "").replace(/\\/g, "/").toLowerCase();
+  return String(s ?? "")
+    .replace(/\\/g, "/")
+    .toLowerCase()
+    .replace(/(^|[\s"'=(])\/([a-z])\//g, "$1$2:/");
 }
 
 /** 状態フォルダの候補（環境変数の書き方も含む）。 */
@@ -142,22 +156,22 @@ async function main() {
   try {
     input = JSON.parse(raw);
   } catch {
-    // 入力が読めないときは通す（deny の設定が二重目の守り）。黙らずに標準エラーへ出す。
-    process.stderr.write("guard-hook: 入力を読めなかったので判定していません\n");
+    // 判定できないときは止める（壊れたときに開く守りにしない）。
+    writeDeny("MOYAI の見張り：入力を読めず、判定できなかったので止めました。");
     return;
   }
   const r = decide(input);
-  if (r.deny) {
-    process.stdout.write(
-      JSON.stringify({
-        hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: r.reason },
-      }),
-    );
-  }
+  if (r.deny) writeDeny(r.reason);
+}
+
+function writeDeny(reason) {
+  process.stdout.write(
+    JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reason } }),
+  );
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
-  main().catch((e) => {
-    process.stderr.write(`guard-hook: ${e?.message ?? e}\n`);
+  main().catch(() => {
+    writeDeny("MOYAI の見張り：判定の途中で誤りが起きたので止めました。");
   });
 }

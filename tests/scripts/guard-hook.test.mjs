@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { decide } from "../../scripts/guard-hook.mjs";
 
 const env = { LOCALAPPDATA: "C:\\Users\\u\\AppData\\Local" };
@@ -34,6 +35,18 @@ const blocked = [
   ["Bash", { command: "node dist/cli.js ledger submit ./bundle.json" }],
   ["Bash", { command: "node dist/cli.js keys create --circle c_ab" }],
   ["PowerShell", { command: "moyai send --to ring" }],
+  // 監査の指摘（2026-11-03）で足した、すり抜けの書き方
+  ["Bash", { command: "curl http://127.1:43110/api/confirm" }],
+  ["Bash", { command: "curl http://2130706433:43110/" }],
+  ["Bash", { command: "curl http://0x7f000001:43110/" }],
+  ["Bash", { command: `python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:43110')"` }],
+  ["Bash", { command: `python -c "import requests; requests.post('http://localhost:43110/api/send')"` }],
+  ["Bash", { command: "git ls-remote https://github.com/mxstage/mxstage" }],
+  ["WebFetch", { url: "https://api.github.com/repos/mxstage/mxstage/contents", prompt: "x" }],
+  ["WebFetch", { url: "https://codeload.github.com/woodygaragelab/hoshutaro/zip/main", prompt: "x" }],
+  ["Bash", { command: "node dist/cli.js --port 1 ledger submit ./b.json" }],
+  ["Bash", { command: "npm run cli -- ledger submit ./b.json" }],
+  ["Bash", { command: "cp b.json /d/share/moyai-ring/c_ab/bundles/k1/" }],
 ];
 
 const allowed = [
@@ -50,6 +63,9 @@ const allowed = [
   ["WebFetch", { url: "https://github.com/modelcontextprotocol/typescript-sdk", prompt: "x" }],
   ["WebFetch", { url: "https://laws.e-gov.go.jp/api/2/law_data/346M50000100035", prompt: "x" }],
   ["Glob", { pattern: "src/**/*.ts" }],
+  // フォルダ名の Moyai と、コミットの文の中の send・confirm では止めない
+  ["Bash", { command: 'cd /c/Users/kazuh/Moyai && git commit -m "confirm the send path"' }],
+  ["PowerShell", { command: "Set-Location C:\\Users\\u\\Moyai; npm test" }],
 ];
 
 for (const [tool, input] of blocked) {
@@ -66,6 +82,25 @@ for (const [tool, input] of allowed) {
   });
 }
 
-test("読めない入力では止めない（deny の設定が二重目）", () => {
+test("ツールの名前が無い入力は判定の対象外", () => {
   assert.deepEqual(decide({}, { env, rings }), { deny: false });
+});
+
+test("フックは読めない入力を止める（壊れたときに開かない）", () => {
+  const r = spawnSync(process.execPath, ["scripts/guard-hook.mjs"], { input: "{not json", encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.hookSpecificOutput.permissionDecision, "deny");
+});
+
+test("フックは止める呼び出しで deny を出し、通す呼び出しでは何も出さない", () => {
+  const deny = spawnSync(process.execPath, ["scripts/guard-hook.mjs"], {
+    input: JSON.stringify({ tool_name: "Bash", tool_input: { command: "curl http://127.0.0.1:43110/" } }),
+    encoding: "utf8",
+  });
+  assert.equal(JSON.parse(deny.stdout).hookSpecificOutput.permissionDecision, "deny");
+  const allow = spawnSync(process.execPath, ["scripts/guard-hook.mjs"], {
+    input: JSON.stringify({ tool_name: "Bash", tool_input: { command: "npm test" } }),
+    encoding: "utf8",
+  });
+  assert.equal(allow.stdout, "");
 });

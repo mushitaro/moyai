@@ -34,6 +34,19 @@ test("結果の型は重さを 3 つに閉じる", () => {
   assert.equal(bad.success, false);
 });
 
+test("結果があるときも、要約にモデルの識別子を書かない", () => {
+  const result = { summary: "要約", findings: [{ severity: "minor", file: "a.ts", line: 3, rule: "AGENTS.md", problem: "p", fix: "f" }], unchecked: ["u"] };
+  const md = renderMarkdown({ role: "audit", base: "a".repeat(40), head: "b".repeat(40), result, skipped: [], usage: { input_tokens: 1 }, cost: 0.1, stopReason: "end_turn" });
+  assert.doesNotMatch(md, /claude-|opus|sonnet|haiku|fable/i);
+  assert.match(md, /指摘 1 件/);
+});
+
+test("値段が分からないときは費用を $0 と書かない", () => {
+  const md = renderMarkdown({ role: "audit", base: "a".repeat(40), head: "b".repeat(40), result: null, skipped: [], usage: { input_tokens: 1 }, cost: null, stopReason: "x" });
+  assert.match(md, /計れない/);
+  assert.doesNotMatch(md, /\$0\.0000/);
+});
+
 test("要約にはモデルの識別子を書かず、受け取れなかったときはそう書く", () => {
   const md = renderMarkdown({ role: "audit", base: "a".repeat(40), head: "b".repeat(40), result: null, skipped: [], usage: {}, cost: 0, stopReason: "refusal" });
   assert.match(md, /受け取れませんでした/);

@@ -96,7 +96,7 @@ export function renderMarkdown({ role, base, head, result, skipped, usage, cost,
   }
   lines.push("");
   lines.push(
-    `使ったトークン：入力 ${usage.input_tokens ?? 0}・キャッシュ読み ${usage.cache_read_input_tokens ?? 0}・キャッシュ書き ${usage.cache_creation_input_tokens ?? 0}・出力 ${usage.output_tokens ?? 0}。費用の見込み $${cost.toFixed(4)}`,
+    `使ったトークン：入力 ${usage.input_tokens ?? 0}・キャッシュ読み ${usage.cache_read_input_tokens ?? 0}・キャッシュ書き ${usage.cache_creation_input_tokens ?? 0}・出力 ${usage.output_tokens ?? 0}。費用の見込み ${cost === null ? "計れない（値段の表に無い）" : `$${cost.toFixed(4)}`}`,
   );
   return lines.join("\n");
 }

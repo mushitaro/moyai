@@ -1,0 +1,10 @@
+{
+  "schema": "moyai.work/0",
+  "note": "作業の属性の既定の名前。コードは 4 つのコードだけを持ち、画面に出す名前はここから読む。業種のパックは common.json の work で言い換えられる",
+  "work": {
+    "INSPECT": { "label": "点検" },
+    "OVERHAUL": { "label": "分解整備" },
+    "REPLACE": { "label": "更新" },
+    "UPGRADE": { "label": "基幹改良" }
+  }
+}

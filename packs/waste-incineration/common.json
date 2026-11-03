@@ -135,11 +135,5 @@
       "name": "計装設備",
       "items": [{ "code": "WI.INST.DCS", "name": "DCS" }]
     }
-  ],
-  "work": {
-    "INSPECT": { "label": "点検" },
-    "OVERHAUL": { "label": "分解整備" },
-    "REPLACE": { "label": "更新" },
-    "UPGRADE": { "label": "基幹改良" }
-  }
+  ]
 }

@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { AuditResult, costUsd, planDiff, renderMarkdown } from "./lib.mjs";
+import { appendLedger, budgetCheck, loadLedger } from "../api-spend.mjs";
 
 const ROLE = "audit";
 const config = JSON.parse(readFileSync("config/models.json", "utf8"));
@@ -47,8 +48,14 @@ let usage = {};
 let stopReason = "";
 let failed = false;
 
+// 呼ぶ前に、費用の配分を確かめる（1 回の見込みは $2 として見る）
+const gate = budgetCheck(config.budgetUsd, loadLedger().rows, ROLE, 2);
+
 if (included.length === 0) {
   stopReason = "監査に入れる差分が無い";
+} else if (gate.stop) {
+  failed = true;
+  stopReason = gate.reason;
 } else {
   const client = new Anthropic({ timeout: 15 * 60 * 1000, maxRetries: 1 });
   try {
@@ -73,7 +80,15 @@ if (included.length === 0) {
   }
 }
 
-const cost = price ? costUsd(usage, price) : 0;
+// 値段が分からないときは $0 と書かず、計れないことを出す
+const called = Object.keys(usage).length > 0;
+const cost = called && price ? costUsd(usage, price) : called ? null : 0;
+if (called) {
+  // 手元で走らせた回だけを台帳に足す（CI の回は要約と artifact に残し、あとで台帳に写す）
+  if (!process.env.GITHUB_ACTIONS) {
+    appendLedger({ at: new Date().toISOString(), role: ROLE, where: "local", base, head, usd: cost ?? NaN, usage });
+  }
+}
 const md = renderMarkdown({ role: ROLE, base, head, result, skipped, usage, cost, stopReason });
 writeFileSync("audit-result.json", JSON.stringify({ base, head, role: ROLE, result, skipped, usage, costUsd: cost, stopReason }, null, 2));
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, md + "\n");
