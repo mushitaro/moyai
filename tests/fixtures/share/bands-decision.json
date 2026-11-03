@@ -1,0 +1,88 @@
+{
+  "schema": "moyai.bands-decision/0",
+  "note": "帯の境目を決めたときに測った数（docs/sharing.md）。edges・ladder・truth は tests/unit/share/bands-decision.test.ts が試験の実行から作り直して照らす。startYear と capacityEdges は、元の全国の表（リポジトリに入れない）をこの PC で読んだ結果で、試験は段の数だけを ladder と照らす",
+  "decided": "2026-11-03",
+  "bandsVersion": "bands-1",
+  "edges": {
+    "interval": [1, 2, 3, 4, 5, 6, 8, 11, 16, 31],
+    "manDays": [1, 10, 30, 100, 300, 1000],
+    "days": [1, 4, 8, 15, 31, 61, 121],
+    "ageNormal": [0, 5, 10, 15, 20, 25, 30, 35, 40],
+    "ageUpgrade": [0, 10, 20, 30, 40]
+  },
+  "ledgerWithheld": ["ageAtWork"],
+  "ladder": {
+    "of": 844,
+    "rungs": [
+      { "stage": 0, "kept": ["furnace", "capacity_t_per_day", "turbine", "ash", "contract"], "coarse": false, "facilities": 698 },
+      { "stage": 1, "kept": ["furnace", "capacity_t_per_day", "turbine", "ash"], "coarse": false, "facilities": 74 },
+      { "stage": 1, "kept": ["furnace", "capacity_t_per_day", "turbine"], "coarse": false, "facilities": 51 },
+      { "stage": 2, "kept": ["furnace", "capacity_t_per_day"], "coarse": false, "facilities": 7 },
+      { "stage": 2, "kept": ["furnace", "capacity_t_per_day"], "coarse": true, "facilities": 5 },
+      { "stage": 3, "kept": [], "coarse": false, "facilities": 9 }
+    ],
+    "notReached": 0
+  },
+  "truth": {
+    "fictional-1": {
+      "chunks": { "ring": 13, "ledger": 12 },
+      "interval": { "I1": 5, "I2": 2, "I3": 3, "I6_7": 1 },
+      "intervalRaw": [1, 2, 3, 6],
+      "manDays": { "W10_29": 1, "W1_9": 2, "W30_99": 1 },
+      "manDaysRaw": [6, 9, 22.5, 48],
+      "manDaysNearEdge": 1,
+      "days": { "D1_3": 2, "D4_7": 1, "D8_14": 1 },
+      "daysRaw": [3, 5, 12],
+      "daysNearEdge": 0,
+      "ageRing": { "A15_19": 11, "A20_29": 1 },
+      "ageLedger": 0,
+      "installFiscalYears": [2001, 2008],
+      "installWindowFromRing": [2001, 2004],
+      "ledgerWithheld": 12
+    },
+    "fictional-2": {
+      "chunks": { "ring": 14, "ledger": 13 },
+      "interval": { "I1": 6, "I2": 1, "I3": 4, "I6_7": 1 },
+      "intervalRaw": [1, 2, 3, 6],
+      "manDays": { "W10_29": 1, "W1_9": 2, "W30_99": 2 },
+      "manDaysRaw": [6, 9, 20, 42, 48],
+      "manDaysNearEdge": 1,
+      "days": { "D1_3": 2, "D4_7": 1, "D8_14": 2 },
+      "daysRaw": [3, 5, 12],
+      "daysNearEdge": 0,
+      "ageRing": { "A20_24": 12, "A20_29": 1 },
+      "ageLedger": 0,
+      "installFiscalYears": [1997, 2010],
+      "installWindowFromRing": [1997, 1999],
+      "ledgerWithheld": 13
+    }
+  },
+  "startYear": {
+    "measuredOn": "2026-11-03",
+    "tool": "scripts/national/measure_start_year.py",
+    "command": "python -I -X utf8 scripts/national/measure_start_year.py --pack packs/waste-incineration --xlsx <手元の表> --start-column 使用開始年度",
+    "source": { "id": "MOE-IPPAN-R6-FACILITY-01", "sha256": "8d5493a1ccb88638abcc38133b14576f14acd10b2b72eff179eea4bac0e1ab7f" },
+    "facilities": 844,
+    "startYearUnreadable": 0,
+    "kMin": 5,
+    "window": {
+      "exact": { "counted": 844, "belowK": 696, "median": 2 },
+      "pm1": { "counted": 844, "belowK": 479, "median": 4 },
+      "pm2": { "counted": 844, "belowK": 356, "median": 6 },
+      "block5": { "counted": 844, "belowK": 361, "median": 6 },
+      "block10": { "counted": 844, "belowK": 202, "median": 9 }
+    },
+    "rungFacilities": [698, 74, 51, 7, 5, 9]
+  },
+  "capacityEdges": {
+    "measuredOn": "2026-11-03",
+    "tool": "scripts/national/build.py --edges <境目> --out <一時のフォルダ>",
+    "note": "見え方の軸を足していく段ごとに、5 施設以上に紛れる施設の数（844 のうち）。処理能力の帯の境目はパックの national/columns.json にあり、決めたのは今のまま（50・100・200・400）",
+    "steps": ["furnace・capacity", "+turbine", "+ash", "+contract"],
+    "byEdges": {
+      "100,200,400": [832, 824, 787, 711],
+      "50,100,200,400": [830, 823, 772, 698],
+      "30,50,100,150,200,300,400,600": [826, 816, 707, 635]
+    }
+  }
+}

@@ -24,6 +24,11 @@ export type ChunkField = (typeof CHUNK_FIELDS)[number];
 export const REQUIRED_CHUNK_FIELDS = ["class", "work", "years", "observed"] as const satisfies readonly ChunkField[];
 export const OPTIONAL_CHUNK_FIELDS = ["interval", "manDays", "days", "ageAtWork"] as const satisfies readonly ChunkField[];
 export type OptionalChunkField = (typeof OPTIONAL_CHUNK_FIELDS)[number];
+/**
+ * 公開の台帳には、どの決まりでも出さない欄（コードの定数。場の決まりで足せない）。
+ * ageAtWork：塊の years と合わせると設置の年度の幅が読め、全国の表の使用開始年度で施設が絞れる（docs/sharing.md）。
+ */
+export const LEDGER_WITHHELD_FIELDS = ["ageAtWork"] as const satisfies readonly OptionalChunkField[];
 
 export interface Chunk {
   class: string;
@@ -79,6 +84,7 @@ export const OMIT_REASONS = [
   "ageNegative", // 設置より前の作業（どちらかの誤り）
   "ageInstallAmbiguous", // 設置が年だけで、暦年と年度のどちらに読むかで帯が変わる
   "fieldNotAllowed", // 場の決まりが欄を外している
+  "ledgerWithheld", // 公開の台帳には出さない欄（LEDGER_WITHHELD_FIELDS）
 ] as const;
 export type OmitReason = (typeof OMIT_REASONS)[number];
 
@@ -325,6 +331,10 @@ export function copyOut(input: CopyInput): CopyResult {
     const out: Record<string, unknown> = { class: g.cls, work: g.work };
     for (const f of CHUNK_FIELDS) {
       if (f === "class" || f === "work") continue;
+      if (to.kind === "ledger" && (LEDGER_WITHHELD_FIELDS as readonly string[]).includes(f)) {
+        omit("ledgerWithheld");
+        continue;
+      }
       if ((OPTIONAL_CHUNK_FIELDS as readonly string[]).includes(f) && !rules.fields.includes(f as OptionalChunkField)) {
         omit("fieldNotAllowed");
         continue;
