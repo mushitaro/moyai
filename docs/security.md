@@ -38,7 +38,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 |---|---|---|
 | `POST /human/commit-trial` | `commit_trial` | 確定の試しの経路（v0。中身は何もしない。守りの形を試験するためのもの） |
 | `POST /human/plan-status` | `plan_status` | 確定した版の一覧と、いちばん新しい版（確定のダイアログを開いたとき） |
-| `POST /human/plan-commit` | `plan_commit` | 計画を確定する（版のファイルを足し、差分レポートを書く） |
+| `POST /human/plan-commit` | `plan_commit` | 計画を確定する（版のファイルを足し、差分レポートと人が見る様式の星取表の Excel を書く） |
 | `POST /human/plan-revert` | `plan_revert` | 前の版に戻す（前の版を指す記録を足す） |
 | `POST /human/settings-read` | `settings_read` | 置き場所・Documents の場所・輪の一覧を読む |
 | `POST /human/settings-save` | `settings_save` | 置き場所を保存する |

@@ -73,7 +73,7 @@ export const ROUTES = {
   },
   // ─── 人だけの経路（確定・設定・鍵・検問所）。処理は src/bridge/human.ts ───
   planStatus: human("/human/plan-status", "plan_status", 64 * 1024, "確定した版の一覧と、いちばん新しい版（確定のダイアログを開いたとき）"),
-  planCommit: human("/human/plan-commit", "plan_commit", 32 * 1024 * 1024, "計画を確定する（版のファイルを足し、差分レポートを書く）"),
+  planCommit: human("/human/plan-commit", "plan_commit", 32 * 1024 * 1024, "計画を確定する（版のファイルを足し、差分レポートと人が見る様式の星取表の Excel を書く）"),
   planRevert: human("/human/plan-revert", "plan_revert", 64 * 1024, "前の版に戻す（前の版を指す記録を足す）"),
   settingsRead: human("/human/settings-read", "settings_read", 64 * 1024, "置き場所・Documents の場所・輪の一覧を読む"),
   settingsSave: human("/human/settings-save", "settings_save", 64 * 1024, "置き場所を保存する"),
