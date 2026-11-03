@@ -306,10 +306,12 @@ describe("中継の経路", () => {
     expect(r.body.error.code).toBe("origin_not_allowed");
   });
 
-  it("鍵が合えば、v0 では型どおりに「未実装」を返す", async () => {
+  it("鍵が合えば受ける：作業画面へ渡すものはタブが無ければ「開いていません」、ほかは型どおりに「未実装」", async () => {
     tb = await startTestBridge();
     const r = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "chart_rows", args: { limit: 10 } });
-    expect(r.body.error.code).toBe("not_implemented");
+    expect(r.body.error.code).toBe("work_screen_not_open");
+    const ni = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "check_results", args: {} });
+    expect(ni.body.error.code).toBe("not_implemented");
     expect((await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "nope", args: {} })).body.error.code).toBe("unknown_tool");
     const bad = await call(tb, { [HEADER_RELAY_KEY]: tb.bridge.relayKey }, { name: "chart_rows", args: { limit: 201 } });
     expect(bad.body.error.code).toBe("invalid_input");

@@ -9,5 +9,7 @@ export const MCP_INSTRUCTIONS = [
   "4. 決まらない値は推測で埋めず、件数を添えて利用者に聞きます。",
   "5. 検査の数字は丸めず言い換えず、出典を添えて説明します。自己点検であって、審査の判断ではありません。",
   "6. 橋渡しが起きていなければ、利用者に端末で moyai start を走らせてもらいます。",
-  "v0 では、どのツールも名前と型だけがあり、呼ぶと「未実装」と返ります。",
+  "7. 作業画面が開いていなければ、利用者に moyai start が出した URL を開いてもらいます。資料は利用者が作業画面に落とします（チャットに添付させません）。",
+  "取り込みの流れ：intake_survey で要約と質問（選択肢つき）を読む → 利用者に聞いて intake_settle で決定を置く（答えは選択肢の id だけ。作者は ai か ai_relayed_human、理由を添える）→ 質問が無くなるまで繰り返す → intake_compose で作り始める → intake_survey の compose で結果を読む → chart_rows で星取表の行を読む。",
+  "今動くのは intake_survey・intake_settle・intake_compose・chart_rows です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。",
 ].join("\n");

@@ -36,7 +36,14 @@ export interface Survey {
   samples: { fileRef: string; row: number; cells: string[] }[];
   legends: { mark: string; meaning: string }[];
   notes: string[];
-  questions: { questionId: string; text: string; sameShapeRows: number; defaultAnswer: string | null }[];
+  questions: {
+    questionId: string;
+    text: string;
+    sameShapeRows: number;
+    defaultAnswer: string | null;
+    valueKind: "option" | "number";
+    options: { id: string; label: string }[];
+  }[];
   unresolvedCells: number;
   compose: { state: "idle" | "running" | "done" | "failed"; message: string | null };
 }
@@ -47,8 +54,8 @@ const SAMPLE_TEXT = 60;
 
 export class IntakeSession {
   private readonly files: InputFile[] = [];
-  /** 資料の名前 → 中身の SHA-256（質問の鍵に使う。中身の違うファイルに前の答えを当てない） */
-  private readonly digests = new Map<string, string>();
+  /** 資料 → 中身の SHA-256（質問の鍵に使う。中身の違うファイルに前の答えを当てない） */
+  private readonly digests = new WeakMap<InputFile, string>();
   private readonly xlsx = new Map<string, SourceFile>();
   private readonly rejectedFiles: RejectedFile[] = [];
   private decisions = new Map<string, Decision>();
@@ -65,7 +72,7 @@ export class IntakeSession {
       }
       const ext = extensionOf(f.name);
       if ((READABLE as Record<string, string>)[ext] === "csv") {
-        this.digests.set(f.name, await sha256Hex(f.bytes));
+        this.digests.set(f, await sha256Hex(f.bytes));
         this.files.push(f);
         continue;
       }
@@ -79,6 +86,12 @@ export class IntakeSession {
     this.rejectedFiles.push(...rejected);
     this.composed = null;
     return rejected;
+  }
+
+  private digestOf(f: InputFile): string {
+    const d = this.digests.get(f);
+    if (d === undefined) throw new Error("資料の指紋が無い（add を通っていない資料）");
+    return d;
   }
 
   decisionList(): Decision[] {
@@ -137,7 +150,7 @@ export class IntakeSession {
         const what = amb.what === "encoding" ? "文字コード" : "区切り";
         const single = amb.what === "delimiter" && amb.candidates.length === 0 ? [{ id: "single", label: "区切りの無い 1 列の表として読む" }] : [];
         // 質問の鍵はファイルの名前と中身の指紋と問いの種類（何回目の読み直しで出たかに依らない。中身の違うファイルには前の答えを当てない）
-        const a = ask.ask(`${amb.what}|${f.name}|${this.digests.get(f.name) ?? ""}`, {
+        const a = ask.ask(`${amb.what}|${f.name}|${this.digestOf(f)}`, {
           kind: amb.what,
           text: `${f.name} の${what}が決まらない（${amb.detail}）`,
           options: [
@@ -220,7 +233,14 @@ export class IntakeSession {
       samples,
       legends,
       notes,
-      questions: an.open.map((q) => ({ questionId: q.questionId, text: q.text, sameShapeRows: q.sameShapeRows, defaultAnswer: q.defaultAnswer })),
+      questions: an.open.map((q) => ({
+        questionId: q.questionId,
+        text: q.text,
+        sameShapeRows: q.sameShapeRows,
+        defaultAnswer: q.defaultAnswer,
+        valueKind: q.valueKind,
+        options: q.options.map((o) => ({ id: o.id, label: o.label })),
+      })),
       unresolvedCells: unresolved,
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },
     };

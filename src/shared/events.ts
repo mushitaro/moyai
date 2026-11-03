@@ -2,14 +2,17 @@
 // 受け手は、src/bridge/tab.ts の TAB_EVENT_HANDLERS と src/app/bridge-client.ts の BRIDGE_EVENT_HANDLERS が持つ。
 // tests/contract/ が、どのイベントにも送るコードと受ける処理があることを数える。
 import { z } from "zod";
-import { TAB_ERROR_CODES, type TabErrorCode } from "./errors";
+import { TAB_ERROR_CODES, TAB_SENT_CODES, type TabErrorCode, type TabSentCode } from "./errors";
 import { HUMAN_ACTIONS } from "./routes";
+import { TOOL_NAMES, type ToolName } from "./tools";
 
 export type EventSide = "tab" | "bridge";
 
 /** タブの秘密：ページの中で作る 32 バイトの乱数（base64url で 43 文字）。HTML にもどの GET にも入れない。 */
 export const tabSecretSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const sha256Hex = z.string().regex(/^[0-9a-f]{64}$/);
+const requestId = z.string().min(1).max(64);
+const toolName = z.enum(TOOL_NAMES as [ToolName, ...ToolName[]]);
 
 export const EVENTS = {
   "tab.hello": {
@@ -47,6 +50,36 @@ export const EVENTS = {
       action: z.enum(HUMAN_ACTIONS),
       expiresAt: z.number(),
     }),
+  },
+  // AI のツールの呼び出し（中継 → 橋渡し → タブ）。引数は橋渡しが型で確かめてから渡し、タブも確かめ直す。
+  // rowsRemaining はこの会話であと読める星取表の行の数（数えるのは橋渡し。§2.12）。
+  "bridge.tool_call": {
+    from: "bridge",
+    to: "tab",
+    data: z.object({
+      requestId,
+      name: toolName,
+      args: z.record(z.string(), z.unknown()),
+      conversation: z.string().min(1).max(64),
+      rowsRemaining: z.number().int().min(0),
+    }),
+  },
+  "tab.tool_result": {
+    from: "tab",
+    to: "bridge",
+    data: z.object({
+      requestId,
+      result: z.discriminatedUnion("ok", [
+        z.object({ ok: z.literal(true), data: z.record(z.string(), z.unknown()) }),
+        z.object({ ok: z.literal(false), code: z.enum(TAB_SENT_CODES as [TabSentCode, ...TabSentCode[]]) }),
+      ]),
+    }),
+  },
+  // 案を置くツール・始めるツールで、タブの答えが時間内に来なかった。AI には「結果不明」と返したので、画面にも出す
+  "bridge.tool_unknown": {
+    from: "bridge",
+    to: "tab",
+    data: z.object({ requestId, name: toolName }),
   },
 } as const satisfies Record<string, { from: EventSide; to: EventSide; data: z.ZodType }>;
 

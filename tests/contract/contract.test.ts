@@ -29,6 +29,7 @@ const ERROR_SENDER_SOURCES: Record<ErrorSide, string> = {
   bridge: sources("src/bridge"),
   relay: readFileSync("src/cli/relay.ts", "utf8"),
   cli: readFileSync("src/cli/main.ts", "utf8"),
+  tab: sources("src/app"),
 };
 
 describe("イベントの送り手と受け手", () => {
@@ -81,8 +82,9 @@ describe("ツールの送り手と受け手", () => {
     expect(Object.keys(BRIDGE_TOOL_RECEIVERS).sort()).toEqual([...TOOL_NAMES].sort());
     const notImplemented = TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "not_implemented");
     console.log(`contract: ツール ${TOOL_NAMES.length} のうち未実装 ${notImplemented.length}（今見せるもの ${EXPOSED_TOOL_NAMES.length}）`);
-    // v0 はすべて未実装。処理を足したら、この数を減らす
-    expect(notImplemented).toHaveLength(12);
+    // 作業画面へ渡すもの：取り込みの 3 つと星取表の行。処理を足したら、この数を減らす
+    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "tab").sort()).toEqual(["chart_rows", "intake_compose", "intake_settle", "intake_survey"]);
+    expect(notImplemented).toHaveLength(8);
   });
 
   it("確定・送る・昇格・保存のツールが無い", () => {

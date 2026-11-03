@@ -1,0 +1,94 @@
+/* 取り込みの画面のクラス。色は theme.css の変数だけを使う。 */
+
+.moyai-drop {
+  border: 2px dashed var(--moyai-border);
+  border-radius: 6px;
+  padding: 16px;
+  background: var(--moyai-surface);
+}
+.moyai-drop[data-over="true"] {
+  border-color: var(--moyai-accent);
+}
+
+.moyai-sheet {
+  overflow: auto;
+  max-height: 420px;
+  border: 1px solid var(--moyai-border);
+  background: var(--moyai-surface);
+}
+.moyai-sheet table {
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.moyai-sheet th,
+.moyai-sheet td {
+  border: 1px solid var(--moyai-border);
+  padding: 2px 6px;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moyai-sheet th {
+  position: sticky;
+  top: 0;
+  background: var(--moyai-chart-header-bg);
+  color: var(--moyai-muted);
+  font-weight: 400;
+}
+.moyai-sheet th.moyai-rowhead {
+  position: sticky;
+  left: 0;
+}
+.moyai-sheet td {
+  cursor: pointer;
+}
+.moyai-sheet td[data-s="data"] {
+  background: var(--moyai-cell-data-bg);
+}
+.moyai-sheet td[data-s="excluded"] {
+  background: var(--moyai-cell-excluded-bg);
+}
+.moyai-sheet td[data-s="unresolved"] {
+  background: var(--moyai-cell-unresolved-bg);
+}
+.moyai-sheet td[data-focus="true"] {
+  outline: 2px solid var(--moyai-cell-focus);
+  outline-offset: -2px;
+}
+
+.moyai-dest-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--moyai-border);
+  min-width: 160px;
+}
+.moyai-dest-bar > span[data-s="data"] {
+  background: var(--moyai-cell-data-bg);
+}
+.moyai-dest-bar > span[data-s="excluded"] {
+  background: var(--moyai-cell-excluded-bg);
+}
+.moyai-dest-bar > span[data-s="unresolved"] {
+  background: var(--moyai-cell-unresolved-bg);
+}
+.moyai-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--moyai-border);
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.moyai-swatch[data-s="data"] {
+  background: var(--moyai-cell-data-bg);
+}
+.moyai-swatch[data-s="excluded"] {
+  background: var(--moyai-cell-excluded-bg);
+}
+.moyai-swatch[data-s="unresolved"] {
+  background: var(--moyai-cell-unresolved-bg);
+}

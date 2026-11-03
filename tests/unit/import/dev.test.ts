@@ -2,7 +2,7 @@
 // 物差し ① 原本の漏れ・② 行き先（未解決）・③ 読み取りの正しさ・⑤ 聞いた数を測って出す（目標と測った値を分ける）。
 // 質問には、正解の世界から答える決まった台本（truth.ts）が人の代わりに答える。src/ は正解を読まない。
 import { describe, expect, test } from "vitest";
-import { readFileSync } from "node:fs";
+import { appendFileSync, readFileSync } from "node:fs";
 import { IntakeSession } from "../../../src/import";
 import { Plan } from "../../../src/shared/plan";
 import { Entities, loadTruth, measureCrossdoc, measureDaily, measureFacts, measureLedger, measureStar, measureStarWorkCount, pct, runScript } from "./truth";
@@ -94,6 +94,22 @@ function report(c: Case, r: Awaited<ReturnType<typeof run>>) {
   if (process.env.MOYAI_IMPORT_VERBOSE)
     for (const q of r.an.questions) lines.push(`  質問 ${q.kind}（${q.sameShapeRows} 行、既定 ${q.defaultAnswer}）→ ${q.decision?.answer ?? "なし"}：${q.text}`);
   console.log(lines.join("\n"));
+  // scripts/trend.mjs が読む数（docs/trend.md の物差しの行）。走らせたときだけ書く
+  const out = process.env.MOYAI_TREND_OUT;
+  if (out) {
+    const files = c.files.map((f) => {
+      const fc = r.comp.counts.find((x) => x.file === f);
+      const acc = f.startsWith("equipment") ? r.ledger : f.startsWith("plan") ? r.star : r.daily;
+      return {
+        file: f,
+        leak: r.facts[f] ? r.facts[f].diffs : null,
+        unresolved: fc?.unresolvedCells ?? null,
+        accuracy: acc ? { correct: acc.correct, total: acc.total, extra: acc.extra } : null,
+      };
+    });
+    const cross = r.cross && r.cross.total ? { correct: r.cross.correct, total: r.cross.total } : null;
+    appendFileSync(out, JSON.stringify({ pack: PACK, facility: c.facility, files, asked: r.script.asked, planMade: r.plan !== null, cross }) + "\n");
+  }
 }
 
 describe("import.dev：工場の開発用の資料（Excel・CSV）", () => {

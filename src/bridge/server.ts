@@ -15,8 +15,8 @@ import {
   type RouteDef,
   type RouteId,
 } from "../shared/routes";
-import { EXPOSED_TOOL_NAMES, isToolName, toolDef } from "../shared/tools";
-import { BRIDGE_TOOL_RECEIVERS, type ToolReceiver } from "./tools";
+import { EXPOSED_TOOL_NAMES, isToolName, toolDef, type ToolKind } from "../shared/tools";
+import { ToolRelay } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { HumanService, type HumanEnv } from "./human";
 import { makeEd25519Sample } from "./selftest";
@@ -40,6 +40,8 @@ export interface BridgeOptions {
   deadMs?: number;
   helloTimeoutMs?: number;
   tokenTtlMs?: number;
+  /** 作業画面を待つ上限（試験で短くするときだけ。既定は TOOL_TIMEOUTS） */
+  toolTimeouts?: Partial<Record<ToolKind, number>>;
   now?: () => number;
   log?: (msg: string) => void;
   /** パックのフォルダ（共有の公開語彙・見え方・全国の表）。無ければリポジトリの packs/ */
@@ -54,6 +56,7 @@ export interface Bridge {
   relayKey: string;
   tabs: TabHub;
   tokens: TokenStore;
+  tools: ToolRelay;
   close(): Promise<void>;
 }
 
@@ -114,6 +117,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     now,
     log,
   });
+  const tools = new ToolRelay(tabs, opts.toolTimeouts);
   const relayKey = randomBytes(32).toString("base64url");
   const human = new HumanService({ stateDir: opts.stateDir, packsDir: opts.packsDir ?? resolvePacksDir(), now, ...opts.human });
   let port = opts.port;
@@ -191,14 +195,16 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (g) return reject(res, g);
       const body = await readJson(req, route.maxBody ?? 0);
       if (typeof body === "string") return reject(res, body);
-      const { name, args } = (body.value ?? {}) as { name?: unknown; args?: unknown };
+      const { name, args, conversation } = (body.value ?? {}) as { name?: unknown; args?: unknown; conversation?: unknown };
       if (typeof name !== "string" || !isToolName(name) || !(EXPOSED_TOOL_NAMES as string[]).includes(name)) {
         return reject(res, "unknown_tool");
       }
-      if (!toolDef(name).input.safeParse(args ?? {}).success) return reject(res, "invalid_input");
-      // v0：どのツールも名前と型だけ。受け手が「未実装」なので、型どおりに「未実装」を返す
-      const receiver: ToolReceiver = BRIDGE_TOOL_RECEIVERS[name];
-      return reject(res, receiver);
+      const parsed = toolDef(name).input.safeParse(args ?? {});
+      if (!parsed.success) return reject(res, "invalid_input");
+      // 会話は中継の 1 つの接続。中継が付けない呼び出しは 1 つの会話にまとめて数える
+      const conv = typeof conversation === "string" && /^[A-Za-z0-9-]{1,64}$/.test(conversation) ? conversation : "none";
+      const answer = await tools.run(name, parsed.data as Record<string, unknown>, conv);
+      return "ok" in answer ? sendJson(res, 200, answer) : reject(res, answer.error.code);
     },
   };
 
@@ -262,7 +268,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     }
   });
 
-  const wss = new WebSocketServer({ noServer: true, maxPayload: 64 * 1024 });
+  // ツールの結果（星取表の行 200 行など）がタブから来るので、中継の経路の上限と同じ 1 MB まで受ける
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 });
   server.on("upgrade", (req: IncomingMessage, socket: Duplex, head: Buffer) => {
     const host = header(req, "host");
     const url = new URL(req.url ?? "/", "http://x");
@@ -306,6 +313,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     relayKey,
     tabs,
     tokens,
+    tools,
     close: async () => {
       tabs.stop();
       for (const c of wss.clients) c.terminate();

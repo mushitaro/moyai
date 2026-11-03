@@ -38,6 +38,11 @@
   /* 検問所の ① 原本（墨：出ない欄、朱：変えて写す値） */
   --moyai-sumi: #1d2421;
   --moyai-shu: #c0392b;
+  /* 取り込み：セルの行き先（データ・外した・未解決） */
+  --moyai-cell-data-bg: #d6efe4;
+  --moyai-cell-excluded-bg: #e7e8e4;
+  --moyai-cell-unresolved-bg: #f8d3cf;
+  --moyai-cell-focus: #b3261e;
 }
 
 :root[data-mantine-color-scheme="dark"] {
@@ -63,6 +68,10 @@
   --moyai-chart-selected: #6fc7ad33;
   --moyai-sumi: #000000;
   --moyai-shu: #ff7b6b;
+  --moyai-cell-data-bg: #1f4a3c;
+  --moyai-cell-excluded-bg: #2c3330;
+  --moyai-cell-unresolved-bg: #5a2420;
+  --moyai-cell-focus: #ff8a80;
 }
 
 body {

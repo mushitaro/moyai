@@ -39,6 +39,7 @@ let child: ChildProcess;
 let base = "";
 let work = "";
 let stateDir = "";
+const rings: string[] = [];
 const PASS = "架空の合言葉 e2e です";
 
 test.beforeAll(async () => {
@@ -68,6 +69,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   child?.kill();
   rmSync(work, { recursive: true, force: true });
+  for (const r of rings) rmSync(r, { recursive: true, force: true });
 });
 
 async function openPlan(page: Page, name: "fictional-1") {
@@ -81,7 +83,9 @@ async function openPlan(page: Page, name: "fictional-1") {
 test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ関数で ✓", async ({ page }, info) => {
   const tag = info.project.name;
   const root = join(work, tag, "置き場所");
-  const ringRoot = join(work, tag, "輪のフォルダ");
+  // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする
+  const ringRoot = join(tmpdir(), `moyai-e2e-ring-${tag}-${Date.now()}`, "輪のフォルダ");
+  rings.push(join(ringRoot, ".."));
 
   await test.step("設定：Documents の場所と同期の知らせ。置き場所を選んで保存", async () => {
     await page.goto(`${base}/#/settings`);

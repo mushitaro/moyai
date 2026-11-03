@@ -3,6 +3,7 @@
 import { ERRORS, errorBodySchema, type TabErrorCode } from "../shared/errors";
 import { decodeEvent, encodeEvent, type BridgeToTab, type EventData, type TabToBridge } from "../shared/events";
 import { HEADER_TAB_SECRET, type HumanAction } from "../shared/routes";
+import type { ToolName } from "../shared/tools";
 
 export type ConnectionState =
   | { kind: "connecting" }
@@ -12,12 +13,22 @@ export type ConnectionState =
 
 type Handler<T extends BridgeToTab> = (client: BridgeClient, data: EventData<T>) => void;
 
+export type ToolCallResult = EventData<"tab.tool_result">["result"];
+/** AI のツールをこのタブで動かす処理（App が取り込みの作業場につなぐ） */
+export interface ToolHandlers {
+  call(name: ToolName, args: Record<string, unknown>, ctx: { conversation: string; rowsRemaining: number }): Promise<ToolCallResult>;
+  /** 案を置くツールの答えが時間内に橋渡しへ届かず、AI に「結果不明」と返された */
+  unknown(name: ToolName, requestId: string): void;
+}
+
 /** 橋渡し → タブのイベントの受け手。tests/contract/ が数える。 */
 export const BRIDGE_EVENT_HANDLERS: { [K in BridgeToTab]: Handler<K> } = {
   "bridge.welcome": (c, d) => c.onWelcome(d),
   "bridge.refused": (c, d) => c.onRefused(d),
   "bridge.ping": (c, d) => c.onPing(d),
   "bridge.token": (c, d) => c.onToken(d),
+  "bridge.tool_call": (c, d) => void c.onToolCall(d),
+  "bridge.tool_unknown": (c, d) => c.onToolUnknown(d),
 };
 
 function randomSecret(): string {
@@ -41,6 +52,7 @@ export class BridgeClient {
   private readonly listeners = new Set<(s: ConnectionState, dropped: number) => void>();
   private readonly pending = new Map<string, (t: { token: string; expiresAt: number } | null) => void>();
   private seq = 0;
+  private tools: ToolHandlers | null = null;
   /** 飛ばした、読めない通信の数 */
   dropped = 0;
 
@@ -93,6 +105,24 @@ export class BridgeClient {
     const r = this.pending.get(d.requestId);
     this.pending.delete(d.requestId);
     r?.({ token: d.token, expiresAt: d.expiresAt });
+  }
+
+  setToolHandlers(h: ToolHandlers): void {
+    this.tools = h;
+  }
+
+  async onToolCall(d: EventData<"bridge.tool_call">): Promise<void> {
+    let result: ToolCallResult;
+    try {
+      result = this.tools ? await this.tools.call(d.name, d.args, { conversation: d.conversation, rowsRemaining: d.rowsRemaining }) : { ok: false, code: "tool_failed" };
+    } catch {
+      result = { ok: false, code: "tool_failed" };
+    }
+    this.send("tab.tool_result", { requestId: d.requestId, result });
+  }
+
+  onToolUnknown(d: EventData<"bridge.tool_unknown">): void {
+    this.tools?.unknown(d.name, d.requestId);
   }
 
   /** 確かめのダイアログを開いたときに、その操作と中身に結んだ 1 回きりの印を求める。 */

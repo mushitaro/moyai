@@ -103,7 +103,7 @@ export function matchRoute(method: string, pathname: string): { id: RouteId } | 
 }
 
 /** 画面の中の道（HashRouter を使わず、#/selftest のように hash で分ける）。サーバーの経路は増やさない。 */
-export const APP_PAGES = { home: "#/", selftest: "#/selftest", checkpoint: "#/checkpoint", settings: "#/settings" } as const;
+export const APP_PAGES = { home: "#/", selftest: "#/selftest", intake: "#/intake", checkpoint: "#/checkpoint", settings: "#/settings" } as const;
 
 /** 橋渡しとタブの間で使う HTTP の見出しの名前 */
 export const HEADER_TAB_SECRET = "x-moyai-tab-secret";

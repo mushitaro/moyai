@@ -447,5 +447,39 @@ describe("AI に渡す要約と、決定の数", () => {
     expect(q?.sameShapeRows).toBe(2);
     expect(q?.options.map((o) => o.id)).toEqual(["literal", "exclude"]);
   });
+
+  test("決定で外した行の名前は、すぐ下の 〃 の参照先にしない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["名称", "仕様"]]);
+      rows(ws, 2, [
+        ["甲設備", null],
+        ["電動機", "10 kW"],
+        ["乙設備", null],
+        ["送風機", "5 kW"],
+        ["〃", "15 kW"],
+      ]);
+      ws.getCell("A3").alignment = { indent: 1 };
+      ws.getCell("A5").alignment = { indent: 3 }; // 段が飛ぶ行（外す）
+      ws.getCell("A6").alignment = { indent: 1 };
+    });
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    const jump = s.analyze().open.find((q) => q.kind === "levelJump");
+    expect(jump).toBeDefined();
+    s.settle([human(jump!.questionId, "exclude")]);
+    const key = (ref: string) => ["台帳.xlsx", "0", ref].join(String.fromCharCode(0));
+    let an = s.analyze();
+    expect(an.composition.status.get(key("A5"))?.s).toBe("excluded");
+    // 外した「送風機」ではなく、資産になる行（乙設備）を「すぐ上の行」として聞く
+    const q = an.open.find((x) => x.text.includes("〃"));
+    expect(q?.text).toContain("乙設備");
+    expect(q?.text).not.toContain("送風機");
+    expect(an.composition.status.get(key("A6"))?.s).toBe("unresolved");
+    s.settle([human(q!.questionId, "above")]);
+    acceptDefaults(s);
+    const plan = s.compose().plan;
+    expect(plan?.assets.find((a) => a.sources.some((x) => x.cell === "A6"))?.name).toBe("乙設備");
+    expect(plan?.assets.some((a) => a.name === "送風機")).toBe(false);
+  });
 });
 

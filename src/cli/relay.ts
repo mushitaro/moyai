@@ -1,19 +1,22 @@
 // 中継（moyai mcp）：標準入出力の MCP。つなぐだけで、判断も保存もしない。
 // 橋渡しの居場所と鍵は、状態フォルダの鍵ファイルから毎回読む。橋渡しが起きていなければ「先に moyai start を」と返す。
 // 標準出力は MCP だけに使い、記録は標準エラーへ出す（作業データ・キー・行の値は出さない）。
+import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { errorBody, errorBodySchema, type ErrorBody } from "../shared/errors";
 import { MCP_INSTRUCTIONS } from "../shared/instructions";
 import { HEADER_RELAY_KEY, ROUTES } from "../shared/routes";
-import { EXPOSED_TOOL_NAMES, TOOL_TIMEOUTS, toolDef, type ToolKind, type ToolName } from "../shared/tools";
+import { EXPOSED_TOOL_NAMES, RELAY_MARGIN_MS, TOOL_TIMEOUTS, toolDef, type ToolKind, type ToolName } from "../shared/tools";
 import { readKeyFile } from "../bridge/state";
 
 export interface RelayOptions {
   stateDir: string;
-  /** 試験で待ちの上限を短くするときだけ使う */
+  /** 試験で 1 回の HTTP の待ちの上限と送り直しを変えるときだけ使う（既定は TOOL_TIMEOUTS＋RELAY_MARGIN_MS） */
   timeouts?: Partial<Record<ToolKind, { ms: number; retries: number }>>;
   version?: string;
+  /** 会話の印。中継の 1 つの接続を 1 つの会話と数える（行を読む上限はこの単位）。無ければ作る */
+  conversation?: string;
 }
 
 /** 接続を拒まれた誤りか（AggregateError の中に入っている形も見る）。 */
@@ -30,7 +33,7 @@ type BridgeAnswer = { ok: true; data: Record<string, unknown> } | ErrorBody;
  * 橋渡しに 1 回送る。接続を拒まれたら bridge_not_running（送れていない）。
  * 時間切れは "timeout"、送ったあとに切れたなどは "lost"（どちらも、書けたかどうか分からない）。
  */
-async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: number): Promise<BridgeAnswer | "timeout" | "lost"> {
+async function postOnce(stateDir: string, name: ToolName, args: unknown, conversation: string, ms: number): Promise<BridgeAnswer | "timeout" | "lost"> {
   const key = readKeyFile(stateDir);
   if (!key) return errorBody("bridge_not_running");
   let res: Response;
@@ -38,7 +41,7 @@ async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: num
     res = await fetch(`http://127.0.0.1:${key.port}${ROUTES.relayTool.path}`, {
       method: "POST",
       headers: { "content-type": "application/json", [HEADER_RELAY_KEY]: key.key },
-      body: JSON.stringify({ name, args }),
+      body: JSON.stringify({ name, args, conversation }),
       signal: AbortSignal.timeout(ms),
     });
   } catch (e) {
@@ -61,14 +64,16 @@ async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: num
 }
 
 /** 種類ごとの待ちの上限と送り直しで橋渡しを呼ぶ。読むものは 1 回だけ送り直し、書くものは送り直さない。 */
-export async function callBridge(opts: RelayOptions, name: ToolName, args: unknown): Promise<BridgeAnswer> {
+export async function callBridge(opts: RelayOptions, name: ToolName, args: unknown, conversation = "none"): Promise<BridgeAnswer> {
   const kind = toolDef(name).kind;
-  const t = { ...TOOL_TIMEOUTS[kind], ...(opts.timeouts?.[kind] ?? {}) };
+  // 橋渡しは作業画面を TOOL_TIMEOUTS だけ待ち、来なければ tab_no_answer を返す。中継はその答えを受けられるよう少し長く待つ
+  const t = { ms: TOOL_TIMEOUTS[kind].ms + RELAY_MARGIN_MS, retries: TOOL_TIMEOUTS[kind].retries, ...(opts.timeouts?.[kind] ?? {}) };
   let last: "timeout" | "lost" = "timeout";
   for (let attempt = 0; attempt <= t.retries; attempt++) {
-    const r = await postOnce(opts.stateDir, name, args, t.ms);
-    if (r !== "timeout" && r !== "lost") return r;
-    last = r;
+    const r = await postOnce(opts.stateDir, name, args, conversation, t.ms);
+    // 作業画面から答えが来なかったのは、時間切れと同じに扱う（読むものだけ送り直す）
+    if (r !== "timeout" && r !== "lost" && !("error" in r && r.error.code === "tab_no_answer")) return r;
+    last = r === "lost" ? "lost" : "timeout";
   }
   // 書くもの・始めるものは、送れたかどうか分からないので「結果不明」。読むものは送り直しても来なかった理由を返す
   if (kind !== "read") return errorBody("result_unknown");
@@ -85,6 +90,7 @@ export function toToolResult(answer: BridgeAnswer): CallToolResult {
 }
 
 export function createRelayServer(opts: RelayOptions): McpServer {
+  const conversation = opts.conversation ?? randomUUID();
   const server = new McpServer(
     { name: "moyai", version: opts.version ?? "0.0.0" },
     { instructions: MCP_INSTRUCTIONS, capabilities: { tools: {} } },
@@ -106,7 +112,7 @@ export function createRelayServer(opts: RelayOptions): McpServer {
           openWorldHint: false,
         },
       },
-      async (args: unknown) => toToolResult(await callBridge(opts, name, args)),
+      async (args: unknown) => toToolResult(await callBridge(opts, name, args, conversation)),
     );
   }
   return server;
