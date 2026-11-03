@@ -1,0 +1,106 @@
+{
+  "schema": "moyai.checks/0",
+  "pack": "waste-incineration",
+  "version": 1,
+  "checks": [
+    {
+      "id": "WI-PRECISION-INTERVAL",
+      "name": "精密機能検査の間隔",
+      "what": "精密機能検査の対象の機器ごとに、実施の間（と、最後の実施から基準日の年度か計画の最後の年度まで）が 3 年度を越えないか。過ぎた予定で実績の無いものは実施に数えない",
+      "level": "recommendation",
+      "thresholdOrigin": "source",
+      "source": { "id": "MHW-NOTICE-S46-KANSEI45", "clause": "第三の 11（規則第五条の精密機能検査は三年に一回以上）", "page": null },
+      "unimplemented": null,
+      "note": "課長通知は行政指導なので水準は推奨。規則第五条は「定期的に」とだけ書き、年数は通知にある。延長の定めは通知に無いので、延長は認めない（承認の記録があっても notMet）。年度の差で数える",
+      "params": {
+        "kind": "interval_max",
+        "works": [{ "field": "work.kind", "op": "in", "values": ["精密機能検査"] }],
+        "years": 3,
+        "extensionCapYears": null
+      }
+    },
+    {
+      "id": "WI-PLAN-DONE",
+      "name": "過ぎた予定の実績",
+      "what": "基準日より前の予定（日付の無い予定は、その年度が終わったもの）に、同じ機器・同じ年度・同じ作業の属性の実績があるか",
+      "level": "app",
+      "thresholdOrigin": "app",
+      "source": null,
+      "unimplemented": "きっかけ（周期）から次回を出して期限と比べる検査は未実装。計画のきっかけの欄が、取り込んだ計画ではまだ空のため",
+      "note": "出典の無いアプリの目安。予定のとおりに実施したかを、計画の予定の印と実績の印だけで照らす",
+      "params": { "kind": "next_due", "due": "plan_mark", "works": [] }
+    },
+    {
+      "id": "WI-PLAN-COVERAGE",
+      "name": "計画の期間の予定",
+      "what": "1 段目に当てて人が受けた機器のすべてに、計画の期間（基準日の年度から、計画にある最後の予定の年度まで）の予定が 1 つ以上あるか",
+      "level": "app",
+      "thresholdOrigin": "app",
+      "source": null,
+      "unimplemented": null,
+      "note": "出典の無いアプリの目安。期間は計画そのものから決める（閾値の年数を置かない）",
+      "params": { "kind": "coverage", "needs": "plan_in_horizon" }
+    },
+    {
+      "id": "WI-PLAN-HORIZON",
+      "name": "計画の年数",
+      "what": "基準日の年度から、計画にある最後の予定の年度までが 10 年度以上あるか",
+      "level": "app",
+      "thresholdOrigin": "app",
+      "source": { "id": "MOE-GLPLE-PROV-R3", "clause": "表Ⅱ-12 主要設備・機器の劣化予測と整備計画例（イメージ）", "page": "印刷頁 40（PDF の 48 枚目）" },
+      "unimplemented": null,
+      "note": "手引きは計画の年数を定めていない（本文の文字を全部探して見つからなかった）。表Ⅱ-12 の例は今後 12 年度分の列を持つ。10 年度はアプリの目安で、出典の値ではない",
+      "params": { "kind": "plan_horizon", "years": 10 }
+    },
+    {
+      "id": "WI-PLAN-FIELDS",
+      "name": "機器別管理基準の列",
+      "what": "1 段目に当てて人が受けた機器（とその部位）の作業に、保全方式と診断の頻度（きっかけ）の欄があるか",
+      "level": "recommendation",
+      "thresholdOrigin": "source",
+      "source": { "id": "MOE-GLPLE-PROV-R3", "clause": "表Ⅱ-7 機器別管理基準（作成例）と作成手順の ②③", "page": "印刷頁 33（PDF の 41 枚目）" },
+      "unimplemented": "表Ⅱ-7 の列のうち、診断項目・評価方法・管理値・目標耐用年数は、計画の型に欄が無いので見られない（未実装）",
+      "note": "手引きの作成例と作成手順なので、水準は推奨",
+      "params": { "kind": "plan_fields", "fields": ["strategy", "trigger"] }
+    },
+    {
+      "id": "WI-HEALTH-SCALE",
+      "name": "健全度の値",
+      "what": "判定の値のある記録の値が、健全度の 4 段（4・3・2・1）のどれかか",
+      "level": "recommendation",
+      "thresholdOrigin": "source",
+      "source": { "id": "MOE-GLPLE-PROV-R3", "clause": "表Ⅱ-9 健全度の判断基準例", "page": "印刷頁 36（PDF の 44 枚目）" },
+      "unimplemented": null,
+      "note": "手引きの例なので、水準は推奨。判定の尺度の名前が空の記録も、この尺度として見る",
+      "params": { "kind": "scale_valid", "scale": "健全度", "values": ["4", "3", "2", "1"] }
+    },
+    {
+      "id": "WI-HEALTH-FOLLOWUP",
+      "name": "健全度の悪い判定のあとの措置",
+      "what": "健全度 2 の判定のあとに分解整備・更新・基幹改良の作業が、健全度 1 の判定のあとに更新か基幹改良の作業が、同じ機器（とその部位）にあるか（計画か実績）",
+      "level": "recommendation",
+      "thresholdOrigin": "app",
+      "source": { "id": "MOE-GLPLE-PROV-R3", "clause": "表Ⅱ-9 健全度の判断基準例（措置の列）", "page": "印刷頁 36（PDF の 44 枚目）" },
+      "unimplemented": null,
+      "note": "措置の列（2 は部分の補修・交換、1 は全交換）を作業の属性に当てたのはアプリの読み方なので、閾値の出どころはアプリの目安。措置の期限は手引きに無いので、期限は見ない",
+      "params": {
+        "kind": "followup",
+        "scale": "健全度",
+        "rules": [
+          { "values": ["2"], "needs": ["OVERHAUL", "REPLACE", "UPGRADE"] },
+          { "values": ["1"], "needs": ["REPLACE", "UPGRADE"] }
+        ]
+      }
+    }
+  ],
+  "notMade": [
+    {
+      "what": "表Ⅱ-4 にあるのに計画に無い機器",
+      "why": "表Ⅱ-4 は「例」で、炉の型と溶融設備の有無で当てはまる項目が変わる。計画の型に炉の型が無いので、どの項目が当てはまるかを決められない"
+    },
+    {
+      "what": "記録の必須の項目の欠け（record_fields）",
+      "why": "記録に要る項目を定める一次資料を、まだ照らしていない。種類はコードにあり試験もあるが、このパックでは当てない"
+    }
+  ]
+}
