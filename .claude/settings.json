@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "deny": [
+      "mcp__hoshutaro",
+      "WebFetch(domain:mxstage.tsunagi.app)",
+      "Bash(curl http://127.0.0.1:*)",
+      "Bash(curl -X POST http://127.0.0.1:*)",
+      "Bash(curl http://localhost:*)",
+      "Bash(curl -X POST http://localhost:*)",
+      "Read(~/AppData/Local/MOYAI/**)",
+      "Edit(~/AppData/Local/MOYAI/**)",
+      "Read(~/.local/state/moyai/**)",
+      "Edit(~/.local/state/moyai/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Grep|Glob|Write|Edit|MultiEdit|NotebookEdit|WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/guard-hook.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}

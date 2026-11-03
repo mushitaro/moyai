@@ -1,0 +1,18 @@
+# 既定は LF。Windows の autocrlf で束・CSV・試験の固定ファイルのバイト列が変わると、署名とハッシュが ✗ になる。
+* text=auto eol=lf
+
+# バイト列をそのまま持つもの（改行の変換をしない）
+samples/** -text
+tests/fixtures/** -text
+demo-ring/** -text
+ledger/** -text
+*.bundle.json -text
+
+*.xlsx binary
+*.xlsm binary
+*.xls binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.woff2 binary

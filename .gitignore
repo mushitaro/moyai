@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+.cache/
+*.log
+.DS_Store
+
+# 工場の Python の環境
+samples/factory/.venv/
+__pycache__/
+
+# 動画の素材はコミットしない（Google Drive か Release の添付で渡す）
+*.mp4
+*.wav
+*.m4a
+video/out/
+
+# 全国の表の元のファイル（施設名を含む）はコミットしない。数だけを取り出した表を packs/*/national/ に置く
+sources-raw/
+
+# Playwright
+test-results/
+playwright-report/
