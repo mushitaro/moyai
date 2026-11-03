@@ -272,6 +272,14 @@ function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; 
 /** 記録に使わないセル（外したもの・値の無い数式） */
 type Off = (ref: string) => boolean;
 
+/** 名前の前の号（「1号機ポンプ」「2号機 ポンプ」）。号の印（号・系）のある書き方だけ（「3段ポンプ」は分けない） */
+function splitUnitPrefix(text: string): { name: string; n: number; spelling: string } | null {
+  const m = /^(\d{1,3}\s*(?:号|系)\p{Script=Han}{0,2})\s*(\S.*)$/u.exec(nfkc(text).trim());
+  if (!m) return null;
+  const u = parseUnit(m[1] ?? "");
+  return u?.kind === "number" ? { name: (m[2] ?? "").trim(), n: u.n, spelling: u.spelling } : null;
+}
+
 /** 「-」だけのセル（号なし・該当なし） */
 function isNone(text: string): boolean {
   return /^[-－―—‐ー]+$/u.test(nfkc(text).trim());
@@ -416,7 +424,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       else dittoPending = true; // 答えを待つ（「上と同じ」でも上の行が無ければここ）：資産は未解決のまま置く（子の行の親が欠けないように）
     }
     const raw = dittoName && !literalDitto ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
-    const unitInName = splitUnitSuffix(raw);
+    const unitInName = splitUnitSuffix(raw) ?? splitUnitPrefix(raw);
     const name = tagged ? tagged.name : unitInName ? unitInName.name : raw;
     const a: AssetRec = {
       id: idOf(r.r),
@@ -599,12 +607,35 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const pathPrevRef: (string | null)[] = hier.map(() => null);
   const leafCol = hier[hier.length - 1];
   let prevLeaf: { r: number; node: AssetRec } | null = null;
+  // まとまりの見出しの行（名前の列が 1 つの星取表で、名前だけを書いて印の無い行。「受入供給設備」）：下の行の親になる
+  const isSection = (r: number) => {
+    if (hier.length !== 1) return false;
+    const cs = lay.index.rowCells(r).filter((c) => c.text !== "" && !off(c.ref));
+    return cs.length === 1 && cs[0]?.c === hier[0]?.c;
+  };
+  let group: AssetRec | null = null;
   for (const r of data) {
     if (lay.index.rowCells(r.r).every((c) => off(c.ref))) {
       rowNode.set(r.r, null);
       prevLeaf = null;
       continue;
     }
+    if (isSection(r.r)) {
+      const cell = lay.index.at(r.r, hier[0]?.c ?? 0);
+      if (cell) {
+        const name = cell.text.replace(/\s*\n\s*/g, " ").trim();
+        group = { id: `${t.id}:g${r.r}`, file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, tableId: t.id, shape: "grid", order: order++, level: 1, parentId: null, rawName: name, name, tag: null, tagNumber: null, nameRef: cell.ref, series: null, specs: [], installed: null, refs: [cell.ref], excluded: null, pending: false };
+        rec.assets.push(group);
+      }
+      rowNode.set(r.r, null);
+      prevLeaf = null;
+      for (let k = 0; k < hier.length; k++) {
+        pathPrev[k] = null;
+        pathPrevRef[k] = null;
+      }
+      continue;
+    }
+    const offset = group ? 1 : 0;
     // 名前の無い続きの段：葉の名前の欄が空で（結合でもなく）、すぐ上の行が機器の行で、2 つの行の予定・実績が違う。
     // 予定の段と実績の段に分けて書く書き方の 2 段目。上の行の機器の印として読む
     const leafCell = leafCol ? lay.index.at(r.r, leafCol.c) : null;
@@ -616,7 +647,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       rowNode.set(r.r, prevLeaf.node);
       continue;
     }
-    let parent = null as AssetRec | null;
+    let parent = group as AssetRec | null;
     let node = null as AssetRec | null;
     let undecided = false;
     for (let i = 0; i < hier.length; i++) {
@@ -680,7 +711,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
           tableId: t.id,
           shape: "grid",
           order: order++,
-          level: col.hierLevel ?? i + 1,
+          level: (col.hierLevel ?? i + 1) + offset,
           parentId: parent?.id ?? null,
           rawName: raw,
           name: raw,
@@ -736,7 +767,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       if (node.pending) for (const ref of node.refs) pend(ref);
     } else for (const c of lay.index.rowCells(r.r)) pend(c.ref);
     rowNode.set(r.r, node);
-    prevLeaf = node && node.level === (leafCol?.hierLevel ?? -1) ? { r: r.r, node } : null;
+    prevLeaf = node && node.level === (leafCol?.hierLevel ?? -1) + offset ? { r: r.r, node } : null;
   }
   // 印
   const legend = t.legend;
@@ -849,9 +880,13 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const tagCol = col("tag");
   const blankDecision = (t as Table & { blankDecision?: Map<number, string | null> }).blankDecision ?? new Map<number, string | null>();
   const daysCol = col("days");
-  const effortCol = col("effort");
-  // 見出しに書いた工数の単位（「工数(人日)」「延工数(h)」）
-  const effortUnit = effortCol ? cue.headerUnit(effortCol.header) : null;
+  // 工数の列がいくつか（「予定工数」「実績工数」）：行ごとに、実績の列を先に、書いてある列を使う
+  const effortCols = t.cols.filter((c) => c.role === "effort").sort((a, b) => (cue.planActual(b.header) === "actual" ? 1 : 0) - (cue.planActual(a.header) === "actual" ? 1 : 0));
+  const effortCol = effortCols[0];
+  const effortColAt = (r: number) => effortCols.find((c) => {
+    const x = lay.index.at(r, c.c);
+    return !!x && x.text !== "";
+  }) ?? effortCol;
   const assetCol = col("assetRef");
   const unitCol = col("unit");
   const workCol = col("workName");
@@ -908,7 +943,11 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     const yc = daysCol ? lay.index.at(r.r, daysCol.c) : null;
     const days = yc && !off(yc.ref) ? parseDayCount(typeof yc.value === "number" ? yc.value : yc.text) : null;
     if (yc && !off(yc.ref) && days === null) badDays.set(shapeOf(yc.text), [...(badDays.get(shapeOf(yc.text)) ?? []), yc.ref]);
-    const ec = effortCol ? lay.index.at(r.r, effortCol.c) : null;
+    const rowEffortCol = effortColAt(r.r);
+    const ec = rowEffortCol ? lay.index.at(r.r, rowEffortCol.c) : null;
+    // 見出しに書いた工数の単位（「工数(人日)」「延工数(h)」）
+    // 見出しの段ごとに見る（「延人員」の下に「(人)」と書く書き方）
+    const effortUnit = rowEffortCol ? (rowEffortCol.headerParts.map((h) => cue.headerUnit(h)).find((u) => u !== null) ?? cue.headerUnit(rowEffortCol.header)) : null;
     let manDays: number | null = null;
     let hours: number | null = null;
     let persons: number | null = null;
@@ -936,7 +975,10 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     const unit: UnitValue | null = uc && !isNone(uc.text) ? (parseUnit(uc.text) ?? (bareNo ? { kind: "number", n: Number(bareNo[0]), spelling: "{n}" } : null)) : null;
     if (uc && uc.text !== "" && !isNone(uc.text) && !unit) unitBadEv.set(nfkc(uc.text).trim(), [...(unitBadEv.get(nfkc(uc.text).trim()) ?? []), { row: r.r, ref: uc.ref }]);
     if (unit?.kind === "number") spellings.set(unit.spelling, [...(spellings.get(unit.spelling) ?? []), uc?.ref ?? ""]);
-    const assetText = text(r.r, assetCol);
+    const assetText0 = text(r.r, assetCol);
+    // 名前の前の号（「1号機ポンプ」）：号の欄が無いか空なら、名前から号を分ける
+    const lead = (!uc || uc.text === "") ? splitUnitPrefix(assetText0) : null;
+    const assetText = lead ? lead.name : assetText0;
     const stripped = cue.stripSet(assetText);
     const workName = (workCol ? text(r.r, workCol) : text(r.r, titleCol)).trim();
     const fy = date ? fiscalYearOf(date, opts.fiscalYearStartMonth) : null;
@@ -959,7 +1001,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
         return tc && tc.text !== "" && !cue.isDitto(tc.text) ? nfkc(tc.text).trim() : null;
       })(),
       bundle: stripped.set,
-      unit: uc && uc.text !== "" && !isNone(uc.text) ? unit : null,
+      unit: lead ? { kind: "number", n: lead.n, spelling: lead.spelling } : uc && uc.text !== "" && !isNone(uc.text) ? unit : null,
       workName,
       workTitle: titleCol && workCol ? text(r.r, titleCol) || null : null,
       remark: remarkCols.map((c) => text(r.r, c)).filter(Boolean).join(" / ") || null,
@@ -970,6 +1012,29 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       _persons: persons,
       _bare: bare,
     });
+  }
+  // 日付の欄の無い作業の表（工程表など）：表の外に書いた期間を使うか、まとめて 1 回聞く（推し量らない）
+  if (!dateCol && evs.length) {
+    const cp = lay.contextPeriod;
+    const a = ask.ask(`dateMissing|${t.id}`, {
+      kind: "dateUnknown",
+      text: cp
+        ? `作業の行に日付が書いていない（${evs.length} 行）。表の外に書いた期間（「${cp.text.slice(0, 60)}」）をその行の期間にするか`
+        : `作業の行に日付が書いていない（${evs.length} 行）`,
+      options: [...(cp ? [{ id: "heading", label: "表の外に書いた期間にする" }] : []), { id: "exclude", label: "その行を外す" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: evs.length,
+      items: [itemOf(lay, evs.slice(0, 10).map((e) => e.refs[0] ?? ""))],
+    });
+    for (const e of evs) {
+      if (a === "heading" && cp) {
+        e.date = cp.start;
+        e.end = cp.end;
+        e.fiscalYear = fiscalYearOf(cp.start, opts.fiscalYearStartMonth);
+        e.pending = !e.workName;
+      } else if (a === "exclude") e.excluded = "日付の書いていない行（決定で外した）";
+    }
   }
   // 工数の単位の問いは、同じ様式の表をまとめて 1 回聞く（同じ鍵で聞くと、件数と見本は足される）
   const form = rec.formOf.get(t.id);

@@ -19,6 +19,7 @@ const sets = {
   notePrefix: normList(CUES.rowRole.notePrefix),
   continued: normList(CUES.rowRole.continued),
   asOf: normList(CUES.rowRole.asOf),
+  count: normList(CUES.rowRole.count),
   actual: normList(CUES.planActual.actual),
   plan: normList(CUES.planActual.plan),
   ditto: normList(CUES.ditto),
@@ -36,7 +37,10 @@ export function containsAny(text: string, list: readonly string[]): boolean {
 
 export const cue = {
   isSubtotal: (t: string) => containsAny(t, sets.subtotal),
-  isTotal: (t: string) => containsAny(t, sets.total) || sets.totalExact.includes(norm(t)),
+  // 「延人員 計」のように、列の名前と「計」を空白で分けた書き方も合計
+  isTotal: (t: string) => containsAny(t, sets.total) || sets.totalExact.includes(norm(t)) || /\S[\s　]+計$/u.test(nfkc(t)),
+  /** 件数の行（「件数」）：表の行の数を書いたもの */
+  isCount: (t: string) => sets.count.includes(norm(t)),
   isLegendTitle: (t: string) => containsAny(t, sets.legend),
   /** 凡例の見出しの語を除いた文字（同じセルに「○：予定」などが続く書き方のため） */
   stripLegendTitle(t: string): string {
@@ -86,6 +90,9 @@ export const cue = {
     const h = norm(header);
     const paren = /[(（]([^()（）]*)[)）]$/.exec(h)?.[1] ?? null;
     const inParen = (ws: readonly string[]) => paren !== null && ws.some((w) => norm(w).toLowerCase() === paren.toLowerCase());
+    const bareH = stripParen(h);
+    // 延べの人数の見出し（「延人員」）は、人・日を数えたもの
+    if (CUES.headerUnit.manDays.some((w) => norm(w).length >= 3 && bareH.endsWith(norm(w)))) return "manDays";
     if (inParen(CUES.headerUnit.manDays)) return "manDays";
     if (inParen(CUES.headerUnit.hours)) return "hours";
     // 括弧が無いとき：見出しそのものが単位の語を含む（「延べ時間」「作業時間」）
@@ -111,9 +118,9 @@ export const cue = {
   commonMeanings: CUES.commonMeanings,
 };
 
-/** 末尾の括弧（単位など）を除く。除くと空になるなら除かない */
+/** 末尾の括弧（単位・番号など：() （） 〔〕 ［］ [] 【】）を除く。除くと空になるなら除かない */
 function stripParen(h: string): string {
-  const s = h.replace(/[(（][^()（）]*[)）]$/, "");
+  const s = h.replace(/[(（〔［[【][^()（）〔〕［］[\]【】]*[)）〕］\]】]$/u, "");
   return s || h;
 }
 

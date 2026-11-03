@@ -70,8 +70,11 @@ export function parseEffort(v: string | number): EffortValue | null {
   if (m) return { amount: Number(m[1]), unit: "hours", style: s.replace(/[\d.]+/, "{n}") };
   m = RE_PERSONS.exec(s);
   if (m) return { amount: Number(m[1]), unit: "persons", style: s.replace(/[\d.]+/, "{n}") };
-  m = RE_BARE.exec(s);
+  m = RE_BARE.exec(s.replace(/,/g, ""));
   if (m) return { amount: Number(m[1]), unit: "bare", style: "数だけ" };
+  // 時間と分（「192:00」「7:30」）：時間
+  m = /^(\d{1,5}):([0-5]\d)$/.exec(s);
+  if (m) return { amount: Number(m[1]) + Number(m[2]) / 60, unit: "hours", style: "{h}:{mm}" };
   return null;
 }
 
@@ -94,7 +97,7 @@ export interface TagSplit {
   pattern: "trailingParen" | "leadingCode";
 }
 
-const RE_TAG_PAREN = /^(.+?)\s*[（(]\s*([A-Z][A-Z0-9]{1,7}(?:-[A-Z0-9]{1,6})*)\s*[)）]$/;
+const RE_TAG_PAREN = /^(.+?)\s*[（(〔［[]\s*([A-Z][A-Z0-9]{1,7}(?:-[A-Z0-9]{1,6})*)\s*[)）〕］\]]$/;
 const RE_TAG_LEAD = /^([A-Z][A-Z0-9]{1,7}(?:-[A-Z0-9]{1,6})*)\s+(\S.*)$/;
 
 /** 名前の中の英大文字の符号（機器番号）の候補。決めるのは呼ぶ側（質問にする） */

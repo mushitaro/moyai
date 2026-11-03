@@ -10,6 +10,7 @@ import { ROW_ROLE_LABEL, type SheetLayout, type Table } from "./structure";
 import { seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
 import { daysInclusive, parseDayCount, type Ymd } from "./era";
 import { nameKey, parseEffort } from "./text";
+import { cue } from "./cues";
 import { markPhotoRecords, type PhotoReview } from "./photo";
 
 export type CellStatus = { s: "data" } | { s: "excluded"; reason: string } | { s: "unresolved"; questionId: string | null };
@@ -122,7 +123,10 @@ function checkTotals(
       if (written === null) continue;
       let counted = 0;
       let alt: number | null = null;
-      if (col?.role === "mark") counted = data.filter((r) => (lay.index.at(r.r, c.c)?.text ?? "") !== "").length;
+      // 件数の行（「件数｜71」）：表の行の数と照らす
+      const countRow = cells.some((x) => typeof x.value === "string" && cue.isCount(x.text));
+      if (countRow) counted = data.length;
+      else if (col?.role === "mark") counted = data.filter((r) => (lay.index.at(r.r, c.c)?.text ?? "") !== "").length;
       else if (t.shape === "events" && col?.role === "effort") {
         const evs = data.map((r) => eventOf(r.r)).filter((e): e is EventRec => !!e && !e.excluded);
         if (evs.some((e) => e.effortPending)) {

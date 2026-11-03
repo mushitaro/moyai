@@ -230,3 +230,114 @@ describe("台帳と星取表の形", () => {
     expect(lay?.notes.map((n) => n.r)).toEqual(expect.arrayContaining([3, 4, 5]));
   });
 });
+
+describe("見ていない様式の 2 回目（heldout-2）で詰まった形", () => {
+  const ledger = csv(["名称,系列,機器番号", "ポンプ,1号,P-1", "ブロワ,1号,B-1", "計量器,共通,SCL"]);
+
+  test("CSV の囲みの中の改行で表が分かれない。頭書きに見出しの語がまじっても、見出しの語のいちばん多い行が見出し。件数の行は行の数と照らす", async () => {
+    const wo = csv([
+      "【架空】作業の書き出し",
+      "出力日時,2026/10/01 09:15,工数の単位,時間（h:mm）",
+      "WO番号,状態,設備コード,設備名称,作業件名,着手日,完了日,工期(日),予定工数,実績工数,備考",
+      'W-1,完了,P-1,ポンプ,点検,2022/04/06,2022/04/08,3,,24:00,"1 行目',
+      '2 行目"',
+      "W-2,完了,B-1,ブロワ,点検,2022/05/06,2022/05/06,1,,7:30,",
+      "件数,2",
+    ]);
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "書き出し.csv", bytes: wo },
+    ]);
+    const an = s.analyze();
+    const lay = an.layouts.find((l) => l.file === "書き出し.csv");
+    expect(lay?.tables.length).toBe(1);
+    const t = lay?.tables[0];
+    expect(t?.headerRows).toEqual([3]);
+    expect(t?.cols.map((c) => c.role)).toEqual(["number", "planActual", "tag", "assetRef", "workName", "date", "end", "days", "effort", "effort", "remark"]);
+    acceptDefaults(s);
+    const hours = s.analyze().open.find((q) => q.kind === "hoursPerManDay");
+    if (hours) s.settle([human(hours.questionId, "8")]);
+    acceptDefaults(s);
+    const ev = s.analyze().records.events.filter((e) => e.file === "書き出し.csv");
+    // 予定工数が空の行は実績工数（h:mm）。7:30 は 7.5 時間
+    expect(ev.map((e) => e.manDays)).toEqual([3, 7.5 / 8]);
+    const count = s.compose().checks.find((x) => x.file === "書き出し.csv");
+    expect(count?.mismatches).toEqual([]);
+  });
+
+  test("作業の表の区分の見出しの行（「〈甲設備〉」）は注記。名前の前の号と〔番号〕を分ける。延人員の見出しは人・日", async () => {
+    const rep = csv([
+      "No.,設備／機器〔番号〕,作業内容,実施期間,日数,延人員(人)",
+      ",〈甲設備〉,,,,",
+      "1,1号炉ポンプ〔P-1〕,点検,R5.8.31～R5.9.2,3,6",
+      "2,1号炉ブロワ〔B-1〕,点検,R5.8.31～R5.9.2,3,9",
+      ",,延人員 計,,,15",
+    ]);
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "報告.csv", bytes: rep },
+    ]);
+    const an = s.analyze();
+    const t = an.layouts.find((l) => l.file === "報告.csv")?.tables[0];
+    expect(t?.cols[1]?.role).toBe("assetRef");
+    expect(t?.rows.find((r) => r.r === 2)?.role).toBe("note");
+    expect(t?.rows.find((r) => r.r === 5)?.role).toBe("total");
+    const ev = an.records.events.filter((e) => e.file === "報告.csv");
+    expect(ev.map((e) => [e.assetNames[0], e.unit?.kind === "number" ? e.unit.n : null, e.manDays])).toEqual([
+      ["ポンプ〔P-1〕", 1, 6],
+      ["ブロワ〔B-1〕", 1, 9],
+    ]);
+  });
+
+  test("工程表：見出しの上の段・単位の段・日の数と曜日の段は見出し。日付の列が無ければ、表の外に書いた工期を使うか聞く", async () => {
+    const gantt = csv([
+      "【架空】実施工程表（予定）,,,,,,,",
+      "予定工期：令和8年10月5日（月）～ 令和8年10月7日（水） 3日間,,,,,,,",
+      ",,,人員,,延人員,,,,",
+      "No.,機器名称〔番号〕,作業内容,,日数,,,,,備考",
+      ",,,(人/日),,(人),5,6,7,",
+      ",,,,,,月,火,水,",
+      "1,ポンプ〔P-1〕,点検,2,3,6,,,,",
+    ]);
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "工程表.csv", bytes: gantt },
+    ]);
+    const an = s.analyze();
+    const lay = an.layouts.find((l) => l.file === "工程表.csv");
+    expect(lay?.contextPeriod?.start).toEqual({ y: 2026, m: 10, d: 5 });
+    const t = lay?.tables[0];
+    expect(t?.shape).toBe("events");
+    expect(t?.headerRows).toEqual([3, 4, 5, 6]);
+    const q = an.open.find((x) => x.kind === "dateUnknown");
+    expect(q?.options.map((o) => o.id)).toEqual(["heading", "exclude"]);
+    s.settle([human(q?.questionId ?? "", "heading")]);
+    const ev = s.analyze().records.events.find((e) => e.file === "工程表.csv");
+    expect([ev?.date?.d, ev?.end?.d]).toEqual([5, 7]);
+  });
+
+  test("短い字の印（「点」「（点）」「整・精」）と、注記の行の凡例（「凡例　点＝点検　整＝整備」）の星取表。まとまりの見出しの行は親", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["凡例　点＝点検　整＝整備　精＝精密"]]);
+      rows(ws, 3, [["設備・機器名称", "号炉", "R5", "R6", "R7"]]);
+      rows(ws, 4, [
+        ["甲設備", null, null, null, null],
+        ["ポンプ", "1号炉", "点", "整・精", "（点）"],
+        ["ブロワ", "1号炉", null, "点", null],
+      ]);
+    });
+    const s = session();
+    await s.add([{ name: "星取表.xlsx", bytes }]);
+    const an = s.analyze();
+    const t = an.layouts[0]?.tables[0];
+    expect(t?.shape).toBe("grid");
+    expect(t?.legend.map((e) => `${e.symbol}=${e.meaning}`)).toEqual(["点=点検", "整=整備", "精=精密"]);
+    const assets = an.records.assets;
+    const pump = assets.find((a) => a.name === "ポンプ");
+    expect(pump?.level).toBe(2);
+    expect(assets.find((a) => a.id === pump?.parentId)?.name).toBe("甲設備");
+  });
+});

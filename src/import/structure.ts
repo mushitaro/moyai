@@ -4,7 +4,7 @@
 // 層 2 は形式を知らない（格子だけを見る）。決まらないものは「問い」の種（Issue）として層 3 に渡す。
 import { CellIndex, cellRef, colLetter, type GridCell, type SheetGrid, type SourceFile } from "./grid";
 import { cue, norm, type ColumnCue } from "./cues";
-import { fiscalYearInText, parseDateRange, parseDateText, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, serialToYmd, type Ymd } from "./era";
+import { fiscalYearInText, nfkc as nfkcText, parseDateRange, parseDateText, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, serialToYmd, type Ymd } from "./era";
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit } from "./text";
 
@@ -133,6 +133,8 @@ export interface SheetLayout {
   rowReasons: Map<number, string>;
   /** シートの中の文に書いた年度がただ 1 つなら、その年度（年の無い日付「4/6」の年を決めるため）。無い・2 つ以上なら null */
   contextFiscalYear: number | null;
+  /** 表の外（題・注記）に書いた期間がただ 1 つなら、その期間（日付の書いていない作業の行に、人が使うかを決める） */
+  contextPeriod: { start: Ymd; end: Ymd; text: string } | null;
 }
 
 // ─── 値の読み方 ────────────────────────────────────────────────
@@ -181,12 +183,14 @@ function contentRows(idx: CellIndex, g: SheetGrid): number[] {
   return [...rows].sort((a, b) => a - b);
 }
 
-function blocksOf(rows: number[], g: SheetGrid): number[][] {
+function blocksOf(rows: number[], g: SheetGrid, spans: Map<number, number> = new Map()): number[][] {
   const blocks: number[][] = [];
   let cur: number[] = [];
   // 結合が行をまたぐときは、つながっているものとして扱う
   const joined = new Set<number>();
   for (const m of g.merges) for (let r = m.top; r < m.bottom; r++) joined.add(r);
+  // CSV の囲みの中の改行：1 つの記録が何行にもわたる。記録の行と次の記録の行は、つながっている
+  for (const [r, n] of spans) for (let k = r; k < r + n; k++) joined.add(k);
   for (const r of rows) {
     const last = cur[cur.length - 1];
     if (last !== undefined && (r === last + 1 || joined.has(last))) cur.push(r);
@@ -205,18 +209,35 @@ function rowTexts(idx: CellIndex, r: number): GridCell[] {
 
 function isSubtotalRow(cells: GridCell[]): "subtotal" | "total" | null {
   const texts = cells.filter((c) => typeof c.value === "string");
-  const labelCell = texts.find((c) => cue.isSubtotal(c.text) || cue.isTotal(c.text));
+  const labelCell = texts.find((c) => cue.isSubtotal(c.text) || cue.isTotal(c.text) || cue.isCount(c.text));
   if (!labelCell) return null;
   const others = cells.filter((c) => c !== labelCell);
   // 名前のほかは数か空（数の値の小計・合計）。数が 1 つも無ければ小計の行ではない
   if (!others.some(isAmountish)) return null;
-  if (others.some((c) => !isAmountish(c) && !(cue.isSubtotal(c.text) || cue.isTotal(c.text)))) return null;
+  if (others.some((c) => !isAmountish(c) && !(cue.isSubtotal(c.text) || cue.isTotal(c.text) || cue.isCount(c.text)))) return null;
   return cue.isSubtotal(labelCell.text) ? "subtotal" : "total";
 }
 
 // ─── 凡例 ──────────────────────────────────────────────────────
 
 /** 1 つのセルに並べた凡例：「○：予定　●：実績」「○予定 ●実績」「○=予定、●=実績」 */
+/** 星取表の印らしい短い書き方：記号（○●◎）か、数の無い 1〜2 字の短い字（「点」「整」）。括弧と並べる印（「（点）」「整・精」）も */
+function isMarkLike(text: string): boolean {
+  if (isSymbolLike(text)) return true;
+  const t = norm(text).replace(/^[(（［[]|[)）］\]]$/gu, "");
+  return t.split(/[・,、/]/u).every((x) => x.length >= 1 && x.length <= 2 && !/[0-9A-Za-z]/.test(x));
+}
+
+/** 凡例の「X＝意味」の書き方（記号でなく短い字の印：「点＝点検」）。等号でつないだものだけ */
+function parseEqualsLegend(text: string): { symbol: string; meaning: string }[] {
+  const out: { symbol: string; meaning: string }[] = [];
+  for (const m of nfkcText(cue.stripLegendTitle(text)).matchAll(/(\S{1,2})\s*[=＝]\s*([^\s=＝]+)/gu)) {
+    const sym = m[1] ?? "";
+    if (sym && !/[0-9A-Za-z]/.test(sym)) out.push({ symbol: sym, meaning: (m[2] ?? "").trim() });
+  }
+  return out;
+}
+
 function parseInlineLegend(text: string): { symbol: string; meaning: string }[] {
   const out: { symbol: string; meaning: string }[] = [];
   const isWordChar = (ch: string) => /[0-9A-Za-z\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー]/u.test(ch);
@@ -292,8 +313,21 @@ function planActualColumn(cs: GridCell[]): boolean {
   return cs.length >= 2 && ratio(cs.filter((x) => cue.planActual(x.text) !== null).length, cs.length) >= 0.9;
 }
 
+/** 見出しの下の段らしい行：見出しの空いた列の単位の括弧（「(人)」）、日の数の並び（5・6・7…）、曜日（月・火…）だけの行 */
+function subHeaderRow(ctx: BuildCtx, r: number, headerCols: Set<number>): boolean {
+  const cs = rowTexts(ctx.idx, r);
+  if (!cs.length) return false;
+  const weekday = (t: string) => /^[月火水木金土日]$/u.test(norm(t));
+  if (cs.length >= 3 && cs.every((c) => weekday(c.text))) return true;
+  const nums = cs.filter((c) => /^\d{1,2}$/.test(norm(c.text)) && !headerCols.has(c.c)).map((c) => Number(norm(c.text)));
+  const seq = nums.length >= 3 && nums.every((n, i) => i === 0 || n === (nums[i - 1] ?? 0) + 1 || n === 1);
+  return cs.every((c) => (/^[(（][^()（）]{1,8}[)）]$/u.test(norm(c.text)) && !headerCols.has(c.c)) || (seq && /^\d{1,2}$/.test(norm(c.text)) && !headerCols.has(c.c)));
+}
+
 function headerExtent(ctx: BuildCtx, block: number[], top: number): number[] {
   let bottom = top;
+  // 見出しの上の段から始まるとき：すぐ下の見出しの行も見出し
+  if (block.includes(top + 1) && !headerLike(rowTexts(ctx.idx, top)) && headerLike(rowTexts(ctx.idx, top + 1))) bottom = top + 1;
   for (const m of ctx.grid.merges) if (m.top === top && m.bottom > bottom && block.includes(m.bottom)) bottom = m.bottom;
   // 見出しのすぐ下の行が、実績・予定の語だけでできていれば、2 段の見出し
   const next = bottom + 1;
@@ -301,6 +335,9 @@ function headerExtent(ctx: BuildCtx, block: number[], top: number): number[] {
     const cells = rowTexts(ctx.idx, next);
     if (cells.length >= 2 && cells.every((c) => cue.planActual(c.text) !== null)) bottom = next;
   }
+  // 見出しの下の段（単位・日の数・曜日）
+  const headerCols = new Set(rowTexts(ctx.idx, bottom).map((c) => c.c));
+  for (let k = 0; k < 3 && block.includes(bottom + 1) && subHeaderRow(ctx, bottom + 1, headerCols); k++) bottom++;
   const out: number[] = [];
   for (let r = top; r <= bottom; r++) out.push(r);
   return out;
@@ -346,7 +383,7 @@ function detectYearBand(ctx: BuildCtx, cols: ColInfo[], dataRows: number[], head
   if (years.length < 1) return { kind: null, issue: null };
   // 年の列の中身が印（記号）であること。数や文の列（年度ごとの金額など）は星取表の印ではない
   const cells = years.flatMap((y) => dataCellsOf(ctx, dataRows, y.col.c));
-  if (!cells.length || ratio(cells.filter((x) => isSymbolLike(x.text)).length, cells.length) < 0.8) return { kind: null, issue: null };
+  if (!cells.length || ratio(cells.filter((x) => isMarkLike(x.text)).length, cells.length) < 0.8) return { kind: null, issue: null };
   // 隣り合う列で、年が減らずに並ぶこと（同じ年が 2 列＝実績・予定）
   const seq = years.map((y) => y.label?.year ?? 0);
   for (let i = 1; i < seq.length; i++) if ((seq[i] ?? 0) < (seq[i - 1] ?? 0)) return { kind: null, issue: null };
@@ -422,7 +459,9 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   if (marks.length) shape = "grid";
   else {
     const dateCol = cols.find((col) => dateColumn(ctx, dataCellsOf(ctx, dataRows, col.c)));
-    shape = dateCol ? "events" : "tree";
+    // 日付の列が無くても、作業の名前の列と、日数か工数の列があれば作業の表（工程表のように、日付を帯で描く書き方）
+    const workish = cols.some((c) => c.cue === "workName") && cols.some((c) => c.cue === "days" || c.cue === "effort");
+    shape = dateCol || workish ? "events" : "tree";
   }
   // 列の役目
   for (const col of cols) {
@@ -452,6 +491,9 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       else if (col.cue === "workName") col.role = "workName";
       else if (col.cue === "workTitle") col.role = "workTitle";
       else if (col.cue === "tag") col.role = "tag";
+      else if (col.cue === "weekday") col.role = "remark";
+      // 行ごとの予定・実績（「状態｜完了・計画中」）
+      else if (planActualColumn(cs)) col.role = "planActual";
       // 号・系列の見出しの列で、中身が数だけ（「1」「2」）：号の列
       else if (col.cue === "series" && seriesValues(cs)) col.role = "unit";
       else if (col.cue === "remark" || col.cue === "spec" || col.cue === "category" || col.cue === "persons" || col.cue === "fiscal") col.role = "remark";
@@ -503,6 +545,16 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     col.role = "label"; // 名前か階層の候補（下で決める）
   }
   if (shape === "events") {
+    // 区分の見出しの行（「〈燃焼設備〉」：中身が 1 セルだけで、日付も数も無い行）は、作業の行でなく注記
+    for (const row of rows) {
+      if (row.role !== "data") continue;
+      const cs = rowTexts(ctx.idx, row.r);
+      if (cs.length === 1 && typeof cs[0]?.value === "string" && !isDateCell(ctx, cs[0] as GridCell)) {
+        row.role = "note";
+        const i = dataRows.indexOf(row.r);
+        if (i >= 0) dataRows.splice(i, 1);
+      }
+    }
     // 日付の列が 2 つ（着手・完了）で、終わりの手がかりが無ければ、右の列を終わりにする
     const ds = cols.filter((c) => c.role === "date");
     if (ds.length === 2 && !cols.some((c) => c.role === "end")) (ds[1] as ColInfo).role = "end";
@@ -837,9 +889,9 @@ function headerLike(cells: GridCell[]): boolean {
  * 項目（短い文字。数・日付でない）と値の組が 1 つ以上で、最後に組にならない文が 1 つあってもよい。列の見出しの行や、
  * 中身の半分を超えて見出しの語の行（2 列の表の見出し）は、頭書きにしない
  */
-function kvRow(cells: GridCell[]): boolean {
-  if (cells.length < 2 || cells.length > 7 || headerLike(cells)) return false;
-  if (cells.filter((c) => cue.column(c.text) !== null).length * 2 > cells.length) return false;
+function kvRow(cells: GridCell[], allowHeaderWords = false): boolean {
+  if (cells.length < 2 || cells.length > 7 || (!allowHeaderWords && headerLike(cells))) return false;
+  if (!allowHeaderWords && cells.filter((c) => cue.column(c.text) !== null).length * 2 > cells.length) return false;
   for (let i = 0; i + 1 < cells.length; i += 2) {
     const label = cells[i] as GridCell;
     const t = norm(label.text);
@@ -942,10 +994,18 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
     roles.set(r, "header");
     rowReasons.set(r, rp.kind === "continued" ? "続きの印（前の表の続き）" : "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）");
   }
+  // CSV の記録が物理の何行にわたるか（囲みの中の改行の数＋1）
+  const spans = new Map<number, number>();
+  if (src.format === "csv" || src.format === "tsv")
+    for (const c of grid.cells) {
+      const n = (c.text.match(/\r\n|\r|\n/g) ?? []).length + 1;
+      if (n > 1 && n > (spans.get(c.r) ?? 1)) spans.set(c.r, n);
+    }
   const blocks = joinAcross(
     blocksOf(
       all.filter((r) => !repeats.has(r)),
       grid,
+      spans,
     ),
     all,
     repeats,
@@ -956,7 +1016,14 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
     // 凡例の塊
     if (firstCells.some((c) => cue.isLegendTitle(c.text))) {
       for (const r of block) roles.set(r, "legend");
-      legends.push({ rows: block, entries: readLegend(idx, block) });
+      // 記号の凡例が読めなければ、「X＝意味」の書き方（短い字の印）で読む
+      let entries = readLegend(idx, block);
+      if (!entries.length) {
+        const r0 = block[0] ?? 0;
+        const ref = rowTexts(idx, r0)[0]?.ref ?? cellRef(r0, 1);
+        entries = block.flatMap((r) => rowTexts(idx, r).flatMap((c) => parseEqualsLegend(c.text))).map((e) => ({ ...e, planOrActual: cue.planActual(e.meaning), refs: [ref], r: r0 }));
+      }
+      legends.push({ rows: block, entries });
       return;
     }
     // 題と注記の塊（どの行も 2 つ以下のセル、4 行以下）。ただし、列の見出しの語がある塊や、
@@ -1003,9 +1070,23 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
       top = rest[0] ?? top;
     }
     // 帳票の頭書き：列の見出しの行の上にある、項目と値だけの行（どれも 2 セルまで）。表の外の項目なので記録には使わない
-    const hi = rest.findIndex((r) => headerLike(rowTexts(idx, r)));
-    if (hi > 0 && rest.slice(0, hi).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)))) {
-      for (const r of rest.splice(0, hi)) {
+    // 見出しの行：はじめの 4 行のうち、見出しの語のいちばん多い行（頭書きの値に見出しの語がまじる書き方があるため）
+    const cueCount = (r: number) => rowTexts(idx, r).filter((c) => cue.column(c.text) !== null).length;
+    let hi = -1;
+    for (let i = 0; i < Math.min(rest.length, 4); i++) if (headerLike(rowTexts(idx, rest[i] ?? 0)) && (hi < 0 || cueCount(rest[i] ?? 0) > cueCount(rest[hi] ?? 0))) hi = i;
+    if (hi < 0) hi = rest.findIndex((r) => headerLike(rowTexts(idx, r)));
+    // 見出しの行のすぐ上の、見出しの空いた列の上にだけ短い名前を置いた行は、見出しの上の段（「人員」「延人員」）
+    let upper = 0;
+    if (hi > 0) {
+      const head = new Set(rowTexts(idx, rest[hi] ?? 0).map((c) => c.c));
+      for (let i = hi - 1; i >= 0; i--) {
+        const cs = rowTexts(idx, rest[i] ?? 0);
+        if (cs.length && cs.every((c) => !head.has(c.c) && typeof c.value === "string" && norm(c.text).length <= 8 && parseDateText(c.text) === null)) upper++;
+        else break;
+      }
+    }
+    if (hi - upper > 0 && rest.slice(0, hi - upper).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)) || kvRow(rowTexts(idx, r), true))) {
+      for (const r of rest.splice(0, hi - upper)) {
         const cells = rowTexts(idx, r);
         roles.set(r, "note");
         rowReasons.set(r, "表の上の項目と値（頭書き）。記録には使わない");
@@ -1015,6 +1096,14 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
     }
     tables.push(buildTable(ctx, rest, top, roles));
   });
+  // 表の上や下の注記の行に書いた凡例（「凡例　点＝点検　整＝分解整備」）も凡例にする（星取表の形の表があるときだけ）
+  if (tables.some((t) => t.shape === "grid"))
+    for (const n of notes.filter((x) => cue.isLegendTitle(x.text))) {
+      const entries = parseEqualsLegend(n.text);
+      if (!entries.length) continue;
+      roles.set(n.r, "legend");
+      legends.push({ rows: [n.r], entries: entries.map((e) => ({ ...e, planOrActual: cue.planActual(e.meaning), refs: [n.ref], r: n.r })) });
+    }
   // 凡例は、上にある一番近い星取表の形の表へ
   const looseLegends: LegendEntry[] = [];
   for (const lg of legends) {
@@ -1025,7 +1114,16 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
       target.legendRows.push(...lg.rows);
     } else looseLegends.push(...lg.entries);
   }
-  return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends, rowReasons, contextFiscalYear };
+  const periods = new Map<string, { start: Ymd; end: Ymd; text: string }>();
+  for (const n of [...titles, ...notes]) {
+    // 項目の名前（「予定工期：」）と曜日の括弧を除いて、期間として読む
+    const body = nfkcText(n.text).replace(/^[^：:]{1,10}[：:]/u, "").replace(/[(（][月火水木金土日][)）]/gu, "");
+    const pair = /(\S+)\s*[〜~]\s*(\S+)/u.exec(body);
+    const p = parseDateRange(body) ?? (pair ? parseDateRange(`${pair[1]}~${pair[2]}`) : null);
+    if (p) periods.set(`${p.start.y}-${p.start.m}-${p.start.d}|${p.end.y}-${p.end.m}-${p.end.d}`, { ...p, text: n.text });
+  }
+  const contextPeriod = periods.size === 1 ? ([...periods.values()][0] ?? null) : null;
+  return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends, rowReasons, contextFiscalYear, contextPeriod };
 }
 
 export function layoutFile(src: SourceFile): SheetLayout[] {
