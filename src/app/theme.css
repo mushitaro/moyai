@@ -35,6 +35,11 @@
   --moyai-mark-review-fg: #6b5200;
   --moyai-chart-unmapped-bg: #f3efe6;
   --moyai-chart-selected: #1f6f5c33;
+  /* 取り込み：セルの行き先（データ・外した・未解決） */
+  --moyai-cell-data-bg: #d6efe4;
+  --moyai-cell-excluded-bg: #e7e8e4;
+  --moyai-cell-unresolved-bg: #f8d3cf;
+  --moyai-cell-focus: #b3261e;
 }
 
 :root[data-mantine-color-scheme="dark"] {
@@ -58,6 +63,10 @@
   --moyai-mark-review-fg: #ffe58a;
   --moyai-chart-unmapped-bg: #2a2620;
   --moyai-chart-selected: #6fc7ad33;
+  --moyai-cell-data-bg: #1f4a3c;
+  --moyai-cell-excluded-bg: #2c3330;
+  --moyai-cell-unresolved-bg: #5a2420;
+  --moyai-cell-focus: #ff8a80;
 }
 
 body {

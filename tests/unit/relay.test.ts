@@ -13,6 +13,7 @@ import { createRelayServer, type RelayOptions } from "../../src/cli/relay";
 import { ERRORS, type ErrorCode } from "../../src/shared/errors";
 import { MCP_INSTRUCTIONS } from "../../src/shared/instructions";
 import { EXPOSED_TOOL_NAMES, TOOL_NAMES } from "../../src/shared/tools";
+import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
 import { startTestBridge, type TestBridge } from "../helpers/bridge";
 
 const cleanups: (() => Promise<void> | void)[] = [];
@@ -78,7 +79,7 @@ describe("中継の MCP", () => {
     expectError(r, "bridge_not_running");
   });
 
-  it("橋渡しが起きていれば、どのツールも型どおりに「未実装」を返す", async () => {
+  it("橋渡しが起きていれば、作業画面へ渡すものはタブが無いと「開いていません」、ほかは型どおりに「未実装」を返す", async () => {
     const tb: TestBridge = await startTestBridge();
     cleanups.push(() => tb.close());
     const c = await connect({ stateDir: tb.stateDir });
@@ -100,8 +101,13 @@ describe("中継の MCP", () => {
     for (const name of EXPOSED_TOOL_NAMES) {
       const r = await c.callTool({ name, arguments: args[name] ?? {} });
       expect(r.isError, name).toBe(true);
-      expectError(r, "not_implemented", name);
-      expect(JSON.stringify(r.content), name).toContain("未実装");
+      if (BRIDGE_TOOL_RECEIVERS[name] === "tab") {
+        expectError(r, "work_screen_not_open", name);
+        expect(JSON.stringify(r.content), name).toContain("作業画面が開いていません");
+      } else {
+        expectError(r, "not_implemented", name);
+        expect(JSON.stringify(r.content), name).toContain("未実装");
+      }
     }
   });
 

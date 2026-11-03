@@ -54,6 +54,15 @@ export const TOOL_TIMEOUTS: Record<ToolKind, { ms: number; retries: number }> = 
   propose: { ms: 30_000, retries: 0 },
   start: { ms: 20_000, retries: 0 },
 };
+/**
+ * 待ちの上限は橋渡しが作業画面を待つ時間。中継は、橋渡しの答え（時間切れの知らせを含む）を受けられるよう、
+ * 1 回の HTTP をこれだけ長く待つ。送り直しは中継だけがする（橋渡しは 1 回だけ作業画面へ渡す）。
+ */
+export const RELAY_MARGIN_MS = 5_000;
+
+/** 星取表の行を読む上限：1 回 200 行、会話（中継の 1 つの接続）で 2,000 行（§2.12） */
+export const ROWS_PER_CALL = 200;
+export const ROWS_PER_CONVERSATION = 2_000;
 
 /** 確かめた度合い（4 段）。画面と検査の結果に必ず出す。 */
 export const VERIFICATION_LEVELS = ["原典照合済", "要約のみ", "未確認", "プレビュー"] as const;
@@ -140,6 +149,9 @@ export const TOOLS = {
           text: z.string(),
           sameShapeRows: z.number().int(),
           defaultAnswer: z.string().nullable(),
+          /** option は options の id のどれかで答える。number は正の数で答える（options は空） */
+          valueKind: z.enum(["option", "number"]),
+          options: z.array(z.object({ id: z.string(), label: z.string() })),
         }),
       ),
       unresolvedCells: z.number().int(),
@@ -150,7 +162,7 @@ export const TOOLS = {
     "intake_settle",
     "propose",
     "取り込みの決定を置く",
-    "質問への決定を置く。作者は AI か、チャットで人が答えたものを AI が置くか。理由は 1 文字以上。決まらないものは推測で埋めず、利用者に聞く。",
+    "質問への決定を置く。答えは intake_survey の質問の options の id（valueKind が number なら正の数）だけ。作者は AI か、チャットで人が答えたものを AI が置くか。理由は 1 文字以上。人が画面で答えた質問は変えられない。1 つでも当てはまらなければ、どれも置かない。決まらないものは推測で埋めず、利用者に聞く。",
     z.object({
       decisions: z
         .array(
@@ -219,7 +231,7 @@ export const TOOLS = {
     "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose で規則を置く。",
     z.object({
       offset: z.number().int().min(0).default(0),
-      limit: z.number().int().min(1).max(200).default(50),
+      limit: z.number().int().min(1).max(ROWS_PER_CALL).default(50),
       view: z.enum(["base", "adjusted"]).default("adjusted"),
     }),
     z.object({

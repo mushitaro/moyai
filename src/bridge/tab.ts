@@ -2,7 +2,8 @@
 // 最初の握手でページが作ったタブの秘密を登録する。15 秒ごとに生存を確かめ、45 秒答えが無ければ切れたと見なす。
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import type { WebSocket } from "ws";
-import { errorBody, type TabErrorCode } from "../shared/errors";
+import { errorBody, type TabErrorCode, type TabSentCode } from "../shared/errors";
+import type { ToolName } from "../shared/tools";
 import { decodeEvent, encodeEvent, type BridgeToTab, type EventData, type TabToBridge } from "../shared/events";
 import type { TokenStore } from "./tokens";
 
@@ -38,11 +39,26 @@ interface Conn {
 
 type Handler<T extends TabToBridge> = (hub: TabHub, conn: Conn, data: EventData<T>) => void;
 
+/** タブにツールを渡した結果。no_tab は渡せなかった、no_answer は時間切れか途中で閉じた（渡したかもしれない）。 */
+export type TabCallOutcome =
+  | { kind: "ok"; data: Record<string, unknown> }
+  | { kind: "error"; code: TabSentCode }
+  | { kind: "no_tab" }
+  | { kind: "no_answer"; reason: "timeout" | "closed" };
+
+interface PendingCall {
+  name: ToolName;
+  ws: WebSocket;
+  timer: NodeJS.Timeout;
+  resolve: (o: TabCallOutcome) => void;
+}
+
 /** タブ → 橋渡しのイベントの受け手。tests/contract/ が、送り手のあるどのイベントにも受け手があることを数える。 */
 export const TAB_EVENT_HANDLERS: { [K in TabToBridge]: Handler<K> } = {
   "tab.hello": (hub, conn, data) => hub.onHello(conn, data),
   "tab.pong": (hub, conn) => hub.onPong(conn),
   "tab.token_request": (hub, conn, data) => hub.onTokenRequest(conn, data),
+  "tab.tool_result": (hub, conn, data) => hub.onToolResult(conn, data),
 };
 
 export class TabHub {
@@ -50,6 +66,8 @@ export class TabHub {
   /** 今のタブの回で、握手のあとに飛ばした読めない通信の数 */
   dropped = 0;
   private timer: NodeJS.Timeout | null = null;
+  private readonly calls = new Map<string, PendingCall>();
+  private callSeq = 0;
 
   constructor(private readonly o: TabHubOptions) {}
 
@@ -63,6 +81,7 @@ export class TabHub {
     this.timer = null;
     this.active?.ws.terminate();
     this.active = null;
+    this.dropCalls(null);
   }
 
   /** 生きているタブがあるか */
@@ -106,6 +125,7 @@ export class TabHub {
       if (conn.active && this.active === conn.active) {
         this.o.tokens.dropSession(conn.active.session);
         this.active = null;
+        this.dropCalls(conn.ws);
         this.o.log("作業画面のタブが閉じました");
       }
     });
@@ -137,6 +157,52 @@ export class TabHub {
     this.send(conn.ws, "bridge.token", { requestId: data.requestId, token, action: data.action, expiresAt });
   }
 
+  /**
+   * AI のツールを今のタブに 1 回だけ渡し、答えを待つ。送り直しはしない（読むものの送り直しは中継がする）。
+   * 時間内に答えが来なければ no_answer。onUnknown が true なら、そのことをタブにも知らせる（画面に「結果不明」を出す）。
+   */
+  callTool(
+    name: ToolName,
+    args: Record<string, unknown>,
+    conversation: string,
+    rowsRemaining: number,
+    timeoutMs: number,
+    notifyUnknown: boolean,
+  ): Promise<TabCallOutcome> {
+    const tab = this.active;
+    if (!tab) return Promise.resolve({ kind: "no_tab" });
+    const requestId = `t${++this.callSeq}`;
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        if (!this.calls.delete(requestId)) return;
+        if (notifyUnknown) this.send(tab.ws, "bridge.tool_unknown", { requestId, name });
+        resolve({ kind: "no_answer", reason: "timeout" });
+      }, timeoutMs);
+      timer.unref();
+      this.calls.set(requestId, { name, ws: tab.ws, timer, resolve });
+      this.send(tab.ws, "bridge.tool_call", { requestId, name, args, conversation, rowsRemaining });
+    });
+  }
+
+  onToolResult(conn: Conn, data: EventData<"tab.tool_result">): void {
+    const call = this.calls.get(data.requestId);
+    // 時間切れのあとに来た答え・ほかのタブの答えは受けない（AI には返してある）
+    if (!call || call.ws !== conn.ws) return;
+    this.calls.delete(data.requestId);
+    clearTimeout(call.timer);
+    call.resolve(data.result.ok ? { kind: "ok", data: data.result.data } : { kind: "error", code: data.result.code });
+  }
+
+  /** タブが閉じた・切れたとき、そのタブに渡して答えを待っているものを終える（ws が null ならすべて） */
+  private dropCalls(ws: WebSocket | null): void {
+    for (const [id, c] of this.calls) {
+      if (ws && c.ws !== ws) continue;
+      this.calls.delete(id);
+      clearTimeout(c.timer);
+      c.resolve({ kind: "no_answer", reason: "closed" });
+    }
+  }
+
   private beat(): void {
     const tab = this.active;
     if (!tab) return;
@@ -144,6 +210,7 @@ export class TabHub {
       this.o.log("作業画面のタブから答えが無いので、切れたと見なしました");
       this.o.tokens.dropSession(tab.session);
       this.active = null;
+      this.dropCalls(tab.ws);
       tab.ws.close(CLOSE_DEAD);
       tab.ws.terminate();
       return;

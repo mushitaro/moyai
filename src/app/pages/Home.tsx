@@ -134,6 +134,7 @@ export function Home({ client }: { client: BridgeClient }) {
           </Text>
         )}
         <Text>{TEXT.home.lead}</Text>
+        <Anchor href={APP_PAGES.intake}>{TEXT.home.intakeLink}</Anchor>
         <Anchor href={CHART_HASH}>{TEXT.home.chartLink}</Anchor>
         <Anchor href={APP_PAGES.selftest}>{TEXT.home.selftestLink}</Anchor>
       </Stack>

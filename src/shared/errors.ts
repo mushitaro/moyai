@@ -3,7 +3,7 @@
 // 受け手が tab のものは、画面の言葉（src/app/text/）に文がある。ai と terminal のものは、ここの text をそのまま返す。
 import { z } from "zod";
 
-export type ErrorSide = "bridge" | "relay" | "cli";
+export type ErrorSide = "bridge" | "relay" | "cli" | "tab";
 export type ErrorReceiver = "ai" | "tab" | "terminal";
 
 interface ErrorDef {
@@ -57,6 +57,62 @@ export const ERRORS = {
     http: 401,
     text: "中継の鍵が橋渡しと合いません。橋渡しを起こし直してから、AI クライアントをつなぎ直してください。",
   },
+  // 橋渡し → AI（作業画面へ渡すツール。待ちの上限は src/shared/tools.ts の TOOL_TIMEOUTS）
+  work_screen_not_open: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "作業画面が開いていません。利用者に、moyai start が出した URL を Chrome か Edge で開いてもらってください。",
+  },
+  tab_no_answer: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "作業画面から答えが来ませんでした（時間切れか、途中で閉じた）。",
+  },
+  tab_bad_result: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "作業画面の答えが型に合わなかったので、渡しません。作業画面の状態を利用者に確かめてもらってください。",
+  },
+  rows_limit_reached: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "この会話で読める星取表の行の上限（2,000 行）に達しました。行を写さず、規則で案を置いてください。",
+  },
+  // 作業画面 → AI（橋渡しと中継を通る。作業画面は誤りの名前だけを返し、文はここから作る）
+  no_working_plan: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "作業中の計画がまだありません。intake_compose で作り始め、intake_survey の compose で結果を確かめてください。",
+  },
+  unknown_question: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "その質問の番号は今の作業画面にありません。どの決定も置いていません。intake_survey で質問を読み直してください。",
+  },
+  answer_not_offered: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "答えが、その質問の出している選択肢（options の id。valueKind が number の質問は正の数）に入っていません。どの決定も置いていません。intake_survey で選択肢を読み直してください。",
+  },
+  human_decided: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "その質問には人が画面で答えています。どの決定も置いていません。変えるときは、利用者に画面で直してもらってください。",
+  },
+  tool_failed: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "作業画面でツールを動かせませんでした。作業画面の状態を利用者に確かめてもらってください。",
+  },
   // 橋渡し → タブ（WebSocket）
   tab_already_open: { from: "bridge", to: "tab", text: "作業画面はほかのタブで開いています。" },
   hello_invalid: { from: "bridge", to: "tab", text: "最初の握手の形が違います。" },
@@ -103,6 +159,10 @@ export const ERROR_CODES = Object.keys(ERRORS) as ErrorCode[];
 
 export type TabErrorCode = { [K in ErrorCode]: (typeof ERRORS)[K]["to"] extends "tab" ? K : never }[ErrorCode];
 export const TAB_ERROR_CODES = ERROR_CODES.filter((c) => ERRORS[c].to === "tab") as TabErrorCode[];
+
+/** 作業画面がツールの結果として返す誤り（送り手が tab のもの） */
+export type TabSentCode = { [K in ErrorCode]: (typeof ERRORS)[K]["from"] extends "tab" ? K : never }[ErrorCode];
+export const TAB_SENT_CODES = ERROR_CODES.filter((c) => ERRORS[c].from === "tab") as TabSentCode[];
 
 /** 誤りの中身。HTTP の答え、WebSocket の断り、ツールの結果（isError）で同じ形を使う。 */
 export const errorBodySchema = z.object({

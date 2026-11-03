@@ -36,7 +36,14 @@ export interface Survey {
   samples: { fileRef: string; row: number; cells: string[] }[];
   legends: { mark: string; meaning: string }[];
   notes: string[];
-  questions: { questionId: string; text: string; sameShapeRows: number; defaultAnswer: string | null }[];
+  questions: {
+    questionId: string;
+    text: string;
+    sameShapeRows: number;
+    defaultAnswer: string | null;
+    valueKind: "option" | "number";
+    options: { id: string; label: string }[];
+  }[];
   unresolvedCells: number;
   compose: { state: "idle" | "running" | "done" | "failed"; message: string | null };
 }
@@ -217,7 +224,14 @@ export class IntakeSession {
       samples,
       legends,
       notes,
-      questions: an.open.map((q) => ({ questionId: q.questionId, text: q.text, sameShapeRows: q.sameShapeRows, defaultAnswer: q.defaultAnswer })),
+      questions: an.open.map((q) => ({
+        questionId: q.questionId,
+        text: q.text,
+        sameShapeRows: q.sameShapeRows,
+        defaultAnswer: q.defaultAnswer,
+        valueKind: q.valueKind,
+        options: q.options.map((o) => ({ id: o.id, label: o.label })),
+      })),
       unresolvedCells: unresolved,
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },
     };

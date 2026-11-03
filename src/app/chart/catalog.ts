@@ -27,3 +27,10 @@ let empty: ChartCatalog | null = null;
 export function emptyCatalog(): ChartCatalog {
   return (empty ??= catalogFromPack({ systems: [] }, kindsWork));
 }
+
+/** 選べるパック（packs/<パック>/common.json があるもの）。名前はデータの表の名前から出す */
+export function packChoices(): { id: string; table: string }[] {
+  return [...byPack.entries()]
+    .map(([id, json]) => ({ id, table: String((json as { table?: unknown }).table ?? "") }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
