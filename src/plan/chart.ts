@@ -187,7 +187,7 @@ export interface ChartLabels {
   commonLevels: [string, string, string];
   /** 未当てはめの行の名前 */
   unmapped: string;
-  /** 系列（号炉・系統など）の見出し。計画の series（"1" か "common.<意味>"）から。同じ名前の機器を見分けるため名前に添える */
+  /** 系列（号炉・系統など）の見出し。計画の series（"1" か "common.<意味>"）から。同じ親の下の同じ名前の機器を見分けるため名前に添える */
   series: (series: string) => string;
 }
 
@@ -247,8 +247,12 @@ const markOf = (a: { plan: boolean; actual: boolean }): Mark | null => (a.plan &
 /** 自分の台帳の段の木。対象が計画の機器に無い記録は orphan に数える。 */
 function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): Node[] {
   const byKey = new Map<string, Node>();
+  // 同じ親の下に同じ名前の機器が 2 つ以上あるときだけ、名前に系列を添えて見分ける
+  const sameName = new Map<string, number>();
+  for (const a of plan.assets) sameName.set(`${a.parentKey ?? ""} ${a.name}`, (sameName.get(`${a.parentKey ?? ""} ${a.name}`) ?? 0) + 1);
   for (const a of plan.assets) {
-    const name = a.series !== null ? `${a.name}（${labels.series(a.series)}）` : a.name;
+    const dup = (sameName.get(`${a.parentKey ?? ""} ${a.name}`) ?? 0) > 1;
+    const name = dup && a.series !== null ? `${a.name}（${labels.series(a.series)}）` : a.name;
     byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name, kind: "node", children: [], direct: [] });
   }
   const roots: Node[] = [];

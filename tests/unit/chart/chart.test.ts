@@ -331,15 +331,22 @@ describe("工場の正解から組んだ計画（試験の道具）", () => {
 });
 
 describe("系列の見出し", () => {
-  it("同じ名前の機器でも、系列が違えば名前に系列を添えて見分けられる", () => {
+  it("同じ親の下の同じ名前の機器だけ、名前に系列を添えて見分けられる", () => {
     const p = small();
     const two = {
       ...p,
-      assets: [...p.assets, asset("E4", 2, "S2", "eq3", { series: "2" }), asset("E5", 2, "S2", "eq3", { series: "common.共通" })],
+      assets: [
+        ...p.assets,
+        asset("E4", 2, "S2", "eq3", { series: "2" }),
+        asset("E5", 2, "S2", "eq3", { series: "common.共通" }),
+        asset("E6", 2, "S1", "eq9", { series: "1" }),
+      ],
     };
     const names = buildChart(two, catalog, labels, base).rows.map((r) => r.levelCells.join("/"));
     expect(names.some((n) => n.includes("eq3（S2）"))).toBe(true);
     expect(names.some((n) => n.includes("eq3（Scommon.共通）"))).toBe(true);
     expect(names).toContain("/eq3/");
+    // 同じ名前の兄弟が無ければ、系列があっても添えない
+    expect(names).toContain("/eq9/");
   });
 });
