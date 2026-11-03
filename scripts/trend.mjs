@@ -5,7 +5,7 @@
 //   2. import.dev（tests/unit/import/dev.test.ts）が書いた物差し ①②③⑤ と、資料をまたいで結べた割合を取る
 //   3. ops/trend.jsonl に 1 行足し（足すだけ）、日ごとの最後の行から docs/trend.md を作り直す
 // 緑でないものを緑と書かない：試験が落ちた回は「落ちた」と書き、測れなかった値は「測っていない」と書く。
-import { appendFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -30,8 +30,17 @@ const pct = (a) =>
   a && a.total ? `${Math.round((a.correct / a.total) * 1000) / 10}%（${a.correct}/${a.total}${a.extra ? `、余分 ${a.extra}` : ""}）` : "測っていない";
 const val = (v) => (v === null || v === undefined ? "測っていない" : String(v));
 
-/** 行の一覧（古い順）から、日ごとの最後の行で表を作る */
-export function render(rows) {
+/** 公開した見ていない様式の結果（samples/heldout/<組>/measured/result.json）。1 組 1 回だけ測ったもので、走らせ直さない */
+export function readHeldout(root = "samples/heldout") {
+  if (!existsSync(root)) return [];
+  return readdirSync(root, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && existsSync(join(root, e.name, "measured", "result.json")))
+    .map((e) => JSON.parse(readFileSync(join(root, e.name, "measured", "result.json"), "utf8")))
+    .sort((a, b) => (a.set < b.set ? -1 : 1));
+}
+
+/** 行の一覧（古い順）から、日ごとの最後の行で表を作る。heldout：見ていない様式の結果（readHeldout） */
+export function render(rows, heldout = []) {
   const byDate = new Map();
   for (const r of rows) byDate.set(r.date, r);
   const days = [...byDate.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
@@ -71,7 +80,33 @@ export function render(rows) {
   L.push(
     "報告書の PDF の ① は、工場に PDF の事実（別の読み手が取ったもの）が無いので、PDF の元の xlsx を MOYAI の Excel の読み手で読んだ表示の文字と、中身のある行ごとに比べた。",
   );
-  L.push("この表にまだ載せていないもの：写真の ③ と要確認の数（tests/unit/import/photo-measure.test.ts が測る）、④ 検査の正しさ（tests/unit/review/measure.test.ts が測る）。まだ測っていないもの：見ていない様式。CSV の ① は、工場の別の読み手（Python の csv。samples/factory/csv_facts.py）が取った記録と比べる。");
+  L.push("この表にまだ載せていないもの：写真の ③ と要確認の数（tests/unit/import/photo-measure.test.ts が測る）、④ 検査の正しさ（tests/unit/review/measure.test.ts が測る）。CSV の ① は、工場の別の読み手（Python の csv。samples/factory/csv_facts.py）が取った記録と比べる。");
+  L.push("");
+  L.push("## 見ていない様式（import.heldout。凍結した読み手で、組ごとに 1 回だけ測った値）");
+  L.push("");
+  if (!heldout.length) L.push("まだ測っていない。");
+  else {
+    L.push("| 組 | 読み手 | 測った時刻（JST） | 資料 | 形式 | ① 原本の漏れ | ② 未解決のセル | ③ 読み取りの正しさ |");
+    L.push("|---|---|---|---|---|---:|---:|---|");
+    for (const h of heldout) {
+      const t = jst(new Date(h.measuredAt));
+      for (const f of h.result.files)
+        L.push(
+          `| ${h.set} | ${h.reader.tag ?? h.reader.commit.slice(0, 7)} | ${t.date} ${t.time} | ${f.file} | ${f.format} | ${f.rejected ? "読んでいない" : val(f.leak)} | ${f.rejected ? "—" : val(f.unresolved)} | ${f.rejected ? "—" : h.result.planMade ? pct(f.accuracy) : "計画なし（測れない）"} |`,
+        );
+    }
+    L.push("");
+    L.push("| 組 | ⑤ 質問（台本が答えた・開いたまま） | 計画 | ⑥ 取り戻せた割合 | ⑥ のうち工数 | ⑥ のうち日数 |");
+    L.push("|---|---|---|---|---|---|");
+    for (const h of heldout) {
+      const r = h.result;
+      L.push(
+        `| ${h.set} | ${r.asked}（${r.answered}・${r.openAtEnd.length}） | ${r.planMade ? "作った" : `作らなかった（${r.blockers.join("・")}）`} | ${pct({ correct: r.recovery.together, total: r.recovery.denominator })} | ${pct(r.recovery.manDays)} | ${pct(r.recovery.days)} |`,
+      );
+    }
+    L.push("");
+    L.push("見ていない様式の結果は、測った値のまま出す（直したら、新しい組を新しい凍結の読み手で測る）。手順と正解の形は samples/heldout/README.md。写真は AI が読むので、この台本では読まない。");
+  }
   return L.join("\n") + "\n";
 }
 
@@ -94,7 +129,7 @@ function main() {
   const row = { at: at.toISOString(), ...jst(at), commit, dirty, passed: r.status === 0 && counts !== null, counts, import: imp };
   appendFileSync(DATA, JSON.stringify(row) + "\n");
   const rows = readFileSync(DATA, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
-  writeFileSync(OUT, render(rows));
+  writeFileSync(OUT, render(rows, readHeldout()));
   console.log(`trend: ${row.passed ? "通った" : "落ちた"}（node:test ${val(counts?.node)}、vitest ${val(counts?.vitest)}、取り込み ${imp.length} 施設）→ ${OUT}`);
   if (!row.passed) process.exit(1);
 }

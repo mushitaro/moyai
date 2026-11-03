@@ -49,3 +49,29 @@ test("⑥ 取り戻せた割合と、そのうちの工数・日数を出す。�
   assert.match(md, /\| f1 \| 1 \| 作った \| 測っていない \| 90%（9\/10） \| 100%（4\/4） \| 50%（1\/2） \|/);
   assert.match(md, /\| f2 \| 1 \| 作った \| 測っていない \| 測っていない \| 測っていない \| 測っていない \|/);
 });
+
+test("見ていない様式：組ごとに 1 回測った値を、計画が無ければ ③ を「測れない」として出す。無ければ「まだ測っていない」", () => {
+  const day = { date: "2026-11-04", time: "09:00", commit: "c", dirty: false, passed: true, counts: { node: 1, vitest: 1 }, import: [] };
+  assert.match(render([day]), /## 見ていない様式[^\n]*\n\nまだ測っていない。/);
+  const h = {
+    set: "heldout-1",
+    measuredAt: "2026-11-03T22:16:10.655Z",
+    reader: { tag: "reader-freeze-1", commit: "0d5405b72ef0", src: "s", packs: "p" },
+    result: {
+      files: [
+        { file: "a.csv", format: "csv", leak: 0, unresolved: 546, accuracy: null, rejected: null },
+        { file: "p.jpg", format: "jpg", leak: null, unresolved: null, accuracy: null, rejected: "読んでいない（写真は AI が読む）" },
+      ],
+      asked: 24,
+      answered: 9,
+      openAtEnd: new Array(15).fill({}),
+      planMade: false,
+      blockers: ["未解決のセル 1428"],
+      recovery: { together: 0, denominator: 142, manDays: { correct: 0, total: 60 }, days: { correct: 0, total: 73 } },
+    },
+  };
+  const md = render([day], [h]);
+  assert.match(md, /\| heldout-1 \| reader-freeze-1 \| 2026-11-04 07:16 \| a\.csv \| csv \| 0 \| 546 \| 計画なし（測れない） \|/);
+  assert.match(md, /\| heldout-1 \| reader-freeze-1 \| 2026-11-04 07:16 \| p\.jpg \| jpg \| 読んでいない \| — \| — \|/);
+  assert.match(md, /\| heldout-1 \| 24（9・15） \| 作らなかった（未解決のセル 1428） \| 0%（0\/142） \|/);
+});

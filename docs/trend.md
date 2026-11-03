@@ -8,7 +8,7 @@
 | 日付 | 時刻（JST） | コミット | node:test | vitest | 結果 |
 |---|---|---|---:|---:|---|
 | 2026-11-03 | 21:58 | `3f98947`+ | 138 | 599 | 通った |
-| 2026-11-04 | 06:56 | `7bba7db`+ | 139 | 639 | 通った |
+| 2026-11-04 | 07:19 | `6afe9cd`+ | 140 | 640 | 通った |
 
 ## 取り込みの物差し（import.dev、工場の開発用の資料）
 
@@ -66,4 +66,22 @@
 
 ⑥ の分母は、正解の世界の実績の作業のうち、その回に読んだ資料のどれかに書いてあるもの。戻せた＝読んだ資料の出どころ（星取表の印・日報の行・報告書の行）を 1 つの実績の明細がすべて持つ。工数・日数は、作業ごとに書いてある作業だけを分母にする。
 報告書の PDF の ① は、工場に PDF の事実（別の読み手が取ったもの）が無いので、PDF の元の xlsx を MOYAI の Excel の読み手で読んだ表示の文字と、中身のある行ごとに比べた。
-この表にまだ載せていないもの：写真の ③ と要確認の数（tests/unit/import/photo-measure.test.ts が測る）、④ 検査の正しさ（tests/unit/review/measure.test.ts が測る）。まだ測っていないもの：見ていない様式。CSV の ① は、工場の別の読み手（Python の csv。samples/factory/csv_facts.py）が取った記録と比べる。
+この表にまだ載せていないもの：写真の ③ と要確認の数（tests/unit/import/photo-measure.test.ts が測る）、④ 検査の正しさ（tests/unit/review/measure.test.ts が測る）。CSV の ① は、工場の別の読み手（Python の csv。samples/factory/csv_facts.py）が取った記録と比べる。
+
+## 見ていない様式（import.heldout。凍結した読み手で、組ごとに 1 回だけ測った値）
+
+| 組 | 読み手 | 測った時刻（JST） | 資料 | 形式 | ① 原本の漏れ | ② 未解決のセル | ③ 読み取りの正しさ |
+|---|---|---|---|---|---:|---:|---|
+| heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | daicho/setsubi-daicho_R8.xlsx | xlsx | 0 | 175 | 計画なし（測れない） |
+| heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | hoshitori/hozen-keikaku-hyo_R8-R10.xlsx | xlsx | 0 | 0 | 計画なし（測れない） |
+| heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | nippo/sagyo-jisseki-ichiran_R4-R7.csv | csv | 0 | 546 | 計画なし（測れない） |
+| heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | nippo/sagyo-nippo_2026-04_08.csv | csv | 0 | 535 | 計画なし（測れない） |
+| heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | houkoku/R5-teiki-seibi_sagyo-houkoku.pdf | pdf | 0 | 155 | 計画なし（測れない） |
+| heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | houkoku/R7-DCS-koshin_kansei-houkoku.pdf | pdf | 0 | 17 | 計画なし（測れない） |
+| heldout-1 | reader-freeze-1 | 2026-11-04 07:16 | shashin/IMG_20231012_houkoku-p1.jpg | jpg | 読んでいない | — | — |
+
+| 組 | ⑤ 質問（台本が答えた・開いたまま） | 計画 | ⑥ 取り戻せた割合 | ⑥ のうち工数 | ⑥ のうち日数 |
+|---|---|---|---|---|---|
+| heldout-1 | 24（9・15） | 作らなかった（未解決のセル 1428・答えの無い質問 15） | 0%（0/142） | 0%（0/60） | 0%（0/73） |
+
+見ていない様式の結果は、測った値のまま出す（直したら、新しい組を新しい凍結の読み手で測る）。手順と正解の形は samples/heldout/README.md。写真は AI が読むので、この台本では読まない。
