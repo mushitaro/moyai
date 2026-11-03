@@ -97,6 +97,38 @@ export function parseDateText(text: string): Ymd | null {
   return null;
 }
 
+/** 期間の区切りの書き方（〜・～）。日付の「/」「.」と同じ、日付の書き方の一般の性質 */
+const RANGE_SEP = /\s*[〜~]\s*/u;
+
+/**
+ * 期間の文字を読む：「2019/04/06〜2019/04/17」「R1.5.10〜R1.5.20」「令和元年5月10日〜令和元年5月20日」。
+ * 両側とも年月日のそろった日付で、始まりが終わりより後でないときだけ。片側だけ・「4月上旬〜」などは null。
+ */
+export function parseDateRange(text: string): { start: Ymd; end: Ymd } | null {
+  const s = nfkc(text);
+  const parts = s.split(RANGE_SEP);
+  if (parts.length !== 2) return null;
+  const start = parseDateText(parts[0] ?? "");
+  const end = parseDateText(parts[1] ?? "");
+  if (!start || !end) return null;
+  if (ymdString(start) > ymdString(end)) return null;
+  return { start, end };
+}
+
+/** 両端を含む日の数（2019-04-06〜2019-04-17 → 12） */
+export function daysInclusive(a: Ymd, b: Ymd): number {
+  return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86400000) + 1;
+}
+
+/** 日数の書き方：「12」「12日」「12日間」（正の整数だけ） */
+export function parseDayCount(v: string | number): number | null {
+  if (typeof v === "number") return Number.isInteger(v) && v > 0 ? v : null;
+  const m = /^(\d{1,4})(?:日間?)?$/u.exec(nfkc(v).replace(/\s+/g, ""));
+  if (!m) return null;
+  const n = Number(m[1]);
+  return n > 0 ? n : null;
+}
+
 export interface YearLabel {
   year: number;
   /** 「年度」と書いてあれば true、「年」と書いてあれば false、どちらも無ければ null */

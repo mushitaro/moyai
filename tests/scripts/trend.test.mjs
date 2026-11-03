@@ -29,3 +29,23 @@ test("③ に余分な記録の数を出し、物差しの行に試験の結果�
   assert.match(md, /\| 2026-11-04 \| 通った \| f \| a\.xlsx \| 0 \| 0 \| 100%（10\/10、余分 2） \|/);
   assert.match(md, /75%（3\/4）/);
 });
+
+test("⑥ 取り戻せた割合と、そのうちの工数・日数を出す。無い回は「測っていない」", () => {
+  const base = { pack: "p", files: [], asked: 1, planMade: true, cross: null };
+  const md = render([
+    {
+      date: "2026-11-04",
+      time: "09:00",
+      commit: "c",
+      dirty: false,
+      passed: true,
+      counts: { node: 1, vitest: 1 },
+      import: [
+        { ...base, facility: "f1", recovery: { together: 9, denominator: 10, manDays: { correct: 4, total: 4 }, days: { correct: 1, total: 2 }, starOnly: 10 } },
+        { ...base, facility: "f2" },
+      ],
+    },
+  ]);
+  assert.match(md, /\| f1 \| 1 \| 作った \| 測っていない \| 90%（9\/10） \| 100%（4\/4） \| 50%（1\/2） \|/);
+  assert.match(md, /\| f2 \| 1 \| 作った \| 測っていない \| 測っていない \| 測っていない \| 測っていない \|/);
+});

@@ -10,6 +10,7 @@ import { layoutFile, type SheetLayout } from "./structure";
 import { buildRecords, type Records } from "./records";
 import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
+import { renderPdfPage, type PageImage } from "./pdf";
 import { Asker, type Decision, type QuestionState } from "./questions";
 
 export interface IntakeOptions {
@@ -65,7 +66,19 @@ export class IntakeSession {
   private composed: Composition | null = null;
   constructor(readonly options: IntakeOptions) {}
 
-  /** 資料を入れる（Excel はここで読む。CSV は文字コードと区切りの決定があるので読み直しのたびに読む） */
+  /** 文字の無い頁（写真の道に回す頁）：資料と頁の番号 */
+  scannedPages(): { file: string; page: number }[] {
+    return [...this.xlsx.values()].flatMap((s) => (s.pages ?? []).filter((p) => p.scanned).map((p) => ({ file: s.file, page: p.page })));
+  }
+
+  /** PDF の頁を描いた画像（PNG）。文字の無い頁を写真の道の入口に渡すためのもの（つなぐのは呼ぶ側） */
+  async pageImage(file: string, page: number, scale?: number): Promise<PageImage> {
+    const f = this.files.find((x) => x.name === file);
+    if (!f || this.xlsx.get(file)?.format !== "pdf") throw new Error(`PDF の資料ではない：${file}`);
+    return renderPdfPage(f.bytes, page, scale === undefined ? {} : { scale });
+  }
+
+  /** 資料を入れる（Excel と PDF はここで読む。CSV は文字コードと区切りの決定があるので読み直しのたびに読む） */
   async add(files: InputFile[]): Promise<RejectedFile[]> {
     const rejected: RejectedFile[] = [];
     for (const f of files) {
@@ -180,6 +193,22 @@ export class IntakeSession {
       }
       if (!done) unreadable.push(`${f.name}（${why || "読めない"}）`);
     }
+    // 文字の無い頁（スキャン）：推し量って読まず、写真の道に回す。写真の道につなぐまでは、人が外すと決めるまで計画を作らない
+    const toPhoto: string[] = [];
+    for (const s of sources) {
+      const scanned = (s.pages ?? []).filter((p) => p.scanned).map((p) => p.page);
+      if (!scanned.length) continue;
+      const a = ask.ask(`photoRoute|${s.file}|${scanned.join(",")}`, {
+        kind: "photoRoute",
+        text: `${s.file} の ${scanned.join("・")} 頁は文字が無い（スキャンの頁）。推し量って読まず、写真の道に回す（写真の読み取りは未実装）。どうするか`,
+        options: [{ id: "exclude", label: "この頁を読まずに外す（理由を残す）" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: scanned.length,
+        items: [{ file: s.file, sheet: null, cells: [], note: scanned.map((p) => `${p} 頁`).join("・") }],
+      });
+      if (a !== "exclude") toPhoto.push(`${s.file}（${scanned.join("・")} 頁）`);
+    }
     const layouts = sources.flatMap((s) => layoutFile(s));
     const date1904 = new Map(sources.map((s) => [s.file, s.date1904]));
     const records = buildRecords(layouts, ask, { fiscalYearStartMonth: this.options.facility.fiscalYearStartMonth }, (f) => date1904.get(f) ?? false);
@@ -187,6 +216,10 @@ export class IntakeSession {
     const composition = compose(sources, layouts, records, linked, ask, this.decisions, this.options);
     if (unreadable.length) {
       composition.blockers.push(`読めなかった資料 ${unreadable.length}（${unreadable.join("・")}）`);
+      composition.plan = null;
+    }
+    if (toPhoto.length) {
+      composition.blockers.push(`写真の道に回した頁 ${toPhoto.length}（${toPhoto.join("・")}。写真の読み取りは未実装）`);
       composition.plan = null;
     }
     const questions = [...ask.asked.values()];

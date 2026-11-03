@@ -215,7 +215,7 @@ function SheetView({ an, lay, focus, top, setTop, onFocus, onNext }: {
         </Table>
       </div>
       <Text size="xs" data-testid="cell-info">
-        {focusCell ? `${T.sheet.cell(focusCell.ref)}：${cellInfo(focusStatus, an)}` : T.sheet.pick}
+        {focusCell ? `${T.sheet.cell(focusCell.ref)}${focusCell.page !== undefined ? T.sheet.page(focusCell.page) : ""}：${cellInfo(focusStatus, an)}` : T.sheet.pick}
       </Text>
     </Stack>
   );

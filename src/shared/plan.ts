@@ -13,7 +13,7 @@ export const SourceRef = z.object({
   file: z.string().min(1),
   sheet: z.string().nullable(),
   page: z.number().int().nullable(),
-  cell: z.string().nullable(), // 例 "C12"。PDF・写真は null
+  cell: z.string().nullable(), // 例 "C12"。PDF は層 1 の格子の位置（頁を上から積んだ格子。頁と box も持つ）。写真は null
   box: z.tuple([z.number(), z.number(), z.number(), z.number()]).nullable(), // 画像や頁の上の位置（x, y, w, h）
 });
 export type SourceRef = z.infer<typeof SourceRef>;

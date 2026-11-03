@@ -4,7 +4,7 @@
 // 層 2 は形式を知らない（格子だけを見る）。決まらないものは「問い」の種（Issue）として層 3 に渡す。
 import { CellIndex, cellRef, colLetter, type GridCell, type SheetGrid, type SourceFile } from "./grid";
 import { cue, norm, type ColumnCue } from "./cues";
-import { parseDateText, parseYearLabel, parseYearOnly, serialToYmd, type Ymd } from "./era";
+import { parseDateRange, parseDateText, parseDayCount, parseYearLabel, parseYearOnly, serialToYmd, type Ymd } from "./era";
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit } from "./text";
 
@@ -28,6 +28,7 @@ export type ColRole =
   | "mark"
   | "date"
   | "effort"
+  | "days"
   | "workName"
   | "workTitle"
   | "assetRef"
@@ -105,6 +106,8 @@ export interface Table {
   legendRows: number[];
   yearKind: "fiscal" | "calendar" | null;
   issues: Issue[];
+  /** 様式の形：列の見出しの文字と位置。同じ形の表（同じ様式の帳票を何冊も入れたとき）は、同じ書き方の問いをまとめて聞く */
+  form: string;
 }
 
 export interface SheetLayout {
@@ -120,6 +123,8 @@ export interface SheetLayout {
   titles: { r: number; text: string; ref: string }[];
   /** 表に属さない凡例 */
   looseLegends: LegendEntry[];
+  /** 行の役割のほかに、外した理由を決めた行（頭書き・頁ごとにくり返す見出し・続きの印） */
+  rowReasons: Map<number, string>;
 }
 
 // ─── 値の読み方 ────────────────────────────────────────────────
@@ -129,13 +134,31 @@ export function cellDate(c: GridCell, date1904: boolean): Ymd | null {
     const d = serialToYmd(c.value, date1904);
     return { y: d.y, m: d.m, d: d.d };
   }
-  if (typeof c.value === "string") return parseDateText(c.value);
+  if (typeof c.value === "string") return parseDateText(c.value) ?? parseDateRange(c.value)?.start ?? null;
   return null;
+}
+
+/** 期間のセル（「始まり〜終わり」）。1 日の日付なら始まりと終わりが同じ */
+export function cellPeriod(c: GridCell, date1904: boolean): { start: Ymd; end: Ymd; range: boolean } | null {
+  if (typeof c.value === "string") {
+    const r = parseDateRange(c.value);
+    if (r) return { ...r, range: true };
+  }
+  const d = cellDate(c, date1904);
+  return d ? { start: d, end: d, range: false } : null;
 }
 
 function isNumberish(c: GridCell): boolean {
   if (typeof c.value === "number") return true;
   return typeof c.value === "string" && /^[\d,.\s]+$/.test(c.value.trim()) && c.value.trim() !== "";
+}
+
+/** 小計・合計の行の数の欄：数のほか、単位つきの数（工数「253人・日」・日数「61日」）も数の欄に数える */
+function isAmountish(c: GridCell): boolean {
+  if (isNumberish(c)) return true;
+  if (typeof c.value !== "string") return false;
+  const e = parseEffort(c.value);
+  return (e !== null && e.unit !== "bare") || parseDayCount(c.value) !== null;
 }
 
 function ratio(n: number, d: number): number {
@@ -178,8 +201,8 @@ function isSubtotalRow(cells: GridCell[]): "subtotal" | "total" | null {
   if (!labelCell) return null;
   const others = cells.filter((c) => c !== labelCell);
   // 名前のほかは数か空（数の値の小計・合計）。数が 1 つも無ければ小計の行ではない
-  if (!others.some(isNumberish)) return null;
-  if (others.some((c) => !isNumberish(c) && !(cue.isSubtotal(c.text) || cue.isTotal(c.text)))) return null;
+  if (!others.some(isAmountish)) return null;
+  if (others.some((c) => !isAmountish(c) && !(cue.isSubtotal(c.text) || cue.isTotal(c.text)))) return null;
   return cue.isSubtotal(labelCell.text) ? "subtotal" : "total";
 }
 
@@ -365,7 +388,12 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     if (col.role === "mark") continue;
     const cs = dataCellsOf(ctx, dataRows, col.c);
     if (!cs.length && !col.header) continue;
-    const units = cs.filter((x) => parseUnit(x.text) !== null);
+    // 工数の書き方（「24人工」「288時間」）は号・系列ではない（数と漢字の形が号の書き方と重なるため、先に外す）
+    const isEffortText = (x: GridCell) => {
+      const e = parseEffort(x.text);
+      return e !== null && e.unit !== "bare";
+    };
+    const units = cs.filter((x) => parseUnit(x.text) !== null && !isEffortText(x));
     const hasRealUnit = units.some((x) => parseUnit(x.text)?.kind !== "ditto");
     if (cs.length && hasRealUnit && ratio(units.length, cs.length) >= 0.6) {
       col.role = "unit";
@@ -374,6 +402,9 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     if (shape === "events") {
       if (cs.length && ratio(cs.filter((x) => cellDate(x, ctx.date1904) !== null).length, cs.length) >= 0.6) col.role = "date";
       else if (cs.length && ratio(cs.filter((x) => parseEffort(typeof x.value === "number" ? x.value : x.text) !== null).length, cs.length) >= 0.6 && col.cue === "effort") col.role = "effort";
+      else if (cs.length && col.cue === "days" && ratio(cs.filter((x) => parseDayCount(typeof x.value === "number" ? x.value : x.text) !== null).length, cs.length) >= 0.6) col.role = "days";
+      // 行の通し番号（No.）：その資料の中で行を指すだけ。記録の出どころには入るが、値としては読まない
+      else if (cs.length && col.cue === "number" && ratio(cs.filter((x) => numberDepth(typeof x.value === "number" ? x.value : x.text) === 1).length, cs.length) >= 0.8) col.role = "number";
       else if (col.cue === "assetRef" || col.cue === "name") col.role = "assetRef";
       else if (col.cue === "workName") col.role = "workName";
       else if (col.cue === "workTitle") col.role = "workTitle";
@@ -453,6 +484,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     legendRows: [],
     yearKind,
     issues,
+    form: `${shape}|${headerRows.map((r) => exactSig(rowTexts(ctx.idx, r))).join("\u0003")}`,
   };
   if (shape === "tree") voteLevels(ctx, table);
   if (shape === "grid") gridLevels(ctx, table);
@@ -660,17 +692,114 @@ function hiddenIssues(ctx: BuildCtx, t: Table) {
     });
 }
 
+// ─── くり返す領域（頁ごとの見出し・続紙） ─────────────────────────
+
+/** 列の見出しの行らしいか：中身が 3 つ以上で、列の手がかりの語が 2 つ以上 */
+function headerLike(cells: GridCell[]): boolean {
+  return cells.length >= 3 && cells.filter((c) => cue.column(c.text) !== null).length >= 2;
+}
+
+const exactSig = (cells: GridCell[]) => cells.map((c) => `${c.c}\u0001${norm(c.text)}`).join("\u0002");
+/** 頁ごとに変わる所（続きの印・頁の番号などの数）を除いた形 */
+const looseSig = (cells: GridCell[]) =>
+  cells.map((c) => `${c.c}\u0001${norm(cue.stripContinued(c.text)).replace(/\d+/g, "#")}`).join("\u0002");
+
+interface Repeat {
+  kind: "header" | "preamble" | "continued";
+  /** 同じ形の 1 つ目の行 */
+  of: number;
+}
+
+/**
+ * 頁ごとにくり返す見出しを見つける：列の見出しの行が同じ文字のまま後でまた出たら、それは前の表の続きの頁の見出し。
+ * その上の行（題・頭書き）も、1 つ目の見出しの上の行と、上へ 1 行ずつ同じ形（続きの印と数を除く）のあいだは、くり返し。
+ * 見出しのすぐ下の実績・予定だけの行（2 段の見出し）も、同じ文字ならくり返し。
+ * 表の見出しより後の、続きの印だけの 1 セルの行（「（続き）」）も、前の表の続きの印。
+ */
+function findRepeats(idx: CellIndex, rows: number[]): Map<number, Repeat> {
+  const out = new Map<number, Repeat>();
+  const cellsOf = (r: number) => rowTexts(idx, r);
+  const bySig = new Map<string, number[]>();
+  for (const r of rows) {
+    const cs = cellsOf(r);
+    if (headerLike(cs)) bySig.set(exactSig(cs), [...(bySig.get(exactSig(cs)) ?? []), r]);
+  }
+  for (const hs of bySig.values()) {
+    const first = hs[0];
+    if (hs.length < 2 || first === undefined) continue;
+    const iFirst = rows.indexOf(first);
+    const sub = rows[iFirst + 1];
+    const subCells = sub !== undefined ? cellsOf(sub) : [];
+    const twoTier = subCells.length >= 2 && subCells.every((c) => cue.planActual(c.text) !== null);
+    for (let k = 1; k < hs.length; k++) {
+      const h = hs[k] ?? 0;
+      const prevH = hs[k - 1] ?? 0;
+      out.set(h, { kind: "header", of: first });
+      const jh = rows.indexOf(h);
+      const below = rows[jh + 1];
+      if (twoTier && sub !== undefined && below !== undefined && exactSig(cellsOf(below)) === exactSig(subCells)) out.set(below, { kind: "header", of: sub });
+      for (let i = iFirst - 1, j = jh - 1; i >= 0 && j >= 0; i--, j--) {
+        const a = rows[i] ?? 0;
+        const b = rows[j] ?? 0;
+        if (b <= prevH || out.has(b) || looseSig(cellsOf(a)) !== looseSig(cellsOf(b))) break;
+        out.set(b, { kind: "preamble", of: a });
+      }
+    }
+  }
+  // 続きの印だけの行：印を除くと空か、前に出た 1 セルの行（題）と同じ文字
+  let seenHeader = false;
+  const singles: { r: number; text: string }[] = [];
+  for (const r of rows) {
+    const cs = cellsOf(r);
+    const text = cs[0]?.text ?? "";
+    if (headerLike(cs)) seenHeader = true;
+    else if (cs.length === 1 && !out.has(r)) {
+      const rest = norm(cue.stripContinued(text));
+      const earlier = singles.find((s) => s.text === rest);
+      if (seenHeader && cue.isContinued(text) && (rest === "" || earlier)) out.set(r, { kind: "continued", of: earlier?.r ?? r });
+      else singles.push({ r, text: norm(text) });
+    }
+  }
+  return out;
+}
+
+/** くり返しの行のすぐ後から始まる塊は、前の塊（同じ表の前の頁）につなぐ */
+function joinAcross(blocks: number[][], rows: number[], repeats: Map<number, Repeat>): number[][] {
+  const out: number[][] = [];
+  for (const b of blocks) {
+    const prev = rows[rows.indexOf(b[0] ?? -1) - 1];
+    const last = out[out.length - 1];
+    if (last && prev !== undefined && repeats.has(prev)) last.push(...b);
+    else out.push([...b]);
+  }
+  return out;
+}
+
 // ─── シートの入口 ────────────────────────────────────────────
 
 export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
   const idx = new CellIndex(grid);
   const ctx: BuildCtx = { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, idx, date1904: src.date1904 };
   const roles = new Map<number, RowRole>();
+  const rowReasons = new Map<number, string>();
   const tables: Table[] = [];
   const notes: SheetLayout["notes"] = [];
   const titles: SheetLayout["titles"] = [];
   const legends: { rows: number[]; entries: LegendEntry[] }[] = [];
-  const blocks = blocksOf(contentRows(idx, grid), grid);
+  const all = contentRows(idx, grid);
+  const repeats = findRepeats(idx, all);
+  for (const [r, rp] of repeats) {
+    roles.set(r, "header");
+    rowReasons.set(r, rp.kind === "continued" ? "続きの印（前の表の続き）" : "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）");
+  }
+  const blocks = joinAcross(
+    blocksOf(
+      all.filter((r) => !repeats.has(r)),
+      grid,
+    ),
+    all,
+    repeats,
+  );
   blocks.forEach((block, bi) => {
     const firstRow = block[0] ?? 0;
     const firstCells = rowTexts(idx, firstRow);
@@ -711,6 +840,17 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
       (roles.get(r) === "title" ? titles : notes).push({ r, text: c?.text ?? "", ref: c?.ref ?? cellRef(r, 1) });
       top = rest[0] ?? top;
     }
+    // 帳票の頭書き：列の見出しの行の上にある、項目と値だけの行（どれも 2 セルまで）。表の外の項目なので記録には使わない
+    const hi = rest.findIndex((r) => headerLike(rowTexts(idx, r)));
+    if (hi > 0 && rest.slice(0, hi).every((r) => rowTexts(idx, r).length <= 2)) {
+      for (const r of rest.splice(0, hi)) {
+        const cells = rowTexts(idx, r);
+        roles.set(r, "note");
+        rowReasons.set(r, "表の上の項目と値（頭書き）。記録には使わない");
+        notes.push({ r, text: cells.map((c) => c.text).join(" "), ref: cells[0]?.ref ?? cellRef(r, 1) });
+      }
+      top = rest[0] ?? top;
+    }
     tables.push(buildTable(ctx, rest, top, roles));
   });
   // 凡例は、上にある一番近い星取表の形の表へ
@@ -723,7 +863,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
       target.legendRows.push(...lg.rows);
     } else looseLegends.push(...lg.entries);
   }
-  return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends };
+  return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends, rowReasons };
 }
 
 export function layoutFile(src: SourceFile): SheetLayout[] {

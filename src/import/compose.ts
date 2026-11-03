@@ -5,10 +5,11 @@ import { Plan, type AssetNodeT, type WorkDetailT, type WorkT } from "../shared/p
 import type { AuthorKind } from "../shared/fields";
 import { CellIndex, type SourceFile } from "./grid";
 import { Asker, questionIdOf, type Decision } from "./questions";
-import { cellKey, type MarkRec, type Records } from "./records";
+import { cellKey, type EventRec, type MarkRec, type Records } from "./records";
 import { ROW_ROLE_LABEL, type SheetLayout, type Table } from "./structure";
-import { seriesLabel, type Cluster, type Linked, type Occurrence } from "./link";
-import { nameKey } from "./text";
+import { seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
+import { daysInclusive, parseDayCount, type Ymd } from "./era";
+import { nameKey, parseEffort } from "./text";
 
 export type CellStatus = { s: "data" } | { s: "excluded"; reason: string } | { s: "unresolved"; questionId: string | null };
 
@@ -72,8 +73,17 @@ function authorOf(qids: Iterable<string>, decisions: ReadonlyMap<string, Decisio
  * 小計・合計の行を検算する。星取表の形は印のあるセルの数、ほかの形は数の和と比べる。
  * 小計は自分の区切り（前の小計の行のあとから自分の前まで。上に置いた小計なら、自分のあとから次の小計の前まで）の中、
  * 合計は表のデータの行すべて（小計の行は数えない）と比べる。
+ * 日報の形の表では、工数の欄は行ごとに人・日に直した工数の和と、日数の欄は日数の和か、行の期間の始まりから終わりまでの
+ * 通しの日数（工期の日数）と比べる。人・日に直せていない行があれば、その答えを待つ（検算を推し量らない）。
  */
-function checkTotals(lay: SheetLayout, t: Table, ask: Asker, exclude: (ref: string, why: string) => void, pend: (ref: string, q: string) => void): CheckResult[] {
+function checkTotals(
+  lay: SheetLayout,
+  t: Table,
+  ask: Asker,
+  exclude: (ref: string, why: string) => void,
+  pend: (ref: string, q: string | null) => void,
+  eventOf: (r: number) => EventRec | undefined,
+): CheckResult[] {
   const out: CheckResult[] = [];
   const isData = (r: { role: string }) => r.role === "data" || r.role === "parent";
   const allData = t.rows.filter(isData);
@@ -94,23 +104,52 @@ function checkTotals(lay: SheetLayout, t: Table, ask: Asker, exclude: (ref: stri
     }
     const cells = lay.index.rowCells(row.r);
     const res: CheckResult = { file: lay.file, sheet: lay.sheet, row: row.r, kind: row.role as "subtotal" | "total", columns: 0, matched: 0, mismatches: [] };
+    let waiting = false;
+    const numberOf = (v: unknown): number | null =>
+      typeof v === "number" ? v : typeof v === "string" && /^\s*[\d,.]+\s*$/.test(v) ? Number(v.replace(/,/g, "")) : null;
     for (const c of cells) {
-      const written = typeof c.value === "number" ? c.value : typeof c.value === "string" && /^\s*[\d,.]+\s*$/.test(c.value) ? Number(c.value.replace(/,/g, "")) : null;
-      if (written === null) continue;
       const col = t.cols.find((k) => k.c === c.c);
+      let written = numberOf(c.value);
+      if (written === null && typeof c.value === "string" && t.shape === "events") {
+        // 単位つきの合計（「253人・日」「61日」）
+        const e = col?.role === "effort" ? parseEffort(c.value) : null;
+        if (e && e.unit === "manDays") written = e.amount;
+        else if (col?.role === "days") written = parseDayCount(c.value);
+      }
+      if (written === null) continue;
       let counted = 0;
+      let alt: number | null = null;
       if (col?.role === "mark") counted = data.filter((r) => (lay.index.at(r.r, c.c)?.text ?? "") !== "").length;
-      else
+      else if (t.shape === "events" && col?.role === "effort") {
+        const evs = data.map((r) => eventOf(r.r)).filter((e): e is EventRec => !!e && !e.excluded);
+        if (evs.some((e) => e.effortPending)) {
+          waiting = true;
+          continue;
+        }
+        counted = evs.reduce((a, e) => a + (e.manDays ?? 0), 0);
+      } else if (t.shape === "events" && col?.role === "days") {
+        const evs = data.map((r) => eventOf(r.r)).filter((e): e is EventRec => !!e && !e.excluded);
+        counted = evs.reduce((a, e) => a + (e.days ?? 0), 0);
+        // 工期の日数：行の期間の始まりから終わりまでの通しの日数
+        const ds = evs.flatMap((e) => [e.date, e.end ?? e.date]).filter((d): d is Ymd => !!d);
+        if (ds.length) {
+          const key = (d: Ymd) => d.y * 10000 + d.m * 100 + d.d;
+          const lo = ds.reduce((a, d) => (key(d) < key(a) ? d : a));
+          const hi = ds.reduce((a, d) => (key(d) > key(a) ? d : a));
+          alt = daysInclusive(lo, hi);
+        }
+      } else
         counted = data.reduce((a, r) => {
-          const v = lay.index.at(r.r, c.c)?.value;
-          return a + (typeof v === "number" ? v : 0);
+          const v = numberOf(lay.index.at(r.r, c.c)?.value);
+          return a + (v ?? 0);
         }, 0);
       res.columns++;
-      if (Math.abs(counted - written) < 1e-9) res.matched++;
+      if (Math.abs(counted - written) < 1e-9 || (alt !== null && Math.abs(alt - written) < 1e-9)) res.matched++;
       else res.mismatches.push({ ref: c.ref, written, counted });
     }
     const label = ROW_ROLE_LABEL[row.role];
-    if (res.mismatches.length === 0) for (const c of cells) exclude(c.ref, `${label}（検算して合った）`);
+    if (waiting) for (const c of cells) pend(c.ref, null);
+    else if (res.mismatches.length === 0) for (const c of cells) exclude(c.ref, `${label}（検算して合った）`);
     else {
       const key = `subtotalMismatch|${t.id}|${row.r}`;
       const a = ask.ask(key, {
@@ -142,10 +181,12 @@ export function compose(
   const excluded = new Map(rec.excluded);
   const pending = new Map<string, string | null>([...rec.pending].map((k) => [k, null]));
   const checks: CheckResult[] = [];
+  const eventAt = new Map<string, EventRec>();
+  for (const e of rec.events) eventAt.set(`${e.tableId}\u0000${e.row}`, e);
   for (const lay of layouts) {
     const ex = (ref: string, why: string) => excluded.set(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), why);
-    const pd = (ref: string, q: string) => pending.set(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), q);
-    for (const t of lay.tables) checks.push(...checkTotals(lay, t, ask, ex, pd));
+    const pd = (ref: string, q: string | null) => pending.set(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), q);
+    for (const t of lay.tables) checks.push(...checkTotals(lay, t, ask, ex, pd, (r) => eventAt.get(`${t.id}\u0000${r}`)));
   }
 
   // ─── 資産の節 ───
@@ -171,7 +212,14 @@ export function compose(
     }
     return d;
   };
-  const refOf = (file: string, sheet: string | null, ref: string) => ({ file, sheet, page: null, cell: ref, box: null });
+  // 出どころ：頁のある資料（PDF）は、格子の位置に加えて頁と頁の上の位置も持つ
+  const placeOf = new Map<string, { page: number; box: [number, number, number, number] | null }>();
+  for (const lay of layouts)
+    for (const c of lay.grid.cells) if (c.page !== undefined) placeOf.set(`${lay.file}\u0000${lay.sheet ?? ""}\u0000${c.ref}`, { page: c.page, box: c.box ?? null });
+  const refOf = (file: string, sheet: string | null, ref: string) => {
+    const p = placeOf.get(`${file}\u0000${sheet ?? ""}\u0000${ref}`);
+    return { file, sheet, page: p?.page ?? null, cell: ref, box: p?.box ?? null };
+  };
   const assets: AssetNodeT[] = [];
   for (const c of live) {
     if (c.pending) continue;
@@ -239,16 +287,120 @@ export function compose(
     details.push({ ...d, detailKey: k });
   };
   const eventSources = (o: Occurrence) => o.events.flatMap((e) => e.refs.map((ref) => refOf(e.file, e.sheet, ref)));
-  const markLinks = new Map<MarkRec, { o: Occurrence; qids: Set<string> }[]>();
+  const jobSources = (j: Job) => j.units.flatMap(eventSources);
   const okCluster = (c: Cluster | undefined): c is Cluster => !!c && !c.pending && !c.excluded;
-  for (const l of lk.links) {
-    if (l.mode === "mark" && l.mark) markLinks.set(l.mark, [...(markLinks.get(l.mark) ?? []), { o: l.occurrence, qids: l.decidedBy }]);
+  const linksOfMark = new Map<MarkRec, WorkLink[]>();
+  for (const l of lk.links) if (l.mode === "mark" && l.mark) linksOfMark.set(l.mark, [...(linksOfMark.get(l.mark) ?? []), l]);
+  const range = (us: Occurrence[]) => {
+    const s = us.map((u) => u.start).filter((x): x is string => !!x).sort();
+    const e = us.map((u) => u.end).filter((x): x is string => !!x).sort();
+    return { start: s[0] ?? null, end: e[e.length - 1] ?? null };
+  };
+  const titlesOf = (us: Occurrence[]) => [...new Set(us.flatMap((u) => u.events.map((e) => e.workTitle ?? e.workName)))].join("・");
+  const docsOf = (us: Occurrence[]) => us.map((u) => `${u.file} の ${u.events.length} 行（${titlesOf([u])}）`).join("と");
+  // 資料をまたいで同じ値のはずの工数・日数：資料ごとの値が 1 つに決まればそれ、違えば聞く（黙ってどれかを選ばない）
+  const settleValue = (what: "manDays" | "days", key: string, vals: { u: Occurrence; v: number }[], cName: string): { v: number | null; q: string | null; pend: boolean } => {
+    const distinct = [...new Set(vals.map((x) => x.v))];
+    if (distinct.length <= 1) return { v: distinct[0] ?? null, q: null, pend: false };
+    const label = what === "manDays" ? "工数（人・日）" : "日数";
+    const qkey = `effortConflict|${what}|${key}`;
+    const a = ask.ask(qkey, {
+      kind: "effortConflict",
+      text: `「${cName}」の同じ作業の${label}が、資料で違う（${vals.map((x) => `${x.u.file} ${x.v}`).join("・")}）。どれを使うか`,
+      options: [...distinct.map((v, i) => ({ id: `v${i}`, label: `${v}` })), { id: "none", label: `${label}を空にする` }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: vals.length,
+      items: vals.map((x) => ({ file: x.u.file, sheet: x.u.sheet, cells: x.u.events.slice(0, 1).map((e) => e.refs[0] ?? "") })),
+    });
+    const q = questionIdOf(qkey);
+    if (a === "none") return { v: null, q, pend: false };
+    if (a?.startsWith("v")) return { v: distinct[Number(a.slice(1))] ?? null, q, pend: false };
+    return { v: null, q, pend: true };
+  };
+  const conflictPending: { j: Job; q: string | null }[] = [];
+  /** 1 つの機器の上の作業の明細の値：工数はまとめ工事でない資料から、日数は書いてある資料から */
+  const jobValues = (j: Job) => {
+    const md = settleValue(
+      "manDays",
+      j.id,
+      j.units.filter((u) => !u.bundle && u.manDays !== null).map((u) => ({ u, v: u.manDays as number })),
+      j.cluster.name,
+    );
+    const dy = settleValue(
+      "days",
+      j.id,
+      j.units.filter((u) => u.days !== null).map((u) => ({ u, v: u.days as number })),
+      j.cluster.name,
+    );
+    if (md.pend || dy.pend) conflictPending.push({ j, q: md.pend ? md.q : dy.q });
+    return { manDays: md.v, days: dy.v, qids: [md.q, dy.q].filter((x): x is string => !!x) };
+  };
+  // まとめ工事（一式）：同じ作業と結んだまとめ工事どうしは、1 つのまとめ工事の明細にする
+  const bundleRoot = new Map<Occurrence, Occurrence>();
+  const rootOf = (o: Occurrence): Occurrence => {
+    let r = o;
+    while (bundleRoot.get(r) && bundleRoot.get(r) !== r) r = bundleRoot.get(r) as Occurrence;
+    return r;
+  };
+  for (const o of lk.occurrences) if (o.bundle) bundleRoot.set(o, o);
+  for (const j of lk.jobs) {
+    const bs = j.units.filter((u) => u.bundle);
+    for (let i = 1; i < bs.length; i++) {
+      const a = rootOf(bs[0] as Occurrence);
+      const b = rootOf(bs[i] as Occurrence);
+      if (a !== b) bundleRoot.set(b, a);
+    }
   }
-  const markDetailsDone = new Set<MarkRec>();
+  const bundleMembers = new Map<Occurrence, Occurrence[]>();
+  for (const o of bundleRoot.keys()) bundleMembers.set(rootOf(o), [...(bundleMembers.get(rootOf(o)) ?? []), o]);
+  for (const ms of bundleMembers.values()) ms.sort((a, b) => a.file.localeCompare(b.file) || a.id.localeCompare(b.id));
+  const bundleTargets = (root: Occurrence) =>
+    [...new Map((bundleMembers.get(root) ?? [root]).flatMap((o) => o.targets).map((t) => [t.id, t])).values()].filter(okCluster);
   const bundleWork = (o: Occurrence): string | null => {
     if (!o.bundle) return null;
-    const targets = o.targets.filter(okCluster).map((c) => keyOf.get(c) ?? "").sort();
-    return workFor(`bundle|${o.workKey}|${targets.join(",")}`, o.workName, targets, null);
+    const root = rootOf(o);
+    const lead = (bundleMembers.get(root) ?? [root])[0] ?? root;
+    const targets = bundleTargets(root).map((c) => keyOf.get(c) ?? "").sort();
+    return workFor(`bundle|${lead.workKey}|${targets.join(",")}`, lead.workName, targets, null);
+  };
+  /** 作業のまとまりの親（まとめ工事）。どれか 1 つの資料がまとめ工事なら、その親 */
+  const parentOfJob = (j: Job): string | null => {
+    const b = j.units.find((u) => u.bundle);
+    return b ? bundleWork(b) : null;
+  };
+  const jobDetail = (j: Job, m: MarkRec | null, qids: Set<string>, kind: string, keyName: string) => {
+    const c = j.cluster;
+    const ak = keyOf.get(c) ?? "";
+    const parent = parentOfJob(j);
+    const wk = workFor(`asset|${ak}|${keyName}|${parent ?? ""}`, kind, [ak], parent);
+    const v = jobValues(j);
+    const r = range(j.units);
+    const symbolQ = m ? [questionIdOf(`unknownSymbol|${m.tableId}|${m.symbol}`), questionIdOf(`noLegend|${m.tableId}|${m.symbol}`)] : [];
+    const bundled = j.units.some((u) => u.bundle);
+    addDetail(
+      {
+        workKey: wk,
+        planOrActual: m ? (m.planOrActual ?? "actual") : "actual",
+        step: null,
+        startDate: r.start,
+        endDate: r.end,
+        fiscalYear: m ? m.fiscalYear : j.fiscalYear,
+        cost: null,
+        manDays: v.manDays,
+        days: v.days,
+        resultScale: null,
+        resultValue: null,
+        measuredValue: null,
+        previousValue: null,
+        performer: null,
+        sources: [...(m ? [refOf(m.file, m.sheet, m.ref)] : []), ...jobSources(j)],
+        basis: `${m ? `星取表 ${m.ref} の印「${m.symbol}」と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
+        author: authorOf([...c.decidedBy, ...qids, ...j.decidedBy, ...j.units.flatMap((u) => [...u.decidedBy]), ...v.qids, ...symbolQ], decisions),
+        needsReview: false,
+      },
+      m ? `mark|${m.file}|${m.sheetIndex}|${m.ref}|${j.id}` : `event|${j.id}`,
+    );
   };
   // 印から
   for (const m of rec.marks) {
@@ -256,7 +408,7 @@ export function compose(
     const c = lk.clusterOf.get(m.assetId);
     if (!okCluster(c)) continue;
     const ak = keyOf.get(c) ?? "";
-    const ls = markLinks.get(m) ?? [];
+    const ls = (linksOfMark.get(m) ?? []).filter((l) => okCluster(l.cluster));
     const symbolQ = [questionIdOf(`unknownSymbol|${m.tableId}|${m.symbol}`), questionIdOf(`noLegend|${m.tableId}|${m.symbol}`)];
     if (ls.length === 0) {
       const kind = m.workName ?? "";
@@ -284,101 +436,80 @@ export function compose(
         },
         `mark|${m.file}|${m.sheetIndex}|${m.ref}`,
       );
-    } else
-      for (const { o, qids } of ls) {
-        const parent = bundleWork(o);
-        const wk = workFor(`asset|${ak}|${o.workKey}|${parent ?? ""}`, o.workName, [ak], parent);
-        addDetail(
-          {
-            workKey: wk,
-            planOrActual: m.planOrActual,
-            step: null,
-            startDate: o.start,
-            endDate: o.end,
-            fiscalYear: m.fiscalYear,
-            cost: null,
-            manDays: o.bundle ? null : o.manDays,
-            days: null,
-            resultScale: null,
-            resultValue: null,
-            measuredValue: null,
-            previousValue: null,
-            performer: null,
-            sources: [refOf(m.file, m.sheet, m.ref), ...eventSources(o)],
-            basis: `星取表 ${m.ref} の印「${m.symbol}」と ${o.file} の ${o.events.length} 行（${[...new Set(o.events.map((e) => e.workTitle ?? e.workName))].join("・")}）${o.bundle ? "。工数はまとめ工事の明細に" : ""}`,
-            author: authorOf([...c.decidedBy, ...qids, ...o.decidedBy, ...symbolQ], decisions),
-            needsReview: false,
-          },
-          `mark|${m.file}|${m.sheetIndex}|${m.ref}|${o.id}`,
-        );
-      }
-    markDetailsDone.add(m);
+      continue;
+    }
+    for (const l of ls) {
+      // 凡例の意味が作業の名前と合う印（◎ が特定の検査など）は、凡例の名前を作業の種類にする（星取表だけの年と同じ作業になる）
+      const lead = l.job.units[0];
+      const mk = nameKey(m.workName ?? "");
+      const named = !!mk && l.job.units.some((u) => nameKey(u.workName) === mk || nameKey(u.workName).includes(mk) || (nameKey(u.workName) !== "" && mk.includes(nameKey(u.workName))));
+      const kind = named ? (m.workName ?? "") : (lead?.workName ?? "");
+      jobDetail(l.job, m, l.decidedBy, kind, named ? nameKey(m.workName ?? "") : (lead?.workKey ?? ""));
+    }
   }
-  // 日報だけの記録と、まとめ工事の明細
-  const occDone = new Set<Occurrence>();
+  // 日報・報告書だけの記録
   for (const l of lk.links) {
-    const o = l.occurrence;
-    if (l.mode === "eventOnly" && okCluster(l.cluster)) {
-      const ak = keyOf.get(l.cluster) ?? "";
+    if (l.mode !== "eventOnly" || !okCluster(l.cluster)) continue;
+    const lead = l.job.units[0];
+    jobDetail(l.job, null, l.decidedBy, lead?.workName ?? "", lead?.workKey ?? "");
+  }
+  // まとめ工事の明細（結んだまとめ工事は 1 つに）
+  const bundleDone = new Set<Occurrence>();
+  for (const l of lk.links) {
+    if (l.mode !== "mark" && l.mode !== "eventOnly") continue;
+    for (const o of l.job.units) {
+      if (!o.bundle) continue;
+      const root = rootOf(o);
+      if (bundleDone.has(root)) continue;
+      bundleDone.add(root);
+      const members = bundleMembers.get(root) ?? [root];
       const parent = bundleWork(o);
-      const wk = workFor(`asset|${ak}|${o.workKey}|${parent ?? ""}`, o.workName, [ak], parent);
+      if (!parent) continue;
+      const md = settleValue(
+        "manDays",
+        `bundle|${root.id}`,
+        members.filter((u) => u.manDays !== null).map((u) => ({ u, v: u.manDays as number })),
+        bundleTargets(root).map((t) => t.name).join("・"),
+      );
+      const dy = settleValue(
+        "days",
+        `bundle|${root.id}`,
+        members.filter((u) => u.days !== null).map((u) => ({ u, v: u.days as number })),
+        bundleTargets(root).map((t) => t.name).join("・"),
+      );
+      if (md.pend || dy.pend) conflictPending.push({ j: l.job, q: md.pend ? md.q : dy.q });
+      const r = range(members);
       addDetail(
         {
-          workKey: wk,
+          workKey: parent,
           planOrActual: "actual",
           step: null,
-          startDate: o.start,
-          endDate: o.end,
-          fiscalYear: o.fiscalYear,
+          startDate: r.start,
+          endDate: r.end,
+          fiscalYear: root.fiscalYear,
           cost: null,
-          manDays: o.bundle ? null : o.manDays,
-          days: null,
+          manDays: md.v,
+          days: dy.v,
           resultScale: null,
           resultValue: null,
           measuredValue: null,
           previousValue: null,
           performer: null,
-          sources: eventSources(o),
-          basis: `${o.file} の ${o.events.length} 行（${[...new Set(o.events.map((e) => e.workTitle ?? e.workName))].join("・")}）`,
-          author: authorOf([...l.cluster.decidedBy, ...l.decidedBy, ...o.decidedBy], decisions),
+          sources: members.flatMap(eventSources),
+          basis: `まとめ工事（${bundleTargets(root).map((t) => t.name + seriesLabel(t.series)).join("・")}）。${docsOf(members)}`,
+          author: authorOf([...members.flatMap((u) => [...u.decidedBy]), ...[md.q, dy.q].filter((x): x is string => !!x)], decisions),
           needsReview: false,
         },
-        `event|${o.id}|${ak}`,
+        `bundle|${root.id}`,
       );
-    }
-    if (o.bundle && !occDone.has(o) && (l.mode === "mark" || l.mode === "eventOnly")) {
-      occDone.add(o);
-      const parent = bundleWork(o);
-      if (parent)
-        addDetail(
-          {
-            workKey: parent,
-            planOrActual: "actual",
-            step: null,
-            startDate: o.start,
-            endDate: o.end,
-            fiscalYear: o.fiscalYear,
-            cost: null,
-            manDays: o.manDays,
-            days: null,
-            resultScale: null,
-            resultValue: null,
-            measuredValue: null,
-            previousValue: null,
-            performer: null,
-            sources: eventSources(o),
-            basis: `まとめ工事（${o.targets.map((t) => t.name + seriesLabel(t.series)).join("・")}）。${o.file} の ${o.events.length} 行`,
-            author: authorOf(o.decidedBy, decisions),
-            needsReview: false,
-          },
-          `bundle|${o.id}`,
-        );
     }
   }
   for (const l of lk.links) {
-    if (l.mode === "excluded") for (const e of l.occurrence.events) for (const ref of e.refs) excluded.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), "作業を外した（決定）");
-    if (l.mode === "pending") for (const e of l.occurrence.events) for (const ref of e.refs) pending.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), null);
+    const evs = l.job.units.flatMap((u) => u.events);
+    if (l.mode === "excluded") for (const e of evs) for (const ref of e.refs) excluded.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), "作業を外した（決定）");
+    if (l.mode === "pending") for (const e of evs) for (const ref of e.refs) pending.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), null);
   }
+  for (const { j, q } of conflictPending) for (const e of j.units.flatMap((u) => u.events)) for (const ref of e.refs) pending.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), q);
   for (const e of rec.events) {
     if (lk.eventPending.has(e.id)) for (const ref of e.refs) pending.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), null);
     const why = lk.eventExcluded.get(e.id);
@@ -412,6 +543,7 @@ export function compose(
       if (pending.has(k)) status.set(k, { s: "unresolved", questionId: pending.get(k) ?? null });
       else if (dataKeys.has(k)) status.set(k, { s: "data" });
       else if (excluded.has(k)) status.set(k, { s: "excluded", reason: excluded.get(k) ?? "" });
+      else if (lay.rowReasons.has(cell.r)) status.set(k, { s: "excluded", reason: lay.rowReasons.get(cell.r) ?? "" });
       else {
         const role = lay.rowRoles.get(cell.r);
         if (role === "title" || role === "note" || role === "header" || role === "legend") {

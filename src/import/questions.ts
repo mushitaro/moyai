@@ -32,6 +32,9 @@ export type QuestionKind =
   | "eventAssetOne"
   | "workLink"
   | "workLinkOne"
+  | "workJoin"
+  | "effortConflict"
+  | "photoRoute"
   | "subtotalMismatch"
   | "duplicateAsset"
   | "stray";

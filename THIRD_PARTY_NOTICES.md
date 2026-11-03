@@ -26,6 +26,17 @@ MOYAI のコードは、このリポジトリで会期中に新しく書いた�
 | exceljs | 4.4.0 | MIT | 取り込みの Excel の読み手（`src/import/xlsx.ts`。全部を読む読み手だけを使い、版を固定して中の 3 か所に直しを当てる：`src/import/exceljs-setup.ts`）。書き出しにも使う予定 |
 | ssf | 0.11.2 | Apache-2.0 | 表示形式から表示の文字を作る（`src/import/numfmt.ts`。和暦・曜日・[DBNum] などは自分で足した） |
 | csv-parse | 7.0.3 | MIT | 取り込みの CSV・TSV の読み手（`src/import/csv.ts`。文字コードと区切りの判定は自分で書いた） |
+| pdfjs-dist | 6.4.299 | Apache-2.0 | 取り込みの文字のある PDF の読み手（`src/import/pdf.ts`。文字と位置・描く命令の罫線を読む。格子の組み方は自分で書いた）。Node（試験）は legacy の build。画面のビルドには worker（`build/pdf.worker.min.mjs`）と、下の同梱のデータを写して入れる（外のサーバーからは取らない） |
+| @napi-rs/canvas（pdfjs-dist の任意の依存） | 1.0.11 | MIT | Node で pdf.js が頁を描くときの canvas（`renderPdfPage`。試験だけ。画面のビルドには入らない）。pdfjs-dist は `^1.0.10` を求め、そのままでは 2026-10-30 公開の 1.1.0 が入るので、2 週間以上前の 1.0.11 に `overrides` で固定した。OS ごとの本体（`@napi-rs/canvas-win32-x64-msvc` など）も 1.0.11 |
+
+pdfjs-dist に同梱のデータのうち、画面のビルドに写して配るもの（それぞれの使用条件の文は pdfjs-dist の中にある）：
+
+| データ | 使用条件 | 使い道 |
+|---|---|---|
+| cMap（`cmaps/*.bcmap`、Adobe Systems） | BSD-3-Clause の形（`cmaps/LICENSE`） | 埋め込みの無い日本語の書体の文字を読む |
+| 標準の書体の Foxit の `.pfb`（`standard_fonts/Foxit*.pfb`、PDFium Authors） | BSD-3-Clause（`standard_fonts/LICENSE_FOXIT`） | 埋め込みの無い標準の書体（Courier・Times・Symbol・ZapfDingbats） |
+
+同梱の Liberation の `.ttf`（`standard_fonts/LiberationSans-*.ttf`、Red Hat）は、使用条件が GPL-2.0 と書体の例外なので配らない。Node でも読まない（どちらでも同じ出力にするため）。無いときは pdf.js が内蔵の字の幅で読むので、Helvetica などの文字は読める（試験 `tests/unit/import/pdf.test.ts`）。画像の復号の wasm（`wasm/`）も配らない（JBIG2・JPEG 2000 の画像の頁は描けないことがある。未確認）。
 
 これから足す依存（docs/plan.md §2.16）は、入れたときにこの表に足します。依存の依存は package-lock.json にあります。
 

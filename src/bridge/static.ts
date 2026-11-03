@@ -11,6 +11,11 @@ const TYPES: Record<string, string> = {
   ".png": "image/png",
   ".woff2": "font/woff2",
   ".woff": "font/woff",
+  // PDF の読み手（pdf.js）：worker と、同梱の cMap・標準の書体（ビルドに入れたもの。外から取らない）
+  ".mjs": "text/javascript; charset=utf-8",
+  ".bcmap": "application/octet-stream",
+  ".pfb": "application/octet-stream",
+  ".ttf": "font/ttf",
 };
 
 /** 返すファイルの中身と形。無い・外へ出る・知らない形なら null。 */
