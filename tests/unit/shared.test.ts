@@ -6,10 +6,12 @@ import { resolveStateDir } from "../../src/bridge/state";
 import { TokenStore } from "../../src/bridge/tokens";
 import { checkFetchSite, checkHost, checkOrigin } from "../../src/bridge/guard";
 import { parseStartArgs } from "../../src/cli/args";
+import { refused } from "../../src/cli/relay";
+import { listenErrorCode } from "../../src/bridge/server";
 import { decodeEvent, encodeEvent } from "../../src/shared/events";
 import { AUTHOR_KINDS, ENTITIES, FIELD_REFS, fieldDef } from "../../src/shared/fields";
 import { errorBody } from "../../src/shared/errors";
-import { RULE_MAX_VALUES, TOOLS, ruleSchema, statRow } from "../../src/shared/tools";
+import { RULE_MAX_VALUES, TOOLS, ruleSchema, statRowOf } from "../../src/shared/tools";
 import { STAMP_ENV, sharedBuildStamp } from "../../scripts/build-stamp.mjs";
 
 describe("作者の種類", () => {
@@ -21,13 +23,20 @@ describe("作者の種類", () => {
 });
 
 describe("仲間の統計の行", () => {
-  it("帯のコードだけを通し、生の数を通さない", () => {
-    expect(statRow.safeParse({ shown: "x" }).success).toBe(true);
-    expect(statRow.safeParse({ shown: "range", n: 3, low: "I3", high: "I4_5" }).success).toBe(true);
-    expect(statRow.safeParse({ shown: "median", n: 7, median: "W10_29", q1: "W1_9", q3: "W1000P" }).success).toBe(true);
-    expect(statRow.safeParse({ shown: "median", n: 7, median: 12, q1: "W1_9", q3: "W30_99" }).success).toBe(false);
-    expect(statRow.safeParse({ shown: "median", n: 4, median: "D1_3", q1: "D1_3", q3: "D4_7" }).success).toBe(false);
-    expect(statRow.safeParse({ shown: "range", n: 2, low: "I1", high: "I2" }).success).toBe(false);
+  // 帯の値は計画（§2.8）に書いてある端の値だけを使う。境目は 11-05 に決める
+  it("帯のコードだけを通し、生の数と、ほかの欄の帯を通さない", () => {
+    const interval = statRowOf("interval");
+    const manDays = statRowOf("manDays");
+    const days = statRowOf("days");
+    expect(interval.safeParse({ shown: "x" }).success).toBe(true);
+    expect(interval.safeParse({ shown: "range", n: 3, low: "I1", high: "I16_30" }).success).toBe(true);
+    expect(manDays.safeParse({ shown: "median", n: 7, median: "W1_9", q1: "W1_9", q3: "W1000P" }).success).toBe(true);
+    expect(days.safeParse({ shown: "median", n: 5, median: "D1_3", q1: "D1_3", q3: "D121P" }).success).toBe(true);
+    expect(manDays.safeParse({ shown: "median", n: 7, median: 12, q1: "W1_9", q3: "W1000P" }).success).toBe(false);
+    expect(days.safeParse({ shown: "median", n: 4, median: "D1_3", q1: "D1_3", q3: "D121P" }).success).toBe(false);
+    expect(interval.safeParse({ shown: "range", n: 2, low: "I1", high: "I16_30" }).success).toBe(false);
+    expect(interval.safeParse({ shown: "range", n: 3, low: "W1_9", high: "W1000P" }).success).toBe(false);
+    expect(manDays.safeParse({ shown: "range", n: 3, low: "D1_3", high: "D121P" }).success).toBe(false);
     const agg = TOOLS.peer_reference.output.shape.aggregates.element;
     expect(Object.keys(agg.shape).sort()).toEqual(["commonItem", "days", "interval", "manDays"]);
   });
@@ -111,6 +120,21 @@ describe("網の外側の判定", () => {
     expect(checkFetchSite("same-site", true)).toBe("fetch_site_not_allowed");
     expect(checkFetchSite("none", false)).toBe("fetch_site_not_allowed");
     expect(checkFetchSite("none", true)).toBeNull();
+  });
+});
+
+describe("起動と中継の誤りの読み替え", () => {
+  it("待ち受けの誤り：使われている → port_in_use、権限で断られた → port_denied、ほかはそのまま", () => {
+    expect(listenErrorCode({ code: "EADDRINUSE" })).toBe("port_in_use");
+    expect(listenErrorCode({ code: "EACCES" })).toBe("port_denied");
+    expect(listenErrorCode({ code: "EINVAL" })).toBeNull();
+    expect(errorBody("port_denied", { port: 80 }).error.message).toContain("ポート 80");
+  });
+  it("接続を拒まれた誤りは、AggregateError の中にあっても見分ける", () => {
+    expect(refused({ code: "ECONNREFUSED" })).toBe(true);
+    expect(refused(new AggregateError([Object.assign(new Error("x"), { code: "ECONNREFUSED" })]))).toBe(true);
+    expect(refused({ code: "ECONNRESET" })).toBe(false);
+    expect(refused(undefined)).toBe(false);
   });
 });
 

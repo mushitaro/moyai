@@ -17,6 +17,7 @@ export const TEXT = {
     closed: "橋渡しとの接続が切れました",
     refusedHelp: "ほかのタブを閉じてから、このタブを読み込み直してください。",
     closedHelp: "端末で moyai start が動いているかを確かめ、このタブを読み込み直してください。",
+    dropped: (n: number) => `橋渡しからの読めない通信を ${n} 件飛ばしました。`,
   },
   scheme: { toDark: "暗い表示", toLight: "明るい表示" },
   trial: {

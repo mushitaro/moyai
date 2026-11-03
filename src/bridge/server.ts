@@ -51,6 +51,13 @@ export interface Bridge {
   close(): Promise<void>;
 }
 
+/** 待ち受けの誤りを、端末に出す誤りの型に読み替える。使われている → port_in_use、権限で断られた → port_denied。 */
+export function listenErrorCode(e: { code?: string }): "port_in_use" | "port_denied" | null {
+  if (e.code === "EADDRINUSE") return "port_in_use";
+  if (e.code === "EACCES") return "port_denied";
+  return null;
+}
+
 export class BridgeStartError extends Error {
   constructor(
     readonly code: ErrorCode,
@@ -255,13 +262,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   await new Promise<void>((resolve, reject) => {
     const onError = (e: NodeJS.ErrnoException) => {
       server.off("listening", onListening);
-      reject(
-        e.code === "EADDRINUSE"
-          ? new BridgeStartError("port_in_use", opts.port)
-          : e.code === "EACCES"
-            ? new BridgeStartError("port_denied", opts.port)
-            : e,
-      );
+      const code = listenErrorCode(e);
+      reject(code ? new BridgeStartError(code, opts.port) : e);
     };
     const onListening = () => {
       server.off("error", onError);

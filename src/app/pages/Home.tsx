@@ -6,10 +6,10 @@ import { sha256Hex, type BridgeClient, type ConnectionState } from "../bridge-cl
 import { ERROR_TEXT, TEXT } from "../text";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 
-function useConnection(client: BridgeClient): ConnectionState {
-  const [s, setS] = useState<ConnectionState>({ kind: "connecting" });
-  useEffect(() => client.subscribe(setS), [client]);
-  return s;
+function useConnection(client: BridgeClient): { state: ConnectionState; dropped: number } {
+  const [v, setV] = useState<{ state: ConnectionState; dropped: number }>({ state: { kind: "connecting" }, dropped: 0 });
+  useEffect(() => client.subscribe((state, dropped) => setV({ state, dropped })), [client]);
+  return v;
 }
 
 function ConnectionBadge({ state }: { state: ConnectionState }) {
@@ -88,7 +88,7 @@ function CommitTrialDialog({ client, opened, onClose }: { client: BridgeClient; 
 }
 
 export function Home({ client }: { client: BridgeClient }) {
-  const state = useConnection(client);
+  const { state, dropped } = useConnection(client);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [trialOpen, setTrialOpen] = useState(false);
   const canTrial = state.kind === "open";
@@ -126,6 +126,11 @@ export function Home({ client }: { client: BridgeClient }) {
           <Alert color="orange" title={TEXT.connection.closed}>
             {TEXT.connection.closedHelp}
           </Alert>
+        )}
+        {dropped > 0 && (
+          <Text size="sm" c="dimmed" data-testid="dropped">
+            {TEXT.connection.dropped(dropped)}
+          </Text>
         )}
         <Text>{TEXT.home.lead}</Text>
         <Anchor href={APP_PAGES.selftest}>{TEXT.home.selftestLink}</Anchor>

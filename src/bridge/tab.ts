@@ -47,7 +47,7 @@ export const TAB_EVENT_HANDLERS: { [K in TabToBridge]: Handler<K> } = {
 
 export class TabHub {
   private active: ActiveTab | null = null;
-  /** 握手のあとに飛ばした、読めない通信の数 */
+  /** 今のタブの回で、握手のあとに飛ばした読めない通信の数 */
   dropped = 0;
   private timer: NodeJS.Timeout | null = null;
 
@@ -118,6 +118,7 @@ export class TabHub {
     const tab: ActiveTab = { ws: conn.ws, secret: Buffer.from(data.secret, "utf8"), session: randomUUID(), lastSeen: this.o.now() };
     conn.active = tab;
     this.active = tab;
+    this.dropped = 0; // 数はタブの回ごと
     this.send(conn.ws, "bridge.welcome", {
       heartbeatMs: this.o.heartbeatMs,
       deadMs: this.o.deadMs,

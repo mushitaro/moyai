@@ -16,6 +16,14 @@ export interface RelayOptions {
   version?: string;
 }
 
+/** 接続を拒まれた誤りか（AggregateError の中に入っている形も見る）。 */
+export function refused(cause: unknown): boolean {
+  const c = cause as { code?: unknown; errors?: unknown } | undefined;
+  if (!c) return false;
+  if (c.code === "ECONNREFUSED") return true;
+  return Array.isArray(c.errors) && c.errors.some((e) => (e as { code?: unknown })?.code === "ECONNREFUSED");
+}
+
 type BridgeAnswer = { ok: true; data: Record<string, unknown> } | ErrorBody;
 
 /**
@@ -36,7 +44,7 @@ async function postOnce(stateDir: string, name: ToolName, args: unknown, ms: num
   } catch (e) {
     const err = e as { name?: string; cause?: { code?: string } };
     if (err.name === "TimeoutError" || err.name === "AbortError") return "timeout";
-    if (err.cause?.code === "ECONNREFUSED") return errorBody("bridge_not_running");
+    if (refused(err.cause)) return errorBody("bridge_not_running");
     return "lost";
   }
   let body: unknown;

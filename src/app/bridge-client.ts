@@ -37,7 +37,7 @@ export class BridgeClient {
   private readonly secret = randomSecret();
   private ws: WebSocket | null = null;
   private state: ConnectionState = { kind: "connecting" };
-  private readonly listeners = new Set<(s: ConnectionState) => void>();
+  private readonly listeners = new Set<(s: ConnectionState, dropped: number) => void>();
   private readonly pending = new Map<string, (t: { token: string; expiresAt: number } | null) => void>();
   private seq = 0;
   /** 飛ばした、読めない通信の数 */
@@ -49,16 +49,7 @@ export class BridgeClient {
     const ws = new WebSocket(this.wsUrl);
     this.ws = ws;
     ws.addEventListener("open", () => this.send("tab.hello", { secret: this.secret, build: __MOYAI_BUILD__.commit }));
-    ws.addEventListener("message", (e) => {
-      const ev = typeof e.data === "string" ? decodeEvent(e.data, "bridge") : null;
-      if (!ev) {
-        // 読めない通信は飛ばして数える（1 件の不正で全体を止めない）
-        this.dropped++;
-        return;
-      }
-      const h = BRIDGE_EVENT_HANDLERS[ev.type as BridgeToTab] as Handler<BridgeToTab> | undefined;
-      h?.(this, ev.data as EventData<BridgeToTab>);
-    });
+    ws.addEventListener("message", (e) => this.receive(e.data));
     ws.addEventListener("close", () => {
       for (const r of this.pending.values()) r(null);
       this.pending.clear();
@@ -66,9 +57,22 @@ export class BridgeClient {
     });
   }
 
-  subscribe(fn: (s: ConnectionState) => void): () => void {
+  /** 受けた通信を受け手に渡す。読めないものは飛ばして数え、画面に件数を出す（1 件の不正で全体を止めない）。 */
+  receive(raw: unknown): void {
+    const ev = typeof raw === "string" ? decodeEvent(raw, "bridge") : null;
+    if (!ev) {
+      this.dropped++;
+      this.notify();
+      return;
+    }
+    const h = BRIDGE_EVENT_HANDLERS[ev.type as BridgeToTab] as Handler<BridgeToTab> | undefined;
+    h?.(this, ev.data as EventData<BridgeToTab>);
+  }
+
+  /** つながりの状態と、飛ばした通信の数を受ける。 */
+  subscribe(fn: (s: ConnectionState, dropped: number) => void): () => void {
     this.listeners.add(fn);
-    fn(this.state);
+    fn(this.state, this.dropped);
     return () => this.listeners.delete(fn);
   }
 
@@ -129,7 +133,11 @@ export class BridgeClient {
 
   private setState(s: ConnectionState): void {
     this.state = s;
-    for (const fn of this.listeners) fn(s);
+    this.notify();
+  }
+
+  private notify(): void {
+    for (const fn of this.listeners) fn(this.state, this.dropped);
   }
 
   private send<T extends TabToBridge>(type: T, data: EventData<T>): void {
