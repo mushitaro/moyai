@@ -5,7 +5,6 @@
 // 状態は取り込みの作業場（intake/workspace.ts。このタブのメモリだけ）が持ち、AI のツールも同じ作業場を使う。
 import {
   Alert,
-  Anchor,
   Badge,
   Button,
   Checkbox,
@@ -22,7 +21,6 @@ import {
   Text,
   TextInput,
   Title,
-  useMantineColorScheme,
 } from "@mantine/core";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import type { Analysis } from "../../import";
@@ -30,7 +28,6 @@ import type { CellStatus } from "../../import/compose";
 import type { QuestionKind, QuestionState } from "../../import/questions";
 import { cellKey } from "../../import/records";
 import type { SheetLayout } from "../../import/structure";
-import { APP_PAGES } from "../../shared/routes";
 import { CHART_HASH } from "../chart/route";
 import { packChoices, packFiscalStart } from "../chart/catalog";
 import { CrosswalkPanel } from "../components/CrosswalkPanel";
@@ -277,6 +274,7 @@ function QuestionCard({ ws, q }: { ws: IntakeWorkspace; q: QuestionState }) {
         )}
         <Button
           size="compact-sm"
+          variant="default"
           disabled={!ok}
           data-testid="answer"
           onClick={() => setRefused(refusedText(ws.answerAsHuman(q.questionId, value, T.questions.humanReason)))}
@@ -414,7 +412,6 @@ function Activity({ ws }: { ws: IntakeWorkspace }) {
 
 export function Intake({ ws }: { ws: IntakeWorkspace }) {
   useWorkspace(ws);
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const an = ws.fileCount ? ws.analysis() : null;
   const blockers = ws.composeBlockers();
   const compose = ws.compose;
@@ -475,14 +472,8 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
             </Text>
           )}
           {ws.settings.fictional && <FictionMark />}
-          <Anchor href={APP_PAGES.home} size="sm">
-            {T.back}
-          </Anchor>
         </Group>
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
-          <Button variant="default" onClick={toggleColorScheme}>
-            {colorScheme === "dark" ? TEXT.scheme.toLight : TEXT.scheme.toDark}
-          </Button>
           {blockers.length > 0 && compose.state !== "running" && (
             <Text size="xs" c="dimmed" maw={420} lineClamp={2} title={blockers.join("・")} data-testid="compose-disabled-reason">
               {T.reasonsPrefix}

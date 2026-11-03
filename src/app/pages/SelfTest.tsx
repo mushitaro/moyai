@@ -1,7 +1,7 @@
 // Ed25519 の試験のページ：橋渡し（Node の crypto）の署名を、このブラウザの WebCrypto で検証する。
-import { Alert, Anchor, Container, Stack, Table, Text, Title } from "@mantine/core";
+import { Alert, Container, Stack, Table, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { APP_PAGES, ROUTES } from "../../shared/routes";
+import { ROUTES } from "../../shared/routes";
 import { TEXT } from "../text";
 
 interface Sample {
@@ -89,7 +89,6 @@ export function SelfTest() {
             </Alert>
           </>
         )}
-        <Anchor href={APP_PAGES.home}>{TEXT.selftest.back}</Anchor>
       </Stack>
     </Container>
   );

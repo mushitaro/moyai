@@ -1,8 +1,8 @@
 // 設定（docs/plan.md §2.14）：置き場所（Documents と同期フォルダの知らせ）、輪のフォルダと鍵。
 // 主ボタンは「保存」（変えたときだけ）で、見出しの行の右端。輪を作るのは副のボタンから開くダイアログ。
-import { Alert, Anchor, Button, Code, Container, Group, Modal, NativeSelect, PasswordInput, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, Code, Container, Group, Modal, NativeSelect, PasswordInput, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useCallback, useEffect, useState } from "react";
-import { APP_PAGES, ROUTES } from "../../shared/routes";
+import { ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
 import { HUMAN_TEXT } from "../text";
@@ -148,9 +148,6 @@ export function Settings() {
       <Group justify="space-between" align="center" mb="md">
         <Group gap="sm">
           <Title order={2}>{T.title}</Title>
-          <Anchor href={APP_PAGES.home} size="sm">
-            {T.back}
-          </Anchor>
         </Group>
         <Group gap="sm">
           <Button variant="default" onClick={() => setCreateOpen(true)} disabled={!s} data-testid="ring-create-open">

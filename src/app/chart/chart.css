@@ -1,87 +1,145 @@
-/* 星取表の印と行のクラス。色は theme.css の変数だけを使う（plan §2.2 の印と色の表）。 */
+/* 星取表の印と行のクラス。色は src/ui/tokens.css の役割のトークンだけを使う（デザイン定義 §7.2・§10.9）。 */
 
 .moyai-chart-grid {
   height: 100%;
   width: 100%;
 }
 
+/* 段の見出し：label の text-3。押すとその段で畳む */
 .moyai-fold-header {
   all: unset;
   cursor: pointer;
-  font-weight: 700;
+  font: 500 12px/16px var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--text-3);
   width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color var(--dur-quick) var(--ease-standard);
+}
+.moyai-fold-header:hover {
+  color: var(--text);
 }
 .moyai-fold-header:focus-visible {
-  outline: 2px solid var(--moyai-accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .moyai-fold-header[data-folded="true"] {
-  color: var(--moyai-accent);
+  color: var(--text);
 }
 
+/* 段の列：body-s、いちばん右の段の右に強い罫 */
 .moyai-lv {
-  background: var(--moyai-chart-level-bg);
+  font-size: 13px;
+  letter-spacing: var(--track-body);
 }
 .moyai-lv-own {
-  font-weight: 700;
+  color: var(--text);
 }
 .moyai-lv-folded {
-  color: var(--moyai-muted);
+  color: var(--text-3);
 }
 
-.moyai-row-unmapped .moyai-lv,
-.moyai-row-unmapped .moyai-mark {
-  background: var(--moyai-chart-unmapped-bg);
+.moyai-row-unmapped .moyai-lv {
+  color: var(--text-3);
 }
 
-/* 印：実施 ●・計画 ○・両方 ◎ は本文の色（色の無い印刷でも形で分かる） */
+/* 印：字の ○ ● ◎ は DOM に残し（読み上げと写し）、形は CSS で描く。28px のセルの中央 */
+/* AG Grid のセルは自分で位置を持つので、position と display は変えない */
 .moyai-mark {
-  text-align: center;
-  color: var(--moyai-mark-fg);
-  font-size: 15px;
   padding: 0 !important;
+  text-align: center;
+}
+.moyai-mark [data-mark] {
+  font-size: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  vertical-align: middle;
+}
+.moyai-mark [data-mark]::before {
+  content: "";
+  box-sizing: border-box;
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.moyai-mark [data-mark="plan"]::before {
+  border: 1.5px solid var(--text-3);
+}
+.moyai-mark [data-mark="actual"]::before {
+  background: var(--text);
+}
+/* 計画と実績：直径 12px の線＋中に 5px の塗り（中の点は線の内側の地を残して描く） */
+.moyai-mark [data-mark="both"]::before {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--text);
+  background: var(--text);
+  background-clip: content-box;
+  padding: 2px;
 }
 
-/* 畳んだ行のまとめ：薄い印＋台数 */
-.moyai-mark-summary {
-  color: var(--moyai-mark-summary);
-  font-size: 13px;
+/* 畳んだまとめ：形を mark-faint に、右下に台数（num-s、text-3） */
+.moyai-mark-summary [data-mark]::before {
+  border-color: var(--mark-faint);
+}
+.moyai-mark-summary [data-mark="actual"]::before,
+.moyai-mark-summary [data-mark="both"]::before {
+  background-color: var(--mark-faint);
+}
+.moyai-mark [data-count]::after {
+  content: attr(data-count);
+  align-self: flex-end;
+  font: 400 12px/16px var(--font-num);
+  color: var(--text-3);
 }
 
-/* 変更（調整後）：印の右肩の点＋セルの罫 */
-.moyai-mark-changed {
-  box-shadow: inset 0 0 0 2px var(--moyai-mark-changed);
-  position: relative;
+/* 変更した：形を朱に、セルの下に 2px の朱の罫 */
+.moyai-mark-changed [data-mark]::before {
+  border-color: var(--shu);
+}
+.moyai-mark-changed [data-mark="actual"]::before,
+.moyai-mark-changed [data-mark="both"]::before {
+  background-color: var(--shu);
 }
 .moyai-mark-changed::after {
   content: "";
   position: absolute;
-  top: 4px;
-  right: 6px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--moyai-mark-changed);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--shu);
 }
 
-/* 要確認（写真から読んだもの）：印の前の「?」と黄 */
-.moyai-mark-review {
-  background: var(--moyai-mark-review-bg);
-  color: var(--moyai-mark-review-fg);
+/* 要確認（写真から読んだもの）：印の前の「?」（デザイン定義に決まりが無いので、形は字だけ） */
+.moyai-mark-review::before {
+  content: "?";
+  font: 700 12px/16px var(--font-num);
+  color: var(--text-3);
+  margin-right: var(--sp-1);
 }
 
+/* 期の罫：年度の境に強い罫（月の間は行の罫だけ） */
+.moyai-fy-start {
+  border-left: 1px solid var(--line-strong) !important;
+}
+
+/* 期の見出し：年度は数字の書体 */
 .moyai-fy-group {
-  font-weight: 700;
+  font-family: var(--font-num);
+  letter-spacing: 0;
 }
 
+/* §10.13 横の板 */
 .moyai-chart-side {
-  width: 340px;
+  width: 360px;
   flex: none;
   overflow: auto;
-  border-left: 1px solid var(--moyai-border);
-  padding: 12px;
-  background: var(--moyai-surface);
+  border-left: 1px solid var(--line-strong);
+  padding: var(--sp-6) var(--sp-5);
+  background: var(--layer-2);
 }

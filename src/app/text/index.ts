@@ -4,7 +4,7 @@ import type { TabErrorCode } from "../../shared/errors";
 export const TEXT = {
   appName: "MOYAI",
   buildStamp: (time: string, commit: string) => `MOYAI · build ${time} JST · ${commit}`,
-  fictionMark: "【架空】",
+  fictionMark: "架空",
   home: {
     title: "作業画面",
     lead: "v0：橋渡しとのつながり、人だけの経路の守り、ビルドの印を確かめる最小の画面です。取り込みで資料から計画を作り、星取表で見られます（確定と保存は未実装）。検査で、作業中の計画をパックの基準で自己点検できます。",
@@ -22,9 +22,23 @@ export const TEXT = {
     closedHelp: "端末で moyai start が動いているかを確かめ、このタブを読み込み直してください。",
     dropped: (n: number) => `橋渡しからの読めない通信を ${n} 件飛ばしました。`,
   },
-  scheme: { toDark: "暗い表示", toLight: "明るい表示" },
+  /** 画面の骨組み：ヘッダのタブ（英字の大文字、日本語の名前はツールチップ）と、表示の明暗・設定 */
+  shell: {
+    home: "最初の画面",
+    tabsLabel: "画面",
+    tabs: {
+      ledger: { en: "LEDGER", ja: "星取表" },
+      import: { en: "IMPORT", ja: "取り込み" },
+      check: { en: "CHECK", ja: "検査" },
+      share: { en: "SHARE", ja: "検問所" },
+    },
+    themeLabel: "表示の明暗",
+    themeDark: "暗",
+    themeLight: "明",
+    settings: "設定",
+  },
   trial: {
-    button: "確定の試し…",
+    button: "確定の試し",
     disabledReason: "橋渡しとつながっていないので押せません",
     title: "確定の試し",
     body: "人だけの経路の守り（タブの秘密と 1 回きりの印）を通す試しです。計画は何も変わりません。",
@@ -50,7 +64,7 @@ export const TEXT = {
     layer: { original: "元の計画", adjusted: "調整後" },
     adjustedSame: "調整はまだありません。調整後は元の計画と同じです。",
     noCatalog: "この計画のパックの項目が見つからないので、共通の設備項目の行は出せません。",
-    confirm: "確定する…",
+    confirm: "確定する",
     confirmDisabled: "確定の経路はまだありません（未実装）",
     levelFallback: (n: number) => `第 ${n} 階層`,
     commonLevels: ["共通の設備", "共通の設備項目", "作業の属性"] as [string, string, string],
@@ -270,7 +284,7 @@ export const TEXT = {
     reasonLabel: (id: string) => `${id} の一言の理由`,
     reasonPlaceholder: "例：台帳の名前とパックの項目を見て合っている",
     accept: "受ける",
-    reject: "断る…",
+    reject: "断る",
     needReason: "一言の理由を書くと押せます",
     rejectTitle: (id: string) => `${id} を断る`,
     rejectBody: (id: string, n: number) => `${id} が置いた案のうち、まだ案のままの ${n} 件を外します（値の無い行に戻ります）。AI はまた案を置けます。`,

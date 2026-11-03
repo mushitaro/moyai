@@ -1,30 +1,39 @@
-/* 取り込みの画面のクラス。色は theme.css の変数だけを使う。 */
+/* 取り込みの画面のクラス。色は src/ui/tokens.css の役割のトークンだけを使う（デザイン定義 §10.8・§10.17）。
+   セルの行き先は色相を足さずに分ける：データは地のまま、外したは沈めて淡い字、未解決は朱の字と下の朱の罫。 */
 
+/* ファイルの受け口：縁で囲まず、上と下の細い罫と広い余白だけ */
 .moyai-drop {
-  border: 2px dashed var(--moyai-border);
-  border-radius: 6px;
-  padding: 16px;
-  background: var(--moyai-surface);
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  min-height: 140px;
+  box-sizing: border-box;
+  padding: var(--sp-7) 0;
+  background: transparent;
+  transition: background-color var(--dur-quick) var(--ease-standard);
 }
 .moyai-drop[data-over="true"] {
-  border-color: var(--moyai-accent);
+  border-top-color: var(--text);
+  border-bottom-color: var(--text);
+  background: var(--layer-1);
 }
 
 .moyai-sheet {
   overflow: auto;
   max-height: 420px;
-  border: 1px solid var(--moyai-border);
-  background: var(--moyai-surface);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
 .moyai-sheet table {
   border-collapse: collapse;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
+  font: 400 12px/20px var(--font-num);
+  letter-spacing: 0.02em;
 }
 .moyai-sheet th,
 .moyai-sheet td {
-  border: 1px solid var(--moyai-border);
-  padding: 2px 6px;
+  border: 1px solid var(--line);
+  padding: var(--sp-2) var(--sp-4);
   max-width: 220px;
   white-space: nowrap;
   overflow: hidden;
@@ -33,9 +42,10 @@
 .moyai-sheet th {
   position: sticky;
   top: 0;
-  background: var(--moyai-chart-header-bg);
-  color: var(--moyai-muted);
+  background: var(--layer-1);
+  color: var(--text-3);
   font-weight: 400;
+  border-bottom-color: var(--line-strong);
 }
 .moyai-sheet th.moyai-rowhead {
   position: sticky;
@@ -45,52 +55,52 @@
   cursor: pointer;
 }
 .moyai-sheet td[data-s="data"] {
-  background: var(--moyai-cell-data-bg);
+  color: var(--text);
 }
 .moyai-sheet td[data-s="excluded"] {
-  background: var(--moyai-cell-excluded-bg);
+  background: var(--layer-1);
+  color: var(--text-3);
 }
 .moyai-sheet td[data-s="unresolved"] {
-  background: var(--moyai-cell-unresolved-bg);
+  color: var(--shu-text);
+  border-bottom: 2px solid var(--shu);
 }
 .moyai-sheet td[data-focus="true"] {
-  outline: 2px solid var(--moyai-cell-focus);
+  outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
 
 .moyai-dest-bar {
   display: flex;
-  height: 10px;
-  border-radius: 3px;
+  height: 2px;
   overflow: hidden;
-  border: 1px solid var(--moyai-border);
+  background: var(--line);
   min-width: 160px;
 }
 .moyai-dest-bar > span[data-s="data"] {
-  background: var(--moyai-cell-data-bg);
+  background: var(--text);
 }
 .moyai-dest-bar > span[data-s="excluded"] {
-  background: var(--moyai-cell-excluded-bg);
+  background: var(--mark-faint);
 }
 .moyai-dest-bar > span[data-s="unresolved"] {
-  background: var(--moyai-cell-unresolved-bg);
+  background: var(--shu);
 }
 .moyai-swatch {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border: 1px solid var(--moyai-border);
-  margin-right: 4px;
+  margin-right: var(--sp-2);
   vertical-align: middle;
 }
 .moyai-swatch[data-s="data"] {
-  background: var(--moyai-cell-data-bg);
+  background: var(--text);
 }
 .moyai-swatch[data-s="excluded"] {
-  background: var(--moyai-cell-excluded-bg);
+  background: var(--mark-faint);
 }
 .moyai-swatch[data-s="unresolved"] {
-  background: var(--moyai-cell-unresolved-bg);
+  background: var(--shu);
 }
 
 /* 写真の欄：AI に渡す画像の見本と、読み取りを画像と並べて確かめる枠 */
@@ -98,13 +108,13 @@
   display: block;
   max-width: 100%;
   max-height: 360px;
-  border: 1px solid var(--moyai-border);
-  background: var(--moyai-surface);
+  border: 1px solid var(--line);
+  background: var(--bg);
 }
 .moyai-photo-frame {
   position: relative;
-  border: 1px solid var(--moyai-border);
-  background: var(--moyai-surface);
+  border: 1px solid var(--line);
+  background: var(--bg);
   line-height: 0;
 }
 .moyai-photo-frame img {
@@ -116,32 +126,32 @@
   position: absolute;
   padding: 0;
   margin: 0;
-  border: 1px solid var(--moyai-accent);
+  border: 1px solid var(--text);
   background: transparent;
   cursor: pointer;
 }
 .moyai-photo-box[data-low="true"] {
-  border-color: var(--moyai-warn);
+  border-color: var(--shu);
   border-style: dashed;
 }
 .moyai-photo-box[data-human="true"] {
-  border-color: var(--moyai-mark-changed);
+  border-color: var(--shu);
 }
 .moyai-photo-box[data-sel="true"] {
-  border: 2px solid var(--moyai-cell-focus);
-  background: var(--moyai-chart-selected);
+  border: 2px solid var(--focus);
+  background: transparent;
 }
 .moyai-photo-grid {
   max-height: 360px;
 }
 .moyai-photo-grid td[data-low="true"] {
-  background: var(--moyai-mark-review-bg);
-  color: var(--moyai-mark-review-fg);
+  background: var(--layer-2);
+  color: var(--text-2);
 }
 .moyai-photo-grid td[data-human="true"] {
-  box-shadow: inset 0 0 0 2px var(--moyai-mark-changed);
+  border-bottom: 2px solid var(--shu);
 }
 .moyai-photo-grid td[data-sel="true"] {
-  outline: 2px solid var(--moyai-cell-focus);
+  outline: 2px solid var(--focus);
   outline-offset: -2px;
 }

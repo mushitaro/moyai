@@ -1,16 +1,16 @@
 // 星取表（v0）：plan §2.2 と §2.14。表は AG Grid Community（chart/grid.ts）、行と印は src/plan/chart.ts。
 // 開閉の状態はこの画面が持ち、見える行だけを表に渡す。畳んだ段はブラウザに覚える。
-// 主ボタン「確定する…」は見出しの行の右端。押すと確定のダイアログ（components/ConfirmDialog.tsx）を開く。
+// 主ボタン「確定する」は見出しの行の右端。押すと確定のダイアログ（components/ConfirmDialog.tsx）を開く。
 // 橋渡しとつながっていなければ押せず、理由を横に出す。
-import { Alert, Anchor, Button, Group, Modal, SegmentedControl, Stack, Table, Text, Title, useMantineColorScheme } from "@mantine/core";
+import { Alert, Button, Group, Modal, Stack, Table, Text, Title } from "@mantine/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildChart, nextFoldLevel, type Layer, type PeriodMode, type RowMode } from "../../plan/chart";
 import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
-import { APP_PAGES } from "../../shared/routes";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, cellAria, formatCell } from "../chart/grid";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
+import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
 import { setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
@@ -134,7 +134,6 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
 }
 
 function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { client, state: conn } = useConnection();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -242,7 +241,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
   const openDetails = open ? open.detailKeys.map((k) => detailsByKey.get(k)).filter((d): d is WorkDetailT => !!d).sort((a, b) => a.fiscalYear - b.fiscalYear) : [];
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }} data-testid="chart-page">
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }} data-testid="chart-page">
       <Group justify="space-between" align="center" px="md" pt="sm" pb={6} wrap="nowrap" gap="sm">
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
           <Title order={2} style={{ flex: "none", whiteSpace: "nowrap" }}>
@@ -254,9 +253,6 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
           {plan.facility.fictional && <FictionMark />}
         </Group>
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
-          <Button variant="default" onClick={toggleColorScheme}>
-            {colorScheme === "dark" ? TEXT.scheme.toLight : TEXT.scheme.toDark}
-          </Button>
           <Button variant="default" onClick={() => setHistoryOpen(true)} disabled={!canConfirm} data-testid="history-open">
             {HUMAN_TEXT.confirm.history}
           </Button>
@@ -274,8 +270,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
       <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
 
       <Group px="md" pb={6} gap="sm" wrap="wrap">
-        <SegmentedControl
-          size="xs"
+        <Switch
           aria-label={T.rowsLabel}
           data-testid="rows-mode"
           value={mode}
@@ -285,8 +280,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
             { value: "common", label: T.rows.common, disabled: !catalog },
           ]}
         />
-        <SegmentedControl
-          size="xs"
+        <Switch
           aria-label={T.periodLabel}
           data-testid="period-mode"
           value={period}
@@ -296,8 +290,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
             { value: "month", label: T.period.month },
           ]}
         />
-        <SegmentedControl
-          size="xs"
+        <Switch
           aria-label={T.layerLabel}
           data-testid="layer-mode"
           value={layer}
@@ -450,7 +443,6 @@ export function StarTable() {
           {load.message}
         </Alert>
       )}
-      <Anchor href={APP_PAGES.home}>{T.back}</Anchor>
     </Stack>
   );
 }

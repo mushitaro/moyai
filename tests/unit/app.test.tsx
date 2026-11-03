@@ -15,9 +15,9 @@ describe("画面の部品", () => {
     expect(html).toContain("moyai-build-stamp");
   });
 
-  it("【架空】の印", () => {
-    expect(renderToStaticMarkup(<FictionMark />)).toContain("【架空】");
-    expect(TEXT.fictionMark).toBe("【架空】");
+  it("架空の札", () => {
+    expect(renderToStaticMarkup(<FictionMark />)).toContain("架空");
+    expect(TEXT.fictionMark).toBe("架空");
   });
 
   it("タブの側も、読めない通信は飛ばして数え、受け手に件数を渡す", () => {

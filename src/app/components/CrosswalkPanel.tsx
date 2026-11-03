@@ -2,7 +2,8 @@
 // 受けた当てはめだけが星取表の共通の設備項目の行に入り、共有に写る。未当てはめの数を出す。
 // ここは人の画面だけの道（state/crosswalk.ts の acceptByHuman・rejectByHuman・setByHuman）で、AI のツールからは届かない。
 // 断るのは案を捨てる操作なので、確かめのダイアログを通す（window.confirm は使わない）。
-import { Alert, Badge, Button, Group, Modal, ScrollArea, SegmentedControl, Select, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, Group, Modal, ScrollArea, Select, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+import { Switch } from "./Switch";
 import { useMemo, useState } from "react";
 import { crosswalkSummary, heldRows, nodeRef, workRef, type CrosswalkProposal, type CrosswalkTarget } from "../../plan/crosswalk";
 import { WORK_ATTRIBUTES, type Plan } from "../../shared/plan";
@@ -153,12 +154,11 @@ function DirectSet({ plan, onDone }: { plan: Plan; onDone: (msg: { color: string
         {D.lead}
       </Text>
       <Group align="flex-end" gap="sm" wrap="wrap">
-        <SegmentedControl
-          size="xs"
+        <Switch<CrosswalkTarget>
           aria-label={D.kind}
           value={target}
           onChange={(v) => {
-            setTarget(v as CrosswalkTarget);
+            setTarget(v);
             setRow(null);
             setValue(null);
           }}

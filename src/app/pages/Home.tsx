@@ -1,6 +1,6 @@
 // 作業画面（v0）：橋渡しとのつながりと、確定の試し（人だけの経路の守りを通す）。
 // 主ボタンは見出しの行の右端に 1 つだけ。副のボタンはその左。
-import { Alert, Anchor, Badge, Button, Container, Group, Modal, Stack, Text, Title, useMantineColorScheme } from "@mantine/core";
+import { Alert, Anchor, Button, Container, Group, Modal, Stack, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { sha256Hex, type BridgeClient, type ConnectionState } from "../bridge-client";
 import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
@@ -11,15 +11,6 @@ function useConnection(client: BridgeClient): { state: ConnectionState; dropped:
   const [v, setV] = useState<{ state: ConnectionState; dropped: number }>({ state: { kind: "connecting" }, dropped: 0 });
   useEffect(() => client.subscribe((state, dropped) => setV({ state, dropped })), [client]);
   return v;
-}
-
-function ConnectionBadge({ state }: { state: ConnectionState }) {
-  const color = state.kind === "open" ? "teal" : state.kind === "connecting" ? "gray" : "red";
-  return (
-    <Badge color={color} variant="light" data-testid="connection" data-state={state.kind}>
-      {TEXT.connection[state.kind]}
-    </Badge>
-  );
 }
 
 type TrialStep =
@@ -90,7 +81,6 @@ function CommitTrialDialog({ client, opened, onClose }: { client: BridgeClient; 
 
 export function Home({ client }: { client: BridgeClient }) {
   const { state, dropped } = useConnection(client);
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [trialOpen, setTrialOpen] = useState(false);
   const canTrial = state.kind === "open";
 
@@ -98,14 +88,9 @@ export function Home({ client }: { client: BridgeClient }) {
     <Container size="lg" py="lg">
       <Group justify="space-between" align="center" mb="md">
         <Group gap="sm">
-          <Title order={2}>{TEXT.appName}</Title>
-          <Text c="dimmed">{TEXT.home.title}</Text>
-          <ConnectionBadge state={state} />
+          <Title order={2}>{TEXT.home.title}</Title>
         </Group>
         <Group gap="sm">
-          <Button variant="default" onClick={toggleColorScheme}>
-            {colorScheme === "dark" ? TEXT.scheme.toLight : TEXT.scheme.toDark}
-          </Button>
           {!canTrial && (
             <Text size="sm" c="dimmed" data-testid="trial-disabled-reason">
               {TEXT.trial.disabledReason}

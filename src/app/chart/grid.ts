@@ -26,19 +26,37 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 const T = TEXT.chart;
 
+// デザイン定義 §13.3。縦の罫は年度の境と固定の列だけ（chart.css のクラス）
 const theme = themeQuartz.withParams({
-  fontFamily: "var(--moyai-font)",
+  backgroundColor: "var(--bg)",
+  foregroundColor: "var(--text)",
+  cellTextColor: "var(--text)",
+  accentColor: "var(--text)",
+  borderColor: "var(--line)",
+  headerBackgroundColor: "var(--layer-1)",
+  headerTextColor: "var(--text-3)",
+  rowHoverColor: "var(--layer-1)",
+  selectedRowBackgroundColor: "var(--layer-2)",
+  oddRowBackgroundColor: "var(--bg)",
+  fontFamily: "var(--font-body)",
+  browserColorScheme: "inherit",
   fontSize: 13,
-  backgroundColor: "var(--moyai-surface)",
-  foregroundColor: "var(--moyai-fg)",
-  headerBackgroundColor: "var(--moyai-chart-header-bg)",
-  borderColor: "var(--moyai-border)",
-  accentColor: "var(--moyai-accent)",
-  rowHoverColor: "var(--moyai-chart-selected)",
-  rowHeight: 28,
-  headerHeight: 30,
+  headerFontSize: 12,
+  headerFontWeight: 500,
+  rowHeight: 36,
+  headerHeight: 44,
   spacing: 4,
-  wrapperBorderRadius: 4,
+  cellHorizontalPadding: 16,
+  headerColumnResizeHandleColor: "transparent",
+  borderRadius: 0,
+  wrapperBorderRadius: 0,
+  wrapperBorder: false,
+  columnBorder: false,
+  headerColumnBorder: false,
+  pinnedColumnBorder: { width: 1, color: "var(--line-strong)" },
+  rowBorder: { width: 1, color: "var(--line)" },
+  iconSize: 16,
+  focusShadow: "none",
 });
 
 export interface GridHandlers {
@@ -101,7 +119,13 @@ class MarkCell implements ICellRendererComp<ChartRow> {
   refresh(p: ICellRendererParams<ChartRow>): boolean {
     this.el.textContent = p.valueFormatted ?? "";
     const period = (p.colDef?.cellRendererParams as { period: Period } | undefined)?.period;
-    if (p.data && period) p.eGridCell.setAttribute("aria-label", cellAria(p.data, period, p.data.cells[period.key]));
+    const cell = p.data && period ? p.data.cells[period.key] : undefined;
+    // 形は CSS が data-mark で描く（字は読み上げと写しのために残す）。台数は data-count で右下に
+    if (cell?.mark) this.el.dataset.mark = cell.mark;
+    else delete this.el.dataset.mark;
+    if (cell?.summary && cell.count !== null) this.el.dataset.count = String(cell.count);
+    else delete this.el.dataset.count;
+    if (p.data && period) p.eGridCell.setAttribute("aria-label", cellAria(p.data, period, cell));
     return true;
   }
 }
@@ -164,13 +188,15 @@ function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandle
   }));
 }
 
-function markColumn(p: Period, width: number): ColDef<ChartRow> {
+/** fyStart：年度の境（左に強い罫を引く列） */
+function markColumn(p: Period, width: number, fyStart: boolean): ColDef<ChartRow> {
   const get = (c: { data?: ChartRow | undefined }) => c.data?.cells[p.key];
   return {
     colId: p.key,
     headerName: periodLabel(p),
     width,
-    cellClass: "moyai-mark moyai-num",
+    cellClass: fyStart ? "moyai-mark moyai-num moyai-fy-start" : "moyai-mark moyai-num",
+    headerClass: fyStart ? "moyai-num moyai-fy-start" : "moyai-num",
     cellClassRules: {
       "moyai-mark-summary": (c: CellClassParams<ChartRow>) => !!get(c)?.summary,
       "moyai-mark-changed": (c: CellClassParams<ChartRow>) => !!get(c)?.change,
@@ -197,7 +223,8 @@ function columns(model: ChartModel, foldLevel: number | null, h: GridHandlers): 
   const out: (ColDef<ChartRow> | ColGroupDef<ChartRow>)[] = levelColumns(model, foldLevel, h);
   const monthly = model.periods.some((p) => p.month !== null);
   if (!monthly) {
-    for (const p of model.periods) out.push(markColumn(p, 86));
+    // 年だけの表は縦の罫を引かない（どの列も年度の境なので、罫が並んでうるさくなる）
+    for (const p of model.periods) out.push(markColumn(p, 112, false));
     return out;
   }
   const groups = new Map<number, Period[]>();
@@ -206,8 +233,8 @@ function columns(model: ChartModel, foldLevel: number | null, h: GridHandlers): 
     out.push({
       groupId: `g${fy}`,
       headerName: T.fiscalYear(fy),
-      headerClass: "moyai-fy-group",
-      children: ps.map((p) => ({ ...markColumn(p, p.month === null ? 50 : 42), headerName: p.month === null ? T.yearOnly : String(p.month) })),
+      headerClass: "moyai-fy-group moyai-fy-start",
+      children: ps.map((p, j) => ({ ...markColumn(p, p.month === null ? 64 : 56, j === 0), headerName: p.month === null ? T.yearOnly : String(p.month) })),
     });
   }
   return out;

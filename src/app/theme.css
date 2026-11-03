@@ -1,126 +1,289 @@
-/* 色・書体のトークンはここだけに置く。明るいのが既定で、暗いのは Mantine の印で切り替える。 */
+/* 画面の土台と、どの画面でも使う印のクラス。色は src/ui/tokens.css の役割のトークンだけを使う。 */
 
-/* Windows に入っている BIZ UDPゴシック を先に使う。無ければ @fontsource/biz-udpgothic（"BIZ UDPGothic"）を読む。 */
-@font-face {
-  font-family: "MOYAI Local Gothic";
-  font-weight: 400;
-  src: local("BIZ UDPGothic"), local("BIZUDPGothic");
-}
-@font-face {
-  font-family: "MOYAI Local Gothic";
-  font-weight: 700;
-  src: local("BIZ UDPGothic Bold"), local("BIZUDPGothic-Bold");
-}
-
-:root {
-  --moyai-font: "MOYAI Local Gothic", "BIZ UDPGothic", sans-serif;
-  --moyai-bg: #f7f7f4;
-  --moyai-surface: #ffffff;
-  --moyai-fg: #1d2421;
-  --moyai-muted: #5b6661;
-  --moyai-border: #d9ddd8;
-  --moyai-accent: #1f6f5c;
-  --moyai-ok: #1f7a3f;
-  --moyai-ng: #b3261e;
-  --moyai-warn: #8a5a00;
-  --moyai-fiction-bg: #fff1c2;
-  --moyai-fiction-fg: #5c3d00;
-  /* 星取表（plan §2.2 の印と色） */
-  --moyai-chart-header-bg: #eef1ed;
-  --moyai-chart-level-bg: #fbfbf9;
-  --moyai-mark-fg: var(--moyai-fg);
-  --moyai-mark-summary: #9aa39e;
-  --moyai-mark-changed: #d9730d;
-  --moyai-mark-review-bg: #fff3b0;
-  --moyai-mark-review-fg: #6b5200;
-  --moyai-chart-unmapped-bg: #f3efe6;
-  --moyai-chart-selected: #1f6f5c33;
-  /* 検問所の ① 原本（墨：出ない欄、朱：変えて写す値） */
-  --moyai-sumi: #1d2421;
-  --moyai-shu: #c0392b;
-  /* 取り込み：セルの行き先（データ・外した・未解決） */
-  --moyai-cell-data-bg: #d6efe4;
-  --moyai-cell-excluded-bg: #e7e8e4;
-  --moyai-cell-unresolved-bg: #f8d3cf;
-  --moyai-cell-focus: #b3261e;
-}
-
-:root[data-mantine-color-scheme="dark"] {
-  --moyai-bg: #151a18;
-  --moyai-surface: #1d2422;
-  --moyai-fg: #e6ebe8;
-  --moyai-muted: #a3aea9;
-  --moyai-border: #33403b;
-  --moyai-accent: #6fc7ad;
-  --moyai-ok: #7fd49a;
-  --moyai-ng: #ff8a80;
-  --moyai-warn: #f2c66d;
-  --moyai-fiction-bg: #4a3a10;
-  --moyai-fiction-fg: #ffe7a3;
-  --moyai-chart-header-bg: #222b28;
-  --moyai-chart-level-bg: #1a201e;
-  --moyai-mark-fg: var(--moyai-fg);
-  --moyai-mark-summary: #6f7a75;
-  --moyai-mark-changed: #ff9f43;
-  --moyai-mark-review-bg: #4a3f10;
-  --moyai-mark-review-fg: #ffe58a;
-  --moyai-chart-unmapped-bg: #2a2620;
-  --moyai-chart-selected: #6fc7ad33;
-  --moyai-sumi: #000000;
-  --moyai-shu: #ff7b6b;
-  --moyai-cell-data-bg: #1f4a3c;
-  --moyai-cell-excluded-bg: #2c3330;
-  --moyai-cell-unresolved-bg: #5a2420;
-  --moyai-cell-focus: #ff8a80;
-}
-
+html,
 body {
-  background: var(--moyai-bg);
-  color: var(--moyai-fg);
-  font-family: var(--moyai-font);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 26px;
+  letter-spacing: var(--track-body);
+  font-synthesis: none;
+  line-break: strict;
 }
 
-/* 番号と年月の列は桁をそろえる */
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+/* §9 焦点：2px の枠を外へ 2px。消さない */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* 番号と年月の列は等幅の数字の書体でそろえる */
 .moyai-num {
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-num);
+  letter-spacing: 0.02em;
 }
 
-.moyai-build-stamp {
-  position: fixed;
-  right: 12px;
-  bottom: 8px;
+/* ボタン：字の濃さと太さだけ。言葉の前に切り替えと同じ短い縦の罫（運営者の指示 2026-11-04）。二番目は触れると少し濃く、使えないときは淡く */
+.moyai-button .mantine-Button-inner::before {
+  content: "";
+  flex: none;
+  width: 1px;
+  height: 10px;
+  margin-right: var(--sp-3);
+  background: var(--line-strong);
+}
+.moyai-button:not([data-variant="filled"]):not(:disabled):hover {
+  color: var(--text-2);
+}
+.moyai-button:disabled,
+.moyai-button[data-disabled] {
+  background: transparent;
+  color: var(--text-disabled);
+}
+
+/* 表は外枠と縦の罫を持たない（行の間の 1 本の罫だけ。§10.8） */
+.mantine-Table-table[data-with-table-border] {
+  border: 0;
+}
+.mantine-Table-table[data-with-column-border] :where(th, td):not(:last-of-type) {
+  border-inline-end: 0;
+}
+
+/* 入力欄：線を持たない淡い面。入力しているあいだは面を 1 段沈め、上の名前を墨の字・太さ 500 にする（切り替えと同じ見え方） */
+.mantine-Input-input {
+  background: var(--layer-1);
+  border: 0;
+  border-radius: 0;
+  min-height: var(--h-m);
+  padding-inline: var(--sp-4);
+  color: var(--text);
+  letter-spacing: var(--track-body);
+  transition: background-color var(--dur-quick) var(--ease-standard);
+}
+.mantine-Input-input::placeholder {
+  color: var(--text-3);
+}
+.mantine-Input-input:focus,
+.mantine-Input-input:focus-visible {
+  outline: none;
+  background: var(--layer-2);
+}
+.mantine-InputWrapper-label {
+  margin-bottom: var(--sp-2);
   font-size: 12px;
-  color: var(--moyai-muted);
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
+  line-height: 18px;
+  font-weight: 400;
+  letter-spacing: var(--track-label);
+  color: var(--text-3);
+  transition: color var(--dur-quick) var(--ease-standard);
+}
+.mantine-InputWrapper-root:focus-within .mantine-InputWrapper-label {
+  color: var(--text);
+  font-weight: 500;
+}
+.mantine-InputWrapper-description {
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--text-3);
+}
+.mantine-InputWrapper-error {
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--shu-text);
+}
+
+/* §5.2 画面の骨組み：ヘッダ・主の面・状態の帯。画面そのものはスクロールせず、主の面の中でスクロールする */
+.moyai-shell {
+  display: grid;
+  grid-template-rows: var(--h-header) minmax(0, 1fr) var(--h-status);
+  height: 100svh;
+}
+.moyai-main {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* §10.20 ヘッダ */
+.moyai-header {
+  position: relative;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  padding: 0 var(--sp-7);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.moyai-seal {
+  color: var(--text);
+  text-decoration: none;
+}
+.moyai-header-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+/* §10.7 タブ：英字の大文字、選んでいる画面はヘッダの下の罫に重ねて 2px の墨の線 */
+.moyai-tabs {
+  display: flex;
+  align-self: stretch;
+  gap: var(--sp-8);
+  margin: 0 auto;
+}
+.moyai-tab {
+  display: flex;
+  align-items: center;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-3);
+  text-decoration: none;
+  font: 400 10px/16px var(--font-wide);
+  letter-spacing: 0.14em;
+  transition: color var(--dur-quick) var(--ease-standard);
+}
+.moyai-tab:hover {
+  color: var(--text-2);
+}
+.moyai-tab[aria-current="page"] {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+/* §10.6 切り替え：言葉を短い縦の罫でつなぐ。選んでいる言葉は墨と太さ 500、ほかは淡い字と太さ 400。下線は引かない（運営者の指示 2026-11-04） */
+.moyai-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.moyai-switch-item {
+  all: unset;
+  cursor: pointer;
+  height: var(--h-s);
+  display: inline-flex;
+  align-items: center;
+  font: 400 12px/16px var(--font-body);
+  letter-spacing: var(--track-label);
+  color: var(--text-3);
+  transition: color var(--dur-quick) var(--ease-standard);
+}
+.moyai-switch-item:hover {
+  color: var(--text-2);
+}
+.moyai-switch-item[aria-pressed="true"] {
+  color: var(--text);
+  font-weight: 500;
+}
+.moyai-switch-item:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+.moyai-switch-item:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* 選択肢の間の短い縦の罫（字の高さより短い 10px） */
+.moyai-switch-sep {
+  width: 1px;
+  height: 10px;
+  background: var(--line-strong);
+  font-size: 0;
+}
+
+/* §10.1 文字のボタン */
+.moyai-text-button {
+  font: 500 14px/22px var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color var(--dur-quick) var(--ease-standard);
+}
+.moyai-text-button:hover,
+.moyai-text-button[aria-current="page"] {
+  color: var(--text);
+}
+
+/* §10.21 状態の帯 */
+.moyai-status {
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding: 0 var(--sp-7);
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  font: 400 11px/16px var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+}
+.moyai-status-start {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+}
+.moyai-status-fiction:empty {
+  display: none;
+}
+.moyai-status-connection[data-state="refused"],
+.moyai-status-connection[data-state="closed"] {
+  color: var(--shu-text);
+}
+.moyai-build-stamp {
+  font: 400 11px/16px var(--font-num);
+  color: var(--text-3);
   user-select: text;
 }
 
-.moyai-fiction {
+/* タグ：縁も【】も持たず、言葉の前に短い横の線「-」だけ（運営者の指示 2026-11-04）。線は字の色 */
+.moyai-tag-mark::before,
+.moyai-fiction::before,
+.mantine-Badge-root:not(.moyai-num)::before {
+  content: "";
+  flex: none;
   display: inline-block;
-  padding: 0 6px;
-  border-radius: 4px;
-  background: var(--moyai-fiction-bg);
-  color: var(--moyai-fiction-fg);
-  font-weight: 700;
+  width: 6px;
+  height: 1px;
+  margin-right: var(--sp-2);
+  vertical-align: middle;
+  background: currentColor;
+}
+.mantine-Badge-root {
+  display: inline-flex;
+  align-items: center;
 }
 
+/* 架空のデータの札：朱の字と印だけ */
+.moyai-fiction {
+  display: inline-flex;
+  align-items: center;
+  color: var(--shu-text);
+  font: 500 11px/16px var(--font-body);
+  letter-spacing: var(--track-label);
+}
+
+/* §2.4 状態：色相は足さず、済みは墨、誤りは朱の文字 */
 .moyai-ok {
-  color: var(--moyai-ok);
+  color: var(--text);
 }
 .moyai-ng {
-  color: var(--moyai-ng);
+  color: var(--shu-text);
 }
 
-/* 検問所 */
+/* 検問所の ① 原本：墨は出ない欄（帯で隠す）、朱は変えて写す値 */
 .moyai-sumi {
-  background: var(--moyai-sumi);
+  background: var(--text);
   color: transparent;
-  border-radius: 2px;
   padding: 0 0.6em;
   user-select: none;
 }
 .moyai-shu {
-  color: var(--moyai-shu);
-  font-weight: 700;
+  color: var(--shu-text);
 }

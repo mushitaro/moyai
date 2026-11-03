@@ -1,8 +1,8 @@
 // 画面の外枠：Mantine の設定、hash での画面の切り替え（作業画面・取り込み・星取表・Ed25519 の試験）、右下のビルドの印。
 // 取り込みの作業場はこのタブで 1 つだけ作り、画面と AI のツールの受け手（intake/tab-tools.ts）が同じものを使う。
-import { MantineProvider, createTheme } from "@mantine/core";
+import { MantineProvider, useComputedColorScheme } from "@mantine/core";
 import { Suspense, lazy, useEffect, useState } from "react";
-import { BuildStamp } from "./components/BuildStamp";
+import { Shell } from "./components/Shell";
 import { bridgeClient } from "./state/bridge";
 import { Home } from "./pages/Home";
 import { Intake } from "./pages/Intake";
@@ -11,16 +11,11 @@ import { connectTabTools } from "./intake/tab-tools";
 import { SelfTest } from "./pages/SelfTest";
 import { CHART_HASH } from "./chart/route";
 import { APP_PAGES } from "../shared/routes";
+import { moyaiCssVariables, moyaiTheme } from "../ui/mantine-theme";
 
 // 星取表は AG Grid を含むので、開いたときに読む
 const StarTable = lazy(() => import("./pages/StarTable").then((m) => ({ default: m.StarTable })));
 
-const theme = createTheme({
-  fontFamily: "var(--moyai-font)",
-  headings: { fontFamily: "var(--moyai-font)" },
-  primaryColor: "teal",
-  defaultRadius: "sm",
-});
 
 // 検問所と設定は人だけの画面（開いたときに読む）
 const Checkpoint = lazy(() => import("./pages/Checkpoint").then((m) => ({ default: m.Checkpoint })));
@@ -43,10 +38,21 @@ function useHash(): string {
   return hash;
 }
 
+// 役割のトークン（src/ui/tokens.css）は暗が既定で、明は html の data-theme="light" で入れ替える
+function ThemeSync() {
+  const scheme = useComputedColorScheme("dark");
+  useEffect(() => {
+    document.documentElement.dataset.theme = scheme;
+  }, [scheme]);
+  return null;
+}
+
 export function App() {
   const hash = useHash();
   return (
-    <MantineProvider theme={theme} defaultColorScheme="light">
+    <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
+      <ThemeSync />
+      <Shell client={client} hash={hash}>
       {hash === APP_PAGES.selftest ? (
         <SelfTest />
       ) : hash === APP_PAGES.checkpoint || hash === APP_PAGES.settings ? (
@@ -64,7 +70,7 @@ export function App() {
       ) : (
         <Home client={client} />
       )}
-      <BuildStamp />
+      </Shell>
     </MantineProvider>
   );
 }

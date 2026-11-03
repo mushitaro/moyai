@@ -73,7 +73,7 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
   const tag = info.project.name;
   void browserName;
 
-  // Windows では入っている BIZ UDPゴシック を使い、書体のファイルを読まない
+  // 書体は同梱のファイルを橋渡しから読む。外のサーバー（Google Fonts など）からは読まない
   const fontRequests: string[] = [];
   page.on("request", (r) => {
     if (r.resourceType() === "font") fontRequests.push(r.url());
@@ -84,7 +84,7 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
     await expect(page.getByTestId("build-stamp")).toHaveText(/^MOYAI · build \d{4}-\d{2}-\d{2} \d{2}:\d{2} JST · [0-9a-f]{7}\+?$/);
     await expect(page.getByTestId("connection")).toHaveAttribute("data-state", "open");
     await page.screenshot({ path: shot(`start-${tag}`) });
-    if (process.platform === "win32") expect(fontRequests).toEqual([]);
+    expect(fontRequests.filter((u) => !u.startsWith(base))).toEqual([]);
   });
 
   await test.step("2 つ目のタブは断られ、理由が出る", async () => {

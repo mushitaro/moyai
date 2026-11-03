@@ -98,7 +98,7 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
     await expect(page.getByTestId("build-stamp")).toHaveText(/^MOYAI · build /);
     // 橋渡しとつながっていれば押せる（確定の流れは checkpoint.spec.ts）
     await expect(page.getByTestId("confirm-open")).toBeEnabled();
-    await expect(page.getByTestId("confirm-open")).toHaveText("確定する…");
+    await expect(page.getByTestId("confirm-open")).toHaveText("確定する");
     await expect(page.getByTestId("confirm-disabled-reason")).toHaveCount(0);
     // 主ボタンは見出しの行の右端
     const btn = await page.getByTestId("confirm-open").boundingBox();
@@ -187,10 +187,13 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
     await page.screenshot({ path: shot(`chart-month-${tag}`) });
   });
 
-  await test.step("暗い表示", async () => {
-    await page.getByText("暗い表示").click();
-    await page.screenshot({ path: shot(`chart-dark-${tag}`) });
-    await page.getByText("明るい表示").click();
+  // 暗が既定（デザイン定義 §2.2）。明に切り替えて撮り、暗に戻す
+  await test.step("明るい表示", async () => {
+    await page.getByTestId("theme-light").click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await page.screenshot({ path: shot(`chart-light-${tag}`) });
+    await page.getByTestId("theme-dark").click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   });
 });
 

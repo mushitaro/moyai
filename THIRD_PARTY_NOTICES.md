@@ -13,7 +13,9 @@ MOYAI のコードは、このリポジトリで会期中に新しく書いた�
 | ag-grid-community・ag-grid-react | 36.2.0 | MIT | 表（Community だけ。Enterprise は入れない） |
 | @modelcontextprotocol/sdk | 1.32.1 | MIT | 中継（`moyai mcp`）の MCP |
 | ws | 8.22.0 | MIT | 橋渡しとタブの WebSocket |
-| @fontsource/biz-udpgothic | 5.3.0 | OFL-1.1 | Windows 以外の BIZ UDPゴシック |
+| @fontsource/ibm-plex-sans-jp | 5.3.1 | OFL-1.1 | 本文と UI の書体（IBM Plex Sans JP） |
+| @fontsource/ibm-plex-mono | 5.3.0 | OFL-1.1 | 数字・符号の等幅の書体（IBM Plex Mono） |
+| @fontsource/krona-one | 5.3.0 | OFL-1.1 | 英字のタブと「MOYAI」の字の、横に広い書体（Krona One） |
 | vite（開発用） | 8.3.4 | MIT | 画面のビルドと、`dist/cli.js` の SSR のビルド |
 | @vitejs/plugin-react（開発用） | 6.1.2 | MIT | 画面のビルド |
 | typescript（開発用） | 7.0.2 | Apache-2.0 | 型の検査（`tsc --noEmit`） |

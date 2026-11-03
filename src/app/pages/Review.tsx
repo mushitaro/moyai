@@ -184,7 +184,6 @@ export function Review() {
               </Text>
             )}
           </Group>
-          <Anchor href={APP_PAGES.home}>{T.back}</Anchor>
         </Group>
 
         <Alert color="blue" title={T.notice} data-testid="review-notice">

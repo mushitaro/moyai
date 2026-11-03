@@ -1,0 +1,181 @@
+/* 画面の見た目のトークン。色の値を書くのはこのファイルだけ。暗が既定で、明は [data-theme="light"] で入れ替える。
+   正本は運営者の TSUNAGI デザイン定義（MOYAI で使う範囲）v1.1。§ の番号はその定義のもの。 */
+
+/* §2.1 基の色（ここ以外の色を使わない） */
+:root {
+  --sumi-0a: #0a0a0a;
+  --sumi-11: #111111;
+  --sumi-16: #161616;
+  --sumi-18: #181818;
+  --sumi-22: #222222;
+  --sumi-2a: #2a2a2a;
+  --sumi-33: #333333;
+  --sumi-3a: #3a3a3a;
+  --sumi-4a: #4a4a4a;
+  --sumi-5e: #5e5e5e;
+  --sumi-6b: #6b6b6b;
+  --sumi-6e: #6e6e6e;
+  --sumi-76: #767676;
+  --sumi-7a: #7a7a7a;
+  --sumi-88: #888888;
+  --sumi-b5: #b5b5b5;
+  --sumi-c0: #c0c0c0;
+  --sumi-c4: #c4c4c4;
+  --sumi-dc: #dcdcdc;
+  --sumi-dd: #dddddd;
+  --sumi-e0: #e0e0e0;
+  --sumi-e6: #e6e6e6;
+  --sumi-ef: #efefef;
+  --sumi-f5: #f5f5f5;
+  --sumi-f7: #f7f7f7;
+  --shu-400: #d96a50;
+  --shu-500: #bb4a34;
+  --shu-600: #a63e2a;
+  --white: #ffffff;
+
+  /* 和紙（明の地）：書道の半紙のように明るい紙と、紙に置いた墨。運営者の指示 2026-11-04「ライトモードは和紙」「もう少し明るく、書道の紙」。
+     色相は持たない近い無彩色で、わずかに温かい。模様（紙の繊維）は描かない。 */
+  --washi-fb: #fbfaf6;
+  --washi-f4: #f4f2ec;
+  --washi-ed: #edeae2;
+  --washi-e4: #e4e0d6;
+  --washi-c9: #c9c3b6;
+  --washi-bb: #bbb5a8;
+  --washi-7c: #7c766b;
+  --washi-5f: #5f5a50;
+  --washi-3b: #3b3832;
+  --washi-2c: #2c2a25;
+  --washi-17: #171512;
+  /* 和紙の上の朱の文字（layer-3 の上でも 4.5:1 を超えるように少し沈めた朱） */
+  --shu-650: #9a3826;
+}
+
+/* §2.2 役割のトークン（暗） */
+:root {
+  color-scheme: dark;
+  --bg: var(--sumi-0a);
+  --layer-1: var(--sumi-11);
+  --layer-2: var(--sumi-18);
+  --layer-3: var(--sumi-22);
+  --line: var(--sumi-2a);
+  --line-strong: var(--sumi-3a);
+  --line-field: var(--sumi-6e);
+  --text: var(--sumi-e0);
+  --text-2: var(--sumi-c0);
+  --text-3: var(--sumi-88);
+  --text-disabled: var(--sumi-4a);
+  --mark-faint: var(--sumi-6b);
+  --shu: var(--shu-500);
+  --shu-text: var(--shu-400);
+  --on-shu: var(--white);
+  --fill: var(--sumi-e0);
+  --fill-hover: var(--sumi-f5);
+  --fill-active: var(--sumi-c0);
+  --on-fill: var(--sumi-0a);
+  --focus: var(--sumi-e0);
+  --overlay: rgb(0 0 0 / 0.64);
+  --selection-bg: var(--text);
+  --selection-text: var(--bg);
+}
+
+/* §2.2 役割のトークン（明）：和紙。地は半紙の白、文字は紙に置いた墨 */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--washi-fb);
+  --layer-1: var(--washi-f4);
+  --layer-2: var(--washi-ed);
+  --layer-3: var(--washi-e4);
+  --line: var(--washi-e4);
+  --line-strong: var(--washi-c9);
+  --line-field: var(--washi-7c);
+  --text: var(--washi-17);
+  --text-2: var(--washi-3b);
+  --text-3: var(--washi-5f);
+  --text-disabled: var(--washi-bb);
+  --mark-faint: var(--washi-7c);
+  --shu: var(--shu-600);
+  --shu-text: var(--shu-650);
+  --on-shu: var(--white);
+  --fill: var(--washi-17);
+  --fill-hover: var(--washi-2c);
+  --fill-active: var(--washi-3b);
+  --on-fill: var(--washi-fb);
+  --focus: var(--washi-17);
+  --overlay: rgb(23 21 18 / 0.28);
+}
+
+/* §3.1 書体・§3.2 文字の型・§4 余白と寸法・§4.4 重なり・§6 動き
+   運営者の指示（2026-11-04）：「研ぎ澄まされた刀」と「もやいの輪＝和＝柔」。線を減らし、余白と字間を広く取る。
+   本文は字面が小さく字と字の間が空く IBM Plex Sans JP、数字は細く鋭い IBM Plex Mono に替えた（定義の書体から変えた所）。
+   見出しと「MOYAI」の字も明朝・毛筆をやめ、同じゴシックに統一した（運営者の指示 2026-11-04。字間と太さだけで階層を作る）。 */
+:root {
+  --font-body: "IBM Plex Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif;
+  --font-num: "IBM Plex Mono", "IBM Plex Sans JP", ui-monospace, "Consolas", monospace;
+  --font-heading: var(--font-body);
+  /* 英字のタブと「MOYAI」の字だけ、横に広い英字の書体（運営者の指示 2026-11-04：英字に横長、I が一本線の Krona One）。太さは 400 の 1 つだけ。和文は本文のゴシックに落ちる */
+  --font-wide: "Krona One", var(--font-body);
+  --font-seal: var(--font-wide);
+
+  /* 字間：本文 0.06em、名前と見出し 0.1em 以上 */
+  --track-body: 0.06em;
+  --track-label: 0.1em;
+  --track-heading: 0.14em;
+
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 8px;
+  --sp-4: 12px;
+  --sp-5: 16px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 48px;
+  --sp-9: 64px;
+  --sp-10: 96px;
+
+  /* 部品の高さ：余白を広く取るため、定義の値から 1 段ずつ上げた */
+  --h-xs: 28px;
+  --h-s: 36px;
+  --h-m: 40px;
+  --h-l: 48px;
+  --h-header: 56px;
+  --h-status: 28px;
+
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-panel: 30;
+  --z-popover: 40;
+  --z-overlay: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+
+  --dur-instant: 0ms;
+  --dur-quick: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-quick: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}
+
+/* §3.2 文字の型（画面はこの型だけを使う） */
+.t-caption { font: 400 11px/18px var(--font-body); letter-spacing: var(--track-body); }
+.t-label { font: 500 12px/18px var(--font-body); letter-spacing: var(--track-label); }
+.t-body-s { font: 400 13px/22px var(--font-body); letter-spacing: var(--track-body); }
+.t-body { font: 400 14px/26px var(--font-body); letter-spacing: var(--track-body); }
+.t-body-l { font: 400 16px/30px var(--font-body); letter-spacing: var(--track-body); }
+.t-num-s { font: 400 12px/18px var(--font-num); letter-spacing: 0.02em; }
+.t-num { font: 400 13px/22px var(--font-num); letter-spacing: 0.02em; }
+.t-num-l { font: 500 20px/28px var(--font-num); letter-spacing: 0.04em; }
+.t-index { font: 500 14px/20px var(--font-num); letter-spacing: 0.1em; color: var(--text-3); }
+.t-kicker-en { font: 400 10px/16px var(--font-wide); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-3); }
+.t-heading-s { font: 500 14px/22px var(--font-heading); letter-spacing: var(--track-heading); }
+.t-heading { font: 500 18px/30px var(--font-heading); letter-spacing: var(--track-heading); }
+.t-heading-l { font: 500 26px/40px var(--font-heading); letter-spacing: var(--track-heading); }
+.t-seal { font: 400 17px/24px var(--font-seal); letter-spacing: 0.18em; }
