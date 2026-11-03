@@ -1,0 +1,23 @@
+{
+  "schema": "moyai.pack/0",
+  "id": "night-soil",
+  "name": "し尿処理施設",
+  "version": 1,
+  "group": "A",
+  "verification": {
+    "common": "原典照合済",
+    "shareVocab": "未実装",
+    "national": "未実装",
+    "checks": "未実装",
+    "note": "common は表Ⅱ-4（し尿処理施設・汚泥再生処理センター編、印刷頁 27）を原本で照らした（sources.json）。全国の表（08.xlsx）から数だけを取り出した national/ と共有の公開語彙は、まだ作っていない。だから共有は切ってある"
+  },
+  "sharing": "off",
+  "sharingNote": "全国の表の数と公開語彙が無いので、紛れる数 k を数えられない。数えられないものは送らない（docs/plan.md §2.8）。パックを足しただけの業種",
+  "fiscalYearStartMonth": 4,
+  "levelNames": ["設備", "機器", "部位"],
+  "identityKey": null,
+  "scale": null,
+  "units": { "capacity_kl_per_day": "kL/日" },
+  "undecided": "identityKey（同一性の鍵の宣言）と scale（判定の尺度）は未実装",
+  "common": "common.json"
+}
