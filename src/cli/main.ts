@@ -9,6 +9,7 @@ import { BridgeStartError, startBridge } from "../bridge/server";
 import { resolveStateDir } from "../bridge/state";
 import { errorBody, type ErrorCode } from "../shared/errors";
 import { parseStartArgs } from "./args";
+import { keysCli, sendCli, verifyRingCli } from "./human";
 import { createRelayServer } from "./relay";
 
 declare const __MOYAI_BUILD__: { time: string; commit: string };
@@ -26,6 +27,10 @@ const fail = (code: ErrorCode, vars: Record<string, string | number> = {}): neve
 const HELP = `使い方：
   moyai start [--port 43110] [--no-open]   橋渡しを起こし、作業画面を開く
   moyai mcp                                 AI クライアントとつなぐ中継（標準入出力の MCP）
+  moyai verify ring <輪のフォルダ>           輪の決まり・仲間・束を、受け手と同じ関数で確かめる（✓／✗ と理由）
+  moyai keys create --root <輪のフォルダ> --pack <パック>
+                                            輪を作り、その輪の鍵を合言葉で包む（人だけ。端末から）
+  moyai send                                束を送る（人だけ。検問所の画面から送る。端末からは未実装）
   moyai --version                           ビルドの印を出す`;
 
 function openBrowser(url: string): void {
@@ -86,6 +91,9 @@ async function main(argv: string[]): Promise<void> {
     if (rest.length) return fail("bad_args");
     return mcp();
   }
+  if (cmd === "verify") return process.exit(await verifyRingCli(rest));
+  if (cmd === "keys") return process.exit(await keysCli(rest));
+  if (cmd === "send") return process.exit(sendCli());
   if (cmd === "--version" || cmd === "-v") return say(BUILD);
   if (cmd === undefined || cmd === "--help" || cmd === "-h") return say(HELP);
   fail("bad_args");
