@@ -1,0 +1,2180 @@
+{
+  "dir": "reports",
+  "reports": [
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2019.pdf",
+      "file_xlsx": "reports/report-f1-fy2019.xlsx",
+      "fiscal_year": 2019,
+      "furnace": 1,
+      "id": "R-F1-FY2019",
+      "pages": 2,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "24人工",
+          "end": "2019-04-17",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2019-04-06",
+          "work_ids": [
+            "W0001"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "24人・日",
+          "end": "2019-04-17",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2019-04-06",
+          "work_ids": [
+            "W0002"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "24人工",
+          "end": "2019-04-17",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2019-04-06",
+          "work_ids": [
+            "W0003"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ72人",
+          "end": "2019-04-17",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 72,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2019-04-06",
+          "work_ids": [
+            "W0004",
+            "W0005",
+            "W0006"
+          ],
+          "xlsx_row": 11
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ48人",
+          "end": "2019-04-17",
+          "equipment_ids": [
+            "E17"
+          ],
+          "equipment_text": "押込送風機（FDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 48,
+          "no": 5,
+          "page": 1,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2019-04-06",
+          "work_ids": [
+            "W0007"
+          ],
+          "xlsx_row": 12
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "288時間",
+          "end": "2019-04-17",
+          "equipment_ids": [
+            "E18"
+          ],
+          "equipment_text": "誘引通風機（IDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 36,
+          "no": 6,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2019-04-06",
+          "work_ids": [
+            "W0008"
+          ],
+          "xlsx_row": 20
+        },
+        {
+          "bundle": false,
+          "duration_days": 5,
+          "effort_style": "ninnichi",
+          "effort_text": "25人・日",
+          "end": "2019-06-05",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "精密機能検査 実施記録",
+          "man_days": 25,
+          "no": 7,
+          "page": 2,
+          "pattern": "P-PREC",
+          "precision": true,
+          "start": "2019-06-01",
+          "work_ids": [
+            "W0011"
+          ],
+          "xlsx_row": 21
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 平成31年度 定期整備工事",
+      "term_days": 61,
+      "term_text": "2019/04/06 〜 2019/06/05（61日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 61,
+        "days_cell": "E22",
+        "man_days": 253,
+        "man_days_cell": "F22",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 22
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2020.pdf",
+      "file_xlsx": "reports/report-f1-fy2020.xlsx",
+      "fiscal_year": 2020,
+      "furnace": 1,
+      "id": "R-F1-FY2020",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2020-09-11",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2020-08-31",
+          "work_ids": [
+            "W0023"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "36人・日",
+          "end": "2020-09-11",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2020-08-31",
+          "work_ids": [
+            "W0024"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ36人",
+          "end": "2020-09-11",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2020-08-31",
+          "work_ids": [
+            "W0025"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "384時間",
+          "end": "2020-09-11",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 48,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2020-08-31",
+          "work_ids": [
+            "W0026",
+            "W0027",
+            "W0028"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 令和2年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R2.8.31 〜 R2.9.11（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 168,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2021.pdf",
+      "file_xlsx": "reports/report-f1-fy2021.xlsx",
+      "fiscal_year": 2021,
+      "furnace": 1,
+      "id": "R-F1-FY2021",
+      "pages": 2,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "288時間",
+          "end": "2021-04-17",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2021-04-06",
+          "work_ids": [
+            "W0042"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "192時間",
+          "end": "2021-04-17",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2021-04-06",
+          "work_ids": [
+            "W0043"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "24人・日",
+          "end": "2021-04-17",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2021-04-06",
+          "work_ids": [
+            "W0044"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ72人",
+          "end": "2021-04-17",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 72,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2021-04-06",
+          "work_ids": [
+            "W0045",
+            "W0046",
+            "W0047"
+          ],
+          "xlsx_row": 11
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "24人工",
+          "end": "2021-04-17",
+          "equipment_ids": [
+            "E17"
+          ],
+          "equipment_text": "押込送風機（FDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 24,
+          "no": 5,
+          "page": 1,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2021-04-06",
+          "work_ids": [
+            "W0048"
+          ],
+          "xlsx_row": 12
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "24人・日",
+          "end": "2021-04-17",
+          "equipment_ids": [
+            "E18"
+          ],
+          "equipment_text": "誘引通風機（IDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 24,
+          "no": 6,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2021-04-06",
+          "work_ids": [
+            "W0049"
+          ],
+          "xlsx_row": 20
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 令和3年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R3.4.6 〜 R3.4.17（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E21",
+        "man_days": 204,
+        "man_days_cell": "F21",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 21
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2022.pdf",
+      "file_xlsx": "reports/report-f1-fy2022.xlsx",
+      "fiscal_year": 2022,
+      "furnace": 1,
+      "id": "R-F1-FY2022",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "24人・日",
+          "end": "2022-04-17",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2022-04-06",
+          "work_ids": [
+            "W0060"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "48人・日",
+          "end": "2022-04-17",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2022-04-06",
+          "work_ids": [
+            "W0061"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "36人工",
+          "end": "2022-04-17",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2022-04-06",
+          "work_ids": [
+            "W0062"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "84人工",
+          "end": "2022-04-17",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 84,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2022-04-06",
+          "work_ids": [
+            "W0063",
+            "W0064",
+            "W0065"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 令和4年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R4.4.6 〜 R4.4.17（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 192,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2023.pdf",
+      "file_xlsx": "reports/report-f1-fy2023.xlsx",
+      "fiscal_year": 2023,
+      "furnace": 1,
+      "id": "R-F1-FY2023",
+      "pages": 2,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "192時間",
+          "end": "2023-09-11",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2023-08-31",
+          "work_ids": [
+            "W0080"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2023-09-11",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2023-08-31",
+          "work_ids": [
+            "W0081"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "288時間",
+          "end": "2023-09-11",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2023-08-31",
+          "work_ids": [
+            "W0082"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "84人工",
+          "end": "2023-09-11",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 84,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2023-08-31",
+          "work_ids": [
+            "W0083",
+            "W0084",
+            "W0085"
+          ],
+          "xlsx_row": 11
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "48人・日",
+          "end": "2023-09-11",
+          "equipment_ids": [
+            "E17"
+          ],
+          "equipment_text": "押込送風機（FDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 48,
+          "no": 5,
+          "page": 1,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2023-08-31",
+          "work_ids": [
+            "W0086"
+          ],
+          "xlsx_row": 12
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ36人",
+          "end": "2023-09-11",
+          "equipment_ids": [
+            "E18"
+          ],
+          "equipment_text": "誘引通風機（IDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 36,
+          "no": 6,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2023-08-31",
+          "work_ids": [
+            "W0087"
+          ],
+          "xlsx_row": 20
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 令和5年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R5.8.31 〜 R5.9.11（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E21",
+        "man_days": 276,
+        "man_days_cell": "F21",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 21
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2024.pdf",
+      "file_xlsx": "reports/report-f1-fy2024.xlsx",
+      "fiscal_year": 2024,
+      "furnace": 1,
+      "id": "R-F1-FY2024",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "24人・日",
+          "end": "2024-04-17",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2024-04-06",
+          "work_ids": [
+            "W0099"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "24人工",
+          "end": "2024-04-17",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2024-04-06",
+          "work_ids": [
+            "W0100"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "288時間",
+          "end": "2024-04-17",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2024-04-06",
+          "work_ids": [
+            "W0101"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ48人",
+          "end": "2024-04-17",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 48,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2024-04-06",
+          "work_ids": [
+            "W0102",
+            "W0103",
+            "W0104"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 令和6年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "2024/04/06 〜 2024/04/17（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 132,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2025.pdf",
+      "file_xlsx": "reports/report-f1-fy2025.xlsx",
+      "fiscal_year": 2025,
+      "furnace": 1,
+      "id": "R-F1-FY2025",
+      "pages": 2,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ24人",
+          "end": "2025-04-17",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2025-04-06",
+          "work_ids": [
+            "W0116"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "36人・日",
+          "end": "2025-04-17",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2025-04-06",
+          "work_ids": [
+            "W0117"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "384時間",
+          "end": "2025-04-17",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2025-04-06",
+          "work_ids": [
+            "W0118"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "60人・日",
+          "end": "2025-04-17",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 60,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2025-04-06",
+          "work_ids": [
+            "W0119",
+            "W0120",
+            "W0121"
+          ],
+          "xlsx_row": 11
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "384時間",
+          "end": "2025-04-17",
+          "equipment_ids": [
+            "E17"
+          ],
+          "equipment_text": "押込送風機（FDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 48,
+          "no": 5,
+          "page": 1,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2025-04-06",
+          "work_ids": [
+            "W0122"
+          ],
+          "xlsx_row": 12
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "288時間",
+          "end": "2025-04-17",
+          "equipment_ids": [
+            "E18"
+          ],
+          "equipment_text": "誘引通風機（IDF-1）",
+          "label_text": "通風機の分解整備",
+          "man_days": 36,
+          "no": 6,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2025-04-06",
+          "work_ids": [
+            "W0123"
+          ],
+          "xlsx_row": 20
+        },
+        {
+          "bundle": false,
+          "duration_days": 5,
+          "effort_style": "ninku",
+          "effort_text": "20人工",
+          "end": "2025-06-05",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "精密機能検査 実施記録",
+          "man_days": 20,
+          "no": 7,
+          "page": 2,
+          "pattern": "P-PREC",
+          "precision": true,
+          "start": "2025-06-01",
+          "work_ids": [
+            "W0126"
+          ],
+          "xlsx_row": 21
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 令和7年度 定期整備工事",
+      "term_days": 61,
+      "term_text": "令和7年4月6日 〜 令和7年6月5日（61日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 61,
+        "days_cell": "E22",
+        "man_days": 272,
+        "man_days_cell": "F22",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 22
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f1-fy2026.pdf",
+      "file_xlsx": "reports/report-f1-fy2026.xlsx",
+      "fiscal_year": 2026,
+      "furnace": 1,
+      "id": "R-F1-FY2026",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "384時間",
+          "end": "2026-04-17",
+          "equipment_ids": [
+            "E04"
+          ],
+          "equipment_text": "ストーカ（STK-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2026-04-06",
+          "work_ids": [
+            "W0135"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "36人工",
+          "end": "2026-04-17",
+          "equipment_ids": [
+            "E05"
+          ],
+          "equipment_text": "焼却炉本体（FNC-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2026-04-06",
+          "work_ids": [
+            "W0136"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "36人工",
+          "end": "2026-04-17",
+          "equipment_ids": [
+            "E09"
+          ],
+          "equipment_text": "ボイラ（BLR-1）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2026-04-06",
+          "work_ids": [
+            "W0137"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "60人工",
+          "end": "2026-04-17",
+          "equipment_ids": [
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "equipment_text": "集じん装置（BGF-1）・HCL、SOx 除去設備（DSC-1）・NOx 除去設備（NXR-1）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 60,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2026-04-06",
+          "work_ids": [
+            "W0138",
+            "W0139",
+            "W0140"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "1号炉 令和8年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "令和8年4月6日 〜 令和8年4月17日（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 180,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2019.pdf",
+      "file_xlsx": "reports/report-f2-fy2019.xlsx",
+      "fiscal_year": 2019,
+      "furnace": 2,
+      "id": "R-F2-FY2019",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "24人工",
+          "end": "2019-10-16",
+          "equipment_ids": [
+            "E06"
+          ],
+          "equipment_text": "ストーカ（STK-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2019-10-05",
+          "work_ids": [
+            "W0013"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ48人",
+          "end": "2019-10-16",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2019-10-05",
+          "work_ids": [
+            "W0014"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2019-10-16",
+          "equipment_ids": [
+            "E10"
+          ],
+          "equipment_text": "ボイラ（BLR-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2019-10-05",
+          "work_ids": [
+            "W0015"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "672時間",
+          "end": "2019-10-16",
+          "equipment_ids": [
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "equipment_text": "集じん装置（BGF-2）・HCL、SOx 除去設備（DSC-2）・NOx 除去設備（NXR-2）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 84,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2019-10-05",
+          "work_ids": [
+            "W0016",
+            "W0017",
+            "W0018"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 平成31年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R1.10.5 〜 R1.10.16（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 204,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2020.pdf",
+      "file_xlsx": "reports/report-f2-fy2020.xlsx",
+      "fiscal_year": 2020,
+      "furnace": 2,
+      "id": "R-F2-FY2020",
+      "pages": 2,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 5,
+          "effort_style": "nobe",
+          "effort_text": "延べ20人",
+          "end": "2020-08-21",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "精密機能検査 実施記録",
+          "man_days": 20,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-PREC",
+          "precision": true,
+          "start": "2020-08-17",
+          "work_ids": [
+            "W0022"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ48人",
+          "end": "2020-10-11",
+          "equipment_ids": [
+            "E06"
+          ],
+          "equipment_text": "ストーカ（STK-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2020-09-30",
+          "work_ids": [
+            "W0034"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "288時間",
+          "end": "2020-10-11",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2020-09-30",
+          "work_ids": [
+            "W0035"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2020-10-11",
+          "equipment_ids": [
+            "E10"
+          ],
+          "equipment_text": "ボイラ（BLR-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2020-09-30",
+          "work_ids": [
+            "W0036"
+          ],
+          "xlsx_row": 11
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "768時間",
+          "end": "2020-10-11",
+          "equipment_ids": [
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "equipment_text": "集じん装置（BGF-2）・HCL、SOx 除去設備（DSC-2）・NOx 除去設備（NXR-2）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 96,
+          "no": 5,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2020-09-30",
+          "work_ids": [
+            "W0037",
+            "W0038",
+            "W0039"
+          ],
+          "xlsx_row": 12
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2020-10-11",
+          "equipment_ids": [
+            "E19"
+          ],
+          "equipment_text": "押込送風機（FDF-2）",
+          "label_text": "通風機の分解整備",
+          "man_days": 48,
+          "no": 6,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2020-09-30",
+          "work_ids": [
+            "W0040"
+          ],
+          "xlsx_row": 20
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "192時間",
+          "end": "2020-10-11",
+          "equipment_ids": [
+            "E20"
+          ],
+          "equipment_text": "誘引通風機（IDF-2）",
+          "label_text": "通風機の分解整備",
+          "man_days": 24,
+          "no": 7,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2020-09-30",
+          "work_ids": [
+            "W0041"
+          ],
+          "xlsx_row": 21
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 令和2年度 定期整備工事",
+      "term_days": 56,
+      "term_text": "令和2年8月17日 〜 令和2年10月11日（56日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 56,
+        "days_cell": "E22",
+        "man_days": 320,
+        "man_days_cell": "F22",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 22
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2021.pdf",
+      "file_xlsx": "reports/report-f2-fy2021.xlsx",
+      "fiscal_year": 2021,
+      "furnace": 2,
+      "id": "R-F2-FY2021",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "36人・日",
+          "end": "2021-10-16",
+          "equipment_ids": [
+            "E06"
+          ],
+          "equipment_text": "ストーカ（STK-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2021-10-05",
+          "work_ids": [
+            "W0053"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "384時間",
+          "end": "2021-10-16",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2021-10-05",
+          "work_ids": [
+            "W0054"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "48人・日",
+          "end": "2021-10-16",
+          "equipment_ids": [
+            "E10"
+          ],
+          "equipment_text": "ボイラ（BLR-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2021-10-05",
+          "work_ids": [
+            "W0055"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "84人・日",
+          "end": "2021-10-16",
+          "equipment_ids": [
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "equipment_text": "集じん装置（BGF-2）・HCL、SOx 除去設備（DSC-2）・NOx 除去設備（NXR-2）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 84,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2021-10-05",
+          "work_ids": [
+            "W0056",
+            "W0057",
+            "W0058"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 令和3年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "令和3年10月5日 〜 令和3年10月16日（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 216,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2022.pdf",
+      "file_xlsx": "reports/report-f2-fy2022.xlsx",
+      "fiscal_year": 2022,
+      "furnace": 2,
+      "id": "R-F2-FY2022",
+      "pages": 2,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2022-10-16",
+          "equipment_ids": [
+            "E06"
+          ],
+          "equipment_text": "ストーカ（STK-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2022-10-05",
+          "work_ids": [
+            "W0069"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "36人・日",
+          "end": "2022-10-16",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2022-10-05",
+          "work_ids": [
+            "W0070"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "24人工",
+          "end": "2022-10-16",
+          "equipment_ids": [
+            "E10"
+          ],
+          "equipment_text": "ボイラ（BLR-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2022-10-05",
+          "work_ids": [
+            "W0071"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "72人工",
+          "end": "2022-10-16",
+          "equipment_ids": [
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "equipment_text": "集じん装置（BGF-2）・HCL、SOx 除去設備（DSC-2）・NOx 除去設備（NXR-2）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 72,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2022-10-05",
+          "work_ids": [
+            "W0072",
+            "W0073",
+            "W0074"
+          ],
+          "xlsx_row": 11
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "24人工",
+          "end": "2022-10-16",
+          "equipment_ids": [
+            "E19"
+          ],
+          "equipment_text": "押込送風機（FDF-2）",
+          "label_text": "通風機の分解整備",
+          "man_days": 24,
+          "no": 5,
+          "page": 1,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2022-10-05",
+          "work_ids": [
+            "W0075"
+          ],
+          "xlsx_row": 12
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ24人",
+          "end": "2022-10-16",
+          "equipment_ids": [
+            "E20"
+          ],
+          "equipment_text": "誘引通風機（IDF-2）",
+          "label_text": "通風機の分解整備",
+          "man_days": 24,
+          "no": 6,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2022-10-05",
+          "work_ids": [
+            "W0076"
+          ],
+          "xlsx_row": 20
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 令和4年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R4.10.5 〜 R4.10.16（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E21",
+        "man_days": 228,
+        "man_days_cell": "F21",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 21
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2023.pdf",
+      "file_xlsx": "reports/report-f2-fy2023.xlsx",
+      "fiscal_year": 2023,
+      "furnace": 2,
+      "id": "R-F2-FY2023",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "24人・日",
+          "end": "2023-10-11",
+          "equipment_ids": [
+            "E06"
+          ],
+          "equipment_text": "ストーカ（STK-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 24,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2023-09-30",
+          "work_ids": [
+            "W0093"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ36人",
+          "end": "2023-10-11",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2023-09-30",
+          "work_ids": [
+            "W0094"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "48人・日",
+          "end": "2023-10-11",
+          "equipment_ids": [
+            "E10"
+          ],
+          "equipment_text": "ボイラ（BLR-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2023-09-30",
+          "work_ids": [
+            "W0095"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "60人・日",
+          "end": "2023-10-11",
+          "equipment_ids": [
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "equipment_text": "集じん装置（BGF-2）・HCL、SOx 除去設備（DSC-2）・NOx 除去設備（NXR-2）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 60,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2023-09-30",
+          "work_ids": [
+            "W0096",
+            "W0097",
+            "W0098"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 令和5年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R5.9.30 〜 R5.10.11（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 168,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2024.pdf",
+      "file_xlsx": "reports/report-f2-fy2024.xlsx",
+      "fiscal_year": 2024,
+      "furnace": 2,
+      "id": "R-F2-FY2024",
+      "pages": 2,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "48人・日",
+          "end": "2024-10-16",
+          "equipment_ids": [
+            "E06"
+          ],
+          "equipment_text": "ストーカ（STK-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2024-10-05",
+          "work_ids": [
+            "W0108"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ36人",
+          "end": "2024-10-16",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2024-10-05",
+          "work_ids": [
+            "W0109"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2024-10-16",
+          "equipment_ids": [
+            "E10"
+          ],
+          "equipment_text": "ボイラ（BLR-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2024-10-05",
+          "work_ids": [
+            "W0110"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "hours",
+          "effort_text": "384時間",
+          "end": "2024-10-16",
+          "equipment_ids": [
+            "E15",
+            "E16"
+          ],
+          "equipment_text": "HCL、SOx 除去設備（DSC-2）・NOx 除去設備（NXR-2）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 48,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2024-10-05",
+          "work_ids": [
+            "W0112",
+            "W0113"
+          ],
+          "xlsx_row": 11
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "36人工",
+          "end": "2024-10-16",
+          "equipment_ids": [
+            "E19"
+          ],
+          "equipment_text": "押込送風機（FDF-2）",
+          "label_text": "通風機の分解整備",
+          "man_days": 36,
+          "no": 5,
+          "page": 1,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2024-10-05",
+          "work_ids": [
+            "W0114"
+          ],
+          "xlsx_row": 12
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ48人",
+          "end": "2024-10-16",
+          "equipment_ids": [
+            "E20"
+          ],
+          "equipment_text": "誘引通風機（IDF-2）",
+          "label_text": "通風機の分解整備",
+          "man_days": 48,
+          "no": 6,
+          "page": 2,
+          "pattern": "P-DRAFT",
+          "precision": false,
+          "start": "2024-10-05",
+          "work_ids": [
+            "W0115"
+          ],
+          "xlsx_row": 20
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 令和6年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "R6.10.5 〜 R6.10.16（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E21",
+        "man_days": 264,
+        "man_days_cell": "F21",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 21
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2025.pdf",
+      "file_xlsx": "reports/report-f2-fy2025.xlsx",
+      "fiscal_year": 2025,
+      "furnace": 2,
+      "id": "R-F2-FY2025",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2025-10-16",
+          "equipment_ids": [
+            "E06"
+          ],
+          "equipment_text": "ストーカ（STK-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2025-10-05",
+          "work_ids": [
+            "W0128"
+          ],
+          "xlsx_row": 8
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninku",
+          "effort_text": "48人工",
+          "end": "2025-10-16",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 48,
+          "no": 2,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2025-10-05",
+          "work_ids": [
+            "W0129"
+          ],
+          "xlsx_row": 9
+        },
+        {
+          "bundle": false,
+          "duration_days": 12,
+          "effort_style": "ninnichi",
+          "effort_text": "36人・日",
+          "end": "2025-10-16",
+          "equipment_ids": [
+            "E10"
+          ],
+          "equipment_text": "ボイラ（BLR-2）",
+          "label_text": "定期整備（分解・点検）",
+          "man_days": 36,
+          "no": 3,
+          "page": 1,
+          "pattern": "P-OVH",
+          "precision": false,
+          "start": "2025-10-05",
+          "work_ids": [
+            "W0130"
+          ],
+          "xlsx_row": 10
+        },
+        {
+          "bundle": true,
+          "duration_days": 12,
+          "effort_style": "nobe",
+          "effort_text": "延べ60人",
+          "end": "2025-10-16",
+          "equipment_ids": [
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "equipment_text": "集じん装置（BGF-2）・HCL、SOx 除去設備（DSC-2）・NOx 除去設備（NXR-2）（一式）",
+          "label_text": "排ガス処理設備の点検",
+          "man_days": 60,
+          "no": 4,
+          "page": 1,
+          "pattern": "P-FLUE",
+          "precision": false,
+          "start": "2025-10-05",
+          "work_ids": [
+            "W0131",
+            "W0132",
+            "W0133"
+          ],
+          "xlsx_row": 11
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 令和7年度 定期整備工事",
+      "term_days": 12,
+      "term_text": "2025/10/05 〜 2025/10/16（12日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 12,
+        "days_cell": "E12",
+        "man_days": 192,
+        "man_days_cell": "F12",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 12
+      }
+    },
+    {
+      "continued_mark": "（続き）",
+      "file_pdf": "reports/report-f2-fy2026.pdf",
+      "file_xlsx": "reports/report-f2-fy2026.xlsx",
+      "fiscal_year": 2026,
+      "furnace": 2,
+      "id": "R-F2-FY2026",
+      "pages": 1,
+      "rows": [
+        {
+          "bundle": false,
+          "duration_days": 5,
+          "effort_style": "ninku",
+          "effort_text": "25人工",
+          "end": "2026-08-21",
+          "equipment_ids": [
+            "E07"
+          ],
+          "equipment_text": "焼却炉本体（FNC-2）",
+          "label_text": "精密機能検査 実施記録",
+          "man_days": 25,
+          "no": 1,
+          "page": 1,
+          "pattern": "P-PREC",
+          "precision": true,
+          "start": "2026-08-17",
+          "work_ids": [
+            "W0144"
+          ],
+          "xlsx_row": 8
+        }
+      ],
+      "rows_per_page": 5,
+      "subject": "2号炉 令和8年度 定期整備工事",
+      "term_days": 5,
+      "term_text": "令和8年8月17日 〜 令和8年8月21日（5日間）",
+      "title": "【架空】定期整備 工事報告書",
+      "title_cell": "A1",
+      "total": {
+        "days": 5,
+        "days_cell": "E9",
+        "man_days": 25,
+        "man_days_cell": "F9",
+        "meaning": "合計の工数（人・日）は数の値。日数は工期の日数",
+        "row": 9
+      }
+    }
+  ],
+  "schema": "moyai.factory.truth.reports/0"
+}

@@ -1,0 +1,66 @@
+{
+  "note": "写真は報告書の PDF の 1 頁。印は手書きの丸（精密機能検査・一式の行の工数）とチェック（行）",
+  "photos": [
+    {
+      "file": "photos/inspection-photo-f1-fy2025.jpg",
+      "marks": [
+        {
+          "kind": "check",
+          "row_no": 1,
+          "text": "延べ24人",
+          "work_ids": [
+            "W0116"
+          ]
+        },
+        {
+          "kind": "check",
+          "row_no": 2,
+          "text": "36人・日",
+          "work_ids": [
+            "W0117"
+          ]
+        },
+        {
+          "kind": "circle",
+          "row_no": 4,
+          "text": "60人・日",
+          "work_ids": [
+            "W0119",
+            "W0120",
+            "W0121"
+          ]
+        }
+      ],
+      "page": 1,
+      "source_pdf": "reports/report-f1-fy2025.pdf",
+      "source_report": "R-F1-FY2025",
+      "work_ids": [
+        "W0116",
+        "W0117",
+        "W0119",
+        "W0120",
+        "W0121"
+      ]
+    },
+    {
+      "file": "photos/inspection-photo-f2-fy2026.jpg",
+      "marks": [
+        {
+          "kind": "circle",
+          "row_no": 1,
+          "text": "25人工",
+          "work_ids": [
+            "W0144"
+          ]
+        }
+      ],
+      "page": 1,
+      "source_pdf": "reports/report-f2-fy2026.pdf",
+      "source_report": "R-F2-FY2026",
+      "work_ids": [
+        "W0144"
+      ]
+    }
+  ],
+  "schema": "moyai.factory.truth.photos/0"
+}

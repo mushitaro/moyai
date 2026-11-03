@@ -30,13 +30,19 @@ class Determinism(unittest.TestCase):
             factory_build.build(Path(a))
             factory_build.build(Path(b))
             ha, hb = sha_map(Path(a)), sha_map(Path(b))
-        self.assertEqual(len(ha), 6)
+        for need in ("out/waste-incineration/fictional-1/equipment-ledger.xlsx",
+                     "out/waste-incineration/fictional-2/equipment-ledger.xlsx",
+                     "truth/waste-incineration/fictional-1/crossdoc.truth.json",
+                     "truth/waste-incineration/fictional-2/crossdoc.truth.json"):
+            self.assertIn(need, ha)
         self.assertEqual(ha, hb)
 
     def test_committed_files_match_a_fresh_build(self):
         fresh = sha_map(built_root())
         committed = REPO / "samples"
         for rel, h in fresh.items():
+            if rel.endswith((".pdf", ".jpg")):
+                continue  # PDF と写真は LibreOffice・字体・画像の部品の版で変わりうる。構造は test_documents.py で見る
             p = committed / rel
             self.assertTrue(p.exists(), rel)
             import hashlib

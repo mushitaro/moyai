@@ -9,11 +9,11 @@ from openpyxl.utils import get_column_letter
 from dirt import DITTO, apply_ditto, year_label
 from writers.ioutil import rewrite_zip_fixed
 
-CREATOR = "【架空】工場 v0"
+CREATOR = "【架空】工場 v1"
+LEVEL_NAMES = ("設備", "系統", "機器群")
 SYM_ACTUAL, SYM_PLANNED, SYM_PRECISION = "●", "○", "◎"
 LEGEND = [(SYM_PLANNED, "予定"), (SYM_ACTUAL, "実績"), (SYM_PRECISION, "精密機能検査")]
 HEADER_ROWS = (3, 4)
-FIRST_COL = 4  # D
 
 
 def write_hoshitori(world: dict, path: Path) -> dict:
@@ -21,6 +21,9 @@ def write_hoshitori(world: dict, path: Path) -> dict:
     dirt = rules["dirt"]["sheet"]
     eq = world["equipment"]
     fys = world["fiscal_years"]
+    n_levels = len(eq[0]["path"])
+    equip_col, furn_col = n_levels + 1, n_levels + 2
+    FIRST_COL = n_levels + 3
     today = world["today"]
 
     wb = Workbook()
@@ -41,7 +44,7 @@ def write_hoshitori(world: dict, path: Path) -> dict:
     ws["A2"] = f"{today} 時点。実績と予定の境は今日の日付"
 
     # 見出し 2 段
-    for col, text in zip((1, 2, 3), ("設備", "機器", "号炉")):
+    for col, text in enumerate(list(LEVEL_NAMES[:n_levels]) + ["機器", "号炉"], 1):
         ws.cell(HEADER_ROWS[0], col, text)
         ws.merge_cells(start_row=HEADER_ROWS[0], start_column=col, end_row=HEADER_ROWS[1], end_column=col)
     year_cols = []
@@ -64,25 +67,30 @@ def write_hoshitori(world: dict, path: Path) -> dict:
     rows = []
     sys_start = {}
     for i, e in enumerate(eq):
-        sys_start.setdefault(e["system_key"], i)
+        sys_start.setdefault(tuple(e["path"]), i)
     ditto_in = apply_ditto([e["furnace_label"] for e in eq], reset_at=set(sys_start.values()))
-    # 設備ごとに縦に結合する
-    spans = {}
-    for i, e in enumerate(eq):
-        spans.setdefault(e["system_key"], []).append(i)
     for i, e in enumerate(eq):
         r = first + i
         rows.append({"row": r, "equipment_id": e["id"]})
-        ws.cell(r, 2, e["base_name"])
-        ws.cell(r, 3, ditto_in[i])
-    merged_systems = []
-    for key, idxs in spans.items():
-        r0, r1 = first + idxs[0], first + idxs[-1]
-        ws.cell(r0, 1, eq[idxs[0]]["system"])
-        ws.cell(r0, 1).alignment = Alignment(vertical="center", wrap_text=True)
-        if r1 > r0:
-            ws.merge_cells(start_row=r0, start_column=1, end_row=r1, end_column=1)
-        merged_systems.append(f"A{r0}:A{r1}" if r1 > r0 else f"A{r0}")
+        ws.cell(r, equip_col, e["base_name"])
+        ws.cell(r, furn_col, ditto_in[i])
+    # 上位の段ごとに縦に結合する（同じ上位の道が続く行）
+    merged_ranges = []
+    for lv in range(n_levels):
+        i = 0
+        while i < len(eq):
+            j = i
+            while j + 1 < len(eq) and eq[j + 1]["path"][: lv + 1] == eq[i]["path"][: lv + 1]:
+                j += 1
+            r0, r1 = first + i, first + j
+            ws.cell(r0, lv + 1, eq[i]["path"][lv])
+            ws.cell(r0, lv + 1).alignment = Alignment(vertical="center", wrap_text=True)
+            if r1 > r0:
+                ws.merge_cells(start_row=r0, start_column=lv + 1, end_row=r1, end_column=lv + 1)
+            letter = get_column_letter(lv + 1)
+            merged_ranges.append(f"{letter}{r0}:{letter}{r1}" if r1 > r0 else f"{letter}{r0}")
+            i = j + 1
+    merged_systems = [m for m in merged_ranges if m[0] == "A"]
     last = first + len(eq) - 1
     row_of = {x["equipment_id"]: x["row"] for x in rows}
     col_of = {y["fiscal_year"]: y for y in year_cols}
@@ -133,13 +141,14 @@ def write_hoshitori(world: dict, path: Path) -> dict:
     ws.cell(leg_row, 1, "凡例").font = bold
     legend = []
     for k, (sym, text) in enumerate(LEGEND, 1):
-        ws.cell(leg_row + k, 2, sym)
-        ws.cell(leg_row + k, 3, text)
+        ws.cell(leg_row + k, equip_col, sym)
+        ws.cell(leg_row + k, furn_col, text)
         legend.append({"row": leg_row + k, "symbol": sym, "meaning": text})
 
-    ws.column_dimensions["A"].width = 18
-    ws.column_dimensions["B"].width = 26
-    ws.column_dimensions["C"].width = 9
+    for c in range(1, n_levels + 1):
+        ws.column_dimensions[get_column_letter(c)].width = 18
+    ws.column_dimensions[get_column_letter(equip_col)].width = 26
+    ws.column_dimensions[get_column_letter(furn_col)].width = 9
     for c in range(FIRST_COL, FIRST_COL + 2 * len(fys)):
         ws.column_dimensions[get_column_letter(c)].width = 7
     ws.freeze_panes = ws.cell(first, FIRST_COL)
@@ -156,13 +165,19 @@ def write_hoshitori(world: dict, path: Path) -> dict:
         "header_rows": list(HEADER_ROWS),
         "first_data_row": first,
         "last_data_row": last,
-        "columns": {"system": "A", "equipment": "B", "furnace": "C", "first_year_col": get_column_letter(FIRST_COL)},
+        "levels": n_levels,
+        "depth": n_levels + 1,
+        "columns": {"system": "A", "levels": [get_column_letter(c) for c in range(1, n_levels + 1)],
+                    "equipment": get_column_letter(equip_col), "furnace": get_column_letter(furn_col),
+                    "first_year_col": get_column_letter(FIRST_COL)},
+        "merged_ranges": merged_ranges,
+        "equipment_names": {e["id"]: e["base_name"] for e in eq},
         "year_columns": year_cols,
         "era_switch": {"from_label": col_of[2019]["label"], "to_label": col_of[2020]["label"],
                        "note": "2019 年度を H31、2020 年度を R2 と書く。令和元年度は 2019 年度に当たる"},
         "rows": rows,
         "merged_system_ranges": merged_systems,
-        "ditto_cells": [f"C{first + i}" for i, v in enumerate(ditto_in) if v == DITTO],
+        "ditto_cells": [f"{get_column_letter(furn_col)}{first + i}" for i, v in enumerate(ditto_in) if v == DITTO],
         "cells": {k: {"kind": v["kind"], "symbol": v["symbol"], "work_ids": sorted(v["work_ids"])}
                   for k, v in sorted(cells.items())},
         "legend": legend,

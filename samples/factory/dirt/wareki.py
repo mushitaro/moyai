@@ -23,16 +23,28 @@ def year_label(fy: int, style: str) -> str:
 
 
 def date_text(d: date, style: str) -> str:
+    if d < date(1989, 1, 8):
+        raise ValueError("平成より前の日付は未対応")
     if d < date(2019, 5, 1):
-        raise ValueError("令和より前の日付は未対応")
-    r = d.year - 2018
+        era_k, era_s, r = "平成", "H", d.year - 1988
+    else:
+        era_k, era_s, r = "令和", "R", d.year - 2018
     if style == "slash":
         return f"{d.year}/{d.month:02d}/{d.day:02d}"
     if style == "wareki_dot":
-        return f"R{r}.{d.month}.{d.day}"
+        return f"{era_s}{r}.{d.month}.{d.day}"
     if style == "wareki_kanji":
-        return f"令和{r}年{d.month}月{d.day}日"
+        return f"{era_k}{r}年{d.month}月{d.day}日"
     raise ValueError(style)
 
 
 DATE_STYLES = ("slash", "wareki_dot", "wareki_kanji")
+
+
+def era_year_text(y: int) -> str:
+    """西暦の年を和暦の年の文字にする（機器の設置年の書き方の揺れ）。"""
+    if y >= 2019:
+        return "令和元年" if y == 2019 else f"令和{y - 2018}年"
+    if y >= 1989:
+        return "平成元年" if y == 1989 else f"平成{y - 1988}年"
+    raise ValueError("平成より前は未対応")

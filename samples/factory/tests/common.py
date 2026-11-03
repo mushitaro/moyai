@@ -12,6 +12,7 @@ if str(HERE) not in sys.path:
 import build as factory_build  # noqa: E402
 
 SUB = Path("waste-incineration") / "fictional-1"
+SUB2 = Path("waste-incineration") / "fictional-2"
 _cache: dict = {}
 
 
@@ -30,5 +31,5 @@ def sha_map(root: Path) -> dict:
             for p in sorted(root.rglob("*")) if p.is_file()}
 
 
-def load(root: Path, kind: str, name: str):
-    return json.loads((root / kind / SUB / name).read_text(encoding="utf-8"))
+def load(root: Path, kind: str, name: str, sub: Path = SUB):
+    return json.loads((root / kind / sub / name).read_text(encoding="utf-8"))

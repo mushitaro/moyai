@@ -1,4 +1,11 @@
 {
+  "documents": [
+    "ledger",
+    "hoshitori",
+    "reports",
+    "daily",
+    "photos"
+  ],
   "equipment": [
     {
       "base_name": "計量機",
@@ -6,10 +13,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E01",
+      "install_year": 2002,
       "key": "scale",
       "name": "計量機",
+      "parts": [],
+      "path": [
+        "受入供給設備"
+      ],
+      "spec": [
+        "ロードセル式 30 t",
+        "2 台"
+      ],
       "system": "受入供給設備",
-      "system_key": "recv"
+      "system_key": "recv",
+      "tag": "SCL"
     },
     {
       "base_name": "ごみクレーン",
@@ -17,10 +34,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E02",
+      "install_year": 2002,
       "key": "crane",
       "name": "ごみクレーン",
+      "parts": [],
+      "path": [
+        "受入供給設備"
+      ],
+      "spec": [
+        "バケット容量 4 m3",
+        "吊上荷重 6 t"
+      ],
       "system": "受入供給設備",
-      "system_key": "recv"
+      "system_key": "recv",
+      "tag": "CRN"
     },
     {
       "base_name": "可燃性粗大ごみ切断機",
@@ -28,10 +55,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E03",
+      "install_year": 2002,
       "key": "shredder",
       "name": "可燃性粗大ごみ切断機",
+      "parts": [],
+      "path": [
+        "受入供給設備"
+      ],
+      "spec": [
+        "2 軸せん断式",
+        "処理能力 5 t/h"
+      ],
       "system": "受入供給設備",
-      "system_key": "recv"
+      "system_key": "recv",
+      "tag": "SHR"
     },
     {
       "base_name": "ストーカ",
@@ -39,10 +76,20 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E04",
+      "install_year": 2002,
       "key": "grate",
       "name": "1号炉 ストーカ",
+      "parts": [],
+      "path": [
+        "燃焼設備"
+      ],
+      "spec": [
+        "階段式 3 段",
+        "火格子面積 18 m2"
+      ],
       "system": "燃焼設備",
-      "system_key": "comb"
+      "system_key": "comb",
+      "tag": "STK"
     },
     {
       "base_name": "焼却炉本体",
@@ -50,10 +97,28 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E05",
+      "install_year": 2002,
       "key": "furnace",
       "name": "1号炉 焼却炉本体",
+      "parts": [
+        {
+          "name": "耐火物",
+          "spec": [
+            "炉壁 キャスタブル",
+            "補修周期 3 年"
+          ]
+        }
+      ],
+      "path": [
+        "燃焼設備"
+      ],
+      "spec": [
+        "処理能力 75 t/日",
+        "耐火物 キャスタブル"
+      ],
       "system": "燃焼設備",
-      "system_key": "comb"
+      "system_key": "comb",
+      "tag": "FNC"
     },
     {
       "base_name": "ストーカ",
@@ -61,10 +126,20 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E06",
+      "install_year": 2002,
       "key": "grate",
       "name": "2号炉 ストーカ",
+      "parts": [],
+      "path": [
+        "燃焼設備"
+      ],
+      "spec": [
+        "階段式 3 段",
+        "火格子面積 18 m2"
+      ],
       "system": "燃焼設備",
-      "system_key": "comb"
+      "system_key": "comb",
+      "tag": "STK"
     },
     {
       "base_name": "焼却炉本体",
@@ -72,10 +147,28 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E07",
+      "install_year": 2002,
       "key": "furnace",
       "name": "2号炉 焼却炉本体",
+      "parts": [
+        {
+          "name": "耐火物",
+          "spec": [
+            "炉壁 キャスタブル",
+            "補修周期 3 年"
+          ]
+        }
+      ],
+      "path": [
+        "燃焼設備"
+      ],
+      "spec": [
+        "処理能力 75 t/日",
+        "耐火物 キャスタブル"
+      ],
       "system": "燃焼設備",
-      "system_key": "comb"
+      "system_key": "comb",
+      "tag": "FNC"
     },
     {
       "base_name": "蒸気復水器",
@@ -83,10 +176,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E08",
+      "install_year": 2003,
       "key": "condenser",
       "name": "蒸気復水器",
+      "parts": [],
+      "path": [
+        "燃焼ガス冷却設備"
+      ],
+      "spec": [
+        "空冷式",
+        "処理蒸気量 25 t/h"
+      ],
       "system": "燃焼ガス冷却設備",
-      "system_key": "cool"
+      "system_key": "cool",
+      "tag": "CND"
     },
     {
       "base_name": "ボイラ",
@@ -94,10 +197,20 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E09",
+      "install_year": 2002,
       "key": "boiler",
       "name": "1号炉 ボイラ",
+      "parts": [],
+      "path": [
+        "燃焼ガス冷却設備"
+      ],
+      "spec": [
+        "自然循環式",
+        "蒸気圧力 3.0 MPa"
+      ],
       "system": "燃焼ガス冷却設備",
-      "system_key": "cool"
+      "system_key": "cool",
+      "tag": "BLR"
     },
     {
       "base_name": "ボイラ",
@@ -105,10 +218,20 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E10",
+      "install_year": 2002,
       "key": "boiler",
       "name": "2号炉 ボイラ",
+      "parts": [],
+      "path": [
+        "燃焼ガス冷却設備"
+      ],
+      "spec": [
+        "自然循環式",
+        "蒸気圧力 3.0 MPa"
+      ],
       "system": "燃焼ガス冷却設備",
-      "system_key": "cool"
+      "system_key": "cool",
+      "tag": "BLR"
     },
     {
       "base_name": "集じん装置",
@@ -116,10 +239,20 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E11",
+      "install_year": 2002,
       "key": "dust",
       "name": "1号炉 集じん装置",
+      "parts": [],
+      "path": [
+        "排ガス処理設備"
+      ],
+      "spec": [
+        "ろ過式",
+        "ろ布面積 1,200 m2"
+      ],
       "system": "排ガス処理設備",
-      "system_key": "flue"
+      "system_key": "flue",
+      "tag": "BGF"
     },
     {
       "base_name": "HCL、SOx 除去設備",
@@ -127,10 +260,20 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E12",
+      "install_year": 2002,
       "key": "hcl",
       "name": "1号炉 HCL、SOx 除去設備",
+      "parts": [],
+      "path": [
+        "排ガス処理設備"
+      ],
+      "spec": [
+        "乾式 消石灰吹込",
+        "処理ガス量 28,000 m3N/h"
+      ],
       "system": "排ガス処理設備",
-      "system_key": "flue"
+      "system_key": "flue",
+      "tag": "DSC"
     },
     {
       "base_name": "NOx 除去設備",
@@ -138,10 +281,20 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E13",
+      "install_year": 2008,
       "key": "nox",
       "name": "1号炉 NOx 除去設備",
+      "parts": [],
+      "path": [
+        "排ガス処理設備"
+      ],
+      "spec": [
+        "無触媒脱硝",
+        "尿素水噴霧"
+      ],
       "system": "排ガス処理設備",
-      "system_key": "flue"
+      "system_key": "flue",
+      "tag": "NXR"
     },
     {
       "base_name": "集じん装置",
@@ -149,10 +302,20 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E14",
+      "install_year": 2002,
       "key": "dust",
       "name": "2号炉 集じん装置",
+      "parts": [],
+      "path": [
+        "排ガス処理設備"
+      ],
+      "spec": [
+        "ろ過式",
+        "ろ布面積 1,200 m2"
+      ],
       "system": "排ガス処理設備",
-      "system_key": "flue"
+      "system_key": "flue",
+      "tag": "BGF"
     },
     {
       "base_name": "HCL、SOx 除去設備",
@@ -160,10 +323,20 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E15",
+      "install_year": 2002,
       "key": "hcl",
       "name": "2号炉 HCL、SOx 除去設備",
+      "parts": [],
+      "path": [
+        "排ガス処理設備"
+      ],
+      "spec": [
+        "乾式 消石灰吹込",
+        "処理ガス量 28,000 m3N/h"
+      ],
       "system": "排ガス処理設備",
-      "system_key": "flue"
+      "system_key": "flue",
+      "tag": "DSC"
     },
     {
       "base_name": "NOx 除去設備",
@@ -171,10 +344,20 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E16",
+      "install_year": 2008,
       "key": "nox",
       "name": "2号炉 NOx 除去設備",
+      "parts": [],
+      "path": [
+        "排ガス処理設備"
+      ],
+      "spec": [
+        "無触媒脱硝",
+        "尿素水噴霧"
+      ],
       "system": "排ガス処理設備",
-      "system_key": "flue"
+      "system_key": "flue",
+      "tag": "NXR"
     },
     {
       "base_name": "押込送風機",
@@ -182,10 +365,27 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E17",
+      "install_year": 2002,
       "key": "fdf",
       "name": "1号炉 押込送風機",
+      "parts": [
+        {
+          "name": "電動機",
+          "spec": [
+            "90 kW"
+          ]
+        }
+      ],
+      "path": [
+        "通風設備"
+      ],
+      "spec": [
+        "ターボ形",
+        "風量 1,200 m3/min"
+      ],
       "system": "通風設備",
-      "system_key": "draft"
+      "system_key": "draft",
+      "tag": "FDF"
     },
     {
       "base_name": "誘引通風機",
@@ -193,10 +393,33 @@
       "furnace": 1,
       "furnace_label": "1号炉",
       "id": "E18",
+      "install_year": 2002,
       "key": "idf",
       "name": "1号炉 誘引通風機",
+      "parts": [
+        {
+          "name": "電動機",
+          "spec": [
+            "200 kW 4 極"
+          ]
+        },
+        {
+          "name": "軸受",
+          "spec": [
+            "すべり軸受"
+          ]
+        }
+      ],
+      "path": [
+        "通風設備"
+      ],
+      "spec": [
+        "ターボ形",
+        "風量 2,100 m3/min"
+      ],
       "system": "通風設備",
-      "system_key": "draft"
+      "system_key": "draft",
+      "tag": "IDF"
     },
     {
       "base_name": "押込送風機",
@@ -204,10 +427,35 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E19",
+      "install_year": 2002,
       "key": "fdf",
       "name": "2号炉 押込送風機",
+      "parts": [
+        {
+          "name": "電動機",
+          "spec": [
+            "90 kW"
+          ]
+        },
+        {
+          "furnace_only": 2,
+          "name": "旧電動機",
+          "remark": "2021年12月 撤去（新品に取替）",
+          "spec": [
+            "90 kW"
+          ]
+        }
+      ],
+      "path": [
+        "通風設備"
+      ],
+      "spec": [
+        "ターボ形",
+        "風量 1,200 m3/min"
+      ],
       "system": "通風設備",
-      "system_key": "draft"
+      "system_key": "draft",
+      "tag": "FDF"
     },
     {
       "base_name": "誘引通風機",
@@ -215,10 +463,33 @@
       "furnace": 2,
       "furnace_label": "2号炉",
       "id": "E20",
+      "install_year": 2002,
       "key": "idf",
       "name": "2号炉 誘引通風機",
+      "parts": [
+        {
+          "name": "電動機",
+          "spec": [
+            "200 kW 4 極"
+          ]
+        },
+        {
+          "name": "軸受",
+          "spec": [
+            "すべり軸受"
+          ]
+        }
+      ],
+      "path": [
+        "通風設備"
+      ],
+      "spec": [
+        "ターボ形",
+        "風量 2,100 m3/min"
+      ],
       "system": "通風設備",
-      "system_key": "draft"
+      "system_key": "draft",
+      "tag": "IDF"
     },
     {
       "base_name": "蒸気タービン発電設備",
@@ -226,10 +497,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E21",
+      "install_year": 2003,
       "key": "turbine",
       "name": "蒸気タービン発電設備",
+      "parts": [],
+      "path": [
+        "余熱利用設備"
+      ],
+      "spec": [
+        "復水式",
+        "定格出力 1,990 kW"
+      ],
       "system": "余熱利用設備",
-      "system_key": "heat"
+      "system_key": "heat",
+      "tag": "TBN"
     },
     {
       "base_name": "灰クレーン",
@@ -237,10 +518,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E22",
+      "install_year": 2002,
       "key": "ashcrane",
       "name": "灰クレーン",
+      "parts": [],
+      "path": [
+        "灰出し設備"
+      ],
+      "spec": [
+        "バケット容量 2 m3",
+        "吊上荷重 4 t"
+      ],
       "system": "灰出し設備",
-      "system_key": "ashout"
+      "system_key": "ashout",
+      "tag": "ACR"
     },
     {
       "base_name": "受変電配電設備",
@@ -248,10 +539,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E23",
+      "install_year": 2002,
       "key": "substation",
       "name": "受変電配電設備",
+      "parts": [],
+      "path": [
+        "電気設備"
+      ],
+      "spec": [
+        "受電 6.6 kV",
+        "変圧器 3 台"
+      ],
       "system": "電気設備",
-      "system_key": "elec"
+      "system_key": "elec",
+      "tag": "SUB"
     },
     {
       "base_name": "発電機",
@@ -259,10 +560,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E24",
+      "install_year": 2003,
       "key": "generator",
       "name": "発電機",
+      "parts": [],
+      "path": [
+        "電気設備"
+      ],
+      "spec": [
+        "非常用 ディーゼル",
+        "出力 300 kVA"
+      ],
       "system": "電気設備",
-      "system_key": "elec"
+      "system_key": "elec",
+      "tag": "GEN"
     },
     {
       "base_name": "DCS",
@@ -270,10 +581,20 @@
       "furnace": null,
       "furnace_label": "共通",
       "id": "E25",
+      "install_year": 2002,
       "key": "dcs",
       "name": "DCS",
+      "parts": [],
+      "path": [
+        "計装設備"
+      ],
+      "spec": [
+        "監視操作卓 3 台",
+        "制御盤 4 面"
+      ],
       "system": "計装設備",
-      "system_key": "inst"
+      "system_key": "inst",
+      "tag": "DCS"
     }
   ],
   "equipment_to_code": {
@@ -439,125 +760,273 @@
         }
       }
     },
+    "documents": [
+      "ledger",
+      "hoshitori",
+      "reports",
+      "daily",
+      "photos"
+    ],
     "equipment_templates": [
       {
         "code": "WI.RECV.SCALE",
+        "install": 2002,
         "key": "scale",
         "name": "計量機",
         "scope": "common",
-        "system": "recv"
+        "spec": [
+          "ロードセル式 30 t",
+          "2 台"
+        ],
+        "system": "recv",
+        "tag": "SCL"
       },
       {
         "code": "WI.RECV.CRANE",
+        "install": 2002,
         "key": "crane",
         "name": "ごみクレーン",
         "scope": "common",
-        "system": "recv"
+        "spec": [
+          "バケット容量 4 m3",
+          "吊上荷重 6 t"
+        ],
+        "system": "recv",
+        "tag": "CRN"
       },
       {
         "code": "WI.RECV.SHREDDER",
+        "install": 2002,
         "key": "shredder",
         "name": "可燃性粗大ごみ切断機",
         "scope": "common",
-        "system": "recv"
+        "spec": [
+          "2 軸せん断式",
+          "処理能力 5 t/h"
+        ],
+        "system": "recv",
+        "tag": "SHR"
       },
       {
         "code": "WI.COMB.STK_GRATE",
+        "install": 2002,
         "key": "grate",
         "name": "ストーカ",
         "scope": "furnace",
-        "system": "comb"
+        "spec": [
+          "階段式 3 段",
+          "火格子面積 18 m2"
+        ],
+        "system": "comb",
+        "tag": "STK"
       },
       {
         "code": "WI.COMB.STK_FURNACE",
+        "install": 2002,
         "key": "furnace",
         "name": "焼却炉本体",
+        "parts": [
+          {
+            "name": "耐火物",
+            "spec": [
+              "炉壁 キャスタブル",
+              "補修周期 3 年"
+            ]
+          }
+        ],
         "scope": "furnace",
-        "system": "comb"
+        "spec": [
+          "処理能力 75 t/日",
+          "耐火物 キャスタブル"
+        ],
+        "system": "comb",
+        "tag": "FNC"
       },
       {
         "code": "WI.COOL.BOILER",
+        "install": 2002,
         "key": "boiler",
         "name": "ボイラ",
         "scope": "furnace",
-        "system": "cool"
+        "spec": [
+          "自然循環式",
+          "蒸気圧力 3.0 MPa"
+        ],
+        "system": "cool",
+        "tag": "BLR"
       },
       {
         "code": "WI.COOL.CONDENSER",
+        "install": 2003,
         "key": "condenser",
         "name": "蒸気復水器",
         "scope": "common",
-        "system": "cool"
+        "spec": [
+          "空冷式",
+          "処理蒸気量 25 t/h"
+        ],
+        "system": "cool",
+        "tag": "CND"
       },
       {
         "code": "WI.FLUE.DUST",
+        "install": 2002,
         "key": "dust",
         "name": "集じん装置",
         "scope": "furnace",
-        "system": "flue"
+        "spec": [
+          "ろ過式",
+          "ろ布面積 1,200 m2"
+        ],
+        "system": "flue",
+        "tag": "BGF"
       },
       {
         "code": "WI.FLUE.HCL_SOX",
+        "install": 2002,
         "key": "hcl",
         "name": "HCL、SOx 除去設備",
         "scope": "furnace",
-        "system": "flue"
+        "spec": [
+          "乾式 消石灰吹込",
+          "処理ガス量 28,000 m3N/h"
+        ],
+        "system": "flue",
+        "tag": "DSC"
       },
       {
         "code": "WI.FLUE.NOX",
+        "install": 2008,
         "key": "nox",
         "name": "NOx 除去設備",
         "scope": "furnace",
-        "system": "flue"
+        "spec": [
+          "無触媒脱硝",
+          "尿素水噴霧"
+        ],
+        "system": "flue",
+        "tag": "NXR"
       },
       {
         "code": "WI.DRAFT.FDF",
+        "install": 2002,
         "key": "fdf",
         "name": "押込送風機",
+        "parts": [
+          {
+            "name": "電動機",
+            "spec": [
+              "90 kW"
+            ]
+          },
+          {
+            "furnace_only": 2,
+            "name": "旧電動機",
+            "remark": "2021年12月 撤去（新品に取替）",
+            "spec": [
+              "90 kW"
+            ]
+          }
+        ],
         "scope": "furnace",
-        "system": "draft"
+        "spec": [
+          "ターボ形",
+          "風量 1,200 m3/min"
+        ],
+        "system": "draft",
+        "tag": "FDF"
       },
       {
         "code": "WI.DRAFT.IDF",
+        "install": 2002,
         "key": "idf",
         "name": "誘引通風機",
+        "parts": [
+          {
+            "name": "電動機",
+            "spec": [
+              "200 kW 4 極"
+            ]
+          },
+          {
+            "name": "軸受",
+            "spec": [
+              "すべり軸受"
+            ]
+          }
+        ],
         "scope": "furnace",
-        "system": "draft"
+        "spec": [
+          "ターボ形",
+          "風量 2,100 m3/min"
+        ],
+        "system": "draft",
+        "tag": "IDF"
       },
       {
         "code": "WI.HEAT.TURBINE",
+        "install": 2003,
         "key": "turbine",
         "name": "蒸気タービン発電設備",
         "scope": "common",
-        "system": "heat"
+        "spec": [
+          "復水式",
+          "定格出力 1,990 kW"
+        ],
+        "system": "heat",
+        "tag": "TBN"
       },
       {
         "code": "WI.ASHOUT.ASH_CRANE",
+        "install": 2002,
         "key": "ashcrane",
         "name": "灰クレーン",
         "scope": "common",
-        "system": "ashout"
+        "spec": [
+          "バケット容量 2 m3",
+          "吊上荷重 4 t"
+        ],
+        "system": "ashout",
+        "tag": "ACR"
       },
       {
         "code": "WI.ELEC.SUBSTATION",
+        "install": 2002,
         "key": "substation",
         "name": "受変電配電設備",
         "scope": "common",
-        "system": "elec"
+        "spec": [
+          "受電 6.6 kV",
+          "変圧器 3 台"
+        ],
+        "system": "elec",
+        "tag": "SUB"
       },
       {
         "code": "WI.ELEC.GENERATOR",
+        "install": 2003,
         "key": "generator",
         "name": "発電機",
         "scope": "common",
-        "system": "elec"
+        "spec": [
+          "非常用 ディーゼル",
+          "出力 300 kVA"
+        ],
+        "system": "elec",
+        "tag": "GEN"
       },
       {
         "code": "WI.INST.DCS",
+        "install": 2002,
         "key": "dcs",
         "name": "DCS",
         "scope": "common",
-        "system": "inst"
+        "spec": [
+          "監視操作卓 3 台",
+          "制御盤 4 面"
+        ],
+        "system": "inst",
+        "tag": "DCS"
       }
     ],
     "facility": {
@@ -655,6 +1124,12 @@
       }
     ],
     "interval_limit_years": 3,
+    "ledger": {
+      "install_style": "seireki",
+      "name_format": "{name}（{tag}）",
+      "numbering": true,
+      "tag_furnace_suffix": true
+    },
     "man_day_hours": 8,
     "outage": {
       "days": 14,
@@ -1025,6 +1500,33 @@
       "fy_from": 2026,
       "fy_to": 2028
     },
+    "report": {
+      "bundle_patterns": [
+        "P-FLUE"
+      ],
+      "patterns": [
+        "P-OVH",
+        "P-PREC",
+        "P-FLUE",
+        "P-DRAFT"
+      ],
+      "photos": [
+        {
+          "furnace": 1,
+          "fy": 2025
+        },
+        {
+          "furnace": 2,
+          "fy": 2026
+        }
+      ],
+      "report_labels": {
+        "P-OVH": "定期整備（分解・点検）",
+        "P-PREC": "精密機能検査 実施記録"
+      },
+      "rows_per_page": 5,
+      "title": "定期整備 工事報告書"
+    },
     "schema": "moyai.factory.rules/0",
     "seed": 20261001,
     "systems": [
@@ -1066,7 +1568,7 @@
       }
     ],
     "today": "2026-10-01",
-    "world_version": "v0"
+    "world_version": "v1"
   },
   "schema": "moyai.factory.world/0",
   "seed": 20261001,
@@ -4511,5 +5013,5 @@
       "tag": "ANNUAL"
     }
   ],
-  "world_version": "v0"
+  "world_version": "v1"
 }

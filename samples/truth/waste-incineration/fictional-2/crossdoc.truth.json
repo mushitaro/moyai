@@ -1,0 +1,2177 @@
+{
+  "facility": "fictional-2",
+  "note": "資料をまたいで同じ作業を指す行の対応。ledger_row は作業の対象の機器の台帳の行",
+  "precision_work_ids": [
+    "W0021",
+    "W0091"
+  ],
+  "schema": "moyai.factory.truth.crossdoc/0",
+  "works": [
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2019,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0001"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2019,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0002"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2019,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0003"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2019,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0004"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2019,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0005"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2019,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0006"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2019,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0007"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E10",
+      "fiscal_year": 2019,
+      "label": "送風機の分解整備",
+      "ledger_row": 37,
+      "man_days": 56,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F14",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0008"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E11",
+      "fiscal_year": 2019,
+      "label": "送風機の分解整備",
+      "ledger_row": 40,
+      "man_days": 28,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F15",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0009"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2019,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0010"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E13",
+      "fiscal_year": 2019,
+      "label": "灰クレーンの点検",
+      "ledger_row": 48,
+      "man_days": 6,
+      "pattern": "P-ASHCRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F17",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0011"
+    },
+    {
+      "duration_days": 2,
+      "equipment_id": "E02",
+      "fiscal_year": 2019,
+      "label": "計量装置の定期検査",
+      "ledger_row": 11,
+      "man_days": 4,
+      "pattern": "P-SCALE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "F6",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0012"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2020,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0013"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2020,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "◎"
+        }
+      ],
+      "work_id": "W0014"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2020,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0015"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2020,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0016"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2020,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0017"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2020,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0018"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2020,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0019"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2020,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "H5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0020"
+    },
+    {
+      "duration_days": 5,
+      "equipment_id": "E04",
+      "fiscal_year": 2020,
+      "label": "精密機能検査",
+      "ledger_row": 17,
+      "man_days": 20,
+      "pattern": "P-PREC",
+      "precision": true,
+      "refs": [
+        {
+          "cell": "H8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "◎"
+        }
+      ],
+      "work_id": "W0021"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2021,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0022"
+    },
+    {
+      "duration_days": 2,
+      "equipment_id": "E02",
+      "fiscal_year": 2021,
+      "label": "計量装置の定期検査",
+      "ledger_row": 11,
+      "man_days": 4,
+      "pattern": "P-SCALE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J6",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0023"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2021,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 42,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0024"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2021,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 42,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0025"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2021,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 42,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0026"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2021,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0027"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2021,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0028"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2021,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0029"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2021,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0030"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E10",
+      "fiscal_year": 2021,
+      "label": "送風機の分解整備",
+      "ledger_row": 37,
+      "man_days": 42,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J14",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0031"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E11",
+      "fiscal_year": 2021,
+      "label": "送風機の分解整備",
+      "ledger_row": 40,
+      "man_days": 28,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J15",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0032"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E12",
+      "fiscal_year": 2021,
+      "label": "全休止のタービンの分解整備",
+      "ledger_row": 44,
+      "man_days": 36,
+      "pattern": "P-OUT-TURB",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J16",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0033"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E14",
+      "fiscal_year": 2021,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 52,
+      "man_days": 36,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J18",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0034"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E15",
+      "fiscal_year": 2021,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 55,
+      "man_days": 36,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J19",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0035"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E16",
+      "fiscal_year": 2021,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 59,
+      "man_days": 48,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "J20",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0036"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2022,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0037"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2022,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0038"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2022,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0039"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2022,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0040"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2022,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0041"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2022,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0042"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2022,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0043"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2022,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0044"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E13",
+      "fiscal_year": 2022,
+      "label": "灰クレーンの点検",
+      "ledger_row": 48,
+      "man_days": 6,
+      "pattern": "P-ASHCRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L17",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0045"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E10",
+      "fiscal_year": 2022,
+      "label": "押込ファンの電動機取替",
+      "ledger_row": 37,
+      "man_days": 48,
+      "pattern": "P-REPL-PAST",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "L14",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0046"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2023,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0047"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2023,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 42,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0048"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2023,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0049"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2023,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0050"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2023,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0051"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2023,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0052"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2023,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0053"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E10",
+      "fiscal_year": 2023,
+      "label": "送風機の分解整備",
+      "ledger_row": 37,
+      "man_days": 28,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N14",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0054"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E11",
+      "fiscal_year": 2023,
+      "label": "送風機の分解整備",
+      "ledger_row": 40,
+      "man_days": 28,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N15",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0055"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2023,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "O5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0056"
+    },
+    {
+      "duration_days": 2,
+      "equipment_id": "E02",
+      "fiscal_year": 2023,
+      "label": "計量装置の定期検査",
+      "ledger_row": 11,
+      "man_days": 4,
+      "pattern": "P-SCALE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "N6",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0057"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2024,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0058"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2024,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 42,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0059"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2024,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0060"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2024,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0061"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2024,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Q10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0062"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2024,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0063"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2024,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0064"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2024,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0065"
+    },
+    {
+      "duration_days": 159,
+      "equipment_id": "E16",
+      "fiscal_year": 2024,
+      "label": "分散制御装置の更新（基幹改良）",
+      "ledger_row": 59,
+      "man_days": 477,
+      "pattern": "P-UPG-DCS",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P20",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0066"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E12",
+      "fiscal_year": 2024,
+      "label": "全休止のタービンの分解整備",
+      "ledger_row": 44,
+      "man_days": 48,
+      "pattern": "P-OUT-TURB",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P16",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0067"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E14",
+      "fiscal_year": 2024,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 52,
+      "man_days": 36,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P18",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0068"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E15",
+      "fiscal_year": 2024,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 55,
+      "man_days": 36,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P19",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0069"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E16",
+      "fiscal_year": 2024,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 59,
+      "man_days": 36,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "P20",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0070"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2025,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0071"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2025,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0072"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2025,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0073"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2025,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0074"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2025,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0075"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2025,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0076"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2025,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0077"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E10",
+      "fiscal_year": 2025,
+      "label": "送風機の分解整備",
+      "ledger_row": 37,
+      "man_days": 42,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R14",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0078"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E11",
+      "fiscal_year": 2025,
+      "label": "送風機の分解整備",
+      "ledger_row": 40,
+      "man_days": 42,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R15",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0079"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2025,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0080"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E13",
+      "fiscal_year": 2025,
+      "label": "灰クレーンの点検",
+      "ledger_row": 48,
+      "man_days": 6,
+      "pattern": "P-ASHCRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R17",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0081"
+    },
+    {
+      "duration_days": 2,
+      "equipment_id": "E02",
+      "fiscal_year": 2025,
+      "label": "計量装置の定期検査",
+      "ledger_row": 11,
+      "man_days": 4,
+      "pattern": "P-SCALE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "R6",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0082"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2026,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0083"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2026,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "◎"
+        }
+      ],
+      "work_id": "W0084"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2026,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0085"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2026,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0086"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2026,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0087"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2026,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0088"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2026,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0089"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2026,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "T5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "●"
+        }
+      ],
+      "work_id": "W0090"
+    },
+    {
+      "duration_days": 5,
+      "equipment_id": "E04",
+      "fiscal_year": 2026,
+      "label": "精密機能検査",
+      "ledger_row": 17,
+      "man_days": 20,
+      "pattern": "P-PREC",
+      "precision": true,
+      "refs": [
+        {
+          "cell": "T8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "◎"
+        }
+      ],
+      "work_id": "W0091"
+    },
+    {
+      "duration_days": 32,
+      "equipment_id": "E11",
+      "fiscal_year": 2026,
+      "label": "誘引送風機の取替",
+      "ledger_row": 40,
+      "man_days": 160,
+      "pattern": "P-REPL-FUT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "U15",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "△"
+        }
+      ],
+      "work_id": "W0092"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2027,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0093"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2027,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 42,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0094"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2027,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0095"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2027,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0096"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2027,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 42,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0097"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2027,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0098"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2027,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0099"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2027,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0100"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E10",
+      "fiscal_year": 2027,
+      "label": "送風機の分解整備",
+      "ledger_row": 37,
+      "man_days": 42,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W14",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0101"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E11",
+      "fiscal_year": 2027,
+      "label": "送風機の分解整備",
+      "ledger_row": 40,
+      "man_days": 28,
+      "pattern": "P-DRAFT",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W15",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0102"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E12",
+      "fiscal_year": 2027,
+      "label": "全休止のタービンの分解整備",
+      "ledger_row": 44,
+      "man_days": 36,
+      "pattern": "P-OUT-TURB",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W16",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0103"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E14",
+      "fiscal_year": 2027,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 52,
+      "man_days": 48,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W18",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0104"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E15",
+      "fiscal_year": 2027,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 55,
+      "man_days": 36,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W19",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0105"
+    },
+    {
+      "duration_days": 12,
+      "equipment_id": "E16",
+      "fiscal_year": 2027,
+      "label": "全休止の電気・計装の点検",
+      "ledger_row": 59,
+      "man_days": 48,
+      "pattern": "P-OUT-ELEC",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "W20",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0106"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E03",
+      "fiscal_year": 2028,
+      "label": "定期整備（分解）",
+      "ledger_row": 15,
+      "man_days": 70,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y7",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0107"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E04",
+      "fiscal_year": 2028,
+      "label": "定期整備（分解）",
+      "ledger_row": 17,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y8",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0108"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E05",
+      "fiscal_year": 2028,
+      "label": "定期整備（分解）",
+      "ledger_row": 21,
+      "man_days": 56,
+      "pattern": "P-OVH",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y9",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0109"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E06",
+      "fiscal_year": 2028,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 24,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y10",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0110"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E07",
+      "fiscal_year": 2028,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 28,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y11",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0111"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E08",
+      "fiscal_year": 2028,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 31,
+      "man_days": 14,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y12",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0112"
+    },
+    {
+      "duration_days": 14,
+      "equipment_id": "E09",
+      "fiscal_year": 2028,
+      "label": "排ガス処理設備の点検",
+      "ledger_row": 33,
+      "man_days": 28,
+      "pattern": "P-FLUE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y13",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0113"
+    },
+    {
+      "duration_days": 3,
+      "equipment_id": "E01",
+      "fiscal_year": 2028,
+      "label": "投入クレーンの年次点検",
+      "ledger_row": 8,
+      "man_days": 9,
+      "pattern": "P-CRANE",
+      "precision": false,
+      "refs": [
+        {
+          "cell": "Y5",
+          "doc": "plan-hoshitori.xlsx",
+          "sheet": "星取表",
+          "symbol": "○"
+        }
+      ],
+      "work_id": "W0114"
+    }
+  ]
+}

@@ -1,0 +1,593 @@
+{
+  "creator": "【架空】工場 v1",
+  "file": "equipment-ledger.xlsx",
+  "reader": "openpyxl 3.1.5",
+  "schema": "moyai.factory.facts/0",
+  "sheets": [
+    {
+      "cells": [
+        {
+          "coord": "A1",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "【架空】ルメトラ環境プラザ 機器台帳"
+        },
+        {
+          "coord": "A2",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "令和8年10月1日 時点"
+        },
+        {
+          "coord": "A4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "名称"
+        },
+        {
+          "coord": "B4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "仕様"
+        },
+        {
+          "coord": "C4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "設置年"
+        },
+        {
+          "coord": "D4",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "備考"
+        },
+        {
+          "coord": "A5",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受入供給設備"
+        },
+        {
+          "coord": "A6",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ピット系"
+        },
+        {
+          "coord": "A7",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "クレーン"
+        },
+        {
+          "coord": "A8",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CRN ごみ投入クレーン"
+        },
+        {
+          "coord": "B8",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "バケット容量 3 m3\n吊上荷重 5 t"
+        },
+        {
+          "coord": "C8",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A9",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "搬入系"
+        },
+        {
+          "coord": "A10",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計量"
+        },
+        {
+          "coord": "A11",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "SCL 搬入計量装置"
+        },
+        {
+          "coord": "B11",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ロードセル式 20 t"
+        },
+        {
+          "coord": "C11",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A12",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "燃焼設備"
+        },
+        {
+          "coord": "A13",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流動床系"
+        },
+        {
+          "coord": "A14",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "前処理"
+        },
+        {
+          "coord": "A15",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "PRT ごみ破砕前処理装置"
+        },
+        {
+          "coord": "B15",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "二軸回転式\n処理能力 8 t/h\n1系用"
+        },
+        {
+          "coord": "C15",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉"
+        },
+        {
+          "coord": "A17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "FBF 流動床炉本体"
+        },
+        {
+          "coord": "B17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "処理能力 60 t/日\n流動砂 珪砂\n1系用"
+        },
+        {
+          "coord": "C17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "冷却設備"
+        },
+        {
+          "coord": "A19",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "廃熱回収系"
+        },
+        {
+          "coord": "A20",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ"
+        },
+        {
+          "coord": "A21",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "BLR 廃熱ボイラ"
+        },
+        {
+          "coord": "B21",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "強制循環式\n蒸気圧力 2.0 MPa\n1系用"
+        },
+        {
+          "coord": "C21",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A22",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "減温系"
+        },
+        {
+          "coord": "A23",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "噴霧"
+        },
+        {
+          "coord": "A24",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "QNC ガス減温塔"
+        },
+        {
+          "coord": "B24",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水噴霧式\n1系用"
+        },
+        {
+          "coord": "C24",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A25",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス処理設備"
+        },
+        {
+          "coord": "A26",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん系"
+        },
+        {
+          "coord": "A27",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ろ過式"
+        },
+        {
+          "coord": "A28",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "BGF バグフィルタ"
+        },
+        {
+          "coord": "B28",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ろ布面積 900 m2\n1系用"
+        },
+        {
+          "coord": "C28",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A29",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ガス処理系"
+        },
+        {
+          "coord": "A30",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "酸性ガス"
+        },
+        {
+          "coord": "A31",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "DSC 脱塩装置"
+        },
+        {
+          "coord": "B31",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "乾式 消石灰吹込\n1系用"
+        },
+        {
+          "coord": "C31",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A32",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "窒素酸化物"
+        },
+        {
+          "coord": "A33",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "NXR 脱硝装置"
+        },
+        {
+          "coord": "B33",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "無触媒脱硝\n1系用"
+        },
+        {
+          "coord": "C33",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成22年"
+        },
+        {
+          "coord": "A34",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "送排風設備"
+        },
+        {
+          "coord": "A35",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "給気系"
+        },
+        {
+          "coord": "A36",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "押込"
+        },
+        {
+          "coord": "A37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "FDF 押込ファン"
+        },
+        {
+          "coord": "B37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "風量 900 m3/min\n1系用"
+        },
+        {
+          "coord": "C37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "D37",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2022年11月 電動機取替"
+        },
+        {
+          "coord": "A38",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排気系"
+        },
+        {
+          "coord": "A39",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "誘引"
+        },
+        {
+          "coord": "A40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "IDF 誘引送風機"
+        },
+        {
+          "coord": "B40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "風量 1,600 m3/min\n電動機 160 kW\n1系用"
+        },
+        {
+          "coord": "C40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "D40",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2027年1月 取替予定"
+        },
+        {
+          "coord": "A41",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "発電設備"
+        },
+        {
+          "coord": "A42",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "発電系"
+        },
+        {
+          "coord": "A43",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "タービン"
+        },
+        {
+          "coord": "A44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "TBN 蒸気タービン"
+        },
+        {
+          "coord": "B44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "背圧式\n定格出力 1,200 kW"
+        },
+        {
+          "coord": "C44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成11年"
+        },
+        {
+          "coord": "A45",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "灰出し設備"
+        },
+        {
+          "coord": "A46",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "灰搬出系"
+        },
+        {
+          "coord": "A47",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "クレーン"
+        },
+        {
+          "coord": "A48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ACR 灰ピットクレーン"
+        },
+        {
+          "coord": "B48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "バケット容量 1.5 m3"
+        },
+        {
+          "coord": "C48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電気設備"
+        },
+        {
+          "coord": "A50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受変電系"
+        },
+        {
+          "coord": "A51",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受電"
+        },
+        {
+          "coord": "A52",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "SUB 高圧受電盤"
+        },
+        {
+          "coord": "B52",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受電 6.6 kV"
+        },
+        {
+          "coord": "C52",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "A53",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "非常電源系"
+        },
+        {
+          "coord": "A54",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "発電機"
+        },
+        {
+          "coord": "A55",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "GEN 非常用発電装置"
+        },
+        {
+          "coord": "B55",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "出力 200 kVA"
+        },
+        {
+          "coord": "C55",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成11年"
+        },
+        {
+          "coord": "A56",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計装設備"
+        },
+        {
+          "coord": "A57",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "制御系"
+        },
+        {
+          "coord": "A58",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "中央監視"
+        },
+        {
+          "coord": "A59",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "DCS 分散制御装置"
+        },
+        {
+          "coord": "B59",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "操作卓 2 台"
+        },
+        {
+          "coord": "C59",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "平成10年"
+        },
+        {
+          "coord": "D59",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2024年10月 基幹改良"
+        }
+      ],
+      "hidden_cols": [],
+      "hidden_rows": [],
+      "merged": [],
+      "state": "visible",
+      "title": "機器台帳"
+    }
+  ]
+}

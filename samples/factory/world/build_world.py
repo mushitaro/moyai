@@ -31,16 +31,21 @@ def _md_date(fy: int, md: str) -> date:
 def build_equipment(rules: dict) -> list[dict]:
     sys_idx = {s["key"]: i for i, s in enumerate(rules["systems"])}
     sys_name = {s["key"]: s["name"] for s in rules["systems"]}
+    group_idx = {}
+    for t in rules["equipment_templates"]:
+        g = tuple(t.get("groups", []))
+        group_idx.setdefault((t["system"], g), len(group_idx))
     items = []
     for ti, t in enumerate(rules["equipment_templates"]):
+        gi = group_idx[(t["system"], tuple(t.get("groups", [])))]
         if t["scope"] == "furnace":
             for f in rules["facility"]["furnaces"]:
-                items.append((sys_idx[t["system"]], f["no"], ti, t, f))
+                items.append((sys_idx[t["system"]], gi, f["no"], ti, t, f))
         else:
-            items.append((sys_idx[t["system"]], 0, ti, t, None))
-    items.sort(key=lambda x: x[:3])
+            items.append((sys_idx[t["system"]], gi, 0, ti, t, None))
+    items.sort(key=lambda x: x[:4])
     out = []
-    for i, (_, _, _, t, f) in enumerate(items, 1):
+    for i, (_, _, _, _, t, f) in enumerate(items, 1):
         out.append({
             "id": f"E{i:02d}",
             "key": t["key"],
@@ -48,9 +53,14 @@ def build_equipment(rules: dict) -> list[dict]:
             "name": (f["label"] + " " if f else "") + t["name"],
             "system_key": t["system"],
             "system": sys_name[t["system"]],
+            "path": [sys_name[t["system"]]] + list(t.get("groups", [])),
             "furnace": f["no"] if f else None,
             "furnace_label": f["label"] if f else "共通",
             "code": t["code"],
+            "tag": t.get("tag"),
+            "install_year": t.get("install"),
+            "spec": list(t.get("spec", [])),
+            "parts": [p for p in t.get("parts", []) if p.get("furnace_only") in (None, f["no"] if f else None)],
         })
     return out
 
@@ -251,6 +261,7 @@ def build_world(rules: dict | None = None) -> dict:
         "world_version": rules["world_version"],
         "fictional": True,
         "facility": rules["facility"],
+        "documents": rules["documents"],
         "seed": rules["seed"],
         "today": rules["today"],
         "fiscal_years": list(range(fy0, fy1 + 1)),

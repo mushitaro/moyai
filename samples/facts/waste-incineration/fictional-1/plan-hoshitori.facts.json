@@ -1,5 +1,5 @@
 {
-  "creator": "【架空】工場 v0",
+  "creator": "【架空】工場 v1",
   "file": "plan-hoshitori.xlsx",
   "reader": "openpyxl 3.1.5",
   "schema": "moyai.factory.facts/0",
