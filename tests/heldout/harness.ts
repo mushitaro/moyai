@@ -232,6 +232,19 @@ export function answer(q: QuestionState, ix: Index): string | null {
       }
       return "eventOnly";
     }
+    case "dateUnknown":
+      // 日付の書いていない作業の行に、表の外に書いた期間（工期）を使うか：正解の行の期間は工期の中なので、使う
+      if (q.options.some((o) => o.id === "heading")) return "heading";
+      return q.options.length === 1 ? (q.options[0]?.id ?? null) : null;
+    case "planActualConflict": {
+      // 凡例の記号が予定か実績か（列の見出しと凡例が食い違うときも）：その印の正解
+      const it = q.items[0];
+      const m = it ? ix.markAt(it.file, it.sheet, it.cells[0] ?? "") : null;
+      if (!m) return q.options.some((o) => o.id === "exclude") ? "exclude" : null;
+      const want = m.status === "planned" ? "plan" : "actual";
+      if (q.options.some((o) => o.id === want)) return want;
+      return null;
+    }
     case "effortConflict": {
       // 資料で違う工数・日数：世界の作業の値と同じ選択肢（無ければ空にする）
       const works = [...new Set(q.items.flatMap((it) => it.cells.flatMap((c) => ix.eventAt(it.file, it.sheet, c)?.work_ids ?? [])))];
