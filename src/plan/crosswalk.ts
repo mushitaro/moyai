@@ -391,6 +391,74 @@ export function rejectProposal(plan: Plan, p: CrosswalkProposal, reason: string)
   return { ok: true, plan: rewrite(plan, p.target, refs, () => ({ value: null, author: null, basis: null, accepted: false })), rows: refs.size };
 }
 
+// ─── 計画を作り直したときに引き継ぐ ──────────────────────────────────
+
+export interface CarryOverReport {
+  /** 引き継いだ規則（断った規則は引き継がない） */
+  rules: number;
+  /** 前の計画で人が受けていた当てはめの数（資産の節と作業） */
+  acceptedBefore: number;
+  /** 新しい計画で、引き継いで人が受けた当てはめの数 */
+  acceptedAfter: number;
+  /** 人が直に当てた行のうち、新しい計画に同じ行が無く引き継げなかった数 */
+  humanLost: number;
+}
+
+const acceptedCount = (plan: Plan) =>
+  plan.assets.filter((a) => a.commonItem !== null && a.commonItemAccepted).length + plan.works.filter((w) => w.attribute !== null && w.attributeAccepted).length;
+
+/**
+ * 取り込みで計画を作り直したとき、前の計画の当てはめを新しい計画に引き継ぐ（人の判断を黙って捨てない）。
+ * 1. 人が直に当てた行（作者「人」）は、同じ鍵の行があればそのまま写す（規則より先に）。
+ * 2. 断っていない規則を、置いた順に 1 つずつ当て直す（規則の ID と根拠の文はそのまま）。人が受けていた規則は、同じ理由で受け直す。
+ * 行の鍵は取り込みが中身から作るので、同じ資料と決定なら同じ鍵になる。行が無くなった分は数えて返す。
+ */
+export function carryOverCrosswalk(
+  prev: Plan,
+  prevProposals: readonly CrosswalkProposal[],
+  next: Plan,
+  itemCodes: ReadonlySet<string>,
+  acceptedBasis: (basis: string, reason: string) => string,
+): { plan: Plan; proposals: CrosswalkProposal[]; report: CarryOverReport } {
+  let plan = next;
+  let humanLost = 0;
+  const nextNodes = new Set(next.assets.map((a) => a.nodeKey));
+  const nextWorks = new Set(next.works.map((w) => w.workKey));
+  const humanNodes = new Map(prev.assets.filter((a) => a.commonItemAuthor === "human" && a.commonItemAccepted).map((a) => [a.nodeKey, nodeMapping(a)]));
+  const humanWorks = new Map(prev.works.filter((w) => w.attributeAuthor === "human" && w.attributeAccepted).map((w) => [w.workKey, workMapping(w)]));
+  for (const k of humanNodes.keys()) if (!nextNodes.has(k)) humanLost++;
+  for (const k of humanWorks.keys()) if (!nextWorks.has(k)) humanLost++;
+  plan = {
+    ...plan,
+    assets: plan.assets.map((a) => {
+      const m = humanNodes.get(a.nodeKey);
+      return m && itemCodes.has(m.value ?? "") ? withNode(a, m) : a;
+    }),
+    works: plan.works.map((w) => {
+      const m = humanWorks.get(w.workKey);
+      return m ? withWork(w, m) : w;
+    }),
+  };
+  const proposals: CrosswalkProposal[] = [];
+  for (const p of prevProposals) {
+    if (p.state === "rejected") continue;
+    const r = proposeCrosswalk(plan, [p.rule], { itemCodes, basedOnVersion: p.basedOnVersion, nextRuleId: () => p.ruleId, basisOf: () => p.basis });
+    if (!r.ok) continue;
+    plan = r.plan;
+    const fresh: CrosswalkProposal = { ...r.proposals[0]!, state: "proposed", humanReason: null };
+    if (p.state === "accepted" && p.humanReason !== null) {
+      const a = acceptProposal(plan, fresh, p.humanReason, acceptedBasis);
+      if (a.ok) {
+        plan = a.plan;
+        proposals.push({ ...fresh, state: "accepted", humanReason: p.humanReason });
+        continue;
+      }
+    }
+    proposals.push(fresh);
+  }
+  return { plan, proposals, report: { rules: proposals.length, acceptedBefore: acceptedCount(prev), acceptedAfter: acceptedCount(plan), humanLost } };
+}
+
 /**
  * 人が画面で 1 つの行に直に当てる（作者「人」・人が受けた）。value が null なら当てはめを外す（値の無い行に戻す）。
  * 1 段目の項目はパックのコード、作業の属性は 4 つのどれかだけ。

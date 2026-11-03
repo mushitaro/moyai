@@ -400,7 +400,7 @@ function Activity({ ws }: { ws: IntakeWorkspace }) {
   return (
     <Stack gap={2} data-testid="activity">
       {ws.notices.slice(0, 12).map((n) => (
-        <Text key={n.id} size="xs" c={n.kind === "unknown" ? "red" : undefined} data-testid={n.kind === "unknown" ? "result-unknown" : "ai-activity"}>
+        <Text key={n.id} size="xs" c={n.kind === "unknown" ? "red" : undefined} data-testid={n.kind === "unknown" ? "result-unknown" : n.kind === "info" ? "screen-activity" : "ai-activity"}>
           <span className="moyai-num">{new Date(n.at).toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo" })}</span> {n.text}
         </Text>
       ))}

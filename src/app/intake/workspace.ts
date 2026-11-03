@@ -7,7 +7,7 @@ import type { Decision, QuestionKind, QuestionState } from "../../import/questio
 import type { InputFile } from "../../import/read";
 import type { TabSentCode } from "../../shared/errors";
 import type { Plan } from "../../shared/plan";
-import { setWorkingPlan } from "../state/plan-store";
+import { placeComposedPlan } from "../state/crosswalk";
 import { TEXT } from "../text";
 
 /** 1 ファイルの上限（§2.12） */
@@ -29,8 +29,8 @@ export type ComposeState =
 export interface Notice {
   id: number;
   at: string;
-  /** ai：AI がツールで何かをした／unknown：AI に「結果不明」と返した */
-  kind: "ai" | "unknown";
+  /** ai：AI がツールで何かをした／unknown：AI に「結果不明」と返した／info：画面が自分でしたこと（当てはめの引き継ぎなど） */
+  kind: "ai" | "unknown" | "info";
   text: string;
 }
 
@@ -261,7 +261,9 @@ export class IntakeWorkspace {
           const pre = this.composeBlockers();
           const c = pre.length ? { plan: null, blockers: pre } : this.session.compose();
           if (c.plan) {
-            setWorkingPlan(c.plan, "intake");
+            // 作り直したときは、前の当てはめ（人が受けたもの・人が直に当てたもの・AI の案）を引き継ぎ、数を知らせる
+            const carried = placeComposedPlan(c.plan);
+            if (carried) this.note("info", TEXT.crosswalk.carried(carried));
             this.compose = { state: "done", startedAt, by, plan: c.plan };
           } else this.compose = { state: "failed", startedAt, by, blockers: c.blockers };
         } catch (e) {

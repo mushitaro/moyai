@@ -11,7 +11,7 @@ import { acceptByHuman, rejectByHuman, setByHuman } from "../../../src/app/state
 import { clearWorkingPlan, getWorkingPlan } from "../../../src/app/state/plan-store";
 import { catalogFor } from "../../../src/app/chart/catalog";
 import { buildChart } from "../../../src/plan/chart";
-import { crosswalkSummary, inCommonRows } from "../../../src/plan/crosswalk";
+import { carryOverCrosswalk, crosswalkSummary, inCommonRows } from "../../../src/plan/crosswalk";
 import { pendingDecisions } from "../../../src/plan/diff";
 import { candidateClasses, copyOut, SKIP_REASONS } from "../../../src/share/copyout";
 import { chooseProfile, loadNational, loadVocab, SEND_MIN_K, type ProfileSpec } from "../../../src/share/k";
@@ -372,4 +372,51 @@ describe("写し取り：人が受けた計画から塊が出る。作業の属�
       expect(inCommonRows(a, w)).toBe(a.commonItemAccepted && w.attributeAccepted && a.commonItem !== null && w.attribute !== null);
     }
   }, 60_000);
+});
+
+describe("計画を作り直しても、当てはめを黙って捨てない", () => {
+  const snap = (p: Plan) => ({
+    nodes: Object.fromEntries(p.assets.map((a) => [a.nodeKey, [a.commonItem, a.commonItemAuthor, a.commonItemBasis, a.commonItemAccepted]])),
+    works: Object.fromEntries(p.works.map((w) => [w.workKey, [w.attribute, w.attributeAuthor, w.attributeBasis, w.attributeAccepted]])),
+  });
+
+  test("人が受けた規則・断った規則・案のままの規則・人が直に当てた行が、作り直したあとも同じ", async () => {
+    const F = CASES[0];
+    const ws = await composed(F.facility, [...F.files]);
+    const { nodes, works } = F.rules();
+    proposeAll(ws, [...nodes, ...works]);
+    const ps = getWorkingPlan()!.proposals;
+    // 1 つ目は断る、2 つ目は案のまま、残りは受ける
+    expect(rejectByHuman(ps[0]!.ruleId, "試験の台本が押した（断る）").ok).toBe(true);
+    for (const p of ps.slice(2)) expect(acceptByHuman(p.ruleId, HUMAN_REASON).ok).toBe(true);
+    // 人が直に当てる（規則の当てはめを人の当てはめに置き換える）
+    const crane = plan().assets.find((a) => a.name === "ごみクレーン")!;
+    expect(setByHuman("assetNode", crane.nodeKey, "WI.RECV.CRANE", "台帳を見て人が決めた").ok).toBe(true);
+    const before = snap(plan());
+    const states = getWorkingPlan()!.proposals.map((p) => [p.ruleId, p.state, p.humanReason]);
+    const gen = getWorkingPlan()!.generation;
+
+    // 取り込みで計画を作り直す（同じ資料と決定）
+    ws.startCompose("human");
+    await ws.whenComposed();
+    expect(getWorkingPlan()!.generation).toBe(gen + 1);
+    expect(snap(plan())).toEqual(before);
+    // 断った規則は引き継がない。ほかは同じ ID・同じ状態・同じ理由
+    expect(getWorkingPlan()!.proposals.map((p) => [p.ruleId, p.state, p.humanReason])).toEqual(states.filter((s) => s[1] !== "rejected"));
+    // 画面に、引き継いだ数を知らせる
+    expect(ws.notices[0]).toMatchObject({ kind: "info" });
+    expect(ws.notices[0]!.text).toContain("前の当てはめを引き継ぎました");
+    expect(ws.notices[0]!.text).not.toContain("引き継げませんでした");
+  }, 120_000);
+
+  test("新しい計画に無い行は、人が直に当てたものも数えて知らせる", async () => {
+    const F = CASES[0];
+    const ws = await composed(F.facility, [...F.files]);
+    const crane = plan().assets.find((a) => a.name === "ごみクレーン")!;
+    expect(setByHuman("assetNode", crane.nodeKey, "WI.RECV.CRANE", "台帳を見て人が決めた").ok).toBe(true);
+    const prev = getWorkingPlan()!;
+    const next: Plan = { ...prev.plan, assets: prev.plan.assets.filter((a) => a.nodeKey !== crane.nodeKey).map((a) => ({ ...a, commonItem: null, commonItemAuthor: null, commonItemBasis: null, commonItemAccepted: false })) };
+    const r = carryOverCrosswalk(prev.plan, prev.proposals, next, new Set(catalogFor(PACK)!.items.keys()), (b, reason) => `${b}。人が受けた理由：${reason}`);
+    expect(r.report).toMatchObject({ acceptedBefore: 1, acceptedAfter: 0, humanLost: 1 });
+  }, 120_000);
 });

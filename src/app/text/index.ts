@@ -313,6 +313,10 @@ export const TEXT = {
     ruleBasis: (id: string, cond: string, to: string, reason: string) => `${id}：${cond} → ${to}。AI の理由：${reason}`,
     acceptedBasis: (basis: string, reason: string) => `${basis}。人が受けた理由：${reason}`,
     humanBasis: (reason: string) => `人が画面で当てた。理由：${reason}`,
+    carried: (r: { rules: number; acceptedBefore: number; acceptedAfter: number; humanLost: number }) =>
+      `計画を作り直したので、前の当てはめを引き継ぎました：規則 ${r.rules}、人が受けた当てはめ ${r.acceptedBefore} → ${r.acceptedAfter}` +
+      (r.humanLost ? `、人が直に当てた行のうち ${r.humanLost} 行は新しい計画に無く、引き継げませんでした` : "") +
+      (r.acceptedAfter < r.acceptedBefore ? "。減った分は、当てはめの欄で確かめてください" : ""),
   },
   author: {
     human: "人",

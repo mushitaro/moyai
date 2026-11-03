@@ -4,6 +4,8 @@
 // 案は作者「AI」・人が受けていない。受けるのは人だけで、受けた行だけが星取表の共通の行と共有に入る。
 import {
   acceptProposal,
+  carryOverCrosswalk,
+  type CarryOverReport,
   crosswalkSummary,
   heldRows,
   proposeCrosswalk,
@@ -19,7 +21,7 @@ import type { Plan } from "../../shared/plan";
 import { SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, type CrosswalkSurvey, type Rule } from "../../shared/tools";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { TEXT } from "../text";
-import { getWorkingPlan, updateWorkingPlan } from "./plan-store";
+import { getWorkingPlan, setWorkingPlan, updateWorkingPlan } from "./plan-store";
 
 const T = TEXT.crosswalk;
 
@@ -127,6 +129,27 @@ export function crosswalkSurvey(): CrosswalkSurvey | null {
     unmapped: { nodes: s.nodes.none, works: s.works.none, records: s.unmappedRecords },
     proposals: working.proposals.slice(-100).map((p) => ({ ruleId: p.ruleId, target: p.target, value: p.value, state: p.state, held: heldRows(plan, p).length })),
   };
+}
+
+// ─── 取り込みで計画を作り直したとき ──────────────────────────────────
+
+/**
+ * 取り込みが作った計画を作業中の計画に置く。前の作業中の計画が同じ計画（取り込みの、同じ計画の ID）なら、
+ * その当てはめ（AI の案・人が受けた規則・人が直に当てた行）を引き継ぎ、引き継いだ数を返す。引き継ぐものが無ければ null。
+ */
+export function placeComposedPlan(next: Plan): CarryOverReport | null {
+  const prev = getWorkingPlan();
+  const same = prev !== null && prev.origin === "intake" && prev.plan.planId === next.planId;
+  const any =
+    same &&
+    (prev.proposals.length > 0 || prev.plan.assets.some((a) => a.commonItem !== null) || prev.plan.works.some((w) => w.attribute !== null));
+  if (!same || !any) {
+    setWorkingPlan(next, "intake");
+    return null;
+  }
+  const r = carryOverCrosswalk(prev.plan, prev.proposals, next, itemCodesOf(catalogFor(next.packId)), T.acceptedBasis);
+  setWorkingPlan(r.plan, "intake", r.proposals);
+  return r.report;
 }
 
 // ─── 人の道（画面だけが呼ぶ） ─────────────────────────────────────

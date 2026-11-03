@@ -14,7 +14,7 @@ export interface WorkingPlan {
   revision: number;
   /** 置き直した回（取り込み・確定・見本で置き直すたびに増える。当てはめで中身が変わっても増えない） */
   generation: number;
-  /** AI が置いた当てはめの規則の一覧（置き直すと空に戻る） */
+  /** AI が置いた当てはめの規則の一覧（置き直すと空に戻る。取り込みで作り直したときは引き継いだ分） */
   proposals: CrosswalkProposal[];
 }
 
@@ -27,8 +27,8 @@ function notify() {
   for (const l of listeners) l();
 }
 
-export function setWorkingPlan(plan: Plan, origin: PlanOrigin): WorkingPlan {
-  current = { plan, origin, revision: ++revision, generation: ++generation, proposals: [] };
+export function setWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: CrosswalkProposal[] = []): WorkingPlan {
+  current = { plan, origin, revision: ++revision, generation: ++generation, proposals };
   notify();
   return current;
 }
