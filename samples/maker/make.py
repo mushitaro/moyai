@@ -20,11 +20,11 @@ VERSION = 1
 
 
 def writers():
-    from maker import chart, diary, gantt, ledger, orders, photo, specpdf
+    from maker import chart, diary, diarybook, gantt, ledger, orders, photo, specpdf
 
     return {
         "chart": chart.write_chart,
-        "diary": diary.write_diary_books,
+        "diary": diarybook.write_diary_books,
         "diary_csv": diary.write_diary_csv,
         "inspect_csv": diary.write_inspect_csv,
         "gantt": gantt.write_gantt,

@@ -281,7 +281,6 @@
         2021,
         2025
       ],
-      "formatChange": 2023,
       "furnaceStyle": [
         0,
         1,
@@ -291,7 +290,7 @@
         5
       ],
       "kana": 0.12,
-      "crammed": 0.14
+      "landscapeFrom": 2024
     },
     {
       "type": "gantt",
