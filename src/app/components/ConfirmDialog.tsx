@@ -2,7 +2,8 @@
 // 自分の鍵の合言葉で版に署名する（鍵がまだ無ければ、合言葉を決めて作ってから署名する）。この署名で承認する読み方を 1 行ずつ見せる。
 // 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、MERGE の決定のシートで一言の理由を書いて受けるまで確定できない（受けた決定は state/decisions.ts）。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
-import { Alert, Anchor, Badge, Button, Checkbox, Group, Modal, PasswordInput, ScrollArea, Stack, Table, Text, TextInput } from "@mantine/core";
+import { Alert, Anchor, Button, Group, Modal, PasswordInput, Radio, ScrollArea, Stack, Table, Text, TextInput, Textarea } from "@mantine/core";
+import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
 import { getCurrentReadings, readingsForCommit } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
 import { sheetHash } from "../stages";
@@ -44,6 +45,8 @@ interface StatusBody {
   /** 自分の呼び名と、この PC にその鍵があるか */
   name?: string | null;
   hasKey?: boolean;
+  /** 編集の番（docs/screens.md 3.4） */
+  turn?: { version: number; state: "editing" | "awaitingApproval" | "approved" | "returned"; holder: string | null; to: string | null; from: string; note: string; at: string } | null;
 }
 
 const PASS_MIN = 8;
@@ -110,6 +113,11 @@ export function ConfirmDialog({
   const [pass, setPass] = useState("");
   const [pass2, setPass2] = useState("");
   const [keyMade, setKeyMade] = useState<string | null>(null);
+  // 頼むこと：自分で確定する・編集を頼む・承認を頼む
+  const [ask, setAsk] = useState<"self" | "edit" | "approve">("self");
+  const [to, setTo] = useState("");
+  const [note, setNote] = useState("");
+  const [mail, setMail] = useState<HandoffMail | null>(null);
 
   useEffect(() => {
     if (!opened) return;
@@ -119,6 +127,10 @@ export function ConfirmDialog({
     setPass("");
     setPass2("");
     setKeyMade(null);
+    setAsk("self");
+    setTo("");
+    setNote("");
+    setMail(null);
   }, [opened]);
 
   const status = load.kind === "ready" ? load.status : null;
@@ -136,8 +148,9 @@ export function ConfirmDialog({
   const newKey = !!status && !status.hasKey && keyMade === null;
   const passOk = newKey ? pass.length >= PASS_MIN && pass === pass2 : pass.length > 0;
   const readings = getCurrentReadings().readings;
-  const canSubmit = !!status && !!name && passOk && reason.trim().length > 0 && left === 0 && !busy && !done;
-  const blockReason = !name ? T.needName : left > 0 ? T.pendingLeft(left) : reason.trim().length === 0 ? T.reasonEmpty : !passOk ? (newKey && pass.length > 0 && pass.length < PASS_MIN ? T.passphraseShort : newKey && pass2.length > 0 && pass !== pass2 ? T.passphraseMismatch : T.passphraseEmpty) : null;
+  const toOk = ask === "self" || /^[^\s@]+@[^\s@]+$/.test(to.trim());
+  const canSubmit = !!status && !!name && passOk && toOk && reason.trim().length > 0 && left === 0 && !busy && !done;
+  const blockReason = !toOk ? T.toMissing : !name ? T.needName : left > 0 ? T.pendingLeft(left) : reason.trim().length === 0 ? T.reasonEmpty : !passOk ? (newKey && pass.length > 0 && pass.length < PASS_MIN ? T.passphraseShort : newKey && pass2.length > 0 && pass !== pass2 ? T.passphraseMismatch : T.passphraseEmpty) : null;
 
   const submit = async () => {
     if (!canSubmit || !status) return;
@@ -160,8 +173,10 @@ export function ConfirmDialog({
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
       readings: readingsForCommit(),
       passphrase: pass,
+      request: { kind: ask, to: ask === "self" ? null : to.trim(), note: note.trim() },
+      origin: location.origin,
     };
-    const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null } }>(
+    const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null }; mail: HandoffMail | null }>(
       await client.callHuman("plan_commit", ROUTES.planCommit.path, payload),
     );
     setBusy(false);
@@ -169,12 +184,15 @@ export function ConfirmDialog({
     setPass2("");
     if (!r.ok) return setError(r.message);
     setDone({ version: r.body.version, files: r.body.files });
+    setMail(r.body.mail);
+    // 用意したメールの文は、AI にも intake_survey の handoff で渡す（Claude が利用者の連携したメールから送る）
+    setHandoffMail(r.body.mail);
     clearAccepted();
     onConfirmed(r.body.plan);
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title={status ? T.titleSign((status.latest?.version ?? 0) + 1) : T.title} size="80rem" centered data-testid="confirm-dialog">
+    <Modal opened={opened} onClose={onClose} title={status ? (ask === "self" ? T.titleSign((status.latest?.version ?? 0) + 1) : T.titleHandoff((status.latest?.version ?? 0) + 1)) : T.title} size="80rem" centered data-testid="confirm-dialog">
       <Stack gap="sm">
         {load.kind === "loading" && <Text size="sm">{T.loading}</Text>}
         {load.kind === "error" && (
@@ -274,6 +292,27 @@ export function ConfirmDialog({
               </Stack>
             )}
 
+            <Stack gap={4} data-testid="ask">
+              <Radio.Group label={T.askTitle} value={ask} onChange={(v) => setAsk(v as typeof ask)}>
+                <Group gap="lg" mt={4}>
+                  <Radio value="self" label={T.ask.self} disabled={!!done} data-testid="ask-self" />
+                  <Radio value="edit" label={T.ask.edit} disabled={!!done} data-testid="ask-edit" />
+                  <Radio value="approve" label={T.ask.approve} disabled={!!done} data-testid="ask-approve" />
+                </Group>
+              </Radio.Group>
+              {ask !== "self" && (
+                <Group grow align="flex-start">
+                  <TextInput label={T.to} placeholder={T.toPlaceholder} value={to} onChange={(e) => setTo(e.currentTarget.value)} disabled={!!done} data-testid="ask-to" />
+                  <Textarea label={T.note} value={note} onChange={(e) => setNote(e.currentTarget.value)} autosize minRows={1} maxLength={1000} disabled={!!done} data-testid="ask-note" />
+                </Group>
+              )}
+              {ask !== "self" && (
+                <Text size="xs" c="dimmed">
+                  {T.carries}
+                </Text>
+              )}
+            </Stack>
+
             <Stack gap={4} data-testid="sign">
               <Text fw={700}>{T.signTitle}</Text>
               {!name ? (
@@ -344,6 +383,32 @@ export function ConfirmDialog({
                 </Stack>
               </Alert>
             )}
+            {done && mail && (
+              <Alert color="gray" data-testid="handoff-mail">
+                <Stack gap={4}>
+                  <Text size="sm" fw={700}>
+                    {T.mailTitle}
+                  </Text>
+                  <Text size="xs">
+                    {T.mailTo}：{mail.to}
+                  </Text>
+                  <Text size="xs">
+                    {T.mailSubject}：{mail.subject}
+                  </Text>
+                  <Text size="xs" style={{ whiteSpace: "pre-wrap" }} data-testid="handoff-body">
+                    {mail.body}
+                  </Text>
+                  <Group gap="sm">
+                    <Button component="a" href={mailtoOf(mail)} variant="default" size="xs" data-testid="handoff-mailto">
+                      {T.mailOpen}
+                    </Button>
+                    <Text size="xs" c="dimmed">
+                      {T.mailClaude}
+                    </Text>
+                  </Group>
+                </Stack>
+              </Alert>
+            )}
           </>
         )}
         <Group justify="flex-end" gap="sm">
@@ -373,7 +438,7 @@ export function ConfirmDialog({
                 {T.cancel}
               </Button>
               <Button onClick={submit} disabled={!canSubmit} loading={busy} data-testid="confirm-submit">
-                {T.submit}
+                {ask === "self" ? T.submit : T.submitHandoff}
               </Button>
             </>
           )}

@@ -194,7 +194,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("sign-key-made")).toBeVisible();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名して確定しました");
+      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
       const plans = readdirSync(join(root, "plans"));
       expect(plans).toHaveLength(1);
       const versions = join(root, "plans", plans[0]!, "versions");

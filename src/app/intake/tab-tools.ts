@@ -6,6 +6,7 @@
 import type { TabSentCode } from "../../shared/errors";
 import { SKILL_CATALOG_TOOLS, toolDef, type PhotoCellIn, type PhotoImage, type Rule, type ToolName } from "../../shared/tools";
 import { activeSkills, skillCatalog } from "../skills";
+import { getHandoffMail } from "../state/handoff";
 import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
@@ -126,7 +127,7 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
       return { ok: true, data: { ...s, skillTexts: skillsOf(ws) } };
     }
     // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
-    const s: Record<string, unknown> = { ...ws.survey(), crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null };
+    const s: Record<string, unknown> = { ...ws.survey(), crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null, handoff: getHandoffMail() };
     ws.note("ai", T.surveyed);
     if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] } };
     if (part === "questions") return { ok: true, data: { ...s, samples: [], legends: [], notes: [] } };

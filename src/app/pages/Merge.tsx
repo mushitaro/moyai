@@ -4,10 +4,11 @@
 // 下の帯：左に止め札（決まっていない所・受けていない決定・橋渡しが切れている）、右に主ボタン「署名して確定する…」（署名のダイアログ）。
 // 画面のどこに資料を落としても受ける。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
 import { Anchor, Button, FileButton, Group, Stack, Text, Title } from "@mantine/core";
-import { Suspense, lazy, useRef, useState, type DragEvent } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type DragEvent } from "react";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
-import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
+import { ConfirmDialog, HistoryDialog, usePlanStatus } from "../components/ConfirmDialog";
+import { SignDialog } from "../components/SignDialog";
 import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
 import { FictionMark } from "../components/FictionMark";
 import type { IntakeWorkspace } from "../intake/workspace";
@@ -34,6 +35,31 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [historyOpen, setHistoryOpen] = useState(false);
   const [over, setOver] = useState(false);
   const nextPlan = useRef<Plan | null>(null);
+  const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // メールのリンク（#/merge?open=<計画ID>&v=<版>&h=<中身のハッシュの頭>）で開いたら、保管先の版を読み、署名と鎖とハッシュを確かめてから置く
+  const open = new URLSearchParams(location.hash.split("?")[1] ?? "");
+  const openId = open.get("open");
+  const wantOpen = !!openId && plan?.planId !== openId;
+  const [status, reloadStatus] = usePlanStatus(client, plan?.planId ?? openId ?? "", (!!plan || !!openId) && conn.kind === "open");
+  const st = status.kind === "ready" ? status.status : null;
+  useEffect(() => {
+    if (!wantOpen || !st) return;
+    const latest = st.latest;
+    const info = st.versions?.at(-1);
+    const fail = (k: string) => setNotice(T.openFailed(T.openWhat[k] ?? ""));
+    if (!latest || !info) return fail("missing");
+    if (String(latest.version) !== open.get("v")) return fail("version");
+    if (!(info as { contentHash?: string }).contentHash?.startsWith(open.get("h") ?? "\u0000")) return fail("hash");
+    if ((info as { problem?: string | null }).problem) return fail("broken");
+    setWorkingPlan(latest.plan, "intake");
+    setNotice(null);
+  }, [wantOpen, st]);
+  const turn = st?.turn ?? null;
+  const me = st?.name ?? null;
+  // 承認を頼まれた人（いちばん新しい版を渡した人でない人）には、承認と差し戻しを出す
+  const awaitingMe = !!turn && turn.state === "awaitingApproval" && !!me && turn.from !== me && turn.version === st?.latest?.version;
 
   // 版の下書きが無いあいだは白紙（資料のシートだけ）。開発と試験の見本（?plan=）は、星取表のシートが読んで作業中の計画に置く
   const devSample = new URLSearchParams(location.search).has("plan");
@@ -68,6 +94,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     close();
     if (nextPlan.current && working) setWorkingPlan(nextPlan.current, working.origin);
     nextPlan.current = null;
+    reloadStatus();
   };
   const tabs: MergeSheet[] = plan ? ["chart", "check", "decisions", "files"] : ["files"];
 
@@ -100,6 +127,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         <Text size="sm" c="dimmed">
           {plan ? T.lead(nextVersion) : T.leadNew}
         </Text>
+        {notice && (
+          <Text size="sm" c="var(--shu)" data-testid="merge-notice">
+            {notice}
+          </Text>
+        )}
       </Stack>
 
       <Group justify="space-between" px="md" pt="xs" wrap="nowrap" className="moyai-sheet-tabs">
@@ -154,6 +186,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
 
       <Group justify="space-between" px="md" py="xs" wrap="nowrap" className="moyai-merge-bar">
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+          {turn && (
+            <Text size="xs" data-testid="merge-turn" data-state={turn.state}>
+              {T.turnState[turn.state]}　{T.turn(turn.state === "awaitingApproval" ? (awaitingMe ? T.turnYou : (turn.to ?? "")) : (turn.holder === me ? T.turnYou : (turn.holder ?? turn.to ?? "")))}
+            </Text>
+          )}
           <Text size="xs" c="dimmed">
             {T.talk}
           </Text>
@@ -171,9 +208,20 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           <Button variant="default" onClick={() => setHistoryOpen(true)} disabled={!plan || conn.kind !== "open"} data-testid="history-open">
             {T.history}
           </Button>
-          <Button onClick={() => setConfirmOpen(true)} disabled={blocks.length > 0} data-testid="confirm-open">
-            {T.sign}
-          </Button>
+          {awaitingMe && st?.latest ? (
+            <>
+              <Button variant="default" onClick={() => setSignRole("return")} disabled={conn.kind !== "open"} data-testid="return-open">
+                {T.returnBack}
+              </Button>
+              <Button onClick={() => setSignRole("approve")} disabled={conn.kind !== "open"} data-testid="approve-open">
+                {T.approve}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setConfirmOpen(true)} disabled={blocks.length > 0} data-testid="confirm-open">
+              {T.sign}
+            </Button>
+          )}
         </Group>
       </Group>
 
@@ -181,6 +229,21 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         <>
           <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
+          {st?.latest && signRole && (
+            <SignDialog
+              client={client}
+              planId={plan.planId}
+              version={st.latest.version}
+              role={signRole}
+              hasKey={!!st.hasKey}
+              opened={!!signRole}
+              onClose={() => setSignRole(null)}
+              onSigned={() => {
+                setNotice(T.signed(signRole, st.latest!.version));
+                reloadStatus();
+              }}
+            />
+          )}
         </>
       )}
     </div>

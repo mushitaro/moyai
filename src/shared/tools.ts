@@ -329,6 +329,8 @@ export const TOOLS = {
       compose: z.object({ state: z.enum(["idle", "running", "done", "failed"]), message: z.string().nullable() }),
       crosswalk: crosswalkSurveySchema.nullable(),
       skills: skillCatalogSchema.optional(),
+      /** 人が「署名して渡す」を押したときに橋渡しが用意したメールの文（宛先・件名・本文）。利用者の連携したメールから送る（決まり 1 の例外の 1 つめ） */
+      handoff: z.object({ to: z.string(), subject: z.string(), body: z.string() }).nullable().optional(),
       /** part: skills のとき：今効いている Skill の本文 */
       skillTexts: z.array(z.object({ tier: z.number().int().min(1).max(3), name: z.string(), version: z.string(), text: z.string().max(60_000) })).max(30).optional(),
     }),

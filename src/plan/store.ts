@@ -181,7 +181,7 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
           : p !== null && p.version === prevInfo.version && p.contentHash === prevInfo.contentHash && [...p.signatures].sort().join() === prevInfo.signatures.map((x) => x.fileHash).sort().join();
       if (!chainOk) problem = "chain";
       else if (sigs.bad > 0) problem = "signature";
-      else if (!sigs.ok.some((x) => x.role === (record.kind === "revert" ? "revert" : "confirm"))) problem = "unsigned";
+      else if (!sigs.ok.some((x) => (record.kind === "revert" ? x.role === "revert" : x.role === "confirm" || x.role === "edit"))) problem = "unsigned";
     }
     const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem };
     versions.push(info);
@@ -205,6 +205,8 @@ export interface Signer {
 export interface CommitInput {
   root: string;
   signer: Signer;
+  /** 版を作る署名の役目：自分で確定する（confirm。既定）か、編集・承認を頼んで渡す（edit）。docs/screens.md 3.4 */
+  role?: "confirm" | "edit";
   plan: unknown;
   reason: string;
   acceptances: Acceptance[];
@@ -251,6 +253,7 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     catalogs: i.catalogs ?? null,
     readingSkills: i.readingSkills ?? [],
     signer: i.signer,
+    role: i.role ?? "confirm",
   });
 }
 
@@ -301,6 +304,7 @@ async function writeVersion(
     catalogs: CatalogsFor | null;
     readingSkills?: { name: string; path: string; version: string }[];
     signer: Signer;
+    role?: "confirm" | "edit";
   },
 ): Promise<CommitResult> {
   const dir = planDir(root, v.plan.planId);
@@ -326,7 +330,7 @@ async function writeVersion(
     plan,
   };
   const hash = contentHash(record);
-  const role: SignRole = v.kind === "revert" ? "revert" : "confirm";
+  const role: SignRole = v.kind === "revert" ? "revert" : (v.role ?? "confirm");
   const signature = signStatement({ planId: plan.planId, version, contentHash: hash, role, by: v.signer.by, at: record.at, reason: v.reason }, v.signer.pair);
   await mkdir(join(dir, "versions"), { recursive: true });
   await mkdir(join(dir, "reports"), { recursive: true });
@@ -358,6 +362,35 @@ async function writeVersion(
     await writeAtomic(exportPath, await planWorkbook({ plan, version, at: record.at, catalog: c.catalog, emptyCatalog: c.empty }));
   }
   return { ok: true, version, record, diff, files: { version: versionPath, report: reportPath, export: exportPath } };
+}
+
+export type SignResult = { ok: true; version: number; role: "approve" | "return" } | { ok: false; reason: "nameInvalid" | "reasonEmpty" | "notLatest" | "historyBroken" | "selfApprove" | "exists" };
+
+/**
+ * いちばん新しい版に、承認（approve）か差し戻し（return。理由は必須）の署名を足す（docs/plan.md §2.18.2）。
+ * いちばん新しい版にだけ足す（次の版の鎖は、親の署名のファイルの並びを持つので、前の版に足すと鎖が切れる）。
+ * その版を作った人（確定か渡すの署名をした鍵）は、自分の版を承認できない。
+ */
+export async function signLatest(i: { root: string; planId: string; version: number; role: "approve" | "return"; reason: string; signer: Signer; now?: Date }): Promise<SignResult> {
+  if (!validName(i.signer.by)) return { ok: false, reason: "nameInvalid" };
+  if (i.role === "return" && i.reason.trim().length === 0) return { ok: false, reason: "reasonEmpty" };
+  const hist = await readHistory(i.root, i.planId);
+  const v = hist.versions.at(-1);
+  if (!v || v.version !== i.version) return { ok: false, reason: "notLatest" };
+  if (v.problem !== null) return { ok: false, reason: "historyBroken" };
+  const key = keyIdOf(i.signer.pair.pub);
+  if (i.role === "approve" && v.signatures.some((x) => (x.role === "confirm" || x.role === "edit") && x.key === key)) return { ok: false, reason: "selfApprove" };
+  const at = (i.now ?? new Date()).toISOString();
+  const sig = signStatement({ planId: i.planId, version: v.version, contentHash: v.contentHash, role: i.role, by: i.signer.by, at, reason: i.reason.trim() }, i.signer.pair);
+  const dir = planDir(i.root, i.planId);
+  await writePerson(i.root, i.signer, at);
+  try {
+    await writeFile(join(dir, "signatures", signatureFileName(v.version, i.role, key)), `${JSON.stringify(sig, null, 1)}\n`, { encoding: "utf8", flag: "wx" });
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "EEXIST") return { ok: false, reason: "exists" };
+    throw e;
+  }
+  return { ok: true, version: v.version, role: i.role };
 }
 
 /** 署名した人の呼び名と公開鍵を、保管先の people/ に置く（同じ鍵のファイルがあれば書かない）。信じる元ではない */

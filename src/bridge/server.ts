@@ -259,6 +259,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     planCommit: delegate,
     planRevert: delegate,
     planFileRead: delegate,
+    planSign: delegate,
     personKeyCreate: delegate,
     personKeyConfirm: delegate,
     settingsRead: delegate,

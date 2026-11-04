@@ -117,7 +117,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   }
   await signInDialog(page, PASS);
   await page.getByTestId("confirm-submit").click();
-  await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名して確定しました");
+  await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
   const plans = readdirSync(join(root, "plans"));
   const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
   expect(rec.plan.assets.filter((a: any) => a.commonItemAccepted).length).toBe(accepted);

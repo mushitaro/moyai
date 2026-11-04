@@ -216,3 +216,31 @@ describe("版の署名（docs/plan.md §2.18.2）", () => {
     expect(h.versions[0]).toMatchObject({ legacy: true, problem: null, signatures: [] });
   });
 });
+
+describe("渡す・承認・差し戻し（docs/plan.md §2.18.2・docs/screens.md 3.4）", () => {
+  it("編集を頼んで渡す版は edit の署名。ほかの人が承認の署名を足し、自分の版は自分で承認できない。いちばん新しい版にだけ足せる", async () => {
+    const { signLatest } = await import("../../src/plan/store");
+    const rt = root();
+    const p = aiPlan();
+    const acc = aiDecisions(p).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "承認を頼む", acceptances: acc, basedOn: null, signer: SIGNER, role: "edit", client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    const h1 = await readHistory(rt, "plan-test");
+    expect(h1.versions[0]).toMatchObject({ problem: null, signatures: [{ role: "edit", by: SIGNER.by }] });
+    // 自分の版は自分で承認できない
+    expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: SIGNER })).toEqual({ ok: false, reason: "selfApprove" });
+    const boss = otherSigner("【架空】課長");
+    // 差し戻しは理由が要る
+    expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "return", reason: " ", signer: boss })).toEqual({ ok: false, reason: "reasonEmpty" });
+    expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "見て承認する", signer: boss })).toEqual({ ok: true, version: 1, role: "approve" });
+    const h2 = await readHistory(rt, "plan-test");
+    expect(h2.versions[0]!.signatures.map((x) => [x.role, x.by]).sort()).toEqual([["approve", "【架空】課長"], ["edit", SIGNER.by]]);
+    expect(h2.versions[0]!.problem).toBeNull();
+    // 次の版は、承認の署名まで含めた親の鎖を持つ。そのあとは、前の版には足せない
+    const v2 = await commitPlan({ root: rt, plan: v1.record.plan, reason: "2 版目", acceptances: [], basedOn: 1, signer: SIGNER, client: "t" });
+    if (!v2.ok) throw new Error(v2.reason);
+    expect(v2.record.parent!.signatures).toHaveLength(2);
+    expect((await readHistory(rt, "plan-test")).versions.every((v) => v.problem === null)).toBe(true);
+    expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: otherSigner() })).toEqual({ ok: false, reason: "notLatest" });
+  });
+});

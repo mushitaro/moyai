@@ -8,7 +8,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
-import { commitPlan, planDir, readHistory, revertPlan, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { commitPlan, planDir, readHistory, revertPlan, signLatest, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustList, trustOf } from "./people";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
@@ -73,11 +74,16 @@ const SCHEMAS = {
     basedOn: z.number().int().min(1).nullable(),
     /** 署名の鍵を開く合言葉（橋渡しが開き、署名したらすぐ捨てる。どこにも残さない） */
     passphrase: z.string().min(1).max(1000),
+    /** 頼むこと（docs/screens.md 3.4）：自分で確定する・編集を頼む・承認を頼む。頼むときは宛先（メール）とひとこと */
+    request: z.object({ kind: z.enum(["self", "edit", "approve"]), to: z.string().max(200).nullable(), note: z.string().max(1000) }).optional(),
+    /** 受け取る人の MOYAI で版を開くリンクの頭（画面の origin。メールの文に入れる） */
+    origin: z.string().max(200).optional(),
     /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
   readings_read: z.object({}),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable(), passphrase: z.string().min(1).max(1000) }),
+  plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500), passphrase: z.string().min(1).max(1000) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({ passphrase: z.string().min(1).max(1000) }),
   person_key_confirm: z.object({ key: z.string().regex(/^[0-9a-f]{16}$/) }),
@@ -250,7 +256,18 @@ export class HumanService {
         // 署名ごとに、この PC が覚えた鍵と照らした信じ方を添える（未確認の鍵は覚えるが、信じはしない）
         const versions = h.versions.map((v) => ({ ...v, signatures: v.signatures.map((x) => ({ ...x, trust: trustOf(sd, x, now), fingerprint: fingerprint(x.pub) })) }));
         const s = readSettings(sd);
-        return { ok: true, root, synced: await this.syncedOfPath(root), versions, latest: h.latest ? { version: h.latest.version, plan: h.latest.plan } : null, accepted: h.accepted, name: s.name, hasKey: s.name !== null && ownKeys(sd).some((k) => k.by === s.name) };
+        return {
+          ok: true,
+          root,
+          synced: await this.syncedOfPath(root),
+          versions,
+          latest: h.latest ? { version: h.latest.version, plan: h.latest.plan } : null,
+          accepted: h.accepted,
+          name: s.name,
+          hasKey: s.name !== null && ownKeys(sd).some((k) => k.by === s.name),
+          // 編集の番（渡す・承認・差し戻しで替わる）
+          turn: await readTurn(root, p.planId),
+        };
       }
       case "plan_commit": {
         const p = parsePayload("plan_commit", call.payload);
@@ -266,9 +283,36 @@ export class HumanService {
           if (!w.ok) return no("readingInvalid");
           readingSkills.push({ name: (x.skill as { name: string }).name, path: w.path, version: w.version });
         }
-        const r = await commitPlan({ root, signer: signer.signer, plan: p.plan, reason: p.reason, acceptances: p.acceptances, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id), readingSkills });
+        // 頼むこと：自分で確定する（confirm の署名）か、編集・承認を頼んで渡す（edit の署名）。頼むときは宛先が要る
+        const req = p.request ?? { kind: "self" as const, to: null, note: "" };
+        if (req.kind !== "self" && !(req.to && /^[^\s@]+@[^\s@]+$/.test(req.to.trim()))) return no("mailToInvalid");
+        const r = await commitPlan({
+          root,
+          signer: signer.signer,
+          role: req.kind === "self" ? "confirm" : "edit",
+          plan: p.plan,
+          reason: p.reason,
+          acceptances: p.acceptances,
+          basedOn: p.basedOn,
+          client: call.session,
+          now,
+          catalogs: (id) => this.catalogsFor(id),
+          readingSkills,
+        });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
-        return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
+        const at = now.toISOString();
+        const by = signer.signer.by;
+        const planId = r.record.planId;
+        let mail: { to: string; subject: string; body: string } | null = null;
+        if (req.kind === "self") await writeTurn(root, { schema: TURN_SCHEMA, planId, version: r.version, state: "approved", holder: by, to: null, from: by, note: "", at });
+        else {
+          await writeTurn(root, { schema: TURN_SCHEMA, planId, version: r.version, state: req.kind === "edit" ? "editing" : "awaitingApproval", holder: null, to: req.to!.trim(), from: by, note: req.note, at });
+          const hist = await readHistory(root, planId);
+          const contentHash = hist.versions.at(-1)!.contentHash;
+          const link = `${p.origin ?? "http://127.0.0.1:43110"}/#/merge?open=${encodeURIComponent(planId)}&v=${r.version}&h=${contentHash.slice(0, 16)}`;
+          mail = handoffMail({ name: r.record.plan.displayName, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), note: req.note, by, planId, link });
+        }
+        return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files, mail };
       }
       case "plan_revert": {
         const p = parsePayload("plan_revert", call.payload);
@@ -306,6 +350,32 @@ export class HumanService {
         if (name === undefined) return no("nameInvalid");
         writeSettings(sd, { v: 1, root, ledger, name });
         return { ok: true, root, ledger, name };
+      }
+      case "plan_sign": {
+        const p = parsePayload("plan_sign", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const signer = this.signer(sd, p.passphrase);
+        if (!signer.ok) return no(signer.reason);
+        const r = await signLatest({ root, planId: p.planId, version: p.version, role: p.role, reason: p.reason, signer: signer.signer, now });
+        if (!r.ok) return no(r.reason);
+        // 承認すると番は閉じ、差し戻すと渡した人に番が戻る
+        const prev = await readTurn(root, p.planId);
+        const at = now.toISOString();
+        const by = signer.signer.by;
+        await writeTurn(root, {
+          schema: TURN_SCHEMA,
+          planId: p.planId,
+          version: p.version,
+          state: p.role === "approve" ? "approved" : "returned",
+          holder: p.role === "approve" ? by : (prev?.from ?? null),
+          to: null,
+          from: by,
+          note: p.reason.trim(),
+          at,
+        });
+        return { ok: true, version: r.version, role: r.role };
       }
       case "plan_file_read": {
         const p = parsePayload("plan_file_read", call.payload);

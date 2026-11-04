@@ -108,7 +108,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await page.getByTestId("confirm-reason").fill("台帳の似た施設の周期を計画に入れる（e2e）");
       await signInDialog(page, PASS);
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名して確定しました");
+      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
     });
 
     await test.step("確定した版に、台帳から来た計画の印が残る（作者は AI、根拠に台帳の版と集計、人が受けた）", async () => {
