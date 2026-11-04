@@ -1,5 +1,5 @@
 // AI を入れた 1 回（docs/plan.md §2.6）：見ていない様式を、Claude が会話で作った読み方（3 段目の Skill の下書き）を当てて読む。
-// MOYAI_AI_ROUND=<組のフォルダ> MOYAI_AI_OUT=<回のフォルダ> のときだけ走る。回のフォルダの readings.json（ReadingSkill の並び）を下書きとして当て、
+// MOYAI_AI_ROUND=<組のフォルダ> MOYAI_AI_OUT=<回のフォルダ> のときだけ走る。回のフォルダ（組の measured/ の下に置く。組のハッシュに入れないため）の readings.json（ReadingSkill の並び）を下書きとして当て、
 // Claude が見るもの（intake_survey と同じ要約）を survey.json に、物差しを result.json に書く。
 // Claude の役は survey.json だけを見て規則を書く。質問には、正解だけを見る台本（harness.ts）が人の代わりに答える。
 import { execFileSync } from "node:child_process";

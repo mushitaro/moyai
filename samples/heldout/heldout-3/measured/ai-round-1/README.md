@@ -6,7 +6,7 @@
 
 - **Claude の役**（主線のセッション）：`survey.json` と同じ要約（intake_survey が返すもの）だけを見て、読み方の規則を書きました。規則は `readings.json` にあります。
 - **人の役**：質問に答える決まった台本（`tests/heldout/harness.ts`）です。台本は正解だけを見ます。計画には別のサブエージェントを立てると書きましたが、この回は台本で足りました。台本が答えられない質問が、列の役目の 5 つだけだったからです。その 5 つには、Claude が読み方の answer の規則で答えました。
-- 道具：`MOYAI_AI_ROUND=samples/heldout/heldout-3 MOYAI_AI_OUT=<このフォルダ> npx vitest run tests/heldout/ai-round.test.ts`
+- 道具：`MOYAI_AI_ROUND=samples/heldout/heldout-3 MOYAI_AI_OUT=samples/heldout/heldout-3/measured/ai-round-1 npx vitest run tests/heldout/ai-round.test.ts`
 
 ## 進み
 
