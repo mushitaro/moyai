@@ -65,8 +65,26 @@ export function KeyWarnLine({ signers, onConfirmed, onShow }: { signers: readonl
   );
 }
 
-/** 指紋を読み合わせるダイアログ：指紋を大きく出し、16 文字が合えば「合った」で確認済みにする（人だけの経路） */
-export function KeyCheckDialog({ signer, onClose, onConfirmed }: { signer: TrustSig | null; onClose: () => void; onConfirmed: () => void }) {
+/**
+ * 指紋を読み合わせるダイアログ：指紋を大きく出し、16 文字が合えば「合った」で確認済みにする（人だけの経路）。
+ * 輪の仲間（呼び名が無い）は、題・文・確認済みにする経路を差し替えて同じものを使う（Share.dc.html Version 46）
+ */
+export function KeyCheckDialog({
+  signer,
+  onClose,
+  onConfirmed,
+  title,
+  howTo,
+  onMatch,
+}: {
+  signer: TrustSig | null;
+  onClose: () => void;
+  onConfirmed: () => void;
+  title?: string;
+  howTo?: string;
+  /** 「合った」を押したときの人だけの経路（無ければ人の鍵を確認済みにする）。誤りがあれば、その文を返す */
+  onMatch?: (s: TrustSig) => Promise<string | null>;
+}) {
   const { client } = useConnection();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,14 +92,19 @@ export function KeyCheckDialog({ signer, onClose, onConfirmed }: { signer: Trust
     if (!signer?.pub) return;
     setBusy(true);
     setError(null);
-    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("person_key_confirm", ROUTES.personKeyConfirm.path, { pub: signer.pub }));
+    let err: string | null;
+    if (onMatch) err = await onMatch(signer);
+    else {
+      const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("person_key_confirm", ROUTES.personKeyConfirm.path, { pub: signer.pub }));
+      err = r.ok ? null : r.message;
+    }
     setBusy(false);
-    if (!r.ok) return setError(r.message);
+    if (err) return setError(err);
     onConfirmed();
     onClose();
   };
   return (
-    <Modal opened={!!signer} onClose={onClose} title={signer ? T.title(signer.by) : ""} centered data-testid="key-check">
+    <Modal opened={!!signer} onClose={onClose} title={signer ? (title ?? T.title(signer.by)) : ""} centered data-testid="key-check">
       {signer && (
         <Stack gap="sm">
           <Text ff="monospace" fw={700} className="moyai-num" style={{ fontSize: 24, letterSpacing: "0.08em" }} data-testid="key-check-fingerprint">
@@ -92,7 +115,7 @@ export function KeyCheckDialog({ signer, onClose, onConfirmed }: { signer: Trust
               {T.previous(signer.previous.fingerprint, signer.previous.at.slice(0, 10))}
             </Text>
           )}
-          <Text size="sm">{T.howTo(signer.by)}</Text>
+          <Text size="sm">{howTo ?? T.howTo(signer.by)}</Text>
           {error && (
             <Text size="sm" c="var(--shu-text)">
               {error}

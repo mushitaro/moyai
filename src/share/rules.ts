@@ -70,6 +70,34 @@ export interface RulesDiff {
   changed: number;
 }
 
+/** 受け入れのダイアログの表の 1 行：決まり（コードの名前。画面は言葉にする）・前・今・向き */
+export interface RulesDiffRow {
+  rule: "minK" | `field:${string}` | `band:${string}` | "pack" | "vocab" | "national";
+  before: string;
+  now: string;
+  dir: "loosened" | "tightened" | "changed";
+}
+
+/** 受け入れた決まりと今の決まりの差を、決まりごとの行にする（受け入れのダイアログの表。数は diffRules と同じ） */
+export function diffRuleRows(accepted: Rules, current: Rules): RulesDiffRow[] {
+  const rows: RulesDiffRow[] = [];
+  if (current.minK !== accepted.minK) rows.push({ rule: "minK", before: String(accepted.minK), now: String(current.minK), dir: current.minK > accepted.minK ? "tightened" : "loosened" });
+  for (const f of accepted.fields) if (!current.fields.includes(f)) rows.push({ rule: `field:${f}`, before: "出す", now: "出さない", dir: "tightened" });
+  for (const f of current.fields) if (!accepted.fields.includes(f)) rows.push({ rule: `field:${f}`, before: "出さない", now: "出す", dir: "loosened" });
+  for (const f of STAT_FIELDS) {
+    const a = accepted.bands[f];
+    const c = current.bands[f];
+    const removed = a.filter((e) => !c.includes(e)).length;
+    const added = c.filter((e) => !a.includes(e)).length;
+    if (removed + added === 0) continue;
+    // 境目を外すと帯が粗くなる（厳しくなる）、足すと細かくなる（緩くなる）。両方あれば 2 行
+    if (removed > 0) rows.push({ rule: `band:${f}`, before: a.join("・"), now: c.join("・"), dir: "tightened" });
+    if (added > 0) rows.push({ rule: `band:${f}`, before: a.join("・"), now: c.join("・"), dir: "loosened" });
+  }
+  for (const k of ["pack", "vocab", "national"] as const) if (current[k] !== accepted[k]) rows.push({ rule: k, before: String(accepted[k]).slice(0, 12), now: String(current[k]).slice(0, 12), dir: "changed" });
+  return rows;
+}
+
 /** 人が受け入れた決まりと、今の決まりの差（「決まりが変わりました：緩くなった n、厳しくなった m」）。 */
 export function diffRules(accepted: Rules, current: Rules): RulesDiff {
   const d: RulesDiff = { loosened: 0, tightened: 0, changed: 0 };

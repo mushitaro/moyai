@@ -14,6 +14,7 @@ import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previousOf, trustList, trustOf } from "./people";
 import { checkSeen } from "./seen";
+import { checkRules, diffRuleRows } from "../share/rules";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
@@ -34,7 +35,9 @@ import {
   detectDocuments,
   readGitHub,
   type LedgerSentEntry,
+  addRing,
   readRings,
+  writeRings,
   removeGitHub,
   writeGitHub,
   readSettings,
@@ -133,6 +136,8 @@ const SCHEMAS = {
     previewHash: z.string().regex(HEX64),
   }),
   ring_verify: z.object({ ringId: ringIdSchema }),
+  ring_member_confirm: z.object({ ringId: ringIdSchema, pub: z.string().regex(HEX64) }),
+  ring_rules_accept: z.object({ ringId: ringIdSchema, rulesHash: z.string().regex(HEX64) }),
   ledger_preview: z.object({ planId: planIdSchema, answers: answersSchema }),
   ledger_send: z.object({
     planId: planIdSchema,
@@ -227,6 +232,23 @@ export const HANDOFF_ORIGIN = "http://127.0.0.1:43110";
 
 /** 施設の鍵がまだ決まらないとき（鍵が 2 つある）に、見え方だけを出すための仮の鍵（メモリだけ。署名には使わない） */
 const PLACEHOLDER_PAIR: KeyPair = generateKeyPair();
+
+/** 輪の決まりが、人が受け入れたものから変わっていれば、その差（受け入れのダイアログの表）と、決まりに署名した鍵と月 */
+function rulesChangeOf(ring: Extract<Awaited<ReturnType<typeof loadRing>>, { ok: true }>) {
+  if (ring.entry.acceptedRulesHash === ring.ctx.rulesHash) return null;
+  const p = parseJsonStrict(ring.circleBytes.toString("utf8"));
+  const body = p.ok ? (p.value as { body?: { founder?: unknown; month?: unknown } }).body : undefined;
+  const pub = typeof body?.founder === "string" && HEX64.test(body.founder) ? body.founder : null;
+  const rows = diffRuleRows(ring.entry.acceptedRules, ring.rules);
+  return {
+    rulesHash: ring.ctx.rulesHash,
+    loosened: rows.filter((r) => r.dir === "loosened").length,
+    tightened: rows.filter((r) => r.dir === "tightened").length,
+    rows,
+    changer: pub ? { pub, fingerprint: fingerprint(pub), confirmed: ring.confirmed.has(keyIdOf(pub)) } : null,
+    month: typeof body?.month === "string" ? body.month : null,
+  };
+}
 
 export class HumanService {
   private docs: DocumentsInfo | null = null;
@@ -778,6 +800,38 @@ export class HumanService {
         removeGitHub(sd);
         return { ok: true };
       }
+      case "ring_member_confirm": {
+        // 輪の仲間の鍵を、人が指紋を読み合わせて確認済みにする（その輪に、この公開鍵の仲間のファイルがあるときだけ）
+        const p = parsePayload("ring_member_confirm", call.payload);
+        if (!p) return no("payloadInvalid");
+        const entry = readRings(sd).rings.find((r) => r.ringId === p.ringId);
+        if (!entry) return no("noRing");
+        const pack = this.pack(entry.pack);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const ring = await loadRing(sd, p.ringId, pack);
+        if (!ring.ok) return no(ring.reason);
+        const rep = await verifyRing(entry.root, p.ringId, pack, ring.confirmed);
+        if (!rep.lines.some((l) => l.kind === "member" && l.pub === p.pub)) return no("keyUnknown");
+        const rs = readRings(sd);
+        const key = keyIdOf(p.pub);
+        if (!rs.confirmed.includes(key)) writeRings(sd, { ...rs, confirmed: [...rs.confirmed, key] });
+        return { ok: true, key };
+      }
+      case "ring_rules_accept": {
+        // 変わった輪の決まりを、人が差を見て受け入れる（見た決まりのハッシュと今のハッシュが同じで、緩くした決まりでないときだけ）
+        const p = parsePayload("ring_rules_accept", call.payload);
+        if (!p) return no("payloadInvalid");
+        const entry = readRings(sd).rings.find((r) => r.ringId === p.ringId);
+        if (!entry) return no("noRing");
+        const pack = this.pack(entry.pack);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const ring = await loadRing(sd, p.ringId, pack);
+        if (!ring.ok) return no(ring.reason);
+        if (ring.ctx.rulesHash !== p.rulesHash) return no("previewChanged");
+        if (checkRules(ring.rules).length > 0) return no("rules");
+        addRing(sd, { ...ring.entry, acceptedRulesHash: ring.ctx.rulesHash, acceptedRules: ring.rules });
+        return { ok: true };
+      }
       case "ring_verify": {
         const p = parsePayload("ring_verify", call.payload);
         if (!p) return no("payloadInvalid");
@@ -923,7 +977,13 @@ export class HumanService {
     const sender: FacilityKey = facilityKey(facility, ringId, this.pendingKeys);
     const info = {
       ...base,
-      ring: { ...entry, key: sender.ok ? keyIdOf(sender.pair.pub) : null, fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null, folder: join(entry.root, ringId) },
+      ring: {
+        ...entry,
+        key: sender.ok ? keyIdOf(sender.pair.pub) : null,
+        fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null,
+        folder: join(entry.root, ringId),
+        rulesChange: rulesChangeOf(ring),
+      },
       ringCount: rings.length,
     };
     return { ok: true as const, ring, pack, plan, version: h.latest.version, info, answers, facility, sender };

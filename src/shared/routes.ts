@@ -42,6 +42,9 @@ export const HUMAN_ACTIONS = [
   "checkpoint_open_text",
   "checkpoint_send",
   "ring_verify",
+  // 輪の仲間の鍵を、指紋を読み合わせて確認済みにする・変わった輪の決まりを受け入れる（受け取った束の行で。監査 D1）
+  "ring_member_confirm",
+  "ring_rules_accept",
   // 公開の台帳へ出す（§2.8。運営者の決定 2026-11-04「MOYAI が出す」）：PR を出すのは人がボタンを押したときだけ。通信は §2.12 の例外
   "ledger_preview",
   "ledger_send",
@@ -115,6 +118,8 @@ export const ROUTES = {
   checkpointOpenText: human("/human/checkpoint-open-text", "checkpoint_open_text", 64 * 1024, "検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く"),
   checkpointSend: human("/human/checkpoint-send", "checkpoint_send", 64 * 1024, "検問所：署名し、束を輪のフォルダに置く"),
   ringVerify: human("/human/ring-verify", "ring_verify", 64 * 1024, "輪を受け手と同じ関数で確かめる"),
+  ringMemberConfirm: human("/human/ring-member-confirm", "ring_member_confirm", 16 * 1024, "輪の仲間の鍵を、指紋を読み合わせて確認済みにする（確認済みの仲間の束だけを数える）"),
+  ringRulesAccept: human("/human/ring-rules-accept", "ring_rules_accept", 16 * 1024, "変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない）"),
   ledgerPreview: human("/human/ledger-preview", "ledger_preview", 64 * 1024, "公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり）"),
   ledgerSend: human(
     "/human/ledger-send",

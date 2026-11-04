@@ -422,7 +422,7 @@ export const HUMAN_TEXT = {
     send: "送る",
     sendNeeds: {
       keysForked: "この施設の署名鍵が 2 つあります",
-      rules: "輪の決まりを受け入れていない",
+      rules: "輪の決まりを受け入れていません",
       groupUnknown: "全国の表に載る施設かが決まっていない",
       profileIncomplete: "施設の見え方が決まっていない",
       kShort: "紛れる数が下限に届かない",
@@ -447,6 +447,30 @@ export const HUMAN_TEXT = {
     unknownKey: "指紋の読めない鍵",
     verifyAgain: "確かめ直す",
     verifyKind: { circle: "輪の決まり", member: "仲間", bundle: "束" } as Record<string, string>,
+    /** まだ確かめていない仲間と、その束（Wire、Share.dc.html Version 46。未確認は誤りではないので ✗ と朱を使わない） */
+    memberUnconfirmed: "まだ確かめていません",
+    notCounted: "数えていません",
+    memberTitle: "仲間の鍵の指紋",
+    memberHowTo: "この鍵を持つ仲間に電話などで読み上げてもらい、16 文字が合えば「合った」を押します。",
+    /** 輪の決まりが変わったとき */
+    rulesChanged: "変わりました",
+    rulesCounts: (loosened: number, tightened: number) => ({ loosened: `緩くなった ${loosened}`, tightened: `厳しくなった ${tightened}` }),
+    rulesView: "見て受け入れる",
+    rulesNotAccepted: "輪の決まりを受け入れていません",
+    rulesTitle: "輪の決まりが変わりました",
+    rulesChanger: (fp: string, month: string) => `変えた鍵　${fp}　${month}`,
+    rulesHead: ["決まり", "前", "今", ""],
+    rulesDir: { loosened: "緩くなった", tightened: "厳しくなった", changed: "変わった" } as Record<string, string>,
+    rulesResult: "受け入れると、次に送る束から今の決まりで出します。",
+    rulesAccept: "受け入れる",
+    ruleName: (rule: string): string =>
+      rule === "minK"
+        ? "紛れる数の下限"
+        : rule.startsWith("field:")
+          ? `出す欄（${({ interval: "間隔", manDays: "工数", days: "日数", ageAtWork: "経過年" } as Record<string, string>)[rule.slice(6)] ?? rule.slice(6)}）`
+          : rule.startsWith("band:")
+            ? `${({ interval: "間隔", manDays: "工数", days: "日数", ageAtWork: "経過年" } as Record<string, string>)[rule.slice(5)] ?? rule.slice(5)}の帯の幅`
+            : ({ pack: "パック", vocab: "公開語彙", national: "全国の表" } as Record<string, string>)[rule] ?? rule,
     verifyStatus: { ok: "✓", ng: "✗", arriving: "届きかけ", missing: "無い" } as Record<string, string>,
   },
   bands: {

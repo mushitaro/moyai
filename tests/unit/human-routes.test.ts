@@ -15,6 +15,8 @@ import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { FakeTab, SECRET_A, http, startTestBridge, type TestBridge } from "../helpers/bridge";
 import { STUB_TOKEN, startGitHubStub } from "../helpers/github-stub";
 import type { GitHubIo } from "../../src/bridge/github";
+import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody } from "../../src/share/bundle";
+import { generateKeyPair, keyIdOf, openPlainKey, signBody, type PlainKey } from "../../src/share/sign";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 const NEW_ROUTES = ROUTE_IDS.filter((id) => ROUTES[id].kind === "human" && id !== "commitTrial");
@@ -52,7 +54,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -206,6 +208,32 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(v.report.lines.map((l: { kind: string; status: string }) => `${l.kind}:${l.status}`)).toEqual(["circle:ok", "member:ok", "member:ok", "bundle:ok"]);
     expect(readdirSync(join(docs, "MOYAI", "plans", plan.planId, "share", "keys"))).toEqual([`${rc.ringId}.json`]);
     expect(readdirSync(join(docs, "MOYAI", "plans", plan.planId, "share", "sent"))).toEqual([`${rc.ringId}.json`]);
+
+    // 輪の仲間（監査 D1）：まだ確かめていない仲間は、指紋を読み合わせて確認済みにする（その輪に、その公開鍵の仲間のファイルがあるときだけ）
+    const peer = generateKeyPair();
+    const peerBody = makeMemberBody(rc.ringId, keyIdOf(peer.pub), peer.pub, "2026-11");
+    writeFileSync(join(ringRoot, rc.ringId, "members", `${keyIdOf(peer.pub)}.json`), envelopeText(peerBody, signBody(peerBody, peer.privateKey)));
+    const v2 = await call("ringVerify", { ringId: rc.ringId });
+    expect(v2.report.lines.find((l: { kind: string; pub?: string }) => l.kind === "member" && l.pub === peer.pub)?.reasons).toEqual(["member.unconfirmed"]);
+    expect((await call("ringMemberConfirm", { ringId: rc.ringId, pub: generateKeyPair().pub })).reason).toBe("keyUnknown");
+    expect(await call("ringMemberConfirm", { ringId: rc.ringId, pub: peer.pub })).toMatchObject({ ok: true, key: keyIdOf(peer.pub) });
+    const v3 = await call("ringVerify", { ringId: rc.ringId });
+    expect(v3.report.lines.find((l: { kind: string; pub?: string }) => l.kind === "member" && l.pub === peer.pub)?.status).toBe("ok");
+
+    // 輪の決まりが変わった（輪を作った人が、紛れる数の下限を 1 つ厳しくした）：差を見せ、人が受け入れるまで送らない
+    const founderKey = openPlainKey(JSON.parse(readFileSync(join(tb.stateDir!, "keys", `${rc.ringId}.json`), "utf8")) as PlainKey)!;
+    const circlePath = join(ringRoot, rc.ringId, "circle.json");
+    const oldCircle = JSON.parse(readFileSync(circlePath, "utf8")).body;
+    const nextBody = makeRulesDocBody(CIRCLE_V, oldCircle.founder, oldCircle.nonce, 2, "2026-11", { ...oldCircle.rules, minK: oldCircle.rules.minK + 1 });
+    writeFileSync(circlePath, envelopeText(nextBody, signBody(nextBody, founderKey.privateKey)));
+    const pvR = await call("checkpointPreview", { planId: plan.planId, ringId: rc.ringId, answers });
+    expect(pvR.view.blockers).toContain("rules");
+    expect(pvR.ring.rulesChange).toMatchObject({ loosened: 0, tightened: 1, rows: [{ rule: "minK", dir: "tightened" }], changer: { pub: oldCircle.founder, confirmed: true } });
+    expect((await call("ringRulesAccept", { ringId: rc.ringId, rulesHash: "0".repeat(64) })).reason).toBe("previewChanged");
+    expect(await call("ringRulesAccept", { ringId: rc.ringId, rulesHash: pvR.ring.rulesChange.rulesHash })).toMatchObject({ ok: true });
+    const pvA = await call("checkpointPreview", { planId: plan.planId, ringId: rc.ringId, answers });
+    expect(pvA.ring.rulesChange).toBeNull();
+    expect(pvA.view.blockers).not.toContain("rules");
 
     // 版の履歴と戻す
     // EXPORT：確定した版の書き出しと差分レポートを読む。無い版は断る
