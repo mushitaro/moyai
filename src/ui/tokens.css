@@ -179,3 +179,39 @@
 .t-heading { font: 500 18px/30px var(--font-heading); letter-spacing: var(--track-heading); }
 .t-heading-l { font: 500 26px/40px var(--font-heading); letter-spacing: var(--track-heading); }
 .t-seal { font: 400 17px/24px var(--font-seal); letter-spacing: 0.18em; }
+
+/* スクロールバー（運営者の指示 2026-11-04：4px ほどの細いものを、アプリの色で）。
+   溝は描かず地に溶かし、つまみだけを飾りの罫の色で置く。触れているあいだだけ淡い字の色に上げる。
+   Chrome・Edge は ::-webkit-scrollbar で幅を決める（scrollbar-width を書くと、こちらが効かなくなるので書かない）。
+   それが無い Firefox だけ、決まった細さ（thin）と色を書く */
+:root {
+  --scrollbar-size: 4px;
+  --scrollbar-thumb: var(--line-strong);
+  --scrollbar-thumb-hover: var(--text-3);
+  --scrollbar-track: transparent;
+}
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-hover);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+}
