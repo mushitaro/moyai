@@ -1,0 +1,101 @@
+{
+  "id": "WI-03",
+  "pack": "waste-incineration",
+  "name": "さくら坂環境センター",
+  "short": "さくら坂",
+  "owner": "架空市",
+  "seed": 53003,
+  "today": "2025-12-12",
+  "years": [
+    2016,
+    2025
+  ],
+  "planTo": 2030,
+  "profile": {
+    "furnace": "STOKER",
+    "furnaces": 2,
+    "perFurnace": 75,
+    "turbine": true,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 2005
+  },
+  "costScale": 0.9,
+  "tagStyle": "num",
+  "vendorStyle": "(株)",
+  "vendorPick": 2,
+  "overrides": {
+    "CRANE|年次自主検査": {
+      "skipDone": [
+        2020
+      ],
+      "target": "CRANE-1"
+    }
+  },
+  "gapsNote": [
+    {
+      "kind": "legal_missed",
+      "check": "interval_max",
+      "level": "app",
+      "what": "ごみクレーン No.1 年次自主検査",
+      "note": "R2（2020）に計画したが行っていない（星取表は ○ のまま）"
+    }
+  ],
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "長期整備計画_H28-R12",
+      "title": "整備計画表",
+      "yearsFrom": 2016,
+      "yearsTo": 2030,
+      "layout": "numbered",
+      "header": "eraStack",
+      "legend": "simple",
+      "costUnit": "千円",
+      "codeCol": true,
+      "sheetName": "長期整備計画",
+      "furnaceStyle": [
+        2,
+        1
+      ],
+      "unitStyle": [
+        0,
+        1
+      ],
+      "nameVariant": 2,
+      "sysVariant": 2,
+      "sysPrefix": "none",
+      "groups": true,
+      "subtotals": [
+        "RECV",
+        "COMB",
+        "COOL",
+        "FLUE",
+        "DRAFT"
+      ],
+      "mismatchSubtotal": "COOL",
+      "mismatchBy": 8000
+    },
+    {
+      "type": "ledger",
+      "stem": "機器台帳",
+      "codeInName": 0.6,
+      "nameVariant": 1
+    },
+    {
+      "type": "diary_csv",
+      "years": [
+        2021,
+        2025
+      ],
+      "encoding": "cp932",
+      "kana": 0.3,
+      "furnaceStyle": [
+        0,
+        1,
+        2
+      ]
+    }
+  ]
+}

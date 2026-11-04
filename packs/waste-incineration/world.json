@@ -1,0 +1,491 @@
+{
+  "schema": "moyai.world/0",
+  "pack": "waste-incineration",
+  "version": 1,
+  "note": "サンプルの作り手（samples/maker/）が読む、ごみ焼却の正解の世界の決まり。設備の機器・作業の組み方・法令の点検の周期・資料ごとの粒度と呼び名・書き漏れの割合をここに置き、生成器のコードには業種の語を書かない。施設・業者・金額はすべて架空。全国の表（national/table.json）は施設の性質の分布としてだけ使う",
+  "rates": {
+    "note": "割合は施設ごとの乱数で当てる。どれも正解（answer/world.json の errata）に 1 件ずつ記録する",
+    "omitMark": 0.03,
+    "wrongYear": 0.04,
+    "lastYearReflected": 0.5,
+    "breakdownInChart": 0.12,
+    "postpone": 0.06,
+    "partial": 0.03,
+    "unplannedExtra": 0.02,
+    "breakdownPerUnitYear": 0.035,
+    "diaryRoutinePerDay": 1.4,
+    "cycleAsText": 0.18
+  },
+  "fiscalYearStartMonth": 4,
+  "outage": {
+    "note": "毎年、1 号炉の定期整備 → 全休炉整備（全炉停止）→ 2 号炉の定期整備。全休炉は 1 号炉の整備の終わりと 2 号炉の整備の始めのあいだ。各炉の窓は自分の定期整備と全休炉を合わせた期間",
+    "startMonthDay": [[5, 7], [5, 20]],
+    "allDays": [9, 13],
+    "steps": [
+      { "key": "shutdown", "name": "立下げ", "alias": ["炉立下げ", "停止操作"], "days": 1, "md": 4 },
+      { "key": "cooling", "name": "炉内冷却", "alias": ["冷却"], "days": 2, "md": 2 },
+      { "key": "dxn_pre", "name": "ダイオキシン類 作業前測定・養生", "alias": ["DXN 作業前測定", "ダイオキシン類測定（作業前）・養生"], "days": 2, "md": 8, "vendor": "analysis" },
+      { "key": "deposit", "name": "付着物除去", "alias": ["炉内清掃（付着物除去）", "クリンカ除去"], "days": 3, "md": 24 },
+      { "key": "scaffold_up", "name": "足場組立", "alias": ["炉内足場組立", "足場架設"], "days": 2, "md": 16, "vendor": "scaffold" },
+      { "key": "work", "name": "機器整備", "days": null },
+      { "key": "scaffold_down", "name": "足場解体", "alias": ["炉内足場解体", "足場撤去"], "days": 2, "md": 12, "vendor": "scaffold" },
+      { "key": "dxn_post", "name": "養生撤去・作業後測定", "alias": ["養生撤去・DXN 作業後測定"], "days": 1, "md": 6, "vendor": "analysis" },
+      { "key": "dry_run", "name": "空打ち試運転", "alias": ["空運転", "試運転（空打ち）"], "days": 2, "md": 6 },
+      { "key": "startup", "name": "立上げ", "alias": ["炉立上げ", "昇温"], "days": 1, "md": 4 }
+    ],
+    "flow": {
+      "note": "炉内は上流から下流へ順に、同じ流れの中で作業場を重ねない。炉外は炉内と並行する。専門の業者は、その炉の作業を 1 回のつながった期間にまとめる",
+      "inner": ["grate", "refractory", "boiler", "cooling_tower", "dust", "catalyst"],
+      "outerParallel": true
+    },
+    "allOutage": {
+      "note": "受変電の全停電は全休炉整備の中ほどの日。盤の点検はその日から、DCS はそのあと",
+      "blackoutAt": 0.5,
+      "afterBlackout": ["panel", "dcs"]
+    }
+  },
+  "legal": [
+    { "key": "precise", "name": "精密機能検査", "cycle": 3, "level": "recommendation", "source": "MHW-NOTICE-S46-KANSEI45", "basis": "第三の 11（三年に一回以上）。規則第 5 条は「定期的に」だけ" },
+    { "key": "exhaust", "name": "排ガス測定（ばいじん・NOx・SOx・HCl・ダイオキシン類）", "perYear": 4, "level": "app", "source": null, "basis": "未確認（年 4 回は施設の運用として置いた）" },
+    { "key": "dxn_env", "name": "ダイオキシン類 作業環境測定", "perYear": 2, "level": "app", "source": null, "basis": "未確認" },
+    { "key": "boiler_perf", "name": "ボイラー性能検査", "cycle": 1, "level": "app", "source": null, "basis": "未確認（ボイラー及び圧力容器安全規則。条と周期は照らしていない）" },
+    { "key": "pv_perf", "name": "第一種圧力容器 性能検査", "cycle": 1, "level": "app", "source": null, "basis": "未確認" },
+    { "key": "boiler_jigyo", "name": "発電用ボイラー 定期事業者検査", "cycle": 2, "level": "app", "source": null, "basis": "未確認（電気事業法。周期は照らしていない）" },
+    { "key": "turbine_jigyo", "name": "蒸気タービン 定期事業者検査", "cycle": 4, "level": "app", "source": null, "basis": "未確認（電気事業法。周期は照らしていない）" },
+    { "key": "sub_annual", "name": "受変電設備 年次点検", "cycle": 1, "level": "app", "source": null, "basis": "未確認（保安規程）" },
+    { "key": "sub_monthly", "name": "受変電設備 月次点検", "perYear": 12, "level": "app", "source": null, "basis": "未確認（保安規程）" },
+    { "key": "emg_gen", "name": "非常用発電機 点検・負荷運転", "cycle": 1, "level": "app", "source": null, "basis": "未確認（消防法）" },
+    { "key": "crane_annual", "name": "クレーン 年次自主検査", "cycle": 1, "level": "app", "source": null, "basis": "未確認（クレーン等安全規則）" },
+    { "key": "crane_perf", "name": "クレーン 性能検査", "cycle": 2, "level": "app", "source": null, "basis": "未確認（クレーン等安全規則）" },
+    { "key": "scale", "name": "計量機 定期検査", "cycle": 2, "level": "app", "source": null, "basis": "未確認（計量法）" },
+    { "key": "fire", "name": "消防用設備等点検", "perYear": 2, "level": "app", "source": null, "basis": "未確認（消防法）" },
+    { "key": "elevator", "name": "昇降機 定期検査", "cycle": 1, "level": "app", "source": null, "basis": "未確認（建築基準法）" }
+  ],
+  "systems": [
+    { "key": "RECV", "chart": ["受入・供給設備", "受入供給設備", "受入れ供給設備"], "ledger": "受入・供給設備" },
+    { "key": "COMB", "chart": ["燃焼設備", "燃焼設備", "燃焼・溶融設備"], "ledger": "燃焼設備" },
+    { "key": "COOL", "chart": ["燃焼ガス冷却設備", "ガス冷却設備", "燃焼ガス冷却設備"], "ledger": "燃焼ガス冷却設備" },
+    { "key": "FLUE", "chart": ["排ガス処理設備", "排ガス処理設備", "排ガス処理設備"], "ledger": "排ガス処理設備" },
+    { "key": "DRAFT", "chart": ["通風設備", "通風設備", "通風設備"], "ledger": "通風設備" },
+    { "key": "HEAT", "chart": ["余熱利用設備", "発電設備", "余熱利用設備"], "ledger": "余熱利用設備" },
+    { "key": "WATER", "chart": ["給水設備", "給水設備", "用水設備"], "ledger": "給水設備" },
+    { "key": "ASH", "chart": ["灰出し設備", "灰出設備", "灰出し設備"], "ledger": "灰出し設備" },
+    { "key": "DRAIN", "chart": ["排水処理設備", "排水処理設備", "排水処理設備"], "ledger": "排水処理設備" },
+    { "key": "ELEC", "chart": ["電気設備", "電気設備", "電気設備"], "ledger": "電気設備", "electrical": true },
+    { "key": "INST", "chart": ["計装設備", "計装設備", "計装設備"], "ledger": "計装設備", "electrical": true },
+    { "key": "MISC", "chart": ["雑設備", "雑設備・建築設備", "その他設備"], "ledger": "雑設備" },
+    { "key": "FAC", "chart": ["施設全体", "共通", "全体"], "ledger": null }
+  ],
+  "commonKinds": {
+    "note": "「共通」の 3 つの意味。shared_part＝系統に共通の部品、junction＝系統が合流して分かれる機器、facility＝施設全体の共通の設備",
+    "shared_part": "系統に共通の部品",
+    "junction": "系統が合流して分かれる機器",
+    "facility": "施設全体の共通の設備"
+  },
+  "catalog": [
+    { "key": "SCALE", "sys": "RECV", "name": "計量機", "chart": ["計量機", "トラックスケール", "計量装置"], "diary": ["計量機", "ﾄﾗｯｸｽｹｰﾙ", "計量器"], "class": "WI.RECV.SCALE", "scope": "facility", "n": 2, "tag": "WS", "spec": { "form": "ロードセル式", "main": "最大秤量 30t", "kw": null, "maker": "instrument" }, "chartRow": "group",
+      "tasks": [
+        { "w": "定期点検", "a": "INSPECT", "c": 1, "k": 600, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "scale", "ct": "annual:scale" },
+        { "w": "定期検査（計量法）", "a": "INSPECT", "c": 2, "k": 900, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "scale", "ct": "annual:scale", "legal": "scale" },
+        { "w": "ロードセル更新", "a": "REPLACE", "c": 12, "k": 5200, "md": [6, 8], "d": [2, 3], "at": "Y", "v": "scale", "ct": "own" }
+      ] },
+    { "key": "CRANE", "sys": "RECV", "name": "ごみクレーン", "chart": ["ごみクレーン", "ゴミクレーン", "ごみクレーン"], "diary": ["ごみクレーン", "ｺﾞﾐｸﾚｰﾝ", "クレーン"], "class": "WI.RECV.CRANE", "scope": "facility", "n": 2, "tag": "CR", "parts": ["巻上装置", "走行装置", "横行装置", "バケット"], "spec": { "form": "天井走行クレーン（油圧開閉式バケット）", "main": "吊上荷重 6.3t、バケット容量 4.0m3", "kw": 75, "maker": "crane" }, "chartRow": "unit",
+      "tasks": [
+        { "w": "年次自主検査", "a": "INSPECT", "c": 1, "k": 900, "md": [6, 10], "d": [2, 3], "at": "Y", "v": "crane", "ct": "annual:crane", "legal": "crane_annual" },
+        { "w": "性能検査（クレーン則）", "a": "INSPECT", "c": 2, "k": 800, "md": [4, 6], "d": [1, 2], "at": "Y", "v": "crane", "ct": "annual:crane", "legal": "crane_perf" },
+        { "p": "巻上装置", "w": "ワイヤロープ交換", "a": "REPLACE", "c": 2, "k": 1400, "md": [8, 12], "d": [2, 3], "at": "Y", "v": "crane", "ct": "own" },
+        { "p": "走行装置", "w": "車輪・軸受交換", "a": "REPLACE", "c": 6, "k": 3800, "md": [14, 20], "d": [4, 6], "at": "Y", "v": "crane", "ct": "own" },
+        { "p": "横行装置", "w": "減速機分解整備", "a": "OVERHAUL", "c": 5, "k": 1900, "md": [8, 12], "d": [3, 4], "at": "Y", "v": "crane", "ct": "own" },
+        { "p": "バケット", "w": "分解整備", "a": "OVERHAUL", "c": 3, "k": 3200, "md": [12, 18], "d": [4, 6], "at": "Y", "v": "crane", "ct": "own" }
+      ] },
+    { "key": "CRANE_CTRL", "sys": "RECV", "name": "ごみクレーン制御装置", "chart": ["クレーン制御装置", "ごみクレーン制御盤", "クレーン自動運転装置"], "diary": ["クレーン制御盤", "ｸﾚｰﾝ制御盤"], "class": "WI.RECV.CRANE", "scope": "facility", "n": 1, "tag": "CRC", "spec": { "form": "全自動運転", "main": "—", "kw": null, "maker": "crane" }, "chartRow": "unit", "under": "CRANE",
+      "tasks": [
+        { "w": "更新", "a": "REPLACE", "c": 15, "k": 36000, "md": [60, 90], "d": [20, 30], "at": "A", "v": "crane", "ct": "own" }
+      ] },
+    { "key": "DOOR", "sys": "RECV", "name": "ごみ投入扉", "chart": ["ごみ投入扉", "投入扉", "ごみ投入扉"], "diary": ["投入扉", "ﾄｳﾆｭｳﾄﾋﾞﾗ", "ごみ投入扉"], "class": null, "scope": "facility", "n": 6, "tag": "DR", "spec": { "form": "観音開き式（油圧）", "main": "幅 3.5m × 高さ 6.0m", "kw": 7.5, "maker": "plant" }, "chartRow": "group",
+      "tasks": [
+        { "w": "点検整備", "a": "INSPECT", "c": 2, "k": 2200, "md": [8, 12], "d": [3, 4], "at": "A", "v": "plant", "ct": "bundle" },
+        { "w": "油圧シリンダ取替", "a": "REPLACE", "c": 10, "k": 6000, "md": [12, 16], "d": [4, 5], "at": "A", "v": "plant", "ct": "own" }
+      ] },
+    { "key": "PFDOOR", "sys": "RECV", "name": "プラットホーム出入口扉", "chart": ["プラットホーム出入口扉", "出入口シャッター", "プラットホーム扉"], "diary": ["出入口扉", "ﾌﾟﾗｯﾄﾎｰﾑ扉"], "class": null, "scope": "facility", "n": 2, "tag": "PD", "spec": { "form": "高速シャッター", "main": "—", "kw": 2.2, "maker": "misc" }, "chartRow": "group",
+      "tasks": [ { "w": "点検整備", "a": "INSPECT", "c": 1, "k": 450, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "building", "ct": "own" } ] },
+    { "key": "SHRED", "sys": "RECV", "name": "可燃性粗大ごみ切断機", "chart": ["粗大ごみ切断機", "可燃性粗大ごみ切断機", "切断機"], "diary": ["切断機", "ｾﾂﾀﾞﾝｷ", "粗大切断機"], "class": "WI.RECV.SHREDDER", "scope": "facility", "n": 1, "tag": "SH", "spec": { "form": "竪型せん断式", "main": "処理能力 5t/5h", "kw": 30, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [
+        { "w": "刃物交換", "a": "REPLACE", "c": 1, "k": 850, "md": [3, 4], "d": [1, 2], "at": "Y", "v": "machine", "ct": "own" },
+        { "w": "油圧ユニット整備", "a": "OVERHAUL", "c": 4, "k": 1600, "md": [5, 7], "d": [2, 3], "at": "Y", "v": "machine", "ct": "own" }
+      ] },
+    { "key": "DEODOR", "sys": "RECV", "name": "脱臭装置", "chart": ["脱臭装置", "全休炉時脱臭装置", "脱臭装置"], "diary": ["脱臭装置", "ﾀﾞｯｼｭｳ"], "class": null, "scope": "facility", "n": 1, "tag": "DO", "spec": { "form": "活性炭吸着式", "main": "処理風量 600m3/min", "kw": 37, "maker": "fan" }, "chartRow": "unit",
+      "tasks": [ { "w": "活性炭交換", "a": "REPLACE", "c": 3, "k": 4800, "md": [6, 8], "d": [2, 3], "at": "A", "v": "plant", "ct": "bundle" } ] },
+    { "key": "HOPPER", "sys": "RECV", "name": "ごみ投入ホッパ", "chart": ["ごみホッパ", "投入ホッパ", "ホッパ・シュート"], "diary": ["ホッパ", "ﾎｯﾊﾟ"], "class": null, "scope": "furnace", "n": 1, "tag": "HP", "spec": { "form": "鋼板溶接製", "main": "容量 30m3", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "摩耗部補修", "a": "OVERHAUL", "c": 2, "k": 1300, "md": [6, 9], "d": [2, 3], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+
+    { "key": "FEEDER", "sys": "COMB", "name": "給じん装置", "chart": ["給じん装置", "給塵装置", "給じん装置"], "diary": ["給じん装置", "ｷｭｳｼﾞﾝ", "給塵機"], "class": "WI.COMB.STK_GRATE", "scope": "furnace", "n": 1, "tag": "FD", "need": { "furnace": ["STOKER"] }, "spec": { "form": "油圧プッシャ式", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "点検整備", "a": "INSPECT", "c": 1, "k": 1700, "md": [8, 12], "d": [3, 4], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" } ] },
+    { "key": "GRATE", "sys": "COMB", "name": "火格子", "chart": ["火格子", "ストーカ", "火格子"], "diary": ["火格子", "ｽﾄｰｶ", "ストーカ"], "class": "WI.COMB.STK_GRATE", "scope": "furnace", "n": 1, "tag": "G", "need": { "furnace": ["STOKER"] }, "parts": ["乾燥段", "燃焼段", "後燃焼段"], "spec": { "form": "階段式（可動・固定交互）", "main": "火格子面積 38m2", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [
+        { "p": "乾燥段", "w": "部分取替", "a": "REPLACE", "c": 1, "k": 5800, "md": [14, 20], "d": [3, 5], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "p": "燃焼段", "w": "部分取替", "a": "REPLACE", "c": 1, "k": 11000, "md": [20, 30], "d": [4, 6], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "p": "後燃焼段", "w": "部分取替", "a": "REPLACE", "c": 1, "k": 3800, "md": [10, 14], "d": [2, 4], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "w": "全数更新", "a": "REPLACE", "c": 12, "k": 150000, "md": [240, 320], "d": [20, 26], "at": "F", "flow": "grate", "v": "plant", "ct": "own" }
+      ] },
+    { "key": "GRATE_HYD", "sys": "COMB", "name": "火格子駆動用油圧装置", "chart": ["火格子油圧装置", "油圧ユニット（火格子）", "火格子駆動油圧装置"], "diary": ["油圧ユニット", "ﾕｱﾂﾕﾆｯﾄ", "火格子油圧"], "class": "WI.COMB.STK_GRATE", "scope": "junction", "n": 1, "tag": "HU", "need": { "furnace": ["STOKER"] }, "spec": { "form": "可変容量ポンプ 2 台", "main": "14MPa", "kw": 22, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "点検整備", "a": "INSPECT", "c": 2, "k": 1400, "md": [5, 7], "d": [2, 3], "at": "A", "v": "plant", "ct": "bundle" } ] },
+    { "key": "FURNACE", "sys": "COMB", "name": "焼却炉本体", "chart": ["焼却炉", "焼却炉本体", "炉本体"], "diary": ["焼却炉", "炉本体", "ｼｮｳｷｬｸﾛ"], "class": "WI.COMB.STK_FURNACE", "scope": "furnace", "n": 1, "tag": "K", "need": { "furnace": ["STOKER"] }, "parts": ["耐火物"], "spec": { "form": "全連続燃焼式", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "炉内点検", "a": "INSPECT", "c": 1, "k": 1200, "md": [4, 6], "d": [1, 2], "at": "F", "flow": "refractory", "v": "plant", "ct": "bundle" },
+        { "p": "耐火物", "w": "部分補修", "a": "OVERHAUL", "c": 1, "k": 8500, "md": [24, 36], "d": [4, 6], "at": "F", "flow": "refractory", "v": "refractory", "ct": "bundle" },
+        { "p": "耐火物", "w": "大規模補修", "a": "REPLACE", "c": 7, "k": 46000, "md": [120, 160], "d": [12, 16], "at": "F", "flow": "refractory", "v": "refractory", "ct": "own" }
+      ] },
+    { "key": "BURNER", "sys": "COMB", "name": "助燃バーナ", "chart": ["助燃バーナ", "助燃装置", "助燃バーナ"], "diary": ["助燃バーナ", "ﾊﾞｰﾅ", "バーナ"], "class": "WI.COMB.STK_FURNACE", "scope": "furnace", "n": 1, "tag": "BN", "spec": { "form": "灯油焚き", "main": "—", "kw": 5.5, "maker": "plant" }, "chartRow": "pair",
+      "tasks": [ { "w": "点検・ノズル交換", "a": "INSPECT", "c": 1, "k": 500, "md": [2, 3], "d": [1, 1], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+    { "key": "ASHDROP", "sys": "COMB", "name": "落じんコンベヤ", "chart": ["落じんコンベヤ", "落塵コンベヤ", "落じんコンベア"], "diary": ["落じんコンベヤ", "ﾗｸｼﾞﾝｺﾝﾍﾞﾔ", "落塵CV"], "class": "WI.COMB.STK_GRATE", "scope": "furnace", "n": 1, "tag": "DC", "need": { "furnace": ["STOKER"] }, "spec": { "form": "スクレーパコンベヤ", "main": "—", "kw": 3.7, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "チェーン交換", "a": "REPLACE", "c": 3, "k": 1100, "md": [5, 8], "d": [2, 3], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+    { "key": "CAMERA", "sys": "COMB", "name": "炉内監視カメラ", "chart": ["炉内監視カメラ", "炉内TV", "炉内ITV"], "diary": ["炉内カメラ", "ﾛﾅｲｶﾒﾗ"], "class": null, "scope": "furnace", "n": 1, "tag": "TV", "spec": { "form": "水冷式", "main": "—", "kw": null, "maker": "instrument" }, "chartRow": "pair",
+      "tasks": [ { "w": "オーバーホール", "a": "OVERHAUL", "c": 5, "k": 2400, "md": [3, 4], "d": [1, 2], "at": "F", "flow": "outer", "v": "instrument", "ct": "own" } ] },
+    { "key": "FB_SAND", "sys": "COMB", "name": "流動砂循環装置", "chart": ["砂循環装置", "流動砂循環装置", "砂循環エレベータ"], "diary": ["砂循環", "ｽﾅｼﾞｭﾝｶﾝ"], "class": "WI.COMB.FBI_PRETREAT", "scope": "furnace", "n": 1, "tag": "SC", "need": { "furnace": ["FLUID"] }, "spec": { "form": "バケットエレベータ", "main": "—", "kw": 5.5, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "チェーン・バケット交換", "a": "REPLACE", "c": 3, "k": 2600, "md": [8, 12], "d": [3, 4], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+    { "key": "FB_FURNACE", "sys": "COMB", "name": "流動床式焼却炉", "chart": ["流動床炉", "焼却炉（流動床）", "流動焼却炉"], "diary": ["流動床炉", "ﾘｭｳﾄﾞｳﾛ", "焼却炉"], "class": "WI.COMB.FBI_FURNACE", "scope": "furnace", "n": 1, "tag": "K", "need": { "furnace": ["FLUID"] }, "parts": ["散気管", "耐火物"], "spec": { "form": "流動床式", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [
+        { "p": "散気管", "w": "部分取替", "a": "REPLACE", "c": 2, "k": 3600, "md": [12, 16], "d": [3, 4], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "p": "耐火物", "w": "部分補修", "a": "OVERHAUL", "c": 1, "k": 7200, "md": [20, 30], "d": [4, 5], "at": "F", "flow": "refractory", "v": "refractory", "ct": "bundle" }
+      ] },
+    { "key": "FB_INCOMB", "sys": "COMB", "name": "不燃物排出装置", "chart": ["不燃物排出装置", "不燃物抜出装置", "不燃物排出装置"], "diary": ["不燃物排出", "ﾌﾈﾝﾌﾞﾂ"], "class": "WI.COMB.FBI_FURNACE", "scope": "furnace", "n": 1, "tag": "IE", "need": { "furnace": ["FLUID"] }, "spec": { "form": "スクリュー式", "main": "—", "kw": 3.7, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "スクリュー補修", "a": "OVERHAUL", "c": 2, "k": 1800, "md": [6, 8], "d": [2, 3], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+    { "key": "SH_MELTER", "sys": "COMB", "name": "ガス化溶融炉", "chart": ["ガス化溶融炉", "溶融炉", "シャフト炉"], "diary": ["溶融炉", "ﾖｳﾕｳﾛ", "シャフト炉"], "class": "WI.COMB.SHF_MELTER", "scope": "furnace", "n": 1, "tag": "M", "need": { "furnace": ["SHAFT"] }, "parts": ["羽口", "出滓口", "耐火物"], "spec": { "form": "シャフト式", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [
+        { "p": "羽口", "w": "取替", "a": "REPLACE", "c": 1, "k": 6400, "md": [14, 20], "d": [3, 5], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "p": "出滓口", "w": "補修", "a": "OVERHAUL", "c": 1, "k": 3800, "md": [10, 14], "d": [2, 4], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "p": "耐火物", "w": "張替", "a": "REPLACE", "c": 3, "k": 52000, "md": [140, 180], "d": [14, 18], "at": "F", "flow": "refractory", "v": "refractory", "ct": "own" }
+      ] },
+    { "key": "SH_CHAMBER", "sys": "COMB", "name": "燃焼室", "chart": ["燃焼室", "二次燃焼室", "燃焼室"], "diary": ["燃焼室", "ﾈﾝｼｮｳｼﾂ"], "class": "WI.COMB.SHF_CHAMBER", "scope": "furnace", "n": 1, "tag": "CC", "need": { "furnace": ["SHAFT"] }, "spec": { "form": "竪型", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "耐火物補修", "a": "OVERHAUL", "c": 1, "k": 4200, "md": [12, 16], "d": [3, 4], "at": "F", "flow": "refractory", "v": "refractory", "ct": "bundle" } ] },
+    { "key": "COKE", "sys": "COMB", "name": "コークス供給装置", "chart": ["コークス供給装置", "副資材供給装置", "コークス・石灰石供給装置"], "diary": ["コークス供給", "ｺｰｸｽ"], "class": "WI.COMB.SHF_MELTER", "scope": "junction", "n": 1, "tag": "CK", "need": { "furnace": ["SHAFT"] }, "spec": { "form": "ベルトコンベヤ", "main": "—", "kw": 11, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "ベルト交換", "a": "REPLACE", "c": 4, "k": 2600, "md": [8, 10], "d": [2, 3], "at": "A", "v": "plant", "ct": "bundle" } ] },
+    { "key": "KL_DRUM", "sys": "COMB", "name": "熱分解ドラム", "chart": ["熱分解ドラム", "キルン", "熱分解ドラム"], "diary": ["キルン", "ﾄﾞﾗﾑ", "熱分解ドラム"], "class": "WI.COMB.KLN_GASIFIER", "scope": "furnace", "n": 1, "tag": "KD", "need": { "furnace": ["ROTARY"] }, "parts": ["シール装置", "駆動装置"], "spec": { "form": "外熱式回転ドラム", "main": "—", "kw": 37, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [
+        { "p": "シール装置", "w": "シール材交換", "a": "REPLACE", "c": 1, "k": 3200, "md": [8, 12], "d": [2, 3], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "p": "駆動装置", "w": "減速機分解整備", "a": "OVERHAUL", "c": 4, "k": 5400, "md": [12, 16], "d": [3, 5], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" }
+      ] },
+    { "key": "KL_MELTER", "sys": "COMB", "name": "旋回溶融炉", "chart": ["溶融炉", "旋回溶融炉", "溶融燃焼炉"], "diary": ["溶融炉", "ﾖｳﾕｳﾛ"], "class": "WI.COMB.KLN_MELTER", "scope": "furnace", "n": 1, "tag": "SM", "need": { "furnace": ["ROTARY"] }, "parts": ["耐火物"], "spec": { "form": "旋回流式", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "p": "耐火物", "w": "部分補修", "a": "OVERHAUL", "c": 1, "k": 9600, "md": [24, 32], "d": [4, 6], "at": "F", "flow": "refractory", "v": "refractory", "ct": "bundle" } ] },
+    { "key": "FX_FURNACE", "sys": "COMB", "name": "固定床式焼却炉", "chart": ["焼却炉", "固定炉", "焼却炉"], "diary": ["焼却炉", "炉"], "class": "WI.COMB.STK_FURNACE", "scope": "furnace", "n": 1, "tag": "K", "need": { "furnace": ["FIXED"] }, "parts": ["炉床", "耐火物"], "spec": { "form": "固定床式（バッチ）", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [
+        { "p": "炉床", "w": "火格子取替", "a": "REPLACE", "c": 2, "k": 1800, "md": [6, 8], "d": [2, 3], "at": "F", "flow": "grate", "v": "plant", "ct": "bundle" },
+        { "p": "耐火物", "w": "部分補修", "a": "OVERHAUL", "c": 1, "k": 2400, "md": [8, 12], "d": [2, 3], "at": "F", "flow": "refractory", "v": "refractory", "ct": "bundle" }
+      ] },
+
+    { "key": "BOILER", "sys": "COOL", "name": "廃熱ボイラ", "chart": ["ボイラ", "廃熱ボイラ", "ボイラー"], "diary": ["ボイラ", "ﾎﾞｲﾗ", "廃熱ボイラ"], "class": "WI.COOL.BOILER", "scope": "furnace", "n": 1, "tag": "B", "need": { "turbine": [true] }, "parts": ["過熱器", "蒸発管", "節炭器", "安全弁"], "spec": { "form": "自然循環式水管ボイラ", "main": "最高使用圧力 4.4MPa、蒸発量 14t/h", "kw": null, "maker": "boiler" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "性能検査（ボイラー則）", "a": "INSPECT", "c": 1, "k": 3800, "md": [10, 14], "d": [2, 3], "at": "F", "flow": "boiler", "v": "boiler", "ct": "annual:boiler", "legal": "boiler_perf" },
+        { "w": "定期事業者検査", "a": "INSPECT", "c": 2, "k": 9000, "md": [20, 28], "d": [3, 5], "at": "F", "flow": "boiler", "v": "boiler", "ct": "annual:boiler", "legal": "boiler_jigyo" },
+        { "p": "蒸発管", "w": "肉厚測定・補修", "a": "INSPECT", "c": 1, "k": 5200, "md": [16, 24], "d": [3, 5], "at": "F", "flow": "boiler", "v": "boiler", "ct": "bundle" },
+        { "p": "過熱器", "w": "管更新", "a": "REPLACE", "c": 8, "k": 64000, "md": [160, 220], "d": [14, 20], "at": "F", "flow": "boiler", "v": "boiler", "ct": "own" },
+        { "p": "節炭器", "w": "管束更新", "a": "REPLACE", "c": 12, "k": 42000, "md": [110, 150], "d": [10, 14], "at": "F", "flow": "boiler", "v": "boiler", "ct": "own" },
+        { "p": "安全弁", "w": "分解点検・吹出し調整", "a": "OVERHAUL", "c": 1, "k": 550, "md": [3, 4], "d": [1, 1], "at": "F", "flow": "boiler", "v": "boiler", "ct": "annual:boiler" }
+      ] },
+    { "key": "SOOT", "sys": "COOL", "name": "スートブロワ", "chart": ["スートブロワ", "スートブロワー", "すす吹装置"], "diary": ["スートブロワ", "ｽｰﾄﾌﾞﾛﾜ", "SB"], "class": "WI.COOL.BOILER", "scope": "furnace", "n": 1, "tag": "SB", "need": { "turbine": [true] }, "spec": { "form": "蒸気噴射式（長抜差し・定置）", "main": "—", "kw": 0.4, "maker": "boiler" }, "chartRow": "pair",
+      "tasks": [ { "w": "整備", "a": "OVERHAUL", "c": 2, "k": 1200, "md": [4, 6], "d": [2, 2], "at": "F", "flow": "outer", "v": "boiler", "ct": "bundle" } ] },
+    { "key": "BFP", "sys": "COOL", "name": "ボイラ給水ポンプ", "chart": ["ボイラ給水ポンプ", "ボイラー給水ポンプ", "BFP"], "diary": ["BFP", "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ", "給水ポンプ", "給水P"], "class": "WI.COOL.BOILER", "scope": "furnace", "n": 3, "tag": "BFP", "need": { "turbine": [true] }, "spec": { "form": "多段タービンポンプ", "main": "吐出量 20m3/h × 5.5MPa", "kw": 55, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 3, "k": 2500, "md": [6, 9], "d": [2, 3], "at": "F", "flow": "outer", "v": "pump", "ct": "own" } ] },
+    { "key": "DEAERATOR", "sys": "COOL", "name": "脱気器", "chart": ["脱気器", "脱気器", "脱気器"], "diary": ["脱気器", "ﾀﾞｯｷｷ"], "class": "WI.COOL.BOILER", "scope": "junction", "n": 1, "tag": "DA", "need": { "turbine": [true] }, "spec": { "form": "スプレートレイ形", "main": "第一種圧力容器", "kw": null, "maker": "boiler" }, "chartRow": "unit",
+      "tasks": [ { "w": "開放点検（第一種圧力容器 性能検査）", "a": "INSPECT", "c": 1, "k": 1700, "md": [5, 7], "d": [2, 2], "at": "A", "v": "boiler", "ct": "annual:boiler", "legal": "pv_perf" } ] },
+    { "key": "DAP", "sys": "COOL", "name": "脱気器給水ポンプ", "chart": ["脱気器給水ポンプ", "脱気器給水ポンプ", "脱気器給水P"], "diary": ["脱気器給水P", "ﾀﾞｯｷｷｷｭｳｽｲ"], "class": "WI.COOL.BOILER", "scope": "junction", "n": 2, "tag": "DAP", "need": { "turbine": [true] }, "spec": { "form": "うず巻ポンプ", "main": "—", "kw": 15, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 1300, "md": [4, 6], "d": [2, 2], "at": "A", "v": "pump", "ct": "own" } ] },
+    { "key": "ACC", "sys": "COOL", "name": "空冷式蒸気復水器", "chart": ["復水器", "蒸気復水器", "空冷復水器"], "diary": ["復水器", "ﾌｸｽｲｷ", "ACC"], "class": "WI.COOL.CONDENSER", "scope": "junction", "n": 1, "tag": "AC", "need": { "turbine": [true] }, "parts": ["ファン"], "spec": { "form": "強制空冷式", "main": "ファン 8 台", "kw": 30, "maker": "fan" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "管束洗浄", "a": "INSPECT", "c": 3, "k": 2600, "md": [6, 8], "d": [2, 3], "at": "A", "v": "plant", "ct": "own" },
+        { "p": "ファン", "w": "点検（8台）", "a": "INSPECT", "c": 2, "k": 2900, "md": [6, 8], "d": [2, 3], "at": "A", "v": "fan", "ct": "own" }
+      ] },
+    { "key": "CONDP", "sys": "COOL", "name": "復水ポンプ", "chart": ["復水ポンプ", "復水ポンプ", "復水P"], "diary": ["復水P", "ﾌｸｽｲﾎﾟﾝﾌﾟ"], "class": "WI.COOL.CONDENSER", "scope": "junction", "n": 2, "tag": "CP", "need": { "turbine": [true] }, "spec": { "form": "立形多段", "main": "—", "kw": 11, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 1000, "md": [3, 5], "d": [1, 2], "at": "A", "v": "pump", "ct": "own" } ] },
+    { "key": "PUREW", "sys": "COOL", "name": "純水装置", "chart": ["純水装置", "純水装置", "ボイラ用純水装置"], "diary": ["純水装置", "ｼﾞｭﾝｽｲ"], "class": null, "scope": "facility", "n": 1, "tag": "PW", "need": { "turbine": [true] }, "spec": { "form": "イオン交換樹脂式", "main": "—", "kw": null, "maker": "water" }, "chartRow": "unit",
+      "tasks": [ { "w": "樹脂交換", "a": "REPLACE", "c": 5, "k": 3600, "md": [3, 4], "d": [1, 2], "at": "Y", "v": "water", "ct": "own" } ] },
+    { "key": "GCT", "sys": "COOL", "name": "減温塔", "chart": ["減温塔", "ガス冷却室", "減温塔"], "diary": ["減温塔", "ｹﾞﾝｵﾝﾄｳ"], "class": "WI.COOL.WATER_SPRAY", "scope": "furnace", "n": 1, "tag": "T", "spec": { "form": "水噴霧式", "main": "—", "kw": null, "maker": "plant" }, "chartRow": "unit", "nameWithFurnace": true,
+      "tasks": [ { "w": "点検・ノズル交換", "a": "INSPECT", "c": 1, "k": 1500, "md": [5, 7], "d": [2, 2], "at": "F", "flow": "cooling_tower", "v": "plant", "ct": "bundle" } ] },
+    { "key": "GCTP", "sys": "COOL", "name": "減温塔噴射水ポンプ", "chart": ["噴射水ポンプ", "減温塔噴射水ポンプ", "噴霧水ポンプ"], "diary": ["噴射水P", "ﾌﾝｼｬｽｲ"], "class": "WI.COOL.WATER_SPRAY", "scope": "furnace", "n": 2, "tag": "TP", "spec": { "form": "多段うず巻", "main": "—", "kw": 7.5, "maker": "pump" }, "chartRow": "group",
+      "tasks": [ { "w": "メカニカルシール交換", "a": "REPLACE", "c": 3, "k": 700, "md": [2, 3], "d": [1, 1], "at": "F", "flow": "outer", "v": "pump", "ct": "own" } ] },
+
+    { "key": "BF", "sys": "FLUE", "name": "ろ過式集じん器", "chart": ["バグフィルタ", "ろ過式集じん器", "バグフィルター"], "diary": ["バグフィルタ", "ﾊﾞｸﾞﾌｨﾙﾀ", "BF", "集じん器"], "class": "WI.FLUE.DUST", "scope": "furnace", "n": 1, "tag": "F", "need": { "dust": ["BF"] }, "parts": ["ろ布", "パルス弁"], "spec": { "form": "パルスジェット式", "main": "ろ過面積 1,450m2", "kw": null, "maker": "env" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "本体点検", "a": "INSPECT", "c": 1, "k": 1300, "md": [4, 6], "d": [1, 2], "at": "F", "flow": "dust", "v": "plant", "ct": "bundle" },
+        { "p": "ろ布", "w": "全数交換", "a": "REPLACE", "c": 5, "k": 24000, "md": [40, 56], "d": [5, 7], "at": "F", "flow": "dust", "v": "env", "ct": "own" },
+        { "p": "パルス弁", "w": "全数交換", "a": "REPLACE", "c": 6, "k": 3500, "md": [6, 8], "d": [2, 3], "at": "F", "flow": "dust", "v": "env", "ct": "own" }
+      ] },
+    { "key": "EP", "sys": "FLUE", "name": "電気集じん器", "chart": ["電気集じん器", "EP", "電気集塵機"], "diary": ["EP", "電気集じん機", "ﾃﾞﾝｷｼｭｳｼﾞﾝ"], "class": "WI.FLUE.DUST", "scope": "furnace", "n": 1, "tag": "EP", "need": { "dust": ["EP"] }, "parts": ["放電極", "集じん極"], "spec": { "form": "乾式 2 室 3 場", "main": "—", "kw": null, "maker": "env" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "内部点検・槌打装置調整", "a": "INSPECT", "c": 1, "k": 1800, "md": [6, 8], "d": [2, 3], "at": "F", "flow": "dust", "v": "env", "ct": "bundle" },
+        { "p": "放電極", "w": "部分取替", "a": "REPLACE", "c": 4, "k": 9000, "md": [20, 28], "d": [4, 5], "at": "F", "flow": "dust", "v": "env", "ct": "own" }
+      ] },
+    { "key": "LIME", "sys": "FLUE", "name": "消石灰供給装置", "chart": ["消石灰供給装置", "薬剤供給装置（消石灰）", "消石灰定量供給装置"], "diary": ["消石灰供給", "ｼｮｳｾｯｶｲ", "消石灰"], "class": "WI.FLUE.HCL_SOX", "scope": "shared_part", "n": 1, "tag": "L", "parts": ["ブロワ"], "partsPerFurnace": true, "spec": { "form": "乾式（サイロ・定量供給機）", "main": "サイロ 60m3", "kw": 3.7, "maker": "env" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "整備", "a": "OVERHAUL", "c": 2, "k": 750, "md": [3, 4], "d": [1, 2], "at": "A", "v": "plant", "ct": "bundle" },
+        { "p": "ブロワ", "w": "整備", "a": "OVERHAUL", "c": 2, "k": 650, "md": [2, 3], "d": [1, 1], "at": "F", "flow": "outer", "v": "fan", "ct": "own" }
+      ] },
+    { "key": "CARBON", "sys": "FLUE", "name": "活性炭供給装置", "chart": ["活性炭供給装置", "活性炭吹込装置", "活性炭供給装置"], "diary": ["活性炭供給", "ｶｯｾｲﾀﾝ"], "class": "WI.FLUE.DIOXIN", "scope": "shared_part", "n": 1, "tag": "AC", "spec": { "form": "乾式", "main": "—", "kw": 2.2, "maker": "env" }, "chartRow": "unit", "addedYearOffset": 16,
+      "tasks": [ { "w": "整備", "a": "OVERHAUL", "c": 2, "k": 700, "md": [2, 3], "d": [1, 1], "at": "A", "v": "plant", "ct": "bundle" } ] },
+    { "key": "SCR", "sys": "FLUE", "name": "触媒脱硝装置", "chart": ["脱硝装置", "触媒反応塔", "脱硝装置"], "diary": ["脱硝", "触媒", "ﾀﾞｯｼｮｳ"], "class": "WI.FLUE.NOX", "scope": "furnace", "n": 1, "tag": "N", "need": { "furnace": ["STOKER", "FLUID", "SHAFT", "ROTARY"] }, "parts": ["触媒"], "spec": { "form": "触媒脱硝（ハニカム）", "main": "—", "kw": null, "maker": "catalyst" }, "chartRow": "unit",
+      "tasks": [ { "p": "触媒", "w": "交換", "a": "REPLACE", "c": 6, "k": 40000, "md": [24, 32], "d": [4, 6], "at": "F", "flow": "catalyst", "v": "catalyst", "ct": "own" } ] },
+    { "key": "NH3P", "sys": "FLUE", "name": "アンモニア水噴霧ポンプ", "chart": ["アンモニア水噴霧ポンプ", "アンモニア水ポンプ", "NH3噴霧ポンプ"], "diary": ["アンモニアポンプ", "ｱﾝﾓﾆｱP"], "class": "WI.FLUE.NOX", "scope": "junction", "n": 2, "tag": "NP", "spec": { "form": "ダイヤフラム式", "main": "—", "kw": 0.75, "maker": "pump" }, "chartRow": "group",
+      "tasks": [ { "w": "整備", "a": "OVERHAUL", "c": 3, "k": 600, "md": [2, 3], "d": [1, 1], "at": "A", "v": "pump", "ct": "own" } ] },
+    { "key": "REHEAT", "sys": "FLUE", "name": "排ガス再加熱器", "chart": ["排ガス再加熱器", "再加熱器", "SGH"], "diary": ["再加熱器", "ｻｲｶﾈﾂｷ", "SGH"], "class": "WI.FLUE.NOX", "scope": "furnace", "n": 1, "tag": "RH", "need": { "turbine": [true] }, "spec": { "form": "蒸気式", "main": "—", "kw": null, "maker": "boiler" }, "chartRow": "unit",
+      "tasks": [ { "w": "開放点検", "a": "INSPECT", "c": 2, "k": 650, "md": [3, 4], "d": [1, 2], "at": "F", "flow": "catalyst", "v": "boiler", "ct": "bundle" } ] },
+
+    { "key": "FDF", "sys": "DRAFT", "name": "押込送風機", "chart": ["押込送風機", "押込ファン", "FDF"], "diary": ["FDF", "押込ﾌｧﾝ", "押込送風機"], "class": "WI.DRAFT.FDF", "scope": "furnace", "n": 1, "tag": "FDF", "spec": { "form": "ターボ形", "main": "—", "kw": 90, "maker": "fan" }, "chartRow": "pair",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 2600, "md": [6, 9], "d": [2, 3], "at": "F", "flow": "outer", "v": "fan", "ct": "own" } ] },
+    { "key": "SAF", "sys": "DRAFT", "name": "二次送風機", "chart": ["二次送風機", "二次空気送風機", "SAF"], "diary": ["二次送風機", "ﾆｼﾞﾌｧﾝ", "SAF"], "class": "WI.DRAFT.FDF", "scope": "furnace", "n": 1, "tag": "SAF", "spec": { "form": "ターボ形", "main": "—", "kw": 45, "maker": "fan" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 1900, "md": [5, 7], "d": [2, 3], "at": "F", "flow": "outer", "v": "fan", "ct": "own" } ] },
+    { "key": "IDF", "sys": "DRAFT", "name": "誘引通風機", "chart": ["誘引送風機", "誘引通風機", "IDF"], "diary": ["IDF", "誘引ﾌｧﾝ", "誘引通風機", "誘引送風機"], "class": "WI.DRAFT.IDF", "scope": "furnace", "n": 1, "tag": "IDF", "spec": { "form": "ターボ形（インバータ制御）", "main": "—", "kw": 280, "maker": "fan" }, "chartRow": "unit",
+      "tasks": [
+        { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 7400, "md": [16, 22], "d": [4, 6], "at": "F", "flow": "outer", "v": "fan", "ct": "own" },
+        { "w": "インペラ更新", "a": "REPLACE", "c": 12, "k": 17000, "md": [24, 30], "d": [5, 7], "at": "F", "flow": "outer", "v": "fan", "ct": "own" }
+      ] },
+    { "key": "STACK", "sys": "DRAFT", "name": "煙突", "chart": ["煙突", "煙突（外筒・内筒）", "煙突"], "diary": ["煙突", "ｴﾝﾄﾂ"], "class": null, "scope": "shared_part", "n": 1, "tag": "ST", "parts": ["内筒"], "partsPerFurnace": true, "spec": { "form": "外筒 RC 造・内筒 鋼板製", "main": "高さ 59m", "kw": null, "maker": "plant" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "点検調査", "a": "INSPECT", "c": 5, "k": 4200, "md": [10, 14], "d": [3, 4], "at": "A", "v": "plant", "ct": "own" },
+        { "p": "内筒", "w": "肉厚測定", "a": "INSPECT", "c": 5, "k": 1100, "md": [3, 4], "d": [1, 2], "at": "A", "v": "plant", "ct": "own" }
+      ] },
+    { "key": "DAMPER", "sys": "DRAFT", "name": "煙道ダンパ", "chart": ["煙道ダンパ", "風道・煙道ダンパ", "ダンパ類"], "diary": ["ダンパ", "ﾀﾞﾝﾊﾟ"], "class": null, "scope": "furnace", "n": 1, "tag": "DP", "spec": { "form": "電動式", "main": "—", "kw": 0.4, "maker": "plant" }, "chartRow": "pair",
+      "tasks": [ { "w": "点検", "a": "INSPECT", "c": 2, "k": 400, "md": [2, 3], "d": [1, 1], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+
+    { "key": "TURBINE", "sys": "HEAT", "name": "蒸気タービン", "chart": ["蒸気タービン", "タービン", "蒸気タービン"], "diary": ["タービン", "ﾀｰﾋﾞﾝ", "ST"], "class": "WI.HEAT.TURBINE", "scope": "facility", "n": 1, "tag": "TB", "need": { "turbine": [true] }, "parts": ["油ポンプ"], "spec": { "form": "抽気復水タービン", "main": "定格出力 3,500kW", "kw": null, "maker": "turbine" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "開放点検（定期事業者検査）", "a": "OVERHAUL", "c": 4, "k": 56000, "md": [140, 180], "d": [10, 13], "at": "A", "v": "turbine", "ct": "own", "legal": "turbine_jigyo" },
+        { "w": "定期点検", "a": "INSPECT", "c": 1, "k": 2200, "md": [6, 8], "d": [2, 3], "at": "A", "v": "turbine", "ct": "own" },
+        { "p": "油ポンプ", "w": "整備", "a": "OVERHAUL", "c": 4, "k": 1100, "md": [3, 4], "d": [1, 2], "at": "A", "v": "turbine", "ct": "own" }
+      ] },
+    { "key": "GEN", "sys": "HEAT", "name": "発電機", "chart": ["発電機", "タービン発電機", "発電機"], "diary": ["発電機", "ﾊﾂﾃﾞﾝｷ", "TG"], "class": "WI.ELEC.GENERATOR", "scope": "facility", "n": 1, "tag": "TG", "need": { "turbine": [true] }, "spec": { "form": "三相交流同期発電機", "main": "3,500kW 6.6kV", "kw": null, "maker": "electric" }, "chartRow": "unit",
+      "tasks": [ { "w": "精密点検", "a": "INSPECT", "c": 4, "k": 6800, "md": [14, 18], "d": [3, 5], "at": "A", "v": "turbine", "ct": "own" } ] },
+    { "key": "PRV", "sys": "HEAT", "name": "減温減圧装置", "chart": ["減温減圧装置", "タービンバイパス減温減圧装置", "減圧弁"], "diary": ["減温減圧", "ｹﾞﾝｵﾝｹﾞﾝｱﾂ"], "class": "WI.HEAT.TURBINE", "scope": "junction", "n": 1, "tag": "PRV", "need": { "turbine": [true] }, "spec": { "form": "—", "main": "—", "kw": null, "maker": "boiler" }, "chartRow": "unit",
+      "tasks": [ { "w": "点検", "a": "INSPECT", "c": 2, "k": 900, "md": [3, 4], "d": [1, 2], "at": "A", "v": "boiler", "ct": "own" } ] },
+
+    { "key": "CWP", "sys": "WATER", "name": "機器冷却水ポンプ", "chart": ["機器冷却水ポンプ", "冷却水ポンプ", "機器冷却水P"], "diary": ["冷却水P", "ﾚｲｷｬｸｽｲﾎﾟﾝﾌﾟ", "機器冷却水ポンプ"], "class": null, "scope": "junction", "n": 2, "tag": "CWP", "spec": { "form": "片吸込うず巻", "main": "—", "kw": 22, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 1200, "md": [3, 5], "d": [1, 2], "at": "A", "v": "pump", "ct": "own" } ] },
+    { "key": "CTOWER", "sys": "WATER", "name": "冷却塔", "chart": ["冷却塔", "クーリングタワー", "冷却塔"], "diary": ["冷却塔", "ｸｰﾘﾝｸﾞﾀﾜｰ"], "class": null, "scope": "facility", "n": 1, "tag": "CT", "parts": ["ファン"], "spec": { "form": "開放式", "main": "—", "kw": 11, "maker": "water" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "充填材交換", "a": "REPLACE", "c": 8, "k": 9200, "md": [10, 14], "d": [3, 4], "at": "A", "v": "water", "ct": "own" },
+        { "p": "ファン", "w": "点検", "a": "INSPECT", "c": 2, "k": 400, "md": [2, 2], "d": [1, 1], "at": "A", "v": "water", "ct": "own" }
+      ] },
+    { "key": "WELLP", "sys": "WATER", "name": "井水揚水ポンプ", "chart": ["井水揚水ポンプ", "井水ポンプ", "揚水ポンプ"], "diary": ["井水P", "ｲｽｲﾎﾟﾝﾌﾟ"], "class": null, "scope": "facility", "n": 2, "tag": "WP", "spec": { "form": "水中ポンプ", "main": "—", "kw": 7.5, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "引上げ点検", "a": "OVERHAUL", "c": 5, "k": 1700, "md": [4, 6], "d": [2, 2], "at": "Y", "v": "pump", "ct": "own" } ] },
+    { "key": "PLANTWP", "sys": "WATER", "name": "プラント用水ポンプ", "chart": ["プラント用水ポンプ", "用水ポンプ", "プラント用水P"], "diary": ["プラント用水P", "ﾖｳｽｲP"], "class": null, "scope": "facility", "n": 2, "tag": "UP", "spec": { "form": "うず巻", "main": "—", "kw": 11, "maker": "pump" }, "chartRow": "group",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 900, "md": [3, 4], "d": [1, 2], "at": "A", "v": "pump", "ct": "own" } ] },
+    { "key": "FILTER", "sys": "WATER", "name": "用水ろ過器", "chart": ["用水ろ過器", "ろ過器", "砂ろ過器"], "diary": ["ろ過器", "ﾛｶｷ"], "class": null, "scope": "facility", "n": 1, "tag": "WF", "spec": { "form": "圧力式", "main": "—", "kw": null, "maker": "water" }, "chartRow": "unit",
+      "tasks": [ { "w": "ろ材交換", "a": "REPLACE", "c": 5, "k": 2100, "md": [3, 4], "d": [1, 2], "at": "Y", "v": "water", "ct": "own" } ] },
+
+    { "key": "ASHPUSH", "sys": "ASH", "name": "灰押出装置", "chart": ["灰押出装置", "灰押出機", "灰出装置"], "diary": ["灰押出", "ﾊｲｵｼﾀﾞｼ", "灰押出機"], "class": "WI.ASHOUT.ASH_CRANE", "scope": "furnace", "n": 1, "tag": "AP", "spec": { "form": "半湿式プッシャ", "main": "—", "kw": 5.5, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "点検整備", "a": "INSPECT", "c": 1, "k": 2000, "md": [6, 8], "d": [2, 3], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+    { "key": "ASHCRANE", "sys": "ASH", "name": "灰クレーン", "chart": ["灰クレーン", "灰クレーン", "灰バケットクレーン"], "diary": ["灰クレーン", "ﾊｲｸﾚｰﾝ"], "class": "WI.ASHOUT.ASH_CRANE", "scope": "facility", "n": 1, "tag": "ACR", "need": { "ash": ["OUT", "CEMENT"] }, "spec": { "form": "天井走行クレーン", "main": "吊上荷重 2.8t", "kw": 30, "maker": "crane" }, "chartRow": "unit",
+      "tasks": [
+        { "w": "年次自主検査", "a": "INSPECT", "c": 1, "k": 1100, "md": [4, 6], "d": [1, 2], "at": "Y", "v": "crane", "ct": "annual:crane", "legal": "crane_annual" },
+        { "w": "ワイヤロープ交換", "a": "REPLACE", "c": 3, "k": 900, "md": [4, 6], "d": [1, 2], "at": "Y", "v": "crane", "ct": "own" }
+      ] },
+    { "key": "FLYCV", "sys": "ASH", "name": "飛灰搬送コンベヤ", "chart": ["飛灰搬送コンベヤ", "飛灰コンベヤ", "飛灰搬送装置"], "diary": ["飛灰CV", "ﾋﾊｲｺﾝﾍﾞﾔ", "飛灰コンベヤ"], "class": "WI.ASHOUT.FLYASH_TREAT", "scope": "furnace", "n": 1, "tag": "FC", "spec": { "form": "スクリューコンベヤ", "main": "—", "kw": 2.2, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "整備", "a": "OVERHAUL", "c": 2, "k": 1000, "md": [3, 5], "d": [1, 2], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+    { "key": "FLYTREAT", "sys": "ASH", "name": "飛灰処理装置", "chart": ["飛灰処理装置", "飛灰固化装置", "薬剤処理装置"], "diary": ["飛灰処理", "ﾋﾊｲｼｮﾘ", "混練機"], "class": "WI.ASHOUT.FLYASH_TREAT", "scope": "junction", "n": 1, "tag": "FT", "need": { "ash": ["OUT"] }, "parts": ["混練機"], "spec": { "form": "キレート薬剤処理", "main": "—", "kw": 15, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "p": "混練機", "w": "パドル交換", "a": "REPLACE", "c": 2, "k": 2200, "md": [5, 7], "d": [2, 2], "at": "A", "v": "plant", "ct": "bundle" } ] },
+    { "key": "CEMENT", "sys": "ASH", "name": "セメント固化装置", "chart": ["セメント固化装置", "飛灰固化装置", "固化装置"], "diary": ["固化装置", "ｺｶｿｳﾁ"], "class": "WI.ASHOUT.FLYASH_TREAT", "scope": "junction", "n": 1, "tag": "CM", "need": { "ash": ["CEMENT"] }, "parts": ["混練機"], "spec": { "form": "セメント固化", "main": "—", "kw": 18.5, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "p": "混練機", "w": "ライナ交換", "a": "REPLACE", "c": 2, "k": 2600, "md": [6, 8], "d": [2, 3], "at": "A", "v": "plant", "ct": "bundle" } ] },
+    { "key": "SLAG", "sys": "ASH", "name": "スラグ搬出装置", "chart": ["スラグ搬出装置", "水砕スラグコンベヤ", "スラグ処理装置"], "diary": ["スラグCV", "ｽﾗｸﾞ"], "class": "WI.ASHOUT.POST", "scope": "furnace", "n": 1, "tag": "SL", "need": { "ash": ["MELT"] }, "spec": { "form": "水砕・磁選", "main": "—", "kw": 7.5, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "チェーン交換", "a": "REPLACE", "c": 3, "k": 3100, "md": [8, 10], "d": [2, 3], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+    { "key": "ASHOUTCV", "sys": "ASH", "name": "灰搬出コンベヤ", "chart": ["灰搬出コンベヤ", "灰搬出コンベヤ", "灰ピットコンベヤ"], "diary": ["灰搬出CV", "ﾊｲﾊﾝｼｭﾂ"], "class": "WI.ASHOUT.ASH_CRANE", "scope": "junction", "n": 1, "tag": "AC", "spec": { "form": "エプロンコンベヤ", "main": "—", "kw": 3.7, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "整備", "a": "OVERHAUL", "c": 3, "k": 1400, "md": [4, 6], "d": [2, 2], "at": "A", "v": "plant", "ct": "bundle" } ] },
+    { "key": "BASHCV", "sys": "ASH", "name": "ボイラ灰搬送コンベヤ", "chart": ["ボイラ灰搬送コンベヤ", "ボイラ灰コンベヤ", "ボイラダスト搬送装置"], "diary": ["ボイラ灰CV", "ﾎﾞｲﾗﾊｲ"], "class": "WI.COOL.BOILER", "scope": "furnace", "n": 1, "tag": "BC", "need": { "turbine": [true] }, "spec": { "form": "チェーンコンベヤ", "main": "—", "kw": 1.5, "maker": "plant" }, "chartRow": "unit",
+      "tasks": [ { "w": "チェーン交換", "a": "REPLACE", "c": 3, "k": 1200, "md": [4, 5], "d": [1, 2], "at": "F", "flow": "outer", "v": "plant", "ct": "bundle" } ] },
+
+    { "key": "WWT", "sys": "DRAIN", "name": "排水処理設備", "chart": ["排水処理設備", "排水処理装置", "プラント排水処理設備"], "diary": ["排水処理", "ﾊｲｽｲｼｮﾘ"], "class": null, "scope": "facility", "n": 1, "tag": "WW", "parts": ["移送ポンプ"], "spec": { "form": "凝集沈殿・ろ過", "main": "—", "kw": null, "maker": "water" }, "chartRow": "unit", "ownTasks": true,
+      "tasks": [
+        { "w": "点検整備", "a": "INSPECT", "c": 2, "k": 1100, "md": [4, 5], "d": [1, 2], "at": "A", "v": "water", "ct": "own" },
+        { "p": "移送ポンプ", "w": "整備", "a": "OVERHAUL", "c": 3, "k": 500, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "pump", "ct": "own" }
+      ] },
+
+    { "key": "SUBST", "sys": "ELEC", "name": "特別高圧受変電設備", "chart": ["特別高圧受変電設備", "受変電設備", "特高受変電設備"], "diary": ["受変電", "特高", "ｼﾞｭﾍﾝﾃﾞﾝ"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 1, "tag": "E", "parts": ["受電用遮断器"], "spec": { "form": "屋内キュービクル", "main": "受電 22kV", "kw": null, "maker": "electric" }, "chartRow": "unit", "ownTasks": true, "work": "panel",
+      "tasks": [
+        { "w": "年次点検（全停電）", "a": "INSPECT", "c": 1, "k": 2600, "md": [10, 14], "d": [1, 1], "at": "B", "v": "elecsafety", "ct": "annual:elec", "legal": "sub_annual" },
+        { "w": "月次点検（保安規程）", "a": "INSPECT", "c": 1, "perYear": 12, "k": 2300, "md": [1, 1], "d": [1, 1], "at": "M", "v": "elecsafety", "ct": "annual:elec", "legal": "sub_monthly" },
+        { "p": "受電用遮断器", "w": "精密点検", "a": "OVERHAUL", "c": 6, "k": 6200, "md": [6, 8], "d": [1, 1], "at": "B", "v": "electric", "ct": "own" }
+      ] },
+    { "key": "HVPANEL", "sys": "ELEC", "name": "高圧配電盤", "chart": ["高圧配電盤", "高圧配電盤", "6.6kV配電盤"], "diary": ["高圧盤", "ｺｳｱﾂﾊﾞﾝ"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 1, "tag": "E", "spec": { "form": "閉鎖配電盤", "main": "—", "kw": null, "maker": "electric" }, "chartRow": "unit", "work": "panel",
+      "tasks": [ { "w": "点検・継電器試験", "a": "INSPECT", "c": 3, "k": 2500, "md": [6, 8], "d": [2, 3], "at": "B", "v": "electric", "ct": "own" } ] },
+    { "key": "LVPANEL", "sys": "ELEC", "name": "低圧動力制御盤", "chart": ["低圧動力制御盤", "動力制御盤", "MCC"], "diary": ["MCC", "動力盤", "ﾄﾞｳﾘｮｸﾊﾞﾝ"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 1, "tag": "E", "spec": { "form": "コントロールセンタ", "main": "—", "kw": null, "maker": "electric" }, "chartRow": "unit", "work": "panel",
+      "tasks": [ { "w": "点検・清掃", "a": "INSPECT", "c": 3, "k": 3300, "md": [8, 10], "d": [2, 3], "at": "B", "v": "electric", "ct": "own" } ] },
+    { "key": "EMGEN", "sys": "ELEC", "name": "非常用発電機", "chart": ["非常用発電機", "非常用発電設備", "非常用ディーゼル発電機"], "diary": ["非常用発電機", "ﾋｼﾞｮｳﾖｳﾊﾂﾃﾞﾝ", "EG"], "class": "WI.ELEC.GENERATOR", "scope": "facility", "n": 1, "tag": "EG", "spec": { "form": "ディーゼル機関", "main": "750kVA", "kw": null, "maker": "diesel" }, "chartRow": "unit",
+      "tasks": [
+        { "w": "定期点検・負荷運転（消防法）", "a": "INSPECT", "c": 1, "k": 420, "md": [2, 2], "d": [1, 1], "at": "Y", "v": "diesel", "ct": "annual:emg", "legal": "emg_gen" },
+        { "w": "精密点検（OH）", "a": "OVERHAUL", "c": 6, "k": 11500, "md": [14, 18], "d": [4, 5], "at": "Y", "v": "diesel", "ct": "own" }
+      ] },
+    { "key": "DCPOW", "sys": "ELEC", "name": "直流電源装置", "chart": ["直流電源装置", "蓄電池設備", "直流電源"], "diary": ["直流電源", "蓄電池"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 1, "tag": "DC", "spec": { "form": "鉛蓄電池", "main": "—", "kw": null, "maker": "electric" }, "chartRow": "unit",
+      "tasks": [ { "w": "蓄電池更新", "a": "REPLACE", "c": 7, "k": 5400, "md": [4, 6], "d": [2, 2], "at": "Y", "v": "electric", "ct": "own" } ] },
+    { "key": "UPS", "sys": "ELEC", "name": "無停電電源装置", "chart": ["UPS", "無停電電源装置", "CVCF"], "diary": ["UPS", "ﾑﾃｲﾃﾞﾝ"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 1, "tag": "UPS", "spec": { "form": "常時インバータ給電", "main": "—", "kw": null, "maker": "electric" }, "chartRow": "unit",
+      "tasks": [ { "w": "蓄電池交換", "a": "REPLACE", "c": 5, "k": 3000, "md": [3, 4], "d": [1, 1], "at": "Y", "v": "electric", "ct": "own" } ] },
+    { "key": "INV", "sys": "ELEC", "name": "インバータ盤", "chart": ["インバータ盤", "IDFインバータ盤", "インバータ盤"], "diary": ["インバータ盤", "INV"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 1, "tag": "INV", "spec": { "form": "—", "main": "—", "kw": null, "maker": "electric" }, "chartRow": "unit", "work": "panel",
+      "tasks": [ { "w": "更新", "a": "REPLACE", "c": 20, "k": 13000, "md": [20, 28], "d": [5, 7], "at": "B", "v": "electric", "ct": "own" } ] },
+
+    { "key": "DCS", "sys": "INST", "name": "分散形制御システム", "chart": ["DCS", "中央制御装置（DCS）", "DCS"], "diary": ["DCS", "ｾｲｷﾞｮｿｳﾁ"], "class": "WI.INST.DCS", "scope": "facility", "n": 1, "tag": "I", "parts": ["オペレータコンソール"], "spec": { "form": "二重化", "main": "—", "kw": null, "maker": "system" }, "chartRow": "unit", "ownTasks": true, "work": "dcs",
+      "tasks": [
+        { "w": "保守点検", "a": "INSPECT", "c": 1, "k": 6500, "md": [6, 8], "d": [2, 3], "at": "D", "v": "system", "ct": "annual:dcs" },
+        { "w": "ハード更新", "a": "REPLACE", "c": 10, "k": 360000, "md": [300, 400], "d": [30, 45], "at": "D", "v": "system", "ct": "own" }
+      ] },
+    { "key": "GASANA", "sys": "INST", "name": "排ガス分析計", "chart": ["排ガス分析計", "排ガス分析装置", "連続分析計"], "diary": ["分析計", "ﾌﾞﾝｾｷｹｲ", "排ガス分析計"], "class": null, "scope": "furnace", "n": 1, "tag": "IA", "spec": { "form": "赤外線式（NOx・SOx・CO・O2）", "main": "—", "kw": null, "maker": "instrument" }, "chartRow": "pair",
+      "tasks": [ { "w": "保守点検（年4回）", "a": "INSPECT", "c": 1, "perYear": 4, "k": 4600, "md": [1, 2], "d": [1, 1], "at": "Q", "v": "instrument", "ct": "annual:ana" } ] },
+    { "key": "DUSTM", "sys": "INST", "name": "ばいじん濃度計", "chart": ["ばいじん計", "ばいじん濃度計", "煤塵計"], "diary": ["ばいじん計", "ﾊﾞｲｼﾞﾝｹｲ"], "class": null, "scope": "furnace", "n": 1, "tag": "ID", "spec": { "form": "光散乱式", "main": "—", "kw": null, "maker": "instrument" }, "chartRow": "unit",
+      "tasks": [ { "w": "更新", "a": "REPLACE", "c": 15, "k": 6200, "md": [3, 4], "d": [1, 2], "at": "F", "flow": "outer", "v": "instrument", "ct": "own" } ] },
+    { "key": "HGM", "sys": "INST", "name": "水銀連続測定装置", "chart": ["水銀測定装置", "水銀連続分析計", "Hg計"], "diary": ["水銀計", "Hg計"], "class": null, "scope": "facility", "n": 1, "tag": "IH", "spec": { "form": "加熱気化冷原子吸光", "main": "—", "kw": null, "maker": "instrument" }, "chartRow": "unit", "addedYearOffset": 17,
+      "tasks": [ { "w": "新設", "a": "UPGRADE", "c": 30, "k": 26000, "md": [20, 30], "d": [8, 12], "at": "Y", "v": "instrument", "ct": "own", "once": "added" }, { "w": "保守点検", "a": "INSPECT", "c": 1, "k": 1200, "md": [1, 2], "d": [1, 1], "at": "Y", "v": "instrument", "ct": "annual:ana" } ] },
+    { "key": "ITV", "sys": "INST", "name": "ITV装置", "chart": ["ITV設備", "監視カメラ設備", "ITV"], "diary": ["ITV", "監視カメラ"], "class": null, "scope": "facility", "n": 1, "tag": "IT", "spec": { "form": "カラーカメラ 24 台", "main": "—", "kw": null, "maker": "instrument" }, "chartRow": "unit",
+      "tasks": [ { "w": "更新", "a": "REPLACE", "c": 12, "k": 23000, "md": [16, 24], "d": [8, 12], "at": "Y", "v": "instrument", "ct": "own" } ] },
+    { "key": "IAC", "sys": "INST", "name": "計装用空気圧縮機", "chart": ["計装用空気圧縮機", "計装空気コンプレッサ", "計装用空圧機"], "diary": ["計装空気", "ｹｲｿｳｴｱ", "計装コンプ"], "class": null, "scope": "facility", "n": 2, "tag": "IC", "spec": { "form": "スクリュー式", "main": "—", "kw": 22, "maker": "machine" }, "chartRow": "group",
+      "tasks": [ { "w": "整備", "a": "OVERHAUL", "c": 2, "k": 850, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "machine", "ct": "own" } ] },
+
+    { "key": "AIRC", "sys": "MISC", "name": "雑用空気圧縮機", "chart": ["雑用空気圧縮機", "雑用コンプレッサ", "所内空気圧縮機"], "diary": ["雑用コンプ", "ｻﾞﾂﾖｳｴｱ"], "class": null, "scope": "facility", "n": 2, "tag": "Z", "spec": { "form": "スクリュー式", "main": "—", "kw": 37, "maker": "machine" }, "chartRow": "unit",
+      "tasks": [ { "w": "整備", "a": "OVERHAUL", "c": 2, "k": 850, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "machine", "ct": "own" } ] },
+    { "key": "HVAC", "sys": "MISC", "name": "空調設備", "chart": ["空調設備", "空気調和設備", "空調機"], "diary": ["空調", "ｸｳﾁｮｳ", "エアコン"], "class": null, "scope": "facility", "n": 1, "tag": "Z", "spec": { "form": "パッケージ形 10 台", "main": "—", "kw": null, "maker": "building" }, "chartRow": "unit",
+      "tasks": [ { "w": "更新", "a": "REPLACE", "c": 20, "k": 15000, "md": [16, 24], "d": [6, 10], "at": "Y", "v": "building", "ct": "own" } ] },
+    { "key": "ELV", "sys": "MISC", "name": "エレベータ", "chart": ["エレベータ", "昇降機", "エレベーター"], "diary": ["エレベータ", "ｴﾚﾍﾞｰﾀ"], "class": null, "scope": "facility", "n": 1, "tag": "Z", "spec": { "form": "ロープ式", "main": "定員 11 名", "kw": 11, "maker": "building" }, "chartRow": "unit",
+      "tasks": [ { "w": "定期検査（建築基準法）", "a": "INSPECT", "c": 1, "k": 850, "md": [1, 1], "d": [1, 1], "at": "Y", "v": "building", "ct": "annual:elv", "legal": "elevator" } ] },
+
+    { "key": "MOV", "sys": "COOL", "name": "ボイラ周り電動弁", "chart": ["ボイラ周り電動弁", "電動弁（ボイラ）", "ボイラ電動弁類"], "diary": ["電動弁", "MOV", "ﾃﾞﾝﾄﾞｳﾍﾞﾝ"], "class": "WI.COOL.BOILER", "scope": "furnace", "n": 6, "tag": "MV", "need": { "turbine": [true] }, "spec": { "form": "電動玉形弁", "main": "—", "kw": 0.4, "maker": "boiler" }, "chartRow": "group",
+      "tasks": [ { "w": "分解点検", "a": "OVERHAUL", "c": 3, "k": 450, "md": [2, 3], "d": [1, 2], "at": "F", "flow": "outer", "v": "boiler", "ct": "bundle" } ] },
+    { "key": "CHEMP", "sys": "COOL", "name": "ボイラ薬液注入ポンプ", "chart": ["薬注ポンプ", "ボイラ薬液注入装置", "清缶剤注入ポンプ"], "diary": ["薬注P", "ﾔｸﾁｭｳP", "清缶剤ポンプ"], "class": "WI.COOL.BOILER", "scope": "junction", "n": 3, "tag": "CHP", "need": { "turbine": [true] }, "spec": { "form": "ダイヤフラム式", "main": "—", "kw": 0.2, "maker": "pump" }, "chartRow": "group",
+      "tasks": [ { "w": "ダイヤフラム交換", "a": "REPLACE", "c": 2, "k": 120, "md": [1, 2], "d": [1, 1], "at": "Y", "v": "pump", "ct": "own" } ] },
+    { "key": "BLOWT", "sys": "COOL", "name": "ブロータンク", "chart": ["ブロータンク", "連続ブロー装置", "ブロータンク"], "diary": ["ブロータンク", "ﾌﾞﾛｰﾀﾝｸ"], "class": "WI.COOL.BOILER", "scope": "furnace", "n": 1, "tag": "BT", "need": { "turbine": [true] }, "spec": { "form": "—", "main": "—", "kw": null, "maker": "boiler" }, "chartRow": "pair",
+      "tasks": [ { "w": "開放点検", "a": "INSPECT", "c": 2, "k": 300, "md": [1, 2], "d": [1, 1], "at": "F", "flow": "outer", "v": "boiler", "ct": "bundle" } ] },
+    { "key": "ASHWP", "sys": "ASH", "name": "灰汚水ポンプ", "chart": ["灰汚水ポンプ", "灰汚水移送ポンプ", "灰汚水P"], "diary": ["灰汚水P", "ﾊｲｵｽｲP"], "class": null, "scope": "furnace", "n": 2, "tag": "AWP", "spec": { "form": "水中ポンプ", "main": "—", "kw": 3.7, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "引上げ点検", "a": "OVERHAUL", "c": 3, "k": 380, "md": [2, 2], "d": [1, 1], "at": "F", "flow": "outer", "v": "pump", "ct": "own" } ] },
+    { "key": "REUSEP", "sys": "WATER", "name": "再利用水ポンプ", "chart": ["再利用水ポンプ", "再利用水P", "再利用水ポンプ"], "diary": ["再利用水P", "ｻｲﾘﾖｳｽｲP"], "class": null, "scope": "facility", "n": 2, "tag": "RWP", "spec": { "form": "うず巻", "main": "—", "kw": 5.5, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 600, "md": [2, 3], "d": [1, 1], "at": "A", "v": "pump", "ct": "own" } ] },
+    { "key": "HOTWP", "sys": "WATER", "name": "温水循環ポンプ", "chart": ["温水循環ポンプ", "場内温水ポンプ", "温水P"], "diary": ["温水P", "ｵﾝｽｲP"], "class": null, "scope": "facility", "n": 2, "tag": "HWP", "need": { "turbine": [true] }, "spec": { "form": "うず巻", "main": "—", "kw": 7.5, "maker": "pump" }, "chartRow": "group",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 4, "k": 700, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "pump", "ct": "own" } ] },
+    { "key": "RAINP", "sys": "DRAIN", "name": "雨水排水ポンプ", "chart": ["雨水排水ポンプ", "雨水ポンプ", "雨水排水P"], "diary": ["雨水P", "ｳｽｲP"], "class": null, "scope": "facility", "n": 2, "tag": "RP", "spec": { "form": "水中ポンプ", "main": "—", "kw": 5.5, "maker": "pump" }, "chartRow": "group",
+      "tasks": [ { "w": "引上げ点検", "a": "OVERHAUL", "c": 5, "k": 500, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "pump", "ct": "own" } ] },
+    { "key": "PITP", "sys": "DRAIN", "name": "ごみ汚水移送ポンプ", "chart": ["ごみ汚水ポンプ", "ピット汚水移送ポンプ", "汚水ポンプ"], "diary": ["汚水P", "ｵｽｲP"], "class": null, "scope": "facility", "n": 2, "tag": "SP", "spec": { "form": "スクリュー式", "main": "—", "kw": 3.7, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 3, "k": 650, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "pump", "ct": "own" } ] },
+    { "key": "PANELS", "sys": "ELEC", "name": "現場操作盤", "chart": ["現場操作盤", "現場盤", "現場制御盤"], "diary": ["現場盤", "ｹﾞﾝﾊﾞﾊﾞﾝ", "操作盤"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 18, "tag": "LP", "spec": { "form": "屋内自立形", "main": "—", "kw": null, "maker": "electric" }, "chartRow": "group", "work": "panel",
+      "tasks": [ { "w": "点検・清掃（18面）", "a": "INSPECT", "c": 2, "k": 1800, "md": [6, 8], "d": [2, 3], "at": "B", "v": "electric", "ct": "own" } ] },
+    { "key": "MOTORS", "sys": "ELEC", "name": "高圧電動機", "chart": ["高圧電動機", "高圧モータ", "6kV電動機"], "diary": ["高圧モータ", "ﾓｰﾀ", "電動機"], "class": "WI.ELEC.SUBSTATION", "scope": "facility", "n": 6, "tag": "HM", "spec": { "form": "かご形誘導電動機", "main": "6.6kV", "kw": null, "maker": "electric" }, "chartRow": "group",
+      "tasks": [ { "w": "絶縁診断", "a": "INSPECT", "c": 3, "k": 1500, "md": [3, 4], "d": [1, 2], "at": "A", "v": "electric", "ct": "own" } ] },
+    { "key": "INSTR", "sys": "INST", "name": "現場計器", "chart": ["現場計器", "伝送器・計器類", "発信器類"], "diary": ["伝送器", "ﾃﾞﾝｿｳｷ", "計器"], "class": null, "scope": "furnace", "n": 24, "tag": "PT", "spec": { "form": "電子式伝送器", "main": "圧力・流量・温度", "kw": null, "maker": "instrument" }, "chartRow": "group",
+      "tasks": [ { "w": "校正（24点）", "a": "INSPECT", "c": 1, "k": 1400, "md": [3, 4], "d": [2, 2], "at": "F", "flow": "outer", "v": "instrument", "ct": "bundle" } ] },
+    { "key": "VENT", "sys": "MISC", "name": "炉室換気ファン", "chart": ["炉室換気ファン", "換気ファン（炉室）", "炉室換気扇"], "diary": ["換気ファン", "ｶﾝｷﾌｧﾝ"], "class": null, "scope": "facility", "n": 8, "tag": "VF", "spec": { "form": "有圧換気扇", "main": "—", "kw": 3.7, "maker": "fan" }, "chartRow": "group",
+      "tasks": [ { "w": "軸受交換（8台）", "a": "REPLACE", "c": 5, "k": 1200, "md": [3, 4], "d": [2, 2], "at": "Y", "v": "fan", "ct": "own" } ] },
+    { "key": "HOIST", "sys": "MISC", "name": "荷役用ホイスト", "chart": ["ホイスト", "荷役用ホイスト", "電動ホイスト"], "diary": ["ホイスト", "ﾎｲｽﾄ"], "class": null, "scope": "facility", "n": 6, "tag": "HO", "spec": { "form": "電動チェーンブロック", "main": "1〜5t", "kw": null, "maker": "crane" }, "chartRow": "group",
+      "tasks": [ { "w": "年次自主検査", "a": "INSPECT", "c": 1, "k": 360, "md": [1, 2], "d": [1, 1], "at": "Y", "v": "crane", "ct": "annual:crane" } ] },
+    { "key": "FIREP", "sys": "MISC", "name": "消火ポンプ", "chart": ["消火栓ポンプ", "消火ポンプ", "屋内消火栓ポンプ"], "diary": ["消火ポンプ", "ｼｮｳｶP"], "class": null, "scope": "facility", "n": 1, "tag": "FP", "spec": { "form": "多段うず巻", "main": "—", "kw": 15, "maker": "pump" }, "chartRow": "unit",
+      "tasks": [ { "w": "分解整備", "a": "OVERHAUL", "c": 6, "k": 900, "md": [2, 3], "d": [1, 1], "at": "Y", "v": "pump", "ct": "own" } ] },
+    { "key": "FAC_PRECISE", "sys": "FAC", "name": "施設全体", "chart": ["施設全体"], "diary": ["施設全体", "全体"], "class": null, "scope": "facility", "n": 1, "tag": null, "commonKind": "facility", "spec": null, "chartRow": "unit", "noLedger": true,
+      "tasks": [
+        { "w": "精密機能検査", "a": "INSPECT", "c": 3, "k": 4500, "md": [12, 16], "d": [3, 4], "at": "Y", "v": "consult", "ct": "own", "legal": "precise" },
+        { "w": "排ガス測定（ばいじん・NOx・SOx・HCl・DXN）", "a": "INSPECT", "c": 1, "perYear": 4, "k": 3400, "md": [2, 3], "d": [1, 1], "at": "Q", "v": "analysis", "ct": "annual:gas", "legal": "exhaust" },
+        { "w": "作業環境測定（ダイオキシン類）", "a": "INSPECT", "c": 1, "perYear": 2, "k": 800, "md": [1, 2], "d": [1, 1], "at": "H", "v": "analysis", "ct": "annual:gas", "legal": "dxn_env" },
+        { "w": "消防用設備等点検", "a": "INSPECT", "c": 1, "perYear": 2, "k": 950, "md": [2, 3], "d": [1, 1], "at": "H", "v": "building", "ct": "annual:fire", "legal": "fire" }
+      ] }
+  ],
+  "outageRows": {
+    "note": "炉全体の定期整備と全休炉の行。作業は窓の段（steps）の集まりで、まとめた工事の行（内訳は各機器の行）",
+    "furnace": { "w": ["定期整備（休炉整備）", "定期補修", "年次定期整備"], "a": "OVERHAUL" },
+    "all": { "w": ["全休炉整備（全炉停止）", "全炉停止整備", "全停期間 共通設備整備"], "a": "OVERHAUL" }
+  },
+  "upgrade": {
+    "note": "基幹的設備改良工事。3 年度にまたがる 1 件の契約（継続費）で、主な機器をまとめて更新する。作業の属性は UPGRADE",
+    "title": "基幹的設備改良工事",
+    "years": 3,
+    "items": ["GRATE", "BFP", "IDF", "DCS", "LVPANEL", "SCR"],
+    "md": [2800, 3600],
+    "amountYen": [3200000000, 4200000000],
+    "v": "plant"
+  },
+  "breakdowns": [
+    { "for": ["BFP", "DAP", "CONDP", "CWP", "WELLP", "PLANTWP", "GCTP", "NH3P"], "w": ["メカニカルシール漏れ補修", "軸受交換", "異音点検・芯出し調整", "カップリングゴム交換", "グランドパッキン交換"] },
+    { "for": ["FDF", "SAF", "IDF", "ACC", "DEODOR"], "w": ["振動調整（バランス修正）", "軸受交換", "軸受温度上昇 点検・グリス交換", "Vベルト交換"] },
+    { "for": ["CRANE", "ASHCRANE"], "w": ["ブレーキ調整", "リミットスイッチ交換", "ワイヤロープ損傷 点検", "バケット油圧ホース交換"] },
+    { "for": ["BOILER", "SOOT"], "w": ["水管漏れ補修（緊急停止）", "ケーシング漏れ補修", "スートブロワ ランス曲がり補修"] },
+    { "for": ["GRATE", "FEEDER", "GRATE_HYD", "ASHDROP", "FB_INCOMB", "KL_DRUM"], "w": ["火格子脱落 復旧", "油圧シリンダ漏れ補修", "チェーン切れ 復旧"] },
+    { "for": ["FLYCV", "ASHPUSH", "ASHOUTCV", "BASHCV", "SLAG"], "w": ["ケーシング穴あき補修（当て板溶接）", "スプロケット交換", "チェーン切れ 復旧"] },
+    { "for": ["LVPANEL", "HVPANEL", "INV", "UPS", "DCS", "GASANA", "DUSTM", "ITV"], "w": ["絶縁不良 調査・補修", "基板交換", "伝送器交換"] },
+    { "for": ["DOOR", "PFDOOR", "SHRED", "SCALE"], "w": ["油圧ホース交換", "部品交換", "リミットスイッチ交換"] }
+  ],
+  "routine": {
+    "note": "運転管理の常駐が日報にだけ書く細かな点検・清掃・手当て。星取表にも発注台帳にも出ない",
+    "items": [
+      { "for": ["BFP", "CWP", "PLANTWP", "DAP", "CONDP"], "w": ["グランド部漏れ点検", "ストレーナ清掃", "グリスアップ", "振動測定"] },
+      { "for": ["FDF", "SAF", "IDF"], "w": ["振動測定", "軸受温度確認", "Vベルト張り調整"] },
+      { "for": ["CRANE", "ASHCRANE"], "w": ["ワイヤロープ給油", "バケット爪点検", "グリスアップ"] },
+      { "for": ["FLYCV", "ASHDROP", "BASHCV", "ASHOUTCV"], "w": ["詰まり除去", "チェーン給油", "ライナー点検"] },
+      { "for": ["LIME", "CARBON"], "w": ["ブリッジ除去", "ロータリーバルブ清掃"] },
+      { "for": ["GASANA", "DUSTM"], "w": ["サンプリング配管詰まり除去", "校正ガス交換"] },
+      { "for": ["DOOR", "PFDOOR"], "w": ["動作確認", "油圧ホース点検"] },
+      { "for": ["AIRC", "IAC"], "w": ["ドレン排出", "フィルタ清掃"] }
+    ],
+    "vendor": "om"
+  },
+  "vendors": {
+    "note": "業者は役ごとに架空の名前。施設ごとに名前の書き方（㈱・株式会社・(株)）が揺れる",
+    "plant": ["架空炉機エンジニアリング", "架空環境プラント工業", "架空燃焼システムズ"],
+    "boiler": ["架空ボイラテック", "架空汽缶サービス"],
+    "pump": ["架空ポンプ製作所", "架空流体機器サービス"],
+    "fan": ["架空ファン工業", "架空送風機整備"],
+    "crane": ["架空クレーン整備", "架空揚重機サービス"],
+    "env": ["架空ろ布工業", "架空集塵テクノ"],
+    "catalyst": ["架空触媒化工"],
+    "refractory": ["架空耐火工業", "架空築炉"],
+    "turbine": ["架空タービンサービス", "架空回転機メンテナンス"],
+    "electric": ["架空電設", "架空電機メンテナンス"],
+    "elecsafety": ["架空電気保安サービス"],
+    "system": ["架空制御システムズ"],
+    "instrument": ["架空計測サービス", "架空計装エンジニアリング"],
+    "analysis": ["架空環境分析センター", "架空分析技研"],
+    "consult": ["架空技術コンサルタント", "架空環境技術研究所"],
+    "scale": ["架空計量器"],
+    "diesel": ["架空ディーゼル整備"],
+    "building": ["架空ビル設備", "架空ファシリティ"],
+    "water": ["架空水処理サービス", "架空アクア技研"],
+    "machine": ["架空機械整備", "架空工機"],
+    "scaffold": ["架空足場工業"],
+    "om": ["架空運転管理", "架空オペレーション"],
+    "chem": ["架空化成", "架空薬品販売"],
+    "fuel": ["架空石油"],
+    "misc": ["架空シャッター工業"]
+  },
+  "annualContracts": [
+    { "key": "om", "title": "{fac}運転管理業務委託", "v": "om", "method": ["一般競争入札", "一般競争入札（総合評価）"], "yen": [280000000, 360000000], "kind": "委託" },
+    { "key": "dcs", "title": "DCS保守点検業務委託", "v": "system", "method": ["随意契約", "随意契約（特命）"], "yen": [6000000, 7800000], "kind": "委託" },
+    { "key": "crane", "title": "ごみクレーン・灰クレーン年次点検業務委託", "v": "crane", "method": ["随意契約"], "yen": [4800000, 6800000], "kind": "委託" },
+    { "key": "elec", "title": "受変電設備保安管理業務委託", "v": "elecsafety", "method": ["指名競争入札", "随意契約"], "yen": [2600000, 3400000], "kind": "委託" },
+    { "key": "boiler", "title": "ボイラ性能検査受検整備業務委託", "v": "boiler", "method": ["随意契約"], "yen": [14000000, 19500000], "kind": "委託" },
+    { "key": "gas", "title": "排ガス等測定分析業務委託", "v": "analysis", "method": ["指名競争入札"], "yen": [3600000, 5200000], "kind": "委託" },
+    { "key": "ana", "title": "排ガス分析計保守点検業務委託", "v": "instrument", "method": ["随意契約"], "yen": [4500000, 6000000], "kind": "委託" },
+    { "key": "scale", "title": "計量機定期点検業務委託", "v": "scale", "method": ["随意契約（少額）"], "yen": [580000, 900000], "kind": "委託" },
+    { "key": "emg", "title": "非常用発電設備点検業務委託", "v": "diesel", "method": ["随意契約（少額）"], "yen": [420000, 600000], "kind": "委託" },
+    { "key": "fire", "title": "消防用設備等点検業務委託", "v": "building", "method": ["随意契約（少額）"], "yen": [820000, 1150000], "kind": "委託" },
+    { "key": "elv", "title": "昇降機保守点検業務委託", "v": "building", "method": ["随意契約（少額）"], "yen": [740000, 1050000], "kind": "委託" }
+  ],
+  "purchases": [
+    { "title": "消石灰購入（単価契約）", "v": "chem", "yen": [24000000, 36000000] },
+    { "title": "活性炭購入（単価契約）", "v": "chem", "yen": [9000000, 11500000] },
+    { "title": "キレート薬剤購入（単価契約）", "v": "chem", "yen": [10000000, 14500000] },
+    { "title": "灯油購入（単価契約）", "v": "fuel", "yen": [3000000, 6000000] },
+    { "title": "アンモニア水購入（単価契約）", "v": "chem", "yen": [2200000, 3200000] },
+    { "title": "ベアリング・シール類購入", "v": "pump", "yen": [1100000, 1500000], "oneOff": true },
+    { "title": "火格子予備品購入", "v": "plant", "yen": [8000000, 11000000], "oneOff": true }
+  ],
+  "naming": {
+    "note": "号炉と号機の書き方の揺れ。資料ごとに使う組を施設の設定で選ぶ",
+    "furnace": {
+      "chart": ["{n}号炉", "{n}号", "#{n}", "{nz}号炉", "{n}炉"],
+      "diary": ["{n}号", "{nz}号炉", "{n}炉", "#{n}", "{n}号炉", "{nz}号"],
+      "order": ["{n}号炉", "{n}系", "No.{n}"]
+    },
+    "unit": {
+      "chart": ["No.{n}", "№{n}", "{n}号機", "({n})", "{A}号機"],
+      "diary": ["No.{n}", "№{n}", "{n}号機", "({n})", "{A}号機", "{nz}号機"]
+    },
+    "common": { "chart": ["共通", "共通設備", "共用"], "diary": ["共通", "—", "共"] }
+  },
+  "manDaysText": {
+    "note": "工数の書き方。人日＝人・日、人工、延べ人数、時間（1 日 8 時間）、日数だけ、期間だけ",
+    "styles": ["人日", "人工", "延べ人数", "時間", "日数", "期間"]
+  },
+  "chartHealth": {
+    "note": "機器別管理基準の健全度は手引きの表Ⅱ-9 の例にならって 4 段（4 がよく 1 が悪い）",
+    "scale": [1, 2, 3, 4]
+  }
+}
