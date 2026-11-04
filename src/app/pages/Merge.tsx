@@ -9,7 +9,9 @@ import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { ConfirmDialog, HistoryDialog, usePlanStatus } from "../components/ConfirmDialog";
 import { SignDialog } from "../components/SignDialog";
+import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
 import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
+import { ReadingsSheet, unapprovedReadings } from "../components/ReadingsSheet";
 import { FictionMark } from "../components/FictionMark";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { useConnection } from "../state/bridge";
@@ -36,6 +38,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [over, setOver] = useState(false);
   const nextPlan = useRef<Plan | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
+  const [side, setSide] = useState<"open" | "signatures">("open");
   const [notice, setNotice] = useState<string | null>(null);
 
   // メールのリンク（#/merge?open=<計画ID>&v=<版>&h=<中身のハッシュの頭>）で開いたら、保管先の版を読み、署名と鎖とハッシュを確かめてから置く
@@ -97,7 +100,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     nextPlan.current = null;
     reloadStatus();
   };
-  const tabs: MergeSheet[] = plan ? ["chart", "check", "decisions", "files"] : ["files"];
+  const tabs: MergeSheet[] = plan ? ["chart", "readings", "check", "decisions", "files"] : ["files"];
+  // 横の板：決まっていない所があれば先にそれ、無ければ署名
+  const sideOpen = !!an && openQuestions > 0;
+  const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
+  const sideNow: "open" | "signatures" = sideOpen && (side === "open" || !latestInfo) ? "open" : "signatures";
+  const unapproved = unapprovedReadings(ws);
 
   return (
     <div
@@ -140,6 +148,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           {tabs.map((s) => (
             <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s)} aria-selected={current === s} data-testid={`sheet-${s}`}>
               {T.sheets[s]}
+              {s === "readings" && unapproved > 0 && (
+                <Text span c="var(--shu)" className="moyai-num" ml={6}>
+                  {unapproved}
+                </Text>
+              )}
               {s === "decisions" && leftDecisions > 0 && (
                 <Text span c="var(--shu)" className="moyai-num" ml={6}>
                   {leftDecisions}
@@ -165,6 +178,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           <Suspense fallback={null}>
             {current === "chart" && <StarTable embedded />}
             {current === "check" && <Review embedded />}
+            {current === "readings" && <ReadingsSheet ws={ws} />}
             {current === "decisions" && plan && <DecisionsSheet client={client} plan={plan} />}
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
@@ -172,15 +186,30 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             <Intake ws={ws} embedded composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} />
           </div>
         </div>
-        {an && openQuestions > 0 && (
+        {(sideOpen || latestInfo) && (
           <aside className="moyai-merge-side" data-testid="merge-side">
-            <Text fw={700} mb="xs">
-              {T.side.open(openQuestions)}
-            </Text>
-            <Questions ws={ws} an={an} />
-            <Text size="xs" c="dimmed" mt="xs">
-              {T.sideNote}
-            </Text>
+            {/* 切り替え：決まっていない所（n が 0 なら出さない）・署名（確定した版があるとき） */}
+            <Group gap="sm" mb="xs" wrap="nowrap">
+              {sideOpen && (
+                <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "open"} onClick={(e) => (e.preventDefault(), setSide("open"))} data-testid="side-open">
+                  {T.side.open(openQuestions)}
+                </a>
+              )}
+              {latestInfo && (
+                <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "signatures"} onClick={(e) => (e.preventDefault(), setSide("signatures"))} data-testid="side-signatures">
+                  {T.side.signatures(latestInfo.signatures.length)}
+                </a>
+              )}
+            </Group>
+            {sideNow === "open" && an && (
+              <>
+                <Questions ws={ws} an={an} />
+                <Text size="xs" c="dimmed" mt="xs">
+                  {T.sideNote}
+                </Text>
+              </>
+            )}
+            {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} />}
           </aside>
         )}
       </div>

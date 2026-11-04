@@ -4,9 +4,9 @@ import { APP_PAGES } from "../shared/routes";
 import { CHART_HASH } from "./chart/route";
 
 export type Stage = "top" | "merge" | "export" | "share" | "settings" | "selftest";
-/** MERGE のシート：星取表・検査・決定・資料（取り込み） */
-export type MergeSheet = "chart" | "check" | "decisions" | "files";
-export const MERGE_SHEETS: readonly MergeSheet[] = ["chart", "check", "decisions", "files"];
+/** MERGE のシート：星取表・読み方・検査・決定・資料（取り込み） */
+export type MergeSheet = "chart" | "readings" | "check" | "decisions" | "files";
+export const MERGE_SHEETS: readonly MergeSheet[] = ["chart", "readings", "check", "decisions", "files"];
 
 export const STAGE_HASH = { merge: "#/merge", export: "#/export", share: "#/share" } as const;
 export const sheetHash = (s: MergeSheet) => `${STAGE_HASH.merge}/${s}`;

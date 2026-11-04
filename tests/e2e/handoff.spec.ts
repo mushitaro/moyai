@@ -87,6 +87,10 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await expect(pb.getByTestId("approve-open")).toBeVisible();
     // 見出しの版は、承認を頼まれた版（第 1 版）
     await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
+    // 横の板の署名：山田の渡す署名は、課長の PC ではまだ確認していない鍵（! 未確認）。版の中身のハッシュは 4 文字 × 2 組を 4 つ
+    await pb.getByTestId("side-signatures").click();
+    await expect(pb.locator('[data-testid="signature"][data-role="edit"]')).toHaveAttribute("data-trust", "unconfirmed");
+    await expect(pb.getByTestId("signatures-hash")).toHaveText(/^([0-9a-f]{4} [0-9a-f]{4}  ){3}[0-9a-f]{4} [0-9a-f]{4}$/);
     await pb.screenshot({ path: shot(`handoff-approver-${tag}`) });
   });
 
@@ -99,6 +103,9 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await expect(pb.getByTestId("merge-notice")).toContainText("第 1 版を承認しました");
     await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
     await expect(pb.getByTestId("approve-open")).toHaveCount(0);
+    // 承認の署名は、課長の PC の鍵（own）
+    await pb.getByTestId("side-signatures").click();
+    await expect(pb.locator('[data-testid="signature"][data-role="approve"]')).toHaveAttribute("data-trust", "own");
     await pb.screenshot({ path: shot(`handoff-approved-${tag}`) });
   });
 
