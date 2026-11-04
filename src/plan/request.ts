@@ -6,12 +6,15 @@
 // ④ 承認・差し戻しは、受け取った鍵だけに通す。編集を頼んだときは、受け取った鍵の人が編集の番。
 // 頼み直すと新しい頼みを置き、同じ版の前の頼みとその受け取りは効かなくなる（いちばん新しい頼みだけが効く）。
 // ファイルは保管先の 1 組なので、頼む側と受け手の両方の PC から同じものが見える。
+// 頼みとして数えるのは、その版を作った署名（confirm・edit・revert）の鍵で、その版の中身のハッシュに宛てたものだけ。
+// 保管先に書ける人がほかの鍵で頼みを置いても、効いている頼みにはならない（数えずに、置かれていることを画面に出す。監査 B1 の追い）。
 import { createHash, randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { canonicalize } from "../share/jcs";
 import { HEX64, signBody, verifyBody, type KeyPair } from "../share/sign";
 import { planDir } from "./paths";
+import { CREATION_ROLES, type VersionInfo } from "./store";
 
 export const REQUEST_V = "moyai.request/1";
 export const RECEIPT_V = "moyai.receipt/1";
@@ -101,22 +104,32 @@ export async function createRequest(i: {
   return { token, request: { body, hash } };
 }
 
-/** その版の頼み（署名が合うものだけ、古い順） */
-export async function readRequests(root: string, planId: string, version: number): Promise<Request[]> {
+/** 頼みを数える相手の版：版の番号・中身のハッシュ・その版を作った署名 */
+export type RequestVersion = Pick<VersionInfo, "version" | "contentHash" | "signatures">;
+
+/**
+ * その版の頼み（署名が合うものだけ、古い順）。requests はその版を作った鍵がその中身に宛てた頼み、
+ * foreign はそれ以外の鍵か中身に宛てた頼み（数えない。置かれていることを画面に出す）
+ */
+export async function readRequests(root: string, planId: string, v: RequestVersion): Promise<{ requests: Request[]; foreign: Request[] }> {
   const dir = join(planDir(root, planId), "requests");
   let names: string[] = [];
   try {
-    names = (await readdir(dir)).filter((n) => n.startsWith(`${pad(version)}-`) && n.endsWith(".json"));
+    names = (await readdir(dir)).filter((n) => n.startsWith(`${pad(v.version)}-`) && n.endsWith(".json"));
   } catch {
-    return [];
+    return { requests: [], foreign: [] };
   }
-  const out: Request[] = [];
+  const makers = new Set(v.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.pub));
+  const requests: Request[] = [];
+  const foreign: Request[] = [];
   for (const n of names) {
     const text = await readFile(join(dir, n), "utf8");
     const body = open<RequestBody>(text);
-    if (body && body.v === REQUEST_V && body.planId === planId && body.version === version) out.push({ body, hash: sha(text) });
+    if (!body || body.v !== REQUEST_V || body.planId !== planId || body.version !== v.version) continue;
+    (makers.has(body.pub) && body.contentHash === v.contentHash ? requests : foreign).push({ body, hash: sha(text) });
   }
-  return out.sort((a, b) => (a.body.at < b.body.at ? -1 : a.body.at > b.body.at ? 1 : 0));
+  const byAt = (a: Request, b: Request) => (a.body.at < b.body.at ? -1 : a.body.at > b.body.at ? 1 : 0);
+  return { requests: requests.sort(byAt), foreign: foreign.sort(byAt) };
 }
 
 /** 受け取り（その頼みに、署名が合うもの） */
@@ -131,9 +144,9 @@ export async function readReceipt(root: string, req: Request): Promise<ReceiptBo
 }
 
 /** その版で効いている頼み（いちばん新しいもの）と、その受け取り。頼みが無ければ null */
-export async function activeRequest(root: string, planId: string, version: number): Promise<{ request: Request; receipt: ReceiptBody | null } | null> {
-  const all = await readRequests(root, planId, version);
-  const request = all.at(-1);
+export async function activeRequest(root: string, planId: string, v: RequestVersion): Promise<{ request: Request; receipt: ReceiptBody | null } | null> {
+  const { requests } = await readRequests(root, planId, v);
+  const request = requests.at(-1);
   if (!request) return null;
   return { request, receipt: await readReceipt(root, request) };
 }
@@ -148,14 +161,14 @@ export type ReceiveResult =
   | { state: "unknown" };
 
 /** リンクを開いた人の MOYAI が、合言葉を頼みと照らし、受け手の鍵で受け取りに署名して置く（最初の 1 つだけ） */
-export async function receiveRequest(i: { root: string; planId: string; version: number; token: string; by: string; pair: KeyPair; now: Date }): Promise<ReceiveResult> {
-  const all = await readRequests(i.root, i.planId, i.version);
+export async function receiveRequest(i: { root: string; planId: string; version: RequestVersion; token: string; by: string; pair: KeyPair; now: Date }): Promise<ReceiveResult> {
+  const { requests: all } = await readRequests(i.root, i.planId, i.version);
   const hit = all.find((r) => r.body.tokenHash === sha(i.token));
   if (!hit) return { state: "unknown" };
   if (hit !== all.at(-1)) return { state: "withdrawn" };
   const existing = await readReceipt(i.root, hit);
   if (existing) return existing.pub === i.pair.pub ? { state: "mine", request: hit } : { state: "takenByOther", request: hit, receipt: existing };
-  const body: ReceiptBody = { v: RECEIPT_V, planId: i.planId, version: i.version, request: hit.hash, token: i.token, by: i.by, pub: i.pair.pub, at: i.now.toISOString() };
+  const body: ReceiptBody = { v: RECEIPT_V, planId: i.planId, version: i.version.version, request: hit.hash, token: i.token, by: i.by, pub: i.pair.pub, at: i.now.toISOString() };
   const dir = join(planDir(i.root, i.planId), "receipts");
   await mkdir(dir, { recursive: true });
   try {

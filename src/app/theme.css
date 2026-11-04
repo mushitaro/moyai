@@ -162,6 +162,10 @@ body {
   letter-spacing: 0.1em;
   color: var(--shu-text);
 }
+/* 見るだけで開いたとき（古い版・ほかの鍵が受け取った頼み・取り下げられた頼み）は朱を使わず、淡い字（Wire の B1） */
+.moyai-merge-state[data-view-only="true"] {
+  color: var(--text-3);
+}
 .moyai-merge-head-end {
   margin-left: auto;
   display: flex;
@@ -190,6 +194,30 @@ button.moyai-merge-link {
 }
 .moyai-merge-link:hover {
   color: var(--text);
+}
+/* 行の中のボタン（指紋を読み合わせる・知らせる など）：下線を持たず、言葉の前にボタンと同じ短い縦の罫（Wire の B1） */
+.moyai-inline-act {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--sp-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+.moyai-inline-act::before {
+  content: "";
+  flex: none;
+  width: 1px;
+  height: 10px;
+  margin-right: var(--sp-3);
+  background: var(--line-strong);
+}
+.moyai-inline-act:hover {
+  color: var(--text-2);
 }
 /* シートのタブ（絵は Review.dc.html、Version 35）：高さ 36px、字は 12px・字間 0.1em・淡い字（ホバーで墨）。選んだシートは墨と太さ 500 で、下線なし。
    項目の間は、切り替えと同じ短い縦の罫（1×10px の --line-strong を上下の真ん中に、字との間は 12px）。最初の項目の前と「重ねた資料」の札のすぐ後には付けない。

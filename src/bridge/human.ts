@@ -8,13 +8,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
-import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLatest, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLatest, CREATION_ROLES, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
 import { COMMENT_MAX, addComment, readComments } from "../plan/comments";
 import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previousOf, trustList, trustOf } from "./people";
 import { checkSeen } from "./seen";
-import { activeRequest, createRequest, receiveRequest } from "../plan/request";
+import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
@@ -284,12 +284,24 @@ export class HumanService {
     return { ok: true, signer: { by: name, pair: k.pair } };
   }
 
+  /**
+   * いちばん新しい版の、数えない頼み：置いた鍵の名乗り・指紋・時刻と、効かない理由
+   * （otherKey：その版を作った鍵でない。otherContent：その版を作った鍵が、ほかの中身に宛てた）
+   */
+  private async ignoredRequests(root: string, planId: string, h: Awaited<ReturnType<typeof readHistory>>) {
+    const top = h.versions.at(-1);
+    if (!top) return [];
+    const makers = new Set(top.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.pub));
+    const { foreign } = await readRequests(root, planId, top);
+    return foreign.map((q) => ({ by: q.body.by, fingerprint: fingerprint(q.body.pub), at: q.body.at, why: makers.has(q.body.pub) ? ("otherContent" as const) : ("otherKey" as const) }));
+  }
+
   /** いちばん新しい版の頼みの見え方：頼むこと・宛先・頼んだ人・受け取った人（信じ方つき）・自分が頼んだか・自分が受け取ったか・済んだか */
   private async requestView(root: string, planId: string, h: Awaited<ReturnType<typeof readHistory>>, name: string | null) {
     const sd = this.e.stateDir!;
     const top = h.versions.at(-1);
     if (!top) return null;
-    const act = await activeRequest(root, planId, top.version);
+    const act = await activeRequest(root, planId, top);
     if (!act) return null;
     const mine = ownKeys(sd).filter((k) => !k.old && k.by === name).map((k) => k.pub);
     const r = act.receipt;
@@ -420,6 +432,8 @@ export class HumanService {
           turn: await readTurn(root, p.planId),
           // いちばん新しい版の頼みと受け取り（頼んだ人には受け取った人を、受け取った人には自分だと出す。監査 B1）
           request: await this.requestView(root, p.planId, h, s.name),
+          // いちばん新しい版に、その版を作った鍵でない頼みが置かれていれば、数えずに出す（監査 B1 の追い）
+          requestsIgnored: await this.ignoredRequests(root, p.planId, h),
           vanished,
         };
       }
@@ -446,7 +460,7 @@ export class HumanService {
           if (checkSeen(sd, root, pid, h0)) return no("historyVanished");
           // 編集を頼んだ版の上に重ねるのは、編集の番の人だけ（頼みを受け取った鍵。まだ誰も受け取っていなければ頼んだ人。監査 B1）
           const top = h0.versions.at(-1);
-          const act = top ? await activeRequest(root, pid, top.version) : null;
+          const act = top ? await activeRequest(root, pid, top) : null;
           if (act && act.request.body.kind === "edit" && signer.signer.pair.pub !== (act.receipt?.pub ?? act.request.body.pub)) return no("notYourTurn");
         }
         // 頼むこと：自分で確定する（confirm の署名）か、編集・承認を頼んで渡す（edit の署名）。頼むときは宛先が要る
@@ -605,7 +619,9 @@ export class HumanService {
           signer = this.signer(sd);
         }
         if (!signer.ok) return no(signer.reason);
-        const r = await receiveRequest({ root, planId: p.planId, version: p.version, token: p.token, by: signer.signer.by, pair: signer.signer.pair, now });
+        const v = (await readHistory(root, p.planId)).versions.find((x) => x.version === p.version);
+        if (!v) return { ok: true, state: "unknown" };
+        const r = await receiveRequest({ root, planId: p.planId, version: v, token: p.token, by: signer.signer.by, pair: signer.signer.pair, now });
         if (r.state === "takenByOther") return { ok: true, state: r.state, requester: r.request.body.by, receiver: { by: r.receipt.by, fingerprint: fingerprint(r.receipt.pub) } };
         if (r.state === "received" || r.state === "mine") return { ok: true, state: r.state, requester: r.request.body.by, kind: r.request.body.kind };
         return { ok: true, state: r.state };
@@ -623,7 +639,7 @@ export class HumanService {
         const top = h.versions.at(-1);
         if (!top || top.version !== p.version || !h.latest) return no("notLatest");
         if (top.problem) return no("historyBroken");
-        const act = await activeRequest(root, p.planId, p.version);
+        const act = await activeRequest(root, p.planId, top);
         if (!act || act.request.body.pub !== signer.signer.pair.pub) return no("notRequested");
         if (top.signatures.some((x) => x.role === "approve" || x.role === "return")) return no("notRequested");
         const q = await createRequest({ root, planId: p.planId, version: p.version, contentHash: top.contentHash, kind: act.request.body.kind, to: p.to.trim(), by: signer.signer.by, pair: signer.signer.pair, now });
@@ -639,9 +655,11 @@ export class HumanService {
         if (!root) return no("noRoot");
         const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
-        if (checkSeen(sd, root, p.planId, await readHistory(root, p.planId))) return no("historyVanished");
+        const hs = await readHistory(root, p.planId);
+        if (checkSeen(sd, root, p.planId, hs)) return no("historyVanished");
         // 承認・差し戻しは、承認の頼みを受け取った鍵だけ（監査 B1）
-        const act = await activeRequest(root, p.planId, p.version);
+        const sv = hs.versions.find((x) => x.version === p.version);
+        const act = sv ? await activeRequest(root, p.planId, sv) : null;
         if (!act || act.request.body.kind !== "approve" || act.receipt?.pub !== signer.signer.pair.pub) return no("notRequested");
         const r = await signLatest({ root, planId: p.planId, version: p.version, role: p.role, reason: p.reason, signer: signer.signer, now });
         if (!r.ok) return no(r.reason);

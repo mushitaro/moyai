@@ -303,7 +303,9 @@ export const TEXT = {
     peersLabel: "似た施設",
     peersOn: "重ねる",
     peersOff: "外す",
-    oldVersionLabel: "保管先の古い版（見るだけ）",
+    oldVersionLabel: "古い版（見るだけ）",
+    /** 頼みをほかの鍵が受け取っていた・頼みが取り下げられていたリンクで開いたとき（古い版ではない。Wire の B1） */
+    viewOnlyLabel: "見るだけ",
     confirmedLine: "確定済み",
     stale: (n: number, by: string) => `保管先に新しい版（第 ${n} 版${by ? `、${by}` : ""}）があります。開き直すと、その版に重ねます。`,
     reopen: "開き直す",
@@ -312,7 +314,6 @@ export const TEXT = {
       open: (n: number) => `決まっていない所が ${n}`,
       pending: (n: number) => `受けていない決定が ${n}`,
       notConnected: "橋渡しとつながっていないので押せません",
-      oldVersion: "保管先の古い版を見ています。重ねるときは、トップの版の印から「この版から次の版」",
       stale: "保管先に新しい版があります。開き直してください",
     },
     blockPrefix: "押せない理由：",

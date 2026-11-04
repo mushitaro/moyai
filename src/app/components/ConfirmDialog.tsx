@@ -26,6 +26,14 @@ interface Synced {
   base: string;
 }
 
+/** 効かない頼み（その版を作った鍵でない・ほかの中身に宛てた。数えない。Wire の B1 の追い） */
+export interface IgnoredRequest {
+  by: string;
+  fingerprint: string;
+  at: string;
+  why: "otherKey" | "otherContent";
+}
+
 interface StatusBody {
   ok: boolean;
   reason?: string;
@@ -62,6 +70,8 @@ interface StatusBody {
     receivedByMe: boolean;
     done: boolean;
   } | null;
+  /** いちばん新しい版に置かれた、数えない頼み（その版を作った鍵でないか、ほかの中身に宛てたもの。監査 B1 の追い） */
+  requestsIgnored?: IgnoredRequest[];
 }
 
 

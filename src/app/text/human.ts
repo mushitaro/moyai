@@ -187,6 +187,15 @@ export const HUMAN_TEXT = {
     notifySubject: (n: number) => `【MOYAI】第 ${n} 版の頼みを、ほかの人が受け取っています`,
     notifyBody: (n: number, by: string, fp: string) => `第 ${n} 版の頼みのリンクを開いたところ、ほかの鍵がもう受け取っていました。\n受け取った人：${by}\n受け取った鍵の指紋：${fp}\n頼み直していただけますか。`,
     withdrawn: "この頼みは取り下げられました",
+    // リンクの合言葉が、効いている頼みのどれにも当たらない（その版を作った鍵でない頼みなど）
+    unknown: "この頼みは効いていません",
+    ignored: "効かない頼み",
+    ignoredSelfNamed: "（名乗り）",
+    ignoredWhy: { otherKey: "この版を作った鍵ではありません", otherContent: "ほかの中身に宛てた頼みです" } as Record<string, string>,
+    ignoredBar: "! 効かない頼みが置かれています",
+    ignoredShow: "見る",
+    ignoredAt: (iso: string) =>
+      new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso)).replace("/", "-"),
     renewTitle: (n: number) => `第 ${n} 版を頼み直す`,
     renewResult: "前のリンクは使えなくなります。",
     renewSubmit: "署名して渡す",
@@ -195,6 +204,9 @@ export const HUMAN_TEXT = {
   keyWarn: {
     unconfirmed: (by: string) => `! ${by}の鍵を、まだ確かめていません`,
     changed: (by: string) => `! ${by}の鍵が、前に確かめた鍵と違います`,
+    // 名前がすぐ前に出ているとき（頼んだ人の下の帯。Wire の B1）
+    unconfirmedThis: "! この鍵を、まだ確かめていません",
+    changedThis: "! この鍵が、前に確かめた鍵と違います",
     many: (n: number) => `! 確かめていない鍵が ${n} つあります`,
     check: "指紋を読み合わせる",
     show: "見る",

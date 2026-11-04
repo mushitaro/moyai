@@ -1,8 +1,9 @@
 // MERGE の横の板の「署名」（docs/screens.md 3.2）：いちばん新しい版の中身のハッシュ（4 文字 × 2 組を 4 つ）、使った読み方、結び目の鎖（確定・渡す・承認・差し戻し）。
 // 署名ごとに、この PC が覚えた鍵と照らした信じ方（✓ この PC の鍵・✓ 確認済み・! 未確認・! 鍵が替わった）を出す。確かめで合わない版は朱で出す。
 // 未確認はふつうの字、替わったは朱。! の行の右端に「| 指紋を読み合わせる」（KeyWarn.dc.html の 5）。
-import { Anchor, Stack, Text } from "@mantine/core";
+import { Stack, Text } from "@mantine/core";
 import { useState } from "react";
+import type { IgnoredRequest } from "./ConfirmDialog";
 import { KeyCheckDialog, type TrustSig } from "./KeyWarn";
 import { showContentHash } from "../../plan/signature";
 import type { LoadedReading } from "../../import/reading";
@@ -27,7 +28,20 @@ export interface PanelRequest {
   received: { by: string; pub: string; fingerprint: string; trust: string; previous: { fingerprint: string; at: string } | null } | null;
 }
 
-export function SignaturesPanel({ v, readings, onKeyConfirmed, request = null }: { v: PanelVersion; readings: readonly LoadedReading[]; onKeyConfirmed?: () => void; request?: PanelRequest | null }) {
+export function SignaturesPanel({
+  v,
+  readings,
+  onKeyConfirmed,
+  request = null,
+  ignored = [],
+}: {
+  v: PanelVersion;
+  readings: readonly LoadedReading[];
+  onKeyConfirmed?: () => void;
+  request?: PanelRequest | null;
+  /** 効かない頼み：頼みの行のすぐ下に 1 つ 1 行。別の鍵は朱で「!」と名乗りと指紋、版を作った鍵のほかの中身に宛てた頼みは淡い字（Wire の B1 の追い） */
+  ignored?: readonly IgnoredRequest[];
+}) {
   const [check, setCheck] = useState<TrustSig | null>(null);
   return (
     <Stack gap="xs" data-testid="signatures-panel">
@@ -71,12 +85,9 @@ export function SignaturesPanel({ v, readings, onKeyConfirmed, request = null }:
           {T.role[s.role] ?? s.role}　{s.by}　<Text span c={s.trust === "changed" ? "var(--shu-text)" : undefined}>{H.trust[s.trust] ?? ""}</Text>
           {(s.trust === "unconfirmed" || s.trust === "changed") && s.pub && (
             <>
-              <Text span c="dimmed">
-                {"　| "}
-              </Text>
-              <Anchor component="button" type="button" size="xs" onClick={() => setCheck(s)} data-testid="signature-check">
+              <button type="button" className="moyai-inline-act" onClick={() => setCheck(s)} data-testid="signature-check">
                 {HUMAN_TEXT.keyWarn.check}
-              </Anchor>
+              </button>
             </>
           )}
         </Text>
@@ -92,17 +103,13 @@ export function SignaturesPanel({ v, readings, onKeyConfirmed, request = null }:
               </Text>
               {(request.received.trust === "unconfirmed" || request.received.trust === "changed") && (
                 <>
-                  <Text span c="dimmed">
-                    {"　| "}
-                  </Text>
-                  <Anchor
-                    component="button"
+                  <button
                     type="button"
-                    size="xs"
+                    className="moyai-inline-act"
                     onClick={() => setCheck({ role: "confirm", by: request.received!.by, pub: request.received!.pub, fingerprint: request.received!.fingerprint, trust: request.received!.trust, previous: request.received!.previous })}
                   >
                     {HUMAN_TEXT.keyWarn.check}
-                  </Anchor>
+                  </button>
                 </>
               )}
             </>
@@ -113,6 +120,15 @@ export function SignaturesPanel({ v, readings, onKeyConfirmed, request = null }:
           )}
         </Text>
       )}
+      {ignored.map((q) => {
+        const R = HUMAN_TEXT.request;
+        const other = q.why === "otherKey";
+        return (
+          <Text size="xs" key={`${q.fingerprint}|${q.at}`} c={other ? "var(--shu-text)" : "var(--text-3)"} data-testid="signature-ignored" data-why={q.why}>
+            {other ? `! ${R.ignored}　${q.by}${R.ignoredSelfNamed}　${q.fingerprint}` : `${R.ignored}　${q.by}`}　{R.ignoredAt(q.at)}　{R.ignoredWhy[q.why]}
+          </Text>
+        );
+      })}
       <KeyCheckDialog signer={check} onClose={() => setCheck(null)} onConfirmed={() => onKeyConfirmed?.()} />
     </Stack>
   );
