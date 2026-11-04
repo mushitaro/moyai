@@ -22,5 +22,6 @@ test("MOYAI のツール名が使わない名前と 1 つも一致しない", (t
   const names = JSON.parse(readFileSync(file, "utf8"));
   const hits = names.filter((n) => reserved.includes(n));
   assert.deepEqual(hits, []);
-  assert.ok(names.length <= 12, `ツールは 12 以下: ${names.length}`);
+  // docs/plan.md §2.13 の 12 と、§2.17 の読み方の 3（reading_rules_propose・reading_skill_register・reading_skills_list）
+  assert.ok(names.length <= 15, `ツールは 15 以下: ${names.length}`);
 });

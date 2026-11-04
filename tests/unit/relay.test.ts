@@ -210,7 +210,7 @@ describe("待ちの上限と送り直し", () => {
 const dist = join(process.cwd(), "dist", "cli.js");
 const needDist = process.env.MOYAI_REQUIRE_DIST === "1";
 describe.skipIf(!existsSync(dist) && !needDist)("dist/cli.js mcp（標準入出力）", () => {
-  it("標準出力は MCP だけで、11 のツールを出し、橋渡しが無ければ先に start をと返す", async () => {
+  it("標準出力は MCP だけで、今見せるツールを出し、橋渡しが無ければ先に start をと返す", async () => {
     const stateDir = tempState();
     const transport = new StdioClientTransport({
       command: process.execPath,
@@ -222,7 +222,7 @@ describe.skipIf(!existsSync(dist) && !needDist)("dist/cli.js mcp（標準入出�
     await client.connect(transport);
     cleanups.push(() => client.close());
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(11);
+    expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
     const r = await client.callTool({ name: "share_preview", arguments: {} });
     expectError(r, "bridge_not_running");
   });
