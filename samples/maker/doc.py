@@ -112,21 +112,25 @@ def readme(W, answers, fac_dir: Path):
     L.append("### 3. 星取表の書き漏れ・年度の書き間違い・最後の年度の一部だけの反映")
     L.append("")
     cnt = Counter(e["type"] for e in W.errata)
-    L.append(f"世界の割合（`packs/{W.pack}/world.json` の rates）：書き漏れ {W.rates['omitMark']:.0%}、年度の書き間違い {W.rates['wrongYear']:.0%}、"
-             f"最後の年度の反映 {W.rates['lastYearReflected']:.0%}。入った数：書き漏れ {cnt.get('omitMark', 0)}、年度の書き間違い {cnt.get('wrongYear', 0)}、"
-             f"最後の年度で反映していない {cnt.get('lastYearUnreflected', 0)}。全部は `answer/world.json` の `errata`。例：")
-    L.append("")
-    shown = defaultdict(int)
-    for e in W.errata:
-        if shown[e["type"]] >= 4:
-            continue
-        shown[e["type"]] += 1
-        what = {"omitMark": "やったのに印が無い（○ のまま、か空欄）", "wrongYear": f"{e.get('year')} 年度の実施を {e.get('writtenYear')} 年度の列に書いた",
-                "lastYearUnreflected": "今年度やったのに、まだ ○ のまま"}[e["type"]]
-        w0 = W.widx[e["works"][0]] if e.get("works") else None
-        lab = f"{W.aidx[w0['asset']]['name']} {w0['task']}" if w0 else ""
-        L.append(f"- `{e['sheet']}` の {e['r']} 行（{lab}、{e.get('year')} 年度）：{what}")
-    L.append("")
+    if not _docs(W, "chart"):
+        L.append("- 星取表が無い施設なので、入れていない。")
+        L.append("")
+    else:
+        L.append(f"世界の割合（`packs/{W.pack}/world.json` の rates）：書き漏れ {W.rates['omitMark']:.0%}、年度の書き間違い {W.rates['wrongYear']:.0%}、"
+                 f"最後の年度の反映 {W.rates['lastYearReflected']:.0%}。入った数：書き漏れ {cnt.get('omitMark', 0)}、年度の書き間違い {cnt.get('wrongYear', 0)}、"
+                 f"最後の年度で反映していない {cnt.get('lastYearUnreflected', 0)}。全部は `answer/world.json` の `errata`。例：")
+        L.append("")
+        shown = defaultdict(int)
+        for e in W.errata:
+            if shown[e["type"]] >= 4:
+                continue
+            shown[e["type"]] += 1
+            what = {"omitMark": "やったのに印が無い（○ のまま、か空欄）", "wrongYear": f"{e.get('year')} 年度の実施を {e.get('writtenYear')} 年度の列に書いた",
+                    "lastYearUnreflected": "今年度やったのに、まだ ○ のまま"}[e["type"]]
+            w0 = W.widx[e["works"][0]] if e.get("works") else None
+            lab = f"{W.aidx[w0['asset']]['name']} {w0['task']}" if w0 else ""
+            L.append(f"- `{e['sheet']}` の {e['r']} 行（{lab}、{e.get('year')} 年度）：{what}")
+        L.append("")
     L.append("### 4. 計画の欠け（MOYAI の検査が見つけるはずのもの）")
     L.append("")
     if W.gaps:
@@ -234,8 +238,9 @@ def _dirt(W, answers):
             out.append(f"作業日報（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのブック、月ごとのシート、1 日 1 枚の帳票。印刷の設定（A4・向き・余白・印刷の範囲・改ページ・横 1 頁）を入れ、1 日 1 枚が印刷の 1 頁になる。"
                        "明細が入りきらない日は続紙（「作業日報（続紙）」、頁 2/2）。"
                        f"明細は{W.text('unitWord')}・系統・機器・作業を、横に結合した 1 つのセルに平打ちした（例{W.doc_text('diaryExample')}）。書き順と区切り（空白・全角の空白・「・」・括弧）は記入者で揺れ、日でも少し揺れる。"
+                       + ("帳票はどの年度も A4 横（日付のセル、職種別人員と人工計の列）。" if lf and lf <= d["years"][0] else "")
                        + (f"いじわる：{era_fy(lf)} 年度から帳票が A4 横に変わる。それより前（A4 縦）は和暦の文字の日付・人員（「3名」と数が混ざる）、"
-                          f"{era_fy(lf)} 年度からは日付のセル・題と承認の欄と日付の位置・列の並び・結合が変わり、職種別人員と人工計の列が足される。" if lf else "")
+                          f"{era_fy(lf)} 年度からは日付のセル・題と承認の欄と日付の位置・列の並び・結合が変わり、職種別人員と人工計の列が足される。" if lf and lf > d["years"][0] else "")
                        + f"{W.doc_text('diaryForms')}と半角カナが揺れる。"
                        f"補修と細かな点検（{W.doc_text('routineExample')}…）は日報にだけある")
         elif t == "diary_csv":
@@ -285,6 +290,7 @@ def _cross(W, answers):
                 return k
         return f
 
+    has_chart = bool(_docs(W, "chart"))
     cands = []
     for a in W.assets:
         if a.get("pseudo") or a["part"]:
@@ -303,9 +309,11 @@ def _cross(W, answers):
         if a["key"] in used:
             continue
         used.add(a["key"])
-        out.append(f"`{aid}`（完成図書・台帳の名前「{a['name']}」）の呼び名：" + "、".join(f"「{k}」（{'・'.join(sorted(v))}）" for k, v in list(vals.items())[:5]))
+        out.append(f"`{aid}`（{'完成図書・台帳の名前' if has_chart else '正式な名前'}「{a['name']}」）の呼び名：" + "、".join(f"「{k}」（{'・'.join(sorted(v))}）" for k, v in list(vals.items())[:5]))
         if len(used) >= 10:
             break
+    if not has_chart:
+        return out + _cross_no_chart(W)
     parts = any(a["part"] for a in W.assets)
     out.append("粒度：完成図書・機器台帳は台数でまとめ、星取表は 1 台ずつの行・" + (f"{W.text('pairRow')}・" if W.F > 1 else "") + "まとめて 1 行が混ざる"
                + (f"。台帳の 1 行が、星取表では部位（{W.doc_text('partsExample')}）に分かれる" if parts else ""))
@@ -313,6 +321,23 @@ def _cross(W, answers):
     out.append("工数：日報は 1 日の人数（と延べ時間）、工程表は延べ人工（数か文字）か日数だけ、CSV は人数と時間。同じ作業の日報の人数の和が、工程表の延べ人工になる")
     out.append("どの資料のどの行がどの作業かは `answer/world.json` の `links`（`how` が bundle・annual・rollup・upgrade の結びは、契約やまとめた工事の行で、作業そのものの行ではない）")
     out.append("事後の補修は、星取表にはほとんど書かない（一部だけ備考か「補修（事後）」の行）。日報と発注台帳の修繕工事にはある")
+    return out
+
+
+def _cross_no_chart(W):
+    """星取表を持たない施設（作業日報・発注台帳だけなど）の、資料どうしの違い。"""
+    has = {d["type"] for d in W.fac["docs"]}
+    names = [n for t, n in (("diary", "作業日報"), ("diary_csv", "作業実績の CSV"), ("orders", "発注台帳"), ("ledger", "機器台帳"),
+                            ("spec_pdf", "完成図書")) if t in has]
+    out = [f"資料は{'・'.join(names)}だけ。年度の計画（星取表）は無い。同じ機器の呼び名が、記入者と日で揺れる（上の例）"]
+    if "orders" in has:
+        out.append("日付：日報は作業した日。発注台帳の工期は契約の期間で、作業の日より広い")
+        out.append("同じ作業：日報の作業の行と、発注台帳の工事・委託の行（まとめた工事・年間の委託は、多くの作業を 1 行で持つ）")
+    else:
+        out.append("日付：日報は作業した日")
+    out.append("工数：日報は 1 日の人数（A4 横の帳票は職種別人員と人工計）")
+    out.append("どの資料のどの行がどの作業かは `answer/world.json` の `links`（`how` が bundle・annual・rollup・upgrade の結びは、契約やまとめた工事の行で、作業そのものの行ではない）")
+    out.append("事後の補修と細かな点検は、日報" + ("と発注台帳の修繕工事" if "orders" in has else "") + "にある")
     return out
 
 
@@ -356,7 +381,9 @@ def usermd(W, answers, fac_dir: Path):
             L.append("")
             L.append("- 運転管理の委託先と保全係が毎日書く帳票。1 日 1 枚で、印刷すると 1 日が A4 の 1 枚になる。書ききれない日は続紙に書いた（頁の欄が 2/2）。")
             L.append(f"- 明細の欄には、{W.text('unitWord')}・号機・機器・作業をまとめて 1 行で打っている。書く順番や区切りは書く人で違う。")
-            if lf:
+            if lf and lf <= d["years"][0]:
+                L.append("- 帳票は A4 横。人数は職種ごとの人数と、その合計の「人工計」。")
+            elif lf:
                 L.append(f"- {era_fy(lf) } 年度から帳票を A4 横に変えた（職種ごとの人数の欄を足したため）。それより前の A4 縦の帳票の「人員」はその日にその作業に入った人数。横の帳票は職種ごとの人数と、その合計の「人工計」。")
             L.append("- 1 人が 1 日働いて 1 人工。")
             L.append("- 施工業者が「常駐（運転管理）」「運転管理委託」の行は、運転管理の委託先が自分でやった作業。")

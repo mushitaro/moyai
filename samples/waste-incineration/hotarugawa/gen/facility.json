@@ -1,0 +1,45 @@
+{
+  "id": "WI-11",
+  "pack": "waste-incineration",
+  "name": "ほたる川クリーンセンター",
+  "short": "ほたる川CC",
+  "owner": "架空西郷環境衛生組合",
+  "seed": 63013,
+  "today": "2025-12-12",
+  "years": [
+    2016,
+    2025
+  ],
+  "planTo": 2030,
+  "profile": {
+    "furnace": "STOKER",
+    "furnaces": 2,
+    "perFurnace": 70,
+    "turbine": true,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 2003
+  },
+  "costScale": 0.9,
+  "tagStyle": "dash",
+  "vendorStyle": "(株)",
+  "vendorPick": 2,
+  "overrides": {},
+  "docs": [
+    {
+      "type": "diary",
+      "years": [
+        2021,
+        2025
+      ],
+      "furnaceStyle": [
+        1,
+        3,
+        5
+      ],
+      "kana": 0.2,
+      "landscapeFrom": 2021
+    }
+  ]
+}

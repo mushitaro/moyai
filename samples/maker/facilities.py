@@ -107,6 +107,13 @@ F.append(("waste-incineration", "hoshinooka", {
     "docs": [chart("保全計画_R1-R13", 2019, 2031, layout="merged", header="eraStack", legend="pa", costUnit="千円", ditto=0.4, sheetName="保全計画",
                    furnaceStyle=[2, 3], unitStyle=[2], nameVariant=1, colLabels={"names": ["設備", "機器", "系列", "部位", "部位"]}, author="運営事業者"),
              {"type": "diary_csv", "years": [2022, 2025], "encoding": "cp932", "kana": 0.25, "furnaceStyle": [3, 1]}]}))
+# 動画のデモの施設 C：星取表を持たない（作業日報だけ。段 2 で発注台帳を足す）。似た施設の群（ストーカ・100〜199t/日・タービン・搬出・単年度）に入れる
+F.append(("waste-incineration", "hotarugawa", {
+    "id": "WI-11", "name": "ほたる川クリーンセンター", "short": "ほたる川CC", "owner": "架空西郷環境衛生組合", "seed": 63013,
+    "years": [2016, 2025], "planTo": 2030,
+    "profile": {"furnace": "STOKER", "furnaces": 2, "perFurnace": 70, "turbine": True, "dust": "BF", "ash": "OUT", "contract": "SINGLE", "commissioned": 2003},
+    "costScale": 0.9, "tagStyle": "dash", "vendorStyle": "(株)", "vendorPick": 2,
+    "docs": [{"type": "diary", "years": [2021, 2025], "furnaceStyle": [1, 3, 5], "kana": 0.2, "landscapeFrom": 2021}]}))
 F.append(("night-soil", "suzukaze", {
     "id": "NS-01", "name": "すずかぜ衛生センター", "short": "すずかぜ衛生C", "owner": "架空衛生施設組合", "seed": 61011,
     "years": [2017, 2025], "planTo": 2030,
