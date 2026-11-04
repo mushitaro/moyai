@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
-import { commitPlan, planDir, readHistory, revertPlan, signLatest, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLatest, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
 import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustList, trustOf } from "./people";
@@ -78,12 +78,15 @@ const SCHEMAS = {
     request: z.object({ kind: z.enum(["self", "edit", "approve"]), to: z.string().max(200).nullable(), note: z.string().max(1000) }).optional(),
     /** 受け取る人の MOYAI で版を開くリンクの頭（画面の origin。メールの文に入れる） */
     origin: z.string().max(200).optional(),
+    /** ほかの施設の版から作った第 1 版のとき（トップの「この版から別の施設をつくる」） */
+    derivedFrom: z.object({ planId: planIdSchema, version: z.number().int().min(1), contentHash: z.string().regex(/^[0-9a-f]{64}$/) }).nullable().optional(),
     /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
   readings_read: z.object({}),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable(), passphrase: z.string().min(1).max(1000) }),
   plans_list: z.object({}),
+  plan_version_read: z.object({ planId: planIdSchema, version: z.number().int().min(1) }),
   plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500), passphrase: z.string().min(1).max(1000) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({ passphrase: z.string().min(1).max(1000) }),
@@ -263,6 +266,8 @@ export class HumanService {
           synced: await this.syncedOfPath(root),
           versions,
           latest: h.latest ? { version: h.latest.version, plan: h.latest.plan } : null,
+          // ひとつ前の版（確かめで合うときだけ）：承認を頼まれた人の星取表は、頼まれた版をこの版と比べる
+          previous: h.previous && h.versions.find((v) => v.version === h.previous!.version)?.problem === null ? { version: h.previous.version, plan: h.previous.plan } : null,
           accepted: h.accepted,
           name: s.name,
           hasKey: s.name !== null && ownKeys(sd).some((k) => k.by === s.name),
@@ -299,6 +304,7 @@ export class HumanService {
           now,
           catalogs: (id) => this.catalogsFor(id),
           readingSkills,
+          derivedFrom: p.derivedFrom ?? null,
         });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         const at = now.toISOString();
@@ -352,6 +358,15 @@ export class HumanService {
         writeSettings(sd, { v: 1, root, ledger, name });
         return { ok: true, root, ledger, name };
       }
+      case "plan_version_read": {
+        const p = parsePayload("plan_version_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const r = await readPlanVersion(root, p.planId, p.version);
+        if (!r.ok) return no(r.reason);
+        return { ok: true, version: r.record.version, plan: r.record.plan, contentHash: r.contentHash, at: r.record.at };
+      }
       case "plans_list": {
         if (!parsePayload("plans_list", call.payload)) return no("payloadInvalid");
         const root = await this.root();
@@ -374,7 +389,17 @@ export class HumanService {
               planId: id,
               displayName: h.latest.plan.displayName,
               fictional: h.latest.plan.facility.fictional,
-              versions: h.versions.map((v) => ({ version: v.version, at: v.at, contentHash: v.contentHash, roles: v.signatures.map((x) => x.role), problem: v.problem, legacy: v.legacy })),
+              versions: h.versions.map((v) => ({
+                version: v.version,
+                at: v.at,
+                contentHash: v.contentHash,
+                roles: v.signatures.map((x) => x.role),
+                // 版を作った人（確定か渡すの署名の呼び名）。トップの「ほかの人が持っていた間」に使う
+                by: v.signatures.find((x) => x.role === "confirm" || x.role === "edit" || x.role === "revert")?.by ?? null,
+                problem: v.problem,
+                legacy: v.legacy,
+              })),
+              derivedFrom: h.derivedFrom,
               turn: await readTurn(root, id),
             });
           } catch {

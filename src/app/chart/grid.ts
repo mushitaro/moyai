@@ -20,6 +20,7 @@ import {
   type ValueFormatterParams,
 } from "ag-grid-community";
 import type { ChartCell, ChartModel, ChartRow, Mark, Period } from "../../plan/chart";
+import { changedFrom, oldMark } from "../../plan/chart-compare";
 import type { StatField } from "../../share/bands";
 import { bandShort, statText } from "../../share/stat-text";
 import { TEXT } from "../text";
@@ -121,11 +122,24 @@ function levelText(row: ChartRow, i: number): string {
   return row.kind === "unmapped" ? `${name}（${T.records(row.count)}）` : `${name}（${T.units(row.count)}）`;
 }
 
-/** 表に渡す、行の外の状態：Claude が台帳から置き、人がまだ受けていない案の明細の鍵 */
+/** 表に渡す、行の外の状態：Claude が台帳から置き、人がまだ受けていない案の明細の鍵と、比べる版の印（docs/screens.md 3.2） */
 interface GridContext {
   proposals: ReadonlySet<string>;
+  compare: { version: number; before: ReadonlyMap<string, Mark> } | null;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
+export type GridCompare = GridContext["compare"];
+
+/** この印が、比べる版から変わったか */
+function isChanged(row: ChartRow | undefined, p: Period, cell: ChartCell | undefined, context: unknown): boolean {
+  const c = (context as GridContext | undefined)?.compare;
+  return !!c && !!row && row.kind !== "peer" && row.kind !== "stat" && changedFrom(c.before, row.id, p.key, cell?.mark ?? null);
+}
+/** 比べる版にあって、今は無い印 */
+function wasMark(row: ChartRow | undefined, p: Period, cell: ChartCell | undefined, context: unknown): Mark | null {
+  const c = (context as GridContext | undefined)?.compare;
+  return c && row && row.kind !== "peer" && row.kind !== "stat" ? oldMark(c.before, row.id, p.key, cell?.mark ?? null) : null;
+}
 
 /** この印が、まだ受けていない Claude の案を含むか */
 function isProposal(cell: ChartCell | undefined, context: unknown): boolean {
@@ -151,7 +165,19 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     else delete this.el.dataset.mark;
     if (cell?.summary && cell.count !== null) this.el.dataset.count = String(cell.count);
     else delete this.el.dataset.count;
-    if (p.data && period) p.eGridCell.setAttribute("aria-label", cellAria(p.data, period, cell) + (isProposal(cell, p.context) ? T.legend.proposalAria : ""));
+    // 比べる版にあって今は無い印は、淡い破線の円で残す（字は読み上げのために aria-label に）
+    const was = period ? wasMark(p.data, period, cell, p.context) : null;
+    if (was) this.el.dataset.old = was;
+    else delete this.el.dataset.old;
+    const version = (p.context as GridContext | undefined)?.compare?.version ?? 0;
+    if (p.data && period)
+      p.eGridCell.setAttribute(
+        "aria-label",
+        cellAria(p.data, period, cell) +
+          (isProposal(cell, p.context) ? T.legend.proposalAria : "") +
+          (isChanged(p.data, period, cell, p.context) ? T.legend.changedFromAria(version) : "") +
+          (was ? T.legend.oldPlanAria(version, T.markName[was]) : ""),
+      );
     return true;
   }
 }
@@ -228,6 +254,7 @@ function markColumn(p: Period, width: number, fyStart: boolean): ColDef<ChartRow
       "moyai-mark-changed": (c: CellClassParams<ChartRow>) => !!get(c)?.change,
       "moyai-mark-review": (c: CellClassParams<ChartRow>) => !!get(c)?.review,
       "moyai-mark-proposal": (c: CellClassParams<ChartRow>) => isProposal(get(c), c.context),
+      "moyai-mark-vchg": (c: CellClassParams<ChartRow>) => isChanged(c.data, p, get(c), c.context),
     },
     valueGetter: (c) => markText(get(c)?.mark ?? null),
     valueFormatter: (c: ValueFormatterParams<ChartRow>) => formatCell(get(c)),
@@ -302,7 +329,7 @@ export class ChartGrid {
       tooltipShowDelay: 300,
       animateRows: false,
       suppressNoRowsOverlay: true,
-      context: { proposals: NO_PROPOSALS } satisfies GridContext,
+      context: { proposals: NO_PROPOSALS, compare: null } satisfies GridContext,
       rowClassRules: {
         "moyai-row-folded": (p) => !!p.data?.folded,
         "moyai-row-unmapped": (p) => p.data?.kind === "unmapped",
@@ -331,8 +358,8 @@ export class ChartGrid {
   }
 
   /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
-  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS) {
-    this.api.setGridOption("context", { proposals } satisfies GridContext);
+  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null) {
+    this.api.setGridOption("context", { proposals, compare } satisfies GridContext);
     const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, band]);
     if (key !== this.colKey) {
       this.colKey = key;

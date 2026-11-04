@@ -45,6 +45,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/plan-commit` | `plan_commit` | 計画を確定する（合言葉で開いた自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く） |
 | `POST /human/plan-revert` | `plan_revert` | 前の版に戻す（前の版を指す記録を足し、自分の鍵で署名する） |
 | `POST /human/plans-list` | `plans_list` | 保管先の施設と版の一覧（版の番号・時刻・署名の役目・確かめの結果・編集の番）を、トップのもやいの星取表に読む |
+| `POST /human/plan-version-read` | `plan_version_read` | 確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる） |
 | `POST /human/plan-sign` | `plan_sign` | いちばん新しい版に、合言葉で開いた自分の鍵で承認か差し戻しの署名を足し、編集の番を替える |
 | `POST /human/plan-file-read` | `plan_file_read` | 確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす |
 | `POST /human/person-key-create` | `person_key_create` | 自分の鍵（版に署名する）を作り、合言葉で包んで状態フォルダに置く |
@@ -60,7 +61,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 19 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 20 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

@@ -2,13 +2,14 @@
 // 上は 2 行だけ（運営者の指示：データを広く）：見出しの 1 行（施設の名前・版・状態、右に施設の設定）と、シートのタブの 1 行。その下はすぐデータ。
 // シートのタブ：星取表｜読み方｜検査｜決定 n｜資料｜＋ 資料を足す。前の画面（星取表・検査・取り込み）を、そのままシートとして入れる。
 // 右の横の板は 1 枚で、切り替えは「決まっていない所 n（0 なら出さない）/ 署名 n / 出どころ（星取表のとき）」。印を選ぶと出どころへ。
-// 下の帯は、止め札（決まっていない所・受けていない決定・橋渡しが切れている）とボタンだけ。「Claude に話す」の例は状態の帯（Shell）。
+// 下の帯は、止め札（決まっていない所・受けていない決定・橋渡しが切れている）とボタンだけ。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする）。
 // 画面のどこに資料を落としても受ける（引きずって入ったときだけ、全面に「第 n 版に重ねます」）。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
-import { Anchor, Button, FileButton, Group, Text } from "@mantine/core";
+import { Button, FileButton, Group, Text } from "@mantine/core";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
-import { ConfirmDialog, HistoryDialog, usePlanStatus } from "../components/ConfirmDialog";
+import { ConfirmDialog, HistoryDialog, readHuman, usePlanStatus } from "../components/ConfirmDialog";
+import { ROUTES } from "../../shared/routes";
 import { SignDialog } from "../components/SignDialog";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
 import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
@@ -18,9 +19,9 @@ import { FictionMark } from "../components/FictionMark";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { useConnection } from "../state/bridge";
 import { useAccepted } from "../state/decisions";
-import { MergeSideContext, type MergeSide } from "../state/merge-side";
+import { MergeCompareContext, MergeSideContext, type MergeCompare, type MergeSide } from "../state/merge-side";
 import { setWorkingPlan, useWorkingPlan } from "../state/plan-store";
-import { sheetHash, type MergeSheet } from "../stages";
+import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { TEXT } from "../text";
 import { Intake, Questions, useWorkspace } from "./Intake";
 
@@ -46,24 +47,57 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const sideCtx = useMemo<MergeSide>(() => ({ el: sourceEl, show: () => setSide("source") }), [sourceEl]);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // メールのリンク（#/merge?open=<計画ID>&v=<版>&h=<中身のハッシュの頭>）で開いたら、保管先の版を読み、署名と鎖とハッシュを確かめてから置く
+  // 版を開くリンク（#/merge?open=<計画ID>&v=<版>&h=<中身のハッシュの頭>[&next=1]）：メール・トップの「＋ 次の版」・版の印のメニューから。
+  // 保管先の版を読み、署名と鎖とハッシュを確かめてから置く。いちばん新しい版はそのまま、古い版は見るだけ（next=1 なら、その版の中身から次の版を作る）
   const open = new URLSearchParams(location.hash.split("?")[1] ?? "");
   const openId = open.get("open");
-  const wantOpen = !!openId && plan?.planId !== openId;
-  const [status, reloadStatus] = usePlanStatus(client, plan?.planId ?? openId ?? "", (!!plan || !!openId) && conn.kind === "open");
+  const openV = Number(open.get("v"));
+  const openNext = open.get("next") === "1";
+  const openKey = openId ? `${openId}|${openV}|${open.get("h") ?? ""}|${openNext ? 1 : 0}` : null;
+  const [doneKey, setDoneKey] = useState<string | null>(null);
+  const pendingOpen = !!openKey && doneKey !== openKey;
+  // 古い版を見ているあいだは、その版の番号（見るだけ。確定はできない）
+  const [oldView, setOldView] = useState<{ planId: string; version: number } | null>(null);
+  const statusId = pendingOpen ? (openId ?? "") : (plan?.planId ?? "");
+  const [status, reloadStatus] = usePlanStatus(client, statusId, !!statusId && conn.kind === "open");
   const st = status.kind === "ready" ? status.status : null;
   useEffect(() => {
-    if (!wantOpen || !st) return;
+    if (!pendingOpen || !st || !openKey || !openId) return;
+    const fail = (k: string) => {
+      setNotice(T.openFailed(T.openWhat[k] ?? ""));
+      setDoneKey(openKey);
+    };
     const latest = st.latest;
-    const info = st.versions?.at(-1);
-    const fail = (k: string) => setNotice(T.openFailed(T.openWhat[k] ?? ""));
-    if (!latest || !info) return fail("missing");
-    if (String(latest.version) !== open.get("v")) return fail("version");
-    if (!(info as { contentHash?: string }).contentHash?.startsWith(open.get("h") ?? "\u0000")) return fail("hash");
-    if ((info as { problem?: string | null }).problem) return fail("broken");
-    setWorkingPlan(latest.plan, "intake");
-    setNotice(null);
-  }, [wantOpen, st]);
+    if (!latest || latest.plan.planId !== openId) return fail("missing");
+    const info = st.versions?.find((x) => x.version === openV) as { contentHash?: string; problem?: string | null } | undefined;
+    if (!info) return fail("version");
+    if (!info.contentHash?.startsWith(open.get("h") ?? "\u0000")) return fail("hash");
+    if (info.problem) return fail("broken");
+    if (openV === latest.version) {
+      setWorkingPlan(latest.plan, "intake");
+      setOldView(null);
+      setNotice(null);
+      setDoneKey(openKey);
+      return;
+    }
+    void (async () => {
+      const r = readHuman<{ ok: boolean; reason?: string; plan: Plan }>(await client.callHuman("plan_version_read", ROUTES.planVersionRead.path, { planId: openId, version: openV }));
+      if (!r.ok) return fail("version");
+      // この版から次の版：もとにした版は、保管先のいちばん新しい版（古い版の中身を、その上に重ねる）
+      setWorkingPlan(r.body.plan, "intake", [], openNext ? latest.version : openV);
+      setOldView(openNext ? null : { planId: openId, version: openV });
+      setNotice(openNext ? T.fromOld(openV) : null);
+      setDoneKey(openKey);
+    })();
+  }, [pendingOpen, st]);
+  // タブに戻ったときに、保管先の版を読み直す（ほかの人が足した版に気づくため）
+  useEffect(() => {
+    const onVisible = () => document.visibilityState === "visible" && reloadStatus();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [reloadStatus]);
+  // 作業中の計画がほかの計画に替われば、古い版を見ている印を外す
+  const viewingOld = oldView && plan && plan.planId === oldView.planId && plan.version === oldView.version ? oldView.version : null;
   const turn = st?.turn ?? null;
   const me = st?.name ?? null;
   // 承認を頼まれた人（いちばん新しい版を渡した人でない人）には、承認と差し戻しを出す
@@ -73,12 +107,19 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const devSample = new URLSearchParams(location.search).has("plan");
   const current: MergeSheet = !plan ? (devSample && (sheet ?? "chart") === "chart" ? "chart" : "files") : (sheet ?? "chart");
   // 見出しの版：承認を頼まれた人には、頼まれた版（いちばん新しい版）を、ほかは次につくる版を出す
-  const nextVersion = awaitingMe && st?.latest ? st.latest.version : (plan?.version ?? 0) + 1;
+  const latestNo = st?.latest && plan && st.latest.plan.planId === plan.planId ? st.latest.version : null;
+  // 2 人が同時に書こうとしたとき（docs/screens.md 4 の 6）：この編集がもとにした版より新しい版が保管先にあれば、知らせて署名を止める
+  const base = working?.base ?? null;
+  const staleBy = !viewingOld && latestNo !== null && (base === null || latestNo > base) ? (st?.versions?.at(-1) ?? null) : null;
+  // つくる版は、もとにした版の次（ほかの人が足した版があっても、この編集がつくるつもりの版を出す。署名は止まる）
+  const nextVersion = viewingOld ?? (awaitingMe && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
   const an = ws.fileCount ? ws.analysis() : null;
   const openQuestions = an ? an.open.length : 0;
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length;
   const blocks = [
     !plan ? T.block.noPlan : null,
+    viewingOld ? T.block.oldVersion : null,
+    staleBy ? T.block.stale : null,
     openQuestions > 0 ? T.block.open(openQuestions) : null,
     leftDecisions > 0 ? T.block.pending(leftDecisions) : null,
     conn.kind !== "open" ? T.block.notConnected : null,
@@ -115,7 +156,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const sideSource = current === "chart";
   const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource };
   const sideNow: "open" | "signatures" | "source" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : null;
-  const stateLabel = turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned") ? TEXT.top.state[turn.state] : null;
+  const stateLabel = viewingOld ? T.oldVersionLabel : turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned") ? TEXT.top.state[turn.state] : null;
+  // 比べる版：承認を頼まれた人は頼まれた版のひとつ前、ほかは保管先のいちばん新しい版（同じ計画のときだけ）
+  const compareWith = viewingOld ? null : awaitingMe ? (st?.previous ?? null) : (st?.latest ?? null);
+  const compare = useMemo<MergeCompare | null>(
+    () => (plan && compareWith && compareWith.plan.planId === plan.planId ? { version: compareWith.version, plan: compareWith.plan } : null),
+    [plan, compareWith],
+  );
   const unapproved = unapprovedReadings(ws);
 
   return (
@@ -146,6 +193,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         {stateLabel && <span className="moyai-merge-state">{stateLabel}</span>}
         {fictional && <FictionMark />}
         <div className="moyai-merge-head-end">
+          {compare && (
+            <span data-testid="merge-compare" data-version={compare.version}>
+              <span className="moyai-merge-head-label">{T.compareLabel}　</span>
+              {T.version(compare.version)}
+            </span>
+          )}
           <a href={sheetHash("files")} className="moyai-merge-link" data-testid="facility-settings">
             {T.facilitySettings}
           </a>
@@ -156,29 +209,27 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           {notice}
         </Text>
       )}
+      {staleBy && plan && (
+        <Text size="sm" c="var(--shu-text)" px={32} data-testid="merge-stale">
+          {T.stale(staleBy.version, (staleBy as { signatures?: { by: string }[] }).signatures?.[0]?.by ?? "")}{" "}
+          <a className="moyai-merge-link" href={`${STAGE_HASH.merge}?open=${encodeURIComponent(plan.planId)}&v=${staleBy.version}&h=${((staleBy as { contentHash?: string }).contentHash ?? "").slice(0, 16)}`} data-testid="merge-reopen">
+            {T.reopen}
+          </a>
+        </Text>
+      )}
 
       <Group justify="space-between" px={32} pt={4} wrap="nowrap" className="moyai-sheet-tabs">
-        <Group gap="lg" wrap="nowrap" role="tablist">
+        <Group gap={0} wrap="nowrap" role="tablist">
           {tabs.map((s) => (
             <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s)} aria-selected={current === s} data-testid={`sheet-${s}`}>
               {T.sheets[s]}
-              {s === "readings" && unapproved > 0 && (
-                <Text span c="var(--shu)" className="moyai-num" ml={6}>
-                  {unapproved}
-                </Text>
-              )}
-              {s === "decisions" && leftDecisions > 0 && (
-                <Text span c="var(--shu)" className="moyai-num" ml={6}>
-                  {leftDecisions}
-                </Text>
-              )}
+              {s === "readings" && unapproved > 0 && <span className="moyai-sheet-n moyai-num">{unapproved}</span>}
+              {s === "decisions" && leftDecisions > 0 && <span className="moyai-sheet-n moyai-num">{leftDecisions}</span>}
             </a>
           ))}
           {plan && fileNames.length > 0 && (
             <>
-              <Text span size="xs" c="var(--text-disabled)" pl={12}>
-                {T.filesLabel}
-              </Text>
+              <span className="moyai-sheet-label">{T.filesLabel}</span>
               {fileNames.map((f) => (
                 <a key={f} role="tab" className="moyai-sheet-tab" href={`${sheetHash("files")}?f=${encodeURIComponent(f)}`} aria-selected={current === "files" && fileParam === f} data-testid="sheet-file" data-file={f}>
                   {f}
@@ -188,14 +239,15 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           )}
           <FileButton multiple onChange={(fs) => void addFiles(fs)}>
             {(props) => (
-              <Anchor component="button" size="sm" {...props} data-testid="merge-add-files">
+              <button type="button" className="moyai-sheet-tab" {...props} data-testid="merge-add-files">
                 {T.addFiles}
-              </Anchor>
+              </button>
             )}
           </FileButton>
         </Group>
       </Group>
 
+      <MergeCompareContext.Provider value={compare}>
       <MergeSideContext.Provider value={sideCtx}>
       <div className="moyai-merge-body">
         <div className="moyai-merge-main">
@@ -214,7 +266,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         {sideNow && (
           <aside className="moyai-merge-side" data-testid="merge-side">
             {/* 切り替え：決まっていない所（n が 0 なら出さない）・署名（確定した版があるとき）・出どころ（星取表のとき） */}
-            <Group gap="sm" mb="md" wrap="nowrap">
+            <Group gap={0} mb="md" wrap="nowrap">
               {sideOpen && (
                 <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "open"} onClick={(e) => (e.preventDefault(), setSide("open"))} data-testid="side-open">
                   {T.side.open(openQuestions)}
@@ -243,12 +295,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         )}
       </div>
       </MergeSideContext.Provider>
+      </MergeCompareContext.Provider>
 
       <Group justify="space-between" px={32} py="xs" wrap="nowrap" className="moyai-merge-bar">
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
           {turn && (
             <Text size="xs" data-testid="merge-turn" data-state={turn.state}>
-              {T.turnLine(turn.state, turn.state === "awaitingApproval" ? awaitingMe : turn.holder === me, turn.state === "awaitingApproval" ? (turn.to ?? "") : (turn.holder ?? turn.to ?? ""))}
+              {T.turnLine(turn.state, turn.state === "awaitingApproval" ? awaitingMe : turn.holder === me, turn.state === "awaitingApproval" ? (turn.to ?? "") : (turn.holder ?? turn.to ?? ""), turn.to === null)}
             </Text>
           )}
         </Group>

@@ -112,7 +112,7 @@
   --font-body: "IBM Plex Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif;
   --font-num: "IBM Plex Mono", "IBM Plex Sans JP", ui-monospace, "Consolas", monospace;
   --font-heading: var(--font-body);
-  /* 英字のタブと「MOYAI」の字だけ、横に広い英字の書体（運営者の指示 2026-11-04：英字に横長、I が一本線の Krona One）。太さは 400 の 1 つだけ。和文は本文のゴシックに落ちる */
+  /* 英字の段の名前（MOYAI › MERGE › EXPORT › SHARE）だけ、横に広い英字の書体（運営者の指示 2026-11-04：英字に横長、I が一本線の Krona One）。太さは 400 の 1 つだけ。和文は本文のゴシックに落ちる */
   --font-wide: "Krona One", var(--font-body);
   --font-seal: var(--font-wide);
 

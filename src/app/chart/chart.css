@@ -128,6 +128,32 @@
   border-color: var(--shu);
 }
 
+/* 比べる版から変わった（docs/screens.md 3.2、絵は Review.dc.html の .mk.chg）：形を朱に、印のすぐ下に短い朱の線 */
+.moyai-mark.moyai-mark-vchg [data-mark]::before {
+  border-color: var(--shu);
+  box-shadow: 0 7px 0 -5px var(--shu);
+}
+.moyai-mark.moyai-mark-vchg [data-mark="actual"]::before,
+.moyai-mark.moyai-mark-vchg [data-mark="both"]::before {
+  background-color: var(--shu);
+}
+/* 比べる版にあって、今は無い印：淡い破線の小さな円（.mk.old） */
+.moyai-mark [data-old] {
+  font-size: 0;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+.moyai-mark [data-old]::before {
+  content: "";
+  box-sizing: border-box;
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px dashed var(--mark-faint);
+}
+
 /* 凡例の印：表のセルと同じ形を、同じクラスで描く */
 .moyai-legend-mark {
   position: relative;

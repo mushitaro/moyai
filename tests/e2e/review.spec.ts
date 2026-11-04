@@ -61,7 +61,8 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       await expect(page.getByTestId("review-page")).toBeVisible();
       await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "check");
       await expect(page.getByTestId("plan-name")).toContainText(FACILITY);
-      await expect(page.getByTestId("review-notice")).toContainText("自己点検であって、審査の判断ではない");
+      // 「自己点検であって…」は画面に出さない（AI のツールの結果にだけ添える）
+      await expect(page.getByTestId("review-notice")).toHaveCount(0);
       await expect(page.getByTestId("fiction-mark").first()).toBeVisible();
       await page.getByTestId("reference-date").fill(REFERENCE);
       await expect(page.getByTestId("review-fy")).toHaveText("基準日の年度：2026 年度");

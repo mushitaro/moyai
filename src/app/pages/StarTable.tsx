@@ -19,7 +19,8 @@ import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf } from "../../plan/cycle";
 import { useAccepted } from "../state/decisions";
-import { MergeSideContext } from "../state/merge-side";
+import { MergeCompareContext, MergeSideContext } from "../state/merge-side";
+import { compareCounts, marksOf } from "../../plan/chart-compare";
 import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -275,9 +276,23 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     return new Set(keys);
   }, [pending, accepted]);
 
+  // 比べる版（MERGE の見出しの「比べる版　第 n 版」）：同じ作り方で比べる版の表を作り、セルごとの印を比べる
+  const compareWith = useContext(MergeCompareContext);
+  const compare = useMemo(() => {
+    if (!compareWith) return null;
+    const before = buildChart(
+      compareWith.plan,
+      catalog ?? emptyCatalog(),
+      { levelFallback: T.levelFallback, commonLevels: T.commonLevels, unmapped: T.unmapped, series: T.series },
+      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel },
+    );
+    return { version: compareWith.version, before: marksOf(before) };
+  }, [compareWith, catalog, mode, period, layer, foldLevel]);
+  const compared = useMemo(() => (compare ? compareCounts(compare.before, model) : null), [compare, model]);
+
   useEffect(() => {
-    grid.current?.update(model, foldLevel, band, proposals);
-  }, [model, foldLevel, band, proposals]);
+    grid.current?.update(model, foldLevel, band, proposals, compare);
+  }, [model, foldLevel, band, proposals, compare]);
 
   const switchMode = (v: string) => {
     const m = v as RowMode;
@@ -438,6 +453,22 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               </span>
               {T.legend.changed}
             </Text>
+            {compare && compared && compared.changed > 0 && (
+              <Text size="xs" c="var(--shu-text)" span data-testid="legend-changed-from" data-count={compared.changed}>
+                <span className="moyai-mark moyai-legend-mark moyai-mark-vchg">
+                  <span data-mark="plan">{T.mark.plan}</span>
+                </span>
+                {T.legend.changedFrom(compare.version)}
+              </Text>
+            )}
+            {compare && compared && compared.old > 0 && (
+              <Text size="xs" c="dimmed" span data-testid="legend-old" data-count={compared.old}>
+                <span className="moyai-mark moyai-legend-mark">
+                  <span data-old="plan" />
+                </span>
+                {T.legend.oldPlan(compare.version)}
+              </Text>
+            )}
             {proposals.size > 0 && (
               <Text size="xs" c="dimmed" span data-testid="legend-proposal">
                 <span className="moyai-mark moyai-legend-mark moyai-mark-proposal">

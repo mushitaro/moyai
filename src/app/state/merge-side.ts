@@ -10,3 +10,11 @@ export interface MergeSide {
 }
 
 export const MergeSideContext = createContext<MergeSide | null>(null);
+
+/** 比べる版（docs/screens.md 3.2「比べる版　第 n 版」）：編集する人は保管先のいちばん新しい版、承認を頼まれた人はそのひとつ前の版 */
+export interface MergeCompare {
+  version: number;
+  plan: import("../../shared/plan").Plan;
+}
+
+export const MergeCompareContext = createContext<MergeCompare | null>(null);

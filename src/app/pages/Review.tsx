@@ -193,10 +193,8 @@ export function Review({ embedded = false }: { embedded?: boolean } = {}) {
         </Group>
         )}
 
-        {/* 冒頭にいつも（箱にせず、文で。安全の決まり 5 の文なので、画面の説明を外したあとも残す） */}
-        <Text fw={700} data-testid="review-notice">
-          {T.notice}。
-        </Text>
+        {/* 「自己点検であって、審査の判断ではない」は画面には出さない（運営者、2026-11-04：意味が分からない。分かる文で戻すかは未定）。
+            AI のツールの結果（check_results の notice）と MCP の決まり 5 には残す */}
 
         {!working && (
           <Stack gap="xs">

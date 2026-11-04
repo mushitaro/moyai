@@ -3,7 +3,7 @@
 // 人の操作（受ける・署名する・承認する・落とす・送る）は画面のボタンだけで、試験の台本が人の代わりに押す。
 //   1 トップ（施設が無い）→「＋ 新しい施設」→ MERGE の資料のシートに資料を落とす
 //   2 Claude が取り込みを最後まで動かす（質問に既定の答え・計画を作る）→ 当てはめの規則の案 → 人が規則ごとに受ける
-//   3 星取表（共通の設備項目 × 作業の属性）→ Claude が公開の台帳を読み、周期の案（朱の破線の円）→ 人が決定のシートで受ける
+//   3 星取表（共通の設備項目 × 作業の属性）→ 突き合せ → Claude が公開の台帳を読み、周期の案（朱の破線の円）→ 人が決定のシートで受ける
 //   4 検査のシート → 署名して承認を頼み、渡すメールの文 → 課長がリンクで開き、承認して署名する
 //   5 トップに ● →「＋ 次の版」で開く → EXPORT で Excel を落とす → SHARE の検問所 → 合言葉で署名して輪に置き、✓
 // 使い方：npm run build のあと、MOYAI_SHOTS_DIR=docs/progress/shots/<日付>/demo npx playwright test -c playwright.demo.config.ts tests/demo/walkthrough.spec.ts
@@ -136,6 +136,15 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-06-chart-common") });
     });
 
+    await test.step("3 突き合せ：資料をまたいで結んだ作業を、資料ごとの書き方で並べる（一致・片方だけ・食い違い）", async () => {
+      await pa.getByTestId("sheet-match").click();
+      await expect(pa.getByTestId("match-sheet")).toBeVisible();
+      await pa.getByTestId("match-filter").getByText(/^すべて \d+$/).click();
+      expect(await pa.getByTestId("match-row").count()).toBeGreaterThan(0);
+      await pa.screenshot({ path: shot("demo-06b-match") });
+      await pa.getByTestId("sheet-chart").click();
+    });
+
     let proposalId = "";
     await test.step("3 Claude：人が比べを開かずに公開の台帳を読み、似た施設の間隔の帯から周期の案を置く", async () => {
       const r = await call(c, "peer_reference", { place: "ledger", answers: { facility: PROFILE, inNationalTable: true } });
@@ -187,7 +196,8 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
 
     await test.step("4 検査のシート：自己点検。外れは朱の ×、満たすは ✓", async () => {
       await pa.getByTestId("sheet-check").click();
-      await expect(pa.getByTestId("review-notice")).toContainText("自己点検であって、審査の判断ではない");
+      // 「自己点検であって…」は画面に出さない（AI のツールの結果にだけ添える）
+      await expect(pa.getByTestId("review-notice")).toHaveCount(0);
       await expect(pa.getByTestId("check").first()).toBeVisible();
       await pa.screenshot({ path: shot("demo-09-check"), fullPage: true });
     });

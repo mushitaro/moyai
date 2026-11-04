@@ -95,6 +95,10 @@ export const TEXT = {
       proposal: "Claude の案（決定のシートで受けるまで決まらない）",
       proposalAria: "（Claude の案。決定のシートで受けるまで決まらない）",
       proposalNote: "Claude が公開の台帳から置いた案です。決定のシートで受けるまで決まりません。",
+      changedFrom: (n: number) => `第 ${n} 版から変わった`,
+      oldPlan: (n: number) => `第 ${n} 版の印`,
+      changedFromAria: (n: number) => `（第 ${n} 版から変わった）`,
+      oldPlanAria: (n: number, mark: string) => `（第 ${n} 版の印：${mark}）`,
     },
     change: (who: string, why: string, before: string, after: string) => `誰が：${who}
 なぜ：${why}
@@ -218,7 +222,16 @@ export const TEXT = {
     state: { editing: "編集中", awaitingApproval: "承認待ち", returned: "差し戻し" } as Record<string, string>,
     next: "＋ 次の版",
     newFacility: "＋ 新しい施設",
-    legend: { signed: "署名した版", open: "編集中・承認待ち", problem: "確かめで合わない版" },
+    legend: { signed: "署名した版", open: "編集中・承認待ち", problem: "確かめで合わない版", other: "━ ほかの人が作った版", derived: "└ 派生した元の版から" },
+    markTitle: (n: number, by: string | null) => (by ? `第 ${n} 版（${by}）` : `第 ${n} 版`),
+    menuHead: (name: string, n: number, ym: string, sigs: number) => `${name} 第 ${n} 版　${ym}　署名 ${sigs}`,
+    menu: { open: "開く", next: "この版から次の版", derive: "この版から別の施設をつくる" },
+    deriveTitle: (name: string, n: number) => `${name} の第 ${n} 版から、別の施設をつくる`,
+    deriveName: "新しい施設の名前",
+    deriveNamePlaceholder: "例：E 村 清掃センター",
+    deriveResult: (n: number) => `第 ${n} 版の中身を写して、新しい施設の第 1 版をつくり始めます。第 1 版に署名すると、元の版を記録に残し、トップで線でつなぎます。`,
+    deriveCancel: "やめる",
+    deriveSubmit: "つくり始める",
   },
   export: {
     title: "出力",
@@ -247,11 +260,18 @@ export const TEXT = {
     composeFirst: "第 1 版をつくる",
     composeNext: (n: number) => `資料を重ねて第 ${n} 版をつくる`,
     side: { open: (n: number) => `決まっていない所 ${n}`, signatures: (n: number) => `署名 ${n}`, source: "出どころ" },
+    compareLabel: "比べる版",
+    oldVersionLabel: "保管先の古い版（見るだけ）",
+    stale: (n: number, by: string) => `保管先に新しい版（第 ${n} 版${by ? `、${by}` : ""}）があります。開き直すと、その版に重ねます。`,
+    reopen: "開き直す",
+    fromOld: (n: number) => `第 ${n} 版の中身から、次の版をつくります。`,
     block: {
       noPlan: "まだ版の下書きがありません。資料を落として第 1 版をつくってください",
       open: (n: number) => `決まっていない所が ${n}`,
       pending: (n: number) => `受けていない決定が ${n}`,
       notConnected: "橋渡しとつながっていないので押せません",
+      oldVersion: "保管先の古い版を見ています。重ねるときは、トップの版の印から「この版から次の版」",
+      stale: "保管先に新しい版があります。開き直してください",
     },
     blockPrefix: "押せない理由：",
     history: "版の履歴",
@@ -260,13 +280,15 @@ export const TEXT = {
     returnBack: "理由を添えて差し戻す",
     turnYou: "あなた",
     /** 下の帯の左：編集の番と承認の待ち（承認を頼まれた人は編集しないので、頼まれていることだけ） */
-    turnLine: (state: string, mine: boolean, who: string) =>
+    turnLine: (state: string, mine: boolean, who: string, self = false) =>
       state === "awaitingApproval"
         ? mine
           ? "承認を頼まれています"
           : `承認待ち　承認する人 ${who}`
         : state === "approved"
-          ? "承認済み"
+          ? self
+            ? "確定済み"
+            : "承認済み"
           : state === "returned"
             ? `差し戻されました　編集の番 ${mine ? "あなた" : who}`
             : `編集の番 ${mine ? "あなた" : who}`,
@@ -434,7 +456,7 @@ export const TEXT = {
     unmapped: (nodes: number, works: number, records: number) =>
       `案も当てはめも無いもの：機器の節 ${nodes}・作業 ${works}　／　星取表の未当てはめの行の記録 ${records} 件`,
     accepted: (na: number, nt: number, wa: number, wt: number) => `人が受けた当てはめ：機器の節 ${na}／${nt}・作業 ${wa}／${wt}`,
-    none: "AI の案はまだありません。AI が当てはめの規則を置くと、ここに並びます。",
+    none: "当てはめの案はありません。",
     head: ["規則", "置く値", "当てた", "ぶつかった", "案のまま", "例", "状態", "一言の理由", ""],
     state: { proposed: "案", accepted: "人が受けた", rejected: "断った" },
     reasonLabel: (id: string) => `${id} の一言の理由`,

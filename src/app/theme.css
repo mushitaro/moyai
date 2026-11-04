@@ -171,6 +171,10 @@ body {
   font-size: 12px;
   line-height: 18px;
 }
+.moyai-merge-head-label {
+  color: var(--text-3);
+  letter-spacing: 0.1em;
+}
 .moyai-merge-link {
   color: var(--text-3);
   text-decoration: none;
@@ -179,23 +183,64 @@ body {
 .moyai-merge-link:hover {
   color: var(--text);
 }
+/* シートのタブ（絵は Review.dc.html、Version 35）：高さ 36px、字は 12px・字間 0.1em・淡い字（ホバーで墨）。選んだシートは墨と太さ 500 で、下線なし。
+   項目の間は、切り替えと同じ短い縦の罫（1×10px の --line-strong を上下の真ん中に、字との間は 12px）。最初の項目の前と「重ねた資料」の札のすぐ後には付けない。
+   件数の n は朱の字。行の下に 1px の --line。横の板の切り替えも同じ形 */
 .moyai-sheet-tabs {
   border-bottom: 1px solid var(--line);
 }
 .moyai-sheet-tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  padding: var(--sp-3) 0;
-  margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
   color: var(--text-3);
   text-decoration: none;
-  font-size: 14px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.moyai-sheet-tab::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 13px;
+  width: 1px;
+  height: 10px;
+  background: var(--line-strong);
+}
+.moyai-sheet-tab:first-child {
+  padding-left: 0;
+}
+.moyai-sheet-tab:first-child::before,
+.moyai-sheet-label + .moyai-sheet-tab::before {
+  display: none;
+}
+.moyai-sheet-label + .moyai-sheet-tab {
+  padding-left: 0;
+}
+.moyai-sheet-tab:hover {
+  color: var(--text);
 }
 .moyai-sheet-tab[aria-selected="true"] {
   color: var(--text);
-  border-bottom-color: var(--text);
   font-weight: 500;
+}
+.moyai-sheet-n {
+  /* 「読み方　3」の全角の空き */
+  margin-left: 1em;
+  color: var(--shu-text);
+}
+.moyai-sheet-label {
+  font-size: 11px;
+  color: var(--text-disabled);
+  padding: 0 12px 0 24px;
+  white-space: nowrap;
 }
 .moyai-merge-body {
   flex: 1;
@@ -304,6 +349,7 @@ body {
   letter-spacing: 0.14em;
 }
 .moyai-top-grid {
+  position: relative;
   overflow-x: auto;
 }
 .moyai-top-head,
@@ -316,12 +362,14 @@ body {
   font: 400 11px/18px var(--font-num);
   color: var(--text-3);
 }
+/* 行の高さは 48px に決める（派生の線の位置を、行の番号から引くため。MoyaiTop.tsx の ROW_H） */
 .moyai-top-row {
-  min-height: 48px;
+  height: 48px;
   border-bottom: 1px solid var(--line);
 }
 .moyai-top-name {
   flex: none;
+  box-sizing: border-box;
   width: 328px;
   display: flex;
   align-items: baseline;
@@ -362,7 +410,17 @@ body {
   align-items: center;
   gap: 2px;
 }
-/* 版の印：字は DOM に残し（読み上げと写し）、形を描く。● 署名した版、朱の ○ 編集中・承認待ち、朱の × 確かめで合わない版 */
+/* 版の印：字は DOM に残し（読み上げと写し）、形を描く。● 署名した版、朱の ○ 編集中・承認待ち、朱の × 確かめで合わない版。押すと版のメニュー */
+button.moyai-top-mk {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+button.moyai-top-mk:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
 .moyai-top-mk {
   display: inline-block;
   width: 10px;
@@ -372,7 +430,8 @@ body {
   font-size: 0;
   vertical-align: middle;
 }
-.moyai-top-mk[data-kind="signed"] {
+.moyai-top-mk[data-kind="signed"],
+button.moyai-top-mk[data-kind="signed"] {
   background: var(--text);
 }
 .moyai-top-mk[data-kind="open"] {
@@ -384,6 +443,25 @@ body {
   border-radius: 0;
   font: 700 12px/12px var(--font-num);
   color: var(--shu-text);
+}
+/* ほかの人が作った版：印の下に 2px の線 */
+.moyai-top-cell[data-other="true"] {
+  position: relative;
+}
+.moyai-top-cell[data-other="true"]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 12px;
+  height: 2px;
+  background: var(--text-3);
+}
+/* 派生の線（元の版の印から下ろし、派生した施設の最初の印へ） */
+.moyai-top-br {
+  position: absolute;
+  background: var(--text-3);
+  pointer-events: none;
 }
 .moyai-top-add {
   margin-left: var(--sp-5);
@@ -544,4 +622,25 @@ body {
 }
 .moyai-shu {
   color: var(--shu-text);
+}
+
+/* SHARE（共有。docs/screens.md 3.6、絵は Share.dc.html）：見出しから下はすぐ中身。下の帯に、出したあとに起きることと主ボタン 1 つ */
+.moyai-share-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.moyai-share-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--sp-6) var(--sp-7);
+}
+/* 伏せた所（相手には出ない）：--layer-3 の帯 */
+.moyai-redact {
+  display: inline-block;
+  width: 72px;
+  height: 12px;
+  background: var(--layer-3);
+  vertical-align: middle;
 }

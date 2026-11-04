@@ -154,6 +154,10 @@ async function readSignatures(dir: string, record: VersionRecord, hash: string):
 export interface PlanHistory {
   versions: VersionInfo[];
   latest: VersionRecord | null;
+  /** いちばん新しい版のひとつ前の版（承認を頼まれた人が、頼まれた版を前の版と比べるため） */
+  previous: VersionRecord | null;
+  /** 第 1 版が、ほかの施設の版から作ったものなら、その計画・版・中身のハッシュ（トップの派生の線） */
+  derivedFrom: { planId: string; version: number; contentHash: string } | null;
   /** これまでに人が受けた決定（どの版でも） */
   accepted: Acceptance[];
 }
@@ -165,6 +169,8 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
   const versions: VersionInfo[] = [];
   const accepted: Acceptance[] = [];
   let latest: VersionRecord | null = null;
+  let previous: VersionRecord | null = null;
+  let derivedFrom: PlanHistory["derivedFrom"] = null;
   let prevInfo: VersionInfo | null = null;
   for (const n of nums) {
     const { record } = await readVersion(dir, n);
@@ -186,15 +192,35 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
     const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem };
     versions.push(info);
     for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });
+    if (prevInfo === null) derivedFrom = record.derivedFrom ?? null;
+    previous = latest;
     latest = record;
     prevInfo = info;
   }
-  return { versions, latest, accepted };
+  return { versions, latest, previous, derivedFrom, accepted };
+}
+
+/** 確かめで合う版の記録を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設） */
+export async function readPlanVersion(
+  root: string,
+  planId: string,
+  version: number,
+): Promise<{ ok: true; record: VersionRecord; contentHash: string } | { ok: false; reason: "versionUnknown" | "historyBroken" }> {
+  const hist = await readHistory(root, planId);
+  const info = hist.versions.find((v) => v.version === version);
+  if (!info) return { ok: false, reason: "versionUnknown" };
+  if (info.problem !== null) return { ok: false, reason: "historyBroken" };
+  const { record } = await readVersion(planDir(root, planId), version);
+  return { ok: true, record, contentHash: info.contentHash };
 }
 
 export type CommitResult =
   | { ok: true; version: number; record: VersionRecord; diff: PlanDiff; files: { version: string; report: string; export: string | null } }
-  | { ok: false; reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown" | "nameInvalid" | "historyBroken"; pending?: number };
+  | {
+      ok: false;
+      reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown" | "nameInvalid" | "historyBroken" | "deriveNotFirst" | "deriveSourceInvalid";
+      pending?: number;
+    };
 
 /** 署名する人：呼び名と、合言葉で開いた鍵（橋渡しが開き、署名したら捨てる） */
 export interface Signer {
@@ -218,6 +244,8 @@ export interface CommitInput {
   catalogs?: CatalogsFor;
   /** 使った読み方（橋渡しが保管先に書いて、道と版を決めたもの） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /** ほかの施設の版から作った第 1 版のとき、その計画・版・中身のハッシュ（確かめで合う版だけ） */
+  derivedFrom?: { planId: string; version: number; contentHash: string } | null;
 }
 
 /** 計画を確定する：人が受けていない決定が残っていれば止める。版の記録と差分レポートを足す。 */
@@ -241,6 +269,14 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
   }
   const left = pending.filter((d) => !byId.has(`${d.id}\u0000${d.hash}`));
   if (left.length > 0) return { ok: false, reason: "pendingDecisions", pending: left.length };
+  // 派生：第 1 版だけが、ほかの施設の確かめで合う版から作れる（元の中身のハッシュが合うときだけ）
+  const from = i.derivedFrom ?? null;
+  if (from) {
+    if (latestNo !== null) return { ok: false, reason: "deriveNotFirst" };
+    if (from.planId === plan.planId || !PLAN_ID.test(from.planId)) return { ok: false, reason: "deriveSourceInvalid" };
+    const src = await readPlanVersion(i.root, from.planId, from.version);
+    if (!src.ok || src.contentHash !== from.contentHash) return { ok: false, reason: "deriveSourceInvalid" };
+  }
   const applied = applyAcceptances(plan, i.acceptances);
   return writeVersion(i.root, hist, {
     kind: "confirm",
@@ -254,6 +290,7 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     readingSkills: i.readingSkills ?? [],
     signer: i.signer,
     role: i.role ?? "confirm",
+    derivedFrom: from,
   });
 }
 
@@ -305,6 +342,7 @@ async function writeVersion(
     readingSkills?: { name: string; path: string; version: string }[];
     signer: Signer;
     role?: "confirm" | "edit";
+    derivedFrom?: VersionRecord["derivedFrom"];
   },
 ): Promise<CommitResult> {
   const dir = planDir(root, v.plan.planId);
@@ -325,7 +363,7 @@ async function writeVersion(
     acceptances: v.acceptances,
     summary: { added: diff.added, removed: diff.removed, changed: diff.changed, same: diff.same },
     parent: prevInfo ? { version: prevInfo.version, contentHash: prevInfo.contentHash, signatures: prevInfo.signatures.map((x) => x.fileHash).sort() } : null,
-    derivedFrom: null,
+    derivedFrom: v.derivedFrom ?? null,
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
     plan,
   };

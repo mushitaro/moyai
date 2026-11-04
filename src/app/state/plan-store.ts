@@ -16,6 +16,11 @@ export interface WorkingPlan {
   generation: number;
   /** AI が置いた当てはめの規則の一覧（置き直すと空に戻る。取り込みで作り直したときは引き継いだ分） */
   proposals: CrosswalkProposal[];
+  /**
+   * この編集がもとにした保管先の版（無ければ null。docs/screens.md 4 の 6）。署名のダイアログはこれを「もとにした版」として送るので、
+   * ほかの人がその後に版を足していれば、橋渡しが断る（黙って上書きしない）。
+   */
+  base: number | null;
 }
 
 let current: WorkingPlan | null = null;
@@ -27,8 +32,13 @@ function notify() {
   for (const l of listeners) l();
 }
 
-export function setWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: CrosswalkProposal[] = []): WorkingPlan {
-  current = { plan, origin, revision: ++revision, generation: ++generation, proposals };
+/**
+ * 作業中の計画を置く。もとにした版（base）は、渡さなければ、保管先の版の中身ならその版の番号、
+ * 同じ計画を取り込みで作り直したならそのままの値、新しい計画なら null。
+ */
+export function setWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: CrosswalkProposal[] = [], base?: number | null): WorkingPlan {
+  const kept = current && current.plan.planId === plan.planId ? current.base : null;
+  current = { plan, origin, revision: ++revision, generation: ++generation, proposals, base: base !== undefined ? base : plan.version > 0 ? plan.version : kept };
   notify();
   return current;
 }

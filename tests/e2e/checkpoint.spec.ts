@@ -175,7 +175,15 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     // 経過年はどこにも出さない（2026-11-03）。帯と束の型の版は bands-2
     expect(bodyText).toContain('"bands":"bands-2"');
     expect(bodyText).not.toContain("ageAtWork");
+    // 相手から見たあなた：見え方の 1 行と、塊ごとの周期・工数・日数の帯（委託先は伏せる）
+    await expect(page.getByTestId("you-profile")).toBeVisible();
     await expect(page.getByTestId("plain-chunk").first()).toBeVisible();
+    await expect(page.getByTestId("plain-chunk").first().locator(".moyai-redact")).toHaveCount(1);
+    // 出元：束の鎖（初めて出すので 束 1）
+    await expect(page.getByTestId("share-chain")).toHaveText("束 1");
+    // 出ていくバイト列・原本・相手の星取表は「中身を見る」にたたんである
+    await expect(page.getByTestId("their-chart")).toBeHidden();
+    await page.getByTestId("share-contents").locator("summary").click();
     await expect(page.getByTestId("their-chart")).toBeVisible();
     // ［送る］は合言葉の欄のすぐ右
     const pass = await page.getByTestId("passphrase").boundingBox();

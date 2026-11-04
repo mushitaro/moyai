@@ -6,6 +6,8 @@ import { Alert, Anchor, Button, Group, Modal, PasswordInput, Radio, Stack, Table
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
 import { getCurrentReadings, readingsForCommit } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
+import { pendingDeriveFor, setPendingDerive } from "../state/derive";
+import { getWorkingPlan } from "../state/plan-store";
 import { sheetHash } from "../stages";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
@@ -40,6 +42,8 @@ interface StatusBody {
     problem: string | null;
   }[];
   latest?: { version: number; plan: Plan } | null;
+  /** いちばん新しい版のひとつ前の版（確かめで合うときだけ） */
+  previous?: { version: number; plan: Plan } | null;
   accepted?: Acceptance[];
   /** 自分の呼び名と、この PC にその鍵があるか */
   name?: string | null;
@@ -49,6 +53,12 @@ interface StatusBody {
 }
 
 const PASS_MIN = 8;
+
+/** 署名の「もとにした版」：作業中の計画がもとにした保管先の版（作業中の計画でなければ、保管先のいちばん新しい版） */
+function baseOf(plan: Plan, latest: number | null): number | null {
+  const w = getWorkingPlan();
+  return w && w.plan.planId === plan.planId ? w.base : latest;
+}
 
 /** 人だけの経路の答えを、画面に出す誤りの文か中身にする */
 export function readHuman<T extends { ok: boolean; reason?: string }>(r: HumanResult): { ok: true; body: T } | { ok: false; message: string } {
@@ -165,11 +175,14 @@ export function ConfirmDialog({
       plan,
       reason: reason.trim(),
       acceptances: accepted,
-      basedOn: status.latest?.version ?? null,
+      // もとにした版：この編集を始めた保管先の版（ほかの人がその後に版を足していれば、橋渡しが断る）
+      basedOn: baseOf(plan, status.latest?.version ?? null),
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
       readings: readingsForCommit(),
       passphrase: pass,
       request: { kind: ask, to: ask === "self" ? null : to.trim(), note: reason.trim() },
+      // ほかの施設の版から作った新しい施設の第 1 版なら、その元（トップの「この版から別の施設をつくる」）
+      derivedFrom: status.latest ? null : pendingDeriveFor(plan.planId),
       origin: location.origin,
     };
     const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null }; mail: HandoffMail | null }>(
@@ -183,6 +196,7 @@ export function ConfirmDialog({
     setMail(r.body.mail);
     // 用意したメールの文は、AI にも intake_survey の handoff で渡す（Claude が利用者の連携したメールから送る）
     setHandoffMail(r.body.mail);
+    if (pendingDeriveFor(plan.planId)) setPendingDerive(null);
     clearAccepted();
     onConfirmed(r.body.plan);
   };

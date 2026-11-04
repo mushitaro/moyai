@@ -20,8 +20,9 @@ export const HUMAN_ACTIONS = [
   "plan_status",
   "plan_commit",
   "plan_revert",
-  // トップ：保管先の施設と版の一覧（もやいの星取表。docs/screens.md 3.1）
+  // トップ：保管先の施設と版の一覧（もやいの星取表。docs/screens.md 3.1）と、版の印のメニューで 1 つの版を読む
   "plans_list",
+  "plan_version_read",
   // 承認：いちばん新しい版に、承認か差し戻しの署名を足す（docs/screens.md 3.2 の下の帯）
   "plan_sign",
   // EXPORT：確定した版の Excel（人が見る様式・差分レポート）を、人が画面で落とす（docs/screens.md 3.5）
@@ -90,6 +91,7 @@ export const ROUTES = {
   planCommit: human("/human/plan-commit", "plan_commit", 32 * 1024 * 1024, "計画を確定する（合言葉で開いた自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く）"),
   planRevert: human("/human/plan-revert", "plan_revert", 64 * 1024, "前の版に戻す（前の版を指す記録を足し、自分の鍵で署名する）"),
   plansList: human("/human/plans-list", "plans_list", 16 * 1024, "保管先の施設と版の一覧（版の番号・時刻・署名の役目・確かめの結果・編集の番）を、トップのもやいの星取表に読む"),
+  planVersionRead: human("/human/plan-version-read", "plan_version_read", 16 * 1024, "確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる）"),
   planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、合言葉で開いた自分の鍵で承認か差し戻しの署名を足し、編集の番を替える"),
   planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
   personKeyCreate: human("/human/person-key-create", "person_key_create", 16 * 1024, "自分の鍵（版に署名する）を作り、合言葉で包んで状態フォルダに置く"),

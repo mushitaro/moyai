@@ -1,5 +1,5 @@
 // MOYAI（トップ。docs/screens.md 3.1、絵は Main.dc.html）：もやいの星取表で、どの施設のどの版から始めるかを選ぶ。主ボタンは無い。
-// 左 32px から始める（中央に寄せない）。「Claude に話す」の例は状態の帯（Shell）。橋渡しに断られた・切れたときだけ、上に知らせを出す。
+// 左 32px から始める（中央に寄せない）。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする）。橋渡しに断られた・切れたときだけ、上に知らせを出す。
 // 開発の道具（確定の試し・前の画面への道・Ed25519 の試験のページ）は、設定の画面の下（components/DevTools.tsx）。
 import { Alert, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
