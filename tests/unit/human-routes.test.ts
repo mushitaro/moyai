@@ -166,6 +166,8 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     const key = await call("personKeyCreate", {});
     expect(key).toMatchObject({ ok: true, name: "【架空】試験の人" });
     expect((await call("personKeyCreate", {})).reason).toBe("personKeyExists");
+    // 担当者の範囲の読み方の持ち主は、署名する人だけ（タブから来たほかの呼び名は断る。監査 D2）
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, readings: [{ skill: {}, by: "【架空】ほかの人", facilityKey: null }] })).reason).toBe("readingInvalid");
     expect((await call("planCommit", { plan, reason: "", acceptances: [], basedOn: null })).reason).toBe("reasonEmpty");
     expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null })).reason).toBe("pendingDecisions");
     const c = await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null });

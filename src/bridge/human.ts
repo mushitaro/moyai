@@ -13,6 +13,7 @@ import { COMMENT_MAX, addComment, readComments } from "../plan/comments";
 import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previousOf, trustList, trustOf } from "./people";
+import { checkSeen } from "./seen";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
@@ -335,6 +336,8 @@ export class HumanService {
         const root = await this.root();
         if (!root) return no("noRoot");
         const h = await readHistory(root, p.planId);
+        // この PC が前に見た版と署名が、保管先から消えていないか（監査 A5）。消えていれば、確定・承認・戻す・送るを止める
+        const vanished = checkSeen(sd, root, p.planId, h);
         // 署名ごとに、この PC が覚えた鍵と照らした信じ方を添える（未確認の鍵は覚えるが、信じはしない）。替わった鍵には、前に確かめた鍵の指紋
         const versions = h.versions.map((v) => ({
           ...v,
@@ -357,6 +360,7 @@ export class HumanService {
           hasKey: s.name !== null && ownKeys(sd).some((k) => k.by === s.name),
           // 編集の番（渡す・承認・差し戻しで替わる）
           turn: await readTurn(root, p.planId),
+          vanished,
         };
       }
       case "plan_commit": {
@@ -369,10 +373,15 @@ export class HumanService {
         // 使った読み方を保管先に書き、道と版を版の記録に書く（この版に人が署名すると、その版の読み方が承認済みになる）。担当者の範囲の読み方は、署名する人の呼び名の下に置く
         const readingSkills: { name: string; path: string; version: string }[] = [];
         for (const x of p.readings ?? []) {
-          const w = await registerReading(root, x.skill, x.by ?? signer.signer.by, x.facilityKey);
+          // 担当者の範囲の読み方の持ち主は、署名する人だけ（タブから来たほかの呼び名は受けない。監査 D2）
+          if (x.by !== null && x.by !== signer.signer.by) return no("readingInvalid");
+          const w = await registerReading(root, x.skill, signer.signer.by, x.facilityKey);
           if (!w.ok) return no("readingInvalid");
           readingSkills.push({ name: (x.skill as { name: string }).name, path: w.path, version: w.version });
         }
+        // 前に見た版や署名が保管先から消えていれば、その上には重ねない（監査 A5）
+        const pid = (p.plan as { planId?: unknown } | null)?.planId;
+        if (typeof pid === "string" && PLAN_ID.test(pid) && checkSeen(sd, root, pid, await readHistory(root, pid))) return no("historyVanished");
         // 頼むこと：自分で確定する（confirm の署名）か、編集・承認を頼んで渡す（edit の署名）。頼むときは宛先が要る
         const req = p.request ?? { kind: "self" as const, to: null, note: "" };
         if (req.kind !== "self" && !(req.to && /^[^\s@]+@[^\s@]+$/.test(req.to.trim()))) return no("mailToInvalid");
@@ -413,6 +422,7 @@ export class HumanService {
         if (!root) return no("noRoot");
         const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
+        if (checkSeen(sd, root, p.planId, await readHistory(root, p.planId))) return no("historyVanished");
         const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
         if (!r.ok) return no(r.reason);
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
@@ -522,6 +532,7 @@ export class HumanService {
         if (!root) return no("noRoot");
         const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
+        if (checkSeen(sd, root, p.planId, await readHistory(root, p.planId))) return no("historyVanished");
         const r = await signLatest({ root, planId: p.planId, version: p.version, role: p.role, reason: p.reason, signer: signer.signer, now });
         if (!r.ok) return no(r.reason);
         // 承認すると番は閉じ、差し戻すと渡した人に番が戻る
@@ -833,8 +844,9 @@ export class HumanService {
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
-    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない
+    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない。前に見た版や署名が消えていても出さない
     if (h.versions.at(-1)?.problem) return fail("historyBroken");
+    if (checkSeen(this.e.stateDir!, root, planId, h)) return fail("historyVanished");
     const plan = h.latest.plan;
     const pack = this.pack(plan.packId);
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });
@@ -886,8 +898,9 @@ export class HumanService {
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
-    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない
+    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない。前に見た版や署名が消えていても出さない
     if (h.versions.at(-1)?.problem) return fail("historyBroken");
+    if (checkSeen(this.e.stateDir!, root, planId, h)) return fail("historyVanished");
     const plan = h.latest.plan;
     const pack = this.pack(plan.packId);
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });

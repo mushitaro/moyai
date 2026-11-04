@@ -41,7 +41,8 @@ describe("版の署名", () => {
     expect(verifyPersonFile(p)).toBe(true);
     expect(verifyPersonFile({ ...p, by: "【架空】佐藤" })).toBe(false);
     expect(verifyPersonFile({ ...p, pub: other.pub })).toBe(false);
-    for (const bad of ["", " 山田", "山田/課長", "a".repeat(41)]) expect(validName(bad), bad).toBe(false);
+    for (const bad of ["", " 山田", "山田/課長", "a".repeat(41), ".", "..", "..."]) expect(validName(bad), bad).toBe(false);
+    for (const ok of ["【架空】山田", "山田.課長", ".山田"]) expect(validName(ok), ok).toBe(true);
   });
 
   it("署名のファイルの名前", () => {
