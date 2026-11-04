@@ -7,7 +7,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { chooseRootAndCreateRing, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, acceptRules, chooseRootAndCreateRing, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（Claude Code）";
 const PASS = "架空の合言葉 Claude Code の通し";
@@ -86,35 +86,23 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   expect(cc.status).toBe(0);
   for (const t of ["intake_settle", "intake_compose", "crosswalk_propose"]) expect(cc.calls).toContain(`mcp__moyai__${t}`);
   await expect(page.getByTestId("composed")).toBeVisible();
-  const rules = page.getByTestId("crosswalk-rule");
-  const n = await rules.count();
-  expect(n).toBeGreaterThan(0);
+  // 当てはめの案は、MERGE の決定のシートに 1 規則 1 行で並ぶ
+  await page.getByTestId("sheet-decisions").click();
+  expect(await page.getByTestId("crosswalk-rule").count()).toBeGreaterThan(0);
   await page.screenshot({ path: shot(`cc-crosswalk-proposed-${tag}`), fullPage: true });
 
-  // 人（試験の台本）：Claude Code の規則を、一言の理由で受ける
-  for (let i = 0; i < n; i++) {
-    const row = rules.nth(i);
-    if ((await row.getAttribute("data-state")) !== "proposed") continue;
-    await row.getByTestId("crosswalk-reason").fill(HUMAN);
-    await row.getByTestId("crosswalk-accept").click();
-    await expect(row).toHaveAttribute("data-state", "accepted");
-  }
+  // 人（試験の台本）：Claude Code の規則を、上の欄の一言の理由で 1 規則ずつ受ける
+  expect(await acceptRules(page, HUMAN)).toBeGreaterThan(0);
   const accepted = Number(await page.getByTestId("crosswalk-accepted").getAttribute("data-nodes"));
   expect(accepted).toBeGreaterThan(0);
   const un = page.getByTestId("crosswalk-unmapped");
   console.log(`受けた節 ${accepted}、未当てはめ：節 ${await un.getAttribute("data-nodes")}・作業 ${await un.getAttribute("data-works")}・記録 ${await un.getAttribute("data-records")}`);
   await page.screenshot({ path: shot(`cc-crosswalk-accepted-${tag}`), fullPage: true });
 
-  // 確定（人だけ）
-  await page.getByTestId("to-chart").click();
+  // 確定（人だけ）：AI の決定を決定のシートで受けてから、署名のダイアログを開く
+  await acceptDecisions(page, "試験の台本が押した（AI の決定を画面で受けた）");
   await page.getByTestId("confirm-open").click();
   await page.getByTestId("confirm-reason").fill("Claude Code の通し：取り込みと当てはめを確定する（e2e）");
-  const pending = page.getByTestId("pending-row");
-  const pn = await pending.count();
-  for (let i = 0; i < pn; i++) {
-    await pending.nth(i).getByTestId("pending-reason").fill("試験の台本が押した（AI の決定を画面で受けた）");
-    await pending.nth(i).getByTestId("pending-accept").check();
-  }
   await signInDialog(page, PASS);
   await page.getByTestId("confirm-submit").click();
   await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");

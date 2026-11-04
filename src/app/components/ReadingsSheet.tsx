@@ -20,7 +20,6 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
   const tab = useMemo(() => (ws.fileCount ? readingTab(ws.currentReadings(), ws.analysis()) : { skills: [], unapproved: 0 }), [ws, ws.version]);
   return (
     <Stack gap="md" p="md" data-testid="readings-sheet">
-      <Text size="sm">{T.lead}</Text>
       {tab.skills.length === 0 && (
         <Text size="sm" c="dimmed" data-testid="readings-none">
           {T.none}

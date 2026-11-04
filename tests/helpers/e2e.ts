@@ -157,19 +157,45 @@ export async function chooseRootAndCreateRing(page: Page, base: string, root: st
   await expect(page.getByTestId("rings-table")).toBeVisible();
 }
 
-/** MERGE の決定のシートで、受けていない決定を 1 行ずつ理由を書いて受ける（試験の台本が人の代わりに押す）。受けた数を返す */
+/** MERGE の決定のシートで、受けていない決定を、上の理由の欄に理由を書いて 1 行ずつ受ける（試験の台本が人の代わりに押す）。受けた数を返す */
 export async function acceptDecisions(page: Page, reason: string): Promise<number> {
   await page.getByTestId("sheet-decisions").click();
   await expect(page.getByTestId("decisions-sheet")).toBeVisible();
   // 版の履歴を読んで、受けていない決定が並ぶ（無ければ「ありません」）まで待つ
   await expect(page.locator('[data-testid="pending-row"], [data-testid="decisions-none"]').first()).toBeVisible();
+  await page.getByTestId("decisions-reason").fill(reason);
   const rows = page.locator('[data-testid="pending-row"][data-accepted="false"]');
   let n = 0;
-  for (; n < 10_000 && (await rows.count()) > 0; n++) {
-    const row = rows.first();
-    await row.getByTestId("pending-reason").fill(reason);
-    await row.getByTestId("pending-accept").click();
-  }
+  for (; n < 10_000 && (await rows.count()) > 0; n++) await rows.first().getByTestId("pending-accept").click();
   await expect(rows).toHaveCount(0);
+  return n;
+}
+
+/**
+ * MERGE の決定のシートで、当てはめの案（Claude が置いた規則）を 1 規則ずつ受ける。理由は上の欄に書く。
+ * reject に挙げた規則は、その理由で、確かめのダイアログを通して断る。受けた・断った数を返す
+ */
+export async function acceptRules(page: Page, reason: string, reject: { ruleId: string; reason: string } | null = null): Promise<number> {
+  await page.getByTestId("sheet-decisions").click();
+  await expect(page.getByTestId("decisions-sheet")).toBeVisible();
+  const open = page.locator('[data-testid="crosswalk-rule"][data-state="proposed"]');
+  const field = page.getByTestId("decisions-reason");
+  let n = 0;
+  for (; n < 1_000 && (await open.count()) > 0; n++) {
+    const row = open.first();
+    const id = (await row.getAttribute("data-rule")) ?? "";
+    const done = page.locator(`[data-testid="crosswalk-rule"][data-rule="${id}"]`);
+    if (reject && id === reject.ruleId) {
+      await field.fill(reject.reason);
+      await row.getByTestId("crosswalk-reject").click();
+      await page.getByTestId("crosswalk-reject-confirm").click();
+      await expect(done).toHaveAttribute("data-state", "rejected");
+    } else {
+      if ((await field.inputValue()) !== reason) await field.fill(reason);
+      await row.getByTestId("crosswalk-accept").click();
+      await expect(done).toHaveAttribute("data-state", "accepted");
+    }
+  }
+  await expect(open).toHaveCount(0);
   return n;
 }

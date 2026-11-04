@@ -1,10 +1,11 @@
-// MERGE（版に重ねる。docs/screens.md 3.2・3.3）：資料・Claude の案・人の答えを、次の版に重ねる段。
-// シートのタブ：星取表｜検査｜決定 n｜資料｜＋ 資料を足す。前の画面（星取表・検査・取り込み）を、そのままシートとして入れる。
-// 右の横の板は「決まっていない所 n」（取り込みの質問。n が 0 なら出さない）。署名とコメントの切り替えは P1・P2 で足す。
-// 下の帯：左に止め札（決まっていない所・受けていない決定・橋渡しが切れている）、右に主ボタン「署名して確定する…」（署名のダイアログ）。
-// 画面のどこに資料を落としても受ける。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
-import { Anchor, Button, FileButton, Group, Stack, Text, Title } from "@mantine/core";
-import { Suspense, lazy, useEffect, useRef, useState, type DragEvent } from "react";
+// MERGE（版に重ねる。docs/screens.md 3.2・3.3、絵は Review.dc.html）：資料・Claude の案・人の答えを、次の版に重ねる段。
+// 上は 2 行だけ（運営者の指示：データを広く）：見出しの 1 行（施設の名前・版・状態、右に施設の設定）と、シートのタブの 1 行。その下はすぐデータ。
+// シートのタブ：星取表｜読み方｜検査｜決定 n｜資料｜＋ 資料を足す。前の画面（星取表・検査・取り込み）を、そのままシートとして入れる。
+// 右の横の板は 1 枚で、切り替えは「決まっていない所 n（0 なら出さない）/ 署名 n / 出どころ（星取表のとき）」。印を選ぶと出どころへ。
+// 下の帯は、止め札（決まっていない所・受けていない決定・橋渡しが切れている）とボタンだけ。「Claude に話す」の例は状態の帯（Shell）。
+// 画面のどこに資料を落としても受ける（引きずって入ったときだけ、全面に「第 n 版に重ねます」）。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
+import { Anchor, Button, FileButton, Group, Text } from "@mantine/core";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { ConfirmDialog, HistoryDialog, usePlanStatus } from "../components/ConfirmDialog";
@@ -12,10 +13,12 @@ import { SignDialog } from "../components/SignDialog";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
 import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
 import { ReadingsSheet, unapprovedReadings } from "../components/ReadingsSheet";
+import { MatchSheet } from "../components/MatchSheet";
 import { FictionMark } from "../components/FictionMark";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { useConnection } from "../state/bridge";
 import { useAccepted } from "../state/decisions";
+import { MergeSideContext, type MergeSide } from "../state/merge-side";
 import { setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { sheetHash, type MergeSheet } from "../stages";
 import { TEXT } from "../text";
@@ -38,7 +41,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [over, setOver] = useState(false);
   const nextPlan = useRef<Plan | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
-  const [side, setSide] = useState<"open" | "signatures">("open");
+  const [side, setSide] = useState<"open" | "signatures" | "source">("open");
+  const [sourceEl, setSourceEl] = useState<HTMLElement | null>(null);
+  const sideCtx = useMemo<MergeSide>(() => ({ el: sourceEl, show: () => setSide("source") }), [sourceEl]);
   const [notice, setNotice] = useState<string | null>(null);
 
   // メールのリンク（#/merge?open=<計画ID>&v=<版>&h=<中身のハッシュの頭>）で開いたら、保管先の版を読み、署名と鎖とハッシュを確かめてから置く
@@ -100,11 +105,17 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     nextPlan.current = null;
     reloadStatus();
   };
-  const tabs: MergeSheet[] = plan ? ["chart", "readings", "check", "decisions", "files"] : ["files"];
-  // 横の板：決まっていない所があれば先にそれ、無ければ署名
+  // 突き合せは、このタブに資料が 2 つ以上あるとき。資料は、重ねた資料ごとのタブ（無ければ「資料」の 1 枚）
+  const fileNames = an ? an.sources.map((x) => x.file) : [];
+  const tabs: MergeSheet[] = plan ? ["chart", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : ["files"];
+  const fileParam = current === "files" ? new URLSearchParams(location.hash.split("?")[1] ?? "").get("f") : null;
+  // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
   const sideOpen = !!an && openQuestions > 0;
   const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
-  const sideNow: "open" | "signatures" = sideOpen && (side === "open" || !latestInfo) ? "open" : "signatures";
+  const sideSource = current === "chart";
+  const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource };
+  const sideNow: "open" | "signatures" | "source" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : null;
+  const stateLabel = turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned") ? TEXT.top.state[turn.state] : null;
   const unapproved = unapprovedReadings(ws);
 
   return (
@@ -120,30 +131,33 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
     >
-      <Stack gap={4} px="md" pt="sm">
-        <Group gap="sm" wrap="nowrap" align="baseline">
-          <Title order={2} style={{ whiteSpace: "nowrap" }} data-testid="plan-name">
-            {name}
-          </Title>
-          <Text fw={700} className="moyai-num" data-testid="merge-version">
-            {T.version(nextVersion)}
-          </Text>
-          {fictional && <FictionMark />}
-          <Anchor href={sheetHash("files")} size="sm" data-testid="facility-settings">
+      {over && (
+        <div className="moyai-merge-over" aria-hidden="true">
+          {T.dropHere(nextVersion)}
+        </div>
+      )}
+      <div className="moyai-merge-head">
+        <h1 className="moyai-merge-name" data-testid="plan-name">
+          {name}
+        </h1>
+        <span className="moyai-merge-ver" data-testid="merge-version">
+          {T.version(nextVersion)}
+        </span>
+        {stateLabel && <span className="moyai-merge-state">{stateLabel}</span>}
+        {fictional && <FictionMark />}
+        <div className="moyai-merge-head-end">
+          <a href={sheetHash("files")} className="moyai-merge-link" data-testid="facility-settings">
             {T.facilitySettings}
-          </Anchor>
-        </Group>
-        <Text size="sm" c="dimmed">
-          {plan ? T.lead(nextVersion) : T.leadNew}
+          </a>
+        </div>
+      </div>
+      {notice && (
+        <Text size="sm" c="var(--shu-text)" px={32} data-testid="merge-notice">
+          {notice}
         </Text>
-        {notice && (
-          <Text size="sm" c="var(--shu)" data-testid="merge-notice">
-            {notice}
-          </Text>
-        )}
-      </Stack>
+      )}
 
-      <Group justify="space-between" px="md" pt="xs" wrap="nowrap" className="moyai-sheet-tabs">
+      <Group justify="space-between" px={32} pt={4} wrap="nowrap" className="moyai-sheet-tabs">
         <Group gap="lg" wrap="nowrap" role="tablist">
           {tabs.map((s) => (
             <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s)} aria-selected={current === s} data-testid={`sheet-${s}`}>
@@ -160,6 +174,18 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               )}
             </a>
           ))}
+          {plan && fileNames.length > 0 && (
+            <>
+              <Text span size="xs" c="var(--text-disabled)" pl={12}>
+                {T.filesLabel}
+              </Text>
+              {fileNames.map((f) => (
+                <a key={f} role="tab" className="moyai-sheet-tab" href={`${sheetHash("files")}?f=${encodeURIComponent(f)}`} aria-selected={current === "files" && fileParam === f} data-testid="sheet-file" data-file={f}>
+                  {f}
+                </a>
+              ))}
+            </>
+          )}
           <FileButton multiple onChange={(fs) => void addFiles(fs)}>
             {(props) => (
               <Anchor component="button" size="sm" {...props} data-testid="merge-add-files">
@@ -168,28 +194,27 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             )}
           </FileButton>
         </Group>
-        <Text size="xs" c="dimmed">
-          {T.dropAnywhere(nextVersion)}
-        </Text>
       </Group>
 
+      <MergeSideContext.Provider value={sideCtx}>
       <div className="moyai-merge-body">
         <div className="moyai-merge-main">
           <Suspense fallback={null}>
             {current === "chart" && <StarTable embedded />}
             {current === "check" && <Review embedded />}
+            {current === "match" && <MatchSheet ws={ws} />}
             {current === "readings" && <ReadingsSheet ws={ws} />}
             {current === "decisions" && plan && <DecisionsSheet client={client} plan={plan} />}
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
           <div style={{ display: current === "files" ? undefined : "none" }}>
-            <Intake ws={ws} embedded composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} />
+            <Intake ws={ws} embedded file={fileParam} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} />
           </div>
         </div>
-        {(sideOpen || latestInfo) && (
+        {sideNow && (
           <aside className="moyai-merge-side" data-testid="merge-side">
-            {/* 切り替え：決まっていない所（n が 0 なら出さない）・署名（確定した版があるとき） */}
-            <Group gap="sm" mb="xs" wrap="nowrap">
+            {/* 切り替え：決まっていない所（n が 0 なら出さない）・署名（確定した版があるとき）・出どころ（星取表のとき） */}
+            <Group gap="sm" mb="md" wrap="nowrap">
               {sideOpen && (
                 <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "open"} onClick={(e) => (e.preventDefault(), setSide("open"))} data-testid="side-open">
                   {T.side.open(openQuestions)}
@@ -200,33 +225,32 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                   {T.side.signatures(latestInfo.signatures.length)}
                 </a>
               )}
+              {sideSource && (
+                <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "source"} onClick={(e) => (e.preventDefault(), setSide("source"))} data-testid="side-source">
+                  {T.side.source}
+                </a>
+              )}
             </Group>
             {sideNow === "open" && an && (
               <>
                 <Questions ws={ws} an={an} />
-                <Text size="xs" c="dimmed" mt="xs">
-                  {T.sideNote}
-                </Text>
               </>
             )}
             {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} />}
+            {/* 出どころは星取表のシートがここへ描く。見ていないあいだも場所は残す */}
+            {sideSource && <div ref={setSourceEl} style={{ display: sideNow === "source" ? undefined : "none" }} />}
           </aside>
         )}
       </div>
+      </MergeSideContext.Provider>
 
-      <Group justify="space-between" px="md" py="xs" wrap="nowrap" className="moyai-merge-bar">
+      <Group justify="space-between" px={32} py="xs" wrap="nowrap" className="moyai-merge-bar">
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
           {turn && (
             <Text size="xs" data-testid="merge-turn" data-state={turn.state}>
-              {T.turnState[turn.state]}　{T.turn(turn.state === "awaitingApproval" ? (awaitingMe ? T.turnYou : (turn.to ?? "")) : (turn.holder === me ? T.turnYou : (turn.holder ?? turn.to ?? "")))}
+              {T.turnLine(turn.state, turn.state === "awaitingApproval" ? awaitingMe : turn.holder === me, turn.state === "awaitingApproval" ? (turn.to ?? "") : (turn.holder ?? turn.to ?? ""))}
             </Text>
           )}
-          <Text size="xs" c="dimmed">
-            {T.talk}
-          </Text>
-          <Text size="xs" truncate>
-            {T.talkExample}
-          </Text>
         </Group>
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
           {blocks.length > 0 && (

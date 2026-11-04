@@ -119,7 +119,7 @@ function ProposalRow({ p, plan, nameOf, onReject, onDone }: {
   );
 }
 
-function DirectSet({ plan, onDone }: { plan: Plan; onDone: (msg: { color: string; text: string }) => void }) {
+export function DirectSet({ plan, onDone }: { plan: Plan; onDone: (msg: { color: string; text: string }) => void }) {
   const D = C.direct;
   const [target, setTarget] = useState<CrosswalkTarget>("assetNode");
   const [row, setRow] = useState<string | null>(null);

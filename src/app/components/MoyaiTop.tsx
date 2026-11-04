@@ -1,8 +1,8 @@
-// MOYAI（トップ）のもやいの星取表（docs/screens.md 3.1）：どの施設の、どの版から始めるかを選ぶ。主ボタンは無い。
-// 行は保管先の施設、列は月、印は版（● は署名して確定・承認した版、朱の ○ は渡して編集中か承認待ちの版、朱の × は確かめで合わない版）。
-// 行の名前の右に、いちばん新しい版（「第 7 版」）と状態（編集中・承認待ち・差し戻し）。入口は行の右端の「＋ 次の版」（その施設のいちばん新しい版を MERGE で開く）と、
-// 星取表の下の「＋ 新しい施設」（MERGE の白紙）。トップでは資料を受けない。版の印のメニュー（派生）と派生の線は P2。
-import { Anchor, Stack, Table, Text } from "@mantine/core";
+// MOYAI（トップ）のもやいの星取表（docs/screens.md 3.1、絵は Main.dc.html）：どの施設の、どの版から始めるかを選ぶ。主ボタンは無い。
+// 行は保管先の施設、列は今月までの 20 か月、印は版（● は署名して確定・承認した版、朱の ○ は渡して編集中か承認待ちの版、朱の × は確かめで合わない版）。
+// 行の名前の右に、いちばん新しい版（「第 7 版」、等幅）と状態（編集中・承認待ち・差し戻し、朱）。入口は行の右端の「＋ 次の版」（その施設のいちばん新しい版を MERGE で開く）と、
+// 星取表の下の「＋ 新しい施設」（MERGE の白紙）。トップでは資料を受けない。版の印のメニュー（派生）・派生の線・後任の添え書きは P2。
+import { Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import type { BridgeClient } from "../bridge-client";
@@ -12,7 +12,7 @@ import { TEXT } from "../text";
 import { readHuman } from "./ConfirmDialog";
 
 const T = TEXT.top;
-const MONTHS = 12;
+const MONTHS = 20;
 
 interface ListedPlan {
   planId: string;
@@ -54,98 +54,106 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [state.kind, client]);
   const months = monthsUpTo(new Date(), MONTHS);
+  const anyProblem = !!plans?.some((p) => p.versions.some((v) => v.problem));
 
   return (
-    <Stack gap="sm" data-testid="moyai-top">
-      <Text size="sm" c="dimmed">
-        {T.lead}
-      </Text>
+    <div className="moyai-top" data-testid="moyai-top">
+      <h1 className="moyai-top-title">{T.title}</h1>
       {error && (
-        <Text size="sm" c="var(--shu)">
+        <Text size="sm" c="var(--shu-text)">
           {error}
         </Text>
       )}
       {plans && plans.length > 0 && (
-        <div style={{ overflowX: "auto" }}>
-          {/* 列の幅を決めて、今月の列までいつも見えるようにする（施設の列が残りを取る） */}
-          <Table layout="fixed" horizontalSpacing={6} className="moyai-num" data-testid="moyai-table">
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>{T.facility}</Table.Th>
-                {months.map((m, i) => (
-                  <Table.Th key={m} style={{ textAlign: "center", whiteSpace: "nowrap", width: 44 }} title={T.yearMonth(m)}>
-                    {/* 年は、最初の列と 1 月の列にだけ出す */}
-                    {(i === 0 || m.endsWith("-01")) && (
-                      <Text span size="xs" c="dimmed" display="block">
-                        {m.slice(0, 4)}
-                      </Text>
-                    )}
-                    {T.month(m)}
-                  </Table.Th>
-                ))}
-                <Table.Th style={{ width: 96 }} />
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {plans.map((p) => {
-                const latest = p.versions.at(-1);
-                const open = !!p.turn && latest?.version === p.turn.version && (p.turn.state === "editing" || p.turn.state === "awaitingApproval" || p.turn.state === "returned");
-                return (
-                  <Table.Tr key={p.planId} data-testid="moyai-row" data-plan={p.planId}>
-                    <Table.Td style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={p.displayName}>
-                      {p.displayName}
-                      {latest && (
-                        <Text span ml="sm" ff="monospace" data-testid="moyai-version">
-                          {T.version(latest.version)}
-                        </Text>
-                      )}
-                      {open && p.turn && (
-                        <Text span c="var(--shu)" ml={6} data-testid="moyai-state">
-                          {T.state[p.turn.state]}
-                        </Text>
-                      )}
-                    </Table.Td>
-                    {months.map((m) => {
-                      const here = p.versions.filter((v) => monthOf(v.at) === m);
-                      return (
-                        <Table.Td key={m} style={{ textAlign: "center" }} title={here.map((v) => T.version(v.version)).join("・")}>
-                          {here.map((v) => {
-                            const isOpen = open && v.version === latest?.version;
-                            const signed = v.roles.includes("confirm") || v.roles.includes("approve");
-                            return (
-                              <Text span key={v.version} c={v.problem || isOpen ? "var(--shu)" : undefined} data-testid="moyai-mark" data-version={v.version}>
-                                {v.problem ? "×" : isOpen || !signed ? "○" : "●"}
-                              </Text>
-                            );
-                          })}
-                        </Table.Td>
-                      );
-                    })}
-                    <Table.Td style={{ whiteSpace: "nowrap" }}>
-                      {latest && !latest.problem && (
-                        <Anchor href={`${STAGE_HASH.merge}?open=${encodeURIComponent(p.planId)}&v=${latest.version}&h=${latest.contentHash.slice(0, 16)}`} size="sm" data-testid="moyai-next">
-                          {T.next}
-                        </Anchor>
-                      )}
-                    </Table.Td>
-                  </Table.Tr>
-                );
-              })}
-            </Table.Tbody>
-          </Table>
+        <div className="moyai-top-grid" data-testid="moyai-table">
+          {/* 年は、最初の列と 1 月の列にだけ出す */}
+          <div className="moyai-top-head">
+            <span className="moyai-top-name" />
+            <span className="moyai-top-months">
+              {months.map((m, i) => (
+                <span key={m} className="moyai-top-cell">
+                  {i === 0 || m.endsWith("-01") ? m.slice(0, 4) : ""}
+                </span>
+              ))}
+            </span>
+          </div>
+          <div className="moyai-top-head">
+            <span className="moyai-top-name" />
+            <span className="moyai-top-months">
+              {months.map((m) => (
+                <span key={m} className="moyai-top-cell" title={T.yearMonth(m)}>
+                  {T.month(m)}
+                </span>
+              ))}
+            </span>
+          </div>
+          {plans.map((p) => {
+            const latest = p.versions.at(-1);
+            const open = !!p.turn && latest?.version === p.turn.version && (p.turn.state === "editing" || p.turn.state === "awaitingApproval" || p.turn.state === "returned");
+            return (
+              <div key={p.planId} className="moyai-top-row" data-testid="moyai-row" data-plan={p.planId}>
+                <span className="moyai-top-name" title={p.displayName}>
+                  <span className="moyai-top-facility">{p.displayName}</span>
+                  {latest && (
+                    <span className="moyai-top-ver" data-testid="moyai-version">
+                      {T.version(latest.version)}
+                    </span>
+                  )}
+                  {open && p.turn && (
+                    <span className="moyai-top-state" data-testid="moyai-state">
+                      {T.state[p.turn.state]}
+                    </span>
+                  )}
+                </span>
+                <span className="moyai-top-months">
+                  {months.map((m) => {
+                    const here = p.versions.filter((v) => monthOf(v.at) === m);
+                    return (
+                      <span key={m} className="moyai-top-cell" title={here.map((v) => T.version(v.version)).join("・")}>
+                        {here.map((v) => {
+                          const signed = v.roles.includes("confirm") || v.roles.includes("approve");
+                          const kind = v.problem ? "problem" : (open && v.version === latest?.version) || !signed ? "open" : "signed";
+                          return (
+                            <span key={v.version} className="moyai-top-mk" data-kind={kind} data-testid="moyai-mark" data-version={v.version}>
+                              {kind === "problem" ? "×" : kind === "open" ? "○" : "●"}
+                            </span>
+                          );
+                        })}
+                      </span>
+                    );
+                  })}
+                </span>
+                {latest && !latest.problem && (
+                  <a className="moyai-top-add" href={`${STAGE_HASH.merge}?open=${encodeURIComponent(p.planId)}&v=${latest.version}&h=${latest.contentHash.slice(0, 16)}`} data-testid="moyai-next">
+                    {T.next}
+                  </a>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
-      {plans && plans.length === 0 && (
-        <Text size="sm" c="dimmed" data-testid="moyai-empty">
-          {T.empty}
-        </Text>
-      )}
-      <Anchor href={STAGE_HASH.merge} data-testid="moyai-new">
+      <a className="moyai-top-add moyai-top-new" href={STAGE_HASH.merge} data-testid="moyai-new">
         {T.newFacility}
-      </Anchor>
-      <Text size="xs" c="dimmed">
-        {T.talk}
-      </Text>
-    </Stack>
+      </a>
+      {plans && plans.length > 0 && (
+        <div className="moyai-top-legend">
+          <span>
+            <span className="moyai-top-mk" data-kind="signed" /> {T.legend.signed}
+          </span>
+          <span className="moyai-top-legend-open">
+            <span className="moyai-top-mk" data-kind="open" /> {T.legend.open}
+          </span>
+          {anyProblem && (
+            <span className="moyai-top-legend-open">
+              <span className="moyai-top-mk" data-kind="problem">
+                ×
+              </span>{" "}
+              {T.legend.problem}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

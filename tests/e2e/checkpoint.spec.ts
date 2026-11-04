@@ -130,7 +130,8 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("confirm-open")).toBeEnabled();
     await page.getByTestId("confirm-open").click();
     await expect(page.getByTestId("diff-summary")).toBeVisible();
-    await expect(page.getByTestId("confirm-root")).toHaveText(root);
+    // 署名のダイアログに保管先の生のパスは出さない
+    await expect(page.getByTestId("confirm-root")).toHaveCount(0);
     await expect(page.getByTestId("pending")).toContainText(`決定のシートで受けた決定 ${n} 件`);
     // 理由が空なら確定できない
     await expect(page.getByTestId("confirm-submit")).toBeDisabled();

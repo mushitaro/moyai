@@ -13,6 +13,7 @@ export default defineConfig({
   // ゆっくり流すので、1 つの台本の上限を広げる
   timeout: 15 * 60_000,
   expect: { timeout: 30_000 },
-  use: { ...base.use, headless: false, launchOptions: { slowMo } },
+  // 先に画面を出さずに試すときは MOYAI_DEMO_HEADLESS=1（MOYAI_DEMO_SLOWMO=0 と合わせて）
+  use: { ...base.use, headless: process.env.MOYAI_DEMO_HEADLESS === "1", launchOptions: { slowMo } },
   projects: [{ name: "chrome", use: { channel: "chrome" } }],
 });

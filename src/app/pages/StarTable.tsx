@@ -3,7 +3,8 @@
 // 主ボタン「確定する」は見出しの行の右端。押すと確定のダイアログ（components/ConfirmDialog.tsx）を開く。
 // 橋渡しとつながっていなければ押せず、理由を横に出す。
 import { Alert, Button, Group, Modal, Stack, Table, Text, Title } from "@mantine/core";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { buildChart, nextFoldLevel, type ChartRow, type Layer, type PeerOverlay, type PeriodMode, type RowMode } from "../../plan/chart";
 import { STAT_FIELDS, type StatField } from "../../share/bands";
 import type { Comparison } from "../../share/receive";
@@ -18,6 +19,7 @@ import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf } from "../../plan/cycle";
 import { useAccepted } from "../state/decisions";
+import { MergeSideContext } from "../state/merge-side";
 import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -131,10 +133,10 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
         {T.source.by}：{TEXT.author[d.author]} · {T.source.basis}：{d.basis}
         {d.needsReview ? ` · ${T.source.review}` : ""}
       </Text>
-      <Stack gap={0} component="ul" style={{ margin: 0, paddingLeft: 16 }}>
+      <Stack gap={0}>
         {d.sources.map((s, i) => (
-          <Text key={i} size="xs" component="li" data-testid="source-ref">
-            {sourceText(s)}
+          <Text key={i} size="xs" data-testid="source-ref">
+            - {sourceText(s)}
           </Text>
         ))}
       </Stack>
@@ -202,6 +204,10 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   );
   const gridEl = useRef<HTMLDivElement>(null);
   const grid = useRef<ChartGrid | null>(null);
+  // MERGE の中では、出どころを横の板の 1 枚に描き、印を選んだらその板へ切り替える
+  const side = useContext(MergeSideContext);
+  const sideRef = useRef(side);
+  sideRef.current = side;
   const firstPaint = useRef(true);
 
   const model = useMemo(() => {
@@ -238,7 +244,10 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     if (!gridEl.current) return;
     const g = new ChartGrid(gridEl.current, {
       onFold: (l) => onFoldRef.current(l),
-      onSelect: (rowId, periodKey) => setSelected({ rowId, periodKey }),
+      onSelect: (rowId, periodKey) => {
+        setSelected({ rowId, periodKey });
+        if (periodKey) sideRef.current?.show();
+      },
       onOpenFolded: (rowId) => setOpenRow(rowId),
       onEditStopped: () => setEditNotice(true),
       onRendered: () => {
@@ -260,7 +269,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const accepted = useAccepted();
   const proposals = useMemo(() => {
     const keys = pending
-      .filter((d) => d.kind === "detail" && !accepted.has(`${d.id} ${d.hash}`))
+      .filter((d) => d.kind === "detail" && !accepted.has(`${d.id}\u0000${d.hash}`))
       .map((d) => d.id.slice("detail:".length))
       .filter((k) => cycleIdOf(k) !== null);
     return new Set(keys);
@@ -332,7 +341,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       {!embedded && <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />}
       {!embedded && <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />}
 
-      <Group px="md" pb={6} gap="sm" wrap="wrap">
+      {/* 表示の切り替えと凡例を 1 行に。説明の行は置かず、行の数だけを右端に小さく（docs/screens.md 3.2、Wire 2026-11-04） */}
+      <Group px={embedded ? 32 : "md"} py={8} gap="md" wrap="wrap" align="center">
         <Switch
           aria-label={T.rowsLabel}
           data-testid="rows-mode"
@@ -363,45 +373,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
             { value: "adjusted", label: T.layer.adjusted },
           ]}
         />
-      </Group>
-
-      <Group px="md" pb={6} gap="md" wrap="wrap">
-        <Text size="xs" c="dimmed" className="moyai-num" data-testid="chart-rows-count" data-visible={model.rows.length} data-total={model.totalRows}>
-          {T.rowsCount(model.rows.length, model.totalRows)}
-        </Text>
-        <Text size="xs" c="dimmed">
-          {T.details.hint}
-        </Text>
-        {layer === "adjusted" && (
-          <Text size="xs" c="dimmed" data-testid="adjusted-same">
-            {T.adjustedSame}
-          </Text>
-        )}
-        <Group gap={10} wrap="nowrap" aria-label={T.legend.label} data-testid="chart-legend">
-          {(["actual", "plan", "both"] as const).map((m) => (
-            <Text key={m} size="xs" c="dimmed" span>
-              <span className="moyai-mark moyai-legend-mark">
-                <span data-mark={m}>{T.mark[m]}</span>
-              </span>
-              {T.markName[m]}
-            </Text>
-          ))}
-          <Text size="xs" c="dimmed" span>
-            <span className="moyai-mark moyai-legend-mark moyai-mark-changed">
-              <span data-mark="plan">{T.mark.plan}</span>
-            </span>
-            {T.legend.changed}
-          </Text>
-          {proposals.size > 0 && (
-            <Text size="xs" c="dimmed" span data-testid="legend-proposal">
-              <span className="moyai-mark moyai-legend-mark moyai-mark-proposal">
-                <span data-mark="plan">{T.mark.plan}</span>
-              </span>
-              {T.legend.proposal}
-            </Text>
-          )}
-        </Group>
-        {mode === "common" ? (
+        {mode === "common" && (
           <Group gap="xs" wrap="nowrap">
             <Button size="xs" variant="default" onClick={() => setPeersOpen((o) => !o)} disabled={!canConfirm || !catalog} data-testid="peers-toggle" aria-pressed={peersOpen}>
               {peersOpen ? P.close : P.open}
@@ -421,10 +393,6 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               />
             )}
           </Group>
-        ) : (
-          <Text size="xs" c="dimmed">
-            {P.onlyCommon}
-          </Text>
         )}
         {model.unknownPeerClasses.length > 0 && (
           <Text size="xs" c="orange" data-testid="peers-unknown">
@@ -451,13 +419,43 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       {peersOpen && mode === "common" && catalog && <PeerPanel plan={plan} onComparison={setComparison} />}
 
       <div style={{ flex: 1, display: "flex", minHeight: 0, paddingBottom: 28 }}>
-        <div style={{ flex: 1, minWidth: 0, paddingLeft: 16 }}>
+        <div style={{ flex: 1, minWidth: 0, paddingLeft: embedded ? 32 : 16, display: "flex", flexDirection: "column" }}>
           <div ref={gridEl} className="moyai-chart-grid" data-testid="chart-grid" data-mode={mode} data-fold={foldLevel ?? ""} />
+          {/* 凡例は表の下に 1 行。行の数は右端に小さく */}
+          <Group gap="md" wrap="nowrap" pt={8} pr={16} align="center">
+          <Group gap={10} wrap="nowrap" aria-label={T.legend.label} data-testid="chart-legend">
+            {(["actual", "plan", "both"] as const).map((m) => (
+              <Text key={m} size="xs" c="dimmed" span>
+                <span className="moyai-mark moyai-legend-mark">
+                  <span data-mark={m}>{T.mark[m]}</span>
+                </span>
+                {T.markName[m]}
+              </Text>
+            ))}
+            <Text size="xs" c="dimmed" span>
+              <span className="moyai-mark moyai-legend-mark moyai-mark-changed">
+                <span data-mark="plan">{T.mark.plan}</span>
+              </span>
+              {T.legend.changed}
+            </Text>
+            {proposals.size > 0 && (
+              <Text size="xs" c="dimmed" span data-testid="legend-proposal">
+                <span className="moyai-mark moyai-legend-mark moyai-mark-proposal">
+                  <span data-mark="plan">{T.mark.plan}</span>
+                </span>
+                {T.legend.proposal}
+              </Text>
+            )}
+          </Group>
+          <Text size="xs" c="dimmed" className="moyai-num" ml="auto" data-testid="chart-rows-count" data-visible={model.rows.length} data-total={model.totalRows}>
+            {T.rowsShort(model.rows.length, model.totalRows)}
+          </Text>
+          </Group>
         </div>
-        <aside className="moyai-chart-side" data-testid="source-panel" aria-label={T.source.title}>
-          <Title order={4} mb="xs">
-            {T.source.title}
-          </Title>
+        {side ? (
+          side.el &&
+          createPortal(
+            <div data-testid="source-panel" aria-label={T.source.title}>
           {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
             <PeerSide row={selRow} />
           ) : !selRow || !selPeriod ? (
@@ -493,7 +491,51 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               {(selCell?.detailKeys.length ?? 0) > DETAILS_MAX && <Text size="xs">{T.details.more((selCell?.detailKeys.length ?? 0) - DETAILS_MAX)}</Text>}
             </Stack>
           )}
-        </aside>
+            </div>,
+            side.el,
+          )
+        ) : (
+          <aside className="moyai-chart-side" data-testid="source-panel" aria-label={T.source.title}>
+            <Title order={4} mb="xs">
+              {T.source.title}
+            </Title>
+          {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
+            <PeerSide row={selRow} />
+          ) : !selRow || !selPeriod ? (
+            <Text size="sm" c="dimmed">
+              {T.source.empty}
+            </Text>
+          ) : (
+            <Stack gap="sm">
+              <Text size="sm" data-testid="source-cell">
+                {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
+              </Text>
+              {selCell?.detailKeys.some((k) => proposals.has(k)) && (
+                <Text size="xs" c="var(--shu)" data-testid="source-proposal">
+                  {T.legend.proposalNote}
+                </Text>
+              )}
+              {selCell?.change && (
+                <Alert color="orange" p="xs">
+                  <Text size="xs" style={{ whiteSpace: "pre-line" }}>
+                    {T.change(
+                      selCell.change.who ?? TEXT.author[selCell.change.author],
+                      selCell.change.reason,
+                      selCell.change.before ? T.markName[selCell.change.before] : T.markNone,
+                      selCell.change.after ? T.markName[selCell.change.after] : T.markRemoved,
+                    )}
+                  </Text>
+                </Alert>
+              )}
+              {(selCell?.detailKeys ?? []).slice(0, DETAILS_MAX).map((k) => {
+                const d = detailsByKey.get(k);
+                return d ? <DetailCard key={k} d={d} ix={ix} /> : null;
+              })}
+              {(selCell?.detailKeys.length ?? 0) > DETAILS_MAX && <Text size="xs">{T.details.more((selCell?.detailKeys.length ?? 0) - DETAILS_MAX)}</Text>}
+            </Stack>
+          )}
+          </aside>
+        )}
       </div>
 
       <Modal opened={!!open} onClose={() => setOpenRow(null)} title={open ? T.details.title(open.path.filter(Boolean).join(T.pathSep)) : ""} size="xl" centered>

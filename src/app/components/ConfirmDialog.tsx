@@ -2,7 +2,7 @@
 // 自分の鍵の合言葉で版に署名する（鍵がまだ無ければ、合言葉を決めて作ってから署名する）。この署名で承認する読み方を 1 行ずつ見せる。
 // 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、MERGE の決定のシートで一言の理由を書いて受けるまで確定できない（受けた決定は state/decisions.ts）。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
-import { Alert, Anchor, Button, Group, Modal, PasswordInput, Radio, ScrollArea, Stack, Table, Text, TextInput, Textarea } from "@mantine/core";
+import { Alert, Anchor, Button, Group, Modal, PasswordInput, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
 import { getCurrentReadings, readingsForCommit } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
@@ -17,7 +17,6 @@ import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
 
 const T = HUMAN_TEXT.confirm;
 const H = HUMAN_TEXT.history;
-const DIFF_MAX = 200;
 
 interface Synced {
   kind: "onedrive" | "sharepoint";
@@ -68,7 +67,6 @@ export function SyncedNotice({ synced, kind }: { synced: Synced | null | undefin
   );
 }
 
-const markText = (m: DiffMark | null) => (m === null ? T.mark.none : T.mark[m]);
 
 type Load = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; status: StatusBody };
 
@@ -116,7 +114,6 @@ export function ConfirmDialog({
   // 頼むこと：自分で確定する・編集を頼む・承認を頼む
   const [ask, setAsk] = useState<"self" | "edit" | "approve">("self");
   const [to, setTo] = useState("");
-  const [note, setNote] = useState("");
   const [mail, setMail] = useState<HandoffMail | null>(null);
 
   useEffect(() => {
@@ -129,7 +126,6 @@ export function ConfirmDialog({
     setKeyMade(null);
     setAsk("self");
     setTo("");
-    setNote("");
     setMail(null);
   }, [opened]);
 
@@ -173,7 +169,7 @@ export function ConfirmDialog({
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
       readings: readingsForCommit(),
       passphrase: pass,
-      request: { kind: ask, to: ask === "self" ? null : to.trim(), note: note.trim() },
+      request: { kind: ask, to: ask === "self" ? null : to.trim(), note: reason.trim() },
       origin: location.origin,
     };
     const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null }; mail: HandoffMail | null }>(
@@ -192,7 +188,7 @@ export function ConfirmDialog({
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title={status ? (ask === "self" ? T.titleSign((status.latest?.version ?? 0) + 1) : T.titleHandoff((status.latest?.version ?? 0) + 1)) : T.title} size="80rem" centered data-testid="confirm-dialog">
+    <Modal opened={opened} onClose={onClose} title={status ? (ask === "self" ? T.titleSign((status.latest?.version ?? 0) + 1) : T.titleHandoff((status.latest?.version ?? 0) + 1)) : T.title} size={680} centered data-testid="confirm-dialog">
       <Stack gap="sm">
         {load.kind === "loading" && <Text size="sm">{T.loading}</Text>}
         {load.kind === "error" && (
@@ -202,60 +198,40 @@ export function ConfirmDialog({
         )}
         {status && diff && (
           <>
-            <Group gap="xs">
-              <Text size="sm" fw={700}>
-                {T.root}
-              </Text>
-              <Text size="sm" className="moyai-num" data-testid="confirm-root">
-                {status.root}
-              </Text>
-            </Group>
-            <SyncedNotice synced={status.synced} kind="root" />
-            <Text size="sm">{status.latest ? T.basedOn(status.latest.version) : T.first}</Text>
-            <Text size="sm" fw={700} className="moyai-num" data-testid="diff-summary">
-              {T.summary(diff.added, diff.removed, diff.changed, diff.same)}
+            {/* 署名して渡す（docs/screens.md 3.4、絵は Handoff.dc.html）：件数の 1 行 → 頼むこと → 宛先・ひとこと → この署名で承認する読み方 → 合言葉 → リンクが運ぶもの。
+                差分の行は差分レポートと決定のシートが持つので、ここには件数だけ */}
+            <Text size="sm" className="moyai-num" data-testid="diff-summary">
+              {T.summaryLine(status.latest?.version ?? null, diff.added, diff.removed, diff.changed)}
             </Text>
-            <ScrollArea.Autosize mah={240}>
-              <Table striped withTableBorder className="moyai-num" data-testid="diff-table">
-                <Table.Thead>
-                  <Table.Tr>
-                    {T.diffHead.map((h) => (
-                      <Table.Th key={h}>{h}</Table.Th>
-                    ))}
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {diff.rows.slice(0, DIFF_MAX).map((r) => (
-                    <Table.Tr key={`${r.nodeKey}|${r.workKey}|${r.fiscalYear}`}>
-                      <Table.Td>{r.equipment}</Table.Td>
-                      <Table.Td>{r.work}</Table.Td>
-                      <Table.Td>{r.fiscalYear}</Table.Td>
-                      <Table.Td>{markText(r.before)}</Table.Td>
-                      <Table.Td>{markText(r.after)}</Table.Td>
-                      <Table.Td>{r.authors.map((a) => TEXT.author[a]).join("、")}</Table.Td>
-                      <Table.Td>{r.basis.join(" / ")}</Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </ScrollArea.Autosize>
-            {diff.rows.length > DIFF_MAX && <Text size="xs">{T.diffMore(diff.rows.length - DIFF_MAX)}</Text>}
+            <SyncedNotice synced={status.synced} kind="root" />
 
-            {pending.length > 0 && (
+            {/* この署名に入る、決定のシートで受けた決定の数 */}
+            {pending.length > 0 && left === 0 && (
+              <Text size="xs" c="dimmed" data-testid="pending">
+                {T.pendingAllAccepted(pending.length)}
+              </Text>
+            )}
+            {pending.length > 0 && left > 0 && (
               <Alert color="gray" p="xs" data-testid="pending">
                 <Group gap="xs">
-                  <Text size="sm">{left > 0 ? T.pendingLeft(left) : T.pendingAllAccepted(pending.length)}</Text>
-                  {left > 0 && (
-                    <Anchor href={sheetHash("decisions")} size="sm" onClick={onClose} data-testid="to-decisions">
-                      {T.toDecisions}
-                    </Anchor>
-                  )}
+                  <Text size="sm">{T.pendingLeft(left)}</Text>
+                  <Anchor href={sheetHash("decisions")} size="sm" onClick={onClose} data-testid="to-decisions">
+                    {T.toDecisions}
+                  </Anchor>
                 </Group>
               </Alert>
             )}
 
+            <Radio.Group label={T.askTitle} value={ask} onChange={(v) => setAsk(v as typeof ask)} data-testid="ask">
+              <Group gap="lg" mt={4}>
+                <Radio value="self" label={T.ask.self} disabled={!!done} data-testid="ask-self" />
+                <Radio value="edit" label={T.ask.edit} disabled={!!done} data-testid="ask-edit" />
+                <Radio value="approve" label={T.ask.approve} disabled={!!done} data-testid="ask-approve" />
+              </Group>
+            </Radio.Group>
+            {ask !== "self" && <TextInput label={T.to} placeholder={T.toPlaceholder} value={to} onChange={(e) => setTo(e.currentTarget.value)} disabled={!!done} data-testid="ask-to" />}
             <TextInput
-              label={T.reason}
+              label={ask === "self" ? T.reason : T.reasonHandoff}
               placeholder={T.reasonPlaceholder}
               value={reason}
               onChange={(e) => setReason(e.currentTarget.value)}
@@ -265,56 +241,34 @@ export function ConfirmDialog({
             />
 
             {readings.length > 0 && (
-              <Stack gap={4} data-testid="sign-readings">
-                <Text fw={700}>{T.readingsTitle(readings.length)}</Text>
-                <Text size="xs" c="dimmed">
-                  {T.readingsLead}
+              <Stack gap={2} data-testid="sign-readings">
+                <Text size="xs" fw={500} c="dimmed">
+                  {T.readingsTitle(readings.length)}
                 </Text>
-                <Table withTableBorder>
-                  <Table.Thead>
-                    <Table.Tr>
-                      {T.readingsHead.map((h) => (
-                        <Table.Th key={h}>{h}</Table.Th>
-                      ))}
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {readings.map((r) => (
-                      <Table.Tr key={`${r.skill.name}|${r.version}`} data-testid="sign-reading">
-                        <Table.Td>{r.skill.name}</Table.Td>
-                        <Table.Td>{T.readingScope[r.skill.scope]}</Table.Td>
-                        <Table.Td className="moyai-num">{r.skill.rules.length}</Table.Td>
-                        <Table.Td>{r.draft ? <Text span c="var(--shu)">{T.readingDraft}</Text> : r.approved ? T.readingApproved : T.readingUnapproved}</Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
+                {readings.map((r) => (
+                  <Group key={`${r.skill.name}|${r.version}`} gap="md" wrap="nowrap" data-testid="sign-reading">
+                    <Text size="sm">{r.skill.name}</Text>
+                    <Text size="xs" c="dimmed">
+                      {T.readingScope[r.skill.scope]}
+                    </Text>
+                    <Text size="xs" c="dimmed" className="moyai-num">
+                      {T.readingRules(r.skill.rules.length)}
+                    </Text>
+                    {r.draft ? (
+                      <Text size="xs" c="var(--shu-text)">
+                        {T.readingDraft}
+                      </Text>
+                    ) : (
+                      <Text size="xs" c="dimmed">
+                        {r.approved ? T.readingApproved : T.readingUnapproved}
+                      </Text>
+                    )}
+                  </Group>
+                ))}
               </Stack>
             )}
 
-            <Stack gap={4} data-testid="ask">
-              <Radio.Group label={T.askTitle} value={ask} onChange={(v) => setAsk(v as typeof ask)}>
-                <Group gap="lg" mt={4}>
-                  <Radio value="self" label={T.ask.self} disabled={!!done} data-testid="ask-self" />
-                  <Radio value="edit" label={T.ask.edit} disabled={!!done} data-testid="ask-edit" />
-                  <Radio value="approve" label={T.ask.approve} disabled={!!done} data-testid="ask-approve" />
-                </Group>
-              </Radio.Group>
-              {ask !== "self" && (
-                <Group grow align="flex-start">
-                  <TextInput label={T.to} placeholder={T.toPlaceholder} value={to} onChange={(e) => setTo(e.currentTarget.value)} disabled={!!done} data-testid="ask-to" />
-                  <Textarea label={T.note} value={note} onChange={(e) => setNote(e.currentTarget.value)} autosize minRows={1} maxLength={1000} disabled={!!done} data-testid="ask-note" />
-                </Group>
-              )}
-              {ask !== "self" && (
-                <Text size="xs" c="dimmed">
-                  {T.carries}
-                </Text>
-              )}
-            </Stack>
-
             <Stack gap={4} data-testid="sign">
-              <Text fw={700}>{T.signTitle}</Text>
               {!name ? (
                 <Alert color="gray" p="xs" data-testid="sign-need-name">
                   <Group gap="xs">
@@ -357,6 +311,17 @@ export function ConfirmDialog({
                 </>
               )}
             </Stack>
+
+            {ask !== "self" && (
+              <Stack gap={2}>
+                <Text size="xs" fw={500} c="dimmed">
+                  {T.carriesTitle}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {T.carries}
+                </Text>
+              </Stack>
+            )}
             {error && (
               <Alert color="red" data-testid="confirm-error">
                 {error}

@@ -13,7 +13,7 @@ import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { FICTIONAL_1, acceptDecisions, callTool as call, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { FICTIONAL_1, callTool as call, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】みどり台クリーンセンター";
 const A = { name: "【架空】山田", pass: "架空の合言葉 山田の鍵 デモ" };
@@ -70,7 +70,9 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
 
     await test.step("1 トップ：保管先にまだ施設が無い。「＋ 新しい施設」で MERGE の白紙へ", async () => {
       await pa.goto(`${one.base}/#/`);
-      await expect(pa.getByTestId("moyai-empty")).toBeVisible();
+      // 施設が無いときは「＋ 新しい施設」だけ（docs/screens.md 3.1）
+      await expect(pa.getByTestId("moyai-new")).toBeVisible();
+      await expect(pa.getByTestId("moyai-table")).toHaveCount(0);
       await pa.screenshot({ path: shot("demo-01-top-empty") });
       await pa.getByTestId("moyai-new").click();
       await expect(pa.getByTestId("drop")).toBeVisible();
@@ -117,15 +119,12 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       const r = await call(c, "crosswalk_propose", { rules: [...nodes, ...works], basedOnVersion: version });
       expect(r.conflicts).toBe(0);
       await pa.getByTestId("sheet-decisions").click();
-      const rows = pa.getByTestId("crosswalk-rule");
-      await expect(rows).toHaveCount(nodes.length + works.length);
+      await expect(pa.getByTestId("crosswalk-rule")).toHaveCount(nodes.length + works.length);
       await pa.screenshot({ path: shot("demo-04-crosswalk-proposed") });
-      for (let i = 0; i < nodes.length + works.length; i++) {
-        const row = rows.nth(i);
-        await row.getByTestId("crosswalk-reason").fill(HUMAN);
-        await row.getByTestId("crosswalk-accept").click();
-        await expect(row).toHaveAttribute("data-state", "accepted");
-      }
+      // 人：上の欄に理由を書いて、規則をまとめて受ける
+      await pa.getByTestId("decisions-reason").fill(HUMAN);
+      await pa.getByTestId("decisions-bulk-accept").click();
+      await expect(pa.locator('[data-testid="crosswalk-rule"][data-state="proposed"]')).toHaveCount(0);
       await pa.screenshot({ path: shot("demo-05-crosswalk-accepted") });
     });
 
@@ -158,9 +157,15 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
         }
       }
       expect(proposalId, "計画に当たる台帳の案がある").not.toBe("");
+      // 案は、自分の台帳の段の行で見る（共通の行では、ほかの機器の実施と同じセルにまとまる）
+      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
       await expect(pa.getByTestId("legend-proposal")).toBeVisible();
-      await pa.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
-      await expect(pa.getByTestId("chart-grid").locator(".moyai-mark-proposal").first()).toBeVisible();
+      const prop = pa.getByTestId("chart-grid").locator(".moyai-mark-proposal");
+      if ((await prop.count()) === 0) {
+        await pa.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
+        await pa.waitForTimeout(300);
+      }
+      await expect(prop.first()).toBeVisible();
       await pa.getByTestId("chart-grid").locator(".moyai-mark-proposal").first().click();
       await expect(pa.getByTestId("source-proposal")).toBeVisible();
       await pa.screenshot({ path: shot("demo-07-ledger-proposal") });
@@ -172,7 +177,10 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await expect(row).toHaveCount(1);
       await expect(row).toContainText(`周期の案 ${proposalId}`);
       await pa.screenshot({ path: shot("demo-08-decisions") });
-      await acceptDecisions(pa, "試験の台本が押した（似た施設の帯と、チャットの答えを見て受けた）");
+      // 人：上の欄に理由を書いて、まとめて受ける
+      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（似た施設の帯と、チャットの答えを見て受けた）");
+      await pa.getByTestId("decisions-bulk-accept").click();
+      await expect(pa.locator('[data-testid="pending-row"][data-accepted="false"]')).toHaveCount(0);
       await pa.getByTestId("sheet-chart").click();
       await expect(pa.getByTestId("legend-proposal")).toHaveCount(0);
     });
@@ -191,7 +199,8 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("sign-passphrase").fill(A.pass);
       await pa.getByTestId("sign-passphrase-again").fill(A.pass);
       await pa.getByTestId("ask-to").fill("kacho@example.jp");
-      await pa.getByTestId("ask-note").fill("台帳の似た施設の周期を 1 つ入れました");
+      // ラジオの切り替えの動きが終わってから撮る
+      await pa.waitForTimeout(400);
       await pa.screenshot({ path: shot("demo-10-sign") });
       await pa.getByTestId("confirm-submit").click();
       await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
@@ -226,7 +235,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await expect(pa.getByTestId("moyai-mark")).toHaveText("●");
       await pa.screenshot({ path: shot("demo-15-top-approved") });
       await pa.getByTestId("moyai-next").click();
-      await expect(pa.getByTestId("merge-version")).toHaveText("第 1 版");
+      await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
       await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
     });
 

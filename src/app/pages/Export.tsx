@@ -118,9 +118,6 @@ export function Export() {
         <Text size="sm" data-testid="export-format">
           {T.format}
         </Text>
-        <Text size="xs" c="dimmed">
-          {T.lead}
-        </Text>
         {error && (
           <Alert color="gray" data-testid="export-error">
             {error}

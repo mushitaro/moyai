@@ -24,7 +24,6 @@ function ReferenceDate() {
     <TextInput
       type="date"
       label={T.referenceDate}
-      description={T.referenceDateHelp}
       value={draft}
       error={bad ? T.referenceDateInvalid : null}
       onChange={(e) => {
@@ -194,13 +193,10 @@ export function Review({ embedded = false }: { embedded?: boolean } = {}) {
         </Group>
         )}
 
-        {/* 冒頭にいつも（箱にせず、文で） */}
-        <Stack gap={2} data-testid="review-notice">
-          <Text fw={700}>{T.notice}。</Text>
-          <Text size="sm" c="dimmed">
-            {T.noticeBody}
-          </Text>
-        </Stack>
+        {/* 冒頭にいつも（箱にせず、文で。安全の決まり 5 の文なので、画面の説明を外したあとも残す） */}
+        <Text fw={700} data-testid="review-notice">
+          {T.notice}。
+        </Text>
 
         {!working && (
           <Stack gap="xs">

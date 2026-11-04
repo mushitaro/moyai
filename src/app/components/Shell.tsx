@@ -1,7 +1,7 @@
 // 画面の骨組み（デザイン定義 §5.2）：上にヘッダ、下に状態の帯、その間を主の面がすべて使う。
-// - ヘッダ（docs/screens.md 1）：左にしるし＋「MOYAI」の字。字は、トップでは大きく墨、ほかの画面ではタブと同じ小さく淡い字にして、今いる所に目を行かせる（しるしの大きさと色は変えない）、
-// そのすぐ右に段のタブ MERGE › EXPORT › SHARE（今いる段だけ大きく墨）、右に表示の明暗の切り替えと設定。
-// - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり、右にビルドの印。
+// - ヘッダ（docs/screens.md 1）：左にしるし（飾り）、その右に段の列 MOYAI › MERGE › EXPORT › SHARE（今いる段だけ大きく墨、ほかは小さく淡い字）、
+// 右に表示の明暗の切り替えと設定。しるしと「MOYAI」の間は、トップでは 10px（組み）、ほかの段では 40px。
+// - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり、右にビルドの印。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする。運営者、2026-11-04）。
 // 【架空】は各画面が <FictionMark /> を置くと、ここの枠に出る（架空のデータの画面には常に出す）。
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
@@ -55,19 +55,19 @@ function ThemeSwitch() {
 function Header({ hash }: { hash: string }) {
   const stage = routeOf(hash).stage;
   return (
-    <header className="moyai-header">
-      <a className="moyai-seal" href={APP_PAGES.home} title={S.home} data-testid="brand" aria-current={hash === APP_PAGES.home ? "page" : undefined}>
+    <header className="moyai-header" data-top={stage === "top" ? "true" : "false"}>
+      <span className="moyai-logo" aria-hidden="true">
         <BrandMark height={20} />
-        <span className="moyai-seal-word">{TEXT.appName}</span>
-      </a>
+      </span>
       <nav className="moyai-tabs" aria-label={S.tabsLabel}>
-        {TABS.map((t, i) => (
+        <a className="moyai-tab" href={APP_PAGES.home} title={S.home} data-testid="brand" aria-current={stage === "top" ? "page" : undefined}>
+          {TEXT.appName}
+        </a>
+        {TABS.map((t) => (
           <span key={t.stage} className="moyai-stage">
-            {i > 0 && (
-              <span className="moyai-stage-sep" aria-hidden="true">
-                ›
-              </span>
-            )}
+            <span className="moyai-stage-sep" aria-hidden="true">
+              ›
+            </span>
             <a
               className="moyai-tab"
               href={t.hash}

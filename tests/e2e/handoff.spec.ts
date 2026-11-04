@@ -58,7 +58,6 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pa.getByTestId("sign-passphrase-again").fill(A.pass);
     await expect(pa.getByTestId("confirm-submit")).toBeDisabled();
     await pa.getByTestId("ask-to").fill("kacho@example.jp");
-    await pa.getByTestId("ask-note").fill("11 月の点検の結果を入れました");
     await expect(pa.getByTestId("confirm-submit")).toBeEnabled();
     await pa.getByTestId("confirm-submit").click();
     await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
@@ -72,6 +71,7 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pa.keyboard.press("Escape");
     // 山田の側：承認を頼んだ版は、自分では承認できない（承認の道は出ない）
     await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "awaitingApproval");
+    await expect(pa.getByTestId("merge-turn")).toHaveText(`承認待ち　承認する人 kacho@example.jp`);
     await expect(pa.getByTestId("approve-open")).toHaveCount(0);
     // トップのもやいの星取表：施設の行に「第 1 版」と朱の「承認待ち」、今月の列に朱の ○（渡して承認待ちの版）
     await pa.goto(`${one.base}/#/`);
@@ -92,6 +92,8 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.goto(theirs);
     await expect(pb.getByTestId("plan-name")).toContainText("【架空】");
     await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "awaitingApproval");
+    // 承認を頼まれた人は編集しないので、下の帯には頼まれていることだけ
+    await expect(pb.getByTestId("merge-turn")).toHaveText("承認を頼まれています");
     await expect(pb.getByTestId("approve-open")).toBeVisible();
     // 見出しの版は、承認を頼まれた版（第 1 版）
     await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
@@ -126,7 +128,7 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await expect(next).toHaveAttribute("href", /^#\/merge\?open=[^&]+&v=1&h=[0-9a-f]{16}$/);
     await pa.screenshot({ path: shot(`handoff-top-approved-${tag}`) });
     await next.click();
-    await expect(pa.getByTestId("merge-version")).toHaveText("第 1 版");
+    await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
     await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
   });
 

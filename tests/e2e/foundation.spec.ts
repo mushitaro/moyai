@@ -92,6 +92,8 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
     await second.goto(base);
     await expect(second.getByTestId("refused")).toBeVisible();
     await expect(second.getByTestId("connection")).toHaveAttribute("data-state", "refused");
+    // 確定の試しは、設定の画面の下の開発の道具にある
+    await second.goto(`${base}#/settings`);
     await expect(second.getByTestId("trial-open")).toBeDisabled();
     await expect(second.getByTestId("trial-disabled-reason")).toBeVisible();
     await second.screenshot({ path: shot(`second-tab-${tag}`) });
@@ -100,6 +102,7 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
 
   await test.step("確定の試し：印を受け取り、人だけの経路を通る（何も変えない）", async () => {
     await page.bringToFront();
+    await page.goto(`${base}#/settings`);
     await page.getByTestId("trial-open").click();
     await expect(page.getByTestId("trial-token")).toBeVisible();
     await page.getByTestId("trial-confirm").click();

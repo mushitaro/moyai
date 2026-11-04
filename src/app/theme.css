@@ -116,9 +116,68 @@ body {
   display: flex;
   flex-direction: column;
 }
+.moyai-merge {
+  position: relative;
+}
 .moyai-merge[data-over="true"] {
   outline: 2px dashed var(--shu);
   outline-offset: -4px;
+}
+/* ファイルを引きずって入ったときだけ、全面に「第 n 版に重ねます」 */
+.moyai-merge-over {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay, rgba(0, 0, 0, 0.64));
+  color: var(--text);
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+/* 見出しの 1 行（絵は Review.dc.html）：施設の名前 17px・500・字間 0.1em、版は等幅 13px、状態は朱 12px。右に施設の設定 */
+.moyai-merge-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-6) var(--sp-7) 0;
+}
+.moyai-merge-name {
+  margin: 0;
+  font-size: 17px;
+  line-height: 28px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.moyai-merge-ver {
+  font: 400 13px/22px var(--font-num);
+  color: var(--text-2);
+}
+.moyai-merge-state {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--shu-text);
+}
+.moyai-merge-head-end {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-6);
+  font-size: 12px;
+  line-height: 18px;
+}
+.moyai-merge-link {
+  color: var(--text-3);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+}
+.moyai-merge-link:hover {
+  color: var(--text);
 }
 .moyai-sheet-tabs {
   border-bottom: 1px solid var(--line);
@@ -148,52 +207,37 @@ body {
   min-width: 0;
   overflow: auto;
 }
+/* 横の板は 1 枚（地は --layer-1、余白 24px で見出しの行とそろえる） */
 .moyai-merge-side {
   flex: none;
   width: 360px;
   overflow: auto;
-  padding: var(--sp-5);
-  border-left: 1px solid var(--line);
+  padding: var(--sp-6);
+  background: var(--layer-1);
 }
 .moyai-merge-bar {
   border-top: 1px solid var(--line);
 }
 
 /* §10.20 ヘッダ */
+/* ヘッダ（絵は Review.dc.html・Main.dc.html）：左から、しるし（25×20、飾り）→ 段の列「MOYAI › MERGE › EXPORT › SHARE」。
+   しるしと「MOYAI」の間は、トップ（MOYAI が今の段で大きい）では 10px（しるしと字の組み）、ほかの段では 40px 離す */
 .moyai-header {
   position: relative;
   z-index: var(--z-header);
   display: flex;
   align-items: center;
-  gap: var(--sp-8);
   padding: 0 var(--sp-7);
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
-.moyai-seal {
-  /* しるし 20px（幅 25px。幅 24px 以上の決まり）＋「MOYAI」（Krona One 17px/24px・字間 0.18em）、間 10px。
-     塊の幅は 144px に決めて縮めない：字の大きさが画面ごとに変わっても、すぐ右のタブ（48px あける）が動かない。左揃え（中央揃えはしない） */
+.moyai-logo {
   flex: none;
-  width: 144px;
   display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
+  margin-right: 40px;
 }
-.moyai-mark {
-  flex: none;
-  display: block;
-}
-/* 字だけ、トップでは 17px/24px・字間 0.18em・墨。ほかの画面ではタブと同じ 10px/16px・字間 0.14em・淡い字（しるしは変えない） */
-.moyai-seal-word {
-  font: 400 10px/16px var(--font-seal);
-  letter-spacing: 0.14em;
-  color: var(--text-3);
-}
-.moyai-seal[aria-current="page"] .moyai-seal-word {
-  font: 400 17px/24px var(--font-seal);
-  letter-spacing: 0.18em;
-  color: var(--text);
+.moyai-header[data-top="true"] .moyai-logo {
+  margin-right: 10px;
 }
 .moyai-header-end {
   margin-left: auto;
@@ -202,17 +246,16 @@ body {
   gap: var(--sp-6);
 }
 
-/* §10.7 タブ：英字の大文字、選んでいる画面はヘッダの下の罫に重ねて 2px の墨の線 */
+/* §10.7 段のタブ：英字の大文字。今の段は 17px・字間 0.18em・墨、ほかは 10px・淡い字。下線は引かない（運営者の指示「大きく、ほかはグレーアウト」）。
+   項目と › の間は、すべて 20px の等間隔 */
 .moyai-tabs {
   display: flex;
-  align-self: stretch;
-  gap: var(--sp-8);
+  align-items: center;
+  gap: 20px;
 }
 .moyai-tab {
   display: flex;
   align-items: center;
-  margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
   color: var(--text-3);
   text-decoration: none;
   font: 400 10px/16px var(--font-wide);
@@ -220,11 +263,10 @@ body {
   transition: color var(--dur-quick) var(--ease-standard);
 }
 .moyai-tab:hover {
-  color: var(--text-2);
+  color: var(--text);
 }
 .moyai-tab[aria-current="page"] {
   color: var(--text);
-  border-bottom-color: var(--text);
   /* 今いる段は「MOYAI」と同じ大きさ（docs/screens.md 1） */
   font: 400 17px/24px var(--font-wide);
   letter-spacing: 0.18em;
@@ -232,13 +274,146 @@ body {
 .moyai-stage {
   display: flex;
   align-items: center;
-  gap: var(--sp-8);
+  gap: 20px;
 }
 .moyai-stage-sep {
-  color: var(--text-3);
+  color: var(--text-disabled);
   /* Krona One の › は左向きに見えるので、記号だけ本文の書体で描く */
-  font: 400 14px/16px var(--font-body);
+  font: 400 12px/16px var(--font-body);
 }
+
+/* MOYAI（トップ。docs/screens.md 3.1、絵は Main.dc.html）：左 32px から。行は施設、列は 20 か月（44px）、印は 10px の円 */
+.moyai-top-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.moyai-top-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.moyai-top {
+  padding: var(--sp-6) var(--sp-7);
+}
+.moyai-top-title {
+  margin: 0 0 var(--sp-6);
+  font-size: 24px;
+  line-height: 40px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+}
+.moyai-top-grid {
+  overflow-x: auto;
+}
+.moyai-top-head,
+.moyai-top-row {
+  display: flex;
+  align-items: center;
+  width: max-content;
+}
+.moyai-top-head {
+  font: 400 11px/18px var(--font-num);
+  color: var(--text-3);
+}
+.moyai-top-row {
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+}
+.moyai-top-name {
+  flex: none;
+  width: 328px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 22px;
+}
+.moyai-top-facility {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moyai-top-ver {
+  flex: none;
+  font: 400 12px/22px var(--font-num);
+  color: var(--text-2);
+}
+.moyai-top-state {
+  flex: none;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--shu-text);
+}
+.moyai-top-months {
+  display: flex;
+  margin-left: var(--sp-3);
+  align-self: stretch;
+}
+.moyai-top-row .moyai-top-months {
+  border-left: 1px solid var(--line-strong);
+}
+.moyai-top-cell {
+  flex: none;
+  width: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+/* 版の印：字は DOM に残し（読み上げと写し）、形を描く。● 署名した版、朱の ○ 編集中・承認待ち、朱の × 確かめで合わない版 */
+.moyai-top-mk {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  font-size: 0;
+  vertical-align: middle;
+}
+.moyai-top-mk[data-kind="signed"] {
+  background: var(--text);
+}
+.moyai-top-mk[data-kind="open"] {
+  border: 2px solid var(--shu);
+}
+.moyai-top-mk[data-kind="problem"] {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  font: 700 12px/12px var(--font-num);
+  color: var(--shu-text);
+}
+.moyai-top-add {
+  margin-left: var(--sp-5);
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.moyai-top-add:hover {
+  color: var(--text);
+}
+.moyai-top-new {
+  display: inline-block;
+  margin: var(--sp-5) 0 0;
+}
+.moyai-top-legend {
+  display: flex;
+  gap: var(--sp-6);
+  margin-top: var(--sp-7);
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--text-3);
+}
+.moyai-top-legend-open {
+  color: var(--shu-text);
+}
+
+
 
 /* §10.6 切り替え：言葉を短い縦の罫でつなぐ。選んでいる言葉は墨と太さ 500、ほかは淡い字と太さ 400。下線は引かない（運営者の指示 2026-11-04） */
 .moyai-switch {

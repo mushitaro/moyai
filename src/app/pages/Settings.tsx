@@ -5,6 +5,7 @@ import { Alert, Button, Code, Container, Group, Modal, NativeSelect, PasswordInp
 import { useCallback, useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
+import { DevTools } from "../components/DevTools";
 import { useConnection } from "../state/bridge";
 import { HUMAN_TEXT } from "../text";
 
@@ -319,6 +320,7 @@ export function Settings() {
         )}
       </Stack>
       {s && <CreateRingDialog opened={createOpen} onClose={() => setCreateOpen(false)} packs={s.packs} onCreated={() => void load()} />}
+      <DevTools />
     </Container>
   );
 }

@@ -22,7 +22,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { Analysis } from "../../import";
 import type { CellStatus } from "../../import/compose";
 import type { QuestionKind, QuestionState } from "../../import/questions";
@@ -415,7 +415,7 @@ function Activity({ ws }: { ws: IntakeWorkspace }) {
  * 計画を作るのは副のボタン（composeLabel。白紙では「第 1 版をつくる」、版があれば「資料を重ねて第 n 版をつくる」）、
  * 当てはめの案は決定のシートへ、質問は MERGE の横の板へ移す。
  */
-export function Intake({ ws, embedded = false, composeLabel }: { ws: IntakeWorkspace; embedded?: boolean; composeLabel?: string }) {
+export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws: IntakeWorkspace; embedded?: boolean; composeLabel?: string; file?: string | null }) {
   useWorkspace(ws);
   const an = ws.fileCount ? ws.analysis() : null;
   const blockers = ws.composeBlockers();
@@ -444,6 +444,12 @@ export function Intake({ ws, embedded = false, composeLabel }: { ws: IntakeWorks
   };
 
   const layouts = an?.layouts ?? [];
+  // MERGE の資料ごとのタブ（?f=）で開いたら、その資料の最初のシートを見せる
+  useEffect(() => {
+    if (!file) return;
+    const l = layouts.find((x) => x.file === file);
+    if (l) setSel({ file, sheetIndex: l.sheetIndex });
+  }, [file, layouts.length]);
   const current = sel ? layouts.find((l) => l.file === sel.file && l.sheetIndex === sel.sheetIndex) : layouts[0];
 
   const goTo = (c: { file: string; sheetIndex: number; r: number; c: number }) => {

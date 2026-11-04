@@ -148,7 +148,8 @@ export const moyaiTheme = createTheme({
       vars: () => ({ root: { "--checkbox-color": "var(--fill)", "--checkbox-icon-color": "var(--on-fill)", "--checkbox-radius": "0" } }),
     },
     Radio: {
-      vars: () => ({ root: { "--radio-color": "var(--text)", "--radio-icon-color": "var(--bg)", "--radio-size": "16px" } }),
+      // 丸の地はいつも透明なので、選んだ印の点は墨で描く（地の色で描くと、選んでも見えない）
+      vars: () => ({ root: { "--radio-color": "var(--text)", "--radio-icon-color": "var(--text)", "--radio-size": "16px" } }),
       styles: { radio: { background: "transparent", borderColor: "var(--line-field)" }, label: { letterSpacing: "var(--track-body)" } },
     },
     Table: {

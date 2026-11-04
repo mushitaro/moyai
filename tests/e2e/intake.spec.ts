@@ -68,4 +68,21 @@ test("資料を落とし、質問に答え、計画を作って星取表で見�
     expect(Number(await page.getByTestId("chart-rows-count").getAttribute("data-total"))).toBeGreaterThan(10);
     await page.screenshot({ path: shot(`intake-chart-${tag}`) });
   });
+
+  await test.step("突き合せ：資料をまたいで結んだ作業を、資料ごとに並べる。重ねた資料は資料ごとのタブ", async () => {
+    await page.getByTestId("sheet-match").click();
+    await expect(page.getByTestId("match-sheet")).toBeVisible();
+    // 切り替えの「すべて」で、結んだ作業が並ぶ（星取表と作業日報の両方の列）
+    await page.getByTestId("match-filter").getByText(/^すべて \d+$/).click();
+    expect(await page.getByTestId("match-row").count()).toBeGreaterThan(0);
+    await expect(page.getByTestId("match-table")).toContainText("plan-hoshitori.xlsx");
+    await expect(page.getByTestId("match-table")).toContainText("daily-report.csv");
+    await expect(page.locator('[data-testid="match-row"][data-result="ok"]').first()).toContainText("✓ 一致");
+    await page.screenshot({ path: shot(`intake-match-${tag}`) });
+    // 資料ごとのタブ：押すと、資料のシートでその資料を見せる
+    await expect(page.getByTestId("sheet-file")).toHaveCount(3);
+    await page.locator('[data-testid="sheet-file"][data-file="daily-report.csv"]').click();
+    await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
+    await expect(page.locator('[data-testid="sheet-file"][data-file="daily-report.csv"]')).toHaveAttribute("aria-selected", "true");
+  });
 });

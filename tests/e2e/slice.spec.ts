@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { attr, f1Rules } from "../fixtures/crosswalk/rules";
-import { acceptDecisions, callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, acceptRules, callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（AI と人）";
 const PASS = "架空の合言葉 縦の一本 です";
@@ -127,29 +127,14 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       // 案は人が受けるまで決まらない：受けた当てはめは 0
       await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-nodes", "0");
       await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-works", "0");
-      await page.getByTestId("crosswalk-panel").scrollIntoViewIfNeeded();
       await page.screenshot({ path: shot(`slice-crosswalk-proposed-${tag}`), fullPage: true });
     });
 
     await test.step("人（試験の台本が押した）：画面で規則ごとに一言の理由を書いて受ける。粗い規則は確かめのダイアログを通して断る", async () => {
-      const rows = page.getByTestId("crosswalk-rule");
-      for (let i = 0; i < ruleCount; i++) {
-        const row = rows.nth(i);
-        const id = await row.getAttribute("data-rule");
-        // 理由が空なら押せない
-        await expect(row.getByTestId("crosswalk-accept")).toBeDisabled();
-        if (id === wrongRule) {
-          await row.getByTestId("crosswalk-reason").fill(REJECT);
-          await row.getByTestId("crosswalk-reject").click();
-          await expect(page.getByTestId("crosswalk-reject-confirm")).toBeVisible();
-          await page.getByTestId("crosswalk-reject-confirm").click();
-          await expect(row).toHaveAttribute("data-state", "rejected");
-        } else {
-          await row.getByTestId("crosswalk-reason").fill(HUMAN);
-          await row.getByTestId("crosswalk-accept").click();
-          await expect(row).toHaveAttribute("data-state", "accepted");
-        }
-      }
+      // 理由が空なら押せない（理由の欄は上に 1 つ）
+      await expect(page.getByTestId("crosswalk-accept").first()).toBeDisabled();
+      await expect(page.getByTestId("crosswalk-reject").first()).toBeDisabled();
+      expect(await acceptRules(page, HUMAN, { ruleId: wrongRule, reason: REJECT })).toBe(ruleCount);
       await expect(page.locator('[data-testid="crosswalk-rule"][data-state="proposed"]')).toHaveCount(0);
       // 未当てはめ：断った規則の作業（送風機の名前の無い作業）が残り、件数が出る
       const un = page.getByTestId("crosswalk-unmapped");
@@ -186,7 +171,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await acceptDecisions(page, "試験の台本が押した（チャットの答えを画面で受けた）");
       await page.getByTestId("confirm-open").click();
       await expect(page.getByTestId("diff-summary")).toBeVisible();
-      await expect(page.getByTestId("confirm-root")).toHaveText(root);
+      // 署名のダイアログに保管先の生のパスは出さない
+    await expect(page.getByTestId("confirm-root")).toHaveCount(0);
       await page.getByTestId("confirm-reason").fill("縦の 1 本：取り込みと当てはめを確定する（e2e）");
       // 署名：この PC にまだ鍵が無いので、合言葉を決めて鍵を作ってから署名する（2 回入れる）
       await expect(page.getByTestId("confirm-submit")).toBeDisabled();

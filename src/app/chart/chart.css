@@ -1,7 +1,9 @@
 /* 星取表の印と行のクラス。色は src/ui/tokens.css の役割のトークンだけを使う（デザイン定義 §7.2・§10.9）。 */
 
+/* 表は、凡例の行を残した高さいっぱい（親は縦の flex） */
 .moyai-chart-grid {
-  height: 100%;
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
 }
 
@@ -119,6 +121,11 @@
    受けたら、ふつうの計画の印になる。字の ○ は DOM に残す */
 .moyai-mark.moyai-mark-proposal [data-mark="plan"]::before {
   border: 1px dashed var(--shu);
+}
+/* 同じセルに、案の計画とほかの作業の実施が重なったとき（◎）：外の輪だけを朱の破線に */
+.moyai-mark.moyai-mark-proposal [data-mark="both"]::before {
+  border-style: dashed;
+  border-color: var(--shu);
 }
 
 /* 凡例の印：表のセルと同じ形を、同じクラスで描く */

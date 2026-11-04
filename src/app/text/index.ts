@@ -88,6 +88,7 @@ export const TEXT = {
     pathSep: " › ",
     orphan: (n: number) => `行に載せられない記録が ${n} 件あります（対象の機器か、パックの項目が計画に無い）。`,
     rowsCount: (visible: number, total: number) => `見えている行 ${visible} ／ 全部の行 ${total}`,
+    rowsShort: (visible: number, total: number) => (visible === total ? `${total} 行` : `${visible}／${total} 行`),
     legend: {
       label: "凡例",
       changed: "変えた所",
@@ -192,9 +193,24 @@ export const TEXT = {
       close: "閉じる",
     },
   },
+  match: {
+    filterLabel: "見せる行",
+    filterDiff: (n: number) => `食い違い ${n}`,
+    filterOne: (n: number) => `片方だけ ${n}`,
+    filterAll: (n: number) => `すべて ${n}`,
+    head: "機器 › 作業 › 年度",
+    resultHead: "突き合せ",
+    item: (machine: string, work: string, fy: number) => `${machine} › ${work} › ${fy}`,
+    ok: "✓ 一致",
+    diff: "× 食い違い（計画のまま／実施済み）",
+    only: (file: string) => `! ${file} だけにある`,
+    none: "―",
+    noDate: "記録あり",
+    noFiles: "このタブには資料がありません。突き合せは、資料を重ねたタブで見られます。",
+    more: (n: number) => `ほかに ${n} 行（切り替えで絞ってください）`,
+  },
   top: {
     title: "もやい",
-    lead: "保管先の施設と、署名で結んだ版の履歴です。どの施設の、どの版から始めるかを選びます。",
     facility: "施設",
     month: (ym: string) => `${Number(ym.slice(5))}`,
     yearMonth: (ym: string) => `${ym.slice(0, 4)} 年 ${Number(ym.slice(5))} 月`,
@@ -202,11 +218,10 @@ export const TEXT = {
     state: { editing: "編集中", awaitingApproval: "承認待ち", returned: "差し戻し" } as Record<string, string>,
     next: "＋ 次の版",
     newFacility: "＋ 新しい施設",
-    empty: "保管先にまだ施設がありません。",
-    talk: "Claude に話す　「B 町の第 3 版から、E 村の計画をつくって」",
+    legend: { signed: "署名した版", open: "編集中・承認待ち", problem: "確かめで合わない版" },
   },
   export: {
-    title: "EXPORT",
+    title: "出力",
     version: (n: number) => `第 ${n} 版`,
     fiscal: (y: number) => `${y} 年度`,
     format: "人が見る様式（MOYAI の標準）：入れ子・縦の結合・アウトライン・小計の行・A3 横・凡例・【架空】",
@@ -224,16 +239,14 @@ export const TEXT = {
   merge: {
     newFacility: "新しい施設",
     version: (n: number) => `第 ${n} 版`,
-    lead: (n: number) => `資料・Claude の案・あなたの答えを、第 ${n} 版に重ねます。前の版から変わった所は星取表で朱になります。`,
-    leadNew: "資料を落とすと、Claude がまとめて第 1 版をつくります。",
     facilitySettings: "施設の設定",
-    sheets: { chart: "星取表", readings: "読み方", check: "検査", decisions: "決定", files: "資料" } as Record<string, string>,
+    sheets: { chart: "星取表", match: "突き合せ", readings: "読み方", check: "検査", decisions: "決定", files: "資料" } as Record<string, string>,
+    filesLabel: "重ねた資料",
     addFiles: "＋ 資料を足す",
-    dropAnywhere: (n: number) => `画面のどこに落としても、第 ${n} 版に重ねます`,
+    dropHere: (n: number) => `第 ${n} 版に重ねます`,
     composeFirst: "第 1 版をつくる",
     composeNext: (n: number) => `資料を重ねて第 ${n} 版をつくる`,
-    side: { open: (n: number) => `決まっていない所 ${n}`, signatures: (n: number) => `署名 ${n}` },
-    sideNote: "Claude につないでいるときは、会話で答えても同じです。",
+    side: { open: (n: number) => `決まっていない所 ${n}`, signatures: (n: number) => `署名 ${n}`, source: "出どころ" },
     block: {
       noPlan: "まだ版の下書きがありません。資料を落として第 1 版をつくってください",
       open: (n: number) => `決まっていない所が ${n}`,
@@ -245,14 +258,21 @@ export const TEXT = {
     sign: "署名して確定する…",
     approve: "承認して署名する",
     returnBack: "理由を添えて差し戻す",
-    turn: (who: string) => `編集の番　${who}`,
     turnYou: "あなた",
-    turnState: { editing: "編集を頼まれています", awaitingApproval: "承認を頼まれています", approved: "承認済み", returned: "差し戻されました" } as Record<string, string>,
+    /** 下の帯の左：編集の番と承認の待ち（承認を頼まれた人は編集しないので、頼まれていることだけ） */
+    turnLine: (state: string, mine: boolean, who: string) =>
+      state === "awaitingApproval"
+        ? mine
+          ? "承認を頼まれています"
+          : `承認待ち　承認する人 ${who}`
+        : state === "approved"
+          ? "承認済み"
+          : state === "returned"
+            ? `差し戻されました　編集の番 ${mine ? "あなた" : who}`
+            : `編集の番 ${mine ? "あなた" : who}`,
     signed: (role: string, n: number) => (role === "approve" ? `第 ${n} 版を承認しました。` : `第 ${n} 版を差し戻しました。`),
     openFailed: (what: string) => `リンクの版を開けませんでした。保管先の版と、リンクの${what}が合いません。`,
     openWhat: { missing: "計画", version: "版の番号", hash: "ハッシュ", broken: "署名と鎖" } as Record<string, string>,
-    talk: "Claude に話す",
-    talkExample: "「押込送風機の更新は、来年度の計画に入れて」",
   },
   intake: {
     title: "取り込み",

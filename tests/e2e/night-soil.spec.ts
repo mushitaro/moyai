@@ -5,7 +5,7 @@
 // 人の受けるは、試験の台本が画面で押す。先に npm run build を走らせておく。
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { callTool as call, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptRules, callTool as call, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const PACK = "night-soil";
 const FACILITY = "【架空】し尿処理の一施設";
@@ -118,14 +118,7 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
     });
 
     await test.step("人（試験の台本が押した）：画面で規則ごとに一言の理由を書いて受ける", async () => {
-      const rows = page.getByTestId("crosswalk-rule");
-      for (let i = 0; i < ruleCount; i++) {
-        const row = rows.nth(i);
-        await row.getByTestId("crosswalk-reason").fill(HUMAN);
-        await row.getByTestId("crosswalk-accept").click();
-        await expect(row).toHaveAttribute("data-state", "accepted");
-      }
-      await page.getByTestId("crosswalk-panel").scrollIntoViewIfNeeded();
+      expect(await acceptRules(page, HUMAN)).toBe(ruleCount);
       await page.screenshot({ path: shot(`night-soil-crosswalk-accepted-${tag}`), fullPage: true });
     });
 

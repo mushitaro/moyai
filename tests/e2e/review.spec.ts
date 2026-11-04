@@ -5,7 +5,7 @@
 // AI は本物の中継（dist/cli.js mcp）を MCP の SDK のクライアントでつなぐ。先に npm run build を走らせておく。
 import { expect, test } from "@playwright/test";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { callTool as call, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptRules, callTool as call, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】検査の画面";
 const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
@@ -49,20 +49,14 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       await call(c, "crosswalk_propose", { rules, basedOnVersion: version });
       // 当てはめの案は、MERGE の決定のシートに並ぶ
       await page.getByTestId("sheet-decisions").click();
-      const rows = page.getByTestId("crosswalk-rule");
-      await expect(rows).toHaveCount(rules.length);
-      for (let i = 0; i < rules.length; i++) {
-        const row = rows.nth(i);
-        await row.getByTestId("crosswalk-reason").fill(HUMAN);
-        await row.getByTestId("crosswalk-accept").click();
-        await expect(row).toHaveAttribute("data-state", "accepted");
-      }
+      await expect(page.getByTestId("crosswalk-rule")).toHaveCount(rules.length);
+      expect(await acceptRules(page, HUMAN)).toBe(rules.length);
       await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-nodes", "25");
     });
 
-    await test.step("人：作業画面から検査を開き、基準日を選ぶ", async () => {
-      // 読み込み直さずに作業画面へ（作業中の計画はこのタブのメモリにある）
-      await page.evaluate(() => (location.hash = "#/"));
+    await test.step("人：開発の道具（設定の画面の下）から検査を開き、基準日を選ぶ", async () => {
+      // 読み込み直さずに設定の画面へ（作業中の計画はこのタブのメモリにある）
+      await page.evaluate(() => (location.hash = "#/settings"));
       await page.getByRole("link", { name: "検査", exact: true }).click();
       await expect(page.getByTestId("review-page")).toBeVisible();
       await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "check");
