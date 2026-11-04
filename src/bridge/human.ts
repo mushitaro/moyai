@@ -83,6 +83,7 @@ const SCHEMAS = {
   }),
   readings_read: z.object({}),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable(), passphrase: z.string().min(1).max(1000) }),
+  plans_list: z.object({}),
   plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500), passphrase: z.string().min(1).max(1000) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({ passphrase: z.string().min(1).max(1000) }),
@@ -350,6 +351,37 @@ export class HumanService {
         if (name === undefined) return no("nameInvalid");
         writeSettings(sd, { v: 1, root, ledger, name });
         return { ok: true, root, ledger, name };
+      }
+      case "plans_list": {
+        if (!parsePayload("plans_list", call.payload)) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return { ok: true, root: null, plans: [] };
+        let ids: string[] = [];
+        try {
+          ids = readdirSync(join(root, "plans"), { withFileTypes: true })
+            .filter((e) => e.isDirectory() && PLAN_ID.test(e.name))
+            .map((e) => e.name)
+            .sort();
+        } catch {
+          ids = [];
+        }
+        const plans: Record<string, unknown>[] = [];
+        for (const id of ids) {
+          try {
+            const h = await readHistory(root, id);
+            if (!h.latest) continue;
+            plans.push({
+              planId: id,
+              displayName: h.latest.plan.displayName,
+              fictional: h.latest.plan.facility.fictional,
+              versions: h.versions.map((v) => ({ version: v.version, at: v.at, contentHash: v.contentHash, roles: v.signatures.map((x) => x.role), problem: v.problem, legacy: v.legacy })),
+              turn: await readTurn(root, id),
+            });
+          } catch {
+            plans.push({ planId: id, displayName: id, fictional: false, versions: [], turn: null, unreadable: true });
+          }
+        }
+        return { ok: true, root, plans, name: readSettings(sd).name };
       }
       case "plan_sign": {
         const p = parsePayload("plan_sign", call.payload);

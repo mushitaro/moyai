@@ -115,6 +115,25 @@
   background: var(--shu);
 }
 
+/* Claude の案（台帳から置き、人がまだ決定のシートで受けていない計画の印）：朱の破線の円。下の罫は付けない（docs/screens.md 3.2）。
+   受けたら、ふつうの計画の印になる。字の ○ は DOM に残す */
+.moyai-mark.moyai-mark-proposal [data-mark="plan"]::before {
+  border: 1px dashed var(--shu);
+}
+
+/* 凡例の印：表のセルと同じ形を、同じクラスで描く */
+.moyai-legend-mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 20px;
+}
+.moyai-legend-mark.moyai-mark-changed::after {
+  bottom: 1px;
+}
+
 /* 要確認（写真から読んだもの）：印の前の「?」（デザイン定義に決まりが無いので、形は字だけ） */
 .moyai-mark-review::before {
   content: "?";

@@ -15,6 +15,9 @@ import { FictionMark } from "../components/FictionMark";
 import { PeerPanel } from "../components/PeerPanel";
 import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
+import { usePending } from "../components/DecisionsSheet";
+import { cycleIdOf } from "../../plan/cycle";
+import { useAccepted } from "../state/decisions";
 import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -252,9 +255,20 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     };
   }, []);
 
+  // Claude が台帳から置き、人がまだ受けていない案の明細（朱の破線の円で描く）
+  const { pending } = usePending(client, plan);
+  const accepted = useAccepted();
+  const proposals = useMemo(() => {
+    const keys = pending
+      .filter((d) => d.kind === "detail" && !accepted.has(`${d.id} ${d.hash}`))
+      .map((d) => d.id.slice("detail:".length))
+      .filter((k) => cycleIdOf(k) !== null);
+    return new Set(keys);
+  }, [pending, accepted]);
+
   useEffect(() => {
-    grid.current?.update(model, foldLevel, band);
-  }, [model, foldLevel, band]);
+    grid.current?.update(model, foldLevel, band, proposals);
+  }, [model, foldLevel, band, proposals]);
 
   const switchMode = (v: string) => {
     const m = v as RowMode;
@@ -363,6 +377,30 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
             {T.adjustedSame}
           </Text>
         )}
+        <Group gap={10} wrap="nowrap" aria-label={T.legend.label} data-testid="chart-legend">
+          {(["actual", "plan", "both"] as const).map((m) => (
+            <Text key={m} size="xs" c="dimmed" span>
+              <span className="moyai-mark moyai-legend-mark">
+                <span data-mark={m}>{T.mark[m]}</span>
+              </span>
+              {T.markName[m]}
+            </Text>
+          ))}
+          <Text size="xs" c="dimmed" span>
+            <span className="moyai-mark moyai-legend-mark moyai-mark-changed">
+              <span data-mark="plan">{T.mark.plan}</span>
+            </span>
+            {T.legend.changed}
+          </Text>
+          {proposals.size > 0 && (
+            <Text size="xs" c="dimmed" span data-testid="legend-proposal">
+              <span className="moyai-mark moyai-legend-mark moyai-mark-proposal">
+                <span data-mark="plan">{T.mark.plan}</span>
+              </span>
+              {T.legend.proposal}
+            </Text>
+          )}
+        </Group>
         {mode === "common" ? (
           <Group gap="xs" wrap="nowrap">
             <Button size="xs" variant="default" onClick={() => setPeersOpen((o) => !o)} disabled={!canConfirm || !catalog} data-testid="peers-toggle" aria-pressed={peersOpen}>
@@ -431,6 +469,11 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               <Text size="sm" data-testid="source-cell">
                 {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
               </Text>
+              {selCell?.detailKeys.some((k) => proposals.has(k)) && (
+                <Text size="xs" c="var(--shu)" data-testid="source-proposal">
+                  {T.legend.proposalNote}
+                </Text>
+              )}
               {selCell?.change && (
                 <Alert color="orange" p="xs">
                   <Text size="xs" style={{ whiteSpace: "pre-line" }}>

@@ -95,6 +95,17 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       expect(stale.isError).toBe(true);
     });
 
+    await test.step("星取表のシート：受けていない案は朱の破線の円で描き、凡例に「Claude の案」が出る", async () => {
+      await page.getByTestId("sheet-chart").click();
+      await expect(page.getByTestId("legend-proposal")).toBeVisible();
+      // 案の年度は計画の終わりの方なので、表を右の端まで送ってから数える（AG Grid は見えている列だけを描く）
+      await page.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
+      await expect(page.getByTestId("chart-grid").locator(".moyai-mark-proposal").first()).toBeVisible();
+      const label = await page.getByTestId("chart-grid").locator(".moyai-mark-proposal").first().getAttribute("aria-label");
+      expect(label).toContain("Claude の案");
+      await page.screenshot({ path: shot(`ledger-plan-proposal-${tag}`) });
+    });
+
     await test.step("決定のシート：台帳からの案が案ごとに 1 行。人が受けて、合言葉で署名して確定する", async () => {
       await page.getByTestId("sheet-decisions").click();
       const row = page.locator('[data-testid="pending-row"][data-kind="ledger"]');
@@ -104,6 +115,10 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await expect(row).toContainText("Claude（台帳から）");
       await page.screenshot({ path: shot(`ledger-plan-decisions-${tag}`), fullPage: true });
       await acceptDecisions(page, "試験の台本が押した（似た施設の帯を見て、周期の案を受けた）");
+      // 受けたら、破線の円はふつうの計画の印になり、凡例の「Claude の案」も消える
+      await page.getByTestId("sheet-chart").click();
+      await expect(page.getByTestId("legend-proposal")).toHaveCount(0);
+      await expect(page.getByTestId("chart-grid").locator(".moyai-mark-proposal")).toHaveCount(0);
       await page.getByTestId("confirm-open").click();
       await page.getByTestId("confirm-reason").fill("台帳の似た施設の周期を計画に入れる（e2e）");
       await signInDialog(page, PASS);

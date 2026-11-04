@@ -1,11 +1,12 @@
-// 作業画面（v0）：橋渡しとのつながりと、確定の試し（人だけの経路の守りを通す）。
-// 主ボタンは見出しの行の右端に 1 つだけ。副のボタンはその左。
-import { Alert, Anchor, Button, Container, Group, Modal, Stack, Text, Title } from "@mantine/core";
+// MOYAI（トップ。docs/screens.md 3.1）：もやいの星取表で、どの施設のどの版から始めるかを選ぶ。主ボタンは無い。
+// 下に、会期のあいだだけの開発の道具（確定の試し＝人だけの経路の守りを通す、前の画面への道、Ed25519 の試験のページ）。
+import { Alert, Anchor, Button, Container, Divider, Group, Modal, Stack, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { sha256Hex, type BridgeClient, type ConnectionState } from "../bridge-client";
 import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { CHART_HASH } from "../chart/route";
+import { MoyaiTop } from "../components/MoyaiTop";
 
 function useConnection(client: BridgeClient): { state: ConnectionState; dropped: number } {
   const [v, setV] = useState<{ state: ConnectionState; dropped: number }>({ state: { kind: "connecting" }, dropped: 0 });
@@ -86,23 +87,10 @@ export function Home({ client }: { client: BridgeClient }) {
 
   return (
     <Container size="lg" py="lg">
-      <Group justify="space-between" align="center" mb="md">
-        <Group gap="sm">
-          <Title order={2}>{TEXT.home.title}</Title>
-        </Group>
-        <Group gap="sm">
-          {!canTrial && (
-            <Text size="sm" c="dimmed" data-testid="trial-disabled-reason">
-              {TEXT.trial.disabledReason}
-            </Text>
-          )}
-          <Button onClick={() => setTrialOpen(true)} disabled={!canTrial} data-testid="trial-open">
-            {TEXT.trial.button}
-          </Button>
-        </Group>
-      </Group>
-
-      <Stack gap="md">
+      <Title order={2} mb="md">
+        {TEXT.top.title}
+      </Title>
+      <Stack gap="md" mb="md">
         {state.kind === "refused" && (
           <Alert color="red" title={TEXT.connection.refused} data-testid="refused">
             {ERROR_TEXT[state.code]} {TEXT.connection.refusedHelp}
@@ -118,7 +106,25 @@ export function Home({ client }: { client: BridgeClient }) {
             {TEXT.connection.dropped(dropped)}
           </Text>
         )}
-        <Text>{TEXT.home.lead}</Text>
+      </Stack>
+
+      <MoyaiTop client={client} />
+
+      <Divider my="xl" label={TEXT.home.title} labelPosition="left" />
+      <Stack gap="sm" align="flex-start" data-testid="dev-tools">
+        <Text size="sm" c="dimmed">
+          {TEXT.home.lead}
+        </Text>
+        <Group gap="sm">
+          <Button variant="default" size="xs" onClick={() => setTrialOpen(true)} disabled={!canTrial} data-testid="trial-open">
+            {TEXT.trial.button}
+          </Button>
+          {!canTrial && (
+            <Text size="sm" c="dimmed" data-testid="trial-disabled-reason">
+              {TEXT.trial.disabledReason}
+            </Text>
+          )}
+        </Group>
         <Anchor href={APP_PAGES.intake}>{TEXT.home.intakeLink}</Anchor>
         <Anchor href={CHART_HASH}>{TEXT.home.chartLink}</Anchor>
         <Anchor href={APP_PAGES.review}>{TEXT.home.reviewLink}</Anchor>

@@ -73,6 +73,14 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     // 山田の側：承認を頼んだ版は、自分では承認できない（承認の道は出ない）
     await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "awaitingApproval");
     await expect(pa.getByTestId("approve-open")).toHaveCount(0);
+    // トップのもやいの星取表：施設の行に「第 1 版」と朱の「承認待ち」、今月の列に朱の ○（渡して承認待ちの版）
+    await pa.goto(`${one.base}/#/`);
+    const row = pa.getByTestId("moyai-row");
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText("第 1 版");
+    await expect(row.getByTestId("moyai-state")).toHaveText("承認待ち");
+    await expect(row.getByTestId("moyai-mark")).toHaveText("○");
+    await pa.screenshot({ path: shot(`handoff-top-awaiting-${tag}`) });
   });
 
   await test.step("課長：別の MOYAI で同じ保管先を開き、リンクのハッシュが違えば開かない。正しいリンクなら署名を確かめてから見せる", async () => {
@@ -107,6 +115,19 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.getByTestId("side-signatures").click();
     await expect(pb.locator('[data-testid="signature"][data-role="approve"]')).toHaveAttribute("data-trust", "own");
     await pb.screenshot({ path: shot(`handoff-approved-${tag}`) });
+  });
+
+  await test.step("山田のトップ：承認された版は ●、状態は出ない。「＋ 次の版」で、その版を MERGE で開く", async () => {
+    await pa.reload();
+    const row = pa.getByTestId("moyai-row");
+    await expect(row.getByTestId("moyai-mark")).toHaveText("●");
+    await expect(row.getByTestId("moyai-state")).toHaveCount(0);
+    const next = row.getByTestId("moyai-next");
+    await expect(next).toHaveAttribute("href", /^#\/merge\?open=[^&]+&v=1&h=[0-9a-f]{16}$/);
+    await pa.screenshot({ path: shot(`handoff-top-approved-${tag}`) });
+    await next.click();
+    await expect(pa.getByTestId("merge-version")).toHaveText("第 1 版");
+    await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
   });
 
   await test.step("保管先：版 1 に、山田の渡す署名（edit）と課長の承認の署名（approve）。版の履歴で確かめられる", async () => {

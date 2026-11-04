@@ -121,6 +121,18 @@ function levelText(row: ChartRow, i: number): string {
   return row.kind === "unmapped" ? `${name}（${T.records(row.count)}）` : `${name}（${T.units(row.count)}）`;
 }
 
+/** 表に渡す、行の外の状態：Claude が台帳から置き、人がまだ受けていない案の明細の鍵 */
+interface GridContext {
+  proposals: ReadonlySet<string>;
+}
+const NO_PROPOSALS: ReadonlySet<string> = new Set();
+
+/** この印が、まだ受けていない Claude の案を含むか */
+function isProposal(cell: ChartCell | undefined, context: unknown): boolean {
+  const s = (context as GridContext | undefined)?.proposals;
+  return !!cell && !!s && s.size > 0 && cell.detailKeys.some((k) => s.has(k));
+}
+
 /** 印のセルの描き手：文字を 1 つ置き、セルに aria-label を付けるだけ */
 class MarkCell implements ICellRendererComp<ChartRow> {
   private el = document.createElement("span");
@@ -139,7 +151,7 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     else delete this.el.dataset.mark;
     if (cell?.summary && cell.count !== null) this.el.dataset.count = String(cell.count);
     else delete this.el.dataset.count;
-    if (p.data && period) p.eGridCell.setAttribute("aria-label", cellAria(p.data, period, cell));
+    if (p.data && period) p.eGridCell.setAttribute("aria-label", cellAria(p.data, period, cell) + (isProposal(cell, p.context) ? T.legend.proposalAria : ""));
     return true;
   }
 }
@@ -215,6 +227,7 @@ function markColumn(p: Period, width: number, fyStart: boolean): ColDef<ChartRow
       "moyai-mark-summary": (c: CellClassParams<ChartRow>) => !!get(c)?.summary,
       "moyai-mark-changed": (c: CellClassParams<ChartRow>) => !!get(c)?.change,
       "moyai-mark-review": (c: CellClassParams<ChartRow>) => !!get(c)?.review,
+      "moyai-mark-proposal": (c: CellClassParams<ChartRow>) => isProposal(get(c), c.context),
     },
     valueGetter: (c) => markText(get(c)?.mark ?? null),
     valueFormatter: (c: ValueFormatterParams<ChartRow>) => formatCell(get(c)),
@@ -289,6 +302,7 @@ export class ChartGrid {
       tooltipShowDelay: 300,
       animateRows: false,
       suppressNoRowsOverlay: true,
+      context: { proposals: NO_PROPOSALS } satisfies GridContext,
       rowClassRules: {
         "moyai-row-folded": (p) => !!p.data?.folded,
         "moyai-row-unmapped": (p) => p.data?.kind === "unmapped",
@@ -317,7 +331,8 @@ export class ChartGrid {
   }
 
   /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
-  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval") {
+  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS) {
+    this.api.setGridOption("context", { proposals } satisfies GridContext);
     const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, band]);
     if (key !== this.colKey) {
       this.colKey = key;

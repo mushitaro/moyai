@@ -7,6 +7,9 @@ const slowMo = Number(process.env.MOYAI_DEMO_SLOWMO ?? 350);
 
 export default defineConfig({
   ...base,
+  // tests/demo の台本（デモの通し）も、tests/e2e の台本も流せるように
+  testDir: "tests",
+  testMatch: "**/*.spec.ts",
   // ゆっくり流すので、1 つの台本の上限を広げる
   timeout: 15 * 60_000,
   expect: { timeout: 30_000 },

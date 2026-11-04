@@ -2,7 +2,7 @@
 // 検査ごとの結果・根拠の数字・例 10 件・出典（資料・条項・頁・URL）・水準・閾値の出どころ・確かめた度合い。
 // いつも「自己点検であって、審査の判断ではない」と出す。主ボタンは無い（検査を直すのは人で、パックを直して版を上げる）。
 // 業種の言葉は、パックの checks.json と sources.json から出る（コードに置かない）。
-import { Alert, Anchor, Badge, Container, Group, List, Paper, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+import { Anchor, Container, Group, List, Paper, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useMemo, useState } from "react";
 import { nodePath, type CheckResult, type NumberKey } from "../../review/checks";
 import type { Plan } from "../../shared/plan";
@@ -13,7 +13,8 @@ import { reviewOf, setReferenceDate, useReferenceDate } from "../state/review";
 import { REVIEW_TEXT, exampleText, numberLabel, numberValue } from "../text";
 
 const T = REVIEW_TEXT;
-const RESULT_COLOR: Record<CheckResult["result"], string> = { met: "teal", notMet: "red", notApplicable: "gray" };
+// 結果の印（docs/screens.md 3.2「検査」）：外れは朱の ×、満たすは ✓、当たらないは ―。色は朱だけ（緑や赤の札は使わない）
+const RESULT_MARK: Record<CheckResult["result"], string> = { met: "✓", notMet: "×", notApplicable: "―" };
 
 function ReferenceDate() {
   const date = useReferenceDate();
@@ -46,9 +47,14 @@ function CheckCard({ c, plan }: { c: CheckResult; plan: Plan }) {
           <Title order={3} size="h4">
             {c.name}
           </Title>
-          <Badge color={RESULT_COLOR[c.result]} variant={c.result === "notMet" ? "filled" : "light"} size="lg" data-testid="check-result">
-            {T.result[c.result]}
-          </Badge>
+          <Group gap={6} wrap="nowrap" c={c.result === "notMet" ? "var(--shu)" : c.result === "met" ? undefined : "dimmed"}>
+            <Text span fw={700} aria-hidden data-testid="check-mark">
+              {RESULT_MARK[c.result]}
+            </Text>
+            <Text span fw={c.result === "notMet" ? 700 : 400} data-testid="check-result">
+              {T.result[c.result]}
+            </Text>
+          </Group>
         </Group>
         <Text size="sm">
           {T.whatLabel}：{c.what}
@@ -148,9 +154,9 @@ function CheckCard({ c, plan }: { c: CheckResult; plan: Plan }) {
 
         {c.unimplemented && (
           <Text size="sm" data-testid="check-unimplemented">
-            <Badge color="yellow" variant="light" mr={6}>
+            <Text span c="dimmed" mr={6}>
               {T.unimplementedLabel}
-            </Badge>
+            </Text>
             {c.unimplemented}
           </Text>
         )}
@@ -188,9 +194,13 @@ export function Review({ embedded = false }: { embedded?: boolean } = {}) {
         </Group>
         )}
 
-        <Alert color="blue" title={T.notice} data-testid="review-notice">
-          {T.noticeBody}
-        </Alert>
+        {/* 冒頭にいつも（箱にせず、文で） */}
+        <Stack gap={2} data-testid="review-notice">
+          <Text fw={700}>{T.notice}。</Text>
+          <Text size="sm" c="dimmed">
+            {T.noticeBody}
+          </Text>
+        </Stack>
 
         {!working && (
           <Stack gap="xs">
@@ -203,9 +213,9 @@ export function Review({ embedded = false }: { embedded?: boolean } = {}) {
 
         {review?.kind === "noChecks" && <Text data-testid="review-no-checks">{T.noChecks}</Text>}
         {review?.kind === "invalid" && (
-          <Alert color="red" title={T.invalid} data-testid="review-invalid">
-            {T.loadProblem[review.reason]}（{review.detail}）
-          </Alert>
+          <Text c="var(--shu)" data-testid="review-invalid">
+            {T.invalid} {T.loadProblem[review.reason]}（{review.detail}）
+          </Text>
         )}
 
         {review?.kind === "ok" && (

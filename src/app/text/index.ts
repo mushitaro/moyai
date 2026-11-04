@@ -6,8 +6,8 @@ export const TEXT = {
   buildStamp: (time: string, commit: string) => `MOYAI · build ${time} JST · ${commit}`,
   fictionMark: "架空",
   home: {
-    title: "作業画面",
-    lead: "v0：橋渡しとのつながり、人だけの経路の守り、ビルドの印を確かめる最小の画面です。取り込みで資料から計画を作り、星取表で見られます（確定と保存は未実装）。検査で、作業中の計画をパックの基準で自己点検できます。",
+    title: "開発の道具（会期のあいだだけ）",
+    lead: "人だけの経路の守りの試し、前の画面への道（取り込み・星取表・検査は MERGE のシート）、署名の試験のページです。",
     reviewLink: "検査",
     selftestLink: "Ed25519 の試験のページ",
     chartLink: "星取表",
@@ -88,6 +88,13 @@ export const TEXT = {
     pathSep: " › ",
     orphan: (n: number) => `行に載せられない記録が ${n} 件あります（対象の機器か、パックの項目が計画に無い）。`,
     rowsCount: (visible: number, total: number) => `見えている行 ${visible} ／ 全部の行 ${total}`,
+    legend: {
+      label: "凡例",
+      changed: "変えた所",
+      proposal: "Claude の案（決定のシートで受けるまで決まらない）",
+      proposalAria: "（Claude の案。決定のシートで受けるまで決まらない）",
+      proposalNote: "Claude が公開の台帳から置いた案です。決定のシートで受けるまで決まりません。",
+    },
     change: (who: string, why: string, before: string, after: string) => `誰が：${who}
 なぜ：${why}
 前→後：${before} → ${after}`,
@@ -184,6 +191,19 @@ export const TEXT = {
       more: (n: number) => `ほかに ${n} 件あります。行を開いて見てください。`,
       close: "閉じる",
     },
+  },
+  top: {
+    title: "もやい",
+    lead: "保管先の施設と、署名で結んだ版の履歴です。どの施設の、どの版から始めるかを選びます。",
+    facility: "施設",
+    month: (ym: string) => `${Number(ym.slice(5))}`,
+    yearMonth: (ym: string) => `${ym.slice(0, 4)} 年 ${Number(ym.slice(5))} 月`,
+    version: (n: number) => `第 ${n} 版`,
+    state: { editing: "編集中", awaitingApproval: "承認待ち", returned: "差し戻し" } as Record<string, string>,
+    next: "＋ 次の版",
+    newFacility: "＋ 新しい施設",
+    empty: "保管先にまだ施設がありません。",
+    talk: "Claude に話す　「B 町の第 3 版から、E 村の計画をつくって」",
   },
   export: {
     title: "EXPORT",
