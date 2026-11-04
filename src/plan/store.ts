@@ -60,6 +60,8 @@ export interface VersionRecord {
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
   /** この版を作るのに使った読み方（3 段目の Skill）：名前・保管先からの道・版。署名した版が使った読み方は承認済み（docs/plan.md §2.17） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /** この版の差分レポートと書き出しの SHA-256（署名の中に入る。落とすときに照らす。監査 E1）。前に確定した版には無い */
+  files?: { report: string; export: string | null };
   plan: Plan;
 }
 
@@ -368,7 +370,7 @@ async function writeVersion(
   const prevInfo = hist.versions.at(-1) ?? null;
   const plan: Plan = { ...v.plan, version };
   const diff = diffPlans(hist.latest?.plan ?? null, plan);
-  const record: VersionRecord = {
+  const base: VersionRecord = {
     schema: VERSION_SCHEMA,
     planId: plan.planId,
     version,
@@ -387,6 +389,12 @@ async function writeVersion(
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
     plan,
   };
+  // 差分レポートと書き出しは署名の前に作り、そのハッシュを版の記録に入れる（落とすときに照らす。監査 E1）
+  const reportBytes = await diffReport(base, diff);
+  const c = v.catalogs ? v.catalogs(plan.packId) : null;
+  const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty }) : null;
+  const { plan: _plan, ...head } = base;
+  const record: VersionRecord = { ...head, files: { report: sha(reportBytes), export: exportBytes ? sha(exportBytes) : null }, plan };
   const hash = contentHash(record);
   const role: SignRole = v.kind === "revert" ? "revert" : (v.role ?? "confirm");
   const signature = signStatement({ planId: plan.planId, version, contentHash: hash, role, by: v.signer.by, at: record.at, reason: v.reason }, v.signer.pair);
@@ -411,13 +419,12 @@ async function writeVersion(
     if ((e as NodeJS.ErrnoException).code === "EEXIST") return { ok: false, reason: "exists" };
     throw e;
   }
-  await writeAtomic(reportPath, await diffReport(record, diff));
+  await writeAtomic(reportPath, reportBytes);
   let exportPath: string | null = null;
-  if (v.catalogs) {
+  if (exportBytes) {
     await mkdir(join(dir, "exports"), { recursive: true });
     exportPath = join(dir, "exports", `${pad(version)}-plan.xlsx`);
-    const c = v.catalogs(plan.packId);
-    await writeAtomic(exportPath, await planWorkbook({ plan, version, at: record.at, catalog: c.catalog, emptyCatalog: c.empty }));
+    await writeAtomic(exportPath, exportBytes);
   }
   return { ok: true, version, record, diff, files: { version: versionPath, report: reportPath, export: exportPath } };
 }

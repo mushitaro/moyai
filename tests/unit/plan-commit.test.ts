@@ -66,6 +66,22 @@ describe("確定：版と差分レポート", () => {
     expect(r3).toEqual({ ok: false, reason: "acceptanceUnknown" });
   });
 
+  it("読み方の決定（年度の読み方など）も、AI の答えは人が受けるまで確定しない。決まり（コード）と人の答えは聞かない。答えが変われば聞き直す", async () => {
+    const rd = (questionId: string, author: Plan["details"][number]["author"], answer = "暦年") => ({ questionId, kind: "yearKind", question: "年の列は年度か暦年か", answer, author, reason: "見出しに「年」とある", rows: 12 });
+    const p: Plan = { ...plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "OVERHAUL", ["a1"])], details: [detail("d1", "w1", 2016)] }), readingDecisions: [rd("q-ai", "ai"), rd("q-rule", "rule_code"), rd("q-human", "human")] };
+    const ds = aiDecisions(p);
+    expect(ds.map((d) => d.id)).toEqual(["reading:q-ai"]);
+    expect(ds[0]).toMatchObject({ kind: "reading", target: "年の列は年度か暦年か", value: "暦年" });
+    const rt = root();
+    expect(await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: [], basedOn: null, signer: SIGNER, client: "t" })).toMatchObject({ ok: false, reason: "pendingDecisions", pending: 1 });
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: [{ id: ds[0]!.id, hash: ds[0]!.hash, reason: "見出しを見て暦年でよい" }], basedOn: null, signer: SIGNER, client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    const accepted = (await readHistory(rt, "plan-test")).accepted;
+    expect(pendingDecisions(v1.record.plan, accepted)).toHaveLength(0);
+    const changed: Plan = { ...v1.record.plan, readingDecisions: [rd("q-ai", "ai", "年度")] };
+    expect(pendingDecisions(changed, accepted).map((d) => d.id)).toEqual(["reading:q-ai"]);
+  });
+
   it("版は足すだけ：版のファイルを足し、差分レポートを書き、戻すのは前の版を指す新しい記録", async () => {
     const rt = root();
     const p = aiPlan();

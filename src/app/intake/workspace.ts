@@ -220,9 +220,10 @@ export class IntakeWorkspace {
     const s = new IntakeSession(this.optionsOf(next), this.photoBook);
     await s.add(this.inputs.filter((f) => photoMimeOf(f.name) === null));
     for (const d of decisions) s.settle([d]);
-    s.setReadings(this.readings);
+    s.setReadings(forFacility(this.readings, this.optionsOf(next).facility.facilityKey));
     this.session = s;
     this.settings = next;
+    setCurrentReadings(forFacility(this.readings, this.facilityKey()), this.facilityKey());
     this.cache = null;
     this.changed(true, true);
   }
@@ -230,8 +231,8 @@ export class IntakeWorkspace {
   /** 承認済みの読み方を置き換える（保管先から読んだもの）。作業中の下書きは残す */
   setApprovedReadings(list: readonly LoadedReading[]): void {
     this.readings = [...this.readings.filter((r) => r.draft), ...list.filter((r) => !r.draft)];
-    this.session.setReadings(this.readings);
-    setCurrentReadings(this.readings, this.facilityKey());
+    this.session.setReadings(forFacility(this.readings, this.facilityKey()));
+    setCurrentReadings(forFacility(this.readings, this.facilityKey()), this.facilityKey());
     this.changed(true, true);
   }
 
@@ -244,8 +245,8 @@ export class IntakeWorkspace {
     const merged = [...(prev?.skill.rules ?? []).filter((x) => !rules.some((y) => y.id === x.id)), ...rules];
     const draft: LoadedReading = { skill: { schema: "moyai.reading/0", name, scope, rules: merged }, version: "", path: null, approved: false, draft: true };
     this.readings = [...this.readings.filter((r) => r !== prev), draft];
-    this.session.setReadings(this.readings);
-    setCurrentReadings(this.readings, this.facilityKey());
+    this.session.setReadings(forFacility(this.readings, this.facilityKey()));
+    setCurrentReadings(forFacility(this.readings, this.facilityKey()), this.facilityKey());
     this.changed(true, true);
     const hits = this.analysis().ruleHits;
     return merged.map((x) => ({ id: x.id, text: x.text, hits: hits.count(x.id) }));
@@ -263,7 +264,7 @@ export class IntakeWorkspace {
 
   /** 当てている読み方（「読み方」のタブ） */
   currentReadings(): LoadedReading[] {
-    return [...this.readings];
+    return forFacility(this.readings, this.facilityKey());
   }
 
   analysis(): Analysis {
@@ -366,4 +367,9 @@ export class IntakeWorkspace {
     this.notices = [{ id: ++this.noticeSeq, at: now(), kind, text }, ...this.notices].slice(0, NOTICES_MAX);
     this.changed(false);
   }
+}
+
+/** 当てる読み方：下書きと、会社・担当者の読み方と、今の施設の読み方（ほかの施設の読み方は当てない。Db の重-5） */
+function forFacility(readings: readonly LoadedReading[], facilityKey: string): LoadedReading[] {
+  return readings.filter((r) => r.draft || r.skill.scope !== "facility" || r.owner === facilityKey);
 }

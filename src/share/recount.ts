@@ -43,6 +43,11 @@ export interface RecountResult {
   k: number | null;
   /** k が下限に届かない・数えられない分類・送る側の k と違う */
   kShort: number;
+  /**
+   * 輪の仲間で数える k（OUTSIDE の集団と UPGRADE の塊）が、渡された仲間では下限に届かない。
+   * 受け手の確認済みの仲間は人ごとに違うので、改ざんとは分ける（✗ にせず、鎖も切らず、集計に入れない）。送る側は送らない
+   */
+  peersShort: boolean;
   /** 署名と鎖（署名・seq・prev・行き先・決まりのハッシュ） */
   chain: number;
   /** 理由のコード（値は入れない） */
@@ -62,7 +67,7 @@ export function isClean(r: RecountResult): boolean {
 
 /** 中身が 0 か（署名の前の確かめ。署名と鎖は見ない） */
 export function isContentClean(r: RecountResult): boolean {
-  return r.kind !== null && r.shape === 0 && r.freeText === 0 && r.money === 0 && r.exactDate === 0 && r.kShort === 0;
+  return r.kind !== null && r.shape === 0 && r.freeText === 0 && r.money === 0 && r.exactDate === 0 && r.kShort === 0 && !r.peersShort;
 }
 
 // ─── 形の照らし（NFKC にしてから） ─────────────────────────────
@@ -125,6 +130,7 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
     exactDate: 0,
     k: null,
     kShort: 0,
+    peersShort: false,
     chain: 0,
     reasons: [],
     hash: sha256Hex(file),
@@ -331,13 +337,22 @@ function countK(body: Record<string, Json>, ctx: ShareContext, res: RecountResul
     return;
   }
   res.k = k;
-  if (k < minK) kShort("belowMin");
   const counts = body.counts as Record<string, Json> | undefined;
-  if (!counts || counts.k !== k) kShort("mismatch");
+  const claimed = counts?.k;
+  if (group === "NATIONAL") {
+    // 全国の表は誰が数えても同じなので、送る側の k と同じ数かも見る
+    if (k < minK) kShort("belowMin");
+    if (claimed !== k) kShort("mismatch");
+  } else {
+    // 仲間で数える k は、数える人の確認済みの仲間で変わる。送る側の k は形だけを見る（下限未満と書いた束は壊れているか作られたもの）。
+    // 数える人の仲間で届かなければ peersShort（数えるとき除くのは、束を出した施設の鍵だけ）
+    if (typeof claimed !== "number" || !Number.isInteger(claimed) || claimed < minK) kShort("mismatch");
+    if (k < minK) res.peersShort = true;
+  }
   if (upgrade) {
     // UPGRADE は全国の表で数えられないので、輪の中の確認済みの仲間で数えて下限に届くときだけ
-    const ringK = countPeers(ctx.table, ctx.peers ?? [], self, group, axes);
-    if (ctx.to.kind !== "ring" || ringK < minK) kShort("upgradeBelowMin");
+    if (ctx.to.kind !== "ring") kShort("upgradeBelowMin");
+    else if (countPeers(ctx.table, ctx.peers ?? [], self, group, axes) < minK) res.peersShort = true;
   }
 }
 

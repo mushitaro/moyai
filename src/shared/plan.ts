@@ -89,6 +89,18 @@ export const WorkDetail = z.object({
   needsReview: z.boolean(), // 写真から読んだものは、人が画像と並べて確かめるまで true
 });
 
+// 読み方の決定：取り込みの質問への答え。年度の読み方や列の役目は、多くの印に一度に効く。
+// AI と、AI が会話から写した人の答えは、人が画面で受けるまで確定できない（plan §2.9）
+export const ReadingDecision = z.object({
+  questionId: code,
+  kind: z.string(),
+  question: z.string(),
+  answer: z.string(), // 選択肢の名前（数の答えは数）
+  author: author,
+  reason: z.string().min(1),
+  rows: z.number().int().min(0), // 同じ形の行の数
+});
+
 export const Plan = z.object({
   schema: z.literal("moyai.plan/0"),
   planId: code,
@@ -100,6 +112,7 @@ export const Plan = z.object({
   assets: z.array(AssetNode),
   works: z.array(Work),
   details: z.array(WorkDetail),
+  readingDecisions: z.array(ReadingDecision).optional(), // 答えた質問が無ければ置かない
 });
 export type Plan = z.infer<typeof Plan>;
 export type AssetNodeT = z.infer<typeof AssetNode>;

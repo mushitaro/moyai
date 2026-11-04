@@ -70,6 +70,8 @@ export interface LoadedReading {
   approvedIn?: number | null;
   /** 作業中の版に置いた下書き（reading_rules_propose） */
   draft: boolean;
+  /** 施設の読み方なら、置き場所の施設の鍵（作業画面は今の施設のものだけを当てる） */
+  owner?: string | null;
 }
 
 /** 当てる規則と、その出どころ */

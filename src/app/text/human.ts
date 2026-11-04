@@ -64,6 +64,7 @@ export const HUMAN_TEXT = {
     notLatest: "保管先に、もっと新しい版があります。開き直してから署名してください。",
     selfApprove: "自分が作った版は、自分で承認できません。ほかの人に承認を頼んでください。",
     fileMissing: "その版の Excel が保管先にありません（確定のときに書けなかったか、消されています）。",
+    fileChanged: "保管先の Excel が、この版に署名したときのものと違います（あとから書き換えられています）。落とせません。",
     // 公開の台帳へ出す（GitHub に PR）
     "ledger.notChosen": "公開の台帳の clone の場所が決まっていません。設定で選んでください。",
     "ledger.noLedgerDir": "台帳の clone の中に ledger/ がありません。",
@@ -483,6 +484,8 @@ export const HUMAN_TEXT = {
     /** まだ確かめていない仲間と、その束（Wire、Share.dc.html Version 46。未確認は誤りではないので ✗ と朱を使わない） */
     memberUnconfirmed: "まだ確かめていません",
     notCounted: "数えていません",
+    /** 受け手の確認済みの仲間では k が 5 に届かない束（Db の重-6。左の状態は「数えていません」と同じ。Wire）*/
+    peersShort: "確認した仲間では、似た施設が 5 に届きません",
     memberTitle: "仲間の鍵の指紋",
     memberHowTo: "この鍵を持つ仲間に電話などで読み上げてもらい、16 文字が合えば「合った」を押します。",
     /** 輪の決まりが変わったとき */

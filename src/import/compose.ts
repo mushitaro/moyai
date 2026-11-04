@@ -603,6 +603,15 @@ export function compose(
   if (review) blockers.push(`要確認 ${review}`);
   if (photoReview.photos) blockers.push(`確かめていない写真 ${photoReview.photos}`);
   let plan: Plan | null = null;
+  const readingDecisions = ask.answered().map((q) => ({
+    questionId: q.questionId,
+    kind: q.kind,
+    question: q.text,
+    answer: q.valueKind === "number" ? q.decision!.answer : (q.options.find((o) => o.id === q.decision!.answer)?.label ?? q.decision!.answer),
+    author: q.decision!.author,
+    reason: q.decision!.reason,
+    rows: q.sameShapeRows,
+  }));
   const draft = {
     schema: "moyai.plan/0" as const,
     planId: opts.planId,
@@ -614,6 +623,7 @@ export function compose(
     assets,
     works: [...works.values()],
     details,
+    ...(readingDecisions.length ? { readingDecisions } : {}),
   };
   if (!blockers.length) {
     const parsed = Plan.safeParse(draft);

@@ -75,6 +75,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       const [pa, fy] = d.value.split(":");
       return `${d.target} · ${HUMAN_TEXT.confirm.pendingValue[pa ?? ""] ?? ""} · ${HUMAN_TEXT.confirm.pendingFiscal(fy ?? "")}`;
     }
+    if (d.kind === "reading") return `${d.target} → ${d.value}`;
     return `${d.target} → ${d.kind === "attribute" ? attrName(d.value) : itemName(d.value)}`;
   };
   const acceptRule = (p: CrosswalkProposal) => {

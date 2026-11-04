@@ -122,6 +122,8 @@ export interface BundleEntry {
   profile: Profile | null;
   /** 送った月（束の body の month、YYYY-MM）。読めなければ null */
   month: string | null;
+  /** ✓ の束のうち、受け手の確認済みの仲間では似た施設が下限に届かないもの（OUTSIDE の集団・UPGRADE の塊）。✗ ではなく、集計に入れない */
+  short?: true;
 }
 
 export interface MemberStatus {
@@ -151,8 +153,6 @@ export interface ReadOptions {
   confirmed: ReadonlySet<string>;
   /** 仲間ごとに前に見た最大の seq */
   knownMaxSeq?: ReadonlyMap<string, number>;
-  /** OUTSIDE の集団と UPGRADE を数える仲間 */
-  peers?: readonly PeerProfile[];
 }
 
 async function listDir(p: string): Promise<{ name: string; dir: boolean }[]> {
@@ -230,7 +230,7 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
         rules,
         rulesHash: sha256Hex(circleBytes),
         to: { kind: "ring", id: ringId },
-        peers: o.peers ?? [],
+        peers: [],
       };
       const r = recount(circleBytes, ctx);
       out.circle = r.kind === "circle" && isClean(r) ? { status: "ok", reasons: [] } : { status: "ng", reasons: r.reasons.length ? r.reasons : ["circle.kind"] };
@@ -272,6 +272,7 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
   // 束
   const prevOf = new Map<BundleEntry, unknown>();
   const bodyOf = new Map<BundleEntry, BundleBody>();
+  const bytesOf = new Map<BundleEntry, Buffer>();
   const folders = (await listDir(join(dir, BUNDLES_DIR))).filter((e) => e.dir).map((e) => e.name);
   const byKey = new Map<string, BundleEntry[]>();
   for (const folder of folders.sort()) {
@@ -318,6 +319,7 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
         entry.profile = body!.profile ?? null;
         prevOf.set(entry, (body as { prev?: unknown }).prev);
         bodyOf.set(entry, body as unknown as BundleBody);
+        bytesOf.set(entry, bytes);
       }
     }
   }
@@ -325,8 +327,9 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
   // 鎖：鍵ごとに seq を 1 から順に、prev が前の束のファイルのハッシュか
   for (const list of byKey.values()) checkChain(list, prevOf);
 
-  // 仲間ごと
+  // 仲間ごと（1 回目：形・署名・鎖で ✓ を決める。仲間で数える k はまだ数えない）
   const keys = [...new Set([...memberOk.keys(), ...byKey.keys()])].sort();
+  const latestOf = new Map<string, BundleEntry>();
   for (const key of keys) {
     const reasons: string[] = [];
     const mr = memberOk.get(key);
@@ -343,10 +346,21 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
     out.members.push({ key, status: uniq.length === 0 ? "ok" : "ng", reasons: uniq, arriving: list.filter((b) => b.status === "arriving").length });
     if (uniq.length === 0 && maxSeq > 0) {
       const latest = list.find((b) => b.status === "ok" && b.seq === maxSeq)!;
+      latestOf.set(key, latest);
       if (latest.profile) out.latest.push({ key, profile: latest.profile });
-      const b = bodyOf.get(latest);
-      if (b) out.latestBundles.push({ key, pub: b.pub, body: b });
     }
+  }
+  // 2 回目：仲間で数える k（OUTSIDE の集団・UPGRADE の塊）を、1 回目で ✓ になった確認済みの仲間の最新の束の見え方で数え直す。
+  // 仲間は 1 回目の結果で固定する（届かない束の施設も数える。署名で確かめた施設なので）。除くのは束を出した施設の鍵だけ
+  const peerCtx: ShareContext | null = circleOk ? { ...ctx!, peers: out.latest } : null;
+  for (const [entry, bytes] of bytesOf) {
+    if (entry.status !== "ok" || !peerCtx) continue;
+    if (recount(bytes, peerCtx).peersShort) entry.short = true;
+  }
+  // 集計に入れるのは、最新の束が届いている仲間だけ（最新が届かない仲間は、古い束にさかのぼらない）
+  for (const [key, latest] of latestOf) {
+    const b = bodyOf.get(latest);
+    if (b && !latest.short) out.latestBundles.push({ key, pub: b.pub, body: b });
   }
   out.bundles = [...byKey.values()].flat();
   return out;

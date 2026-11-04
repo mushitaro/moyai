@@ -686,10 +686,8 @@ export class HumanService {
         const root = await this.root();
         if (!root) return no("noRoot");
         // 確かめで合う版だけ（署名と鎖が合わない版の書き出しは渡さない）
-        const h = await readHistory(root, p.planId);
-        const v = h.versions.find((x) => x.version === p.version);
-        if (!v) return no("versionUnknown");
-        if (v.problem !== null) return no("historyBroken");
+        const pv = await readPlanVersion(root, p.planId, p.version);
+        if (!pv.ok) return no(pv.reason);
         const n = String(p.version).padStart(6, "0");
         const file = join(planDir(root, p.planId), p.kind === "export" ? "exports" : "reports", p.kind === "export" ? `${n}-plan.xlsx` : `${n}-diff.xlsx`);
         let bytes: Buffer;
@@ -698,6 +696,9 @@ export class HumanService {
         } catch {
           return no("fileMissing");
         }
+        // 署名の中のハッシュと照らす（監査 E1）。合わなければ渡さない。ハッシュの無い前の版は、そのまま渡す
+        const want = pv.record.files ? (p.kind === "export" ? pv.record.files.export : pv.record.files.report) : undefined;
+        if (want !== undefined && want !== sha256Hex(bytes)) return no("fileChanged");
         return { ok: true, version: p.version, kind: p.kind, base64: bytes.toString("base64") };
       }
       case "person_key_create": {
@@ -956,7 +957,7 @@ export class HumanService {
         const root = await this.root();
         if (!root) return { ok: true, root: null, readings: [] };
         const list = await listReadings(root, await approvedReadingVersions(root, (x) => countsForApproval(trustOf(sd, x, now))));
-        return { ok: true, root, readings: loadedOf(list) };
+        return { ok: true, root, readings: loadedOf(list, readSettings(sd).name) };
       }
       case "peers_compare": {
         const p = parsePayload("peers_compare", call.payload);

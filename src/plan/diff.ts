@@ -109,9 +109,9 @@ export function diffPlans(before: Plan | null, after: Plan): PlanDiff {
 export const NEEDS_HUMAN_AUTHORS: readonly AuthorKind[] = ["ai", "ai_relayed_human"];
 
 export interface Decision {
-  /** 決定の ID（何の決定か）："item:<資産の鍵>"・"attr:<作業の鍵>"・"detail:<明細の鍵>" */
+  /** 決定の ID（何の決定か）："item:<資産の鍵>"・"attr:<作業の鍵>"・"detail:<明細の鍵>"・"reading:<質問の番号>" */
   id: string;
-  kind: "commonItem" | "attribute" | "detail";
+  kind: "commonItem" | "attribute" | "detail" | "reading";
   author: AuthorKind;
   /** 画面に出す対象（機器の名前・作業の名前） */
   target: string;
@@ -142,6 +142,19 @@ export function fnv64(text: string): string {
 /** 計画の中の、AI が決めたもの（作者が AI か AI（チャットでの人の答え））の一覧。 */
 export function aiDecisions(plan: Plan): Decision[] {
   const out: Decision[] = [];
+  // 読み方の決定は、明細の作者に写らなくても（年度の読み方・列の役目など）ここで受けてもらう
+  for (const r of plan.readingDecisions ?? []) {
+    if (!NEEDS_HUMAN_AUTHORS.includes(r.author)) continue;
+    out.push({
+      id: `reading:${r.questionId}`,
+      kind: "reading",
+      author: r.author,
+      target: r.question,
+      value: r.answer,
+      basis: r.reason,
+      hash: fnv64(JSON.stringify([r.questionId, r.answer, r.author, r.reason])),
+    });
+  }
   for (const a of plan.assets) {
     if (a.commonItem === null || a.commonItemAuthor === null || !NEEDS_HUMAN_AUTHORS.includes(a.commonItemAuthor)) continue;
     if (a.commonItemAccepted) continue;

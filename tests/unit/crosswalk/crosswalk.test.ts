@@ -157,7 +157,7 @@ describe("crosswalk.*：深さと呼び名の違う 2 施設の台帳を、規�
       expect(common.rows[0]?.kind).toBe("unmapped");
       expect(common.rows[0]?.count).toBe(proposed.details.length);
       // 確定もできない：AI の案は人が受けていない決定に並ぶ
-      expect(pendingDecisions(proposed, []).filter((d) => d.kind !== "detail").length).toBe(mappedNodes.length + mappedWorks.length);
+      expect(pendingDecisions(proposed, []).filter((d) => d.kind === "commonItem" || d.kind === "attribute").length).toBe(mappedNodes.length + mappedWorks.length);
       // 写し取りも何も写さない
       const before = copyOut({ plan: proposed, lift: new Map(F1_NODES.concat(F2_NODES).map(([, k]) => [k, k])), to: { kind: "ring", id: "0123456789abcdef" } });
       expect(before.chunks).toEqual([]);
@@ -215,7 +215,7 @@ describe("crosswalk.*：深さと呼び名の違う 2 施設の台帳を、規�
       expect(un?.count ?? 0).toBe(sum.unmappedRecords);
       expect(sum.unmappedRecords).toBeGreaterThan(0); // 送風機の混ざった作業
       expect(sum.works.none).toBe(c.mixedWorks);
-      expect(pendingDecisions(accepted, []).filter((d) => d.kind !== "detail")).toEqual([]);
+      expect(pendingDecisions(accepted, []).filter((d) => d.kind === "commonItem" || d.kind === "attribute")).toEqual([]);
     }, 60_000);
   }
 });

@@ -163,6 +163,7 @@ interface VerifyLine {
   month?: string;
   version?: number;
   day?: string;
+  short?: true;
 }
 interface Report {
   ringId: string;
@@ -326,7 +327,8 @@ function VerifyTable({
             l.kind === "circle" ? T.verifyKind.circle : l.kind === "member" ? T.verifyKind.member : b ? T.prBundle(Number(b[2]), l.version ?? null, l.day ?? l.month ?? "") : T.notBundleRow;
           const key = l.kind === "member" ? l.name : folder;
           const unconfirmed = unconfirmedOnly(l);
-          const uncounted = l.kind === "bundle" && l.status === "ok" && !!folder && notCounted.has(folder);
+          const short = l.kind === "bundle" && l.status === "ok" && !!l.short;
+          const uncounted = short || (l.kind === "bundle" && l.status === "ok" && !!folder && notCounted.has(folder));
           const rulesRow = l.kind === "circle" && !!rulesChange;
           const soft = unconfirmed || rulesRow;
           const mark = soft ? "!" : uncounted ? "―" : (T.verifyStatus[l.status] ?? l.status);
@@ -336,7 +338,7 @@ function VerifyTable({
               data-testid="verify-line"
               data-status={l.status}
               data-kind={l.kind}
-              data-state={unconfirmed ? "unconfirmed" : uncounted ? "notCounted" : rulesRow ? "rulesChanged" : undefined}
+              data-state={unconfirmed ? "unconfirmed" : short ? "peersShort" : uncounted ? "notCounted" : rulesRow ? "rulesChanged" : undefined}
               style={uncounted ? { color: "var(--text-3)" } : undefined}
             >
               <Table.Td w={40}>
@@ -358,7 +360,7 @@ function VerifyTable({
                   </button>
                 </Table.Td>
               ) : uncounted ? (
-                <Table.Td c="var(--text-3)">{T.notCounted}</Table.Td>
+                <Table.Td c="var(--text-3)">{short ? T.peersShort : T.notCounted}</Table.Td>
               ) : rulesRow && rulesChange ? (
                 <Table.Td>
                   {T.rulesChanged}

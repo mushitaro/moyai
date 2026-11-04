@@ -181,6 +181,16 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(existsSync(c.files.version)).toBe(true);
     expect(existsSync(c.files.report)).toBe(true);
     expect(c.files.version.startsWith(join(docs, "MOYAI", "plans"))).toBe(true);
+    // 書き出しと差分レポートのハッシュは署名の中にあり、落とすときに照らす。書き換えたファイルは渡さない（監査 E1）
+    const rec = JSON.parse(readFileSync(c.files.version, "utf8"));
+    expect(rec.files.report).toBe(createHash("sha256").update(readFileSync(c.files.report)).digest("hex"));
+    expect(rec.files.export).toBe(createHash("sha256").update(readFileSync(c.files.export)).digest("hex"));
+    const got = await call("planFileRead", { planId: plan.planId, version: 1, kind: "export" });
+    expect(Buffer.from(got.base64, "base64").equals(readFileSync(c.files.export))).toBe(true);
+    const report = readFileSync(c.files.report);
+    writeFileSync(c.files.report, Buffer.concat([report, Buffer.from([0])]));
+    expect((await call("planFileRead", { planId: plan.planId, version: 1, kind: "report" })).reason).toBe("fileChanged");
+    writeFileSync(c.files.report, report);
 
     // 輪を作る
     const ringRoot = join(extra, "輪");
