@@ -11,7 +11,7 @@ const EXACT: Record<string, string> = {
   "member.unconfirmed": "未確認の仲間（指紋の読み合わせがまだ）",
   "member.otherFolder": "仲間のファイルが別の鍵の名前に置かれている",
   "member.kind": "仲間のファイルの形でない",
-  "file.notBundleName": "束の名前の形でない",
+  "file.notBundleName": "束の名前の形ではありません",
   "file.otherFolder": "別の鍵のフォルダに置かれている",
   "file.nameMismatch": "ファイルの名前が中身（連番とハッシュ）と合わない",
   "chain.badSignature": "署名 ✗",

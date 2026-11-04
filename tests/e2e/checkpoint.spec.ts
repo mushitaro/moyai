@@ -218,7 +218,9 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     // ✗ は 2 行：置いたファイルの行と、そのフォルダの仲間の行（理由はどちらも「束の形でない名前」）
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(2);
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("束の形でないファイル");
-    await expect(page.getByTestId("received-not-bundle")).toContainText("束の形をしていないファイル 1");
+    // 仲間の行の理由は「束でないファイルが混じっています」、ファイルの行は「束の名前の形ではありません」
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="member"]')).toContainText("束でないファイルが混じっています");
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("束の名前の形ではありません");
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-received-ng-${tag}`) });
     // 置いたファイルを消すと、また ✓ だけ（次の CLI の確かめのため）
     rmSync(join(ringRoot, ringDirs[0]!, "bundles", keyDirs[0]!, "メモ.txt"));

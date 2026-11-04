@@ -189,6 +189,21 @@ function Num({ v }: { v: number | null }) {
  */
 function VerifyTable({ report, ownKey }: { report: Report; ownKey: string | null }) {
   const fpOf = new Map(report.lines.filter((l) => l.kind === "member" && l.fingerprint).map((l) => [l.name, l.fingerprint!]));
+  // 仲間ごとに、その束の行の理由（仲間の行に写ってきたもの）
+  const bundleReasons = new Map<string, Set<string>>();
+  for (const l of report.lines) {
+    const k = l.kind === "bundle" ? /bundles\/([0-9a-f]{16})\//.exec(l.name)?.[1] : undefined;
+    if (k) for (const r of l.reasons) (bundleReasons.get(k) ?? bundleReasons.set(k, new Set()).get(k)!).add(r);
+  }
+  const reasonsOf = (l: VerifyLine): string[] => {
+    if (l.kind !== "member") return [...new Set(l.reasons.map(reasonText))];
+    const fromBundles = bundleReasons.get(l.name) ?? new Set<string>();
+    const own = l.reasons.filter((r) => !fromBundles.has(r)).map(reasonText);
+    const mixed = l.reasons.filter((r) => fromBundles.has(r));
+    if (mixed.includes("file.notBundleName")) own.push(T.memberNotBundle);
+    if (mixed.some((r) => r !== "file.notBundleName")) own.push(T.memberNgBundle);
+    return [...new Set(own)];
+  };
   const who = (key: string | null) => (key ? `${fpOf.get(key) ?? T.unknownKey}${key === ownKey ? T.you : ""}` : "");
   return (
     <Table className="moyai-num" data-testid="verify-table" data-ok={report.ok} verticalSpacing={6}>
@@ -212,7 +227,7 @@ function VerifyTable({ report, ownKey }: { report: Report; ownKey: string | null
                   {who(key)}
                 </Text>
               </Table.Td>
-              <Table.Td c={l.status === "ok" ? undefined : "var(--shu-text)"}>{[...new Set(l.reasons.map(reasonText))].join("、")}</Table.Td>
+              <Table.Td c={l.status === "ok" ? undefined : "var(--shu-text)"}>{reasonsOf(l).join("、")}</Table.Td>
             </Table.Tr>
           );
         })}
@@ -814,11 +829,6 @@ export function Checkpoint() {
                 </Button>
               </Group>
               <VerifyTable report={received} ownKey={res?.ring?.key ?? null} />
-              {received.notBundleFiles > 0 && (
-                <Text size="xs" c="var(--shu-text)" mt={4} data-testid="received-not-bundle">
-                  {T.notBundleFiles(received.notBundleFiles)}
-                </Text>
-              )}
             </section>
           )}
         </Stack>
