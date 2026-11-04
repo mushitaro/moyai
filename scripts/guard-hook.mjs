@@ -115,6 +115,16 @@ export function ringFolders(env = process.env) {
   }
 }
 
+// 保管先の計画のフォルダの施設の署名鍵（plans/<計画ID>/share/keys/。包まないので AI に読ませない。docs/plan.md §2.19）。
+// plans/<何か>/share/keys と、** で始まる …/share/keys の書き方を当てる（コードの src/share/ は当てない）。
+const FACILITY_KEYS = /(?:^|[\/\s=(])(?:plans\/[^/\s]+|\*\*?)\/share\/keys(?:\/|$|[\s*;&|)])/;
+
+/** 施設の署名鍵のフォルダを指しているか（引用符を外し、区切りを / にそろえて見る） */
+export function mentionsFacilityKeys(text) {
+  const t = norm(text).replace(/["'`]/g, "").replace(/\s*\/\s*/g, "/");
+  return FACILITY_KEYS.test(t);
+}
+
 function underAny(path, folders) {
   const p = norm(path);
   return folders.some((f) => {
@@ -143,6 +153,9 @@ export function decide(input, ctx = {}) {
     if (mentionsStateDir(cmd, env)) {
       return deny("状態フォルダ（鍵・持ち出し簿・対応表）には AI から触れません。");
     }
+    if (mentionsFacilityKeys(cmd)) {
+      return deny("施設の署名鍵（保管先の計画のフォルダの share/keys/）には AI から触れません。");
+    }
     if (PREVIOUS_PRODUCT.test(cmd) && FETCH_VERB.test(cmd)) {
       return deny("前の製品のリポジトリと配布物は取得しない決まりです。");
     }
@@ -160,12 +173,18 @@ export function decide(input, ctx = {}) {
     if (paths.some((p) => mentionsStateDir(p, env))) {
       return deny("状態フォルダ（鍵・持ち出し簿・対応表）は AI から読みません。");
     }
+    // Grep の pattern は探す文字であって道ではないので、道（path・glob）だけを見る
+    const keyPaths = tool === "Grep" ? [ti.path, ti.glob].filter((v) => typeof v === "string") : paths;
+    if (keyPaths.some((p) => mentionsFacilityKeys(p))) {
+      return deny("施設の署名鍵（保管先の計画のフォルダの share/keys/）は AI から読みません。");
+    }
     return { deny: false };
   }
 
   if (tool === "Write" || tool === "Edit" || tool === "MultiEdit" || tool === "NotebookEdit") {
     const p = String(ti.file_path ?? ti.notebook_path ?? "");
     if (mentionsStateDir(p, env)) return deny("状態フォルダには AI から書きません。");
+    if (mentionsFacilityKeys(p)) return deny("施設の署名鍵（保管先の計画のフォルダの share/keys/）には AI から書きません。");
     if (underAny(p, rings)) return deny("輪のフォルダには、検問所を通した束を橋渡しだけが書きます。");
     return { deny: false };
   }

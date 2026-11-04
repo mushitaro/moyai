@@ -44,9 +44,9 @@ describe("peer_reference", () => {
   });
 
   it("場ごとの集計と札だけを返す。鍵・見え方の値・年度・施設ごとの帯は返さない", () => {
-    const ledger: Place = { kind: "ledger", id: "317f291617ec26bb", peers: many("台帳", 5, [ch(), ch({ class: "T.POWER", work: "OVERHAUL", interval: "I3" })]), self: null };
-    const ring: Place = { kind: "ring", id: "0123456789abcdef", peers: many("輪", 3, [ch({ interval: "I2" })]), self: null };
-    const small: Place = { kind: "ring", id: "fedcba9876543210", peers: many("少ない", 2, [ch()]), self: null };
+    const ledger: Place = { kind: "ledger", id: "317f291617ec26bb", peers: many("台帳", 5, [ch(), ch({ class: "T.POWER", work: "OVERHAUL", interval: "I3" })]), self: [] };
+    const ring: Place = { kind: "ring", id: "0123456789abcdef", peers: many("輪", 3, [ch({ interval: "I2" })]), self: [] };
+    const small: Place = { kind: "ring", id: "fedcba9876543210", peers: many("少ない", 2, [ch()]), self: [] };
     const c = compare({ table, position: "subsidiary", profile: FULL, places: [ledger, ring, small] });
     setPeerView({ comparison: c, packId: "waste-incineration" });
 

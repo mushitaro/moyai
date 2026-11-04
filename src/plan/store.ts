@@ -25,7 +25,8 @@ export interface ExportCatalogs {
 }
 export type CatalogsFor = (packId: string) => ExportCatalogs;
 
-export const PLAN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+import { PLAN_ID, planDir } from "./paths";
+export { PLAN_ID, planDir };
 export const VERSION_FILE = /^(\d{6})\.json$/;
 /** 署名の無い前の形の版。読むだけにし、承認には数えない */
 export const VERSION_SCHEMA_V0 = "moyai.plan-version/0";
@@ -89,10 +90,7 @@ export interface VersionInfo {
   problem: "chain" | "signature" | "unsigned" | null;
 }
 
-export function planDir(root: string, planId: string): string {
-  if (!PLAN_ID.test(planId)) throw new Error("計画 ID の形でない");
-  return join(root, "plans", planId);
-}
+
 
 const pad = (n: number) => String(n).padStart(6, "0");
 const sha = (b: string | Buffer) => createHash("sha256").update(b).digest("hex");

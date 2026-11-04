@@ -36,8 +36,8 @@ export interface Place {
   /** 台帳 ID か輪 ID */
   id: string;
   peers: readonly PeerBundle[];
-  /** その場での自分の鍵（台帳と、自分の鍵の無い輪は null） */
-  self: string | null;
+  /** その場での自分の鍵（保管先の計画がその場へ出す施設の鍵。docs/plan.md §2.19）。数えない */
+  self: readonly string[];
   /** 場の決まりの帯の境目 */
   bands?: Partial<Record<StatField, readonly number[]>>;
 }

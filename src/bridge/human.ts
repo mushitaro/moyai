@@ -17,7 +17,7 @@ import { approvedReadingVersions, listReadings, loadedOf, registerReading } from
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
-import { LEDGER_PR_TEXT, checkAgainstLedger, ensureLedgerKey, ledgerBranch, ledgerBundlePath, ledgerKeyOf, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
+import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, ledgerBranch, ledgerBundlePath, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
@@ -25,18 +25,17 @@ import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "
 import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
-import { HEX16, HEX64, fingerprint, keyIdOf, sha256Hex } from "../share/sign";
+import { HEX16, HEX64, fingerprint, generateKeyPair, keyIdOf, sha256Hex, type KeyPair } from "../share/sign";
+import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, storeFacilityKey, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
 import { readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
   detectDocuments,
   readGitHub,
-  readLedgerSent,
+  type LedgerSentEntry,
   readRings,
-  readSent,
   removeGitHub,
   writeGitHub,
-  writeLedgerSent,
   readSettings,
   readKeyFile,
   syncedOf,
@@ -225,9 +224,14 @@ const sha256OfLedger = (L: { ledgerBytes: Uint8Array }) => sha256Hex(L.ledgerByt
 /** 渡すメールのリンクの行き先：受け取る人の MOYAI（moyai start の既定のポート。server.ts の DEFAULT_PORT と同じ） */
 export const HANDOFF_ORIGIN = "http://127.0.0.1:43110";
 
+/** 施設の鍵がまだ決まらないとき（鍵が 2 つある）に、見え方だけを出すための仮の鍵（メモリだけ。署名には使わない） */
+const PLACEHOLDER_PAIR: KeyPair = generateKeyPair();
+
 export class HumanService {
   private docs: DocumentsInfo | null = null;
   private connecting: GitHubConnecting | null = null;
+  /** 施設の鍵のうち、まだ保管先に書いていないもの（人が送ったときに書く。docs/plan.md §2.19） */
+  private readonly pendingKeys = new Map<string, KeyPair>();
 
   constructor(private readonly e: HumanEnv) {}
 
@@ -581,7 +585,7 @@ export class HumanService {
         const ctx = await this.shareContext(p.planId, p.ringId, p.answers);
         if (!ctx.ok) return ctx.out;
         if (call.action === "checkpoint_open_text") {
-          const v = previewCheckpoint(sd, ctx.ring, ctx.pack, ctx.plan, p.answers, monthOf(now));
+          const v = this.ringView(ctx, monthOf(now));
           if (!v.bodyText || !v.bodyHash) return no("noPreview");
           // 同期されない一時のフォルダに写す（施設名で検索して見つからないことを、人が自分で確かめられる）
           const file = join(tmpdir(), `moyai-preview-${v.bodyHash.slice(0, 16)}.json`);
@@ -589,7 +593,7 @@ export class HumanService {
           (this.e.openText ?? openWithEditor)(file);
           return { ok: true, file };
         }
-        const view = previewCheckpoint(sd, ctx.ring, ctx.pack, ctx.plan, p.answers, monthOf(now));
+        const view = this.ringView(ctx, monthOf(now));
         return { ok: true, ...ctx.info, view };
       }
       case "checkpoint_send": {
@@ -598,9 +602,13 @@ export class HumanService {
         const ctx = await this.shareContext(p.planId, p.ringId, p.answers);
         if (!ctx.ok) return ctx.out;
         if (ctx.version !== p.version) return no("versionChanged");
-        const r = await sendCheckpoint(sd, ctx.ring, ctx.pack, ctx.plan, p.answers, monthOf(now), p.previewHash, now);
+        if (!ctx.sender.ok) return no("keysForked");
+        const sender = { facility: ctx.facility, pair: ctx.sender.pair, stored: ctx.sender.stored };
+        const r = await sendCheckpoint(ctx.ring, sender, ctx.pack, ctx.plan, p.answers, monthOf(now), p.previewHash, now, this.pendingKeys);
         if (!r.ok) return no(r.reason);
-        const report = withSentInfo(await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, ctx.ring.confirmed), readSent(sd));
+        // 初めて出した施設の鍵も、自分の鍵として確認済みに数える
+        const confirmed = new Set([...ctx.ring.confirmed, keyIdOf(sender.pair.pub)]);
+        const report = withSentInfo(await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, confirmed), readPlanSent(ctx.facility, p.ringId));
         return { ok: true, fileName: r.fileName, hash: r.hash, seq: r.seq, report };
       }
       case "ledger_preview": {
@@ -608,9 +616,8 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const c = await this.ledgerSendContext(p.planId);
         if (!c.ok) return c.out;
-        const k = ledgerKeyOf(sd, c.L.id);
-        const pend = k ? pendingSent(sd, c.L, k.entry.key) : null;
-        const view = this.ledgerView(c, k, p.answers, monthOf(now), !!pend);
+        const pend = c.sender.ok ? pendingSent(c.facility, c.L, keyIdOf(c.sender.pair.pub)) : null;
+        const view = this.ledgerView(c, p.answers, monthOf(now), !!pend);
         return { ok: true, ...c.info, pending: pend ? { pr: pend.pr, url: pend.url } : null, view };
       }
       case "ledger_send": {
@@ -622,12 +629,12 @@ export class HumanService {
         if (!c.repo) return no("ledgerNotGitHub");
         const gh = readGitHub(sd);
         if (!gh) return no("githubNotConnected");
-        const k = ledgerKeyOf(sd, c.L.id);
-        const w = readKeyFile(sd, c.L.id);
-        if (!k || !w) return no("noKey");
-        if (pendingSent(sd, c.L, k.entry.key)) return no("ledgerPending");
+        if (!c.accepted) return no("noKey");
+        if (!c.sender.ok) return no("keysForked");
+        const sender = { facility: c.facility, pair: c.sender.pair };
+        if (pendingSent(c.facility, c.L, keyIdOf(sender.pair.pub))) return no("ledgerPending");
         const token = gh.token;
-        const s = sealPlace(ledgerPlace(sd, c.L, k), w, c.pack, c.plan, p.answers, monthOf(now), p.previewHash);
+        const s = sealPlace(ledgerPlace(c.L, c.accepted, sender), sender.pair, c.pack, c.plan, p.answers, monthOf(now), p.previewHash);
         if (!s.ok) return no(s.reason);
         const bytes = new Uint8Array(Buffer.from(s.text, "utf8"));
         const seq = s.input.seq;
@@ -635,6 +642,8 @@ export class HumanService {
         const path = ledgerBundlePath(key, seq, s.hash);
         const check = checkAgainstLedger(c.L, c.pack, path, bytes);
         if (!check.ok) return no("ledgerNg", { reasons: check.reasons });
+        // 施設の鍵を先に置く（PR だけが出て、鍵が保管先に無い状態を作らない）。ほかの PC が先に別の鍵を書いていれば出さない
+        if (!c.sender.stored && storeFacilityKey(c.facility, c.L.id, sender.pair, this.pendingKeys) === "differs") return no("keysForked");
         const parsed = parseJsonStrict(s.text);
         const body = parsed.ok ? (parsed.value as unknown as { body: { profile: Parameters<typeof ledgerProfileText>[1]["profile"]; chunks: unknown[] } }).body : null;
         const io = this.githubIo();
@@ -648,10 +657,7 @@ export class HumanService {
           commitMessage: LEDGER_PR_TEXT.commitMessage(key, seq),
         });
         if (!r.ok) return no(`github.${r.reason}`);
-        writeLedgerSent(sd, [
-          ...readLedgerSent(sd),
-          { ledgerId: c.L.id, key, seq, hash: s.hash, path, month: monthOf(now), at: now.toISOString(), repo: `${c.repo.owner}/${c.repo.name}`, pr: r.number, url: r.url, login: r.login, version: c.version, state: "open" },
-        ]);
+        appendPlanSent(c.facility, c.L.id, { ledgerId: c.L.id, key, seq, hash: s.hash, path, month: monthOf(now), at: now.toISOString(), repo: `${c.repo.owner}/${c.repo.name}`, pr: r.number, url: r.url, login: r.login, version: c.version, state: "open" });
         return { ok: true, pr: r.number, url: r.url, path, hash: s.hash, seq, login: r.login };
       }
       case "ledger_prs": {
@@ -662,16 +668,22 @@ export class HumanService {
         const L = await loadLedgerForSend(readSettings(sd).ledger, pack);
         if (!L.ok) return no(`ledger.${L.reason}`);
         const io = this.githubIo();
-        const all = readLedgerSent(sd);
-        const mine = all.filter((e) => e.ledgerId === L.id);
+        const root = await this.root();
+        // 保管先の計画ごとの持ち出し簿（share/sent/<台帳ID>.json）から、出した PR を新しい順に 10 まで
+        const books = root ? allPlanSent<LedgerSentEntry>(root, L.id) : [];
+        const mine = books.flatMap((b) => b.entries.filter((e) => e.ledgerId === L.id).map((e) => ({ e, b }))).sort((x, y) => (x.e.at < y.e.at ? -1 : 1));
         const prs = [];
-        for (const e of mine.slice(-10).reverse()) {
+        const touched = new Set<(typeof books)[number]>();
+        for (const { e, b } of mine.slice(-10).reverse()) {
           const [owner, name] = e.repo.split("/");
           const st = owner && name ? await prStatus(io, { owner, name }, e.pr) : null;
-          if (st) e.state = st.state;
+          if (st && e.state !== st.state) {
+            e.state = st.state;
+            touched.add(b);
+          }
           prs.push({ pr: e.pr, url: e.url, seq: e.seq, at: e.at, version: e.version ?? null, login: e.login, status: st });
         }
-        writeLedgerSent(sd, all);
+        for (const b of touched) writePlanSent(b.facility, L.id, b.entries);
         return { ok: true, prs };
       }
       case "github_connect_start": {
@@ -684,9 +696,9 @@ export class HumanService {
         const io = this.githubIo();
         const clientId = this.githubClientId(io);
         if (!clientId) return no("githubNoClient");
-        // 台帳の自分の鍵：あればそれを使い、無ければ作る（合言葉はやめた。docs/plan.md §2.19）
-        const k = ensureLedgerKey(sd, L, pack, now);
-        if (!k.ok) return no(k.reason);
+        // 台帳の決まりを受け入れる（束に署名する鍵は施設のもの。人が送ったときに計画のフォルダに書く。docs/plan.md §2.19）
+        const accepted = ledgerAcceptance(sd, L.id);
+        acceptLedger(sd, L, pack, now);
         const d = await startDevice(io, clientId);
         if (!d.ok) return no(`github.${d.reason}`);
         this.connecting?.stop();
@@ -730,7 +742,7 @@ export class HumanService {
           st.state = r.state;
         };
         setTimeout(() => void tick(), interval * 1000);
-        return { ok: true, userCode: d.userCode, verificationUri: d.verificationUri, expiresIn: d.expiresIn, keyCreated: k.created };
+        return { ok: true, userCode: d.userCode, verificationUri: d.verificationUri, expiresIn: d.expiresIn, acceptedNow: !accepted };
       }
       case "github_connect_state": {
         if (!parsePayload("github_connect_state", call.payload)) return no("payloadInvalid");
@@ -754,9 +766,11 @@ export class HumanService {
         if (!entry) return no("noRing");
         const pack = this.pack(entry.pack);
         if (typeof pack === "string") return no("packNotReady", { packReason: pack });
-        const ring = await loadRing(sd, p.ringId, pack);
+        const root = await this.root();
+        const ring = await loadRing(sd, p.ringId, pack, root ? ownKeysAt(root, p.ringId) : []);
         if (!ring.ok) return no(ring.reason);
-        return { ok: true, report: withSentInfo(await verifyRing(entry.root, p.ringId, pack, ring.confirmed), readSent(sd)) };
+        const sent = root ? allPlanSent<{ ringId: string; hash: string; version?: number; at: string }>(root, p.ringId).flatMap((b) => b.entries) : [];
+        return { ok: true, report: withSentInfo(await verifyRing(entry.root, p.ringId, pack, ring.confirmed), sent) };
       }
       case "readings_read": {
         if (!parsePayload("readings_read", call.payload)) return no("payloadInvalid");
@@ -771,7 +785,7 @@ export class HumanService {
         const pack = this.pack(p.packId);
         if (typeof pack === "string") return no("packNotReady", { packReason: pack });
         const s = readSettings(sd);
-        const loaded = await loadPlaces({ stateDir: sd, ledgerRoot: s.ledger, pack });
+        const loaded = await loadPlaces({ stateDir: sd, ledgerRoot: s.ledger, pack, storage: await this.root() });
         const base = {
           packName: pack.name,
           questions: questionsOf(pack, p.facility === null ? null : { facility: p.facility }),
@@ -826,26 +840,30 @@ export class HumanService {
     const L = await loadLedgerForSend(ledgerRoot, pack);
     if (!L.ok) return fail(`ledger.${L.reason}`, base);
     const repo: Repo | null = repoOfRemote(gitRemote(L.root));
-    const k = ledgerKeyOf(sd, L.id);
-    const info = { ...base, ledger: { id: L.id, repo: repo ? `${repo.owner}/${repo.name}` : null, key: k?.entry.key ?? null, fingerprint: k ? fingerprint(k.pub) : null } };
-    return { ok: true as const, L, pack, plan, version: h.latest.version, repo, info };
+    const facility: Facility = { root, planId };
+    const sender = facilityKey(facility, L.id, this.pendingKeys);
+    const accepted = ledgerAcceptance(sd, L.id);
+    const key = sender.ok ? keyIdOf(sender.pair.pub) : null;
+    const info = { ...base, ledger: { id: L.id, repo: repo ? `${repo.owner}/${repo.name}` : null, key, fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null } };
+    return { ok: true as const, L, pack, plan, version: h.latest.version, repo, info, facility, sender, accepted };
   }
 
-  /** 公開の台帳の見え方（鍵がまだ無ければ、相手から見たあなたまでを出し、束のバイト列は出さない） */
-  private ledgerView(
-    c: Extract<Awaited<ReturnType<HumanService["ledgerSendContext"]>>, { ok: true }>,
-    k: ReturnType<typeof ledgerKeyOf>,
-    answers: Answers,
-    month: string,
-    pending: boolean,
-  ): PreviewView {
-    const sd = this.e.stateDir!;
-    const place = ledgerPlace(sd, c.L, k ?? { entry: { ledgerId: c.L.id, pack: c.pack.id, key: "0".repeat(16), acceptedRulesHash: sha256OfLedger(c.L), acceptedRules: c.L.rules, createdAt: "" }, pub: "0".repeat(64) });
+  /** 公開の台帳の見え方（GitHub につないでいないか、施設の鍵が 2 つあれば、相手から見たあなたまでを出し、束のバイト列は出さない） */
+  private ledgerView(c: Extract<Awaited<ReturnType<HumanService["ledgerSendContext"]>>, { ok: true }>, answers: Answers, month: string, pending: boolean): PreviewView {
+    const accepted = c.accepted ?? { ledgerId: c.L.id, pack: c.pack.id, acceptedRulesHash: sha256OfLedger(c.L), acceptedRules: c.L.rules, createdAt: "" };
+    const place = ledgerPlace(c.L, accepted, { facility: c.facility, pair: c.sender.ok ? c.sender.pair : PLACEHOLDER_PAIR });
     // 台帳では、出した束が審査中で clone にまだ無いのはふつうのこと（「消えた」ではない）。次の束を止めるのは pending
     const v = { ...previewPlace(place, c.pack, c.plan, answers, month), vanished: false };
-    // 鍵がまだ無い：見え方と塊（鍵によらない）は見せるが、鍵の欄が仮なので、ハッシュは出さず送れない（画面は「出ていくもの」を出さない）
-    if (!k) return { ...v, blockers: [...v.blockers, "noKey"], bodyHash: null, bytes: null };
+    // 見え方と塊（鍵によらない）は見せるが、送れないので、ハッシュとバイト列は出さない（画面は「出ていくもの」を出さない）
+    if (!c.sender.ok) return { ...v, blockers: [...v.blockers, "keysForked"], bodyHash: null, bodyText: null, bytes: null };
+    if (!c.accepted) return { ...v, blockers: [...v.blockers, "noKey"], bodyHash: null, bodyText: null, bytes: null };
     return pending ? { ...v, blockers: [...v.blockers, "pending"] } : v;
+  }
+
+  /** 輪の見え方。施設の鍵が 2 つあれば、相手から見たあなたまでを出し、束のバイト列は出さない */
+  private ringView(ctx: Extract<Awaited<ReturnType<HumanService["shareContext"]>>, { ok: true }>, month: string): PreviewView {
+    const v = previewCheckpoint(ctx.ring, { facility: ctx.facility, pair: ctx.sender.ok ? ctx.sender.pair : PLACEHOLDER_PAIR }, ctx.pack, ctx.plan, ctx.answers, month);
+    return ctx.sender.ok ? v : { ...v, blockers: [...v.blockers, "keysForked"], bodyHash: null, bodyText: null, bytes: null };
   }
 
   /** 検問所の文脈：確定したいちばん新しい版・パック・輪。足りなければ、何が足りないかと、聞くことを返す。 */
@@ -873,10 +891,16 @@ export class HumanService {
     if (ringId === null) return fail("noRingChosen", base);
     const entry = rings.find((r) => r.ringId === ringId);
     if (!entry || entry.pack !== plan.packId) return fail("noRing", base);
-    const ring = await loadRing(sd, ringId, pack);
+    const ring = await loadRing(sd, ringId, pack, ownKeysAt(root, ringId));
     if (!ring.ok) return fail(ring.reason, base);
-    const w = readKeyFile(sd, ringId);
-    const info = { ...base, ring: { ...entry, key: ring.entry.key, fingerprint: w ? fingerprint(w.pub) : null, folder: join(entry.root, ringId) }, ringCount: rings.length };
-    return { ok: true as const, ring, pack, plan, version: h.latest.version, info, answers };
+    // 束に署名する鍵は施設のもの（保管先の計画のフォルダ。まだ無ければメモリの鍵で見せ、送ったときに書く）
+    const facility: Facility = { root, planId };
+    const sender: FacilityKey = facilityKey(facility, ringId, this.pendingKeys);
+    const info = {
+      ...base,
+      ring: { ...entry, key: sender.ok ? keyIdOf(sender.pair.pub) : null, fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null, folder: join(entry.root, ringId) },
+      ringCount: rings.length,
+    };
+    return { ok: true as const, ring, pack, plan, version: h.latest.version, info, answers, facility, sender };
   }
 }

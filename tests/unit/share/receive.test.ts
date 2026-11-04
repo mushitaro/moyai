@@ -47,8 +47,8 @@ describe("受け手の見え方", () => {
 });
 
 describe("3 つの立場", () => {
-  const ledger: Place = { kind: "ledger", id: "317f291617ec26bb", peers: many("台帳", 6), self: null };
-  const ring: Place = { kind: "ring", id: "0123456789abcdef", peers: many("輪", 4, FULL, [ch({ interval: "I3" })]), self: null };
+  const ledger: Place = { kind: "ledger", id: "317f291617ec26bb", peers: many("台帳", 6), self: [] };
+  const ring: Place = { kind: "ring", id: "0123456789abcdef", peers: many("輪", 4, FULL, [ch({ interval: "I3" })]), self: [] };
 
   it("立場で変わるのは並べる場の組と見え方の出どころだけ", () => {
     expect(POSITION_PLACES).toEqual({ municipal: ["ledger"], subsidiary: ["ring", "ledger"], om: ["ledger", "ring"] });
@@ -71,7 +71,7 @@ describe("3 つの立場", () => {
 
   it("自分の鍵は数えない（輪で自分の束がある場合）", () => {
     const mine = peer("自分");
-    const r: Place = { ...ring, peers: [...ring.peers, mine], self: mine.key };
+    const r: Place = { ...ring, peers: [...ring.peers, mine], self: [mine.key] };
     const s = compare({ table, position: "subsidiary", profile: FULL, places: [r] });
     expect(s.places[0]).toMatchObject({ status: "shown" });
     if (s.places[0]?.status === "shown") expect(s.places[0].agg.similar.map((x) => x.key)).not.toContain(mine.key);

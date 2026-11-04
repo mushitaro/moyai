@@ -2,13 +2,14 @@
 // 送る先（輪か公開の台帳）は SendPlace にまとめ、プレビューと署名はどちらの先でも同じ関数を通る（台帳へ出すのは ledger-send.ts）。
 // プレビューと送るは、同じ sendInputOf と previewBundle で同じ body を作る。送るときは sealBundle が
 // 人が見たハッシュと照らし、違えば送らない。署名するのは、数がすべて 0・k が下限以上のときだけ（seal.ts）。
+// 束に署名する鍵は施設のもの（docs/plan.md §2.19）：保管先の計画のフォルダ share/keys/<場ID>.json。持ち出し簿も share/sent/（facility.ts）。
 // 合言葉はやめた（運営者の決定 2026-11-04、docs/plan.md §2.19）。送るのは人だけの経路（人が［送る］を押したとき）だけ。
 // 鍵・束の中身・行の値をログに出さない。
 import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Plan } from "../shared/plan";
-import { addRing, appendSent, readKeyFile, readRings, readSent, writeKeyFile, type RingEntry } from "../bridge/places";
+import { addRing, readRings, writeKeyFile, type RingEntry, type SentEntry } from "../bridge/places";
 import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody, publicWords, ringIdOf, type ShareContext } from "./bundle";
 import type { CopyResult, SkipReason, WithheldField, OmitReason } from "./copyout";
 import { canonicalize, parseJsonStrict } from "./jcs";
@@ -16,9 +17,10 @@ import { SEND_MIN_K, kNational, profileBandOf, type Group, type Profile, type Tr
 import type { SharePack } from "./pack";
 import { countProperNouns } from "./recount";
 import { CIRCLE_FILE, readRing, ringDir, writeBundle, writeCircle, writeMember, type RingRead } from "./ring";
+import { appendPlanSent, readPlanSent, storeFacilityKey, type Facility } from "./facility";
 import { baseRules, rulesGate, type Rules } from "./rules";
 import { previewBundle, sealBundle, type SendInput } from "./seal";
-import { fingerprint, generateKeyPair, keyIdOf, openKeyFile, sha256Hex, signBody, toPlainKey, type KeyFile } from "./sign";
+import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, signBody, toPlainKey, type KeyPair } from "./sign";
 
 /** 送る月（その PC の時刻の YYYY-MM） */
 export function monthOf(d: Date): string {
@@ -32,7 +34,7 @@ export type CreateRingResult =
   | { ok: false; reason: "writeFailed" | "keyExists" };
 
 /**
- * 輪を作る：この輪の鍵の対を作り、状態フォルダに置く（包まない）。決まり（コードの決まり＝いちばん緩いもの）に署名して circle.json を、
+ * 輪を作る：輪を作った人の鍵の対を作り、状態フォルダに置く（包まない。決まりの署名にだけ使う。束に署名するのは施設の鍵）。決まり（コードの決まり＝いちばん緩いもの）に署名して circle.json を、
  * 自分の仲間のファイルを members/ に置き、輪のフォルダを rings.json に足す（見張りのフックが読む）。作った人はその決まりを受け入れている。
  */
 export async function createRing(i: { stateDir: string; root: string; pack: SharePack; now: Date }): Promise<CreateRingResult> {
@@ -59,16 +61,17 @@ export async function createRing(i: { stateDir: string; root: string; pack: Shar
 // ─── 輪を読む ──────────────────────────────────────────────
 
 export type RingLoad =
-  | { ok: true; entry: RingEntry; pub: string; circleBytes: Buffer; rules: Rules; ctx: ShareContext; read: RingRead; confirmed: Set<string> }
-  | { ok: false; reason: "noRing" | "noKey" | "circleMissing" | "circleInvalid" };
+  | { ok: true; entry: RingEntry; circleBytes: Buffer; rules: Rules; ctx: ShareContext; read: RingRead; confirmed: Set<string> }
+  | { ok: false; reason: "noRing" | "circleMissing" | "circleInvalid" };
 
-/** 自分の輪を読む：決まり（circle.json）、自分の鍵、仲間ごとの ✓／✗（受け手と同じ readRing）。 */
-export async function loadRing(stateDir: string, ringId: string, pack: SharePack): Promise<RingLoad> {
+/**
+ * 自分の輪を読む：決まり（circle.json）と、仲間ごとの ✓／✗（受け手と同じ readRing）。
+ * own は、保管先の計画がこの輪へ出す施設の鍵（facility.ts の ownKeysAt）。自分の鍵として確認済みに数える。
+ */
+export async function loadRing(stateDir: string, ringId: string, pack: SharePack, own: readonly string[] = []): Promise<RingLoad> {
   const rings = readRings(stateDir);
   const entry = rings.rings.find((r) => r.ringId === ringId);
   if (!entry) return { ok: false, reason: "noRing" };
-  const w = readKeyFile(stateDir, ringId);
-  if (!w) return { ok: false, reason: "noKey" };
   let circleBytes: Buffer;
   try {
     circleBytes = await readFile(join(ringDir(entry.root, ringId), CIRCLE_FILE));
@@ -78,7 +81,7 @@ export async function loadRing(stateDir: string, ringId: string, pack: SharePack
   const p = parseJsonStrict(circleBytes.toString("utf8"));
   const rules = p.ok ? ((p.value as { body?: { rules?: Rules } })?.body?.rules ?? null) : null;
   if (!rules) return { ok: false, reason: "circleInvalid" };
-  const confirmed = new Set([...rings.confirmed, ...rings.rings.map((r) => r.key)]);
+  const confirmed = new Set([...rings.confirmed, ...rings.rings.map((r) => r.key), ...own]);
   const read = await readRing(entry.root, ringId, { table: pack.table, vocab: pack.vocab, confirmed });
   const ctx: ShareContext = {
     table: pack.table,
@@ -88,7 +91,7 @@ export async function loadRing(stateDir: string, ringId: string, pack: SharePack
     to: { kind: "ring", id: ringId },
     peers: read.latest,
   };
-  return { ok: true, entry, pub: w.pub, circleBytes, rules, ctx, read, confirmed };
+  return { ok: true, entry, circleBytes, rules, ctx, read, confirmed };
 }
 
 // ─── 施設の見え方の答え ──────────────────────────────────────
@@ -147,18 +150,25 @@ export interface SendPlace {
   folderPath: string;
 }
 
-/** 輪を送る先にする */
-export function ringPlace(stateDir: string, ring: Extract<RingLoad, { ok: true }>): SendPlace {
-  const key = keyIdOf(ring.pub);
+/** 送る施設と、その場の鍵（facility.ts の facilityKey が返したもの）。stored は、保管先にもう鍵があるか */
+export interface Sender {
+  facility: Facility;
+  pair: KeyPair;
+  stored: boolean;
+}
+
+/** 輪を送る先にする。持ち出し簿は、保管先の計画のフォルダ（share/sent/<輪ID>.json） */
+export function ringPlace(ring: Extract<RingLoad, { ok: true }>, sender: Pick<Sender, "facility" | "pair">): SendPlace {
+  const key = keyIdOf(sender.pair.pub);
   return {
     ctx: ring.ctx,
     rules: ring.rules,
     acceptedRulesHash: ring.entry.acceptedRulesHash,
     acceptedRules: ring.entry.acceptedRules,
-    pub: ring.pub,
+    pub: sender.pair.pub,
     placed: ring.read.bundles.filter((b) => b.folder === key && b.status === "ok" && b.seq !== null).map((b) => ({ seq: b.seq!, hash: b.hash })),
-    logged: readSent(stateDir)
-      .filter((s) => s.ringId === ring.entry.ringId && s.key === key)
+    logged: readPlanSent<SentEntry>(sender.facility, ring.entry.ringId)
+      .filter((s) => s.key === key)
       .map((s) => ({ seq: s.seq, hash: s.hash })),
     folderPath: ringDir(ring.entry.root, ring.entry.ringId),
   };
@@ -170,11 +180,6 @@ export interface SendSetup {
   input: SendInput;
   /** 持ち出し簿より場の自分の束が少ない（前に置いた束が見えない） */
   vanished: boolean;
-}
-
-/** プレビューと送るの両方が使う、送る中身の組み立て（輪）。 */
-export function sendInputOf(stateDir: string, ring: Extract<RingLoad, { ok: true }>, pack: SharePack, plan: Plan, a: Answers, month: string): SendSetup {
-  return placeInputOf(ringPlace(stateDir, ring), pack, plan, a, month);
 }
 
 /** 送る中身の組み立て。seq と prev は、持ち出し簿と場の自分の束の大きい方から。 */
@@ -226,8 +231,10 @@ export type Blocker =
   | "nothingToCopy"
   | "content"
   | "properNoun"
-  /** 公開の台帳：この台帳の自分の鍵がまだ無い（GitHub につなぐときに作る） */
+  /** 公開の台帳：GitHub につないでいない（台帳の決まりを受け入れていない） */
   | "noKey"
+  /** その場の鍵が 2 つ以上ある（同期の衝突の写しを含む）か、持ち出し簿にほかの鍵の記録がある（facility.ts） */
+  | "keysForked"
   /** 公開の台帳：前に出した束が、台帳の clone にまだ無い（審査中か、clone が古い） */
   | "pending";
 
@@ -314,8 +321,8 @@ function originalRows(plan: Plan, lift: ReadonlyMap<string, string | null> | nul
 }
 
 /** 検問所に出すもの（輪）。送る処理（sendCheckpoint）と同じ placeInputOf・previewBundle で body を作る。 */
-export function previewCheckpoint(stateDir: string, ring: Extract<RingLoad, { ok: true }>, pack: SharePack, plan: Plan, a: Answers, month: string): PreviewView {
-  return previewPlace(ringPlace(stateDir, ring), pack, plan, a, month);
+export function previewCheckpoint(ring: Extract<RingLoad, { ok: true }>, sender: Pick<Sender, "facility" | "pair">, pack: SharePack, plan: Plan, a: Answers, month: string): PreviewView {
+  return previewPlace(ringPlace(ring, sender), pack, plan, a, month);
 }
 
 /** 検問所に出すもの。輪と公開の台帳で同じ関数。 */
@@ -401,15 +408,12 @@ function copySummary(c: CopyResult): NonNullable<PreviewView["copy"]> {
 
 export type SendResult =
   | { ok: true; fileName: string; hash: string; path: string; seq: number }
-  | { ok: false; reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "keyMismatch" | "afterSign" | "noKey" | "oldKey" | "notClean" | "exists" | "unknown" };
+  | { ok: false; reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "keyMismatch" | "afterSign" | "keysForked" | "notClean" | "exists" | "unknown" };
 
 export type SealPlaceResult = { ok: true; text: string; hash: string; fileName: string; input: SendInput } | { ok: false; reason: Exclude<SendResult, { ok: true }>["reason"] };
 
-/** 署名する（輪と公開の台帳で同じ関数）。プレビューと同じ placeInputOf を通り、人が見たハッシュと照らす。前の形の鍵（合言葉で包んだもの）なら oldKey */
-export function sealPlace(place: SendPlace, keyFileOf: KeyFile, pack: SharePack, plan: Plan, a: Answers, month: string, previewHash: string): SealPlaceResult {
-  const pair = openKeyFile(keyFileOf);
-  if (pair === "old") return { ok: false, reason: "oldKey" };
-  if (!pair) return { ok: false, reason: "noKey" };
+/** 署名する（輪と公開の台帳で同じ関数）。プレビューと同じ placeInputOf を通り、人が見たハッシュと照らす。 */
+export function sealPlace(place: SendPlace, pair: KeyPair, pack: SharePack, plan: Plan, a: Answers, month: string, previewHash: string): SealPlaceResult {
   const { input } = placeInputOf(place, pack, plan, a, month);
   const words = properNounSources(plan);
   const s = sealBundle(input, {
@@ -425,25 +429,37 @@ export function sealPlace(place: SendPlace, keyFileOf: KeyFile, pack: SharePack,
   return { ok: true, text: s.text, hash: s.hash, fileName: s.fileName, input };
 }
 
-/** 署名し、輪の自分のフォルダに置き、持ち出し簿に足す。プレビューと同じ placeInputOf を通る。 */
+/**
+ * 署名し、輪の施設のフォルダに置き、持ち出し簿（保管先の計画のフォルダ）に足す。プレビューと同じ placeInputOf を通る。
+ * 施設の鍵がまだ保管先に無ければ、ここで書く（人が送ったときだけ書く）。この鍵で初めて出すなら、仲間のファイル（members/<鍵ID>.json）も置く。
+ */
 export async function sendCheckpoint(
-  stateDir: string,
   ring: Extract<RingLoad, { ok: true }>,
+  sender: Sender,
   pack: SharePack,
   plan: Plan,
   a: Answers,
   month: string,
   previewHash: string,
   now: Date,
+  pending?: Map<string, KeyPair>,
 ): Promise<SendResult> {
-  const k = readKeyFile(stateDir, ring.entry.ringId);
-  if (!k) return { ok: false, reason: "noKey" };
-  const s = sealPlace(ringPlace(stateDir, ring), k, pack, plan, a, month, previewHash);
+  const s = sealPlace(ringPlace(ring, sender), sender.pair, pack, plan, a, month, previewHash);
   if (!s.ok) return { ok: false, reason: s.reason };
   const { input } = s;
+  const ringId = ring.entry.ringId;
+  const key = keyIdOf(sender.pair.pub);
+  // 鍵を先に置く（束だけが残り、鍵が無い状態を作らない）。ほかの PC が先に別の鍵を書いていれば送らない
+  if (!sender.stored && storeFacilityKey(sender.facility, ringId, sender.pair, pending) === "differs") return { ok: false, reason: "keysForked" };
+  if (!ring.read.members.some((m) => m.key === key)) {
+    const memberBody = makeMemberBody(ringId, key, sender.pair.pub, month);
+    const m = await writeMember(ring.entry.root, envelopeText(memberBody, signBody(memberBody, sender.pair.privateKey)), input.ctx);
+    // 仲間のファイルがもうある（ほかの PC が先に置いた）なら、そのまま束を置く
+    if (!m.ok && m.reason !== "exists") return { ok: false, reason: m.reason };
+  }
   const placed = await writeBundle(ring.entry.root, s.text, input.ctx);
   if (!placed.ok) return { ok: false, reason: placed.reason };
-  appendSent(stateDir, { ringId: ring.entry.ringId, key: keyIdOf(ring.pub), seq: input.seq, hash: s.hash, fileName: s.fileName, month, at: now.toISOString(), version: plan.version });
+  appendPlanSent<SentEntry>(sender.facility, ringId, { ringId, key, seq: input.seq, hash: s.hash, fileName: s.fileName, month, at: now.toISOString(), version: plan.version });
   return { ok: true, fileName: s.fileName, hash: s.hash, path: placed.path, seq: input.seq };
 }
 

@@ -1,16 +1,18 @@
 // 公開の台帳へ出す側（docs/plan.md §2.8。運営者の決定、2026-11-04「MOYAI が出す」）。
 // - 台帳の clone（人が設定で選んだもの）を受け手と同じ関数で読み、送る先（SendPlace）を作る。束は検問所と同じ関数で作って署名する。
-// - 鍵は台帳ごとに 1 つ。人が SHARE で GitHub につなぐときに作る（包まない。合言葉はやめた、docs/plan.md §2.19）。
+// - 束に署名する鍵は施設のもの（docs/plan.md §2.19）：保管先の計画のフォルダ share/keys/<台帳ID>.json。持ち出し簿（出した PR）も share/sent/<台帳ID>.json（facility.ts）。
+//   人が SHARE で GitHub につなぐときは、台帳の決まりを受け入れたことだけを、この PC の状態フォルダ（ledgers.json）に書く。
 // - 出す前に、台帳の clone の木に束を足したときに受け手と同じ関数（verifyLedgerFiles）で ✓ になるかを確かめる。✗ なら出さない。
 // - 前に出した束が clone にまだ無く、PR が閉じてもいなければ、次の束は出さない（鎖が抜けて、台帳の検証で ✗ になるため）。
 // 束の中身・鍵・トークンをログに出さない。
-import { addLedger, readKeyFile, readLedgers, readLedgerSent, writeKeyFile, type LedgerEntry, type LedgerSentEntry } from "../bridge/places";
+import { addLedger, readLedgers, type LedgerEntry, type LedgerSentEntry } from "../bridge/places";
 import { bundleFileName, type ShareContext } from "./bundle";
 import { LEDGER_DIR, LEDGER_JSON_PATH, ledgerContext, readLedgerDir, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "./ledger";
 import type { SharePack } from "./pack";
 import type { Rules } from "./rules";
-import type { SendPlace } from "./checkpoint";
-import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, toPlainKey } from "./sign";
+import type { SendPlace, Sender } from "./checkpoint";
+import { readPlanSent, type Facility } from "./facility";
+import { fingerprint, keyIdOf, sha256Hex } from "./sign";
 import { profileText } from "./site";
 
 export type LedgerLoad =
@@ -32,62 +34,47 @@ export async function loadLedgerForSend(root: string | null, pack: SharePack): P
   return { ok: true, id: L.id, root, rules: L.rules, ledgerBytes: lf.bytes, ctx, files: dir.files, read };
 }
 
-export type LedgerKey = { ok: true; entry: LedgerEntry; pub: string; created: boolean } | { ok: false; reason: "keyExists" };
-
 /**
- * この台帳の自分の鍵：あればそれを使い、無ければ作って置く（人が SHARE で GitHub につなぐとき。包まない。docs/plan.md §2.19）。
- * 作るときは、いまの台帳の決まりを受け入れたものとして記録する（あとで決まりが変われば、送る前に止まる）。
+ * 台帳の決まりを受け入れる（人が SHARE で GitHub につなぐとき）。いまの台帳の決まりを、この PC が受け入れたものとして記録する
+ * （あとで決まりが変われば、送る前に止まる）。もう受け入れていれば、そのまま返す。
  */
-export function ensureLedgerKey(stateDir: string, L: Extract<LedgerLoad, { ok: true }>, pack: SharePack, now: Date): LedgerKey {
-  const entry = readLedgers(stateDir).find((e) => e.ledgerId === L.id);
-  const w = readKeyFile(stateDir, L.id);
-  if (entry && w) return { ok: true, entry, pub: w.pub, created: false };
-  if (w) return { ok: false, reason: "keyExists" };
-  const pair = generateKeyPair();
-  if (!writeKeyFile(stateDir, L.id, toPlainKey(pair))) return { ok: false, reason: "keyExists" };
-  const made: LedgerEntry = {
-    ledgerId: L.id,
-    pack: pack.id,
-    key: keyIdOf(pair.pub),
-    acceptedRulesHash: sha256Hex(L.ledgerBytes),
-    acceptedRules: L.rules,
-    createdAt: now.toISOString(),
-  };
+export function acceptLedger(stateDir: string, L: Extract<LedgerLoad, { ok: true }>, pack: SharePack, now: Date): LedgerEntry {
+  const cur = readLedgers(stateDir).find((e) => e.ledgerId === L.id);
+  if (cur) return cur;
+  const made: LedgerEntry = { ledgerId: L.id, pack: pack.id, acceptedRulesHash: sha256Hex(L.ledgerBytes), acceptedRules: L.rules, createdAt: now.toISOString() };
   addLedger(stateDir, made);
-  return { ok: true, entry: made, pub: pair.pub, created: true };
+  return made;
 }
 
-/** 台帳の自分の鍵（あれば）。無ければ null（GitHub につなぐときに作る） */
-export function ledgerKeyOf(stateDir: string, ledgerId: string): { entry: LedgerEntry; pub: string } | null {
-  const entry = readLedgers(stateDir).find((e) => e.ledgerId === ledgerId);
-  const w = readKeyFile(stateDir, ledgerId);
-  return entry && w && keyIdOf(w.pub) === entry.key ? { entry, pub: w.pub } : null;
+/** この PC が受け入れた台帳の決まり（無ければ null。GitHub につなぐときに受け入れる） */
+export function ledgerAcceptance(stateDir: string, ledgerId: string): LedgerEntry | null {
+  return readLedgers(stateDir).find((e) => e.ledgerId === ledgerId) ?? null;
 }
 
-/** 自分の鍵で出した束のうち、PR が閉じていないもの（載ったかどうかは clone で見る） */
-function liveSent(stateDir: string, ledgerId: string, key: string): LedgerSentEntry[] {
-  return readLedgerSent(stateDir).filter((e) => e.ledgerId === ledgerId && e.key === key && e.state !== "closed");
+/** 施設の鍵で出した束のうち、PR が閉じていないもの（載ったかどうかは clone で見る） */
+function liveSent(f: Facility, ledgerId: string, key: string): LedgerSentEntry[] {
+  return readPlanSent<LedgerSentEntry>(f, ledgerId).filter((e) => e.ledgerId === ledgerId && e.key === key && e.state !== "closed");
 }
 
-/** 公開の台帳を送る先にする。場の束は clone の ✓ の束、持ち出し簿は出して閉じていない PR の束 */
-export function ledgerPlace(stateDir: string, L: Extract<LedgerLoad, { ok: true }>, k: { entry: LedgerEntry; pub: string }): SendPlace {
-  const key = k.entry.key;
+/** 公開の台帳を送る先にする。場の束は clone の ✓ の束、持ち出し簿は出して閉じていない PR の束（保管先の計画のフォルダ） */
+export function ledgerPlace(L: Extract<LedgerLoad, { ok: true }>, accepted: LedgerEntry, sender: Pick<Sender, "facility" | "pair">): SendPlace {
+  const key = keyIdOf(sender.pair.pub);
   return {
     ctx: L.ctx,
     rules: L.rules,
-    acceptedRulesHash: k.entry.acceptedRulesHash,
-    acceptedRules: k.entry.acceptedRules,
-    pub: k.pub,
+    acceptedRulesHash: accepted.acceptedRulesHash,
+    acceptedRules: accepted.acceptedRules,
+    pub: sender.pair.pub,
     placed: L.read.bundles.filter((b) => b.key === key && b.status === "ok" && b.seq !== null).map((b) => ({ seq: b.seq!, hash: b.hash })),
-    logged: liveSent(stateDir, L.id, key).map((e) => ({ seq: e.seq, hash: e.hash })),
+    logged: liveSent(sender.facility, L.id, key).map((e) => ({ seq: e.seq, hash: e.hash })),
     folderPath: `${LEDGER_DIR}/bundles/${key}`,
   };
 }
 
 /** 前に出した束のうち、clone にまだ無く、PR が閉じてもいないもの（審査中か、clone が古い）。あれば次の束は出さない */
-export function pendingSent(stateDir: string, L: Extract<LedgerLoad, { ok: true }>, key: string): LedgerSentEntry | null {
+export function pendingSent(f: Facility, L: Extract<LedgerLoad, { ok: true }>, key: string): LedgerSentEntry | null {
   const inClone = new Set(L.read.bundles.filter((b) => b.key === key && b.status === "ok").map((b) => b.hash));
-  return liveSent(stateDir, L.id, key).find((e) => !inClone.has(e.hash)) ?? null;
+  return liveSent(f, L.id, key).find((e) => !inClone.has(e.hash)) ?? null;
 }
 
 /** 台帳の中の束の道 */

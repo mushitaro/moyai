@@ -42,6 +42,7 @@ export const HUMAN_TEXT = {
     properNoun: "固有名詞が見つかったので送りませんでした。",
     oldKey: "この PC の鍵は前の形（合言葉で包んだもの）です。端末で moyai keys unwrap を走らせ、前の合言葉で 1 度だけ移してください。",
     keyMismatch: "鍵が輪の自分の鍵と合いません。",
+    keysForked: "この施設のこの場への署名鍵が、計画のフォルダに 2 つあります（同期の衝突の写しか、持ち出し簿にほかの鍵の記録）。同じ施設を 2 施設に数えないため、送りませんでした。片方を残す直し方は未実装です。",
     afterSign: "署名のあとの数え直しで 0 でない数が出たので置きませんでした。",
     notClean: "数え直しで 0 でない数があるので置きませんでした。",
     unknown: "輪のフォルダに置けたかどうか分かりません（結果不明）。輪のフォルダを確かめてください。",
@@ -398,12 +399,14 @@ export const HUMAN_TEXT = {
     noBody: "まだ出ていくものはありません。",
     leaveTitle: "置き場所が残すもの",
     leaveAlways: "置き場所は、置いた人の名前と時刻を別に残します。",
+    keyInPlan: "施設の署名鍵は、計画のフォルダに置きます。フォルダを開ける人は、この施設として出せます。",
     twoRings: "同じ施設を 2 つの輪に送ると、中身が同じなので、2 つの輪の束がつながります。",
     counts: (c: { shape: number; properNoun: number; money: number; freeText: number; exactDate: number }) =>
       `形 ${c.shape}｜固有名詞 ${c.properNoun}｜金額 ${c.money}｜自由記述 ${c.freeText}｜正確な日付 ${c.exactDate}`,
     known: "輪の仲間には、あなたの拠点の束だと分かります。",
     send: "送る",
     sendNeeds: {
+      keysForked: "この施設の署名鍵が 2 つあります",
       rules: "輪の決まりを受け入れていない",
       groupUnknown: "全国の表に載る施設かが決まっていない",
       profileIncomplete: "施設の見え方が決まっていない",

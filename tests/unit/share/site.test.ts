@@ -61,7 +61,7 @@ describe("サイトの集計", () => {
     expect(read.ok).toBe(true);
     const m = siteModel({ read, pack });
     expect(m.sections).toHaveLength(1);
-    const want = aggregate({ table, profile: m.sections[0]!.profile, self: null, peers: latestPerKey(read.bundles) });
+    const want = aggregate({ table, profile: m.sections[0]!.profile, self: [], peers: latestPerKey(read.bundles) });
     expect(m.sections[0]!.aggregate).toEqual(want);
     const rows = Object.fromEntries(want.rows.map((r) => [r.class, r.stats.interval.shown]));
     expect(rows).toEqual({ "T.FEED": "x", "T.FEED.LIFT": "median", "T.RESIDUE": "range" });

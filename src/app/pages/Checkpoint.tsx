@@ -328,6 +328,8 @@ export function Checkpoint() {
   // 止め札は、いま効いている理由を 1 つだけ出す（公開の台帳でつないでいなければ、それがいちばん先）
   const sendReason = !view
     ? T.sendNeeds.noView
+    : view.blockers.includes("keysForked")
+      ? T.sendNeeds.keysForked
     : view.blockers.includes("noKey")
       ? T.sendNeeds.noKey
       : view.blockers.includes("pending")
@@ -848,6 +850,9 @@ export function Checkpoint() {
               {T.vanished}
             </Text>
           )}
+          <Text size="xs" c="dimmed" data-testid="key-in-plan">
+            {T.keyInPlan}
+          </Text>
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
           {!canSend && (dest === "ledger" || !done) && sendReason && (

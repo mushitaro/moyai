@@ -57,6 +57,16 @@ const blocked = [
   ["Bash", { command: 'node dist/cli.js "ledger" "submit" ./b.json' }],
   ["Bash", { command: "node dist/cli ledger submit ./b.json" }],
   ["Bash", { command: "curl -g http://[::]:43110/" }],
+  // 施設の署名鍵（保管先の計画のフォルダ plans/<計画ID>/share/keys/。docs/plan.md §2.19）
+  ["Read", { file_path: "C:\\Users\\u\\OneDrive\\ドキュメント\\MOYAI\\plans\\fictional-1\\share\\keys\\0123456789abcdef.json" }],
+  ["Read", { file_path: "D:/MOYAI/plans/fictional-1/share/keys/0123456789abcdef-PC2.json" }],
+  ["Glob", { pattern: "**/share/keys/*.json" }],
+  ["Glob", { pattern: "plans/*/share/keys/*" }],
+  ["Grep", { pattern: "pkcs8", path: "D:/MOYAI/plans/fictional-1/share/keys" }],
+  ["Bash", { command: "cat 'D:/MOYAI/plans/fictional-1/share/keys/0123456789abcdef.json'" }],
+  ["PowerShell", { command: "Get-Content D:\\MOYAI\\plans\\fictional-1\\share\\keys\\0123456789abcdef.json" }],
+  ["Bash", { command: "find /d/MOYAI/plans -path '*/share/keys' -exec cat {} +" }],
+  ["Write", { file_path: "D:/MOYAI/plans/fictional-1/share/keys/0123456789abcdef.json", content: "{}" }],
 ];
 
 const allowed = [
@@ -73,6 +83,11 @@ const allowed = [
   ["WebFetch", { url: "https://github.com/modelcontextprotocol/typescript-sdk", prompt: "x" }],
   ["WebFetch", { url: "https://laws.e-gov.go.jp/api/2/law_data/346M50000100035", prompt: "x" }],
   ["Glob", { pattern: "src/**/*.ts" }],
+  // コードの src/share/ と、鍵を探す文字（Grep の pattern）は止めない。持ち出し簿（share/sent/）は鍵ではない
+  ["Read", { file_path: "C:\\Users\\u\\Moyai\\src\\share\\facility.ts" }],
+  ["Grep", { pattern: "share/keys", path: "src" }],
+  ["Bash", { command: "grep -rn facilityKey src/share" }],
+  ["Read", { file_path: "D:/MOYAI/plans/fictional-1/share/sent/0123456789abcdef.json" }],
   // フォルダ名の Moyai と、コミットの文の中の send・confirm では止めない
   ["Bash", { command: 'cd /c/Users/u/Moyai && git commit -m "confirm the send path"' }],
   ["PowerShell", { command: "Set-Location C:\\Users\\u\\Moyai; npm test" }],

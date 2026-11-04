@@ -8,7 +8,8 @@
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。前の合言葉は画面に出さない。
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
-import { readKeyFile, readRings, replaceOldKeyFile } from "../bridge/places";
+import { defaultRoot, detectDocuments, readKeyFile, readRings, readSettings, replaceOldKeyFile } from "../bridge/places";
+import { ownKeysAt } from "../share/facility";
 import { oldOwnKeys, replaceOldOwnKey } from "../bridge/people";
 import { resolveStateDir } from "../bridge/state";
 import { reasonText } from "../app/text/reasons";
@@ -74,14 +75,19 @@ export function ringsAt(folder: string): { root: string; ringId: string }[] {
   }
 }
 
-/** 状態フォルダから、確認済みの鍵（自分の鍵と、読み合わせた仲間）を読む。 */
-export function confirmedKeys(stateDir: string): Set<string> {
+/**
+ * 確認済みの鍵：状態フォルダの、輪を作った自分の鍵と読み合わせた仲間に、保管先の計画が輪へ出す施設の鍵（plans/<計画ID>/share/keys/）を足す。
+ * 保管先は設定の置き場所か、既定（Documents の下の MOYAI/）。
+ */
+export async function confirmedKeys(stateDir: string, rootOf: () => Promise<string | null> = async () => readSettings(stateDir).root ?? defaultRoot(await detectDocuments())): Promise<Set<string>> {
   const r = readRings(stateDir);
   const out = new Set(r.confirmed);
+  const root = r.rings.length > 0 ? await rootOf() : null;
   for (const e of r.rings) {
     out.add(e.key);
     const w = readKeyFile(stateDir, e.ringId);
     if (w) out.add(keyIdOf(w.pub));
+    if (root) for (const k of ownKeysAt(root, e.ringId)) out.add(k);
   }
   return out;
 }
@@ -100,7 +106,7 @@ export function formatReport(rep: VerifyReport): string[] {
 }
 
 /** verify ring。すべて ✓ なら 0、ほかは 1、引数が違えば 2 を返す。 */
-export async function verifyRingCli(argv: string[], o: { packsDir?: string; stateDir?: string } = {}): Promise<number> {
+export async function verifyRingCli(argv: string[], o: { packsDir?: string; stateDir?: string; root?: string } = {}): Promise<number> {
   const [what, folder, ...rest] = argv;
   if (what !== "ring" || !folder || rest.length > 0) {
     say(CLI_TEXT.verifyUsage);
@@ -112,7 +118,8 @@ export async function verifyRingCli(argv: string[], o: { packsDir?: string; stat
     return 1;
   }
   const packsDir = o.packsDir ?? resolvePacksDir();
-  const confirmed = confirmedKeys(o.stateDir ?? resolveStateDir());
+  const stateDir = o.stateDir ?? resolveStateDir();
+  const confirmed = await confirmedKeys(stateDir, ...(o.root !== undefined ? [async () => o.root ?? null] : []));
   let ng = 0;
   for (const r of rings) {
     const p = parseJsonStrict(readFileSync(join(r.root, r.ringId, CIRCLE_FILE), "utf8"));

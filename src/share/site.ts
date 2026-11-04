@@ -122,7 +122,7 @@ export function siteModel(i: Pick<SiteInput, "read" | "pack">): SiteModel {
   const sections = sectionsOf(peers)
     .map((profile) => ({
       profile,
-      aggregate: aggregate({ table: i.pack.table, profile, self: null, peers, ...(bands ? { bands } : {}) }),
+      aggregate: aggregate({ table: i.pack.table, profile, self: [], peers, ...(bands ? { bands } : {}) }),
     }))
     .map((s, k) => ({ s, k }))
     .sort((a, b) => b.s.aggregate.similar.length - a.s.aggregate.similar.length || a.k - b.k)

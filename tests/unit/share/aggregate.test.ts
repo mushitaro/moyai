@@ -50,7 +50,7 @@ describe("似た施設と集計", () => {
 
   it("自分を除いて数え、塊ごと・欄ごとに n を数える", () => {
     const self = peers[0]!.key;
-    const g = aggregate({ table, profile: P, self, peers });
+    const g = aggregate({ table, profile: P, self: [self], peers });
     expect(g.similar).toHaveLength(5);
     expect(g.similar.some((s) => s.key === self)).toBe(false);
     const feed = g.rows.find((r) => r.class === "T.FEED")!;
@@ -64,7 +64,7 @@ describe("似た施設と集計", () => {
   });
 
   it("サイト（自分なし）は全部を数え、1〜2 施設だけの塊は x", () => {
-    const g = aggregate({ table, profile: P, self: null, peers });
+    const g = aggregate({ table, profile: P, self: [], peers });
     const power = g.rows.find((r) => r.class === "T.POWER")!;
     expect(power.peers).toHaveLength(1);
     expect(power.stats).toEqual({ interval: { shown: "x" }, manDays: { shown: "x" }, days: { shown: "x" } });
@@ -73,7 +73,7 @@ describe("似た施設と集計", () => {
 
   it("集団を混ぜない：OUTSIDE の束は、軸が同じでも数えない", () => {
     const outside = peer(9, [ch()], { ...P, group: "OUTSIDE" });
-    const g = aggregate({ table, profile: P, self: null, peers: [...peers.slice(0, 2), outside] });
+    const g = aggregate({ table, profile: P, self: [], peers: [...peers.slice(0, 2), outside] });
     expect(g.similar.map((s) => s.key)).not.toContain(outside.key);
     expect(isSimilar(table, P, outside.body.profile)).toBe(false);
     expect(g.belowFive).toBe(true);

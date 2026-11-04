@@ -2,9 +2,10 @@
 // - Documents の場所は `powershell -NoProfile` で [Environment]::GetFolderPath('MyDocuments') を取り、UTF-8 で受ける（日本語のフォルダ名を化けさせない）。
 // - 同期フォルダ：環境変数 OneDrive・OneDriveCommercial・OneDriveConsumer の指すフォルダと、OneDrive が同期している場所（SharePoint のライブラリを含む）の下か。
 // - 状態フォルダの設定：settings.json（置き場所）、rings.json（輪のフォルダ。scripts/guard-hook.mjs の ringFolders() が folders を読む）、
-//   keys/<輪ID>.json（包まない秘密鍵。前の形は合言葉で包んだもの）、sent.json（持ち出し簿）。書くのは人だけの経路だけ。
-// - 公開の台帳へ出す側：ledgers.json（台帳ごとの自分の鍵と受け入れた決まり。鍵は keys/<台帳ID>.json）、
-//   ledger-sent.json（出した束のハッシュと PR の番号。中身は残さない）、github.json（アカウント名とトークン。包まない。運営者の決定 2026-11-04、docs/plan.md §2.19）。
+//   keys/<輪ID>.json（輪を作った人の鍵。包まない。前の形は合言葉で包んだもの）。書くのは人だけの経路だけ。
+//   束に署名する施設の鍵と持ち出し簿は、保管先の計画のフォルダ（plans/<計画ID>/share/。share/facility.ts、docs/plan.md §2.19）。
+// - 公開の台帳へ出す側：ledgers.json（この PC が受け入れた台帳の決まり）、keys/<台帳ID>.json（台帳の管理者の鍵。ledger init が作る）、
+//   github.json（アカウント名とトークン。包まない。運営者の決定 2026-11-04、docs/plan.md §2.19）。
 import { validName } from "../plan/signature";
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -253,23 +254,12 @@ export interface SentEntry {
   version?: number;
 }
 
-/** 持ち出し簿：検問所を通して置いた束のハッシュ（中身は残さない） */
-export function readSent(stateDir: string): SentEntry[] {
-  const s = readJson<{ entries?: SentEntry[] }>(join(stateDir, "sent.json"));
-  return Array.isArray(s?.entries) ? s.entries : [];
-}
-
-export function appendSent(stateDir: string, e: SentEntry): void {
-  writeJson(stateDir, "sent.json", { entries: [...readSent(stateDir), e] });
-}
-
 // ─── 公開の台帳へ出す側 ─────────────────────────────────────
 
+/** この PC が受け入れた台帳の決まり（束に署名する鍵は施設のもの。保管先の計画のフォルダ share/keys/、docs/plan.md §2.19） */
 export interface LedgerEntry {
   ledgerId: string;
   pack: string;
-  /** この台帳の自分の鍵 ID（秘密鍵は keys/<台帳ID>.json に置く。包まない） */
-  key: string;
   /** 人が受け入れた決まり（ledger.json のバイト列の SHA-256 と、その決まり） */
   acceptedRulesHash: string;
   acceptedRules: Rules;
@@ -278,7 +268,7 @@ export interface LedgerEntry {
 
 export function readLedgers(stateDir: string): LedgerEntry[] {
   const r = readJson<{ ledgers?: LedgerEntry[] }>(join(stateDir, "ledgers.json"));
-  return Array.isArray(r?.ledgers) ? r.ledgers.filter((x) => x && typeof x.ledgerId === "string" && HEX16.test(x.ledgerId) && HEX16.test(x.key)) : [];
+  return Array.isArray(r?.ledgers) ? r.ledgers.filter((x) => x && typeof x.ledgerId === "string" && HEX16.test(x.ledgerId)) : [];
 }
 
 export function addLedger(stateDir: string, e: LedgerEntry): void {
@@ -303,15 +293,6 @@ export interface LedgerSentEntry {
   version?: number;
   /** SHARE を開いたときに読んだ PR の行方（最後に読めたもの） */
   state?: "open" | "merged" | "closed";
-}
-
-export function readLedgerSent(stateDir: string): LedgerSentEntry[] {
-  const s = readJson<{ entries?: LedgerSentEntry[] }>(join(stateDir, "ledger-sent.json"));
-  return Array.isArray(s?.entries) ? s.entries.filter((e) => e && HEX16.test(e.ledgerId) && Number.isInteger(e.pr)) : [];
-}
-
-export function writeLedgerSent(stateDir: string, entries: LedgerSentEntry[]): void {
-  writeJson(stateDir, "ledger-sent.json", { entries });
 }
 
 export interface GitHubLink {

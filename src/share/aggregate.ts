@@ -119,8 +119,8 @@ export interface AggregateInput {
   table: NationalTable;
   /** 受け手の見え方（サイトでは、その節の見え方） */
   profile: Profile;
-  /** 受け手の鍵（サイトは null。数えない） */
-  self: string | null;
+  /** 受け手の鍵（保管先の計画がその場へ出す施設の鍵。数えない。サイトは空） */
+  self: readonly string[];
   peers: readonly PeerBundle[];
   /** 場の決まりの帯の境目（無ければコードの境目） */
   bands?: Partial<Record<StatField, readonly number[]>>;
@@ -128,7 +128,7 @@ export interface AggregateInput {
 
 /** 似た施設の星取表の行と統計の行を作る */
 export function aggregate(i: AggregateInput): Aggregate {
-  const sim = i.peers.filter((p) => p.key !== i.self && isSimilar(i.table, i.profile, p.body.profile));
+  const sim = i.peers.filter((p) => !i.self.includes(p.key) && isSimilar(i.table, i.profile, p.body.profile));
   const labels = anonymousLabels(i.peers.map((p) => p.pub));
   const similar = sim
     .map((p) => ({ key: p.key, label: labels.get(p.pub)!, profile: p.body.profile, chunks: p.body.chunks }))

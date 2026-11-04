@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createRing, loadRing, previewCheckpoint, sendCheckpoint, type Answers } from "../../../src/share/checkpoint";
+import { facilityKey } from "../../../src/share/facility";
+import { keyIdOf } from "../../../src/share/sign";
 import type { SharePack } from "../../../src/share/pack";
 import { compare } from "../../../src/share/receive";
 import { loadLedgerPlace, loadPlaces, loadRingPlaces } from "../../../src/share/receive-load";
@@ -38,7 +40,8 @@ describe("公開の台帳の clone を読む", () => {
     expect(r.status).toMatchObject({ kind: "ledger", id: L.id, ok: true, reason: null, peers: 4, ng: 1 });
     expect(r.place?.peers).toHaveLength(4);
     expect(r.place?.peers.find((p) => p.key === signers[0]!.key)?.body.seq).toBe(2);
-    expect(r.place?.self).toBeNull();
+    // 保管先を渡さなければ、自分の鍵は無い（似た施設に数える束を減らさない）
+    expect(r.place?.self).toEqual([]);
     expect(r.place?.bands).toEqual(L.rules.bands);
   });
 
@@ -55,25 +58,31 @@ describe("公開の台帳の clone を読む", () => {
 });
 
 describe("自分の輪を読む", () => {
-  it("✓ の最新の束の body を渡し、自分の鍵を self にする（集計では自分を数えない）", async () => {
+  it("✓ の最新の束の body を渡し、保管先の施設の鍵を self にする（集計では自分を数えない）", async () => {
     const stateDir = join(tmp, "state");
     const root = join(tmp, "輪のフォルダ");
+    const storage = join(tmp, "保管先");
     const c = await createRing({ stateDir, root, pack: PACK, now: NOW });
     if (!c.ok) throw new Error(c.reason);
-    const ring = await loadRing(stateDir, c.ringId, PACK);
-    if (!ring.ok) throw new Error(ring.reason);
     const p = smallPlan();
-    const v = previewCheckpoint(stateDir, ring, PACK, p, ANSWERS, "2026-11");
-    const s = await sendCheckpoint(stateDir, ring, PACK, p, ANSWERS, "2026-11", v.bodyHash!, NOW);
+    const facility = { root: storage, planId: p.planId };
+    const k = facilityKey(facility, c.ringId, new Map());
+    if (!k.ok) throw new Error(k.reason);
+    const sender = { facility, pair: k.pair, stored: k.stored };
+    const key = keyIdOf(k.pair.pub);
+    const ring = await loadRing(stateDir, c.ringId, PACK, [key]);
+    if (!ring.ok) throw new Error(ring.reason);
+    const v = previewCheckpoint(ring, sender, PACK, p, ANSWERS, "2026-11");
+    const s = await sendCheckpoint(ring, sender, PACK, p, ANSWERS, "2026-11", v.bodyHash!, NOW);
     expect(s.ok).toBe(true);
 
-    const r = await loadRingPlaces(stateDir, PACK);
+    const r = await loadRingPlaces(stateDir, PACK, storage);
     expect(r.status).toEqual([{ kind: "ring", id: c.ringId, ok: true, reason: null, peers: 1, ng: 0 }]);
-    expect(r.places[0]).toMatchObject({ kind: "ring", id: c.ringId, self: c.key });
-    expect(r.places[0]!.peers.map((x) => x.key)).toEqual([c.key]);
+    expect(r.places[0]).toMatchObject({ kind: "ring", id: c.ringId, self: [key] });
+    expect(r.places[0]!.peers.map((x) => x.key)).toEqual([key]);
 
     // 輪には自分しかいないので、保全子会社の立場で比べても似た施設は 0（自分を数えない）
-    const all = await loadPlaces({ stateDir, ledgerRoot: null, pack: PACK });
+    const all = await loadPlaces({ stateDir, ledgerRoot: null, pack: PACK, storage });
     const cmp = compare({ table, position: "subsidiary", profile: { group: "NATIONAL", stage: 0, axes: { ...FACILITY_COMMON } }, places: all.places });
     expect(cmp.places).toEqual([
       { kind: "ring", id: c.ringId, status: "belowShow", similar: 0 },

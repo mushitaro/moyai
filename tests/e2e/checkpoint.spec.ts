@@ -208,7 +208,9 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(2);
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("束の形でないファイル");
     // 仲間の行の理由は「束でないファイルが混じっています」、ファイルの行は「束の名前の形ではありません」
-    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="member"]')).toContainText("束でないファイルが混じっています");
+    // 仲間の行は 2 つ（輪を作った人の鍵と、束に署名した施設の鍵）。✗ はファイルを置いたフォルダの仲間の行だけ
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="member"]')).toHaveCount(2);
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="member"][data-status="ng"]')).toContainText("束でないファイルが混じっています");
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("束の名前の形ではありません");
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-received-ng-${tag}`) });
     // 置いたファイルを消すと、また ✓ だけ（次の CLI の確かめのため）

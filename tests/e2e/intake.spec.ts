@@ -11,7 +11,8 @@ test.afterAll(() => bridge?.stop());
 
 test("資料を落とし、質問に答え、計画を作って星取表で見る", async ({ page }, info) => {
   const tag = info.project.name;
-  test.setTimeout(120_000);
+  // 厚くしたサンプルは質問が多く、1 問ずつ答えるので時間がかかる
+  test.setTimeout(240_000);
 
   await test.step("資料を落とすと、全セルの行き先が出る。【架空】の印を読み取る", async () => {
     await openIntakeAndDrop(page, bridge.base, "【架空】第一清掃工場");

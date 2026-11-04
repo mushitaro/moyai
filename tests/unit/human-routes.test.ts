@@ -2,7 +2,7 @@
 // どの経路も、素の HTTP・タブの秘密の無い要求・Origin の無い要求・偽った Origin で秘密なし・使い終えた印・切れた印を拒む。拒む試験は消さない。
 // あわせて、正しいタブから、Documents が日本語の OneDrive の下にある PC の形で、確定 → 輪を作る → 検問所 → 送る → 確かめるを通す。
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -200,7 +200,10 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(sent).toMatchObject({ ok: true, seq: 1 });
     expect(sent.report.ok).toBe(true);
     const v = await call("ringVerify", { ringId: rc.ringId });
-    expect(v.report.lines.map((l: { kind: string; status: string }) => `${l.kind}:${l.status}`)).toEqual(["circle:ok", "member:ok", "bundle:ok"]);
+    // 仲間は 2 行：輪を作った人の鍵と、束に署名した施設の鍵（保管先の計画のフォルダ share/keys/。docs/plan.md §2.19）
+    expect(v.report.lines.map((l: { kind: string; status: string }) => `${l.kind}:${l.status}`)).toEqual(["circle:ok", "member:ok", "member:ok", "bundle:ok"]);
+    expect(readdirSync(join(docs, "MOYAI", "plans", plan.planId, "share", "keys"))).toEqual([`${rc.ringId}.json`]);
+    expect(readdirSync(join(docs, "MOYAI", "plans", plan.planId, "share", "sent"))).toEqual([`${rc.ringId}.json`]);
 
     // 版の履歴と戻す
     // EXPORT：確定した版の書き出しと差分レポートを読む。無い版は断る
@@ -306,16 +309,17 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
       expect(await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null })).toMatchObject({ ok: true, version: 1 });
       const answers = { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true };
 
-      // つなぐ前：誰からも見えるあなたは出るが、台帳の鍵が無いので束のバイト列は無く、送れない
+      // つなぐ前：誰からも見えるあなたは出るが、台帳の決まりを受け入れていないので束のバイト列は無く、送れない。施設の鍵はまだメモリだけ
       const pv0 = await call("ledgerPreview", { planId: plan.planId, answers });
-      expect(pv0).toMatchObject({ ok: true, github: { login: null, ready: true }, ledger: { repo: "ledger-owner/moyai-ledger", key: null } });
+      expect(pv0).toMatchObject({ ok: true, github: { login: null, ready: true }, ledger: { repo: "ledger-owner/moyai-ledger", key: expect.stringMatching(/^[0-9a-f]{16}$/) } });
+      expect(existsSync(join(extra, "置き場所", "plans", plan.planId, "share"))).toBe(false);
       expect(pv0.view.blockers).toContain("noKey");
       expect(pv0.view.bodyHash).toBeNull();
       expect(pv0.view.k).toBeGreaterThanOrEqual(5);
 
-      // GitHub につなぐ：台帳の鍵を作り、デバイスフローのコードを返す。人が github.com で入れるまで待つ
+      // GitHub につなぐ：台帳の決まりを受け入れ、デバイスフローのコードを返す。人が github.com で入れるまで待つ
       const st = await call("githubConnectStart", { packId: "waste-incineration" });
-      expect(st).toMatchObject({ ok: true, userCode: "WDJB-MJHT", keyCreated: true });
+      expect(st).toMatchObject({ ok: true, userCode: "WDJB-MJHT", acceptedNow: true });
       expect(await call("githubConnectState", {})).toMatchObject({ ok: true, state: "waiting" });
       stub.approve(); // 試験の台本が押した（人が github.com でコードを入れた）
       let state = "waiting";
