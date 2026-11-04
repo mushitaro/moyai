@@ -20,8 +20,8 @@
 | `outageRows` | 炉全体の定期整備と全休炉の行の書き方（`furnace.w`・`all.w` の言い方の候補と属性）。窓の無い業種は無くてよい |
 | `upgrade` | 基幹改良（3 年度にまたがる 1 件の契約）。`title`・`years`・`items`（機器の key）・`md`・`amountYen`・`v` |
 | `breakdowns` | 事後の補修の言い方。`[{for: [機器の key], w: [言い方]}]` |
-| `routine` | 日報にだけ書く細かな点検。`items: [{for, w}]`・`vendor` |
-| `vendors` | 業者の役 → 架空の名前の候補。役の名前は `catalog[].tasks[].v` と `spec.maker` から引く。`plant`（元請・窓の段の既定）・`machine`（事後の補修の既定）・`om`（運転管理）は、どの業種にも要る |
+| `routine` | 日報にだけ書く細かな点検。`items: [{for, w}]`・`vendor`・`contract`（結ぶ契約。`annual:om` など） |
+| `vendors` | 業者の役 → 架空の名前の候補。役の名前は `catalog[].tasks[].v` と `spec.maker` から引く。`plant`（元請・窓の段の既定）と `om`（運転管理）は、どの業種にも要る。`repair.default` の役も要る |
 | `annualContracts` | 年間の委託（下） |
 | `purchases` | 単価契約の購入。`[{title, v, yen: [下, 上]}]` |
 | `naming` | 号炉・号機・共通の書き方（下） |
@@ -142,9 +142,10 @@
 
 - `title` の `{fac}` は、施設の名前に置き換わります。
 - `key` は、作業の `ct: "annual:<key>"` から指します。指す作業が無い年は作りません。
-- `key: "om"`（運転管理の委託）は、作業が無くても毎年作ります。施設の性質が `contract: "OM"` なら、件名は「運営業務（長期包括）」に変わります。日報にだけある点検は、この契約に結びます。
+- `always: true` の委託（運転管理の `om`）は、作業が無くても毎年作ります。日報にだけある点検は、`routine.contract` の契約に結びます。
+- `titleIf: {axis, value, title}` は、施設の性質がその値のときに件名を替えます（ごみ焼却の O&M の「運営業務（長期包括）」）。
 
-`purchases` の `oneOff: true` は、毎年ではなく半分ほどの年に随意契約で買う物です。
+`purchases` の `oneOff: true` は、毎年ではなく半分ほどの年に随意契約で買う物です。`needAsset: "<機器の key>"` は、その機器がある年だけ買う物です（活性炭供給装置のある年の活性炭）。
 
 ## naming（書き方）
 
@@ -153,6 +154,48 @@
 - `common.chart`・`common.diary`：「共通」の書き方の候補。
 
 何番目を使うかは、施設の設定の `furnaceStyle`・`unitStyle`・`commonStyle` で選びます（references/facility-json.md）。個数の下限があります。`furnace.chart` は 3 つ以上、`common.chart` は 2 つ以上書きます（既定でその番号を使うため）。水処理の業種は「号炉」の場所に系列を入れます（`{n}系`・`{n}系列`）。
+
+## 業種の言葉（text）
+
+資料・README・user.md に出る業種の言葉です。コードはここからしか業種の言葉を引きません。無い言葉を使うと、名前を言って止まります。手本は `packs/waste-incineration/world.json`（号炉）と `packs/night-soil/world.json`（系列）です。
+
+| 項目 | 何に使うか | ごみ焼却 | し尿処理 |
+|---|---|---|---|
+| `unit` | 系列 n の正式な書き方（契約の件名・台帳・写真・日報の運転の欄・管理基準） | `{n}号炉` | `{n}系` |
+| `unitWord`・`theUnit` | 説明の文の中の言葉 | 号炉・その炉 | 系列・その系列 |
+| `allUnits` | 全部の系列（日報の機器の欄、仮の機器の名前） | 全炉 | 全系列 |
+| `pairRow` | 2 系列で 1 行にした行の言い方（2 系列以上の施設だけ） | 2 炉で 1 行 | 2 系列で 1 行 |
+| `chartTop`・`chartUnitsAll`・`chartHeads` | 星取表の頭の節・系列全体の節・列の見出しの既定（施設の設定で上書きできる） | | |
+| `upgradeMemo` | 基幹改良のセルのメモ（`{y0}`・`{y1}`・`{y2}`） | | |
+| `taskUnit`・`taskAll` | 系列の定期整備と全停止の作業の名前 | 定期整備・全休炉整備 | |
+| `contractUnit`・`contractAll` | まとめた工事の件名（`{fac}`・`{unit}`） | | |
+| `ganttUnit`・`ganttAll`・`ganttAllSingle` | 工程表の見出しの行 | | |
+| `diaryHeadPortrait`・`diaryHeadLandscape` | 日報の明細の見出し（A4 縦・横） | | |
+| `diaryStatusExtra` | 日報の運転の欄に足す項目 `{axis, label}`。無ければ null | 発電（turbine） | null |
+| `csvUnitHead` | 作業実績の CSV の系列の列の見出し | 号炉 | 系列 |
+| `specPerUnit` | 完成図書の「1 系列あたり」 | 1炉あたり | |
+| `doc.sourceNotes` | README の「出典と加工」の行 | | |
+| `doc.words`・`doc.userFacility` | user.md の「うちの施設」の文。下に書き方 | | |
+| `doc.diaryExample`・`diaryForms`・`routineExample`・`ganttShade`・`ganttHeads`・`partsExample`・`specNamesExample`・`ledgerCodeExample` | README と user.md の例 | | |
+
+`doc.userFacility` は文の並びです。
+
+- 各文は `{t, when}` です。`when` は無し・`upgrade`（基幹改良のある施設だけ）・`noUpgrade` のどれかです。
+- `t` の中では次の名前が使えます。
+  - `{p[軸]}`：施設の性質
+  - `{w[軸]}`：`doc.words[軸]` で性質の値を言葉にしたもの（`"*"` は、そのほかの値）
+  - `{F}`：系列の数
+  - `{total}`：`profileAnswer.total` の値 × 系列の数
+  - `{up0}`・`{upN}`：基幹改良の始めと終わりの年度
+
+## profileAnswer・trades・repair・specCount
+
+| 項目 | 中身 |
+|---|---|
+| `profileAnswer` | `copy`（そのまま残す軸）、`total`（`{from, key, band: {key, edges, names}}`。1 系列あたりの値 × 系列の数と、その帯）、`yesNo`（真偽を YES・NO にする軸）。無ければ、施設の profile の軸をすべて残す |
+| `trades` | `names`（職種）、`byRole`（業者の役 → 職種ごとの重み）、`default`。日報の A4 横の帳票を使う施設に要る |
+| `repair` | `own`（事後の補修を自分でする業者の役）と `default`（ほかの機器の補修の役） |
+| `specCount` | 完成図書の数量の単位。`default`・`bySuffix`（名前の終わり）・`byKey`（機器の key）。無ければ「台」 |
 
 ## コードが読んでいない項目
 

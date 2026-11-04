@@ -34,7 +34,7 @@
 
 し尿処理：`method`・`methodName`・`capacity_kl_per_day`・`furnaces`（系列の数）・`commissioned`。
 
-軸と順はパックの `pack.json` の `profile` に従います。`catalog[].need` がこの値で機器を選びます。
+軸と順はパックの `pack.json` の `profile` に従います。`catalog[].need` がこの値で機器を選びます。世界の正解にどの軸を残すかは、パックの `world.json` の `profileAnswer` で決まります。新しい業種で軸を足したら、そこにも足します。
 
 ### overrides（わざと入れる欠け）
 
