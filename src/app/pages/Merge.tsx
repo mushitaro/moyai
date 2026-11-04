@@ -64,7 +64,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 版の下書きが無いあいだは白紙（資料のシートだけ）。開発と試験の見本（?plan=）は、星取表のシートが読んで作業中の計画に置く
   const devSample = new URLSearchParams(location.search).has("plan");
   const current: MergeSheet = !plan ? (devSample && (sheet ?? "chart") === "chart" ? "chart" : "files") : (sheet ?? "chart");
-  const nextVersion = (plan?.version ?? 0) + 1;
+  // 見出しの版：承認を頼まれた人には、頼まれた版（いちばん新しい版）を、ほかは次につくる版を出す
+  const nextVersion = awaitingMe && st?.latest ? st.latest.version : (plan?.version ?? 0) + 1;
   const an = ws.fileCount ? ws.analysis() : null;
   const openQuestions = an ? an.open.length : 0;
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length;

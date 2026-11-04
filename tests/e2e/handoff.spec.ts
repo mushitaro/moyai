@@ -85,6 +85,8 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await expect(pb.getByTestId("plan-name")).toContainText("【架空】");
     await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "awaitingApproval");
     await expect(pb.getByTestId("approve-open")).toBeVisible();
+    // 見出しの版は、承認を頼まれた版（第 1 版）
+    await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
     await pb.screenshot({ path: shot(`handoff-approver-${tag}`) });
   });
 
