@@ -236,12 +236,14 @@ class PdfAndPhotos(unittest.TestCase):
                 self.assertIn(FICT, doc.get_metadata_value("Author"))
                 for i in range(len(doc)):
                     text = doc[i].get_textpage().get_text_range()
+                    # セルの中で折り返した字は、取り出すと改行が挟まる（例「延べ24」と「人」の間）。中身は 1 つのセルの字なので、改行を外して照らす
+                    flat = text.replace("\r", "").replace("\n", "")
                     self.assertIn(FICT + rep["title"].removeprefix(FICT), text)
                     self.assertIn("No.", text)
                     self.assertIn("（続き）" in text, [i > 0])
                     for row in rep["rows"]:
                         if row["page"] == i + 1:
-                            self.assertIn(row["effort_text"], text)
+                            self.assertIn(row["effort_text"], flat)
                 last = doc[len(doc) - 1].get_textpage().get_text_range()
                 self.assertIn("合 計", last)
                 self.assertIn(str(rep["total"]["man_days"]), last)

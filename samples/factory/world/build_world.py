@@ -38,19 +38,24 @@ def build_equipment(rules: dict) -> list[dict]:
     items = []
     for ti, t in enumerate(rules["equipment_templates"]):
         gi = group_idx[(t["system"], tuple(t.get("groups", [])))]
-        if t["scope"] == "furnace":
-            for f in rules["facility"]["furnaces"]:
-                items.append((sys_idx[t["system"]], gi, f["no"], ti, t, f))
-        else:
-            items.append((sys_idx[t["system"]], gi, 0, ti, t, None))
-    items.sort(key=lambda x: x[:4])
+        # 同じ機器を複数台（units：A・B…）。名前と機器番号の両方に号機の字を入れ、資料をまたいで見分けられるようにする
+        units = t.get("units") or [None]
+        for ui, u in enumerate(units):
+            if t["scope"] == "furnace":
+                for f in rules["facility"]["furnaces"]:
+                    items.append((sys_idx[t["system"]], gi, f["no"], ti, ui, t, f, u))
+            else:
+                items.append((sys_idx[t["system"]], gi, 0, ti, ui, t, None, u))
+    items.sort(key=lambda x: x[:5])
     out = []
-    for i, (_, _, _, _, t, f) in enumerate(items, 1):
+    for i, (_, _, _, _, _, t, f, u) in enumerate(items, 1):
+        base = t["name"] + (f" {u}" if u else "")
         out.append({
             "id": f"E{i:02d}",
             "key": t["key"],
-            "base_name": t["name"],
-            "name": (f["label"] + " " if f else "") + t["name"],
+            **({"unit": u} if u else {}),
+            "base_name": base,
+            "name": (f["label"] + " " if f else "") + base,
             "system_key": t["system"],
             "system": sys_name[t["system"]],
             "path": [sys_name[t["system"]]] + list(t.get("groups", [])),
@@ -83,7 +88,7 @@ def generate_works(rules: dict, equipment: list[dict]) -> list[dict]:
     fy0, fy1 = rules["fiscal_years"]["from"], rules["fiscal_years"]["to"]
     by_key = {}
     for e in equipment:
-        by_key.setdefault((e["key"], e["furnace"]), e)
+        by_key.setdefault((e["key"], e["furnace"]), []).append(e)
     patterns = {p["id"]: p for p in rules["patterns"]}
     draws = {}  # (pattern, furnace, fy) -> (start, end)  同じ日程を「with」で使う
     works = []
@@ -92,17 +97,17 @@ def generate_works(rules: dict, equipment: list[dict]) -> list[dict]:
         draws[(p["id"], furnace_no, fy)] = (start, end)
         crew_cfg = p["crew"]
         for key in p["targets"]:
-            e = by_key[(key, furnace_no if p["per"] == "furnace" else None)]
-            crew = crew_cfg["base"] + rng.randint(-crew_cfg["jitter"], crew_cfg["jitter"])
-            days = (end - start).days + 1
-            works.append({
-                "pattern": p["id"], "equipment_id": e["id"], "fiscal_year": fiscal_year(start),
-                "attr": p["attr"], "tag": p["tag"], "label": p["label"],
-                "start": start.isoformat(), "end": end.isoformat(),
-                "duration_days": days, "crew": crew, "man_days": crew * days,
-                "contractor": p.get("contractor"), "bundle": p["bundle"],
-                "note_text": p.get("note_text"),
-            })
+            for e in by_key[(key, furnace_no if p["per"] == "furnace" else None)]:
+                crew = crew_cfg["base"] + rng.randint(-crew_cfg["jitter"], crew_cfg["jitter"])
+                days = (end - start).days + 1
+                works.append({
+                    "pattern": p["id"], "equipment_id": e["id"], "fiscal_year": fiscal_year(start),
+                    "attr": p["attr"], "tag": p["tag"], "label": p["label"],
+                    "start": start.isoformat(), "end": end.isoformat(),
+                    "duration_days": days, "crew": crew, "man_days": crew * days,
+                    "contractor": p.get("contractor"), "bundle": p["bundle"],
+                    "note_text": p.get("note_text"),
+                })
 
     # with 参照があるので、with でない型を先に、with の型を後に組む
     ordered = sorted(rules["patterns"], key=lambda p: p["schedule"]["kind"] == "with")

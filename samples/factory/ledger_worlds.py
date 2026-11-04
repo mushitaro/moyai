@@ -1,6 +1,6 @@
 """公開の台帳のデモの架空の施設の正解の世界を組む（docs/plan.md §2.5・§2.8）。
 
-world/ledger-facilities.json の施設ごとに、土台の決まり（rules.json か rules-fictional-2.json）に差だけを当て、
+world/ledger-facilities.json の施設ごとに、土台の決まり（rules-ledger-base.json か rules-fictional-2.json）に差だけを当て、
 build_world で正解の世界を組んで samples/truth/<pack>/<施設>/world.json に書く。資料（Excel・CSV・PDF・写真）は書かない
 （取り込みを通すのは fictional-1・fictional-2 だけ。台帳の施設は、scripts/ledger/ の道具が正解の世界から直接書いた計画を使う）。
 乱数の種は施設ごとに決めてあり、もう一度走らせると同じバイト列になる。

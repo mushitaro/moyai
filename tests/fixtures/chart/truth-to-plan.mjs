@@ -211,7 +211,8 @@ export function truthToPlan(id, opts = {}) {
 export const DEV_PLANS = {
   "fictional-1": () => truthToPlan("fictional-1"),
   "fictional-2": () => truthToPlan("fictional-2"),
-  "fictional-1-x40": () => truthToPlan("fictional-1", { scale: 40 }),
+  // 厚い計画の重さを測る見本：機器 1,000 余り（fictional-1 を計画 §2.5 の厚さ〔機器 217〕にしたので 5 倍。前は 25 の 40 倍）
+  "fictional-1-x5": () => truthToPlan("fictional-1", { scale: 5 }),
 };
 
 export const DEV_PLAN_DIR = join("dist", "app", "assets", "dev-plans");

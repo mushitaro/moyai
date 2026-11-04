@@ -8,7 +8,8 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     environment: "node",
-    testTimeout: 20_000,
-    hookTimeout: 20_000,
+    // 工場の資料を計画 §2.5 の厚さ（機器 217・作業 2,120）にしたので、取り込みを端まで動かす試験は、並べて走らせると 20 秒を越える
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
   },
 });

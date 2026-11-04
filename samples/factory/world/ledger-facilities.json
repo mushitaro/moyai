@@ -5,7 +5,7 @@
   "facilities": [
     {
       "id": "ledger-01",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261101,
       "name": "【架空】アオツキ清掃工場",
       "contractor": "【架空】アオツキ保全",
@@ -19,7 +19,7 @@
     },
     {
       "id": "ledger-02",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261102,
       "name": "【架空】ミナセラ環境センター",
       "contractor": "【架空】ミナセラ整備",
@@ -38,7 +38,7 @@
     },
     {
       "id": "ledger-03",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261103,
       "name": "【架空】ハルノベ環境工場",
       "contractor": "【架空】ハルノベ保全",
@@ -55,7 +55,7 @@
     },
     {
       "id": "ledger-04",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261104,
       "name": "【架空】ソラヅカクリーンプラント",
       "contractor": "【架空】ソラヅカ整備",
@@ -86,7 +86,7 @@
     },
     {
       "id": "ledger-05",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261105,
       "name": "【架空】キヨミネ環境センター",
       "contractor": "【架空】キヨミネ保全",
@@ -103,7 +103,7 @@
     },
     {
       "id": "ledger-06",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261106,
       "name": "【架空】ユズリハ清掃工場",
       "contractor": "【架空】ユズリハ整備",
@@ -134,7 +134,7 @@
     },
     {
       "id": "ledger-07",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261107,
       "name": "【架空】カザミドリ環境プラザ",
       "contractor": "【架空】カザミドリ保全",
@@ -165,7 +165,7 @@
     },
     {
       "id": "ledger-08",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261108,
       "name": "【架空】トワノモリ清掃センター",
       "contractor": "【架空】トワノモリ運営",
@@ -179,7 +179,7 @@
     },
     {
       "id": "ledger-09",
-      "base": "rules.json",
+      "base": "rules-ledger-base.json",
       "seed": 20261109,
       "name": "【架空】ナギサワ環境工場",
       "contractor": "【架空】ナギサワ運営",

@@ -116,7 +116,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       expect(r.conflicts).toBe(0);
       expect(r.matched).toBeGreaterThan(80);
       expect(r.unmappedNodes).toBe(0);
-      expect(r.unmappedWorks).toBe(0);
+      // 星取表の印に点検と分解整備・取替が混ざる補機（44 行）は、利用者が答えられないので、名前の無い作業の属性を置かない
+      expect(r.unmappedWorks).toBe(44);
       expect(r.version).toBe(version + 1);
       for (const e of r.examples) expect(e.rowRef).toMatch(/^[nw]:[a-z0-9-]+$/);
       wrongRule = r.rules[r.rules.length - 1].ruleId;
@@ -136,18 +137,18 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("crosswalk-reject").first()).toBeDisabled();
       expect(await acceptRules(page, HUMAN, { ruleId: wrongRule, reason: REJECT })).toBe(ruleCount);
       await expect(page.locator('[data-testid="crosswalk-rule"][data-state="proposed"]')).toHaveCount(0);
-      // 未当てはめ：断った規則の作業（送風機の名前の無い作業）が残り、件数が出る
+      // 未当てはめ：断った規則の作業（送風機の名前の無い作業 4）と、印の混ざる補機の作業（44）が残り、件数が出る
       const un = page.getByTestId("crosswalk-unmapped");
       await expect(un).toHaveAttribute("data-nodes", "0");
-      await expect(un).toHaveAttribute("data-works", "4");
+      await expect(un).toHaveAttribute("data-works", "48");
       expect(Number(await un.getAttribute("data-records"))).toBeGreaterThan(0);
-      await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-nodes", "25");
+      await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-nodes", "217");
       await page.screenshot({ path: shot(`slice-crosswalk-accepted-${tag}`), fullPage: true });
       // AI からも、受けた・断ったが見える（変えることはできない）
       const s = await call(c, "intake_survey", { part: "crosswalk" });
       expect(s.crosswalk.proposals.filter((p: any) => p.state === "accepted")).toHaveLength(ruleCount - 1);
       expect(s.crosswalk.proposals.find((p: any) => p.ruleId === wrongRule).state).toBe("rejected");
-      expect(s.crosswalk.unmapped.works).toBe(4);
+      expect(s.crosswalk.unmapped.works).toBe(48);
     });
 
     let unmappedRecords = 0;
@@ -187,10 +188,11 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       // 確定した版に、人が受けた当てはめが残る（作者は AI のまま、根拠に人の理由）
       const rec = JSON.parse(readFileSync(join(versions, "000001.json"), "utf8"));
       const accepted = rec.plan.assets.filter((a: any) => a.commonItemAccepted);
-      expect(accepted).toHaveLength(25);
+      expect(accepted).toHaveLength(217);
       expect(accepted.every((a: any) => a.commonItemAuthor === "ai" && String(a.commonItemBasis).includes(HUMAN))).toBe(true);
       expect(rec.plan.works.filter((w: any) => w.attribute !== null && !w.attributeAccepted)).toEqual([]);
-      expect(rec.plan.works.filter((w: any) => w.attribute === null)).toHaveLength(4);
+      // 属性の無い作業：断った規則の送風機 4 と、印の混ざる補機 44
+      expect(rec.plan.works.filter((w: any) => w.attribute === null)).toHaveLength(48);
       // 確定すると、人が見る様式の Excel と差分レポートが版ごとに足される。撮った画面の隣に写して残す（Excel で開いて見るため）
       const planDir = join(root, "plans", plans[0]!);
       expect(readdirSync(join(planDir, "exports"))).toEqual(["000001-plan.xlsx"]);

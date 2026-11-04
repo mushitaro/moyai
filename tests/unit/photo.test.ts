@@ -205,7 +205,7 @@ describe("格子の型と位置：外れたものは直さずに断る", () => {
     expect(r).toEqual({ ok: true, data: expect.objectContaining({ mode: "place", imageRef: PHOTO_NAME, placedCells: grid.cells.length, needsReview: true, image: null }) });
     const reading = ws.photoBook.get(PHOTO_NAME)!.reading!;
     expect(reading.width).toBe(1800);
-    expect(reading.height).toBe(655);
+    expect(reading.height).toBe(jpegSize(photoBytes())!.height);
     expect(reading.cells).toHaveLength(grid.cells.length);
     for (const c of reading.cells) {
       expect(c.author).toBe("ai_reading");
@@ -215,7 +215,9 @@ describe("格子の型と位置：外れたものは直さずに断る", () => {
     const src = ws.analysis().sources.find((s) => s.file === PHOTO_NAME)!;
     expect(src.format).toBe("photo");
     expect(src.sheets[0]?.cells.find((c) => c.ref === "A1")?.text).toBe("【架空】定期整備 工事報告書");
-    expect(src.photo?.boxes.A1).toEqual([140, 192, 340, 40]);
+    // 道具の位置は高さ 655 の画像で決めたもの。受け取った画像の高さに合わせて縦を縮める
+    const ky = jpegSize(photoBytes())!.height / 655;
+    expect(src.photo?.boxes.A1).toEqual([140, 192 * ky, 340, 40 * ky]);
     expect(src.photo?.confirmed).toBe(false);
   });
 });
@@ -395,7 +397,11 @@ describe("渡す大きさ：長辺 1,568〜2,000 px（縦横の比は変えな�
 
   it("工場の写真は、長辺 1,800 px・100 KB 以下の JPEG（この試験で渡す画像にそのまま使えることを確かめる）", () => {
     const b = photoBytes();
-    expect(jpegSize(b)).toEqual({ width: 1800, height: 655 });
+    // 長辺は 1,800 px（書き手が決める）。高さは報告書の頁の中身で変わるので、長辺より短く、縦横の比が横長であることだけを見る
+    const sz = jpegSize(b)!;
+    expect(sz.width).toBe(1800);
+    expect(sz.height).toBeGreaterThan(0);
+    expect(sz.height).toBeLessThan(sz.width);
     expect(b.length).toBeLessThanOrEqual(PHOTO_SEND.targetBytes);
     expect(PHOTO_SEND.targetBytes).toBe(100 * 1024);
   });

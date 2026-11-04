@@ -116,7 +116,7 @@ describe("人が許した画像だけを、MCP の画像の中身で 1 回渡す
     expect(r.content[1]).toEqual({ type: "image", data: B64, mimeType: "image/jpeg" });
     // 画像そのものは JSON に入れない（構造化の結果は小さな JSON だけ）
     expect(JSON.stringify(r.structuredContent)).not.toContain(B64.slice(0, 64));
-    expect(r.structuredContent).toMatchObject({ mode: "receive", imageRef: PHOTO_NAME, needsReview: true, image: { width: 1800, height: 655, bytes: BYTES.length } });
+    expect(r.structuredContent).toMatchObject({ mode: "receive", imageRef: PHOTO_NAME, needsReview: true, image: { width: SIZE.width, height: SIZE.height, bytes: BYTES.length } });
     const got = Uint8Array.from(Buffer.from(r.content[1].data, "base64"));
     expect(sha(got)).toBe(PERMIT.sha256);
     expect(jpegSize(got)).toEqual(SIZE);

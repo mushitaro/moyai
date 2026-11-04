@@ -9,25 +9,39 @@
           "row_no": 1,
           "text": "延べ24人",
           "work_ids": [
-            "W0116"
+            "W1276"
           ]
         },
         {
           "kind": "check",
           "row_no": 2,
-          "text": "36人・日",
+          "text": "48人・日",
           "work_ids": [
-            "W0117"
+            "W1277"
           ]
         },
         {
-          "kind": "circle",
-          "row_no": 4,
-          "text": "60人・日",
+          "kind": "check",
+          "row_no": 3,
+          "text": "192時間",
           "work_ids": [
-            "W0119",
-            "W0120",
-            "W0121"
+            "W1288"
+          ]
+        },
+        {
+          "kind": "check",
+          "row_no": 4,
+          "text": "36人・日",
+          "work_ids": [
+            "W1289"
+          ]
+        },
+        {
+          "kind": "check",
+          "row_no": 5,
+          "text": "384時間",
+          "work_ids": [
+            "W1316"
           ]
         }
       ],
@@ -35,11 +49,11 @@
       "source_pdf": "reports/report-f1-fy2025.pdf",
       "source_report": "R-F1-FY2025",
       "work_ids": [
-        "W0116",
-        "W0117",
-        "W0119",
-        "W0120",
-        "W0121"
+        "W1276",
+        "W1277",
+        "W1288",
+        "W1289",
+        "W1316"
       ]
     },
     {
@@ -50,7 +64,7 @@
           "row_no": 1,
           "text": "25人工",
           "work_ids": [
-            "W0144"
+            "W1563"
           ]
         }
       ],
@@ -58,7 +72,7 @@
       "source_pdf": "reports/report-f2-fy2026.pdf",
       "source_report": "R-F2-FY2026",
       "work_ids": [
-        "W0144"
+        "W1563"
       ]
     }
   ],

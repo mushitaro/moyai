@@ -1,0 +1,199 @@
+{
+  "schema": "moyai.factory.rules/0",
+  "world_version": "v1",
+  "seed": 20261001,
+  "today": "2026-10-01",
+  "fiscal_years": { "from": 2019, "to": 2028 },
+  "plan_window": { "fy_from": 2026, "fy_to": 2028 },
+  "man_day_hours": 8,
+  "facility": {
+    "id": "fictional-1",
+    "pack": "waste-incineration",
+    "name": "【架空】みどり台クリーンセンター",
+    "furnace_type": "ストーカ式",
+    "furnaces": [
+      { "no": 1, "label": "1号炉" },
+      { "no": 2, "label": "2号炉" }
+    ]
+  },
+  "systems": [
+    { "key": "recv", "name": "受入供給設備" },
+    { "key": "comb", "name": "燃焼設備" },
+    { "key": "cool", "name": "燃焼ガス冷却設備" },
+    { "key": "flue", "name": "排ガス処理設備" },
+    { "key": "draft", "name": "通風設備" },
+    { "key": "heat", "name": "余熱利用設備" },
+    { "key": "ashout", "name": "灰出し設備" },
+    { "key": "elec", "name": "電気設備" },
+    { "key": "inst", "name": "計装設備" }
+  ],
+  "equipment_templates": [
+    { "key": "scale", "name": "計量機", "system": "recv", "scope": "common", "code": "WI.RECV.SCALE", "tag": "SCL", "install": 2002, "spec": ["ロードセル式 30 t", "2 台"] },
+    { "key": "crane", "name": "ごみクレーン", "system": "recv", "scope": "common", "code": "WI.RECV.CRANE", "tag": "CRN", "install": 2002, "spec": ["バケット容量 4 m3", "吊上荷重 6 t"] },
+    { "key": "shredder", "name": "可燃性粗大ごみ切断機", "system": "recv", "scope": "common", "code": "WI.RECV.SHREDDER", "tag": "SHR", "install": 2002, "spec": ["2 軸せん断式", "処理能力 5 t/h"] },
+    { "key": "grate", "name": "ストーカ", "system": "comb", "scope": "furnace", "code": "WI.COMB.STK_GRATE", "tag": "STK", "install": 2002, "spec": ["階段式 3 段", "火格子面積 18 m2"] },
+    { "key": "furnace", "name": "焼却炉本体", "system": "comb", "scope": "furnace", "code": "WI.COMB.STK_FURNACE", "tag": "FNC", "install": 2002, "spec": ["処理能力 75 t/日", "耐火物 キャスタブル"], "parts": [{"name": "耐火物", "spec": ["炉壁 キャスタブル", "補修周期 3 年"]}] },
+    { "key": "boiler", "name": "ボイラ", "system": "cool", "scope": "furnace", "code": "WI.COOL.BOILER", "tag": "BLR", "install": 2002, "spec": ["自然循環式", "蒸気圧力 3.0 MPa"] },
+    { "key": "condenser", "name": "蒸気復水器", "system": "cool", "scope": "common", "code": "WI.COOL.CONDENSER", "tag": "CND", "install": 2003, "spec": ["空冷式", "処理蒸気量 25 t/h"] },
+    { "key": "dust", "name": "集じん装置", "system": "flue", "scope": "furnace", "code": "WI.FLUE.DUST", "tag": "BGF", "install": 2002, "spec": ["ろ過式", "ろ布面積 1,200 m2"] },
+    { "key": "hcl", "name": "HCL、SOx 除去設備", "system": "flue", "scope": "furnace", "code": "WI.FLUE.HCL_SOX", "tag": "DSC", "install": 2002, "spec": ["乾式 消石灰吹込", "処理ガス量 28,000 m3N/h"] },
+    { "key": "nox", "name": "NOx 除去設備", "system": "flue", "scope": "furnace", "code": "WI.FLUE.NOX", "tag": "NXR", "install": 2008, "spec": ["無触媒脱硝", "尿素水噴霧"] },
+    { "key": "fdf", "name": "押込送風機", "system": "draft", "scope": "furnace", "code": "WI.DRAFT.FDF", "tag": "FDF", "install": 2002, "spec": ["ターボ形", "風量 1,200 m3/min"], "parts": [{"name": "電動機", "spec": ["90 kW"]}, {"name": "旧電動機", "spec": ["90 kW"], "furnace_only": 2, "remark": "2021年12月 撤去（新品に取替）"}] },
+    { "key": "idf", "name": "誘引通風機", "system": "draft", "scope": "furnace", "code": "WI.DRAFT.IDF", "tag": "IDF", "install": 2002, "spec": ["ターボ形", "風量 2,100 m3/min"], "parts": [{"name": "電動機", "spec": ["200 kW 4 極"]}, {"name": "軸受", "spec": ["すべり軸受"]}] },
+    { "key": "turbine", "name": "蒸気タービン発電設備", "system": "heat", "scope": "common", "code": "WI.HEAT.TURBINE", "tag": "TBN", "install": 2003, "spec": ["復水式", "定格出力 1,990 kW"] },
+    { "key": "ashcrane", "name": "灰クレーン", "system": "ashout", "scope": "common", "code": "WI.ASHOUT.ASH_CRANE", "tag": "ACR", "install": 2002, "spec": ["バケット容量 2 m3", "吊上荷重 4 t"] },
+    { "key": "substation", "name": "受変電配電設備", "system": "elec", "scope": "common", "code": "WI.ELEC.SUBSTATION", "tag": "SUB", "install": 2002, "spec": ["受電 6.6 kV", "変圧器 3 台"] },
+    { "key": "generator", "name": "発電機", "system": "elec", "scope": "common", "code": "WI.ELEC.GENERATOR", "tag": "GEN", "install": 2003, "spec": ["非常用 ディーゼル", "出力 300 kVA"] },
+    { "key": "dcs", "name": "DCS", "system": "inst", "scope": "common", "code": "WI.INST.DCS", "tag": "DCS", "install": 2002, "spec": ["監視操作卓 3 台", "制御盤 4 面"] }
+  ],
+  "documents": ["ledger", "hoshitori", "reports", "daily", "photos"],
+  "ledger": { "numbering": true, "name_format": "{name}（{tag}）", "tag_furnace_suffix": true, "install_style": "seireki" },
+  "report": {
+    "patterns": ["P-OVH", "P-PREC", "P-FLUE", "P-DRAFT"],
+    "bundle_patterns": ["P-FLUE"],
+    "report_labels": { "P-OVH": "定期整備（分解・点検）", "P-PREC": "精密機能検査 実施記録" },
+    "rows_per_page": 5,
+    "title": "定期整備 工事報告書",
+    "photos": [ { "furnace": 1, "fy": 2025 }, { "furnace": 2, "fy": 2026 } ]
+  },
+  "contractors": [
+    { "id": "C1", "name": "【架空】みどり保全", "from": "2022-04-01" }
+  ],
+  "outage": {
+    "note": "全休止。2 炉とも止めて、共通の設備を整備する年の決まり",
+    "years": [2020, 2023, 2027],
+    "start_md": "09-14",
+    "days": 14,
+    "furnace_overhaul": {
+      "1": { "anchor": "outage_start", "offset_days": -14 },
+      "2": { "anchor": "outage_end", "offset_days": 3 }
+    }
+  },
+  "patterns": [
+    {
+      "id": "P-OVH", "label": "定期整備（分解）", "attr": "OVERHAUL", "tag": "ANNUAL",
+      "targets": ["grate", "furnace", "boiler"], "per": "furnace",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": { "1": "04-06", "2": "10-05" }, "follow_outage": true },
+      "days": { "1": 12, "2": 12 }, "crew": { "base": 3, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-PREC", "label": "精密機能検査", "attr": "INSPECT", "tag": "PRECISION",
+      "targets": ["furnace"], "per": "furnace",
+      "cycle": { "every": 3, "from": { "1": 2019, "2": 2020 } },
+      "schedule": { "kind": "fixed", "month_day": { "1": "06-01", "2": "08-17" } },
+      "days": { "1": 5, "2": 5 }, "crew": { "base": 4, "jitter": 1 },
+      "contractor": "C1", "bundle": false
+    },
+    {
+      "id": "P-FLUE", "label": "排ガス処理設備の点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["dust", "hcl", "nox"], "per": "furnace",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "with", "pattern": "P-OVH" },
+      "crew": { "base": 2, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-DRAFT", "label": "通風機の分解整備", "attr": "OVERHAUL", "tag": "ANNUAL",
+      "targets": ["fdf", "idf"], "per": "furnace",
+      "cycle": { "every": 2, "from": { "1": 2019, "2": 2020 } },
+      "schedule": { "kind": "with", "pattern": "P-OVH" },
+      "crew": { "base": 3, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-CRANE", "label": "ごみクレーンの年次点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["crane"], "per": "common",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "05-12" },
+      "days": 3, "crew": { "base": 3, "jitter": 0 },
+      "contractor": "C1", "bundle": false
+    },
+    {
+      "id": "P-SCALE", "label": "計量機の定期検査", "attr": "INSPECT", "tag": "LEGAL",
+      "targets": ["scale"], "per": "common",
+      "cycle": { "every": 2, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "07-08" },
+      "days": 2, "crew": { "base": 2, "jitter": 0 },
+      "contractor": "C1", "bundle": false
+    },
+    {
+      "id": "P-SHRED", "label": "切断機の点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["shredder"], "per": "common",
+      "cycle": { "every": 2, "from": 2020 },
+      "schedule": { "kind": "fixed", "month_day": "07-14" },
+      "days": 3, "crew": { "base": 2, "jitter": 1 },
+      "contractor": "C1", "bundle": false
+    },
+    {
+      "id": "P-ASHCRANE", "label": "灰クレーンの年次点検", "attr": "INSPECT", "tag": "ANNUAL",
+      "targets": ["ashcrane"], "per": "common",
+      "cycle": { "every": 1, "from": 2019 },
+      "schedule": { "kind": "fixed", "month_day": "05-26" },
+      "days": 3, "crew": { "base": 2, "jitter": 0 },
+      "contractor": "C1", "bundle": false
+    },
+    {
+      "id": "P-OUT-ELEC", "label": "全休止の電気・計装の点検", "attr": "INSPECT", "tag": "SHUTDOWN",
+      "targets": ["substation", "generator", "dcs"], "per": "common",
+      "schedule": { "kind": "outage" },
+      "crew": { "base": 4, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-OUT-TURB", "label": "全休止のタービン系の分解整備", "attr": "OVERHAUL", "tag": "SHUTDOWN",
+      "targets": ["turbine", "condenser"], "per": "common",
+      "schedule": { "kind": "outage" },
+      "crew": { "base": 5, "jitter": 1 },
+      "contractor": "C1", "bundle": true
+    },
+    {
+      "id": "P-UPG-DCS", "label": "DCS の更新（基幹改良）", "attr": "UPGRADE", "tag": "MAJOR",
+      "targets": ["dcs"], "per": "common",
+      "schedule": { "kind": "dates", "dates": [["2025-10-14", "2026-02-27"]] },
+      "crew": { "base": 4, "jitter": 0 },
+      "contractor": "C1", "bundle": false, "note_text": "基幹改良"
+    },
+    {
+      "id": "P-REPL-PAST", "label": "押込送風機の電動機取替", "attr": "REPLACE", "tag": "REPLACEMENT",
+      "targets": ["fdf"], "per": "furnace", "only_furnace": 2,
+      "schedule": { "kind": "dates", "dates": [["2021-12-06", "2021-12-17"]] },
+      "crew": { "base": 4, "jitter": 0 },
+      "contractor": null, "bundle": false, "note_text": "電動機取替"
+    },
+    {
+      "id": "P-REPL-FUT", "label": "誘引通風機の取替", "attr": "REPLACE", "tag": "REPLACEMENT",
+      "targets": ["idf"], "per": "furnace", "only_furnace": 1,
+      "schedule": { "kind": "dates", "dates": [["2027-02-01", "2027-02-26"]] },
+      "crew": { "base": 5, "jitter": 0 },
+      "contractor": "C1", "bundle": false, "note_text": "取替"
+    }
+  ],
+  "inspections": [
+    { "id": "INSP-INTERVAL", "text": "精密機能検査の間が 3 年を越える（通知、第三の 11）" },
+    { "id": "INSP-NOACTUAL", "text": "過去の予定に実績が無い" },
+    { "id": "INSP-NOPLAN", "text": "計画の窓に予定が 1 つも無い機器" }
+  ],
+  "interval_limit_years": 3,
+  "gap_injections": [
+    { "id": "GAP-01", "inspection": "INSP-INTERVAL", "op": "remove", "match": { "pattern": "P-PREC", "furnace": 1, "fy": 2022 } },
+    { "id": "GAP-02", "inspection": "INSP-INTERVAL", "op": "remove", "match": { "pattern": "P-PREC", "furnace": 2, "fy": 2023 } },
+    { "id": "GAP-03", "inspection": "INSP-NOACTUAL", "op": "unrecord", "match": { "pattern": "P-CRANE", "fy": 2022 } },
+    { "id": "GAP-04", "inspection": "INSP-NOACTUAL", "op": "unrecord", "match": { "pattern": "P-FLUE", "equip_key": "dust", "furnace": 2, "fy": 2024 } },
+    { "id": "GAP-05", "inspection": "INSP-NOPLAN", "op": "remove", "match": { "pattern": "P-SCALE", "fy": 2027 } },
+    { "id": "GAP-06", "inspection": "INSP-NOPLAN", "op": "remove", "match": { "pattern": "P-SHRED", "fy": 2028 } }
+  ],
+  "dirt": {
+    "sheet": {
+      "year_label_styles": { "2019": "short", "2020": "short", "2021": "long", "2022": "seireki", "2023": "short_nendo", "2024": "long", "2025": "seireki", "2026": "short", "2027": "long", "2028": "seireki" },
+      "unknown_symbol": { "symbol": "★", "match": { "pattern": "P-REPL-FUT" }, "means": "PLANNED" }
+    },
+    "csv": {
+      "halfwidth_kana_rate": 0.35,
+      "brackets_mixed_rate": 0.5,
+      "furnace_spellings": ["{n}号炉", "{zn}号炉", "{n}号機", "No.{n}炉"],
+      "missing_note": "実績の無い行は書かない"
+    }
+  }
+}

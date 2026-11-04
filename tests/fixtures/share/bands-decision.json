@@ -28,20 +28,20 @@
   },
   "truth": {
     "fictional-1": {
-      "chunks": { "ring": 13, "ledger": 12 },
-      "interval": { "I1": 5, "I2": 2, "I3": 3, "I6_7": 1 },
-      "intervalRaw": [1, 2, 3, 6],
-      "manDays": { "W10_29": 1, "W1_9": 2, "W30_99": 1 },
-      "manDaysRaw": [6, 9, 22.5, 48],
-      "manDaysNearEdge": 1,
-      "days": { "D1_3": 2, "D4_7": 1, "D8_14": 1 },
-      "daysRaw": [3, 5, 12],
-      "daysNearEdge": 0,
-      "ageWouldBe": { "A15_19": 11, "A20_29": 1 },
+      "chunks": { "ring": 21, "ledger": 20 },
+      "interval": { "I1": 12, "I2": 4, "I3": 1 },
+      "intervalRaw": [1, 2, 3],
+      "manDays": { "W10_29": 5, "W1_9": 4, "W30_99": 3 },
+      "manDaysRaw": [2, 4, 6, 9, 10, 12, 22.5, 24, 30, 36, 48],
+      "manDaysNearEdge": 3,
+      "days": { "D1_3": 4, "D4_7": 4, "D8_14": 4 },
+      "daysRaw": [1, 2, 3, 4, 5, 12],
+      "daysNearEdge": 2,
+      "ageWouldBe": { "A15_19": 17, "A20_24": 2, "A20_29": 1 },
       "ageInBundles": { "ring": 0, "ledger": 0 },
-      "installFiscalYears": [2001, 2008],
-      "installWindowWouldBe": [2001, 2004],
-      "installedWithheld": { "ring": 25, "ledger": 25 }
+      "installFiscalYears": [2001, 2015],
+      "installWindowWouldBe": [2001, 2003],
+      "installedWithheld": { "ring": 217, "ledger": 217 }
     },
     "fictional-2": {
       "chunks": { "ring": 14, "ledger": 13 },

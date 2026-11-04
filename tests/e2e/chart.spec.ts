@@ -209,10 +209,10 @@ test("4 段の施設（fictional-2）", async ({ page }, info) => {
   await page.screenshot({ path: shot(`chart-4levels-folded-${tag}`) });
 });
 
-test("厚い計画（×40）の重さを測る", async ({ page }, info) => {
+test("厚い計画（機器 1,000 余り）の重さを測る", async ({ page }, info) => {
   const tag = info.project.name;
   const t0 = Date.now();
-  await openPlan(page, "fictional-1-x40");
+  await openPlan(page, "fictional-1-x5");
   const firstVisible = Date.now() - t0;
   const rows = await visibleRows(page);
   expect(rows).toBeGreaterThan(1000);

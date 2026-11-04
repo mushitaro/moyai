@@ -51,7 +51,8 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       await page.getByTestId("sheet-decisions").click();
       await expect(page.getByTestId("crosswalk-rule")).toHaveCount(rules.length);
       expect(await acceptRules(page, HUMAN)).toBe(rules.length);
-      await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-nodes", "25");
+      // 当てはめを受けた機器の節（fictional-1 は計画 §2.5 の厚さで機器 217）
+      await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-nodes", "217");
     });
 
     await test.step("人：開発の道具（設定の画面の下）から検査を開き、基準日を選ぶ", async () => {

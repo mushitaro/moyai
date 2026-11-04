@@ -73,9 +73,12 @@ describe("工場の資料で、要約 → 決定 → 計画 → 星取表の行"
           .filter((q: any) => q.defaultAnswer !== null)
           .map((q: any) => ({ questionId: q.questionId, answer: q.defaultAnswer, author: "ai_relayed_human", reason: "利用者がチャットで既定の答えでよいと言った" }));
         expect(decisions.length, "既定の答えの無い質問が残った").toBe(s.questions.length);
-        const r = ok(runTabTool(ws, "intake_settle", { decisions }, CTX));
-        expect(TOOLS.intake_settle.output.safeParse(r).success).toBe(true);
-        expect(r.cellsAffected).toBeGreaterThanOrEqual(0);
+        // 1 回に置けるのは 50 件まで（ツールの型）。AI と同じく 50 件ずつ置く
+        for (let i = 0; i < decisions.length; i += 50) {
+          const r = ok(runTabTool(ws, "intake_settle", { decisions: decisions.slice(i, i + 50) }, CTX));
+          expect(TOOLS.intake_settle.output.safeParse(r).success).toBe(true);
+          expect(r.cellsAffected).toBeGreaterThanOrEqual(0);
+        }
       }
       const s1 = ok(runTabTool(ws, "intake_survey", {}, CTX));
       expect(s1.unresolvedCells).toBe(0);

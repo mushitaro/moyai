@@ -456,7 +456,10 @@ export function measureLedger(plan: Plan, t: Truth, ents: Entities): Accuracy {
       } else if (p) why.push("親が余分");
       const text = nf(r.name_text);
       if (a.tag) {
-        if (!text.includes(nf(a.tag)) || nf(text.replace(a.tag, "").replace(/[()（）]/g, "")) !== nf(a.name)) why.push("名前と番号の分け方");
+        // 番号は名前のあとの括弧の中にある。名前にも同じ字が入ること（「ITV 設備（ITV）」）があるので、最後に出てくるものを外す
+        const at = text.lastIndexOf(nf(a.tag));
+        const rest = at < 0 ? text : text.slice(0, at) + text.slice(at + nf(a.tag).length);
+        if (at < 0 || nf(rest.replace(/[()（）]/g, "")) !== nf(a.name)) why.push("名前と番号の分け方");
       } else if (nf(a.name) !== text) why.push("名前が違う");
       if (r.kind === "equipment") {
         const w = ents.eq.get(r.equipment_id);

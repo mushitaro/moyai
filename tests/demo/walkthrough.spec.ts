@@ -199,6 +199,11 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
         await pa.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
         await pa.waitForTimeout(300);
       }
+      // 厚い計画では、案の行が表の下の方にある（表は見えている行だけを描く）。人がスクロールして探すように、下へ送る
+      for (let i = 0; i < 120 && (await prop.count()) === 0; i++) {
+        await pa.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop += el.clientHeight * 0.8), undefined, { timeout: 5000 });
+        await pa.waitForTimeout(120);
+      }
       await expect(prop.first()).toBeVisible();
       await pa.getByTestId("chart-grid").locator(".moyai-mark-proposal").first().click();
       await expect(pa.getByTestId("source-proposal")).toBeVisible();

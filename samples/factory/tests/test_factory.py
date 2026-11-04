@@ -84,7 +84,9 @@ class World(unittest.TestCase):
 
     def test_equipment_furnaces_years(self):
         w = self.w
-        self.assertTrue(20 <= len(w["equipment"]) <= 30)
+        # 計画 §2.5 の厚さ：機器が数百、作業が千を超える
+        self.assertTrue(200 <= len(w["equipment"]) <= 400)
+        self.assertGreater(len(w["works"]), 1000)
         self.assertEqual({e["furnace"] for e in w["equipment"] if e["furnace"]}, {1, 2})
         self.assertTrue(any(e["furnace"] is None for e in w["equipment"]))
         self.assertEqual(len(w["fiscal_years"]), 10)

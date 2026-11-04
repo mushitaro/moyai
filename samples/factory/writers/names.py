@@ -5,9 +5,11 @@ def tag_text(e: dict, rules: dict) -> str | None:
     tag = e.get("tag")
     if not tag:
         return None
+    # 号機の字は炉の番号の前（例 BFP-A1）。機器番号の末尾の数が炉の番号になる書き方にそろえる
+    unit = e.get("unit") or ""
     if rules["ledger"]["tag_furnace_suffix"] and e["furnace"]:
-        return f"{tag}-{e['furnace']}"
-    return tag
+        return f"{tag}-{unit}{e['furnace']}"
+    return f"{tag}-{unit}" if unit else tag
 
 
 def ledger_name(e: dict, rules: dict) -> str:

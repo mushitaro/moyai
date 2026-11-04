@@ -18,7 +18,7 @@ import { chooseProfile, loadNational, loadVocab, SEND_MIN_K, type ProfileSpec } 
 import type { Plan, WorkT } from "../../../src/shared/plan";
 import { EXAMPLES_MAX, SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, TOOLS, type Rule } from "../../../src/shared/tools";
 import { Entities, loadTruth, type Truth } from "../import/truth";
-import { F1_NODES, F2_NODES, attr, f1Rules, f2Rules, nameIs, node } from "../../fixtures/crosswalk/rules";
+import { F1_MIXED_NAMES, F1_NODES, F2_NODES, attr, f1Rules, f2Rules, nameIs, node } from "../../fixtures/crosswalk/rules";
 
 const PACK = "waste-incineration";
 const CTX = { conversation: "c-crosswalk", rowsRemaining: 2000 };
@@ -97,7 +97,8 @@ function acceptAll(reason = HUMAN_REASON): void {
 }
 
 const CASES = [
-  { facility: "fictional-1", files: ["equipment-ledger.xlsx", "plan-hoshitori.xlsx", "daily-report.csv"], rules: f1Rules, mixedWorks: 4, leftOut: ["押込送風機", "誘引通風機"] },
+  // 星取表の印に点検と分解整備・取替が混ざる機器（送風機 2 つ × 2 炉と、補機 44）は、名前の無い作業の属性を置かない
+  { facility: "fictional-1", files: ["equipment-ledger.xlsx", "plan-hoshitori.xlsx", "daily-report.csv"], rules: f1Rules, mixedWorks: 48, leftOut: F1_MIXED_NAMES },
   { facility: "fictional-2", files: ["equipment-ledger.xlsx", "plan-hoshitori.xlsx"], rules: f2Rules, mixedWorks: 3, leftOut: ["押込ファン", "誘引送風機", "分散制御装置"] },
 ] as const;
 
@@ -224,9 +225,9 @@ describe("ぶつかり・断り・人の道", () => {
 
   test("同じ行に違う値の規則が当たればぶつかりに数え、行は変えない。人が受けた値と違う規則もぶつかり", async () => {
     const ws = await composed(F1.facility, [...F1.files]);
-    // 「クレーン」を含む節を受入れのクレーンに、灰クレーンを灰出しのクレーンに：灰クレーンの節に 2 つが当たる
+    // 2 つのクレーンの節を受入れのクレーンに、灰クレーンを灰出しのクレーンに：灰クレーンの節に 2 つが当たる
     const r = proposeAll(ws, [
-      node([{ field: "assetNode.name", op: "contains", values: ["クレーン"] }], "WI.RECV.CRANE", "名前にクレーンとある"),
+      node([{ field: "assetNode.name", op: "in", values: ["ごみクレーン", "灰クレーン"] }], "WI.RECV.CRANE", "名前がクレーン"),
       node([nameIs("灰クレーン")], "WI.ASHOUT.ASH_CRANE", "灰クレーン"),
     ]);
     expect(r.matched).toBe(1);
@@ -293,7 +294,13 @@ describe("ぶつかり・断り・人の道", () => {
 
   test("人が断ると案を外す（理由が空なら断れない）。人が直に当てると作者は「人」", async () => {
     const ws = await composed(F1.facility, [...F1.files]);
-    proposeAll(ws, f1Rules().nodes.slice(0, 3));
+    // 1 つの機器に 1 つずつ当たる規則を 3 つ（台本は項目ごとに名前をまとめるので、ここでは明示して作る）
+    const level2 = { field: "assetNode.level" as const, op: "equals" as const, values: [2] };
+    proposeAll(ws, [
+      node([nameIs("計量機"), level2], "WI.RECV.SCALE", "機器の段の名前「計量機」は、パックの項目の名前と同じもの"),
+      node([nameIs("ごみクレーン"), level2], "WI.RECV.CRANE", "機器の段の名前「ごみクレーン」は、パックの項目の名前と同じもの"),
+      node([nameIs("可燃性粗大ごみ切断機"), level2], "WI.RECV.SHREDDER", "機器の段の名前「可燃性粗大ごみ切断機」は、パックの項目の名前と同じもの"),
+    ]);
     const [p1, p2] = getWorkingPlan()!.proposals;
     expect(rejectByHuman(p1!.ruleId, "  ")).toEqual({ ok: false, reason: "reasonEmpty" });
     expect(acceptByHuman(p1!.ruleId, "")).toEqual({ ok: false, reason: "reasonEmpty" });

@@ -136,31 +136,43 @@
           "coord": "A9",
           "data_type": "s",
           "number_format": "General",
-          "value": "燃焼設備"
+          "value": "ごみ投入扉 A（PTD-A）"
         },
         {
           "coord": "B9",
           "data_type": "s",
           "number_format": "General",
-          "value": "2"
+          "value": "1-4"
+        },
+        {
+          "coord": "C9",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "観音開き式\n油圧駆動"
+        },
+        {
+          "coord": "D9",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A10",
           "data_type": "s",
           "number_format": "General",
-          "value": "ストーカ（STK-1）"
+          "value": "ごみ投入扉 B（PTD-B）"
         },
         {
           "coord": "B10",
           "data_type": "s",
           "number_format": "General",
-          "value": "2-1"
+          "value": "1-5"
         },
         {
           "coord": "C10",
           "data_type": "s",
           "number_format": "General",
-          "value": "階段式 3 段\n火格子面積 18 m2\n1号炉用"
+          "value": "観音開き式\n油圧駆動"
         },
         {
           "coord": "D10",
@@ -172,19 +184,19 @@
           "coord": "A11",
           "data_type": "s",
           "number_format": "General",
-          "value": "焼却炉本体（FNC-1）"
+          "value": "ごみ投入扉 C（PTD-C）"
         },
         {
           "coord": "B11",
           "data_type": "s",
           "number_format": "General",
-          "value": "2-2"
+          "value": "1-6"
         },
         {
           "coord": "C11",
           "data_type": "s",
           "number_format": "General",
-          "value": "処理能力 75 t/日\n耐火物 キャスタブル\n1号炉用"
+          "value": "観音開き式\n油圧駆動"
         },
         {
           "coord": "D11",
@@ -196,37 +208,43 @@
           "coord": "A12",
           "data_type": "s",
           "number_format": "General",
-          "value": "耐火物"
+          "value": "ごみ投入扉 D（PTD-D）"
         },
         {
           "coord": "B12",
           "data_type": "s",
           "number_format": "General",
-          "value": "2-2-1"
+          "value": "1-7"
         },
         {
           "coord": "C12",
           "data_type": "s",
           "number_format": "General",
-          "value": "炉壁 キャスタブル\n補修周期 3 年"
+          "value": "観音開き式\n油圧駆動"
+        },
+        {
+          "coord": "D12",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A13",
           "data_type": "s",
           "number_format": "General",
-          "value": "ストーカ（STK-2）"
+          "value": "ごみ投入扉 E（PTD-E）"
         },
         {
           "coord": "B13",
           "data_type": "s",
           "number_format": "General",
-          "value": "2-3"
+          "value": "1-8"
         },
         {
           "coord": "C13",
           "data_type": "s",
           "number_format": "General",
-          "value": "階段式 3 段\n火格子面積 18 m2\n2号炉用"
+          "value": "観音開き式\n油圧駆動"
         },
         {
           "coord": "D13",
@@ -238,19 +256,19 @@
           "coord": "A14",
           "data_type": "s",
           "number_format": "General",
-          "value": "焼却炉本体（FNC-2）"
+          "value": "ごみ投入扉 F（PTD-F）"
         },
         {
           "coord": "B14",
           "data_type": "s",
           "number_format": "General",
-          "value": "2-4"
+          "value": "1-9"
         },
         {
           "coord": "C14",
           "data_type": "s",
           "number_format": "General",
-          "value": "処理能力 75 t/日\n耐火物 キャスタブル\n2号炉用"
+          "value": "観音開き式\n油圧駆動"
         },
         {
           "coord": "D14",
@@ -262,97 +280,115 @@
           "coord": "A15",
           "data_type": "s",
           "number_format": "General",
-          "value": "耐火物"
+          "value": "ごみクレーン用バケット A（CBK-A）"
         },
         {
           "coord": "B15",
           "data_type": "s",
           "number_format": "General",
-          "value": "2-4-1"
+          "value": "1-10"
         },
         {
           "coord": "C15",
           "data_type": "s",
           "number_format": "General",
-          "value": "炉壁 キャスタブル\n補修周期 3 年"
+          "value": "油圧開閉式\n容量 4 m3"
         },
         {
-          "coord": "A16",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "燃焼ガス冷却設備"
-        },
-        {
-          "coord": "B16",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "3"
-        },
-        {
-          "coord": "A17",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "蒸気復水器（CND）"
-        },
-        {
-          "coord": "B17",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "3-1"
-        },
-        {
-          "coord": "C17",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "空冷式\n処理蒸気量 25 t/h"
-        },
-        {
-          "coord": "D17",
-          "data_type": "n",
-          "number_format": "General",
-          "value": 2003
-        },
-        {
-          "coord": "A18",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "ボイラ（BLR-1）"
-        },
-        {
-          "coord": "B18",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "3-2"
-        },
-        {
-          "coord": "C18",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "自然循環式\n蒸気圧力 3.0 MPa\n1号炉用"
-        },
-        {
-          "coord": "D18",
+          "coord": "D15",
           "data_type": "n",
           "number_format": "General",
           "value": 2002
         },
         {
+          "coord": "A16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ごみクレーン用バケット B（CBK-B）"
+        },
+        {
+          "coord": "B16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-11"
+        },
+        {
+          "coord": "C16",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "油圧開閉式\n容量 4 m3"
+        },
+        {
+          "coord": "D16",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ごみピット脱臭装置（DEO）"
+        },
+        {
+          "coord": "B17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-12"
+        },
+        {
+          "coord": "C17",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "活性炭吸着式\n風量 300 m3/min"
+        },
+        {
+          "coord": "D17",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2004
+        },
+        {
+          "coord": "A18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計量データ処理装置（SDP）"
+        },
+        {
+          "coord": "B18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "1-13"
+        },
+        {
+          "coord": "C18",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計量票印字\n計量票 自動発行"
+        },
+        {
+          "coord": "D18",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2015
+        },
+        {
           "coord": "A19",
           "data_type": "s",
           "number_format": "General",
-          "value": "ボイラ（BLR-2）"
+          "value": "切断機搬送コンベヤ（SCV）"
         },
         {
           "coord": "B19",
           "data_type": "s",
           "number_format": "General",
-          "value": "3-3"
+          "value": "1-14"
         },
         {
           "coord": "C19",
           "data_type": "s",
           "number_format": "General",
-          "value": "自然循環式\n蒸気圧力 3.0 MPa\n2号炉用"
+          "value": "ベルト式 幅 900 mm\n電動機 7.5 kW"
         },
         {
           "coord": "D19",
@@ -364,31 +400,31 @@
           "coord": "A20",
           "data_type": "s",
           "number_format": "General",
-          "value": "排ガス処理設備"
+          "value": "燃焼設備"
         },
         {
           "coord": "B20",
           "data_type": "s",
           "number_format": "General",
-          "value": "4"
+          "value": "2"
         },
         {
           "coord": "A21",
           "data_type": "s",
           "number_format": "General",
-          "value": "集じん装置（BGF-1）"
+          "value": "ストーカ（STK-1）"
         },
         {
           "coord": "B21",
           "data_type": "s",
           "number_format": "General",
-          "value": "4-1"
+          "value": "2-1"
         },
         {
           "coord": "C21",
           "data_type": "s",
           "number_format": "General",
-          "value": "ろ過式\nろ布面積 1,200 m2\n1号炉用"
+          "value": "階段式 3 段\n火格子面積 18 m2\n1号炉用"
         },
         {
           "coord": "D21",
@@ -400,19 +436,19 @@
           "coord": "A22",
           "data_type": "s",
           "number_format": "General",
-          "value": "HCL、SOx 除去設備（DSC-1）"
+          "value": "焼却炉本体（FNC-1）"
         },
         {
           "coord": "B22",
           "data_type": "s",
           "number_format": "General",
-          "value": "4-2"
+          "value": "2-2"
         },
         {
           "coord": "C22",
           "data_type": "s",
           "number_format": "General",
-          "value": "乾式 消石灰吹込\n処理ガス量 28,000 m3N/h\n1号炉用"
+          "value": "処理能力 75 t/日\n耐火物 キャスタブル\n1号炉用"
         },
         {
           "coord": "D22",
@@ -424,43 +460,37 @@
           "coord": "A23",
           "data_type": "s",
           "number_format": "General",
-          "value": "NOx 除去設備（NXR-1）"
+          "value": "耐火物"
         },
         {
           "coord": "B23",
           "data_type": "s",
           "number_format": "General",
-          "value": "4-3"
+          "value": "2-2-1"
         },
         {
           "coord": "C23",
           "data_type": "s",
           "number_format": "General",
-          "value": "無触媒脱硝\n尿素水噴霧\n1号炉用"
-        },
-        {
-          "coord": "D23",
-          "data_type": "n",
-          "number_format": "General",
-          "value": 2008
+          "value": "炉壁 キャスタブル\n補修周期 3 年"
         },
         {
           "coord": "A24",
           "data_type": "s",
           "number_format": "General",
-          "value": "集じん装置（BGF-2）"
+          "value": "ごみ投入ホッパ（HOP-1）"
         },
         {
           "coord": "B24",
           "data_type": "s",
           "number_format": "General",
-          "value": "4-4"
+          "value": "2-3"
         },
         {
           "coord": "C24",
           "data_type": "s",
           "number_format": "General",
-          "value": "ろ過式\nろ布面積 1,200 m2\n2号炉用"
+          "value": "ブリッジ解除装置付\n容量 40 m3\n1号炉用"
         },
         {
           "coord": "D24",
@@ -472,19 +502,19 @@
           "coord": "A25",
           "data_type": "s",
           "number_format": "General",
-          "value": "HCL、SOx 除去設備（DSC-2）"
+          "value": "給じん装置（FDR-1）"
         },
         {
           "coord": "B25",
           "data_type": "s",
           "number_format": "General",
-          "value": "4-5"
+          "value": "2-4"
         },
         {
           "coord": "C25",
           "data_type": "s",
           "number_format": "General",
-          "value": "乾式 消石灰吹込\n処理ガス量 28,000 m3N/h\n2号炉用"
+          "value": "プッシャ式\n油圧駆動\n1号炉用"
         },
         {
           "coord": "D25",
@@ -496,55 +526,67 @@
           "coord": "A26",
           "data_type": "s",
           "number_format": "General",
-          "value": "NOx 除去設備（NXR-2）"
+          "value": "火格子駆動油圧装置 A（GHU-A1）"
         },
         {
           "coord": "B26",
           "data_type": "s",
           "number_format": "General",
-          "value": "4-6"
+          "value": "2-5"
         },
         {
           "coord": "C26",
           "data_type": "s",
           "number_format": "General",
-          "value": "無触媒脱硝\n尿素水噴霧\n2号炉用"
+          "value": "油圧ポンプ 2 台\n作動油 VG46\n1号炉用"
         },
         {
           "coord": "D26",
           "data_type": "n",
           "number_format": "General",
-          "value": 2008
+          "value": 2002
         },
         {
           "coord": "A27",
           "data_type": "s",
           "number_format": "General",
-          "value": "通風設備"
+          "value": "火格子駆動油圧装置 B（GHU-B1）"
         },
         {
           "coord": "B27",
           "data_type": "s",
           "number_format": "General",
-          "value": "5"
+          "value": "2-6"
+        },
+        {
+          "coord": "C27",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "油圧ポンプ 2 台\n作動油 VG46\n1号炉用"
+        },
+        {
+          "coord": "D27",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A28",
           "data_type": "s",
           "number_format": "General",
-          "value": "押込送風機（FDF-1）"
+          "value": "落じんコンベヤ（SFC-1）"
         },
         {
           "coord": "B28",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-1"
+          "value": "2-7"
         },
         {
           "coord": "C28",
           "data_type": "s",
           "number_format": "General",
-          "value": "ターボ形\n風量 1,200 m3/min\n1号炉用"
+          "value": "スクリュー式\n電動機 2.2 kW\n1号炉用"
         },
         {
           "coord": "D28",
@@ -556,37 +598,43 @@
           "coord": "A29",
           "data_type": "s",
           "number_format": "General",
-          "value": "電動機"
+          "value": "助燃バーナ A（BNR-A1）"
         },
         {
           "coord": "B29",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-1-1"
+          "value": "2-8"
         },
         {
           "coord": "C29",
           "data_type": "s",
           "number_format": "General",
-          "value": "90 kW"
+          "value": "灯油焚き\n燃焼量 200 L/h\n1号炉用"
+        },
+        {
+          "coord": "D29",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A30",
           "data_type": "s",
           "number_format": "General",
-          "value": "誘引通風機（IDF-1）"
+          "value": "助燃バーナ B（BNR-B1）"
         },
         {
           "coord": "B30",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-2"
+          "value": "2-9"
         },
         {
           "coord": "C30",
           "data_type": "s",
           "number_format": "General",
-          "value": "ターボ形\n風量 2,100 m3/min\n1号炉用"
+          "value": "灯油焚き\n燃焼量 200 L/h\n1号炉用"
         },
         {
           "coord": "D30",
@@ -595,64 +643,70 @@
           "value": 2002
         },
         {
-          "coord": "E30",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "2027年2月 取替予定"
-        },
-        {
           "coord": "A31",
           "data_type": "s",
           "number_format": "General",
-          "value": "電動機"
+          "value": "灰押出装置（APS-1）"
         },
         {
           "coord": "B31",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-2-1"
+          "value": "2-10"
         },
         {
           "coord": "C31",
           "data_type": "s",
           "number_format": "General",
-          "value": "200 kW 4 極"
+          "value": "湿式\n油圧駆動\n1号炉用"
+        },
+        {
+          "coord": "D31",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A32",
           "data_type": "s",
           "number_format": "General",
-          "value": "軸受"
+          "value": "炉内監視カメラ（FCM-1）"
         },
         {
           "coord": "B32",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-2-2"
+          "value": "2-11"
         },
         {
           "coord": "C32",
           "data_type": "s",
           "number_format": "General",
-          "value": "すべり軸受"
+          "value": "水冷ケース入り\nカラー 1 台\n1号炉用"
+        },
+        {
+          "coord": "D32",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2012
         },
         {
           "coord": "A33",
           "data_type": "s",
           "number_format": "General",
-          "value": "押込送風機（FDF-2）"
+          "value": "ストーカ（STK-2）"
         },
         {
           "coord": "B33",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-3"
+          "value": "2-12"
         },
         {
           "coord": "C33",
           "data_type": "s",
           "number_format": "General",
-          "value": "ターボ形\n風量 1,200 m3/min\n2号炉用"
+          "value": "階段式 3 段\n火格子面積 18 m2\n2号炉用"
         },
         {
           "coord": "D33",
@@ -661,70 +715,64 @@
           "value": 2002
         },
         {
-          "coord": "E33",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "2021年12月 電動機取替"
-        },
-        {
           "coord": "A34",
           "data_type": "s",
           "number_format": "General",
-          "value": "電動機"
+          "value": "焼却炉本体（FNC-2）"
         },
         {
           "coord": "B34",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-3-1"
+          "value": "2-13"
         },
         {
           "coord": "C34",
           "data_type": "s",
           "number_format": "General",
-          "value": "90 kW"
+          "value": "処理能力 75 t/日\n耐火物 キャスタブル\n2号炉用"
+        },
+        {
+          "coord": "D34",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A35",
           "data_type": "s",
           "number_format": "General",
-          "value": "旧電動機"
+          "value": "耐火物"
         },
         {
           "coord": "B35",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-3-2"
+          "value": "2-13-1"
         },
         {
           "coord": "C35",
           "data_type": "s",
           "number_format": "General",
-          "value": "90 kW"
-        },
-        {
-          "coord": "E35",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "2021年12月 撤去（新品に取替）"
+          "value": "炉壁 キャスタブル\n補修周期 3 年"
         },
         {
           "coord": "A36",
           "data_type": "s",
           "number_format": "General",
-          "value": "誘引通風機（IDF-2）"
+          "value": "ごみ投入ホッパ（HOP-2）"
         },
         {
           "coord": "B36",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-4"
+          "value": "2-14"
         },
         {
           "coord": "C36",
           "data_type": "s",
           "number_format": "General",
-          "value": "ターボ形\n風量 2,100 m3/min\n2号炉用"
+          "value": "ブリッジ解除装置付\n容量 40 m3\n2号炉用"
         },
         {
           "coord": "D36",
@@ -736,103 +784,139 @@
           "coord": "A37",
           "data_type": "s",
           "number_format": "General",
-          "value": "電動機"
+          "value": "給じん装置（FDR-2）"
         },
         {
           "coord": "B37",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-4-1"
+          "value": "2-15"
         },
         {
           "coord": "C37",
           "data_type": "s",
           "number_format": "General",
-          "value": "200 kW 4 極"
+          "value": "プッシャ式\n油圧駆動\n2号炉用"
+        },
+        {
+          "coord": "D37",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A38",
           "data_type": "s",
           "number_format": "General",
-          "value": "軸受"
+          "value": "火格子駆動油圧装置 A（GHU-A2）"
         },
         {
           "coord": "B38",
           "data_type": "s",
           "number_format": "General",
-          "value": "5-4-2"
+          "value": "2-16"
         },
         {
           "coord": "C38",
           "data_type": "s",
           "number_format": "General",
-          "value": "すべり軸受"
+          "value": "油圧ポンプ 2 台\n作動油 VG46\n2号炉用"
+        },
+        {
+          "coord": "D38",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A39",
           "data_type": "s",
           "number_format": "General",
-          "value": "余熱利用設備"
+          "value": "火格子駆動油圧装置 B（GHU-B2）"
         },
         {
           "coord": "B39",
           "data_type": "s",
           "number_format": "General",
-          "value": "6"
+          "value": "2-17"
+        },
+        {
+          "coord": "C39",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "油圧ポンプ 2 台\n作動油 VG46\n2号炉用"
+        },
+        {
+          "coord": "D39",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A40",
           "data_type": "s",
           "number_format": "General",
-          "value": "蒸気タービン発電設備（TBN）"
+          "value": "落じんコンベヤ（SFC-2）"
         },
         {
           "coord": "B40",
           "data_type": "s",
           "number_format": "General",
-          "value": "6-1"
+          "value": "2-18"
         },
         {
           "coord": "C40",
           "data_type": "s",
           "number_format": "General",
-          "value": "復水式\n定格出力 1,990 kW"
+          "value": "スクリュー式\n電動機 2.2 kW\n2号炉用"
         },
         {
           "coord": "D40",
           "data_type": "n",
           "number_format": "General",
-          "value": 2003
+          "value": 2002
         },
         {
           "coord": "A41",
           "data_type": "s",
           "number_format": "General",
-          "value": "灰出し設備"
+          "value": "助燃バーナ A（BNR-A2）"
         },
         {
           "coord": "B41",
           "data_type": "s",
           "number_format": "General",
-          "value": "7"
+          "value": "2-19"
+        },
+        {
+          "coord": "C41",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "灯油焚き\n燃焼量 200 L/h\n2号炉用"
+        },
+        {
+          "coord": "D41",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         },
         {
           "coord": "A42",
           "data_type": "s",
           "number_format": "General",
-          "value": "灰クレーン（ACR）"
+          "value": "助燃バーナ B（BNR-B2）"
         },
         {
           "coord": "B42",
           "data_type": "s",
           "number_format": "General",
-          "value": "7-1"
+          "value": "2-20"
         },
         {
           "coord": "C42",
           "data_type": "s",
           "number_format": "General",
-          "value": "バケット容量 2 m3\n吊上荷重 4 t"
+          "value": "灯油焚き\n燃焼量 200 L/h\n2号炉用"
         },
         {
           "coord": "D42",
@@ -844,91 +928,103 @@
           "coord": "A43",
           "data_type": "s",
           "number_format": "General",
-          "value": "電気設備"
+          "value": "灰押出装置（APS-2）"
         },
         {
           "coord": "B43",
           "data_type": "s",
           "number_format": "General",
-          "value": "8"
+          "value": "2-21"
         },
         {
-          "coord": "A44",
+          "coord": "C43",
           "data_type": "s",
           "number_format": "General",
-          "value": "受変電配電設備（SUB）"
+          "value": "湿式\n油圧駆動\n2号炉用"
         },
         {
-          "coord": "B44",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "8-1"
-        },
-        {
-          "coord": "C44",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "受電 6.6 kV\n変圧器 3 台"
-        },
-        {
-          "coord": "D44",
+          "coord": "D43",
           "data_type": "n",
           "number_format": "General",
           "value": 2002
         },
         {
+          "coord": "A44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内監視カメラ（FCM-2）"
+        },
+        {
+          "coord": "B44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2-22"
+        },
+        {
+          "coord": "C44",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "水冷ケース入り\nカラー 1 台\n2号炉用"
+        },
+        {
+          "coord": "D44",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2012
+        },
+        {
           "coord": "A45",
           "data_type": "s",
           "number_format": "General",
-          "value": "発電機（GEN）"
+          "value": "燃焼ガス冷却設備"
         },
         {
           "coord": "B45",
           "data_type": "s",
           "number_format": "General",
-          "value": "8-2"
-        },
-        {
-          "coord": "C45",
-          "data_type": "s",
-          "number_format": "General",
-          "value": "非常用 ディーゼル\n出力 300 kVA"
-        },
-        {
-          "coord": "D45",
-          "data_type": "n",
-          "number_format": "General",
-          "value": 2003
+          "value": "3"
         },
         {
           "coord": "A46",
           "data_type": "s",
           "number_format": "General",
-          "value": "計装設備"
+          "value": "蒸気復水器（CND）"
         },
         {
           "coord": "B46",
           "data_type": "s",
           "number_format": "General",
-          "value": "9"
+          "value": "3-1"
+        },
+        {
+          "coord": "C46",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "空冷式\n処理蒸気量 25 t/h"
+        },
+        {
+          "coord": "D46",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
         },
         {
           "coord": "A47",
           "data_type": "s",
           "number_format": "General",
-          "value": "DCS（DCS）"
+          "value": "脱気器（DEA）"
         },
         {
           "coord": "B47",
           "data_type": "s",
           "number_format": "General",
-          "value": "9-1"
+          "value": "3-2"
         },
         {
           "coord": "C47",
           "data_type": "s",
           "number_format": "General",
-          "value": "監視操作卓 3 台\n制御盤 4 面"
+          "value": "加圧式\n容量 15 m3"
         },
         {
           "coord": "D47",
@@ -937,10 +1033,4606 @@
           "value": 2002
         },
         {
-          "coord": "E47",
+          "coord": "A48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ水薬注装置 A（BCI-A）"
+        },
+        {
+          "coord": "B48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-3"
+        },
+        {
+          "coord": "C48",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "清缶剤・脱酸素剤\n定量ポンプ式"
+        },
+        {
+          "coord": "D48",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ水薬注装置 B（BCI-B）"
+        },
+        {
+          "coord": "B49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-4"
+        },
+        {
+          "coord": "C49",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "清缶剤・脱酸素剤\n定量ポンプ式"
+        },
+        {
+          "coord": "D49",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高圧蒸気だめ（HSH）"
+        },
+        {
+          "coord": "B50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-5"
+        },
+        {
+          "coord": "C50",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "第一種圧力容器\n最高使用圧力 3.0 MPa"
+        },
+        {
+          "coord": "D50",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A51",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "純水装置 A（PWU-A）"
+        },
+        {
+          "coord": "B51",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-6"
+        },
+        {
+          "coord": "C51",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "イオン交換式\n処理水量 5 m3/h"
+        },
+        {
+          "coord": "D51",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A52",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "純水装置 B（PWU-B）"
+        },
+        {
+          "coord": "B52",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-7"
+        },
+        {
+          "coord": "C52",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "イオン交換式\n処理水量 5 m3/h"
+        },
+        {
+          "coord": "D52",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A53",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ給水タンク（FWT）"
+        },
+        {
+          "coord": "B53",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-8"
+        },
+        {
+          "coord": "C53",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "容量 30 m3\nSUS 製"
+        },
+        {
+          "coord": "D53",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A54",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "復水タンク（CDT）"
+        },
+        {
+          "coord": "B54",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-9"
+        },
+        {
+          "coord": "C54",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "容量 20 m3\nSUS 製"
+        },
+        {
+          "coord": "D54",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A55",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "復水ポンプ A（CDP-A）"
+        },
+        {
+          "coord": "B55",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-10"
+        },
+        {
+          "coord": "C55",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "横軸渦巻式\n電動機 30 kW"
+        },
+        {
+          "coord": "D55",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A56",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "復水ポンプ B（CDP-B）"
+        },
+        {
+          "coord": "B56",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-11"
+        },
+        {
+          "coord": "C56",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "横軸渦巻式\n電動機 30 kW"
+        },
+        {
+          "coord": "D56",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A57",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン A（CDF-A）"
+        },
+        {
+          "coord": "B57",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-12"
+        },
+        {
+          "coord": "C57",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D57",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A58",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン B（CDF-B）"
+        },
+        {
+          "coord": "B58",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-13"
+        },
+        {
+          "coord": "C58",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D58",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A59",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン C（CDF-C）"
+        },
+        {
+          "coord": "B59",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-14"
+        },
+        {
+          "coord": "C59",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D59",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A60",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン D（CDF-D）"
+        },
+        {
+          "coord": "B60",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-15"
+        },
+        {
+          "coord": "C60",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D60",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A61",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン E（CDF-E）"
+        },
+        {
+          "coord": "B61",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-16"
+        },
+        {
+          "coord": "C61",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D61",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A62",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン F（CDF-F）"
+        },
+        {
+          "coord": "B62",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-17"
+        },
+        {
+          "coord": "C62",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D62",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A63",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン G（CDF-G）"
+        },
+        {
+          "coord": "B63",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-18"
+        },
+        {
+          "coord": "C63",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D63",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A64",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気復水器ファン H（CDF-H）"
+        },
+        {
+          "coord": "B64",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-19"
+        },
+        {
+          "coord": "C64",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸流式\nインバータ駆動"
+        },
+        {
+          "coord": "D64",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A65",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ（BLR-1）"
+        },
+        {
+          "coord": "B65",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-20"
+        },
+        {
+          "coord": "C65",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "自然循環式\n蒸気圧力 3.0 MPa\n1号炉用"
+        },
+        {
+          "coord": "D65",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A66",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ給水ポンプ A（BFP-A1）"
+        },
+        {
+          "coord": "B66",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-21"
+        },
+        {
+          "coord": "C66",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "多段渦巻式\n電動機 75 kW\n1号炉用"
+        },
+        {
+          "coord": "D66",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A67",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ給水ポンプ B（BFP-B1）"
+        },
+        {
+          "coord": "B67",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-22"
+        },
+        {
+          "coord": "C67",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "多段渦巻式\n電動機 75 kW\n1号炉用"
+        },
+        {
+          "coord": "D67",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A68",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "過熱器（SHT-1）"
+        },
+        {
+          "coord": "B68",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-23"
+        },
+        {
+          "coord": "C68",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2 段\n伝熱面積 600 m2\n1号炉用"
+        },
+        {
+          "coord": "D68",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A69",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "節炭器（ECO-1）"
+        },
+        {
+          "coord": "B69",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-24"
+        },
+        {
+          "coord": "C69",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "裸管式\n伝熱面積 900 m2\n1号炉用"
+        },
+        {
+          "coord": "D69",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A70",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ A（SBW-A1）"
+        },
+        {
+          "coord": "B70",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-25"
+        },
+        {
+          "coord": "C70",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D70",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A71",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ B（SBW-B1）"
+        },
+        {
+          "coord": "B71",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-26"
+        },
+        {
+          "coord": "C71",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D71",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A72",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ C（SBW-C1）"
+        },
+        {
+          "coord": "B72",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-27"
+        },
+        {
+          "coord": "C72",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D72",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A73",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ D（SBW-D1）"
+        },
+        {
+          "coord": "B73",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-28"
+        },
+        {
+          "coord": "C73",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D73",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A74",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ E（SBW-E1）"
+        },
+        {
+          "coord": "B74",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-29"
+        },
+        {
+          "coord": "C74",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D74",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A75",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ F（SBW-F1）"
+        },
+        {
+          "coord": "B75",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-30"
+        },
+        {
+          "coord": "C75",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D75",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A76",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ G（SBW-G1）"
+        },
+        {
+          "coord": "B76",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-31"
+        },
+        {
+          "coord": "C76",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D76",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A77",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ H（SBW-H1）"
+        },
+        {
+          "coord": "B77",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-32"
+        },
+        {
+          "coord": "C77",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n1号炉用"
+        },
+        {
+          "coord": "D77",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A78",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "連続ブロー装置（CBD-1）"
+        },
+        {
+          "coord": "B78",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-33"
+        },
+        {
+          "coord": "C78",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量調節弁付\nブロー率 2 %\n1号炉用"
+        },
+        {
+          "coord": "D78",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A79",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ給水予熱器（FWH-1）"
+        },
+        {
+          "coord": "B79",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-34"
+        },
+        {
+          "coord": "C79",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "シェルアンドチューブ式\n伝熱面積 40 m2\n1号炉用"
+        },
+        {
+          "coord": "D79",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A80",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ（BLR-2）"
+        },
+        {
+          "coord": "B80",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-35"
+        },
+        {
+          "coord": "C80",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "自然循環式\n蒸気圧力 3.0 MPa\n2号炉用"
+        },
+        {
+          "coord": "D80",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A81",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ給水ポンプ A（BFP-A2）"
+        },
+        {
+          "coord": "B81",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-36"
+        },
+        {
+          "coord": "C81",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "多段渦巻式\n電動機 75 kW\n2号炉用"
+        },
+        {
+          "coord": "D81",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A82",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ給水ポンプ B（BFP-B2）"
+        },
+        {
+          "coord": "B82",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-37"
+        },
+        {
+          "coord": "C82",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "多段渦巻式\n電動機 75 kW\n2号炉用"
+        },
+        {
+          "coord": "D82",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A83",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "過熱器（SHT-2）"
+        },
+        {
+          "coord": "B83",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-38"
+        },
+        {
+          "coord": "C83",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2 段\n伝熱面積 600 m2\n2号炉用"
+        },
+        {
+          "coord": "D83",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A84",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "節炭器（ECO-2）"
+        },
+        {
+          "coord": "B84",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-39"
+        },
+        {
+          "coord": "C84",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "裸管式\n伝熱面積 900 m2\n2号炉用"
+        },
+        {
+          "coord": "D84",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A85",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ A（SBW-A2）"
+        },
+        {
+          "coord": "B85",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-40"
+        },
+        {
+          "coord": "C85",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D85",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E85",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A86",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ B（SBW-B2）"
+        },
+        {
+          "coord": "B86",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-41"
+        },
+        {
+          "coord": "C86",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D86",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E86",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A87",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ C（SBW-C2）"
+        },
+        {
+          "coord": "B87",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-42"
+        },
+        {
+          "coord": "C87",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D87",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E87",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A88",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ D（SBW-D2）"
+        },
+        {
+          "coord": "B88",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-43"
+        },
+        {
+          "coord": "C88",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D88",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E88",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A89",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ E（SBW-E2）"
+        },
+        {
+          "coord": "B89",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-44"
+        },
+        {
+          "coord": "C89",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D89",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E89",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A90",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ F（SBW-F2）"
+        },
+        {
+          "coord": "B90",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-45"
+        },
+        {
+          "coord": "C90",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D90",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E90",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A91",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ G（SBW-G2）"
+        },
+        {
+          "coord": "B91",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-46"
+        },
+        {
+          "coord": "C91",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D91",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E91",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A92",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スートブロワ H（SBW-H2）"
+        },
+        {
+          "coord": "B92",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-47"
+        },
+        {
+          "coord": "C92",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "長抜差式\n蒸気噴射式\n2号炉用"
+        },
+        {
+          "coord": "D92",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E92",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2023年10月 取替"
+        },
+        {
+          "coord": "A93",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "連続ブロー装置（CBD-2）"
+        },
+        {
+          "coord": "B93",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-48"
+        },
+        {
+          "coord": "C93",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量調節弁付\nブロー率 2 %\n2号炉用"
+        },
+        {
+          "coord": "D93",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A94",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ボイラ給水予熱器（FWH-2）"
+        },
+        {
+          "coord": "B94",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "3-49"
+        },
+        {
+          "coord": "C94",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "シェルアンドチューブ式\n伝熱面積 40 m2\n2号炉用"
+        },
+        {
+          "coord": "D94",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A95",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス処理設備"
+        },
+        {
+          "coord": "B95",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4"
+        },
+        {
+          "coord": "A96",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "消石灰貯留サイロ（LMS）"
+        },
+        {
+          "coord": "B96",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-1"
+        },
+        {
+          "coord": "C96",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "容量 60 m3\nSS 製"
+        },
+        {
+          "coord": "D96",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A97",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "消石灰輸送ブロワ A（LMB-A）"
+        },
+        {
+          "coord": "B97",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-2"
+        },
+        {
+          "coord": "C97",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ルーツ式\n電動機 22 kW"
+        },
+        {
+          "coord": "D97",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A98",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "消石灰輸送ブロワ B（LMB-B）"
+        },
+        {
+          "coord": "B98",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-3"
+        },
+        {
+          "coord": "C98",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ルーツ式\n電動機 22 kW"
+        },
+        {
+          "coord": "D98",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A99",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "活性炭貯留サイロ（ACS）"
+        },
+        {
+          "coord": "B99",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-4"
+        },
+        {
+          "coord": "C99",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "容量 15 m3\nSS 製"
+        },
+        {
+          "coord": "D99",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A100",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "尿素水貯槽（URT）"
+        },
+        {
+          "coord": "B100",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-5"
+        },
+        {
+          "coord": "C100",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "容量 10 m3\nFRP 製"
+        },
+        {
+          "coord": "D100",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2008
+        },
+        {
+          "coord": "A101",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん装置（BGF-1）"
+        },
+        {
+          "coord": "B101",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-6"
+        },
+        {
+          "coord": "C101",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ろ過式\nろ布面積 1,200 m2\n1号炉用"
+        },
+        {
+          "coord": "D101",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A102",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "HCL、SOx 除去設備（DSC-1）"
+        },
+        {
+          "coord": "B102",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-7"
+        },
+        {
+          "coord": "C102",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "乾式 消石灰吹込\n処理ガス量 28,000 m3N/h\n1号炉用"
+        },
+        {
+          "coord": "D102",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A103",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "NOx 除去設備（NXR-1）"
+        },
+        {
+          "coord": "B103",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-8"
+        },
+        {
+          "coord": "C103",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "無触媒脱硝\n尿素水噴霧\n1号炉用"
+        },
+        {
+          "coord": "D103",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2008
+        },
+        {
+          "coord": "A104",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん器逆洗装置（BPJ-1）"
+        },
+        {
+          "coord": "B104",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-9"
+        },
+        {
+          "coord": "C104",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "パルスジェット式\n圧縮空気式\n1号炉用"
+        },
+        {
+          "coord": "D104",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A105",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん器ダスト排出装置 A（BDV-A1）"
+        },
+        {
+          "coord": "B105",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-10"
+        },
+        {
+          "coord": "C105",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ロータリーバルブ\n電動機 0.75 kW\n1号炉用"
+        },
+        {
+          "coord": "D105",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A106",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん器ダスト排出装置 B（BDV-B1）"
+        },
+        {
+          "coord": "B106",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-11"
+        },
+        {
+          "coord": "C106",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ロータリーバルブ\n電動機 0.75 kW\n1号炉用"
+        },
+        {
+          "coord": "D106",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A107",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "消石灰供給装置（LMF-1）"
+        },
+        {
+          "coord": "B107",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-12"
+        },
+        {
+          "coord": "C107",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "定量切出機\nロータリーフィーダ\n1号炉用"
+        },
+        {
+          "coord": "D107",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A108",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "活性炭供給装置（ACF-1）"
+        },
+        {
+          "coord": "B108",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-13"
+        },
+        {
+          "coord": "C108",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "定量切出機\nロータリーフィーダ\n1号炉用"
+        },
+        {
+          "coord": "D108",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A109",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "尿素水噴霧ポンプ A（URP-A1）"
+        },
+        {
+          "coord": "B109",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-14"
+        },
+        {
+          "coord": "C109",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "プランジャ式\n電動機 1.5 kW\n1号炉用"
+        },
+        {
+          "coord": "D109",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2008
+        },
+        {
+          "coord": "A110",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "尿素水噴霧ポンプ B（URP-B1）"
+        },
+        {
+          "coord": "B110",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-15"
+        },
+        {
+          "coord": "C110",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "プランジャ式\n電動機 1.5 kW\n1号炉用"
+        },
+        {
+          "coord": "D110",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2008
+        },
+        {
+          "coord": "A111",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん装置（BGF-2）"
+        },
+        {
+          "coord": "B111",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-16"
+        },
+        {
+          "coord": "C111",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ろ過式\nろ布面積 1,200 m2\n2号炉用"
+        },
+        {
+          "coord": "D111",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A112",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "HCL、SOx 除去設備（DSC-2）"
+        },
+        {
+          "coord": "B112",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-17"
+        },
+        {
+          "coord": "C112",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "乾式 消石灰吹込\n処理ガス量 28,000 m3N/h\n2号炉用"
+        },
+        {
+          "coord": "D112",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A113",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "NOx 除去設備（NXR-2）"
+        },
+        {
+          "coord": "B113",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-18"
+        },
+        {
+          "coord": "C113",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "無触媒脱硝\n尿素水噴霧\n2号炉用"
+        },
+        {
+          "coord": "D113",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2008
+        },
+        {
+          "coord": "A114",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん器逆洗装置（BPJ-2）"
+        },
+        {
+          "coord": "B114",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-19"
+        },
+        {
+          "coord": "C114",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "パルスジェット式\n圧縮空気式\n2号炉用"
+        },
+        {
+          "coord": "D114",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A115",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん器ダスト排出装置 A（BDV-A2）"
+        },
+        {
+          "coord": "B115",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-20"
+        },
+        {
+          "coord": "C115",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ロータリーバルブ\n電動機 0.75 kW\n2号炉用"
+        },
+        {
+          "coord": "D115",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A116",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "集じん器ダスト排出装置 B（BDV-B2）"
+        },
+        {
+          "coord": "B116",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-21"
+        },
+        {
+          "coord": "C116",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ロータリーバルブ\n電動機 0.75 kW\n2号炉用"
+        },
+        {
+          "coord": "D116",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A117",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "消石灰供給装置（LMF-2）"
+        },
+        {
+          "coord": "B117",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-22"
+        },
+        {
+          "coord": "C117",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "定量切出機\nロータリーフィーダ\n2号炉用"
+        },
+        {
+          "coord": "D117",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A118",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "活性炭供給装置（ACF-2）"
+        },
+        {
+          "coord": "B118",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-23"
+        },
+        {
+          "coord": "C118",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "定量切出機\nロータリーフィーダ\n2号炉用"
+        },
+        {
+          "coord": "D118",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A119",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "尿素水噴霧ポンプ A（URP-A2）"
+        },
+        {
+          "coord": "B119",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-24"
+        },
+        {
+          "coord": "C119",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "プランジャ式\n電動機 1.5 kW\n2号炉用"
+        },
+        {
+          "coord": "D119",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2008
+        },
+        {
+          "coord": "A120",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "尿素水噴霧ポンプ B（URP-B2）"
+        },
+        {
+          "coord": "B120",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "4-25"
+        },
+        {
+          "coord": "C120",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "プランジャ式\n電動機 1.5 kW\n2号炉用"
+        },
+        {
+          "coord": "D120",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2008
+        },
+        {
+          "coord": "A121",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "通風設備"
+        },
+        {
+          "coord": "B121",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5"
+        },
+        {
+          "coord": "A122",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙突（STC）"
+        },
+        {
+          "coord": "B122",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-1"
+        },
+        {
+          "coord": "C122",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "外筒 RC 造 59 m\n内筒 2 本"
+        },
+        {
+          "coord": "D122",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A123",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "押込送風機（FDF-1）"
+        },
+        {
+          "coord": "B123",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-2"
+        },
+        {
+          "coord": "C123",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n風量 1,200 m3/min\n1号炉用"
+        },
+        {
+          "coord": "D123",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A124",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動機"
+        },
+        {
+          "coord": "B124",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-2-1"
+        },
+        {
+          "coord": "C124",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "90 kW"
+        },
+        {
+          "coord": "A125",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "誘引通風機（IDF-1）"
+        },
+        {
+          "coord": "B125",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-3"
+        },
+        {
+          "coord": "C125",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n風量 2,100 m3/min\n1号炉用"
+        },
+        {
+          "coord": "D125",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E125",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2027年2月 取替予定"
+        },
+        {
+          "coord": "A126",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動機"
+        },
+        {
+          "coord": "B126",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-3-1"
+        },
+        {
+          "coord": "C126",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "200 kW 4 極"
+        },
+        {
+          "coord": "A127",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸受"
+        },
+        {
+          "coord": "B127",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-3-2"
+        },
+        {
+          "coord": "C127",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "すべり軸受"
+        },
+        {
+          "coord": "A128",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "二次押込送風機（SFD-1）"
+        },
+        {
+          "coord": "B128",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-4"
+        },
+        {
+          "coord": "C128",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n電動機 55 kW\n1号炉用"
+        },
+        {
+          "coord": "D128",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A129",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "空気予熱器（APH-1）"
+        },
+        {
+          "coord": "B129",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-5"
+        },
+        {
+          "coord": "C129",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気式\n伝熱面積 300 m2\n1号炉用"
+        },
+        {
+          "coord": "D129",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A130",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス循環送風機（GRF-1）"
+        },
+        {
+          "coord": "B130",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-6"
+        },
+        {
+          "coord": "C130",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n電動機 37 kW\n1号炉用"
+        },
+        {
+          "coord": "D130",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2010
+        },
+        {
+          "coord": "A131",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ A（DMP-A1）"
+        },
+        {
+          "coord": "B131",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-7"
+        },
+        {
+          "coord": "C131",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n1号炉用"
+        },
+        {
+          "coord": "D131",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A132",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ B（DMP-B1）"
+        },
+        {
+          "coord": "B132",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-8"
+        },
+        {
+          "coord": "C132",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n1号炉用"
+        },
+        {
+          "coord": "D132",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A133",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ C（DMP-C1）"
+        },
+        {
+          "coord": "B133",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-9"
+        },
+        {
+          "coord": "C133",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n1号炉用"
+        },
+        {
+          "coord": "D133",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A134",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ D（DMP-D1）"
+        },
+        {
+          "coord": "B134",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-10"
+        },
+        {
+          "coord": "C134",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n1号炉用"
+        },
+        {
+          "coord": "D134",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A135",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ E（DMP-E1）"
+        },
+        {
+          "coord": "B135",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-11"
+        },
+        {
+          "coord": "C135",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n1号炉用"
+        },
+        {
+          "coord": "D135",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A136",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ F（DMP-F1）"
+        },
+        {
+          "coord": "B136",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-12"
+        },
+        {
+          "coord": "C136",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n1号炉用"
+        },
+        {
+          "coord": "D136",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A137",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "押込送風機（FDF-2）"
+        },
+        {
+          "coord": "B137",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-13"
+        },
+        {
+          "coord": "C137",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n風量 1,200 m3/min\n2号炉用"
+        },
+        {
+          "coord": "D137",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E137",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2021年12月 電動機取替"
+        },
+        {
+          "coord": "A138",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動機"
+        },
+        {
+          "coord": "B138",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-13-1"
+        },
+        {
+          "coord": "C138",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "90 kW"
+        },
+        {
+          "coord": "A139",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "旧電動機"
+        },
+        {
+          "coord": "B139",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-13-2"
+        },
+        {
+          "coord": "C139",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "90 kW"
+        },
+        {
+          "coord": "E139",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2021年12月 撤去（新品に取替）"
+        },
+        {
+          "coord": "A140",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "誘引通風機（IDF-2）"
+        },
+        {
+          "coord": "B140",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-14"
+        },
+        {
+          "coord": "C140",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n風量 2,100 m3/min\n2号炉用"
+        },
+        {
+          "coord": "D140",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A141",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動機"
+        },
+        {
+          "coord": "B141",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-14-1"
+        },
+        {
+          "coord": "C141",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "200 kW 4 極"
+        },
+        {
+          "coord": "A142",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "軸受"
+        },
+        {
+          "coord": "B142",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-14-2"
+        },
+        {
+          "coord": "C142",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "すべり軸受"
+        },
+        {
+          "coord": "A143",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "二次押込送風機（SFD-2）"
+        },
+        {
+          "coord": "B143",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-15"
+        },
+        {
+          "coord": "C143",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n電動機 55 kW\n2号炉用"
+        },
+        {
+          "coord": "D143",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A144",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "空気予熱器（APH-2）"
+        },
+        {
+          "coord": "B144",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-16"
+        },
+        {
+          "coord": "C144",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気式\n伝熱面積 300 m2\n2号炉用"
+        },
+        {
+          "coord": "D144",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A145",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス循環送風機（GRF-2）"
+        },
+        {
+          "coord": "B145",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-17"
+        },
+        {
+          "coord": "C145",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ターボ形\n電動機 37 kW\n2号炉用"
+        },
+        {
+          "coord": "D145",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2010
+        },
+        {
+          "coord": "A146",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ A（DMP-A2）"
+        },
+        {
+          "coord": "B146",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-18"
+        },
+        {
+          "coord": "C146",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n2号炉用"
+        },
+        {
+          "coord": "D146",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A147",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ B（DMP-B2）"
+        },
+        {
+          "coord": "B147",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-19"
+        },
+        {
+          "coord": "C147",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n2号炉用"
+        },
+        {
+          "coord": "D147",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A148",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ C（DMP-C2）"
+        },
+        {
+          "coord": "B148",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-20"
+        },
+        {
+          "coord": "C148",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n2号炉用"
+        },
+        {
+          "coord": "D148",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A149",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ D（DMP-D2）"
+        },
+        {
+          "coord": "B149",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-21"
+        },
+        {
+          "coord": "C149",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n2号炉用"
+        },
+        {
+          "coord": "D149",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A150",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ E（DMP-E2）"
+        },
+        {
+          "coord": "B150",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-22"
+        },
+        {
+          "coord": "C150",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n2号炉用"
+        },
+        {
+          "coord": "D150",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A151",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "煙道ダンパ F（DMP-F2）"
+        },
+        {
+          "coord": "B151",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "5-23"
+        },
+        {
+          "coord": "C151",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電動バタフライ式\n口径 1,600 mm\n2号炉用"
+        },
+        {
+          "coord": "D151",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A152",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "余熱利用設備"
+        },
+        {
+          "coord": "B152",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6"
+        },
+        {
+          "coord": "A153",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蒸気タービン発電設備（TBN）"
+        },
+        {
+          "coord": "B153",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-1"
+        },
+        {
+          "coord": "C153",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "復水式\n定格出力 1,990 kW"
+        },
+        {
+          "coord": "D153",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A154",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "タービン潤滑油装置（TLO）"
+        },
+        {
+          "coord": "B154",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-2"
+        },
+        {
+          "coord": "C154",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "主油ポンプ・補助油ポンプ\n油量 3 m3"
+        },
+        {
+          "coord": "D154",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A155",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "タービンバイパス弁（TBV）"
+        },
+        {
+          "coord": "B155",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-3"
+        },
+        {
+          "coord": "C155",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "減温減圧装置付\n口径 150 mm"
+        },
+        {
+          "coord": "D155",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A156",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "グランド蒸気復水器（GSC）"
+        },
+        {
+          "coord": "B156",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-4"
+        },
+        {
+          "coord": "C156",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "表面式\n伝熱面積 20 m2"
+        },
+        {
+          "coord": "D156",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A157",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "場内給湯熱交換器 A（HWX-A）"
+        },
+        {
+          "coord": "B157",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-5"
+        },
+        {
+          "coord": "C157",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "プレート式\n伝熱面積 15 m2"
+        },
+        {
+          "coord": "D157",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A158",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "場内給湯熱交換器 B（HWX-B）"
+        },
+        {
+          "coord": "B158",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6-6"
+        },
+        {
+          "coord": "C158",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "プレート式\n伝熱面積 15 m2"
+        },
+        {
+          "coord": "D158",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A159",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "灰出し設備"
+        },
+        {
+          "coord": "B159",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7"
+        },
+        {
+          "coord": "A160",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "灰クレーン（ACR）"
+        },
+        {
+          "coord": "B160",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-1"
+        },
+        {
+          "coord": "C160",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "バケット容量 2 m3\n吊上荷重 4 t"
+        },
+        {
+          "coord": "D160",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A161",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "灰クレーン用バケット（ABK）"
+        },
+        {
+          "coord": "B161",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-2"
+        },
+        {
+          "coord": "C161",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "油圧開閉式\n容量 1.5 m3"
+        },
+        {
+          "coord": "D161",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A162",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "飛灰搬送コンベヤ A（FCV-A）"
+        },
+        {
+          "coord": "B162",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-3"
+        },
+        {
+          "coord": "C162",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "チェーン式\n電動機 3.7 kW"
+        },
+        {
+          "coord": "D162",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A163",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "飛灰搬送コンベヤ B（FCV-B）"
+        },
+        {
+          "coord": "B163",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-4"
+        },
+        {
+          "coord": "C163",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "チェーン式\n電動機 3.7 kW"
+        },
+        {
+          "coord": "D163",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A164",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "飛灰貯留槽（FSL）"
+        },
+        {
+          "coord": "B164",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-5"
+        },
+        {
+          "coord": "C164",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "容量 40 m3\nSS 製"
+        },
+        {
+          "coord": "D164",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A165",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "飛灰混練機 A（KND-A）"
+        },
+        {
+          "coord": "B165",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-6"
+        },
+        {
+          "coord": "C165",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2 軸パドル式\n電動機 30 kW"
+        },
+        {
+          "coord": "D165",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A166",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "飛灰混練機 B（KND-B）"
+        },
+        {
+          "coord": "B166",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-7"
+        },
+        {
+          "coord": "C166",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2 軸パドル式\n電動機 30 kW"
+        },
+        {
+          "coord": "D166",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A167",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "キレート剤添加装置（CHL）"
+        },
+        {
+          "coord": "B167",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-8"
+        },
+        {
+          "coord": "C167",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "定量ポンプ式\nタンク 2 m3"
+        },
+        {
+          "coord": "D167",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A168",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "処理物搬出コンベヤ（TCV）"
+        },
+        {
+          "coord": "B168",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-9"
+        },
+        {
+          "coord": "C168",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ベルト式\n電動機 2.2 kW"
+        },
+        {
+          "coord": "D168",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A169",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "主灰搬出コンベヤ（ACV-1）"
+        },
+        {
+          "coord": "B169",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-10"
+        },
+        {
+          "coord": "C169",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "エプロン式\n電動機 3.7 kW\n1号炉用"
+        },
+        {
+          "coord": "D169",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A170",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "主灰搬出コンベヤ（ACV-2）"
+        },
+        {
+          "coord": "B170",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "7-11"
+        },
+        {
+          "coord": "C170",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "エプロン式\n電動機 3.7 kW\n2号炉用"
+        },
+        {
+          "coord": "D170",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A171",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "電気設備"
+        },
+        {
+          "coord": "B171",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8"
+        },
+        {
+          "coord": "A172",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受変電配電設備（SUB）"
+        },
+        {
+          "coord": "B172",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-1"
+        },
+        {
+          "coord": "C172",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "受電 6.6 kV\n変圧器 3 台"
+        },
+        {
+          "coord": "D172",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A173",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "発電機（GEN）"
+        },
+        {
+          "coord": "B173",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-2"
+        },
+        {
+          "coord": "C173",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "非常用 ディーゼル\n出力 300 kVA"
+        },
+        {
+          "coord": "D173",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A174",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "特別高圧受電盤（EHV）"
+        },
+        {
+          "coord": "B174",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-3"
+        },
+        {
+          "coord": "C174",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "66 kV\n屋内キュービクル形"
+        },
+        {
+          "coord": "D174",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A175",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "主変圧器（MTR）"
+        },
+        {
+          "coord": "B175",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-4"
+        },
+        {
+          "coord": "C175",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "油入自冷式 5,000 kVA\n66/6.6 kV"
+        },
+        {
+          "coord": "D175",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A176",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高圧配電盤 A（HVP-A）"
+        },
+        {
+          "coord": "B176",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-5"
+        },
+        {
+          "coord": "C176",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6.6 kV\n閉鎖形"
+        },
+        {
+          "coord": "D176",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A177",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高圧配電盤 B（HVP-B）"
+        },
+        {
+          "coord": "B177",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-6"
+        },
+        {
+          "coord": "C177",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6.6 kV\n閉鎖形"
+        },
+        {
+          "coord": "D177",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A178",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高圧配電盤 C（HVP-C）"
+        },
+        {
+          "coord": "B178",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-7"
+        },
+        {
+          "coord": "C178",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6.6 kV\n閉鎖形"
+        },
+        {
+          "coord": "D178",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A179",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高圧配電盤 D（HVP-D）"
+        },
+        {
+          "coord": "B179",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-8"
+        },
+        {
+          "coord": "C179",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6.6 kV\n閉鎖形"
+        },
+        {
+          "coord": "D179",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A180",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高圧配電盤 E（HVP-E）"
+        },
+        {
+          "coord": "B180",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-9"
+        },
+        {
+          "coord": "C180",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6.6 kV\n閉鎖形"
+        },
+        {
+          "coord": "D180",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A181",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "高圧配電盤 F（HVP-F）"
+        },
+        {
+          "coord": "B181",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-10"
+        },
+        {
+          "coord": "C181",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "6.6 kV\n閉鎖形"
+        },
+        {
+          "coord": "D181",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A182",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 A（LVP-A）"
+        },
+        {
+          "coord": "B182",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-11"
+        },
+        {
+          "coord": "C182",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D182",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A183",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 B（LVP-B）"
+        },
+        {
+          "coord": "B183",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-12"
+        },
+        {
+          "coord": "C183",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D183",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A184",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 C（LVP-C）"
+        },
+        {
+          "coord": "B184",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-13"
+        },
+        {
+          "coord": "C184",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D184",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A185",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 D（LVP-D）"
+        },
+        {
+          "coord": "B185",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-14"
+        },
+        {
+          "coord": "C185",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D185",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A186",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 E（LVP-E）"
+        },
+        {
+          "coord": "B186",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-15"
+        },
+        {
+          "coord": "C186",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D186",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A187",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 F（LVP-F）"
+        },
+        {
+          "coord": "B187",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-16"
+        },
+        {
+          "coord": "C187",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D187",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A188",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 G（LVP-G）"
+        },
+        {
+          "coord": "B188",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-17"
+        },
+        {
+          "coord": "C188",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D188",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A189",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 H（LVP-H）"
+        },
+        {
+          "coord": "B189",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-18"
+        },
+        {
+          "coord": "C189",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D189",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A190",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 I（LVP-I）"
+        },
+        {
+          "coord": "B190",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-19"
+        },
+        {
+          "coord": "C190",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D190",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A191",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 J（LVP-J）"
+        },
+        {
+          "coord": "B191",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-20"
+        },
+        {
+          "coord": "C191",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D191",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A192",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 K（LVP-K）"
+        },
+        {
+          "coord": "B192",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-21"
+        },
+        {
+          "coord": "C192",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D192",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A193",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "低圧動力盤 L（LVP-L）"
+        },
+        {
+          "coord": "B193",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-22"
+        },
+        {
+          "coord": "C193",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "440 V\n閉鎖形"
+        },
+        {
+          "coord": "D193",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A194",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "直流電源装置（DCP）"
+        },
+        {
+          "coord": "B194",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-23"
+        },
+        {
+          "coord": "C194",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "蓄電池 100 V\n制御弁式鉛蓄電池"
+        },
+        {
+          "coord": "D194",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A195",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "無停電電源装置 A（UPS-A）"
+        },
+        {
+          "coord": "B195",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-24"
+        },
+        {
+          "coord": "C195",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "30 kVA\n常時インバータ給電"
+        },
+        {
+          "coord": "D195",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E195",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2024年2月 蓄電池取替"
+        },
+        {
+          "coord": "A196",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "無停電電源装置 B（UPS-B）"
+        },
+        {
+          "coord": "B196",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-25"
+        },
+        {
+          "coord": "C196",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "30 kVA\n常時インバータ給電"
+        },
+        {
+          "coord": "D196",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E196",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2024年2月 蓄電池取替"
+        },
+        {
+          "coord": "A197",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "非常用発電機（EGN）"
+        },
+        {
+          "coord": "B197",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-26"
+        },
+        {
+          "coord": "C197",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ディーゼル 500 kVA\n燃料 A 重油"
+        },
+        {
+          "coord": "D197",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A198",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "発電機遮断器（GCB）"
+        },
+        {
+          "coord": "B198",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-27"
+        },
+        {
+          "coord": "C198",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "真空遮断器\n定格 6.6 kV"
+        },
+        {
+          "coord": "D198",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A199",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "励磁装置（EXC）"
+        },
+        {
+          "coord": "B199",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "8-28"
+        },
+        {
+          "coord": "C199",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ブラシレス\n自動電圧調整器付"
+        },
+        {
+          "coord": "D199",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2003
+        },
+        {
+          "coord": "A200",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計装設備"
+        },
+        {
+          "coord": "B200",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9"
+        },
+        {
+          "coord": "A201",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "DCS（DCS）"
+        },
+        {
+          "coord": "B201",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-1"
+        },
+        {
+          "coord": "C201",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "監視操作卓 3 台\n制御盤 4 面"
+        },
+        {
+          "coord": "D201",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E201",
           "data_type": "s",
           "number_format": "General",
           "value": "2025年10月 基幹改良"
+        },
+        {
+          "coord": "A202",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "中央操作盤（COP）"
+        },
+        {
+          "coord": "B202",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-2"
+        },
+        {
+          "coord": "C202",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ディスプレイ 6 面\n二重化"
+        },
+        {
+          "coord": "D202",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A203",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "ITV 設備（ITV）"
+        },
+        {
+          "coord": "B203",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-3"
+        },
+        {
+          "coord": "C203",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "カメラ 24 台\n録画装置付"
+        },
+        {
+          "coord": "D203",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2012
+        },
+        {
+          "coord": "A204",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計装用空気圧縮機 A（IAC-A）"
+        },
+        {
+          "coord": "B204",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-4"
+        },
+        {
+          "coord": "C204",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スクリュー式\n電動機 22 kW"
+        },
+        {
+          "coord": "D204",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A205",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "計装用空気圧縮機 B（IAC-B）"
+        },
+        {
+          "coord": "B205",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-5"
+        },
+        {
+          "coord": "C205",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "スクリュー式\n電動機 22 kW"
+        },
+        {
+          "coord": "D205",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A206",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 A（GAN-A1）"
+        },
+        {
+          "coord": "B206",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-6"
+        },
+        {
+          "coord": "C206",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n1号炉用"
+        },
+        {
+          "coord": "D206",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E206",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2027年4月 更新予定"
+        },
+        {
+          "coord": "A207",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 B（GAN-B1）"
+        },
+        {
+          "coord": "B207",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-7"
+        },
+        {
+          "coord": "C207",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n1号炉用"
+        },
+        {
+          "coord": "D207",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E207",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2027年4月 更新予定"
+        },
+        {
+          "coord": "A208",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 C（GAN-C1）"
+        },
+        {
+          "coord": "B208",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-8"
+        },
+        {
+          "coord": "C208",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n1号炉用"
+        },
+        {
+          "coord": "D208",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E208",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2027年4月 更新予定"
+        },
+        {
+          "coord": "A209",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 D（GAN-D1）"
+        },
+        {
+          "coord": "B209",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-9"
+        },
+        {
+          "coord": "C209",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n1号炉用"
+        },
+        {
+          "coord": "D209",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "E209",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "2027年4月 更新予定"
+        },
+        {
+          "coord": "A210",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 A（TIC-A1）"
+        },
+        {
+          "coord": "B210",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-10"
+        },
+        {
+          "coord": "C210",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n1号炉用"
+        },
+        {
+          "coord": "D210",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A211",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 B（TIC-B1）"
+        },
+        {
+          "coord": "B211",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-11"
+        },
+        {
+          "coord": "C211",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n1号炉用"
+        },
+        {
+          "coord": "D211",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A212",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 C（TIC-C1）"
+        },
+        {
+          "coord": "B212",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-12"
+        },
+        {
+          "coord": "C212",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n1号炉用"
+        },
+        {
+          "coord": "D212",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A213",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 D（TIC-D1）"
+        },
+        {
+          "coord": "B213",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-13"
+        },
+        {
+          "coord": "C213",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n1号炉用"
+        },
+        {
+          "coord": "D213",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A214",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 E（TIC-E1）"
+        },
+        {
+          "coord": "B214",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-14"
+        },
+        {
+          "coord": "C214",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n1号炉用"
+        },
+        {
+          "coord": "D214",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A215",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 F（TIC-F1）"
+        },
+        {
+          "coord": "B215",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-15"
+        },
+        {
+          "coord": "C215",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n1号炉用"
+        },
+        {
+          "coord": "D215",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A216",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 A（FIC-A1）"
+        },
+        {
+          "coord": "B216",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-16"
+        },
+        {
+          "coord": "C216",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n1号炉用"
+        },
+        {
+          "coord": "D216",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A217",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 B（FIC-B1）"
+        },
+        {
+          "coord": "B217",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-17"
+        },
+        {
+          "coord": "C217",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n1号炉用"
+        },
+        {
+          "coord": "D217",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A218",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 C（FIC-C1）"
+        },
+        {
+          "coord": "B218",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-18"
+        },
+        {
+          "coord": "C218",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n1号炉用"
+        },
+        {
+          "coord": "D218",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A219",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 D（FIC-D1）"
+        },
+        {
+          "coord": "B219",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-19"
+        },
+        {
+          "coord": "C219",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n1号炉用"
+        },
+        {
+          "coord": "D219",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A220",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 E（FIC-E1）"
+        },
+        {
+          "coord": "B220",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-20"
+        },
+        {
+          "coord": "C220",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n1号炉用"
+        },
+        {
+          "coord": "D220",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A221",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 F（FIC-F1）"
+        },
+        {
+          "coord": "B221",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-21"
+        },
+        {
+          "coord": "C221",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n1号炉用"
+        },
+        {
+          "coord": "D221",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A222",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉制御盤（PLC-1）"
+        },
+        {
+          "coord": "B222",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-22"
+        },
+        {
+          "coord": "C222",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "PLC 二重化\n二重化\n1号炉用"
+        },
+        {
+          "coord": "D222",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A223",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 A（GAN-A2）"
+        },
+        {
+          "coord": "B223",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-23"
+        },
+        {
+          "coord": "C223",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n2号炉用"
+        },
+        {
+          "coord": "D223",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A224",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 B（GAN-B2）"
+        },
+        {
+          "coord": "B224",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-24"
+        },
+        {
+          "coord": "C224",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n2号炉用"
+        },
+        {
+          "coord": "D224",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A225",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 C（GAN-C2）"
+        },
+        {
+          "coord": "B225",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-25"
+        },
+        {
+          "coord": "C225",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n2号炉用"
+        },
+        {
+          "coord": "D225",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A226",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "排ガス分析計 D（GAN-D2）"
+        },
+        {
+          "coord": "B226",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-26"
+        },
+        {
+          "coord": "C226",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "CO・O2・NOx・HCl\n連続式\n2号炉用"
+        },
+        {
+          "coord": "D226",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A227",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 A（TIC-A2）"
+        },
+        {
+          "coord": "B227",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-27"
+        },
+        {
+          "coord": "C227",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n2号炉用"
+        },
+        {
+          "coord": "D227",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A228",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 B（TIC-B2）"
+        },
+        {
+          "coord": "B228",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-28"
+        },
+        {
+          "coord": "C228",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n2号炉用"
+        },
+        {
+          "coord": "D228",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A229",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 C（TIC-C2）"
+        },
+        {
+          "coord": "B229",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-29"
+        },
+        {
+          "coord": "C229",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n2号炉用"
+        },
+        {
+          "coord": "D229",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A230",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 D（TIC-D2）"
+        },
+        {
+          "coord": "B230",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-30"
+        },
+        {
+          "coord": "C230",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n2号炉用"
+        },
+        {
+          "coord": "D230",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A231",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 E（TIC-E2）"
+        },
+        {
+          "coord": "B231",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-31"
+        },
+        {
+          "coord": "C231",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n2号炉用"
+        },
+        {
+          "coord": "D231",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A232",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉内温度計 F（TIC-F2）"
+        },
+        {
+          "coord": "B232",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-32"
+        },
+        {
+          "coord": "C232",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "熱電対 K\n挿入長 1,000 mm\n2号炉用"
+        },
+        {
+          "coord": "D232",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A233",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 A（FIC-A2）"
+        },
+        {
+          "coord": "B233",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-33"
+        },
+        {
+          "coord": "C233",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n2号炉用"
+        },
+        {
+          "coord": "D233",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A234",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 B（FIC-B2）"
+        },
+        {
+          "coord": "B234",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-34"
+        },
+        {
+          "coord": "C234",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n2号炉用"
+        },
+        {
+          "coord": "D234",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A235",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 C（FIC-C2）"
+        },
+        {
+          "coord": "B235",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-35"
+        },
+        {
+          "coord": "C235",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n2号炉用"
+        },
+        {
+          "coord": "D235",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A236",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 D（FIC-D2）"
+        },
+        {
+          "coord": "B236",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-36"
+        },
+        {
+          "coord": "C236",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n2号炉用"
+        },
+        {
+          "coord": "D236",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A237",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 E（FIC-E2）"
+        },
+        {
+          "coord": "B237",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-37"
+        },
+        {
+          "coord": "C237",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n2号炉用"
+        },
+        {
+          "coord": "D237",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A238",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "流量計 F（FIC-F2）"
+        },
+        {
+          "coord": "B238",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-38"
+        },
+        {
+          "coord": "C238",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "差圧式\n伝送器付\n2号炉用"
+        },
+        {
+          "coord": "D238",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
+        },
+        {
+          "coord": "A239",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "炉制御盤（PLC-2）"
+        },
+        {
+          "coord": "B239",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "9-39"
+        },
+        {
+          "coord": "C239",
+          "data_type": "s",
+          "number_format": "General",
+          "value": "PLC 二重化\n二重化\n2号炉用"
+        },
+        {
+          "coord": "D239",
+          "data_type": "n",
+          "number_format": "General",
+          "value": 2002
         }
       ],
       "hidden_cols": [],
