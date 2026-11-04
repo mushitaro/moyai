@@ -9,7 +9,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readdirSync } from "node:fs";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { ReadingSkill, type LoadedReading, type ReadingScope } from "../import/reading";
+import { ReadingSkill, handWritten, skillMarkdown, type LoadedReading, type ReadingScope } from "../import/reading";
 import { PLAN_ID, readHistory, type PlanHistory, type SignatureInfo } from "../plan/store";
 
 const SKILLS = "skills";
@@ -29,27 +29,6 @@ export function readingDir(root: string, scope: ReadingScope, name: string, by: 
   if (scope === "company") return join(root, SKILLS, COMPANY, name);
   if (scope === "person") return by && safeSegment(by) ? join(root, SKILLS, PERSON, by, name) : null;
   return facilityKey && safeSegment(facilityKey) ? join(root, facilityKey, SKILLS, name) : null;
-}
-
-const SCOPE_LABEL: Record<ReadingScope, string> = { facility: "施設", person: "担当", company: "会社" };
-
-/** SKILL.md の文：題・範囲・使い方・規則の一覧（人の言葉の 1 文） */
-export function skillMarkdown(skill: ReadingSkill): string {
-  const L = [
-    `# 読み方：${skill.name}`,
-    "",
-    `範囲：${SCOPE_LABEL[skill.scope]}。MOYAI の取り込みが、資料を読むときに先に当てる決まり（3 段目の Skill。docs/plan.md §2.17）。`,
-    "規則は rules.json にある。この文と rules.json は、手で編集してよい。編集すると版が変わり、その版を使った版に人が署名するまで、ほかの人の MOYAI では効かない。",
-    "",
-    "## 規則",
-    "",
-    ...skill.rules.map((r) => {
-      const where = [r.when?.file ? `資料「${r.when.file}」` : null, r.when?.headers?.length ? `見出しに「${r.when.headers.join("」「")}」` : null].filter(Boolean).join("・");
-      return `- ${r.text}${where ? `（効く資料：${where}）` : ""}`;
-    }),
-    "",
-  ];
-  return L.join("\n");
 }
 
 /** 版：SKILL.md と rules.json の中身の SHA-256（全長。16 文字に切ると衝突を作れるため） */
@@ -74,7 +53,9 @@ export async function registerReading(root: string, skillIn: unknown, by: string
   const dir = readingDir(root, skill.scope, skill.name, by, facilityKey);
   if (!dir) return { ok: false, reason: "nameInvalid" };
   const rules = `${JSON.stringify(skill, null, 1)}\n`;
-  const md = skillMarkdown(skill);
+  // 人が手で書いた「## 補い」の節は、規則から作り直しても残す
+  const prevMd = existsSync(join(dir, SKILL_MD)) ? await readFile(join(dir, SKILL_MD), "utf8") : null;
+  const md = skillMarkdown(skill, prevMd ? handWritten(prevMd) : null);
   const version = readingVersion(md, rules);
   await mkdir(dir, { recursive: true });
   const oldRules = existsSync(join(dir, RULES)) ? await readFile(join(dir, RULES), "utf8") : null;
@@ -115,6 +96,8 @@ export interface ListedReading {
   /** 承認した星取表の版の番号（その読み方の版を最初に使った、署名した版。未承認は null） */
   approvedIn: number | null;
   skill: ReadingSkill;
+  /** SKILL.md の文（読めなければ空） */
+  text: string;
 }
 
 /** 保管先の読み方の一覧（形の外れたものは数えない）。approvedVersions：署名した版が使った読み方の版 → 承認した星取表の版の番号 */
@@ -137,7 +120,7 @@ export async function listReadings(root: string, approvedVersions: ReadonlyMap<s
     const p = ReadingSkill.safeParse(v);
     if (!p.success) continue;
     const version = readingVersion(md, rules);
-    out.push({ name: p.data.name, scope: p.data.scope, path: relPath(root, dir), version, rules: p.data.rules.length, approved: approvedVersions.has(version), approvedIn: approvedVersions.get(version) ?? null, skill: p.data });
+    out.push({ name: p.data.name, scope: p.data.scope, path: relPath(root, dir), version, rules: p.data.rules.length, approved: approvedVersions.has(version), approvedIn: approvedVersions.get(version) ?? null, skill: p.data, text: md });
   }
   return out;
 }

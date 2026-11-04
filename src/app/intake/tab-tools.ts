@@ -4,7 +4,8 @@
 // 当てはめ（crosswalk_propose）は規則で案を置くだけで、数と行の参照だけを返す。人が受ける道はここに無い（画面だけ）。
 // 写真（photo_transcribe）は、人が画面で許した写真の画像を 1 回だけ添えて返す（intake/photos.ts）。許す・確かめる道はここに無い。
 import type { TabSentCode } from "../../shared/errors";
-import { toolDef, type PhotoCellIn, type PhotoImage, type Rule, type ToolName } from "../../shared/tools";
+import { SKILL_CATALOG_TOOLS, toolDef, type PhotoCellIn, type PhotoImage, type Rule, type ToolName } from "../../shared/tools";
+import { activeSkills, skillCatalog } from "../skills";
 import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
@@ -96,6 +97,11 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
   };
 }
 
+/** 作業画面が今当てている Skill：選んでいるパック（作業中の計画のパック）と、当てている読み方 */
+function skillsOf(ws: IntakeWorkspace) {
+  return activeSkills(getWorkingPlan()?.plan.packId ?? (ws.settings.packId || null), ws.currentReadings());
+}
+
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   chart_propose: (ws, args) => chartPropose(ws, args),
   reading_rules_propose: (ws, args) => {
@@ -113,7 +119,12 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   },
   peer_reference: (_ws, args) => (args.place === "ledger" ? ledgerRequest(args) : peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined)),
   intake_survey: (ws, args) => {
-    const part = args.part as "all" | "questions" | "compose" | "crosswalk";
+    const part = args.part as "all" | "questions" | "compose" | "crosswalk" | "skills";
+    if (part === "skills") {
+      const s: Record<string, unknown> = { ...ws.survey(), crosswalk: null, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] };
+      ws.note("ai", T.skillsRead);
+      return { ok: true, data: { ...s, skillTexts: skillsOf(ws) } };
+    }
     // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
     const s: Record<string, unknown> = { ...ws.survey(), crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null };
     ws.note("ai", T.surveyed);
@@ -184,8 +195,10 @@ export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<
   const def = toolDef(name);
   const args = def.input.safeParse(rawArgs);
   if (!args.success) return { ok: false, code: "tool_failed" };
-  const r = receiver(ws, args.data as Record<string, unknown>, ctx);
-  if (!r.ok) return r;
+  const r0 = receiver(ws, args.data as Record<string, unknown>, ctx);
+  if (!r0.ok) return r0;
+  // 今効いている Skill の目録を添える（本文は intake_survey の part: skills。docs/plan.md §2.18.3）
+  const r: TabToolResult = (SKILL_CATALOG_TOOLS as readonly string[]).includes(name) ? { ...r0, data: { ...r0.data, skills: skillCatalog(skillsOf(ws)) } } : r0;
   // AI へ返す答えは型で確かめる。橋渡しへ渡す途中の中身は、その形だけを確かめる
   const mid = INTERMEDIATE[name];
   if (mid?.(r.data)) return r;

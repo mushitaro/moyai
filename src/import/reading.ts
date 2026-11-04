@@ -151,3 +151,34 @@ export class RuleHits {
     return { file, ref };
   }
 }
+
+// ─── SKILL.md の文（3 段目。保管先に書く文と、AI に渡す本文で同じもの） ─────────────
+
+const SCOPE_LABEL: Record<ReadingScope, string> = { facility: "施設", person: "担当", company: "会社" };
+const HAND = "## 補い";
+
+/** SKILL.md の中の、人が手で書いた「## 補い」の節（無ければ null） */
+export function handWritten(md: string): string | null {
+  const i = md.indexOf(`\n${HAND}\n`);
+  return i < 0 ? null : md.slice(i + 1).trimEnd();
+}
+
+/** SKILL.md の文：題・範囲・使い方・規則の一覧（人の言葉の 1 文）と、人が手で書いた補い */
+export function skillMarkdown(skill: ReadingSkill, hand: string | null = null): string {
+  const L = [
+    `# 読み方：${skill.name}`,
+    "",
+    `範囲：${SCOPE_LABEL[skill.scope]}。MOYAI の取り込みが、資料を読むときに先に当てる決まり（3 段目の Skill。docs/plan.md §2.17）。`,
+    `規則は rules.json にある。規則は手で編集してよい。人の言葉の補いは、この文の「${HAND}」の節の下に手で書く（規則から作り直しても残る）。編集すると版が変わり、その版を使った版に人が署名するまで、ほかの人の MOYAI では効かない。`,
+    "",
+    "## 規則",
+    "",
+    ...skill.rules.map((r) => {
+      const where = [r.when?.file ? `資料「${r.when.file}」` : null, r.when?.headers?.length ? `見出しに「${r.when.headers.join("」「")}」` : null].filter(Boolean).join("・");
+      return `- ${r.text}${where ? `（効く資料：${where}）` : ""}`;
+    }),
+    "",
+    ...(hand ? [hand, ""] : []),
+  ];
+  return L.join("\n");
+}

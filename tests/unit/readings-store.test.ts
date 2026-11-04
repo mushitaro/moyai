@@ -46,6 +46,8 @@ describe("読み方の保管先", () => {
     const list = await listReadings(root, new Map());
     expect(list.map((x) => [x.name, x.scope, x.version, x.rules, x.approved])).toEqual([["【架空】甲工場の読み方", "facility", b.version, 2, false]]);
     expect(loadedOf(list)).toEqual([]);
+    // 一覧は SKILL.md の文も持つ（reading_skills_list の withText で AI に渡す）
+    expect(list[0]!.text).toContain("- 2 行目を見出しとして読む");
   });
 
   it("形の外れた読み方は書かず、一覧にも出さない", async () => {

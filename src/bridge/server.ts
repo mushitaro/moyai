@@ -126,11 +126,12 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   const sd = opts.stateDir;
   const trusted = (x: SignatureInfo) => sd !== null && countsForApproval(trustOf(sd, x, new Date(now())));
   const tools = new ToolRelay(tabs, opts.toolTimeouts, {
-    reading_skills_list: async () => {
+    reading_skills_list: async (args) => {
       const root = await human.root();
       if (!root) return "no_reading_root";
       const list = await listReadings(root, await approvedReadingVersions(root, trusted));
-      return { skills: list.map(({ skill: _skill, ...x }) => x) };
+      // 本文は頼まれたときだけ（保管先の SKILL.md の文。規則の 1 文と、人が手で書いた補い）
+      return { skills: list.map(({ skill: _skill, text, ...x }) => (args.withText === true ? { ...x, text } : x)) };
     },
     // 似た施設：人が開いた比べはそのまま渡し、公開の台帳だけを読む頼みは橋渡しが台帳を読む（§2.18.4）
     peer_reference: async (fromTab) => {
