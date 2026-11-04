@@ -201,7 +201,14 @@ export type PlaceKind = "ledger" | "ring";
  */
 export interface PeerOverlay {
   places: readonly { kind: PlaceKind; rows: readonly StarRow[] }[];
+  /**
+   * 1 行にまとめる（docs/screens.md 3.2「似た施設を重ねると、各行の下に細い行『似た施設　帯 3〜5 年』」）：
+   * 場ごとに 1 行。印は似た施設のどれかが作業をした年度（淡い印）、名前は labels.summary
+   */
+  summary?: boolean;
   labels: {
+    /** まとめた行の名前（統計から。例「似た施設　帯 3〜5 年」「似た施設　5 施設に満たない」） */
+    summary?: (place: PlaceKind, stats: StarRow["stats"]) => string;
     /** 設備の分類の塊を載せる行の名前 */
     wholeSystem: string;
     /** 似た施設の行の名前 */
@@ -246,6 +253,8 @@ export interface ChartModel {
   orphanDetails: string[];
   /** 似た施設を重ねたか（帯の列を出す） */
   peersShown: boolean;
+  /** 似た施設を 1 行にまとめたか（帯の列は出さない。帯は行の名前に） */
+  peersSummary: boolean;
   /** 似た施設の塊のうち、パックに無い分類（行にしなかったもの）。黙って捨てない */
   unknownPeerClasses: string[];
 }
@@ -454,7 +463,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   const collect = (n: Node): void => {
     total++;
     // 重ねた似た施設の行と統計の行も、全部の行に数える（畳んで隠れても数は変わらない）
-    if (n.overlay) for (const o of n.overlay) total += o.row.peers.length + 1;
+    if (n.overlay) for (const o of n.overlay) total += overlay?.summary ? 1 : o.row.peers.length + 1;
     const dm = new Map<string, Agg>();
     const sm = new Map<string, Agg>();
     const assets = new Set<string>();
@@ -530,6 +539,18 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   // 似た施設の行（場の順・札の順）と、場ごとの統計の行。段の列は最後の段にだけ名前を出す
   const emitPeers = (n: Node, path: (string | null)[]) => {
     const fullPath = Array.from({ length: width }, (_, i) => path[i] ?? null);
+    if (overlay!.summary) {
+      for (const { place, index, row } of n.overlay!) {
+        const cells: Record<string, ChartCell> = {};
+        for (const y of new Set(row.peers.flatMap((p) => p.years))) {
+          const fy = Number(y.slice(2));
+          if (Number.isInteger(fy)) cells[yearKey(fy)] = { mark: "actual", summary: true, count: null, review: false, change: null, detailKeys: [] };
+        }
+        const name = overlay!.labels.summary ? overlay!.labels.summary(place, row.stats) : overlay!.labels.stat(place);
+        rows.push({ id: `${n.id}|${place}${index}|stat`, level: n.level + 1, parentId: n.id, kind: "stat", place, stats: row.stats, path: fullPath, levelCells: lastOnly(name), hasChildren: false, folded: false, count: null, detailKeys: [], cells });
+      }
+      return;
+    }
     for (const { place, index, row } of n.overlay!) {
       for (const peer of row.peers) {
         const cells: Record<string, ChartCell> = {};
@@ -571,6 +592,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
     totalRows: total,
     orphanDetails: [...orphan],
     peersShown: overlay !== null,
+    peersSummary: overlay !== null && !!overlay.summary,
     unknownPeerClasses: [...unknownPeer].sort(),
   };
 }

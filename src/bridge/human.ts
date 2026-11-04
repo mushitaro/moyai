@@ -9,24 +9,34 @@ import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
 import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLatest, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { COMMENT_MAX, addComment, readComments } from "../plan/comments";
 import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustList, trustOf } from "./people";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
-import { createRing, loadRing, monthOf, previewCheckpoint, questionsOf, sendCheckpoint, verifyRing, type Answers } from "../share/checkpoint";
+import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, sealPlace, sendCheckpoint, verifyRing, type Answers, type PreviewView } from "../share/checkpoint";
+import { LEDGER_PR_TEXT, checkAgainstLedger, ensureLedgerKey, ledgerBranch, ledgerBundlePath, ledgerKeyOf, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
+import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
+import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
 import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "../share/receive";
 import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
-import { HEX16, HEX64, fingerprint } from "../share/sign";
+import { HEX16, HEX64, WrongPassphrase, fingerprint, keyIdOf, sha256Hex, unwrapSecret, wrapSecret } from "../share/sign";
 import { readFileSync, readdirSync } from "node:fs";
 import {
+  GITHUB_TOKEN_AAD,
   defaultRoot,
   detectDocuments,
+  readGitHub,
+  readLedgerSent,
   readRings,
+  removeGitHub,
+  writeGitHub,
+  writeLedgerSent,
   readSettings,
   readWrappedKey,
   syncedOf,
@@ -46,6 +56,20 @@ export interface HumanEnv {
   env?: NodeJS.ProcessEnv;
   /** 一時のファイルを OS のテキストエディタで開く（試験は差し替える） */
   openText?: (path: string) => void;
+  /** GitHub とのやりとり（既定は github.com と api.github.com。試験は 127.0.0.1 の試験の台） */
+  github?: GitHubIo;
+  /** OAuth App の Client ID（既定は github.ts の GITHUB_CLIENT_ID） */
+  githubClientId?: string | null;
+}
+
+/** GitHub につなぐ途中（デバイスフロー）。合言葉はつながるか終わるまでこのメモリだけに置き、どこにも書かない */
+interface GitHubConnecting {
+  state: "waiting" | "ok" | "denied" | "expired" | "failed";
+  userCode: string;
+  verificationUri: string;
+  expiresAt: number;
+  login: string | null;
+  stop: () => void;
 }
 
 export interface HumanCall {
@@ -87,6 +111,13 @@ const SCHEMAS = {
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable(), passphrase: z.string().min(1).max(1000) }),
   plans_list: z.object({}),
   plan_version_read: z.object({ planId: planIdSchema, version: z.number().int().min(1) }),
+  comment_add: z.object({
+    planId: planIdSchema,
+    version: z.number().int().min(0),
+    row: z.object({ mode: z.enum(["ledger", "common"]), id: z.string().min(1).max(500), label: z.string().max(500) }).nullable(),
+    text: z.string().max(COMMENT_MAX),
+  }),
+  comments_list: z.object({ planId: planIdSchema }),
   plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500), passphrase: z.string().min(1).max(1000) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({ passphrase: z.string().min(1).max(1000) }),
@@ -105,6 +136,18 @@ const SCHEMAS = {
     passphrase: z.string().max(1000),
   }),
   ring_verify: z.object({ ringId: ringIdSchema }),
+  ledger_preview: z.object({ planId: planIdSchema, answers: answersSchema }),
+  ledger_send: z.object({
+    planId: planIdSchema,
+    version: z.number().int().min(1),
+    answers: answersSchema,
+    previewHash: z.string().regex(HEX64),
+    passphrase: z.string().max(1000),
+  }),
+  ledger_prs: z.object({ packId: z.string().regex(PACK_ID) }),
+  github_connect_start: z.object({ packId: z.string().regex(PACK_ID), passphrase: z.string().max(1000) }),
+  github_connect_state: z.object({}),
+  github_disconnect: z.object({}),
   peers_compare: z.object({
     packId: z.string().regex(PACK_ID),
     position: z.enum(POSITIONS),
@@ -161,10 +204,42 @@ function gitHead(root: string): string | null {
   }
 }
 
+/** 台帳の clone の origin の URL（.git/config を読む。git は走らせない）。読めなければ null */
+export function gitRemote(root: string): string | null {
+  try {
+    const text = readFileSync(join(root, ".git", "config"), "utf8");
+    let inOrigin = false;
+    for (const line of text.split(/\r?\n/)) {
+      const sec = /^\s*\[(.+)\]\s*$/.exec(line);
+      if (sec) {
+        inOrigin = /^remote\s+"origin"$/.test(sec[1]!.trim());
+        continue;
+      }
+      const m = inOrigin ? /^\s*url\s*=\s*(.+?)\s*$/.exec(line) : null;
+      if (m) return m[1]!;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const sha256OfLedger = (L: { ledgerBytes: Uint8Array }) => sha256Hex(L.ledgerBytes);
+
 export class HumanService {
   private docs: DocumentsInfo | null = null;
+  private connecting: GitHubConnecting | null = null;
 
   constructor(private readonly e: HumanEnv) {}
+
+  private githubIo(): GitHubIo {
+    return this.e.github ?? githubIo(githubHostsOf(this.e.env ?? process.env));
+  }
+
+  private githubClientId(io: GitHubIo): string | null {
+    if (this.e.githubClientId !== undefined) return this.e.githubClientId;
+    return githubClientIdOf(GITHUB_CLIENT_ID, this.e.env ?? process.env, io.hosts);
+  }
 
   /** 署名する人：設定の呼び名と、合言葉で開いた自分の鍵（署名したらすぐ捨てる。鍵も合言葉もどこにも残さない） */
   private signer(sd: string, passphrase: string): { ok: true; signer: Signer } | { ok: false; reason: "nameMissing" | "personKeyMissing" | "wrongPassphrase" } {
@@ -341,7 +416,7 @@ export class HumanService {
           const w = readWrappedKey(sd, r.ringId);
           return { ringId: r.ringId, root: r.root, pack: r.pack, key: r.key, fingerprint: w ? fingerprint(w.pub) : null, synced: syncedOf(r.root, docs.syncRoots) };
         });
-        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, rings, packs: this.packs(), name: s.name, people: trustList(sd) };
+        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, github: readGitHub(sd)?.login ?? null, rings, packs: this.packs(), name: s.name, people: trustList(sd) };
       }
       case "settings_save": {
         const p = parsePayload("settings_save", call.payload);
@@ -357,6 +432,26 @@ export class HumanService {
         if (name === undefined) return no("nameInvalid");
         writeSettings(sd, { v: 1, root, ledger, name });
         return { ok: true, root, ledger, name };
+      }
+      case "comment_add": {
+        const p = parsePayload("comment_add", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        // 書いた人は、この PC の呼び名（画面で選ばせない）
+        const name = readSettings(sd).name;
+        if (!name) return no("nameMissing");
+        const r = await addComment(root, { planId: p.planId, version: p.version, row: p.row, by: name, text: p.text }, now);
+        if (!r.ok) return no(r.reason);
+        return { ok: true, comment: r.comment };
+      }
+      case "comments_list": {
+        const p = parsePayload("comments_list", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return { ok: true, comments: [], unreadable: 0 };
+        const r = await readComments(root, p.planId);
+        return { ok: true, comments: r.comments, unreadable: r.unreadable };
       }
       case "plan_version_read": {
         const p = parsePayload("plan_version_read", call.payload);
@@ -508,6 +603,157 @@ export class HumanService {
         const report = await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, ctx.ring.confirmed);
         return { ok: true, fileName: r.fileName, hash: r.hash, seq: r.seq, report };
       }
+      case "ledger_preview": {
+        const p = parsePayload("ledger_preview", call.payload);
+        if (!p) return no("payloadInvalid");
+        const c = await this.ledgerSendContext(p.planId);
+        if (!c.ok) return c.out;
+        const k = ledgerKeyOf(sd, c.L.id);
+        const pend = k ? pendingSent(sd, c.L, k.entry.key) : null;
+        const view = this.ledgerView(c, k, p.answers, monthOf(now), !!pend);
+        return { ok: true, ...c.info, pending: pend ? { pr: pend.pr, url: pend.url } : null, view };
+      }
+      case "ledger_send": {
+        const p = parsePayload("ledger_send", call.payload);
+        if (!p) return no("payloadInvalid");
+        const c = await this.ledgerSendContext(p.planId);
+        if (!c.ok) return c.out;
+        if (c.version !== p.version) return no("versionChanged");
+        if (!c.repo) return no("ledgerNotGitHub");
+        const gh = readGitHub(sd);
+        if (!gh) return no("githubNotConnected");
+        const k = ledgerKeyOf(sd, c.L.id);
+        const w = readWrappedKey(sd, c.L.id);
+        if (!k || !w) return no("noKey");
+        if (pendingSent(sd, c.L, k.entry.key)) return no("ledgerPending");
+        let token: string;
+        try {
+          token = unwrapSecret(gh.token, p.passphrase, GITHUB_TOKEN_AAD);
+        } catch (e) {
+          if (e instanceof WrongPassphrase) return no("passphrase");
+          throw e;
+        }
+        const s = sealPlace(ledgerPlace(sd, c.L, k), w, c.pack, c.plan, p.answers, monthOf(now), p.previewHash, p.passphrase);
+        if (!s.ok) return no(s.reason);
+        const bytes = new Uint8Array(Buffer.from(s.text, "utf8"));
+        const seq = s.input.seq;
+        const key = keyIdOf(s.input.pub);
+        const path = ledgerBundlePath(key, seq, s.hash);
+        const check = checkAgainstLedger(c.L, c.pack, path, bytes);
+        if (!check.ok) return no("ledgerNg", { reasons: check.reasons });
+        const parsed = parseJsonStrict(s.text);
+        const body = parsed.ok ? (parsed.value as unknown as { body: { profile: Parameters<typeof ledgerProfileText>[1]["profile"]; chunks: unknown[] } }).body : null;
+        const io = this.githubIo();
+        const r = await openLedgerPr(io, token, {
+          upstream: c.repo,
+          path,
+          bytes,
+          branch: ledgerBranch(key, seq, s.hash),
+          title: LEDGER_PR_TEXT.title(key, seq),
+          body: LEDGER_PR_TEXT.body({ key, pub: s.input.pub, seq, hash: s.hash, path, profile: body ? ledgerProfileText(c.pack, body) : "", chunks: body?.chunks.length ?? 0, ledgerId: c.L.id }),
+          commitMessage: LEDGER_PR_TEXT.commitMessage(key, seq),
+        });
+        if (!r.ok) return no(`github.${r.reason}`);
+        writeLedgerSent(sd, [
+          ...readLedgerSent(sd),
+          { ledgerId: c.L.id, key, seq, hash: s.hash, path, month: monthOf(now), at: now.toISOString(), repo: `${c.repo.owner}/${c.repo.name}`, pr: r.number, url: r.url, login: r.login, state: "open" },
+        ]);
+        return { ok: true, pr: r.number, url: r.url, path, hash: s.hash, seq, login: r.login };
+      }
+      case "ledger_prs": {
+        const p = parsePayload("ledger_prs", call.payload);
+        if (!p) return no("payloadInvalid");
+        const pack = this.pack(p.packId);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const L = await loadLedgerForSend(readSettings(sd).ledger, pack);
+        if (!L.ok) return no(`ledger.${L.reason}`);
+        const io = this.githubIo();
+        const all = readLedgerSent(sd);
+        const mine = all.filter((e) => e.ledgerId === L.id);
+        const prs = [];
+        for (const e of mine.slice(-10).reverse()) {
+          const [owner, name] = e.repo.split("/");
+          const st = owner && name ? await prStatus(io, { owner, name }, e.pr) : null;
+          if (st) e.state = st.state;
+          prs.push({ pr: e.pr, url: e.url, seq: e.seq, at: e.at, login: e.login, status: st });
+        }
+        writeLedgerSent(sd, all);
+        return { ok: true, prs };
+      }
+      case "github_connect_start": {
+        const p = parsePayload("github_connect_start", call.payload);
+        if (!p) return no("payloadInvalid");
+        const pack = this.pack(p.packId);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const L = await loadLedgerForSend(readSettings(sd).ledger, pack);
+        if (!L.ok) return no(`ledger.${L.reason}`);
+        const io = this.githubIo();
+        const clientId = this.githubClientId(io);
+        if (!clientId) return no("githubNoClient");
+        // 台帳の自分の鍵：あれば合言葉で開けるかを確かめ、無ければこの合言葉で作る（トークンも同じ合言葉で包む）
+        const k = ensureLedgerKey(sd, L, pack, p.passphrase, now);
+        if (!k.ok) return no(k.reason === "wrongPassphrase" ? "passphrase" : k.reason);
+        const d = await startDevice(io, clientId);
+        if (!d.ok) return no(`github.${d.reason}`);
+        this.connecting?.stop();
+        const passphrase = p.passphrase;
+        let stopped = false;
+        let interval = d.interval;
+        const st: GitHubConnecting = {
+          state: "waiting",
+          userCode: d.userCode,
+          verificationUri: d.verificationUri,
+          expiresAt: this.e.now() + d.expiresIn * 1000,
+          login: null,
+          stop: () => {
+            stopped = true;
+          },
+        };
+        this.connecting = st;
+        const tick = async (): Promise<void> => {
+          if (stopped) return;
+          if (this.e.now() > st.expiresAt) {
+            st.state = "expired";
+            return;
+          }
+          const r = await pollDevice(io, clientId, d.deviceCode);
+          if (stopped) return;
+          if (r.state === "ok") {
+            const login = await whoAmI(io, r.token);
+            if (!login) {
+              st.state = "failed";
+              return;
+            }
+            writeGitHub(sd, { v: "moyai.github/0", login, token: wrapSecret(r.token, passphrase, GITHUB_TOKEN_AAD), connectedAt: new Date(this.e.now()).toISOString() });
+            st.login = login;
+            st.state = "ok";
+            return;
+          }
+          if (r.state === "pending" || r.state === "slowDown") {
+            if (r.state === "slowDown") interval += 5;
+            setTimeout(() => void tick(), interval * 1000);
+            return;
+          }
+          st.state = r.state;
+        };
+        setTimeout(() => void tick(), interval * 1000);
+        return { ok: true, userCode: d.userCode, verificationUri: d.verificationUri, expiresIn: d.expiresIn, keyCreated: k.created };
+      }
+      case "github_connect_state": {
+        if (!parsePayload("github_connect_state", call.payload)) return no("payloadInvalid");
+        const c = this.connecting;
+        const gh = readGitHub(sd);
+        if (!c) return { ok: true, state: gh ? "ok" : "none", login: gh?.login ?? null };
+        if (c.state !== "waiting") this.connecting = null;
+        return { ok: true, state: c.state, login: c.login ?? gh?.login ?? null, userCode: c.userCode, verificationUri: c.verificationUri };
+      }
+      case "github_disconnect": {
+        if (!parsePayload("github_disconnect", call.payload)) return no("payloadInvalid");
+        this.connecting?.stop();
+        this.connecting = null;
+        removeGitHub(sd);
+        return { ok: true };
+      }
       case "ring_verify": {
         const p = parsePayload("ring_verify", call.payload);
         if (!p) return no("payloadInvalid");
@@ -559,6 +805,54 @@ export class HumanService {
 
   private async syncedOfPath(path: string) {
     return syncedOf(path, (await this.documents()).syncRoots);
+  }
+
+  /** 公開の台帳へ出す文脈：確定したいちばん新しい版・パック・台帳の clone（受け手と同じ関数で読む）・台帳のリポジトリ・GitHub の接続 */
+  private async ledgerSendContext(planId: string) {
+    const sd = this.e.stateDir!;
+    const root = await this.root();
+    const io = this.githubIo();
+    const gh = readGitHub(sd);
+    const github = { login: gh?.login ?? null, ready: this.githubClientId(io) !== null };
+    const fail = (reason: string, extra: Record<string, unknown> = {}) => ({ ok: false as const, out: no(reason, { github, ...extra }) });
+    if (!root) return fail("noRoot");
+    const h = await readHistory(root, planId);
+    if (!h.latest) return fail("notConfirmed");
+    const plan = h.latest.plan;
+    const pack = this.pack(plan.packId);
+    if (typeof pack === "string") return fail("packNotReady", { packReason: pack });
+    const base = {
+      plan: { planId, packId: plan.packId, version: h.latest.version, displayName: plan.displayName, fictional: plan.facility.fictional, inNationalTable: plan.facility.inNationalTable, pending: pendingDecisions(plan, h.accepted).length },
+      questions: questionsOf(pack, plan),
+      classNames: pack.classNames,
+      axes: pack.axes,
+      packName: pack.name,
+      github,
+    };
+    const ledgerRoot = readSettings(sd).ledger;
+    const L = await loadLedgerForSend(ledgerRoot, pack);
+    if (!L.ok) return fail(`ledger.${L.reason}`, base);
+    const repo: Repo | null = repoOfRemote(gitRemote(L.root));
+    const k = ledgerKeyOf(sd, L.id);
+    const info = { ...base, ledger: { id: L.id, repo: repo ? `${repo.owner}/${repo.name}` : null, key: k?.entry.key ?? null, fingerprint: k ? fingerprint(k.pub) : null } };
+    return { ok: true as const, L, pack, plan, version: h.latest.version, repo, info };
+  }
+
+  /** 公開の台帳の見え方（鍵がまだ無ければ、相手から見たあなたまでを出し、束のバイト列は出さない） */
+  private ledgerView(
+    c: Extract<Awaited<ReturnType<HumanService["ledgerSendContext"]>>, { ok: true }>,
+    k: ReturnType<typeof ledgerKeyOf>,
+    answers: Answers,
+    month: string,
+    pending: boolean,
+  ): PreviewView {
+    const sd = this.e.stateDir!;
+    const place = ledgerPlace(sd, c.L, k ?? { entry: { ledgerId: c.L.id, pack: c.pack.id, key: "0".repeat(16), acceptedRulesHash: sha256OfLedger(c.L), acceptedRules: c.L.rules, createdAt: "" }, pub: "0".repeat(64) });
+    // 台帳では、出した束が審査中で clone にまだ無いのはふつうのこと（「消えた」ではない）。次の束を止めるのは pending
+    const v = { ...previewPlace(place, c.pack, c.plan, answers, month), vanished: false };
+    // 鍵がまだ無い：見え方と塊（鍵によらない）は見せるが、鍵の欄が仮なので、ハッシュは出さず送れない（画面は「出ていくもの」を出さない）
+    if (!k) return { ...v, blockers: [...v.blockers, "noKey"], bodyHash: null, bytes: null };
+    return pending ? { ...v, blockers: [...v.blockers, "pending"] } : v;
   }
 
   /** 検問所の文脈：確定したいちばん新しい版・パック・輪。足りなければ、何が足りないかと、聞くことを返す。 */

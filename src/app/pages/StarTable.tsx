@@ -7,6 +7,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { createPortal } from "react-dom";
 import { buildChart, nextFoldLevel, type ChartRow, type Layer, type PeerOverlay, type PeriodMode, type RowMode } from "../../plan/chart";
 import { STAT_FIELDS, type StatField } from "../../share/bands";
+import { bandShort } from "../../share/stat-text";
 import type { Comparison } from "../../share/receive";
 import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
@@ -19,7 +20,7 @@ import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf } from "../../plan/cycle";
 import { useAccepted } from "../state/decisions";
-import { MergeCompareContext, MergeSideContext } from "../state/merge-side";
+import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey } from "../state/merge-side";
 import { compareCounts, marksOf } from "../../plan/chart-compare";
 import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
@@ -161,11 +162,7 @@ function PeerSide({ row }: { row: ChartRow }) {
           {P.bandCols[f]}：{bandCellText(row, f) || P.side.none}
         </Text>
       ))}
-      {row.kind === "stat" && (
-        <Text size="xs" c="dimmed">
-          {P.side.statNote}
-        </Text>
-      )}
+
     </Stack>
   );
 }
@@ -193,15 +190,23 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const [peersOpen, setPeersOpen] = useState(false);
   const [band, setBand] = useState<StatField>("interval");
   const [comparison, setComparison] = useState<Comparison | null>(null);
+  // MERGE の中では、見出しの「似た施設　重ねる / 外す」で開け閉めし、似た施設は行ごとに 1 行にまとめる（docs/screens.md 3.2）
+  const peersFromHead = useContext(MergePeersContext);
   const overlay = useMemo<PeerOverlay | undefined>(
     () =>
       comparison
         ? {
             places: comparison.places.flatMap((p) => (p.status === "shown" ? [{ kind: p.kind, rows: p.agg.rows }] : [])),
-            labels: { wholeSystem: P.wholeSystem, peer: (k, l) => P.peerRow(P.placeShort[k] ?? k, l), stat: (k) => P.statRow(P.placeShort[k] ?? k) },
+            summary: peersFromHead !== null,
+            labels: {
+              wholeSystem: P.wholeSystem,
+              peer: (k, l) => P.peerRow(P.placeShort[k] ?? k, l),
+              stat: (k) => P.statRow(P.placeShort[k] ?? k),
+              summary: (k, stats) => (stats.interval.shown === "median" ? P.summaryRow(bandShort(stats.interval.median)) : P.summaryFew),
+            },
           }
         : undefined,
-    [comparison],
+    [comparison, peersFromHead],
   );
   const gridEl = useRef<HTMLDivElement>(null);
   const grid = useRef<ChartGrid | null>(null);
@@ -290,9 +295,29 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   }, [compareWith, catalog, mode, period, layer, foldLevel]);
   const compared = useMemo(() => (compare ? compareCounts(compare.before, model) : null), [compare, model]);
 
+  // コメントの付いた行（今の行の切り替えの分だけ）
+  const commentMarks = useMemo(() => {
+    const out = new Map<string, string>();
+    if (!side) return out;
+    for (const [k, v] of side.commentMarks) {
+      const [m, id] = k.split("\u0000") as [string, string];
+      if (m === mode) out.set(id, v);
+    }
+    return out;
+  }, [side, mode]);
+
   useEffect(() => {
-    grid.current?.update(model, foldLevel, band, proposals, compare);
-  }, [model, foldLevel, band, proposals, compare]);
+    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks);
+  }, [model, foldLevel, band, proposals, compare, commentMarks]);
+
+  // 見出しで「重ねる」を選ぶと、共通の設備項目の行に替えて比べを開く。「外す」で閉じる
+  useEffect(() => {
+    if (peersFromHead === null) return;
+    if (peersFromHead) {
+      if (catalog) setMode("common");
+      setPeersOpen(true);
+    } else setPeersOpen(false);
+  }, [peersFromHead, catalog]);
 
   const switchMode = (v: string) => {
     const m = v as RowMode;
@@ -321,6 +346,12 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const selRow = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;
   const selPeriod = selected?.periodKey ? model.periods.find((p) => p.key === selected.periodKey) : undefined;
   const selCell = selRow && selPeriod ? selRow.cells[selPeriod.key] : undefined;
+  // 選んだ行を、MERGE の横の板（コメントを付ける先）へ知らせる。自分の行だけ（似た施設と統計の行には付けない）
+  const selKey = selRow && (selRow.kind === "node" || selRow.kind === "unmapped") ? selRow.id : null;
+  const selLabel = selRow ? selRow.path.filter((x): x is string => !!x).join(T.pathSep) : "";
+  useEffect(() => {
+    sideRef.current?.select(selKey ? { mode, id: selKey, label: selLabel } : null);
+  }, [selKey, mode, selLabel]);
   const open = openRow ? model.rows.find((r) => r.id === openRow) : undefined;
   const openDetails = open ? open.detailKeys.map((k) => detailsByKey.get(k)).filter((d): d is WorkDetailT => !!d).sort((a, b) => a.fiscalYear - b.fiscalYear) : [];
 
@@ -390,15 +421,18 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         />
         {mode === "common" && (
           <Group gap="xs" wrap="nowrap">
-            <Button size="xs" variant="default" onClick={() => setPeersOpen((o) => !o)} disabled={!canConfirm || !catalog} data-testid="peers-toggle" aria-pressed={peersOpen}>
-              {peersOpen ? P.close : P.open}
-            </Button>
+            {/* MERGE の中では、開け閉めは見出しの「似た施設　重ねる / 外す」 */}
+            {peersFromHead === null && (
+              <Button size="xs" variant="default" onClick={() => setPeersOpen((o) => !o)} disabled={!canConfirm || !catalog} data-testid="peers-toggle" aria-pressed={peersOpen}>
+                {peersOpen ? P.close : P.open}
+              </Button>
+            )}
             {peersOpen && period === "month" && (
               <Text size="xs" c="orange" data-testid="peers-only-year">
                 {P.onlyYear}
               </Text>
             )}
-            {model.peersShown && (
+            {model.peersShown && !model.peersSummary && (
               <Switch
                 aria-label={P.bandLabel}
                 data-testid="peer-band"
@@ -447,20 +481,13 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
                 {T.markName[m]}
               </Text>
             ))}
-            <Text size="xs" c="dimmed" span>
-              <span className="moyai-mark moyai-legend-mark moyai-mark-changed">
+            {/* 朱は 1 つの意味：比べる版があれば「第 n 版から変わった」（この版の中で人が調整した所も含む）、無ければ「元の資料から変えた所」 */}
+            <Text size="xs" c="var(--shu-text)" span data-testid="legend-changed-from" data-count={compared?.changed ?? 0}>
+              <span className="moyai-mark moyai-legend-mark moyai-mark-vchg">
                 <span data-mark="plan">{T.mark.plan}</span>
               </span>
-              {T.legend.changed}
+              {compare ? T.legend.changedFrom(compare.version) : T.legend.changedFromSource}
             </Text>
-            {compare && compared && compared.changed > 0 && (
-              <Text size="xs" c="var(--shu-text)" span data-testid="legend-changed-from" data-count={compared.changed}>
-                <span className="moyai-mark moyai-legend-mark moyai-mark-vchg">
-                  <span data-mark="plan">{T.mark.plan}</span>
-                </span>
-                {T.legend.changedFrom(compare.version)}
-              </Text>
-            )}
             {compare && compared && compared.old > 0 && (
               <Text size="xs" c="dimmed" span data-testid="legend-old" data-count={compared.old}>
                 <span className="moyai-mark moyai-legend-mark">

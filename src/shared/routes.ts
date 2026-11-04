@@ -23,6 +23,9 @@ export const HUMAN_ACTIONS = [
   // トップ：保管先の施設と版の一覧（もやいの星取表。docs/screens.md 3.1）と、版の印のメニューで 1 つの版を読む
   "plans_list",
   "plan_version_read",
+  // MERGE の横の板のコメント（版・行・呼び名・時刻・文。保管先に置く）
+  "comment_add",
+  "comments_list",
   // 承認：いちばん新しい版に、承認か差し戻しの署名を足す（docs/screens.md 3.2 の下の帯）
   "plan_sign",
   // EXPORT：確定した版の Excel（人が見る様式・差分レポート）を、人が画面で落とす（docs/screens.md 3.5）
@@ -39,6 +42,13 @@ export const HUMAN_ACTIONS = [
   "checkpoint_open_text",
   "checkpoint_send",
   "ring_verify",
+  // 公開の台帳へ出す（§2.8。運営者の決定 2026-11-04「MOYAI が出す」）：PR を出すのは人がボタンを押したときだけ。通信は §2.12 の例外
+  "ledger_preview",
+  "ledger_send",
+  "ledger_prs",
+  "github_connect_start",
+  "github_connect_state",
+  "github_disconnect",
   // 受け手：似た施設と並べる（§2.8 受け取りと 3 つの立場。台帳の clone と自分の輪を受け手の関数で読む）
   "peers_compare",
   "readings_read",
@@ -91,6 +101,8 @@ export const ROUTES = {
   planCommit: human("/human/plan-commit", "plan_commit", 32 * 1024 * 1024, "計画を確定する（合言葉で開いた自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く）"),
   planRevert: human("/human/plan-revert", "plan_revert", 64 * 1024, "前の版に戻す（前の版を指す記録を足し、自分の鍵で署名する）"),
   plansList: human("/human/plans-list", "plans_list", 16 * 1024, "保管先の施設と版の一覧（版の番号・時刻・署名の役目・確かめの結果・編集の番）を、トップのもやいの星取表に読む"),
+  commentAdd: human("/human/comment-add", "comment_add", 16 * 1024, "計画にコメントを足す（星取表の行と、この PC の呼び名を添えて、保管先に置く。署名はしない）"),
+  commentsList: human("/human/comments-list", "comments_list", 16 * 1024, "計画のコメントを古い順に読む（MERGE の横の板の「コメント」）"),
   planVersionRead: human("/human/plan-version-read", "plan_version_read", 16 * 1024, "確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる）"),
   planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、合言葉で開いた自分の鍵で承認か差し戻しの署名を足し、編集の番を替える"),
   planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
@@ -103,6 +115,22 @@ export const ROUTES = {
   checkpointOpenText: human("/human/checkpoint-open-text", "checkpoint_open_text", 64 * 1024, "検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く"),
   checkpointSend: human("/human/checkpoint-send", "checkpoint_send", 64 * 1024, "検問所：合言葉で署名し、束を輪のフォルダに置く"),
   ringVerify: human("/human/ring-verify", "ring_verify", 64 * 1024, "輪を受け手と同じ関数で確かめる"),
+  ledgerPreview: human("/human/ledger-preview", "ledger_preview", 64 * 1024, "公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり）"),
+  ledgerSend: human(
+    "/human/ledger-send",
+    "ledger_send",
+    64 * 1024,
+    "合言葉で束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ）",
+  ),
+  ledgerPrs: human("/human/ledger-prs", "ledger_prs", 16 * 1024, "出した束の PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ）"),
+  githubConnectStart: human(
+    "/human/github-connect-start",
+    "github_connect_start",
+    16 * 1024,
+    "GitHub につなぐ：台帳の自分の鍵を合言葉で作るか開き、OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ）",
+  ),
+  githubConnectState: human("/human/github-connect-state", "github_connect_state", 16 * 1024, "GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを合言葉で包んで状態フォルダに置く"),
+  githubDisconnect: human("/human/github-disconnect", "github_disconnect", 16 * 1024, "GitHub との接続を切る（包んだトークンのファイルを消す）"),
   readingsRead: human("/human/readings-read", "readings_read", 16 * 1024, "保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む"),
   peersCompare: human("/human/peers-compare", "peers_compare", 64 * 1024, "受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る"),
   // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）

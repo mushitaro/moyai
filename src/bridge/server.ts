@@ -50,7 +50,7 @@ export interface BridgeOptions {
   /** パックのフォルダ（共有の公開語彙・見え方・全国の表）。無ければリポジトリの packs/ */
   packsDir?: string;
   /** 人だけの経路の、外とつながる部品（Documents の調べ方・テキストエディタ）。試験は差し替える */
-  human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText">;
+  human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId">;
 }
 
 export interface Bridge {
@@ -262,6 +262,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     planSign: delegate,
     plansList: delegate,
     planVersionRead: delegate,
+    commentAdd: delegate,
+    commentsList: delegate,
     personKeyCreate: delegate,
     personKeyConfirm: delegate,
     settingsRead: delegate,
@@ -271,6 +273,13 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     checkpointOpenText: delegate,
     checkpointSend: delegate,
     ringVerify: delegate,
+    // 公開の台帳へ出す（通信の例外：github.com と api.github.com だけ。PR を出すのは人がボタンを押したときだけ）
+    ledgerPreview: delegate,
+    ledgerSend: delegate,
+    ledgerPrs: delegate,
+    githubConnectStart: delegate,
+    githubConnectState: delegate,
+    githubDisconnect: delegate,
     peersCompare: delegate,
     readingsRead: delegate,
     // 写真を AI クライアントに渡す許し：タブの回と、渡す画像のハッシュに結んでメモリに置く（中身の画像は受けない）

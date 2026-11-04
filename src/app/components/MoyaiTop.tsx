@@ -7,7 +7,7 @@
 // - 入口は 3 つ：行の右端「＋ 次の版」、版の印のメニュー（開く / この版から次の版 / この版から別の施設をつくる）、星取表の下「＋ 新しい施設」。どれも MERGE へ。
 // トップでは資料を受けない。
 import { Button, Group, Menu, Modal, Stack, Text, TextInput } from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
@@ -19,7 +19,12 @@ import { TEXT } from "../text";
 import { readHuman } from "./ConfirmDialog";
 
 const T = TEXT.top;
-const MONTHS = 20;
+/** 月の列の数：広い画面で 20 か月、狭い画面では幅に合わせて減らす（「＋ 次の版」がいつも見えるように。最小幅 1024px で 11 か月） */
+const MONTHS_MAX = 20;
+const MONTHS_MIN = 6;
+/** 「＋ 次の版」と左右の余白に取っておく幅 */
+const NEXT_W = 96;
+const PAD_X = 64;
 /** 線を引くための寸法（theme.css の .moyai-top-* とそろえる） */
 const NAME_W = 328;
 const MONTHS_LEFT = NAME_W + 8 + 1;
@@ -89,6 +94,20 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
   const [me, setMe] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [derive, setDerive] = useState<{ p: ListedPlan; v: ListedVersion } | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const [monthCount, setMonthCount] = useState(MONTHS_MAX);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const fit = () => {
+      const n = Math.floor((el.clientWidth - PAD_X - MONTHS_LEFT - NEXT_W) / CELL_W);
+      setMonthCount(Math.max(MONTHS_MIN, Math.min(MONTHS_MAX, n)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   // 開いたときと、タブに戻ったときに読み直す（ほかの人がメールのリンクで承認した版を、開いたままのトップにも出すため）
   useEffect(() => {
     if (state.kind !== "open") return;
@@ -104,7 +123,7 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [state.kind, client]);
-  const months = monthsUpTo(new Date(), MONTHS);
+  const months = useMemo(() => monthsUpTo(new Date(), monthCount), [monthCount]);
   const rows = useMemo(() => treeOrder(plans ?? []), [plans]);
   const anyProblem = rows.some(({ p }) => p.versions.some((v) => v.problem));
   const anyOther = rows.some(({ p }) => p.versions.some((v) => v.by && me && v.by !== me));
@@ -133,7 +152,7 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
   }, [rows, months]);
 
   return (
-    <div className="moyai-top" data-testid="moyai-top">
+    <div className="moyai-top" data-testid="moyai-top" ref={box} data-months={monthCount}>
       <h1 className="moyai-top-title">{T.title}</h1>
       {error && (
         <Text size="sm" c="var(--shu-text)">
@@ -198,7 +217,7 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
                                 </button>
                               </Menu.Target>
                               <Menu.Dropdown data-testid="moyai-mark-menu">
-                                <Menu.Label>{T.menuHead(p.displayName, v.version, monthOf(v.at), v.roles.length)}</Menu.Label>
+                                <Menu.Label>{T.menuHead(v.version, monthOf(v.at), v.roles.length)}</Menu.Label>
                                 <Menu.Item component="a" href={openLink(p.planId, v)} disabled={!!v.problem} data-testid="mark-open">
                                   {T.menu.open}
                                 </Menu.Item>

@@ -6,8 +6,11 @@
 //   3 星取表（共通の設備項目 × 作業の属性）→ 突き合せ → Claude が公開の台帳を読み、周期の案（朱の破線の円）→ 人が決定のシートで受ける
 //   4 検査のシート → 署名して承認を頼み、渡すメールの文 → 課長がリンクで開き、承認して署名する
 //   5 トップに ● →「＋ 次の版」で開く → EXPORT で Excel を落とす → SHARE の検問所 → 合言葉で署名して輪に置き、✓
+//   6〜10 版どうしの差・古い版から次の版・似た施設の重ね・コメント・派生・様式に写す
+//   11 SHARE の公開の台帳：誰からも見えるあなた。GitHub にはつないでいない（MOYAI の OAuth App の登録待ち。PR を出す流れは tests/e2e/ledger-pr.spec.ts）
 // 使い方：npm run build のあと、MOYAI_SHOTS_DIR=docs/progress/shots/<日付>/demo npx playwright test -c playwright.demo.config.ts tests/demo/walkthrough.spec.ts
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -48,11 +51,25 @@ async function settings(page: Page, base: string, root: string, name: string, le
   await expect(page.getByTestId("current-name")).toHaveText(name);
 }
 
+/** 動画の素材を撮るときは MOYAI_DEMO_VIDEO_DIR：Chrome の画面の流れ（CDP の screencast）を、時刻を名前にした JPEG で <dir>/<who>/ に置く。MP4 にするのは別の手順 */
+async function record(page: Page, who: string) {
+  const dir = process.env.MOYAI_DEMO_VIDEO_DIR;
+  if (!dir) return;
+  mkdirSync(join(dir, who), { recursive: true });
+  const cdp = await page.context().newCDPSession(page);
+  cdp.on("Page.screencastFrame", (f) => {
+    writeFileSync(join(dir, who, `${Math.round((f.metadata.timestamp ?? Date.now() / 1000) * 1000)}.jpg`), Buffer.from(f.data, "base64"));
+    void cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(() => {});
+  });
+  await cdp.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: 1440, maxHeight: 900, everyNthFrame: 1 });
+}
+
 test("デモの通し：トップ → MERGE（取り込み・当てはめ・台帳の案・検査）→ 承認 → EXPORT → SHARE", async ({ browser }) => {
   test.setTimeout(15 * 60_000);
   const root = join(work, "共有の保管先");
   const ringRoot = join(work, "輪のフォルダ");
   const pa = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })).newPage();
+  await record(pa, "a");
   const c = await mcpClient(one.stateDir, ["intake_survey", "intake_settle", "intake_compose", "crosswalk_propose", "peer_reference", "chart_propose"]);
   let link = "";
   try {
@@ -140,31 +157,39 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("sheet-match").click();
       await expect(pa.getByTestId("match-sheet")).toBeVisible();
       await pa.getByTestId("match-filter").getByText(/^すべて \d+$/).click();
-      expect(await pa.getByTestId("match-row").count()).toBeGreaterThan(0);
+      await expect(pa.getByTestId("match-row").first()).toBeVisible();
       await pa.screenshot({ path: shot("demo-06b-match") });
       await pa.getByTestId("sheet-chart").click();
     });
 
     let proposalId = "";
-    await test.step("3 Claude：人が比べを開かずに公開の台帳を読み、似た施設の間隔の帯から周期の案を置く", async () => {
-      const r = await call(c, "peer_reference", { place: "ledger", answers: { facility: PROFILE, inNationalTable: true } });
-      expect(r).toMatchObject({ mode: "ledger", reason: null });
-      // 帯の出た塊を順に試し、計画に当たった最初の 1 つを案にする（当たらなければ印は引かれない）
-      const shown = r.aggregates.filter((a: any) => a.interval.shown === "median" || a.interval.shown === "range");
-      expect(shown.length, "台帳に帯の出た塊がある").toBeGreaterThan(0);
-      for (const a of shown) {
+    let ledgerShown: any[] = [];
+    let ledgerVersion: string | null = null;
+    const usedPairs = new Set<string>();
+    /** 台帳の帯の出た塊を順に試し、まだ使っていない塊で計画に当たった最初の 1 つを案にする（当たらなければ印は引かれない） */
+    const proposeFromLedger = async (): Promise<string> => {
+      for (const a of ledgerShown) {
+        const pair = `${a.commonItem}|${a.work}`;
+        if (usedPairs.has(pair)) continue;
         const band = a.interval.shown === "median" ? a.interval.median : a.interval.range;
         const years = Number(/\d+/.exec(String(band))?.[0] ?? "0");
         if (!(years >= 1)) continue;
         const version = (await call(c, "intake_survey", { part: "crosswalk" })).crosswalk.version;
-        const basis = `公開の台帳${r.ledgerVersion ? `（版 ${r.ledgerVersion}）` : ""}・似た施設 ${a.interval.n} の間隔の帯 ${band}`;
+        const basis = `公開の台帳${ledgerVersion ? `（版 ${ledgerVersion}）` : ""}・似た施設 ${a.interval.n} の間隔の帯 ${band}`;
         const rules = [{ when: [{ field: "assetNode.commonItem", op: "equals", values: [a.commonItem] }, { field: "work.attribute", op: "equals", values: [a.work] }], set: { field: "work.trigger", value: years }, reason: "似た施設の間隔の帯から" }];
         const p = await call(c, "chart_propose", { rules, basedOnVersion: version, basis });
-        if (p.matched > 0) {
-          proposalId = p.proposals[0].id;
-          break;
-        }
+        usedPairs.add(pair);
+        if (p.matched > 0) return p.proposals[0].id as string;
       }
+      return "";
+    };
+    await test.step("3 Claude：人が比べを開かずに公開の台帳を読み、似た施設の間隔の帯から周期の案を置く", async () => {
+      const r = await call(c, "peer_reference", { place: "ledger", answers: { facility: PROFILE, inNationalTable: true } });
+      expect(r).toMatchObject({ mode: "ledger", reason: null });
+      ledgerShown = r.aggregates.filter((a: any) => a.interval.shown === "median" || a.interval.shown === "range");
+      ledgerVersion = r.ledgerVersion ?? null;
+      expect(ledgerShown.length, "台帳に帯の出た塊がある").toBeGreaterThan(0);
+      proposalId = await proposeFromLedger();
       expect(proposalId, "計画に当たる台帳の案がある").not.toBe("");
       // 案は、自分の台帳の段の行で見る（共通の行では、ほかの機器の実施と同じセルにまとまる）
       await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
@@ -226,6 +251,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
 
     await test.step("4 課長：別の MOYAI で同じ保管先。メールのリンクで開くと、署名と鎖を確かめてから見せる → 承認して署名する", async () => {
       const pb = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+      await record(pb, "b");
       await settings(pb, two.base, root, B.name);
       await pb.goto(link.replace(/^http:\/\/[^/]+/, two.base));
       await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
@@ -235,7 +261,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pb.getByTestId("sign-dialog-passphrase").fill(B.pass);
       await pb.getByTestId("sign-dialog-passphrase-again").fill(B.pass);
       await pb.getByTestId("sign-submit").click();
-      await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
+      await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "editing");
       await pb.screenshot({ path: shot("demo-14-approved") });
       await pb.context().close();
     });
@@ -246,7 +272,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-15-top-approved") });
       await pa.getByTestId("moyai-next").click();
       await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
-      await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
+      await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "editing");
     });
 
     await test.step("5 EXPORT：確定した版の Excel を、人が落とす", async () => {
@@ -280,6 +306,141 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       expect(plans).toHaveLength(1);
       const sigs = readdirSync(join(root, "plans", plans[0]!, "signatures")).map((n) => n.split("-")[1]).sort();
       expect(sigs).toEqual(["approve", "edit"]);
+    });
+
+    await test.step("6 版どうしの差：「＋ 次の版」で第 2 版をつくる。Claude が台帳から別の周期の案を置くと、第 1 版から変わった印が朱になる", async () => {
+      await pa.goto(`${one.base}/#/`);
+      await pa.getByTestId("moyai-next").click();
+      await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
+      await expect(pa.getByTestId("merge-compare")).toContainText("比べる版　第 1 版");
+      expect(await proposeFromLedger(), "まだ使っていない台帳の塊で、計画に当たる案がある").not.toBe("");
+      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
+      await expect(pa.getByTestId("legend-changed-from")).toBeVisible();
+      const changed = pa.getByTestId("chart-grid").locator(".moyai-mark-vchg");
+      if ((await changed.count()) === 0) {
+        await pa.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
+        await pa.waitForTimeout(300);
+      }
+      await expect(changed.first()).toBeVisible();
+      await pa.screenshot({ path: shot("demo-19-version-diff") });
+      // 人：まとめて受けて、第 2 版に自分で署名して確定する
+      await pa.getByTestId("sheet-decisions").click();
+      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（似た施設の帯を見て、もう 1 つの周期の案も受けた）");
+      await pa.getByTestId("decisions-bulk-accept").click();
+      await pa.getByTestId("confirm-open").click();
+      await pa.getByTestId("ask-self").check();
+      await pa.getByTestId("confirm-reason").fill("台帳の周期の案をもう 1 つ入れた第 2 版");
+      await pa.getByTestId("sign-passphrase").fill(A.pass);
+      await pa.getByTestId("confirm-submit").click();
+      await expect(pa.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+      await pa.keyboard.press("Escape");
+    });
+
+    await test.step("6 古い版から次の版：トップで第 1 版の印のメニュー →「この版から次の版」。第 2 版から変わった所が朱になる", async () => {
+      await pa.goto(`${one.base}/#/`);
+      await expect(pa.getByTestId("moyai-mark")).toHaveCount(2);
+      await pa.locator('[data-testid="moyai-mark"][data-version="1"]').click();
+      await expect(pa.getByTestId("moyai-mark-menu")).toContainText("第 1 版");
+      await pa.screenshot({ path: shot("demo-20-mark-menu") });
+      await pa.getByTestId("mark-next").click();
+      await expect(pa.getByTestId("merge-version")).toHaveText("第 3 版");
+      await expect(pa.getByTestId("merge-compare")).toContainText("比べる版　第 2 版");
+      // 第 2 版で足した計画の印が、第 1 版の中身では無くなる。この工場の資料は最後の年度まで実施があるので、
+      // 案の印は実施と同じセル（◎）に入り、第 1 版の中身では ● に戻る（＝第 2 版から変わった、朱）。
+      // 印がまるごと無くなるセルなら、淡い破線の「第 2 版の印」で残る（tests/e2e/version-diff.spec.ts で確かめている）
+      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
+      await expect(pa.getByTestId("legend-changed-from")).toContainText("第 2 版から変わった");
+      await pa.screenshot({ path: shot("demo-21-from-old") });
+    });
+
+    await test.step("7 似た施設を重ねる：見出しの「似た施設　重ねる」。共通の行の下に「似た施設　帯 …」の 1 行", async () => {
+      await pa.getByTestId("merge-peers").getByRole("button", { name: "重ねる" }).click();
+      await expect(pa.getByTestId("peer-panel")).toBeVisible();
+      await pa.getByTestId("peer-self-national").selectOption("yes");
+      await pa.getByTestId("peer-self-furnace").selectOption(PROFILE.furnace);
+      await pa.getByTestId("peer-self-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
+      await expect(pa.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
+      await pa.screenshot({ path: shot("demo-22-peers") });
+      await pa.getByTestId("merge-peers").getByRole("button", { name: "外す" }).click();
+      await expect(pa.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
+    });
+
+    await test.step("8 コメント：星取表の行を選んで書くと、その行に ① が付き、横の板に並ぶ", async () => {
+      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
+      await pa.locator('.ag-row [col-id="lv2"]').filter({ hasText: /\S/ }).first().click();
+      await pa.getByTestId("side-comments").click();
+      await pa.getByTestId("comment-text").fill("この機器の点検は、来年度の全休止に合わせられますか。");
+      await pa.getByTestId("comment-add").click();
+      await expect(pa.getByTestId("comment")).toHaveCount(1);
+      await expect(pa.getByTestId("side-comments")).toHaveText("コメント 1");
+      await pa.screenshot({ path: shot("demo-23-comment") });
+    });
+
+    await test.step("9 派生：トップで第 2 版の印のメニュー →「この版から別の施設をつくる」。第 1 版に署名すると、元の施設の下に線でつながる", async () => {
+      await pa.goto(`${one.base}/#/`);
+      await pa.locator('[data-testid="moyai-mark"][data-version="2"]').click();
+      await pa.getByTestId("mark-derive").click();
+      await pa.getByTestId("derive-name").fill("東山クリーンセンター");
+      await pa.screenshot({ path: shot("demo-24-derive") });
+      await pa.getByTestId("derive-submit").click();
+      await expect(pa.getByTestId("plan-name")).toHaveText("【架空】東山クリーンセンター");
+      await pa.getByTestId("sheet-decisions").click();
+      // 決定のシートが版の履歴を読み終えて、行か「ありません」が出るまで待ってから数える（早く数えると 0 と数えて受けずに進む）
+      await expect(pa.locator('[data-testid="pending-row"], [data-testid="decisions-none"]').first()).toBeVisible();
+      const open = pa.locator('[data-testid="pending-row"][data-accepted="false"]');
+      if ((await open.count()) > 0) {
+        await pa.getByTestId("decisions-reason").fill("試験の台本が押した（元の施設で受けた決定を、派生した施設でも受けた）");
+        await pa.getByTestId("decisions-bulk-accept").click();
+      }
+      await pa.getByTestId("confirm-open").click();
+      await pa.getByTestId("ask-self").check();
+      await pa.getByTestId("confirm-reason").fill("みどり台の第 2 版から作った、東山の第 1 版");
+      await pa.getByTestId("sign-passphrase").fill(A.pass);
+      await pa.getByTestId("confirm-submit").click();
+      await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+      await pa.keyboard.press("Escape");
+      await pa.goto(`${one.base}/#/`);
+      await expect(pa.getByTestId("moyai-row")).toHaveCount(2);
+      await expect(pa.getByTestId("moyai-branch")).toHaveCount(1);
+      await pa.screenshot({ path: shot("demo-25-top-derived") });
+    });
+
+    await test.step("10 様式に写す：EXPORT で「別の様式を落とす」。見出しから列ごとに写すものが出て、「この様式で落とす」", async () => {
+      // 架空の様式（題と見出し：設備名・作業区分・周期・R3〜R5・備考）を、別のプロセスの exceljs で作る
+      const tpl = join(work, "長寿命化計画_様式3.xlsx");
+      const cells: Record<string, string> = { A1: "【架空】長寿命化計画 様式 3" };
+      ["設備名", "作業区分", "周期（年）", "R3", "R4", "R5", "備考"].forEach((h, i) => (cells[`${String.fromCharCode(65 + i)}3`] = h));
+      const w = spawnSync(process.execPath, ["tests/helpers/xlsx-cli.mjs", "write", tpl, JSON.stringify({ sheet: "様式3", cells })], { encoding: "utf8" });
+      expect(w.status, w.stderr).toBe(0);
+      await pa.locator('[data-testid="moyai-row"]').first().getByTestId("moyai-next").click();
+      await expect(pa.getByTestId("merge-version")).toBeVisible();
+      await pa.goto(`${one.base}/#/export`);
+      const chooser = pa.waitForEvent("filechooser");
+      await pa.getByTestId("template-pick").click();
+      await (await chooser).setFiles(tpl);
+      await expect(pa.getByTestId("template-role")).toHaveCount(7);
+      await pa.screenshot({ path: shot("demo-26-template") });
+      const [download] = await Promise.all([pa.waitForEvent("download"), pa.getByTestId("export-excel").click()]);
+      await download.saveAs(shot("demo-26-template").replace(/\.png$/, ".xlsx"));
+    });
+
+    await test.step("11 SHARE の公開の台帳：誰からも見えるあなた・PR を出すアカウントの行・下の帯。GitHub にはまだつないでいない", async () => {
+      await pa.goto(`${one.base}/#/share`);
+      await expect(pa.getByTestId("checkpoint-page")).toBeVisible();
+      await pa.getByTestId("share-dest").getByText("公開の台帳").click();
+      await pa.getByTestId("q-national").selectOption("yes");
+      await pa.getByTestId("q-furnace").selectOption(PROFILE.furnace);
+      await pa.getByTestId("q-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
+      await pa.getByTestId("q-turbine").selectOption(PROFILE.turbine);
+      await pa.getByTestId("q-ash").selectOption(PROFILE.ash);
+      await pa.getByTestId("q-contract").selectOption(PROFILE.contract);
+      await expect(pa.getByText("誰からも見えるあなた")).toBeVisible();
+      await expect(pa.getByTestId("you-steps")).toContainText("全国の");
+      await expect(pa.getByTestId("github-login")).toHaveText("つないでいません");
+      await expect(pa.getByTestId("send")).toHaveText("署名して公開の台帳へ出す");
+      await expect(pa.getByTestId("send-reason")).toContainText("GitHub につないでいない");
+      await expect(pa.getByTestId("ledger-bottom")).toBeVisible();
+      await pa.screenshot({ path: shot("demo-27-share-ledger") });
     });
   } finally {
     await c.close();

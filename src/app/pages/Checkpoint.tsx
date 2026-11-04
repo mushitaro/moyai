@@ -1,8 +1,10 @@
 // SHARE（共有。docs/screens.md 3.6、絵は Share.dc.html。P2 の 2 で引き算した）：
 // 出す先（自社の輪 / 公開の台帳）、見え方の答え、相手から見たあなた（見え方の 1 行・何施設のどれかに見えるか・塊ごとの帯。委託先は伏せる）、
 // 出元（鍵の指紋と束の鎖）。原本・出ていくバイト列そのもの（ハッシュ・メモ帳で開く）・相手の星取表は「中身を見る」にたたむ。
-// 下の帯に、出したあとに起きることと、合言葉の欄の右の主ボタン 1 つ「署名して自社の輪へ出す」。
+// 下の帯に、出したあとに起きることと、合言葉の欄の右の主ボタン 1 つ「署名して自社の輪へ出す」か「署名して公開の台帳へ出す」。
 // 出ていくものは橋渡しが作る（送る処理と同じ関数）。画面は橋渡しが返したバイト列を見せ、そのハッシュを送るときに照らす。
+// 公開の台帳（絵は SharePublic.dc.html。運営者の決定 2026-11-04「MOYAI が出す」）：出す先の右に GitHub のアカウント、誰からも見えるあなた、
+// 出した束の行方（SHARE を開いたときだけ読む）。PR を出すのは、人が合言葉を打って主ボタンを押したときだけ。
 import { Alert, Anchor, Button, Code, Container, Group, NativeSelect, Paper, PasswordInput, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ROUTES } from "../../shared/routes";
@@ -10,10 +12,12 @@ import { emptyCatalog } from "../chart/catalog";
 import { CHART_HASH } from "../chart/route";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
 import { FictionMark } from "../components/FictionMark";
+import { GitHubConnect } from "../components/GitHubConnect";
 import { Switch } from "../components/Switch";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
 import { HUMAN_TEXT, bandText, reasonText } from "../text";
+import { bandShort } from "../../share/stat-text";
 
 const T = HUMAN_TEXT.checkpoint;
 
@@ -87,6 +91,54 @@ interface PreviewBody {
   ring?: RingInfo & { key: string; fingerprint: string | null; folder: string };
   ringCount?: number;
   view?: View;
+  /** 公開の台帳：GitHub の接続（アカウント名だけ。トークンは画面に来ない）と台帳 */
+  github?: { login: string | null; ready: boolean };
+  ledger?: { id: string; repo: string | null; key: string | null; fingerprint: string | null };
+  pending?: { pr: number; url: string } | null;
+}
+interface LedgerPr {
+  pr: number;
+  url: string;
+  seq: number;
+  at: string;
+  login: string;
+  status: { state: "open" | "merged" | "closed"; check: "pending" | "ok" | "ng" | "none"; reason: string | null } | null;
+}
+
+function PrLine({ p }: { p: LedgerPr }) {
+  const st = p.status;
+  return (
+    <Group gap="md" wrap="nowrap" className="moyai-num" data-testid="ledger-pr" data-state={st?.state ?? "unread"} data-check={st?.check ?? ""}>
+      <Text size="sm" w={70}>
+        {T.prOpen(p.pr)}
+      </Text>
+      {!st && (
+        <Text size="sm" c="dimmed">
+          {T.prUnread}
+        </Text>
+      )}
+      {st?.state === "open" && (
+        <>
+          <Text size="sm">{T.prReview}</Text>
+          <Text size="sm" c={st.check === "ng" ? "var(--shu-text)" : "dimmed"}>
+            {T.prCheck[st.check]}
+          </Text>
+          <Text size="sm" c="dimmed">
+            {T.prWaiting}
+          </Text>
+        </>
+      )}
+      {st?.state === "merged" && <Text size="sm">{T.prMerged}</Text>}
+      {st?.state === "closed" && (
+        <Text size="sm" c="var(--shu-text)">
+          {T.prClosed(st.reason)}
+        </Text>
+      )}
+      <Anchor href={p.url} target="_blank" rel="noopener noreferrer" size="sm" c="dimmed">
+        {T.prLink}
+      </Anchor>
+    </Group>
+  );
 }
 interface VerifyLine {
   kind: string;
@@ -162,6 +214,11 @@ export function Checkpoint() {
   const [sent, setSent] = useState<{ fileName: string; report: Report } | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
+  const [dest, setDest] = useState<"ring" | "ledger">("ring");
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [prs, setPrs] = useState<LedgerPr[] | null>(null);
+  const [sentPr, setSentPr] = useState<{ pr: number; url: string } | null>(null);
+  const [reload, setReload] = useState(0);
   const seq = useRef(0);
   const prefilled = useRef(false);
 
@@ -174,7 +231,10 @@ export function Checkpoint() {
     const n = ++seq.current;
     setLoading(true);
     void (async () => {
-      const r = await client.callHuman("checkpoint_preview", ROUTES.checkpointPreview.path, { planId, ringId, answers });
+      const r =
+        dest === "ledger"
+          ? await client.callHuman("ledger_preview", ROUTES.ledgerPreview.path, { planId, answers })
+          : await client.callHuman("checkpoint_preview", ROUTES.checkpointPreview.path, { planId, ringId, answers });
       if (n !== seq.current) return;
       setLoading(false);
       const h = readHuman<PreviewBody>(r);
@@ -188,12 +248,22 @@ export function Checkpoint() {
         for (const q of b.questions) if (q.suggested) pre[q.key] = q.suggested;
         if (Object.keys(pre).length > 0) setFacility((f) => ({ ...pre, ...f }));
       }
-      if (ringId === null && b.rings && b.plan) {
+      if (dest === "ring" && ringId === null && b.rings && b.plan) {
         const first = b.rings.find((x) => x.pack === b.plan!.packId);
         if (first) setRingId(first.ringId);
       }
     })();
-  }, [client, state.kind, planId, ringId, answers]);
+  }, [client, state.kind, planId, ringId, answers, dest, reload]);
+
+  // 出した束の行方：公開の台帳を選んで SHARE を開いたときだけ、公開の PR を読む（トークンは使わない）
+  const packId = res?.plan?.packId ?? working?.plan.packId ?? null;
+  useEffect(() => {
+    if (dest !== "ledger" || state.kind !== "open" || !packId) return;
+    void (async () => {
+      const r = readHuman<{ ok: boolean; reason?: string; prs: LedgerPr[] }>(await client.callHuman("ledger_prs", ROUTES.ledgerPrs.path, { packId }));
+      setPrs(r.ok ? r.body.prs : []);
+    })();
+  }, [client, dest, state.kind, packId, sentPr]);
 
   const view = res?.ok ? (res.view ?? null) : null;
   const body = useMemo(() => {
@@ -210,11 +280,27 @@ export function Checkpoint() {
   const codeName = (key: string, code: string) => res?.axes?.find((a) => a.key === key)?.codes.find((c) => c.code === code)?.name ?? code;
 
   const countsZero = !!view?.counts && Object.values(view.counts).every((n) => n === 0);
-  const canSend = !!view && view.blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && pass.length > 0 && !sending && !sent;
+  const done = dest === "ledger" ? !!sentPr : !!sent;
+  const canSend = !!view && view.blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && pass.length > 0 && !sending && !done;
+  const login = res?.github?.login ?? null;
   const sendReasons = !view ? [T.sendNeeds.noView] : [...view.blockers.map((b) => T.sendNeeds[b] ?? b), ...(pass.length === 0 ? [T.sendNeeds.passphrase] : [])];
 
   const send = async () => {
-    if (!canSend || !view?.bodyHash || !res?.plan || !ringId) return;
+    if (!canSend || !view?.bodyHash || !res?.plan) return;
+    if (dest === "ledger") {
+      setSending(true);
+      setSendError(null);
+      const r = readHuman<{ ok: boolean; reason?: string; pr: number; url: string }>(
+        await client.callHuman("ledger_send", ROUTES.ledgerSend.path, { planId, version: res.plan.version, answers, previewHash: view.bodyHash, passphrase: pass }),
+      );
+      setSending(false);
+      setPass("");
+      if (!r.ok) return setSendError(r.message);
+      setSentPr({ pr: r.body.pr, url: r.body.url });
+      setReload((x) => x + 1);
+      return;
+    }
+    if (!ringId) return;
     setSending(true);
     setSendError(null);
     const r = readHuman<{ ok: boolean; reason?: string; fileName: string; report: Report }>(
@@ -260,18 +346,11 @@ export function Checkpoint() {
   return (
     <div className="moyai-share-page" data-testid="checkpoint-page">
       <div className="moyai-share-body">
-        <Group gap="md" align="baseline" mb="lg">
-          <h1 className="moyai-top-title" style={{ margin: 0 }}>
-            {T.title}
-          </h1>
-          <Text fw={500}>{res?.plan?.displayName ?? working?.plan.displayName}</Text>
-          {res?.plan && (
-            <Text size="sm" c="var(--text-2)" className="moyai-num">
-              {T.versionOf(res.plan.version)}
-            </Text>
-          )}
+        <div className="moyai-page-head">
+          <h1 className="moyai-merge-name">{res?.plan?.displayName ?? working?.plan.displayName}</h1>
+          {res?.plan && <span className="moyai-merge-ver">{T.versionOf(res.plan.version)}</span>}
           {(res?.plan?.fictional ?? working?.plan.facility.fictional) && <FictionMark />}
-        </Group>
+        </div>
 
         <Stack gap="lg">
           {state.kind !== "open" && <Alert color="orange">{HUMAN_TEXT.notConnected}</Alert>}
@@ -281,24 +360,47 @@ export function Checkpoint() {
             </Alert>
           )}
 
-          {/* 出す先：自社の輪 / 公開の台帳（公開の台帳へ束を書き出す道は、まだ作っていない） */}
+          {/* 出す先：自社の輪 / 公開の台帳。公開の台帳の右に、PR を出す GitHub のアカウント */}
           <Group gap="md" align="center" data-testid="share-dest">
             <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
               {T.destLabel}
             </Text>
             <Switch<"ring" | "ledger">
               aria-label={T.destLabel}
-              value="ring"
-              onChange={() => undefined}
+              value={dest}
+              onChange={(v) => {
+                setDest(v);
+                setRes(null);
+                setSent(null);
+                setSentPr(null);
+                setSendError(null);
+                setPass("");
+              }}
               data={[
                 { value: "ring", label: T.dest.ring },
-                { value: "ledger", label: T.dest.ledger, disabled: true },
+                { value: "ledger", label: T.dest.ledger },
               ]}
             />
-            <Text size="xs" c="dimmed">
-              {T.ledgerNotYet}
-            </Text>
-            {(res?.rings ?? []).length > 1 && (
+            {dest === "ledger" && (
+              <Group gap="xs" align="center" data-testid="github-account">
+                <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
+                  {T.github}
+                </Text>
+                <Text size="sm" data-testid="github-login">
+                  {login ?? T.githubNone}
+                </Text>
+                {res?.github?.ready === false ? (
+                  <Text size="xs" c="var(--shu-text)" data-testid="github-no-client">
+                    {T.githubNoClient}
+                  </Text>
+                ) : (
+                  <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setConnectOpen(true)} disabled={!packId} data-testid="github-open">
+                    {login ? `| ${T.githubReconnect}` : `| ${T.githubConnect}`}
+                  </Anchor>
+                )}
+              </Group>
+            )}
+            {dest === "ring" && (res?.rings ?? []).length > 1 && (
               <NativeSelect
                 size="xs"
                 aria-label={T.ring}
@@ -308,12 +410,20 @@ export function Checkpoint() {
                 data-testid="ring-select"
               />
             )}
-            {(res?.rings ?? []).length === 0 && res && (
+            {dest === "ring" && (res?.rings ?? []).length === 0 && res && (
               <Text size="xs" c="var(--shu-text)">
                 {T.ringNone}
               </Text>
             )}
           </Group>
+          {packId && (
+            <GitHubConnect
+              opened={connectOpen}
+              packId={packId}
+              onClose={() => setConnectOpen(false)}
+              onConnected={() => setReload((x) => x + 1)}
+            />
+          )}
 
           {/* 見え方の答え（Claude との会話で決めてもよい。答えがそろうと、相手から見たあなたが出る） */}
           <Group gap="sm" align="flex-end" wrap="wrap">
@@ -353,7 +463,7 @@ export function Checkpoint() {
           {/* 相手から見たあなた：見え方の 1 行と、何施設のどれかに見えるか。塊ごとの周期・工数・日数の帯（委託先は伏せる） */}
           <section data-testid="you">
             <Title order={2} size="h4" fw={500} mb="xs">
-              {T.youTitle}
+              {dest === "ledger" ? T.youTitleLedger : T.youTitle}
             </Title>
             {view?.steps ? (
               <Stack gap={4}>
@@ -366,7 +476,8 @@ export function Checkpoint() {
                   {view.profile?.group === "NATIONAL" ? T.youSteps(view.steps.all, view.steps.profile, view.steps.rows) : T.youPeers(view.steps.rows)}
                 </Text>
                 <Text size="xs" c="dimmed" className="moyai-num" data-testid="you-k" data-k={view.k ?? ""}>
-                  {T.kLine(view.k ?? 0, view.minK)} · {T.stage(view.profile?.stage ?? 0)}
+                  {T.kLine(view.k ?? 0, view.minK)}
+                  {T.stage(view.profile?.stage ?? 0) ? `　${T.stage(view.profile?.stage ?? 0)}` : ""}
                 </Text>
                 {view.rowEffects.length > 0 &&
                   view.rowEffects.map((e) => (
@@ -386,10 +497,10 @@ export function Checkpoint() {
                     <Table.Tbody>
                       {body.chunks.map((c, i) => (
                         <Table.Tr key={i} data-testid="plain-chunk">
-                          <Table.Td>{T.col3Chunk(className(c.class), workLabels[c.work] ?? c.work)}</Table.Td>
-                          <Table.Td>{c.interval ? bandText(c.interval) : T.none}</Table.Td>
-                          <Table.Td>{c.manDays ? bandText(c.manDays) : T.none}</Table.Td>
-                          <Table.Td>{c.days ? bandText(c.days) : T.none}</Table.Td>
+                          <Table.Td>{T.chunkPath(className(c.class), workLabels[c.work] ?? c.work)}</Table.Td>
+                          <Table.Td>{c.interval ? bandShort(c.interval) : T.none}</Table.Td>
+                          <Table.Td>{c.manDays ? bandShort(c.manDays) : T.none}</Table.Td>
+                          <Table.Td>{c.days ? bandShort(c.days) : T.none}</Table.Td>
                           <Table.Td>
                             <span className="moyai-redact" aria-label={T.redacted} />
                           </Table.Td>
@@ -397,6 +508,19 @@ export function Checkpoint() {
                       ))}
                     </Table.Tbody>
                   </Table>
+                )}
+                {dest === "ledger" && (view.copy?.skipped.upgradeLedger ?? 0) > 0 && (
+                  <Text size="sm" className="moyai-num" data-testid="not-on-ledger">
+                    {T.upgradeRow(view.copy?.skipped.upgradeLedger ?? 0)}
+                    <Text span size="xs" c="dimmed">
+                      {T.notOnLedger}
+                    </Text>
+                  </Text>
+                )}
+                {dest === "ledger" && login && (
+                  <Text size="xs" c="var(--shu-text)" data-testid="account-seen">
+                    {T.accountSeen(login)}
+                  </Text>
                 )}
               </Stack>
             ) : (
@@ -411,8 +535,39 @@ export function Checkpoint() {
             )}
           </section>
 
+          {/* 出した束の行方（公開の台帳。SHARE を開いたときに読んだもの） */}
+          {dest === "ledger" && prs && prs.length > 0 && (
+            <section data-testid="ledger-prs">
+              <Title order={2} size="h4" fw={500} mb="xs">
+                {T.prsTitle}
+              </Title>
+              <Stack gap={4}>
+                {prs.map((p) => (
+                  <PrLine key={p.pr} p={p} />
+                ))}
+              </Stack>
+            </section>
+          )}
+
           {/* 出元：鍵の指紋と、束の鎖（名前は出ない） */}
-          {res?.ring && (
+          {dest === "ledger" && res?.ledger?.fingerprint && (
+            <section data-testid="share-source">
+              <Title order={2} size="h4" fw={500} mb="xs">
+                {T.sourceTitle}
+              </Title>
+              <Stack gap={2}>
+                <Text size="xs" c="dimmed" className="moyai-num">
+                  {T.fingerprint}　{res.ledger.fingerprint}
+                </Text>
+                {chain.length > 0 && (
+                  <Text size="xs" c="dimmed" className="moyai-num" data-testid="share-chain">
+                    {chain.map((n) => T.bundleN(n)).join(" ← ")}
+                  </Text>
+                )}
+              </Stack>
+            </section>
+          )}
+          {dest === "ring" && res?.ring && (
             <section data-testid="share-source">
               <Title order={2} size="h4" fw={500} mb="xs">
                 {T.sourceTitle}
@@ -443,11 +598,14 @@ export function Checkpoint() {
               <Paper withBorder p="sm" data-testid="col-outgoing">
                 <Group justify="space-between" align="flex-start">
                   <Title order={4}>{T.col2}</Title>
-                  <Button size="xs" variant="default" onClick={openText} disabled={!view?.bodyText} data-testid="open-text">
-                    {T.openText}
-                  </Button>
+                  {/* メモ帳で開くのは輪の束だけ（公開の台帳の束は、PR に出たものを GitHub で誰でも開ける） */}
+                  {dest === "ring" && (
+                    <Button size="xs" variant="default" onClick={openText} disabled={!view?.bodyText} data-testid="open-text">
+                      {T.openText}
+                    </Button>
+                  )}
                 </Group>
-                {view?.bodyText ? (
+                {view?.bodyText && view.bodyHash ? (
                   <>
                     <Text size="xs" className="moyai-num">
                       {T.hash}：
@@ -577,6 +735,14 @@ export function Checkpoint() {
               {sendError}
             </Alert>
           )}
+          {sentPr && (
+            <Alert color="gray" data-testid="ledger-sent">
+              {T.prSent(sentPr.pr)}{" "}
+              <Anchor href={sentPr.url} target="_blank" rel="noopener noreferrer" size="sm">
+                {T.prLink}
+              </Anchor>
+            </Alert>
+          )}
           {sent && (
             <Stack gap="xs">
               <Alert color="gray" data-testid="sent">
@@ -597,20 +763,28 @@ export function Checkpoint() {
       {/* 下の帯：出したあとに起きること（置き場所が残すもの・仲間に分かること）と、合言葉の欄の右に主ボタン 1 つ */}
       <Group justify="space-between" px={32} py="xs" wrap="nowrap" gap="md" className="moyai-merge-bar" data-testid="leave">
         <Stack gap={0} style={{ minWidth: 0 }}>
-          <Text size="xs" c="dimmed">
-            {T.known} {T.leaveAlways}
-            {(res?.ringCount ?? 0) > 1 ? ` ${T.twoRings}` : ""}
-          </Text>
-          <SyncedNotice synced={res?.ring?.synced} kind="ring" />
-          {view?.vanished && (
+          {dest === "ledger" ? (
+            <Text size="xs" c="dimmed" style={{ textWrap: "pretty" }} data-testid="ledger-bottom">
+              {T.ledgerBottom}
+            </Text>
+          ) : (
+            <>
+              <Text size="xs" c="dimmed">
+                {T.known}
+                {(res?.ringCount ?? 0) > 1 ? ` ${T.twoRings}` : ""}
+              </Text>
+              <SyncedNotice synced={res?.ring?.synced} kind="ring" />
+            </>
+          )}
+          {dest === "ring" && view?.vanished && (
             <Text size="xs" c="var(--shu-text)">
               {T.vanished}
             </Text>
           )}
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
-          {!canSend && !sent && (
-            <Text size="xs" c="dimmed" data-testid="send-reason">
+          {!canSend && !done && (
+            <Text size="xs" c="dimmed" style={{ maxWidth: 260, textWrap: "pretty" }} data-testid="send-reason">
               {sendReasons.join("・")}
             </Text>
           )}
@@ -624,11 +798,11 @@ export function Checkpoint() {
               if (e.key === "Enter") void send();
             }}
             style={{ width: 220 }}
-            disabled={!!sent}
+            disabled={done}
             data-testid="passphrase"
           />
           <Button onClick={send} disabled={!canSend} loading={sending} data-testid="send">
-            {T.sendRing}
+            {dest === "ledger" ? T.sendLedger : T.sendRing}
           </Button>
         </Group>
       </Group>

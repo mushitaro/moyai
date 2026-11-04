@@ -3,12 +3,14 @@
 // - 同期フォルダ：環境変数 OneDrive・OneDriveCommercial・OneDriveConsumer の指すフォルダと、OneDrive が同期している場所（SharePoint のライブラリを含む）の下か。
 // - 状態フォルダの設定：settings.json（置き場所）、rings.json（輪のフォルダ。scripts/guard-hook.mjs の ringFolders() が folders を読む）、
 //   keys/<輪ID>.json（合言葉で包んだ秘密鍵）、sent.json（持ち出し簿）。書くのは人だけの経路だけ。
+// - 公開の台帳へ出す側：ledgers.json（台帳ごとの自分の鍵と受け入れた決まり。鍵は keys/<台帳ID>.json）、
+//   ledger-sent.json（出した束のハッシュと PR の番号。中身は残さない）、github.json（アカウント名と、合言葉で包んだトークン）。
 import { validName } from "../plan/signature";
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
-import { HEX16, type WrappedKey } from "../share/sign";
+import { HEX16, type WrappedKey, type WrappedSecret } from "../share/sign";
 import type { Rules } from "../share/rules";
 
 // ─── Documents と同期フォルダ ─────────────────────────────
@@ -248,4 +250,78 @@ export function readSent(stateDir: string): SentEntry[] {
 
 export function appendSent(stateDir: string, e: SentEntry): void {
   writeJson(stateDir, "sent.json", { entries: [...readSent(stateDir), e] });
+}
+
+// ─── 公開の台帳へ出す側 ─────────────────────────────────────
+
+export interface LedgerEntry {
+  ledgerId: string;
+  pack: string;
+  /** この台帳の自分の鍵 ID（秘密鍵は keys/<台帳ID>.json に合言葉で包んで置く） */
+  key: string;
+  /** 人が受け入れた決まり（ledger.json のバイト列の SHA-256 と、その決まり） */
+  acceptedRulesHash: string;
+  acceptedRules: Rules;
+  createdAt: string;
+}
+
+export function readLedgers(stateDir: string): LedgerEntry[] {
+  const r = readJson<{ ledgers?: LedgerEntry[] }>(join(stateDir, "ledgers.json"));
+  return Array.isArray(r?.ledgers) ? r.ledgers.filter((x) => x && typeof x.ledgerId === "string" && HEX16.test(x.ledgerId) && HEX16.test(x.key)) : [];
+}
+
+export function addLedger(stateDir: string, e: LedgerEntry): void {
+  writeJson(stateDir, "ledgers.json", { ledgers: [...readLedgers(stateDir).filter((x) => x.ledgerId !== e.ledgerId), e] });
+}
+
+export interface LedgerSentEntry {
+  ledgerId: string;
+  key: string;
+  seq: number;
+  hash: string;
+  /** 台帳の中の道（ledger/bundles/<鍵ID>/<名前>） */
+  path: string;
+  month: string;
+  at: string;
+  /** PR を出した台帳のリポジトリ（owner/name）と番号・URL・出したアカウント */
+  repo: string;
+  pr: number;
+  url: string;
+  login: string;
+  /** SHARE を開いたときに読んだ PR の行方（最後に読めたもの） */
+  state?: "open" | "merged" | "closed";
+}
+
+export function readLedgerSent(stateDir: string): LedgerSentEntry[] {
+  const s = readJson<{ entries?: LedgerSentEntry[] }>(join(stateDir, "ledger-sent.json"));
+  return Array.isArray(s?.entries) ? s.entries.filter((e) => e && HEX16.test(e.ledgerId) && Number.isInteger(e.pr)) : [];
+}
+
+export function writeLedgerSent(stateDir: string, entries: LedgerSentEntry[]): void {
+  writeJson(stateDir, "ledger-sent.json", { entries });
+}
+
+export interface GitHubLink {
+  v: "moyai.github/0";
+  /** PR を出すアカウント（画面に出す。誰にでも見えるため） */
+  login: string;
+  /** トークン（scope は public_repo）。合言葉で包む。画面にもログにも AI にも出さない */
+  token: WrappedSecret;
+  connectedAt: string;
+}
+
+export const GITHUB_TOKEN_AAD = "moyai.github-token";
+
+export function readGitHub(stateDir: string): GitHubLink | null {
+  const g = readJson<GitHubLink>(join(stateDir, "github.json"));
+  return g && g.v === "moyai.github/0" && typeof g.login === "string" && g.token?.v === "moyai.wrapped-secret/0" ? g : null;
+}
+
+export function writeGitHub(stateDir: string, g: GitHubLink): void {
+  writeJson(stateDir, "github.json", g);
+}
+
+/** GitHub との接続を切る：包んだトークンのファイルを消す（GitHub の側の許しは、人が GitHub の設定で取り消す） */
+export function removeGitHub(stateDir: string): void {
+  rmSync(join(stateDir, "github.json"), { force: true });
 }

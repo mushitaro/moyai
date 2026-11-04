@@ -128,8 +128,9 @@ export const moyaiTheme = createTheme({
         icon: { color: props.color === "red" || props.color === "orange" ? "var(--shu-text)" : "var(--text)" },
       }),
     }),
+    // 現れる演出はしない（DS：動きは色の変化だけ）。Modal・Menu・Popover・Tooltip のフェードを 0 に
     Modal: {
-      defaultProps: { radius: 0, shadow: "none", centered: false, overlayProps: { backgroundOpacity: 1, color: "var(--overlay)" } },
+      defaultProps: { radius: 0, shadow: "none", centered: false, transitionProps: { duration: 0 }, overlayProps: { backgroundOpacity: 1, color: "var(--overlay)" } },
       styles: {
         content: { background: "var(--layer-2)", border: "1px solid var(--line-strong)" },
         header: { background: "var(--layer-2)", padding: "var(--sp-7) var(--sp-8) var(--sp-5)" },
@@ -167,8 +168,15 @@ export const moyaiTheme = createTheme({
       defaultProps: { underline: "always" },
       styles: { root: { color: "var(--text)", textUnderlineOffset: "6px", textDecorationColor: "var(--line-strong)", letterSpacing: "var(--track-body)" } },
     },
+    Menu: {
+      defaultProps: { radius: 0, shadow: "none", transitionProps: { duration: 0 } },
+      styles: { dropdown: { background: "var(--layer-2)", border: "1px solid var(--line-strong)" } },
+    },
+    Popover: {
+      defaultProps: { radius: 0, shadow: "none", transitionProps: { duration: 0 } },
+    },
     Tooltip: {
-      defaultProps: { radius: 0, openDelay: 400 },
+      defaultProps: { radius: 0, openDelay: 400, transitionProps: { duration: 0 } },
       styles: { tooltip: { background: "var(--layer-3)", color: "var(--text)", fontSize: "13px", maxWidth: 280, padding: "var(--sp-3) var(--sp-4)" } },
     },
     Text: {

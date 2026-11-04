@@ -60,7 +60,8 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
     await test.step("星取表の共通の設備項目の行で、似た施設と並べる", async () => {
       await openCommonRows(page);
       expect(await c.callTool({ name: "peer_reference", arguments: {} })).toMatchObject({ isError: true });
-      await page.getByTestId("peers-toggle").click();
+      // MERGE の見出しの「似た施設　重ねる / 外す」（既定は外す）
+      await page.getByTestId("merge-peers").getByRole("button", { name: "重ねる" }).click();
       const panel = page.getByTestId("peer-panel");
       await expect(panel).toBeVisible();
       // 試しの計画は全国の表に載るかが決まっていない：推測で埋めず聞く
@@ -85,15 +86,15 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.getByTestId("axis-dust")).toHaveCount(0);
     });
 
-    await test.step("自分の行の下に似た施設の行と統計の行、右に帯の列", async () => {
-      await expect(page.locator(".ag-row.moyai-row-peer").first()).toBeVisible();
+    await test.step("自分の行の下に、似た施設を 1 行にまとめた細い行（名前は間隔の帯か「5 施設に満たない」）", async () => {
+      // 似た施設ごとの行と帯の列は出さない（docs/screens.md 3.2）。印は、似た施設のどれかが作業をした年度
       await expect(page.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
-      // 帯の列は 1 つ（人が間隔・工数・日数から選ぶ）。年度の列も見えたまま
-      await expect(page.locator(".ag-header-cell.moyai-band-head")).toHaveText("間隔");
-      await page.getByTestId("peer-band").getByRole("button", { name: "工数" }).click();
-      await expect(page.locator(".ag-header-cell.moyai-band-head")).toHaveText("工数");
+      await expect(page.locator(".ag-row.moyai-row-peer")).toHaveCount(0);
+      await expect(page.locator(".ag-header-cell.moyai-band-head")).toHaveCount(0);
+      const label = page.locator(".ag-row.moyai-row-stat .moyai-lv").filter({ hasText: "似た施設" }).first();
+      await expect(label).toHaveText(/^似た施設　(帯 .+|5 施設に満たない)$/);
       await expect(page.locator(".ag-header-cell", { hasText: /\d{4} 年度/ }).first()).toBeInViewport();
-      await page.locator(".ag-row.moyai-row-stat .moyai-lv").filter({ hasText: "統計" }).first().click();
+      await label.click();
       await expect(page.getByTestId("peer-side")).toHaveAttribute("data-kind", "stat");
       await expect(page.getByTestId("peer-side")).toContainText("公開の台帳");
       await page.screenshot({ path: shot(`peers-${tag}-ledger`), fullPage: false });
@@ -128,10 +129,10 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await page.screenshot({ path: shot(`peers-${tag}-om`), fullPage: false });
     });
 
-    await test.step("閉じると行が消え、AI も読めない", async () => {
-      await page.getByTestId("peers-toggle").click();
+    await test.step("外すと行が消え、AI も読めない", async () => {
+      await page.getByTestId("merge-peers").getByRole("button", { name: "外す" }).click();
       await expect(page.getByTestId("peer-panel")).toHaveCount(0);
-      await expect(page.locator(".ag-row.moyai-row-peer")).toHaveCount(0);
+      await expect(page.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
       const r: any = await c.callTool({ name: "peer_reference", arguments: {} });
       expect(r.isError).toBe(true);
       expect(JSON.stringify(r.content)).toContain("似た施設との比べを、利用者がまだ星取表の画面で開いていません");

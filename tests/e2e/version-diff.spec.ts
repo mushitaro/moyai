@@ -54,10 +54,10 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "1");
       await expect(page.getByTestId("merge-compare")).toContainText("比べる版　第 1 版");
-      // 自分で確定した版は「確定済み」（承認した人はいない）
-      await expect(page.getByTestId("merge-turn")).toHaveText("確定済み");
+      // 確定したあとは、次の版を編集中（「確定済み」は古い版を見るだけで開いたときだけ）
+      await expect(page.getByTestId("merge-turn")).toHaveText("編集の番 あなた");
       await expect(grid.locator(".moyai-mark-vchg")).toHaveCount(0);
-      await expect(page.getByTestId("legend-changed-from")).toHaveCount(0);
+      await expect(page.getByTestId("legend-changed-from")).toHaveAttribute("data-count", "0");
     });
 
     await test.step("AI：周期の案を置く → 第 1 版から変わったセルが朱になり、凡例に「第 1 版から変わった」", async () => {
@@ -100,7 +100,7 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       await page.keyboard.press("Escape");
       await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "2");
-      await expect(page.getByTestId("legend-changed-from")).toHaveCount(0);
+      await expect(page.getByTestId("legend-changed-from")).toHaveAttribute("data-count", "0");
       await expect(grid.locator(".moyai-mark-vchg")).toHaveCount(0);
     });
 

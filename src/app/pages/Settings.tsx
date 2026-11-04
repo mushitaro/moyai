@@ -25,6 +25,8 @@ interface SettingsBody {
   root: string | null;
   rootSynced: Synced | null;
   ledger: string | null;
+  /** 公開の台帳へ PR を出す GitHub のアカウント（トークンは画面に来ない） */
+  github: string | null;
   rings: { ringId: string; root: string; pack: string; key: string; fingerprint: string | null; synced: Synced | null }[];
   packs: { id: string; name: string; ready: boolean; reason: string | null }[];
   name: string | null;
@@ -280,6 +282,26 @@ export function Settings() {
                 <Code data-testid="current-ledger">{s.ledger ?? T.ledgerNone}</Code>
               </Group>
               <TextInput label={T.ledgerInput} value={ledger} onChange={(e) => (setLedger(e.currentTarget.value), setSaved(false))} data-testid="ledger-input" />
+              <Group gap="sm" align="center" data-testid="github-setting">
+                <Text size="sm" data-testid="settings-github">
+                  {s.github ? HUMAN_TEXT.github.connectedAs(s.github) : HUMAN_TEXT.github.none}
+                </Text>
+                {s.github && (
+                  <Button
+                    size="xs"
+                    variant="default"
+                    onClick={() =>
+                      void (async () => {
+                        const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("github_disconnect", ROUTES.githubDisconnect.path, {}));
+                        if (r.ok) setS((x) => (x ? { ...x, github: null } : x));
+                      })()
+                    }
+                    data-testid="github-disconnect"
+                  >
+                    {HUMAN_TEXT.github.disconnect}
+                  </Button>
+                )}
+              </Group>
             </Stack>
             <Stack gap="xs">
               <Title order={4}>{T.ringsTitle}</Title>

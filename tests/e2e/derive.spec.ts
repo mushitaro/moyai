@@ -89,6 +89,11 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
     await expect(rows.nth(1)).toHaveAttribute("data-depth", "1");
     await expect(rows.nth(1)).toContainText("【架空】派生した清掃工場");
     await expect(page.getByTestId("moyai-branch")).toHaveCount(1);
+    // 「＋ 次の版」は、画面の幅に月の数を合わせて、いつも見える（1280px と、最小幅の 1024px）
+    await expect(page.getByTestId("moyai-next").first()).toBeInViewport();
     await page.screenshot({ path: shot(`derive-top-${tag}`) });
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect(page.getByTestId("moyai-next").first()).toBeInViewport();
+    expect(Number(await page.getByTestId("moyai-top").getAttribute("data-months"))).toBeLessThan(20);
   });
 });

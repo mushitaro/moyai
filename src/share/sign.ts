@@ -159,3 +159,36 @@ export function unwrapPrivateKey(w: WrappedKey, passphrase: string): KeyPair {
   if (pub !== w.pub) throw new WrongPassphrase();
   return { pub, privateKey };
 }
+
+/** 鍵でない秘密（GitHub のトークン）を合言葉で包んだもの。用途の名前（aad）に結び、別の用途のファイルとしては開けない */
+export interface WrappedSecret {
+  v: "moyai.wrapped-secret/0";
+  aad: string;
+  salt: string;
+  iv: string;
+  ct: string;
+  tag: string;
+}
+
+/** 秘密の文字列を合言葉で包む（秘密鍵と同じ scrypt と AES-256-GCM） */
+export function wrapSecret(secret: string, passphrase: string, aad: string): WrappedSecret {
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const c = createCipheriv("aes-256-gcm", deriveKey(passphrase, salt), iv);
+  c.setAAD(Buffer.from(aad, "utf8"));
+  const ct = Buffer.concat([c.update(Buffer.from(secret, "utf8")), c.final()]);
+  return { v: "moyai.wrapped-secret/0", aad, salt: salt.toString("hex"), iv: iv.toString("hex"), ct: ct.toString("hex"), tag: c.getAuthTag().toString("hex") };
+}
+
+/** 包んだ秘密を開く。合言葉が違うか、用途が違うか、ファイルが変わっていれば WrongPassphrase */
+export function unwrapSecret(w: WrappedSecret, passphrase: string, aad: string): string {
+  if (w.v !== "moyai.wrapped-secret/0" || w.aad !== aad) throw new WrongPassphrase();
+  try {
+    const d = createDecipheriv("aes-256-gcm", deriveKey(passphrase, Buffer.from(w.salt, "hex")), Buffer.from(w.iv, "hex"));
+    d.setAAD(Buffer.from(aad, "utf8"));
+    d.setAuthTag(Buffer.from(w.tag, "hex"));
+    return Buffer.concat([d.update(Buffer.from(w.ct, "hex")), d.final()]).toString("utf8");
+  } catch {
+    throw new WrongPassphrase();
+  }
+}

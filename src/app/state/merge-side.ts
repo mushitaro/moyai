@@ -7,7 +7,20 @@ export interface MergeSide {
   el: HTMLElement | null;
   /** 板を出どころへ切り替える */
   show(): void;
+  /** 星取表で選んだ行（コメントを付ける先）。選んでいなければ null */
+  select(row: CommentRow | null): void;
+  /** コメントの付いた行（行の切り替え × 行の鍵 → 番号の字「①②」） */
+  commentMarks: ReadonlyMap<string, string>;
 }
+
+/** コメントを付ける星取表の行 */
+export interface CommentRow {
+  mode: "ledger" | "common";
+  id: string;
+  label: string;
+}
+
+export const commentMarkKey = (mode: string, id: string): string => `${mode}\u0000${id}`;
 
 export const MergeSideContext = createContext<MergeSide | null>(null);
 
@@ -18,3 +31,6 @@ export interface MergeCompare {
 }
 
 export const MergeCompareContext = createContext<MergeCompare | null>(null);
+
+/** 似た施設を重ねるか（MERGE の見出しの「似た施設　重ねる / 外す」。既定は外す）。MERGE の外では null */
+export const MergePeersContext = createContext<boolean | null>(null);

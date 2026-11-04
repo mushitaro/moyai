@@ -42,11 +42,11 @@ export interface StartedBridge {
   stop(): void;
 }
 
-export async function startBuiltBridge(prefix: string): Promise<StartedBridge> {
+export async function startBuiltBridge(prefix: string, env: Record<string, string> = {}): Promise<StartedBridge> {
   const stateDir = mkdtempSync(join(tmpdir(), prefix));
   const port = await freePort();
   const child: ChildProcess = spawn(process.execPath, ["dist/cli.js", "start", "--port", String(port), "--no-open"], {
-    env: { ...process.env, MOYAI_STATE_DIR: stateDir },
+    env: { ...process.env, ...env, MOYAI_STATE_DIR: stateDir },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";

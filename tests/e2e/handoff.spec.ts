@@ -104,6 +104,21 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.screenshot({ path: shot(`handoff-approver-${tag}`) });
   });
 
+  await test.step("課長：星取表の行を選んでコメントを付ける。横の板に ① と、行の名前の右に ①", async () => {
+    await pb.locator('.ag-row [col-id="lv2"]').filter({ hasText: "計量機" }).first().click();
+    await pb.getByTestId("side-comments").click();
+    await expect(pb.getByTestId("comment-to")).toHaveText("付ける行：受入供給設備 › 計量機");
+    await expect(pb.getByTestId("comment-add")).toBeDisabled();
+    await pb.getByTestId("comment-text").fill("計量機の 2027 年度の点検は、ほかの工事と重なりませんか。");
+    await pb.getByTestId("comment-add").click();
+    await expect(pb.getByTestId("comment")).toHaveCount(1);
+    await expect(pb.getByTestId("comment").first()).toContainText("① 受入供給設備 › 計量機");
+    await expect(pb.getByTestId("comment").first()).toContainText(B.name);
+    await expect(pb.getByTestId("side-comments")).toHaveText("コメント 1");
+    await expect(pb.locator('.ag-row [col-id="lv2"]').filter({ hasText: "計量機　①" })).toHaveCount(1);
+    await pb.screenshot({ path: shot(`handoff-comment-${tag}`) });
+  });
+
   await test.step("課長：承認して署名する。この PC にまだ鍵が無いので、合言葉を 2 回入れて鍵を作ってから署名する", async () => {
     await pb.getByTestId("approve-open").click();
     await pb.getByTestId("sign-dialog-passphrase").fill(B.pass);
@@ -111,7 +126,8 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.getByTestId("sign-dialog-passphrase-again").fill(B.pass);
     await pb.getByTestId("sign-submit").click();
     await expect(pb.getByTestId("merge-notice")).toContainText("第 1 版を承認しました");
-    await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
+    // 承認したあとは編集の番が空き、次の版を編集できる（見出しの通知に「第 1 版を承認しました」）
+    await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "editing");
     await expect(pb.getByTestId("approve-open")).toHaveCount(0);
     // 承認の署名は、課長の PC の鍵（own）
     await pb.getByTestId("side-signatures").click();
@@ -119,8 +135,16 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.screenshot({ path: shot(`handoff-approved-${tag}`) });
   });
 
+  await test.step("山田：トップの「＋ 次の版」で開くと、課長のコメントが横の板に出る（保管先から読む）", async () => {
+    await pa.goto(`${one.base}/#/`);
+    await pa.getByTestId("moyai-next").click();
+    await expect(pa.getByTestId("side-comments")).toHaveText("コメント 1");
+    await pa.getByTestId("side-comments").click();
+    await expect(pa.getByTestId("comment").first()).toContainText("計量機の 2027 年度の点検");
+  });
+
   await test.step("山田のトップ：承認された版は ●、状態は出ない。「＋ 次の版」で、その版を MERGE で開く", async () => {
-    await pa.reload();
+    await pa.goto(`${one.base}/#/`);
     const row = pa.getByTestId("moyai-row");
     await expect(row.getByTestId("moyai-mark")).toHaveText("●");
     await expect(row.getByTestId("moyai-state")).toHaveCount(0);
@@ -129,7 +153,7 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pa.screenshot({ path: shot(`handoff-top-approved-${tag}`) });
     await next.click();
     await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
-    await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "approved");
+    await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "editing");
   });
 
   await test.step("保管先：版 1 に、山田の渡す署名（edit）と課長の承認の署名（approve）。版の履歴で確かめられる", async () => {

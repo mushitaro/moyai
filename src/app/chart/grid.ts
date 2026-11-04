@@ -126,6 +126,8 @@ function levelText(row: ChartRow, i: number): string {
 interface GridContext {
   proposals: ReadonlySet<string>;
   compare: { version: number; before: ReadonlyMap<string, Mark> } | null;
+  /** コメントの付いた行（行の鍵 → 番号の字「①②」） */
+  comments?: ReadonlyMap<string, string>;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -221,7 +223,12 @@ function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandle
     pinned: "left",
     lockPinned: true,
     width: i === 0 ? 170 : 160,
-    valueGetter: (p) => (p.data ? levelText(p.data, i) : ""),
+    valueGetter: (p) => {
+      if (!p.data) return "";
+      const text = levelText(p.data, i);
+      const marks = i === p.data.level - 1 ? (p.context as GridContext | undefined)?.comments?.get(p.data.id) : undefined;
+      return marks ? `${text}　${marks}` : text;
+    },
     headerComponent: FoldHeader,
     headerComponentParams: { level: i + 1, folded: foldLevel === i + 1, onFold: h.onFold },
     suppressHeaderKeyboardEvent: (p) => {
@@ -295,7 +302,7 @@ function columns(model: ChartModel, foldLevel: number | null, h: GridHandlers, b
   const monthly = model.periods.some((p) => p.month !== null);
   if (!monthly) {
     // 年だけの表は縦の罫を引かない（どの列も年度の境なので、罫が並んでうるさくなる）
-    if (model.peersShown) out.push(bandColumn(band));
+    if (model.peersShown && !model.peersSummary) out.push(bandColumn(band));
     for (const p of model.periods) out.push(markColumn(p, 112, false));
     return out;
   }
@@ -358,9 +365,9 @@ export class ChartGrid {
   }
 
   /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
-  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null) {
-    this.api.setGridOption("context", { proposals, compare } satisfies GridContext);
-    const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, band]);
+  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null, comments?: ReadonlyMap<string, string>) {
+    this.api.setGridOption("context", { proposals, compare, comments } satisfies GridContext);
+    const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band]);
     if (key !== this.colKey) {
       this.colKey = key;
       this.api.setGridOption("columnDefs", columns(model, foldLevel, this.h, band));

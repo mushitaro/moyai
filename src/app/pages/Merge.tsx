@@ -19,7 +19,9 @@ import { FictionMark } from "../components/FictionMark";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { useConnection } from "../state/bridge";
 import { useAccepted } from "../state/decisions";
-import { MergeCompareContext, MergeSideContext, type MergeCompare, type MergeSide } from "../state/merge-side";
+import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey, type CommentRow, type MergeCompare, type MergeSide } from "../state/merge-side";
+import { CommentsPanel, commentNumber, type ListedComment } from "../components/CommentsPanel";
+import { Switch } from "../components/Switch";
 import { setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { TEXT } from "../text";
@@ -42,10 +44,24 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [over, setOver] = useState(false);
   const nextPlan = useRef<Plan | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
-  const [side, setSide] = useState<"open" | "signatures" | "source">("open");
+  const [side, setSide] = useState<"open" | "signatures" | "source" | "comments">("open");
   const [sourceEl, setSourceEl] = useState<HTMLElement | null>(null);
-  const sideCtx = useMemo<MergeSide>(() => ({ el: sourceEl, show: () => setSide("source") }), [sourceEl]);
+  // コメント：保管先から読み、星取表で選んだ行に付ける
+  const [comments, setComments] = useState<ListedComment[]>([]);
+  const [selectedRow, setSelectedRow] = useState<CommentRow | null>(null);
+  const commentMarks = useMemo(() => {
+    const m = new Map<string, string>();
+    comments.forEach((c, i) => {
+      if (!c.row) return;
+      const k = commentMarkKey(c.row.mode, c.row.id);
+      m.set(k, (m.get(k) ?? "") + commentNumber(i));
+    });
+    return m;
+  }, [comments]);
+  const sideCtx = useMemo<MergeSide>(() => ({ el: sourceEl, show: () => setSide("source"), select: setSelectedRow, commentMarks }), [sourceEl, commentMarks]);
   const [notice, setNotice] = useState<string | null>(null);
+  // 似た施設を重ねるか（見出しの右。既定は外す）
+  const [peersOn, setPeersOn] = useState(false);
 
   // 版を開くリンク（#/merge?open=<計画ID>&v=<版>&h=<中身のハッシュの頭>[&next=1]）：メール・トップの「＋ 次の版」・版の印のメニューから。
   // 保管先の版を読み、署名と鎖とハッシュを確かめてから置く。いちばん新しい版はそのまま、古い版は見るだけ（next=1 なら、その版の中身から次の版を作る）
@@ -90,9 +106,21 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       setDoneKey(openKey);
     })();
   }, [pendingOpen, st]);
+  const loadComments = async (planId: string) => {
+    const r = readHuman<{ ok: boolean; reason?: string; comments: ListedComment[] }>(await client.callHuman("comments_list", ROUTES.commentsList.path, { planId }));
+    setComments(r.ok ? r.body.comments : []);
+  };
+  useEffect(() => {
+    if (!plan || conn.kind !== "open") return setComments([]);
+    void loadComments(plan.planId);
+  }, [plan?.planId, conn.kind]);
   // タブに戻ったときに、保管先の版を読み直す（ほかの人が足した版に気づくため）
   useEffect(() => {
-    const onVisible = () => document.visibilityState === "visible" && reloadStatus();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      reloadStatus();
+      if (plan) void loadComments(plan.planId);
+    };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [reloadStatus]);
@@ -154,9 +182,24 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const sideOpen = !!an && openQuestions > 0;
   const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
   const sideSource = current === "chart";
-  const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource };
-  const sideNow: "open" | "signatures" | "source" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : null;
-  const stateLabel = viewingOld ? T.oldVersionLabel : turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned") ? TEXT.top.state[turn.state] : null;
+  const sideComments = !!plan;
+  const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
+  const sideNow: "open" | "signatures" | "source" | "comments" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : sideComments ? "comments" : null;
+  // 見出しの状態と下の帯の左は、いま開いている版（つくっている版）のこと（Wire、2026-11-04）：
+  // 編集の番が人に渡っている（編集を頼んだ・承認待ち・差し戻し）ならその番。番が空いている（確定・承認のあと）なら、次の版を編集中。
+  // 「確定済み」は、古い版を見るだけで開いたときだけ
+  const turnHeld = !!turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned");
+  const stateLabel = viewingOld ? T.oldVersionLabel : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
+  const turnLine: { state: string; text: string } | null = viewingOld
+    ? { state: "confirmed", text: T.confirmedLine }
+    : turnHeld && turn
+      ? {
+          state: turn.state,
+          text: T.turnLine(turn.state, turn.state === "awaitingApproval" ? awaitingMe : turn.holder === me, turn.state === "awaitingApproval" ? (turn.to ?? "") : (turn.holder ?? turn.to ?? "")),
+        }
+      : plan
+        ? { state: "editing", text: T.turnLine("editing", true, "") }
+        : null;
   // 比べる版：承認を頼まれた人は頼まれた版のひとつ前、ほかは保管先のいちばん新しい版（同じ計画のときだけ）
   const compareWith = viewingOld ? null : awaitingMe ? (st?.previous ?? null) : (st?.latest ?? null);
   const compare = useMemo<MergeCompare | null>(
@@ -193,6 +236,21 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         {stateLabel && <span className="moyai-merge-state">{stateLabel}</span>}
         {fictional && <FictionMark />}
         <div className="moyai-merge-head-end">
+          {current === "chart" && plan && (
+            <Group gap={8} wrap="nowrap" align="center">
+              <span className="moyai-merge-head-label">{T.peersLabel}</span>
+              <Switch<"on" | "off">
+                aria-label={T.peersLabel}
+                value={peersOn ? "on" : "off"}
+                onChange={(v) => setPeersOn(v === "on")}
+                data-testid="merge-peers"
+                data={[
+                  { value: "on", label: T.peersOn },
+                  { value: "off", label: T.peersOff },
+                ]}
+              />
+            </Group>
+          )}
           {compare && (
             <span data-testid="merge-compare" data-version={compare.version}>
               <span className="moyai-merge-head-label">{T.compareLabel}　</span>
@@ -247,6 +305,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         </Group>
       </Group>
 
+      <MergePeersContext.Provider value={peersOn}>
       <MergeCompareContext.Provider value={compare}>
       <MergeSideContext.Provider value={sideCtx}>
       <div className="moyai-merge-body">
@@ -282,6 +341,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                   {T.side.source}
                 </a>
               )}
+              {sideComments && (
+                <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "comments"} onClick={(e) => (e.preventDefault(), setSide("comments"))} data-testid="side-comments">
+                  {T.side.comments(comments.length)}
+                </a>
+              )}
             </Group>
             {sideNow === "open" && an && (
               <>
@@ -289,6 +353,16 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               </>
             )}
             {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} />}
+            {sideNow === "comments" && plan && (
+              <CommentsPanel
+                client={client}
+                planId={plan.planId}
+                version={nextVersion}
+                comments={comments}
+                row={selectedRow}
+                onAdded={() => void loadComments(plan.planId)}
+              />
+            )}
             {/* 出どころは星取表のシートがここへ描く。見ていないあいだも場所は残す */}
             {sideSource && <div ref={setSourceEl} style={{ display: sideNow === "source" ? undefined : "none" }} />}
           </aside>
@@ -296,12 +370,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       </div>
       </MergeSideContext.Provider>
       </MergeCompareContext.Provider>
+      </MergePeersContext.Provider>
 
       <Group justify="space-between" px={32} py="xs" wrap="nowrap" className="moyai-merge-bar">
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-          {turn && (
-            <Text size="xs" data-testid="merge-turn" data-state={turn.state}>
-              {T.turnLine(turn.state, turn.state === "awaitingApproval" ? awaitingMe : turn.holder === me, turn.state === "awaitingApproval" ? (turn.to ?? "") : (turn.holder ?? turn.to ?? ""), turn.to === null)}
+          {turnLine && (
+            <Text size="xs" data-testid="merge-turn" data-state={turnLine.state}>
+              {turnLine.text}
             </Text>
           )}
         </Group>

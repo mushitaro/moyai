@@ -2,7 +2,7 @@
 // どの経路も、素の HTTP・タブの秘密の無い要求・Origin の無い要求・偽った Origin で秘密なし・使い終えた印・切れた印を拒む。拒む試験は消さない。
 // あわせて、正しいタブから、Documents が日本語の OneDrive の下にある PC の形で、確定 → 輪を作る → 検問所 → 送る → 確かめるを通す。
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -13,6 +13,8 @@ import { truthToPlan } from "../fixtures/chart/truth-to-plan.mjs";
 import { fileURLToPath } from "node:url";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { FakeTab, SECRET_A, http, startTestBridge, type TestBridge } from "../helpers/bridge";
+import { STUB_TOKEN, startGitHubStub } from "../helpers/github-stub";
+import type { GitHubIo } from "../../src/bridge/github";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 const NEW_ROUTES = ROUTE_IDS.filter((id) => ROUTES[id].kind === "human" && id !== "commitTrial");
@@ -50,7 +52,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "planStatus", "plansList", "planVersionRead", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -279,5 +281,85 @@ describe("受け手：似た施設と並べる（peers_compare）", () => {
     // 知らない立場・パックの形でないものは断る
     const bad = await call("peersCompare", { ...base, position: "知らない立場" });
     expect(bad).toMatchObject({ ok: false, reason: "payloadInvalid" });
+  }, 60_000);
+});
+
+describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物の GitHub では未確認）", () => {
+  it("確定 → GitHub につなぐ（デバイスフロー）→ 束を見る → 合言葉で署名して PR → 行方を読む → 接続を切る", async () => {
+    extra = join(tmpdir(), `moyai-ledger-pr-${process.pid}-${Date.now()}`);
+    mkdirSync(extra, { recursive: true });
+    const repo = join(extra, "台帳");
+    buildLedgerDemo({ repo: fileURLToPath(new URL("../../", import.meta.url)), out: repo, state: join(extra, "demo-state"), month: "2026-11" });
+    mkdirSync(join(repo, ".git"), { recursive: true });
+    writeFileSync(join(repo, ".git", "config"), `[remote "origin"]\n\turl = https://github.com/${"ledger-owner"}/moyai-ledger.git\n`);
+    const stub = await startGitHubStub();
+    try {
+      const io: GitHubIo = { hosts: { web: stub.web, api: stub.api }, fetch: (u, i) => fetch(u, i), sleep: async () => {} };
+      tb = await startTestBridge({ human: { shell: async () => ({ documents: join(extra, "Documents"), mounts: [] }), github: io, githubClientId: stub.clientId } });
+      const t = await tab(tb);
+      const call = async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+        const text = JSON.stringify(payload);
+        const tok = await t.token(R(id).action, text);
+        const r = await post(tb!, R(id).path, good(tb!), { token: tok, payload: text });
+        expect(r.status, id).toBe(200);
+        return r.body;
+      };
+      const KEYPASS = "架空の合言葉 署名の鍵";
+      const PASS = "架空の合言葉 公開の台帳";
+      await call("settingsSave", { root: join(extra, "置き場所"), ledger: repo, name: "【架空】試験の人" });
+      await call("personKeyCreate", { passphrase: KEYPASS });
+      const plan = truthToPlan("fictional-1");
+      const ds = aiDecisions(plan);
+      expect(await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null, passphrase: KEYPASS })).toMatchObject({ ok: true, version: 1 });
+      const answers = { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true };
+
+      // つなぐ前：誰からも見えるあなたは出るが、台帳の鍵が無いので束のバイト列は無く、送れない
+      const pv0 = await call("ledgerPreview", { planId: plan.planId, answers });
+      expect(pv0).toMatchObject({ ok: true, github: { login: null, ready: true }, ledger: { repo: "ledger-owner/moyai-ledger", key: null } });
+      expect(pv0.view.blockers).toContain("noKey");
+      expect(pv0.view.bodyHash).toBeNull();
+      expect(pv0.view.k).toBeGreaterThanOrEqual(5);
+
+      // GitHub につなぐ：合言葉で台帳の鍵を作り、デバイスフローのコードを返す。人が github.com で入れるまで待つ
+      expect((await call("githubConnectStart", { packId: "waste-incineration", passphrase: "短い" })).reason).toBe("passphraseShort");
+      const st = await call("githubConnectStart", { packId: "waste-incineration", passphrase: PASS });
+      expect(st).toMatchObject({ ok: true, userCode: "WDJB-MJHT", keyCreated: true });
+      expect(await call("githubConnectState", {})).toMatchObject({ ok: true, state: "waiting" });
+      stub.approve(); // 試験の台本が押した（人が github.com でコードを入れた）
+      let state = "waiting";
+      for (let i = 0; i < 40 && state === "waiting"; i++) {
+        await new Promise((r) => setTimeout(r, 200));
+        state = (await call("githubConnectState", {})).state;
+      }
+      expect(state).toBe("ok");
+      expect((await call("settingsRead", {})).github).toBe("moyai-test");
+      // トークンは状態フォルダに包んで置く（素のまま書かない）
+      expect(readFileSync(join(tb.stateDir!, "github.json"), "utf8")).not.toContain(STUB_TOKEN);
+
+      // 束を見る → 合言葉が違えば出さない → 合えば PR を 1 つ出す
+      const pv = await call("ledgerPreview", { planId: plan.planId, answers });
+      expect(pv.github.login).toBe("moyai-test");
+      expect(pv.view.blockers).toEqual([]);
+      expect(sha(pv.view.bodyText)).toBe(pv.view.bodyHash);
+      expect((await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash, passphrase: "違う合言葉ですよ" })).reason).toBe("passphrase");
+      expect(stub.prs).toHaveLength(0);
+      const sent = await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash, passphrase: PASS });
+      expect(sent).toMatchObject({ ok: true, pr: 1, seq: 1, login: "moyai-test" });
+      expect(Object.keys(stub.prs[0]!.files)).toEqual([sent.path]);
+      expect(stub.prs[0]!.body).not.toContain(plan.displayName);
+
+      // 前の束が台帳に載るまでは、次の束は出さない。行方は公開の PR から読む
+      expect((await call("ledgerPreview", { planId: plan.planId, answers })).view.blockers).toContain("pending");
+      expect((await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash, passphrase: PASS })).reason).toBe("ledgerPending");
+      const prs = await call("ledgerPrs", { packId: "waste-incineration" });
+      expect(prs.prs).toMatchObject([{ pr: 1, seq: 1, status: { state: "open", check: "pending" } }]);
+
+      // 接続を切ると、トークンのファイルは消え、出せない
+      expect(await call("githubDisconnect", {})).toEqual({ ok: true });
+      expect((await call("settingsRead", {})).github).toBeNull();
+      expect(existsSync(join(tb.stateDir!, "github.json"))).toBe(false);
+    } finally {
+      await stub.close();
+    }
   }, 60_000);
 });

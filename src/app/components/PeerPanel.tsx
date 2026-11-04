@@ -200,9 +200,6 @@ export function PeerPanel({ plan, onComparison }: { plan: Plan; onComparison: (c
             { value: "om", label: P.position.om },
           ]}
         />
-        <Text size="xs" c="dimmed">
-          {P.positionLead[position]}
-        </Text>
         <Text size="xs" fw={700}>
           {P.profileTitle[from]}
         </Text>
@@ -243,11 +240,6 @@ export function PeerPanel({ plan, onComparison }: { plan: Plan; onComparison: (c
           {views.every((v) => v.status !== "shown") && <Text size="xs">{P.noRows}</Text>}
         </Stack>
       )}
-      <Text size="xs" c="dimmed">
-        {P.axesNote}
-        {P.notesSep}
-        {P.aiNote}
-      </Text>
     </Stack>
   );
 }

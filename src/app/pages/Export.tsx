@@ -1,7 +1,7 @@
 // EXPORT（docs/screens.md 3.5）：確定した版から、人が見る様式の Excel（MOYAI の標準）を落とす。差分レポートも副のボタンで落とす。
 // Excel は確定のときに橋渡しが保管先に書いたもの（plans/<計画ID>/exports・reports）で、人だけの経路 plan_file_read で読んでブラウザに落とす。
-// 署名と鎖が合わない版の Excel は渡さない。様式に写す（別の様式を落とす）は P2 で、作るまで置かない。
-import { Alert, Button, Container, Group, Stack, Table, Text, Title } from "@mantine/core";
+// 署名と鎖が合わない版の Excel は渡さない。「別の様式を落とす」で、利用者の様式に写した Excel も落とせる（components/TemplateExport.tsx）。
+import { Alert, Button, Group, Stack, Table, Text } from "@mantine/core";
 import { useMemo, useState } from "react";
 import { buildChart } from "../../plan/chart";
 import type { Plan } from "../../shared/plan";
@@ -9,6 +9,7 @@ import { ROUTES } from "../../shared/routes";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { formatCell } from "../chart/grid";
 import { FictionMark } from "../components/FictionMark";
+import { TemplateExport, downloadTemplate, type LoadedTemplate } from "../components/TemplateExport";
 import { readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
@@ -71,6 +72,8 @@ export function Export() {
   const planId = working?.plan.planId ?? "";
   const [load] = usePlanStatus(client, planId, !!working && state.kind === "open");
   const [busy, setBusy] = useState<"export" | "report" | null>(null);
+  // 利用者が落とした様式（選んでいれば、「Excel を落とす」はこの様式に写す）
+  const [template, setTemplate] = useState<LoadedTemplate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const status = load.kind === "ready" ? load.status : null;
   const latest = status?.latest ?? null;
@@ -80,6 +83,12 @@ export function Export() {
 
   const get = async (kind: "export" | "report") => {
     if (!latest || blocked) return;
+    if (kind === "export" && template) {
+      setBusy(kind);
+      await downloadTemplate(template, latest.plan, latest.version);
+      setBusy(null);
+      return;
+    }
     setBusy(kind);
     setError(null);
     const r = readHuman<{ ok: boolean; reason?: string; base64: string }>(await client.callHuman("plan_file_read", ROUTES.planFileRead.path, { planId, version: latest.version, kind }));
@@ -89,17 +98,39 @@ export function Export() {
   };
 
   return (
-    <Container fluid py="md" px="lg" data-testid="export-page">
-      <Group justify="space-between" align="center" mb="md" wrap="nowrap">
-        <Group gap="sm" wrap="nowrap">
-          <Title order={2}>{T.title}</Title>
+    <div className="moyai-share-page" data-testid="export-page">
+      <div className="moyai-share-body">
+        {/* 段の名前はヘッダが大きく出すので、見出しは施設の名前と版の 1 行だけ（MERGE と同じ形） */}
+        <div className="moyai-page-head" data-testid="export-plan">
           {latest && (
-            <Text fw={700} data-testid="export-plan">
-              {latest.plan.displayName}　{T.version(latest.version)}
-            </Text>
+            <>
+              <h1 className="moyai-merge-name">{latest.plan.displayName}</h1>
+              <span className="moyai-merge-ver">{T.version(latest.version)}</span>
+            </>
           )}
           {latest?.plan.facility.fictional && <FictionMark />}
-        </Group>
+        </div>
+        <Stack gap="md">
+          {/* 様式の行（MOYAI の標準か、利用者が落とした様式）。様式を選んでいるときは、その様式に写した見本 */}
+          {latest && <TemplateExport plan={latest.plan} template={template} onTemplate={setTemplate} />}
+          {error && (
+            <Alert color="gray" data-testid="export-error">
+              {error}
+            </Alert>
+          )}
+          {!working && (
+            <Text size="sm">
+              {T.noPlan} <a href={sheetHash("files")}>{T.toMerge}</a>
+            </Text>
+          )}
+          {latest && !template && <Sample plan={latest.plan} />}
+        </Stack>
+      </div>
+      {/* 下の帯：左に何から作るか、右端に主ボタン 1 つ（いま選んでいる様式で落とす）と、その左に差分レポート */}
+      <Group justify="space-between" px={32} py="xs" wrap="nowrap" gap="md" className="moyai-merge-bar">
+        <Text size="xs" c="dimmed">
+          {latest ? T.fromVersion(latest.version) : ""}
+        </Text>
         <Group gap="sm" wrap="nowrap">
           {blocked && (
             <Text size="xs" c="dimmed" data-testid="export-blocked">
@@ -114,22 +145,6 @@ export function Export() {
           </Button>
         </Group>
       </Group>
-      <Stack gap="md">
-        <Text size="sm" data-testid="export-format">
-          {T.format}
-        </Text>
-        {error && (
-          <Alert color="gray" data-testid="export-error">
-            {error}
-          </Alert>
-        )}
-        {!working && (
-          <Text size="sm">
-            {T.noPlan} <a href={sheetHash("files")}>{T.toMerge}</a>
-          </Text>
-        )}
-        {latest && <Sample plan={latest.plan} />}
-      </Stack>
-    </Container>
+    </div>
   );
 }

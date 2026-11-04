@@ -102,19 +102,11 @@
 /* 変更した：形を朱に、セルの下に 2px の朱の罫 */
 .moyai-mark-changed [data-mark]::before {
   border-color: var(--shu);
+  box-shadow: 0 7px 0 -5px var(--shu);
 }
 .moyai-mark-changed [data-mark="actual"]::before,
 .moyai-mark-changed [data-mark="both"]::before {
   background-color: var(--shu);
-}
-.moyai-mark-changed::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: var(--shu);
 }
 
 /* Claude の案（台帳から置き、人がまだ決定のシートで受けていない計画の印）：朱の破線の円。下の罫は付けない（docs/screens.md 3.2）。

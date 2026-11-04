@@ -624,6 +624,15 @@ button.moyai-top-mk[data-kind="signed"] {
   color: var(--shu-text);
 }
 
+/* EXPORT と SHARE の見出し：MERGE と同じ形（施設の名前 17px・500 と版の 1 行。段の名前はヘッダが大きく出す） */
+.moyai-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3) var(--sp-5);
+  margin-bottom: var(--sp-6);
+}
+
 /* SHARE（共有。docs/screens.md 3.6、絵は Share.dc.html）：見出しから下はすぐ中身。下の帯に、出したあとに起きることと主ボタン 1 つ */
 .moyai-share-page {
   height: 100%;
@@ -643,4 +652,29 @@ button.moyai-top-mk[data-kind="signed"] {
   height: 12px;
   background: var(--layer-3);
   vertical-align: middle;
+}
+
+/* 様式に写す（EXPORT。絵は Export.dc.html）：Excel の見本なので縦の罫の格子。どの行も 1 行（折らない） */
+.moyai-template th,
+.moyai-template td {
+  white-space: nowrap;
+}
+/* 列の上の役目：箱の無い 11px の字。押すと選ぶ欄。字は切らず、長ければ折る。未定は朱 */
+.moyai-template-role {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  white-space: normal;
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.1em;
+  color: var(--text-2);
+}
+.moyai-template-role[data-none="true"] {
+  color: var(--shu-text);
+}
+.moyai-template-role:hover {
+  color: var(--text);
 }
