@@ -122,13 +122,27 @@ put("favicon.svg", svg(MW, MW, `<style>svg{--ink:${C.light.ink};--knot:${C.light
 const favTile = (size) => svg(size, size, `<rect width="${size}" height="${size}" fill="${C.dark.bg}"/><g transform="translate(${r2(size * 0.04)} ${r2((size - MH * (size * 0.92) / MW) / 2)}) scale(${r2((size * 0.92) / MW)})">${markBody(C.dark, true)}</g>`, "MOYAI");
 
 // 5. OGP（1200×630、左揃え）と SNS のアバター
+// しるしと MOYAI は横組みと同じ比率。サブメッセージは MOYAI の上に小さく置き、しるしの上の端より上に出てよい
+const SUB = "保全の記録を、紡ぎあう", SUB_TRACK = 0.06, SUB_SIZE = 32, SUB_GAP = 28;
+await page.evaluate(() => document.fonts.load('100px "IBM Plex Sans JP"', "保全の記録を、紡ぎあう"));
+const sm = await page.evaluate(([s, tr]) => {
+  const ctx = document.createElement("canvas").getContext("2d");
+  ctx.font = '100px "IBM Plex Sans JP"';
+  ctx.letterSpacing = `${tr * 100}px`;
+  const t = ctx.measureText(s);
+  return { up: t.actualBoundingBoxAscent, down: t.actualBoundingBoxDescent, left: t.actualBoundingBoxLeft };
+}, [SUB, SUB_TRACK]);
 const og = (t) => {
-  const markScale = 1.9, mh = MH * markScale, size = (mh * CAP_H) / (m.cap / 100), w = word(size), gap = mh * GAP_H;
-  const x0 = 96, y0 = 630 / 2 - mh / 2 - 40;
+  const s = 1.9, mh = MH * s, gap = mh * GAP_H;
+  const capM = mh * CAP_H, sizeM = capM / (m.cap / 100), w = word(sizeM), base = mh / 2 + capM / 2;
+  const k = SUB_SIZE / 100, subTop = base - capM - SUB_GAP - (sm.up + sm.down) * k;
+  const D = Math.max(0, -subTop), x = MW * s + gap, W = x + w.width, H = mh + D;
+  const x0 = 96, y0 = 630 / 2 - H / 2;
   return `<!doctype html><html><head>${fontStyle}<link rel="stylesheet" href="${plexCss}"></head><body style="margin:0">
 <div style="width:1200px;height:630px;background:${C[t].bg};position:relative;overflow:hidden">
-<svg viewBox="0 0 ${r2(MW * markScale + gap + w.width)} ${r2(mh)}" width="${r2(MW * markScale + gap + w.width)}" height="${r2(mh)}" style="position:absolute;left:${x0}px;top:${r2(y0)}px"><g transform="scale(${markScale})">${markBody(C[t])}</g>${text(MW * markScale + gap + w.left, mh / 2 + w.cap / 2, size, C[t].ink)}</svg>
-<div style="position:absolute;left:${x0}px;top:${r2(y0 + mh + 48)}px;font:400 32px/48px 'IBM Plex Sans JP';letter-spacing:0.06em;color:${C[t].sub}">保全の記録を一つの計画にまとめ、似た施設と同じ行で比べる</div>
+<svg viewBox="0 0 ${r2(W)} ${r2(H)}" width="${r2(W)}" height="${r2(H)}" style="position:absolute;left:${x0}px;top:${r2(y0)}px"><g transform="translate(0 ${r2(D)})"><g transform="scale(${s})">${markBody(C[t])}</g>
+<text x="${r2(x + sm.left * k)}" y="${r2(subTop + sm.up * k)}" font-family="IBM Plex Sans JP" font-size="${SUB_SIZE}" letter-spacing="${r2(SUB_SIZE * SUB_TRACK)}" fill="${C[t].sub}">${SUB}</text>
+${text(x + w.left, base, sizeM, C[t].ink)}</g></svg>
 </div></body></html>`;
 };
 
