@@ -352,7 +352,7 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
       expect((await call("ledgerPreview", { planId: plan.planId, answers })).view.blockers).toContain("pending");
       expect((await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash, passphrase: PASS })).reason).toBe("ledgerPending");
       const prs = await call("ledgerPrs", { packId: "waste-incineration" });
-      expect(prs.prs).toMatchObject([{ pr: 1, seq: 1, status: { state: "open", check: "pending" } }]);
+      expect(prs.prs).toMatchObject([{ pr: 1, seq: 1, version: 1, status: { state: "open", check: "pending" } }]);
 
       // 接続を切ると、トークンのファイルは消え、出せない
       expect(await call("githubDisconnect", {})).toEqual({ ok: true });

@@ -101,14 +101,25 @@ interface LedgerPr {
   url: string;
   seq: number;
   at: string;
+  /** 束にした計画の版 */
+  version: number | null;
   login: string;
   status: { state: "open" | "merged" | "closed"; check: "pending" | "ok" | "ng" | "none"; reason: string | null } | null;
+}
+
+/** その PC の時刻の日付（YYYY-MM-DD） */
+function dayOf(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function PrLine({ p }: { p: LedgerPr }) {
   const st = p.status;
   return (
     <Group gap="md" wrap="nowrap" className="moyai-num" data-testid="ledger-pr" data-state={st?.state ?? "unread"} data-check={st?.check ?? ""}>
+      <Text size="sm" data-testid="ledger-pr-bundle">
+        {T.prBundle(p.seq, p.version, dayOf(p.at))}
+      </Text>
       <Text size="sm" w={70}>
         {T.prOpen(p.pr)}
       </Text>
@@ -283,12 +294,16 @@ export function Checkpoint() {
   const done = dest === "ledger" ? !!sentPr : !!sent;
   const canSend = !!view && view.blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && pass.length > 0 && !sending && !done;
   const login = res?.github?.login ?? null;
+  /** 公開の台帳：前に出した束がまだ載っていない（そのあいだは合言葉の欄を出さない） */
+  const waitingLedger = dest === "ledger" && !!view?.blockers.includes("pending");
   // 止め札は、いま効いている理由を 1 つだけ出す（公開の台帳でつないでいなければ、それがいちばん先）
   const sendReason = !view
     ? T.sendNeeds.noView
     : view.blockers.includes("noKey")
       ? T.sendNeeds.noKey
-      : view.blockers.length > 0
+      : view.blockers.includes("pending")
+        ? T.sendNeeds.pending
+        : view.blockers.length > 0
         ? (T.sendNeeds[view.blockers[0]!] ?? view.blockers[0]!)
         : pass.length === 0
           ? T.sendNeeds.passphrase
@@ -792,11 +807,12 @@ export function Checkpoint() {
           )}
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
-          {!canSend && !done && sendReason && (
+          {!canSend && (dest === "ledger" || !done) && sendReason && (
             <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
               {sendReason}
             </Text>
           )}
+          {!waitingLedger && (
           <PasswordInput
             size="xs"
             aria-label={T.passphrase}
@@ -810,6 +826,7 @@ export function Checkpoint() {
             disabled={done}
             data-testid="passphrase"
           />
+          )}
           <Button onClick={send} disabled={!canSend} loading={sending} data-testid="send">
             {dest === "ledger" ? T.sendLedger : T.sendRing}
           </Button>

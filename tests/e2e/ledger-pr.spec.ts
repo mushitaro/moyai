@@ -109,6 +109,10 @@ test("SHARE で GitHub につなぎ、合言葉で署名して、公開の台帳
     await expect(page.getByTestId("ledger-sent")).toContainText("PR #1 を出しました");
     await expect(page.locator('[data-testid="ledger-pr"][data-state="open"]')).toHaveCount(1);
     await expect(page.getByTestId("ledger-pr").first()).toContainText("審査中");
+    await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^束 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
+    // 出したあと：止め札は「前に出した束が、まだ台帳に載っていません」の 1 つ。そのあいだ合言葉の欄は出さない
+    await expect(page.getByTestId("send-reason")).toHaveText("前に出した束が、まだ台帳に載っていません");
+    await expect(page.getByTestId("passphrase")).toHaveCount(0);
     await page.screenshot({ path: shot(`ledger-pr-sent-${tag}`), fullPage: true });
 
     // 届いた束：台帳の木に足して、受け手と同じ関数で ✓（台帳の Actions の検証と同じ関数）

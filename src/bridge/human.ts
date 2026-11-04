@@ -656,7 +656,7 @@ export class HumanService {
         if (!r.ok) return no(`github.${r.reason}`);
         writeLedgerSent(sd, [
           ...readLedgerSent(sd),
-          { ledgerId: c.L.id, key, seq, hash: s.hash, path, month: monthOf(now), at: now.toISOString(), repo: `${c.repo.owner}/${c.repo.name}`, pr: r.number, url: r.url, login: r.login, state: "open" },
+          { ledgerId: c.L.id, key, seq, hash: s.hash, path, month: monthOf(now), at: now.toISOString(), repo: `${c.repo.owner}/${c.repo.name}`, pr: r.number, url: r.url, login: r.login, version: c.version, state: "open" },
         ]);
         return { ok: true, pr: r.number, url: r.url, path, hash: s.hash, seq, login: r.login };
       }
@@ -675,7 +675,7 @@ export class HumanService {
           const [owner, name] = e.repo.split("/");
           const st = owner && name ? await prStatus(io, { owner, name }, e.pr) : null;
           if (st) e.state = st.state;
-          prs.push({ pr: e.pr, url: e.url, seq: e.seq, at: e.at, login: e.login, status: st });
+          prs.push({ pr: e.pr, url: e.url, seq: e.seq, at: e.at, version: e.version ?? null, login: e.login, status: st });
         }
         writeLedgerSent(sd, all);
         return { ok: true, prs };

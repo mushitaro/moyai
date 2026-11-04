@@ -288,6 +288,8 @@ export interface LedgerSentEntry {
   pr: number;
   url: string;
   login: string;
+  /** 束にした計画の版（画面の「束 1　第 1 版　2026-11-04」に出す。この PC の記録だけで、束には入らない） */
+  version?: number;
   /** SHARE を開いたときに読んだ PR の行方（最後に読めたもの） */
   state?: "open" | "merged" | "closed";
 }

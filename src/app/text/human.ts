@@ -354,6 +354,8 @@ export const HUMAN_TEXT = {
     accountSeen: (login: string) => `- PR を出す GitHub のアカウント［${login}］が、誰にでも見えます`,
     prsTitle: "公開の台帳に出した束",
     prOpen: (n: number) => `PR #${n}`,
+    /** どの版の束か（束 1　第 1 版　2026-11-04） */
+    prBundle: (seq: number, version: number | null, day: string) => [`束 ${seq}`, version === null ? null : `第 ${version} 版`, day].filter(Boolean).join("　"),
     prReview: "審査中",
     prCheck: { pending: "台帳の検証 走っています", ok: "台帳の検証 ✓", ng: "台帳の検証 ×", none: "台帳の検証 まだ" } as Record<string, string>,
     prWaiting: "管理者の判断を待っています",
@@ -430,7 +432,7 @@ export const HUMAN_TEXT = {
       passphrase: "合言葉を打つと送れます",
       noView: "出ていくものがまだ無い",
       noKey: "GitHub につないでいません",
-      pending: "前に出した束が台帳にまだ載っていない",
+      pending: "前に出した束が、まだ台帳に載っていません",
     } as Record<string, string>,
     missingAxes: (names: string) => `まだ決まっていない軸：${names}`,
     vanished: "持ち出し簿にある束が、輪のあなたのフォルダに見えません（前に見た束が消えています）。",
