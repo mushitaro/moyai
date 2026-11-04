@@ -4,7 +4,7 @@
   "version": 1,
   "note": "サンプルの作り手（samples/maker/）が読む、ごみ焼却の正解の世界の決まり。設備の機器・作業の組み方・法令の点検の周期・資料ごとの粒度と呼び名・書き漏れの割合をここに置き、生成器のコードには業種の語を書かない。施設・業者・金額はすべて架空。全国の表（national/table.json）は施設の性質の分布としてだけ使う",
   "rates": {
-    "note": "割合は施設ごとの乱数で当てる。どれも正解（answer/world.json の errata）に 1 件ずつ記録する",
+    "note": "割合は施設ごとの乱数で当てる。omitMark・wrongYear・lastYearReflected は正解（answer/world.json の errata）に 1 件ずつ記録し、postpone・partial・unplannedExtra・事後の補修は作業の status に出る",
     "omitMark": 0.03,
     "wrongYear": 0.04,
     "lastYearReflected": 0.5,

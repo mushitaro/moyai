@@ -3,7 +3,7 @@
 "maker":{"version":1,"seed":56006,"today":"2025-12-12","rules":"packs/waste-incineration/world.json"},
 "facility":{"id":"WI-06","name":"うみかぜエコプラント","short":"うみかぜEP","owner":"架空県南広域環境組合","pack":"waste-incineration","years":[2019,2025],"planTo":2034,"fiscalYearStartMonth":4,"fictional":true},
 "profile":{"furnace":"STOKER","turbine":"YES","dust":"BF","ash":"OUT","contract":"OM","capacity_t_per_day":300,"capacityBand":"C200_400","upgraded":"未実施","furnaces":3,"commissioned":2012},
-"rates":{"note":"割合は施設ごとの乱数で当てる。どれも正解（answer/world.json の errata）に 1 件ずつ記録する","omitMark":0.03,"wrongYear":0.04,"lastYearReflected":0.5,"breakdownInChart":0.12,"postpone":0.06,"partial":0.03,"unplannedExtra":0.02,"breakdownPerUnitYear":0.035,"diaryRoutinePerDay":1.4,"cycleAsText":0.18},
+"rates":{"note":"割合は施設ごとの乱数で当てる。omitMark・wrongYear・lastYearReflected は正解（answer/world.json の errata）に 1 件ずつ記録し、postpone・partial・unplannedExtra・事後の補修は作業の status に出る","omitMark":0.03,"wrongYear":0.04,"lastYearReflected":0.5,"breakdownInChart":0.12,"postpone":0.06,"partial":0.03,"unplannedExtra":0.02,"breakdownPerUnitYear":0.035,"diaryRoutinePerDay":1.4,"cycleAsText":0.18},
 "files":[
 {"file":"【架空】うみかぜEP_長期修繕計画_R1-R16.xlsx","plan":true,"records":282},
 {"file":"【架空】うみかぜEP_作業実績_2021.csv","plan":false,"records":876},

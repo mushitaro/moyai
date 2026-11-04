@@ -3,7 +3,7 @@
 "maker":{"version":1,"seed":51001,"today":"2025-12-12","rules":"packs/waste-incineration/world.json"},
 "facility":{"id":"WI-DEMO-01","name":"しらかば野クリーンセンター","short":"しらかば野CC","owner":"架空市","pack":"waste-incineration","years":[2013,2025],"planTo":2030,"fiscalYearStartMonth":4,"fictional":true},
 "profile":{"furnace":"STOKER","turbine":"YES","dust":"BF","ash":"OUT","contract":"SINGLE","capacity_t_per_day":170,"capacityBand":"C100_200","upgraded":"実施済み","furnaces":2,"commissioned":2002},
-"rates":{"note":"割合は施設ごとの乱数で当てる。どれも正解（answer/world.json の errata）に 1 件ずつ記録する","omitMark":0.03,"wrongYear":0.04,"lastYearReflected":0.5,"breakdownInChart":0.12,"postpone":0.06,"partial":0.03,"unplannedExtra":0.02,"breakdownPerUnitYear":0.035,"diaryRoutinePerDay":1.4,"cycleAsText":0.18},
+"rates":{"note":"割合は施設ごとの乱数で当てる。omitMark・wrongYear・lastYearReflected は正解（answer/world.json の errata）に 1 件ずつ記録し、postpone・partial・unplannedExtra・事後の補修は作業の status に出る","omitMark":0.03,"wrongYear":0.04,"lastYearReflected":0.5,"breakdownInChart":0.12,"postpone":0.06,"partial":0.03,"unplannedExtra":0.02,"breakdownPerUnitYear":0.035,"diaryRoutinePerDay":1.4,"cycleAsText":0.18},
 "files":[
 {"file":"【架空】しらかば野CC_星取表_H25-R12.xlsx","plan":true,"records":256},
 {"file":"【架空】しらかば野CC_作業日報_R3.xlsx","plan":false,"records":717},

@@ -30,6 +30,11 @@ LAYOUT = {
 }
 
 
+def _bundles(W):
+    """まとめた定期補修工事の契約があるか（炉の窓のある業種だけ）。"""
+    return any(c.get("bundle") for c in W.contracts)
+
+
 def _layout(W, key):
     return LAYOUT[key].replace("{u}", W.text("unitWord"))
 
@@ -235,15 +240,21 @@ def _dirt(W, answers):
                        f"補修と細かな点検（{W.doc_text('routineExample')}…）は日報にだけある")
         elif t == "diary_csv":
             out.append(f"作業実績の CSV（{d['years'][0]}〜{d['years'][1]} 年度、{d.get('encoding', 'cp932')}）：1 行目がコメント、2 行目が見出し。1 行 1 件。"
-                       "まとめ工事の行（「…定期補修工事」「一式（内訳は各行）」「延べ◯人工」）を工事の初日に置いた。日付は「2023/05/10」と「2023-05-10」が混ざる。"
+                       + ("まとめ工事の行（「…定期補修工事」「一式（内訳は各行）」「延べ◯人工」）を工事の初日に置いた。" if _bundles(W) else "")
+                       + "日付は「2023/05/10」と「2023-05-10」が混ざる。"
                        f"半角カナ・括弧の全角半角・{W.text('unitWord')}の書き方が揺れる。作業時間は人数×7.5 か 8 時間"
                        + ("。Shift_JIS に無い文字（—）は ― に置いた" if d.get("encoding", "cp932") == "cp932" else ""))
         elif t == "gantt":
             out.append(f"工程表（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのシート、週の列（月の見出しは週の列の上）。週のセルはその週に作業した日数で、網掛けの色で{W.doc_text('ganttShade')}を分けた。"
                        f"工数の書き方が行ごとに揺れる（延べ人工の数、「45人工」の文字、「6日間」の日数だけ、着手・完了の無い期間だけ）。{W.doc_text('ganttHeads')}の見出しの行は複数の機器をまとめた工事の行。行のグループ")
         elif t == "orders":
-            out.append(f"発注台帳（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのシート。{era_fy(d.get('textDatesUntil', 2018))} 年度までは和暦の文字の日付（「H27.5.12」と「平成27年5月12日」が混ざる）、あとは日付のセル。"
-                       "単価契約（予定総額と支払額が違う）、変更契約の行（「　〃　（第1回変更）」）、緊急の随意契約、定期補修工事の一式、継続費の基幹改良（年割額）。件名に施設の正式名と略称が混ざる。区分ごとの小計と合計（数の値）"
+            tdu = d.get("textDatesUntil", 2018)
+            dates = (f"{era_fy(tdu)} 年度までは和暦の文字の日付（「H27.5.12」と「平成27年5月12日」が混ざる）、あとは日付のセル。" if tdu >= d["years"][0]
+                     else "日付はすべて日付のセル。")
+            out.append(f"発注台帳（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのシート。{dates}"
+                       "単価契約（予定総額と支払額が違う）、変更契約の行（「　〃　（第1回変更）」）、緊急の随意契約"
+                       + ("、定期補修工事の一式" if _bundles(W) else "") + ("、継続費の基幹改良（年割額）" if W.upgrade else "")
+                       + "。件名に施設の正式名と略称が混ざる。区分ごとの小計と合計（数の値）"
                        + ("。履行期間を 1 つのセルに「R8.4～R9.3」と書いた" if d.get("oneCellPeriod") else ""))
         elif t == "spec_pdf":
             out.append(f"完成図書の機器仕様一覧表（PDF）：竣工のときのまま（あとで足した機器は無い）。{W.text('unitWord')}に分けず数量でまとめた（「6 台」）。頁ごとに見出しをくり返す。表紙の頁。名前は完成図書の名前（星取表の呼び名と違う）")
@@ -295,7 +306,9 @@ def _cross(W, answers):
         out.append(f"`{aid}`（完成図書・台帳の名前「{a['name']}」）の呼び名：" + "、".join(f"「{k}」（{'・'.join(sorted(v))}）" for k, v in list(vals.items())[:5]))
         if len(used) >= 10:
             break
-    out.append(f"粒度：完成図書・機器台帳は台数でまとめ、星取表は 1 台ずつの行・{W.text('pairRow')}・まとめて 1 行が混ざる。台帳の 1 行が、星取表では部位（{W.doc_text('partsExample')}）に分かれる")
+    parts = any(a["part"] for a in W.assets)
+    out.append("粒度：完成図書・機器台帳は台数でまとめ、星取表は 1 台ずつの行・" + (f"{W.text('pairRow')}・" if W.F > 1 else "") + "まとめて 1 行が混ざる"
+               + (f"。台帳の 1 行が、星取表では部位（{W.doc_text('partsExample')}）に分かれる" if parts else ""))
     out.append("日付：星取表は年度の印だけ。日報・工程表・発注台帳は日付（工程表の着手・完了と、日報の作業した日は同じ作業。発注台帳の工期は契約の期間で、作業の日より広い）")
     out.append("工数：日報は 1 日の人数（と延べ時間）、工程表は延べ人工（数か文字）か日数だけ、CSV は人数と時間。同じ作業の日報の人数の和が、工程表の延べ人工になる")
     out.append("どの資料のどの行がどの作業かは `answer/world.json` の `links`（`how` が bundle・annual・rollup・upgrade の結びは、契約やまとめた工事の行で、作業そのものの行ではない）")
@@ -323,7 +336,7 @@ def usermd(W, answers, fac_dir: Path):
             L.append("")
             L.append("- 施設の整備の計画表（星取表）。保全係が毎年見直している。")
             L.append(f"- 記号：{LEG[d.get('legend', 'pd')]}。")
-            L.append(f"- 費用は 1 回あたりの概算で、単位は{d.get('costUnit', '千円')}（税抜）。{W.text('pairRow')}にした行や台数をまとめた行は、その全体の額。")
+            L.append(f"- 費用は 1 回あたりの概算で、単位は{d.get('costUnit', '千円')}（税抜）。" + (f"{W.text('pairRow')}にした行や" if W.F > 1 else "") + "台数をまとめた行は、その全体の額。")
             L.append("- 周期は年。「2年」と文字で書いた行もあるが同じ意味。")
             L.append(f"- {era_fy(W.today_fy)} 年度の実績はまだ一部しか入れていない（日報と発注台帳を見て、あとでまとめて入れる）。")
             if d.get("hideYears"):
@@ -354,7 +367,8 @@ def usermd(W, answers, fac_dir: Path):
             L.append("")
             L.append(f"- 委託先の業務の仕組みから書き出したもの。文字コードは{'Shift_JIS' if d.get('encoding', 'cp932') == 'cp932' else 'UTF-8'}。1 行目は書き出しのコメント。")
             L.append("- 1 行が 1 日の 1 件。人数はその日に入った人数、作業時間は延べの時間。")
-            L.append("- 作業内容が「一式（内訳は各行）」の行は、定期補修工事のまとめの行。中身の作業は同じファイルの別の行にある。")
+            if _bundles(W):
+                L.append("- 作業内容が「一式（内訳は各行）」の行は、定期補修工事のまとめの行。中身の作業は同じファイルの別の行にある。")
             L.append("")
         elif t == "gantt":
             L.append(f"### 工程表（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])} 年度）")
@@ -370,7 +384,8 @@ def usermd(W, answers, fac_dir: Path):
             L.append("- 契約係の発注台帳。金額は税込の円。")
             L.append("- 単価契約は契約金額が予定の総額で、支払額は使った分。")
             L.append("- 「〃（第1回変更）」の行は、すぐ上の契約の変更契約（変更後の金額）。")
-            L.append(f"- 「定期補修工事」は、{W.text('theUnit')}の定期整備の中の機器の整備をまとめた 1 件の契約。")
+            if _bundles(W):
+                L.append(f"- 「定期補修工事」は、{W.text('theUnit')}の定期整備の中の機器の整備をまとめた 1 件の契約。")
             if W.upgrade:
                 L.append("- 基幹的設備改良工事は 3 年度の継続費。2 年目と 3 年目のシートには、その年度の年割額の行がある。")
             L.append("")
