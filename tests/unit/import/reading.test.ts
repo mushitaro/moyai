@@ -150,12 +150,34 @@ describe("「読み方」のタブのデータ", () => {
     const tab = readingTab([approved, draft], s.analyze());
     expect(tab.skills).toHaveLength(1);
     const k = tab.skills[0]!;
-    expect([k.name, k.scope, k.version, k.status]).toEqual(["【架空】甲工場の読み方", "facility", "―", "draft"]);
+    expect([k.name, k.scope, k.version, k.status, k.approvedIn]).toEqual(["【架空】甲工場の読み方", "facility", "―", "draft", null]);
+    // 承認済みだけを当てていれば、承認した星取表の版を出す
+    const only = readingTab([{ ...approved, approvedIn: 6 }], s.analyze()).skills[0]!;
+    expect([only.version, only.status, only.approvedIn]).toEqual(["0123 4567", "approved", 6]);
     expect(k.rules.map((r) => [r.text, r.appliesTo, r.hits, r.decidedBy, r.change])).toEqual([
       ["「作業日」の列の日付は yyyymmdd", "見出しに「作業日」", 2, { kind: "ai" }, "same"],
       ["「ブロワー」と「ブロワ」は同じ機器", null, 0, { kind: "human", name: "山田" }, "added"],
     ]);
     expect(k.rules[0]?.sample).toEqual({ file: "日報.csv", ref: "A2", text: "20240406" });
     expect(tab.unapproved).toBe(1);
+  });
+});
+
+describe("詰まっている所（intake_survey の stuck）", () => {
+  test("未解決のセルのある資料ごとの数と、その行の見本。規則で読めたら、その資料は消える", async () => {
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "日報.csv", bytes: daily },
+    ]);
+    const st = s.survey().stuck.find((x) => x.fileRef === "日報.csv");
+    expect(st?.cells).toBeGreaterThan(0);
+    expect(st?.rows[0]?.cells.slice(0, 2)).toEqual(["20240406", "1"]);
+    expect(st?.rows[0]?.unresolved).toContain("A2");
+    s.setReadings([reading([{ ...base, id: "d1", text: "「作業日」の列の日付は yyyymmdd", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { headers: ["作業日"] } }])]);
+    // 日付が読めても、工数の時間の質問が残るうちは詰まったまま。答えると消える
+    expect(s.survey().stuck.find((x) => x.fileRef === "日報.csv")?.cells).toBe(10);
+    acceptDefaults(s);
+    expect(s.survey().stuck.find((x) => x.fileRef === "日報.csv")).toBeUndefined();
   });
 });

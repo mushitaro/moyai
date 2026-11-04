@@ -7,7 +7,8 @@ import { join } from "node:path";
 import { IntakeSession, readSource } from "../../src/import";
 import type { SourceFile } from "../../src/import/grid";
 import type { Decision, QuestionItem, QuestionState } from "../../src/import/questions";
-import type { Analysis } from "../../src/import/session";
+import type { Analysis, Survey } from "../../src/import/session";
+import type { LoadedReading } from "../../src/import/reading";
 import { Plan } from "../../src/shared/plan";
 import { measureFacts, measurePdfAgainstXlsx } from "../unit/import/truth";
 import { hits, nf, resolve, rowOf, type Asset, type Event, type HeldoutTruth, type HeldoutWorld, type LoadedSet, type Mark, type Resolved } from "./contract";
@@ -613,9 +614,11 @@ export interface RunOptions {
   /** ① の相手：資料 → 事実の JSON（openpyxl・Python の csv が取ったもの） */
   facts?: Record<string, unknown>;
   facilityKey?: string;
+  /** 当てる読み方（AI を入れた回で、Claude が会話で作った下書き） */
+  readings?: LoadedReading[];
 }
 
-export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ result: SetResult; plan: Plan | null; analysis: Analysis; index: Index }> {
+export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ result: SetResult; plan: Plan | null; analysis: Analysis; index: Index; survey: Survey }> {
   const { truth, world } = set;
   const read = opt.read ?? truth.files.filter((f) => f.kind !== "photo").map((f) => f.file);
   const s = new IntakeSession({
@@ -624,6 +627,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
     packId: "waste-incineration",
     facility: { facilityKey: opt.facilityKey ?? world.facility.id, name: world.facility.name, fiscalYearStartMonth: 4, scale: null, scaleUnit: null, legalFlags: [], fictional: true, inNationalTable: null },
   });
+  if (opt.readings) s.setReadings(opt.readings);
   const bytes = (f: string) => new Uint8Array(readFileSync(join(set.filesDir ?? join(set.dir, "files"), f)));
   const rejected = await s.add(read.map((n) => ({ name: n, bytes: bytes(n) })));
   const before = s.analyze();
@@ -691,5 +695,5 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
     recovery: { ...rc, misses: rc.misses.slice(0, 50) },
     unplaced: unplaced.slice(0, 50),
   };
-  return { result, plan: plan ? Plan.parse(plan) : null, analysis: an, index: ix };
+  return { result, plan: plan ? Plan.parse(plan) : null, analysis: an, index: ix, survey: s.survey() };
 }

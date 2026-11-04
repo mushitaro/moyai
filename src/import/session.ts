@@ -8,7 +8,7 @@ import { readCsv, ENCODING_LABEL, type CsvDelimiter, type CsvEncoding } from "./
 import type { RejectedFile, SourceFile } from "./grid";
 import { extensionOf, READABLE, readSource, type InputFile } from "./read";
 import { layoutFile, type SheetLayout } from "./structure";
-import { buildRecords, type Records } from "./records";
+import { buildRecords, cellKey, type Records } from "./records";
 import { activeRules, RuleHits, type LoadedReading } from "./reading";
 import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
@@ -56,6 +56,8 @@ export interface Survey {
     options: { id: string; label: string }[];
   }[];
   unresolvedCells: number;
+  /** 詰まっている所：未解決のセルのある資料ごとの数と、その行の見本（5 行まで）。questionId はその行を決める質問が分かるときだけ */
+  stuck: { fileRef: string; cells: number; rows: { sheet: string | null; row: number; cells: string[]; unresolved: string[]; questionId: string | null }[] }[];
   compose: { state: "idle" | "running" | "done" | "failed"; message: string | null };
   /** 取り込みは当てはめを持たないので null。作業画面の側が作業中の計画から足す */
   crosswalk: CrosswalkSurvey | null;
@@ -64,6 +66,8 @@ export interface Survey {
 const SAMPLE_ROWS = 20;
 const SAMPLE_CELLS = 40;
 const SAMPLE_TEXT = 60;
+const STUCK_FILES = 20;
+const STUCK_ROWS = 5;
 
 export class IntakeSession {
   private readonly files: InputFile[] = [];
@@ -350,6 +354,26 @@ export class IntakeSession {
         .map((e) => `${e.input.name}：写真（まだ読んでいない。人が画面で AI クライアントに渡すことを許した写真だけを、photo_transcribe で受け取れる）`),
     ];
     const unresolved = [...an.composition.status.values()].filter((s) => s.s === "unresolved").length;
+    const stuck = new Map<string, Survey["stuck"][number]>();
+    for (const lay of an.layouts) {
+      const byRow = new Map<number, { refs: string[]; q: string | null }>();
+      for (const cell of lay.grid.cells) {
+        const st = an.composition.status.get(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref: cell.ref }));
+        if (st?.s !== "unresolved") continue;
+        const e = stuck.get(lay.file) ?? { fileRef: lay.file, cells: 0, rows: [] };
+        stuck.set(lay.file, e);
+        e.cells++;
+        const r = byRow.get(cell.r) ?? { refs: [], q: st.questionId };
+        byRow.set(cell.r, r);
+        r.refs.push(cell.ref);
+      }
+      const e = stuck.get(lay.file);
+      if (!e) continue;
+      for (const [r, x] of [...byRow].sort((a, b) => a[0] - b[0])) {
+        if (e.rows.length >= STUCK_ROWS) break;
+        e.rows.push({ sheet: lay.sheet, row: r, cells: lay.index.rowCells(r).slice(0, SAMPLE_CELLS).map((c) => c.text.slice(0, SAMPLE_TEXT)), unresolved: x.refs.slice(0, SAMPLE_CELLS), questionId: x.q });
+      }
+    }
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";
     return {
       files,
@@ -365,6 +389,7 @@ export class IntakeSession {
         options: q.options.map((o) => ({ id: o.id, label: o.label })),
       })),
       unresolvedCells: unresolved,
+      stuck: [...stuck.values()].sort((a, b) => b.cells - a.cells).slice(0, STUCK_FILES),
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },
       crosswalk: null,
     };

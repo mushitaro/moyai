@@ -67,6 +67,7 @@ const SURVEY = {
   notes: [],
   questions: [],
   unresolvedCells: 0,
+  stuck: [],
   compose: { state: "idle", message: null },
   crosswalk: null,
 };

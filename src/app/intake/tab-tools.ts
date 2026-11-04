@@ -104,7 +104,7 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
     const s: Record<string, unknown> = { ...ws.survey(), crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null };
     ws.note("ai", T.surveyed);
-    if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [] } };
+    if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] } };
     if (part === "questions") return { ok: true, data: { ...s, samples: [], legends: [], notes: [] } };
     return { ok: true, data: s };
   },
