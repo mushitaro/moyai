@@ -20,6 +20,8 @@ export const HUMAN_ACTIONS = [
   "plan_status",
   "plan_commit",
   "plan_revert",
+  // EXPORT：確定した版の Excel（人が見る様式・差分レポート）を、人が画面で落とす（docs/screens.md 3.5）
+  "plan_file_read",
   // 人の鍵（版の署名。§2.18.2）：自分の鍵を作る・ほかの人の鍵を確認済みにする
   "person_key_create",
   "person_key_confirm",
@@ -83,6 +85,7 @@ export const ROUTES = {
   planStatus: human("/human/plan-status", "plan_status", 64 * 1024, "確定した版の一覧と、いちばん新しい版（確定のダイアログを開いたとき）"),
   planCommit: human("/human/plan-commit", "plan_commit", 32 * 1024 * 1024, "計画を確定する（合言葉で開いた自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く）"),
   planRevert: human("/human/plan-revert", "plan_revert", 64 * 1024, "前の版に戻す（前の版を指す記録を足し、自分の鍵で署名する）"),
+  planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
   personKeyCreate: human("/human/person-key-create", "person_key_create", 16 * 1024, "自分の鍵（版に署名する）を作り、合言葉で包んで状態フォルダに置く"),
   personKeyConfirm: human("/human/person-key-confirm", "person_key_confirm", 16 * 1024, "ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない）"),
   settingsRead: human("/human/settings-read", "settings_read", 64 * 1024, "置き場所・Documents の場所・輪の一覧を読む"),

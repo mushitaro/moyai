@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
+import { acceptDecisions } from "../helpers/e2e";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/moyai-shots/${jst}`;
@@ -121,22 +122,20 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
 
   await test.step("確定：差分の要約、人が受けていない決定を理由つきで受け、一言の理由で確定する", async () => {
     await openPlan(page, "fictional-1");
+    // 受けていない決定があるうちは、署名のダイアログを開けない。決定のシートで 1 行ずつ理由を書いて受ける
+    await expect(page.getByTestId("confirm-open")).toBeDisabled();
+    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("受けていない決定が");
+    const n = await acceptDecisions(page, "台帳の名前と表Ⅱ-4 を見て、人が受けた");
+    expect(n).toBeGreaterThan(0);
+    await expect(page.getByTestId("confirm-open")).toBeEnabled();
     await page.getByTestId("confirm-open").click();
     await expect(page.getByTestId("diff-summary")).toBeVisible();
     await expect(page.getByTestId("confirm-root")).toHaveText(root);
-    const rows = page.getByTestId("pending-row");
-    await expect(rows.first()).toBeVisible();
-    const n = await rows.count();
-    expect(n).toBeGreaterThan(0);
-    // 理由が空なら確定できない。受けていない決定が残っても確定できない
+    await expect(page.getByTestId("pending")).toContainText(`決定のシートで受けた決定 ${n} 件`);
+    // 理由が空なら確定できない
     await expect(page.getByTestId("confirm-submit")).toBeDisabled();
+    await expect(page.getByTestId("confirm-submit-reason")).toContainText("理由を書くと確定できます");
     await page.getByTestId("confirm-reason").fill("試しの計画を確定する（e2e）");
-    await expect(page.getByTestId("confirm-submit")).toBeDisabled();
-    await expect(page.getByTestId("confirm-submit-reason")).toContainText("まだ受けていない決定");
-    for (let i = 0; i < n; i++) {
-      await rows.nth(i).getByTestId("pending-reason").fill("台帳の名前と表Ⅱ-4 を見て、人が受けた");
-      await rows.nth(i).getByTestId("pending-accept").check();
-    }
     // 署名：合言葉が無いうちは確定できない。この PC にまだ鍵が無いので、合言葉を 2 回入れて鍵を作ってから署名する
     await expect(page.getByTestId("confirm-submit")).toBeDisabled();
     await page.getByTestId("sign-passphrase").fill(PASS);

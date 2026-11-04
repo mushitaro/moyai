@@ -1,9 +1,11 @@
 // 確定のダイアログと版の履歴（docs/plan.md §2.9・§2.18.2）。確定は人だけ：差分の要約と一言の理由（空は通さない）、
 // 自分の鍵の合言葉で版に署名する（鍵がまだ無ければ、合言葉を決めて作ってから署名する）。この署名で承認する読み方を 1 行ずつ見せる。
-// 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、一言の理由を書いて受けるまで確定できない。
+// 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、MERGE の決定のシートで一言の理由を書いて受けるまで確定できない（受けた決定は state/decisions.ts）。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
 import { Alert, Anchor, Badge, Button, Checkbox, Group, Modal, PasswordInput, ScrollArea, Stack, Table, Text, TextInput } from "@mantine/core";
 import { getCurrentReadings, readingsForCommit } from "../state/readings";
+import { acceptancesFor, clearAccepted } from "../state/decisions";
+import { sheetHash } from "../stages";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
@@ -67,7 +69,8 @@ const markText = (m: DiffMark | null) => (m === null ? T.mark.none : T.mark[m]);
 
 type Load = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; status: StatusBody };
 
-function useStatus(client: BridgeClient, planId: string, opened: boolean): [Load, () => void] {
+/** 確定した版の一覧と、いちばん新しい版（人だけの経路 plan_status）。opened のあいだ読む */
+export function usePlanStatus(client: BridgeClient, planId: string, opened: boolean): [Load, () => void] {
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [n, setN] = useState(0);
   useEffect(() => {
@@ -99,9 +102,8 @@ export function ConfirmDialog({
   onClose: () => void;
   onConfirmed: (plan: Plan) => void;
 }) {
-  const [load] = useStatus(client, plan.planId, opened);
+  const [load] = usePlanStatus(client, plan.planId, opened);
   const [reason, setReason] = useState("");
-  const [accept, setAccept] = useState<Record<string, { reason: string; on: boolean }>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ version: number; files: { version: string; report: string; export: string | null } } | null>(null);
@@ -112,7 +114,6 @@ export function ConfirmDialog({
   useEffect(() => {
     if (!opened) return;
     setReason("");
-    setAccept({});
     setError(null);
     setDone(null);
     setPass("");
@@ -123,7 +124,8 @@ export function ConfirmDialog({
   const status = load.kind === "ready" ? load.status : null;
   const diff = useMemo(() => (status ? diffPlans(status.latest?.plan ?? null, plan) : null), [status, plan]);
   const pending = useMemo(() => (status ? pendingDecisions(plan, status.accepted ?? []) : []), [status, plan]);
-  const accepted = pending.filter((d) => accept[d.id]?.on && (accept[d.id]?.reason.trim().length ?? 0) > 0);
+  // 受けた決定は、MERGE の決定のシートで人が受けたもの
+  const accepted = acceptancesFor(pending);
   const left = pending.length - accepted.length;
   // 共通の設備項目はコードでなくパックの名前で見せる（名前が無ければコードのまま）
   const catalog = useMemo(() => catalogFor(plan.packId), [plan.packId]);
@@ -153,7 +155,7 @@ export function ConfirmDialog({
     const payload = {
       plan,
       reason: reason.trim(),
-      acceptances: accepted.map((d) => ({ id: d.id, hash: d.hash, reason: accept[d.id]!.reason.trim() })),
+      acceptances: accepted,
       basedOn: status.latest?.version ?? null,
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
       readings: readingsForCommit(),
@@ -167,6 +169,7 @@ export function ConfirmDialog({
     setPass2("");
     if (!r.ok) return setError(r.message);
     setDone({ version: r.body.version, files: r.body.files });
+    clearAccepted();
     onConfirmed(r.body.plan);
   };
 
@@ -221,68 +224,16 @@ export function ConfirmDialog({
             {diff.rows.length > DIFF_MAX && <Text size="xs">{T.diffMore(diff.rows.length - DIFF_MAX)}</Text>}
 
             {pending.length > 0 && (
-              <Stack gap={4} data-testid="pending">
-                <Text fw={700}>{T.pendingTitle(pending.length)}</Text>
-                <Text size="xs" c="dimmed">
-                  {T.pendingLead}
-                </Text>
-                <ScrollArea.Autosize mah={260}>
-                  <Table withTableBorder>
-                    <Table.Thead>
-                      <Table.Tr>
-                        {T.pendingHead.map((h) => (
-                          <Table.Th key={h}>{h}</Table.Th>
-                        ))}
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {pending.map((d) => {
-                        const a = accept[d.id] ?? { reason: "", on: false };
-                        const [pa, fy] = d.kind === "detail" ? d.value.split(":") : [null, null];
-                        return (
-                          <Table.Tr key={d.id} data-testid="pending-row">
-                            <Table.Td>{d.target}</Table.Td>
-                            <Table.Td className="moyai-num">
-                              {d.kind === "detail" ? `${T.pendingValue[pa ?? ""] ?? ""} · ${T.pendingFiscal(fy ?? "")}` : d.kind === "attribute" ? attrName(d.value) : itemName(d.value)}
-                            </Table.Td>
-                            <Table.Td>
-                              <Badge variant="light" color="orange">
-                                {TEXT.author[d.author]}
-                              </Badge>
-                            </Table.Td>
-                            <Table.Td>{d.basis}</Table.Td>
-                            <Table.Td>
-                              <TextInput
-                                size="xs"
-                                aria-label={`${T.pendingHead[4]} ${d.target}`}
-                                value={a.reason}
-                                onChange={(e) => {
-                                  const v = e.currentTarget.value;
-                                  setAccept((s) => ({ ...s, [d.id]: { on: v.trim().length > 0 && a.on, reason: v } }));
-                                }}
-                                data-testid="pending-reason"
-                              />
-                            </Table.Td>
-                            <Table.Td>
-                              <Checkbox
-                                label={T.accept}
-                                checked={a.on}
-                                disabled={a.reason.trim().length === 0}
-                                title={a.reason.trim().length === 0 ? T.acceptNeedsReason : undefined}
-                                onChange={(e) => {
-                                  const on = e.currentTarget.checked;
-                                  setAccept((s) => ({ ...s, [d.id]: { reason: a.reason, on } }));
-                                }}
-                                data-testid="pending-accept"
-                              />
-                            </Table.Td>
-                          </Table.Tr>
-                        );
-                      })}
-                    </Table.Tbody>
-                  </Table>
-                </ScrollArea.Autosize>
-              </Stack>
+              <Alert color="gray" p="xs" data-testid="pending">
+                <Group gap="xs">
+                  <Text size="sm">{left > 0 ? T.pendingLeft(left) : T.pendingAllAccepted(pending.length)}</Text>
+                  {left > 0 && (
+                    <Anchor href={sheetHash("decisions")} size="sm" onClick={onClose} data-testid="to-decisions">
+                      {T.toDecisions}
+                    </Anchor>
+                  )}
+                </Group>
+              </Alert>
             )}
 
             <TextInput
@@ -445,7 +396,7 @@ export function HistoryDialog({
   onClose: () => void;
   onReverted: (plan: Plan) => void;
 }) {
-  const [load, reload] = useStatus(client, planId, opened);
+  const [load, reload] = usePlanStatus(client, planId, opened);
   const [target, setTarget] = useState<number | null>(null);
   const [reason, setReason] = useState("");
   const [msg, setMsg] = useState<{ color: string; text: string } | null>(null);

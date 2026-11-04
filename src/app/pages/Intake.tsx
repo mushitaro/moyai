@@ -42,7 +42,7 @@ const KIND_LABEL: Record<QuestionKind, string> = T.questionKind;
 const WINDOW_ROWS = 40;
 const MAX_COLS = 30;
 
-function useWorkspace(ws: IntakeWorkspace): number {
+export function useWorkspace(ws: IntakeWorkspace): number {
   return useSyncExternalStore(
     (cb) => ws.subscribe(cb),
     () => ws.version,
@@ -286,7 +286,7 @@ function QuestionCard({ ws, q }: { ws: IntakeWorkspace; q: QuestionState }) {
   );
 }
 
-function Questions({ ws, an }: { ws: IntakeWorkspace; an: Analysis }) {
+export function Questions({ ws, an }: { ws: IntakeWorkspace; an: Analysis }) {
   const groups = useMemo(() => {
     const m = new Map<QuestionKind, QuestionState[]>();
     for (const q of an.open) m.set(q.kind, [...(m.get(q.kind) ?? []), q]);
@@ -410,7 +410,12 @@ function Activity({ ws }: { ws: IntakeWorkspace }) {
 
 // ─── 画面 ──────────────────────────────────────────────────────
 
-export function Intake({ ws }: { ws: IntakeWorkspace }) {
+/**
+ * 取り込み。embedded は MERGE の「資料」のシートとして入れるとき（docs/screens.md 3.2・3.3）：見出しを出さず、
+ * 計画を作るのは副のボタン（composeLabel。白紙では「第 1 版をつくる」、版があれば「資料を重ねて第 n 版をつくる」）、
+ * 当てはめの案は決定のシートへ、質問は MERGE の横の板へ移す。
+ */
+export function Intake({ ws, embedded = false, composeLabel }: { ws: IntakeWorkspace; embedded?: boolean; composeLabel?: string }) {
   useWorkspace(ws);
   const an = ws.fileCount ? ws.analysis() : null;
   const blockers = ws.composeBlockers();
@@ -460,19 +465,21 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
   };
 
   return (
-    <Container size="xl" py="md" data-testid="intake-page">
-      <Group justify="space-between" align="center" mb="md" wrap="nowrap" gap="sm">
-        <Group gap="sm" wrap="nowrap">
-          <Title order={2} style={{ whiteSpace: "nowrap" }}>
-            {T.title}
-          </Title>
-          {ws.settings.facilityName && (
-            <Text fw={700} truncate>
-              {ws.settings.facilityName}
-            </Text>
-          )}
-          {ws.settings.fictional && <FictionMark />}
-        </Group>
+    <Container size={embedded ? undefined : "xl"} fluid={embedded} py="md" data-testid="intake-page">
+      <Group justify={embedded ? "flex-end" : "space-between"} align="center" mb="md" wrap="nowrap" gap="sm">
+        {!embedded && (
+          <Group gap="sm" wrap="nowrap">
+            <Title order={2} style={{ whiteSpace: "nowrap" }}>
+              {T.title}
+            </Title>
+            {ws.settings.facilityName && (
+              <Text fw={700} truncate>
+                {ws.settings.facilityName}
+              </Text>
+            )}
+            {ws.settings.fictional && <FictionMark />}
+          </Group>
+        )}
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
           {blockers.length > 0 && compose.state !== "running" && (
             <Text size="xs" c="dimmed" maw={420} lineClamp={2} title={blockers.join("・")} data-testid="compose-disabled-reason">
@@ -481,12 +488,13 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
             </Text>
           )}
           <Button
+            variant={embedded ? "default" : "filled"}
             onClick={() => ws.startCompose("human")}
             disabled={blockers.length > 0 || compose.state === "running"}
             loading={compose.state === "running"}
             data-testid="compose"
           >
-            {T.compose}
+            {composeLabel ?? T.compose}
           </Button>
         </Group>
       </Group>
@@ -508,12 +516,14 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
           </Alert>
         )}
 
-        <Paper withBorder p="sm">
-          <Title order={4} mb="xs">
-            {TEXT.crosswalk.title}
-          </Title>
-          <CrosswalkPanel />
-        </Paper>
+        {!embedded && (
+          <Paper withBorder p="sm">
+            <Title order={4} mb="xs">
+              {TEXT.crosswalk.title}
+            </Title>
+            <CrosswalkPanel />
+          </Paper>
+        )}
 
         <Paper withBorder p="sm">
           <Title order={4} mb="xs">
@@ -672,12 +682,14 @@ export function Intake({ ws }: { ws: IntakeWorkspace }) {
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 5 }}>
             <Stack gap="md">
-              <Paper withBorder p="sm">
-                <Title order={4} mb="xs">
-                  {T.questions.title}
-                </Title>
-                {an ? <Questions ws={ws} an={an} /> : <Text size="sm" c="dimmed">{T.questions.none}</Text>}
-              </Paper>
+              {!embedded && (
+                <Paper withBorder p="sm">
+                  <Title order={4} mb="xs">
+                    {T.questions.title}
+                  </Title>
+                  {an ? <Questions ws={ws} an={an} /> : <Text size="sm" c="dimmed">{T.questions.none}</Text>}
+                </Paper>
+              )}
               <Paper withBorder p="sm">
                 <Title order={4} mb="xs">
                   {T.activity.title}

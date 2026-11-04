@@ -22,11 +22,10 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
   const tag = info.project.name;
   const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "crosswalk_propose", "check_results"]);
   try {
-    await test.step("計画が無いうちは、検査は「計画がまだありません」と出し、AI には「作業中の計画が無い」", async () => {
+    await test.step("計画が無いうちは、MERGE は白紙で検査のシートが無く、AI には「作業中の計画が無い」", async () => {
       await page.goto(`${bridge.base}/#/review`);
-      await expect(page.getByTestId("review-page")).toBeVisible();
-      await expect(page.getByTestId("review-notice")).toContainText("自己点検であって、審査の判断ではない");
-      await expect(page.getByTestId("review-empty")).toBeVisible();
+      await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
+      await expect(page.getByTestId("sheet-check")).toHaveCount(0);
       const r: any = await c.callTool({ name: "check_results", arguments: {} });
       expect(r.isError).toBe(true);
       expect(JSON.stringify(r.content)).toContain("作業中の計画");
@@ -48,6 +47,8 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       const { nodes, works } = f1Rules();
       const rules = [...nodes, ...works];
       await call(c, "crosswalk_propose", { rules, basedOnVersion: version });
+      // 当てはめの案は、MERGE の決定のシートに並ぶ
+      await page.getByTestId("sheet-decisions").click();
       const rows = page.getByTestId("crosswalk-rule");
       await expect(rows).toHaveCount(rules.length);
       for (let i = 0; i < rules.length; i++) {
@@ -64,7 +65,9 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       await page.evaluate(() => (location.hash = "#/"));
       await page.getByRole("link", { name: "検査", exact: true }).click();
       await expect(page.getByTestId("review-page")).toBeVisible();
-      await expect(page.getByTestId("review-plan")).toContainText(FACILITY);
+      await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "check");
+      await expect(page.getByTestId("plan-name")).toContainText(FACILITY);
+      await expect(page.getByTestId("review-notice")).toContainText("自己点検であって、審査の判断ではない");
       await expect(page.getByTestId("fiction-mark").first()).toBeVisible();
       await page.getByTestId("reference-date").fill(REFERENCE);
       await expect(page.getByTestId("review-fy")).toHaveText("基準日の年度：2026 年度");

@@ -83,9 +83,12 @@ async function openPlan(page: Page, name: string) {
 const cell = (page: Page, aria: string) => page.locator(`[role="gridcell"][aria-label^="${aria}"]`);
 const visibleRows = async (page: Page) => Number(await page.getByTestId("chart-rows-count").getAttribute("data-visible"));
 
-test("計画が無いときは、無いことと未実装を言う", async ({ page }) => {
+test("計画が無いときは、MERGE は白紙（新しい施設。資料のシートだけ）", async ({ page }) => {
   await page.goto(`${base}/#/chart`);
-  await expect(page.getByTestId("chart-empty")).toBeVisible();
+  await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
+  await expect(page.getByTestId("sheet-chart")).toHaveCount(0);
+  await expect(page.getByTestId("plan-name")).toHaveText("新しい施設");
+  await expect(page.getByTestId("tab-merge")).toHaveAttribute("aria-current", "page");
   await expect(page.getByTestId("build-stamp")).toBeVisible();
 });
 
@@ -96,11 +99,10 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
   await test.step("見出しの行：【架空】、ビルドの印、右端の主ボタン", async () => {
     await expect(page.getByTestId("fiction-mark")).toBeVisible();
     await expect(page.getByTestId("build-stamp")).toHaveText(/^MOYAI · build /);
-    // 橋渡しとつながっていれば押せる（確定の流れは checkpoint.spec.ts）
-    await expect(page.getByTestId("confirm-open")).toBeEnabled();
-    await expect(page.getByTestId("confirm-open")).toHaveText("確定する");
-    await expect(page.getByTestId("confirm-disabled-reason")).toHaveCount(0);
-    // 主ボタンは見出しの行の右端
+    // 主ボタン「署名して確定する…」は MERGE の下の帯の右端。受けていない決定があるうちは押せず、理由を横に出す（確定の流れは checkpoint.spec.ts）
+    await expect(page.getByTestId("confirm-open")).toHaveText("署名して確定する…");
+    await expect(page.getByTestId("confirm-open")).toBeDisabled();
+    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("受けていない決定が");
     const btn = await page.getByTestId("confirm-open").boundingBox();
     const vp = page.viewportSize();
     expect(btn && vp && vp.width - (btn.x + btn.width)).toBeLessThan(40);

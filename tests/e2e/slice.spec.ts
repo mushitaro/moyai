@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { attr, f1Rules } from "../fixtures/crosswalk/rules";
-import { callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（AI と人）";
 const PASS = "架空の合言葉 縦の一本 です";
@@ -65,7 +65,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       }
       expect(state).toBe("done");
       await expect(page.getByTestId("composed")).toContainText("AI が作りました");
-      // 取り込んだばかりの計画は、どの当てはめも無い（未当てはめの行に全部の記録）
+      // 取り込んだばかりの計画は、どの当てはめも無い（決定のシートの当てはめの案の欄に、未当てはめの行に全部の記録と出る）
+      await page.getByTestId("sheet-decisions").click();
       await expect(page.getByTestId("crosswalk-none")).toBeVisible();
     });
 
@@ -119,9 +120,10 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       expect(r.version).toBe(version + 1);
       for (const e of r.examples) expect(e.rowRef).toMatch(/^[nw]:[a-z0-9-]+$/);
       wrongRule = r.rules[r.rules.length - 1].ruleId;
+      // 当てはめの案は、MERGE の決定のシートに 1 規則 1 行で並ぶ
+      await page.getByTestId("sheet-decisions").click();
       await expect(page.getByTestId("crosswalk-rule")).toHaveCount(rules.length);
       await expect(page.locator('[data-testid="crosswalk-rule"][data-state="proposed"]')).toHaveCount(rules.length);
-      await expect(page.getByTestId("ai-activity").first()).toContainText("当てはめの規則");
       // 案は人が受けるまで決まらない：受けた当てはめは 0
       await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-nodes", "0");
       await expect(page.getByTestId("crosswalk-accepted")).toHaveAttribute("data-works", "0");
@@ -166,7 +168,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
     let unmappedRecords = 0;
     await test.step("星取表：共通の設備項目 × 作業の属性の行に受けた当てはめが並び、未当てはめの行に件数", async () => {
       unmappedRecords = Number(await page.getByTestId("crosswalk-unmapped").getAttribute("data-records"));
-      await page.getByTestId("to-chart").click();
+      await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("plan-name")).toHaveText(FACILITY);
       await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
       await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
@@ -179,18 +181,13 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.screenshot({ path: shot(`slice-chart-common-unmapped-${tag}`) });
     });
 
-    await test.step("確定（人だけ）：AI が置いた決定を理由つきで受け、一言の理由で確定する", async () => {
+    await test.step("確定（人だけ）：AI が置いた決定を決定のシートで理由つきで受け、一言の理由と合言葉で署名して確定する", async () => {
+      // 当てはめは当てはめの欄で人が受けたので、残るのは AI がチャットの答えで置いた取り込みの決定だけ
+      await acceptDecisions(page, "試験の台本が押した（チャットの答えを画面で受けた）");
       await page.getByTestId("confirm-open").click();
       await expect(page.getByTestId("diff-summary")).toBeVisible();
       await expect(page.getByTestId("confirm-root")).toHaveText(root);
       await page.getByTestId("confirm-reason").fill("縦の 1 本：取り込みと当てはめを確定する（e2e）");
-      const pending = page.getByTestId("pending-row");
-      const n = await pending.count();
-      // 当てはめは当てはめの欄で人が受けたので、残るのは AI がチャットの答えで置いた取り込みの決定だけ
-      for (let i = 0; i < n; i++) {
-        await pending.nth(i).getByTestId("pending-reason").fill("試験の台本が押した（チャットの答えを画面で受けた）");
-        await pending.nth(i).getByTestId("pending-accept").check();
-      }
       // 署名：この PC にまだ鍵が無いので、合言葉を決めて鍵を作ってから署名する（2 回入れる）
       await expect(page.getByTestId("confirm-submit")).toBeDisabled();
       await signInDialog(page, PASS);

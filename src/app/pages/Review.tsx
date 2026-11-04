@@ -164,7 +164,7 @@ function CheckCard({ c, plan }: { c: CheckResult; plan: Plan }) {
   );
 }
 
-export function Review() {
+export function Review({ embedded = false }: { embedded?: boolean } = {}) {
   const working = useWorkingPlan();
   const date = useReferenceDate();
   const review = useMemo(() => (working ? reviewOf(working.plan, date) : null), [working, date]);
@@ -174,10 +174,11 @@ export function Review() {
   return (
     <Container fluid py="md" px="lg" data-testid="review-page">
       <Stack gap="md">
+        {!embedded && (
         <Group justify="space-between">
           <Group gap="sm">
             <Title order={2}>{T.title}</Title>
-            {working?.plan.facility.fictional && <FictionMark />}
+            {!embedded && working?.plan.facility.fictional && <FictionMark />}
             {working && (
               <Text c="dimmed" data-testid="review-plan">
                 {T.plan}：{working.plan.displayName}
@@ -185,6 +186,7 @@ export function Review() {
             )}
           </Group>
         </Group>
+        )}
 
         <Alert color="blue" title={T.notice} data-testid="review-notice">
           {T.noticeBody}

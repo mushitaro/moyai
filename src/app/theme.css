@@ -109,6 +109,56 @@ body {
   overflow: auto;
 }
 
+/* MERGE（docs/screens.md 3.2）：見出し・シートのタブ・本体（シート＋右の横の板）・下の帯。本体だけが送られる */
+.moyai-merge {
+  height: 100%;
+  min-width: 1024px;
+  display: flex;
+  flex-direction: column;
+}
+.moyai-merge[data-over="true"] {
+  outline: 2px dashed var(--shu);
+  outline-offset: -4px;
+}
+.moyai-sheet-tabs {
+  border-bottom: 1px solid var(--line);
+}
+.moyai-sheet-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sp-3) 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-3);
+  text-decoration: none;
+  font-size: 14px;
+}
+.moyai-sheet-tab[aria-selected="true"] {
+  color: var(--text);
+  border-bottom-color: var(--text);
+  font-weight: 500;
+}
+.moyai-merge-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.moyai-merge-main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+.moyai-merge-side {
+  flex: none;
+  width: 360px;
+  overflow: auto;
+  padding: var(--sp-5);
+  border-left: 1px solid var(--line);
+}
+.moyai-merge-bar {
+  border-top: 1px solid var(--line);
+}
+
 /* §10.20 ヘッダ */
 .moyai-header {
   position: relative;
@@ -175,6 +225,18 @@ body {
 .moyai-tab[aria-current="page"] {
   color: var(--text);
   border-bottom-color: var(--text);
+  /* 今いる段は「MOYAI」と同じ大きさ（docs/screens.md 1） */
+  font: 400 17px/24px var(--font-wide);
+  letter-spacing: 0.18em;
+}
+.moyai-stage {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
+.moyai-stage-sep {
+  color: var(--text-3);
+  font: 400 10px/16px var(--font-wide);
 }
 
 /* §10.6 切り替え：言葉を短い縦の罫でつなぐ。選んでいる言葉は墨と太さ 500、ほかは淡い字と太さ 400。下線は引かない（運営者の指示 2026-11-04） */

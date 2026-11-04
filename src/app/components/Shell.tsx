@@ -1,5 +1,6 @@
 // 画面の骨組み（デザイン定義 §5.2）：上にヘッダ、下に状態の帯、その間を主の面がすべて使う。
-// - ヘッダ（§10.20）：左にしるし＋「MOYAI」の字。字は、トップでは大きく墨、ほかの画面ではタブと同じ小さく淡い字にして、今いる所に目を行かせる（しるしの大きさと色は変えない）、中央に画面のタブ（§10.7）、右に表示の明暗の切り替えと設定。
+// - ヘッダ（docs/screens.md 1）：左にしるし＋「MOYAI」の字。字は、トップでは大きく墨、ほかの画面ではタブと同じ小さく淡い字にして、今いる所に目を行かせる（しるしの大きさと色は変えない）、
+// そのすぐ右に段のタブ MERGE › EXPORT › SHARE（今いる段だけ大きく墨）、右に表示の明暗の切り替えと設定。
 // - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり、右にビルドの印。
 // 【架空】は各画面が <FictionMark /> を置くと、ここの枠に出る（架空のデータの画面には常に出す）。
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
@@ -7,7 +8,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { BridgeClient, ConnectionState } from "../bridge-client";
 import { TEXT } from "../text";
 import { APP_PAGES } from "../../shared/routes";
-import { CHART_HASH } from "../chart/route";
+import { STAGE_HASH, routeOf, type Stage } from "../stages";
 import { BrandMark } from "./BrandMark";
 import { BuildStamp } from "./BuildStamp";
 
@@ -16,12 +17,11 @@ const S = TEXT.shell;
 /** 状態の帯の【架空】の枠。画面の FictionMark がここへ描く。undefined は骨組みの外（その場に描く）、null は枠を作っている途中 */
 export const FictionSlot = createContext<HTMLElement | null | undefined>(undefined);
 
-const TABS = [
-  { hash: CHART_HASH, ...S.tabs.ledger },
-  { hash: APP_PAGES.intake, ...S.tabs.import },
-  { hash: APP_PAGES.review, ...S.tabs.check },
-  { hash: APP_PAGES.checkpoint, ...S.tabs.share },
-] as const;
+const TABS: { stage: Stage; hash: string; en: string; ja: string }[] = [
+  { stage: "merge", hash: STAGE_HASH.merge, ...S.tabs.merge },
+  { stage: "export", hash: STAGE_HASH.export, ...S.tabs.export },
+  { stage: "share", hash: STAGE_HASH.share, ...S.tabs.share },
+];
 
 function useConnection(client: BridgeClient): ConnectionState {
   const [state, setState] = useState<ConnectionState>({ kind: "connecting" });
@@ -53,6 +53,7 @@ function ThemeSwitch() {
 }
 
 function Header({ hash }: { hash: string }) {
+  const stage = routeOf(hash).stage;
   return (
     <header className="moyai-header">
       <a className="moyai-seal" href={APP_PAGES.home} title={S.home} data-testid="brand" aria-current={hash === APP_PAGES.home ? "page" : undefined}>
@@ -60,17 +61,23 @@ function Header({ hash }: { hash: string }) {
         <span className="moyai-seal-word">{TEXT.appName}</span>
       </a>
       <nav className="moyai-tabs" aria-label={S.tabsLabel}>
-        {TABS.map((t) => (
-          <a
-            key={t.hash}
-            className="moyai-tab"
-            href={t.hash}
-            title={t.ja}
-            aria-current={hash === t.hash ? "page" : undefined}
-            data-testid={`tab-${t.en.toLowerCase()}`}
-          >
-            {t.en}
-          </a>
+        {TABS.map((t, i) => (
+          <span key={t.stage} className="moyai-stage">
+            {i > 0 && (
+              <span className="moyai-stage-sep" aria-hidden="true">
+                ›
+              </span>
+            )}
+            <a
+              className="moyai-tab"
+              href={t.hash}
+              title={t.ja}
+              aria-current={stage === t.stage ? "page" : undefined}
+              data-testid={`tab-${t.en.toLowerCase()}`}
+            >
+              {t.en}
+            </a>
+          </span>
         ))}
       </nav>
       <div className="moyai-header-end">

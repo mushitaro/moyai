@@ -156,3 +156,20 @@ export async function chooseRootAndCreateRing(page: Page, base: string, root: st
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("rings-table")).toBeVisible();
 }
+
+/** MERGE の決定のシートで、受けていない決定を 1 行ずつ理由を書いて受ける（試験の台本が人の代わりに押す）。受けた数を返す */
+export async function acceptDecisions(page: Page, reason: string): Promise<number> {
+  await page.getByTestId("sheet-decisions").click();
+  await expect(page.getByTestId("decisions-sheet")).toBeVisible();
+  // 版の履歴を読んで、受けていない決定が並ぶ（無ければ「ありません」）まで待つ
+  await expect(page.locator('[data-testid="pending-row"], [data-testid="decisions-none"]').first()).toBeVisible();
+  const rows = page.locator('[data-testid="pending-row"][data-accepted="false"]');
+  let n = 0;
+  for (; n < 10_000 && (await rows.count()) > 0; n++) {
+    const row = rows.first();
+    await row.getByTestId("pending-reason").fill(reason);
+    await row.getByTestId("pending-accept").click();
+  }
+  await expect(rows).toHaveCount(0);
+  return n;
+}

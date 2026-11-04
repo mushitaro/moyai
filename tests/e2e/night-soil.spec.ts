@@ -112,6 +112,8 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
       ruleCount = rules.length + works.length;
       const r = await call(c, "crosswalk_propose", { rules: [...rules, ...works], basedOnVersion: cw.version });
       expect(r.conflicts).toBe(0);
+      // 当てはめの案は、MERGE の決定のシートに 1 規則 1 行で並ぶ
+      await page.getByTestId("sheet-decisions").click();
       await expect(page.locator('[data-testid="crosswalk-rule"][data-state="proposed"]')).toHaveCount(ruleCount);
     });
 
@@ -128,7 +130,7 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
     });
 
     await test.step("星取表：ごみ焼却と同じ画面で、し尿処理のパックの設備と項目の行が出る", async () => {
-      await page.getByTestId("to-chart").click();
+      await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("plan-name")).toHaveText(FACILITY);
       await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
       await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");

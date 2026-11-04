@@ -50,7 +50,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planRevert", "planStatus", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planStatus", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -206,6 +206,12 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(v.report.lines.map((l: { kind: string; status: string }) => `${l.kind}:${l.status}`)).toEqual(["circle:ok", "member:ok", "bundle:ok"]);
 
     // 版の履歴と戻す
+    // EXPORT：確定した版の書き出しと差分レポートを読む。無い版は断る
+    const ex = await call("planFileRead", { planId: plan.planId, version: 1, kind: "export" });
+    expect(ex).toMatchObject({ ok: true, version: 1, kind: "export" });
+    expect(Buffer.from(ex.base64, "base64").subarray(0, 2).toString()).toBe("PK");
+    expect((await call("planFileRead", { planId: plan.planId, version: 1, kind: "report" })).ok).toBe(true);
+    expect((await call("planFileRead", { planId: plan.planId, version: 9, kind: "export" })).reason).toBe("versionUnknown");
     const back = await call("planRevert", { planId: plan.planId, to: 1, reason: "試しに戻す", basedOn: 1, passphrase: KEYPASS });
     expect(back).toMatchObject({ ok: true, version: 2 });
     // 版が変わったので、前の版で見た検問所からは送らない

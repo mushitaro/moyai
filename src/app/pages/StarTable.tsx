@@ -16,7 +16,7 @@ import { PeerPanel } from "../components/PeerPanel";
 import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
-import { setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
+import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
 import { HUMAN_TEXT, TEXT } from "../text";
 
 const T = TEXT.chart;
@@ -50,6 +50,8 @@ function usePlan(): Load {
           return;
         }
         performance.mark("moyai-chart-data");
+        // 見本の計画も、作業中の計画として置く（MERGE の見出し・決定のシート・署名が同じ計画を見るため）。取り込みの計画があれば置かない
+        if (!getWorkingPlan()) setWorkingPlan(parsed.data, "dev");
         setLoad({ kind: "ready", plan: parsed.data });
       } catch {
         if (live) setLoad({ kind: "error", message: T.loadFailed });
@@ -162,7 +164,7 @@ function PeerSide({ row }: { row: ChartRow }) {
   );
 }
 
-function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
+function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; embedded: boolean }) {
   const { client, state: conn } = useConnection();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -286,6 +288,8 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }} data-testid="chart-page">
+      {/* MERGE の中では、施設の名前と主ボタン（署名して確定する）は MERGE の見出しと下の帯にある */}
+      {!embedded && (
       <Group justify="space-between" align="center" px="md" pt="sm" pb={6} wrap="nowrap" gap="sm">
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
           <Title order={2} style={{ flex: "none", whiteSpace: "nowrap" }}>
@@ -294,7 +298,7 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
           <Text fw={700} truncate data-testid="plan-name">
             {plan.displayName}
           </Text>
-          {plan.facility.fictional && <FictionMark />}
+          {!embedded && plan.facility.fictional && <FictionMark />}
         </Group>
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
           <Button variant="default" onClick={() => setHistoryOpen(true)} disabled={!canConfirm} data-testid="history-open">
@@ -310,8 +314,9 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
           </Button>
         </Group>
       </Group>
-      <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />
-      <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
+      )}
+      {!embedded && <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />}
+      {!embedded && <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />}
 
       <Group px="md" pb={6} gap="sm" wrap="wrap">
         <Switch
@@ -491,13 +496,14 @@ function Chart({ plan, origin }: { plan: Plan; origin: PlanOrigin }) {
   );
 }
 
-export function StarTable() {
+/** 星取表。embedded は MERGE の「星取表」のシートとして入れるとき（見出しと主ボタンは MERGE が持つ） */
+export function StarTable({ embedded = false }: { embedded?: boolean } = {}) {
   const working = useWorkingPlan();
   const load = usePlan();
   // 取り込みが置いた作業中の計画を先に使い、無ければ開発用の見本（?plan=）を読む
   // 置き直したときだけ表を作り直す（当てはめで中身が変わっただけなら、行の切り替えや畳んだ段をそのまま残す）
-  if (working) return <Chart key={working.generation} plan={working.plan} origin={working.origin} />;
-  if (load.kind === "ready") return <Chart plan={load.plan} origin="dev" />;
+  if (working) return <Chart key={working.generation} plan={working.plan} origin={working.origin} embedded={embedded} />;
+  if (load.kind === "ready") return <Chart plan={load.plan} origin="dev" embedded={embedded} />;
   return (
     <Stack p="lg" gap="md">
       <Group justify="space-between">

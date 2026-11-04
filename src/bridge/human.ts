@@ -3,12 +3,12 @@
 // どれも MCP のツールにしない（src/shared/tools.ts に無い）。答えは JSON。断るときは { ok: false, reason }。
 // 合言葉・鍵・計画の中身をログに出さない。
 import { spawn } from "node:child_process";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
-import { commitPlan, readHistory, revertPlan, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { commitPlan, planDir, readHistory, revertPlan, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustList, trustOf } from "./people";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
@@ -76,6 +76,7 @@ const SCHEMAS = {
   }),
   readings_read: z.object({}),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable(), passphrase: z.string().min(1).max(1000) }),
+  plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({ passphrase: z.string().min(1).max(1000) }),
   person_key_confirm: z.object({ key: z.string().regex(/^[0-9a-f]{16}$/) }),
   settings_read: z.object({}),
@@ -261,6 +262,26 @@ export class HumanService {
         if (name === undefined) return no("nameInvalid");
         writeSettings(sd, { v: 1, root, ledger, name });
         return { ok: true, root, ledger, name };
+      }
+      case "plan_file_read": {
+        const p = parsePayload("plan_file_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        // 確かめで合う版だけ（署名と鎖が合わない版の書き出しは渡さない）
+        const h = await readHistory(root, p.planId);
+        const v = h.versions.find((x) => x.version === p.version);
+        if (!v) return no("versionUnknown");
+        if (v.problem !== null) return no("historyBroken");
+        const n = String(p.version).padStart(6, "0");
+        const file = join(planDir(root, p.planId), p.kind === "export" ? "exports" : "reports", p.kind === "export" ? `${n}-plan.xlsx` : `${n}-diff.xlsx`);
+        let bytes: Buffer;
+        try {
+          bytes = await readFile(file);
+        } catch {
+          return no("fileMissing");
+        }
+        return { ok: true, version: p.version, kind: p.kind, base64: bytes.toString("base64") };
       }
       case "person_key_create": {
         const p = parsePayload("person_key_create", call.payload);
