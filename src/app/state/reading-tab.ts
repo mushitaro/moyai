@@ -20,7 +20,7 @@ export interface ReadingTabRule {
   change: "added" | "changed" | "same";
   /** 規則で変わる承認済みのセルの数（まだ数えない） */
   approvedCellsChanged: number | null;
-  /** 見本：資料と位置と、そのセルの文字 */
+  /** 見本：資料と、セルの番地（D88）と、そのセルの文字 */
   sample: { file: string; ref: string; text: string } | null;
 }
 
@@ -30,6 +30,8 @@ export interface ReadingTabSkill {
   /** 版（4 文字 × 2 組）。下書きは「―」 */
   version: string;
   status: "draft" | "unapproved" | "approved";
+  /** 承認した星取表の版の番号（「承認済み（第 n 版で）」）。承認済みでなければ null */
+  approvedIn: number | null;
   rules: ReadingTabRule[];
 }
 
@@ -56,6 +58,7 @@ export function readingTab(readings: readonly LoadedReading[], an: Pick<Analysis
       scope: shown.skill.scope,
       version: shown.draft ? "―" : shortVersion(shown.version),
       status,
+      approvedIn: status === "approved" ? (shown.approvedIn ?? null) : null,
       rules: shown.skill.rules.map((r) => {
         const before = approved?.skill.rules.find((x) => x.id === r.id) ?? null;
         const s = an.ruleHits.sample(r.id);

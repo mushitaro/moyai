@@ -66,6 +66,8 @@ export interface LoadedReading {
   /** 保管先からの道（作業中の下書きは null） */
   path: string | null;
   approved: boolean;
+  /** 承認した星取表の版の番号（承認済みのときだけ。分からなければ null か無し） */
+  approvedIn?: number | null;
   /** 作業中の版に置いた下書き（reading_rules_propose） */
   draft: boolean;
 }

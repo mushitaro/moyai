@@ -110,11 +110,13 @@ export interface ListedReading {
   version: string;
   rules: number;
   approved: boolean;
+  /** 承認した星取表の版の番号（その読み方の版を最初に使った、署名した版。未承認は null） */
+  approvedIn: number | null;
   skill: ReadingSkill;
 }
 
-/** 保管先の読み方の一覧（形の外れたものは数えない）。approvedVersions：署名した版が使った読み方の版 */
-export async function listReadings(root: string, approvedVersions: ReadonlySet<string>): Promise<ListedReading[]> {
+/** 保管先の読み方の一覧（形の外れたものは数えない）。approvedVersions：署名した版が使った読み方の版 → 承認した星取表の版の番号 */
+export async function listReadings(root: string, approvedVersions: ReadonlyMap<string, number>): Promise<ListedReading[]> {
   const dirs: string[] = [];
   for (const n of subdirs(join(root, SKILLS, COMPANY))) dirs.push(join(root, SKILLS, COMPANY, n));
   for (const who of subdirs(join(root, SKILLS, PERSON))) for (const n of subdirs(join(root, SKILLS, PERSON, who))) dirs.push(join(root, SKILLS, PERSON, who, n));
@@ -133,14 +135,14 @@ export async function listReadings(root: string, approvedVersions: ReadonlySet<s
     const p = ReadingSkill.safeParse(v);
     if (!p.success) continue;
     const version = readingVersion(md, rules);
-    out.push({ name: p.data.name, scope: p.data.scope, path: relPath(root, dir), version, rules: p.data.rules.length, approved: approvedVersions.has(version), skill: p.data });
+    out.push({ name: p.data.name, scope: p.data.scope, path: relPath(root, dir), version, rules: p.data.rules.length, approved: approvedVersions.has(version), approvedIn: approvedVersions.get(version) ?? null, skill: p.data });
   }
   return out;
 }
 
-/** 承認済みの読み方の版：保管先の確定（署名）した版の記録が使った読み方の版 */
-export async function approvedReadingVersions(root: string): Promise<Set<string>> {
-  const out = new Set<string>();
+/** 承認済みの読み方の版：保管先の確定（署名）した版の記録が使った読み方の版 → その読み方の版を最初に使った星取表の版の番号 */
+export async function approvedReadingVersions(root: string): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
   for (const planId of subdirs(join(root, "plans"))) {
     const vdir = join(root, "plans", planId, "versions");
     let files: string[] = [];
@@ -150,9 +152,10 @@ export async function approvedReadingVersions(root: string): Promise<Set<string>
       continue;
     }
     for (const f of files) {
+      const n = Number(f.replace(/\.json$/, ""));
       try {
         const rec = JSON.parse(await readFile(join(vdir, f), "utf8")) as { readingSkills?: { version?: unknown }[] };
-        for (const r of rec.readingSkills ?? []) if (typeof r.version === "string") out.add(r.version);
+        for (const r of rec.readingSkills ?? []) if (typeof r.version === "string" && Number.isInteger(n) && !(out.get(r.version)! <= n)) out.set(r.version, n);
       } catch {
         // 読めない記録は数えない
       }
@@ -163,5 +166,5 @@ export async function approvedReadingVersions(root: string): Promise<Set<string>
 
 /** 作業画面に渡す、承認済みの読み方 */
 export function loadedOf(list: readonly ListedReading[]): LoadedReading[] {
-  return list.filter((x) => x.approved).map((x) => ({ skill: x.skill, version: x.version, path: x.path, approved: true, draft: false }));
+  return list.filter((x) => x.approved).map((x) => ({ skill: x.skill, version: x.version, path: x.path, approved: true, approvedIn: x.approvedIn, draft: false }));
 }

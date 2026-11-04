@@ -281,7 +281,7 @@ export const TOOLS = {
     "intake_survey",
     "read",
     "取り込みの要約",
-    "作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に当てはめの要約（パックの 1 段目の項目と作業の属性、欄ごとの多い値、未当てはめの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の段の道で読む。",
+    "作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose の規則で読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に当てはめの要約（パックの 1 段目の項目と作業の属性、欄ごとの多い値、未当てはめの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の段の道で読む。",
     z.object({ part: z.enum(["all", "questions", "compose", "crosswalk"]).default("all") }),
     z.object({
       files: z.array(z.object({ fileRef: z.string(), sheets: z.number().int(), rows: z.number().int() })),
@@ -302,6 +302,18 @@ export const TOOLS = {
         }),
       ),
       unresolvedCells: z.number().int(),
+      /** 詰まっている所：資料ごとの未解決のセルの数と、その行の見本。questionId はその行を決める質問が分かるときだけ（null でも質問が残っていることがある） */
+      stuck: z
+        .array(
+          z.object({
+            fileRef: z.string(),
+            cells: z.number().int(),
+            rows: z
+              .array(z.object({ sheet: z.string().nullable(), row: z.number().int(), cells: z.array(z.string()).max(40), unresolved: z.array(z.string()).max(40), questionId: z.string().nullable() }))
+              .max(5),
+          }),
+        )
+        .max(20),
       compose: z.object({ state: z.enum(["idle", "running", "done", "failed"]), message: z.string().nullable() }),
       crosswalk: crosswalkSurveySchema.nullable(),
     }),
@@ -522,7 +534,7 @@ export const TOOLS = {
     z.object({}),
     z.object({
       skills: z.array(
-        z.object({ name: z.string(), scope: z.enum(READING_SCOPES), path: z.string(), version: z.string(), rules: z.number().int(), approved: z.boolean() }),
+        z.object({ name: z.string(), scope: z.enum(READING_SCOPES), path: z.string(), version: z.string(), rules: z.number().int(), approved: z.boolean(), approvedIn: z.number().int().nullable() }),
       ),
     }),
   ),

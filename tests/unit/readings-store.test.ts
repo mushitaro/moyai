@@ -39,7 +39,7 @@ describe("読み方の保管先", () => {
     if (!b.ok) throw new Error(b.reason);
     expect(b.version).not.toBe(a.version);
     expect(readdirSync(join(dir, "versions"))).toEqual([a.version]);
-    const list = await listReadings(root, new Set());
+    const list = await listReadings(root, new Map());
     expect(list.map((x) => [x.name, x.scope, x.version, x.rules, x.approved])).toEqual([["【架空】甲工場の読み方", "facility", b.version, 2, false]]);
     expect(loadedOf(list)).toEqual([]);
   });
@@ -48,18 +48,20 @@ describe("読み方の保管先", () => {
     expect((await registerReading(root, { ...skill("乙", "company"), rules: [{ kind: "script", code: "x" }] }, null, null)).ok).toBe(false);
     mkdirSync(join(root, "skills", "会社", "壊れた"), { recursive: true });
     writeFileSync(join(root, "skills", "会社", "壊れた", "rules.json"), "{ not json");
-    expect((await listReadings(root, new Set())).some((x) => x.name === "壊れた")).toBe(false);
+    expect((await listReadings(root, new Map())).some((x) => x.name === "壊れた")).toBe(false);
   });
 
   it("確定（署名）した版の記録が使った読み方の版は承認済み。承認済みだけを作業画面に渡す", async () => {
     const c = await registerReading(root, skill("【架空】会社の読み方", "company"), null, null);
     if (!c.ok) throw new Error(c.reason);
     mkdirSync(join(root, "plans", "intake-x", "versions"), { recursive: true });
-    writeFileSync(join(root, "plans", "intake-x", "versions", "000001.json"), JSON.stringify({ readingSkills: [{ name: "【架空】会社の読み方", path: c.path, version: c.version }] }));
+    writeFileSync(join(root, "plans", "intake-x", "versions", "000003.json"), JSON.stringify({ readingSkills: [{ name: "【架空】会社の読み方", path: c.path, version: c.version }] }));
+    writeFileSync(join(root, "plans", "intake-x", "versions", "000002.json"), JSON.stringify({ readingSkills: [{ name: "【架空】会社の読み方", path: c.path, version: c.version }] }));
     const approved = await approvedReadingVersions(root);
-    expect(approved.has(c.version)).toBe(true);
+    // 承認した星取表の版は、その読み方の版を最初に使った版
+    expect(approved.get(c.version)).toBe(2);
     const list = await listReadings(root, approved);
     expect(list.find((x) => x.name === "【架空】会社の読み方")?.approved).toBe(true);
-    expect(loadedOf(list).map((x) => [x.skill.name, x.approved, x.draft])).toEqual([["【架空】会社の読み方", true, false]]);
+    expect(loadedOf(list).map((x) => [x.skill.name, x.approved, x.approvedIn, x.draft])).toEqual([["【架空】会社の読み方", true, 2, false]]);
   });
 });
