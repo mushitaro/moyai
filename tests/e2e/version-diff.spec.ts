@@ -120,7 +120,8 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       await page.locator('[data-testid="moyai-mark"][data-version="1"]').click();
       await page.getByTestId("mark-next").click();
       await expect(page.getByTestId("merge-version")).toHaveText("第 3 版");
-      await expect(page.getByTestId("merge-notice")).toContainText("第 1 版の中身から");
+      // 元の版は「比べる版」で分かるので、見出しの下に説明の文は出さない
+      await expect(page.getByTestId("merge-notice")).toHaveCount(0);
       await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "2");
       await expect(page.getByTestId("legend-old")).toBeVisible();
       expect(Number(await page.getByTestId("legend-old").getAttribute("data-count"))).toBeGreaterThan(0);

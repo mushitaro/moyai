@@ -215,13 +215,27 @@ function suppressTypingStart(p: SuppressKeyboardEventParams<ChartRow>): boolean 
   return e.key.length === 1 || e.key === "Backspace" || e.key === "Delete" || e.key === "Process";
 }
 
+/** 段の名前の見込みの幅（13px の字：全角 13px・半角 7.5px と字間、左右の余白） */
+function textWidth(t: string): number {
+  let w = 0;
+  for (const ch of t) w += ch.charCodeAt(0) > 0xff ? 14 : 8;
+  return w;
+}
+const LEVEL_MIN = [170, 160];
+const LEVEL_MAX = 360;
+
 function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandlers): ColDef<ChartRow>[] {
   return model.levelNames.map((name, i) => ({
     colId: `lv${i + 1}`,
     headerName: name,
     pinned: "left",
     lockPinned: true,
-    width: i === 0 ? 170 : 160,
+    // その段のいちばん長い名前が切れない幅（上限を越える名前は切り、title に全文）
+    width: Math.min(LEVEL_MAX, Math.max(LEVEL_MIN[i === 0 ? 0 : 1]!, ...model.rows.map((r) => textWidth(levelText(r, i)) + 40))),
+    tooltipValueGetter: (p) => {
+      const t = p.data ? levelText(p.data, i) : "";
+      return t && textWidth(t) + 40 > LEVEL_MAX ? t : null;
+    },
     valueGetter: (p) => {
       if (!p.data) return "";
       const text = levelText(p.data, i);

@@ -3,7 +3,7 @@
 // → 検問所（見え方を選ぶ・相手から見たあなた・数がすべて 0・合言葉の右の［送る］）→ 署名して輪に置く → 受け手と同じ関数で ✓ → CLI の verify ring でも ✓。
 // 人だけの CLI（keys create）は、標準入力が端末でなければ断る。置き場所と輪は一時のフォルダに作り、この PC の Documents には書かない。
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -208,6 +208,22 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.screenshot({ path: shot(`checkpoint-sent-${tag}`), fullPage: true });
     await page.getByTestId("received").scrollIntoViewIfNeeded();
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-received-${tag}`) });
+    // 束の行は「束 1　第 1 版　年-月-日」（自分の束）
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toContainText(/束 1　第 1 版　\d{4}-\d{2}-\d{2}/);
+    // 束の形をしていないファイルを自分のフォルダに置く（試験の台本が置いた）と、✗ の行と数が出る
+    const ringDirs = readdirSync(ringRoot).filter((d) => /^[0-9a-f]{16}$/.test(d));
+    const keyDirs = readdirSync(join(ringRoot, ringDirs[0]!, "bundles"));
+    writeFileSync(join(ringRoot, ringDirs[0]!, "bundles", keyDirs[0]!, "メモ.txt"), "【架空】試験のメモ");
+    await page.getByTestId("received-again").click();
+    // ✗ は 2 行：置いたファイルの行と、そのフォルダの仲間の行（理由はどちらも「束の形でない名前」）
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(2);
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("束の形でないファイル");
+    await expect(page.getByTestId("received-not-bundle")).toContainText("束の形をしていないファイル 1");
+    await page.getByTestId("received").screenshot({ path: shot(`checkpoint-received-ng-${tag}`) });
+    // 置いたファイルを消すと、また ✓ だけ（次の CLI の確かめのため）
+    rmSync(join(ringRoot, ringDirs[0]!, "bundles", keyDirs[0]!, "メモ.txt"));
+    await page.getByTestId("received-again").click();
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
   });
 
   await test.step("CLI：verify ring でも ✓。人だけの CLI は端末でなければ断る", async () => {

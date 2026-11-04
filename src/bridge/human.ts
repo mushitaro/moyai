@@ -16,7 +16,7 @@ import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trust
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
-import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, sealPlace, sendCheckpoint, verifyRing, type Answers, type PreviewView } from "../share/checkpoint";
+import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
 import { LEDGER_PR_TEXT, checkAgainstLedger, ensureLedgerKey, ledgerBranch, ledgerBundlePath, ledgerKeyOf, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
 import { parseJsonStrict } from "../share/jcs";
@@ -34,6 +34,7 @@ import {
   readGitHub,
   readLedgerSent,
   readRings,
+  readSent,
   removeGitHub,
   writeGitHub,
   writeLedgerSent,
@@ -226,6 +227,9 @@ export function gitRemote(root: string): string | null {
 
 const sha256OfLedger = (L: { ledgerBytes: Uint8Array }) => sha256Hex(L.ledgerBytes);
 
+/** 渡すメールのリンクの行き先：受け取る人の MOYAI（moyai start の既定のポート。server.ts の DEFAULT_PORT と同じ） */
+export const HANDOFF_ORIGIN = "http://127.0.0.1:43110";
+
 export class HumanService {
   private docs: DocumentsInfo | null = null;
   private connecting: GitHubConnecting | null = null;
@@ -391,7 +395,8 @@ export class HumanService {
           await writeTurn(root, { schema: TURN_SCHEMA, planId, version: r.version, state: req.kind === "edit" ? "editing" : "awaitingApproval", holder: null, to: req.to!.trim(), from: by, note: req.note, at });
           const hist = await readHistory(root, planId);
           const contentHash = hist.versions.at(-1)!.contentHash;
-          const link = `${p.origin ?? "http://127.0.0.1:43110"}/#/merge?open=${encodeURIComponent(planId)}&v=${r.version}&h=${contentHash.slice(0, 16)}`;
+          // リンクは受け取る人の MOYAI（既定のポート）で開く。送る人が --port を変えていても、その番号は載せない
+          const link = `${HANDOFF_ORIGIN}/#/merge?open=${encodeURIComponent(planId)}&v=${r.version}&h=${contentHash.slice(0, 16)}`;
           mail = handoffMail({ name: r.record.plan.displayName, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), note: req.note, by, planId, link });
         }
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files, mail };
@@ -600,7 +605,7 @@ export class HumanService {
         if (ctx.version !== p.version) return no("versionChanged");
         const r = await sendCheckpoint(sd, ctx.ring, ctx.pack, ctx.plan, p.answers, monthOf(now), p.previewHash, p.passphrase, now);
         if (!r.ok) return no(r.reason);
-        const report = await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, ctx.ring.confirmed);
+        const report = withSentInfo(await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, ctx.ring.confirmed), readSent(sd));
         return { ok: true, fileName: r.fileName, hash: r.hash, seq: r.seq, report };
       }
       case "ledger_preview": {
@@ -763,7 +768,7 @@ export class HumanService {
         if (typeof pack === "string") return no("packNotReady", { packReason: pack });
         const ring = await loadRing(sd, p.ringId, pack);
         if (!ring.ok) return no(ring.reason);
-        return { ok: true, report: await verifyRing(entry.root, p.ringId, pack, ring.confirmed) };
+        return { ok: true, report: withSentInfo(await verifyRing(entry.root, p.ringId, pack, ring.confirmed), readSent(sd)) };
       }
       case "readings_read": {
         if (!parsePayload("readings_read", call.payload)) return no("payloadInvalid");

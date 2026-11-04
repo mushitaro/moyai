@@ -210,7 +210,8 @@ export function ConfirmDialog({
             {load.message}
           </Alert>
         )}
-        {status && diff && (
+        {/* 署名したら、中身を結果に置き換える（Wire、2026-11-04）。入力の欄は残さない */}
+        {status && diff && !done && (
           <>
             {/* 署名して渡す（docs/screens.md 3.4、絵は Handoff.dc.html）：件数の 1 行 → 頼むこと → 宛先・ひとこと → この署名で承認する読み方 → 合言葉 → リンクが運ぶもの。
                 差分の行は差分レポートと決定のシートが持つので、ここには件数だけ */}
@@ -318,7 +319,7 @@ export function ConfirmDialog({
               )}
             </Stack>
 
-            {/* 外へ出ていくもの：メールが運ぶのは、版の場所とハッシュだけ（Handoff.dc.html、Version 39） */}
+            {/* 外へ出ていくもの：リンクが運ぶのは、版の場所とハッシュだけ（メールには施設の名前・版・ひとことも載る。Handoff.dc.html） */}
             {ask !== "self" && (
               <Text size="xs" fw={500} c="dimmed" data-testid="confirm-carries">
                 {T.carries}
@@ -329,6 +330,10 @@ export function ConfirmDialog({
                 {error}
               </Alert>
             )}
+          </>
+        )}
+        {done && (
+          <>
             {done && (
               <Alert color="teal" data-testid="confirm-done">
                 {/* 結果は 1 文だけ（保管先のファイルの道は出さない。版と差分レポートは EXPORT から落とす） */}
@@ -370,18 +375,21 @@ export function ConfirmDialog({
           )}
           {done ? (
             <>
-              <Button variant="default" onClick={onClose}>
+              <Button variant={mail ? "filled" : "default"} onClick={onClose} data-testid="confirm-close">
                 {T.close}
               </Button>
-              <Button
-                onClick={() => {
-                  onClose();
-                  location.hash = APP_PAGES.checkpoint;
-                }}
-                data-testid="to-checkpoint"
-              >
-                {T.toCheckpoint}
-              </Button>
+              {/* 自分で確定したときだけ、次の段（SHARE）へ。渡したときは閉じるだけ */}
+              {!mail && (
+                <Button
+                  onClick={() => {
+                    onClose();
+                    location.hash = APP_PAGES.checkpoint;
+                  }}
+                  data-testid="to-checkpoint"
+                >
+                  {T.toCheckpoint}
+                </Button>
+              )}
             </>
           ) : (
             <>

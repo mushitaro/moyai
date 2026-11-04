@@ -145,9 +145,9 @@ function PrLine({ p }: { p: LedgerPr }) {
           {T.prClosed(st.reason)}
         </Text>
       )}
-      <Anchor href={p.url} target="_blank" rel="noopener noreferrer" size="sm" c="dimmed">
+      <Button component="a" href={p.url} target="_blank" rel="noopener noreferrer" variant="default" size="xs">
         {T.prLink}
-      </Anchor>
+      </Button>
     </Group>
   );
 }
@@ -157,6 +157,9 @@ interface VerifyLine {
   status: string;
   reasons: string[];
   fingerprint?: string;
+  month?: string;
+  version?: number;
+  day?: string;
 }
 interface Report {
   ringId: string;
@@ -192,8 +195,10 @@ function VerifyTable({ report, ownKey }: { report: Report; ownKey: string | null
       <Table.Tbody>
         {report.lines.map((l) => {
           const b = l.kind === "bundle" ? /bundles\/([0-9a-f]{16})\/(\d{6})-/.exec(l.name) : null;
-          const label = l.kind === "circle" ? T.verifyKind.circle : l.kind === "member" ? T.verifyKind.member : b ? T.bundleN(Number(b[2])) : T.verifyKind.bundle;
-          const key = l.kind === "member" ? l.name : (b?.[1] ?? null);
+          const folder = l.kind === "bundle" ? (/bundles\/([0-9a-f]{16})\//.exec(l.name)?.[1] ?? null) : null;
+          const label =
+            l.kind === "circle" ? T.verifyKind.circle : l.kind === "member" ? T.verifyKind.member : b ? T.prBundle(Number(b[2]), l.version ?? null, l.day ?? l.month ?? "") : T.notBundleRow;
+          const key = l.kind === "member" ? l.name : folder;
           return (
             <Table.Tr key={`${l.kind}:${l.name}`} data-testid="verify-line" data-status={l.status} data-kind={l.kind}>
               <Table.Td w={40}>
@@ -442,9 +447,9 @@ export function Checkpoint() {
                     {T.githubNoClient}
                   </Text>
                 ) : (
-                  <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setConnectOpen(true)} disabled={!packId} data-testid="github-open">
-                    {login ? `| ${T.githubReconnect}` : `| ${T.githubConnect}`}
-                  </Anchor>
+                  <Button variant="default" size="xs" onClick={() => setConnectOpen(true)} disabled={!packId} data-testid="github-open">
+                    {login ? T.githubReconnect : T.githubConnect}
+                  </Button>
                 )}
               </Group>
             )}
@@ -476,7 +481,7 @@ export function Checkpoint() {
           {/* 公開の台帳に出した束（SHARE を開いたときに読んだ行方）。出した束があれば、出す先の行のすぐ下。無ければ節ごと出さない */}
           {dest === "ledger" && prs && prs.length > 0 && (
             <section data-testid="ledger-prs">
-              <Title order={2} size="h4" fw={500} mb="xs">
+              <Title order={2} fz={14} fw={500} mb="xs">
                 {T.prsTitle}
               </Title>
               <Stack gap={4}>
@@ -524,7 +529,7 @@ export function Checkpoint() {
 
           {/* 相手から見たあなた：見え方の 1 行と、何施設のどれかに見えるか。塊ごとの周期・工数・日数の帯（委託先は伏せる） */}
           <section data-testid="you">
-            <Title order={2} size="h4" fw={500} mb="xs">
+            <Title order={2} fz={14} fw={500} mb="xs">
               {dest === "ledger" ? T.youTitleLedger : T.youTitle}
             </Title>
             {view?.steps ? (
@@ -600,7 +605,7 @@ export function Checkpoint() {
           {/* 出元：鍵の指紋と、束の鎖（名前は出ない） */}
           {dest === "ledger" && res?.ledger?.fingerprint && (
             <section data-testid="share-source">
-              <Title order={2} size="h4" fw={500} mb="xs">
+              <Title order={2} fz={14} fw={500} mb="xs">
                 {T.sourceTitle}
               </Title>
               <Stack gap={2}>
@@ -617,7 +622,7 @@ export function Checkpoint() {
           )}
           {dest === "ring" && res?.ring && (
             <section data-testid="share-source">
-              <Title order={2} size="h4" fw={500} mb="xs">
+              <Title order={2} fz={14} fw={500} mb="xs">
                 {T.sourceTitle}
               </Title>
               <Stack gap={2}>
@@ -786,9 +791,9 @@ export function Checkpoint() {
           {sentPr && (
             <Alert color="gray" data-testid="ledger-sent">
               {T.prSent(sentPr.pr)}{" "}
-              <Anchor href={sentPr.url} target="_blank" rel="noopener noreferrer" size="sm">
+              <Button component="a" href={sentPr.url} target="_blank" rel="noopener noreferrer" variant="default" size="xs">
                 {T.prLink}
-              </Anchor>
+              </Button>
             </Alert>
           )}
           {sent && (
@@ -801,12 +806,12 @@ export function Checkpoint() {
           {dest === "ring" && received && (
             <section data-testid="received">
               <Group justify="space-between" align="baseline" mb="xs">
-                <Title order={2} size="h4" fw={500}>
+                <Title order={2} fz={14} fw={500}>
                   {T.receivedTitle}
                 </Title>
-                <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => void verifyAgain()} data-testid="received-again">
+                <Button variant="default" size="xs" onClick={() => void verifyAgain()} data-testid="received-again">
                   {T.verifyAgain}
-                </Anchor>
+                </Button>
               </Group>
               <VerifyTable report={received} ownKey={res?.ring?.key ?? null} />
               {received.notBundleFiles > 0 && (

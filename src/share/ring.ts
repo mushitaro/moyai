@@ -120,6 +120,8 @@ export interface BundleEntry {
   seq: number | null;
   hash: string;
   profile: Profile | null;
+  /** 送った月（束の body の month、YYYY-MM）。読めなければ null */
+  month: string | null;
 }
 
 export interface MemberStatus {
@@ -282,7 +284,7 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
       }
       const path = join(dir, BUNDLES_DIR, folder, e.name);
       const bytes = await readFile(path);
-      const entry: BundleEntry = { folder, name: e.name, status: "ok", reasons: [], seq: null, hash: sha256Hex(bytes), profile: null };
+      const entry: BundleEntry = { folder, name: e.name, status: "ok", reasons: [], seq: null, hash: sha256Hex(bytes), profile: null, month: null };
       list.push(entry);
       if (isTempName(e.name) || bytes.length === 0) {
         entry.status = "arriving";
@@ -305,8 +307,9 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
         entry.status = "arriving";
         continue;
       }
-      const body = r.body as { key?: unknown; seq?: unknown; profile?: Profile } | null;
+      const body = r.body as { key?: unknown; seq?: unknown; profile?: Profile; month?: unknown } | null;
       entry.seq = typeof body?.seq === "number" ? body.seq : null;
+      entry.month = typeof body?.month === "string" && /^\d{4}-\d{2}$/.test(body.month) ? body.month : null;
       if (!isClean(r)) entry.reasons.push(...r.reasons);
       if (body && body.key !== folder) entry.reasons.push("file.otherFolder");
       if (entry.seq !== null && (Number(nm[1]) !== entry.seq || nm[2] !== r.hash.slice(0, 16))) entry.reasons.push("file.nameMismatch");

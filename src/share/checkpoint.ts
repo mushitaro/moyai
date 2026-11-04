@@ -444,7 +444,7 @@ export async function sendCheckpoint(
   const { input } = s;
   const placed = await writeBundle(ring.entry.root, s.text, input.ctx);
   if (!placed.ok) return { ok: false, reason: placed.reason };
-  appendSent(stateDir, { ringId: ring.entry.ringId, key: keyIdOf(ring.pub), seq: input.seq, hash: s.hash, fileName: s.fileName, month, at: now.toISOString() });
+  appendSent(stateDir, { ringId: ring.entry.ringId, key: keyIdOf(ring.pub), seq: input.seq, hash: s.hash, fileName: s.fileName, month, at: now.toISOString(), version: plan.version });
   return { ok: true, fileName: s.fileName, hash: s.hash, path: placed.path, seq: input.seq };
 }
 
@@ -457,6 +457,10 @@ export interface VerifyLine {
   status: "ok" | "ng" | "arriving" | "missing";
   reasons: string[];
   fingerprint?: string;
+  /** 束：送った月（束の body から）。自分の束なら、束にした計画の版と、置いた日（この PC の持ち出し簿から） */
+  month?: string;
+  version?: number;
+  day?: string;
 }
 
 export interface VerifyReport {
@@ -464,6 +468,25 @@ export interface VerifyReport {
   lines: VerifyLine[];
   notBundleFiles: number;
   ok: boolean;
+}
+
+/** 自分の束の行に、持ち出し簿から、束にした計画の版と置いた日（この PC の時刻）を足す（受け手の判定は変えない） */
+export function withSentInfo(report: VerifyReport, sent: readonly { ringId: string; hash: string; version?: number; at: string }[]): VerifyReport {
+  const byName = new Map(sent.filter((e) => e.ringId === report.ringId).map((e) => [e.hash.slice(0, 16), e]));
+  const dayOf = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? undefined : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  return {
+    ...report,
+    lines: report.lines.map((l) => {
+      const m = l.kind === "bundle" ? /-([0-9a-f]{16})\.json$/.exec(l.name) : null;
+      const e = m ? byName.get(m[1]!) : undefined;
+      if (!e) return l;
+      const day = dayOf(e.at);
+      return { ...l, ...(e.version !== undefined ? { version: e.version } : {}), ...(day ? { day } : {}) };
+    }),
+  };
 }
 
 /** readRing の結果を、決まり・仲間・束の行に並べる（画面と CLI が同じものを出す）。 */
@@ -485,6 +508,6 @@ export async function verifyRing(root: string, ringId: string, pack: Pick<ShareP
     const pub = pubs.get(m.key);
     lines.push({ kind: "member", name: m.key, status: m.status, reasons: m.reasons, ...(pub && /^[0-9a-f]{64}$/.test(pub) ? { fingerprint: fingerprint(pub) } : {}) });
   }
-  for (const b of r.bundles) lines.push({ kind: "bundle", name: `bundles/${b.folder}/${b.name}`, status: b.status, reasons: b.reasons });
+  for (const b of r.bundles) lines.push({ kind: "bundle", name: `bundles/${b.folder}/${b.name}`, status: b.status, reasons: b.reasons, ...(b.month ? { month: b.month } : {}) });
   return { ringId, lines, notBundleFiles: r.notBundleFiles, ok: lines.every((l) => l.status === "ok") && r.notBundleFiles === 0 };
 }

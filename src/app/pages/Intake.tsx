@@ -114,7 +114,7 @@ function Destinations({ an, onJump }: { an: Analysis; onJump: (file: string) => 
               {fc.holds ? "" : `（${T.dest.rowsNotHeld}）`}
             </Text>
             {excluded > 0 && (
-              <Text size="xs" c="dimmed">
+              <Text size="xs" c="dimmed" style={{ overflowWrap: "anywhere" }} data-testid="dest-reasons">
                 {T.dest.reasons}：
                 {Object.entries(fc.excludedCells)
                   .map(([k, v]) => `${k} ${v}`)
@@ -538,7 +538,7 @@ export function Intake({
 
         {!embedded && (
           <Paper withBorder p="sm">
-            <Title order={4} mb="xs">
+            <Title order={4} fz={14} fw={500} mb="xs">
               {TEXT.crosswalk.title}
             </Title>
             <CrosswalkPanel />
@@ -546,7 +546,7 @@ export function Intake({
         )}
 
         <Paper withBorder p="sm">
-          <Title order={4} mb="xs">
+          <Title order={4} fz={14} fw={500} mb="xs">
             {T.settings.title}
           </Title>
           <Group align="flex-end" gap="sm">
@@ -568,7 +568,7 @@ export function Intake({
               label={T.settings.name}
               value={ws.settings.facilityName}
               onChange={(e) => ws.setFacility({ facilityName: e.currentTarget.value })}
-              w={260}
+              w={360}
               data-testid="facility-name"
             />
             <NumberInput label={T.settings.startMonth} min={1} max={12} value={month} onChange={(v) => setMonth(Number(v) || month)} w={140} />
@@ -599,6 +599,7 @@ export function Intake({
           </Group>
         </Paper>
 
+        {!(embedded && ws.fileCount > 0) && (
         <Paper
           className="moyai-drop"
           data-over={over ? "true" : "false"}
@@ -615,8 +616,10 @@ export function Intake({
           }}
         >
           <Group justify="space-between" gap="sm">
-            {/* 説明の文は置かない（受け付ける形式・大きさ・AI に渡るものは、Claude が MCP の instructions と基本の Skill で説明する） */}
-            <Title order={4}>{T.drop.title}</Title>
+            {/* 見出しも説明の文も置かない。空のときの 1 行だけ（MergeNew.dc.html） */}
+            <Text size="sm" c="dimmed">
+              {ws.fileCount > 0 ? "" : T.drop.empty}
+            </Text>
             <FileButton multiple onChange={(fs) => void addFiles(fs)}>
               {(props) => (
                 <Button {...props} variant="default" loading={reading}>
@@ -643,10 +646,23 @@ export function Intake({
             </Stack>
           )}
         </Paper>
+        )}
+        {embedded && ws.fileCount > 0 && (ws.skippedFiles.length > 0 || (an?.rejected.length ?? 0) > 0) && (
+          <Stack gap={0} data-testid="skipped">
+            <Text size="xs" fw={700}>
+              {T.drop.skipped}
+            </Text>
+            {[...ws.skippedFiles, ...(an?.rejected ?? [])].map((r, i) => (
+              <Text key={i} size="xs" c="orange">
+                {r.file}：{r.reason}
+              </Text>
+            ))}
+          </Stack>
+        )}
 
         {ws.photoBook.entries().length > 0 && (
           <Paper withBorder p="sm">
-            <Title order={4} mb="xs">
+            <Title order={4} fz={14} fw={500} mb="xs">
               {PHOTO_TEXT.title}
             </Title>
             <PhotoPanel ws={ws} an={an} />
@@ -657,7 +673,7 @@ export function Intake({
           <Grid.Col span={{ base: 12, md: 7 }}>
             <Stack gap="md">
               <Paper withBorder p="sm">
-                <Title order={4} mb="xs">
+                <Title order={4} fz={14} fw={500} mb="xs">
                   {T.dest.title}
                 </Title>
                 {an ? <Destinations an={an} onJump={jump} /> : <Text size="sm" c="dimmed">{T.dest.none}</Text>}
@@ -697,14 +713,14 @@ export function Intake({
             <Stack gap="md">
               {!embedded && (
                 <Paper withBorder p="sm">
-                  <Title order={4} mb="xs">
+                  <Title order={4} fz={14} fw={500} mb="xs">
                     {T.questions.title}
                   </Title>
                   {an ? <Questions ws={ws} an={an} /> : <Text size="sm" c="dimmed">{T.questions.none}</Text>}
                 </Paper>
               )}
               <Paper withBorder p="sm">
-                <Title order={4} mb="xs">
+                <Title order={4} fz={14} fw={500} mb="xs">
                   {T.activity.title}
                 </Title>
                 <Activity ws={ws} />
@@ -714,13 +730,13 @@ export function Intake({
         </Grid>
 
         <Paper withBorder p="sm">
-          <Title order={4} mb="xs">
+          <Title order={4} fz={14} fw={500} mb="xs">
             {T.decisions.title}
           </Title>
           {an ? <Decisions ws={ws} an={an} /> : <Text size="sm" c="dimmed">{T.decisions.none}</Text>}
         </Paper>
         <Paper withBorder p="sm" mb="xl">
-          <Title order={4} mb="xs">
+          <Title order={4} fz={14} fw={500} mb="xs">
             {T.aiOnly.title}
           </Title>
           {an && <AiOnly ws={ws} />}

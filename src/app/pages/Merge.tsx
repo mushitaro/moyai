@@ -104,7 +104,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       // この版から次の版：もとにした版は、保管先のいちばん新しい版（古い版の中身を、その上に重ねる）
       setWorkingPlan(r.body.plan, "intake", [], openNext ? latest.version : openV);
       setOldView(openNext ? null : { planId: openId, version: openV });
-      setNotice(openNext ? T.fromOld(openV) : null);
+      setNotice(null);
       setDoneKey(openKey);
     })();
   }, [pendingOpen, st]);

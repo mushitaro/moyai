@@ -161,8 +161,8 @@ export const TEXT = {
       summaryRow: (band: string) => `似た施設　帯 ${band}`,
       summaryFew: "似た施設　5 施設に満たない",
       profileMissing: "似た施設　見え方が決まっていません",
-      fixDecide: "| 施設の設定で決める",
-      fixProfile: "| 見え方を直す",
+      fixDecide: "施設の設定で決める",
+      fixProfile: "見え方を直す",
       wholeSystem: "設備全体",
       bandCols: { interval: "間隔", manDays: "工数", days: "日数" },
       bandLabel: "帯の列",
@@ -307,7 +307,6 @@ export const TEXT = {
     confirmedLine: "確定済み",
     stale: (n: number, by: string) => `保管先に新しい版（第 ${n} 版${by ? `、${by}` : ""}）があります。開き直すと、その版に重ねます。`,
     reopen: "開き直す",
-    fromOld: (n: number) => `第 ${n} 版の中身から、次の版をつくります。`,
     block: {
       noPlan: "まだ版の下書きがありません。資料を落として第 1 版をつくってください",
       open: (n: number) => `決まっていない所が ${n}`,
@@ -364,6 +363,7 @@ export const TEXT = {
     },
     drop: {
       title: "資料を入れる",
+      empty: "ここに資料を落とします",
       pick: "ファイルを選ぶ",
       reading: "読んでいます",
       skipped: "読まなかった資料",

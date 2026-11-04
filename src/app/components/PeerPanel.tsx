@@ -1,7 +1,7 @@
 // 似た施設と並べる（docs/plan.md §2.2 行の切り替え・§2.8 受け取りと 3 つの立場）。星取表の共通の設備項目の行で、人が開く。
 // 立場を人が選び、見え方は施設の設定（計画の施設の欄）から読んで、橋渡しの人だけの経路 peers_compare が、台帳の clone と自分の輪の ✓ の束から場ごとに数える。
 // 開いている間だけ、比べをこのタブのメモリ（state/peers）に置く。AI のツール peer_reference は、ここで開いた比べだけを読む。閉じれば消す。
-import { Alert, Anchor, Group, NativeSelect, SimpleGrid, Stack, Text } from "@mantine/core";
+import { Alert, Button, Group, NativeSelect, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Comparison, PlaceView, Position } from "../../share/receive";
 import { PROFILE_FROM } from "../../share/receive";
@@ -161,9 +161,9 @@ export function PeerPanel({ plan, onComparison }: { plan: Plan; onComparison: (c
   const selfMissing = res?.comparison === null && !!res.reason && SELF_MISSING.has(res.reason) && from === "self";
   const unknown = res?.comparison === null && res.reason && !selfMissing ? (P.reason[res.reason] ?? res.reason) : null;
   const fix = (
-    <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setFacilityDialog(true)} data-testid="peer-fix">
+    <Button variant="default" size="xs" onClick={() => setFacilityDialog(true)} data-testid="peer-fix">
       {selfMissing ? P.fixDecide : P.fixProfile}
-    </Anchor>
+    </Button>
   );
 
   return (

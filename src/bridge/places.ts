@@ -240,6 +240,8 @@ export interface SentEntry {
   fileName: string;
   month: string;
   at: string;
+  /** 束にした計画の版（画面の「束 3　第 7 版　2026-11-04」に出す。束には入らない） */
+  version?: number;
 }
 
 /** 持ち出し簿：検問所を通して置いた束のハッシュ（中身は残さない） */

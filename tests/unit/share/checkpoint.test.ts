@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { readRings, readSent, readWrappedKey } from "../../../src/bridge/places";
-import { createRing, loadRing, previewCheckpoint, questionsOf, sendCheckpoint, verifyRing, type Answers } from "../../../src/share/checkpoint";
+import { createRing, loadRing, previewCheckpoint, questionsOf, sendCheckpoint, verifyRing, withSentInfo, type Answers } from "../../../src/share/checkpoint";
 import { parseJsonStrict } from "../../../src/share/jcs";
 import type { SharePack } from "../../../src/share/pack";
 import { BUNDLES_DIR } from "../../../src/share/ring";
@@ -86,7 +86,7 @@ describe("検問所の裏：架空の計画を端まで", () => {
 
     const rep = await verifyRing(root, ringId, PACK, ring.confirmed);
     expect(rep.ok).toBe(true);
-    expect(rep.lines.filter((l) => l.kind === "bundle")).toEqual([{ kind: "bundle", name: `bundles/${ring.entry.key}/${s.fileName}`, status: "ok", reasons: [] }]);
+    expect(rep.lines.filter((l) => l.kind === "bundle")).toEqual([{ kind: "bundle", name: `bundles/${ring.entry.key}/${s.fileName}`, status: "ok", reasons: [], month: MONTH }]);
 
     // 2 回目は連番 2、前の束のハッシュを持つ
     const ring2 = await loadRing(stateDir, ringId, PACK);
@@ -120,6 +120,20 @@ describe("検問所の裏：架空の計画を端まで", () => {
     expect(vn.counts!.properNoun).toBeGreaterThan(0);
     expect(vn.blockers).toContain("properNoun");
     expect(readdirSync(join(root, ringId))).not.toContain(BUNDLES_DIR);
+  });
+
+  it("受け取った束の行：束の送った月、自分の束なら束にした計画の版と置いた日（持ち出し簿から）", async () => {
+    const { stateDir, root, ringId, ring } = await setup();
+    const p = { ...smallPlan(), version: 7 };
+    const v = previewCheckpoint(stateDir, ring, PACK, p, ANSWERS, MONTH);
+    const s = await sendCheckpoint(stateDir, ring, PACK, p, ANSWERS, MONTH, v.bodyHash!, PASS, NOW);
+    if (!s.ok) throw new Error(s.reason);
+    const rep = await verifyRing(root, ringId, PACK, ring.confirmed);
+    expect(rep.lines.find((l) => l.kind === "bundle")).toMatchObject({ status: "ok", month: MONTH });
+    const withMine = withSentInfo(rep, readSent(stateDir));
+    expect(withMine.lines.find((l) => l.kind === "bundle")).toMatchObject({ month: MONTH, version: 7, day: "2026-11-03" });
+    // ほかの輪の持ち出し簿は当てない
+    expect(withSentInfo(rep, readSent(stateDir).map((e) => ({ ...e, ringId: "f".repeat(16) }))).lines.find((l) => l.kind === "bundle")!.version).toBeUndefined();
   });
 
   it("書き換えた束・他人のフォルダの束は、受け手の関数で理由つきの ✗", async () => {

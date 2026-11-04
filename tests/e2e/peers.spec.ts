@@ -84,7 +84,7 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       // 1 行：「公開の台帳　似た施設 n　| 見え方を直す」。台帳の 16 桁の ID は出さない
       await expect(ledger).toHaveText(/^公開の台帳　似た施設 \d+/);
       await expect(page.getByTestId("peer-places")).not.toContainText(/[0-9a-f]{16}/);
-      await expect(page.getByTestId("peer-fix")).toHaveText("| 見え方を直す");
+      await expect(page.getByTestId("peer-fix")).toHaveText("見え方を直す");
     });
 
     await test.step("自分の行の下に、似た施設を 1 行にまとめた細い行（名前は間隔の帯か「5 施設に満たない」）", async () => {
