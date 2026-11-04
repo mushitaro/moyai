@@ -54,9 +54,9 @@ export class Index {
   private sameSheet(a: string | null | undefined, b: string | null | undefined) {
     return a === undefined || a === null || b === undefined || b === null || a === b;
   }
-  /** そのセルにある正解のもの */
+  /** そのセルにある正解のもの（セルで書いた場所か、行とその文字で書いた場所。行のすべてのセルで書いたものは assetInRow で引く） */
   assetAt(file: string, sheet: string | null | undefined, ref: string): Asset | null {
-    return this.assets.find((p) => p.at && p.item.file === file && this.sameSheet(p.at.sheet, sheet) && p.at.refs.has(ref) && "cell" in p.item.at)?.item ?? null;
+    return this.assets.find((p) => p.at && p.item.file === file && this.sameSheet(p.at.sheet, sheet) && p.at.refs.has(ref) && ("cell" in p.item.at || "text" in p.item.at))?.item ?? null;
   }
   /** その行にある正解のもの（kind で絞れる。1 つに決まらなければ null） */
   assetInRow(file: string, sheet: string | null | undefined, row: number, kind?: Asset["kind"]): Asset | null {

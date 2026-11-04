@@ -10,11 +10,16 @@ import type { SourceFile } from "../../src/import/grid";
 const cellRef = z.string().regex(/^[A-Z]{1,3}[1-9]\d*$/);
 const sheet = z.string().nullable().optional();
 
-/** 資料のどこにあるか。cell：そのセル。row：その行のすべてのセル。texts：それぞれの文字を持つセルがそろう、ただ 1 つの行 */
+/**
+ * 資料のどこにあるか。cell：そのセル。row：その行のすべてのセル。row と text：その行の、その文字のセル（同じ文字のセルが
+ * いくつかあれば、列の順の nth 番目。0 から）。texts：それぞれの文字を持つセルがそろう、ただ 1 つの行（nth があれば、そうなる行の
+ * 文書の順の nth 番目。text があれば、その行のその文字のセル）。row と text・nth は、行で書いた正解（answer.ts）を写すときに使う
+ */
 export const Locate = z.union([
   z.object({ cell: cellRef, sheet }).strict(),
   z.object({ row: z.number().int().positive(), sheet }).strict(),
-  z.object({ texts: z.array(z.string().min(1).max(200)).min(1).max(8), sheet }).strict(),
+  z.object({ row: z.number().int().positive(), sheet, text: z.string().min(1).max(200), nth: z.number().int().nonnegative().optional() }).strict(),
+  z.object({ texts: z.array(z.string().min(1).max(200)).min(1).max(8), sheet, nth: z.number().int().nonnegative().optional(), text: z.string().min(1).max(200).optional() }).strict(),
 ]);
 export type Locate = z.infer<typeof Locate>;
 
@@ -70,7 +75,8 @@ export type Asset = z.infer<typeof Asset>;
 export const Mark = z
   .object({
     file: z.string(),
-    at: z.object({ cell: cellRef, sheet }).strict(),
+    /** 印のセル（行で書いた正解から写したものは、行とその印の文字と列の順） */
+    at: z.union([z.object({ cell: cellRef, sheet }).strict(), z.object({ row: z.number().int().positive(), sheet, text: z.string().min(1), nth: z.number().int().nonnegative().optional() }).strict()]),
     fiscal_year: z.number().int(),
     status: z.enum(["planned", "actual"]),
     equipment_id: id,
@@ -174,6 +180,13 @@ export function resolve(src: SourceFile | undefined, loc: Locate): Resolution {
     if (!sh) return { ok: false, why: `シート ${loc.sheet} が無い` };
     return { ok: true, at: { sheet: sh.name, row: rowOf(loc.cell), refs: new Set([loc.cell]) } };
   }
+  if ("row" in loc && "text" in loc) {
+    const sh = loc.sheet === undefined || loc.sheet === null ? src.sheets[0] : sheetsOf(src, loc.sheet)[0];
+    if (!sh) return { ok: false, why: `シート ${loc.sheet} が無い` };
+    const c = cellWithText(sh.cells.filter((x) => x.r === loc.row), loc.text, loc.nth ?? 0);
+    if (!c) return { ok: false, why: `${loc.row} 行に「${loc.text}」のセルが${loc.nth ? ` ${loc.nth + 1} つ` : ""}無い` };
+    return { ok: true, at: { sheet: sh.name, row: loc.row, refs: new Set([c.ref]) } };
+  }
   if ("row" in loc) {
     const sh = loc.sheet === undefined || loc.sheet === null ? src.sheets[0] : sheetsOf(src, loc.sheet)[0];
     if (!sh) return { ok: false, why: `シート ${loc.sheet} が無い` };
@@ -195,9 +208,25 @@ export function resolve(src: SourceFile | undefined, loc: Locate): Resolution {
   let hits = find((t, w) => t === w);
   if (hits.length === 0) hits = find((t, w) => t.includes(w));
   if (hits.length === 0) return { ok: false, why: `「${loc.texts.join("」「")}」をそろえて持つ行が無い` };
-  if (hits.length > 1) return { ok: false, why: `「${loc.texts.join("」「")}」の行が ${hits.length} つあり、1 つに決まらない` };
-  const h = hits[0]!;
-  return { ok: true, at: { sheet: h.sh.name, row: h.r, refs: new Set(h.sh.cells.filter((c) => c.r === h.r).map((c) => c.ref)) } };
+  if (loc.nth === undefined && hits.length > 1) return { ok: false, why: `「${loc.texts.join("」「")}」の行が ${hits.length} つあり、1 つに決まらない` };
+  const h = hits[loc.nth ?? 0];
+  if (!h) return { ok: false, why: `「${loc.texts.join("」「")}」の行が ${hits.length} つで、${(loc.nth ?? 0) + 1} 番目が無い` };
+  const rowCells = h.sh.cells.filter((c) => c.r === h.r);
+  if (loc.text !== undefined) {
+    const c = cellWithText(rowCells, loc.text, 0);
+    if (!c) return { ok: false, why: `「${loc.texts.join("」「")}」の行に「${loc.text}」のセルが無い` };
+    return { ok: true, at: { sheet: h.sh.name, row: h.r, refs: new Set([c.ref]) } };
+  }
+  return { ok: true, at: { sheet: h.sh.name, row: h.r, refs: new Set(rowCells.map((c) => c.ref)) } };
+}
+
+/** 行のセルのうち、その文字のセル（列の順の nth 番目）。同じ文字が無ければ、その文字を含むセル */
+function cellWithText(cells: Sheet["cells"], text: string, nth: number): Sheet["cells"][number] | null {
+  const w = nf(text);
+  const byCol = [...cells].sort((a, b) => a.c - b.c);
+  const exact = byCol.filter((c) => nf(c.text) === w);
+  if (exact.length) return exact[nth] ?? null;
+  return byCol.filter((c) => w !== "" && nf(c.text).includes(w))[nth] ?? null;
 }
 
 /** 出どころ（計画の sources の 1 つ）が、引き当てたセルのどれかか */
