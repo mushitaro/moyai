@@ -48,7 +48,9 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/comment-add` | `comment_add` | 計画にコメントを足す（星取表の行と、この PC の呼び名を添えて、保管先に置く。署名はしない） |
 | `POST /human/comments-list` | `comments_list` | 計画のコメントを古い順に読む（MERGE の横の板の「コメント」） |
 | `POST /human/plan-version-read` | `plan_version_read` | 確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる） |
-| `POST /human/plan-sign` | `plan_sign` | いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える |
+| `POST /human/plan-sign` | `plan_sign` | いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える（頼みを受け取った鍵だけ） |
+| `POST /human/request-receive` | `request_receive` | メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ） |
+| `POST /human/request-renew` | `request_renew` | 頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する |
 | `POST /human/plan-file-read` | `plan_file_read` | 確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす |
 | `POST /human/person-key-create` | `person_key_create` | 自分の鍵（版に署名する）を作り、状態フォルダに置く |
 | `POST /human/person-key-confirm` | `person_key_confirm` | ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない） |
@@ -71,7 +73,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 30 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 32 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

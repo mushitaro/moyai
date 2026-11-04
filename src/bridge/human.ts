@@ -14,6 +14,7 @@ import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
 import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previousOf, trustList, trustOf } from "./people";
 import { checkSeen } from "./seen";
+import { activeRequest, createRequest, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
@@ -120,6 +121,8 @@ const SCHEMAS = {
   }),
   comments_list: z.object({ planId: planIdSchema }),
   plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500) }),
+  request_receive: z.object({ planId: planIdSchema, version: z.number().int().min(1), token: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/) }),
+  request_renew: z.object({ planId: planIdSchema, version: z.number().int().min(1), to: z.string().max(200), note: z.string().max(1000) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({}),
   person_key_confirm: z.object({ pub: z.string().regex(HEX64) }),
@@ -230,6 +233,11 @@ const sha256OfLedger = (L: { ledgerBytes: Uint8Array }) => sha256Hex(L.ledgerByt
 /** 渡すメールのリンクの行き先：受け取る人の MOYAI（moyai start の既定のポート。server.ts の DEFAULT_PORT と同じ） */
 export const HANDOFF_ORIGIN = "http://127.0.0.1:43110";
 
+/** 受け取る人の MOYAI（既定のポート）で開くリンク。送る人が --port を変えていても、その番号は載せない。合言葉はリンクにだけ入れる */
+function handoffLink(planId: string, version: number, contentHash: string, token: string): string {
+  return `${HANDOFF_ORIGIN}/#/merge?open=${encodeURIComponent(planId)}&v=${version}&h=${contentHash.slice(0, 16)}&t=${token}`;
+}
+
 /** 施設の鍵がまだ決まらないとき（鍵が 2 つある）に、見え方だけを出すための仮の鍵（メモリだけ。署名には使わない） */
 const PLACEHOLDER_PAIR: KeyPair = generateKeyPair();
 
@@ -274,6 +282,34 @@ export class HumanService {
     const k = openOwnKey(sd, name);
     if (!k.ok) return { ok: false, reason: k.reason };
     return { ok: true, signer: { by: name, pair: k.pair } };
+  }
+
+  /** いちばん新しい版の頼みの見え方：頼むこと・宛先・頼んだ人・受け取った人（信じ方つき）・自分が頼んだか・自分が受け取ったか・済んだか */
+  private async requestView(root: string, planId: string, h: Awaited<ReturnType<typeof readHistory>>, name: string | null) {
+    const sd = this.e.stateDir!;
+    const top = h.versions.at(-1);
+    if (!top) return null;
+    const act = await activeRequest(root, planId, top.version);
+    if (!act) return null;
+    const mine = ownKeys(sd).filter((k) => !k.old && k.by === name).map((k) => k.pub);
+    const r = act.receipt;
+    const received = r
+      ? (() => {
+          const sig = { by: r.by, key: keyIdOf(r.pub), pub: r.pub };
+          const trust = trustOf(sd, sig, new Date(this.e.now()));
+          return { by: r.by, pub: r.pub, fingerprint: fingerprint(r.pub), trust, previous: trust === "changed" ? previousOf(sd, r.pub) : null };
+        })()
+      : null;
+    return {
+      version: top.version,
+      kind: act.request.body.kind,
+      to: act.request.body.to,
+      by: act.request.body.by,
+      mine: mine.includes(act.request.body.pub),
+      received,
+      receivedByMe: !!r && mine.includes(r.pub),
+      done: top.signatures.some((x) => x.role === "approve" || x.role === "return"),
+    };
   }
 
   /** 書き出しに使うパックの名前の表（packs/<パック>/common.json と packs/_kinds/work.json）。読めなければ共通のシートは作らない */
@@ -382,6 +418,8 @@ export class HumanService {
           hasKey: s.name !== null && ownKeys(sd).some((k) => k.by === s.name),
           // 編集の番（渡す・承認・差し戻しで替わる）
           turn: await readTurn(root, p.planId),
+          // いちばん新しい版の頼みと受け取り（頼んだ人には受け取った人を、受け取った人には自分だと出す。監査 B1）
+          request: await this.requestView(root, p.planId, h, s.name),
           vanished,
         };
       }
@@ -403,7 +441,14 @@ export class HumanService {
         }
         // 前に見た版や署名が保管先から消えていれば、その上には重ねない（監査 A5）
         const pid = (p.plan as { planId?: unknown } | null)?.planId;
-        if (typeof pid === "string" && PLAN_ID.test(pid) && checkSeen(sd, root, pid, await readHistory(root, pid))) return no("historyVanished");
+        if (typeof pid === "string" && PLAN_ID.test(pid)) {
+          const h0 = await readHistory(root, pid);
+          if (checkSeen(sd, root, pid, h0)) return no("historyVanished");
+          // 編集を頼んだ版の上に重ねるのは、編集の番の人だけ（頼みを受け取った鍵。まだ誰も受け取っていなければ頼んだ人。監査 B1）
+          const top = h0.versions.at(-1);
+          const act = top ? await activeRequest(root, pid, top.version) : null;
+          if (act && act.request.body.kind === "edit" && signer.signer.pair.pub !== (act.receipt?.pub ?? act.request.body.pub)) return no("notYourTurn");
+        }
         // 頼むこと：自分で確定する（confirm の署名）か、編集・承認を頼んで渡す（edit の署名）。頼むときは宛先が要る
         const req = p.request ?? { kind: "self" as const, to: null, note: "" };
         if (req.kind !== "self" && !(req.to && /^[^\s@]+@[^\s@]+$/.test(req.to.trim()))) return no("mailToInvalid");
@@ -431,9 +476,9 @@ export class HumanService {
           await writeTurn(root, { schema: TURN_SCHEMA, planId, version: r.version, state: req.kind === "edit" ? "editing" : "awaitingApproval", holder: null, to: req.to!.trim(), from: by, note: req.note, at });
           const hist = await readHistory(root, planId);
           const contentHash = hist.versions.at(-1)!.contentHash;
-          // リンクは受け取る人の MOYAI（既定のポート）で開く。送る人が --port を変えていても、その番号は載せない
-          const link = `${HANDOFF_ORIGIN}/#/merge?open=${encodeURIComponent(planId)}&v=${r.version}&h=${contentHash.slice(0, 16)}`;
-          mail = handoffMail({ name: r.record.plan.displayName, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), note: req.note, by, planId, link });
+          // 頼みに署名して保管先に置き、使い捨ての合言葉をリンクにだけ入れる（監査 B1）
+          const q = await createRequest({ root, planId, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), by, pair: signer.signer.pair, now });
+          mail = handoffMail({ name: r.record.plan.displayName, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), note: req.note, by, planId, link: handoffLink(planId, r.version, contentHash, q.token) });
         }
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files, mail };
       }
@@ -547,6 +592,46 @@ export class HumanService {
         }
         return { ok: true, root, plans, name: readSettings(sd).name };
       }
+      case "request_receive": {
+        // メールのリンクを開いた人：合言葉を頼みと照らし、自分の鍵で受け取りに署名する（鍵がまだ無ければ作る。呼び名は要る）
+        const p = parsePayload("request_receive", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        let signer = this.signer(sd);
+        if (!signer.ok && signer.reason === "personKeyMissing") {
+          const name = readSettings(sd).name;
+          if (name) createOwnKey(sd, name, now);
+          signer = this.signer(sd);
+        }
+        if (!signer.ok) return no(signer.reason);
+        const r = await receiveRequest({ root, planId: p.planId, version: p.version, token: p.token, by: signer.signer.by, pair: signer.signer.pair, now });
+        if (r.state === "takenByOther") return { ok: true, state: r.state, requester: r.request.body.by, receiver: { by: r.receipt.by, fingerprint: fingerprint(r.receipt.pub) } };
+        if (r.state === "received" || r.state === "mine") return { ok: true, state: r.state, requester: r.request.body.by, kind: r.request.body.kind };
+        return { ok: true, state: r.state };
+      }
+      case "request_renew": {
+        // 頼み直す：頼んだ人だけ、承認か差し戻しが済む前だけ。新しい頼みを置き、前のリンクは使えなくなる（Wire の B1）
+        const p = parsePayload("request_renew", call.payload);
+        if (!p) return no("payloadInvalid");
+        if (!/^[^\s@]+@[^\s@]+$/.test(p.to.trim())) return no("mailToInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const signer = this.signer(sd);
+        if (!signer.ok) return no(signer.reason);
+        const h = await readHistory(root, p.planId);
+        const top = h.versions.at(-1);
+        if (!top || top.version !== p.version || !h.latest) return no("notLatest");
+        if (top.problem) return no("historyBroken");
+        const act = await activeRequest(root, p.planId, p.version);
+        if (!act || act.request.body.pub !== signer.signer.pair.pub) return no("notRequested");
+        if (top.signatures.some((x) => x.role === "approve" || x.role === "return")) return no("notRequested");
+        const q = await createRequest({ root, planId: p.planId, version: p.version, contentHash: top.contentHash, kind: act.request.body.kind, to: p.to.trim(), by: signer.signer.by, pair: signer.signer.pair, now });
+        const prev = await readTurn(root, p.planId);
+        if (prev) await writeTurn(root, { ...prev, to: p.to.trim(), note: p.note, at: now.toISOString() });
+        const mail = handoffMail({ name: h.latest.plan.displayName, version: p.version, contentHash: top.contentHash, kind: act.request.body.kind, to: p.to.trim(), note: p.note, by: signer.signer.by, planId: p.planId, link: handoffLink(p.planId, p.version, top.contentHash, q.token) });
+        return { ok: true, mail };
+      }
       case "plan_sign": {
         const p = parsePayload("plan_sign", call.payload);
         if (!p) return no("payloadInvalid");
@@ -555,6 +640,9 @@ export class HumanService {
         const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
         if (checkSeen(sd, root, p.planId, await readHistory(root, p.planId))) return no("historyVanished");
+        // 承認・差し戻しは、承認の頼みを受け取った鍵だけ（監査 B1）
+        const act = await activeRequest(root, p.planId, p.version);
+        if (!act || act.request.body.kind !== "approve" || act.receipt?.pub !== signer.signer.pair.pub) return no("notRequested");
         const r = await signLatest({ root, planId: p.planId, version: p.version, role: p.role, reason: p.reason, signer: signer.signer, now });
         if (!r.ok) return no(r.reason);
         // 承認すると番は閉じ、差し戻すと渡した人に番が戻る

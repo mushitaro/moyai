@@ -51,6 +51,8 @@ export const HUMAN_TEXT = {
     nameInvalid: "呼び名は 40 文字までで、前後の空白と / \\ : * ? \" < > | は使えません。",
     personKeyMissing: "署名の鍵がまだありません。",
     personKeyExists: "この呼び名の署名の鍵は、この PC にもうあります。",
+    notYourTurn: "この版は、ほかの人が編集を頼まれています。編集の番の人だけが、次の版を重ねられます。",
+    notRequested: "この版の承認の頼みを受け取った鍵ではないので、承認も差し戻しもできません（頼み直しのあとの古いリンクか、頼んだ本人です）。",
     historyVanished: "この PC が前に見た版か署名が、保管先から無くなっています。消されたか、古い写しに戻された恐れがあるので、確定・承認・戻す・送るを止めています（戻す道は未実装）。",
     historyBroken: "保管先の版の署名か鎖が合わないので、その上には確定できません。版の履歴で、どの版が合わないかを見てください。",
     keyUnknown: "その鍵は、この PC がまだ見たことのない鍵です。",
@@ -174,6 +176,22 @@ export const HUMAN_TEXT = {
     role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差し戻し", revert: "戻す" } as Record<string, string>,
   },
   /** 署名の鍵をまだ確かめていないときの知らせ（Wire の KeyWarn.dc.html）。人の署名を信じて何かをするボタンのすぐ左に 1 行 */
+  /** 頼みを誰が受け取ったか（Wire の B1。運営者の決定「マジックリンクで鎖をつなぐ」） */
+  request: {
+    asked: { approve: "承認を頼みました", edit: "編集を頼みました" } as Record<string, string>,
+    notOpened: "まだ開かれていません",
+    receivedBy: "受け取った人",
+    renew: "頼み直す",
+    takenByOther: "この頼みは、ほかの鍵が受け取っています",
+    notify: (by: string) => `${by} に知らせる`,
+    notifySubject: (n: number) => `【MOYAI】第 ${n} 版の頼みを、ほかの人が受け取っています`,
+    notifyBody: (n: number, by: string, fp: string) => `第 ${n} 版の頼みのリンクを開いたところ、ほかの鍵がもう受け取っていました。\n受け取った人：${by}\n受け取った鍵の指紋：${fp}\n頼み直していただけますか。`,
+    withdrawn: "この頼みは取り下げられました",
+    renewTitle: (n: number) => `第 ${n} 版を頼み直す`,
+    renewResult: "前のリンクは使えなくなります。",
+    renewSubmit: "署名して渡す",
+    role: { approve: "承認", edit: "編集" } as Record<string, string>,
+  },
   keyWarn: {
     unconfirmed: (by: string) => `! ${by}の鍵を、まだ確かめていません`,
     changed: (by: string) => `! ${by}の鍵が、前に確かめた鍵と違います`,

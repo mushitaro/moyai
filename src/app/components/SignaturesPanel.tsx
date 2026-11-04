@@ -20,7 +20,14 @@ export interface PanelVersion {
   signatures: (TrustSig & { at?: string })[];
 }
 
-export function SignaturesPanel({ v, readings, onKeyConfirmed }: { v: PanelVersion; readings: readonly LoadedReading[]; onKeyConfirmed?: () => void }) {
+/** 頼み（まだ済んでいないもの）：鎖の行に「承認　宛先　まだ開かれていません」か「承認　受け取った人　信じ方」（Wire の B1） */
+export interface PanelRequest {
+  kind: "approve" | "edit";
+  to: string;
+  received: { by: string; pub: string; fingerprint: string; trust: string; previous: { fingerprint: string; at: string } | null } | null;
+}
+
+export function SignaturesPanel({ v, readings, onKeyConfirmed, request = null }: { v: PanelVersion; readings: readonly LoadedReading[]; onKeyConfirmed?: () => void; request?: PanelRequest | null }) {
   const [check, setCheck] = useState<TrustSig | null>(null);
   return (
     <Stack gap="xs" data-testid="signatures-panel">
@@ -74,6 +81,37 @@ export function SignaturesPanel({ v, readings, onKeyConfirmed }: { v: PanelVersi
           )}
         </Text>
       ))}
+      {request && (
+        <Text size="xs" data-testid="signature-request" data-received={request.received ? "true" : "false"}>
+          {HUMAN_TEXT.request.role[request.kind]}　{request.received ? request.received.by : request.to}
+          {request.received ? (
+            <>
+              <Text span c={request.received.trust === "changed" ? "var(--shu-text)" : undefined}>
+                {H.trust[request.received.trust] ?? ""}
+              </Text>
+              {(request.received.trust === "unconfirmed" || request.received.trust === "changed") && (
+                <>
+                  <Text span c="dimmed">
+                    {"　| "}
+                  </Text>
+                  <Anchor
+                    component="button"
+                    type="button"
+                    size="xs"
+                    onClick={() => setCheck({ role: "confirm", by: request.received!.by, pub: request.received!.pub, fingerprint: request.received!.fingerprint, trust: request.received!.trust, previous: request.received!.previous })}
+                  >
+                    {HUMAN_TEXT.keyWarn.check}
+                  </Anchor>
+                </>
+              )}
+            </>
+          ) : (
+            <Text span c="dimmed">
+              {HUMAN_TEXT.request.notOpened}
+            </Text>
+          )}
+        </Text>
+      )}
       <KeyCheckDialog signer={check} onClose={() => setCheck(null)} onConfirmed={() => onKeyConfirmed?.()} />
     </Stack>
   );

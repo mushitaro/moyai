@@ -51,6 +51,17 @@ interface StatusBody {
   hasKey?: boolean;
   /** 編集の番（docs/screens.md 3.4） */
   turn?: { version: number; state: "editing" | "awaitingApproval" | "approved" | "returned"; holder: string | null; to: string | null; from: string; note: string; at: string } | null;
+  /** いちばん新しい版の頼みと受け取り（監査 B1） */
+  request?: {
+    version: number;
+    kind: "approve" | "edit";
+    to: string;
+    by: string;
+    mine: boolean;
+    received: { by: string; pub: string; fingerprint: string; trust: string; previous: { fingerprint: string; at: string } | null } | null;
+    receivedByMe: boolean;
+    done: boolean;
+  } | null;
 }
 
 

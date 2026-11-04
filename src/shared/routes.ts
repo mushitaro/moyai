@@ -28,6 +28,9 @@ export const HUMAN_ACTIONS = [
   "comments_list",
   // 承認：いちばん新しい版に、承認か差し戻しの署名を足す（docs/screens.md 3.2 の下の帯）
   "plan_sign",
+  // 頼みの受け取り（メールのリンクを開いた人の鍵で署名）と、頼み直す（監査 B1。運営者の決定「マジックリンクで鎖をつなぐ」）
+  "request_receive",
+  "request_renew",
   // EXPORT：確定した版の Excel（人が見る様式・差分レポート）を、人が画面で落とす（docs/screens.md 3.5）
   "plan_file_read",
   // 人の鍵（版の署名。§2.18.2）：自分の鍵を作る・ほかの人の鍵を確認済みにする
@@ -107,7 +110,9 @@ export const ROUTES = {
   commentAdd: human("/human/comment-add", "comment_add", 16 * 1024, "計画にコメントを足す（星取表の行と、この PC の呼び名を添えて、保管先に置く。署名はしない）"),
   commentsList: human("/human/comments-list", "comments_list", 16 * 1024, "計画のコメントを古い順に読む（MERGE の横の板の「コメント」）"),
   planVersionRead: human("/human/plan-version-read", "plan_version_read", 16 * 1024, "確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる）"),
-  planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える"),
+  planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える（頼みを受け取った鍵だけ）"),
+  requestReceive: human("/human/request-receive", "request_receive", 16 * 1024, "メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ）"),
+  requestRenew: human("/human/request-renew", "request_renew", 16 * 1024, "頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する"),
   planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
   personKeyCreate: human("/human/person-key-create", "person_key_create", 16 * 1024, "自分の鍵（版に署名する）を作り、状態フォルダに置く"),
   personKeyConfirm: human("/human/person-key-confirm", "person_key_confirm", 16 * 1024, "ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない）"),
