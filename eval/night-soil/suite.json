@@ -1,0 +1,191 @@
+{
+  "schema": "moyai.eval.suite/0",
+  "name": "night-soil",
+  "pack": "night-soil",
+  "world": "samples/truth/night-soil/fictional-ns-1",
+  "fiscalYearStartMonth": 4,
+  "packSourceUrls": [
+    "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_hw.pdf",
+    "https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/08.xlsx"
+  ],
+  "rules": [
+    {
+      "id": "R01",
+      "name": "周期の欄が空なら推測しない",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R02",
+      "name": "番号の違う機器を名前でまとめない",
+      "graders": [
+        "json",
+        "identity"
+      ]
+    },
+    {
+      "id": "R03",
+      "name": "出典はパックの一覧の中から",
+      "graders": [
+        "json",
+        "source",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R04",
+      "name": "年度の始まりはパックどおり",
+      "graders": [
+        "json",
+        "fiscal_year"
+      ]
+    },
+    {
+      "id": "R05",
+      "name": "記録に無いことは「記録に無い」と言う",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R06",
+      "name": "和暦の年度",
+      "graders": [
+        "json",
+        "fiscal_year"
+      ]
+    },
+    {
+      "id": "R07",
+      "name": "範囲のタグ（系列の範囲）を機器ごとに分ける",
+      "graders": [
+        "json",
+        "identity"
+      ]
+    },
+    {
+      "id": "R08",
+      "name": "凡例に無い記号の意味を推測しない",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R09",
+      "name": "合計の行を作業にしない",
+      "graders": [
+        "json",
+        "identity",
+        "no_guess"
+      ]
+    },
+    {
+      "id": "R10",
+      "name": "単位の違う工数",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    }
+  ],
+  "counts": {
+    "train": 45,
+    "test": 50,
+    "duplicatesRemoved": 0
+  },
+  "missing": [
+    {
+      "rule": "R04",
+      "index": 1,
+      "reason": "正解の世界のデータに、この規則の問いを作る材料が足りない（30 回試した）"
+    },
+    {
+      "rule": "R04",
+      "index": 2,
+      "reason": "正解の世界のデータに、この規則の問いを作る材料が足りない（30 回試した）"
+    },
+    {
+      "rule": "R04",
+      "index": 3,
+      "reason": "正解の世界のデータに、この規則の問いを作る材料が足りない（30 回試した）"
+    },
+    {
+      "rule": "R04",
+      "index": 4,
+      "reason": "正解の世界のデータに、この規則の問いを作る材料が足りない（30 回試した）"
+    },
+    {
+      "rule": "R04",
+      "index": 5,
+      "reason": "正解の世界のデータに、この規則の問いを作る材料が足りない（30 回試した）"
+    }
+  ],
+  "splitNote": "期間で分ける規則は、作業の年度が 2023 年度より前を学習用、2023 年度以後を試験用にした。年度を持たない規則（R03・R08）は、問いの番号 1〜5 を学習用、6〜10 を試験用にした",
+  "testHashes": [
+    "1ae41cf7ce75e7ccf09d09df606a18c55288840a21ab1a5cfc111117415a682b",
+    "400569b21462655d247280d0234a13dfd84783421f962605e96d454a42d0ff73",
+    "4abfd90b0cbf55d3016a38257c1fa9da619a152f72f30d15a30595a4e78a17c3",
+    "2b18204b834575ea9614be040a2c5ba81fe38b2c99c7373b734b98a3328db97e",
+    "fef96b8f5dc0b5d4c6acf008b3a20ee891c19fca1edcbdae6b7bd577439a26ee",
+    "85d9229498435acbde71e849352ee144460819884f6d1d45b44456762a93eabb",
+    "8a3d2e82d4de55083e38aae2ad1b1f2527dd5875256ebb6ef31a6e6839182612",
+    "c1d2f0c2338e0261f2e0e2c9ded6485ac74baa6f4d057d846b9a6bdfa179cbd4",
+    "52ba4731eb262fda23d752e721da7101e52b15e086c780a45da9bb3c4032501a",
+    "ffd894e004698e8bd9d1d95254f23b095da8eae864c6c7b1267512a615a81ff9",
+    "1046b4b2520f362a77097c68b79e7c6ac6766c0be0348f1651a8772740c55620",
+    "242334ad9b3cdf03deaff292602e5ef9ed3eb4c66872cc3d39b7337207f358b5",
+    "28d36fb4fd5f17e11c207e53ced807cd140dc2ee5a54ffd343247a3741d192b5",
+    "df0acc00ff6dc3fe79d349af2ca538b545b7e34f0554d993c972dd5683ff1868",
+    "d14f962f8cbf3fdbb1c1ea7fce44c238c851d4e39061a27494f481d932ea3a12",
+    "a5108668c598a675a50c46fb6e86e1786f9ee2d9fa00663698058bb34ae52794",
+    "77e826014d70d9a52ef1408c779ea565d20ddca5aeba7e2daa7ee4f6a1db8e1a",
+    "aaf0977c417f215a350ff13bf274748f8ff95b062527a3d93c655d56ea824514",
+    "1c11f0e71e37507632e2f8d41a6684573d9ebc6aebbd7d76abd935baf672f5d1",
+    "d331d7888c143a8930c42e4db83521c7a3a8739f311857774a6f2e98ba1e7ef9",
+    "6a2df9c60dd72d08e10b2ab6e87c9473344c22915ff2761d239bbfeccfc78883",
+    "2974ee8e816cfa201eec1e8e1e44f238f0862b1de1ee612da6b792fb0e59a1fa",
+    "3e1d22247a7542c5d732afbea771d678681c5e6b48dc181d33f2f2217121ba9c",
+    "9df5bd7606d2dd4b036c7485972051c03b0376734ea9489daa74eb4cf9cbbead",
+    "f759ef79c8597500eff4b55578bc580534fc971ea397fa30bfc2cd53bcd92b5d",
+    "a97c8db19e489bf8ca6938750e563e474bff0b06ca2ba4d49675432105a11b76",
+    "a051e37b2efa6a9b5e039a16aa4ea79a0c30b6a7c96aaae8c9800da975e7b0d7",
+    "f69187faebd5a4970e5805276df83bd3b04230eb996854b35b63b272d008a675",
+    "3c8a7799f1af0db47d6464b49dba6b73cf4ed7dc81b6f33814d97ab3c9c2f055",
+    "09d90f1adae4afa0dadbe27f59622e28b6233e4d86d325bcb75c2c13377db29e",
+    "9c2dfed58d25dbb3b9f8f96af7d13fb3521f946fda14e6c42473e06baf5d89a9",
+    "14c526c7ae130ec8a9202a77ec4dd7bd53160c1fc506f7e0f62d96c136f6f5b3",
+    "b2fbd1722fa53d084ddd00f49f3d732c3c8a8d7d58757e829cac596558af0d84",
+    "cb00730b08720104ed88fda0ec64a3eac611c1c0d2bf5bee4d1f2a26b5a8511f",
+    "1fe9700f5c4f36514808bfee31baafba1228decbb3f7294952e6cd272c56a8c8",
+    "a1658cd33d47fd8a1c15e8f4244e722fd8592d199bd2e3aa7d7f85820393040b",
+    "707b3cb938e0da692f10fa5dc5afff7d7e6e7d15a9013a396d06997816426c9f",
+    "55f14c03ef3fa2a8b8ecbcc3e3b71d3170ac404991fa532b4af425c4d763ac38",
+    "0c2797ddbd03b7b204df9b7eef84e41320dfa318a9777408edf86f5f39cce6b4",
+    "191ce2dc94ec868929f841a8a5d03ef40aac35be552931acec05654bff68c314",
+    "16c18559fbd9f80abc955028f28f3b23a2d662da32c7fb6b07b908cbadf46a01",
+    "4e863709aa031d25f6c682d3795cadf5f682baae3c38918215d377360abe4098",
+    "f4c707e6a7295fc476180e56d2e64c8fc71991a11fed1c418bd62f6260dd45d5",
+    "3fc9583a554d5733fb64280aa4a2dff21b119e36f45ce393a3012b84d27ecd98",
+    "cec99bdfc725f311b63d782dd456b612921cb910c34492457c957d4314ff4951",
+    "90a7b267c7cce7a2530eef9e89a2395de1cae88693bd3fd6c73286cb782c596e",
+    "7cbb1050157e74d60b03d13a24daeea8e5efddb2ecfadda1db255a3aec3140d9",
+    "ac17c14f5feee0b5c82ba7e0747d9c0cc50ef2c2fed94b6c9552c03f438b13b0",
+    "63d96aa91c3cf77f1efd732ce529455c8720e1663e62af490c5d32ae86e84515",
+    "07362c36c9daaf2b816ee0fcb367452278a93e7a3bcfaa975270eb6785fa5b93"
+  ],
+  "preambleHash": "5fc87fd97a52c5eb5adb615794605425fc6302326f14c0c28ced79d4a86ba91c",
+  "answerFormatHash": "210515c532205cec407feadab86aa5d4575c615b8fd6571469ffd05f92a93c93",
+  "properNounHits": 0,
+  "generator": {
+    "seed": 20261105,
+    "version": 1
+  }
+}
