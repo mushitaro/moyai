@@ -14,14 +14,14 @@
   "profile": {
     "furnace": "STOKER",
     "furnaces": 2,
-    "perFurnace": 70,
+    "perFurnace": 120,
     "turbine": true,
     "dust": "BF",
     "ash": "OUT",
     "contract": "SINGLE",
     "commissioned": 2003
   },
-  "costScale": 0.9,
+  "costScale": 1.2,
   "tagStyle": "dash",
   "vendorStyle": "(株)",
   "vendorPick": 2,
@@ -40,6 +40,15 @@
       ],
       "kana": 0.2,
       "landscapeFrom": 2021
+    },
+    {
+      "type": "orders",
+      "years": [
+        2016,
+        2025
+      ],
+      "textDatesUntil": 2018,
+      "author": "総務課 契約係"
     }
   ]
 }
