@@ -12,6 +12,7 @@ import { Plan } from "../shared/plan";
 import type { ChartCatalog } from "./chart";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
+import { fixWorkbook } from "./xlsx-fix";
 
 /** 書き出しに使う、パックの名前の表（無ければ共通の設備項目のシートを作らない）と、作業の属性の名前だけの表 */
 export interface ExportCatalogs {
@@ -323,5 +324,5 @@ export async function diffReport(record: VersionRecord, diff: PlanDiff): Promise
     row.getCell(3).numFmt = "0";
   });
   ws.autoFilter = { from: { row: 7, column: 1 }, to: { row: 7, column: 7 } };
-  return Buffer.from(await wb.xlsx.writeBuffer());
+  return fixWorkbook(Buffer.from(await wb.xlsx.writeBuffer()));
 }

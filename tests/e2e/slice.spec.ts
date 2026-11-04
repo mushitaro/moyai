@@ -6,7 +6,7 @@
 // AI は本物の中継（dist/cli.js mcp）を MCP の SDK のクライアントでつなぐ。人の操作（受ける・確定・送る）は画面のボタンだけで、
 // AI のツールには無い。先に npm run build を走らせておく。置き場所と輪は一時のフォルダに作り、この PC の Documents には書かない。
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
@@ -205,6 +205,12 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       expect(accepted.every((a: any) => a.commonItemAuthor === "ai" && String(a.commonItemBasis).includes(HUMAN))).toBe(true);
       expect(rec.plan.works.filter((w: any) => w.attribute !== null && !w.attributeAccepted)).toEqual([]);
       expect(rec.plan.works.filter((w: any) => w.attribute === null)).toHaveLength(4);
+      // 確定すると、人が見る様式の Excel と差分レポートが版ごとに足される。撮った画面の隣に写して残す（Excel で開いて見るため）
+      const planDir = join(root, "plans", plans[0]!);
+      expect(readdirSync(join(planDir, "exports"))).toEqual(["000001-plan.xlsx"]);
+      expect(readdirSync(join(planDir, "reports"))).toEqual(["000001-diff.xlsx"]);
+      copyFileSync(join(planDir, "exports", "000001-plan.xlsx"), shot(`slice-export-${tag}`).replace(/\.png$/, ".xlsx"));
+      copyFileSync(join(planDir, "reports", "000001-diff.xlsx"), shot(`slice-diff-${tag}`).replace(/\.png$/, ".xlsx"));
       await page.screenshot({ path: shot(`slice-confirmed-${tag}`) });
       await page.getByTestId("to-checkpoint").click();
     });

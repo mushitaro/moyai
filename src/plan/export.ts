@@ -6,6 +6,7 @@
 // 行の組み方は画面の星取表と同じ関数（buildChart）。純粋な関数（ファイルは書かない。書くのは store.ts）。
 import ExcelJS from "exceljs";
 import type { Plan } from "../shared/plan";
+import { fixWorkbook } from "./xlsx-fix";
 import { buildChart, type ChartCatalog, type ChartLabels, type ChartModel, type ChartRow } from "./chart";
 
 /** 書き出しの言葉（Excel に書く言葉。画面の言葉は src/app/text/） */
@@ -184,5 +185,5 @@ export async function planWorkbook(input: ExportInput): Promise<Buffer> {
     ws2.getCell(1, 1).value = `${T.title}${input.plan.facility.fictional ? `　${T.fiction}` : ""}`;
     ws2.getCell(2, 1).value = T.noCatalog;
   }
-  return Buffer.from(await wb.xlsx.writeBuffer());
+  return fixWorkbook(Buffer.from(await wb.xlsx.writeBuffer()));
 }
