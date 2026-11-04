@@ -46,7 +46,7 @@ def write_ledger(W, doc, outdir, answers, _):
                 num2 = f"{si}-{ti + 1}" + (f"-{gi + 1}" if len(groups) > 1 else "")
                 name = t["chart"][doc.get("nameVariant", 1) % len(t["chart"])] if r.random() < 0.3 else t["name"]
                 if len(groups) > 1:
-                    name = f"{g[0]['furnace']}号炉 " + name
+                    name = f"{W.unit(g[0]['furnace'])} " + name
                 tag = g[0]["tag"]
                 if tag and r.random() < doc.get("codeInName", 0.5):
                     name = f"{name}({tag}{'～' + g[-1]['tag'].split('-')[-1] if len(g) > 1 and g[-1]['tag'] else ''})"

@@ -71,20 +71,23 @@ def _wrappers(fac_dir):
 
 
 def profile(W):
+    """世界の正解に残す施設の性質。どの軸を残すかはパックの world.json の profileAnswer で決める。
+    無ければ、施設の設定の profile の軸をすべて残す（系列の数・竣工・基幹改良は下で足す）。"""
     p = W.prof
-    out = {k: p[k] for k in ("furnace", "turbine", "dust", "ash", "contract") if k in p}
-    if "perFurnace" in p:
-        cap = p["perFurnace"] * W.F
-        out["capacity_t_per_day"] = cap
-        edges = [50, 100, 200, 400]
-        names = ["CLT50", "C50_100", "C100_200", "C200_400", "C400P"]
-        out["capacityBand"] = names[sum(1 for e in edges if cap >= e)]
-    if "capacity_kl_per_day" in p:
-        out["capacity_kl_per_day"] = p["capacity_kl_per_day"]
-    if "method" in p:
-        out["method"] = p["method"]
-    if isinstance(out.get("turbine"), bool):
-        out["turbine"] = "YES" if out["turbine"] else "NO"
+    pa = W.rules.get("profileAnswer")
+    if pa is None:
+        pa = {"copy": [k for k in p if k not in ("furnaces", "commissioned", "upgrade")]}
+    out = {k: p[k] for k in pa.get("copy", []) if k in p}
+    tot = pa.get("total")
+    if tot and tot["from"] in p:
+        cap = p[tot["from"]] * W.F
+        out[tot["key"]] = cap
+        if tot.get("band"):
+            b = tot["band"]
+            out[b["key"]] = b["names"][sum(1 for e in b["edges"] if cap >= e)]
+    for k in pa.get("yesNo", []):
+        if isinstance(out.get(k), bool):
+            out[k] = "YES" if out[k] else "NO"
     out["upgraded"] = "実施済み" if (W.upgrade and W.upgrade["years"][-1] <= W.today_fy) else ("実施中" if W.upgrade else "未実施")
     out["furnaces"] = W.F
     out["commissioned"] = p["commissioned"]

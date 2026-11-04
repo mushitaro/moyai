@@ -1,6 +1,7 @@
 """施設ごとの README.md（わざと入れた揺れと食い違いの一覧）と user.md（担当者が知っていること）を書く。
 
 README は作る側と測る人のためのもので、読み手には渡さない。user.md は担当者の言葉で、ファイルの読み方の手順や MOYAI の決定の形は書かない。
+業種の言葉（系列の呼び方・例の機器・出典・施設の説明の文）は、パックの world.json の text から引く。
 """
 from __future__ import annotations
 
@@ -22,11 +23,35 @@ HEAD = {
     "eraStack": "年度の見出しは元号を 1 段にまとめ（「平　成」「令　和」）、その下に年の数（元・2・3…）",
 }
 LAYOUT = {
-    "cols": "設備 → 機器 → 号炉・系統 → 部位を、左から列をずらして書いた（列で字下げ）",
+    "cols": "設備 → 機器 → {u}・系統 → 部位を、左から列をずらして書いた（列で字下げ）",
     "indent": "名前は 1 列。段は全角の空白で字下げし、深い段は「・」を付けた",
     "numbered": "番号の列（1 / 1-1 / 1-1-1）と名前の列。名前は書式のインデントで字下げ",
-    "merged": "大分類の列を縦に結合し、機器・号炉・部位を列に分けた。上と同じ名前は「〃」や空欄",
+    "merged": "大分類の列を縦に結合し、機器・{u}・部位を列に分けた。上と同じ名前は「〃」や空欄",
 }
+
+
+def _layout(W, key):
+    return LAYOUT[key].replace("{u}", W.text("unitWord"))
+
+
+def _facility_lines(W):
+    """user.md の「うちの施設」の文。パックの text.doc.userFacility の型に、施設の性質を入れる。"""
+    p = W.prof
+    words = W.doc_text("words")
+    w = {k: v.get(str(p.get(k)), v.get("*", "")) for k, v in words.items()}
+    v = {"p": p, "w": w, "F": W.F}
+    tot = (W.rules.get("profileAnswer") or {}).get("total")
+    if tot and tot["from"] in p:
+        v["total"] = p[tot["from"]] * W.F
+    if W.upgrade:
+        v["up0"], v["upN"] = era_fy(W.upgrade["years"][0]), era_fy(W.upgrade["years"][-1])
+    out = []
+    for x in W.doc_text("userFacility"):
+        when = x.get("when")
+        if when == "upgrade" and not W.upgrade or when == "noUpgrade" and W.upgrade:
+            continue
+        out.append(x["t"].format(**v))
+    return out
 
 
 def _docs(W, t):
@@ -131,11 +156,8 @@ def readme(W, answers, fac_dir: Path):
     L.append("")
     L.append("## 出典と加工")
     L.append("")
-    if W.pack == "waste-incineration":
-        L.append("- 施設の性質（炉型・処理能力の帯・蒸気タービン・灰処理・運営の形）は、環境省「一般廃棄物処理実態調査結果（令和 6 年度）施設の表（焼却施設）」から数だけを取り出した `packs/waste-incineration/national/table.json` の分布に寄せて選んだ（加工した）。表の行や施設名は写していない。")
-    else:
-        L.append("- し尿処理の施設の性質は、全国の表（同じ調査の 08.xlsx）から数をまだ取り出していないので、分布には照らしていない（未確認）。")
-    L.append("- 機器の項目は、環境省の長寿命化総合計画作成の手引きの表Ⅱ-4（パックの `common.json`）。法令の点検の周期は、照らしたもの（精密機能検査の 3 年＝課長通知）だけを `recommendation` にし、ほかは `app`（`world.json` の legal）。")
+    for line in W.doc_text("sourceNotes"):
+        L.append(f"- {line}")
     L.append("- 金額・工数・業者・型式・製造番号・人名はすべて架空。")
     (fac_dir / "README.md").write_bytes(("\n".join(L) + "\n").encode("utf-8"))
 
@@ -168,16 +190,16 @@ def _dirt(W, answers):
         t = d["type"]
         if t == "chart":
             f = [a for a in answers if d["stem"] in a][0]
-            parts = [LAYOUT[d.get("layout", "cols")], HEAD[d.get("header", "era2")], f"凡例：{LEG[d.get('legend', 'pd')]}"]
+            parts = [_layout(W, d.get("layout", "cols")), HEAD[d.get("header", "era2")], f"凡例：{LEG[d.get('legend', 'pd')]}"]
             if d.get("hideYears"):
                 parts.append(f"古い年度の列を {d['hideYears']} 列隠した（{era_fy(d['yearsFrom'])}〜）")
             if d.get("elecSheet"):
                 e = d["elecSheet"]
-                parts.append(f"機械と電気・計装を別のシートにした。電気・計装のシートは {LAYOUT[e.get('layout', 'indent')]}、{HEAD[e.get('header', 'eraNL')]}"
+                parts.append(f"機械と電気・計装を別のシートにした。電気・計装のシートは {_layout(W, e.get('layout', 'indent'))}、{HEAD[e.get('header', 'eraNL')]}"
                              + (f"、年度は {era_fy(e['yearsFrom'])}〜{era_fy(e['yearsTo'])}" if e.get("yearsTo") else ""))
             parts.append("周期を「2年」と文字で書いた行が混ざる（数の行と文字の行）")
-            parts.append("号炉の書き方が機器ごとに揺れる（" + "・".join(sorted({x for x in _furnace_forms(W, d)})) + "）")
-            parts.append("1 台ずつの行と、" + ("2 炉で 1 行・" if W.F > 1 else "") + "台数をまとめて 1 行の機器が混ざる")
+            parts.append(f"{W.text('unitWord')}の書き方が機器ごとに揺れる（" + "・".join(sorted({x for x in _furnace_forms(W, d)})) + "）")
+            parts.append("1 台ずつの行と、" + (f"{W.text('pairRow')}・" if W.F > 1 else "") + "台数をまとめて 1 行の機器が混ざる")
             parts.append("Excel のメモ：延期の理由（「R2予定 → R3に延期」）、計画外の臨時の実施、完成図書との名前の違い")
             parts.append("備考に取替・新設・更新（「R3 更新」）と、文の中の年度（「R18に更新の予定」）、事後の補修（「R5.3.8 …（臨時）」）")
             own = [x for x in answers[f].records if x["kind"] == "parent" and "work" in x["fields"]]
@@ -206,28 +228,28 @@ def _dirt(W, answers):
             lf = d.get("landscapeFrom")
             out.append(f"作業日報（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのブック、月ごとのシート、1 日 1 枚の帳票。印刷の設定（A4・向き・余白・印刷の範囲・改ページ・横 1 頁）を入れ、1 日 1 枚が印刷の 1 頁になる。"
                        "明細が入りきらない日は続紙（「作業日報（続紙）」、頁 2/2）。"
-                       "明細は号炉・系統・機器・作業を、横に結合した 1 つのセルに平打ちした（例「1号 No.2 BFP 分解整備」「バグフィルタ（#2）本体点検」）。書き順と区切り（空白・全角の空白・「・」・括弧）は記入者で揺れ、日でも少し揺れる。"
+                       f"明細は{W.text('unitWord')}・系統・機器・作業を、横に結合した 1 つのセルに平打ちした（例{W.doc_text('diaryExample')}）。書き順と区切り（空白・全角の空白・「・」・括弧）は記入者で揺れ、日でも少し揺れる。"
                        + (f"いじわる：{era_fy(lf)} 年度から帳票が A4 横に変わる。それより前（A4 縦）は和暦の文字の日付・人員（「3名」と数が混ざる）、"
                           f"{era_fy(lf)} 年度からは日付のセル・題と承認の欄と日付の位置・列の並び・結合が変わり、職種別人員と人工計の列が足される。" if lf else "")
-                       + "号炉の書き方（1号・１号炉・1炉・#1・共通・—）、号機（No.2・№2・2号機・(2)・B号機）、呼び名（IDF・誘引ﾌｧﾝ・BFP・給水P など）と半角カナが揺れる。"
-                       "補修と細かな点検（ストレーナ清掃・グリスアップ…）は日報にだけある")
+                       + f"{W.doc_text('diaryForms')}と半角カナが揺れる。"
+                       f"補修と細かな点検（{W.doc_text('routineExample')}…）は日報にだけある")
         elif t == "diary_csv":
             out.append(f"作業実績の CSV（{d['years'][0]}〜{d['years'][1]} 年度、{d.get('encoding', 'cp932')}）：1 行目がコメント、2 行目が見出し。1 行 1 件。"
                        "まとめ工事の行（「…定期補修工事」「一式（内訳は各行）」「延べ◯人工」）を工事の初日に置いた。日付は「2023/05/10」と「2023-05-10」が混ざる。"
-                       "半角カナ・括弧の全角半角・号炉の書き方が揺れる。作業時間は人数×7.5 か 8 時間"
+                       f"半角カナ・括弧の全角半角・{W.text('unitWord')}の書き方が揺れる。作業時間は人数×7.5 か 8 時間"
                        + ("。Shift_JIS に無い文字（—）は ― に置いた" if d.get("encoding", "cp932") == "cp932" else ""))
         elif t == "gantt":
-            out.append(f"工程表（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのシート、週の列（月の見出しは週の列の上）。週のセルはその週に作業した日数で、網掛けの色で炉・全休炉・段を分けた。"
-                       "工数の書き方が行ごとに揺れる（延べ人工の数、「45人工」の文字、「6日間」の日数だけ、着手・完了の無い期間だけ）。炉と全休炉の見出しの行は複数の機器をまとめた工事の行。行のグループ")
+            out.append(f"工程表（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのシート、週の列（月の見出しは週の列の上）。週のセルはその週に作業した日数で、網掛けの色で{W.doc_text('ganttShade')}を分けた。"
+                       f"工数の書き方が行ごとに揺れる（延べ人工の数、「45人工」の文字、「6日間」の日数だけ、着手・完了の無い期間だけ）。{W.doc_text('ganttHeads')}の見出しの行は複数の機器をまとめた工事の行。行のグループ")
         elif t == "orders":
             out.append(f"発注台帳（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])}）：年度ごとのシート。{era_fy(d.get('textDatesUntil', 2018))} 年度までは和暦の文字の日付（「H27.5.12」と「平成27年5月12日」が混ざる）、あとは日付のセル。"
                        "単価契約（予定総額と支払額が違う）、変更契約の行（「　〃　（第1回変更）」）、緊急の随意契約、定期補修工事の一式、継続費の基幹改良（年割額）。件名に施設の正式名と略称が混ざる。区分ごとの小計と合計（数の値）"
                        + ("。履行期間を 1 つのセルに「R8.4～R9.3」と書いた" if d.get("oneCellPeriod") else ""))
         elif t == "spec_pdf":
-            out.append("完成図書の機器仕様一覧表（PDF）：竣工のときのまま（あとで足した機器は無い）。号炉に分けず数量でまとめた（「6 台」）。頁ごとに見出しをくり返す。表紙の頁。名前は完成図書の名前（星取表の呼び名と違う）")
+            out.append(f"完成図書の機器仕様一覧表（PDF）：竣工のときのまま（あとで足した機器は無い）。{W.text('unitWord')}に分けず数量でまとめた（「6 台」）。頁ごとに見出しをくり返す。表紙の頁。名前は完成図書の名前（星取表の呼び名と違う）")
         elif t == "ledger":
-            out.append("機器台帳（Excel）：番号 1 / 1-1 / 1-1-1、名前は 1 列で全角の空白の字下げ、名前に入った機器番号「(BFP-101～103)」、仕様のセルの中の改行、設置年月は「平成14年3月」、備考に新設・更新。"
-                       + ("号炉ごとに行を分けた（ほかの資料は台数でまとめる）" if d.get("perFurnace") else "台数でまとめた（号炉に分けない）"))
+            out.append(f"機器台帳（Excel）：番号 1 / 1-1 / 1-1-1、名前は 1 列で全角の空白の字下げ、名前に入った機器番号「{W.doc_text('ledgerCodeExample')}」、仕様のセルの中の改行、設置年月は「平成14年3月」、備考に新設・更新。"
+                       + (f"{W.text('unitWord')}ごとに行を分けた（ほかの資料は台数でまとめる）" if d.get("perFurnace") else f"台数でまとめた（{W.text('unitWord')}に分けない）"))
         elif t == "photo":
             out.append(f"日常点検表の写真（{len(d['weeks'])} 枚、JPEG）：紙を撮ったもの。傾き（3〜8 度）、影、ぼけ、明るさのむら、紙の折れ、手書きのチェック・×・数・印。1 枚に 2 セルずつ、染みとぼけで読めなくしたセル（正解は「読めない」）")
         elif t == "inspect_csv":
@@ -273,7 +295,7 @@ def _cross(W, answers):
         out.append(f"`{aid}`（完成図書・台帳の名前「{a['name']}」）の呼び名：" + "、".join(f"「{k}」（{'・'.join(sorted(v))}）" for k, v in list(vals.items())[:5]))
         if len(used) >= 10:
             break
-    out.append("粒度：完成図書・機器台帳は台数でまとめ、星取表は 1 台ずつの行・2 炉で 1 行・まとめて 1 行が混ざる。台帳の 1 行が、星取表では部位（クレーン → 巻上装置・走行装置・横行装置・バケット など）に分かれる")
+    out.append(f"粒度：完成図書・機器台帳は台数でまとめ、星取表は 1 台ずつの行・{W.text('pairRow')}・まとめて 1 行が混ざる。台帳の 1 行が、星取表では部位（{W.doc_text('partsExample')}）に分かれる")
     out.append("日付：星取表は年度の印だけ。日報・工程表・発注台帳は日付（工程表の着手・完了と、日報の作業した日は同じ作業。発注台帳の工期は契約の期間で、作業の日より広い）")
     out.append("工数：日報は 1 日の人数（と延べ時間）、工程表は延べ人工（数か文字）か日数だけ、CSV は人数と時間。同じ作業の日報の人数の和が、工程表の延べ人工になる")
     out.append("どの資料のどの行がどの作業かは `answer/world.json` の `links`（`how` が bundle・annual・rollup・upgrade の結びは、契約やまとめた工事の行で、作業そのものの行ではない）")
@@ -288,25 +310,7 @@ def usermd(W, answers, fac_dir: Path):
     L.append("")
     L.append("## うちの施設")
     L.append("")
-    if W.pack == "waste-incineration":
-        fur = {"STOKER": "ストーカ炉", "FLUID": "流動床炉", "SHAFT": "シャフト式のガス化溶融炉", "ROTARY": "キルン式のガス化溶融炉", "FIXED": "固定床の炉"}[p["furnace"]]
-        L.append(f"- {fur}が {W.F} 炉。1 炉 {p['perFurnace']}t/日で、全体で {p['perFurnace'] * W.F}t/日。{p['commissioned']} 年度に竣工した。")
-        L.append(f"- 蒸気タービンで発電{'している' if p.get('turbine') else 'はしていない'}。集じんは{'ろ過式集じん器（バグフィルタ）' if p.get('dust') == 'BF' else '電気集じん器'}。"
-                 f"灰は{'溶融している' if p.get('ash') == 'MELT' else ('セメント固化している' if p.get('ash') == 'CEMENT' else '処理して外へ搬出している')}。")
-        L.append(f"- 運営は{'運営事業者への長期包括（O&M）' if p.get('contract') == 'OM' else '市町村の直営で、運転管理は単年度の委託'}。")
-        if W.upgrade:
-            ys = W.upgrade["years"]
-            L.append(f"- 基幹的設備改良工事を {era_fy(ys[0])}〜{era_fy(ys[-1])} 年度にやった（{era_fy(ys[0])} が実施設計、そのあと 1 号炉、2 号炉の順）。")
-        else:
-            L.append("- 基幹的設備改良工事はまだやっていない。")
-        L.append("- 毎年、1 号炉の定期整備 → 全炉を止める全休炉整備 → 2 号炉の定期整備の順。全休炉のあいだに受変電の全停電の点検をする。")
-    else:
-        L.append(f"- し尿処理施設。処理方式は{p.get('methodName')}、処理能力は {p['capacity_kl_per_day']}kL/日。{p['commissioned']} 年度に竣工した。")
-        L.append("- 炉は無い。年に 1 回、受変電の年次点検のときに全停止する。")
-    L.append("- 号炉や号機の書き方は人と資料でまちまち。「1号」「#1」「1炉」「１号炉」はどれも 1 号炉。号機は「No.2」「№2」「2号機」「(2)」「B号機」がどれも 2 台目。"
-             if W.pack == "waste-incineration" else "- 号機の書き方は人と資料でまちまち。「No.2」「№2」「2号機」「(2)」「B号機」はどれも 2 台目。")
-    L.append("- 「共通」は 3 つの意味で使っている：系統に共通の部品（消石灰のサイロなど）、系統が合流して分かれる機器（脱気器・復水器・火格子の油圧装置など）、施設全体の設備（精密機能検査・排ガス測定など）。日報で「共通」「—」「共」と書いた行は炉を分けない作業。"
-             if W.pack == "waste-incineration" else "- 「共通」は施設全体の作業（精密機能検査・水質検査など）。")
+    L.extend(_facility_lines(W))
     L.append("- 年度は 4 月から 3 月。")
     L.append("")
     L.append("## ファイルごと")
@@ -319,7 +323,7 @@ def usermd(W, answers, fac_dir: Path):
             L.append("")
             L.append("- 施設の整備の計画表（星取表）。保全係が毎年見直している。")
             L.append(f"- 記号：{LEG[d.get('legend', 'pd')]}。")
-            L.append(f"- 費用は 1 回あたりの概算で、単位は{d.get('costUnit', '千円')}（税抜）。2 炉で 1 行にした行や台数をまとめた行は、その全体の額。")
+            L.append(f"- 費用は 1 回あたりの概算で、単位は{d.get('costUnit', '千円')}（税抜）。{W.text('pairRow')}にした行や台数をまとめた行は、その全体の額。")
             L.append("- 周期は年。「2年」と文字で書いた行もあるが同じ意味。")
             L.append(f"- {era_fy(W.today_fy)} 年度の実績はまだ一部しか入れていない（日報と発注台帳を見て、あとでまとめて入れる）。")
             if d.get("hideYears"):
@@ -338,12 +342,12 @@ def usermd(W, answers, fac_dir: Path):
             L.append(f"### 作業日報（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])} 年度のブック）")
             L.append("")
             L.append("- 運転管理の委託先と保全係が毎日書く帳票。1 日 1 枚で、印刷すると 1 日が A4 の 1 枚になる。書ききれない日は続紙に書いた（頁の欄が 2/2）。")
-            L.append("- 明細の欄には、号炉・号機・機器・作業をまとめて 1 行で打っている。書く順番や区切りは書く人で違う。")
+            L.append(f"- 明細の欄には、{W.text('unitWord')}・号機・機器・作業をまとめて 1 行で打っている。書く順番や区切りは書く人で違う。")
             if lf:
                 L.append(f"- {era_fy(lf) } 年度から帳票を A4 横に変えた（職種ごとの人数の欄を足したため）。それより前の A4 縦の帳票の「人員」はその日にその作業に入った人数。横の帳票は職種ごとの人数と、その合計の「人工計」。")
             L.append("- 1 人が 1 日働いて 1 人工。")
             L.append("- 施工業者が「常駐（運転管理）」「運転管理委託」の行は、運転管理の委託先が自分でやった作業。")
-            L.append("- 細かな点検や手当て（ストレーナ清掃・グリスアップなど）と、壊れて直した補修は、日報にしか書いていない。")
+            L.append(f"- 細かな点検や手当て（{W.doc_text('routineExample')}など）と、壊れて直した補修は、日報にしか書いていない。")
             L.append("")
         elif t == "diary_csv":
             L.append(f"### 作業実績の CSV（{d['years'][0]}〜{d['years'][1]} 年度）")
@@ -358,7 +362,7 @@ def usermd(W, answers, fac_dir: Path):
             L.append("- 定期整備の工程表。元請と打ち合わせて作り、終わったあとに実際の日に直した。")
             L.append("- 週の列の数字は、その週に作業した日数（日曜は休み）。")
             L.append("- 延べ人工はその作業の全体の人工。数字で書いた行と「◯人工」と書いた行がある。「◯日間」としか書いていない行は人工を控えていない。")
-            L.append("- 「■ 1号炉　定期整備」などの見出しの行は、その炉の整備の期間と全体の人工。")
+            L.append(f"- 「{W.text('ganttUnit').replace('{unit}', W.unit(1))}」などの見出しの行は、{W.text('theUnit')}の整備の期間と全体の人工。")
             L.append("")
         elif t == "orders":
             L.append(f"### 発注台帳（{era_fy(d['years'][0])}〜{era_fy(d['years'][1])} 年度）")
@@ -366,7 +370,7 @@ def usermd(W, answers, fac_dir: Path):
             L.append("- 契約係の発注台帳。金額は税込の円。")
             L.append("- 単価契約は契約金額が予定の総額で、支払額は使った分。")
             L.append("- 「〃（第1回変更）」の行は、すぐ上の契約の変更契約（変更後の金額）。")
-            L.append("- 「定期補修工事」は、その炉の定期整備の中の機器の整備をまとめた 1 件の契約。")
+            L.append(f"- 「定期補修工事」は、{W.text('theUnit')}の定期整備の中の機器の整備をまとめた 1 件の契約。")
             if W.upgrade:
                 L.append("- 基幹的設備改良工事は 3 年度の継続費。2 年目と 3 年目のシートには、その年度の年割額の行がある。")
             L.append("")
@@ -374,12 +378,12 @@ def usermd(W, answers, fac_dir: Path):
             L.append("### 完成図書 第3編 機器仕様一覧表（PDF）")
             L.append("")
             L.append("- 竣工のときにプラントの会社が出した完成図書の一部。そのあとに足した機器や更新した中身は入っていない。")
-            L.append("- 数量は施設全体の台数（号炉に分けていない）。名前は完成図書の名前で、現場の呼び名と違うものがある（誘引通風機＝誘引送風機、ろ過式集じん器＝バグフィルタ など）。")
+            L.append(f"- 数量は施設全体の台数（{W.text('unitWord')}に分けていない）。名前は完成図書の名前で、現場の呼び名と違うものがある（{W.doc_text('specNamesExample')}）。")
             L.append("")
         elif t == "ledger":
             L.append(f"### 機器台帳")
             L.append("")
-            L.append("- 施設係の機器台帳。" + ("号炉ごとに行を分けている。" if d.get("perFurnace") else "台数でまとめている（号炉に分けていない）。"))
+            L.append("- 施設係の機器台帳。" + (f"{W.text('unitWord')}ごとに行を分けている。" if d.get("perFurnace") else f"台数でまとめている（{W.text('unitWord')}に分けていない）。"))
             L.append("- 名前の後ろの括弧の中は機器番号（「～」は番号の範囲）。")
             L.append("- 設置年月は竣工か、あとで足した年月。備考の「新設」「更新」はその年度にやったこと。")
             L.append("")

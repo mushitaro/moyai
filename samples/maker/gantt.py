@@ -64,11 +64,11 @@ def _sheet(W, S, fy, ans, fname, doc):
     nm = W.rules["naming"]
     sections = []
     for f, fw in sorted(win["furnaces"].items()):
-        sections.append((f"■ {f}号炉　定期整備", "F", f, fw["start"], fw["end"]))
+        sections.append((W.text("ganttUnit").replace("{unit}", W.unit(f)), "F", f, fw["start"], fw["end"]))
         if f == 1 and W.F >= 2:
-            sections.append(("■ 全休炉（全炉停止）", "A", None, win["all"]["start"], win["all"]["end"]))
+            sections.append((W.text("ganttAll"), "A", None, win["all"]["start"], win["all"]["end"]))
     if W.F == 1:
-        sections.append(("■ 共通設備（休炉中）", "A", None, win["all"]["start"], win["all"]["end"]))
+        sections.append((W.text("ganttAllSingle"), "A", None, win["all"]["start"], win["all"]["end"]))
     for title, kind, f, s, e in sections:
         ws_ = []
         if kind == "F":

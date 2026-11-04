@@ -13,15 +13,6 @@ from collections import defaultdict
 from .book import Answer, Book, addr, ev
 from .util import FAKE, daterange, era_fy, fill, fy_range, hankaku_kana, paren_half, rng_for, wareki_full, weekday_ja
 
-TRADES = ["鳶工", "機械工", "溶接工", "電工", "保温工", "作業員"]
-TRADE_BY_ROLE = {
-    "plant": [1, 4, 2, 0, 0, 3], "boiler": [0, 3, 3, 0, 1, 1], "pump": [0, 3, 0, 1, 0, 0], "fan": [0, 3, 0, 1, 0, 0],
-    "crane": [0, 2, 0, 2, 0, 1], "env": [0, 3, 1, 0, 0, 3], "catalyst": [1, 2, 0, 0, 0, 3], "refractory": [0, 1, 0, 0, 0, 6],
-    "turbine": [0, 4, 0, 1, 0, 1], "electric": [0, 0, 0, 4, 0, 1], "elecsafety": [0, 0, 0, 3, 0, 0], "system": [0, 0, 0, 3, 0, 0],
-    "instrument": [0, 0, 0, 2, 0, 1], "analysis": [0, 0, 0, 0, 0, 2], "consult": [0, 0, 0, 0, 0, 2], "scale": [0, 1, 0, 1, 0, 0],
-    "diesel": [0, 2, 0, 1, 0, 0], "building": [0, 1, 0, 1, 0, 1], "water": [0, 2, 0, 0, 0, 1], "machine": [0, 2, 1, 0, 0, 1],
-    "scaffold": [5, 0, 0, 0, 0, 2], "om": [0, 2, 0, 1, 0, 2], "misc": [0, 1, 0, 1, 0, 0],
-}
 WRITERS = ["高瀬", "三ツ木", "沖野", "葉山", "柚木", "千早"]
 WEATHER = ["晴", "晴", "曇", "晴", "雨", "曇", "晴時々曇", "雪"]
 TIMES = ["8:30～17:00", "8:30～17:00", "8:00～17:00", "9:00～16:30", "8:30-17:00", "13:00～17:00"]
@@ -67,7 +58,7 @@ def labels(W, w, r, doc):
             eq = ""
         else:
             fur = r.choice(nm["common"]["diary"])
-            eq = "全炉"
+            eq = W.text("allUnits")
         return fur, "", eq
     f = a["furnace"]
     fur = fill(nm["furnace"]["diary"][fstyle], f) if f and W.F > 1 else (r.choice(nm["common"]["diary"]) if r.random() < 0.6 else "")
@@ -169,7 +160,8 @@ def write_diary_csv(W, doc, outdir, answers, _):
         lines = day_lines(W, days, doc)
         rows = []
         rows.append([f"# {FAKE}{W.fac['name']} 作業実績データ（{era}年度）　委託先の業務システムから出力。施設・業者・人名はすべて架空"])
-        head = ["作業日", "号炉", "設備名", "作業区分", "作業内容", "施工業者", "人数", "作業時間(h)", "備考"]
+        uh = W.text("csvUnitHead")
+        head = ["作業日", uh, "設備名", "作業区分", "作業内容", "施工業者", "人数", "作業時間(h)", "備考"]
         rows.append(head)
         bundles_done = set()
         for day in days:
@@ -181,10 +173,10 @@ def write_diary_csv(W, doc, outdir, answers, _):
                 if c and c.get("bundle") and cid not in bundles_done:
                     bundles_done.add(cid)
                     tot = sum(W.widx[x]["manDays"] for x in c["works"] if W.widx[x]["done"])
-                    rr = [day.strftime("%Y/%m/%d"), f"{c['bundle']}号炉" if c["bundle"] != "all" else "共通", c["title"].replace(W.fac["name"], ""),
+                    rr = [day.strftime("%Y/%m/%d"), W.unit(c["bundle"]) if c["bundle"] != "all" else "共通", c["title"].replace(W.fac["name"], ""),
                           "工事", "一式（内訳は各行）", c["vendor"], "", "", f"延べ{tot}人工"]
                     rows.append(rr)
-                    _rec(ans, {"作業日": day, "号炉": rr[1], "設備名": rr[2], "作業区分": "工事", "作業内容": rr[4],
+                    _rec(ans, {"作業日": day, uh: rr[1], "設備名": rr[2], "作業区分": "工事", "作業内容": rr[4],
                                "施工業者": rr[5], "manDaysText": rr[8], "manDays": tot}, rr, enc, len(rows))
                     for x in c["works"]:
                         W.link(x, fname, r=len(rows), how="bundle")
@@ -198,10 +190,10 @@ def write_diary_csv(W, doc, outdir, answers, _):
                 rr = [day.strftime("%Y/%m/%d") if r.random() > 0.05 else day.strftime("%Y-%m-%d"), fur, eqtxt, kind, wt,
                       vend, str(persons), hstr, memo]
                 rows.append(rr)
-                f = {"作業日": day, "号炉": fur, "設備名": eqtxt, "作業区分": kind, "作業内容": wt, "施工業者": vend,
+                f = {"作業日": day, uh: fur, "設備名": eqtxt, "作業区分": kind, "作業内容": wt, "施工業者": vend,
                      "人数": persons, "作業時間(h)": hours, "manDays": persons, "manDaysText": f"{persons}人・{hstr}h"}
                 if not fur:
-                    f.pop("号炉")
+                    f.pop(uh)
                 if memo:
                     f["備考"] = memo
                 _rec(ans, f, rr, enc, len(rows))

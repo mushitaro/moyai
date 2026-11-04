@@ -41,6 +41,7 @@ class World:
         self.links: list[dict] = []
         self.errata: list[dict] = []
         self.gaps: list[dict] = list(self.fac.get("gapsNote", []))
+        self.words = self.rules.get("text", {})
         self.vendor_names = self._vendors()
         self._build_assets()
         self._plan_occurrences()
@@ -428,10 +429,10 @@ class World:
         if not rows:
             return
         for f in range(1, self.F + 1):
-            self._add_asset({"id": f"F-{f}", "key": "_F", "name": f"{f}号炉", "system": "FAC", "class": None,
+            self._add_asset({"id": f"F-{f}", "key": "_F", "name": self.unit(f), "system": "FAC", "class": None,
                              "furnace": f, "unit": None, "units": 1, "part": None, "parent": None, "commonKind": None,
                              "installed": self.prof["commissioned"], "added": False, "tag": None, "pseudo": True})
-        self._add_asset({"id": "ALL", "key": "_ALL", "name": "全炉", "system": "FAC", "class": None, "furnace": None,
+        self._add_asset({"id": "ALL", "key": "_ALL", "name": self.text("allUnits"), "system": "FAC", "class": None, "furnace": None,
                          "unit": None, "units": 1, "part": None, "parent": None, "commonKind": "facility",
                          "installed": self.prof["commissioned"], "added": False, "tag": None, "pseudo": True})
         base = {"strategy": "時間基準保全", "legal": None, "flow": None, "costK": 0, "k": 0, "per": 1, "cycle": 1,
@@ -441,7 +442,7 @@ class World:
             for f, fw in win["furnaces"].items():
                 md = sum(w["manDays"] for w in inwin if w["at"] == "F" and self.aidx[w["asset"]]["furnace"] == f)
                 md += sum(s["md"] for s in win["steps"] if s["furnace"] == f)
-                w = {**base, "asset": f"F-{f}", "key": "_F", "task": "定期整備", "ti": "OUT", "attr": rows["furnace"]["a"],
+                w = {**base, "asset": f"F-{f}", "key": "_F", "task": self.text("taskUnit"), "ti": "OUT", "attr": rows["furnace"]["a"],
                      "fy": fy, "plannedFy": fy, "status": "planned", "vendorRole": "plant", "ct": "bundle", "at": "F",
                      "start": fw["start"], "end": fw["end"], "days": (fw["end"] - fw["start"]).days + 1, "manDays": md,
                      "rollup": True}
@@ -454,7 +455,7 @@ class World:
                 self._finish_outage(w)
             a = win["all"]
             md = sum(w["manDays"] for w in inwin if w["at"] in ("A", "B", "D"))
-            w = {**base, "asset": "ALL", "key": "_ALL", "task": "全休炉整備", "ti": "ALL", "attr": rows["all"]["a"],
+            w = {**base, "asset": "ALL", "key": "_ALL", "task": self.text("taskAll"), "ti": "ALL", "attr": rows["all"]["a"],
                  "fy": fy, "plannedFy": fy, "status": "planned", "vendorRole": "plant", "ct": "bundle", "at": "A",
                  "start": a["start"], "end": a["end"], "days": (a["end"] - a["start"]).days + 1, "manDays": md,
                  "rollup": True}
@@ -488,9 +489,9 @@ class World:
                             continue
                         days = r.choice([1, 1, 1, 2, 3])
                         t = self.cat[key]
-                        role = t["spec"]["maker"] if t.get("spec") else "machine"
-                        role = {"instrument": "instrument", "electric": "electric", "pump": "pump", "fan": "fan",
-                                "crane": "crane", "boiler": "boiler", "plant": "plant", "system": "system"}.get(role, "machine")
+                        rep = self.rules["repair"]
+                        role = t["spec"]["maker"] if t.get("spec") else rep["default"]
+                        role = role if role in rep["own"] else rep["default"]
                         w = {"asset": a["id"], "key": key, "task": r.choice(grp["w"]), "ti": -1, "attr": None,
                              "strategy": "事後保全", "fy": fy, "plannedFy": None, "status": "breakdown", "legal": None,
                              "vendorRole": role, "ct": "repair", "at": "X", "flow": None, "days": days,
@@ -532,7 +533,7 @@ class World:
                 a, ws = r.choice(pool)
                 w = {"asset": a["id"], "key": a["key"], "task": r.choice(ws), "ti": -2, "attr": "INSPECT",
                      "strategy": "日常点検", "fy": day.year if day.month >= self.fym else day.year - 1, "plannedFy": None,
-                     "status": "routine", "legal": None, "vendorRole": rt["vendor"], "ct": "annual:om", "at": "R",
+                     "status": "routine", "legal": None, "vendorRole": rt["vendor"], "ct": rt["contract"], "at": "R",
                      "flow": None, "days": 1, "manDays": r.choice([1, 1, 2, 2, 3]), "costK": 0, "k": 0, "per": 1,
                      "cycle": None, "start": day, "end": day, "done": True}
                 w["vendor"] = self.vendor(rt["vendor"])
@@ -566,10 +567,11 @@ class World:
             # 年間の委託
             for key, a in ann.items():
                 mine = [w for w in ws if w["ct"] == f"annual:{key}"]
-                if not mine and key != "om":
+                if not mine and not a.get("always"):
                     continue
-                if key == "om" and self.prof.get("contract") == "OM":
-                    title = f"{fac}運営業務（長期包括）"
+                ti = a.get("titleIf")
+                if ti and self.prof.get(ti["axis"]) == ti["value"]:
+                    title = ti["title"].replace("{fac}", fac)
                 else:
                     title = a["title"].replace("{fac}", fac)
                 yen = r.randint(*a["yen"]) // 1000 * 1000
@@ -582,7 +584,8 @@ class World:
             for p in self.rules.get("purchases", []):
                 if p.get("oneOff") and r.random() < 0.5:
                     continue
-                if "活性炭" in p["title"] and "CARBON" in self.cat and not any(a["key"] == "CARBON" and a["installed"] <= fy for a in self.assets):
+                need = p.get("needAsset")
+                if need and need in self.cat and not any(a["key"] == need and a["installed"] <= fy for a in self.assets):
                     continue
                 new(fy, title=p["title"], kind="物品", method="指名競争入札" if not p.get("oneOff") else "随意契約",
                     vendor=self.vendor(p["v"]), amount=r.randint(*p["yen"]) // 1000 * 1000, start=fya, end=fyb,
@@ -595,7 +598,7 @@ class World:
                     continue
                 fw = win["furnaces"][f]
                 k = sum(w["costK"] for w in mine)
-                c = new(fy, title=f"{fac}{f}号炉定期補修工事", kind="工事", method="一般競争入札", vendor=self.vendor("plant"),
+                c = new(fy, title=self.text("contractUnit").replace("{fac}", fac).replace("{unit}", self.unit(f)), kind="工事", method="一般競争入札", vendor=self.vendor("plant"),
                         amount=int(k * r.uniform(0.85, 1.05)) * 1000 + 18_000_000, start=fw["start"], end=fw["end"],
                         bundle=f)
                 for w in mine:
@@ -604,7 +607,7 @@ class World:
             mine = [w for w in ws if w["ct"] == "bundle" and w["at"] in ("A", "B", "D")]
             if mine:
                 k = sum(w["costK"] for w in mine)
-                c = new(fy, title=f"{fac}全休炉時共通設備補修工事", kind="工事", method="一般競争入札",
+                c = new(fy, title=self.text("contractAll").replace("{fac}", fac), kind="工事", method="一般競争入札",
                         vendor=self.vendor("plant"), amount=int(k * r.uniform(0.85, 1.05)) * 1000 + 4_000_000,
                         start=win["all"]["start"], end=win["all"]["end"], bundle="all")
                 for w in mine:
@@ -662,7 +665,7 @@ class World:
             w.setdefault("contract", None)
 
     def contract_target_label(self, lst):
-        """契約の件名に書く対象（号炉と号機）。"""
+        """契約の件名に書く対象（系列と号機）。"""
         t = self.cat[lst[0]["key"]]
         name = self.rules["catalog"][[x["key"] for x in self.rules["catalog"]].index(t["key"])]["chart"][0]
         labs = []
@@ -672,7 +675,7 @@ class World:
             u = a["unit"]
             s = ""
             if f and self.F > 1:
-                s += f"{f}号炉"
+                s += self.unit(f)
             if u:
                 s += f"No.{u}"
             labs.append(s)
@@ -701,5 +704,18 @@ class World:
     def gap(self, **kw):
         self.gaps.append(kw)
 
-    def fname(self, n):
-        return fill("{n}号炉", n)
+    def text(self, key):
+        """業種の言葉（パックの world.json の text）。無ければ、どの項目を書けばよいかを言って止まる。"""
+        if key not in self.words:
+            raise KeyError(f"packs/{self.pack}/world.json の text.{key} が無い（業種の言葉はコードに書かない）")
+        return self.words[key]
+
+    def doc_text(self, key):
+        d = self.text("doc")
+        if key not in d:
+            raise KeyError(f"packs/{self.pack}/world.json の text.doc.{key} が無い")
+        return d[key]
+
+    def unit(self, n):
+        """系列（号炉）n の正式な書き方。"""
+        return fill(self.text("unit"), n)

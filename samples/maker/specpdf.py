@@ -50,16 +50,19 @@ def spec_rows(W):
             no += 1
             n = len(units)
             nm_ = t["name"]
-            unit_word = "台"
-            if nm_.endswith(("炉", "塔", "器", "槽", "タンク", "ボイラ", "装置", "煙突", "ホッパ", "本体")):
-                unit_word = "基"
-            if t["key"] in ("SUBST", "HVPANEL", "LVPANEL", "DCS", "ITV", "GASANA", "WWT"):
-                unit_word = "式"
+            sc = W.rules.get("specCount", {})
+            unit_word = sc.get("default", "台")
+            for w_, sfx in sc.get("bySuffix", {}).items():
+                if nm_.endswith(tuple(sfx)):
+                    unit_word = w_
+            for w_, keys in sc.get("byKey", {}).items():
+                if t["key"] in keys:
+                    unit_word = w_
             sp = t.get("spec") or {}
             code = f"{t['tag']}-{sysno}{len(rows) + 1:02d}" if t.get("tag") else "—"
             rows.append({"no": no, "code": code, "name": t["name"], "qty": f"{n} {unit_word}", "form": sp.get("form") or "—",
                          "main": sp.get("main") or "—", "kw": sp.get("kw"), "maker": W.vendor(sp.get("maker", "plant")).replace("㈱", "").replace("株式会社", "").replace("(株)", ""),
-                         "note": "1炉あたり " + str(t.get("n", 1)) + " " + unit_word if t["scope"] == "furnace" and t.get("n", 1) > 1 else "",
+                         "note": W.text("specPerUnit") + " " + str(t.get("n", 1)) + " " + unit_word if t["scope"] == "furnace" and t.get("n", 1) > 1 else "",
                          "units": [a["id"] for a in units]})
         if rows:
             out.append((s, rows))

@@ -11,7 +11,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.pagebreak import Break, RowBreak
 
 from .book import Answer, Book, addr, ev
-from .diary import (TIMES, TRADE_BY_ROLE, TRADES, WEATHER, WRITERS, _alloc, day_lines, labels, op_status,
+from .diary import (TIMES, WEATHER, WRITERS, _alloc, day_lines, labels, op_status,
                     vendor_text, work_text)
 from .util import FAKE, daterange, era_fy, fy_range, rng_for, wareki_full, weekday_ja
 
@@ -143,11 +143,17 @@ def _status(W, day):
     return {f: op_status(W, day, f) for f in range(1, W.F + 1)}
 
 
-def _card_base(card_day, no, pg, pages, weather, writer, st):
+def _card_base(W, card_day, no, pg, pages, weather, writer, st):
     card = {"日付": card_day, "No": no, "頁": f"{pg}/{pages}", "天候": weather, "記入者": writer}
     for f in st:
-        card[f"{f}号炉運転"] = st[f]
+        card[f"{W.unit(f)}運転"] = st[f]
     return card
+
+
+def _extra_status(W):
+    """運転の欄に足す項目（ごみ焼却の「発電」など）。パックの text.diaryStatusExtra と施設の性質の軸で決める。"""
+    x = W.text("diaryStatusExtra")
+    return x["label"] if x and W.prof.get(x["axis"]) else None
 
 
 def _detail(W, S, ans, fname, rr, i, pg, maxl, chunk, card, card_ev, r, doc, writer, day, cols):
@@ -164,10 +170,11 @@ def _detail(W, S, ans, fname, rr, i, pg, maxl, chunk, card, card_ev, r, doc, wri
     f["作業内容"] = txt
     f["施工業者"] = vend
     if cols.get("trades"):
-        for k, n in enumerate(_alloc(persons, TRADE_BY_ROLE.get(w["vendorRole"], [0, 1, 0, 0, 0, 1]), r)):
+        tr = W.rules["trades"]
+        for k, n in enumerate(_alloc(persons, tr["byRole"].get(w["vendorRole"], tr["default"]), r)):
             if n:
                 evc.append(ev(S.put(rr, cols["trades"] + k, n, box=True, align="center"), n))
-                f[TRADES[k]] = n
+                f[tr["names"][k]] = n
         evc.append(ev(S.put(rr, cols["persons"], persons, box=True, align="center"), persons))
         f["人工計"] = persons
         f["manDaysText"] = str(persons)
@@ -214,15 +221,16 @@ def _card_portrait(W, S, ans, fname, row, day, no, pg, pages, weather, writer, c
     S.put(dr, 9, "頁", box=True, align="right")
     S.put(dr, 10, f"{pg}/{pages}", box=True, align="center")
     st = _status(W, day)
-    txt = "運転状況　" + "　".join(f"{f}号炉：{st[f]}" for f in st)
-    if W.prof.get("turbine"):
-        txt += "　発電：" + ("停止" if all(v != "運転" for v in st.values()) else "運転")
+    txt = "運転状況　" + "　".join(f"{W.unit(f)}：{st[f]}" for f in st)
+    extra = _extra_status(W)
+    if extra:
+        txt += f"　{extra}：" + ("停止" if all(v != "運転" for v in st.values()) else "運転")
     S.put(dr + 1, 1, txt)
     S.merge(dr + 1, 1, dr + 1, 10)
-    card = _card_base(dtxt, no, pg, pages, weather, writer, st)
+    card = _card_base(W, dtxt, no, pg, pages, weather, writer, st)
     card_ev = [ev(addr(dr, 2), dtxt), ev(addr(row + 1, 1), head), ev(addr(dr, 10), f"{pg}/{pages}"), ev(addr(dr, 8), writer)]
     hr = dr + 3
-    for col, h in ((1, "No."), (2, "作業内容（号炉・機器・作業）"), (7, "施工業者"), (8, "人員"), (9, "作業時間"), (10, "備考")):
+    for col, h in ((1, "No."), (2, W.text("diaryHeadPortrait")), (7, "施工業者"), (8, "人員"), (9, "作業時間"), (10, "備考")):
         S.put(hr, col, h, bold=True, box=True, align="center")
     S.merge(hr, 2, hr, 6)
     body = hr + 1
@@ -275,22 +283,23 @@ def _card_landscape(W, S, ans, fname, row, day, no, pg, pages, weather, writer, 
     S.put(row + 2, 1, "運転", box=True)
     c = 2
     for f in st:
-        S.put(row + 2, c, f"{f}号炉", box=True)
+        S.put(row + 2, c, W.unit(f), box=True)
         S.put(row + 2, c + 1, st[f], box=True)
         c += 2
-    if W.prof.get("turbine"):
-        S.put(row + 2, c, "発電", box=True)
+    extra = _extra_status(W)
+    if extra:
+        S.put(row + 2, c, extra, box=True)
         S.put(row + 2, c + 1, "停止" if all(v != "運転" for v in st.values()) else "運転", box=True)
-    card = _card_base(day, no, pg, pages, weather, writer, st)
+    card = _card_base(W, day, no, pg, pages, weather, writer, st)
     card_ev = [ev(addr(row, 2), day), ev(addr(row + 1, 1), f"No. {no}"), ev(addr(row + 1, 8), pgt), ev(addr(row + 1, 5), writer)]
     hr = row + 4
-    for col, h in [(1, "No."), (2, "号炉・系統・機器・作業内容"), (8, "施工業者"), (9, "職種別人員（人）"), (15, "人工計"), (16, "作業時間"), (17, "備考")]:
+    for col, h in [(1, "No."), (2, W.text("diaryHeadLandscape")), (8, "施工業者"), (9, "職種別人員（人）"), (15, "人工計"), (16, "作業時間"), (17, "備考")]:
         S.put(hr, col, h, bold=True, box=True, align="center", wrap=True)
     S.merge(hr, 2, hr + 1, 7)
     S.merge(hr, 9, hr, 14)
     for col in (1, 8, 15, 16, 17):
         S.merge(hr, col, hr + 1, col)
-    for i, t in enumerate(TRADES):
+    for i, t in enumerate(W.rules["trades"]["names"]):
         S.put(hr + 1, 9 + i, t, box=True, align="center", size=8)
     body = hr + 2
     cols = {"text": 2, "vendor": 8, "trades": 9, "persons": 15, "time": 16, "memo": 17}

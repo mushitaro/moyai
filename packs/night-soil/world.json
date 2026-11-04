@@ -151,7 +151,7 @@
     "fuel": ["架空石油"]
   },
   "annualContracts": [
-    { "key": "om", "title": "{fac}運転管理業務委託", "v": "om", "method": ["一般競争入札"], "yen": [62000000, 84000000], "kind": "委託" },
+    { "key": "om", "always": true, "titleIf": { "axis": "contract", "value": "OM", "title": "{fac}運営業務（長期包括）" }, "title": "{fac}運転管理業務委託", "v": "om", "method": ["一般競争入札"], "yen": [62000000, 84000000], "kind": "委託" },
     { "key": "elec", "title": "受変電設備保安管理業務委託", "v": "elecsafety", "method": ["随意契約"], "yen": [700000, 1000000], "kind": "委託" },
     { "key": "dcs", "title": "中央監視装置保守点検業務委託", "v": "system", "method": ["随意契約"], "yen": [1300000, 1800000], "kind": "委託" },
     { "key": "gas", "title": "水質・臭気測定分析業務委託", "v": "analysis", "method": ["指名競争入札"], "yen": [1800000, 2600000], "kind": "委託" },
@@ -168,5 +168,291 @@
     "unit": { "chart": ["No.{n}", "№{n}", "{n}号機", "({n})", "{A}号機"], "diary": ["No.{n}", "№{n}", "{n}号機", "({n})", "{A}号機", "{nz}号機"] },
     "common": { "chart": ["共通", "共通設備", "共用"], "diary": ["共通", "—", "共"] }
   },
-  "manDaysText": { "styles": ["人日", "人工", "延べ人数", "時間", "日数", "期間"] }
+  "manDaysText": { "styles": ["人日", "人工", "延べ人数", "時間", "日数", "期間"] },
+  "text": {
+    "note": "生成器が資料と README・user.md に書く業種の言葉。系列の正式な書き方は unit（{n} は数）",
+    "unit": "{n}号炉",
+    "unitWord": "号炉",
+    "theUnit": "その炉",
+    "allUnits": "全炉",
+    "pairRow": "2 炉で 1 行",
+    "chartTop": "炉全体・施設全体",
+    "chartUnitsAll": "炉全体",
+    "chartHeads": [
+      "設備",
+      "機器",
+      "号炉・系統",
+      "部位",
+      "部位",
+      "部位"
+    ],
+    "upgradeMemo": "{y0} 実施設計・{y1} 1号炉・{y2} 2号炉",
+    "taskUnit": "定期整備",
+    "taskAll": "全休炉整備",
+    "contractUnit": "{fac}{unit}定期補修工事",
+    "contractAll": "{fac}全休炉時共通設備補修工事",
+    "ganttUnit": "■ {unit}　定期整備",
+    "ganttAll": "■ 全休炉（全炉停止）",
+    "ganttAllSingle": "■ 共通設備（休炉中）",
+    "diaryHeadPortrait": "作業内容（号炉・機器・作業）",
+    "diaryHeadLandscape": "号炉・系統・機器・作業内容",
+    "diaryStatusExtra": null,
+    "csvUnitHead": "号炉",
+    "specPerUnit": "1炉あたり",
+    "doc": {
+      "sourceNotes": [
+        "し尿処理の施設の性質は、全国の表（同じ調査の 08.xlsx）から数をまだ取り出していないので、分布には照らしていない（未確認）。",
+        "機器の項目は、環境省の長寿命化総合計画作成の手引きの表Ⅱ-4（パックの `common.json`）。法令の点検の周期は、照らしたもの（精密機能検査の 3 年＝課長通知）だけを `recommendation` にし、ほかは `app`（`world.json` の legal）。"
+      ],
+      "words": {},
+      "userFacility": [
+        {
+          "t": "- し尿処理施設。処理方式は{p[methodName]}、処理能力は {p[capacity_kl_per_day]}kL/日。{p[commissioned]} 年度に竣工した。"
+        },
+        {
+          "t": "- 炉は無い。年に 1 回、受変電の年次点検のときに全停止する。"
+        },
+        {
+          "t": "- 号機の書き方は人と資料でまちまち。「No.2」「№2」「2号機」「(2)」「B号機」はどれも 2 台目。"
+        },
+        {
+          "t": "- 「共通」は施設全体の作業（精密機能検査・水質検査など）。"
+        }
+      ],
+      "diaryExample": "「1号 No.2 BFP 分解整備」「バグフィルタ（#2）本体点検」",
+      "diaryForms": "号炉の書き方（1号・１号炉・1炉・#1・共通・—）、号機（No.2・№2・2号機・(2)・B号機）、呼び名（IDF・誘引ﾌｧﾝ・BFP・給水P など）",
+      "routineExample": "ストレーナ清掃・グリスアップ",
+      "ganttShade": "炉・全休炉・段",
+      "ganttHeads": "炉と全休炉",
+      "partsExample": "クレーン → 巻上装置・走行装置・横行装置・バケット など",
+      "specNamesExample": "誘引通風機＝誘引送風機、ろ過式集じん器＝バグフィルタ など",
+      "ledgerCodeExample": "(BFP-101～103)"
+    }
+  },
+  "profileAnswer": {
+    "note": "世界の正解（answer/world.json）の profile に残す性質",
+    "copy": [
+      "capacity_kl_per_day",
+      "method"
+    ]
+  },
+  "trades": {
+    "note": "日報の A4 横の帳票の職種別人員。業者の役ごとに、職種への人数の配り方の重み",
+    "names": [
+      "鳶工",
+      "機械工",
+      "溶接工",
+      "電工",
+      "保温工",
+      "作業員"
+    ],
+    "default": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ],
+    "byRole": {
+      "plant": [
+        1,
+        4,
+        2,
+        0,
+        0,
+        3
+      ],
+      "boiler": [
+        0,
+        3,
+        3,
+        0,
+        1,
+        1
+      ],
+      "pump": [
+        0,
+        3,
+        0,
+        1,
+        0,
+        0
+      ],
+      "fan": [
+        0,
+        3,
+        0,
+        1,
+        0,
+        0
+      ],
+      "crane": [
+        0,
+        2,
+        0,
+        2,
+        0,
+        1
+      ],
+      "env": [
+        0,
+        3,
+        1,
+        0,
+        0,
+        3
+      ],
+      "catalyst": [
+        1,
+        2,
+        0,
+        0,
+        0,
+        3
+      ],
+      "refractory": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        6
+      ],
+      "turbine": [
+        0,
+        4,
+        0,
+        1,
+        0,
+        1
+      ],
+      "electric": [
+        0,
+        0,
+        0,
+        4,
+        0,
+        1
+      ],
+      "elecsafety": [
+        0,
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      "system": [
+        0,
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      "instrument": [
+        0,
+        0,
+        0,
+        2,
+        0,
+        1
+      ],
+      "analysis": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "consult": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "scale": [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0
+      ],
+      "diesel": [
+        0,
+        2,
+        0,
+        1,
+        0,
+        0
+      ],
+      "building": [
+        0,
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "water": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        1
+      ],
+      "machine": [
+        0,
+        2,
+        1,
+        0,
+        0,
+        1
+      ],
+      "scaffold": [
+        5,
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "om": [
+        0,
+        2,
+        0,
+        1,
+        0,
+        2
+      ],
+      "misc": [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "repair": {
+    "note": "事後の補修の業者の役。機器の spec.maker が own にあればその役、無ければ default",
+    "own": [
+      "instrument",
+      "electric",
+      "pump",
+      "fan",
+      "crane",
+      "boiler",
+      "plant",
+      "system"
+    ],
+    "default": "machine"
+  }
 }

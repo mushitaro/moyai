@@ -63,10 +63,10 @@ def build_tree(W, doc, electrical):
         return fill(nm["unit"]["chart"][r.choice(ustyles)], i)
 
     # 炉全体・施設全体の節
-    top = Node(doc.get("topLabel", "炉全体・施設全体"), 0, sys="FAC")
+    top = Node(doc.get("topLabel", W.text("chartTop")), 0, sys="FAC")
     if W.rules.get("outageRows") and W.F >= 1:
         orow = W.rules["outageRows"]
-        fur = top.add(Node(doc.get("furnaceAllLabel", "炉全体"), 1))
+        fur = top.add(Node(doc.get("furnaceAllLabel", W.text("chartUnitsAll")), 1))
         for f in range(1, W.F + 1):
             n = fur.add(Node(fl(f), 2))
             n.tasks.append(TaskRow(orow["furnace"]["w"][doc.get("outageW", 0)], "OUT", [f"F-{f}"], 1, None, "_F"))
@@ -376,7 +376,7 @@ def write_sheet(W, S, sd, elec, ans, r, fname):
     # 見出し
     labels = sd.get("colLabels", {})
     if layout in ("cols", "merged"):
-        heads = labels.get("names", ["設備", "機器", "号炉・系統", "部位", "部位", "部位"])
+        heads = labels.get("names", W.text("chartHeads"))
         if layout == "cols":
             S.put(hr, 1, labels.get("name", "設備・機器名称"), bold=True, box=True)
             S.merge(hr, 1, hr + hdr_rows - 1, maxdepth)
@@ -580,8 +580,9 @@ def write_sheet(W, S, sd, elec, ans, r, fname):
                 memo = f"{era_fy(ys[0])}～{era_fy(ys[-1])}　継続費"
                 evc.append(ev(S.put(row, memo_col, memo), memo))
                 rec_fields["memo"] = memo
-                S.memo(row, ycols[ys[0]], f"{era_fy(ys[0])} 実施設計・{era_fy(ys[1])} 1号炉・{era_fy(ys[-1])} 2号炉")
-                comments[addr(row, ycols[ys[0]])] = f"{era_fy(ys[0])} 実施設計・{era_fy(ys[1])} 1号炉・{era_fy(ys[-1])} 2号炉"
+                um = W.text("upgradeMemo").format(y0=era_fy(ys[0]), y1=era_fy(ys[1]), y2=era_fy(ys[-1]))
+                S.memo(row, ycols[ys[0]], um)
+                comments[addr(row, ycols[ys[0]])] = um
                 rec_fields["marks"] = {str(y): txt for y in ys}
                 if comments:
                     rec_fields["comments"] = comments
@@ -795,7 +796,7 @@ def write_mgmt(W, S, md, ans, r, fname):
         for u in W.units_of(key):
             if t["scope"] == "furnace" and u["unit"] not in (None, 1):
                 continue
-            nm = t["chart"][0] + (f"（{u['furnace']}号炉）" if u["furnace"] else "")
+            nm = t["chart"][0] + (f"（{W.unit(u['furnace'])}）" if u["furnace"] else "")
             it = md["defs"].get(key, ["本体", "外観・異音・振動", "目視・測定", "異常なきこと", "1年"])
             hv = health_bad.get(u["id"], odd.get(u["id"], r.choice([3, 3, 4, 4, 2, 3])))
             vals = [nm, it[0], it[1], it[2], it[3], it[4], md.get("life", {}).get(key, 20), hv]

@@ -44,7 +44,7 @@ def _items(W, doc):
                 continue
             lab = W.cat[key]["chart"][0]
             if u["furnace"] and W.F > 1:
-                lab = f"{u['furnace']}号炉 " + lab
+                lab = f"{W.unit(u['furnace'])} " + lab
             if u["unit"]:
                 lab += f" No.{u['unit']}"
             out.append({"asset": u["id"], "label": lab, "item": item, "std": std, "kind": kind})
