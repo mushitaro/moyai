@@ -229,6 +229,8 @@ export function compose(
     const p = placeOf.get(`${file}\u0000${sheet ?? ""}\u0000${ref}`);
     return { file, sheet, page: p?.page ?? null, cell: ref, box: p?.box ?? null };
   };
+  // 印の出どころ：印のセルと、行ごとに作業の列を書く星取表ならその行の作業の名前のセル
+  const markSources = (m: MarkRec) => [refOf(m.file, m.sheet, m.ref), ...(m.workRef ? [refOf(m.file, m.sheet, m.workRef)] : [])];
   const assets: AssetNodeT[] = [];
   for (const c of live) {
     if (c.pending) continue;
@@ -403,7 +405,7 @@ export function compose(
         measuredValue: null,
         previousValue: null,
         performer: null,
-        sources: [...(m ? [refOf(m.file, m.sheet, m.ref)] : []), ...jobSources(j)],
+        sources: [...(m ? markSources(m) : []), ...jobSources(j)],
         basis: `${m ? `星取表 ${m.ref} の印「${m.symbol}」と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
         author: authorOf([...c.decidedBy, ...qids, ...j.decidedBy, ...j.units.flatMap((u) => [...u.decidedBy]), ...v.qids, ...symbolQ], decisions),
         needsReview: false,
@@ -438,7 +440,7 @@ export function compose(
           measuredValue: null,
           previousValue: null,
           performer: null,
-          sources: [refOf(m.file, m.sheet, m.ref)],
+          sources: markSources(m),
           basis: `星取表 ${m.ref} の印「${m.symbol}」（${m.planOrActual === "plan" ? "予定" : "実績"}${m.workName ? `・${m.workName}` : ""}）`,
           author: authorOf([...c.decidedBy, ...symbolQ], decisions),
           needsReview: false,

@@ -232,8 +232,19 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           pattern = `${scope}byNumber`;
         } else pattern = "ambiguous";
       }
+      // 名前と親で 1 つに決まらないとき：機器番号が同じ機器がただ 1 つあれば、それを案にする（段や親の書き方が資料で違っても、番号は同じ機器を指す）
+      let options = cands;
+      if (!cand && r.tag) {
+        const tk = nk(r.tag);
+        const byTag = clusters.filter((c) => !!c.tag && nk(c.tag) === tk && c.recs.some((x) => done.has(x.tableId)));
+        if (byTag.length === 1 && byTag[0]) {
+          cand = byTag[0];
+          pattern = nk(cand.name) === key ? "tagName" : "tagOnly";
+          options = [cand];
+        }
+      }
       proposed.set(r.id, cand);
-      props.push({ r, cand, pattern, options: cands });
+      props.push({ r, cand, pattern, options });
     }
     // 形ごとにまとめて聞く
     const groups = new Map<string, Prop[]>();
@@ -271,6 +282,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         unique: "名前が同じで、同じ親の下にどちらも 1 つずつ",
         uniqueNumberDiffers: "名前が同じで 1 つずつだが、号の数と機器番号の数が違う",
         byNumber: "名前が同じものがいくつかあり、号の数と機器番号の末尾の数が同じ",
+        tagName: "機器番号と名前が同じ（段や親の書き方は資料で違う）",
+        tagOnly: "機器番号が同じ（名前の書き方は違う）",
       };
       const base = pattern.replace(/^global:/, "");
       const scopeNote = pattern.startsWith("global:") ? "（親どうしは結んでいない。名前と段だけで当てた）" : "";
@@ -280,7 +293,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         text: `${tableFile} の機器 ${ps.length} 件を、先の資料の機器と同じものとして結ぶか。結び方：${label[base] ?? base}${scopeNote}`,
         options: YES_SPLIT,
         valueKind: "option",
-        defaultAnswer: base === "uniqueNumberDiffers" ? "split" : "yes",
+        defaultAnswer: base === "uniqueNumberDiffers" || base === "tagOnly" ? "split" : "yes",
         sameShapeRows: ps.length,
         items: ps.map((p) => itemOfRec(p.r, p.cand ?? undefined)),
       });
@@ -362,11 +375,16 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const byTag = new Map<string, Cluster[]>();
   for (const c of clusters) {
     if (c.excluded) continue;
-    const k = nk(c.name);
-    byName.set(k, [...(byName.get(k) ?? []), c]);
+    // 資料をまたいで結んだ機器は、どの資料の名前でも引く（台帳の「1号炉ストーカ」と星取表の「ストーカ」）
+    for (const k of new Set([c.name, ...c.recs.map((r) => r.name)].map(nk))) byName.set(k, [...(byName.get(k) ?? []), c]);
     if (c.tag) byTag.set(nk(c.tag), [...(byTag.get(nk(c.tag)) ?? []), c]);
   }
+  // 機器番号の列から引いた名前（「名前（番号）」の形にしたもの）→ その番号。番号の書き方（「1-STK」のように数で始まるもの）が
+  // 名前の中の番号の形に合わなくても、列に書いた番号なので番号として引く
+  const fromTagCol = new Map<string, { name: string; tag: string }>();
   const tagged = (nm: string) => {
+    const col = fromTagCol.get(nk(nm));
+    if (col) return col;
     const sp = splitTag(nm);
     return sp && byTag.has(nk(sp.tag)) ? sp : null;
   };
@@ -404,7 +422,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       }
     }
     // 機器番号の列に、どれかの機器の番号を書いた行：「名前（番号）」と同じに番号で引く（番号は同一性の鍵）
-    if (names.length === 1 && e.tag && byTag.has(nk(e.tag)) && !tagged(whole)) names = [`${whole}（${e.tag}）`];
+    if (names.length === 1 && e.tag && byTag.has(nk(e.tag)) && !tagged(whole)) {
+      names = [`${whole}（${e.tag}）`];
+      fromTagCol.set(nk(names[0] ?? ""), { name: whole, tag: e.tag });
+    }
     const unitKey = !e.unit ? "-" : e.unit.kind === "number" ? `n${e.unit.n}` : e.unit.kind === "common" ? "common" : "ditto";
     eventNames.set(e.id, { names, unitKey });
     for (const nm of names) {
@@ -511,7 +532,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           valueKind: "option",
           defaultAnswer: null,
           sameShapeRows: cs.events.length,
-          items: cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1) })),
+          // 行ごとに、比べる相手（候補の機器の出どころ）を添える（人が台帳を開かずに見比べられるように）
+          items: cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), target: (c0?.recs ?? []).slice(0, 3).map((r) => ({ file: r.file, sheet: r.sheet, cells: [r.nameRef] })), note: cs.name })),
         });
         resolved.set(cs.key, { c: b === "c0" ? (c0 ?? null) : null, qid: b ? questionIdOf(k1) : null, excluded: b === "exclude" });
       } else resolved.set(cs.key, { c: null, qid: null, excluded: false });

@@ -39,7 +39,8 @@
     "fiscal": ["年度"],
     "series": ["号炉", "炉", "系列", "号機"],
     "planActual": ["予実", "予定/実績", "計画/実績"],
-    "weekday": ["曜", "曜日"]
+    "weekday": ["曜", "曜日"],
+    "quantity": ["数量", "台数", "員数"]
   },
   "effort": {
     "manDays": ["人・日", "人日", "人工", "人/日"],
@@ -50,7 +51,8 @@
   "unit": {
     "numberPrefix": ["No.", "No", "NO.", "№", "#"],
     "numberMark": ["号"],
-    "ordinalPrefix": ["第"]
+    "ordinalPrefix": ["第"],
+    "counters": ["基", "台", "式", "本", "個", "枚", "組", "面", "箇所", "ヶ所", "カ所"]
   },
   "commonMeanings": [
     { "id": "parts", "label": "系統に共通の部品" },

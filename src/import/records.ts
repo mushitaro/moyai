@@ -55,8 +55,10 @@ export interface MarkRec {
   symbol: string;
   fiscalYear: number;
   planOrActual: "plan" | "actual" | null;
-  /** 凡例の意味が作業の名前のとき（例：◎ が特定の検査） */
+  /** 凡例の意味が作業の名前のとき（例：◎ が特定の検査）か、行ごとに作業の列を書く星取表のその行の作業 */
   workName: string | null;
+  /** 行の作業の名前のセル（行ごとに作業の列を書く星取表）。記録の出どころに足す */
+  workRef: string | null;
   assetId: string | null;
   excluded: string | null;
   pending: boolean;
@@ -220,8 +222,7 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
       const c = Number(is.pattern.slice(4));
       const col = t.cols.find((x) => x.c === c);
       if (col) {
-        if (a === "remark") col.role = "remark";
-        else if (a === "workName") col.role = "workName";
+        if (a === "remark" || a === "workName" || a === "assetRef" || a === "tag" || a === "date" || a === "end" || a === "days" || a === "effort") col.role = a;
         else if (a === "exclude") {
           col.role = "unknown";
           for (const r of t.rows) {
@@ -273,9 +274,12 @@ function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; 
 /** 記録に使わないセル（外したもの・値の無い数式） */
 type Off = (ref: string) => boolean;
 
-/** 名前の前の号（「1号機ポンプ」「2号機 ポンプ」）。号の印（号・系）のある書き方だけ（「3段ポンプ」は分けない） */
+/**
+ * 名前の前の号（「1号機ポンプ」「2号機 ポンプ」「1号炉焼却炉本体」）。号の印（号・系）のある書き方だけ（「3段ポンプ」は分けない）。
+ * 号の後ろの字は 1 字まで（「系統」「系列」は 2 字）：空白なしで漢字の名前が続くとき、名前の頭を号の字にしない
+ */
 function splitUnitPrefix(text: string): { name: string; n: number; spelling: string } | null {
-  const m = /^(\d{1,3}\s*(?:号|系)\p{Script=Han}{0,2})\s*(\S.*)$/u.exec(nfkc(text).trim());
+  const m = /^(\d{1,3}\s*(?:系統|系列|号\p{Script=Han}|号|系))\s*(\S.*)$/u.exec(nfkc(text).trim());
   if (!m) return null;
   const u = parseUnit(m[1] ?? "");
   return u?.kind === "number" ? { name: (m[2] ?? "").trim(), n: u.n, spelling: u.spelling } : null;
@@ -312,6 +316,12 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     return order;
   }
   assignParents(t, nameCol.c);
+  // 表の上の頭書きに書いた名前（「設備名｜受入供給設備」。設備ごとに 1 シートの台帳）：表の行の親のまとまり。表の段は 1 つ下がる
+  const head = t.heading && !off(t.heading.ref) ? t.heading : null;
+  const headRec: AssetRec | null = head
+    ? { id: `${t.id}:head`, file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, tableId: t.id, shape: "tree", order: order++, level: 1, parentId: null, rawName: head.text, name: head.text, tag: null, tagNumber: null, nameRef: head.ref, series: null, specs: [], installed: null, refs: [head.ref], excluded: null, pending: false }
+    : null;
+  if (headRec) rec.assets.push(headRec);
   // 段が飛ぶ・親が無い行
   for (const is of t.issues.filter((i) => i.kind === "levelJump")) {
     const a = ask.ask(`levelJump|${t.id}|${is.pattern}`, {
@@ -425,8 +435,9 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       else dittoPending = true; // 答えを待つ（「上と同じ」でも上の行が無ければここ）：資産は未解決のまま置く（子の行の親が欠けないように）
     }
     const raw = dittoName && !literalDitto ? (prevName ?? nc.text) : nc.text.replace(/\s*\n\s*/g, " ").trim();
-    const unitInName = splitUnitSuffix(raw) ?? splitUnitPrefix(raw);
-    const name = tagged ? tagged.name : unitInName ? unitInName.name : raw;
+    // 名前の中の号：番号を分けた名前（「1号炉ストーカ（STK-1）」→「1号炉ストーカ」）からも分ける
+    const unitInName = tagged ? (splitUnitSuffix(tagged.name) ?? splitUnitPrefix(tagged.name)) : (splitUnitSuffix(raw) ?? splitUnitPrefix(raw));
+    const name = unitInName ? unitInName.name : tagged ? tagged.name : raw;
     const a: AssetRec = {
       id: idOf(r.r),
       file: lay.file,
@@ -435,8 +446,8 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       tableId: t.id,
       shape: "tree",
       order: order++,
-      level: r.level ?? 0,
-      parentId: r.parentRow ? idOf(r.parentRow) : null,
+      level: r.level === null ? 0 : r.level + (headRec ? 1 : 0),
+      parentId: r.parentRow ? idOf(r.parentRow) : (headRec?.id ?? null),
       rawName: raw,
       name,
       tag: tagged ? tagged.tag : null,
@@ -449,7 +460,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       excluded: null,
       pending: r.level === null || tagUndecided || dittoPending,
     };
-    if (unitInName && !tagged) a.series = { kind: "number", n: unitInName.n };
+    if (unitInName) a.series = { kind: "number", n: unitInName.n };
     for (const c of cells) {
       if (nameCols.some((k) => k.c === c.c) || off(c.ref)) continue;
       const col = t.cols.find((k) => k.c === c.c);
@@ -534,6 +545,12 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const marks = t.cols.filter((c) => c.role === "mark");
   const specCols = t.cols.filter((c) => c.role === "spec" || c.role === "remark" || c.role === "installed" || c.role === "number");
   const tagCol = t.cols.find((c) => c.role === "tag");
+  // 行ごとの作業の列（行が「機器 × 作業」の星取表）
+  const workCol = t.cols.find((c) => c.role === "workName");
+  const rowWork = (r: number) => {
+    const c = workCol ? lay.index.at(r, workCol.c) : null;
+    return c && c.text.trim() !== "" && !off(c.ref) ? c : null;
+  };
   // 行ごとの予定・実績（予定の段と実績の段に分けて書く書き方）
   const paCol = t.cols.find((c) => c.role === "planActual");
   const rowPA = (r: number) => {
@@ -608,6 +625,8 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const pathPrevRef: (string | null)[] = hier.map(() => null);
   const leafCol = hier[hier.length - 1];
   let prevLeaf: { r: number; node: AssetRec } | null = null;
+  // 直前の行の機器（作業だけを書いた行が、上の行の機器の別の作業として使う）
+  let lastLeaf: AssetRec | null = null;
   // まとまりの見出しの行（名前の列が 1 つの星取表で、名前だけを書いて印の無い行。「受入供給設備」）：下の行の親になる
   const isSection = (r: number) => {
     if (hier.length !== 1) return false;
@@ -630,6 +649,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       }
       rowNode.set(r.r, null);
       prevLeaf = null;
+      lastLeaf = null;
       for (let k = 0; k < hier.length; k++) {
         pathPrev[k] = null;
         pathPrevRef[k] = null;
@@ -651,7 +671,13 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     let parent = group as AssetRec | null;
     let node = null as AssetRec | null;
     let undecided = false;
-    for (let i = 0; i < hier.length; i++) {
+    // 作業だけを書いた行（機器の名前の欄が空で、結合でもなく、作業の欄がある）：上の行と同じ機器か（答えに従う）
+    const workOnly = !!workCol && !!leafCol && (!leafCell || leafCell.text === "") && !leafMerged && !!rowWork(r.r) && !!lastLeaf;
+    const workOnlyAnswer = workOnly && leafCol ? blankDecision.get(leafCol.c) : undefined;
+    if (workOnly && workOnlyAnswer !== "none") {
+      if (workOnlyAnswer === "same") node = lastLeaf;
+      else undecided = true;
+    } else for (let i = 0; i < hier.length; i++) {
       const col = hier[i];
       if (!col) continue;
       const own = lay.index.at(r.r, col.c);
@@ -769,6 +795,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     } else for (const c of lay.index.rowCells(r.r)) pend(c.ref);
     rowNode.set(r.r, node);
     prevLeaf = node && node.level === (leafCol?.hierLevel ?? -1) + offset ? { r: r.r, node } : null;
+    if (prevLeaf) lastLeaf = prevLeaf.node;
   }
   // 印
   const legend = t.legend;
@@ -790,6 +817,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         fiscalYear: col.fiscalYear ?? 0,
         planOrActual: null,
         workName: null,
+        workRef: null,
         assetId: node?.id ?? null,
         excluded: null,
         pending: !node || node.pending || t.yearKind === null,
@@ -854,15 +882,27 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         if (answer === "column") m.planOrActual = colPA;
         else if (answer === "legend") m.planOrActual = entry.planOrActual;
       } else m.planOrActual = entry.planOrActual;
+      // 行ごとの作業の列：その行の作業の名前（凡例の意味より行が細かい）
+      const wc = rowWork(r.r);
+      if (wc) {
+        m.workName = wc.text.replace(/\s*\n\s*/g, " ").trim();
+        m.workRef = wc.ref;
+      }
       if (answer === "exclude") {
         m.excluded = "印ではない記号（決定で外した）";
         exclude(cell.ref, m.excluded);
         continue;
       }
       if (answer === null || m.planOrActual === null) m.pending = true;
-      if (m.pending) pend(cell.ref);
+      if (m.pending) {
+        pend(cell.ref);
+        if (m.workRef) pend(m.workRef);
+      }
       rec.marks.push(m);
     }
+    // 作業の名前のセルで、印の 1 つも無い行のもの：理由つきで外す（印のある行は、印の記録の出どころ）
+    const wc = rowWork(r.r);
+    if (wc && !rec.marks.some((m) => m.tableId === t.id && m.workRef === wc.ref && !m.excluded)) exclude(wc.ref, "印の無い行の作業の名前");
   }
   return order;
 }
@@ -990,6 +1030,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     // 名前の前の号（「1号機ポンプ」）：号の欄が無いか空なら、名前から号を分ける
     const lead = (!uc || uc.text === "") ? splitUnitPrefix(assetText0) : null;
     const assetText = lead ? lead.name : assetText0;
+    // 号の欄も名前の前の号も無ければ、同じ行の工事の件名・作業の名前の頭の号（「1号炉 定期整備工事」）。ほかの号を並べた件名（「1号炉・2号炉 …」）は使わない
+    const titleLead = !lead && (!uc || uc.text === "") ? [text(r.r, titleCol), text(r.r, workCol)].map(splitUnitPrefix).find((x) => !!x && !/\d\s*(?:号|系)/u.test(x.name)) ?? null : null;
     const stripped = cue.stripSet(assetText);
     const workName = (workCol ? text(r.r, workCol) : text(r.r, titleCol)).trim();
     const fy = date ? fiscalYearOf(date, opts.fiscalYearStartMonth) : null;
@@ -1012,7 +1054,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
         return tc && tc.text !== "" && !cue.isDitto(tc.text) ? nfkc(tc.text).trim() : null;
       })(),
       bundle: stripped.set,
-      unit: lead ? { kind: "number", n: lead.n, spelling: lead.spelling } : uc && uc.text !== "" && !isNone(uc.text) ? unit : null,
+      unit: lead ? { kind: "number", n: lead.n, spelling: lead.spelling } : uc && uc.text !== "" && !isNone(uc.text) ? unit : titleLead ? { kind: "number", n: titleLead.n, spelling: titleLead.spelling } : null,
       workName,
       workTitle: titleCol && workCol ? text(r.r, titleCol) || null : null,
       remark: remarkCols.map((c) => text(r.r, c)).filter(Boolean).join(" / ") || null,

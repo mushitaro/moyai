@@ -15,7 +15,7 @@ const reading = (rules: ReadingRule[], o: Partial<LoadedReading> = {}): LoadedRe
   ...o,
 });
 const ledger = csv(["名称,系列", "ポンプ,1号", "ブロワ,1号"]);
-const daily = csv(["作業日,炉,機器,作業,時間(h)", "20240406,1,ポンプ,点検,16", "20240407,1,ブロワ,点検,8"]);
+const daily = csv(["作業日,炉,機器,作業,時間(h)", "240406,1,ポンプ,点検,16", "240407,1,ブロワ,点検,8"]);
 
 describe("読み方の形", () => {
   test("決まった形だけを受け、知らない種類・知らない欄は受けない", () => {
@@ -35,7 +35,7 @@ describe("読み方の形", () => {
 });
 
 describe("規則の種類ごとに、読み手が当てる", () => {
-  test("日付の書き方（yyyymmdd）：規則が無ければ日付として読めず、規則で日付として読む。効いたセルを数える", async () => {
+  test("日付の書き方（yymmdd）：規則が無ければ日付として読めず、規則で日付として読む。効いたセルを数える", async () => {
     const s = session();
     await s.add([
       { name: "台帳.csv", bytes: ledger },
@@ -44,7 +44,7 @@ describe("規則の種類ごとに、読み手が当てる", () => {
     const before = s.analyze();
     expect(before.records.events.filter((e) => e.file === "日報.csv").every((e) => e.date === null)).toBe(true);
     expect(before.open.some((q) => q.kind === "dateUnknown")).toBe(true);
-    const rule: ReadingRule = { ...base, id: "d1", text: "「作業日」の列の日付は yyyymmdd", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { headers: ["作業日"] } };
+    const rule: ReadingRule = { ...base, id: "d1", text: "「作業日」の列の日付は yymmdd", kind: "dateFormat", column: "作業日", format: "yymmdd", when: { headers: ["作業日"] } };
     s.setReadings([reading([rule])]);
     const an = s.analyze();
     const t = an.layouts.find((l) => l.file === "日報.csv")?.tables[0];
@@ -57,9 +57,9 @@ describe("規則の種類ごとに、読み手が当てる", () => {
   test("どの資料に効くか：見出しの文字がシートに無い資料には効かない", async () => {
     const s = session();
     await s.add([{ name: "日報.csv", bytes: daily }]);
-    s.setReadings([reading([{ ...base, id: "d1", text: "「作業日」の列の日付は yyyymmdd", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { headers: ["実施日"] } }])]);
+    s.setReadings([reading([{ ...base, id: "d1", text: "「作業日」の列の日付は yymmdd", kind: "dateFormat", column: "作業日", format: "yymmdd", when: { headers: ["実施日"] } }])]);
     expect(s.analyze().ruleHits.count("d1")).toBe(0);
-    s.setReadings([reading([{ ...base, id: "d1", text: "x", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { file: "別の*.csv" } }])]);
+    s.setReadings([reading([{ ...base, id: "d1", text: "x", kind: "dateFormat", column: "作業日", format: "yymmdd", when: { file: "別の*.csv" } }])]);
     expect(s.analyze().ruleHits.count("d1")).toBe(0);
   });
 
@@ -142,7 +142,7 @@ describe("「読み方」のタブのデータ", () => {
       { name: "台帳.csv", bytes: ledger },
       { name: "日報.csv", bytes: daily },
     ]);
-    const r1: ReadingRule = { ...base, id: "d1", text: "「作業日」の列の日付は yyyymmdd", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { headers: ["作業日"] } };
+    const r1: ReadingRule = { ...base, id: "d1", text: "「作業日」の列の日付は yymmdd", kind: "dateFormat", column: "作業日", format: "yymmdd", when: { headers: ["作業日"] } };
     const r2: ReadingRule = { ...base, id: "a1", text: "「ブロワー」と「ブロワ」は同じ機器", kind: "sameAsset", names: ["ブロワー", "ブロワ"] };
     const approved = reading([r1], { approved: true, draft: false, path: "f/skills/甲", version: "0123456789abcdef" });
     const draft = reading([r1, { ...r2, author: "human", by: "山田" }]);
@@ -155,10 +155,10 @@ describe("「読み方」のタブのデータ", () => {
     const only = readingTab([{ ...approved, approvedIn: 6 }], s.analyze()).skills[0]!;
     expect([only.version, only.status, only.approvedIn]).toEqual(["0123 4567", "approved", 6]);
     expect(k.rules.map((r) => [r.text, r.appliesTo, r.hits, r.decidedBy, r.change])).toEqual([
-      ["「作業日」の列の日付は yyyymmdd", "見出しに「作業日」", 2, { kind: "ai" }, "same"],
+      ["「作業日」の列の日付は yymmdd", "見出しに「作業日」", 2, { kind: "ai" }, "same"],
       ["「ブロワー」と「ブロワ」は同じ機器", null, 0, { kind: "human", name: "山田" }, "added"],
     ]);
-    expect(k.rules[0]?.sample).toEqual({ file: "日報.csv", ref: "A2", text: "20240406" });
+    expect(k.rules[0]?.sample).toEqual({ file: "日報.csv", ref: "A2", text: "240406" });
     expect(tab.unapproved).toBe(1);
   });
 });
@@ -172,13 +172,13 @@ describe("詰まっている所（intake_survey の stuck）", () => {
     ]);
     const st = s.survey().stuck.find((x) => x.fileRef === "日報.csv");
     expect(st?.cells).toBeGreaterThan(0);
-    expect(st?.rows[0]?.cells.slice(0, 2)).toEqual(["20240406", "1"]);
+    expect(st?.rows[0]?.cells.slice(0, 2)).toEqual(["240406", "1"]);
     expect(st?.rows[0]?.unresolved).toContain("A2");
     expect(st?.header).toEqual([{ row: 1, cells: ["作業日", "炉", "機器", "作業", "時間(h)"] }]);
     // 見本は資料ごとに分けて取る。質問には種類（読み方の answer の規則で指す）が付く
     expect(new Set(s.survey().samples.map((x) => x.fileRef))).toEqual(new Set(["台帳.csv", "日報.csv"]));
     expect(s.survey().questions.every((q) => q.kind.length > 0)).toBe(true);
-    s.setReadings([reading([{ ...base, id: "d1", text: "「作業日」の列の日付は yyyymmdd", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { headers: ["作業日"] } }])]);
+    s.setReadings([reading([{ ...base, id: "d1", text: "「作業日」の列の日付は yymmdd", kind: "dateFormat", column: "作業日", format: "yymmdd", when: { headers: ["作業日"] } }])]);
     // 日付が読めても、工数の時間の質問が残るうちは詰まったまま。答えると消える
     expect(s.survey().stuck.find((x) => x.fileRef === "日報.csv")?.cells).toBe(10);
     acceptDefaults(s);

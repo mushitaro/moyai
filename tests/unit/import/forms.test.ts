@@ -2,7 +2,8 @@
 // 見ていない様式の 1 回目（heldout-1）で詰まった形を、架空の小さな資料で 1 つずつ確かめる。どの資料の語にも依らない。
 import { describe, expect, test } from "vitest";
 import { cue } from "../../../src/import/cues";
-import { fiscalYearInText, parseMonthDay, withFiscalYear } from "../../../src/import/era";
+import { fiscalYearInText, parseDateRange, parseMonthDay, withFiscalYear } from "../../../src/import/era";
+import { parseUnit } from "../../../src/import/text";
 import { acceptDefaults, human, rows, session, xlsxOf } from "./helpers";
 
 const csv = (lines: string[]) => new TextEncoder().encode(`${lines.join("\r\n")}\r\n`);
@@ -339,5 +340,268 @@ describe("見ていない様式の 2 回目（heldout-2）で詰まった形", (
     const pump = assets.find((a) => a.name === "ポンプ");
     expect(pump?.level).toBe(2);
     expect(assets.find((a) => a.id === pump?.parentId)?.name).toBe("甲設備");
+  });
+});
+
+describe("見ていない様式の 3 回目（heldout-3）で詰まった形", () => {
+  const ledger = csv(["名称,号炉,機器番号", "ポンプ,1号,1-PMP", "ブロワ,1号,1-BLW", "計量器,共通,0-SCL"]);
+  const kinds = (s: ReturnType<typeof session>) => s.analyze().questions.map((q) => q.kind).sort();
+
+  test("数の並びだけの日付（yyyymmdd）：CSV の文字でも xlsx の数でも日付の列。8 桁の管理番号は日付にしない", async () => {
+    const daily = csv(["作業日,炉,機器,作業,時間(h)", "20240406,1,ポンプ,点検,16", "20240407,1,ブロワ,点検,8"]);
+    const xlsx = await xlsxOf((ws) => {
+      rows(ws, 1, [["管理No", "実施日", "機器", "作業内容", "工数(人日)"]]);
+      rows(ws, 2, [
+        [20240001, 20240510, "ポンプ", "整備", 2],
+        [20240002, 20240511, "ブロワ", "整備", 1],
+        [20240003, 20240512, "計量器", "整備", 1],
+      ]);
+    });
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "日報.csv", bytes: daily },
+      { name: "実績.xlsx", bytes: xlsx },
+    ]);
+    const an = s.analyze();
+    expect(an.layouts.find((l) => l.file === "日報.csv")?.tables[0]?.cols[0]?.role).toBe("date");
+    // 「実施日」は見出しが日付の語で、中身が正しい年月日。「管理No」（20240001 は月が 00）は番号の列のまま
+    expect(an.layouts.find((l) => l.file === "実績.xlsx")?.tables[0]?.cols.map((c) => c.role).slice(0, 2)).toEqual(["number", "date"]);
+    expect(an.open.filter((q) => q.kind === "columnRole" || q.kind === "dateUnknown")).toEqual([]);
+    expect(an.records.events.filter((e) => e.file === "日報.csv").map((e) => `${e.date?.y}-${e.date?.m}-${e.date?.d}`)).toEqual(["2024-4-6", "2024-4-7"]);
+    expect(an.records.events.filter((e) => e.file === "実績.xlsx").map((e) => e.date?.d ?? null)).toEqual([10, 11, 12]);
+  });
+
+  test("右の年を省いた期間（「2023/9/14～9/27」「令和5年12月25日～1月5日」）は始まりの年から読み、工期の列は日付の列", async () => {
+    expect(parseDateRange("2023/9/14～9/27")).toEqual({ start: { y: 2023, m: 9, d: 14 }, end: { y: 2023, m: 9, d: 27 } });
+    expect(parseDateRange("令和5年12月25日～1月5日")).toEqual({ start: { y: 2023, m: 12, d: 25 }, end: { y: 2024, m: 1, d: 5 } });
+    expect(parseDateRange("9/14～9/27")).toBeNull();
+    const rep = csv(["区分,作業項目,対象機器,工期,日数,人工(人日)", "甲,分解整備,ポンプ,2023/9/14～9/27,14,56", "甲,点検,ブロワ,2023/9/14～9/20,7,14"]);
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "集計.csv", bytes: rep },
+    ]);
+    const an = s.analyze();
+    expect(an.layouts.find((l) => l.file === "集計.csv")?.tables[0]?.cols.find((c) => c.header === "工期")?.role).toBe("date");
+    expect(an.open.some((q) => q.kind === "columnRole")).toBe(false);
+    expect(an.records.events.filter((e) => e.file === "集計.csv").map((e) => e.end?.d)).toEqual([27, 20]);
+  });
+
+  test("行が「機器 × 作業」の星取表：作業の列はその行の作業、少ない値をくり返す列（施工）は属性。作業だけを書いた行は上の行の機器か聞く", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["【架空】長期保全計画表"]]);
+      rows(ws, 2, [["凡例　▲：実施済　△：計画　（令和8年9月末現在）"]]);
+      rows(ws, 3, [["設備区分", "機器名称", "機器番号", "作業項目", "受注", "2024", "2025"]]);
+      rows(ws, 4, [
+        ["甲設備", "ポンプ", "1-PMP", "分解整備", "委託", "▲", "△"],
+        [null, null, null, "精密検査", "委託", "▲", null],
+        [null, "ブロワ", "1-BLW", "点検", "直営", null, "△"],
+        [null, null, null, "取替", "委託", null, "△"],
+      ]);
+      ws.mergeCells("A4:A7");
+    });
+    const s = session();
+    await s.add([{ name: "星取表.xlsx", bytes }]);
+    const an = s.analyze();
+    const t = an.layouts[0]?.tables[0];
+    expect(t?.shape).toBe("grid");
+    expect(t?.cols.slice(0, 5).map((c) => c.role)).toEqual(["hier", "hier", "tag", "workName", "spec"]);
+    // 題と表のあいだの「凡例　▲：実施済　△：計画」の行も凡例（後ろの括弧の注記は記号にしない）
+    expect(t?.legend.map((e) => `${e.symbol}=${e.planOrActual}`)).toEqual(["▲=actual", "△=plan"]);
+    const blank = an.open.find((q) => q.kind === "blankSameAsAbove");
+    expect(blank?.options.map((o) => o.label)).toEqual(["上の行と同じ機器（別の作業）", "機器は無い"]);
+    acceptDefaults(s);
+    const an2 = s.analyze();
+    const name = (id: string | null) => an2.records.assets.find((a) => a.id === id)?.name;
+    expect(an2.records.marks.map((m) => `${m.ref}:${name(m.assetId)}:${m.workName}`).sort()).toEqual([
+      "F4:ポンプ:分解整備",
+      "F5:ポンプ:精密検査",
+      "G4:ポンプ:分解整備",
+      "G6:ブロワ:点検",
+      "G7:ブロワ:取替",
+    ]);
+    expect(an2.records.assets.filter((a) => a.name === "委託" || a.name === "分解整備")).toEqual([]);
+    const comp = s.compose();
+    expect(comp.blockers).toEqual([]);
+    // 作業の名前のセルは、印の記録の出どころ
+    expect(comp.plan?.details.some((d) => d.sources.some((x) => x.cell === "D5"))).toBe(true);
+  });
+
+  test("PDF の題を位置で切り分けた行・表の下の署名の欄は、表にしない（見出しの列に中身が並ばない小さな塊）", async () => {
+    const rep = csv([
+      ",,【架空】令和6年度,2号炉定期整備,作業実績報告書,,",
+      "",
+      "番号,機器名称,作業項目,着手,完了,日数,延時間(h)",
+      "1,ポンプ,点検,2024/10/5,2024/10/16,12,384",
+      "2,ブロワ,点検,2024/10/5,2024/10/16,12,288",
+      "",
+      ",,,,,上記のとおり報告します。,",
+      ",,,,,【架空】甲社,,現場代理人,（記名省略）",
+    ]);
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "報告.csv", bytes: rep },
+    ]);
+    const lay = s.analyze().layouts.find((l) => l.file === "報告.csv");
+    expect(lay?.tables.map((t) => [t.shape, t.top])).toEqual([["events", 3]]);
+    expect([...(lay?.notes.map((n) => n.r) ?? [])].sort((a, b) => a - b)).toEqual([1, 7, 8]);
+    expect(s.analyze().open.some((q) => q.kind === "columnRole" || q.kind === "assetUnmatched")).toBe(false);
+  });
+
+  test("機器番号が同じ機器は、段や親の書き方が資料で違っても結ぶ案にする。番号の列の数で始まる番号（「1-PMP」）でも日報の行を機器に当てる", async () => {
+    const star = await xlsxOf((ws) => {
+      rows(ws, 1, [["【架空】星取表"]]);
+      rows(ws, 2, [["凡例　●：実績　○：予定"]]);
+      rows(ws, 3, [["設備", "機器名称", "機器番号", "R5", "R6"]]);
+      rows(ws, 4, [
+        ["甲設備", "ポンプ", "1-PMP", "●", "○"],
+        [null, "ブロワ", "1-BLW", "●", null],
+      ]);
+      ws.mergeCells("A4:A5");
+    });
+    const daily = csv(["日付,機器番号,機器名称,作業,工数(人日)", "2023/5/1,1-PMP,ポンプ,点検,2", "2023/5/2,0-SCL,計量器,点検,1"]);
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "星取表.xlsx", bytes: star },
+      { name: "日報.csv", bytes: daily },
+    ]);
+    const link = s.analyze().open.find((q) => q.kind === "assetLink");
+    expect(link?.text).toContain("機器番号と名前が同じ");
+    acceptDefaults(s);
+    const an2 = s.analyze();
+    const pump = an2.linked.clusters.find((c) => c.tag === "1-PMP");
+    expect(pump?.recs.map((r) => r.file).sort()).toEqual(["台帳.csv", "星取表.xlsx"]);
+    // 日報の行は、番号の列の番号で機器に当たる（「名前の同じ機器が無い」とは聞かない）
+    expect(an2.questions.some((q) => q.kind === "eventAssetOne" && q.text.includes("名前の同じ機器が無い"))).toBe(false);
+    expect(s.compose().blockers).toEqual([]);
+  });
+
+  test("「この機器か」の問い（はい・外す）は、行ごとに候補の機器の出どころを添える", async () => {
+    const daily = csv(["日付,機器,作業,工数(人日)", "2023/5/1,ポンプ,点検,2", "2023/5/2,ポンプ,整備,1"]);
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: csv(["名称,機器番号", "ポンプ,PMP", "ブロワ,BLW"]) },
+      { name: "日報.csv", bytes: daily },
+    ]);
+    const g = s.analyze().open.find((q) => q.kind === "eventAsset");
+    s.settle([human(g?.questionId ?? "", "split")]);
+    const one = s.analyze().open.find((q) => q.kind === "eventAssetOne");
+    expect(one?.items.length).toBeGreaterThan(0);
+    expect(one?.items.every((it) => it.target?.[0]?.file === "台帳.csv" && it.target[0].cells[0] === "A2")).toBe(true);
+  });
+
+  test("表の上の頭書きの「設備名｜X」（設備ごとに 1 シートの台帳）は、表の機器の親のまとまり", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["【架空】機器台帳"]]);
+      rows(ws, 2, [["施設名", "【架空】甲工場", null, "整理番号", "01"]]);
+      rows(ws, 3, [["設備名", "甲設備", null, "作成", "R8.3.31"]]);
+      rows(ws, 5, [["号炉", "機器名称", "機器番号", "仕様", "設置年"]]);
+      rows(ws, 6, [
+        ["1号炉", "ポンプ", "1-PMP", "30 kW", "2002"],
+        ["1号炉", "ブロワ", "1-BLW", "15 kW", "2002"],
+      ]);
+    }, "01甲");
+    const s = session();
+    await s.add([{ name: "台帳.xlsx", bytes }]);
+    const an = s.analyze();
+    const group = an.records.assets.find((a) => a.name === "甲設備");
+    expect(group?.level).toBe(1);
+    expect(an.records.assets.filter((a) => a.parentId === group?.id).map((a) => [a.name, a.level])).toEqual([
+      ["ポンプ", 2],
+      ["ブロワ", 2],
+    ]);
+    // 「施設名」は名前の項目ではない（まとまりにしない）
+    expect(an.records.assets.some((a) => a.name === "【架空】甲工場")).toBe(false);
+  });
+
+  test("数を数える字（「1基」「2台」）と数量の見出しの列は号にしない：台帳（xlsx）でも日報（CSV）でも、数量の列の無い資料と同じ質問の数", async () => {
+    expect(parseUnit("1基")).toBeNull();
+    expect(parseUnit("2台")).toBeNull();
+    expect(parseUnit("1系")).toEqual({ kind: "number", n: 1, spelling: "{n}系" });
+    const ledgerOf = (qty: boolean) =>
+      xlsxOf((ws) => {
+        rows(ws, 1, [["名称", ...(qty ? ["数量"] : []), "型式"]]);
+        rows(ws, 2, [
+          ["1号炉ポンプ", ...(qty ? ["1基"] : []), "渦巻"],
+          ["2号炉ポンプ", ...(qty ? ["1基"] : []), "渦巻"],
+          ["計量器", ...(qty ? ["2台"] : []), "ロードセル"],
+        ]);
+      });
+    const dailyOf = (qty: boolean) =>
+      csv([`日付,${qty ? "数量," : ""}号炉,機器,作業,工数(人日)`, `2024/4/6,${qty ? "2台," : ""}1,ポンプ,点検,2`, `2024/4/7,${qty ? "1台," : ""}2,ポンプ,点検,2`]);
+    const run = async (qtyLedger: boolean, qtyDaily: boolean) => {
+      const s = session();
+      await s.add([
+        { name: "台帳.xlsx", bytes: await ledgerOf(qtyLedger) },
+        { name: "日報.csv", bytes: dailyOf(qtyDaily) },
+      ]);
+      acceptDefaults(s);
+      return s;
+    };
+    const base = await run(false, false);
+    const withLedgerQty = await run(true, false);
+    const withDailyQty = await run(false, true);
+    expect(kinds(withLedgerQty)).toEqual(kinds(base));
+    expect(kinds(withDailyQty)).toEqual(kinds(base));
+    // 名前の前の号（「2号炉ポンプ」）が、数量の「1基」で上書きされない
+    expect(withLedgerQty.analyze().records.assets.filter((a) => a.name === "ポンプ").map((a) => (a.series as { n?: number } | null)?.n)).toEqual([1, 2]);
+    expect(withDailyQty.analyze().records.events.map((e) => (e.unit as { n?: number } | null)?.n)).toEqual([1, 2]);
+  });
+
+  test("名前の前の号は、空白なしで漢字の名前が続いても 1 字まで（「1号炉焼却炉本体」）。番号を分けた名前からも分ける。件名の頭の号はその行の号", async () => {
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: csv(["名称,型式", "1号炉焼却炉本体（FNC-1）,甲", "2号炉焼却炉本体（FNC-2）,甲"]) },
+      { name: "実績.csv", bytes: csv(["工事件名,対象機器,着工日,竣工日", "1号炉 定期整備工事,焼却炉本体,2023/4/6,2023/4/17", "1号炉・2号炉 点検,焼却炉本体,2023/5/6,2023/5/7"]) },
+    ]);
+    acceptDefaults(s);
+    const an = s.analyze();
+    expect(an.records.assets.map((a) => [a.name, (a.series as { n?: number } | null)?.n, a.tag])).toEqual([
+      ["焼却炉本体", 1, "FNC-1"],
+      ["焼却炉本体", 2, "FNC-2"],
+    ]);
+    expect(an.records.events.map((e) => (e.unit as { n?: number } | null)?.n ?? null)).toEqual([1, null]);
+  });
+
+  test("機器の表の「管理番号」の列で、中身が英字まじりの符号で行ごとに違えば機器番号。作業の表の管理番号は行を指すだけ", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["【架空】星取表"]]);
+      rows(ws, 2, [["凡例　点＝点検"]]);
+      rows(ws, 3, [["No.", "設備・機器名称", "管理番号", "R5", "R6"]]);
+      rows(ws, 4, [
+        [1, "ポンプ", "PMP-1", "点", null],
+        [2, "ブロワ", "BLW-1", null, "点"],
+        [3, "計量器", "SCL", "点", "点"],
+      ]);
+    });
+    const s = session();
+    await s.add([
+      { name: "星取表.xlsx", bytes },
+      { name: "実績.csv", bytes: csv(["管理No,日付,機器,作業", "R4-001,2022/4/6,ポンプ,点検", "R4-002,2022/4/7,ブロワ,点検", "R4-003,2022/4/8,計量器,点検"]) },
+    ]);
+    const an = s.analyze();
+    expect(an.layouts.find((l) => l.file === "星取表.xlsx")?.tables[0]?.cols[2]?.role).toBe("tag");
+    expect(an.records.assets.find((a) => a.name === "ポンプ")?.tag).toBe("PMP-1");
+    expect(an.layouts.find((l) => l.file === "実績.csv")?.tables[0]?.cols[0]?.role).toBe("number");
+  });
+
+  test("表紙のシート：1 セルだけの文の並び（「記入の決まり」）は表にしない。列の役目の問いは、日付・機器番号・工数などの役目でも答えられる", async () => {
+    const cover = await xlsxOf((ws) => {
+      rows(ws, 1, [["【架空】機器台帳"]]);
+      rows(ws, 3, [["記入の決まり"], ["・設備ごとに 1 シート。"], ["・区分の「機」は機器。"], ["・機器番号の先頭は号炉。"], ["・設置年は和暦の略号。"], ["・取消線は撤去済み。"]]);
+    }, "表紙");
+    const s = session();
+    await s.add([
+      { name: "表紙.xlsx", bytes: cover },
+      { name: "日報.csv", bytes: csv(["日付,実施区分あ,機器,作業,工数(人日)", "2024/4/6,あ,ポンプ,点検,2", "2024/4/7,い,ブロワ,点検,1"]) },
+    ]);
+    const an = s.analyze();
+    expect(an.layouts.find((l) => l.file === "表紙.xlsx")?.tables).toEqual([]);
+    expect(an.records.assets.filter((a) => a.file === "表紙.xlsx")).toEqual([]);
+    const q = an.open.find((x) => x.kind === "columnRole");
+    expect(q?.options.map((o) => o.id)).toEqual(["remark", "workName", "assetRef", "tag", "date", "end", "days", "effort", "exclude"]);
   });
 });

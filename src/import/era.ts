@@ -59,7 +59,8 @@ function eraYear(tok: string, n: string): number | null {
   return e.start[0] + k - 1;
 }
 
-function validYmd(y: number, m: number, d: number): boolean {
+/** 年月日として正しいか（2 月 30 日などを外す） */
+export function validYmd(y: number, m: number, d: number): boolean {
   if (!(m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1868 && y <= 2200)) return false;
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
@@ -136,15 +137,22 @@ const RANGE_SEP = /\s*[〜~]\s*/u;
 
 /**
  * 期間の文字を読む：「2019/04/06〜2019/04/17」「R1.5.10〜R1.5.20」「令和元年5月10日〜令和元年5月20日」。
- * 両側とも年月日のそろった日付で、始まりが終わりより後でないときだけ。片側だけ・「4月上旬〜」などは null。
+ * 右側の年を省いた書き方（「2023/9/14〜9/27」「令和5年8月31日〜9月2日」）は、始まりの年から読む（月が戻れば次の年）。
+ * 始まりは年月日のそろった日付で、始まりが終わりより後でないときだけ。片側だけ・「4月上旬〜」などは null。
  */
 export function parseDateRange(text: string): { start: Ymd; end: Ymd } | null {
   const s = nfkc(text);
   const parts = s.split(RANGE_SEP);
   if (parts.length !== 2) return null;
   const start = parseDateText(parts[0] ?? "");
-  const end = parseDateText(parts[1] ?? "");
-  if (!start || !end) return null;
+  if (!start) return null;
+  let end = parseDateText(parts[1] ?? "");
+  const md = end ? null : parseMonthDay(parts[1] ?? "");
+  if (md) {
+    const y = md.m < start.m ? start.y + 1 : start.y;
+    end = validYmd(y, md.m, md.d) ? { y, m: md.m, d: md.d } : null;
+  }
+  if (!end) return null;
   if (ymdString(start) > ymdString(end)) return null;
   return { start, end };
 }
