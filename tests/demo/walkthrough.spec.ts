@@ -438,7 +438,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await expect(pa.getByTestId("you-steps")).toContainText("全国の");
       await expect(pa.getByTestId("github-login")).toHaveText("つないでいません");
       await expect(pa.getByTestId("send")).toHaveText("署名して公開の台帳へ出す");
-      await expect(pa.getByTestId("send-reason")).toContainText("GitHub につないでいない");
+      await expect(pa.getByTestId("send-reason")).toHaveText("GitHub につないでいません");
       await expect(pa.getByTestId("ledger-bottom")).toBeVisible();
       await pa.screenshot({ path: shot("demo-27-share-ledger") });
     });

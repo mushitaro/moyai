@@ -78,7 +78,7 @@ test("SHARE で GitHub につなぎ、合言葉で署名して、公開の台帳
     await expect(page.getByText("誰からも見えるあなた")).toBeVisible();
     await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
     await expect(page.getByTestId("send")).toHaveText("署名して公開の台帳へ出す");
-    await expect(page.getByTestId("send-reason")).toContainText("GitHub につないでいない");
+    await expect(page.getByTestId("send-reason")).toHaveText("GitHub につないでいません");
     await expect(page.getByTestId("ledger-bottom")).toHaveText("MOYAI が GitHub に PR を出します。載ったものは、取下げても相手の写しは消せません。");
   });
 

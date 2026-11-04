@@ -283,7 +283,16 @@ export function Checkpoint() {
   const done = dest === "ledger" ? !!sentPr : !!sent;
   const canSend = !!view && view.blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && pass.length > 0 && !sending && !done;
   const login = res?.github?.login ?? null;
-  const sendReasons = !view ? [T.sendNeeds.noView] : [...view.blockers.map((b) => T.sendNeeds[b] ?? b), ...(pass.length === 0 ? [T.sendNeeds.passphrase] : [])];
+  // 止め札は、いま効いている理由を 1 つだけ出す（公開の台帳でつないでいなければ、それがいちばん先）
+  const sendReason = !view
+    ? T.sendNeeds.noView
+    : view.blockers.includes("noKey")
+      ? T.sendNeeds.noKey
+      : view.blockers.length > 0
+        ? (T.sendNeeds[view.blockers[0]!] ?? view.blockers[0]!)
+        : pass.length === 0
+          ? T.sendNeeds.passphrase
+          : "";
 
   const send = async () => {
     if (!canSend || !view?.bodyHash || !res?.plan) return;
@@ -390,7 +399,7 @@ export function Checkpoint() {
                   {login ?? T.githubNone}
                 </Text>
                 {res?.github?.ready === false ? (
-                  <Text size="xs" c="var(--shu-text)" data-testid="github-no-client">
+                  <Text size="xs" c="dimmed" data-testid="github-no-client">
                     {T.githubNoClient}
                   </Text>
                 ) : (
@@ -423,6 +432,20 @@ export function Checkpoint() {
               onClose={() => setConnectOpen(false)}
               onConnected={() => setReload((x) => x + 1)}
             />
+          )}
+
+          {/* 公開の台帳に出した束（SHARE を開いたときに読んだ行方）。出した束があれば、出す先の行のすぐ下。無ければ節ごと出さない */}
+          {dest === "ledger" && prs && prs.length > 0 && (
+            <section data-testid="ledger-prs">
+              <Title order={2} size="h4" fw={500} mb="xs">
+                {T.prsTitle}
+              </Title>
+              <Stack gap={4}>
+                {prs.map((p) => (
+                  <PrLine key={p.pr} p={p} />
+                ))}
+              </Stack>
+            </section>
           )}
 
           {/* 見え方の答え（Claude との会話で決めてもよい。答えがそろうと、相手から見たあなたが出る） */}
@@ -534,20 +557,6 @@ export function Checkpoint() {
               </Stack>
             )}
           </section>
-
-          {/* 出した束の行方（公開の台帳。SHARE を開いたときに読んだもの） */}
-          {dest === "ledger" && prs && prs.length > 0 && (
-            <section data-testid="ledger-prs">
-              <Title order={2} size="h4" fw={500} mb="xs">
-                {T.prsTitle}
-              </Title>
-              <Stack gap={4}>
-                {prs.map((p) => (
-                  <PrLine key={p.pr} p={p} />
-                ))}
-              </Stack>
-            </section>
-          )}
 
           {/* 出元：鍵の指紋と、束の鎖（名前は出ない） */}
           {dest === "ledger" && res?.ledger?.fingerprint && (
@@ -783,9 +792,9 @@ export function Checkpoint() {
           )}
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
-          {!canSend && !done && (
-            <Text size="xs" c="dimmed" style={{ maxWidth: 260, textWrap: "pretty" }} data-testid="send-reason">
-              {sendReasons.join("・")}
+          {!canSend && !done && sendReason && (
+            <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
+              {sendReason}
             </Text>
           )}
           <PasswordInput
