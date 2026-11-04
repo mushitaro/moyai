@@ -1,0 +1,404 @@
+{
+ "schema": "moyai.heldout.result/0",
+ "set": "heldout-3",
+ "bundle": "8e8d4259a28848a4b2e5fc562bd2857ba5dc17a03e9fcef798e60b9d70475b71",
+ "reader": {
+  "tag": "reader-freeze-3",
+  "commit": "0f061592e7555c1b27c5639f7ed3c19aebab2677",
+  "src": "3203bd23c91ffd932d0415579b7c80afd4767fad",
+  "packs": "57ed8e01c601593f34bd94ac8037451816802360"
+ },
+ "measuredAt": "2026-11-04T00:16:03.263Z",
+ "result": {
+  "set": "heldout-3",
+  "files": [
+   {
+    "file": "ledger/kiki-daicho_R8.xlsx",
+    "format": "xlsx",
+    "kind": "ledger",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 0,
+    "rows": {
+     "input": 92,
+     "imported": 41,
+     "excluded": 51,
+     "unresolved": 0,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "star/choki-hozen-keikaku_hoshitori.xlsx",
+    "format": "xlsx",
+    "kind": "star",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 204,
+    "rows": {
+     "input": 45,
+     "imported": 11,
+     "excluded": 15,
+     "unresolved": 19,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "daily/sagyo-nippo_2024-2026.csv",
+    "format": "csv",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 4642,
+    "rows": {
+     "input": 573,
+     "imported": 0,
+     "excluded": 4,
+     "unresolved": 569,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "daily/koji-jisseki_H31-R5.csv",
+    "format": "csv",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 282,
+    "rows": {
+     "input": 55,
+     "imported": 0,
+     "excluded": 9,
+     "unresolved": 46,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "report/R6-2go-teiki-seibi_jisseki.pdf",
+    "format": "pdf",
+    "kind": "report",
+    "leak": 128,
+    "leakAgainst": "元の xlsx（列の位置のずれ 0）",
+    "leakDetail": [
+     "中身のある行の数が違う（xlsx 19・PDF 21）",
+     "xlsx の 1 行の「【架空】令和6年度 2号炉定期整備工事 作業実績報告書」が PDF の 1 行に無い",
+     "PDF の 1 行の「【架空】令和6年度」が xlsx の 1 行に無い",
+     "PDF の 1 行の「2号炉定期整備工事」が xlsx の 1 行に無い",
+     "PDF の 1 行の「作業実績報告書」が xlsx の 1 行に無い",
+     "xlsx の 3 行の「令和6年10月25日」が PDF の 3 行に無い",
+     "PDF の 3 行の「令和6年10月」が xlsx の 3 行に無い",
+     "PDF の 3 行の「25日」が xlsx の 3 行に無い",
+     "xlsx の 8 行の「番号」が PDF の 8 行に無い",
+     "xlsx の 8 行の「設備区分」が PDF の 8 行に無い",
+     "xlsx の 8 行の「機器名称」が PDF の 8 行に無い",
+     "xlsx の 8 行の「作業項目」が PDF の 8 行に無い",
+     "xlsx の 8 行の「作業期間（令和6年）」が PDF の 8 行に無い",
+     "xlsx の 8 行の「日数」が PDF の 8 行に無い",
+     "xlsx の 8 行の「人員(人/日)」が PDF の 8 行に無い",
+     "xlsx の 8 行の「延時間(h)」が PDF の 8 行に無い",
+     "xlsx の 8 行の「備考」が PDF の 8 行に無い",
+     "PDF の 8 行の「作業期間（令和6年」が xlsx の 8 行に無い",
+     "xlsx の 9 行の「自」が PDF の 9 行に無い",
+     "xlsx の 9 行の「至」が PDF の 9 行に無い",
+     "PDF の 9 行の「番号」が xlsx の 9 行に無い",
+     "PDF の 9 行の「設備区分」が xlsx の 9 行に無い",
+     "PDF の 9 行の「機器名称」が xlsx の 9 行に無い",
+     "PDF の 9 行の「作業項目」が xlsx の 9 行に無い",
+     "PDF の 9 行の「）」が xlsx の 9 行に無い",
+     "PDF の 9 行の「日数」が xlsx の 9 行に無い",
+     "PDF の 9 行の「人員(人/日」が xlsx の 9 行に無い",
+     "PDF の 9 行の「延時間(h)」が xlsx の 9 行に無い",
+     "PDF の 9 行の「備考」が xlsx の 9 行に無い",
+     "xlsx の 10 行の「①」が PDF の 10 行に無い",
+     "xlsx の 10 行の「燃焼設備」が PDF の 10 行に無い",
+     "xlsx の 10 行の「2号ストーカ」が PDF の 10 行に無い",
+     "xlsx の 10 行の「定期整備（分解・清掃・摩耗部品交換）」が PDF の 10 行に無い",
+     "xlsx の 10 行の「10/5」が PDF の 10 行に無い",
+     "xlsx の 10 行の「10/16」が PDF の 10 行に無い",
+     "xlsx の 10 行の「12」が PDF の 10 行に無い",
+     "xlsx の 10 行の「4」が PDF の 10 行に無い",
+     "xlsx の 10 行の「384」が PDF の 10 行に無い",
+     "PDF の 10 行の「)」が xlsx の 10 行に無い",
+     "xlsx の 11 行の「②」が PDF の 11 行に無い",
+     "xlsx の 11 行の「2号焼却炉本体」が PDF の 11 行に無い",
+     "xlsx の 11 行の「定期整備（分解・清掃・摩耗部品交換）」が PDF の 11 行に無い",
+     "xlsx の 11 行の「10/5」が PDF の 11 行に無い",
+     "xlsx の 11 行の「10/16」が PDF の 11 行に無い",
+     "xlsx の 11 行の「12」が PDF の 11 行に無い",
+     "xlsx の 11 行の「3」が PDF の 11 行に無い",
+     "xlsx の 11 行の「288」が PDF の 11 行に無い",
+     "PDF の 11 行の「自」が xlsx の 11 行に無い",
+     "PDF の 11 行の「至」が xlsx の 11 行に無い",
+     "xlsx の 12 行の「③」が PDF の 12 行に無い"
+    ],
+    "unresolved": 60,
+    "rows": {
+     "input": 21,
+     "imported": 1,
+     "excluded": 13,
+     "unresolved": 7,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "report/2023-zenkyushi-tenken_shukei.pdf",
+    "format": "pdf",
+    "kind": "report",
+    "leak": 14,
+    "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+    "leakDetail": [
+     "xlsx の 1 行の「【架空】全炉休止期間 点検整備作業 日数・人工集計表（2023年度）」が PDF の 1 行に無い",
+     "PDF の 1 行の「【架空】全炉休止期間」が xlsx の 1 行に無い",
+     "PDF の 1 行の「点検整備作業」が xlsx の 1 行に無い",
+     "PDF の 1 行の「日数・人工集計表（2023年度）」が xlsx の 1 行に無い",
+     "xlsx の 2 行の「2023年10月6日」が PDF の 2 行に無い",
+     "PDF の 2 行の「2023年10月6」が xlsx の 2 行に無い",
+     "PDF の 2 行の「日」が xlsx の 2 行に無い",
+     "xlsx の 3 行の「全炉休止：2023/9/14（木）～ 9/27（水）」が PDF の 3 行に無い",
+     "PDF の 3 行の「全炉休止：2023/9/14」が xlsx の 3 行に無い",
+     "PDF の 3 行の「（木）～ 9/27」が xlsx の 3 行に無い",
+     "PDF の 3 行の「（水）」が xlsx の 3 行に無い",
+     "xlsx の 14 行の「施設管理係 確認欄」が PDF の 14 行に無い",
+     "PDF の 14 行の「施設管理係」が xlsx の 14 行に無い",
+     "PDF の 14 行の「確認欄」が xlsx の 14 行に無い"
+    ],
+    "unresolved": 8,
+    "rows": {
+     "input": 11,
+     "imported": 0,
+     "excluded": 6,
+     "unresolved": 5,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "photo/IMG_20231006_093214.jpg",
+    "format": "jpg",
+    "kind": "photo",
+    "leak": null,
+    "leakAgainst": null,
+    "leakDetail": [],
+    "unresolved": null,
+    "rows": null,
+    "accuracy": null,
+    "rejected": "読んでいない（写真は AI が読む）"
+   }
+  ],
+  "asked": 76,
+  "answered": 52,
+  "openAtEnd": [
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 A（見出し「作業日」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 A（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 B（見出し「【架空】全炉休止期間」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 F（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 G（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "列 D（見出し「工期」）の役目が決まらない"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「定期整備（分解）」は、先の資料の「定期整備（分解）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-STK）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「定期整備（分解）」は、先の資料の「定期整備（分解）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-FNC）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「精密機能検査」は、先の資料の「精密機能検査」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「定期整備（分解）」は、先の資料の「定期整備（分解）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-BLR）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「定期点検」は、先の資料の「定期点検」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-BGF）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「定期点検」は、先の資料の「定期点検」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-DSC）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「定期点検」は、先の資料の「定期点検」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-NXR）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「分解整備」は、先の資料の「分解整備」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-FDF）」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「分解整備」は、先の資料の「分解整備」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "「委託」は、先の資料の「委託（1-IDF）」と同じ機器か"
+   }
+  ],
+  "unresolvedBefore": 5583,
+  "unresolvedAfter": 5196,
+  "planMade": false,
+  "blockers": [
+   "未解決のセル 5196",
+   "答えの無い質問 24"
+  ],
+  "plan": null,
+  "markWorkCount": null,
+  "recovery": {
+   "denominator": 142,
+   "together": 0,
+   "inPlan": 0,
+   "manDays": {
+    "correct": 0,
+    "total": 64
+   },
+   "days": {
+    "correct": 0,
+    "total": 104
+   },
+   "marksOnly": 142,
+   "notCounted": {},
+   "misses": [
+    "作業 W0001（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0001：日数 なし≠12",
+    "作業 W0002（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0002：日数 なし≠12",
+    "作業 W0003（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0003：日数 なし≠12",
+    "作業 W0004（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0004：日数 なし≠12",
+    "作業 W0005（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0005：日数 なし≠12",
+    "作業 W0006（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0006：日数 なし≠12",
+    "作業 W0007（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0007：日数 なし≠12",
+    "作業 W0008（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0008：日数 なし≠12",
+    "作業 W0009（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0009：工数 なし≠9",
+    "作業 W0009：日数 なし≠3",
+    "作業 W0010（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0010：工数 なし≠6",
+    "作業 W0010：日数 なし≠3",
+    "作業 W0011（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0011：工数 なし≠25",
+    "作業 W0011：日数 なし≠5",
+    "作業 W0012（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0012：工数 なし≠4",
+    "作業 W0012：日数 なし≠2",
+    "作業 W0013（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0013：日数 なし≠12",
+    "作業 W0014（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0014：日数 なし≠12",
+    "作業 W0015（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0015：日数 なし≠12",
+    "作業 W0016（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0016：日数 なし≠12",
+    "作業 W0017（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0017：日数 なし≠12",
+    "作業 W0018（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0018：日数 なし≠12",
+    "作業 W0019（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0019：工数 なし≠9",
+    "作業 W0019：日数 なし≠3",
+    "作業 W0020（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0020：工数 なし≠6",
+    "作業 W0020：日数 なし≠3",
+    "作業 W0021（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない",
+    "作業 W0021：工数 なし≠9",
+    "作業 W0021：日数 なし≠3",
+    "作業 W0022（star/choki-hozen-keikaku_hoshitori.xlsx・daily/koji-jisseki_H31-R5.csv）：1 つの明細にそろっていない"
+   ]
+  },
+  "unplaced": []
+ }
+}

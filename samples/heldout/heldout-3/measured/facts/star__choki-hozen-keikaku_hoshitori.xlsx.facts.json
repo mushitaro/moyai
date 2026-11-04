@@ -1,0 +1,2522 @@
+{
+ "schema": "moyai.factory.facts/0",
+ "file": "star/choki-hozen-keikaku_hoshitori.xlsx",
+ "reader": "openpyxl 3.1.5",
+ "creator": "【架空】みどり台クリーンセンター 施設管理係",
+ "sheets": [
+  {
+   "title": "1号炉",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】みどり台クリーンセンター　長期保全計画表（星取表）　1号炉系",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "凡例　▲：実施済　△：計画　（令和8年9月末現在。2026年度は黄色の列）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "設備区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C3",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D3",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E3",
+     "value": "作業項目",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F3",
+     "value": "受注",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "年　　度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q3",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G4",
+     "value": 2019,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H4",
+     "value": 2020,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I4",
+     "value": 2021,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J4",
+     "value": 2022,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "K4",
+     "value": 2023,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L4",
+     "value": 2024,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M4",
+     "value": 2025,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N4",
+     "value": 2026,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "O4",
+     "value": 2027,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P4",
+     "value": 2028,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "燃焼設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "ストーカ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "1-STK",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "定期整備（分解）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O5",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P5",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "焼却炉本体",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "1-FNC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "定期整備（分解）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O6",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P6",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "精密機能検査",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P7",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "燃焼ガス冷却設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "ボイラ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "1-BLR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "定期整備（分解）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O8",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P8",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B9",
+     "value": "排ガス処理設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "集じん装置",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "1-BGF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "定期点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O9",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P9",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "HCL、SOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "1-DSC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "定期点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O10",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P10",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "NOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "1-NXR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "定期点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O11",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P11",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A12",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B12",
+     "value": "通風設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "押込送風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D12",
+     "value": "1-FDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": "分解整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F12",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O12",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C13",
+     "value": "誘引通風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D13",
+     "value": "1-IDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E13",
+     "value": "分解整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F13",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G13",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I13",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K13",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M13",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O13",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E14",
+     "value": "本体取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N14",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q14",
+     "value": "R9.2 予定",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": "※ 年度は 4 月から翌年 3 月。設備区分・機器名称が空欄の行は、上の行と同じ。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:Q1",
+    "A2:Q2",
+    "A3:A4",
+    "B3:B4",
+    "C3:C4",
+    "D3:D4",
+    "E3:E4",
+    "F3:F4",
+    "G3:P3",
+    "Q3:Q4"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "2号炉",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】みどり台クリーンセンター　長期保全計画表（星取表）　2号炉系",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "凡例　▲：実施済　△：計画　（令和8年9月末現在。2026年度は黄色の列）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "設備区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C3",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D3",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E3",
+     "value": "作業項目",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F3",
+     "value": "受注",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "年　　度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q3",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G4",
+     "value": 2019,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H4",
+     "value": 2020,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I4",
+     "value": 2021,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J4",
+     "value": 2022,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "K4",
+     "value": 2023,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L4",
+     "value": 2024,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M4",
+     "value": 2025,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N4",
+     "value": 2026,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "O4",
+     "value": 2027,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P4",
+     "value": 2028,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "燃焼設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "ストーカ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "2-STK",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "定期整備（分解）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N5",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O5",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P5",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "焼却炉本体",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "2-FNC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "定期整備（分解）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N6",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O6",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P6",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "精密機能検査",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "燃焼ガス冷却設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "ボイラ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "2-BLR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "定期整備（分解）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N8",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O8",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P8",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B9",
+     "value": "排ガス処理設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "集じん装置",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "2-BGF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "定期点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N9",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O9",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P9",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "HCL、SOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "2-DSC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "定期点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N10",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O10",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P10",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "NOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "2-NXR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "定期点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N11",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O11",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P11",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A12",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B12",
+     "value": "通風設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "押込送風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D12",
+     "value": "2-FDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": "分解整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F12",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N12",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P12",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E13",
+     "value": "電動機取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F13",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I13",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q13",
+     "value": "R3.12 電動機取替（旧電動機は撤去）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C14",
+     "value": "誘引通風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D14",
+     "value": "2-IDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E14",
+     "value": "分解整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H14",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J14",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L14",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N14",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P14",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": "※ 年度は 4 月から翌年 3 月。設備区分・機器名称が空欄の行は、上の行と同じ。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:Q1",
+    "A2:Q2",
+    "A3:A4",
+    "B3:B4",
+    "C3:C4",
+    "D3:D4",
+    "E3:E4",
+    "F3:F4",
+    "G3:P3",
+    "Q3:Q4"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "共通",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】みどり台クリーンセンター　長期保全計画表（星取表）　共通系",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "凡例　▲：実施済　△：計画　（令和8年9月末現在。2026年度は黄色の列）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "設備区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C3",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D3",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E3",
+     "value": "作業項目",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F3",
+     "value": "受注",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "年　　度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q3",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G4",
+     "value": 2019,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H4",
+     "value": 2020,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I4",
+     "value": 2021,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J4",
+     "value": 2022,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "K4",
+     "value": 2023,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L4",
+     "value": 2024,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M4",
+     "value": 2025,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N4",
+     "value": 2026,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "O4",
+     "value": 2027,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P4",
+     "value": 2028,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "受入供給設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "計量機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "0-SCL",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "定期検査",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M5",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "ごみクレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "0-CRN",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "年次点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N6",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O6",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P6",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "可燃性粗大ごみ切断機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "0-SHR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "定期点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N7",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "燃焼ガス冷却設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "蒸気復水器",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "0-CND",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "分解整備（全休止時）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K8",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O8",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B9",
+     "value": "余熱利用設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "蒸気タービン発電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "0-TBN",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "分解整備（全休止時）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K9",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O9",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B10",
+     "value": "灰出し設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "灰クレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "0-ACR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "年次点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N10",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O10",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P10",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B11",
+     "value": "電気設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "受変電配電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "0-SUB",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "定期点検（全休止時）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K11",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O11",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A12",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D12",
+     "value": "0-GEN",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": "定期点検（全休止時）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F12",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K12",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O12",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B13",
+     "value": "計装設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C13",
+     "value": "DCS",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D13",
+     "value": "0-DCS",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E13",
+     "value": "定期点検（全休止時）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F13",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H13",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K13",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O13",
+     "value": "△",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E14",
+     "value": "更新（基幹改良）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M14",
+     "value": "▲",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q14",
+     "value": "R7.10～R8.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": "※ 年度は 4 月から翌年 3 月。設備区分・機器名称が空欄の行は、上の行と同じ。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:Q1",
+    "A2:Q2",
+    "A3:A4",
+    "B3:B4",
+    "C3:C4",
+    "D3:D4",
+    "E3:E4",
+    "F3:F4",
+    "G3:P3",
+    "Q3:Q4"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  }
+ ]
+}

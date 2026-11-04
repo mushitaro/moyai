@@ -1,0 +1,2450 @@
+{
+ "schema": "moyai.factory.facts/0",
+ "file": "ledger/kiki-daicho_R8.xlsx",
+ "reader": "openpyxl 3.1.5",
+ "creator": "【架空】みどり台クリーンセンター 施設管理係",
+ "sheets": [
+  {
+   "title": "表紙",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A4",
+     "value": "炉形式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B4",
+     "value": "ストーカ式焼却炉　2炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "管理者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "施設管理係",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "記入の決まり",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "・設備ごとに 1 シート（整理番号の順）。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": "・区分：「機」＝機器、「部」＝その上の機器の部位。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": "・機器番号：先頭の数字は号炉（0＝共通）。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": "・設置年は和暦の略号（H＝平成）。部位は機器と同じ。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A12",
+     "value": "・取消線の行は撤去済み（記録として残す）。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": "改訂",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B14",
+     "value": "内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A15",
+     "value": "R4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B15",
+     "value": "2号炉 押込送風機の電動機を取り替えたため修正",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": "R8.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B16",
+     "value": "計装設備の更新（基幹改良）が終わったため確認",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "01受入供給",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "01",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "受入供給設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "計量機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "0-SCL",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "ロードセル式 30 t",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "2 台",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "ごみクレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "0-CRN",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "バケット容量 4 m3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "吊上荷重 6 t",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "可燃性粗大ごみ切断機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "0-SHR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "2 軸せん断式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "処理能力 5 t/h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G8",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "02燃焼",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "02",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "燃焼設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "ストーカ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "1-STK",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "階段式 3 段",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "火格子面積 18 m2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "焼却炉本体",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "1-FNC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "処理能力 75 t/日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "耐火物 キャスタブル",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "耐火物",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "炉壁 キャスタブル",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "補修周期 3 年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B9",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "ストーカ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "2-STK",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "階段式 3 段",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": "火格子面積 18 m2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G9",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B10",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "焼却炉本体",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "2-FNC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "処理能力 75 t/日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "耐火物 キャスタブル",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G10",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "耐火物",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "炉壁 キャスタブル",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "補修周期 3 年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "03ガス冷却",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "03",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "燃焼ガス冷却設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "蒸気復水器",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "0-CND",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "空冷式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "処理蒸気量 25 t/h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H15",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "ボイラ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "1-BLR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "自然循環式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "蒸気圧力 3.0 MPa",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "ボイラ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "2-BLR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "自然循環式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "蒸気圧力 3.0 MPa",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G8",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "04排ガス処理",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "04",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "排ガス処理設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "集じん装置",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "1-BGF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "ろ過式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "ろ布面積 1,200 m2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "HCL、SOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "1-DSC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "乾式 消石灰吹込",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "処理ガス量 28,000 m3N/h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "NOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "1-NXR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "無触媒脱硝",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "尿素水噴霧",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G8",
+     "value": "H20",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B9",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "集じん装置",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "2-BGF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "ろ過式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": "ろ布面積 1,200 m2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G9",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B10",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "HCL、SOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "2-DSC",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "乾式 消石灰吹込",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "処理ガス量 28,000 m3N/h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G10",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B11",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "NOx 除去設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "2-NXR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "無触媒脱硝",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "尿素水噴霧",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G11",
+     "value": "H20",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "05通風",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "05",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "通風設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "押込送風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "1-FDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "ターボ形",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "風量 1,200 m3/min",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "電動機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "90 kW",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "誘引通風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "1-IDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "ターボ形",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "風量 2,100 m3/min",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G8",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "電動機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "200 kW 4 極",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "軸受",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "すべり軸受",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B11",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "押込送風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "2-FDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "ターボ形",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "風量 1,200 m3/min",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G11",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A12",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "電動機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": "90 kW",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C13",
+     "value": "旧電動機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E13",
+     "value": "90 kW",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H13",
+     "value": "2021年12月 撤去（新品に取替）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B14",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C14",
+     "value": "誘引通風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D14",
+     "value": "2-IDF",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E14",
+     "value": "ターボ形",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": "風量 2,100 m3/min",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G14",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A15",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C15",
+     "value": "電動機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E15",
+     "value": "200 kW 4 極",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": "部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C16",
+     "value": "軸受",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E16",
+     "value": "すべり軸受",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A18",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "06余熱利用",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "06",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "余熱利用設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "蒸気タービン発電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "0-TBN",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "復水式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "定格出力 1,990 kW",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H15",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "07灰出し",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "07",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "灰出し設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "灰クレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "0-ACR",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "バケット容量 2 m3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "吊上荷重 4 t",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "08電気",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "08",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "電気設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "受変電配電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "0-SUB",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "受電 6.6 kV",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "変圧器 3 台",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "0-GEN",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "非常用 ディーゼル",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "出力 300 kVA",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "H15",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  },
+  {
+   "title": "09計装",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】機器台帳",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "施設名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "【架空】みどり台クリーンセンター",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G2",
+     "value": "整理番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "09",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "計装設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "作成",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "R8.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "機器名称",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "仕様（1）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "仕様（2）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "設置年",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": "機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "ＤＣＳ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "0-DCS",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "監視操作卓 3 台",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "制御盤 4 面",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "H14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": "※ 区分・機器番号・設置年の書き方は表紙のとおり。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A1:H1",
+    "B2:E2",
+    "B3:E3"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  }
+ ]
+}
