@@ -240,8 +240,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       : plan
         ? { state: "editing", text: T.turnLine("editing", true, "") }
         : null;
-  // 比べる版：承認を頼まれた人は頼まれた版のひとつ前、ほかは保管先のいちばん新しい版（同じ計画のときだけ）
-  const compareWith = viewingOld ? null : awaitingMe ? (st?.previous ?? null) : (st?.latest ?? null);
+  // 比べる版：承認を頼まれた人も頼んだ人も、頼んだ版のひとつ前（無ければ出さない）。ほかは保管先のいちばん新しい版（同じ計画のときだけ）
+  const compareWith = viewingOld ? null : awaitingMe || askedApprove ? (st?.previous ?? null) : (st?.latest ?? null);
   const compare = useMemo<MergeCompare | null>(
     () => (plan && compareWith && compareWith.plan.planId === plan.planId ? { version: compareWith.version, plan: compareWith.plan } : null),
     [plan, compareWith],

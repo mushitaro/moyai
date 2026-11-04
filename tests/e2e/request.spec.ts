@@ -94,6 +94,8 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await expect(pa.getByTestId("merge-version")).toHaveText("第 1 版");
     await expect(pa.getByTestId("merge-state")).toHaveText("承認待ち");
     await expect(pa.getByTestId("confirm-open")).toHaveCount(0);
+    // 比べる版は頼んだ版のひとつ前。第 1 版には前の版が無いので出さない
+    await expect(pa.getByTestId("merge-compare")).toHaveCount(0);
     await expect(pa.getByTestId("request-renew")).toBeVisible();
     await expect(pa.getByTestId("history-open")).toBeVisible();
     await pa.screenshot({ path: shot(`b1-1-asked-unopened-${tag}`) });
@@ -195,8 +197,10 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await expect(row).toHaveCount(1);
     await expect(row).toHaveAttribute("data-why", "otherKey");
     // 名乗りは自称：版を作った山田と同じ名を名乗っても「（名乗り）」と指紋が出る
-    await expect(row).toContainText(`! 効かない頼み　${A}（名乗り）`);
-    await expect(row).toContainText("この版を作った鍵ではありません");
+    await expect(row).toContainText("! 効かない頼み　この版を作った鍵ではありません");
+    await expect(row).toContainText(`${A}（名乗り）`);
+    // 時刻は年を省かない（未来の時刻で取り下げる狙いに気づけるように）
+    await expect(row).toContainText("2099-01-01 09:00");
     await expect(pa.locator(".ag-row").first()).toBeVisible();
     await pa.screenshot({ path: shot(`b1-6-ignored-${tag}`) });
     // 佐藤：置いた頼みの合言葉で開いても、受け取れない。見るだけ

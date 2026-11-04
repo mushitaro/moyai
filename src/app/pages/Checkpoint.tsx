@@ -227,11 +227,10 @@ function RulesDialog({
                 <Text span c="var(--text)" ff="var(--font-body)">
                   {"　! "}
                   {T.memberUnconfirmed}
-                  {"　| "}
                 </Text>
-                <Anchor component="button" type="button" size="xs" onClick={onCheckChanger} data-testid="rules-changer-check">
+                <button type="button" className="moyai-inline-act" style={{ fontFamily: "var(--font-body)" }} onClick={onCheckChanger} data-testid="rules-changer-check">
                   {HUMAN_TEXT.keyWarn.check}
-                </Anchor>
+                </button>
               </>
             )}
           </Text>
@@ -354,12 +353,9 @@ function VerifyTable({
               {unconfirmed ? (
                 <Table.Td>
                   {T.memberUnconfirmed}
-                  <Text span c="dimmed">
-                    {"　| "}
-                  </Text>
-                  <Anchor component="button" type="button" size="sm" onClick={() => onCheckMember?.(l)} data-testid="member-check">
+                  <button type="button" className="moyai-inline-act" onClick={() => onCheckMember?.(l)} data-testid="member-check">
                     {HUMAN_TEXT.keyWarn.check}
-                  </Anchor>
+                  </button>
                 </Table.Td>
               ) : uncounted ? (
                 <Table.Td c="var(--text-3)">{T.notCounted}</Table.Td>
@@ -371,12 +367,9 @@ function VerifyTable({
                     {T.rulesCounts(rulesChange.loosened, rulesChange.tightened).loosened}
                   </Text>
                   {`・${T.rulesCounts(rulesChange.loosened, rulesChange.tightened).tightened}`}
-                  <Text span c="dimmed">
-                    {"　| "}
-                  </Text>
-                  <Anchor component="button" type="button" size="sm" onClick={() => onViewRules?.()} data-testid="rules-view">
+                  <button type="button" className="moyai-inline-act" onClick={() => onViewRules?.()} data-testid="rules-view">
                     {T.rulesView}
-                  </Anchor>
+                  </button>
                 </Table.Td>
               ) : (
                 <Table.Td c={l.status === "ok" ? undefined : "var(--shu-text)"}>{reasonsOf(l).join("、")}</Table.Td>
@@ -1057,12 +1050,9 @@ export function Checkpoint() {
             <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
               {sendReason}
               {dest === "ring" && sendReason === T.sendNeeds.rules && res?.ring?.rulesChange && (
-                <>
-                  {"　| "}
-                  <Anchor component="button" type="button" size="xs" onClick={() => setRulesOpen(true)} data-testid="send-rules-view">
-                    {T.rulesView}
-                  </Anchor>
-                </>
+                <button type="button" className="moyai-inline-act" onClick={() => setRulesOpen(true)} data-testid="send-rules-view">
+                  {T.rulesView}
+                </button>
               )}
             </Text>
           )}

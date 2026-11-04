@@ -194,8 +194,11 @@ export const HUMAN_TEXT = {
     ignoredWhy: { otherKey: "この版を作った鍵ではありません", otherContent: "ほかの中身に宛てた頼みです" } as Record<string, string>,
     ignoredBar: "! 効かない頼みが置かれています",
     ignoredShow: "見る",
+    // 年を省かない（未来の時刻にして本物の頼みを取り下げる狙いに気づけるように。Wire の B1）
     ignoredAt: (iso: string) =>
-      new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso)).replace("/", "-"),
+      new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+        .format(new Date(iso))
+        .replace(/\//g, "-"),
     renewTitle: (n: number) => `第 ${n} 版を頼み直す`,
     renewResult: "前のリンクは使えなくなります。",
     renewSubmit: "署名して渡す",

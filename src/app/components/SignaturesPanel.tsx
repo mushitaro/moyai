@@ -124,9 +124,16 @@ export function SignaturesPanel({
         const R = HUMAN_TEXT.request;
         const other = q.why === "otherKey";
         return (
-          <Text size="xs" key={`${q.fingerprint}|${q.at}`} c={other ? "var(--shu-text)" : "var(--text-3)"} data-testid="signature-ignored" data-why={q.why}>
-            {other ? `! ${R.ignored}　${q.by}${R.ignoredSelfNamed}　${q.fingerprint}` : `${R.ignored}　${q.by}`}　{R.ignoredAt(q.at)}　{R.ignoredWhy[q.why]}
-          </Text>
+          // 2 行：1 行目に効かない理由（別の鍵は朱で「!」）、2 行目に置いた人・指紋・時刻（淡い字 11px）
+          <div key={`${q.fingerprint}|${q.at}`} data-testid="signature-ignored" data-why={q.why}>
+            <Text size="xs" c={other ? "var(--shu-text)" : "var(--text-3)"}>
+              {other ? "! " : ""}
+              {R.ignored}　{R.ignoredWhy[q.why]}
+            </Text>
+            <Text c="var(--text-3)" fz={11} className="moyai-num">
+              {other ? `${q.by}${R.ignoredSelfNamed}　${q.fingerprint}` : q.by}　{R.ignoredAt(q.at)}
+            </Text>
+          </div>
         );
       })}
       <KeyCheckDialog signer={check} onClose={() => setCheck(null)} onConfirmed={() => onKeyConfirmed?.()} />
