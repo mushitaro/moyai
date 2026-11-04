@@ -1,0 +1,151 @@
+[
+ {
+  "schema": "moyai.reading/0",
+  "name": "【架空】天鏡台浄水場の読み方",
+  "scope": "facility",
+  "rules": [
+   {
+    "id": "plan-col-asset",
+    "text": "「設備・機器」を機器の名前として読む",
+    "kind": "columnRole",
+    "column": "設備・機器",
+    "role": "assetRef",
+    "author": "ai",
+    "reason": "見本の 9〜11 行目で「取水ゲート」「除塵機」「取水ポンプ（No.1～3）」が入っている欄。1 回目の答え 4：「〃」は上の行と同じ機器",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "plan-col-tag",
+    "text": "「機器番号」を機器番号として読む",
+    "kind": "columnRole",
+    "column": "機器番号",
+    "role": "tag",
+    "author": "ai",
+    "reason": "見出しの文字どおり。見本の値は「IG-1」「IS-1」「IP-1～3」",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "plan-col-qty",
+    "text": "「数量」を機器の数として読む",
+    "kind": "columnRole",
+    "column": "数量",
+    "role": "number",
+    "author": "ai",
+    "reason": "見本の値は「1門」「1基」「3台」。1 回目の答え 5：11 行目の取水ポンプは号機ごとに分けてよい（修繕は同じ年度に 1 台ずつ別の日、更新は 2033 年度に 3 台）",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "plan-col-work",
+    "text": "「区分」（点検・修繕・更新）を作業の名前として読む",
+    "kind": "columnRole",
+    "column": "区分",
+    "role": "workName",
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 4「はい、合っています」「区分は点検・修繕・更新の 3 つです」",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "plan-col-cycle",
+    "text": "「周期」は備考として残す",
+    "kind": "columnRole",
+    "column": "周期",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の値は「10年」「5年」「30年」。年度の印の並びが実際の計画を表すので、根拠の文に添えるだけにする",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "plan-col-cost",
+    "text": "「概算費用（千円/回）」は計画に使わない",
+    "kind": "columnRole",
+    "column": "概算費用",
+    "role": "exclude",
+    "author": "ai",
+    "reason": "金額の欄（18,000・96,000 など）で、星取表の機器・作業・年度の印に入らない",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "plan-col-remark",
+    "text": "「備　考」を備考として残す",
+    "kind": "columnRole",
+    "column": "備　考",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の 11 行目「3台を同じ年度に分解整備」・12 行目「2033年度に3台更新の予定（第2期）」の欄",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "plan-answer-filled-legend",
+    "text": "「計画年度」の列の「●」は凡例のとおり実施済みとして読む",
+    "kind": "answer",
+    "question": "planActualConflict",
+    "match": "記号「●」",
+    "answer": "legend",
+    "author": "ai",
+    "reason": "凡例は「● 実施済」。年度の列の見出しは「計　画　年　度」だが、表は 2026年9月 改定で、●は 2025 年度など過ぎた年度にある（10 行目 除塵機）。18 行の質問が開いたまま",
+    "when": { "file": "*長期保全計画表*" }
+   },
+   {
+    "id": "repair-row-stamp",
+    "text": "「担当」「係長」「課長」の判の行は注記として読む",
+    "kind": "rowRole",
+    "match": "課長",
+    "role": "note",
+    "author": "ai",
+    "reason": "各用紙の下の決裁の欄（見本の 17 行目）。作業の行ではない（1 回目で 27 に効いた）",
+    "when": { "file": "*修繕報告書*" }
+   },
+   {
+    "id": "repair-row-trouble",
+    "text": "各用紙の「故障の状況」の行は注記として読む",
+    "kind": "rowRole",
+    "match": "故障の状況",
+    "role": "note",
+    "author": "ai",
+    "reason": "見本の 5・24・43・62 行目。故障の説明の文で、機器の名前ではないのに「同じ機器か」の質問が出ている。1 回目の答え 1：作業は明細の作業日の行にあるので、この文は注記として残す",
+    "when": { "file": "*修繕報告書*" }
+   },
+   {
+    "id": "repair-row-action",
+    "text": "各用紙の「処置の内容」の行は注記として読む",
+    "kind": "rowRole",
+    "match": "処置の内容",
+    "role": "note",
+    "author": "ai",
+    "reason": "見本の 7・26・45・64 行目。処置の説明の文で、機器の名前ではないのに「同じ機器か」の質問が出ている。作業そのものは明細の行にある（1 回目の答え 1）",
+    "when": { "file": "*修繕報告書*" }
+   },
+   {
+    "id": "repair-row-cost",
+    "text": "各用紙の「修繕費（円・税込）」の行は注記として読む",
+    "kind": "rowRole",
+    "match": "修繕費（円・税込）",
+    "role": "note",
+    "author": "ai",
+    "reason": "金額の行で、機器の名前ではないのに「同じ機器か」の質問が出ている。星取表には金額を入れない",
+    "when": { "file": "*修繕報告書*" }
+   },
+   {
+    "id": "ledger-row-title",
+    "text": "「機器台帳」の題の行は注記として読む",
+    "kind": "rowRole",
+    "match": "機器台帳",
+    "role": "note",
+    "author": "ai",
+    "reason": "見本の 2 行目「【架空】天鏡台浄水場 機器台帳」。表の題で、機器の行ではない（1 回目で 2 に効いた）",
+    "when": { "file": "*機器台帳*" }
+   },
+   {
+    "id": "ledger-row-preface",
+    "text": "「（竣工 平成10年3月。…）」の前書きの行は注記として読む",
+    "kind": "rowRole",
+    "match": "（竣工 平成10年3月。以後の更新・増設は設置年月と備考に記す。数量は場内の全数）",
+    "role": "note",
+    "author": "ai",
+    "reason": "見本の 3 行目の台帳の前書き。1 回目は文字の一部（「竣工 平成10年3月」）で 0 件だったので、セルの文字そのままに直した",
+    "when": { "file": "*機器台帳*" }
+   }
+  ]
+ }
+]

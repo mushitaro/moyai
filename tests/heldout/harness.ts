@@ -586,7 +586,7 @@ export interface FileResult {
   leakDetail: string[];
   /** ② 未解決のセル */
   unresolved: number | null;
-  rows: { input: number; imported: number; excluded: number; unresolved: number; holds: boolean } | null;
+  rows: { input: number; imported: number; excluded: number; excludedBy?: Record<string, number>; unresolved: number; holds: boolean } | null;
   /** ③ 読み取りの正しさ（機器の節・印・行を合わせたもの） */
   accuracy: Accuracy | null;
   rejected: string | null;
@@ -673,7 +673,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
       leakAgainst,
       leakDetail: leakDetail.slice(0, 50),
       unresolved: fc?.unresolvedCells ?? null,
-      rows: fc ? { input: fc.inputRows, imported: fc.importedRows, excluded: Object.values(fc.excludedRows).reduce((a, b) => a + b, 0), unresolved: fc.unresolvedRows, holds: fc.holds } : null,
+      rows: fc ? { input: fc.inputRows, imported: fc.importedRows, excluded: Object.values(fc.excludedRows).reduce((a, b) => a + b, 0), excludedBy: fc.excludedRows, unresolved: fc.unresolvedRows, holds: fc.holds } : null,
       accuracy: accuracy ? { ...accuracy, misses: accuracy.misses.slice(0, 50) } : null,
       rejected: rej ? rej.reason : read.includes(f.file) ? null : "読んでいない（写真は AI が読む）",
     });

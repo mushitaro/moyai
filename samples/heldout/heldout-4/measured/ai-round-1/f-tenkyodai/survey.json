@@ -1,0 +1,2064 @@
+{
+ "files": [
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "sheets": 1,
+   "rows": 122
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_機器台帳.pdf",
+   "sheets": 1,
+   "rows": 55
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+   "sheets": 1,
+   "rows": 41
+  }
+ ],
+ "samples": [
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 4,
+   "cells": [
+    "設備名",
+    "PAC 注入ポンプ No.2",
+    "機器番号",
+    "CP-2"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 10,
+   "cells": [
+    "No.",
+    "作業日",
+    "作業内容",
+    "業者",
+    "人数",
+    "時間",
+    "工数（人工）",
+    "備考"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 11,
+   "cells": [
+    "1",
+    "R7.5.14",
+    "状況確認・分解",
+    "萌葱化工機㈱",
+    "2",
+    "13:00～17:00",
+    "1"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 23,
+   "cells": [
+    "設備名",
+    "沈殿池 汚泥かき寄せ機 2系",
+    "機器番号",
+    "SC-2"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 30,
+   "cells": [
+    "1",
+    "R7.7.2",
+    "排水・流木除去・シャーピン交換",
+    "山吹機工㈱",
+    "4",
+    "8:30～17:30",
+    "4"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 31,
+   "cells": [
+    "2"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 42,
+   "cells": [
+    "設備名",
+    "監視制御設備",
+    "機器番号"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 49,
+   "cells": [
+    "1"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 50,
+   "cells": [
+    "2"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 61,
+   "cells": [
+    "設備名",
+    "送水ポンプ No.2",
+    "機器番号",
+    "SP-2"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 68,
+   "cells": [
+    "1",
+    "R7.11.4",
+    "振動測定・停止・切離し",
+    "鶯ポンプ製作所㈱",
+    "2",
+    "9:00～16:00",
+    "1.5"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "row": 69,
+   "cells": [
+    "2",
+    "R7.11.5",
+    "分解・軸受の抜取り",
+    "鶯ポンプ製作所㈱",
+    "3",
+    "8:30～17:00",
+    "2.81"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_機器台帳.pdf",
+   "row": 1,
+   "cells": [
+    "【架空】天鏡台浄水場",
+    "完成図書 第2編 機器仕様（抜粋）",
+    "架空のデータ"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_機器台帳.pdf",
+   "row": 4,
+   "cells": [
+    "番号",
+    "設備・機器名称",
+    "機器番号",
+    "数量",
+    "主な仕様",
+    "製造者",
+    "設置年月",
+    "備考"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_機器台帳.pdf",
+   "row": 5,
+   "cells": [
+    "1.",
+    "取水設備"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+   "row": 4,
+   "cells": [
+    "番号",
+    "設備・機器",
+    "機器番号",
+    "数量",
+    "区分",
+    "周期",
+    "概算費用\n（千円/回）",
+    "計　画　年　度",
+    "備　考"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+   "row": 5,
+   "cells": [
+    "第1期（2024～2028）",
+    "第2期（2029～2033）",
+    "第3期（2034～2038）"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+   "row": 6,
+   "cells": [
+    "2024",
+    "2025",
+    "2026",
+    "2027",
+    "2028",
+    "2029",
+    "2030",
+    "2031",
+    "2032",
+    "2033",
+    "2034",
+    "2035",
+    "2036",
+    "2037",
+    "2038"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+   "row": 8,
+   "cells": [
+    "1",
+    "取水設備"
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+   "row": 9,
+   "cells": [
+    "1-1",
+    "取水ゲート",
+    "IG-1",
+    "1門",
+    "修繕",
+    "10年",
+    "18,000",
+    "○",
+    "○"
+   ]
+  }
+ ],
+ "legends": [
+  {
+   "mark": "○",
+   "meaning": "点検・修繕の計画"
+  },
+  {
+   "mark": "◎",
+   "meaning": "更新の計画"
+  },
+  {
+   "mark": "●",
+   "meaning": "実施済"
+  },
+  {
+   "mark": "△",
+   "meaning": "一部実施"
+  }
+ ],
+ "notes": [
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A2：報告No. 修-R7-01 報告日 R7.5.17 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A3：発生日 R7.5.14 完了日 R7.5.16",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A20：【架空】天鏡台浄水場　修繕報告書",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A21：報告No. 修-R7-02 報告日 R7.7.3 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A22：発生日 R7.7.2 完了日 R7.7.2",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A39：【架空】天鏡台浄水場　修繕報告書",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A40：報告No. 修-R7-03 報告日 R7.8.20 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A41：発生日 R7.8.19 完了日 R7.8.19",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A58：【架空】天鏡台浄水場　修繕報告書",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A59：報告No. 修-R7-04 報告日 R7.11.15 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A60：発生日 R7.11.4 完了日 R7.11.14",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A90：【架空】天鏡台浄水場　修繕報告書",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A91：報告No. 修-R7-05 報告日 R8.1.23 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A92：発生日 R8.1.21 完了日 R8.1.22",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A109：【架空】天鏡台浄水場　修繕報告書",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A110：報告No. 修-R8-01 報告日 R8.4.10 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A111：発生日 R8.4.9 完了日 R8.4.9",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A128：【架空】天鏡台浄水場　修繕報告書",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A129：報告No. 修-R8-02 報告日 R8.7.4 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A130：発生日 R8.6.30 完了日 R8.7.3",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A147：【架空】天鏡台浄水場　修繕報告書",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A148：報告No. 修-R8-03 報告日 R8.9.10 架空のデータ",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx A149：発生日 R8.9.8 完了日 R8.9.9",
+  "【架空】天鏡台浄水場_機器台帳.pdf E56：2-3",
+  "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx A2：【架空のデータ】　工務課　2026年9月 改定　　概算費用：千円（税込）",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx「修繕報告書」：改ページ。読まない（9）",
+  "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx：読む前に部品の名前 0 と行き先 1 をそろえた（1）",
+  "【架空】天鏡台浄水場_機器台帳.pdf：頁 3（文字のある頁 3・文字の無い頁 0）（3）",
+  "【架空】天鏡台浄水場_機器台帳.pdf：格子の組み方：行は文字の基準線、列は縦の罫線 9 本の間（1）",
+  "【架空】天鏡台浄水場_機器台帳.pdf：頁の中の行の大きな間を空の行にした（表の切れ目）（1）",
+  "【架空】天鏡台浄水場_機器台帳.pdf：同じセルに入った文字の並びをつないだ（並びの数）（144）",
+  "【架空】天鏡台浄水場_機器台帳.pdf：空白だけの文字の並び（位置の隙間）。セルにしない（261）",
+  "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx「長期保全計画」：ウィンドウ枠の固定（H7）。読み方には使わない（1）",
+  "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx：読む前に部品の名前 2 と行き先 3 をそろえた（5）"
+ ],
+ "questions": [
+  {
+   "questionId": "q-p6q0ue160ujt8",
+   "kind": "columnRole",
+   "text": "列 C（見出し「PAC 注入ポンプ No.2」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-q0otxb1ynzq97",
+   "kind": "columnRole",
+   "text": "列 D（見出し「PAC 注入ポンプ No.2」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-qko1b91v12oip",
+   "kind": "columnRole",
+   "text": "列 F（見出し「CP-2」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-qaofma6711rc",
+   "kind": "columnRole",
+   "text": "列 G（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-r4n8p71iz68zb",
+   "kind": "columnRole",
+   "text": "列 H（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-1bl67v3gby1sz",
+   "kind": "columnRole",
+   "text": "列 C（見出し「沈殿池 汚泥かき寄せ機 2系」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-1ar7es6hz00ji",
+   "kind": "columnRole",
+   "text": "列 D（見出し「沈殿池 汚泥かき寄せ機 2系」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-1a787e85mzcw",
+   "kind": "columnRole",
+   "text": "列 F（見出し「SC-2」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-1ah7t37rt5rzj",
+   "kind": "columnRole",
+   "text": "列 G（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-gq7wvp1cq95sh",
+   "kind": "columnRole",
+   "text": "列 C（見出し「送水ポンプ No.2」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-esap0w1eoz1qg",
+   "kind": "columnRole",
+   "text": "列 D（見出し「送水ポンプ No.2」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-fc9weub8xzam",
+   "kind": "columnRole",
+   "text": "列 F（見出し「SP-2」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-fm9i3t5sxv3p",
+   "kind": "columnRole",
+   "text": "列 G（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-i45xck1s277rg",
+   "kind": "columnRole",
+   "text": "列 H（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-pkkpd4128bzeo",
+   "kind": "columnRole",
+   "text": "列 C（見出し「急速ろ過池 表洗装置 No.3池」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-rihx7xxqndu5",
+   "kind": "columnRole",
+   "text": "列 D（見出し「急速ろ過池 表洗装置 No.3池」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-qyiptz1rnlzj7",
+   "kind": "columnRole",
+   "text": "列 F（見出し「SW-3」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-qoj450uzdu0c",
+   "kind": "columnRole",
+   "text": "列 G（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-9tl4bu1xufc48",
+   "kind": "columnRole",
+   "text": "列 C（見出し「取水口 除塵機」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-8fn3uz1ikjuuf",
+   "kind": "columnRole",
+   "text": "列 D（見出し「取水口 除塵機」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-8zmb8xvvaejt",
+   "kind": "columnRole",
+   "text": "列 F（見出し「IS-1」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-8pmpjy1g1cujw",
+   "kind": "columnRole",
+   "text": "列 G（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-bmxxuham72v5",
+   "kind": "columnRole",
+   "text": "列 C（見出し「逆洗ポンプ No.1」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-bwxjjg1oq147e",
+   "kind": "columnRole",
+   "text": "列 D（見出し「逆洗ポンプ No.1」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-cgwqxe1482w0s",
+   "kind": "columnRole",
+   "text": "列 F（見出し「BW-1」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-cqwcmd1ezn1ud",
+   "kind": "columnRole",
+   "text": "列 G（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-106w9e41i7sbi",
+   "kind": "columnRole",
+   "text": "列 C（見出し「次亜注入ポンプ No.1」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-zwwnp5xfv28x",
+   "kind": "columnRole",
+   "text": "列 D（見出し「次亜注入ポンプ No.1」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-zcxgb7k6r1in",
+   "kind": "columnRole",
+   "text": "列 F（見出し「HP-1」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  },
+  {
+   "questionId": "q-z2xum8jllzay",
+   "kind": "columnRole",
+   "text": "列 G（見出し「なし」）の役目が決まらない",
+   "sameShapeRows": 1,
+   "defaultAnswer": "remark",
+   "valueKind": "option",
+   "options": [
+    {
+     "id": "remark",
+     "label": "備考として根拠の文に添える"
+    },
+    {
+     "id": "workName",
+     "label": "作業の名前"
+    },
+    {
+     "id": "assetRef",
+     "label": "機器の名前"
+    },
+    {
+     "id": "tag",
+     "label": "機器番号"
+    },
+    {
+     "id": "date",
+     "label": "日付（始まり）"
+    },
+    {
+     "id": "end",
+     "label": "日付（終わり）"
+    },
+    {
+     "id": "days",
+     "label": "日数"
+    },
+    {
+     "id": "effort",
+     "label": "工数"
+    },
+    {
+     "id": "exclude",
+     "label": "外す"
+    }
+   ]
+  }
+ ],
+ "unresolvedCells": 458,
+ "stuck": [
+  {
+   "fileRef": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+   "cells": 284,
+   "header": [
+    {
+     "row": 4,
+     "cells": [
+      "番号",
+      "設備・機器",
+      "機器番号",
+      "数量",
+      "区分",
+      "周期",
+      "概算費用\n（千円/回）",
+      "計　画　年　度",
+      "備　考"
+     ]
+    },
+    {
+     "row": 5,
+     "cells": [
+      "第1期（2024～2028）",
+      "第2期（2029～2033）",
+      "第3期（2034～2038）"
+     ]
+    },
+    {
+     "row": 6,
+     "cells": [
+      "2024",
+      "2025",
+      "2026",
+      "2027",
+      "2028",
+      "2029",
+      "2030",
+      "2031",
+      "2032",
+      "2033",
+      "2034",
+      "2035",
+      "2036",
+      "2037",
+      "2038"
+     ]
+    }
+   ],
+   "rows": [
+    {
+     "sheet": "長期保全計画",
+     "row": 8,
+     "cells": [
+      "1",
+      "取水設備"
+     ],
+     "unresolved": [
+      "A8",
+      "B8"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "長期保全計画",
+     "row": 9,
+     "cells": [
+      "1-1",
+      "取水ゲート",
+      "IG-1",
+      "1門",
+      "修繕",
+      "10年",
+      "18,000",
+      "○",
+      "○"
+     ],
+     "unresolved": [
+      "A9",
+      "B9",
+      "C9",
+      "D9",
+      "E9",
+      "F9",
+      "G9",
+      "K9",
+      "U9"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "長期保全計画",
+     "row": 10,
+     "cells": [
+      "1-2",
+      "除塵機",
+      "IS-1",
+      "1基",
+      "修繕",
+      "5年",
+      "3,200",
+      "●",
+      "○",
+      "○"
+     ],
+     "unresolved": [
+      "A10",
+      "B10",
+      "C10",
+      "D10",
+      "E10",
+      "F10",
+      "G10",
+      "I10",
+      "N10",
+      "S10"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "長期保全計画",
+     "row": 11,
+     "cells": [
+      "1-3",
+      "取水ポンプ（No.1～3）",
+      "IP-1～3",
+      "3台",
+      "修繕",
+      "6年",
+      "9,600",
+      "○",
+      "○",
+      "○",
+      "3台を同じ年度に分解整備"
+     ],
+     "unresolved": [
+      "A11",
+      "B11",
+      "C11",
+      "D11",
+      "E11",
+      "F11",
+      "G11",
+      "J11",
+      "P11",
+      "V11",
+      "W11"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "長期保全計画",
+     "row": 12,
+     "cells": [
+      "〃",
+      "更新",
+      "30年",
+      "96,000",
+      "◎",
+      "2033年度に3台更新の予定（第2期）"
+     ],
+     "unresolved": [
+      "B12",
+      "E12",
+      "F12",
+      "G12",
+      "Q12",
+      "W12"
+     ],
+     "questionId": null
+    }
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+   "cells": 172,
+   "header": [
+    {
+     "row": 4,
+     "cells": [
+      "設備名",
+      "PAC 注入ポンプ No.2",
+      "機器番号",
+      "CP-2"
+     ]
+    }
+   ],
+   "rows": [
+    {
+     "sheet": "修繕報告書",
+     "row": 10,
+     "cells": [
+      "No.",
+      "作業日",
+      "作業内容",
+      "業者",
+      "人数",
+      "時間",
+      "工数（人工）",
+      "備考"
+     ],
+     "unresolved": [
+      "C10",
+      "D10",
+      "F10",
+      "G10",
+      "H10"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "修繕報告書",
+     "row": 11,
+     "cells": [
+      "1",
+      "R7.5.14",
+      "状況確認・分解",
+      "萌葱化工機㈱",
+      "2",
+      "13:00～17:00",
+      "1"
+     ],
+     "unresolved": [
+      "A11",
+      "B11",
+      "C11",
+      "D11",
+      "E11",
+      "F11",
+      "G11"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "修繕報告書",
+     "row": 12,
+     "cells": [
+      "2",
+      "R7.5.16",
+      "部品取替・注入量校正",
+      "萌葱化工機㈱",
+      "2",
+      "9:00～15:00",
+      "1.25"
+     ],
+     "unresolved": [
+      "A12",
+      "B12",
+      "C12",
+      "D12",
+      "E12",
+      "F12",
+      "G12"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "修繕報告書",
+     "row": 13,
+     "cells": [
+      "3"
+     ],
+     "unresolved": [
+      "A13"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": "修繕報告書",
+     "row": 14,
+     "cells": [
+      "4"
+     ],
+     "unresolved": [
+      "A14"
+     ],
+     "questionId": null
+    }
+   ]
+  },
+  {
+   "fileRef": "【架空】天鏡台浄水場_機器台帳.pdf",
+   "cells": 2,
+   "header": [
+    {
+     "row": 1,
+     "cells": [
+      "【架空】天鏡台浄水場",
+      "完成図書 第2編 機器仕様（抜粋）",
+      "架空のデータ"
+     ]
+    }
+   ],
+   "rows": [
+    {
+     "sheet": null,
+     "row": 23,
+     "cells": [
+      "2-1"
+     ],
+     "unresolved": [
+      "E23"
+     ],
+     "questionId": null
+    },
+    {
+     "sheet": null,
+     "row": 46,
+     "cells": [
+      "2-2"
+     ],
+     "unresolved": [
+      "E46"
+     ],
+     "questionId": null
+    }
+   ]
+  }
+ ],
+ "compose": {
+  "state": "failed",
+  "message": "未解決のセル 458・答えの無い質問 30"
+ },
+ "crosswalk": null,
+ "ruleHits": [
+  {
+   "id": "plan-col-asset",
+   "hits": 33
+  },
+  {
+   "id": "plan-col-tag",
+   "hits": 17
+  },
+  {
+   "id": "plan-col-qty",
+   "hits": 9
+  },
+  {
+   "id": "plan-col-work",
+   "hits": 23
+  },
+  {
+   "id": "plan-col-cycle",
+   "hits": 23
+  },
+  {
+   "id": "plan-col-cost",
+   "hits": 23
+  },
+  {
+   "id": "plan-col-remark",
+   "hits": 11
+  },
+  {
+   "id": "plan-answer-filled-legend",
+   "hits": 1
+  },
+  {
+   "id": "repair-row-stamp",
+   "hits": 27
+  },
+  {
+   "id": "repair-row-trouble",
+   "hits": 16
+  },
+  {
+   "id": "repair-row-action",
+   "hits": 16
+  },
+  {
+   "id": "repair-row-cost",
+   "hits": 16
+  },
+  {
+   "id": "ledger-row-title",
+   "hits": 2
+  },
+  {
+   "id": "ledger-row-preface",
+   "hits": 1
+  }
+ ]
+}
