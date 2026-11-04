@@ -1,0 +1,503 @@
+[
+ {
+  "schema": "moyai.reading/0",
+  "name": "【架空】みどり台クリーンセンターの読み方",
+  "scope": "facility",
+  "rules": [
+   {
+    "id": "d-date",
+    "text": "「作業日」の列の日付は yyyymmdd",
+    "kind": "dateFormat",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "作業日",
+    "format": "yyyymmdd",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "d-eff",
+    "text": "「延作業時間(h)」は工数（時間）",
+    "kind": "effortUnit",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "延作業時間",
+    "unit": "hours",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "d-tag",
+    "text": "「機器番号」を機器番号として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "機器番号",
+    "role": "tag",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "d-asset",
+    "text": "「機器名称」を機器として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "機器名称",
+    "role": "assetRef",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "d-work",
+    "text": "「作業内容」を作業の名前として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "作業内容",
+    "role": "workName",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "d-kind",
+    "text": "「作業区分」を備考として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "作業区分",
+    "role": "remark",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "d-n",
+    "text": "「人員(名)」を数として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "人員",
+    "role": "number",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "d-rem",
+    "text": "「備考」を備考として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "備考",
+    "role": "remark",
+    "when": {
+     "file": "daily/sagyo-nippo*",
+     "headers": [
+      "作業日",
+      "延作業時間(h)"
+     ]
+    }
+   },
+   {
+    "id": "k-start",
+    "text": "「着工日」を作業の日付として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "着工日",
+    "role": "date",
+    "when": {
+     "file": "daily/koji-jisseki*",
+     "headers": [
+      "着工日",
+      "竣工日"
+     ]
+    }
+   },
+   {
+    "id": "k-end",
+    "text": "「竣工日」を作業の終わりの日として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "竣工日",
+    "role": "end",
+    "when": {
+     "file": "daily/koji-jisseki*",
+     "headers": [
+      "着工日",
+      "竣工日"
+     ]
+    }
+   },
+   {
+    "id": "k-days",
+    "text": "「工期(日)」を日数として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "工期",
+    "role": "days",
+    "when": {
+     "file": "daily/koji-jisseki*",
+     "headers": [
+      "着工日",
+      "竣工日"
+     ]
+    }
+   },
+   {
+    "id": "k-eff",
+    "text": "「延べ人工」は工数（人・日）",
+    "kind": "effortUnit",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "延べ人工",
+    "unit": "manDays",
+    "when": {
+     "file": "daily/koji-jisseki*",
+     "headers": [
+      "着工日",
+      "竣工日"
+     ]
+    }
+   },
+   {
+    "id": "k-asset",
+    "text": "「対象機器」を機器として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "対象機器",
+    "role": "assetRef",
+    "when": {
+     "file": "daily/koji-jisseki*",
+     "headers": [
+      "着工日",
+      "竣工日"
+     ]
+    }
+   },
+   {
+    "id": "k-work",
+    "text": "「工事件名」を作業の名前として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "工事件名",
+    "role": "workName",
+    "when": {
+     "file": "daily/koji-jisseki*",
+     "headers": [
+      "着工日",
+      "竣工日"
+     ]
+    }
+   },
+   {
+    "id": "s-asset",
+    "text": "「機器名称」を機器として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "機器名称",
+    "role": "assetRef",
+    "when": {
+     "file": "star/*",
+     "headers": [
+      "作業項目",
+      "受注"
+     ]
+    }
+   },
+   {
+    "id": "s-tag",
+    "text": "「機器番号」を機器番号として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "機器番号",
+    "role": "tag",
+    "when": {
+     "file": "star/*",
+     "headers": [
+      "作業項目",
+      "受注"
+     ]
+    }
+   },
+   {
+    "id": "s-work",
+    "text": "「作業項目」を作業の名前として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "作業項目",
+    "role": "workName",
+    "when": {
+     "file": "star/*",
+     "headers": [
+      "作業項目",
+      "受注"
+     ]
+    }
+   },
+   {
+    "id": "s-order",
+    "text": "「受注」（委託など）を備考として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "受注",
+    "role": "remark",
+    "when": {
+     "file": "star/*",
+     "headers": [
+      "作業項目",
+      "受注"
+     ]
+    }
+   },
+   {
+    "id": "s-no",
+    "text": "「No.」は外す（行の番号）",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "No.",
+    "role": "exclude",
+    "when": {
+     "file": "star/*",
+     "headers": [
+      "作業項目",
+      "受注"
+     ]
+    }
+   },
+   {
+    "id": "p-start",
+    "text": "「自」を作業の日付として読む（月/日）",
+    "kind": "dateFormat",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "自",
+    "format": "md",
+    "when": {
+     "file": "report/R6-*",
+     "headers": [
+      "作業項目",
+      "日数"
+     ]
+    }
+   },
+   {
+    "id": "p-end",
+    "text": "「至」を作業の終わりの日として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "至",
+    "role": "end",
+    "when": {
+     "file": "report/R6-*",
+     "headers": [
+      "作業項目",
+      "日数"
+     ]
+    }
+   },
+   {
+    "id": "p-days",
+    "text": "「日数」を日数として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "日数",
+    "role": "days",
+    "when": {
+     "file": "report/R6-*",
+     "headers": [
+      "作業項目",
+      "日数"
+     ]
+    }
+   },
+   {
+    "id": "p-eff",
+    "text": "「延時間(h)」は工数（時間）",
+    "kind": "effortUnit",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "延時間",
+    "unit": "hours",
+    "when": {
+     "file": "report/R6-*",
+     "headers": [
+      "作業項目",
+      "日数"
+     ]
+    }
+   },
+   {
+    "id": "p-asset",
+    "text": "「機器名称」を機器として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "機器名称",
+    "role": "assetRef",
+    "when": {
+     "file": "report/R6-*",
+     "headers": [
+      "作業項目",
+      "日数"
+     ]
+    }
+   },
+   {
+    "id": "p-work",
+    "text": "「作業項目」を作業の名前として読む",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "作業項目",
+    "role": "workName",
+    "when": {
+     "file": "report/R6-*",
+     "headers": [
+      "作業項目",
+      "日数"
+     ]
+    }
+   },
+   {
+    "id": "p-no",
+    "text": "「番号」は外す（行の番号）",
+    "kind": "columnRole",
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）",
+    "column": "番号",
+    "role": "exclude",
+    "when": {
+     "file": "report/R6-*",
+     "headers": [
+      "作業項目",
+      "日数"
+     ]
+    }
+   },
+   {
+    "id": "z-head",
+    "text": "全炉休止の集計表は 5 行目を見出しとして読む",
+    "kind": "headerRow",
+    "row": 5,
+    "when": {
+     "file": "report/2023-zenkyushi*"
+    },
+    "author": "ai",
+    "reason": "見出しと見本の行から、会話で決めた（Claude）"
+   },
+   {
+    "id": "z-a",
+    "text": "全炉休止の集計表の頭書きの列 A は外す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 A（見出し「なし」）",
+    "answer": "exclude",
+    "when": {
+     "file": "report/2023-zenkyushi*"
+    },
+    "author": "ai",
+    "reason": "見本の行から、会話で決めた（Claude）：表の上の頭書き（施設名・作成日・休止期間）で、作業の行ではない"
+   },
+   {
+    "id": "z-b",
+    "text": "全炉休止の集計表の頭書きの列 B は外す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 B（見出し「【架空】全炉休止期間」）",
+    "answer": "exclude",
+    "when": {
+     "file": "report/2023-zenkyushi*"
+    },
+    "author": "ai",
+    "reason": "見本の行から、会話で決めた（Claude）：表の上の頭書き（施設名・作成日・休止期間）で、作業の行ではない"
+   },
+   {
+    "id": "z-f",
+    "text": "全炉休止の集計表の頭書きの列 F は外す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 F（見出し「なし」）",
+    "answer": "exclude",
+    "when": {
+     "file": "report/2023-zenkyushi*"
+    },
+    "author": "ai",
+    "reason": "見本の行から、会話で決めた（Claude）：表の上の頭書き（施設名・作成日・休止期間）で、作業の行ではない"
+   },
+   {
+    "id": "z-g",
+    "text": "全炉休止の集計表の頭書きの列 G は外す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 G（見出し「なし」）",
+    "answer": "exclude",
+    "when": {
+     "file": "report/2023-zenkyushi*"
+    },
+    "author": "ai",
+    "reason": "見本の行から、会話で決めた（Claude）：表の上の頭書き（施設名・作成日・休止期間）で、作業の行ではない"
+   },
+   {
+    "id": "z-period",
+    "text": "「工期」を作業の日付として読む（「2023/9/14～9/27」の形）",
+    "kind": "columnRole",
+    "column": "工期",
+    "role": "date",
+    "when": {
+     "file": "report/2023-zenkyushi*",
+     "headers": [
+      "工期"
+     ]
+    },
+    "author": "ai",
+    "reason": "見本の行から、会話で決めた（Claude）"
+   }
+  ]
+ }
+]
