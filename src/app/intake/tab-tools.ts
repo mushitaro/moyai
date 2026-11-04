@@ -9,11 +9,11 @@ import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
+import { proposeCyclesFromAi } from "../state/cycles";
 import { getPeerView } from "../state/peers";
 import type { ReadingRule, ReadingScope } from "../../import/reading";
-import { STAT_FIELDS } from "../../share/bands";
 import { RECEIVE_MIN_K } from "../../share/k";
-import type { StatCell } from "../../share/aggregate";
+import { peerAggregates } from "../../share/peer-reference";
 import { checkResultsOf, getReferenceDate } from "../state/review";
 import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
@@ -56,35 +56,48 @@ function chartRows(view: "base" | "adjusted", offset: number, limit: number, row
   };
 }
 
-/** 統計の行を、ツールの答えの形（low・high）にする */
-function statOut(c: StatCell): Record<string, unknown> {
-  if (c.shown === "x") return { shown: "x" };
-  if (c.shown === "range") return { shown: "range", n: c.n, low: c.lo, high: c.hi };
-  return { shown: "median", n: c.n, median: c.median, q1: c.q1, q3: c.q3 };
-}
-
 /** 人が星取表で開いた比べから、下限を守った集計と匿名の札だけを返す（鍵・見え方の値・年度・施設ごとの帯は返さない） */
 function peerReference(commonItem: string | undefined): TabToolResult {
   const v = getPeerView();
   if (!v) return { ok: false, code: "no_peer_view" };
-  const c = v.comparison;
-  const aggregates: Record<string, unknown>[] = [];
-  const cards: Record<string, unknown>[] = [];
-  for (const p of c.places) {
-    if (p.status !== "shown") continue;
-    for (const r of p.agg.rows) {
-      if (commonItem !== undefined && r.class !== commonItem) continue;
-      const a: Record<string, unknown> = { place: p.kind, commonItem: r.class, work: r.work };
-      for (const f of STAT_FIELDS) a[f] = statOut(r.stats[f]);
-      aggregates.push(a);
-      for (const peer of r.peers) cards.push({ place: p.kind, card: peer.label, commonItem: r.class, work: r.work });
-    }
-  }
-  const places = c.places.map((p) => ({ place: p.kind, status: p.status, similar: p.status === "shown" ? p.agg.similar.length : p.status === "belowShow" ? p.similar : null }));
-  return { ok: true, data: { position: c.position, floorK: RECEIVE_MIN_K, places, aggregates, cards } };
+  return { ok: true, data: { mode: "view", position: v.comparison.position, floorK: RECEIVE_MIN_K, ...peerAggregates(v.comparison, commonItem) } };
+}
+
+/** 公開の台帳だけを読むときは、作業画面は計画のパックと施設の規模を渡し、橋渡しが台帳を読んで比べる（人が比べを開かなくてよい。運営者の決定） */
+function ledgerRequest(args: Record<string, unknown>): TabToolResult {
+  const working = getWorkingPlan();
+  if (!working) return { ok: false, code: "no_working_plan" };
+  const f = working.plan.facility;
+  return { ok: true, data: { mode: "ledger", packId: working.plan.packId, facility: { scale: f.scale, scaleUnit: f.scaleUnit }, answers: args.answers ?? null, commonItem: args.commonItem ?? null } };
+}
+
+/** 周期の案を置く（chart_propose。docs/plan.md §2.18.4）：足すだけ。引いた印は作者 AI で、人が決定のシートで受けるまで決まらない */
+function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabToolResult {
+  const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis));
+  if (!r.ok) return r;
+  const marks = r.proposals.reduce((n, p) => n + p.detailKeys.length, 0);
+  ws.note("ai", T.cyclesProposed(r.proposals.length, marks));
+  const examples = r.proposals
+    .flatMap((p) => p.detailKeys)
+    .slice(0, 10)
+    .map((k) => {
+      const d = r.plan.details.find((x) => x.detailKey === k)!;
+      return { rowRef: `d:${k}`, before: null, after: TEXT.chart.cycleMark(d.fiscalYear) };
+    });
+  return {
+    ok: true,
+    data: {
+      matched: marks,
+      conflicts: 0,
+      examples,
+      proposals: r.proposals.map((p) => ({ id: p.id, years: p.years, works: p.works, marks: p.detailKeys.length, skipped: p.skipped })),
+      version: r.version,
+    },
+  };
 }
 
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
+  chart_propose: (ws, args) => chartPropose(ws, args),
   reading_rules_propose: (ws, args) => {
     const rules = ws.proposeReading(String(args.name), args.scope as ReadingScope, args.rules as ReadingRule[]);
     const an = ws.analysis();
@@ -98,7 +111,7 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     if (!d) return { ok: false, code: "no_reading_draft" };
     return { ok: true, data: { skill: d.skill, by: typeof args.by === "string" ? args.by : null, facilityKey: ws.facilityKey() } };
   },
-  peer_reference: (_ws, args) => peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined),
+  peer_reference: (_ws, args) => (args.place === "ledger" ? ledgerRequest(args) : peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined)),
   intake_survey: (ws, args) => {
     const part = args.part as "all" | "questions" | "compose" | "crosswalk";
     // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
@@ -156,6 +169,15 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
 };
 
 /** AI のツールを 1 つ動かす。受け手の無いもの・型に合わないもの・途中の誤りは tool_failed */
+/**
+ * 橋渡しが続きを作るツール（作業画面の答えは途中の中身で、AI へ返す型は橋渡しが確かめる）の、途中の中身の型。
+ * 読み方を保管先に書く（作業画面は下書きを渡す）と、公開の台帳だけを読む（作業画面は計画のパックと規模を渡す）。
+ */
+const INTERMEDIATE: Partial<Record<ToolName, (d: Record<string, unknown>) => boolean>> = {
+  reading_skill_register: (d) => !!d.skill && typeof d.skill === "object",
+  peer_reference: (d) => d.mode === "ledger" && typeof d.packId === "string",
+};
+
 export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): TabToolResult {
   const receiver = TAB_TOOL_RECEIVERS[name];
   if (!receiver) return { ok: false, code: "tool_failed" };
@@ -163,7 +185,11 @@ export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<
   const args = def.input.safeParse(rawArgs);
   if (!args.success) return { ok: false, code: "tool_failed" };
   const r = receiver(ws, args.data as Record<string, unknown>, ctx);
-  if (r.ok && !def.output.safeParse(r.data).success) return { ok: false, code: "tool_failed" };
+  if (!r.ok) return r;
+  // AI へ返す答えは型で確かめる。橋渡しへ渡す途中の中身は、その形だけを確かめる
+  const mid = INTERMEDIATE[name];
+  if (mid?.(r.data)) return r;
+  if (!def.output.safeParse(r.data).success) return { ok: false, code: "tool_failed" };
   return r;
 }
 

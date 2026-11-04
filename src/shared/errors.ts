@@ -101,6 +101,18 @@ export const ERRORS = {
     http: 200,
     text: "保管先が決まっていないので、読み方を書けません。利用者に、設定で保管先を選んでもらってください。",
   },
+  no_ledger: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "公開の台帳の clone の場所が、設定にありません。利用者に、設定で台帳の clone の場所を選んでもらってください（clone と git pull は利用者が端末でします）。",
+  },
+  ledger_pack_not_ready: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "この計画のパックには、共有に使う部品（公開語彙・見え方の軸・全国の表）がありません。公開の台帳と比べられません。",
+  },
   no_peer_view: {
     from: "tab",
     to: "ai",

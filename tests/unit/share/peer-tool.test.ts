@@ -1,5 +1,5 @@
 // peer_reference（docs/plan.md §2.13 の 11）：人が星取表で開いた比べだけを読み、下限を守った集計と匿名の札だけを返す。
-// 開いていなければ断る。場をまたいで混ぜない。鍵・見え方の値・年度・施設ごとの帯は返さない。立場・見え方・場を選ぶ引数は無い。
+// 開いていなければ断る。場をまたいで混ぜない。鍵・見え方の値・年度・施設ごとの帯は返さない。立場と輪を選ぶ引数は無い（公開の台帳だけは、開かずに読める）。
 import { afterEach, describe, expect, it } from "vitest";
 import { runTabTool } from "../../../src/app/intake/tab-tools";
 import type { IntakeWorkspace } from "../../../src/app/intake/workspace";
@@ -29,9 +29,11 @@ const many = (tag: string, n: number, chunks: Chunk[]) => Array.from({ length: n
 afterEach(() => setPeerView(null));
 
 describe("peer_reference", () => {
-  it("受け手は作業画面。立場・見え方・場を選ぶ引数は無い（人が画面で選ぶ）", () => {
-    expect(BRIDGE_TOOL_RECEIVERS.peer_reference).toBe("tab");
-    expect(Object.keys(TOOLS.peer_reference.input.shape)).toEqual(["commonItem"]);
+  it("受け手は作業画面（人が開いた比べ）と、橋渡し（公開の台帳だけ。運営者の決定 §2.18.4）。立場と輪を選ぶ引数は無い", () => {
+    expect(BRIDGE_TOOL_RECEIVERS.peer_reference).toBe("tab_then_bridge");
+    // 場は「公開の台帳」だけを選べる（輪は人が開いたときだけ）。立場は引数に無い（台帳だけを読むときは市町村に固める）
+    expect(Object.keys(TOOLS.peer_reference.input.shape).sort()).toEqual(["answers", "commonItem", "place"]);
+    expect(TOOLS.peer_reference.input.safeParse({ place: "ring" }).success).toBe(false);
     expect(TOOLS.peer_reference.kind).toBe("read");
     expect(MCP_INSTRUCTIONS).toContain("peer_reference");
     expect(MCP_INSTRUCTIONS.length).toBeLessThanOrEqual(4096);

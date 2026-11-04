@@ -187,6 +187,12 @@ function ruleHitsWork(rule: Rule, w: WorkT, ix: Index): boolean {
   });
 }
 
+/** 規則の条件がすべて当たる作業（周期の案など、作業に置く規則が使う） */
+export function worksHitBy(plan: Plan, rule: Rule): WorkT[] {
+  const ix = indexOf(plan);
+  return plan.works.filter((w) => ruleHitsWork(rule, w, ix));
+}
+
 /** 規則が置く値として正しいか（作業の属性は 4 つのどれか、1 段目の項目はパックのコード） */
 function valueProblem(rule: Rule, itemCodes: ReadonlySet<string>): "code_not_in_pack" | "rule_invalid" | null {
   const target = targetOf(rule);

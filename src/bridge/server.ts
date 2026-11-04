@@ -132,6 +132,21 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       const list = await listReadings(root, await approvedReadingVersions(root, trusted));
       return { skills: list.map(({ skill: _skill, ...x }) => x) };
     },
+    // 似た施設：人が開いた比べはそのまま渡し、公開の台帳だけを読む頼みは橋渡しが台帳を読む（§2.18.4）
+    peer_reference: async (fromTab) => {
+      if (fromTab.mode !== "ledger") return fromTab;
+      const a = fromTab.answers as { facility?: unknown; inNationalTable?: unknown } | null;
+      const answers =
+        a && typeof a === "object" && a.facility && typeof a.facility === "object"
+          ? { facility: a.facility as Record<string, string | null>, inNationalTable: typeof a.inNationalTable === "boolean" ? a.inNationalTable : null }
+          : null;
+      return human.ledgerReference({
+        packId: String(fromTab.packId),
+        facility: (fromTab.facility as { scale: number | null; scaleUnit: string | null } | null) ?? null,
+        answers,
+        ...(typeof fromTab.commonItem === "string" ? { commonItem: fromTab.commonItem } : {}),
+      });
+    },
     reading_skill_register: async (fromTab) => {
       const root = await human.root();
       if (!root) return "no_reading_root";

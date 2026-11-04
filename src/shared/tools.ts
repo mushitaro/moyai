@@ -409,13 +409,21 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で星取表の変更の案を置く。根拠と、もとにした版の番号を付ける。版が違えばぶつかりとして返る。",
+    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠（公開の台帳の版 ledgerVersion と、似た施設の数と帯。費用は書かない）を書く。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
     z.object({
       rules: z.array(ruleSchema).min(1).max(50),
       basedOnVersion: z.number().int().min(0),
       basis: z.string().min(1).max(500),
     }),
-    ruleOutcome,
+    z.object({
+      /** 引いた計画の印の数 */
+      matched: z.number().int(),
+      conflicts: z.number().int(),
+      examples: z.array(example).max(EXAMPLES_MAX),
+      /** 案ごと：案の ID・当たった作業・引いた印・置かなかった作業（実施が無い・終わりの年度が足りない） */
+      proposals: z.array(z.object({ id: z.string(), years: z.number().int(), works: z.number().int(), marks: z.number().int(), skipped: z.object({ noActual: z.number().int(), noHorizon: z.number().int() }) })),
+      version: z.number().int(),
+    }),
   ),
   check_results: def(
     "check_results",
@@ -489,9 +497,15 @@ export const TOOLS = {
     "peer_reference",
     "read",
     "仲間の参考を読む",
-    "人が星取表の画面で開いた、似た施設との比べ（立場・見え方・場は人が選ぶ）から、下限を守った集計と匿名の札だけを読む。場（公開の台帳・輪）をまたいで混ぜない。施設を当てようとしない。",
-    z.object({ commonItem: z.string().max(64).optional() }),
+    "似た施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。計画に入れるときは chart_propose で周期の案を置き、根拠に ledgerVersion と集計（似た施設の数と帯）を書く。場をまたいで混ぜない。施設を当てようとしない。",
     z.object({
+      commonItem: z.string().max(64).optional(),
+      place: z.enum(["ledger"]).optional(),
+      answers: z.object({ facility: z.record(z.string().max(64), z.string().max(64).nullable()), inNationalTable: z.boolean().nullable() }).optional(),
+    }),
+    z.object({
+      /** view：人が開いた比べ、ledger：公開の台帳だけ */
+      mode: z.enum(["view", "ledger"]),
       position: z.enum(["municipal", "subsidiary", "om"]),
       floorK: z.number().int(),
       places: z.array(z.object({ place: z.enum(["ledger", "ring"]), status: z.enum(["shown", "belowShow", "outsideGroup", "missing"]), similar: z.number().int().nullable() })),
@@ -506,6 +520,11 @@ export const TOOLS = {
         }),
       ),
       cards: z.array(z.object({ place: z.enum(["ledger", "ring"]), card: z.string(), commonItem: z.string(), work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]) })),
+      /** ledger のとき：台帳の clone の版（git の commit。根拠に書く） */
+      ledgerVersion: z.string().nullable().optional(),
+      /** ledger のとき：見え方の答えが足りないときに聞く軸（選べるコードと、規模から推した既定） */
+      needs: z.array(z.object({ key: z.string(), name: z.string(), codes: z.array(z.object({ code: z.string(), name: z.string() })), suggested: z.string().nullable() })).optional(),
+      reason: z.string().nullable().optional(),
     }),
   ),
   reading_rules_propose: def(

@@ -17,7 +17,9 @@ import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, questionsOf, sendCheckpoint, verifyRing, type Answers } from "../share/checkpoint";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
 import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "../share/receive";
-import { loadPlaces } from "../share/receive-load";
+import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
+import { peerAggregates } from "../share/peer-reference";
+import { RECEIVE_MIN_K } from "../share/k";
 import { HEX16, HEX64, fingerprint } from "../share/sign";
 import { readFileSync, readdirSync } from "node:fs";
 import {
@@ -132,12 +134,28 @@ function openWithEditor(path: string): void {
   }
 }
 
+/** 台帳の clone の版（git の commit の先頭 12 文字）。.git を読むだけで、git は呼ばない。読めなければ null */
+function gitHead(root: string): string | null {
+  try {
+    const head = readFileSync(join(root, ".git", "HEAD"), "utf8").trim();
+    const ref = /^ref: (refs\/[\w./-]+)$/.exec(head)?.[1];
+    if (!ref) return /^[0-9a-f]{40}$/.test(head) ? head.slice(0, 12) : null;
+    try {
+      return readFileSync(join(root, ".git", ...ref.split("/")), "utf8").trim().slice(0, 12);
+    } catch {
+      const line = readFileSync(join(root, ".git", "packed-refs"), "utf8").split(/\r?\n/).find((l) => l.endsWith(` ${ref}`));
+      return line ? line.slice(0, 12) : null;
+    }
+  } catch {
+    return null;
+  }
+}
+
 export class HumanService {
   private docs: DocumentsInfo | null = null;
 
   constructor(private readonly e: HumanEnv) {}
 
-  /** 書き出しに使うパックの名前の表（packs/<パック>/common.json と packs/_kinds/work.json）。読めなければ共通のシートは作らない */
   /** 署名する人：設定の呼び名と、合言葉で開いた自分の鍵（署名したらすぐ捨てる。鍵も合言葉もどこにも残さない） */
   private signer(sd: string, passphrase: string): { ok: true; signer: Signer } | { ok: false; reason: "nameMissing" | "personKeyMissing" | "wrongPassphrase" } {
     const name = readSettings(sd).name;
@@ -147,6 +165,7 @@ export class HumanService {
     return { ok: true, signer: { by: name, pair: k.pair } };
   }
 
+  /** 書き出しに使うパックの名前の表（packs/<パック>/common.json と packs/_kinds/work.json）。読めなければ共通のシートは作らない */
   private catalogsFor(packId: string): ExportCatalogs {
     const read = (p: string): unknown => JSON.parse(readFileSync(p, "utf8"));
     const work = read(join(this.e.packsDir, "_kinds", "work.json"));
@@ -168,6 +187,31 @@ export class HumanService {
   async root(): Promise<string | null> {
     if (!this.e.stateDir) return null;
     return readSettings(this.e.stateDir).root ?? defaultRoot(await this.documents());
+  }
+
+  /**
+   * 公開の台帳だけを読んで、似た施設の集計を返す（AI の peer_reference の place: "ledger"。docs/plan.md §2.18.4）。
+   * 場は公開の台帳だけ、立場は市町村（自分の施設の見え方）に固める。輪（非公開）は読まない。
+   * 見え方の答えが無い・足りなければ、比べずに、聞くこと（軸と選べるコード）を返す（推測で埋めない）。
+   */
+  async ledgerReference(i: { packId: string; facility: { scale: number | null; scaleUnit: string | null } | null; answers: z.infer<typeof answersSchema> | null; commonItem?: string }): Promise<Record<string, unknown> | "no_ledger" | "ledger_pack_not_ready"> {
+    const sd = this.e.stateDir;
+    if (!sd) return "no_ledger";
+    const pack = this.pack(i.packId);
+    if (typeof pack === "string") return "ledger_pack_not_ready";
+    const s = readSettings(sd);
+    if (!s.ledger) return "no_ledger";
+    const needs = questionsOf(pack, i.facility ? { facility: i.facility } : null).map((q) => ({ key: q.key, name: q.name, codes: q.codes, suggested: q.suggested }));
+    const ledgerVersion = gitHead(s.ledger);
+    const empty = { mode: "ledger", position: "municipal", floorK: RECEIVE_MIN_K, places: [], aggregates: [], cards: [], ledgerVersion };
+    if (!i.answers) return { ...empty, needs, reason: "answersMissing" };
+    const chosen = defaultAxes(pack.spec, pack.table, i.answers);
+    const prof = receiverProfile(pack.spec, pack.table, i.answers, chosen);
+    if (!prof.ok) return { ...empty, needs, reason: prof.reason };
+    const l = await loadLedgerPlace(s.ledger, pack);
+    const c = compare({ table: pack.table, position: "municipal", profile: prof.profile, places: l.place ? [l.place] : [] });
+    const out = peerAggregates(c, i.commonItem);
+    return { mode: "ledger", position: c.position, floorK: RECEIVE_MIN_K, ...out, ledgerVersion, needs: [], reason: null };
   }
 
   private pack(id: string): SharePack | string {

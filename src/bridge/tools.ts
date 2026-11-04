@@ -25,6 +25,8 @@ export type ToolReceiver = "not_implemented" | "tab" | "bridge" | "tab_then_brid
 export interface BridgeTools {
   reading_skills_list?: (args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   reading_skill_register?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+  /** 作業画面が人の開いた比べを返したらそのまま、公開の台帳だけを読む頼みなら橋渡しが台帳を読んで比べる */
+  peer_reference?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
 }
 
 export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
@@ -34,11 +36,11 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   photo_transcribe: "tab",
   crosswalk_propose: "tab",
   chart_rows: "tab",
-  chart_propose: "not_implemented",
+  chart_propose: "tab",
   check_results: "tab",
   note_for_human: "not_implemented",
   share_preview: "not_implemented",
-  peer_reference: "tab",
+  peer_reference: "tab_then_bridge",
   reading_rules_propose: "tab",
   reading_skill_register: "tab_then_bridge",
   reading_skills_list: "bridge",
@@ -191,8 +193,8 @@ export class ToolRelay {
     if (out.kind === "no_answer") return fail("tab_no_answer");
     if (out.kind === "error") return fail(out.code);
     if (BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
-      const h = this.bridgeTools.reading_skill_register;
-      return h && name === "reading_skill_register" ? finish(await h(out.data as Record<string, unknown>, args)) : fail("not_implemented");
+      const h = name === "reading_skill_register" ? this.bridgeTools.reading_skill_register : name === "peer_reference" ? this.bridgeTools.peer_reference : undefined;
+      return h ? finish(await h(out.data as Record<string, unknown>, args)) : fail("not_implemented");
     }
 
     const parsed = def.output.safeParse(out.data);

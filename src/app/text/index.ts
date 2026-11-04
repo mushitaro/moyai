@@ -70,6 +70,7 @@ export const TEXT = {
     unmapped: "未当てはめ",
     series: (s: string) => (s.startsWith("common.") ? s.slice("common.".length) || "共通" : `系列 ${s}`),
     mark: { plan: "○", actual: "●", both: "◎" },
+    cycleMark: (fy: number) => `○ ${fy} 年度（周期の案）`,
     markName: { plan: "計画", actual: "実施", both: "計画と実施" },
     markNone: "印なし",
     markRemoved: "印を消した",
@@ -329,6 +330,7 @@ export const TEXT = {
     ai: {
       surveyed: "AI が取り込みの要約を読みました",
       readingProposed: (name: string, n: number) => `AI が読み方「${name}」に規則を ${n} 置きました（下書き。承認は版の署名で）`,
+      cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の印 ${marks}。決定のシートで受けるまで決まりません）`,
       settled: (n: number, unresolved: number) => `AI が決定を ${n} 個置きました（残りの未解決 ${unresolved} セル）`,
       settleRefused: (n: number) => `AI の決定 ${n} 個を断りました（当てはまらないものがあったので、どれも置いていません）`,
       composeStarted: "AI が計画を作り始めました",
