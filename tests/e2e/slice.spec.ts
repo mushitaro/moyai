@@ -2,7 +2,7 @@
 // 取り込み（人が資料を落とし、AI が MCP で intake_survey → intake_settle → intake_compose）
 // → 当てはめ（AI が crosswalk_propose で規則の案を置き、試験の台本が人の代わりに画面で規則ごとに受ける・違う規則は断る）
 // → 星取表（共通の設備項目 × 作業の属性の行と、未当てはめの行）→ 確定（人だけ）→ 検問所（k ≥ 5 の塊・数がすべて 0）
-// → 合言葉で署名して輪に置く → 受け手と同じ関数で ✓、CLI の verify ring でも ✓。
+// → 人が押して署名し、輪に置く → 受け手と同じ関数で ✓、CLI の verify ring でも ✓。
 // AI は本物の中継（dist/cli.js mcp）を MCP の SDK のクライアントでつなぐ。人の操作（受ける・確定・送る）は画面のボタンだけで、
 // AI のツールには無い。先に npm run build を走らせておく。置き場所と輪は一時のフォルダに作り、この PC の Documents には書かない。
 import { spawnSync } from "node:child_process";
@@ -14,7 +14,6 @@ import { attr, f1Rules } from "../fixtures/crosswalk/rules";
 import { acceptDecisions, acceptRules, callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（AI と人）";
-const PASS = "架空の合言葉 縦の一本 です";
 const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
 const REJECT = "試験の台本が押した（送風機は分解整備と取替が混ざるので、まとめて取替にはしない）";
 
@@ -40,8 +39,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
   rings.push(join(ringRoot, ".."));
   const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose"]);
   try {
-    await test.step("人：設定で置き場所を選び、輪を作って鍵を合言葉で包む", async () => {
-      await chooseRootAndCreateRing(page, bridge.base, root, ringRoot, PASS);
+    await test.step("人：設定で置き場所を選び、輪を作って鍵を作る", async () => {
+      await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
     });
 
     await test.step("人：資料を取り込みの画面に落とす", async () => {
@@ -167,7 +166,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.screenshot({ path: shot(`slice-chart-common-unmapped-${tag}`) });
     });
 
-    await test.step("確定（人だけ）：AI が置いた決定を決定のシートで理由つきで受け、一言の理由と合言葉で署名して確定する", async () => {
+    await test.step("確定（人だけ）：AI が置いた決定を決定のシートで理由つきで受け、一言の理由を書いて署名して確定する", async () => {
       // 当てはめは当てはめの欄で人が受けたので、残るのは AI がチャットの答えで置いた取り込みの決定だけ
       await acceptDecisions(page, "試験の台本が押した（チャットの答えを画面で受けた）");
       await page.getByTestId("confirm-open").click();
@@ -175,9 +174,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       // 署名のダイアログに保管先の生のパスは出さない
     await expect(page.getByTestId("confirm-root")).toHaveCount(0);
       await page.getByTestId("confirm-reason").fill("縦の 1 本：取り込みと当てはめを確定する（e2e）");
-      // 署名：この PC にまだ鍵が無いので、合言葉を決めて鍵を作ってから署名する（2 回入れる）
-      await expect(page.getByTestId("confirm-submit")).toBeDisabled();
-      await signInDialog(page, PASS);
+      // 署名：この PC にまだ鍵が無いので、鍵を作ってから署名する（合言葉は打たない）
+      await signInDialog(page);
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
@@ -225,8 +223,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.screenshot({ path: shot(`slice-checkpoint-${tag}`), fullPage: true });
     });
 
-    await test.step("合言葉で署名して輪に置き、受け手と同じ関数で ✓。CLI の verify ring でも ✓", async () => {
-      await page.getByTestId("passphrase").fill(PASS);
+    await test.step("人が押して署名し、輪に置き、受け手と同じ関数で ✓。CLI の verify ring でも ✓", async () => {
       await page.getByTestId("send").click();
       await expect(page.getByTestId("sent")).toContainText("束を輪に置きました");
       await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");

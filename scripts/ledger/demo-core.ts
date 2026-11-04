@@ -16,7 +16,7 @@ import { LEDGER_DIR, LEDGER_FILE, ledgerContext, verifyLedgerFiles, type LedgerF
 import { loadSharePack, type SharePack } from "../../src/share/pack";
 import { baseRules, type Rules } from "../../src/share/rules";
 import { previewBundle, sealBundle, type SendInput } from "../../src/share/seal";
-import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, signBody, wrapPrivateKey, type KeyPair } from "../../src/share/sign";
+import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, signBody, type KeyPair } from "../../src/share/sign";
 import { Plan } from "../../src/shared/plan";
 
 export const DEMO_PACK = "waste-incineration";
@@ -109,7 +109,7 @@ function sendInputOf(ctx: ShareContext, pack: SharePack, plan: Plan, answers: Re
 }
 
 /**
- * 本物の写し取りと封で 1 施設の束を作る（合言葉は走らせるたびに作り、どこにも書かない）。
+ * 本物の写し取りと封で 1 施設の束を作る（鍵はメモリの中だけ。どこにも書かない）。
  * 固有名詞の網が照らす置き場所の道は、台帳で人に見える道（ledger/bundles/<鍵ID>）にする（手元の clone の道は公開されない）。
  */
 function sealFacility(ctx: ShareContext, rules: Rules, pack: SharePack, plan: Plan, answers: Record<string, string>, pair: KeyPair, month: string) {
@@ -117,12 +117,10 @@ function sealFacility(ctx: ShareContext, rules: Rules, pack: SharePack, plan: Pl
   const input = sendInputOf(ctx, pack, plan, answers, pair.pub, month);
   const pv = previewBundle(input);
   if (!pv.ok) throw new Error(`プレビューができない（${pv.reason}）`);
-  const passphrase = randomBytes(24).toString("base64url");
   const words = properNounSources(plan);
   const s = sealBundle(input, {
     previewHash: pv.bodyHash,
-    wrapped: wrapPrivateKey(pair, passphrase),
-    passphrase,
+    pair,
     acceptedRulesHash: ctx.rulesHash,
     acceptedRules: rules,
     localWords: words.localWords,

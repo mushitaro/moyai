@@ -1,7 +1,7 @@
 // 人だけの経路の処理（確定・版・設定・輪と鍵・検問所）。ここに来るのは、server.ts の guardHuman
 // （Origin・Sec-Fetch-Site・タブの秘密・操作と中身のハッシュに結んだ 1 回きりの印）を通ったものだけ。
 // どれも MCP のツールにしない（src/shared/tools.ts に無い）。答えは JSON。断るときは { ok: false, reason }。
-// 合言葉・鍵・計画の中身をログに出さない。
+// 鍵・トークン・計画の中身をログに出さない。
 import { spawn } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -25,10 +25,9 @@ import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "
 import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
-import { HEX16, HEX64, WrongPassphrase, fingerprint, keyIdOf, sha256Hex, unwrapSecret, wrapSecret } from "../share/sign";
+import { HEX16, HEX64, fingerprint, keyIdOf, sha256Hex } from "../share/sign";
 import { readFileSync, readdirSync } from "node:fs";
 import {
-  GITHUB_TOKEN_AAD,
   defaultRoot,
   detectDocuments,
   readGitHub,
@@ -39,7 +38,7 @@ import {
   writeGitHub,
   writeLedgerSent,
   readSettings,
-  readWrappedKey,
+  readKeyFile,
   syncedOf,
   validRoot,
   writeSettings,
@@ -63,7 +62,7 @@ export interface HumanEnv {
   githubClientId?: string | null;
 }
 
-/** GitHub につなぐ途中（デバイスフロー）。合言葉はつながるか終わるまでこのメモリだけに置き、どこにも書かない */
+/** GitHub につなぐ途中（デバイスフロー）。デバイスのコードはつながるか終わるまでこのメモリだけに置き、どこにも書かない */
 interface GitHubConnecting {
   state: "waiting" | "ok" | "denied" | "expired" | "failed";
   userCode: string;
@@ -97,8 +96,6 @@ const SCHEMAS = {
     reason: z.string().max(500),
     acceptances: z.array(z.object({ id: z.string().max(200), hash: z.string().regex(/^[0-9a-f]{16}$/), reason: z.string().max(500) })).max(100_000),
     basedOn: z.number().int().min(1).nullable(),
-    /** 署名の鍵を開く合言葉（橋渡しが開き、署名したらすぐ捨てる。どこにも残さない） */
-    passphrase: z.string().min(1).max(1000),
     /** 頼むこと（docs/screens.md 3.4）：自分で確定する・編集を頼む・承認を頼む。頼むときは宛先（メール）とひとこと */
     request: z.object({ kind: z.enum(["self", "edit", "approve"]), to: z.string().max(200).nullable(), note: z.string().max(1000) }).optional(),
     /** 受け取る人の MOYAI で版を開くリンクの頭（画面の origin。メールの文に入れる） */
@@ -109,7 +106,7 @@ const SCHEMAS = {
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
   readings_read: z.object({}),
-  plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable(), passphrase: z.string().min(1).max(1000) }),
+  plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable() }),
   plans_list: z.object({}),
   plan_version_read: z.object({ planId: planIdSchema, version: z.number().int().min(1) }),
   comment_add: z.object({
@@ -119,13 +116,13 @@ const SCHEMAS = {
     text: z.string().max(COMMENT_MAX),
   }),
   comments_list: z.object({ planId: planIdSchema }),
-  plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500), passphrase: z.string().min(1).max(1000) }),
+  plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
-  person_key_create: z.object({ passphrase: z.string().min(1).max(1000) }),
+  person_key_create: z.object({}),
   person_key_confirm: z.object({ key: z.string().regex(/^[0-9a-f]{16}$/) }),
   settings_read: z.object({}),
   settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional(), name: z.string().max(40).nullable().optional() }),
-  ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID), passphrase: z.string().max(1000) }),
+  ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID) }),
   checkpoint_preview: z.object({ planId: planIdSchema, ringId: ringIdSchema.nullable(), answers: answersSchema }),
   checkpoint_open_text: z.object({ planId: planIdSchema, ringId: ringIdSchema, answers: answersSchema }),
   checkpoint_send: z.object({
@@ -134,7 +131,6 @@ const SCHEMAS = {
     ringId: ringIdSchema,
     answers: answersSchema,
     previewHash: z.string().regex(HEX64),
-    passphrase: z.string().max(1000),
   }),
   ring_verify: z.object({ ringId: ringIdSchema }),
   ledger_preview: z.object({ planId: planIdSchema, answers: answersSchema }),
@@ -143,10 +139,9 @@ const SCHEMAS = {
     version: z.number().int().min(1),
     answers: answersSchema,
     previewHash: z.string().regex(HEX64),
-    passphrase: z.string().max(1000),
   }),
   ledger_prs: z.object({ packId: z.string().regex(PACK_ID) }),
-  github_connect_start: z.object({ packId: z.string().regex(PACK_ID), passphrase: z.string().max(1000) }),
+  github_connect_start: z.object({ packId: z.string().regex(PACK_ID) }),
   github_connect_state: z.object({}),
   github_disconnect: z.object({}),
   peers_compare: z.object({
@@ -245,11 +240,11 @@ export class HumanService {
     return githubClientIdOf(GITHUB_CLIENT_ID, this.e.env ?? process.env, io.hosts);
   }
 
-  /** 署名する人：設定の呼び名と、合言葉で開いた自分の鍵（署名したらすぐ捨てる。鍵も合言葉もどこにも残さない） */
-  private signer(sd: string, passphrase: string): { ok: true; signer: Signer } | { ok: false; reason: "nameMissing" | "personKeyMissing" | "wrongPassphrase" } {
+  /** 署名する人：設定の呼び名と、開いた自分の鍵（署名したらすぐ捨てる。署名は、人が画面で署名のボタンを押したときに決まる） */
+  private signer(sd: string): { ok: true; signer: Signer } | { ok: false; reason: "nameMissing" | "personKeyMissing" | "oldKey" } {
     const name = readSettings(sd).name;
     if (!name) return { ok: false, reason: "nameMissing" };
-    const k = openOwnKey(sd, name, passphrase);
+    const k = openOwnKey(sd, name);
     if (!k.ok) return { ok: false, reason: k.reason };
     return { ok: true, signer: { by: name, pair: k.pair } };
   }
@@ -359,7 +354,7 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        const signer = this.signer(sd, p.passphrase);
+        const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
         // 使った読み方を保管先に書き、道と版を版の記録に書く（この版に人が署名すると、その版の読み方が承認済みになる）。担当者の範囲の読み方は、署名する人の呼び名の下に置く
         const readingSkills: { name: string; path: string; version: string }[] = [];
@@ -406,7 +401,7 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        const signer = this.signer(sd, p.passphrase);
+        const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
         const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
         if (!r.ok) return no(r.reason);
@@ -418,7 +413,7 @@ export class HumanService {
         const s = readSettings(sd);
         const root = s.root ?? defaultRoot(docs);
         const rings = readRings(sd).rings.map((r) => {
-          const w = readWrappedKey(sd, r.ringId);
+          const w = readKeyFile(sd, r.ringId);
           return { ringId: r.ringId, root: r.root, pack: r.pack, key: r.key, fingerprint: w ? fingerprint(w.pub) : null, synced: syncedOf(r.root, docs.syncRoots) };
         });
         return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, github: readGitHub(sd)?.login ?? null, rings, packs: this.packs(), name: s.name, people: trustList(sd) };
@@ -513,7 +508,7 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        const signer = this.signer(sd, p.passphrase);
+        const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
         const r = await signLatest({ root, planId: p.planId, version: p.version, role: p.role, reason: p.reason, signer: signer.signer, now });
         if (!r.ok) return no(r.reason);
@@ -559,7 +554,7 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const name = readSettings(sd).name;
         if (!name) return no("nameMissing");
-        const r = createOwnKey(sd, name, p.passphrase, now);
+        const r = createOwnKey(sd, name, now);
         if (!r.ok) return no(r.reason);
         return { ok: true, name, key: r.key, fingerprint: r.fingerprint };
       }
@@ -575,7 +570,7 @@ export class HumanService {
         if (!root) return no("rootInvalid");
         const pack = this.pack(p.packId);
         if (typeof pack === "string") return no("packNotReady", { packReason: pack });
-        const r = await createRing({ stateDir: sd, root, pack, passphrase: p.passphrase, now });
+        const r = await createRing({ stateDir: sd, root, pack, now });
         if (!r.ok) return no(r.reason);
         return { ok: true, ringId: r.ringId, key: r.key, fingerprint: r.fingerprint, synced: await this.syncedOfPath(root) };
       }
@@ -603,7 +598,7 @@ export class HumanService {
         const ctx = await this.shareContext(p.planId, p.ringId, p.answers);
         if (!ctx.ok) return ctx.out;
         if (ctx.version !== p.version) return no("versionChanged");
-        const r = await sendCheckpoint(sd, ctx.ring, ctx.pack, ctx.plan, p.answers, monthOf(now), p.previewHash, p.passphrase, now);
+        const r = await sendCheckpoint(sd, ctx.ring, ctx.pack, ctx.plan, p.answers, monthOf(now), p.previewHash, now);
         if (!r.ok) return no(r.reason);
         const report = withSentInfo(await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, ctx.ring.confirmed), readSent(sd));
         return { ok: true, fileName: r.fileName, hash: r.hash, seq: r.seq, report };
@@ -628,17 +623,11 @@ export class HumanService {
         const gh = readGitHub(sd);
         if (!gh) return no("githubNotConnected");
         const k = ledgerKeyOf(sd, c.L.id);
-        const w = readWrappedKey(sd, c.L.id);
+        const w = readKeyFile(sd, c.L.id);
         if (!k || !w) return no("noKey");
         if (pendingSent(sd, c.L, k.entry.key)) return no("ledgerPending");
-        let token: string;
-        try {
-          token = unwrapSecret(gh.token, p.passphrase, GITHUB_TOKEN_AAD);
-        } catch (e) {
-          if (e instanceof WrongPassphrase) return no("passphrase");
-          throw e;
-        }
-        const s = sealPlace(ledgerPlace(sd, c.L, k), w, c.pack, c.plan, p.answers, monthOf(now), p.previewHash, p.passphrase);
+        const token = gh.token;
+        const s = sealPlace(ledgerPlace(sd, c.L, k), w, c.pack, c.plan, p.answers, monthOf(now), p.previewHash);
         if (!s.ok) return no(s.reason);
         const bytes = new Uint8Array(Buffer.from(s.text, "utf8"));
         const seq = s.input.seq;
@@ -695,13 +684,12 @@ export class HumanService {
         const io = this.githubIo();
         const clientId = this.githubClientId(io);
         if (!clientId) return no("githubNoClient");
-        // 台帳の自分の鍵：あれば合言葉で開けるかを確かめ、無ければこの合言葉で作る（トークンも同じ合言葉で包む）
-        const k = ensureLedgerKey(sd, L, pack, p.passphrase, now);
-        if (!k.ok) return no(k.reason === "wrongPassphrase" ? "passphrase" : k.reason);
+        // 台帳の自分の鍵：あればそれを使い、無ければ作る（合言葉はやめた。docs/plan.md §2.19）
+        const k = ensureLedgerKey(sd, L, pack, now);
+        if (!k.ok) return no(k.reason);
         const d = await startDevice(io, clientId);
         if (!d.ok) return no(`github.${d.reason}`);
         this.connecting?.stop();
-        const passphrase = p.passphrase;
         let stopped = false;
         let interval = d.interval;
         const st: GitHubConnecting = {
@@ -729,7 +717,7 @@ export class HumanService {
               st.state = "failed";
               return;
             }
-            writeGitHub(sd, { v: "moyai.github/0", login, token: wrapSecret(r.token, passphrase, GITHUB_TOKEN_AAD), connectedAt: new Date(this.e.now()).toISOString() });
+            writeGitHub(sd, { v: "moyai.github/1", login, token: r.token, connectedAt: new Date(this.e.now()).toISOString() });
             st.login = login;
             st.state = "ok";
             return;
@@ -887,7 +875,7 @@ export class HumanService {
     if (!entry || entry.pack !== plan.packId) return fail("noRing", base);
     const ring = await loadRing(sd, ringId, pack);
     if (!ring.ok) return fail(ring.reason, base);
-    const w = readWrappedKey(sd, ringId);
+    const w = readKeyFile(sd, ringId);
     const info = { ...base, ring: { ...entry, key: ring.entry.key, fingerprint: w ? fingerprint(w.pub) : null, folder: join(entry.root, ringId) }, ringCount: rings.length };
     return { ok: true as const, ring, pack, plan, version: h.latest.version, info, answers };
   }

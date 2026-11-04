@@ -6,7 +6,7 @@ import { envelopeText, publicWords } from "../../../src/share/bundle";
 import { canonicalize } from "../../../src/share/jcs";
 import { countProperNouns, hasExactDate, hasMoney, isClean, recount } from "../../../src/share/recount";
 import { previewBundle, sealBundle } from "../../../src/share/seal";
-import { signBody } from "../../../src/share/sign";
+import { generateKeyPair, signBody } from "../../../src/share/sign";
 import { asset, detail, makeMember, makeRing, plan, sendInput, work } from "./fixtures";
 
 const FACILITY = "架空市みどり清掃センター";
@@ -74,8 +74,7 @@ describe("share.leak", () => {
   const pv = previewBundle(input);
   const sealArgs = {
     previewHash: pv.ok ? pv.bodyHash : "",
-    wrapped: m.wrapped,
-    passphrase: m.passphrase,
+    pair: m.pair,
     acceptedRulesHash: ring.ctx.rulesHash,
     acceptedRules: ring.rules,
     localWords: [FACILITY, CLIENT, PERSON],
@@ -169,9 +168,9 @@ describe("share.leak", () => {
     expect(quiet.total).toBe(0);
   });
 
-  it("合言葉が違えば署名しない。プレビューと中身が違えば送らない", () => {
-    const wrong = sealBundle(input, { ...sealArgs, passphrase: "ちがう合言葉" });
-    expect(!wrong.ok && wrong.reason).toBe("passphrase");
+  it("送る人の鍵と違う鍵では署名しない。プレビューと中身が違えば送らない", () => {
+    const wrong = sealBundle(input, { ...sealArgs, pair: generateKeyPair() });
+    expect(!wrong.ok && wrong.reason).toBe("keyMismatch");
     const changed = sealBundle(input, { ...sealArgs, previewHash: "0".repeat(64) });
     expect(!changed.ok && changed.reason).toBe("previewChanged");
   });

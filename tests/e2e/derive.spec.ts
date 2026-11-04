@@ -9,7 +9,6 @@ import { expect, test } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
-const PASS = "架空の合言葉 派生の試験";
 
 let bridge: StartedBridge;
 let work = "";
@@ -40,7 +39,7 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
     await acceptDecisions(page, "試験の台本が押した（見本の計画の決定を受けた）");
     await page.getByTestId("confirm-open").click();
     await page.getByTestId("confirm-reason").fill("元の施設の第 1 版（e2e）");
-    await signInDialog(page, PASS);
+    await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
     await page.keyboard.press("Escape");
@@ -68,7 +67,6 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
     await acceptDecisions(page, "試験の台本が押した（写した決定を受けた）");
     await page.getByTestId("confirm-open").click();
     await page.getByTestId("confirm-reason").fill("元の施設の第 1 版から作った（e2e）");
-    await page.getByTestId("sign-passphrase").fill(PASS);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
     await page.keyboard.press("Escape");

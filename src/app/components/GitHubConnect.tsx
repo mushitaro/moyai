@@ -1,7 +1,7 @@
 // GitHub につなぐ（SHARE の公開の台帳。docs/plan.md §2.12 の通信の例外、絵は SharePublic.dc.html）：
-// 合言葉を打って「コードを出す」→ 橋渡しが OAuth のデバイスフローを始め、台帳の自分の鍵を同じ合言葉で作るか開く →
-// 人が github.com でコードを入れる → 橋渡しがトークンを合言葉で包んで状態フォルダに置く。トークンは画面に来ない。
-import { Anchor, Button, Group, Modal, PasswordInput, Stack, Text } from "@mantine/core";
+// 「コードを出す」→ 橋渡しが OAuth のデバイスフローを始め、台帳の自分の鍵が無ければ作る →
+// 人が github.com でコードを入れる → 橋渡しがトークンを状態フォルダに置く（包まない。合言葉はやめた、docs/plan.md §2.19）。トークンは画面に来ない。
+import { Anchor, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import { useConnection } from "../state/bridge";
@@ -15,7 +15,6 @@ type State = "waiting" | "ok" | "denied" | "expired" | "failed";
 
 export function GitHubConnect({ opened, packId, onClose, onConnected }: { opened: boolean; packId: string; onClose: () => void; onConnected: (login: string) => void }) {
   const { client } = useConnection();
-  const [pass, setPass] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState<{ userCode: string; verificationUri: string } | null>(null);
@@ -24,7 +23,6 @@ export function GitHubConnect({ opened, packId, onClose, onConnected }: { opened
 
   useEffect(() => {
     if (!opened) {
-      setPass("");
       setError(null);
       setCode(null);
       setState(null);
@@ -53,9 +51,8 @@ export function GitHubConnect({ opened, packId, onClose, onConnected }: { opened
   const start = async () => {
     setBusy(true);
     setError(null);
-    const r = readHuman<{ ok: boolean; reason?: string; userCode: string; verificationUri: string }>(await client.callHuman("github_connect_start", ROUTES.githubConnectStart.path, { packId, passphrase: pass }));
+    const r = readHuman<{ ok: boolean; reason?: string; userCode: string; verificationUri: string }>(await client.callHuman("github_connect_start", ROUTES.githubConnectStart.path, { packId }));
     setBusy(false);
-    setPass("");
     if (!r.ok) return setError(r.message);
     setCode({ userCode: r.body.userCode, verificationUri: r.body.verificationUri });
     setState("waiting");
@@ -65,18 +62,8 @@ export function GitHubConnect({ opened, packId, onClose, onConnected }: { opened
     <Modal opened={opened} onClose={onClose} title={T.title} centered data-testid="github-connect">
       <Stack gap="md">
         {!code && (
-          <Group gap="sm" align="flex-end" wrap="nowrap">
-            <PasswordInput
-              label={T.passphrase}
-              value={pass}
-              onChange={(e) => setPass(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && pass) void start();
-              }}
-              style={{ flex: 1 }}
-              data-testid="github-passphrase"
-            />
-            <Button onClick={() => void start()} disabled={!pass} loading={busy} data-testid="github-start">
+          <Group gap="sm" justify="flex-end" wrap="nowrap">
+            <Button onClick={() => void start()} loading={busy} data-testid="github-start">
               {T.start}
             </Button>
           </Group>

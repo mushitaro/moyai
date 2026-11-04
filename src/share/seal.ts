@@ -1,6 +1,7 @@
-// 送る前の 2 つの処理：プレビュー（検問所に出す束のバイト列）と封（合言葉で署名する）。
+// 送る前の 2 つの処理：プレビュー（検問所に出す束のバイト列）と封（施設の鍵で署名する）。
 // どちらも previewBundle で同じ body を作り、ハッシュが違えば送らない。
-// 署名するのは、形の外れ・自由記述・金額・正確な日付・固有名詞が 0、k が下限以上、決まりを人が受け入れた、合言葉が合う、がそろったときだけ。
+// 署名するのは、形の外れ・自由記述・金額・正確な日付・固有名詞が 0、k が下限以上、決まりを人が受け入れた、がそろったときだけ。
+// 合言葉はやめた（運営者の決定 2026-11-04、docs/plan.md §2.19）。呼ぶのは人だけの経路（人が［送る］を押したとき）だけ。
 import type { Plan } from "../shared/plan";
 import { bundleFileName, envelopeText, fileHash, makeBundleBody, publicWords, type BundleBody, type ShareContext } from "./bundle";
 import { candidateClasses, copyOut, type CopyResult } from "./copyout";
@@ -8,7 +9,7 @@ import { canonicalize } from "./jcs";
 import { chooseProfile, countPeers, kNational, type Group, type KChoice, type ProfileSpec } from "./k";
 import { countProperNouns, isClean, isContentClean, recount, type ProperNounResult, type RecountResult } from "./recount";
 import { copyRulesOf, rulesGate, type Rules, type RulesGate } from "./rules";
-import { WrongPassphrase, keyIdOf, sha256Hex, signBody, unwrapPrivateKey, type WrappedKey } from "./sign";
+import { keyIdOf, sha256Hex, signBody, type KeyPair } from "./sign";
 
 export interface SendInput {
   ctx: ShareContext;
@@ -80,8 +81,8 @@ export function previewBundle(i: SendInput): Preview {
 export interface SealInput {
   /** 人が検問所で見たプレビューのハッシュ */
   previewHash: string;
-  wrapped: WrappedKey;
-  passphrase: string;
+  /** 送る人の鍵（開いたもの。呼ぶ側は署名のあとに持ち続けない） */
+  pair: KeyPair;
   /** 人が受け入れた決まりのハッシュと、その決まり（差を出すため） */
   acceptedRulesHash: string | null;
   acceptedRules: Rules | null;
@@ -95,13 +96,13 @@ export type SealResult =
   | { ok: true; text: string; hash: string; fileName: string; recount: RecountResult }
   | {
       ok: false;
-      reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "passphrase" | "keyMismatch" | "afterSign";
+      reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "keyMismatch" | "afterSign";
       rules?: RulesGate;
       properNoun?: ProperNounResult;
       recount?: RecountResult;
     };
 
-/** 合言葉で署名して、輪に置く文字列を作る（置くのは ring.ts）。 */
+/** 署名して、場に置く文字列を作る（置くのは ring.ts か ledger-send.ts）。 */
 export function sealBundle(i: SendInput, s: SealInput): SealResult {
   const pv = previewBundle(i);
   if (!pv.ok) return { ok: false, reason: "preview" };
@@ -118,15 +119,8 @@ export function sealBundle(i: SendInput, s: SealInput): SealResult {
     publicWords: publicWords(i.ctx),
   });
   if (pn.total > 0) return { ok: false, reason: "properNoun", properNoun: pn };
-  let pair;
-  try {
-    pair = unwrapPrivateKey(s.wrapped, s.passphrase);
-  } catch (e) {
-    if (e instanceof WrongPassphrase) return { ok: false, reason: "passphrase" };
-    throw e;
-  }
-  if (pair.pub !== i.pub) return { ok: false, reason: "keyMismatch" };
-  const sig = signBody(pv.body, pair.privateKey);
+  if (s.pair.pub !== i.pub) return { ok: false, reason: "keyMismatch" };
+  const sig = signBody(pv.body, s.pair.privateKey);
   const text = envelopeText(pv.body, sig);
   const r = recount(text, i.ctx);
   if (!isClean(r)) return { ok: false, reason: "afterSign", recount: r };

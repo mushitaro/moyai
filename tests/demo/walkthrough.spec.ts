@@ -5,7 +5,7 @@
 //   2 Claude が取り込みを最後まで動かす（質問に既定の答え・計画を作る）→ 当てはめの規則の案 → 人が規則ごとに受ける
 //   3 星取表（共通の設備項目 × 作業の属性）→ 突き合せ → Claude が公開の台帳を読み、周期の案（朱の破線の円）→ 人が決定のシートで受ける
 //   4 検査のシート → 署名して承認を頼み、渡すメールの文 → 課長がリンクで開き、承認して署名する
-//   5 トップに ● →「＋ 次の版」で開く → EXPORT で Excel を落とす → SHARE の検問所 → 合言葉で署名して輪に置き、✓
+//   5 トップに ● →「＋ 次の版」で開く → EXPORT で Excel を落とす → SHARE の検問所 → 人が押して署名し、輪に置き、✓
 //   6〜10 版どうしの差・古い版から次の版・似た施設の重ね・コメント・派生・様式に写す
 //   11 SHARE の公開の台帳：誰からも見えるあなた。GitHub にはつないでいない（MOYAI の OAuth App の登録待ち。PR を出す流れは tests/e2e/ledger-pr.spec.ts）
 // 使い方：npm run build のあと、MOYAI_SHOTS_DIR=docs/progress/shots/<日付>/demo npx playwright test -c playwright.demo.config.ts tests/demo/walkthrough.spec.ts
@@ -19,8 +19,8 @@ import { f1Rules } from "../fixtures/crosswalk/rules";
 import { packName, FICTIONAL_1, callTool as call, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】みどり台クリーンセンター";
-const A = { name: "【架空】山田", pass: "架空の合言葉 山田の鍵 デモ" };
-const B = { name: "【架空】課長", pass: "架空の合言葉 課長の鍵 デモ" };
+const A = { name: "【架空】山田" };
+const B = { name: "【架空】課長" };
 const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
 // 見え方（利用者がチャットで答えたことにする。架空の施設）
 const PROFILE = { furnace: "STOKER", capacity_t_per_day: "C200_400", turbine: "YES", ash: "OUT", contract: "SINGLE" } as const;
@@ -73,13 +73,11 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
   const c = await mcpClient(one.stateDir, ["intake_survey", "intake_settle", "intake_compose", "crosswalk_propose", "peer_reference", "chart_propose"]);
   let link = "";
   try {
-    await test.step("山田：設定で保管先・呼び名・台帳の clone。輪を作って鍵を合言葉で包む", async () => {
+    await test.step("山田：設定で保管先・呼び名・台帳の clone。輪を作って鍵を作る", async () => {
       await settings(pa, one.base, root, A.name, ledger);
       await pa.getByTestId("ring-create-open").click();
       await pa.getByTestId("ring-folder").fill(ringRoot);
       await pa.getByTestId("ring-pack").selectOption("waste-incineration");
-      await pa.getByTestId("ring-pass").fill(A.pass);
-      await pa.getByTestId("ring-pass2").fill(A.pass);
       await pa.getByTestId("ring-create-submit").click();
       await expect(pa.getByTestId("ring-created")).toBeVisible();
       await pa.keyboard.press("Escape");
@@ -232,12 +230,10 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-09-check"), fullPage: true });
     });
 
-    await test.step("4 署名して承認を頼む：一言の理由・宛先・合言葉 → 渡すメールの文（版の場所とハッシュだけ）", async () => {
+    await test.step("4 署名して承認を頼む：一言の理由・宛先 → 渡すメールの文（版の場所とハッシュだけ）", async () => {
       await pa.getByTestId("confirm-open").click();
       await pa.getByTestId("confirm-reason").fill("取り込みと当てはめ、台帳の周期の案を入れた第 1 版。承認をお願いします");
       await pa.getByTestId("ask-approve").check();
-      await pa.getByTestId("sign-passphrase").fill(A.pass);
-      await pa.getByTestId("sign-passphrase-again").fill(A.pass);
       await pa.getByTestId("ask-to").fill("kacho@example.jp");
       // ラジオの切り替えの動きが終わってから撮る
       await pa.waitForTimeout(400);
@@ -263,8 +259,6 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pb.getByTestId("side-signatures").click();
       await pb.screenshot({ path: shot("demo-13-approver") });
       await pb.getByTestId("approve-open").click();
-      await pb.getByTestId("sign-dialog-passphrase").fill(B.pass);
-      await pb.getByTestId("sign-dialog-passphrase-again").fill(B.pass);
       await pb.getByTestId("sign-submit").click();
       await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "editing");
       await pb.screenshot({ path: shot("demo-14-approved") });
@@ -288,7 +282,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-16-export") });
     });
 
-    await test.step("5 SHARE：検問所で相手から見たあなたを確かめ、合言葉で署名して輪に置く → ✓", async () => {
+    await test.step("5 SHARE：検問所で相手から見たあなたを確かめ、押して署名し、輪に置く → ✓", async () => {
       await pa.goto(`${one.base}/#/share`);
       await expect(pa.getByTestId("checkpoint-page")).toBeVisible();
       await pa.getByTestId("q-national").selectOption("yes");
@@ -299,7 +293,6 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("q-contract").selectOption(PROFILE.contract);
       await expect(pa.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
       await pa.screenshot({ path: shot("demo-17-checkpoint"), fullPage: true });
-      await pa.getByTestId("passphrase").fill(A.pass);
       await pa.getByTestId("send").click();
       await expect(pa.getByTestId("sent")).toContainText("束を輪に置きました");
       await expect(pa.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
@@ -335,7 +328,6 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("confirm-open").click();
       await pa.getByTestId("ask-self").check();
       await pa.getByTestId("confirm-reason").fill("台帳の周期の案をもう 1 つ入れた第 2 版");
-      await pa.getByTestId("sign-passphrase").fill(A.pass);
       await pa.getByTestId("confirm-submit").click();
       await expect(pa.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
       await pa.keyboard.press("Escape");
@@ -406,7 +398,6 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("confirm-open").click();
       await pa.getByTestId("ask-self").check();
       await pa.getByTestId("confirm-reason").fill("みどり台の第 2 版から作った、東山の第 1 版");
-      await pa.getByTestId("sign-passphrase").fill(A.pass);
       await pa.getByTestId("confirm-submit").click();
       await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
       await pa.keyboard.press("Escape");

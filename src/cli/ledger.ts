@@ -12,7 +12,7 @@ import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { reasonText } from "../app/text/reasons";
 import { bundleFileName } from "../share/bundle";
 import { fingerprint, sha256Hex } from "../share/sign";
-import { askHidden, requireTerminal } from "./human";
+import { requireTerminal } from "./human";
 import { createLedger } from "../share/ledger-init";
 import { resolveStateDir } from "../bridge/state";
 import {
@@ -140,15 +140,10 @@ export const LEDGER_USAGE = `使い方：
 /** ledger init の言葉 */
 export const INIT_TEXT = {
   usage: "使い方：moyai ledger init --root <台帳のリポジトリの根（絶対の道）> --pack <パック> [--month YYYY-MM]（人だけ。端末から）",
-  intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに合言葉で包んで置きます（台帳には書きません）。",
-  passphrase: "管理者の鍵の合言葉（打った文字は「*」で出ます。日本語は変換を確定してから Enter）：",
-  passphraseAgain: "もう一度：",
-  mismatch: "合言葉が合いません。何も書いていません。",
-  cancelled: "やめました。何も書いていません。",
+  intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。合言葉では包みません）。",
   failed: (r: string) =>
     ({
       exists: "ledger/ledger.json がもうあります（足すだけの台帳なので、上書きしません）。",
-      passphraseShort: "合言葉が短すぎます。",
       monthInvalid: "月の形が違います（YYYY-MM）。",
       keyExists: "この台帳の鍵がもう状態フォルダにあります。",
       selfCheck: "作った決まりを、受け手と同じ関数で読めませんでした。何も書いていません。",
@@ -165,7 +160,7 @@ export const INIT_TEXT = {
 /** ledger init：人だけ。端末でなければ断る（3）。書けたら 0、断ったら 1、引数の誤りは 2 */
 export async function initCli(
   argv: string[],
-  o: { packsDir?: string; stdin?: { isTTY?: boolean }; ask?: (p: string) => Promise<string | null>; now?: Date; stateDir?: string } = {},
+  o: { packsDir?: string; stdin?: { isTTY?: boolean }; now?: Date; stateDir?: string } = {},
 ): Promise<number> {
   if (!requireTerminal(o.stdin)) return 3;
   let root: string | null = null;
@@ -188,24 +183,9 @@ export async function initCli(
     return 2;
   }
   say(INIT_TEXT.intro);
-  const ask = o.ask ?? askHidden;
-  const a = await ask(INIT_TEXT.passphrase);
-  if (a === null) {
-    say(INIT_TEXT.cancelled);
-    return 130;
-  }
-  const b = await ask(INIT_TEXT.passphraseAgain);
-  if (b === null) {
-    say(INIT_TEXT.cancelled);
-    return 130;
-  }
-  if (a !== b) {
-    say(INIT_TEXT.mismatch);
-    return 1;
-  }
   const now = o.now ?? new Date();
   const m = month ?? `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-  const r = createLedger({ root: resolve(root), pack: pack.pack, passphrase: a, stateDir: o.stateDir ?? resolveStateDir(), month: m });
+  const r = createLedger({ root: resolve(root), pack: pack.pack, stateDir: o.stateDir ?? resolveStateDir(), month: m });
   if (!r.ok) {
     say(INIT_TEXT.failed(r.reason));
     return 1;

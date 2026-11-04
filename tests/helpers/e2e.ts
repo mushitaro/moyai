@@ -132,18 +132,16 @@ export async function callTool(c: Client, name: string, args: Record<string, unk
   return r.structuredContent;
 }
 
-/** 人が設定の画面で、置き場所を選んで保存し、輪を作ってこの輪の鍵を合言葉で包む */
+/** 人が設定の画面で、置き場所を選んで保存し、輪を作ってこの輪の鍵を作る */
 /** 試験の台本が版に署名するときの呼び名（架空） */
 export const E2E_NAME = "【架空】試験の台本";
 
-/** 確定のダイアログで署名する：合言葉を入れる。この PC に鍵がまだ無ければ、もう一度の欄にも入れる（鍵を作ってから署名する） */
-export async function signInDialog(page: Page, passphrase: string): Promise<void> {
-  await page.getByTestId("sign-passphrase").fill(passphrase);
-  const again = page.getByTestId("sign-passphrase-again");
-  if (await again.count()) await again.fill(passphrase);
+/** 確定のダイアログで署名する：合言葉は打たない（運営者の決定 2026-11-04）。誰として署名するかの 1 行が出ていることだけを確かめる */
+export async function signInDialog(page: Page): Promise<void> {
+  await expect(page.getByTestId("sign-as")).toBeVisible();
 }
 
-export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string, passphrase: string): Promise<void> {
+export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string): Promise<void> {
   await page.goto(`${base}/#/settings`);
   await expect(page.getByTestId("settings-page")).toBeVisible();
   await page.getByTestId("root-input").fill(root);
@@ -154,8 +152,6 @@ export async function chooseRootAndCreateRing(page: Page, base: string, root: st
   await page.getByTestId("ring-create-open").click();
   await page.getByTestId("ring-folder").fill(ringRoot);
   await page.getByTestId("ring-pack").selectOption("waste-incineration");
-  await page.getByTestId("ring-pass").fill(passphrase);
-  await page.getByTestId("ring-pass2").fill(passphrase);
   await page.getByTestId("ring-create-submit").click();
   await expect(page.getByTestId("ring-created")).toBeVisible();
   await page.keyboard.press("Escape");

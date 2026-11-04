@@ -1,11 +1,12 @@
 // SHARE（共有。docs/screens.md 3.6、絵は Share.dc.html。P2 の 2 で引き算した）：
 // 出す先（自社の輪 / 公開の台帳）、見え方の答え、相手から見たあなた（見え方の 1 行・何施設のどれかに見えるか・塊ごとの帯。委託先は伏せる）、
 // 出元（鍵の指紋と束の鎖）。原本・出ていくバイト列そのもの（ハッシュ・メモ帳で開く）・相手の星取表は「中身を見る」にたたむ。
-// 下の帯に、出したあとに起きることと、合言葉の欄の右の主ボタン 1 つ「署名して自社の輪へ出す」か「署名して公開の台帳へ出す」。
+// 下の帯に、出したあとに起きることと、主ボタン 1 つ「署名して自社の輪へ出す」か「署名して公開の台帳へ出す」。
+// 合言葉はやめた（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。署名は、人が主ボタンを押したときに決まる。
 // 出ていくものは橋渡しが作る（送る処理と同じ関数）。画面は橋渡しが返したバイト列を見せ、そのハッシュを送るときに照らす。
 // 公開の台帳（絵は SharePublic.dc.html。運営者の決定 2026-11-04「MOYAI が出す」）：出す先の右に GitHub のアカウント、誰からも見えるあなた、
-// 出した束の行方（SHARE を開いたときだけ読む）。PR を出すのは、人が合言葉を打って主ボタンを押したときだけ。
-import { Alert, Anchor, Button, Code, Container, Group, NativeSelect, Paper, PasswordInput, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
+// 出した束の行方（SHARE を開いたときだけ読む）。PR を出すのは、人が主ボタンを押したときだけ。
+import { Alert, Anchor, Button, Code, Container, Group, NativeSelect, Paper, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import { emptyCatalog } from "../chart/catalog";
@@ -246,7 +247,6 @@ export function Checkpoint() {
   const [res, setRes] = useState<PreviewBody | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [pass, setPass] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<{ fileName: string; report: Report } | null>(null);
   // 受け取った束（docs/screens.md 3.6。受け取り箱をこの画面の下の節に移した）：輪を受け手と同じ関数で確かめた結果
@@ -323,10 +323,8 @@ export function Checkpoint() {
 
   const countsZero = !!view?.counts && Object.values(view.counts).every((n) => n === 0);
   const done = dest === "ledger" ? !!sentPr : !!sent;
-  const canSend = !!view && view.blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && pass.length > 0 && !sending && !done;
+  const canSend = !!view && view.blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && !sending && !done;
   const login = res?.github?.login ?? null;
-  /** 公開の台帳：前に出した束がまだ載っていない（そのあいだは合言葉の欄を出さない） */
-  const waitingLedger = dest === "ledger" && !!view?.blockers.includes("pending");
   // 止め札は、いま効いている理由を 1 つだけ出す（公開の台帳でつないでいなければ、それがいちばん先）
   const sendReason = !view
     ? T.sendNeeds.noView
@@ -336,9 +334,7 @@ export function Checkpoint() {
         ? T.sendNeeds.pending
         : view.blockers.length > 0
         ? (T.sendNeeds[view.blockers[0]!] ?? view.blockers[0]!)
-        : pass.length === 0
-          ? T.sendNeeds.passphrase
-          : "";
+        : "";
 
   const send = async () => {
     if (!canSend || !view?.bodyHash || !res?.plan) return;
@@ -346,10 +342,9 @@ export function Checkpoint() {
       setSending(true);
       setSendError(null);
       const r = readHuman<{ ok: boolean; reason?: string; pr: number; url: string }>(
-        await client.callHuman("ledger_send", ROUTES.ledgerSend.path, { planId, version: res.plan.version, answers, previewHash: view.bodyHash, passphrase: pass }),
+        await client.callHuman("ledger_send", ROUTES.ledgerSend.path, { planId, version: res.plan.version, answers, previewHash: view.bodyHash }),
       );
       setSending(false);
-      setPass("");
       if (!r.ok) return setSendError(r.message);
       setSentPr({ pr: r.body.pr, url: r.body.url });
       setReload((x) => x + 1);
@@ -359,10 +354,9 @@ export function Checkpoint() {
     setSending(true);
     setSendError(null);
     const r = readHuman<{ ok: boolean; reason?: string; fileName: string; report: Report }>(
-      await client.callHuman("checkpoint_send", ROUTES.checkpointSend.path, { planId, version: res.plan.version, ringId, answers, previewHash: view.bodyHash, passphrase: pass }),
+      await client.callHuman("checkpoint_send", ROUTES.checkpointSend.path, { planId, version: res.plan.version, ringId, answers, previewHash: view.bodyHash }),
     );
     setSending(false);
-    setPass("");
     if (!r.ok) return setSendError(r.message);
     setSent({ fileName: r.body.fileName, report: r.body.report });
     setReceived(r.body.report);
@@ -442,7 +436,6 @@ export function Checkpoint() {
                 setSent(null);
                 setSentPr(null);
                 setSendError(null);
-                setPass("");
               }}
               data={[
                 { value: "ring", label: T.dest.ring },
@@ -834,7 +827,7 @@ export function Checkpoint() {
         </Stack>
       </div>
 
-      {/* 下の帯：出したあとに起きること（置き場所が残すもの・仲間に分かること）と、合言葉の欄の右に主ボタン 1 つ */}
+      {/* 下の帯：出したあとに起きること（置き場所が残すもの・仲間に分かること）と、主ボタン 1 つ */}
       <Group justify="space-between" px={32} py="xs" wrap="nowrap" gap="md" className="moyai-merge-bar" data-testid="leave">
         <Stack gap={0} style={{ minWidth: 0 }}>
           {dest === "ledger" ? (
@@ -861,21 +854,6 @@ export function Checkpoint() {
             <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
               {sendReason}
             </Text>
-          )}
-          {!waitingLedger && (
-          <PasswordInput
-            size="xs"
-            aria-label={T.passphrase}
-            placeholder={T.passphrase}
-            value={pass}
-            onChange={(e) => setPass(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void send();
-            }}
-            style={{ width: 220 }}
-            disabled={done}
-            data-testid="passphrase"
-          />
           )}
           <Button onClick={send} disabled={!canSend} loading={sending} data-testid="send">
             {dest === "ledger" ? T.sendLedger : T.sendRing}

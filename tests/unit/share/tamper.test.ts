@@ -17,8 +17,7 @@ function seal(input: SendInput, m: Member, ring: Ring): { text: string; hash: st
   if (!pv.ok) throw new Error(`プレビューができない: ${pv.reason}`);
   const s = sealBundle(input, {
     previewHash: pv.bodyHash,
-    wrapped: m.wrapped,
-    passphrase: m.passphrase,
+    pair: m.pair,
     acceptedRulesHash: ring.ctx.rulesHash,
     acceptedRules: ring.rules,
     localWords: [],

@@ -9,8 +9,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { acceptDecisions, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
-const A = { name: "【架空】山田", pass: "架空の合言葉 山田の鍵" };
-const B = { name: "【架空】課長", pass: "架空の合言葉 課長の鍵" };
+const A = { name: "【架空】山田" };
+const B = { name: "【架空】課長" };
 
 let one: StartedBridge;
 let two: StartedBridge;
@@ -54,8 +54,6 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pa.getByTestId("ask-approve").check();
     await expect(pa.getByTestId("confirm-submit")).toHaveText("署名して渡す");
     // 宛先が無ければ押せない
-    await pa.getByTestId("sign-passphrase").fill(A.pass);
-    await pa.getByTestId("sign-passphrase-again").fill(A.pass);
     await expect(pa.getByTestId("confirm-submit")).toBeDisabled();
     await pa.getByTestId("ask-to").fill("kacho@example.jp");
     await expect(pa.getByTestId("confirm-submit")).toBeEnabled();
@@ -120,11 +118,11 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.screenshot({ path: shot(`handoff-comment-${tag}`) });
   });
 
-  await test.step("課長：承認して署名する。この PC にまだ鍵が無いので、合言葉を 2 回入れて鍵を作ってから署名する", async () => {
+  await test.step("課長：承認して署名する。この PC にまだ鍵が無いので、鍵を作ってから署名する（合言葉は打たない）", async () => {
     await pb.getByTestId("approve-open").click();
-    await pb.getByTestId("sign-dialog-passphrase").fill(B.pass);
-    await expect(pb.getByTestId("sign-submit")).toBeDisabled();
-    await pb.getByTestId("sign-dialog-passphrase-again").fill(B.pass);
+    // 合言葉の欄は無い。鍵がまだ無いことを 1 行で知らせ、承認はそのまま押せる
+    await expect(pb.getByTestId("sign-dialog-new-key")).toBeVisible();
+    await expect(pb.getByTestId("sign-submit")).toBeEnabled();
     await pb.getByTestId("sign-submit").click();
     await expect(pb.getByTestId("merge-notice")).toContainText("第 1 版を承認しました");
     // 承認したあとは編集の番が空き、次の版を編集できる（見出しの通知に「第 1 版を承認しました」）

@@ -222,7 +222,7 @@ export type CommitResult =
       pending?: number;
     };
 
-/** 署名する人：呼び名と、合言葉で開いた鍵（橋渡しが開き、署名したら捨てる） */
+/** 署名する人：呼び名と、開いた鍵（橋渡しが開き、署名したら捨てる） */
 export interface Signer {
   by: string;
   pair: KeyPair;

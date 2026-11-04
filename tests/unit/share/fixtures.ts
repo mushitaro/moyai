@@ -8,7 +8,7 @@ import type { AssetNodeT, Plan, WorkDetailT, WorkT } from "../../../src/shared/p
 import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody, ringIdOf, type ShareContext } from "../../../src/share/bundle";
 import { loadNational, loadVocab, type ProfileSpec, type ShareVocab } from "../../../src/share/k";
 import { baseRules, type Rules } from "../../../src/share/rules";
-import { generateKeyPair, keyIdOf, sha256Hex, signBody, wrapPrivateKey, type KeyPair, type WrappedKey } from "../../../src/share/sign";
+import { generateKeyPair, keyIdOf, sha256Hex, signBody, type KeyPair } from "../../../src/share/sign";
 import type { SendInput } from "../../../src/share/seal";
 
 export const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -191,24 +191,15 @@ export function makeRingWith(founder: KeyPair, nonce: string, rulesPatch: Partia
 export interface Member {
   pair: KeyPair;
   key: string;
-  wrapped: WrappedKey;
-  passphrase: string;
   memberText: string;
 }
 
-const wrappedCache = new Map<string, WrappedKey>();
-
-export function makeMember(ring: Ring, passphrase = "架空の合言葉 試験"): Member {
+export function makeMember(ring: Ring): Member {
   const pair = generateKeyPair();
   const key = keyIdOf(pair.pub);
   const body = makeMemberBody(ring.ringId, key, pair.pub, "2026-11");
   const memberText = envelopeText(body, signBody(body, pair.privateKey));
-  let wrapped = wrappedCache.get(pair.pub);
-  if (!wrapped) {
-    wrapped = wrapPrivateKey(pair, passphrase);
-    wrappedCache.set(pair.pub, wrapped);
-  }
-  return { pair, key, wrapped, passphrase, memberText };
+  return { pair, key, memberText };
 }
 
 export function sendInput(ring: Ring, m: Member, p: Plan, o: Partial<SendInput> = {}): SendInput {

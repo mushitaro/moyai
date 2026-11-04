@@ -1,4 +1,4 @@
-// 試験で版に署名する人（架空の呼び名と、その場で作った鍵。合言葉で包まない）
+// 試験で版に署名する人（架空の呼び名と、その場で作った鍵）
 import type { Signer } from "../../src/plan/store";
 import { generateKeyPair } from "../../src/share/sign";
 

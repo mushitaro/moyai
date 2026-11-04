@@ -1,7 +1,7 @@
 // 公開の台帳を計画に使う（docs/plan.md §2.18.4）を、この PC の Chrome と Edge で端から端まで通す：
 // 設定で台帳の clone と呼び名を選ぶ → 見本の計画を MERGE で開く → AI が peer_reference（place: ledger）で、人が比べを開かずに台帳だけを読む
 // （見え方の答えが無ければ聞くことが返り、答えを添えて読み直す）→ AI が chart_propose で周期の案を置く → 決定のシートに「- 台帳からの案」が 1 行
-// → 人（試験の台本が押した）が決定のシートで受け、合言葉で署名して確定する → 確定した版に、台帳から来た計画の印が残る。
+// → 人（試験の台本が押した）が決定のシートで受け、署名して確定する → 確定した版に、台帳から来た計画の印が残る。
 // 台帳は架空の 10 施設（scripts/ledger/demo-core.ts）を一時のフォルダに作る。AI は本物の中継（dist/cli.js mcp）。先に npm run build を走らせておく。
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -11,7 +11,6 @@ import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { E2E_NAME, acceptDecisions, callTool as call, mcpClient, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
-const PASS = "架空の合言葉 台帳から計画へ";
 const LEDGER_SOURCE = "ledger:公開の台帳";
 
 let bridge: StartedBridge;
@@ -106,7 +105,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await page.screenshot({ path: shot(`ledger-plan-proposal-${tag}`) });
     });
 
-    await test.step("決定のシート：台帳からの案が案ごとに 1 行。人が受けて、合言葉で署名して確定する", async () => {
+    await test.step("決定のシート：台帳からの案が案ごとに 1 行。人が受けて、署名して確定する", async () => {
       await page.getByTestId("sheet-decisions").click();
       const row = page.locator('[data-testid="pending-row"][data-kind="ledger"]');
       await expect(row).toHaveCount(1);
@@ -121,7 +120,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await expect(page.getByTestId("chart-grid").locator(".moyai-mark-proposal")).toHaveCount(0);
       await page.getByTestId("confirm-open").click();
       await page.getByTestId("confirm-reason").fill("台帳の似た施設の周期を計画に入れる（e2e）");
-      await signInDialog(page, PASS);
+      await signInDialog(page);
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
     });

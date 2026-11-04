@@ -1,4 +1,4 @@
-// 署名：鍵の対・署名・検証・合言葉で包む・指紋。
+// 署名：鍵の対・署名・検証・包まない鍵のファイル・前の形（合言葉で包んだ鍵。移すときにだけ開く）・指紋。
 import { createHash, verify } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { canonicalize } from "../../../src/share/jcs";
@@ -7,8 +7,11 @@ import {
   fingerprint,
   generateKeyPair,
   keyIdOf,
+  openKeyFile,
+  openPlainKey,
   publicKeyFromHex,
   signBody,
+  toPlainKey,
   unwrapPrivateKey,
   verifyBody,
   wrapPrivateKey,
@@ -38,7 +41,19 @@ describe("sign", () => {
     expect(verifyBody(body, "xyz", pair.pub)).toBe(false);
   });
 
-  it("合言葉で包み、同じ合言葉で開ける。違う合言葉と書き換えは WrongPassphrase", () => {
+  it("包まない鍵のファイル：開くと同じ鍵。添えた公開鍵と違えば・壊れていれば開かない。前の形は old", () => {
+    const k = toPlainKey(pair);
+    expect(k.v).toBe("moyai.key/1");
+    const back = openPlainKey(k);
+    expect(back?.pub).toBe(pair.pub);
+    expect(verifyBody(body, signBody(body, back!.privateKey), pair.pub)).toBe(true);
+    expect(openPlainKey({ ...k, pub: generateKeyPair().pub })).toBeNull();
+    expect(openPlainKey({ ...k, pkcs8: "00" })).toBeNull();
+    expect(openKeyFile(k)?.toString()).not.toBe("old");
+    expect(openKeyFile(wrapPrivateKey(pair, "架空の前の合言葉"))).toBe("old");
+  });
+
+  it("前の形：合言葉で包み、同じ合言葉で開ける。違う合言葉と書き換えは WrongPassphrase（keys unwrap が移すときにだけ使う）", () => {
     const w = wrapPrivateKey(pair, "架空の合言葉");
     expect(JSON.stringify(w)).not.toContain("架空の合言葉");
     const back = unwrapPrivateKey(w, "架空の合言葉");

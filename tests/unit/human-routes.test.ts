@@ -127,7 +127,7 @@ describe("新しい人だけの経路は、どれも守りを越えさせない"
 });
 
 describe("正しいタブから：確定 → 輪を作る → 検問所 → 送る → 確かめる（Documents が日本語の OneDrive の下）", () => {
-  it("端まで通る。中身の形が違う・理由が空・合言葉が違うものは断る", async () => {
+  it("端まで通る。中身の形が違う・理由が空のものは断る", async () => {
     // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の英字（計画の語と偶然重なる）を入れない名前にする（数だけは照らさない）
     extra = join(tmpdir(), `moyai-human-${process.pid}-${Date.now()}`);
     mkdirSync(extra, { recursive: true });
@@ -157,20 +157,18 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(st).toMatchObject({ ok: true, latest: null, synced: { kind: "onedrive" } });
     const ds = aiDecisions(plan);
     expect(ds.length).toBeGreaterThan(0);
-    // 署名：呼び名が無ければ鍵を作れない。呼び名を決め、自分の鍵を合言葉で作る。合言葉が違えば署名しない
-    const KEYPASS = "架空の合言葉 署名の鍵";
-    expect((await call("personKeyCreate", { passphrase: KEYPASS })).reason).toBe("nameMissing");
-    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("nameMissing");
+    // 署名：呼び名が無ければ鍵を作れない。呼び名を決め、自分の鍵を作る（合言葉はやめた）
+    expect((await call("personKeyCreate", {})).reason).toBe("nameMissing");
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null })).reason).toBe("nameMissing");
     expect((await call("settingsSave", { root: null, name: "山田/課長" })).reason).toBe("nameInvalid");
     expect(await call("settingsSave", { root: null, name: "【架空】試験の人" })).toMatchObject({ ok: true, name: "【架空】試験の人" });
-    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("personKeyMissing");
-    const key = await call("personKeyCreate", { passphrase: KEYPASS });
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null })).reason).toBe("personKeyMissing");
+    const key = await call("personKeyCreate", {});
     expect(key).toMatchObject({ ok: true, name: "【架空】試験の人" });
-    expect((await call("personKeyCreate", { passphrase: KEYPASS })).reason).toBe("personKeyExists");
-    expect((await call("planCommit", { plan, reason: "", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("reasonEmpty");
-    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: "違う合言葉" })).reason).toBe("wrongPassphrase");
-    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("pendingDecisions");
-    const c = await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null, passphrase: KEYPASS });
+    expect((await call("personKeyCreate", {})).reason).toBe("personKeyExists");
+    expect((await call("planCommit", { plan, reason: "", acceptances: [], basedOn: null })).reason).toBe("reasonEmpty");
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null })).reason).toBe("pendingDecisions");
+    const c = await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null });
     expect(c).toMatchObject({ ok: true, version: 1 });
     // 版の一覧には、確かめた署名と、この PC の鍵として信じた印（own）と指紋
     const st1 = await call("planStatus", { planId: plan.planId });
@@ -180,10 +178,9 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(existsSync(c.files.report)).toBe(true);
     expect(c.files.version.startsWith(join(docs, "MOYAI", "plans"))).toBe(true);
 
-    // 輪を作る（合言葉は 8 文字以上）
+    // 輪を作る
     const ringRoot = join(extra, "輪");
-    expect((await call("ringCreate", { root: ringRoot, packId: "waste-incineration", passphrase: "短い" })).reason).toBe("passphraseShort");
-    const rc = await call("ringCreate", { root: ringRoot, packId: "waste-incineration", passphrase: "架空の合言葉 試験です" });
+    const rc = await call("ringCreate", { root: ringRoot, packId: "waste-incineration" });
     expect(rc).toMatchObject({ ok: true });
     expect(rc.fingerprint).toMatch(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/);
 
@@ -198,10 +195,8 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(pv.view.k).toBeGreaterThanOrEqual(5);
     expect(sha(pv.view.bodyText)).toBe(pv.view.bodyHash);
 
-    // 送る：合言葉が違えば置かない。合えば置き、受け手と同じ関数で ✓
-    const bad = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash, passphrase: "違う合言葉です" });
-    expect(bad.reason).toBe("passphrase");
-    const sent = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash, passphrase: "架空の合言葉 試験です" });
+    // 送る：人が押せば署名して置き、受け手と同じ関数で ✓
+    const sent = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash });
     expect(sent).toMatchObject({ ok: true, seq: 1 });
     expect(sent.report.ok).toBe(true);
     const v = await call("ringVerify", { ringId: rc.ringId });
@@ -214,10 +209,10 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(Buffer.from(ex.base64, "base64").subarray(0, 2).toString()).toBe("PK");
     expect((await call("planFileRead", { planId: plan.planId, version: 1, kind: "report" })).ok).toBe(true);
     expect((await call("planFileRead", { planId: plan.planId, version: 9, kind: "export" })).reason).toBe("versionUnknown");
-    const back = await call("planRevert", { planId: plan.planId, to: 1, reason: "試しに戻す", basedOn: 1, passphrase: KEYPASS });
+    const back = await call("planRevert", { planId: plan.planId, to: 1, reason: "試しに戻す", basedOn: 1 });
     expect(back).toMatchObject({ ok: true, version: 2 });
     // 版が変わったので、前の版で見た検問所からは送らない
-    const stale = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash, passphrase: "架空の合言葉 試験です" });
+    const stale = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash });
     expect(stale.reason).toBe("versionChanged");
   });
 });
@@ -285,7 +280,7 @@ describe("受け手：似た施設と並べる（peers_compare）", () => {
 });
 
 describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物の GitHub では未確認）", () => {
-  it("確定 → GitHub につなぐ（デバイスフロー）→ 束を見る → 合言葉で署名して PR → 行方を読む → 接続を切る", async () => {
+  it("確定 → GitHub につなぐ（デバイスフロー）→ 束を見る → 署名して PR → 行方を読む → 接続を切る", async () => {
     extra = join(tmpdir(), `moyai-ledger-pr-${process.pid}-${Date.now()}`);
     mkdirSync(extra, { recursive: true });
     const repo = join(extra, "台帳");
@@ -304,13 +299,11 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
         expect(r.status, id).toBe(200);
         return r.body;
       };
-      const KEYPASS = "架空の合言葉 署名の鍵";
-      const PASS = "架空の合言葉 公開の台帳";
       await call("settingsSave", { root: join(extra, "置き場所"), ledger: repo, name: "【架空】試験の人" });
-      await call("personKeyCreate", { passphrase: KEYPASS });
+      await call("personKeyCreate", {});
       const plan = truthToPlan("fictional-1");
       const ds = aiDecisions(plan);
-      expect(await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null, passphrase: KEYPASS })).toMatchObject({ ok: true, version: 1 });
+      expect(await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null })).toMatchObject({ ok: true, version: 1 });
       const answers = { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true };
 
       // つなぐ前：誰からも見えるあなたは出るが、台帳の鍵が無いので束のバイト列は無く、送れない
@@ -320,9 +313,8 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
       expect(pv0.view.bodyHash).toBeNull();
       expect(pv0.view.k).toBeGreaterThanOrEqual(5);
 
-      // GitHub につなぐ：合言葉で台帳の鍵を作り、デバイスフローのコードを返す。人が github.com で入れるまで待つ
-      expect((await call("githubConnectStart", { packId: "waste-incineration", passphrase: "短い" })).reason).toBe("passphraseShort");
-      const st = await call("githubConnectStart", { packId: "waste-incineration", passphrase: PASS });
+      // GitHub につなぐ：台帳の鍵を作り、デバイスフローのコードを返す。人が github.com で入れるまで待つ
+      const st = await call("githubConnectStart", { packId: "waste-incineration" });
       expect(st).toMatchObject({ ok: true, userCode: "WDJB-MJHT", keyCreated: true });
       expect(await call("githubConnectState", {})).toMatchObject({ ok: true, state: "waiting" });
       stub.approve(); // 試験の台本が押した（人が github.com でコードを入れた）
@@ -333,24 +325,25 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
       }
       expect(state).toBe("ok");
       expect((await call("settingsRead", {})).github).toBe("moyai-test");
-      // トークンは状態フォルダに包んで置く（素のまま書かない）
-      expect(readFileSync(join(tb.stateDir!, "github.json"), "utf8")).not.toContain(STUB_TOKEN);
+      // トークンは状態フォルダに置く（包まない。運営者の決定 2026-11-04）。画面に返す答えには入れない
+      expect(JSON.parse(readFileSync(join(tb.stateDir!, "github.json"), "utf8")).v).toBe("moyai.github/1");
+      expect(JSON.stringify(await call("settingsRead", {}))).not.toContain(STUB_TOKEN);
+      expect(JSON.stringify(await call("githubConnectState", {}))).not.toContain(STUB_TOKEN);
 
-      // 束を見る → 合言葉が違えば出さない → 合えば PR を 1 つ出す
+      // 束を見る → 人が押すと PR を 1 つ出す
       const pv = await call("ledgerPreview", { planId: plan.planId, answers });
       expect(pv.github.login).toBe("moyai-test");
       expect(pv.view.blockers).toEqual([]);
       expect(sha(pv.view.bodyText)).toBe(pv.view.bodyHash);
-      expect((await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash, passphrase: "違う合言葉ですよ" })).reason).toBe("passphrase");
       expect(stub.prs).toHaveLength(0);
-      const sent = await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash, passphrase: PASS });
+      const sent = await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash });
       expect(sent).toMatchObject({ ok: true, pr: 1, seq: 1, login: "moyai-test" });
       expect(Object.keys(stub.prs[0]!.files)).toEqual([sent.path]);
       expect(stub.prs[0]!.body).not.toContain(plan.displayName);
 
       // 前の束が台帳に載るまでは、次の束は出さない。行方は公開の PR から読む
       expect((await call("ledgerPreview", { planId: plan.planId, answers })).view.blockers).toContain("pending");
-      expect((await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash, passphrase: PASS })).reason).toBe("ledgerPending");
+      expect((await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash })).reason).toBe("ledgerPending");
       const prs = await call("ledgerPrs", { packId: "waste-incineration" });
       expect(prs.prs).toMatchObject([{ pr: 1, seq: 1, version: 1, status: { state: "open", check: "pending" } }]);
 

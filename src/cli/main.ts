@@ -39,7 +39,8 @@ const HELP = `使い方：
   moyai ledger init --root <台帳のリポジトリの根> --pack <パック> [--month YYYY-MM]
                                             台帳の決まり（ledger.json）を作り、管理者の鍵で署名する（人だけ。端末から）
   moyai keys create --root <輪のフォルダ> --pack <パック>
-                                            輪を作り、その輪の鍵を合言葉で包む（人だけ。端末から）
+                                            輪を作り、その輪の鍵を状態フォルダに置く（人だけ。端末から）
+  moyai keys unwrap                         前の形の鍵（合言葉で包んだもの）を、前の合言葉で 1 度だけ開いて移す（人だけ。端末から）
   moyai send                                束を送る（人だけ。検問所の画面から送る。端末からは未実装）
   moyai --version                           ビルドの印を出す`;
 

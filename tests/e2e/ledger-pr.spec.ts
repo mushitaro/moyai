@@ -1,7 +1,7 @@
 // 公開の台帳へ PR を出す（docs/plan.md §2.8・§2.12。運営者の決定、2026-11-04「MOYAI が出す」）を、この PC の Chrome と Edge で画面から通す：
 // 設定で置き場所・呼び名・台帳の clone を選ぶ → 見本の計画を確定する → SHARE で出す先を「公開の台帳」にする → 誰からも見えるあなた →
-// 「GitHub につなぐ」で合言葉を打ってコードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる →
-// 合言葉で署名して「署名して公開の台帳へ出す」→ PR #1 → 出した束の行方（審査中）。
+// 「GitHub につなぐ」でコードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる →
+// 人が「署名して公開の台帳へ出す」を押す → PR #1 → 出した束の行方（審査中）。
 // GitHub は、試験の中だけで動く代わり（tests/helpers/github-stub.ts）。本物の GitHub では確かめていない。先に npm run build を走らせておく。
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -14,7 +14,6 @@ import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 import { startGitHubStub, type GitHubStub } from "../helpers/github-stub";
 
-const PASS = "架空の合言葉 公開の台帳へ";
 
 let bridge: StartedBridge;
 let stub: GitHubStub;
@@ -36,7 +35,7 @@ test.afterAll(async () => {
   if (work) rmSync(work, { recursive: true, force: true });
 });
 
-test("SHARE で GitHub につなぎ、合言葉で署名して、公開の台帳に PR を出す", async ({ page }, info) => {
+test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を出す", async ({ page }, info) => {
   const tag = info.project.name;
   test.setTimeout(180_000);
   const root = join(work, tag, "置き場所");
@@ -51,7 +50,7 @@ test("SHARE で GitHub につなぎ、合言葉で署名して、公開の台帳
     await expect(page.getByTestId("settings-github")).toHaveText("GitHub　つないでいません");
   });
 
-  await test.step("見本の計画を開き、決定を受けて、合言葉で署名して確定する", async () => {
+  await test.step("見本の計画を開き、決定を受けて、署名して確定する", async () => {
     const body = JSON.stringify(DEV_PLANS["fictional-1"]());
     await page.route("**/assets/dev-plans/*.json", (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
     await page.goto(`${bridge.base}/?plan=fictional-1#/merge/chart`);
@@ -59,7 +58,7 @@ test("SHARE で GitHub につなぎ、合言葉で署名して、公開の台帳
     await acceptDecisions(page, "試験の台本が押した（見本の計画の決定を受けた）");
     await page.getByTestId("confirm-open").click();
     await page.getByTestId("confirm-reason").fill("公開の台帳へ出す前の確定（e2e）");
-    await signInDialog(page, PASS);
+    await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
     await page.getByTestId("to-checkpoint").click();
@@ -82,9 +81,8 @@ test("SHARE で GitHub につなぎ、合言葉で署名して、公開の台帳
     await expect(page.getByTestId("ledger-bottom")).toHaveText("MOYAI が GitHub に PR を出します。載ったものは、取下げても相手の写しは消せません。");
   });
 
-  await test.step("GitHub につなぐ：合言葉でコードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる", async () => {
+  await test.step("GitHub につなぐ：コードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる", async () => {
     await page.getByTestId("github-open").click();
-    await page.getByTestId("github-passphrase").fill(PASS);
     await page.getByTestId("github-start").click();
     await expect(page.getByTestId("github-user-code")).toHaveText("WDJB-MJHT");
     await expect(page.getByTestId("github-state")).toHaveAttribute("data-state", "waiting");
@@ -99,20 +97,17 @@ test("SHARE で GitHub につなぎ、合言葉で署名して、公開の台帳
     await expect(page.getByTestId("share-chain")).toHaveText("束 1");
   });
 
-  await test.step("合言葉が違えば出さない。合えば署名して、MOYAI が PR を 1 つ出す。行方は審査中", async () => {
-    await page.getByTestId("passphrase").fill("違う合言葉ですよ");
-    await page.getByTestId("send").click();
-    await expect(page.getByTestId("send-error")).toContainText("合言葉が鍵を開きませんでした");
+  await test.step("人が主ボタンを押すと署名して、MOYAI が PR を 1 つ出す（合言葉の欄は無い）。行方は審査中", async () => {
+    await expect(page.getByTestId("passphrase")).toHaveCount(0);
     expect(stub.prs).toHaveLength(0);
-    await page.getByTestId("passphrase").fill(PASS);
     await page.getByTestId("send").click();
     await expect(page.getByTestId("ledger-sent")).toContainText("PR #1 を出しました");
     await expect(page.locator('[data-testid="ledger-pr"][data-state="open"]')).toHaveCount(1);
     await expect(page.getByTestId("ledger-pr").first()).toContainText("審査中");
     await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^束 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
-    // 出したあと：止め札は「前に出した束が、まだ台帳に載っていません」の 1 つ。そのあいだ合言葉の欄は出さない
+    // 出したあと：止め札は「前に出した束が、まだ台帳に載っていません」の 1 つ。主ボタンは押せない
     await expect(page.getByTestId("send-reason")).toHaveText("前に出した束が、まだ台帳に載っていません");
-    await expect(page.getByTestId("passphrase")).toHaveCount(0);
+    await expect(page.getByTestId("send")).toBeDisabled();
     await page.screenshot({ path: shot(`ledger-pr-sent-${tag}`), fullPage: true });
 
     // 届いた束：台帳の木に足して、受け手と同じ関数で ✓（台帳の Actions の検証と同じ関数）

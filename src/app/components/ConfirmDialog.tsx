@@ -1,5 +1,5 @@
 // 確定のダイアログと版の履歴（docs/plan.md §2.9・§2.18.2）。確定は人だけ：差分の要約と一言の理由（空は通さない）、
-// 自分の鍵の合言葉で版に署名する（鍵がまだ無ければ、合言葉を決めて作ってから署名する）。この署名で承認する読み方を 1 行ずつ見せる。
+// 自分の鍵で版に署名する（鍵がまだ無ければ、作ってから署名する。合言葉はやめた、docs/plan.md §2.18）。この署名で承認する読み方を 1 行ずつ見せる。
 // 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、MERGE の決定のシートで一言の理由を書いて受けるまで確定できない（受けた決定は state/decisions.ts）。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
 import { Alert, Anchor, Button, Group, Modal, PasswordInput, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
@@ -52,7 +52,6 @@ interface StatusBody {
   turn?: { version: number; state: "editing" | "awaitingApproval" | "approved" | "returned"; holder: string | null; to: string | null; from: string; note: string; at: string } | null;
 }
 
-const PASS_MIN = 8;
 
 /** 署名の「もとにした版」：作業中の計画がもとにした保管先の版（作業中の計画でなければ、保管先のいちばん新しい版） */
 function baseOf(plan: Plan, latest: number | null): number | null {
@@ -118,8 +117,6 @@ export function ConfirmDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ version: number; files: { version: string; report: string; export: string | null } } | null>(null);
-  const [pass, setPass] = useState("");
-  const [pass2, setPass2] = useState("");
   const [keyMade, setKeyMade] = useState<string | null>(null);
   // 頼むこと：自分で確定する・編集を頼む・承認を頼む
   const [ask, setAsk] = useState<"self" | "edit" | "approve">("self");
@@ -131,8 +128,6 @@ export function ConfirmDialog({
     setReason("");
     setError(null);
     setDone(null);
-    setPass("");
-    setPass2("");
     setKeyMade(null);
     setAsk("self");
     setTo("");
@@ -149,22 +144,21 @@ export function ConfirmDialog({
   const catalog = useMemo(() => catalogFor(plan.packId), [plan.packId]);
   const itemName = (code: string) => catalog?.items.get(code)?.name ?? catalog?.systems.get(code)?.name ?? code;
   const attrName = (code: string) => ((catalog ?? emptyCatalog()).workLabels as Record<string, string>)[code] ?? code;
-  // 署名：呼び名が決まっていなければ署名できない。鍵が無ければ、合言葉を決めて（2 回）鍵を作ってから署名する
+  // 署名：呼び名が決まっていなければ署名できない。この PC に鍵が無ければ、鍵を作ってから署名する（合言葉はやめた。docs/plan.md §2.18）
   const name = status?.name ?? null;
   const newKey = !!status && !status.hasKey && keyMade === null;
-  const passOk = newKey ? pass.length >= PASS_MIN && pass === pass2 : pass.length > 0;
   const readings = getCurrentReadings().readings;
   const toOk = ask === "self" || /^[^\s@]+@[^\s@]+$/.test(to.trim());
-  const canSubmit = !!status && !!name && passOk && toOk && reason.trim().length > 0 && left === 0 && !busy && !done;
-  const blockReason = !toOk ? T.toMissing : !name ? T.needName : left > 0 ? T.pendingLeft(left) : reason.trim().length === 0 ? T.reasonEmpty : !passOk ? (newKey && pass.length > 0 && pass.length < PASS_MIN ? T.passphraseShort : newKey && pass2.length > 0 && pass !== pass2 ? T.passphraseMismatch : T.passphraseEmpty) : null;
+  const canSubmit = !!status && !!name && toOk && reason.trim().length > 0 && left === 0 && !busy && !done;
+  const blockReason = !toOk ? T.toMissing : !name ? T.needName : left > 0 ? T.pendingLeft(left) : reason.trim().length === 0 ? T.reasonEmpty : null;
 
   const submit = async () => {
     if (!canSubmit || !status) return;
     setBusy(true);
     setError(null);
     if (newKey) {
-      // 鍵を作る（人だけの経路）。作れたら、同じ合言葉で続けて署名する
-      const k = readHuman<{ ok: boolean; reason?: string; fingerprint: string }>(await client.callHuman("person_key_create", ROUTES.personKeyCreate.path, { passphrase: pass }));
+      // 鍵を作る（人だけの経路）。作れたら、続けて署名する
+      const k = readHuman<{ ok: boolean; reason?: string; fingerprint: string }>(await client.callHuman("person_key_create", ROUTES.personKeyCreate.path, {}));
       if (!k.ok) {
         setBusy(false);
         return setError(k.message);
@@ -179,7 +173,6 @@ export function ConfirmDialog({
       basedOn: baseOf(plan, status.latest?.version ?? null),
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
       readings: readingsForCommit(),
-      passphrase: pass,
       request: { kind: ask, to: ask === "self" ? null : to.trim(), note: reason.trim() },
       // ほかの施設の版から作った新しい施設の第 1 版なら、その元（トップの「この版から別の施設をつくる」）
       derivedFrom: status.latest ? null : pendingDeriveFor(plan.planId),
@@ -189,8 +182,6 @@ export function ConfirmDialog({
       await client.callHuman("plan_commit", ROUTES.planCommit.path, payload),
     );
     setBusy(false);
-    setPass("");
-    setPass2("");
     if (!r.ok) return setError(r.message);
     setDone({ version: r.body.version, files: r.body.files });
     setMail(r.body.mail);
@@ -294,28 +285,10 @@ export function ConfirmDialog({
                   </Group>
                 </Alert>
               ) : (
-                <>
-                  <Group grow align="flex-start">
-                    <PasswordInput
-                      label={newKey ? T.passphraseNew : T.passphrase}
-                      value={pass}
-                      onChange={(e) => setPass(e.currentTarget.value)}
-                      disabled={!!done}
-                      autoComplete="off"
-                      data-testid="sign-passphrase"
-                    />
-                    {newKey && (
-                      <PasswordInput
-                        label={T.passphraseAgain}
-                        value={pass2}
-                        onChange={(e) => setPass2(e.currentTarget.value)}
-                        disabled={!!done}
-                        autoComplete="off"
-                        data-testid="sign-passphrase-again"
-                      />
-                    )}
-                  </Group>
-                </>
+                <Text size="xs" c="dimmed" data-testid="sign-as">
+                  {T.signAs(name)}
+                  {newKey ? ` ${T.keyNew}` : ""}
+                </Text>
               )}
             </Stack>
 
@@ -425,17 +398,15 @@ export function HistoryDialog({
   const [reason, setReason] = useState("");
   const [msg, setMsg] = useState<{ color: string; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [pass, setPass] = useState("");
   const status = load.kind === "ready" ? load.status : null;
 
   const revert = async () => {
-    if (target === null || !status || reason.trim().length === 0 || pass.length === 0) return;
+    if (target === null || !status || reason.trim().length === 0) return;
     setBusy(true);
     const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan }>(
-      await client.callHuman("plan_revert", ROUTES.planRevert.path, { planId, to: target, reason: reason.trim(), basedOn: status.latest?.version ?? null, passphrase: pass }),
+      await client.callHuman("plan_revert", ROUTES.planRevert.path, { planId, to: target, reason: reason.trim(), basedOn: status.latest?.version ?? null }),
     );
     setBusy(false);
-    setPass("");
     if (!r.ok) return setMsg({ color: "red", text: r.message });
     setMsg({ color: "teal", text: H.reverted(r.body.version) });
     setTarget(null);
@@ -504,8 +475,7 @@ export function HistoryDialog({
             </Text>
             <Group align="flex-end" gap="sm">
               <TextInput style={{ flex: 1 }} label={H.revertReason} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={500} />
-              <PasswordInput label={H.revertPassphrase} value={pass} onChange={(e) => setPass(e.currentTarget.value)} autoComplete="off" />
-              <Button onClick={revert} disabled={reason.trim().length === 0 || pass.length === 0} loading={busy}>
+              <Button onClick={revert} disabled={reason.trim().length === 0} loading={busy}>
                 {H.revertSubmit(target)}
               </Button>
             </Group>

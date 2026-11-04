@@ -1,6 +1,7 @@
 // 署名：Ed25519 の鍵の対・署名・検証（Node の crypto）。署名するのは、正規化した body の SHA-256（32 バイト）。
-// 秘密鍵は、合言葉から scrypt で作った鍵で包む（AES-256-GCM）。指紋は 16 文字（4 文字 × 4 組）。
-// 鍵・合言葉・署名する文をログに出さない。
+// 秘密鍵は包まずにファイルに置く（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。守りは置き場所と見張りのフックに頼る。
+// 前の形（合言葉から scrypt で作った鍵で包んだもの）は、人だけの CLI `moyai keys unwrap` が 1 度だけ開いて移すためにだけ読む。
+// 指紋は 16 文字（4 文字 × 4 組）。鍵・署名する文をログに出さない。
 import {
   createCipheriv,
   createDecipheriv,
@@ -92,7 +93,51 @@ export function fingerprint(pub: string): string {
   return `${out.slice(0, 4)}-${out.slice(4, 8)}-${out.slice(8, 12)}-${out.slice(12, 16)}`;
 }
 
-// ─── 秘密鍵を包む ─────────────────────────────────────────
+// ─── 秘密鍵のファイル ──────────────────────────────────────
+
+/** 包まない秘密鍵（PKCS#8 の DER を 16 進）。公開鍵を添え、開くと照らし合わせる */
+export interface PlainKey {
+  v: "moyai.key/1";
+  pub: string;
+  pkcs8: string;
+}
+
+export function toPlainKey(pair: KeyPair): PlainKey {
+  return { v: "moyai.key/1", pub: pair.pub, pkcs8: pair.privateKey.export({ format: "der", type: "pkcs8" }).toString("hex") };
+}
+
+export function isPlainKey(x: unknown): x is PlainKey {
+  const k = x as PlainKey | null;
+  return !!k && k.v === "moyai.key/1" && HEX64.test(k.pub) && typeof k.pkcs8 === "string" && /^[0-9a-f]+$/.test(k.pkcs8);
+}
+
+/** 包まない秘密鍵を開く。形が違うか、添えた公開鍵と合わなければ null */
+export function openPlainKey(k: PlainKey): KeyPair | null {
+  if (!isPlainKey(k)) return null;
+  try {
+    const privateKey = createPrivateKey({ key: Buffer.from(k.pkcs8, "hex"), format: "der", type: "pkcs8" });
+    const pub = publicKeyHex(createPublicKey(privateKey));
+    return pub === k.pub ? { pub, privateKey } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 鍵のファイルの中身：包まない鍵か、前の形（合言葉で包んだ鍵） */
+export type KeyFile = PlainKey | WrappedKey;
+
+export function isWrappedKey(x: unknown): x is WrappedKey {
+  const w = x as WrappedKey | null;
+  return !!w && w.v === "moyai.wrapped-key/0" && HEX64.test(w.pub);
+}
+
+/** 署名に使えるように開く。前の形なら "old"（人が `moyai keys unwrap` で移すまで使わない）、壊れていれば null */
+export function openKeyFile(f: KeyFile): KeyPair | "old" | null {
+  if (isWrappedKey(f)) return "old";
+  return openPlainKey(f);
+}
+
+// ─── 前の形：合言葉で包んだ秘密鍵（移すときにだけ開く） ──────────────
 
 /** scrypt の重さは固定（ファイルの値で軽くさせない）。N=2^15・r=8・p=1、鍵は 32 バイト。 */
 export const SCRYPT = { N: 32768, r: 8, p: 1, keyLen: 32, maxmem: 64 * 1024 * 1024 } as const;
@@ -158,37 +203,4 @@ export function unwrapPrivateKey(w: WrappedKey, passphrase: string): KeyPair {
   const pub = publicKeyHex(createPublicKey(privateKey));
   if (pub !== w.pub) throw new WrongPassphrase();
   return { pub, privateKey };
-}
-
-/** 鍵でない秘密（GitHub のトークン）を合言葉で包んだもの。用途の名前（aad）に結び、別の用途のファイルとしては開けない */
-export interface WrappedSecret {
-  v: "moyai.wrapped-secret/0";
-  aad: string;
-  salt: string;
-  iv: string;
-  ct: string;
-  tag: string;
-}
-
-/** 秘密の文字列を合言葉で包む（秘密鍵と同じ scrypt と AES-256-GCM） */
-export function wrapSecret(secret: string, passphrase: string, aad: string): WrappedSecret {
-  const salt = randomBytes(16);
-  const iv = randomBytes(12);
-  const c = createCipheriv("aes-256-gcm", deriveKey(passphrase, salt), iv);
-  c.setAAD(Buffer.from(aad, "utf8"));
-  const ct = Buffer.concat([c.update(Buffer.from(secret, "utf8")), c.final()]);
-  return { v: "moyai.wrapped-secret/0", aad, salt: salt.toString("hex"), iv: iv.toString("hex"), ct: ct.toString("hex"), tag: c.getAuthTag().toString("hex") };
-}
-
-/** 包んだ秘密を開く。合言葉が違うか、用途が違うか、ファイルが変わっていれば WrongPassphrase */
-export function unwrapSecret(w: WrappedSecret, passphrase: string, aad: string): string {
-  if (w.v !== "moyai.wrapped-secret/0" || w.aad !== aad) throw new WrongPassphrase();
-  try {
-    const d = createDecipheriv("aes-256-gcm", deriveKey(passphrase, Buffer.from(w.salt, "hex")), Buffer.from(w.iv, "hex"));
-    d.setAAD(Buffer.from(aad, "utf8"));
-    d.setAuthTag(Buffer.from(w.tag, "hex"));
-    return Buffer.concat([d.update(Buffer.from(w.ct, "hex")), d.final()]).toString("utf8");
-  } catch {
-    throw new WrongPassphrase();
-  }
 }

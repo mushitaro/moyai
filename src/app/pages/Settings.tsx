@@ -1,7 +1,7 @@
 // 設定（docs/plan.md §2.14）：置き場所（Documents と同期フォルダの知らせ）、輪のフォルダと鍵、公開の台帳の clone の場所（受け手が読む）、
 // 自分の呼び名と署名の鍵（§2.18.2。ほかの人の鍵は、指紋を読み合わせて人が確認済みにする）。
 // 主ボタンは「保存」（変えたときだけ）で、見出しの行の右端。輪を作るのは副のボタンから開くダイアログ。
-import { Alert, Button, Code, Container, Group, Modal, NativeSelect, PasswordInput, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, Code, Container, Group, Modal, NativeSelect, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useCallback, useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
@@ -45,32 +45,29 @@ function CreateRingDialog({ opened, onClose, packs, onCreated }: { opened: boole
   const { client } = useConnection();
   const [folder, setFolder] = useState("");
   const [pack, setPack] = useState("");
-  const [a, setA] = useState("");
-  const [b, setB] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ ringId: string; fingerprint: string; synced: Synced | null } | null>(null);
+  // 開いたときだけ消す（作ったあとに設定を読み直すと packs が替わるが、そのときに作った知らせと指紋を消さない）
   useEffect(() => {
     if (!opened) return;
     setFolder("");
-    setA("");
-    setB("");
     setError(null);
     setDone(null);
-    setPack(packs.find((p) => p.ready)?.id ?? "");
-  }, [opened, packs]);
-  const mismatch = b.length > 0 && a !== b;
-  const can = folder.trim().length > 0 && pack !== "" && a.length >= 8 && a === b && !busy && !done;
+  }, [opened]);
+  const firstReady = packs.find((p) => p.ready)?.id ?? "";
+  useEffect(() => {
+    if (opened) setPack((cur) => cur || firstReady);
+  }, [opened, firstReady]);
+  const can = folder.trim().length > 0 && pack !== "" && !busy && !done;
   const submit = async () => {
     if (!can) return;
     setBusy(true);
     setError(null);
     const r = readHuman<{ ok: boolean; reason?: string; ringId: string; fingerprint: string; synced: Synced | null }>(
-      await client.callHuman("ring_create", ROUTES.ringCreate.path, { root: folder.trim(), packId: pack, passphrase: a }),
+      await client.callHuman("ring_create", ROUTES.ringCreate.path, { root: folder.trim(), packId: pack }),
     );
     setBusy(false);
-    setA("");
-    setB("");
     if (!r.ok) return setError(r.message);
     setDone({ ringId: r.body.ringId, fingerprint: r.body.fingerprint, synced: r.body.synced });
     onCreated();
@@ -88,8 +85,6 @@ function CreateRingDialog({ opened, onClose, packs, onCreated }: { opened: boole
           data-testid="ring-pack"
           disabled={!!done}
         />
-        <PasswordInput label={T.passphrase} value={a} onChange={(e) => setA(e.currentTarget.value)} data-testid="ring-pass" disabled={!!done} />
-        <PasswordInput label={T.passphraseAgain} value={b} onChange={(e) => setB(e.currentTarget.value)} error={mismatch ? T.passphraseMismatch : undefined} data-testid="ring-pass2" disabled={!!done} />
         {error && <Alert color="red">{error}</Alert>}
         {done && (
           <Alert color="teal" data-testid="ring-created">

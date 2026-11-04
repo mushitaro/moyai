@@ -84,8 +84,7 @@ describe("share.rules", () => {
     if (!pv.ok) return;
     const args = {
       previewHash: pv.bodyHash,
-      wrapped: m.wrapped,
-      passphrase: m.passphrase,
+      pair: m.pair,
       acceptedRulesHash: v1.ctx.rulesHash,
       acceptedRules: v1.rules,
       localWords: [],
@@ -121,8 +120,7 @@ describe("share.rules", () => {
     if (!pv.ok) throw new Error("プレビューができない");
     const s = sealBundle(input, {
       previewHash: pv.bodyHash,
-      wrapped: m.wrapped,
-      passphrase: m.passphrase,
+      pair: m.pair,
       acceptedRulesHash: ring.ctx.rulesHash,
       acceptedRules: ring.rules,
       localWords: [],

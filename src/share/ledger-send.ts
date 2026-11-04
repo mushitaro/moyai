@@ -1,16 +1,16 @@
 // 公開の台帳へ出す側（docs/plan.md §2.8。運営者の決定、2026-11-04「MOYAI が出す」）。
 // - 台帳の clone（人が設定で選んだもの）を受け手と同じ関数で読み、送る先（SendPlace）を作る。束は検問所と同じ関数で作って署名する。
-// - 鍵は台帳ごとに 1 つ。人が SHARE で GitHub につなぐときに、その合言葉で作る（同じ合言葉で GitHub のトークンも包む）。
+// - 鍵は台帳ごとに 1 つ。人が SHARE で GitHub につなぐときに作る（包まない。合言葉はやめた、docs/plan.md §2.19）。
 // - 出す前に、台帳の clone の木に束を足したときに受け手と同じ関数（verifyLedgerFiles）で ✓ になるかを確かめる。✗ なら出さない。
 // - 前に出した束が clone にまだ無く、PR が閉じてもいなければ、次の束は出さない（鎖が抜けて、台帳の検証で ✗ になるため）。
-// 束の中身・鍵・合言葉・トークンをログに出さない。
-import { addLedger, readLedgers, readLedgerSent, readWrappedKey, writeWrappedKey, type LedgerEntry, type LedgerSentEntry } from "../bridge/places";
+// 束の中身・鍵・トークンをログに出さない。
+import { addLedger, readKeyFile, readLedgers, readLedgerSent, writeKeyFile, type LedgerEntry, type LedgerSentEntry } from "../bridge/places";
 import { bundleFileName, type ShareContext } from "./bundle";
 import { LEDGER_DIR, LEDGER_JSON_PATH, ledgerContext, readLedgerDir, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "./ledger";
 import type { SharePack } from "./pack";
 import type { Rules } from "./rules";
-import { PASSPHRASE_MIN, type SendPlace } from "./checkpoint";
-import { WrongPassphrase, fingerprint, generateKeyPair, keyIdOf, sha256Hex, unwrapPrivateKey, wrapPrivateKey } from "./sign";
+import type { SendPlace } from "./checkpoint";
+import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, toPlainKey } from "./sign";
 import { profileText } from "./site";
 
 export type LedgerLoad =
@@ -32,28 +32,19 @@ export async function loadLedgerForSend(root: string | null, pack: SharePack): P
   return { ok: true, id: L.id, root, rules: L.rules, ledgerBytes: lf.bytes, ctx, files: dir.files, read };
 }
 
-export type LedgerKey = { ok: true; entry: LedgerEntry; pub: string; created: boolean } | { ok: false; reason: "passphraseShort" | "wrongPassphrase" | "keyExists" };
+export type LedgerKey = { ok: true; entry: LedgerEntry; pub: string; created: boolean } | { ok: false; reason: "keyExists" };
 
 /**
- * この台帳の自分の鍵：あれば合言葉で開けるかを確かめ、無ければ作って合言葉で包んで置く（人が SHARE で GitHub につなぐとき）。
+ * この台帳の自分の鍵：あればそれを使い、無ければ作って置く（人が SHARE で GitHub につなぐとき。包まない。docs/plan.md §2.19）。
  * 作るときは、いまの台帳の決まりを受け入れたものとして記録する（あとで決まりが変われば、送る前に止まる）。
  */
-export function ensureLedgerKey(stateDir: string, L: Extract<LedgerLoad, { ok: true }>, pack: SharePack, passphrase: string, now: Date): LedgerKey {
+export function ensureLedgerKey(stateDir: string, L: Extract<LedgerLoad, { ok: true }>, pack: SharePack, now: Date): LedgerKey {
   const entry = readLedgers(stateDir).find((e) => e.ledgerId === L.id);
-  const w = readWrappedKey(stateDir, L.id);
-  if (entry && w) {
-    try {
-      unwrapPrivateKey(w, passphrase);
-    } catch (e) {
-      if (e instanceof WrongPassphrase) return { ok: false, reason: "wrongPassphrase" };
-      throw e;
-    }
-    return { ok: true, entry, pub: w.pub, created: false };
-  }
+  const w = readKeyFile(stateDir, L.id);
+  if (entry && w) return { ok: true, entry, pub: w.pub, created: false };
   if (w) return { ok: false, reason: "keyExists" };
-  if (passphrase.length < PASSPHRASE_MIN) return { ok: false, reason: "passphraseShort" };
   const pair = generateKeyPair();
-  if (!writeWrappedKey(stateDir, L.id, wrapPrivateKey(pair, passphrase))) return { ok: false, reason: "keyExists" };
+  if (!writeKeyFile(stateDir, L.id, toPlainKey(pair))) return { ok: false, reason: "keyExists" };
   const made: LedgerEntry = {
     ledgerId: L.id,
     pack: pack.id,
@@ -69,7 +60,7 @@ export function ensureLedgerKey(stateDir: string, L: Extract<LedgerLoad, { ok: t
 /** 台帳の自分の鍵（あれば）。無ければ null（GitHub につなぐときに作る） */
 export function ledgerKeyOf(stateDir: string, ledgerId: string): { entry: LedgerEntry; pub: string } | null {
   const entry = readLedgers(stateDir).find((e) => e.ledgerId === ledgerId);
-  const w = readWrappedKey(stateDir, ledgerId);
+  const w = readKeyFile(stateDir, ledgerId);
   return entry && w && keyIdOf(w.pub) === entry.key ? { entry, pub: w.pub } : null;
 }
 
@@ -126,7 +117,7 @@ export const LEDGER_PR_TEXT = {
       `- 見え方：${o.profile}`,
       `- 塊：${o.chunks}`,
       "",
-      "この束は、MOYAI の SHARE の画面で人が合言葉で署名し、出す前に受け手と同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめて ✓ でした。PR は MOYAI が出しました。",
+      "この束は、MOYAI の SHARE の画面で人が署名し、出す前に受け手と同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめて ✓ でした。PR は MOYAI が出しました。",
       "鍵 ID と出した人の結びつきは束の署名で決まり、この PR を出したアカウントの名前は使いません。",
       "",
     ].join("\n"),

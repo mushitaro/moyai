@@ -1,4 +1,4 @@
-// 合言葉を画面に出さずに読む（人だけの CLI の ledger init・keys create が使う）。
+// 合言葉を画面に出さずに読む（人だけの CLI の keys unwrap が、前の形の鍵を移すときに使う）。
 // 問いの文字が端末に残ること（readline の描き直しで消えて、止まったように見えたことがある）、打った文字の代わりに「*」を出すこと、
 // Backspace・日本語・貼り付け・Ctrl+C を、偽の端末で確かめる。
 import { EventEmitter } from "node:events";

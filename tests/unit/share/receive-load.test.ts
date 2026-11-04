@@ -13,7 +13,6 @@ import { forge, makeLedger, makeSigner, sealLedger, writeRepo } from "./ledger-f
 
 const PACK: SharePack = { id: "waste-incineration", name: "架空のパック", spec: SPEC, vocab, table, classNames: {}, axes: [] };
 const ANSWERS: Answers = { facility: FACILITY_COMMON, inNationalTable: true };
-const PASS = "架空の合言葉 受け手";
 const NOW = new Date(2026, 10, 4, 12, 0, 0);
 
 let tmp = "";
@@ -59,13 +58,13 @@ describe("自分の輪を読む", () => {
   it("✓ の最新の束の body を渡し、自分の鍵を self にする（集計では自分を数えない）", async () => {
     const stateDir = join(tmp, "state");
     const root = join(tmp, "輪のフォルダ");
-    const c = await createRing({ stateDir, root, pack: PACK, passphrase: PASS, now: NOW });
+    const c = await createRing({ stateDir, root, pack: PACK, now: NOW });
     if (!c.ok) throw new Error(c.reason);
     const ring = await loadRing(stateDir, c.ringId, PACK);
     if (!ring.ok) throw new Error(ring.reason);
     const p = smallPlan();
     const v = previewCheckpoint(stateDir, ring, PACK, p, ANSWERS, "2026-11");
-    const s = await sendCheckpoint(stateDir, ring, PACK, p, ANSWERS, "2026-11", v.bodyHash!, PASS, NOW);
+    const s = await sendCheckpoint(stateDir, ring, PACK, p, ANSWERS, "2026-11", v.bodyHash!, NOW);
     expect(s.ok).toBe(true);
 
     const r = await loadRingPlaces(stateDir, PACK);

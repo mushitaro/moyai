@@ -1,19 +1,22 @@
 // 人だけの CLI と、輪を確かめる CLI。
 // - `moyai verify ring <フォルダ>`：受け手と同じ関数（readRing）で、決まり・仲間・束ごとに ✓ か理由つきの ✗ を出す。
-// - `moyai keys create --root <輪のフォルダ> --pack <パック>`：輪を作り、その輪の鍵の対を合言葉で包む。
+// - `moyai keys create --root <輪のフォルダ> --pack <パック>`：輪を作り、その輪の鍵の対を状態フォルダに置く（包まない）。
+// - `moyai keys unwrap`：前の形の鍵（合言葉で包んだもの）を、前の合言葉で 1 度だけ開き、包まない形に置き換える。
+//   合言葉はやめた（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。前の形の鍵はアプリでは使わない。
 // - `moyai send`：束を送る（検問所の画面から送る。端末から送るのは未実装）。
 // 人だけの CLI（keys create・send）は、標準入力が端末でなければ断る（AI のシェルや別のプログラムから呼ばせない）。
-// 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。合言葉は画面に出さない。
+// 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。前の合言葉は画面に出さない。
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
-import { readRings, readWrappedKey } from "../bridge/places";
+import { readKeyFile, readRings, replaceOldKeyFile } from "../bridge/places";
+import { oldOwnKeys, replaceOldOwnKey } from "../bridge/people";
 import { resolveStateDir } from "../bridge/state";
 import { reasonText } from "../app/text/reasons";
-import { createRing, PASSPHRASE_MIN, verifyRing, type VerifyReport } from "../share/checkpoint";
+import { createRing, verifyRing, type VerifyReport } from "../share/checkpoint";
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, resolvePacksDir } from "../share/pack";
 import { CIRCLE_FILE } from "../share/ring";
-import { HEX16, keyIdOf } from "../share/sign";
+import { HEX16, fingerprint, isWrappedKey, keyIdOf, toPlainKey, unwrapPrivateKey, WrongPassphrase, type WrappedKey } from "../share/sign";
 
 export const CLI_TEXT = {
   notTerminal: "この操作は人だけがします。端末から直接走らせてください（標準入力が端末ではないので断りました）。",
@@ -32,11 +35,16 @@ export const CLI_TEXT = {
   notBundleFiles: (n: number) => `束の形をしていないファイル ${n} 件`,
   summaryOk: "すべて ✓ です。",
   summaryNg: (n: number) => `✗ が ${n} 件あります。`,
-  keysUsage: "使い方：moyai keys create --root <輪のフォルダ（絶対の道）> --pack <パック ID>",
-  passphrase: "合言葉（8 文字以上。打った文字は「*」で出ます。日本語は変換を確定してから Enter）：",
-  passphraseAgain: "もう一度：",
-  passphraseShort: `合言葉は ${PASSPHRASE_MIN} 文字以上にしてください。`,
-  passphraseMismatch: "2 回の合言葉が違います。作りませんでした。",
+  keysUsage: "使い方：moyai keys create --root <輪のフォルダ（絶対の道）> --pack <パック ID>　／　moyai keys unwrap",
+  noOldKeys: "前の形の鍵（合言葉で包んだもの）はありません。",
+  oldKeyHead: (what: string, fp: string) => `前の形の鍵：${what}（指紋 ${fp}）`,
+  oldPersonKey: (by: string) => `人の鍵「${by}」`,
+  oldPlaceKey: (id: string) => `輪か台帳の鍵 ${id}`,
+  oldPassphrase: "前の合言葉（打った文字は「*」で出ます。日本語は変換を確定してから Enter。空で Enter なら、この鍵は飛ばす）：",
+  wrongOld: "前の合言葉が鍵を開きませんでした。",
+  skipped: "この鍵は飛ばしました（前の形のまま。アプリでは使えません）。",
+  unwrapped: "包まない形に置き換えました。",
+  unwrapSummary: (done: number, left: number) => `置き換えた鍵 ${done}・前の形のまま ${left}`,
   created: (ringId: string, fp: string, dir: string) => `輪 ${ringId} を作りました：${dir}\n自分の鍵の指紋：${fp}（仲間と電話で読み合わせてください）`,
   createFailed: (r: string) => `作れませんでした（${r}）`,
   cancelled: "やめました。何も書いていません。",
@@ -72,7 +80,7 @@ export function confirmedKeys(stateDir: string): Set<string> {
   const out = new Set(r.confirmed);
   for (const e of r.rings) {
     out.add(e.key);
-    const w = readWrappedKey(stateDir, e.ringId);
+    const w = readKeyFile(stateDir, e.ringId);
     if (w) out.add(keyIdOf(w.pub));
   }
   return out;
@@ -182,9 +190,63 @@ export function askHidden(prompt: string, io: HiddenIO = { input: process.stdin,
   });
 }
 
-/** keys create：人だけ。端末でなければ断る。 */
+/** 前の形の鍵の一覧：人の鍵（people/keys/）と、輪・台帳・管理者の鍵（keys/） */
+export function oldKeysOf(stateDir: string): { what: string; wrapped: WrappedKey; replace: (pair: ReturnType<typeof unwrapPrivateKey>) => boolean }[] {
+  const out: ReturnType<typeof oldKeysOf> = [];
+  for (const k of oldOwnKeys(stateDir)) out.push({ what: CLI_TEXT.oldPersonKey(k.by), wrapped: k.wrapped, replace: (pair) => replaceOldOwnKey(stateDir, k.key, pair) });
+  const dir = join(stateDir, "keys");
+  const ids = existsSync(dir) ? readdirSync(dir).filter((n) => /^[0-9a-f]{16}\.json$/.test(n)).map((n) => n.slice(0, 16)) : [];
+  for (const id of ids.sort()) {
+    const f = readKeyFile(stateDir, id);
+    if (f && isWrappedKey(f)) out.push({ what: CLI_TEXT.oldPlaceKey(id), wrapped: f, replace: (pair) => replaceOldKeyFile(stateDir, id, toPlainKey(pair)) });
+  }
+  return out;
+}
+
+/** keys unwrap：前の形の鍵を、前の合言葉で 1 度だけ開いて置き換える。人だけ。端末でなければ断る。前の形が残れば 1 */
+export async function unwrapCli(o: { stdin?: { isTTY?: boolean }; stateDir?: string; ask?: (p: string) => Promise<string | null> } = {}): Promise<number> {
+  if (!requireTerminal(o.stdin)) return 3;
+  const old = oldKeysOf(o.stateDir ?? resolveStateDir());
+  if (old.length === 0) {
+    say(CLI_TEXT.noOldKeys);
+    return 0;
+  }
+  const ask = o.ask ?? askHidden;
+  let done = 0;
+  for (const k of old) {
+    say(CLI_TEXT.oldKeyHead(k.what, fingerprint(k.wrapped.pub)));
+    for (let tries = 0; ; tries++) {
+      const p = await ask(CLI_TEXT.oldPassphrase);
+      if (p === null) {
+        say(CLI_TEXT.cancelled);
+        say(CLI_TEXT.unwrapSummary(done, old.length - done));
+        return 130;
+      }
+      if (p.length === 0 || tries >= 3) {
+        say(CLI_TEXT.skipped);
+        break;
+      }
+      try {
+        const pair = unwrapPrivateKey(k.wrapped, p);
+        if (k.replace(pair)) {
+          done++;
+          say(CLI_TEXT.unwrapped);
+        }
+        break;
+      } catch (e) {
+        if (!(e instanceof WrongPassphrase)) throw e;
+        say(CLI_TEXT.wrongOld);
+      }
+    }
+  }
+  say(CLI_TEXT.unwrapSummary(done, old.length - done));
+  return done === old.length ? 0 : 1;
+}
+
+/** keys create・keys unwrap：人だけ。端末でなければ断る。 */
 export async function keysCli(argv: string[], o: { stdin?: { isTTY?: boolean } } = {}): Promise<number> {
   if (!requireTerminal(o.stdin)) return 3;
+  if (argv.length === 1 && argv[0] === "unwrap") return unwrapCli(o);
   const [verb, ...rest] = argv;
   let root: string | null = null;
   let packId: string | null = null;
@@ -202,25 +264,7 @@ export async function keysCli(argv: string[], o: { stdin?: { isTTY?: boolean } }
     say(CLI_TEXT.packNotReady(packId, pack.reason));
     return 1;
   }
-  const a = await askHidden(CLI_TEXT.passphrase);
-  if (a === null) {
-    say(CLI_TEXT.cancelled);
-    return 130;
-  }
-  if (a.length < PASSPHRASE_MIN) {
-    say(CLI_TEXT.passphraseShort);
-    return 1;
-  }
-  const b = await askHidden(CLI_TEXT.passphraseAgain);
-  if (b === null) {
-    say(CLI_TEXT.cancelled);
-    return 130;
-  }
-  if (a !== b) {
-    say(CLI_TEXT.passphraseMismatch);
-    return 1;
-  }
-  const r = await createRing({ stateDir: resolveStateDir(), root: resolve(root), pack: pack.pack, passphrase: a, now: new Date() });
+  const r = await createRing({ stateDir: resolveStateDir(), root: resolve(root), pack: pack.pack, now: new Date() });
   if (!r.ok) {
     say(CLI_TEXT.createFailed(r.reason));
     return 1;

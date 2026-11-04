@@ -9,8 +9,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
-const A = { name: "【架空】山田", pass: "架空の合言葉 山田 同時" };
-const B = { name: "【架空】課長", pass: "架空の合言葉 課長 同時" };
+const A = { name: "【架空】山田" };
+const B = { name: "【架空】課長" };
 
 let one: StartedBridge;
 let two: StartedBridge;
@@ -50,7 +50,7 @@ test("ほかの人が新しい版を足したら知らせて署名を止め、�
     await acceptDecisions(pa, "試験の台本が押した（山田が受けた）");
     await pa.getByTestId("confirm-open").click();
     await pa.getByTestId("confirm-reason").fill("山田の第 1 版（e2e）");
-    await signInDialog(pa, A.pass);
+    await signInDialog(pa);
     await pa.getByTestId("confirm-submit").click();
     await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
     await pa.keyboard.press("Escape");
@@ -65,7 +65,7 @@ test("ほかの人が新しい版を足したら知らせて署名を止め、�
     await expect(pb.getByTestId("merge-version")).toHaveText("第 2 版");
     await pb.getByTestId("confirm-open").click();
     await pb.getByTestId("confirm-reason").fill("課長が見直した第 2 版（e2e）");
-    await signInDialog(pb, B.pass);
+    await signInDialog(pb);
     await pb.getByTestId("confirm-submit").click();
     await expect(pb.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
   });

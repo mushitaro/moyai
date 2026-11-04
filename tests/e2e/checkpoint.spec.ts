@@ -1,6 +1,6 @@
 // 縦の 1 本の人だけの半分を、この PC の Chrome と Edge で通す：
 // 設定（Documents と OneDrive の知らせ・置き場所を一時のフォルダに・輪と鍵を作る）→ 星取表の試しの計画（架空）を確定（人が受けていない決定を理由つきで受ける）
-// → 検問所（見え方を選ぶ・相手から見たあなた・数がすべて 0・合言葉の右の［送る］）→ 署名して輪に置く → 受け手と同じ関数で ✓ → CLI の verify ring でも ✓。
+// → 検問所（見え方を選ぶ・相手から見たあなた・数がすべて 0・［送る］）→ 署名して輪に置く → 受け手と同じ関数で ✓ → CLI の verify ring でも ✓。
 // 人だけの CLI（keys create）は、標準入力が端末でなければ断る。置き場所と輪は一時のフォルダに作り、この PC の Documents には書かない。
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -41,7 +41,6 @@ let base = "";
 let work = "";
 let stateDir = "";
 const rings: string[] = [];
-const PASS = "架空の合言葉 e2e です";
 
 test.beforeAll(async () => {
   work = mkdtempSync(join(tmpdir(), "moyai-e2e-checkpoint-"));
@@ -106,12 +105,10 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("current-name")).toHaveText("【架空】試験の台本");
   });
 
-  await test.step("輪を作り、この輪の鍵を合言葉で包む。指紋は 4 文字 × 4 組", async () => {
+  await test.step("輪を作り、この輪の鍵を作る（合言葉は打たない）。指紋は 4 文字 × 4 組", async () => {
     await page.getByTestId("ring-create-open").click();
     await page.getByTestId("ring-folder").fill(ringRoot);
     await page.getByTestId("ring-pack").selectOption("waste-incineration");
-    await page.getByTestId("ring-pass").fill(PASS);
-    await page.getByTestId("ring-pass2").fill(PASS);
     await page.getByTestId("ring-create-submit").click();
     await expect(page.getByTestId("ring-created")).toBeVisible();
     await expect(page.getByTestId("ring-created").getByTestId("fingerprint")).toHaveText(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/);
@@ -137,12 +134,9 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("confirm-submit")).toBeDisabled();
     await expect(page.getByTestId("confirm-submit-reason")).toContainText("理由を書くと確定できます");
     await page.getByTestId("confirm-reason").fill("試しの計画を確定する（e2e）");
-    // 署名：合言葉が無いうちは確定できない。この PC にまだ鍵が無いので、合言葉を 2 回入れて鍵を作ってから署名する
-    await expect(page.getByTestId("confirm-submit")).toBeDisabled();
-    await page.getByTestId("sign-passphrase").fill(PASS);
-    await page.getByTestId("sign-passphrase-again").fill(`${PASS}x`);
-    await expect(page.getByTestId("confirm-submit-reason")).toContainText("2 つの合言葉が違います");
-    await page.getByTestId("sign-passphrase-again").fill(PASS);
+    // 署名：合言葉は打たない。この PC にまだ鍵が無いので、鍵を作ってから署名すると 1 行で知らせる
+    await expect(page.getByTestId("sign-as")).toContainText("「【架空】試験の台本」として");
+    await expect(page.getByTestId("sign-as")).toContainText("署名の鍵を作ります");
     await expect(page.getByTestId("confirm-submit")).toBeEnabled();
     await page.screenshot({ path: shot(`confirm-${tag}`) });
     await page.getByTestId("confirm-submit").click();
@@ -156,7 +150,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
   await test.step("検問所：見え方を選ぶと、相手から見たあなた・3 つの欄・数がすべて 0", async () => {
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
     await expect(page.getByTestId("q-furnace")).toBeVisible();
-    // 送る前は押せない（見え方が決まっていない・合言葉が無い）
+    // 送る前は押せない（見え方が決まっていない）
     await expect(page.getByTestId("send")).toBeDisabled();
     await page.getByTestId("q-national").selectOption("yes");
     await page.getByTestId("q-furnace").selectOption("STOKER");
@@ -185,18 +179,13 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("their-chart")).toBeHidden();
     await page.getByTestId("share-contents").locator("summary").click();
     await expect(page.getByTestId("their-chart")).toBeVisible();
-    // ［送る］は合言葉の欄のすぐ右
-    const pass = await page.getByTestId("passphrase").boundingBox();
-    const send = await page.getByTestId("send").boundingBox();
-    expect(pass && send && send.x > pass.x + pass.width - 1 && send.x - (pass.x + pass.width) < 40).toBe(true);
+    // 合言葉の欄は無い（運営者の決定 2026-11-04）。主ボタンは 1 つ
+    await expect(page.getByTestId("passphrase")).toHaveCount(0);
+    await expect(page.getByTestId("send")).toBeEnabled();
     await page.screenshot({ path: shot(`checkpoint-${tag}`), fullPage: true });
   });
 
-  await test.step("合言葉が違えば送らない。合えば署名して輪に置き、受け手と同じ関数で ✓", async () => {
-    await page.getByTestId("passphrase").fill("違う合言葉です");
-    await page.getByTestId("send").click();
-    await expect(page.getByTestId("send-error")).toContainText("合言葉が鍵を開きませんでした");
-    await page.getByTestId("passphrase").fill(PASS);
+  await test.step("人が主ボタンを押すと、署名して輪に置き、受け手と同じ関数で ✓", async () => {
     // 受け取った束（SHARE の下の節）：置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
     await expect(page.getByTestId("received")).toContainText("受け取った束");
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toHaveCount(0);
@@ -236,7 +225,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     const k = spawnSync(process.execPath, ["dist/cli.js", "keys", "create", "--root", ringRoot, "--pack", "waste-incineration"], {
       env: { ...process.env, MOYAI_STATE_DIR: stateDir },
       encoding: "utf8",
-      input: `${PASS}\n${PASS}\n`,
+      input: "",
     });
     expect(k.status).toBe(3);
     expect(k.stderr).toContain("標準入力が端末ではない");

@@ -10,7 +10,6 @@ import { expect, test } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
-const PASS = "架空の合言葉 様式に写す";
 
 let bridge: StartedBridge;
 let work = "";
@@ -59,7 +58,7 @@ test("利用者の様式の見出しを読み、列ごとに写すものを決�
     await acceptDecisions(page, "試験の台本が押した（見本の計画の決定を受けた）");
     await page.getByTestId("confirm-open").click();
     await page.getByTestId("confirm-reason").fill("様式に写す試験の第 1 版（e2e）");
-    await signInDialog(page, PASS);
+    await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
     await page.keyboard.press("Escape");

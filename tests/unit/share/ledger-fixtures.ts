@@ -7,7 +7,7 @@ import { LEDGER_V, bundleFileName, envelopeText, fileHash, makeRulesDocBody, rin
 import type { Plan } from "../../../src/shared/plan";
 import { baseRules, type Rules } from "../../../src/share/rules";
 import { previewBundle, sealBundle, type SendInput } from "../../../src/share/seal";
-import { generateKeyPair, keyIdOf, sha256Hex, signBody, wrapPrivateKey, type KeyPair, type WrappedKey } from "../../../src/share/sign";
+import { generateKeyPair, keyIdOf, sha256Hex, signBody, type KeyPair } from "../../../src/share/sign";
 import { FACILITY_COMMON, SPEC, table, vocab } from "./fixtures";
 
 /** 台帳の決まりの欄：間隔・工数・日数（コードの許可リストのすべて。経過年はどこにも出さない） */
@@ -35,14 +35,11 @@ export function makeLedger(rulesPatch: Partial<Rules> = {}, o: { admin?: KeyPair
 export interface Signer {
   pair: KeyPair;
   key: string;
-  wrapped: WrappedKey;
-  passphrase: string;
 }
 
-const PASS = "架空の合言葉 台帳";
 export function makeSigner(): Signer {
   const pair = generateKeyPair();
-  return { pair, key: keyIdOf(pair.pub), wrapped: wrapPrivateKey(pair, PASS), passphrase: PASS };
+  return { pair, key: keyIdOf(pair.pub) };
 }
 
 export interface Sealed {
@@ -64,8 +61,7 @@ export function sealLedger(L: Ledger, s: Signer, p: Plan, o: Partial<SendInput> 
   if (!pv.ok) throw new Error(`プレビューができない: ${pv.reason}`);
   const r = sealBundle(input, {
     previewHash: pv.bodyHash,
-    wrapped: s.wrapped,
-    passphrase: s.passphrase,
+    pair: s.pair,
     acceptedRulesHash: L.ctx.rulesHash,
     acceptedRules: L.rules,
     localWords: [],

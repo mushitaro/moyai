@@ -42,28 +42,28 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 |---|---|---|
 | `POST /human/commit-trial` | `commit_trial` | 確定の試しの経路（v0。中身は何もしない。守りの形を試験するためのもの） |
 | `POST /human/plan-status` | `plan_status` | 確定した版の一覧と、いちばん新しい版（確定のダイアログを開いたとき） |
-| `POST /human/plan-commit` | `plan_commit` | 計画を確定する（合言葉で開いた自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く） |
+| `POST /human/plan-commit` | `plan_commit` | 計画を確定する（自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く） |
 | `POST /human/plan-revert` | `plan_revert` | 前の版に戻す（前の版を指す記録を足し、自分の鍵で署名する） |
 | `POST /human/plans-list` | `plans_list` | 保管先の施設と版の一覧（版の番号・時刻・署名の役目・確かめの結果・編集の番）を、トップのもやいの星取表に読む |
 | `POST /human/comment-add` | `comment_add` | 計画にコメントを足す（星取表の行と、この PC の呼び名を添えて、保管先に置く。署名はしない） |
 | `POST /human/comments-list` | `comments_list` | 計画のコメントを古い順に読む（MERGE の横の板の「コメント」） |
 | `POST /human/plan-version-read` | `plan_version_read` | 確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる） |
-| `POST /human/plan-sign` | `plan_sign` | いちばん新しい版に、合言葉で開いた自分の鍵で承認か差し戻しの署名を足し、編集の番を替える |
+| `POST /human/plan-sign` | `plan_sign` | いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える |
 | `POST /human/plan-file-read` | `plan_file_read` | 確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす |
-| `POST /human/person-key-create` | `person_key_create` | 自分の鍵（版に署名する）を作り、合言葉で包んで状態フォルダに置く |
+| `POST /human/person-key-create` | `person_key_create` | 自分の鍵（版に署名する）を作り、状態フォルダに置く |
 | `POST /human/person-key-confirm` | `person_key_confirm` | ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない） |
 | `POST /human/settings-read` | `settings_read` | 置き場所・Documents の場所・輪の一覧を読む |
 | `POST /human/settings-save` | `settings_save` | 置き場所・公開の台帳の clone の場所・自分の呼び名を保存する |
-| `POST /human/ring-create` | `ring_create` | 輪を作り、その輪の鍵の対を合言葉で包んで状態フォルダに置く |
+| `POST /human/ring-create` | `ring_create` | 輪を作り、その輪の鍵の対を状態フォルダに置く |
 | `POST /human/checkpoint-preview` | `checkpoint_preview` | 検問所：出ていく束のバイト列とハッシュと数（送る処理と同じ関数） |
 | `POST /human/checkpoint-open-text` | `checkpoint_open_text` | 検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く |
-| `POST /human/checkpoint-send` | `checkpoint_send` | 検問所：合言葉で署名し、束を輪のフォルダに置く |
+| `POST /human/checkpoint-send` | `checkpoint_send` | 検問所：署名し、束を輪のフォルダに置く |
 | `POST /human/ring-verify` | `ring_verify` | 輪を受け手と同じ関数で確かめる |
 | `POST /human/ledger-preview` | `ledger_preview` | 公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり） |
-| `POST /human/ledger-send` | `ledger_send` | 合言葉で束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
+| `POST /human/ledger-send` | `ledger_send` | 束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
 | `POST /human/ledger-prs` | `ledger_prs` | 出した束の PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ） |
-| `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：台帳の自分の鍵を合言葉で作るか開き、OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ） |
-| `POST /human/github-connect-state` | `github_connect_state` | GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを合言葉で包んで状態フォルダに置く |
+| `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：台帳の自分の鍵が無ければ作り、OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ） |
+| `POST /human/github-connect-state` | `github_connect_state` | GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを状態フォルダに置く（包まない。見張りのフックが AI の読み取りを止める） |
 | `POST /human/github-disconnect` | `github_disconnect` | GitHub との接続を切る（包んだトークンのファイルを消す） |
 | `POST /human/readings-read` | `readings_read` | 保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む |
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |

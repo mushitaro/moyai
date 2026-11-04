@@ -2,15 +2,15 @@
 // - Documents の場所は `powershell -NoProfile` で [Environment]::GetFolderPath('MyDocuments') を取り、UTF-8 で受ける（日本語のフォルダ名を化けさせない）。
 // - 同期フォルダ：環境変数 OneDrive・OneDriveCommercial・OneDriveConsumer の指すフォルダと、OneDrive が同期している場所（SharePoint のライブラリを含む）の下か。
 // - 状態フォルダの設定：settings.json（置き場所）、rings.json（輪のフォルダ。scripts/guard-hook.mjs の ringFolders() が folders を読む）、
-//   keys/<輪ID>.json（合言葉で包んだ秘密鍵）、sent.json（持ち出し簿）。書くのは人だけの経路だけ。
+//   keys/<輪ID>.json（包まない秘密鍵。前の形は合言葉で包んだもの）、sent.json（持ち出し簿）。書くのは人だけの経路だけ。
 // - 公開の台帳へ出す側：ledgers.json（台帳ごとの自分の鍵と受け入れた決まり。鍵は keys/<台帳ID>.json）、
-//   ledger-sent.json（出した束のハッシュと PR の番号。中身は残さない）、github.json（アカウント名と、合言葉で包んだトークン）。
+//   ledger-sent.json（出した束のハッシュと PR の番号。中身は残さない）、github.json（アカウント名とトークン。包まない。運営者の決定 2026-11-04、docs/plan.md §2.19）。
 import { validName } from "../plan/signature";
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
-import { HEX16, type WrappedKey, type WrappedSecret } from "../share/sign";
+import { HEX16, isPlainKey, isWrappedKey, type KeyFile, type PlainKey } from "../share/sign";
 import type { Rules } from "../share/rules";
 
 // ─── Documents と同期フォルダ ─────────────────────────────
@@ -220,15 +220,24 @@ export function keyFile(stateDir: string, ringId: string): string {
   return join(stateDir, "keys", `${ringId}.json`);
 }
 
-export function readWrappedKey(stateDir: string, ringId: string): WrappedKey | null {
-  const w = readJson<WrappedKey>(keyFile(stateDir, ringId));
-  return w && w.v === "moyai.wrapped-key/0" ? w : null;
+/** 輪か台帳の自分の鍵のファイル（包まない鍵か、前の形の包んだ鍵）。無いか壊れていれば null */
+export function readKeyFile(stateDir: string, ringId: string): KeyFile | null {
+  const k = readJson<KeyFile>(keyFile(stateDir, ringId));
+  return isPlainKey(k) || isWrappedKey(k) ? k : null;
 }
 
-/** 包んだ秘密鍵を置く。同じ輪の鍵があれば上書きしない（鍵を作り直すのは未実装）。 */
-export function writeWrappedKey(stateDir: string, ringId: string, w: WrappedKey): boolean {
+/** 秘密鍵を置く。同じ輪の鍵があれば上書きしない（鍵を作り直すのは未実装。前の形を移すのは replaceOldKeyFile）。 */
+export function writeKeyFile(stateDir: string, ringId: string, k: PlainKey): boolean {
   if (existsSync(keyFile(stateDir, ringId))) return false;
-  writeJson(stateDir, join("keys", `${ringId}.json`), w);
+  writeJson(stateDir, join("keys", `${ringId}.json`), k);
+  return true;
+}
+
+/** 前の形（包んだ鍵）を、同じ鍵の包まない形に置き換える（人だけの CLI `moyai keys unwrap`）。公開鍵が違えば置き換えない */
+export function replaceOldKeyFile(stateDir: string, ringId: string, k: PlainKey): boolean {
+  const cur = readKeyFile(stateDir, ringId);
+  if (!cur || !isWrappedKey(cur) || cur.pub !== k.pub) return false;
+  writeJson(stateDir, join("keys", `${ringId}.json`), k);
   return true;
 }
 
@@ -259,7 +268,7 @@ export function appendSent(stateDir: string, e: SentEntry): void {
 export interface LedgerEntry {
   ledgerId: string;
   pack: string;
-  /** この台帳の自分の鍵 ID（秘密鍵は keys/<台帳ID>.json に合言葉で包んで置く） */
+  /** この台帳の自分の鍵 ID（秘密鍵は keys/<台帳ID>.json に置く。包まない） */
   key: string;
   /** 人が受け入れた決まり（ledger.json のバイト列の SHA-256 と、その決まり） */
   acceptedRulesHash: string;
@@ -306,26 +315,25 @@ export function writeLedgerSent(stateDir: string, entries: LedgerSentEntry[]): v
 }
 
 export interface GitHubLink {
-  v: "moyai.github/0";
+  v: "moyai.github/1";
   /** PR を出すアカウント（画面に出す。誰にでも見えるため） */
   login: string;
-  /** トークン（scope は public_repo）。合言葉で包む。画面にもログにも AI にも出さない */
-  token: WrappedSecret;
+  /** トークン（scope は public_repo）。包まずに状態フォルダに置く（同期されない。見張りのフックが AI の読み取りを止める）。画面にもログにも AI にも出さない */
+  token: string;
   connectedAt: string;
 }
 
-export const GITHUB_TOKEN_AAD = "moyai.github-token";
-
+/** 前の形（合言葉で包んだトークン、moyai.github/0）は読まない。人がもう一度 GitHub につなぐ */
 export function readGitHub(stateDir: string): GitHubLink | null {
   const g = readJson<GitHubLink>(join(stateDir, "github.json"));
-  return g && g.v === "moyai.github/0" && typeof g.login === "string" && g.token?.v === "moyai.wrapped-secret/0" ? g : null;
+  return g && g.v === "moyai.github/1" && typeof g.login === "string" && typeof g.token === "string" && g.token.length > 0 ? g : null;
 }
 
 export function writeGitHub(stateDir: string, g: GitHubLink): void {
   writeJson(stateDir, "github.json", g);
 }
 
-/** GitHub との接続を切る：包んだトークンのファイルを消す（GitHub の側の許しは、人が GitHub の設定で取り消す） */
+/** GitHub との接続を切る：トークンのファイルを消す（GitHub の側の許しは、人が GitHub の設定で取り消す） */
 export function removeGitHub(stateDir: string): void {
   rmSync(join(stateDir, "github.json"), { force: true });
 }

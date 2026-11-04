@@ -1,7 +1,8 @@
-// 承認して署名する／理由を添えて差し戻す（docs/screens.md 3.2 の下の帯・§2.18.2）：いちばん新しい版に、合言葉で開いた自分の鍵で署名を足す。
+// 承認して署名する／理由を添えて差し戻す（docs/screens.md 3.2 の下の帯・§2.18.2）：いちばん新しい版に、自分の鍵で署名を足す。
+// 合言葉はやめた（運営者の決定 2026-11-04、docs/plan.md §2.18）。署名は、人がこのボタンを押したときに決まる。
 // 差し戻しは一言の理由が要る。承認は、その版を作った人には押せない（橋渡しが断る）。window.confirm は使わない。
-// 承認だけをする人は確定のダイアログを開かないので、この PC にまだ鍵が無ければ、ここで合言葉を決めて（2 回）鍵を作ってから署名する。
-import { Alert, Button, Group, Modal, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+// 承認だけをする人は確定のダイアログを開かないので、この PC にまだ鍵が無ければ、ここで鍵を作ってから署名する。
+import { Alert, Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import type { BridgeClient } from "../bridge-client";
@@ -31,33 +32,27 @@ export function SignDialog({
   onSigned: () => void;
 }) {
   const [reason, setReason] = useState("");
-  const [pass, setPass] = useState("");
-  const [pass2, setPass2] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     if (!opened) return;
     setReason("");
-    setPass("");
-    setPass2("");
     setError(null);
   }, [opened]);
-  const passOk = hasKey ? pass.length > 0 : pass.length >= 8 && pass === pass2;
-  const can = passOk && (role === "approve" || reason.trim().length > 0) && !busy;
+  const can = (role === "approve" || reason.trim().length > 0) && !busy;
   const submit = async () => {
     if (!can) return;
     setBusy(true);
     setError(null);
     if (!hasKey) {
-      const k = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("person_key_create", ROUTES.personKeyCreate.path, { passphrase: pass }));
+      const k = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("person_key_create", ROUTES.personKeyCreate.path, {}));
       if (!k.ok) {
         setBusy(false);
         return setError(k.message);
       }
     }
-    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("plan_sign", ROUTES.planSign.path, { planId, version, role, reason: reason.trim(), passphrase: pass }));
+    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("plan_sign", ROUTES.planSign.path, { planId, version, role, reason: reason.trim() }));
     setBusy(false);
-    setPass("");
     if (!r.ok) return setError(r.message);
     onSigned();
     onClose();
@@ -67,21 +62,20 @@ export function SignDialog({
       <Stack gap="sm">
         <Text size="sm">{role === "approve" ? T.leadApprove : T.leadReturn}</Text>
         <TextInput label={role === "approve" ? T.reasonOptional : T.reason} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={500} data-testid="sign-reason" />
-        <Group grow align="flex-start">
-          <PasswordInput label={hasKey ? HUMAN_TEXT.confirm.passphrase : HUMAN_TEXT.confirm.passphraseNew} value={pass} onChange={(e) => setPass(e.currentTarget.value)} autoComplete="off" data-testid="sign-dialog-passphrase" />
-          {!hasKey && (
-            <PasswordInput label={HUMAN_TEXT.confirm.passphraseAgain} value={pass2} onChange={(e) => setPass2(e.currentTarget.value)} autoComplete="off" data-testid="sign-dialog-passphrase-again" />
-          )}
-        </Group>
+        {!hasKey && (
+          <Text size="xs" c="dimmed" data-testid="sign-dialog-new-key">
+            {HUMAN_TEXT.confirm.keyNew}
+          </Text>
+        )}
         {error && (
           <Alert color="gray" data-testid="sign-error">
             {error}
           </Alert>
         )}
         <Group justify="flex-end" gap="sm">
-          {!can && (
+          {!can && role === "return" && reason.trim().length === 0 && (
             <Text size="xs" c="dimmed">
-              {role === "return" && reason.trim().length === 0 ? T.reasonEmpty : T.passEmpty}
+              {T.reasonEmpty}
             </Text>
           )}
           <Button variant="default" onClick={onClose}>

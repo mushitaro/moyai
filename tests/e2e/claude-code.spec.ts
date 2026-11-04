@@ -1,6 +1,6 @@
 // 縦の 1 本を、Claude Code を AI クライアントにして通す（docs/plan.md §5.2 の 1）。走らせるときだけ：MOYAI_CLAUDE_E2E=1。
 // AI の仕事（要約を読む・決定を置く・計画を作る・当てはめの規則を自分で書いて置く）は、`claude -p` がリポジトリの .mcp.json の
-// moyai だけをつないで行う。人の操作（資料を落とす・当てはめを受ける・確定・合言葉で送る）は、試験の台本が画面のボタンで押す。
+// moyai だけをつないで行う。人の操作（資料を落とす・当てはめを受ける・確定・送る）は、試験の台本が画面のボタンで押す。
 // Claude Code は利用者の契約の中で動く（API のキーは使わない）。先に npm run build を走らせておく。
 import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -10,7 +10,6 @@ import { expect, test } from "@playwright/test";
 import { acceptDecisions, acceptRules, chooseRootAndCreateRing, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（Claude Code）";
-const PASS = "架空の合言葉 Claude Code の通し";
 const HUMAN = "試験の台本が押した（Claude Code の案を画面で受けた）";
 const TOOLS = ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose"];
 
@@ -78,7 +77,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   const ringRoot = join(tmpdir(), `moyai-e2e-cc-ring-${Date.now()}`, "輪のフォルダ");
   rings.push(join(ringRoot, ".."));
 
-  await chooseRootAndCreateRing(page, bridge.base, root, ringRoot, PASS);
+  await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
   await openIntakeAndDrop(page, bridge.base, FACILITY);
 
   const cc = await test.step("AI（Claude Code）：取り込み → 計画 → 当てはめの規則", () => runClaude(bridge.stateDir, join(work, "claude.jsonl")));
@@ -103,7 +102,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   await acceptDecisions(page, "試験の台本が押した（AI の決定を画面で受けた）");
   await page.getByTestId("confirm-open").click();
   await page.getByTestId("confirm-reason").fill("Claude Code の通し：取り込みと当てはめを確定する（e2e）");
-  await signInDialog(page, PASS);
+  await signInDialog(page);
   await page.getByTestId("confirm-submit").click();
   await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
   const plans = readdirSync(join(root, "plans"));
@@ -124,7 +123,6 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
   expect(await page.getByTestId("plain-chunk").count()).toBeGreaterThan(0);
   await page.screenshot({ path: shot(`cc-checkpoint-${tag}`), fullPage: true });
-  await page.getByTestId("passphrase").fill(PASS);
   await page.getByTestId("send").click();
   await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
   const v = spawnSync(process.execPath, ["dist/cli.js", "verify", "ring", ringRoot], { env: { ...process.env, MOYAI_STATE_DIR: bridge.stateDir }, encoding: "utf8" });
