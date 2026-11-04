@@ -7,7 +7,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { chooseRootAndCreateRing, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { chooseRootAndCreateRing, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（Claude Code）";
 const PASS = "架空の合言葉 Claude Code の通し";
@@ -115,8 +115,9 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
     await pending.nth(i).getByTestId("pending-reason").fill("試験の台本が押した（AI の決定を画面で受けた）");
     await pending.nth(i).getByTestId("pending-accept").check();
   }
+  await signInDialog(page, PASS);
   await page.getByTestId("confirm-submit").click();
-  await expect(page.getByTestId("confirm-done")).toContainText("第 1 版として確定しました");
+  await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名して確定しました");
   const plans = readdirSync(join(root, "plans"));
   const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
   expect(rec.plan.assets.filter((a: any) => a.commonItemAccepted).length).toBe(accepted);

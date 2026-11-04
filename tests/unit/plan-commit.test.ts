@@ -1,12 +1,17 @@
 // 確定（docs/plan.md §2.9）：版は足すだけ、戻すのは前の版を指す記録を足すこと、差分レポート（Excel）、
 // 人が受けていない決定が残れば確定しない、理由が空なら確定しない。試験は一時のフォルダ（日本語の OneDrive の道の形）で行う。
+import { SIGNER } from "../helpers/signer";
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ExcelJS from "exceljs";
 import { afterEach, describe, expect, it } from "vitest";
 import { aiDecisions, diffPlans, pendingDecisions } from "../../src/plan/diff";
-import { commitPlan, planDir, readHistory, revertPlan } from "../../src/plan/store";
+import { commitPlan, planDir, readHistory, revertPlan, VERSION_SCHEMA_V0 } from "../../src/plan/store";
+import { signatureFileName, signStatement } from "../../src/plan/signature";
+import { keyIdOf } from "../../src/share/sign";
+import { otherSigner } from "../helpers/signer";
+import { writeFileSync } from "node:fs";
 import type { Plan } from "../../src/shared/plan";
 import { asset, detail, plan, work } from "./share/fixtures";
 
@@ -45,7 +50,7 @@ async function readSheet(path: string): Promise<string[][]> {
 
 describe("確定：版と差分レポート", () => {
   it("理由が空なら確定しない", async () => {
-    const r = await commitPlan({ root: root(), plan: aiPlan(), reason: "  ", acceptances: [], basedOn: null, client: "t" });
+    const r = await commitPlan({ root: root(), plan: aiPlan(), reason: "  ", acceptances: [], basedOn: null, signer: SIGNER, client: "t" });
     expect(r).toEqual({ ok: false, reason: "reasonEmpty" });
   });
 
@@ -53,11 +58,11 @@ describe("確定：版と差分レポート", () => {
     const p = aiPlan();
     const ds = aiDecisions(p);
     expect(ds.map((d) => d.id).sort()).toEqual(["detail:d2", "item:a2"]);
-    const r1 = await commitPlan({ root: root(), plan: p, reason: "確定の試験", acceptances: [], basedOn: null, client: "t" });
+    const r1 = await commitPlan({ root: root(), plan: p, reason: "確定の試験", acceptances: [], basedOn: null, signer: SIGNER, client: "t" });
     expect(r1).toMatchObject({ ok: false, reason: "pendingDecisions", pending: 2 });
-    const r2 = await commitPlan({ root: join(dir, "x"), plan: p, reason: "確定の試験", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "" })), basedOn: null, client: "t" });
+    const r2 = await commitPlan({ root: join(dir, "x"), plan: p, reason: "確定の試験", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "" })), basedOn: null, signer: SIGNER, client: "t" });
     expect(r2).toEqual({ ok: false, reason: "acceptanceReasonEmpty" });
-    const r3 = await commitPlan({ root: join(dir, "x"), plan: p, reason: "確定の試験", acceptances: [{ id: "item:a2", hash: "0".repeat(16), reason: "見た" }], basedOn: null, client: "t" });
+    const r3 = await commitPlan({ root: join(dir, "x"), plan: p, reason: "確定の試験", acceptances: [{ id: "item:a2", hash: "0".repeat(16), reason: "見た" }], basedOn: null, signer: SIGNER, client: "t" });
     expect(r3).toEqual({ ok: false, reason: "acceptanceUnknown" });
   });
 
@@ -65,7 +70,7 @@ describe("確定：版と差分レポート", () => {
     const rt = root();
     const p = aiPlan();
     const acc = aiDecisions(p).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
-    const v1 = await commitPlan({ root: rt, plan: p, reason: "初めの確定", acceptances: acc, basedOn: null, client: "tab-1" });
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "初めの確定", acceptances: acc, basedOn: null, signer: SIGNER, client: "tab-1" });
     if (!v1.ok) throw new Error(v1.reason);
     expect(v1.version).toBe(1);
     expect(v1.record.plan.version).toBe(1);
@@ -78,19 +83,21 @@ describe("確定：版と差分レポート", () => {
     const first = readFileSync(v1.files.version, "utf8");
 
     // 同じ版を元にした 2 回目は、ほかの確定が先に入っていれば断る
-    expect(await commitPlan({ root: rt, plan: p, reason: "古い画面から", acceptances: [], basedOn: null, client: "tab-2" })).toEqual({ ok: false, reason: "stale" });
+    expect(await commitPlan({ root: rt, plan: p, reason: "古い画面から", acceptances: [], basedOn: null, signer: SIGNER, client: "tab-2" })).toEqual({ ok: false, reason: "stale" });
 
     // 2 版目：印を 1 つ足し、1 つ消す。受けた決定は、同じ中身なら聞き直さない
     const p2: Plan = { ...v1.record.plan, details: [...v1.record.plan.details.filter((d) => d.detailKey !== "d1"), detail("d4", "w1", 2022, { manDays: 3 })] };
     expect(pendingDecisions(p2, (await readHistory(rt, "plan-test")).accepted)).toHaveLength(0);
-    const v2 = await commitPlan({ root: rt, plan: p2, reason: "2022 の分解整備を足した", acceptances: [], basedOn: 1, client: "tab-1" });
+    const v2 = await commitPlan({ root: rt, plan: p2, reason: "2022 の分解整備を足した", acceptances: [], basedOn: 1, signer: SIGNER, client: "tab-1" });
     if (!v2.ok) throw new Error(v2.reason);
     expect(v2.version).toBe(2);
     expect(v2.record.summary).toMatchObject({ added: 1, removed: 1, changed: 0 });
-    expect(v2.record.prev).toMatch(/^[0-9a-f]{64}$/);
+    // 親の鎖：1 版目の中身のハッシュと、1 版目の署名のファイルのハッシュの並び
+    const h12 = await readHistory(rt, "plan-test");
+    expect(v2.record.parent).toEqual({ version: 1, contentHash: h12.versions[0]!.contentHash, signatures: h12.versions[0]!.signatures.map((x) => x.fileHash) });
 
     // 1 版目に戻す：3 版目の記録が 1 版目を指す。前の版のファイルは変わらない
-    const v3 = await revertPlan({ root: rt, planId: "plan-test", to: 1, reason: "2022 の分は誤りだった", basedOn: 2, client: "tab-1" });
+    const v3 = await revertPlan({ root: rt, planId: "plan-test", to: 1, reason: "2022 の分は誤りだった", basedOn: 2, signer: SIGNER, client: "tab-1" });
     if (!v3.ok) throw new Error(v3.reason);
     expect(v3.record.kind).toBe("revert");
     expect(v3.record.revertOf).toBe(1);
@@ -101,6 +108,11 @@ describe("確定：版と差分レポート", () => {
     expect(readdirSync(join(d, "reports")).sort()).toEqual(["000001-diff.xlsx", "000002-diff.xlsx", "000003-diff.xlsx"]);
     const h = await readHistory(rt, "plan-test");
     expect(h.versions.map((v) => v.kind)).toEqual(["confirm", "confirm", "revert"]);
+    // どの版にも、確かめた署名が 1 つ（確定・確定・戻す）。確かめで合わない版は無い
+    expect(h.versions.map((v) => v.signatures.map((x) => [x.role, x.by]))).toEqual([[["confirm", SIGNER.by]], [["confirm", SIGNER.by]], [["revert", SIGNER.by]]]);
+    expect(h.versions.every((v) => v.problem === null && !v.legacy)).toBe(true);
+    expect(readdirSync(join(d, "signatures"))).toHaveLength(3);
+    expect(readdirSync(join(rt, "people"))).toEqual([`${keyIdOf(SIGNER.pair.pub)}.json`]);
 
     // 差分レポート：機器・作業・年度・前の印・後の印・誰が・なぜ
     const rows = await readSheet(v2.files.report);
@@ -122,8 +134,8 @@ describe("確定：版と差分レポート", () => {
     expect(ds.map((d) => d.id).sort()).toEqual(["attr:w1", "detail:d2", "item:a2"]);
     expect(ds.find((d) => d.id === "attr:w1")).toMatchObject({ kind: "attribute", value: "OVERHAUL", author: "ai" });
     const rt = root();
-    expect(await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: [], basedOn: null, client: "t" })).toMatchObject({ ok: false, reason: "pendingDecisions", pending: 3 });
-    const v1 = await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null, client: "t" });
+    expect(await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: [], basedOn: null, signer: SIGNER, client: "t" })).toMatchObject({ ok: false, reason: "pendingDecisions", pending: 3 });
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null, signer: SIGNER, client: "t" });
     if (!v1.ok) throw new Error(v1.reason);
     expect(v1.record.plan.works.find((w) => w.workKey === "w1")).toMatchObject({ attributeAccepted: true, attributeAuthor: "ai" });
     // 当てはめの欄で人が受けたもの（attributeAccepted が true）は、もう受けていない決定に並ばない
@@ -137,5 +149,70 @@ describe("確定：版と差分レポート", () => {
     expect(d.rows).toHaveLength(1);
     expect(d.rows[0]).toMatchObject({ nodeKey: "a2", fiscalYear: 2018, before: "plan", after: "both" });
     expect(diffPlans(null, before).added).toBe(3);
+  });
+});
+
+describe("版の署名（docs/plan.md §2.18.2）", () => {
+  async function twoVersions() {
+    const rt = root();
+    const p = aiPlan();
+    const acc = aiDecisions(p).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "初めの確定", acceptances: acc, basedOn: null, signer: SIGNER, client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    const v2 = await commitPlan({ root: rt, plan: v1.record.plan, reason: "2 版目", acceptances: [], basedOn: 1, signer: SIGNER, client: "t" });
+    if (!v2.ok) throw new Error(v2.reason);
+    return { rt, d: planDir(rt, "plan-test") };
+  }
+
+  it("呼び名の形に合わない人は署名しない", async () => {
+    const r = await commitPlan({ root: root(), plan: aiPlan(), reason: "確定", acceptances: [], basedOn: null, signer: { ...SIGNER, by: "山田/課長" }, client: "t" });
+    expect(r).toEqual({ ok: false, reason: "nameInvalid" });
+  });
+
+  it("版の中身を書き換えると、署名が合わない版になり、その上には重ねない", async () => {
+    const { rt, d } = await twoVersions();
+    const f = join(d, "versions", "000001.json");
+    writeFileSync(f, readFileSync(f, "utf8").replace("初めの確定", "書き換えた理由"));
+    const h = await readHistory(rt, "plan-test");
+    // 1 版目は署名の中身のハッシュと合わない。2 版目は親の鎖が合わない
+    expect(h.versions.map((v) => v.problem)).toEqual(["signature", "chain"]);
+    const r = await commitPlan({ root: rt, plan: aiPlan(), reason: "3 版目", acceptances: [], basedOn: 2, signer: SIGNER, client: "t" });
+    expect(r).toEqual({ ok: false, reason: "historyBroken" });
+  });
+
+  it("署名のファイルを消すと、その版は署名の無い版、次の版は鎖が合わない版になる", async () => {
+    const { rt, d } = await twoVersions();
+    rmSync(join(d, "signatures", signatureFileName(1, "confirm", keyIdOf(SIGNER.pair.pub))));
+    const h = await readHistory(rt, "plan-test");
+    expect(h.versions.map((v) => v.problem)).toEqual(["unsigned", "chain"]);
+  });
+
+  it("ほかの人の承認の署名を足すと、2 版目の署名に並ぶ（版の記録は書き直さない）。ほかの版の中身を指す署名は数えない", async () => {
+    const { rt, d } = await twoVersions();
+    const h = await readHistory(rt, "plan-test");
+    const v2 = h.versions[1]!;
+    const boss = otherSigner("【架空】課長");
+    const before = readFileSync(join(d, "versions", "000002.json"), "utf8");
+    const ok = signStatement({ planId: "plan-test", version: 2, contentHash: v2.contentHash, role: "approve", by: boss.by, at: "2026-11-04T05:00:00.000Z", reason: "見て承認する" }, boss.pair);
+    writeFileSync(join(d, "signatures", signatureFileName(2, "approve", ok.statement.key)), JSON.stringify(ok));
+    const other = otherSigner("【架空】よその人");
+    const wrong = signStatement({ planId: "plan-test", version: 2, contentHash: h.versions[0]!.contentHash, role: "approve", by: other.by, at: "2026-11-04T05:00:00.000Z", reason: "別の版の中身" }, other.pair);
+    writeFileSync(join(d, "signatures", signatureFileName(2, "approve", wrong.statement.key)), JSON.stringify(wrong));
+    const h2 = await readHistory(rt, "plan-test");
+    expect(readFileSync(join(d, "versions", "000002.json"), "utf8")).toBe(before);
+    expect(h2.versions[1]!.signatures.map((x) => [x.role, x.by]).sort()).toEqual([["approve", "【架空】課長"], ["confirm", SIGNER.by]]);
+    // 合わない署名のファイルがあると、その版は「署名が合わない」として開かない
+    expect(h2.versions[1]!.problem).toBe("signature");
+  });
+
+  it("署名の無い前の形の版（v0）は、読むだけにし、承認には数えない（legacy）", async () => {
+    const rt = root();
+    const d = planDir(rt, "plan-test");
+    const v0 = { schema: VERSION_SCHEMA_V0, planId: "plan-test", version: 1, kind: "confirm", revertOf: null, at: "2026-11-03T00:00:00.000Z", author: "human", client: "t", reason: "前の形", acceptances: [], summary: { added: 0, removed: 0, changed: 0, same: 0 }, prev: null, plan: { ...aiPlan(), version: 1 } };
+    const { mkdirSync } = await import("node:fs");
+    mkdirSync(join(d, "versions"), { recursive: true });
+    writeFileSync(join(d, "versions", "000001.json"), JSON.stringify(v0));
+    const h = await readHistory(rt, "plan-test");
+    expect(h.versions[0]).toMatchObject({ legacy: true, problem: null, signatures: [] });
   });
 });

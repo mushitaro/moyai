@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { attr, f1Rules } from "../fixtures/crosswalk/rules";
-import { callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（AI と人）";
 const PASS = "架空の合言葉 縦の一本 です";
@@ -191,9 +191,13 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
         await pending.nth(i).getByTestId("pending-reason").fill("試験の台本が押した（チャットの答えを画面で受けた）");
         await pending.nth(i).getByTestId("pending-accept").check();
       }
+      // 署名：この PC にまだ鍵が無いので、合言葉を決めて鍵を作ってから署名する（2 回入れる）
+      await expect(page.getByTestId("confirm-submit")).toBeDisabled();
+      await signInDialog(page, PASS);
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版として確定しました");
+      await expect(page.getByTestId("sign-key-made")).toBeVisible();
+      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名して確定しました");
       const plans = readdirSync(join(root, "plans"));
       expect(plans).toHaveLength(1);
       const versions = join(root, "plans", plans[0]!, "versions");

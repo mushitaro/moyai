@@ -50,7 +50,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planRevert", "planStatus", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planRevert", "planStatus", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -155,10 +155,25 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(st).toMatchObject({ ok: true, latest: null, synced: { kind: "onedrive" } });
     const ds = aiDecisions(plan);
     expect(ds.length).toBeGreaterThan(0);
-    expect((await call("planCommit", { plan, reason: "", acceptances: [], basedOn: null })).reason).toBe("reasonEmpty");
-    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null })).reason).toBe("pendingDecisions");
-    const c = await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null });
+    // 署名：呼び名が無ければ鍵を作れない。呼び名を決め、自分の鍵を合言葉で作る。合言葉が違えば署名しない
+    const KEYPASS = "架空の合言葉 署名の鍵";
+    expect((await call("personKeyCreate", { passphrase: KEYPASS })).reason).toBe("nameMissing");
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("nameMissing");
+    expect((await call("settingsSave", { root: null, name: "山田/課長" })).reason).toBe("nameInvalid");
+    expect(await call("settingsSave", { root: null, name: "【架空】試験の人" })).toMatchObject({ ok: true, name: "【架空】試験の人" });
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("personKeyMissing");
+    const key = await call("personKeyCreate", { passphrase: KEYPASS });
+    expect(key).toMatchObject({ ok: true, name: "【架空】試験の人" });
+    expect((await call("personKeyCreate", { passphrase: KEYPASS })).reason).toBe("personKeyExists");
+    expect((await call("planCommit", { plan, reason: "", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("reasonEmpty");
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: "違う合言葉" })).reason).toBe("wrongPassphrase");
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, passphrase: KEYPASS })).reason).toBe("pendingDecisions");
+    const c = await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null, passphrase: KEYPASS });
     expect(c).toMatchObject({ ok: true, version: 1 });
+    // 版の一覧には、確かめた署名と、この PC の鍵として信じた印（own）と指紋
+    const st1 = await call("planStatus", { planId: plan.planId });
+    expect(st1.versions[0].signatures).toMatchObject([{ role: "confirm", by: "【架空】試験の人", trust: "own", fingerprint: key.fingerprint }]);
+    expect(st1).toMatchObject({ name: "【架空】試験の人", hasKey: true });
     expect(existsSync(c.files.version)).toBe(true);
     expect(existsSync(c.files.report)).toBe(true);
     expect(c.files.version.startsWith(join(docs, "MOYAI", "plans"))).toBe(true);
@@ -191,7 +206,7 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(v.report.lines.map((l: { kind: string; status: string }) => `${l.kind}:${l.status}`)).toEqual(["circle:ok", "member:ok", "bundle:ok"]);
 
     // 版の履歴と戻す
-    const back = await call("planRevert", { planId: plan.planId, to: 1, reason: "試しに戻す", basedOn: 1 });
+    const back = await call("planRevert", { planId: plan.planId, to: 1, reason: "試しに戻す", basedOn: 1, passphrase: KEYPASS });
     expect(back).toMatchObject({ ok: true, version: 2 });
     // 版が変わったので、前の版で見た検問所からは送らない
     const stale = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash, passphrase: "架空の合言葉 試験です" });
@@ -224,7 +239,7 @@ describe("受け手：似た施設と並べる（peers_compare）", () => {
 
     // 相対の道は断る。絶対の道を選ぶと、置き場所は前のまま
     expect((await call("settingsSave", { root: null, ledger: "相対の道" })).reason).toBe("ledgerInvalid");
-    expect(await call("settingsSave", { root: null, ledger: repo })).toEqual({ ok: true, root: null, ledger: repo });
+    expect(await call("settingsSave", { root: null, ledger: repo })).toEqual({ ok: true, root: null, ledger: repo, name: null });
     expect((await call("settingsRead", {})).ledger).toBe(repo);
     expect((await call("settingsSave", { root: null })).ledger).toBe(repo);
 

@@ -97,9 +97,12 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("settings-save")).toBeDisabled();
     await page.screenshot({ path: shot(`settings-${tag}`), fullPage: true });
     await page.getByTestId("root-input").fill(root);
+    // 版の署名に出す呼び名（架空）
+    await page.getByTestId("name-input").fill("【架空】試験の台本");
     await page.getByTestId("settings-save").click();
     await expect(page.getByTestId("settings-saved")).toBeVisible();
     await expect(page.getByTestId("current-root")).toHaveText(root);
+    await expect(page.getByTestId("current-name")).toHaveText("【架空】試験の台本");
   });
 
   await test.step("輪を作り、この輪の鍵を合言葉で包む。指紋は 4 文字 × 4 組", async () => {
@@ -134,10 +137,16 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
       await rows.nth(i).getByTestId("pending-reason").fill("台帳の名前と表Ⅱ-4 を見て、人が受けた");
       await rows.nth(i).getByTestId("pending-accept").check();
     }
+    // 署名：合言葉が無いうちは確定できない。この PC にまだ鍵が無いので、合言葉を 2 回入れて鍵を作ってから署名する
+    await expect(page.getByTestId("confirm-submit")).toBeDisabled();
+    await page.getByTestId("sign-passphrase").fill(PASS);
+    await page.getByTestId("sign-passphrase-again").fill(`${PASS}x`);
+    await expect(page.getByTestId("confirm-submit-reason")).toContainText("2 つの合言葉が違います");
+    await page.getByTestId("sign-passphrase-again").fill(PASS);
     await expect(page.getByTestId("confirm-submit")).toBeEnabled();
     await page.screenshot({ path: shot(`confirm-${tag}`) });
     await page.getByTestId("confirm-submit").click();
-    await expect(page.getByTestId("confirm-done")).toContainText("第 1 版として確定しました");
+    await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名して確定しました");
     const versions = join(root, "plans", "fixture-fictional-1", "versions");
     expect(readdirSync(versions)).toEqual(["000001.json"]);
     expect(readdirSync(join(root, "plans", "fixture-fictional-1", "reports"))).toEqual(["000001-diff.xlsx"]);

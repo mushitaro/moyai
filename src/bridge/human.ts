@@ -8,7 +8,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
-import { commitPlan, readHistory, revertPlan, PLAN_ID, type ExportCatalogs } from "../plan/store";
+import { commitPlan, readHistory, revertPlan, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { validName } from "../plan/signature";
+import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustList, trustOf } from "./people";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
@@ -67,13 +69,17 @@ const SCHEMAS = {
     reason: z.string().max(500),
     acceptances: z.array(z.object({ id: z.string().max(200), hash: z.string().regex(/^[0-9a-f]{16}$/), reason: z.string().max(500) })).max(100_000),
     basedOn: z.number().int().min(1).nullable(),
+    /** 署名の鍵を開く合言葉（橋渡しが開き、署名したらすぐ捨てる。どこにも残さない） */
+    passphrase: z.string().min(1).max(1000),
     /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
   readings_read: z.object({}),
-  plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable() }),
+  plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable(), passphrase: z.string().min(1).max(1000) }),
+  person_key_create: z.object({ passphrase: z.string().min(1).max(1000) }),
+  person_key_confirm: z.object({ key: z.string().regex(/^[0-9a-f]{16}$/) }),
   settings_read: z.object({}),
-  settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional() }),
+  settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional(), name: z.string().max(40).nullable().optional() }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID), passphrase: z.string().max(1000) }),
   checkpoint_preview: z.object({ planId: planIdSchema, ringId: ringIdSchema.nullable(), answers: answersSchema }),
   checkpoint_open_text: z.object({ planId: planIdSchema, ringId: ringIdSchema, answers: answersSchema }),
@@ -131,6 +137,15 @@ export class HumanService {
   constructor(private readonly e: HumanEnv) {}
 
   /** 書き出しに使うパックの名前の表（packs/<パック>/common.json と packs/_kinds/work.json）。読めなければ共通のシートは作らない */
+  /** 署名する人：設定の呼び名と、合言葉で開いた自分の鍵（署名したらすぐ捨てる。鍵も合言葉もどこにも残さない） */
+  private signer(sd: string, passphrase: string): { ok: true; signer: Signer } | { ok: false; reason: "nameMissing" | "personKeyMissing" | "wrongPassphrase" } {
+    const name = readSettings(sd).name;
+    if (!name) return { ok: false, reason: "nameMissing" };
+    const k = openOwnKey(sd, name, passphrase);
+    if (!k.ok) return { ok: false, reason: k.reason };
+    return { ok: true, signer: { by: name, pair: k.pair } };
+  }
+
   private catalogsFor(packId: string): ExportCatalogs {
     const read = (p: string): unknown => JSON.parse(readFileSync(p, "utf8"));
     const work = read(join(this.e.packsDir, "_kinds", "work.json"));
@@ -187,21 +202,26 @@ export class HumanService {
         const root = await this.root();
         if (!root) return no("noRoot");
         const h = await readHistory(root, p.planId);
-        return { ok: true, root, synced: await this.syncedOfPath(root), versions: h.versions, latest: h.latest ? { version: h.latest.version, plan: h.latest.plan } : null, accepted: h.accepted };
+        // 署名ごとに、この PC が覚えた鍵と照らした信じ方を添える（未確認の鍵は覚えるが、信じはしない）
+        const versions = h.versions.map((v) => ({ ...v, signatures: v.signatures.map((x) => ({ ...x, trust: trustOf(sd, x, now), fingerprint: fingerprint(x.pub) })) }));
+        const s = readSettings(sd);
+        return { ok: true, root, synced: await this.syncedOfPath(root), versions, latest: h.latest ? { version: h.latest.version, plan: h.latest.plan } : null, accepted: h.accepted, name: s.name, hasKey: s.name !== null && ownKeys(sd).some((k) => k.by === s.name) };
       }
       case "plan_commit": {
         const p = parsePayload("plan_commit", call.payload);
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        // 使った読み方を保管先に書き、道と版を版の記録に書く（この版に人が署名すると、その版の読み方が承認済みになる）
+        const signer = this.signer(sd, p.passphrase);
+        if (!signer.ok) return no(signer.reason);
+        // 使った読み方を保管先に書き、道と版を版の記録に書く（この版に人が署名すると、その版の読み方が承認済みになる）。担当者の範囲の読み方は、署名する人の呼び名の下に置く
         const readingSkills: { name: string; path: string; version: string }[] = [];
         for (const x of p.readings ?? []) {
-          const w = await registerReading(root, x.skill, x.by, x.facilityKey);
+          const w = await registerReading(root, x.skill, x.by ?? signer.signer.by, x.facilityKey);
           if (!w.ok) return no("readingInvalid");
           readingSkills.push({ name: (x.skill as { name: string }).name, path: w.path, version: w.version });
         }
-        const r = await commitPlan({ root, plan: p.plan, reason: p.reason, acceptances: p.acceptances, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id), readingSkills });
+        const r = await commitPlan({ root, signer: signer.signer, plan: p.plan, reason: p.reason, acceptances: p.acceptances, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id), readingSkills });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
       }
@@ -210,7 +230,9 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        const r = await revertPlan({ root, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
+        const signer = this.signer(sd, p.passphrase);
+        if (!signer.ok) return no(signer.reason);
+        const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
         if (!r.ok) return no(r.reason);
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
       }
@@ -223,7 +245,7 @@ export class HumanService {
           const w = readWrappedKey(sd, r.ringId);
           return { ringId: r.ringId, root: r.root, pack: r.pack, key: r.key, fingerprint: w ? fingerprint(w.pub) : null, synced: syncedOf(r.root, docs.syncRoots) };
         });
-        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, rings, packs: this.packs() };
+        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, rings, packs: this.packs(), name: s.name, people: trustList(sd) };
       }
       case "settings_save": {
         const p = parsePayload("settings_save", call.payload);
@@ -234,8 +256,25 @@ export class HumanService {
         const prev = readSettings(sd);
         const ledger = p.ledger === undefined ? prev.ledger : p.ledger === null ? null : validRoot(p.ledger);
         if (p.ledger !== undefined && p.ledger !== null && ledger === null) return no("ledgerInvalid");
-        writeSettings(sd, { v: 1, root, ledger });
-        return { ok: true, root, ledger };
+        // 呼び名も、送られたときだけ変える
+        const name = p.name === undefined ? prev.name : p.name === null ? null : validName(p.name) ? p.name : undefined;
+        if (name === undefined) return no("nameInvalid");
+        writeSettings(sd, { v: 1, root, ledger, name });
+        return { ok: true, root, ledger, name };
+      }
+      case "person_key_create": {
+        const p = parsePayload("person_key_create", call.payload);
+        if (!p) return no("payloadInvalid");
+        const name = readSettings(sd).name;
+        if (!name) return no("nameMissing");
+        const r = createOwnKey(sd, name, p.passphrase, now);
+        if (!r.ok) return no(r.reason);
+        return { ok: true, name, key: r.key, fingerprint: r.fingerprint };
+      }
+      case "person_key_confirm": {
+        const p = parsePayload("person_key_confirm", call.payload);
+        if (!p) return no("payloadInvalid");
+        return confirmKey(sd, p.key) ? { ok: true, key: p.key } : no("keyUnknown");
       }
       case "ring_create": {
         const p = parsePayload("ring_create", call.payload);
@@ -292,7 +331,7 @@ export class HumanService {
         if (!parsePayload("readings_read", call.payload)) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return { ok: true, root: null, readings: [] };
-        const list = await listReadings(root, await approvedReadingVersions(root));
+        const list = await listReadings(root, await approvedReadingVersions(root, (x) => countsForApproval(trustOf(sd, x, now))));
         return { ok: true, root, readings: loadedOf(list) };
       }
       case "peers_compare": {

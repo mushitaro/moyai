@@ -1,6 +1,7 @@
 // 書き出し（docs/plan.md §2.9・§6.1 の 6）：確定した計画を、人が見る様式の Excel にする。
 // 書いた xlsx を exceljs で読み直し、入れ子（段の列）・縦の結合・アウトライン・小計の行・A3 横・ウィンドウ枠の固定・凡例・【架空】を確かめる。
 // Excel で開いて見やすいかは、運営者の目で確かめる（ここで言えるのは「様式どおりに書けた」まで）。
+import { SIGNER } from "../helpers/signer";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -101,7 +102,7 @@ describe("書き出し：人が見る様式の星取表", () => {
     dirs.push(root);
     // AI の決定は、試験の台本が人の代わりに理由を書いて受ける
     const acceptances = pendingDecisions(plan, []).map((d) => ({ id: d.id, hash: d.hash, reason: "試験の台本が押した" }));
-    const r = await commitPlan({ root, plan, reason: "書き出しの試験", acceptances, basedOn: null, client: "t", catalogs: () => ({ catalog, empty }) });
+    const r = await commitPlan({ root, plan, reason: "書き出しの試験", acceptances, basedOn: null, signer: SIGNER, client: "t", catalogs: () => ({ catalog, empty }) });
     if (!r.ok) throw new Error(r.reason);
     expect(r.files.export).toBe(join(root, "plans", plan.planId, "exports", "000001-plan.xlsx"));
     const wb = await read(readFileSync(r.files.export!));

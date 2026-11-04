@@ -3,12 +3,14 @@
 //   <保管先>/skills/担当/<呼び名>/<名前>/    担当者の読み方
 //   <保管先>/<施設>/skills/<名前>/           施設の読み方
 // 1 つの読み方は SKILL.md（人と Claude が読む文。手で編集してよい）と rules.json（moyai.reading/0）。中身のハッシュが版で、前の版は versions/ に足すだけ（消さない）。
-// 書いた読み方は未承認。その読み方を使った版に人が署名したとき承認される（どの版が承認済みかは、呼ぶ側が渡す）。
+// 書いた読み方は未承認。その読み方を使った版に人が署名したとき承認される。数えるのは、確かめた確定か承認の署名で、
+// この PC が信じる鍵（自分の鍵か、指紋を読み合わせて確認済みの鍵）のものだけ（docs/plan.md §2.18.2）。
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync } from "node:fs";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { ReadingSkill, type LoadedReading, type ReadingScope } from "../import/reading";
+import { PLAN_ID, readHistory, type PlanHistory, type SignatureInfo } from "../plan/store";
 
 const SKILLS = "skills";
 const COMPANY = "会社";
@@ -50,9 +52,9 @@ export function skillMarkdown(skill: ReadingSkill): string {
   return L.join("\n");
 }
 
-/** 版：SKILL.md と rules.json の中身のハッシュ（16 文字） */
+/** 版：SKILL.md と rules.json の中身の SHA-256（全長。16 文字に切ると衝突を作れるため） */
 export function readingVersion(md: string, rules: string): string {
-  return createHash("sha256").update(md, "utf8").update("\u0000").update(rules, "utf8").digest("hex").slice(0, 16);
+  return createHash("sha256").update(md, "utf8").update("\u0000").update(rules, "utf8").digest("hex");
 }
 
 /** 一時の名前で書いてから置き換える（書きかけを読ませない） */
@@ -140,25 +142,23 @@ export async function listReadings(root: string, approvedVersions: ReadonlyMap<s
   return out;
 }
 
-/** 承認済みの読み方の版：保管先の確定（署名）した版の記録が使った読み方の版 → その読み方の版を最初に使った星取表の版の番号 */
-export async function approvedReadingVersions(root: string): Promise<Map<string, number>> {
+/** 承認済みの読み方の版：確かめた確定か承認の署名があり、その署名の鍵をこの PC が信じる版が使った読み方の版 → その読み方の版を最初に使った星取表の版の番号。
+ * 確かめで合わない版（鎖・署名）から先と、署名の無い前の形の版は数えない。trusted：署名の鍵を信じるか（橋渡しが覚えた鍵と照らす） */
+export async function approvedReadingVersions(root: string, trusted: (sig: SignatureInfo) => boolean): Promise<Map<string, number>> {
   const out = new Map<string, number>();
   for (const planId of subdirs(join(root, "plans"))) {
-    const vdir = join(root, "plans", planId, "versions");
-    let files: string[] = [];
+    if (!PLAN_ID.test(planId)) continue;
+    let hist: PlanHistory;
     try {
-      files = readdirSync(vdir).filter((f) => f.endsWith(".json"));
+      hist = await readHistory(root, planId);
     } catch {
-      continue;
+      continue; // 読めない計画は数えない
     }
-    for (const f of files) {
-      const n = Number(f.replace(/\.json$/, ""));
-      try {
-        const rec = JSON.parse(await readFile(join(vdir, f), "utf8")) as { readingSkills?: { version?: unknown }[] };
-        for (const r of rec.readingSkills ?? []) if (typeof r.version === "string" && Number.isInteger(n) && !(out.get(r.version)! <= n)) out.set(r.version, n);
-      } catch {
-        // 読めない記録は数えない
-      }
+    const bad = hist.versions.findIndex((v) => v.problem !== null);
+    for (const v of bad < 0 ? hist.versions : hist.versions.slice(0, bad)) {
+      if (v.legacy || !v.signatures.some((x) => (x.role === "confirm" || x.role === "approve") && trusted(x))) continue;
+      const rec = JSON.parse(await readFile(join(root, "plans", planId, "versions", `${String(v.version).padStart(6, "0")}.json`), "utf8")) as { readingSkills?: { version?: unknown }[] };
+      for (const r of rec.readingSkills ?? []) if (typeof r.version === "string" && !(out.get(r.version)! <= v.version)) out.set(r.version, v.version);
     }
   }
   return out;

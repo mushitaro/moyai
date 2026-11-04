@@ -42,10 +42,12 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 |---|---|---|
 | `POST /human/commit-trial` | `commit_trial` | 確定の試しの経路（v0。中身は何もしない。守りの形を試験するためのもの） |
 | `POST /human/plan-status` | `plan_status` | 確定した版の一覧と、いちばん新しい版（確定のダイアログを開いたとき） |
-| `POST /human/plan-commit` | `plan_commit` | 計画を確定する（版のファイルを足し、差分レポートと人が見る様式の星取表の Excel を書く） |
-| `POST /human/plan-revert` | `plan_revert` | 前の版に戻す（前の版を指す記録を足す） |
+| `POST /human/plan-commit` | `plan_commit` | 計画を確定する（合言葉で開いた自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く） |
+| `POST /human/plan-revert` | `plan_revert` | 前の版に戻す（前の版を指す記録を足し、自分の鍵で署名する） |
+| `POST /human/person-key-create` | `person_key_create` | 自分の鍵（版に署名する）を作り、合言葉で包んで状態フォルダに置く |
+| `POST /human/person-key-confirm` | `person_key_confirm` | ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない） |
 | `POST /human/settings-read` | `settings_read` | 置き場所・Documents の場所・輪の一覧を読む |
-| `POST /human/settings-save` | `settings_save` | 置き場所と、公開の台帳の clone の場所を保存する |
+| `POST /human/settings-save` | `settings_save` | 置き場所・公開の台帳の clone の場所・自分の呼び名を保存する |
 | `POST /human/ring-create` | `ring_create` | 輪を作り、その輪の鍵の対を合言葉で包んで状態フォルダに置く |
 | `POST /human/checkpoint-preview` | `checkpoint_preview` | 検問所：出ていく束のバイト列とハッシュと数（送る処理と同じ関数） |
 | `POST /human/checkpoint-open-text` | `checkpoint_open_text` | 検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く |
@@ -55,7 +57,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 14 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 16 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

@@ -3,6 +3,7 @@
 // - 同期フォルダ：環境変数 OneDrive・OneDriveCommercial・OneDriveConsumer の指すフォルダと、OneDrive が同期している場所（SharePoint のライブラリを含む）の下か。
 // - 状態フォルダの設定：settings.json（置き場所）、rings.json（輪のフォルダ。scripts/guard-hook.mjs の ringFolders() が folders を読む）、
 //   keys/<輪ID>.json（合言葉で包んだ秘密鍵）、sent.json（持ち出し簿）。書くのは人だけの経路だけ。
+import { validName } from "../plan/signature";
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -126,7 +127,7 @@ export function defaultRoot(info: DocumentsInfo): string | null {
 
 // ─── 状態フォルダのファイル ──────────────────────────────────
 
-function readJson<T>(file: string): T | null {
+export function readJson<T>(file: string): T | null {
   try {
     return JSON.parse(readFileSync(file, "utf8")) as T;
   } catch {
@@ -134,7 +135,7 @@ function readJson<T>(file: string): T | null {
   }
 }
 
-function writeJson(stateDir: string, rel: string, data: unknown): void {
+export function writeJson(stateDir: string, rel: string, data: unknown): void {
   const file = join(stateDir, rel);
   mkdirSync(join(file, ".."), { recursive: true, mode: 0o700 });
   const tmp = `${file}.${process.pid}.tmp`;
@@ -148,12 +149,14 @@ export interface Settings {
   root: string | null;
   /** 人が選んだ公開の台帳の clone の場所（受け手が読む）。null はまだ選んでいない */
   ledger: string | null;
+  /** 自分の呼び名（版の署名と、画面の「編集の番」に出す）。null はまだ決めていない */
+  name: string | null;
 }
 
 export function readSettings(stateDir: string): Settings {
   const s = readJson<Partial<Settings>>(join(stateDir, "settings.json"));
   const abs = (x: unknown) => (typeof x === "string" && isAbsolute(x) ? x : null);
-  return { v: 1, root: abs(s?.root), ledger: abs(s?.ledger) };
+  return { v: 1, root: abs(s?.root), ledger: abs(s?.ledger), name: typeof s?.name === "string" && validName(s.name) ? s.name : null };
 }
 
 export function writeSettings(stateDir: string, s: Settings): void {

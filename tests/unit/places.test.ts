@@ -59,10 +59,13 @@ describe("状態フォルダの設定", () => {
     expect(validRoot("relative/path")).toBeNull();
     expect(validRoot("")).toBeNull();
     const abs = join(dir, "置き場所");
-    writeSettings(dir, { v: 1, root: validRoot(abs), ledger: null });
+    writeSettings(dir, { v: 1, root: validRoot(abs), ledger: null, name: null });
     expect(readSettings(dir).root).toBe(abs);
-    writeSettings(dir, { v: 1, root: null, ledger: validRoot(abs) });
-    expect(readSettings(dir)).toEqual({ v: 1, root: null, ledger: abs });
+    writeSettings(dir, { v: 1, root: null, ledger: validRoot(abs), name: "【架空】山田" });
+    expect(readSettings(dir)).toEqual({ v: 1, root: null, ledger: abs, name: "【架空】山田" });
+    // 呼び名の形に合わないものは読まない
+    writeSettings(dir, { v: 1, root: null, ledger: null, name: "山田/課長" });
+    expect(readSettings(dir).name).toBeNull();
   });
 
   it("輪のフォルダは rings.json の folders に入り、見張りのフック（ringFolders）がそのまま読む", () => {

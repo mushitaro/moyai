@@ -128,10 +128,21 @@ export async function callTool(c: Client, name: string, args: Record<string, unk
 }
 
 /** 人が設定の画面で、置き場所を選んで保存し、輪を作ってこの輪の鍵を合言葉で包む */
+/** 試験の台本が版に署名するときの呼び名（架空） */
+export const E2E_NAME = "【架空】試験の台本";
+
+/** 確定のダイアログで署名する：合言葉を入れる。この PC に鍵がまだ無ければ、もう一度の欄にも入れる（鍵を作ってから署名する） */
+export async function signInDialog(page: Page, passphrase: string): Promise<void> {
+  await page.getByTestId("sign-passphrase").fill(passphrase);
+  const again = page.getByTestId("sign-passphrase-again");
+  if (await again.count()) await again.fill(passphrase);
+}
+
 export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string, passphrase: string): Promise<void> {
   await page.goto(`${base}/#/settings`);
   await expect(page.getByTestId("settings-page")).toBeVisible();
   await page.getByTestId("root-input").fill(root);
+  await page.getByTestId("name-input").fill(E2E_NAME);
   await page.getByTestId("settings-save").click();
   await expect(page.getByTestId("settings-saved")).toBeVisible();
   await expect(page.getByTestId("current-root")).toHaveText(root);

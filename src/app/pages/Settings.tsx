@@ -1,4 +1,5 @@
-// 設定（docs/plan.md §2.14）：置き場所（Documents と同期フォルダの知らせ）、輪のフォルダと鍵、公開の台帳の clone の場所（受け手が読む）。
+// 設定（docs/plan.md §2.14）：置き場所（Documents と同期フォルダの知らせ）、輪のフォルダと鍵、公開の台帳の clone の場所（受け手が読む）、
+// 自分の呼び名と署名の鍵（§2.18.2。ほかの人の鍵は、指紋を読み合わせて人が確認済みにする）。
 // 主ボタンは「保存」（変えたときだけ）で、見出しの行の右端。輪を作るのは副のボタンから開くダイアログ。
 import { Alert, Button, Code, Container, Group, Modal, NativeSelect, PasswordInput, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useCallback, useEffect, useState } from "react";
@@ -25,6 +26,8 @@ interface SettingsBody {
   ledger: string | null;
   rings: { ringId: string; root: string; pack: string; key: string; fingerprint: string | null; synced: Synced | null }[];
   packs: { id: string; name: string; ready: boolean; reason: string | null }[];
+  name: string | null;
+  people: { by: string; key: string; fingerprint: string; confirmed: boolean; own: boolean; firstSeen: string }[];
 }
 
 export function Fingerprint({ value }: { value: string }) {
@@ -118,6 +121,7 @@ export function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [root, setRoot] = useState("");
   const [ledger, setLedger] = useState("");
+  const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -129,6 +133,7 @@ export function Settings() {
     setS(r.body);
     setRoot(r.body.chosenRoot ?? "");
     setLedger(r.body.ledger ?? "");
+    setName(r.body.name ?? "");
   }, [client]);
 
   useEffect(() => {
@@ -136,14 +141,20 @@ export function Settings() {
   }, [state.kind, load]);
 
   const orNull = (v: string) => (v.trim() === "" ? null : v.trim());
-  const changed = s !== null && (orNull(root) !== s.chosenRoot || orNull(ledger) !== s.ledger);
+  const changed = s !== null && (orNull(root) !== s.chosenRoot || orNull(ledger) !== s.ledger || orNull(name) !== s.name);
   const save = async () => {
     if (!changed) return;
     setBusy(true);
-    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: orNull(root), ledger: orNull(ledger) }));
+    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: orNull(root), ledger: orNull(ledger), name: orNull(name) }));
     setBusy(false);
     if (!r.ok) return setError(r.message);
     setSaved(true);
+    await load();
+  };
+  // ほかの人の鍵を、指紋を読み合わせて確認済みにする（人だけの経路）
+  const confirmKey = async (key: string) => {
+    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("person_key_confirm", ROUTES.personKeyConfirm.path, { key }));
+    if (!r.ok) return setError(r.message);
     await load();
   };
 
@@ -204,6 +215,56 @@ export function Settings() {
                 <Text size="sm" c="teal" data-testid="settings-saved">
                   {T.saved}
                 </Text>
+              )}
+            </Stack>
+            <Stack gap="xs" data-testid="name-setting">
+              <Title order={4}>{T.nameTitle}</Title>
+              <Text size="xs" c="dimmed">
+                {T.nameLead}
+              </Text>
+              <Group gap="xs">
+                <Text size="sm" fw={700}>
+                  {T.current}
+                </Text>
+                <Code data-testid="current-name">{s.name ?? T.nameNone}</Code>
+              </Group>
+              <TextInput label={T.nameInput} value={name} maxLength={40} onChange={(e) => (setName(e.currentTarget.value), setSaved(false))} data-testid="name-input" />
+            </Stack>
+            <Stack gap="xs" data-testid="people">
+              <Title order={4}>{T.peopleTitle}</Title>
+              <Text size="xs" c="dimmed">
+                {T.peopleLead}
+              </Text>
+              {s.people.length === 0 ? (
+                <Text size="sm">{T.peopleNone}</Text>
+              ) : (
+                <Table withTableBorder data-testid="people-table">
+                  <Table.Thead>
+                    <Table.Tr>
+                      {T.peopleHead.map((h, i) => (
+                        <Table.Th key={i}>{h}</Table.Th>
+                      ))}
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {s.people.map((p) => (
+                      <Table.Tr key={p.key} data-testid="person" data-key={p.key}>
+                        <Table.Td>{p.by}</Table.Td>
+                        <Table.Td>
+                          <Fingerprint value={p.fingerprint} />
+                        </Table.Td>
+                        <Table.Td>{p.own ? T.own : p.confirmed ? T.confirmed : T.unconfirmed}</Table.Td>
+                        <Table.Td>
+                          {!p.own && !p.confirmed && (
+                            <Button size="compact-sm" variant="default" onClick={() => void confirmKey(p.key)} data-testid="person-confirm">
+                              {T.confirmKey}
+                            </Button>
+                          )}
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
               )}
             </Stack>
             <Stack gap="xs" data-testid="ledger-setting">

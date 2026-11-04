@@ -5,6 +5,10 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { approvedReadingVersions, listReadings, loadedOf, readingDir, registerReading } from "../../src/bridge/readings";
 import { READING_SCHEMA, type ReadingSkill } from "../../src/import/reading";
+import { commitPlan } from "../../src/plan/store";
+import { keyIdOf } from "../../src/share/sign";
+import { SIGNER } from "../helpers/signer";
+import { asset, detail, plan, work } from "./share/fixtures";
 
 const root = mkdtempSync(join(tmpdir(), "moyai-readings-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
@@ -51,17 +55,29 @@ describe("読み方の保管先", () => {
     expect((await listReadings(root, new Map())).some((x) => x.name === "壊れた")).toBe(false);
   });
 
-  it("確定（署名）した版の記録が使った読み方の版は承認済み。承認済みだけを作業画面に渡す", async () => {
+  it("確かめた確定の署名があり、その鍵を信じる版が使った読み方の版だけが承認済み。承認済みだけを作業画面に渡す", async () => {
     const c = await registerReading(root, skill("【架空】会社の読み方", "company"), null, null);
     if (!c.ok) throw new Error(c.reason);
+    // 版の記録に名前を書いただけ（署名の無いファイル）では承認済みにしない
     mkdirSync(join(root, "plans", "intake-x", "versions"), { recursive: true });
-    writeFileSync(join(root, "plans", "intake-x", "versions", "000003.json"), JSON.stringify({ readingSkills: [{ name: "【架空】会社の読み方", path: c.path, version: c.version }] }));
-    writeFileSync(join(root, "plans", "intake-x", "versions", "000002.json"), JSON.stringify({ readingSkills: [{ name: "【架空】会社の読み方", path: c.path, version: c.version }] }));
-    const approved = await approvedReadingVersions(root);
-    // 承認した星取表の版は、その読み方の版を最初に使った版
-    expect(approved.get(c.version)).toBe(2);
+    writeFileSync(join(root, "plans", "intake-x", "versions", "000001.json"), JSON.stringify({ readingSkills: [{ name: "【架空】会社の読み方", path: c.path, version: c.version }] }));
+    expect((await approvedReadingVersions(root, () => true)).has(c.version)).toBe(false);
+    rmSync(join(root, "plans", "intake-x"), { recursive: true, force: true });
+    // 署名して確定した版が使った読み方
+    const p = plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "INSPECT", ["a1"])], details: [detail("d1", "w1", 2020)] });
+    const readingSkills = [{ name: "【架空】会社の読み方", path: c.path, version: c.version }];
+    const v1 = await commitPlan({ root, plan: p, reason: "確定", acceptances: [], basedOn: null, signer: SIGNER, client: "t", readingSkills });
+    if (!v1.ok) throw new Error(v1.reason);
+    const v2 = await commitPlan({ root, plan: v1.record.plan, reason: "2 版目", acceptances: [], basedOn: 1, signer: SIGNER, client: "t", readingSkills });
+    if (!v2.ok) throw new Error(v2.reason);
+    // 署名の鍵を信じなければ承認しない。信じれば、最初に使った版の番号で承認済み
+    expect((await approvedReadingVersions(root, () => false)).has(c.version)).toBe(false);
+    const approved = await approvedReadingVersions(root, (x) => x.key === keyIdOf(SIGNER.pair.pub));
+    expect(approved.get(c.version)).toBe(1);
     const list = await listReadings(root, approved);
     expect(list.find((x) => x.name === "【架空】会社の読み方")?.approved).toBe(true);
-    expect(loadedOf(list).map((x) => [x.skill.name, x.approved, x.approvedIn, x.draft])).toEqual([["【架空】会社の読み方", true, 2, false]]);
+    expect(loadedOf(list).map((x) => [x.skill.name, x.approved, x.approvedIn, x.draft])).toEqual([["【架空】会社の読み方", true, 1, false]]);
+    // 読み方の版は SHA-256 の全長
+    expect(c.version).toMatch(/^[0-9a-f]{64}$/);
   });
 });

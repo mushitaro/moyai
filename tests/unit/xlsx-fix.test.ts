@@ -1,5 +1,6 @@
 // exceljs が書いた xlsx の sheetPr の子を、表計算の決まりの順（tabColor → outlinePr → pageSetUpPr）に直す。
 // 逆の順のままだと、Excel はシートを空で開く（exceljs で読み直しても気づかない）。書き出しと差分レポートの両方を確かめる。
+import { SIGNER } from "../helpers/signer";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -42,7 +43,7 @@ describe("xlsx の sheetPr の順", () => {
     const root = mkdtempSync(join(tmpdir(), "moyai-xlsx-fix-"));
     try {
       const acceptances = pendingDecisions(plan, []).map((d) => ({ id: d.id, hash: d.hash, reason: "試験の台本が押した" }));
-      const r = await commitPlan({ root, plan, reason: "順の試験", acceptances, basedOn: null, client: "t", catalogs: () => ({ catalog, empty }) });
+      const r = await commitPlan({ root, plan, reason: "順の試験", acceptances, basedOn: null, signer: SIGNER, client: "t", catalogs: () => ({ catalog, empty }) });
       if (!r.ok) throw new Error(r.reason);
       for (const f of [r.files.export!, join(root, "plans", plan.planId, "reports", "000001-diff.xlsx")]) {
         const orders = await sheetPrOrders(readFileSync(f));

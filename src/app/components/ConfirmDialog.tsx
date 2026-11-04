@@ -1,8 +1,9 @@
-// 確定のダイアログと版の履歴（docs/plan.md §2.9）。確定は人だけ：差分の要約と一言の理由（空は通さない）、
+// 確定のダイアログと版の履歴（docs/plan.md §2.9・§2.18.2）。確定は人だけ：差分の要約と一言の理由（空は通さない）、
+// 自分の鍵の合言葉で版に署名する（鍵がまだ無ければ、合言葉を決めて作ってから署名する）。この署名で承認する読み方を 1 行ずつ見せる。
 // 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、一言の理由を書いて受けるまで確定できない。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
-import { Alert, Anchor, Badge, Button, Checkbox, Group, Modal, ScrollArea, Stack, Table, Text, TextInput } from "@mantine/core";
-import { readingsForCommit } from "../state/readings";
+import { Alert, Anchor, Badge, Button, Checkbox, Group, Modal, PasswordInput, ScrollArea, Stack, Table, Text, TextInput } from "@mantine/core";
+import { getCurrentReadings, readingsForCommit } from "../state/readings";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
@@ -25,10 +26,25 @@ interface StatusBody {
   reason?: string;
   root?: string;
   synced?: Synced | null;
-  versions?: { version: number; kind: "confirm" | "revert"; revertOf: number | null; at: string; reason: string; summary: { added: number; removed: number; changed: number } }[];
+  versions?: {
+    version: number;
+    kind: "confirm" | "revert";
+    revertOf: number | null;
+    at: string;
+    reason: string;
+    summary: { added: number; removed: number; changed: number };
+    signatures: { role: string; by: string; fingerprint: string; trust: string }[];
+    legacy: boolean;
+    problem: string | null;
+  }[];
   latest?: { version: number; plan: Plan } | null;
   accepted?: Acceptance[];
+  /** 自分の呼び名と、この PC にその鍵があるか */
+  name?: string | null;
+  hasKey?: boolean;
 }
+
+const PASS_MIN = 8;
 
 /** 人だけの経路の答えを、画面に出す誤りの文か中身にする */
 export function readHuman<T extends { ok: boolean; reason?: string }>(r: HumanResult): { ok: true; body: T } | { ok: false; message: string } {
@@ -89,6 +105,9 @@ export function ConfirmDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ version: number; files: { version: string; report: string; export: string | null } } | null>(null);
+  const [pass, setPass] = useState("");
+  const [pass2, setPass2] = useState("");
+  const [keyMade, setKeyMade] = useState<string | null>(null);
 
   useEffect(() => {
     if (!opened) return;
@@ -96,6 +115,9 @@ export function ConfirmDialog({
     setAccept({});
     setError(null);
     setDone(null);
+    setPass("");
+    setPass2("");
+    setKeyMade(null);
   }, [opened]);
 
   const status = load.kind === "ready" ? load.status : null;
@@ -107,12 +129,27 @@ export function ConfirmDialog({
   const catalog = useMemo(() => catalogFor(plan.packId), [plan.packId]);
   const itemName = (code: string) => catalog?.items.get(code)?.name ?? catalog?.systems.get(code)?.name ?? code;
   const attrName = (code: string) => ((catalog ?? emptyCatalog()).workLabels as Record<string, string>)[code] ?? code;
-  const canSubmit = !!status && reason.trim().length > 0 && left === 0 && !busy && !done;
+  // 署名：呼び名が決まっていなければ署名できない。鍵が無ければ、合言葉を決めて（2 回）鍵を作ってから署名する
+  const name = status?.name ?? null;
+  const newKey = !!status && !status.hasKey && keyMade === null;
+  const passOk = newKey ? pass.length >= PASS_MIN && pass === pass2 : pass.length > 0;
+  const readings = getCurrentReadings().readings;
+  const canSubmit = !!status && !!name && passOk && reason.trim().length > 0 && left === 0 && !busy && !done;
+  const blockReason = !name ? T.needName : left > 0 ? T.pendingLeft(left) : reason.trim().length === 0 ? T.reasonEmpty : !passOk ? (newKey && pass.length > 0 && pass.length < PASS_MIN ? T.passphraseShort : newKey && pass2.length > 0 && pass !== pass2 ? T.passphraseMismatch : T.passphraseEmpty) : null;
 
   const submit = async () => {
     if (!canSubmit || !status) return;
     setBusy(true);
     setError(null);
+    if (newKey) {
+      // 鍵を作る（人だけの経路）。作れたら、同じ合言葉で続けて署名する
+      const k = readHuman<{ ok: boolean; reason?: string; fingerprint: string }>(await client.callHuman("person_key_create", ROUTES.personKeyCreate.path, { passphrase: pass }));
+      if (!k.ok) {
+        setBusy(false);
+        return setError(k.message);
+      }
+      setKeyMade(k.body.fingerprint);
+    }
     const payload = {
       plan,
       reason: reason.trim(),
@@ -120,18 +157,21 @@ export function ConfirmDialog({
       basedOn: status.latest?.version ?? null,
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
       readings: readingsForCommit(),
+      passphrase: pass,
     };
     const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null } }>(
       await client.callHuman("plan_commit", ROUTES.planCommit.path, payload),
     );
     setBusy(false);
+    setPass("");
+    setPass2("");
     if (!r.ok) return setError(r.message);
     setDone({ version: r.body.version, files: r.body.files });
     onConfirmed(r.body.plan);
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title={T.title} size="80rem" centered data-testid="confirm-dialog">
+    <Modal opened={opened} onClose={onClose} title={status ? T.titleSign((status.latest?.version ?? 0) + 1) : T.title} size="80rem" centered data-testid="confirm-dialog">
       <Stack gap="sm">
         {load.kind === "loading" && <Text size="sm">{T.loading}</Text>}
         {load.kind === "error" && (
@@ -254,6 +294,79 @@ export function ConfirmDialog({
               data-testid="confirm-reason"
               disabled={!!done}
             />
+
+            {readings.length > 0 && (
+              <Stack gap={4} data-testid="sign-readings">
+                <Text fw={700}>{T.readingsTitle(readings.length)}</Text>
+                <Text size="xs" c="dimmed">
+                  {T.readingsLead}
+                </Text>
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      {T.readingsHead.map((h) => (
+                        <Table.Th key={h}>{h}</Table.Th>
+                      ))}
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {readings.map((r) => (
+                      <Table.Tr key={`${r.skill.name}|${r.version}`} data-testid="sign-reading">
+                        <Table.Td>{r.skill.name}</Table.Td>
+                        <Table.Td>{T.readingScope[r.skill.scope]}</Table.Td>
+                        <Table.Td className="moyai-num">{r.skill.rules.length}</Table.Td>
+                        <Table.Td>{r.draft ? <Text span c="var(--shu)">{T.readingDraft}</Text> : r.approved ? T.readingApproved : T.readingUnapproved}</Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </Stack>
+            )}
+
+            <Stack gap={4} data-testid="sign">
+              <Text fw={700}>{T.signTitle}</Text>
+              {!name ? (
+                <Alert color="gray" p="xs" data-testid="sign-need-name">
+                  <Group gap="xs">
+                    <Text size="sm">{T.needName}</Text>
+                    <Anchor href={APP_PAGES.settings} size="sm" onClick={onClose}>
+                      {T.toSettings}
+                    </Anchor>
+                  </Group>
+                </Alert>
+              ) : (
+                <>
+                  <Text size="xs" c="dimmed">
+                    {newKey ? T.newKeyLead : T.signLead(name)}
+                  </Text>
+                  <Group grow align="flex-start">
+                    <PasswordInput
+                      label={newKey ? T.passphraseNew : T.passphrase}
+                      value={pass}
+                      onChange={(e) => setPass(e.currentTarget.value)}
+                      disabled={!!done}
+                      autoComplete="off"
+                      data-testid="sign-passphrase"
+                    />
+                    {newKey && (
+                      <PasswordInput
+                        label={T.passphraseAgain}
+                        value={pass2}
+                        onChange={(e) => setPass2(e.currentTarget.value)}
+                        disabled={!!done}
+                        autoComplete="off"
+                        data-testid="sign-passphrase-again"
+                      />
+                    )}
+                  </Group>
+                  {keyMade && (
+                    <Text size="xs" data-testid="sign-key-made">
+                      {T.keyMade(keyMade)}
+                    </Text>
+                  )}
+                </>
+              )}
+            </Stack>
             {error && (
               <Alert color="red" data-testid="confirm-error">
                 {error}
@@ -283,9 +396,9 @@ export function ConfirmDialog({
           </>
         )}
         <Group justify="flex-end" gap="sm">
-          {!done && status && (left > 0 || reason.trim().length === 0) && (
+          {!done && status && blockReason && (
             <Text size="xs" c="dimmed" data-testid="confirm-submit-reason">
-              {left > 0 ? T.pendingLeft(left) : T.reasonEmpty}
+              {blockReason}
             </Text>
           )}
           {done ? (
@@ -337,15 +450,17 @@ export function HistoryDialog({
   const [reason, setReason] = useState("");
   const [msg, setMsg] = useState<{ color: string; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pass, setPass] = useState("");
   const status = load.kind === "ready" ? load.status : null;
 
   const revert = async () => {
-    if (target === null || !status || reason.trim().length === 0) return;
+    if (target === null || !status || reason.trim().length === 0 || pass.length === 0) return;
     setBusy(true);
     const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan }>(
-      await client.callHuman("plan_revert", ROUTES.planRevert.path, { planId, to: target, reason: reason.trim(), basedOn: status.latest?.version ?? null }),
+      await client.callHuman("plan_revert", ROUTES.planRevert.path, { planId, to: target, reason: reason.trim(), basedOn: status.latest?.version ?? null, passphrase: pass }),
     );
     setBusy(false);
+    setPass("");
     if (!r.ok) return setMsg({ color: "red", text: r.message });
     setMsg({ color: "teal", text: H.reverted(r.body.version) });
     setTarget(null);
@@ -378,6 +493,23 @@ export function HistoryDialog({
                   <Table.Td>{new Date(v.at).toLocaleString("ja-JP")}</Table.Td>
                   <Table.Td>{v.reason}</Table.Td>
                   <Table.Td>{H.diff(v.summary.added, v.summary.removed, v.summary.changed)}</Table.Td>
+                  <Table.Td data-testid="history-signatures">
+                    {v.problem ? (
+                      <Text size="xs" c="var(--shu)">
+                        {H.problem[v.problem]}
+                      </Text>
+                    ) : v.legacy ? (
+                      <Text size="xs" c="dimmed">
+                        {H.legacy}
+                      </Text>
+                    ) : (
+                      v.signatures.map((x) => (
+                        <Text size="xs" key={`${x.role}|${x.fingerprint}`}>
+                          {x.by} {H.trust[x.trust] ?? ""}
+                        </Text>
+                      ))
+                    )}
+                  </Table.Td>
                   <Table.Td>
                     {v.version !== status.latest?.version && (
                       <Anchor component="button" size="sm" onClick={() => setTarget(v.version)}>
@@ -397,7 +529,8 @@ export function HistoryDialog({
             </Text>
             <Group align="flex-end" gap="sm">
               <TextInput style={{ flex: 1 }} label={H.revertReason} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={500} />
-              <Button onClick={revert} disabled={reason.trim().length === 0} loading={busy}>
+              <PasswordInput label={H.revertPassphrase} value={pass} onChange={(e) => setPass(e.currentTarget.value)} autoComplete="off" />
+              <Button onClick={revert} disabled={reason.trim().length === 0 || pass.length === 0} loading={busy}>
                 {H.revertSubmit(target)}
               </Button>
             </Group>

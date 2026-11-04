@@ -17,6 +17,8 @@ import {
 } from "../shared/routes";
 import { EXPOSED_TOOL_NAMES, isToolName, toolDef, type ToolKind } from "../shared/tools";
 import { approvedReadingVersions, listReadings, registerReading } from "./readings";
+import { countsForApproval, trustOf } from "./people";
+import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { HumanService, type HumanEnv } from "./human";
@@ -119,12 +121,15 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     log,
   });
   const human = new HumanService({ stateDir: opts.stateDir, packsDir: opts.packsDir ?? resolvePacksDir(), now, ...opts.human });
-  // 読み方（3 段目の Skill）：保管先を読む・未承認の下書きを書く（決まり 1 の例外。承認は人の署名。docs/plan.md §2.17）
+  // 読み方（3 段目の Skill）：保管先を読む・未承認の下書きを書く（決まり 1 の例外。承認は人の署名。docs/plan.md §2.17・§2.18.2）
+  // 承認に数える署名：この PC が信じる鍵（自分の鍵か、確認済みの鍵）のものだけ（§2.18.2）
+  const sd = opts.stateDir;
+  const trusted = (x: SignatureInfo) => sd !== null && countsForApproval(trustOf(sd, x, new Date(now())));
   const tools = new ToolRelay(tabs, opts.toolTimeouts, {
     reading_skills_list: async () => {
       const root = await human.root();
       if (!root) return "no_reading_root";
-      const list = await listReadings(root, await approvedReadingVersions(root));
+      const list = await listReadings(root, await approvedReadingVersions(root, trusted));
       return { skills: list.map(({ skill: _skill, ...x }) => x) };
     },
     reading_skill_register: async (fromTab) => {
@@ -132,7 +137,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (!root) return "no_reading_root";
       const w = await registerReading(root, fromTab.skill, typeof fromTab.by === "string" ? fromTab.by : null, typeof fromTab.facilityKey === "string" ? fromTab.facilityKey : null);
       if (!w.ok) return "tab_bad_result";
-      const approved = (await approvedReadingVersions(root)).has(w.version);
+      const approved = (await approvedReadingVersions(root, trusted)).has(w.version);
       return { path: w.path, version: w.version, approved, rules: w.rules };
     },
   });
@@ -237,6 +242,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     planStatus: delegate,
     planCommit: delegate,
     planRevert: delegate,
+    personKeyCreate: delegate,
+    personKeyConfirm: delegate,
     settingsRead: delegate,
     settingsSave: delegate,
     ringCreate: delegate,

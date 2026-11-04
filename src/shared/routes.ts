@@ -20,6 +20,9 @@ export const HUMAN_ACTIONS = [
   "plan_status",
   "plan_commit",
   "plan_revert",
+  // 人の鍵（版の署名。§2.18.2）：自分の鍵を作る・ほかの人の鍵を確認済みにする
+  "person_key_create",
+  "person_key_confirm",
   // 設定（置き場所・輪のフォルダ・鍵。§2.12、§2.14）
   "settings_read",
   "settings_save",
@@ -78,10 +81,12 @@ export const ROUTES = {
   },
   // ─── 人だけの経路（確定・設定・鍵・検問所）。処理は src/bridge/human.ts ───
   planStatus: human("/human/plan-status", "plan_status", 64 * 1024, "確定した版の一覧と、いちばん新しい版（確定のダイアログを開いたとき）"),
-  planCommit: human("/human/plan-commit", "plan_commit", 32 * 1024 * 1024, "計画を確定する（版のファイルを足し、差分レポートと人が見る様式の星取表の Excel を書く）"),
-  planRevert: human("/human/plan-revert", "plan_revert", 64 * 1024, "前の版に戻す（前の版を指す記録を足す）"),
+  planCommit: human("/human/plan-commit", "plan_commit", 32 * 1024 * 1024, "計画を確定する（合言葉で開いた自分の鍵で版に署名し、版のファイルと署名を足し、差分レポートと人が見る様式の星取表の Excel を書く）"),
+  planRevert: human("/human/plan-revert", "plan_revert", 64 * 1024, "前の版に戻す（前の版を指す記録を足し、自分の鍵で署名する）"),
+  personKeyCreate: human("/human/person-key-create", "person_key_create", 16 * 1024, "自分の鍵（版に署名する）を作り、合言葉で包んで状態フォルダに置く"),
+  personKeyConfirm: human("/human/person-key-confirm", "person_key_confirm", 16 * 1024, "ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない）"),
   settingsRead: human("/human/settings-read", "settings_read", 64 * 1024, "置き場所・Documents の場所・輪の一覧を読む"),
-  settingsSave: human("/human/settings-save", "settings_save", 64 * 1024, "置き場所と、公開の台帳の clone の場所を保存する"),
+  settingsSave: human("/human/settings-save", "settings_save", 64 * 1024, "置き場所・公開の台帳の clone の場所・自分の呼び名を保存する"),
   ringCreate: human("/human/ring-create", "ring_create", 64 * 1024, "輪を作り、その輪の鍵の対を合言葉で包んで状態フォルダに置く"),
   checkpointPreview: human("/human/checkpoint-preview", "checkpoint_preview", 64 * 1024, "検問所：出ていく束のバイト列とハッシュと数（送る処理と同じ関数）"),
   checkpointOpenText: human("/human/checkpoint-open-text", "checkpoint_open_text", 64 * 1024, "検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く"),
