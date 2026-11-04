@@ -13,6 +13,7 @@ export const MCP_INSTRUCTIONS = [
   "取り込みの流れ：intake_survey で要約と質問（選択肢つき）を読む → 利用者に聞いて intake_settle で決定を置く（答えは選択肢の id だけ。作者は ai か ai_relayed_human、理由を添える）→ 質問が無くなるまで繰り返す → intake_compose で作り始める → intake_survey の compose で結果を読む → chart_rows で星取表の行を読む。",
   "当てはめの流れ：intake_survey（part: crosswalk）でパックの 1 段目の項目・作業の属性・欄ごとの多い値・版を読む → chart_rows で節の段の道を読む → crosswalk_propose で規則を置く（節 → 項目のコード、作業 → INSPECT・OVERHAUL・REPLACE・UPGRADE）→ 返った未当てはめの数を見て、決まらないものは利用者に聞く。案は人が画面で受けるまで決まりません。受けてほしいときは、利用者に取り込みの画面の当てはめの欄を見てもらいます。",
   "写真の流れ：人が取り込みの画面で 1 枚ずつ許した写真だけを、photo_transcribe（mode: receive）で 1 回受け取る（画像は結果に添えられる）→ 画像を自分で読み、格子（行・列・文字・受け取った画像の画素での位置・確からしさ）を mode: place で置く。読めない所は推測で埋めない。置いたものは人が画像と並べて確かめるまで要確認で、計画は作れません。許す・確かめるツールはありません。",
+  "詰めきれないとき（質問の選択肢に正しい答えが無い・読み違えている）：開いたままの質問と読み違いの見本の行を利用者に見せ、何がどうなっているかを会話で聞く → 決まった形の規則（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・印の意味・同じ質問への決まった答え）にして reading_rules_propose で下書きに置く（text は人の言葉の 1 文、体言止めか「〜として読む」、名前は「」）→ 読み直した結果を見せる → 利用者が良いと言えば reading_skill_register で保管先に未承認で書く。範囲は、その施設だけなら facility、会社で同じなら company、担当者の癖なら person。承認は、その読み方を使った版への人の署名です。reading_skills_list で保管先の読み方を見られます。",
   "似た施設：利用者が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を peer_reference で読む。返るのは下限を守った集計と匿名の札だけで、場（公開の台帳・輪）をまたいで混ぜない。施設を当てようとしない。周期の案を置いても、確定は人です。",
-  "今動くのは intake_survey・intake_settle・intake_compose・chart_rows・crosswalk_propose・photo_transcribe・check_results・peer_reference です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。",
+  "今動くのは intake_survey・intake_settle・intake_compose・chart_rows・crosswalk_propose・photo_transcribe・check_results・peer_reference・reading_rules_propose・reading_skill_register・reading_skills_list です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。",
 ].join("\n");
