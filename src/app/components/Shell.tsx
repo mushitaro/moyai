@@ -1,5 +1,5 @@
 // 画面の骨組み（デザイン定義 §5.2）：上にヘッダ、下に状態の帯、その間を主の面がすべて使う。
-// - ヘッダ（§10.20）：左に横組みのロゴ（しるし＋「MOYAI」の字。Wire のキャンバスと同じ組み方）、中央に画面のタブ（§10.7）、右に表示の明暗の切り替えと設定。
+// - ヘッダ（§10.20）：左にしるし＋「MOYAI」の字。字は、トップでは大きく墨、ほかの画面ではタブと同じ小さく淡い字にして、今いる所に目を行かせる（しるしの大きさと色は変えない）、中央に画面のタブ（§10.7）、右に表示の明暗の切り替えと設定。
 // - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり、右にビルドの印。
 // 【架空】は各画面が <FictionMark /> を置くと、ここの枠に出る（架空のデータの画面には常に出す）。
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
@@ -55,8 +55,8 @@ function ThemeSwitch() {
 function Header({ hash }: { hash: string }) {
   return (
     <header className="moyai-header">
-      <a className="moyai-seal" href={APP_PAGES.home} title={S.home} data-testid="brand">
-        <BrandMark height={21} />
+      <a className="moyai-seal" href={APP_PAGES.home} title={S.home} data-testid="brand" aria-current={hash === APP_PAGES.home ? "page" : undefined}>
+        <BrandMark height={20} />
         <span className="moyai-seal-word">{TEXT.appName}</span>
       </a>
       <nav className="moyai-tabs" aria-label={S.tabsLabel}>
