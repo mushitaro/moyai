@@ -121,8 +121,20 @@ body {
   border-bottom: 1px solid var(--line);
 }
 .moyai-seal {
+  /* 横組みのロゴ：しるし 21px（幅 26px）、字は Krona One 21px・字間 0.18em、しるしと字の間 11px */
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
   color: var(--text);
   text-decoration: none;
+}
+.moyai-mark {
+  flex: none;
+  display: block;
+}
+.moyai-seal-word {
+  font: 400 21px/1 var(--font-seal);
+  letter-spacing: 0.18em;
 }
 .moyai-header-end {
   margin-left: auto;

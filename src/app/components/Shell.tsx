@@ -1,5 +1,5 @@
 // 画面の骨組み（デザイン定義 §5.2）：上にヘッダ、下に状態の帯、その間を主の面がすべて使う。
-// - ヘッダ（§10.20）：左に「MOYAI」の印の字、中央に画面のタブ（§10.7）、右に表示の明暗の切り替えと設定。
+// - ヘッダ（§10.20）：左に横組みのロゴ（しるし＋「MOYAI」の字。Wire のキャンバスと同じ組み方）、中央に画面のタブ（§10.7）、右に表示の明暗の切り替えと設定。
 // - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり、右にビルドの印。
 // 【架空】は各画面が <FictionMark /> を置くと、ここの枠に出る（架空のデータの画面には常に出す）。
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
@@ -8,6 +8,7 @@ import type { BridgeClient, ConnectionState } from "../bridge-client";
 import { TEXT } from "../text";
 import { APP_PAGES } from "../../shared/routes";
 import { CHART_HASH } from "../chart/route";
+import { BrandMark } from "./BrandMark";
 import { BuildStamp } from "./BuildStamp";
 
 const S = TEXT.shell;
@@ -54,8 +55,9 @@ function ThemeSwitch() {
 function Header({ hash }: { hash: string }) {
   return (
     <header className="moyai-header">
-      <a className="moyai-seal t-seal" href={APP_PAGES.home} title={S.home}>
-        {TEXT.appName}
+      <a className="moyai-seal" href={APP_PAGES.home} title={S.home} data-testid="brand">
+        <BrandMark height={21} />
+        <span className="moyai-seal-word">{TEXT.appName}</span>
       </a>
       <nav className="moyai-tabs" aria-label={S.tabsLabel}>
         {TABS.map((t) => (
