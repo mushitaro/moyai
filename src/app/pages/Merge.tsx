@@ -66,7 +66,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [notice, setNotice] = useState<string | null>(null);
   // リンクを開いたとき、頼みをほかの鍵がもう受け取っていた・頼みが取り下げられていた（見るだけで開く。Wire の B1）
   const [receive, setReceive] = useState<{ state: "takenByOther"; requester: string; receiver: { by: string; fingerprint: string } } | { state: "withdrawn" } | null>(null);
-  const [renewOpen, setRenewOpen] = useState(false);
+  const [renew, setRenew] = useState<{ version: number; to: string } | null>(null);
   // 似た施設を重ねるか（見出しの右。既定は外す）
   const [peersOn, setPeersOn] = useState(false);
 
@@ -435,7 +435,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               <Text span c="dimmed">
                 {"　| "}
               </Text>
-              <Anchor component="button" type="button" size="xs" onClick={() => setRenewOpen(true)} data-testid="request-renew">
+              <Anchor component="button" type="button" size="xs" onClick={() => setRenew({ version: req.version, to: req.to })} data-testid="request-renew">
                 {HUMAN_TEXT.request.renew}
               </Anchor>
             </Text>
@@ -503,9 +503,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />
           <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
-          {askedByMe && req && (
-            <RequestRenewDialog client={client} planId={plan.planId} version={req.version} to={req.to} opened={renewOpen} onClose={() => setRenewOpen(false)} onRenewed={reloadStatus} />
-          )}
+          {/* 頼み直す相手は開いたときに覚える（読み直しの間に状態が消えても、出したメールの文を消さない） */}
+          <RequestRenewDialog client={client} planId={plan.planId} version={renew?.version ?? 0} to={renew?.to ?? ""} opened={!!renew} onClose={() => setRenew(null)} onRenewed={reloadStatus} />
           {st?.latest && signRole && (
             <SignDialog
               client={client}

@@ -84,6 +84,7 @@ export function SignaturesPanel({ v, readings, onKeyConfirmed, request = null }:
       {request && (
         <Text size="xs" data-testid="signature-request" data-received={request.received ? "true" : "false"}>
           {HUMAN_TEXT.request.role[request.kind]}　{request.received ? request.received.by : request.to}
+          {"　"}
           {request.received ? (
             <>
               <Text span c={request.received.trust === "changed" ? "var(--shu-text)" : undefined}>

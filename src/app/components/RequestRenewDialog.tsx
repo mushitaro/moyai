@@ -33,13 +33,14 @@ export function RequestRenewDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mail, setMail] = useState<HandoffMail | null>(null);
+  // 開いたときだけ入れ直す（頼み直したあとに宛先が変わっても、出したメールの文は消さない）
   useEffect(() => {
     if (!opened) return;
     setTo(initialTo);
     setNote("");
     setError(null);
     setMail(null);
-  }, [opened, initialTo]);
+  }, [opened]);
   const can = /^[^\s@]+@[^\s@]+$/.test(to.trim()) && !busy && !mail;
   const submit = async () => {
     if (!can) return;
