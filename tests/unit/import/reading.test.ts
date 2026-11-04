@@ -174,6 +174,10 @@ describe("詰まっている所（intake_survey の stuck）", () => {
     expect(st?.cells).toBeGreaterThan(0);
     expect(st?.rows[0]?.cells.slice(0, 2)).toEqual(["20240406", "1"]);
     expect(st?.rows[0]?.unresolved).toContain("A2");
+    expect(st?.header).toEqual([{ row: 1, cells: ["作業日", "炉", "機器", "作業", "時間(h)"] }]);
+    // 見本は資料ごとに分けて取る。質問には種類（読み方の answer の規則で指す）が付く
+    expect(new Set(s.survey().samples.map((x) => x.fileRef))).toEqual(new Set(["台帳.csv", "日報.csv"]));
+    expect(s.survey().questions.every((q) => q.kind.length > 0)).toBe(true);
     s.setReadings([reading([{ ...base, id: "d1", text: "「作業日」の列の日付は yyyymmdd", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { headers: ["作業日"] } }])]);
     // 日付が読めても、工数の時間の質問が残るうちは詰まったまま。答えると消える
     expect(s.survey().stuck.find((x) => x.fileRef === "日報.csv")?.cells).toBe(10);

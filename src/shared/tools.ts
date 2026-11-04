@@ -293,6 +293,8 @@ export const TOOLS = {
       questions: z.array(
         z.object({
           questionId: z.string(),
+          /** 質問の種類。同じ種類の質問にいつも同じ答えを当てたいときは、読み方の answer の規則の question にこれを書く */
+          kind: z.string(),
           text: z.string(),
           sameShapeRows: z.number().int(),
           defaultAnswer: z.string().nullable(),
@@ -308,6 +310,8 @@ export const TOOLS = {
           z.object({
             fileRef: z.string(),
             cells: z.number().int(),
+            /** 見本の行の表の見出しの行（3 行まで。表の外の行なら空） */
+            header: z.array(z.object({ row: z.number().int(), cells: z.array(z.string()).max(40) })).max(3),
             rows: z
               .array(z.object({ sheet: z.string().nullable(), row: z.number().int(), cells: z.array(z.string()).max(40), unresolved: z.array(z.string()).max(40), questionId: z.string().nullable() }))
               .max(5),

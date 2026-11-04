@@ -49,6 +49,8 @@ export interface Survey {
   notes: string[];
   questions: {
     questionId: string;
+    /** 質問の種類（読み方の answer の規則の question に書く） */
+    kind: string;
     text: string;
     sameShapeRows: number;
     defaultAnswer: string | null;
@@ -57,7 +59,7 @@ export interface Survey {
   }[];
   unresolvedCells: number;
   /** 詰まっている所：未解決のセルのある資料ごとの数と、その行の見本（5 行まで）。questionId はその行を決める質問が分かるときだけ */
-  stuck: { fileRef: string; cells: number; rows: { sheet: string | null; row: number; cells: string[]; unresolved: string[]; questionId: string | null }[] }[];
+  stuck: { fileRef: string; cells: number; header: { row: number; cells: string[] }[]; rows: { sheet: string | null; row: number; cells: string[]; unresolved: string[]; questionId: string | null }[] }[];
   compose: { state: "idle" | "running" | "done" | "failed"; message: string | null };
   /** 取り込みは当てはめを持たないので null。作業画面の側が作業中の計画から足す */
   crosswalk: CrosswalkSurvey | null;
@@ -333,16 +335,24 @@ export class IntakeSession {
   survey(): Survey {
     const an = this.analyze();
     const files = an.sources.map((s) => ({ fileRef: s.file, sheets: s.sheets.length, rows: s.sheets.reduce((a, g) => a + new Set(g.cells.map((c) => c.r)).size, 0) }));
+    // 見本は資料ごとに分けて取る（1 つの資料の表が多くても、ほかの資料の見出しが見えるように）。資料ごとの枠に余りが出たら、次の巡で足す
     const samples: Survey["samples"] = [];
+    const rowText = (lay: SheetLayout, r: number) => lay.index.rowCells(r).slice(0, SAMPLE_CELLS).map((c) => c.text.slice(0, SAMPLE_TEXT));
+    const perFile = new Map<string, { lay: SheetLayout; r: number }[]>();
     for (const lay of an.layouts) {
-      for (const t of lay.tables) {
-        const rows = [...t.headerRows, ...t.rows.filter((r) => r.role === "data" || r.role === "parent").slice(0, 2).map((r) => r.r)];
-        for (const r of rows) {
-          if (samples.length >= SAMPLE_ROWS) break;
-          samples.push({ fileRef: lay.file, row: r, cells: lay.index.rowCells(r).slice(0, SAMPLE_CELLS).map((c) => c.text.slice(0, SAMPLE_TEXT)) });
-        }
+      const xs = perFile.get(lay.file) ?? [];
+      perFile.set(lay.file, xs);
+      for (const t of lay.tables) for (const r of [...t.headerRows, ...t.rows.filter((r) => r.role === "data" || r.role === "parent").slice(0, 2).map((r) => r.r)]) xs.push({ lay, r });
+    }
+    const queues = [...perFile.entries()];
+    for (let i = 0; samples.length < SAMPLE_ROWS && queues.some(([, xs]) => xs.length > i); i++) {
+      for (const [file, xs] of queues) {
+        const x = xs[i];
+        if (!x || samples.length >= SAMPLE_ROWS) continue;
+        samples.push({ fileRef: file, row: x.r, cells: rowText(x.lay, x.r) });
       }
     }
+    samples.sort((a, b) => queues.findIndex(([f]) => f === a.fileRef) - queues.findIndex(([f]) => f === b.fileRef));
     const legends = an.layouts.flatMap((l) => l.tables.flatMap((t) => t.legend.map((e) => ({ mark: e.symbol, meaning: e.meaning }))));
     const notes = [
       ...an.layouts.flatMap((l) => l.notes.map((n) => `${l.file} ${n.ref}：${n.text.slice(0, SAMPLE_TEXT)}`)),
@@ -360,7 +370,7 @@ export class IntakeSession {
       for (const cell of lay.grid.cells) {
         const st = an.composition.status.get(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref: cell.ref }));
         if (st?.s !== "unresolved") continue;
-        const e = stuck.get(lay.file) ?? { fileRef: lay.file, cells: 0, rows: [] };
+        const e = stuck.get(lay.file) ?? { fileRef: lay.file, cells: 0, header: [], rows: [] };
         stuck.set(lay.file, e);
         e.cells++;
         const r = byRow.get(cell.r) ?? { refs: [], q: st.questionId };
@@ -371,7 +381,9 @@ export class IntakeSession {
       if (!e) continue;
       for (const [r, x] of [...byRow].sort((a, b) => a[0] - b[0])) {
         if (e.rows.length >= STUCK_ROWS) break;
-        e.rows.push({ sheet: lay.sheet, row: r, cells: lay.index.rowCells(r).slice(0, SAMPLE_CELLS).map((c) => c.text.slice(0, SAMPLE_TEXT)), unresolved: x.refs.slice(0, SAMPLE_CELLS), questionId: x.q });
+        // 最初に見本にした行の表の見出し（無ければ表の外の行）
+        if (!e.rows.length) for (const h of lay.tables.find((t) => r >= t.top && r <= t.bottom)?.headerRows.slice(0, 3) ?? []) e.header.push({ row: h, cells: rowText(lay, h) });
+        e.rows.push({ sheet: lay.sheet, row: r, cells: rowText(lay, r), unresolved: x.refs.slice(0, SAMPLE_CELLS), questionId: x.q });
       }
     }
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";
@@ -382,6 +394,7 @@ export class IntakeSession {
       notes,
       questions: an.open.map((q) => ({
         questionId: q.questionId,
+        kind: q.kind,
         text: q.text,
         sameShapeRows: q.sameShapeRows,
         defaultAnswer: q.defaultAnswer,
