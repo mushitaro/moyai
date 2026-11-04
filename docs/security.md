@@ -22,6 +22,9 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `share_preview` | 読む | 未実装 | 共有の束に写す数、写さなかった理由ごとの数、k の段を読む。 | 20 秒、1 回だけ送り直す |
 | `peer_reference` | 読む | 動く | 人が星取表の画面で開いた、似た施設との比べ（立場・見え方・場は人が選ぶ）から、下限を守った集計と匿名の札だけを読む。 | 20 秒、1 回だけ送り直す |
 | `skill_eval` | 始める | まだ見せない | Skill の版の一覧と表の要約を読む（list）か、評価を走らせる（run）。 | 20 秒、送り直さない（来なければ「結果不明」） |
+| `reading_rules_propose` | 案を置く | 動く | 取り込みを詰めきれないとき、利用者と会話で決めた読み方の規則を、作業中の版の下書きの読み方（3 段目の Skill）に置く。 | 30 秒、送り直さない（来なければ「結果不明」） |
+| `reading_skill_register` | 案を置く | 動く | 作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。 | 30 秒、送り直さない（来なければ「結果不明」） |
+| `reading_skills_list` | 読む | 動く | 保管先にある 3 段目の Skill（読み方）の一覧。 | 20 秒、1 回だけ送り直す |
 
 ## 上限
 
@@ -48,10 +51,11 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/checkpoint-open-text` | `checkpoint_open_text` | 検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く |
 | `POST /human/checkpoint-send` | `checkpoint_send` | 検問所：合言葉で署名し、束を輪のフォルダに置く |
 | `POST /human/ring-verify` | `ring_verify` | 輪を受け手と同じ関数で確かめる |
+| `POST /human/readings-read` | `readings_read` | 保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む |
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 13 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 14 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

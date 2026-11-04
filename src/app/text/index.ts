@@ -288,6 +288,7 @@ export const TEXT = {
     },
     ai: {
       surveyed: "AI が取り込みの要約を読みました",
+      readingProposed: (name: string, n: number) => `AI が読み方「${name}」に規則を ${n} 置きました（下書き。承認は版の署名で）`,
       settled: (n: number, unresolved: number) => `AI が決定を ${n} 個置きました（残りの未解決 ${unresolved} セル）`,
       settleRefused: (n: number) => `AI の決定 ${n} 個を断りました（当てはまらないものがあったので、どれも置いていません）`,
       composeStarted: "AI が計画を作り始めました",

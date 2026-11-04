@@ -43,6 +43,8 @@ export interface VersionRecord {
   summary: { added: number; removed: number; changed: number; same: number };
   /** 前の版のファイルの SHA-256（最初の版は null） */
   prev: string | null;
+  /** この版を作るのに使った読み方（3 段目の Skill）：名前・保管先からの道・版。署名した版が使った読み方は承認済み（docs/plan.md §2.17） */
+  readingSkills?: { name: string; path: string; version: string }[];
   plan: Plan;
 }
 
@@ -121,6 +123,8 @@ export interface CommitInput {
   now?: Date;
   /** 人が見る様式の書き出しに使う名前の表を、パックの ID から引く（無ければ書き出しを作らない） */
   catalogs?: CatalogsFor;
+  /** 使った読み方（橋渡しが保管先に書いて、道と版を決めたもの） */
+  readingSkills?: { name: string; path: string; version: string }[];
 }
 
 /** 計画を確定する：人が受けていない決定が残っていれば止める。版の記録と差分レポートを足す。 */
@@ -151,6 +155,7 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     client: i.client,
     now: i.now ?? new Date(),
     catalogs: i.catalogs ?? null,
+    readingSkills: i.readingSkills ?? [],
   });
 }
 
@@ -195,6 +200,7 @@ async function writeVersion(
     client: string;
     now: Date;
     catalogs: CatalogsFor | null;
+    readingSkills?: { name: string; path: string; version: string }[];
   },
 ): Promise<CommitResult> {
   const dir = planDir(root, v.plan.planId);
@@ -215,6 +221,7 @@ async function writeVersion(
     acceptances: v.acceptances,
     summary: { added: diff.added, removed: diff.removed, changed: diff.changed, same: diff.same },
     prev: prevText === null ? null : sha(prevText),
+    ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
     plan,
   };
   await mkdir(join(dir, "versions"), { recursive: true });

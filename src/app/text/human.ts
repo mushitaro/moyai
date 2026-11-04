@@ -22,6 +22,7 @@ export const HUMAN_TEXT = {
     exists: "同じ版のファイルがもうあります。閉じて開き直してください。",
     revertUnknown: "戻す先の版がありません。",
     rootInvalid: "置き場所は、ドライブから始まる絶対の道で書いてください（例 D:\\MOYAI）。",
+    readingInvalid: "使った読み方を保管先に書けませんでした（名前か中身の形が違う）。読み方を直してから確定してください。",
     ledgerInvalid: "公開の台帳の clone の場所は、ドライブから始まる絶対の道で書いてください（例 C:\\moyai-ledger）。",
     packNotReady: "このパックには、共有に使う公開語彙・見え方の軸・全国の表のどれかがありません（未実装）。",
     passphraseShort: "合言葉は 8 文字以上にしてください。",

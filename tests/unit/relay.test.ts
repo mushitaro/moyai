@@ -43,13 +43,13 @@ async function connect(opts: RelayOptions): Promise<Client> {
 }
 
 describe("中継の MCP", () => {
-  it("今見せるツール（12 のうち、F3 の画面を待つ skill_eval を除く 11）を、説明と入力・出力の型つきで出す", async () => {
+  it("今見せるツール（15 のうち、F3 の画面を待つ skill_eval を除く 14）を、説明と入力・出力の型つきで出す", async () => {
     const c = await connect({ stateDir: tempState() });
     const { tools } = await c.listTools();
-    expect(TOOL_NAMES).toHaveLength(12);
+    expect(TOOL_NAMES).toHaveLength(15);
     expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
     expect(tools.map((t) => t.name)).not.toContain("skill_eval");
-    expect(tools).toHaveLength(11);
+    expect(tools).toHaveLength(14);
     for (const t of tools) {
       expect(t.description, t.name).toMatch(/人だけ/);
       expect(t.inputSchema.type).toBe("object");
@@ -97,11 +97,18 @@ describe("中継の MCP", () => {
         basis: "b",
       },
       note_for_human: { before: "confirm", text: "見てください" },
+      reading_rules_propose: { name: "【架空】甲", scope: "facility", rules: [{ id: "r1", text: "1 行目を見出しとして読む", kind: "headerRow", row: 1, author: "ai", reason: "r" }] },
+      reading_skill_register: { name: "【架空】甲" },
     };
     for (const name of EXPOSED_TOOL_NAMES) {
       const r = await c.callTool({ name, arguments: args[name] ?? {} });
+      // 保管先を読むだけのツールは、橋渡しが答える（作業画面は要らない）
+      if (BRIDGE_TOOL_RECEIVERS[name] === "bridge") {
+        expect(JSON.stringify(r.content), name).not.toContain("未実装");
+        continue;
+      }
       expect(r.isError, name).toBe(true);
-      if (BRIDGE_TOOL_RECEIVERS[name] === "tab") {
+      if (BRIDGE_TOOL_RECEIVERS[name] === "tab" || BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
         expectError(r, "work_screen_not_open", name);
         expect(JSON.stringify(r.content), name).toContain("作業画面が開いていません");
       } else {

@@ -16,6 +16,7 @@ import {
   type RouteId,
 } from "../shared/routes";
 import { EXPOSED_TOOL_NAMES, isToolName, toolDef, type ToolKind } from "../shared/tools";
+import { approvedReadingVersions, listReadings, registerReading } from "./readings";
 import { ToolRelay } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { HumanService, type HumanEnv } from "./human";
@@ -117,9 +118,25 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     now,
     log,
   });
-  const tools = new ToolRelay(tabs, opts.toolTimeouts);
-  const relayKey = randomBytes(32).toString("base64url");
   const human = new HumanService({ stateDir: opts.stateDir, packsDir: opts.packsDir ?? resolvePacksDir(), now, ...opts.human });
+  // 読み方（3 段目の Skill）：保管先を読む・未承認の下書きを書く（決まり 1 の例外。承認は人の署名。docs/plan.md §2.17）
+  const tools = new ToolRelay(tabs, opts.toolTimeouts, {
+    reading_skills_list: async () => {
+      const root = await human.root();
+      if (!root) return "no_reading_root";
+      const list = await listReadings(root, await approvedReadingVersions(root));
+      return { skills: list.map(({ skill: _skill, ...x }) => x) };
+    },
+    reading_skill_register: async (fromTab) => {
+      const root = await human.root();
+      if (!root) return "no_reading_root";
+      const w = await registerReading(root, fromTab.skill, typeof fromTab.by === "string" ? fromTab.by : null, typeof fromTab.facilityKey === "string" ? fromTab.facilityKey : null);
+      if (!w.ok) return "tab_bad_result";
+      const approved = (await approvedReadingVersions(root)).has(w.version);
+      return { path: w.path, version: w.version, approved, rules: w.rules };
+    },
+  });
+  const relayKey = randomBytes(32).toString("base64url");
   let port = opts.port;
 
   const sendJson = (res: ServerResponse, status: number, body: unknown, extra: Record<string, string> = {}) => {
@@ -228,6 +245,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     checkpointSend: delegate,
     ringVerify: delegate,
     peersCompare: delegate,
+    readingsRead: delegate,
     // 写真を AI クライアントに渡す許し：タブの回と、渡す画像のハッシュに結んでメモリに置く（中身の画像は受けない）
     photoAllow: (res, h) => sendJson(res, 200, tools.allowPhoto(h.session, h.payload)),
   };

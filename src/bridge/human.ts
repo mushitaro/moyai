@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
 import { commitPlan, readHistory, revertPlan, PLAN_ID, type ExportCatalogs } from "../plan/store";
+import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, questionsOf, sendCheckpoint, verifyRing, type Answers } from "../share/checkpoint";
@@ -66,7 +67,10 @@ const SCHEMAS = {
     reason: z.string().max(500),
     acceptances: z.array(z.object({ id: z.string().max(200), hash: z.string().regex(/^[0-9a-f]{16}$/), reason: z.string().max(500) })).max(100_000),
     basedOn: z.number().int().min(1).nullable(),
+    /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
+    readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
+  readings_read: z.object({}),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable() }),
   settings_read: z.object({}),
   settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional() }),
@@ -190,7 +194,14 @@ export class HumanService {
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        const r = await commitPlan({ root, plan: p.plan, reason: p.reason, acceptances: p.acceptances, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
+        // 使った読み方を保管先に書き、道と版を版の記録に書く（この版に人が署名すると、その版の読み方が承認済みになる）
+        const readingSkills: { name: string; path: string; version: string }[] = [];
+        for (const x of p.readings ?? []) {
+          const w = await registerReading(root, x.skill, x.by, x.facilityKey);
+          if (!w.ok) return no("readingInvalid");
+          readingSkills.push({ name: (x.skill as { name: string }).name, path: w.path, version: w.version });
+        }
+        const r = await commitPlan({ root, plan: p.plan, reason: p.reason, acceptances: p.acceptances, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id), readingSkills });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
       }
@@ -276,6 +287,13 @@ export class HumanService {
         const ring = await loadRing(sd, p.ringId, pack);
         if (!ring.ok) return no(ring.reason);
         return { ok: true, report: await verifyRing(entry.root, p.ringId, pack, ring.confirmed) };
+      }
+      case "readings_read": {
+        if (!parsePayload("readings_read", call.payload)) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return { ok: true, root: null, readings: [] };
+        const list = await listReadings(root, await approvedReadingVersions(root));
+        return { ok: true, root, readings: loadedOf(list) };
       }
       case "peers_compare": {
         const p = parsePayload("peers_compare", call.payload);

@@ -4,6 +4,8 @@
 // React を持たない純粋な TS にして、試験（vitest）から工場の資料で動かせるようにする。
 import { IntakeSession, type Analysis, type IntakeOptions, type Survey } from "../../import";
 import { PhotoBook, photoMimeOf } from "../../import/photo";
+import type { LoadedReading, ReadingRule, ReadingScope } from "../../import/reading";
+import { setCurrentReadings } from "../state/readings";
 import type { Decision, QuestionKind, QuestionState } from "../../import/questions";
 import type { InputFile } from "../../import/read";
 import { PhotoDesk } from "./photos";
@@ -101,6 +103,9 @@ export class IntakeWorkspace {
   readonly photoBook = new PhotoBook();
   /** 写真を AI に渡す記録と、写真のツールの受け手・人の確かめの操作 */
   readonly photos: PhotoDesk;
+
+  /** 当てる読み方：承認済みの読み方（保管先から）と、作業中の版の下書き（会話で置いたもの） */
+  private readings: LoadedReading[] = [];
 
   constructor(public settings: WorkspaceSettings) {
     this.session = new IntakeSession(this.optionsOf(settings), this.photoBook);
@@ -215,10 +220,50 @@ export class IntakeWorkspace {
     const s = new IntakeSession(this.optionsOf(next), this.photoBook);
     await s.add(this.inputs.filter((f) => photoMimeOf(f.name) === null));
     for (const d of decisions) s.settle([d]);
+    s.setReadings(this.readings);
     this.session = s;
     this.settings = next;
     this.cache = null;
     this.changed(true, true);
+  }
+
+  /** 承認済みの読み方を置き換える（保管先から読んだもの）。作業中の下書きは残す */
+  setApprovedReadings(list: readonly LoadedReading[]): void {
+    this.readings = [...this.readings.filter((r) => r.draft), ...list.filter((r) => !r.draft)];
+    this.session.setReadings(this.readings);
+    setCurrentReadings(this.readings, this.facilityKey());
+    this.changed(true, true);
+  }
+
+  /**
+   * 会話で決めた規則を、作業中の版の下書きの読み方に置く（同じ id の規則は置き換え、ほかは足す）。読み直して、規則ごとに効いたセルを返す。
+   * 保管先には書かない（書くのは reading_skill_register）
+   */
+  proposeReading(name: string, scope: ReadingScope, rules: readonly ReadingRule[]): { id: string; text: string; hits: number }[] {
+    const prev = this.readings.find((r) => r.draft && r.skill.name === name);
+    const merged = [...(prev?.skill.rules ?? []).filter((x) => !rules.some((y) => y.id === x.id)), ...rules];
+    const draft: LoadedReading = { skill: { schema: "moyai.reading/0", name, scope, rules: merged }, version: "", path: null, approved: false, draft: true };
+    this.readings = [...this.readings.filter((r) => r !== prev), draft];
+    this.session.setReadings(this.readings);
+    setCurrentReadings(this.readings, this.facilityKey());
+    this.changed(true, true);
+    const hits = this.analysis().ruleHits;
+    return merged.map((x) => ({ id: x.id, text: x.text, hits: hits.count(x.id) }));
+  }
+
+  /** 施設の鍵（施設の読み方の置き場所の名前に使う） */
+  facilityKey(): string {
+    return this.optionsOf(this.settings).facility.facilityKey;
+  }
+
+  /** 作業中の版の下書きの読み方（名前で） */
+  draftReading(name: string): LoadedReading | null {
+    return this.readings.find((r) => r.draft && r.skill.name === name) ?? null;
+  }
+
+  /** 当てている読み方（「読み方」のタブ） */
+  currentReadings(): LoadedReading[] {
+    return [...this.readings];
   }
 
   analysis(): Analysis {

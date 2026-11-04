@@ -37,8 +37,8 @@ function ok(r: ReturnType<typeof runTabTool>): any {
   return r.data;
 }
 
-test("受け手が tab のツールには、どれもタブの側の受け手がある", () => {
-  for (const n of TOOL_NAMES) expect(Boolean(TAB_TOOL_RECEIVERS[n]), n).toBe(BRIDGE_TOOL_RECEIVERS[n] === "tab");
+test("受け手が tab のツール（と、タブの中身を橋渡しが書くツール）には、どれもタブの側の受け手がある", () => {
+  for (const n of TOOL_NAMES) expect(Boolean(TAB_TOOL_RECEIVERS[n]), n).toBe(BRIDGE_TOOL_RECEIVERS[n] === "tab" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge");
 });
 
 describe("工場の資料で、要約 → 決定 → 計画 → 星取表の行", () => {

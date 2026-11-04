@@ -31,6 +31,7 @@ export const HUMAN_ACTIONS = [
   "ring_verify",
   // 受け手：似た施設と並べる（§2.8 受け取りと 3 つの立場。台帳の clone と自分の輪を受け手の関数で読む）
   "peers_compare",
+  "readings_read",
   // 写真を AI クライアントに渡す許し（§2.3・§2.12。1 枚ごと、その画像のハッシュに結ぶ）
   "photo_allow",
 ] as const;
@@ -86,6 +87,7 @@ export const ROUTES = {
   checkpointOpenText: human("/human/checkpoint-open-text", "checkpoint_open_text", 64 * 1024, "検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く"),
   checkpointSend: human("/human/checkpoint-send", "checkpoint_send", 64 * 1024, "検問所：合言葉で署名し、束を輪のフォルダに置く"),
   ringVerify: human("/human/ring-verify", "ring_verify", 64 * 1024, "輪を受け手と同じ関数で確かめる"),
+  readingsRead: human("/human/readings-read", "readings_read", 16 * 1024, "保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む"),
   peersCompare: human("/human/peers-compare", "peers_compare", 64 * 1024, "受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る"),
   // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）
   photoAllow: human("/human/photo-allow", "photo_allow", 64 * 1024, "写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる）"),

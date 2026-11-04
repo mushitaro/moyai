@@ -4,6 +4,7 @@
 import { z } from "zod";
 import toolNames from "./tool-names.json";
 import { FIELD_REFS, WORK_ATTRIBUTES, type FieldRef } from "./fields";
+import { READING_SCOPES, ReadingRule } from "../import/reading";
 
 // ─── 規則の形（1 か所だけ）─────────────────────────────────────────
 
@@ -489,6 +490,40 @@ export const TOOLS = {
         }),
       ),
       cards: z.array(z.object({ place: z.enum(["ledger", "ring"]), card: z.string(), commonItem: z.string(), work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]) })),
+    }),
+  ),
+  reading_rules_propose: def(
+    "reading_rules_propose",
+    "propose",
+    "読み方の規則を下書きで置く",
+    "取り込みを詰めきれないとき、利用者と会話で決めた読み方の規則を、作業中の版の下書きの読み方（3 段目の Skill）に置く。規則は決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・印の意味・同じ質問への決まった答え）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型）。同じ id の規則は置き換える。作業画面がすぐ読み直し、規則ごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
+    z.object({ name: z.string().min(1).max(80), scope: z.enum(READING_SCOPES), rules: z.array(ReadingRule).min(1).max(50) }),
+    z.object({
+      name: z.string(),
+      rules: z.array(z.object({ id: z.string(), text: z.string(), hits: z.number().int() })),
+      unresolvedCells: z.number().int(),
+      openQuestions: z.number().int(),
+      planReady: z.boolean(),
+    }),
+  ),
+  reading_skill_register: def(
+    "reading_skill_register",
+    "propose",
+    "読み方を保管先に未承認で書く",
+    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：by の担当者、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
+    z.object({ name: z.string().min(1).max(80), by: z.string().min(1).max(40).optional() }),
+    z.object({ path: z.string(), version: z.string(), approved: z.boolean(), rules: z.number().int() }),
+  ),
+  reading_skills_list: def(
+    "reading_skills_list",
+    "read",
+    "保管先の読み方の一覧",
+    "保管先にある 3 段目の Skill（読み方）の一覧。名前・範囲・道・版・規則の数・承認済みか（その読み方を使った版に署名があるか）。中身の規則は返さない。",
+    z.object({}),
+    z.object({
+      skills: z.array(
+        z.object({ name: z.string(), scope: z.enum(READING_SCOPES), path: z.string(), version: z.string(), rules: z.number().int(), approved: z.boolean() }),
+      ),
     }),
   ),
   skill_eval: def(

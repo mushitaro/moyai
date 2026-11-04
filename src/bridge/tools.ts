@@ -18,7 +18,14 @@ import {
 } from "../shared/tools";
 import type { TabHub } from "./tab";
 
-export type ToolReceiver = "not_implemented" | "tab";
+/** tab：作業画面が答える。bridge：橋渡しが答える。tab_then_bridge：作業画面が渡した中身を、橋渡しが書く（読み方を保管先に書く） */
+export type ToolReceiver = "not_implemented" | "tab" | "bridge" | "tab_then_bridge";
+
+/** 橋渡しが答えるツール（保管先を読む・書く）。誤りは誤りの名前で返す */
+export interface BridgeTools {
+  reading_skills_list?: (args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+  reading_skill_register?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+}
 
 export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   intake_survey: "tab",
@@ -32,6 +39,9 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   note_for_human: "not_implemented",
   share_preview: "not_implemented",
   peer_reference: "tab",
+  reading_rules_propose: "tab",
+  reading_skill_register: "tab_then_bridge",
+  reading_skills_list: "bridge",
   skill_eval: "not_implemented",
 };
 
@@ -100,6 +110,7 @@ export class ToolRelay {
   constructor(
     private readonly tabs: TabHub,
     private readonly timeouts: Partial<Record<ToolKind, number>> = {},
+    private readonly bridgeTools: BridgeTools = {},
   ) {}
 
   rowsReadIn(conversation: string): number {
@@ -152,6 +163,15 @@ export class ToolRelay {
     if (BRIDGE_TOOL_RECEIVERS[name] === "not_implemented") return errorBody("not_implemented");
     const def = toolDef(name);
     const fail = (code: ErrorCode) => errorBody(code);
+    const finish = (r: Record<string, unknown> | ErrorCode): ToolAnswer => {
+      if (typeof r === "string") return fail(r);
+      const p = def.output.safeParse(r);
+      return p.success ? { ok: true, data: p.data as Record<string, unknown> } : fail("tab_bad_result");
+    };
+    if (BRIDGE_TOOL_RECEIVERS[name] === "bridge") {
+      const h = (this.bridgeTools as Record<string, ((a: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>) | undefined>)[name];
+      return h ? finish(await h(args)) : fail("not_implemented");
+    }
 
     let sendArgs = args;
     const used = this.rowsReadIn(conversation);
@@ -170,6 +190,10 @@ export class ToolRelay {
     if (out.kind === "no_tab") return fail("work_screen_not_open");
     if (out.kind === "no_answer") return fail("tab_no_answer");
     if (out.kind === "error") return fail(out.code);
+    if (BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
+      const h = this.bridgeTools.reading_skill_register;
+      return h && name === "reading_skill_register" ? finish(await h(out.data as Record<string, unknown>, args)) : fail("not_implemented");
+    }
 
     const parsed = def.output.safeParse(out.data);
     if (!parsed.success) return fail("tab_bad_result");

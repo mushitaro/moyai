@@ -2,6 +2,7 @@
 // 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、一言の理由を書いて受けるまで確定できない。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
 import { Alert, Anchor, Badge, Button, Checkbox, Group, Modal, ScrollArea, Stack, Table, Text, TextInput } from "@mantine/core";
+import { readingsForCommit } from "../state/readings";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
@@ -117,6 +118,8 @@ export function ConfirmDialog({
       reason: reason.trim(),
       acceptances: accepted.map((d) => ({ id: d.id, hash: d.hash, reason: accept[d.id]!.reason.trim() })),
       basedOn: status.latest?.version ?? null,
+      // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
+      readings: readingsForCommit(),
     };
     const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null } }>(
       await client.callHuman("plan_commit", ROUTES.planCommit.path, payload),

@@ -66,8 +66,8 @@ describe("誤りの送り手と受け手", () => {
 });
 
 describe("ツールの送り手と受け手", () => {
-  it("tool-names.json と TOOLS が同じ 12。中継が出すのは今見せるものだけ", () => {
-    expect(toolNames).toHaveLength(12);
+  it("tool-names.json と TOOLS が同じ 15。中継が出すのは今見せるものだけ", () => {
+    expect(toolNames).toHaveLength(15);
     expect(Object.keys(TOOLS).sort()).toEqual([...toolNames].sort());
     expect(TOOL_NAMES).toEqual(toolNames);
     for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
@@ -83,7 +83,9 @@ describe("ツールの送り手と受け手", () => {
     const notImplemented = TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "not_implemented");
     console.log(`contract: ツール ${TOOL_NAMES.length} のうち未実装 ${notImplemented.length}（今見せるもの ${EXPOSED_TOOL_NAMES.length}）`);
     // 作業画面へ渡すもの：取り込みの 3 つ、写真、星取表の行、当てはめの案、検査の結果、似た施設の参考。処理を足したら、この数を減らす
-    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "tab").sort()).toEqual(["chart_rows", "check_results", "crosswalk_propose", "intake_compose", "intake_settle", "intake_survey", "peer_reference", "photo_transcribe"]);
+    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "tab").sort()).toEqual(["chart_rows", "check_results", "crosswalk_propose", "intake_compose", "intake_settle", "intake_survey", "peer_reference", "photo_transcribe", "reading_rules_propose"]);
+    // 保管先を読む・書くのは橋渡し（書くのは未承認の読み方の下書きだけ。決まり 1 の例外。docs/plan.md §2.17）
+    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge").sort()).toEqual(["reading_skill_register", "reading_skills_list"]);
     expect(notImplemented).toHaveLength(4);
   });
 

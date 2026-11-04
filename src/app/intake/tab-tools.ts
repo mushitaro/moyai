@@ -10,6 +10,7 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
 import { getPeerView } from "../state/peers";
+import type { ReadingRule, ReadingScope } from "../../import/reading";
 import { STAT_FIELDS } from "../../share/bands";
 import { RECEIVE_MIN_K } from "../../share/k";
 import type { StatCell } from "../../share/aggregate";
@@ -84,6 +85,19 @@ function peerReference(commonItem: string | undefined): TabToolResult {
 }
 
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
+  reading_rules_propose: (ws, args) => {
+    const rules = ws.proposeReading(String(args.name), args.scope as ReadingScope, args.rules as ReadingRule[]);
+    const an = ws.analysis();
+    const unresolved = [...an.composition.status.values()].filter((x) => x.s === "unresolved").length;
+    ws.note("ai", T.readingProposed(String(args.name), (args.rules as unknown[]).length));
+    return { ok: true, data: { name: args.name, rules, unresolvedCells: unresolved, openQuestions: an.open.length, planReady: an.composition.blockers.length === 0 } };
+  },
+  // 橋渡しが保管先に書く下書き（作業画面は中身を渡すだけ。書くのは橋渡し）
+  reading_skill_register: (ws, args) => {
+    const d = ws.draftReading(String(args.name));
+    if (!d) return { ok: false, code: "no_reading_draft" };
+    return { ok: true, data: { skill: d.skill, by: typeof args.by === "string" ? args.by : null, facilityKey: ws.facilityKey() } };
+  },
   peer_reference: (_ws, args) => peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined),
   intake_survey: (ws, args) => {
     const part = args.part as "all" | "questions" | "compose" | "crosswalk";

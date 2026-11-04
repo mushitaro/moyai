@@ -3,14 +3,15 @@
 import { MantineProvider, useComputedColorScheme } from "@mantine/core";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Shell } from "./components/Shell";
-import { bridgeClient } from "./state/bridge";
+import { bridgeClient, useConnection } from "./state/bridge";
+import type { LoadedReading } from "../import/reading";
 import { Home } from "./pages/Home";
 import { Intake } from "./pages/Intake";
 import { IntakeWorkspace } from "./intake/workspace";
 import { connectTabTools } from "./intake/tab-tools";
 import { SelfTest } from "./pages/SelfTest";
 import { CHART_HASH } from "./chart/route";
-import { APP_PAGES } from "../shared/routes";
+import { APP_PAGES, ROUTES } from "../shared/routes";
 import { moyaiCssVariables, moyaiTheme } from "../ui/mantine-theme";
 
 // 星取表は AG Grid を含むので、開いたときに読む
@@ -47,11 +48,25 @@ function ThemeSync() {
   return null;
 }
 
+/** 橋渡しとつながったら、保管先の承認済みの読み方（3 段目の Skill）を作業画面に読み込む（docs/plan.md §2.17） */
+function ReadingsSync() {
+  const { state } = useConnection();
+  useEffect(() => {
+    if (state.kind !== "open") return;
+    void (async () => {
+      const r = await client.callHuman("readings_read", ROUTES.readingsRead.path, {});
+      if (r.ok && (r.body as { ok?: boolean }).ok) workspace.setApprovedReadings(((r.body as { readings?: LoadedReading[] }).readings ?? []) as LoadedReading[]);
+    })();
+  }, [state.kind]);
+  return null;
+}
+
 export function App() {
   const hash = useHash();
   return (
     <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
       <ThemeSync />
+      <ReadingsSync />
       <Shell client={client} hash={hash}>
       {hash === APP_PAGES.selftest ? (
         <SelfTest />
