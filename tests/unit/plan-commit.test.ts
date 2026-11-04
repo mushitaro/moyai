@@ -215,6 +215,38 @@ describe("版の署名（docs/plan.md §2.18.2）", () => {
     const h = await readHistory(rt, "plan-test");
     expect(h.versions[0]).toMatchObject({ legacy: true, problem: null, signatures: [] });
   });
+
+  it("前の形の版（v0）は先頭に続く部分だけ。署名のある版のあとに置いた v0 は鎖が合わない版で、最新にも基底にもならず、受けた決定にも数えない", async () => {
+    const { rt, d } = await twoVersions();
+    const tail = {
+      schema: VERSION_SCHEMA_V0, planId: "plan-test", version: 3, kind: "confirm", revertOf: null, at: "2026-11-05T00:00:00.000Z", author: "human", client: "t",
+      reason: "署名なしで足した版", acceptances: [{ id: "x", hash: "0".repeat(16), reason: "勝手に受けた", author: "human" }], summary: { added: 0, removed: 0, changed: 0, same: 0 }, prev: null,
+      plan: { ...aiPlan(), version: 3 },
+    };
+    writeFileSync(join(d, "versions", "000003.json"), JSON.stringify(tail));
+    const h = await readHistory(rt, "plan-test");
+    expect(h.versions.map((v) => [v.version, v.legacy, v.problem])).toEqual([[1, false, null], [2, false, null], [3, true, "chain"]]);
+    expect(h.accepted.some((a) => a.id === "x")).toBe(false);
+    // 鎖が合わない版の上には重ねない
+    expect(await commitPlan({ root: rt, plan: aiPlan(), reason: "4 版目", acceptances: [], basedOn: 3, signer: SIGNER, client: "t" })).toEqual({ ok: false, reason: "historyBroken" });
+  });
+
+  it("鎖は親の中身と作った署名だけを持つ：親にあとから承認が足されても（同期で遅れて届いても）、次の版の鎖は切れない", async () => {
+    const { rt, d } = await twoVersions();
+    const h = await readHistory(rt, "plan-test");
+    const rec2 = JSON.parse(readFileSync(join(d, "versions", "000002.json"), "utf8"));
+    expect(rec2.parent.signatures).toHaveLength(1);
+    // 1 版目に、2 版目を作ったあとで承認が届く
+    const boss = otherSigner("【架空】課長");
+    const late = signStatement({ planId: "plan-test", version: 1, contentHash: h.versions[0]!.contentHash, role: "approve", by: boss.by, at: "2026-11-05T05:00:00.000Z", reason: "遅れて届いた承認" }, boss.pair);
+    writeFileSync(join(d, "signatures", signatureFileName(1, "approve", late.statement.key)), JSON.stringify(late));
+    const h2 = await readHistory(rt, "plan-test");
+    expect(h2.versions.map((v) => v.problem)).toEqual([null, null]);
+    expect(h2.versions[0]!.signatures.map((x) => x.role).sort()).toEqual(["approve", "confirm"]);
+    // 作った署名を消すと、鎖は切れる
+    rmSync(join(d, "signatures", signatureFileName(1, "confirm", keyIdOf(SIGNER.pair.pub))));
+    expect((await readHistory(rt, "plan-test")).versions.map((v) => v.problem)).toEqual(["unsigned", "chain"]);
+  });
 });
 
 describe("渡す・承認・差し戻し（docs/plan.md §2.18.2・docs/screens.md 3.4）", () => {
@@ -227,8 +259,9 @@ describe("渡す・承認・差し戻し（docs/plan.md §2.18.2・docs/screens.
     if (!v1.ok) throw new Error(v1.reason);
     const h1 = await readHistory(rt, "plan-test");
     expect(h1.versions[0]).toMatchObject({ problem: null, signatures: [{ role: "edit", by: SIGNER.by }] });
-    // 自分の版は自分で承認できない
+    // 自分の版は自分で承認できない。同じ呼び名の 2 つ目の鍵でも同じ
     expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: SIGNER })).toEqual({ ok: false, reason: "selfApprove" });
+    expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: otherSigner(SIGNER.by) })).toEqual({ ok: false, reason: "selfApprove" });
     const boss = otherSigner("【架空】課長");
     // 差し戻しは理由が要る
     expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "return", reason: " ", signer: boss })).toEqual({ ok: false, reason: "reasonEmpty" });
@@ -236,10 +269,10 @@ describe("渡す・承認・差し戻し（docs/plan.md §2.18.2・docs/screens.
     const h2 = await readHistory(rt, "plan-test");
     expect(h2.versions[0]!.signatures.map((x) => [x.role, x.by]).sort()).toEqual([["approve", "【架空】課長"], ["edit", SIGNER.by]]);
     expect(h2.versions[0]!.problem).toBeNull();
-    // 次の版は、承認の署名まで含めた親の鎖を持つ。そのあとは、前の版には足せない
+    // 次の版の鎖は、親を作った署名だけを持つ（承認は入れない）。そのあとは、前の版には足せない
     const v2 = await commitPlan({ root: rt, plan: v1.record.plan, reason: "2 版目", acceptances: [], basedOn: 1, signer: SIGNER, client: "t" });
     if (!v2.ok) throw new Error(v2.reason);
-    expect(v2.record.parent!.signatures).toHaveLength(2);
+    expect(v2.record.parent!.signatures).toHaveLength(1);
     expect((await readHistory(rt, "plan-test")).versions.every((v) => v.problem === null)).toBe(true);
     expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: otherSigner() })).toEqual({ ok: false, reason: "notLatest" });
   });

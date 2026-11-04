@@ -11,6 +11,7 @@ import type { BridgeClient } from "../bridge-client";
 import { ConfirmDialog, HistoryDialog, readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { ROUTES } from "../../shared/routes";
 import { SignDialog } from "../components/SignDialog";
+import { KeyWarnLine, untrustedSigners, type TrustSig } from "../components/KeyWarn";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
 import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
 import { ReadingsSheet, unapprovedReadings } from "../components/ReadingsSheet";
@@ -185,6 +186,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
   const sideOpen = !!an && openQuestions > 0;
   const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
+  // 承認を頼まれた人に知らせる、頼まれた版を作った鍵のうち、まだ確かめていないもの（KeyWarn.dc.html の 1）
+  const latestUntrusted = latestInfo ? untrustedSigners([latestInfo as { signatures: TrustSig[] }]) : [];
   const sideSource = current === "chart";
   const sideComments = !!plan;
   const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
@@ -362,7 +365,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                 <Questions ws={ws} an={an} />
               </>
             )}
-            {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} />}
+            {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} onKeyConfirmed={reloadStatus} />}
             {sideNow === "comments" && plan && (
               <CommentsPanel
                 client={client}
@@ -389,6 +392,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               {turnLine.text}
             </Text>
           )}
+          {awaitingMe && st?.latest && <KeyWarnLine signers={latestUntrusted} onConfirmed={reloadStatus} onShow={() => setSide("signatures")} />}
         </Group>
         {/* 白紙のあいだ（版の下書きが無い）：主ボタンは「第 1 版をつくる」の 1 つだけ（MergeNew.dc.html） */}
         {!plan ? (
@@ -449,6 +453,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               version={st.latest.version}
               role={signRole}
               hasKey={!!st.hasKey}
+              untrusted={signRole === "approve" ? latestUntrusted : []}
+              onKeyConfirmed={reloadStatus}
               opened={!!signRole}
               onClose={() => setSignRole(null)}
               onSigned={() => {

@@ -12,7 +12,7 @@ import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLate
 import { COMMENT_MAX, addComment, readComments } from "../plan/comments";
 import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
-import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustList, trustOf } from "./people";
+import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previousOf, trustList, trustOf } from "./people";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
@@ -118,7 +118,7 @@ const SCHEMAS = {
   plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({}),
-  person_key_confirm: z.object({ key: z.string().regex(/^[0-9a-f]{16}$/) }),
+  person_key_confirm: z.object({ pub: z.string().regex(HEX64) }),
   settings_read: z.object({}),
   settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional(), name: z.string().max(40).nullable().optional() }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID) }),
@@ -335,8 +335,14 @@ export class HumanService {
         const root = await this.root();
         if (!root) return no("noRoot");
         const h = await readHistory(root, p.planId);
-        // 署名ごとに、この PC が覚えた鍵と照らした信じ方を添える（未確認の鍵は覚えるが、信じはしない）
-        const versions = h.versions.map((v) => ({ ...v, signatures: v.signatures.map((x) => ({ ...x, trust: trustOf(sd, x, now), fingerprint: fingerprint(x.pub) })) }));
+        // 署名ごとに、この PC が覚えた鍵と照らした信じ方を添える（未確認の鍵は覚えるが、信じはしない）。替わった鍵には、前に確かめた鍵の指紋
+        const versions = h.versions.map((v) => ({
+          ...v,
+          signatures: v.signatures.map((x) => {
+            const trust = trustOf(sd, x, now);
+            return { ...x, trust, fingerprint: fingerprint(x.pub), previous: trust === "changed" ? previousOf(sd, x.pub) : null };
+          }),
+        }));
         const s = readSettings(sd);
         return {
           ok: true,
@@ -495,6 +501,8 @@ export class HumanService {
                 roles: v.signatures.map((x) => x.role),
                 // 版を作った人（確定か渡すの署名の呼び名）。トップの「ほかの人が持っていた間」に使う
                 by: v.signatures.find((x) => x.role === "confirm" || x.role === "edit" || x.role === "revert")?.by ?? null,
+                // 版を作った鍵が、前に確かめた鍵と替わっている（トップは替わったときだけ朱で知らせる。KeyWarn.dc.html の 6）
+                keyChanged: v.signatures.some((x) => (x.role === "confirm" || x.role === "edit" || x.role === "revert") && trustOf(sd, x, now) === "changed"),
                 problem: v.problem,
                 legacy: v.legacy,
               })),
@@ -565,7 +573,7 @@ export class HumanService {
       case "person_key_confirm": {
         const p = parsePayload("person_key_confirm", call.payload);
         if (!p) return no("payloadInvalid");
-        return confirmKey(sd, p.key) ? { ok: true, key: p.key } : no("keyUnknown");
+        return confirmKey(sd, p.pub, now) ? { ok: true, key: keyIdOf(p.pub) } : no("keyUnknown");
       }
       case "ring_create": {
         const p = parsePayload("ring_create", call.payload);
@@ -825,6 +833,8 @@ export class HumanService {
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
+    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない
+    if (h.versions.at(-1)?.problem) return fail("historyBroken");
     const plan = h.latest.plan;
     const pack = this.pack(plan.packId);
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });
@@ -876,6 +886,8 @@ export class HumanService {
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
+    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない
+    if (h.versions.at(-1)?.problem) return fail("historyBroken");
     const plan = h.latest.plan;
     const pack = this.pack(plan.packId);
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });

@@ -31,6 +31,10 @@ export interface TrustEntry {
   firstSeen: string;
   confirmed: boolean;
   own: boolean;
+  /** 人が指紋を読み合わせて確認済みにした時刻 */
+  confirmedAt?: string;
+  /** 確認済みの同じ呼び名の鍵があったのに、この鍵が出てきた（その鍵の鍵 ID）。人が確認済みにするまで「替わった」のまま */
+  changedFrom?: string;
 }
 
 /** 署名の鍵の信じ方：自分の鍵・確認済み・未確認・覚えた呼び名と違う鍵（替わった） */
@@ -100,23 +104,39 @@ export function oldOwnKeys(stateDir: string): { key: string; by: string; wrapped
     .map((f) => ({ key: keyIdOf(f.wrapped.pub), by: f.by, wrapped: f.wrapped }));
 }
 
-/** 署名の鍵を、覚えた鍵と照らす。初めて見た鍵は未確認として覚える（信じはしない） */
+/**
+ * 署名の鍵を、覚えた鍵と照らす。初めて見た鍵は未確認として覚える（信じはしない）。
+ * 確認済みの呼び名に知らない鍵が出てきたら、どの鍵から替わったかも覚え、人が確認済みにするまで「替わった」を返し続ける
+ * （1 回目の表示で警告が消えないように）。
+ */
 export function trustOf(stateDir: string, sig: { by: string; key: string; pub: string }, now: Date): Trust {
   const entries = readTrust(stateDir);
   const hit = entries.find((e) => e.key === sig.key && e.pub === sig.pub);
-  if (hit) return hit.own ? "own" : hit.by !== sig.by ? "changed" : hit.confirmed ? "confirmed" : "unconfirmed";
-  const sameName = entries.some((e) => e.by === sig.by && e.confirmed);
-  writeTrust(stateDir, [...entries, { by: sig.by, key: sig.key, pub: sig.pub, firstSeen: now.toISOString(), confirmed: false, own: false }]);
-  // 確認済みの呼び名に、知らない鍵が出てきた
-  return sameName ? "changed" : "unconfirmed";
+  if (hit) return hit.own ? "own" : hit.by !== sig.by ? "changed" : hit.confirmed ? "confirmed" : hit.changedFrom ? "changed" : "unconfirmed";
+  const before = entries.find((e) => e.by === sig.by && e.confirmed);
+  writeTrust(stateDir, [
+    ...entries,
+    { by: sig.by, key: sig.key, pub: sig.pub, firstSeen: now.toISOString(), confirmed: false, own: false, ...(before ? { changedFrom: before.key } : {}) },
+  ]);
+  return before ? "changed" : "unconfirmed";
 }
 
-/** 人が指紋を読み合わせて、鍵を確認済みにする（人だけの経路） */
-export function confirmKey(stateDir: string, key: string): boolean {
+/** 「替わった」鍵の、前に確かめた鍵の指紋と確かめた時刻（読み合わせのダイアログに薄く出す）。無ければ null */
+export function previousOf(stateDir: string, pub: string): { fingerprint: string; at: string } | null {
   const entries = readTrust(stateDir);
-  const e = entries.find((x) => x.key === key);
+  const e = entries.find((x) => x.pub === pub);
+  const before = e?.changedFrom ? entries.find((x) => x.key === e.changedFrom && x.confirmed) : e ? entries.find((x) => x.by === e.by && x.confirmed && x.pub !== pub) : undefined;
+  return before ? { fingerprint: fingerprint(before.pub), at: before.confirmedAt ?? before.firstSeen } : null;
+}
+
+/** 人が指紋を読み合わせて、鍵を確認済みにする（人だけの経路）。鍵 ID は 64 ビットなので、公開鍵で決める */
+export function confirmKey(stateDir: string, pub: string, now: Date = new Date()): boolean {
+  const entries = readTrust(stateDir);
+  const e = entries.find((x) => x.pub === pub);
   if (!e) return false;
   e.confirmed = true;
+  e.confirmedAt = now.toISOString();
+  delete e.changedFrom;
   writeTrust(stateDir, entries);
   return true;
 }
@@ -125,6 +145,16 @@ export function confirmKey(stateDir: string, key: string): boolean {
 export const countsForApproval = (t: Trust) => t === "own" || t === "confirmed";
 
 /** 設定の画面に出す、覚えた鍵の一覧（呼び名・鍵 ID・指紋・確認済みか・自分の鍵か・初めて見た時刻） */
-export function trustList(stateDir: string): { by: string; key: string; fingerprint: string; confirmed: boolean; own: boolean; firstSeen: string }[] {
-  return readTrust(stateDir).map((e) => ({ by: e.by, key: e.key, fingerprint: fingerprint(e.pub), confirmed: e.confirmed, own: e.own, firstSeen: e.firstSeen }));
+export function trustList(stateDir: string): { by: string; key: string; pub: string; fingerprint: string; confirmed: boolean; own: boolean; changed: boolean; firstSeen: string; previous: { fingerprint: string; at: string } | null }[] {
+  return readTrust(stateDir).map((e) => ({
+    by: e.by,
+    key: e.key,
+    pub: e.pub,
+    fingerprint: fingerprint(e.pub),
+    confirmed: e.confirmed,
+    own: e.own,
+    changed: !e.confirmed && !!e.changedFrom,
+    firstSeen: e.firstSeen,
+    previous: !e.confirmed && e.changedFrom ? previousOf(stateDir, e.pub) : null,
+  }));
 }

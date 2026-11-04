@@ -15,7 +15,7 @@ import { useConnection } from "../state/bridge";
 import { setPendingDerive } from "../state/derive";
 import { setWorkingPlan } from "../state/plan-store";
 import { STAGE_HASH, sheetHash } from "../stages";
-import { TEXT } from "../text";
+import { HUMAN_TEXT, TEXT } from "../text";
 import { readHuman } from "./ConfirmDialog";
 
 const T = TEXT.top;
@@ -38,6 +38,8 @@ interface ListedVersion {
   contentHash: string;
   roles: string[];
   by: string | null;
+  /** 版を作った鍵が、前に確かめた鍵と替わっている */
+  keyChanged?: boolean;
   problem: string | null;
   legacy: boolean;
 }
@@ -184,6 +186,8 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
           </div>
           {rows.map(({ p, depth }) => {
             const latest = p.versions.at(-1);
+            // 鍵が替わった版（いちばん新しいもの）。未確認は出さない（初めての相手はいつも未確認なので、毎回出すと見なくなる）
+            const keyChanged = [...p.versions].reverse().find((v) => v.keyChanged) ?? null;
             const open = !!p.turn && latest?.version === p.turn.version && (p.turn.state === "editing" || p.turn.state === "awaitingApproval" || p.turn.state === "returned");
             return (
               <div key={p.planId} className="moyai-top-row" data-testid="moyai-row" data-plan={p.planId} data-depth={depth}>
@@ -238,6 +242,11 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
                 {latest && !latest.problem && (
                   <a className="moyai-top-add" href={openLink(p.planId, latest)} data-testid="moyai-next">
                     {T.next}
+                  </a>
+                )}
+                {keyChanged && !keyChanged.problem && (
+                  <a className="moyai-top-add" style={{ color: "var(--shu-text)" }} href={openLink(p.planId, keyChanged)} data-testid="moyai-key-changed">
+                    {HUMAN_TEXT.keyWarn.topChanged}
                   </a>
                 )}
               </div>

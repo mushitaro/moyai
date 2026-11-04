@@ -51,7 +51,10 @@ export interface VersionRecord {
   summary: { added: number; removed: number; changed: number; same: number };
   /** 前の形（v0）だけ：前の版のファイルの SHA-256（最初の版は null） */
   prev?: string | null;
-  /** 親の版（同じ計画の 1 つ前）：番号・中身のハッシュ・その版の署名のファイルの SHA-256 の並び。最初の版は null（v1） */
+  /**
+   * 親の版（同じ計画の 1 つ前）：番号・中身のハッシュと、親の版を作った署名（確定・渡す・戻す）のファイルの SHA-256。最初の版は null（v1）。
+   * 承認・差し戻しの署名は入れない（あとから足される承認や、同期で遅れて届く署名で、鎖が切れないように）。前の書き方（親の全署名）も読める。
+   */
   parent?: { version: number; contentHash: string; signatures: string[] } | null;
   /** ほかの施設の版から作ったとき、その計画・版・中身のハッシュ（v1。無ければ null） */
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
@@ -86,9 +89,15 @@ export interface VersionInfo {
   signatures: SignatureInfo[];
   /** 署名の無い前の形の版（読むだけ。承認に数えない） */
   legacy: boolean;
-  /** 確かめで合わなかったこと（無ければ null）。合わない版は開かない */
+  /**
+   * 確かめで合わなかったこと（無ければ null）。合わない版は開かない。
+   * chain：鎖が合わない（署名の無い前の形の版が、署名のある版のあとに置かれたときも）。signature：署名のファイルが合わない。unsigned：版を作った署名が無い
+   */
   problem: "chain" | "signature" | "unsigned" | null;
 }
+
+/** 版を作る署名の役目（確定・渡す・戻す）。承認・差し戻しは、版への独立の署名 */
+export const CREATION_ROLES: readonly SignRole[] = ["confirm", "edit", "revert"];
 
 
 
@@ -170,26 +179,37 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
   let previous: VersionRecord | null = null;
   let derivedFrom: PlanHistory["derivedFrom"] = null;
   let prevInfo: VersionInfo | null = null;
+  let signedSeen = false;
   for (const n of nums) {
     const { record } = await readVersion(dir, n);
     const legacy = record.schema === VERSION_SCHEMA_V0;
     const hash = contentHash(record);
     const sigs = legacy ? { ok: [], bad: 0 } : await readSignatures(dir, record, hash);
     let problem: VersionInfo["problem"] = null;
+    // 署名の無い前の形の版は、先頭に続く部分だけ許す（署名のある版のあとに置かれた前の形は、署名も鎖も見ずに最新になってしまうため）
+    if (legacy && signedSeen) problem = "chain";
     if (!legacy) {
-      // 親の鎖：前の版の中身のハッシュと、前の版の署名のファイルの並びが、この版の記録と合うか
+      signedSeen = true;
+      // 親の鎖：前の版の中身のハッシュと、前の版を作った署名のファイルが、この版の記録と合うか。
+      // 記録にある署名はどれも前の版の署名のうちにあり、少なくとも 1 つは前の版を作った署名（承認があとから足されても切れない）
       const p = record.parent ?? null;
+      const prevHashes = new Set(prevInfo?.signatures.map((x) => x.fileHash) ?? []);
+      const prevCreation = new Set(prevInfo?.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.fileHash) ?? []);
       const chainOk =
         prevInfo === null
           ? p === null
-          : p !== null && p.version === prevInfo.version && p.contentHash === prevInfo.contentHash && [...p.signatures].sort().join() === prevInfo.signatures.map((x) => x.fileHash).sort().join();
-      if (!chainOk) problem = "chain";
+          : p !== null &&
+            p.version === prevInfo.version &&
+            p.contentHash === prevInfo.contentHash &&
+            (prevInfo.legacy ? p.signatures.length === 0 : p.signatures.every((h) => prevHashes.has(h)) && p.signatures.some((h) => prevCreation.has(h)));
+      if (!chainOk || (prevInfo?.problem ?? null) !== null) problem = "chain";
       else if (sigs.bad > 0) problem = "signature";
       else if (!sigs.ok.some((x) => (record.kind === "revert" ? x.role === "revert" : x.role === "confirm" || x.role === "edit"))) problem = "unsigned";
     }
     const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem };
     versions.push(info);
-    for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });
+    // 人が受けた決定に数えるのは、確かめで合う署名のある版だけ（前の形の版の受けた決定は数えない）
+    if (!legacy && problem === null) for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });
     if (prevInfo === null) derivedFrom = record.derivedFrom ?? null;
     previous = latest;
     latest = record;
@@ -360,7 +380,9 @@ async function writeVersion(
     reason: v.reason,
     acceptances: v.acceptances,
     summary: { added: diff.added, removed: diff.removed, changed: diff.changed, same: diff.same },
-    parent: prevInfo ? { version: prevInfo.version, contentHash: prevInfo.contentHash, signatures: prevInfo.signatures.map((x) => x.fileHash).sort() } : null,
+    parent: prevInfo
+      ? { version: prevInfo.version, contentHash: prevInfo.contentHash, signatures: prevInfo.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.fileHash).sort() }
+      : null,
     derivedFrom: v.derivedFrom ?? null,
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
     plan,
@@ -404,8 +426,8 @@ export type SignResult = { ok: true; version: number; role: "approve" | "return"
 
 /**
  * いちばん新しい版に、承認（approve）か差し戻し（return。理由は必須）の署名を足す（docs/plan.md §2.18.2）。
- * いちばん新しい版にだけ足す（次の版の鎖は、親の署名のファイルの並びを持つので、前の版に足すと鎖が切れる）。
- * その版を作った人（確定か渡すの署名をした鍵）は、自分の版を承認できない。
+ * いちばん新しい版にだけ足す（前の版はもう次の版の親で、承認を足す意味が無いため。鎖は作った署名だけを持つので、足しても切れない）。
+ * その版を作った人（確定・渡す・戻すの署名をした鍵か、同じ呼び名）は、自分の版を承認できない。
  */
 export async function signLatest(i: { root: string; planId: string; version: number; role: "approve" | "return"; reason: string; signer: Signer; now?: Date }): Promise<SignResult> {
   if (!validName(i.signer.by)) return { ok: false, reason: "nameInvalid" };
@@ -415,7 +437,7 @@ export async function signLatest(i: { root: string; planId: string; version: num
   if (!v || v.version !== i.version) return { ok: false, reason: "notLatest" };
   if (v.problem !== null) return { ok: false, reason: "historyBroken" };
   const key = keyIdOf(i.signer.pair.pub);
-  if (i.role === "approve" && v.signatures.some((x) => (x.role === "confirm" || x.role === "edit") && x.key === key)) return { ok: false, reason: "selfApprove" };
+  if (i.role === "approve" && v.signatures.some((x) => CREATION_ROLES.includes(x.role) && (x.key === key || x.by === i.signer.by))) return { ok: false, reason: "selfApprove" };
   const at = (i.now ?? new Date()).toISOString();
   const sig = signStatement({ planId: i.planId, version: v.version, contentHash: v.contentHash, role: i.role, by: i.signer.by, at, reason: i.reason.trim() }, i.signer.pair);
   const dir = planDir(i.root, i.planId);

@@ -217,6 +217,11 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     // 版が変わったので、前の版で見た検問所からは送らない
     const stale = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash });
     expect(stale.reason).toBe("versionChanged");
+    // 最新の版を書き換えると（確かめで合わない版）、検問所は開かず、送らない
+    const vf = join(docs, "MOYAI", "plans", plan.planId, "versions", "000002.json");
+    writeFileSync(vf, readFileSync(vf, "utf8").replace("試しに戻す", "書き換えた理由"));
+    expect((await call("checkpointPreview", { planId: plan.planId, ringId: rc.ringId, answers })).reason).toBe("historyBroken");
+    expect((await call("checkpointSend", { planId: plan.planId, version: 2, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash })).reason).toBe("historyBroken");
   });
 });
 

@@ -11,7 +11,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import { emptyCatalog } from "../chart/catalog";
 import { CHART_HASH } from "../chart/route";
-import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
+import { SyncedNotice, readHuman, usePlanStatus } from "../components/ConfirmDialog";
+import { KeyWarnLine, untrustedSigners } from "../components/KeyWarn";
 import { FictionMark } from "../components/FictionMark";
 import { GitHubConnect } from "../components/GitHubConnect";
 import { Switch } from "../components/Switch";
@@ -241,6 +242,9 @@ export function Checkpoint() {
   const working = useWorkingPlan();
   const { client, state } = useConnection();
   const planId = working?.plan.planId ?? null;
+  // 送る版の鎖に、まだ確かめていない鍵があれば、主ボタンの左（押せない理由と同じ所）に 1 行（KeyWarn.dc.html の 4。止めない）
+  const [status, reloadStatus] = usePlanStatus(client, planId ?? "", !!planId && state.kind === "open");
+  const untrusted = status.kind === "ready" && status.status.versions ? untrustedSigners(status.status.versions) : [];
   const [ringId, setRingId] = useState<string | null>(null);
   const [facility, setFacility] = useState<Record<string, string | null>>({});
   const [national, setNational] = useState<boolean | null>(working?.plan.facility.inNationalTable ?? null);
@@ -860,6 +864,8 @@ export function Checkpoint() {
               {sendReason}
             </Text>
           )}
+          {/* 押せない理由が別にあるときは、押せない理由を先にする */}
+          {canSend && <KeyWarnLine signers={untrusted} onConfirmed={reloadStatus} />}
           <Button onClick={send} disabled={!canSend} loading={sending} data-testid="send">
             {dest === "ledger" ? T.sendLedger : T.sendRing}
           </Button>

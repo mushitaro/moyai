@@ -94,11 +94,16 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     // 承認を頼まれた人は編集しないので、下の帯には頼まれていることだけ
     await expect(pb.getByTestId("merge-turn")).toHaveText("承認を頼まれています");
     await expect(pb.getByTestId("approve-open")).toBeVisible();
+    // 山田の鍵は、課長の PC ではまだ確かめていない：下の帯の「承認を頼まれています」の右に 1 行（止めない。KeyWarn.dc.html の 1）
+    await expect(pb.getByTestId("key-warn")).toContainText(`! ${A.name}の鍵を、まだ確かめていません`);
+    await expect(pb.getByTestId("key-warn")).toHaveAttribute("data-trust", "unconfirmed");
+    await expect(pb.getByTestId("approve-open")).toBeEnabled();
     // 見出しの版は、承認を頼まれた版（第 1 版）
     await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
     // 横の板の署名：山田の渡す署名は、課長の PC ではまだ確認していない鍵（! 未確認）。版の中身のハッシュは 4 文字 × 2 組を 4 つ
     await pb.getByTestId("side-signatures").click();
     await expect(pb.locator('[data-testid="signature"][data-role="edit"]')).toHaveAttribute("data-trust", "unconfirmed");
+    await expect(pb.locator('[data-testid="signature"][data-role="edit"]').getByTestId("signature-check")).toBeVisible();
     await expect(pb.getByTestId("signatures-hash")).toHaveText(/^([0-9a-f]{4} [0-9a-f]{4}  ){3}[0-9a-f]{4} [0-9a-f]{4}$/);
     await pb.screenshot({ path: shot(`handoff-approver-${tag}`) });
   });
@@ -122,6 +127,15 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.getByTestId("approve-open").click();
     // 合言葉の欄は無い。鍵がまだ無いことを 1 行で知らせ、承認はそのまま押せる
     await expect(pb.getByTestId("sign-dialog-new-key")).toBeVisible();
+    // 承認のダイアログでも、主ボタンのすぐ上に同じ 1 行。指紋を読み合わせると確認済みになり、1 行は消える（試験の台本が押した）
+    const warn = pb.getByTestId("sign-dialog").getByTestId("key-warn");
+    await expect(warn).toContainText(`! ${A.name}の鍵を、まだ確かめていません`);
+    await warn.getByTestId("key-warn-check").click();
+    await expect(pb.getByText(`${A.name}の鍵の指紋`)).toBeVisible();
+    await expect(pb.getByTestId("key-check-fingerprint")).toHaveText(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/);
+    await pb.getByTestId("key-check-matched").click();
+    await expect(pb.getByTestId("key-check-fingerprint")).toHaveCount(0);
+    await expect(pb.getByTestId("key-warn")).toHaveCount(0);
     await expect(pb.getByTestId("sign-submit")).toBeEnabled();
     await pb.getByTestId("sign-submit").click();
     await expect(pb.getByTestId("merge-notice")).toContainText("第 1 版を承認しました");

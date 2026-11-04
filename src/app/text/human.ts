@@ -172,6 +172,20 @@ export const HUMAN_TEXT = {
     chain: "結び目の鎖",
     role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差し戻し", revert: "戻す" } as Record<string, string>,
   },
+  /** 署名の鍵をまだ確かめていないときの知らせ（Wire の KeyWarn.dc.html）。人の署名を信じて何かをするボタンのすぐ左に 1 行 */
+  keyWarn: {
+    unconfirmed: (by: string) => `! ${by}の鍵を、まだ確かめていません`,
+    changed: (by: string) => `! ${by}の鍵が、前に確かめた鍵と違います`,
+    many: (n: number) => `! 確かめていない鍵が ${n} つあります`,
+    check: "指紋を読み合わせる",
+    show: "見る",
+    title: (by: string) => `${by}の鍵の指紋`,
+    previous: (fp: string, day: string) => `前に確かめた　${fp}　${day}`,
+    howTo: (by: string) => `${by}さんに電話などで読み上げてもらい、16 文字が合えば「合った」を押します。`,
+    later: "あとで",
+    matched: "合った",
+    topChanged: "! 鍵が替わった",
+  },
   readings: {
     lead: "Claude と会話で決めた読み方と、承認済みの読み方です。署名すると、下書きの読み方も一緒に承認されます。",
     none: "当てている読み方はありません。取り込みで詰まったら、Claude と会話で読み方を決められます。",

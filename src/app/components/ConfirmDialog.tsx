@@ -2,7 +2,7 @@
 // 自分の鍵で版に署名する（鍵がまだ無ければ、作ってから署名する。合言葉はやめた、docs/plan.md §2.18）。この署名で承認する読み方を 1 行ずつ見せる。
 // 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、MERGE の決定のシートで一言の理由を書いて受けるまで確定できない（受けた決定は state/decisions.ts）。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
-import { Alert, Anchor, Button, Group, Modal, PasswordInput, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
+import { Alert, Anchor, Button, Group, Modal, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
 import { getCurrentReadings, readingsForCommit } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
@@ -16,6 +16,7 @@ import { APP_PAGES, ROUTES } from "../../shared/routes";
 import type { BridgeClient, HumanResult } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
+import { KeyWarnLine, untrustedSigners, type TrustSig } from "./KeyWarn";
 
 const T = HUMAN_TEXT.confirm;
 const H = HUMAN_TEXT.history;
@@ -37,7 +38,7 @@ interface StatusBody {
     at: string;
     reason: string;
     summary: { added: number; removed: number; changed: number };
-    signatures: { role: string; by: string; fingerprint: string; trust: string }[];
+    signatures: TrustSig[];
     legacy: boolean;
     problem: string | null;
   }[];
@@ -112,7 +113,7 @@ export function ConfirmDialog({
   onClose: () => void;
   onConfirmed: (plan: Plan) => void;
 }) {
-  const [load] = usePlanStatus(client, plan.planId, opened);
+  const [load, reload] = usePlanStatus(client, plan.planId, opened);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -339,6 +340,12 @@ export function ConfirmDialog({
               </Alert>
             )}
           </>
+        )}
+        {/* 次の版を重ねて署名するとき、比べる版の鎖に確かめていない鍵があれば、主ボタンのすぐ上に 1 行（KeyWarn.dc.html の 3。止めない） */}
+        {!done && status?.versions && untrustedSigners(status.versions).length > 0 && (
+          <Group justify="flex-end">
+            <KeyWarnLine signers={untrustedSigners(status.versions)} onConfirmed={reload} />
+          </Group>
         )}
         <Group justify="flex-end" gap="sm">
           {!done && status && blockReason && (
