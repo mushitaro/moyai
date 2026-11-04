@@ -133,3 +133,29 @@ describe("規則の種類ごとに、読み手が当てる", () => {
     expect(s.analyze().questions.find((x) => x.questionId === q?.questionId)?.decision?.answer).toBe("7.5");
   });
 });
+
+describe("「読み方」のタブのデータ", () => {
+  test("読み方ごとの見出し（名前・段・版・状態）と、1 規則 1 行（決まり・効く資料・効いたセル・決めた人・前の版から・見本）", async () => {
+    const { readingTab } = await import("../../../src/app/state/reading-tab");
+    const s = session();
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "日報.csv", bytes: daily },
+    ]);
+    const r1: ReadingRule = { ...base, id: "d1", text: "「作業日」の列の日付は yyyymmdd", kind: "dateFormat", column: "作業日", format: "yyyymmdd", when: { headers: ["作業日"] } };
+    const r2: ReadingRule = { ...base, id: "a1", text: "「ブロワー」と「ブロワ」は同じ機器", kind: "sameAsset", names: ["ブロワー", "ブロワ"] };
+    const approved = reading([r1], { approved: true, draft: false, path: "f/skills/甲", version: "0123456789abcdef" });
+    const draft = reading([r1, { ...r2, author: "human", by: "山田" }]);
+    s.setReadings([approved, draft]);
+    const tab = readingTab([approved, draft], s.analyze());
+    expect(tab.skills).toHaveLength(1);
+    const k = tab.skills[0]!;
+    expect([k.name, k.scope, k.version, k.status]).toEqual(["【架空】甲工場の読み方", "facility", "―", "draft"]);
+    expect(k.rules.map((r) => [r.text, r.appliesTo, r.hits, r.decidedBy, r.change])).toEqual([
+      ["「作業日」の列の日付は yyyymmdd", "見出しに「作業日」", 2, { kind: "ai" }, "same"],
+      ["「ブロワー」と「ブロワ」は同じ機器", null, 0, { kind: "human", name: "山田" }, "added"],
+    ]);
+    expect(k.rules[0]?.sample).toEqual({ file: "日報.csv", ref: "A2", text: "20240406" });
+    expect(tab.unapproved).toBe(1);
+  });
+});
