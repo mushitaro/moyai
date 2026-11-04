@@ -197,12 +197,17 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("send").click();
     await expect(page.getByTestId("send-error")).toContainText("合言葉が鍵を開きませんでした");
     await page.getByTestId("passphrase").fill(PASS);
+    // 受け取った束（SHARE の下の節）：置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
+    await expect(page.getByTestId("received")).toContainText("受け取った束");
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toHaveCount(0);
     await page.getByTestId("send").click();
     await expect(page.getByTestId("sent")).toContainText("束を輪に置きました");
     await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
     await expect(page.locator('[data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="verify-line"][data-kind="bundle"][data-status="ok"]')).toHaveCount(1);
     await page.screenshot({ path: shot(`checkpoint-sent-${tag}`), fullPage: true });
+    await page.getByTestId("received").scrollIntoViewIfNeeded();
+    await page.getByTestId("received").screenshot({ path: shot(`checkpoint-received-${tag}`) });
   });
 
   await test.step("CLI：verify ring でも ✓。人だけの CLI は端末でなければ断る", async () => {

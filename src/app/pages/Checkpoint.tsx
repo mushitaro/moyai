@@ -180,31 +180,37 @@ function Num({ v }: { v: number | null }) {
   return v === null ? <Text span c="dimmed">—</Text> : <Text span className="moyai-shu">{v}</Text>;
 }
 
-function VerifyTable({ report }: { report: Report }) {
+/**
+ * 受け取った束の表（受け手と同じ関数で確かめた結果）。内部の ID（輪・鍵・ファイルの道）は出さず、
+ * 人が電話で読み合わせる鍵の指紋で示す：「決まり」「仲間　指紋（あなた）」「束 n　指紋」と、✓／✗ と理由
+ */
+function VerifyTable({ report, ownKey }: { report: Report; ownKey: string | null }) {
+  const fpOf = new Map(report.lines.filter((l) => l.kind === "member" && l.fingerprint).map((l) => [l.name, l.fingerprint!]));
+  const who = (key: string | null) => (key ? `${fpOf.get(key) ?? T.unknownKey}${key === ownKey ? T.you : ""}` : "");
   return (
-    <Table withTableBorder className="moyai-num" data-testid="verify-table" data-ok={report.ok}>
+    <Table className="moyai-num" data-testid="verify-table" data-ok={report.ok} verticalSpacing={6}>
       <Table.Tbody>
-        {report.lines.map((l) => (
-          <Table.Tr key={`${l.kind}:${l.name}`} data-testid="verify-line" data-status={l.status} data-kind={l.kind}>
-            <Table.Td w={60}>
-              <Text fw={700} c={l.status === "ok" ? "teal" : "red"}>
-                {T.verifyStatus[l.status] ?? l.status}
-              </Text>
-            </Table.Td>
-            <Table.Td w={60}>{T.verifyKind[l.kind] ?? l.kind}</Table.Td>
-            <Table.Td>
-              <Text size="sm" ff="monospace">
-                {l.name}
-              </Text>
-              {l.fingerprint && (
-                <Text size="xs" ff="monospace">
-                  {l.fingerprint}
+        {report.lines.map((l) => {
+          const b = l.kind === "bundle" ? /bundles\/([0-9a-f]{16})\/(\d{6})-/.exec(l.name) : null;
+          const label = l.kind === "circle" ? T.verifyKind.circle : l.kind === "member" ? T.verifyKind.member : b ? T.bundleN(Number(b[2])) : T.verifyKind.bundle;
+          const key = l.kind === "member" ? l.name : (b?.[1] ?? null);
+          return (
+            <Table.Tr key={`${l.kind}:${l.name}`} data-testid="verify-line" data-status={l.status} data-kind={l.kind}>
+              <Table.Td w={40}>
+                <Text fw={700} c={l.status === "ok" ? "var(--text)" : "var(--shu-text)"}>
+                  {T.verifyStatus[l.status] ?? l.status}
                 </Text>
-              )}
-            </Table.Td>
-            <Table.Td>{[...new Set(l.reasons.map(reasonText))].join("、")}</Table.Td>
-          </Table.Tr>
-        ))}
+              </Table.Td>
+              <Table.Td style={{ whiteSpace: "nowrap" }}>{label}</Table.Td>
+              <Table.Td style={{ whiteSpace: "nowrap" }}>
+                <Text size="sm" ff="monospace">
+                  {who(key)}
+                </Text>
+              </Table.Td>
+              <Table.Td c={l.status === "ok" ? undefined : "var(--shu-text)"}>{[...new Set(l.reasons.map(reasonText))].join("、")}</Table.Td>
+            </Table.Tr>
+          );
+        })}
       </Table.Tbody>
     </Table>
   );
@@ -223,6 +229,8 @@ export function Checkpoint() {
   const [pass, setPass] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<{ fileName: string; report: Report } | null>(null);
+  // 受け取った束（docs/screens.md 3.6。受け取り箱をこの画面の下の節に移した）：輪を受け手と同じ関数で確かめた結果
+  const [received, setReceived] = useState<Report | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
   const [dest, setDest] = useState<"ring" | "ledger">("ring");
@@ -337,14 +345,27 @@ export function Checkpoint() {
     setPass("");
     if (!r.ok) return setSendError(r.message);
     setSent({ fileName: r.body.fileName, report: r.body.report });
+    setReceived(r.body.report);
   };
 
   const verifyAgain = async () => {
     if (!ringId) return;
     const r = readHuman<{ ok: boolean; reason?: string; report: Report }>(await client.callHuman("ring_verify", ROUTES.ringVerify.path, { ringId }));
-    if (r.ok) setSent((s) => (s ? { ...s, report: r.body.report } : s));
+    if (r.ok) setReceived(r.body.report);
     else setSendError(r.message);
   };
+
+  // 輪を選んだら（開いたとき・輪を替えたとき）、受け取った束を読む
+  useEffect(() => {
+    if (dest !== "ring" || !ringId || state.kind !== "open") {
+      setReceived(null);
+      return;
+    }
+    void (async () => {
+      const r = readHuman<{ ok: boolean; reason?: string; report: Report }>(await client.callHuman("ring_verify", ROUTES.ringVerify.path, { ringId }));
+      setReceived(r.ok ? r.body.report : null);
+    })();
+  }, [client, dest, ringId, state.kind]);
 
   const openText = async () => {
     if (!ringId || !planId) return;
@@ -771,18 +792,29 @@ export function Checkpoint() {
             </Alert>
           )}
           {sent && (
-            <Stack gap="xs">
-              <Alert color="gray" data-testid="sent">
-                {T.sent(sent.fileName)}
-              </Alert>
-              <Group justify="space-between">
-                <Text fw={700}>{T.verifyTitle}</Text>
-                <Button size="xs" variant="default" onClick={verifyAgain}>
+            <Alert color="gray" data-testid="sent">
+              {T.sent(sent.fileName)}
+            </Alert>
+          )}
+
+          {/* 受け取った束：輪の決まり・仲間・束ごとの ✓／✗ と理由（受け手と同じ関数）、検問所を通っていないファイルの数 */}
+          {dest === "ring" && received && (
+            <section data-testid="received">
+              <Group justify="space-between" align="baseline" mb="xs">
+                <Title order={2} size="h4" fw={500}>
+                  {T.receivedTitle}
+                </Title>
+                <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => void verifyAgain()} data-testid="received-again">
                   {T.verifyAgain}
-                </Button>
+                </Anchor>
               </Group>
-              <VerifyTable report={sent.report} />
-            </Stack>
+              <VerifyTable report={received} ownKey={res?.ring?.key ?? null} />
+              {received.notBundleFiles > 0 && (
+                <Text size="xs" c="var(--shu-text)" mt={4} data-testid="received-not-bundle">
+                  {T.notBundleFiles(received.notBundleFiles)}
+                </Text>
+              )}
+            </section>
           )}
         </Stack>
       </div>
