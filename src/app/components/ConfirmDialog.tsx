@@ -294,9 +294,6 @@ export function ConfirmDialog({
                 </Alert>
               ) : (
                 <>
-                  <Text size="xs" c="dimmed">
-                    {newKey ? T.newKeyLead : T.signLead(name)}
-                  </Text>
                   <Group grow align="flex-start">
                     <PasswordInput
                       label={newKey ? T.passphraseNew : T.passphrase}
@@ -317,24 +314,15 @@ export function ConfirmDialog({
                       />
                     )}
                   </Group>
-                  {keyMade && (
-                    <Text size="xs" data-testid="sign-key-made">
-                      {T.keyMade(keyMade)}
-                    </Text>
-                  )}
                 </>
               )}
             </Stack>
 
+            {/* 外へ出ていくもの：メールが運ぶのは、版の場所とハッシュだけ（Handoff.dc.html、Version 39） */}
             {ask !== "self" && (
-              <Stack gap={2}>
-                <Text size="xs" fw={500} c="dimmed">
-                  {T.carriesTitle}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  {T.carries}
-                </Text>
-              </Stack>
+              <Text size="xs" fw={500} c="dimmed" data-testid="confirm-carries">
+                {T.carries}
+              </Text>
             )}
             {error && (
               <Alert color="red" data-testid="confirm-error">
@@ -343,23 +331,10 @@ export function ConfirmDialog({
             )}
             {done && (
               <Alert color="teal" data-testid="confirm-done">
-                <Stack gap={4}>
-                  <Text size="sm" fw={700}>
-                    {T.done(done.version)}
-                  </Text>
-                  <Text size="xs">{T.files}</Text>
-                  <Text size="xs" className="moyai-num" data-testid="confirm-files">
-                    {done.files.version}
-                  </Text>
-                  <Text size="xs" className="moyai-num">
-                    {done.files.report}
-                  </Text>
-                  {done.files.export && (
-                    <Text size="xs" className="moyai-num" data-testid="confirm-export">
-                      {done.files.export}
-                    </Text>
-                  )}
-                </Stack>
+                {/* 結果は 1 文だけ（保管先のファイルの道は出さない。版と差分レポートは EXPORT から落とす） */}
+                <Text size="sm" fw={700}>
+                  {mail ? T.doneHandoff(done.version, mail.to) : T.done(done.version)}
+                </Text>
               </Alert>
             )}
             {done && mail && (
@@ -381,9 +356,6 @@ export function ConfirmDialog({
                     <Button component="a" href={mailtoOf(mail)} variant="default" size="xs" data-testid="handoff-mailto">
                       {T.mailOpen}
                     </Button>
-                    <Text size="xs" c="dimmed">
-                      {T.mailClaude}
-                    </Text>
                   </Group>
                 </Stack>
               </Alert>

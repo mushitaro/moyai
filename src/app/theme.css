@@ -180,6 +180,14 @@ body {
   text-decoration: none;
   letter-spacing: 0.1em;
 }
+/* 施設の設定（計画があるあいだはダイアログを開くボタン）：つなぎと同じ見た目 */
+button.moyai-merge-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
 .moyai-merge-link:hover {
   color: var(--text);
 }

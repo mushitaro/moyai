@@ -822,7 +822,7 @@ export class HumanService {
     const pack = this.pack(plan.packId);
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });
     const base = {
-      plan: { planId, packId: plan.packId, version: h.latest.version, displayName: plan.displayName, fictional: plan.facility.fictional, inNationalTable: plan.facility.inNationalTable, pending: pendingDecisions(plan, h.accepted).length },
+      plan: { planId, packId: plan.packId, version: h.latest.version, displayName: plan.displayName, fictional: plan.facility.fictional, inNationalTable: plan.facility.inNationalTable, profile: plan.facility.profile ?? null, pending: pendingDecisions(plan, h.accepted).length },
       questions: questionsOf(pack, plan),
       classNames: pack.classNames,
       axes: pack.axes,
@@ -870,7 +870,7 @@ export class HumanService {
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });
     const questions = questionsOf(pack, plan);
     const base = {
-      plan: { planId, packId: plan.packId, version: h.latest.version, displayName: plan.displayName, fictional: plan.facility.fictional, inNationalTable: plan.facility.inNationalTable, pending: pendingDecisions(plan, h.accepted).length },
+      plan: { planId, packId: plan.packId, version: h.latest.version, displayName: plan.displayName, fictional: plan.facility.fictional, inNationalTable: plan.facility.inNationalTable, profile: plan.facility.profile ?? null, pending: pendingDecisions(plan, h.accepted).length },
       questions,
       classNames: pack.classNames,
       axes: pack.axes,

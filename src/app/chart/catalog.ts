@@ -36,9 +36,12 @@ export function packFiscalStart(packId: string): number | null {
   return typeof m === "number" && Number.isInteger(m) && m >= 1 && m <= 12 ? m : null;
 }
 
-/** 選べるパック（packs/<パック>/common.json があるもの）。名前はデータの表の名前から出す */
-export function packChoices(): { id: string; table: string }[] {
+/** 選べるパック（packs/<パック>/common.json があるもの）。画面に出すのは pack.json の名前（無ければ ID） */
+export function packChoices(): { id: string; name: string; table: string }[] {
   return [...byPack.entries()]
-    .map(([id, json]) => ({ id, table: String((json as { table?: unknown }).table ?? "") }))
+    .map(([id, json]) => {
+      const pj = packJsons[`../../../packs/${id}/pack.json`] as { name?: unknown } | undefined;
+      return { id, name: typeof pj?.name === "string" && pj.name ? pj.name : id, table: String((json as { table?: unknown }).table ?? "") };
+    })
     .sort((a, b) => a.id.localeCompare(b.id));
 }

@@ -16,7 +16,7 @@ import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { FICTIONAL_1, callTool as call, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { packName, FICTIONAL_1, callTool as call, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】みどり台クリーンセンター";
 const A = { name: "【架空】山田", pass: "架空の合言葉 山田の鍵 デモ" };
@@ -97,7 +97,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
 
     await test.step("1 MERGE の資料のシート：パックと施設の名前を選び、資料を 3 つ落とす", async () => {
       await pa.getByTestId("pack").click();
-      await pa.getByRole("option", { name: /^waste-incineration/ }).click();
+      await pa.getByRole("option", { name: packName("waste-incineration"), exact: true }).click();
       await pa.getByTestId("facility-name").fill(FACILITY);
       const files = FICTIONAL_1.files.map((n) => ({ name: basename(n), b64: readFileSync(join(FICTIONAL_1.dir, n)).toString("base64") }));
       const dt = await pa.evaluateHandle((fs) => {
@@ -238,7 +238,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.waitForTimeout(400);
       await pa.screenshot({ path: shot("demo-10-sign") });
       await pa.getByTestId("confirm-submit").click();
-      await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+      await expect(pa.getByTestId("confirm-done")).toHaveText(/^第 1 版に署名して、.+へのメールを用意しました。$/);
       const mail = (await pa.getByTestId("handoff-body").textContent()) ?? "";
       link = /http:\/\/[^\s]+#\/merge\?open=[^\s]+/.exec(mail)?.[0] ?? "";
       expect(link).toContain("&v=1&h=");
@@ -356,9 +356,15 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
     await test.step("7 似た施設を重ねる：見出しの「似た施設　重ねる」。共通の行の下に「似た施設　帯 …」の 1 行", async () => {
       await pa.getByTestId("merge-peers").getByRole("button", { name: "重ねる" }).click();
       await expect(pa.getByTestId("peer-panel")).toBeVisible();
-      await pa.getByTestId("peer-self-national").selectOption("yes");
-      await pa.getByTestId("peer-self-furnace").selectOption(PROFILE.furnace);
-      await pa.getByTestId("peer-self-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
+      // 見え方の答えは施設の設定で（星取表の上では答えない）
+      await pa.getByTestId("peer-fix").click();
+      await pa.getByTestId("facility-national").selectOption("yes");
+      await pa.getByTestId("facility-furnace").selectOption(PROFILE.furnace);
+      await pa.getByTestId("facility-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
+      await pa.getByTestId("facility-turbine").selectOption(PROFILE.turbine);
+      await pa.getByTestId("facility-ash").selectOption(PROFILE.ash);
+      await pa.getByTestId("facility-contract").selectOption(PROFILE.contract);
+      await pa.getByTestId("facility-save").click();
       await expect(pa.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
       await pa.screenshot({ path: shot("demo-22-peers") });
       await pa.getByTestId("merge-peers").getByRole("button", { name: "外す" }).click();

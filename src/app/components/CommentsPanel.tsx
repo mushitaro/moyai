@@ -78,9 +78,12 @@ export function CommentsPanel({
       )}
       <Stack gap={4}>
         <Textarea label={T.label} placeholder={T.placeholder} value={text} onChange={(e) => setText(e.currentTarget.value)} autosize minRows={2} maxLength={2000} data-testid="comment-text" />
-        <Text size="xs" c="dimmed" data-testid="comment-to">
-          {row ? T.to(row.label) : T.toPlan}
-        </Text>
+        {/* 付ける行は、行を選んだときだけ出す */}
+        {row && (
+          <Text size="xs" c="dimmed" data-testid="comment-to">
+            {T.to(row.label)}
+          </Text>
+        )}
         {error && (
           <Text size="xs" c="var(--shu-text)">
             {error}

@@ -60,7 +60,8 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pa.getByTestId("ask-to").fill("kacho@example.jp");
     await expect(pa.getByTestId("confirm-submit")).toBeEnabled();
     await pa.getByTestId("confirm-submit").click();
-    await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+    // 渡したときの結果は 1 文：メールは MOYAI が用意し、送るのは利用者のメーラーか Claude
+    await expect(pa.getByTestId("confirm-done")).toHaveText(/^第 1 版に署名して、.+へのメールを用意しました。$/);
     const mailBody = (await pa.getByTestId("handoff-body").textContent()) ?? "";
     expect(mailBody).toContain("この版の承認をお願いします。");
     expect(mailBody).toContain("計画の中身は運びません");

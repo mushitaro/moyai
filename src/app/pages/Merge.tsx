@@ -25,6 +25,8 @@ import { Switch } from "../components/Switch";
 import { setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { TEXT } from "../text";
+import { FacilityDialog } from "../components/FacilityDialog";
+import { setFacilityDialog } from "../state/facility-dialog";
 import { Intake, Questions, useWorkspace } from "./Intake";
 
 const T = TEXT.merge;
@@ -144,6 +146,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const an = ws.fileCount ? ws.analysis() : null;
   const openQuestions = an ? an.open.length : 0;
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length;
+  // 白紙のあいだに「第 1 版をつくる」を止めている理由（取り込みと同じもの）
+  const composeBlocks = !plan ? ws.composeBlockers() : [];
   const blocks = [
     !plan ? T.block.noPlan : null,
     viewingOld ? T.block.oldVersion : null,
@@ -257,9 +261,15 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               {T.version(compare.version)}
             </span>
           )}
-          <a href={sheetHash("files")} className="moyai-merge-link" data-testid="facility-settings">
-            {T.facilitySettings}
-          </a>
+          {plan ? (
+            <button type="button" className="moyai-merge-link" onClick={() => setFacilityDialog(true)} data-testid="facility-settings">
+              {T.facilitySettings}
+            </button>
+          ) : (
+            <a href={sheetHash("files")} className="moyai-merge-link" data-testid="facility-settings">
+              {T.facilitySettings}
+            </a>
+          )}
         </div>
       </div>
       {notice && (
@@ -319,7 +329,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
           <div style={{ display: current === "files" ? undefined : "none" }}>
-            <Intake ws={ws} embedded file={fileParam} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} />
+            <Intake ws={ws} embedded file={fileParam} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} composeInBar={!plan} />
           </div>
         </div>
         {sideNow && (
@@ -380,6 +390,25 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             </Text>
           )}
         </Group>
+        {/* 白紙のあいだ（版の下書きが無い）：主ボタンは「第 1 版をつくる」の 1 つだけ（MergeNew.dc.html） */}
+        {!plan ? (
+          <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
+            {composeBlocks.length > 0 && ws.compose.state !== "running" && (
+              <Text size="xs" c="dimmed" maw={560} lineClamp={2} title={composeBlocks.join("・")} data-testid="compose-disabled-reason">
+                {TEXT.intake.reasonsPrefix}
+                {composeBlocks.join("・")}
+              </Text>
+            )}
+            <Button
+              onClick={() => ws.startCompose("human")}
+              disabled={composeBlocks.length > 0 || ws.compose.state === "running"}
+              loading={ws.compose.state === "running"}
+              data-testid="compose"
+            >
+              {T.composeFirst}
+            </Button>
+          </Group>
+        ) : (
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
           {blocks.length > 0 && (
             <Text size="xs" c="dimmed" data-testid="confirm-disabled-reason">
@@ -405,10 +434,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             </Button>
           )}
         </Group>
+        )}
       </Group>
 
       {plan && (
         <>
+          <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />
           <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
           {st?.latest && signRole && (

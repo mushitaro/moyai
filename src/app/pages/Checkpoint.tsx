@@ -83,7 +83,7 @@ interface RingInfo {
 interface PreviewBody {
   ok: boolean;
   reason?: string;
-  plan?: { planId: string; packId: string; version: number; displayName: string; fictional: boolean; inNationalTable: boolean | null; pending: number };
+  plan?: { planId: string; packId: string; version: number; displayName: string; fictional: boolean; inNationalTable: boolean | null; profile: Record<string, string> | null; pending: number };
   questions?: Question[];
   classNames?: Record<string, string>;
   axes?: { key: string; name: string; codes: { code: string; name: string }[] }[];
@@ -255,8 +255,11 @@ export function Checkpoint() {
       setRes(b);
       if (!prefilled.current && b.questions) {
         prefilled.current = true;
+        // 施設の設定の答えを先に入れ、無い軸だけ規模からの見込み（人が直せる）
         const pre: Record<string, string | null> = {};
         for (const q of b.questions) if (q.suggested) pre[q.key] = q.suggested;
+        Object.assign(pre, b.plan?.profile ?? {});
+        if (b.plan && b.plan.inNationalTable !== null && national === null) setNational(b.plan.inNationalTable);
         if (Object.keys(pre).length > 0) setFacility((f) => ({ ...pre, ...f }));
       }
       if (dest === "ring" && ringId === null && b.rings && b.plan) {

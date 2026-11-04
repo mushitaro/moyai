@@ -39,6 +39,7 @@ export const ENTITIES = {
       legalFlags: f("該当する法令の印", "list"),
       fictional: f("架空の印", "flag"),
       inNationalTable: f("全国の表に載る施設か", "flag"),
+      profile: f("見え方の答え（全国の表の軸のコード）", "list"),
     },
   },
   assetNode: {

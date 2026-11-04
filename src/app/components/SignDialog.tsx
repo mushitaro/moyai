@@ -67,11 +67,6 @@ export function SignDialog({
       <Stack gap="sm">
         <Text size="sm">{role === "approve" ? T.leadApprove : T.leadReturn}</Text>
         <TextInput label={role === "approve" ? T.reasonOptional : T.reason} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={500} data-testid="sign-reason" />
-        {!hasKey && (
-          <Text size="xs" c="dimmed">
-            {HUMAN_TEXT.confirm.newKeyLead}
-          </Text>
-        )}
         <Group grow align="flex-start">
           <PasswordInput label={hasKey ? HUMAN_TEXT.confirm.passphrase : HUMAN_TEXT.confirm.passphraseNew} value={pass} onChange={(e) => setPass(e.currentTarget.value)} autoComplete="off" data-testid="sign-dialog-passphrase" />
           {!hasKey && (

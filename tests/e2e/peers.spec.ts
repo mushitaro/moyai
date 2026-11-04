@@ -1,5 +1,5 @@
 // 受け手の側を、この PC の Chrome と Edge で通す（docs/plan.md §2.8 受け取りと 3 つの立場）：
-// 設定で公開の台帳の clone の場所を選ぶ → 星取表の共通の設備項目の行で［似た施設と並べる］→ 見え方を選ぶ → 台帳の ✓ の束から似た施設の行と統計の行
+// 設定で公開の台帳の clone の場所を選ぶ → 星取表の共通の設備項目の行で［似た施設と並べる］→ 施設の設定で見え方を答える → 台帳の ✓ の束から似た施設の行
 // → AI は本物の中継（dist/cli.js mcp）の peer_reference で、人が開いた比べの集計と札だけを読む → 立場を O&M にすると入札の対象の見え方を聞く
 // → 閉じると行が消え、AI も読めない。台帳は架空の 10 施設（scripts/ledger/demo-core.ts。本物の署名と写し取りのコード）を一時のフォルダに作る。
 // 先に npm run build を走らせておく。
@@ -64,26 +64,27 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await page.getByTestId("merge-peers").getByRole("button", { name: "重ねる" }).click();
       const panel = page.getByTestId("peer-panel");
       await expect(panel).toBeVisible();
-      // 試しの計画は全国の表に載るかが決まっていない：推測で埋めず聞く
+      // 試しの計画は全国の表に載るかが決まっていない：推測で埋めず、「見え方が決まっていません　| 施設の設定で決める」
       await expect(page.getByTestId("peer-reason")).toHaveAttribute("data-reason", "groupUnknown");
-      await page.getByTestId("peer-self-national").selectOption("yes");
-      // 主要の軸は、答えを選ぶと既定で使う（人が外せる）
-      await page.getByTestId("peer-self-furnace").selectOption("STOKER");
-      await expect(page.getByTestId("axis-furnace")).toBeChecked();
-      await page.getByTestId("peer-self-capacity_t_per_day").selectOption("C200_400");
-      await expect(page.getByTestId("axis-capacity_t_per_day")).toBeChecked();
+      await expect(page.getByTestId("peer-reason")).toContainText("似た施設　見え方が決まっていません");
+      // 見え方の答えは施設の設定の 1 か所だけ（星取表の上では答えない。比べるのに使う軸の印も無い）
+      await expect(page.locator('[data-testid^="peer-self-"]')).toHaveCount(0);
+      await expect(page.locator('[data-testid^="axis-"]')).toHaveCount(0);
+      await page.getByTestId("peer-fix").click();
+      await expect(page.getByTestId("facility-national")).toBeVisible();
+      await page.getByTestId("facility-national").selectOption("yes");
+      await page.getByTestId("facility-furnace").selectOption("STOKER");
+      await page.getByTestId("facility-capacity_t_per_day").selectOption("C200_400");
+      // 全国の表に列の無い軸（集じん）は聞かない
+      await expect(page.getByTestId("facility-dust")).toHaveCount(0);
+      await page.getByTestId("facility-save").click();
+      await expect(page.getByTestId("facility-national")).toHaveCount(0);
       const ledger = page.locator('[data-testid="peer-place"][data-kind="ledger"]');
       await expect(ledger).toHaveAttribute("data-status", "shown");
-      await expect(ledger).toContainText("似た施設");
-      // 軸を外すと似た施設は減らない（増えるか同じ）。戻すと元の数
-      const similar = async () => Number(/似た施設 (\d+)/.exec((await ledger.textContent()) ?? "")?.[1]);
-      const two = await similar();
-      await page.getByTestId("axis-capacity_t_per_day").uncheck();
-      await expect.poll(similar).toBeGreaterThanOrEqual(two);
-      await page.getByTestId("axis-capacity_t_per_day").check();
-      await expect.poll(similar).toBe(two);
-      // 全国の表に列の無い軸（集じん）は、受け手では聞かない
-      await expect(page.getByTestId("axis-dust")).toHaveCount(0);
+      // 1 行：「公開の台帳　似た施設 n　| 見え方を直す」。台帳の 16 桁の ID は出さない
+      await expect(ledger).toHaveText(/^公開の台帳　似た施設 \d+/);
+      await expect(page.getByTestId("peer-places")).not.toContainText(/[0-9a-f]{16}/);
+      await expect(page.getByTestId("peer-fix")).toHaveText("| 見え方を直す");
     });
 
     await test.step("自分の行の下に、似た施設を 1 行にまとめた細い行（名前は間隔の帯か「5 施設に満たない」）", async () => {
@@ -118,7 +119,6 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.locator(".ag-row.moyai-row-peer")).toHaveCount(0);
       await page.getByTestId("peer-target-national").selectOption("yes");
       await page.getByTestId("peer-target-furnace").selectOption("STOKER");
-      await expect(page.getByTestId("axis-furnace")).toBeChecked();
       const places = page.getByTestId("peer-place");
       await expect(places).toHaveCount(2);
       await expect(places.nth(0)).toHaveAttribute("data-kind", "ledger");

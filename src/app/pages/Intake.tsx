@@ -415,14 +415,26 @@ function Activity({ ws }: { ws: IntakeWorkspace }) {
  * 計画を作るのは副のボタン（composeLabel。白紙では「第 1 版をつくる」、版があれば「資料を重ねて第 n 版をつくる」）、
  * 当てはめの案は決定のシートへ、質問は MERGE の横の板へ移す。
  */
-export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws: IntakeWorkspace; embedded?: boolean; composeLabel?: string; file?: string | null }) {
+export function Intake({
+  ws,
+  embedded = false,
+  composeLabel,
+  composeInBar = false,
+  file = null,
+}: {
+  ws: IntakeWorkspace;
+  embedded?: boolean;
+  composeLabel?: string;
+  /** 計画をつくるボタンは MERGE の下の帯にある（白紙のあいだ）。ここには出さない */
+  composeInBar?: boolean;
+  file?: string | null;
+}) {
   useWorkspace(ws);
   const an = ws.fileCount ? ws.analysis() : null;
   const blockers = ws.composeBlockers();
   const compose = ws.compose;
   const [reading, setReading] = useState(false);
   const [over, setOver] = useState(false);
-  const [fictionFound, setFictionFound] = useState(false);
   const [month, setMonth] = useState<number>(ws.settings.fiscalYearStartMonth);
   const [sel, setSel] = useState<{ file: string; sheetIndex: number } | null>(null);
   const [focus, setFocus] = useState<Focus>(null);
@@ -436,7 +448,6 @@ export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws
       await ws.addFiles(files.map((f) => ({ name: f.name, size: f.size, bytes: async () => new Uint8Array(await f.arrayBuffer()) })));
       if (!ws.settings.fictional && ws.sourcesMarkedFictional()) {
         ws.setFacility({ fictional: true });
-        setFictionFound(true);
       }
     } finally {
       setReading(false);
@@ -472,6 +483,8 @@ export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws
 
   return (
     <Container size={embedded ? undefined : "xl"} fluid={embedded} py="md" data-testid="intake-page">
+      {/* 白紙の MERGE の中では、上の行ごと出さない（主ボタンは下の帯にある） */}
+      {!composeInBar && (
       <Group justify={embedded ? "flex-end" : "space-between"} align="center" mb="md" wrap="nowrap" gap="sm">
         {!embedded && (
           <Group gap="sm" wrap="nowrap">
@@ -504,6 +517,7 @@ export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws
           </Button>
         </Group>
       </Group>
+      )}
 
       <Stack gap="md">
         {compose.state === "done" && (
@@ -539,7 +553,7 @@ export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws
             <Select
               label={T.settings.pack}
               placeholder={T.settings.packPlaceholder}
-              data={packs.map((p) => ({ value: p.id, label: T.settings.packLabel(p.id, p.table) }))}
+              data={packs.map((p) => ({ value: p.id, label: p.name }))}
               value={ws.settings.packId || null}
               onChange={(v) => {
                 ws.setFacility({ packId: v ?? "" });
@@ -583,11 +597,6 @@ export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws
               data-testid="fictional"
             />
           </Group>
-          {fictionFound && ws.settings.fictional && (
-            <Text size="xs" c="dimmed" mt={4}>
-              {T.settings.fictionalFound}
-            </Text>
-          )}
         </Paper>
 
         <Paper

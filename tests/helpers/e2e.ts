@@ -84,12 +84,17 @@ const PHOTO_EXT = /\.(jpe?g|png)$/i;
  * 取り込みの画面を開き、パックと施設の名前を入れ、資料を受け口に落とす。
  * 資料はフォルダの下の道で書いてよい（落とすファイルの名前は最後の部分）。写真はセルの行き先ではなく写真の欄に並ぶ。
  */
+/** パックの欄に出る日本語の名前（packs/<パック>/pack.json の name。画面は内部の ID を出さない） */
+export function packName(packId: string): string {
+  return (JSON.parse(readFileSync(join("packs", packId, "pack.json"), "utf8")) as { name: string }).name;
+}
+
 export async function openIntakeAndDrop(page: Page, base: string, facilityName: string, set = FICTIONAL_1, packId = "waste-incineration"): Promise<void> {
   await page.goto(`${base}/#/intake`);
   await expect(page.getByTestId("intake-page")).toBeVisible();
   await expect(page.getByTestId("compose")).toBeDisabled();
   await page.getByTestId("pack").click();
-  await page.getByRole("option", { name: new RegExp(`^${packId}`) }).click();
+  await page.getByRole("option", { name: packName(packId), exact: true }).click();
   await page.getByTestId("facility-name").fill(facilityName);
   const photos = set.files.filter((n) => PHOTO_EXT.test(n)).length;
   const files = set.files.map((name) => ({ name: basename(name), b64: readFileSync(join(set.dir, name)).toString("base64") }));

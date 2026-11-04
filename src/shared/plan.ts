@@ -27,6 +27,8 @@ export const Facility = z.object({
   legalFlags: z.array(code),
   fictional: z.boolean(),
   inNationalTable: z.boolean().nullable(), // 人が答えるまで null
+  // 見え方の答え（全国の表の軸のコード。例 furnace: "STOKER"）。人が施設の設定で答える。無ければ聞く（推測で埋めない）
+  profile: z.record(z.string().regex(/^[a-z][a-z0-9_]{0,40}$/), z.string().regex(/^[A-Za-z0-9_]{1,40}$/)).optional(),
 });
 
 export const AssetNode = z.object({

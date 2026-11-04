@@ -117,7 +117,6 @@ export function bandCellText(row: ChartRow | undefined, f: StatField): string {
 /** 段の列のセルの文字：畳んだ行は台数、未当てはめの行は件数、似た施設にだけある行はそのことを添える */
 function levelText(row: ChartRow, i: number): string {
   const name = row.levelCells[i] ?? "";
-  if (i === row.level - 1 && row.ownMissing) return `${name}（${T.peers.ownMissing}）`;
   if (i !== row.level - 1 || row.count === null) return name;
   return row.kind === "unmapped" ? `${name}（${T.records(row.count)}）` : `${name}（${T.units(row.count)}）`;
 }
