@@ -1,0 +1,2047 @@
+{
+ "schema": "moyai.answer.world/0",
+ "facility": {
+  "id": "f-kirinose",
+  "name": "【架空】霧ノ瀬浄化センター",
+  "industry": "sewer",
+  "profile": {
+   "treatment": "標準活性汚泥法",
+   "capacity_m3_per_day": 42000,
+   "sewer_system": "分流式",
+   "sludge": "脱水・場外搬出",
+   "contract": "運転管理委託（単年度）",
+   "completed": 1991
+  }
+ },
+ "fiscal_year_start_month": 4,
+ "man_day_hours": 8,
+ "today": "2026-10-01",
+ "equipment": [
+  {
+   "id": "H01",
+   "name": "除塵機 No.1",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "除塵機 №1・№2"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": "SC-1",
+   "path": [
+    "沈砂池設備",
+    "除塵機",
+    "No.1"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H02",
+   "name": "除塵機 No.2",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "除塵機 №1・№2"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": "SC-2",
+   "path": [
+    "沈砂池設備",
+    "除塵機",
+    "No.2"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H03",
+   "name": "沈砂かき揚げ機",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "沈砂かき揚げ機"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": "GR-1",
+   "path": [
+    "沈砂池設備",
+    "沈砂かき揚げ機"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H04",
+   "name": "主ポンプ No.1",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "主ポンプ ①",
+    "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx": "No.1 主ポンプ"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": "MP-1",
+   "path": [
+    "ポンプ設備",
+    "主ポンプ",
+    "No.1"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H05",
+   "name": "主ポンプ No.2",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "主ﾎﾟﾝﾌﾟ (2)",
+    "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx": "No.2 主ポンプ"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": "MP-2",
+   "path": [
+    "ポンプ設備",
+    "主ポンプ",
+    "No.2"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H06",
+   "name": "主ポンプ No.3",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "主ポンプ ③",
+    "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx": "No.3 主ポンプ"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "MP-3",
+   "path": [
+    "ポンプ設備",
+    "主ポンプ",
+    "No.3"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H07",
+   "name": "主ポンプ No.4",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "主ポンプ ④",
+    "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx": "No.4 主ポンプ"
+   },
+   "furnace": null,
+   "install_year": 2025,
+   "code": "MP-4",
+   "path": [
+    "ポンプ設備",
+    "主ポンプ",
+    "No.4"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H08",
+   "name": "最初沈殿池 汚泥かき寄せ機 1系",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "最初沈殿池かき寄せ機（1・2系）"
+   },
+   "furnace": 1,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "水処理設備",
+    "最初沈殿池",
+    "汚泥かき寄せ機",
+    "1系"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H09",
+   "name": "最初沈殿池 汚泥かき寄せ機 2系",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "最初沈殿池かき寄せ機（1・2系）"
+   },
+   "furnace": 2,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "水処理設備",
+    "最初沈殿池",
+    "汚泥かき寄せ機",
+    "2系"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H10",
+   "name": "送風機 No.1",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "送風機 1号"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": "B-1",
+   "path": [
+    "水処理設備",
+    "送風機",
+    "No.1"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H11",
+   "name": "送風機 No.2",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "送風機 2号"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": "B-2",
+   "path": [
+    "水処理設備",
+    "送風機",
+    "No.2"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H12",
+   "name": "送風機 No.3",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "送風機 No.3"
+   },
+   "furnace": null,
+   "install_year": 2010,
+   "code": "B-3",
+   "path": [
+    "水処理設備",
+    "送風機",
+    "No.3"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H13",
+   "name": "反応タンク 散気装置 1系",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "反応タンク1系 散気装置"
+   },
+   "furnace": 1,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "水処理設備",
+    "反応タンク",
+    "散気装置",
+    "1系"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H14",
+   "name": "反応タンク 散気装置 2系",
+   "names": {},
+   "furnace": 2,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "水処理設備",
+    "反応タンク",
+    "散気装置",
+    "2系"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H15",
+   "name": "最終沈殿池 汚泥かき寄せ機 1系",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "最終沈殿池かき寄せ機（1・2系）"
+   },
+   "furnace": 1,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "水処理設備",
+    "最終沈殿池",
+    "汚泥かき寄せ機",
+    "1系"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H16",
+   "name": "最終沈殿池 汚泥かき寄せ機 2系",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "最終沈殿池かき寄せ機（1・2系）"
+   },
+   "furnace": 2,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "水処理設備",
+    "最終沈殿池",
+    "汚泥かき寄せ機",
+    "2系"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H17",
+   "name": "次亜塩素酸ナトリウム注入設備",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "次亜注入ﾎﾟﾝﾌﾟ"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "消毒設備",
+    "次亜注入設備"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H18",
+   "name": "重力濃縮槽",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "重力濃縮槽"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "汚泥処理設備",
+    "重力濃縮槽"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H19",
+   "name": "脱水機 No.1",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "脱水機 No.1"
+   },
+   "furnace": null,
+   "install_year": 2008,
+   "code": "DH-1",
+   "path": [
+    "汚泥処理設備",
+    "脱水機",
+    "No.1"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H20",
+   "name": "脱水機 No.2",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "脱水機 No.2"
+   },
+   "furnace": null,
+   "install_year": 2008,
+   "code": "DH-2",
+   "path": [
+    "汚泥処理設備",
+    "脱水機",
+    "No.2"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H21",
+   "name": "受変電設備",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "受変電設備"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "電気設備",
+    "受変電設備"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H22",
+   "name": "自家発電設備",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "自家発電設備"
+   },
+   "furnace": null,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "電気設備",
+    "自家発電設備"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H23",
+   "name": "監視制御設備",
+   "names": {
+    "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx": "監視制御設備"
+   },
+   "furnace": null,
+   "install_year": 2014,
+   "code": null,
+   "path": [
+    "計装設備",
+    "監視制御設備"
+   ],
+   "rows": []
+  },
+  {
+   "id": "H24",
+   "name": "場内全体",
+   "names": {},
+   "furnace": null,
+   "install_year": 1991,
+   "code": null,
+   "path": [
+    "場内全体"
+   ],
+   "rows": []
+  }
+ ],
+ "works": [
+  {
+   "id": "W0001",
+   "label": "除塵機 №1・№2 し渣搬出・目視点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H01",
+    "H02"
+   ],
+   "start": "2026-08-03",
+   "end": "2026-08-03",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月3日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0002",
+   "label": "自家発電設備 月次 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H22"
+   ],
+   "start": "2026-08-03",
+   "end": "2026-08-03",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月3日",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0003",
+   "label": "重力濃縮槽 スカム除去",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H18"
+   ],
+   "start": "2026-08-05",
+   "end": "2026-08-05",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月5日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0004",
+   "label": "送風機 No.3 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H12"
+   ],
+   "start": "2026-08-05",
+   "end": "2026-08-05",
+   "man_days": 2.25,
+   "days": 1,
+   "vendor": "瑠璃機械整備㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月5日",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0005",
+   "label": "監視制御設備 月次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H23"
+   ],
+   "start": "2026-08-06",
+   "end": "2026-08-06",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "江戸紫電気保安㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月6日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0006",
+   "label": "次亜塩素酸ナトリウム注入設備 注入量確認・配管点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H17"
+   ],
+   "start": "2026-08-07",
+   "end": "2026-08-07",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月7日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0007",
+   "label": "除塵機 №1・№2 し渣搬出・目視点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H01",
+    "H02"
+   ],
+   "start": "2026-08-10",
+   "end": "2026-08-10",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月10日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0008",
+   "label": "主ポンプ No.2 グランドパッキン取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2026-08-11",
+   "end": "2026-08-11",
+   "man_days": 2.0625,
+   "days": 1,
+   "vendor": "浅葱ポンプ工業㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月11日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0009",
+   "label": "重力濃縮槽 スカム除去",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H18"
+   ],
+   "start": "2026-08-12",
+   "end": "2026-08-12",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月12日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0010",
+   "label": "沈砂かき揚げ機 チェーン張り調整",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H03"
+   ],
+   "start": "2026-08-12",
+   "end": "2026-08-12",
+   "man_days": 0.5,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月12日",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0011",
+   "label": "除塵機 №1・№2 し渣搬出・目視点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H01",
+    "H02"
+   ],
+   "start": "2026-08-17",
+   "end": "2026-08-17",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月17日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0012",
+   "label": "脱水機 No.2 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H20"
+   ],
+   "start": "2026-08-18",
+   "end": "2026-08-20",
+   "man_days": 11.25,
+   "days": 3,
+   "vendor": "鶸色脱水機サービス㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月18日",
+     "r": 8
+    },
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 9
+    },
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月20日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0013",
+   "label": "重力濃縮槽 スカム除去",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H18"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0014",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H21"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 4.0625,
+   "days": 1,
+   "vendor": "江戸紫電気保安㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0015",
+   "label": "自家発電設備 停電中の負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H22"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.6667,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0016",
+   "label": "監視制御設備 停電前の停止・復電後の再起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H23"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 1.5417,
+   "days": 1,
+   "vendor": "江戸紫電気保安㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "W0017",
+   "label": "主ポンプ No.1 復電後の起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "W0018",
+   "label": "主ポンプ No.2 復電後の起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 14
+    }
+   ]
+  },
+  {
+   "id": "W0019",
+   "label": "主ポンプ No.3 復電後の起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 15
+    }
+   ]
+  },
+  {
+   "id": "W0020",
+   "label": "主ポンプ No.4 復電後の起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H07"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0021",
+   "label": "送風機 No.1 復電後の起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H10"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0022",
+   "label": "送風機 No.2 復電後の起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H11"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0023",
+   "label": "送風機 No.3 復電後の起動確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H12"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "W0024",
+   "label": "除塵機 No.1 レーキ破損 補修",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H01"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 1.5,
+   "days": 1,
+   "vendor": "瑠璃機械整備㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日 (続)",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0025",
+   "label": "最初沈殿池かき寄せ機（1・2系） 復電後の運転確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H08",
+    "H09"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日 (続)",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0026",
+   "label": "最終沈殿池かき寄せ機（1・2系） 復電後の運転確認",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H15",
+    "H16"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.0625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月19日 (続)",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0027",
+   "label": "主ポンプ No.1～4 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H04",
+    "H05",
+    "H06",
+    "H07"
+   ],
+   "start": "2026-08-21",
+   "end": "2026-08-21",
+   "man_days": 0.625,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月21日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0028",
+   "label": "除塵機 №1・№2 し渣搬出・目視点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H01",
+    "H02"
+   ],
+   "start": "2026-08-24",
+   "end": "2026-08-24",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月24日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0029",
+   "label": "次亜塩素酸ナトリウム注入設備 注入ポンプ No.2 ダイヤフラム取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H17"
+   ],
+   "start": "2026-08-25",
+   "end": "2026-08-25",
+   "man_days": 0.75,
+   "days": 1,
+   "vendor": "瑠璃機械整備㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月25日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0030",
+   "label": "重力濃縮槽 スカム除去",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H18"
+   ],
+   "start": "2026-08-26",
+   "end": "2026-08-26",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月26日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0031",
+   "label": "最初沈殿池 汚泥かき寄せ機 1系 チェーン・フライト調整",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H08"
+   ],
+   "start": "2026-08-26",
+   "end": "2026-08-27",
+   "man_days": 7.5,
+   "days": 2,
+   "vendor": "瑠璃機械整備㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月26日",
+     "r": 9
+    },
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月27日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0032",
+   "label": "反応タンク 散気装置 1系 目詰まり点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H13"
+   ],
+   "start": "2026-08-28",
+   "end": "2026-08-28",
+   "man_days": 0.5,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月28日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0033",
+   "label": "除塵機 №1・№2 し渣搬出・目視点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H01",
+    "H02"
+   ],
+   "start": "2026-08-31",
+   "end": "2026-08-31",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月31日",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0034",
+   "label": "脱水機 No.1 ろ布洗浄ノズル清掃",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "H19"
+   ],
+   "start": "2026-08-31",
+   "end": "2026-08-31",
+   "man_days": 0.1875,
+   "days": 1,
+   "vendor": "運転管理（委託）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+     "sheet": "8月31日",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0035",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-04-15",
+   "end": "2025-04-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 6
+    }
+   ]
+  },
+  {
+   "id": "W0036",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-04-15",
+   "end": "2025-04-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 6
+    }
+   ]
+  },
+  {
+   "id": "W0037",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-04-15",
+   "end": "2025-04-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 6
+    }
+   ]
+  },
+  {
+   "id": "W0038",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-05-15",
+   "end": "2025-05-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0039",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-05-15",
+   "end": "2025-05-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0040",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-05-15",
+   "end": "2025-05-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0041",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-06-16",
+   "end": "2025-06-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0042",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-06-16",
+   "end": "2025-06-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0043",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-06-16",
+   "end": "2025-06-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0044",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-07-15",
+   "end": "2025-07-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0045",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-07-15",
+   "end": "2025-07-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0046",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-07-15",
+   "end": "2025-07-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0047",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-08-15",
+   "end": "2025-08-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0048",
+   "label": "主ポンプ No.2 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-08-04",
+   "end": "2025-08-29",
+   "days": 26,
+   "vendor": "浅葱ポンプ工業㈱",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0049",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-08-15",
+   "end": "2025-08-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0050",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-09-15",
+   "end": "2025-09-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0051",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-09-15",
+   "end": "2025-09-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0052",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-09-15",
+   "end": "2025-09-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0053",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-10-15",
+   "end": "2025-10-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0054",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-10-15",
+   "end": "2025-10-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0055",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-10-15",
+   "end": "2025-10-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0056",
+   "label": "主ポンプ No.4 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H07"
+   ],
+   "start": "2025-10-15",
+   "end": "2025-10-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0057",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-11-17",
+   "end": "2025-11-17",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0058",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-11-17",
+   "end": "2025-11-17",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0059",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-11-17",
+   "end": "2025-11-17",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0060",
+   "label": "主ポンプ No.4 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H07"
+   ],
+   "start": "2025-11-17",
+   "end": "2025-11-17",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0061",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2025-12-15",
+   "end": "2025-12-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0062",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2025-12-15",
+   "end": "2025-12-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0063",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2025-12-15",
+   "end": "2025-12-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0064",
+   "label": "主ポンプ No.4 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H07"
+   ],
+   "start": "2025-12-15",
+   "end": "2025-12-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0065",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2026-01-15",
+   "end": "2026-01-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "W0066",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2026-01-15",
+   "end": "2026-01-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "W0067",
+   "label": "主ポンプ No.4 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H07"
+   ],
+   "start": "2026-01-15",
+   "end": "2026-01-15",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "W0068",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2026-02-16",
+   "end": "2026-02-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0069",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2026-02-16",
+   "end": "2026-02-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0070",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2026-02-16",
+   "end": "2026-02-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0071",
+   "label": "主ポンプ No.4 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H07"
+   ],
+   "start": "2026-02-16",
+   "end": "2026-02-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0072",
+   "label": "主ポンプ No.1 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H04"
+   ],
+   "start": "2026-03-16",
+   "end": "2026-03-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0073",
+   "label": "主ポンプ No.2 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H05"
+   ],
+   "start": "2026-03-16",
+   "end": "2026-03-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0074",
+   "label": "主ポンプ No.3 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H06"
+   ],
+   "start": "2026-03-16",
+   "end": "2026-03-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0075",
+   "label": "主ポンプ No.4 月例点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "H07"
+   ],
+   "start": "2026-03-16",
+   "end": "2026-03-16",
+   "days": 1,
+   "vendor": "保全班（職員）",
+   "rows": [
+    {
+     "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+     "sheet": "R7",
+     "r": 21
+    }
+   ]
+  }
+ ],
+ "unrecorded": [],
+ "defects": [
+  {
+   "kind": "点検の抜け",
+   "where": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx R7 の 1 月の行で No.3 主ポンプの欄が空（点検していない）",
+   "check": "月例点検の周期の超え"
+  }
+ ]
+}

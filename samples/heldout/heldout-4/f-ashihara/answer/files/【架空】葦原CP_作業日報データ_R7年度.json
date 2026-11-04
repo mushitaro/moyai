@@ -1,0 +1,2668 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】葦原CP_作業日報データ_R7年度.csv",
+ "plan": false,
+ "records": [
+  {
+   "r": 4,
+   "kind": "item",
+   "fields": {
+    "date": "2025-04-02",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 5,
+   "kind": "item",
+   "fields": {
+    "date": "2025-04-02",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 6,
+   "kind": "item",
+   "fields": {
+    "date": "2025-04-22",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号 バケット",
+    "category": "補修",
+    "work": "ごみクレーン No.2 バケット 油圧ホース破損 取替",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 2,
+    "hours": "9:00-15:00",
+    "manDays": 1.5,
+    "manDaysText": "12.0",
+    "memo": "巡回点検で発見"
+   }
+  },
+  {
+   "r": 7,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-07",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-07",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-12",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "立下げ",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 10,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-13",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "炉内冷却（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 11,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-14",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "炉内冷却（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 12,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-15",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "ダイオキシン類 作業前測定・養生",
+    "vendor": "群青分析センター㈱",
+    "persons": 4,
+    "hours": "8:30-12:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 13,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-16",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "付着物除去（クリンカ・灰）（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 14,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-17",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "付着物除去（クリンカ・灰）（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 15,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-17",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場組立（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 16,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-18",
+    "furnace": "#1",
+    "system": "通風",
+    "equipment": "FDF",
+    "category": "点検",
+    "work": "点検（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:00-21:00",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 17,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-18",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場組立（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-12:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 18,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-19",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "給じん装置",
+    "category": "整備",
+    "work": "給じん装置整備（1/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 19,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-19",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "火格子",
+    "category": "取替",
+    "work": "火格子取替（一部）（1/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:00-21:00",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 20,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-19",
+    "furnace": "1炉",
+    "system": "通風",
+    "equipment": "FDF",
+    "category": "点検",
+    "work": "点検（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 21,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-19",
+    "furnace": "1炉",
+    "system": "灰出し",
+    "equipment": "灰押出装置",
+    "category": "整備",
+    "work": "点検整備（1/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 22,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-20",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "ごみ供給装置",
+    "category": "整備",
+    "work": "給じん装置整備（2/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-12:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 23,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-20",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "火格子",
+    "category": "取替",
+    "work": "火格子取替（一部）（2/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 24,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-20",
+    "furnace": "1炉",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ №1",
+    "category": "整備",
+    "work": "分解整備（1/3日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 25,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-20",
+    "furnace": "#1",
+    "system": "通風",
+    "equipment": "IDF",
+    "category": "点検",
+    "work": "軸受・インペラ点検（1/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 26,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-20",
+    "furnace": "―",
+    "system": "共通",
+    "equipment": "施設全体",
+    "category": "点検",
+    "work": "排ガス測定（年4回）",
+    "vendor": "群青分析センター㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 27,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-20",
+    "furnace": "#1",
+    "system": "灰出し",
+    "equipment": "灰押出装置",
+    "category": "整備",
+    "work": "点検整備（2/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 28,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-21",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "給じん装置",
+    "category": "整備",
+    "work": "給じん装置整備（3/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 29,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-21",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "火格子",
+    "category": "取替",
+    "work": "火格子取替（一部）（3/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 30,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-21",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（1/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 31,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-21",
+    "furnace": "1炉",
+    "system": "ボイラ",
+    "equipment": "BFP No.1",
+    "category": "整備",
+    "work": "分解整備（2/3日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 32,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-21",
+    "furnace": "1炉",
+    "system": "通風",
+    "equipment": "IDF",
+    "category": "点検",
+    "work": "軸受・インペラ点検（2/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 33,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-21",
+    "furnace": "#1",
+    "system": "灰出し",
+    "equipment": "灰押出装置",
+    "category": "整備",
+    "work": "点検整備（3/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 34,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-22",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "火格子",
+    "category": "取替",
+    "work": "火格子取替（一部）（4/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 35,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-22",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（2/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 36,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-22",
+    "furnace": "1炉",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（1/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 5,
+    "hours": "8:30-12:30",
+    "manDays": 2.5,
+    "manDaysText": "20.0"
+   }
+  },
+  {
+   "r": 37,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-22",
+    "furnace": "#1",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ №1",
+    "category": "整備",
+    "work": "分解整備（3/3日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 38,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-22",
+    "furnace": "1炉",
+    "system": "通風",
+    "equipment": "IDF",
+    "category": "点検",
+    "work": "軸受・インペラ点検（3/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 39,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-23",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "火格子",
+    "category": "取替",
+    "work": "火格子取替（一部）（5/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 40,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-23",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（3/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 41,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-23",
+    "furnace": "#1",
+    "system": "ボイラ",
+    "equipment": "廃熱ボイラ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（2/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 42,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-24",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "火格子",
+    "category": "取替",
+    "work": "火格子取替（一部）（6/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-12:30",
+    "manDays": 2.5,
+    "manDaysText": "20.0"
+   }
+  },
+  {
+   "r": 43,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-24",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（4/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 44,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-24",
+    "furnace": "1炉",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（3/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 5,
+    "hours": "8:30-12:30",
+    "manDays": 2.5,
+    "manDaysText": "20.0"
+   }
+  },
+  {
+   "r": 45,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-24",
+    "furnace": "1炉",
+    "system": "排ガス",
+    "equipment": "BF",
+    "category": "取替",
+    "work": "ろ布取替（1/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 46,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-26",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（5/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-12:30",
+    "manDays": 2.5,
+    "manDaysText": "20.0"
+   }
+  },
+  {
+   "r": 47,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-26",
+    "furnace": "1炉",
+    "system": "ボイラ",
+    "equipment": "廃熱ボイラ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（4/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 48,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-26",
+    "furnace": "#1",
+    "system": "排ガス",
+    "equipment": "バグフィルタ",
+    "category": "取替",
+    "work": "ろ布取替（2/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 7,
+    "hours": "8:00-21:00",
+    "manDays": 10.5,
+    "manDaysText": "84.0"
+   }
+  },
+  {
+   "r": 49,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-27",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（6/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-12:30",
+    "manDays": 2.5,
+    "manDaysText": "20.0"
+   }
+  },
+  {
+   "r": 50,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-27",
+    "furnace": "#1",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（5/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:30-12:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 51,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-27",
+    "furnace": "#1",
+    "system": "排ガス",
+    "equipment": "BF",
+    "category": "取替",
+    "work": "ろ布取替（3/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 52,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-28",
+    "furnace": "#1",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（6/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:00-21:00",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 53,
+   "kind": "item",
+   "fields": {
+    "date": "2025-05-28",
+    "furnace": "1炉",
+    "system": "排ガス",
+    "equipment": "バグフィルタ",
+    "category": "取替",
+    "work": "ろ布取替（4/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 54,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-01",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場解体（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:00-21:00",
+    "manDays": 7.5,
+    "manDaysText": "60.0"
+   }
+  },
+  {
+   "r": 55,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-02",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場解体（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 56,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-03",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "養生撤去・作業後測定",
+    "vendor": "群青分析センター㈱",
+    "persons": 4,
+    "hours": "8:00-21:00",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 57,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-04",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "空打ち試運転（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:00-21:00",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 58,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-04",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 59,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-04",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 60,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-05",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "空打ち試運転（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 61,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-06",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "立上げ",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 62,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-09",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号 バケット",
+    "category": "整備",
+    "work": "爪・油圧シリンダ整備（1/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 63,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-09",
+    "furnace": "共通",
+    "system": "排ガス",
+    "equipment": "消石灰供給装置",
+    "category": "点検",
+    "work": "定期点検（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 64,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-09",
+    "furnace": "共通",
+    "system": "発電",
+    "equipment": "蒸気タービン",
+    "category": "点検",
+    "work": "年次点検（1/4日目）",
+    "vendor": "白群タービン㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 65,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-10",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号 バケット",
+    "category": "整備",
+    "work": "爪・油圧シリンダ整備（2/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 66,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-10",
+    "furnace": "共通",
+    "system": "排ガス",
+    "equipment": "消石灰供給装置",
+    "category": "点検",
+    "work": "定期点検（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 67,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-10",
+    "furnace": "共通",
+    "system": "発電",
+    "equipment": "蒸気タービン",
+    "category": "点検",
+    "work": "年次点検（2/4日目）",
+    "vendor": "白群タービン㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 68,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-11",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号 バケット",
+    "category": "整備",
+    "work": "爪・油圧シリンダ整備（1/3日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 4,
+    "hours": "8:00-21:00",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 69,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-11",
+    "furnace": "共通",
+    "system": "発電",
+    "equipment": "蒸気タービン",
+    "category": "点検",
+    "work": "年次点検（3/4日目）",
+    "vendor": "白群タービン㈱",
+    "persons": 3,
+    "hours": "8:30-12:30",
+    "manDays": 1.5,
+    "manDaysText": "12.0"
+   }
+  },
+  {
+   "r": 70,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-12",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号 走行",
+    "category": "点検",
+    "work": "車輪・減速機点検（1/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 1,
+    "hours": "8:30-17:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 71,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-12",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号 バケット",
+    "category": "整備",
+    "work": "爪・油圧シリンダ整備（2/3日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 2,
+    "hours": "8:00-21:00",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 72,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-12",
+    "furnace": "共通",
+    "system": "発電",
+    "equipment": "ST",
+    "category": "点検",
+    "work": "年次点検（4/4日目）",
+    "vendor": "白群タービン㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 73,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-13",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号 走行",
+    "category": "点検",
+    "work": "車輪・減速機点検（2/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 74,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-13",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号 バケット",
+    "category": "整備",
+    "work": "爪・油圧シリンダ整備（3/3日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 3,
+    "hours": "8:00-21:00",
+    "manDays": 4.5,
+    "manDaysText": "36.0"
+   }
+  },
+  {
+   "r": 75,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-13",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "年次点検（全停電）",
+    "vendor": "縹電設㈱",
+    "persons": 6,
+    "hours": "8:30-12:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 76,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-13",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "点検・負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 3,
+    "hours": "8:00-21:00",
+    "manDays": 4.5,
+    "manDaysText": "36.0"
+   }
+  },
+  {
+   "r": 77,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-14",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号 走行",
+    "category": "点検",
+    "work": "車輪・減速機点検（1/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 1,
+    "hours": "8:00-21:00",
+    "manDays": 1.5,
+    "manDaysText": "12.0"
+   }
+  },
+  {
+   "r": 78,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-14",
+    "furnace": "共通",
+    "system": "計装",
+    "equipment": "DCS",
+    "category": "点検",
+    "work": "定期点検（1/2日目）",
+    "vendor": "萌黄計装㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 79,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-15",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号 走行",
+    "category": "点検",
+    "work": "車輪・減速機点検（2/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 1,
+    "hours": "8:00-21:00",
+    "manDays": 1.5,
+    "manDaysText": "12.0"
+   }
+  },
+  {
+   "r": 80,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-15",
+    "furnace": "共通",
+    "system": "計装",
+    "equipment": "DCS",
+    "category": "点検",
+    "work": "定期点検（2/2日目）",
+    "vendor": "萌黄計装㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 81,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-21",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "立下げ",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 82,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-22",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "炉内冷却（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 1,
+    "hours": "8:30-17:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 83,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-23",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "炉内冷却（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 1,
+    "hours": "8:00-21:00",
+    "manDays": 1.5,
+    "manDaysText": "12.0"
+   }
+  },
+  {
+   "r": 84,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-24",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "ダイオキシン類 作業前測定・養生",
+    "vendor": "群青分析センター㈱",
+    "persons": 5,
+    "hours": "8:00-21:00",
+    "manDays": 7.5,
+    "manDaysText": "60.0"
+   }
+  },
+  {
+   "r": 85,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-25",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "付着物除去（クリンカ・灰）（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 7,
+    "hours": "8:30-17:30",
+    "manDays": 7.0,
+    "manDaysText": "56.0"
+   }
+  },
+  {
+   "r": 86,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-26",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "付着物除去（クリンカ・灰）（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 87,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-26",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場組立（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:00-21:00",
+    "manDays": 7.5,
+    "manDaysText": "60.0"
+   }
+  },
+  {
+   "r": 88,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-27",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "ごみ供給装置",
+    "category": "整備",
+    "work": "給じん装置整備（1/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-12:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 89,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-27",
+    "furnace": "2炉",
+    "system": "通風",
+    "equipment": "FDF",
+    "category": "点検",
+    "work": "点検（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 1,
+    "hours": "8:30-17:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 90,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-27",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場組立（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 91,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-28",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "ごみ供給装置",
+    "category": "整備",
+    "work": "給じん装置整備（2/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-12:30",
+    "manDays": 1.5,
+    "manDaysText": "12.0"
+   }
+  },
+  {
+   "r": 92,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-28",
+    "furnace": "2炉",
+    "system": "通風",
+    "equipment": "FDF",
+    "category": "点検",
+    "work": "点検（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 93,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-28",
+    "furnace": "#2",
+    "system": "灰出し",
+    "equipment": "灰押出装置",
+    "category": "整備",
+    "work": "点検整備（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 94,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-30",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "給じん装置",
+    "category": "整備",
+    "work": "給じん装置整備（3/3日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:00-21:00",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 95,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-30",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（1/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:00-21:00",
+    "manDays": 7.5,
+    "manDaysText": "60.0"
+   }
+  },
+  {
+   "r": 96,
+   "kind": "item",
+   "fields": {
+    "date": "2025-06-30",
+    "furnace": "2炉",
+    "system": "灰出し",
+    "equipment": "灰押出装置",
+    "category": "整備",
+    "work": "点検整備（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:00-21:00",
+    "manDays": 4.5,
+    "manDaysText": "36.0"
+   }
+  },
+  {
+   "r": 97,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-01",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（2/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 98,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-01",
+    "furnace": "#2",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（1/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 5,
+    "hours": "8:00-21:00",
+    "manDays": 7.5,
+    "manDaysText": "60.0"
+   }
+  },
+  {
+   "r": 99,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-02",
+    "furnace": "#2",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（3/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:00-21:00",
+    "manDays": 7.5,
+    "manDaysText": "60.0"
+   }
+  },
+  {
+   "r": 100,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-02",
+    "furnace": "#2",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（2/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:30-12:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 101,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-02",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 102,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-02",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 103,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-03",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（4/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 104,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-03",
+    "furnace": "2炉",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（3/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 105,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-03",
+    "furnace": "2炉",
+    "system": "排ガス",
+    "equipment": "BF",
+    "category": "取替",
+    "work": "ろ布取替（1/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 7,
+    "hours": "8:00-21:00",
+    "manDays": 10.5,
+    "manDaysText": "84.0"
+   }
+  },
+  {
+   "r": 106,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-04",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（5/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 107,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-04",
+    "furnace": "#2",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（4/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:00-21:00",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 108,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-04",
+    "furnace": "#2",
+    "system": "排ガス",
+    "equipment": "バグフィルタ",
+    "category": "取替",
+    "work": "ろ布取替（2/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 109,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-05",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "耐火物",
+    "category": "整備",
+    "work": "部分補修（6/6日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-12:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 110,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-05",
+    "furnace": "2炉",
+    "system": "ボイラ",
+    "equipment": "廃熱ボイラ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（5/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 5,
+    "hours": "8:00-21:00",
+    "manDays": 7.5,
+    "manDaysText": "60.0"
+   }
+  },
+  {
+   "r": 111,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-05",
+    "furnace": "#2",
+    "system": "排ガス",
+    "equipment": "BF",
+    "category": "取替",
+    "work": "ろ布取替（3/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:00-21:00",
+    "manDays": 9.0,
+    "manDaysText": "72.0"
+   }
+  },
+  {
+   "r": 112,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-07",
+    "furnace": "2炉",
+    "system": "ボイラ",
+    "equipment": "廃熱ボイラ",
+    "category": "点検",
+    "work": "性能検査受検整備（ボイラー則）（6/6日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 113,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-07",
+    "furnace": "2炉",
+    "system": "排ガス",
+    "equipment": "バグフィルタ",
+    "category": "取替",
+    "work": "ろ布取替（4/4日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 114,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-11",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場解体（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 115,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-12",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "足場解体（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 6,
+    "hours": "8:30-17:30",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 116,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-13",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "養生撤去・作業後測定",
+    "vendor": "群青分析センター㈱",
+    "persons": 5,
+    "hours": "8:30-17:30",
+    "manDays": 5.0,
+    "manDaysText": "40.0"
+   }
+  },
+  {
+   "r": 117,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-14",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "空打ち試運転（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-12:30",
+    "manDays": 1.5,
+    "manDaysText": "12.0"
+   }
+  },
+  {
+   "r": 118,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-15",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "空打ち試運転（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 119,
+   "kind": "item",
+   "fields": {
+    "date": "2025-07-16",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "焼却炉",
+    "category": "付帯",
+    "work": "立上げ",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 120,
+   "kind": "item",
+   "fields": {
+    "date": "2025-08-05",
+    "furnace": "2炉",
+    "system": "通風",
+    "equipment": "IDF",
+    "category": "補修",
+    "work": "2号炉 誘引通風機 軸受温度上昇 グリス補給・点検",
+    "vendor": "葦原環境サービス㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0",
+    "memo": "運転中に発見。\n応急処置のうえ当日復旧"
+   }
+  },
+  {
+   "r": 122,
+   "kind": "item",
+   "fields": {
+    "date": "2025-08-06",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 123,
+   "kind": "item",
+   "fields": {
+    "date": "2025-08-06",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 124,
+   "kind": "item",
+   "fields": {
+    "date": "2025-08-19",
+    "furnace": "―",
+    "system": "共通",
+    "equipment": "施設全体",
+    "category": "点検",
+    "work": "排ガス測定（年4回）",
+    "vendor": "群青分析センター㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 125,
+   "kind": "item",
+   "fields": {
+    "date": "2025-09-03",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 126,
+   "kind": "item",
+   "fields": {
+    "date": "2025-09-03",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 127,
+   "kind": "item",
+   "fields": {
+    "date": "2025-09-09",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "計量機",
+    "category": "補修",
+    "work": "計量機 No.1 表示器 不調 調整",
+    "vendor": "利休はかり商会",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0",
+    "memo": "運転中に発見。\n応急処置のうえ当日復旧"
+   }
+  },
+  {
+   "r": 129,
+   "kind": "item",
+   "fields": {
+    "date": "2025-10-01",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 130,
+   "kind": "item",
+   "fields": {
+    "date": "2025-10-01",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 131,
+   "kind": "item",
+   "fields": {
+    "date": "2025-10-14",
+    "furnace": "#1",
+    "system": "燃焼",
+    "equipment": "ごみ供給装置",
+    "category": "補修",
+    "work": "1号炉 ごみ供給装置 プッシャ 油漏れ 補修（1/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0",
+    "memo": "巡回点検で発見"
+   }
+  },
+  {
+   "r": 132,
+   "kind": "item",
+   "fields": {
+    "date": "2025-10-15",
+    "furnace": "1炉",
+    "system": "燃焼",
+    "equipment": "ごみ供給装置",
+    "category": "補修",
+    "work": "1号炉 ごみ供給装置 プッシャ 油漏れ 補修（2/2日目）",
+    "vendor": "蒼炉エンジニアリング㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 133,
+   "kind": "item",
+   "fields": {
+    "date": "2025-10-20",
+    "furnace": "―",
+    "system": "共通",
+    "equipment": "施設全体",
+    "category": "点検",
+    "work": "精密機能検査（1/3日目）",
+    "vendor": "鈍色環境技術研究所㈱",
+    "persons": 3,
+    "hours": "8:00-21:00",
+    "manDays": 4.5,
+    "manDaysText": "36.0"
+   }
+  },
+  {
+   "r": 134,
+   "kind": "item",
+   "fields": {
+    "date": "2025-10-21",
+    "furnace": "―",
+    "system": "共通",
+    "equipment": "施設全体",
+    "category": "点検",
+    "work": "精密機能検査（2/3日目）",
+    "vendor": "鈍色環境技術研究所㈱",
+    "persons": 2,
+    "hours": "8:00-21:00",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 135,
+   "kind": "item",
+   "fields": {
+    "date": "2025-10-22",
+    "furnace": "―",
+    "system": "共通",
+    "equipment": "施設全体",
+    "category": "点検",
+    "work": "精密機能検査（3/3日目）",
+    "vendor": "鈍色環境技術研究所㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 136,
+   "kind": "item",
+   "fields": {
+    "date": "2025-11-05",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 137,
+   "kind": "item",
+   "fields": {
+    "date": "2025-11-05",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 138,
+   "kind": "item",
+   "fields": {
+    "date": "2025-11-10",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "計量機",
+    "category": "点検",
+    "work": "定期点検",
+    "vendor": "利休はかり商会",
+    "persons": 1,
+    "hours": "8:30-17:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 139,
+   "kind": "item",
+   "fields": {
+    "date": "2025-11-18",
+    "furnace": "―",
+    "system": "共通",
+    "equipment": "施設全体",
+    "category": "点検",
+    "work": "排ガス測定（年4回）",
+    "vendor": "群青分析センター㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 140,
+   "kind": "item",
+   "fields": {
+    "date": "2025-11-26",
+    "furnace": "共通",
+    "system": "灰出し",
+    "equipment": "飛灰処理装置",
+    "category": "補修",
+    "work": "飛灰処理装置 混練機 キレート配管 閉塞 清掃",
+    "vendor": "葦原環境サービス㈱",
+    "persons": 2,
+    "hours": "9:00-14:00",
+    "manDays": 1.25,
+    "manDaysText": "10.0",
+    "memo": "運転中に発見。\n応急処置のうえ当日復旧"
+   }
+  },
+  {
+   "r": 142,
+   "kind": "item",
+   "fields": {
+    "date": "2025-12-03",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 143,
+   "kind": "item",
+   "fields": {
+    "date": "2025-12-03",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 144,
+   "kind": "item",
+   "fields": {
+    "date": "2025-12-16",
+    "furnace": "#1",
+    "system": "ボイラ",
+    "equipment": "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ №2",
+    "category": "補修",
+    "work": "ボイラ給水ポンプ 1号炉 No.2 メカニカルシール 取替（1/2日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0",
+    "memo": "巡回点検で発見"
+   }
+  },
+  {
+   "r": 145,
+   "kind": "item",
+   "fields": {
+    "date": "2025-12-17",
+    "furnace": "1炉",
+    "system": "ボイラ",
+    "equipment": "BFP No.2",
+    "category": "補修",
+    "work": "ボイラ給水ポンプ 1号炉 No.2 メカニカルシール 取替（2/2日目）",
+    "vendor": "翠ボイラ技研㈱",
+    "persons": 3,
+    "hours": "8:30-17:30",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 146,
+   "kind": "item",
+   "fields": {
+    "date": "2026-01-07",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 147,
+   "kind": "item",
+   "fields": {
+    "date": "2026-01-07",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 148,
+   "kind": "item",
+   "fields": {
+    "date": "2026-01-20",
+    "furnace": "2炉",
+    "system": "燃焼",
+    "equipment": "火格子",
+    "category": "補修",
+    "work": "2号炉 火格子 落じん 清掃・可動部点検",
+    "vendor": "葦原環境サービス㈱",
+    "persons": 3,
+    "hours": "8:30-17:00",
+    "manDays": 2.8125,
+    "manDaysText": "22.5",
+    "memo": "運転中に発見。\n応急処置のうえ当日復旧"
+   }
+  },
+  {
+   "r": 150,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-03",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号",
+    "category": "点検",
+    "work": "年次自主検査（1/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 4,
+    "hours": "8:30-17:30",
+    "manDays": 4.0,
+    "manDaysText": "32.0"
+   }
+  },
+  {
+   "r": 151,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-04",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号",
+    "category": "点検",
+    "work": "年次自主検査（2/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "r": 152,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-04",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 153,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-04",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 154,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-05",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号",
+    "category": "点検",
+    "work": "年次自主検査（1/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 2,
+    "hours": "8:00-21:00",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 155,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-06",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン2号",
+    "category": "点検",
+    "work": "年次自主検査（2/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 2,
+    "hours": "8:30-17:30",
+    "manDays": 2.0,
+    "manDaysText": "16.0"
+   }
+  },
+  {
+   "r": 156,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-12",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号",
+    "category": "点検",
+    "work": "性能検査（クレーン則）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 4,
+    "hours": "8:00-21:00",
+    "manDays": 6.0,
+    "manDaysText": "48.0"
+   }
+  },
+  {
+   "r": 157,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-17",
+    "furnace": "―",
+    "system": "共通",
+    "equipment": "施設全体",
+    "category": "点検",
+    "work": "排ガス測定（年4回）",
+    "vendor": "群青分析センター㈱",
+    "persons": 2,
+    "hours": "8:00-21:00",
+    "manDays": 3.0,
+    "manDaysText": "24.0"
+   }
+  },
+  {
+   "r": 158,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-18",
+    "furnace": "共通",
+    "system": "灰出し",
+    "equipment": "灰クレーン",
+    "category": "点検",
+    "work": "年次自主検査（1/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 3,
+    "hours": "8:00-21:00",
+    "manDays": 4.5,
+    "manDaysText": "36.0"
+   }
+  },
+  {
+   "r": 159,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-19",
+    "furnace": "共通",
+    "system": "灰出し",
+    "equipment": "灰クレーン",
+    "category": "点検",
+    "work": "年次自主検査（2/2日目）",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 3,
+    "hours": "8:00-21:00",
+    "manDays": 4.5,
+    "manDaysText": "36.0"
+   }
+  },
+  {
+   "r": 160,
+   "kind": "item",
+   "fields": {
+    "date": "2026-02-24",
+    "furnace": "共通",
+    "system": "受入供給",
+    "equipment": "ごみクレーン1号 走行",
+    "category": "補修",
+    "work": "ごみクレーン No.1 走行装置 異音 点検",
+    "vendor": "鴇色クレーン整備㈱",
+    "persons": 2,
+    "hours": "8:30-12:30",
+    "manDays": 1.0,
+    "manDaysText": "8.0",
+    "memo": "巡回点検で発見"
+   }
+  },
+  {
+   "r": 161,
+   "kind": "item",
+   "fields": {
+    "date": "2026-03-04",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "受変電設備",
+    "category": "点検",
+    "work": "月次点検",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-12:00",
+    "manDays": 0.375,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "r": 162,
+   "kind": "item",
+   "fields": {
+    "date": "2026-03-04",
+    "furnace": "共通",
+    "system": "電気",
+    "equipment": "非常用発電機",
+    "category": "点検",
+    "work": "月次点検・無負荷運転",
+    "vendor": "縹電設㈱",
+    "persons": 1,
+    "hours": "9:00-11:00",
+    "manDays": 0.25,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "r": 163,
+   "kind": "item",
+   "fields": {
+    "date": "2026-03-10",
+    "furnace": "共通",
+    "system": "排ガス",
+    "equipment": "消石灰供給装置",
+    "category": "補修",
+    "work": "消石灰供給装置 ロータリーバルブ 詰まり 除去",
+    "vendor": "葦原環境サービス㈱",
+    "persons": 2,
+    "hours": "9:00-12:30",
+    "manDays": 0.875,
+    "manDaysText": "7.0",
+    "memo": "巡回点検で発見"
+   }
+  }
+ ]
+}

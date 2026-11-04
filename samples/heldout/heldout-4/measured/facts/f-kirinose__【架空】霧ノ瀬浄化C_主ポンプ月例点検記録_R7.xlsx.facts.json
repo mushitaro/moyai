@@ -1,0 +1,1424 @@
+{
+ "schema": "moyai.factory.facts/0",
+ "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+ "reader": "openpyxl 3.1.5",
+ "creator": "【架空】サンプル生成器",
+ "sheets": [
+  {
+   "title": "R7",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】霧ノ瀬浄化センター　主ポンプ 月例点検記録（令和7年度）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "架空のデータ　　ポンプ棟　点検：保全班",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A4",
+     "value": "点検日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B4",
+     "value": "No.1 主ポンプ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F4",
+     "value": "No.2 主ポンプ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J4",
+     "value": "No.3 主ポンプ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N4",
+     "value": "点検者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O4",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "運転時間\n(h)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "絶縁抵抗\n(MΩ)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "振動\n(mm/s)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "軸受温度\n(℃)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": "運転時間\n(h)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "絶縁抵抗\n(MΩ)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "振動\n(mm/s)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I5",
+     "value": "軸受温度\n(℃)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J5",
+     "value": "運転時間\n(h)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K5",
+     "value": "絶縁抵抗\n(MΩ)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L5",
+     "value": "振動\n(mm/s)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M5",
+     "value": "軸受温度\n(℃)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": 45762.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B6",
+     "value": 151775,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C6",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": 3.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": 36,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": 150260,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G6",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H6",
+     "value": 2.7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I6",
+     "value": 41,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J6",
+     "value": 98713,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K6",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L6",
+     "value": 1.4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M6",
+     "value": 46,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N6",
+     "value": "森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": 45792.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B7",
+     "value": 152348,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C7",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": 4.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": 43,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": 150648,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G7",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H7",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I7",
+     "value": 36,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J7",
+     "value": 99177,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K7",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L7",
+     "value": 1.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M7",
+     "value": 44,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N7",
+     "value": "笹倉・森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": 45824.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B8",
+     "value": 152913,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C8",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": 3.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": 48,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": 151263,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G8",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H8",
+     "value": 2.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I8",
+     "value": 41,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J8",
+     "value": 99777,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K8",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L8",
+     "value": 2.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M8",
+     "value": 37,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N8",
+     "value": "笹倉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": 45853.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B9",
+     "value": 153406,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C9",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": 4.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": 43,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": 151815,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G9",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H9",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I9",
+     "value": 36,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J9",
+     "value": 100174,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K9",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L9",
+     "value": 3.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M9",
+     "value": 45,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N9",
+     "value": "森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": 45884.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B10",
+     "value": 153819,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C10",
+     "value": 200,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": 4.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": 36,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "整備中",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J10",
+     "value": 100747,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K10",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L10",
+     "value": 2.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M10",
+     "value": 52,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N10",
+     "value": "笹倉・森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O10",
+     "value": "No.2 分解整備（8/4～8/29 浅葱ポンプ工業）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": 45915.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B11",
+     "value": 154325,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C11",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": 3.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": 48,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": 152293,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G11",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H11",
+     "value": 1.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I11",
+     "value": 36,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J11",
+     "value": 101157,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K11",
+     "value": 200,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L11",
+     "value": 1.7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M11",
+     "value": 43,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N11",
+     "value": "笹倉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": "※ 令和7年10月1日 No.4 主ポンプ（増設）供用開始。10月から No.4 の欄を足した様式に変更。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": "点検日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B14",
+     "value": "No.1 主ポンプ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": "No.2 主ポンプ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J14",
+     "value": "No.3 主ポンプ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N14",
+     "value": "No.4 主ポンプ（増設）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "R14",
+     "value": "点検者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "S14",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B15",
+     "value": "運転時間\n(h)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C15",
+     "value": "絶縁抵抗\n(MΩ)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D15",
+     "value": "振動\n(mm/s)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E15",
+     "value": "軸受温度\n(℃)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F15",
+     "value": "運転時間\n(h)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G15",
+     "value": "絶縁抵抗\n(MΩ)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H15",
+     "value": "振動\n(mm/s)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I15",
+     "value": "軸受温度\n(℃)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J15",
+     "value": "運転時間\n(h)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K15",
+     "value": "絶縁抵抗\n(MΩ)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L15",
+     "value": "振動\n(mm/s)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "M15",
+     "value": "軸受温度\n(℃)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "N15",
+     "value": "運転時間\n(h)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "O15",
+     "value": "絶縁抵抗\n(MΩ)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "P15",
+     "value": "振動\n(mm/s)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q15",
+     "value": "軸受温度\n(℃)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": 45945.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B16",
+     "value": 154916,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C16",
+     "value": 200,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D16",
+     "value": 3.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E16",
+     "value": 38,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F16",
+     "value": 152743,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G16",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H16",
+     "value": 1.4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I16",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J16",
+     "value": 101656,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K16",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L16",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M16",
+     "value": 38,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N16",
+     "value": 201,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "O16",
+     "value": 1000,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P16",
+     "value": 2.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q16",
+     "value": 46,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "R16",
+     "value": "森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A17",
+     "value": 45978.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B17",
+     "value": 155532,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C17",
+     "value": 200,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D17",
+     "value": 3.8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E17",
+     "value": 52,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F17",
+     "value": 153157,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G17",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H17",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I17",
+     "value": 39,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J17",
+     "value": 102114,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K17",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L17",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M17",
+     "value": 39,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N17",
+     "value": 602,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "O17",
+     "value": 1000,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P17",
+     "value": 3.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q17",
+     "value": 47,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "R17",
+     "value": "笹倉・森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A18",
+     "value": 46006.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B18",
+     "value": 155976,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C18",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D18",
+     "value": 3.4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E18",
+     "value": 37,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F18",
+     "value": 153739,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G18",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H18",
+     "value": 3.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I18",
+     "value": 40,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J18",
+     "value": 102723,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K18",
+     "value": 200,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L18",
+     "value": 3.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M18",
+     "value": 37,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N18",
+     "value": 1055,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "O18",
+     "value": 1000,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P18",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q18",
+     "value": 39,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "R18",
+     "value": "笹倉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "S18",
+     "value": "No.1 振動やや大。次回 重点確認",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A19",
+     "value": 46037.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B19",
+     "value": 156370,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C19",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D19",
+     "value": 3.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E19",
+     "value": 44,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F19",
+     "value": 154316,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G19",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H19",
+     "value": 2.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I19",
+     "value": 40,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N19",
+     "value": 1673,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "O19",
+     "value": 1000,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P19",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q19",
+     "value": 42,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "R19",
+     "value": "森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A20",
+     "value": 46069.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B20",
+     "value": 156831,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C20",
+     "value": 200,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D20",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E20",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F20",
+     "value": 154838,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G20",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H20",
+     "value": 1.7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I20",
+     "value": 44,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J20",
+     "value": 103254,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K20",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L20",
+     "value": 1.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M20",
+     "value": 46,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N20",
+     "value": 2189,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "O20",
+     "value": 1000,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P20",
+     "value": 2.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q20",
+     "value": 38,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "R20",
+     "value": "笹倉・森下",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A21",
+     "value": 46097.0,
+     "data_type": "d",
+     "number_format": "m/d"
+    },
+    {
+     "coord": "B21",
+     "value": 157308,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "C21",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "D21",
+     "value": 3.8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "E21",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F21",
+     "value": 155259,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G21",
+     "value": 100,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H21",
+     "value": 2.7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "I21",
+     "value": 51,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "J21",
+     "value": 103714,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K21",
+     "value": 500,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "L21",
+     "value": 2.8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "M21",
+     "value": 43,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "N21",
+     "value": 2699,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "O21",
+     "value": 1000,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "P21",
+     "value": 2.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "Q21",
+     "value": 50,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "R21",
+     "value": "笹倉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A23",
+     "value": "注）絶縁抵抗は 1000V メガーで測定。振動は軸受部の速度の実効値。運転時間は積算計の読み。",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A14:A15",
+    "A4:A5",
+    "B14:E14",
+    "B4:E4",
+    "F10:I10",
+    "F14:I14",
+    "F4:I4",
+    "J14:M14",
+    "J4:M4",
+    "N14:Q14",
+    "N4:N5",
+    "O4:O5",
+    "R14:R15",
+    "S14:S15"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  }
+ ]
+}

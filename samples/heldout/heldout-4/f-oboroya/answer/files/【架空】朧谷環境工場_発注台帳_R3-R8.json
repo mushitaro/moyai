@@ -1,0 +1,1089 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+ "plan": false,
+ "records": [
+  {
+   "sheet": "発注台帳",
+   "r": 3,
+   "kind": "total",
+   "fields": {}
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 5,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 7,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "title": "R3年度 中央監視制御装置保守点検業務委託",
+    "vendor": "瓶覗システム㈱",
+    "contract_date": "2021-04-01",
+    "start": "2021-04-01",
+    "end": "2022-03-31",
+    "amount": 5957,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "title": "R3年度 排ガス等測定分析業務委託（単価契約）",
+    "vendor": "若竹環境分析㈱",
+    "contract_date": "2021-04-01",
+    "start": "2021-04-01",
+    "end": "2022-03-31",
+    "amount": 3518,
+    "unit": "千円",
+    "memo": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "title": "R3年度 受変電設備年次点検業務委託",
+    "vendor": "紺青電気保安協同組合",
+    "contract_date": "2021-04-01",
+    "start": "2021-08-02",
+    "end": "2021-08-02",
+    "amount": 947,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 10,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "title": "R3年度 計量機定期点検・検定業務委託",
+    "vendor": "砥粉計量器㈱",
+    "contract_date": "2021-04-01",
+    "start": "2021-11-13",
+    "end": "2021-11-13",
+    "amount": 854,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 11,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "title": "R3年度 ごみクレーン年次点検整備業務委託",
+    "vendor": "桑染クレーン㈱",
+    "contract_date": "2021-04-01",
+    "start": "2022-02-04",
+    "end": "2022-02-07",
+    "amount": 2239,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 12,
+   "kind": "item",
+   "fields": {
+    "no": 6,
+    "title": "R3年度 消防用設備等点検業務委託",
+    "vendor": "鉄紺防災設備㈱",
+    "contract_date": "2021-04-01",
+    "start": "2021-04-01",
+    "end": "2022-03-31",
+    "amount": 427,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 13,
+   "kind": "item",
+   "fields": {
+    "no": 7,
+    "title": "R3年度 非常用発電機点検業務委託",
+    "vendor": "黄櫨発電機サービス㈱",
+    "contract_date": "2021-04-01",
+    "start": "2021-07-04",
+    "end": "2021-07-04",
+    "amount": 391,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 14,
+   "kind": "item",
+   "fields": {
+    "no": 8,
+    "title": "R3年度 １号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2021-05-08",
+    "start": "2021-06-07",
+    "end": "2021-07-01",
+    "amount": 35789,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 15,
+   "kind": "item",
+   "fields": {
+    "no": 9,
+    "title": "R3年度 精密機能検査業務委託",
+    "vendor": "利久環境技術センター㈱",
+    "contract_date": "2021-07-01",
+    "start": "2021-10-14",
+    "end": "2021-10-16",
+    "amount": 3668,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 16,
+   "kind": "item",
+   "fields": {
+    "no": 10,
+    "title": "R3年度 2号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2021-08-03",
+    "start": "2021-09-02",
+    "end": "2021-09-26",
+    "amount": 36788,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 18,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 20,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "title": "R4年度 中央監視制御装置保守点検業務委託",
+    "vendor": "瓶覗システム㈱",
+    "contract_date": "2022-04-01",
+    "start": "2022-04-01",
+    "end": "2023-03-31",
+    "amount": 5661,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 21,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "title": "R4年度 排ガス等測定分析業務委託（単価契約）",
+    "vendor": "若竹環境分析㈱",
+    "contract_date": "2022-04-01",
+    "start": "2022-04-01",
+    "end": "2023-03-31",
+    "amount": 3179,
+    "unit": "千円",
+    "memo": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 22,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "title": "R4年度 受変電設備年次点検業務委託",
+    "vendor": "紺青電気保安協同組合",
+    "contract_date": "2022-04-01",
+    "start": "2022-08-04",
+    "end": "2022-08-04",
+    "amount": 1034,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 23,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "title": "R4年度 計量機定期点検業務委託",
+    "vendor": "砥粉計量器㈱",
+    "contract_date": "2022-04-01",
+    "start": "2022-11-12",
+    "end": "2022-11-12",
+    "amount": 555,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 24,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "title": "R4年度 ごみクレーン年次点検整備業務委託",
+    "vendor": "桑染クレーン㈱",
+    "contract_date": "2022-04-01",
+    "start": "2023-02-05",
+    "end": "2023-02-08",
+    "amount": 2140,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 25,
+   "kind": "item",
+   "fields": {
+    "no": 6,
+    "title": "R4年度 消防用設備等点検業務委託",
+    "vendor": "鉄紺防災設備㈱",
+    "contract_date": "2022-04-01",
+    "start": "2022-04-01",
+    "end": "2023-03-31",
+    "amount": 441,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 26,
+   "kind": "item",
+   "fields": {
+    "no": 7,
+    "title": "R4年度 非常用発電機点検業務委託",
+    "vendor": "黄櫨発電機サービス㈱",
+    "contract_date": "2022-04-01",
+    "start": "2022-07-05",
+    "end": "2022-07-05",
+    "amount": 407,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 27,
+   "kind": "item",
+   "fields": {
+    "no": 8,
+    "title": "R4年度 1号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2022-05-09",
+    "start": "2022-06-08",
+    "end": "2022-07-02",
+    "amount": 37295,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 28,
+   "kind": "item",
+   "fields": {
+    "no": 9,
+    "title": "R4年度 2号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2022-08-03",
+    "start": "2022-09-02",
+    "end": "2022-09-26",
+    "amount": 35998,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 29,
+   "kind": "item",
+   "fields": {
+    "no": 10,
+    "title": "R4年度 飛灰固化装置整備工事",
+    "vendor": "柿渋プラント㈱",
+    "contract_date": "2022-08-17",
+    "start": "2022-09-07",
+    "end": "2022-09-11",
+    "amount": 4531,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 30,
+   "kind": "item",
+   "fields": {
+    "no": 11,
+    "title": "2号炉 流動砂循環装置 緊急修繕",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2022-12-07",
+    "start": "2022-12-07",
+    "end": "2022-12-09",
+    "amount": 1826,
+    "unit": "千円",
+    "memo": "緊急対応",
+    "comments": {
+     "B30": "夜間に振動篩が停止。見積合せを省き緊急随契（課長決裁 12/7）"
+    }
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 32,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 34,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "title": "R5年度 中央監視制御装置保守点検業務委託",
+    "vendor": "瓶覗システム㈱",
+    "contract_date": "2023-04-01",
+    "start": "2023-04-01",
+    "end": "2024-03-31",
+    "amount": 5770,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 35,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "title": "R5年度 排ガス等測定分析業務委託（単価契約）",
+    "vendor": "若竹環境分析㈱",
+    "contract_date": "2023-04-01",
+    "start": "2023-04-01",
+    "end": "2024-03-31",
+    "amount": 3532,
+    "unit": "千円",
+    "memo": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 36,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "title": "R5年度 受変電設備年次点検業務委託",
+    "vendor": "紺青電気保安協同組合",
+    "contract_date": "2023-04-01",
+    "start": "2023-07-27",
+    "end": "2023-07-27",
+    "amount": 1010,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 37,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "title": "R5年度 計量機定期点検・検定業務委託",
+    "vendor": "砥粉計量器㈱",
+    "contract_date": "2023-04-01",
+    "start": "2023-11-11",
+    "end": "2023-11-11",
+    "amount": 843,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 38,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "title": "R5年度 ごみクレーン年次点検整備業務委託",
+    "vendor": "桑染クレーン㈱",
+    "contract_date": "2023-04-01",
+    "start": "2024-02-08",
+    "end": "2024-02-11",
+    "amount": 2236,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 39,
+   "kind": "item",
+   "fields": {
+    "no": 6,
+    "title": "R5年度 消防用設備等点検業務委託",
+    "vendor": "鉄紺防災設備㈱",
+    "contract_date": "2023-04-01",
+    "start": "2023-04-01",
+    "end": "2024-03-31",
+    "amount": 465,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 40,
+   "kind": "item",
+   "fields": {
+    "no": 7,
+    "title": "R5年度 非常用発電機点検業務委託",
+    "vendor": "黄櫨発電機サービス㈱",
+    "contract_date": "2023-04-01",
+    "start": "2023-07-04",
+    "end": "2023-07-04",
+    "amount": 414,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 41,
+   "kind": "item",
+   "fields": {
+    "no": 8,
+    "title": "R5年度 １号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2023-05-08",
+    "start": "2023-06-07",
+    "end": "2023-07-01",
+    "amount": 37832,
+    "unit": "千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 42,
+   "kind": "item",
+   "fields": {
+    "no": 9,
+    "title": "R5年度 2号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2023-08-04",
+    "start": "2023-09-03",
+    "end": "2023-09-27",
+    "amount": 37785,
+    "unit": "千円",
+    "memo": "変更契約（R5.10.6）流動砂の追加補充による増額　変更後 39,105千円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 44,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 46,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "title": "R6年度 中央監視制御装置保守点検業務委託",
+    "vendor": "瓶覗システム㈱",
+    "contract_date": "2024-04-01",
+    "start": "2024-04-01",
+    "end": "2025-03-31",
+    "contract_no": "R6-委-001",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 5832000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 47,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "title": "R6年度 排ガス等測定分析業務委託（単価契約）",
+    "vendor": "若竹環境分析㈱",
+    "contract_date": "2024-04-01",
+    "start": "2024-04-01",
+    "end": "2025-03-31",
+    "contract_no": "R6-委-002",
+    "category": "委託",
+    "method": "単価契約",
+    "amount": 3188000,
+    "unit": "円",
+    "memo": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 48,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "title": "R6年度 受変電設備年次点検業務委託",
+    "vendor": "紺青電気保安協同組合",
+    "contract_date": "2024-04-01",
+    "start": "2024-07-28",
+    "end": "2024-07-28",
+    "contract_no": "R6-委-005",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 1041000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 49,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "title": "R6年度 計量機定期点検業務委託",
+    "vendor": "砥粉計量器㈱",
+    "contract_date": "2024-04-01",
+    "start": "2024-11-14",
+    "end": "2024-11-14",
+    "contract_no": "R6-委-006",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 501000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 50,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "title": "R6年度 ごみクレーン年次点検整備業務委託",
+    "vendor": "桑染クレーン㈱",
+    "contract_date": "2024-04-01",
+    "start": "2025-02-03",
+    "end": "2025-02-06",
+    "contract_no": "R6-委-007",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 2220000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 51,
+   "kind": "item",
+   "fields": {
+    "no": 6,
+    "title": "R6年度 消防用設備等点検業務委託",
+    "vendor": "鉄紺防災設備㈱",
+    "contract_date": "2024-04-01",
+    "start": "2024-04-01",
+    "end": "2025-03-31",
+    "contract_no": "R6-委-008",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 469000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 52,
+   "kind": "item",
+   "fields": {
+    "no": 7,
+    "title": "R6年度 非常用発電機点検業務委託",
+    "vendor": "黄櫨発電機サービス㈱",
+    "contract_date": "2024-04-01",
+    "start": "2024-07-04",
+    "end": "2024-07-04",
+    "contract_no": "R6-委-009",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 407000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 53,
+   "kind": "item",
+   "fields": {
+    "no": 8,
+    "title": "R6年度 1号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2024-05-08",
+    "start": "2024-06-07",
+    "end": "2024-07-01",
+    "contract_no": "R6-工-003",
+    "category": "工事",
+    "method": "指名競争入札",
+    "amount": 37121000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 54,
+   "kind": "item",
+   "fields": {
+    "no": 9,
+    "title": "R6年度 精密機能検査業務委託",
+    "vendor": "利久環境技術センター㈱",
+    "contract_date": "2024-07-01",
+    "start": "2024-10-14",
+    "end": "2024-10-16",
+    "contract_no": "R6-委-011",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 3706000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 55,
+   "kind": "item",
+   "fields": {
+    "no": 10,
+    "title": "R6年度 2号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2024-08-05",
+    "start": "2024-09-04",
+    "end": "2024-09-28",
+    "contract_no": "R6-工-004",
+    "category": "工事",
+    "method": "指名競争入札",
+    "amount": 33890000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 56,
+   "kind": "item",
+   "fields": {
+    "no": 11,
+    "title": "R6年度 飛灰固化装置整備工事",
+    "vendor": "柿渋プラント㈱",
+    "contract_date": "2024-08-19",
+    "start": "2024-09-09",
+    "end": "2024-09-13",
+    "contract_no": "R6-工-010",
+    "category": "工事",
+    "method": "随意契約",
+    "amount": 4546000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 57,
+   "kind": "item",
+   "fields": {
+    "no": 12,
+    "title": "1号炉 誘引送風機 軸受 緊急取替",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2024-08-26",
+    "start": "2024-08-27",
+    "end": "2024-08-29",
+    "contract_no": "R6-修-012",
+    "category": "修繕",
+    "method": "随意契約（緊急）",
+    "amount": 2563000,
+    "unit": "円",
+    "memo": "軸受温度上昇のため停止"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 59,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 61,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "title": "R7年度 中央監視制御装置保守点検業務委託",
+    "vendor": "瓶覗システム㈱",
+    "contract_date": "2025-04-01",
+    "start": "2025-04-01",
+    "end": "2026-03-31",
+    "contract_no": "R7-委-001",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 6024000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 62,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "title": "R7年度 排ガス等測定分析業務委託（単価契約）",
+    "vendor": "若竹環境分析㈱",
+    "contract_date": "2025-04-01",
+    "start": "2025-04-01",
+    "end": "2026-03-31",
+    "contract_no": "R7-委-002",
+    "category": "委託",
+    "method": "単価契約",
+    "amount": 3202000,
+    "unit": "円",
+    "memo": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 63,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "title": "R7年度 受変電設備年次点検業務委託",
+    "vendor": "紺青電気保安協同組合",
+    "contract_date": "2025-04-01",
+    "start": "2025-08-04",
+    "end": "2025-08-04",
+    "contract_no": "R7-委-005",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 1008000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 64,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "title": "R7年度 計量機定期点検・検定業務委託",
+    "vendor": "砥粉計量器㈱",
+    "contract_date": "2025-04-01",
+    "start": "2025-11-15",
+    "end": "2025-11-15",
+    "contract_no": "R7-委-006",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 859000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 65,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "title": "R7年度 ごみクレーン年次点検整備業務委託",
+    "vendor": "桑染クレーン㈱",
+    "contract_date": "2025-04-01",
+    "start": "2026-02-03",
+    "end": "2026-02-06",
+    "contract_no": "R7-委-007",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 2082000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 66,
+   "kind": "item",
+   "fields": {
+    "no": 6,
+    "title": "R7年度 消防用設備等点検業務委託",
+    "vendor": "鉄紺防災設備㈱",
+    "contract_date": "2025-04-01",
+    "start": "2025-04-01",
+    "end": "2026-03-31",
+    "contract_no": "R7-委-008",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 479000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 67,
+   "kind": "item",
+   "fields": {
+    "no": 7,
+    "title": "R7年度 非常用発電機点検業務委託",
+    "vendor": "黄櫨発電機サービス㈱",
+    "contract_date": "2025-04-01",
+    "start": "2025-06-29",
+    "end": "2025-06-29",
+    "contract_no": "R7-委-009",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 396000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 68,
+   "kind": "item",
+   "fields": {
+    "no": 8,
+    "title": "R7年度 １号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2025-05-03",
+    "start": "2025-06-02",
+    "end": "2025-06-26",
+    "contract_no": "R7-工-003",
+    "category": "工事",
+    "method": "指名競争入札",
+    "amount": 38032000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 69,
+   "kind": "item",
+   "fields": {
+    "no": 9,
+    "title": "R7年度 2号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2025-08-03",
+    "start": "2025-09-02",
+    "end": "2025-09-26",
+    "contract_no": "R7-工-004",
+    "category": "工事",
+    "method": "指名競争入札",
+    "amount": 37077000,
+    "unit": "円",
+    "changed_amount": 39717000,
+    "memo": "R7.9.19 変更（ガス冷却室 噴霧ノズル追加取替）"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 70,
+   "kind": "item",
+   "fields": {
+    "no": 10,
+    "title": "ごみクレーン 1号 バケット油圧ユニット 緊急修繕",
+    "vendor": "桑染クレーン㈱",
+    "contract_date": "2026-01-13",
+    "start": "2026-01-14",
+    "end": "2026-01-15",
+    "contract_no": "R7-修-010",
+    "category": "修繕",
+    "method": "随意契約（緊急）",
+    "amount": 1408000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 72,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 74,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "title": "R8年度 中央監視制御装置保守点検業務委託",
+    "vendor": "瓶覗システム㈱",
+    "contract_date": "2026-04-01",
+    "start": "2026-04-01",
+    "end": "2027-03-31",
+    "contract_no": "R8-委-001",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 5850000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 75,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "title": "R8年度 排ガス等測定分析業務委託（単価契約）",
+    "vendor": "若竹環境分析㈱",
+    "contract_date": "2026-04-01",
+    "start": "2026-04-01",
+    "end": "2027-03-31",
+    "contract_no": "R8-委-002",
+    "category": "委託",
+    "method": "単価契約",
+    "amount": 3297000,
+    "unit": "円",
+    "memo": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 76,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "title": "R8年度 受変電設備年次点検業務委託",
+    "vendor": "紺青電気保安協同組合",
+    "contract_date": "2026-04-01",
+    "start": "2026-08-06",
+    "end": "2026-08-06",
+    "contract_no": "R8-委-005",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 950000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 77,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "title": "R8年度 計量機定期点検業務委託",
+    "vendor": "砥粉計量器㈱",
+    "contract_date": "2026-04-01",
+    "start": "2026-11-10",
+    "end": "2026-11-10",
+    "contract_no": "R8-委-006",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 542000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 78,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "title": "R8年度 ごみクレーン年次点検整備業務委託",
+    "vendor": "桑染クレーン㈱",
+    "contract_date": "2026-04-01",
+    "start": "2027-02-02",
+    "end": "2027-02-05",
+    "contract_no": "R8-委-007",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 2245000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 79,
+   "kind": "item",
+   "fields": {
+    "no": 6,
+    "title": "R8年度 消防用設備等点検業務委託",
+    "vendor": "鉄紺防災設備㈱",
+    "contract_date": "2026-04-01",
+    "start": "2026-04-01",
+    "end": "2027-03-31",
+    "contract_no": "R8-委-008",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 467000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 80,
+   "kind": "item",
+   "fields": {
+    "no": 7,
+    "title": "R8年度 非常用発電機点検業務委託",
+    "vendor": "黄櫨発電機サービス㈱",
+    "contract_date": "2026-04-01",
+    "start": "2026-06-30",
+    "end": "2026-06-30",
+    "contract_no": "R8-委-009",
+    "category": "委託",
+    "method": "随意契約",
+    "amount": 373000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 81,
+   "kind": "item",
+   "fields": {
+    "no": 8,
+    "title": "R8年度 1号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2026-05-04",
+    "start": "2026-06-03",
+    "end": "2026-06-27",
+    "contract_no": "R8-工-003",
+    "category": "工事",
+    "method": "指名競争入札",
+    "amount": 36381000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 82,
+   "kind": "item",
+   "fields": {
+    "no": 9,
+    "title": "R8年度 2号炉定期整備工事",
+    "vendor": "千草炉機工業㈱",
+    "contract_date": "2026-08-04",
+    "start": "2026-09-03",
+    "end": "2026-09-27",
+    "contract_no": "R8-工-004",
+    "category": "工事",
+    "method": "指名競争入札",
+    "amount": 33833000,
+    "unit": "円"
+   }
+  },
+  {
+   "sheet": "発注台帳",
+   "r": 83,
+   "kind": "item",
+   "fields": {
+    "no": 10,
+    "title": "R8年度 飛灰固化装置整備工事",
+    "vendor": "柿渋プラント㈱",
+    "contract_date": "2026-08-18",
+    "start": "2026-09-08",
+    "end": "2026-09-12",
+    "contract_no": "R8-工-010",
+    "category": "工事",
+    "method": "随意契約",
+    "amount": 4685000,
+    "unit": "円"
+   }
+  }
+ ]
+}

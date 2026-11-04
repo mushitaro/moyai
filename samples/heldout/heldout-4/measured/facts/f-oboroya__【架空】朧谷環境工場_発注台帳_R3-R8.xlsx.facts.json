@@ -1,0 +1,3557 @@
+{
+ "schema": "moyai.factory.facts/0",
+ "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+ "reader": "openpyxl 3.1.5",
+ "creator": "【架空】サンプル生成器",
+ "sheets": [
+  {
+   "title": "発注台帳",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】朧谷環境工場　修繕・委託 発注台帳（令和3年度～）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "【架空のデータ】　施設係　　※R5 までは金額を千円、R6 からは円で記入",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "総合計（R3～R8・円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E3",
+     "value": 552166000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A5",
+     "value": "令和3年度　計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "10件",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": 90578,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A6",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "件　名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "業者名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "契約日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "工　期",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": "契約金額（千円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "備　考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "R3年度 中央監視制御装置保守点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "瓶覗システム㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "R3.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "R3.4.1～R4.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": 5957,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A8",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "R3年度 排ガス等測定分析業務委託（単価契約）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "若竹環境分析㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "R3.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "R3.4.1～R4.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": 3518,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G8",
+     "value": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B9",
+     "value": "R3年度 受変電設備年次点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "紺青電気保安協同組合",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "R3.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "R3.8.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": 947,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A10",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B10",
+     "value": "R3年度 計量機定期点検・検定業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "砥粉計量器㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "R3.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "R3.11.13",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": 854,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A11",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B11",
+     "value": "R3年度 ごみクレーン年次点検整備業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "桑染クレーン㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "R3.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "R4.2.4～R4.2.7",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": 2239,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A12",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B12",
+     "value": "R3年度 消防用設備等点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "鉄紺防災設備㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D12",
+     "value": "R3.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": "R3.4.1～R4.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F12",
+     "value": 427,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A13",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B13",
+     "value": "R3年度 非常用発電機点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C13",
+     "value": "黄櫨発電機サービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D13",
+     "value": "R3.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E13",
+     "value": "R3.7.4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F13",
+     "value": 391,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A14",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B14",
+     "value": "R3年度 １号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C14",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D14",
+     "value": "R3.5.8",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E14",
+     "value": "R3.6.7～R3.7.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": 35789,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A15",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B15",
+     "value": "R3年度 精密機能検査業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C15",
+     "value": "利久環境技術センター㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D15",
+     "value": "R3.7.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E15",
+     "value": "R3.10.14～R3.10.16",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F15",
+     "value": 3668,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A16",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B16",
+     "value": "R3年度 2号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C16",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D16",
+     "value": "R3.8.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E16",
+     "value": "R3.9.2～R3.9.26",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F16",
+     "value": 36788,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A18",
+     "value": "令和4年度　計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C18",
+     "value": "11件",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F18",
+     "value": 93067,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A19",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B19",
+     "value": "件　名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C19",
+     "value": "業者名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D19",
+     "value": "契約日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E19",
+     "value": "工　期",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F19",
+     "value": "契約金額（千円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G19",
+     "value": "備　考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A20",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B20",
+     "value": "R4年度 中央監視制御装置保守点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C20",
+     "value": "瓶覗システム㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D20",
+     "value": "R4.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E20",
+     "value": "R4.4.1～R5.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F20",
+     "value": 5661,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A21",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B21",
+     "value": "R4年度 排ガス等測定分析業務委託（単価契約）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C21",
+     "value": "若竹環境分析㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D21",
+     "value": "R4.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E21",
+     "value": "R4.4.1～R5.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F21",
+     "value": 3179,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G21",
+     "value": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A22",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B22",
+     "value": "R4年度 受変電設備年次点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C22",
+     "value": "紺青電気保安協同組合",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D22",
+     "value": "R4.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E22",
+     "value": "R4.8.4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F22",
+     "value": 1034,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A23",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B23",
+     "value": "R4年度 計量機定期点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C23",
+     "value": "砥粉計量器㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D23",
+     "value": "R4.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E23",
+     "value": "R4.11.12",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F23",
+     "value": 555,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A24",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B24",
+     "value": "R4年度 ごみクレーン年次点検整備業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C24",
+     "value": "桑染クレーン㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D24",
+     "value": "R4.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E24",
+     "value": "R5.2.5～R5.2.8",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F24",
+     "value": 2140,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A25",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B25",
+     "value": "R4年度 消防用設備等点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C25",
+     "value": "鉄紺防災設備㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D25",
+     "value": "R4.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E25",
+     "value": "R4.4.1～R5.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F25",
+     "value": 441,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A26",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B26",
+     "value": "R4年度 非常用発電機点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C26",
+     "value": "黄櫨発電機サービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D26",
+     "value": "R4.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E26",
+     "value": "R4.7.5",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F26",
+     "value": 407,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A27",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B27",
+     "value": "R4年度 1号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C27",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D27",
+     "value": "R4.5.9",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E27",
+     "value": "R4.6.8～R4.7.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F27",
+     "value": 37295,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A28",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B28",
+     "value": "R4年度 2号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C28",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D28",
+     "value": "R4.8.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E28",
+     "value": "R4.9.2～R4.9.26",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F28",
+     "value": 35998,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A29",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B29",
+     "value": "R4年度 飛灰固化装置整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C29",
+     "value": "柿渋プラント㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D29",
+     "value": "R4.8.17",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E29",
+     "value": "R4.9.7～R4.9.11",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F29",
+     "value": 4531,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A30",
+     "value": 11,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B30",
+     "value": "2号炉 流動砂循環装置 緊急修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C30",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D30",
+     "value": "R4.12.7",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E30",
+     "value": "R4.12.7～R4.12.9",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F30",
+     "value": 1826,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G30",
+     "value": "緊急対応",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A32",
+     "value": "令和5年度　計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C32",
+     "value": "9件",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F32",
+     "value": 91207,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A33",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B33",
+     "value": "件　名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C33",
+     "value": "業者名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D33",
+     "value": "契約日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E33",
+     "value": "工　期",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F33",
+     "value": "契約金額（千円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G33",
+     "value": "備　考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A34",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B34",
+     "value": "R5年度 中央監視制御装置保守点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C34",
+     "value": "瓶覗システム㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D34",
+     "value": "R5.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E34",
+     "value": "R5.4.1～R6.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F34",
+     "value": 5770,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A35",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B35",
+     "value": "R5年度 排ガス等測定分析業務委託（単価契約）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C35",
+     "value": "若竹環境分析㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D35",
+     "value": "R5.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E35",
+     "value": "R5.4.1～R6.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F35",
+     "value": 3532,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G35",
+     "value": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A36",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B36",
+     "value": "R5年度 受変電設備年次点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C36",
+     "value": "紺青電気保安協同組合",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D36",
+     "value": "R5.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E36",
+     "value": "R5.7.27",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F36",
+     "value": 1010,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A37",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B37",
+     "value": "R5年度 計量機定期点検・検定業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C37",
+     "value": "砥粉計量器㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D37",
+     "value": "R5.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E37",
+     "value": "R5.11.11",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F37",
+     "value": 843,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A38",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B38",
+     "value": "R5年度 ごみクレーン年次点検整備業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C38",
+     "value": "桑染クレーン㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D38",
+     "value": "R5.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E38",
+     "value": "R6.2.8～R6.2.11",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F38",
+     "value": 2236,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A39",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B39",
+     "value": "R5年度 消防用設備等点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C39",
+     "value": "鉄紺防災設備㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D39",
+     "value": "R5.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E39",
+     "value": "R5.4.1～R6.3.31",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F39",
+     "value": 465,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A40",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B40",
+     "value": "R5年度 非常用発電機点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C40",
+     "value": "黄櫨発電機サービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D40",
+     "value": "R5.4.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E40",
+     "value": "R5.7.4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F40",
+     "value": 414,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A41",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B41",
+     "value": "R5年度 １号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C41",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D41",
+     "value": "R5.5.8",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E41",
+     "value": "R5.6.7～R5.7.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F41",
+     "value": 37832,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A42",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B42",
+     "value": "R5年度 2号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C42",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D42",
+     "value": "R5.8.4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E42",
+     "value": "R5.9.3～R5.9.27",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F42",
+     "value": 37785,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G42",
+     "value": "変更契約（R5.10.6）流動砂の追加補充による増額　変更後 39,105千円",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A44",
+     "value": "令和6年度　計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D44",
+     "value": "12件",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J44",
+     "value": 95484000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A45",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B45",
+     "value": "契約番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C45",
+     "value": "件　名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D45",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E45",
+     "value": "契約方法",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F45",
+     "value": "業者名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G45",
+     "value": "契約日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H45",
+     "value": "着手",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I45",
+     "value": "完了",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J45",
+     "value": "契約金額（円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K45",
+     "value": "変更後金額（円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L45",
+     "value": "備　考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A46",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B46",
+     "value": "R6-委-001",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C46",
+     "value": "R6年度 中央監視制御装置保守点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D46",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E46",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F46",
+     "value": "瓶覗システム㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G46",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H46",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I46",
+     "value": 45747.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J46",
+     "value": 5832000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A47",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B47",
+     "value": "R6-委-002",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C47",
+     "value": "R6年度 排ガス等測定分析業務委託（単価契約）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D47",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E47",
+     "value": "単価契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F47",
+     "value": "若竹環境分析㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G47",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H47",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I47",
+     "value": 45747.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J47",
+     "value": 3188000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "L47",
+     "value": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A48",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B48",
+     "value": "R6-委-005",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C48",
+     "value": "R6年度 受変電設備年次点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D48",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E48",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F48",
+     "value": "紺青電気保安協同組合",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G48",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H48",
+     "value": 45501.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I48",
+     "value": 45501.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J48",
+     "value": 1041000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A49",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B49",
+     "value": "R6-委-006",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C49",
+     "value": "R6年度 計量機定期点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D49",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E49",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F49",
+     "value": "砥粉計量器㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G49",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H49",
+     "value": 45610.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I49",
+     "value": 45610.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J49",
+     "value": 501000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A50",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B50",
+     "value": "R6-委-007",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C50",
+     "value": "R6年度 ごみクレーン年次点検整備業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D50",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E50",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F50",
+     "value": "桑染クレーン㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G50",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H50",
+     "value": 45691.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I50",
+     "value": 45694.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J50",
+     "value": 2220000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A51",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B51",
+     "value": "R6-委-008",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C51",
+     "value": "R6年度 消防用設備等点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D51",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E51",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F51",
+     "value": "鉄紺防災設備㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G51",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H51",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I51",
+     "value": 45747.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J51",
+     "value": 469000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A52",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B52",
+     "value": "R6-委-009",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C52",
+     "value": "R6年度 非常用発電機点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D52",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E52",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F52",
+     "value": "黄櫨発電機サービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G52",
+     "value": 45383.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H52",
+     "value": 45477.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I52",
+     "value": 45477.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J52",
+     "value": 407000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A53",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B53",
+     "value": "R6-工-003",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C53",
+     "value": "R6年度 1号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D53",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E53",
+     "value": "指名競争入札",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F53",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G53",
+     "value": 45420.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H53",
+     "value": 45450.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I53",
+     "value": 45474.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J53",
+     "value": 37121000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A54",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B54",
+     "value": "R6-委-011",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C54",
+     "value": "R6年度 精密機能検査業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D54",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E54",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F54",
+     "value": "利久環境技術センター㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G54",
+     "value": 45474.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H54",
+     "value": 45579.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I54",
+     "value": 45581.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J54",
+     "value": 3706000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A55",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B55",
+     "value": "R6-工-004",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C55",
+     "value": "R6年度 2号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D55",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E55",
+     "value": "指名競争入札",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F55",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G55",
+     "value": 45509.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H55",
+     "value": 45539.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I55",
+     "value": 45563.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J55",
+     "value": 33890000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A56",
+     "value": 11,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B56",
+     "value": "R6-工-010",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C56",
+     "value": "R6年度 飛灰固化装置整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D56",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E56",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F56",
+     "value": "柿渋プラント㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G56",
+     "value": 45523.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H56",
+     "value": 45544.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I56",
+     "value": 45548.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J56",
+     "value": 4546000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A57",
+     "value": 12,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B57",
+     "value": "R6-修-012",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C57",
+     "value": "1号炉 誘引送風機 軸受 緊急取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D57",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E57",
+     "value": "随意契約（緊急）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F57",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G57",
+     "value": 45530.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H57",
+     "value": 45531.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I57",
+     "value": 45533.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J57",
+     "value": 2563000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "L57",
+     "value": "軸受温度上昇のため停止",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A59",
+     "value": "令和7年度　計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D59",
+     "value": "10件",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J59",
+     "value": 93207000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A60",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B60",
+     "value": "契約番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C60",
+     "value": "件　名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D60",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E60",
+     "value": "契約方法",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F60",
+     "value": "業者名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G60",
+     "value": "契約日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H60",
+     "value": "着手",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I60",
+     "value": "完了",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J60",
+     "value": "契約金額（円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K60",
+     "value": "変更後金額（円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L60",
+     "value": "備　考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A61",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B61",
+     "value": "R7-委-001",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C61",
+     "value": "R7年度 中央監視制御装置保守点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D61",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E61",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F61",
+     "value": "瓶覗システム㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G61",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H61",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I61",
+     "value": 46112.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J61",
+     "value": 6024000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A62",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B62",
+     "value": "R7-委-002",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C62",
+     "value": "R7年度 排ガス等測定分析業務委託（単価契約）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D62",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E62",
+     "value": "単価契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F62",
+     "value": "若竹環境分析㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G62",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H62",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I62",
+     "value": 46112.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J62",
+     "value": 3202000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "L62",
+     "value": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A63",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B63",
+     "value": "R7-委-005",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C63",
+     "value": "R7年度 受変電設備年次点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D63",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E63",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F63",
+     "value": "紺青電気保安協同組合",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G63",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H63",
+     "value": 45873.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I63",
+     "value": 45873.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J63",
+     "value": 1008000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A64",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B64",
+     "value": "R7-委-006",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C64",
+     "value": "R7年度 計量機定期点検・検定業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D64",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E64",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F64",
+     "value": "砥粉計量器㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G64",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H64",
+     "value": 45976.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I64",
+     "value": 45976.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J64",
+     "value": 859000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A65",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B65",
+     "value": "R7-委-007",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C65",
+     "value": "R7年度 ごみクレーン年次点検整備業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D65",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E65",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F65",
+     "value": "桑染クレーン㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G65",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H65",
+     "value": 46056.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I65",
+     "value": 46059.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J65",
+     "value": 2082000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A66",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B66",
+     "value": "R7-委-008",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C66",
+     "value": "R7年度 消防用設備等点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D66",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E66",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F66",
+     "value": "鉄紺防災設備㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G66",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H66",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I66",
+     "value": 46112.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J66",
+     "value": 479000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A67",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B67",
+     "value": "R7-委-009",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C67",
+     "value": "R7年度 非常用発電機点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D67",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E67",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F67",
+     "value": "黄櫨発電機サービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G67",
+     "value": 45748.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H67",
+     "value": 45837.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I67",
+     "value": 45837.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J67",
+     "value": 396000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A68",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B68",
+     "value": "R7-工-003",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C68",
+     "value": "R7年度 １号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D68",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E68",
+     "value": "指名競争入札",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F68",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G68",
+     "value": 45780.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H68",
+     "value": 45810.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I68",
+     "value": 45834.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J68",
+     "value": 38032000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A69",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B69",
+     "value": "R7-工-004",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C69",
+     "value": "R7年度 2号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D69",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E69",
+     "value": "指名競争入札",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F69",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G69",
+     "value": 45872.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H69",
+     "value": 45902.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I69",
+     "value": 45926.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J69",
+     "value": 37077000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "K69",
+     "value": 39717000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "L69",
+     "value": "R7.9.19 変更（ガス冷却室 噴霧ノズル追加取替）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A70",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B70",
+     "value": "R7-修-010",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C70",
+     "value": "ごみクレーン 1号 バケット油圧ユニット 緊急修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D70",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E70",
+     "value": "随意契約（緊急）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F70",
+     "value": "桑染クレーン㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G70",
+     "value": 46035.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H70",
+     "value": 46036.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I70",
+     "value": 46037.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J70",
+     "value": 1408000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A72",
+     "value": "令和8年度　計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D72",
+     "value": "10件",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J72",
+     "value": 88623000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A73",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B73",
+     "value": "契約番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C73",
+     "value": "件　名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D73",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E73",
+     "value": "契約方法",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F73",
+     "value": "業者名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G73",
+     "value": "契約日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H73",
+     "value": "着手",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I73",
+     "value": "完了",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J73",
+     "value": "契約金額（円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "K73",
+     "value": "変更後金額（円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "L73",
+     "value": "備　考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A74",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B74",
+     "value": "R8-委-001",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C74",
+     "value": "R8年度 中央監視制御装置保守点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D74",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E74",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F74",
+     "value": "瓶覗システム㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G74",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H74",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I74",
+     "value": 46477.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J74",
+     "value": 5850000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A75",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B75",
+     "value": "R8-委-002",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C75",
+     "value": "R8年度 排ガス等測定分析業務委託（単価契約）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D75",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E75",
+     "value": "単価契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F75",
+     "value": "若竹環境分析㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G75",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H75",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I75",
+     "value": 46477.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J75",
+     "value": 3297000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "L75",
+     "value": "年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A76",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B76",
+     "value": "R8-委-005",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C76",
+     "value": "R8年度 受変電設備年次点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D76",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E76",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F76",
+     "value": "紺青電気保安協同組合",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G76",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H76",
+     "value": 46240.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I76",
+     "value": 46240.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J76",
+     "value": 950000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A77",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B77",
+     "value": "R8-委-006",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C77",
+     "value": "R8年度 計量機定期点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D77",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E77",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F77",
+     "value": "砥粉計量器㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G77",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H77",
+     "value": 46336.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I77",
+     "value": 46336.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J77",
+     "value": 542000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A78",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B78",
+     "value": "R8-委-007",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C78",
+     "value": "R8年度 ごみクレーン年次点検整備業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D78",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E78",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F78",
+     "value": "桑染クレーン㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G78",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H78",
+     "value": 46420.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I78",
+     "value": 46423.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J78",
+     "value": 2245000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A79",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B79",
+     "value": "R8-委-008",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C79",
+     "value": "R8年度 消防用設備等点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D79",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E79",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F79",
+     "value": "鉄紺防災設備㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G79",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H79",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I79",
+     "value": 46477.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J79",
+     "value": 467000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A80",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B80",
+     "value": "R8-委-009",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C80",
+     "value": "R8年度 非常用発電機点検業務委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D80",
+     "value": "委託",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E80",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F80",
+     "value": "黄櫨発電機サービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G80",
+     "value": 46113.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H80",
+     "value": 46203.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I80",
+     "value": 46203.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J80",
+     "value": 373000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A81",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B81",
+     "value": "R8-工-003",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C81",
+     "value": "R8年度 1号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D81",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E81",
+     "value": "指名競争入札",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F81",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G81",
+     "value": 46146.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H81",
+     "value": 46176.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I81",
+     "value": 46200.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J81",
+     "value": 36381000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A82",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B82",
+     "value": "R8-工-004",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C82",
+     "value": "R8年度 2号炉定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D82",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E82",
+     "value": "指名競争入札",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F82",
+     "value": "千草炉機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G82",
+     "value": 46238.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H82",
+     "value": 46268.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I82",
+     "value": 46292.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J82",
+     "value": 33833000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A83",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B83",
+     "value": "R8-工-010",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C83",
+     "value": "R8年度 飛灰固化装置整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D83",
+     "value": "工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E83",
+     "value": "随意契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F83",
+     "value": "柿渋プラント㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G83",
+     "value": 46252.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H83",
+     "value": 46273.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "I83",
+     "value": 46277.0,
+     "data_type": "d",
+     "number_format": "[$-ja-JP]ge.m.d"
+    },
+    {
+     "coord": "J83",
+     "value": 4685000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    }
+   ],
+   "merged": [],
+   "hidden_rows": [],
+   "hidden_cols": []
+  }
+ ]
+}

@@ -1,0 +1,402 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf",
+ "plan": false,
+ "records": [
+  {
+   "seq": 0,
+   "kind": "parent",
+   "fields": {
+    "name": "付帯作業（停止・準備）"
+   }
+  },
+  {
+   "seq": 1,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "equipment": "焼却炉",
+    "work": "立下げ",
+    "start": "2025-05-12",
+    "end": "2025-05-12",
+    "days": 1,
+    "manDays": 3.0,
+    "manDaysText": "3.0"
+   }
+  },
+  {
+   "seq": 2,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "equipment": "焼却炉",
+    "work": "炉内冷却",
+    "start": "2025-05-13",
+    "end": "2025-05-14",
+    "days": 2,
+    "manDays": 4.0,
+    "manDaysText": "4.0"
+   }
+  },
+  {
+   "seq": 3,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "equipment": "焼却炉",
+    "work": "ダイオキシン類 作業前測定・養生",
+    "start": "2025-05-15",
+    "end": "2025-05-15",
+    "days": 1,
+    "manDays": 2.0,
+    "manDaysText": "2.0",
+    "memo": "群青分析センター"
+   }
+  },
+  {
+   "seq": 4,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "equipment": "焼却炉",
+    "work": "付着物除去（クリンカ・灰）",
+    "start": "2025-05-16",
+    "end": "2025-05-17",
+    "days": 2,
+    "manDays": 11.0,
+    "manDaysText": "11.0"
+   }
+  },
+  {
+   "seq": 5,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "equipment": "焼却炉",
+    "work": "足場組立",
+    "start": "2025-05-17",
+    "end": "2025-05-18",
+    "days": 2,
+    "manDays": 8.0,
+    "manDaysText": "8.0"
+   }
+  },
+  {
+   "seq": 6,
+   "kind": "parent",
+   "fields": {
+    "name": "燃焼設備"
+   }
+  },
+  {
+   "seq": 7,
+   "kind": "item",
+   "fields": {
+    "no": 6,
+    "equipment": "ごみ供給装置",
+    "work": "給じん装置整備",
+    "start": "2025-05-18",
+    "end": "2025-05-21",
+    "days": 4,
+    "manDays": 10.0,
+    "manDaysText": "10.0"
+   }
+  },
+  {
+   "seq": 8,
+   "kind": "item",
+   "fields": {
+    "no": 7,
+    "equipment": "火格子",
+    "work": "火格子取替（一部）",
+    "start": "2025-05-19",
+    "end": "2025-05-24",
+    "days": 6,
+    "manDays": 28.5,
+    "manDaysText": "28.5"
+   }
+  },
+  {
+   "seq": 9,
+   "kind": "item",
+   "fields": {
+    "no": 8,
+    "equipment": "耐火物",
+    "work": "部分補修",
+    "start": "2025-05-21",
+    "end": "2025-05-26",
+    "days": 6,
+    "manDays": 26.0,
+    "manDaysText": "26.0"
+   }
+  },
+  {
+   "seq": 10,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "seq": 11,
+   "kind": "parent",
+   "fields": {
+    "name": "灰出し設備"
+   }
+  },
+  {
+   "seq": 12,
+   "kind": "item",
+   "fields": {
+    "no": 9,
+    "equipment": "灰押出装置",
+    "work": "点検整備",
+    "start": "2025-05-19",
+    "end": "2025-05-21",
+    "days": 3,
+    "manDays": 11.0,
+    "manDaysText": "11.0"
+   }
+  },
+  {
+   "seq": 13,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "seq": 14,
+   "kind": "parent",
+   "fields": {
+    "name": "燃焼ガス冷却設備"
+   }
+  },
+  {
+   "seq": 15,
+   "kind": "item",
+   "fields": {
+    "no": 10,
+    "equipment": "廃熱ボイラ",
+    "work": "性能検査受検整備（ボイラー則）",
+    "start": "2025-05-22",
+    "end": "2025-05-28",
+    "days": 7,
+    "manDays": 22.0,
+    "manDaysText": "22.0",
+    "memo": "翠ボイラ技研"
+   }
+  },
+  {
+   "seq": 16,
+   "kind": "item",
+   "fields": {
+    "no": 11,
+    "equipment": "ボイラ給水ポンプ No.1",
+    "work": "分解整備",
+    "start": "2025-05-20",
+    "end": "2025-05-22",
+    "days": 3,
+    "manDays": 10.0,
+    "manDaysText": "10.0",
+    "memo": "翠ボイラ技研"
+   }
+  },
+  {
+   "seq": 17,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "seq": 18,
+   "kind": "parent",
+   "fields": {
+    "name": "排ガス処理設備"
+   }
+  },
+  {
+   "seq": 19,
+   "kind": "item",
+   "fields": {
+    "no": 12,
+    "equipment": "ろ過式集じん器",
+    "work": "ろ布取替",
+    "start": "2025-05-24",
+    "end": "2025-05-28",
+    "days": 5,
+    "manDays": 26.5,
+    "manDaysText": "26.5"
+   }
+  },
+  {
+   "seq": 20,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "seq": 21,
+   "kind": "parent",
+   "fields": {
+    "name": "通風設備"
+   }
+  },
+  {
+   "seq": 22,
+   "kind": "item",
+   "fields": {
+    "no": 13,
+    "equipment": "押込送風機",
+    "work": "点検",
+    "start": "2025-05-18",
+    "end": "2025-05-19",
+    "days": 2,
+    "manDays": 4.0,
+    "manDaysText": "4.0"
+   }
+  },
+  {
+   "seq": 23,
+   "kind": "item",
+   "fields": {
+    "no": 14,
+    "equipment": "誘引送風機",
+    "work": "軸受・インペラ点検",
+    "start": "2025-05-20",
+    "end": "2025-05-22",
+    "days": 3,
+    "manDays": 6.0,
+    "manDaysText": "6.0"
+   }
+  },
+  {
+   "seq": 24,
+   "kind": "subtotal",
+   "fields": {}
+  },
+  {
+   "seq": 25,
+   "kind": "parent",
+   "fields": {
+    "name": "付帯作業（復旧・立上げ）"
+   }
+  },
+  {
+   "seq": 26,
+   "kind": "item",
+   "fields": {
+    "no": 15,
+    "equipment": "焼却炉",
+    "work": "足場解体",
+    "start": "2025-06-01",
+    "end": "2025-06-02",
+    "days": 2,
+    "manDays": 12.5,
+    "manDaysText": "12.5"
+   }
+  },
+  {
+   "seq": 27,
+   "kind": "item",
+   "fields": {
+    "no": 16,
+    "equipment": "焼却炉",
+    "work": "養生撤去・作業後測定",
+    "start": "2025-06-03",
+    "end": "2025-06-03",
+    "days": 1,
+    "manDays": 6.0,
+    "manDaysText": "6.0",
+    "memo": "群青分析センター"
+   }
+  },
+  {
+   "seq": 28,
+   "kind": "item",
+   "fields": {
+    "no": 17,
+    "equipment": "焼却炉",
+    "work": "空打ち試運転",
+    "start": "2025-06-04",
+    "end": "2025-06-05",
+    "days": 2,
+    "manDays": 6.0,
+    "manDaysText": "6.0"
+   }
+  },
+  {
+   "seq": 29,
+   "kind": "item",
+   "fields": {
+    "no": 18,
+    "equipment": "焼却炉",
+    "work": "立上げ",
+    "start": "2025-06-06",
+    "end": "2025-06-06",
+    "days": 1,
+    "manDays": 2.0,
+    "manDaysText": "2.0"
+   }
+  },
+  {
+   "seq": 30,
+   "kind": "total",
+   "fields": {}
+  },
+  {
+   "seq": 31,
+   "kind": "item",
+   "fields": {
+    "no": 1,
+    "part": "可動火格子",
+    "qty": 48,
+    "unit": "枚",
+    "where": "乾燥段・燃焼段",
+    "work_no": "No.7"
+   }
+  },
+  {
+   "seq": 32,
+   "kind": "item",
+   "fields": {
+    "no": 2,
+    "part": "耐火れんが（SK-34 相当）",
+    "qty": 2.4,
+    "unit": "t",
+    "where": "燃焼室側壁",
+    "work_no": "No.8"
+   }
+  },
+  {
+   "seq": 33,
+   "kind": "item",
+   "fields": {
+    "no": 3,
+    "part": "ろ布",
+    "qty": 1260,
+    "unit": "本",
+    "where": "全 6 室",
+    "work_no": "No.12"
+   }
+  },
+  {
+   "seq": 34,
+   "kind": "item",
+   "fields": {
+    "no": 4,
+    "part": "メカニカルシール",
+    "qty": 1,
+    "unit": "組",
+    "where": "ボイラ給水ポンプ No.1",
+    "work_no": "No.11"
+   }
+  },
+  {
+   "seq": 35,
+   "kind": "item",
+   "fields": {
+    "no": 5,
+    "part": "軸受",
+    "qty": 2,
+    "unit": "個",
+    "where": "誘引送風機 両側",
+    "work_no": "No.14"
+   }
+  }
+ ]
+}

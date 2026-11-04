@@ -1,0 +1,690 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】天鏡台浄水場_機器台帳.pdf",
+ "plan": false,
+ "records": [
+  {
+   "seq": 0,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "取水設備"
+    ]
+   }
+  },
+  {
+   "seq": 1,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "取水設備",
+     "取水ゲート"
+    ],
+    "qty": "1門",
+    "specs": [
+     "鋼製ローラゲート 幅3.0m×高2.5m 電動"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "IG-1"
+   }
+  },
+  {
+   "seq": 2,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "取水設備",
+     "除塵機"
+    ],
+    "qty": "1基",
+    "specs": [
+     "前面降下背面掻揚式 水路幅3.0m 1.5kW"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "IS-1"
+   }
+  },
+  {
+   "seq": 3,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "取水設備",
+     "取水ポンプ"
+    ],
+    "qty": "3台",
+    "specs": [
+     "立軸斜流ポンプ φ500mm×28m³/min×18m×132kW",
+     "うち 1 台予備"
+    ],
+    "maker": "鶯ポンプ製作所",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "IP-1～3",
+    "memo": "うち 1 台予備"
+   }
+  },
+  {
+   "seq": 4,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "取水設備",
+     "取水ポンプ用電動機"
+    ],
+    "qty": "3台",
+    "specs": [
+     "かご形三相誘導電動機 132kW 6P 3.3kV"
+    ],
+    "maker": "常盤電機",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "IP-1M～3M"
+   }
+  },
+  {
+   "seq": 5,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "取水設備",
+     "取水流量計"
+    ],
+    "qty": "1台",
+    "specs": [
+     "電磁流量計 φ900mm"
+    ],
+    "maker": "空色計装",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "FI-101"
+   }
+  },
+  {
+   "seq": 6,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "薬品注入設備"
+    ]
+   }
+  },
+  {
+   "seq": 7,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "薬品注入設備",
+     "PAC 貯留槽"
+    ],
+    "qty": "2基",
+    "specs": [
+     "FRP製 30m³"
+    ],
+    "maker": "萌葱化工機",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "CT-1・2"
+   }
+  },
+  {
+   "seq": 8,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "薬品注入設備",
+     "PAC 注入ポンプ"
+    ],
+    "qty": "2台",
+    "specs": [
+     "ダイヤフラム式 0.1～1.2L/min 0.2kW",
+     "平成20年 更新"
+    ],
+    "maker": "萌葱化工機",
+    "install_year": 2008,
+    "install": "平成20年3月",
+    "code": "CP-1・2",
+    "memo": "平成20年 更新"
+   }
+  },
+  {
+   "seq": 9,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "薬品注入設備",
+     "次亜塩素酸ナトリウム貯留槽"
+    ],
+    "qty": "1基",
+    "specs": [
+     "FRP製 10m³"
+    ],
+    "maker": "萌葱化工機",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "HT-1"
+   }
+  },
+  {
+   "seq": 10,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "薬品注入設備",
+     "次亜注入ポンプ"
+    ],
+    "qty": "2台",
+    "specs": [
+     "ダイヤフラム式 0.05～0.6L/min 0.1kW"
+    ],
+    "maker": "萌葱化工機",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "HP-1・2"
+   }
+  },
+  {
+   "seq": 11,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "沈殿設備"
+    ]
+   }
+  },
+  {
+   "seq": 12,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "沈殿設備",
+     "フロック形成池 撹拌機"
+    ],
+    "qty": "2基",
+    "specs": [
+     "横軸パドル式 3段 2.2kW×3",
+     "1系・2系"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "FM-1・2",
+    "memo": "1系・2系"
+   }
+  },
+  {
+   "seq": 13,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "沈殿設備",
+     "沈殿池 汚泥かき寄せ機"
+    ],
+    "qty": "2基",
+    "specs": [
+     "チェーンフライト式 池幅8.0m×長さ60m 0.75kW",
+     "1系・2系"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "SC-1・2",
+    "memo": "1系・2系"
+   }
+  },
+  {
+   "seq": 14,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "沈殿設備",
+     "排泥弁"
+    ],
+    "qty": "8台",
+    "specs": [
+     "電動偏心構造弁 φ200mm"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "SV-1～8"
+   }
+  },
+  {
+   "seq": 15,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "ろ過設備"
+    ]
+   }
+  },
+  {
+   "seq": 16,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "ろ過設備",
+     "急速ろ過池 表洗装置"
+    ],
+    "qty": "4基",
+    "specs": [
+     "固定式表面洗浄 ノズル式",
+     "No.1～4池"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "SW-1～4",
+    "memo": "No.1～4池"
+   }
+  },
+  {
+   "seq": 17,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "ろ過設備",
+     "ろ過池 流量調節弁"
+    ],
+    "qty": "4台",
+    "specs": [
+     "電動バタフライ弁 φ400mm"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "FV-1～4"
+   }
+  },
+  {
+   "seq": 18,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "ろ過設備",
+     "逆洗ポンプ"
+    ],
+    "qty": "2台",
+    "specs": [
+     "横軸両吸込渦巻ポンプ φ350mm×18m³/min×12m×55kW"
+    ],
+    "maker": "鶯ポンプ製作所",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "BW-1・2"
+   }
+  },
+  {
+   "seq": 19,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "ろ過設備",
+     "逆洗用空気ブロワ"
+    ],
+    "qty": "1台",
+    "specs": [
+     "ルーツブロワ 12m³/min 30kW"
+    ],
+    "maker": "鶯ポンプ製作所",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "AB-1"
+   }
+  },
+  {
+   "seq": 20,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "送水設備"
+    ]
+   }
+  },
+  {
+   "seq": 21,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "送水設備",
+     "配水池"
+    ],
+    "qty": "2池",
+    "specs": [
+     "RC造 有効容量 各9,000m³"
+    ],
+    "maker": "―",
+    "install_year": 1998,
+    "install": "平成10年3月"
+   }
+  },
+  {
+   "seq": 22,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "送水設備",
+     "送水ポンプ"
+    ],
+    "qty": "4台",
+    "specs": [
+     "横軸両吸込渦巻ポンプ φ450mm×20m³/min×45m×200kW",
+     "No.4 は平成24年3月 増設"
+    ],
+    "maker": "鶯ポンプ製作所",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "SP-1～4",
+    "memo": "No.4 は平成24年3月 増設"
+   }
+  },
+  {
+   "seq": 23,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "送水設備",
+     "送水ポンプ用電動機"
+    ],
+    "qty": "4台",
+    "specs": [
+     "かご形三相誘導電動機 200kW 4P 3.3kV",
+     "No.4 は平成24年3月"
+    ],
+    "maker": "常盤電機",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "SP-1M～4M",
+    "memo": "No.4 は平成24年3月"
+   }
+  },
+  {
+   "seq": 24,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "送水設備",
+     "送水流量計"
+    ],
+    "qty": "1台",
+    "specs": [
+     "電磁流量計 φ800mm"
+    ],
+    "maker": "空色計装",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "FI-201"
+   }
+  },
+  {
+   "seq": 25,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "送水設備",
+     "送水圧力計"
+    ],
+    "qty": "1台",
+    "specs": [
+     "ダイヤフラム式 0～1.0MPa"
+    ],
+    "maker": "空色計装",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "PI-201"
+   }
+  },
+  {
+   "seq": 26,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "排水処理設備"
+    ]
+   }
+  },
+  {
+   "seq": 27,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "排水処理設備",
+     "排水池"
+    ],
+    "qty": "1池",
+    "specs": [
+     "RC造 有効容量 600m³"
+    ],
+    "maker": "―",
+    "install_year": 1998,
+    "install": "平成10年3月"
+   }
+  },
+  {
+   "seq": 28,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "排水処理設備",
+     "濃縮槽 汚泥かき寄せ機"
+    ],
+    "qty": "1基",
+    "specs": [
+     "中心駆動懸垂式 φ12m 0.4kW"
+    ],
+    "maker": "山吹機工",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "TC-1"
+   }
+  },
+  {
+   "seq": 29,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "排水処理設備",
+     "加圧脱水機"
+    ],
+    "qty": "1台",
+    "specs": [
+     "フィルタープレス ろ室 80室",
+     "平成17年 新設"
+    ],
+    "maker": "萌葱化工機",
+    "install_year": 2005,
+    "install": "平成17年3月",
+    "code": "DW-1",
+    "memo": "平成17年 新設"
+   }
+  },
+  {
+   "seq": 30,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "排水処理設備",
+     "脱水ケーキ搬出コンベヤ"
+    ],
+    "qty": "1台",
+    "specs": [
+     "ベルトコンベヤ 幅600mm 2.2kW"
+    ],
+    "maker": "山吹機工",
+    "install_year": 2005,
+    "install": "平成17年3月",
+    "code": "CV-1"
+   }
+  },
+  {
+   "seq": 31,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "電気設備"
+    ]
+   }
+  },
+  {
+   "seq": 32,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "電気設備",
+     "受変電設備"
+    ],
+    "qty": "1式",
+    "specs": [
+     "6.6kV 受電 1回線 変圧器 1,500kVA×2"
+    ],
+    "maker": "常盤電設",
+    "install_year": 1998,
+    "install": "平成10年3月"
+   }
+  },
+  {
+   "seq": 33,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "電気設備",
+     "高圧配電盤"
+    ],
+    "qty": "1式",
+    "specs": [
+     "3.3kV 閉鎖配電盤 12面"
+    ],
+    "maker": "常盤電設",
+    "install_year": 1998,
+    "install": "平成10年3月"
+   }
+  },
+  {
+   "seq": 34,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "電気設備",
+     "自家発電設備"
+    ],
+    "qty": "1台",
+    "specs": [
+     "ディーゼル 500kVA 6.6kV",
+     "平成28年 更新"
+    ],
+    "maker": "常盤電設",
+    "install_year": 2016,
+    "install": "平成28年3月",
+    "code": "EG-1",
+    "memo": "平成28年 更新"
+   }
+  },
+  {
+   "seq": 35,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "電気設備",
+     "無停電電源装置"
+    ],
+    "qty": "1台",
+    "specs": [
+     "10kVA 10分"
+    ],
+    "maker": "常盤電設",
+    "install_year": 2016,
+    "install": "平成28年3月",
+    "code": "UPS-1"
+   }
+  },
+  {
+   "seq": 36,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "計装設備"
+    ]
+   }
+  },
+  {
+   "seq": 37,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "計装設備",
+     "監視制御設備"
+    ],
+    "qty": "1式",
+    "specs": [
+     "分散形制御装置 監視卓 2台",
+     "平成28年 更新"
+    ],
+    "maker": "空色計装",
+    "install_year": 2016,
+    "install": "平成28年3月",
+    "memo": "平成28年 更新"
+   }
+  },
+  {
+   "seq": 38,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "計装設備",
+     "濁度計"
+    ],
+    "qty": "3台",
+    "specs": [
+     "散乱光式 0～50度",
+     "原水・沈殿・ろ過"
+    ],
+    "maker": "空色計装",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "TB-1～3",
+    "memo": "原水・沈殿・ろ過"
+   }
+  },
+  {
+   "seq": 39,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "計装設備",
+     "残留塩素計"
+    ],
+    "qty": "1台",
+    "specs": [
+     "ポーラログラフ式"
+    ],
+    "maker": "空色計装",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "CL-1"
+   }
+  },
+  {
+   "seq": 40,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "計装設備",
+     "水位計"
+    ],
+    "qty": "6台",
+    "specs": [
+     "投込式・超音波式"
+    ],
+    "maker": "空色計装",
+    "install_year": 1998,
+    "install": "平成10年3月",
+    "code": "LI-1～6"
+   }
+  }
+ ]
+}

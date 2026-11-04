@@ -1,0 +1,2523 @@
+{
+ "schema": "moyai.factory.facts/0",
+ "file": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+ "reader": "openpyxl 3.1.5",
+ "creator": "【架空】サンプル生成器",
+ "sheets": [
+  {
+   "title": "修繕報告書",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B2",
+     "value": "修-R7-01",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E2",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F2",
+     "value": "R7.5.17",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H2",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "R7.5.14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E3",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F3",
+     "value": "R7.5.16",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A4",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B4",
+     "value": "PAC 注入ポンプ No.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E4",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F4",
+     "value": "CP-2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "吐出量が設定の 6 割まで低下。\nダイヤフラムに亀裂。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "ダイヤフラム・逆止弁を取替。注入量を校正。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B10",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G10",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H10",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B11",
+     "value": "R7.5.14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "状況確認・分解",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "萌葱化工機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "13:00～17:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G11",
+     "value": "1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A12",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B12",
+     "value": "R7.5.16",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "部品取替・注入量校正",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D12",
+     "value": "萌葱化工機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F12",
+     "value": "9:00～15:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G12",
+     "value": "1.25",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A15",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C16",
+     "value": 286000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "E17",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F17",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G17",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A20",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A21",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B21",
+     "value": "修-R7-02",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E21",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F21",
+     "value": "R7.7.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H21",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A22",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B22",
+     "value": "R7.7.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E22",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F22",
+     "value": "R7.7.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A23",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B23",
+     "value": "沈殿池 汚泥かき寄せ機 2系",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E23",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F23",
+     "value": "SC-2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A24",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B24",
+     "value": "過負荷でトリップ。\nフライトに流木が噛み込み。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A26",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B26",
+     "value": "流木を除去し、シャーピンを交換。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A29",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B29",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C29",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D29",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E29",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F29",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G29",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H29",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A30",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B30",
+     "value": "R7.7.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C30",
+     "value": "排水・流木除去・シャーピン交換",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D30",
+     "value": "山吹機工㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E30",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F30",
+     "value": "8:30～17:30",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G30",
+     "value": "4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A31",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A32",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A33",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A34",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A35",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C35",
+     "value": 198000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "E36",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F36",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G36",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A39",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A40",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B40",
+     "value": "修-R7-03",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E40",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F40",
+     "value": "R7.8.20",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H40",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A41",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B41",
+     "value": "R7.8.19",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E41",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F41",
+     "value": "R7.8.19",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A42",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B42",
+     "value": "監視制御設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E42",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A43",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B43",
+     "value": "落雷の後、監視卓 1 台の画面が固まる。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A45",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B45",
+     "value": "経過観察。再起動で復旧。部品は未交換。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A48",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B48",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C48",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D48",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E48",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F48",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G48",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H48",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A49",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A50",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A51",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A52",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A53",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A54",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C54",
+     "value": "―",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E55",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F55",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G55",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A58",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A59",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B59",
+     "value": "修-R7-04",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E59",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F59",
+     "value": "R7.11.15",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H59",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A60",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B60",
+     "value": "R7.11.4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E60",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F60",
+     "value": "R7.11.14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A61",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B61",
+     "value": "送水ポンプ No.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E61",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F61",
+     "value": "SP-2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A62",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B62",
+     "value": "軸受の温度が 75℃ まで上昇。\n振動も増加。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A64",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B64",
+     "value": "反負荷側の軸受を取替。芯出し調整。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A67",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B67",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C67",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D67",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E67",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F67",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G67",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H67",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A68",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B68",
+     "value": "R7.11.4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C68",
+     "value": "振動測定・停止・切離し",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D68",
+     "value": "鶯ポンプ製作所㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E68",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F68",
+     "value": "9:00～16:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G68",
+     "value": "1.5",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A69",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B69",
+     "value": "R7.11.5",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C69",
+     "value": "分解・軸受の抜取り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D69",
+     "value": "鶯ポンプ製作所㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E69",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F69",
+     "value": "8:30～17:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G69",
+     "value": "2.81",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A70",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B70",
+     "value": "R7.11.6",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C70",
+     "value": "軸・スリーブの寸法計測",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D70",
+     "value": "鶯ポンプ製作所㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E70",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F70",
+     "value": "8:30～17:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G70",
+     "value": "1.88",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A71",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B71",
+     "value": "R7.11.12",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C71",
+     "value": "軸受（部品入荷）取付",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D71",
+     "value": "鶯ポンプ製作所㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E71",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F71",
+     "value": "8:30～17:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G71",
+     "value": "2.81",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A72",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B72",
+     "value": "R7.11.13",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C72",
+     "value": "組立・芯出し",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D72",
+     "value": "鶯ポンプ製作所㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E72",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F72",
+     "value": "8:30～17:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G72",
+     "value": "2.81",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E73",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F73",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G73",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A76",
+     "value": "【架空】天鏡台浄水場　修繕報告書（続き）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A77",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B77",
+     "value": "修-R7-04",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E77",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F77",
+     "value": "R7.11.15",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H77",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A78",
+     "value": "前ページから続く",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A80",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B80",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C80",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D80",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E80",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F80",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G80",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H80",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A81",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B81",
+     "value": "R7.11.14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C81",
+     "value": "試運転・振動測定",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D81",
+     "value": "鶯ポンプ製作所㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E81",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F81",
+     "value": "9:00～15:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G81",
+     "value": "1.25",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A82",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B82",
+     "value": "R7.11.14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C82",
+     "value": "保温・塗装の補修",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D82",
+     "value": "山吹機工㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E82",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F82",
+     "value": "13:00～16:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G82",
+     "value": "0.38",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A83",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A84",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A85",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A86",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C86",
+     "value": 1452000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "E87",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F87",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G87",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A90",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A91",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B91",
+     "value": "修-R7-05",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E91",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F91",
+     "value": "R8.1.23",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H91",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A92",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B92",
+     "value": "R8.1.21",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E92",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F92",
+     "value": "R8.1.22",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A93",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B93",
+     "value": "急速ろ過池 表洗装置 No.3池",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E93",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F93",
+     "value": "SW-3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A94",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B94",
+     "value": "ノズル 2 本の詰まりで洗浄むら。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A96",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B96",
+     "value": "ノズルを清掃し、1 本を取替。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A99",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B99",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C99",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D99",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E99",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F99",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G99",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H99",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A100",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B100",
+     "value": "R8.1.21",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C100",
+     "value": "ろ過池 排水・ノズル点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D100",
+     "value": "山吹機工㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E100",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F100",
+     "value": "9:00～16:30",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G100",
+     "value": "2.44",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A101",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B101",
+     "value": "R8.1.22",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C101",
+     "value": "ノズル清掃・取替・通水",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D101",
+     "value": "山吹機工㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E101",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F101",
+     "value": "8:30～15:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G101",
+     "value": "2.06",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A102",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A103",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A104",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A105",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C105",
+     "value": 352000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "E106",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F106",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G106",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A109",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A110",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B110",
+     "value": "修-R8-01",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E110",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F110",
+     "value": "R8.4.10",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H110",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A111",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B111",
+     "value": "R8.4.9",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E111",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F111",
+     "value": "R8.4.9",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A112",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B112",
+     "value": "取水口 除塵機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E112",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F112",
+     "value": "IS-1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A113",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B113",
+     "value": "レーキのチェーンが外れる。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A115",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B115",
+     "value": "チェーンを掛け直し、張りを調整。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A118",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B118",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C118",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D118",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E118",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F118",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G118",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H118",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A119",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B119",
+     "value": "R8.4.9",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C119",
+     "value": "チェーン掛け直し・張り調整",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D119",
+     "value": "山吹機工㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E119",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F119",
+     "value": "10:00～14:30",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G119",
+     "value": "1.12",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A120",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A121",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A122",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A123",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A124",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C124",
+     "value": 88000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "E125",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F125",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G125",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A128",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A129",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B129",
+     "value": "修-R8-02",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E129",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F129",
+     "value": "R8.7.4",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H129",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A130",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B130",
+     "value": "R8.6.30",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E130",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F130",
+     "value": "R8.7.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A131",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B131",
+     "value": "逆洗ポンプ No.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E131",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F131",
+     "value": "BW-1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A132",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B132",
+     "value": "グランド部からの漏水が増加。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A134",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B134",
+     "value": "グランドパッキンを取替。スリーブに摩耗あり、次回の修繕で取替。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A137",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B137",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C137",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D137",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E137",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F137",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G137",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H137",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A138",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B138",
+     "value": "R8.6.30",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C138",
+     "value": "漏水量の確認",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D138",
+     "value": "（職員）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E138",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F138",
+     "value": "9:00～10:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G138",
+     "value": "0.12",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A139",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B139",
+     "value": "R8.7.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C139",
+     "value": "グランドパッキン取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D139",
+     "value": "鶯ポンプ製作所㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E139",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F139",
+     "value": "9:00～15:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G139",
+     "value": "1.25",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A140",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A141",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A142",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A143",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C143",
+     "value": 121000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "E144",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F144",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G144",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A147",
+     "value": "【架空】天鏡台浄水場　修繕報告書",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A148",
+     "value": "報告No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B148",
+     "value": "修-R8-03",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E148",
+     "value": "報告日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F148",
+     "value": "R8.9.10",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H148",
+     "value": "架空のデータ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A149",
+     "value": "発生日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B149",
+     "value": "R8.9.8",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E149",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F149",
+     "value": "R8.9.9",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A150",
+     "value": "設備名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B150",
+     "value": "次亜注入ポンプ No.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E150",
+     "value": "機器番号",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F150",
+     "value": "HP-1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A151",
+     "value": "故障の状況",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B151",
+     "value": "エア噛みで注入が止まる。\n吸込配管の継手から空気を吸う。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A153",
+     "value": "処置の内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B153",
+     "value": "継手を取替、エア抜き。",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A156",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B156",
+     "value": "作業日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C156",
+     "value": "作業内容",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D156",
+     "value": "業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E156",
+     "value": "人数",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F156",
+     "value": "時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G156",
+     "value": "工数（人工）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H156",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A157",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B157",
+     "value": "R8.9.8",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C157",
+     "value": "応急のエア抜き",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D157",
+     "value": "（職員）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E157",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F157",
+     "value": "16:00～17:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G157",
+     "value": "0.12",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A158",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B158",
+     "value": "R8.9.9",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C158",
+     "value": "吸込継手の取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D158",
+     "value": "萌葱化工機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E158",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "F158",
+     "value": "9:00～12:00",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G158",
+     "value": "0.75",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A159",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A160",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A161",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A162",
+     "value": "修繕費（円・税込）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C162",
+     "value": 64000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "E163",
+     "value": "担当",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F163",
+     "value": "係長",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G163",
+     "value": "課長",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [
+    "A109:H109",
+    "A128:H128",
+    "A147:H147",
+    "A1:H1",
+    "A20:H20",
+    "A39:H39",
+    "A58:H58",
+    "A76:H76",
+    "A90:H90",
+    "B112:D112",
+    "B113:H114",
+    "B115:H116",
+    "B131:D131",
+    "B132:H133",
+    "B134:H135",
+    "B150:D150",
+    "B151:H152",
+    "B153:H154",
+    "B23:D23",
+    "B24:H25",
+    "B26:H27",
+    "B42:D42",
+    "B43:H44",
+    "B45:H46",
+    "B4:D4",
+    "B5:H6",
+    "B61:D61",
+    "B62:H63",
+    "B64:H65",
+    "B7:H8",
+    "B93:D93",
+    "B94:H95",
+    "B96:H97"
+   ],
+   "hidden_rows": [],
+   "hidden_cols": []
+  }
+ ]
+}
