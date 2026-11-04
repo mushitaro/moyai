@@ -2,6 +2,7 @@
 // 決定は同じ種類の行すべてに効き、取り消せる（決定を外して読み直す。同じ入力と決定からはいつも同じ出力）。
 // 決定の作者は src/shared/fields.ts の AUTHOR_KINDS。推測で埋めない：答えが無ければ、そのセルは未解決。
 import { AUTHOR_KINDS, type AuthorKind } from "../shared/fields";
+import { ruleReason, type ActiveRule, type RuleHits } from "./reading";
 
 export type QuestionKind =
   | "encoding"
@@ -96,7 +97,12 @@ export function questionIdOf(key: string): string {
 
 export class Asker {
   readonly asked = new Map<string, QuestionState>();
-  constructor(private readonly decisions: ReadonlyMap<string, Decision>) {}
+  constructor(
+    private readonly decisions: ReadonlyMap<string, Decision>,
+    /** 読み方の規則の決まった答え（人の決定が先。規則は、人がまだ答えていない質問にだけ効く） */
+    private readonly answerRules: readonly ActiveRule[] = [],
+    private readonly hits: RuleHits | null = null,
+  ) {}
 
   /**
    * 質問を置き、決定があれば答えを返す（無い・当てはまらないときは null）。
@@ -110,7 +116,14 @@ export class Asker {
       prev.items.push(...q.items);
       return prev.invalid ? null : (prev.decision?.answer ?? null);
     }
-    const d = this.decisions.get(questionId) ?? null;
+    let d = this.decisions.get(questionId) ?? null;
+    if (!d) {
+      const a = this.answerRules.find((x) => x.rule.kind === "answer" && x.rule.question === q.kind && q.text.includes(x.rule.match) && (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer)));
+      if (a && a.rule.kind === "answer") {
+        d = { questionId, answer: a.rule.answer, author: "rule_code", reason: ruleReason(a) };
+        for (const it of q.items) for (const c of it.cells) this.hits?.add(a.rule, it.file, c);
+      }
+    }
     let invalid: string | null = null;
     if (d) {
       if (!AUTHOR_KINDS.includes(d.author)) invalid = "作者の種類が違う";

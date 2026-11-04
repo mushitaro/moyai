@@ -7,6 +7,7 @@ import { cue, norm, type ColumnCue } from "./cues";
 import { fiscalYearInText, nfkc as nfkcText, parseDateRange, parseDateText, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, serialToYmd, type Ymd } from "./era";
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit } from "./text";
+import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type RuleHits } from "./reading";
 
 export type RowRole = "title" | "legend" | "header" | "parent" | "data" | "subtotal" | "total" | "note";
 export const ROW_ROLE_LABEL: Record<RowRole, string> = {
@@ -74,6 +75,10 @@ export interface ColInfo {
   yearLabel?: string;
   planOrActual?: "plan" | "actual" | null;
   hidden: boolean;
+  /** 読み方の規則で決めた日付の書き方・工数の単位・外す列 */
+  dateFormat?: DateFormat;
+  effortUnit?: "manDays" | "hours";
+  ruleExclude?: string;
 }
 
 export interface LegendEntry {
@@ -288,19 +293,39 @@ interface BuildCtx {
   idx: CellIndex;
   date1904: boolean;
   contextFiscalYear: number | null;
+  /** このシートに効く読み方の規則 */
+  rules: ActiveRule[];
+  hits: RuleHits | null;
 }
 
 /** 日付として読めるセルか。年の無い日付（「4/6(月)」）は、シートに年度が 1 つだけ書いてあるときだけ日付にする */
-function isDateCell(ctx: BuildCtx, x: GridCell): boolean {
+function isDateCell(ctx: BuildCtx, x: GridCell, format?: DateFormat): boolean {
+  if (format) return parseWithFormat(String(x.value ?? x.text), format) !== null;
   if (cellDate(x, ctx.date1904) !== null) return true;
   return ctx.contextFiscalYear !== null && typeof x.value === "string" && parseMonthDay(x.value) !== null;
 }
 
 /** 日付の列らしいか：〃（上と同じ）を除いた中身の 6 割以上が日付 */
-function dateColumn(ctx: BuildCtx, cs: GridCell[]): boolean {
+function dateColumn(ctx: BuildCtx, cs: GridCell[], format?: DateFormat): boolean {
   const own = cs.filter((x) => !cue.isDitto(x.text));
-  return own.length > 0 && ratio(own.filter((x) => isDateCell(ctx, x)).length, own.length) >= 0.6;
+  return own.length > 0 && ratio(own.filter((x) => isDateCell(ctx, x, format)).length, own.length) >= 0.6;
 }
+
+/** 読み方の規則で決めた列の役目（列の見出しで指す）。規則が効いたセルを数える */
+function ruleForColumn(ctx: BuildCtx, col: ColInfo, dataRows: number[]): void {
+  for (const a of ctx.rules) {
+    const r = a.rule;
+    if ((r.kind !== "columnRole" && r.kind !== "dateFormat" && r.kind !== "effortUnit") || !sameColumn(col.header, r.column)) continue;
+    if (r.kind === "dateFormat" && !col.dateFormat) col.dateFormat = r.format;
+    if (r.kind === "effortUnit" && !col.effortUnit) col.effortUnit = r.unit;
+    if (r.kind === "columnRole" && !(col as ColInfo & { forced?: string }).forced) (col as ColInfo & { forced?: string }).forced = r.role;
+    for (const row of dataRows) {
+      const x = ctx.idx.at(row, col.c);
+      if (x && x.text !== "") ctx.hits?.add(r, ctx.file, x.ref);
+    }
+  }
+}
+const forcedOf = (col: ColInfo) => (col as ColInfo & { forced?: string }).forced;
 
 /** 号・系列の見出しの列の中身が、号の書き方か数だけか（「-」の号なしは数えない） */
 function seriesValues(cs: GridCell[]): boolean {
@@ -439,6 +464,16 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     let role: RowRole = "data";
     if (st) role = st;
     else if (first && cells.length === 1 && cue.isNote(first.text)) role = "note";
+    // 読み方の規則の行の役割（「『年度計』の行は合計として外す」）
+    for (const a of ctx.rules) {
+      if (a.rule.kind !== "rowRole") continue;
+      const want = norm(a.rule.match);
+      if (cells.some((c) => norm(c.text) === want)) {
+        role = a.rule.role;
+        for (const c of cells) ctx.hits?.add(a.rule, ctx.file, c.ref);
+        break;
+      }
+    }
     rows.push({ r, role, level: null, votes: [], suspect: false, parentRow: null, bold: !!first?.bold });
     if (role === "data") dataRows.push(r);
   }
@@ -451,6 +486,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     const header = headerParts.join(" / ");
     cols.push({ c, role: "unknown", header, headerParts, cue: cue.column(headerParts[0] ?? ""), hidden: !!ctx.grid.cols[c]?.hidden });
   }
+  for (const col of cols) ruleForColumn(ctx, col, dataRows);
   const yb = detectYearBand(ctx, cols, dataRows, top);
   const yearKind = yb.kind;
   if (yb.issue) issues.push({ ...yb.issue, tableId: id });
@@ -458,7 +494,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   let shape: Shape;
   if (marks.length) shape = "grid";
   else {
-    const dateCol = cols.find((col) => dateColumn(ctx, dataCellsOf(ctx, dataRows, col.c)));
+    const dateCol = cols.find((col) => forcedOf(col) === "date" || forcedOf(col) === "end" || dateColumn(ctx, dataCellsOf(ctx, dataRows, col.c), col.dateFormat));
     // 日付の列が無くても、作業の名前の列と、日数か工数の列があれば作業の表（工程表のように、日付を帯で描く書き方）
     const workish = cols.some((c) => c.cue === "workName") && cols.some((c) => c.cue === "days" || c.cue === "effort");
     shape = dateCol || workish ? "events" : "tree";
@@ -467,6 +503,23 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   for (const col of cols) {
     if (col.role === "mark") continue;
     const cs = dataCellsOf(ctx, dataRows, col.c);
+    // 読み方の規則で決めた役目（外すは理由つきで外す）
+    const forced = forcedOf(col);
+    if (forced) {
+      if (forced === "exclude") {
+        col.role = "remark";
+        col.ruleExclude = "読み方の規則で外した列";
+      } else col.role = forced as ColRole;
+      continue;
+    }
+    if (col.dateFormat && shape === "events") {
+      col.role = col.cue === "end" ? "end" : "date";
+      continue;
+    }
+    if (col.effortUnit && shape === "events") {
+      col.role = "effort";
+      continue;
+    }
     if (!cs.length && !col.header) continue;
     // 工数の書き方（「24人工」「288時間」）は号・系列ではない（数と漢字の形が号の書き方と重なるため、先に外す）
     const isEffortText = (x: GridCell) => {
@@ -480,7 +533,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       continue;
     }
     if (shape === "events") {
-      if (dateColumn(ctx, cs)) col.role = col.cue === "end" ? "end" : "date";
+      if (dateColumn(ctx, cs, col.dateFormat)) col.role = col.cue === "end" ? "end" : "date";
       else if (cs.length && ratio(cs.filter((x) => parseEffort(typeof x.value === "number" ? x.value : x.text) !== null).length, cs.length) >= 0.6 && col.cue === "effort") col.role = "effort";
       else if (cs.length && col.cue === "days" && ratio(cs.filter((x) => parseDayCount(typeof x.value === "number" ? x.value : x.text) !== null).length, cs.length) >= 0.6) col.role = "days";
       // 行の通し番号（No.）：その資料の中で行を指すだけ。記録の出どころには入るが、値としては読まない
@@ -978,10 +1031,12 @@ function joinAcross(blocks: number[][], rows: number[], repeats: Map<number, Rep
 
 // ─── シートの入口 ────────────────────────────────────────────
 
-export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
+export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly ActiveRule[] = [], hits: RuleHits | null = null): SheetLayout {
   const idx = new CellIndex(grid);
+  const sheetTexts = new Set(grid.cells.map((c) => norm(c.text)));
+  const rules = allRules.filter((a) => ruleApplies(a.rule, src.file, sheetTexts));
   const contextFiscalYear = fiscalYearInText(grid.cells.map((c) => c.text));
-  const ctx: BuildCtx = { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, idx, date1904: src.date1904, contextFiscalYear };
+  const ctx: BuildCtx = { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, idx, date1904: src.date1904, contextFiscalYear, rules, hits };
   const roles = new Map<number, RowRole>();
   const rowReasons = new Map<number, string>();
   const tables: Table[] = [];
@@ -1075,6 +1130,18 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
     let hi = -1;
     for (let i = 0; i < Math.min(rest.length, 4); i++) if (headerLike(rowTexts(idx, rest[i] ?? 0)) && (hi < 0 || cueCount(rest[i] ?? 0) > cueCount(rest[hi] ?? 0))) hi = i;
     if (hi < 0) hi = rest.findIndex((r) => headerLike(rowTexts(idx, r)));
+    // 読み方の規則の見出しの行（「3 行目を見出しとして読む」）
+    let ruleHeader = false;
+    for (const a of rules) {
+      if (a.rule.kind !== "headerRow") continue;
+      const i = rest.indexOf(a.rule.row);
+      if (i >= 0) {
+        hi = i;
+        ruleHeader = true;
+        for (const c of rowTexts(idx, a.rule.row)) hits?.add(a.rule, src.file, c.ref);
+        break;
+      }
+    }
     // 見出しの行のすぐ上の、見出しの空いた列の上にだけ短い名前を置いた行は、見出しの上の段（「人員」「延人員」）
     let upper = 0;
     if (hi > 0) {
@@ -1085,7 +1152,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
         else break;
       }
     }
-    if (hi - upper > 0 && rest.slice(0, hi - upper).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)) || kvRow(rowTexts(idx, r), true))) {
+    if (hi - upper > 0 && (ruleHeader || rest.slice(0, hi - upper).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)) || kvRow(rowTexts(idx, r), true)))) {
       for (const r of rest.splice(0, hi - upper)) {
         const cells = rowTexts(idx, r);
         roles.set(r, "note");
@@ -1104,6 +1171,16 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
       roles.set(n.r, "legend");
       legends.push({ rows: [n.r], entries: entries.map((e) => ({ ...e, planOrActual: cue.planActual(e.meaning), refs: [n.ref], r: n.r })) });
     }
+  // 読み方の規則の印の意味（「▲ は実績、△ は予定」）：星取表の形の表の凡例に足す
+  const markRules = rules.filter((a) => a.rule.kind === "markMeaning");
+  if (markRules.length && tables.some((t) => t.shape === "grid"))
+    legends.push({
+      rows: [],
+      entries: markRules.map((a) => {
+        const r = a.rule as Extract<typeof a.rule, { kind: "markMeaning" }>;
+        return { symbol: r.symbol, meaning: r.meaning ?? (r.planOrActual === "plan" ? "予定" : "実績"), planOrActual: r.planOrActual, refs: [], r: 0 };
+      }),
+    });
   // 凡例は、上にある一番近い星取表の形の表へ
   const looseLegends: LegendEntry[] = [];
   for (const lg of legends) {
@@ -1126,8 +1203,8 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid): SheetLayout {
   return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends, rowReasons, contextFiscalYear, contextPeriod };
 }
 
-export function layoutFile(src: SourceFile): SheetLayout[] {
-  return src.sheets.map((g) => layoutSheet(src, g));
+export function layoutFile(src: SourceFile, rules: readonly ActiveRule[] = [], hits: RuleHits | null = null): SheetLayout[] {
+  return src.sheets.map((g) => layoutSheet(src, g, rules, hits));
 }
 
 export { norm };

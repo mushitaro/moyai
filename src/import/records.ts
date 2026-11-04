@@ -3,6 +3,7 @@
 import { cellRef, type SheetGrid } from "./grid";
 import { cue, norm } from "./cues";
 import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFiscalYear, type Ymd } from "./era";
+import { parseWithFormat } from "./reading";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { assignParents, cellPeriod, type ColInfo, type SheetLayout, type Table } from "./structure";
 import { parseEffort, parseUnit, splitTag, tagTrailingNumber, type TagSplit, type UnitValue } from "./text";
@@ -916,7 +917,12 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     }
     let p: { start: Ymd; end: Ymd; range: boolean } | null = null;
     if (cue.isDitto(cell.text)) p = prevDate.get(c.c) ?? null;
-    else {
+    else if (c.dateFormat) {
+      // 読み方の規則で決めた書き方（yyyymmdd・yymmdd・月/日）
+      const f = parseWithFormat(String(cell.value ?? cell.text), c.dateFormat);
+      const ymd = !f ? null : f.y !== null ? { y: f.y, m: f.m, d: f.d } : lay.contextFiscalYear !== null ? withFiscalYear({ m: f.m, d: f.d }, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
+      if (ymd) p = { start: ymd, end: ymd, range: false };
+    } else {
       p = cellPeriod(cell, date1904);
       if (!p && lay.contextFiscalYear !== null && typeof cell.value === "string") {
         const md = parseMonthDay(cell.value);
@@ -927,8 +933,13 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     if (p) prevDate.set(c.c, p);
     return { period: p, cell, bad: !p, blank: false };
   };
+  // 読み方の規則で外した列のセル：理由つきで外す
+  for (const col of t.cols.filter((c) => c.ruleExclude)) for (const r of data) {
+    const x = lay.index.at(r.r, col.c);
+    if (x && x.text !== "" && !off(x.ref)) exclude(x.ref, col.ruleExclude as string);
+  }
   for (const r of data) {
-    const cells = lay.index.rowCells(r.r).filter((c) => !off(c.ref));
+    const cells = lay.index.rowCells(r.r).filter((c) => !off(c.ref) && !t.cols.some((k) => k.ruleExclude && k.c === c.c));
     if (!cells.length) continue;
     const refs = cells.map((c) => c.ref);
     const sd = readDate(r.r, dateCol);
@@ -947,7 +958,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     const ec = rowEffortCol ? lay.index.at(r.r, rowEffortCol.c) : null;
     // 見出しに書いた工数の単位（「工数(人日)」「延工数(h)」）
     // 見出しの段ごとに見る（「延人員」の下に「(人)」と書く書き方）
-    const effortUnit = rowEffortCol ? (rowEffortCol.headerParts.map((h) => cue.headerUnit(h)).find((u) => u !== null) ?? cue.headerUnit(rowEffortCol.header)) : null;
+    const effortUnit = rowEffortCol ? (rowEffortCol.effortUnit ?? rowEffortCol.headerParts.map((h) => cue.headerUnit(h)).find((u) => u !== null) ?? cue.headerUnit(rowEffortCol.header)) : null;
     let manDays: number | null = null;
     let hours: number | null = null;
     let persons: number | null = null;

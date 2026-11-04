@@ -6,6 +6,7 @@ import { cue } from "./cues";
 import { Asker, questionIdOf, type QuestionItem, YES_SPLIT } from "./questions";
 import { filesLabel, type AssetRec, type EventRec, type MarkRec, type Records, type Series } from "./records";
 import { nameKey, splitTag } from "./text";
+import type { ActiveRule, RuleHits } from "./reading";
 
 export interface Cluster {
   id: string;
@@ -108,7 +109,23 @@ function ymd(d: { y: number; m: number; d: number }): string {
   return `${String(d.y).padStart(4, "0")}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`;
 }
 
-export function link(rec: Records, ask: Asker): Linked {
+/** 読み方の規則の同じ機器（辞書）：名前の鍵 → そろえる先の名前の鍵。link を呼ぶたびに入れ直す */
+let ALIAS = new Map<string, string>();
+const nk = (s: string): string => {
+  const k = nameKey(s);
+  return ALIAS.get(k) ?? k;
+};
+
+export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = [], hits: RuleHits | null = null): Linked {
+  ALIAS = new Map();
+  for (const a of rules) if (a.rule.kind === "sameAsset") ALIAS.set(nameKey(a.rule.names[0]), nameKey(a.rule.names[1]));
+  // 規則が効いた資産と行を数える（「読み方」のタブの効いたセル）
+  for (const a of rules) {
+    if (a.rule.kind !== "sameAsset") continue;
+    const k0 = nameKey(a.rule.names[0]);
+    for (const x of rec.assets) if (nameKey(x.name) === k0) hits?.add(a.rule, x.file, x.nameRef);
+    for (const e of rec.events) if (e.assetNames.some((n) => nameKey(n) === k0)) hits?.add(a.rule, e.file, e.refs[0] ?? "");
+  }
   // ─── 機器 ───
   const parentOf = new Map<string, string | null>();
   const clusterOf = new Map<string, Cluster>();
@@ -184,7 +201,7 @@ export function link(rec: Records, ask: Asker): Linked {
         props.push({ r, cand: null, pattern: "skip", options: [] });
         continue;
       }
-      const key = nameKey(r.name);
+      const key = nk(r.name);
       const pc = r.parentId ? proposed.get(r.parentId) : null;
       let pool: Cluster[];
       let scope: string;
@@ -198,8 +215,8 @@ export function link(rec: Records, ask: Asker): Linked {
         pool = clusters.filter((c) => c.recs.some((x) => done.has(x.tableId) && x.level === r.level));
         scope = "global:";
       }
-      const cands = pool.filter((c) => nameKey(c.name) === key);
-      const sibs = recs.filter((x) => x.parentId === r.parentId && nameKey(x.name) === key && !x.pending && !x.excluded);
+      const cands = pool.filter((c) => nk(c.name) === key);
+      const sibs = recs.filter((x) => x.parentId === r.parentId && nk(x.name) === key && !x.pending && !x.excluded);
       const n = numberOf(r);
       let cand: Cluster | null = null;
       let pattern: string;
@@ -345,13 +362,13 @@ export function link(rec: Records, ask: Asker): Linked {
   const byTag = new Map<string, Cluster[]>();
   for (const c of clusters) {
     if (c.excluded) continue;
-    const k = nameKey(c.name);
+    const k = nk(c.name);
     byName.set(k, [...(byName.get(k) ?? []), c]);
-    if (c.tag) byTag.set(nameKey(c.tag), [...(byTag.get(nameKey(c.tag)) ?? []), c]);
+    if (c.tag) byTag.set(nk(c.tag), [...(byTag.get(nk(c.tag)) ?? []), c]);
   }
   const tagged = (nm: string) => {
     const sp = splitTag(nm);
-    return sp && byTag.has(nameKey(sp.tag)) ? sp : null;
+    return sp && byTag.has(nk(sp.tag)) ? sp : null;
   };
   type Case = { key: string; tableId: string; name: string; unitKey: string; cands: Cluster[]; events: EventRec[]; pattern: string };
   const cases = new Map<string, Case>();
@@ -372,7 +389,7 @@ export function link(rec: Records, ask: Asker): Linked {
     // 並べた機器（「A・B・C（一式）」）：分けたどれもが機器の名前か機器番号で引ければ分ける。
     // 引けないときは、全体が 1 つの機器の名前なら分けない（名前に「・」を含む機器）
     let names = [whole];
-    const known = (nm: string) => byName.has(nameKey(nm)) || !!tagged(nm);
+    const known = (nm: string) => byName.has(nk(nm)) || !!tagged(nm);
     // 「まとまりの名前（A・B・C）」：括弧の中に並べた名前を、まとめた機器の名前として読む（括弧の前はまとまりの名前）
     const inParen = /^(.*?)[(（]([^()（）]+)[)）]\s*$/u.exec(nfkc(whole));
     const listed = inParen && cue.listSeparators.some((sep) => (inParen[2] ?? "").includes(sep)) && !known(whole) ? (inParen[2] ?? "") : whole;
@@ -387,11 +404,11 @@ export function link(rec: Records, ask: Asker): Linked {
       }
     }
     // 機器番号の列に、どれかの機器の番号を書いた行：「名前（番号）」と同じに番号で引く（番号は同一性の鍵）
-    if (names.length === 1 && e.tag && byTag.has(nameKey(e.tag)) && !tagged(whole)) names = [`${whole}（${e.tag}）`];
+    if (names.length === 1 && e.tag && byTag.has(nk(e.tag)) && !tagged(whole)) names = [`${whole}（${e.tag}）`];
     const unitKey = !e.unit ? "-" : e.unit.kind === "number" ? `n${e.unit.n}` : e.unit.kind === "common" ? "common" : "ditto";
     eventNames.set(e.id, { names, unitKey });
     for (const nm of names) {
-      const k = `${e.tableId}|${nameKey(nm)}|${unitKey}`;
+      const k = `${e.tableId}|${nk(nm)}|${unitKey}`;
       let cs = cases.get(k);
       if (!cs) {
         const sp = tagged(nm);
@@ -399,11 +416,11 @@ export function link(rec: Records, ask: Asker): Linked {
         let pattern: string;
         if (sp) {
           // 名前の中の機器番号が、どれか 1 つの機器の番号と同じ（番号は同一性の鍵。号の欄は見ない）
-          cands = byTag.get(nameKey(sp.tag)) ?? [];
+          cands = byTag.get(nk(sp.tag)) ?? [];
           const c0 = cands[0];
-          pattern = cands.length === 1 && c0 ? (nameKey(c0.name) === nameKey(sp.name) ? "tagName" : "tagOnly") : "ambiguous";
+          pattern = cands.length === 1 && c0 ? (nk(c0.name) === nk(sp.name) ? "tagName" : "tagOnly") : "ambiguous";
         } else {
-          cands = byName.get(nameKey(nm)) ?? [];
+          cands = byName.get(nk(nm)) ?? [];
           if (unitKey.startsWith("n")) cands = cands.filter((c) => numberOf(c) === Number(unitKey.slice(1)));
           else if (unitKey === "common") cands = cands.filter((c) => c.series?.kind === "common" || numberOf(c) === null);
           pattern = cands.length === 1 ? (unitKey === "-" ? "nameOnly" : "nameUnit") : "ambiguous";
@@ -514,7 +531,7 @@ export function link(rec: Records, ask: Asker): Linked {
     let pend = false;
     let excl = false;
     for (const nm of en.names) {
-      const r = resolved.get(`${e.tableId}|${nameKey(nm)}|${en.unitKey}`);
+      const r = resolved.get(`${e.tableId}|${nk(nm)}|${en.unitKey}`);
       if (!r || (!r.c && !r.excluded)) pend = true;
       else if (r.excluded) excl = true;
       else if (r.c) targets.push(r.c);
@@ -529,7 +546,7 @@ export function link(rec: Records, ask: Asker): Linked {
       continue;
     }
     const tkey = [...new Set(targets.map((t) => t.id))].sort().join(",");
-    const wk = nameKey(e.workName);
+    const wk = nk(e.workName);
     // 期間を持つ行（「始まり〜終わり」）は、その行だけで 1 回の作業。1 日の日付の行は、同じ作業・機器・年度でまとめる
     const k = `${e.tableId}|${wk}|${tkey}|${e.fiscalYear}${e.end ? `|r${e.row}` : ""}`;
     let o = occMap.get(k);
@@ -719,10 +736,10 @@ export function link(rec: Records, ask: Asker): Linked {
 
 /** 凡例の意味と作業の名前：同じなら named、どちらかがもう一方を含むなら namedPart、どれとも違えば null */
 function nameMatch(meaning: string, names: string[]): "named" | "namedPart" | null {
-  const m = nameKey(meaning);
+  const m = nk(meaning);
   if (!m) return null;
-  if (names.some((n) => nameKey(n) === m)) return "named";
-  if (names.some((n) => nameKey(n).includes(m) || (nameKey(n).length > 0 && m.includes(nameKey(n))))) return "namedPart";
+  if (names.some((n) => nk(n) === m)) return "named";
+  if (names.some((n) => nk(n).includes(m) || (nk(n).length > 0 && m.includes(nk(n))))) return "namedPart";
   return null;
 }
 

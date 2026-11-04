@@ -9,6 +9,7 @@ import type { RejectedFile, SourceFile } from "./grid";
 import { extensionOf, READABLE, readSource, type InputFile } from "./read";
 import { layoutFile, type SheetLayout } from "./structure";
 import { buildRecords, type Records } from "./records";
+import { activeRules, RuleHits, type LoadedReading } from "./reading";
 import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
@@ -32,6 +33,9 @@ export interface Analysis {
   records: Records;
   linked: Linked;
   composition: Composition;
+  /** 読み方（3 段目の Skill）と、規則ごとに効いたセル */
+  readings: LoadedReading[];
+  ruleHits: RuleHits;
   questions: QuestionState[];
   open: QuestionState[];
   unusedDecisions: Decision[];
@@ -69,6 +73,8 @@ export class IntakeSession {
   private readonly rejectedFiles: RejectedFile[] = [];
   private decisions = new Map<string, Decision>();
   private composed: Composition | null = null;
+  /** 当てる読み方（承認済みの読み方と、作業中の版の下書き） */
+  private readings: LoadedReading[] = [];
   /**
    * 写真（photo.ts）。層 1 では読まず並べるだけで、AI が読んだ格子を置いたものだけを層 2〜4 に渡す。
    * 読み直し（セッションを作り直す）をまたいで同じものを使えるよう、外から渡せる。
@@ -188,8 +194,18 @@ export class IntakeSession {
     return diff(before, after);
   }
 
+  /** 当てる読み方を置き換える（承認済みの読み方と、作業中の版の下書き）。次の analyze から効く */
+  setReadings(readings: readonly LoadedReading[]): void {
+    this.readings = [...readings];
+  }
+  getReadings(): LoadedReading[] {
+    return [...this.readings];
+  }
+
   analyze(): Analysis {
-    const ask = new Asker(this.decisions);
+    const rules = activeRules(this.readings);
+    const hits = new RuleHits();
+    const ask = new Asker(this.decisions, rules, hits);
     const sources: SourceFile[] = [];
     const rejected: RejectedFile[] = [...this.rejectedFiles];
     const unreadable: string[] = [];
@@ -268,10 +284,10 @@ export class IntakeSession {
     // 写真：AI が読んだ格子を置いたものだけを、ほかの形式と同じ格子として渡す。人が読まずに外したものは理由つきで数える
     sources.push(...this.photos.sources());
     rejected.push(...this.photos.excludedFiles());
-    const layouts = sources.flatMap((s) => layoutFile(s));
+    const layouts = sources.flatMap((s) => layoutFile(s, rules, hits));
     const date1904 = new Map(sources.map((s) => [s.file, s.date1904]));
     const records = buildRecords(layouts, ask, { fiscalYearStartMonth: this.options.facility.fiscalYearStartMonth }, (f) => date1904.get(f) ?? false);
-    const linked = link(records, ask);
+    const linked = link(records, ask, rules, hits);
     const composition = compose(sources, layouts, records, linked, ask, this.decisions, this.options);
     if (unreadable.length) {
       composition.blockers.push(`読めなかった資料 ${unreadable.length}（${unreadable.join("・")}）`);
@@ -295,6 +311,8 @@ export class IntakeSession {
       records,
       linked,
       composition,
+      readings: [...this.readings],
+      ruleHits: hits,
       questions,
       open: ask.open(),
       unusedDecisions: ask.unusedDecisions(),
