@@ -606,10 +606,8 @@ export function Intake({ ws, embedded = false, composeLabel, file = null }: { ws
           }}
         >
           <Group justify="space-between" gap="sm">
-            <Stack gap={2}>
-              <Title order={4}>{T.drop.title}</Title>
-              <Text size="sm">{T.drop.hint}</Text>
-            </Stack>
+            {/* 説明の文は置かない（受け付ける形式・大きさ・AI に渡るものは、Claude が MCP の instructions と基本の Skill で説明する） */}
+            <Title order={4}>{T.drop.title}</Title>
             <FileButton multiple onChange={(fs) => void addFiles(fs)}>
               {(props) => (
                 <Button {...props} variant="default" loading={reading}>
