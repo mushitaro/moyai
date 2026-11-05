@@ -1,5 +1,7 @@
 // 人だけの CLI と、輪を確かめる CLI。
 // - `moyai verify ring <フォルダ>`：受け手と同じ関数（readRing）で、決まり・仲間・束ごとに ✓ か理由つきの ✗ を出す。
+// - `moyai verify demo-ring [<フォルダ>]`：リポジトリのデモの輪（demo-ring/）を、verify ring と同じ関数で確かめ、
+//   全員 ✓・わざと入れた ✗ が約束の理由で ✗ かを照らす。確認済みに数える鍵は demo-ring.json から読む（状態フォルダは読まない）。
 // - `moyai keys create --root <輪のフォルダ> --pack <パック>`：輪を作り、その輪の鍵の対を状態フォルダに置く（包まない）。
 // - `moyai keys unwrap`：前の形の鍵（合言葉で包んだもの）を、前の合言葉で 1 度だけ開き、包まない形に置き換える。
 //   合言葉はやめた（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。前の形の鍵はアプリでは使わない。
@@ -8,6 +10,7 @@
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。前の合言葉は画面に出さない。
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defaultRoot, detectDocuments, readKeyFile, readRings, readSettings, replaceOldKeyFile } from "../bridge/places";
 import { ownKeysAt } from "../share/facility";
 import { oldOwnKeys, replaceOldOwnKey } from "../bridge/people";
@@ -17,6 +20,7 @@ import { createRing, verifyRing, type VerifyReport } from "../share/checkpoint";
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, resolvePacksDir } from "../share/pack";
 import { CIRCLE_FILE } from "../share/ring";
+import { DEMO_RING_FILE, judgeDemoRing, parseDemoRingManifest } from "../share/demo-ring";
 import { HEX16, fingerprint, isWrappedKey, keyIdOf, toPlainKey, unwrapPrivateKey, WrongPassphrase, type WrappedKey } from "../share/sign";
 
 export const CLI_TEXT = {
@@ -35,6 +39,17 @@ export const CLI_TEXT = {
   missing: "ありません",
   notBundleFiles: (n: number) => `束の形をしていないファイル ${n} 件`,
   summaryOk: "すべて ✓ です。",
+  demoUsage: "使い方：moyai verify demo-ring [<デモの輪のフォルダ>]（省くとリポジトリの demo-ring/）",
+  demoNoManifest: (p: string) => `デモの輪の約束のファイル（${DEMO_RING_FILE}）を読めません：${p}`,
+  demoConfirmedNote: (n: number) => `デモの輪：指紋の読み合わせの代わりに、${DEMO_RING_FILE} の ${n} 個の鍵を確認済みに数えます（あなたの状態フォルダは読みません）`,
+  demoExpectedNg: (what: string) => `  （${what} の ✗ は、わざと入れた束によるものです。約束の理由で ✗ になりました）`,
+  demoUnexpected: (what: string) => `約束に無い ✗：${what}`,
+  demoUnmet: (what: string, got: string) => `約束の ✗ になりません：${what}（${got}）`,
+  demoGotOk: "✓ になった",
+  demoGotMissing: "ありません",
+  demoGotOther: (r: string) => `理由が違う：${r}`,
+  demoSummaryOk: (ok: number, n: number) => `デモの輪：拠点 ${ok}/${n} が ✓、わざと入れた ✗ は約束どおり ✗ です。`,
+  demoSummaryNg: (n: number) => `デモの輪：約束と違う所が ${n} 件あります。`,
   summaryNg: (n: number) => `✗ が ${n} 件あります。`,
   keysUsage: "使い方：moyai keys create --root <輪のフォルダ（絶対の道）> --pack <パック ID>　／　moyai keys unwrap",
   noOldKeys: "前の形の鍵（合言葉で包んだもの）はありません。",
@@ -143,6 +158,82 @@ export async function verifyRingCli(argv: string[], o: { packsDir?: string; stat
     if (rules.vocab !== pack.pack.vocab.hash || rules.national !== pack.pack.table.hash) ng++;
   }
   say(ng === 0 ? CLI_TEXT.summaryOk : CLI_TEXT.summaryNg(ng));
+  return ng === 0 ? 0 : 1;
+}
+
+/** リポジトリのデモの輪のフォルダ（dist/cli.js からは ../demo-ring、src/cli/human.ts からは ../../demo-ring） */
+export function resolveDemoRingDir(from: string = import.meta.url): string {
+  const here = dirname(fileURLToPath(from));
+  for (const rel of ["../demo-ring", "../../demo-ring"]) {
+    const p = join(here, rel);
+    if (existsSync(join(p, DEMO_RING_FILE))) return p;
+  }
+  return join(here, "..", "demo-ring");
+}
+
+/**
+ * verify demo-ring。verify ring と同じ関数（verifyRing）で確かめ、全員 ✓・わざと入れた ✗ が約束の理由で ✗ なら 0、
+ * 約束と違えば 1、引数が違えば 2 を返す。
+ */
+export async function verifyDemoRingCli(argv: string[], o: { packsDir?: string } = {}): Promise<number> {
+  const [what, folder, ...rest] = argv;
+  if (what !== "demo-ring" || rest.length > 0) {
+    say(CLI_TEXT.demoUsage);
+    return 2;
+  }
+  const dir = resolve(folder ?? resolveDemoRingDir());
+  let manifest = null;
+  try {
+    manifest = parseDemoRingManifest(readFileSync(join(dir, DEMO_RING_FILE), "utf8"));
+  } catch {
+    manifest = null;
+  }
+  if (!manifest) {
+    say(CLI_TEXT.demoNoManifest(dir));
+    return 1;
+  }
+  const rings = ringsAt(dir);
+  if (rings.length !== 1 || rings[0]!.ringId !== manifest.ring) {
+    say(CLI_TEXT.noRing(join(dir, manifest.ring)));
+    return 1;
+  }
+  const r = rings[0]!;
+  const p = parseJsonStrict(readFileSync(join(r.root, r.ringId, CIRCLE_FILE), "utf8"));
+  const rules = p.ok ? (p.value as { body?: { rules?: { pack?: unknown; vocab?: unknown; national?: unknown } } })?.body?.rules : undefined;
+  if (!rules || typeof rules.pack !== "string") {
+    say(`${CLI_TEXT.ringHead(r.ringId)}
+  ✗ ${CLI_TEXT.circle}：${CLI_TEXT.circleUnreadable}`);
+    return 1;
+  }
+  const pack = loadSharePack(o.packsDir ?? resolvePacksDir(), rules.pack);
+  if (!pack.ok) {
+    say(`${CLI_TEXT.ringHead(r.ringId)}
+  ✗ ${CLI_TEXT.packNotReady(rules.pack, pack.reason)}`);
+    return 1;
+  }
+  say(CLI_TEXT.demoConfirmedNote(manifest.confirmed.length));
+  const rep = await verifyRing(r.root, r.ringId, pack.pack, new Set(manifest.confirmed.map((c) => c.key)));
+  for (const l of formatReport(rep)) say(l);
+  const j = judgeDemoRing(rep, manifest);
+  const label = (kind: string, name: string) => (kind === "member" ? CLI_TEXT.member(name, undefined) : kind === "bundle" ? CLI_TEXT.bundle(name) : CLI_TEXT.circle);
+  let ng = 0;
+  if (rules.vocab !== pack.pack.vocab.hash) {
+    say(`  ✗ ${CLI_TEXT.vocabMismatch}`);
+    ng++;
+  }
+  if (rules.national !== pack.pack.table.hash) {
+    say(`  ✗ ${CLI_TEXT.nationalMismatch}`);
+    ng++;
+  }
+  for (const e of manifest.expectNg) if (!j.unmet.some((u) => u.expect === e)) say(CLI_TEXT.demoExpectedNg(label(e.kind, e.name)));
+  for (const l of j.unexpected) say(`  ✗ ${CLI_TEXT.demoUnexpected(label(l.kind, l.name))}`);
+  for (const u of j.unmet) {
+    const got = !u.got ? CLI_TEXT.demoGotMissing : u.got.status === "ok" ? CLI_TEXT.demoGotOk : CLI_TEXT.demoGotOther([...new Set(u.got.reasons.map(reasonText))].join("、") || u.got.status);
+    say(`  ✗ ${CLI_TEXT.demoUnmet(label(u.expect.kind, u.expect.name), got)}`);
+  }
+  ng += j.unexpected.length + j.unmet.length;
+  if (!j.ok && ng === 0) ng = 1; // 拠点の数が合わない・束の形でないファイル（上の行に出ている）
+  say(ng === 0 ? CLI_TEXT.demoSummaryOk(j.sitesOk, j.sites) : CLI_TEXT.demoSummaryNg(ng));
   return ng === 0 ? 0 : 1;
 }
 
