@@ -412,7 +412,9 @@ export class IntakeSession {
         if (why.has(key)) continue;
         why.set(key, `${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""} ${t.top}〜${t.bottom} 行目の表が止まっている：${shape}${missing.length ? `で、${missing.join("・")}の欄が読めていない` : ""}（質問の無い未解決のセル ${silent}）`);
       }
-    const shownNotes = [...[...why.values()].slice(0, STUCK_FILES), ...notes];
+    // 読み方の規則が効かなかった・読み手の読み方を止めたこと（同じ様式の表は 1 つにまとめる）：いちばん先に出す
+    const ruleNotes = [...new Set(an.layouts.flatMap((l) => l.tables.flatMap((t) => t.cols.flatMap((c) => (c.ruleNotes ?? []).map((n) => `${l.file}：${n}`)))))].slice(0, STUCK_FILES);
+    const shownNotes = [...ruleNotes, ...[...why.values()].slice(0, STUCK_FILES), ...notes];
     const moreNotes = shownNotes.length - NOTES;
     const cappedNotes = moreNotes > 0 ? [...shownNotes.slice(0, NOTES), `注記はほかに ${moreNotes} 件（頁ごとの頭書き・表の下の記入欄など）`] : shownNotes;
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";

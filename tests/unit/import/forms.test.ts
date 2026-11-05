@@ -687,6 +687,19 @@ describe("帳票（1 日 1 枚・1 件 1 枚）と、heldout-4 で詰まった�
     expect(q?.text).toContain("分けられない");
   });
 
+  test("規則が読み手の読み方を止めたとき・同じ列に 2 つの役目の規則があるときは、要約の注記に出す（効かなかった規則は効いたセルに数えない）", async () => {
+    const s = session();
+    const rule = (id: string, role: "assetRef" | "workName") => ({ id, text: `「号炉・機器・作業内容」を${role}`, kind: "columnRole" as const, author: "ai" as const, reason: "試験", column: "号炉・機器・作業内容", role });
+    s.setReadings([{ skill: { schema: "moyai.reading/0", name: "【架空】試験の読み方", scope: "facility", rules: [rule("a", "assetRef"), rule("w", "workName")] }, version: "draft", path: null, approved: false, draft: true }]);
+    await s.add([{ name: "日報.csv", bytes: csv(["日付,号炉・機器・作業内容,人工", "2024/4/6,1号 No.2 ポンプ 分解整備,2", "2024/4/7,ブロワ（#2）給油,1"]) }]);
+    const sv = s.survey();
+    expect(sv.notes.some((n) => n.includes("分けて読んでいない") && n.includes("規則「a」"))).toBe(true);
+    expect(sv.notes.some((n) => n.includes("規則「w」（workName）は効いていない"))).toBe(true);
+    const an = s.analyze();
+    expect(an.ruleHits.count("a")).toBeGreaterThan(0);
+    expect(an.ruleHits.count("w")).toBe(0);
+  });
+
   test("日付の書き方の規則（月/日）は、日付の型のセルを壊さない", async () => {
     const bytes = await xlsxOf((ws) => {
       rows(ws, 1, [["点検日", "機器", "作業", "工数(人日)"]]);
