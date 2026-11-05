@@ -63,6 +63,7 @@ export const HUMAN_TEXT = {
     mailToInvalid: "頼む相手のメールの宛先を書いてください（例 name@example.jp）。",
     notLatest: "保存先に、もっと新しい版があります。開き直してから署名してください。",
     selfApprove: "自分が作った版は、自分で承認できません。ほかの人に承認を頼んでください。",
+    alreadySigned: "この版には、もう承認か差戻しの署名があります。",
     fileMissing: "その版の Excel が保存先にありません（確定のときに書けなかったか、消されています）。",
     fileChanged: "保存先の Excel が、この版に署名したときのものと違います（あとから書き換えられています）。落とせません。",
     // 様式で書き出す（3C）

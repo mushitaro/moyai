@@ -503,7 +503,7 @@ async function writeVersion(
   return { ok: true, version, record, diff, files: { version: versionPath, report: reportPath, export: exportPath } };
 }
 
-export type SignResult = { ok: true; version: number; role: "approve" | "return" } | { ok: false; reason: "nameInvalid" | "reasonEmpty" | "notLatest" | "historyBroken" | "selfApprove" | "exists" };
+export type SignResult = { ok: true; version: number; role: "approve" | "return" } | { ok: false; reason: "nameInvalid" | "reasonEmpty" | "notLatest" | "historyBroken" | "selfApprove" | "exists" | "alreadySigned" };
 
 /**
  * いちばん新しい版に、承認（approve）か差し戻し（return。理由は必須）の署名を足す（docs/plan.md §2.18.2）。
@@ -517,6 +517,8 @@ export async function signLatest(i: { root: string; planId: string; version: num
   const v = hist.versions.at(-1);
   if (!v || v.version !== i.version) return { ok: false, reason: "notLatest" };
   if (v.problem !== null) return { ok: false, reason: "historyBroken" };
+  // 承認か差戻しがもうある版には、どちらも重ねない（両方が残ると、編集者の番が開いたままになる。台帳の新-7）
+  if (v.signatures.some((x) => x.role === "approve" || x.role === "return")) return { ok: false, reason: "alreadySigned" };
   const key = keyIdOf(i.signer.pair.pub);
   if (i.role === "approve" && v.signatures.some((x) => CREATION_ROLES.includes(x.role) && (x.key === key || x.by === i.signer.by))) return { ok: false, reason: "selfApprove" };
   const at = (i.now ?? new Date()).toISOString();

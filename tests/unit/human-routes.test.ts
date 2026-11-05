@@ -434,10 +434,14 @@ describe("編集者：承認を頼んだ版の上に次の版を作れるのは�
       // 差戻されたあとも、頼んだ人の番に戻るだけ
       const boss = otherSigner("【架空】承認する人");
       expect(await signLatest({ root, planId: plan.planId, version: 1, role: "return", reason: "直してください", signer: boss })).toMatchObject({ ok: true });
+      // 差戻しのある版には、承認も、もう一度の差戻しも重ねない（台帳の新-7）
+      expect(await signLatest({ root, planId: plan.planId, version: 1, role: "approve", reason: "", signer: boss })).toEqual({ ok: false, reason: "alreadySigned" });
+      expect(await signLatest({ root, planId: plan.planId, version: 1, role: "return", reason: "もう一度", signer: otherSigner("【架空】ほかの課長") })).toEqual({ ok: false, reason: "alreadySigned" });
       expect((await cb("planCommit", { plan: next, reason: "横から重ねる", acceptances: [], basedOn: 1 })).reason).toBe("notYourTurn");
       expect(await ca("planCommit", { plan: next, reason: "直した", acceptances: [], basedOn: 1, request: { kind: "approve", to: "boss@example.jp", note: "" } })).toMatchObject({ ok: true, version: 2 });
       // 承認されると閉じ、誰でも次の版を作れる
       expect(await signLatest({ root, planId: plan.planId, version: 2, role: "approve", reason: "", signer: boss })).toMatchObject({ ok: true });
+      expect(await signLatest({ root, planId: plan.planId, version: 2, role: "return", reason: "やっぱり", signer: boss })).toEqual({ ok: false, reason: "alreadySigned" });
       expect(await cb("planCommit", { plan: next, reason: "次の年の版", acceptances: [], basedOn: 2 })).toMatchObject({ ok: true, version: 3 });
     } finally {
       await a.close();
