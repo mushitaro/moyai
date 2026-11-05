@@ -948,7 +948,7 @@ export class HumanService {
         if (!r.ok) return no(r.reason);
         // 初めて出した施設の鍵も、自分の鍵として確認済みに数える
         const confirmed = new Set([...ctx.ring.confirmed, keyIdOf(sender.pair.pub)]);
-        const report = withSentInfo(await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, confirmed), readPlanSent(ctx.facility, p.ringId));
+        const report = withSentInfo(await verifyRing(ctx.ring.entry.root, p.ringId, ctx.pack, confirmed, ctx.ring.known), readPlanSent(ctx.facility, p.ringId));
         return { ok: true, fileName: r.fileName, hash: r.hash, seq: r.seq, report };
       }
       case "ledger_preview": {
@@ -1118,7 +1118,7 @@ export class HumanService {
         if (typeof pack === "string") return no("packNotReady", { packReason: pack });
         const ring = await loadRing(sd, p.ringId, pack);
         if (!ring.ok) return no(ring.reason);
-        const rep = await verifyRing(entry.root, p.ringId, pack, ring.confirmed);
+        const rep = await verifyRing(entry.root, p.ringId, pack, ring.confirmed, ring.known);
         if (!rep.lines.some((l) => l.kind === "member" && l.pub === p.pub)) return no("keyUnknown");
         const rs = readRings(sd);
         const key = keyIdOf(p.pub);
@@ -1165,7 +1165,7 @@ export class HumanService {
         const ring = await loadRing(sd, p.ringId, pack, root ? ownKeysAt(root, p.ringId) : []);
         if (!ring.ok) return no(ring.reason);
         const sent = root ? allPlanSent<{ ringId: string; hash: string; version?: number; at: string }>(root, p.ringId).flatMap((b) => b.entries) : [];
-        return { ok: true, report: withSentInfo(await verifyRing(entry.root, p.ringId, pack, ring.confirmed), sent) };
+        return { ok: true, report: withSentInfo(await verifyRing(entry.root, p.ringId, pack, ring.confirmed, ring.known), sent) };
       }
       case "readings_read": {
         if (!parsePayload("readings_read", call.payload)) return no("payloadInvalid");

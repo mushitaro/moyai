@@ -8,6 +8,7 @@
 // - `moyai send`：束を送る（検問所の画面から送る。端末から送るのは未実装）。
 // 人だけの CLI（keys create・send）は、標準入力が端末でなければ断る（AI のシェルや別のプログラムから呼ばせない）。
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。前の合言葉は画面に出さない。
+import { knownMaxSeq } from "../share/ring-seen";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -152,7 +153,8 @@ export async function verifyRingCli(argv: string[], o: { packsDir?: string; stat
       ng++;
       continue;
     }
-    const rep = await verifyRing(r.root, r.ringId, pack.pack, confirmed);
+    // この PC が前に見た仲間ごとの最大の seq と照らす（覚え直すのは画面の loadRing だけ。台帳の D3）
+    const rep = await verifyRing(r.root, r.ringId, pack.pack, confirmed, knownMaxSeq(stateDir, r.root, r.ringId));
     for (const l of formatReport(rep)) say(l);
     if (rules.vocab !== pack.pack.vocab.hash) say(`  ✗ ${CLI_TEXT.vocabMismatch}`);
     if (rules.national !== pack.pack.table.hash) say(`  ✗ ${CLI_TEXT.nationalMismatch}`);

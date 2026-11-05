@@ -17,6 +17,7 @@ import { SEND_MIN_K, kNational, profileBandOf, type Group, type Profile, type Tr
 import type { SharePack } from "./pack";
 import { countProperNouns } from "./recount";
 import { CIRCLE_FILE, readRing, ringDir, writeBundle, writeCircle, writeMember, type RingRead } from "./ring";
+import { knownMaxSeq, rememberSeq } from "./ring-seen";
 import { appendPlanSent, readPlanSent, storeFacilityKey, type Facility } from "./facility";
 import { baseRules, rulesGate, type Rules } from "./rules";
 import { previewBundle, sealBundle, type SendInput } from "./seal";
@@ -61,7 +62,7 @@ export async function createRing(i: { stateDir: string; root: string; pack: Shar
 // ─── 輪を読む ──────────────────────────────────────────────
 
 export type RingLoad =
-  | { ok: true; entry: RingEntry; circleBytes: Buffer; rules: Rules; ctx: ShareContext; read: RingRead; confirmed: Set<string> }
+  | { ok: true; entry: RingEntry; circleBytes: Buffer; rules: Rules; ctx: ShareContext; read: RingRead; confirmed: Set<string>; known: Map<string, number> }
   | { ok: false; reason: "noRing" | "circleMissing" | "circleInvalid" };
 
 /**
@@ -82,7 +83,10 @@ export async function loadRing(stateDir: string, ringId: string, pack: SharePack
   const rules = p.ok ? ((p.value as { body?: { rules?: Rules } })?.body?.rules ?? null) : null;
   if (!rules) return { ok: false, reason: "circleInvalid" };
   const confirmed = new Set([...rings.confirmed, ...rings.rings.map((r) => r.key), ...own]);
-  const read = await readRing(entry.root, ringId, { table: pack.table, vocab: pack.vocab, confirmed });
+  // 仲間ごとに前に見た最大の seq と照らし（末尾の束が消えたら chain.vanished）、読めた ✓ の束で覚え直す（台帳の D3）
+  const known = knownMaxSeq(stateDir, entry.root, ringId);
+  const read = await readRing(entry.root, ringId, { table: pack.table, vocab: pack.vocab, confirmed, knownMaxSeq: known });
+  rememberSeq(stateDir, entry.root, ringId, read);
   const ctx: ShareContext = {
     table: pack.table,
     vocab: pack.vocab,
@@ -91,7 +95,7 @@ export async function loadRing(stateDir: string, ringId: string, pack: SharePack
     to: { kind: "ring", id: ringId },
     peers: read.latest,
   };
-  return { ok: true, entry, circleBytes, rules, ctx, read, confirmed };
+  return { ok: true, entry, circleBytes, rules, ctx, read, confirmed, known };
 }
 
 // ─── 施設の見え方の答え ──────────────────────────────────────
@@ -509,8 +513,15 @@ export function withSentInfo(report: VerifyReport, sent: readonly { ringId: stri
 }
 
 /** readRing の結果を、決まり・仲間・束の行に並べる（画面と CLI が同じものを出す）。 */
-export async function verifyRing(root: string, ringId: string, pack: Pick<SharePack, "table" | "vocab">, confirmed: ReadonlySet<string>): Promise<VerifyReport> {
-  const r = await readRing(root, ringId, { table: pack.table, vocab: pack.vocab, confirmed });
+export async function verifyRing(
+  root: string,
+  ringId: string,
+  pack: Pick<SharePack, "table" | "vocab">,
+  confirmed: ReadonlySet<string>,
+  /** 仲間ごとに前に見た最大の seq（loadRing の known。無ければ消えた束は見ない） */
+  known?: ReadonlyMap<string, number>,
+): Promise<VerifyReport> {
+  const r = await readRing(root, ringId, { table: pack.table, vocab: pack.vocab, confirmed, ...(known ? { knownMaxSeq: known } : {}) });
   const lines: VerifyLine[] = [{ kind: "circle", name: ringId, status: r.circle.status, reasons: r.circle.reasons }];
   const pubs = new Map<string, string>();
   for (const m of r.members) {
