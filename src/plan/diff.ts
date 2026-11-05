@@ -120,6 +120,9 @@ export interface Decision {
   basis: string;
   /** 中身の指紋。受けたあとに中身が変われば、また受けていない決定になる */
   hash: string;
+  /** 読み方の決定：効く明細の数（明細の数で言えない決定は null）と、効く所（Wire） */
+  count?: number | null;
+  where?: string;
 }
 
 export interface Acceptance {
@@ -142,9 +145,13 @@ export function fnv64(text: string): string {
 /** 計画の中の、AI が決めたもの（作者が AI か AI（チャットでの人の答え））の一覧。 */
 export function aiDecisions(plan: Plan): Decision[] {
   const out: Decision[] = [];
-  // 読み方の決定は、明細の作者に写らなくても（年度の読み方・列の役目など）ここで受けてもらう
+  // 読み方の決定は、明細の作者に写らなくても（年度の読み方・列の役目など）ここで受けてもらう。1 つの決定は 1 行で、
+  // それで作者が決まった明細は行に出さず、決定に付いて動く（効く明細が変われば、また受けていない決定になる。Wire）
+  const covered = new Set<string>();
   for (const r of plan.readingDecisions ?? []) {
     if (!NEEDS_HUMAN_AUTHORS.includes(r.author)) continue;
+    const ds = [...(r.details ?? [])].sort();
+    for (const k of ds) covered.add(k);
     out.push({
       id: `reading:${r.questionId}`,
       kind: "reading",
@@ -152,7 +159,9 @@ export function aiDecisions(plan: Plan): Decision[] {
       target: r.question,
       value: r.answer,
       basis: r.reason,
-      hash: fnv64(JSON.stringify([r.questionId, r.answer, r.author, r.reason])),
+      hash: fnv64(JSON.stringify([r.questionId, r.answer, r.author, r.reason, ds])),
+      count: ds.length > 0 ? ds.length : null,
+      ...(r.where ? { where: r.where } : {}),
     });
   }
   for (const a of plan.assets) {
@@ -184,7 +193,7 @@ export function aiDecisions(plan: Plan): Decision[] {
     });
   }
   for (const d of plan.details) {
-    if (!NEEDS_HUMAN_AUTHORS.includes(d.author)) continue;
+    if (!NEEDS_HUMAN_AUTHORS.includes(d.author) || covered.has(d.detailKey)) continue;
     const w = works.get(d.workKey);
     out.push({
       id: `detail:${d.detailKey}`,

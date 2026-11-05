@@ -108,6 +108,13 @@ describe("工場の資料で、要約 → 決定 → 計画 → 星取表の行"
       expect(readings.length).toBeGreaterThan(0);
       expect(readings.map((d) => d.id).every((id) => settled.includes(id))).toBe(true);
       expect(working!.plan.readingDecisions!.filter((r) => r.author === "ai_relayed_human").length).toBe(readings.length);
+      // 1 つの決定は 1 行：答えで作者が決まった明細は、明細の行に出さず決定に付く。数は効く明細の数か「―」（null）で、効く所を持つ（Wire）
+      expect(aiDecisions(working!.plan).filter((d) => d.kind === "detail")).toEqual([]);
+      const covered = new Set(working!.plan.readingDecisions!.flatMap((r) => r.details ?? []));
+      expect(working!.plan.details.filter((d) => d.author === "ai_relayed_human").every((d) => covered.has(d.detailKey))).toBe(true);
+      expect(readings.some((d) => typeof d.count === "number" && d.count > 0)).toBe(true);
+      expect(readings.every((d) => d.count === null || d.count! > 0)).toBe(true);
+      expect(readings.every((d) => !!d.where)).toBe(true);
 
       // 星取表の行：上限どおりに返し、残りを数える
       const rows = ok(runTabTool(ws, "chart_rows", { limit: 200 }, CTX));

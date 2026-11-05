@@ -82,6 +82,20 @@ describe("確定：版と差分レポート", () => {
     expect(pendingDecisions(changed, accepted).map((d) => d.id)).toEqual(["reading:q-ai"]);
   });
 
+  it("読み方の決定で作者が決まった明細は、明細の行に出さず決定に付く。効く明細が増えれば、また受けていない決定になる", () => {
+    const rd = { questionId: "q-link", kind: "workLink", question: "この作業日報の行は星取表のどの印か", answer: "同じ作業", author: "ai_relayed_human" as const, reason: "利用者がチャットで答えた", rows: 2, details: ["d2"], where: "日報.csv" };
+    const p: Plan = { ...aiPlan(), readingDecisions: [rd] };
+    const ds = aiDecisions(p);
+    expect(ds.map((d) => d.id).sort()).toEqual(["item:a2", "reading:q-link"]);
+    expect(ds.find((d) => d.kind === "reading")).toMatchObject({ count: 1, where: "日報.csv" });
+    const accepted = ds.map((d) => ({ id: d.id, hash: d.hash }));
+    expect(pendingDecisions(p, accepted)).toEqual([]);
+    const more: Plan = { ...p, readingDecisions: [{ ...rd, details: ["d2", "d3"] }] };
+    expect(pendingDecisions(more, accepted).map((d) => d.id)).toEqual(["reading:q-link"]);
+    // 明細の数で言えない決定（年度の読み方など）は、数を出さない
+    expect(aiDecisions({ ...p, readingDecisions: [{ ...rd, details: [] }] }).find((d) => d.kind === "reading")?.count).toBeNull();
+  });
+
   it("版は足すだけ：版のファイルを足し、差分レポートを書き、戻すのは前の版を指す新しい記録", async () => {
     const rt = root();
     const p = aiPlan();

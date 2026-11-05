@@ -99,6 +99,8 @@ export const ReadingDecision = z.object({
   author: author,
   reason: z.string().min(1),
   rows: z.number().int().min(0), // 同じ形の行の数
+  details: z.array(code).optional(), // この答えで作者が決まった明細（決定のシートで、この決定に付いて動く）
+  where: z.string().optional(), // 効く所（資料・シート。明細の数で言えない決定のため）
 });
 
 export const Plan = z.object({

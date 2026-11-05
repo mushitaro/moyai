@@ -253,9 +253,11 @@ export const HUMAN_TEXT = {
     title: (n: number) => `受けていない決定（${fmt(n)}）`,
     none: "受けていない決定はありません。",
     loading: "これまでに受けた決定（版の履歴）を読んでいます",
-    head: ["何を", "なぜ", "決めた人", "行", ""],
+    // 決めた人は 1 列目の朱の小さな字が言うので、列にしない（Wire、Decisions.dc.html V44）
+    head: ["何を", "なぜ", "行", ""],
     kind: { ai: "- Claude の決定", relayed: "- 会話から写した答え", ledger: "- 台帳からの案", crosswalk: "- 当てはめの案" },
-    by: { relayed: "Claude（あなたの答えを写した）", ledger: "Claude（台帳から）", ai: "Claude" },
+    /** 読み方の決定が効く所（明細の数で言えない決定。Wire） */
+    where: (w: string) => `効く所　${w}`,
     blank: "空",
     and: " かつ ",
     ruleNode: " の節",
