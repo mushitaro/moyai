@@ -246,7 +246,6 @@ export function Export() {
                 </Group>
               </div>
             )}
-            <Text size="sm">{T.template.dialogResult(latest.version)}</Text>
             <Group justify="flex-end" gap="sm">
               <Button variant="default" onClick={() => setSigning(false)}>
                 {T.template.cancel}

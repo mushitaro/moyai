@@ -67,7 +67,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
   });
 
   await test.step("SHARE：出す先を公開の台帳にする。見え方を選ぶと、誰からも見えるあなた。つなぐまでは出せない", async () => {
-    await page.getByTestId("share-dest").getByText("公開の台帳").click();
+    await page.getByTestId("share-dest").getByText("公開台帳").click();
     await expect(page.getByTestId("github-login")).toHaveText("つないでいません");
     await page.getByTestId("q-national").selectOption("yes");
     await page.getByTestId("q-furnace").selectOption("STOKER");
@@ -75,11 +75,11 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await page.getByTestId("q-turbine").selectOption("YES");
     await page.getByTestId("q-ash").selectOption("OUT");
     await page.getByTestId("q-contract").selectOption("SINGLE");
-    await expect(page.getByText("誰からも見えるあなた")).toBeVisible();
+    await expect(page.getByText("公開時の表示")).toBeVisible();
     await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
-    await expect(page.getByTestId("send")).toHaveText("署名して公開の台帳へ出す");
+    await expect(page.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
     await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub につないでいません");
-    await expect(page.getByTestId("ledger-bottom")).toHaveText("MOYAI が GitHub に PR を出します。載ったものは、取下げても相手の写しは消せません。");
+    await expect(page.getByTestId("ledger-bottom")).toHaveText("GitHub に PR を送信。掲載後は取り下げても複製は残ります。");
   });
 
   await test.step("GitHub につなぐ：コードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる", async () => {
@@ -93,7 +93,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("github-state")).toHaveText("つながりました：moyai-test");
     await page.getByTestId("github-close").click();
     await expect(page.getByTestId("github-login")).toHaveText("moyai-test");
-    await expect(page.getByTestId("account-seen")).toHaveText("- PR を出す GitHub のアカウント［moyai-test］が、誰にでも見えます");
+    await expect(page.getByTestId("account-seen")).toHaveText("- PR の GitHub アカウント名［moyai-test］は公開されます");
     await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
     await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");
   });

@@ -575,6 +575,8 @@ export interface VerifyLine {
   pub?: string;
   /** 束：✓ だが、あなたが確認した仲間では似た施設が下限に届かない（集計に入れない） */
   short?: true;
+  /** 仲間と束：失効した鍵のもの（集計に入れない。✓ を付けない。Wire） */
+  retired?: true;
   /** 束：送った月（束の body から）。自分の束なら、束にした計画の版と、置いた日（この PC の持ち出し簿から） */
   month?: string;
   version?: number;
@@ -631,8 +633,24 @@ export async function verifyRing(
   }
   for (const m of r.members) {
     const pub = pubs.get(m.key);
-    lines.push({ kind: "member", name: m.key, status: m.status, reasons: m.reasons, ...(pub && /^[0-9a-f]{64}$/.test(pub) ? { fingerprint: fingerprint(pub), pub } : {}) });
+    lines.push({
+      kind: "member",
+      name: m.key,
+      status: m.status,
+      reasons: m.reasons,
+      ...(pub && /^[0-9a-f]{64}$/.test(pub) ? { fingerprint: fingerprint(pub), pub } : {}),
+      ...(m.retiredAt !== undefined ? { retired: true as const } : {}),
+    });
   }
-  for (const b of r.bundles) lines.push({ kind: "bundle", name: `bundles/${b.folder}/${b.name}`, status: b.status, reasons: b.reasons, ...(b.month ? { month: b.month } : {}), ...(b.short ? { short: true as const } : {}) });
+  for (const b of r.bundles)
+    lines.push({
+      kind: "bundle",
+      name: `bundles/${b.folder}/${b.name}`,
+      status: b.status,
+      reasons: b.reasons,
+      ...(b.month ? { month: b.month } : {}),
+      ...(b.short ? { short: true as const } : {}),
+      ...(r.retired[b.folder] !== undefined && b.status === "ok" ? { retired: true as const } : {}),
+    });
   return { ringId, lines, notBundleFiles: r.notBundleFiles, ok: lines.every((l) => l.status === "ok") && r.notBundleFiles === 0 };
 }

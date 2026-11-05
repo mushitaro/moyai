@@ -412,7 +412,7 @@ describe("計画を作り直しても、当てはめを黙って捨てない", (
     expect(getWorkingPlan()!.proposals.map((p) => [p.ruleId, p.state, p.humanReason])).toEqual(states.filter((s) => s[1] !== "rejected"));
     // 画面に、引き継いだ数を知らせる
     expect(ws.notices[0]).toMatchObject({ kind: "info" });
-    expect(ws.notices[0]!.text).toContain("前の当てはめを引き継ぎました");
+    expect(ws.notices[0]!.text).toContain("前の紐付けを引き継ぎました");
     expect(ws.notices[0]!.text).not.toContain("引き継げませんでした");
   }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 

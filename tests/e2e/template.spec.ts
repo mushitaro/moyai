@@ -97,16 +97,16 @@ test("利用者の様式の見出しを読み、列ごとに写すものを決�
     await page.getByTestId("template-role").nth(2).getByRole("button").click();
     await page.locator('[data-testid="template-role-item"][data-value="cycle"]').click();
     await expect(page.getByTestId("template-role").nth(2)).toHaveAttribute("data-role", "cycle");
-    // 署名して書き出す：ダイアログに、この署名で承認する写し方と、版の中身は変わらないこと
+    // 署名して出力：ダイアログに承認する列対応。説明の文（版の中身は変わらない）は置かない（docs/words.md）
     await page.getByTestId("export-sign").click();
     const dialog = page.getByTestId("export-sign-dialog");
-    await expect(dialog).toContainText("長寿命化計画_様式3 で書き出す");
-    await expect(dialog).toContainText("この署名で承認する写し方（1）");
-    await expect(dialog).toContainText("版の中身は変わりません");
+    await expect(dialog).toContainText("長寿命化計画_様式3 で出力");
+    await expect(dialog).toContainText("承認する列対応（1）");
+    await expect(dialog).not.toContainText("版の中身は変わりません");
     await page.screenshot({ path: shot(`template-sign-${tag}`), fullPage: true });
     await page.getByTestId("export-sign-submit").click();
-    await expect(page.getByTestId("export-signed")).toHaveText("第 1 版を 長寿命化計画_様式3 で書き出し、署名しました");
-    const row = page.getByTestId("template-shared").filter({ hasText: "長寿命化計画_様式3" }).filter({ hasText: "書き出し済み" });
+    await expect(page.getByTestId("export-signed")).toHaveText("第 1 版を 長寿命化計画_様式3 で出力し、署名しました");
+    const row = page.getByTestId("template-shared").filter({ hasText: "長寿命化計画_様式3" }).filter({ hasText: "出力済み" });
     await expect(row).toContainText(`承認済み　第 1 版で　${E2E_NAME}`);
     // 結び目の鎖の書出の行は MERGE の横の板（ここでは見ない）。主ボタンは「Excel を落とす」
     await expect(page.getByTestId("export-sign")).toHaveCount(0);

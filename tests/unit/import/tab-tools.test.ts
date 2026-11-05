@@ -250,7 +250,7 @@ describe("決定の確かめ（AI も人も同じ確かめを通る）", () => {
 
   test("施設の名前が空なら作らない（画面の理由と同じ）", async () => {
     const ws = new IntakeWorkspace({ packId: PACK, facilityName: "", fiscalYearStartMonth: 4, fictional: false });
-    expect(ws.composeBlockers()).toEqual(expect.arrayContaining(["資料がまだ無い", "施設の名前が空"]));
+    expect(ws.composeBlockers()).toEqual(expect.arrayContaining(["資料がまだ無い", "施設名が空"]));
   });
 
   test("橋渡しとの接続に受け手をつなぐ：呼び出しに答え、「結果不明」の知らせを画面の作業の一覧に出す", async () => {

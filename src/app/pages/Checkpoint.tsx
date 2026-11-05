@@ -90,7 +90,15 @@ interface PreviewBody {
   classNames?: Record<string, string>;
   axes?: { key: string; name: string; codes: { code: string; name: string }[] }[];
   rings?: RingInfo[];
-  ring?: RingInfo & { key: string; keys?: string[]; fingerprint: string | null; folder: string; rulesChange?: RulesChange | null };
+  ring?: RingInfo & {
+    key: string;
+    keys?: string[];
+    keyInfo?: { key: string; fingerprint: string | null; month: string | null }[];
+    retiredCount?: number;
+    fingerprint: string | null;
+    folder: string;
+    rulesChange?: RulesChange | null;
+  };
   ringCount?: number;
   view?: View;
   /** 公開の台帳：GitHub の接続（アカウント名だけ。トークンは画面に来ない）と台帳 */
@@ -166,6 +174,7 @@ interface VerifyLine {
   version?: number;
   day?: string;
   short?: true;
+  retired?: true;
 }
 interface Report {
   ringId: string;
@@ -292,12 +301,15 @@ function Num({ v }: { v: number | null }) {
 function VerifyTable({
   report,
   ownKey,
+  retiredCount = 0,
   rulesChange = null,
   onCheckMember,
   onViewRules,
 }: {
   report: Report;
   ownKey: string | null;
+  /** 当施設の失効した鍵の数（今の鍵の右に「失効 n」） */
+  retiredCount?: number;
   rulesChange?: RulesChange | null;
   onCheckMember?: (l: VerifyLine) => void;
   onViewRules?: () => void;
@@ -333,7 +345,9 @@ function VerifyTable({
           const key = l.kind === "member" ? l.name : folder;
           const unconfirmed = unconfirmedOnly(l);
           const short = l.kind === "bundle" && l.status === "ok" && !!l.short;
-          const uncounted = short || (l.kind === "bundle" && l.status === "ok" && !!folder && notCounted.has(folder));
+          // 失効した鍵の仲間と束は、集計に入れないので ✓ を付けない（薄い字で「失効」。Wire）
+          const retired = !!l.retired;
+          const uncounted = retired || short || (l.kind === "bundle" && l.status === "ok" && !!folder && notCounted.has(folder));
           const rulesRow = l.kind === "circle" && !!rulesChange;
           const soft = unconfirmed || rulesRow;
           const mark = soft ? "!" : uncounted ? "―" : (T.verifyStatus[l.status] ?? l.status);
@@ -343,7 +357,7 @@ function VerifyTable({
               data-testid="verify-line"
               data-status={l.status}
               data-kind={l.kind}
-              data-state={unconfirmed ? "unconfirmed" : short ? "peersShort" : uncounted ? "notCounted" : rulesRow ? "rulesChanged" : undefined}
+              data-state={retired ? "retired" : unconfirmed ? "unconfirmed" : short ? "peersShort" : uncounted ? "notCounted" : rulesRow ? "rulesChanged" : undefined}
               style={uncounted ? { color: "var(--text-3)" } : undefined}
             >
               <Table.Td w={40}>
@@ -355,9 +369,16 @@ function VerifyTable({
               <Table.Td style={{ whiteSpace: "nowrap" }}>
                 <Text size="sm" ff="monospace" c={uncounted ? "var(--text-3)" : undefined}>
                   {who(key)}
+                  {l.kind === "member" && key === ownKey && retiredCount > 0 && (
+                    <Text span size="xs" c="var(--text-3)" ff="var(--font-body)" ml={8} data-testid="own-retired">
+                      {T.retiredOwn(retiredCount)}
+                    </Text>
+                  )}
                 </Text>
               </Table.Td>
-              {unconfirmed ? (
+              {retired ? (
+                <Table.Td c="var(--text-3)">{l.kind === "member" ? T.retiredMember : T.retiredBundle}</Table.Td>
+              ) : unconfirmed ? (
                 <Table.Td>
                   {T.memberUnconfirmed}
                   <button type="button" className="moyai-inline-act" onClick={() => onCheckMember?.(l)} data-testid="member-check">
@@ -412,6 +433,7 @@ export function Checkpoint() {
   const [ledgerRulesOpen, setLedgerRulesOpen] = useState(false);
   const [rotateOpen, setRotateOpen] = useState(false);
   const [rotateMsg, setRotateMsg] = useState<string | null>(null);
+  const [rotateUnsigned, setRotateUnsigned] = useState(0);
   const [sendError, setSendError] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
   const [dest, setDest] = useState<"ring" | "ledger">("ring");
@@ -1007,6 +1029,7 @@ export function Checkpoint() {
               <VerifyTable
                 report={received}
                 ownKey={res?.ring?.key ?? null}
+                retiredCount={res?.ring?.retiredCount ?? 0}
                 rulesChange={res?.ring?.rulesChange ?? null}
                 onCheckMember={(l) => l.pub && setMemberCheck({ role: "member", by: "", pub: l.pub, fingerprint: l.fingerprint ?? "", trust: "unconfirmed" })}
                 onViewRules={() => setRulesOpen(true)}
@@ -1115,8 +1138,13 @@ export function Checkpoint() {
             </Text>
           )}
           {rotateMsg && (
-            <Text size="xs" data-testid="rotate-done">
+            <Text size="xs" c="var(--text-3)" data-testid="rotate-done">
               {rotateMsg}
+              {rotateUnsigned > 0 && (
+                <Text span c="var(--shu-text)" ml={8}>
+                  {T.rotate.unsigned(rotateUnsigned)}
+                </Text>
+              )}
             </Text>
           )}
           <Modal opened={rotateOpen} onClose={() => setRotateOpen(false)} title={T.rotate.title} centered data-testid="rotate-dialog">
@@ -1124,9 +1152,10 @@ export function Checkpoint() {
               <Text size="xs" c="dimmed">
                 {T.rotate.keys}
               </Text>
-              {(res?.ring?.keys ?? []).map((k) => (
-                <Text key={k} size="sm" ff="monospace">
-                  {k}
+              {(res?.ring?.keyInfo ?? []).map((k) => (
+                <Text key={k.key} size="sm" ff="monospace" data-testid="rotate-key">
+                  {k.fingerprint ?? T.unknownKey}
+                  {k.month ? `　${k.month}` : ""}
                 </Text>
               ))}
               <Text size="sm" c="var(--shu-text)">
@@ -1147,7 +1176,8 @@ export function Checkpoint() {
                     if (!r.ok) return setSendError(r.message);
                     // 作り直したら、新しい鍵で送り直せる（送った知らせは消す）
                     setSent(null);
-                    setRotateMsg([T.rotate.done(r.body.retired.length), ...(r.body.unsigned.length ? [T.rotate.unsigned(r.body.unsigned.length)] : [])].join(""));
+                    setRotateMsg(T.rotate.done(r.body.retired.length));
+                    setRotateUnsigned(r.body.unsigned.length);
                     setReload((x) => x + 1);
                   }}
                 >

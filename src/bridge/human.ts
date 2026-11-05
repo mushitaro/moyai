@@ -38,13 +38,25 @@ import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
 import { HEX16, HEX64, fingerprint, generateKeyPair, keyIdOf, sha256Hex, type KeyPair } from "../share/sign";
-import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, storeFacilityKey, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
+import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, retiredKeyFiles, retiredKeys, storeFacilityKey, storedKeys, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
+
+/** 再発行のダイアログに出す鍵：鍵番号（公開鍵が読めれば）と作成月（その鍵で最初に出した月。持ち出し簿か場の束から） */
+function keyInfoOf(ring: Extract<Awaited<ReturnType<typeof loadRing>>, { ok: true }>, facility: Facility, key: string): { key: string; fingerprint: string | null; month: string | null } {
+  const ringId = ring.entry.ringId;
+  const pub = [...storedKeys(facility, ringId).map((k) => k.pub), ...retiredKeyFiles(facility, ringId).map((k) => k.pair.pub)].find((p) => keyIdOf(p) === key) ?? null;
+  const months = [
+    ...readPlanSent<SentEntry>(facility, ringId).filter((e) => e.key === key).map((e) => e.month),
+    ...ring.read.bundles.filter((b) => b.folder === key && b.month).map((b) => b.month!),
+  ].sort();
+  return { key, fingerprint: pub ? fingerprint(pub) : null, month: months[0] ?? null };
+}
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
   detectDocuments,
   readGitHub,
   type LedgerSentEntry,
+  type SentEntry,
   addRing,
   readRings,
   writeRings,
@@ -1340,6 +1352,9 @@ export class HumanService {
         // 今の鍵の ID（鍵が 2 つあれば両方。署名鍵を作り直すダイアログが見せ、作り直す経路が照らす）
         // 作り直しで照らす鍵（前に移したのに輪に印が無い鍵も。経路が照らす鍵と同じ関数）
         keys: rotateKeysOf(ring, facility),
+        // 再発行のダイアログに出す鍵番号と作成月（鍵 ID は出さない。Wire）。当施設の失効した鍵の数（今の鍵の右に「失効 n」）
+        keyInfo: rotateKeysOf(ring, facility).map((k) => keyInfoOf(ring, facility, k)),
+        retiredCount: retiredKeys(facility, ringId).size,
         fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null,
         folder: join(entry.root, ringId),
         rulesChange: rulesChangeOf(ring),

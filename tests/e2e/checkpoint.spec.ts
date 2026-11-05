@@ -123,7 +123,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await openPlan(page, "fictional-1");
     // 受けていない決定があるうちは、署名のダイアログを開けない。決定のシートで 1 行ずつ理由を書いて受ける
     await expect(page.getByTestId("confirm-open")).toBeDisabled();
-    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("受けていない決定が");
+    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("未確定 ");
     const n = await acceptDecisions(page, "台帳の名前と表Ⅱ-4 を見て、人が受けた");
     expect(n).toBeGreaterThan(0);
     await expect(page.getByTestId("confirm-open")).toBeEnabled();
@@ -131,7 +131,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("diff-summary")).toBeVisible();
     // 署名のダイアログに保管先の生のパスは出さない
     await expect(page.getByTestId("confirm-root")).toHaveCount(0);
-    await expect(page.getByTestId("pending")).toContainText(`決定のシートで受けた決定 ${n} 件`);
+    await expect(page.getByTestId("pending")).toContainText(`確定のシートで確定した決定 ${n} 件`);
     // 理由が空なら確定できない
     await expect(page.getByTestId("confirm-submit")).toBeDisabled();
     await expect(page.getByTestId("confirm-submit-reason")).toContainText("理由を書くと確定できます");
@@ -190,7 +190,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
 
   await test.step("人が主ボタンを押すと、署名して輪に置き、受け手と同じ関数で ✓", async () => {
     // 受け取った束（SHARE の下の節）：置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
-    await expect(page.getByTestId("received")).toContainText("受け取った共有ファイル");
+    await expect(page.getByTestId("received")).toContainText("受信した共有ファイル");
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toHaveCount(0);
     await page.getByTestId("send").click();
     await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
@@ -231,17 +231,17 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("received-again").click();
     const row = page.locator('[data-testid="verify-line"][data-state="unconfirmed"]');
     await expect(row).toHaveCount(1);
-    await expect(row).toContainText("まだ確かめていません");
+    await expect(row).toContainText("未照合");
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-member-unconfirmed-${tag}`) });
     // 人が仲間に電話で読み上げてもらい、16 文字が合った（試験の台本が押した）
     await row.getByTestId("member-check").click();
-    await expect(page.getByText("メンバーの鍵の指紋")).toBeVisible();
+    await expect(page.getByText("メンバーの鍵番号")).toBeVisible();
     await page.getByTestId("key-check-matched").click();
     await expect(page.locator('[data-testid="verify-line"][data-state="unconfirmed"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
   });
 
-  await test.step("施設の署名鍵が 2 つ（同期の衝突の写し）：送れない理由の右に「署名鍵を作り直す」。作り直すと、古い鍵に引退の印を置き、新しい鍵で送れる（docs/plan.md §2.19 の 5）", async () => {
+  await test.step("施設の署名鍵が 2 つ（同期の衝突の写し）：送れない理由の右に「署名鍵を再発行」。再発行すると、旧鍵に失効の印を置き、新しい鍵で送れる（docs/plan.md §2.19 の 5）", async () => {
     // 試験の台本が、2 台目の PC が作った鍵（同期の衝突の写し）を計画のフォルダに置いた
     const ringId = readdirSync(ringRoot).find((d) => /^[0-9a-f]{16}$/.test(d))!;
     const keysDir = join(root, "plans", "fixture-fictional-1", "share", "keys");
@@ -250,16 +250,21 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     const destSwitch = page.locator('[role="group"]').filter({ has: page.locator("button", { hasText: "共有フォルダ" }) }).first();
     await destSwitch.locator("button").nth(1).click();
     await destSwitch.locator("button").nth(0).click();
-    await expect(page.getByTestId("send-reason")).toContainText("この施設の署名鍵が 2 つあります");
+    await expect(page.getByTestId("send-reason")).toHaveText(/^理由：署名鍵の重複/);
     await expect(page.getByTestId("send")).toBeDisabled();
     await page.getByTestId("rotate-open").click();
     await expect(page.getByTestId("rotate-run")).toBeVisible();
+    // 失効する鍵は鍵番号（4 字 × 4 組）で出し、鍵 ID は出さない（Wire）
+    await expect(page.getByTestId("rotate-key").first()).toHaveText(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}/);
     await page.screenshot({ path: shot(`checkpoint-rotate-${tag}`) });
     await page.getByTestId("rotate-run").click();
-    await expect(page.getByTestId("rotate-done")).toContainText("鍵を 2 つ引退させました");
+    await expect(page.getByTestId("rotate-done")).toHaveText("失効 2　次回の送信から新しい鍵");
     // 引退の印は輪の members/ に、鍵ごとに 1 つ。鍵のファイルは keys/retired/ へ移す（消さない）
     expect(readdirSync(join(ringRoot, ringId, "members")).filter((n) => n.endsWith(".retired.json"))).toHaveLength(2);
     expect(readdirSync(keysDir)).toEqual(["retired"]);
+    // 受信の一覧：失効した鍵の仲間の行は ✓ を付けず、薄い字で「失効」
+    await page.getByTestId("received-again").click();
+    await expect(page.locator('[data-testid="verify-line"][data-state="retired"][data-kind="member"]').first()).toContainText("失効");
     // 新しい鍵で送れる（連番 1 から）
     await page.getByTestId("received-again").click();
     await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");

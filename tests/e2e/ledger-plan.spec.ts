@@ -112,7 +112,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await page.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
       await expect(page.getByTestId("chart-grid").locator(".moyai-mark-proposal").first()).toBeVisible();
       const label = await page.getByTestId("chart-grid").locator(".moyai-mark-proposal").first().getAttribute("aria-label");
-      expect(label).toContain("Claude の案");
+      expect(label).toContain("Claude 案");
       await page.screenshot({ path: shot(`ledger-plan-proposal-${tag}`) });
     });
 
@@ -120,9 +120,9 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await page.getByTestId("sheet-decisions").click();
       const row = page.locator('[data-testid="pending-row"][data-kind="ledger"]');
       await expect(row).toHaveCount(1);
-      await expect(row).toContainText("- 台帳からの案");
+      await expect(row).toContainText("- 台帳案");
       await expect(row).toContainText(`周期の案 ${proposalId}`);
-      await expect(row).toContainText("- 台帳からの案");
+      await expect(row).toContainText("- 台帳案");
       await page.screenshot({ path: shot(`ledger-plan-decisions-${tag}`), fullPage: true });
       await acceptDecisions(page, "試験の台本が押した（似た施設の帯を見て、周期の案を受けた）");
       // 受けたら、破線の円はふつうの計画の印になり、凡例の「Claude の案」も消える
