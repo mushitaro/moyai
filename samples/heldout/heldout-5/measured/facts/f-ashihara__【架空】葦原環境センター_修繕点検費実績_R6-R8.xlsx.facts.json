@@ -1,0 +1,1349 @@
+{
+ "schema": "moyai.factory.facts/0",
+ "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+ "reader": "openpyxl 3.1.5",
+ "creator": "【架空】葦原環境センター 施設管理係",
+ "sheets": [
+  {
+   "title": "実績",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】葦原環境センター　修繕・点検費 実績集計（R6～R8）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A2",
+     "value": "単位：千円（税込）　※R8 は 9 月末まで",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A4",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B4",
+     "value": "件名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C4",
+     "value": "対象設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D4",
+     "value": "号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E4",
+     "value": "区分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F4",
+     "value": "発注日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G4",
+     "value": "完了日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H4",
+     "value": "施工業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I4",
+     "value": "金額",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J4",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B5",
+     "value": "合計（R6～R8）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I5",
+     "value": 229773,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B6",
+     "value": "令和6年度 計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I6",
+     "value": 84885,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B7",
+     "value": "1号炉 定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "焼却炉・付帯設備 一式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": "R6.7.25",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "R6.9.20",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H7",
+     "value": "架空流動炉エンジ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I7",
+     "value": 38500,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A8",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B8",
+     "value": "2号炉 定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "焼却炉・付帯設備 一式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F8",
+     "value": "R6.9.10",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G8",
+     "value": "R6.11.15",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H8",
+     "value": "架空流動炉エンジ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I8",
+     "value": 37200,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A9",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B9",
+     "value": "誘引送風機 2号 軸受交換",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "誘引送風機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F9",
+     "value": "R6.6.12",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G9",
+     "value": "R6.6.14",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H9",
+     "value": "架空ファンテック㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I9",
+     "value": 1430,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "J9",
+     "value": "緊急対応",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B10",
+     "value": "灰固化装置 混練機 羽根取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "灰固化装置",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F10",
+     "value": "R6.12.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G10",
+     "value": "R7.1.24",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H10",
+     "value": "架空固化設備㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I10",
+     "value": 4180,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A11",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B11",
+     "value": "ごみクレーン ワイヤロープ取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "ごみクレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": "R6.10.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G11",
+     "value": "R6.11.8",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H11",
+     "value": "架空クレーン保守㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I11",
+     "value": 2860,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A12",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B12",
+     "value": "計量機 定期検査（計量法）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "計量機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D12",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": "点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F12",
+     "value": "R6.10.15",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G12",
+     "value": "R6.11.20",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H12",
+     "value": "架空はかり㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I12",
+     "value": 715,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "B13",
+     "value": "令和7年度 計",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I13",
+     "value": 103330,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": 7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B14",
+     "value": "1号炉 定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C14",
+     "value": "焼却炉・付帯設備 一式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D14",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E14",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": 45866.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G14",
+     "value": 45919.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H14",
+     "value": "架空流動炉エンジ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I14",
+     "value": 39800,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A15",
+     "value": 8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B15",
+     "value": "2号炉 定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C15",
+     "value": "焼却炉・付帯設備 一式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D15",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E15",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F15",
+     "value": 45908.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G15",
+     "value": 45975.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H15",
+     "value": "架空流動炉エンジ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I15",
+     "value": 41200,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "J15",
+     "value": "変更契約あり（+1,650千円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": 9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B16",
+     "value": "バグフィルタ 2号 ろ布全数取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C16",
+     "value": "バグフィルタ",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D16",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E16",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F16",
+     "value": 45908.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G16",
+     "value": 45975.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H16",
+     "value": "架空集塵機工業㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I16",
+     "value": 16500,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "J16",
+     "value": "2号炉定期整備と同時",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A17",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B17",
+     "value": "空気圧縮機 No.1 オーバーホール",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C17",
+     "value": "空気圧縮機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D17",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E17",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F17",
+     "value": 45797.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G17",
+     "value": 45835.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H17",
+     "value": "架空コンプレッサ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I17",
+     "value": 2090,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A18",
+     "value": 11,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B18",
+     "value": "砂循環装置 2号 バケットエレベータ チェーン取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C18",
+     "value": "砂循環装置",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D18",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E18",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F18",
+     "value": 46035.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G18",
+     "value": 46073.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H18",
+     "value": "架空葦原オペレーション㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I18",
+     "value": 3740,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "J18",
+     "value": "緊急対応",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A19",
+     "value": 12,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B19",
+     "value": "排水処理設備 薬注ポンプ取替",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C19",
+     "value": "排水処理設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D19",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E19",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F19",
+     "value": 46055.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G19",
+     "value": 46094.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H19",
+     "value": "架空ポンプサービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I19",
+     "value": 968,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "B20",
+     "value": "令和8年度 計（9月末）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I20",
+     "value": 40590,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "A21",
+     "value": 13,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B21",
+     "value": "1号炉 定期整備工事",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C21",
+     "value": "焼却炉・付帯設備 一式",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D21",
+     "value": "1号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E21",
+     "value": "整備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F21",
+     "value": 46237.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G21",
+     "value": 46283.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H21",
+     "value": "架空流動炉エンジ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I21",
+     "value": 40150,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "A22",
+     "value": 14,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B22",
+     "value": "砂循環装置 2号 ベルトコンベヤ 蛇行調整",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C22",
+     "value": "砂循環装置",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D22",
+     "value": "2号炉",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E22",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F22",
+     "value": 46266.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G22",
+     "value": 46266.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H22",
+     "value": "架空葦原オペレーション㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I22",
+     "value": 0,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "J22",
+     "value": "運転委託の範囲内（0円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A23",
+     "value": 15,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B23",
+     "value": "排水処理設備 放流ポンプ 軸受交換",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C23",
+     "value": "排水処理設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D23",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E23",
+     "value": "修繕",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F23",
+     "value": 46275.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G23",
+     "value": 46275.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H23",
+     "value": "架空ポンプサービス㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I23",
+     "value": 352,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "J23",
+     "value": "緊急対応",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A24",
+     "value": 16,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B24",
+     "value": "空気圧縮機 No.2 吸込フィルタ交換",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C24",
+     "value": "空気圧縮機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D24",
+     "value": "共通",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E24",
+     "value": "点検",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F24",
+     "value": 46260.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "G24",
+     "value": 46267.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "H24",
+     "value": "架空コンプレッサ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I24",
+     "value": 88,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "J24",
+     "value": "単価契約",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A27",
+     "value": "■ 年間委託（点検・保守）　※金額は円",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A28",
+     "value": "No.",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B28",
+     "value": "契約名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C28",
+     "value": "対象",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D28",
+     "value": "契約期間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E28",
+     "value": "受託者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F28",
+     "value": "年額（円）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G28",
+     "value": "点検の頻度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H28",
+     "value": "備考",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A29",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B29",
+     "value": "受変電設備 保安管理業務",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C29",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D29",
+     "value": "R6.4～R7.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E29",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F29",
+     "value": 1980000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G29",
+     "value": "毎月",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A30",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B30",
+     "value": "ごみクレーン 保守点検業務",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C30",
+     "value": "ごみクレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D30",
+     "value": "R6.4～R7.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E30",
+     "value": "架空クレーン保守㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F30",
+     "value": 2640000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G30",
+     "value": "四半期",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A31",
+     "value": 3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B31",
+     "value": "受変電設備 保安管理業務",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C31",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D31",
+     "value": "R7.4～R8.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E31",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F31",
+     "value": 1980000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G31",
+     "value": "毎月",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A32",
+     "value": 4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B32",
+     "value": "ごみクレーン 保守点検業務",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C32",
+     "value": "ごみクレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D32",
+     "value": "R7.4～R8.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E32",
+     "value": "架空クレーン保守㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F32",
+     "value": 2706000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G32",
+     "value": "四半期",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A33",
+     "value": 5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B33",
+     "value": "受変電設備 保安管理業務",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C33",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D33",
+     "value": "R8.4～R9.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E33",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F33",
+     "value": 2046000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G33",
+     "value": "毎月",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A34",
+     "value": 6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "B34",
+     "value": "ごみクレーン 保守点検業務",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C34",
+     "value": "ごみクレーン",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D34",
+     "value": "R8.4～R9.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E34",
+     "value": "架空クレーン保守㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F34",
+     "value": 2706000,
+     "data_type": "n",
+     "number_format": "#,##0"
+    },
+    {
+     "coord": "G34",
+     "value": "四半期",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [],
+   "hidden_rows": [],
+   "hidden_cols": []
+  }
+ ]
+}

@@ -1,0 +1,1265 @@
+{
+ "schema": "moyai.answer.world/0",
+ "facility": {
+  "id": "f-ashihara",
+  "name": "【架空】葦原環境センター",
+  "industry": "waste-incineration",
+  "profile": {
+   "furnace": "流動床式（全連続）",
+   "lines": 2,
+   "capacity_t_per_day": 90,
+   "capacity_note": "45t/24h × 2炉",
+   "turbine": false,
+   "dust": "BF",
+   "ash": "セメント固化",
+   "contract": "O&M（長期包括）",
+   "upgrade": false,
+   "completed": 2003
+  }
+ },
+ "fiscal_year_start_month": 4,
+ "man_day_hours": 8,
+ "today": "2026-10-01",
+ "equipment": [
+  {
+   "id": "E01",
+   "name": "流動床焼却炉 1号",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "流動床炉"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "FB-1",
+   "path": [
+    "流動床焼却炉 1号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E02",
+   "name": "流動床焼却炉 2号",
+   "names": {},
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "FB-2",
+   "path": [
+    "流動床焼却炉 2号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E03",
+   "name": "押込送風機 1号",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "FDF"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "FDF-1",
+   "path": [
+    "押込送風機 1号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E04",
+   "name": "押込送風機 2号",
+   "names": {},
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "FDF-2",
+   "path": [
+    "押込送風機 2号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E05",
+   "name": "誘引送風機 1号",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "IDF"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "IDF-1",
+   "path": [
+    "誘引送風機 1号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E06",
+   "name": "誘引送風機 2号",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "誘引送風機"
+   },
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "IDF-2",
+   "path": [
+    "誘引送風機 2号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E07",
+   "name": "バグフィルタ 1号",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "バグフィルタ"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "BF-1",
+   "path": [
+    "バグフィルタ 1号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E08",
+   "name": "バグフィルタ 2号",
+   "names": {},
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "BF-2",
+   "path": [
+    "バグフィルタ 2号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E09",
+   "name": "砂循環装置 1号",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "砂循環装置"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "SC-1",
+   "path": [
+    "砂循環装置 1号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E10",
+   "name": "砂循環装置 2号",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "砂循環装置（ベルコン）"
+   },
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "SC-2",
+   "path": [
+    "砂循環装置 2号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E11",
+   "name": "灰固化装置",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "灰固化装置"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "AS-1",
+   "path": [
+    "灰固化装置"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E12",
+   "name": "ごみクレーン",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "ごみクレーン"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "CR-1",
+   "path": [
+    "ごみクレーン"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E13",
+   "name": "計量機",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "計量機"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "WB-1",
+   "path": [
+    "計量機"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E14",
+   "name": "受変電設備",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "受変電設備"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "SS-1",
+   "path": [
+    "受変電設備"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E15",
+   "name": "空気圧縮機 No.1",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "空気圧縮機 No.1"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "AC-1",
+   "path": [
+    "空気圧縮機 No.1"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E16",
+   "name": "空気圧縮機 No.2",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "空気圧縮機 No.2"
+   },
+   "furnace": null,
+   "install_year": 2019,
+   "code": "AC-2",
+   "path": [
+    "空気圧縮機 No.2"
+   ],
+   "rows": []
+  },
+  {
+   "id": "E17",
+   "name": "排水処理設備",
+   "names": {
+    "【架空】葦原環境センター_作業日報_R8.9月.xlsx": "排水処理設備"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "WW-1",
+   "path": [
+    "排水処理設備"
+   ],
+   "rows": []
+  }
+ ],
+ "works": [
+  {
+   "id": "W0001",
+   "label": "ごみクレーン 年次点検（R6）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-04-09",
+   "end": "2024-04-09",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空クレーン保守㈱",
+   "contract": "ごみクレーン 保守点検業務（R6）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 30
+    }
+   ],
+   "note": "年間委託の契約の行。月次・四半期の点検もこの契約に入るが、世界には年次の点検だけを作業として置いた"
+  },
+  {
+   "id": "W0002",
+   "label": "誘引送風機 2号 軸受交換（R6）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2024-06-12",
+   "end": "2024-06-14",
+   "man_days": 2.0,
+   "days": 3,
+   "vendor": "架空ファンテック㈱",
+   "contract": "R6 誘引送風機 2号 軸受交換",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 9
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0003",
+   "label": "1号炉 定期整備工事（R6）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E01",
+    "E03",
+    "E05",
+    "E07",
+    "E09"
+   ],
+   "start": "2024-07-25",
+   "end": "2024-09-20",
+   "man_days": 12.0,
+   "days": 58,
+   "vendor": "架空流動炉エンジ㈱",
+   "contract": "R6 1号炉 定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 7
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0004",
+   "label": "2号炉 定期整備工事（R6）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E02",
+    "E04",
+    "E06",
+    "E08",
+    "E10"
+   ],
+   "start": "2024-09-10",
+   "end": "2024-11-15",
+   "man_days": 12.0,
+   "days": 67,
+   "vendor": "架空流動炉エンジ㈱",
+   "contract": "R6 2号炉 定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 8
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0005",
+   "label": "ごみクレーン ワイヤロープ取替（R6）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-10-01",
+   "end": "2024-11-08",
+   "man_days": 3.0,
+   "days": 39,
+   "vendor": "架空クレーン保守㈱",
+   "contract": "R6 ごみクレーン ワイヤロープ取替",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 11
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0006",
+   "label": "計量機 定期検査（計量法）（R6）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-10-15",
+   "end": "2024-11-20",
+   "man_days": 5.0,
+   "days": 37,
+   "vendor": "架空はかり㈱",
+   "contract": "R6 計量機 定期検査（計量法）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 12
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0007",
+   "label": "受変電設備 年次点検（全停電）（R6）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2024-11-17",
+   "end": "2024-11-17",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 29
+    }
+   ],
+   "note": "年間委託の契約の行。月次・四半期の点検もこの契約に入るが、世界には年次の点検だけを作業として置いた"
+  },
+  {
+   "id": "W0008",
+   "label": "灰固化装置 混練機 羽根取替（R6）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-12-03",
+   "end": "2025-01-24",
+   "man_days": 3.0,
+   "days": 53,
+   "vendor": "架空固化設備㈱",
+   "contract": "R6 灰固化装置 混練機 羽根取替",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 10
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0009",
+   "label": "ごみクレーン 年次点検（R7）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2025-04-08",
+   "end": "2025-04-08",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空クレーン保守㈱",
+   "contract": "ごみクレーン 保守点検業務（R7）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 32
+    }
+   ],
+   "note": "年間委託の契約の行。月次・四半期の点検もこの契約に入るが、世界には年次の点検だけを作業として置いた"
+  },
+  {
+   "id": "W0010",
+   "label": "空気圧縮機 No.1 オーバーホール（R7）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E15"
+   ],
+   "start": "2025-05-20",
+   "end": "2025-06-27",
+   "man_days": 4.0,
+   "days": 39,
+   "vendor": "架空コンプレッサ㈱",
+   "contract": "R7 空気圧縮機 No.1 オーバーホール",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 17
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0011",
+   "label": "1号炉 定期整備工事（R7）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E01",
+    "E03",
+    "E05",
+    "E07",
+    "E09"
+   ],
+   "start": "2025-07-28",
+   "end": "2025-09-19",
+   "man_days": 6.0,
+   "days": 54,
+   "vendor": "架空流動炉エンジ㈱",
+   "contract": "R7 1号炉 定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 14
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0012",
+   "label": "2号炉 定期整備工事（R7）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E02",
+    "E04",
+    "E06",
+    "E08",
+    "E10"
+   ],
+   "start": "2025-09-08",
+   "end": "2025-11-14",
+   "man_days": 9.0,
+   "days": 68,
+   "vendor": "架空流動炉エンジ㈱",
+   "contract": "R7 2号炉 定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 15
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0013",
+   "label": "バグフィルタ 2号 ろ布全数取替（R7）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2025-09-08",
+   "end": "2025-11-14",
+   "man_days": 5.0,
+   "days": 68,
+   "vendor": "架空集塵機工業㈱",
+   "contract": "R7 バグフィルタ 2号 ろ布全数取替",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 16
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0014",
+   "label": "受変電設備 年次点検（全停電）（R7）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2025-11-16",
+   "end": "2025-11-16",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R7）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 31
+    }
+   ],
+   "note": "年間委託の契約の行。月次・四半期の点検もこの契約に入るが、世界には年次の点検だけを作業として置いた"
+  },
+  {
+   "id": "W0015",
+   "label": "砂循環装置 2号 バケットエレベータ チェーン取替（R7）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2026-01-13",
+   "end": "2026-02-20",
+   "man_days": 4.0,
+   "days": 39,
+   "vendor": "架空葦原オペレーション㈱",
+   "contract": "R7 砂循環装置 2号 バケットエレベータ チェーン取替",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 18
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0016",
+   "label": "排水処理設備 薬注ポンプ取替（R7）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2026-02-02",
+   "end": "2026-03-13",
+   "man_days": 4.0,
+   "days": 40,
+   "vendor": "架空ポンプサービス㈱",
+   "contract": "R7 排水処理設備 薬注ポンプ取替",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 19
+    }
+   ],
+   "note": "開始と終了は発注日と完了日（工事の実際の期間は資料に無い）"
+  },
+  {
+   "id": "W0017",
+   "label": "ごみクレーン 年次点検（R8）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2026-04-07",
+   "end": "2026-04-07",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空クレーン保守㈱",
+   "contract": "ごみクレーン 保守点検業務（R8）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 34
+    }
+   ],
+   "note": "年間委託の契約の行。月次・四半期の点検もこの契約に入るが、世界には年次の点検だけを作業として置いた"
+  },
+  {
+   "id": "W0018",
+   "label": "計量機 日常点検の範囲の調整（R8.8）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2026-08-19",
+   "end": "2026-08-19",
+   "man_days": 0.5,
+   "days": 1,
+   "vendor": "架空葦原オペレーション㈱",
+   "contract": "運転管理業務委託（長期包括）",
+   "precision": false,
+   "rows": []
+  },
+  {
+   "id": "W0019",
+   "label": "砂循環装置 2号 ベルトコンベヤ 蛇行調整",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2026-09-01",
+   "end": "2026-09-01",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "架空葦原オペレーション㈱",
+   "contract": "運転管理業務委託（長期包括）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.1",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 22
+    }
+   ]
+  },
+  {
+   "id": "W0020",
+   "label": "空気圧縮機 No.2 吸込フィルタ交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E16"
+   ],
+   "start": "2026-09-02",
+   "end": "2026-09-02",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "架空コンプレッサ㈱",
+   "contract": "単価契約・随意契約",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.2",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 24
+    }
+   ]
+  },
+  {
+   "id": "W0021",
+   "label": "ごみクレーン 月例点検（9月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2026-09-02",
+   "end": "2026-09-02",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "架空クレーン保守㈱",
+   "contract": "ごみクレーン 保守点検業務（R8）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.2",
+     "r": 8
+    },
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 34
+    }
+   ]
+  },
+  {
+   "id": "W0022",
+   "label": "灰固化装置 混練機 清掃・点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2026-09-03",
+   "end": "2026-09-03",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "架空葦原オペレーション㈱",
+   "contract": "運転管理業務委託（長期包括）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.3",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0023",
+   "label": "受変電設備 月次点検（9月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2026-09-03",
+   "end": "2026-09-03",
+   "man_days": 0.5,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R8）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.3",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 33
+    }
+   ]
+  },
+  {
+   "id": "W0024",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E01",
+    "E03",
+    "E05",
+    "E07",
+    "E09"
+   ],
+   "start": "2026-09-04",
+   "end": "2026-09-18",
+   "man_days": 65.0,
+   "days": 15,
+   "vendor": "架空流動炉エンジ㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.4",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.7",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.7",
+     "r": 8
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 8
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8(続)",
+     "r": 8
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.9",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0025",
+   "label": "計量機 日常点検（9/4）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2026-09-04",
+   "end": "2026-09-04",
+   "man_days": 0.25,
+   "days": 1,
+   "vendor": "架空葦原オペレーション㈱",
+   "contract": "運転管理業務委託（長期包括）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.4",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0026",
+   "label": "空気圧縮機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E15"
+   ],
+   "start": "2026-09-08",
+   "end": "2026-09-08",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "架空コンプレッサ㈱",
+   "contract": "単価契約・随意契約",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8(続)",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0027",
+   "label": "バグフィルタ 1号 ろ布点検・部分取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2026-09-08",
+   "end": "2026-09-11",
+   "man_days": 12.0,
+   "days": 4,
+   "vendor": "架空集塵機工業㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 13
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 14
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.9",
+     "r": 9
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.11",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0028",
+   "label": "押込送風機 1号 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2026-09-08",
+   "end": "2026-09-10",
+   "man_days": 9.0,
+   "days": 3,
+   "vendor": "架空ファンテック㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 9
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 10
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.9",
+     "r": 8
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.10",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0029",
+   "label": "誘引送風機 2号 給油（軸受温度上昇）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2026-09-08",
+   "end": "2026-09-08",
+   "man_days": 0.5,
+   "days": 1,
+   "vendor": "架空葦原オペレーション㈱",
+   "contract": "運転管理業務委託（長期包括）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8(続)",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0030",
+   "label": "砂循環装置 1号 点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2026-09-08",
+   "end": "2026-09-08",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空葦原オペレーション㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 11
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.8",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "W0031",
+   "label": "流動床焼却炉 1号 散気管・耐火物 補修",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2026-09-10",
+   "end": "2026-09-14",
+   "man_days": 14.0,
+   "days": 5,
+   "vendor": "架空流動炉エンジ㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.10",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.11",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.12",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.14",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0032",
+   "label": "排水処理設備 放流ポンプ 軸受交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2026-09-10",
+   "end": "2026-09-10",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "架空ポンプサービス㈱",
+   "contract": "単価契約・随意契約",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.10",
+     "r": 9
+    },
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 23
+    }
+   ]
+  },
+  {
+   "id": "W0033",
+   "label": "誘引送風機 1号 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2026-09-14",
+   "end": "2026-09-17",
+   "man_days": 12.0,
+   "days": 4,
+   "vendor": "架空ファンテック㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.14",
+     "r": 7
+    },
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.15",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0034",
+   "label": "ごみクレーン バケット爪点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2026-09-15",
+   "end": "2026-09-15",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "架空クレーン保守㈱",
+   "contract": "ごみクレーン 保守点検業務（R8）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_作業日報_R8.9月.xlsx",
+     "sheet": "9.15",
+     "r": 8
+    },
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 34
+    }
+   ]
+  },
+  {
+   "id": "W0035",
+   "label": "受変電設備 年次点検（全停電）（R8）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2026-11-15",
+   "end": "2026-11-15",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R8）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx",
+     "sheet": "実績",
+     "r": 33
+    }
+   ],
+   "note": "年間委託の契約の行。月次・四半期の点検もこの契約に入るが、世界には年次の点検だけを作業として置いた"
+  }
+ ],
+ "unrecorded": [
+  {
+   "work": "W0018",
+   "reason": "運転委託の範囲の軽作業で、日報の期間（9月前半）より前、集計にも載らない（0円）"
+  }
+ ],
+ "defects": [
+  {
+   "kind": "費用の小計の食い違い",
+   "where": "【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx 実績 「令和7年度 計」の行：明細の合計より 968 千円少ない（薬注ポンプ取替の行を足す前の値）",
+   "check": "小計と明細の合計の一致"
+  }
+ ],
+ "note": "機器の木を書いた資料が無い施設。機器の rows は空。"
+}

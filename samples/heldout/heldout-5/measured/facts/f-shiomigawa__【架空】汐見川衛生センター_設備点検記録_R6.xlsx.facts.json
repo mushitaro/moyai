@@ -1,0 +1,5279 @@
+{
+ "schema": "moyai.factory.facts/0",
+ "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+ "reader": "openpyxl 3.1.5",
+ "creator": "【架空】汐見川衛生センター 施設係",
+ "sheets": [
+  {
+   "title": "点検記録",
+   "state": "visible",
+   "cells": [
+    {
+     "coord": "A1",
+     "value": "【架空】汐見川衛生センター　設備点検記録（令和6年度）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A3",
+     "value": "点検日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B3",
+     "value": "設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C3",
+     "value": "機器名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D3",
+     "value": "点検項目",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E3",
+     "value": "結果",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F3",
+     "value": "測定値",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G3",
+     "value": "単位",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H3",
+     "value": "作業時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I3",
+     "value": "実施者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A4",
+     "value": 45387.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B4",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C4",
+     "value": "曝気ブロワNo.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D4",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E4",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F4",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G4",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H4",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I4",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A5",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B5",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C5",
+     "value": "脱臭ファン No.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D5",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E5",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F5",
+     "value": 1.8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G5",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H5",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I5",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A6",
+     "value": 45390.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B6",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C6",
+     "value": "曝気ブロワNo.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D6",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E6",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F6",
+     "value": 2.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G6",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H6",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I6",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A7",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B7",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C7",
+     "value": "曝気ブロワ(3)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D7",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E7",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F7",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G7",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H7",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I7",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A8",
+     "value": 45392.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B8",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C8",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D8",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E8",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H8",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I8",
+     "value": "井上・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A9",
+     "value": 45397.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B9",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C9",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D9",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E9",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H9",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I9",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A10",
+     "value": 45398.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B10",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C10",
+     "value": "1号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D10",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E10",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H10",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I10",
+     "value": "木村・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A11",
+     "value": 45404.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B11",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C11",
+     "value": "自家発",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D11",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E11",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F11",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G11",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H11",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I11",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A12",
+     "value": 45418.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B12",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C12",
+     "value": "曝気ブロワ(3)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D12",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E12",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F12",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G12",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H12",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I12",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A13",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B13",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C13",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D13",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E13",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F13",
+     "value": 2.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G13",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H13",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I13",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A14",
+     "value": 45419.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B14",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C14",
+     "value": "曝気ﾌﾞﾛﾜ №1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D14",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E14",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F14",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G14",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H14",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I14",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A15",
+     "value": 45425.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B15",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C15",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D15",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E15",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H15",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I15",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A16",
+     "value": 45426.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B16",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C16",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D16",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E16",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H16",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I16",
+     "value": "井上・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A17",
+     "value": 45428.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B17",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C17",
+     "value": "1号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D17",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E17",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H17",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I17",
+     "value": "井上・木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A18",
+     "value": 45429.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B18",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C18",
+     "value": "曝気ブロワ(2)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D18",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E18",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F18",
+     "value": 2.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G18",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H18",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I18",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A19",
+     "value": 45433.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B19",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C19",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D19",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E19",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F19",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G19",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H19",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I19",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A20",
+     "value": 45449.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B20",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C20",
+     "value": "汚泥脱水機 1号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D20",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E20",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H20",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I20",
+     "value": "井上・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A21",
+     "value": 45450.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B21",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C21",
+     "value": "曝気ブロワ(3)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D21",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E21",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F21",
+     "value": 1.8,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G21",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H21",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I21",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A22",
+     "value": 45453.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B22",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C22",
+     "value": "脱臭ファン No.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D22",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E22",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F22",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G22",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H22",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I22",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A23",
+     "value": 45454.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B23",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C23",
+     "value": "曝気ブロワNo.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D23",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E23",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F23",
+     "value": 1.4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G23",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H23",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I23",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A24",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B24",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C24",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D24",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E24",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H24",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I24",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A25",
+     "value": 45457.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B25",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C25",
+     "value": "曝気ブロワNo.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D25",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E25",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F25",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G25",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H25",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I25",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A26",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B26",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C26",
+     "value": "汚泥脱水機 2号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D26",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E26",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H26",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I26",
+     "value": "井上・木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A27",
+     "value": 45461.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B27",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C27",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D27",
+     "value": "スクリーン目詰まり",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E27",
+     "value": "不良 → スクリーン洗浄・ブラシ交換",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H27",
+     "value": "3h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I27",
+     "value": "山田・佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A28",
+     "value": 45464.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B28",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C28",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D28",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E28",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F28",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G28",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H28",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I28",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A29",
+     "value": 45481.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B29",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C29",
+     "value": "曝気ブロワ(2)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D29",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E29",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F29",
+     "value": 2.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G29",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H29",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I29",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A30",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B30",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C30",
+     "value": "曝気ブロワNo.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D30",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E30",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F30",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G30",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H30",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I30",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A31",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B31",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C31",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D31",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E31",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F31",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G31",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H31",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I31",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A32",
+     "value": 45488.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B32",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C32",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D32",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E32",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H32",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I32",
+     "value": "佐藤・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A33",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B33",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C33",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D33",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E33",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H33",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I33",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A34",
+     "value": 45489.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B34",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C34",
+     "value": "汚泥脱水機 1号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D34",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E34",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H34",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I34",
+     "value": "佐藤・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A35",
+     "value": 45491.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B35",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C35",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D35",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E35",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F35",
+     "value": 2.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G35",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H35",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I35",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A36",
+     "value": 45495.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B36",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C36",
+     "value": "曝気ﾌﾞﾛﾜ №1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D36",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E36",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F36",
+     "value": 2.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G36",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H36",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I36",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A37",
+     "value": 45509.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B37",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C37",
+     "value": "自家発",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D37",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E37",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F37",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G37",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H37",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I37",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A38",
+     "value": 45512.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B38",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C38",
+     "value": "曝気ブロワNo.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D38",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E38",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F38",
+     "value": 1.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G38",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H38",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I38",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A39",
+     "value": 45516.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B39",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C39",
+     "value": "曝気ブロワNo.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D39",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E39",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F39",
+     "value": 2.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G39",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H39",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I39",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A40",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B40",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C40",
+     "value": "曝気ブロワ(2)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D40",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E40",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F40",
+     "value": 2.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G40",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H40",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I40",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A41",
+     "value": 45518.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B41",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C41",
+     "value": "脱臭ファン No.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D41",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E41",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F41",
+     "value": 1.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G41",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H41",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I41",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A42",
+     "value": 45520.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B42",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C42",
+     "value": "1号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D42",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E42",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H42",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I42",
+     "value": "山田・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A43",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B43",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C43",
+     "value": "汚泥脱水機 2号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D43",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E43",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H43",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I43",
+     "value": "山田・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A44",
+     "value": 45539.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B44",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C44",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D44",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E44",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H44",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I44",
+     "value": "佐藤・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A45",
+     "value": 45544.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B45",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C45",
+     "value": "曝気ﾌﾞﾛﾜ №2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D45",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E45",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F45",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G45",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H45",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I45",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A46",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B46",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C46",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D46",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E46",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F46",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G46",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H46",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I46",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A47",
+     "value": 45545.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B47",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C47",
+     "value": "1号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D47",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E47",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H47",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I47",
+     "value": "山田・佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A48",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B48",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C48",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D48",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E48",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H48",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I48",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A49",
+     "value": 45548.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B49",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C49",
+     "value": "曝気ブロワNo.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D49",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E49",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F49",
+     "value": 1.7,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G49",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H49",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I49",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A50",
+     "value": 45553.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B50",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C50",
+     "value": "脱臭ファン No.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D50",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E50",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F50",
+     "value": 2.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G50",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H50",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I50",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A51",
+     "value": 45554.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B51",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C51",
+     "value": "曝気ブロワNo.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D51",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E51",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F51",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "G51",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H51",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I51",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A53",
+     "value": "※令和6年10月から点検の一部を委託（委託業者の欄を追加）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A54",
+     "value": "点検日",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "B54",
+     "value": "設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C54",
+     "value": "機器名",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D54",
+     "value": "委託業者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E54",
+     "value": "点検項目",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F54",
+     "value": "結果",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G54",
+     "value": "測定値",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "H54",
+     "value": "単位",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I54",
+     "value": "作業時間",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J54",
+     "value": "実施者",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A55",
+     "value": 45569.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B55",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C55",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D55",
+     "value": "架空発電機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E55",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F55",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G55",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H55",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I55",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J55",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A56",
+     "value": 45572.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B56",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C56",
+     "value": "1号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D56",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E56",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F56",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I56",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J56",
+     "value": "井上・木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A57",
+     "value": 45576.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B57",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C57",
+     "value": "曝気ブロワ(2)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D57",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E57",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F57",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G57",
+     "value": 1.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H57",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I57",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J57",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A58",
+     "value": 45580.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B58",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C58",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D58",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E58",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F58",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G58",
+     "value": 1.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H58",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I58",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J58",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A59",
+     "value": 45586.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B59",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C59",
+     "value": "曝気ﾌﾞﾛﾜ №1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D59",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E59",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F59",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G59",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H59",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I59",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J59",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A60",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B60",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C60",
+     "value": "曝気ブロワNo.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D60",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E60",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F60",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G60",
+     "value": 1.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H60",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I60",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J60",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A61",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B61",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C61",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D61",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E61",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F61",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I61",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J61",
+     "value": "山田・佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A62",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B62",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C62",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D62",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E62",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F62",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I62",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J62",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A63",
+     "value": 45603.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B63",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C63",
+     "value": "曝気ブロワNo.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D63",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E63",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F63",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G63",
+     "value": 2.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H63",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I63",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J63",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A64",
+     "value": 45604.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B64",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C64",
+     "value": "曝気ﾌﾞﾛﾜ №1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D64",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E64",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F64",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G64",
+     "value": 2.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H64",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I64",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J64",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A65",
+     "value": 45607.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B65",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C65",
+     "value": "汚泥脱水機 1号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D65",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E65",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F65",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I65",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J65",
+     "value": "山田・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A66",
+     "value": 45608.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B66",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C66",
+     "value": "曝気ﾌﾞﾛﾜ №2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D66",
+     "value": "架空ブロワ㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E66",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F66",
+     "value": "振動大 → Vベルト交換",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I66",
+     "value": "2.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J66",
+     "value": "木村・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A67",
+     "value": 45614.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B67",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C67",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D67",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E67",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F67",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G67",
+     "value": 1.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H67",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I67",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J67",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A68",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B68",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C68",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D68",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E68",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F68",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I68",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J68",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A69",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B69",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C69",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D69",
+     "value": "架空発電機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E69",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F69",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G69",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H69",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I69",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J69",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A70",
+     "value": 45616.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B70",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C70",
+     "value": "汚泥脱水機 2号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D70",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E70",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F70",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I70",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J70",
+     "value": "佐藤・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A71",
+     "value": 45617.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B71",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C71",
+     "value": "曝気ﾌﾞﾛﾜ №2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D71",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E71",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F71",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G71",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H71",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I71",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J71",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A72",
+     "value": 45632.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B72",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C72",
+     "value": "自家発",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D72",
+     "value": "架空発電機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E72",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F72",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G72",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H72",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I72",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J72",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A73",
+     "value": 45635.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B73",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C73",
+     "value": "曝気ﾌﾞﾛﾜ №1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D73",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E73",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F73",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G73",
+     "value": 2.4,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H73",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I73",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J73",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A74",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B74",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C74",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D74",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E74",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F74",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I74",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J74",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A75",
+     "value": 45638.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B75",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C75",
+     "value": "1号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D75",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E75",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F75",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I75",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J75",
+     "value": "山田・佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A76",
+     "value": 45639.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B76",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C76",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D76",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E76",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F76",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I76",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J76",
+     "value": "山田・佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A77",
+     "value": 45642.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B77",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C77",
+     "value": "曝気ブロワ(2)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D77",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E77",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F77",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G77",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H77",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I77",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J77",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A78",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B78",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C78",
+     "value": "曝気ブロワNo.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D78",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E78",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F78",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G78",
+     "value": 1.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H78",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I78",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J78",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A79",
+     "value": 45643.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B79",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C79",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D79",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E79",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F79",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G79",
+     "value": 2.1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H79",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I79",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J79",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A80",
+     "value": 45660.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B80",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C80",
+     "value": "曝気ﾌﾞﾛﾜ №2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D80",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E80",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F80",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G80",
+     "value": 2.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H80",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I80",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J80",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A81",
+     "value": 45663.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B81",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C81",
+     "value": "曝気ブロワNo.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D81",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E81",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F81",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G81",
+     "value": 2.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H81",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I81",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J81",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A82",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B82",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C82",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D82",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E82",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F82",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G82",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H82",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I82",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J82",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A83",
+     "value": 45673.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B83",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C83",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D83",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E83",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F83",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I83",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J83",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A84",
+     "value": 45677.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B84",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C84",
+     "value": "曝気ブロワ(3)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D84",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E84",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F84",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G84",
+     "value": 1.3,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H84",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I84",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J84",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A85",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B85",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C85",
+     "value": "1号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D85",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E85",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F85",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I85",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J85",
+     "value": "佐藤・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A86",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B86",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C86",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D86",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E86",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F86",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I86",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J86",
+     "value": "佐藤・井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A87",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B87",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C87",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D87",
+     "value": "架空発電機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E87",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F87",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G87",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H87",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I87",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J87",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A88",
+     "value": 45691.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B88",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C88",
+     "value": "曝気ブロワ(3)",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D88",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E88",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F88",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G88",
+     "value": 1,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H88",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I88",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J88",
+     "value": "佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A89",
+     "value": 45693.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B89",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C89",
+     "value": "曝気ﾌﾞﾛﾜ №2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D89",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E89",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F89",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G89",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H89",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I89",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J89",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A90",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B90",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C90",
+     "value": "汚泥脱水機 1号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D90",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E90",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F90",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I90",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J90",
+     "value": "井上・木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A91",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B91",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C91",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D91",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E91",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F91",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I91",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J91",
+     "value": "井上・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A92",
+     "value": 45694.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B92",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C92",
+     "value": "脱臭ファン No.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D92",
+     "value": "架空送風機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E92",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F92",
+     "value": "ベルト摩耗 → 交換",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I92",
+     "value": "2h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J92",
+     "value": "木村・佐藤",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A93",
+     "value": 45698.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B93",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C93",
+     "value": "曝気ﾌﾞﾛﾜ №1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D93",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E93",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F93",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G93",
+     "value": 1.6,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H93",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I93",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J93",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A94",
+     "value": 45705.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B94",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C94",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D94",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E94",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F94",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G94",
+     "value": 1.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H94",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I94",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J94",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A95",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B95",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C95",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D95",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E95",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F95",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I95",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J95",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A96",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B96",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C96",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D96",
+     "value": "架空発電機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E96",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F96",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G96",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H96",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I96",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J96",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A97",
+     "value": 45719.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B97",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C97",
+     "value": "曝気ブロワNo.1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D97",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E97",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F97",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G97",
+     "value": 2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H97",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I97",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J97",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A98",
+     "value": 45720.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B98",
+     "value": "脱臭",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C98",
+     "value": "脱臭ファン1",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D98",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E98",
+     "value": "振動・ベルト張り",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F98",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G98",
+     "value": 1.9,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H98",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I98",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J98",
+     "value": "木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A99",
+     "value": 45723.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B99",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C99",
+     "value": "曝気ブロワNo.3",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D99",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E99",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F99",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G99",
+     "value": 2.2,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H99",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I99",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J99",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A100",
+     "value": 45733.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B100",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C100",
+     "value": "汚泥脱水機 1号機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D100",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E100",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F100",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I100",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J100",
+     "value": "佐藤・山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A101",
+     "value": 45734.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B101",
+     "value": "汚泥処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C101",
+     "value": "2号脱水機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D101",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E101",
+     "value": "スクリーン目詰まり・駆動部",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F101",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I101",
+     "value": "1.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J101",
+     "value": "山田・木村",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A102",
+     "value": 45735.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B102",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C102",
+     "value": "非常用発電機",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D102",
+     "value": "架空発電機㈱",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E102",
+     "value": "無負荷試運転",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F102",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G102",
+     "value": 10,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H102",
+     "value": "分",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I102",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J102",
+     "value": "山田",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A103",
+     "value": 45736.0,
+     "data_type": "d",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B103",
+     "value": "主処理",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C103",
+     "value": "曝気ブロワNo.2",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D103",
+     "value": "直営",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E103",
+     "value": "振動・軸受温度",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F103",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "G103",
+     "value": 1.5,
+     "data_type": "n",
+     "number_format": "General"
+    },
+    {
+     "coord": "H103",
+     "value": "mm/s",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I103",
+     "value": "0.5h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J103",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "A104",
+     "value": "〃",
+     "data_type": "s",
+     "number_format": "yyyy/m/d"
+    },
+    {
+     "coord": "B104",
+     "value": "電気",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "C104",
+     "value": "受変電設備",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "D104",
+     "value": "（一財）架空電気保安協会",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "E104",
+     "value": "月次点検（外観・絶縁監視）",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "F104",
+     "value": "良",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "I104",
+     "value": "1h",
+     "data_type": "s",
+     "number_format": "General"
+    },
+    {
+     "coord": "J104",
+     "value": "井上",
+     "data_type": "s",
+     "number_format": "General"
+    }
+   ],
+   "merged": [],
+   "hidden_rows": [],
+   "hidden_cols": []
+  }
+ ]
+}

@@ -1,0 +1,3395 @@
+{
+ "schema": "moyai.answer.world/0",
+ "facility": {
+  "id": "f-yanase",
+  "name": "【架空】柳瀬中継ポンプ場",
+  "industry": "sewer",
+  "profile": {
+   "kind": "汚水中継ポンプ場",
+   "pumps": 3,
+   "capacity_m3_per_min": 42.0,
+   "completed": 2001,
+   "contract": "包括的民間委託（運転のみ）"
+  }
+ },
+ "fiscal_year_start_month": 4,
+ "man_day_hours": 8,
+ "today": "2026-10-01",
+ "equipment": [
+  {
+   "id": "E01",
+   "name": "自動除塵機 No.1",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "No.1",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "自動除塵機"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "SC-1",
+   "path": [
+    "沈砂池設備",
+    "自動除塵機",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "E02",
+   "name": "自動除塵機 No.2",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "No.2",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "自動除塵機"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "SC-2",
+   "path": [
+    "沈砂池設備",
+    "自動除塵機",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "E03",
+   "name": "沈砂掻揚機",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "沈砂掻揚機",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "沈砂かき揚げ機"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "GR-1",
+   "path": [
+    "沈砂池設備",
+    "沈砂掻揚機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "E04",
+   "name": "主ポンプ No.1",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "主ポンプ No.1",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "主ポンプ"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "MP-1",
+   "path": [
+    "主ポンプ設備",
+    "主ポンプ No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "E05",
+   "name": "主ポンプ No.2",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "主ポンプ No.2",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "主ポンプ"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "MP-2",
+   "path": [
+    "主ポンプ設備",
+    "主ポンプ No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 14
+    }
+   ]
+  },
+  {
+   "id": "E06",
+   "name": "主ポンプ No.3",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "主ポンプ No.3",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "主ポンプ"
+   },
+   "furnace": null,
+   "install_year": 2009,
+   "code": "MP-3",
+   "path": [
+    "主ポンプ設備",
+    "主ポンプ No.3"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "E07",
+   "name": "主ポンプ用電動機 No.1",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "電動機",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "主ポンプ電動機"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "MM-1",
+   "path": [
+    "主ポンプ設備",
+    "主ポンプ No.1",
+    "電動機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "E08",
+   "name": "主ポンプ用電動機 No.2",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "電動機",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "主ポンプ電動機"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "MM-2",
+   "path": [
+    "主ポンプ設備",
+    "主ポンプ No.2",
+    "電動機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15
+    }
+   ]
+  },
+  {
+   "id": "E09",
+   "name": "主ポンプ用電動機 No.3",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "電動機",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "主ポンプ電動機"
+   },
+   "furnace": null,
+   "install_year": 2009,
+   "code": "MM-3",
+   "path": [
+    "主ポンプ設備",
+    "主ポンプ No.3",
+    "電動機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "吐出弁",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "吐出弁（3台）",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "吐出弁"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "DV-1",
+   "path": [
+    "主ポンプ設備",
+    "吐出弁（3台）"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "受変電設備",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "受変電設備",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "受変電設備"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "SS-1",
+   "path": [
+    "電気設備",
+    "受変電設備"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "自家発電設備",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "自家発電設備",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "自家用発電設備"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "EG-1",
+   "path": [
+    "電気設備",
+    "自家発電設備"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "監視制御設備",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "監視制御設備",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "監視制御設備"
+   },
+   "furnace": null,
+   "install_year": 2012,
+   "code": "TM-1",
+   "path": [
+    "電気設備",
+    "監視制御設備"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 23
+    }
+   ]
+  },
+  {
+   "id": "E14",
+   "name": "脱臭設備",
+   "names": {
+    "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx": "脱臭設備",
+    "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv": "脱臭装置"
+   },
+   "furnace": null,
+   "install_year": 2001,
+   "code": "DO-1",
+   "path": [
+    "脱臭設備"
+   ],
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 24
+    }
+   ]
+  }
+ ],
+ "works": [
+  {
+   "id": "W0001",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2018-06-06",
+   "end": "2018-06-07",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "H30 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 3
+    }
+   ]
+  },
+  {
+   "id": "W0002",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2018-06-13",
+   "end": "2018-06-14",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "H30 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 4
+    }
+   ]
+  },
+  {
+   "id": "W0003",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2018-07-09",
+   "end": "2018-07-09",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "H30 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 5
+    }
+   ]
+  },
+  {
+   "id": "W0004",
+   "label": "脱臭設備 活性炭取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2018-08-06",
+   "end": "2018-08-08",
+   "man_days": null,
+   "days": 3,
+   "vendor": "架空脱臭㈱",
+   "contract": "H30 脱臭設備 活性炭取替 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 24,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 6
+    }
+   ]
+  },
+  {
+   "id": "W0005",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2018-09-18",
+   "end": "2018-09-19",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "H30 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0006",
+   "label": "主ポンプ用電動機 No.1 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2018-10-04",
+   "end": "2018-10-04",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "H30 主ポンプ用電動機 No.1 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0007",
+   "label": "主ポンプ用電動機 No.2 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2018-10-11",
+   "end": "2018-10-11",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "H30 主ポンプ用電動機 No.2 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0008",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2018-11-15",
+   "end": "2018-11-15",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "H30 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0009",
+   "label": "主ポンプ No.3 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2019-01-08",
+   "end": "2019-02-01",
+   "man_days": null,
+   "days": 25,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "H30 主ポンプ No.3 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 16,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0010",
+   "label": "自家発電設備 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2018,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2019-02-21",
+   "end": "2019-02-21",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "H30 自家発電設備 点検・負荷運転 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21,
+     "year": 2018
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "W0011",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2019-06-12",
+   "end": "2019-06-13",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R元 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "W0012",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2019-06-19",
+   "end": "2019-06-20",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R元 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 14
+    }
+   ]
+  },
+  {
+   "id": "W0013",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2019-07-17",
+   "end": "2019-07-17",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R元 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 15
+    }
+   ]
+  },
+  {
+   "id": "W0014",
+   "label": "主ポンプ No.2 グランドパッキン交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2019-08-20",
+   "end": "2019-08-21",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "単価契約（修繕）",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0015",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2019-09-13",
+   "end": "2019-09-14",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R元 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0016",
+   "label": "主ポンプ用電動機 No.3 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2019-10-04",
+   "end": "2019-10-04",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R元 主ポンプ用電動機 No.3 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 17,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0017",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2019-11-06",
+   "end": "2019-11-06",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R元 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "W0018",
+   "label": "沈砂掻揚機 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2019-11-18",
+   "end": "2019-11-27",
+   "man_days": null,
+   "days": 10,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R元 沈砂掻揚機 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 10,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0019",
+   "label": "自家発電設備 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2020-02-07",
+   "end": "2020-02-07",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "R元 自家発電設備 点検・負荷運転 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21,
+     "year": 2019
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0020",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2020-06-15",
+   "end": "2020-06-16",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R2 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 22
+    }
+   ]
+  },
+  {
+   "id": "W0021",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2020-06-22",
+   "end": "2020-06-23",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R2 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 23
+    }
+   ]
+  },
+  {
+   "id": "W0022",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2020-07-08",
+   "end": "2020-07-08",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R2 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 24
+    }
+   ]
+  },
+  {
+   "id": "W0023",
+   "label": "自動除塵機 No.2 臨時点検（豪雨後）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2020-09-07",
+   "end": "2020-09-07",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R2 自動除塵機 No.2 臨時点検（豪雨後） 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 25
+    }
+   ]
+  },
+  {
+   "id": "W0024",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2020-09-16",
+   "end": "2020-09-17",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R2 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 26
+    }
+   ]
+  },
+  {
+   "id": "W0025",
+   "label": "主ポンプ用電動機 No.1 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2020-10-05",
+   "end": "2020-10-05",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R2 主ポンプ用電動機 No.1 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 27
+    }
+   ]
+  },
+  {
+   "id": "W0026",
+   "label": "主ポンプ用電動機 No.2 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2020-10-08",
+   "end": "2020-10-08",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R2 主ポンプ用電動機 No.2 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 28
+    }
+   ]
+  },
+  {
+   "id": "W0027",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2020-11-19",
+   "end": "2020-11-19",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R2 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 29
+    }
+   ]
+  },
+  {
+   "id": "W0028",
+   "label": "主ポンプ No.1 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2021-01-19",
+   "end": "2021-02-12",
+   "man_days": null,
+   "days": 25,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R2 主ポンプ No.1 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 12,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 30
+    }
+   ]
+  },
+  {
+   "id": "W0029",
+   "label": "自家発電設備 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2021-02-19",
+   "end": "2021-02-19",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "R2 自家発電設備 点検・負荷運転 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21,
+     "year": 2020
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 31
+    }
+   ]
+  },
+  {
+   "id": "W0030",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2021-06-14",
+   "end": "2021-06-15",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R3 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 32
+    }
+   ]
+  },
+  {
+   "id": "W0031",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2021-06-15",
+   "end": "2021-06-16",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R3 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 33
+    }
+   ]
+  },
+  {
+   "id": "W0032",
+   "label": "自動除塵機 No.1 レーキ チェーン補修",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2021-06-30",
+   "end": "2021-06-30",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "単価契約（修繕）",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 34
+    }
+   ]
+  },
+  {
+   "id": "W0033",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2021-07-07",
+   "end": "2021-07-07",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R3 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 35
+    }
+   ],
+   "note": "保全計画表の実績の書き漏れ（○ のまま）"
+  },
+  {
+   "id": "W0034",
+   "label": "脱臭設備 活性炭取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2021-08-09",
+   "end": "2021-08-11",
+   "man_days": null,
+   "days": 3,
+   "vendor": "架空脱臭㈱",
+   "contract": "R3 脱臭設備 活性炭取替 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 24,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 36
+    }
+   ]
+  },
+  {
+   "id": "W0035",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2021-09-09",
+   "end": "2021-09-10",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R3 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 37
+    }
+   ]
+  },
+  {
+   "id": "W0036",
+   "label": "主ポンプ用電動機 No.3 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2021-10-08",
+   "end": "2021-10-08",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R3 主ポンプ用電動機 No.3 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 17,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 38
+    }
+   ]
+  },
+  {
+   "id": "W0037",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2021-11-16",
+   "end": "2021-11-16",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R3 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 39
+    }
+   ]
+  },
+  {
+   "id": "W0038",
+   "label": "自家発電設備 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2022-02-14",
+   "end": "2022-02-14",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "R3 自家発電設備 点検・負荷運転 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21,
+     "year": 2021
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 40
+    }
+   ]
+  },
+  {
+   "id": "W0039",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2022-06-09",
+   "end": "2022-06-10",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R4 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 41
+    }
+   ]
+  },
+  {
+   "id": "W0040",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2022-06-16",
+   "end": "2022-06-17",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R4 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 42
+    }
+   ]
+  },
+  {
+   "id": "W0041",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2022-07-11",
+   "end": "2022-07-11",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R4 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 43
+    }
+   ]
+  },
+  {
+   "id": "W0042",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2022-09-12",
+   "end": "2022-09-13",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R4 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 44
+    }
+   ]
+  },
+  {
+   "id": "W0043",
+   "label": "主ポンプ用電動機 No.1 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2022-10-10",
+   "end": "2022-10-10",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R4 主ポンプ用電動機 No.1 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 45
+    }
+   ],
+   "note": "保全計画表の実績の書き漏れ（○ のまま）"
+  },
+  {
+   "id": "W0044",
+   "label": "主ポンプ用電動機 No.2 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2022-10-10",
+   "end": "2022-10-10",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R4 主ポンプ用電動機 No.2 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 46
+    }
+   ]
+  },
+  {
+   "id": "W0045",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2022-11-10",
+   "end": "2022-11-10",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R4 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 47
+    }
+   ]
+  },
+  {
+   "id": "W0046",
+   "label": "自家発電設備 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2023-02-20",
+   "end": "2023-02-20",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "R4 自家発電設備 点検・負荷運転 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 48
+    }
+   ]
+  },
+  {
+   "id": "W0047",
+   "label": "監視制御設備 UPS バッテリー交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2023-03-02",
+   "end": "2023-03-02",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空計装㈱",
+   "contract": "単価契約（修繕）",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 49
+    }
+   ]
+  },
+  {
+   "id": "W0048",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2023-06-19",
+   "end": "2023-06-20",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R5 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2023
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 50
+    }
+   ]
+  },
+  {
+   "id": "W0049",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2023-06-21",
+   "end": "2023-06-22",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R5 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2023
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 51
+    }
+   ]
+  },
+  {
+   "id": "W0050",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2023-07-19",
+   "end": "2023-07-19",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R5 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2023
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 52
+    }
+   ]
+  },
+  {
+   "id": "W0051",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2023-09-21",
+   "end": "2023-09-22",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R5 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2023
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 53
+    }
+   ]
+  },
+  {
+   "id": "W0052",
+   "label": "主ポンプ用電動機 No.3 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2023-10-16",
+   "end": "2023-10-16",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R5 主ポンプ用電動機 No.3 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 17,
+     "year": 2023
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 54
+    }
+   ]
+  },
+  {
+   "id": "W0053",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2023-11-13",
+   "end": "2023-11-13",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R5 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2023
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 55
+    }
+   ]
+  },
+  {
+   "id": "W0055",
+   "label": "主ポンプ No.2 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2024-01-10",
+   "end": "2024-02-03",
+   "man_days": null,
+   "days": 25,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R5 主ポンプ No.2 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 14,
+     "year": 2022
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 14,
+     "year": 2023
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 56
+    }
+   ]
+  },
+  {
+   "id": "W0056",
+   "label": "自家発電設備 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-02-21",
+   "end": "2024-02-21",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "R5 自家発電設備 点検・負荷運転 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21,
+     "year": 2023
+    }
+   ],
+   "note": "修繕・点検履歴の入力漏れ（計画表の ● だけ）"
+  },
+  {
+   "id": "W0057",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2024-06-04",
+   "end": "2024-06-05",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R6 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 57
+    }
+   ]
+  },
+  {
+   "id": "W0058",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2024-06-17",
+   "end": "2024-06-18",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R6 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 58
+    }
+   ]
+  },
+  {
+   "id": "W0059",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2024-07-12",
+   "end": "2024-07-12",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R6 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 59
+    }
+   ]
+  },
+  {
+   "id": "W0060",
+   "label": "脱臭設備 活性炭取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2024-08-05",
+   "end": "2024-08-07",
+   "man_days": null,
+   "days": 3,
+   "vendor": "架空脱臭㈱",
+   "contract": "R6 脱臭設備 活性炭取替 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 24,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 60
+    }
+   ],
+   "note": "活性炭 2槽のうち 1槽のみ取替"
+  },
+  {
+   "id": "W0061",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-09-04",
+   "end": "2024-09-05",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R6 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 61
+    }
+   ]
+  },
+  {
+   "id": "W0062",
+   "label": "主ポンプ用電動機 No.1 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2024-10-21",
+   "end": "2024-10-21",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R6 主ポンプ用電動機 No.1 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 62
+    }
+   ]
+  },
+  {
+   "id": "W0063",
+   "label": "主ポンプ用電動機 No.2 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2024-10-21",
+   "end": "2024-10-21",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R6 主ポンプ用電動機 No.2 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 63
+    }
+   ]
+  },
+  {
+   "id": "W0064",
+   "label": "沈砂掻揚機 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2024-11-11",
+   "end": "2024-11-20",
+   "man_days": null,
+   "days": 10,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R6 沈砂掻揚機 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 10,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 64
+    }
+   ]
+  },
+  {
+   "id": "W0065",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-11-14",
+   "end": "2024-11-14",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R6 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 65
+    }
+   ]
+  },
+  {
+   "id": "W0066",
+   "label": "主ポンプ No.1 メカニカルシール交換（漏水）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2024-12-09",
+   "end": "2024-12-11",
+   "man_days": null,
+   "days": 3,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "単価契約（修繕）",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 66
+    }
+   ]
+  },
+  {
+   "id": "W0067",
+   "label": "自家発電設備 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2025-02-21",
+   "end": "2025-02-21",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "R6 自家発電設備 点検・負荷運転 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 21,
+     "year": 2024
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 67
+    }
+   ]
+  },
+  {
+   "id": "W0068",
+   "label": "自家発電設備 始動用蓄電池交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2025-06-17",
+   "end": "2025-06-17",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空パワーシステム㈱",
+   "contract": "単価契約（修繕）",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 68
+    }
+   ]
+  },
+  {
+   "id": "W0069",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2025-06-17",
+   "end": "2025-06-18",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R7 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2025
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 69
+    }
+   ]
+  },
+  {
+   "id": "W0070",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2025-06-23",
+   "end": "2025-06-24",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R7 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2025
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 70
+    }
+   ]
+  },
+  {
+   "id": "W0071",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2025-07-07",
+   "end": "2025-07-07",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R7 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2025
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 71
+    }
+   ]
+  },
+  {
+   "id": "W0072",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2025-09-08",
+   "end": "2025-09-09",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R7 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2025
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 72
+    }
+   ]
+  },
+  {
+   "id": "W0073",
+   "label": "主ポンプ用電動機 No.3 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2025-10-08",
+   "end": "2025-10-08",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R7 主ポンプ用電動機 No.3 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 17,
+     "year": 2025
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 73
+    }
+   ]
+  },
+  {
+   "id": "W0074",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2025-11-10",
+   "end": "2025-11-10",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R7 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2025
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 74
+    }
+   ]
+  },
+  {
+   "id": "W0075",
+   "label": "主ポンプ No.1 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2026-01-19",
+   "end": "2026-02-12",
+   "man_days": null,
+   "days": 25,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R7 主ポンプ No.1 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 12,
+     "year": 2025
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv",
+     "r": 75
+    }
+   ]
+  },
+  {
+   "id": "W0076",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2026-06-15",
+   "end": "2026-06-16",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R8 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0077",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2026-06-15",
+   "end": "2026-06-16",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R8 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0078",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2026-07-16",
+   "end": "2026-07-16",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R8 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0079",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2026-09-07",
+   "end": "2026-09-08",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R8 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0080",
+   "label": "主ポンプ用電動機 No.2 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2026-10-07",
+   "end": "2026-10-07",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R8 主ポンプ用電動機 No.2 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0081",
+   "label": "主ポンプ用電動機 No.1 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2026-10-12",
+   "end": "2026-10-12",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R8 主ポンプ用電動機 No.1 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0082",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2026-11-09",
+   "end": "2026-11-09",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R8 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0083",
+   "label": "主ポンプ No.3 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2027-01-19",
+   "end": "2027-02-12",
+   "man_days": null,
+   "days": 25,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R8 主ポンプ No.3 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 16,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0084",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2027-06-14",
+   "end": "2027-06-15",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R9 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0085",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2027-06-21",
+   "end": "2027-06-22",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R9 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0086",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2027-07-06",
+   "end": "2027-07-06",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R9 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0087",
+   "label": "脱臭設備 活性炭取替",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2027-08-17",
+   "end": "2027-08-19",
+   "man_days": null,
+   "days": 3,
+   "vendor": "架空脱臭㈱",
+   "contract": "R9 脱臭設備 活性炭取替 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 24,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0088",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2027-09-13",
+   "end": "2027-09-14",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R9 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0089",
+   "label": "主ポンプ用電動機 No.3 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2027-10-12",
+   "end": "2027-10-12",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R9 主ポンプ用電動機 No.3 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 17,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0090",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2027-11-19",
+   "end": "2027-11-19",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R9 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0091",
+   "label": "主ポンプ No.2 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2028-01-17",
+   "end": "2028-02-10",
+   "man_days": null,
+   "days": 25,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R9 主ポンプ No.2 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 14,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0092",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2028-06-15",
+   "end": "2028-06-16",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R10 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0093",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2028-06-20",
+   "end": "2028-06-21",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R10 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0094",
+   "label": "監視制御設備 更新工事",
+   "attribute": "UPGRADE",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2028-07-01",
+   "end": "2031-03-15",
+   "man_days": null,
+   "days": 988,
+   "vendor": "（未定）",
+   "contract": "R10 監視制御設備 更新工事 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 23,
+     "year": 2028
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 23,
+     "year": 2029
+    },
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 23,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0095",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2028-07-07",
+   "end": "2028-07-07",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R10 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0096",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2028-09-11",
+   "end": "2028-09-12",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R10 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0097",
+   "label": "主ポンプ用電動機 No.2 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2028-10-09",
+   "end": "2028-10-09",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R10 主ポンプ用電動機 No.2 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0098",
+   "label": "主ポンプ用電動機 No.1 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2028-10-16",
+   "end": "2028-10-16",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R10 主ポンプ用電動機 No.1 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0099",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2028-11-21",
+   "end": "2028-11-21",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R10 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0100",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2029-06-06",
+   "end": "2029-06-07",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R11 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0101",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2029-06-06",
+   "end": "2029-06-07",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R11 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0102",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2029-07-18",
+   "end": "2029-07-18",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R11 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0103",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2029-09-18",
+   "end": "2029-09-19",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R11 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0104",
+   "label": "主ポンプ用電動機 No.3 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2029-10-09",
+   "end": "2029-10-09",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R11 主ポンプ用電動機 No.3 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 17,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0105",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2029-11-06",
+   "end": "2029-11-06",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R11 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0106",
+   "label": "沈砂掻揚機 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2029-11-12",
+   "end": "2029-11-21",
+   "man_days": null,
+   "days": 10,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R11 沈砂掻揚機 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 10,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0107",
+   "label": "自動除塵機 No.2 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2030-06-07",
+   "end": "2030-06-08",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R12 自動除塵機 No.2 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 9,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0108",
+   "label": "自動除塵機 No.1 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2030-06-17",
+   "end": "2030-06-18",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空除塵機工業㈱",
+   "contract": "R12 自動除塵機 No.1 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 8,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0109",
+   "label": "吐出弁 作動点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2030-07-17",
+   "end": "2030-07-17",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R12 吐出弁 作動点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 18,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0110",
+   "label": "脱臭設備 活性炭取替",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2030-08-12",
+   "end": "2030-08-14",
+   "man_days": null,
+   "days": 3,
+   "vendor": "架空脱臭㈱",
+   "contract": "R12 脱臭設備 活性炭取替 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 24,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0111",
+   "label": "監視制御設備 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2030-09-10",
+   "end": "2030-09-11",
+   "man_days": null,
+   "days": 2,
+   "vendor": "架空計装㈱",
+   "contract": "R12 監視制御設備 定期点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 22,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0112",
+   "label": "主ポンプ用電動機 No.1 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2030-10-07",
+   "end": "2030-10-07",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R12 主ポンプ用電動機 No.1 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 13,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0113",
+   "label": "主ポンプ用電動機 No.2 絶縁診断",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2030-10-17",
+   "end": "2030-10-17",
+   "man_days": null,
+   "days": 1,
+   "vendor": "架空モータサービス㈱",
+   "contract": "R12 主ポンプ用電動機 No.2 絶縁診断 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 15,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0114",
+   "label": "受変電設備 年次点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2030-11-05",
+   "end": "2030-11-05",
+   "man_days": null,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R12 受変電設備 年次点検 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 20,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0115",
+   "label": "主ポンプ No.1 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2031-01-14",
+   "end": "2031-02-07",
+   "man_days": null,
+   "days": 25,
+   "vendor": "架空ポンプエンジニアリング㈱",
+   "contract": "R12 主ポンプ No.1 分解整備 業務",
+   "rows": [
+    {
+     "file": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx",
+     "sheet": "保全計画",
+     "r": 12,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0116",
+   "label": "吐出弁 No.2 弁棒グランド増締め",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2022-07-21",
+   "end": "2022-07-21",
+   "man_days": null,
+   "days": 1,
+   "vendor": "直営",
+   "contract": "直営",
+   "rows": []
+  }
+ ],
+ "unrecorded": [
+  {
+   "work": "W0116",
+   "reason": "直営の軽作業で、履歴のシステムに入れず計画表にも書かない"
+  }
+ ],
+ "defects": [
+  {
+   "kind": "周期の超え（主ポンプ No.3 の分解整備）",
+   "where": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx 2-3 主ポンプ No.3：H30 に実施、R5 は ○ のまま未実施、次は R8（8 年）",
+   "check": "分解整備の周期（5 年）"
+  },
+  {
+   "kind": "点検の予定の抜け（自家発電設備）",
+   "where": "【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx 3-2 自家発電設備：R7 以降の ○ が無い（備考「R7から更新を検討中」）",
+   "check": "自家発電設備の点検と負荷運転（毎年）"
+  }
+ ],
+ "note": "工数（人・日）を書いた資料が無いので、man_days は null。"
+}
