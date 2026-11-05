@@ -4,6 +4,7 @@
 .r{position:absolute;left:0;right:0;top:340px;text-align:center;font-size:28px;color:var(--sub)}
 .term{position:absolute;left:330px;right:330px;top:450px;padding:28px 36px;border:1px solid var(--line);border-radius:6px;font:22px/1.7 "IBM Plex Mono","IBM Plex Sans JP";color:var(--sub)}
 .term .ok{color:#8fb48a}
+.k{position:absolute;left:160px;top:130px;font-size:24px;color:var(--sub);letter-spacing:.06em}
 .map{position:absolute;left:160px;right:160px;top:200px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
 .map div{border:1px solid var(--line);border-radius:6px;padding:26px 24px;font-size:28px;color:var(--sub)}
 .map div i{display:block;font-style:normal;font-size:18px;margin-top:10px}
@@ -23,17 +24,20 @@
   <div class=term><span class=ok>✓</span> pack.second：し尿処理のパックで、取り込み → 当てはめ → 星取表<br>同じコードのまま通り、節の当てはめは正解と一致する<br><span style="color:#6a6a6a">質問 18・節 受けた 40/40・作業 受けた 51/98</span></div>
 </div>
 <div data-s=3>
-  <div class=map>
-    <div class=on>A 市町村の環境<i>ごみ焼却（起点）・し尿処理（済）</i></div>
-    <div>B 水<i>構想</i></div><div>C 河川<i>構想</i></div><div>D 道路<i>構想</i></div>
-    <div>E 公共建築<i>構想</i></div><div>F エネルギー<i>構想</i></div><div>G 産業プラント<i>構想</i></div><div>H 交通<i>構想</i></div>
-  </div>
+  <div class=k id=mapk></div>
+  <div class=map id=map></div>
   <div class=fan><b>送風機</b>の行 ── 焼却の誘引通風機・下水の送風機・ビルの空調機を、1 本の線で並べる（構想）</div>
 </div>
 <div class=cap><div class=ja id=ja></div><div class=en id=en></div></div>
 <div class=stamp></div>
 <div class=tag>【架空】の資料</div>
 <script>
+window.drawMap = (m) => {
+  document.getElementById("mapk").textContent = `設備の地図　${m.total} 行（パックの数。中身があるのは ${m.groups.reduce((n, g) => n + g.built.length, 0)}）`;
+  document.getElementById("map").innerHTML = m.groups.map((g) => g.built.length
+    ? `<div class=on>${g.id} ${g.name}<i>${g.built.join("・")}・ほか ${g.count - g.built.length} 種（構想）</i></div>`
+    : `<div>${g.id} ${g.name}<i>${g.count} 種・構想</i></div>`).join("");
+};
 window.CAPS = {
   1: ["ごみ焼却の国の基準を、データにした。判定はコード、説明は Claude。", "We turned the national standards into data. Code judges; Claude explains."],
   2: ["し尿処理は、パックを足しただけで動いた。", "Night soil treatment ran by adding a pack, with no code change."],

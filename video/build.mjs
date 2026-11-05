@@ -2,7 +2,7 @@
 // 最後にまとめて作らず、開発と並行して短い動画を作り直し続けるための道具（video/SCRIPT.md）。
 // 数字は描くときにリポジトリから数える（ここでは全国の稼働の施設の数を packs の表から読む）。
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "@playwright/test";
@@ -54,11 +54,29 @@ function checkCount() {
   return (Array.isArray(c) ? c : c.checks).length;
 }
 
+// 設備の地図：packs/_kinds/groups.json の群と、各パックの pack.json の群・中身（描くときに数える）
+function packMap() {
+  const groups = JSON.parse(readFileSync(join(root, "packs/_kinds/groups.json"), "utf8")).groups;
+  const packs = readdirSync(join(root, "packs"), { withFileTypes: true })
+    .filter((d) => d.isDirectory() && !d.name.startsWith("_") && existsSync(join(root, "packs", d.name, "pack.json")))
+    .map((d) => JSON.parse(readFileSync(join(root, "packs", d.name, "pack.json"), "utf8")));
+  return {
+    total: packs.length,
+    groups: groups.map((g) => {
+      const mine = packs.filter((p) => p.group === g.id);
+      const rank = (p) => { const i = (g.order ?? []).indexOf(p.id); return i < 0 ? 99 : i; };
+      mine.sort((a, b) => rank(a) - rank(b));
+      return { id: g.id, name: g.name, count: mine.length, built: mine.filter((p) => (p.content ?? "full") !== "empty").map((p) => p.name) };
+    }),
+  };
+}
+
 async function render(frames, dir, stamp) {
   const browser = await chromium.launch({ channel: "chrome" });
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   const pop = nationalActive();
   const checks = checkCount();
+  const map = packMap();
   const files = [];
   for (const [i, f] of frames.entries()) {
     const url = f.shot
@@ -66,7 +84,7 @@ async function render(frames, dir, stamp) {
       : pathToFileURL(join(here, `cards/${f.card}.html`)).href;
     await page.goto(url);
     await page.evaluate(
-      ({ step, stamp, pop, checks }) => {
+      ({ step, stamp, pop, checks, map }) => {
         for (const el of document.querySelectorAll("[data-s]")) {
           const until = el.dataset.until ? Number(el.dataset.until) : Infinity;
           el.classList.toggle("on", Number(el.dataset.s) <= step && step <= until);
@@ -80,8 +98,9 @@ async function render(frames, dir, stamp) {
         const p = document.getElementById("pop");
         if (p) p.textContent = pop;
         for (const el of document.querySelectorAll(".checks")) el.textContent = String(checks);
+        window.drawMap?.(map);
       },
-      { step: f.step ?? 0, stamp, pop, checks },
+      { step: f.step ?? 0, stamp, pop, checks, map },
     );
     await page.evaluate(() => document.fonts.ready);
     await page.waitForFunction(() => [...document.images].every((im) => im.complete));
