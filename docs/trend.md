@@ -9,7 +9,7 @@
 |---|---|---|---:|---:|---|
 | 2026-11-03 | 21:58 | `3f98947`+ | 138 | 599 | 通った |
 | 2026-11-04 | 09:17 | `f469ab7`+ | 140 | 656 | 通った |
-| 2026-11-05 | 01:34 | `cc53ee3` | 153 | 848 | 通った |
+| 2026-11-05 | 13:00 | `8f95b9e` | 153 | 928 | 通った |
 
 ## 取り込みの物差し（import.dev、工場の開発用の資料）
 
@@ -117,6 +117,16 @@
 | heldout-3 | reader-freeze-3 | 2026-11-04 09:16 | report/R6-2go-teiki-seibi_jisseki.pdf | pdf | 128 | 60 | 計画なし（測れない） |
 | heldout-3 | reader-freeze-3 | 2026-11-04 09:16 | report/2023-zenkyushi-tenken_shukei.pdf | pdf | 14 | 8 | 計画なし（測れない） |
 | heldout-3 | reader-freeze-3 | 2026-11-04 09:16 | photo/IMG_20231006_093214.jpg | jpg | 読んでいない | — | — |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-ashihara/【架空】葦原環境センター_作業日報_R8.9月.xlsx | xlsx | 0 | 0 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-ashihara/【架空】葦原環境センター_修繕点検費実績_R6-R8.xlsx | xlsx | 0 | 20 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-kirinodai/【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf | pdf | 測っていない | 170 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-kirinodai/【架空】霧野台清掃工場_作業日報データ_R7-R8.csv | csv | 0 | 2073 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-kirinodai/【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx | xlsx | 0 | 533 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-kirinodai/【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg | jpg | 読んでいない | — | — |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-shiomigawa/【架空】汐見川衛生センター_機器台帳.pdf | pdf | 測っていない | 11 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-shiomigawa/【架空】汐見川衛生センター_設備点検記録_R6.xlsx | xlsx | 0 | 856 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-yanase/【架空】柳瀬中継ポンプ場_保全計画表_H30-R12.xlsx | xlsx | 0 | 18 | 計画なし（測れない） |
+| heldout-5 | reader-freeze-6 | 2026-11-05 12:52 | f-yanase/【架空】柳瀬中継ポンプ場_修繕点検履歴_H30-R7.csv | csv | 0 | 349 | 計画なし（測れない） |
 | moyai-heldout-4 | reader-freeze-5 | 2026-11-05 01:27 | f-ashihara/【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf | pdf | 測っていない | 184 | 計画なし（測れない） |
 | moyai-heldout-4 | reader-freeze-5 | 2026-11-05 01:27 | f-ashihara/【架空】葦原CP_作業日報データ_R7年度.csv | csv | 0 | 156 | 計画なし（測れない） |
 | moyai-heldout-4 | reader-freeze-5 | 2026-11-05 01:27 | f-ashihara/【架空】葦原CP_設備整備計画表_R1-R12.xlsx | xlsx | 0 | 524 | 計画なし（測れない） |
@@ -133,6 +143,7 @@
 | heldout-1 | 24（9・15） | 作らなかった（未解決のセル 1428・答えの無い質問 15） | 0%（0/142） | 0%（0/60） | 0%（0/73） |
 | heldout-2 | 63（22・41） | 作らなかった（未解決のセル 917・答えの無い質問 41） | 0%（0/142） | 0%（0/63） | 0%（0/83） |
 | heldout-3 | 76（52・24） | 作らなかった（未解決のセル 5196・答えの無い質問 24） | 0%（0/142） | 0%（0/64） | 0%（0/104） |
+| heldout-5 | 103（78・25） | 作らなかった（f-ashihara：未解決のセル 20・f-ashihara：答えの無い質問 2・f-kirinodai：未解決のセル 2776・f-kirinodai：答えの無い質問 3・f-shiomigawa：未解決のセル 867・f-shiomigawa：答えの無い質問 14・f-yanase：未解決のセル 367・f-yanase：答えの無い質問 6） | 0%（0/358） | 0%（0/151） | 0%（0/77） |
 | moyai-heldout-4 | 215（145・70） | 作らなかった（f-ashihara：未解決のセル 864・f-ashihara：答えの無い質問 17・f-kirinose：未解決のセル 379・f-kirinose：答えの無い質問 35・f-oboroya：未解決のセル 511・f-oboroya：答えの無い質問 6・f-tenkyodai：未解決のセル 478・f-tenkyodai：答えの無い質問 12） | 0%（0/501） | 0%（0/90） | 0%（0/18） |
 
 見ていない様式の結果は、測った値のまま出す（直したら、新しい組を新しい凍結の読み手で測る）。手順と正解の形は samples/heldout/README.md。写真は AI が読むので、この台本では読まない。
