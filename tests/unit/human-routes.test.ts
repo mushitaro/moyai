@@ -12,6 +12,9 @@ import { EXPOSED_TOOL_NAMES, TOOL_NAMES } from "../../src/shared/tools";
 import { truthToPlan } from "../fixtures/chart/truth-to-plan.mjs";
 import { fileURLToPath } from "node:url";
 import ExcelJS from "exceljs";
+import { exportExcelName, exportSignatureName, signExport } from "../../src/plan/exports";
+import { signLatest } from "../../src/plan/store";
+import { otherSigner } from "../helpers/signer";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { FakeTab, SECRET_A, http, startTestBridge, type TestBridge } from "../helpers/bridge";
 import { STUB_TOKEN, startGitHubStub } from "../helpers/github-stub";
@@ -235,6 +238,28 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect((await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).reason).toBe("fileChanged");
     writeFileSync(xl, keep);
     expect((await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: "0".repeat(64) })).reason).toBe("templateUnknown");
+    // 保存先に書ける人が、自分で作った鍵で偽の Excel と先の時刻の書き出しの署名を置いても、信じる鍵の書き出しが落ちる。
+    // 渡した書き出しの署名者を返す（画面は、その 1 つについて鍵の警告を出す。Architect の 3C の直し）
+    const forger = otherSigner("【架空】書き換えた人");
+    const fake = Buffer.from("PK偽の Excel");
+    const fakeHash = createHash("sha256").update(fake).digest("hex");
+    const pdir = join(docs, "MOYAI", "plans", plan.planId);
+    const st1x = await call("planStatus", { planId: plan.planId });
+    const tpl1 = st1x.versions[0].exports.find((x: { template: { version: string } }) => x.template.version === saved.version).template;
+    writeFileSync(join(pdir, "exports", exportExcelName(1, fakeHash)), fake);
+    const forged = signExport({ planId: plan.planId, version: 1, contentHash: st1x.versions[0].contentHash, by: forger.by, at: "2099-01-01T00:00:00.000Z", template: tpl1, excel: fakeHash }, forger.pair);
+    writeFileSync(join(pdir, "signatures", exportSignatureName(1, keyIdOf(forger.pair.pub), fakeHash)), JSON.stringify(forged));
+    const got2 = await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version });
+    expect(createHash("sha256").update(Buffer.from(got2.base64, "base64")).digest("hex")).toBe(sx.excel);
+    expect(got2.signer).toMatchObject({ by: "【架空】試験の人", trust: "own" });
+    // template.version が file・columns と食い違う署名は、形の外れとして数えない（Architect の小 2）
+    const odd = signExport({ planId: plan.planId, version: 1, contentHash: st1x.versions[0].contentHash, by: forger.by, at: "2099-01-01T00:00:00.000Z", template: { ...tpl1, version: "f".repeat(64) }, excel: fakeHash }, forger.pair);
+    writeFileSync(join(pdir, "signatures", exportSignatureName(1, keyIdOf(forger.pair.pub), "f".repeat(64))), JSON.stringify(odd));
+    expect((await call("planStatus", { planId: plan.planId })).versions[0].exports.some((x: { template: { version: string } }) => x.template.version === "f".repeat(64))).toBe(false);
+    // 先に別の中身が同じ名前で置かれていても、書き出すと置き換える（落とすたびに fileChanged にしない。Architect の小 1）
+    writeFileSync(join(pdir, "exports", exportExcelName(1, sx.excel)), Buffer.from("PK別の中身"));
+    expect((await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).ok).toBe(true);
+    expect((await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).ok).toBe(true);
 
     // 輪を作る
     const ringRoot = join(extra, "輪");
@@ -301,6 +326,10 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     // 新しく書き出せるのは最新の版だけ。古い版でも、もう置いてある書き出しは落とせる（Architect の縛り 4）
     expect((await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).reason).toBe("notLatest");
     expect((await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).ok).toBe(true);
+    // 差戻された版は書き出さない（Architect の縛り 4）
+    const returner = otherSigner("【架空】差し戻した人");
+    expect(await signLatest({ root: join(docs, "MOYAI"), planId: plan.planId, version: 2, role: "return", reason: "直してください", signer: returner })).toMatchObject({ ok: true, role: "return" });
+    expect((await call("exportSign", { planId: plan.planId, version: 2, name: "【架空】様式3", templateVersion: saved.version })).reason).toBe("returned");
     // 版が変わったので、前の版で見た検問所からは送らない
     const stale = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash });
     expect(stale.reason).toBe("versionChanged");
