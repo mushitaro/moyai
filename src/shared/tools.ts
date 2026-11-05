@@ -566,8 +566,8 @@ export const TOOLS = {
     "reading_skill_register",
     "propose",
     "読み方を保管先に未承認で書く",
-    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：by の担当者、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
-    z.object({ name: z.string().min(1).max(80), by: z.string().min(1).max(40).optional() }),
+    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：この PC の設定の呼び名の担当者。担当者を AI が選ぶ道は無い、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
+    z.object({ name: z.string().min(1).max(80) }),
     z.object({ path: z.string(), version: z.string(), approved: z.boolean(), rules: z.number().int() }),
   ),
   reading_skills_list: def(

@@ -1,5 +1,6 @@
 // 橋渡し（moyai start）：1 プロセス、127.0.0.1 の 1 ポート。
 // HTTP は許可の一覧（src/shared/routes.ts）の経路だけを受け、WebSocket はタブ 1 つだけを受ける。
+import { readSettings } from "./places";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
@@ -152,7 +153,9 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     reading_skill_register: async (fromTab) => {
       const root = await human.root();
       if (!root) return "no_reading_root";
-      const w = await registerReading(root, fromTab.skill, typeof fromTab.by === "string" ? fromTab.by : null, typeof fromTab.facilityKey === "string" ? fromTab.facilityKey : null);
+      // 担当者は、この PC の設定の呼び名（人の経路と同じ。AI の引数やタブの答えからは取らない。監-3）
+      const by = sd ? readSettings(sd).name : null;
+      const w = await registerReading(root, fromTab.skill, by, typeof fromTab.facilityKey === "string" ? fromTab.facilityKey : null);
       if (!w.ok) return "tab_bad_result";
       const approved = (await approvedReadingVersions(root, trusted)).has(w.version);
       return { path: w.path, version: w.version, approved, rules: w.rules };

@@ -70,7 +70,15 @@ function ledgerRequest(args: Record<string, unknown>): TabToolResult {
   const working = getWorkingPlan();
   if (!working) return { ok: false, code: "no_working_plan" };
   const f = working.plan.facility;
-  return { ok: true, data: { mode: "ledger", packId: working.plan.packId, facility: { scale: f.scale, scaleUnit: f.scaleUnit }, answers: args.answers ?? null, commonItem: args.commonItem ?? null } };
+  // 見え方の答えは、人が施設に答えたものを先に使い、AI の答え（会話から）は人が答えていない軸にだけ使う（監-4）
+  const ai = (args.answers ?? null) as { facility?: Record<string, string | null>; inNationalTable?: boolean | null } | null;
+  const human = f.profile ?? {};
+  const hasHuman = Object.keys(human).length > 0 || f.inNationalTable !== null;
+  const answers =
+    ai || hasHuman
+      ? { facility: { ...(ai?.facility ?? {}), ...human }, inNationalTable: f.inNationalTable ?? ai?.inNationalTable ?? null }
+      : null;
+  return { ok: true, data: { mode: "ledger", packId: working.plan.packId, facility: { scale: f.scale, scaleUnit: f.scaleUnit }, answers, commonItem: args.commonItem ?? null } };
 }
 
 /** 周期の案を置く（chart_propose。docs/plan.md §2.18.4）：足すだけ。引いた印は作者 AI で、人が決定のシートで受けるまで決まらない */
@@ -118,7 +126,8 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   reading_skill_register: (ws, args) => {
     const d = ws.draftReading(String(args.name));
     if (!d) return { ok: false, code: "no_reading_draft" };
-    return { ok: true, data: { skill: d.skill, by: typeof args.by === "string" ? args.by : null, facilityKey: ws.facilityKey() } };
+    // 担当者は橋渡しが設定の呼び名から決める（AI の引数から取らない。監-3）
+    return { ok: true, data: { skill: d.skill, facilityKey: ws.facilityKey() } };
   },
   peer_reference: (_ws, args) => (args.place === "ledger" ? ledgerRequest(args) : peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined)),
   intake_survey: (ws, args) => {
