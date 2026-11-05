@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // docs/acceptance.md（docs/plan.md §5.1 の表）を、試験の実行から作る（§5.2 の 4）。手で書かない。
 // 試験の名前と試験のファイルの対応は tests/acceptance-map.json の 1 か所。名前の並びは docs/plan.md §5.1 の表から読む。
-// 結果は 4 つだけ：通った／落ちた／試験が無い／測っていない。緑でないものを緑と書かない：
+// 結果は 5 つだけ：通った／一部（範囲の注を見る）／落ちた／試験が無い／測っていない。緑でないものを緑と書かない：
+//   - 「通った」は、対応する試験が §5.1 の合格の条件まで確かめていて、すべて通った行だけ。
+//   - 対応表に範囲の注（scope）がある行は、試験が通っても合格の条件まで届いていないので「一部（範囲の注を見る）」。
 //   - 対応する試験が無い名前は「試験が無い」（作らない）。
 //   - 試験はあるが、この実行の報告に無い（Playwright を走らせていない、ファイルが走らなかった、全部飛ばした）なら「測っていない」。
 //   - 1 つでも落ちれば「落ちた」。
@@ -22,7 +24,14 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 export const REPO = resolve(fileURLToPath(new URL("..", import.meta.url)));
 export const MAP = "tests/acceptance-map.json";
 export const OUT = "docs/acceptance.md";
-export const STATUS = { pass: "通った", fail: "落ちた", none: "試験が無い", unmeasured: "測っていない" };
+export const STATUS = { pass: "通った", partial: "一部（範囲の注を見る）", fail: "落ちた", none: "試験が無い", unmeasured: "測っていない" };
+/** 数の並び（表の頭と端末の 1 行） */
+export const STATUS_ORDER = ["pass", "partial", "fail", "none", "unmeasured"];
+const SHORT = { pass: "通った", partial: "一部", fail: "落ちた", none: "試験が無い", unmeasured: "測っていない" };
+/** 「通った n・一部 n・落ちた n・試験が無い n・測っていない n」 */
+export function tally(rows) {
+  return STATUS_ORDER.map((k) => `${SHORT[k]} ${rows.filter((r) => r.status === STATUS[k]).length}`).join("・");
+}
 
 /** docs/plan.md §5.1 の表の、試験の名前の並び */
 export function planNames(planText) {
@@ -138,7 +147,7 @@ export function judge(names, map, reports, commands = {}) {
       if (p + f === 0) unmeasured = true;
       srcOut.push({ ...s, mark: p + f + k === 0 ? "報告に無い" : `通った ${p}・落ちた ${f}${k ? `・飛ばした ${k}` : ""}` });
     }
-    const status = failed > 0 ? STATUS.fail : unmeasured || passed === 0 ? STATUS.unmeasured : STATUS.pass;
+    const status = failed > 0 ? STATUS.fail : unmeasured || passed === 0 ? STATUS.unmeasured : row.scope ? STATUS.partial : STATUS.pass;
     rows.push({ name, status, passed, failed, skipped, sources: srcOut, scope: row.scope ?? null });
   }
   return rows;
@@ -149,18 +158,17 @@ const cell = (s) => String(s).replace(/\|/g, "\\|").replace(/\n/g, " ");
 /** docs/acceptance.md の本文 */
 export function render(rows, meta) {
   const L = [];
-  const count = (st) => rows.filter((r) => r.status === st).length;
   L.push("# 受け入れの試験（docs/plan.md §5.1）");
   L.push("");
   L.push(
     "`node scripts/acceptance.mjs`（または `node scripts/trend.mjs`）が、試験の実行の報告から作ります。手で直さないでください。試験の名前と試験のファイルの対応は `tests/acceptance-map.json` の 1 か所で、名前の並びと合格の条件は `docs/plan.md` §5.1 の表です。",
   );
   L.push("");
-  L.push("結果は 4 つです：通った（対応する試験がすべて通った）／落ちた（1 つでも落ちた）／試験が無い（対応する試験を作っていない）／測っていない（試験はあるが、この実行で走っていない）。「通った」は、対応する試験が通ったことで、§5.1 の合格の条件をすべて確かめたとは限りません（範囲の注を見てください）。");
+  L.push("結果は 5 つです：通った（対応する試験が §5.1 の合格の条件まで確かめ、すべて通った）／一部（範囲の注を見る。対応する試験は通ったが、合格の条件の一部しか確かめていない）／落ちた（1 つでも落ちた）／試験が無い（対応する試験を作っていない）／測っていない（試験はあるが、この実行で走っていない）。");
   L.push("");
   L.push(`- 作った時刻：${meta.date} ${meta.time} JST・コミット \`${meta.commit}\`${meta.dirty ? "（コミットしていない変更あり）" : ""}`);
   L.push(`- 報告：node:test ${meta.counts.node ?? "無し"}・vitest ${meta.counts.vitest ?? "無し"}・Playwright ${meta.counts.playwright ?? "渡していない（測っていない）"}`);
-  L.push(`- ${STATUS.pass} ${count(STATUS.pass)}・${STATUS.fail} ${count(STATUS.fail)}・${STATUS.none} ${count(STATUS.none)}・${STATUS.unmeasured} ${count(STATUS.unmeasured)}（全 ${rows.length}）`);
+  L.push(`- ${tally(rows)}（全 ${rows.length}）`);
   L.push("");
   L.push("| 試験の名前 | 結果 | 通った・落ちた | 対応する試験 | 範囲の注 |");
   L.push("|---|---|---|---|---|");
@@ -250,8 +258,7 @@ function main() {
   const reports = readReports(dir, a.playwright);
   if (tmp) rmSync(tmp, { recursive: true, force: true });
   const rows = writeAcceptance({ reports, out: a.out });
-  const c = (st) => rows.filter((r) => r.status === st).length;
-  console.log(`acceptance: ${STATUS.pass} ${c(STATUS.pass)}・${STATUS.fail} ${c(STATUS.fail)}・${STATUS.none} ${c(STATUS.none)}・${STATUS.unmeasured} ${c(STATUS.unmeasured)} → ${a.out}`);
+  console.log(`acceptance: ${tally(rows)} → ${a.out}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

@@ -7,6 +7,11 @@ import { parseJsonStrict } from "./jcs";
 import { HEX16 } from "./sign";
 
 export const DEMO_RING_FILE = "demo-ring.json";
+/**
+ * リポジトリのデモの輪の ID（コミットした demo-ring/<輪ID>/）。verify demo-ring は、demo-ring.json の ring がこれと同じときだけ受ける
+ * （自分で作った輪に demo-ring.json を置いて「全員 ✓」と出させないため）。道具で輪を作り直したら、ここも同じ変更で直す。
+ */
+export const DEMO_RING_ID = "280b431a5d3351ca";
 export const DEMO_RING_V = "moyai.demo-ring/0";
 
 export interface DemoRingManifest {

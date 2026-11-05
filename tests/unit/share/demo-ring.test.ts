@@ -12,7 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DEMO_RING_REJECT_WORLD, DEMO_RING_WORLDS, buildDemoRing, type DemoRingResult } from "../../../scripts/demo-ring/demo-ring-core";
 import { resolveDemoRingDir, verifyDemoRingCli, verifyRingCli } from "../../../src/cli/human";
 import { verifyRing } from "../../../src/share/checkpoint";
-import { DEMO_RING_FILE, judgeDemoRing, parseDemoRingManifest, type DemoRingManifest } from "../../../src/share/demo-ring";
+import { DEMO_RING_FILE, DEMO_RING_ID, judgeDemoRing, parseDemoRingManifest, type DemoRingManifest } from "../../../src/share/demo-ring";
 import { loadSharePack } from "../../../src/share/pack";
 import { ROOT } from "./fixtures";
 
@@ -45,6 +45,7 @@ afterAll(() => {
 describe("verify demo-ring：コミットしたデモの輪", () => {
   it("全員 ✓（拠点 7）、わざと入れた ✗ の束は理由つきで ✗。CLI の終了コードは 0", async () => {
     const m = manifestOf(DEMO);
+    expect(m.ring).toBe(DEMO_RING_ID);
     expect(m.confirmed.filter((c) => c.role === "site")).toHaveLength(7);
     const rep = await verifyRing(DEMO, m.ring, pack, new Set(m.confirmed.map((c) => c.key)));
     const j = judgeDemoRing(rep, m);
@@ -125,6 +126,16 @@ describe("verify demo-ring：外れを見つける（写したデモの輪で）
     expect(await verifyDemoRingCli(["demo-ring", d], { packsDir })).toBe(1);
   });
 
+  it("ほかの輪に demo-ring.json を置いても受けない（輪がリポジトリのデモの輪でなければ 2）", async () => {
+    const d = copy("other");
+    const m = manifestOf(d);
+    const fake = "0123456789abcdef";
+    cpSync(join(d, m.ring), join(d, fake), { recursive: true });
+    rmSync(join(d, m.ring), { recursive: true, force: true });
+    writeFileSync(join(d, DEMO_RING_FILE), JSON.stringify({ ...m, ring: fake }));
+    expect(await verifyDemoRingCli(["demo-ring", d], { packsDir })).toBe(2);
+  });
+
   it("約束のファイルが無いか形が違えば 1、引数が違えば 2", async () => {
     const d = copy("nomanifest");
     rmSync(join(d, DEMO_RING_FILE));
@@ -140,7 +151,10 @@ describe("デモの輪を作る道具", () => {
     expect(built.sites.map((s) => s.world)).toEqual([...DEMO_RING_WORLDS]);
     for (const s of built.sites) expect(s.k).toBeGreaterThanOrEqual(5);
     expect(judgeDemoRing(built.report, built.manifest).ok).toBe(true);
-    expect(await verifyDemoRingCli(["demo-ring", join(tmp, "out")], { packsDir })).toBe(0);
+    // 作り直した輪は鍵が変わるので輪 ID も変わる。端末からは受けず（2）、試験だけが ID を渡して確かめる
+    expect(built.ringId).not.toBe(DEMO_RING_ID);
+    expect(await verifyDemoRingCli(["demo-ring", join(tmp, "out")], { packsDir })).toBe(2);
+    expect(await verifyDemoRingCli(["demo-ring", join(tmp, "out")], { packsDir, ringId: built.ringId })).toBe(0);
   });
 
   it("仲間が 5 に届いた拠点（6 つめ・7 つめ）だけ、輪だけに出す UPGRADE の塊が入りうる。前の 5 拠点には入らない", () => {

@@ -1,5 +1,5 @@
 {
-  "note": "docs/plan.md §5.1 の試験の名前と、実際の試験の対応（この 1 か所）。scripts/acceptance.mjs がこれと試験の実行の報告から docs/acceptance.md を作る。sources が空の名前は「試験が無い」と書く（作らない）。scope は、対応する試験が §5.1 の合格の一部しか確かめていないときの注。runner は vitest・node（node:test）・playwright・command（リポジトリの道具を走らせ、終了コード 0 なら通った）。title があれば、その文字を名前に含む試験だけを数える。",
+  "note": "docs/plan.md §5.1 の試験の名前と、実際の試験の対応（この 1 か所）。scripts/acceptance.mjs がこれと試験の実行の報告から docs/acceptance.md を作る。sources が空の名前は「試験が無い」と書く（作らない）。scope は、対応する試験が §5.1 の合格の一部しか確かめていないときの注（試験がある行に scope があれば、通っても「一部（範囲の注を見る）」になる）。runner は vitest・node（node:test）・playwright・command（リポジトリの道具を走らせ、終了コード 0 なら通った）。title があれば、その文字を名前に含む試験だけを数える。",
   "rows": [
     {
       "name": "import.dev",

@@ -31,6 +31,7 @@ const M = {
     { name: "d", sources: [{ runner: "playwright", file: "tests/e2e/d.spec.ts" }] },
     { name: "e", sources: [{ runner: "vitest", file: "tests/e.test.ts", title: "e.only" }] },
     { name: "f", sources: [{ runner: "command", file: "scripts/x.mjs" }] },
+    { name: "h", sources: [{ runner: "vitest", file: "tests/a.test.ts" }], scope: "合格の条件の一部だけ" },
   ],
 };
 const vitest = fromVitest(
@@ -55,6 +56,7 @@ test("通った・落ちた・試験が無い・測っていない を分ける�
   assert.equal(by.e, STATUS.pass); // 「e.only」の試験だけを数える
   assert.equal(by.f, STATUS.pass); // 道具の終了コード 0
   assert.equal(by.g, STATUS.none); // 対応表に無い名前も「無い」
+  assert.equal(judge(["h"], M, { vitest, node, playwright: null })[0].status, STATUS.partial); // 範囲の注がある行は通っても「一部」
   assert.equal(rows.find((r) => r.name === "g").scope, "対応表に名前が無い");
 });
 
@@ -94,10 +96,11 @@ test("Playwright の報告：ブラウザの組ごとに数え、やり直して
   assert.equal(ok.status, STATUS.pass);
 });
 
-test("表には 4 つの結果の数と、試験が無い名前の一覧が出る", () => {
-  const rows = judge(["a", "c", "d"], M, { vitest, node, playwright: null });
+test("表には 5 つの結果の数と、試験が無い名前の一覧が出る", () => {
+  const rows = judge(["a", "c", "d", "h"], M, { vitest, node, playwright: null });
   const md = render(rows, { date: "2026-11-05", time: "12:00", commit: "abc1234", dirty: false, counts: { node: 1, vitest: 5, playwright: null } });
-  assert.match(md, /通った 1・落ちた 0・試験が無い 1・測っていない 1（全 3）/);
+  assert.match(md, /通った 1・一部 1・落ちた 0・試験が無い 1・測っていない 1（全 4）/);
+  assert.match(md, /\| `h` \| 一部（範囲の注を見る） \|/);
   assert.match(md, /Playwright 渡していない（測っていない）/);
   assert.match(md, /試験が無い名前：`c`。/);
   assert.match(md, /\| `a` \| 通った \|/);

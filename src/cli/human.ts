@@ -20,7 +20,7 @@ import { createRing, verifyRing, type VerifyReport } from "../share/checkpoint";
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, resolvePacksDir } from "../share/pack";
 import { CIRCLE_FILE } from "../share/ring";
-import { DEMO_RING_FILE, judgeDemoRing, parseDemoRingManifest } from "../share/demo-ring";
+import { DEMO_RING_FILE, DEMO_RING_ID, judgeDemoRing, parseDemoRingManifest } from "../share/demo-ring";
 import { HEX16, fingerprint, isWrappedKey, keyIdOf, toPlainKey, unwrapPrivateKey, WrongPassphrase, type WrappedKey } from "../share/sign";
 
 export const CLI_TEXT = {
@@ -40,6 +40,8 @@ export const CLI_TEXT = {
   notBundleFiles: (n: number) => `束の形をしていないファイル ${n} 件`,
   summaryOk: "すべて ✓ です。",
   demoUsage: "使い方：moyai verify demo-ring [<デモの輪のフォルダ>]（省くとリポジトリの demo-ring/）",
+  demoNotOurs: (got: string, want: string) =>
+    `デモの輪ではありません：${DEMO_RING_FILE} の輪 ${got} は、リポジトリのデモの輪 ${want} と違います（ほかの輪は moyai verify ring で確かめてください）`,
   demoNoManifest: (p: string) => `デモの輪の約束のファイル（${DEMO_RING_FILE}）を読めません：${p}`,
   demoConfirmedNote: (n: number) => `デモの輪：指紋の読み合わせの代わりに、${DEMO_RING_FILE} の ${n} 個の鍵を確認済みに数えます（あなたの状態フォルダは読みません）`,
   demoExpectedNg: (what: string) => `  （${what} の ✗ は、わざと入れた束によるものです。約束の理由で ✗ になりました）`,
@@ -173,9 +175,10 @@ export function resolveDemoRingDir(from: string = import.meta.url): string {
 
 /**
  * verify demo-ring。verify ring と同じ関数（verifyRing）で確かめ、全員 ✓・わざと入れた ✗ が約束の理由で ✗ なら 0、
- * 約束と違えば 1、引数が違えば 2 を返す。
+ * 約束と違えば 1、引数が違うか、demo-ring.json の輪がリポジトリのデモの輪（DEMO_RING_ID）でなければ 2 を返す。
+ * ringId は試験だけが渡す（道具で一時のフォルダに作り直した輪を確かめるため。端末の引数からは変えられない）。
  */
-export async function verifyDemoRingCli(argv: string[], o: { packsDir?: string } = {}): Promise<number> {
+export async function verifyDemoRingCli(argv: string[], o: { packsDir?: string; ringId?: string } = {}): Promise<number> {
   const [what, folder, ...rest] = argv;
   if (what !== "demo-ring" || rest.length > 0) {
     say(CLI_TEXT.demoUsage);
@@ -191,6 +194,11 @@ export async function verifyDemoRingCli(argv: string[], o: { packsDir?: string }
   if (!manifest) {
     say(CLI_TEXT.demoNoManifest(dir));
     return 1;
+  }
+  const want = o.ringId ?? DEMO_RING_ID;
+  if (manifest.ring !== want) {
+    say(CLI_TEXT.demoNotOurs(manifest.ring, want));
+    return 2;
   }
   const rings = ringsAt(dir);
   if (rings.length !== 1 || rings[0]!.ringId !== manifest.ring) {
