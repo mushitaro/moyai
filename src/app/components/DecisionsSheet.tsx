@@ -27,13 +27,25 @@ const T = HUMAN_TEXT.decisions;
 const KINDS = ["same", "crosswalk", "ledger", "relayed", "ai"] as const;
 type Kind = (typeof KINDS)[number];
 const W = TEXT.crosswalk;
+const NO_PROPOSALS: readonly CrosswalkProposal[] = [];
 
-/** 受けていない決定（版の履歴で受けたものを除く）。署名のダイアログと下の帯も同じ数を使う */
-export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; ready: boolean } {
+/**
+ * 受けていない決定（版の履歴で受けたものを除く）。署名のダイアログと下の帯も同じ数を使う。
+ * 案のままの当てはめの規則が当てている行は、決定の 1 行ずつには出さない（規則の行で受ける。二重に出さない。台帳の新-4）。
+ * openRules は案のままの規則の数（下の帯の数に足す）
+ */
+export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; ready: boolean } {
   const [load] = usePlanStatus(client, plan?.planId ?? "", !!plan);
   const status = load.kind === "ready" ? load.status : null;
-  const pending = useMemo(() => (plan && status ? pendingDecisions(plan, status.accepted ?? []) : []), [plan, status]);
-  return { pending, ready: !!status };
+  const working = useWorkingPlan();
+  const proposals = working?.proposals ?? NO_PROPOSALS;
+  const pending = useMemo(() => {
+    if (!plan || !status) return [];
+    const held = new Set<string>();
+    for (const p of proposals) if (p.state === "proposed") for (const ref of heldRows(plan, p)) held.add(ref.startsWith("n:") ? `item:${ref.slice(2)}` : `attr:${ref.slice(2)}`);
+    return pendingDecisions(plan, status.accepted ?? []).filter((d) => !held.has(d.id));
+  }, [plan, status, proposals]);
+  return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, ready: !!status };
 }
 
 /** 規則の条件の値を人の言葉で（節や作業の鍵の条件は、その名前に読み替える） */

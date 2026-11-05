@@ -65,7 +65,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const plan = working?.plan ?? null;
   const { state: conn } = useConnection();
   const accepted = useAccepted();
-  const { pending } = usePending(client, plan);
+  const { pending, openRules } = usePending(client, plan);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [over, setOver] = useState(false);
@@ -267,7 +267,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const nextVersion = viewingOld ?? ((awaitingMe || askedApprove) && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
   const an = ws.fileCount ? ws.analysis() : null;
   const openQuestions = an ? an.open.length : 0;
-  const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length;
+  // 受けていない決定と、案のままの当てはめの規則（規則が当てている行は決定に二重に数えない。台帳の新-4）
+  const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules;
   // 白紙のあいだに「第 1 版をつくる」を止めている理由（取り込みと同じもの）
   const composeBlocks = !plan ? ws.composeBlockers() : [];
   const blocks = [
