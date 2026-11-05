@@ -752,3 +752,62 @@ button.moyai-top-mk[data-kind="signed"] {
   margin: 6px 0 0 0;
   align-self: flex-start;
 }
+
+/* 【業種】（設備の地図）：群の見出しの下に、設備の種類を 1 行ずつ。中身のある行は ✓ と墨、空の行と作らない行は淡い字。選んだ行は左に墨の罫（朱は判断が要る所だけ） */
+.moyai-industry-head {
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
+.moyai-industry-dim {
+  color: var(--text-3);
+}
+.moyai-industry-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.moyai-industry-row {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-3);
+  border: 0;
+  border-left: 2px solid transparent;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  text-align: left;
+}
+button.moyai-industry-row {
+  cursor: pointer;
+}
+button.moyai-industry-row:hover {
+  color: var(--text-2);
+}
+.moyai-industry-row[data-kind="empty"],
+.moyai-industry-row[data-kind="notBuilt"] {
+  color: var(--text-3);
+}
+.moyai-industry-row[aria-expanded="true"] {
+  border-left-color: var(--text);
+}
+.moyai-industry-mark {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.moyai-industry-row[data-kind="content"] .moyai-industry-mark {
+  color: var(--text);
+}
+.moyai-industry-row[data-kind="notBuilt"] .moyai-industry-mark {
+  flex: 0 1 auto;
+  text-align: right;
+}
+.moyai-industry-detail {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-left: 2px solid var(--text);
+  border-bottom: 1px solid var(--line);
+}

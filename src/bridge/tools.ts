@@ -65,8 +65,8 @@ export interface OutboundEntry {
   imageBytes: number | null;
 }
 
-/** 台帳に残す行の数の上限（古いものから捨てる。会話ごとの合計は捨てない） */
-const OUTBOUND_MAX = 2000;
+/** 台帳に持つ行の数の上限（橋渡しのメモリだけ。古いものから捨てる。会話ごとの合計は捨てない） */
+export const OUTBOUND_MAX = 2000;
 
 /** 人が許した写真 1 枚（人だけの経路 photo_allow で置く。タブの回のメモリだけ） */
 interface PhotoPermit {

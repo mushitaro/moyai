@@ -1,0 +1,87 @@
+{
+  "id": "WI-09",
+  "pack": "waste-incineration",
+  "name": "こだま谷焼却場",
+  "short": "こだま谷",
+  "owner": "架空村",
+  "seed": 59009,
+  "today": "2025-12-12",
+  "years": [
+    2021,
+    2025
+  ],
+  "planTo": 2028,
+  "profile": {
+    "furnace": "FIXED",
+    "furnaces": 1,
+    "perFurnace": 30,
+    "turbine": false,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 1999
+  },
+  "costScale": 0.4,
+  "tagStyle": "dash",
+  "vendorStyle": "㈱",
+  "vendorPick": 1,
+  "exclude": [
+    "SHRED",
+    "CRANE_CTRL",
+    "PFDOOR",
+    "DEODOR",
+    "HVPANEL",
+    "INV",
+    "UPS",
+    "PANELS",
+    "MOTORS",
+    "INSTR",
+    "VENT",
+    "HOIST",
+    "ELV",
+    "DCS",
+    "ITV",
+    "HGM",
+    "NH3P",
+    "WELLP",
+    "CTOWER",
+    "SCR",
+    "REUSEP",
+    "ASHWP",
+    "PITP",
+    "FIREP"
+  ],
+  "overrides": {},
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "点検計画_R3-R10",
+      "title": "整備計画表",
+      "yearsFrom": 2021,
+      "yearsTo": 2028,
+      "layout": "indent",
+      "header": "eraNL",
+      "legend": "simple",
+      "costUnit": "千円",
+      "sheetName": "点検計画",
+      "furnaceStyle": [
+        0
+      ],
+      "unitStyle": [
+        0
+      ],
+      "nameVariant": 0,
+      "sysPrefix": "box"
+    },
+    {
+      "type": "orders",
+      "years": [
+        2021,
+        2025
+      ],
+      "textDatesUntil": 0,
+      "oneCellPeriod": true,
+      "sheetFmt": "{era}年度"
+    }
+  ]
+}

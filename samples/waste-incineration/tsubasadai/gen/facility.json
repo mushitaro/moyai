@@ -1,0 +1,76 @@
+{
+  "id": "WI-08",
+  "pack": "waste-incineration",
+  "name": "つばさ台環境エネルギーセンター",
+  "short": "つばさ台EC",
+  "owner": "架空西部広域環境組合",
+  "seed": 58008,
+  "today": "2025-12-12",
+  "years": [
+    2017,
+    2025
+  ],
+  "planTo": 2032,
+  "profile": {
+    "furnace": "SHAFT",
+    "furnaces": 2,
+    "perFurnace": 80,
+    "turbine": true,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 2007
+  },
+  "costScale": 1.2,
+  "tagStyle": "num",
+  "vendorStyle": "㈱",
+  "vendorPick": 0,
+  "overrides": {},
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "点検整備計画_2017-2032",
+      "title": "整備計画表",
+      "yearsFrom": 2017,
+      "yearsTo": 2032,
+      "layout": "cols",
+      "header": "fy4",
+      "legend": "pd",
+      "costUnit": "千円",
+      "codeCol": true,
+      "hideYears": 2,
+      "sheetName": "点検整備計画",
+      "furnaceStyle": [
+        0,
+        1
+      ],
+      "unitStyle": [
+        0,
+        2
+      ],
+      "nameVariant": 2,
+      "groups": true,
+      "parentSummary": [
+        "COMB"
+      ],
+      "subtotals": [
+        "COMB",
+        "FLUE"
+      ]
+    },
+    {
+      "type": "orders",
+      "years": [
+        2017,
+        2025
+      ],
+      "textDatesUntil": 2018
+    },
+    {
+      "type": "ledger",
+      "stem": "機器台帳",
+      "codeInName": 0.2,
+      "nameVariant": 1
+    }
+  ]
+}

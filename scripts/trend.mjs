@@ -4,12 +4,14 @@
 //   1. scripts/run-tests.mjs を走らせ、node:test と vitest の数と、通ったかを取る
 //   2. import.dev（tests/unit/import/dev.test.ts）が書いた物差し ①②③⑤ と、資料をまたいで結べた割合を取る
 //   3. ops/trend.jsonl に 1 行足し（足すだけ）、日ごとの最後の行から docs/trend.md を作り直す
+//   4. 同じ実行の試験ごとの報告から、docs/acceptance.md（docs/plan.md §5.1 の表）も作り直す（scripts/acceptance.mjs）
 // 緑でないものを緑と書かない：試験が落ちた回は「落ちた」と書き、測れなかった値は「測っていない」と書く。
 import { appendFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { readReports, writeAcceptance } from "./acceptance.mjs";
 
 const DATA = "ops/trend.jsonl";
 const OUT = "docs/trend.md";
@@ -113,15 +115,17 @@ export function render(rows, heldout = []) {
 function main() {
   const dir = mkdtempSync(join(tmpdir(), "moyai-trend-"));
   const measures = join(dir, "import.jsonl");
+  const reportDir = join(dir, "reports");
   const r = spawnSync(process.execPath, ["scripts/run-tests.mjs"], {
     encoding: "utf8",
-    env: { ...process.env, MOYAI_TREND_OUT: measures },
+    env: { ...process.env, MOYAI_TREND_OUT: measures, MOYAI_REPORT_DIR: reportDir },
     maxBuffer: 64 * 1024 * 1024,
   });
   const counts = parseCounts(r.stdout ?? "");
   const imp = existsSync(measures)
     ? readFileSync(measures, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
     : [];
+  const accepted = writeAcceptance({ reports: readReports(reportDir) });
   rmSync(dir, { recursive: true, force: true });
   const commit = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
   const dirty = execFileSync("git", ["status", "--porcelain", "--", "src", "tests", "packs", "samples", "scripts"], { encoding: "utf8" }).trim() !== "";
@@ -130,7 +134,7 @@ function main() {
   appendFileSync(DATA, JSON.stringify(row) + "\n");
   const rows = readFileSync(DATA, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
   writeFileSync(OUT, render(rows, readHeldout()));
-  console.log(`trend: ${row.passed ? "通った" : "落ちた"}（node:test ${val(counts?.node)}、vitest ${val(counts?.vitest)}、取り込み ${imp.length} 施設）→ ${OUT}`);
+  console.log(`trend: ${row.passed ? "通った" : "落ちた"}（node:test ${val(counts?.node)}、vitest ${val(counts?.vitest)}、取り込み ${imp.length} 施設）→ ${OUT}、§5.1 の表 ${accepted.length} 行 → docs/acceptance.md`);
   if (!row.passed) process.exit(1);
 }
 

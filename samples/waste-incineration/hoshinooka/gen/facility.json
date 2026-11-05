@@ -1,0 +1,75 @@
+{
+  "id": "WI-10",
+  "pack": "waste-incineration",
+  "name": "ほしの丘リサイクルセンター",
+  "short": "ほしの丘RC",
+  "owner": "架空中央広域環境組合",
+  "seed": 60010,
+  "today": "2025-12-12",
+  "years": [
+    2019,
+    2025
+  ],
+  "planTo": 2031,
+  "profile": {
+    "furnace": "ROTARY",
+    "furnaces": 2,
+    "perFurnace": 70,
+    "turbine": true,
+    "dust": "BF",
+    "ash": "MELT",
+    "contract": "OM",
+    "commissioned": 2004
+  },
+  "costScale": 1.0,
+  "tagStyle": "num",
+  "vendorStyle": "株式会社",
+  "vendorPick": 0,
+  "overrides": {},
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "保全計画_R1-R13",
+      "title": "整備計画表",
+      "yearsFrom": 2019,
+      "yearsTo": 2031,
+      "layout": "merged",
+      "header": "eraStack",
+      "legend": "pa",
+      "costUnit": "千円",
+      "ditto": 0.4,
+      "sheetName": "保全計画",
+      "furnaceStyle": [
+        2,
+        3
+      ],
+      "unitStyle": [
+        2
+      ],
+      "nameVariant": 1,
+      "colLabels": {
+        "names": [
+          "設備",
+          "機器",
+          "系列",
+          "部位",
+          "部位"
+        ]
+      },
+      "author": "運営事業者"
+    },
+    {
+      "type": "diary_csv",
+      "years": [
+        2022,
+        2025
+      ],
+      "encoding": "cp932",
+      "kana": 0.25,
+      "furnaceStyle": [
+        3,
+        1
+      ]
+    }
+  ]
+}
