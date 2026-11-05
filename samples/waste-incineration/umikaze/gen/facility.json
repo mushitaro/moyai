@@ -1,0 +1,72 @@
+{
+  "id": "WI-06",
+  "pack": "waste-incineration",
+  "name": "うみかぜエコプラント",
+  "short": "うみかぜEP",
+  "owner": "架空県南広域環境組合",
+  "seed": 56006,
+  "today": "2025-12-12",
+  "years": [
+    2019,
+    2025
+  ],
+  "planTo": 2034,
+  "profile": {
+    "furnace": "STOKER",
+    "furnaces": 3,
+    "perFurnace": 100,
+    "turbine": true,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "OM",
+    "commissioned": 2012
+  },
+  "costScale": 1.3,
+  "tagStyle": "num",
+  "vendorStyle": "株式会社",
+  "vendorPick": 1,
+  "overrides": {},
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "長期修繕計画_R1-R16",
+      "title": "整備計画表",
+      "yearsFrom": 2019,
+      "yearsTo": 2034,
+      "layout": "indent",
+      "header": "era2",
+      "legend": "pd",
+      "costUnit": "千円",
+      "sheetName": "長期修繕計画（運営事業者）",
+      "furnaceStyle": [
+        0
+      ],
+      "unitStyle": [
+        0
+      ],
+      "nameVariant": 1,
+      "sysPrefix": "paren",
+      "bullets": false,
+      "subtotals": [
+        "COMB",
+        "COOL",
+        "FLUE",
+        "ELEC"
+      ],
+      "author": "運営事業者 保全課"
+    },
+    {
+      "type": "diary_csv",
+      "years": [
+        2021,
+        2025
+      ],
+      "encoding": "utf-8",
+      "kana": 0.1,
+      "furnaceStyle": [
+        0,
+        4
+      ]
+    }
+  ]
+}

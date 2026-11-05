@@ -1,0 +1,83 @@
+{
+  "id": "WI-05",
+  "pack": "waste-incineration",
+  "name": "もみじ台清掃センター",
+  "short": "もみじ台SC",
+  "owner": "架空町",
+  "seed": 55005,
+  "today": "2025-12-12",
+  "years": [
+    2019,
+    2025
+  ],
+  "planTo": 2032,
+  "profile": {
+    "furnace": "STOKER",
+    "furnaces": 2,
+    "perFurnace": 65,
+    "turbine": true,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 2010
+  },
+  "costScale": 0.85,
+  "tagStyle": "num",
+  "vendorStyle": "㈱",
+  "vendorPick": 0,
+  "overrides": {
+    "FAC_PRECISE|精密機能検査": {
+      "years": [
+        2019,
+        2022,
+        2025,
+        2028,
+        2031
+      ]
+    }
+  },
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "星取表_R元-R14",
+      "title": "整備計画表",
+      "yearsFrom": 2019,
+      "yearsTo": 2032,
+      "layout": "cols",
+      "header": "eraNL",
+      "legend": "simple",
+      "costUnit": "千円",
+      "furnaceStyle": [
+        0,
+        2
+      ],
+      "unitStyle": [
+        1
+      ],
+      "nameVariant": 0,
+      "sheetMech": "機械",
+      "sheetElec": "電気計装",
+      "elecSheet": {
+        "layout": "indent",
+        "header": "eraNL",
+        "sysPrefix": "box",
+        "subtotals": [],
+        "parentSummary": []
+      },
+      "parentSummary": [
+        "COMB"
+      ],
+      "subtotals": [
+        "COMB",
+        "COOL"
+      ]
+    },
+    {
+      "type": "ledger",
+      "stem": "機器台帳_号炉別",
+      "perFurnace": true,
+      "codeInName": 0.3,
+      "nameVariant": 2
+    }
+  ]
+}

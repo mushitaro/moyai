@@ -1,0 +1,402 @@
+{
+  "id": "WI-DEMO-01",
+  "pack": "waste-incineration",
+  "name": "しらかば野クリーンセンター",
+  "short": "しらかば野CC",
+  "owner": "架空市",
+  "seed": 51001,
+  "today": "2025-12-12",
+  "years": [
+    2013,
+    2025
+  ],
+  "planTo": 2030,
+  "profile": {
+    "furnace": "STOKER",
+    "furnaces": 2,
+    "perFurnace": 85,
+    "turbine": true,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 2002,
+    "upgrade": [
+      2020
+    ]
+  },
+  "costScale": 1.0,
+  "tagStyle": "num",
+  "vendorStyle": "㈱",
+  "vendorPick": 0,
+  "overrides": {
+    "FAC_PRECISE|精密機能検査": {
+      "years": [
+        2013,
+        2016,
+        2020,
+        2023,
+        2026,
+        2029
+      ]
+    },
+    "CRANE|性能検査（クレーン則）": {
+      "skipDone": [
+        2022
+      ],
+      "target": "CRANE-2"
+    },
+    "IDF|分解整備": {
+      "noFuture": true,
+      "target": "IDF-2"
+    },
+    "IDF|インペラ更新": {
+      "noFuture": true,
+      "target": "IDF-2"
+    }
+  },
+  "gapsNote": [
+    {
+      "kind": "interval_max",
+      "check": "interval_max",
+      "level": "recommendation",
+      "what": "精密機能検査",
+      "note": "H28（2016）の次が R2（2020）。4 年空いた（課長通知の 3 年に 1 回以上を超える）"
+    },
+    {
+      "kind": "legal_missed",
+      "check": "interval_max",
+      "level": "app",
+      "what": "ごみクレーン No.2 性能検査（クレーン則）",
+      "note": "R4（2022）の性能検査を計画したが行っていない（星取表は ○ のまま）。前回 R2 から次は R6"
+    },
+    {
+      "kind": "coverage",
+      "check": "coverage",
+      "what": "可燃性粗大ごみ切断機（WI.RECV.SHREDDER）",
+      "note": "完成図書と発注台帳にあるが、星取表に行が無い"
+    },
+    {
+      "kind": "plan_horizon",
+      "check": "plan_horizon",
+      "level": "app",
+      "what": "星取表（電気・計装）",
+      "note": "機械設備のシートは R12 まで、電気・計装のシートは R9 までしか計画が無い"
+    }
+  ],
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "星取表_H25-R12",
+      "title": "施設保全計画 星取表",
+      "author": "保全係",
+      "yearsFrom": 2013,
+      "yearsTo": 2030,
+      "hideYears": 2,
+      "layout": "cols",
+      "header": "era2",
+      "legend": "pd",
+      "costUnit": "千円",
+      "codeCol": true,
+      "groups": true,
+      "furnaceStyle": [
+        0,
+        0,
+        1,
+        2
+      ],
+      "unitStyle": [
+        0,
+        0,
+        1
+      ],
+      "nameVariant": 0,
+      "names": {
+        "IDF": 0,
+        "BF": 0,
+        "BFP": 0
+      },
+      "chartExclude": [
+        "SHRED"
+      ],
+      "parentSummary": [
+        "COMB",
+        "COOL",
+        "DRAFT",
+        "ASH"
+      ],
+      "subtotals": [
+        "COMB",
+        "COOL",
+        "DRAFT",
+        "ASH"
+      ],
+      "mismatchSubtotal": "DRAFT",
+      "mismatchBy": 12000,
+      "breakdownRows": true,
+      "sheetMech": "星取表（機械設備）",
+      "sheetElec": "星取表（電気・計装）",
+      "elecSheet": {
+        "layout": "indent",
+        "header": "eraNL",
+        "yearsFrom": 2015,
+        "yearsTo": 2027,
+        "codeCol": false,
+        "subtotals": [],
+        "parentSummary": [],
+        "groups": false,
+        "legendTop": true,
+        "mismatchSubtotal": null,
+        "sysPrefix": "box"
+      },
+      "footNotes": [
+        "※1 {last} 年度の実績は一部のみ反映（日報・発注台帳と突き合わせ中）。",
+        "※2 費用は税抜・概算、1 回あたり。",
+        "※3 電気・計装設備は別シート。"
+      ],
+      "mgmtSheet": {
+        "name": "機器別管理基準",
+        "items": [
+          "GRATE",
+          "FURNACE",
+          "BOILER",
+          "BF",
+          "SCR",
+          "IDF",
+          "FDF",
+          "CRANE",
+          "TURBINE",
+          "DCS",
+          "SUBST"
+        ],
+        "defs": {
+          "GRATE": [
+            "火格子",
+            "摩耗・焼損",
+            "目視・寸法測定",
+            "厚さ 18mm 以上",
+            "1年"
+          ],
+          "FURNACE": [
+            "耐火物",
+            "損耗・脱落",
+            "目視・打音",
+            "損耗 30% 未満",
+            "1年"
+          ],
+          "BOILER": [
+            "水管",
+            "肉厚",
+            "超音波厚さ計",
+            "最小肉厚 3.2mm 以上",
+            "1年"
+          ],
+          "BF": [
+            "ろ布",
+            "差圧・破損",
+            "差圧計・目視",
+            "差圧 2.0kPa 以下",
+            "1年"
+          ],
+          "SCR": [
+            "触媒",
+            "脱硝率",
+            "性能試験",
+            "脱硝率 80% 以上",
+            "3年"
+          ],
+          "IDF": [
+            "インペラ・軸受",
+            "振動・温度",
+            "振動計・温度計",
+            "振動 4.5mm/s 以下",
+            "6か月"
+          ],
+          "FDF": [
+            "軸受",
+            "振動",
+            "振動計",
+            "振動 4.5mm/s 以下",
+            "6か月"
+          ],
+          "CRANE": [
+            "ワイヤロープ",
+            "素線切れ・摩耗",
+            "目視・径測定",
+            "径の減少 7% 未満",
+            "1年"
+          ],
+          "TURBINE": [
+            "ロータ・軸受",
+            "振動・油",
+            "振動計・油分析",
+            "振動 50μm 以下",
+            "1年"
+          ],
+          "DCS": [
+            "制御装置",
+            "故障履歴",
+            "記録の確認",
+            "—",
+            "1年"
+          ],
+          "SUBST": [
+            "遮断器",
+            "絶縁抵抗",
+            "絶縁抵抗計",
+            "規定値以上",
+            "1年"
+          ]
+        },
+        "life": {
+          "GRATE": 12,
+          "FURNACE": 7,
+          "BOILER": 20,
+          "BF": 5,
+          "SCR": 6,
+          "IDF": 25,
+          "FDF": 25,
+          "CRANE": 25,
+          "TURBINE": 30,
+          "DCS": 12,
+          "SUBST": 30
+        },
+        "bad": {
+          "IDF-2": 2
+        },
+        "outOfScale": {
+          "BF-1": 5
+        }
+      },
+      "notes": [
+        "１．凡例　○：計画　◎：計画どおり実施　●：実施（計画外・延期のあと）　△：一部実施　○→：延期",
+        "２．設備 → 機器 → 号炉・系統 → 部位の順に書いた。左の［－］［＋］で段を畳める。",
+        "３．燃焼設備・燃焼ガス冷却設備・通風設備・灰出し設備の親の行の灰色の記号は、下の行のまとめ。",
+        "４．機器の名前は現場の呼び名。完成図書の名前と違うものがある。",
+        "５．電気・計装のシートは R9 までしか計画を入れていない（改定の作業中）。"
+      ]
+    },
+    {
+      "type": "diary",
+      "years": [
+        2021,
+        2025
+      ],
+      "furnaceStyle": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "kana": 0.12,
+      "landscapeFrom": 2024
+    },
+    {
+      "type": "gantt",
+      "years": [
+        2021,
+        2025
+      ]
+    },
+    {
+      "type": "orders",
+      "years": [
+        2013,
+        2025
+      ],
+      "textDatesUntil": 2018,
+      "author": "施設管理課 管理係"
+    },
+    {
+      "type": "spec_pdf"
+    },
+    {
+      "type": "photo",
+      "stem": "日常点検表_ボイラ・タービン",
+      "title": "日常点検表（ボイラ・タービン設備）",
+      "weeks": [
+        "2025-06-02",
+        "2025-09-08",
+        "2025-11-17"
+      ],
+      "maxRows": 18,
+      "items": [
+        [
+          "BFP",
+          "振動・異音",
+          "異常なきこと",
+          "check"
+        ],
+        [
+          "BFP",
+          "吐出圧力",
+          "5.0～5.8MPa",
+          [
+            5.0,
+            5.8
+          ],
+          [
+            "BFP-1-1",
+            "BFP-1-2",
+            "BFP-1-3"
+          ]
+        ],
+        [
+          "DEAERATOR",
+          "圧力",
+          "0.20～0.30MPa",
+          [
+            0.2,
+            0.3
+          ]
+        ],
+        [
+          "DAP",
+          "漏れ",
+          "漏れなきこと",
+          "check"
+        ],
+        [
+          "TURBINE",
+          "軸受温度",
+          "70℃以下",
+          [
+            48,
+            66
+          ]
+        ],
+        [
+          "TURBINE",
+          "潤滑油圧",
+          "0.15MPa以上",
+          [
+            0.16,
+            0.22
+          ]
+        ],
+        [
+          "GEN",
+          "出力",
+          "—",
+          [
+            2600,
+            3400
+          ]
+        ],
+        [
+          "ACC",
+          "ファン異音",
+          "異常なきこと",
+          "check"
+        ],
+        [
+          "CONDP",
+          "振動",
+          "異常なきこと",
+          "check"
+        ]
+      ]
+    }
+  ]
+}
