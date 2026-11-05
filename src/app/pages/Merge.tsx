@@ -523,6 +523,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                   {T.side.open(openQuestions)}
                 </a>
               )}
+              {sideSource && (
+                <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "source"} onClick={(e) => (e.preventDefault(), setSide("source"))} data-testid="side-source">
+                  {T.side.source}
+                </a>
+              )}
               {latestInfo && (
                 <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "signatures"} onClick={(e) => (e.preventDefault(), setSide("signatures"))} data-testid="side-signatures">
                   {T.side.signatures(latestInfo.signatures.length)}
@@ -531,11 +536,6 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                       !
                     </span>
                   )}
-                </a>
-              )}
-              {sideSource && (
-                <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "source"} onClick={(e) => (e.preventDefault(), setSide("source"))} data-testid="side-source">
-                  {T.side.source}
                 </a>
               )}
               {sideComments && (

@@ -37,7 +37,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
   // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする
   const ringRoot = join(tmpdir(), `moyai-e2e-slice-ring-${tag}-${Date.now()}`, "輪のフォルダ");
   rings.push(join(ringRoot, ".."));
-  const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose"]);
+  const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose", "reading_rules_propose"]);
   try {
     await test.step("人：設定で置き場所を選び、輪を作って鍵を作る", async () => {
       await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
@@ -269,10 +269,15 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("decisions-bulk-accept")).toContainText("第 1 版と同じ");
       await page.getByTestId("decisions-bulk-accept").click();
       await expect(page.locator('[data-testid="crosswalk-rule"][data-same="1"][data-state="proposed"]')).toHaveCount(0);
-      // 写し（Wire の 1 回目の確かめ）：読み方のシート、資料のタブ、横の板をたたんだ星取表（共通の設備項目の 1 列の見出し）
+      // 写し（Wire の確かめ）：下書きの読み方を 2 つ置いた読み方のシート、資料のタブ、横の板をたたんだ星取表（共通の設備項目の 1 列の見出し）
+      const base = { author: "ai", reason: "利用者が会話で決めた（試験の台本）" };
+      await call(c, "reading_rules_propose", { name: "【架空】縦の一本の読み方", scope: "facility", rules: [{ ...base, id: "s1", text: "「ブロワー」と「ブロワ」は同じ機器", kind: "sameAsset", names: ["ブロワー", "ブロワ"] }] });
+      await call(c, "reading_rules_propose", { name: "【架空】日報の書き方", scope: "facility", rules: [{ ...base, id: "m1", text: "▲ は実績", kind: "markMeaning", symbol: "▲", planOrActual: "actual" }] });
       await page.getByTestId("sheet-readings").click();
+      await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "readings");
       await page.screenshot({ path: shot(`slice-readings-${tag}`), fullPage: true });
       await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
       await page.screenshot({ path: shot(`slice-files-${tag}`), fullPage: true });
       await page.getByTestId("sheet-chart").click();
       await expect(page.locator(".ag-row").first()).toBeVisible();

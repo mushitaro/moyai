@@ -44,6 +44,7 @@ export const REVIEW_TEXT = {
   cols: ["", "検査", "機器", "この施設", "基準", "出典"],
   withinYears: (n: number) => `${n} 年以内`,
   years: (n: number) => `${n} 年`,
+  noActualShort: (fy: number) => `${fy} 年度　実績なし`,
   notMetCount: (n: number) => `外れ ${n}`,
   here: "この施設",
   standard: "基準",

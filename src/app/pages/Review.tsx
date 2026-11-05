@@ -196,6 +196,8 @@ const shortSource = (s: NonNullable<CheckResult["source"]>) => (s.clause || s.do
 const standardOf = (c: CheckResult) => (typeof c.numbers.thresholdYears === "number" ? T.withinYears(c.numbers.thresholdYears) : "―");
 /** この施設の短い言い方（外れの例から。例が無ければ外れの数か結果） */
 function hereOf(l: CheckLine): string {
+  // 過ぎた予定の実績は短く「2022 年度　実績なし」。長い言い方は詳しくへ（Wire）
+  if (l.e?.why === "noActual" && l.e.fiscalYears[0] !== undefined) return T.noActualShort(l.e.fiscalYears[0]);
   if (l.e) return l.e.years !== null ? T.years(l.e.years) : l.e.value ?? exampleText(l.e, l.c);
   return l.c.result === "notMet" ? T.notMetCount(l.c.count) : T.result[l.c.result];
 }
@@ -272,7 +274,7 @@ function CheckSheet({ plan, results, referenceFiscalYear, checksVersion }: { pla
           }}
           aria-label={T.kindSwitch}
           data-testid="check-kind"
-          data={(["notMet", "met", "notApplicable"] as const).map((k) => ({ value: k, label: `${T.kinds[k]} ${counts[k]}` }))}
+          data={(["notMet", "met", "notApplicable"] as const).map((k) => ({ value: k, label: T.kinds[k], count: counts[k], shu: k === "notMet" && counts[k] > 0 }))}
         />
         <Group gap={0} wrap="nowrap" className="moyai-num">
           <Text size="xs" c="var(--text-2)" data-testid="reference-date-text">
@@ -285,7 +287,7 @@ function CheckSheet({ plan, results, referenceFiscalYear, checksVersion }: { pla
       </Group>
       {editDate && <ReferenceDate />}
       <Table.ScrollContainer minWidth={0}>
-      <Table verticalSpacing="sm" fz="sm" highlightOnHover data-testid="check-table" data-kind={which}>
+      <Table verticalSpacing="sm" fz="sm" data-testid="check-table" data-kind={which}>
         <Table.Thead>
           <Table.Tr>
             {T.cols.map((h) => (
@@ -303,6 +305,7 @@ function CheckSheet({ plan, results, referenceFiscalYear, checksVersion }: { pla
               data-check={l.c.checkId}
               data-result={l.c.result}
               aria-selected={sel === l.key}
+              className="moyai-pick-row"
               style={{ cursor: "pointer" }}
               onClick={() => {
                 setSel(l.key);

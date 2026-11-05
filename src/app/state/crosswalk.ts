@@ -177,6 +177,8 @@ export function placeComposedPlan(next: Plan): CarryOverReport | null {
  * - 人が受けた周期の案（台帳から置いた計画の印）は、同じ作業があれば「第 n 版と同じ」の案として並べ直す。
  *   根拠に「第 n 版で受けた当てはめと同じ」を足すので、決定の中身が変わり、人がもう一度受けるまで決まらない
  */
+/** 根拠の末尾の「。第 n 版で受けた当てはめと同じ」（T.sameAs と同じ形） */
+const SAME_AS_TAIL = new RegExp(`。${T.sameAs(0).replace("0", String.raw`\d+`)}$`);
 export function carryFromBase(plan: Plan, basePlan: Plan, version: number): Plan {
   const f = plan.facility;
   const bf = basePlan.facility;
@@ -189,7 +191,8 @@ export function carryFromBase(plan: Plan, basePlan: Plan, version: number): Plan
   const have = new Set(plan.details.map((d) => d.detailKey));
   const carried = basePlan.details
     .filter((d) => cycleIdOf(d.detailKey) !== null && works.has(d.workKey) && !have.has(d.detailKey))
-    .map((d) => ({ ...d, basis: `${d.basis}。${T.sameAs(version)}` }));
+    // 前の版で足した同じ形の言葉は外してから足す（版を重ねても「…第 2 版と同じ。第 3 版と同じ」と伸ばさない）
+    .map((d) => ({ ...d, basis: `${d.basis.replace(SAME_AS_TAIL, "")}。${T.sameAs(version)}` }));
   return { ...plan, facility, details: [...plan.details, ...carried] };
 }
 

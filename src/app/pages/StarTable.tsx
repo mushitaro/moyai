@@ -184,6 +184,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const [period, setPeriod] = useState<PeriodMode>("year");
   const [layer, setLayer] = useState<Layer>("adjusted");
   const [foldLevel, setFoldLevel] = useState<number | null>(() => readFold("ledger"));
+  // 共通の設備項目で見るとき、畳んだ設備の見出しの行（Wire、2026-11-05）
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [selected, setSelected] = useState<{ rowId: string; periodKey: string | null } | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editNotice, setEditNotice] = useState(false);
@@ -222,7 +224,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       plan,
       catalog ?? emptyCatalog(),
       { levelFallback: T.levelFallback, commonLevels: T.commonLevels, unmapped: T.unmapped, series: T.series },
-      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel, ...(overlay ? { peers: overlay } : {}) },
+      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel, ...(mode === "common" ? { collapsed } : {}), ...(overlay ? { peers: overlay } : {}) },
     );
     try {
       performance.measure("moyai-chart-build", { start: t0, end: performance.now() });
@@ -230,7 +232,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       // 測れない環境では測らない
     }
     return m;
-  }, [plan, catalog, mode, period, layer, foldLevel, overlay]);
+  }, [plan, catalog, mode, period, layer, foldLevel, overlay, collapsed]);
 
   const onFold = useCallback(
     (level: number) => {
@@ -255,6 +257,12 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         if (periodKey) sideRef.current?.show();
       },
       onOpenFolded: (rowId) => setOpenRow(rowId),
+      onToggle: (rowId) =>
+        setCollapsed((c) => {
+          const n = new Set(c);
+          if (!n.delete(rowId)) n.add(rowId);
+          return n;
+        }),
       onEditStopped: () => setEditNotice(true),
       onRendered: () => {
         if (firstPaint.current) {

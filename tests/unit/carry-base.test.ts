@@ -22,6 +22,9 @@ test("見え方の答えを写し、受けた周期の案を「第 n 版と同�
   expect(c.basis).toContain("第 1 版で受けた当てはめと同じ");
   // 前の版で受けた決定とは中身が違うので、もう一度受けるまで決まらない
   expect(pendingDecisions(carried, accepted).map((d) => d.id)).toEqual([`detail:${cy.detailKey}`]);
+  // 版を重ねても、前の版で足した言葉は伸びない
+  const again = carryFromBase({ ...next, details: [detail("d1", "w1", 2020)] }, carried, 2).details.find((d) => d.detailKey === cy.detailKey)!;
+  expect(again.basis).toBe("公開の台帳・似た施設 6 の帯。第 2 版で受けた当てはめと同じ");
   // 作業が無くなった周期の案は並べない
   expect(carryFromBase({ ...next, works: [] }, base, 1).details.some((d) => d.detailKey === cy.detailKey)).toBe(false);
 });

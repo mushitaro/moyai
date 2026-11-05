@@ -66,6 +66,8 @@ export interface GridHandlers {
   onFold(level: number): void;
   onSelect(rowId: string, periodKey: string | null): void;
   onOpenFolded(rowId: string): void;
+  /** 共通の設備項目で見るとき、設備の見出しの行を押して、その設備の行を畳む・開く（Wire、2026-11-05） */
+  onToggle?(rowId: string): void;
   onEditStopped(): void;
   /** 行を渡し終えたとき（描くのは AG Grid が次の描画の枠でする） */
   onRendered(): void;
@@ -230,6 +232,8 @@ const LEVEL_MAX = 360;
  */
 export function commonRowText(row: ChartRow): string {
   if (row.kind === "peer" || row.kind === "stat") return row.levelCells[row.levelCells.length - 1] ?? "";
+  // 設備の見出しの行：名前の左に ▾（開いている）か ▸（畳んだ）。押すと、その設備の行を畳む・開く
+  if (row.level === 1 && row.kind === "node" && row.hasChildren) return `${row.folded ? T.foldClosed : T.foldOpen} ${levelText(row, 0)}`;
   if (row.level === 1 || row.kind === "unmapped") return levelText(row, row.level - 1);
   if (row.level === 2) return levelText(row, 1);
   const [, item, attr] = row.path;
@@ -377,6 +381,7 @@ export class ChartGrid {
   private api: GridApi<ChartRow>;
   private colKey = "";
 
+  private mode: ChartModel["mode"] = "ledger";
   constructor(el: HTMLElement, private h: GridHandlers) {
     this.api = createGrid<ChartRow>(el, {
       theme,
@@ -404,6 +409,7 @@ export class ChartGrid {
         if (node?.data) this.select(node.data.id, col);
       },
       onCellClicked: (e) => {
+        if (e.data && this.mode === "common" && e.column.getColId() === "lv1" && e.data.kind === "node" && e.data.level === 1 && e.data.hasChildren) this.h.onToggle?.(e.data.id);
         if (e.data) this.select(e.data.id, e.column.getColId());
       },
       onCellDoubleClicked: (e) => {
@@ -419,6 +425,7 @@ export class ChartGrid {
 
   /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
   update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null, comments?: ReadonlyMap<string, string>) {
+    this.mode = model.mode;
     this.api.setGridOption("context", { proposals, compare, comments } satisfies GridContext);
     const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band]);
     if (key !== this.colKey) {

@@ -84,6 +84,8 @@ export const TEXT = {
     // 共通の設備項目 × 作業の属性で見るときの、行の見出しの 1 列（Wire、2026-11-05）
     commonOneCol: "共通の設備項目 › 作業",
     commonSep: " › ",
+    foldOpen: "▾",
+    foldClosed: "▸",
     unmapped: "未当てはめ",
     series: (s: string) => (s.startsWith("common.") ? s.slice("common.".length) || "共通" : `系列 ${s}`),
     mark: { plan: "○", actual: "●", both: "◎" },
@@ -324,7 +326,7 @@ export const TEXT = {
       open: (n: number) => `決まっていない所 ${n}`,
       signatures: (n: number) => `署名 ${n}`,
       source: "詳しく",
-      comments: (n: number) => `コメント ${n}`,
+      comments: (n: number) => (n > 0 ? `コメント ${n}` : "コメント"),
       detailEmpty: "行を選ぶと、ここに出ます。",
       fold: "横の板をたたむ（キー ］）",
       unfold: "横の板を開く（キー ］）",

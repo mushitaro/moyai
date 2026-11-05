@@ -6,7 +6,9 @@
 // 理由の欄は上に 1 つ。1 行ずつ受けるときも、まとめて受けるときも、その理由を使う（空のあいだは押せない）。受けたものは下にたたむ。
 // 受けた決定はこのタブのメモリ（state/decisions.ts）に持ち、署名のダイアログがそこから読んで送る。
 import { Alert, Button, Group, Modal, Stack, Table, Text, TextInput } from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { MergeSideContext } from "../state/merge-side";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
 import { cycleIdOf } from "../../plan/cycle";
@@ -34,9 +36,27 @@ export function usePending(client: BridgeClient, plan: Plan | null): { pending: 
   return { pending, ready: !!status };
 }
 
-/** 規則の条件を人の言葉で（「焼却炉本体」かつ「1 号炉」） */
-function whenText(p: CrosswalkProposal): string {
-  return p.rule.when.map((c) => `「${c.values.join("・") || T.blank}」`).join(T.and);
+/** 規則の条件の値を人の言葉で（節や作業の鍵の条件は、その名前に読み替える） */
+function whenValues(p: CrosswalkProposal, names: ReadonlyMap<string, string>): string[][] {
+  return p.rule.when.map((c) => c.values.map((v) => (c.field === "assetNode.nodeKey" || c.field === "work.workKey" ? (names.get(String(v)) ?? String(v)) : String(v))));
+}
+/** 短く：条件ごとに頭の 1 つと「ほか n」（「ごみクレーン」ほか 9）。全部は詳しくへ（Wire） */
+function whenShort(p: CrosswalkProposal, names: ReadonlyMap<string, string>): string {
+  return whenValues(p, names)
+    .map((vs) => `「${vs[0] || T.blank}」${vs.length > 1 ? T.more(vs.length - 1) : ""}`)
+    .join(T.and);
+}
+/** 全部：「焼却炉本体・1 号炉」かつ … */
+function whenText(p: CrosswalkProposal, names: ReadonlyMap<string, string>): string {
+  return whenValues(p, names)
+    .map((vs) => `「${vs.join("・") || T.blank}」`)
+    .join(T.and);
+}
+
+/** 「なぜ」は短い 1 句：AI の理由の頭（句点か 30 字まで）。全文は title と詳しくへ（PM の決定） */
+function shortWhy(basis: string): string {
+  const head = basis.split(/[。\n]/)[0] ?? basis;
+  return head.length > 30 ? `${head.slice(0, 30)}…` : head;
 }
 
 export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: Plan }) {
@@ -52,6 +72,21 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   const itemName = (code: string) => catalog?.items.get(code)?.name ?? catalog?.systems.get(code)?.name ?? code;
   const attrName = (code: string) => ((catalog ?? emptyCatalog()).workLabels as Record<string, string>)[code] ?? code;
   const ok = reason.trim().length > 0;
+  const side = useContext(MergeSideContext);
+  const [picked, setPicked] = useState<CrosswalkProposal | null>(null);
+  const pick = (p: CrosswalkProposal) => {
+    setPicked(p);
+    side?.show();
+  };
+  // 節と作業の鍵 → 名前（鍵で結んだ「第 n 版と同じ」の規則を、名前で読めるように）
+  const names = useMemo(() => new Map<string, string>([...plan.assets.map((a) => [a.nodeKey, a.name] as const), ...plan.works.map((w) => [w.workKey, w.kind || w.workKey] as const)]), [plan]);
+  // 行き先は項目の道（受入供給設備 › 計量機）か作業の属性の名前。内部の ID は出さない（Wire）
+  const targetPath = (p: CrosswalkProposal) => {
+    if (p.target === "work") return attrName(p.value);
+    const it = catalog?.items.get(p.value);
+    const sys = it ? catalog?.systems.get(it.systemCode)?.name : undefined;
+    return it ? (sys ? `${sys}${T.pathSep}${it.name}` : it.name) : p.value;
+  };
   // 行：台帳からの案は案ごとにまとめ、ほかは 1 決定 1 行
   const groups = useMemo(() => {
     const out: { key: string; ds: Decision[]; cycle: string | null }[] = [];
@@ -165,12 +200,22 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
 
   // 「第 n 版と同じ」：淡い字の 1 規則 1 行。行ごとの受ける・断るは置かない（Wire）
   const sameRow = (p: CrosswalkProposal) => (
-    <Table.Tr key={p.ruleId} data-testid="crosswalk-rule" data-rule={p.ruleId} data-state={p.state} data-target={p.target} data-same={p.sameAs}>
+    <Table.Tr
+      key={p.ruleId}
+      data-testid="crosswalk-rule"
+      data-rule={p.ruleId}
+      data-state={p.state}
+      data-target={p.target}
+      data-same={p.sameAs}
+      aria-selected={picked?.ruleId === p.ruleId}
+      className="moyai-pick-row"
+      onClick={() => pick(p)}
+      style={{ cursor: "pointer" }}
+    >
       <Table.Td c="var(--text-3)">
-        {whenText(p)}
-        {p.target === "assetNode" ? T.ruleNode : T.ruleWork} → {valueLabel(catalog, p.target, p.value)}
+        {p.target === "assetNode" ? T.ruleNodeHead : T.ruleWorkHead}
+        {whenShort(p, names)} → {targetPath(p)}
       </Table.Td>
-      <Table.Td c="var(--text-3)">{W.sameAs(p.sameAs ?? 0)}</Table.Td>
       <Table.Td className="moyai-num" ta="right" c="var(--text-3)">
         {p.matched}
       </Table.Td>
@@ -179,17 +224,29 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   );
 
   const ruleRow = (p: CrosswalkProposal) => (
-    <Table.Tr key={p.ruleId} data-testid="crosswalk-rule" data-rule={p.ruleId} data-state={p.state} data-target={p.target}>
+    <Table.Tr
+      key={p.ruleId}
+      data-testid="crosswalk-rule"
+      data-rule={p.ruleId}
+      data-state={p.state}
+      data-target={p.target}
+      aria-selected={picked?.ruleId === p.ruleId}
+      className="moyai-pick-row"
+      onClick={() => pick(p)}
+      style={{ cursor: "pointer" }}
+    >
       <Table.Td>
         <Text size="sm">
-          {whenText(p)}
-          {p.target === "assetNode" ? T.ruleNode : T.ruleWork} → {valueLabel(catalog, p.target, p.value)}
+          {p.target === "assetNode" ? T.ruleNodeHead : T.ruleWorkHead}
+          {whenShort(p, names)} → {targetPath(p)}
         </Text>
         <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
           {T.kind.crosswalk}
         </Text>
       </Table.Td>
-      <Table.Td c="var(--text-2)">{p.state === "proposed" ? p.basis : `${p.basis}（${T.humanReason}：${p.humanReason ?? ""}）`}</Table.Td>
+      <Table.Td c="var(--text-2)" title={p.basis}>
+        {shortWhy(p.basis)}
+      </Table.Td>
       <Table.Td className="moyai-num" ta="right" data-testid="crosswalk-matched">
         {p.matched}
       </Table.Td>
@@ -212,16 +269,42 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     </Table.Tr>
   );
 
+  const cols = kind === "same" ? T.head.filter((_, i) => i !== 1) : T.head;
   const head = (
     <Table.Thead>
       <Table.Tr>
-        {T.head.map((h, i) => (
-          <Table.Th key={h} ta={i >= 2 ? "right" : undefined} style={{ width: i === 0 ? "40%" : i === 1 ? "36%" : undefined }}>
+        {cols.map((h, i) => (
+          <Table.Th key={h} ta={i >= 2 ? "right" : undefined} style={{ width: i === 0 ? (kind === "same" ? "76%" : "40%") : i === 1 && kind !== "same" ? "36%" : undefined }}>
             {h}
           </Table.Th>
         ))}
       </Table.Tr>
     </Table.Thead>
+  );
+
+  const detail = picked && (
+    <Stack gap="xs" data-testid="decision-detail" data-rule={picked.ruleId}>
+      <Text size="sm" fw={700}>
+        {picked.sameAs !== undefined ? T.kinds.same(picked.sameAs) : T.kinds.crosswalk}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {T.detailRule}
+      </Text>
+      <Text size="sm">
+        {picked.target === "assetNode" ? T.ruleNodeHead : T.ruleWorkHead}
+        {whenText(picked, names)} → {targetPath(picked)}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {T.detailWhy}
+      </Text>
+      <Text size="sm">{picked.basis}</Text>
+      <Text size="xs" c="dimmed">
+        {T.detailWhere}
+      </Text>
+      <Text size="sm" className="moyai-num">
+        {picked.matched}
+      </Text>
+    </Stack>
   );
 
   return (
@@ -329,6 +412,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           </Stack>
         )}
       </Modal>
+      {side?.el && detail && createPortal(detail, side.el)}
     </Stack>
   );
 }

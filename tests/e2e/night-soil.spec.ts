@@ -131,7 +131,7 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
       await page.screenshot({ path: shot(`night-soil-chart-common-${tag}`) });
       // 設備の見出しの行には、し尿処理のパックの設備の名前が出る（ごみ焼却の名前ではない）。行の見出しは 1 列で、設備の行は太字の見出し
       const firstLevel = (JSON.parse(readFileSync(`packs/${PACK}/common.json`, "utf8")) as { systems?: { name: string }[] }).systems?.map((e) => e.name) ?? [];
-      const shown = (await page.locator(".ag-row [col-id='lv1'].moyai-common-head").allTextContents()).map((t) => t.trim()).filter(Boolean);
+      const shown = (await page.locator(".ag-row [col-id='lv1'].moyai-common-head").allTextContents()).map((t) => t.trim().replace(/^[▾▸] /, "")).filter(Boolean);
       const mapped = shown.filter((t) => !t.startsWith("未当てはめ"));
       expect(mapped.length, `出た 1 段目：${shown.join("・")}`).toBeGreaterThan(0);
       expect(mapped.every((t) => firstLevel.includes(t)), `出た 1 段目：${shown.join("・")}`).toBe(true);
