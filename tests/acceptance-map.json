@@ -1,0 +1,163 @@
+{
+  "note": "docs/plan.md §5.1 の試験の名前と、実際の試験の対応（この 1 か所）。scripts/acceptance.mjs がこれと試験の実行の報告から docs/acceptance.md を作る。sources が空の名前は「試験が無い」と書く（作らない）。scope は、対応する試験が §5.1 の合格の一部しか確かめていないときの注。runner は vitest・node（node:test）・playwright・command（リポジトリの道具を走らせ、終了コード 0 なら通った）。title があれば、その文字を名前に含む試験だけを数える。",
+  "rows": [
+    {
+      "name": "import.dev",
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/import/dev.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/import/photo-measure.test.ts" }
+      ],
+      "scope": "写真の ③ と要確認の数は測った値を出す試験（photo-measure）。目標に届いたかの値は docs/trend.md"
+    },
+    {
+      "name": "import.heldout",
+      "sources": [{ "runner": "vitest", "file": "tests/heldout/heldout.test.ts" }],
+      "scope": "いつも走るのは、凍結 → ハッシュ → 公開の順と、測った読み手の確かめだけ。② 0・③ 100% に届いたかは試験で見ていない（測った値は docs/trend.md）"
+    },
+    {
+      "name": "layer1.*",
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/import/layer1.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/import/pdf.test.ts" }
+      ]
+    },
+    {
+      "name": "crosswalk.*",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/crosswalk/crosswalk.test.ts" }]
+    },
+    {
+      "name": "cross-layer",
+      "sources": [],
+      "scope": "tests/unit/cross/import-share.test.ts は取り込み → 写し取りの層をまたぐ試験で、きっかけの次回とは別のもの"
+    },
+    {
+      "name": "counts",
+      "sources": []
+    },
+    {
+      "name": "pack.second",
+      "sources": [
+        { "runner": "node", "file": "tests/packs/pack-second.test.mjs" },
+        { "runner": "vitest", "file": "tests/unit/packs/night-soil-slice.test.ts" }
+      ]
+    },
+    {
+      "name": "pack.words",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/review/tool.test.ts", "title": "業種の語" }],
+      "scope": "見ているのは検査のコードと画面の言葉だけで、src/ 全体ではない"
+    },
+    {
+      "name": "pack.map",
+      "sources": []
+    },
+    {
+      "name": "kinds",
+      "sources": [
+        { "runner": "node", "file": "tests/packs/kinds.test.mjs" },
+        { "runner": "node", "file": "tests/packs/night-soil.test.mjs" }
+      ]
+    },
+    {
+      "name": "checks",
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/review/checks.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/review/measure.test.ts" }
+      ]
+    },
+    {
+      "name": "trigger.property",
+      "sources": []
+    },
+    {
+      "name": "human-only",
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/human-only.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/human-routes.test.ts" }
+      ]
+    },
+    {
+      "name": "hook",
+      "sources": [{ "runner": "node", "file": "tests/scripts/guard-hook.test.mjs" }]
+    },
+    {
+      "name": "reserved-names",
+      "sources": [{ "runner": "node", "file": "tests/scripts/reserved-names.test.mjs" }]
+    },
+    {
+      "name": "contract",
+      "sources": [{ "runner": "vitest", "file": "tests/contract/contract.test.ts" }]
+    },
+    {
+      "name": "share.leak",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/share/leak.test.ts" }]
+    },
+    {
+      "name": "share.k",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/share/k.test.ts" }]
+    },
+    {
+      "name": "share.stable",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/share/copyout.test.ts", "title": "share.stable" }]
+    },
+    {
+      "name": "share.grain",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/share/copyout.test.ts", "title": "share.grain" }]
+    },
+    {
+      "name": "share.tamper",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/share/tamper.test.ts" }]
+    },
+    {
+      "name": "share.rules",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/share/rules.test.ts" }]
+    },
+    {
+      "name": "share.chart",
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/share/aggregate.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/share/receive.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/share/site.test.ts" }
+      ]
+    },
+    {
+      "name": "verify demo-ring",
+      "sources": [{ "runner": "vitest", "file": "tests/unit/share/demo-ring.test.ts" }]
+    },
+    {
+      "name": "ledger",
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/share/ledger.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/share/prdiff.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/share/ledger-demo.test.ts" },
+        { "runner": "playwright", "file": "tests/e2e/ledger-site.spec.ts" }
+      ],
+      "scope": "台帳のリポジトリの Actions は、ここでは走らせていない（同じ判定の CLI validate-pr を一時の git のリポジトリで試す）"
+    },
+    {
+      "name": "e2e.daily",
+      "sources": [
+        { "runner": "playwright", "file": "tests/e2e/slice.spec.ts" },
+        { "runner": "playwright", "file": "tests/e2e/review.spec.ts" }
+      ],
+      "scope": "「毎日通る」は 1 回の実行では言えない。この表は 1 回の実行の結果"
+    },
+    {
+      "name": "windows",
+      "sources": [],
+      "scope": "CI（.github/workflows/ci.yml）は windows-latest でも試験の全体を走らせるが、§5.1 の起動・ツール 1 つ・確定・書き出し・日本語の道・OneDrive の Documents・使われているポートを通す試験は無い"
+    },
+    {
+      "name": "eval",
+      "sources": []
+    },
+    {
+      "name": "publish",
+      "sources": [
+        { "runner": "command", "file": "scripts/check-publish.mjs" },
+        { "runner": "command", "file": "scripts/check-deps.mjs" },
+        { "runner": "node", "file": "tests/scripts/check-publish.test.mjs" },
+        { "runner": "node", "file": "tests/scripts/check-deps.test.mjs" }
+      ]
+    }
+  ]
+}
