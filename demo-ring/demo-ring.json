@@ -1,0 +1,68 @@
+{
+  "v": "moyai.demo-ring/0",
+  "note": "【架空】デモの輪（7 拠点）。scripts/demo-ring/build.mjs が作った。秘密鍵はリポジトリに無い",
+  "ring": "280b431a5d3351ca",
+  "month": "2026-11",
+  "confirmed": [
+    {
+      "key": "f9307f6b2b256898",
+      "fingerprint": "Z4R7-YTSB-4NM9-GP0N",
+      "role": "site"
+    },
+    {
+      "key": "d4333ac8872c93cc",
+      "fingerprint": "TGSK-NJ47-5J9W-S8E5",
+      "role": "site"
+    },
+    {
+      "key": "d920e7957bb9c21a",
+      "fingerprint": "V4GE-F5BV-Q711-MEDQ",
+      "role": "site"
+    },
+    {
+      "key": "ff8e00712d95b6e7",
+      "fingerprint": "ZY70-0W9D-JPVE-FCZK",
+      "role": "site"
+    },
+    {
+      "key": "cd6604ea3eb52df8",
+      "fingerprint": "SNK0-9THY-PMPZ-GB5D",
+      "role": "site"
+    },
+    {
+      "key": "927025187dc9fd25",
+      "fingerprint": "J9R2-A63X-S7YJ-AV0Y",
+      "role": "site"
+    },
+    {
+      "key": "c10a99601ad5511b",
+      "fingerprint": "R459-JR0T-TN8H-P9GT",
+      "role": "site"
+    },
+    {
+      "key": "4d70bf5ad35e3744",
+      "fingerprint": "9NRB-YPPK-BRVM-8DG7",
+      "role": "reject"
+    }
+  ],
+  "expectNg": [
+    {
+      "kind": "member",
+      "name": "4d70bf5ad35e3744",
+      "reasons": [
+        "freeText",
+        "money",
+        "shape.type"
+      ]
+    },
+    {
+      "kind": "bundle",
+      "name": "bundles/4d70bf5ad35e3744/000001-a5039f671aa8e8ee.json",
+      "reasons": [
+        "freeText",
+        "money",
+        "shape.type"
+      ]
+    }
+  ]
+}

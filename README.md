@@ -6,4 +6,9 @@ Claude ハッカソン「Built with Claude: Japan 2026」（2026-11-02〜11-10�
 
 知恵は出し合う。秘密は出さない。
 
+## 確かめ方
+
+- `npm ci` → `npm run build` → `node dist/cli.js verify demo-ring`：架空の 7 拠点のデモの輪（`demo-ring/`）を、受け手と同じ関数で確かめます。全員 ✓、わざと入れた ✗ の束は理由つきで ✗ です。秘密鍵はリポジトリにありません（`demo-ring/README.md`）。
+- `npm run acceptance`：試験を走らせ、計画の受け入れの表（`docs/plan.md` §5.1）を `docs/acceptance.md` に作ります。結果は「通った／落ちた／試験が無い／測っていない」の 4 つで、試験の無いものは「試験が無い」と書きます。
+
 ライセンス：Apache-2.0
