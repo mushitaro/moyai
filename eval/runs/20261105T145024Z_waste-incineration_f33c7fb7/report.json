@@ -1,0 +1,788 @@
+{
+  "schema": "moyai.eval.report/0",
+  "runId": "20261105T145024Z_waste-incineration_f33c7fb7",
+  "suite": "waste-incineration",
+  "split": "test",
+  "skill": {
+    "path": "eval/drafts/waste-incineration/SKILL.v2-ai.md",
+    "sha256": "f33c7fb776b9627911c1726ef43af42524098ad110f62b747a2ab5dffc70c495",
+    "label": "版 2 の案",
+    "author": "AI"
+  },
+  "modelRole": "eval",
+  "modelRoleHash": "34bb92a28e1e78ae7f97dcd2530eace9512f1229c2efa96ed2d3e813c4cfed05",
+  "effort": "high",
+  "repeat": 3,
+  "calls": 150,
+  "counted": 150,
+  "excluded": {
+    "switched": 0,
+    "refusal": 0,
+    "max_tokens": 0,
+    "error": 0
+  },
+  "perAttempt": [
+    {
+      "attempt": 1,
+      "passRate": 1,
+      "counted": 50
+    },
+    {
+      "attempt": 2,
+      "passRate": 1,
+      "counted": 50
+    },
+    {
+      "attempt": 3,
+      "passRate": 1,
+      "counted": 50
+    }
+  ],
+  "passRate": 1,
+  "band": 0,
+  "byRule": [
+    {
+      "rule": "R01",
+      "name": "周期の欄が空なら推測しない",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R02",
+      "name": "番号の違う機器を名前でまとめない",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R03",
+      "name": "出典はパックの一覧の中から",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R04",
+      "name": "年度の始まりはパックどおり",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R05",
+      "name": "記録に無いことは「記録に無い」と言う",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R06",
+      "name": "和暦の年度",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R07",
+      "name": "範囲のタグ（系列の範囲）を機器ごとに分ける",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R08",
+      "name": "凡例に無い記号の意味を推測しない",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R09",
+      "name": "合計の行を作業にしない",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    },
+    {
+      "rule": "R10",
+      "name": "単位の違う工数",
+      "passRate": 1,
+      "counted": 15,
+      "failingCases": 0
+    }
+  ],
+  "byGrader": [
+    {
+      "grader": "json",
+      "name": "JSON として読めるか",
+      "passRate": 1,
+      "counted": 150
+    },
+    {
+      "grader": "no_guess",
+      "name": "周期や工数などを推測で埋めていないか（記録にある値は合っているか）",
+      "passRate": 1,
+      "counted": 285
+    },
+    {
+      "grader": "identity",
+      "name": "番号の違う機器を名前でまとめていないか（対象の集合が正解と同じか）",
+      "passRate": 1,
+      "counted": 90
+    },
+    {
+      "grader": "source",
+      "name": "出典がパックの一覧の中にあるか",
+      "passRate": 1,
+      "counted": 45
+    },
+    {
+      "grader": "fiscal_year",
+      "name": "年度の始まりがパックどおりか（年度が正解と同じか）",
+      "passRate": 1,
+      "counted": 180
+    },
+    {
+      "grader": "not_in_record",
+      "name": "記録に無いことを「記録に無い」と言えたか",
+      "passRate": 1,
+      "counted": 300
+    }
+  ],
+  "cases": [
+    {
+      "id": "R01-06",
+      "rule": "R01",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R01-07",
+      "rule": "R01",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R01-08",
+      "rule": "R01",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R01-09",
+      "rule": "R01",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R01-10",
+      "rule": "R01",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R02-06",
+      "rule": "R02",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R02-07",
+      "rule": "R02",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R02-08",
+      "rule": "R02",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R02-09",
+      "rule": "R02",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R02-10",
+      "rule": "R02",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R03-06",
+      "rule": "R03",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R03-07",
+      "rule": "R03",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R03-08",
+      "rule": "R03",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R03-09",
+      "rule": "R03",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R03-10",
+      "rule": "R03",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R04-06",
+      "rule": "R04",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R04-07",
+      "rule": "R04",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R04-08",
+      "rule": "R04",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R04-09",
+      "rule": "R04",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R04-10",
+      "rule": "R04",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R05-06",
+      "rule": "R05",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R05-07",
+      "rule": "R05",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R05-08",
+      "rule": "R05",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R05-09",
+      "rule": "R05",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R05-10",
+      "rule": "R05",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R06-06",
+      "rule": "R06",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R06-07",
+      "rule": "R06",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R06-08",
+      "rule": "R06",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R06-09",
+      "rule": "R06",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R06-10",
+      "rule": "R06",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R07-06",
+      "rule": "R07",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R07-07",
+      "rule": "R07",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R07-08",
+      "rule": "R07",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R07-09",
+      "rule": "R07",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R07-10",
+      "rule": "R07",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R08-06",
+      "rule": "R08",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R08-07",
+      "rule": "R08",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R08-08",
+      "rule": "R08",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R08-09",
+      "rule": "R08",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R08-10",
+      "rule": "R08",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R09-06",
+      "rule": "R09",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R09-07",
+      "rule": "R09",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R09-08",
+      "rule": "R09",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R09-09",
+      "rule": "R09",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R09-10",
+      "rule": "R09",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R10-06",
+      "rule": "R10",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R10-07",
+      "rule": "R10",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R10-08",
+      "rule": "R10",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R10-09",
+      "rule": "R10",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    },
+    {
+      "id": "R10-10",
+      "rule": "R10",
+      "split": "test",
+      "passes": [
+        true,
+        true,
+        true
+      ],
+      "failing": false,
+      "failedGraders": []
+    }
+  ],
+  "failingCases": [],
+  "format": {
+    "failed": 0,
+    "contentPassed": 0,
+    "contentPassRate": 1
+  },
+  "cost": {
+    "usd": 1.362146,
+    "perCallUsd": 0.009080973333333334,
+    "inputTokens": 87474,
+    "outputTokens": 33589,
+    "cacheReadTokens": 914225,
+    "cacheWriteTokens": 31525
+  },
+  "outbound": {
+    "chars": 41895,
+    "properNounHits": 0,
+    "file": "outbound.txt"
+  },
+  "comparison": {
+    "base": "20261105T144200Z_waste-incineration_2ee7b1aa",
+    "verdict": "差なし",
+    "basePassRate": 0.96,
+    "baseBand": 0.040000000000000036,
+    "diff": 0.040000000000000036,
+    "baseFailing": 1,
+    "failing": 0,
+    "newlyFailing": [],
+    "fixed": [
+      "R03-08"
+    ],
+    "reason": "合格率の差 4.0% が、前の版の揺れの幅 4.0%（3 回の最大と最小の差）に収まる"
+  }
+}

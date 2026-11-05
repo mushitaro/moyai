@@ -1,0 +1,38 @@
+{
+  "schema": "moyai.eval.manifest/0",
+  "runId": "20261105T145159Z_night-soil_1f6cb5b2",
+  "createdAt": "2026-11-05T14:51:59.713Z",
+  "finishedAt": "2026-11-05T14:53:41.306Z",
+  "status": "done",
+  "stopNote": null,
+  "suite": "night-soil",
+  "suiteHash": "8a81b63ba6130ee1f6e40d34705af9ad66019b4ed8e89d4c7463de16cd1db70d",
+  "split": "test",
+  "rules": null,
+  "perRule": null,
+  "limit": null,
+  "repeat": 3,
+  "cases": 50,
+  "calls": 150,
+  "skill": {
+    "path": "eval/drafts/night-soil/SKILL.v2-ai.md",
+    "sha256": "1f6cb5b26337f96ef3c7a9a9f5acc15a766b69468fe355f38569a375425edd73",
+    "label": "版 2 の案",
+    "author": "AI"
+  },
+  "modelRole": "eval",
+  "modelRoleHash": "34bb92a28e1e78ae7f97dcd2530eace9512f1229c2efa96ed2d3e813c4cfed05",
+  "effort": "high",
+  "maxTokens": 16000,
+  "systemHash": "cd544b7a460741a282891bb469abf63fbfd77f84b5e2a1131a39a95abc79195c",
+  "answerFormatHash": "210515c532205cec407feadab86aa5d4575c615b8fd6571469ffd05f92a93c93",
+  "outbound": {
+    "chars": 36366,
+    "properNounHits": 0,
+    "file": "outbound.txt"
+  },
+  "estimateUsd": 3.34503,
+  "maxUsd": 10,
+  "costUsd": 1.1867180000000002,
+  "base": "20261105T144507Z_night-soil_b6f954f1"
+}

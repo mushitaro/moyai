@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Skill の採点 waste-incineration</title>
+<style>
+:root{--ink:#1b1b1b;--sub:#5b5b5b;--line:#d9d6cf;--bg:#fbfaf7;--bad:#9b2d20}
+@media (prefers-color-scheme: dark){:root{--ink:#ecebe7;--sub:#a9a6a0;--line:#3b3a37;--bg:#161615;--bad:#e2806f}}
+body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);font:14px/1.6 system-ui,"IBM Plex Sans JP",sans-serif}
+main{max-width:1080px;margin:0 auto}h1{font-size:20px;font-weight:500}h2{font-size:15px;font-weight:500;margin-top:28px}
+table{border-collapse:collapse;width:100%;margin:8px 0;display:block;overflow-x:auto}th,td{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+th{font-weight:500;color:var(--sub)}.bad{color:var(--bad)}p{color:var(--sub)}
+</style></head><body><main>
+<h1>Skill の採点 — waste-incineration（test）</h1>
+<p>回 20261105T143044Z_waste-incineration_2ee7b1aa。Skill の版 2ee7b1aa（packs/waste-incineration/SKILL.md）。モデルは config/models.json の「eval」（ハッシュ 34bb92a28e1e）、effort high、1 問 1 回。表は report.json から作った。</p>
+<table><tr><th>合格率</th><th>揺れの幅</th><th>回ごとの合格率</th><th>数えた回</th><th>外した回</th><th>費用（米ドル）</th><th>1 回あたり</th><th>外へ出た文字</th><th>固有名詞の当たり</th></tr><tr><td>100.0%</td><td>—</td><td>1: 100.0%</td><td>10 / 10</td><td>switched 0・refusal 0・max_tokens 0・error 0</td><td>$0.2224</td><td>$0.0222</td><td>13488</td><td>0</td></tr></table>
+<p>前の版との比べ：比べる版が無い（ベースライン）</p>
+<h2>規則ごと</h2><table><tr><th>規則</th><th>名前</th><th>合格率</th><th>数えた回</th><th>過半で落ちた問題</th></tr><tr><td>R01</td><td>周期の欄が空なら推測しない</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R02</td><td>番号の違う機器を名前でまとめない</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R03</td><td>出典はパックの一覧の中から</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R04</td><td>年度の始まりはパックどおり</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R05</td><td>記録に無いことは「記録に無い」と言う</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R06</td><td>和暦の年度</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R07</td><td>範囲のタグ（系列の範囲）を機器ごとに分ける</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R08</td><td>凡例に無い記号の意味を推測しない</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R09</td><td>合計の行を作業にしない</td><td>100.0%</td><td>1</td><td>0</td></tr><tr><td>R10</td><td>単位の違う工数</td><td>100.0%</td><td>1</td><td>0</td></tr></table>
+<h2>採点ごと（確かめ 1 つずつ）</h2><table><tr><th>採点</th><th>見ること</th><th>合格率</th><th>確かめの数</th></tr><tr><td>json</td><td>JSON として読めるか</td><td>100.0%</td><td>10</td></tr><tr><td>no_guess</td><td>周期や工数などを推測で埋めていないか（記録にある値は合っているか）</td><td>100.0%</td><td>19</td></tr><tr><td>identity</td><td>番号の違う機器を名前でまとめていないか（対象の集合が正解と同じか）</td><td>100.0%</td><td>6</td></tr><tr><td>source</td><td>出典がパックの一覧の中にあるか</td><td>100.0%</td><td>3</td></tr><tr><td>fiscal_year</td><td>年度の始まりがパックどおりか（年度が正解と同じか）</td><td>100.0%</td><td>12</td></tr><tr><td>not_in_record</td><td>記録に無いことを「記録に無い」と言えたか</td><td>100.0%</td><td>20</td></tr></table>
+<h2>問題ごと</h2><table><tr><th>問題</th><th>規則</th><th>分け</th><th>回ごとの合否</th><th>落ちた採点</th></tr><tr><td>R01-06</td><td>R01</td><td>test</td><td>○</td><td></td></tr><tr><td>R02-06</td><td>R02</td><td>test</td><td>○</td><td></td></tr><tr><td>R03-06</td><td>R03</td><td>test</td><td>○</td><td></td></tr><tr><td>R04-06</td><td>R04</td><td>test</td><td>○</td><td></td></tr><tr><td>R05-06</td><td>R05</td><td>test</td><td>○</td><td></td></tr><tr><td>R06-06</td><td>R06</td><td>test</td><td>○</td><td></td></tr><tr><td>R07-06</td><td>R07</td><td>test</td><td>○</td><td></td></tr><tr><td>R08-06</td><td>R08</td><td>test</td><td>○</td><td></td></tr><tr><td>R09-06</td><td>R09</td><td>test</td><td>○</td><td></td></tr><tr><td>R10-06</td><td>R10</td><td>test</td><td>○</td><td></td></tr></table>
+<p>トークン：入力 5854・キャッシュ読み 29780・キャッシュ書き 29780・出力 2205。</p>
+</main></body></html>

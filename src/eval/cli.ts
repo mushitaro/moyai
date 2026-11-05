@@ -307,7 +307,10 @@ function writeReport(p: Paths, runId: string, base: string | null): number {
   if (base) {
     const bDir = join(p.evalDir, "runs", base);
     const bm: Manifest = JSON.parse(readFileSync(join(bDir, "manifest.json"), "utf8"));
-    rep.comparison = compareReports(buildReport(bm, readJsonl<ResultRow>(join(bDir, "results.jsonl")), loaded.suite.rules), rep);
+    // 前の版の合格率と揺れの幅は、両方で走らせた問題だけで数える（試験用だけで比べるときに、全問の値と比べないため）
+    const ids = new Set(rows.map((r) => r.caseId));
+    const baseRows = readJsonl<ResultRow>(join(bDir, "results.jsonl")).filter((r) => ids.has(r.caseId));
+    rep.comparison = compareReports(buildReport(bm, baseRows, loaded.suite.rules), rep);
   }
   writeJson(join(runDir, "report.json"), rep);
   writeFileSync(join(runDir, "report.html"), renderHtml(rep));
