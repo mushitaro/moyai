@@ -2,22 +2,22 @@
 
 `node scripts/acceptance.mjs`（または `node scripts/trend.mjs`）が、試験の実行の報告から作ります。手で直さないでください。試験の名前と試験のファイルの対応は `tests/acceptance-map.json` の 1 か所で、名前の並びと合格の条件は `docs/plan.md` §5.1 の表です。
 
-結果は 4 つです：通った（対応する試験がすべて通った）／落ちた（1 つでも落ちた）／試験が無い（対応する試験を作っていない）／測っていない（試験はあるが、この実行で走っていない）。「通った」は、対応する試験が通ったことで、§5.1 の合格の条件をすべて確かめたとは限りません（範囲の注を見てください）。
+結果は 5 つです：通った（対応する試験が §5.1 の合格の条件まで確かめ、すべて通った）／一部（範囲の注を見る。対応する試験は通ったが、合格の条件の一部しか確かめていない）／落ちた（1 つでも落ちた）／試験が無い（対応する試験を作っていない）／測っていない（試験はあるが、この実行で走っていない）。
 
-- 作った時刻：2026-11-05 12:28 JST・コミット `b9ae334`
+- 作った時刻：2026-11-05 12:34 JST・コミット `e437dec`
 - 報告：node:test 159・vitest 921・Playwright 渡していない（測っていない）
-- 通った 21・落ちた 0・試験が無い 6・測っていない 2（全 29）
+- 通った 18・一部 3・落ちた 0・試験が無い 6・測っていない 2（全 29）
 
 | 試験の名前 | 結果 | 通った・落ちた | 対応する試験 | 範囲の注 |
 |---|---|---|---|---|
-| `import.dev` | 通った | 3・0 | `tests/unit/import/dev.test.ts`：通った 2・落ちた 0<br>`tests/unit/import/photo-measure.test.ts`：通った 1・落ちた 0 | 写真の ③ と要確認の数は測った値を出す試験（photo-measure）。目標に届いたかの値は docs/trend.md |
-| `import.heldout` | 通った | 4・0（飛ばした 1） | `tests/heldout/heldout.test.ts`：通った 4・落ちた 0・飛ばした 1 | いつも走るのは、凍結 → ハッシュ → 公開の順と、測った読み手の確かめだけ。② 0・③ 100% に届いたかは試験で見ていない（測った値は docs/trend.md） |
+| `import.dev` | 一部（範囲の注を見る） | 3・0 | `tests/unit/import/dev.test.ts`：通った 2・落ちた 0<br>`tests/unit/import/photo-measure.test.ts`：通った 1・落ちた 0 | 写真の ③ と要確認の数は測った値を出す試験（photo-measure）。目標に届いたかの値は docs/trend.md |
+| `import.heldout` | 一部（範囲の注を見る） | 4・0（飛ばした 1） | `tests/heldout/heldout.test.ts`：通った 4・落ちた 0・飛ばした 1 | いつも走るのは、凍結 → ハッシュ → 公開の順と、測った読み手の確かめだけ。② 0・③ 100% に届いたかは試験で見ていない（測った値は docs/trend.md） |
 | `layer1.*` | 通った | 29・0 | `tests/unit/import/layer1.test.ts`：通った 13・落ちた 0<br>`tests/unit/import/pdf.test.ts`：通った 16・落ちた 0 |  |
 | `crosswalk.*` | 通った | 10・0 | `tests/unit/crosswalk/crosswalk.test.ts`：通った 10・落ちた 0 |  |
 | `cross-layer` | 試験が無い | — | — | tests/unit/cross/import-share.test.ts は取り込み → 写し取りの層をまたぐ試験で、きっかけの次回とは別のもの |
 | `counts` | 試験が無い | — | — |  |
 | `pack.second` | 通った | 3・0 | `tests/packs/pack-second.test.mjs`：通った 2・落ちた 0<br>`tests/unit/packs/night-soil-slice.test.ts`：通った 1・落ちた 0 |  |
-| `pack.words` | 通った | 1・0 | `tests/unit/review/tool.test.ts`（「業種の語」）：通った 1・落ちた 0 | 見ているのは検査のコードと画面の言葉だけで、src/ 全体ではない |
+| `pack.words` | 一部（範囲の注を見る） | 1・0 | `tests/unit/review/tool.test.ts`（「業種の語」）：通った 1・落ちた 0 | 見ているのは検査のコードと画面の言葉だけで、src/ 全体ではない |
 | `pack.map` | 試験が無い | — | — |  |
 | `kinds` | 通った | 14・0 | `tests/packs/kinds.test.mjs`：通った 6・落ちた 0<br>`tests/packs/night-soil.test.mjs`：通った 8・落ちた 0 |  |
 | `checks` | 通った | 38・0 | `tests/unit/review/checks.test.ts`：通った 35・落ちた 0<br>`tests/unit/review/measure.test.ts`：通った 3・落ちた 0 |  |
