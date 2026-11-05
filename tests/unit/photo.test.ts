@@ -243,7 +243,7 @@ describe("要確認と止める決まり", () => {
     expect(ws.compose.state).toBe("failed");
     expect(ws.compose.state === "failed" && ws.compose.blockers.join("・")).toContain("要確認");
     console.log(`写真：要確認 ${review.assets + review.details}（機器の節 ${review.assets}・明細 ${review.details}）、置いたセル ${ws.photoBook.get(PHOTO_NAME)!.reading!.cells.length}`);
-  });
+  }, 180_000); // windows-latest の CI で 60 秒を越える（11-05 に 61〜69 秒）。測った値に合わせた上限
 
   it("写真から作った明細は要確認・作者は AI（読み取り）・出どころに画像の位置。人が確かめたら要確認でない", () => {
     const src = (confirmed: boolean): SourceFile => ({
@@ -357,7 +357,7 @@ describe("人が確かめる：画像と並べてセルを直し、一言の理�
     // 確かめを取り消すと、また要確認
     expect(ws.photos.unconfirm(PHOTO_NAME)).toBe("ok");
     expect(ws.composeBlockers().join("・")).toMatch(/要確認 \d+/);
-  });
+  }, 180_000); // windows-latest の CI で 60 秒を越える（11-05 に 61〜69 秒）。測った値に合わせた上限
 
   it("人が読み取りを捨てると、AI はもう一度置ける", async () => {
     const ws = workspace();
