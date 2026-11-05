@@ -408,7 +408,7 @@ export class HumanService {
    * 場は公開の台帳だけ、立場は市町村（自分の施設の見え方）に固める。輪（非公開）は読まない。
    * 見え方の答えが無い・足りなければ、比べずに、聞くこと（軸と選べるコード）を返す（推測で埋めない）。
    */
-  async ledgerReference(i: { packId: string; facility: { scale: number | null; scaleUnit: string | null } | null; answers: z.infer<typeof answersSchema> | null; commonItem?: string }): Promise<Record<string, unknown> | "no_ledger" | "ledger_pack_not_ready"> {
+  async ledgerReference(i: { packId: string; facility: { scale: number | null; scaleUnit: string | null } | null; answers: z.infer<typeof answersSchema> | null; commonItem?: string; aiAxes?: string[] }): Promise<Record<string, unknown> | "no_ledger" | "ledger_pack_not_ready"> {
     const sd = this.e.stateDir;
     if (!sd) return "no_ledger";
     const pack = this.pack(i.packId);
@@ -426,7 +426,7 @@ export class HumanService {
     const l = await loadLedgerPlace(s.ledger, pack, await this.root());
     const c = compare({ table: pack.table, position: "municipal", profile: prof.profile, places: l.place ? [l.place] : [] });
     const out = peerAggregates(c, i.commonItem);
-    return { mode: "ledger", position: c.position, floorK: RECEIVE_MIN_K, ...out, ledgerVersion, needs: [], reason: null };
+    return { mode: "ledger", position: c.position, floorK: RECEIVE_MIN_K, ...out, ledgerVersion, needs: [], reason: null, aiAxes: i.aiAxes ?? [] };
   }
 
   /** 今の公開の台帳の clone の版（設定に台帳が無ければ null） */

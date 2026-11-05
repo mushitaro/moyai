@@ -6,7 +6,7 @@
 
 例外は 2 つです（MCP の instructions の安全の決まり 1 と同じ）。どちらも、承認は人の署名です。
 
-1. 引き渡しのメールを送ること。人が MERGE で「署名して渡す」を押すと、`intake_survey` の handoff に MOYAI が用意したメールの文（宛先・件名・本文）が入ります。利用者が送ってと言ったら、Claude が利用者の連携したメールから、その文のまま送ります。中身は版の場所とハッシュだけです。MOYAI にメールを送るツールはありません。
+1. 引き渡しのメールを送ること。人が MERGE で「署名して渡す」を押すと、`intake_survey` の handoff に MOYAI が用意したメールの文（宛先・件名・本文）が入ります。利用者が送ってと言ったら、Claude が利用者の連携したメールから、その文のまま送ります。中身は版の場所とハッシュと、リンクの中の使い捨ての合言葉（受け取りに使う）です。合言葉は、文を読んだ AI の提供者にも渡ります。受け取れるのは最初の 1 回だけです。計画の中身は運びません。MOYAI にメールを送るツールはありません。
 2. 未承認の読み方の下書きを保管先に書くこと（`reading_skill_register`）。保管先の決まった場所に、未承認の 3 段目の Skill として書きます。承認は、その読み方を使った版への人の署名です。
 
 ## AI に渡る範囲（ツールごと）
@@ -78,9 +78,9 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/ledger-send` | `ledger_send` | 束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
 | `POST /human/ledger-rules-accept` | `ledger_rules_accept` | 変わった公開の台帳の決まりを、人が差を見て受け入れる（見た決まりのハッシュと同じで、緩くした決まりでないときだけ） |
 | `POST /human/ledger-prs` | `ledger_prs` | 出した束の PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ） |
-| `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：台帳の自分の鍵が無ければ作り、OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ） |
+| `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ）。台帳に束を出す施設の鍵は、送ったときに保管先の計画のフォルダに書く |
 | `POST /human/github-connect-state` | `github_connect_state` | GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを状態フォルダに置く（包まない。見張りのフックが AI の読み取りを止める） |
-| `POST /human/github-disconnect` | `github_disconnect` | GitHub との接続を切る（包んだトークンのファイルを消す） |
+| `POST /human/github-disconnect` | `github_disconnect` | GitHub との接続を切る（状態フォルダのトークンのファイルを消す） |
 | `POST /human/readings-read` | `readings_read` | 保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む |
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |

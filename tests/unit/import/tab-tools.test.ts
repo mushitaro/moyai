@@ -7,7 +7,7 @@ import { IntakeWorkspace } from "../../../src/app/intake/workspace";
 import { connectTabTools, runTabTool, TAB_TOOL_RECEIVERS } from "../../../src/app/intake/tab-tools";
 import { BridgeClient } from "../../../src/app/bridge-client";
 import { encodeEvent } from "../../../src/shared/events";
-import { clearWorkingPlan, getWorkingPlan } from "../../../src/app/state/plan-store";
+import { clearWorkingPlan, getWorkingPlan, setWorkingPlan } from "../../../src/app/state/plan-store";
 import { BRIDGE_TOOL_RECEIVERS } from "../../../src/bridge/tools";
 import { TOOL_NAMES, TOOLS } from "../../../src/shared/tools";
 import { aiDecisions } from "../../../src/plan/diff";
@@ -278,5 +278,28 @@ describe("決定の確かめ（AI も人も同じ確かめを通る）", () => {
     expect(read).toBe(false);
     expect(ws.skippedFiles[0]?.reason).toContain("64 MB");
     expect(ok(runTabTool(ws, "intake_survey", {}, CTX)).notes.join("\n")).toContain("big.xlsx");
+  });
+});
+
+describe("AI の引数で人の答えを越えない（監-3・監-4）", () => {
+  afterEach(() => clearWorkingPlan());
+  const ws = () => new IntakeWorkspace({ packId: PACK, facilityName: "【架空】甲", fiscalYearStartMonth: 4, fictional: true });
+
+  test("台帳を読むときの見え方の答えは、人が施設に答えたものが先。AI の答えは人が答えていない軸にだけ", async () => {
+    const { plan, asset } = await import("../share/fixtures");
+    const p = plan({ assets: [asset("a1", null)], works: [], details: [] });
+    setWorkingPlan({ ...p, facility: { ...p.facility, profile: { furnace: "STOKER" }, inNationalTable: true } }, "dev");
+    const r = ok(runTabTool(ws(), "peer_reference", { place: "ledger", answers: { facility: { furnace: "FLUID", turbine: "YES" }, inNationalTable: false } }, CTX));
+    expect(r.answers).toEqual({ facility: { furnace: "STOKER", turbine: "YES" }, inNationalTable: true });
+    // AI の答えで埋めた軸だけを返す（人が答えた furnace と inNationalTable は入らない）
+    expect(r.aiAxes).toEqual(["turbine"]);
+    // 人が答えていなければ AI の答えのまま。どちらも無ければ null（橋渡しが聞くことを返す）
+    setWorkingPlan({ ...p, facility: { ...p.facility, inNationalTable: null } }, "dev");
+    expect(ok(runTabTool(ws(), "peer_reference", { place: "ledger", answers: { facility: { furnace: "FLUID" }, inNationalTable: false } }, CTX)).answers).toEqual({ facility: { furnace: "FLUID" }, inNationalTable: false });
+    expect(ok(runTabTool(ws(), "peer_reference", { place: "ledger" }, CTX)).answers).toBeNull();
+  });
+
+  test("読み方を保管先に書く頼みは、AI の担当者の名前を橋渡しへ渡さない（担当者は橋渡しが設定の呼び名から決める）", () => {
+    expect(TOOLS.reading_skill_register.input.safeParse({ name: "【架空】甲", by: "よその人" }).data).toEqual({ name: "【架空】甲" });
   });
 });

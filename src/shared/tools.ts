@@ -422,11 +422,13 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠（公開の台帳の版 ledgerVersion と、似た施設の数と帯。費用は書かない）を書く。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で似た施設が 5 以上〔中央の帯〕かを照らし、合わなければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
+    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠（公開の台帳の版 ledgerVersion と、似た施設の数と帯。費用は書かない）を書く。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で似た施設が 5 以上〔中央の帯〕かを照らし、合わなければ案を置かない）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
     z.object({
       rules: z.array(ruleSchema).min(1).max(50),
       basedOnVersion: z.number().int().min(0),
       basis: z.string().min(1).max(500),
+      /** 台帳を根拠にしないときの作者：利用者が会話で言った周期なら ai_relayed_human、Claude の判断なら ai（既定） */
+      author: z.enum(["ai", "ai_relayed_human"]).optional(),
       /** 台帳を根拠にするとき：peer_reference（place: ledger）の版と、その集計の行（橋渡しが照らす。台帳の中-5） */
       ledger: z
         .object({
@@ -518,7 +520,7 @@ export const TOOLS = {
     "peer_reference",
     "read",
     "仲間の参考を読む",
-    "似た施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。計画に入れるときは chart_propose で周期の案を置き、根拠に ledgerVersion と集計（似た施設の数と帯）を書く。場をまたいで混ぜない。施設を当てようとしない。",
+    "似た施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。人が施設に答えた軸はそちらを使い、answers は人が答えていない軸にだけ効く（効いた軸は aiAxes に返るので、根拠に「会話から写した答え」と書く）。計画に入れるときは chart_propose で周期の案を置き、根拠に ledgerVersion と集計（似た施設の数と帯）を書く。場をまたいで混ぜない。施設を当てようとしない。",
     z.object({
       commonItem: z.string().max(64).optional(),
       place: z.enum(["ledger"]).optional(),
@@ -546,6 +548,8 @@ export const TOOLS = {
       /** ledger のとき：見え方の答えが足りないときに聞く軸（選べるコードと、規模から推した既定） */
       needs: z.array(z.object({ key: z.string(), name: z.string(), codes: z.array(z.object({ code: z.string(), name: z.string() })), suggested: z.string().nullable() })).optional(),
       reason: z.string().nullable().optional(),
+      /** ledger のとき：人が施設に答えていない軸のうち、AI の答え（会話から写した答え）で埋めた軸。根拠にそう書く */
+      aiAxes: z.array(z.string()).optional(),
     }),
   ),
   reading_rules_propose: def(
@@ -566,15 +570,15 @@ export const TOOLS = {
     "reading_skill_register",
     "propose",
     "読み方を保管先に未承認で書く",
-    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：by の担当者、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
-    z.object({ name: z.string().min(1).max(80), by: z.string().min(1).max(40).optional() }),
+    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：この PC の設定の呼び名の担当者。担当者を AI が選ぶ道は無い、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
+    z.object({ name: z.string().min(1).max(80) }),
     z.object({ path: z.string(), version: z.string(), approved: z.boolean(), rules: z.number().int() }),
   ),
   reading_skills_list: def(
     "reading_skills_list",
     "read",
     "保管先の読み方の一覧",
-    "保管先にある 3 段目の Skill（読み方）の一覧。名前・範囲・道・版・規則の数・承認済みか（その読み方を使った版に、信じる鍵の確定か承認の署名があるか）。withText: true で、SKILL.md の文（規則の 1 文と、人が手で書いた補い）も返す（直す前に読み直すため）。",
+    "保管先にある 3 段目の Skill（読み方）の一覧。名前・範囲・道・版・規則の数・承認済みか（その読み方を使った版に、信じる鍵の確定か承認の署名があるか）。withText: true で、SKILL.md の文（規則の 1 文と、人が手で書いた補い）も返す（直す前に読み直すため）。本文が返るのは、作業画面の今の施設・この PC の呼び名の担当・会社の範囲の読み方だけで、ほかの施設や担当の読み方は名前と数だけ。作業画面が開いていないと読めない。",
     z.object({ withText: z.boolean().optional() }),
     z.object({
       skills: z.array(

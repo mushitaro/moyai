@@ -1,5 +1,6 @@
 // 橋渡し（moyai start）：1 プロセス、127.0.0.1 の 1 ポート。
 // HTTP は許可の一覧（src/shared/routes.ts）の経路だけを受け、WebSocket はタブ 1 つだけを受ける。
+import { readSettings } from "./places";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
@@ -16,7 +17,7 @@ import {
   type RouteId,
 } from "../shared/routes";
 import { EXPOSED_TOOL_NAMES, isToolName, toolDef, type ToolKind } from "../shared/tools";
-import { approvedReadingVersions, listReadings, registerReading } from "./readings";
+import { approvedReadingVersions, listReadings, readingTextShown, registerReading } from "./readings";
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
@@ -126,12 +127,15 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   const sd = opts.stateDir;
   const trusted = (x: SignatureInfo) => sd !== null && countsForApproval(trustOf(sd, x, new Date(now())));
   const tools = new ToolRelay(tabs, opts.toolTimeouts, {
-    reading_skills_list: async (args) => {
+    reading_skills_list: async (fromTab, args) => {
       const root = await human.root();
       if (!root) return "no_reading_root";
       const list = await listReadings(root, await approvedReadingVersions(root, trusted));
-      // 本文は頼まれたときだけ（保管先の SKILL.md の文。規則の 1 文と、人が手で書いた補い）
-      return { skills: list.map(({ skill: _skill, text, ...x }) => (args.withText === true ? { ...x, text } : x)) };
+      // 本文は頼まれたときだけ（保管先の SKILL.md の文。規則の 1 文と、人が手で書いた補い）。
+      // 渡す本文は、作業画面の今の施設・この PC の呼び名の担当・会社の範囲だけ。ほかの施設や担当の読み方は名前と数だけ（客先の呼び名を混ぜない。台帳の中-4）
+      const facility = typeof fromTab.facilityKey === "string" ? fromTab.facilityKey : null;
+      const me = sd ? readSettings(sd).name : null;
+      return { skills: list.map(({ skill: _skill, text, ...x }) => (args.withText === true && readingTextShown(x, facility, me) ? { ...x, text } : x)) };
     },
     // 似た施設：人が開いた比べはそのまま渡し、公開の台帳だけを読む頼みは橋渡しが台帳を読む（§2.18.4）
     peer_reference: async (fromTab) => {
@@ -146,13 +150,16 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
         facility: (fromTab.facility as { scale: number | null; scaleUnit: string | null } | null) ?? null,
         answers,
         ...(typeof fromTab.commonItem === "string" ? { commonItem: fromTab.commonItem } : {}),
+        aiAxes: Array.isArray(fromTab.aiAxes) ? fromTab.aiAxes.filter((x): x is string => typeof x === "string") : [],
       });
     },
     ledger_version: async () => human.ledgerHead(),
     reading_skill_register: async (fromTab) => {
       const root = await human.root();
       if (!root) return "no_reading_root";
-      const w = await registerReading(root, fromTab.skill, typeof fromTab.by === "string" ? fromTab.by : null, typeof fromTab.facilityKey === "string" ? fromTab.facilityKey : null);
+      // 担当者は、この PC の設定の呼び名（人の経路と同じ。AI の引数やタブの答えからは取らない。監-3）
+      const by = sd ? readSettings(sd).name : null;
+      const w = await registerReading(root, fromTab.skill, by, typeof fromTab.facilityKey === "string" ? fromTab.facilityKey : null);
       if (!w.ok) return "tab_bad_result";
       const approved = (await approvedReadingVersions(root, trusted)).has(w.version);
       return { path: w.path, version: w.version, approved, rules: w.rules };

@@ -23,7 +23,8 @@ export type ToolReceiver = "not_implemented" | "tab" | "bridge" | "tab_then_brid
 
 /** 橋渡しが答えるツール（保管先を読む・書く）。誤りは誤りの名前で返す */
 export interface BridgeTools {
-  reading_skills_list?: (args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+  /** 作業画面が今の施設を渡し、橋渡しが保管先を読む（本文は今の施設・自分の担当・会社の範囲だけ。台帳の中-4） */
+  reading_skills_list?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   reading_skill_register?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   /** 作業画面が人の開いた比べを返したらそのまま、公開の台帳だけを読む頼みなら橋渡しが台帳を読んで比べる */
   peer_reference?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
@@ -48,7 +49,7 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   peer_reference: "tab_then_bridge",
   reading_rules_propose: "tab",
   reading_skill_register: "tab_then_bridge",
-  reading_skills_list: "bridge",
+  reading_skills_list: "tab_then_bridge",
   skill_eval: "not_implemented",
 };
 
@@ -219,7 +220,14 @@ export class ToolRelay {
     if (out.kind === "no_answer") return fail("tab_no_answer");
     if (out.kind === "error") return fail(out.code);
     if (BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
-      const h = name === "reading_skill_register" ? this.bridgeTools.reading_skill_register : name === "peer_reference" ? this.bridgeTools.peer_reference : undefined;
+      const h =
+        name === "reading_skill_register"
+          ? this.bridgeTools.reading_skill_register
+          : name === "peer_reference"
+            ? this.bridgeTools.peer_reference
+            : name === "reading_skills_list"
+              ? this.bridgeTools.reading_skills_list
+              : undefined;
       if (!h) return fail("not_implemented");
       const answer = finish(await h(out.data as Record<string, unknown>, args));
       if (name === "peer_reference" && isOk(answer) && answer.data.mode === "ledger") this.rememberLedger(conversation, answer.data);

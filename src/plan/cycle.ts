@@ -11,6 +11,11 @@ export const CYCLE_FIELD = "work.trigger";
 export const CYCLE_YEARS = { min: 1, max: 30 } as const;
 /** 台帳から来た印の出どころ（資料ではないので、資料の名前の代わりにこの印を置く） */
 export const LEDGER_SOURCE = "ledger:公開の台帳";
+/** 台帳を照らしていない案（利用者の言葉や Claude の判断から置いた案）の出どころ（台帳の中-5 の残り） */
+export const CONVERSATION_SOURCE = "conversation:Claude との会話";
+/** 台帳を照らした案の ID の頭（ほかは C。決定のシートの種類を分ける） */
+export const LEDGER_CYCLE_PREFIX = "L";
+export const isLedgerCycle = (id: string): boolean => id.startsWith(LEDGER_CYCLE_PREFIX);
 export const CYCLE_KEY = /^cy-([A-Za-z0-9]+)-/;
 
 export interface CycleProposal {
@@ -37,7 +42,20 @@ export function cycleYearsOf(rule: Rule): number | null {
   return Number.isInteger(n) && n >= CYCLE_YEARS.min && n <= CYCLE_YEARS.max ? n : null;
 }
 
-export function proposeCycles(plan: Plan, rules: Rule[], opts: { nextId: () => string; basis: string }): CycleOutcome {
+export function proposeCycles(
+  plan: Plan,
+  rules: Rule[],
+  opts: {
+    nextId: () => string;
+    basis: string;
+    /** 橋渡しが台帳の版と似た施設 5 以上を照らした案か。照らした案だけ出どころを台帳にする（中-5 の残り） */
+    fromLedger: boolean;
+    /** 台帳を照らしていない案の作者（会話から写した利用者の答えか、Claude の決定） */
+    author?: "ai" | "ai_relayed_human";
+  },
+): CycleOutcome {
+  const source = opts.fromLedger ? LEDGER_SOURCE : CONVERSATION_SOURCE;
+  const author = opts.fromLedger ? "ai" : (opts.author ?? "ai");
   for (const [i, r] of rules.entries()) if (cycleYearsOf(r) === null) return { ok: false, code: "rule_invalid", ruleIndex: i };
   const horizon = plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity);
   const details: WorkDetailT[] = [...plan.details];
@@ -79,9 +97,9 @@ export function proposeCycles(plan: Plan, rules: Rule[], opts: { nextId: () => s
           measuredValue: null,
           previousValue: null,
           performer: null,
-          sources: [{ file: LEDGER_SOURCE, sheet: null, page: null, cell: null, box: null }],
+          sources: [{ file: source, sheet: null, page: null, cell: null, box: null }],
           basis,
-          author: "ai",
+          author,
           needsReview: false,
         });
         p.detailKeys.push(detailKey);
