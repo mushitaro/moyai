@@ -111,7 +111,7 @@ function ymd(d: { y: number; m: number; d: number }): string {
 
 /** 読み方の規則の同じ機器（辞書）：名前の鍵 → そろえる先の名前の鍵。link を呼ぶたびに入れ直す */
 let ALIAS = new Map<string, string>();
-const nk = (s: string): string => {
+export const nk = (s: string): string => {
   const k = nameKey(s);
   return ALIAS.get(k) ?? k;
 };

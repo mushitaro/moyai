@@ -17,6 +17,9 @@ import { checkSeen } from "./seen";
 import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
+import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
+import { ruleSchema } from "../shared/tools";
+import { AUTHOR_KINDS } from "../shared/fields";
 import { approvedTemplateVersions, listTemplates, readTemplateVersion, saveTemplate } from "./templates";
 import { exportExcelName, exportSignatureName, signExport } from "../plan/exports";
 import { fillTemplate, templateRows } from "../plan/template";
@@ -110,10 +113,19 @@ const SCHEMAS = {
     origin: z.string().max(200).optional(),
     /** ほかの施設の版から作った第 1 版のとき（トップの「この版から別の施設をつくる」） */
     derivedFrom: z.object({ planId: planIdSchema, version: z.number().int().min(1), contentHash: z.string().regex(/^[0-9a-f]{64}$/) }).nullable().optional(),
+    /** 次の版に重ねるための記録（1C・重-2）：先に plan_source_put で置いた資料の SHA-256、その資料への決定、人が受けた当てはめの規則。写真のある版は送らない */
+    sources: z.array(z.object({ name: z.string().min(1).max(200), sha256: z.string().regex(/^[0-9a-f]{64}$/), size: z.number().int().min(1) })).max(200).optional(),
+    decisions: z
+      .array(z.object({ questionId: z.string().min(1).max(200), answer: z.string().max(200), author: z.enum(AUTHOR_KINDS), reason: z.string().min(1).max(1000), sources: z.array(z.string().regex(/^[0-9a-f]{64}$/)).min(1).max(200) }))
+      .max(100_000)
+      .optional(),
+    crosswalk: z.array(z.object({ rule: ruleSchema, target: z.enum(["assetNode", "work"]), value: z.string().min(1).max(200), basis: z.string().max(2000) })).max(2000).optional(),
     /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
   readings_read: z.object({}),
+  plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
+  plan_source_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
   templates_read: z.object({ planId: planIdSchema.nullable() }),
   // 写し方だけを直すときは base64 を空にし、from に元の様式の版を書く（様式のファイルは共有フォルダのものを使う）
   template_save: z.object({ name: z.string().min(1).max(80), base64: z.string().max(12 * 1024 * 1024), columns: z.unknown(), from: z.string().regex(/^[0-9a-f]{64}$/).nullable().optional() }),
@@ -333,6 +345,20 @@ export class HumanService {
     };
   }
 
+  /**
+   * いちばん新しい版の上に、この鍵が次の版を作ってよいか（編集の番。監査 B1・台帳の新-1）。
+   * - 編集を頼んだ版：頼みを受け取った鍵（まだ誰も受け取っていなければ頼んだ人）だけ
+   * - 承認を頼んだ版：承認されるまで（差戻されたあとも）頼んだ人だけ。承認されれば閉じて、誰でも次の版を作れる
+   */
+  private async mayBuildOn(root: string, planId: string, h: Awaited<ReturnType<typeof readHistory>>, pub: string): Promise<boolean> {
+    const top = h.versions.at(-1);
+    const act = top ? await activeRequest(root, planId, top) : null;
+    if (!act || !top) return true;
+    if (act.request.body.kind === "edit") return pub === (act.receipt?.pub ?? act.request.body.pub);
+    if (top.signatures.some((x) => x.role === "approve")) return true;
+    return pub === act.request.body.pub;
+  }
+
   /** 書き出しに使うパックの名前の表（packs/<パック>/common.json と packs/_kinds/work.json）。読めなければ共通のシートは作らない */
   private catalogsFor(packId: string): ExportCatalogs {
     const read = (p: string): unknown => JSON.parse(readFileSync(p, "utf8"));
@@ -435,7 +461,7 @@ export class HumanService {
           root,
           synced: await this.syncedOfPath(root),
           versions,
-          latest: h.latest ? { version: h.latest.version, plan: h.latest.plan } : null,
+          latest: h.latest ? { version: h.latest.version, plan: h.latest.plan, sources: h.latest.sources ?? null, decisions: h.latest.decisions ?? null, crosswalk: h.latest.crosswalk ?? null } : null,
           // ひとつ前の版（確かめで合うときだけ）：承認を頼まれた人の星取表は、頼まれた版をこの版と比べる
           previous: h.previous && h.versions.find((v) => v.version === h.previous!.version)?.problem === null ? { version: h.previous.version, plan: h.previous.plan } : null,
           accepted: h.accepted,
@@ -471,10 +497,12 @@ export class HumanService {
         if (typeof pid === "string" && PLAN_ID.test(pid)) {
           const h0 = await readHistory(root, pid);
           if (checkSeen(sd, root, pid, h0)) return no("historyVanished");
-          // 編集を頼んだ版の上に重ねるのは、編集の番の人だけ（頼みを受け取った鍵。まだ誰も受け取っていなければ頼んだ人。監査 B1）
-          const top = h0.versions.at(-1);
-          const act = top ? await activeRequest(root, pid, top) : null;
-          if (act && act.request.body.kind === "edit" && signer.signer.pair.pub !== (act.receipt?.pub ?? act.request.body.pub)) return no("notYourTurn");
+          if (!(await this.mayBuildOn(root, pid, h0, signer.signer.pair.pub))) return no("notYourTurn");
+        }
+        // 次の版に重ねるための資料：あること・ハッシュ・上限を照らす。合わなければ確定しない（黙って記録を欠かさない）
+        if (p.sources && typeof pid === "string" && PLAN_ID.test(pid)) {
+          const sc = await checkSources(root, pid, p.sources, p.decisions ?? []);
+          if (!sc.ok) return no(sc.reason);
         }
         // 頼むこと：自分で確定する（confirm の署名）か、編集・承認を頼んで渡す（edit の署名）。頼むときは宛先が要る
         const req = p.request ?? { kind: "self" as const, to: null, note: "" };
@@ -492,6 +520,7 @@ export class HumanService {
           catalogs: (id) => this.catalogsFor(id),
           readingSkills,
           derivedFrom: p.derivedFrom ?? null,
+          ...(p.sources ? { sources: p.sources, decisions: p.decisions ?? [], crosswalk: p.crosswalk ?? [] } : {}),
         });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         const at = now.toISOString();
@@ -516,7 +545,10 @@ export class HumanService {
         if (!root) return no("noRoot");
         const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
-        if (checkSeen(sd, root, p.planId, await readHistory(root, p.planId))) return no("historyVanished");
+        const hr = await readHistory(root, p.planId);
+        if (checkSeen(sd, root, p.planId, hr)) return no("historyVanished");
+        // 戻すのも、次の版を作ること。確定と同じく、番の人だけ（台帳の新-1）
+        if (!(await this.mayBuildOn(root, p.planId, hr, signer.signer.pair.pub))) return no("notYourTurn");
         const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
         if (!r.ok) return no(r.reason);
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
@@ -713,6 +745,27 @@ export class HumanService {
         const want = pv.record.files ? (p.kind === "export" ? pv.record.files.export : pv.record.files.report) : undefined;
         if (want !== undefined && want !== sha256Hex(bytes)) return no("fileChanged");
         return { ok: true, version: p.version, kind: p.kind, base64: bytes.toString("base64") };
+      }
+      case "plan_source_put": {
+        const p = parsePayload("plan_source_put", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const r = await putSource(root, p.planId, new Uint8Array(Buffer.from(p.base64, "base64")));
+        if (!r.ok) return no(r.reason);
+        return { ok: true, sha256: r.sha256, size: r.size };
+      }
+      case "plan_source_read": {
+        const p = parsePayload("plan_source_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        // 確かめで合う版の記録にある資料だけ。ハッシュが合わなければ渡さない（黙って残りの資料だけで組み直させない）
+        const pv = await readPlanVersion(root, p.planId, p.version);
+        if (!pv.ok) return no(pv.reason);
+        const r = await readSource(root, p.planId, pv.record.sources, p.sha256);
+        if (!r.ok) return no(r.reason);
+        return { ok: true, name: r.name, sha256: p.sha256, base64: r.bytes.toString("base64") };
       }
       case "templates_read": {
         const p = parsePayload("templates_read", call.payload);

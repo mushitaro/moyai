@@ -100,7 +100,7 @@ test("利用者の様式の見出しを読み、列ごとに写すものを決�
     // 署名して書き出す：ダイアログに、この署名で承認する写し方と、版の中身は変わらないこと
     await page.getByTestId("export-sign").click();
     const dialog = page.getByTestId("export-sign-dialog");
-    await expect(dialog).toContainText("第 1 版を 長寿命化計画_様式3 で書き出す");
+    await expect(dialog).toContainText("長寿命化計画_様式3 で書き出す");
     await expect(dialog).toContainText("この署名で承認する写し方（1）");
     await expect(dialog).toContainText("版の中身は変わりません");
     await page.screenshot({ path: shot(`template-sign-${tag}`), fullPage: true });

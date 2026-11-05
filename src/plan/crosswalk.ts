@@ -5,7 +5,7 @@
 // 純粋な TS（UI もネットも持たない）。画面の言葉（規則の文）は呼ぶ側が渡す。
 import { WORK_ATTRIBUTES, type AuthorKind, type WorkAttribute } from "../shared/fields";
 import type { AssetNodeT, Plan, WorkT } from "../shared/plan";
-import { EXAMPLES_MAX, type Rule } from "../shared/tools";
+import { EXAMPLES_MAX, RULE_MAX_VALUES, type Rule } from "../shared/tools";
 
 /** 規則が置ける欄と、その欄を持つ物（資産の節か作業） */
 export const CROSSWALK_SET_FIELDS = { "assetNode.commonItem": "assetNode", "work.attribute": "work" } as const;
@@ -31,6 +31,8 @@ export interface CrosswalkProposal {
   state: ProposalState;
   /** 人が受けた・断ったときの一言の理由 */
   humanReason: string | null;
+  /** もとにした版で人が受けた当てはめと同じ（1C。決定のシートの「第 n 版と同じ」にまとめる） */
+  sameAs?: number;
 }
 
 export interface CrosswalkExample {
@@ -425,13 +427,18 @@ export function carryOverCrosswalk(
   next: Plan,
   itemCodes: ReadonlySet<string>,
   acceptedBasis: (basis: string, reason: string) => string,
+  base: CrosswalkBase | null = null,
 ): { plan: Plan; proposals: CrosswalkProposal[]; report: CarryOverReport } {
   let plan = next;
   let humanLost = 0;
   const nextNodes = new Set(next.assets.map((a) => a.nodeKey));
   const nextWorks = new Set(next.works.map((w) => w.workKey));
-  const humanNodes = new Map(prev.assets.filter((a) => a.commonItemAuthor === "human" && a.commonItemAccepted).map((a) => [a.nodeKey, nodeMapping(a)]));
-  const humanWorks = new Map(prev.works.filter((w) => w.attributeAuthor === "human" && w.attributeAccepted).map((w) => [w.workKey, workMapping(w)]));
+  // このタブで人が直に当てたもの（もとにした版の当てはめと違うものだけ。版から来たものは下で案として並べる）
+  const baseNode = new Map((base?.plan.assets ?? []).map((a) => [a.nodeKey, nodeMapping(a)]));
+  const baseWork = new Map((base?.plan.works ?? []).map((w) => [w.workKey, workMapping(w)]));
+  const fromSession = (m: Mapping, b: Mapping | undefined) => !b || b.value !== m.value || b.author !== m.author;
+  const humanNodes = new Map(prev.assets.filter((a) => a.commonItemAuthor === "human" && a.commonItemAccepted && fromSession(nodeMapping(a), baseNode.get(a.nodeKey))).map((a) => [a.nodeKey, nodeMapping(a)]));
+  const humanWorks = new Map(prev.works.filter((w) => w.attributeAuthor === "human" && w.attributeAccepted && fromSession(workMapping(w), baseWork.get(w.workKey))).map((w) => [w.workKey, workMapping(w)]));
   for (const k of humanNodes.keys()) if (!nextNodes.has(k)) humanLost++;
   for (const k of humanWorks.keys()) if (!nextWorks.has(k)) humanLost++;
   plan = {
@@ -445,24 +452,100 @@ export function carryOverCrosswalk(
       return m ? withWork(w, m) : w;
     }),
   };
+  // 前に受けた規則が当てていた行（受けた根拠の文で見分ける）。作り直して新しく当たった行があれば、規則は案に戻す（人が見ていない行を「受けた」にしない。重-3）
+  const prevHeld = (p: CrosswalkProposal): Set<string> => {
+    if (p.state !== "accepted" || p.humanReason === null) return new Set();
+    const b = acceptedBasis(p.basis, p.humanReason);
+    const held = (m: Mapping) => m.accepted && m.value === p.value && m.basis === b;
+    return new Set(p.target === "assetNode" ? prev.assets.filter((a) => held(nodeMapping(a))).map((a) => nodeRef(a.nodeKey)) : prev.works.filter((w) => held(workMapping(w))).map((w) => workRef(w.workKey)));
+  };
   const proposals: CrosswalkProposal[] = [];
-  for (const p of prevProposals) {
-    if (p.state === "rejected") continue;
+  const seenRules = new Set<string>();
+  const place = (p: Pick<CrosswalkProposal, "rule" | "ruleId" | "basis" | "basedOnVersion">, before: CrosswalkProposal | null, sameAs: number | null) => {
     const r = proposeCrosswalk(plan, [p.rule], { itemCodes, basedOnVersion: p.basedOnVersion, nextRuleId: () => p.ruleId, basisOf: () => p.basis });
-    if (!r.ok) continue;
+    if (!r.ok) return;
     plan = r.plan;
-    const fresh: CrosswalkProposal = { ...r.proposals[0]!, state: "proposed", humanReason: null };
-    if (p.state === "accepted" && p.humanReason !== null) {
-      const a = acceptProposal(plan, fresh, p.humanReason, acceptedBasis);
-      if (a.ok) {
-        plan = a.plan;
-        proposals.push({ ...fresh, state: "accepted", humanReason: p.humanReason });
-        continue;
+    const fresh: CrosswalkProposal = { ...r.proposals[0]!, state: "proposed", humanReason: null, ...(sameAs !== null ? { sameAs } : {}) };
+    if (before && before.state === "accepted" && before.humanReason !== null) {
+      const was = prevHeld(before);
+      const now = heldRows(plan, fresh);
+      if (now.every((x) => was.has(x))) {
+        const a = acceptProposal(plan, fresh, before.humanReason, acceptedBasis);
+        if (a.ok) {
+          plan = a.plan;
+          proposals.push({ ...fresh, state: "accepted", humanReason: before.humanReason });
+          return;
+        }
       }
     }
     proposals.push(fresh);
+  };
+  const ruleKey = (p: Pick<CrosswalkProposal, "rule">) => JSON.stringify(p.rule);
+  for (const p of prevProposals) {
+    if (p.state === "rejected") {
+      seenRules.add(ruleKey(p));
+      continue;
+    }
+    seenRules.add(ruleKey(p));
+    place(p, p, p.sameAs ?? null);
+  }
+  // もとにした版の当てはめ（1C）：その版で人が受けた規則と、規則の無い行の当てはめ（機器の鍵で結ぶ）を「第 n 版と同じ」の案として並べる。
+  // 黙って引き継がない。人が受けるまで決めない。同じ計画の中で見分けられなかった機器（AMBIGUOUS_KEY_PREFIX）は並べない（台帳の中-8）
+  if (base) {
+    let n = 0;
+    const usedIds = new Set(proposals.map((p) => p.ruleId));
+    const id = () => {
+      let x = `v${base.version}-${++n}`;
+      while (usedIds.has(x)) x = `v${base.version}-${++n}`;
+      usedIds.add(x);
+      return x;
+    };
+    for (const c of base.crosswalk) {
+      if (seenRules.has(JSON.stringify(c.rule))) continue;
+      seenRules.add(JSON.stringify(c.rule));
+      place({ rule: c.rule, ruleId: id(), basis: c.basis, basedOnVersion: base.version }, null, base.version);
+    }
+    const groups = new Map<string, string[]>();
+    const want = (target: CrosswalkTarget, key: string, m: Mapping, cur: Mapping) => {
+      if (key.startsWith(base.ambiguousPrefix) || m.value === null || !m.accepted) return;
+      if (target === "assetNode" && !itemCodes.has(m.value)) return;
+      if (cur.value !== null) return;
+      const g = `${target}\u0000${m.value}`;
+      groups.set(g, [...(groups.get(g) ?? []), key]);
+    };
+    for (const a of plan.assets) {
+      const m = baseNode.get(a.nodeKey);
+      if (m) want("assetNode", a.nodeKey, m, nodeMapping(a));
+    }
+    for (const w of plan.works) {
+      const m = baseWork.get(w.workKey);
+      if (m) want("work", w.workKey, m, workMapping(w));
+    }
+    for (const [g, keys] of groups) {
+      const [target, value] = g.split("\u0000") as [CrosswalkTarget, string];
+      for (let i = 0; i < keys.length; i += RULE_MAX_VALUES) {
+        const chunk = keys.slice(i, i + RULE_MAX_VALUES);
+        const rule: Rule = {
+          when: [{ field: target === "assetNode" ? "assetNode.nodeKey" : "work.workKey", op: "in", values: chunk }],
+          set: { field: target === "assetNode" ? "assetNode.commonItem" : "work.attribute", value },
+          reason: base.reason,
+        };
+        place({ rule, ruleId: id(), basis: base.reason, basedOnVersion: base.version }, null, base.version);
+      }
+    }
   }
   return { plan, proposals, report: { rules: proposals.length, acceptedBefore: acceptedCount(prev), acceptedAfter: acceptedCount(plan), humanLost } };
+}
+
+/** もとにした版（1C）：その版の計画と、人が受けた当てはめの規則。作り直したとき「第 n 版と同じ」の案として並べる */
+export interface CrosswalkBase {
+  version: number;
+  plan: Plan;
+  crosswalk: readonly { rule: Rule; basis: string }[];
+  /** 規則の無い行の当てはめを案にするときの理由（「第 n 版で受けた当てはめと同じ」） */
+  reason: string;
+  /** 見分けられなかった機器の鍵の頭（並べない） */
+  ambiguousPrefix: string;
 }
 
 /**

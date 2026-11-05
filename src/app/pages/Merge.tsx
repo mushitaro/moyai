@@ -25,6 +25,8 @@ import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKe
 import { CommentsPanel, commentNumber, type ListedComment } from "../components/CommentsPanel";
 import { Switch } from "../components/Switch";
 import { setWorkingPlan, useWorkingPlan } from "../state/plan-store";
+import { setCrosswalkBase } from "../state/crosswalk";
+import type { Decision } from "../../import/questions";
 import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { FacilityDialog } from "../components/FacilityDialog";
@@ -80,6 +82,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const openKey = openId ? `${openId}|${openV}|${open.get("h") ?? ""}|${openNext ? 1 : 0}` : null;
   const [doneKey, setDoneKey] = useState<string | null>(null);
   const pendingOpen = !!openKey && doneKey !== openKey;
+  // 版を開いて、その版の資料と決定を戻し終えるまでは作り直させない（前の版の資料なしで組み直して、明細を消さない）
+  useEffect(() => {
+    if (pendingOpen) ws.blockRestore(T.opening);
+    // 開き終える前にほかのシートへ移ったら、開くのはやめる（止め札だけを残さない）
+    else ws.clearBlock(T.opening);
+  }, [pendingOpen]);
   // 古い版を見ているあいだは、その版の番号（見るだけ。確定はできない）
   const [oldView, setOldView] = useState<{ planId: string; version: number } | null>(null);
   const statusId = pendingOpen ? (openId ?? "") : (plan?.planId ?? "");
@@ -88,6 +96,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   useEffect(() => {
     if (!pendingOpen || !st || !openKey || !openId) return;
     const fail = (k: string) => {
+      ws.blockRestore(null);
       setNotice(T.openFailed(T.openWhat[k] ?? ""));
       setDoneKey(openKey);
     };
@@ -99,6 +108,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     if (info.problem) return fail("broken");
     if (openV === latest.version) {
       setWorkingPlan(latest.plan, "intake");
+      void restoreFrom(openId, latest).catch((e: unknown) => ws.blockRestore(T.sourcesFailed(latest.version, e instanceof Error ? e.message : String(e))));
       setOldView(null);
       setNotice(null);
       setDoneKey(openKey);
@@ -127,10 +137,33 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       // この版から次の版：もとにした版は、保管先のいちばん新しい版（古い版の中身を、その上に重ねる）
       setWorkingPlan(r.body.plan, "intake", [], openNext ? latest.version : openV);
       setOldView(openNext ? null : { planId: openId, version: openV });
+      // 古い版から次の版を作るときは、その版の資料をまだ戻さない（このタブの資料だけで組み直す）
+      ws.blockRestore(null);
       setNotice(null);
       setDoneKey(openKey);
     })();
   }, [pendingOpen, st]);
+  // 開いた版を組んだ資料と決定を画面に戻し、その版をもとにした版にする（1C・重-2）。資料が 1 つでも読めなければ戻さず、作り直しを止める
+  const restoreFrom = async (planId: string, latest: NonNullable<NonNullable<typeof st>["latest"]>) => {
+    setCrosswalkBase({ version: latest.version, plan: latest.plan, crosswalk: latest.crosswalk ?? [] });
+    ws.pinPlanId(planId);
+    ws.blockRestore(T.opening);
+    if (!latest.sources) {
+      ws.blockRestore(null);
+      return setNotice(T.noSources(latest.version));
+    }
+    const files: { name: string; bytes: Uint8Array }[] = [];
+    for (const s of latest.sources) {
+      const r = readHuman<{ ok: boolean; name: string; base64: string }>(await client.callHuman("plan_source_read", ROUTES.planSourceRead.path, { planId, version: latest.version, sha256: s.sha256 }));
+      if (!r.ok) return ws.blockRestore(T.sourcesFailed(latest.version, r.message));
+      files.push({ name: r.body.name, bytes: Uint8Array.from(atob(r.body.base64), (c) => c.charCodeAt(0)) });
+    }
+    await ws.restoreVersion(
+      latest.version,
+      files,
+      (latest.decisions ?? []).map((d) => ({ questionId: d.questionId, answer: d.answer, author: d.author as Decision["author"], reason: d.reason })),
+    );
+  };
   const loadComments = async (planId: string) => {
     const r = readHuman<{ ok: boolean; reason?: string; comments: ListedComment[] }>(await client.callHuman("comments_list", ROUTES.commentsList.path, { planId }));
     setComments(r.ok ? r.body.comments : []);
@@ -525,7 +558,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       {plan && (
         <>
           <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />
-          <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />
+          <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} sources={() => ws.sourcesForCommit()} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
           {/* 頼み直す相手は開いたときに覚える（読み直しの間に状態が消えても、出したメールの文を消さない） */}
           <RequestRenewDialog client={client} planId={plan.planId} version={renew?.version ?? 0} to={renew?.to ?? ""} opened={!!renew} onClose={() => setRenew(null)} onRenewed={reloadStatus} />

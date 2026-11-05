@@ -7,7 +7,7 @@ import { CellIndex, type SourceFile } from "./grid";
 import { Asker, questionIdOf, type Decision } from "./questions";
 import { cellKey, type EventRec, type MarkRec, type Records } from "./records";
 import { ROW_ROLE_LABEL, type SheetLayout, type Table } from "./structure";
-import { seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
+import { nk, seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
 import { daysInclusive, parseDayCount, type Ymd } from "./era";
 import { nameKey, parseEffort } from "./text";
 import { cue } from "./cues";
@@ -63,6 +63,9 @@ function hash(s: string): string {
 }
 
 const AUTHOR_RANK: AuthorKind[] = ["ai", "ai_reading", "ai_relayed_human", "human", "rule_code"];
+
+/** 同じ計画の中で機器を見分ける値が同じだった機器の鍵の頭（前の版と結ばず、当てはめの案にも並べない。台帳の中-8） */
+export const AMBIGUOUS_KEY_PREFIX = "nx-";
 
 function authorOf(qids: Iterable<string>, decisions: ReadonlyMap<string, Decision>): AuthorKind {
   let best: AuthorKind = "rule_code";
@@ -199,14 +202,35 @@ export function compose(
   }
 
   // ─── 資産の節 ───
+  // 同一性の鍵（台帳の中-8、Architect の決めた形）：機器番号があれば nk(機器番号) と系列から、無ければ nk(名前) と系列と親の機器の鍵から作る。
+  // 資料のファイル名・シート・セルの位置とパックの項目は入れない（次の年の資料でも同じ機器は同じ鍵になり、前の版の当てはめを案に並べられる）。
+  // 同じ計画の中で同じ鍵が 2 つできた機器は、資料の位置から作る別の形の鍵（AMBIGUOUS_KEY_PREFIX）にし、前の版と結ばず案にも並べない
   const live = lk.clusters.filter((c) => !c.excluded);
   const keyOf = new Map<Cluster, string>();
+  const baseOf = new Map<Cluster, string>();
+  const seriesKey = (s: Cluster["series"]) => (s === null ? "" : s.kind === "number" ? `#${s.n}` : `c:${nk(s.meaning)}`);
+  const base = (c: Cluster, seen: Set<Cluster> = new Set()): string => {
+    const known = baseOf.get(c);
+    if (known !== undefined) return known;
+    if (seen.has(c)) return "";
+    seen.add(c);
+    const b = c.tag ? `t|${nk(c.tag)}|${seriesKey(c.series)}` : `n|${nk(c.name)}|${seriesKey(c.series)}|${c.parent ? base(c.parent, seen) : ""}`;
+    baseOf.set(c, b);
+    return b;
+  };
+  const count = new Map<string, number>();
+  for (const c of live) count.set(base(c), (count.get(base(c)) ?? 0) + 1);
   const used = new Set<string>();
   for (const c of live) {
-    const first = [...c.recs].sort((a, b) => a.file.localeCompare(b.file) || a.sheetIndex - b.sheetIndex || a.order - b.order)[0];
-    let k = `n-${hash(`${first?.file}|${first?.sheetIndex}|${first?.nameRef}`)}`;
-    let i = 2;
-    while (used.has(k)) k = `n-${hash(`${first?.file}|${first?.sheetIndex}|${first?.nameRef}|${i++}`)}`;
+    const b = base(c);
+    let k: string;
+    if (count.get(b) === 1) k = `n-${hash(b)}`;
+    else {
+      const first = [...c.recs].sort((x, y) => x.file.localeCompare(y.file) || x.sheetIndex - y.sheetIndex || x.order - y.order)[0];
+      k = `${AMBIGUOUS_KEY_PREFIX}${hash(`${b}|${first?.file}|${first?.sheetIndex}|${first?.nameRef}`)}`;
+      let i = 2;
+      while (used.has(k)) k = `${AMBIGUOUS_KEY_PREFIX}${hash(`${b}|${first?.file}|${first?.sheetIndex}|${first?.nameRef}|${i++}`)}`;
+    }
     used.add(k);
     keyOf.set(c, k);
   }

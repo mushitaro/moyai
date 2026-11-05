@@ -203,7 +203,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       copyFileSync(join(planDir, "exports", "000001-plan.xlsx"), shot(`slice-export-${tag}`).replace(/\.png$/, ".xlsx"));
       copyFileSync(join(planDir, "reports", "000001-diff.xlsx"), shot(`slice-diff-${tag}`).replace(/\.png$/, ".xlsx"));
       await page.screenshot({ path: shot(`slice-confirmed-${tag}`) });
-      await page.getByTestId("to-checkpoint").click();
+      await page.getByTestId("confirm-close").click();
+      await page.getByTestId("tab-share").click();
     });
 
     await test.step("検問所：見え方を選ぶと、k ≥ 5 の段で塊が出て、数がすべて 0", async () => {
@@ -230,7 +231,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
 
     await test.step("人が押して署名し、輪に置き、受け手と同じ関数で ✓。CLI の verify ring でも ✓", async () => {
       await page.getByTestId("send").click();
-      await expect(page.getByTestId("sent")).toContainText("束を輪に置きました");
+      await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
       await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
       await expect(page.locator('[data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
       await expect(page.locator('[data-testid="verify-line"][data-kind="bundle"][data-status="ok"]')).toHaveCount(1);
@@ -239,6 +240,35 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       expect(v.status, v.stderr).toBe(0);
       expect(v.stderr).toContain("✓ 束 bundles/");
       expect(v.stderr).toContain("すべて ✓ です。");
+    });
+
+    await test.step("次の版（1C・重-2）：トップの「＋ 次の版」で第 1 版を組んだ資料と決定が戻り、作り直すと第 1 版の当てはめが「第 1 版と同じ」の案として並ぶ", async () => {
+      // 版の記録に資料の SHA-256 が入り、資料は中身のアドレスに置かれている
+      const plans = readdirSync(join(root, "plans"));
+      const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
+      expect(rec.sources.map((x: { name: string }) => x.name).sort()).toEqual(["daily-report.csv", "equipment-ledger.xlsx", "plan-hoshitori.xlsx"]);
+      expect(readdirSync(join(root, "plans", plans[0]!, "sources")).sort()).toEqual(rec.sources.map((x: { sha256: string }) => x.sha256).sort());
+      expect(rec.crosswalk.length).toBeGreaterThan(0);
+      await page.evaluate(() => (location.hash = "#/"));
+      await page.getByTestId("moyai-next").first().click();
+      // 第 1 版の資料と決定が戻るまでは作り直せない（戻し終えると押せる）。質問は戻した決定で残らない
+      await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
+      await expect(page.getByTestId("sheet-file")).toHaveCount(3);
+      await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("compose")).toBeEnabled();
+      await page.getByTestId("compose").click();
+      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await page.getByTestId("sheet-decisions").click();
+      const kinds = page.getByTestId("decisions-kind");
+      await expect(kinds).toContainText("第 1 版と同じ");
+      await kinds.locator("button", { hasText: "第 1 版と同じ" }).click();
+      // 黙って引き継がない：どの規則も案で、人が 1 回押すまで決まらない
+      await expect(page.locator('[data-testid="crosswalk-rule"][data-same="1"][data-state="proposed"]').first()).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId("decisions-reason")).toHaveValue("第 1 版で受けた当てはめと同じ");
+      await page.screenshot({ path: shot(`slice-carry-${tag}`), fullPage: true });
+      await expect(page.getByTestId("decisions-bulk-accept")).toContainText("第 1 版と同じ");
+      await page.getByTestId("decisions-bulk-accept").click();
+      await expect(page.locator('[data-testid="crosswalk-rule"][data-same="1"][data-state="proposed"]')).toHaveCount(0);
     });
   } finally {
     await c.close();

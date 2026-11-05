@@ -1,5 +1,5 @@
 // 検査の画面の言葉（docs/plan.md §2.14）。AI のツール（check_results）の結果の文も、ここの言葉で作る（画面と同じ言い方にするため）。
-// 業種の言葉（検査の名前・何を見るか・出典の名前・尺度の名前）は置かない。それはパックの checks.json と sources.json から出る。
+// 業種の言葉（検査の名前・何を見るか・出典の名前・尺度の名前）は置かない。それはSkillパックの checks.json と sources.json から出る。
 import type { CheckExample, CheckOutcome, CheckResult, NotApplicableWhy, NumberKey } from "../../review/checks";
 import type { CheckKind, CheckLevel, ChecksLoadProblem, ThresholdOrigin } from "../../review/spec";
 import { fieldDef, type FieldRef } from "../../shared/fields";
@@ -15,18 +15,18 @@ const fieldLabel = (ref: string) => {
 
 export const REVIEW_TEXT = {
   title: "検査",
-  back: "作業画面へ",
+  back: "画面へ",
   /** AI のツールの結果（check_results）に添える。画面には出さない（運営者、2026-11-04） */
   notice: "自己点検であって、審査の判断ではない",
-  noticeBody: "パックの基準から外れた所を、根拠の数字と出典つきで出します。直すかどうかを決めるのは人です。",
+  noticeBody: "Skillパックの基準から外れた所を、根拠の数字と出典つきで出します。直すかどうかを決めるのは人です。",
   noPlan: "検査する計画がまだありません。取り込みの画面で資料を入れ、計画を作ってください。",
   toIntake: "取り込みへ",
-  noChecks: "この計画のパックには、検査がまだありません（未実装）。",
-  invalid: "パックの検査を読めませんでした。パックを直すまで、検査は走りません。",
+  noChecks: "この計画のSkillパックには、検査がまだありません（未実装）。",
+  invalid: "Skillパックの検査を読めませんでした。Skillパックを直すまで、検査は走りません。",
   loadProblem: {
     checksInvalid: "検査の書き方の形が違う",
     sourcesInvalid: "出典の一覧の形が違う",
-    packMismatch: "検査と出典の一覧のパックが違う",
+    packMismatch: "検査と出典の一覧のSkillパックが違う",
     sourceMissing: "検査の出典が、出典の一覧に無い",
     sourceNotVerified: "要件か推奨の検査の出典が、原典で照らされていない",
     duplicateId: "検査の ID が重なる",
@@ -36,7 +36,7 @@ export const REVIEW_TEXT = {
   referenceDateHelp: "この日で走らせます（AI が読む結果も同じ日）。年度だけの印は、その年度が終わってから「過ぎた」とします",
   referenceDateInvalid: "日付の形（年-月-日）で入れてください",
   referenceFiscalYear: (n: number) => `基準日の年度：${fy(n)}`,
-  checksVersion: (n: number) => `パックの検査の版：${n}`,
+  checksVersion: (n: number) => `Skillパックの検査の版：${n}`,
   summary: (met: number, notMet: number, na: number) => `満たす ${met} ／ 外れがある ${notMet} ／ 当てはまらない ${na}`,
   result: { met: "満たす", notMet: "外れがある", notApplicable: "当てはまらない" } satisfies Record<CheckOutcome, string>,
   level: {
@@ -66,7 +66,7 @@ export const REVIEW_TEXT = {
   unimplementedLabel: "未実装",
   noteLabel: "補足",
   whatLabel: "見ること",
-  notMadeTitle: "このパックで作っていない検査",
+  notMadeTitle: "このSkillパックで作っていない検査",
   codeUnimplementedTitle: "検査の仕組みで、まだ無いもの（未実装）",
   codeUnimplemented: [
     "延長の承認の記録の置き場（人だけの画面）。今は、どの延長も承認の記録が無いものとして「外れがある」にします",

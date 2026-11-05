@@ -146,7 +146,8 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     const versions = join(root, "plans", "fixture-fictional-1", "versions");
     expect(readdirSync(versions)).toEqual(["000001.json"]);
     expect(readdirSync(join(root, "plans", "fixture-fictional-1", "reports"))).toEqual(["000001-diff.xlsx"]);
-    await page.getByTestId("to-checkpoint").click();
+    await page.getByTestId("confirm-close").click();
+    await page.getByTestId("tab-share").click();
   });
 
   await test.step("検問所：見え方を選ぶと、相手から見たあなた・3 つの欄・数がすべて 0", async () => {
@@ -176,7 +177,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("plain-chunk").first()).toBeVisible();
     await expect(page.getByTestId("plain-chunk").first().locator(".moyai-redact")).toHaveCount(1);
     // 出元：束の鎖（初めて出すので 束 1）
-    await expect(page.getByTestId("share-chain")).toHaveText("束 1");
+    await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");
     // 出ていくバイト列・原本・相手の星取表は「中身を見る」にたたんである
     await expect(page.getByTestId("their-chart")).toBeHidden();
     await page.getByTestId("share-contents").locator("summary").click();
@@ -189,10 +190,10 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
 
   await test.step("人が主ボタンを押すと、署名して輪に置き、受け手と同じ関数で ✓", async () => {
     // 受け取った束（SHARE の下の節）：置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
-    await expect(page.getByTestId("received")).toContainText("受け取った束");
+    await expect(page.getByTestId("received")).toContainText("受け取った共有ファイル");
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toHaveCount(0);
     await page.getByTestId("send").click();
-    await expect(page.getByTestId("sent")).toContainText("束を輪に置きました");
+    await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
     await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
     await expect(page.locator('[data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="verify-line"][data-kind="bundle"][data-status="ok"]')).toHaveCount(1);
@@ -200,7 +201,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("received").scrollIntoViewIfNeeded();
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-received-${tag}`) });
     // 束の行は「束 1　第 1 版　年-月-日」（自分の束）
-    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toContainText(/束 1　第 1 版　\d{4}-\d{2}-\d{2}/);
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toContainText(/共有ファイル 1　第 1 版　\d{4}-\d{2}-\d{2}/);
     // 束の形をしていないファイルを自分のフォルダに置く（試験の台本が置いた）と、✗ の行と数が出る
     const ringDirs = readdirSync(ringRoot).filter((d) => /^[0-9a-f]{16}$/.test(d));
     const keyDirs = readdirSync(join(ringRoot, ringDirs[0]!, "bundles"));
@@ -208,12 +209,12 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("received-again").click();
     // ✗ は 2 行：置いたファイルの行と、そのフォルダの仲間の行（理由はどちらも「束の形でない名前」）
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(2);
-    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("束の形でないファイル");
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("共有ファイルの形でないファイル");
     // 仲間の行の理由は「束でないファイルが混じっています」、ファイルの行は「束の名前の形ではありません」
     // 仲間の行は 2 つ（輪を作った人の鍵と、束に署名した施設の鍵）。✗ はファイルを置いたフォルダの仲間の行だけ
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="member"]')).toHaveCount(2);
-    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="member"][data-status="ng"]')).toContainText("束でないファイルが混じっています");
-    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("束の名前の形ではありません");
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="member"][data-status="ng"]')).toContainText("共有ファイルでないファイルが混じっています");
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"][data-status="ng"]')).toContainText("共有ファイルの名前の形ではありません");
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-received-ng-${tag}`) });
     // 置いたファイルを消すと、また ✓ だけ（次の CLI の確かめのため）
     rmSync(join(ringRoot, ringDirs[0]!, "bundles", keyDirs[0]!, "メモ.txt"));
@@ -234,7 +235,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-member-unconfirmed-${tag}`) });
     // 人が仲間に電話で読み上げてもらい、16 文字が合った（試験の台本が押した）
     await row.getByTestId("member-check").click();
-    await expect(page.getByText("仲間の鍵の指紋")).toBeVisible();
+    await expect(page.getByText("メンバーの鍵の指紋")).toBeVisible();
     await page.getByTestId("key-check-matched").click();
     await expect(page.locator('[data-testid="verify-line"][data-state="unconfirmed"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);

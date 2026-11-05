@@ -160,8 +160,8 @@ export async function chooseRootAndCreateRing(page: Page, base: string, root: st
 
 /**
  * MERGE の決定のシートで、受けていない決定を、上の理由の欄に理由を書いて受ける（試験の台本が人の代わりに押す）。受けた数を返す。
- * 案のままの当てはめの規則が無ければ「まとめて受ける」で受ける（工場の資料を計画 §2.5 の厚さにしてから、決定が数百ある）。
- * 案のままの規則があるときは、規則は受けずに決定の行だけを 1 行ずつ受ける（まとめて受けると規則も受けるため）
+ * 種類の切り替えごとに「見えている n 件をまとめて受ける」で受ける（工場の資料を計画 §2.5 の厚さにしてから、決定が数百ある）。
+ * 当てはめの規則の種類（第 n 版と同じ・当てはめの案）は受けない（acceptRules で受ける）
  */
 export async function acceptDecisions(page: Page, reason: string): Promise<number> {
   await page.getByTestId("sheet-decisions").click();
@@ -169,18 +169,24 @@ export async function acceptDecisions(page: Page, reason: string): Promise<numbe
   // 版の履歴を読んで、受けていない決定が並ぶ（無ければ「ありません」）まで待つ
   await expect(page.locator('[data-testid="pending-row"], [data-testid="decisions-none"]').first()).toBeVisible();
   await page.getByTestId("decisions-reason").fill(reason);
+  // 種類の切り替え（第 n 版と同じ・当てはめの案・台帳からの案・会話から写した答え・Claude の決定）ごとに、見えている種類をまとめて受ける。
+  // 当てはめの規則（第 n 版と同じ・当てはめの案）は受けない（acceptRules で 1 規則ずつ受ける）。受け終えた種類は切り替えから消える
   const rows = page.locator('[data-testid="pending-row"][data-accepted="false"]');
-  const open = await rows.count();
-  if (open === 0) return 0;
-  const rulesOpen = await page.locator('[data-testid="crosswalk-rule"][data-state="proposed"]').count();
-  if (rulesOpen === 0) {
-    await page.getByTestId("decisions-bulk-accept").click();
-    await expect(rows).toHaveCount(0);
-    return open;
-  }
+  const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasNotText: /^(当てはめの案|第 \d+ 版と同じ)/ });
   let n = 0;
-  for (; n < 10_000 && (await rows.count()) > 0; n++) await rows.first().getByTestId("pending-accept").click();
-  await expect(rows).toHaveCount(0);
+  for (let i = 0; i < 20; i++) {
+    if ((await kinds.count()) > 0) await kinds.first().click();
+    const open = await rows.count();
+    if (open === 0) break;
+    n += open;
+    // 受けると計画が描き直され、理由の欄が空に戻ることがあるので、種類ごとに書き直す
+    await page.getByTestId("decisions-reason").fill(reason);
+    const kindText = () => page.getByTestId("decisions-kind").textContent({ timeout: 500 }).catch(() => "");
+    const before = await kindText();
+    await page.getByTestId("decisions-bulk-accept").click();
+    // 受けた種類は切り替えから消え、次の種類が見える（最後の種類なら切り替えごと消える）
+    await expect.poll(kindText).not.toBe(before);
+  }
   return n;
 }
 

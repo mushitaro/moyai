@@ -6,7 +6,7 @@
 // 理由の欄は上に 1 つ。1 行ずつ受けるときも、まとめて受けるときも、その理由を使う（空のあいだは押せない）。受けたものは下にたたむ。
 // 受けた決定はこのタブのメモリ（state/decisions.ts）に持ち、署名のダイアログがそこから読んで送る。
 import { Alert, Button, Group, Modal, Stack, Table, Text, TextInput } from "@mantine/core";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
 import { cycleIdOf } from "../../plan/cycle";
@@ -19,8 +19,11 @@ import { useWorkingPlan } from "../state/plan-store";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { DirectSet } from "./CrosswalkPanel";
 import { usePlanStatus } from "./ConfirmDialog";
+import { Switch } from "./Switch";
 
 const T = HUMAN_TEXT.decisions;
+const KINDS = ["same", "crosswalk", "ledger", "relayed", "ai"] as const;
+type Kind = (typeof KINDS)[number];
 const W = TEXT.crosswalk;
 
 /** 受けていない決定（版の履歴で受けたものを除く）。署名のダイアログと下の帯も同じ数を使う */
@@ -42,6 +45,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   const working = useWorkingPlan();
   const proposals = working?.proposals ?? [];
   const [reason, setReason] = useState("");
+  const [kindPick, setKindPick] = useState<Kind | null>(null);
   const [msg, setMsg] = useState<{ color: string; text: string } | null>(null);
   const [rejecting, setRejecting] = useState<CrosswalkProposal | null>(null);
   const catalog = useMemo(() => catalogFor(plan.packId), [plan.packId]);
@@ -65,9 +69,33 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   const isDone = (ds: Decision[]) => ds.every((x) => accepted.has(`${x.id}\u0000${x.hash}`));
   const openGroups = groups.filter((g) => !isDone(g.ds));
   const doneGroups = groups.filter((g) => isDone(g.ds));
-  const openRules = proposals.filter((p) => p.state === "proposed");
+  const allOpenRules = proposals.filter((p) => p.state === "proposed");
   const doneRules = proposals.filter((p) => p.state !== "proposed");
-  const leftCount = openGroups.length + openRules.length;
+  // 種類の切り替え（Wire、2026-11-05）：第 n 版と同じ ／ 当てはめの案 ／ 台帳からの案 ／ 会話から写した答え ／ Claude の決定。数が 0 の種類は出さず、先頭の種類を既定にする
+  const kindOfGroup = (g: { ds: Decision[]; cycle: string | null }): Kind => (g.cycle ? "ledger" : g.ds[0]!.author === "ai_relayed_human" ? "relayed" : "ai");
+  const sameAs = allOpenRules.find((p) => p.sameAs !== undefined)?.sameAs ?? null;
+  const counts: Record<Kind, number> = {
+    same: allOpenRules.filter((p) => p.sameAs !== undefined).length,
+    crosswalk: allOpenRules.filter((p) => p.sameAs === undefined).length,
+    ledger: openGroups.filter((g) => kindOfGroup(g) === "ledger").length,
+    relayed: openGroups.filter((g) => kindOfGroup(g) === "relayed").length,
+    ai: openGroups.filter((g) => kindOfGroup(g) === "ai").length,
+  };
+  const kinds = KINDS.filter((k) => counts[k] > 0);
+  const kind: Kind | null = kindPick && kinds.includes(kindPick) ? kindPick : (kinds[0] ?? null);
+  const openRules = allOpenRules.filter((p) => (kind === "same" ? p.sameAs !== undefined : kind === "crosswalk" ? p.sameAs === undefined : false));
+  const visibleGroups = openGroups.filter((g) => kindOfGroup(g) === kind);
+  const leftCount = openGroups.length + allOpenRules.length;
+  const visibleCount = visibleGroups.length + openRules.length;
+  // 「第 n 版と同じ」が見えているあいだは、受ける理由が空なら「第 n 版で受けた当てはめと同じ」を入れておく（人が直せる。Wire）
+  useEffect(() => {
+    if (kind === "same" && sameAs !== null && reason.trim() === "") setReason(W.sameAs(sameAs));
+  }, [kind, sameAs]);
+  const pickKind = (k: Kind) => {
+    setKindPick(k);
+    // 「第 n 版と同じ」では、受ける理由に「第 n 版で受けた当てはめと同じ」を入れておく（人が直せる）
+    if (k === "same" && sameAs !== null && reason.trim() === "") setReason(W.sameAs(sameAs));
+  };
   const s = crosswalkSummary(plan);
 
   const what = (d: Decision) => {
@@ -83,12 +111,13 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     setMsg(r.ok ? { color: "gray", text: W.acceptedDone(p.ruleId, r.rows) } : { color: "red", text: W.refused[r.reason] ?? "" });
     return r.ok;
   };
+  // まとめて受けるのは、いま見えている種類の行だけ
   const acceptAll = () => {
     if (!ok) return;
-    for (const g of openGroups) for (const d of g.ds) acceptDecision(d.id, d.hash, reason);
+    for (const g of visibleGroups) for (const d of g.ds) acceptDecision(d.id, d.hash, reason);
     let refused = 0;
     for (const p of openRules) if (!acceptByHuman(p.ruleId, reason).ok) refused++;
-    setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(openGroups.length + openRules.length - refused, refused) });
+    setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(visibleGroups.length + openRules.length - refused, refused) });
   };
 
   const groupRow = ({ key, ds, cycle }: { key: string; ds: Decision[]; cycle: string | null }) => {
@@ -130,6 +159,21 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       </Table.Tr>
     );
   };
+
+  // 「第 n 版と同じ」：淡い字の 1 規則 1 行。行ごとの受ける・断るは置かない（Wire）
+  const sameRow = (p: CrosswalkProposal) => (
+    <Table.Tr key={p.ruleId} data-testid="crosswalk-rule" data-rule={p.ruleId} data-state={p.state} data-target={p.target} data-same={p.sameAs}>
+      <Table.Td c="var(--text-3)">
+        {whenText(p)}
+        {p.target === "assetNode" ? T.ruleNode : T.ruleWork} → {valueLabel(catalog, p.target, p.value)}
+      </Table.Td>
+      <Table.Td c="var(--text-3)">{W.sameAs(p.sameAs ?? 0)}</Table.Td>
+      <Table.Td className="moyai-num" ta="right" c="var(--text-3)">
+        {p.matched}
+      </Table.Td>
+      <Table.Td />
+    </Table.Tr>
+  );
 
   const ruleRow = (p: CrosswalkProposal) => (
     <Table.Tr key={p.ruleId} data-testid="crosswalk-rule" data-rule={p.ruleId} data-state={p.state} data-target={p.target}>
@@ -181,8 +225,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     <Stack gap="md" px="xl" py="lg" data-testid="decisions-sheet">
       <Group align="flex-end" gap="md" wrap="wrap">
         <TextInput label={T.reasonLabel} placeholder={T.reasonPlaceholder} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={500} style={{ flex: "1 1 360px", maxWidth: 560 }} data-testid="decisions-reason" />
-        <Button variant="default" disabled={!ok || leftCount === 0} onClick={acceptAll} data-testid="decisions-bulk-accept">
-          {T.bulkAccept}
+        <Button variant="default" disabled={!ok || visibleCount === 0} onClick={acceptAll} data-testid="decisions-bulk-accept">
+          {kind === "same" && sameAs !== null ? T.sameAccept(sameAs, visibleCount) : T.visibleAccept(visibleCount)}
         </Button>
         {!ok && leftCount > 0 && (
           <Text size="xs" c="dimmed">
@@ -190,6 +234,15 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           </Text>
         )}
       </Group>
+      {kinds.length > 0 && kind && (
+        <Switch
+          value={kind}
+          onChange={pickKind}
+          aria-label={T.kindSwitch}
+          data-testid="decisions-kind"
+          data={kinds.map((k) => ({ value: k, label: `${k === "same" ? T.kinds.same(sameAs ?? 0) : T.kinds[k]} ${counts[k]}` }))}
+        />
+      )}
       {msg && (
         <Alert color={msg.color} p="xs" data-testid="crosswalk-message">
           <Text size="xs">{msg.text}</Text>
@@ -209,8 +262,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         <Table data-testid="decisions-table" verticalSpacing="sm" fz="sm">
           {head}
           <Table.Tbody>
-            {openRules.map(ruleRow)}
-            {openGroups.map(groupRow)}
+            {openRules.map(kind === "same" ? sameRow : ruleRow)}
+            {visibleGroups.map(groupRow)}
           </Table.Tbody>
         </Table>
       )}

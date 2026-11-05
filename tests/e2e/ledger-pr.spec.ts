@@ -61,7 +61,8 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
-    await page.getByTestId("to-checkpoint").click();
+    await page.getByTestId("confirm-close").click();
+    await page.getByTestId("tab-share").click();
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
   });
 
@@ -94,7 +95,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("github-login")).toHaveText("moyai-test");
     await expect(page.getByTestId("account-seen")).toHaveText("- PR を出す GitHub のアカウント［moyai-test］が、誰にでも見えます");
     await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
-    await expect(page.getByTestId("share-chain")).toHaveText("束 1");
+    await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");
   });
 
   await test.step("人が主ボタンを押すと署名して、MOYAI が PR を 1 つ出す（合言葉の欄は無い）。行方は審査中", async () => {
@@ -104,9 +105,9 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("ledger-sent")).toContainText("PR #1 を出しました");
     await expect(page.locator('[data-testid="ledger-pr"][data-state="open"]')).toHaveCount(1);
     await expect(page.getByTestId("ledger-pr").first()).toContainText("審査中");
-    await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^束 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
+    await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^共有ファイル 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
     // 出したあと：止め札は「前に出した束が、まだ台帳に載っていません」の 1 つ。主ボタンは押せない
-    await expect(page.getByTestId("send-reason")).toHaveText("前に出した束が、まだ台帳に載っていません");
+    await expect(page.getByTestId("send-reason")).toHaveText("前に出した共有ファイルが、まだ台帳に載っていません");
     await expect(page.getByTestId("send")).toBeDisabled();
     await page.screenshot({ path: shot(`ledger-pr-sent-${tag}`), fullPage: true });
 

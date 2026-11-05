@@ -124,7 +124,7 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(places.nth(0)).toHaveAttribute("data-kind", "ledger");
       await expect(places.nth(1)).toHaveAttribute("data-kind", "ring");
       await expect(places.nth(1)).toHaveAttribute("data-status", "missing");
-      await expect(places.nth(1)).toContainText("このパックの輪に入っていません");
+      await expect(places.nth(1)).toContainText("このSkillパックの共有フォルダに入っていません");
       expect((await callTool(c, "peer_reference")).position).toBe("om");
       await page.screenshot({ path: shot(`peers-${tag}-om`), fullPage: false });
     });

@@ -11,6 +11,7 @@ import { join } from "node:path";
 import ExcelJS from "exceljs";
 import type { AuthorKind } from "../shared/fields";
 import { Plan } from "../shared/plan";
+import type { Rule } from "../shared/tools";
 import type { ChartCatalog } from "./chart";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
@@ -61,9 +62,39 @@ export interface VersionRecord {
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
   /** この版を作るのに使った読み方（3 段目の Skill）：名前・保管先からの道・版。署名した版が使った読み方は承認済み（docs/plan.md §2.17） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /**
+   * 次の版に重ねるための記録（1C・重-2。Architect の形）：この版を組んだ資料（中身のアドレス plans/<計画ID>/sources/<SHA-256>）、
+   * その資料に下した取り込みの決定、人が受けた当てはめの規則。次の版はこの資料と決定で組み直し、新しい資料を足す。
+   * 当てはめは「第 n 版と同じ」の案として並べ、人が受けるまで決めない。写真のある版と前の形の版には無い（このタブの資料だけで組み直す）
+   */
+  sources?: VersionSource[];
+  decisions?: VersionDecision[];
+  crosswalk?: VersionCrosswalkRule[];
   /** この版の差分レポートと書き出しの SHA-256（署名の中に入る。落とすときに照らす。監査 E1）。前に確定した版には無い */
   files?: { report: string; export: string | null };
   plan: Plan;
+}
+
+/** 版を組んだ資料（name は表示だけ。置き場所は SHA-256 だけで決める） */
+export interface VersionSource {
+  name: string;
+  sha256: string;
+  size: number;
+}
+/** 版を組んだ資料に下した取り込みの決定（作者のまま。sources はその決定が掛かった資料の SHA-256） */
+export interface VersionDecision {
+  questionId: string;
+  answer: string;
+  author: AuthorKind;
+  reason: string;
+  sources: string[];
+}
+/** 人が受けた当てはめの規則（次の版で「第 n 版と同じ」の案として並べる） */
+export interface VersionCrosswalkRule {
+  rule: Rule;
+  target: "assetNode" | "work";
+  value: string;
+  basis: string;
 }
 
 /** 版の署名を読んで確かめたもの（鍵を信じるかは呼ぶ側が覚えた鍵と照らす） */
@@ -280,6 +311,10 @@ export interface CommitInput {
   catalogs?: CatalogsFor;
   /** 使った読み方（橋渡しが保管先に書いて、道と版を決めたもの） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /** 次の版に重ねるための記録（確かめは呼ぶ側の橋渡しがする） */
+  sources?: VersionSource[];
+  decisions?: VersionDecision[];
+  crosswalk?: VersionCrosswalkRule[];
   /** ほかの施設の版から作った第 1 版のとき、その計画・版・中身のハッシュ（確かめで合う版だけ） */
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
 }
@@ -324,6 +359,9 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     now: i.now ?? new Date(),
     catalogs: i.catalogs ?? null,
     readingSkills: i.readingSkills ?? [],
+    sources: i.sources,
+    decisions: i.decisions,
+    crosswalk: i.crosswalk,
     signer: i.signer,
     role: i.role ?? "confirm",
     derivedFrom: from,
@@ -359,6 +397,10 @@ export async function revertPlan(i: {
     client: i.client,
     now: i.now ?? new Date(),
     catalogs: i.catalogs ?? null,
+    // 戻した先の版の資料・決定・規則も写す（次の版は、戻した先の版に重ねる）
+    sources: record.sources,
+    decisions: record.decisions,
+    crosswalk: record.crosswalk,
     signer: i.signer,
   });
 }
@@ -376,6 +418,9 @@ async function writeVersion(
     now: Date;
     catalogs: CatalogsFor | null;
     readingSkills?: { name: string; path: string; version: string }[];
+    sources?: VersionSource[];
+    decisions?: VersionDecision[];
+    crosswalk?: VersionCrosswalkRule[];
     signer: Signer;
     role?: "confirm" | "edit";
     derivedFrom?: VersionRecord["derivedFrom"];
@@ -403,6 +448,7 @@ async function writeVersion(
       : null,
     derivedFrom: v.derivedFrom ?? null,
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
+    ...(v.sources ? { sources: v.sources, decisions: v.decisions ?? [], crosswalk: v.crosswalk ?? [] } : {}),
     plan,
   };
   // 差分レポートと書き出しは署名の前に作り、そのハッシュを版の記録に入れる（落とすときに照らす。監査 E1）

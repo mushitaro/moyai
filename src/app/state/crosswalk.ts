@@ -22,6 +22,16 @@ import { SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, type CrosswalkSurvey, type Rule } f
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { TEXT } from "../text";
 import { getWorkingPlan, setWorkingPlan, updateWorkingPlan } from "./plan-store";
+import { AMBIGUOUS_KEY_PREFIX } from "../../import/compose";
+
+/** もとにした版（1C）：MERGE で版を開いたときに置く。作り直すと、その版の当てはめを「第 n 版と同じ」の案として並べる */
+let base: { version: number; plan: Plan; crosswalk: readonly { rule: Rule; basis: string }[] } | null = null;
+export function setCrosswalkBase(b: typeof base): void {
+  base = b;
+}
+export function getCrosswalkBase(): typeof base {
+  return base;
+}
 
 const T = TEXT.crosswalk;
 
@@ -140,14 +150,22 @@ export function crosswalkSurvey(): CrosswalkSurvey | null {
 export function placeComposedPlan(next: Plan): CarryOverReport | null {
   const prev = getWorkingPlan();
   const same = prev !== null && prev.origin === "intake" && prev.plan.planId === next.planId;
+  const b = base && base.plan.planId === next.planId ? base : null;
   const any =
     same &&
-    (prev.proposals.length > 0 || prev.plan.assets.some((a) => a.commonItem !== null) || prev.plan.works.some((w) => w.attribute !== null));
+    (b !== null || prev.proposals.length > 0 || prev.plan.assets.some((a) => a.commonItem !== null) || prev.plan.works.some((w) => w.attribute !== null));
   if (!same || !any) {
     setWorkingPlan(next, "intake");
     return null;
   }
-  const r = carryOverCrosswalk(prev.plan, prev.proposals, next, itemCodesOf(catalogFor(next.packId)), T.acceptedBasis);
+  const r = carryOverCrosswalk(
+    prev.plan,
+    prev.proposals,
+    next,
+    itemCodesOf(catalogFor(next.packId)),
+    T.acceptedBasis,
+    b ? { ...b, reason: T.sameAs(b.version), ambiguousPrefix: AMBIGUOUS_KEY_PREFIX } : null,
+  );
   setWorkingPlan(r.plan, "intake", r.proposals);
   return r.report;
 }
