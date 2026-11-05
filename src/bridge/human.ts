@@ -3,7 +3,7 @@
 // どれも MCP のツールにしない（src/shared/tools.ts に無い）。答えは JSON。断るときは { ok: false, reason }。
 // 鍵・トークン・計画の中身をログに出さない。
 import { spawn } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
@@ -17,6 +17,10 @@ import { checkSeen } from "./seen";
 import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
+import { approvedTemplateVersions, listTemplates, readTemplateVersion, saveTemplate } from "./templates";
+import { exportExcelName, exportSignatureName, signExport } from "../plan/exports";
+import { fillTemplate, templateRows } from "../plan/template";
+import ExcelJS from "exceljs";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
@@ -30,7 +34,7 @@ import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
 import { HEX16, HEX64, fingerprint, generateKeyPair, keyIdOf, sha256Hex, type KeyPair } from "../share/sign";
 import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, storeFacilityKey, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
   detectDocuments,
@@ -110,6 +114,11 @@ const SCHEMAS = {
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
   readings_read: z.object({}),
+  templates_read: z.object({ planId: planIdSchema.nullable() }),
+  // 写し方だけを直すときは base64 を空にし、from に元の様式の版を書く（様式のファイルは共有フォルダのものを使う）
+  template_save: z.object({ name: z.string().min(1).max(80), base64: z.string().max(12 * 1024 * 1024), columns: z.unknown(), from: z.string().regex(/^[0-9a-f]{64}$/).nullable().optional() }),
+  export_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), name: z.string().min(1).max(80), templateVersion: z.string().regex(/^[0-9a-f]{64}$/) }),
+  export_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), name: z.string().min(1).max(80), templateVersion: z.string().regex(/^[0-9a-f]{64}$/) }),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable() }),
   plans_list: z.object({}),
   plan_version_read: z.object({ planId: planIdSchema, version: z.number().int().min(1) }),
@@ -415,6 +424,10 @@ export class HumanService {
             const trust = trustOf(sd, x, now);
             return { ...x, trust, fingerprint: fingerprint(x.pub), previous: trust === "changed" ? previousOf(sd, x.pub) : null };
           }),
+          exports: v.exports.map((x) => {
+            const trust = trustOf(sd, x, now);
+            return { ...x, trust, fingerprint: fingerprint(x.pub), previous: trust === "changed" ? previousOf(sd, x.pub) : null };
+          }),
         }));
         const s = readSettings(sd);
         return {
@@ -700,6 +713,100 @@ export class HumanService {
         const want = pv.record.files ? (p.kind === "export" ? pv.record.files.export : pv.record.files.report) : undefined;
         if (want !== undefined && want !== sha256Hex(bytes)) return no("fileChanged");
         return { ok: true, version: p.version, kind: p.kind, base64: bytes.toString("base64") };
+      }
+      case "templates_read": {
+        const p = parsePayload("templates_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return { ok: true, root: null, templates: [] };
+        const list = await listTemplates(root, await approvedTemplateVersions(root, (x) => countsForApproval(trustOf(sd, x, now))));
+        // その計画のいちばん新しい版で書き出した様式（どの鍵の署名でも。信じ方は版の一覧の書き出しの署名に出る）
+        let exported = new Set<string>();
+        if (p.planId) {
+          const v = (await readHistory(root, p.planId)).versions.at(-1);
+          if (v) exported = new Set(v.exports.map((x) => x.template.version));
+        }
+        // 並べるのは、いちばん上の版と、承認済みの前の版（承認済みの写し方を直しても、承認済みのほうは消えない。Wire）
+        const shown = list.filter((t) => t.current || t.approval);
+        return {
+          ok: true,
+          root,
+          templates: shown.map((t) => ({ name: t.name, version: t.version, current: t.current, columns: t.columns, approval: t.approval, exported: exported.has(t.version) })),
+        };
+      }
+      case "template_save": {
+        const p = parsePayload("template_save", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        let bytes: Uint8Array = new Uint8Array(Buffer.from(p.base64, "base64"));
+        if (bytes.length === 0) {
+          const src = p.from ? await readTemplateVersion(root, p.name, p.from) : null;
+          if (!src) return no("templateUnknown");
+          bytes = src.bytes;
+        }
+        const r = await saveTemplate(root, p.name, bytes, p.columns);
+        if (!r.ok) return no(r.reason);
+        return { ok: true, name: r.name, version: r.version };
+      }
+      case "export_sign": {
+        const p = parsePayload("export_sign", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const signer = this.signer(sd);
+        if (!signer.ok) return no(signer.reason);
+        const h = await readHistory(root, p.planId);
+        if (checkSeen(sd, root, p.planId, h)) return no("historyVanished");
+        // 新しく書き出すのは、確かめで合う最新の版だけ。差し戻された版は書き出さない（Architect の縛り 4）
+        const v = h.versions.find((x) => x.version === p.version);
+        if (!v || !h.latest) return no("versionUnknown");
+        if (h.versions.some((x) => x.problem !== null)) return no("historyBroken");
+        if (h.latest.version !== p.version) return no("notLatest");
+        if (v.signatures.some((x) => x.role === "return")) return no("returned");
+        const t = await readTemplateVersion(root, p.name, p.templateVersion);
+        if (!t) return no("templateUnknown");
+        const plan = h.latest.plan;
+        const cat = this.catalogsFor(plan.packId);
+        const labels = (cat.catalog ?? cat.empty).workLabels as Record<string, string>;
+        const excel = await fillTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, templateRows(plan, (a) => labels[a]));
+        const excelHash = sha256Hex(excel);
+        const file = signExport(
+          { planId: p.planId, version: p.version, contentHash: v.contentHash, by: signer.signer.by, at: now.toISOString(), template: { name: p.name, file: t.fileHash, columns: t.columnsHash, version: p.templateVersion }, excel: excelHash },
+          signer.signer.pair,
+        );
+        const dir = planDir(root, p.planId);
+        await mkdir(join(dir, "exports"), { recursive: true });
+        await mkdir(join(dir, "signatures"), { recursive: true });
+        // Excel のバイト列を先に置き、署名をあとに置く（署名があるのに Excel が無い、を作らない。Architect の縛り 3）
+        const xlsx = join(dir, "exports", exportExcelName(p.version, excelHash));
+        if (!existsSync(xlsx)) await writeFile(xlsx, excel);
+        try {
+          await writeFile(join(dir, "signatures", exportSignatureName(p.version, keyIdOf(signer.signer.pair.pub), excelHash)), `${JSON.stringify(file, null, 1)}\n`, { encoding: "utf8", flag: "wx" });
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+        }
+        return { ok: true, version: p.version, name: p.name, excel: excelHash };
+      }
+      case "export_file_read": {
+        const p = parsePayload("export_file_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const pv = await readPlanVersion(root, p.planId, p.version);
+        if (!pv.ok) return no(pv.reason);
+        const v = (await readHistory(root, p.planId)).versions.find((x) => x.version === p.version);
+        // その様式の版で署名した書き出しのうち、いちばん新しいもの。Excel を読み、署名の SHA-256 と照らしてから渡す
+        const x = (v?.exports ?? []).filter((e) => e.template.name === p.name && e.template.version === p.templateVersion).sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+        if (!x) return no("exportUnknown");
+        let bytes: Buffer;
+        try {
+          bytes = await readFile(join(planDir(root, p.planId), "exports", exportExcelName(p.version, x.excel)));
+        } catch {
+          return no("fileMissing");
+        }
+        if (sha256Hex(bytes) !== x.excel) return no("fileChanged");
+        return { ok: true, version: p.version, name: p.name, base64: bytes.toString("base64") };
       }
       case "person_key_create": {
         const p = parsePayload("person_key_create", call.payload);

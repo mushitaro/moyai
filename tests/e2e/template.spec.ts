@@ -1,6 +1,7 @@
 // 様式に写す（docs/screens.md 3.5、P2 の 7）を、この PC の Chrome と Edge で通す：
-// 見本の計画を第 1 版として署名 → EXPORT で「別の様式を落とす」（試験の台本が作った架空の様式）→ 見出しの言葉から列ごとに写すもの
-// （← 項目・← 作業・← 周期・← 年度の印・- 写すものが未定）が出る → 違う列は人が直す → 「この様式で落とす」で、確定した版の作業が写った Excel。
+// 見本の計画を第 1 版として署名 → EXPORT で「＋ 様式を落とす」（試験の台本が作った架空の様式。共有フォルダに下書きで置く）→ 見出しの言葉から
+// 列ごとに写すもの（← 項目・← 作業・← 周期・← 年度の印・- 写すものが未定）が出る → 違う列は人が直す → 「署名して書き出す」（3C）→ 承認済み・書き出し済み
+// →「Excel を落とす」で、確定した版の作業が写った Excel。
 // AI は使わない。先に npm run build を走らせておく。
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
@@ -64,36 +65,54 @@ test("利用者の様式の見出しを読み、列ごとに写すものを決�
     await page.keyboard.press("Escape");
   });
 
-  await test.step("EXPORT：別の様式を落とすと、見出しの言葉から列ごとに写すものが出る（決まらない列は未定）", async () => {
+  await test.step("EXPORT：様式を落とすと、共有フォルダに下書きで置かれ、見出しの言葉から列ごとに写すものが出る（決まらない列は未定）", async () => {
     await page.evaluate(() => (location.hash = "#/export"));
     await expect(page.getByTestId("template-pick")).toBeVisible();
+    // 様式の選びの並び：標準・（共有フォルダの様式）・＋ 様式を落とす
+    await expect(page.getByTestId("template-standard")).toHaveAttribute("data-active", "true");
     const chooser = page.waitForEvent("filechooser");
     await page.getByTestId("template-pick").click();
     await (await chooser).setFiles(tpl);
-    await expect(page.getByTestId("template-name")).toHaveText("長寿命化計画_様式3.xlsx");
+    const row = page.getByTestId("template-shared").filter({ hasText: "長寿命化計画_様式3" });
+    await expect(row).toHaveAttribute("data-active", "true");
+    await expect(row).toContainText("下書き");
     // 同じ機器の同じ作業は 1 行（見本の行の「項目 › 作業」が重ならない）
     const firstTwo = await page.getByTestId("template-row").evaluateAll((els) => els.slice(0, 4).map((e) => [...e.querySelectorAll("td")].slice(1, 3).map((td) => td.textContent).join("|")));
     expect(new Set(firstTwo).size).toBe(firstTwo.length);
     const roles = page.getByTestId("template-role");
     await expect(roles).toHaveCount(8);
     expect(await roles.evaluateAll((els) => els.map((e) => e.getAttribute("data-role")))).toEqual(["item", "work", "cycle", "year:2021", "year:2022", "year:2023", "none", "none"]);
-    // 「点検者」は作業の列と読める言葉ではないので未定のまま。人が「未定」のままにする列は、何も写さない
-    await expect(page.getByTestId("template-row").first()).toBeVisible();
+    // まだ書き出していない様式なので、主ボタンは「署名して書き出す」
+    await expect(page.getByTestId("export-sign")).toBeEnabled();
+    await expect(page.getByTestId("export-excel")).toHaveCount(0);
     await page.screenshot({ path: shot(`template-${tag}`), fullPage: true });
   });
 
-  await test.step("人：列の役目を直せる。「この様式で落とす」で、見出しの行の下に作業が写った Excel", async () => {
-    // 3 列目（周期）を未定に直してから戻す（列の上の字を押すと選ぶ欄が開く）
+  await test.step("人：列の役目を直すと同じ名前の下書き。署名して書き出すと承認済み・書き出し済みになり、「Excel を落とす」で写した Excel", async () => {
+    // 3 列目（周期）を未定に直してから戻す（列の上の字を押すと選ぶ欄が開く。直すたびに写し方の下書きになる）
     const third = page.getByTestId("template-role").nth(2);
     await third.getByRole("button").click();
     await page.locator('[data-testid="template-role-item"][data-value="none"]').click();
-    await expect(third).toHaveAttribute("data-role", "none");
-    await third.getByRole("button").click();
+    await expect(page.getByTestId("template-role").nth(2)).toHaveAttribute("data-role", "none");
+    await page.getByTestId("template-role").nth(2).getByRole("button").click();
     await page.locator('[data-testid="template-role-item"][data-value="cycle"]').click();
-    await expect(third).toHaveAttribute("data-role", "cycle");
-    // 落とすのは下の帯の「Excel を落とす」1 つ（様式を選んでいれば、その様式に写す）
-    await expect(page.getByTestId("template-download")).toHaveCount(0);
+    await expect(page.getByTestId("template-role").nth(2)).toHaveAttribute("data-role", "cycle");
+    // 署名して書き出す：ダイアログに、この署名で承認する写し方と、版の中身は変わらないこと
+    await page.getByTestId("export-sign").click();
+    const dialog = page.getByTestId("export-sign-dialog");
+    await expect(dialog).toContainText("第 1 版を 長寿命化計画_様式3 で書き出す");
+    await expect(dialog).toContainText("この署名で承認する写し方（1）");
+    await expect(dialog).toContainText("版の中身は変わりません");
+    await page.screenshot({ path: shot(`template-sign-${tag}`), fullPage: true });
+    await page.getByTestId("export-sign-submit").click();
+    await expect(page.getByTestId("export-signed")).toHaveText("第 1 版を 長寿命化計画_様式3 で書き出し、署名しました");
+    const row = page.getByTestId("template-shared").filter({ hasText: "長寿命化計画_様式3" }).filter({ hasText: "書き出し済み" });
+    await expect(row).toContainText(`承認済み　第 1 版で　${E2E_NAME}`);
+    // 結び目の鎖の書出の行は MERGE の横の板（ここでは見ない）。主ボタンは「Excel を落とす」
+    await expect(page.getByTestId("export-sign")).toHaveCount(0);
+    await page.screenshot({ path: shot(`template-signed-${tag}`), fullPage: true });
     const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("export-excel").click()]);
+    // 承認を頼んでいないので、名前の末尾に「_承認待ち」は付かない
     expect(download.suggestedFilename()).toMatch(/^長寿命化計画_様式3_【架空】.+_第1版\.xlsx$/);
     const out = join(work, tag, "写した様式.xlsx");
     await download.saveAs(out);

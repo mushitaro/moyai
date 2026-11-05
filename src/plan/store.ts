@@ -15,6 +15,7 @@ import type { ChartCatalog } from "./chart";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
 import { fixWorkbook } from "./xlsx-fix";
+import { EXPORT_SIGNATURE_FILE, checkExports, type ExportInfo } from "./exports";
 import { contentHash, personFile, signStatement, signatureFileName, SIGNATURE_FILE, validName, verifySignatureFile, type SignRole } from "./signature";
 import { keyIdOf, type KeyPair } from "../share/sign";
 
@@ -91,6 +92,8 @@ export interface VersionInfo {
   signatures: SignatureInfo[];
   /** 署名の無い前の形の版（読むだけ。承認に数えない） */
   legacy: boolean;
+  /** 様式で書き出した Excel への署名（確かめて合うものだけ。版を作る署名ではないので、鎖・承認・頼み・編集の番には数えない） */
+  exports: ExportInfo[];
   /**
    * 確かめで合わなかったこと（無ければ null）。合わない版は開かない。
    * chain：鎖が合わない（署名の無い前の形の版が、署名のある版のあとに置かれたときも）。signature：署名のファイルが合わない。unsigned：版を作った署名が無い
@@ -124,6 +127,18 @@ async function readVersion(dir: string, n: number): Promise<{ record: VersionRec
   const p = Plan.safeParse(record.plan);
   if ((record.schema !== VERSION_SCHEMA && record.schema !== VERSION_SCHEMA_V0) || record.version !== n || !p.success) throw new Error("版のファイルの形でない");
   return { record: { ...record, plan: p.data }, text };
+}
+
+/** 版の書き出しの署名を読む（plan/exports.ts で確かめる） */
+async function readExportFiles(dir: string, version: number, planId: string, hash: string): Promise<{ ok: ExportInfo[]; bad: number }> {
+  let names: string[] = [];
+  try {
+    names = (await readdir(join(dir, "signatures"))).filter((n) => EXPORT_SIGNATURE_FILE.exec(n)?.[1] === pad(version)).sort();
+  } catch {
+    return { ok: [], bad: 0 };
+  }
+  const files = await Promise.all(names.map(async (name) => ({ name, text: await readFile(join(dir, "signatures", name), "utf8") })));
+  return checkExports(files, planId, version, hash);
 }
 
 /** 版の署名のファイルを読み、確かめて合うものだけを返す。合わないファイルは数えて返す */
@@ -208,7 +223,8 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
       else if (sigs.bad > 0) problem = "signature";
       else if (!sigs.ok.some((x) => (record.kind === "revert" ? x.role === "revert" : x.role === "confirm" || x.role === "edit"))) problem = "unsigned";
     }
-    const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem };
+    const exports = legacy ? [] : (await readExportFiles(dir, n, record.planId, hash)).ok;
+    const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem, exports };
     versions.push(info);
     // 人が受けた決定に数えるのは、確かめで合う署名のある版だけ（前の形の版の受けた決定は数えない）
     if (!legacy && problem === null) for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });

@@ -19,6 +19,8 @@ export interface PanelVersion {
   problem: string | null;
   legacy: boolean;
   signatures: (TrustSig & { at?: string })[];
+  /** 様式で書き出した Excel への署名（鎖の行は「書出　山田　〇〇市様式」。版を作る署名ではない。3C） */
+  exports?: (Omit<TrustSig, "role"> & { template: { name: string } })[];
 }
 
 /** 頼み（まだ済んでいないもの）：鎖の行に「承認　宛先　まだ開かれていません」か「承認　受け取った人　信じ方」（Wire の B1） */
@@ -89,6 +91,16 @@ export function SignaturesPanel({
                 {HUMAN_TEXT.keyWarn.check}
               </button>
             </>
+          )}
+        </Text>
+      ))}
+      {(v.exports ?? []).map((x) => (
+        <Text size="xs" key={`export|${x.fingerprint}|${x.template.name}`} data-testid="signature" data-role="export" data-trust={x.trust}>
+          {T.role.export}　{x.by}　{x.template.name}　<Text span c={x.trust === "changed" ? "var(--shu-text)" : undefined}>{H.trust[x.trust] ?? ""}</Text>
+          {(x.trust === "unconfirmed" || x.trust === "changed") && x.pub && (
+            <button type="button" className="moyai-inline-act" onClick={() => setCheck({ ...x, role: "export" })}>
+              {HUMAN_TEXT.keyWarn.check}
+            </button>
           )}
         </Text>
       ))}

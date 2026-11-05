@@ -34,6 +34,13 @@ export interface IgnoredRequest {
   why: "otherKey" | "otherContent";
 }
 
+/** 書き出しの署名（信じ方つき）：結び目の鎖の「書出」の行と、EXPORT の鍵の警告 */
+export interface ExportSig extends Omit<TrustSig, "role"> {
+  at: string;
+  template: { name: string; file: string; columns: string; version: string };
+  excel: string;
+}
+
 interface StatusBody {
   ok: boolean;
   reason?: string;
@@ -49,6 +56,8 @@ interface StatusBody {
     signatures: TrustSig[];
     legacy: boolean;
     problem: string | null;
+    /** 様式で書き出した Excel への署名（3C。版を作る署名ではない） */
+    exports?: ExportSig[];
   }[];
   latest?: { version: number; plan: Plan } | null;
   /** いちばん新しい版のひとつ前の版（確かめで合うときだけ） */

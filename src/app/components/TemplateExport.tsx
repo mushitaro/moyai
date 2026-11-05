@@ -1,11 +1,12 @@
-// 様式に写す（docs/screens.md 3.5、P2 の 7、絵は Export.dc.html）：利用者が落とした様式（Excel）の見出しの行を読み、列ごとに写すもの
-// （← 項目・← 作業・← 周期・← 年度の印・- 写すものが未定）を出す。落とすのは EXPORT の下の帯の「Excel を落とす」1 つだけで、
-// 様式を選んでいればこの様式に写した Excel、選んでいなければ MOYAI の標準（Export.tsx）。
-// 様式は、このタブのメモリだけで読む（保管先にも AI にも渡さない）。列の役目は見出しの言葉から決め、違えば人が列ごとに直す。
-import { Button, Group, Menu, Stack, Table, Text, FileButton } from "@mantine/core";
+// 様式で書き出す（docs/screens.md 3.5、運営者の決定 3C、Wire の Export.dc.html V48・V50）：様式の選び（標準・共有フォルダの様式・＋ 様式を落とす）と、
+// 様式を選んでいるときの見本（列の見出しの上の役目を、人が列ごとに直せる）。
+// 様式と写し方（列の役目）は保管先の共有フォルダに置く（橋渡しの template_save）。直すと、その写し方は下書きになる。
+// 下書きの写し方は、その写し方で書き出した Excel に人が署名したとき承認される（export_sign。主ボタンは Export.tsx）。
+// 様式の中身は AI に渡さない。
+import { Stack, Table, Text, FileButton, Menu } from "@mantine/core";
 import { useMemo, useState } from "react";
 import { patchedExcelJS } from "../../import/exceljs-setup";
-import { cellValue, findHeaderRow, roleOfHeader, templateRows, type ColumnRole, type TemplateRow } from "../../plan/template";
+import { cellValue, findHeaderRow, roleOfHeader, templateRows, COLUMNS_SCHEMA, type ColumnRole, type TemplateColumns, type TemplateRow } from "../../plan/template";
 import type { Plan } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { TEXT } from "../text";
@@ -14,17 +15,20 @@ const T = TEXT.export.template;
 const PREVIEW_ROWS = 4;
 const HEAD_ROWS = 30;
 
-export interface LoadedTemplate {
+/** 共有フォルダの様式の 1 つ（橋渡しの templates_read） */
+export interface SharedTemplate {
   name: string;
-  bytes: ArrayBuffer;
-  /** 見出しの行（1 から数える Excel の行） */
-  headerRow: number;
-  headers: string[];
-  roles: ColumnRole[];
+  version: string;
+  current: boolean;
+  columns: TemplateColumns;
+  approval: { in: number; by: string; at: string } | null;
+  /** この計画のいちばん新しい版で、もう署名して書き出したか */
+  exported: boolean;
 }
 
 const roleKey = (r: ColumnRole) => (r.kind === "year" ? `year:${r.fiscalYear}` : r.kind);
 const colLetter = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : colLetter(Math.floor(i / 26) - 1) + String.fromCharCode(65 + (i % 26)));
+export const templateKey = (t: Pick<SharedTemplate, "name" | "version">) => `${t.name}|${t.version}`;
 
 function roleLabel(r: ColumnRole): string {
   switch (r.kind) {
@@ -47,8 +51,8 @@ export function rowsFor(plan: Plan): TemplateRow[] {
   return templateRows(plan, (a) => labels[a]);
 }
 
-/** 様式を読む：最初のシートの見出しの行と、列ごとの役目（見出しの言葉から） */
-export async function readTemplate(f: File): Promise<{ ok: true; t: LoadedTemplate } | { ok: false; message: string }> {
+/** 様式を読む：最初のシートの見出しの行と、列ごとの役目（見出しの言葉から）。名前はファイルの名前から拡張子を除いたもの */
+export async function readTemplate(f: File): Promise<{ ok: true; name: string; bytes: ArrayBuffer; columns: TemplateColumns } | { ok: false; message: string }> {
   try {
     const bytes = await f.arrayBuffer();
     const wb = new (patchedExcelJS().Workbook)();
@@ -66,91 +70,105 @@ export async function readTemplate(f: File): Promise<{ ok: true; t: LoadedTempla
     const headers = head[h] ?? [];
     while (headers.length && headers.at(-1) === "") headers.pop();
     if (headers.length === 0) return { ok: false, message: T.noHeader };
-    return { ok: true, t: { name: f.name, bytes, headerRow: h + 1, headers, roles: headers.map(roleOfHeader) } };
+    return { ok: true, name: f.name.replace(/\.xls[xm]?$/i, ""), bytes, columns: { schema: COLUMNS_SCHEMA, headerRow: h + 1, headers, roles: headers.map(roleOfHeader) } };
   } catch {
     return { ok: false, message: T.unreadable };
   }
 }
 
-/** 様式に写した Excel を落とす（人が「Excel を落とす」を押したときだけ） */
-export async function downloadTemplate(t: LoadedTemplate, plan: Plan, version: number): Promise<void> {
-  const wb = new (patchedExcelJS().Workbook)();
-  await wb.xlsx.load(t.bytes);
-  const ws = wb.worksheets[0]!;
-  rowsFor(plan).forEach((row, i) => {
-    t.roles.forEach((role, c) => {
-      if (role.kind === "none") return;
-      ws.getCell(t.headerRow + 1 + i, c + 1).value = cellValue(role, row);
-    });
-  });
-  const out = await wb.xlsx.writeBuffer();
-  const url = URL.createObjectURL(new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = T.fileName(t.name.replace(/\.xlsx?$/i, ""), plan.displayName, version);
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
-
-/** 様式の行（様式の名前・別の様式を落とす・標準の様式に戻す）と、様式を選んでいるときの見本 */
-export function TemplateExport({ plan, template, onTemplate }: { plan: Plan; template: LoadedTemplate | null; onTemplate: (t: LoadedTemplate | null) => void }) {
+/**
+ * 様式の選び（縦の並び：標準・共有フォルダの様式〔右に状態〕・＋ 様式を落とす）と、選んだ様式の見本。
+ * onDrop：落とした様式を共有フォルダに置く。onRoles：列の役目を直した写し方を、同じ名前の下書きとして置く
+ */
+export function TemplateExport({
+  plan,
+  templates,
+  selected,
+  onSelect,
+  onDrop,
+  onRoles,
+}: {
+  plan: Plan;
+  templates: readonly SharedTemplate[];
+  selected: SharedTemplate | null;
+  onSelect: (t: SharedTemplate | null) => void;
+  onDrop: (f: File) => Promise<string | null>;
+  onRoles: (t: SharedTemplate, columns: TemplateColumns) => void;
+}) {
   const [error, setError] = useState<string | null>(null);
   const rows = useMemo(() => rowsFor(plan), [plan]);
 
   const pick = async (f: File | null) => {
     if (!f) return;
-    const r = await readTemplate(f);
-    if (!r.ok) return setError(r.message);
-    setError(null);
-    onTemplate(r.t);
+    setError(await onDrop(f));
   };
   const setRole = (i: number, key: string) => {
-    if (!template) return;
+    if (!selected) return;
     const fy = /^year:(\d+)$/.exec(key);
     const r: ColumnRole = fy ? { kind: "year", fiscalYear: Number(fy[1]) } : ({ kind: key } as ColumnRole);
-    onTemplate({ ...template, roles: template.roles.map((x, j) => (j === i ? r : x)) });
+    onRoles(selected, { ...selected.columns, roles: selected.columns.roles.map((x, j) => (j === i ? r : x)) });
   };
+  const row = (key: string, active: boolean, onClick: () => void, name: string, right: React.ReactNode, testid: string) => (
+    <button type="button" key={key} className="moyai-template-choice" data-active={active ? "true" : undefined} onClick={onClick} data-testid={testid}>
+      <span className="moyai-template-choice-name">{name}</span>
+      <span className="moyai-template-choice-state">{right}</span>
+    </button>
+  );
+  const columns = selected?.columns ?? null;
 
   return (
     <Stack gap="sm" data-testid="template-export">
-      <Group gap="md" align="center" wrap="wrap">
-        <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
-          {T.label}
-        </Text>
-        <Text size="sm" data-testid="template-name">
-          {template ? template.name : T.standard}
-        </Text>
-        {template && (
-          <Text size="xs" c="dimmed">
-            {T.yours}
-          </Text>
+      <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
+        {T.label}
+      </Text>
+      <div className="moyai-template-choices" data-testid="template-choices">
+        {row("standard", selected === null, () => onSelect(null), T.standard, null, "template-standard")}
+        {templates.map((t) =>
+          row(
+            templateKey(t),
+            !!selected && templateKey(selected) === templateKey(t),
+            () => onSelect(t),
+            t.name,
+            <>
+              {t.approval ? (
+                <Text span size="xs" c="var(--text-2)">
+                  {T.approved(t.approval.in, t.approval.by)}
+                </Text>
+              ) : (
+                <Text span size="xs" c="var(--text-3)">
+                  {T.draft}
+                </Text>
+              )}
+              {t.exported && (
+                <Text span size="xs" c="var(--text-2)" ml="sm" data-testid="template-exported">
+                  {T.exported}
+                </Text>
+              )}
+            </>,
+            "template-shared",
+          ),
         )}
         <FileButton accept=".xlsx,.xlsm" onChange={(f) => void pick(f)}>
           {(props) => (
-            <Button variant="default" size="xs" {...props} data-testid="template-pick">
+            <button type="button" className="moyai-inline-act" {...props} data-testid="template-pick">
               {T.pick}
-            </Button>
+            </button>
           )}
         </FileButton>
-        {template && (
-          <Button variant="default" size="xs" onClick={() => onTemplate(null)} data-testid="template-reset">
-            {T.reset}
-          </Button>
-        )}
-      </Group>
+      </div>
       {error && (
         <Text size="sm" c="var(--shu-text)" data-testid="template-error">
           {error}
         </Text>
       )}
-      {template && (
+      {selected && columns && (
         <div style={{ overflowX: "auto" }}>
           <Table withColumnBorders fz="xs" verticalSpacing={8} horizontalSpacing={12} className="moyai-num moyai-template" data-testid="template-preview" style={{ width: "max-content" }}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th />
-                {template.roles.map((r, i) => {
-                  const fy = template.headers[i] ? roleOfHeader(template.headers[i]!) : { kind: "none" as const };
+                {columns.roles.map((r, i) => {
+                  const fy = columns.headers[i] ? roleOfHeader(columns.headers[i]!) : { kind: "none" as const };
                   const choices: { value: string; label: string }[] = [
                     { value: "item", label: T.role.item },
                     { value: "work", label: T.role.work },
@@ -181,7 +199,7 @@ export function TemplateExport({ plan, template, onTemplate }: { plan: Plan; tem
               </Table.Tr>
               <Table.Tr>
                 <Table.Th />
-                {template.headers.map((_, i) => (
+                {columns.headers.map((_, i) => (
                   <Table.Th key={i} c="dimmed">
                     {colLetter(i)}
                   </Table.Th>
@@ -190,8 +208,8 @@ export function TemplateExport({ plan, template, onTemplate }: { plan: Plan; tem
             </Table.Thead>
             <Table.Tbody>
               <Table.Tr>
-                <Table.Td c="dimmed">{template.headerRow}</Table.Td>
-                {template.headers.map((h, i) => (
+                <Table.Td c="dimmed">{columns.headerRow}</Table.Td>
+                {columns.headers.map((h, i) => (
                   <Table.Td key={i} fw={500}>
                     {h}
                   </Table.Td>
@@ -199,8 +217,8 @@ export function TemplateExport({ plan, template, onTemplate }: { plan: Plan; tem
               </Table.Tr>
               {rows.slice(0, PREVIEW_ROWS).map((row, j) => (
                 <Table.Tr key={j} data-testid="template-row">
-                  <Table.Td c="dimmed">{template.headerRow + 1 + j}</Table.Td>
-                  {template.roles.map((r, i) => (
+                  <Table.Td c="dimmed">{columns.headerRow + 1 + j}</Table.Td>
+                  {columns.roles.map((r, i) => (
                     <Table.Td key={i}>{String(cellValue(r, row))}</Table.Td>
                   ))}
                 </Table.Tr>

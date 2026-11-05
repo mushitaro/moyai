@@ -65,6 +65,12 @@ export const HUMAN_TEXT = {
     selfApprove: "自分が作った版は、自分で承認できません。ほかの人に承認を頼んでください。",
     fileMissing: "その版の Excel が保管先にありません（確定のときに書けなかったか、消されています）。",
     fileChanged: "保管先の Excel が、この版に署名したときのものと違います（あとから書き換えられています）。落とせません。",
+    // 様式で書き出す（3C）
+    returned: "差し戻された版は書き出せません。",
+    templateUnknown: "共有フォルダに、その様式のその版がありません（ほかの人が直したかもしれません）。選び直してください。",
+    exportUnknown: "この版を、その様式で書き出した署名がありません。",
+    columnsInvalid: "写し方（列の役目）の形が違います。",
+    fileInvalid: "様式のファイルが .xlsx ではないか、大きすぎます。",
     // 公開の台帳へ出す（GitHub に PR）
     "ledger.notChosen": "公開の台帳の clone の場所が決まっていません。設定で選んでください。",
     "ledger.noLedgerDir": "台帳の clone の中に ledger/ がありません。",
@@ -174,7 +180,7 @@ export const HUMAN_TEXT = {
     noReadings: "使った読み方はありません。",
     draft: "- 下書き",
     chain: "結び目の鎖",
-    role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差し戻し", revert: "戻す" } as Record<string, string>,
+    role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差し戻し", revert: "戻す", export: "書出" } as Record<string, string>,
   },
   /** 署名の鍵をまだ確かめていないときの知らせ（Wire の KeyWarn.dc.html）。人の署名を信じて何かをするボタンのすぐ左に 1 行 */
   /** 頼みを誰が受け取ったか（Wire の B1。運営者の決定「マジックリンクで鎖をつなぐ」） */
