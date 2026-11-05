@@ -70,6 +70,8 @@ const SAMPLE_CELLS = 40;
 const SAMPLE_TEXT = 60;
 const STUCK_FILES = 20;
 const STUCK_ROWS = 5;
+/** 注記の数の上限（帳票を何百頁も入れると、頁ごとの頭書きの注記で要約が埋まるため。止まった表の理由は先に置く） */
+const NOTES = 60;
 
 export class IntakeSession {
   private readonly files: InputFile[] = [];
@@ -410,13 +412,15 @@ export class IntakeSession {
         if (why.has(key)) continue;
         why.set(key, `${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""} ${t.top}〜${t.bottom} 行目の表が止まっている：${shape}${missing.length ? `で、${missing.join("・")}の欄が読めていない` : ""}（質問の無い未解決のセル ${silent}）`);
       }
-    notes.push(...[...why.values()].slice(0, STUCK_FILES));
+    const shownNotes = [...[...why.values()].slice(0, STUCK_FILES), ...notes];
+    const moreNotes = shownNotes.length - NOTES;
+    const cappedNotes = moreNotes > 0 ? [...shownNotes.slice(0, NOTES), `注記はほかに ${moreNotes} 件（頁ごとの頭書き・表の下の記入欄など）`] : shownNotes;
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";
     return {
       files,
       samples,
       legends,
-      notes,
+      notes: cappedNotes,
       questions: an.open.map((q) => ({
         questionId: q.questionId,
         kind: q.kind,
