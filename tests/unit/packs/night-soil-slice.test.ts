@@ -125,5 +125,5 @@ describe("pack.second：し尿処理のパックで、取り込み → 当ては
     expect(s.works.accepted).toBeGreaterThan(0);
     // 測った値を残す（目標ではない）：質問の数と未当てはめの記録
     console.log(`し尿処理 ${FACILITY}：質問 ${asked.size}、節 受けた ${s.nodes.accepted}/${s.nodes.targeted}、作業 受けた ${s.works.accepted}/${s.works.total}、未当てはめの記録 ${s.unmappedRecords}`);
-  }, 120_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });

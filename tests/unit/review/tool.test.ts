@@ -14,7 +14,7 @@ import { CTX, PACK, composeFictional1, ok } from "./compose";
 let ws: IntakeWorkspace;
 beforeAll(async () => {
   ws = await composeFictional1("【架空】検査のツール");
-}, 60_000);
+}, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 afterAll(() => clearWorkingPlan());
 
 describe("check_results：検査の結果を読む", () => {

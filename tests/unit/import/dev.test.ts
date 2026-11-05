@@ -247,6 +247,6 @@ describe("import.dev：工場の開発用の資料（Excel・CSV・文字のあ�
           expect(s.box, `${s.file} ${s.cell} の位置`).not.toBeNull();
         }
       } else expect(r.comp.blockers.length).toBeGreaterThan(0);
-    }, 120_000);
+    }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
   }
 });
