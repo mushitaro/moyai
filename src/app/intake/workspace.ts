@@ -245,7 +245,8 @@ export class IntakeWorkspace {
     // 写真は同じ一覧をそのまま使う（並べ直さない）
     const s = new IntakeSession(this.optionsOf(next), this.photoBook);
     await s.add(this.inputs.filter((f) => photoMimeOf(f.name) === null));
-    for (const d of decisions) s.settle([d]);
+    // 決定はまとめて 1 回で置く（1 つずつ置くと置くたびに資料を読み直し、厚い施設ではタブが 45 秒を越えて固まって、橋渡しが切れたと見なした）
+    if (decisions.length > 0) s.settle([...decisions]);
     s.setReadings(forFacility(this.readings, this.optionsOf(next).facility.facilityKey));
     this.session = s;
     this.settings = next;
@@ -336,7 +337,8 @@ export class IntakeWorkspace {
     const s = new IntakeSession(this.optionsOf(this.settings), this.photoBook);
     const read: InputFile[] = files.map((f) => ({ name: f.name, bytes: f.bytes }));
     const rejected = new Set((await s.add(read)).map((r) => r.file));
-    for (const d of decisions) s.settle([d]);
+    // 決定はまとめて 1 回で置く（1 つずつ置くと置くたびに資料を読み直し、厚い施設ではタブが 45 秒を越えて固まって、橋渡しが切れたと見なした）
+    if (decisions.length > 0) s.settle([...decisions]);
     s.setReadings(forFacility(this.readings, this.facilityKey()));
     this.session = s;
     this.inputs = read.filter((f) => !rejected.has(f.name));

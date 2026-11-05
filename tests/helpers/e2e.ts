@@ -3,7 +3,7 @@
 // MCP のクライアント（本物の中継 dist/cli.js mcp を標準入出力でつなぐ）と、設定の画面で置き場所と輪を作る人の操作も置く。
 // スクリーンショットは一時のフォルダの moyai-shots/<走らせた日（日本時間）>/（日誌に残すときは MOYAI_SHOTS_DIR=docs/progress/shots/<日付> を渡す）。前の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
@@ -62,6 +62,12 @@ export async function startBuiltBridge(prefix: string, env: Record<string, strin
     });
     child.once("exit", (c) => reject(new Error(`止まった ${c}: ${out}`)));
   });
+  // 橋渡しのログ（MOYAI_E2E_BRIDGE_LOG に道を渡したときだけ、そのファイルに足す。落ちた試験の調べに使う）
+  const logTo = process.env.MOYAI_E2E_BRIDGE_LOG;
+  if (logTo) {
+    appendFileSync(logTo, out);
+    child.stderr?.on("data", (d: Buffer) => appendFileSync(logTo, `${new Date().toISOString()} ${d.toString("utf8")}`));
+  }
   return {
     base,
     stateDir,

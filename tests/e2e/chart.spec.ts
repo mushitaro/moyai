@@ -303,5 +303,8 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   await expect(page.getByTestId("due-work")).toHaveCount(3);
   await expect(page.getByTestId("due-work").last()).toHaveAttribute("data-work", "e2e-none");
   await expect(page.getByTestId("due-work").last()).toContainText("備考　起点なし");
+  // 作業の名前に機器の名前を付けない（板はごみクレーンの板）
+  await expect(page.getByTestId("due-work").first()).toContainText("分解整備");
+  await expect(page.getByTestId("due-work").first()).not.toContainText("ごみクレーンの");
   await page.screenshot({ path: shot(`chart-next-${tag}`) });
 });

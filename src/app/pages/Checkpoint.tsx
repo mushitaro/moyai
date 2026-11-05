@@ -608,8 +608,6 @@ export function Checkpoint() {
                 {T.ledgerRulesMark}
                 {T.ledgerRulesChanged}
                 {"　"}
-                {T.rulesChanged}
-                {"　"}
                 <Text span c="var(--shu-text)">
                   {T.rulesCounts(res.rulesChange.loosened, res.rulesChange.tightened).loosened}
                 </Text>
@@ -1089,6 +1087,7 @@ export function Checkpoint() {
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
           {!canSend && (dest === "ledger" || !done) && sendReason && (
             <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
+              {T.reasonHead}
               {dest === "ledger" && sendReason === T.sendNeeds.rules ? T.ledgerRulesNotAccepted : sendReason}
               {dest === "ledger" && sendReason === T.sendNeeds.rules && res?.rulesChange && (
                 <button type="button" className="moyai-inline-act" onClick={() => setLedgerRulesOpen(true)} data-testid="send-ledger-rules-view">

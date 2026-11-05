@@ -153,6 +153,13 @@ function todayLocal(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** 作業の名前から、行の機器の名前を外す（板はもうその機器の板なので。「ごみクレーンの分解整備」→「分解整備」。Wire） */
+function workShort(kind: string, rowName: string): string {
+  if (!rowName || !kind.startsWith(rowName)) return kind;
+  const rest = kind.slice(rowName.length).replace(/^の/, "").trim();
+  return rest || kind;
+}
+
 /** 行を選んだとき、横の板に出す次回の詳細（docs/screens.md 3.2）。作業が 2 つ以上ある行は作業ごとに */
 function DueSide({ row, due, ix }: { row: ChartRow; due: ReadonlyMap<string, DueView>; ix: Index }) {
   const views = rowDues(row.works, due);
@@ -160,8 +167,9 @@ function DueSide({ row, due, ix }: { row: ChartRow; due: ReadonlyMap<string, Due
   const S = DUE_TEXT.side;
   const head = rowDue(row.works, due);
   const many = views.length > 1;
+  const rowName = [...row.path].reverse().find((x): x is string => !!x) ?? "";
   return (
-    <Stack gap={6} data-testid="due-side">
+    <Stack gap="md" data-testid="due-side">
       {(many ? views : [head!]).map((v) => {
         const lines: [string, string | null][] = [
           [S.due, v.text],
@@ -175,7 +183,7 @@ function DueSide({ row, due, ix }: { row: ChartRow; due: ReadonlyMap<string, Due
           <Stack key={v.workKey} gap={0} className="moyai-num" data-testid="due-work" data-work={v.workKey}>
             {many && (
               <Text size="xs" fw={700}>
-                {ix.works.get(v.workKey)?.kind ?? v.workKey}
+                {workShort(ix.works.get(v.workKey)?.kind ?? v.workKey, rowName)}
               </Text>
             )}
             {lines

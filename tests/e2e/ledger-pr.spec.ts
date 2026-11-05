@@ -78,7 +78,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByText("誰からも見えるあなた")).toBeVisible();
     await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
     await expect(page.getByTestId("send")).toHaveText("署名して公開の台帳へ出す");
-    await expect(page.getByTestId("send-reason")).toHaveText("GitHub につないでいません");
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub につないでいません");
     await expect(page.getByTestId("ledger-bottom")).toHaveText("MOYAI が GitHub に PR を出します。載ったものは、取下げても相手の写しは消せません。");
   });
 
@@ -107,7 +107,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("ledger-pr").first()).toContainText("審査中");
     await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^共有ファイル 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
     // 出したあと：止め札は「前に出した束が、まだ台帳に載っていません」の 1 つ。主ボタンは押せない
-    await expect(page.getByTestId("send-reason")).toHaveText("前に出した共有ファイルが、まだ台帳に載っていません");
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
     await expect(page.getByTestId("send")).toBeDisabled();
     await page.screenshot({ path: shot(`ledger-pr-sent-${tag}`), fullPage: true });
 

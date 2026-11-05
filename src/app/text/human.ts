@@ -475,7 +475,7 @@ export const HUMAN_TEXT = {
     send: "送る",
     sendNeeds: {
       keysForked: "この施設の署名鍵が 2 つあります",
-      rules: "共有フォルダの決まりを受け入れていません",
+      rules: "共有フォルダのルール未受入",
       groupUnknown: "全国の表に載る施設かが決まっていない",
       profileIncomplete: "施設の見え方が決まっていない",
       kShort: "紛れる数が下限に届かない",
@@ -508,15 +508,17 @@ export const HUMAN_TEXT = {
     memberTitle: "メンバーの鍵の指紋",
     memberHowTo: "この鍵を持つメンバーに電話などで読み上げてもらい、16 文字が合えば「合った」を押します。",
     /** 共有フォルダの決まりが変わったとき */
-    rulesChanged: "変わりました",
-    rulesCounts: (loosened: number, tightened: number) => ({ loosened: `緩くなった ${loosened}`, tightened: `厳しくなった ${tightened}` }),
-    rulesView: "見て受け入れる",
+    rulesChanged: "ルール変更",
+    rulesCounts: (loosened: number, tightened: number) => ({ loosened: `緩和 ${loosened}`, tightened: `厳格化 ${tightened}` }),
+    rulesView: "確認して受入",
+    /** 送れない理由の頭（MERGE の下の帯と同じ形。Wire、2026-11-06） */
+    reasonHead: "理由：",
     rulesNotAccepted: "共有フォルダの決まりを受け入れていません",
     rulesTitle: "共有フォルダの決まりが変わりました",
-    // 公開の台帳の決まりが変わったとき（台帳の新-3。Wire、2026-11-05：「! 公開の台帳の決まり　変わりました　緩くなった n・厳しくなった m　| 見て受け入れる」）
+    // 公開の台帳の決まりが変わったとき（台帳の新-3。Wire、2026-11-06：「! 公開台帳のルール変更　緩和 n・厳格化 m　| 確認して受入」）
     ledgerRulesMark: "! ",
-    ledgerRulesChanged: "公開の台帳の決まり",
-    ledgerRulesNotAccepted: "理由：公開の台帳の決まりを受け入れていません",
+    ledgerRulesChanged: "公開台帳のルール変更",
+    ledgerRulesNotAccepted: "公開台帳のルール未受入",
     ledgerRulesTitle: "公開の台帳の決まりが変わりました",
     rulesChanger: (fp: string, month: string) => `変えた鍵　${fp}　${month}`,
     rulesHead: ["決まり", "前", "今", ""],
