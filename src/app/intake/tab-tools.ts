@@ -78,7 +78,10 @@ function ledgerRequest(args: Record<string, unknown>): TabToolResult {
     ai || hasHuman
       ? { facility: { ...(ai?.facility ?? {}), ...human }, inNationalTable: f.inNationalTable ?? ai?.inNationalTable ?? null }
       : null;
-  return { ok: true, data: { mode: "ledger", packId: working.plan.packId, facility: { scale: f.scale, scaleUnit: f.scaleUnit }, answers, commonItem: args.commonItem ?? null } };
+  // AI の答えで埋めた軸（根拠に「会話から写した答え」と書けるように返す）
+  const aiAxes = Object.keys(ai?.facility ?? {}).filter((k) => !(k in human)).sort();
+  if (ai && f.inNationalTable === null && typeof ai.inNationalTable === "boolean") aiAxes.push("inNationalTable");
+  return { ok: true, data: { mode: "ledger", packId: working.plan.packId, facility: { scale: f.scale, scaleUnit: f.scaleUnit }, answers, aiAxes, commonItem: args.commonItem ?? null } };
 }
 
 /** 周期の案を置く（chart_propose。docs/plan.md §2.18.4）：足すだけ。引いた印は作者 AI で、人が決定のシートで受けるまで決まらない */

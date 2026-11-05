@@ -520,7 +520,7 @@ export const TOOLS = {
     "peer_reference",
     "read",
     "仲間の参考を読む",
-    "似た施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。計画に入れるときは chart_propose で周期の案を置き、根拠に ledgerVersion と集計（似た施設の数と帯）を書く。場をまたいで混ぜない。施設を当てようとしない。",
+    "似た施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。人が施設に答えた軸はそちらを使い、answers は人が答えていない軸にだけ効く（効いた軸は aiAxes に返るので、根拠に「会話から写した答え」と書く）。計画に入れるときは chart_propose で周期の案を置き、根拠に ledgerVersion と集計（似た施設の数と帯）を書く。場をまたいで混ぜない。施設を当てようとしない。",
     z.object({
       commonItem: z.string().max(64).optional(),
       place: z.enum(["ledger"]).optional(),
@@ -548,6 +548,8 @@ export const TOOLS = {
       /** ledger のとき：見え方の答えが足りないときに聞く軸（選べるコードと、規模から推した既定） */
       needs: z.array(z.object({ key: z.string(), name: z.string(), codes: z.array(z.object({ code: z.string(), name: z.string() })), suggested: z.string().nullable() })).optional(),
       reason: z.string().nullable().optional(),
+      /** ledger のとき：人が施設に答えていない軸のうち、AI の答え（会話から写した答え）で埋めた軸。根拠にそう書く */
+      aiAxes: z.array(z.string()).optional(),
     }),
   ),
   reading_rules_propose: def(

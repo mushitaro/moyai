@@ -147,6 +147,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
         facility: (fromTab.facility as { scale: number | null; scaleUnit: string | null } | null) ?? null,
         answers,
         ...(typeof fromTab.commonItem === "string" ? { commonItem: fromTab.commonItem } : {}),
+        aiAxes: Array.isArray(fromTab.aiAxes) ? fromTab.aiAxes.filter((x): x is string => typeof x === "string") : [],
       });
     },
     ledger_version: async () => human.ledgerHead(),

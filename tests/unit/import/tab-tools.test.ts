@@ -291,6 +291,8 @@ describe("AI の引数で人の答えを越えない（監-3・監-4）", () => 
     setWorkingPlan({ ...p, facility: { ...p.facility, profile: { furnace: "STOKER" }, inNationalTable: true } }, "dev");
     const r = ok(runTabTool(ws(), "peer_reference", { place: "ledger", answers: { facility: { furnace: "FLUID", turbine: "YES" }, inNationalTable: false } }, CTX));
     expect(r.answers).toEqual({ facility: { furnace: "STOKER", turbine: "YES" }, inNationalTable: true });
+    // AI の答えで埋めた軸だけを返す（人が答えた furnace と inNationalTable は入らない）
+    expect(r.aiAxes).toEqual(["turbine"]);
     // 人が答えていなければ AI の答えのまま。どちらも無ければ null（橋渡しが聞くことを返す）
     setWorkingPlan({ ...p, facility: { ...p.facility, inNationalTable: null } }, "dev");
     expect(ok(runTabTool(ws(), "peer_reference", { place: "ledger", answers: { facility: { furnace: "FLUID" }, inNationalTable: false } }, CTX)).answers).toEqual({ facility: { furnace: "FLUID" }, inNationalTable: false });
