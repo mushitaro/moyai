@@ -127,6 +127,8 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     ws.note("ai", T.readingProposed(String(args.name), (args.rules as unknown[]).length));
     return { ok: true, data: { name: args.name, rules, unresolvedCells: unresolved, openQuestions: an.open.length, planReady: an.composition.blockers.length === 0 } };
   },
+  // 保管先の読み方の一覧：作業画面は今の施設だけを渡し、橋渡しが保管先を読む（本文は今の施設の分だけ。台帳の中-4）
+  reading_skills_list: (ws) => ({ ok: true, data: { facilityKey: ws.facilityKey() } }),
   // 橋渡しが保管先に書く下書き（作業画面は中身を渡すだけ。書くのは橋渡し）
   reading_skill_register: (ws, args) => {
     const d = ws.draftReading(String(args.name));

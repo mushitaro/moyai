@@ -143,6 +143,13 @@ export async function listReadings(root: string, approvedVersions: ReadonlyMap<s
   return out;
 }
 
+/** AI に本文を渡してよい読み方か：会社の範囲、この PC の呼び名の担当、作業画面の今の施設のものだけ（台帳の中-4） */
+export function readingTextShown(x: { scope: ReadingScope; owner: string | null }, facility: string | null, me: string | null): boolean {
+  if (x.scope === "company") return true;
+  if (x.scope === "person") return me !== null && x.owner === me;
+  return facility !== null && x.owner === facility;
+}
+
 /** 承認済みの読み方の版：確かめた確定か承認の署名があり、その署名の鍵をこの PC が信じる版が使った読み方の版 → その読み方の版を最初に使った星取表の版の番号。
  * 確かめで合わない版（鎖・署名）から先と、署名の無い前の形の版は数えない。trusted：署名の鍵を信じるか（橋渡しが覚えた鍵と照らす） */
 export async function approvedReadingVersions(root: string, trusted: (sig: SignatureInfo) => boolean): Promise<Map<string, ApprovedReading>> {
