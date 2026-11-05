@@ -1,0 +1,1010 @@
+{
+ "schema": "moyai.demo.result/0",
+ "reader": {
+  "commit": "15400b68ec16c75323b0d2dbd097bc89043ade5a",
+  "src": "16bb3aad5d26979a6184d283367d78ef5defb359",
+  "dirty": false
+ },
+ "measuredAt": "2026-11-05T04:11:33.109Z",
+ "facilities": [
+  {
+   "key": "A",
+   "label": "fictional-1（開発用の工場の資料）",
+   "seconds": 47.8,
+   "dropped": {},
+   "result": {
+    "set": "calibrate-fictional-1",
+    "files": [
+     {
+      "file": "equipment-ledger.xlsx",
+      "format": "xlsx",
+      "kind": "ledger",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 238,
+       "imported": 235,
+       "excluded": 3,
+       "excludedBy": {
+        "題": 1,
+        "注記": 1,
+        "見出し（読み方に使った）": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 235,
+       "correct": 235,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "plan-hoshitori.xlsx",
+      "format": "xlsx",
+      "kind": "star",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 226,
+       "imported": 217,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "注記": 1,
+        "見出し（読み方に使った）": 2,
+        "小計（検算して合った）": 1,
+        "凡例（記号の意味に使った）": 4
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 2319,
+       "correct": 2319,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "daily-report.csv",
+      "format": "csv",
+      "kind": "daily",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 2394,
+       "imported": 2390,
+       "excluded": 4,
+       "excludedBy": {
+        "題": 1,
+        "注記": 2,
+        "見出し（読み方に使った）": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 2390,
+       "correct": 2390,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2019.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 23,
+       "imported": 7,
+       "excluded": 16,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）": 7,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 7,
+       "correct": 7,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2020.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2021.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 22,
+       "imported": 6,
+       "excluded": 16,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）": 7,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 6,
+       "correct": 6,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2022.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2023.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 22,
+       "imported": 6,
+       "excluded": 16,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）": 7,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 6,
+       "correct": 6,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2024.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2025.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 23,
+       "imported": 7,
+       "excluded": 16,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）": 7,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 7,
+       "correct": 7,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f1-fy2026.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2019.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2020.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 23,
+       "imported": 7,
+       "excluded": 16,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）": 7,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 7,
+       "correct": 7,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2021.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2022.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 22,
+       "imported": 6,
+       "excluded": 16,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）": 7,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 6,
+       "correct": 6,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2023.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2024.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 22,
+       "imported": 6,
+       "excluded": 16,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）": 7,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 6,
+       "correct": 6,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2025.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 13,
+       "imported": 4,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 4,
+       "correct": 4,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "reports/report-f2-fy2026.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": 0,
+      "leakAgainst": "元の xlsx（列の位置のずれ 1）",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 10,
+       "imported": 1,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "表の上の項目と値（頭書き）。記録には使わない": 5,
+        "見出し（読み方に使った）": 1,
+        "合計（検算して合った）": 1,
+        "注記": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 1,
+       "correct": 1,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     }
+    ],
+    "asked": 41,
+    "answered": 41,
+    "openAtEnd": [],
+    "unresolvedBefore": 18288,
+    "unresolvedAfter": 0,
+    "planMade": true,
+    "blockers": [],
+    "plan": {
+     "assets": 235,
+     "works": 525,
+     "details": 2289
+    },
+    "markWorkCount": {
+     "correct": 2097,
+     "total": 2102
+    },
+    "recovery": {
+     "denominator": 1561,
+     "together": 1561,
+     "inPlan": 1561,
+     "manDays": {
+      "correct": 161,
+      "total": 161
+     },
+     "days": {
+      "correct": 107,
+      "total": 107
+     },
+     "marksOnly": 1561,
+     "notCounted": {},
+     "misses": []
+    },
+    "unplaced": []
+   }
+  },
+  {
+   "key": "B",
+   "label": "fictional-2（開発用の工場の資料）",
+   "seconds": 0.2,
+   "dropped": {},
+   "result": {
+    "set": "calibrate-fictional-2",
+    "files": [
+     {
+      "file": "equipment-ledger.xlsx",
+      "format": "xlsx",
+      "kind": "ledger",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 58,
+       "imported": 55,
+       "excluded": 3,
+       "excludedBy": {
+        "題": 1,
+        "注記": 1,
+        "見出し（読み方に使った）": 1
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 55,
+       "correct": 55,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     },
+     {
+      "file": "plan-hoshitori.xlsx",
+      "format": "xlsx",
+      "kind": "star",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 25,
+       "imported": 16,
+       "excluded": 9,
+       "excludedBy": {
+        "題": 1,
+        "注記": 1,
+        "見出し（読み方に使った）": 2,
+        "小計（検算して合った）": 1,
+        "凡例（記号の意味に使った）": 4
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": {
+       "total": 127,
+       "correct": 127,
+       "extra": 0,
+       "misses": []
+      },
+      "rejected": null
+     }
+    ],
+    "asked": 4,
+    "answered": 4,
+    "openAtEnd": [],
+    "unresolvedBefore": 233,
+    "unresolvedAfter": 0,
+    "planMade": true,
+    "blockers": [],
+    "plan": {
+     "assets": 55,
+     "works": 17,
+     "details": 111
+    },
+    "markWorkCount": {
+     "correct": 108,
+     "total": 111
+    },
+    "recovery": {
+     "denominator": 89,
+     "together": 89,
+     "inPlan": 89,
+     "manDays": {
+      "correct": 0,
+      "total": 0
+     },
+     "days": {
+      "correct": 0,
+      "total": 0
+     },
+     "marksOnly": 89,
+     "notCounted": {},
+     "misses": []
+    },
+    "unplaced": []
+   }
+  },
+  {
+   "key": "C",
+   "label": "ほたる川（工場 v2。作業日報 5 冊と発注台帳、星取表なし）",
+   "seconds": 51.4,
+   "dropped": {
+    "契約の行の結び（annual）": 2434,
+    "契約の行の結び（bundle）": 1082
+   },
+   "result": {
+    "set": "demo-C",
+    "files": [
+     {
+      "file": "【架空】ほたる川CC_作業日報_R3.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 4193,
+      "rows": {
+       "input": 4644,
+       "imported": 0,
+       "excluded": 4027,
+       "excludedBy": {
+        "表の上の項目と値（頭書き）": 774,
+        "見出し（読み方に使った）": 516,
+        "行の番号だけの行（記入欄の空き）": 2459,
+        "表の下の記入欄（項目と文）": 258,
+        "機器と作業の区切りの無いセルの行（決定で外した）": 20
+       },
+       "unresolved": 617,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】ほたる川CC_作業日報_R4.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 4045,
+      "rows": {
+       "input": 4572,
+       "imported": 0,
+       "excluded": 3978,
+       "excludedBy": {
+        "表の上の項目と値（頭書き）": 762,
+        "見出し（読み方に使った）": 508,
+        "行の番号だけの行（記入欄の空き）": 2431,
+        "表の下の記入欄（項目と文）": 254,
+        "機器と作業の区切りの無いセルの行（決定で外した）": 23
+       },
+       "unresolved": 594,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】ほたる川CC_作業日報_R5.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 4453,
+      "rows": {
+       "input": 4644,
+       "imported": 0,
+       "excluded": 3991,
+       "excludedBy": {
+        "表の上の項目と値（頭書き）": 774,
+        "見出し（読み方に使った）": 516,
+        "行の番号だけの行（記入欄の空き）": 2416,
+        "表の下の記入欄（項目と文）": 258,
+        "機器と作業の区切りの無いセルの行（決定で外した）": 27
+       },
+       "unresolved": 653,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】ほたる川CC_作業日報_R6.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 4773,
+      "rows": {
+       "input": 4644,
+       "imported": 0,
+       "excluded": 3949,
+       "excludedBy": {
+        "表の上の項目と値（頭書き）": 774,
+        "見出し（読み方に使った）": 516,
+        "行の番号だけの行（記入欄の空き）": 2373,
+        "表の下の記入欄（項目と文）": 258,
+        "機器と作業の区切りの無いセルの行（決定で外した）": 28
+       },
+       "unresolved": 695,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】ほたる川CC_作業日報_R7.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 3084,
+      "rows": {
+       "input": 3222,
+       "imported": 0,
+       "excluded": 2777,
+       "excludedBy": {
+        "表の上の項目と値（頭書き）": 537,
+        "見出し（読み方に使った）": 358,
+        "行の番号だけの行（記入欄の空き）": 1681,
+        "表の下の記入欄（項目と文）": 179,
+        "機器と作業の区切りの無いセルの行（決定で外した）": 22
+       },
+       "unresolved": 445,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】ほたる川CC_発注台帳_H28-R7.xlsx",
+      "format": "xlsx",
+      "kind": "report",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 2935,
+      "rows": {
+       "input": 565,
+       "imported": 0,
+       "excluded": 30,
+       "excludedBy": {
+        "題": 10,
+        "注記": 10,
+        "見出し（読み方に使った）": 10
+       },
+       "unresolved": 535,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     }
+    ],
+    "asked": 76,
+    "answered": 69,
+    "openAtEnd": [
+     {
+      "kind": "effortUnknown",
+      "rows": 3124,
+      "text": "【架空】ほたる川CC_作業日報_R3.xlsx・【架空】ほたる川CC_作業日報_R4.xlsx ほか 3 冊（同じ様式）の表に、工数が数だけで単位が無い行がある。単位は何か"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 10,
+      "text": "列 E（見出し「契約方式」・中身の見本 「一般競争入札（総合評価）」「随意契約（特命）」「随意契約」・表の 5〜57 行目）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 10,
+      "text": "列 F（見出し「契約の相手方」・中身の見本 「(株)架空運転管理」「(株)架空制御システムズ」「(株)架空揚重機サービス」・表の 5〜57 行目）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 10,
+      "text": "列 G（見出し「予定価格（円）」・中身の見本 「325,271,000」「7,441,000」「5,833,000」・表の 5〜57 行目）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 10,
+      "text": "列 H（見出し「契約金額（円）」・中身の見本 「291,842,000」「6,646,000」「5,536,000」・表の 5〜57 行目）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 10,
+      "text": "列 N（見出し「支払額（円）」・中身の見本 「291,842,000」「6,646,000」「5,536,000」・表の 5〜57 行目）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 10,
+      "text": "列 O（見出し「所管」・中身の見本 「施設係」「保全係」「管理係」・表の 5〜57 行目）の役目が決まらない"
+     }
+    ],
+    "unresolvedBefore": 28836,
+    "unresolvedAfter": 23483,
+    "planMade": false,
+    "blockers": [
+     "未解決のセル 23483",
+     "答えの無い質問 7"
+    ],
+    "plan": null,
+    "markWorkCount": null,
+    "recovery": {
+     "denominator": 3164,
+     "together": 0,
+     "inPlan": 0,
+     "manDays": {
+      "correct": 0,
+      "total": 2495
+     },
+     "days": {
+      "correct": 0,
+      "total": 0
+     },
+     "marksOnly": 0,
+     "notCounted": {
+      "この組のどの資料にも書いていない": 820
+     },
+     "misses": [
+      "作業 w00010（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w03203（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00045（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00028（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00040（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00052（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00100（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00035（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00050（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00042（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00044（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00059（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00063（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00070（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00043（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00054（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00056（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00060（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00061（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00062（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00064（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00065（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00085（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00102（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00103（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00104（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00106（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00107（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00108（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00109（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00110（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00111（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00112（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00113（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00114（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00115（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00116（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00117（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00118（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00119（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00029（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00053（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00071（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w03202（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00006（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00175（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w03200（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00008（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00009（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない",
+      "作業 w00096（【架空】ほたる川CC_発注台帳_H28-R7.xlsx）：1 つの明細にそろっていない"
+     ]
+    },
+    "unplaced": []
+   }
+  }
+ ]
+}
