@@ -318,7 +318,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (route.kind === "static" || route.kind === "public" || route.kind === "ws") {
         const o = checkOrigin(header(req, "origin"), host, port, false);
         if (o) return reject(res, o);
-        const s = checkFetchSite(header(req, "sec-fetch-site"), true);
+        const s = checkFetchSite(header(req, "sec-fetch-site"), true, route.kind === "static" ? { method: req.method ?? "", mode: header(req, "sec-fetch-mode"), dest: header(req, "sec-fetch-dest") } : undefined);
         if (s) return reject(res, s);
       }
       if (route.kind === "human") {

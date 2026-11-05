@@ -31,9 +31,12 @@ export function checkOrigin(origin: string | undefined, host: string | undefined
  * 人だけの経路は same-origin だけ。静的ファイルは same-origin と none（人がアドレスを打った）を受ける。
  * 見出しが無いのはブラウザでない呼び手で、ここでは断らず、Origin と秘密で断る。
  */
-export function checkFetchSite(value: string | undefined, allowNone: boolean): ErrorCode | null {
+export function checkFetchSite(value: string | undefined, allowNone: boolean, page?: { method: string; mode: string | undefined; dest: string | undefined }): ErrorCode | null {
   if (value === undefined) return null;
   if (value === "same-origin") return null;
   if (allowNone && value === "none") return null;
+  // 人がリンクで開いたページ（メールのリンクなど）：静的ファイルの経路だけ、ほかのサイトからでも GET の navigate・document を受ける（台帳の中-16）。
+  // 人だけの経路と WebSocket は渡さないので、今のまま same-origin とタブの秘密を求める
+  if (page && page.method === "GET" && page.mode === "navigate" && page.dest === "document") return null;
   return "fetch_site_not_allowed";
 }
