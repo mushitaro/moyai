@@ -290,11 +290,90 @@ button.moyai-merge-link {
 }
 /* 横の板は 1 枚（地は --layer-1、余白 24px で見出しの行とそろえる） */
 .moyai-merge-side {
+  position: relative;
   flex: none;
-  width: 360px;
+  width: 340px;
   overflow: auto;
   padding: var(--sp-6);
   background: var(--layer-1);
+}
+/* 詳しく：選んだ行の全文が描かれていれば、「行を選ぶと…」の 1 行は出さない */
+.moyai-side-detail:not(:empty) + .moyai-side-detail-empty {
+  display: none;
+}
+/* 横の板の右上の「›」（たたむ） */
+.moyai-side-fold {
+  position: absolute;
+  top: var(--sp-5);
+  right: var(--sp-4);
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font: inherit;
+  cursor: pointer;
+}
+.moyai-side-fold:hover {
+  color: var(--text);
+}
+/* データとの境目（引いて幅を変える。ダブルクリックで 340px） */
+.moyai-side-resize {
+  flex: none;
+  width: 4px;
+  margin-right: -4px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 1;
+}
+.moyai-side-resize:hover {
+  background: var(--line-strong);
+}
+/* たたんだ帯：幅 40px。切り替えの名前と数を縦書きで並べ、決まっていない所の数は朱 */
+.moyai-merge-side-band {
+  flex: none;
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-5) 0;
+  background: var(--layer-1);
+}
+.moyai-side-band-open,
+.moyai-side-band-item {
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.moyai-side-band-item {
+  writing-mode: vertical-rl;
+}
+.moyai-side-band-item[data-shu="true"] {
+  color: var(--shu-text);
+}
+.moyai-side-band-open:hover,
+.moyai-side-band-item:hover {
+  color: var(--text);
+}
+/* 窓が 1200px より狭いときは、板はデータの上に重ねて開く（左に罫）。たたんだ帯は場所をとる */
+@media (max-width: 1199px) {
+  .moyai-merge-body {
+    position: relative;
+  }
+  .moyai-merge-side {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    border-left: 1px solid var(--line-strong);
+  }
+  .moyai-side-resize {
+    display: none;
+  }
 }
 .moyai-merge-bar {
   border-top: 1px solid var(--line);
@@ -810,4 +889,9 @@ button.moyai-industry-row:hover {
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
   border-left: 2px solid var(--text);
   border-bottom: 1px solid var(--line);
+}
+
+/* 共通の設備項目で見るときの、設備の見出しの行（1 列の行の見出し。Wire、Fold.dc.html） */
+.moyai-common-head {
+  font-weight: 700;
 }

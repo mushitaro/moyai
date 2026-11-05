@@ -170,17 +170,16 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
   await test.step("共通の設備項目 × 作業の属性の行に切り替え、未当てはめを 1 行に集める", async () => {
     await page.getByText("共通の設備項目 × 作業の属性").click();
     await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
-    await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='lv3']")).toContainText("作業の属性");
+    // 行の見出しは 1 列（「共通の設備項目 › 作業」。Wire、2026-11-05）：設備は見出しの行、その下は「項目 › 作業」の行
+    await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='lv1']")).toContainText("共通の設備項目 › 作業");
+    await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='lv2']")).toHaveCount(0);
+    await expect(page.locator(".ag-row [col-id='lv1']").filter({ hasText: " › " }).first()).toBeVisible();
     await page.screenshot({ path: shot(`chart-common-${tag}`) });
     // 未当てはめの行は最後。表の下まで送って見る
     await page.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop = el.scrollHeight));
     await expect(page.locator(".moyai-row-unmapped [col-id='lv1']")).toHaveText(/^未当てはめ（\d+ 件）$/);
     await page.screenshot({ path: shot(`chart-common-unmapped-${tag}`) });
     await page.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop = 0));
-    await page.getByTestId("fold-2").click();
-    await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-fold", "2");
-    await page.screenshot({ path: shot(`chart-common-folded-${tag}`) });
-    await page.getByTestId("fold-2").click();
   });
 
   await test.step("月までの表（年度の下に月）", async () => {

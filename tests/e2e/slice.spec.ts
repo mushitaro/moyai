@@ -269,6 +269,39 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("decisions-bulk-accept")).toContainText("第 1 版と同じ");
       await page.getByTestId("decisions-bulk-accept").click();
       await expect(page.locator('[data-testid="crosswalk-rule"][data-same="1"][data-state="proposed"]')).toHaveCount(0);
+      // 写し（Wire の 1 回目の確かめ）：読み方のシート、資料のタブ、横の板をたたんだ星取表（共通の設備項目の 1 列の見出し）
+      await page.getByTestId("sheet-readings").click();
+      await page.screenshot({ path: shot(`slice-readings-${tag}`), fullPage: true });
+      await page.getByTestId("sheet-file").first().click();
+      await page.screenshot({ path: shot(`slice-files-${tag}`), fullPage: true });
+      await page.getByTestId("sheet-chart").click();
+      await expect(page.locator(".ag-row").first()).toBeVisible();
+      await page.getByTestId("side-fold").click();
+      await expect(page.getByTestId("merge-side-band")).toBeVisible();
+      await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
+      await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
+      await expect(page.locator(".ag-row").first()).toBeVisible();
+      await page.screenshot({ path: shot(`slice-chart-folded-${tag}`), fullPage: true });
+      // キー ］ で開き直す（覚えた開け閉めを次の試験に残さない）
+      await page.keyboard.press("]");
+      await expect(page.getByTestId("merge-side")).toBeVisible();
+    });
+
+    await test.step("同じタブで第 2 版を確定して作り直すと、案は「第 2 版と同じ」になる（台帳の新-9）", async () => {
+      await acceptDecisions(page, "試験の台本が押した（第 2 版の決定を受けた）");
+      await page.getByTestId("confirm-open").click();
+      await page.getByTestId("confirm-reason").fill("縦の 1 本：第 1 版の資料と当てはめを重ねた第 2 版（e2e）");
+      await expect(page.getByTestId("confirm-submit")).toBeEnabled();
+      await page.getByTestId("confirm-submit").click();
+      await expect(page.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+      await page.getByTestId("confirm-close").click();
+      await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
+      await page.getByTestId("compose").click();
+      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await page.getByTestId("sheet-decisions").click();
+      await expect(page.getByTestId("decisions-kind")).toContainText("第 2 版と同じ", { timeout: 60_000 });
+      await expect(page.getByTestId("decisions-kind")).not.toContainText("第 1 版と同じ");
     });
   } finally {
     await c.close();

@@ -81,6 +81,9 @@ export const TEXT = {
     confirmDisabled: "確定の経路はまだありません（未実装）",
     levelFallback: (n: number) => `第 ${n} 階層`,
     commonLevels: ["共通の設備", "共通の設備項目", "作業の属性"] as [string, string, string],
+    // 共通の設備項目 × 作業の属性で見るときの、行の見出しの 1 列（Wire、2026-11-05）
+    commonOneCol: "共通の設備項目 › 作業",
+    commonSep: " › ",
     unmapped: "未当てはめ",
     series: (s: string) => (s.startsWith("common.") ? s.slice("common.".length) || "共通" : `系列 ${s}`),
     mark: { plan: "○", actual: "●", both: "◎" },
@@ -317,7 +320,15 @@ export const TEXT = {
     dropHere: (n: number) => `第 ${n} 版にマージします`,
     composeFirst: "第 1 版をつくる",
     composeNext: (n: number) => `資料を重ねて第 ${n} 版をつくる`,
-    side: { open: (n: number) => `決まっていない所 ${n}`, signatures: (n: number) => `署名 ${n}`, source: "出どころ", comments: (n: number) => `コメント ${n}` },
+    side: {
+      open: (n: number) => `決まっていない所 ${n}`,
+      signatures: (n: number) => `署名 ${n}`,
+      source: "詳しく",
+      comments: (n: number) => `コメント ${n}`,
+      detailEmpty: "行を選ぶと、ここに出ます。",
+      fold: "横の板をたたむ（キー ］）",
+      unfold: "横の板を開く（キー ］）",
+    },
     comments: {
       label: "コメント",
       placeholder: "行を選んでから書くと、その行に付きます",
@@ -367,8 +378,8 @@ export const TEXT = {
     openFailed: (what: string) => `リンクの版を開けませんでした。保存先の版と、リンクの${what}が合いません。`,
     openWhat: { missing: "計画", version: "版の番号", hash: "ハッシュ", broken: "署名と鎖" } as Record<string, string>,
     // 1C・重-2：開いた版を組んだ資料（言葉は Wire に確かめる）
-    noSources: (n: number) => `第 ${n} 版には組んだ資料の記録がありません。資料を足して作り直すと、足した資料だけで組むので、第 ${n} 版の印は差分に消えた行として出ます。`,
-    opening: "開いた版の資料を読んでいます",
+    noSources: (n: number) => `第 ${n} 版は、どの資料から作ったかの記録がありません。資料を足すと、足した資料だけで作り直すので、第 ${n} 版の印は消えた行として出ます。`,
+    opening: (n: number) => `第 ${n} 版の資料を読んでいます`,
     sourcesFailed: (n: number, why: string) => `第 ${n} 版を組んだ資料を読めないので、作り直せません（${why}）`,
   },
   intake: {

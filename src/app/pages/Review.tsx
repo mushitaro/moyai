@@ -3,7 +3,11 @@
 // いつも「自己点検であって、審査の判断ではない」と出す。主ボタンは無い（検査を直すのは人で、パックを直して版を上げる）。
 // 業種の言葉は、パックの checks.json と sources.json から出る（コードに置かない）。
 import { Anchor, Container, Group, List, Paper, Stack, Table, Text, TextInput, Title } from "@mantine/core";
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Switch } from "../components/Switch";
+import { MergeSideContext } from "../state/merge-side";
+import { sheetHash } from "../stages";
 import { nodePath, type CheckResult, type NumberKey } from "../../review/checks";
 import type { Plan } from "../../shared/plan";
 import { APP_PAGES } from "../../shared/routes";
@@ -169,10 +173,172 @@ function CheckCard({ c, plan }: { c: CheckResult; plan: Plan }) {
   );
 }
 
+/** 検査のシートの 1 行（1 つの外れを 1 行。機器ごと。例の無い検査と、満たす・当てはまらないは 1 検査 1 行。PM の決定） */
+interface CheckLine {
+  key: string;
+  c: CheckResult;
+  e: CheckResult["examples"][number] | null;
+}
+
+function linesOf(results: readonly CheckResult[], want: CheckResult["result"]): CheckLine[] {
+  const out: CheckLine[] = [];
+  for (const c of results) {
+    if (c.result !== want) continue;
+    if (want === "notMet" && c.examples.length > 0) c.examples.forEach((e, i) => out.push({ key: `${c.checkId}#${i}`, c, e }));
+    else out.push({ key: c.checkId, c, e: null });
+  }
+  return out;
+}
+
+/** 出典の短い言い方（条項の頭。括弧の中の言い換えは詳しくへ。例「第三の 11」） */
+const shortSource = (s: NonNullable<CheckResult["source"]>) => (s.clause || s.document).split(/[（(]/)[0]!.trim();
+/** 基準の短い言い方（「3 年以内」。閾値の年数が無い検査は ―） */
+const standardOf = (c: CheckResult) => (typeof c.numbers.thresholdYears === "number" ? T.withinYears(c.numbers.thresholdYears) : "―");
+/** この施設の短い言い方（外れの例から。例が無ければ外れの数か結果） */
+function hereOf(l: CheckLine): string {
+  if (l.e) return l.e.years !== null ? T.years(l.e.years) : l.e.value ?? exampleText(l.e, l.c);
+  return l.c.result === "notMet" ? T.notMetCount(l.c.count) : T.result[l.c.result];
+}
+
+/** MERGE の検査のシート（docs/screens.md 3.2、Wire、2026-11-05。絵は Check.dc.html）：1 つの外れを 1 行。行を選ぶと横の板の詳しく */
+function CheckSheet({ plan, results, referenceFiscalYear, checksVersion }: { plan: Plan; results: readonly CheckResult[]; referenceFiscalYear: number; checksVersion: number }) {
+  const side = useContext(MergeSideContext);
+  const date = useReferenceDate();
+  const [which, setWhich] = useState<CheckResult["result"]>("notMet");
+  const [editDate, setEditDate] = useState(false);
+  const [sel, setSel] = useState<string | null>(null);
+  const counts = { notMet: linesOf(results, "notMet").length, met: linesOf(results, "met").length, notApplicable: linesOf(results, "notApplicable").length };
+  const lines = linesOf(results, which);
+  const picked = lines.find((l) => l.key === sel) ?? null;
+  const node = (l: CheckLine) => (l.e?.nodeKey ? (nodePath(plan, l.e.nodeKey).at(-1) ?? "―") : "―");
+  const detail = picked && (
+    <Stack gap="xs" data-testid="check-detail" data-check={picked.c.checkId}>
+      <Text size="sm" fw={700}>
+        <Text span c={picked.c.result === "notMet" ? "var(--shu-text)" : undefined} mr={6}>
+          {RESULT_MARK[picked.c.result]}
+        </Text>
+        {picked.c.name}
+      </Text>
+      {picked.e?.nodeKey && <Text size="sm">{nodePath(plan, picked.e.nodeKey).join(T.pathSep)}</Text>}
+      <Text size="xs" c="dimmed">
+        {T.whatLabel}
+      </Text>
+      <Text size="sm">{picked.c.what}</Text>
+      <Text size="xs" c="dimmed">
+        {T.here}
+      </Text>
+      <Text size="sm" c={picked.c.result === "notMet" ? "var(--shu-text)" : undefined}>
+        {picked.e ? exampleText(picked.e, picked.c) : hereOf(picked)}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {T.standard}
+      </Text>
+      <Text size="sm">
+        {standardOf(picked.c)}（{T.level[picked.c.level]}）
+      </Text>
+      <Text size="xs" c="dimmed">
+        {T.sourceLabel}
+      </Text>
+      <Text size="sm">{picked.c.source ? T.sourceText(picked.c.source.document, picked.c.source.clause, picked.c.source.page) : T.noSource}</Text>
+      <Text size="xs" c="dimmed">
+        {T.verificationLabel}
+      </Text>
+      <Text size="sm">{picked.c.verification ?? T.noSource}</Text>
+      <Text size="xs" c="dimmed" className="moyai-num">
+        {T.referenceFiscalYear(referenceFiscalYear)}　{T.checksVersion(checksVersion)}
+      </Text>
+      <Group gap={0}>
+        {picked.e?.nodeKey && (
+          <a className="moyai-inline-act" href={sheetHash("chart")} data-testid="check-to-chart">
+            {T.toChart}
+          </a>
+        )}
+        {picked.c.source && (
+          <a className="moyai-inline-act" href={picked.c.source.url} target="_blank" rel="noreferrer" data-testid="check-open-source">
+            {T.openSource}
+          </a>
+        )}
+      </Group>
+    </Stack>
+  );
+  return (
+    <Stack gap="md" px="xl" py="lg" data-testid="check-sheet">
+      <Group justify="space-between" wrap="nowrap">
+        <Switch
+          value={which}
+          onChange={(v) => {
+            setWhich(v);
+            setSel(null);
+          }}
+          aria-label={T.kindSwitch}
+          data-testid="check-kind"
+          data={(["notMet", "met", "notApplicable"] as const).map((k) => ({ value: k, label: `${T.kinds[k]} ${counts[k]}` }))}
+        />
+        <Group gap={0} wrap="nowrap" className="moyai-num">
+          <Text size="xs" c="var(--text-2)" data-testid="reference-date-text">
+            {T.referenceDate}　{date}
+          </Text>
+          <button type="button" className="moyai-inline-act" onClick={() => setEditDate((x) => !x)} data-testid="reference-date-edit">
+            {T.changeDate}
+          </button>
+        </Group>
+      </Group>
+      {editDate && <ReferenceDate />}
+      <Table.ScrollContainer minWidth={0}>
+      <Table verticalSpacing="sm" fz="sm" highlightOnHover data-testid="check-table" data-kind={which}>
+        <Table.Thead>
+          <Table.Tr>
+            {T.cols.map((h) => (
+              <Table.Th key={h} style={{ whiteSpace: "nowrap" }}>
+                {h}
+              </Table.Th>
+            ))}
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {lines.map((l) => (
+            <Table.Tr
+              key={l.key}
+              data-testid="check-line"
+              data-check={l.c.checkId}
+              data-result={l.c.result}
+              aria-selected={sel === l.key}
+              style={{ cursor: "pointer" }}
+              onClick={() => {
+                setSel(l.key);
+                side?.show();
+              }}
+            >
+              <Table.Td w={32} fw={700} c={l.c.result === "notMet" ? "var(--shu-text)" : undefined}>
+                {RESULT_MARK[l.c.result]}
+              </Table.Td>
+              <Table.Td style={{ whiteSpace: "nowrap" }}>{l.c.name}</Table.Td>
+              <Table.Td style={{ whiteSpace: "nowrap" }}>{node(l)}</Table.Td>
+              <Table.Td className="moyai-num" miw={160} c={l.c.result === "notMet" ? "var(--shu-text)" : undefined}>
+                {hereOf(l)}
+              </Table.Td>
+              <Table.Td className="moyai-num" style={{ whiteSpace: "nowrap" }}>
+                {standardOf(l.c)}
+              </Table.Td>
+              <Table.Td c="var(--text-2)" style={{ whiteSpace: "nowrap" }} title={l.c.source ? T.sourceText(l.c.source.document, l.c.source.clause, l.c.source.page) : undefined}>
+                {l.c.source ? shortSource(l.c.source) : T.threshold[l.c.thresholdOrigin]}
+              </Table.Td>
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
+      </Table.ScrollContainer>
+      {side?.el && detail && createPortal(detail, side.el)}
+    </Stack>
+  );
+}
+
 export function Review({ embedded = false }: { embedded?: boolean } = {}) {
   const working = useWorkingPlan();
   const date = useReferenceDate();
   const review = useMemo(() => (working ? reviewOf(working.plan, date) : null), [working, date]);
+  if (embedded && working && review?.kind === "ok")
+    return <CheckSheet plan={working.plan} results={review.run.results} referenceFiscalYear={review.run.referenceFiscalYear} checksVersion={review.run.checksVersion} />;
   const results = review?.kind === "ok" ? review.run.results : [];
   const count = (r: CheckResult["result"]) => results.filter((x) => x.result === r).length;
 

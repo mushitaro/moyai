@@ -37,6 +37,18 @@ export const REVIEW_TEXT = {
   referenceDateInvalid: "日付の形（年-月-日）で入れてください",
   referenceFiscalYear: (n: number) => `基準日の年度：${fy(n)}`,
   checksVersion: (n: number) => `Skillパックの検査の版：${n}`,
+  // MERGE の検査のシート（Wire、2026-11-05）
+  kindSwitch: "検査の結果",
+  kinds: { notMet: "外れ", met: "満たす", notApplicable: "当てはまらない" } satisfies Record<CheckOutcome, string>,
+  changeDate: "変える",
+  cols: ["", "検査", "機器", "この施設", "基準", "出典"],
+  withinYears: (n: number) => `${n} 年以内`,
+  years: (n: number) => `${n} 年`,
+  notMetCount: (n: number) => `外れ ${n}`,
+  here: "この施設",
+  standard: "基準",
+  toChart: "星取表で見る",
+  openSource: "出典を開く",
   summary: (met: number, notMet: number, na: number) => `満たす ${met} ／ 外れがある ${notMet} ／ 当てはまらない ${na}`,
   result: { met: "満たす", notMet: "外れがある", notApplicable: "当てはまらない" } satisfies Record<CheckOutcome, string>,
   level: {

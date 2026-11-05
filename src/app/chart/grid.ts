@@ -224,7 +224,47 @@ function textWidth(t: string): number {
 const LEVEL_MIN = [170, 160];
 const LEVEL_MAX = 360;
 
+/**
+ * 共通の設備項目 × 作業の属性で見るときの行の見出しは 1 列（Wire、2026-11-05。絵は Fold.dc.html）：
+ * 設備は見出しの行、その下は「計量機 › 点検」（項目 › 作業）の 1 行。列の見出しは「共通の設備項目 › 作業」
+ */
+export function commonRowText(row: ChartRow): string {
+  if (row.kind === "peer" || row.kind === "stat") return row.levelCells[row.levelCells.length - 1] ?? "";
+  if (row.level === 1 || row.kind === "unmapped") return levelText(row, row.level - 1);
+  if (row.level === 2) return levelText(row, 1);
+  const [, item, attr] = row.path;
+  const text = `${item ?? ""}${T.commonSep}${attr ?? ""}`;
+  return row.count === null ? text : `${text}（${T.units(row.count)}）`;
+}
+
+/** 1 列のときに表へ渡す行：項目の行は、その下に作業の行があれば出さない（作業の行が「項目 › 作業」を言う） */
+export function commonRowsShown(rows: readonly ChartRow[]): ChartRow[] {
+  return rows.filter((r) => !(r.kind === "node" && r.level === 2 && r.hasChildren && !r.folded));
+}
+
 function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandlers): ColDef<ChartRow>[] {
+  if (model.mode === "common")
+    return [
+      {
+        colId: "lv1",
+        headerName: T.commonOneCol,
+        pinned: "left",
+        lockPinned: true,
+        width: Math.min(LEVEL_MAX + 120, Math.max(LEVEL_MIN[0]!, ...model.rows.map((r) => textWidth(commonRowText(r)) + 40))),
+        tooltipValueGetter: (p) => (p.data ? commonRowText(p.data) : null),
+        valueGetter: (p) => {
+          if (!p.data) return "";
+          const marks = (p.context as GridContext | undefined)?.comments?.get(p.data.id);
+          return marks ? `${commonRowText(p.data)}　${marks}` : commonRowText(p.data);
+        },
+        cellClass: "moyai-lv",
+        cellClassRules: {
+          "moyai-common-head": (p: CellClassParams<ChartRow>) => !!p.data && p.data.level === 1 && p.data.kind === "node",
+          "moyai-lv-folded": (p: CellClassParams<ChartRow>) => !!p.data?.folded,
+          "moyai-lv-own": (p: CellClassParams<ChartRow>) => !!p.data,
+        },
+      },
+    ];
   return model.levelNames.map((name, i) => ({
     colId: `lv${i + 1}`,
     headerName: name,
@@ -385,7 +425,7 @@ export class ChartGrid {
       this.colKey = key;
       this.api.setGridOption("columnDefs", columns(model, foldLevel, this.h, band));
     }
-    this.api.setGridOption("rowData", model.rows);
+    this.api.setGridOption("rowData", model.mode === "common" ? commonRowsShown(model.rows) : model.rows);
     // 行の中身が同じ鍵のまま変わったとき（畳む・層の切り替え）に、セルの文字とクラスを描き直す
     this.api.refreshCells({ force: true });
     this.h.onRendered();

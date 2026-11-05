@@ -24,7 +24,7 @@ import { useAccepted } from "../state/decisions";
 import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey, type CommentRow, type MergeCompare, type MergeSide } from "../state/merge-side";
 import { CommentsPanel, commentNumber, type ListedComment } from "../components/CommentsPanel";
 import { Switch } from "../components/Switch";
-import { setWorkingPlan, useWorkingPlan } from "../state/plan-store";
+import { getWorkingPlan, setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { setCrosswalkBase } from "../state/crosswalk";
 import type { Decision } from "../../import/questions";
 import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
@@ -34,6 +34,27 @@ import { setFacilityDialog } from "../state/facility-dialog";
 import { Intake, Questions, useWorkspace } from "./Intake";
 
 const T = TEXT.merge;
+const SIDE_WIDTH = 340;
+const SIDE_MIN = 280;
+const SIDE_MAX = 560;
+const SIDE_PREF = "moyai.mergeSide";
+/** 横の板の開け閉めと幅（localStorage。読めなければ既定） */
+function readSidePref(): { folded: boolean; width: number } {
+  try {
+    const v = JSON.parse(localStorage.getItem(SIDE_PREF) ?? "null") as { folded?: unknown; width?: unknown } | null;
+    const w = typeof v?.width === "number" ? Math.min(SIDE_MAX, Math.max(SIDE_MIN, v.width)) : SIDE_WIDTH;
+    return { folded: v?.folded === true, width: w };
+  } catch {
+    return { folded: false, width: SIDE_WIDTH };
+  }
+}
+function writeSidePref(p: { folded: boolean; width: number }): void {
+  try {
+    localStorage.setItem(SIDE_PREF, JSON.stringify(p));
+  } catch {
+    /* 覚えられなくても動く */
+  }
+}
 // 星取表と検査は AG Grid や検査の関数を含むので、開いたときに読む
 const StarTable = lazy(() => import("./StarTable").then((m) => ({ default: m.StarTable })));
 const Review = lazy(() => import("./Review").then((m) => ({ default: m.Review })));
@@ -51,6 +72,32 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const nextPlan = useRef<Plan | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
   const [side, setSide] = useState<"open" | "signatures" | "source" | "comments">("open");
+  // 横の板の開け閉めと幅（この PC に 1 つだけ覚える。シートごとではない）
+  const [sideFolded, setSideFolded] = useState<boolean>(() => readSidePref().folded);
+  const [sideWidth, setSideWidth] = useState<number>(() => readSidePref().width);
+  useEffect(() => writeSidePref({ folded: sideFolded, width: sideWidth }), [sideFolded, sideWidth]);
+  // キー ］ で、たたむ・開く（字を打っている欄では効かせない）
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.key !== "]" || e.ctrlKey || e.metaKey || e.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
+      setSideFolded((f) => !f);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const x0 = e.clientX;
+    const w0 = sideWidth;
+    const move = (m: MouseEvent) => setSideWidth(Math.min(SIDE_MAX, Math.max(SIDE_MIN, w0 + (x0 - m.clientX))));
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
   const [sourceEl, setSourceEl] = useState<HTMLElement | null>(null);
   // コメント：保管先から読み、星取表で選んだ行に付ける
   const [comments, setComments] = useState<ListedComment[]>([]);
@@ -66,6 +113,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   }, [comments]);
   const sideCtx = useMemo<MergeSide>(() => ({ el: sourceEl, show: () => setSide("source"), select: setSelectedRow, commentMarks }), [sourceEl, commentMarks]);
   const [notice, setNotice] = useState<string | null>(null);
+  // 開いた版に資料の記録が無い（その版と、そのときの資料の数。資料を足すと消す）
+  const [noSources, setNoSources] = useState<{ version: number; files: number } | null>(null);
   // リンクを開いたとき、頼みをほかの鍵がもう受け取っていた・頼みが取り下げられていた（見るだけで開く。Wire の B1）
   // 合言葉がどの効いている頼みにも当たらない（その版を作った鍵でない頼みなど）ときも、見るだけで開く
   const [receive, setReceive] = useState<{ state: "takenByOther"; requester: string; receiver: { by: string; fingerprint: string } } | { state: "withdrawn" | "unknown" } | null>(null);
@@ -84,9 +133,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const pendingOpen = !!openKey && doneKey !== openKey;
   // 版を開いて、その版の資料と決定を戻し終えるまでは作り直させない（前の版の資料なしで組み直して、明細を消さない）
   useEffect(() => {
-    if (pendingOpen) ws.blockRestore(T.opening);
+    if (pendingOpen) ws.blockRestore(T.opening(openV));
     // 開き終える前にほかのシートへ移ったら、開くのはやめる（止め札だけを残さない）
-    else ws.clearBlock(T.opening);
+    else ws.clearBlock(T.opening(openV));
   }, [pendingOpen]);
   // 古い版を見ているあいだは、その版の番号（見るだけ。確定はできない）
   const [oldView, setOldView] = useState<{ planId: string; version: number } | null>(null);
@@ -137,7 +186,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       // この版から次の版：もとにした版は、保管先のいちばん新しい版（古い版の中身を、その上に重ねる）
       setWorkingPlan(r.body.plan, "intake", [], openNext ? latest.version : openV);
       setOldView(openNext ? null : { planId: openId, version: openV });
-      // 古い版から次の版を作るときは、その版の資料をまだ戻さない（このタブの資料だけで組み直す）
+      // 古い版から次の版を作るときは、その版の資料をまだ戻さない（このタブの資料だけで組み直す）。計画 ID は固定する（台帳の新-9）
+      ws.pinPlanId(openId);
       ws.blockRestore(null);
       setNotice(null);
       setDoneKey(openKey);
@@ -147,10 +197,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const restoreFrom = async (planId: string, latest: NonNullable<NonNullable<typeof st>["latest"]>) => {
     setCrosswalkBase({ version: latest.version, plan: latest.plan, crosswalk: latest.crosswalk ?? [] });
     ws.pinPlanId(planId);
-    ws.blockRestore(T.opening);
+    ws.blockRestore(T.opening(latest.version));
+    setNoSources(null);
     if (!latest.sources) {
       ws.blockRestore(null);
-      return setNotice(T.noSources(latest.version));
+      // ふつうの字の 1 行。資料を足すと消える（Wire）
+      return setNoSources({ version: latest.version, files: ws.fileCount });
     }
     const files: { name: string; bytes: Uint8Array }[] = [];
     for (const s of latest.sources) {
@@ -163,6 +215,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       files,
       (latest.decisions ?? []).map((d) => ({ questionId: d.questionId, answer: d.answer, author: d.author as Decision["author"], reason: d.reason })),
     );
+  };
+  // 確定したら、その版をもとにした版に置き直し、計画 ID を固定する（同じタブで次の版を作ると「第 n+1 版と同じ」になる。台帳の新-9）
+  const onConfirmed = (p: Plan) => {
+    nextPlan.current = p;
+    const crosswalk = (getWorkingPlan()?.proposals ?? []).filter((x) => x.state === "accepted").map((x) => ({ rule: x.rule, basis: x.basis }));
+    setCrosswalkBase({ version: p.version, plan: p, crosswalk });
+    ws.pinPlanId(p.planId);
   };
   const loadComments = async (planId: string) => {
     const r = readHuman<{ ok: boolean; reason?: string; comments: ListedComment[] }>(await client.callHuman("comments_list", ROUTES.commentsList.path, { planId }));
@@ -254,7 +313,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const ignored = st?.requestsIgnored ?? [];
   const ignoredOther = ignored.some((q) => q.why === "otherKey");
   const madeByMe = !!latestInfo?.signatures.some((x) => (x.role === "confirm" || x.role === "edit" || x.role === "revert") && x.trust === "own");
-  const sideSource = current === "chart";
+  // 詳しく：どのシートでも、本体で選んだ行・印・セルの全文と根拠を出す所（前の「出どころ」。Wire、2026-11-05）
+  const sideSource = !!plan;
   const sideComments = !!plan;
   const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
   const sideNow: "open" | "signatures" | "source" | "comments" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : sideComments ? "comments" : null;
@@ -350,6 +410,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           {notice}
         </Text>
       )}
+      {noSources && ws.fileCount <= noSources.files && (
+        <Text size="sm" px={32} data-testid="merge-no-sources">
+          {T.noSources(noSources.version)}
+        </Text>
+      )}
       {staleBy && plan && (
         <Text size="sm" c="var(--shu-text)" px={32} data-testid="merge-stale">
           {T.stale(staleBy.version, (staleBy as { signatures?: { by: string }[] }).signatures?.[0]?.by ?? "")}{" "}
@@ -405,8 +470,52 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             <Intake ws={ws} embedded file={fileParam} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} composeInBar={!plan} />
           </div>
         </div>
-        {sideNow && (
-          <aside className="moyai-merge-side" data-testid="merge-side">
+        {sideNow && sideFolded && (
+          <aside className="moyai-merge-side-band" data-testid="merge-side-band">
+            <button type="button" className="moyai-side-band-open" onClick={() => setSideFolded(false)} aria-label={T.side.unfold} data-testid="side-unfold">
+              ‹
+            </button>
+            {(
+              [
+                ["open", sideOpen, T.side.open(openQuestions), true],
+                ["source", sideSource, T.side.source, false],
+                ["signatures", !!latestInfo, T.side.signatures(latestInfo?.signatures.length ?? 0), false],
+                ["comments", sideComments, T.side.comments(comments.length), false],
+              ] as const
+            )
+              .filter(([, on]) => on)
+              .map(([k, , label, shu]) => (
+                <button
+                  type="button"
+                  key={k}
+                  className="moyai-side-band-item"
+                  data-shu={shu ? "true" : undefined}
+                  onClick={() => {
+                    setSide(k);
+                    setSideFolded(false);
+                  }}
+                  data-testid={`side-band-${k}`}
+                >
+                  {label}
+                </button>
+              ))}
+          </aside>
+        )}
+        {sideNow && !sideFolded && (
+          <div
+            className="moyai-side-resize"
+            role="separator"
+            aria-orientation="vertical"
+            onMouseDown={startResize}
+            onDoubleClick={() => setSideWidth(SIDE_WIDTH)}
+            data-testid="side-resize"
+          />
+        )}
+        {sideNow && !sideFolded && (
+          <aside className="moyai-merge-side" style={{ width: sideWidth }} data-testid="merge-side">
+            <button type="button" className="moyai-side-fold" onClick={() => setSideFolded(true)} aria-label={T.side.fold} data-testid="side-fold">
+              ›
+            </button>
             {/* 切り替え：決まっていない所（n が 0 なら出さない）・署名（確定した版があるとき）・出どころ（星取表のとき） */}
             <Group gap={0} mb="md" wrap="nowrap">
               {sideOpen && (
@@ -451,8 +560,15 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                 onAdded={() => void loadComments(plan.planId)}
               />
             )}
-            {/* 出どころは星取表のシートがここへ描く。見ていないあいだも場所は残す */}
-            {sideSource && <div ref={setSourceEl} style={{ display: sideNow === "source" ? undefined : "none" }} />}
+            {/* 詳しくは、星取表・検査のシートがここへ描く。見ていないあいだも場所は残す。何も選んでいなければ 1 行 */}
+            {sideSource && (
+              <div style={{ display: sideNow === "source" ? undefined : "none" }}>
+                <div ref={setSourceEl} className="moyai-side-detail" />
+                <Text size="sm" c="dimmed" className="moyai-side-detail-empty" data-testid="side-detail-empty">
+                  {T.side.detailEmpty}
+                </Text>
+              </div>
+            )}
           </aside>
         )}
       </div>
@@ -558,7 +674,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       {plan && (
         <>
           <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />
-          <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} sources={() => ws.sourcesForCommit()} />
+          <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={onConfirmed} sources={() => ws.sourcesForCommit()} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
           {/* 頼み直す相手は開いたときに覚える（読み直しの間に状態が消えても、出したメールの文を消さない） */}
           <RequestRenewDialog client={client} planId={plan.planId} version={renew?.version ?? 0} to={renew?.to ?? ""} opened={!!renew} onClose={() => setRenew(null)} onRenewed={reloadStatus} />
