@@ -58,10 +58,10 @@ test("架空の台帳：verify ledger で ✓ → site → ブラウザで外へ
   });
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(url);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("【架空】MOYAI 公開の台帳");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("【架空】MOYAI 公開台帳");
   await expect(page.locator(".fiction")).toContainText("【架空】");
   await expect(page.getByText("✓ 10 件")).toBeVisible();
-  await expect(page.getByText("似た施設 7", { exact: true })).toBeVisible();
+  await expect(page.getByText("類似施設 7", { exact: true })).toBeVisible();
   const statCells = await page.locator("tr.stat td.band").allTextContents();
   expect(statCells.some((t) => t.startsWith("中央 "))).toBe(true);
   expect(statCells.some((t) => t.startsWith("幅 "))).toBe(true);

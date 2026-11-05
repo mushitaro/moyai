@@ -47,7 +47,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await page.getByTestId("ledger-input").fill(repo);
     await page.getByTestId("settings-save").click();
     await expect(page.getByTestId("current-ledger")).toHaveText(repo);
-    await expect(page.getByTestId("settings-github")).toHaveText("GitHub　つないでいません");
+    await expect(page.getByTestId("settings-github")).toHaveText("GitHub　未接続");
   });
 
   await test.step("見本の計画を開き、決定を受けて、署名して確定する", async () => {
@@ -68,7 +68,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
 
   await test.step("SHARE：出す先を公開の台帳にする。見え方を選ぶと、誰からも見えるあなた。つなぐまでは出せない", async () => {
     await page.getByTestId("share-dest").getByText("公開台帳").click();
-    await expect(page.getByTestId("github-login")).toHaveText("つないでいません");
+    await expect(page.getByTestId("github-login")).toHaveText("未接続");
     await page.getByTestId("q-national").selectOption("yes");
     await page.getByTestId("q-furnace").selectOption("STOKER");
     await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
@@ -78,7 +78,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByText("公開時の表示")).toBeVisible();
     await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
     await expect(page.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
-    await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub につないでいません");
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続");
     await expect(page.getByTestId("ledger-bottom")).toHaveText("GitHub に PR を送信。掲載後は取り下げても複製は残ります。");
   });
 
@@ -131,6 +131,6 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await page.goto(`${bridge.base}/#/settings`);
     await expect(page.getByTestId("settings-github")).toHaveText("GitHub　moyai-test");
     await page.getByTestId("github-disconnect").click();
-    await expect(page.getByTestId("settings-github")).toHaveText("GitHub　つないでいません");
+    await expect(page.getByTestId("settings-github")).toHaveText("GitHub　未接続");
   });
 });

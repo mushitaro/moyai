@@ -194,7 +194,7 @@ describe("CLI：ledger site", () => {
     const out = join(tmp, "site-inner");
     expect(await siteCli([repo, out], { packsDir: packsDir() })).toBe(1);
     const html = readFileSync(join(out, "index.html"), "utf8");
-    expect(html).toContain("似た施設 6");
+    expect(html).toContain("類似施設 6");
   });
 
   it("わざと外れた束（施設名）は集計に入らず、理由が出る", async () => {

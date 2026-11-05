@@ -52,7 +52,7 @@ export const TEXT = {
   },
   trial: {
     button: "確定の試し",
-    disabledReason: "ブリッジとつながっていないので押せません",
+    disabledReason: "理由：ブリッジ未接続",
     title: "確定の試し",
     body: "人だけの経路の守り（タブの秘密と 1 回きりの印）を通す試しです。計画は何も変わりません。",
     waitingToken: "1 回きりの印を受け取っています",
@@ -111,7 +111,7 @@ export const TEXT = {
     legend: {
       label: "凡例",
       changed: "変更",
-      proposal: "Claude 案（確定のシートで確定するまで未確定）",
+      proposal: "Claude 案",
       proposalAria: "（Claude 案。確定のシートで確定するまで未確定）",
       proposalNote: "Claude が公開台帳から置いた案です。確定のシートで確定するまで未確定です。",
       changedFrom: (n: number) => `第 ${n} 版から変更`,
@@ -230,7 +230,7 @@ export const TEXT = {
     resultHead: "突合",
     item: (machine: string, work: string, fy: number) => `${machine} › ${work} › ${fy}`,
     ok: "✓ 一致",
-    diff: "× 差異（計画のまま／実施済み）",
+    diff: "× 差異（計画／実績）",
     only: (file: string) => `! ${file} のみ`,
     none: "―",
     noDate: "記録あり",
@@ -303,7 +303,7 @@ export const TEXT = {
     lead: "確定した版から作った Excel を出力します。版は、保存先の署名と鎖を確かめてから渡します。下は中身の見本（台帳の段の行の先頭）です。",
     excel: "Excel を出力",
     report: "差分を出力",
-    notConnected: "ブリッジとつながっていないので出力できません",
+    notConnected: "理由：ブリッジ未接続",
     noPlan: "作業中の計画がありません。",
     toMerge: "MERGE へ",
     notConfirmed: "まだ確定した版がありません。MERGE で署名して確定してください",
@@ -322,7 +322,7 @@ export const TEXT = {
     composeFirst: "第 1 版をつくる",
     composeNext: (n: number) => `資料を重ねて第 ${n} 版をつくる`,
     side: {
-      open: (n: number) => `未確定 ${n}`,
+      open: (n: number) => `未回答 ${n}`,
       signatures: (n: number) => `署名 ${n}`,
       source: "詳細",
       comments: (n: number) => (n > 0 ? `コメント ${n}` : "コメント"),
@@ -351,9 +351,10 @@ export const TEXT = {
     reopen: "開き直す",
     block: {
       noPlan: "まだ版の下書きがありません。資料をドロップして第 1 版をつくってください",
-      open: (n: number) => `未確定 ${n}`,
+      open: (n: number) => `未回答 ${n}`,
       pending: (n: number) => `未確定 ${n}`,
-      notConnected: "ブリッジとつながっていないので押せません",
+      // 下の帯が頭に「理由：」を付ける
+      notConnected: "ブリッジ未接続",
       stale: "保存先に新しい版があります。開き直してください",
       notRecomposed: "作ったあとに資料や決定が変わりました。作り直していません",
     },
@@ -485,7 +486,7 @@ export const TEXT = {
     },
     ai: {
       surveyed: "AI が取り込みの要約を読みました",
-      readingProposed: (name: string, n: number) => `AI がルール「${name}」にルールを ${n} 置きました（下書き。承認は版の署名で）`,
+      readingProposed: (name: string, n: number) => `「${name}」に ${n} 件追加（下書き。承認は版の署名で）`,
       skillsRead: "AI が今効いている Skill の本文を読みました",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の印 ${marks}。確定のシートで確定するまで未確定）`,
       settled: (n: number, unresolved: number) => `AI が決定を ${n} 個置きました（残りの未解決 ${unresolved} セル）`,

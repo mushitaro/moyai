@@ -755,8 +755,8 @@ export function Checkpoint() {
                 <Text size="lg" fw={500} className="moyai-num" data-testid="you-steps">
                   {view.profile?.group === "NATIONAL" ? T.youSteps(view.steps.all, view.steps.profile, view.steps.rows) : T.youPeers(view.steps.rows)}
                 </Text>
-                <Text size="xs" c="dimmed" className="moyai-num" data-testid="you-k" data-k={view.k ?? ""}>
-                  {T.kLine(view.k ?? 0, view.minK)}
+                <Text size="xs" c={(view.k ?? 0) < view.minK ? "var(--shu-text)" : "dimmed"} className="moyai-num" data-testid="you-k" data-k={view.k ?? ""}>
+                  {(view.k ?? 0) < view.minK ? T.kLineShort(view.k ?? 0, view.minK) : T.kLine(view.k ?? 0, view.profile?.group === "NATIONAL" ? view.steps.all : null)}
                   {T.stage(view.profile?.stage ?? 0) ? `　${T.stage(view.profile?.stage ?? 0)}` : ""}
                 </Text>
                 {view.rowEffects.length > 0 &&

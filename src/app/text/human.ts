@@ -4,7 +4,7 @@
 const fmt = (n: number) => n.toLocaleString("ja-JP");
 
 export const HUMAN_TEXT = {
-  notConnected: "ブリッジとつながっていないので押せません",
+  notConnected: "理由：ブリッジ未接続",
   network: "ブリッジに届きませんでした。端末で moyai start が動いているかを確かめてください。",
   working: "ブリッジが処理しています",
   /** ブリッジが { ok: false, reason } で断ったときの言葉 */
@@ -81,7 +81,7 @@ export const HUMAN_TEXT = {
     "ledger.rules": "台帳のルール（ledger.json）を読めません。",
     "ledger.otherPack": "この台帳は、計画と違うSkillパックの台帳です。",
     ledgerNotGitHub: "台帳の clone の出どころが GitHub ではないので、PR を出せません。",
-    githubNotConnected: "GitHub につないでいません。",
+    githubNotConnected: "GitHub　未接続",
     githubNoClient: "GitHub につなぐ道は、まだ用意できていません。",
     ledgerPending: "前に出した共有ファイルが、まだ台帳に載っていません（審査中か、台帳の clone が古い）。",
     ledgerNg: "この共有ファイルは台帳の検証で ✗ になるので、PR を出しませんでした。",
@@ -134,7 +134,7 @@ export const HUMAN_TEXT = {
     keyNew: "はじめての署名なので、この PC にあなたの署名の鍵を作ります。",
     readingsTitle: (n: number) => `承認するルール（${fmt(n)}）`,
     readingsLead: "Claude と会話で作ったルール（下書き）も、この署名で承認されます。承認すると、同じ保存先を開くほかの人の MOYAI でも効きます。",
-    readingsHead: ["ルール", "範囲", "ルールの数", "状態"],
+    readingsHead: ["ルール", "範囲", "件数", "状態"],
     readingRules: (n: number) => `ルール ${fmt(n)}`,
     readingScope: { facility: "設備", person: "担当", company: "会社" } as Record<string, string>,
     readingDraft: "- 下書き（Claude）",
@@ -165,7 +165,7 @@ export const HUMAN_TEXT = {
     reason: "理由",
     reasonHandoff: "理由（宛先へのメールにも書きます）",
     reasonPlaceholder: "例：11 月の点検の結果を入れたので確定する",
-    reasonEmpty: "理由を書くと確定できます",
+    reasonEmpty: "理由：理由が未入力",
     cancel: "やめる",
     submit: "署名して確定する",
     done: (n: number) => `第 ${n} 版に署名しました。`,
@@ -199,7 +199,7 @@ export const HUMAN_TEXT = {
     ignoredSelfNamed: "（名乗り）",
     ignoredWhy: { otherKey: "この版を作った鍵ではありません", otherContent: "ほかの中身に宛てた頼みです" } as Record<string, string>,
     ignoredBar: "! 効かない頼みが置かれています",
-    ignoredShow: "見る",
+    ignoredShow: "表示",
     // 年を省かない（未来の時刻にして本物の頼みを取り下げる狙いに気づけるように。Wire の B1）
     ignoredAt: (iso: string) =>
       new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
@@ -218,12 +218,12 @@ export const HUMAN_TEXT = {
     changedThis: "! この鍵が変更",
     many: (n: number) => `! 未照合の鍵 ${n}`,
     check: "鍵番号を照合",
-    show: "見る",
+    show: "表示",
     title: (by: string) => `${by}の鍵番号`,
     previous: (fp: string, day: string) => `前に確かめた　${fp}　${day}`,
-    howTo: (by: string) => `${by}さんに電話などで読み上げてもらい、16 文字が合えば「合った」を押します。`,
+    howTo: (by: string) => `${by}さんに読み上げてもらい、16 文字が合えば「一致」。`,
     later: "あとで",
-    matched: "合った",
+    matched: "一致",
     topChanged: "! 鍵が変更",
   },
   readings: {
@@ -233,7 +233,7 @@ export const HUMAN_TEXT = {
     version: (v: string) => `版 ${v}`,
     status: { draft: "- 下書き（この版の中だけで効く）", unapproved: "- 未承認のルール" } as Record<string, string>,
     approved: (n: number | null) => (n === null ? "承認済み" : `承認済み（第 ${n} 版で）`),
-    head: ["決まり", "元の資料", "元のセル", "確定者", "元の版"],
+    head: ["内容", "元の資料", "元のセル", "確定者", "元の版"],
     anyFile: "どの資料にも",
     byAi: "Claude（会話で決めた）",
     byHuman: "人",
@@ -248,7 +248,7 @@ export const HUMAN_TEXT = {
     leadReturn: "あなたの鍵で、この版に差戻しの署名を足し、この版を渡した人に戻します。理由は渡した人に見えます。",
     reason: "差戻す理由",
     reasonOptional: "理由（任意）",
-    reasonEmpty: "理由を書くと押せます",
+    reasonEmpty: "理由：理由が未入力",
     submitApprove: "承認して署名する",
     submitReturn: "差戻す",
   },
@@ -375,7 +375,7 @@ export const HUMAN_TEXT = {
     close: "閉じる",
     disconnect: "GitHub との接続を切る",
     connectedAs: (login: string) => `GitHub　${login}`,
-    none: "GitHub　つないでいません",
+    none: "GitHub　未接続",
   },
   checkpoint: {
     title: "共有",
@@ -395,7 +395,7 @@ export const HUMAN_TEXT = {
     destLabel: "共有先",
     dest: { ring: "共有フォルダ", ledger: "公開台帳" },
     github: "GitHub",
-    githubNone: "つないでいません",
+    githubNone: "未接続",
     githubConnect: "GitHub につなぐ",
     githubReconnect: "再接続",
     githubNoClient: "GitHub につなぐ道は、まだ用意できていません",
@@ -431,7 +431,9 @@ export const HUMAN_TEXT = {
     youSteps: (all: number, profile: number, rows: number) =>
       `全国の ${fmt(all)} 施設のどれか → 見え方で ${fmt(profile)} → この行で ${fmt(rows)}`,
     youPeers: (k: number) => `共有フォルダの中で、見え方がそろう照合済みのメンバー ${fmt(k)}`,
-    kLine: (k: number, min: number) => `同区分の施設 ${fmt(k)}（${fmt(min)} 施設に満たないと出せません）`,
+    /** 同区分の施設（Wire、2026-11-06）：ふだんは「同区分の施設 m（全国 n）」、下限より少ないときは朱で「同区分の施設 3（下限 5）」 */
+    kLine: (k: number, all: number | null) => (all === null ? `同区分の施設 ${fmt(k)}` : `同区分の施設 ${fmt(k)}（全国 ${fmt(all)}）`),
+    kLineShort: (k: number, min: number) => `同区分の施設 ${fmt(k)}（下限 ${fmt(min)}）`,
     /** 紛れる数に届くように見え方をまとめた度合い（0 はそのまま）。内部の「段」は出さない */
     stage: (s: number) => (s === 0 ? "" : s >= 3 ? "業種だけを出します。" : "紛れるように、見え方の一部をまとめました。"),
     chunkPath: (cls: string, work: string) => `${cls} › ${work}`,
@@ -492,12 +494,12 @@ export const HUMAN_TEXT = {
       rules: "共有フォルダのルール未受入",
       groupUnknown: "全国の表に載る施設かが未確定",
       profileIncomplete: "施設の見え方が未確定",
-      kShort: "同区分の施設数が下限に届かない",
+      kShort: "同区分の施設が下限未満",
       nothingToCopy: "写せる行が無い",
       content: "数え直しで 0 でない数がある",
       properNoun: "固有名詞が見つかった",
       noView: "出ていくものがまだ無い",
-      noKey: "GitHub につないでいません",
+      noKey: "GitHub　未接続",
       pending: "前に出した共有ファイルが、まだ台帳に載っていません",
     } as Record<string, string>,
     missingAxes: (names: string) => `未確定の軸：${names}`,
@@ -524,7 +526,7 @@ export const HUMAN_TEXT = {
     /** 受け手の確認済みのメンバーでは k が 5 に届かない共有ファイル（Db の重-6。左の状態は「数えていません」と同じ。Wire）*/
     peersShort: "照合済みのメンバーでは、類似施設が 5 に届きません",
     memberTitle: "メンバーの鍵番号",
-    memberHowTo: "この鍵を持つメンバーに電話などで読み上げてもらい、16 文字が合えば「合った」を押します。",
+    memberHowTo: "この鍵を持つメンバーに読み上げてもらい、16 文字が合えば「一致」。",
     /** 共有フォルダの決まりが変わったとき */
     rulesChanged: "ルール変更",
     rulesCounts: (loosened: number, tightened: number) => ({ loosened: `緩和 ${loosened}`, tightened: `厳格化 ${tightened}` }),

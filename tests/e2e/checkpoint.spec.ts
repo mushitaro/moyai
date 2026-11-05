@@ -134,7 +134,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("pending")).toContainText(`確定のシートで確定した決定 ${n} 件`);
     // 理由が空なら確定できない
     await expect(page.getByTestId("confirm-submit")).toBeDisabled();
-    await expect(page.getByTestId("confirm-submit-reason")).toContainText("理由を書くと確定できます");
+    await expect(page.getByTestId("confirm-submit-reason")).toContainText("理由：理由が未入力");
     await page.getByTestId("confirm-reason").fill("試しの計画を確定する（e2e）");
     // 署名：合言葉は打たない。この PC にまだ鍵が無いので、鍵を作ってから署名すると 1 行で知らせる
     await expect(page.getByTestId("sign-as")).toContainText("「【架空】試験の台本」として");
