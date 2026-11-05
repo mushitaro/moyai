@@ -216,7 +216,7 @@ describe("crosswalk.*：深さと呼び名の違う 2 施設の台帳を、規�
       expect(sum.unmappedRecords).toBeGreaterThan(0); // 送風機の混ざった作業
       expect(sum.works.none).toBe(c.mixedWorks);
       expect(pendingDecisions(accepted, []).filter((d) => d.kind === "commonItem" || d.kind === "attribute")).toEqual([]);
-    }, 60_000);
+    }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
   }
 });
 
@@ -251,7 +251,7 @@ describe("ぶつかり・断り・人の道", () => {
     const r3 = proposeAll(ws, [node([nameIs("ごみクレーン")], "WI.RECV.CRANE", "同じ値")]);
     expect([r3.matched, r3.conflicts]).toEqual([1, 0]);
     expect(plan().assets.find((a) => a.nodeKey === crane.nodeKey)).toMatchObject({ commonItemAccepted: true, commonItemBasis: crane.commonItemBasis });
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 
   test("パックに無いコードは型の誤りとして断り、どの案も置かない。4 つの外の属性・置けない欄・作業明細の条件は型で断る", async () => {
     const ws = await composed(F1.facility, [...F1.files]);
@@ -278,7 +278,7 @@ describe("ぶつかり・断り・人の道", () => {
     // 受けたことにする欄は、規則の欄の一覧にそもそも無い
     expect(TOOLS.crosswalk_propose.input.safeParse({ rules: [{ ...good, set: { field: "assetNode.commonItemAccepted", value: true } }], basedOnVersion: v }).success).toBe(false);
     expect(version()).toBe(v);
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 
   test("もとにした版が違えばどれも置かない。計画が無ければ「作業中の計画が無い」", async () => {
     expect(runTabTool(new IntakeWorkspace({ packId: PACK, facilityName: "x", fiscalYearStartMonth: 4, fictional: true }), "crosswalk_propose", { rules: [node([nameIs("計量機")], "WI.RECV.SCALE", "r")], basedOnVersion: 0 }, CTX)).toEqual({ ok: false, code: "no_working_plan" });
@@ -290,7 +290,7 @@ describe("ぶつかり・断り・人の道", () => {
     // 前の版をもとにした 2 回目は断る（新しい版は結果と要約にある）
     expect(runTabTool(ws, "crosswalk_propose", { rules: [node([nameIs("DCS")], "WI.INST.DCS", "r")], basedOnVersion: v }, CTX)).toEqual({ ok: false, code: "stale_version" });
     expect(ok(runTabTool(ws, "intake_survey", { part: "crosswalk" }, CTX)).crosswalk.version).toBe(v + 1);
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 
   test("人が断ると案を外す（理由が空なら断れない）。人が直に当てると作者は「人」", async () => {
     const ws = await composed(F1.facility, [...F1.files]);
@@ -326,7 +326,7 @@ describe("ぶつかり・断り・人の道", () => {
     // 外す
     expect(setByHuman("assetNode", crane.nodeKey, null, "やはり外す").ok).toBe(true);
     expect(plan().assets.find((a) => a.nodeKey === crane.nodeKey)?.commonItem).toBeNull();
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 
   test("AI のツールの受け手には、受ける・断る・直に当てる道が無い", () => {
     const src = readFileSync("src/app/intake/tab-tools.ts", "utf8");
@@ -378,7 +378,7 @@ describe("写し取り：人が受けた計画から塊が出る。作業の属�
       const a = plan().assets.find((x) => x.nodeKey === t)!;
       expect(inCommonRows(a, w)).toBe(a.commonItemAccepted && w.attributeAccepted && a.commonItem !== null && w.attribute !== null);
     }
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });
 
 describe("計画を作り直しても、当てはめを黙って捨てない", () => {
@@ -414,7 +414,7 @@ describe("計画を作り直しても、当てはめを黙って捨てない", (
     expect(ws.notices[0]).toMatchObject({ kind: "info" });
     expect(ws.notices[0]!.text).toContain("前の当てはめを引き継ぎました");
     expect(ws.notices[0]!.text).not.toContain("引き継げませんでした");
-  }, 120_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 
   test("新しい計画に無い行は、人が直に当てたものも数えて知らせる", async () => {
     const F = CASES[0];
@@ -425,5 +425,5 @@ describe("計画を作り直しても、当てはめを黙って捨てない", (
     const next: Plan = { ...prev.plan, assets: prev.plan.assets.filter((a) => a.nodeKey !== crane.nodeKey).map((a) => ({ ...a, commonItem: null, commonItemAuthor: null, commonItemBasis: null, commonItemAccepted: false })) };
     const r = carryOverCrosswalk(prev.plan, prev.proposals, next, new Set(catalogFor(PACK)!.items.keys()), (b, reason) => `${b}。人が受けた理由：${reason}`);
     expect(r.report).toMatchObject({ acceptedBefore: 1, acceptedAfter: 0, humanLost: 1 });
-  }, 120_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });

@@ -29,7 +29,7 @@ function walk(dir: string): string[] {
 beforeAll(() => {
   tmp = mkdtempSync(join(tmpdir(), "moyai-ledger-demo-test-"));
   r = buildLedgerDemo({ repo: ROOT, out: out(), state: state(), month: "2026-11", rejects: rejects() });
-}, 60_000);
+}, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 afterAll(() => {
   if (tmp) rmSync(tmp, { recursive: true, force: true });
 });
