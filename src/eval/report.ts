@@ -41,6 +41,11 @@ export interface Report {
   byGrader: { grader: GraderId; name: string; passRate: number | null; counted: number }[];
   cases: CaseSummary[];
   failingCases: string[];
+  /**
+   * 診断（合否と見立てには入れない）：形で落ちた回（JSON だけを返さなかった）の数と、そのうち最初の JSON だけなら通った回の数。
+   * contentPassRate は、形で落ちた回を中身で数え直した合格率。Skill の新しい版の案を書くときの手がかり。
+   */
+  format: { failed: number; contentPassed: number; contentPassRate: number | null };
   cost: { usd: number; perCallUsd: number | null; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number };
   outbound: Manifest["outbound"];
   comparison: null | {
@@ -122,6 +127,11 @@ export function buildReport(manifest: Manifest, rows: ResultRow[], rules: RuleIn
     byGrader,
     cases,
     failingCases: cases.filter((c) => c.failing).map((c) => c.id),
+    format: {
+      failed: counted.filter((r) => r.grade && !r.grade.parsed).length,
+      contentPassed: counted.filter((r) => r.grade && !r.grade.parsed && r.grade.contentPass === true).length,
+      contentPassRate: rate(counted.filter((r) => r.grade?.pass || r.grade?.contentPass === true).length, counted.length),
+    },
     cost: {
       usd,
       perCallUsd: paid ? usd / paid : null,
@@ -222,6 +232,7 @@ th{font-weight:500;color:var(--sub)}.bad{color:var(--bad)}p{color:var(--sub)}
     r.outbound.properNounHits,
   ])}</table>
 ${cmp}
+<h2>診断：答えの形（合否と見立てには入れない）</h2><table>${head(["JSON だけを返さなかった回", "そのうち最初の JSON だけなら通った回", "中身で数え直した合格率"])}${row([r.format.failed, r.format.contentPassed, pct(r.format.contentPassRate)])}</table>
 <h2>規則ごと</h2><table>${head(["規則", "名前", "合格率", "数えた回", "過半で落ちた問題"])}${r.byRule.map((b) => row([b.rule, b.name, pct(b.passRate), b.counted, b.failingCases])).join("")}</table>
 <h2>採点ごと（確かめ 1 つずつ）</h2><table>${head(["採点", "見ること", "合格率", "確かめの数"])}${r.byGrader.map((g) => row([g.grader, g.name, pct(g.passRate), g.counted])).join("")}</table>
 <h2>問題ごと</h2><table>${head(["問題", "規則", "分け", "回ごとの合否", "落ちた採点"])}${r.cases

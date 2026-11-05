@@ -94,6 +94,11 @@ export interface Grade {
   pass: boolean;
   parsed: boolean;
   checks: CheckResult[];
+  /**
+   * 診断（合否には入れない）：形で落ちた答え（JSON の後に説明の文を足したなど）から、最初の JSON だけを取り出して採点したら通ったか。
+   * 形で落ちていない答えは null。
+   */
+  contentPass: boolean | null;
 }
 
 /** 集計から外す理由（docs/plan.md §2.10）。 */

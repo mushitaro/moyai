@@ -64,6 +64,14 @@ describe("コードの採点 6 種", () => {
     expect(grade(base).pass).toBe(true);
     expect(grade("```json\n" + JSON.stringify(base) + "\n```").pass).toBe(true);
   });
+  test("診断：JSON の後に説明の文を足した答えは落ちるが、最初の JSON の中身が合っていれば contentPass で数える", () => {
+    const g = grade("```json\n" + JSON.stringify(base) + "\n```\n\n- k1：記録に無いので null にした");
+    expect(g.pass).toBe(false);
+    expect(g.parsed).toBe(false);
+    expect(g.contentPass).toBe(true);
+    expect(grade("```json\n" + JSON.stringify(withAnswer({ k1: 1 })) + "\n```\n説明").contentPass).toBe(false);
+    expect(grade(base).contentPass).toBeNull();
+  });
   test("json：JSON でない・形が違うなら、その問いの確かめは全部落ちる", () => {
     for (const bad of ["答えは 2 年です", "{}", '{"answers": []}', JSON.stringify({ ...base, sources: "x" }), `前置き\n${JSON.stringify(base)}`]) {
       const g = grade(bad);
@@ -154,7 +162,7 @@ function rowsOf(runId: string, passes: boolean[][], excluded: Record<string, Res
         costUsd: 0.01,
         ms: 1,
         text: "{}",
-        grade: { pass, parsed: true, checks: [{ grader: "json", key: null, pass }] },
+        grade: { pass, parsed: true, checks: [{ grader: "json", key: null, pass }], contentPass: null },
       } satisfies ResultRow;
     }),
   );

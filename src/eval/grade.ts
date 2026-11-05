@@ -85,8 +85,23 @@ export function gradeCheck(answer: Answer | null, check: Check, packUrls: string
   }
 }
 
+/** 診断のためだけの読み方：文の中の最初の ```json の囲みか、最初の { から最後の } までを読む。合否には使わない。 */
+export function parseAnswerLoose(text: string | null): Answer | null {
+  if (text === null) return null;
+  const fence = /```(?:json)?\s*\n([\s\S]*?)\n?```/.exec(text);
+  if (fence) return parseAnswer(fence[1] as string);
+  const i = text.indexOf("{");
+  const j = text.lastIndexOf("}");
+  return i >= 0 && j > i ? parseAnswer(text.slice(i, j + 1)) : null;
+}
+
 export function gradeCase(c: Pick<EvalCase, "checks">, text: string | null, packUrls: string[]): Grade {
   const answer = parseAnswer(text);
   const checks: CheckResult[] = c.checks.map((ch) => ({ grader: ch.grader, key: ch.key ?? null, pass: gradeCheck(answer, ch, packUrls) }));
-  return { pass: checks.every((x) => x.pass), parsed: answer !== null, checks };
+  let contentPass: boolean | null = null;
+  if (answer === null) {
+    const loose = parseAnswerLoose(text);
+    contentPass = loose !== null && c.checks.every((ch) => ch.grader === "json" || gradeCheck(loose, ch, packUrls));
+  }
+  return { pass: checks.every((x) => x.pass), parsed: answer !== null, checks, contentPass };
 }

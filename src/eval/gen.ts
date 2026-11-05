@@ -5,7 +5,8 @@ import { ANSWER_FORMAT, PREAMBLE, bodyHash, countEvalProperNouns, sha256, userTe
 import { CASE_SCHEMA, SUITE_SCHEMA, type Check, type EvalCase, type GraderId, type RuleInfo, type Split, type Suite } from "./types";
 import { fiscalYearOf, properNounTerms, type PackCheck, type PackData, type WorldData, type WorldEquipment, type WorldWork } from "./world";
 
-export const GENERATOR_VERSION = 1;
+// 版 2（2026-11-05）：R10 の記録に、人工と延べ人数の数え方（施設の決まり）を書く。版 1 では書いておらず、正解が記録から決まらなかった
+export const GENERATOR_VERSION = 2;
 export const DEFAULT_SEED = 20261105;
 export const CASES_PER_RULE = 10;
 
@@ -419,7 +420,9 @@ const genEffort: Gen = (ctx, split, rng, i) => {
     checks.push(ck("no_guess", keys[j], known ? w.man_days : null), ck("not_in_record", keys[j], !known));
     return [keys[j] as string, num(ctx, w.equipment_id), eqName(ctx, w.equipment_id), w.label, effortText(w.man_days, s, H)];
   });
-  const note = withRate ? `この施設の決まり：1 人・日は ${H} 時間として数える。\n\n` : "";
+  // 人工と延べ人数の数え方は施設の決まりなので、記録に書く（書かないと正解が記録から決まらない）。時間の決まりは偶数番だけに書く
+  const rules = ["この施設の決まり：人工と延べ人数は、人・日の数のまま数える。", ...(withRate ? [`この施設の決まり：1 人・日は ${H} 時間として数える。`] : [])];
+  const note = `${rules.join("\n")}\n\n`;
   return {
     record: `${note}${table(["キー", "台帳の番号", "機器", "作業", "工数"], rows)}`,
     question: "各キーの工数を、人・日の数で答えてください。",
