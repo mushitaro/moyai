@@ -14,6 +14,8 @@ export const BUNDLE_V = "moyai.bundle/0";
 export const MEMBER_V = "moyai.member/0";
 export const CIRCLE_V = "moyai.circle/0";
 export const LEDGER_V = "moyai.ledger/0";
+/** 引退の印（members/<鍵ID>.retired.json。docs/plan.md §2.19 の 5）。その鍵自身の署名。次の鍵は書かない（Architect：盗んだ鍵で続きを名乗れないように） */
+export const RETIRED_V = "moyai.retired/0";
 export const DESTINATION_KINDS = ["ring", "ledger"] as const;
 export const MEMBER_STATES = ["active", "retired"] as const;
 
@@ -270,6 +272,19 @@ export const MEMBER_BODY_TYPE: T = {
   },
 };
 
+/** 引退の印：鍵 ID・公開鍵（署名を確かめる）・最後に使った連番・月だけ */
+export const RETIRED_BODY_TYPE: T = {
+  t: "obj",
+  req: {
+    v: { t: "lit", v: RETIRED_V },
+    ring: hex(HEX16),
+    key: hex(HEX16),
+    pub: hex(HEX64),
+    last: { t: "int", min: 0, max: LIMITS.seq },
+    month: hex(MONTH),
+  },
+};
+
 const edgesType: T = { t: "arr", of: { t: "int", min: 0, max: LIMITS.edges }, min: 2, max: 64 };
 
 export const RULES_TYPE: T = {
@@ -308,6 +323,7 @@ export function publicWords(ctx: ShareContext): Set<string> {
   const s = new Set<string>();
   schemaWords(envelopeType(bundleBodyType({ ...ctx, to: { kind: "ring", id: ctx.to.id } })), s);
   schemaWords(envelopeType(MEMBER_BODY_TYPE), s);
+  schemaWords(envelopeType(RETIRED_BODY_TYPE), s);
   schemaWords(envelopeType(rulesDocBodyType(CIRCLE_V)), s);
   schemaWords(envelopeType(rulesDocBodyType(LEDGER_V)), s);
   return s;
@@ -391,6 +407,11 @@ export function ringIdOf(body: { v: string; founder: string; nonce: string }): s
 /** 決まりのファイルの body（輪を作った人が署名する） */
 export function makeRulesDocBody(v: typeof CIRCLE_V | typeof LEDGER_V, founder: string, nonce: string, version: number, month: string, rules: Rules) {
   return { v, founder, nonce, version, month, rules };
+}
+
+/** 引退の印の body（last はその鍵で最後に使った連番。まだ出していなければ 0） */
+export function makeRetiredBody(ring: string, key: string, pub: string, last: number, month: string) {
+  return { v: RETIRED_V, ring, key, pub, last, month };
 }
 
 export function makeMemberBody(ring: string, key: string, pub: string, month: string, state: (typeof MEMBER_STATES)[number] = "active") {

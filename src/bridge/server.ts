@@ -292,6 +292,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     ringVerify: delegate,
     ringMemberConfirm: delegate,
     ringRulesAccept: delegate,
+    facilityKeyRotate: delegate,
     // 公開の台帳へ出す（通信の例外：github.com と api.github.com だけ。PR を出すのは人がボタンを押したときだけ）
     ledgerPreview: delegate,
     ledgerSend: delegate,

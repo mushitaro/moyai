@@ -6,7 +6,7 @@
 // 同期の遅れで 2 台がそれぞれ鍵を作ると、同期フォルダは衝突の写し（<場ID>-<PC 名>.json など）を残す。その場の鍵が 2 つ以上あるか、
 // 持ち出し簿にほかの鍵の記録があれば、送らずに知らせる（同じ施設を 2 施設に数えないため。直し方は人が選ぶ。作り直しは未実装）。
 // 鍵の中身は MCP のどの結果にも入れず、保管先を読むほかの処理は share/keys/ を読まない。見張りのフックが AI の読み取りを止める。
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { readJson, writeJson } from "../bridge/places";
 import { planDir } from "../plan/paths";
@@ -64,16 +64,63 @@ export function appendPlanSent<T>(f: Facility, placeId: string, e: T): void {
   writePlanSent(f, placeId, [...readPlanSent<T>(f, placeId), e]);
 }
 
-/** 持ち出し簿（衝突の写しを含む）に出てくる鍵 ID */
+/** 引退させた鍵の一覧（share/sent/<場ID>.retired.json。足すだけ。衝突の写しは数えない） */
+const retiredFile = (placeId: string) => join(SENT_DIR, `${placeId}.retired.json`);
+
+/** 引退させた鍵 ID（作り直した鍵の古い方。持ち出し簿にその記録があっても、ほかの鍵とは数えない） */
+export function retiredKeys(f: Facility, placeId: string): Set<string> {
+  placeIdOk(placeId);
+  const r = readJson<{ keys?: unknown }>(join(shareDir(f), retiredFile(placeId)));
+  return new Set(Array.isArray(r?.keys) ? r.keys.filter((k): k is string => typeof k === "string" && HEX16.test(k)) : []);
+}
+
+/** 持ち出し簿（衝突の写しを含む）に出てくる鍵 ID。引退させた鍵は除く */
 export function sentKeys(f: Facility, placeId: string): Set<string> {
   placeIdOk(placeId);
   const dir = join(shareDir(f), SENT_DIR);
+  const retired = retiredKeys(f, placeId);
   const out = new Set<string>();
   for (const n of filesOf(dir, placeId)) {
+    if (n.endsWith(".retired.json")) continue;
     const s = readJson<{ entries?: { key?: unknown }[] }>(join(dir, n));
-    for (const e of Array.isArray(s?.entries) ? s.entries : []) if (typeof e?.key === "string" && HEX16.test(e.key)) out.add(e.key);
+    for (const e of Array.isArray(s?.entries) ? s.entries : []) if (typeof e?.key === "string" && HEX16.test(e.key) && !retired.has(e.key)) out.add(e.key);
   }
   return out;
+}
+
+/** 持ち出し簿（衝突の写しを含む）にある、その鍵の連番 */
+export function sentSeqs(f: Facility, placeId: string, key: string): number[] {
+  placeIdOk(placeId);
+  const dir = join(shareDir(f), SENT_DIR);
+  const out: number[] = [];
+  for (const n of filesOf(dir, placeId)) {
+    if (n.endsWith(".retired.json")) continue;
+    const s = readJson<{ entries?: { key?: unknown; seq?: unknown }[] }>(join(dir, n));
+    for (const e of Array.isArray(s?.entries) ? s.entries : []) if (e?.key === key && typeof e.seq === "number") out.push(e.seq);
+  }
+  return out;
+}
+
+/**
+ * 施設の鍵を引退させる（作り直し。人だけの経路）：その場の鍵のファイル（衝突の写しも）を share/keys/retired/ へ移し、
+ * 引退させた鍵 ID を share/sent/<場ID>.retired.json に足す。鍵は消さない（引退の印に署名するのに使い、あとで確かめられるように）。
+ * 次に送るときは新しい鍵になる（橋渡しがメモリで作り、人が送ったときに書く）。返すのは、引退させた鍵（鍵の対が読めたもの）と、
+ * 持ち出し簿にだけあって鍵の対の無い鍵 ID（引退の印に署名できない）
+ */
+export function retireFacilityKeys(f: Facility, placeId: string): { retired: { key: string; pair: KeyPair }[]; unsigned: string[] } {
+  const stored = storedKeys(f, placeId);
+  const dir = join(shareDir(f), KEYS_DIR);
+  const retired: { key: string; pair: KeyPair }[] = [];
+  for (const k of stored) {
+    const key = keyIdOf(k.pub);
+    if (k.pair && !retired.some((x) => x.key === key)) retired.push({ key, pair: k.pair });
+    mkdirSync(join(dir, "retired"), { recursive: true });
+    renameSync(join(dir, k.file), join(dir, "retired", `${key}-${k.file}`));
+  }
+  const logged = sentKeys(f, placeId);
+  const keys = new Set([...retiredKeys(f, placeId), ...retired.map((r) => r.key), ...logged]);
+  writeJson(shareDir(f), retiredFile(placeId), { keys: [...keys].sort() });
+  return { retired, unsigned: [...logged].filter((k) => !retired.some((r) => r.key === k)).sort() };
 }
 
 export type FacilityKey =

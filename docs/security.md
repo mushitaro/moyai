@@ -73,6 +73,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/checkpoint-send` | `checkpoint_send` | 検問所：署名し、束を輪のフォルダに置く |
 | `POST /human/ring-verify` | `ring_verify` | 輪を受け手と同じ関数で確かめる |
 | `POST /human/ring-member-confirm` | `ring_member_confirm` | 輪の仲間の鍵を、指紋を読み合わせて確認済みにする（確認済みの仲間の束だけを数える） |
+| `POST /human/facility-key-rotate` | `facility_key_rotate` | 輪へ出す施設の署名鍵を作り直す：今の鍵ごとに、その鍵自身の署名の引退の印（鍵 ID・最後の連番・月だけ）を輪に置き、保管先の鍵を引退させる。新しい鍵は次に送るときに作る |
 | `POST /human/ring-rules-accept` | `ring_rules_accept` | 変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない） |
 | `POST /human/ledger-preview` | `ledger_preview` | 公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり） |
 | `POST /human/ledger-send` | `ledger_send` | 束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
@@ -85,7 +86,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 39 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 40 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

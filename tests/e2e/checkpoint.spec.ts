@@ -11,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { acceptDecisions } from "../helpers/e2e";
 import { envelopeText, makeMemberBody } from "../../src/share/bundle";
-import { generateKeyPair, keyIdOf, signBody } from "../../src/share/sign";
+import { generateKeyPair, keyIdOf, signBody, toPlainKey } from "../../src/share/sign";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/moyai-shots/${jst}`;
@@ -239,6 +239,31 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("key-check-matched").click();
     await expect(page.locator('[data-testid="verify-line"][data-state="unconfirmed"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
+  });
+
+  await test.step("施設の署名鍵が 2 つ（同期の衝突の写し）：送れない理由の右に「署名鍵を作り直す」。作り直すと、古い鍵に引退の印を置き、新しい鍵で送れる（docs/plan.md §2.19 の 5）", async () => {
+    // 試験の台本が、2 台目の PC が作った鍵（同期の衝突の写し）を計画のフォルダに置いた
+    const ringId = readdirSync(ringRoot).find((d) => /^[0-9a-f]{16}$/.test(d))!;
+    const keysDir = join(root, "plans", "fixture-fictional-1", "share", "keys");
+    writeFileSync(join(keysDir, `${ringId}-PC2.json`), JSON.stringify(toPlainKey(generateKeyPair())));
+    // 送った知らせを閉じるため、共有先を切り替えて戻す（戻すと出ていくものを作り直す）
+    const destSwitch = page.locator('[role="group"]').filter({ has: page.locator("button", { hasText: "共有フォルダ" }) }).first();
+    await destSwitch.locator("button").nth(1).click();
+    await destSwitch.locator("button").nth(0).click();
+    await expect(page.getByTestId("send-reason")).toContainText("この施設の署名鍵が 2 つあります");
+    await expect(page.getByTestId("send")).toBeDisabled();
+    await page.getByTestId("rotate-open").click();
+    await expect(page.getByTestId("rotate-run")).toBeVisible();
+    await page.screenshot({ path: shot(`checkpoint-rotate-${tag}`) });
+    await page.getByTestId("rotate-run").click();
+    await expect(page.getByTestId("rotate-done")).toContainText("鍵を 2 つ引退させました");
+    // 引退の印は輪の members/ に、鍵ごとに 1 つ。鍵のファイルは keys/retired/ へ移す（消さない）
+    expect(readdirSync(join(ringRoot, ringId, "members")).filter((n) => n.endsWith(".retired.json"))).toHaveLength(2);
+    expect(readdirSync(keysDir)).toEqual(["retired"]);
+    // 新しい鍵で送れる（連番 1 から）
+    await page.getByTestId("received-again").click();
+    await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");
+    await expect(page.getByTestId("send")).toBeEnabled();
   });
 
   await test.step("CLI：verify ring でも ✓。人だけの CLI は端末でなければ断る", async () => {

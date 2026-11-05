@@ -30,6 +30,8 @@ const EXACT: Record<string, string> = {
   "chain.duplicateSeq": "同じ連番の共有ファイルが 2 つある",
   "chain.afterBreak": "切れた鎖のあとの共有ファイル",
   "chain.vanished": "前に見た共有ファイルが消えています",
+  "chain.afterRetired": "引退した鍵で、引退のあとに出した共有ファイル",
+  "chain.retiredBelowKnown": "引退の印の連番が、前に見た連番より小さい",
   "k.unreadable": "紛れる数を数えられない",
   "k.stageMismatch": "見え方の段が合わない",
   "k.classNotCountable": "数えられない分類",

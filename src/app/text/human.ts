@@ -473,7 +473,19 @@ export const HUMAN_TEXT = {
       `形 ${c.shape}｜固有名詞 ${c.properNoun}｜金額 ${c.money}｜自由記述 ${c.freeText}｜正確な日付 ${c.exactDate}`,
     known: "共有フォルダのメンバーには、あなたの拠点の共有ファイルだと分かります。",
     send: "送る",
+    /** 署名鍵を作り直す（docs/plan.md §2.19 の 5・6。言葉は Wire に確かめる） */
+    rotate: {
+      open: "署名鍵を作り直す",
+      title: "署名鍵を作り直す",
+      keys: "引退させる鍵",
+      result: "古い鍵に引退の印を置きます。新しい鍵は、メンバーが鍵番号を照合するまで数えられません。",
+      later: "あとで",
+      run: "作り直す",
+      done: (n: number) => `鍵を ${n} つ引退させました。次に送ると新しい鍵になります。`,
+      unsigned: (n: number) => `鍵のファイルが無い鍵 ${n} つは、引退の印を置けません。`,
+    },
     sendNeeds: {
+      chainForked: "鎖が分かれています",
       keysForked: "この施設の署名鍵が 2 つあります",
       rules: "共有フォルダのルール未受入",
       groupUnknown: "全国の表に載る施設かが決まっていない",

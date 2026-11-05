@@ -90,7 +90,7 @@ interface PreviewBody {
   classNames?: Record<string, string>;
   axes?: { key: string; name: string; codes: { code: string; name: string }[] }[];
   rings?: RingInfo[];
-  ring?: RingInfo & { key: string; fingerprint: string | null; folder: string; rulesChange?: RulesChange | null };
+  ring?: RingInfo & { key: string; keys?: string[]; fingerprint: string | null; folder: string; rulesChange?: RulesChange | null };
   ringCount?: number;
   view?: View;
   /** 公開の台帳：GitHub の接続（アカウント名だけ。トークンは画面に来ない）と台帳 */
@@ -410,6 +410,8 @@ export function Checkpoint() {
   const [memberCheck, setMemberCheck] = useState<TrustSig | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [ledgerRulesOpen, setLedgerRulesOpen] = useState(false);
+  const [rotateOpen, setRotateOpen] = useState(false);
+  const [rotateMsg, setRotateMsg] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
   const [dest, setDest] = useState<"ring" | "ledger">("ring");
@@ -489,6 +491,8 @@ export function Checkpoint() {
     ? T.sendNeeds.noView
     : view.blockers.includes("keysForked")
       ? T.sendNeeds.keysForked
+    : view.blockers.includes("chainForked")
+      ? T.sendNeeds.chainForked
     : view.blockers.includes("noKey")
       ? T.sendNeeds.noKey
       : view.blockers.includes("pending")
@@ -528,6 +532,8 @@ export function Checkpoint() {
     const r = readHuman<{ ok: boolean; reason?: string; report: Report }>(await client.callHuman("ring_verify", ROUTES.ringVerify.path, { ringId }));
     if (r.ok) setReceived(r.body.report);
     else setSendError(r.message);
+    // 出ていくものも作り直す（連番・鍵・鎖は輪の今の中身で決まるので）
+    setReload((x) => x + 1);
   };
 
   // 輪を選んだら（開いたとき・輪を替えたとき）、受け取った束を読む
@@ -1094,6 +1100,11 @@ export function Checkpoint() {
                   {T.rulesView}
                 </button>
               )}
+              {dest === "ring" && (sendReason === T.sendNeeds.keysForked || sendReason === T.sendNeeds.chainForked) && (res?.ring?.keys?.length ?? 0) > 0 && (
+                <button type="button" className="moyai-inline-act" onClick={() => setRotateOpen(true)} data-testid="rotate-open">
+                  {T.rotate.open}
+                </button>
+              )}
               {dest === "ring" && sendReason === T.sendNeeds.rules && res?.ring?.rulesChange && (
                 <button type="button" className="moyai-inline-act" onClick={() => setRulesOpen(true)} data-testid="send-rules-view">
                   {T.rulesView}
@@ -1101,6 +1112,48 @@ export function Checkpoint() {
               )}
             </Text>
           )}
+          {rotateMsg && (
+            <Text size="xs" data-testid="rotate-done">
+              {rotateMsg}
+            </Text>
+          )}
+          <Modal opened={rotateOpen} onClose={() => setRotateOpen(false)} title={T.rotate.title} centered data-testid="rotate-dialog">
+            <Stack gap="sm">
+              <Text size="xs" c="dimmed">
+                {T.rotate.keys}
+              </Text>
+              {(res?.ring?.keys ?? []).map((k) => (
+                <Text key={k} size="sm" ff="monospace">
+                  {k}
+                </Text>
+              ))}
+              <Text size="sm" c="var(--shu-text)">
+                {T.rotate.result}
+              </Text>
+              <Group justify="flex-end" gap="sm">
+                <Button variant="default" onClick={() => setRotateOpen(false)}>
+                  {T.rotate.later}
+                </Button>
+                <Button
+                  data-testid="rotate-run"
+                  onClick={async () => {
+                    if (!planId || !ringId || !res?.ring?.keys) return;
+                    const r = readHuman<{ ok: boolean; retired: string[]; unsigned: string[] }>(
+                      await client.callHuman("facility_key_rotate", ROUTES.facilityKeyRotate.path, { planId, ringId, keys: res.ring.keys }),
+                    );
+                    setRotateOpen(false);
+                    if (!r.ok) return setSendError(r.message);
+                    // 作り直したら、新しい鍵で送り直せる（送った知らせは消す）
+                    setSent(null);
+                    setRotateMsg([T.rotate.done(r.body.retired.length), ...(r.body.unsigned.length ? [T.rotate.unsigned(r.body.unsigned.length)] : [])].join(""));
+                    setReload((x) => x + 1);
+                  }}
+                >
+                  {T.rotate.run}
+                </Button>
+              </Group>
+            </Stack>
+          </Modal>
           {/* 押せない理由が別にあるときは、押せない理由を先にする */}
           {canSend && <KeyWarnLine signers={untrusted} onConfirmed={reloadStatus} />}
           <Button onClick={send} disabled={!canSend} loading={sending} data-testid="send">

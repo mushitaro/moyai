@@ -6,19 +6,19 @@
 // 合言葉はやめた（運営者の決定 2026-11-04、docs/plan.md §2.19）。送るのは人だけの経路（人が［送る］を押したとき）だけ。
 // 鍵・束の中身・行の値をログに出さない。
 import { randomBytes } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { Plan } from "../shared/plan";
 import { addRing, readRings, writeKeyFile, type RingEntry, type SentEntry } from "../bridge/places";
-import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody, publicWords, ringIdOf, type ShareContext } from "./bundle";
+import { BUNDLE_FILE_NAME, CIRCLE_V, envelopeText, makeMemberBody, makeRetiredBody, makeRulesDocBody, publicWords, ringIdOf, type ShareContext } from "./bundle";
 import type { CopyResult, SkipReason, WithheldField, OmitReason } from "./copyout";
 import { canonicalize, parseJsonStrict } from "./jcs";
 import { SEND_MIN_K, kNational, profileBandOf, type Group, type Profile, type Tried } from "./k";
 import type { SharePack } from "./pack";
 import { countProperNouns } from "./recount";
-import { CIRCLE_FILE, readRing, ringDir, writeBundle, writeCircle, writeMember, type RingRead } from "./ring";
+import { BUNDLES_DIR, CIRCLE_FILE, readRing, ringDir, writeBundle, writeCircle, writeMember, writeRetired, type RingRead } from "./ring";
 import { knownMaxSeq, rememberSeq } from "./ring-seen";
-import { appendPlanSent, readPlanSent, storeFacilityKey, type Facility } from "./facility";
+import { appendPlanSent, readPlanSent, retireFacilityKeys, sentSeqs, storeFacilityKey, type Facility } from "./facility";
 import { baseRules, rulesGate, type Rules } from "./rules";
 import { previewBundle, sealBundle, type SendInput } from "./seal";
 import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, signBody, toPlainKey, type KeyPair } from "./sign";
@@ -152,6 +152,8 @@ export interface SendPlace {
   logged: { seq: number; hash: string }[];
   /** 固有名詞の網で照らす、置き場所の道 */
   folderPath: string;
+  /** 自分の鍵の鎖が分かれている（場に同じ連番の束が 2 つある） */
+  forked?: boolean;
 }
 
 /** 送る施設と、その場の鍵（facility.ts の facilityKey が返したもの）。stored は、保管先にもう鍵があるか */
@@ -175,6 +177,7 @@ export function ringPlace(ring: Extract<RingLoad, { ok: true }>, sender: Pick<Se
       .filter((s) => s.key === key)
       .map((s) => ({ seq: s.seq, hash: s.hash })),
     folderPath: ringDir(ring.entry.root, ring.entry.ringId),
+    forked: ring.read.bundles.some((b) => b.folder === key && b.reasons.includes("chain.duplicateSeq")),
   };
 }
 
@@ -240,7 +243,9 @@ export type Blocker =
   /** その場の鍵が 2 つ以上ある（同期の衝突の写しを含む）か、持ち出し簿にほかの鍵の記録がある（facility.ts） */
   | "keysForked"
   /** 公開の台帳：前に出した束が、台帳の clone にまだ無い（審査中か、clone が古い） */
-  | "pending";
+  | "pending"
+  /** 自分の鍵の鎖が分かれている（同じ連番の束が場に 2 つある。2 台がほぼ同時に出した・同期の遅れ。docs/plan.md §2.19 の 6）。直すのは署名鍵の作り直し */
+  | "chainForked";
 
 export interface Counts {
   shape: number;
@@ -336,6 +341,7 @@ export function previewPlace(place: SendPlace, pack: SharePack, plan: Plan, a: A
   const blockers: Blocker[] = [];
   const gate = rulesGate(place.rules, place.ctx.rulesHash, place.acceptedRulesHash, place.acceptedRules);
   if (!gate.ok) blockers.push("rules");
+  if (place.forked) blockers.push("chainForked");
   const pv = previewBundle(input);
   const base: PreviewView = {
     blockers,
@@ -412,7 +418,7 @@ function copySummary(c: CopyResult): NonNullable<PreviewView["copy"]> {
 
 export type SendResult =
   | { ok: true; fileName: string; hash: string; path: string; seq: number }
-  | { ok: false; reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "keyMismatch" | "afterSign" | "keysForked" | "notClean" | "exists" | "unknown" };
+  | { ok: false; reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "keyMismatch" | "afterSign" | "keysForked" | "chainForked" | "seqTaken" | "notClean" | "exists" | "unknown" };
 
 export type SealPlaceResult = { ok: true; text: string; hash: string; fileName: string; input: SendInput } | { ok: false; reason: Exclude<SendResult, { ok: true }>["reason"] };
 
@@ -461,10 +467,51 @@ export async function sendCheckpoint(
     // 仲間のファイルがもうある（ほかの PC が先に置いた）なら、そのまま束を置く
     if (!m.ok && m.reason !== "exists") return { ok: false, reason: m.reason };
   }
+  // 連番のぶつかり（docs/plan.md §2.19 の 6）：置く直前に、場と持ち出し簿（衝突の写しも）を読み直し、同じ連番がもう見えたら送らない。
+  // 持ち出し簿は同期で遅れるので確かな防ぎではない。本当の守りは、受け手と送る前の「鎖が分かれています」（Architect）
+  if (ringPlace(ring, sender).forked) return { ok: false, reason: "chainForked" };
+  if (await seqSeen(ring.entry.root, ringId, key, input.seq) || sentSeqs(sender.facility, ringId, key).includes(input.seq)) return { ok: false, reason: "seqTaken" };
   const placed = await writeBundle(ring.entry.root, s.text, input.ctx);
   if (!placed.ok) return { ok: false, reason: placed.reason };
   appendPlanSent<SentEntry>(sender.facility, ringId, { ringId, key, seq: input.seq, hash: s.hash, fileName: s.fileName, month, at: now.toISOString(), version: plan.version });
   return { ok: true, fileName: s.fileName, hash: s.hash, path: placed.path, seq: input.seq };
+}
+
+/** 場の自分の鍵のフォルダに、その連番の束のファイル（名前の頭の 6 桁が連番）がもうあるか */
+async function seqSeen(root: string, ringId: string, key: string, seq: number): Promise<boolean> {
+  try {
+    return (await readdir(join(ringDir(root, ringId), BUNDLES_DIR, key))).some((n) => Number(BUNDLE_FILE_NAME.exec(n)?.[1]) === seq);
+  } catch {
+    return false;
+  }
+}
+
+// ─── 署名鍵を作り直す（docs/plan.md §2.19 の 5。人だけの経路） ─────────────
+
+export type RotateResult =
+  | { ok: true; retired: string[]; unsigned: string[] }
+  | { ok: false; reason: "writeFailed"; retired: string[] };
+
+/**
+ * 輪へ出す施設の鍵を作り直す：今の鍵（衝突の写しも）ごとに、その鍵自身の署名の引退の印（鍵 ID・最後に使った連番・月だけ。次の鍵は書かない）を
+ * 輪の members/<鍵ID>.retired.json に置き、保管先の鍵を引退させる。新しい鍵は、次に人が送るときに作って書く。新しい鍵は新しい仲間として入り、
+ * 鍵番号を照合するまでは k に数えない（今の決まりのまま）。束は消さない（輪は足すだけ）。
+ * 持ち出し簿にだけあって鍵の対が無い鍵（鍵のファイルが消えた）は、印に署名できないので unsigned に返す（受け手はその鍵を数え続ける）
+ */
+export async function rotateRingKey(ring: Extract<RingLoad, { ok: true }>, facility: Facility, month: string): Promise<RotateResult> {
+  const ringId = ring.entry.ringId;
+  const r = retireFacilityKeys(facility, ringId);
+  const done: string[] = [];
+  for (const { key, pair } of r.retired) {
+    // 最後に使った連番：場の ✓ の束と持ち出し簿の大きい方
+    const placed = ring.read.bundles.filter((b) => b.folder === key && b.seq !== null).map((b) => b.seq!);
+    const last = Math.max(0, ...placed, ...sentSeqs(facility, ringId, key));
+    const body = makeRetiredBody(ringId, key, pair.pub, last, month);
+    const w = await writeRetired(ring.entry.root, envelopeText(body, signBody(body, pair.privateKey)), ring.ctx);
+    if (!w.ok && w.reason !== "exists") return { ok: false, reason: "writeFailed", retired: done };
+    done.push(key);
+  }
+  return { ok: true, retired: done, unsigned: r.unsigned };
 }
 
 // ─── 輪を確かめる（受け手と同じ関数） ───────────────────────────

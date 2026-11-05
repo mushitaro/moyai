@@ -11,6 +11,8 @@ import {
   LEDGER_V,
   MEMBER_BODY_TYPE,
   MEMBER_V,
+  RETIRED_BODY_TYPE,
+  RETIRED_V,
   BUNDLE_V,
   RULES_TYPE,
   bundleBodyType,
@@ -27,7 +29,7 @@ import { SEND_MIN_K, countPeers, isCountable, kNational, type Group } from "./k"
 import { checkRules, rulesHaveRemovedField, type Rules } from "./rules";
 import { keyIdOf, sha256Hex, verifyBody } from "./sign";
 
-export type DocKind = "bundle" | "member" | "circle" | "ledger";
+export type DocKind = "bundle" | "member" | "retired" | "circle" | "ledger";
 
 export interface RecountResult {
   kind: DocKind | null;
@@ -110,7 +112,7 @@ function kindOfDoc(v: Json): DocKind | null {
   const body = (v as Record<string, Json>).body;
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const tag = (body as Record<string, Json>).v;
-  return tag === BUNDLE_V ? "bundle" : tag === MEMBER_V ? "member" : tag === CIRCLE_V ? "circle" : tag === LEDGER_V ? "ledger" : null;
+  return tag === BUNDLE_V ? "bundle" : tag === MEMBER_V ? "member" : tag === RETIRED_V ? "retired" : tag === CIRCLE_V ? "circle" : tag === LEDGER_V ? "ledger" : null;
 }
 
 // ignoreBOM：BOM を黙って捨てずに文字として残す（バイト列で受けた束の BOM も、形の外れ shape.bom に数えるため）
@@ -213,7 +215,13 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
 
   const issues: string[] = [];
   const bodyType =
-    kind === "bundle" ? bundleBodyType(ctx) : kind === "member" ? MEMBER_BODY_TYPE : rulesDocBodyType(kind === "circle" ? CIRCLE_V : LEDGER_V);
+    kind === "bundle"
+      ? bundleBodyType(ctx)
+      : kind === "member"
+        ? MEMBER_BODY_TYPE
+        : kind === "retired"
+          ? RETIRED_BODY_TYPE
+          : rulesDocBodyType(kind === "circle" ? CIRCLE_V : LEDGER_V);
   checkShape(p.value, envelopeType(bodyType), "", issues);
   if (issues.length > 0) shape("type", issues.length);
 
@@ -248,7 +256,7 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
       res.reasons.push(r);
     }
     countK(body, ctx, res, kShort);
-  } else if (kind === "member") {
+  } else if (kind === "member" || kind === "retired") {
     if (typeof body.pub === "string" && /^[0-9a-f]{64}$/.test(body.pub) && keyIdOf(body.pub) !== body.key) chain("keyMismatch");
     if (ctx.to.kind !== "ring" || body.ring !== ctx.to.id) chain("otherDestination");
   } else {

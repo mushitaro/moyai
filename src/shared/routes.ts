@@ -56,6 +56,7 @@ export const HUMAN_ACTIONS = [
   // 輪の仲間の鍵を、指紋を読み合わせて確認済みにする・変わった輪の決まりを受け入れる（受け取った束の行で。監査 D1）
   "ring_member_confirm",
   "ring_rules_accept",
+  "facility_key_rotate",
   // 公開の台帳へ出す（§2.8。運営者の決定 2026-11-04「MOYAI が出す」）：PR を出すのは人がボタンを押したときだけ。通信は §2.12 の例外
   "ledger_preview",
   "ledger_send",
@@ -139,6 +140,12 @@ export const ROUTES = {
   checkpointSend: human("/human/checkpoint-send", "checkpoint_send", 64 * 1024, "検問所：署名し、束を輪のフォルダに置く"),
   ringVerify: human("/human/ring-verify", "ring_verify", 64 * 1024, "輪を受け手と同じ関数で確かめる"),
   ringMemberConfirm: human("/human/ring-member-confirm", "ring_member_confirm", 16 * 1024, "輪の仲間の鍵を、指紋を読み合わせて確認済みにする（確認済みの仲間の束だけを数える）"),
+  facilityKeyRotate: human(
+    "/human/facility-key-rotate",
+    "facility_key_rotate",
+    16 * 1024,
+    "輪へ出す施設の署名鍵を作り直す：今の鍵ごとに、その鍵自身の署名の引退の印（鍵 ID・最後の連番・月だけ）を輪に置き、保管先の鍵を引退させる。新しい鍵は次に送るときに作る",
+  ),
   ringRulesAccept: human("/human/ring-rules-accept", "ring_rules_accept", 16 * 1024, "変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない）"),
   ledgerPreview: human("/human/ledger-preview", "ledger_preview", 64 * 1024, "公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり）"),
   ledgerSend: human(

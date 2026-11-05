@@ -99,6 +99,17 @@ export async function writeMember(root: string, text: string, ctx: ShareContext,
   return place(join(ringDir(root, ctx.to.id), MEMBERS_DIR), `${body.key}.json`, text, body.month, opts);
 }
 
+/** 引退の印のファイルの名前の末尾（members/<鍵ID>.retired.json） */
+export const RETIRED_SUFFIX = ".retired.json";
+
+/** 引退の印を輪に置く（その鍵自身の署名。輪は足すだけなので、仲間のファイルは書き換えず、別のファイルで足す） */
+export async function writeRetired(root: string, text: string, ctx: ShareContext, opts: PlaceOptions = {}): Promise<PlaceResult> {
+  const r = recount(text, ctx);
+  if (r.kind !== "retired" || !isClean(r)) return { ok: false, reason: "notClean", recount: r };
+  const body = r.body as { key: string; month: string };
+  return place(join(ringDir(root, ctx.to.id), MEMBERS_DIR), `${body.key}${RETIRED_SUFFIX}`, text, body.month, opts);
+}
+
 /** 決まりのファイルを輪に置く（輪を作るとき）。 */
 export async function writeCircle(root: string, text: string, ctx: ShareContext, opts: PlaceOptions = {}): Promise<PlaceResult> {
   const r = recount(text, ctx);
@@ -132,6 +143,11 @@ export interface MemberStatus {
   reasons: string[];
   /** 届きかけの束の数（✗ とは分ける） */
   arriving: number;
+  /**
+   * その鍵自身の署名の引退の印があるとき、印に書いた最後の連番（作り直した鍵の古い方）。k にも集計にも数えない。
+   * 最後の連番より大きい束は ✗（chain.afterRetired。盗んだ人が引退のあとに古い鍵で出し続ける道を止める）。ほかの仲間の署名の印は受けない
+   */
+  retiredAt?: number;
 }
 
 export interface RingRead {
@@ -249,10 +265,21 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
   }
   const circleOk = out.circle.status === "ok" && ctx !== null;
 
-  // 仲間のファイル
+  // 仲間のファイルと引退の印
   const memberOk = new Map<string, string[]>();
+  /** 鍵 ID → 引退の印の最後の連番（その鍵自身の署名の印だけ） */
+  const retiredAt = new Map<string, number>();
   for (const e of await listDir(join(dir, MEMBERS_DIR))) {
     if (e.dir) continue;
+    const rm = /^([0-9a-f]{16})\.retired\.json$/.exec(e.name);
+    if (rm) {
+      // 数え直しが body.pub で署名を確かめ、鍵 ID が pub から決まることも確かめる。名前の鍵と body の鍵が同じときだけ受ける
+      const r = circleOk ? recount(await readFile(join(dir, MEMBERS_DIR, e.name)), ctx!) : null;
+      const b = r?.body as { key?: unknown; last?: unknown } | null | undefined;
+      if (r && r.kind === "retired" && isClean(r) && b?.key === rm[1] && typeof b?.last === "number") retiredAt.set(rm[1]!, b.last);
+      else out.notBundleFiles++;
+      continue;
+    }
     const m = /^([0-9a-f]{16})\.json$/.exec(e.name);
     if (!m) {
       out.notBundleFiles++;
@@ -326,6 +353,15 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
 
   // 鎖：鍵ごとに seq を 1 から順に、prev が前の束のファイルのハッシュか
   for (const list of byKey.values()) checkChain(list, prevOf);
+  // 引退した鍵：印の最後の連番より大きい束は ✗（時刻は出す側が書くので、時刻では切れない。Architect）
+  for (const [key, last] of retiredAt) {
+    for (const b of byKey.get(key) ?? []) {
+      if (b.status === "ok" && b.seq !== null && b.seq > last) {
+        b.reasons.push("chain.afterRetired");
+        b.status = "ng";
+      }
+    }
+  }
 
   // 仲間ごと（1 回目：形・署名・鎖で ✓ を決める。仲間で数える k はまだ数えない）
   const keys = [...new Set([...memberOk.keys(), ...byKey.keys()])].sort();
@@ -335,16 +371,22 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
     const mr = memberOk.get(key);
     if (mr === undefined) reasons.push("member.missing");
     else reasons.push(...mr);
-    if (!o.confirmed.has(key)) reasons.push("member.unconfirmed");
+    // 引退した鍵は k にも集計にも数えないので、照合していなくても ✗ にしない（作り直したあと、古い鍵のファイルは keys/retired/ へ移り、自分の鍵として数えなくなる）
+    if (!o.confirmed.has(key) && !retiredAt.has(key)) reasons.push("member.unconfirmed");
     const list = byKey.get(key) ?? [];
     for (const b of list) if (b.status === "ng") reasons.push(...b.reasons);
     const okSeqs = list.filter((b) => b.status === "ok").map((b) => b.seq!);
     const maxSeq = okSeqs.length ? Math.max(...okSeqs) : 0;
     const known = o.knownMaxSeq?.get(key);
-    if (known !== undefined && maxSeq < known) reasons.push("chain.vanished");
+    const last = retiredAt.get(key);
+    // 前に見た束が消えたかは、引退していない鍵だけで見る（引退した鍵の覚えは ring-seen に残すが、ここでは出さない）
+    if (last === undefined && known !== undefined && maxSeq < known) reasons.push("chain.vanished");
+    // 引退の印の最後の連番が、前に見た連番より小さい：見た束を印のあとの束にする書き方なので ✗（覚えは ring-seen に残す。Architect）
+    if (last !== undefined && known !== undefined && known > last) reasons.push("chain.retiredBelowKnown");
     const uniq = [...new Set(reasons)];
-    out.members.push({ key, status: uniq.length === 0 ? "ok" : "ng", reasons: uniq, arriving: list.filter((b) => b.status === "arriving").length });
-    if (uniq.length === 0 && maxSeq > 0) {
+    out.members.push({ key, status: uniq.length === 0 ? "ok" : "ng", reasons: uniq, arriving: list.filter((b) => b.status === "arriving").length, ...(last !== undefined ? { retiredAt: last } : {}) });
+    // 引退した鍵は k にも集計にも数えない（古い鍵と新しい鍵の束を両方数えると、同じ施設を 2 つに数え、下限 k が甘くなる）
+    if (uniq.length === 0 && maxSeq > 0 && last === undefined) {
       const latest = list.find((b) => b.status === "ok" && b.seq === maxSeq)!;
       latestOf.set(key, latest);
       if (latest.profile) out.latest.push({ key, profile: latest.profile });

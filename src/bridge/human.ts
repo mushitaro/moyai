@@ -27,7 +27,7 @@ import { dueBaseDate } from "../plan/due-view";
 import ExcelJS from "exceljs";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
-import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
+import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, rotateRingKey, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
 import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, ledgerBranch, ledgerBundlePath, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
 import { parseJsonStrict } from "../share/jcs";
@@ -38,7 +38,7 @@ import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
 import { HEX16, HEX64, fingerprint, generateKeyPair, keyIdOf, sha256Hex, type KeyPair } from "../share/sign";
-import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, storeFacilityKey, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
+import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, sentKeys, storeFacilityKey, storedKeys, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
@@ -182,6 +182,8 @@ const SCHEMAS = {
   ring_verify: z.object({ ringId: ringIdSchema }),
   ring_member_confirm: z.object({ ringId: ringIdSchema, pub: z.string().regex(HEX64) }),
   ring_rules_accept: z.object({ ringId: ringIdSchema, rulesHash: z.string().regex(HEX64) }),
+  /** keys：人が画面で見た、今の鍵の ID（見たときから鍵が変わっていれば作り直さない） */
+  facility_key_rotate: z.object({ planId: planIdSchema, ringId: ringIdSchema, keys: z.array(z.string().regex(/^[0-9a-f]{16}$/)).min(1).max(8) }),
   ledger_preview: z.object({ planId: planIdSchema, answers: answersSchema }),
   ledger_send: z.object({
     planId: planIdSchema,
@@ -1148,6 +1150,27 @@ export class HumanService {
         addLedger(sd, { ledgerId: L.id, pack: pack.id, acceptedRulesHash: p.rulesHash, acceptedRules: L.rules, createdAt: cur?.createdAt ?? now.toISOString() });
         return { ok: true };
       }
+      case "facility_key_rotate": {
+        // 署名鍵を作り直す（docs/plan.md §2.19 の 5・6）：鍵が 2 つある・鎖が分かれたときの直し方。人が画面で見た鍵と今の鍵が同じときだけ
+        const p = parsePayload("facility_key_rotate", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const entry = readRings(sd).rings.find((r) => r.ringId === p.ringId);
+        if (!entry) return no("noRing");
+        const pack = this.pack(entry.pack);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const ring = await loadRing(sd, p.ringId, pack, ownKeysAt(root, p.ringId));
+        if (!ring.ok) return no(ring.reason);
+        const facility: Facility = { root, planId: p.planId };
+        const now = [...new Set([...storedKeys(facility, p.ringId).map((k) => keyIdOf(k.pub)), ...sentKeys(facility, p.ringId)])].sort();
+        if (now.length === 0) return no("noKey");
+        if (now.join(",") !== [...new Set(p.keys)].sort().join(",")) return no("previewChanged");
+        const r = await rotateRingKey(ring, facility, monthOf(new Date()));
+        if (!r.ok) return no(r.reason, { retired: r.retired });
+        this.pendingKeys.delete(`${root}|${p.planId}|${p.ringId}`);
+        return { ok: true, retired: r.retired, unsigned: r.unsigned };
+      }
       case "ring_rules_accept": {
         // 変わった輪の決まりを、人が差を見て受け入れる（見た決まりのハッシュと今のハッシュが同じで、緩くした決まりでないときだけ）
         const p = parsePayload("ring_rules_accept", call.payload);
@@ -1311,6 +1334,8 @@ export class HumanService {
       ring: {
         ...entry,
         key: sender.ok ? keyIdOf(sender.pair.pub) : null,
+        // 今の鍵の ID（鍵が 2 つあれば両方。署名鍵を作り直すダイアログが見せ、作り直す経路が照らす）
+        keys: sender.ok ? (sender.stored ? [keyIdOf(sender.pair.pub)] : []) : sender.keys,
         fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null,
         folder: join(entry.root, ringId),
         rulesChange: rulesChangeOf(ring),
