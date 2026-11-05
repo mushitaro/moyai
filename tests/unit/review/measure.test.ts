@@ -50,7 +50,7 @@ beforeAll(async () => {
     const hit = a.sources.map((s) => (s.cell ? ents.of(s.file, s.cell) : null)).find((k) => k?.startsWith("e:"));
     if (hit) nodeOf.set(hit.slice(2), a.nodeKey);
   }
-}, 60_000);
+}, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 afterAll(() => clearWorkingPlan());
 
 /** 欠けを埋めた計画：入れた欠けごとに、正解の世界にあるはずの印を 1 つ足す（ほかは変えない） */
