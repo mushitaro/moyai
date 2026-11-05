@@ -493,6 +493,8 @@ export function Checkpoint() {
       ? T.sendNeeds.keysForked
     : view.blockers.includes("chainForked")
       ? T.sendNeeds.chainForked
+    : view.blockers.includes("keyRetired")
+      ? T.sendNeeds.keyRetired
     : view.blockers.includes("noKey")
       ? T.sendNeeds.noKey
       : view.blockers.includes("pending")
@@ -1100,7 +1102,7 @@ export function Checkpoint() {
                   {T.rulesView}
                 </button>
               )}
-              {dest === "ring" && (sendReason === T.sendNeeds.keysForked || sendReason === T.sendNeeds.chainForked) && (res?.ring?.keys?.length ?? 0) > 0 && (
+              {dest === "ring" && (sendReason === T.sendNeeds.keysForked || sendReason === T.sendNeeds.chainForked || sendReason === T.sendNeeds.keyRetired) && (res?.ring?.keys?.length ?? 0) > 0 && (
                 <button type="button" className="moyai-inline-act" onClick={() => setRotateOpen(true)} data-testid="rotate-open">
                   {T.rotate.open}
                 </button>

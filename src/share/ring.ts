@@ -160,6 +160,8 @@ export interface RingRead {
   latest: PeerProfile[];
   /** latest と同じ束の body（受け手の集計に使う。確認済みで ✓ の仲間だけ） */
   latestBundles: PeerBundle[];
+  /** 受けた失効の印：鍵 ID → 印の最後の連番（仲間の行の無い鍵も。一度も出していない鍵の印など） */
+  retired: Record<string, number>;
 }
 
 export interface ReadOptions {
@@ -224,7 +226,7 @@ export function checkChain<E extends ChainItem>(list: readonly E[], prevOf: Read
 /** 輪のフォルダを読み、束ごと・仲間ごとに ✓ か理由つきの ✗ か届きかけを出す。 */
 export async function readRing(root: string, ringId: string, o: ReadOptions): Promise<RingRead> {
   const dir = ringDir(root, ringId);
-  const out: RingRead = { circle: { status: "missing", reasons: [] }, bundles: [], members: [], notBundleFiles: 0, latest: [], latestBundles: [] };
+  const out: RingRead = { circle: { status: "missing", reasons: [] }, bundles: [], members: [], notBundleFiles: 0, latest: [], latestBundles: [], retired: {} };
 
   // 決まりのファイル
   let circleBytes: Buffer | null = null;
@@ -405,5 +407,6 @@ export async function readRing(root: string, ringId: string, o: ReadOptions): Pr
     if (b && !latest.short) out.latestBundles.push({ key, pub: b.pub, body: b });
   }
   out.bundles = [...byKey.values()].flat();
+  out.retired = Object.fromEntries([...retiredAt].sort(([a], [b]) => (a < b ? -1 : 1)));
   return out;
 }

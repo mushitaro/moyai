@@ -18,7 +18,7 @@ import type { SharePack } from "./pack";
 import { countProperNouns } from "./recount";
 import { BUNDLES_DIR, CIRCLE_FILE, readRing, ringDir, writeBundle, writeCircle, writeMember, writeRetired, type RingRead } from "./ring";
 import { knownMaxSeq, rememberSeq } from "./ring-seen";
-import { appendPlanSent, readPlanSent, retireFacilityKeys, retiredKeyFiles, sentOf, sentSeqs, storedKeys, storeFacilityKey, type Facility } from "./facility";
+import { appendPlanSent, readPlanSent, retireFacilityKeys, retiredKeyFiles, sentKeys, sentOf, sentSeqs, storedKeys, storeFacilityKey, type Facility } from "./facility";
 import { baseRules, rulesGate, type Rules } from "./rules";
 import { previewBundle, sealBundle, type SendInput } from "./seal";
 import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, signBody, toPlainKey, type KeyPair } from "./sign";
@@ -154,6 +154,8 @@ export interface SendPlace {
   folderPath: string;
   /** 自分の鍵の鎖が分かれている（場に同じ連番の束が 2 つある） */
   forked?: boolean;
+  /** 自分の鍵に、輪で受けた失効の印がある */
+  retired?: boolean;
 }
 
 /** 送る施設と、その場の鍵（facility.ts の facilityKey が返したもの）。stored は、保管先にもう鍵があるか */
@@ -178,6 +180,7 @@ export function ringPlace(ring: Extract<RingLoad, { ok: true }>, sender: Pick<Se
       .map((s) => ({ seq: s.seq, hash: s.hash })),
     folderPath: ringDir(ring.entry.root, ring.entry.ringId),
     forked: ring.read.bundles.some((b) => b.folder === key && b.reasons.includes("chain.duplicateSeq")),
+    retired: ring.read.retired[key] !== undefined,
   };
 }
 
@@ -245,7 +248,9 @@ export type Blocker =
   /** 公開の台帳：前に出した束が、台帳の clone にまだ無い（審査中か、clone が古い） */
   | "pending"
   /** 自分の鍵の鎖が分かれている（同じ連番の束が場に 2 つある。2 台がほぼ同時に出した・同期の遅れ。docs/plan.md §2.19 の 6）。直すのは署名鍵の作り直し */
-  | "chainForked";
+  | "chainForked"
+  /** 送る鍵に、輪の失効の印がある（作り直しの途中で鍵を移せなかった・ほかの PC の鍵の移動がまだ同期されていない）。直すのは作り直しの押し直し（Architect の 40） */
+  | "keyRetired";
 
 export interface Counts {
   shape: number;
@@ -342,6 +347,7 @@ export function previewPlace(place: SendPlace, pack: SharePack, plan: Plan, a: A
   const gate = rulesGate(place.rules, place.ctx.rulesHash, place.acceptedRulesHash, place.acceptedRules);
   if (!gate.ok) blockers.push("rules");
   if (place.forked) blockers.push("chainForked");
+  if (place.retired) blockers.push("keyRetired");
   const pv = previewBundle(input);
   const base: PreviewView = {
     blockers,
@@ -418,7 +424,7 @@ function copySummary(c: CopyResult): NonNullable<PreviewView["copy"]> {
 
 export type SendResult =
   | { ok: true; fileName: string; hash: string; path: string; seq: number }
-  | { ok: false; reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "keyMismatch" | "afterSign" | "keysForked" | "chainForked" | "seqTaken" | "notClean" | "exists" | "unknown" };
+  | { ok: false; reason: "preview" | "previewChanged" | "rules" | "content" | "properNoun" | "keyMismatch" | "afterSign" | "keysForked" | "chainForked" | "keyRetired" | "seqTaken" | "notClean" | "exists" | "unknown" };
 
 export type SealPlaceResult = { ok: true; text: string; hash: string; fileName: string; input: SendInput } | { ok: false; reason: Exclude<SendResult, { ok: true }>["reason"] };
 
@@ -469,7 +475,9 @@ export async function sendCheckpoint(
   }
   // 連番のぶつかり（docs/plan.md §2.19 の 6）：置く直前に、場と持ち出し簿（衝突の写しも）を読み直し、同じ連番がもう見えたら送らない。
   // 持ち出し簿は同期で遅れるので確かな防ぎではない。本当の守りは、受け手と送る前の「鎖が分かれています」（Architect）
-  if (ringPlace(ring, sender).forked) return { ok: false, reason: "chainForked" };
+  const here = ringPlace(ring, sender);
+  if (here.retired || unmarkedRetired(ring, sender.facility).length > 0) return { ok: false, reason: "keyRetired" };
+  if (here.forked) return { ok: false, reason: "chainForked" };
   if (await seqSeen(ring.entry.root, ringId, key, input.seq) || sentSeqs(sender.facility, ringId, key).includes(input.seq)) return { ok: false, reason: "seqTaken" };
   const placed = await writeBundle(ring.entry.root, s.text, input.ctx);
   if (!placed.ok) return { ok: false, reason: placed.reason };
@@ -501,7 +509,7 @@ export type RotateResult =
 export async function rotateRingKey(ring: Extract<RingLoad, { ok: true }>, facility: Facility, month: string): Promise<RotateResult> {
   const ringId = ring.entry.ringId;
   // 印を置く鍵：今の鍵（衝突の写しも）と、前に移したのに輪に印が無い鍵（前の作り直しが途中で落ちた。押し直せば直る。Architect の 37）
-  const marked = new Set(ring.read.members.filter((m) => m.retiredAt !== undefined).map((m) => m.key));
+  const marked = markedKeys(ring);
   const current = storedKeys(facility, ringId).flatMap((k) => (k.pair ? [{ key: keyIdOf(k.pub), pair: k.pair }] : []));
   const leftover = retiredKeyFiles(facility, ringId).filter((k) => !marked.has(k.key));
   const toMark = [...current, ...leftover].filter((k, i, all) => all.findIndex((x) => x.key === k.key) === i);
@@ -516,6 +524,31 @@ export async function rotateRingKey(ring: Extract<RingLoad, { ok: true }>, facil
   }
   const r = retireFacilityKeys(facility, ringId);
   return { ok: true, retired: done, unsigned: r.unsigned };
+}
+
+/** 読んだ輪で、失効の印を受けた鍵 */
+function markedKeys(ring: Extract<RingLoad, { ok: true }>): Set<string> {
+  return new Set(Object.keys(ring.read.retired));
+}
+
+/**
+ * 前に保管先の keys/retired/ へ移したのに、輪に失効の印が無い鍵（作り直しが途中で落ちた）。残っている間は送らない：
+ * 受け手はその鍵を数え続けるので、新しい鍵で出すと同じ施設を 2 つに数える（Db・Architect の 37 の残り）。直すのは作り直しの押し直し
+ */
+export function unmarkedRetired(ring: Extract<RingLoad, { ok: true }>, facility: Facility): string[] {
+  const marked = markedKeys(ring);
+  return retiredKeyFiles(facility, ring.entry.ringId)
+    .map((k) => k.key)
+    .filter((k) => !marked.has(k));
+}
+
+/**
+ * 署名鍵を作り直すときに照らす鍵（画面に見せる鍵と、経路が照らす鍵を同じこの関数で決める。Architect の 41）：
+ * 保管先の今の鍵（衝突の写しも）・持ち出し簿にある鍵（引退させた鍵を除く）・前に移したのに輪に印の無い鍵
+ */
+export function rotateKeysOf(ring: Extract<RingLoad, { ok: true }>, facility: Facility): string[] {
+  const ringId = ring.entry.ringId;
+  return [...new Set([...storedKeys(facility, ringId).map((k) => keyIdOf(k.pub)), ...sentKeys(facility, ringId), ...unmarkedRetired(ring, facility)])].sort();
 }
 
 /**

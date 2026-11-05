@@ -27,7 +27,7 @@ import { dueBaseDate } from "../plan/due-view";
 import ExcelJS from "exceljs";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
-import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, rotateRingKey, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
+import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, rotateKeysOf, rotateRingKey, unmarkedRetired, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
 import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, ledgerBranch, ledgerBundlePath, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
 import { parseJsonStrict } from "../share/jcs";
@@ -38,7 +38,7 @@ import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
 import { HEX16, HEX64, fingerprint, generateKeyPair, keyIdOf, sha256Hex, type KeyPair } from "../share/sign";
-import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, retiredKeyFiles, sentKeys, storeFacilityKey, storedKeys, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
+import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, storeFacilityKey, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
@@ -1164,9 +1164,7 @@ export class HumanService {
         if (!ring.ok) return no(ring.reason);
         const facility: Facility = { root, planId: p.planId };
         // 今の鍵と、前に移したのに輪に印が無い鍵（前の作り直しが途中で落ちた。押し直せば印を置き直す）
-        const marked = new Set(ring.read.members.filter((m) => m.retiredAt !== undefined).map((m) => m.key));
-        const leftover = retiredKeyFiles(facility, p.ringId).map((k) => k.key).filter((k) => !marked.has(k));
-        const now = [...new Set([...storedKeys(facility, p.ringId).map((k) => keyIdOf(k.pub)), ...sentKeys(facility, p.ringId), ...leftover])].sort();
+        const now = rotateKeysOf(ring, facility);
         if (now.length === 0) return no("noKey");
         if (now.join(",") !== [...new Set(p.keys)].sort().join(",")) return no("previewChanged");
         const r = await rotateRingKey(ring, facility, monthOf(new Date()));
@@ -1296,7 +1294,9 @@ export class HumanService {
   /** 輪の見え方。施設の鍵が 2 つあれば、相手から見たあなたまでを出し、束のバイト列は出さない */
   private ringView(ctx: Extract<Awaited<ReturnType<HumanService["shareContext"]>>, { ok: true }>, month: string): PreviewView {
     const v = previewCheckpoint(ctx.ring, { facility: ctx.facility, pair: ctx.sender.ok ? ctx.sender.pair : PLACEHOLDER_PAIR }, ctx.pack, ctx.plan, ctx.answers, month);
-    return ctx.sender.ok ? v : { ...v, blockers: [...v.blockers, "keysForked"], bodyHash: null, bodyText: null, bytes: null };
+    if (!ctx.sender.ok) return { ...v, blockers: [...v.blockers, "keysForked"], bodyHash: null, bodyText: null, bytes: null };
+    // 前に移したのに輪に失効の印が無い鍵が残っていれば送らない（作り直しの押し直しで直す）
+    return unmarkedRetired(ctx.ring, ctx.facility).length > 0 && !v.blockers.includes("keyRetired") ? { ...v, blockers: [...v.blockers, "keyRetired"] } : v;
   }
 
   /** 検問所の文脈：確定したいちばん新しい版・パック・輪。足りなければ、何が足りないかと、聞くことを返す。 */
@@ -1338,7 +1338,8 @@ export class HumanService {
         ...entry,
         key: sender.ok ? keyIdOf(sender.pair.pub) : null,
         // 今の鍵の ID（鍵が 2 つあれば両方。署名鍵を作り直すダイアログが見せ、作り直す経路が照らす）
-        keys: sender.ok ? (sender.stored ? [keyIdOf(sender.pair.pub)] : []) : sender.keys,
+        // 作り直しで照らす鍵（前に移したのに輪に印が無い鍵も。経路が照らす鍵と同じ関数）
+        keys: rotateKeysOf(ring, facility),
         fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null,
         folder: join(entry.root, ringId),
         rulesChange: rulesChangeOf(ring),

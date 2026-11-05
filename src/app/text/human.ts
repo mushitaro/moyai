@@ -486,6 +486,7 @@ export const HUMAN_TEXT = {
     },
     sendNeeds: {
       chainForked: "鎖が分かれています",
+      keyRetired: "署名鍵の失効が済んでいません",
       keysForked: "この施設の署名鍵が 2 つあります",
       rules: "共有フォルダのルール未受入",
       groupUnknown: "全国の表に載る施設かが決まっていない",

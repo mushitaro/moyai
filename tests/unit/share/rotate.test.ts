@@ -236,3 +236,39 @@ describe("作り直しが途中で落ちたとき（Architect の 37・38）", (
     expect(after.read.bundles.find((x) => x.folder === keyA && x.seq === 2)?.reasons).toContain("chain.afterRetired");
   });
 });
+
+describe("失効の印のある鍵では送らない（Architect の 40・37 の残り）", () => {
+  it("印を置いたあと鍵が移っていない保管先から送ると止まる。作り直しを押し直すと鍵が移り、新しい鍵で送れる", async () => {
+    const { stateDir, root, ringId, f } = await setup();
+    const a = senderOf(f, ringId);
+    const keyA = keyIdOf(a.pair.pub);
+    const s1 = await send(stateDir, ringId, a);
+    if (!s1.ok) throw new Error(s1.reason);
+    // 輪にだけ印を置いた（鍵を移すところで落ちた・ほかの PC の鍵の移動がまだ同期されていない）
+    const body = makeRetiredBody(ringId, keyA, a.pair.pub, 1, MONTH);
+    writeFileSync(join(ringDir(root, ringId), MEMBERS_DIR, `${keyA}${RETIRED_SUFFIX}`), envelopeText(body, signBody(body, a.pair.privateKey)));
+    const ring = await load(stateDir, ringId, [keyA]);
+    const v = previewCheckpoint(ring, a, PACK, p2(), ANSWERS, MONTH);
+    expect(v.blockers).toContain("keyRetired");
+    expect(await sendCheckpoint(ring, a, PACK, p2(), ANSWERS, MONTH, v.bodyHash ?? "0".repeat(64), NOW, pending)).toMatchObject({ ok: false });
+    // 押し直し：印はもうあるので置けたと見て、鍵を移す
+    expect(await rotateRingKey(ring, f, MONTH)).toEqual({ ok: true, retired: [keyA], unsigned: [] });
+    const b = senderOf(f, ringId);
+    expect(keyIdOf(b.pair.pub)).not.toBe(keyA);
+    const s2 = await send(stateDir, ringId, b, p2(), [keyA]);
+    expect(s2).toMatchObject({ ok: true, seq: 1 });
+  });
+
+  it("前に移したのに輪に印の無い鍵が残っていれば、新しい鍵でも送らない（受け手が同じ施設を 2 つに数えるため）", async () => {
+    const { stateDir, ringId, f } = await setup();
+    const a = senderOf(f, ringId);
+    const keyA = keyIdOf(a.pair.pub);
+    const s1 = await send(stateDir, ringId, a);
+    if (!s1.ok) throw new Error(s1.reason);
+    retireFacilityKeys(f, ringId);
+    const b = senderOf(f, ringId);
+    const ring = await load(stateDir, ringId, [keyA]);
+    const v = previewCheckpoint(ring, b, PACK, p2(), ANSWERS, MONTH);
+    expect(await sendCheckpoint(ring, b, PACK, p2(), ANSWERS, MONTH, v.bodyHash!, NOW, pending)).toEqual({ ok: false, reason: "keyRetired" });
+  });
+});
