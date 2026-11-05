@@ -19,7 +19,7 @@ test("キーを読むコード（環境変数の ANTHROPIC_API_KEY・API の SDK
 
 test("採点の CLI はキーの有無だけを見る（値を書き出す所が無い）", () => {
   const text = readFileSync("src/eval/cli.ts", "utf8");
-  const uses = [...text.matchAll(/process\.env\.ANTHROPIC_API_KEY[^\n]*/g)].map((m) => m[0]);
+  const uses = [...text.matchAll(/process\.env\.ANTHROPIC_API_KEY[^\r\n]*/g)].map((m) => m[0]);
   expect(uses).toEqual(["process.env.ANTHROPIC_API_KEY) {"]);
   for (const f of files.filter((x) => x.startsWith("src/eval/"))) expect(readFileSync(f, "utf8")).not.toMatch(/apiKey\s*:/);
 });

@@ -4,7 +4,7 @@
 // - report：results.jsonl から report.json と表を作り直す（--base で前の版と比べる）
 // 人への知らせは標準エラーへ出す。API キーは、あるかどうかだけを見る（値は出さない）。保存と昇格のコマンドは無い（人だけがする）。
 import Anthropic from "@anthropic-ai/sdk";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { appendLedger, budgetCheck, loadLedger } from "../../scripts/api-spend.mjs";
 import { generateSuite } from "./gen";
@@ -12,7 +12,7 @@ import { countEvalProperNouns, leakedTestCases, sha256, systemText, userText } f
 import { buildReport, compareReports, pct, renderHtml, type Report } from "./report";
 import { callOnce, planTasks, runTasks, type CallConfig, type Price } from "./run";
 import { MANIFEST_SCHEMA, type EvalCase, type Manifest, type ResultRow, type Split, type Suite } from "./types";
-import { WorldFormatError, loadPack, loadWorld, properNounTerms } from "./world";
+import { WorldFormatError, contentPackIds, loadPack, loadWorld, properNounTerms } from "./world";
 
 const say = (m: string): void => {
   process.stderr.write(`${m}\n`);
@@ -76,7 +76,7 @@ function cmdGen(f: Map<string, string>, p: Paths): number {
   if (!packId || !worldDir) return usage();
   const name = f.get("suite") ?? packId;
   // 出典の問い（R03）は、すべてのパックの検査を並べ、このパックに無い検査は「パックに無い」を正解にする
-  const allPacks = readdirSync(p.packsDir).filter((id) => !id.startsWith("_") && existsSync(join(p.packsDir, id, "pack.json"))).sort();
+  const allPacks = contentPackIds(p.packsDir);
   const pack = loadPack(p.packsDir, packId);
   let world;
   try {
@@ -244,7 +244,7 @@ async function cmdRun(f: Map<string, string>, p: Paths): Promise<number> {
     return finish(p, runDir, manifest, [], "stopped", gate.reason);
   }
   if (!process.env.ANTHROPIC_API_KEY) {
-    say("eval run：環境変数 ANTHROPIC_API_KEY がありません。走らせずに止めます");
+    say("eval run：環境変数 ANTHROPIC_API_KEY がありません。走らせずに止めます（キーは node scripts/with-api-key.mjs node dist/cli.js eval run … の形で、このコマンドにだけ渡す）");
     return finish(p, runDir, manifest, [], "stopped", "API キーの環境変数が無い");
   }
 

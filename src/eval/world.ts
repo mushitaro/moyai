@@ -1,6 +1,6 @@
 // 正解の世界とパック（packs/<パック>/）を、評価の問題を作るために読む。世界は形ごとに入口を分ける（src/eval/worlds/）。
 // 業種の語はここに置かない。名前・作業・印は、どれも世界とパックのデータから取る。
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadAnswerWorld } from "./worlds/answer";
 import { loadFactoryV1 } from "./worlds/factory-v1";
@@ -98,6 +98,17 @@ export interface PackData {
 }
 
 const readJson = (p: string): any => JSON.parse(readFileSync(p, "utf8"));
+
+/** 中身のあるパック（出典の一覧と共通の項目を持つもの）の id を名前の順に。地図の空のパック（pack.json だけ）は入れない。 */
+export function contentPackIds(packsDir: string): string[] {
+  return readdirSync(packsDir)
+    .filter((id) => !id.startsWith("_") && existsSync(join(packsDir, id, "pack.json")) && existsSync(join(packsDir, id, "sources.json")))
+    .filter((id) => {
+      const pack = readJson(join(packsDir, id, "pack.json"));
+      return typeof pack.common === "string" && existsSync(join(packsDir, id, pack.common));
+    })
+    .sort();
+}
 
 export function loadPack(packsDir: string, id: string): PackData {
   const dir = join(packsDir, id);

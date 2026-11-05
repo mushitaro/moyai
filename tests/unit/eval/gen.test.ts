@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { generateSuite, rangeLabel, RULES, splitFyOf, yearLabel, effortText, CASES_PER_RULE } from "../../../src/eval/gen";
 import { bodyHash, countEvalProperNouns, leakedTestCases, systemText, userText } from "../../../src/eval/prompt";
-import { fiscalYearOf, loadPack, loadWorld, properNounTerms } from "../../../src/eval/world";
+import { contentPackIds, fiscalYearOf, loadPack, loadWorld, properNounTerms } from "../../../src/eval/world";
 import { gradeCase } from "../../../src/eval/grade";
 import type { EvalCase } from "../../../src/eval/types";
 
@@ -14,7 +14,8 @@ const WORLDS = {
   "night-soil": "samples/truth/night-soil/fictional-ns-1",
 } as const;
 type PackId = keyof typeof WORLDS;
-const packIds = readdirSync("packs").filter((d) => !d.startsWith("_"));
+// 中身のあるパックだけ（地図の空のパックは pack.json だけを持つ）
+const packIds = contentPackIds("packs");
 const gen = (pack: PackId) =>
   generateSuite({
     name: pack,
