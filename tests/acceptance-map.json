@@ -66,7 +66,8 @@
     },
     {
       "name": "trigger.property",
-      "sources": []
+      "sources": [{ "runner": "vitest", "file": "tests/property/trigger.test.ts" }],
+      "scope": "計算の関数だけ。取り込んだ実績や計量値の欄から次回を出すところ（cross-layer）は、まだつないでいない"
     },
     {
       "name": "human-only",
