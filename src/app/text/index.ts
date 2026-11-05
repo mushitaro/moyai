@@ -356,6 +356,7 @@ export const TEXT = {
       pending: (n: number) => `受けていない決定が ${n}`,
       notConnected: "ブリッジとつながっていないので押せません",
       stale: "保存先に新しい版があります。開き直してください",
+      notRecomposed: "作ったあとに資料や決定が変わりました。作り直していません",
     },
     blockPrefix: "理由：",
     history: "履歴",

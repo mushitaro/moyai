@@ -120,6 +120,12 @@ describe("工場の資料で、要約 → 決定 → 計画 → 星取表の行"
       expect(stats.questions).toBeGreaterThan(0);
       expect(stats.decisions.ai_relayed_human + stats.decisions.rule_code + stats.decisions.human + stats.decisions.ai).toBeLessThanOrEqual(stats.questions);
       expect(stats.decisions.ai_relayed_human).toBeGreaterThan(0);
+      // 作ったあとに決定が変われば、作り直すまで「作り直していない」（署名の止め札。台帳の中-6）
+      expect(ws.notRecomposed()).toBe(false);
+      const one = ws.decisions()[0]!;
+      ws.undo(one.questionId);
+      expect(ws.notRecomposed()).toBe(true);
+      ws.settle([one]);
 
       // 星取表の行：上限どおりに返し、残りを数える
       const rows = ok(runTabTool(ws, "chart_rows", { limit: 200 }, CTX));

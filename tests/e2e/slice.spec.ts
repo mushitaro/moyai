@@ -273,11 +273,16 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       const base = { author: "ai", reason: "利用者が会話で決めた（試験の台本）" };
       await call(c, "reading_rules_propose", { name: "【架空】縦の一本の読み方", scope: "facility", rules: [{ ...base, id: "s1", text: "「ブロワー」と「ブロワ」は同じ機器", kind: "sameAsset", names: ["ブロワー", "ブロワ"] }] });
       await call(c, "reading_rules_propose", { name: "【架空】日報の書き方", scope: "facility", rules: [{ ...base, id: "m1", text: "▲ は実績", kind: "markMeaning", symbol: "▲", planOrActual: "actual" }] });
-      await page.getByTestId("sheet-readings").click();
-      await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "readings");
+      // 案を置いた直後は描き直しが続くので、シートが切り替わるまで押し直す
+      await expect(async () => {
+        await page.getByTestId("sheet-readings").click();
+        await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "readings", { timeout: 2000 });
+      }).toPass({ timeout: 30_000 });
       await page.screenshot({ path: shot(`slice-readings-${tag}`), fullPage: true });
-      await page.getByTestId("sheet-file").first().click();
-      await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
+      await expect(async () => {
+        await page.getByTestId("sheet-file").first().click();
+        await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files", { timeout: 2000 });
+      }).toPass({ timeout: 30_000 });
       await page.screenshot({ path: shot(`slice-files-${tag}`), fullPage: true });
       await page.getByTestId("sheet-chart").click();
       await expect(page.locator(".ag-row").first()).toBeVisible();
@@ -293,6 +298,11 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
     });
 
     await test.step("同じタブで第 2 版を確定して作り直すと、案は「第 2 版と同じ」になる（台帳の新-9）", async () => {
+      // 写しのために読み方の下書きを置いたので、作り直すまで署名できない（台帳の中-6）。作り直してから受ける
+      await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
+      await page.getByTestId("compose").click();
+      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
       await acceptDecisions(page, "試験の台本が押した（第 2 版の決定を受けた）");
       await page.getByTestId("confirm-open").click();
       await page.getByTestId("confirm-reason").fill("縦の 1 本：第 1 版の資料と当てはめを重ねた第 2 版（e2e）");

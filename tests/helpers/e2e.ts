@@ -167,7 +167,7 @@ export async function acceptDecisions(page: Page, reason: string): Promise<numbe
   await page.getByTestId("sheet-decisions").click();
   await expect(page.getByTestId("decisions-sheet")).toBeVisible();
   // 版の履歴を読んで、受けていない決定が並ぶ（無ければ「ありません」）まで待つ
-  await expect(page.locator('[data-testid="pending-row"], [data-testid="decisions-none"]').first()).toBeVisible();
+  await expect(page.locator('[data-testid="pending-row"], [data-testid="crosswalk-rule"], [data-testid="decisions-none"]').filter({ visible: true }).first()).toBeVisible();
   await page.getByTestId("decisions-reason").fill(reason);
   // 種類の切り替え（第 n 版と同じ・当てはめの案・台帳からの案・会話から写した答え・Claude の決定）ごとに、見えている種類をまとめて受ける。
   // 当てはめの規則（第 n 版と同じ・当てはめの案）は受けない（acceptRules で 1 規則ずつ受ける）。受け終えた種類は切り替えから消える

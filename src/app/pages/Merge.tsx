@@ -274,6 +274,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const blocks = [
     !plan ? T.block.noPlan : null,
     staleBy ? T.block.stale : null,
+    // 計画を作ったあとに資料・決定・読み方・写真が変わった（作り直していない計画のまま署名しない。台帳の中-6）
+    plan && !viewOnly && ws.notRecomposed() ? T.block.notRecomposed : null,
     openQuestions > 0 ? T.block.open(openQuestions) : null,
     leftDecisions > 0 ? T.block.pending(leftDecisions) : null,
     conn.kind !== "open" ? T.block.notConnected : null,

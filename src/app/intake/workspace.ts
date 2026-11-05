@@ -317,6 +317,14 @@ export class IntakeWorkspace {
     return { questions: an.questions.length, decisions };
   }
 
+  /** 作業中の計画を作ったときの取り込みの版（作ったか版を開いて資料を戻したときに置く。無ければ照らさない） */
+  private composedAt: number | null = null;
+
+  /** 作業中の計画を作ったあと、資料・決定・読み方・写真が変わったか（変わっていれば作り直すまで署名を止める。台帳の中-6） */
+  notRecomposed(): boolean {
+    return this.composedAt !== null && this.composedAt !== this.dataVersion;
+  }
+
   /** 戻した版（次の版に重ねるとき、その版を組んだ資料と決定を戻した。資料のタブで「第 n 版の資料」と出す） */
   restoredFrom: { version: number; files: ReadonlySet<string> } | null = null;
 
@@ -337,6 +345,8 @@ export class IntakeWorkspace {
     this.restoreFailed = null;
     this.cache = null;
     this.changed(true, true);
+    // 戻した資料と決定は、開いた版の計画と同じ（作り直していないことにしない）
+    this.composedAt = this.dataVersion;
   }
 
   /**
@@ -399,6 +409,8 @@ export class IntakeWorkspace {
     if (this.compose.state === "running") return { started: false, startedAt: this.compose.startedAt };
     const startedAt = now();
     this.compose = { state: "running", startedAt, by };
+    // 作り始めたときの資料・決定・読み方・写真の版（このあと変われば、作り直すまで署名を止める。台帳の中-6）
+    const at = this.dataVersion;
     this.changed(false);
     this.composeRun = new Promise((resolve) =>
       setTimeout(() => {
@@ -410,6 +422,7 @@ export class IntakeWorkspace {
             const carried = placeComposedPlan(c.plan);
             if (carried) this.note("info", TEXT.crosswalk.carried(carried));
             this.compose = { state: "done", startedAt, by, plan: c.plan };
+            this.composedAt = at;
           } else this.compose = { state: "failed", startedAt, by, blockers: c.blockers };
         } catch (e) {
           this.compose = { state: "failed", startedAt, by, blockers: [`計画を作る途中で誤りが起きた（${e instanceof Error ? e.name : "誤り"}）`] };
