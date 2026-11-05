@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { approvedReadingVersions, listReadings, loadedOf, readingDir, registerReading } from "../../src/bridge/readings";
+import { approvedReadingVersions, listReadings, loadedOf, readingDir, readingTextShown, registerReading } from "../../src/bridge/readings";
 import { READING_SCHEMA, type ReadingSkill } from "../../src/import/reading";
 import { commitPlan } from "../../src/plan/store";
 import { keyIdOf } from "../../src/share/sign";
@@ -118,5 +118,17 @@ describe("読み方の保管先", () => {
     expect(loaded.filter((x) => x.skill.name === "【架空】癖").map((x) => x.path)).toEqual([mine.path]);
     expect(loaded.find((x) => x.skill.name === "【架空】工場")).toMatchObject({ owner: "f2", skill: { scope: "facility" } });
     expect(loadedOf(list, null).some((x) => x.skill.name === "【架空】癖")).toBe(false);
+  });
+});
+
+describe("AI に本文を渡してよい読み方（台帳の中-4）", () => {
+  it("会社の範囲・自分の担当・今の施設のものだけ。ほかの施設や担当、施設や呼び名が分からないときは渡さない", () => {
+    expect(readingTextShown({ scope: "company", owner: null }, null, null)).toBe(true);
+    expect(readingTextShown({ scope: "person", owner: "【架空】山田" }, "f1", "【架空】山田")).toBe(true);
+    expect(readingTextShown({ scope: "person", owner: "【架空】佐藤" }, "f1", "【架空】山田")).toBe(false);
+    expect(readingTextShown({ scope: "person", owner: "【架空】山田" }, "f1", null)).toBe(false);
+    expect(readingTextShown({ scope: "facility", owner: "f1" }, "f1", null)).toBe(true);
+    expect(readingTextShown({ scope: "facility", owner: "f2" }, "f1", null)).toBe(false);
+    expect(readingTextShown({ scope: "facility", owner: "f1" }, null, null)).toBe(false);
   });
 });

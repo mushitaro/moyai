@@ -2,7 +2,7 @@
 // 実施が無い／終わりの年度が足りない作業は置かずに数える。引いた印は作者 AI、出どころは台帳、決定は案ごとにまとまる。
 import { describe, expect, it } from "vitest";
 import { pendingDecisions } from "../../src/plan/diff";
-import { LEDGER_SOURCE, cycleIdOf, cycleYearsOf, proposeCycles } from "../../src/plan/cycle";
+import { CONVERSATION_SOURCE, LEDGER_SOURCE, cycleIdOf, cycleYearsOf, isLedgerCycle, proposeCycles } from "../../src/plan/cycle";
 import type { Rule } from "../../src/shared/tools";
 import { asset, detail, plan, work } from "./share/fixtures";
 
@@ -28,14 +28,14 @@ describe("周期の案", () => {
     expect(cycleYearsOf(rule("6", ["x"]))).toBe(6);
     for (const bad of [0, 31, 2.5, "五"]) expect(cycleYearsOf(rule(bad as number, ["x"])), String(bad)).toBeNull();
     expect(cycleYearsOf({ ...rule(5, ["x"]), set: { field: "work.attribute", value: 5 } })).toBeNull();
-    const r = proposeCycles(base(), [rule(5, ["押込送風機"]), rule(0, ["誘引通風機"])], { nextId: () => "L1", basis: "公開の台帳" });
+    const r = proposeCycles(base(), [rule(5, ["押込送風機"]), rule(0, ["誘引通風機"])], { nextId: () => "L1", basis: "公開の台帳", fromLedger: true });
     expect(r).toEqual({ ok: false, code: "rule_invalid", ruleIndex: 1 });
   });
 
   it("最後の実施から n 年ごと、終わりの年度（計画のいちばん遅い年度）まで。実施が無い作業と、終わりの年度が足りない作業は置かずに数える", () => {
     const p = base();
     let n = 0;
-    const r = proposeCycles(p, [rule(5, ["押込送風機", "誘引通風機", "空気予熱器"])], { nextId: () => `L${++n}`, basis: "公開の台帳（版 abc1234）・似た施設 6" });
+    const r = proposeCycles(p, [rule(5, ["押込送風機", "誘引通風機", "空気予熱器"])], { nextId: () => `L${++n}`, basis: "公開の台帳（版 abc1234）・似た施設 6", fromLedger: true });
     if (!r.ok) throw new Error(r.code);
     const [c] = r.proposals;
     // 終わりの年度は 2036。w1：最後の実施が 2036 なので、その先は引けない（noHorizon）
@@ -60,11 +60,26 @@ describe("周期の案", () => {
       works: [work("w1", "OVERHAUL", ["a1"])],
       details: [detail("d1", "w1", 2016), detail("d2", "w1", 2021, { planOrActual: "plan" }), detail("d3", "w1", 2026), detail("d4", "w1", 2031, { planOrActual: "plan" })],
     });
-    const r = proposeCycles(p, [rule(5, ["押込送風機"])], { nextId: () => "L9", basis: "公開の台帳" });
+    const r = proposeCycles(p, [rule(5, ["押込送風機"])], { nextId: () => "L9", basis: "公開の台帳", fromLedger: true });
     if (!r.ok) throw new Error(r.code);
     // 最後の実施 2026 → 2031 は計画がもうある。終わりの年度は 2031 なので、それより先は引かない
     expect(r.proposals[0]!.detailKeys).toEqual([]);
-    const r2 = proposeCycles(p, [rule(5, ["押込送風機"])], { nextId: () => "L9", basis: "公開の台帳" });
+    const r2 = proposeCycles(p, [rule(5, ["押込送風機"])], { nextId: () => "L9", basis: "公開の台帳", fromLedger: true });
     expect(r2.ok && r2.plan.details.length).toBe(p.details.length);
+  });
+
+  it("台帳を照らしていない案は、出どころを会話に、作者を会話から写した答えか Claude の決定にする（台帳の中-5 の残り）", () => {
+    const r = proposeCycles(base(), [rule(5, ["誘引通風機"])], { nextId: () => "C1", basis: "利用者が「5 年ごと」と言った", fromLedger: false, author: "ai_relayed_human" });
+    if (!r.ok) throw new Error(r.code);
+    const d = r.plan.details.find((x) => x.detailKey === "cy-C1-w2-2035")!;
+    expect(d).toMatchObject({ author: "ai_relayed_human", sources: [{ file: CONVERSATION_SOURCE }] });
+    expect(isLedgerCycle("C1")).toBe(false);
+    expect(isLedgerCycle("L1")).toBe(true);
+    // 決定のシートでは「会話から写した答え」の決定として並ぶ（人が受けるまで決まらない）
+    expect(pendingDecisions(r.plan, []).find((x) => x.id === "detail:cy-C1-w2-2035")).toMatchObject({ author: "ai_relayed_human" });
+    // 台帳を照らした案は、作者を指定しても Claude の決定で、出どころは台帳
+    const l = proposeCycles(base(), [rule(5, ["誘引通風機"])], { nextId: () => "L1", basis: "台帳", fromLedger: true, author: "ai_relayed_human" });
+    if (!l.ok) throw new Error(l.code);
+    expect(l.plan.details.find((x) => x.detailKey === "cy-L1-w2-2035")).toMatchObject({ author: "ai", sources: [{ file: LEDGER_SOURCE }] });
   });
 });
