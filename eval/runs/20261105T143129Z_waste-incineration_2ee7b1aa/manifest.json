@@ -1,0 +1,38 @@
+{
+  "schema": "moyai.eval.manifest/0",
+  "runId": "20261105T143129Z_waste-incineration_2ee7b1aa",
+  "createdAt": "2026-11-05T14:31:29.726Z",
+  "finishedAt": "2026-11-05T14:35:11.204Z",
+  "status": "done",
+  "stopNote": null,
+  "suite": "waste-incineration",
+  "suiteHash": "93984a33e66bd3e7360fa1de0b93890d9ae8d007edadffc4d865a13ea5caebeb",
+  "split": "all",
+  "rules": null,
+  "perRule": null,
+  "limit": null,
+  "repeat": 3,
+  "cases": 100,
+  "calls": 300,
+  "skill": {
+    "path": "packs/waste-incineration/SKILL.md",
+    "sha256": "2ee7b1aa5c3cc4084040f8c5676c06d964c9095afcf87866a4c13588cbe9a925",
+    "label": "ベースライン",
+    "author": null
+  },
+  "modelRole": "eval",
+  "modelRoleHash": "34bb92a28e1e78ae7f97dcd2530eace9512f1229c2efa96ed2d3e813c4cfed05",
+  "effort": "high",
+  "maxTokens": 16000,
+  "systemHash": "d6fd7abf62f373c4e10906a2ce95fb059999db066b02063e750d6d054f191058",
+  "answerFormatHash": "210515c532205cec407feadab86aa5d4575c615b8fd6571469ffd05f92a93c93",
+  "outbound": {
+    "chars": 75697,
+    "properNounHits": 0,
+    "file": "outbound.txt"
+  },
+  "estimateUsd": 6.69203,
+  "maxUsd": 20,
+  "costUsd": 2.71746,
+  "base": null
+}

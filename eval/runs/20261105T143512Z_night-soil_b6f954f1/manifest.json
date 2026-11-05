@@ -1,0 +1,38 @@
+{
+  "schema": "moyai.eval.manifest/0",
+  "runId": "20261105T143512Z_night-soil_b6f954f1",
+  "createdAt": "2026-11-05T14:35:12.419Z",
+  "finishedAt": "2026-11-05T14:39:10.484Z",
+  "status": "done",
+  "stopNote": null,
+  "suite": "night-soil",
+  "suiteHash": "312ca3e3597d3bb9a41ce5c1d28d6d394c220a68168a58a183d0a292f287a420",
+  "split": "all",
+  "rules": null,
+  "perRule": null,
+  "limit": null,
+  "repeat": 3,
+  "cases": 95,
+  "calls": 285,
+  "skill": {
+    "path": "packs/night-soil/SKILL.md",
+    "sha256": "b6f954f14867fd5336b406763fc34f5b5a862ec845f573d8d0ebcfe324b7ed45",
+    "label": "ベースライン",
+    "author": null
+  },
+  "modelRole": "eval",
+  "modelRoleHash": "34bb92a28e1e78ae7f97dcd2530eace9512f1229c2efa96ed2d3e813c4cfed05",
+  "effort": "high",
+  "maxTokens": 16000,
+  "systemHash": "12c110a4982006441530db932360574de31029cf157a260eac851987503dd5fd",
+  "answerFormatHash": "210515c532205cec407feadab86aa5d4575c615b8fd6571469ffd05f92a93c93",
+  "outbound": {
+    "chars": 65462,
+    "properNounHits": 0,
+    "file": "outbound.txt"
+  },
+  "estimateUsd": 6.340485,
+  "maxUsd": 20,
+  "costUsd": 2.5901189999999974,
+  "base": null
+}

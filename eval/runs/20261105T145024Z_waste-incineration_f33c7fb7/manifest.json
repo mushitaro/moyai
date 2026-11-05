@@ -1,0 +1,38 @@
+{
+  "schema": "moyai.eval.manifest/0",
+  "runId": "20261105T145024Z_waste-incineration_f33c7fb7",
+  "createdAt": "2026-11-05T14:50:24.392Z",
+  "finishedAt": "2026-11-05T14:51:58.109Z",
+  "status": "done",
+  "stopNote": null,
+  "suite": "waste-incineration",
+  "suiteHash": "0e2d11282f93cb6b295b44c4fe51780197af88e296038a540ff64b28b597c0ac",
+  "split": "test",
+  "rules": null,
+  "perRule": null,
+  "limit": null,
+  "repeat": 3,
+  "cases": 50,
+  "calls": 150,
+  "skill": {
+    "path": "eval/drafts/waste-incineration/SKILL.v2-ai.md",
+    "sha256": "f33c7fb776b9627911c1726ef43af42524098ad110f62b747a2ab5dffc70c495",
+    "label": "版 2 の案",
+    "author": "AI"
+  },
+  "modelRole": "eval",
+  "modelRoleHash": "34bb92a28e1e78ae7f97dcd2530eace9512f1229c2efa96ed2d3e813c4cfed05",
+  "effort": "high",
+  "maxTokens": 16000,
+  "systemHash": "4f5b96896f171faa625ce99f0e1cb327f8d2a94c51d6c672c2e45e8122215595",
+  "answerFormatHash": "210515c532205cec407feadab86aa5d4575c615b8fd6571469ffd05f92a93c93",
+  "outbound": {
+    "chars": 41895,
+    "properNounHits": 0,
+    "file": "outbound.txt"
+  },
+  "estimateUsd": 3.363905,
+  "maxUsd": 10,
+  "costUsd": 1.362146,
+  "base": "20261105T144200Z_waste-incineration_2ee7b1aa"
+}

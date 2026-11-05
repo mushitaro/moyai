@@ -112,6 +112,7 @@ async function main(argv: string[]): Promise<void> {
   if (cmd === "ledger") return process.exit(await ledgerCli(rest, { build: BUILD }));
   if (cmd === "keys") return process.exit(await keysCli(rest));
   if (cmd === "send") return process.exit(sendCli());
+  if (cmd === "eval") return process.exit(await (await import("../eval/cli")).evalCli(rest));
   if (cmd === "--version" || cmd === "-v") return say(BUILD);
   if (cmd === undefined || cmd === "--help" || cmd === "-h") return say(HELP);
   fail("bad_args");

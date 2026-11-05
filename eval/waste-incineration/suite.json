@@ -1,0 +1,168 @@
+{
+  "schema": "moyai.eval.suite/0",
+  "name": "waste-incineration",
+  "pack": "waste-incineration",
+  "world": "samples/truth/waste-incineration/fictional-1",
+  "fiscalYearStartMonth": 4,
+  "packSourceUrls": [
+    "https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf",
+    "https://www.env.go.jp/hourei/11/000510.html",
+    "https://laws.e-gov.go.jp/law/346M50000100035",
+    "https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/01.xlsx",
+    "https://www.soumu.go.jp/main_content/000401742.pdf"
+  ],
+  "rules": [
+    {
+      "id": "R01",
+      "name": "周期の欄が空なら推測しない",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R02",
+      "name": "番号の違う機器を名前でまとめない",
+      "graders": [
+        "json",
+        "identity"
+      ]
+    },
+    {
+      "id": "R03",
+      "name": "出典はパックの一覧の中から",
+      "graders": [
+        "json",
+        "source",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R04",
+      "name": "年度の始まりはパックどおり",
+      "graders": [
+        "json",
+        "fiscal_year"
+      ]
+    },
+    {
+      "id": "R05",
+      "name": "記録に無いことは「記録に無い」と言う",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R06",
+      "name": "和暦の年度",
+      "graders": [
+        "json",
+        "fiscal_year"
+      ]
+    },
+    {
+      "id": "R07",
+      "name": "範囲のタグ（系列の範囲）を機器ごとに分ける",
+      "graders": [
+        "json",
+        "identity"
+      ]
+    },
+    {
+      "id": "R08",
+      "name": "凡例に無い記号の意味を推測しない",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    },
+    {
+      "id": "R09",
+      "name": "合計の行を作業にしない",
+      "graders": [
+        "json",
+        "identity",
+        "no_guess"
+      ]
+    },
+    {
+      "id": "R10",
+      "name": "単位の違う工数",
+      "graders": [
+        "json",
+        "no_guess",
+        "not_in_record"
+      ]
+    }
+  ],
+  "counts": {
+    "train": 50,
+    "test": 50,
+    "duplicatesRemoved": 0
+  },
+  "missing": [],
+  "splitNote": "期間で分ける規則は、作業の年度が 2023 年度より前を学習用、2023 年度以後を試験用にした。年度を持たない規則（R03・R08）は、問いの番号 1〜5 を学習用、6〜10 を試験用にした",
+  "testHashes": [
+    "572d248d644c044752ee7124a1a40c1947fa275b2001091ea73ac2839a550ffc",
+    "7286e0cadeb60afa20fb8dfedcfc65a5719d77158057aaf1f8aa92bfe6a6ff9c",
+    "bec3bc420c3ac9b6dbdfa12430b1939e9687f1b3abdadb0f8bf70da005a2ded4",
+    "93f31433817d01cf8387633853109f7b8116ec91f4a0e3e1f834e1679019b79b",
+    "46f5d7be48a73df9bc1a0ebb5b959f200267068f8bd213c1feff5a398906293c",
+    "054ef3cbc8d1a0d5a7f6b3e4d315f8939538d90be956a2ec3e90f705d256da4c",
+    "958dce346053d012aa4a3dbeb797c827f0a17311c2d45b6fef03e57d89395114",
+    "fb62cb14f53df9149fab02dd683aa80830c5649774d6eaded5aaa4bf967906dd",
+    "4a595ccae4276dd15a847ecffdb1694b41839dde2d5a1e38e8a9f4bf9bfa1a5d",
+    "63dbb1ff20a64340fd54b0483754df95c4d6984b6b6a6286fe61dfdef80d5e82",
+    "89ba008141551e8c36687090cce8329c452b52d0914f1fc946e573596486b706",
+    "d698022cc7453a69685712360b67c01c0efdc9da9e2f8ffba3e66b7a5f3b6a57",
+    "28d36fb4fd5f17e11c207e53ced807cd140dc2ee5a54ffd343247a3741d192b5",
+    "2b43f413e470c08e485777ba99b392c5213e9bc0432d9035a721ad60230adfd1",
+    "f6ad75fd07219f636f03e19a9fddd548c29bf28551bc7e0591d7546cb304e326",
+    "b5d1b53c29d2b4ce811535f2a588bcf630d84b1680e209336689765885bf83fc",
+    "229da4eb81934d8d382cb9dd87baf31a4daed73880017433ae71d4cc1e125ed7",
+    "cacc2a4e9ba100e41ecc1fcdeed7e3c1069bd342049fce2aa48a13a89e5aa98c",
+    "df9acc050fd656064fed041997e052e6a0fef0de09aebc2108b79c3cbd868ed4",
+    "7a6b874f05dfe42e15683ae3e9a987b2cbfd8e3879a19dedcaa1e28596abab2d",
+    "bc15d402d7342646bcd5e749ebd1a659ef8a865abe69dbba34b379f8e1da5871",
+    "2f6e7f005acbbbe1f8dc3eafc26ce06b085eb66edc4207ffb28f6d096ec95808",
+    "081744ea596d31236e34b85716634a805a555725740b7cae10c4f197521c843d",
+    "fff4d60872d952920645d02039381d88471330cb73d602c203c46d0e68be9fc2",
+    "fd5d3cd15213f919f14e2ab35a0166db96997ac2302d8fc084c9c7c9ec1966d4",
+    "2d42ce3a6d4b3cc86a1f06a392107175f13e6c7bfaf577508b41f25b11dbff28",
+    "1deb73fd9d42d863c37a20c5a1fed775f0d07622f5bfae7a44521e2d6efe4544",
+    "cfef58150fa46e0d2de0f601741b546ef27f078327ba1a85bf66f0fa91d947c0",
+    "1f8988c22041c91d9e42694bf11faf59828cfecf09adb04562e1244f8450ee75",
+    "7afda4ecb749bc0e0bdc3b1582cc1b15d4d90e5d00c631521f5cdde75461cfb7",
+    "245b69e927c0bffa42b49277358fbb60acd2ab8f01b82cde710aef3c344db203",
+    "3066cf88cc92b9de9a1d497c0f3477aae6256a53ac74428e961716d834d1e73e",
+    "02611325fe9aa2a292706bd63d2441944c96e872b14559bfce1e718052062e57",
+    "00ff4191e22003e3db4684b4e1775a2264a8a66d64fff679dd60098066e7ab8d",
+    "6c04cf621ff9a35df434b97bf85cbf6b1491a1af7e5b49410f782381d4d325c4",
+    "9e335700f766fbc2e1b87488bb31014a30b1afc14b1c64246df74ed583853619",
+    "cec7189f745b69b5133f9bd5c615cd13e15c6ad2e47b6035f41d975d14eba3e1",
+    "e850a99a46e6a619082af444dbd7efa66aeeb60bc9f267f670333cd2ddfd6f7f",
+    "bb315d9bde89c26c491c9da3303f71577521c16fa7b9d4c0cbc5245a7e2d323e",
+    "5e8d595a2fd32bea3c7b1eeba1c3bc5d761bc02bd24b24a19bde3ce405924813",
+    "100ff13b4129ef3f0fdc5b721a6a88fe1432761d80ddc3dab9d64755d13da301",
+    "0fb640925568bcc6b5dc8773a96a48ffada54cbcb95438d9b9029b76ece4e636",
+    "549188ecdac612def183579b6c7f1e544fd9d31fed251051d46086e99f124099",
+    "2ef3319bd7c64fd483fe55f38f0b1744fa1679883b570e02ae8da08b296b6cae",
+    "dd7e231f7a5ab842528ae2c8a39e6d8e8e9c88ebb571254fba91e6ea6f47e389",
+    "f982bee78ab5e7099328b042678653bd11e24e10ed2a2b625f6a6cff7130c7e7",
+    "5603838d6caed4bee76d6766617a1b80d6075a489deb792f8f633ac614f6c468",
+    "b09280a3d3369218155938a5d4bd1631ed83189eb82adb21915cf065bf9afd3a",
+    "82373298d9f4029beee4a0ad6d2e8bd7afba93349879018f9c0db746c8dfb2d8",
+    "2c5480ba7764f671c0afbc83966228bbc33137fa79ee3219f9feb8349954a91d"
+  ],
+  "preambleHash": "5fc87fd97a52c5eb5adb615794605425fc6302326f14c0c28ced79d4a86ba91c",
+  "answerFormatHash": "210515c532205cec407feadab86aa5d4575c615b8fd6571469ffd05f92a93c93",
+  "properNounHits": 0,
+  "generator": {
+    "seed": 20261105,
+    "version": 2
+  }
+}
