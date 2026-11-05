@@ -17,6 +17,8 @@ import { moyaiCssVariables, moyaiTheme } from "../ui/mantine-theme";
 // 検問所と設定は人だけの画面（開いたときに読む）
 const Checkpoint = lazy(() => import("./pages/Checkpoint").then((m) => ({ default: m.Checkpoint })));
 const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
+// 【業種】（設定からのリンク。設備の地図。開いたときに読む）
+const Industries = lazy(() => import("./pages/Industries").then((m) => ({ default: m.Industries })));
 // EXPORT（確定した版の Excel を落とす。開いたときに読む）
 const Export = lazy(() => import("./pages/Export").then((m) => ({ default: m.Export })));
 
@@ -69,6 +71,10 @@ export function App() {
         <SelfTest />
       ) : route.stage === "share" || route.stage === "settings" ? (
         <Suspense fallback={null}>{route.stage === "share" ? <Checkpoint /> : <Settings />}</Suspense>
+      ) : route.stage === "industries" ? (
+        <Suspense fallback={null}>
+          <Industries />
+        </Suspense>
       ) : route.stage === "export" ? (
         <Suspense fallback={null}>
           <Export />

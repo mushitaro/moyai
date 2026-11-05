@@ -3,12 +3,12 @@
 // 主ボタンは「保存」（変えたときだけ）で、見出しの行の右端。輪を作るのは副のボタンから開くダイアログ。
 import { Alert, Button, Code, Container, Group, Modal, NativeSelect, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useCallback, useEffect, useState } from "react";
-import { ROUTES } from "../../shared/routes";
+import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
 import { DevTools } from "../components/DevTools";
 import { KeyCheckDialog, type TrustSig } from "../components/KeyWarn";
 import { useConnection } from "../state/bridge";
-import { HUMAN_TEXT } from "../text";
+import { HUMAN_TEXT, TEXT } from "../text";
 
 const T = HUMAN_TEXT.settings;
 
@@ -159,6 +159,9 @@ export function Settings() {
       <Group justify="space-between" align="center" mb="md">
         <Group gap="sm">
           <Title order={2}>{T.title}</Title>
+          <a className="moyai-inline-act" href={APP_PAGES.industries} data-testid="industries-link">
+            {TEXT.industries.link}
+          </a>
         </Group>
         <Group gap="sm">
           <Button variant="default" onClick={() => setCreateOpen(true)} disabled={!s} data-testid="ring-create-open">
