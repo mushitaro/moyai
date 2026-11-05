@@ -241,8 +241,8 @@
       { "id": "same-fdf", "text": "「押込送風機」と「FDF」は同じ押込送風機", "kind": "sameAsset", "names": ["押込送風機", "FDF"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 23）。R6「１号 FDF」" },
       { "id": "same-saf", "text": "「二次送風機」と「SAF」は同じ二次送風機", "kind": "sameAsset", "names": ["二次送風機", "SAF"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 24）" },
       { "id": "same-haihanshutsu", "text": "「灰搬出CV」と「ﾊｲﾊﾝｼｭﾂ」は同じ灰搬出コンベヤ", "kind": "sameAsset", "names": ["灰搬出CV", "ﾊｲﾊﾝｼｭﾂ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 25）" },
-      { "id": "same-higoshi", "text": "「火格子」と「ストーカ」は同じ火格子", "kind": "sameAsset", "names": ["火格子", "ストーカ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 26）。乾燥段・燃焼段・後燃焼段は作業の中身で分かれる" },
-      { "id": "same-turbine", "text": "「タービン」と「ST」は同じ蒸気タービン", "kind": "sameAsset", "names": ["タービン", "ST"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 27）" }
+      { "id": "same-gomicrane-short", "text": "「クレーン」だけの書き方は「ごみクレーン」と同じ機器", "kind": "sameAsset", "names": ["ごみクレーン", "クレーン"], "author": "human", "by": "担当者", "reason": "担当者の答え：「クレーン」「ｸﾚｰﾝ」だけはごみクレーン（1・2 号機）。灰クレーンは必ず「灰ｸﾚｰﾝ」「灰クレーン」「ﾊｲｸﾚｰﾝ」、ホイストは「ﾎｲｽﾄ」と書く。ただし「ｸﾚｰﾝ制御盤」はごみクレーン制御装置で別の機器、「性能検査（クレーン則）」のクレーンは作業の名前の一部" },
+      { "id": "same-bfp-short", "text": "「給水P」だけの書き方は「ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ」と同じ機器", "kind": "sameAsset", "names": ["ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ", "給水P"], "author": "human", "by": "担当者", "reason": "担当者の答え：「給水P」「給水ポンプ」だけはボイラ給水ポンプ。脱気器給水ポンプは必ず「脱気器給水P」か「ﾀﾞｯｷｷｷｭｳｽｲ」と書く" }
     ]
   }
 ]

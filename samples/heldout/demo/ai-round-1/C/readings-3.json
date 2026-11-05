@@ -1,0 +1,248 @@
+[
+  {
+    "schema": "moyai.reading/0",
+    "name": "【架空】ほたる川CCの読み方",
+    "scope": "facility",
+    "rules": [
+      {
+        "id": "nippo-no-exclude",
+        "text": "作業日報の「No.」は頁ごとの通し番号で、読まない列",
+        "kind": "columnRole",
+        "column": "No.",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "見本の行で 1・2・3 と頁ごとに振り直されていて、機器にも作業にも結びつかない",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-asset",
+        "text": "作業日報の「号炉・系統・機器・作業内容」を機器の名前として読む",
+        "kind": "columnRole",
+        "column": "号炉・系統・機器・作業内容",
+        "role": "assetRef",
+        "author": "ai",
+        "reason": "担当者によると、1 つのセルにだいたい「号炉・号機」「機器」「作業」の順で書いてある（順番は書く人で違う）。星取表の行は機器なので、この列を機器の欄とする",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-work",
+        "text": "作業日報の「号炉・系統・機器・作業内容」を作業の名前としても読む",
+        "kind": "columnRole",
+        "column": "号炉・系統・機器・作業内容",
+        "role": "workName",
+        "author": "ai",
+        "reason": "1 回目の読み直しで、機器の欄だけを置いた表が「作業の名前の欄が読めていない」で止まった。作業の名前もこのセルにしか無い（担当者の答え 2）",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-contractor",
+        "text": "作業日報の「施工業者」は備考として読む",
+        "kind": "columnRole",
+        "column": "施工業者",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「(株)架空運転管理」「常駐（運転管理）」のような業者の名前で、計画の値ではないが根拠の文には残したい",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-tobi",
+        "text": "作業日報の「鳶工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "鳶工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数の和が「人工計」と合い、担当者も「職種別の人数は人工計に入っている」と答えた。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-kikai",
+        "text": "作業日報の「機械工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "機械工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数は人工計に入っている（担当者）。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-yosetsu",
+        "text": "作業日報の「溶接工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "溶接工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数は人工計に入っている（担当者）。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-denko",
+        "text": "作業日報の「電工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "電工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数は人工計に入っている（担当者）。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-hoon",
+        "text": "作業日報の「保温工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "保温工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数は人工計に入っている（担当者）。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-sagyoin",
+        "text": "作業日報の「作業員」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "作業員",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数は人工計に入っている（担当者）。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-effort",
+        "text": "作業日報の「人工計」を工数として読む",
+        "kind": "columnRole",
+        "column": "人工計",
+        "role": "effort",
+        "author": "ai",
+        "reason": "職種別の人数を足した列。単位は nippo-effort-unit で置く",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-effort-unit",
+        "text": "作業日報の「人工計」は、1 人が 1 日入って 1 人工の人・日として読む",
+        "kind": "effortUnit",
+        "column": "人工計",
+        "unit": "manDays",
+        "author": "human",
+        "by": "担当者",
+        "reason": "担当者の答え：1 人が 1 日入って 1 人工。人工計はその日に入った人数をそのまま足していて、半日の作業でも 0.5 にはしない。何日かにまたがる作業は毎日の頁の人工計を足す",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-worktime",
+        "text": "作業日報の「作業時間」は備考として読む",
+        "kind": "columnRole",
+        "column": "作業時間",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「8:30-17:00」「13:00～17:00」のような時刻の幅で、日付でも工数の数でもない（人工計は半日でも 1 と数える）。根拠の文に残す",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-remark",
+        "text": "作業日報の「備考」は備考として読む",
+        "kind": "columnRole",
+        "column": "備考",
+        "role": "remark",
+        "author": "ai",
+        "reason": "見本は「高所作業」。担当者によると「前日から継続」と書くこともある。根拠の文に添える",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-safety-note",
+        "text": "作業日報の「安全・特記事項」の行は注記として読む",
+        "kind": "rowRole",
+        "match": "安全・特記事項",
+        "role": "note",
+        "author": "ai",
+        "reason": "頁の下の記入欄で、中身は「KY 活動実施。」「TBM 実施。」「熱中症対策（WBGT 確認）。」など。作業の行ではなく、1 回目の読み直しで D19・D39 が未解決に残った"
+      },
+      {
+        "id": "order-method",
+        "text": "発注台帳の「契約方式」は備考として読む",
+        "kind": "columnRole",
+        "column": "契約方式",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「一般競争入札（総合評価）」「随意契約（特命）」などで、計画の値ではないが、誰がどう請けたかの根拠になる",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-party",
+        "text": "発注台帳の「契約の相手方」は備考として読む",
+        "kind": "columnRole",
+        "column": "契約の相手方",
+        "role": "remark",
+        "author": "ai",
+        "reason": "請けた業者の名前。根拠の文に添える",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-estimate-exclude",
+        "text": "発注台帳の「予定価格」は読まない列",
+        "kind": "columnRole",
+        "column": "予定価格",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "契約の前の見込みの額で、行われた作業を表さない",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-amount",
+        "text": "発注台帳の「契約金額」は備考として読む",
+        "kind": "columnRole",
+        "column": "契約金額",
+        "role": "remark",
+        "author": "ai",
+        "reason": "計画の値ではないが、作業の規模の手がかりとして根拠の文に残す。単価契約では予定の総額（担当者）",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-paid",
+        "text": "発注台帳の「支払額」は備考として読む",
+        "kind": "columnRole",
+        "column": "支払額",
+        "role": "remark",
+        "author": "ai",
+        "reason": "1 回目は契約金額と同じ額とみて外したが、担当者によると単価契約（消石灰購入など）では実際に使った分で、契約金額と違う。根拠の文に残す",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-section",
+        "text": "発注台帳の「所管」は備考として読む",
+        "kind": "columnRole",
+        "column": "所管",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「施設係」「保全係」「管理係」のような係の名前。根拠の文に添える",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      { "id": "same-jyuhen-tokko", "text": "「受変電」と「特高」は同じ受変電設備", "kind": "sameAsset", "names": ["受変電", "特高"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 1）" },
+      { "id": "same-bunseki", "text": "「排ガス分析計」と「ﾌﾞﾝｾｷｹｲ」は同じ排ガス分析計", "kind": "sameAsset", "names": ["排ガス分析計", "ﾌﾞﾝｾｷｹｲ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 2）" },
+      { "id": "same-rakujin", "text": "「落じんコンベヤ」と「落塵CV」は同じ落じんコンベヤ", "kind": "sameAsset", "names": ["落じんコンベヤ", "落塵CV"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 3）。R3「１号落塵CV」" },
+      { "id": "same-rakujin-kana", "text": "「落じんコンベヤ」と「ﾗｸｼﾞﾝｺﾝﾍﾞﾔ」は同じ落じんコンベヤ", "kind": "sameAsset", "names": ["落じんコンベヤ", "ﾗｸｼﾞﾝｺﾝﾍﾞﾔ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 3）。R4「#2ﾗｸｼﾞﾝｺﾝﾍﾞﾔ」・R7「ﾗｸｼﾞﾝｺﾝﾍﾞﾔ（１号炉）」" },
+      { "id": "same-idf", "text": "「誘引ﾌｧﾝ」と「IDF」は同じ誘引通風機", "kind": "sameAsset", "names": ["誘引ﾌｧﾝ", "IDF"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 4）。R6「#1 誘引ﾌｧﾝ」・R5「１号IDF」" },
+      { "id": "same-dakki", "text": "「脱気器給水P」と「ﾀﾞｯｷｷｷｭｳｽｲ」は同じ脱気器給水ポンプ", "kind": "sameAsset", "names": ["脱気器給水P", "ﾀﾞｯｷｷｷｭｳｽｲ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 5）" },
+      { "id": "same-gomicrane", "text": "「ごみクレーン」と「ｺﾞﾐｸﾚｰﾝ」は同じごみクレーン", "kind": "sameAsset", "names": ["ごみクレーン", "ｺﾞﾐｸﾚｰﾝ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 6）。R5「ｺﾞﾐｸﾚｰﾝ　1号機」。発注台帳の件名の「ごみクレーン」とも同じ" },
+      { "id": "same-haicrane", "text": "「灰クレーン」と「ﾊｲｸﾚｰﾝ」は同じ灰クレーン", "kind": "sameAsset", "names": ["灰クレーン", "ﾊｲｸﾚｰﾝ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 7）" },
+      { "id": "same-tonyu", "text": "「ごみ投入扉」と「投入扉」は同じごみ投入扉", "kind": "sameAsset", "names": ["ごみ投入扉", "投入扉"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 8）。1〜6 号機があり、号機ごとに別の扉" },
+      { "id": "same-tonyu-kana", "text": "「ごみ投入扉」と「ﾄｳﾆｭｳﾄﾋﾞﾗ」は同じごみ投入扉", "kind": "sameAsset", "names": ["ごみ投入扉", "ﾄｳﾆｭｳﾄﾋﾞﾗ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 8）。R6「—(1) ﾄｳﾆｭｳﾄﾋﾞﾗ」" },
+      { "id": "same-baijin", "text": "「ばいじん計」と「ﾊﾞｲｼﾞﾝｹｲ」は同じばいじん濃度計", "kind": "sameAsset", "names": ["ばいじん計", "ﾊﾞｲｼﾞﾝｹｲ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 9）。R5 の 4/5 は同じ日に両方の書き方がある" },
+      { "id": "same-bfp", "text": "「ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ」と「BFP」は同じボイラ給水ポンプ", "kind": "sameAsset", "names": ["ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ", "BFP"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 10）。R7「ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ（２号№1）」・「BFP（１号炉(2)）」" },
+      { "id": "same-yosui", "text": "「プラント用水P」と「ﾖｳｽｲP」は同じプラント用水ポンプ", "kind": "sameAsset", "names": ["プラント用水P", "ﾖｳｽｲP"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 11）。R4「共ﾖｳｽｲP　№1」。1・2 号機の 2 台" },
+      { "id": "same-hihai", "text": "「飛灰CV」と「ﾋﾊｲｺﾝﾍﾞﾔ」は同じ飛灰搬送コンベヤ", "kind": "sameAsset", "names": ["飛灰CV", "ﾋﾊｲｺﾝﾍﾞﾔ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 12）" },
+      { "id": "same-boilerhai", "text": "「ボイラ灰CV」と「ﾎﾞｲﾗﾊｲ」は同じボイラ灰搬送コンベヤ", "kind": "sameAsset", "names": ["ボイラ灰CV", "ﾎﾞｲﾗﾊｲ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 13）。ボイラ本体ではない" },
+      { "id": "same-reikyaku", "text": "「機器冷却水ポンプ」と「冷却水P」は同じ機器冷却水ポンプ", "kind": "sameAsset", "names": ["機器冷却水ポンプ", "冷却水P"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 14）。R4「冷却水P　２号機」" },
+      { "id": "same-keiso", "text": "「計装コンプ」と「ｹｲｿｳｴｱ」は同じ計装用空気圧縮機", "kind": "sameAsset", "names": ["計装コンプ", "ｹｲｿｳｴｱ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 15）" },
+      { "id": "same-zatsuyo", "text": "「雑用コンプ」と「ｻﾞﾂﾖｳｴｱ」は同じ雑用空気圧縮機", "kind": "sameAsset", "names": ["雑用コンプ", "ｻﾞﾂﾖｳｴｱ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 16）" },
+      { "id": "same-shosekkai", "text": "「消石灰」と「共通消石灰」は同じ消石灰供給装置", "kind": "sameAsset", "names": ["消石灰", "共通消石灰"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 17）。両炉で共通の設備。ただし消石灰のブロワは炉ごとに 1 台ずつ" },
+      { "id": "same-zentai", "text": "「全体」と「施設全体」は同じ施設全体", "kind": "sameAsset", "names": ["全体", "施設全体"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 18）。精密機能検査など" },
+      { "id": "same-deiriguchi", "text": "「出入口扉」と「ﾌﾟﾗｯﾄﾎｰﾑ扉」は同じプラットホーム出入口扉", "kind": "sameAsset", "names": ["出入口扉", "ﾌﾟﾗｯﾄﾎｰﾑ扉"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 19）。R6「共通2号機 ﾌﾟﾗｯﾄﾎｰﾑ扉」" },
+      { "id": "same-fukusui", "text": "「復水P」と「ﾌｸｽｲﾎﾟﾝﾌﾟ」は同じ復水ポンプ", "kind": "sameAsset", "names": ["復水P", "ﾌｸｽｲﾎﾟﾝﾌﾟ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 20）。R3「ﾌｸｽｲﾎﾟﾝﾌﾟ　A号機」は 1 号機" },
+      { "id": "same-shokyakuro", "text": "「焼却炉」と「ｼｮｳｷｬｸﾛ」は同じ焼却炉", "kind": "sameAsset", "names": ["焼却炉", "ｼｮｳｷｬｸﾛ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 21）。本体・耐火物" },
+      { "id": "same-kasseitan", "text": "「活性炭供給」と「ｶｯｾｲﾀﾝ」は同じ活性炭供給装置", "kind": "sameAsset", "names": ["活性炭供給", "ｶｯｾｲﾀﾝ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 22）" },
+      { "id": "same-fdf", "text": "「押込送風機」と「FDF」は同じ押込送風機", "kind": "sameAsset", "names": ["押込送風機", "FDF"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 23）。R6「１号 FDF」" },
+      { "id": "same-saf", "text": "「二次送風機」と「SAF」は同じ二次送風機", "kind": "sameAsset", "names": ["二次送風機", "SAF"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 24）" },
+      { "id": "same-haihanshutsu", "text": "「灰搬出CV」と「ﾊｲﾊﾝｼｭﾂ」は同じ灰搬出コンベヤ", "kind": "sameAsset", "names": ["灰搬出CV", "ﾊｲﾊﾝｼｭﾂ"], "author": "human", "by": "担当者", "reason": "担当者が挙げた同じ機器の呼び名（よく出る順の 25）" },
+      { "id": "same-gomicrane-short", "text": "「クレーン」だけの書き方は「ごみクレーン」と同じ機器", "kind": "sameAsset", "names": ["ごみクレーン", "クレーン"], "author": "human", "by": "担当者", "reason": "担当者の答え：「クレーン」「ｸﾚｰﾝ」だけはごみクレーン（1・2 号機）。灰クレーンは必ず「灰ｸﾚｰﾝ」「灰クレーン」「ﾊｲｸﾚｰﾝ」、ホイストは「ﾎｲｽﾄ」と書く。ただし「ｸﾚｰﾝ制御盤」はごみクレーン制御装置で別の機器、「性能検査（クレーン則）」のクレーンは作業の名前の一部" },
+      { "id": "same-bfp-short", "text": "「給水P」だけの書き方は「ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ」と同じ機器", "kind": "sameAsset", "names": ["ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ", "給水P"], "author": "human", "by": "担当者", "reason": "担当者の答え：「給水P」「給水ポンプ」だけはボイラ給水ポンプ。脱気器給水ポンプは必ず「脱気器給水P」か「ﾀﾞｯｷｷｷｭｳｽｲ」と書く" }
+    ]
+  }
+]

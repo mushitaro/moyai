@@ -1,17 +1,17 @@
 {
  "schema": "moyai.demo.result/0",
  "reader": {
-  "commit": "b93b0bdab8d8e85e8f87c6da00751a57ac568e80",
+  "commit": "b051a787a63998dd98315f2d161992460ed0ea20",
   "src": "f9c0d596c657a5647ef86059c48a4b4040709308",
   "dirty": false
  },
- "measuredAt": "2026-11-05T08:25:02.184Z",
+ "measuredAt": "2026-11-05T14:34:35.973Z",
  "facilities": [
   {
    "key": "A",
    "label": "fictional-1（開発用の工場の資料）",
    "rules": 0,
-   "seconds": 89.8,
+   "seconds": 47.9,
    "dropped": {},
    "result": {
     "set": "calibrate-fictional-1",
@@ -629,7 +629,7 @@
    "key": "B",
    "label": "fictional-2（開発用の工場の資料）",
    "rules": 0,
-   "seconds": 0.4,
+   "seconds": 0.2,
    "dropped": {},
    "result": {
     "set": "calibrate-fictional-2",
@@ -732,7 +732,7 @@
    "key": "C",
    "label": "ほたる川（工場 v2。作業日報 5 冊と発注台帳、星取表なし）",
    "rules": 50,
-   "seconds": 84.8,
+   "seconds": 49.7,
    "dropped": {
     "契約の行の結び（annual）": 2434,
     "契約の行の結び（bundle）": 1082
