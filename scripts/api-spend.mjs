@@ -65,8 +65,16 @@ export function runKeys(run) {
  * @param {string|undefined} currentKey いま走っている試み（数えない）
  */
 export function pendingCiEstimate(runs, synced, currentKey, perRunUsd) {
-  const pending = runs.flatMap(runKeys).filter((k) => !synced.has(k) && k !== String(currentKey ?? ""));
-  return { count: pending.length, usd: pending.length * perRunUsd };
+  // API を呼ばなかったと名前で分かる回（artifact の名前が audit-result-uncalled）は $0 と見る（台帳の CI-1b。積み上がらないように）
+  const keys = (onlyUncalled) => runs.filter((r) => !!r.uncalled === onlyUncalled).flatMap(runKeys).filter((k) => !synced.has(k) && k !== String(currentKey ?? ""));
+  const called = keys(false);
+  const uncalled = keys(true);
+  return { count: called.length + uncalled.length, usd: called.length * perRunUsd };
+}
+
+/** 監査の回の artifact の名前から、API を呼ばなかった回か（audit-result-uncalled） */
+export function uncalledByArtifacts(names) {
+  return names.includes("audit-result-uncalled") && !names.includes("audit-result-called");
 }
 
 /**

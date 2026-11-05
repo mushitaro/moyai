@@ -24,7 +24,15 @@ for (const run of runs.sort((a, b) => a.databaseId - b.databaseId)) {
     if (key === keys[keys.length - 1]) {
       const dir = mkdtempSync(join(tmpdir(), "moyai-audit-"));
       try {
-        execFileSync("gh", ["run", "download", String(run.databaseId), "--repo", repo, "-n", "audit-result", "-D", dir], { stdio: "ignore" });
+        // artifact の名前は、呼んだかで audit-result-called・audit-result-uncalled（前は audit-result）。どれか 1 つだけを取る
+        for (const name of ["audit-result-called", "audit-result-uncalled", "audit-result"]) {
+          try {
+            execFileSync("gh", ["run", "download", String(run.databaseId), "--repo", repo, "-n", name, "-D", dir], { stdio: "ignore" });
+            break;
+          } catch {
+            /* その名前の artifact は無い */
+          }
+        }
         const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
         // 1 つの試みが上げる記録は 1 つ。2 つ以上あれば、どれが本物か分からないので記録が無い扱い
         if (files.length === 1) artifact = JSON.parse(readFileSync(join(dir, files[0]), "utf8"));
