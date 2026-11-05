@@ -162,6 +162,10 @@ body {
   letter-spacing: 0.1em;
   color: var(--shu-text);
 }
+/* 見るだけで開いたとき（古い版・ほかの鍵が受け取った頼み・取り下げられた頼み）は朱を使わず、淡い字（Wire の B1） */
+.moyai-merge-state[data-view-only="true"] {
+  color: var(--text-3);
+}
 .moyai-merge-head-end {
   margin-left: auto;
   display: flex;
@@ -190,6 +194,30 @@ button.moyai-merge-link {
 }
 .moyai-merge-link:hover {
   color: var(--text);
+}
+/* 行の中のボタン（指紋を読み合わせる・知らせる など）：下線を持たず、言葉の前にボタンと同じ短い縦の罫（Wire の B1） */
+.moyai-inline-act {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--sp-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+.moyai-inline-act::before {
+  content: "";
+  flex: none;
+  width: 1px;
+  height: 10px;
+  margin-right: var(--sp-3);
+  background: var(--line-strong);
+}
+.moyai-inline-act:hover {
+  color: var(--text-2);
 }
 /* シートのタブ（絵は Review.dc.html、Version 35）：高さ 36px、字は 12px・字間 0.1em・淡い字（ホバーで墨）。選んだシートは墨と太さ 500 で、下線なし。
    項目の間は、切り替えと同じ短い縦の罫（1×10px の --line-strong を上下の真ん中に、字との間は 12px）。最初の項目の前と「重ねた資料」の札のすぐ後には付けない。
@@ -685,4 +713,42 @@ button.moyai-top-mk[data-kind="signed"] {
 }
 .moyai-template-role:hover {
   color: var(--text);
+}
+
+/* 様式の選び（EXPORT。Wire、Export.dc.html V48）：縦の並び。選んだ行は左の細い線と太字。右に状態（承認済み・下書き・書き出し済み） */
+.moyai-template-choices {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 640px;
+}
+.moyai-template-choice {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: 6px 0 6px 12px;
+  border: 0;
+  border-left: 1px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.moyai-template-choice:hover {
+  color: var(--text);
+}
+.moyai-template-choice[data-active="true"] {
+  border-left-color: var(--text);
+  color: var(--text);
+  font-weight: 700;
+}
+.moyai-template-choice-state {
+  font-weight: 400;
+  white-space: nowrap;
+}
+.moyai-template-choices .moyai-inline-act {
+  margin: 6px 0 0 0;
+  align-self: flex-start;
 }

@@ -66,6 +66,36 @@ describe("確定：版と差分レポート", () => {
     expect(r3).toEqual({ ok: false, reason: "acceptanceUnknown" });
   });
 
+  it("読み方の決定（年度の読み方など）も、AI の答えは人が受けるまで確定しない。決まり（コード）と人の答えは聞かない。答えが変われば聞き直す", async () => {
+    const rd = (questionId: string, author: Plan["details"][number]["author"], answer = "暦年") => ({ questionId, kind: "yearKind", question: "年の列は年度か暦年か", answer, author, reason: "見出しに「年」とある", rows: 12 });
+    const p: Plan = { ...plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "OVERHAUL", ["a1"])], details: [detail("d1", "w1", 2016)] }), readingDecisions: [rd("q-ai", "ai"), rd("q-rule", "rule_code"), rd("q-human", "human")] };
+    const ds = aiDecisions(p);
+    expect(ds.map((d) => d.id)).toEqual(["reading:q-ai"]);
+    expect(ds[0]).toMatchObject({ kind: "reading", target: "年の列は年度か暦年か", value: "暦年" });
+    const rt = root();
+    expect(await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: [], basedOn: null, signer: SIGNER, client: "t" })).toMatchObject({ ok: false, reason: "pendingDecisions", pending: 1 });
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "確定の試験", acceptances: [{ id: ds[0]!.id, hash: ds[0]!.hash, reason: "見出しを見て暦年でよい" }], basedOn: null, signer: SIGNER, client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    const accepted = (await readHistory(rt, "plan-test")).accepted;
+    expect(pendingDecisions(v1.record.plan, accepted)).toHaveLength(0);
+    const changed: Plan = { ...v1.record.plan, readingDecisions: [rd("q-ai", "ai", "年度")] };
+    expect(pendingDecisions(changed, accepted).map((d) => d.id)).toEqual(["reading:q-ai"]);
+  });
+
+  it("読み方の決定で作者が決まった明細は、明細の行に出さず決定に付く。効く明細が増えれば、また受けていない決定になる", () => {
+    const rd = { questionId: "q-link", kind: "workLink", question: "この作業日報の行は星取表のどの印か", answer: "同じ作業", author: "ai_relayed_human" as const, reason: "利用者がチャットで答えた", rows: 2, details: ["d2"], where: "日報.csv" };
+    const p: Plan = { ...aiPlan(), readingDecisions: [rd] };
+    const ds = aiDecisions(p);
+    expect(ds.map((d) => d.id).sort()).toEqual(["item:a2", "reading:q-link"]);
+    expect(ds.find((d) => d.kind === "reading")).toMatchObject({ count: 1, where: "日報.csv" });
+    const accepted = ds.map((d) => ({ id: d.id, hash: d.hash }));
+    expect(pendingDecisions(p, accepted)).toEqual([]);
+    const more: Plan = { ...p, readingDecisions: [{ ...rd, details: ["d2", "d3"] }] };
+    expect(pendingDecisions(more, accepted).map((d) => d.id)).toEqual(["reading:q-link"]);
+    // 明細の数で言えない決定（年度の読み方など）は、数を出さない
+    expect(aiDecisions({ ...p, readingDecisions: [{ ...rd, details: [] }] }).find((d) => d.kind === "reading")?.count).toBeNull();
+  });
+
   it("版は足すだけ：版のファイルを足し、差分レポートを書き、戻すのは前の版を指す新しい記録", async () => {
     const rt = root();
     const p = aiPlan();
@@ -215,6 +245,38 @@ describe("版の署名（docs/plan.md §2.18.2）", () => {
     const h = await readHistory(rt, "plan-test");
     expect(h.versions[0]).toMatchObject({ legacy: true, problem: null, signatures: [] });
   });
+
+  it("前の形の版（v0）は先頭に続く部分だけ。署名のある版のあとに置いた v0 は鎖が合わない版で、最新にも基底にもならず、受けた決定にも数えない", async () => {
+    const { rt, d } = await twoVersions();
+    const tail = {
+      schema: VERSION_SCHEMA_V0, planId: "plan-test", version: 3, kind: "confirm", revertOf: null, at: "2026-11-05T00:00:00.000Z", author: "human", client: "t",
+      reason: "署名なしで足した版", acceptances: [{ id: "x", hash: "0".repeat(16), reason: "勝手に受けた", author: "human" }], summary: { added: 0, removed: 0, changed: 0, same: 0 }, prev: null,
+      plan: { ...aiPlan(), version: 3 },
+    };
+    writeFileSync(join(d, "versions", "000003.json"), JSON.stringify(tail));
+    const h = await readHistory(rt, "plan-test");
+    expect(h.versions.map((v) => [v.version, v.legacy, v.problem])).toEqual([[1, false, null], [2, false, null], [3, true, "chain"]]);
+    expect(h.accepted.some((a) => a.id === "x")).toBe(false);
+    // 鎖が合わない版の上には重ねない
+    expect(await commitPlan({ root: rt, plan: aiPlan(), reason: "4 版目", acceptances: [], basedOn: 3, signer: SIGNER, client: "t" })).toEqual({ ok: false, reason: "historyBroken" });
+  });
+
+  it("鎖は親の中身と作った署名だけを持つ：親にあとから承認が足されても（同期で遅れて届いても）、次の版の鎖は切れない", async () => {
+    const { rt, d } = await twoVersions();
+    const h = await readHistory(rt, "plan-test");
+    const rec2 = JSON.parse(readFileSync(join(d, "versions", "000002.json"), "utf8"));
+    expect(rec2.parent.signatures).toHaveLength(1);
+    // 1 版目に、2 版目を作ったあとで承認が届く
+    const boss = otherSigner("【架空】課長");
+    const late = signStatement({ planId: "plan-test", version: 1, contentHash: h.versions[0]!.contentHash, role: "approve", by: boss.by, at: "2026-11-05T05:00:00.000Z", reason: "遅れて届いた承認" }, boss.pair);
+    writeFileSync(join(d, "signatures", signatureFileName(1, "approve", late.statement.key)), JSON.stringify(late));
+    const h2 = await readHistory(rt, "plan-test");
+    expect(h2.versions.map((v) => v.problem)).toEqual([null, null]);
+    expect(h2.versions[0]!.signatures.map((x) => x.role).sort()).toEqual(["approve", "confirm"]);
+    // 作った署名を消すと、鎖は切れる
+    rmSync(join(d, "signatures", signatureFileName(1, "confirm", keyIdOf(SIGNER.pair.pub))));
+    expect((await readHistory(rt, "plan-test")).versions.map((v) => v.problem)).toEqual(["unsigned", "chain"]);
+  });
 });
 
 describe("渡す・承認・差し戻し（docs/plan.md §2.18.2・docs/screens.md 3.4）", () => {
@@ -227,8 +289,9 @@ describe("渡す・承認・差し戻し（docs/plan.md §2.18.2・docs/screens.
     if (!v1.ok) throw new Error(v1.reason);
     const h1 = await readHistory(rt, "plan-test");
     expect(h1.versions[0]).toMatchObject({ problem: null, signatures: [{ role: "edit", by: SIGNER.by }] });
-    // 自分の版は自分で承認できない
+    // 自分の版は自分で承認できない。同じ呼び名の 2 つ目の鍵でも同じ
     expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: SIGNER })).toEqual({ ok: false, reason: "selfApprove" });
+    expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: otherSigner(SIGNER.by) })).toEqual({ ok: false, reason: "selfApprove" });
     const boss = otherSigner("【架空】課長");
     // 差し戻しは理由が要る
     expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "return", reason: " ", signer: boss })).toEqual({ ok: false, reason: "reasonEmpty" });
@@ -236,10 +299,10 @@ describe("渡す・承認・差し戻し（docs/plan.md §2.18.2・docs/screens.
     const h2 = await readHistory(rt, "plan-test");
     expect(h2.versions[0]!.signatures.map((x) => [x.role, x.by]).sort()).toEqual([["approve", "【架空】課長"], ["edit", SIGNER.by]]);
     expect(h2.versions[0]!.problem).toBeNull();
-    // 次の版は、承認の署名まで含めた親の鎖を持つ。そのあとは、前の版には足せない
+    // 次の版の鎖は、親を作った署名だけを持つ（承認は入れない）。そのあとは、前の版には足せない
     const v2 = await commitPlan({ root: rt, plan: v1.record.plan, reason: "2 版目", acceptances: [], basedOn: 1, signer: SIGNER, client: "t" });
     if (!v2.ok) throw new Error(v2.reason);
-    expect(v2.record.parent!.signatures).toHaveLength(2);
+    expect(v2.record.parent!.signatures).toHaveLength(1);
     expect((await readHistory(rt, "plan-test")).versions.every((v) => v.problem === null)).toBe(true);
     expect(await signLatest({ root: rt, planId: "plan-test", version: 1, role: "approve", reason: "", signer: otherSigner() })).toEqual({ ok: false, reason: "notLatest" });
   });

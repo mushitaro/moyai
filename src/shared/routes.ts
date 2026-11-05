@@ -28,8 +28,16 @@ export const HUMAN_ACTIONS = [
   "comments_list",
   // 承認：いちばん新しい版に、承認か差し戻しの署名を足す（docs/screens.md 3.2 の下の帯）
   "plan_sign",
+  // 頼みの受け取り（メールのリンクを開いた人の鍵で署名）と、頼み直す（監査 B1。運営者の決定「マジックリンクで鎖をつなぐ」）
+  "request_receive",
+  "request_renew",
   // EXPORT：確定した版の Excel（人が見る様式・差分レポート）を、人が画面で落とす（docs/screens.md 3.5）
   "plan_file_read",
+  // 様式で書き出す（3C：様式と写し方は保管先の共有フォルダ、書き出した Excel に人が署名する）
+  "templates_read",
+  "template_save",
+  "export_sign",
+  "export_file_read",
   // 人の鍵（版の署名。§2.18.2）：自分の鍵を作る・ほかの人の鍵を確認済みにする
   "person_key_create",
   "person_key_confirm",
@@ -42,6 +50,9 @@ export const HUMAN_ACTIONS = [
   "checkpoint_open_text",
   "checkpoint_send",
   "ring_verify",
+  // 輪の仲間の鍵を、指紋を読み合わせて確認済みにする・変わった輪の決まりを受け入れる（受け取った束の行で。監査 D1）
+  "ring_member_confirm",
+  "ring_rules_accept",
   // 公開の台帳へ出す（§2.8。運営者の決定 2026-11-04「MOYAI が出す」）：PR を出すのは人がボタンを押したときだけ。通信は §2.12 の例外
   "ledger_preview",
   "ledger_send",
@@ -104,8 +115,14 @@ export const ROUTES = {
   commentAdd: human("/human/comment-add", "comment_add", 16 * 1024, "計画にコメントを足す（星取表の行と、この PC の呼び名を添えて、保管先に置く。署名はしない）"),
   commentsList: human("/human/comments-list", "comments_list", 16 * 1024, "計画のコメントを古い順に読む（MERGE の横の板の「コメント」）"),
   planVersionRead: human("/human/plan-version-read", "plan_version_read", 16 * 1024, "確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる）"),
-  planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える"),
+  planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える（頼みを受け取った鍵だけ）"),
+  requestReceive: human("/human/request-receive", "request_receive", 16 * 1024, "メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ）"),
+  requestRenew: human("/human/request-renew", "request_renew", 16 * 1024, "頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する"),
   planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
+  templatesRead: human("/human/templates-read", "templates_read", 16 * 1024, "保管先の共有フォルダの様式と写し方（列の役目）の一覧と、承認済みか下書きか、その版で書き出したか"),
+  templateSave: human("/human/template-save", "template_save", 12 * 1024 * 1024, "利用者が落とした様式と、直した写し方（列の役目）を、保管先の共有フォルダに下書きとして置く"),
+  exportSign: human("/human/export-sign", "export_sign", 16 * 1024, "いちばん新しい版を共有フォルダの様式で書き出し、書き出した Excel に自分の鍵で署名して版に足す（版の中身は変えない。その写し方の承認になる）"),
+  exportFileRead: human("/human/export-file-read", "export_file_read", 16 * 1024, "署名した書き出しの Excel を読み、署名のハッシュと照らしてから、画面がブラウザに落とす"),
   personKeyCreate: human("/human/person-key-create", "person_key_create", 16 * 1024, "自分の鍵（版に署名する）を作り、状態フォルダに置く"),
   personKeyConfirm: human("/human/person-key-confirm", "person_key_confirm", 16 * 1024, "ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない）"),
   settingsRead: human("/human/settings-read", "settings_read", 64 * 1024, "置き場所・Documents の場所・輪の一覧を読む"),
@@ -115,6 +132,8 @@ export const ROUTES = {
   checkpointOpenText: human("/human/checkpoint-open-text", "checkpoint_open_text", 64 * 1024, "検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く"),
   checkpointSend: human("/human/checkpoint-send", "checkpoint_send", 64 * 1024, "検問所：署名し、束を輪のフォルダに置く"),
   ringVerify: human("/human/ring-verify", "ring_verify", 64 * 1024, "輪を受け手と同じ関数で確かめる"),
+  ringMemberConfirm: human("/human/ring-member-confirm", "ring_member_confirm", 16 * 1024, "輪の仲間の鍵を、指紋を読み合わせて確認済みにする（確認済みの仲間の束だけを数える）"),
+  ringRulesAccept: human("/human/ring-rules-accept", "ring_rules_accept", 16 * 1024, "変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない）"),
   ledgerPreview: human("/human/ledger-preview", "ledger_preview", 64 * 1024, "公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり）"),
   ledgerSend: human(
     "/human/ledger-send",

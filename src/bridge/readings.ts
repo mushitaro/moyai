@@ -88,26 +88,43 @@ const subdirs = (d: string): string[] => {
 
 export interface ListedReading {
   name: string;
+  /** 範囲は置き場所で決まる（rules.json の scope ではない。Db の重-5） */
   scope: ReadingScope;
+  /** 施設の読み方なら施設の鍵、担当者の読み方なら呼び名（置き場所の名前）。会社は null */
+  owner: string | null;
+  /** 置き場所のいちばん上の版か（false は versions/ に残した前の版） */
+  current: boolean;
   path: string;
   version: string;
   rules: number;
   approved: boolean;
   /** 承認した星取表の版の番号（その読み方の版を最初に使った、署名した版。未承認は null） */
   approvedIn: number | null;
+  /** 使った署名のいちばん新しい時刻（未承認は null） */
+  approvedAt: string | null;
   skill: ReadingSkill;
   /** SKILL.md の文（読めなければ空） */
   text: string;
 }
 
-/** 保管先の読み方の一覧（形の外れたものは数えない）。approvedVersions：署名した版が使った読み方の版 → 承認した星取表の版の番号 */
-export async function listReadings(root: string, approvedVersions: ReadonlyMap<string, number>): Promise<ListedReading[]> {
-  const dirs: string[] = [];
-  for (const n of subdirs(join(root, SKILLS, COMPANY))) dirs.push(join(root, SKILLS, COMPANY, n));
-  for (const who of subdirs(join(root, SKILLS, PERSON))) for (const n of subdirs(join(root, SKILLS, PERSON, who))) dirs.push(join(root, SKILLS, PERSON, who, n));
-  for (const f of subdirs(root)) if (f !== SKILLS) for (const n of subdirs(join(root, f, SKILLS))) dirs.push(join(root, f, SKILLS, n));
+/** 承認した記録：その読み方の版を最初に使った星取表の版の番号と、使った署名のいちばん新しい時刻 */
+export interface ApprovedReading {
+  in: number;
+  at: string;
+}
+
+/**
+ * 保管先の読み方の一覧（形の外れたものは数えない）。approvedVersions：署名した版が使った読み方の版 → 承認の記録。
+ * いちばん上の版のほかに、versions/ に残した前の版も並べる（未承認の版を上に書いても、承認済みの前の版が消えないように。Db の重-4）
+ */
+export async function listReadings(root: string, approvedVersions: ReadonlyMap<string, ApprovedReading>): Promise<ListedReading[]> {
+  const dirs: { dir: string; scope: ReadingScope; owner: string | null }[] = [];
+  for (const n of subdirs(join(root, SKILLS, COMPANY))) dirs.push({ dir: join(root, SKILLS, COMPANY, n), scope: "company", owner: null });
+  for (const who of subdirs(join(root, SKILLS, PERSON))) for (const n of subdirs(join(root, SKILLS, PERSON, who))) dirs.push({ dir: join(root, SKILLS, PERSON, who, n), scope: "person", owner: who });
+  for (const f of subdirs(root)) if (f !== SKILLS) for (const n of subdirs(join(root, f, SKILLS))) dirs.push({ dir: join(root, f, SKILLS, n), scope: "facility", owner: f });
   const out: ListedReading[] = [];
-  for (const dir of dirs) {
+  const places = dirs.flatMap((d) => [{ ...d, current: true }, ...subdirs(join(d.dir, "versions")).map((v) => ({ ...d, dir: join(d.dir, "versions", v), current: false }))]);
+  for (const { dir, scope, owner, current } of places) {
     if (!existsSync(join(dir, RULES))) continue;
     const rules = await readFile(join(dir, RULES), "utf8");
     const md = existsSync(join(dir, SKILL_MD)) ? await readFile(join(dir, SKILL_MD), "utf8") : "";
@@ -120,15 +137,16 @@ export async function listReadings(root: string, approvedVersions: ReadonlyMap<s
     const p = ReadingSkill.safeParse(v);
     if (!p.success) continue;
     const version = readingVersion(md, rules);
-    out.push({ name: p.data.name, scope: p.data.scope, path: relPath(root, dir), version, rules: p.data.rules.length, approved: approvedVersions.has(version), approvedIn: approvedVersions.get(version) ?? null, skill: p.data, text: md });
+    const a = approvedVersions.get(version);
+    out.push({ name: p.data.name, scope, owner, current, path: relPath(root, dir), version, rules: p.data.rules.length, approved: !!a, approvedIn: a?.in ?? null, approvedAt: a?.at ?? null, skill: { ...p.data, scope }, text: md });
   }
   return out;
 }
 
 /** 承認済みの読み方の版：確かめた確定か承認の署名があり、その署名の鍵をこの PC が信じる版が使った読み方の版 → その読み方の版を最初に使った星取表の版の番号。
  * 確かめで合わない版（鎖・署名）から先と、署名の無い前の形の版は数えない。trusted：署名の鍵を信じるか（橋渡しが覚えた鍵と照らす） */
-export async function approvedReadingVersions(root: string, trusted: (sig: SignatureInfo) => boolean): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
+export async function approvedReadingVersions(root: string, trusted: (sig: SignatureInfo) => boolean): Promise<Map<string, ApprovedReading>> {
+  const out = new Map<string, ApprovedReading>();
   for (const planId of subdirs(join(root, "plans"))) {
     if (!PLAN_ID.test(planId)) continue;
     let hist: PlanHistory;
@@ -139,15 +157,35 @@ export async function approvedReadingVersions(root: string, trusted: (sig: Signa
     }
     const bad = hist.versions.findIndex((v) => v.problem !== null);
     for (const v of bad < 0 ? hist.versions : hist.versions.slice(0, bad)) {
-      if (v.legacy || !v.signatures.some((x) => (x.role === "confirm" || x.role === "approve") && trusted(x))) continue;
+      const sigs = v.signatures.filter((x) => (x.role === "confirm" || x.role === "approve") && trusted(x));
+      if (v.legacy || sigs.length === 0) continue;
+      const at = sigs.map((x) => x.at).sort().at(-1)!;
       const rec = JSON.parse(await readFile(join(root, "plans", planId, "versions", `${String(v.version).padStart(6, "0")}.json`), "utf8")) as { readingSkills?: { version?: unknown }[] };
-      for (const r of rec.readingSkills ?? []) if (typeof r.version === "string" && !(out.get(r.version)! <= v.version)) out.set(r.version, v.version);
+      for (const r of rec.readingSkills ?? []) {
+        if (typeof r.version !== "string") continue;
+        const was = out.get(r.version);
+        out.set(r.version, { in: was ? Math.min(was.in, v.version) : v.version, at: was && was.at > at ? was.at : at });
+      }
     }
   }
   return out;
 }
 
-/** 作業画面に渡す、承認済みの読み方 */
-export function loadedOf(list: readonly ListedReading[]): LoadedReading[] {
-  return list.filter((x) => x.approved).map((x) => ({ skill: x.skill, version: x.version, path: x.path, approved: true, approvedIn: x.approvedIn, draft: false }));
+/**
+ * 作業画面に渡す、承認済みの読み方：置き場所ごとに 1 つ。いちばん上の版が承認済みならそれ、未承認なら前の版のうちいちばん新しく承認されたもの。
+ * 担当者の読み方は、その人（この PC の呼び名）のものだけ。施設の読み方は施設の鍵を付けて渡し、作業画面が今の施設のものだけを当てる（Db の重-4・重-5）
+ */
+export function loadedOf(list: readonly ListedReading[], who: string | null): LoadedReading[] {
+  const byPlace = new Map<string, ListedReading[]>();
+  for (const x of list) {
+    if (!x.approved || (x.scope === "person" && x.owner !== who)) continue;
+    const place = x.current ? x.path : x.path.replace(/\/versions\/[^/]+$/, "");
+    byPlace.set(place, [...(byPlace.get(place) ?? []), x]);
+  }
+  const out: LoadedReading[] = [];
+  for (const xs of byPlace.values()) {
+    const pick = xs.find((x) => x.current) ?? [...xs].sort((a, b) => (a.approvedAt! < b.approvedAt! ? 1 : -1))[0]!;
+    out.push({ skill: pick.skill, version: pick.version, path: pick.path, approved: true, approvedIn: pick.approvedIn, draft: false, owner: pick.scope === "facility" ? pick.owner : null });
+  }
+  return out;
 }

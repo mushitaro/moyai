@@ -10,6 +10,7 @@ import { encodeEvent } from "../../../src/shared/events";
 import { clearWorkingPlan, getWorkingPlan } from "../../../src/app/state/plan-store";
 import { BRIDGE_TOOL_RECEIVERS } from "../../../src/bridge/tools";
 import { TOOL_NAMES, TOOLS } from "../../../src/shared/tools";
+import { aiDecisions } from "../../../src/plan/diff";
 
 const PACK = "waste-incineration";
 const CASES = [
@@ -101,6 +102,19 @@ describe("工場の資料で、要約 → 決定 → 計画 → 星取表の行"
       expect(working?.plan.displayName).toBe(`【架空】${c.facility}`);
       // AI の答えの作者が残る
       expect(working?.plan.details.some((d) => d.author === "ai_relayed_human")).toBe(true);
+      // AI が置いた読み方の決定は、明細の作者に写らないもの（年度・列の役目など）も含めて 1 つずつ、人が受ける決定になる
+      const settled = ws.decisions().filter((d) => d.author === "ai_relayed_human").map((d) => `reading:${d.questionId}`);
+      const readings = aiDecisions(working!.plan).filter((d) => d.kind === "reading");
+      expect(readings.length).toBeGreaterThan(0);
+      expect(readings.map((d) => d.id).every((id) => settled.includes(id))).toBe(true);
+      expect(working!.plan.readingDecisions!.filter((r) => r.author === "ai_relayed_human").length).toBe(readings.length);
+      // 1 つの決定は 1 行：答えで作者が決まった明細は、明細の行に出さず決定に付く。数は効く明細の数か「―」（null）で、効く所を持つ（Wire）
+      expect(aiDecisions(working!.plan).filter((d) => d.kind === "detail")).toEqual([]);
+      const covered = new Set(working!.plan.readingDecisions!.flatMap((r) => r.details ?? []));
+      expect(working!.plan.details.filter((d) => d.author === "ai_relayed_human").every((d) => covered.has(d.detailKey))).toBe(true);
+      expect(readings.some((d) => typeof d.count === "number" && d.count > 0)).toBe(true);
+      expect(readings.every((d) => d.count === null || d.count! > 0)).toBe(true);
+      expect(readings.every((d) => !!d.where)).toBe(true);
 
       // 星取表の行：上限どおりに返し、残りを数える
       const rows = ok(runTabTool(ws, "chart_rows", { limit: 200 }, CTX));

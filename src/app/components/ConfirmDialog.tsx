@@ -2,7 +2,7 @@
 // 自分の鍵で版に署名する（鍵がまだ無ければ、作ってから署名する。合言葉はやめた、docs/plan.md §2.18）。この署名で承認する読み方を 1 行ずつ見せる。
 // 人が受けていない決定（作者が AI・AI（チャットでの人の答え））は、MERGE の決定のシートで一言の理由を書いて受けるまで確定できない（受けた決定は state/decisions.ts）。
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
-import { Alert, Anchor, Button, Group, Modal, PasswordInput, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
+import { Alert, Anchor, Button, Group, Modal, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
 import { getCurrentReadings, readingsForCommit } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
@@ -16,6 +16,7 @@ import { APP_PAGES, ROUTES } from "../../shared/routes";
 import type { BridgeClient, HumanResult } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
+import { KeyWarnLine, untrustedSigners, type TrustSig } from "./KeyWarn";
 
 const T = HUMAN_TEXT.confirm;
 const H = HUMAN_TEXT.history;
@@ -23,6 +24,21 @@ const H = HUMAN_TEXT.history;
 interface Synced {
   kind: "onedrive" | "sharepoint";
   base: string;
+}
+
+/** 効かない頼み（その版を作った鍵でない・ほかの中身に宛てた。数えない。Wire の B1 の追い） */
+export interface IgnoredRequest {
+  by: string;
+  fingerprint: string;
+  at: string;
+  why: "otherKey" | "otherContent";
+}
+
+/** 書き出しの署名（信じ方つき）：結び目の鎖の「書出」の行と、EXPORT の鍵の警告 */
+export interface ExportSig extends Omit<TrustSig, "role"> {
+  at: string;
+  template: { name: string; file: string; columns: string; version: string };
+  excel: string;
 }
 
 interface StatusBody {
@@ -37,9 +53,11 @@ interface StatusBody {
     at: string;
     reason: string;
     summary: { added: number; removed: number; changed: number };
-    signatures: { role: string; by: string; fingerprint: string; trust: string }[];
+    signatures: TrustSig[];
     legacy: boolean;
     problem: string | null;
+    /** 様式で書き出した Excel への署名（3C。版を作る署名ではない） */
+    exports?: ExportSig[];
   }[];
   latest?: { version: number; plan: Plan } | null;
   /** いちばん新しい版のひとつ前の版（確かめで合うときだけ） */
@@ -50,6 +68,19 @@ interface StatusBody {
   hasKey?: boolean;
   /** 編集の番（docs/screens.md 3.4） */
   turn?: { version: number; state: "editing" | "awaitingApproval" | "approved" | "returned"; holder: string | null; to: string | null; from: string; note: string; at: string } | null;
+  /** いちばん新しい版の頼みと受け取り（監査 B1） */
+  request?: {
+    version: number;
+    kind: "approve" | "edit";
+    to: string;
+    by: string;
+    mine: boolean;
+    received: { by: string; pub: string; fingerprint: string; trust: string; previous: { fingerprint: string; at: string } | null } | null;
+    receivedByMe: boolean;
+    done: boolean;
+  } | null;
+  /** いちばん新しい版に置かれた、数えない頼み（その版を作った鍵でないか、ほかの中身に宛てたもの。監査 B1 の追い） */
+  requestsIgnored?: IgnoredRequest[];
 }
 
 
@@ -112,7 +143,7 @@ export function ConfirmDialog({
   onClose: () => void;
   onConfirmed: (plan: Plan) => void;
 }) {
-  const [load] = usePlanStatus(client, plan.planId, opened);
+  const [load, reload] = usePlanStatus(client, plan.planId, opened);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -339,6 +370,12 @@ export function ConfirmDialog({
               </Alert>
             )}
           </>
+        )}
+        {/* 次の版を重ねて署名するとき、比べる版の鎖に確かめていない鍵があれば、主ボタンのすぐ上に 1 行（KeyWarn.dc.html の 3。止めない） */}
+        {!done && status?.versions && untrustedSigners(status.versions).length > 0 && (
+          <Group justify="flex-end">
+            <KeyWarnLine signers={untrustedSigners(status.versions)} onConfirmed={reload} />
+          </Group>
         )}
         <Group justify="flex-end" gap="sm">
           {!done && status && blockReason && (

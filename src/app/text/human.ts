@@ -51,6 +51,9 @@ export const HUMAN_TEXT = {
     nameInvalid: "呼び名は 40 文字までで、前後の空白と / \\ : * ? \" < > | は使えません。",
     personKeyMissing: "署名の鍵がまだありません。",
     personKeyExists: "この呼び名の署名の鍵は、この PC にもうあります。",
+    notYourTurn: "この版は、ほかの人が編集を頼まれています。編集の番の人だけが、次の版を重ねられます。",
+    notRequested: "この版の承認の頼みを受け取った鍵ではないので、承認も差し戻しもできません（頼み直しのあとの古いリンクか、頼んだ本人です）。",
+    historyVanished: "この PC が前に見た版か署名が、保管先から無くなっています。消されたか、古い写しに戻された恐れがあるので、確定・承認・戻す・送るを止めています（戻す道は未実装）。",
     historyBroken: "保管先の版の署名か鎖が合わないので、その上には確定できません。版の履歴で、どの版が合わないかを見てください。",
     keyUnknown: "その鍵は、この PC がまだ見たことのない鍵です。",
     versionUnknown: "その版は保管先にありません。",
@@ -61,6 +64,13 @@ export const HUMAN_TEXT = {
     notLatest: "保管先に、もっと新しい版があります。開き直してから署名してください。",
     selfApprove: "自分が作った版は、自分で承認できません。ほかの人に承認を頼んでください。",
     fileMissing: "その版の Excel が保管先にありません（確定のときに書けなかったか、消されています）。",
+    fileChanged: "保管先の Excel が、この版に署名したときのものと違います（あとから書き換えられています）。落とせません。",
+    // 様式で書き出す（3C）
+    returned: "差し戻された版は書き出せません。",
+    templateUnknown: "共有フォルダに、その様式のその版がありません（ほかの人が直したかもしれません）。選び直してください。",
+    exportUnknown: "この版を、その様式で書き出した署名がありません。",
+    columnsInvalid: "写し方（列の役目）の形が違います。",
+    fileInvalid: "様式のファイルが .xlsx ではないか、大きすぎます。",
     // 公開の台帳へ出す（GitHub に PR）
     "ledger.notChosen": "公開の台帳の clone の場所が決まっていません。設定で選んでください。",
     "ledger.noLedgerDir": "台帳の clone の中に ledger/ がありません。",
@@ -170,7 +180,52 @@ export const HUMAN_TEXT = {
     noReadings: "使った読み方はありません。",
     draft: "- 下書き",
     chain: "結び目の鎖",
-    role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差し戻し", revert: "戻す" } as Record<string, string>,
+    role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差し戻し", revert: "戻す", export: "書出" } as Record<string, string>,
+  },
+  /** 署名の鍵をまだ確かめていないときの知らせ（Wire の KeyWarn.dc.html）。人の署名を信じて何かをするボタンのすぐ左に 1 行 */
+  /** 頼みを誰が受け取ったか（Wire の B1。運営者の決定「マジックリンクで鎖をつなぐ」） */
+  request: {
+    asked: { approve: "承認を頼みました", edit: "編集を頼みました" } as Record<string, string>,
+    notOpened: "まだ開かれていません",
+    receivedBy: "受け取った人",
+    renew: "頼み直す",
+    takenByOther: "この頼みは、ほかの鍵が受け取っています",
+    notify: (by: string) => `${by} に知らせる`,
+    notifySubject: (n: number) => `【MOYAI】第 ${n} 版の頼みを、ほかの人が受け取っています`,
+    notifyBody: (n: number, by: string, fp: string) => `第 ${n} 版の頼みのリンクを開いたところ、ほかの鍵がもう受け取っていました。\n受け取った人：${by}\n受け取った鍵の指紋：${fp}\n頼み直していただけますか。`,
+    withdrawn: "この頼みは取り下げられました",
+    // リンクの合言葉が、効いている頼みのどれにも当たらない（その版を作った鍵でない頼みなど）
+    unknown: "この頼みは効いていません",
+    ignored: "効かない頼み",
+    ignoredSelfNamed: "（名乗り）",
+    ignoredWhy: { otherKey: "この版を作った鍵ではありません", otherContent: "ほかの中身に宛てた頼みです" } as Record<string, string>,
+    ignoredBar: "! 効かない頼みが置かれています",
+    ignoredShow: "見る",
+    // 年を省かない（未来の時刻にして本物の頼みを取り下げる狙いに気づけるように。Wire の B1）
+    ignoredAt: (iso: string) =>
+      new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+        .format(new Date(iso))
+        .replace(/\//g, "-"),
+    renewTitle: (n: number) => `第 ${n} 版を頼み直す`,
+    renewResult: "前のリンクは使えなくなります。",
+    renewSubmit: "署名して渡す",
+    role: { approve: "承認", edit: "編集" } as Record<string, string>,
+  },
+  keyWarn: {
+    unconfirmed: (by: string) => `! ${by}の鍵を、まだ確かめていません`,
+    changed: (by: string) => `! ${by}の鍵が、前に確かめた鍵と違います`,
+    // 名前がすぐ前に出ているとき（頼んだ人の下の帯。Wire の B1）
+    unconfirmedThis: "! この鍵を、まだ確かめていません",
+    changedThis: "! この鍵が、前に確かめた鍵と違います",
+    many: (n: number) => `! 確かめていない鍵が ${n} つあります`,
+    check: "指紋を読み合わせる",
+    show: "見る",
+    title: (by: string) => `${by}の鍵の指紋`,
+    previous: (fp: string, day: string) => `前に確かめた　${fp}　${day}`,
+    howTo: (by: string) => `${by}さんに電話などで読み上げてもらい、16 文字が合えば「合った」を押します。`,
+    later: "あとで",
+    matched: "合った",
+    topChanged: "! 鍵が替わった",
   },
   readings: {
     lead: "Claude と会話で決めた読み方と、承認済みの読み方です。署名すると、下書きの読み方も一緒に承認されます。",
@@ -204,9 +259,11 @@ export const HUMAN_TEXT = {
     title: (n: number) => `受けていない決定（${fmt(n)}）`,
     none: "受けていない決定はありません。",
     loading: "これまでに受けた決定（版の履歴）を読んでいます",
-    head: ["何を", "なぜ", "決めた人", "行", ""],
+    // 決めた人は 1 列目の朱の小さな字が言うので、列にしない（Wire、Decisions.dc.html V44）
+    head: ["何を", "なぜ", "行", ""],
     kind: { ai: "- Claude の決定", relayed: "- 会話から写した答え", ledger: "- 台帳からの案", crosswalk: "- 当てはめの案" },
-    by: { relayed: "Claude（あなたの答えを写した）", ledger: "Claude（台帳から）", ai: "Claude" },
+    /** 読み方の決定が効く所（明細の数で言えない決定。Wire） */
+    where: (w: string) => `効く所　${w}`,
     blank: "空",
     and: " かつ ",
     ruleNode: " の節",
@@ -407,7 +464,7 @@ export const HUMAN_TEXT = {
     send: "送る",
     sendNeeds: {
       keysForked: "この施設の署名鍵が 2 つあります",
-      rules: "輪の決まりを受け入れていない",
+      rules: "輪の決まりを受け入れていません",
       groupUnknown: "全国の表に載る施設かが決まっていない",
       profileIncomplete: "施設の見え方が決まっていない",
       kShort: "紛れる数が下限に届かない",
@@ -432,6 +489,32 @@ export const HUMAN_TEXT = {
     unknownKey: "指紋の読めない鍵",
     verifyAgain: "確かめ直す",
     verifyKind: { circle: "輪の決まり", member: "仲間", bundle: "束" } as Record<string, string>,
+    /** まだ確かめていない仲間と、その束（Wire、Share.dc.html Version 46。未確認は誤りではないので ✗ と朱を使わない） */
+    memberUnconfirmed: "まだ確かめていません",
+    notCounted: "数えていません",
+    /** 受け手の確認済みの仲間では k が 5 に届かない束（Db の重-6。左の状態は「数えていません」と同じ。Wire）*/
+    peersShort: "確認した仲間では、似た施設が 5 に届きません",
+    memberTitle: "仲間の鍵の指紋",
+    memberHowTo: "この鍵を持つ仲間に電話などで読み上げてもらい、16 文字が合えば「合った」を押します。",
+    /** 輪の決まりが変わったとき */
+    rulesChanged: "変わりました",
+    rulesCounts: (loosened: number, tightened: number) => ({ loosened: `緩くなった ${loosened}`, tightened: `厳しくなった ${tightened}` }),
+    rulesView: "見て受け入れる",
+    rulesNotAccepted: "輪の決まりを受け入れていません",
+    rulesTitle: "輪の決まりが変わりました",
+    rulesChanger: (fp: string, month: string) => `変えた鍵　${fp}　${month}`,
+    rulesHead: ["決まり", "前", "今", ""],
+    rulesDir: { loosened: "緩くなった", tightened: "厳しくなった", changed: "変わった" } as Record<string, string>,
+    rulesResult: "受け入れると、次に送る束から今の決まりで出します。",
+    rulesAccept: "受け入れる",
+    ruleName: (rule: string): string =>
+      rule === "minK"
+        ? "紛れる数の下限"
+        : rule.startsWith("field:")
+          ? `出す欄（${({ interval: "間隔", manDays: "工数", days: "日数", ageAtWork: "経過年" } as Record<string, string>)[rule.slice(6)] ?? rule.slice(6)}）`
+          : rule.startsWith("band:")
+            ? `${({ interval: "間隔", manDays: "工数", days: "日数", ageAtWork: "経過年" } as Record<string, string>)[rule.slice(5)] ?? rule.slice(5)}の帯の幅`
+            : ({ pack: "パック", vocab: "公開語彙", national: "全国の表" } as Record<string, string>)[rule] ?? rule,
     verifyStatus: { ok: "✓", ng: "✗", arriving: "届きかけ", missing: "無い" } as Record<string, string>,
   },
   bands: {

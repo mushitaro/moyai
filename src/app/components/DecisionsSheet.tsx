@@ -75,6 +75,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       const [pa, fy] = d.value.split(":");
       return `${d.target} · ${HUMAN_TEXT.confirm.pendingValue[pa ?? ""] ?? ""} · ${HUMAN_TEXT.confirm.pendingFiscal(fy ?? "")}`;
     }
+    if (d.kind === "reading") return `${d.target} → ${d.value}`;
     return `${d.target} → ${d.kind === "attribute" ? attrName(d.value) : itemName(d.value)}`;
   };
   const acceptRule = (p: CrosswalkProposal) => {
@@ -100,11 +101,15 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
             {cycle ? T.kind.ledger : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
           </Text>
+          {d.kind === "reading" && d.where && (
+            <Text size="xs" c="var(--text-3)" data-testid="pending-where">
+              {T.where(d.where)}
+            </Text>
+          )}
         </Table.Td>
         <Table.Td c="var(--text-2)">{d.basis}</Table.Td>
-        <Table.Td c="var(--text-2)">{cycle ? T.by.ledger : d.author === "ai_relayed_human" ? T.by.relayed : TEXT.author[d.author]}</Table.Td>
-        <Table.Td className="moyai-num" ta="right">
-          {ds.length}
+        <Table.Td className="moyai-num" ta="right" data-testid="pending-count">
+          {d.kind === "reading" ? (d.count ?? "―") : ds.length}
         </Table.Td>
         <Table.Td ta="right">
           {done ? (
@@ -138,7 +143,6 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         </Text>
       </Table.Td>
       <Table.Td c="var(--text-2)">{p.state === "proposed" ? p.basis : `${p.basis}（${T.humanReason}：${p.humanReason ?? ""}）`}</Table.Td>
-      <Table.Td c="var(--text-2)">{T.by.ai}</Table.Td>
       <Table.Td className="moyai-num" ta="right" data-testid="crosswalk-matched">
         {p.matched}
       </Table.Td>
@@ -165,7 +169,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     <Table.Thead>
       <Table.Tr>
         {T.head.map((h, i) => (
-          <Table.Th key={h} ta={i >= 3 ? "right" : undefined} style={{ width: i === 0 ? "34%" : i === 1 ? "30%" : undefined }}>
+          <Table.Th key={h} ta={i >= 2 ? "right" : undefined} style={{ width: i === 0 ? "40%" : i === 1 ? "36%" : undefined }}>
             {h}
           </Table.Th>
         ))}

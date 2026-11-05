@@ -15,6 +15,7 @@ import type { ChartCatalog } from "./chart";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
 import { fixWorkbook } from "./xlsx-fix";
+import { EXPORT_SIGNATURE_FILE, checkExports, type ExportInfo } from "./exports";
 import { contentHash, personFile, signStatement, signatureFileName, SIGNATURE_FILE, validName, verifySignatureFile, type SignRole } from "./signature";
 import { keyIdOf, type KeyPair } from "../share/sign";
 
@@ -51,12 +52,17 @@ export interface VersionRecord {
   summary: { added: number; removed: number; changed: number; same: number };
   /** 前の形（v0）だけ：前の版のファイルの SHA-256（最初の版は null） */
   prev?: string | null;
-  /** 親の版（同じ計画の 1 つ前）：番号・中身のハッシュ・その版の署名のファイルの SHA-256 の並び。最初の版は null（v1） */
+  /**
+   * 親の版（同じ計画の 1 つ前）：番号・中身のハッシュと、親の版を作った署名（確定・渡す・戻す）のファイルの SHA-256。最初の版は null（v1）。
+   * 承認・差し戻しの署名は入れない（あとから足される承認や、同期で遅れて届く署名で、鎖が切れないように）。前の書き方（親の全署名）も読める。
+   */
   parent?: { version: number; contentHash: string; signatures: string[] } | null;
   /** ほかの施設の版から作ったとき、その計画・版・中身のハッシュ（v1。無ければ null） */
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
   /** この版を作るのに使った読み方（3 段目の Skill）：名前・保管先からの道・版。署名した版が使った読み方は承認済み（docs/plan.md §2.17） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /** この版の差分レポートと書き出しの SHA-256（署名の中に入る。落とすときに照らす。監査 E1）。前に確定した版には無い */
+  files?: { report: string; export: string | null };
   plan: Plan;
 }
 
@@ -86,9 +92,17 @@ export interface VersionInfo {
   signatures: SignatureInfo[];
   /** 署名の無い前の形の版（読むだけ。承認に数えない） */
   legacy: boolean;
-  /** 確かめで合わなかったこと（無ければ null）。合わない版は開かない */
+  /** 様式で書き出した Excel への署名（確かめて合うものだけ。版を作る署名ではないので、鎖・承認・頼み・編集の番には数えない） */
+  exports: ExportInfo[];
+  /**
+   * 確かめで合わなかったこと（無ければ null）。合わない版は開かない。
+   * chain：鎖が合わない（署名の無い前の形の版が、署名のある版のあとに置かれたときも）。signature：署名のファイルが合わない。unsigned：版を作った署名が無い
+   */
   problem: "chain" | "signature" | "unsigned" | null;
 }
+
+/** 版を作る署名の役目（確定・渡す・戻す）。承認・差し戻しは、版への独立の署名 */
+export const CREATION_ROLES: readonly SignRole[] = ["confirm", "edit", "revert"];
 
 
 
@@ -113,6 +127,18 @@ async function readVersion(dir: string, n: number): Promise<{ record: VersionRec
   const p = Plan.safeParse(record.plan);
   if ((record.schema !== VERSION_SCHEMA && record.schema !== VERSION_SCHEMA_V0) || record.version !== n || !p.success) throw new Error("版のファイルの形でない");
   return { record: { ...record, plan: p.data }, text };
+}
+
+/** 版の書き出しの署名を読む（plan/exports.ts で確かめる） */
+async function readExportFiles(dir: string, version: number, planId: string, hash: string): Promise<{ ok: ExportInfo[]; bad: number }> {
+  let names: string[] = [];
+  try {
+    names = (await readdir(join(dir, "signatures"))).filter((n) => EXPORT_SIGNATURE_FILE.exec(n)?.[1] === pad(version)).sort();
+  } catch {
+    return { ok: [], bad: 0 };
+  }
+  const files = await Promise.all(names.map(async (name) => ({ name, text: await readFile(join(dir, "signatures", name), "utf8") })));
+  return checkExports(files, planId, version, hash);
 }
 
 /** 版の署名のファイルを読み、確かめて合うものだけを返す。合わないファイルは数えて返す */
@@ -170,26 +196,38 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
   let previous: VersionRecord | null = null;
   let derivedFrom: PlanHistory["derivedFrom"] = null;
   let prevInfo: VersionInfo | null = null;
+  let signedSeen = false;
   for (const n of nums) {
     const { record } = await readVersion(dir, n);
     const legacy = record.schema === VERSION_SCHEMA_V0;
     const hash = contentHash(record);
     const sigs = legacy ? { ok: [], bad: 0 } : await readSignatures(dir, record, hash);
     let problem: VersionInfo["problem"] = null;
+    // 署名の無い前の形の版は、先頭に続く部分だけ許す（署名のある版のあとに置かれた前の形は、署名も鎖も見ずに最新になってしまうため）
+    if (legacy && signedSeen) problem = "chain";
     if (!legacy) {
-      // 親の鎖：前の版の中身のハッシュと、前の版の署名のファイルの並びが、この版の記録と合うか
+      signedSeen = true;
+      // 親の鎖：前の版の中身のハッシュと、前の版を作った署名のファイルが、この版の記録と合うか。
+      // 記録にある署名はどれも前の版の署名のうちにあり、少なくとも 1 つは前の版を作った署名（承認があとから足されても切れない）
       const p = record.parent ?? null;
+      const prevHashes = new Set(prevInfo?.signatures.map((x) => x.fileHash) ?? []);
+      const prevCreation = new Set(prevInfo?.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.fileHash) ?? []);
       const chainOk =
         prevInfo === null
           ? p === null
-          : p !== null && p.version === prevInfo.version && p.contentHash === prevInfo.contentHash && [...p.signatures].sort().join() === prevInfo.signatures.map((x) => x.fileHash).sort().join();
-      if (!chainOk) problem = "chain";
+          : p !== null &&
+            p.version === prevInfo.version &&
+            p.contentHash === prevInfo.contentHash &&
+            (prevInfo.legacy ? p.signatures.length === 0 : p.signatures.every((h) => prevHashes.has(h)) && p.signatures.some((h) => prevCreation.has(h)));
+      if (!chainOk || (prevInfo?.problem ?? null) !== null) problem = "chain";
       else if (sigs.bad > 0) problem = "signature";
       else if (!sigs.ok.some((x) => (record.kind === "revert" ? x.role === "revert" : x.role === "confirm" || x.role === "edit"))) problem = "unsigned";
     }
-    const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem };
+    const exports = legacy ? [] : (await readExportFiles(dir, n, record.planId, hash)).ok;
+    const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem, exports };
     versions.push(info);
-    for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });
+    // 人が受けた決定に数えるのは、確かめで合う署名のある版だけ（前の形の版の受けた決定は数えない）
+    if (!legacy && problem === null) for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });
     if (prevInfo === null) derivedFrom = record.derivedFrom ?? null;
     previous = latest;
     latest = record;
@@ -348,7 +386,7 @@ async function writeVersion(
   const prevInfo = hist.versions.at(-1) ?? null;
   const plan: Plan = { ...v.plan, version };
   const diff = diffPlans(hist.latest?.plan ?? null, plan);
-  const record: VersionRecord = {
+  const base: VersionRecord = {
     schema: VERSION_SCHEMA,
     planId: plan.planId,
     version,
@@ -360,11 +398,19 @@ async function writeVersion(
     reason: v.reason,
     acceptances: v.acceptances,
     summary: { added: diff.added, removed: diff.removed, changed: diff.changed, same: diff.same },
-    parent: prevInfo ? { version: prevInfo.version, contentHash: prevInfo.contentHash, signatures: prevInfo.signatures.map((x) => x.fileHash).sort() } : null,
+    parent: prevInfo
+      ? { version: prevInfo.version, contentHash: prevInfo.contentHash, signatures: prevInfo.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.fileHash).sort() }
+      : null,
     derivedFrom: v.derivedFrom ?? null,
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
     plan,
   };
+  // 差分レポートと書き出しは署名の前に作り、そのハッシュを版の記録に入れる（落とすときに照らす。監査 E1）
+  const reportBytes = await diffReport(base, diff);
+  const c = v.catalogs ? v.catalogs(plan.packId) : null;
+  const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty }) : null;
+  const { plan: _plan, ...head } = base;
+  const record: VersionRecord = { ...head, files: { report: sha(reportBytes), export: exportBytes ? sha(exportBytes) : null }, plan };
   const hash = contentHash(record);
   const role: SignRole = v.kind === "revert" ? "revert" : (v.role ?? "confirm");
   const signature = signStatement({ planId: plan.planId, version, contentHash: hash, role, by: v.signer.by, at: record.at, reason: v.reason }, v.signer.pair);
@@ -389,13 +435,12 @@ async function writeVersion(
     if ((e as NodeJS.ErrnoException).code === "EEXIST") return { ok: false, reason: "exists" };
     throw e;
   }
-  await writeAtomic(reportPath, await diffReport(record, diff));
+  await writeAtomic(reportPath, reportBytes);
   let exportPath: string | null = null;
-  if (v.catalogs) {
+  if (exportBytes) {
     await mkdir(join(dir, "exports"), { recursive: true });
     exportPath = join(dir, "exports", `${pad(version)}-plan.xlsx`);
-    const c = v.catalogs(plan.packId);
-    await writeAtomic(exportPath, await planWorkbook({ plan, version, at: record.at, catalog: c.catalog, emptyCatalog: c.empty }));
+    await writeAtomic(exportPath, exportBytes);
   }
   return { ok: true, version, record, diff, files: { version: versionPath, report: reportPath, export: exportPath } };
 }
@@ -404,8 +449,8 @@ export type SignResult = { ok: true; version: number; role: "approve" | "return"
 
 /**
  * いちばん新しい版に、承認（approve）か差し戻し（return。理由は必須）の署名を足す（docs/plan.md §2.18.2）。
- * いちばん新しい版にだけ足す（次の版の鎖は、親の署名のファイルの並びを持つので、前の版に足すと鎖が切れる）。
- * その版を作った人（確定か渡すの署名をした鍵）は、自分の版を承認できない。
+ * いちばん新しい版にだけ足す（前の版はもう次の版の親で、承認を足す意味が無いため。鎖は作った署名だけを持つので、足しても切れない）。
+ * その版を作った人（確定・渡す・戻すの署名をした鍵か、同じ呼び名）は、自分の版を承認できない。
  */
 export async function signLatest(i: { root: string; planId: string; version: number; role: "approve" | "return"; reason: string; signer: Signer; now?: Date }): Promise<SignResult> {
   if (!validName(i.signer.by)) return { ok: false, reason: "nameInvalid" };
@@ -415,7 +460,7 @@ export async function signLatest(i: { root: string; planId: string; version: num
   if (!v || v.version !== i.version) return { ok: false, reason: "notLatest" };
   if (v.problem !== null) return { ok: false, reason: "historyBroken" };
   const key = keyIdOf(i.signer.pair.pub);
-  if (i.role === "approve" && v.signatures.some((x) => (x.role === "confirm" || x.role === "edit") && x.key === key)) return { ok: false, reason: "selfApprove" };
+  if (i.role === "approve" && v.signatures.some((x) => CREATION_ROLES.includes(x.role) && (x.key === key || x.by === i.signer.by))) return { ok: false, reason: "selfApprove" };
   const at = (i.now ?? new Date()).toISOString();
   const sig = signStatement({ planId: i.planId, version: v.version, contentHash: v.contentHash, role: i.role, by: i.signer.by, at, reason: i.reason.trim() }, i.signer.pair);
   const dir = planDir(i.root, i.planId);

@@ -66,11 +66,15 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     expect(await pa.getByTestId("handoff-mailto").getAttribute("href")).toMatch(/^mailto:kacho%40example\.jp\?subject=/);
     link = /http:\/\/[^\s]+#\/merge\?open=[^\s]+/.exec(mailBody)?.[0] ?? "";
     expect(link).toContain("&v=1&h=");
+    // リンクにだけ、使い捨ての合言葉が入る（監査 B1。最初に開いた鍵が受け取りに署名する）
+    expect(link).toMatch(/&t=[A-Za-z0-9_-]{43}$/);
     await pa.screenshot({ path: shot(`handoff-mail-${tag}`), fullPage: true });
     await pa.keyboard.press("Escape");
     // 山田の側：承認を頼んだ版は、自分では承認できない（承認の道は出ない）
-    await expect(pa.getByTestId("merge-turn")).toHaveAttribute("data-state", "awaitingApproval");
-    await expect(pa.getByTestId("merge-turn")).toHaveText(`承認待ち　承認する人 kacho@example.jp`);
+    // 下の帯の左：まだ誰も開いていない頼み（Wire の B1）。右に「頼み直す」
+    await expect(pa.getByTestId("request-asked")).toHaveAttribute("data-received", "false");
+    await expect(pa.getByTestId("request-asked")).toContainText("承認を頼みました　kacho@example.jp　まだ開かれていません");
+    await expect(pa.getByTestId("request-renew")).toBeVisible();
     await expect(pa.getByTestId("approve-open")).toHaveCount(0);
     // トップのもやいの星取表：施設の行に「第 1 版」と朱の「承認待ち」、今月の列に朱の ○（渡して承認待ちの版）
     await pa.goto(`${one.base}/#/`);
@@ -94,11 +98,16 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     // 承認を頼まれた人は編集しないので、下の帯には頼まれていることだけ
     await expect(pb.getByTestId("merge-turn")).toHaveText("承認を頼まれています");
     await expect(pb.getByTestId("approve-open")).toBeVisible();
+    // 山田の鍵は、課長の PC ではまだ確かめていない：下の帯の「承認を頼まれています」の右に 1 行（止めない。KeyWarn.dc.html の 1）
+    await expect(pb.getByTestId("key-warn")).toContainText(`! ${A.name}の鍵を、まだ確かめていません`);
+    await expect(pb.getByTestId("key-warn")).toHaveAttribute("data-trust", "unconfirmed");
+    await expect(pb.getByTestId("approve-open")).toBeEnabled();
     // 見出しの版は、承認を頼まれた版（第 1 版）
     await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
     // 横の板の署名：山田の渡す署名は、課長の PC ではまだ確認していない鍵（! 未確認）。版の中身のハッシュは 4 文字 × 2 組を 4 つ
     await pb.getByTestId("side-signatures").click();
     await expect(pb.locator('[data-testid="signature"][data-role="edit"]')).toHaveAttribute("data-trust", "unconfirmed");
+    await expect(pb.locator('[data-testid="signature"][data-role="edit"]').getByTestId("signature-check")).toBeVisible();
     await expect(pb.getByTestId("signatures-hash")).toHaveText(/^([0-9a-f]{4} [0-9a-f]{4}  ){3}[0-9a-f]{4} [0-9a-f]{4}$/);
     await pb.screenshot({ path: shot(`handoff-approver-${tag}`) });
   });
@@ -118,10 +127,19 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.screenshot({ path: shot(`handoff-comment-${tag}`) });
   });
 
-  await test.step("課長：承認して署名する。この PC にまだ鍵が無いので、鍵を作ってから署名する（合言葉は打たない）", async () => {
+  await test.step("課長：承認して署名する（鍵はリンクを開いて受け取ったときに作った。合言葉は打たない）", async () => {
     await pb.getByTestId("approve-open").click();
-    // 合言葉の欄は無い。鍵がまだ無いことを 1 行で知らせ、承認はそのまま押せる
-    await expect(pb.getByTestId("sign-dialog-new-key")).toBeVisible();
+    // 合言葉の欄は無い。鍵はリンクを開いたとき（受け取りに署名したとき）にもう作ってある
+    await expect(pb.getByTestId("sign-dialog-new-key")).toHaveCount(0);
+    // 承認のダイアログでも、主ボタンのすぐ上に同じ 1 行。指紋を読み合わせると確認済みになり、1 行は消える（試験の台本が押した）
+    const warn = pb.getByTestId("sign-dialog").getByTestId("key-warn");
+    await expect(warn).toContainText(`! ${A.name}の鍵を、まだ確かめていません`);
+    await warn.getByTestId("key-warn-check").click();
+    await expect(pb.getByText(`${A.name}の鍵の指紋`)).toBeVisible();
+    await expect(pb.getByTestId("key-check-fingerprint")).toHaveText(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/);
+    await pb.getByTestId("key-check-matched").click();
+    await expect(pb.getByTestId("key-check-fingerprint")).toHaveCount(0);
+    await expect(pb.getByTestId("key-warn")).toHaveCount(0);
     await expect(pb.getByTestId("sign-submit")).toBeEnabled();
     await pb.getByTestId("sign-submit").click();
     await expect(pb.getByTestId("merge-notice")).toContainText("第 1 版を承認しました");

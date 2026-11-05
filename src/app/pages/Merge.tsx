@@ -11,6 +11,8 @@ import type { BridgeClient } from "../bridge-client";
 import { ConfirmDialog, HistoryDialog, readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { ROUTES } from "../../shared/routes";
 import { SignDialog } from "../components/SignDialog";
+import { KeyWarnLine, untrustedSigners, type TrustSig } from "../components/KeyWarn";
+import { RequestRenewDialog } from "../components/RequestRenewDialog";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
 import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
 import { ReadingsSheet, unapprovedReadings } from "../components/ReadingsSheet";
@@ -24,7 +26,7 @@ import { CommentsPanel, commentNumber, type ListedComment } from "../components/
 import { Switch } from "../components/Switch";
 import { setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
-import { TEXT } from "../text";
+import { HUMAN_TEXT, TEXT } from "../text";
 import { FacilityDialog } from "../components/FacilityDialog";
 import { setFacilityDialog } from "../state/facility-dialog";
 import { Intake, Questions, useWorkspace } from "./Intake";
@@ -62,6 +64,10 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   }, [comments]);
   const sideCtx = useMemo<MergeSide>(() => ({ el: sourceEl, show: () => setSide("source"), select: setSelectedRow, commentMarks }), [sourceEl, commentMarks]);
   const [notice, setNotice] = useState<string | null>(null);
+  // リンクを開いたとき、頼みをほかの鍵がもう受け取っていた・頼みが取り下げられていた（見るだけで開く。Wire の B1）
+  // 合言葉がどの効いている頼みにも当たらない（その版を作った鍵でない頼みなど）ときも、見るだけで開く
+  const [receive, setReceive] = useState<{ state: "takenByOther"; requester: string; receiver: { by: string; fingerprint: string } } | { state: "withdrawn" | "unknown" } | null>(null);
+  const [renew, setRenew] = useState<{ version: number; to: string } | null>(null);
   // 似た施設を重ねるか（見出しの右。既定は外す）
   const [peersOn, setPeersOn] = useState(false);
 
@@ -96,6 +102,23 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       setOldView(null);
       setNotice(null);
       setDoneKey(openKey);
+      // メールのリンクの使い捨ての合言葉：頼みと照らし、自分の鍵で受け取りに署名する（監査 B1）。ほかの鍵が受け取っていた・取り下げられていたら、見るだけ
+      const token = open.get("t");
+      if (token) {
+        void (async () => {
+          const r = readHuman<{ ok: boolean; reason?: string; state: string; requester?: string; receiver?: { by: string; fingerprint: string } }>(
+            await client.callHuman("request_receive", ROUTES.requestReceive.path, { planId: openId, version: openV, token }),
+          );
+          if (r.ok && r.body.state === "takenByOther" && r.body.receiver) {
+            setReceive({ state: "takenByOther", requester: r.body.requester ?? "", receiver: r.body.receiver });
+            setOldView({ planId: openId, version: openV });
+          } else if (r.ok && (r.body.state === "withdrawn" || r.body.state === "unknown")) {
+            setReceive({ state: r.body.state });
+            setOldView({ planId: openId, version: openV });
+          } else setReceive(null);
+          reloadStatus();
+        })();
+      } else setReceive(null);
       return;
     }
     void (async () => {
@@ -130,8 +153,15 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const viewingOld = oldView && plan && plan.planId === oldView.planId && plan.version === oldView.version ? oldView.version : null;
   const turn = st?.turn ?? null;
   const me = st?.name ?? null;
-  // 承認を頼まれた人（いちばん新しい版を渡した人でない人）には、承認と差し戻しを出す
-  const awaitingMe = !!turn && turn.state === "awaitingApproval" && !!me && turn.from !== me && turn.version === st?.latest?.version;
+  // 承認を頼まれた人（頼みを受け取った鍵の人）には、承認と差し戻しを出す（監査 B1）
+  const req = st?.request ?? null;
+  const awaitingMe = !!req && req.kind === "approve" && req.receivedByMe && !req.done && req.version === st?.latest?.version;
+  // 頼んだ人（まだ済んでいない頼み）：受け取った人を下の帯に出し、頼み直せる
+  const askedByMe = !!req && req.mine && !req.done && req.version === st?.latest?.version;
+  // 承認を頼んだあいだは、頼んだ版を見る。自分では確定しない（頼みと食い違うため。Wire の B1）
+  const askedApprove = askedByMe && req?.kind === "approve";
+  // 見るだけで開いたとき（古い版・ほかの鍵が受け取った頼み・取り下げられた頼み）は、主ボタンも押せない理由も出さない（Wire の B1）
+  const viewOnly = viewingOld !== null;
 
   // 版の下書きが無いあいだは白紙（資料のシートだけ）。開発と試験の見本（?plan=）は、星取表のシートが読んで作業中の計画に置く
   const devSample = new URLSearchParams(location.search).has("plan");
@@ -142,7 +172,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const base = working?.base ?? null;
   const staleBy = !viewingOld && latestNo !== null && (base === null || latestNo > base) ? (st?.versions?.at(-1) ?? null) : null;
   // つくる版は、もとにした版の次（ほかの人が足した版があっても、この編集がつくるつもりの版を出す。署名は止まる）
-  const nextVersion = viewingOld ?? (awaitingMe && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
+  const nextVersion = viewingOld ?? ((awaitingMe || askedApprove) && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
   const an = ws.fileCount ? ws.analysis() : null;
   const openQuestions = an ? an.open.length : 0;
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length;
@@ -150,7 +180,6 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const composeBlocks = !plan ? ws.composeBlockers() : [];
   const blocks = [
     !plan ? T.block.noPlan : null,
-    viewingOld ? T.block.oldVersion : null,
     staleBy ? T.block.stale : null,
     openQuestions > 0 ? T.block.open(openQuestions) : null,
     leftDecisions > 0 ? T.block.pending(leftDecisions) : null,
@@ -185,6 +214,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
   const sideOpen = !!an && openQuestions > 0;
   const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
+  // 承認を頼まれた人に知らせる、頼まれた版を作った鍵のうち、まだ確かめていないもの（KeyWarn.dc.html の 1）
+  const latestUntrusted = latestInfo ? untrustedSigners([latestInfo as { signatures: TrustSig[] }]) : [];
+  // 効かない頼み（Wire の B1 の追い）：鎖の行は開いた全員に。別の鍵の頼みがあれば、署名の切り替えに朱の「!」、
+  // 版を作った人（この PC の鍵で作った版）には下の帯にも 1 行
+  const ignored = st?.requestsIgnored ?? [];
+  const ignoredOther = ignored.some((q) => q.why === "otherKey");
+  const madeByMe = !!latestInfo?.signatures.some((x) => (x.role === "confirm" || x.role === "edit" || x.role === "revert") && x.trust === "own");
   const sideSource = current === "chart";
   const sideComments = !!plan;
   const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
@@ -193,7 +229,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 編集の番が人に渡っている（編集を頼んだ・承認待ち・差し戻し）ならその番。番が空いている（確定・承認のあと）なら、次の版を編集中。
   // 「確定済み」は、古い版を見るだけで開いたときだけ
   const turnHeld = !!turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned");
-  const stateLabel = viewingOld ? T.oldVersionLabel : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
+  const stateLabel = viewingOld ? (receive ? T.viewOnlyLabel : T.oldVersionLabel) : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
   const turnLine: { state: string; text: string } | null = viewingOld
     ? { state: "confirmed", text: T.confirmedLine }
     : turnHeld && turn
@@ -204,8 +240,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       : plan
         ? { state: "editing", text: T.turnLine("editing", true, "") }
         : null;
-  // 比べる版：承認を頼まれた人は頼まれた版のひとつ前、ほかは保管先のいちばん新しい版（同じ計画のときだけ）
-  const compareWith = viewingOld ? null : awaitingMe ? (st?.previous ?? null) : (st?.latest ?? null);
+  // 比べる版：承認を頼まれた人も頼んだ人も、頼んだ版のひとつ前（無ければ出さない）。ほかは保管先のいちばん新しい版（同じ計画のときだけ）
+  const compareWith = viewingOld ? null : awaitingMe || askedApprove ? (st?.previous ?? null) : (st?.latest ?? null);
   const compare = useMemo<MergeCompare | null>(
     () => (plan && compareWith && compareWith.plan.planId === plan.planId ? { version: compareWith.version, plan: compareWith.plan } : null),
     [plan, compareWith],
@@ -237,7 +273,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         <span className="moyai-merge-ver" data-testid="merge-version">
           {T.version(nextVersion)}
         </span>
-        {stateLabel && <span className="moyai-merge-state">{stateLabel}</span>}
+        {stateLabel && (
+          <span className="moyai-merge-state" data-view-only={viewOnly ? "true" : "false"} data-testid="merge-state">
+            {stateLabel}
+          </span>
+        )}
         {fictional && <FictionMark />}
         <div className="moyai-merge-head-end">
           {current === "chart" && plan && (
@@ -344,6 +384,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               {latestInfo && (
                 <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "signatures"} onClick={(e) => (e.preventDefault(), setSide("signatures"))} data-testid="side-signatures">
                   {T.side.signatures(latestInfo.signatures.length)}
+                  {ignoredOther && (
+                    <span className="moyai-sheet-n" data-testid="side-signatures-ignored">
+                      !
+                    </span>
+                  )}
                 </a>
               )}
               {sideSource && (
@@ -362,7 +407,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                 <Questions ws={ws} an={an} />
               </>
             )}
-            {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} />}
+            {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} onKeyConfirmed={reloadStatus} request={req && !req.done && req.version === latestInfo.version ? req : null} ignored={ignored} />}
             {sideNow === "comments" && plan && (
               <CommentsPanel
                 client={client}
@@ -384,9 +429,44 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
 
       <Group justify="space-between" px={32} py="xs" wrap="nowrap" className="moyai-merge-bar">
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-          {turnLine && (
-            <Text size="xs" data-testid="merge-turn" data-state={turnLine.state}>
-              {turnLine.text}
+          {receive ? (
+            <Text size="xs" data-testid="request-other" data-state={receive.state}>
+              {receive.state === "takenByOther" ? `${HUMAN_TEXT.request.takenByOther}　${receive.receiver.by}　${receive.receiver.fingerprint}` : HUMAN_TEXT.request[receive.state]}
+              {receive.state === "takenByOther" && (
+                <a
+                  className="moyai-inline-act"
+                  href={`mailto:?subject=${encodeURIComponent(HUMAN_TEXT.request.notifySubject(st?.latest?.version ?? 0))}&body=${encodeURIComponent(HUMAN_TEXT.request.notifyBody(st?.latest?.version ?? 0, receive.receiver.by, receive.receiver.fingerprint))}`}
+                  data-testid="request-notify"
+                >
+                  {HUMAN_TEXT.request.notify(receive.requester)}
+                </a>
+              )}
+            </Text>
+          ) : askedByMe && req ? (
+            <Text size="xs" style={{ whiteSpace: "nowrap" }} data-testid="request-asked" data-received={req.received ? "true" : "false"}>
+              {HUMAN_TEXT.request.asked[req.kind]}　{req.received ? `${HUMAN_TEXT.request.receivedBy}　${req.received.by}　${req.received.fingerprint}` : `${req.to}　${HUMAN_TEXT.request.notOpened}`}
+            </Text>
+          ) : (
+            turnLine && (
+              <Text size="xs" data-testid="merge-turn" data-state={turnLine.state}>
+                {turnLine.text}
+              </Text>
+            )
+          )}
+          {askedByMe && req?.received && (req.received.trust === "unconfirmed" || req.received.trust === "changed") && (
+            <KeyWarnLine
+              signers={[{ role: "confirm", by: req.received.by, pub: req.received.pub, fingerprint: req.received.fingerprint, trust: req.received.trust, previous: req.received.previous }]}
+              onConfirmed={reloadStatus}
+              named={false}
+            />
+          )}
+          {awaitingMe && st?.latest && <KeyWarnLine signers={latestUntrusted} onConfirmed={reloadStatus} onShow={() => setSide("signatures")} />}
+          {madeByMe && ignoredOther && !viewOnly && (
+            <Text size="xs" c="var(--shu-text)" style={{ whiteSpace: "nowrap" }} data-testid="request-ignored">
+              {HUMAN_TEXT.request.ignoredBar}
+              <button type="button" className="moyai-inline-act" onClick={() => setSide("signatures")} data-testid="request-ignored-show">
+                {HUMAN_TEXT.request.ignoredShow}
+              </button>
             </Text>
           )}
         </Group>
@@ -410,16 +490,21 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           </Group>
         ) : (
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
-          {blocks.length > 0 && (
+          {!viewOnly && blocks.length > 0 && (
             <Text size="xs" c="dimmed" data-testid="confirm-disabled-reason">
               {T.blockPrefix}
               {blocks.join("・")}
             </Text>
           )}
+          {askedByMe && req && !viewOnly && (
+            <Button variant="default" onClick={() => setRenew({ version: req.version, to: req.to })} disabled={conn.kind !== "open"} data-testid="request-renew">
+              {HUMAN_TEXT.request.renew}
+            </Button>
+          )}
           <Button variant="default" onClick={() => setHistoryOpen(true)} disabled={!plan || conn.kind !== "open"} data-testid="history-open">
             {T.history}
           </Button>
-          {awaitingMe && st?.latest ? (
+          {viewOnly || askedApprove ? null : awaitingMe && st?.latest ? (
             <>
               <Button variant="default" onClick={() => setSignRole("return")} disabled={conn.kind !== "open"} data-testid="return-open">
                 {T.returnBack}
@@ -442,6 +527,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />
           <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
+          {/* 頼み直す相手は開いたときに覚える（読み直しの間に状態が消えても、出したメールの文を消さない） */}
+          <RequestRenewDialog client={client} planId={plan.planId} version={renew?.version ?? 0} to={renew?.to ?? ""} opened={!!renew} onClose={() => setRenew(null)} onRenewed={reloadStatus} />
           {st?.latest && signRole && (
             <SignDialog
               client={client}
@@ -449,6 +536,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               version={st.latest.version}
               role={signRole}
               hasKey={!!st.hasKey}
+              untrusted={signRole === "approve" ? latestUntrusted : []}
+              onKeyConfirmed={reloadStatus}
               opened={!!signRole}
               onClose={() => setSignRole(null)}
               onSigned={() => {

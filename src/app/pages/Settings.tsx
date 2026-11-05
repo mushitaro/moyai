@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
 import { DevTools } from "../components/DevTools";
+import { KeyCheckDialog, type TrustSig } from "../components/KeyWarn";
 import { useConnection } from "../state/bridge";
 import { HUMAN_TEXT } from "../text";
 
@@ -30,7 +31,7 @@ interface SettingsBody {
   rings: { ringId: string; root: string; pack: string; key: string; fingerprint: string | null; synced: Synced | null }[];
   packs: { id: string; name: string; ready: boolean; reason: string | null }[];
   name: string | null;
-  people: { by: string; key: string; fingerprint: string; confirmed: boolean; own: boolean; firstSeen: string }[];
+  people: { by: string; key: string; pub: string; fingerprint: string; confirmed: boolean; own: boolean; changed: boolean; firstSeen: string; previous?: { fingerprint: string; at: string } | null }[];
 }
 
 export function Fingerprint({ value }: { value: string }) {
@@ -149,15 +150,12 @@ export function Settings() {
     setSaved(true);
     await load();
   };
-  // ほかの人の鍵を、指紋を読み合わせて確認済みにする（人だけの経路）
-  const confirmKey = async (key: string) => {
-    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("person_key_confirm", ROUTES.personKeyConfirm.path, { key }));
-    if (!r.ok) return setError(r.message);
-    await load();
-  };
+  // ほかの人の鍵を、指紋を読み合わせて確認済みにする（人だけの経路）。どこからでも同じ読み合わせのダイアログを開く（KeyWarn.dc.html の 7）
+  const [check, setCheck] = useState<TrustSig | null>(null);
 
   return (
     <Container size="lg" py="lg" data-testid="settings-page">
+      <KeyCheckDialog signer={check} onClose={() => setCheck(null)} onConfirmed={() => void load()} />
       <Group justify="space-between" align="center" mb="md">
         <Group gap="sm">
           <Title order={2}>{T.title}</Title>
@@ -251,10 +249,15 @@ export function Settings() {
                         <Table.Td>
                           <Fingerprint value={p.fingerprint} />
                         </Table.Td>
-                        <Table.Td>{p.own ? T.own : p.confirmed ? T.confirmed : T.unconfirmed}</Table.Td>
+                        <Table.Td c={p.changed ? "var(--shu-text)" : undefined}>{p.own ? T.own : p.confirmed ? T.confirmed : p.changed ? HUMAN_TEXT.history.trust.changed : T.unconfirmed}</Table.Td>
                         <Table.Td>
                           {!p.own && !p.confirmed && (
-                            <Button size="compact-sm" variant="default" onClick={() => void confirmKey(p.key)} data-testid="person-confirm">
+                            <Button
+                              size="compact-sm"
+                              variant="default"
+                              onClick={() => setCheck({ role: "confirm", by: p.by, pub: p.pub, fingerprint: p.fingerprint, trust: p.changed ? "changed" : "unconfirmed", previous: p.previous ?? null })}
+                              data-testid="person-confirm"
+                            >
                               {T.confirmKey}
                             </Button>
                           )}

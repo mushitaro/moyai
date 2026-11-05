@@ -10,6 +10,8 @@ import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { acceptDecisions } from "../helpers/e2e";
+import { envelopeText, makeMemberBody } from "../../src/share/bundle";
+import { generateKeyPair, keyIdOf, signBody } from "../../src/share/sign";
 
 const jst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const SHOTS = process.env.MOYAI_SHOTS_DIR ?? `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/moyai-shots/${jst}`;
@@ -216,6 +218,25 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     // 置いたファイルを消すと、また ✓ だけ（次の CLI の確かめのため）
     rmSync(join(ringRoot, ringDirs[0]!, "bundles", keyDirs[0]!, "メモ.txt"));
     await page.getByTestId("received-again").click();
+    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
+  });
+
+  await test.step("まだ確かめていない仲間：受け取った束の行に「まだ確かめていません」。指紋を読み合わせると ✓（監査 D1、Share.dc.html Version 46）", async () => {
+    // 試験の台本が、ほかの拠点の仲間のファイルを輪に置いた
+    const peer = generateKeyPair();
+    const ringId = readdirSync(ringRoot).find((d) => /^[0-9a-f]{16}$/.test(d))!;
+    const body = makeMemberBody(ringId, keyIdOf(peer.pub), peer.pub, "2026-11");
+    writeFileSync(join(ringRoot, ringId, "members", `${keyIdOf(peer.pub)}.json`), envelopeText(body, signBody(body, peer.privateKey)));
+    await page.getByTestId("received-again").click();
+    const row = page.locator('[data-testid="verify-line"][data-state="unconfirmed"]');
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText("まだ確かめていません");
+    await page.getByTestId("received").screenshot({ path: shot(`checkpoint-member-unconfirmed-${tag}`) });
+    // 人が仲間に電話で読み上げてもらい、16 文字が合った（試験の台本が押した）
+    await row.getByTestId("member-check").click();
+    await expect(page.getByText("仲間の鍵の指紋")).toBeVisible();
+    await page.getByTestId("key-check-matched").click();
+    await expect(page.locator('[data-testid="verify-line"][data-state="unconfirmed"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
   });
 

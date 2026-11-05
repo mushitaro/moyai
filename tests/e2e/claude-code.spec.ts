@@ -87,6 +87,8 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   await expect(page.getByTestId("composed")).toBeVisible();
   // 当てはめの案は、MERGE の決定のシートに 1 規則 1 行で並ぶ
   await page.getByTestId("sheet-decisions").click();
+  await expect(page.getByTestId("decisions-sheet")).toBeVisible();
+  await expect(page.getByTestId("crosswalk-rule").first()).toBeVisible();
   expect(await page.getByTestId("crosswalk-rule").count()).toBeGreaterThan(0);
   await page.screenshot({ path: shot(`cc-crosswalk-proposed-${tag}`), fullPage: true });
 

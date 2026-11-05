@@ -8,6 +8,7 @@ import { ROUTES } from "../../shared/routes";
 import type { BridgeClient } from "../bridge-client";
 import { HUMAN_TEXT } from "../text";
 import { readHuman } from "./ConfirmDialog";
+import { KeyWarnLine, type TrustSig } from "./KeyWarn";
 
 const T = HUMAN_TEXT.approve;
 
@@ -17,6 +18,8 @@ export function SignDialog({
   version,
   role,
   hasKey,
+  untrusted = [],
+  onKeyConfirmed,
   opened,
   onClose,
   onSigned,
@@ -27,6 +30,9 @@ export function SignDialog({
   role: "approve" | "return";
   /** この PC に、設定の呼び名の鍵があるか */
   hasKey: boolean;
+  /** 頼まれた版を作った鍵のうち、まだ確かめていないもの（主ボタンのすぐ上に 1 行。止めない） */
+  untrusted?: readonly TrustSig[];
+  onKeyConfirmed?: () => void;
   opened: boolean;
   onClose: () => void;
   onSigned: () => void;
@@ -71,6 +77,11 @@ export function SignDialog({
           <Alert color="gray" data-testid="sign-error">
             {error}
           </Alert>
+        )}
+        {untrusted.length > 0 && (
+          <Group justify="flex-end">
+            <KeyWarnLine signers={untrusted} onConfirmed={() => onKeyConfirmed?.()} />
+          </Group>
         )}
         <Group justify="flex-end" gap="sm">
           {!can && role === "return" && reason.trim().length === 0 && (

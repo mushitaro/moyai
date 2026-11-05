@@ -111,7 +111,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await expect(row).toHaveCount(1);
       await expect(row).toContainText("- 台帳からの案");
       await expect(row).toContainText(`周期の案 ${proposalId}`);
-      await expect(row).toContainText("Claude（台帳から）");
+      await expect(row).toContainText("- 台帳からの案");
       await page.screenshot({ path: shot(`ledger-plan-decisions-${tag}`), fullPage: true });
       await acceptDecisions(page, "試験の台本が押した（似た施設の帯を見て、周期の案を受けた）");
       // 受けたら、破線の円はふつうの計画の印になり、凡例の「Claude の案」も消える

@@ -11,10 +11,13 @@ import { HEADER_TAB_SECRET, ROUTES, ROUTE_IDS, type HumanAction, type RouteDef }
 import { EXPOSED_TOOL_NAMES, TOOL_NAMES } from "../../src/shared/tools";
 import { truthToPlan } from "../fixtures/chart/truth-to-plan.mjs";
 import { fileURLToPath } from "node:url";
+import ExcelJS from "exceljs";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { FakeTab, SECRET_A, http, startTestBridge, type TestBridge } from "../helpers/bridge";
 import { STUB_TOKEN, startGitHubStub } from "../helpers/github-stub";
 import type { GitHubIo } from "../../src/bridge/github";
+import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody } from "../../src/share/bundle";
+import { generateKeyPair, keyIdOf, openPlainKey, signBody, type PlainKey } from "../../src/share/sign";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 const NEW_ROUTES = ROUTE_IDS.filter((id) => ROUTES[id].kind === "human" && id !== "commitTrial");
@@ -52,7 +55,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -166,6 +169,8 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     const key = await call("personKeyCreate", {});
     expect(key).toMatchObject({ ok: true, name: "【架空】試験の人" });
     expect((await call("personKeyCreate", {})).reason).toBe("personKeyExists");
+    // 担当者の範囲の読み方の持ち主は、署名する人だけ（タブから来たほかの呼び名は断る。監査 D2）
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, readings: [{ skill: {}, by: "【架空】ほかの人", facilityKey: null }] })).reason).toBe("readingInvalid");
     expect((await call("planCommit", { plan, reason: "", acceptances: [], basedOn: null })).reason).toBe("reasonEmpty");
     expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null })).reason).toBe("pendingDecisions");
     const c = await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null });
@@ -177,6 +182,59 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(existsSync(c.files.version)).toBe(true);
     expect(existsSync(c.files.report)).toBe(true);
     expect(c.files.version.startsWith(join(docs, "MOYAI", "plans"))).toBe(true);
+    // 書き出しと差分レポートのハッシュは署名の中にあり、落とすときに照らす。書き換えたファイルは渡さない（監査 E1）
+    const rec = JSON.parse(readFileSync(c.files.version, "utf8"));
+    expect(rec.files.report).toBe(createHash("sha256").update(readFileSync(c.files.report)).digest("hex"));
+    expect(rec.files.export).toBe(createHash("sha256").update(readFileSync(c.files.export)).digest("hex"));
+    const got = await call("planFileRead", { planId: plan.planId, version: 1, kind: "export" });
+    expect(Buffer.from(got.base64, "base64").equals(readFileSync(c.files.export))).toBe(true);
+    const report = readFileSync(c.files.report);
+    writeFileSync(c.files.report, Buffer.concat([report, Buffer.from([0])]));
+    expect((await call("planFileRead", { planId: plan.planId, version: 1, kind: "report" })).reason).toBe("fileChanged");
+    writeFileSync(c.files.report, report);
+
+    // 様式で書き出す（3C）：落とした様式は共有フォルダに下書きで置き、書き出した Excel に人が署名すると、その写し方が承認になる
+    const wb = new ExcelJS.Workbook();
+    const sheet = wb.addWorksheet("様式3");
+    sheet.getCell("A1").value = "【架空】長寿命化計画 様式 3";
+    ["設備名", "作業区分", "周期（年）", "R3", "R4"].forEach((h, i) => (sheet.getCell(3, i + 1).value = h));
+    const tplBytes = Buffer.from(await wb.xlsx.writeBuffer());
+    const columns = { schema: "moyai.columns/0", headerRow: 3, headers: ["設備名", "作業区分", "周期（年）", "R3", "R4"], roles: [{ kind: "item" }, { kind: "work" }, { kind: "cycle" }, { kind: "year", fiscalYear: 2021 }, { kind: "year", fiscalYear: 2022 }] };
+    expect((await call("templateSave", { name: "../外", base64: tplBytes.toString("base64"), columns })).reason).toBe("nameInvalid");
+    expect((await call("templateSave", { name: "【架空】様式3", base64: Buffer.from("not xlsx").toString("base64"), columns })).reason).toBe("fileInvalid");
+    const saved = await call("templateSave", { name: "【架空】様式3", base64: tplBytes.toString("base64"), columns });
+    expect(saved).toMatchObject({ ok: true, name: "【架空】様式3" });
+    expect(existsSync(join(docs, "MOYAI", "様式", "【架空】様式3", "template.xlsx"))).toBe(true);
+    const t0 = await call("templatesRead", { planId: plan.planId });
+    expect(t0.templates).toEqual([expect.objectContaining({ name: "【架空】様式3", version: saved.version, current: true, approval: null, exported: false })]);
+    // 写し方だけを直すと、同じ名前の下書き（様式のファイルは共有フォルダのもの）
+    const draft2 = await call("templateSave", { name: "【架空】様式3", base64: "", columns: { ...columns, roles: [...columns.roles.slice(0, 4), { kind: "none" }] }, from: saved.version });
+    expect(draft2.version).not.toBe(saved.version);
+    // 書き出して署名する：Excel を置き、版の書き出しの署名に足す。版の署名（確定・承認）には入らない
+    const sx = await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version });
+    expect(sx).toMatchObject({ ok: true, version: 1 });
+    const ex2 = await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: draft2.version });
+    expect(ex2.excel).not.toBe(sx.excel);
+    const stx = await call("planStatus", { planId: plan.planId });
+    expect(stx.versions[0].signatures.map((x: { role: string }) => x.role)).toEqual(["confirm"]);
+    expect(stx.versions[0].exports.map((x: { template: { version: string }; trust: string }) => [x.template.version, x.trust]).sort()).toEqual([[saved.version, "own"], [draft2.version, "own"]].sort());
+    // 自分の署名でも、信じる鍵の書き出しなら写し方の承認になる。前の版（承認済み）も消えずに並ぶ
+    const t1 = await call("templatesRead", { planId: plan.planId });
+    expect(t1.templates.map((t: { version: string; current: boolean; approval: { in: number; by: string } | null; exported: boolean }) => [t.version === saved.version, t.current, t.approval?.in ?? null, t.approval?.by ?? null, t.exported]).sort()).toEqual(
+      [
+        [true, false, 1, "【架空】試験の人", true],
+        [false, true, 1, "【架空】試験の人", true],
+      ].sort(),
+    );
+    // 落とすときは署名の SHA-256 と照らす。書き換えたファイルは渡さない
+    const got1 = await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version });
+    expect(createHash("sha256").update(Buffer.from(got1.base64, "base64")).digest("hex")).toBe(sx.excel);
+    const xl = join(docs, "MOYAI", "plans", plan.planId, "exports", `000001-${sx.excel.slice(0, 16)}.xlsx`);
+    const keep = readFileSync(xl);
+    writeFileSync(xl, Buffer.concat([keep, Buffer.from([0])]));
+    expect((await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).reason).toBe("fileChanged");
+    writeFileSync(xl, keep);
+    expect((await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: "0".repeat(64) })).reason).toBe("templateUnknown");
 
     // 輪を作る
     const ringRoot = join(extra, "輪");
@@ -205,6 +263,32 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect(readdirSync(join(docs, "MOYAI", "plans", plan.planId, "share", "keys"))).toEqual([`${rc.ringId}.json`]);
     expect(readdirSync(join(docs, "MOYAI", "plans", plan.planId, "share", "sent"))).toEqual([`${rc.ringId}.json`]);
 
+    // 輪の仲間（監査 D1）：まだ確かめていない仲間は、指紋を読み合わせて確認済みにする（その輪に、その公開鍵の仲間のファイルがあるときだけ）
+    const peer = generateKeyPair();
+    const peerBody = makeMemberBody(rc.ringId, keyIdOf(peer.pub), peer.pub, "2026-11");
+    writeFileSync(join(ringRoot, rc.ringId, "members", `${keyIdOf(peer.pub)}.json`), envelopeText(peerBody, signBody(peerBody, peer.privateKey)));
+    const v2 = await call("ringVerify", { ringId: rc.ringId });
+    expect(v2.report.lines.find((l: { kind: string; pub?: string }) => l.kind === "member" && l.pub === peer.pub)?.reasons).toEqual(["member.unconfirmed"]);
+    expect((await call("ringMemberConfirm", { ringId: rc.ringId, pub: generateKeyPair().pub })).reason).toBe("keyUnknown");
+    expect(await call("ringMemberConfirm", { ringId: rc.ringId, pub: peer.pub })).toMatchObject({ ok: true, key: keyIdOf(peer.pub) });
+    const v3 = await call("ringVerify", { ringId: rc.ringId });
+    expect(v3.report.lines.find((l: { kind: string; pub?: string }) => l.kind === "member" && l.pub === peer.pub)?.status).toBe("ok");
+
+    // 輪の決まりが変わった（輪を作った人が、紛れる数の下限を 1 つ厳しくした）：差を見せ、人が受け入れるまで送らない
+    const founderKey = openPlainKey(JSON.parse(readFileSync(join(tb.stateDir!, "keys", `${rc.ringId}.json`), "utf8")) as PlainKey)!;
+    const circlePath = join(ringRoot, rc.ringId, "circle.json");
+    const oldCircle = JSON.parse(readFileSync(circlePath, "utf8")).body;
+    const nextBody = makeRulesDocBody(CIRCLE_V, oldCircle.founder, oldCircle.nonce, 2, "2026-11", { ...oldCircle.rules, minK: oldCircle.rules.minK + 1 });
+    writeFileSync(circlePath, envelopeText(nextBody, signBody(nextBody, founderKey.privateKey)));
+    const pvR = await call("checkpointPreview", { planId: plan.planId, ringId: rc.ringId, answers });
+    expect(pvR.view.blockers).toContain("rules");
+    expect(pvR.ring.rulesChange).toMatchObject({ loosened: 0, tightened: 1, rows: [{ rule: "minK", dir: "tightened" }], changer: { pub: oldCircle.founder, confirmed: true } });
+    expect((await call("ringRulesAccept", { ringId: rc.ringId, rulesHash: "0".repeat(64) })).reason).toBe("previewChanged");
+    expect(await call("ringRulesAccept", { ringId: rc.ringId, rulesHash: pvR.ring.rulesChange.rulesHash })).toMatchObject({ ok: true });
+    const pvA = await call("checkpointPreview", { planId: plan.planId, ringId: rc.ringId, answers });
+    expect(pvA.ring.rulesChange).toBeNull();
+    expect(pvA.view.blockers).not.toContain("rules");
+
     // 版の履歴と戻す
     // EXPORT：確定した版の書き出しと差分レポートを読む。無い版は断る
     const ex = await call("planFileRead", { planId: plan.planId, version: 1, kind: "export" });
@@ -214,9 +298,17 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect((await call("planFileRead", { planId: plan.planId, version: 9, kind: "export" })).reason).toBe("versionUnknown");
     const back = await call("planRevert", { planId: plan.planId, to: 1, reason: "試しに戻す", basedOn: 1 });
     expect(back).toMatchObject({ ok: true, version: 2 });
+    // 新しく書き出せるのは最新の版だけ。古い版でも、もう置いてある書き出しは落とせる（Architect の縛り 4）
+    expect((await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).reason).toBe("notLatest");
+    expect((await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).ok).toBe(true);
     // 版が変わったので、前の版で見た検問所からは送らない
     const stale = await call("checkpointSend", { planId: plan.planId, version: 1, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash });
     expect(stale.reason).toBe("versionChanged");
+    // 最新の版を書き換えると（確かめで合わない版）、検問所は開かず、送らない
+    const vf = join(docs, "MOYAI", "plans", plan.planId, "versions", "000002.json");
+    writeFileSync(vf, readFileSync(vf, "utf8").replace("試しに戻す", "書き換えた理由"));
+    expect((await call("checkpointPreview", { planId: plan.planId, ringId: rc.ringId, answers })).reason).toBe("historyBroken");
+    expect((await call("checkpointSend", { planId: plan.planId, version: 2, ringId: rc.ringId, answers, previewHash: pv.view.bodyHash })).reason).toBe("historyBroken");
   });
 });
 

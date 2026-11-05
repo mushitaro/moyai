@@ -123,7 +123,7 @@ export function sealBundle(i: SendInput, s: SealInput): SealResult {
   const sig = signBody(pv.body, s.pair.privateKey);
   const text = envelopeText(pv.body, sig);
   const r = recount(text, i.ctx);
-  if (!isClean(r)) return { ok: false, reason: "afterSign", recount: r };
+  if (!isClean(r) || r.peersShort) return { ok: false, reason: "afterSign", recount: r };
   const hash = fileHash(text);
   return { ok: true, text, hash, fileName: bundleFileName(pv.body.seq, hash), recount: r };
 }

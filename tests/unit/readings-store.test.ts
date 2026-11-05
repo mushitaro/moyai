@@ -44,8 +44,11 @@ describe("読み方の保管先", () => {
     expect(b.version).not.toBe(a.version);
     expect(readdirSync(join(dir, "versions"))).toEqual([a.version]);
     const list = await listReadings(root, new Map());
-    expect(list.map((x) => [x.name, x.scope, x.version, x.rules, x.approved])).toEqual([["【架空】甲工場の読み方", "facility", b.version, 2, false]]);
-    expect(loadedOf(list)).toEqual([]);
+    expect(list.map((x) => [x.name, x.scope, x.version, x.rules, x.approved, x.current])).toEqual([
+      ["【架空】甲工場の読み方", "facility", b.version, 2, false, true],
+      ["【架空】甲工場の読み方", "facility", a.version, 1, false, false],
+    ]);
+    expect(loadedOf(list, null)).toEqual([]);
     // 一覧は SKILL.md の文も持つ（reading_skills_list の withText で AI に渡す）
     expect(list[0]!.text).toContain("- 2 行目を見出しとして読む");
   });
@@ -75,11 +78,45 @@ describe("読み方の保管先", () => {
     // 署名の鍵を信じなければ承認しない。信じれば、最初に使った版の番号で承認済み
     expect((await approvedReadingVersions(root, () => false)).has(c.version)).toBe(false);
     const approved = await approvedReadingVersions(root, (x) => x.key === keyIdOf(SIGNER.pair.pub));
-    expect(approved.get(c.version)).toBe(1);
+    expect(approved.get(c.version)?.in).toBe(1);
     const list = await listReadings(root, approved);
     expect(list.find((x) => x.name === "【架空】会社の読み方")?.approved).toBe(true);
-    expect(loadedOf(list).map((x) => [x.skill.name, x.approved, x.approvedIn, x.draft])).toEqual([["【架空】会社の読み方", true, 1, false]]);
+    expect(loadedOf(list, null).map((x) => [x.skill.name, x.approved, x.approvedIn, x.draft])).toEqual([["【架空】会社の読み方", true, 1, false]]);
     // 読み方の版は SHA-256 の全長
     expect(c.version).toMatch(/^[0-9a-f]{64}$/);
+
+    // 同じ名前で未承認の版を上に書いても、承認済みの前の版を当て続ける（Db の重-4）
+    const d = await registerReading(root, skill("【架空】会社の読み方", "company", 2), null, null);
+    if (!d.ok) throw new Error(d.reason);
+    const after = await listReadings(root, await approvedReadingVersions(root, (x) => x.key === keyIdOf(SIGNER.pair.pub)));
+    expect(after.filter((x) => x.name === "【架空】会社の読み方").map((x) => [x.version === d.version, x.current, x.approved])).toEqual([
+      [true, true, false],
+      [false, false, true],
+    ]);
+    expect(loadedOf(after, null).map((x) => [x.skill.name, x.version, x.approved])).toEqual([["【架空】会社の読み方", c.version, true]]);
+  });
+
+  it("範囲は置き場所で決める。担当者の読み方はその人だけ、施設の読み方は施設の鍵を付けて渡す（Db の重-5）", async () => {
+    // rules.json の scope が company でも、担当者の置き場所にあれば担当者の読み方
+    const mine = await registerReading(root, skill("【架空】癖", "person"), "【架空】甲", null);
+    const theirs = await registerReading(root, skill("【架空】癖", "person", 2), "【架空】乙", null);
+    const fac = await registerReading(root, skill("【架空】工場", "facility"), null, "f2");
+    if (!mine.ok || !theirs.ok || !fac.ok) throw new Error("書けない");
+    writeFileSync(join(root, mine.path, "rules.json"), readFileSync(join(root, mine.path, "rules.json"), "utf8").replace('"scope": "person"', '"scope": "company"'));
+    const p = plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "INSPECT", ["a1"])], details: [detail("d1", "w1", 2020)] });
+    const vOf = (path: string) => listReadings(root, new Map()).then((l) => l.find((x) => x.path === path)!.version);
+    const readingSkills = [
+      { name: "【架空】癖", path: mine.path, version: await vOf(mine.path) },
+      { name: "【架空】癖", path: theirs.path, version: theirs.version },
+      { name: "【架空】工場", path: fac.path, version: fac.version },
+    ];
+    const v1 = await commitPlan({ root, plan: { ...p, planId: "plan-scope" }, reason: "確定", acceptances: [], basedOn: null, signer: SIGNER, client: "t", readingSkills });
+    if (!v1.ok) throw new Error(v1.reason);
+    const list = await listReadings(root, await approvedReadingVersions(root, () => true));
+    expect(list.find((x) => x.path === mine.path)).toMatchObject({ scope: "person", owner: "【架空】甲", skill: { scope: "person" } });
+    const loaded = loadedOf(list, "【架空】甲");
+    expect(loaded.filter((x) => x.skill.name === "【架空】癖").map((x) => x.path)).toEqual([mine.path]);
+    expect(loaded.find((x) => x.skill.name === "【架空】工場")).toMatchObject({ owner: "f2", skill: { scope: "facility" } });
+    expect(loadedOf(list, null).some((x) => x.skill.name === "【架空】癖")).toBe(false);
   });
 });

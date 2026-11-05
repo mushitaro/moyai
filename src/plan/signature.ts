@@ -14,7 +14,8 @@ export type SignRole = (typeof SIGN_ROLES)[number];
 
 /** 呼び名：画面と署名に出す名前（40 文字まで。前後の空白と、道の区切り・制御の文字は使えない） */
 export const PERSON_NAME = /^[^\s\\/:*?"<>|\x00-\x1f][^\\/:*?"<>|\x00-\x1f]{0,39}$/u;
-export const validName = (s: string) => PERSON_NAME.test(s) && s.trim() === s;
+/** 保管先の道（people/ や読み方の担当者の下）にも使うので、点だけの名前（.・..）は使えない（監査 D2） */
+export const validName = (s: string) => PERSON_NAME.test(s) && s.trim() === s && !/^\.+$/.test(s);
 
 export interface Statement {
   schema: typeof SIGNATURE_SCHEMA;

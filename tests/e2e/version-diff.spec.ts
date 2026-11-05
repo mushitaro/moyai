@@ -108,8 +108,11 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       await page.getByTestId("mark-open").click();
       await expect(page.getByTestId("merge-version")).toHaveText("第 1 版");
       await expect(page.getByTestId("plan-name")).toBeVisible();
-      await expect(page.getByTestId("confirm-open")).toBeDisabled();
-      await expect(page.getByTestId("confirm-disabled-reason")).toContainText("保管先の古い版を見ています");
+      // 見るだけのときは主ボタンも押せない理由も出さない。古い版であることは見出しの状態（淡い字）で分かる（Wire の B1）
+      await expect(page.getByTestId("confirm-open")).toHaveCount(0);
+      await expect(page.getByTestId("confirm-disabled-reason")).toHaveCount(0);
+      await expect(page.getByTestId("merge-state")).toHaveText("古い版（見るだけ）");
+      await expect(page.getByTestId("merge-state")).toHaveAttribute("data-view-only", "true");
       await expect(page.getByTestId("merge-compare")).toHaveCount(0);
     });
 

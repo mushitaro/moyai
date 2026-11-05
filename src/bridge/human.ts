@@ -3,17 +3,24 @@
 // どれも MCP のツールにしない（src/shared/tools.ts に無い）。答えは JSON。断るときは { ok: false, reason }。
 // 鍵・トークン・計画の中身をログに出さない。
 import { spawn } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { pendingDecisions } from "../plan/diff";
-import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLatest, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
+import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLatest, CREATION_ROLES, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
 import { COMMENT_MAX, addComment, readComments } from "../plan/comments";
 import { TURN_SCHEMA, handoffMail, readTurn, writeTurn } from "../plan/turn";
 import { validName } from "../plan/signature";
-import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustList, trustOf } from "./people";
+import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previousOf, trustList, trustOf } from "./people";
+import { checkSeen } from "./seen";
+import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
+import { checkRules, diffRuleRows } from "../share/rules";
 import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
+import { approvedTemplateVersions, listTemplates, readTemplateVersion, saveTemplate } from "./templates";
+import { exportExcelName, exportSignatureName, signExport } from "../plan/exports";
+import { fillTemplate, templateRows } from "../plan/template";
+import ExcelJS from "exceljs";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
@@ -27,13 +34,15 @@ import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
 import { HEX16, HEX64, fingerprint, generateKeyPair, keyIdOf, sha256Hex, type KeyPair } from "../share/sign";
 import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, storeFacilityKey, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
   detectDocuments,
   readGitHub,
   type LedgerSentEntry,
+  addRing,
   readRings,
+  writeRings,
   removeGitHub,
   writeGitHub,
   readSettings,
@@ -105,6 +114,11 @@ const SCHEMAS = {
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
   }),
   readings_read: z.object({}),
+  templates_read: z.object({ planId: planIdSchema.nullable() }),
+  // 写し方だけを直すときは base64 を空にし、from に元の様式の版を書く（様式のファイルは共有フォルダのものを使う）
+  template_save: z.object({ name: z.string().min(1).max(80), base64: z.string().max(12 * 1024 * 1024), columns: z.unknown(), from: z.string().regex(/^[0-9a-f]{64}$/).nullable().optional() }),
+  export_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), name: z.string().min(1).max(80), templateVersion: z.string().regex(/^[0-9a-f]{64}$/) }),
+  export_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), name: z.string().min(1).max(80), templateVersion: z.string().regex(/^[0-9a-f]{64}$/) }),
   plan_revert: z.object({ planId: planIdSchema, to: z.number().int().min(1), reason: z.string().max(500), basedOn: z.number().int().min(1).nullable() }),
   plans_list: z.object({}),
   plan_version_read: z.object({ planId: planIdSchema, version: z.number().int().min(1) }),
@@ -116,9 +130,11 @@ const SCHEMAS = {
   }),
   comments_list: z.object({ planId: planIdSchema }),
   plan_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), role: z.enum(["approve", "return"]), reason: z.string().max(500) }),
+  request_receive: z.object({ planId: planIdSchema, version: z.number().int().min(1), token: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/) }),
+  request_renew: z.object({ planId: planIdSchema, version: z.number().int().min(1), to: z.string().max(200), note: z.string().max(1000) }),
   plan_file_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), kind: z.enum(["export", "report"]) }),
   person_key_create: z.object({}),
-  person_key_confirm: z.object({ key: z.string().regex(/^[0-9a-f]{16}$/) }),
+  person_key_confirm: z.object({ pub: z.string().regex(HEX64) }),
   settings_read: z.object({}),
   settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional(), name: z.string().max(40).nullable().optional() }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID) }),
@@ -132,6 +148,8 @@ const SCHEMAS = {
     previewHash: z.string().regex(HEX64),
   }),
   ring_verify: z.object({ ringId: ringIdSchema }),
+  ring_member_confirm: z.object({ ringId: ringIdSchema, pub: z.string().regex(HEX64) }),
+  ring_rules_accept: z.object({ ringId: ringIdSchema, rulesHash: z.string().regex(HEX64) }),
   ledger_preview: z.object({ planId: planIdSchema, answers: answersSchema }),
   ledger_send: z.object({
     planId: planIdSchema,
@@ -224,8 +242,30 @@ const sha256OfLedger = (L: { ledgerBytes: Uint8Array }) => sha256Hex(L.ledgerByt
 /** 渡すメールのリンクの行き先：受け取る人の MOYAI（moyai start の既定のポート。server.ts の DEFAULT_PORT と同じ） */
 export const HANDOFF_ORIGIN = "http://127.0.0.1:43110";
 
+/** 受け取る人の MOYAI（既定のポート）で開くリンク。送る人が --port を変えていても、その番号は載せない。合言葉はリンクにだけ入れる */
+function handoffLink(planId: string, version: number, contentHash: string, token: string): string {
+  return `${HANDOFF_ORIGIN}/#/merge?open=${encodeURIComponent(planId)}&v=${version}&h=${contentHash.slice(0, 16)}&t=${token}`;
+}
+
 /** 施設の鍵がまだ決まらないとき（鍵が 2 つある）に、見え方だけを出すための仮の鍵（メモリだけ。署名には使わない） */
 const PLACEHOLDER_PAIR: KeyPair = generateKeyPair();
+
+/** 輪の決まりが、人が受け入れたものから変わっていれば、その差（受け入れのダイアログの表）と、決まりに署名した鍵と月 */
+function rulesChangeOf(ring: Extract<Awaited<ReturnType<typeof loadRing>>, { ok: true }>) {
+  if (ring.entry.acceptedRulesHash === ring.ctx.rulesHash) return null;
+  const p = parseJsonStrict(ring.circleBytes.toString("utf8"));
+  const body = p.ok ? (p.value as { body?: { founder?: unknown; month?: unknown } }).body : undefined;
+  const pub = typeof body?.founder === "string" && HEX64.test(body.founder) ? body.founder : null;
+  const rows = diffRuleRows(ring.entry.acceptedRules, ring.rules);
+  return {
+    rulesHash: ring.ctx.rulesHash,
+    loosened: rows.filter((r) => r.dir === "loosened").length,
+    tightened: rows.filter((r) => r.dir === "tightened").length,
+    rows,
+    changer: pub ? { pub, fingerprint: fingerprint(pub), confirmed: ring.confirmed.has(keyIdOf(pub)) } : null,
+    month: typeof body?.month === "string" ? body.month : null,
+  };
+}
 
 export class HumanService {
   private docs: DocumentsInfo | null = null;
@@ -251,6 +291,46 @@ export class HumanService {
     const k = openOwnKey(sd, name);
     if (!k.ok) return { ok: false, reason: k.reason };
     return { ok: true, signer: { by: name, pair: k.pair } };
+  }
+
+  /**
+   * いちばん新しい版の、数えない頼み：置いた鍵の名乗り・指紋・時刻と、効かない理由
+   * （otherKey：その版を作った鍵でない。otherContent：その版を作った鍵が、ほかの中身に宛てた）
+   */
+  private async ignoredRequests(root: string, planId: string, h: Awaited<ReturnType<typeof readHistory>>) {
+    const top = h.versions.at(-1);
+    if (!top) return [];
+    const makers = new Set(top.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.pub));
+    const { foreign } = await readRequests(root, planId, top);
+    return foreign.map((q) => ({ by: q.body.by, fingerprint: fingerprint(q.body.pub), at: q.body.at, why: makers.has(q.body.pub) ? ("otherContent" as const) : ("otherKey" as const) }));
+  }
+
+  /** いちばん新しい版の頼みの見え方：頼むこと・宛先・頼んだ人・受け取った人（信じ方つき）・自分が頼んだか・自分が受け取ったか・済んだか */
+  private async requestView(root: string, planId: string, h: Awaited<ReturnType<typeof readHistory>>, name: string | null) {
+    const sd = this.e.stateDir!;
+    const top = h.versions.at(-1);
+    if (!top) return null;
+    const act = await activeRequest(root, planId, top);
+    if (!act) return null;
+    const mine = ownKeys(sd).filter((k) => !k.old && k.by === name).map((k) => k.pub);
+    const r = act.receipt;
+    const received = r
+      ? (() => {
+          const sig = { by: r.by, key: keyIdOf(r.pub), pub: r.pub };
+          const trust = trustOf(sd, sig, new Date(this.e.now()));
+          return { by: r.by, pub: r.pub, fingerprint: fingerprint(r.pub), trust, previous: trust === "changed" ? previousOf(sd, r.pub) : null };
+        })()
+      : null;
+    return {
+      version: top.version,
+      kind: act.request.body.kind,
+      to: act.request.body.to,
+      by: act.request.body.by,
+      mine: mine.includes(act.request.body.pub),
+      received,
+      receivedByMe: !!r && mine.includes(r.pub),
+      done: top.signatures.some((x) => x.role === "approve" || x.role === "return"),
+    };
   }
 
   /** 書き出しに使うパックの名前の表（packs/<パック>/common.json と packs/_kinds/work.json）。読めなければ共通のシートは作らない */
@@ -335,8 +415,20 @@ export class HumanService {
         const root = await this.root();
         if (!root) return no("noRoot");
         const h = await readHistory(root, p.planId);
-        // 署名ごとに、この PC が覚えた鍵と照らした信じ方を添える（未確認の鍵は覚えるが、信じはしない）
-        const versions = h.versions.map((v) => ({ ...v, signatures: v.signatures.map((x) => ({ ...x, trust: trustOf(sd, x, now), fingerprint: fingerprint(x.pub) })) }));
+        // この PC が前に見た版と署名が、保管先から消えていないか（監査 A5）。消えていれば、確定・承認・戻す・送るを止める
+        const vanished = checkSeen(sd, root, p.planId, h);
+        // 署名ごとに、この PC が覚えた鍵と照らした信じ方を添える（未確認の鍵は覚えるが、信じはしない）。替わった鍵には、前に確かめた鍵の指紋
+        const versions = h.versions.map((v) => ({
+          ...v,
+          signatures: v.signatures.map((x) => {
+            const trust = trustOf(sd, x, now);
+            return { ...x, trust, fingerprint: fingerprint(x.pub), previous: trust === "changed" ? previousOf(sd, x.pub) : null };
+          }),
+          exports: v.exports.map((x) => {
+            const trust = trustOf(sd, x, now);
+            return { ...x, trust, fingerprint: fingerprint(x.pub), previous: trust === "changed" ? previousOf(sd, x.pub) : null };
+          }),
+        }));
         const s = readSettings(sd);
         return {
           ok: true,
@@ -351,6 +443,11 @@ export class HumanService {
           hasKey: s.name !== null && ownKeys(sd).some((k) => k.by === s.name),
           // 編集の番（渡す・承認・差し戻しで替わる）
           turn: await readTurn(root, p.planId),
+          // いちばん新しい版の頼みと受け取り（頼んだ人には受け取った人を、受け取った人には自分だと出す。監査 B1）
+          request: await this.requestView(root, p.planId, h, s.name),
+          // いちばん新しい版に、その版を作った鍵でない頼みが置かれていれば、数えずに出す（監査 B1 の追い）
+          requestsIgnored: await this.ignoredRequests(root, p.planId, h),
+          vanished,
         };
       }
       case "plan_commit": {
@@ -363,9 +460,21 @@ export class HumanService {
         // 使った読み方を保管先に書き、道と版を版の記録に書く（この版に人が署名すると、その版の読み方が承認済みになる）。担当者の範囲の読み方は、署名する人の呼び名の下に置く
         const readingSkills: { name: string; path: string; version: string }[] = [];
         for (const x of p.readings ?? []) {
-          const w = await registerReading(root, x.skill, x.by ?? signer.signer.by, x.facilityKey);
+          // 担当者の範囲の読み方の持ち主は、署名する人だけ（タブから来たほかの呼び名は受けない。監査 D2）
+          if (x.by !== null && x.by !== signer.signer.by) return no("readingInvalid");
+          const w = await registerReading(root, x.skill, signer.signer.by, x.facilityKey);
           if (!w.ok) return no("readingInvalid");
           readingSkills.push({ name: (x.skill as { name: string }).name, path: w.path, version: w.version });
+        }
+        // 前に見た版や署名が保管先から消えていれば、その上には重ねない（監査 A5）
+        const pid = (p.plan as { planId?: unknown } | null)?.planId;
+        if (typeof pid === "string" && PLAN_ID.test(pid)) {
+          const h0 = await readHistory(root, pid);
+          if (checkSeen(sd, root, pid, h0)) return no("historyVanished");
+          // 編集を頼んだ版の上に重ねるのは、編集の番の人だけ（頼みを受け取った鍵。まだ誰も受け取っていなければ頼んだ人。監査 B1）
+          const top = h0.versions.at(-1);
+          const act = top ? await activeRequest(root, pid, top) : null;
+          if (act && act.request.body.kind === "edit" && signer.signer.pair.pub !== (act.receipt?.pub ?? act.request.body.pub)) return no("notYourTurn");
         }
         // 頼むこと：自分で確定する（confirm の署名）か、編集・承認を頼んで渡す（edit の署名）。頼むときは宛先が要る
         const req = p.request ?? { kind: "self" as const, to: null, note: "" };
@@ -394,9 +503,9 @@ export class HumanService {
           await writeTurn(root, { schema: TURN_SCHEMA, planId, version: r.version, state: req.kind === "edit" ? "editing" : "awaitingApproval", holder: null, to: req.to!.trim(), from: by, note: req.note, at });
           const hist = await readHistory(root, planId);
           const contentHash = hist.versions.at(-1)!.contentHash;
-          // リンクは受け取る人の MOYAI（既定のポート）で開く。送る人が --port を変えていても、その番号は載せない
-          const link = `${HANDOFF_ORIGIN}/#/merge?open=${encodeURIComponent(planId)}&v=${r.version}&h=${contentHash.slice(0, 16)}`;
-          mail = handoffMail({ name: r.record.plan.displayName, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), note: req.note, by, planId, link });
+          // 頼みに署名して保管先に置き、使い捨ての合言葉をリンクにだけ入れる（監査 B1）
+          const q = await createRequest({ root, planId, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), by, pair: signer.signer.pair, now });
+          mail = handoffMail({ name: r.record.plan.displayName, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), note: req.note, by, planId, link: handoffLink(planId, r.version, contentHash, q.token) });
         }
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files, mail };
       }
@@ -407,6 +516,7 @@ export class HumanService {
         if (!root) return no("noRoot");
         const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
+        if (checkSeen(sd, root, p.planId, await readHistory(root, p.planId))) return no("historyVanished");
         const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
         if (!r.ok) return no(r.reason);
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
@@ -495,6 +605,8 @@ export class HumanService {
                 roles: v.signatures.map((x) => x.role),
                 // 版を作った人（確定か渡すの署名の呼び名）。トップの「ほかの人が持っていた間」に使う
                 by: v.signatures.find((x) => x.role === "confirm" || x.role === "edit" || x.role === "revert")?.by ?? null,
+                // 版を作った鍵が、前に確かめた鍵と替わっている（トップは替わったときだけ朱で知らせる。KeyWarn.dc.html の 6）
+                keyChanged: v.signatures.some((x) => (x.role === "confirm" || x.role === "edit" || x.role === "revert") && trustOf(sd, x, now) === "changed"),
                 problem: v.problem,
                 legacy: v.legacy,
               })),
@@ -507,6 +619,48 @@ export class HumanService {
         }
         return { ok: true, root, plans, name: readSettings(sd).name };
       }
+      case "request_receive": {
+        // メールのリンクを開いた人：合言葉を頼みと照らし、自分の鍵で受け取りに署名する（鍵がまだ無ければ作る。呼び名は要る）
+        const p = parsePayload("request_receive", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        let signer = this.signer(sd);
+        if (!signer.ok && signer.reason === "personKeyMissing") {
+          const name = readSettings(sd).name;
+          if (name) createOwnKey(sd, name, now);
+          signer = this.signer(sd);
+        }
+        if (!signer.ok) return no(signer.reason);
+        const v = (await readHistory(root, p.planId)).versions.find((x) => x.version === p.version);
+        if (!v) return { ok: true, state: "unknown" };
+        const r = await receiveRequest({ root, planId: p.planId, version: v, token: p.token, by: signer.signer.by, pair: signer.signer.pair, now });
+        if (r.state === "takenByOther") return { ok: true, state: r.state, requester: r.request.body.by, receiver: { by: r.receipt.by, fingerprint: fingerprint(r.receipt.pub) } };
+        if (r.state === "received" || r.state === "mine") return { ok: true, state: r.state, requester: r.request.body.by, kind: r.request.body.kind };
+        return { ok: true, state: r.state };
+      }
+      case "request_renew": {
+        // 頼み直す：頼んだ人だけ、承認か差し戻しが済む前だけ。新しい頼みを置き、前のリンクは使えなくなる（Wire の B1）
+        const p = parsePayload("request_renew", call.payload);
+        if (!p) return no("payloadInvalid");
+        if (!/^[^\s@]+@[^\s@]+$/.test(p.to.trim())) return no("mailToInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const signer = this.signer(sd);
+        if (!signer.ok) return no(signer.reason);
+        const h = await readHistory(root, p.planId);
+        const top = h.versions.at(-1);
+        if (!top || top.version !== p.version || !h.latest) return no("notLatest");
+        if (top.problem) return no("historyBroken");
+        const act = await activeRequest(root, p.planId, top);
+        if (!act || act.request.body.pub !== signer.signer.pair.pub) return no("notRequested");
+        if (top.signatures.some((x) => x.role === "approve" || x.role === "return")) return no("notRequested");
+        const q = await createRequest({ root, planId: p.planId, version: p.version, contentHash: top.contentHash, kind: act.request.body.kind, to: p.to.trim(), by: signer.signer.by, pair: signer.signer.pair, now });
+        const prev = await readTurn(root, p.planId);
+        if (prev) await writeTurn(root, { ...prev, to: p.to.trim(), note: p.note, at: now.toISOString() });
+        const mail = handoffMail({ name: h.latest.plan.displayName, version: p.version, contentHash: top.contentHash, kind: act.request.body.kind, to: p.to.trim(), note: p.note, by: signer.signer.by, planId: p.planId, link: handoffLink(p.planId, p.version, top.contentHash, q.token) });
+        return { ok: true, mail };
+      }
       case "plan_sign": {
         const p = parsePayload("plan_sign", call.payload);
         if (!p) return no("payloadInvalid");
@@ -514,6 +668,12 @@ export class HumanService {
         if (!root) return no("noRoot");
         const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
+        const hs = await readHistory(root, p.planId);
+        if (checkSeen(sd, root, p.planId, hs)) return no("historyVanished");
+        // 承認・差し戻しは、承認の頼みを受け取った鍵だけ（監査 B1）
+        const sv = hs.versions.find((x) => x.version === p.version);
+        const act = sv ? await activeRequest(root, p.planId, sv) : null;
+        if (!act || act.request.body.kind !== "approve" || act.receipt?.pub !== signer.signer.pair.pub) return no("notRequested");
         const r = await signLatest({ root, planId: p.planId, version: p.version, role: p.role, reason: p.reason, signer: signer.signer, now });
         if (!r.ok) return no(r.reason);
         // 承認すると番は閉じ、差し戻すと渡した人に番が戻る
@@ -539,10 +699,8 @@ export class HumanService {
         const root = await this.root();
         if (!root) return no("noRoot");
         // 確かめで合う版だけ（署名と鎖が合わない版の書き出しは渡さない）
-        const h = await readHistory(root, p.planId);
-        const v = h.versions.find((x) => x.version === p.version);
-        if (!v) return no("versionUnknown");
-        if (v.problem !== null) return no("historyBroken");
+        const pv = await readPlanVersion(root, p.planId, p.version);
+        if (!pv.ok) return no(pv.reason);
         const n = String(p.version).padStart(6, "0");
         const file = join(planDir(root, p.planId), p.kind === "export" ? "exports" : "reports", p.kind === "export" ? `${n}-plan.xlsx` : `${n}-diff.xlsx`);
         let bytes: Buffer;
@@ -551,7 +709,104 @@ export class HumanService {
         } catch {
           return no("fileMissing");
         }
+        // 署名の中のハッシュと照らす（監査 E1）。合わなければ渡さない。ハッシュの無い前の版は、そのまま渡す
+        const want = pv.record.files ? (p.kind === "export" ? pv.record.files.export : pv.record.files.report) : undefined;
+        if (want !== undefined && want !== sha256Hex(bytes)) return no("fileChanged");
         return { ok: true, version: p.version, kind: p.kind, base64: bytes.toString("base64") };
+      }
+      case "templates_read": {
+        const p = parsePayload("templates_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return { ok: true, root: null, templates: [] };
+        const list = await listTemplates(root, await approvedTemplateVersions(root, (x) => countsForApproval(trustOf(sd, x, now))));
+        // その計画のいちばん新しい版で書き出した様式（どの鍵の署名でも。信じ方は版の一覧の書き出しの署名に出る）
+        let exported = new Set<string>();
+        if (p.planId) {
+          const v = (await readHistory(root, p.planId)).versions.at(-1);
+          if (v) exported = new Set(v.exports.map((x) => x.template.version));
+        }
+        // 並べるのは、いちばん上の版と、承認済みの前の版（承認済みの写し方を直しても、承認済みのほうは消えない。Wire）
+        const shown = list.filter((t) => t.current || t.approval);
+        return {
+          ok: true,
+          root,
+          templates: shown.map((t) => ({ name: t.name, version: t.version, current: t.current, columns: t.columns, approval: t.approval, exported: exported.has(t.version) })),
+        };
+      }
+      case "template_save": {
+        const p = parsePayload("template_save", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        let bytes: Uint8Array = new Uint8Array(Buffer.from(p.base64, "base64"));
+        if (bytes.length === 0) {
+          const src = p.from ? await readTemplateVersion(root, p.name, p.from) : null;
+          if (!src) return no("templateUnknown");
+          bytes = src.bytes;
+        }
+        const r = await saveTemplate(root, p.name, bytes, p.columns);
+        if (!r.ok) return no(r.reason);
+        return { ok: true, name: r.name, version: r.version };
+      }
+      case "export_sign": {
+        const p = parsePayload("export_sign", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const signer = this.signer(sd);
+        if (!signer.ok) return no(signer.reason);
+        const h = await readHistory(root, p.planId);
+        if (checkSeen(sd, root, p.planId, h)) return no("historyVanished");
+        // 新しく書き出すのは、確かめで合う最新の版だけ。差し戻された版は書き出さない（Architect の縛り 4）
+        const v = h.versions.find((x) => x.version === p.version);
+        if (!v || !h.latest) return no("versionUnknown");
+        if (h.versions.some((x) => x.problem !== null)) return no("historyBroken");
+        if (h.latest.version !== p.version) return no("notLatest");
+        if (v.signatures.some((x) => x.role === "return")) return no("returned");
+        const t = await readTemplateVersion(root, p.name, p.templateVersion);
+        if (!t) return no("templateUnknown");
+        const plan = h.latest.plan;
+        const cat = this.catalogsFor(plan.packId);
+        const labels = (cat.catalog ?? cat.empty).workLabels as Record<string, string>;
+        const excel = await fillTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, templateRows(plan, (a) => labels[a]));
+        const excelHash = sha256Hex(excel);
+        const file = signExport(
+          { planId: p.planId, version: p.version, contentHash: v.contentHash, by: signer.signer.by, at: now.toISOString(), template: { name: p.name, file: t.fileHash, columns: t.columnsHash, version: p.templateVersion }, excel: excelHash },
+          signer.signer.pair,
+        );
+        const dir = planDir(root, p.planId);
+        await mkdir(join(dir, "exports"), { recursive: true });
+        await mkdir(join(dir, "signatures"), { recursive: true });
+        // Excel のバイト列を先に置き、署名をあとに置く（署名があるのに Excel が無い、を作らない。Architect の縛り 3）
+        const xlsx = join(dir, "exports", exportExcelName(p.version, excelHash));
+        if (!existsSync(xlsx)) await writeFile(xlsx, excel);
+        try {
+          await writeFile(join(dir, "signatures", exportSignatureName(p.version, keyIdOf(signer.signer.pair.pub), excelHash)), `${JSON.stringify(file, null, 1)}\n`, { encoding: "utf8", flag: "wx" });
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+        }
+        return { ok: true, version: p.version, name: p.name, excel: excelHash };
+      }
+      case "export_file_read": {
+        const p = parsePayload("export_file_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const pv = await readPlanVersion(root, p.planId, p.version);
+        if (!pv.ok) return no(pv.reason);
+        const v = (await readHistory(root, p.planId)).versions.find((x) => x.version === p.version);
+        // その様式の版で署名した書き出しのうち、いちばん新しいもの。Excel を読み、署名の SHA-256 と照らしてから渡す
+        const x = (v?.exports ?? []).filter((e) => e.template.name === p.name && e.template.version === p.templateVersion).sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+        if (!x) return no("exportUnknown");
+        let bytes: Buffer;
+        try {
+          bytes = await readFile(join(planDir(root, p.planId), "exports", exportExcelName(p.version, x.excel)));
+        } catch {
+          return no("fileMissing");
+        }
+        if (sha256Hex(bytes) !== x.excel) return no("fileChanged");
+        return { ok: true, version: p.version, name: p.name, base64: bytes.toString("base64") };
       }
       case "person_key_create": {
         const p = parsePayload("person_key_create", call.payload);
@@ -565,7 +820,7 @@ export class HumanService {
       case "person_key_confirm": {
         const p = parsePayload("person_key_confirm", call.payload);
         if (!p) return no("payloadInvalid");
-        return confirmKey(sd, p.key) ? { ok: true, key: p.key } : no("keyUnknown");
+        return confirmKey(sd, p.pub, now) ? { ok: true, key: keyIdOf(p.pub) } : no("keyUnknown");
       }
       case "ring_create": {
         const p = parsePayload("ring_create", call.payload);
@@ -759,6 +1014,38 @@ export class HumanService {
         removeGitHub(sd);
         return { ok: true };
       }
+      case "ring_member_confirm": {
+        // 輪の仲間の鍵を、人が指紋を読み合わせて確認済みにする（その輪に、この公開鍵の仲間のファイルがあるときだけ）
+        const p = parsePayload("ring_member_confirm", call.payload);
+        if (!p) return no("payloadInvalid");
+        const entry = readRings(sd).rings.find((r) => r.ringId === p.ringId);
+        if (!entry) return no("noRing");
+        const pack = this.pack(entry.pack);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const ring = await loadRing(sd, p.ringId, pack);
+        if (!ring.ok) return no(ring.reason);
+        const rep = await verifyRing(entry.root, p.ringId, pack, ring.confirmed);
+        if (!rep.lines.some((l) => l.kind === "member" && l.pub === p.pub)) return no("keyUnknown");
+        const rs = readRings(sd);
+        const key = keyIdOf(p.pub);
+        if (!rs.confirmed.includes(key)) writeRings(sd, { ...rs, confirmed: [...rs.confirmed, key] });
+        return { ok: true, key };
+      }
+      case "ring_rules_accept": {
+        // 変わった輪の決まりを、人が差を見て受け入れる（見た決まりのハッシュと今のハッシュが同じで、緩くした決まりでないときだけ）
+        const p = parsePayload("ring_rules_accept", call.payload);
+        if (!p) return no("payloadInvalid");
+        const entry = readRings(sd).rings.find((r) => r.ringId === p.ringId);
+        if (!entry) return no("noRing");
+        const pack = this.pack(entry.pack);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const ring = await loadRing(sd, p.ringId, pack);
+        if (!ring.ok) return no(ring.reason);
+        if (ring.ctx.rulesHash !== p.rulesHash) return no("previewChanged");
+        if (checkRules(ring.rules).length > 0) return no("rules");
+        addRing(sd, { ...ring.entry, acceptedRulesHash: ring.ctx.rulesHash, acceptedRules: ring.rules });
+        return { ok: true };
+      }
       case "ring_verify": {
         const p = parsePayload("ring_verify", call.payload);
         if (!p) return no("payloadInvalid");
@@ -777,7 +1064,7 @@ export class HumanService {
         const root = await this.root();
         if (!root) return { ok: true, root: null, readings: [] };
         const list = await listReadings(root, await approvedReadingVersions(root, (x) => countsForApproval(trustOf(sd, x, now))));
-        return { ok: true, root, readings: loadedOf(list) };
+        return { ok: true, root, readings: loadedOf(list, readSettings(sd).name) };
       }
       case "peers_compare": {
         const p = parsePayload("peers_compare", call.payload);
@@ -825,6 +1112,9 @@ export class HumanService {
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
+    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない。前に見た版や署名が消えていても出さない
+    if (h.versions.at(-1)?.problem) return fail("historyBroken");
+    if (checkSeen(this.e.stateDir!, root, planId, h)) return fail("historyVanished");
     const plan = h.latest.plan;
     const pack = this.pack(plan.packId);
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });
@@ -876,6 +1166,9 @@ export class HumanService {
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
+    // 確かめで合わない版（鎖・署名・作った署名）は、輪にも公開の台帳にも出さない。前に見た版や署名が消えていても出さない
+    if (h.versions.at(-1)?.problem) return fail("historyBroken");
+    if (checkSeen(this.e.stateDir!, root, planId, h)) return fail("historyVanished");
     const plan = h.latest.plan;
     const pack = this.pack(plan.packId);
     if (typeof pack === "string") return fail("packNotReady", { packReason: pack });
@@ -898,7 +1191,13 @@ export class HumanService {
     const sender: FacilityKey = facilityKey(facility, ringId, this.pendingKeys);
     const info = {
       ...base,
-      ring: { ...entry, key: sender.ok ? keyIdOf(sender.pair.pub) : null, fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null, folder: join(entry.root, ringId) },
+      ring: {
+        ...entry,
+        key: sender.ok ? keyIdOf(sender.pair.pub) : null,
+        fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null,
+        folder: join(entry.root, ringId),
+        rulesChange: rulesChangeOf(ring),
+      },
       ringCount: rings.length,
     };
     return { ok: true as const, ring, pack, plan, version: h.latest.version, info, answers, facility, sender };

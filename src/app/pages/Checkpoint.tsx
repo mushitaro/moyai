@@ -6,12 +6,13 @@
 // 出ていくものは橋渡しが作る（送る処理と同じ関数）。画面は橋渡しが返したバイト列を見せ、そのハッシュを送るときに照らす。
 // 公開の台帳（絵は SharePublic.dc.html。運営者の決定 2026-11-04「MOYAI が出す」）：出す先の右に GitHub のアカウント、誰からも見えるあなた、
 // 出した束の行方（SHARE を開いたときだけ読む）。PR を出すのは、人が主ボタンを押したときだけ。
-import { Alert, Anchor, Button, Code, Container, Group, NativeSelect, Paper, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
+import { Alert, Anchor, Button, Code, Container, Group, Modal, NativeSelect, Paper, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import { emptyCatalog } from "../chart/catalog";
 import { CHART_HASH } from "../chart/route";
-import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
+import { SyncedNotice, readHuman, usePlanStatus } from "../components/ConfirmDialog";
+import { KeyCheckDialog, KeyWarnLine, untrustedSigners, type TrustSig } from "../components/KeyWarn";
 import { FictionMark } from "../components/FictionMark";
 import { GitHubConnect } from "../components/GitHubConnect";
 import { Switch } from "../components/Switch";
@@ -89,7 +90,7 @@ interface PreviewBody {
   classNames?: Record<string, string>;
   axes?: { key: string; name: string; codes: { code: string; name: string }[] }[];
   rings?: RingInfo[];
-  ring?: RingInfo & { key: string; fingerprint: string | null; folder: string };
+  ring?: RingInfo & { key: string; fingerprint: string | null; folder: string; rulesChange?: RulesChange | null };
   ringCount?: number;
   view?: View;
   /** 公開の台帳：GitHub の接続（アカウント名だけ。トークンは画面に来ない）と台帳 */
@@ -158,9 +159,11 @@ interface VerifyLine {
   status: string;
   reasons: string[];
   fingerprint?: string;
+  pub?: string;
   month?: string;
   version?: number;
   day?: string;
+  short?: true;
 }
 interface Report {
   ringId: string;
@@ -180,6 +183,99 @@ interface Chunk {
 
 const Sumi = () => <span className="moyai-sumi">■■■■</span>;
 
+/** 輪の決まりが、受け入れたものから変わったときの差（橋渡しの rulesChangeOf） */
+interface RulesChange {
+  rulesHash: string;
+  loosened: number;
+  tightened: number;
+  rows: { rule: string; before: string; now: string; dir: "loosened" | "tightened" | "changed" }[];
+  changer: { pub: string; fingerprint: string; confirmed: boolean } | null;
+  month: string | null;
+}
+
+/** 輪の決まりの受け入れのダイアログ（Share.dc.html Version 46）：変えた鍵、決まりごとの前と今、結果の文 1 つ、「あとで」「受け入れる」 */
+function RulesDialog({
+  change,
+  opened,
+  onClose,
+  onAccept,
+  onCheckChanger,
+}: {
+  change: RulesChange;
+  opened: boolean;
+  onClose: () => void;
+  onAccept: () => Promise<string | null>;
+  onCheckChanger: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const accept = async () => {
+    setBusy(true);
+    setError(null);
+    const e = await onAccept();
+    setBusy(false);
+    if (e) return setError(e);
+    onClose();
+  };
+  return (
+    <Modal opened={opened} onClose={onClose} title={T.rulesTitle} size="lg" centered data-testid="rules-dialog">
+      <Stack gap="sm">
+        {change.changer && (
+          <Text size="xs" c="dimmed" ff="monospace" data-testid="rules-changer">
+            {T.rulesChanger(change.changer.fingerprint, change.month ?? "")}
+            {!change.changer.confirmed && (
+              <>
+                <Text span c="var(--text)" ff="var(--font-body)">
+                  {"　! "}
+                  {T.memberUnconfirmed}
+                </Text>
+                <button type="button" className="moyai-inline-act" style={{ fontFamily: "var(--font-body)" }} onClick={onCheckChanger} data-testid="rules-changer-check">
+                  {HUMAN_TEXT.keyWarn.check}
+                </button>
+              </>
+            )}
+          </Text>
+        )}
+        <Table className="moyai-num" verticalSpacing={4} data-testid="rules-table">
+          <Table.Thead>
+            <Table.Tr>
+              {T.rulesHead.map((h, i) => (
+                <Table.Th key={i}>{h}</Table.Th>
+              ))}
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {change.rows.map((r, i) => (
+              <Table.Tr key={i} data-testid="rules-row" data-dir={r.dir}>
+                <Table.Td>{T.ruleName(r.rule)}</Table.Td>
+                <Table.Td>{r.before}</Table.Td>
+                <Table.Td>{r.now}</Table.Td>
+                <Table.Td c={r.dir === "loosened" ? "var(--shu-text)" : "dimmed"}>{T.rulesDir[r.dir]}</Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+        <Text size="sm" c="var(--shu-text)">
+          {T.rulesResult}
+        </Text>
+        {error && (
+          <Text size="sm" c="var(--shu-text)">
+            {error}
+          </Text>
+        )}
+        <Group justify="flex-end" gap="sm">
+          <Button variant="default" onClick={onClose}>
+            {HUMAN_TEXT.keyWarn.later}
+          </Button>
+          <Button onClick={() => void accept()} loading={busy} data-testid="rules-accept">
+            {T.rulesAccept}
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+}
+
 function Num({ v }: { v: number | null }) {
   return v === null ? <Text span c="dimmed">—</Text> : <Text span className="moyai-shu">{v}</Text>;
 }
@@ -188,7 +284,22 @@ function Num({ v }: { v: number | null }) {
  * 受け取った束の表（受け手と同じ関数で確かめた結果）。内部の ID（輪・鍵・ファイルの道）は出さず、
  * 人が電話で読み合わせる鍵の指紋で示す：「決まり」「仲間　指紋（あなた）」「束 n　指紋」と、✓／✗ と理由
  */
-function VerifyTable({ report, ownKey }: { report: Report; ownKey: string | null }) {
+function VerifyTable({
+  report,
+  ownKey,
+  rulesChange = null,
+  onCheckMember,
+  onViewRules,
+}: {
+  report: Report;
+  ownKey: string | null;
+  rulesChange?: RulesChange | null;
+  onCheckMember?: (l: VerifyLine) => void;
+  onViewRules?: () => void;
+}) {
+  // まだ確かめていないだけの仲間（ほかの理由が無い）と、その束：✗ と朱を使わず、確かめる道を行の右端に置く
+  const unconfirmedOnly = (l: VerifyLine) => l.kind === "member" && l.reasons.length === 1 && l.reasons[0] === "member.unconfirmed";
+  const notCounted = new Set(report.lines.filter(unconfirmedOnly).map((l) => l.name));
   const fpOf = new Map(report.lines.filter((l) => l.kind === "member" && l.fingerprint).map((l) => [l.name, l.fingerprint!]));
   // 仲間ごとに、その束の行の理由（仲間の行に写ってきたもの）
   const bundleReasons = new Map<string, Set<string>>();
@@ -215,20 +326,56 @@ function VerifyTable({ report, ownKey }: { report: Report; ownKey: string | null
           const label =
             l.kind === "circle" ? T.verifyKind.circle : l.kind === "member" ? T.verifyKind.member : b ? T.prBundle(Number(b[2]), l.version ?? null, l.day ?? l.month ?? "") : T.notBundleRow;
           const key = l.kind === "member" ? l.name : folder;
+          const unconfirmed = unconfirmedOnly(l);
+          const short = l.kind === "bundle" && l.status === "ok" && !!l.short;
+          const uncounted = short || (l.kind === "bundle" && l.status === "ok" && !!folder && notCounted.has(folder));
+          const rulesRow = l.kind === "circle" && !!rulesChange;
+          const soft = unconfirmed || rulesRow;
+          const mark = soft ? "!" : uncounted ? "―" : (T.verifyStatus[l.status] ?? l.status);
           return (
-            <Table.Tr key={`${l.kind}:${l.name}`} data-testid="verify-line" data-status={l.status} data-kind={l.kind}>
+            <Table.Tr
+              key={`${l.kind}:${l.name}`}
+              data-testid="verify-line"
+              data-status={l.status}
+              data-kind={l.kind}
+              data-state={unconfirmed ? "unconfirmed" : short ? "peersShort" : uncounted ? "notCounted" : rulesRow ? "rulesChanged" : undefined}
+              style={uncounted ? { color: "var(--text-3)" } : undefined}
+            >
               <Table.Td w={40}>
-                <Text fw={700} c={l.status === "ok" ? "var(--text)" : "var(--shu-text)"}>
-                  {T.verifyStatus[l.status] ?? l.status}
+                <Text fw={700} c={uncounted ? "var(--text-3)" : l.status === "ok" || soft ? "var(--text)" : "var(--shu-text)"}>
+                  {mark}
                 </Text>
               </Table.Td>
               <Table.Td style={{ whiteSpace: "nowrap" }}>{label}</Table.Td>
               <Table.Td style={{ whiteSpace: "nowrap" }}>
-                <Text size="sm" ff="monospace">
+                <Text size="sm" ff="monospace" c={uncounted ? "var(--text-3)" : undefined}>
                   {who(key)}
                 </Text>
               </Table.Td>
-              <Table.Td c={l.status === "ok" ? undefined : "var(--shu-text)"}>{reasonsOf(l).join("、")}</Table.Td>
+              {unconfirmed ? (
+                <Table.Td>
+                  {T.memberUnconfirmed}
+                  <button type="button" className="moyai-inline-act" onClick={() => onCheckMember?.(l)} data-testid="member-check">
+                    {HUMAN_TEXT.keyWarn.check}
+                  </button>
+                </Table.Td>
+              ) : uncounted ? (
+                <Table.Td c="var(--text-3)">{short ? T.peersShort : T.notCounted}</Table.Td>
+              ) : rulesRow && rulesChange ? (
+                <Table.Td>
+                  {T.rulesChanged}
+                  {"　"}
+                  <Text span c="var(--shu-text)">
+                    {T.rulesCounts(rulesChange.loosened, rulesChange.tightened).loosened}
+                  </Text>
+                  {`・${T.rulesCounts(rulesChange.loosened, rulesChange.tightened).tightened}`}
+                  <button type="button" className="moyai-inline-act" onClick={() => onViewRules?.()} data-testid="rules-view">
+                    {T.rulesView}
+                  </button>
+                </Table.Td>
+              ) : (
+                <Table.Td c={l.status === "ok" ? undefined : "var(--shu-text)"}>{reasonsOf(l).join("、")}</Table.Td>
+              )}
             </Table.Tr>
           );
         })}
@@ -241,6 +388,9 @@ export function Checkpoint() {
   const working = useWorkingPlan();
   const { client, state } = useConnection();
   const planId = working?.plan.planId ?? null;
+  // 送る版の鎖に、まだ確かめていない鍵があれば、主ボタンの左（押せない理由と同じ所）に 1 行（KeyWarn.dc.html の 4。止めない）
+  const [status, reloadStatus] = usePlanStatus(client, planId ?? "", !!planId && state.kind === "open");
+  const untrusted = status.kind === "ready" && status.status.versions ? untrustedSigners(status.status.versions) : [];
   const [ringId, setRingId] = useState<string | null>(null);
   const [facility, setFacility] = useState<Record<string, string | null>>({});
   const [national, setNational] = useState<boolean | null>(working?.plan.facility.inNationalTable ?? null);
@@ -251,6 +401,9 @@ export function Checkpoint() {
   const [sent, setSent] = useState<{ fileName: string; report: Report } | null>(null);
   // 受け取った束（docs/screens.md 3.6。受け取り箱をこの画面の下の節に移した）：輪を受け手と同じ関数で確かめた結果
   const [received, setReceived] = useState<Report | null>(null);
+  // 受け取った束の行で直す：仲間の鍵の読み合わせと、輪の決まりの受け入れ（Share.dc.html Version 46。監査 D1）
+  const [memberCheck, setMemberCheck] = useState<TrustSig | null>(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
   const [dest, setDest] = useState<"ring" | "ledger">("ring");
@@ -823,8 +976,48 @@ export function Checkpoint() {
                   {T.verifyAgain}
                 </Button>
               </Group>
-              <VerifyTable report={received} ownKey={res?.ring?.key ?? null} />
+              <VerifyTable
+                report={received}
+                ownKey={res?.ring?.key ?? null}
+                rulesChange={res?.ring?.rulesChange ?? null}
+                onCheckMember={(l) => l.pub && setMemberCheck({ role: "member", by: "", pub: l.pub, fingerprint: l.fingerprint ?? "", trust: "unconfirmed" })}
+                onViewRules={() => setRulesOpen(true)}
+              />
             </section>
+          )}
+          <KeyCheckDialog
+            signer={memberCheck}
+            title={T.memberTitle}
+            howTo={T.memberHowTo}
+            onClose={() => setMemberCheck(null)}
+            onMatch={async (m) => {
+              const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("ring_member_confirm", ROUTES.ringMemberConfirm.path, { ringId, pub: m.pub }));
+              return r.ok ? null : r.message;
+            }}
+            onConfirmed={() => {
+              void verifyAgain();
+              setReload((x) => x + 1);
+            }}
+          />
+          {res?.ring?.rulesChange && (
+            <RulesDialog
+              change={res.ring.rulesChange}
+              opened={rulesOpen}
+              onClose={() => setRulesOpen(false)}
+              onCheckChanger={() => {
+                const c = res.ring?.rulesChange?.changer;
+                if (c) setMemberCheck({ role: "member", by: "", pub: c.pub, fingerprint: c.fingerprint, trust: "unconfirmed" });
+              }}
+              onAccept={async () => {
+                const r = readHuman<{ ok: boolean; reason?: string }>(
+                  await client.callHuman("ring_rules_accept", ROUTES.ringRulesAccept.path, { ringId, rulesHash: res.ring!.rulesChange!.rulesHash }),
+                );
+                if (!r.ok) return r.message;
+                void verifyAgain();
+                setReload((x) => x + 1);
+                return null;
+              }}
+            />
           )}
         </Stack>
       </div>
@@ -858,8 +1051,15 @@ export function Checkpoint() {
           {!canSend && (dest === "ledger" || !done) && sendReason && (
             <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
               {sendReason}
+              {dest === "ring" && sendReason === T.sendNeeds.rules && res?.ring?.rulesChange && (
+                <button type="button" className="moyai-inline-act" onClick={() => setRulesOpen(true)} data-testid="send-rules-view">
+                  {T.rulesView}
+                </button>
+              )}
             </Text>
           )}
+          {/* 押せない理由が別にあるときは、押せない理由を先にする */}
+          {canSend && <KeyWarnLine signers={untrusted} onConfirmed={reloadStatus} />}
           <Button onClick={send} disabled={!canSend} loading={sending} data-testid="send">
             {dest === "ledger" ? T.sendLedger : T.sendRing}
           </Button>

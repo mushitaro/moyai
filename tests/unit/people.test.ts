@@ -5,9 +5,9 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, trustOf } from "../../src/bridge/people";
+import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previousOf, trustOf } from "../../src/bridge/people";
 import { unwrapCli } from "../../src/cli/human";
-import { generateKeyPair, keyIdOf, wrapPrivateKey } from "../../src/share/sign";
+import { fingerprint, generateKeyPair, keyIdOf, wrapPrivateKey } from "../../src/share/sign";
 
 const dirs: string[] = [];
 afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
@@ -69,15 +69,22 @@ describe("覚えた鍵", () => {
     const sig = { by: "【架空】課長", key: keyIdOf(boss.pub), pub: boss.pub };
     expect(trustOf(sd, sig, now)).toBe("unconfirmed");
     expect(countsForApproval("unconfirmed")).toBe(false);
-    expect(confirmKey(sd, sig.key)).toBe(true);
+    expect(confirmKey(sd, sig.pub, now)).toBe(true);
     expect(trustOf(sd, sig, now)).toBe("confirmed");
     expect(countsForApproval("confirmed")).toBe(true);
-    // 確認済みの「課長」に、知らない鍵が出てきた
+    // 確認済みの「課長」に、知らない鍵が出てきた。2 回目に見ても「替わった」のまま（1 回目の表示で警告が消えない）
     const fake = generateKeyPair();
-    expect(trustOf(sd, { by: "【架空】課長", key: keyIdOf(fake.pub), pub: fake.pub }, now)).toBe("changed");
+    const fakeSig = { by: "【架空】課長", key: keyIdOf(fake.pub), pub: fake.pub };
+    expect(trustOf(sd, fakeSig, now)).toBe("changed");
+    expect(trustOf(sd, fakeSig, now)).toBe("changed");
     expect(countsForApproval("changed")).toBe(false);
+    // 読み合わせのダイアログに出す、前に確かめた鍵
+    expect(previousOf(sd, fake.pub)).toEqual({ fingerprint: fingerprint(boss.pub), at: now.toISOString() });
+    // 人が読み合わせて確認済みにすると、替わった印は消える
+    expect(confirmKey(sd, fake.pub, now)).toBe(true);
+    expect(trustOf(sd, fakeSig, now)).toBe("confirmed");
     // 覚えた鍵に、別の呼び名で署名してきた
     expect(trustOf(sd, { ...sig, by: "【架空】部長" }, now)).toBe("changed");
-    expect(confirmKey(sd, "0".repeat(16))).toBe(false);
+    expect(confirmKey(sd, "0".repeat(64))).toBe(false);
   });
 });

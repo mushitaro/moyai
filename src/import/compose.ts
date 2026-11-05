@@ -290,12 +290,18 @@ export function compose(
       });
     return wk;
   };
-  const addDetail = (d: Omit<WorkDetailT, "detailKey">, seed: string) => {
+  // 読み方の決定（AI と会話から写した答え）ごとに、それで作者が決まった明細（決定のシートで、決定の行に付いて動く。Wire）
+  const affected = new Map<string, string[]>();
+  const addDetail = (d: Omit<WorkDetailT, "detailKey">, seed: string, qids: readonly string[]) => {
     let k = `d-${hash(seed)}`;
     let i = 2;
     while (detailKeys.has(k)) k = `d-${hash(`${seed}|${i++}`)}`;
     detailKeys.add(k);
     details.push({ ...d, detailKey: k });
+    for (const q of new Set(qids)) {
+      const a = decisions.get(q)?.author;
+      if (a === "ai" || a === "ai_relayed_human") affected.set(q, [...(affected.get(q) ?? []), k]);
+    }
   };
   const eventSources = (o: Occurrence) => o.events.flatMap((e) => e.refs.map((ref) => refOf(e.file, e.sheet, ref)));
   const jobSources = (j: Job) => j.units.flatMap(eventSources);
@@ -389,6 +395,7 @@ export function compose(
     const r = range(j.units);
     const symbolQ = m ? [questionIdOf(`unknownSymbol|${m.tableId}|${m.symbol}`), questionIdOf(`noLegend|${m.tableId}|${m.symbol}`)] : [];
     const bundled = j.units.some((u) => u.bundle);
+    const qs = [...c.decidedBy, ...qids, ...j.decidedBy, ...j.units.flatMap((u) => [...u.decidedBy]), ...v.qids, ...symbolQ];
     addDetail(
       {
         workKey: wk,
@@ -407,10 +414,11 @@ export function compose(
         performer: null,
         sources: [...(m ? markSources(m) : []), ...jobSources(j)],
         basis: `${m ? `星取表 ${m.ref} の印「${m.symbol}」と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
-        author: authorOf([...c.decidedBy, ...qids, ...j.decidedBy, ...j.units.flatMap((u) => [...u.decidedBy]), ...v.qids, ...symbolQ], decisions),
+        author: authorOf(qs, decisions),
         needsReview: false,
       },
       m ? `mark|${m.file}|${m.sheetIndex}|${m.ref}|${j.id}` : `event|${j.id}`,
+      qs,
     );
   };
   // 印から
@@ -446,6 +454,7 @@ export function compose(
           needsReview: false,
         },
         `mark|${m.file}|${m.sheetIndex}|${m.ref}`,
+        [...c.decidedBy, ...symbolQ],
       );
       continue;
     }
@@ -490,6 +499,7 @@ export function compose(
       );
       if (md.pend || dy.pend) conflictPending.push({ j: l.job, q: md.pend ? md.q : dy.q });
       const r = range(members);
+      const qs = [...members.flatMap((u) => [...u.decidedBy]), ...[md.q, dy.q].filter((x): x is string => !!x)];
       addDetail(
         {
           workKey: parent,
@@ -508,10 +518,11 @@ export function compose(
           performer: null,
           sources: members.flatMap(eventSources),
           basis: `まとめ工事（${bundleTargets(root).map((t) => t.name + seriesLabel(t.series)).join("・")}）。${docsOf(members)}`,
-          author: authorOf([...members.flatMap((u) => [...u.decidedBy]), ...[md.q, dy.q].filter((x): x is string => !!x)], decisions),
+          author: authorOf(qs, decisions),
           needsReview: false,
         },
         `bundle|${root.id}`,
+        qs,
       );
     }
   }
@@ -605,6 +616,17 @@ export function compose(
   if (review) blockers.push(`要確認 ${review}`);
   if (photoReview.photos) blockers.push(`確かめていない写真 ${photoReview.photos}`);
   let plan: Plan | null = null;
+  const readingDecisions = ask.answered().map((q) => ({
+    questionId: q.questionId,
+    kind: q.kind,
+    question: q.text,
+    answer: q.valueKind === "number" ? q.decision!.answer : (q.options.find((o) => o.id === q.decision!.answer)?.label ?? q.decision!.answer),
+    author: q.decision!.author,
+    reason: q.decision!.reason,
+    rows: q.sameShapeRows,
+    details: affected.get(q.questionId) ?? [],
+    where: whereOf(q.items),
+  }));
   const draft = {
     schema: "moyai.plan/0" as const,
     planId: opts.planId,
@@ -616,6 +638,7 @@ export function compose(
     assets,
     works: [...works.values()],
     details,
+    ...(readingDecisions.length ? { readingDecisions } : {}),
   };
   if (!blockers.length) {
     const parsed = Plan.safeParse(draft);
@@ -698,4 +721,9 @@ export function countRows(sources: SourceFile[], layouts: SheetLayout[], status:
     out.push(fc);
   }
   return out;
+}
+
+/** 決定が効く所の見出し（明細の数で言えない決定のため。資料と、シートがあればシート。Wire） */
+function whereOf(items: readonly { file: string; sheet: string | null }[]): string {
+  return [...new Set(items.map((i) => (i.sheet ? `${i.file} の ${i.sheet}` : i.file)))].slice(0, 3).join("・");
 }
