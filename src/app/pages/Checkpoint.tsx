@@ -97,6 +97,8 @@ interface PreviewBody {
   github?: { login: string | null; ready: boolean };
   ledger?: { id: string; repo: string | null; key: string | null; fingerprint: string | null };
   pending?: { pr: number; url: string } | null;
+  /** 公開の台帳の決まりが、この PC が受け入れたものから変わったときの差（台帳の新-3） */
+  rulesChange?: Omit<RulesChange, "changer" | "month"> | null;
 }
 interface LedgerPr {
   pr: number;
@@ -195,12 +197,15 @@ interface RulesChange {
 
 /** 輪の決まりの受け入れのダイアログ（Share.dc.html Version 46）：変えた鍵、決まりごとの前と今、結果の文 1 つ、「あとで」「受け入れる」 */
 function RulesDialog({
+  title,
   change,
   opened,
   onClose,
   onAccept,
   onCheckChanger,
 }: {
+  /** 題（無ければ共有フォルダの決まり） */
+  title?: string;
   change: RulesChange;
   opened: boolean;
   onClose: () => void;
@@ -218,7 +223,7 @@ function RulesDialog({
     onClose();
   };
   return (
-    <Modal opened={opened} onClose={onClose} title={T.rulesTitle} size="lg" centered data-testid="rules-dialog">
+    <Modal opened={opened} onClose={onClose} title={title ?? T.rulesTitle} size="lg" centered data-testid="rules-dialog">
       <Stack gap="sm">
         {change.changer && (
           <Text size="xs" c="dimmed" ff="monospace" data-testid="rules-changer">
@@ -404,6 +409,7 @@ export function Checkpoint() {
   // 受け取った束の行で直す：仲間の鍵の読み合わせと、輪の決まりの受け入れ（Share.dc.html Version 46。監査 D1）
   const [memberCheck, setMemberCheck] = useState<TrustSig | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [ledgerRulesOpen, setLedgerRulesOpen] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
   const [dest, setDest] = useState<"ring" | "ledger">("ring");
@@ -597,6 +603,19 @@ export function Checkpoint() {
                 { value: "ledger", label: T.dest.ledger },
               ]}
             />
+            {dest === "ledger" && res?.rulesChange && (
+              <Text size="sm" data-testid="ledger-rules-changed">
+                {T.ledgerRulesChanged}
+                {"　"}
+                <Text span c="var(--shu-text)">
+                  {T.rulesCounts(res.rulesChange.loosened, res.rulesChange.tightened).loosened}
+                </Text>
+                {`・${T.rulesCounts(res.rulesChange.loosened, res.rulesChange.tightened).tightened}`}
+                <button type="button" className="moyai-inline-act" onClick={() => setLedgerRulesOpen(true)} data-testid="ledger-rules-view">
+                  {T.rulesView}
+                </button>
+              </Text>
+            )}
             {dest === "ledger" && (
               <Group gap="xs" align="center" data-testid="github-account">
                 <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
@@ -999,6 +1018,23 @@ export function Checkpoint() {
               setReload((x) => x + 1);
             }}
           />
+          {dest === "ledger" && res?.rulesChange && res.plan && (
+            <RulesDialog
+              title={T.ledgerRulesTitle}
+              change={{ ...res.rulesChange, changer: null, month: null }}
+              opened={ledgerRulesOpen}
+              onClose={() => setLedgerRulesOpen(false)}
+              onCheckChanger={() => undefined}
+              onAccept={async () => {
+                const r = readHuman<{ ok: boolean; reason?: string }>(
+                  await client.callHuman("ledger_rules_accept", ROUTES.ledgerRulesAccept.path, { packId: res.plan!.packId, rulesHash: res.rulesChange!.rulesHash }),
+                );
+                if (!r.ok) return r.message;
+                setReload((x) => x + 1);
+                return null;
+              }}
+            />
+          )}
           {res?.ring?.rulesChange && (
             <RulesDialog
               change={res.ring.rulesChange}

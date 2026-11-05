@@ -59,7 +59,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -568,6 +568,16 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
       const pv = await call("ledgerPreview", { planId: plan.planId, answers });
       expect(pv.github.login).toBe("moyai-test");
       expect(pv.view.blockers).toEqual([]);
+      expect(pv.rulesChange).toBeNull();
+      // 台帳の決まりが受け入れたものから変わったら差を出し、人が見た決まりのハッシュで受け入れ直す（台帳の新-3）
+      const lj = join(tb.stateDir!, "ledgers.json");
+      const kept = readFileSync(lj, "utf8");
+      writeFileSync(lj, kept.replace(/"acceptedRulesHash":\s*"[0-9a-f]{64}"/, `"acceptedRulesHash": "${"0".repeat(64)}"`));
+      const changed = await call("ledgerPreview", { planId: plan.planId, answers });
+      expect(changed.rulesChange).toMatchObject({ rulesHash: expect.stringMatching(/^[0-9a-f]{64}$/) });
+      expect((await call("ledgerRulesAccept", { packId: plan.packId, rulesHash: "f".repeat(64) })).reason).toBe("previewChanged");
+      expect(await call("ledgerRulesAccept", { packId: plan.packId, rulesHash: changed.rulesChange.rulesHash })).toEqual({ ok: true });
+      expect((await call("ledgerPreview", { planId: plan.planId, answers })).rulesChange).toBeNull();
       expect(sha(pv.view.bodyText)).toBe(pv.view.bodyHash);
       expect(stub.prs).toHaveLength(0);
       const sent = await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash });

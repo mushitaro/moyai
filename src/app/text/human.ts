@@ -513,6 +513,9 @@ export const HUMAN_TEXT = {
     rulesView: "見て受け入れる",
     rulesNotAccepted: "共有フォルダの決まりを受け入れていません",
     rulesTitle: "共有フォルダの決まりが変わりました",
+    // 公開の台帳の決まりが変わったとき（台帳の新-3。言葉は Wire に確かめる）
+    ledgerRulesChanged: "公開の台帳の決まりが変わりました",
+    ledgerRulesTitle: "公開の台帳の決まりが変わりました",
     rulesChanger: (fp: string, month: string) => `変えた鍵　${fp}　${month}`,
     rulesHead: ["決まり", "前", "今", ""],
     rulesDir: { loosened: "緩くなった", tightened: "厳しくなった", changed: "変わった" } as Record<string, string>,

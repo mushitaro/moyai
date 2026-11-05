@@ -56,6 +56,7 @@ import {
   writeSettings,
   type DocumentsInfo,
   type ShellRunner,
+  addLedger,
 } from "./places";
 
 /** 設備の地図の空のパック（名前と出どころだけ。docs/plan.md §2.7）。輪を作るときの選択に並べない */
@@ -187,6 +188,7 @@ const SCHEMAS = {
     answers: answersSchema,
     previewHash: z.string().regex(HEX64),
   }),
+  ledger_rules_accept: z.object({ packId: z.string().regex(PACK_ID), rulesHash: z.string().regex(HEX64) }),
   ledger_prs: z.object({ packId: z.string().regex(PACK_ID) }),
   github_connect_start: z.object({ packId: z.string().regex(PACK_ID) }),
   github_connect_state: z.object({}),
@@ -956,7 +958,16 @@ export class HumanService {
         if (!c.ok) return c.out;
         const pend = c.sender.ok ? pendingSent(c.facility, c.L, keyIdOf(c.sender.pair.pub)) : null;
         const view = this.ledgerView(c, p.answers, monthOf(now), !!pend);
-        return { ok: true, ...c.info, pending: pend ? { pr: pend.pr, url: pend.url } : null, view };
+        // 台帳の決まりが、この PC が受け入れたものから変わっていれば、その差（受け入れ直しは ledger_rules_accept。台帳の新-3）
+        const rulesHash = sha256Hex(c.L.ledgerBytes);
+        const rulesChange =
+          c.accepted && c.accepted.acceptedRulesHash !== rulesHash
+            ? (() => {
+                const rows = diffRuleRows(c.accepted.acceptedRules, c.L.rules);
+                return { rulesHash, loosened: rows.filter((r) => r.dir === "loosened").length, tightened: rows.filter((r) => r.dir === "tightened").length, rows };
+              })()
+            : null;
+        return { ok: true, ...c.info, pending: pend ? { pr: pend.pr, url: pend.url } : null, view, rulesChange };
       }
       case "ledger_send": {
         const p = parsePayload("ledger_send", call.payload);
@@ -1113,6 +1124,20 @@ export class HumanService {
         const key = keyIdOf(p.pub);
         if (!rs.confirmed.includes(key)) writeRings(sd, { ...rs, confirmed: [...rs.confirmed, key] });
         return { ok: true, key };
+      }
+      case "ledger_rules_accept": {
+        // 変わった台帳の決まりを、人が差を見て受け入れる（見た決まりのハッシュと今のハッシュが同じで、緩くした決まりでないときだけ。輪と同じ形。台帳の新-3）
+        const p = parsePayload("ledger_rules_accept", call.payload);
+        if (!p) return no("payloadInvalid");
+        const pack = this.pack(p.packId);
+        if (typeof pack === "string") return no("packNotReady", { packReason: pack });
+        const L = await loadLedgerForSend(readSettings(sd).ledger, pack);
+        if (!L.ok) return no(`ledger.${L.reason}`);
+        if (sha256Hex(L.ledgerBytes) !== p.rulesHash) return no("previewChanged");
+        if (checkRules(L.rules).length > 0) return no("rules");
+        const cur = ledgerAcceptance(sd, L.id);
+        addLedger(sd, { ledgerId: L.id, pack: pack.id, acceptedRulesHash: p.rulesHash, acceptedRules: L.rules, createdAt: cur?.createdAt ?? now.toISOString() });
+        return { ok: true };
       }
       case "ring_rules_accept": {
         // 変わった輪の決まりを、人が差を見て受け入れる（見た決まりのハッシュと今のハッシュが同じで、緩くした決まりでないときだけ）

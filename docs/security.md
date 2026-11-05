@@ -76,6 +76,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/ring-rules-accept` | `ring_rules_accept` | 変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない） |
 | `POST /human/ledger-preview` | `ledger_preview` | 公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり） |
 | `POST /human/ledger-send` | `ledger_send` | 束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
+| `POST /human/ledger-rules-accept` | `ledger_rules_accept` | 変わった公開の台帳の決まりを、人が差を見て受け入れる（見た決まりのハッシュと同じで、緩くした決まりでないときだけ） |
 | `POST /human/ledger-prs` | `ledger_prs` | 出した束の PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ） |
 | `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：台帳の自分の鍵が無ければ作り、OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ） |
 | `POST /human/github-connect-state` | `github_connect_state` | GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを状態フォルダに置く（包まない。見張りのフックが AI の読み取りを止める） |
@@ -84,7 +85,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 38 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 39 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

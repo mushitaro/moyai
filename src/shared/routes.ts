@@ -59,6 +59,7 @@ export const HUMAN_ACTIONS = [
   // 公開の台帳へ出す（§2.8。運営者の決定 2026-11-04「MOYAI が出す」）：PR を出すのは人がボタンを押したときだけ。通信は §2.12 の例外
   "ledger_preview",
   "ledger_send",
+  "ledger_rules_accept",
   "ledger_prs",
   "github_connect_start",
   "github_connect_state",
@@ -146,6 +147,7 @@ export const ROUTES = {
     64 * 1024,
     "束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ）",
   ),
+  ledgerRulesAccept: human("/human/ledger-rules-accept", "ledger_rules_accept", 16 * 1024, "変わった公開の台帳の決まりを、人が差を見て受け入れる（見た決まりのハッシュと同じで、緩くした決まりでないときだけ）"),
   ledgerPrs: human("/human/ledger-prs", "ledger_prs", 16 * 1024, "出した束の PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ）"),
   githubConnectStart: human(
     "/human/github-connect-start",
