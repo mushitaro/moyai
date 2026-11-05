@@ -804,6 +804,31 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason === "費用の列（計画に入れない）")).toBe(true);
   });
 
+  test("作業の名前の見出し（「点検・整備内容」「点検・検査」「点検項目」）：星取表（xlsx）では機器の段でなくその行の作業、作業の一覧（CSV）では列の役目を聞かない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["機器", "点検・整備内容", "周期\n(年)", "2024年度", "2025年度"], ["ポンプ", "分解整備", "3", "●", null], ["〃", "定期点検", "1", "●", "●"], [], [null, "凡例　○：計画　●：実施済"]]);
+    });
+    const s = session();
+    await s.add([{ name: "星取表.xlsx", bytes }]);
+    const t = s.analyze().layouts[0]?.tables[0];
+    expect(t?.cols.find((c) => c.header === "点検・整備内容")?.role).toBe("workName");
+    acceptDefaults(s);
+    const c = s.compose();
+    const pump = c.plan?.assets.find((a) => a.name === "ポンプ");
+    expect(c.plan?.assets.map((a) => a.name)).toEqual(["ポンプ"]);
+    expect(c.plan?.works.filter((w) => w.targets.includes(pump?.nodeKey ?? "")).map((w) => [w.kind, (w.trigger as { branches: unknown[] } | null)?.branches[0]])).toEqual([
+      ["分解整備", { kind: "calendar", years: 3 }],
+      ["定期点検", { kind: "calendar", years: 1 }],
+    ]);
+    for (const head of ["点検・検査", "点検項目"]) {
+      const s2 = session();
+      await s2.add([{ name: "一覧.csv", bytes: csv([`機器,${head},実施日,工数(人日)`, "ポンプ,分解整備,2024/4/6,1", "ブロワ,定期点検,2024/4/7,1"]) }]);
+      const an = s2.analyze();
+      expect(an.open.some((q) => q.kind === "columnRole")).toBe(false);
+      expect(an.records.events.map((e) => e.workName)).toEqual(["分解整備", "定期点検"]);
+    }
+  });
+
   test("作業の記録（CSV）：「周期」の列の行の周期も作業のきっかけ。「毎回」は推し量らず聞き、置かないと答えたら周期なしで入れる", async () => {
     const s = session();
     await s.add([{ name: "点検.csv", bytes: csv(["機器,作業,周期,実施日,工数(人日),契約金額", "ポンプ,点検,年4回,2024/4/6,1,50000", "ブロワ,点検,毎回,2024/4/7,1,30000"]) }]);
