@@ -897,6 +897,11 @@ button.moyai-industry-row:hover {
 }
 
 /* 切り替えの言葉のあとの数。外れの数などは朱（Wire） */
+/* 言葉と数の間：ボタンは inline-flex なので、字の空白は詰まる。間は余白で取る（「外れ 17」。Wire） */
+.moyai-switch-count {
+  margin-left: 0.35em;
+  font-variant-numeric: tabular-nums;
+}
 .moyai-switch-count[data-shu="true"] {
   color: var(--shu-text);
 }

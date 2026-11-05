@@ -2,14 +2,14 @@
 // - 星取表のシート：段の列（左に固定）と年度の列。親の名前は子の行まで縦に結合し、行はアウトラインで畳める（親が上）
 // - 1 段目のまとまりごとに小計の行（年度ごとの印の数。式ではなく数の値。exceljs の式には計算済みの値が入らないため）
 // - 共通の設備項目のシート（パックの名前の表があるときだけ）：人が受けた当てはめの行と、未当てはめの行の件数
-// - 作業の行の右端に「次回｜期限｜根拠｜備考」の 4 列（docs/screens.md 3.5。字は画面と同じ due-view.ts。基準日は確定した日）
+// - 作業の行の右端に「次回｜期限｜根拠｜備考」の 4 列（docs/screens.md 3.5。字は画面と同じ due-view.ts。基準日は確定した日〔日本時間〕）
 // - A3 横・幅を 1 頁に・見出しの行をくり返し印刷・ウィンドウ枠の固定・凡例・架空の計画は表題と作成者の欄に【架空】
 // 行の組み方は画面の星取表と同じ関数（buildChart）。純粋な関数（ファイルは書かない。書くのは store.ts）。
 import ExcelJS from "exceljs";
 import type { Plan } from "../shared/plan";
 import { fixWorkbook } from "./xlsx-fix";
 import { buildChart, type ChartCatalog, type ChartLabels, type ChartModel, type ChartRow } from "./chart";
-import { DUE_TEXT, planDueViews, rowDue, type DueView } from "./due-view";
+import { DUE_TEXT, dueBaseDate, planDueViews, rowDue, type DueView } from "./due-view";
 
 /** 書き出しの言葉（Excel に書く言葉。画面の言葉は src/app/text/） */
 export const EXPORT_TEXT = {
@@ -185,7 +185,7 @@ export async function planWorkbook(input: ExportInput): Promise<Buffer> {
   if (input.plan.facility.fictional) wb.creator = T.fiction;
   const opts = { period: "year" as const, layer: "original" as const, foldLevel: null };
 
-  const due = planDueViews(input.plan, input.at.slice(0, 10));
+  const due = planDueViews(input.plan, dueBaseDate(input.at));
   const ledger = buildChart(input.plan, input.catalog ?? input.emptyCatalog, T.labels, { ...opts, mode: "ledger" });
   const ws1 = wb.addWorksheet(T.sheetLedger);
   writeSheet(ws1, ledger, input, true, due);

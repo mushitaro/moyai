@@ -280,6 +280,13 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   p.works = p.works.filter((w: { workKey: string }) => to.get(w.workKey) === w.workKey);
   for (const d of p.details) d.workKey = to.get(d.workKey);
   for (const w of p.works) w.trigger = { branches: [{ kind: "calendar", years: 3 }], combine: "earliest" };
+  // ごみクレーンには作業を 2 つ足す：5 年ごとの分解整備（実績あり）と、きっかけの無い作業（決まらない。列の備考に「未確定 1」）
+  const craneAsset = p.assets.find((a: { name: string; level: number }) => a.name === "ごみクレーン" && a.level === 2);
+  const base = p.works.find((w: { targets: string[] }) => w.targets.includes(craneAsset.nodeKey));
+  p.works.push({ ...base, workKey: "e2e-overhaul", kind: "ごみクレーンの分解整備", attribute: "OVERHAUL", trigger: { branches: [{ kind: "calendar", years: 5 }], combine: "earliest" } });
+  p.works.push({ ...base, workKey: "e2e-none", kind: "ごみクレーンのワイヤ交換", attribute: "REPLACE", trigger: null });
+  const d0 = p.details.find((d: { workKey: string }) => d.workKey === base.workKey);
+  p.details.push({ ...d0, detailKey: "e2e-overhaul.1", workKey: "e2e-overhaul", fiscalYear: 2021, startDate: "2021-10-04", endDate: "2021-10-20" });
   planJson.set("due-1", JSON.stringify(p));
   await openPlan(page, "due-1");
   await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='next']")).toHaveText("次回");
@@ -292,5 +299,9 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   await expect(page.getByTestId("due-side")).toBeVisible();
   await expect(page.getByTestId("due-side")).toContainText("根拠　暦");
   await expect(page.getByTestId("due-side")).toContainText("起点　");
+  // 作業ごとに、次回の早い順。決まらない作業は最後
+  await expect(page.getByTestId("due-work")).toHaveCount(3);
+  await expect(page.getByTestId("due-work").last()).toHaveAttribute("data-work", "e2e-none");
+  await expect(page.getByTestId("due-work").last()).toContainText("備考　起点なし");
   await page.screenshot({ path: shot(`chart-next-${tag}`) });
 });

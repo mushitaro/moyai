@@ -35,7 +35,6 @@ export function Switch<V extends string>(props: {
             {d.label}
             {d.count !== undefined && (
               <span className="moyai-switch-count" data-shu={d.shu ? "true" : undefined}>
-                {" "}
                 {d.count}
               </span>
             )}

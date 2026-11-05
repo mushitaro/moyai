@@ -12,7 +12,7 @@ import type { Comparison } from "../../share/receive";
 import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
-import { DUE_TEXT, planDueViews, rowDue, type DueView } from "../../plan/due-view";
+import { DUE_TEXT, planDueViews, rowDue, rowDues, type DueView } from "../../plan/due-view";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
 import { PeerPanel } from "../components/PeerPanel";
@@ -155,7 +155,7 @@ function todayLocal(): string {
 
 /** 行を選んだとき、横の板に出す次回の詳細（docs/screens.md 3.2）。作業が 2 つ以上ある行は作業ごとに */
 function DueSide({ row, due, ix }: { row: ChartRow; due: ReadonlyMap<string, DueView>; ix: Index }) {
-  const views = (row.works ?? []).map((k) => due.get(k)).filter((v): v is DueView => !!v);
+  const views = rowDues(row.works, due);
   if (views.length === 0) return null;
   const S = DUE_TEXT.side;
   const head = rowDue(row.works, due);

@@ -18,6 +18,7 @@ import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
 import { sheetHash } from "../stages";
 import { TEXT } from "../text";
+import { dueBaseDate } from "../../plan/due-view";
 
 const T = TEXT.export;
 const C = TEXT.chart;
@@ -181,7 +182,7 @@ export function Export() {
           {latest?.plan.facility.fictional && <FictionMark />}
         </div>
         <Stack gap="md">
-          {latest && info && <TemplateExport plan={latest.plan} asOf={info.at.slice(0, 10)} templates={templates} selected={selected} onSelect={setSelected} onDrop={onDrop} onRoles={onRoles} standardExported={!broken} />}
+          {latest && info && <TemplateExport plan={latest.plan} asOf={dueBaseDate(info.at)} templates={templates} selected={selected} onSelect={setSelected} onDrop={onDrop} onRoles={onRoles} standardExported={!broken} />}
           {error && (
             <Alert color="gray" data-testid="export-error">
               {error}

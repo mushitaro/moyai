@@ -35,7 +35,16 @@ export const DUE_TEXT = {
     meterNotGrowing: "使用量の変化なし",
   } satisfies Record<"noTrigger" | "triggerInvalid" | "noOrigin" | MeterWhy, string>,
   sep: "・",
+  /** 同じ行に、次回の決まらない作業が残っているとき（台帳の重-8b-b。言葉は Wire に確かめる） */
+  undecidedInRow: (n: number) => `未確定 ${n}`,
 };
+
+/** 版の時刻（ISO）から、次回の基準日（日本時間の日付。PC の時間帯に頼らない。同じ版ならどの PC でも同じ字にするため。台帳の重-8b-a） */
+export function dueBaseDate(at: string): string {
+  const t = Date.parse(at);
+  if (!Number.isFinite(t)) throw new Error(`時刻の形が違う：${at}`);
+  return new Date(t + 9 * 3_600_000).toISOString().slice(0, 10);
+}
 
 export interface DueView {
   workKey: string;
@@ -94,10 +103,22 @@ export function planDueViews(plan: Plan, today: string): Map<string, DueView> {
   return out;
 }
 
-/** 1 つの行の次回：決まった次回のうちいちばん早いもの。どれも決まらなければ最初の作業のもの。作業が無ければ null */
-export function rowDue(works: readonly string[] | undefined, views: ReadonlyMap<string, DueView>): DueView | null {
+/** 行の作業の次回を、次回の早い順に（決まらない作業は最後。Wire、2026-11-06） */
+export function rowDues(works: readonly string[] | undefined, views: ReadonlyMap<string, DueView>): DueView[] {
   const vs = (works ?? []).map((k) => views.get(k)).filter((v): v is DueView => !!v);
-  if (vs.length === 0) return null;
   const decided = vs.filter((v) => v.decided).sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : a.dueDate! > b.dueDate! ? 1 : 0));
-  return decided[0] ?? vs[0]!;
+  return [...decided, ...vs.filter((v) => !v.decided)];
+}
+
+/**
+ * 1 つの行の次回：決まった次回のうちいちばん早いもの。どれも決まらなければ最初の作業のもの。作業が無ければ null。
+ * 決まった次回を出すとき、同じ行に決まらない作業が残っていれば、備考にその件数を添える（列と Excel では作業ごとに見えないため）
+ */
+export function rowDue(works: readonly string[] | undefined, views: ReadonlyMap<string, DueView>): DueView | null {
+  const vs = rowDues(works, views);
+  const head = vs[0];
+  if (!head) return null;
+  const left = vs.filter((v) => !v.decided).length;
+  if (!head.decided || left === 0) return head;
+  return { ...head, notes: [head.notes, DUE_TEXT.undecidedInRow(left)].filter(Boolean).join(DUE_TEXT.sep) };
 }

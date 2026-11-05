@@ -23,6 +23,7 @@ import { AUTHOR_KINDS } from "../shared/fields";
 import { approvedTemplateVersions, listTemplates, readTemplateVersion, saveTemplate } from "./templates";
 import { exportExcelName, exportSignatureName, signExport } from "../plan/exports";
 import { fillTemplate, templateRows } from "../plan/template";
+import { dueBaseDate } from "../plan/due-view";
 import ExcelJS from "exceljs";
 import { catalogFromPack } from "../plan/chart";
 import type { HumanAction } from "../shared/routes";
@@ -851,7 +852,7 @@ export class HumanService {
         const plan = h.latest.plan;
         const cat = this.catalogsFor(plan.packId);
         const labels = (cat.catalog ?? cat.empty).workLabels as Record<string, string>;
-        const excel = await fillTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, templateRows(plan, (a) => labels[a], h.latest.at.slice(0, 10)));
+        const excel = await fillTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, templateRows(plan, (a) => labels[a], dueBaseDate(h.latest.at)));
         const excelHash = sha256Hex(excel);
         const file = signExport(
           { planId: p.planId, version: p.version, contentHash: v.contentHash, by: signer.signer.by, at: now.toISOString(), template: { name: p.name, file: t.fileHash, columns: t.columnsHash, version: p.templateVersion }, excel: excelHash },

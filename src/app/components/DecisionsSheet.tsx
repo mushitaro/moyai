@@ -52,10 +52,22 @@ export function usePending(client: BridgeClient, plan: Plan | null): { pending: 
 function whenValues(p: CrosswalkProposal, names: ReadonlyMap<string, string>): string[][] {
   return p.rule.when.map((c) => c.values.map((v) => (c.field === "assetNode.nodeKey" || c.field === "work.workKey" ? (names.get(String(v)) ?? String(v)) : String(v))));
 }
-/** 短く：条件ごとに頭の 1 つと「ほか n」（「ごみクレーン」ほか 9）。全部は詳しくへ（Wire） */
+/**
+ * 短く：条件ごとに頭の 1 つと「ほか n」（「ごみクレーン」ほか 9）。全部は詳しくへ（Wire）。
+ * 段の条件は短い言い方に出さない。系列の条件は、最初の条件の名前に添える（節「焼却炉本体（系列 2）」。Wire、2026-11-05）
+ */
 function whenShort(p: CrosswalkProposal, names: ReadonlyMap<string, string>): string {
-  return whenValues(p, names)
-    .map((vs) => `「${vs[0] || T.blank}」${vs.length > 1 ? T.more(vs.length - 1) : ""}`)
+  const vals = whenValues(p, names);
+  let series: string | null = null;
+  const parts: string[][] = [];
+  p.rule.when.forEach((c, i) => {
+    if (c.field === "assetNode.level") return;
+    if (c.field === "assetNode.series") series = vals[i]?.[0] ?? null;
+    else parts.push(vals[i] ?? []);
+  });
+  if (parts.length === 0) return whenText(p, names);
+  return parts
+    .map((vs, i) => `「${vs[0] || T.blank}${i === 0 && series !== null ? `（${TEXT.chart.series(series)}）` : ""}」${vs.length > 1 ? T.more(vs.length - 1) : ""}`)
     .join(T.and);
 }
 /** 全部：「焼却炉本体・1 号炉」かつ … */
