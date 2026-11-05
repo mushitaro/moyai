@@ -851,7 +851,7 @@ export class HumanService {
         const plan = h.latest.plan;
         const cat = this.catalogsFor(plan.packId);
         const labels = (cat.catalog ?? cat.empty).workLabels as Record<string, string>;
-        const excel = await fillTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, templateRows(plan, (a) => labels[a]));
+        const excel = await fillTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, templateRows(plan, (a) => labels[a], h.latest.at.slice(0, 10)));
         const excelHash = sha256Hex(excel);
         const file = signExport(
           { planId: p.planId, version: p.version, contentHash: v.contentHash, by: signer.signer.by, at: now.toISOString(), template: { name: p.name, file: t.fileHash, columns: t.columnsHash, version: p.templateVersion }, excel: excelHash },

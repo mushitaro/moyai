@@ -294,7 +294,7 @@ export const TEXT = {
       openLatest: (n: number) => `第 ${n} 版を開く`,
       pending: (who: string) => `まだ承認されていません　承認する人 ${who}`,
       pendingSuffix: "_承認待ち",
-      role: { item: "← 項目", work: "← 作業", cycle: "← 周期", year: (fy: number) => `← ${fy} 年度の印`, none: "- 未定" },
+      role: { item: "← 項目", work: "← 作業", cycle: "← 周期", next: "← 次回", year: (fy: number) => `← ${fy} 年度の印`, none: "- 未定" },
       roleOf: (col: string) => `${col} 列に写すもの`,
       fileName: (base: string, name: string, n: number, suffix = "") => `${base}_${name}_第${n}版${suffix}.xlsx`,
       noSheet: "様式にシートがありません。",

@@ -38,6 +38,8 @@ function roleLabel(r: ColumnRole): string {
       return T.role.work;
     case "cycle":
       return T.role.cycle;
+    case "next":
+      return T.role.next;
     case "year":
       return T.role.year(r.fiscalYear);
     default:
@@ -46,9 +48,9 @@ function roleLabel(r: ColumnRole): string {
 }
 
 /** 確定した版の作業を、様式に写す行にする（機器 × 作業ごとに 1 行） */
-export function rowsFor(plan: Plan): TemplateRow[] {
+export function rowsFor(plan: Plan, asOf: string): TemplateRow[] {
   const labels = (catalogFor(plan.packId) ?? emptyCatalog()).workLabels as Record<string, string>;
-  return templateRows(plan, (a) => labels[a]);
+  return templateRows(plan, (a) => labels[a], asOf);
 }
 
 /** 様式を読む：最初のシートの見出しの行と、列ごとの役目（見出しの言葉から）。名前はファイルの名前から拡張子を除いたもの */
@@ -82,6 +84,7 @@ export async function readTemplate(f: File): Promise<{ ok: true; name: string; b
  */
 export function TemplateExport({
   plan,
+  asOf,
   templates,
   selected,
   onSelect,
@@ -90,6 +93,8 @@ export function TemplateExport({
   standardExported,
 }: {
   plan: Plan;
+  /** 次回の基準日（版を確定した日。橋渡しが署名して書き出すときと同じ日） */
+  asOf: string;
   templates: readonly SharedTemplate[];
   selected: SharedTemplate | null;
   onSelect: (t: SharedTemplate | null) => void;
@@ -99,7 +104,7 @@ export function TemplateExport({
   standardExported: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const rows = useMemo(() => rowsFor(plan), [plan]);
+  const rows = useMemo(() => rowsFor(plan, asOf), [plan, asOf]);
 
   const pick = async (f: File | null) => {
     if (!f) return;
@@ -187,6 +192,7 @@ export function TemplateExport({
                     { value: "item", label: T.role.item },
                     { value: "work", label: T.role.work },
                     { value: "cycle", label: T.role.cycle },
+                    { value: "next", label: T.role.next },
                     ...(fy.kind === "year" ? [{ value: `year:${fy.fiscalYear}`, label: T.role.year(fy.fiscalYear) }] : []),
                     { value: "none", label: T.role.none },
                   ];

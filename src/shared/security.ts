@@ -85,7 +85,7 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("");
   L.push("- 橋渡しは 127.0.0.1 の 1 つのポートだけで待ち受け、Host・Origin・Sec-Fetch-Site を確かめます。これは Web ページからの呼び出しへの守りで、同じ PC の同じ利用者のプロセスは止めきれません（curl も Node も Origin を偽れます）。");
   L.push("- 中継と橋渡しの間は、状態フォルダの鍵ファイル（利用者だけが読める既定の権限）で確かめます。同じ利用者のプロセスには読めます。");
-  L.push("- シェルを持つ AI（Claude Code）には、リポジトリの `.claude/settings.json` の deny と PreToolUse のフック（`scripts/guard-hook.mjs`）の二重で、127.0.0.1 への HTTP・状態フォルダの読み取り・保管先の計画のフォルダの施設の署名鍵（share/keys/）の読み書き・輪のフォルダへの書き込み・人だけのコマンドを止めます。悪意のある同じ利用者のプロセスは止めきれません。");
+  L.push("- シェルを持つ AI（Claude Code）には、リポジトリの `.claude/settings.json` の deny と PreToolUse のフック（`scripts/guard-hook.mjs`）の二重で、127.0.0.1 への HTTP・状態フォルダの読み取り・保管先の計画のフォルダの施設の署名鍵（share/keys/）の読み書き・輪のフォルダへの書き込み・人だけのコマンド・見張りのフックと `.claude/settings.json`・`.claude/settings.local.json` の書き換えを止めます。悪意のある同じ利用者のプロセスは止めきれません。");
   L.push("- 鍵と GitHub のトークンは合言葉で包みません（運営者の決定 2026-11-04）。人の鍵とトークンは同期されない状態フォルダに、束に署名する施設の鍵は保管先の計画のフォルダ（share/keys/）に置きます。MCP のどのツールの結果にも、鍵とトークンの中身は入れません。");
   L.push("- 人だけのコマンド（鍵を作る、送る、台帳に出す）は、標準入力が端末でなければ断ります。");
   L.push("- API のキーを読むのは、Skill の採点の CLI（`moyai eval`、`src/eval/`）だけで、環境変数 `ANTHROPIC_API_KEY` から読みます。写真の読み取りと MCP のツールはキーを読みません。チャットでもツールでもキーを受け取らず、値を画面・記録・ログに出しません。");
@@ -100,6 +100,7 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("6. 写真とスキャンの読み取りでは、人が許したその画像が AI の提供者に渡ります。");
   L.push("7. 画面を操作できる AI の道具（ブラウザやデスクトップの操作）は、人だけのボタンを押せます。");
   L.push("8. 計画のフォルダを読める人と AI は、施設の署名鍵を写せます（写した人は、その施設として束を出せます）。保管先が同期フォルダなら、施設の署名鍵も会社のクラウドに上がります。");
+  L.push("9. シェルを持つ AI は、見張りのフックを越えられます（スクリプトを書いて走らせる・差分のファイルを git apply する・git reset や git checkout で枝ごと戻す・道に ./ を挟んだシェルの書き込み）。フックが見るのは、AI の道具の呼び出しの字だけです。");
   L.push("");
   return L.join("\n");
 }

@@ -181,7 +181,7 @@ export function Export() {
           {latest?.plan.facility.fictional && <FictionMark />}
         </div>
         <Stack gap="md">
-          {latest && <TemplateExport plan={latest.plan} templates={templates} selected={selected} onSelect={setSelected} onDrop={onDrop} onRoles={onRoles} standardExported={!broken} />}
+          {latest && info && <TemplateExport plan={latest.plan} asOf={info.at.slice(0, 10)} templates={templates} selected={selected} onSelect={setSelected} onDrop={onDrop} onRoles={onRoles} standardExported={!broken} />}
           {error && (
             <Alert color="gray" data-testid="export-error">
               {error}
