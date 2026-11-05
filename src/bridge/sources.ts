@@ -8,9 +8,9 @@ import { planDir } from "../plan/store";
 import type { VersionDecision, VersionSource } from "../plan/store";
 import { AUTHOR_KINDS } from "../shared/fields";
 
-/** 1 つの資料と、1 つの版の資料の合計の上限 */
-export const SOURCE_MAX_BYTES = 16 * 1024 * 1024;
-export const SOURCES_TOTAL_MAX_BYTES = 64 * 1024 * 1024;
+/** 1 つの資料と、1 つの版の資料の合計の上限（取り込みの 1 ファイル 64 MB とそろえる。台帳の新-6） */
+export const SOURCE_MAX_BYTES = 64 * 1024 * 1024;
+export const SOURCES_TOTAL_MAX_BYTES = 256 * 1024 * 1024;
 const SHA = /^[0-9a-f]{64}$/;
 /** 資料の名前の形（表示だけ。区切り・制御の文字を使わない） */
 const SOURCE_NAME = /^[^\\/:*?"<>|\x00-\x1f]{1,200}$/u;

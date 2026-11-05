@@ -302,7 +302,10 @@ export class IntakeWorkspace {
     return this.session.decisionList();
   }
 
-  /** 聞いた数（2A）：いまの取り込みで出た質問の数と、作者ごとの決定の数。資料が無ければ null */
+  /**
+   * 聞いた数（2A）：いまの取り込みで出た質問の数と、作者ごとの決定の数。資料が無ければ null。
+   * 作者「AI（読み取り）」は写真の格子のセルの作者で、質問の答えには付かないので数えない
+   */
   intakeStats(): { questions: number; decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number } } | null {
     if (this.inputs.length === 0) return null;
     const an = this.analysis();

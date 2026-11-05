@@ -122,7 +122,7 @@ export const ROUTES = {
   requestReceive: human("/human/request-receive", "request_receive", 16 * 1024, "メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ）"),
   requestRenew: human("/human/request-renew", "request_renew", 16 * 1024, "頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する"),
   planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
-  planSourcePut: human("/human/plan-source-put", "plan_source_put", 24 * 1024 * 1024, "次の版に重ねるため、版を組んだ資料を 1 つ、保存先の計画のフォルダに中身のアドレス（SHA-256）で置く（確定では SHA-256 だけを送る）"),
+  planSourcePut: human("/human/plan-source-put", "plan_source_put", 90 * 1024 * 1024, "次の版に重ねるため、版を組んだ資料を 1 つ、保存先の計画のフォルダに中身のアドレス（SHA-256）で置く（確定では SHA-256 だけを送る）"),
   planSourceRead: human("/human/plan-source-read", "plan_source_read", 16 * 1024, "確かめで合う版を組んだ資料を 1 つ読む（版の記録の SHA-256 と照らす。次の版に重ねるため、画面に戻す）"),
   templatesRead: human("/human/templates-read", "templates_read", 16 * 1024, "保存先の様式と写し方（列の役目）の一覧と、承認済みか下書きか、その版で書き出したか"),
   templateSave: human("/human/template-save", "template_save", 12 * 1024 * 1024, "利用者が落とした様式と、直した写し方（列の役目）を、保存先に下書きとして置く"),
