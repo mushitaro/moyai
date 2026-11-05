@@ -217,6 +217,37 @@ describe("版の署名（docs/plan.md §2.18.2）", () => {
     expect(h.versions.map((v) => v.problem)).toEqual(["unsigned", "chain"]);
   });
 
+  it("版の記録の作った鍵でない鍵の作る署名は、版を作った署名に数えず外して数える。頼みも作った人のものだけ（監-1）", async () => {
+    const { rt, d } = await twoVersions();
+    const h = await readHistory(rt, "plan-test");
+    const v2 = h.versions[1]!;
+    expect(v2).toMatchObject({ makerRecorded: true, unrecordedMakers: 0 });
+    // 保管先に書ける別の人が、自分の鍵で同じ中身に「確定」「渡す」の署名を足す
+    const thief = otherSigner("【架空】なりすます人");
+    for (const role of ["confirm", "edit"] as const) {
+      const f = signStatement({ planId: "plan-test", version: 2, contentHash: v2.contentHash, role, by: thief.by, at: "2026-11-04T05:00:00.000Z", reason: "2 版目" }, thief.pair);
+      writeFileSync(join(d, "signatures", signatureFileName(2, role, f.statement.key)), JSON.stringify(f));
+    }
+    const h2 = await readHistory(rt, "plan-test");
+    const w = h2.versions[1]!;
+    expect(w.problem).toBeNull();
+    expect(w.unrecordedMakers).toBe(2);
+    expect(w.signatures.map((x) => x.by)).toEqual([SIGNER.by]);
+    // なりすます人が自分宛ての頼みを置いても、作った人の頼みに数えない（番は奪えない）
+    const { createRequest, readRequests } = await import("../../src/plan/request");
+    await createRequest({ root: rt, planId: "plan-test", version: 2, contentHash: w.contentHash, kind: "edit", to: thief.by, by: thief.by, pair: thief.pair, now: new Date("2026-11-04T06:00:00Z") });
+    const rq = await readRequests(rt, "plan-test", w);
+    expect(rq.requests).toEqual([]);
+    expect(rq.foreign).toHaveLength(1);
+    // 作った鍵が記録に入るので、記録の作った鍵を書き換えると中身のハッシュが変わり、署名が合わない
+    const f = join(d, "versions", "000002.json");
+    const rec = JSON.parse(readFileSync(f, "utf8"));
+    expect(rec.maker).toEqual({ key: keyIdOf(SIGNER.pair.pub), pub: SIGNER.pair.pub });
+    rec.maker = { key: keyIdOf(thief.pair.pub), pub: thief.pair.pub };
+    writeFileSync(f, JSON.stringify(rec, null, 1));
+    expect((await readHistory(rt, "plan-test")).versions[1]!.problem).not.toBeNull();
+  });
+
   it("ほかの人の承認の署名を足すと、2 版目の署名に並ぶ（版の記録は書き直さない）。ほかの版の中身を指す署名は数えない", async () => {
     const { rt, d } = await twoVersions();
     const h = await readHistory(rt, "plan-test");

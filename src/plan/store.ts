@@ -72,6 +72,12 @@ export interface VersionRecord {
   crosswalk?: VersionCrosswalkRule[];
   /** 聞いた数（運営者の決定 2A）：取り込みで出た質問の数と、決定の数を作者ごとに。年ごとに「聞く数が減った」を署名のある記録で示す */
   intake?: VersionIntake;
+  /**
+   * この版を作った鍵（鍵 ID と公開鍵。中身のハッシュに入る。監査役の監-1）。版を作った署名に数えるのは、この鍵の確定・渡す・戻すの署名だけで、
+   * ほかの鍵の同じ役目の署名は「記録に無い署名」として数えて外す（保管先に書ける人が、自分の鍵の署名を足して版を作った人になりすませないように）。
+   * 前に確定した版には無い（そのときは前のとおり、合う署名をみな数える）
+   */
+  maker?: { key: string; pub: string };
   /** この版の差分レポートと書き出しの SHA-256（署名の中に入る。落とすときに照らす。監査 E1）。前に確定した版には無い */
   files?: { report: string; export: string | null };
   plan: Plan;
@@ -130,6 +136,10 @@ export interface VersionInfo {
   signatures: SignatureInfo[];
   /** 署名の無い前の形の版（読むだけ。承認に数えない） */
   legacy: boolean;
+  /** 版の記録に作った鍵があるか（無い前の版は、合う作る署名をみな数える。監-1） */
+  makerRecorded: boolean;
+  /** 版の記録の作った鍵でない、作る役目の署名の数（数えずに外した。監-1） */
+  unrecordedMakers: number;
   /** 様式で書き出した Excel への署名（確かめて合うものだけ。版を作る署名ではないので、鎖・承認・頼み・編集の番には数えない） */
   exports: ExportInfo[];
   /**
@@ -239,7 +249,12 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
     const { record } = await readVersion(dir, n);
     const legacy = record.schema === VERSION_SCHEMA_V0;
     const hash = contentHash(record);
-    const sigs = legacy ? { ok: [], bad: 0 } : await readSignatures(dir, record, hash);
+    const read = legacy ? { ok: [], bad: 0 } : await readSignatures(dir, record, hash);
+    // 版を作った署名は、版の記録の作った鍵のものだけ（監-1）。ほかの鍵の作る役目の署名は外して数える
+    const maker = record.maker ?? null;
+    const notMaker = (x: SignatureInfo) => maker !== null && CREATION_ROLES.includes(x.role) && (x.key !== maker.key || x.pub !== maker.pub);
+    const sigs = { ok: read.ok.filter((x) => !notMaker(x)), bad: read.bad };
+    const unrecordedMakers = read.ok.filter(notMaker).length;
     let problem: VersionInfo["problem"] = null;
     // 署名の無い前の形の版は、先頭に続く部分だけ許す（署名のある版のあとに置かれた前の形は、署名も鎖も見ずに最新になってしまうため）
     if (legacy && signedSeen) problem = "chain";
@@ -262,7 +277,21 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
       else if (!sigs.ok.some((x) => (record.kind === "revert" ? x.role === "revert" : x.role === "confirm" || x.role === "edit"))) problem = "unsigned";
     }
     const exports = legacy ? [] : (await readExportFiles(dir, n, record.planId, hash)).ok;
-    const info: VersionInfo = { version: n, kind: record.kind, revertOf: record.revertOf, at: record.at, reason: record.reason, summary: record.summary, contentHash: hash, signatures: sigs.ok, legacy, problem, exports };
+    const info: VersionInfo = {
+      version: n,
+      kind: record.kind,
+      revertOf: record.revertOf,
+      at: record.at,
+      reason: record.reason,
+      summary: record.summary,
+      contentHash: hash,
+      signatures: sigs.ok,
+      legacy,
+      makerRecorded: maker !== null,
+      unrecordedMakers,
+      problem,
+      exports,
+    };
     versions.push(info);
     // 人が受けた決定に数えるのは、確かめで合う署名のある版だけ（前の形の版の受けた決定は数えない）
     if (!legacy && problem === null) for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });
@@ -458,6 +487,7 @@ async function writeVersion(
       ? { version: prevInfo.version, contentHash: prevInfo.contentHash, signatures: prevInfo.signatures.filter((x) => CREATION_ROLES.includes(x.role)).map((x) => x.fileHash).sort() }
       : null,
     derivedFrom: v.derivedFrom ?? null,
+    maker: { key: keyIdOf(v.signer.pair.pub), pub: v.signer.pair.pub },
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
     ...(v.sources ? { sources: v.sources, decisions: v.decisions ?? [], crosswalk: v.crosswalk ?? [] } : {}),
     ...(v.intake ? { intake: v.intake } : {}),
