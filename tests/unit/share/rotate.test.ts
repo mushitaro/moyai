@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { envelopeText, makeRetiredBody } from "../../../src/share/bundle";
 import { createRing, loadRing, previewCheckpoint, ringPlace, rotateRingKey, sealPlace, sendCheckpoint, verifyRing, type Answers, type Sender } from "../../../src/share/checkpoint";
-import { facilityKey, retiredKeys, type Facility } from "../../../src/share/facility";
+import { facilityKey, retireFacilityKeys, retiredKeys, type Facility } from "../../../src/share/facility";
 import type { SharePack } from "../../../src/share/pack";
 import { MEMBERS_DIR, RETIRED_SUFFIX, ringDir, writeBundle } from "../../../src/share/ring";
 import { knownMaxSeq } from "../../../src/share/ring-seen";
@@ -178,5 +178,61 @@ describe("連番のぶつかり（2 つの保管先）", () => {
     const s3 = await send(stateDir, ringId, c, p2(), [keyA]);
     if (!s3.ok) throw new Error(s3.reason);
     expect(s3.seq).toBe(1);
+  });
+});
+
+describe("作り直しが途中で落ちたとき（Architect の 37・38）", () => {
+  it("輪に印を置けなければ、鍵を移さない。押し直すと印が置かれ、受け手は古い鍵を数えない", async () => {
+    const { stateDir, root, ringId, f } = await setup();
+    const a = senderOf(f, ringId);
+    const keyA = keyIdOf(a.pair.pub);
+    const s1 = await send(stateDir, ringId, a);
+    if (!s1.ok) throw new Error(s1.reason);
+    // 輪に書けない（印の名前の所をフォルダにして、置き換えが断られるようにした）
+    const blocker = join(ringDir(root, ringId), MEMBERS_DIR, `${keyA}${RETIRED_SUFFIX}`);
+    mkdirSync(blocker);
+    const r1 = await rotateRingKey(await load(stateDir, ringId, [keyA]), f, MONTH);
+    expect(r1.ok).toBe(false);
+    // 鍵は今の鍵のまま（引退させていない）
+    expect(keyIdOf(senderOf(f, ringId).pair.pub)).toBe(keyA);
+    expect([...retiredKeys(f, ringId)]).toEqual([]);
+    rmSync(blocker, { recursive: true });
+    const r2 = await rotateRingKey(await load(stateDir, ringId, [keyA]), f, MONTH);
+    expect(r2).toEqual({ ok: true, retired: [keyA], unsigned: [] });
+    const after = await load(stateDir, ringId, [keyA]);
+    expect(after.read.members.find((m) => m.key === keyA)?.retiredAt).toBe(1);
+    expect(after.read.latest.map((x) => x.key)).not.toContain(keyA);
+  });
+
+  it("前に鍵だけ移して印が無い鍵は、作り直しで印を置き直す", async () => {
+    const { stateDir, ringId, f } = await setup();
+    const a = senderOf(f, ringId);
+    const keyA = keyIdOf(a.pair.pub);
+    const s1 = await send(stateDir, ringId, a);
+    if (!s1.ok) throw new Error(s1.reason);
+    retireFacilityKeys(f, ringId);
+    expect((await load(stateDir, ringId, [keyA])).read.members.find((m) => m.key === keyA)?.retiredAt).toBeUndefined();
+    const r = await rotateRingKey(await load(stateDir, ringId, [keyA]), f, MONTH);
+    expect(r).toMatchObject({ ok: true, retired: [keyA] });
+    expect((await load(stateDir, ringId, [keyA])).read.members.find((m) => m.key === keyA)?.retiredAt).toBe(1);
+  });
+
+  it("印の最後の連番は、持ち出し簿にある束だけで決める（持ち出し簿に無い束は、印のあとの束として ✗）", async () => {
+    const { stateDir, root, ringId, f } = await setup();
+    const a = senderOf(f, ringId);
+    const keyA = keyIdOf(a.pair.pub);
+    const s1 = await send(stateDir, ringId, a);
+    if (!s1.ok) throw new Error(s1.reason);
+    // 盗んだ人が、持ち出し簿に残らない所から連番 2 を先に出した
+    const thief: Sender = { facility: { root: join(dir, "盗んだ人"), planId: f.planId }, pair: a.pair, stored: true };
+    const ring = await load(stateDir, ringId, [keyA]);
+    const sealed = sealPlace(ringPlace(ring, thief), a.pair, PACK, p2(), ANSWERS, MONTH, previewCheckpoint(ring, thief, PACK, p2(), ANSWERS, MONTH).bodyHash!);
+    if (!sealed.ok) throw new Error(sealed.reason);
+    expect((await writeBundle(root, sealed.text, ring.ctx)).ok).toBe(true);
+    const r = await rotateRingKey(await load(stateDir, ringId, [keyA]), f, MONTH);
+    expect(r.ok).toBe(true);
+    const after = await load(stateDir, ringId, [keyA]);
+    expect(after.read.members.find((m) => m.key === keyA)?.retiredAt).toBe(1);
+    expect(after.read.bundles.find((x) => x.folder === keyA && x.seq === 2)?.reasons).toContain("chain.afterRetired");
   });
 });

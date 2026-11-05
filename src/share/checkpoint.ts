@@ -18,7 +18,7 @@ import type { SharePack } from "./pack";
 import { countProperNouns } from "./recount";
 import { BUNDLES_DIR, CIRCLE_FILE, readRing, ringDir, writeBundle, writeCircle, writeMember, writeRetired, type RingRead } from "./ring";
 import { knownMaxSeq, rememberSeq } from "./ring-seen";
-import { appendPlanSent, readPlanSent, retireFacilityKeys, sentSeqs, storeFacilityKey, type Facility } from "./facility";
+import { appendPlanSent, readPlanSent, retireFacilityKeys, retiredKeyFiles, sentOf, sentSeqs, storedKeys, storeFacilityKey, type Facility } from "./facility";
 import { baseRules, rulesGate, type Rules } from "./rules";
 import { previewBundle, sealBundle, type SendInput } from "./seal";
 import { fingerprint, generateKeyPair, keyIdOf, sha256Hex, signBody, toPlainKey, type KeyPair } from "./sign";
@@ -500,18 +500,33 @@ export type RotateResult =
  */
 export async function rotateRingKey(ring: Extract<RingLoad, { ok: true }>, facility: Facility, month: string): Promise<RotateResult> {
   const ringId = ring.entry.ringId;
-  const r = retireFacilityKeys(facility, ringId);
+  // 印を置く鍵：今の鍵（衝突の写しも）と、前に移したのに輪に印が無い鍵（前の作り直しが途中で落ちた。押し直せば直る。Architect の 37）
+  const marked = new Set(ring.read.members.filter((m) => m.retiredAt !== undefined).map((m) => m.key));
+  const current = storedKeys(facility, ringId).flatMap((k) => (k.pair ? [{ key: keyIdOf(k.pub), pair: k.pair }] : []));
+  const leftover = retiredKeyFiles(facility, ringId).filter((k) => !marked.has(k.key));
+  const toMark = [...current, ...leftover].filter((k, i, all) => all.findIndex((x) => x.key === k.key) === i);
+  // 先に全部の印を輪に置く。1 つでも置けなければ、鍵を移さずに返す（鍵を引退させたのに印が無いと、受け手が古い鍵と新しい鍵を両方数える）
   const done: string[] = [];
-  for (const { key, pair } of r.retired) {
-    // 最後に使った連番：場の ✓ の束と持ち出し簿の大きい方
-    const placed = ring.read.bundles.filter((b) => b.folder === key && b.seq !== null).map((b) => b.seq!);
-    const last = Math.max(0, ...placed, ...sentSeqs(facility, ringId, key));
-    const body = makeRetiredBody(ringId, key, pair.pub, last, month);
+  for (const { key, pair } of toMark) {
+    const body = makeRetiredBody(ringId, key, pair.pub, lastSeqOf(ring, facility, ringId, key), month);
     const w = await writeRetired(ring.entry.root, envelopeText(body, signBody(body, pair.privateKey)), ring.ctx);
-    if (!w.ok && w.reason !== "exists") return { ok: false, reason: "writeFailed", retired: done };
+    // もう同じ名前のファイルがあるときは、読んだ輪で正しい印として受けていたときだけ置けたと見る（壊れた印・印でないものの上には置けない）
+    if (!w.ok && !(w.reason === "exists" && marked.has(key))) return { ok: false, reason: "writeFailed", retired: done };
     done.push(key);
   }
+  const r = retireFacilityKeys(facility, ringId);
   return { ok: true, retired: done, unsigned: r.unsigned };
+}
+
+/**
+ * 印に書く最後の連番：持ち出し簿（衝突の写しも）にある連番と、場の束のうち持ち出し簿にハッシュがあるものの連番の大きい方。
+ * 持ち出し簿に無い場の束（盗んだ人が先に出した束）は数えない。それは印のあとの束として ✗ になる（Architect の 38）
+ */
+function lastSeqOf(ring: Extract<RingLoad, { ok: true }>, facility: Facility, ringId: string, key: string): number {
+  const sent = sentOf(facility, ringId, key);
+  const hashes = new Set(sent.flatMap((e) => (e.hash ? [e.hash] : [])));
+  const placed = ring.read.bundles.filter((b) => b.folder === key && b.seq !== null && hashes.has(b.hash)).map((b) => b.seq!);
+  return Math.max(0, ...placed, ...sent.map((e) => e.seq));
 }
 
 // ─── 輪を確かめる（受け手と同じ関数） ───────────────────────────

@@ -90,13 +90,35 @@ export function sentKeys(f: Facility, placeId: string): Set<string> {
 
 /** 持ち出し簿（衝突の写しを含む）にある、その鍵の連番 */
 export function sentSeqs(f: Facility, placeId: string, key: string): number[] {
+  return sentOf(f, placeId, key).map((e) => e.seq);
+}
+
+/** 持ち出し簿（衝突の写しを含む）にある、その鍵の束の連番とハッシュ */
+export function sentOf(f: Facility, placeId: string, key: string): { seq: number; hash: string | null }[] {
   placeIdOk(placeId);
   const dir = join(shareDir(f), SENT_DIR);
-  const out: number[] = [];
+  const out: { seq: number; hash: string | null }[] = [];
   for (const n of filesOf(dir, placeId)) {
     if (n.endsWith(".retired.json")) continue;
-    const s = readJson<{ entries?: { key?: unknown; seq?: unknown }[] }>(join(dir, n));
-    for (const e of Array.isArray(s?.entries) ? s.entries : []) if (e?.key === key && typeof e.seq === "number") out.push(e.seq);
+    const s = readJson<{ entries?: { key?: unknown; seq?: unknown; hash?: unknown }[] }>(join(dir, n));
+    for (const e of Array.isArray(s?.entries) ? s.entries : []) if (e?.key === key && typeof e.seq === "number") out.push({ seq: e.seq, hash: typeof e.hash === "string" ? e.hash : null });
+  }
+  return out;
+}
+
+/** share/keys/retired/ に移した鍵（作り直しで引退させた鍵。輪に印が無ければ、作り直しで印を置き直す） */
+export function retiredKeyFiles(f: Facility, placeId: string): { key: string; pair: KeyPair }[] {
+  placeIdOk(placeId);
+  const dir = join(shareDir(f), KEYS_DIR, "retired");
+  if (!existsSync(dir)) return [];
+  const out: { key: string; pair: KeyPair }[] = [];
+  for (const n of readdirSync(dir).sort()) {
+    // 名前は <鍵ID>-<場ID>….json
+    const m = /^([0-9a-f]{16})-(.+).json$/.exec(n);
+    if (!m || !m[2]!.startsWith(placeId)) continue;
+    const k = readJson<unknown>(join(dir, n));
+    const pair = isPlainKey(k) ? openPlainKey(k) : null;
+    if (pair && keyIdOf(pair.pub) === m[1] && !out.some((x) => x.key === m[1])) out.push({ key: m[1]!, pair });
   }
   return out;
 }

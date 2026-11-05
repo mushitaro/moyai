@@ -38,7 +38,7 @@ import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
 import { RECEIVE_MIN_K } from "../share/k";
 import { HEX16, HEX64, fingerprint, generateKeyPair, keyIdOf, sha256Hex, type KeyPair } from "../share/sign";
-import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, sentKeys, storeFacilityKey, storedKeys, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
+import { allPlanSent, appendPlanSent, facilityKey, ownKeysAt, readPlanSent, retiredKeyFiles, sentKeys, storeFacilityKey, storedKeys, writePlanSent, type Facility, type FacilityKey } from "../share/facility";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   defaultRoot,
@@ -1163,7 +1163,10 @@ export class HumanService {
         const ring = await loadRing(sd, p.ringId, pack, ownKeysAt(root, p.ringId));
         if (!ring.ok) return no(ring.reason);
         const facility: Facility = { root, planId: p.planId };
-        const now = [...new Set([...storedKeys(facility, p.ringId).map((k) => keyIdOf(k.pub)), ...sentKeys(facility, p.ringId)])].sort();
+        // 今の鍵と、前に移したのに輪に印が無い鍵（前の作り直しが途中で落ちた。押し直せば印を置き直す）
+        const marked = new Set(ring.read.members.filter((m) => m.retiredAt !== undefined).map((m) => m.key));
+        const leftover = retiredKeyFiles(facility, p.ringId).map((k) => k.key).filter((k) => !marked.has(k));
+        const now = [...new Set([...storedKeys(facility, p.ringId).map((k) => keyIdOf(k.pub)), ...sentKeys(facility, p.ringId), ...leftover])].sort();
         if (now.length === 0) return no("noKey");
         if (now.join(",") !== [...new Set(p.keys)].sort().join(",")) return no("previewChanged");
         const r = await rotateRingKey(ring, facility, monthOf(new Date()));
