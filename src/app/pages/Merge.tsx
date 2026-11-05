@@ -674,7 +674,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       {plan && (
         <>
           <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />
-          <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={onConfirmed} sources={() => ws.sourcesForCommit()} />
+          <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={onConfirmed} sources={() => ws.sourcesForCommit()} intake={() => ws.intakeStats()} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
           {/* 頼み直す相手は開いたときに覚える（読み直しの間に状態が消えても、出したメールの文を消さない） */}
           <RequestRenewDialog client={client} planId={plan.planId} version={renew?.version ?? 0} to={renew?.to ?? ""} opened={!!renew} onClose={() => setRenew(null)} onRenewed={reloadStatus} />

@@ -370,8 +370,18 @@ describe("次の版に重ねる資料（1C・重-2）：先に置き、確定で
     expect((await call("planCommit", { ...base, sources: [{ name: "a.xlsx", sha256: missing, size: 3 }], decisions: [], crosswalk: [] })).reason).toBe("sourceMissing");
     expect((await call("planCommit", { ...base, sources: [{ name: "a.xlsx", sha256: put.sha256, size: bytes.length }], decisions: [{ ...decision, sources: [missing] }], crosswalk: [] })).reason).toBe("sourcesInvalid");
     expect((await call("planCommit", { ...base, sources: [{ name: "../a.xlsx", sha256: put.sha256, size: bytes.length }], decisions: [], crosswalk: [] })).reason).toBe("sourcesInvalid");
-    const c = await call("planCommit", { ...base, sources: [{ name: "a.xlsx", sha256: put.sha256, size: bytes.length }], decisions: [decision], crosswalk: [{ rule, target: "assetNode", value: "WI.RECV.SCALE", basis: "案の根拠" }] });
+    const intake = { questions: 12, decisions: { human: 2, ai: 3, ai_relayed_human: 6, rule_code: 1 } };
+    const c = await call("planCommit", { ...base, intake, sources: [{ name: "a.xlsx", sha256: put.sha256, size: bytes.length }], decisions: [decision], crosswalk: [{ rule, target: "assetNode", value: "WI.RECV.SCALE", basis: "案の根拠" }] });
     expect(c).toMatchObject({ ok: true, version: 1 });
+    // 聞いた数（2A）は版の記録（署名の中）に入る。差分の頭に計画 ID と署名した人と聞いた数
+    const rec = JSON.parse(readFileSync(c.files.version, "utf8"));
+    expect(rec.intake).toEqual(intake);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.readFile(c.files.report);
+    const head = [2, 3, 4].map((r) => (wb.worksheets[0]!.getRow(r).values as unknown[]).join("|"));
+    expect(head[0]).toContain(plan.planId);
+    expect(head[1]).toContain("聞いた質問 12");
+    expect(head[2]).toContain("【架空】試験の人");
     // 版の記録（署名の中）に入り、plan_status の最新の版で読める
     const st = await call("planStatus", { planId: plan.planId });
     expect(st.latest.sources).toEqual([{ name: "a.xlsx", sha256: put.sha256, size: bytes.length }]);

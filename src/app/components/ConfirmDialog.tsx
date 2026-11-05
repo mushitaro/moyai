@@ -145,6 +145,7 @@ export function ConfirmDialog({
   onClose,
   onConfirmed,
   sources,
+  intake,
 }: {
   client: BridgeClient;
   plan: Plan;
@@ -152,6 +153,8 @@ export function ConfirmDialog({
   onClose: () => void;
   onConfirmed: (plan: Plan) => void;
   /** 次の版に重ねるための資料と決定（1C・重-2）。写真のある版や資料の無い版は null */
+  /** 聞いた数（2A） */
+  intake?: () => { questions: number; decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number } } | null;
   sources?: () => Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; decisions: { questionId: string; answer: string; author: string; reason: string; sources: string[] }[] } | null>;
 }) {
   const [load, reload] = usePlanStatus(client, plan.planId, opened);
@@ -219,7 +222,9 @@ export function ConfirmDialog({
       }
     }
     const crosswalk = (getWorkingPlan()?.proposals ?? []).filter((p) => p.state === "accepted").map((p) => ({ rule: p.rule, target: p.target, value: p.value, basis: p.basis }));
+    const stats = intake ? intake() : null;
     const payload = {
+      ...(stats ? { intake: stats } : {}),
       ...(src ? { sources: src.files.map((f) => ({ name: f.name, sha256: f.sha256, size: f.bytes.length })), decisions: src.decisions, crosswalk } : {}),
       plan,
       reason: reason.trim(),

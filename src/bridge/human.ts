@@ -130,6 +130,13 @@ const SCHEMAS = {
       .array(z.object({ questionId: z.string().min(1).max(200), answer: z.string().max(200), author: z.enum(AUTHOR_KINDS), reason: z.string().min(1).max(1000), sources: z.array(z.string().regex(/^[0-9a-f]{64}$/)).min(1).max(200) }))
       .max(100_000)
       .optional(),
+    /** 聞いた数（2A）：質問の数と、作者ごとの決定の数 */
+    intake: z
+      .object({
+        questions: z.number().int().min(0),
+        decisions: z.object({ human: z.number().int().min(0), ai: z.number().int().min(0), ai_relayed_human: z.number().int().min(0), rule_code: z.number().int().min(0) }),
+      })
+      .optional(),
     crosswalk: z.array(z.object({ rule: ruleSchema, target: z.enum(["assetNode", "work"]), value: z.string().min(1).max(200), basis: z.string().max(2000) })).max(2000).optional(),
     /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
@@ -532,6 +539,7 @@ export class HumanService {
           readingSkills,
           derivedFrom: p.derivedFrom ?? null,
           ...(p.sources ? { sources: p.sources, decisions: p.decisions ?? [], crosswalk: p.crosswalk ?? [] } : {}),
+          ...(p.intake ? { intake: p.intake } : {}),
         });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         const at = now.toISOString();

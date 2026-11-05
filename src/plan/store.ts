@@ -70,6 +70,8 @@ export interface VersionRecord {
   sources?: VersionSource[];
   decisions?: VersionDecision[];
   crosswalk?: VersionCrosswalkRule[];
+  /** 聞いた数（運営者の決定 2A）：取り込みで出た質問の数と、決定の数を作者ごとに。年ごとに「聞く数が減った」を署名のある記録で示す */
+  intake?: VersionIntake;
   /** この版の差分レポートと書き出しの SHA-256（署名の中に入る。落とすときに照らす。監査 E1）。前に確定した版には無い */
   files?: { report: string; export: string | null };
   plan: Plan;
@@ -88,6 +90,11 @@ export interface VersionDecision {
   author: AuthorKind;
   reason: string;
   sources: string[];
+}
+/** 聞いた数（2A）：質問の数と、作者ごとの決定の数 */
+export interface VersionIntake {
+  questions: number;
+  decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number };
 }
 /** 人が受けた当てはめの規則（次の版で「第 n 版と同じ」の案として並べる） */
 export interface VersionCrosswalkRule {
@@ -311,6 +318,8 @@ export interface CommitInput {
   catalogs?: CatalogsFor;
   /** 使った読み方（橋渡しが保管先に書いて、道と版を決めたもの） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /** 聞いた数（2A） */
+  intake?: VersionIntake;
   /** 次の版に重ねるための記録（確かめは呼ぶ側の橋渡しがする） */
   sources?: VersionSource[];
   decisions?: VersionDecision[];
@@ -362,6 +371,7 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     sources: i.sources,
     decisions: i.decisions,
     crosswalk: i.crosswalk,
+    intake: i.intake,
     signer: i.signer,
     role: i.role ?? "confirm",
     derivedFrom: from,
@@ -421,6 +431,7 @@ async function writeVersion(
     sources?: VersionSource[];
     decisions?: VersionDecision[];
     crosswalk?: VersionCrosswalkRule[];
+    intake?: VersionIntake;
     signer: Signer;
     role?: "confirm" | "edit";
     derivedFrom?: VersionRecord["derivedFrom"];
@@ -449,10 +460,11 @@ async function writeVersion(
     derivedFrom: v.derivedFrom ?? null,
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
     ...(v.sources ? { sources: v.sources, decisions: v.decisions ?? [], crosswalk: v.crosswalk ?? [] } : {}),
+    ...(v.intake ? { intake: v.intake } : {}),
     plan,
   };
   // 差分レポートと書き出しは署名の前に作り、そのハッシュを版の記録に入れる（落とすときに照らす。監査 E1）
-  const reportBytes = await diffReport(base, diff);
+  const reportBytes = await diffReport(base, diff, v.signer.by);
   const c = v.catalogs ? v.catalogs(plan.packId) : null;
   const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty }) : null;
   const { plan: _plan, ...head } = base;
@@ -549,6 +561,9 @@ export const REPORT_TEXT = {
   sheet: "差分",
   title: "計画の差分レポート",
   plan: "計画",
+  planId: "計画 ID",
+  by: "署名した人",
+  intake: (x: VersionIntake) => `聞いた質問 ${x.questions}・決定 人 ${x.decisions.human}・Claude ${x.decisions.ai}・会話から写した答え ${x.decisions.ai_relayed_human}・決まり ${x.decisions.rule_code}`,
   version: "版",
   kind: { confirm: "確定", revert: (n: number) => `第 ${n} 版に戻した` },
   at: "確定した時刻",
@@ -569,7 +584,7 @@ export const REPORT_TEXT = {
 };
 
 /** 差分レポートの xlsx（人が見る様式：見出しの固定、列の幅、A4 横）。 */
-export async function diffReport(record: VersionRecord, diff: PlanDiff): Promise<Buffer> {
+export async function diffReport(record: VersionRecord, diff: PlanDiff, by: string | null = null): Promise<Buffer> {
   const T = REPORT_TEXT;
   const wb = new ExcelJS.Workbook();
   wb.created = new Date(record.at);
@@ -581,9 +596,10 @@ export async function diffReport(record: VersionRecord, diff: PlanDiff): Promise
   const title = ws.getRow(1);
   title.getCell(1).value = `${T.title}${record.plan.facility.fictional ? `　${T.fiction}` : ""}`;
   title.font = { bold: true, size: 14 };
-  ws.getRow(2).values = [T.plan, record.plan.displayName];
-  ws.getRow(3).values = [T.version, record.version, record.kind === "confirm" ? T.kind.confirm : T.kind.revert(record.revertOf ?? 0)];
-  ws.getRow(4).values = [T.at, record.at];
+  // 頭：計画 ID と署名した人（台帳の中-7）、聞いた数（2A）。中身のハッシュは、このレポートのハッシュが版の記録に入るので書けない（E1）
+  ws.getRow(2).values = [T.plan, record.plan.displayName, "", T.planId, record.planId];
+  ws.getRow(3).values = [T.version, record.version, record.kind === "confirm" ? T.kind.confirm : T.kind.revert(record.revertOf ?? 0), ...(record.intake ? [T.intake(record.intake)] : [])];
+  ws.getRow(4).values = [T.at, record.at, "", T.by, by ?? ""];
   ws.getRow(5).values = [T.reason, record.reason];
   ws.getRow(6).values = [T.summary(record.summary), "", "", "", "", "", T.accepted(record.acceptances.length)];
   const head = ws.getRow(7);

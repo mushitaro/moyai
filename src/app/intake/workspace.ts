@@ -302,6 +302,18 @@ export class IntakeWorkspace {
     return this.session.decisionList();
   }
 
+  /** 聞いた数（2A）：いまの取り込みで出た質問の数と、作者ごとの決定の数。資料が無ければ null */
+  intakeStats(): { questions: number; decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number } } | null {
+    if (this.inputs.length === 0) return null;
+    const an = this.analysis();
+    const decisions = { human: 0, ai: 0, ai_relayed_human: 0, rule_code: 0 };
+    for (const q of an.questions) {
+      const a = q.decision?.author;
+      if (a === "human" || a === "ai" || a === "ai_relayed_human" || a === "rule_code") decisions[a]++;
+    }
+    return { questions: an.questions.length, decisions };
+  }
+
   /** 戻した版（次の版に重ねるとき、その版を組んだ資料と決定を戻した。資料のタブで「第 n 版の資料」と出す） */
   restoredFrom: { version: number; files: ReadonlySet<string> } | null = null;
 
