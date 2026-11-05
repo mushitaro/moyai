@@ -1,0 +1,19 @@
+{
+  "schema": "moyai.pack/0",
+  "id": "railway",
+  "name": "鉄道（車両・軌道・電気設備）",
+  "version": 1,
+  "group": "H",
+  "content": "empty",
+  "verification": "未確認",
+  "sharing": "off",
+  "sourceCandidates": [
+    {
+      "title": "鉄道の技術上の基準の省令と告示",
+      "issuer": null,
+      "url": null,
+      "scope": "row"
+    }
+  ],
+  "note": "設備の地図の行（docs/plan.md §2.7）。名前と出どころの候補だけで、中身は空。候補は一次資料で照らしていない（未確認）。URL は照らすときに書く。scope が group の候補は群に挙がった候補で、この行に当たるかは未確認"
+}

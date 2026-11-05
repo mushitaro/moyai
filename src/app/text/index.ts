@@ -36,6 +36,21 @@ export const TEXT = {
     themeLight: "明",
     settings: "設定",
   },
+  /** 【業種】（設定からのリンク）：設備の地図の群ごとの設備の種類。名前・群の名前・作らない理由はパックから読む */
+  industries: {
+    link: "業種",
+    title: "業種",
+    count: (n: number) => `${n}`,
+    filled: "中身あり",
+    empty: "空",
+    notBuilt: "作らない",
+    emptyLine: "この業種のパックはまだ中身がありません。",
+    candidates: "出どころの候補：",
+    candidate: (title: string, issuer: string | null) => (issuer ? `${title}（${issuer}）` : title),
+    groupScope: "（群の候補）",
+    verification: "確かめた度合い",
+    invalid: (folder: string) => `読み込めないパック：${folder}`,
+  },
   trial: {
     button: "確定の試し",
     disabledReason: "橋渡しとつながっていないので押せません",

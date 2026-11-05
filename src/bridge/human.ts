@@ -28,6 +28,17 @@ import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, led
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
+import { parsePack } from "../shared/pack";
+
+/** 設備の地図の空のパック（名前と出どころだけ。docs/plan.md §2.7）。輪を作るときの選択に並べない */
+function emptyPack(dir: string): boolean {
+  try {
+    const r = parsePack(JSON.parse(readFileSync(join(dir, "pack.json"), "utf8")));
+    return r.ok && r.kind !== "content";
+  } catch {
+    return false;
+  }
+}
 import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "../share/receive";
 import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
@@ -391,7 +402,7 @@ export class HumanService {
     let ids: string[] = [];
     try {
       ids = readdirSync(this.e.packsDir, { withFileTypes: true })
-        .filter((d) => d.isDirectory() && PACK_ID.test(d.name))
+        .filter((d) => d.isDirectory() && PACK_ID.test(d.name) && !emptyPack(join(this.e.packsDir, d.name)))
         .map((d) => d.name)
         .sort();
     } catch {

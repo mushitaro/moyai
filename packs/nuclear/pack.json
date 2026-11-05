@@ -1,0 +1,14 @@
+{
+  "schema": "moyai.pack/0",
+  "id": "nuclear",
+  "name": "原子力",
+  "version": 1,
+  "group": null,
+  "content": "empty",
+  "build": false,
+  "reason": "核物質防護のため作らない。地図に名前だけ載せる",
+  "verification": "未確認",
+  "sharing": "off",
+  "sourceCandidates": [],
+  "note": "設備の地図の「作らない」の行（docs/plan.md §2.7）"
+}

@@ -82,7 +82,7 @@ function Header({ hash }: { hash: string }) {
       </nav>
       <div className="moyai-header-end">
         <ThemeSwitch />
-        <a className="moyai-text-button" href={APP_PAGES.settings} aria-current={hash === APP_PAGES.settings ? "page" : undefined}>
+        <a className="moyai-text-button" href={APP_PAGES.settings} aria-current={hash === APP_PAGES.settings || hash === APP_PAGES.industries ? "page" : undefined}>
           {S.settings}
         </a>
       </div>
