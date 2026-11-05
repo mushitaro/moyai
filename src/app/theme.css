@@ -753,7 +753,7 @@ button.moyai-top-mk[data-kind="signed"] {
   align-self: flex-start;
 }
 
-/* 【業種】（設備の地図）：群の見出しの下に、設備の種類を 1 行ずつ。中身のある行は ✓ と墨、空の行は淡い字。選んだ行は左に朱の罫 */
+/* 【業種】（設備の地図）：群の見出しの下に、設備の種類を 1 行ずつ。中身のある行は ✓ と墨、空の行と作らない行は淡い字。選んだ行は左に墨の罫（朱は判断が要る所だけ） */
 .moyai-industry-head {
   padding-bottom: var(--sp-2);
   border-bottom: 1px solid var(--line);
@@ -787,8 +787,12 @@ button.moyai-industry-row {
 button.moyai-industry-row:hover {
   color: var(--text-2);
 }
+.moyai-industry-row[data-kind="empty"],
+.moyai-industry-row[data-kind="notBuilt"] {
+  color: var(--text-3);
+}
 .moyai-industry-row[aria-expanded="true"] {
-  border-left-color: var(--shu);
+  border-left-color: var(--text);
 }
 .moyai-industry-mark {
   flex: none;
@@ -804,6 +808,6 @@ button.moyai-industry-row:hover {
 }
 .moyai-industry-detail {
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
-  border-left: 2px solid var(--shu);
+  border-left: 2px solid var(--text);
   border-bottom: 1px solid var(--line);
 }

@@ -42,8 +42,12 @@ test("設定 → 業種：地図の全行が群ごとに並び、空のパック
     await page.getByTestId(`industry-${empty}`).click();
     const detail = page.getByTestId(`industry-detail-${empty}`);
     await expect(detail).toContainText("この業種のパックはまだ中身がありません。出どころの候補：");
-    for (const c of packOf(empty).sourceCandidates ?? []) await expect(detail).toContainText(c.title);
-    await expect(detail).toContainText("未確認");
+    // 1 行：計画 §2.7 の言葉、候補は「発行元『名前』」、後ろに確かめた度合い
+    const cands = (packOf(empty).sourceCandidates ?? []) as { title: string; issuer: string | null; scope: string }[];
+    const line = `この業種のパックはまだ中身がありません。出どころの候補：${cands.map((c) => (c.issuer ? `${c.issuer}『${c.title}』` : c.title) + (c.scope === "group" ? "（群の候補）" : "")).join("、")}（未確認）`;
+    await expect(detail).toHaveText(line);
+    // 空の行には印を出さない（中身のある行だけ「✓ 中身あり」）
+    await expect(page.getByTestId(`industry-${empty}`)).toHaveText(packOf(empty).name);
     await page.screenshot({ path: shot(`industries-selected-${tag}`), fullPage: true });
   });
 

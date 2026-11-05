@@ -29,16 +29,6 @@ import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedger
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
 import { parsePack } from "../shared/pack";
-
-/** 設備の地図の空のパック（名前と出どころだけ。docs/plan.md §2.7）。輪を作るときの選択に並べない */
-function emptyPack(dir: string): boolean {
-  try {
-    const r = parsePack(JSON.parse(readFileSync(join(dir, "pack.json"), "utf8")));
-    return r.ok && r.kind !== "content";
-  } catch {
-    return false;
-  }
-}
 import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "../share/receive";
 import { loadLedgerPlace, loadPlaces } from "../share/receive-load";
 import { peerAggregates } from "../share/peer-reference";
@@ -64,6 +54,16 @@ import {
   type DocumentsInfo,
   type ShellRunner,
 } from "./places";
+
+/** 設備の地図の空のパック（名前と出どころだけ。docs/plan.md §2.7）。輪を作るときの選択に並べない */
+function emptyPack(dir: string): boolean {
+  try {
+    const r = parsePack(JSON.parse(readFileSync(join(dir, "pack.json"), "utf8")));
+    return r.ok && r.kind !== "content";
+  } catch {
+    return false;
+  }
+}
 
 export interface HumanEnv {
   stateDir: string | null;
