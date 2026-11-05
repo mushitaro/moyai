@@ -174,10 +174,18 @@ describe("網の外側（Host・経路の許可の一覧・静的ファイル）
     }
   });
 
-  it("ほかのサイトから静的ファイルを読ませない", async () => {
+  it("ほかのサイトから静的ファイルを読ませない。ただし人がリンクで開いたページ（メールのリンク）は受ける（台帳の中-16）", async () => {
     tb = await startTestBridge();
     const r = await http(tb.bridge.port, "GET", "/", { "sec-fetch-site": "cross-site" });
     expect(r.body.error.code).toBe("fetch_site_not_allowed");
+    // スクリプトや画像として読ませるのは断る
+    expect((await http(tb.bridge.port, "GET", "/assets/a.js", { "sec-fetch-site": "cross-site", "sec-fetch-mode": "no-cors", "sec-fetch-dest": "script" })).body.error.code).toBe("fetch_site_not_allowed");
+    // 人がほかのサイト（Web メール）のリンクを押して開いたページは受ける
+    const nav = await http(tb.bridge.port, "GET", "/?plan=x#/merge", { "sec-fetch-site": "cross-site", "sec-fetch-mode": "navigate", "sec-fetch-dest": "document" });
+    expect(nav.status).toBe(200);
+    // 人だけの経路は、navigate を名乗っても受けない
+    const human = await http(tb.bridge.port, "POST", ROUTES.planStatus.path!, { "sec-fetch-site": "cross-site", "sec-fetch-mode": "navigate", "sec-fetch-dest": "document", origin: tb.origin, "content-type": "application/json" }, JSON.stringify({ token: "x", payload: "{}" }));
+    expect(human.status).toBe(403);
   });
 
   it("使われているポートでは起動を止める", async () => {

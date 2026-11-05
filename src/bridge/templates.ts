@@ -7,7 +7,8 @@ import { createHash } from "node:crypto";
 import { existsSync, readdirSync } from "node:fs";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { columnsHash, type ExportInfo } from "../plan/exports";
+import { columnsHash, templateVersion, type ExportInfo } from "../plan/exports";
+export { templateVersion };
 import { PLAN_ID, readHistory, type PlanHistory } from "../plan/store";
 import { isTemplateColumns, type TemplateColumns } from "../plan/template";
 import { safeSegment } from "./readings";
@@ -19,11 +20,6 @@ const COLUMNS = "columns.json";
 export const TEMPLATE_MAX_BYTES = 8 * 1024 * 1024;
 
 const sha = (b: string | Uint8Array) => createHash("sha256").update(b).digest("hex");
-
-/** 様式の版：様式のファイルの SHA-256 と写し方の中身のハッシュから */
-export function templateVersion(fileHash: string, columns: string): string {
-  return sha(`${fileHash}\u0000${columns}`);
-}
 
 async function writeAtomic(path: string, data: string | Uint8Array): Promise<void> {
   const tmp = `${path}.tmp-${process.pid}`;

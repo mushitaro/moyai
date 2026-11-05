@@ -1,0 +1,22 @@
+/* 動画の札の共通（1920×1080）。色は TSUNAGI の墨と朱。書体は IBM Plex Sans JP（OFL） */
+@font-face{font-family:"Plex JP";font-weight:400;src:url(../../node_modules/@fontsource/ibm-plex-sans-jp/files/ibm-plex-sans-jp-japanese-400-normal.woff2)}
+@font-face{font-family:"Plex JP";font-weight:500;src:url(../../node_modules/@fontsource/ibm-plex-sans-jp/files/ibm-plex-sans-jp-japanese-500-normal.woff2)}
+@font-face{font-family:"Plex Latin";font-weight:400;src:url(../../node_modules/@fontsource/ibm-plex-sans-jp/files/ibm-plex-sans-jp-latin-400-normal.woff2)}
+@font-face{font-family:"Plex Latin";font-weight:500;src:url(../../node_modules/@fontsource/ibm-plex-sans-jp/files/ibm-plex-sans-jp-latin-500-normal.woff2)}
+@font-face{font-family:"Plex Mono";font-weight:400;src:url(../../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2)}
+:root{--ink:#0a0a0a;--text:#e0e0e0;--sub:#8a8a8a;--line:#2e2e2e;--shu:#d0644c}
+*{box-sizing:border-box;margin:0}
+html,body{width:1920px;height:1080px;background:var(--ink);color:var(--text);font-family:"Plex Latin","Plex JP",sans-serif;overflow:hidden}
+body{position:relative}
+.shu{color:var(--shu)}
+.mono{font-family:"Plex Mono","Plex JP",monospace}
+/* 段：data-s が今の段（body の data-step）以下のものだけ見せる。build.mjs が段を切り替える */
+[data-s]{opacity:0}
+[data-s].on{opacity:1}
+/* 字幕の帯：語りの叩き台。声が入るまでは日本語も出す */
+.cap{position:absolute;left:0;right:0;bottom:64px;text-align:center}
+.cap .ja{font-size:34px;font-weight:500;letter-spacing:.04em}
+.cap .en{font-size:26px;color:#bdbdbd;margin-top:8px}
+/* ビルドの印（どの場面にも右下） */
+.stamp{position:absolute;right:48px;bottom:20px;font:400 15px "Plex Mono",monospace;color:#5c5c5c}
+.tag{position:absolute;left:48px;bottom:20px;font-size:15px;color:#5c5c5c}

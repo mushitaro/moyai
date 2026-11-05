@@ -1,0 +1,9 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=base.css>
+<style>
+.shot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.shot img{width:1920px;height:1080px;object-fit:contain}
+.stamp{background:rgba(10,10,10,.8);padding:2px 8px}
+</style>
+<!-- 画面の 1 枚をそのまま全面に出す。印は画面そのものの印（撮ったときのビルド）を使い、重ねない。build.mjs が ?src= に画像の道を渡す -->
+<div class=shot><img id=img></div>
+<script>document.getElementById("img").src = new URLSearchParams(location.search).get("src");</script>

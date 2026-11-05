@@ -120,6 +120,9 @@ describe("網の外側の判定", () => {
     expect(checkFetchSite("same-site", true)).toBe("fetch_site_not_allowed");
     expect(checkFetchSite("none", false)).toBe("fetch_site_not_allowed");
     expect(checkFetchSite("none", true)).toBeNull();
+    expect(checkFetchSite("cross-site", true, { method: "GET", mode: "navigate", dest: "document" })).toBeNull();
+    expect(checkFetchSite("cross-site", true, { method: "POST", mode: "navigate", dest: "document" })).toBe("fetch_site_not_allowed");
+    expect(checkFetchSite("cross-site", true, { method: "GET", mode: "cors", dest: "empty" })).toBe("fetch_site_not_allowed");
   });
 });
 

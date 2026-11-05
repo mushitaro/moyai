@@ -158,7 +158,14 @@ export function Export() {
   const req = status?.request ?? null;
   const pendingWho = latest && !approved && req && req.kind === "approve" && !req.done ? (req.received?.by ?? req.to) : null;
   // 選んだ様式の、この版の書き出しの署名の鍵が未確認なら警告する（止めない。Architect の縛り 7）
-  const exportSigners = selected && info?.exports ? info.exports.filter((x) => x.template.version === selected.version && (x.trust === "unconfirmed" || x.trust === "changed")).map((x) => ({ ...x, role: "export" })) : [];
+  // 落とすのは、ブリッジと同じ選び方の 1 つ（信じる鍵の書き出しを先に、その中で時刻の新しいもの）。その署名者の鍵が未確認なら、その 1 つについて警告する
+  const served = (() => {
+    if (!selected || !info?.exports) return null;
+    const xs = info.exports.filter((x) => x.template.name === selected.name && x.template.version === selected.version);
+    const newest = (ys: typeof xs) => [...ys].sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+    return newest(xs.filter((x) => x.trust === "own" || x.trust === "confirmed")) ?? newest(xs) ?? null;
+  })();
+  const exportSigners = served && (served.trust === "unconfirmed" || served.trust === "changed") ? [{ ...served, role: "export" }] : [];
 
   return (
     <div className="moyai-share-page" data-testid="export-page">
@@ -174,7 +181,7 @@ export function Export() {
           {latest?.plan.facility.fictional && <FictionMark />}
         </div>
         <Stack gap="md">
-          {latest && <TemplateExport plan={latest.plan} templates={templates} selected={selected} onSelect={setSelected} onDrop={onDrop} onRoles={onRoles} />}
+          {latest && <TemplateExport plan={latest.plan} templates={templates} selected={selected} onSelect={setSelected} onDrop={onDrop} onRoles={onRoles} standardExported={!broken} />}
           {error && (
             <Alert color="gray" data-testid="export-error">
               {error}
@@ -225,9 +232,19 @@ export function Export() {
         </Group>
       </Group>
       {latest && selected && (
-        <Modal opened={signing} onClose={() => setSigning(false)} title={T.template.dialogTitle(latest.version, selected.name)} centered data-testid="export-sign-dialog">
+        <Modal opened={signing} onClose={() => setSigning(false)} title={T.template.dialogTitle(latest.version, selected.name)} centered size={560} data-testid="export-sign-dialog">
           <Stack gap="sm">
-            {!selected.approval && <Text size="sm">{T.template.approveLine(1)}</Text>}
+            {!selected.approval && (
+              <div>
+                <Text size="sm">{T.template.approveLine(1)}</Text>
+                <Group justify="space-between" wrap="nowrap" mt={6} pt={6} style={{ borderTop: "1px solid var(--line)" }} data-testid="export-sign-approve-row">
+                  <Text size="sm">{T.template.approveRow(selected.name)}</Text>
+                  <Text size="xs" c="var(--text-3)">
+                    - {T.template.draft}
+                  </Text>
+                </Group>
+              </div>
+            )}
             <Text size="sm">{T.template.dialogResult(latest.version)}</Text>
             <Group justify="flex-end" gap="sm">
               <Button variant="default" onClick={() => setSigning(false)}>

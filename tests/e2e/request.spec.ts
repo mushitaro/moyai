@@ -101,9 +101,17 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await pa.screenshot({ path: shot(`b1-1-asked-unopened-${tag}`) });
   });
 
-  await test.step("課長：リンクを開いて受け取る（承認の道が出る）", async () => {
+  await test.step("課長：Web メールのリンクを押して開き、受け取る（ほかのサイトからの移動でも開ける。台帳の中-16）", async () => {
     await settings(pb, two.base, root, B);
-    await pb.goto(at(link, two.base));
+    // ほかのサイト（架空の Web メール）のページのリンクを押す。ブラウザは Sec-Fetch-Site: cross-site・navigate・document で開く
+    await pb.route("http://mail.example/**", (route) =>
+      route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: `<!doctype html><meta charset="utf-8"><a id="l" href="${at(link, two.base)}">承認のリンク</a>` }),
+    );
+    await pb.goto("http://mail.example/inbox");
+    const nav = pb.waitForRequest((r) => r.url().startsWith(two.base) && r.isNavigationRequest());
+    await pb.locator("#l").click();
+    // 前は静的の経路が cross-site を断り、403 で止まっていた
+    expect((await (await nav).response())?.status()).toBe(200);
     await expect(pb.getByTestId("approve-open")).toBeVisible();
   });
 
