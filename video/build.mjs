@@ -32,6 +32,14 @@ const SCENES = {
     { card: "s2", step: 1, sec: 4 },
     { card: "s2", step: 2, sec: 6 },
   ],
+  s4: [
+    { shot: "docs/progress/shots/2026-11-04/demo-full/demo-06-chart-common.png", sec: 3.5 },
+    { shot: "docs/progress/shots/2026-11-04/demo-full/demo-09-check.png", sec: 4 },
+    { card: "s4", step: 1, sec: 4 },
+    { shot: "docs/progress/shots/2026-11-05/video/night-soil-chart-common.png", sec: 4 },
+    { card: "s4", step: 2, sec: 4 },
+    { card: "s4", step: 3, sec: 6 },
+  ],
 };
 const GROUPS = { opening: ["s0", "s1", "s2"] };
 
@@ -40,10 +48,17 @@ function nationalActive() {
   return `全国で稼働しているごみ焼却施設　${t.population.active}（${t.source.publisher}「${t.source.name}」）`;
 }
 
+/** パックの検査の数（札に描くときに数える） */
+function checkCount() {
+  const c = JSON.parse(readFileSync(join(root, "packs/waste-incineration/checks.json"), "utf8"));
+  return (Array.isArray(c) ? c : c.checks).length;
+}
+
 async function render(frames, dir, stamp) {
   const browser = await chromium.launch({ channel: "chrome" });
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   const pop = nationalActive();
+  const checks = checkCount();
   const files = [];
   for (const [i, f] of frames.entries()) {
     const url = f.shot
@@ -51,7 +66,7 @@ async function render(frames, dir, stamp) {
       : pathToFileURL(join(here, `cards/${f.card}.html`)).href;
     await page.goto(url);
     await page.evaluate(
-      ({ step, stamp, pop }) => {
+      ({ step, stamp, pop, checks }) => {
         for (const el of document.querySelectorAll("[data-s]")) {
           const until = el.dataset.until ? Number(el.dataset.until) : Infinity;
           el.classList.toggle("on", Number(el.dataset.s) <= step && step <= until);
@@ -64,8 +79,9 @@ async function render(frames, dir, stamp) {
         for (const el of document.querySelectorAll(".stamp")) el.textContent = stamp;
         const p = document.getElementById("pop");
         if (p) p.textContent = pop;
+        for (const el of document.querySelectorAll(".checks")) el.textContent = String(checks);
       },
-      { step: f.step ?? 0, stamp, pop },
+      { step: f.step ?? 0, stamp, pop, checks },
     );
     await page.evaluate(() => document.fonts.ready);
     await page.waitForFunction(() => [...document.images].every((im) => im.complete));

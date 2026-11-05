@@ -1,0 +1,42 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=base.css>
+<style>
+.t{position:absolute;left:0;right:0;top:250px;text-align:center;font-size:52px;font-weight:500;letter-spacing:.04em}
+.r{position:absolute;left:0;right:0;top:340px;text-align:center;font-size:28px;color:var(--sub)}
+.term{position:absolute;left:330px;right:330px;top:450px;padding:28px 36px;border:1px solid var(--line);border-radius:6px;font:22px/1.7 "IBM Plex Mono","IBM Plex Sans JP";color:var(--sub)}
+.term .ok{color:#8fb48a}
+.map{position:absolute;left:160px;right:160px;top:200px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.map div{border:1px solid var(--line);border-radius:6px;padding:26px 24px;font-size:28px;color:var(--sub)}
+.map div i{display:block;font-style:normal;font-size:18px;margin-top:10px}
+.map .on{border-color:var(--shu);color:var(--text)}
+.map .on i{color:var(--shu)}
+.fan{position:absolute;left:160px;right:160px;top:560px;padding:22px 26px;border-top:1px dashed var(--shu);font-size:26px;color:var(--text)}
+.fan b{color:var(--shu);font-weight:500}
+</style>
+<div data-s=1 data-until=1>
+  <div class=t>判定はコード、<span class=shu>説明は Claude。</span></div>
+  <div class=r>国の基準から外れた所を、根拠の数字と出典つきで出す（自己点検で、審査の判断ではない）</div>
+  <div class=term>ごみ焼却のパックの検査　<span class=checks></span> 件・どれも出典つき<br><span class=ok>✓</span> tests/unit/review/checks.test.ts　<span class=ok>35 passed</span><br><span style="color:#6a6a6a">純粋な関数：同じ計画と同じ基準日なら、同じ結果</span></div>
+</div>
+<div data-s=2 data-until=2>
+  <div class=t>パックを足しただけ。<span class=shu>コードの差分 0。</span></div>
+  <div class=r>し尿処理：同じ画面・同じ行で、星取表が出る</div>
+  <div class=term><span class=ok>✓</span> pack.second：し尿処理のパックで、取り込み → 当てはめ → 星取表<br>同じコードのまま通り、節の当てはめは正解と一致する<br><span style="color:#6a6a6a">質問 18・節 受けた 40/40・作業 受けた 51/98</span></div>
+</div>
+<div data-s=3>
+  <div class=map>
+    <div class=on>A 市町村の環境<i>ごみ焼却（起点）・し尿処理（済）</i></div>
+    <div>B 水<i>構想</i></div><div>C 河川<i>構想</i></div><div>D 道路<i>構想</i></div>
+    <div>E 公共建築<i>構想</i></div><div>F エネルギー<i>構想</i></div><div>G 産業プラント<i>構想</i></div><div>H 交通<i>構想</i></div>
+  </div>
+  <div class=fan><b>送風機</b>の行 ── 焼却の誘引通風機・下水の送風機・ビルの空調機を、1 本の線で並べる（構想）</div>
+</div>
+<div class=cap><div class=ja id=ja></div><div class=en id=en></div></div>
+<div class=stamp></div>
+<div class=tag>【架空】の資料</div>
+<script>
+window.CAPS = {
+  1: ["ごみ焼却の国の基準を、データにした。判定はコード、説明は Claude。", "We turned the national standards into data. Code judges; Claude explains."],
+  2: ["し尿処理は、パックを足しただけで動いた。", "Night soil treatment ran by adding a pack, with no code change."],
+  3: ["ほかの設備も、同じ物差しに並べられる。", "Other kinds of facilities can line up on the same ruler."],
+};
+</script>
