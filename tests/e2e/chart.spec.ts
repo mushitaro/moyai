@@ -100,9 +100,9 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
     await expect(page.getByTestId("fiction-mark")).toBeVisible();
     await expect(page.getByTestId("build-stamp")).toHaveText(/^MOYAI · build /);
     // 主ボタン「署名して確定する…」は MERGE の下の帯の右端。受けていない決定があるうちは押せず、理由を横に出す（確定の流れは checkpoint.spec.ts）
-    await expect(page.getByTestId("confirm-open")).toHaveText("署名して確定する…");
+    await expect(page.getByTestId("confirm-open")).toHaveText("署名して確定する");
     await expect(page.getByTestId("confirm-open")).toBeDisabled();
-    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("受けていない決定が");
+    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("未確定 ");
     const btn = await page.getByTestId("confirm-open").boundingBox();
     const vp = page.viewportSize();
     expect(btn && vp && vp.width - (btn.x + btn.width)).toBeLessThan(40);
@@ -113,7 +113,7 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
   });
 
   await test.step("セルの aria-label に階層の道。上の行と同じ名前は空ける", async () => {
-    await expect(cell(page, "受入供給設備 › ごみクレーン · 2020 年度 · 実施")).toHaveText("●");
+    await expect(cell(page, "受入供給設備 › ごみクレーン · 2020 年度 · 実績")).toHaveText("●");
     const crane = page.locator('.ag-row[row-index="2"]');
     await expect(crane.locator("[col-id='lv1']")).toHaveText("");
     await expect(crane.locator("[col-id='lv2']")).toHaveText("ごみクレーン");
@@ -168,22 +168,22 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
   });
 
   await test.step("共通の設備項目 × 作業の属性の行に切り替え、未当てはめを 1 行に集める", async () => {
-    await page.getByText("共通の設備項目 × 作業の属性").click();
+    await page.getByText("共通台帳").click();
     await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
     // 行の見出しは 1 列（「共通の設備項目 › 作業」。Wire、2026-11-05）：設備は見出しの行、その下は「項目 › 作業」の行
-    await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='lv1']")).toContainText("共通の設備項目 › 作業");
+    await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='lv1']")).toContainText("共通の機器台帳 › 作業分類");
     await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='lv2']")).toHaveCount(0);
     await expect(page.locator(".ag-row [col-id='lv1']").filter({ hasText: " › " }).first()).toBeVisible();
     await page.screenshot({ path: shot(`chart-common-${tag}`) });
     // 未当てはめの行は最後。表の下まで送って見る
     await page.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop = el.scrollHeight));
-    await expect(page.locator(".moyai-row-unmapped [col-id='lv1']")).toHaveText(/^未当てはめ（\d+ 件）$/);
+    await expect(page.locator(".moyai-row-unmapped [col-id='lv1']")).toHaveText(/^未紐付け（\d+ 件）$/);
     await page.screenshot({ path: shot(`chart-common-unmapped-${tag}`) });
     await page.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop = 0));
   });
 
   await test.step("月までの表（年度の下に月）", async () => {
-    await page.getByText("月まで").click();
+    await page.getByTestId("period-mode").getByRole("button", { name: "月", exact: true }).click();
     await expect(page.locator(".moyai-fy-group").first()).toContainText("年度");
     await page.screenshot({ path: shot(`chart-month-${tag}`) });
   });
@@ -238,20 +238,20 @@ test("厚い計画（機器 1,000 余り）の重さを測る", async ({ page },
   const unfold = await measure("moyai-chart-update");
 
   await clear();
-  await page.getByText("月まで").click();
+  await page.getByTestId("period-mode").getByRole("button", { name: "月", exact: true }).click();
   await expect(page.locator(".moyai-fy-group").first()).toBeVisible();
   const month = await measure("moyai-chart-update");
   const monthBuild = await measure("moyai-chart-build");
   const periods = await page.locator(".ag-header-row-column [col-id^='fy']").count(); // 描いている月の列（横は見える所だけ描く）
 
   await clear();
-  await page.getByText("共通の設備項目 × 作業の属性").click();
+  await page.getByText("共通台帳").click();
   await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
   const common = await measure("moyai-chart-update");
 
   // 縦に端まで送って、描き直しが追いつくか
   const s0 = Date.now();
-  await page.getByText("自分の台帳の段").click();
+  await page.getByText("施設台帳").click();
   await page.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop = el.scrollHeight));
   await expect(page.locator(`.ag-row[row-index="${rows - 1}"]`)).toBeVisible();
   const scroll = Date.now() - s0;

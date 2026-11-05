@@ -31,7 +31,7 @@ async function openCommonRows(page: Page) {
   await page.goto(`${bridge.base}/?plan=fictional-1#/chart`);
   await expect(page.getByTestId("chart-page")).toBeVisible();
   await expect(page.locator(".ag-row").first()).toBeVisible();
-  await page.getByTestId("rows-mode").getByRole("button", { name: "共通の設備項目 × 作業の属性" }).click();
+  await page.getByTestId("rows-mode").getByRole("button", { name: "共通台帳" }).click();
   await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
 }
 
@@ -45,7 +45,7 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.getByTestId("current-ledger")).toHaveText("選んでいません");
       await page.getByTestId("ledger-input").fill("相対の道");
       await page.getByTestId("settings-save").click();
-      await expect(page.getByText("公開の台帳の clone の場所は、ドライブから始まる絶対の道")).toBeVisible();
+      await expect(page.getByText("公開台帳の clone の場所は、ドライブから始まる絶対の道")).toBeVisible();
       await page.getByTestId("ledger-input").fill(repo);
       await page.getByTestId("settings-save").click();
       await expect(page.getByTestId("current-ledger")).toHaveText(repo);
@@ -61,12 +61,12 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await openCommonRows(page);
       expect(await c.callTool({ name: "peer_reference", arguments: {} })).toMatchObject({ isError: true });
       // MERGE の見出しの「似た施設　重ねる / 外す」（既定は外す）
-      await page.getByTestId("merge-peers").getByRole("button", { name: "重ねる" }).click();
+      await page.getByTestId("merge-peers").getByRole("button", { name: "比較" }).click();
       const panel = page.getByTestId("peer-panel");
       await expect(panel).toBeVisible();
       // 試しの計画は全国の表に載るかが決まっていない：推測で埋めず、「見え方が決まっていません　| 施設の設定で決める」
       await expect(page.getByTestId("peer-reason")).toHaveAttribute("data-reason", "groupUnknown");
-      await expect(page.getByTestId("peer-reason")).toContainText("似た施設　見え方が決まっていません");
+      await expect(page.getByTestId("peer-reason")).toContainText("類似施設　見え方が未確定");
       // 見え方の答えは施設の設定の 1 か所だけ（星取表の上では答えない。比べるのに使う軸の印も無い）
       await expect(page.locator('[data-testid^="peer-self-"]')).toHaveCount(0);
       await expect(page.locator('[data-testid^="axis-"]')).toHaveCount(0);
@@ -82,7 +82,7 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       const ledger = page.locator('[data-testid="peer-place"][data-kind="ledger"]');
       await expect(ledger).toHaveAttribute("data-status", "shown");
       // 1 行：「公開の台帳　似た施設 n　| 見え方を直す」。台帳の 16 桁の ID は出さない
-      await expect(ledger).toHaveText(/^公開の台帳　似た施設 \d+/);
+      await expect(ledger).toHaveText(/^公開台帳　類似施設 \d+/);
       await expect(page.getByTestId("peer-places")).not.toContainText(/[0-9a-f]{16}/);
       await expect(page.getByTestId("peer-fix")).toHaveText("見え方を直す");
     });
@@ -92,12 +92,12 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
       await expect(page.locator(".ag-row.moyai-row-peer")).toHaveCount(0);
       await expect(page.locator(".ag-header-cell.moyai-band-head")).toHaveCount(0);
-      const label = page.locator(".ag-row.moyai-row-stat .moyai-lv").filter({ hasText: "似た施設" }).first();
-      await expect(label).toHaveText(/^似た施設　(帯 .+|5 施設に満たない)$/);
+      const label = page.locator(".ag-row.moyai-row-stat .moyai-lv").filter({ hasText: "類似施設" }).first();
+      await expect(label).toHaveText(/^類似施設　(帯 .+|5 施設に満たない)$/);
       await expect(page.locator(".ag-header-cell", { hasText: /\d{4} 年度/ }).first()).toBeInViewport();
       await label.click();
       await expect(page.getByTestId("peer-side")).toHaveAttribute("data-kind", "stat");
-      await expect(page.getByTestId("peer-side")).toContainText("公開の台帳");
+      await expect(page.getByTestId("peer-side")).toContainText("公開台帳");
       await page.screenshot({ path: shot(`peers-${tag}-ledger`), fullPage: false });
     });
 
@@ -130,7 +130,7 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
     });
 
     await test.step("外すと行が消え、AI も読めない", async () => {
-      await page.getByTestId("merge-peers").getByRole("button", { name: "外す" }).click();
+      await page.getByTestId("merge-peers").getByRole("button", { name: "戻す" }).click();
       await expect(page.getByTestId("peer-panel")).toHaveCount(0);
       await expect(page.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
       const r: any = await c.callTool({ name: "peer_reference", arguments: {} });

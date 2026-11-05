@@ -145,7 +145,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
 
     await test.step("3 星取表：共通の設備項目 × 作業の属性の行", async () => {
       await pa.getByTestId("sheet-chart").click();
-      await pa.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
+      await pa.getByTestId("rows-mode").getByText("共通台帳").click();
       await expect(pa.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
       await expect(pa.locator(".ag-row").first()).toBeVisible();
       await pa.screenshot({ path: shot("demo-06-chart-common") });
@@ -154,7 +154,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
     await test.step("3 突き合せ：資料をまたいで結んだ作業を、資料ごとの書き方で並べる（一致・片方だけ・食い違い）", async () => {
       await pa.getByTestId("sheet-match").click();
       await expect(pa.getByTestId("match-sheet")).toBeVisible();
-      await pa.getByTestId("match-filter").getByText(/^すべて \d+$/).click();
+      await pa.getByTestId("match-filter").getByText(/^全件 \d+$/).click();
       await expect(pa.getByTestId("match-row").first()).toBeVisible();
       await pa.screenshot({ path: shot("demo-06b-match") });
       await pa.getByTestId("sheet-chart").click();
@@ -190,7 +190,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       proposalId = await proposeFromLedger();
       expect(proposalId, "計画に当たる台帳の案がある").not.toBe("");
       // 案は、自分の台帳の段の行で見る（共通の行では、ほかの機器の実施と同じセルにまとまる）
-      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
+      await pa.getByTestId("rows-mode").getByText("施設台帳").click();
       await expect(pa.getByTestId("legend-proposal")).toBeVisible();
       const prop = pa.getByTestId("chart-grid").locator(".moyai-mark-proposal");
       if ((await prop.count()) === 0) {
@@ -312,7 +312,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
       await expect(pa.getByTestId("merge-compare")).toContainText("比べる版　第 1 版");
       expect(await proposeFromLedger(), "まだ使っていない台帳の塊で、計画に当たる案がある").not.toBe("");
-      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
+      await pa.getByTestId("rows-mode").getByText("施設台帳").click();
       await expect(pa.getByTestId("legend-changed-from")).toBeVisible();
       const changed = pa.getByTestId("chart-grid").locator(".moyai-mark-vchg");
       if ((await changed.count()) === 0) {
@@ -345,13 +345,13 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       // 第 2 版で足した計画の印が、第 1 版の中身では無くなる。この工場の資料は最後の年度まで実施があるので、
       // 案の印は実施と同じセル（◎）に入り、第 1 版の中身では ● に戻る（＝第 2 版から変わった、朱）。
       // 印がまるごと無くなるセルなら、淡い破線の「第 2 版の印」で残る（tests/e2e/version-diff.spec.ts で確かめている）
-      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
-      await expect(pa.getByTestId("legend-changed-from")).toContainText("第 2 版から変わった");
+      await pa.getByTestId("rows-mode").getByText("施設台帳").click();
+      await expect(pa.getByTestId("legend-changed-from")).toContainText("第 2 版から変更");
       await pa.screenshot({ path: shot("demo-21-from-old") });
     });
 
     await test.step("7 似た施設を重ねる：見出しの「似た施設　重ねる」。共通の行の下に「似た施設　帯 …」の 1 行", async () => {
-      await pa.getByTestId("merge-peers").getByRole("button", { name: "重ねる" }).click();
+      await pa.getByTestId("merge-peers").getByRole("button", { name: "比較" }).click();
       await expect(pa.getByTestId("peer-panel")).toBeVisible();
       // 見え方の答えは施設の設定で（星取表の上では答えない）
       await pa.getByTestId("peer-fix").click();
@@ -364,12 +364,12 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("facility-save").click();
       await expect(pa.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
       await pa.screenshot({ path: shot("demo-22-peers") });
-      await pa.getByTestId("merge-peers").getByRole("button", { name: "外す" }).click();
+      await pa.getByTestId("merge-peers").getByRole("button", { name: "戻す" }).click();
       await expect(pa.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
     });
 
     await test.step("8 コメント：星取表の行を選んで書くと、その行に ① が付き、横の板に並ぶ", async () => {
-      await pa.getByTestId("rows-mode").getByText("自分の台帳の段").click();
+      await pa.getByTestId("rows-mode").getByText("施設台帳").click();
       await pa.locator('.ag-row [col-id="lv2"]').filter({ hasText: /\S/ }).first().click();
       await pa.getByTestId("side-comments").click();
       await pa.getByTestId("comment-text").fill("この機器の点検は、来年度の全休止に合わせられますか。");
@@ -429,17 +429,17 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
     await test.step("11 SHARE の公開の台帳：誰からも見えるあなた・PR を出すアカウントの行・下の帯。GitHub にはまだつないでいない", async () => {
       await pa.goto(`${one.base}/#/share`);
       await expect(pa.getByTestId("checkpoint-page")).toBeVisible();
-      await pa.getByTestId("share-dest").getByText("公開の台帳").click();
+      await pa.getByTestId("share-dest").getByText("公開台帳").click();
       await pa.getByTestId("q-national").selectOption("yes");
       await pa.getByTestId("q-furnace").selectOption(PROFILE.furnace);
       await pa.getByTestId("q-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
       await pa.getByTestId("q-turbine").selectOption(PROFILE.turbine);
       await pa.getByTestId("q-ash").selectOption(PROFILE.ash);
       await pa.getByTestId("q-contract").selectOption(PROFILE.contract);
-      await expect(pa.getByText("誰からも見えるあなた")).toBeVisible();
+      await expect(pa.getByText("公開時の表示")).toBeVisible();
       await expect(pa.getByTestId("you-steps")).toContainText("全国の");
       await expect(pa.getByTestId("github-login")).toHaveText("つないでいません");
-      await expect(pa.getByTestId("send")).toHaveText("署名して公開の台帳へ出す");
+      await expect(pa.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
       await expect(pa.getByTestId("send-reason")).toHaveText("GitHub につないでいません");
       await expect(pa.getByTestId("ledger-bottom")).toBeVisible();
       await pa.screenshot({ path: shot("demo-27-share-ledger") });

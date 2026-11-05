@@ -155,14 +155,14 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       unmappedRecords = Number(await page.getByTestId("crosswalk-unmapped").getAttribute("data-records"));
       await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("plan-name")).toHaveText(FACILITY);
-      await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
+      await page.getByTestId("rows-mode").getByText("共通台帳").click();
       await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
       await expect(page.locator(".ag-row").first()).toBeVisible();
       expect(Number(await page.getByTestId("chart-rows-count").getAttribute("data-total"))).toBeGreaterThan(30);
       await page.screenshot({ path: shot(`slice-chart-common-${tag}`) });
       // 未当てはめの行は最後。表の下まで送って見る（案のまま・断った・当てていない記録の数）
       await page.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop = el.scrollHeight));
-      await expect(page.locator(".moyai-row-unmapped [col-id='lv1']")).toHaveText(`未当てはめ（${unmappedRecords} 件）`);
+      await expect(page.locator(".moyai-row-unmapped [col-id='lv1']")).toHaveText(`未紐付け（${unmappedRecords} 件）`);
       await page.screenshot({ path: shot(`slice-chart-common-unmapped-${tag}`) });
     });
 
@@ -288,7 +288,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.locator(".ag-row").first()).toBeVisible();
       await page.getByTestId("side-fold").click();
       await expect(page.getByTestId("merge-side-band")).toBeVisible();
-      await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
+      await page.getByTestId("rows-mode").getByText("共通台帳").click();
       await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
       await expect(page.locator(".ag-row").first()).toBeVisible();
       await page.screenshot({ path: shot(`slice-chart-folded-${tag}`), fullPage: true });

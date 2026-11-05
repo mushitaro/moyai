@@ -52,7 +52,7 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
     await test.step("比べる版は第 1 版。まだ何も変えていないので、変わった印は無い", async () => {
       await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "1");
-      await expect(page.getByTestId("merge-compare")).toContainText("比較版　第 1 版");
+      await expect(page.getByTestId("merge-compare")).toContainText("元の版　第 1 版");
       // 確定したあとは、次の版を編集中（「確定済み」は古い版を見るだけで開いたときだけ）
       await expect(page.getByTestId("merge-turn")).toHaveText("編集者 あなた");
       await expect(grid.locator(".moyai-mark-vchg")).toHaveCount(0);
@@ -76,7 +76,7 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       const r = await call(c, "chart_propose", { rules, basedOnVersion: version, basis: "試験の台本（版どうしの差）" });
       expect(r.matched).toBeGreaterThan(0);
       await expect(page.getByTestId("legend-changed-from")).toBeVisible();
-      await expect(page.getByTestId("legend-changed-from")).toContainText("第 1 版から変わった");
+      await expect(page.getByTestId("legend-changed-from")).toContainText("第 1 版から変更");
       const n = Number(await page.getByTestId("legend-changed-from").getAttribute("data-count"));
       expect(n).toBeGreaterThan(0);
       // 変わったセルは朱（見えている列の中にあれば描かれる。無ければ右へ送る）
@@ -85,7 +85,7 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
         await page.waitForTimeout(300);
       }
       await expect(grid.locator(".moyai-mark-vchg").first()).toBeVisible();
-      expect(await grid.locator(".moyai-mark-vchg").first().getAttribute("aria-label")).toContain("第 1 版から変わった");
+      expect(await grid.locator(".moyai-mark-vchg").first().getAttribute("aria-label")).toContain("第 1 版から変更");
       await page.screenshot({ path: shot(`version-diff-${tag}`) });
     });
 

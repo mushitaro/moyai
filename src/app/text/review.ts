@@ -14,44 +14,44 @@ const fieldLabel = (ref: string) => {
 };
 
 export const REVIEW_TEXT = {
-  title: "検査",
+  title: "照査",
   back: "画面へ",
   /** AI のツールの結果（check_results）に添える。画面には出さない（運営者、2026-11-04） */
   notice: "自己点検であって、審査の判断ではない",
   noticeBody: "Skillパックの基準から外れた所を、根拠の数字と出典つきで出します。直すかどうかを決めるのは人です。",
-  noPlan: "検査する計画がまだありません。取り込みの画面で資料を入れ、計画を作ってください。",
+  noPlan: "照査する計画がまだありません。取り込みの画面で資料を入れ、計画を作ってください。",
   toIntake: "取り込みへ",
-  noChecks: "この計画のSkillパックには、検査がまだありません（未実装）。",
-  invalid: "Skillパックの検査を読めませんでした。Skillパックを直すまで、検査は走りません。",
+  noChecks: "この計画のSkillパックには、照査がまだありません（未実装）。",
+  invalid: "Skillパックの照査を読めませんでした。Skillパックを直すまで、照査は走りません。",
   loadProblem: {
-    checksInvalid: "検査の書き方の形が違う",
+    checksInvalid: "照査の書き方の形が違う",
     sourcesInvalid: "出典の一覧の形が違う",
-    packMismatch: "検査と出典の一覧のSkillパックが違う",
-    sourceMissing: "検査の出典が、出典の一覧に無い",
-    sourceNotVerified: "要件か推奨の検査の出典が、原典で照らされていない",
-    duplicateId: "検査の ID が重なる",
+    packMismatch: "照査と出典の一覧のSkillパックが違う",
+    sourceMissing: "照査の出典が、出典の一覧に無い",
+    sourceNotVerified: "要件か推奨の照査の出典が、原典で照らされていない",
+    duplicateId: "照査の ID が重なる",
   } satisfies Record<ChecksLoadProblem, string>,
   plan: "計画",
   referenceDate: "基準日",
   referenceDateHelp: "この日で走らせます（AI が読む結果も同じ日）。年度だけの印は、その年度が終わってから「過ぎた」とします",
   referenceDateInvalid: "日付の形（年-月-日）で入れてください",
   referenceFiscalYear: (n: number) => `基準日の年度：${fy(n)}`,
-  checksVersion: (n: number) => `Skillパックの検査の版：${n}`,
+  checksVersion: (n: number) => `Skillパックの照査の版：${n}`,
   // MERGE の検査のシート（Wire、2026-11-05）
-  kindSwitch: "検査の結果",
-  kinds: { notMet: "外れ", met: "満たす", notApplicable: "当てはまらない" } satisfies Record<CheckOutcome, string>,
-  changeDate: "変える",
-  cols: ["", "検査", "機器", "この施設", "基準", "出典"],
+  kindSwitch: "照査の結果",
+  kinds: { notMet: "基準外", met: "基準内", notApplicable: "非該当" } satisfies Record<CheckOutcome, string>,
+  changeDate: "変更",
+  cols: ["", "照査", "機器", "当施設", "基準", "出典"],
   withinYears: (n: number) => `${n} 年以内`,
   years: (n: number) => `${n} 年`,
   noActualShort: (fy: number) => `${fy} 年度　実績なし`,
-  notMetCount: (n: number) => `外れ ${n}`,
-  here: "この施設",
+  notMetCount: (n: number) => `基準外 ${n}`,
+  here: "当施設",
   standard: "基準",
-  toChart: "星取表で見る",
-  openSource: "出典を開く",
-  summary: (met: number, notMet: number, na: number) => `満たす ${met} ／ 外れがある ${notMet} ／ 当てはまらない ${na}`,
-  result: { met: "満たす", notMet: "外れがある", notApplicable: "当てはまらない" } satisfies Record<CheckOutcome, string>,
+  toChart: "星取表を表示",
+  openSource: "出典を表示",
+  summary: (met: number, notMet: number, na: number) => `基準内 ${met} ／ 基準外 ${notMet} ／ 非該当 ${na}`,
+  result: { met: "基準内", notMet: "基準外", notApplicable: "非該当" } satisfies Record<CheckOutcome, string>,
   level: {
     requirement: "要件（法令・補助の要件）",
     recommendation: "推奨（要領・ガイドラインの例）",
@@ -60,13 +60,13 @@ export const REVIEW_TEXT = {
   levelLabel: "水準",
   thresholdLabel: "閾値の出どころ",
   threshold: { source: "出典", app: "アプリの目安" } satisfies Record<ThresholdOrigin, string>,
-  verificationLabel: "確かめた度合い",
+  verificationLabel: "照査状態",
   noSource: "出典なし（アプリの目安）",
   sourceLabel: "出典",
   sourceText: (document: string, clause: string, page: string | null) => [document, clause, page].filter((x) => x).join(" · "),
   numbersLabel: "根拠の数字",
   examplesLabel: (shown: number, all: number) => (all > shown ? `例（${all} 件のうち ${shown} 件）` : `例（${all} 件）`),
-  noExamples: "外れはありません。",
+  noExamples: "基準外はありません。",
   exampleCols: { node: "機器（段の道）", years: "年度", what: "中身" },
   wholePlan: "計画の全体",
   notApplicable: {
@@ -78,16 +78,16 @@ export const REVIEW_TEXT = {
   } satisfies Record<NotApplicableWhy, string>,
   unimplementedLabel: "未実装",
   noteLabel: "補足",
-  whatLabel: "見ること",
-  notMadeTitle: "このSkillパックで作っていない検査",
-  codeUnimplementedTitle: "検査の仕組みで、まだ無いもの（未実装）",
+  whatLabel: "考え方",
+  notMadeTitle: "このSkillパックで作っていない照査",
+  codeUnimplementedTitle: "照査の仕組みで、まだ無いもの（未実装）",
   codeUnimplemented: [
-    "延長の承認の記録の置き場（人だけの画面）。今は、どの延長も承認の記録が無いものとして「外れがある」にします",
+    "延長の承認の記録の置き場（人だけの画面）。今は、どの延長も承認の記録が無いものとして「基準外」にします",
     "きっかけ（周期）から次回を出して期限と比べること。取り込んだ計画のきっかけの欄が空なので、次回は予定の印だけで見ます",
   ],
   granularity: "年度だけの印は、年度の差で数えています（年度の粒度）",
   pathSep: " › ",
-  aiRead: (n: number, date: string) => `AI が検査の結果を読みました（${n} 件、基準日 ${date}）`,
+  aiRead: (n: number, date: string) => `AI が照査の結果を読みました（${n} 件、基準日 ${date}）`,
 } as const;
 
 /** 根拠の数字の名前。見た数は種類ごとに、何を数えたかを言う */
@@ -108,7 +108,7 @@ export function numberLabel(key: NumberKey, kind: CheckKind): string {
     thresholdYears: "閾値の年数",
     extensionCapYears: "延長の上限の年数",
     examined: examined[kind],
-    notMet: "外れの数",
+    notMet: "基準外の数",
     intervals: "見た間の数",
     longestYears: "いちばん長い間（年度の差）",
     approvedExtensions: "承認のある延長の数",
@@ -133,9 +133,9 @@ export function exampleText(e: CheckExample, r: Pick<CheckResult, "kind" | "numb
     case "gap":
       return `${fy(a!)} → ${fy(b!)}：間が ${e.years} 年度（閾値 ${r.numbers.thresholdYears} 年）`;
     case "gapToEnd":
-      return `${fy(a!)} のあと、${fy(a! + e.years!)} まで ${e.years} 年度、実施も予定も無い（閾値 ${r.numbers.thresholdYears} 年）`;
+      return `${fy(a!)} のあと、${fy(a! + e.years!)} まで ${e.years} 年度、実績も予定も無い（閾値 ${r.numbers.thresholdYears} 年）`;
     case "never":
-      return "実施も、これからの予定も無い";
+      return "実績も、これからの予定も無い";
     case "extensionNotApproved":
       return `${e.fiscalYears.map(fy).join(" → ")}：間が ${e.years} 年度。延長の上限の内だが、承認の記録が無い`;
     case "noActual":

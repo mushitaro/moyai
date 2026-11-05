@@ -89,7 +89,7 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     expect(link).toMatch(/&t=[A-Za-z0-9_-]{43}$/);
     await pa.keyboard.press("Escape");
     await expect(pa.getByTestId("request-asked")).toHaveAttribute("data-received", "false");
-    await expect(pa.getByTestId("request-asked")).toContainText("承認を頼みました　kacho@example.jp　まだ開かれていません");
+    await expect(pa.getByTestId("request-asked")).toContainText("承認を依頼しました　kacho@example.jp　まだ開かれていません");
     // 承認を頼んだあいだ：見出しは頼んだ版、自分では確定しない。右は「頼み直す」「版の履歴」だけ
     await expect(pa.getByTestId("merge-version")).toHaveText("第 1 版");
     await expect(pa.getByTestId("merge-state")).toHaveText("承認待ち");
@@ -121,10 +121,10 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await pa.goto(noToken(at(link, one.base)));
     const asked = pa.getByTestId("request-asked");
     await expect(asked).toHaveAttribute("data-received", "true");
-    await expect(asked).toContainText(`承認を頼みました　受け取った人　${B}`);
+    await expect(asked).toContainText(`承認を依頼しました　受け取った人　${B}`);
     await expect(asked).toContainText(/[0-9A-Z]{4}(-[0-9A-Z]{4}){3}/);
     // 名前はすぐ前にあるので、警告では繰り返さない
-    await expect(pa.getByTestId("key-warn")).toContainText("! この鍵を、まだ確かめていません");
+    await expect(pa.getByTestId("key-warn")).toContainText("! この鍵：未照合");
     await expect(pa.getByTestId("approve-open")).toHaveCount(0);
     await expect(pa.getByTestId("confirm-open")).toHaveCount(0);
     await expect(pa.getByTestId("merge-version")).toHaveText("第 1 版");
@@ -167,7 +167,7 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     expect(renewed).not.toBe("");
     expect(renewed).not.toBe(link);
     await pa.keyboard.press("Escape");
-    await expect(pa.getByTestId("request-asked")).toContainText("承認を頼みました　bucho@example.jp　まだ開かれていません");
+    await expect(pa.getByTestId("request-asked")).toContainText("承認を依頼しました　bucho@example.jp　まだ開かれていません");
   });
 
   await test.step("佐藤：古いリンクを開くと「この頼みは取り下げられました」。見るだけ", async () => {
@@ -197,7 +197,7 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     // 山田：効いている頼みは部長宛てのまま。帯の後ろに「! 効かない頼みが置かれています　| 見る」、署名の切り替えに朱の !
     await pa.goto(`${one.base}/#/`);
     await pa.goto(noToken(at(renewed, one.base)));
-    await expect(pa.getByTestId("request-asked")).toContainText("承認を頼みました　bucho@example.jp　まだ開かれていません");
+    await expect(pa.getByTestId("request-asked")).toContainText("承認を依頼しました　bucho@example.jp　まだ開かれていません");
     await expect(pa.getByTestId("request-ignored")).toContainText("! 効かない頼みが置かれています");
     await expect(pa.getByTestId("side-signatures-ignored")).toHaveText("!");
     await pa.getByTestId("request-ignored-show").click();

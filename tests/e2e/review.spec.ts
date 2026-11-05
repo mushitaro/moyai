@@ -58,7 +58,7 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
     await test.step("人：開発の道具（設定の画面の下）から検査を開き、基準日を選ぶ", async () => {
       // 読み込み直さずに設定の画面へ（作業中の計画はこのタブのメモリにある）
       await page.evaluate(() => (location.hash = "#/settings"));
-      await page.getByRole("link", { name: "検査", exact: true }).click();
+      await page.getByRole("link", { name: "照査", exact: true }).click();
       await expect(page.getByTestId("check-sheet")).toBeVisible();
       await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "check");
       await expect(page.getByTestId("plan-name")).toContainText(FACILITY);
@@ -92,7 +92,7 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       await expect(d).toContainText("基準日の年度：2026 年度");
       await page.screenshot({ path: shot(`review-${tag}`), fullPage: true });
       // 当てはまらない：判定の値の無い計画では、健全度の検査
-      await page.getByTestId("check-kind").getByRole("button", { name: /当てはまらない/ }).click();
+      await page.getByTestId("check-kind").getByRole("button", { name: /非該当/ }).click();
       await expect(line("WI-HEALTH-SCALE")).toHaveAttribute("data-result", "notApplicable");
     });
 
@@ -106,8 +106,8 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       };
       // 外れの行の数は、外れの例の数の和（例の無い外れは 1 行）
       const notMet = r.checks.filter((k: any) => k.result === "notMet");
-      await expect(await lines("外れ")).toHaveCount(notMet.reduce((a: number, k: any) => a + Math.max(1, k.examples.length), 0));
-      await expect(await lines("満たす")).toHaveCount(r.checks.filter((k: any) => k.result === "met").length);
+      await expect(await lines("基準外")).toHaveCount(notMet.reduce((a: number, k: any) => a + Math.max(1, k.examples.length), 0));
+      await expect(await lines("基準内")).toHaveCount(r.checks.filter((k: any) => k.result === "met").length);
       const one = await call(c, "check_results", { checkId: "WI-PRECISION-INTERVAL" });
       expect(one.checks).toHaveLength(1);
       expect(one.checks[0].examples.map((e: any) => e.fiscalYears)).toEqual([
@@ -122,7 +122,7 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       const r = await call(c, "check_results", { checkId: "WI-PLAN-DONE" });
       expect(r.referenceDate).toBe("2027-04-01");
       expect(r.checks[0].count).toBeGreaterThan(2);
-      await page.getByTestId("check-kind").getByRole("button", { name: /^外れ/ }).click();
+      await page.getByTestId("check-kind").getByRole("button", { name: /^基準外/ }).click();
       await expect(page.locator('[data-testid="check-line"][data-check="WI-PLAN-DONE"]')).toHaveCount(Math.max(1, r.checks[0].examples.length));
     });
   } finally {

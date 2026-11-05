@@ -82,7 +82,7 @@ test("架空の台帳：verify ledger で ✓ → site → ブラウザで外へ
 
 test("わざと外れた束を足すと、verify ledger と validate-pr が理由つきで ✗", async ({}, info) => {
   const cases: [string, string][] = [
-    ["kBelow5", "紛れる数が下限に届かない"],
+    ["kBelow5", "同区分の施設数が下限に届かない"],
     ["costField", "金額の形"],
     ["facilityName", "自由記述"],
   ];

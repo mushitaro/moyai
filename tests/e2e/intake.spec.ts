@@ -74,7 +74,7 @@ test("資料を落とし、質問に答え、計画を作って星取表で見�
     await page.getByTestId("sheet-match").click();
     await expect(page.getByTestId("match-sheet")).toBeVisible();
     // 切り替えの「すべて」で、結んだ作業が並ぶ（星取表と作業日報の両方の列）
-    await page.getByTestId("match-filter").getByText(/^すべて \d+$/).click();
+    await page.getByTestId("match-filter").getByText(/^全件 \d+$/).click();
     expect(await page.getByTestId("match-row").count()).toBeGreaterThan(0);
     await expect(page.getByTestId("match-table")).toContainText("plan-hoshitori.xlsx");
     await expect(page.getByTestId("match-table")).toContainText("daily-report.csv");

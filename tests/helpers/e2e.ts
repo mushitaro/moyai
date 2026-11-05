@@ -178,7 +178,7 @@ export async function acceptDecisions(page: Page, reason: string): Promise<numbe
   // 種類の切り替え（第 n 版と同じ・当てはめの案・台帳からの案・会話から写した答え・Claude の決定）ごとに、見えている種類をまとめて受ける。
   // 当てはめの規則（第 n 版と同じ・当てはめの案）は受けない（acceptRules で 1 規則ずつ受ける）。受け終えた種類は切り替えから消える
   const rows = page.locator('[data-testid="pending-row"][data-accepted="false"]');
-  const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasNotText: /^(当てはめの案|第 \d+ 版と同じ)/ });
+  const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasNotText: /^(紐付け案|第 \d+ 版と同じ)/ });
   let n = 0;
   for (let i = 0; i < 20; i++) {
     if ((await kinds.count()) > 0) await kinds.first().click();

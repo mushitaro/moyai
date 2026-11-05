@@ -125,14 +125,14 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
     await test.step("星取表：ごみ焼却と同じ画面で、し尿処理のパックの設備と項目の行が出る", async () => {
       await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("plan-name")).toHaveText(FACILITY);
-      await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
+      await page.getByTestId("rows-mode").getByText("共通台帳").click();
       await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
       await expect(page.locator(".ag-row").first()).toBeVisible();
       await page.screenshot({ path: shot(`night-soil-chart-common-${tag}`) });
       // 設備の見出しの行には、し尿処理のパックの設備の名前が出る（ごみ焼却の名前ではない）。行の見出しは 1 列で、設備の行は太字の見出し
       const firstLevel = (JSON.parse(readFileSync(`packs/${PACK}/common.json`, "utf8")) as { systems?: { name: string }[] }).systems?.map((e) => e.name) ?? [];
       const shown = (await page.locator(".ag-row [col-id='lv1'].moyai-common-head").allTextContents()).map((t) => t.trim().replace(/^[▾▸] /, "")).filter(Boolean);
-      const mapped = shown.filter((t) => !t.startsWith("未当てはめ"));
+      const mapped = shown.filter((t) => !t.startsWith("未紐付け"));
       expect(mapped.length, `出た 1 段目：${shown.join("・")}`).toBeGreaterThan(0);
       expect(mapped.every((t) => firstLevel.includes(t)), `出た 1 段目：${shown.join("・")}`).toBe(true);
       expect(Number(await page.getByTestId("chart-rows-count").getAttribute("data-total"))).toBeGreaterThan(10);

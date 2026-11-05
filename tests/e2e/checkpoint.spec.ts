@@ -123,7 +123,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await openPlan(page, "fictional-1");
     // 受けていない決定があるうちは、署名のダイアログを開けない。決定のシートで 1 行ずつ理由を書いて受ける
     await expect(page.getByTestId("confirm-open")).toBeDisabled();
-    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("受けていない決定が");
+    await expect(page.getByTestId("confirm-disabled-reason")).toContainText("未確定 ");
     const n = await acceptDecisions(page, "台帳の名前と表Ⅱ-4 を見て、人が受けた");
     expect(n).toBeGreaterThan(0);
     await expect(page.getByTestId("confirm-open")).toBeEnabled();
@@ -131,7 +131,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("diff-summary")).toBeVisible();
     // 署名のダイアログに保管先の生のパスは出さない
     await expect(page.getByTestId("confirm-root")).toHaveCount(0);
-    await expect(page.getByTestId("pending")).toContainText(`決定のシートで受けた決定 ${n} 件`);
+    await expect(page.getByTestId("pending")).toContainText(`確定のシートで確定した決定 ${n} 件`);
     // 理由が空なら確定できない
     await expect(page.getByTestId("confirm-submit")).toBeDisabled();
     await expect(page.getByTestId("confirm-submit-reason")).toContainText("理由を書くと確定できます");
@@ -190,7 +190,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
 
   await test.step("人が主ボタンを押すと、署名して輪に置き、受け手と同じ関数で ✓", async () => {
     // 受け取った束（SHARE の下の節）：置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
-    await expect(page.getByTestId("received")).toContainText("受け取った共有ファイル");
+    await expect(page.getByTestId("received")).toContainText("受信した共有ファイル");
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toHaveCount(0);
     await page.getByTestId("send").click();
     await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
@@ -231,11 +231,11 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("received-again").click();
     const row = page.locator('[data-testid="verify-line"][data-state="unconfirmed"]');
     await expect(row).toHaveCount(1);
-    await expect(row).toContainText("まだ確かめていません");
+    await expect(row).toContainText("未照合");
     await page.getByTestId("received").screenshot({ path: shot(`checkpoint-member-unconfirmed-${tag}`) });
     // 人が仲間に電話で読み上げてもらい、16 文字が合った（試験の台本が押した）
     await row.getByTestId("member-check").click();
-    await expect(page.getByText("メンバーの鍵の指紋")).toBeVisible();
+    await expect(page.getByText("メンバーの鍵番号")).toBeVisible();
     await page.getByTestId("key-check-matched").click();
     await expect(page.locator('[data-testid="verify-line"][data-state="unconfirmed"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);

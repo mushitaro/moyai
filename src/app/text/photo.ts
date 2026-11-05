@@ -5,7 +5,7 @@ export const PHOTO_TEXT = {
     "写真（JPEG・PNG）は読まずに並べます。読むのは、人が 1 枚ずつ［AI クライアントに渡して読む］を押した写真だけです。" +
     "その画像は、AI クライアント（Claude Code・Claude Desktop）と、その先の AI の提供者に渡ります。" +
     "AI が読んだ格子は「要確認」で、人が画像と並べて確かめるまで計画は作れません。",
-  none: "写真はありません。資料の受け口に JPEG か PNG を落とすと、ここに並びます。",
+  none: "写真はありません。資料の受け口に JPEG か PNG をドロップすると、ここに並びます。",
   size: (kb: number) => `${kb.toLocaleString("ja-JP")} KB`,
   pages: (file: string, page: number) => `${file} の ${page} 頁（文字の無い頁）`,
   state: {
