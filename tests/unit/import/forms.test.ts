@@ -700,6 +700,29 @@ describe("帳票（1 日 1 枚・1 件 1 枚）と、heldout-4 で詰まった�
     expect(an.ruleHits.count("w")).toBe(0);
   });
 
+  test("同じ機器の規則は、3 つ以上の呼び名を 1 つにまとめられる（どれも並びの最後の名前の機器。全角と半角の違いは書かなくてよい）", async () => {
+    const s = session();
+    s.setReadings([
+      {
+        skill: {
+          schema: "moyai.reading/0",
+          name: "【架空】試験の読み方",
+          scope: "facility",
+          rules: [{ id: "bfp", text: "「給水P」「BFP」「ボイラ給水ポンプ」は同じ機器", kind: "sameAsset", author: "human", by: "担当者", reason: "試験", names: ["給水P", "BFP", "ボイラ給水ポンプ"] }],
+        },
+        version: "draft",
+        path: null,
+        approved: false,
+        draft: true,
+      },
+    ]);
+    await s.add([{ name: "日報.csv", bytes: csv(["日付,機器,作業,工数(人日)", "2024/4/6,給水P,点検,1", "2024/4/7,BFP,給油,1", "2024/4/8,ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ,点検,1", "2024/4/9,ブロワ,点検,1"]) }]);
+    for (let i = 0; i < 4; i++) for (const x of s.analyze().open) s.settle([human(x.questionId, x.defaultAnswer ?? x.options.find((o) => o.id === "new")?.id ?? x.options[0]?.id ?? "")]);
+    const c = s.compose();
+    expect(c.plan?.assets.length).toBe(2);
+    expect(s.analyze().ruleHits.count("bfp")).toBe(2);
+  });
+
   test("日付の書き方の規則（月/日）は、日付の型のセルを壊さない", async () => {
     const bytes = await xlsxOf((ws) => {
       rows(ws, 1, [["点検日", "機器", "作業", "工数(人日)"]]);
