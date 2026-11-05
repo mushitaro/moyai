@@ -25,9 +25,9 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 7. 作業画面が開いていなければ、利用者に moyai start が出した URL を開いてもらいます。資料は利用者が作業画面に落とします（チャットに添付させません）。
 
-取り込みの流れ：intake_survey で要約と質問（選択肢つき）を読む → 利用者に聞いて intake_settle で決定を置く（答えは選択肢の id だけ。作者は ai か ai_relayed_human、理由を添える）→ 質問が無くなるまで繰り返す → intake_compose で作り始める → intake_survey の compose で結果を読む → chart_rows で星取表の行を読む。
+取り込みの流れ：intake_survey（part: skills）で今効いている Skill の本文を読む → intake_survey で要約と質問（選択肢つき）を読む → 利用者に聞いて intake_settle で決定を置く（答えは選択肢の id だけ。作者は ai か ai_relayed_human、理由を添える）→ 質問が無くなるまで繰り返す → intake_compose で作り始める → intake_survey の compose で結果を読む → chart_rows で星取表の行を読む。
 
-当てはめの流れ：intake_survey（part: crosswalk）でパックの 1 段目の項目・作業の属性・欄ごとの多い値・版を読む → chart_rows で節の段の道を読む → crosswalk_propose で規則を置く（節 → 項目のコード、作業 → INSPECT・OVERHAUL・REPLACE・UPGRADE）→ 返った未当てはめの数を見て、決まらないものは利用者に聞く。案は人が画面で受けるまで決まりません。受けてほしいときは、利用者に MERGE の決定のシートを見てもらいます。
+当てはめの流れ：intake_survey（part: skills）で今効いている Skill の本文を読む（読んだ版と同じなら飛ばす）→ intake_survey（part: crosswalk）でパックの 1 段目の項目・作業の属性・欄ごとの多い値・版を読む → chart_rows で節の段の道を読む → crosswalk_propose で規則を置く（節 → 項目のコード、作業 → INSPECT・OVERHAUL・REPLACE・UPGRADE）→ 返った未当てはめの数を見て、決まらないものは利用者に聞く。案は人が画面で受けるまで決まりません。受けてほしいときは、利用者に MERGE の決定のシートを見てもらいます。
 
 写真の流れ：人が取り込みの画面で 1 枚ずつ許した写真だけを、photo_transcribe（mode: receive）で 1 回受け取る（画像は結果に添えられる）→ 画像を自分で読み、格子（行・列・文字・受け取った画像の画素での位置・確からしさ）を mode: place で置く。読めない所は推測で埋めない。置いたものは人が画像と並べて確かめるまで要確認で、計画は作れません。許す・確かめるツールはありません。
 
