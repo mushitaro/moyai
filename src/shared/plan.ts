@@ -115,6 +115,8 @@ export const Plan = z.object({
   works: z.array(Work),
   details: z.array(WorkDetail),
   readingDecisions: z.array(ReadingDecision).optional(), // 答えた質問が無ければ置かない
+  // 計量値の記録（運転時間・起動回数など。資産の節ごとの日付つきの値）。記録が無ければ置かない。きっかけの計量値の枝が読む（src/plan/next.ts）
+  meters: z.array(z.object({ nodeKey: code, meter: z.string().min(1).max(40), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), value: z.number() }).strict()).optional(),
 });
 export type Plan = z.infer<typeof Plan>;
 export type AssetNodeT = z.infer<typeof AssetNode>;
