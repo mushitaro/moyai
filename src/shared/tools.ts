@@ -422,11 +422,19 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠（公開の台帳の版 ledgerVersion と、似た施設の数と帯。費用は書かない）を書く。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
+    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠（公開の台帳の版 ledgerVersion と、似た施設の数と帯。費用は書かない）を書く。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で似た施設が 5 以上〔中央の帯〕かを照らし、合わなければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
     z.object({
       rules: z.array(ruleSchema).min(1).max(50),
       basedOnVersion: z.number().int().min(0),
       basis: z.string().min(1).max(500),
+      /** 台帳を根拠にするとき：peer_reference（place: ledger）の版と、その集計の行（橋渡しが照らす。台帳の中-5） */
+      ledger: z
+        .object({
+          ledgerVersion: z.string().regex(/^[0-9a-f]{12}$/),
+          commonItem: z.string().min(1).max(64),
+          work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]),
+        })
+        .optional(),
     }),
     z.object({
       /** 引いた計画の印の数 */

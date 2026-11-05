@@ -148,6 +148,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
         ...(typeof fromTab.commonItem === "string" ? { commonItem: fromTab.commonItem } : {}),
       });
     },
+    ledger_version: async () => human.ledgerHead(),
     reading_skill_register: async (fromTab) => {
       const root = await human.root();
       if (!root) return "no_reading_root";

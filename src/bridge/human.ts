@@ -422,10 +422,18 @@ export class HumanService {
     const chosen = defaultAxes(pack.spec, pack.table, i.answers);
     const prof = receiverProfile(pack.spec, pack.table, i.answers, chosen);
     if (!prof.ok) return { ...empty, needs, reason: prof.reason };
-    const l = await loadLedgerPlace(s.ledger, pack);
+    // 保管先の計画がこの台帳へ出す施設の鍵は、自分の鍵として似た施設に数えない（受け手と同じ。台帳の中-5）
+    const l = await loadLedgerPlace(s.ledger, pack, await this.root());
     const c = compare({ table: pack.table, position: "municipal", profile: prof.profile, places: l.place ? [l.place] : [] });
     const out = peerAggregates(c, i.commonItem);
     return { mode: "ledger", position: c.position, floorK: RECEIVE_MIN_K, ...out, ledgerVersion, needs: [], reason: null };
+  }
+
+  /** 今の公開の台帳の clone の版（設定に台帳が無ければ null） */
+  ledgerHead(): string | null {
+    const sd = this.e.stateDir;
+    const ledger = sd ? readSettings(sd).ledger : null;
+    return ledger ? gitHead(ledger) : null;
   }
 
   private pack(id: string): SharePack | string {

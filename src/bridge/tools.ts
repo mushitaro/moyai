@@ -27,7 +27,12 @@ export interface BridgeTools {
   reading_skill_register?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   /** 作業画面が人の開いた比べを返したらそのまま、公開の台帳だけを読む頼みなら橋渡しが台帳を読んで比べる */
   peer_reference?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+  /** 今の公開の台帳の clone の版（台帳を根拠にした周期の案を照らす。台帳の中-5） */
+  ledger_version?: () => Promise<string | null>;
 }
+
+/** 周期の案の根拠にしてよい似た施設の数（中央の帯が出る数。送る側の下限と同じ） */
+export const LEDGER_BASIS_MIN_N = 5;
 
 export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   intake_survey: "tab",
@@ -85,6 +90,8 @@ export class ToolRelay {
   private readonly rowsRead = new Map<string, number>();
   private readonly outbound: OutboundEntry[] = [];
   private readonly totals = new Map<string, { calls: number; bytes: number; rows: number; imageBytes: number }>();
+  /** 会話 → この会話で読んだ公開の台帳の集計（版と、中央の帯が出た「項目|作業」）。台帳を根拠にした周期の案を照らす */
+  private readonly ledgerRead = new Map<string, { version: string | null; median: Set<string> }>();
   /** タブの回 → 写真の imageRef → 人の許し */
   private readonly permits = new Map<string, Map<string, PhotoPermit>>();
 
@@ -145,6 +152,17 @@ export class ToolRelay {
     return this.permits.get(session)?.size ?? 0;
   }
 
+  /** 公開の台帳の集計を読んだら、版と、中央の帯（似た施設 5 以上）が出た行を覚える（同じ会話の周期の案を照らす） */
+  private rememberLedger(conversation: string, data: Record<string, unknown>): void {
+    const aggs = (data.aggregates ?? []) as { place: string; commonItem: string; work: string; interval: { shown: string; n?: number } }[];
+    const median = new Set(aggs.filter((a) => a.place === "ledger" && a.interval.shown === "median" && (a.interval.n ?? 0) >= LEDGER_BASIS_MIN_N).map((a) => `${a.commonItem}|${a.work}`));
+    const prev = this.ledgerRead.get(conversation);
+    const version = typeof data.ledgerVersion === "string" ? data.ledgerVersion : null;
+    // 同じ版なら足し合わせる（項目を絞って何度か読むため）。版が変わったら読み直したものだけ
+    if (prev && prev.version === version) for (const k of median) prev.median.add(k);
+    else this.ledgerRead.set(conversation, { version, median });
+  }
+
   /** 型を確かめた引数でツールを動かす。答えはいつも ToolAnswer（誤りも型どおり）。 */
   async run(name: ToolName, args: Record<string, unknown>, conversation: string): Promise<ToolAnswer> {
     let reserved = 0;
@@ -175,6 +193,14 @@ export class ToolRelay {
       return h ? finish(await h(args)) : fail("not_implemented");
     }
 
+    // 台帳を根拠にした周期の案：今の台帳の版と、この会話で読んだ集計（似た施設が 5 以上）を照らしてから渡す（台帳の中-5）
+    if (name === "chart_propose" && args.ledger) {
+      const l = args.ledger as { ledgerVersion: string; commonItem: string; work: string };
+      const seen = this.ledgerRead.get(conversation);
+      const now = this.bridgeTools.ledger_version ? await this.bridgeTools.ledger_version() : null;
+      if (!seen || now === null || seen.version !== now || l.ledgerVersion !== now || !seen.median.has(`${l.commonItem}|${l.work}`)) return fail("ledger_basis_unchecked");
+    }
+
     let sendArgs = args;
     const used = this.rowsReadIn(conversation);
     const remaining = Math.max(0, ROWS_PER_CONVERSATION - used);
@@ -194,7 +220,10 @@ export class ToolRelay {
     if (out.kind === "error") return fail(out.code);
     if (BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
       const h = name === "reading_skill_register" ? this.bridgeTools.reading_skill_register : name === "peer_reference" ? this.bridgeTools.peer_reference : undefined;
-      return h ? finish(await h(out.data as Record<string, unknown>, args)) : fail("not_implemented");
+      if (!h) return fail("not_implemented");
+      const answer = finish(await h(out.data as Record<string, unknown>, args));
+      if (name === "peer_reference" && isOk(answer) && answer.data.mode === "ledger") this.rememberLedger(conversation, answer.data);
+      return answer;
     }
 
     const parsed = def.output.safeParse(out.data);
