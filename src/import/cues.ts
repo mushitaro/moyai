@@ -85,6 +85,8 @@ export const cue = {
     }
     return best?.k ?? null;
   },
+  /** その役目の見出しの語（そろえた文字） */
+  words: (k: ColumnCue): string[] => normList(CUES.column[k]),
   /** 見出しに書いた工数の単位（「工数(人日)」→ 人・日、「延工数(h)」「時間」→ 時間）。書いていなければ null */
   headerUnit(header: string): "manDays" | "hours" | null {
     const h = norm(header);

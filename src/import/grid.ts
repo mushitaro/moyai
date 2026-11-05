@@ -57,6 +57,8 @@ export interface SheetGrid {
   cols: Record<number, LineProps>;
   maxRow: number;
   maxCol: number;
+  /** 印刷の改ページ（行）：その行の後で頁が替わる。同じ形の帳票を頁ごとに積んだシートの、頁の境に使う */
+  rowBreaks?: number[];
 }
 
 /** 台帳：読まなかった物・読み方を決めたこと・直したこと（数えて残す）。 */

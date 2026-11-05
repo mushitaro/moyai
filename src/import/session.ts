@@ -353,7 +353,8 @@ export class IntakeSession {
       }
     }
     samples.sort((a, b) => queues.findIndex(([f]) => f === a.fileRef) - queues.findIndex(([f]) => f === b.fileRef));
-    const legends = an.layouts.flatMap((l) => l.tables.flatMap((t) => t.legend.map((e) => ({ mark: e.symbol, meaning: e.meaning }))));
+    // 凡例：表に付けたものと、付ける星取表の形の表が無かったもの（年度の列が読めないなど。読み手は記号の意味を知っている）
+    const legends = an.layouts.flatMap((l) => [...l.tables.flatMap((t) => t.legend), ...l.looseLegends].map((e) => ({ mark: e.symbol, meaning: e.meaning })));
     const notes = [
       ...an.layouts.flatMap((l) => l.notes.map((n) => `${l.file} ${n.ref}：${n.text.slice(0, SAMPLE_TEXT)}`)),
       ...an.sources.flatMap((s) => s.ledger.map((e) => `${s.file}${e.sheet ? `「${e.sheet}」` : ""}：${e.detail}（${e.count}）`)),
@@ -386,6 +387,30 @@ export class IntakeSession {
         e.rows.push({ sheet: lay.sheet, row: r, cells: rowText(lay, r), unresolved: x.refs.slice(0, SAMPLE_CELLS), questionId: x.q });
       }
     }
+    // 止まっている表の理由（注記に足す）：表の形と、読めていない欄。質問の無い未解決のセルが残る表だけ
+    const why = new Map<string, string>();
+    for (const lay of an.layouts)
+      for (const t of lay.tables) {
+        let silent = 0;
+        for (const cell of lay.grid.cells) {
+          if (cell.r < t.top || cell.r > t.bottom) continue;
+          const st = an.composition.status.get(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref: cell.ref }));
+          if (st?.s === "unresolved" && !st.questionId) silent++;
+        }
+        if (!silent) continue;
+        const has = (...rs: string[]) => t.cols.some((c) => rs.includes(c.role)) || !!t.head?.some((h) => rs.includes(h.cue));
+        const missing =
+          t.shape === "events"
+            ? [!has("date", "end") && "日付", !has("assetRef", "tag", "name") && !t.cols.some((c) => c.compound) && "機器", !has("workName", "workTitle") && "作業の名前"].filter(Boolean)
+            : t.shape === "tree"
+              ? [!has("name", "hier") && "機器の名前"].filter(Boolean)
+              : [];
+        const shape = t.shape === "events" ? "作業の表" : t.shape === "grid" ? "星取表の形の表" : "機器の木の表";
+        const key = `${lay.file}\u0000${t.form}`;
+        if (why.has(key)) continue;
+        why.set(key, `${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""} ${t.top}〜${t.bottom} 行目の表が止まっている：${shape}${missing.length ? `で、${missing.join("・")}の欄が読めていない` : ""}（質問の無い未解決のセル ${silent}）`);
+      }
+    notes.push(...[...why.values()].slice(0, STUCK_FILES));
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";
     return {
       files,

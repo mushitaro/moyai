@@ -3,7 +3,7 @@
 import { describe, expect, test } from "vitest";
 import { cue } from "../../../src/import/cues";
 import { fiscalYearInText, parseDateRange, parseMonthDay, withFiscalYear } from "../../../src/import/era";
-import { parseUnit } from "../../../src/import/text";
+import { assetFromTitle, parseUnit, splitFlatWork } from "../../../src/import/text";
 import { acceptDefaults, human, rows, session, xlsxOf } from "./helpers";
 
 const csv = (lines: string[]) => new TextEncoder().encode(`${lines.join("\r\n")}\r\n`);
@@ -603,5 +603,157 @@ describe("見ていない様式の 3 回目（heldout-3）で詰まった形", (
     expect(an.records.assets.filter((a) => a.file === "表紙.xlsx")).toEqual([]);
     const q = an.open.find((x) => x.kind === "columnRole");
     expect(q?.options.map((o) => o.id)).toEqual(["remark", "workName", "assetRef", "tag", "date", "end", "days", "effort", "exclude"]);
+  });
+});
+
+describe("帳票（1 日 1 枚・1 件 1 枚）と、heldout-4 で詰まった形", () => {
+  const day = (k: number) => new Date(Date.UTC(2021, 3, 1 + k));
+
+  test("改ページで頁に分けた日報（月のシートに 1 日 1 枚）：頭書きの日付をその頁の行に付け、番号だけの行と表の下の記入欄は記録にしない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      for (let k = 0; k < 3; k++) {
+        const top = 1 + k * 12;
+        rows(ws, top, [
+          ["日付", null, null, "天候", "晴", null, "【架空】甲工場　作業日報"],
+          [`No. R3-00${k + 1}`, null, null, "記入者", "甲"],
+        ]);
+        ws.getCell(top, 2).value = day(k);
+        ws.getCell(top, 2).numFmt = "yyyy/m/d";
+        rows(ws, top + 3, [["No.", "機器", "作業内容", "業者", "人工"], ["1", "ポンプ", "点検", "【架空】甲社", 2], ["2", "ブロワ", "給油", "【架空】甲社", 1], ["3"], ["4"], ["特記事項", null, "KY 活動実施。"]]);
+        ws.getRow(top + 11).addPageBreak();
+      }
+    }, "4月");
+    const s = session();
+    await s.add([{ name: "日報.xlsx", bytes }]);
+    const an = s.analyze();
+    expect(an.open.some((q) => q.kind === "dateUnknown")).toBe(false);
+    const lay = an.layouts[0];
+    expect(lay?.tables.filter((t) => t.shape === "events").length).toBe(3);
+    expect(an.records.events.filter((e) => !e.excluded).map((e) => `${e.date?.m}/${e.date?.d} ${e.assetNames[0]}`)).toEqual(["4/1 ポンプ", "4/1 ブロワ", "4/2 ポンプ", "4/2 ブロワ", "4/3 ポンプ", "4/3 ブロワ"]);
+    expect(lay?.tables[0]?.rows.filter((r) => r.role === "data").length).toBe(2);
+    expect([...(lay?.rowReasons.values() ?? [])]).toContain("表の下の記入欄（項目と文）");
+    // 台帳も星取表も無い：日報の機器の名前のまま新しい機器にするかを 1 回聞く。入れると、頁をまたいだ同じ名前は 1 つの機器
+    // ほかの問い（業者の列の役目・工数の単位）は既定か最初の選択肢で答える
+    for (let i = 0; i < 4; i++) for (const x of s.analyze().open.filter((o) => !o.options.some((k) => k.id === "new"))) s.settle([human(x.questionId, x.defaultAnswer ?? x.options[0]?.id ?? "")]);
+    const q = s.analyze().open.find((x) => x.kind === "eventAsset" && x.options.some((o) => o.id === "new"));
+    expect(q).toBeTruthy();
+    s.settle([human(q?.questionId ?? "", "new")]);
+    acceptDefaults(s);
+    for (const x of s.analyze().open) s.settle([human(x.questionId, x.options[0]?.id ?? "")]);
+    expect(s.compose().plan?.assets.map((a) => a.name).sort()).toEqual(["ブロワ", "ポンプ"]);
+  });
+
+  test("改ページの無い 1 件 1 枚の報告書：頁は頭書きつきでくり返す見出しで切り、頭書きの「設備名」「機器番号」を、機器の欄の無い表の行に付ける", async () => {
+    const page = (name: string, tag: string): (string | number | null)[][] => [
+      ["【架空】修繕報告書"],
+      ["報告No.", "修-1", null, "報告日", "R7.5.17"],
+      ["設備名", name, null, "機器番号", tag],
+      [],
+      ["No.", "作業日", "作業内容", "業者", "工数（人工）"],
+      ["1", "R7.5.14", "分解", "【架空】甲社", 1],
+      ["2", "R7.5.16", "組立", "【架空】甲社", 1.5],
+    ];
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, page("ポンプ No.2", "P-2"));
+      rows(ws, 10, page("ブロワ", "B-1"));
+    });
+    const s = session();
+    await s.add([{ name: "報告書.xlsx", bytes }]);
+    const an = s.analyze();
+    expect(an.layouts[0]?.tables.length).toBe(2);
+    expect(an.records.events.map((e) => [e.assetNames[0], e.tag, e.date?.d])).toEqual([
+      ["ポンプ No.2", "P-2", 14],
+      ["ポンプ No.2", "P-2", 16],
+      ["ブロワ", "B-1", 14],
+      ["ブロワ", "B-1", 16],
+    ]);
+  });
+
+  test("号炉・機器・作業を 1 つのセルに書いた列（見出し「号炉・機器・作業内容」）：空白か括弧で分け、号機の書き方をそろえる。分けられないセルは聞く", async () => {
+    expect(splitFlatWork("1号 No.2 BFP 分解整備")).toEqual({ unit: { kind: "number", n: 1, spelling: "{n}号" }, asset: "BFP No.2", work: "分解整備" });
+    expect(splitFlatWork("—投入扉　3号機　動作確認")).toEqual({ unit: { kind: "common" }, asset: "投入扉 No.3", work: "動作確認" });
+    expect(splitFlatWork("給じん装置（１号炉）点検整備")).toEqual({ unit: { kind: "number", n: 1, spelling: "{n}号炉" }, asset: "給じん装置", work: "点検整備" });
+    expect(splitFlatWork("ﾄｳﾆｭｳﾄﾋﾞﾗ（共B号機）動作確認")).toEqual({ unit: { kind: "common" }, asset: "トウニュウトビラ B号機", work: "動作確認" });
+    expect(splitFlatWork("ST 開放点検（定期検査）（部品交換）")?.work).toBe("開放点検(定期検査)(部品交換)");
+    expect(splitFlatWork("活性炭供給ロータリーバルブ清掃")).toBeNull();
+    const s = session();
+    await s.add([{ name: "日報.csv", bytes: csv(["日付,号炉・機器・作業内容,人工", "2024/4/6,1号 No.2 ポンプ 分解整備,2", "2024/4/7,ブロワ（#2）給油,1", "2024/4/8,活性炭清掃,1"]) }]);
+    const an = s.analyze();
+    expect(an.records.events.slice(0, 2).map((e) => [e.assetNames[0], e.unit?.kind === "number" ? e.unit.n : null, e.workName])).toEqual([
+      ["ポンプ No.2", 1, "分解整備"],
+      ["ブロワ", 2, "給油"],
+    ]);
+    const q = an.open.find((x) => x.kind === "eventAsset" && x.options.length === 1);
+    expect(q?.text).toContain("分けられない");
+  });
+
+  test("日付の書き方の規則（月/日）は、日付の型のセルを壊さない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["点検日", "機器", "作業", "工数(人日)"]]);
+      for (let k = 0; k < 2; k++) {
+        ws.getCell(2 + k, 1).value = day(k);
+        ws.getCell(2 + k, 1).numFmt = "m/d";
+        rows(ws, 2 + k, [[null, "ポンプ", "点検", 1]]);
+      }
+    });
+    const s = session();
+    s.setReadings([
+      {
+        skill: { schema: "moyai.reading/0", name: "【架空】試験の読み方", scope: "facility", rules: [{ id: "d", text: "「点検日」は月/日", kind: "dateFormat", author: "ai", reason: "試験", column: "点検日", format: "md" }] },
+        version: "draft",
+        path: null,
+        approved: false,
+        draft: true,
+      },
+    ]);
+    await s.add([{ name: "点検.xlsx", bytes }]);
+    const an = s.analyze();
+    expect(an.records.events.map((e) => (e.date ? `${e.date.y}-${e.date.m}-${e.date.d}` : null))).toEqual(["2021-4-1", "2021-4-2"]);
+    expect(an.open.some((q) => q.kind === "dateUnknown")).toBe(false);
+  });
+
+  test("元号と年の数を 2 段に分けた年度の見出し（「令和」の段と「元・2・3」の段）の星取表。表に付けた凡例は要約に出る", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["No.", "機器名称", "実施年度"], [null, null, "令　和"], [null, null, "元", 2, 3], ["1", "ポンプ", "●", "●", "○"], ["2", "ブロワ", null, "●", "○"], [], [null, "凡例　○：計画　●：実施済"]]);
+      ws.mergeCells("A1:A3");
+      ws.mergeCells("B1:B3");
+      ws.mergeCells("C1:E1");
+      ws.mergeCells("C2:E2");
+    });
+    const s = session();
+    await s.add([{ name: "星取表.xlsx", bytes }]);
+    const t = s.analyze().layouts[0]?.tables[0];
+    expect(t?.shape).toBe("grid");
+    expect(t?.cols.filter((c) => c.role === "mark").map((c) => c.fiscalYear)).toEqual([2019, 2020, 2021]);
+    expect(s.survey().legends.map((l) => l.mark).sort()).toEqual(["○", "●"]);
+  });
+
+  test("機器の欄の無い台帳の件名から機器の名前を取る（発注台帳の xlsx と工事の一覧の CSV）：見本を添えて 1 回聞き、取ると未解決が無くなる", async () => {
+    expect(assetFromTitle("R3年度 中央監視装置保守点検業務委託")).toEqual({ asset: "中央監視装置", work: "保守点検業務委託" });
+    expect(assetFromTitle("計量機更新工事（R5年度）")).toEqual({ asset: "計量機", work: "更新工事" });
+    expect(assetFromTitle("精密機能検査")?.asset).toBe("精密機能");
+    expect(assetFromTitle("排ガスの測定について")).toBeNull();
+    const ledger = await xlsxOf((ws) => {
+      rows(ws, 1, [["番号", "件名", "契約日", "工期（自）", "工期（至）"], ["1", "R3年度 中央監視装置保守点検業務委託", "R3.4.1", "R3.4.1", "R4.3.31"], ["2", "1号炉 誘引送風機修繕工事", "R3.6.1", "R3.6.7", "R3.7.2"]]);
+    });
+    const works = csv(["工事名,着手,完了", "計量機更新工事（R5年度）,2023/9/1,2023/9/30", "ごみクレーン年次点検,2023/10/2,2023/10/3"]);
+    for (const [name, bytes, want] of [
+      ["台帳.xlsx", ledger, ["中央監視装置", "誘引送風機"]],
+      ["工事.csv", works, ["計量機", "ごみクレーン"]],
+    ] as const) {
+      const s = session();
+      await s.add([{ name, bytes }]);
+      const before = [...s.compose().status.values()].filter((x) => x.s === "unresolved").length;
+      const q = s.analyze().open.find((x) => x.kind === "eventAsset" && x.options.some((o) => o.id === "title"));
+      expect(q?.text).toContain("→");
+      s.settle([human(q?.questionId ?? "", "title")]);
+      expect(s.analyze().records.events.map((e) => e.assetNames[0])).toEqual([...want]);
+      const nw = s.analyze().open.find((x) => x.options.some((o) => o.id === "new"));
+      if (nw) s.settle([human(nw.questionId, "new")]);
+      acceptDefaults(s);
+      const after = [...s.compose().status.values()].filter((x) => x.s === "unresolved").length;
+      expect(before).toBeGreaterThan(0);
+      expect(after).toBe(0);
+    }
   });
 });

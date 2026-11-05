@@ -1,12 +1,12 @@
 // 層 3 意味づけ（1）：層 2 の表から記録（資産の行・星取表の印・日報の行）を作る。決まらない所は質問にする。
 // どのセルを何に使ったかを数えるため、記録はセルの位置を持つ。
-import { cellRef, type SheetGrid } from "./grid";
-import { cue, norm } from "./cues";
+import { cellRef, colLetter, type GridCell, type SheetGrid } from "./grid";
+import { cue, norm, type ColumnCue } from "./cues";
 import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFiscalYear, type Ymd } from "./era";
 import { parseWithFormat } from "./reading";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
-import { assignParents, cellPeriod, type ColInfo, type SheetLayout, type Table } from "./structure";
-import { parseEffort, parseUnit, splitTag, tagTrailingNumber, type TagSplit, type UnitValue } from "./text";
+import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
+import { assetFromTitle, parseEffort, parseUnit, splitFlatWork, splitTag, tagTrailingNumber, type TagSplit, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
 
@@ -82,6 +82,8 @@ export interface EventRec {
   /** 工数のセルに書いてあったが人・日に直せていない */
   effortPending: boolean;
   assetNames: string[];
+  /** 機器の名前を書いたセル（機器の列・号炉と機器と作業を 1 つに書いたセル・帳票の頭書きの値）。無ければ省く */
+  nameRef?: string;
   /** 機器番号の列に書いた番号（同一性の鍵）。無ければ null */
   tag: string | null;
   bundle: boolean;
@@ -165,7 +167,7 @@ export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOpt
     const noCache = new Set(lay.grid.cells.filter((c) => c.formulaNoCache).map((c) => c.ref));
     const off: Off = (ref) => noCache.has(ref) || rec.excluded.has(cellKey(pos(ref)));
     for (const t of lay.tables) {
-      issuesToQuestions(t, lay, ask, exclude, pend);
+      issuesToQuestions(t, lay, ask, exclude, pend, rec.formOf.get(t.id)?.key ?? t.id);
       if (t.shape === "tree") order = treeRecords(t, lay, ask, rec, order, exclude, pend, off);
       else if (t.shape === "grid") order = gridRecords(t, lay, ask, rec, order, exclude, pend, off);
       else eventRecords(t, lay, ask, rec, opts, date1904Of(lay.file), exclude, pend, off);
@@ -175,10 +177,11 @@ export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOpt
 }
 
 /** 層 2 の問いの種を質問にし、決定を当てる */
-function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref: string, why: string) => void, pend: (ref: string) => void) {
+function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, formKey: string) {
   for (const is of t.issues) {
     if (is.kind === "levelJump") continue; // 段が決まってから（treeRecords で）
-    const key = `${is.kind}|${t.id}|${is.pattern}`;
+    // 列の役目は様式の決まり：同じ様式の表（年度ごとのシート・帳票の頁）は、同じ列をまとめて 1 回聞く
+    const key = `${is.kind}|${is.kind === "columnRole" ? formKey : t.id}|${is.pattern}`;
     const text =
       is.kind === "levelSplit"
         ? `${is.detail}。この行は何段目か`
@@ -957,7 +960,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     }
     let p: { start: Ymd; end: Ymd; range: boolean } | null = null;
     if (cue.isDitto(cell.text)) p = prevDate.get(c.c) ?? null;
-    else if (c.dateFormat) {
+    else if (c.dateFormat && !isTypedDate(cell)) {
       // 読み方の規則で決めた書き方（yyyymmdd・yymmdd・月/日）
       const f = parseWithFormat(String(cell.value ?? cell.text), c.dateFormat);
       const ymd = !f ? null : f.y !== null ? { y: f.y, m: f.m, d: f.d } : lay.contextFiscalYear !== null ? withFiscalYear({ m: f.m, d: f.d }, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
@@ -973,6 +976,29 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     if (p) prevDate.set(c.c, p);
     return { period: p, cell, bad: !p, blank: false };
   };
+  // 帳票の頭書き（同じ頁の、表の上の「日付｜…」「設備名｜…」「機器番号｜…」「号炉｜…」）：表に無い欄を、表の行に付ける
+  const headCell = (...ks: ColumnCue[]) => ks.map((k) => t.head?.find((f) => f.cue === k)?.cell).find((c) => !!c) ?? null;
+  const headPeriod = (c: GridCell | null) => {
+    if (!c) return null;
+    const p = cellPeriod(c, date1904);
+    if (p) return p;
+    const md = lay.contextFiscalYear !== null && typeof c.value === "string" ? parseMonthDay(c.value) : null;
+    const ymd = md && lay.contextFiscalYear !== null ? withFiscalYear(md, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
+    return ymd ? { start: ymd, end: ymd, range: false } : null;
+  };
+  const headStart = dateCol ? null : headPeriod(headCell("date"));
+  const headEnd = dateCol || endCol ? null : headPeriod(headCell("end"));
+  const headDate = headStart && headEnd ? { start: headStart.start, end: headEnd.end, range: true } : headStart;
+  const headAsset = assetCol ? null : (headCell("name", "assetRef")?.text.replace(/\s*\n\s*/g, " ").trim() ?? null);
+  const headTag = tagCol ? null : (headCell("tag")?.text.trim() || null);
+  const headUnitCell = unitCol ? null : headCell("series");
+  const headUnit = headUnitCell && !isNone(headUnitCell.text) ? parseUnit(headUnitCell.text) : null;
+  // 号炉・機器・作業を 1 つのセルに書いた列（「号炉・系統・機器・作業内容」）：機器の列が無いときだけ、見出しの順に分けて読む
+  const flatCol = !assetCol && workCol?.compound ? workCol : null;
+  const unsplit: { id: string; ref: string }[] = [];
+  // 機器の欄も機器番号も無い台帳（発注台帳など）：件名の中の機器の名前の案（あとでまとめて聞く。推し量って決めない）
+  const titleOnly = !assetCol && !tagCol && !flatCol && !headAsset && !headTag && titleCol ? titleCol : null;
+  const titleRows: { id: string; ref: string; title: string; guess: { asset: string; work: string } | null }[] = [];
   // 読み方の規則で外した列のセル：理由つきで外す
   for (const col of t.cols.filter((c) => c.ruleExclude)) for (const r of data) {
     const x = lay.index.at(r.r, col.c);
@@ -986,7 +1012,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     const ed = readDate(r.r, endCol);
     const dc = sd.cell;
     // 始まりと終わりを別の列に書く書き方は、2 つの日付で期間にする
-    const period = sd.period && ed.period ? { start: sd.period.start, end: ed.period.end, range: true } : sd.period;
+    const period = sd.period && ed.period ? { start: sd.period.start, end: ed.period.end, range: true } : (sd.period ?? headDate);
     const date = period?.start ?? null;
     if (dc && sd.bad) badDates.set(shapeOf(dc.text), [...(badDates.get(shapeOf(dc.text)) ?? []), dc.ref]);
     if (ed.cell && ed.bad) badDates.set(shapeOf(ed.cell.text), [...(badDates.get(shapeOf(ed.cell.text)) ?? []), ed.cell.ref]);
@@ -1026,14 +1052,20 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     const unit: UnitValue | null = uc && !isNone(uc.text) ? (parseUnit(uc.text) ?? (bareNo ? { kind: "number", n: Number(bareNo[0]), spelling: "{n}" } : null)) : null;
     if (uc && uc.text !== "" && !isNone(uc.text) && !unit) unitBadEv.set(nfkc(uc.text).trim(), [...(unitBadEv.get(nfkc(uc.text).trim()) ?? []), { row: r.r, ref: uc.ref }]);
     if (unit?.kind === "number") spellings.set(unit.spelling, [...(spellings.get(unit.spelling) ?? []), uc?.ref ?? ""]);
-    const assetText0 = text(r.r, assetCol);
+    // 号炉・機器・作業を 1 つのセルに書いた列：見出しの順に分ける（区切りが無ければ、あとでまとめて聞く）
+    const flatText = flatCol ? text(r.r, flatCol) : "";
+    const flat = flatText ? splitFlatWork(flatText) : null;
+    if (flatText && !flat) unsplit.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, flatCol?.c ?? 0)?.ref ?? "" });
+    const titleText = titleOnly ? text(r.r, titleOnly).trim() : "";
+    if (titleText) titleRows.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, titleOnly?.c ?? 0)?.ref ?? "", title: titleText, guess: assetFromTitle(titleText) });
+    const assetText0 = text(r.r, assetCol) || flat?.asset || (headAsset ?? "");
     // 名前の前の号（「1号機ポンプ」）：号の欄が無いか空なら、名前から号を分ける
     const lead = (!uc || uc.text === "") ? splitUnitPrefix(assetText0) : null;
     const assetText = lead ? lead.name : assetText0;
     // 号の欄も名前の前の号も無ければ、同じ行の工事の件名・作業の名前の頭の号（「1号炉 定期整備工事」）。ほかの号を並べた件名（「1号炉・2号炉 …」）は使わない
-    const titleLead = !lead && (!uc || uc.text === "") ? [text(r.r, titleCol), text(r.r, workCol)].map(splitUnitPrefix).find((x) => !!x && !/\d\s*(?:号|系)/u.test(x.name)) ?? null : null;
+    const titleLead = !lead && !flat && (!uc || uc.text === "") ? [text(r.r, titleCol), text(r.r, workCol)].map(splitUnitPrefix).find((x) => !!x && !/\d\s*(?:号|系)/u.test(x.name)) ?? null : null;
     const stripped = cue.stripSet(assetText);
-    const workName = (workCol ? text(r.r, workCol) : text(r.r, titleCol)).trim();
+    const workName = flat ? flat.work : (workCol ? text(r.r, workCol) : text(r.r, titleCol)).trim();
     const fy = date ? fiscalYearOf(date, opts.fiscalYearStartMonth) : null;
     evs.push({
       id: `${t.id}:e${r.r}`,
@@ -1049,12 +1081,16 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       manDays,
       effortPending: false,
       assetNames: stripped.text ? [stripped.text] : [],
+      ...(() => {
+        const ref = (assetCol && text(r.r, assetCol) ? lay.index.at(r.r, assetCol.c)?.ref : flat ? lay.index.at(r.r, flatCol?.c ?? 0)?.ref : headAsset ? headCell("name", "assetRef")?.ref : undefined) ?? undefined;
+        return ref ? { nameRef: ref } : {};
+      })(),
       tag: (() => {
         const tc = tagCol ? lay.index.at(r.r, tagCol.c) : null;
-        return tc && tc.text !== "" && !cue.isDitto(tc.text) ? nfkc(tc.text).trim() : null;
+        return tc && tc.text !== "" && !cue.isDitto(tc.text) ? nfkc(tc.text).trim() : headTag ? nfkc(headTag) : null;
       })(),
       bundle: stripped.set,
-      unit: lead ? { kind: "number", n: lead.n, spelling: lead.spelling } : uc && uc.text !== "" && !isNone(uc.text) ? unit : titleLead ? { kind: "number", n: titleLead.n, spelling: titleLead.spelling } : null,
+      unit: lead ? { kind: "number", n: lead.n, spelling: lead.spelling } : uc && uc.text !== "" && !isNone(uc.text) ? unit : (flat?.unit ?? (titleLead ? { kind: "number", n: titleLead.n, spelling: titleLead.spelling } : headUnit)),
       workName,
       workTitle: titleCol && workCol ? text(r.r, titleCol) || null : null,
       remark: remarkCols.map((c) => text(r.r, c)).filter(Boolean).join(" / ") || null,
@@ -1067,7 +1103,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     });
   }
   // 日付の欄の無い作業の表（工程表など）：表の外に書いた期間を使うか、まとめて 1 回聞く（推し量らない）
-  if (!dateCol && evs.length) {
+  if (!dateCol && !headDate && evs.length) {
     const cp = lay.contextPeriod;
     const a = ask.ask(`dateMissing|${t.id}`, {
       kind: "dateUnknown",
@@ -1094,6 +1130,53 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const fkey = form?.key ?? t.id;
   const many = (form?.tables.length ?? 1) > 1;
   const where = many ? `${filesLabel(form?.files ?? [])}（同じ様式）の表に、` : "";
+  // 号炉・機器・作業の区切り（空白・括弧）の無いセル：機器と作業に分けられない。推し量らず、同じ様式の表をまとめて 1 回聞く
+  if (unsplit.length && flatCol) {
+    const a = ask.ask(`flatUnsplit|${fkey}`, {
+      kind: "eventAsset",
+      text: `${where}「${flatCol.headerParts[0] ?? ""}」の列は、1 つのセルにいくつかの欄を書いている。区切り（空白・括弧）が無く、機器と作業に分けられないセルが${many ? "" : ` ${unsplit.length}`} ある。どう読むか`,
+      options: [{ id: "exclude", label: "その行を外す（理由を残す）" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: unsplit.length,
+      items: [itemOf(lay, unsplit.slice(0, 10).map((u) => u.ref))],
+    });
+    const ids = new Set(unsplit.map((u) => u.id));
+    for (const e of evs)
+      if (ids.has(e.id)) {
+        if (a === "exclude") e.excluded = "機器と作業の区切りの無いセルの行（決定で外した）";
+        else e.pending = true;
+      }
+  }
+  // 件名の中の機器の名前：見本を添えて、同じ様式の表をまとめて 1 回聞く
+  if (titleRows.length && titleOnly) {
+    const shown = titleRows.filter((x) => x.guess).slice(0, 3).map((x) => `「${x.title.slice(0, 30)}」→「${x.guess?.asset ?? ""}」`).join("");
+    const a = ask.ask(`titleAsset|${fkey}`, {
+      kind: "eventAsset",
+      text: `${where}機器の欄が無い。「${titleOnly.headerParts[0] ?? ""}」の文から、頭の年度・後ろの括弧・後ろの作業の語（「点検」「業務委託」など）を除いた残りを、機器の名前として読むか（見本 ${shown}）`,
+      options: [
+        { id: "title", label: "そう読む（機器の名前が取れない行は外す）" },
+        { id: "exclude", label: "機器の欄の無い行を外す" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: titleRows.length,
+      items: [itemOf(lay, titleRows.slice(0, 10).map((x) => x.ref))],
+    });
+    const byId = new Map(titleRows.map((x) => [x.id, x]));
+    for (const e of evs) {
+      const x = byId.get(e.id);
+      if (!x) continue;
+      if (a === "exclude") e.excluded = "機器の欄の無い行（決定で外した）";
+      else if (a === "title" && !x.guess) e.excluded = "件名から機器の名前を取れない行（決定で外した）";
+      else if (a === "title" && x.guess) {
+        const lead = splitUnitPrefix(x.guess.asset);
+        e.assetNames = [cue.stripSet(lead ? lead.name : x.guess.asset).text];
+        if (lead && !e.unit) e.unit = { kind: "number", n: lead.n, spelling: lead.spelling };
+        e.nameRef = x.ref;
+      }
+    }
+  }
   let hoursPer: number | null = null;
   if (hourCells.length) {
     const a = ask.ask(`hoursPerManDay|${fkey}`, {
@@ -1154,9 +1237,22 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     for (const ref of refs) a === "exclude" ? (exclude(ref, "読めない工数（決定で外した）"), effortExcluded.add(ref)) : pend(ref);
   }
   for (const [shape, refs] of badDates) {
+    // 読めなかった理由：年の無い月/日（シートに年度が 1 つだけ書いてあれば、その年度で読む）・読み方の規則の書き方に合わない・日付の書き方でない
+    const sample = (() => {
+      const m = /^([A-Z]+)(\d+)$/.exec(refs[0] ?? "");
+      if (!m) return "";
+      const c = t.cols.find((k) => colLetter(k.c) === m[1]);
+      return c ? (lay.index.at(Number(m[2]), c.c)?.text ?? "") : "";
+    })();
+    const ruleFormat = [dateCol, endCol].find((c) => c?.dateFormat)?.dateFormat;
+    const why = ruleFormat
+      ? `読み方の規則の書き方（${ruleFormat}）に合わない`
+      : parseMonthDay(sample)
+        ? "年が書いていない（シートの文に年度がただ 1 つ書いてあれば、その年度で読む）"
+        : "日付の書き方として読めない";
     const a = ask.ask(`dateBad|${t.id}|${shape}`, {
       kind: "dateUnknown",
-      text: `日付として読めない書き方がある（${refs.length} 行）。日付に見えない書き方を日付と決めつけない`,
+      text: `日付として読めない書き方がある（${refs.length} 行、見本「${sample.slice(0, 24)}」：${why}）。日付に見えない書き方を日付と決めつけない`,
       options: [{ id: "exclude", label: "その行を外す" }],
       valueKind: "option",
       defaultAnswer: null,
