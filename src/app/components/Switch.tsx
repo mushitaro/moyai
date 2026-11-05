@@ -5,6 +5,9 @@ import { Fragment } from "react";
 export interface SwitchItem<V extends string> {
   value: V;
   label: string;
+  /** 言葉のあとの数（朱にするときは shu） */
+  count?: number;
+  shu?: boolean;
   disabled?: boolean;
 }
 
@@ -30,6 +33,12 @@ export function Switch<V extends string>(props: {
             onClick={() => props.value !== d.value && props.onChange(d.value)}
           >
             {d.label}
+            {d.count !== undefined && (
+              <span className="moyai-switch-count" data-shu={d.shu ? "true" : undefined}>
+                {" "}
+                {d.count}
+              </span>
+            )}
           </button>
         </Fragment>
       ))}

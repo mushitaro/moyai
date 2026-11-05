@@ -12,6 +12,7 @@ import { sheetHash } from "../stages";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
+import type { Rule } from "../../shared/tools";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import type { BridgeClient, HumanResult } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
@@ -59,7 +60,14 @@ interface StatusBody {
     /** 様式で書き出した Excel への署名（3C。版を作る署名ではない） */
     exports?: ExportSig[];
   }[];
-  latest?: { version: number; plan: Plan } | null;
+  latest?: {
+    version: number;
+    plan: Plan;
+    /** 次の版に重ねるための記録（1C・重-2）。写真のある版と前の形の版は null */
+    sources?: { name: string; sha256: string; size: number }[] | null;
+    decisions?: { questionId: string; answer: string; author: string; reason: string; sources: string[] }[] | null;
+    crosswalk?: { rule: Rule; target: "assetNode" | "work"; value: string; basis: string }[] | null;
+  } | null;
   /** いちばん新しい版のひとつ前の版（確かめで合うときだけ） */
   previous?: { version: number; plan: Plan } | null;
   accepted?: Acceptance[];
@@ -136,12 +144,18 @@ export function ConfirmDialog({
   opened,
   onClose,
   onConfirmed,
+  sources,
+  intake,
 }: {
   client: BridgeClient;
   plan: Plan;
   opened: boolean;
   onClose: () => void;
   onConfirmed: (plan: Plan) => void;
+  /** 次の版に重ねるための資料と決定（1C・重-2）。写真のある版や資料の無い版は null */
+  /** 聞いた数（2A） */
+  intake?: () => { questions: number; decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number } } | null;
+  sources?: () => Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; decisions: { questionId: string; answer: string; author: string; reason: string; sources: string[] }[] } | null>;
 }) {
   const [load, reload] = usePlanStatus(client, plan.planId, opened);
   const [reason, setReason] = useState("");
@@ -196,7 +210,22 @@ export function ConfirmDialog({
       }
       setKeyMade(k.body.fingerprint);
     }
+    // 次の版に重ねるための資料を、1 つずつ先に保存先に置く（確定では SHA-256 だけを送る。Architect の縛り 2）
+    const src = sources ? await sources() : null;
+    if (src) {
+      for (const f of src.files) {
+        const put = readHuman<{ ok: boolean; sha256: string }>(await client.callHuman("plan_source_put", ROUTES.planSourcePut.path, { planId: plan.planId, base64: base64Of(f.bytes) }));
+        if (!put.ok) {
+          setBusy(false);
+          return setError(put.message);
+        }
+      }
+    }
+    const crosswalk = (getWorkingPlan()?.proposals ?? []).filter((p) => p.state === "accepted").map((p) => ({ rule: p.rule, target: p.target, value: p.value, basis: p.basis }));
+    const stats = intake ? intake() : null;
     const payload = {
+      ...(stats ? { intake: stats } : {}),
+      ...(src ? { sources: src.files.map((f) => ({ name: f.name, sha256: f.sha256, size: f.bytes.length })), decisions: src.decisions, crosswalk } : {}),
       plan,
       reason: reason.trim(),
       acceptances: accepted,
@@ -235,7 +264,7 @@ export function ConfirmDialog({
         {/* 署名したら、中身を結果に置き換える（Wire、2026-11-04）。入力の欄は残さない */}
         {status && diff && !done && (
           <>
-            {/* 署名して渡す（docs/screens.md 3.4、絵は Handoff.dc.html）：件数の 1 行 → 頼むこと → 宛先・ひとこと → この署名で承認する読み方 → 合言葉 → リンクが運ぶもの。
+            {/* 署名して渡す（docs/screens.md 3.4、絵は Handoff.dc.html）：件数の 1 行 → 頼むこと → 宛先・理由 → この署名で承認する読み方 → 署名。
                 差分の行は差分レポートと決定のシートが持つので、ここには件数だけ */}
             <Text size="sm" className="moyai-num" data-testid="diff-summary">
               {T.summaryLine(status.latest?.version ?? null, diff.added, diff.removed, diff.changed)}
@@ -323,12 +352,6 @@ export function ConfirmDialog({
               )}
             </Stack>
 
-            {/* 外へ出ていくもの：リンクが運ぶのは、版の場所とハッシュだけ（メールには施設の名前・版・ひとことも載る。Handoff.dc.html） */}
-            {ask !== "self" && (
-              <Text size="xs" fw={500} c="dimmed" data-testid="confirm-carries">
-                {T.carries}
-              </Text>
-            )}
             {error && (
               <Alert color="red" data-testid="confirm-error">
                 {error}
@@ -384,23 +407,10 @@ export function ConfirmDialog({
             </Text>
           )}
           {done ? (
-            <>
-              <Button variant={mail ? "filled" : "default"} onClick={onClose} data-testid="confirm-close">
-                {T.close}
-              </Button>
-              {/* 自分で確定したときだけ、次の段（SHARE）へ。渡したときは閉じるだけ */}
-              {!mail && (
-                <Button
-                  onClick={() => {
-                    onClose();
-                    location.hash = APP_PAGES.checkpoint;
-                  }}
-                  data-testid="to-checkpoint"
-                >
-                  {T.toCheckpoint}
-                </Button>
-              )}
-            </>
+            // 確定のあとに SHARE へ行く道は、上の段の SHARE だけ（閉じるだけ）
+            <Button onClick={onClose} data-testid="confirm-close">
+              {T.close}
+            </Button>
           ) : (
             <>
               <Button variant="default" onClick={onClose}>
@@ -527,4 +537,11 @@ export function HistoryDialog({
       </Stack>
     </Modal>
   );
+}
+
+/** バイト列を base64 に（大きな資料でも引数の上限を越えないよう、少しずつ） */
+function base64Of(b: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000));
+  return btoa(s);
 }

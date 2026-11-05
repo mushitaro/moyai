@@ -116,9 +116,34 @@ export class IntakeWorkspace {
     );
   }
 
+  /** 開いた版の計画の ID（版 1 で一度だけ作り、そのあとは施設の名前から作り直さない。台帳の中-8） */
+  private pinnedPlanId: string | null = null;
+  /** 開いた版の資料を戻せなかった理由（戻せないまま作り直すと、前の版の明細が消えるので、計画を作らせない） */
+  private restoreFailed: string | null = null;
+
+  /** 開いた版の計画の ID に固定する（名前を変えても、同じ計画に版を重ねる） */
+  pinPlanId(planId: string): void {
+    this.pinnedPlanId = planId;
+    const o = this.session.options;
+    o.planId = planId;
+    o.facility = { ...o.facility, facilityKey: planId };
+    this.changed(false);
+  }
+
+  /** 開いた版の資料を戻せなかった（理由を出し、計画を作らせない。黙って残りの資料だけで組み直さない。Architect の縛り 5） */
+  blockRestore(reason: string | null): void {
+    this.restoreFailed = reason;
+    this.changed(true);
+  }
+
+  /** その理由で止めているときだけ外す（版を開くのをやめたとき） */
+  clearBlock(reason: string): void {
+    if (this.restoreFailed === reason) this.blockRestore(null);
+  }
+
   private optionsOf(s: WorkspaceSettings): IntakeOptions {
-    // 計画の ID は、パックと施設の名前から作る（同じパックの別の施設とぶつからない。同じ施設は版を重ねる）
-    const key = `intake-${s.packId}-${nameKey(s.facilityName)}`;
+    // 計画の ID は、パックと施設の名前から作る（同じパックの別の施設とぶつからない。同じ施設は版を重ねる）。版を開いたら、その版の ID に固定する
+    const key = this.pinnedPlanId ?? `intake-${s.packId}-${nameKey(s.facilityName)}`;
     return {
       planId: key,
       displayName: s.facilityName,
@@ -206,6 +231,7 @@ export class IntakeWorkspace {
    */
   composeBlockers(): string[] {
     const out: string[] = [];
+    if (this.restoreFailed) out.push(this.restoreFailed);
     if (this.inputs.length === 0) out.push(TEXT.intake.needFiles);
     if (!this.settings.packId) out.push(TEXT.intake.needPack);
     if (!this.settings.facilityName.trim()) out.push(TEXT.intake.needName);
@@ -277,6 +303,76 @@ export class IntakeWorkspace {
   }
 
   /**
+   * 聞いた数（2A）：いまの取り込みで出た質問の数と、作者ごとの決定の数。資料が無ければ null。
+   * 作者「AI（読み取り）」は写真の格子のセルの作者で、質問の答えには付かないので数えない
+   */
+  intakeStats(): { questions: number; decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number } } | null {
+    if (this.inputs.length === 0) return null;
+    const an = this.analysis();
+    const decisions = { human: 0, ai: 0, ai_relayed_human: 0, rule_code: 0 };
+    for (const q of an.questions) {
+      const a = q.decision?.author;
+      if (a === "human" || a === "ai" || a === "ai_relayed_human" || a === "rule_code") decisions[a]++;
+    }
+    return { questions: an.questions.length, decisions };
+  }
+
+  /** 作業中の計画を作ったときの取り込みの版（作ったか版を開いて資料を戻したときに置く。無ければ照らさない） */
+  private composedAt: number | null = null;
+
+  /** 作業中の計画を作ったあと、資料・決定・読み方・写真が変わったか（変わっていれば作り直すまで署名を止める。台帳の中-6） */
+  notRecomposed(): boolean {
+    return this.composedAt !== null && this.composedAt !== this.dataVersion;
+  }
+
+  /** 戻した版（次の版に重ねるとき、その版を組んだ資料と決定を戻した。資料のタブで「第 n 版の資料」と出す） */
+  restoredFrom: { version: number; files: ReadonlySet<string> } | null = null;
+
+  /**
+   * 版を組んだ資料と、その資料への決定を戻す（1C・重-2。次の版はこれに新しい資料を足して組み直す）。
+   * 今のタブの資料と決定は置き換える。決定は作者のまま戻す（署名した版を組み直すための記録で、引き継ぎではない）
+   */
+  async restoreVersion(version: number, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[]): Promise<void> {
+    const s = new IntakeSession(this.optionsOf(this.settings), this.photoBook);
+    const read: InputFile[] = files.map((f) => ({ name: f.name, bytes: f.bytes }));
+    const rejected = new Set((await s.add(read)).map((r) => r.file));
+    for (const d of decisions) s.settle([d]);
+    s.setReadings(forFacility(this.readings, this.facilityKey()));
+    this.session = s;
+    this.inputs = read.filter((f) => !rejected.has(f.name));
+    this.tooLarge = [];
+    this.restoredFrom = { version, files: new Set(this.inputs.map((f) => f.name)) };
+    this.restoreFailed = null;
+    this.cache = null;
+    this.changed(true, true);
+    // 戻した資料と決定は、開いた版の計画と同じ（作り直していないことにしない）
+    this.composedAt = this.dataVersion;
+  }
+
+  /**
+   * 確定のときに版の記録に残す資料と決定（1C・重-2）。資料の SHA-256 と、決定ごとに掛かった資料の SHA-256。
+   * 写真のある版は残さない（写真の読み取りの格子はこのタブにしか無いので、次の版はこのタブの資料だけで組み直す）。資料が無ければ null
+   */
+  async sourcesForCommit(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; decisions: (Decision & { sources: string[] })[] } | null> {
+    if (this.inputs.length === 0 || this.inputs.some((f) => photoMimeOf(f.name) !== null) || this.photoBook.entries().length > 0) return null;
+    const files = await Promise.all(this.inputs.map(async (f) => ({ name: f.name, bytes: f.bytes, sha256: await sha256Hex(f.bytes) })));
+    const shaOf = new Map(files.map((f) => [f.name, f.sha256]));
+    const filesOf = new Map<string, Set<string>>();
+    for (const q of this.analysis().questions) {
+      const set = new Set<string>();
+      for (const it of q.items) {
+        set.add(it.file);
+        for (const t of it.target ?? []) set.add(t.file);
+      }
+      filesOf.set(q.questionId, set);
+    }
+    const decisions = this.decisions()
+      .map((d) => ({ ...d, sources: [...(filesOf.get(d.questionId) ?? [])].map((n) => shaOf.get(n)).filter((x): x is string => !!x) }))
+      .filter((d) => d.sources.length > 0);
+    return { files, decisions };
+  }
+
+  /**
    * 決定を置く。どれか 1 つでも当てはまらなければ、どれも置かない。
    * 当てはまるのは、今出ている質問で、答えがその質問の選択肢に入っているもの。人が答えた質問は、人だけが変えられる。
    */
@@ -313,6 +409,8 @@ export class IntakeWorkspace {
     if (this.compose.state === "running") return { started: false, startedAt: this.compose.startedAt };
     const startedAt = now();
     this.compose = { state: "running", startedAt, by };
+    // 作り始めたときの資料・決定・読み方・写真の版（このあと変われば、作り直すまで署名を止める。台帳の中-6）
+    const at = this.dataVersion;
     this.changed(false);
     this.composeRun = new Promise((resolve) =>
       setTimeout(() => {
@@ -324,6 +422,7 @@ export class IntakeWorkspace {
             const carried = placeComposedPlan(c.plan);
             if (carried) this.note("info", TEXT.crosswalk.carried(carried));
             this.compose = { state: "done", startedAt, by, plan: c.plan };
+            this.composedAt = at;
           } else this.compose = { state: "failed", startedAt, by, blockers: c.blockers };
         } catch (e) {
           this.compose = { state: "failed", startedAt, by, blockers: [`計画を作る途中で誤りが起きた（${e instanceof Error ? e.name : "誤り"}）`] };
@@ -372,4 +471,10 @@ export class IntakeWorkspace {
 /** 当てる読み方：下書きと、会社・担当者の読み方と、今の施設の読み方（ほかの施設の読み方は当てない。Db の重-5） */
 function forFacility(readings: readonly LoadedReading[], facilityKey: string): LoadedReading[] {
   return readings.filter((r) => r.draft || r.skill.scope !== "facility" || r.owner === facilityKey);
+}
+
+/** 資料の SHA-256（16 進。ブラウザの WebCrypto） */
+async function sha256Hex(b: Uint8Array): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", b as BufferSource);
+  return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }

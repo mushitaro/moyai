@@ -84,3 +84,14 @@ test("全体が止める額に届くなら止める", () => {
   assert.equal(r.stop, true);
   assert.match(r.reason, /止める額/);
 });
+
+test("呼ばなかった回（artifact の名前が audit-result-uncalled）は見込みで $0、数には入れる（台帳の CI-1b）", async () => {
+  const { pendingCiEstimate, uncalledByArtifacts } = await import("../../scripts/api-spend.mjs");
+  const runs = [{ id: 1, run_attempt: 1 }, { id: 2, run_attempt: 1, uncalled: true }, { id: 3, run_attempt: 2 }];
+  const r = pendingCiEstimate(runs, new Set(["3-1"]), null, 2);
+  assert.equal(r.count, 3);
+  assert.equal(r.usd, 4);
+  assert.equal(uncalledByArtifacts(["audit-result-uncalled"]), true);
+  assert.equal(uncalledByArtifacts(["audit-result-called"]), false);
+  assert.equal(uncalledByArtifacts([]), false);
+});

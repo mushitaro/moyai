@@ -7,7 +7,7 @@ import { execFileSync } from "node:child_process";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { AuditResult, costUsd, planDiff, renderMarkdown, resultRecord } from "./lib.mjs";
-import { appendLedger, budgetCheck, loadLedger, pendingCiEstimate } from "../api-spend.mjs";
+import { appendLedger, budgetCheck, loadLedger, pendingCiEstimate, uncalledByArtifacts, runKeys } from "../api-spend.mjs";
 
 const ROLE = "audit";
 const config = JSON.parse(readFileSync("config/models.json", "utf8"));
@@ -61,6 +61,31 @@ try {
   pending = { count: NaN, usd: Infinity };
 }
 
+/**
+ * まだ台帳に写していない回だけ、artifact の名前を見て、API を呼ばなかった回に印を付ける（台帳の CI-1b）。
+ * 読めなければ印を付けない（多めに見て止める側に倒す）
+ */
+async function withUncalled(runs) {
+  const out = [];
+  for (const r of runs) {
+    const keys = runKeys(r);
+    if (keys.every((k) => ledger.synced.has(k))) {
+      out.push(r);
+      continue;
+    }
+    try {
+      const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/runs/${r.id}/artifacts?per_page=100`, {
+        headers: { authorization: `Bearer ${process.env.GITHUB_TOKEN}`, accept: "application/vnd.github+json" },
+      });
+      const names = res.ok ? ((await res.json()).artifacts ?? []).map((a) => a.name) : [];
+      out.push({ ...r, uncalled: uncalledByArtifacts(names) });
+    } catch {
+      out.push(r);
+    }
+  }
+  return out;
+}
+
 /** 終わった監査の回を全部読む（ページをたどる）。CI では GitHub API、手元では gh を使う。 */
 async function listCompletedAuditRuns() {
   if (process.env.GITHUB_ACTIONS) {
@@ -73,7 +98,7 @@ async function listCompletedAuditRuns() {
       if (!res.ok) throw new Error(`GitHub API ${res.status}`);
       const batch = (await res.json()).workflow_runs ?? [];
       runs.push(...batch);
-      if (batch.length < 100) return runs;
+      if (batch.length < 100) return withUncalled(runs);
     }
     throw new Error("回が多すぎて読み切れない");
   }
@@ -115,6 +140,8 @@ if (included.length === 0) {
 
 // 値段が分からないときは $0 と書かず、計れないことを出す
 const called = Object.keys(usage).length > 0;
+// 呼んだかを、この回の artifact の名前に出す（次の回の見積もりが、呼ばなかった回を $0 と見るため。台帳の CI-1b）
+if (process.env.GITHUB_ENV) appendFileSync(process.env.GITHUB_ENV, `AUDIT_CALLED=${called ? "called" : "uncalled"}\n`);
 const cost = called && price ? costUsd(usage, price) : called ? null : 0;
 if (called && !process.env.GITHUB_ACTIONS) {
   // 手元の回はすぐ台帳に足す。CI の回は artifact に残し、scripts/api-spend-sync.mjs が写す

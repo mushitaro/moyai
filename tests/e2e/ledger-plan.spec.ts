@@ -3,7 +3,7 @@
 // （見え方の答えが無ければ聞くことが返り、答えを添えて読み直す）→ AI が chart_propose で周期の案を置く → 決定のシートに「- 台帳からの案」が 1 行
 // → 人（試験の台本が押した）が決定のシートで受け、署名して確定する → 確定した版に、台帳から来た計画の印が残る。
 // 台帳は架空の 10 施設（scripts/ledger/demo-core.ts）を一時のフォルダに作る。AI は本物の中継（dist/cli.js mcp）。先に npm run build を走らせておく。
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
@@ -20,6 +20,10 @@ test.beforeAll(async () => {
   work = mkdtempSync(join(tmpdir(), "moyai-e2e-ledger-plan-"));
   repo = join(work, "台帳の clone");
   buildLedgerDemo({ repo: process.cwd(), out: repo, state: join(work, "demo-state"), month: "2026-11" });
+  // clone の版（git の HEAD）を読めるよう、.git の形を置く（根拠に添える版を、橋渡しが今の版と照らす）
+  mkdirSync(join(repo, ".git", "refs", "heads"), { recursive: true });
+  writeFileSync(join(repo, ".git", "HEAD"), "ref: refs/heads/main\n");
+  writeFileSync(join(repo, ".git", "refs", "heads", "main"), `${"c0ffee123456".padEnd(40, "0")}\n`);
   bridge = await startBuiltBridge("moyai-e2e-ledger-plan-state-");
 });
 test.afterAll(() => {
@@ -74,6 +78,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       expect(a, "計画にある塊で、中央の帯の出たものがある").toBeTruthy();
       interval = { commonItem: a.commonItem, work: a.work, band: a.interval.median, n: a.interval.n };
       ledgerVersion = r.ledgerVersion ?? null;
+      expect(ledgerVersion).toBe("c0ffee123456");
     });
 
     let proposalId = "";
@@ -84,7 +89,13 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       const version = (await call(c, "intake_survey", { part: "crosswalk" })).crosswalk.version;
       const basis = `公開の台帳${ledgerVersion ? `（版 ${ledgerVersion}）` : ""}・似た施設 ${iv.n} の間隔の中央の帯 ${iv.band}`;
       const rules = [{ when: [{ field: "assetNode.commonItem", op: "equals", values: [iv.commonItem] }, { field: "work.attribute", op: "equals", values: [iv.work] }], set: { field: "work.trigger", value: years }, reason: "似た施設の間隔の中央の帯から" }];
-      const r = await call(c, "chart_propose", { rules, basedOnVersion: version, basis });
+      // 台帳を根拠にするので、読んだ版と集計の行を添える（橋渡しが、今の台帳の版と似た施設 5 以上を照らす。台帳の中-5）。
+      // 違う版を添えると、案を置かずに断る
+      const wrong: any = await c.callTool({ name: "chart_propose", arguments: { rules, basedOnVersion: version, basis, ledger: { ledgerVersion: "000000000000", commonItem: iv.commonItem, work: iv.work } } });
+      expect(wrong.isError).toBe(true);
+      expect(JSON.stringify(wrong.content)).toContain("照らせません");
+      const ledger = ledgerVersion ? { ledgerVersion, commonItem: iv.commonItem, work: iv.work } : undefined;
+      const r = await call(c, "chart_propose", { rules, basedOnVersion: version, basis, ...(ledger ? { ledger } : {}) });
       expect(r.proposals).toHaveLength(1);
       proposalId = r.proposals[0].id;
       expect(r.proposals[0].works).toBeGreaterThan(0);

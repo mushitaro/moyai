@@ -243,6 +243,8 @@ export interface ChartOptions {
 }
 
 export interface ChartModel {
+  /** 行の切り替え（台帳の段 / 共通の設備項目 × 作業の属性） */
+  mode: RowMode;
   levelNames: string[];
   periods: Period[];
   /** 見える行（表に渡す行） */
@@ -586,6 +588,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   // 似た施設の年度も列にする（自分の計画より前や後の年度でも、印が見えるように）
   const peerYears = overlay ? overlay.places.flatMap((pl) => pl.rows.flatMap((r) => r.peers.flatMap((x) => x.years.map((y) => Number(y.slice(2)))))).filter(Number.isInteger) : [];
   return {
+    mode: opts.mode,
     levelNames,
     periods: buildPeriods(plan, opts.period, [...(opts.layer === "adjusted" ? (opts.changes ?? []) : []).map((c) => c.fiscalYear), ...peerYears]),
     rows,

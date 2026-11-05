@@ -1,6 +1,6 @@
-// 様式で書き出す（docs/screens.md 3.5、運営者の決定 3C、Wire の Export.dc.html V48・V50）：様式の選び（標準・共有フォルダの様式・＋ 様式を落とす）と、
+// 様式で書き出す（docs/screens.md 3.5、運営者の決定 3C、Wire の Export.dc.html V48・V50）：様式の選び（標準・保存先の様式・＋ 様式を落とす）と、
 // 様式を選んでいるときの見本（列の見出しの上の役目を、人が列ごとに直せる）。
-// 様式と写し方（列の役目）は保管先の共有フォルダに置く（橋渡しの template_save）。直すと、その写し方は下書きになる。
+// 様式と写し方（列の役目）は保存先に置く（橋渡しの template_save）。直すと、その写し方は下書きになる。
 // 下書きの写し方は、その写し方で書き出した Excel に人が署名したとき承認される（export_sign。主ボタンは Export.tsx）。
 // 様式の中身は AI に渡さない。
 import { Stack, Table, Text, FileButton, Menu } from "@mantine/core";
@@ -15,7 +15,7 @@ const T = TEXT.export.template;
 const PREVIEW_ROWS = 4;
 const HEAD_ROWS = 30;
 
-/** 共有フォルダの様式の 1 つ（橋渡しの templates_read） */
+/** 保存先の様式の 1 つ（橋渡しの templates_read） */
 export interface SharedTemplate {
   name: string;
   version: string;
@@ -77,8 +77,8 @@ export async function readTemplate(f: File): Promise<{ ok: true; name: string; b
 }
 
 /**
- * 様式の選び（縦の並び：標準・共有フォルダの様式〔右に状態〕・＋ 様式を落とす）と、選んだ様式の見本。
- * onDrop：落とした様式を共有フォルダに置く。onRoles：列の役目を直した写し方を、同じ名前の下書きとして置く
+ * 様式の選び（縦の並び：標準・保存先の様式〔右に状態〕・＋ 様式を落とす）と、選んだ様式の見本。
+ * onDrop：落とした様式を保存先に置く。onRoles：列の役目を直した写し方を、同じ名前の下書きとして置く
  */
 export function TemplateExport({
   plan,

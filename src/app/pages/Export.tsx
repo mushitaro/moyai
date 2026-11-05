@@ -1,6 +1,6 @@
 // EXPORT（docs/screens.md 3.5）：確定した版から、人が見る様式の Excel（MOYAI の標準）を落とす。差分レポートも副のボタンで落とす。
 // Excel は確定のときに橋渡しが保管先に書いたもの（plans/<計画ID>/exports・reports）で、人だけの経路 plan_file_read で読んでブラウザに落とす。
-// 署名と鎖が合わない版の Excel は渡さない。共有フォルダの様式で書き出すときは、書き出した Excel に人が署名する（3C。components/TemplateExport.tsx）：
+// 署名と鎖が合わない版の Excel は渡さない。保存先の様式で書き出すときは、書き出した Excel に人が署名する（3C。components/TemplateExport.tsx）：
 // 主ボタンは 1 つで、まだ書き出していない様式なら「署名して書き出す」、書き出し済みなら「Excel を落とす」（Wire、Export.dc.html V48・V50）。
 import { Alert, Button, Group, Modal, Stack, Table, Text } from "@mantine/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -75,7 +75,7 @@ export function Export() {
   const planId = working?.plan.planId ?? "";
   const [load, reload] = usePlanStatus(client, planId, !!working && state.kind === "open");
   const [busy, setBusy] = useState<"export" | "report" | "sign" | null>(null);
-  // 共有フォルダの様式（null は標準）
+  // 保存先の様式（null は標準）
   const [templates, setTemplates] = useState<SharedTemplate[]>([]);
   const [selected, setSelected] = useState<SharedTemplate | null>(null);
   const [signing, setSigning] = useState(false);
@@ -106,7 +106,7 @@ export function Export() {
     void loadTemplates();
   }, [loadTemplates, latest?.version]);
 
-  // 様式と写し方を共有フォルダに置く（下書き）。base64 が空なら、from の版の様式のファイルを使い、写し方だけを直す
+  // 様式と写し方を保存先に置く（下書き）。base64 が空なら、from の版の様式のファイルを使い、写し方だけを直す
   const save = async (name: string, base64: string, columns: TemplateColumns, from: string | null): Promise<string | null> => {
     const r = readHuman<{ ok: boolean; name: string; version: string }>(await client.callHuman("template_save", ROUTES.templateSave.path, { name, base64, columns, from }));
     if (!r.ok) return r.message;
@@ -232,7 +232,7 @@ export function Export() {
         </Group>
       </Group>
       {latest && selected && (
-        <Modal opened={signing} onClose={() => setSigning(false)} title={T.template.dialogTitle(latest.version, selected.name)} centered size={560} data-testid="export-sign-dialog">
+        <Modal opened={signing} onClose={() => setSigning(false)} title={T.template.dialogTitle(selected.name)} centered size={560} data-testid="export-sign-dialog">
           <Stack gap="sm">
             {!selected.approval && (
               <div>

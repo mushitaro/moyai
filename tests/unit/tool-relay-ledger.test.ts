@@ -48,4 +48,44 @@ describe("ToolRelay", () => {
     expect(t.rows).toBe(3);
     expect(t.bytes).toBe(log[0]!.bytes + log[2]!.bytes);
   });
+
+  it("台帳を根拠にした周期の案は、今の台帳の版と、この会話で読んだ集計の似た施設 5 以上を照らしてから渡す（台帳の中-5）", async () => {
+    const V = "abcdef012345";
+    let head: string | null = V;
+    const sent: string[] = [];
+    const tab = {
+      callTool: async (name: string) => {
+        sent.push(name);
+        if (name === "peer_reference") return { kind: "ok", data: { mode: "ledger" } };
+        return { kind: "ok", data: { matched: 2, conflicts: 0, examples: [], proposals: [], version: 1 } };
+      },
+    } as unknown as TabHub;
+    const stat = (n: number) => (n >= 5 ? { shown: "median", n, median: "I3", q1: "I2", q3: "I4" } : n >= 3 ? { shown: "range", n, low: "I2", high: "I4" } : { shown: "x" });
+    const agg = (commonItem: string, n: number) => ({ place: "ledger", commonItem, work: "OVERHAUL", interval: stat(n), manDays: { shown: "x" }, days: { shown: "x" } });
+    const relay = new ToolRelay(tab, {}, {
+      peer_reference: async () => ({ mode: "ledger", position: "municipal", floorK: 3, places: [], aggregates: [agg("WI.A", 6), agg("WI.B", 4)], cards: [], ledgerVersion: head, needs: [], reason: null }),
+      ledger_version: async () => head,
+    });
+    const propose = (commonItem: string, ledgerVersion = V) =>
+      relay.run("chart_propose", { rules: [{ when: [], set: { field: "work.trigger", value: 3 }, reason: "台帳" }], basedOnVersion: 1, basis: "台帳", ledger: { ledgerVersion, commonItem, work: "OVERHAUL" } }, "c1");
+    const code = (a: Awaited<ReturnType<typeof propose>>) => ("error" in a ? a.error.code : "ok");
+
+    // 台帳をまだ読んでいない会話では渡さない
+    expect(code(await propose("WI.A"))).toBe("ledger_basis_unchecked");
+    expect(sent).toEqual([]);
+    await relay.run("peer_reference", { place: "ledger" }, "c1");
+    // 似た施設 6（中央の帯）なら渡す。4（幅の帯）・読んでいない項目・違う版は渡さない
+    expect(code(await propose("WI.A"))).toBe("ok");
+    expect(code(await propose("WI.B"))).toBe("ledger_basis_unchecked");
+    expect(code(await propose("WI.C"))).toBe("ledger_basis_unchecked");
+    expect(code(await propose("WI.A", "000000000000"))).toBe("ledger_basis_unchecked");
+    // 別の会話で読んだ集計は使えない
+    expect(code(await relay.run("chart_propose", { rules: [], basedOnVersion: 1, basis: "台帳", ledger: { ledgerVersion: V, commonItem: "WI.A", work: "OVERHAUL" } }, "c2"))).toBe("ledger_basis_unchecked");
+    // 台帳を pull して版が変わったら、読み直すまで渡さない
+    head = "111111111111";
+    expect(code(await propose("WI.A", head))).toBe("ledger_basis_unchecked");
+    expect(sent.filter((n) => n === "chart_propose")).toHaveLength(1);
+    // 台帳を根拠にしない案（ledger を添えない）は前のとおり渡す
+    expect(code(await relay.run("chart_propose", { rules: [], basedOnVersion: 1, basis: "利用者の答え" }, "c1"))).toBe("ok");
+  });
 });

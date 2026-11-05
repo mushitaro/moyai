@@ -66,6 +66,8 @@ export interface GridHandlers {
   onFold(level: number): void;
   onSelect(rowId: string, periodKey: string | null): void;
   onOpenFolded(rowId: string): void;
+  /** 共通の設備項目で見るとき、設備の見出しの行を押して、その設備の行を畳む・開く（Wire、2026-11-05） */
+  onToggle?(rowId: string): void;
   onEditStopped(): void;
   /** 行を渡し終えたとき（描くのは AG Grid が次の描画の枠でする） */
   onRendered(): void;
@@ -224,7 +226,49 @@ function textWidth(t: string): number {
 const LEVEL_MIN = [170, 160];
 const LEVEL_MAX = 360;
 
+/**
+ * 共通の設備項目 × 作業の属性で見るときの行の見出しは 1 列（Wire、2026-11-05。絵は Fold.dc.html）：
+ * 設備は見出しの行、その下は「計量機 › 点検」（項目 › 作業）の 1 行。列の見出しは「共通の設備項目 › 作業」
+ */
+export function commonRowText(row: ChartRow): string {
+  if (row.kind === "peer" || row.kind === "stat") return row.levelCells[row.levelCells.length - 1] ?? "";
+  // 設備の見出しの行：名前の左に ▾（開いている）か ▸（畳んだ）。押すと、その設備の行を畳む・開く
+  if (row.level === 1 && row.kind === "node" && row.hasChildren) return `${row.folded ? T.foldClosed : T.foldOpen} ${levelText(row, 0)}`;
+  if (row.level === 1 || row.kind === "unmapped") return levelText(row, row.level - 1);
+  if (row.level === 2) return levelText(row, 1);
+  const [, item, attr] = row.path;
+  const text = `${item ?? ""}${T.commonSep}${attr ?? ""}`;
+  return row.count === null ? text : `${text}（${T.units(row.count)}）`;
+}
+
+/** 1 列のときに表へ渡す行：項目の行は、その下に作業の行があれば出さない（作業の行が「項目 › 作業」を言う） */
+export function commonRowsShown(rows: readonly ChartRow[]): ChartRow[] {
+  return rows.filter((r) => !(r.kind === "node" && r.level === 2 && r.hasChildren && !r.folded));
+}
+
 function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandlers): ColDef<ChartRow>[] {
+  if (model.mode === "common")
+    return [
+      {
+        colId: "lv1",
+        headerName: T.commonOneCol,
+        pinned: "left",
+        lockPinned: true,
+        width: Math.min(LEVEL_MAX + 120, Math.max(LEVEL_MIN[0]!, ...model.rows.map((r) => textWidth(commonRowText(r)) + 40))),
+        tooltipValueGetter: (p) => (p.data ? commonRowText(p.data) : null),
+        valueGetter: (p) => {
+          if (!p.data) return "";
+          const marks = (p.context as GridContext | undefined)?.comments?.get(p.data.id);
+          return marks ? `${commonRowText(p.data)}　${marks}` : commonRowText(p.data);
+        },
+        cellClass: "moyai-lv",
+        cellClassRules: {
+          "moyai-common-head": (p: CellClassParams<ChartRow>) => !!p.data && p.data.level === 1 && p.data.kind === "node",
+          "moyai-lv-folded": (p: CellClassParams<ChartRow>) => !!p.data?.folded,
+          "moyai-lv-own": (p: CellClassParams<ChartRow>) => !!p.data,
+        },
+      },
+    ];
   return model.levelNames.map((name, i) => ({
     colId: `lv${i + 1}`,
     headerName: name,
@@ -337,6 +381,7 @@ export class ChartGrid {
   private api: GridApi<ChartRow>;
   private colKey = "";
 
+  private mode: ChartModel["mode"] = "ledger";
   constructor(el: HTMLElement, private h: GridHandlers) {
     this.api = createGrid<ChartRow>(el, {
       theme,
@@ -364,6 +409,7 @@ export class ChartGrid {
         if (node?.data) this.select(node.data.id, col);
       },
       onCellClicked: (e) => {
+        if (e.data && this.mode === "common" && e.column.getColId() === "lv1" && e.data.kind === "node" && e.data.level === 1 && e.data.hasChildren) this.h.onToggle?.(e.data.id);
         if (e.data) this.select(e.data.id, e.column.getColId());
       },
       onCellDoubleClicked: (e) => {
@@ -379,13 +425,14 @@ export class ChartGrid {
 
   /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
   update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null, comments?: ReadonlyMap<string, string>) {
+    this.mode = model.mode;
     this.api.setGridOption("context", { proposals, compare, comments } satisfies GridContext);
     const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band]);
     if (key !== this.colKey) {
       this.colKey = key;
       this.api.setGridOption("columnDefs", columns(model, foldLevel, this.h, band));
     }
-    this.api.setGridOption("rowData", model.rows);
+    this.api.setGridOption("rowData", model.mode === "common" ? commonRowsShown(model.rows) : model.rows);
     // 行の中身が同じ鍵のまま変わったとき（畳む・層の切り替え）に、セルの文字とクラスを描き直す
     this.api.refreshCells({ force: true });
     this.h.onRendered();

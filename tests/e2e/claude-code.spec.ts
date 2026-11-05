@@ -110,7 +110,8 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   const plans = readdirSync(join(root, "plans"));
   const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
   expect(rec.plan.assets.filter((a: any) => a.commonItemAccepted).length).toBe(accepted);
-  await page.getByTestId("to-checkpoint").click();
+  await page.getByTestId("confirm-close").click();
+  await page.getByTestId("tab-share").click();
 
   // 検問所 → 署名 → 輪
   await expect(page.getByTestId("checkpoint-page")).toBeVisible();

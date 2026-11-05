@@ -106,7 +106,9 @@ function skillsOf(ws: IntakeWorkspace) {
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   chart_propose: (ws, args) => chartPropose(ws, args),
   reading_rules_propose: (ws, args) => {
-    const rules = ws.proposeReading(String(args.name), args.scope as ReadingScope, args.rules as ReadingRule[]);
+    // AI の経路から来た規則は、作者を AI に固め、決めた人の呼び名は捨てる（人と名乗らせない。台帳の新-8）
+    const fromAi = (args.rules as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);
+    const rules = ws.proposeReading(String(args.name), args.scope as ReadingScope, fromAi);
     const an = ws.analysis();
     const unresolved = [...an.composition.status.values()].filter((x) => x.s === "unresolved").length;
     ws.note("ai", T.readingProposed(String(args.name), (args.rules as unknown[]).length));

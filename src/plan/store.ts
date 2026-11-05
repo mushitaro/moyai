@@ -11,6 +11,7 @@ import { join } from "node:path";
 import ExcelJS from "exceljs";
 import type { AuthorKind } from "../shared/fields";
 import { Plan } from "../shared/plan";
+import type { Rule } from "../shared/tools";
 import type { ChartCatalog } from "./chart";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
@@ -61,9 +62,46 @@ export interface VersionRecord {
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
   /** この版を作るのに使った読み方（3 段目の Skill）：名前・保管先からの道・版。署名した版が使った読み方は承認済み（docs/plan.md §2.17） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /**
+   * 次の版に重ねるための記録（1C・重-2。Architect の形）：この版を組んだ資料（中身のアドレス plans/<計画ID>/sources/<SHA-256>）、
+   * その資料に下した取り込みの決定、人が受けた当てはめの規則。次の版はこの資料と決定で組み直し、新しい資料を足す。
+   * 当てはめは「第 n 版と同じ」の案として並べ、人が受けるまで決めない。写真のある版と前の形の版には無い（このタブの資料だけで組み直す）
+   */
+  sources?: VersionSource[];
+  decisions?: VersionDecision[];
+  crosswalk?: VersionCrosswalkRule[];
+  /** 聞いた数（運営者の決定 2A）：取り込みで出た質問の数と、決定の数を作者ごとに。年ごとに「聞く数が減った」を署名のある記録で示す */
+  intake?: VersionIntake;
   /** この版の差分レポートと書き出しの SHA-256（署名の中に入る。落とすときに照らす。監査 E1）。前に確定した版には無い */
   files?: { report: string; export: string | null };
   plan: Plan;
+}
+
+/** 版を組んだ資料（name は表示だけ。置き場所は SHA-256 だけで決める） */
+export interface VersionSource {
+  name: string;
+  sha256: string;
+  size: number;
+}
+/** 版を組んだ資料に下した取り込みの決定（作者のまま。sources はその決定が掛かった資料の SHA-256） */
+export interface VersionDecision {
+  questionId: string;
+  answer: string;
+  author: AuthorKind;
+  reason: string;
+  sources: string[];
+}
+/** 聞いた数（2A）：質問の数と、作者ごとの決定の数 */
+export interface VersionIntake {
+  questions: number;
+  decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number };
+}
+/** 人が受けた当てはめの規則（次の版で「第 n 版と同じ」の案として並べる） */
+export interface VersionCrosswalkRule {
+  rule: Rule;
+  target: "assetNode" | "work";
+  value: string;
+  basis: string;
 }
 
 /** 版の署名を読んで確かめたもの（鍵を信じるかは呼ぶ側が覚えた鍵と照らす） */
@@ -280,6 +318,12 @@ export interface CommitInput {
   catalogs?: CatalogsFor;
   /** 使った読み方（橋渡しが保管先に書いて、道と版を決めたもの） */
   readingSkills?: { name: string; path: string; version: string }[];
+  /** 聞いた数（2A） */
+  intake?: VersionIntake;
+  /** 次の版に重ねるための記録（確かめは呼ぶ側の橋渡しがする） */
+  sources?: VersionSource[];
+  decisions?: VersionDecision[];
+  crosswalk?: VersionCrosswalkRule[];
   /** ほかの施設の版から作った第 1 版のとき、その計画・版・中身のハッシュ（確かめで合う版だけ） */
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
 }
@@ -324,6 +368,10 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     now: i.now ?? new Date(),
     catalogs: i.catalogs ?? null,
     readingSkills: i.readingSkills ?? [],
+    sources: i.sources,
+    decisions: i.decisions,
+    crosswalk: i.crosswalk,
+    intake: i.intake,
     signer: i.signer,
     role: i.role ?? "confirm",
     derivedFrom: from,
@@ -359,6 +407,10 @@ export async function revertPlan(i: {
     client: i.client,
     now: i.now ?? new Date(),
     catalogs: i.catalogs ?? null,
+    // 戻した先の版の資料・決定・規則も写す（次の版は、戻した先の版に重ねる）
+    sources: record.sources,
+    decisions: record.decisions,
+    crosswalk: record.crosswalk,
     signer: i.signer,
   });
 }
@@ -376,6 +428,10 @@ async function writeVersion(
     now: Date;
     catalogs: CatalogsFor | null;
     readingSkills?: { name: string; path: string; version: string }[];
+    sources?: VersionSource[];
+    decisions?: VersionDecision[];
+    crosswalk?: VersionCrosswalkRule[];
+    intake?: VersionIntake;
     signer: Signer;
     role?: "confirm" | "edit";
     derivedFrom?: VersionRecord["derivedFrom"];
@@ -403,10 +459,12 @@ async function writeVersion(
       : null,
     derivedFrom: v.derivedFrom ?? null,
     ...(v.readingSkills?.length ? { readingSkills: v.readingSkills } : {}),
+    ...(v.sources ? { sources: v.sources, decisions: v.decisions ?? [], crosswalk: v.crosswalk ?? [] } : {}),
+    ...(v.intake ? { intake: v.intake } : {}),
     plan,
   };
   // 差分レポートと書き出しは署名の前に作り、そのハッシュを版の記録に入れる（落とすときに照らす。監査 E1）
-  const reportBytes = await diffReport(base, diff);
+  const reportBytes = await diffReport(base, diff, v.signer.by);
   const c = v.catalogs ? v.catalogs(plan.packId) : null;
   const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty }) : null;
   const { plan: _plan, ...head } = base;
@@ -445,7 +503,7 @@ async function writeVersion(
   return { ok: true, version, record, diff, files: { version: versionPath, report: reportPath, export: exportPath } };
 }
 
-export type SignResult = { ok: true; version: number; role: "approve" | "return" } | { ok: false; reason: "nameInvalid" | "reasonEmpty" | "notLatest" | "historyBroken" | "selfApprove" | "exists" };
+export type SignResult = { ok: true; version: number; role: "approve" | "return" } | { ok: false; reason: "nameInvalid" | "reasonEmpty" | "notLatest" | "historyBroken" | "selfApprove" | "exists" | "alreadySigned" };
 
 /**
  * いちばん新しい版に、承認（approve）か差し戻し（return。理由は必須）の署名を足す（docs/plan.md §2.18.2）。
@@ -459,6 +517,8 @@ export async function signLatest(i: { root: string; planId: string; version: num
   const v = hist.versions.at(-1);
   if (!v || v.version !== i.version) return { ok: false, reason: "notLatest" };
   if (v.problem !== null) return { ok: false, reason: "historyBroken" };
+  // 承認か差戻しがもうある版には、どちらも重ねない（両方が残ると、編集者の番が開いたままになる。台帳の新-7）
+  if (v.signatures.some((x) => x.role === "approve" || x.role === "return")) return { ok: false, reason: "alreadySigned" };
   const key = keyIdOf(i.signer.pair.pub);
   if (i.role === "approve" && v.signatures.some((x) => CREATION_ROLES.includes(x.role) && (x.key === key || x.by === i.signer.by))) return { ok: false, reason: "selfApprove" };
   const at = (i.now ?? new Date()).toISOString();
@@ -503,6 +563,9 @@ export const REPORT_TEXT = {
   sheet: "差分",
   title: "計画の差分レポート",
   plan: "計画",
+  planId: "計画 ID",
+  by: "署名した人",
+  intake: (x: VersionIntake) => `聞いた質問 ${x.questions}・決定 人 ${x.decisions.human}・Claude ${x.decisions.ai}・会話から写した答え ${x.decisions.ai_relayed_human}・決まり ${x.decisions.rule_code}`,
   version: "版",
   kind: { confirm: "確定", revert: (n: number) => `第 ${n} 版に戻した` },
   at: "確定した時刻",
@@ -523,7 +586,7 @@ export const REPORT_TEXT = {
 };
 
 /** 差分レポートの xlsx（人が見る様式：見出しの固定、列の幅、A4 横）。 */
-export async function diffReport(record: VersionRecord, diff: PlanDiff): Promise<Buffer> {
+export async function diffReport(record: VersionRecord, diff: PlanDiff, by: string | null = null): Promise<Buffer> {
   const T = REPORT_TEXT;
   const wb = new ExcelJS.Workbook();
   wb.created = new Date(record.at);
@@ -535,9 +598,10 @@ export async function diffReport(record: VersionRecord, diff: PlanDiff): Promise
   const title = ws.getRow(1);
   title.getCell(1).value = `${T.title}${record.plan.facility.fictional ? `　${T.fiction}` : ""}`;
   title.font = { bold: true, size: 14 };
-  ws.getRow(2).values = [T.plan, record.plan.displayName];
-  ws.getRow(3).values = [T.version, record.version, record.kind === "confirm" ? T.kind.confirm : T.kind.revert(record.revertOf ?? 0)];
-  ws.getRow(4).values = [T.at, record.at];
+  // 頭：計画 ID と署名した人（台帳の中-7）、聞いた数（2A）。中身のハッシュは、このレポートのハッシュが版の記録に入るので書けない（E1）
+  ws.getRow(2).values = [T.plan, record.plan.displayName, "", T.planId, record.planId];
+  ws.getRow(3).values = [T.version, record.version, record.kind === "confirm" ? T.kind.confirm : T.kind.revert(record.revertOf ?? 0), ...(record.intake ? [T.intake(record.intake)] : [])];
+  ws.getRow(4).values = [T.at, record.at, "", T.by, by ?? ""];
   ws.getRow(5).values = [T.reason, record.reason];
   ws.getRow(6).values = [T.summary(record.summary), "", "", "", "", "", T.accepted(record.acceptances.length)];
   const head = ws.getRow(7);

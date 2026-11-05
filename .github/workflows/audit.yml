@@ -55,6 +55,7 @@ jobs:
             # 呼んでいないことを、その回の記録として残す（費用を写す道具が $0 の根拠に使う）
             mkdir -p .cache/audit
             printf '{"runKey":"%s-%s","called":false,"reason":"no-key"}\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > ".cache/audit/run-$GITHUB_RUN_ID.json"
+            echo "AUDIT_CALLED=uncalled" >> "$GITHUB_ENV"
             exit 0
           fi
           node scripts/audit/audit.mjs
@@ -62,6 +63,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: audit-result
+          # 呼んだかを名前に出す（次の回の見積もりが、呼ばなかった回を $0 と見る。台帳の CI-1b）。分からなければ called（多めに見る）
+          name: audit-result-${{ env.AUDIT_CALLED == 'uncalled' && 'uncalled' || 'called' }}
           path: .cache/audit/*.json
           if-no-files-found: ignore

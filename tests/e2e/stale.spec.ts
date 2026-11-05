@@ -72,11 +72,11 @@ test("ほかの人が新しい版を足したら知らせて署名を止め、�
 
   await test.step("山田：タブに戻ると、保管先に新しい版があると出て、署名は止まる", async () => {
     await pa.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-    await expect(pa.getByTestId("merge-stale")).toContainText("保管先に新しい版（第 2 版、【架空】課長）があります。");
+    await expect(pa.getByTestId("merge-stale")).toContainText("保存先に新しい版（第 2 版、【架空】課長）があります。");
     // 見出しは、この編集がつくるつもりの版（第 1 版の次）
     await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
     await expect(pa.getByTestId("confirm-open")).toBeDisabled();
-    await expect(pa.getByTestId("confirm-disabled-reason")).toContainText("保管先に新しい版があります");
+    await expect(pa.getByTestId("confirm-disabled-reason")).toContainText("保存先に新しい版があります");
     await pa.screenshot({ path: shot(`stale-${tag}`) });
   });
 

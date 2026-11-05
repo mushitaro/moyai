@@ -37,7 +37,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
   // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする
   const ringRoot = join(tmpdir(), `moyai-e2e-slice-ring-${tag}-${Date.now()}`, "輪のフォルダ");
   rings.push(join(ringRoot, ".."));
-  const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose"]);
+  const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose", "reading_rules_propose"]);
   try {
     await test.step("人：設定で置き場所を選び、輪を作って鍵を作る", async () => {
       await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
@@ -203,7 +203,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       copyFileSync(join(planDir, "exports", "000001-plan.xlsx"), shot(`slice-export-${tag}`).replace(/\.png$/, ".xlsx"));
       copyFileSync(join(planDir, "reports", "000001-diff.xlsx"), shot(`slice-diff-${tag}`).replace(/\.png$/, ".xlsx"));
       await page.screenshot({ path: shot(`slice-confirmed-${tag}`) });
-      await page.getByTestId("to-checkpoint").click();
+      await page.getByTestId("confirm-close").click();
+      await page.getByTestId("tab-share").click();
     });
 
     await test.step("検問所：見え方を選ぶと、k ≥ 5 の段で塊が出て、数がすべて 0", async () => {
@@ -230,7 +231,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
 
     await test.step("人が押して署名し、輪に置き、受け手と同じ関数で ✓。CLI の verify ring でも ✓", async () => {
       await page.getByTestId("send").click();
-      await expect(page.getByTestId("sent")).toContainText("束を輪に置きました");
+      await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
       await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
       await expect(page.locator('[data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
       await expect(page.locator('[data-testid="verify-line"][data-kind="bundle"][data-status="ok"]')).toHaveCount(1);
@@ -239,6 +240,83 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       expect(v.status, v.stderr).toBe(0);
       expect(v.stderr).toContain("✓ 束 bundles/");
       expect(v.stderr).toContain("すべて ✓ です。");
+    });
+
+    await test.step("次の版（1C・重-2）：トップの「＋ 次の版」で第 1 版を組んだ資料と決定が戻り、作り直すと第 1 版の当てはめが「第 1 版と同じ」の案として並ぶ", async () => {
+      // 版の記録に資料の SHA-256 が入り、資料は中身のアドレスに置かれている
+      const plans = readdirSync(join(root, "plans"));
+      const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
+      expect(rec.sources.map((x: { name: string }) => x.name).sort()).toEqual(["daily-report.csv", "equipment-ledger.xlsx", "plan-hoshitori.xlsx"]);
+      expect(readdirSync(join(root, "plans", plans[0]!, "sources")).sort()).toEqual(rec.sources.map((x: { sha256: string }) => x.sha256).sort());
+      expect(rec.crosswalk.length).toBeGreaterThan(0);
+      await page.evaluate(() => (location.hash = "#/"));
+      await page.getByTestId("moyai-next").first().click();
+      // 第 1 版の資料と決定が戻るまでは作り直せない（戻し終えると押せる）。質問は戻した決定で残らない
+      await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
+      await expect(page.getByTestId("sheet-file")).toHaveCount(3);
+      await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("compose")).toBeEnabled();
+      await page.getByTestId("compose").click();
+      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await page.getByTestId("sheet-decisions").click();
+      const kinds = page.getByTestId("decisions-kind");
+      await expect(kinds).toContainText("第 1 版と同じ");
+      await kinds.locator("button", { hasText: "第 1 版と同じ" }).click();
+      // 黙って引き継がない：どの規則も案で、人が 1 回押すまで決まらない
+      await expect(page.locator('[data-testid="crosswalk-rule"][data-same="1"][data-state="proposed"]').first()).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId("decisions-reason")).toHaveValue("第 1 版で受けた当てはめと同じ");
+      await page.screenshot({ path: shot(`slice-carry-${tag}`), fullPage: true });
+      await expect(page.getByTestId("decisions-bulk-accept")).toContainText("第 1 版と同じ");
+      await page.getByTestId("decisions-bulk-accept").click();
+      await expect(page.locator('[data-testid="crosswalk-rule"][data-same="1"][data-state="proposed"]')).toHaveCount(0);
+      // 写し（Wire の確かめ）：下書きの読み方を 2 つ置いた読み方のシート、資料のタブ、横の板をたたんだ星取表（共通の設備項目の 1 列の見出し）
+      const base = { author: "ai", reason: "利用者が会話で決めた（試験の台本）" };
+      await call(c, "reading_rules_propose", { name: "【架空】縦の一本の読み方", scope: "facility", rules: [{ ...base, id: "s1", text: "「ブロワー」と「ブロワ」は同じ機器", kind: "sameAsset", names: ["ブロワー", "ブロワ"] }] });
+      await call(c, "reading_rules_propose", { name: "【架空】日報の書き方", scope: "facility", rules: [{ ...base, id: "m1", text: "▲ は実績", kind: "markMeaning", symbol: "▲", planOrActual: "actual" }] });
+      // 案を置いた直後は描き直しが続くので、シートが切り替わるまで押し直す
+      await expect(async () => {
+        await page.getByTestId("sheet-readings").click();
+        await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "readings", { timeout: 2000 });
+      }).toPass({ timeout: 30_000 });
+      await page.screenshot({ path: shot(`slice-readings-${tag}`), fullPage: true });
+      await expect(async () => {
+        await page.getByTestId("sheet-file").first().click();
+        await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files", { timeout: 2000 });
+      }).toPass({ timeout: 30_000 });
+      await page.screenshot({ path: shot(`slice-files-${tag}`), fullPage: true });
+      await page.getByTestId("sheet-chart").click();
+      await expect(page.locator(".ag-row").first()).toBeVisible();
+      await page.getByTestId("side-fold").click();
+      await expect(page.getByTestId("merge-side-band")).toBeVisible();
+      await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
+      await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
+      await expect(page.locator(".ag-row").first()).toBeVisible();
+      await page.screenshot({ path: shot(`slice-chart-folded-${tag}`), fullPage: true });
+      // キー ］ で開き直す（覚えた開け閉めを次の試験に残さない）
+      await page.keyboard.press("]");
+      await expect(page.getByTestId("merge-side")).toBeVisible();
+    });
+
+    await test.step("同じタブで第 2 版を確定して作り直すと、案は「第 2 版と同じ」になる（台帳の新-9）", async () => {
+      // 写しのために読み方の下書きを置いたので、作り直すまで署名できない（台帳の中-6）。作り直してから受ける
+      await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
+      await page.getByTestId("compose").click();
+      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await acceptDecisions(page, "試験の台本が押した（第 2 版の決定を受けた）");
+      await page.getByTestId("confirm-open").click();
+      await page.getByTestId("confirm-reason").fill("縦の 1 本：第 1 版の資料と当てはめを重ねた第 2 版（e2e）");
+      await expect(page.getByTestId("confirm-submit")).toBeEnabled();
+      await page.getByTestId("confirm-submit").click();
+      await expect(page.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+      await page.getByTestId("confirm-close").click();
+      await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
+      await page.getByTestId("compose").click();
+      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await page.getByTestId("sheet-decisions").click();
+      await expect(page.getByTestId("decisions-kind")).toContainText("第 2 版と同じ", { timeout: 60_000 });
+      await expect(page.getByTestId("decisions-kind")).not.toContainText("第 1 版と同じ");
     });
   } finally {
     await c.close();

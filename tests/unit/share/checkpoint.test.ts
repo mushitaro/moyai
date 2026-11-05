@@ -12,6 +12,7 @@ import { createRing, loadRing, previewCheckpoint, questionsOf, sendCheckpoint, v
 import { parseJsonStrict } from "../../../src/share/jcs";
 import type { SharePack } from "../../../src/share/pack";
 import { BUNDLES_DIR } from "../../../src/share/ring";
+import { knownMaxSeq } from "../../../src/share/ring-seen";
 import { formatReport, keysCli, ringsAt, sendCli, verifyRingCli } from "../../../src/cli/human";
 import { FACILITY_COMMON, SPEC, detail, plan, smallPlan, table, vocab } from "./fixtures";
 
@@ -228,3 +229,45 @@ describe("CLI：verify ring と、人だけの CLI", () => {
   });
 });
 
+
+describe("仲間ごとに見た最大の seq（台帳の D3）", () => {
+  it("輪を読むたびに ✓ の束の seq を覚え、末尾の束が消えたら chain.vanished で ✗。下回っても覚え直さない。保管先が違えば別に覚える", async () => {
+    const { stateDir, root, ringId, ring } = await setup();
+    const p = smallPlan();
+    const v = previewCheckpoint(ring, senderFor(stateDir, ringId), PACK, p, ANSWERS, MONTH);
+    const s1 = await sendCheckpoint(ring, senderFor(stateDir, ringId), PACK, p, ANSWERS, MONTH, v.bodyHash!, NOW, pending);
+    if (!s1.ok) throw new Error(s1.reason);
+    const key = keyIdOf(senderFor(stateDir, ringId).pair.pub);
+    const ring2 = await loadRing(stateDir, ringId, PACK, [key]);
+    if (!ring2.ok) throw new Error(ring2.reason);
+    const p2 = plan({ ...smallPlan(), details: [...smallPlan().details, detail("d9", "w2", 2021, { manDays: 3, days: 1 })] });
+    const v2 = previewCheckpoint(ring2, senderFor(stateDir, ringId), PACK, p2, ANSWERS, MONTH);
+    const s2 = await sendCheckpoint(ring2, senderFor(stateDir, ringId), PACK, p2, ANSWERS, MONTH, v2.bodyHash!, NOW, pending);
+    if (!s2.ok) throw new Error(s2.reason);
+
+    // 読むと 2 を覚える
+    const r3 = await loadRing(stateDir, ringId, PACK, [key]);
+    if (!r3.ok) throw new Error(r3.reason);
+    expect(r3.read.members.find((m) => m.key === key)).toMatchObject({ status: "ok" });
+    expect(knownMaxSeq(stateDir, root, ringId).get(key)).toBe(2);
+
+    // 末尾の束（seq 2）を消すと、鎖だけでは気づけないが、覚えた seq で ✗
+    rmSync(s2.path);
+    const r4 = await loadRing(stateDir, ringId, PACK, [key]);
+    if (!r4.ok) throw new Error(r4.reason);
+    expect(r4.read.members.find((m) => m.key === key)).toMatchObject({ status: "ng", reasons: expect.arrayContaining(["chain.vanished"]) });
+    expect(r4.read.latestBundles.map((b) => b.key)).not.toContain(key);
+    const rep = await verifyRing(root, ringId, PACK, r4.confirmed, r4.known);
+    expect(rep.ok).toBe(false);
+    expect(rep.lines.find((l) => l.kind === "member" && l.name === key)?.reasons).toContain("chain.vanished");
+    // 覚えた値は下げない（もう一度読んでも ✗ のまま）
+    expect(knownMaxSeq(stateDir, root, ringId).get(key)).toBe(2);
+    const r5 = await loadRing(stateDir, ringId, PACK, [key]);
+    if (!r5.ok) throw new Error(r5.reason);
+    expect(r5.read.members.find((m) => m.key === key)?.reasons).toContain("chain.vanished");
+    // 覚えた値を渡さなければ、消えたことは見えない（だから画面の経路と CLI は状態フォルダから渡す）
+    expect((await verifyRing(root, ringId, PACK, r5.confirmed)).lines.find((l) => l.kind === "member" && l.name === key)?.reasons ?? []).not.toContain("chain.vanished");
+    // 別の保管先の同じ輪 ID は別に覚える
+    expect(knownMaxSeq(stateDir, join(dir, "ほかの場所"), ringId).size).toBe(0);
+  });
+});

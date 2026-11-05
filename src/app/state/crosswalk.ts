@@ -22,6 +22,17 @@ import { SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, type CrosswalkSurvey, type Rule } f
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { TEXT } from "../text";
 import { getWorkingPlan, setWorkingPlan, updateWorkingPlan } from "./plan-store";
+import { AMBIGUOUS_KEY_PREFIX } from "../../import/compose";
+import { cycleIdOf } from "../../plan/cycle";
+
+/** もとにした版（1C）：MERGE で版を開いたときに置く。作り直すと、その版の当てはめを「第 n 版と同じ」の案として並べる */
+let base: { version: number; plan: Plan; crosswalk: readonly { rule: Rule; basis: string }[] } | null = null;
+export function setCrosswalkBase(b: typeof base): void {
+  base = b;
+}
+export function getCrosswalkBase(): typeof base {
+  return base;
+}
 
 const T = TEXT.crosswalk;
 
@@ -140,16 +151,49 @@ export function crosswalkSurvey(): CrosswalkSurvey | null {
 export function placeComposedPlan(next: Plan): CarryOverReport | null {
   const prev = getWorkingPlan();
   const same = prev !== null && prev.origin === "intake" && prev.plan.planId === next.planId;
+  const b = base && base.plan.planId === next.planId ? base : null;
   const any =
     same &&
-    (prev.proposals.length > 0 || prev.plan.assets.some((a) => a.commonItem !== null) || prev.plan.works.some((w) => w.attribute !== null));
+    (b !== null || prev.proposals.length > 0 || prev.plan.assets.some((a) => a.commonItem !== null) || prev.plan.works.some((w) => w.attribute !== null));
   if (!same || !any) {
     setWorkingPlan(next, "intake");
     return null;
   }
-  const r = carryOverCrosswalk(prev.plan, prev.proposals, next, itemCodesOf(catalogFor(next.packId)), T.acceptedBasis);
-  setWorkingPlan(r.plan, "intake", r.proposals);
+  const r = carryOverCrosswalk(
+    prev.plan,
+    prev.proposals,
+    next,
+    itemCodesOf(catalogFor(next.packId)),
+    T.acceptedBasis,
+    b ? { ...b, reason: T.sameAs(b.version), ambiguousPrefix: AMBIGUOUS_KEY_PREFIX } : null,
+  );
+  setWorkingPlan(b ? carryFromBase(r.plan, b.plan, b.version) : r.plan, "intake", r.proposals);
   return r.report;
+}
+
+/**
+ * もとにした版から、当てはめのほかに引き継ぐもの（台帳の新-10）：
+ * - 施設の見え方の答え（profile・全国の表に載るか）は、作り直した計画に無ければ写す（人が施設の設定で答えたもの）
+ * - 人が受けた周期の案（台帳から置いた計画の印）は、同じ作業があれば「第 n 版と同じ」の案として並べ直す。
+ *   根拠に「第 n 版で受けた当てはめと同じ」を足すので、決定の中身が変わり、人がもう一度受けるまで決まらない
+ */
+/** 根拠の末尾の「。第 n 版で受けた当てはめと同じ」（T.sameAs と同じ形） */
+const SAME_AS_TAIL = new RegExp(`。${T.sameAs(0).replace("0", String.raw`\d+`)}$`);
+export function carryFromBase(plan: Plan, basePlan: Plan, version: number): Plan {
+  const f = plan.facility;
+  const bf = basePlan.facility;
+  const facility = {
+    ...f,
+    ...(f.profile === undefined && bf.profile !== undefined ? { profile: bf.profile } : {}),
+    inNationalTable: f.inNationalTable ?? bf.inNationalTable,
+  };
+  const works = new Set(plan.works.map((w) => w.workKey));
+  const have = new Set(plan.details.map((d) => d.detailKey));
+  const carried = basePlan.details
+    .filter((d) => cycleIdOf(d.detailKey) !== null && works.has(d.workKey) && !have.has(d.detailKey))
+    // 前の版で足した同じ形の言葉は外してから足す（版を重ねても「…第 2 版と同じ。第 3 版と同じ」と伸ばさない）
+    .map((d) => ({ ...d, basis: `${d.basis.replace(SAME_AS_TAIL, "")}。${T.sameAs(version)}` }));
+  return { ...plan, facility, details: [...plan.details, ...carried] };
 }
 
 // ─── 人の道（画面だけが呼ぶ） ─────────────────────────────────────

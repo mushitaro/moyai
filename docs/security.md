@@ -57,9 +57,11 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/request-receive` | `request_receive` | メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ） |
 | `POST /human/request-renew` | `request_renew` | 頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する |
 | `POST /human/plan-file-read` | `plan_file_read` | 確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす |
-| `POST /human/templates-read` | `templates_read` | 保管先の共有フォルダの様式と写し方（列の役目）の一覧と、承認済みか下書きか、その版で書き出したか |
-| `POST /human/template-save` | `template_save` | 利用者が落とした様式と、直した写し方（列の役目）を、保管先の共有フォルダに下書きとして置く |
-| `POST /human/export-sign` | `export_sign` | いちばん新しい版を共有フォルダの様式で書き出し、書き出した Excel に自分の鍵で署名して版に足す（版の中身は変えない。その写し方の承認になる） |
+| `POST /human/plan-source-put` | `plan_source_put` | 次の版に重ねるため、版を組んだ資料を 1 つ、保存先の計画のフォルダに中身のアドレス（SHA-256）で置く（確定では SHA-256 だけを送る） |
+| `POST /human/plan-source-read` | `plan_source_read` | 確かめで合う版を組んだ資料を 1 つ読む（版の記録の SHA-256 と照らす。次の版に重ねるため、画面に戻す） |
+| `POST /human/templates-read` | `templates_read` | 保存先の様式と写し方（列の役目）の一覧と、承認済みか下書きか、その版で書き出したか |
+| `POST /human/template-save` | `template_save` | 利用者が落とした様式と、直した写し方（列の役目）を、保存先に下書きとして置く |
+| `POST /human/export-sign` | `export_sign` | いちばん新しい版を保存先の様式で書き出し、書き出した Excel に自分の鍵で署名して版に足す（版の中身は変えない。その写し方の承認になる） |
 | `POST /human/export-file-read` | `export_file_read` | 署名した書き出しの Excel を読み、署名のハッシュと照らしてから、画面がブラウザに落とす |
 | `POST /human/person-key-create` | `person_key_create` | 自分の鍵（版に署名する）を作り、状態フォルダに置く |
 | `POST /human/person-key-confirm` | `person_key_confirm` | ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない） |
@@ -74,6 +76,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/ring-rules-accept` | `ring_rules_accept` | 変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない） |
 | `POST /human/ledger-preview` | `ledger_preview` | 公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり） |
 | `POST /human/ledger-send` | `ledger_send` | 束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
+| `POST /human/ledger-rules-accept` | `ledger_rules_accept` | 変わった公開の台帳の決まりを、人が差を見て受け入れる（見た決まりのハッシュと同じで、緩くした決まりでないときだけ） |
 | `POST /human/ledger-prs` | `ledger_prs` | 出した束の PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ） |
 | `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：台帳の自分の鍵が無ければ作り、OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ） |
 | `POST /human/github-connect-state` | `github_connect_state` | GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを状態フォルダに置く（包まない。見張りのフックが AI の読み取りを止める） |
@@ -82,7 +85,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 36 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 39 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 網の外側
 

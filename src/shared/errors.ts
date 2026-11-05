@@ -107,6 +107,12 @@ export const ERRORS = {
     http: 200,
     text: "公開の台帳の clone の場所が、設定にありません。利用者に、設定で台帳の clone の場所を選んでもらってください（clone と git pull は利用者が端末でします）。",
   },
+  ledger_basis_unchecked: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "台帳を根拠にした周期の案を、橋渡しが照らせませんでした。台帳の版が今の clone と違うか、この会話の peer_reference（place: ledger）で、その項目と作業の似た施設が 5 に届いていません（中央の帯が出ていません）。peer_reference（place: ledger）で読み直し、中央の帯が出た行だけを根拠にしてください。案は置いていません。",
+  },
   ledger_pack_not_ready: {
     from: "bridge",
     to: "ai",
