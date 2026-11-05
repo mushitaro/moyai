@@ -146,6 +146,19 @@ export function writeJson(stateDir: string, rel: string, data: unknown): void {
   renameSync(tmp, file);
 }
 
+/**
+ * 保管先（共有フォルダ）に JSON を書く：利用者だけが読める形（0o600）にしない。計画のフォルダを開ける人なら、その施設として出せる（docs/plan.md §2.19 の 1。監-17）。
+ * 権限はフォルダの既定（umask と共有フォルダの設定）に任せる。状態フォルダの writeJson とは分ける
+ */
+export function writeSharedJson(dir: string, rel: string, data: unknown): void {
+  const file = join(dir, rel);
+  mkdirSync(join(file, ".."), { recursive: true });
+  const tmp = `${file}.${process.pid}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify(data, null, 1)}
+`);
+  renameSync(tmp, file);
+}
+
 export interface Settings {
   v: 1;
   /** 人が選んだ置き場所。null は既定（Documents の下の MOYAI/） */

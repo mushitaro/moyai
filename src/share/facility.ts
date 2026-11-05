@@ -8,7 +8,7 @@
 // 鍵の中身は MCP のどの結果にも入れず、保管先を読むほかの処理は share/keys/ を読まない。見張りのフックが AI の読み取りを止める。
 import { existsSync, mkdirSync, readdirSync, renameSync } from "node:fs";
 import { join } from "node:path";
-import { readJson, writeJson } from "../bridge/places";
+import { readJson, writeSharedJson as writeJson } from "../bridge/places";
 import { planDir } from "../plan/paths";
 import { HEX16, generateKeyPair, isPlainKey, keyIdOf, openPlainKey, toPlainKey, type KeyPair } from "./sign";
 
