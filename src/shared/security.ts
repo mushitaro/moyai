@@ -21,6 +21,8 @@ export interface SecurityDocInput {
   tokenTtlMs: number;
   /** 1 ファイルの上限（バイト）。src/app/intake/workspace.ts */
   maxFileBytes: number;
+  /** 外へ出た台帳の行の数の上限（橋渡しのメモリ）。src/bridge/tools.ts の OUTBOUND_MAX */
+  outboundMax: number;
 }
 
 /** docs/security.md の本文 */
@@ -31,6 +33,11 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("このファイルは `src/shared/security.ts` が、ツール定義と経路の許可の一覧から作ります。手で直さないでください（`MOYAI_WRITE_DOCS=1 npx vitest run tests/contract/security-doc.test.ts` で作り直します）。");
   L.push("");
   L.push("決めるのは人です。確定・送る・昇格・保存は、AI のツールにありません。AI クライアントが使えるのは下の表のツールだけで、人だけの操作は作業画面のボタンと、端末の人だけのコマンドにあります。");
+  L.push("");
+  L.push("例外は 2 つです（MCP の instructions の安全の決まり 1 と同じ）。どちらも、承認は人の署名です。");
+  L.push("");
+  L.push("1. 引き渡しのメールを送ること。人が MERGE で「署名して渡す」を押すと、`intake_survey` の handoff に MOYAI が用意したメールの文（宛先・件名・本文）が入ります。利用者が送ってと言ったら、Claude が利用者の連携したメールから、その文のまま送ります。中身は版の場所とハッシュだけです。MOYAI にメールを送るツールはありません。");
+  L.push("2. 未承認の読み方の下書きを保管先に書くこと（`reading_skill_register`）。保管先の決まった場所に、未承認の 3 段目の Skill として書きます。承認は、その読み方を使った版への人の署名です。");
   L.push("");
   L.push("## AI に渡る範囲（ツールごと）");
   L.push("");
@@ -55,7 +62,10 @@ export function securityMarkdown(i: SecurityDocInput): string {
     `- 写真は、人が作業画面で 1 枚ずつ許したものだけを、1 回に 1 枚渡します。作業画面が長辺 ${PHOTO_SEND.longSideMin.toLocaleString("ja-JP")}〜${PHOTO_SEND.longSideMax.toLocaleString("ja-JP")} px・JPEG で約 ${PHOTO_SEND.targetBytes / 1024} KB 以下に描き直し（切り抜かず、位置などの付け足しの情報は落とす）、` +
       `橋渡しは、許した画像のハッシュと合うものだけを渡します（${PHOTO_SEND.maxBytes / 1024} KB を越えるものは渡しません）。許しは 1 回渡すと使い終わります。`,
   );
-  L.push("- 外へ出た台帳：橋渡しは、AI に返した結果ごとに、ツールの名前・大きさ（バイト）・行の数・添えた画像の大きさと、会話ごとの合計を残します。中身は残しません（画面に出すのは未実装）。");
+  L.push(
+    `- 外へ出た台帳：橋渡しは、AI に返した結果ごとに、ツールの名前・大きさ（バイト）・行の数・添えた画像の大きさを、橋渡しのメモリに新しい ${i.outboundMax.toLocaleString("ja-JP")} 行まで持ち、会話ごとの合計も持ちます。` +
+      "返した中身は持ちません。ファイルには書かず、橋渡しを止めると消えます（画面に出すのは未実装）。",
+  );
   L.push("");
   L.push("## 人だけの操作（AI のツールに無い）");
   L.push("");
@@ -78,11 +88,11 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("- シェルを持つ AI（Claude Code）には、リポジトリの `.claude/settings.json` の deny と PreToolUse のフック（`scripts/guard-hook.mjs`）の二重で、127.0.0.1 への HTTP・状態フォルダの読み取り・保管先の計画のフォルダの施設の署名鍵（share/keys/）の読み書き・輪のフォルダへの書き込み・人だけのコマンドを止めます。悪意のある同じ利用者のプロセスは止めきれません。");
   L.push("- 鍵と GitHub のトークンは合言葉で包みません（運営者の決定 2026-11-04）。人の鍵とトークンは同期されない状態フォルダに、束に署名する施設の鍵は保管先の計画のフォルダ（share/keys/）に置きます。MCP のどのツールの結果にも、鍵とトークンの中身は入れません。");
   L.push("- 人だけのコマンド（鍵を作る、送る、台帳に出す）は、標準入力が端末でなければ断ります。");
-  L.push("- API のキーは環境変数だけで、使うのは Skill の採点（`moyai eval`）だけです。チャットでもツールでも受け取りません。");
+  L.push("- MOYAI は AI の提供者の API のキーを受け取りません（チャットでもツールでも、`src/` のどのコードでも読みません）。API のキーを使う Skill の採点（F3）は未実装です。");
   L.push("");
   L.push("## 保証できないこと");
   L.push("");
-  L.push("1. 1 回の上限は、繰り返し呼べば越えられます（だから会話の合計に上限を置き、外へ出た台帳に合計を残します）。");
+  L.push("1. 1 回の上限は、繰り返し呼べば越えられます（だから会話の合計に上限を置き、外へ出た台帳で会話ごとの合計を数えます。合計は橋渡しを止めると消えます）。");
   L.push("2. チャットに Excel を添付すれば、ファイル全体が AI の提供者に渡ります。");
   L.push("3. ファイルを読める AI は、確定した計画のファイルを直接読めます。");
   L.push("4. Documents が同期フォルダ（OneDrive など）の下なら、確定した計画は会社のクラウドに上がります（だから最初に調べて知らせます）。");

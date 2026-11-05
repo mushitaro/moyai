@@ -400,7 +400,7 @@ describe("受け手：似た施設と並べる（peers_compare）", () => {
     // 知らない立場・パックの形でないものは断る
     const bad = await call("peersCompare", { ...base, position: "知らない立場" });
     expect(bad).toMatchObject({ ok: false, reason: "payloadInvalid" });
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });
 
 describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物の GitHub では未確認）", () => {
@@ -479,5 +479,5 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
     } finally {
       await stub.close();
     }
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });

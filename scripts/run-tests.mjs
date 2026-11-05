@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // 試験を走らせる：tests/ の下の *.test.mjs を node --test で、*.test.ts(x) を vitest で。
 // どちらかで見つかった試験・走った試験が 0 件なら失敗にする。
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+// MOYAI_REPORT_DIR があれば、そこに試験ごとの報告を書く（node.json と vitest.json。scripts/acceptance.mjs が読む）。
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -15,6 +16,8 @@ function* walk(dir, re) {
 }
 
 let failed = false;
+const reportOut = process.env.MOYAI_REPORT_DIR || null;
+if (reportOut) mkdirSync(reportOut, { recursive: true });
 
 // 1. node:test
 const files = [...walk("tests", /\.test\.mjs$/)].sort();
@@ -22,7 +25,15 @@ if (files.length === 0) {
   console.error("run-tests: node:test の試験のファイルが 0 件。失敗にする");
   process.exit(1);
 }
-const r = spawnSync(process.execPath, ["--test", "--test-reporter=spec", ...files], { encoding: "utf8" });
+const reporters = reportOut
+  ? [
+      "--test-reporter=spec",
+      "--test-reporter-destination=stdout",
+      "--test-reporter=./scripts/node-test-json-reporter.mjs",
+      `--test-reporter-destination=${join(reportOut, "node.json")}`,
+    ]
+  : ["--test-reporter=spec"];
+const r = spawnSync(process.execPath, ["--test", ...reporters, ...files], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
 process.stdout.write(r.stdout ?? "");
 process.stderr.write(r.stderr ?? "");
 const m = /ℹ tests (\d+)/.exec(r.stdout ?? "");
@@ -54,6 +65,13 @@ try {
 } catch {
   console.error("run-tests: vitest の報告を読めない");
   failed = true;
+}
+if (reportOut) {
+  try {
+    copyFileSync(report, join(reportOut, "vitest.json"));
+  } catch {
+    /* 報告が無い（上で失敗にしてある） */
+  }
 }
 rmSync(reportDir, { recursive: true, force: true });
 if (vitestCount === 0) {

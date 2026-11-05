@@ -14,7 +14,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node scripts/run-tests.mjs",
     "e2e": "playwright test",
-    "check-publish": "node scripts/check-publish.mjs"
+    "check-publish": "node scripts/check-publish.mjs",
+    "acceptance": "node scripts/acceptance.mjs",
+    "demo-ring": "node scripts/demo-ring/build.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "5.3.0",

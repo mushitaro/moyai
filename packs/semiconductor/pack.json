@@ -1,0 +1,31 @@
+{
+  "schema": "moyai.pack/0",
+  "id": "semiconductor",
+  "name": "半導体・電子",
+  "version": 1,
+  "group": "G",
+  "content": "empty",
+  "verification": "未確認",
+  "sharing": "off",
+  "sourceCandidates": [
+    {
+      "title": "高圧ガス保安法の保安検査と定期自主検査",
+      "issuer": null,
+      "url": null,
+      "scope": "group"
+    },
+    {
+      "title": "消防法の危険物の定期点検",
+      "issuer": null,
+      "url": null,
+      "scope": "group"
+    },
+    {
+      "title": "労働安全衛生法のボイラー・クレーン・圧力容器の検査",
+      "issuer": null,
+      "url": null,
+      "scope": "group"
+    }
+  ],
+  "note": "設備の地図の行（docs/plan.md §2.7）。名前と出どころの候補だけで、中身は空。候補は一次資料で照らしていない（未確認）。URL は照らすときに書く。scope が group の候補は群に挙がった候補で、この行に当たるかは未確認"
+}

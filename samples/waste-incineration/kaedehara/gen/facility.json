@@ -1,0 +1,77 @@
+{
+  "id": "WI-07",
+  "pack": "waste-incineration",
+  "name": "かえで原清掃工場",
+  "short": "かえで原",
+  "owner": "架空市",
+  "seed": 57007,
+  "today": "2025-12-12",
+  "years": [
+    2020,
+    2025
+  ],
+  "planTo": 2030,
+  "profile": {
+    "furnace": "FLUID",
+    "furnaces": 2,
+    "perFurnace": 40,
+    "turbine": false,
+    "dust": "BF",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 2000
+  },
+  "costScale": 0.6,
+  "tagStyle": "dash",
+  "vendorStyle": "(株)",
+  "vendorPick": 2,
+  "overrides": {
+    "FAC_PRECISE|精密機能検査": {
+      "years": [
+        2020,
+        2024,
+        2027,
+        2030
+      ]
+    }
+  },
+  "gapsNote": [
+    {
+      "kind": "interval_max",
+      "check": "interval_max",
+      "level": "recommendation",
+      "what": "精密機能検査",
+      "note": "R2（2020）の次が R6（2024）。4 年空いた"
+    }
+  ],
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "整備計画_R2-R12",
+      "title": "整備計画表",
+      "yearsFrom": 2020,
+      "yearsTo": 2030,
+      "layout": "numbered",
+      "header": "pa",
+      "legend": "pa",
+      "costUnit": "千円",
+      "codeCol": true,
+      "sheetName": "整備計画",
+      "furnaceStyle": [
+        1,
+        2
+      ],
+      "unitStyle": [
+        0
+      ],
+      "nameVariant": 0,
+      "sysPrefix": "none"
+    },
+    {
+      "type": "ledger",
+      "stem": "機器台帳",
+      "codeInName": 0.5,
+      "nameVariant": 0
+    }
+  ]
+}

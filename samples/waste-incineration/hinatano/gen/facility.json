@@ -1,0 +1,92 @@
+{
+  "id": "WI-04",
+  "pack": "waste-incineration",
+  "name": "ひなた野クリーンプラザ",
+  "short": "ひなた野CP",
+  "owner": "架空北部広域行政組合",
+  "seed": 54004,
+  "today": "2025-12-12",
+  "years": [
+    2016,
+    2025
+  ],
+  "planTo": 2031,
+  "profile": {
+    "furnace": "STOKER",
+    "furnaces": 2,
+    "perFurnace": 95,
+    "turbine": true,
+    "dust": "EP",
+    "ash": "OUT",
+    "contract": "SINGLE",
+    "commissioned": 1996,
+    "upgrade": [
+      2017
+    ]
+  },
+  "costScale": 1.1,
+  "tagStyle": "dash",
+  "vendorStyle": "㈱",
+  "vendorPick": 1,
+  "exclude": [
+    "CAMERA"
+  ],
+  "overrides": {},
+  "gapsNote": [
+    {
+      "kind": "coverage",
+      "check": "coverage",
+      "what": "ごみクレーン（WI.RECV.CRANE）",
+      "note": "星取表に行が無い（発注台帳にだけ年次点検の委託と工事がある）"
+    }
+  ],
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "保全計画表_2016-2031",
+      "title": "整備計画表",
+      "yearsFrom": 2016,
+      "yearsTo": 2031,
+      "layout": "merged",
+      "header": "fy4",
+      "legend": "pd",
+      "costUnit": "千円",
+      "ditto": 0.5,
+      "secondTable": true,
+      "sheetName": "保全計画",
+      "furnaceStyle": [
+        0,
+        4
+      ],
+      "unitStyle": [
+        3,
+        4
+      ],
+      "nameVariant": 1,
+      "chartExclude": [
+        "CRANE",
+        "CRANE_CTRL"
+      ],
+      "colLabels": {
+        "names": [
+          "大分類",
+          "機器",
+          "号炉",
+          "部位",
+          "部位"
+        ]
+      },
+      "subtotals": [],
+      "totalLabel": "合計（千円）"
+    },
+    {
+      "type": "orders",
+      "years": [
+        2016,
+        2025
+      ],
+      "textDatesUntil": 2019,
+      "author": "総務課 契約係"
+    }
+  ]
+}

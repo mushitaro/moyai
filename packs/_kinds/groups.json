@@ -1,0 +1,93 @@
+{
+  "schema": "moyai.groups/0",
+  "note": "設備の地図の群（A〜H）の名前と、群の中の並び（起点から近い順）。どのパックがどの群かは pack.json の group が決め、数は packs/ から数える。並びに無いパックは群の最後に置く。notBuilt は作らない行（docs/plan.md §2.7）",
+  "groups": [
+    {
+      "id": "A",
+      "name": "市町村の環境",
+      "order": [
+        "waste-incineration",
+        "night-soil",
+        "recycling",
+        "transfer-station",
+        "final-disposal",
+        "crematorium"
+      ]
+    },
+    {
+      "id": "B",
+      "name": "水",
+      "order": [
+        "sewerage",
+        "rural-sewerage",
+        "water-supply",
+        "industrial-water"
+      ]
+    },
+    {
+      "id": "C",
+      "name": "河川・国土",
+      "order": [
+        "river-pump-gate",
+        "dam-facility",
+        "coast-port"
+      ]
+    },
+    {
+      "id": "D",
+      "name": "道路",
+      "order": [
+        "road-bridge",
+        "road-tunnel",
+        "road-ancillary",
+        "tunnel-equipment",
+        "pavement"
+      ]
+    },
+    {
+      "id": "E",
+      "name": "公共建築・公共施設",
+      "order": [
+        "building-services",
+        "playground"
+      ]
+    },
+    {
+      "id": "F",
+      "name": "エネルギー",
+      "order": [
+        "thermal-power",
+        "biomass-waste-power",
+        "substation",
+        "city-gas-plant",
+        "district-heating",
+        "solar-wind"
+      ]
+    },
+    {
+      "id": "G",
+      "name": "産業プラント",
+      "order": [
+        "chemical-petroleum",
+        "steel",
+        "paper",
+        "food-pharma",
+        "semiconductor"
+      ]
+    },
+    {
+      "id": "H",
+      "name": "交通・移動",
+      "order": [
+        "railway",
+        "bus-truck",
+        "ship",
+        "aircraft",
+        "elevator"
+      ]
+    }
+  ],
+  "notBuilt": [
+    "nuclear"
+  ]
+}

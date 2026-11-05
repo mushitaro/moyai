@@ -1,0 +1,139 @@
+{
+  "id": "NS-01",
+  "pack": "night-soil",
+  "name": "すずかぜ衛生センター",
+  "short": "すずかぜ衛生C",
+  "owner": "架空衛生施設組合",
+  "seed": 61011,
+  "today": "2025-12-12",
+  "years": [
+    2017,
+    2025
+  ],
+  "planTo": 2030,
+  "profile": {
+    "method": "STD",
+    "methodName": "標準脱窒素処理方式",
+    "capacity_kl_per_day": 100,
+    "furnaces": 1,
+    "commissioned": 1997
+  },
+  "costScale": 1.0,
+  "tagStyle": "dash",
+  "vendorStyle": "㈱",
+  "vendorPick": 0,
+  "overrides": {
+    "FAC_PRECISE|精密機能検査": {
+      "years": [
+        2017,
+        2020,
+        2024,
+        2027,
+        2030
+      ]
+    }
+  },
+  "gapsNote": [
+    {
+      "kind": "interval_max",
+      "check": "interval_max",
+      "level": "recommendation",
+      "what": "精密機能検査",
+      "note": "R2（2020）の次が R6（2024）。4 年空いた"
+    }
+  ],
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "整備計画_H29-R12",
+      "title": "整備計画表",
+      "yearsFrom": 2017,
+      "yearsTo": 2030,
+      "layout": "cols",
+      "header": "era2",
+      "legend": "pd",
+      "costUnit": "千円",
+      "codeCol": true,
+      "topLabel": "施設全体",
+      "nameVariant": 0,
+      "furnaceStyle": [
+        0
+      ],
+      "unitStyle": [
+        0,
+        1
+      ],
+      "sheetName": "整備計画",
+      "subtotals": [
+        "RECV",
+        "MAIN"
+      ]
+    },
+    {
+      "type": "ledger",
+      "stem": "機器台帳",
+      "codeInName": 0.4,
+      "nameVariant": 1
+    },
+    {
+      "type": "inspect_csv",
+      "stem": "定期巡視点検",
+      "years": [
+        2023,
+        2025
+      ],
+      "encoding": "cp932",
+      "items": [
+        [
+          "AERBL",
+          "吐出圧力",
+          "kPa",
+          48,
+          56
+        ],
+        [
+          "AERBL",
+          "振動",
+          "mm/s",
+          1.2,
+          3.4
+        ],
+        [
+          "GASBL",
+          "吐出圧力",
+          "kPa",
+          30,
+          38
+        ],
+        [
+          "FEEDP",
+          "運転電流",
+          "A",
+          3.1,
+          4.2
+        ],
+        [
+          "RECIRCP",
+          "運転電流",
+          "A",
+          9.0,
+          11.5
+        ],
+        [
+          "DEWAT",
+          "振動",
+          "mm/s",
+          1.8,
+          4.0
+        ],
+        [
+          "LOFAN",
+          "振動",
+          "mm/s",
+          1.0,
+          2.8
+        ]
+      ]
+    }
+  ]
+}

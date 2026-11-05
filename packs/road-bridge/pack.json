@@ -1,0 +1,19 @@
+{
+  "schema": "moyai.pack/0",
+  "id": "road-bridge",
+  "name": "道路橋",
+  "version": 1,
+  "group": "D",
+  "content": "empty",
+  "verification": "未確認",
+  "sharing": "off",
+  "sourceCandidates": [
+    {
+      "title": "道路橋の定期点検要領（部材の区分と判定区分）",
+      "issuer": "国土交通省",
+      "url": null,
+      "scope": "row"
+    }
+  ],
+  "note": "設備の地図の行（docs/plan.md §2.7）。名前と出どころの候補だけで、中身は空。候補は一次資料で照らしていない（未確認）。URL は照らすときに書く。scope が group の候補は群に挙がった候補で、この行に当たるかは未確認"
+}

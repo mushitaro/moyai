@@ -9,7 +9,7 @@ import { BridgeStartError, startBridge } from "../bridge/server";
 import { resolveStateDir } from "../bridge/state";
 import { errorBody, type ErrorCode } from "../shared/errors";
 import { parseStartArgs } from "./args";
-import { keysCli, sendCli, verifyRingCli } from "./human";
+import { keysCli, sendCli, verifyDemoRingCli, verifyRingCli } from "./human";
 import { ledgerCli, verifyLedgerCli } from "./ledger";
 import { createRelayServer } from "./relay";
 
@@ -29,6 +29,8 @@ const HELP = `使い方：
   moyai start [--port 43110] [--no-open]   橋渡しを起こし、作業画面を開く
   moyai mcp                                 AI クライアントとつなぐ中継（標準入出力の MCP）
   moyai verify ring <輪のフォルダ>           輪の決まり・仲間・束を、受け手と同じ関数で確かめる（✓／✗ と理由）
+  moyai verify demo-ring [<フォルダ>]        リポジトリのデモの輪（架空の 7 拠点）を verify ring と同じ関数で確かめる
+                                            （全員 ✓、わざと入れた ✗ の束は理由つきで ✗ なら終了コード 0）
   moyai verify ledger <台帳のリポジトリの根>  公開の台帳の決まりと束を、受け手と同じ関数で確かめる（✓／✗ と理由）
   moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
                                             台帳の PR の変更を、checkout せずに git の木から確かめる（Actions の検証）
@@ -102,7 +104,11 @@ async function main(argv: string[]): Promise<void> {
     if (rest.length) return fail("bad_args");
     return mcp();
   }
-  if (cmd === "verify") return process.exit(rest[0] === "ledger" ? await verifyLedgerCli(rest) : await verifyRingCli(rest));
+  if (cmd === "verify") {
+    if (rest[0] === "ledger") return process.exit(await verifyLedgerCli(rest));
+    if (rest[0] === "demo-ring") return process.exit(await verifyDemoRingCli(rest));
+    return process.exit(await verifyRingCli(rest));
+  }
   if (cmd === "ledger") return process.exit(await ledgerCli(rest, { build: BUILD }));
   if (cmd === "keys") return process.exit(await keysCli(rest));
   if (cmd === "send") return process.exit(sendCli());

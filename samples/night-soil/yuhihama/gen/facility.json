@@ -1,0 +1,56 @@
+{
+  "id": "NS-02",
+  "pack": "night-soil",
+  "name": "ゆうひ浜し尿処理場",
+  "short": "ゆうひ浜",
+  "owner": "架空町",
+  "seed": 62012,
+  "today": "2025-12-12",
+  "years": [
+    2020,
+    2025
+  ],
+  "planTo": 2029,
+  "profile": {
+    "method": "MBR",
+    "methodName": "膜分離高負荷脱窒素処理方式",
+    "capacity_kl_per_day": 60,
+    "furnaces": 1,
+    "commissioned": 2008
+  },
+  "costScale": 0.8,
+  "tagStyle": "num",
+  "vendorStyle": "(株)",
+  "vendorPick": 1,
+  "overrides": {},
+  "docs": [
+    {
+      "type": "chart",
+      "stem": "点検整備計画_R2-R11",
+      "title": "整備計画表",
+      "yearsFrom": 2020,
+      "yearsTo": 2029,
+      "layout": "indent",
+      "header": "pa",
+      "legend": "pa",
+      "costUnit": "円",
+      "topLabel": "施設全体",
+      "sysPrefix": "box",
+      "furnaceStyle": [
+        0
+      ],
+      "unitStyle": [
+        1,
+        3
+      ],
+      "nameVariant": 1,
+      "sheetName": "点検整備計画"
+    },
+    {
+      "type": "ledger",
+      "stem": "設備台帳",
+      "codeInName": 0.7,
+      "nameVariant": 2
+    }
+  ]
+}
