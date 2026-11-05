@@ -97,6 +97,25 @@ const allowed = [
   ["Bash", { command: 'gh issue create --title "fix cli send" --body "x"' }],
 ];
 
+// 見張りそのもの（台帳の中-1）：フックのファイルと .claude/settings.json・settings.local.json を AI から書き換えない。読むのは通す
+blocked.push(
+  ["Edit", { file_path: "C:\\Users\\kazuh\\Moyai\\scripts\\guard-hook.mjs" }],
+  ["Write", { file_path: "C:/Users/kazuh/Moyai/.claude/settings.json" }],
+  ["Write", { file_path: ".claude\\settings.local.json" }],
+  ["Bash", { command: "echo x > .claude/settings.json" }],
+  ["Bash", { command: "sed -i s/a/b/ scripts/guard-hook.mjs" }],
+  ["Bash", { command: "git checkout -- scripts/guard-hook.mjs" }],
+  ["PowerShell", { command: "Copy-Item x.mjs C:\\Moyai\\scripts\\guard-hook.mjs" }],
+);
+allowed.push(
+  ["Read", { file_path: ".claude/settings.json" }],
+  ["Bash", { command: "cat .claude/settings.json" }],
+  ["Bash", { command: "git add scripts/guard-hook.mjs tests/scripts/guard-hook.test.mjs" }],
+  ["Bash", { command: "git diff scripts/guard-hook.mjs" }],
+  ["Edit", { file_path: "tests/scripts/guard-hook.test.mjs" }],
+  ["Write", { file_path: "docs/settings.json" }],
+);
+
 for (const [tool, input] of blocked) {
   test(`止める: ${tool} ${JSON.stringify(input).slice(0, 80)}`, () => {
     const r = run(tool, input);

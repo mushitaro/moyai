@@ -24,6 +24,10 @@ const HUMAN_ONLY_CLI = new RegExp(CLI_AT_EXEC + String.raw`[^;&|\n]*?\b` + HUMAN
 const unquote = (s) => String(s ?? "").replace(/["'`]/g, " ");
 const WRITE_VERB =
   /(>>?|\bcp\b|\bmv\b|\brm\b|\bdel\b|\btee\b|\btouch\b|\bmkdir\b|\bCopy-Item\b|\bMove-Item\b|\bRemove-Item\b|\bSet-Content\b|\bAdd-Content\b|\bOut-File\b|\bNew-Item\b|\brobocopy\b|\bxcopy\b|\brename\b|\bren\b|writeFile|appendFile)/i;
+// 見張りそのもの：このフックのファイルと、フックと deny を置く設定のファイル（台帳の中-1）。AI から書き換えない（直すのは人）。
+// 読むのは止めない。シェルから書く道（> ・cp・sed -i・スクリプトを書いて走らせる など）は全部は拾えない（同じ利用者のプロセスは止めきれない）
+const GUARD_FILES = /(?:^|[\\/\s"'`=])(?:scripts[\\/]+guard-hook\.mjs|\.claude[\\/]+settings(?:\.local)?\.json)(?=$|[\s"'`;&|)])/i;
+const SHELL_WRITE = new RegExp(WRITE_VERB.source + String.raw`|\bsed\s+(?:-\w*\s+)*-i|\bperl\s+-\w*i|\bdd\b|\bchmod\b|\bgit\s+(?:checkout|restore|apply|am|stash\s+pop)\b|\bln\b`, "i");
 const PREVIOUS_PRODUCT_URL = [
   /^https?:\/\/(?:www\.)?github\.com\/mxstage(?:\/|$)/i,
   /^https?:\/\/(?:www\.)?github\.com\/woodygaragelab\/hoshutaro(?:\/|$|\.git)/i,
@@ -162,6 +166,9 @@ export function decide(input, ctx = {}) {
     if (HUMAN_ONLY_CLI.test(unquote(cmd))) {
       return deny("このコマンドは人だけの操作です。端末で人が打ってください。");
     }
+    if (GUARD_FILES.test(cmd) && SHELL_WRITE.test(cmd)) {
+      return deny("見張りのフックと .claude/settings.json は、AI から書き換えません。直すのは人です。");
+    }
     if (rings.length && WRITE_VERB.test(cmd) && rings.some((r) => norm(cmd).includes(norm(r).replace(/\/+$/, "")))) {
       return deny("輪のフォルダには、検問所を通した束を橋渡しだけが書きます。");
     }
@@ -186,6 +193,7 @@ export function decide(input, ctx = {}) {
     if (mentionsStateDir(p, env)) return deny("状態フォルダには AI から書きません。");
     if (mentionsFacilityKeys(p)) return deny("施設の署名鍵（保管先の計画のフォルダの share/keys/）には AI から書きません。");
     if (underAny(p, rings)) return deny("輪のフォルダには、検問所を通した束を橋渡しだけが書きます。");
+    if (GUARD_FILES.test(` ${p}`)) return deny("見張りのフックと .claude/settings.json は、AI から書き換えません。直すのは人です。");
     return { deny: false };
   }
 
