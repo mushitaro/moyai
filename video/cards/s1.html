@@ -1,0 +1,65 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=base.css>
+<style>
+.k{position:absolute;left:96px;top:64px;font-size:22px;color:var(--sub);letter-spacing:.12em}
+h1{position:absolute;left:96px;top:104px;font-size:56px;font-weight:500;letter-spacing:.04em}
+svg{position:absolute;inset:0}
+.n{position:absolute;transform:translate(-50%,-50%);text-align:center;padding:18px 26px;border:1px solid #555;background:var(--ink);min-width:300px}
+.n .t{font-size:30px;font-weight:500}
+.n .r{font-size:20px;color:var(--sub);margin-top:6px}
+.n.plant{border-color:var(--text)}
+.n.other{border-style:dashed;border-color:#444}
+.n.other .t{color:#aaa;font-size:26px}
+.why{position:absolute;transform:translate(-50%,-50%);font-size:24px;color:var(--shu);white-space:nowrap;background:var(--ink);padding:2px 8px}
+.rel{position:absolute;transform:translate(-50%,-50%);font-size:21px;color:#bbb;white-space:nowrap;background:var(--ink);padding:2px 8px}
+.note{position:absolute;right:96px;top:72px;text-align:right;font-size:19px;color:var(--sub);line-height:1.6}
+.closed{position:absolute;left:50%;top:700px;transform:translateX(-50%);font-size:32px;font-weight:500;white-space:nowrap}
+</style>
+<div class=k data-s=6 id=pop></div>
+<h1 data-s=1>似たプラントと、<span class=shu>比べられない。</span></h1>
+
+<svg viewBox="0 0 1920 1080" width=1920 height=1080>
+  <defs><marker id=a viewBox="0 0 10 10" refX=9 refY=5 markerWidth=9 markerHeight=9 orient=auto><path d="M0,0L10,5L0,10z" fill="#d0644c"/></marker></defs>
+  <g stroke="#777" stroke-width=2 data-s=1>
+    <line x1=470 y1=520 x2=810 y2=520 />
+    <line x1=960 y1=330 x2=960 y2=455 />
+    <line x1=1450 y1=520 x2=1110 y2=520 />
+  </g>
+  <g stroke="#d0644c" stroke-width=3 stroke-dasharray="10 8" fill=none>
+    <path data-s=3 d="M330,570 L330,760" marker-end="url(#a)"/>
+    <path data-s=4 d="M1110,270 L1450,270" marker-end="url(#a)"/>
+    <path data-s=5 d="M1590,570 L1590,760" marker-end="url(#a)"/>
+  </g>
+</svg>
+
+<div class="n" style="left:330px;top:520px" data-s=1><div class=t>市町村</div><div class=r>施設の持ち主</div></div>
+<div class="n" style="left:960px;top:270px" data-s=1><div class=t>メーカーの保全子会社</div><div class=r>納めたプラントを整備</div></div>
+<div class="n" style="left:1590px;top:520px" data-s=1><div class=t>O&amp;M 事業者</div><div class=r>運転と保全を請け負う</div></div>
+<div class="n plant" style="left:960px;top:520px" data-s=1><div class=t>ごみ焼却施設</div><div class=r>整備の履歴</div></div>
+
+<div class=rel style="left:640px;top:520px" data-s=2>持つ</div>
+<div class=rel style="left:960px;top:395px" data-s=2>随意契約で整備</div>
+<div class=rel style="left:1280px;top:520px" data-s=2>入札で運転</div>
+
+<div class="n other" style="left:330px;top:820px" data-s=3><div class=t>ほかの市町村の施設</div></div>
+<div class=why style="left:330px;top:665px" data-s=3>比べる物差しが無い</div>
+<div class="n other" style="left:1590px;top:270px" data-s=4><div class=t>他社が納めたプラント</div></div>
+<div class=why style="left:1280px;top:225px" data-s=4>秘密だと諦めている</div>
+<div class="n other" style="left:1590px;top:820px" data-s=5><div class=t>入札の対象の施設</div></div>
+<div class=why style="left:1590px;top:665px" data-s=5>外からは見えない</div>
+
+<div class=note data-s=2 data-until=5>随意契約＝入札をせず、納めたメーカーの系列に頼む契約<br>O&amp;M＝運転（Operation）と保全（Maintenance）をまとめて請け負うこと</div>
+<div class=closed data-s=6>履歴は、系列と施設の中に閉じている。</div>
+
+<div class=cap><div class=ja id=ja></div><div class=en id=en></div></div>
+<div class=stamp></div>
+<script>
+// 段ごとの字幕（語りの叩き台。video/SCRIPT.md の S1）
+window.CAPS = {
+  1: ["似たプラントと、比べられない。", "No plant can compare itself with similar plants."],
+  2: ["似たプラントと、比べられない。", "No plant can compare itself with similar plants."],
+  3: ["市町村も、", "Not the city that owns the plant,"],
+  4: ["保全の会社も、", "not the maker’s maintenance company,"],
+  5: ["運転を請け負う会社も、", "not the company that runs it."],
+  6: ["見たい履歴は、ほかの誰かが持っている。", "The history each one needs is held by someone else."],
+};
+</script>
