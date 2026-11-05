@@ -1,0 +1,2871 @@
+{
+ "schema": "moyai.answer.world/0",
+ "facility": {
+  "id": "f-shiomigawa",
+  "name": "【架空】汐見川衛生センター",
+  "industry": "night-soil",
+  "profile": {
+   "process": "膜分離高負荷生物脱窒処理方式",
+   "capacity_kl_per_day": 80,
+   "completed": 1998,
+   "sludge": "脱水・乾燥",
+   "contract": "直営（R6.10 から一部委託）"
+  }
+ },
+ "fiscal_year_start_month": 4,
+ "man_day_hours": 8,
+ "today": "2026-10-01",
+ "equipment": [
+  {
+   "id": "E01",
+   "name": "受入口 No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "受入口"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-101",
+   "path": [
+    "受入・貯留設備",
+    "受入口",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 1
+    }
+   ]
+  },
+  {
+   "id": "E02",
+   "name": "受入口 No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "受入口"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-101",
+   "path": [
+    "受入・貯留設備",
+    "受入口",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 1
+    }
+   ]
+  },
+  {
+   "id": "E03",
+   "name": "沈砂除去装置",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "沈砂除去装置"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-102",
+   "path": [
+    "受入・貯留設備",
+    "沈砂除去装置"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 2
+    }
+   ]
+  },
+  {
+   "id": "E04",
+   "name": "破砕機",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "破砕機"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-103",
+   "path": [
+    "受入・貯留設備",
+    "破砕機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 3
+    }
+   ]
+  },
+  {
+   "id": "E05",
+   "name": "ドラムスクリーン No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "ドラムスクリーン"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-104",
+   "path": [
+    "受入・貯留設備",
+    "ドラムスクリーン",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 4
+    }
+   ]
+  },
+  {
+   "id": "E06",
+   "name": "ドラムスクリーン No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "ドラムスクリーン"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-104",
+   "path": [
+    "受入・貯留設備",
+    "ドラムスクリーン",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 4
+    }
+   ]
+  },
+  {
+   "id": "E07",
+   "name": "受入貯留槽",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "受入貯留槽"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-105",
+   "path": [
+    "受入・貯留設備",
+    "受入貯留槽"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 5
+    }
+   ]
+  },
+  {
+   "id": "E08",
+   "name": "貯留槽撹拌ブロワ No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "貯留槽撹拌ブロワ"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-106",
+   "path": [
+    "受入・貯留設備",
+    "貯留槽撹拌ブロワ",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 6
+    }
+   ]
+  },
+  {
+   "id": "E09",
+   "name": "貯留槽撹拌ブロワ No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "貯留槽撹拌ブロワ"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "R-106",
+   "path": [
+    "受入・貯留設備",
+    "貯留槽撹拌ブロワ",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 6
+    }
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "生物反応槽",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "生物反応槽"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "M-201",
+   "path": [
+    "主処理設備（膜分離高負荷生物脱窒）",
+    "生物反応槽"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 8
+    }
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "曝気ブロワ No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "曝気ブロワ",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "曝気ブロワNo.1"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "M-202",
+   "path": [
+    "主処理設備（膜分離高負荷生物脱窒）",
+    "曝気ブロワ",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 9
+    }
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "曝気ブロワ No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "曝気ブロワ",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "曝気ブロワNo.2"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "M-202",
+   "path": [
+    "主処理設備（膜分離高負荷生物脱窒）",
+    "曝気ブロワ",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 9
+    }
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "曝気ブロワ No.3",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "曝気ブロワ",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "曝気ブロワ(3)"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "M-202",
+   "path": [
+    "主処理設備（膜分離高負荷生物脱窒）",
+    "曝気ブロワ",
+    "No.3"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 9
+    }
+   ]
+  },
+  {
+   "id": "E14",
+   "name": "循環ポンプ No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "循環ポンプ"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "M-203",
+   "path": [
+    "主処理設備（膜分離高負荷生物脱窒）",
+    "循環ポンプ",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 10
+    }
+   ]
+  },
+  {
+   "id": "E15",
+   "name": "循環ポンプ No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "循環ポンプ"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "M-203",
+   "path": [
+    "主処理設備（膜分離高負荷生物脱窒）",
+    "循環ポンプ",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 10
+    }
+   ]
+  },
+  {
+   "id": "E16",
+   "name": "浸漬膜ユニット",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "浸漬膜ユニット"
+   },
+   "furnace": null,
+   "install_year": 2015,
+   "code": "M-204",
+   "path": [
+    "主処理設備（膜分離高負荷生物脱窒）",
+    "浸漬膜ユニット"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 11
+    }
+   ]
+  },
+  {
+   "id": "E17",
+   "name": "活性炭吸着塔 No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "活性炭吸着塔"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "A-301",
+   "path": [
+    "高度処理設備",
+    "活性炭吸着塔",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 13
+    }
+   ]
+  },
+  {
+   "id": "E18",
+   "name": "活性炭吸着塔 No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "活性炭吸着塔"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "A-301",
+   "path": [
+    "高度処理設備",
+    "活性炭吸着塔",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 13
+    }
+   ]
+  },
+  {
+   "id": "E19",
+   "name": "汚泥脱水機 No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "汚泥脱水機",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "1号脱水機"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "S-401",
+   "path": [
+    "汚泥処理設備",
+    "汚泥脱水機",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 15
+    }
+   ]
+  },
+  {
+   "id": "E20",
+   "name": "汚泥脱水機 No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "汚泥脱水機",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "2号脱水機"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "S-401",
+   "path": [
+    "汚泥処理設備",
+    "汚泥脱水機",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 15
+    }
+   ]
+  },
+  {
+   "id": "E21",
+   "name": "汚泥乾燥機",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "汚泥乾燥機"
+   },
+   "furnace": null,
+   "install_year": 2015,
+   "code": "S-402",
+   "path": [
+    "汚泥処理設備",
+    "汚泥乾燥機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 16
+    }
+   ]
+  },
+  {
+   "id": "E22",
+   "name": "脱臭ファン No.1",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "脱臭ファン",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "脱臭ファン No.1"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "D-501",
+   "path": [
+    "脱臭設備",
+    "脱臭ファン",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 18
+    }
+   ]
+  },
+  {
+   "id": "E23",
+   "name": "脱臭ファン No.2",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "脱臭ファン"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "D-501",
+   "path": [
+    "脱臭設備",
+    "脱臭ファン",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 18
+    }
+   ]
+  },
+  {
+   "id": "E24",
+   "name": "生物脱臭塔",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "生物脱臭塔"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "D-502",
+   "path": [
+    "脱臭設備",
+    "生物脱臭塔"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 19
+    }
+   ]
+  },
+  {
+   "id": "E25",
+   "name": "受変電設備",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "受変電設備",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "受変電設備"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "E-601",
+   "path": [
+    "電気設備",
+    "受変電設備"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 21
+    }
+   ]
+  },
+  {
+   "id": "E26",
+   "name": "非常用発電機",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "非常用発電機",
+    "【架空】汐見川衛生センター_設備点検記録_R6.xlsx": "自家発"
+   },
+   "furnace": null,
+   "install_year": 1998,
+   "code": "E-602",
+   "path": [
+    "電気設備",
+    "非常用発電機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 22
+    }
+   ]
+  },
+  {
+   "id": "E27",
+   "name": "中央監視装置",
+   "names": {
+    "【架空】汐見川衛生センター_機器台帳.pdf": "中央監視装置"
+   },
+   "furnace": null,
+   "install_year": 2019,
+   "code": "E-603",
+   "path": [
+    "電気設備",
+    "中央監視装置"
+   ],
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_機器台帳.pdf",
+     "seq": 23
+    }
+   ]
+  }
+ ],
+ "works": [
+  {
+   "id": "W0001",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-04-05",
+   "end": "2024-04-05",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 4
+    }
+   ]
+  },
+  {
+   "id": "W0002",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-04-05",
+   "end": "2024-04-05",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 5
+    }
+   ]
+  },
+  {
+   "id": "W0003",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-04-08",
+   "end": "2024-04-08",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 6
+    }
+   ]
+  },
+  {
+   "id": "W0004",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-04-08",
+   "end": "2024-04-08",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0005",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-04-10",
+   "end": "2024-04-10",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0006",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-04-15",
+   "end": "2024-04-15",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0007",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-04-16",
+   "end": "2024-04-16",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0008",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-04-22",
+   "end": "2024-04-22",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0009",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-05-06",
+   "end": "2024-05-06",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "W0010",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-05-06",
+   "end": "2024-05-06",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "W0011",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-05-07",
+   "end": "2024-05-07",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 14
+    }
+   ]
+  },
+  {
+   "id": "W0012",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-05-13",
+   "end": "2024-05-13",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 15
+    }
+   ]
+  },
+  {
+   "id": "W0013",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-05-14",
+   "end": "2024-05-14",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0014",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-05-16",
+   "end": "2024-05-16",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0015",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-05-17",
+   "end": "2024-05-17",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0016",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-05-21",
+   "end": "2024-05-21",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "W0017",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-06-06",
+   "end": "2024-06-06",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0018",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-06-07",
+   "end": "2024-06-07",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0019",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-06-10",
+   "end": "2024-06-10",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 22
+    }
+   ]
+  },
+  {
+   "id": "W0020",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-06-11",
+   "end": "2024-06-11",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 23
+    }
+   ]
+  },
+  {
+   "id": "W0021",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-06-11",
+   "end": "2024-06-11",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 24
+    }
+   ]
+  },
+  {
+   "id": "W0022",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-06-14",
+   "end": "2024-06-14",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 25
+    }
+   ]
+  },
+  {
+   "id": "W0023",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-06-14",
+   "end": "2024-06-14",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 26
+    }
+   ]
+  },
+  {
+   "id": "W0024",
+   "label": "汚泥脱水機 No.2 スクリーン洗浄・ブラシ交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-06-18",
+   "end": "2024-06-18",
+   "man_days": 0.75,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 27
+    }
+   ]
+  },
+  {
+   "id": "W0025",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-06-21",
+   "end": "2024-06-21",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 28
+    }
+   ]
+  },
+  {
+   "id": "W0026",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-07-08",
+   "end": "2024-07-08",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 29
+    }
+   ]
+  },
+  {
+   "id": "W0027",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-07-08",
+   "end": "2024-07-08",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 30
+    }
+   ]
+  },
+  {
+   "id": "W0028",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-07-08",
+   "end": "2024-07-08",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 31
+    }
+   ]
+  },
+  {
+   "id": "W0029",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-07-15",
+   "end": "2024-07-15",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 32
+    }
+   ]
+  },
+  {
+   "id": "W0030",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-07-15",
+   "end": "2024-07-15",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 33
+    }
+   ]
+  },
+  {
+   "id": "W0031",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-07-16",
+   "end": "2024-07-16",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 34
+    }
+   ]
+  },
+  {
+   "id": "W0032",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-07-18",
+   "end": "2024-07-18",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 35
+    }
+   ]
+  },
+  {
+   "id": "W0033",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-07-22",
+   "end": "2024-07-22",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 36
+    }
+   ]
+  },
+  {
+   "id": "W0034",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-08-05",
+   "end": "2024-08-05",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 37
+    }
+   ]
+  },
+  {
+   "id": "W0035",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-08-08",
+   "end": "2024-08-08",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 38
+    }
+   ]
+  },
+  {
+   "id": "W0036",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-08-12",
+   "end": "2024-08-12",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 39
+    }
+   ]
+  },
+  {
+   "id": "W0037",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-08-12",
+   "end": "2024-08-12",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 40
+    }
+   ]
+  },
+  {
+   "id": "W0038",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-08-14",
+   "end": "2024-08-14",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 41
+    }
+   ]
+  },
+  {
+   "id": "W0039",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-08-16",
+   "end": "2024-08-16",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 42
+    }
+   ]
+  },
+  {
+   "id": "W0040",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-08-16",
+   "end": "2024-08-16",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 43
+    }
+   ]
+  },
+  {
+   "id": "W0041",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-09-04",
+   "end": "2024-09-04",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 44
+    }
+   ]
+  },
+  {
+   "id": "W0042",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-09-09",
+   "end": "2024-09-09",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 45
+    }
+   ]
+  },
+  {
+   "id": "W0043",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-09-09",
+   "end": "2024-09-09",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 46
+    }
+   ]
+  },
+  {
+   "id": "W0044",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-09-10",
+   "end": "2024-09-10",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 47
+    }
+   ]
+  },
+  {
+   "id": "W0045",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-09-10",
+   "end": "2024-09-10",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 48
+    }
+   ]
+  },
+  {
+   "id": "W0046",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-09-13",
+   "end": "2024-09-13",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 49
+    }
+   ]
+  },
+  {
+   "id": "W0047",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-09-18",
+   "end": "2024-09-18",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 50
+    }
+   ]
+  },
+  {
+   "id": "W0048",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-09-19",
+   "end": "2024-09-19",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 51
+    }
+   ]
+  },
+  {
+   "id": "W0049",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-10-04",
+   "end": "2024-10-04",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "架空発電機㈱",
+   "contract": "非常用発電機 点検業務（R6.10～）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 55
+    }
+   ]
+  },
+  {
+   "id": "W0050",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-10-07",
+   "end": "2024-10-07",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 56
+    }
+   ]
+  },
+  {
+   "id": "W0051",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-10-11",
+   "end": "2024-10-11",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 57
+    }
+   ]
+  },
+  {
+   "id": "W0052",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-10-15",
+   "end": "2024-10-15",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 58
+    }
+   ]
+  },
+  {
+   "id": "W0053",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-10-21",
+   "end": "2024-10-21",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 59
+    }
+   ]
+  },
+  {
+   "id": "W0054",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-10-21",
+   "end": "2024-10-21",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 60
+    }
+   ]
+  },
+  {
+   "id": "W0055",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-10-21",
+   "end": "2024-10-21",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 61
+    }
+   ]
+  },
+  {
+   "id": "W0056",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-10-21",
+   "end": "2024-10-21",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 62
+    }
+   ]
+  },
+  {
+   "id": "W0057",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-11-07",
+   "end": "2024-11-07",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 63
+    }
+   ]
+  },
+  {
+   "id": "W0058",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-11-08",
+   "end": "2024-11-08",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 64
+    }
+   ]
+  },
+  {
+   "id": "W0059",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-11-11",
+   "end": "2024-11-11",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 65
+    }
+   ]
+  },
+  {
+   "id": "W0060",
+   "label": "曝気ブロワ No.2 Vベルト交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-11-12",
+   "end": "2024-11-12",
+   "man_days": 0.625,
+   "days": 1,
+   "vendor": "架空ブロワ㈱",
+   "contract": "修繕（単価契約）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 66
+    }
+   ]
+  },
+  {
+   "id": "W0061",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-11-18",
+   "end": "2024-11-18",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 67
+    }
+   ]
+  },
+  {
+   "id": "W0062",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-11-18",
+   "end": "2024-11-18",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 68
+    }
+   ]
+  },
+  {
+   "id": "W0063",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-11-18",
+   "end": "2024-11-18",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "架空発電機㈱",
+   "contract": "非常用発電機 点検業務（R6.10～）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 69
+    }
+   ]
+  },
+  {
+   "id": "W0064",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-11-20",
+   "end": "2024-11-20",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 70
+    }
+   ]
+  },
+  {
+   "id": "W0065",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-11-21",
+   "end": "2024-11-21",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 71
+    }
+   ]
+  },
+  {
+   "id": "W0066",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-12-06",
+   "end": "2024-12-06",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "架空発電機㈱",
+   "contract": "非常用発電機 点検業務（R6.10～）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 72
+    }
+   ]
+  },
+  {
+   "id": "W0067",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2024-12-09",
+   "end": "2024-12-09",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 73
+    }
+   ]
+  },
+  {
+   "id": "W0068",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2024-12-09",
+   "end": "2024-12-09",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 74
+    }
+   ]
+  },
+  {
+   "id": "W0069",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2024-12-12",
+   "end": "2024-12-12",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 75
+    }
+   ]
+  },
+  {
+   "id": "W0070",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-12-13",
+   "end": "2024-12-13",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 76
+    }
+   ]
+  },
+  {
+   "id": "W0071",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-12-16",
+   "end": "2024-12-16",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 77
+    }
+   ]
+  },
+  {
+   "id": "W0072",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2024-12-16",
+   "end": "2024-12-16",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 78
+    }
+   ]
+  },
+  {
+   "id": "W0073",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-12-17",
+   "end": "2024-12-17",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 79
+    }
+   ]
+  },
+  {
+   "id": "W0074",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2025-01-03",
+   "end": "2025-01-03",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 80
+    }
+   ]
+  },
+  {
+   "id": "W0075",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2025-01-06",
+   "end": "2025-01-06",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 81
+    }
+   ]
+  },
+  {
+   "id": "W0076",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2025-01-06",
+   "end": "2025-01-06",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 82
+    }
+   ]
+  },
+  {
+   "id": "W0077",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2025-01-16",
+   "end": "2025-01-16",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 83
+    }
+   ]
+  },
+  {
+   "id": "W0078",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2025-01-20",
+   "end": "2025-01-20",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 84
+    }
+   ]
+  },
+  {
+   "id": "W0079",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2025-01-20",
+   "end": "2025-01-20",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 85
+    }
+   ]
+  },
+  {
+   "id": "W0080",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2025-01-20",
+   "end": "2025-01-20",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 86
+    }
+   ]
+  },
+  {
+   "id": "W0081",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2025-01-20",
+   "end": "2025-01-20",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "架空発電機㈱",
+   "contract": "非常用発電機 点検業務（R6.10～）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 87
+    }
+   ]
+  },
+  {
+   "id": "W0082",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2025-02-03",
+   "end": "2025-02-03",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 88
+    }
+   ]
+  },
+  {
+   "id": "W0083",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2025-02-05",
+   "end": "2025-02-05",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 89
+    }
+   ]
+  },
+  {
+   "id": "W0084",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2025-02-05",
+   "end": "2025-02-05",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 90
+    }
+   ]
+  },
+  {
+   "id": "W0085",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2025-02-05",
+   "end": "2025-02-05",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 91
+    }
+   ]
+  },
+  {
+   "id": "W0086",
+   "label": "脱臭ファン No.1 交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2025-02-06",
+   "end": "2025-02-06",
+   "man_days": 0.5,
+   "days": 1,
+   "vendor": "架空送風機㈱",
+   "contract": "修繕（単価契約）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 92
+    }
+   ]
+  },
+  {
+   "id": "W0087",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2025-02-10",
+   "end": "2025-02-10",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 93
+    }
+   ]
+  },
+  {
+   "id": "W0088",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2025-02-17",
+   "end": "2025-02-17",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 94
+    }
+   ]
+  },
+  {
+   "id": "W0089",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2025-02-17",
+   "end": "2025-02-17",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 95
+    }
+   ]
+  },
+  {
+   "id": "W0090",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2025-02-17",
+   "end": "2025-02-17",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "架空発電機㈱",
+   "contract": "非常用発電機 点検業務（R6.10～）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 96
+    }
+   ]
+  },
+  {
+   "id": "W0091",
+   "label": "曝気ブロワ No.1 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2025-03-03",
+   "end": "2025-03-03",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 97
+    }
+   ]
+  },
+  {
+   "id": "W0092",
+   "label": "脱臭ファン No.1 振動・ベルト張り",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2025-03-04",
+   "end": "2025-03-04",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 98
+    }
+   ]
+  },
+  {
+   "id": "W0093",
+   "label": "曝気ブロワ No.3 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2025-03-07",
+   "end": "2025-03-07",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 99
+    }
+   ]
+  },
+  {
+   "id": "W0094",
+   "label": "汚泥脱水機 No.1 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2025-03-17",
+   "end": "2025-03-17",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 100
+    }
+   ]
+  },
+  {
+   "id": "W0095",
+   "label": "汚泥脱水機 No.2 スクリーン目詰まり・駆動部",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2025-03-18",
+   "end": "2025-03-18",
+   "man_days": 0.375,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 101
+    }
+   ]
+  },
+  {
+   "id": "W0096",
+   "label": "非常用発電機 無負荷試運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2025-03-19",
+   "end": "2025-03-19",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "架空発電機㈱",
+   "contract": "非常用発電機 点検業務（R6.10～）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 102
+    }
+   ]
+  },
+  {
+   "id": "W0097",
+   "label": "曝気ブロワ No.2 振動・軸受温度",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2025-03-20",
+   "end": "2025-03-20",
+   "man_days": 0.062,
+   "days": 1,
+   "vendor": "直営（施設係）",
+   "contract": "直営",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 103
+    }
+   ]
+  },
+  {
+   "id": "W0098",
+   "label": "受変電設備 月次点検（外観・絶縁監視）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E25"
+   ],
+   "start": "2025-03-20",
+   "end": "2025-03-20",
+   "man_days": 0.125,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "受変電設備 保安管理業務（R6）",
+   "rows": [
+    {
+     "file": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx",
+     "sheet": "点検記録",
+     "r": 104
+    }
+   ]
+  },
+  {
+   "id": "W0099",
+   "label": "非常用発電機 負荷運転（年次）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E26"
+   ],
+   "start": "2024-12-11",
+   "end": "2024-12-11",
+   "man_days": 1.5,
+   "days": 1,
+   "vendor": "架空発電機㈱",
+   "contract": "非常用発電機 点検業務（R6.10～）",
+   "rows": []
+  }
+ ],
+ "unrecorded": [
+  {
+   "work": "W0099",
+   "reason": "委託業者が自社の報告書だけに書き、点検記録に転記していない"
+  }
+ ],
+ "defects": [
+  {
+   "kind": "法令の点検の抜け（受変電設備の月次点検）",
+   "where": "【架空】汐見川衛生センター_設備点検記録_R6.xlsx 点検記録：令和6年8月の受変電設備の月次点検の行が無い",
+   "check": "受変電設備の月次点検（毎月）"
+  }
+ ]
+}

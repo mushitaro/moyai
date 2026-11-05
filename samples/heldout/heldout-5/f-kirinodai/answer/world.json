@@ -1,0 +1,8684 @@
+{
+ "schema": "moyai.answer.world/0",
+ "facility": {
+  "id": "f-kirinodai",
+  "name": "【架空】霧野台清掃工場",
+  "industry": "waste-incineration",
+  "profile": {
+   "furnace": "ストーカ式（全連続）",
+   "lines": 2,
+   "capacity_t_per_day": 170,
+   "capacity_note": "85t/24h × 2炉",
+   "turbine": true,
+   "dust": "BF",
+   "ash": "搬出",
+   "contract": "単年度",
+   "upgrade": false,
+   "completed": 2004
+  }
+ },
+ "fiscal_year_start_month": 4,
+ "man_day_hours": 8,
+ "today": "2026-10-01",
+ "equipment": [
+  {
+   "id": "E01",
+   "name": "計量機",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "計量機",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "計量機"
+   },
+   "aliases": [
+    "計量機",
+    "トラックスケール"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "WB-01",
+   "path": [
+    "受入供給設備",
+    "計量機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "E02",
+   "name": "ごみクレーン No.1",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "ごみクレーン",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "ごみクレーン No.1"
+   },
+   "aliases": [
+    "ごみクレーン No.1",
+    "ごみｸﾚｰﾝ1号機",
+    "クレーン(1)"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "CR-01",
+   "path": [
+    "受入供給設備",
+    "ごみクレーン",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "E03",
+   "name": "ごみクレーン No.2",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "ごみクレーン",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "ごみクレーン No.2"
+   },
+   "aliases": [
+    "ごみクレーン No.2",
+    "ごみｸﾚｰﾝ2号機",
+    "クレーン(2)"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "CR-02",
+   "path": [
+    "受入供給設備",
+    "ごみクレーン",
+    "No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "E04",
+   "name": "火格子（1号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "1号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "火格子",
+    "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf": "火格子（G-110）"
+   },
+   "aliases": [
+    "火格子"
+   ],
+   "furnace": 1,
+   "install_year": 2004,
+   "code": "G-110",
+   "path": [
+    "燃焼設備",
+    "火格子",
+    "1号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "E05",
+   "name": "火格子（2号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "2号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "火格子"
+   },
+   "aliases": [
+    "火格子"
+   ],
+   "furnace": 2,
+   "install_year": 2004,
+   "code": "G-210",
+   "path": [
+    "燃焼設備",
+    "火格子",
+    "2号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "E06",
+   "name": "押込送風機（1号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "1号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "押込送風機",
+    "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg": "押込送風機 1号"
+   },
+   "aliases": [
+    "押込送風機",
+    "FDF"
+   ],
+   "furnace": 1,
+   "install_year": 2004,
+   "code": "F-111",
+   "path": [
+    "燃焼設備",
+    "押込送風機",
+    "1号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22
+    }
+   ]
+  },
+  {
+   "id": "E07",
+   "name": "押込送風機（2号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "#2",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "押込送風機",
+    "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg": "押込送風機 2号"
+   },
+   "aliases": [
+    "押込送風機",
+    "FDF"
+   ],
+   "furnace": 2,
+   "install_year": 2004,
+   "code": "F-211",
+   "path": [
+    "燃焼設備",
+    "押込送風機",
+    "#2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 23
+    }
+   ]
+  },
+  {
+   "id": "E08",
+   "name": "廃熱ボイラ（1号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "1号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "廃熱ボイラ",
+    "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf": "廃熱ボイラ（B-120）"
+   },
+   "aliases": [
+    "廃熱ボイラ",
+    "ボイラ"
+   ],
+   "furnace": 1,
+   "install_year": 2004,
+   "code": "B-120",
+   "path": [
+    "燃焼ガス冷却設備",
+    "廃熱ボイラ",
+    "1号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26
+    }
+   ]
+  },
+  {
+   "id": "E09",
+   "name": "廃熱ボイラ（2号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "2号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "廃熱ボイラ"
+   },
+   "aliases": [
+    "廃熱ボイラ",
+    "ボイラ"
+   ],
+   "furnace": 2,
+   "install_year": 2004,
+   "code": "B-220",
+   "path": [
+    "燃焼ガス冷却設備",
+    "廃熱ボイラ",
+    "2号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27
+    }
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "ボイラ給水ポンプ No.1",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "No.1",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "ボイラ給水ポンプ No.1",
+    "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg": "ボイラ給水ポンプ No.1"
+   },
+   "aliases": [
+    "ボイラ給水ポンプ No.1",
+    "BFP №1",
+    "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ(1)"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "P-131",
+   "path": [
+    "燃焼ガス冷却設備",
+    "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ",
+    "No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 29
+    }
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "ボイラ給水ポンプ No.2",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "№2",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "ボイラ給水ポンプ No.2",
+    "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg": "ボイラ給水ポンプ No.2"
+   },
+   "aliases": [
+    "ボイラ給水ポンプ No.2",
+    "BFP №2",
+    "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ(2)"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "P-132",
+   "path": [
+    "燃焼ガス冷却設備",
+    "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ",
+    "№2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 30
+    }
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "ボイラ給水ポンプ No.3",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "No.3",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "ボイラ給水ポンプ No.3",
+    "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg": "ボイラ給水ポンプ No.3"
+   },
+   "aliases": [
+    "ボイラ給水ポンプ No.3",
+    "BFP №3",
+    "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ(3)"
+   ],
+   "furnace": null,
+   "install_year": 2012,
+   "code": "P-133",
+   "path": [
+    "燃焼ガス冷却設備",
+    "ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ",
+    "No.3"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 31
+    }
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "ろ過式集じん器（1号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "1号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "ろ過式集じん器"
+   },
+   "aliases": [
+    "ろ過式集じん器",
+    "バグフィルタ"
+   ],
+   "furnace": 1,
+   "install_year": 2004,
+   "code": "BF-140",
+   "path": [
+    "排ガス処理設備",
+    "ろ過式集じん器",
+    "1号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 34
+    }
+   ]
+  },
+  {
+   "id": "E14",
+   "name": "ろ過式集じん器（2号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "2号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "ろ過式集じん器"
+   },
+   "aliases": [
+    "ろ過式集じん器",
+    "バグフィルタ"
+   ],
+   "furnace": 2,
+   "install_year": 2004,
+   "code": "BF-240",
+   "path": [
+    "排ガス処理設備",
+    "ろ過式集じん器",
+    "2号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 35
+    }
+   ]
+  },
+  {
+   "id": "E15",
+   "name": "誘引通風機（1号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "1号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "誘引通風機",
+    "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf": "誘引通風機（F-150）",
+    "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg": "誘引通風機 1号"
+   },
+   "aliases": [
+    "誘引通風機",
+    "IDF",
+    "誘引送風機"
+   ],
+   "furnace": 1,
+   "install_year": 2004,
+   "code": "F-150",
+   "path": [
+    "排ガス処理設備",
+    "誘引通風機",
+    "1号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 37
+    }
+   ]
+  },
+  {
+   "id": "E16",
+   "name": "誘引通風機（2号炉）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "2号炉",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "誘引通風機",
+    "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg": "誘引通風機 2号"
+   },
+   "aliases": [
+    "誘引通風機",
+    "IDF",
+    "誘引送風機"
+   ],
+   "furnace": 2,
+   "install_year": 2004,
+   "code": "F-250",
+   "path": [
+    "排ガス処理設備",
+    "誘引通風機",
+    "2号炉"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 38
+    }
+   ]
+  },
+  {
+   "id": "E17",
+   "name": "蒸気タービン",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "蒸気タービン",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "蒸気タービン"
+   },
+   "aliases": [
+    "蒸気タービン",
+    "タービン"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "T-160",
+   "path": [
+    "余熱利用設備",
+    "蒸気タービン"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 41
+    }
+   ]
+  },
+  {
+   "id": "E18",
+   "name": "発電機",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "発電機",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "発電機"
+   },
+   "aliases": [
+    "発電機"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "G-161",
+   "path": [
+    "余熱利用設備",
+    "発電機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 42
+    }
+   ]
+  },
+  {
+   "id": "E19",
+   "name": "施設全体",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "施設全体",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "施設全体"
+   },
+   "aliases": [
+    "施設全体"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": null,
+   "path": [
+    "共通",
+    "施設全体"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 48
+    }
+   ]
+  },
+  {
+   "id": "E20",
+   "name": "高圧受変電設備",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "高圧受変電設備",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "受変電設備"
+   },
+   "aliases": [
+    "受変電設備",
+    "高圧受変電"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "SS-01",
+   "path": [
+    "受変電設備",
+    "高圧受変電設備"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "E21",
+   "name": "非常用発電機",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "非常用発電機",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "非常用発電機"
+   },
+   "aliases": [
+    "非常用発電機",
+    "非常用発電設備"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "EG-01",
+   "path": [
+    "非常用発電機"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "E22",
+   "name": "分散制御システム（DCS）",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "分散制御システム（DCS）",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "DCS"
+   },
+   "aliases": [
+    "DCS",
+    "分散制御システム"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "DCS-01",
+   "path": [
+    "計装設備",
+    "分散制御システム（DCS）"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "E23",
+   "name": "排ガス分析計",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "排ガス分析計",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "排ガス分析計"
+   },
+   "aliases": [
+    "排ガス分析計"
+   ],
+   "furnace": null,
+   "install_year": 2016,
+   "code": "AN-01",
+   "path": [
+    "計装設備",
+    "排ガス分析計"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "E24",
+   "name": "直流電源装置",
+   "names": {
+    "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx": "直流電源装置",
+    "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv": "直流電源装置"
+   },
+   "aliases": [
+    "直流電源装置"
+   ],
+   "furnace": null,
+   "install_year": 2004,
+   "code": "DC-01",
+   "path": [
+    "受変電設備",
+    "直流電源装置"
+   ],
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 9
+    }
+   ]
+  }
+ ],
+ "works": [
+  {
+   "id": "W0001",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2020-05-11",
+   "end": "2020-06-05",
+   "man_days": 185.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R2 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0002",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2020-05-14",
+   "end": "2020-05-20",
+   "man_days": 25.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R2 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0003",
+   "label": "押込送風機（1号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2020-05-15",
+   "end": "2020-05-19",
+   "man_days": 12.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R2 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0004",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2020-05-18",
+   "end": "2020-05-25",
+   "man_days": 24.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R2 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0005",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2020-06-06",
+   "end": "2020-06-11",
+   "man_days": 28.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R2 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0006",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2020-06-06",
+   "end": "2020-06-14",
+   "man_days": 84.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R2 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0007",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2020-06-10",
+   "end": "2020-06-10",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R2 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0008",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2020-06-11",
+   "end": "2020-06-12",
+   "man_days": 11.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R2 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0009",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2020-06-15",
+   "end": "2020-07-10",
+   "man_days": 204.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R2 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0010",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2020-06-18",
+   "end": "2020-06-24",
+   "man_days": 18.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R2 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0011",
+   "label": "押込送風機（2号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2020-06-19",
+   "end": "2020-06-23",
+   "man_days": 19.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R2 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 23,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 23,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0012",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2020-06-22",
+   "end": "2020-06-29",
+   "man_days": 25.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R2 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0013",
+   "label": "誘引通風機（2号炉） 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E16"
+   ],
+   "start": "2020-06-29",
+   "end": "2020-07-03",
+   "man_days": 16.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R2 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 38,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 38,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0014",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2020-09-09",
+   "end": "2020-09-10",
+   "man_days": 11.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R2 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0015",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2020-10-06",
+   "end": "2020-10-07",
+   "man_days": 9.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R2 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0016",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2020-10-19",
+   "end": "2020-10-19",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R2 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0017",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2020-11-18",
+   "end": "2020-11-18",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R2 計量機 定期検査（計量法） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0018",
+   "label": "ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E02",
+    "E03"
+   ],
+   "start": "2020-12-08",
+   "end": "2020-12-08",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空クレーン㈱",
+   "contract": "R2 ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0019",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2021-01-20",
+   "end": "2021-01-21",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R2 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0020",
+   "label": "ごみクレーン No.2 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2021-02-03",
+   "end": "2021-02-04",
+   "man_days": 6.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R2 ごみクレーン No.2 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0021",
+   "label": "ごみクレーン No.2 油圧シリンダ整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2021-02-17",
+   "end": "2021-02-19",
+   "man_days": 13.0,
+   "days": 3,
+   "vendor": "架空クレーン㈱",
+   "contract": "R2 ごみクレーン No.2 油圧シリンダ整備 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 16,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 16,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0022",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2021-02-22",
+   "end": "2021-02-22",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R2 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2020,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2020,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0023",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2021-05-17",
+   "end": "2021-06-11",
+   "man_days": 215.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R3 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0024",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2021-05-20",
+   "end": "2021-05-26",
+   "man_days": 30.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R3 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0025",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2021-05-24",
+   "end": "2021-05-31",
+   "man_days": 29.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R3 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0026",
+   "label": "ろ過式集じん器（1号炉） ろ布取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2021-05-27",
+   "end": "2021-06-02",
+   "man_days": 24.0,
+   "days": 7,
+   "vendor": "架空フィルタ工業㈱",
+   "contract": "R3 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 34,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 34,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0027",
+   "label": "ボイラ給水ポンプ No.1 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2021-06-12",
+   "end": "2021-06-16",
+   "man_days": 11.0,
+   "days": 5,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R3 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 29,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 29,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0028",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2021-06-12",
+   "end": "2021-06-17",
+   "man_days": 18.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R3 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0029",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2021-06-12",
+   "end": "2021-06-20",
+   "man_days": 79.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R3 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0030",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2021-06-16",
+   "end": "2021-06-16",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R3 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0031",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2021-06-17",
+   "end": "2021-06-18",
+   "man_days": 6.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R3 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0032",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2021-06-21",
+   "end": "2021-07-16",
+   "man_days": 150.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R3 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0033",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2021-06-24",
+   "end": "2021-06-30",
+   "man_days": 17.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R3 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0034",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2021-06-28",
+   "end": "2021-07-05",
+   "man_days": 24.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R3 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0035",
+   "label": "計量機 臨時点検（落雷後）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2021-07-26",
+   "end": "2021-07-26",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R3 計量機 臨時点検（落雷後） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2021,
+     "symbol": "※"
+    }
+   ]
+  },
+  {
+   "id": "W0036",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2021-09-10",
+   "end": "2021-09-13",
+   "man_days": 3.0,
+   "days": 4,
+   "vendor": "架空クレーン㈱",
+   "contract": "R3 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0037",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2021-10-08",
+   "end": "2021-10-11",
+   "man_days": 8.0,
+   "days": 4,
+   "vendor": "架空クレーン㈱",
+   "contract": "R3 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0038",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2021-10-18",
+   "end": "2021-10-18",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R3 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0039",
+   "label": "施設全体 精密機能検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2021-11-11",
+   "end": "2021-11-15",
+   "man_days": 10.0,
+   "days": 5,
+   "vendor": "架空環境技術センター㈱",
+   "contract": "R3 施設全体 精密機能検査 業務委託",
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 48,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 48,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0040",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2022-01-19",
+   "end": "2022-01-20",
+   "man_days": 6.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R3 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0041",
+   "label": "ごみクレーン No.1 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2022-02-09",
+   "end": "2022-02-10",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R3 ごみクレーン No.1 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0042",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2022-02-23",
+   "end": "2022-02-23",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R3 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2021,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2021,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0043",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2022-05-16",
+   "end": "2022-06-10",
+   "man_days": 180.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R4 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0044",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2022-05-19",
+   "end": "2022-05-25",
+   "man_days": 25.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R4 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0045",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2022-05-23",
+   "end": "2022-05-30",
+   "man_days": 32.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R4 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0046",
+   "label": "誘引通風機（1号炉） 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E15"
+   ],
+   "start": "2022-05-30",
+   "end": "2022-06-03",
+   "man_days": 13.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R4 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 37,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 37,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0047",
+   "label": "ボイラ給水ポンプ No.2 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2022-06-11",
+   "end": "2022-06-15",
+   "man_days": 14.0,
+   "days": 5,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R4 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 30,
+     "year": 2022,
+     "symbol": "○"
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0048",
+   "label": "蒸気タービン 定期事業者検査（開放）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2022-06-11",
+   "end": "2022-06-21",
+   "man_days": 32.0,
+   "days": 11,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R4 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 41,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 41,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0049",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2022-06-11",
+   "end": "2022-06-16",
+   "man_days": 20.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R4 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0050",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2022-06-11",
+   "end": "2022-06-22",
+   "man_days": 147.0,
+   "days": 12,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R4 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0051",
+   "label": "発電機 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E18"
+   ],
+   "start": "2022-06-13",
+   "end": "2022-06-18",
+   "man_days": 23.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R4 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 42,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 42,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0052",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2022-06-16",
+   "end": "2022-06-16",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R4 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0053",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2022-06-17",
+   "end": "2022-06-18",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R4 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2022,
+     "symbol": "△"
+    }
+   ],
+   "note": "一部（HMI更新のみ実施、残りはR5の点検で）"
+  },
+  {
+   "id": "W0054",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2022-06-23",
+   "end": "2022-07-18",
+   "man_days": 184.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R4 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0055",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2022-06-27",
+   "end": "2022-07-02",
+   "man_days": 27.0,
+   "days": 6,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R4 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0056",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2022-06-30",
+   "end": "2022-07-07",
+   "man_days": 34.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R4 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0057",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2022-09-08",
+   "end": "2022-09-09",
+   "man_days": 7.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R4 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0058",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2022-10-06",
+   "end": "2022-10-07",
+   "man_days": 4.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R4 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0059",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2022-10-17",
+   "end": "2022-10-17",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R4 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0060",
+   "label": "誘引通風機（2号炉） 軸受交換（異音）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E16"
+   ],
+   "start": "2022-11-09",
+   "end": "2022-11-09",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空霧野台運転管理㈱",
+   "contract": "運転管理業務委託（単価）",
+   "precision": false,
+   "rows": []
+  },
+  {
+   "id": "W0061",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2022-11-21",
+   "end": "2022-11-21",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R4 計量機 定期検査（計量法） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0062",
+   "label": "ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E02",
+    "E03"
+   ],
+   "start": "2022-12-09",
+   "end": "2022-12-09",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "架空クレーン㈱",
+   "contract": "R4 ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0063",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2023-01-23",
+   "end": "2023-01-24",
+   "man_days": 13.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R4 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0064",
+   "label": "ごみクレーン No.2 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2023-02-06",
+   "end": "2023-02-07",
+   "man_days": 7.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R4 ごみクレーン No.2 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0065",
+   "label": "ごみクレーン No.1 油圧シリンダ整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2023-02-17",
+   "end": "2023-02-21",
+   "man_days": 11.0,
+   "days": 5,
+   "vendor": "架空クレーン㈱",
+   "contract": "R4 ごみクレーン No.1 油圧シリンダ整備 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 13,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 13,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0066",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2023-02-22",
+   "end": "2023-02-22",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R4 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2022,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2022,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0067",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2023-05-15",
+   "end": "2023-06-09",
+   "man_days": 192.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R5 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0068",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2023-05-18",
+   "end": "2023-05-24",
+   "man_days": 27.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R5 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0069",
+   "label": "押込送風機（1号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2023-05-19",
+   "end": "2023-05-23",
+   "man_days": 19.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R5 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0070",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2023-05-22",
+   "end": "2023-05-29",
+   "man_days": 32.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R5 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0071",
+   "label": "ボイラ給水ポンプ No.3 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2023-06-10",
+   "end": "2023-06-14",
+   "man_days": 14.0,
+   "days": 5,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R5 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 31,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 31,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0072",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2023-06-10",
+   "end": "2023-06-15",
+   "man_days": 18.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R5 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0073",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2023-06-10",
+   "end": "2023-06-18",
+   "man_days": 90.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R5 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0074",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2023-06-14",
+   "end": "2023-06-14",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R5 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0075",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2023-06-15",
+   "end": "2023-06-16",
+   "man_days": 9.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R5 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0076",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2023-06-19",
+   "end": "2023-07-14",
+   "man_days": 212.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R5 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0077",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2023-06-22",
+   "end": "2023-06-28",
+   "man_days": 23.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R5 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0078",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2023-06-26",
+   "end": "2023-07-03",
+   "man_days": 31.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R5 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0079",
+   "label": "ろ過式集じん器（2号炉） ろ布取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2023-06-29",
+   "end": "2023-07-05",
+   "man_days": 22.0,
+   "days": 7,
+   "vendor": "架空フィルタ工業㈱",
+   "contract": "R5 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 35,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 35,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0080",
+   "label": "誘引通風機（2号炉） 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E16"
+   ],
+   "start": "2023-07-03",
+   "end": "2023-07-07",
+   "man_days": 17.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R5 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 38,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 38,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0081",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2023-09-11",
+   "end": "2023-09-12",
+   "man_days": 11.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R5 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0082",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2023-10-09",
+   "end": "2023-10-10",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R5 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0083",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2023-10-16",
+   "end": "2023-10-16",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R5 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0084",
+   "label": "ボイラ給水ポンプ No.1 グランドパッキン交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2024-01-17",
+   "end": "2024-01-17",
+   "man_days": 7.0,
+   "days": 1,
+   "vendor": "架空霧野台運転管理㈱",
+   "contract": "運転管理業務委託（単価）",
+   "precision": false,
+   "rows": []
+  },
+  {
+   "id": "W0085",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2024-01-22",
+   "end": "2024-01-23",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R5 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0086",
+   "label": "ごみクレーン No.1 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2024-02-12",
+   "end": "2024-02-13",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R5 ごみクレーン No.1 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12,
+     "year": 2023,
+     "symbol": "○"
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0087",
+   "label": "ごみクレーン No.2 油圧シリンダ整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2024-02-19",
+   "end": "2024-02-21",
+   "man_days": 14.0,
+   "days": 3,
+   "vendor": "架空クレーン㈱",
+   "contract": "R5 ごみクレーン No.2 油圧シリンダ整備 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 16,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 16,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0088",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2024-02-21",
+   "end": "2024-02-21",
+   "man_days": 6.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R5 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2023,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2023,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0089",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2024-05-20",
+   "end": "2024-06-14",
+   "man_days": 168.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R6 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0090",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2024-05-23",
+   "end": "2024-05-29",
+   "man_days": 25.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R6 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0091",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2024-05-27",
+   "end": "2024-06-03",
+   "man_days": 28.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R6 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0092",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2024-06-15",
+   "end": "2024-06-20",
+   "man_days": 17.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R6 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0093",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2024-06-15",
+   "end": "2024-06-23",
+   "man_days": 66.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R6 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0094",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2024-06-19",
+   "end": "2024-06-19",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R6 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0095",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2024-06-20",
+   "end": "2024-06-21",
+   "man_days": 9.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R6 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0096",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2024-06-24",
+   "end": "2024-07-19",
+   "man_days": 185.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R6 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0097",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2024-06-27",
+   "end": "2024-07-03",
+   "man_days": 25.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R6 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0098",
+   "label": "押込送風機（2号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2024-06-28",
+   "end": "2024-07-02",
+   "man_days": 16.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R6 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 23,
+     "year": 2023,
+     "symbol": "○→"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 23,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0099",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2024-07-01",
+   "end": "2024-07-08",
+   "man_days": 29.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R6 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0100",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2024-09-09",
+   "end": "2024-09-10",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R6 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0101",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2024-10-07",
+   "end": "2024-10-08",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R6 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0102",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2024-10-17",
+   "end": "2024-10-17",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R6 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0104",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2024-11-18",
+   "end": "2024-11-18",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R6 計量機 定期検査（計量法） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2023,
+     "symbol": "●",
+     "note": "年度の書き間違い（実施は 2024 年度）"
+    }
+   ]
+  },
+  {
+   "id": "W0105",
+   "label": "ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E02",
+    "E03"
+   ],
+   "start": "2024-12-09",
+   "end": "2024-12-09",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "架空クレーン㈱",
+   "contract": "R6 ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0106",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2025-01-22",
+   "end": "2025-01-23",
+   "man_days": 9.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R6 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0107",
+   "label": "ごみクレーン No.2 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2025-02-05",
+   "end": "2025-02-06",
+   "man_days": 9.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R6 ごみクレーン No.2 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0108",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2025-02-21",
+   "end": "2025-02-21",
+   "man_days": 6.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R6 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2024,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2024,
+     "symbol": "●"
+    }
+   ]
+  },
+  {
+   "id": "W0109",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2025-05-12",
+   "end": "2025-06-06",
+   "man_days": 192.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R7-018 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 3
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 4
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 5
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 6
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 8
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 10
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 12
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 13
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 16
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 19
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 22
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 24
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 26
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 28
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 29
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 32
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 34
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 36
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 38
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 40
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 41
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 42
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 43
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 44
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 45
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 46
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 0
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 1
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 2
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 3
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 4
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 5
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 6
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 7
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 8
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 9
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 10
+    }
+   ]
+  },
+  {
+   "id": "W0110",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2025-05-15",
+   "end": "2025-05-21",
+   "man_days": 27.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R7-018 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 7
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 9
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 11
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 14
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 17
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 20
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 2
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 11
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 12
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 13
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 14
+    }
+   ]
+  },
+  {
+   "id": "W0111",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2025-05-19",
+   "end": "2025-05-26",
+   "man_days": 28.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R7-018 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 15
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 18
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 21
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 23
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 25
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 27
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 30
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 5
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 15
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 16
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 17
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 18
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 19
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 20
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 21
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 22
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 23
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 24
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 25
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 26
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 27
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 28
+    }
+   ]
+  },
+  {
+   "id": "W0112",
+   "label": "誘引通風機（1号炉） 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E15"
+   ],
+   "start": "2025-05-26",
+   "end": "2025-05-30",
+   "man_days": 28.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R7-018 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 37,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 37,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 31
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 33
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 35
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 37
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 39
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 6
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 29
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 30
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 31
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 32
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 33
+    },
+    {
+     "file": "【架空】霧野台清掃工場_R7_1号炉定期整備工事_作業報告書.pdf",
+     "seq": 34
+    }
+   ]
+  },
+  {
+   "id": "W0113",
+   "label": "ボイラ給水ポンプ No.1 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2025-06-07",
+   "end": "2025-06-11",
+   "man_days": 9.0,
+   "days": 5,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R7 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 29,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 29,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 47
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 51
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 54
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 57
+    }
+   ]
+  },
+  {
+   "id": "W0114",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2025-06-07",
+   "end": "2025-06-12",
+   "man_days": 21.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R7 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 48
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 52
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 55
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 58
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 61
+    }
+   ]
+  },
+  {
+   "id": "W0115",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2025-06-07",
+   "end": "2025-06-15",
+   "man_days": 81.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R7 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 49
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 50
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 53
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 56
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 59
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 62
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 64
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 66
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 67
+    }
+   ]
+  },
+  {
+   "id": "W0116",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2025-06-11",
+   "end": "2025-06-11",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R7 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 60
+    }
+   ]
+  },
+  {
+   "id": "W0117",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2025-06-12",
+   "end": "2025-06-13",
+   "man_days": 5.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R7 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 63
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 65
+    }
+   ]
+  },
+  {
+   "id": "W0118",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2025-06-16",
+   "end": "2025-07-11",
+   "man_days": 176.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R7 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 68
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 69
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 70
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 71
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 73
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 75
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 77
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 78
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 81
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 84
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 87
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 89
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 91
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 93
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 94
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 96
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 97
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 98
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 99
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 100
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 101
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 102
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 103
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 104
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 105
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 106
+    }
+   ]
+  },
+  {
+   "id": "W0119",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2025-06-19",
+   "end": "2025-06-25",
+   "man_days": 29.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R7 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 72
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 74
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 76
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 79
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 82
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 85
+    }
+   ]
+  },
+  {
+   "id": "W0120",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2025-06-23",
+   "end": "2025-06-30",
+   "man_days": 27.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R7 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 80
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 83
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 86
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 88
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 90
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 92
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 95
+    }
+   ]
+  },
+  {
+   "id": "W0121",
+   "label": "ボイラ給水ポンプ No.2 メカニカルシール交換（漏れ）",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2025-07-14",
+   "end": "2025-07-14",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R7 修繕（随意契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 107
+    }
+   ]
+  },
+  {
+   "id": "W0122",
+   "label": "ごみクレーン No.2 走行車輪 補修",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2025-08-26",
+   "end": "2025-08-27",
+   "man_days": 4.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R7 修繕（随意契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 108
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 109
+    }
+   ]
+  },
+  {
+   "id": "W0123",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2025-09-09",
+   "end": "2025-09-10",
+   "man_days": 4.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R7 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 110
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 111
+    }
+   ]
+  },
+  {
+   "id": "W0124",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2025-10-07",
+   "end": "2025-10-08",
+   "man_days": 7.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R7 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 112
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 113
+    }
+   ]
+  },
+  {
+   "id": "W0125",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2025-10-15",
+   "end": "2025-10-15",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R7 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 114
+    }
+   ]
+  },
+  {
+   "id": "W0126",
+   "label": "計量機 ロードセル調整（指示ずれ）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2025-11-05",
+   "end": "2025-11-05",
+   "man_days": 0.5,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R7 修繕（随意契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 115
+    }
+   ]
+  },
+  {
+   "id": "W0128",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2026-01-20",
+   "end": "2026-01-21",
+   "man_days": 9.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R7 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 116
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 117
+    }
+   ]
+  },
+  {
+   "id": "W0129",
+   "label": "押込送風機（2号炉） Vベルト交換",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2026-01-21",
+   "end": "2026-01-21",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "架空霧野台運転管理㈱",
+   "contract": "運転管理業務委託（単価）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 118
+    }
+   ]
+  },
+  {
+   "id": "W0130",
+   "label": "ごみクレーン No.1 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2026-02-12",
+   "end": "2026-02-13",
+   "man_days": 9.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R7 ごみクレーン No.1 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 119
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 120
+    }
+   ]
+  },
+  {
+   "id": "W0131",
+   "label": "ごみクレーン No.1 油圧シリンダ整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2026-02-19",
+   "end": "2026-02-23",
+   "man_days": 10.0,
+   "days": 5,
+   "vendor": "架空クレーン㈱",
+   "contract": "R7 ごみクレーン No.1 油圧シリンダ整備 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 13,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 13,
+     "year": 2025,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 121
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 122
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 123
+    }
+   ]
+  },
+  {
+   "id": "W0132",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2026-02-23",
+   "end": "2026-02-23",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R7 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2025,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 124
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0133",
+   "label": "排ガス分析計 サンプリング配管詰まり除去",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2026-03-10",
+   "end": "2026-03-10",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "架空計測㈱",
+   "contract": "R7 修繕（随意契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 125
+    }
+   ]
+  },
+  {
+   "id": "W0134",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2026-05-18",
+   "end": "2026-06-12",
+   "man_days": 205.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 126
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 127
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 128
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 129
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 131
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 134
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 137
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 138
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 142
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 146
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 149
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 153
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 156
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 159
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 160
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 163
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 165
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 167
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 168
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 169
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 170
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 171
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 172
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 173
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 174
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 175
+    }
+   ]
+  },
+  {
+   "id": "W0135",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2026-05-21",
+   "end": "2026-05-27",
+   "man_days": 26.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 130
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 132
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 135
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 139
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 143
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 147
+    }
+   ]
+  },
+  {
+   "id": "W0136",
+   "label": "押込送風機（1号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2026-05-22",
+   "end": "2026-05-26",
+   "man_days": 12.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 133
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 136
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 140
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 144
+    }
+   ]
+  },
+  {
+   "id": "W0137",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2026-05-25",
+   "end": "2026-06-01",
+   "man_days": 27.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 141
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 145
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 148
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 150
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 154
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 157
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 161
+    }
+   ]
+  },
+  {
+   "id": "W0138",
+   "label": "ろ過式集じん器（1号炉） ろ布取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E13"
+   ],
+   "start": "2026-05-28",
+   "end": "2026-06-03",
+   "man_days": 23.0,
+   "days": 7,
+   "vendor": "架空フィルタ工業㈱",
+   "contract": "R8 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 34,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 34,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 151
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 155
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 158
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 162
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 164
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 166
+    }
+   ]
+  },
+  {
+   "id": "W0139",
+   "label": "ボイラ給水ポンプ No.2 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E11"
+   ],
+   "start": "2026-06-13",
+   "end": "2026-06-17",
+   "man_days": 22.0,
+   "days": 5,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R8 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 30,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 30,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 176
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 181
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 186
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 191
+    }
+   ]
+  },
+  {
+   "id": "W0140",
+   "label": "蒸気タービン 定期事業者検査（開放）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2026-06-13",
+   "end": "2026-06-23",
+   "man_days": 37.0,
+   "days": 11,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R8 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 41,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 41,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 177
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 182
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 187
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 192
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 197
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 202
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 206
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 211
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 213
+    }
+   ]
+  },
+  {
+   "id": "W0141",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2026-06-13",
+   "end": "2026-06-18",
+   "man_days": 20.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R8 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 178
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 183
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 188
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 193
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 198
+    }
+   ]
+  },
+  {
+   "id": "W0142",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2026-06-13",
+   "end": "2026-06-24",
+   "man_days": 178.0,
+   "days": 12,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R8 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 179
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 180
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 184
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 189
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 194
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 199
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 203
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 207
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 210
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 212
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 214
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 215
+    }
+   ]
+  },
+  {
+   "id": "W0143",
+   "label": "発電機 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E18"
+   ],
+   "start": "2026-06-15",
+   "end": "2026-06-20",
+   "man_days": 26.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R8 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 42,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 42,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 185
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 190
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 195
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 200
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 204
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 208
+    }
+   ]
+  },
+  {
+   "id": "W0144",
+   "label": "直流電源装置 蓄電池取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E24"
+   ],
+   "start": "2026-06-17",
+   "end": "2026-06-17",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R8 直流電源装置 蓄電池取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 9,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 9,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 196
+    }
+   ]
+  },
+  {
+   "id": "W0145",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2026-06-18",
+   "end": "2026-06-18",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R8 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 201
+    }
+   ]
+  },
+  {
+   "id": "W0146",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2026-06-19",
+   "end": "2026-06-20",
+   "man_days": 6.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R8 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2026,
+     "symbol": "●"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 205
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 209
+    }
+   ]
+  },
+  {
+   "id": "W0147",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2026-06-25",
+   "end": "2026-07-20",
+   "man_days": 197.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R8 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 216
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 217
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 218
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 219
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 220
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 223
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 226
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 229
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 233
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 236
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 239
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 240
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 242
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 244
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 246
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 249
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 251
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 253
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 254
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 256
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 258
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 259
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 260
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 261
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 262
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 263
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0148",
+   "label": "押込送風機（2号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2026-06-29",
+   "end": "2026-07-02",
+   "man_days": 19.0,
+   "days": 4,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R8 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 23,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 221
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 224
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 227
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 230
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0149",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2026-06-29",
+   "end": "2026-07-04",
+   "man_days": 25.0,
+   "days": 6,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R8 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 222
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 225
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 228
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 231
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 234
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 237
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0150",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2026-07-02",
+   "end": "2026-07-09",
+   "man_days": 24.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R8 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 232
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 235
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 238
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 241
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 243
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 245
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 247
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0151",
+   "label": "誘引通風機（2号炉） 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E16"
+   ],
+   "start": "2026-07-09",
+   "end": "2026-07-14",
+   "man_days": 18.0,
+   "days": 6,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R8 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 38,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 248
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 250
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 252
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 255
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 257
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0152",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2026-09-08",
+   "end": "2026-09-09",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R8 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2026,
+     "symbol": "○"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 264
+    },
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 265
+    }
+   ],
+   "note": "整備計画表の実績の書き漏れ（● が無い）"
+  },
+  {
+   "id": "W0153",
+   "label": "誘引通風機（1号炉） 軸受グリス補給（温度上昇）",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E15"
+   ],
+   "start": "2026-09-24",
+   "end": "2026-09-24",
+   "man_days": 0.25,
+   "days": 1,
+   "vendor": "架空霧野台運転管理㈱",
+   "contract": "運転管理業務委託（単価）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_作業日報データ_R7-R8.csv",
+     "r": 266
+    },
+    {
+     "file": "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg",
+     "seq": 5,
+     "image": "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg"
+    },
+    {
+     "file": "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg",
+     "seq": 12,
+     "image": "【架空】霧野台清掃工場_日常点検表_R8.9.21-27.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0154",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2026-10-09",
+   "end": "2026-10-12",
+   "man_days": 10.0,
+   "days": 4,
+   "vendor": "架空クレーン㈱",
+   "contract": "R8 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0155",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2026-10-15",
+   "end": "2026-10-15",
+   "man_days": 1.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R8 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0156",
+   "label": "施設全体 精密機能検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2026-11-10",
+   "end": "2026-11-12",
+   "man_days": 11.0,
+   "days": 3,
+   "vendor": "架空環境技術センター㈱",
+   "contract": "R8 施設全体 精密機能検査 業務委託",
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 48,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0157",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2026-11-19",
+   "end": "2026-11-19",
+   "man_days": 6.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R8 計量機 定期検査（計量法） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0158",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2027-01-22",
+   "end": "2027-01-25",
+   "man_days": 9.0,
+   "days": 4,
+   "vendor": "架空計測㈱",
+   "contract": "R8 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0159",
+   "label": "ごみクレーン No.2 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2027-02-04",
+   "end": "2027-02-05",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R8 ごみクレーン No.2 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0160",
+   "label": "ごみクレーン No.2 油圧シリンダ整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2027-02-19",
+   "end": "2027-02-23",
+   "man_days": 13.0,
+   "days": 5,
+   "vendor": "架空クレーン㈱",
+   "contract": "R8 ごみクレーン No.2 油圧シリンダ整備 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 16,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0161",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2027-02-22",
+   "end": "2027-02-22",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R8 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2026,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0162",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2027-05-17",
+   "end": "2027-06-11",
+   "man_days": 168.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R9 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0163",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2027-05-20",
+   "end": "2027-05-26",
+   "man_days": 27.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R9 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0164",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2027-05-24",
+   "end": "2027-05-31",
+   "man_days": 24.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R9 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0165",
+   "label": "ボイラ給水ポンプ No.3 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2027-06-12",
+   "end": "2027-06-16",
+   "man_days": 12.0,
+   "days": 5,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R9 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 31,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0166",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2027-06-12",
+   "end": "2027-06-17",
+   "man_days": 22.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R9 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0167",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2027-06-12",
+   "end": "2027-06-20",
+   "man_days": 82.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R9 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0168",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2027-06-16",
+   "end": "2027-06-16",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R9 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0169",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2027-06-17",
+   "end": "2027-06-18",
+   "man_days": 5.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R9 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0170",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2027-06-21",
+   "end": "2027-07-16",
+   "man_days": 156.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R9 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0171",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2027-06-24",
+   "end": "2027-06-30",
+   "man_days": 22.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R9 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0172",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2027-06-28",
+   "end": "2027-07-05",
+   "man_days": 29.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R9 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0173",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2027-09-08",
+   "end": "2027-09-09",
+   "man_days": 10.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R9 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0174",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2027-10-08",
+   "end": "2027-10-11",
+   "man_days": 9.0,
+   "days": 4,
+   "vendor": "架空クレーン㈱",
+   "contract": "R9 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0175",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2027-10-14",
+   "end": "2027-10-14",
+   "man_days": 6.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R9 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0176",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2028-01-21",
+   "end": "2028-01-24",
+   "man_days": 9.0,
+   "days": 4,
+   "vendor": "架空計測㈱",
+   "contract": "R9 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0177",
+   "label": "ごみクレーン No.1 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2028-02-14",
+   "end": "2028-02-15",
+   "man_days": 13.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R9 ごみクレーン No.1 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0178",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2028-02-21",
+   "end": "2028-02-21",
+   "man_days": 6.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R9 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2027,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0179",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2028-05-15",
+   "end": "2028-06-09",
+   "man_days": 191.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R10 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0180",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2028-05-18",
+   "end": "2028-05-24",
+   "man_days": 20.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R10 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0181",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2028-05-22",
+   "end": "2028-05-29",
+   "man_days": 24.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R10 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0182",
+   "label": "誘引通風機（1号炉） 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E15"
+   ],
+   "start": "2028-05-29",
+   "end": "2028-06-02",
+   "man_days": 28.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R10 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 37,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0183",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2028-06-10",
+   "end": "2028-06-15",
+   "man_days": 19.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R10 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0184",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2028-06-10",
+   "end": "2028-06-18",
+   "man_days": 72.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R10 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0185",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2028-06-14",
+   "end": "2028-06-14",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R10 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0186",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2028-06-15",
+   "end": "2028-06-16",
+   "man_days": 10.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R10 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0187",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2028-06-19",
+   "end": "2028-07-14",
+   "man_days": 183.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R10 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0188",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2028-06-22",
+   "end": "2028-06-28",
+   "man_days": 20.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R10 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0189",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2028-06-26",
+   "end": "2028-07-03",
+   "man_days": 23.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R10 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0190",
+   "label": "ろ過式集じん器（2号炉） ろ布取替",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E14"
+   ],
+   "start": "2028-06-29",
+   "end": "2028-07-05",
+   "man_days": 23.0,
+   "days": 7,
+   "vendor": "架空フィルタ工業㈱",
+   "contract": "R10 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 35,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0191",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2028-09-11",
+   "end": "2028-09-12",
+   "man_days": 12.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R10 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0192",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2028-10-09",
+   "end": "2028-10-10",
+   "man_days": 7.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R10 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0193",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2028-10-17",
+   "end": "2028-10-17",
+   "man_days": 3.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R10 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0194",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2028-11-21",
+   "end": "2028-11-21",
+   "man_days": 2.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R10 計量機 定期検査（計量法） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 9,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0195",
+   "label": "ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E02",
+    "E03"
+   ],
+   "start": "2028-12-11",
+   "end": "2028-12-11",
+   "man_days": 6.0,
+   "days": 1,
+   "vendor": "架空クレーン㈱",
+   "contract": "R10 ごみクレーン No.1・ごみクレーン No.2 性能検査（クレーン則） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 10,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0196",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2029-01-22",
+   "end": "2029-01-23",
+   "man_days": 13.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R10 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0197",
+   "label": "ごみクレーン No.2 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2029-02-05",
+   "end": "2029-02-06",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R10 ごみクレーン No.2 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 15,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0198",
+   "label": "ごみクレーン No.1 油圧シリンダ整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2029-02-19",
+   "end": "2029-02-21",
+   "man_days": 13.0,
+   "days": 3,
+   "vendor": "架空クレーン㈱",
+   "contract": "R10 ごみクレーン No.1 油圧シリンダ整備 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 13,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0199",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2029-02-22",
+   "end": "2029-02-22",
+   "man_days": 4.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R10 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2028,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0200",
+   "label": "1号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E04",
+    "E06",
+    "E08",
+    "E13",
+    "E15"
+   ],
+   "start": "2029-05-14",
+   "end": "2029-06-08",
+   "man_days": 189.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R11 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 45,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0201",
+   "label": "火格子（1号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2029-05-17",
+   "end": "2029-05-23",
+   "man_days": 22.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R11 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 19,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0202",
+   "label": "押込送風機（1号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2029-05-18",
+   "end": "2029-05-22",
+   "man_days": 18.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R11 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 22,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0203",
+   "label": "廃熱ボイラ（1号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2029-05-21",
+   "end": "2029-05-28",
+   "man_days": 23.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R11 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 26,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0204",
+   "label": "ボイラ給水ポンプ No.1 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2029-06-09",
+   "end": "2029-06-13",
+   "man_days": 18.0,
+   "days": 5,
+   "vendor": "架空ポンプ工業㈱",
+   "contract": "R11 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 29,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0205",
+   "label": "蒸気タービン 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E17"
+   ],
+   "start": "2029-06-09",
+   "end": "2029-06-14",
+   "man_days": 16.0,
+   "days": 6,
+   "vendor": "架空タービンサービス㈱",
+   "contract": "R11 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 40,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0206",
+   "label": "全炉 全休炉整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E10",
+    "E11",
+    "E12",
+    "E17",
+    "E18",
+    "E20",
+    "E22",
+    "E24"
+   ],
+   "start": "2029-06-09",
+   "end": "2029-06-17",
+   "man_days": 91.0,
+   "days": 9,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R11 全休炉整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 47,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0207",
+   "label": "高圧受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E20"
+   ],
+   "start": "2029-06-13",
+   "end": "2029-06-13",
+   "man_days": 7.0,
+   "days": 1,
+   "vendor": "（一財）架空電気保安協会",
+   "contract": "R11 高圧受変電設備 年次点検（全停電） 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 8,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0208",
+   "label": "分散制御システム（DCS） 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E22"
+   ],
+   "start": "2029-06-14",
+   "end": "2029-06-15",
+   "man_days": 7.0,
+   "days": 2,
+   "vendor": "架空システム㈱",
+   "contract": "R11 分散制御システム（DCS） 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 12,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0209",
+   "label": "2号炉 定期整備工事（一式）",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E05",
+    "E07",
+    "E09",
+    "E14",
+    "E16"
+   ],
+   "start": "2029-06-18",
+   "end": "2029-07-13",
+   "man_days": 209.0,
+   "days": 26,
+   "vendor": "架空プラント整備㈱",
+   "contract": "R11 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 46,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0210",
+   "label": "火格子（2号炉） 点検・部分取替",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E05"
+   ],
+   "start": "2029-06-21",
+   "end": "2029-06-27",
+   "man_days": 25.0,
+   "days": 7,
+   "vendor": "架空炉材工業㈱",
+   "contract": "R11 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 20,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0211",
+   "label": "押込送風機（2号炉） 分解点検",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2029-06-22",
+   "end": "2029-06-26",
+   "man_days": 13.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R11 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 23,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0212",
+   "label": "廃熱ボイラ（2号炉） 性能検査受検整備",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E09"
+   ],
+   "start": "2029-06-25",
+   "end": "2029-07-02",
+   "man_days": 33.0,
+   "days": 8,
+   "vendor": "架空ボイラ保全㈱",
+   "contract": "R11 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 27,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0213",
+   "label": "誘引通風機（2号炉） 分解整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E16"
+   ],
+   "start": "2029-07-02",
+   "end": "2029-07-06",
+   "man_days": 20.0,
+   "days": 5,
+   "vendor": "架空送風機サービス㈱",
+   "contract": "R11 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 38,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0214",
+   "label": "ごみクレーン No.1 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2029-09-10",
+   "end": "2029-09-11",
+   "man_days": 7.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R11 ごみクレーン No.1 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 11,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0215",
+   "label": "ごみクレーン No.2 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2029-10-08",
+   "end": "2029-10-09",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R11 ごみクレーン No.2 年次自主検査 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 14,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0216",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2029-10-16",
+   "end": "2029-10-16",
+   "man_days": 5.0,
+   "days": 1,
+   "vendor": "架空計量器㈱",
+   "contract": "R11 計量機 定期点検 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 8,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0217",
+   "label": "施設全体 精密機能検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E19"
+   ],
+   "start": "2029-11-13",
+   "end": "2029-11-15",
+   "man_days": 11.0,
+   "days": 3,
+   "vendor": "架空環境技術センター㈱",
+   "contract": "R11 施設全体 精密機能検査 業務委託",
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 48,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0218",
+   "label": "排ガス分析計 校正・部品交換",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E23"
+   ],
+   "start": "2030-01-22",
+   "end": "2030-01-23",
+   "man_days": 7.0,
+   "days": 2,
+   "vendor": "架空計測㈱",
+   "contract": "R11 排ガス分析計 校正・部品交換 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 13,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0219",
+   "label": "ごみクレーン No.1 ワイヤロープ取替",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2030-02-11",
+   "end": "2030-02-12",
+   "man_days": 8.0,
+   "days": 2,
+   "vendor": "架空クレーン㈱",
+   "contract": "R11 ごみクレーン No.1 ワイヤロープ取替 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 12,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0220",
+   "label": "ごみクレーン No.2 油圧シリンダ整備",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2030-02-18",
+   "end": "2030-02-20",
+   "man_days": 15.0,
+   "days": 3,
+   "vendor": "架空クレーン㈱",
+   "contract": "R11 ごみクレーン No.2 油圧シリンダ整備 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "機械設備",
+     "r": 16,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  },
+  {
+   "id": "W0221",
+   "label": "非常用発電機 点検・負荷運転",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E21"
+   ],
+   "start": "2030-02-22",
+   "end": "2030-02-22",
+   "man_days": 6.0,
+   "days": 1,
+   "vendor": "架空発電機サービス㈱",
+   "contract": "R11 非常用発電機 点検・負荷運転 業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx",
+     "sheet": "電気・計装設備",
+     "r": 10,
+     "year": 2029,
+     "symbol": "○"
+    }
+   ]
+  }
+ ],
+ "unrecorded": [
+  {
+   "work": "W0060",
+   "reason": "事後の補修で整備計画表に書かず、作業日報データの期間（R7.4～）より前"
+  },
+  {
+   "work": "W0084",
+   "reason": "事後の補修で整備計画表に書かず、作業日報データの期間（R7.4～）より前"
+  }
+ ],
+ "defects": [
+  {
+   "kind": "周期の超え（精密機能検査）",
+   "where": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx 機械設備 精密機能検査の行：R3 に実施のあと R6・R7 と延期（○→）、R8 の予定まで 5 年",
+   "check": "精密機能検査の周期（3 年に 1 回以上、推奨）"
+  },
+  {
+   "kind": "法令の点検の抜け（クレーンの性能検査）",
+   "where": "【架空】霧野台清掃工場_整備計画表_R2-R11.xlsx 機械設備 ごみクレーン 性能検査（クレーン則）の行：R8 の予定が無い（R6 の次は R10）",
+   "check": "クレーンの性能検査（2 年）の予定"
+  }
+ ]
+}

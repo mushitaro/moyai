@@ -1,0 +1,119 @@
+[
+ {
+  "schema": "moyai.reading/0",
+  "name": "【架空】朧谷環境工場の読み方",
+  "scope": "facility",
+  "rules": [
+   {
+    "id": "order-col-no",
+    "text": "「No.」は計画に使わない",
+    "kind": "columnRole",
+    "column": "No.",
+    "role": "exclude",
+    "author": "ai",
+    "reason": "年度ごとの通し番号（見本の 7・8 行目と 46・47 行目で 1, 2 …）で、機器や作業を表さない",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-subject",
+    "text": "「件　名」を作業の名前として読む",
+    "kind": "columnRole",
+    "column": "件　名",
+    "role": "workName",
+    "author": "ai",
+    "reason": "見本の「R3年度 中央監視制御装置保守点検業務委託」など、発注した仕事の名前の欄。機器をどう取るかは担当者に聞く（1 回目の問い 1）",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-period",
+    "text": "「工　期」を作業の始まりの日付として読む",
+    "kind": "columnRole",
+    "column": "工　期",
+    "role": "date",
+    "author": "ai",
+    "reason": "R5 までの様式（6 行目の見出し）で、仕事をした時期の欄（「R3.4.1～R4.3.31」「R3.8.2」）。担当者に確かめる（1 回目の問い 2）",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-start",
+    "text": "「着手」を作業の始まりの日付として読む",
+    "kind": "columnRole",
+    "column": "着手",
+    "role": "date",
+    "author": "ai",
+    "reason": "R6 からの様式（45 行目の見出し）で、見本の値は「R6.4.1」",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-end",
+    "text": "「完了」を作業の終わりの日付として読む",
+    "kind": "columnRole",
+    "column": "完了",
+    "role": "end",
+    "author": "ai",
+    "reason": "R6 からの様式（45 行目の見出し）で、見本の値は「R7.3.31」",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-contract-date",
+    "text": "「契約日」は備考として残す",
+    "kind": "columnRole",
+    "column": "契約日",
+    "role": "remark",
+    "author": "ai",
+    "reason": "契約を結んだ日（R3.4.1・2024/4/1）で、仕事をした日ではない（9 行目は契約 R3.4.1・工期 R3.8.2）",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-contract-no",
+    "text": "「契約番号」は備考として残す",
+    "kind": "columnRole",
+    "column": "契約番号",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の「R6-委-001」。契約の整理番号で、機器番号ではない",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-kind",
+    "text": "「区分」は備考として残す",
+    "kind": "columnRole",
+    "column": "区分",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の「委託」。契約の種類で、作業の名前は件名にある",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-col-remark",
+    "text": "「備　考」を備考として残す",
+    "kind": "columnRole",
+    "column": "備　考",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の 8 行目「年4回（ばいじん・NOx・SOx・HCl・DXN は年1回）」が入っている欄",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-row-year-subtotal",
+    "text": "「令和3年度　計」のような年度の計の行は小計として読む",
+    "kind": "rowRole",
+    "match": "年度　計",
+    "role": "subtotal",
+    "author": "ai",
+    "reason": "A5「令和3年度　計 10件 90,578」・A44「令和6年度　計 12件 95,484,000」。年度ごとの件数と金額の計で、作業の行ではない",
+    "when": { "file": "*発注台帳*" }
+   },
+   {
+    "id": "order-row-grand-total",
+    "text": "「総合計」の行は合計として読む",
+    "kind": "rowRole",
+    "match": "総合計",
+    "role": "total",
+    "author": "ai",
+    "reason": "A3「総合計（R3～R8・円） 552,166,000」",
+    "when": { "file": "*発注台帳*" }
+   }
+  ]
+ }
+]

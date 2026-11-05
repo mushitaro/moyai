@@ -233,12 +233,19 @@ function scanSheetXml(x: string, sheet: string, ledger: LedgerEntry[]) {
   ledgerPush(ledger, "unread", "conditionalFormatting", count(x, /<conditionalFormatting\b/g) + count(x, /<x14:conditionalFormatting\b/g), "条件つきの書式。読まない", sheet);
   const rb = (/<rowBreaks\b[\s\S]*?<\/rowBreaks>/.exec(x) ?? [""])[0];
   const cb = (/<colBreaks\b[\s\S]*?<\/colBreaks>/.exec(x) ?? [""])[0];
-  ledgerPush(ledger, "unread", "pageBreak", count(rb, /<brk\b/g) + count(cb, /<brk\b/g), "改ページ。読まない", sheet);
+  ledgerPush(ledger, "decided", "pageBreak", count(rb, /<brk\b/g), "改ページ（行）。同じ形の帳票を頁ごとに積んだシートの、頁の境に使う", sheet);
+  ledgerPush(ledger, "unread", "pageBreak", count(cb, /<brk\b/g), "改ページ（列）。読まない", sheet);
   ledgerPush(ledger, "unread", "hyperlinkTarget", count(x, /<hyperlink\b/g), "リンクの行き先。セルの文字だけを読む", sheet);
   ledgerPush(ledger, "unread", "control", count(x, /<control\b/g) + count(x, /<oleObject\b/g), "フォームの部品・埋め込みの物。読まない", sheet);
   const pane = /<pane\b[^>]*>/.exec(x);
   if (pane && /state="frozen"/.test(pane[0]))
     ledgerPush(ledger, "unread", "frozenPane", 1, `ウィンドウ枠の固定（${attr(pane[0], "topLeftCell") ?? ""}）。読み方には使わない`, sheet);
+}
+
+/** 行の改ページ（<rowBreaks><brk id="20"/>…）：その行の後で頁が替わる */
+function rowBreaksOf(x: string): number[] {
+  const rb = (/<rowBreaks\b[\s\S]*?<\/rowBreaks>/.exec(x) ?? [""])[0];
+  return [...new Set([...rb.matchAll(/<brk\b[^>]*?\bid="(\d+)"/g)].map((m) => Number(m[1])).filter((n) => n > 0))].sort((a, b) => a - b);
 }
 
 function drawingCounts(xml: string): { shapes: number; withText: number; pictures: number; charts: number; groups: number } {
@@ -498,7 +505,8 @@ export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" |
     }
     const noCache = cells.filter((c) => c.formulaNoCache).length;
     ledgerPush(ledger, "warning", "formulaNoCache", noCache, "数式があって計算済みの値が無いセル（未解決に数える）", s.name);
-    grids.push({ name: s.name, index: index++, state: s.state, cells, merges: props.merges, rows: props.rows, cols: props.cols, maxRow, maxCol });
+    const rowBreaks = rowBreaksOf(text(s.part));
+    grids.push({ name: s.name, index: index++, state: s.state, cells, merges: props.merges, rows: props.rows, cols: props.cols, maxRow, maxCol, ...(rowBreaks.length ? { rowBreaks } : {}) });
   }
   ledgerPush(ledger, "warning", "formatFallback", fmtFallbacks.n, "表示形式を当てられず、値の文字のまま表示にしたセル");
   return { file, format, sheets: grids, ledger, date1904 };

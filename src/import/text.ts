@@ -17,6 +17,8 @@ const RE_UNIT_MARK = new RegExp(`^(\\d{1,3})\\s*(?:${UNIT_MARK})\\s*(\\p{Script=
 const UNIT_ORDINAL = CUES.unit.ordinalPrefix.map((p) => escapeRe(nfkc(p))).join("|");
 // 「{数}{字}」（字は 2 つまで。「1系」「1系列」）。頭に順の字があってもよい（「第1系列」）
 const RE_UNIT_HAN = new RegExp(`^(${UNIT_ORDINAL})?(\\d{1,3})(\\p{Script=Han}{1,2})$`, "u");
+/** 数を数える字（「1基」「2台」「1式」）：数量であって号ではない */
+const COUNTERS = new Set(CUES.unit.counters.map((w) => nfkc(w)));
 
 /** 号・系列の書き方を読む：「{数}号{字}」「No.{数}{字}」「{数}{字}」「第{数}{字}」・共通・〃（数は全角でもよい）。数の書き方の形（spelling）も返す */
 export function parseUnit(text: string): UnitValue | null {
@@ -29,7 +31,7 @@ export function parseUnit(text: string): UnitValue | null {
   m = RE_UNIT_MARK.exec(s);
   if (m) return { kind: "number", n: Number(m[1]), spelling: `{n}号${m[2] ?? ""}` };
   m = RE_UNIT_HAN.exec(s);
-  if (m) return { kind: "number", n: Number(m[2]), spelling: `${m[1] ?? ""}{n}${m[3] ?? ""}` };
+  if (m && !COUNTERS.has(m[3] ?? "")) return { kind: "number", n: Number(m[2]), spelling: `${m[1] ?? ""}{n}${m[3] ?? ""}` };
   return null;
 }
 
@@ -40,6 +42,146 @@ export function unitInText(text: string): number | null {
   const found = new Set<number>();
   for (const m of s.matchAll(re)) found.add(Number(m[1] ?? m[2]));
   return found.size === 1 ? ([...found][0] ?? null) : null;
+}
+
+// ─── 号炉・機器・作業を 1 つのセルに書いたもの ─────────────────────────
+
+export interface FlatWork {
+  unit: UnitValue | null;
+  asset: string;
+  work: string;
+}
+
+/** 号機の書き方（「No.2」「№2」「2号機」「(2)」）を「No.2」にそろえる。そろえられなければそのまま */
+function machineToken(t: string): string {
+  const s = nfkc(t).trim();
+  const m = /^(?:No\.?|NO\.?|#)\s*(\d{1,3})$/u.exec(s) ?? /^(\d{1,3})\s*号機$/u.exec(s) ?? /^[(（](\d{1,3})[)）]$/u.exec(s);
+  return m ? `No.${Number(m[1])}` : s;
+}
+
+/** 号機の書き方（「No.2」「#2」「2号機」「(2)」「B号機」） */
+const RE_MACHINE = /^(?:(?:No|NO)\.?\s*\d{1,3}|\d{1,3}\s*号機|[(（]\d{1,3}[)）]|[A-Za-z]\s*号機)$/u;
+
+/** 号炉の印（「1号」「1号炉」「1炉」「#1」・共通・号なし「—」）。号機（「No.2」「2号機」）は号炉ではない。号炉でなければ null */
+function unitToken(t: string): UnitValue | null {
+  const s = nfkc(t).trim();
+  if (!s || /^(?:No|NO|№)/u.test(s) || /号機$/u.test(s)) return null;
+  if (/^[-－―—‐]+$/u.test(s) || cue.isCommon(s)) return { kind: "common" };
+  if (/^#\s*\d{1,3}$/u.test(s)) return { kind: "number", n: Number(s.replace(/\D/g, "")), spelling: "#{n}" };
+  const u = parseUnit(s);
+  return u?.kind === "number" ? u : null;
+}
+
+/** 号炉の印の頭（空白で区切らずに続けた「１号落塵CV」「#1BFP」「—投入扉」も）。括弧の中（inParen）なら共通の略の頭（「共B号機」）も */
+const RE_UNIT_HEAD = /^(#\s*\d{1,3}|\d{1,3}\s*(?:号炉|号(?!機)|炉)|[-－―—‐]+)\s*(.*)$/u;
+const RE_UNIT_HEAD_PAREN = /^(#\s*\d{1,3}|\d{1,3}\s*(?:号炉|号(?!機)|炉)|[-－―—‐]+|共通|共)\s*(.*)$/u;
+function leadingUnit(s: string, inParen = false): { unit: UnitValue; rest: string } | null {
+  const sp = /^(\S+)\s+(\S.*)$/u.exec(s);
+  if (sp) {
+    const u = unitToken(sp[1] ?? "");
+    if (u) return { unit: u, rest: (sp[2] ?? "").trim() };
+  }
+  const whole = unitToken(s);
+  if (whole) return { unit: whole, rest: "" };
+  const m = (inParen ? RE_UNIT_HEAD_PAREN : RE_UNIT_HEAD).exec(s);
+  const head = m?.[1] ?? "";
+  const u = m ? (/^共/u.test(head) ? ({ kind: "common" } as const) : unitToken(head)) : null;
+  return m && u && (inParen || (m[2] ?? "") !== "") ? { unit: u, rest: (m[2] ?? "").trim() } : null;
+}
+
+/** 括弧の外の空白があるか（「ST 開放点検（定期事業者検査）」は空白で分ける） */
+const spaceOutsideParen = (s: string) => /\s/u.test(s.replace(/[(（][^()（）]*[)）]/gu, ""));
+
+/**
+ * 号炉・機器・作業を 1 つのセルに、見出しの順で書いたもの（「1号 No.2 BFP 分解整備」「給じん装置（１号炉）点検整備」）を分ける。
+ * 区切りは空白か括弧：空白（括弧の外）なら最後の語が作業、その前が機器。空白が無く括弧があれば、括弧の前が機器、括弧の中が号炉と号機、
+ * 括弧の後が作業。号機の書き方はそろえて機器の名前の後ろに付ける。区切りが無ければ null（呼ぶ側が質問にする）
+ */
+export function splitFlatWork(text: string): FlatWork | null {
+  let s = nfkc(text).replace(/\s+/g, " ").trim();
+  if (!s) return null;
+  let unit: UnitValue | null = null;
+  const lead = leadingUnit(s);
+  if (lead) {
+    unit = lead.unit;
+    s = lead.rest;
+  }
+  if (spaceOutsideParen(s)) {
+    const toks = s.split(" ");
+    const work = toks.pop() as string;
+    const machines = toks.filter((t) => RE_MACHINE.test(nfkc(t).trim()));
+    const names = toks.filter((t) => !machines.includes(t));
+    const asset = [...names, ...machines.map(machineToken)].join(" ");
+    return asset ? { unit, asset, work } : null;
+  }
+  const paren = /^(.+?)[(（]([^()（）]*)[)）](\S.*)$/u.exec(s);
+  if (!paren) return null;
+  let qual = (paren[2] ?? "").trim();
+  const q = leadingUnit(qual, true);
+  if (q) {
+    unit = unit ?? q.unit;
+    qual = q.rest;
+  }
+  const asset = [paren[1] ?? "", qual ? machineToken(qual) : ""].filter(Boolean).join(" ");
+  return asset ? { unit, asset, work: (paren[3] ?? "").trim() } : null;
+}
+
+// ─── 周期 ────────────────────────────────────────────────────
+
+export interface CycleSpan {
+  years?: number;
+  months?: number;
+}
+
+/** 周期の見出しに書いた単位（「周期(年)」→ 年、「周期（月）」「周期(か月)」→ 月）。書いていなければ null */
+export function cycleHeaderUnit(header: string): "years" | "months" | null {
+  const h = nfkc(header).replace(/\s+/g, "");
+  if (/[(（][^)）]*(?:か月|ヶ月|カ月|ケ月|月)[^)）]*[)）]/u.test(h)) return "months";
+  if (/[(（][^)）]*年[^)）]*[)）]/u.test(h)) return "years";
+  return null;
+}
+
+/**
+ * 周期の書き方を読む：「1年」「3Y」は年、「6か月」「6ヶ月」「130M」は月。数だけ（「3」）は見出しの単位で読み、単位が無ければ読まない。
+ * 年の小数（「0.5」年）は月に直す（整数の月になるときだけ）。読めない書き方（「毎回」「隔回」「随時」）は null（呼ぶ側が聞く）
+ */
+export function parseCycle(text: string, headerUnit: "years" | "months" | null): CycleSpan | null {
+  const s = nfkc(text).replace(/\s+/g, "");
+  const toYears = (n: number): CycleSpan | null => (Number.isInteger(n) && n > 0 ? { years: n } : Number.isInteger(n * 12) && n > 0 ? { months: n * 12 } : null);
+  const toMonths = (n: number): CycleSpan | null => (Number.isInteger(n) && n > 0 ? (n % 12 === 0 ? { years: n / 12 } : { months: n }) : null);
+  let m = /^(\d+(?:\.\d+)?)(?:年|Y)$/iu.exec(s);
+  if (m) return toYears(Number(m[1]));
+  m = /^(\d+)(?:か月|ヶ月|カ月|ケ月|月|M)$/iu.exec(s);
+  if (m) return toMonths(Number(m[1]));
+  // 「年4回」「年12回」：12 か月を回数で割る（割り切れるときだけ）
+  m = /^年(\d+)回$/u.exec(s);
+  if (m && Number(m[1]) > 0 && 12 % Number(m[1]) === 0) return toMonths(12 / Number(m[1]));
+  m = /^(\d+(?:\.\d+)?)$/u.exec(s);
+  if (m && headerUnit === "years") return toYears(Number(m[1]));
+  if (m && headerUnit === "months") return toMonths(Number(m[1]));
+  return null;
+}
+
+// ─── 件名の中の機器の名前 ─────────────────────────────────────
+
+const TITLE_WORK = [...new Set(CUES.titleWork.map((w) => nfkc(w)))].sort((a, b) => b.length - a.length);
+
+/**
+ * 機器の欄の無い台帳の件名（「R3年度 中央監視制御装置保守点検業務委託」「DCS保守点検業務委託（H28年度）」）の、機器の名前の案：
+ * 後ろの括弧（年度・回数）と頭の年度を除き、後ろの作業の語（「点検」「業務委託」など）をくり返し除いた残り。作業の語が無ければ null
+ */
+export function assetFromTitle(text: string): { asset: string; work: string } | null {
+  let s = nfkc(text).replace(/\s+/g, " ").trim();
+  s = s.replace(/\s*[(（][^()（）]*[)）]\s*$/u, "").trim();
+  s = s.replace(/^(?:(?:令和|平成|R|H)\s*(?:\d{1,2}|元)|(?:19|20)\d{2})\s*年度\s*/u, "").trim();
+  let work = "";
+  for (;;) {
+    const w = TITLE_WORK.find((x) => s.endsWith(x) && s.length > x.length);
+    if (!w) break;
+    work = `${w}${work}`;
+    s = s.slice(0, -w.length).trim();
+  }
+  return work && s ? { asset: s, work } : null;
 }
 
 // ─── 工数 ────────────────────────────────────────────────────

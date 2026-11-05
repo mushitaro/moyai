@@ -1,0 +1,226 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+ "plan": false,
+ "records": [
+  {
+   "seq": 0,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 1,
+    "equipment": "ごみクレーン",
+    "item": "走行・巻上の異音",
+    "standard": "異常なし",
+    "common": "✓"
+   }
+  },
+  {
+   "seq": 1,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 2,
+    "equipment": "ごみクレーン",
+    "item": "油圧ユニット 油量",
+    "standard": "規定範囲",
+    "common": "✓"
+   }
+  },
+  {
+   "seq": 2,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 3,
+    "equipment": "計量機",
+    "item": "ゼロ点（kg）",
+    "standard": "±10 以内",
+    "common": "0"
+   }
+  },
+  {
+   "seq": 3,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 4,
+    "equipment": "焼却炉",
+    "item": "炉内温度（℃）",
+    "standard": "850 以上",
+    "f1": "872",
+    "f2": "休"
+   }
+  },
+  {
+   "seq": 4,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 5,
+    "equipment": "焼却炉",
+    "item": "砂層差圧（kPa）",
+    "standard": "4.0～6.0",
+    "f1": "5.1",
+    "f2": "休"
+   }
+  },
+  {
+   "seq": 5,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 6,
+    "equipment": "流動砂循環装置",
+    "item": "異音・漏れ",
+    "standard": "異常なし",
+    "f1": "✓",
+    "f2": "休"
+   }
+  },
+  {
+   "seq": 6,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 7,
+    "equipment": "ガス冷却室",
+    "item": "出口温度（℃）",
+    "standard": "200 以下",
+    "f1": "176",
+    "f2": "休"
+   }
+  },
+  {
+   "seq": 7,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 8,
+    "equipment": "ろ過式集じん器",
+    "item": "差圧（kPa）",
+    "standard": "1.5 以下",
+    "f1": "読めない",
+    "f2": "休"
+   }
+  },
+  {
+   "seq": 8,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 9,
+    "equipment": "誘引送風機",
+    "item": "軸受温度（℃）",
+    "standard": "70 以下",
+    "f1": "48",
+    "f2": "休"
+   }
+  },
+  {
+   "seq": 9,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 10,
+    "equipment": "誘引送風機",
+    "item": "振動・異音",
+    "standard": "異常なし",
+    "f1": "✓",
+    "f2": "休"
+   }
+  },
+  {
+   "seq": 10,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 11,
+    "equipment": "飛灰固化装置",
+    "item": "セメント供給",
+    "standard": "異常なし",
+    "common": "✓",
+    "memo": "スクリュー清掃"
+   }
+  },
+  {
+   "seq": 11,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 12,
+    "equipment": "受変電設備",
+    "item": "受電電圧（kV）",
+    "standard": "6.6±0.3",
+    "common": "6.6"
+   }
+  },
+  {
+   "seq": 12,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 13,
+    "equipment": "非常用発電機",
+    "item": "燃料残量",
+    "standard": "3/4 以上",
+    "common": "満"
+   }
+  },
+  {
+   "seq": 13,
+   "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+   "kind": "item",
+   "fields": {
+    "date": "2026-09-17",
+    "weather": "曇",
+    "inspector": "早瀬",
+    "no": 14,
+    "equipment": "中央監視制御装置",
+    "item": "警報の有無",
+    "standard": "無きこと",
+    "common": "✓",
+    "memo": "読めない"
+   }
+  }
+ ]
+}

@@ -1,0 +1,89 @@
+[
+ {
+  "schema": "moyai.reading/0",
+  "name": "【架空】霧ノ瀬浄化センターの読み方",
+  "scope": "facility",
+  "rules": [
+   {
+    "id": "pump-col-date",
+    "text": "「点検日」を点検の日付として読む",
+    "kind": "columnRole",
+    "column": "点検日",
+    "role": "date",
+    "author": "ai",
+    "reason": "見本の 6・7・16・17 行目で「4/15」「5/15」「10/15」「11/17」が入っている欄（4 行目と 14 行目の見出し）",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-date-md",
+    "text": "「点検日」は月/日の書き方として読む",
+    "kind": "dateFormat",
+    "column": "点検日",
+    "format": "md",
+    "author": "ai",
+    "reason": "見本の値が「4/15」「11/17」で年が無い。資料の名前の R7（令和 7 年度）の記録",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-hours",
+    "text": "「運転時間」は備考として残す",
+    "kind": "columnRole",
+    "column": "運転時間",
+    "role": "remark",
+    "author": "ai",
+    "reason": "積算計の読み（A23 の注記）。点検の根拠の数で、作業や日付ではない",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-insulation",
+    "text": "「絶縁抵抗」は備考として残す",
+    "kind": "columnRole",
+    "column": "絶縁抵抗",
+    "role": "remark",
+    "author": "ai",
+    "reason": "1000V メガーの測定値（A23 の注記）。点検の根拠の数",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-bearing",
+    "text": "「軸受温度」は備考として残す",
+    "kind": "columnRole",
+    "column": "軸受温度",
+    "role": "remark",
+    "author": "ai",
+    "reason": "測定値の欄（36・41・46 など）。点検の根拠の数",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-remark",
+    "text": "「備考」を備考として残す",
+    "kind": "columnRole",
+    "column": "備考",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の 10 行目「No.2 分解整備（8/4～8/29 浅葱ポンプ工業）」が入っている欄",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "daily-row-stamp",
+    "text": "「架空のデータ」だけの行は注記として読む",
+    "kind": "rowRole",
+    "match": "架空のデータ",
+    "role": "note",
+    "author": "ai",
+    "reason": "各シートの 4 行目（I4）。札で、作業の行ではない",
+    "when": { "file": "*維持管理作業日報*" }
+   },
+   {
+    "id": "daily-row-flow",
+    "text": "「流入水量（m³）」「放流水量（m³）」「降雨量（mm）」の行は注記として読む",
+    "kind": "rowRole",
+    "match": "流入水量",
+    "role": "note",
+    "author": "ai",
+    "reason": "各シートの 3 行目。その日の水量と雨量の記録で機器の作業ではないのに、機器として扱われている（「流入水量（m³）」は同じ機器か、の質問）",
+    "when": { "file": "*維持管理作業日報*" }
+   }
+  ]
+ }
+]

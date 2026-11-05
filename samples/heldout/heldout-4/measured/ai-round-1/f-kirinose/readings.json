@@ -1,0 +1,130 @@
+[
+ {
+  "schema": "moyai.reading/0",
+  "name": "【架空】霧ノ瀬浄化センターの読み方",
+  "scope": "facility",
+  "rules": [
+   {
+    "id": "pump-col-date",
+    "text": "「点検日」を月例点検の日付として読む",
+    "kind": "columnRole",
+    "column": "点検日",
+    "role": "date",
+    "author": "ai",
+    "reason": "見本の 6・7・16・17 行目で「4/15」「5/15」「10/15」「11/17」が入っている欄。1 回目の答え 1：その日にポンプごとに月例点検をした",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-date-md",
+    "text": "「点検日」は月/日の書き方として読む",
+    "kind": "dateFormat",
+    "column": "点検日",
+    "format": "md",
+    "author": "ai",
+    "reason": "見本の値が「4/15」「11/17」で年が無い。資料の名前の R7（令和 7 年度）の記録",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-hours",
+    "text": "「運転時間」は備考として残す",
+    "kind": "columnRole",
+    "column": "運転時間",
+    "role": "remark",
+    "author": "ai",
+    "reason": "積算計の読み（h）。1 回目の答え 3：星取表での扱いは施設では決めていない。点検の根拠の数として残す",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-insulation",
+    "text": "「絶縁抵抗」は備考として残す",
+    "kind": "columnRole",
+    "column": "絶縁抵抗",
+    "role": "remark",
+    "author": "ai",
+    "reason": "1000V メガーの測定値（MΩ、A23 の注記）。点検の根拠の数",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-vibration",
+    "text": "「振動」は備考として残す",
+    "kind": "columnRole",
+    "column": "振動",
+    "role": "remark",
+    "author": "ai",
+    "reason": "軸受部の速度の実効値（mm/s、A23 の注記）。1 回目のあとも列 D（No.1）が残り、列 D・L の質問が開いたまま",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-bearing",
+    "text": "「軸受温度」は備考として残す",
+    "kind": "columnRole",
+    "column": "軸受温度",
+    "role": "remark",
+    "author": "ai",
+    "reason": "測定値の欄（℃）。点検の根拠の数",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-inspector",
+    "text": "「点検者」は備考として残す",
+    "kind": "columnRole",
+    "column": "点検者",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の「森下」「笹倉・森下」。点検した人の名前で、機器や作業ではない。1 回目のあとも列 N が残り、列 N・R の質問が開いたまま",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "pump-col-remark",
+    "text": "「備考」を備考として残す",
+    "kind": "columnRole",
+    "column": "備考",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の 10 行目「No.2 分解整備（8/4～8/29 浅葱ポンプ工業）」が入っている欄",
+    "when": { "file": "*主ポンプ月例点検記録*" }
+   },
+   {
+    "id": "daily-row-stamp",
+    "text": "「架空のデータ」だけの行は注記として読む",
+    "kind": "rowRole",
+    "match": "架空のデータ",
+    "role": "note",
+    "author": "ai",
+    "reason": "各シートの 4 行目（I4）。札で、作業の行ではない（1 回目で 22 シートの I4 が残らなくなった）",
+    "when": { "file": "*維持管理作業日報*" }
+   },
+   {
+    "id": "daily-row-flow",
+    "text": "「流入水量（m³）」「放流水量（m³）」「降雨量（mm）」の行は注記として読む",
+    "kind": "rowRole",
+    "match": "流入水量（m³）",
+    "role": "note",
+    "author": "ai",
+    "reason": "各シートの 3 行目。その日の水量と雨量の記録で機器の作業ではない。1 回目は「流入水量」で 0 件だったので、セルの文字そのままに直した",
+    "when": { "file": "*維持管理作業日報*" }
+   },
+   {
+    "id": "daily-col-place",
+    "text": "「施設」（沈砂池・電気・汚泥処理など）は備考として残す",
+    "kind": "columnRole",
+    "column": "施設",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の値は「沈砂池」「電気」「汚泥処理」で、機器の置き場所や分類。機器は「機器」の欄にある。22 シートの列 B の質問が開いたまま",
+    "when": { "file": "*維持管理作業日報*" }
+   },
+   {
+    "id": "daily-answer-vendor",
+    "text": "作業日報の「業者」の欄は備考として残す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "見出し「業者」",
+    "answer": "remark",
+    "author": "ai",
+    "reason": "6 行目の見出し「業者」の列 E は作業した業者の名前の欄で、機器や作業ではない。「人員」の下の「業者」（人数）と見出しの文字が同じなので、質問への答えで決める",
+    "when": { "file": "*維持管理作業日報*" }
+   }
+  ]
+ }
+]

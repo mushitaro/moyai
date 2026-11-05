@@ -1,0 +1,3166 @@
+{
+ "schema": "moyai.answer.world/0",
+ "facility": {
+  "id": "f-oboroya",
+  "name": "【架空】朧谷環境工場",
+  "industry": "waste-incineration",
+  "profile": {
+   "furnace": "fluidized-bed",
+   "capacity_t_per_day": 90,
+   "lines": 2,
+   "turbine": false,
+   "dust": "BF",
+   "ash": "セメント固化",
+   "contract": "単年度",
+   "upgrade": "done-2016-2018",
+   "completed": 1999
+  }
+ },
+ "fiscal_year_start_month": 4,
+ "man_day_hours": 8,
+ "today": "2026-10-01",
+ "equipment": [
+  {
+   "id": "G01",
+   "name": "ごみクレーン 1号",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 ごみクレーン年次点検整備業務委託",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "ごみクレーン"
+   },
+   "furnace": null,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "受入供給設備",
+    "ごみクレーン",
+    "1号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G02",
+   "name": "ごみクレーン 2号",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 ごみクレーン年次点検整備業務委託",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "ごみクレーン"
+   },
+   "furnace": null,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "受入供給設備",
+    "ごみクレーン",
+    "2号"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G03",
+   "name": "計量機",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 計量機定期点検・検定業務委託",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "計量機"
+   },
+   "furnace": null,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "受入供給設備",
+    "計量機"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G04",
+   "name": "流動床式焼却炉 1号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 １号炉定期整備工事",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "焼却炉"
+   },
+   "furnace": 1,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "燃焼設備",
+    "流動床式焼却炉",
+    "1号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G05",
+   "name": "流動床式焼却炉 2号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 2号炉定期整備工事"
+   },
+   "furnace": 2,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "燃焼設備",
+    "流動床式焼却炉",
+    "2号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G06",
+   "name": "流動砂循環装置 1号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 １号炉定期整備工事",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "流動砂循環装置"
+   },
+   "furnace": 1,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "燃焼設備",
+    "流動砂循環装置",
+    "1号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G07",
+   "name": "流動砂循環装置 2号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 2号炉定期整備工事"
+   },
+   "furnace": 2,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "燃焼設備",
+    "流動砂循環装置",
+    "2号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G08",
+   "name": "ガス冷却室 1号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 １号炉定期整備工事",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "ガス冷却室"
+   },
+   "furnace": 1,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "燃焼ガス冷却設備",
+    "ガス冷却室",
+    "1号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G09",
+   "name": "ガス冷却室 2号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 2号炉定期整備工事"
+   },
+   "furnace": 2,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "燃焼ガス冷却設備",
+    "ガス冷却室",
+    "2号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G10",
+   "name": "ろ過式集じん器 1号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 １号炉定期整備工事",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "ろ過式集じん器"
+   },
+   "furnace": 1,
+   "install_year": 2017,
+   "code": null,
+   "path": [
+    "排ガス処理設備",
+    "ろ過式集じん器",
+    "1号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G11",
+   "name": "ろ過式集じん器 2号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 2号炉定期整備工事"
+   },
+   "furnace": 2,
+   "install_year": 2017,
+   "code": null,
+   "path": [
+    "排ガス処理設備",
+    "ろ過式集じん器",
+    "2号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G12",
+   "name": "誘引送風機 1号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 １号炉定期整備工事",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "誘引送風機"
+   },
+   "furnace": 1,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "通風設備",
+    "誘引送風機",
+    "1号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G13",
+   "name": "誘引送風機 2号炉",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 2号炉定期整備工事"
+   },
+   "furnace": 2,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "通風設備",
+    "誘引送風機",
+    "2号炉"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G14",
+   "name": "飛灰固化装置",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R4年度 飛灰固化装置整備工事",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "飛灰固化装置"
+   },
+   "furnace": null,
+   "install_year": 2017,
+   "code": null,
+   "path": [
+    "灰出し設備",
+    "飛灰固化装置"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G15",
+   "name": "受変電設備",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 受変電設備年次点検業務委託",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "受変電設備"
+   },
+   "furnace": null,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "電気設備",
+    "受変電設備"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G16",
+   "name": "非常用発電機",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 受変電設備年次点検業務委託",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "非常用発電機"
+   },
+   "furnace": null,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "電気設備",
+    "非常用発電機"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G17",
+   "name": "中央監視制御装置",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 中央監視制御装置保守点検業務委託",
+    "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg": "中央監視制御装置"
+   },
+   "furnace": null,
+   "install_year": 2017,
+   "code": null,
+   "path": [
+    "計装設備",
+    "中央監視制御装置"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G18",
+   "name": "消防用設備",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 消防用設備等点検業務委託"
+   },
+   "furnace": null,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "建築設備",
+    "消防用設備"
+   ],
+   "rows": []
+  },
+  {
+   "id": "G19",
+   "name": "施設全体",
+   "names": {
+    "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx": "R3年度 排ガス等測定分析業務委託（単価契約）"
+   },
+   "furnace": null,
+   "install_year": 1999,
+   "code": null,
+   "path": [
+    "施設全体"
+   ],
+   "rows": []
+  }
+ ],
+ "works": [
+  {
+   "id": "W0001",
+   "label": "中央監視制御装置 定期点検（1号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2021-06-28",
+   "end": "2021-06-29",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R3年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0002",
+   "label": "中央監視制御装置 定期点検（2号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2021-09-23",
+   "end": "2021-09-24",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R3年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 7
+    }
+   ]
+  },
+  {
+   "id": "W0003",
+   "label": "排ガス測定（5月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2021-05-21",
+   "end": "2021-05-21",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R3年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0004",
+   "label": "排ガス測定（8月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2021-08-20",
+   "end": "2021-08-20",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R3年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0005",
+   "label": "排ガス測定（11月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2021-11-19",
+   "end": "2021-11-19",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R3年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0006",
+   "label": "排ガス測定（2月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2022-02-18",
+   "end": "2022-02-18",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R3年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0007",
+   "label": "1号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G04",
+    "G06",
+    "G08",
+    "G10",
+    "G12"
+   ],
+   "start": "2021-06-07",
+   "end": "2021-07-01",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R3年度 １号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 14
+    }
+   ]
+  },
+  {
+   "id": "W0008",
+   "label": "2号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G05",
+    "G07",
+    "G09",
+    "G11",
+    "G13"
+   ],
+   "start": "2021-09-02",
+   "end": "2021-09-26",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R3年度 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "W0009",
+   "label": "受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G15"
+   ],
+   "start": "2021-08-02",
+   "end": "2021-08-02",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R3年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0010",
+   "label": "非常用発電機 負荷運転（全停電時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2021-08-02",
+   "end": "2021-08-02",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R3年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0011",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2021-11-13",
+   "end": "2021-11-13",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R3年度 計量機定期点検・検定業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0012",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2021-11-13",
+   "end": "2021-11-13",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R3年度 計量機定期点検・検定業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0013",
+   "label": "ごみクレーン 1号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G01"
+   ],
+   "start": "2022-02-04",
+   "end": "2022-02-05",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R3年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0014",
+   "label": "ごみクレーン 2号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G02"
+   ],
+   "start": "2022-02-06",
+   "end": "2022-02-07",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R3年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0015",
+   "label": "消防用設備等点検（機器）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2021-07-14",
+   "end": "2021-07-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R3年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "W0016",
+   "label": "消防用設備等点検（総合）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2022-01-14",
+   "end": "2022-01-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R3年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "W0017",
+   "label": "非常用発電機 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2021-07-04",
+   "end": "2021-07-04",
+   "days": 1,
+   "vendor": "黄櫨発電機サービス㈱",
+   "contract": "R3年度 非常用発電機点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "W0018",
+   "label": "精密機能検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2021-10-14",
+   "end": "2021-10-16",
+   "days": 3,
+   "vendor": "利久環境技術センター㈱",
+   "contract": "R3年度 精密機能検査業務委託",
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 15
+    }
+   ]
+  },
+  {
+   "id": "W0019",
+   "label": "中央監視制御装置 定期点検（1号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2022-06-29",
+   "end": "2022-06-30",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R4年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0020",
+   "label": "中央監視制御装置 定期点検（2号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2022-09-23",
+   "end": "2022-09-24",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R4年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0021",
+   "label": "排ガス測定（5月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2022-05-21",
+   "end": "2022-05-21",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R4年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0022",
+   "label": "排ガス測定（8月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2022-08-20",
+   "end": "2022-08-20",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R4年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0023",
+   "label": "排ガス測定（11月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2022-11-19",
+   "end": "2022-11-19",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R4年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0024",
+   "label": "排ガス測定（2月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2023-02-18",
+   "end": "2023-02-18",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R4年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "W0025",
+   "label": "1号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G04",
+    "G06",
+    "G08",
+    "G10",
+    "G12"
+   ],
+   "start": "2022-06-08",
+   "end": "2022-07-02",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R4年度 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 27
+    }
+   ]
+  },
+  {
+   "id": "W0026",
+   "label": "2号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G05",
+    "G07",
+    "G09",
+    "G11",
+    "G13"
+   ],
+   "start": "2022-09-02",
+   "end": "2022-09-26",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R4年度 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 28
+    }
+   ]
+  },
+  {
+   "id": "W0027",
+   "label": "受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G15"
+   ],
+   "start": "2022-08-04",
+   "end": "2022-08-04",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R4年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 22
+    }
+   ]
+  },
+  {
+   "id": "W0028",
+   "label": "非常用発電機 負荷運転（全停電時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2022-08-04",
+   "end": "2022-08-04",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R4年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 22
+    }
+   ]
+  },
+  {
+   "id": "W0029",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2022-11-12",
+   "end": "2022-11-12",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R4年度 計量機定期点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 23
+    }
+   ]
+  },
+  {
+   "id": "W0030",
+   "label": "ごみクレーン 1号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G01"
+   ],
+   "start": "2023-02-05",
+   "end": "2023-02-06",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R4年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 24
+    }
+   ]
+  },
+  {
+   "id": "W0031",
+   "label": "ごみクレーン 2号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G02"
+   ],
+   "start": "2023-02-07",
+   "end": "2023-02-08",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R4年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 24
+    }
+   ]
+  },
+  {
+   "id": "W0032",
+   "label": "消防用設備等点検（機器）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2022-07-14",
+   "end": "2022-07-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R4年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 25
+    }
+   ]
+  },
+  {
+   "id": "W0033",
+   "label": "消防用設備等点検（総合）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2023-01-14",
+   "end": "2023-01-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R4年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 25
+    }
+   ]
+  },
+  {
+   "id": "W0034",
+   "label": "非常用発電機 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2022-07-05",
+   "end": "2022-07-05",
+   "days": 1,
+   "vendor": "黄櫨発電機サービス㈱",
+   "contract": "R4年度 非常用発電機点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 26
+    }
+   ]
+  },
+  {
+   "id": "W0035",
+   "label": "飛灰固化装置 混練機・セメント供給機 整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G14"
+   ],
+   "start": "2022-09-07",
+   "end": "2022-09-11",
+   "days": 5,
+   "vendor": "柿渋プラント㈱",
+   "contract": "R4年度 飛灰固化装置整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 29
+    }
+   ]
+  },
+  {
+   "id": "W0036",
+   "label": "中央監視制御装置 定期点検（1号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2023-06-28",
+   "end": "2023-06-29",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R5年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 34
+    }
+   ]
+  },
+  {
+   "id": "W0037",
+   "label": "中央監視制御装置 定期点検（2号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2023-09-24",
+   "end": "2023-09-25",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R5年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 34
+    }
+   ]
+  },
+  {
+   "id": "W0038",
+   "label": "排ガス測定（5月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2023-05-21",
+   "end": "2023-05-21",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R5年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 35
+    }
+   ]
+  },
+  {
+   "id": "W0039",
+   "label": "排ガス測定（8月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2023-08-20",
+   "end": "2023-08-20",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R5年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 35
+    }
+   ]
+  },
+  {
+   "id": "W0040",
+   "label": "排ガス測定（11月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2023-11-19",
+   "end": "2023-11-19",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R5年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 35
+    }
+   ]
+  },
+  {
+   "id": "W0041",
+   "label": "排ガス測定（2月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2024-02-18",
+   "end": "2024-02-18",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R5年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 35
+    }
+   ]
+  },
+  {
+   "id": "W0042",
+   "label": "1号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G04",
+    "G06",
+    "G08",
+    "G10",
+    "G12"
+   ],
+   "start": "2023-06-07",
+   "end": "2023-07-01",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R5年度 １号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 41
+    }
+   ]
+  },
+  {
+   "id": "W0043",
+   "label": "2号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G05",
+    "G07",
+    "G09",
+    "G11",
+    "G13"
+   ],
+   "start": "2023-09-03",
+   "end": "2023-09-27",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R5年度 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 42
+    }
+   ]
+  },
+  {
+   "id": "W0044",
+   "label": "受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G15"
+   ],
+   "start": "2023-07-27",
+   "end": "2023-07-27",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R5年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 36
+    }
+   ]
+  },
+  {
+   "id": "W0045",
+   "label": "非常用発電機 負荷運転（全停電時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2023-07-27",
+   "end": "2023-07-27",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R5年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 36
+    }
+   ]
+  },
+  {
+   "id": "W0046",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2023-11-11",
+   "end": "2023-11-11",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R5年度 計量機定期点検・検定業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 37
+    }
+   ]
+  },
+  {
+   "id": "W0047",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2023-11-11",
+   "end": "2023-11-11",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R5年度 計量機定期点検・検定業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 37
+    }
+   ]
+  },
+  {
+   "id": "W0048",
+   "label": "ごみクレーン 1号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G01"
+   ],
+   "start": "2024-02-08",
+   "end": "2024-02-09",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R5年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 38
+    }
+   ]
+  },
+  {
+   "id": "W0049",
+   "label": "ごみクレーン 2号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G02"
+   ],
+   "start": "2024-02-10",
+   "end": "2024-02-11",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R5年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 38
+    }
+   ]
+  },
+  {
+   "id": "W0050",
+   "label": "消防用設備等点検（機器）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2023-07-14",
+   "end": "2023-07-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R5年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 39
+    }
+   ]
+  },
+  {
+   "id": "W0051",
+   "label": "消防用設備等点検（総合）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2024-01-14",
+   "end": "2024-01-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R5年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 39
+    }
+   ]
+  },
+  {
+   "id": "W0052",
+   "label": "非常用発電機 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2023-07-04",
+   "end": "2023-07-04",
+   "days": 1,
+   "vendor": "黄櫨発電機サービス㈱",
+   "contract": "R5年度 非常用発電機点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 40
+    }
+   ]
+  },
+  {
+   "id": "W0053",
+   "label": "中央監視制御装置 定期点検（1号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2024-06-28",
+   "end": "2024-06-29",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R6年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 46
+    }
+   ]
+  },
+  {
+   "id": "W0054",
+   "label": "中央監視制御装置 定期点検（2号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2024-09-25",
+   "end": "2024-09-26",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R6年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 46
+    }
+   ]
+  },
+  {
+   "id": "W0055",
+   "label": "排ガス測定（5月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2024-05-21",
+   "end": "2024-05-21",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R6年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 47
+    }
+   ]
+  },
+  {
+   "id": "W0056",
+   "label": "排ガス測定（8月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2024-08-20",
+   "end": "2024-08-20",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R6年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 47
+    }
+   ]
+  },
+  {
+   "id": "W0057",
+   "label": "排ガス測定（11月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2024-11-19",
+   "end": "2024-11-19",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R6年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 47
+    }
+   ]
+  },
+  {
+   "id": "W0058",
+   "label": "排ガス測定（2月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2025-02-18",
+   "end": "2025-02-18",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R6年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 47
+    }
+   ]
+  },
+  {
+   "id": "W0059",
+   "label": "1号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G04",
+    "G06",
+    "G08",
+    "G10",
+    "G12"
+   ],
+   "start": "2024-06-07",
+   "end": "2024-07-01",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R6年度 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 53
+    }
+   ]
+  },
+  {
+   "id": "W0060",
+   "label": "2号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G05",
+    "G07",
+    "G09",
+    "G11",
+    "G13"
+   ],
+   "start": "2024-09-04",
+   "end": "2024-09-28",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R6年度 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 55
+    }
+   ]
+  },
+  {
+   "id": "W0061",
+   "label": "受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G15"
+   ],
+   "start": "2024-07-28",
+   "end": "2024-07-28",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R6年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 48
+    }
+   ]
+  },
+  {
+   "id": "W0062",
+   "label": "非常用発電機 負荷運転（全停電時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2024-07-28",
+   "end": "2024-07-28",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R6年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 48
+    }
+   ]
+  },
+  {
+   "id": "W0063",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2024-11-14",
+   "end": "2024-11-14",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R6年度 計量機定期点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 49
+    }
+   ]
+  },
+  {
+   "id": "W0064",
+   "label": "ごみクレーン 1号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G01"
+   ],
+   "start": "2025-02-03",
+   "end": "2025-02-04",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R6年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 50
+    }
+   ]
+  },
+  {
+   "id": "W0065",
+   "label": "ごみクレーン 2号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G02"
+   ],
+   "start": "2025-02-05",
+   "end": "2025-02-06",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R6年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 50
+    }
+   ]
+  },
+  {
+   "id": "W0066",
+   "label": "消防用設備等点検（機器）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2024-07-14",
+   "end": "2024-07-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R6年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 51
+    }
+   ]
+  },
+  {
+   "id": "W0067",
+   "label": "消防用設備等点検（総合）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2025-01-14",
+   "end": "2025-01-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R6年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 51
+    }
+   ]
+  },
+  {
+   "id": "W0068",
+   "label": "非常用発電機 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2024-07-04",
+   "end": "2024-07-04",
+   "days": 1,
+   "vendor": "黄櫨発電機サービス㈱",
+   "contract": "R6年度 非常用発電機点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 52
+    }
+   ]
+  },
+  {
+   "id": "W0069",
+   "label": "飛灰固化装置 混練機・セメント供給機 整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G14"
+   ],
+   "start": "2024-09-09",
+   "end": "2024-09-13",
+   "days": 5,
+   "vendor": "柿渋プラント㈱",
+   "contract": "R6年度 飛灰固化装置整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 56
+    }
+   ]
+  },
+  {
+   "id": "W0070",
+   "label": "精密機能検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2024-10-14",
+   "end": "2024-10-16",
+   "days": 3,
+   "vendor": "利久環境技術センター㈱",
+   "contract": "R6年度 精密機能検査業務委託",
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 54
+    }
+   ]
+  },
+  {
+   "id": "W0071",
+   "label": "中央監視制御装置 定期点検（1号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2025-06-23",
+   "end": "2025-06-24",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R7年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 61
+    }
+   ]
+  },
+  {
+   "id": "W0072",
+   "label": "中央監視制御装置 定期点検（2号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2025-09-23",
+   "end": "2025-09-24",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R7年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 61
+    }
+   ]
+  },
+  {
+   "id": "W0073",
+   "label": "排ガス測定（5月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2025-05-21",
+   "end": "2025-05-21",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R7年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 62
+    }
+   ]
+  },
+  {
+   "id": "W0074",
+   "label": "排ガス測定（8月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2025-08-20",
+   "end": "2025-08-20",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R7年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 62
+    }
+   ]
+  },
+  {
+   "id": "W0075",
+   "label": "排ガス測定（11月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2025-11-19",
+   "end": "2025-11-19",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R7年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 62
+    }
+   ]
+  },
+  {
+   "id": "W0076",
+   "label": "排ガス測定（2月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2026-02-18",
+   "end": "2026-02-18",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R7年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 62
+    }
+   ]
+  },
+  {
+   "id": "W0077",
+   "label": "1号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G04",
+    "G06",
+    "G08",
+    "G10",
+    "G12"
+   ],
+   "start": "2025-06-02",
+   "end": "2025-06-26",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R7年度 １号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 68
+    }
+   ]
+  },
+  {
+   "id": "W0078",
+   "label": "2号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G05",
+    "G07",
+    "G09",
+    "G11",
+    "G13"
+   ],
+   "start": "2025-09-02",
+   "end": "2025-09-26",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R7年度 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 69
+    }
+   ]
+  },
+  {
+   "id": "W0079",
+   "label": "受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G15"
+   ],
+   "start": "2025-08-04",
+   "end": "2025-08-04",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R7年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 63
+    }
+   ]
+  },
+  {
+   "id": "W0080",
+   "label": "非常用発電機 負荷運転（全停電時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2025-08-04",
+   "end": "2025-08-04",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R7年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 63
+    }
+   ]
+  },
+  {
+   "id": "W0081",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2025-11-15",
+   "end": "2025-11-15",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R7年度 計量機定期点検・検定業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 64
+    }
+   ]
+  },
+  {
+   "id": "W0082",
+   "label": "計量機 定期検査（計量法）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2025-11-15",
+   "end": "2025-11-15",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R7年度 計量機定期点検・検定業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 64
+    }
+   ]
+  },
+  {
+   "id": "W0083",
+   "label": "ごみクレーン 1号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G01"
+   ],
+   "start": "2026-02-03",
+   "end": "2026-02-04",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R7年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 65
+    }
+   ]
+  },
+  {
+   "id": "W0084",
+   "label": "ごみクレーン 2号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G02"
+   ],
+   "start": "2026-02-05",
+   "end": "2026-02-06",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R7年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 65
+    }
+   ]
+  },
+  {
+   "id": "W0085",
+   "label": "消防用設備等点検（機器）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2025-07-14",
+   "end": "2025-07-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R7年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 66
+    }
+   ]
+  },
+  {
+   "id": "W0086",
+   "label": "消防用設備等点検（総合）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2026-01-14",
+   "end": "2026-01-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R7年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 66
+    }
+   ]
+  },
+  {
+   "id": "W0087",
+   "label": "非常用発電機 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2025-06-29",
+   "end": "2025-06-29",
+   "days": 1,
+   "vendor": "黄櫨発電機サービス㈱",
+   "contract": "R7年度 非常用発電機点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 67
+    }
+   ]
+  },
+  {
+   "id": "W0088",
+   "label": "中央監視制御装置 定期点検（1号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2026-06-24",
+   "end": "2026-06-25",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R8年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 74
+    }
+   ]
+  },
+  {
+   "id": "W0089",
+   "label": "中央監視制御装置 定期点検（2号炉停止時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2026-09-24",
+   "end": "2026-09-25",
+   "days": 2,
+   "vendor": "瓶覗システム㈱",
+   "contract": "R8年度 中央監視制御装置保守点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 74
+    }
+   ]
+  },
+  {
+   "id": "W0090",
+   "label": "排ガス測定（5月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2026-05-21",
+   "end": "2026-05-21",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R8年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 75
+    }
+   ]
+  },
+  {
+   "id": "W0091",
+   "label": "排ガス測定（8月）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2026-08-20",
+   "end": "2026-08-20",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R8年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 75
+    }
+   ]
+  },
+  {
+   "id": "W0092",
+   "label": "排ガス測定（11月）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2026-11-19",
+   "end": "2026-11-19",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R8年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 75
+    }
+   ]
+  },
+  {
+   "id": "W0093",
+   "label": "排ガス測定（2月）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G19"
+   ],
+   "start": "2027-02-18",
+   "end": "2027-02-18",
+   "days": 1,
+   "vendor": "若竹環境分析㈱",
+   "contract": "R8年度 排ガス等測定分析業務委託（単価契約）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 75
+    }
+   ]
+  },
+  {
+   "id": "W0094",
+   "label": "1号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G04",
+    "G06",
+    "G08",
+    "G10",
+    "G12"
+   ],
+   "start": "2026-06-03",
+   "end": "2026-06-27",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R8年度 1号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 81
+    }
+   ]
+  },
+  {
+   "id": "W0095",
+   "label": "2号炉 定期整備工事",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G05",
+    "G07",
+    "G09",
+    "G11",
+    "G13"
+   ],
+   "start": "2026-09-03",
+   "end": "2026-09-27",
+   "days": 25,
+   "vendor": "千草炉機工業㈱",
+   "contract": "R8年度 2号炉定期整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 82
+    }
+   ]
+  },
+  {
+   "id": "W0096",
+   "label": "受変電設備 年次点検（全停電）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G15"
+   ],
+   "start": "2026-08-06",
+   "end": "2026-08-06",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R8年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 76
+    }
+   ]
+  },
+  {
+   "id": "W0097",
+   "label": "非常用発電機 負荷運転（全停電時）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2026-08-06",
+   "end": "2026-08-06",
+   "days": 1,
+   "vendor": "紺青電気保安協同組合",
+   "contract": "R8年度 受変電設備年次点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 76
+    }
+   ]
+  },
+  {
+   "id": "W0098",
+   "label": "計量機 定期点検",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2026-11-10",
+   "end": "2026-11-10",
+   "days": 1,
+   "vendor": "砥粉計量器㈱",
+   "contract": "R8年度 計量機定期点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 77
+    }
+   ]
+  },
+  {
+   "id": "W0099",
+   "label": "ごみクレーン 1号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G01"
+   ],
+   "start": "2027-02-02",
+   "end": "2027-02-03",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R8年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 78
+    }
+   ]
+  },
+  {
+   "id": "W0100",
+   "label": "ごみクレーン 2号 年次自主検査",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G02"
+   ],
+   "start": "2027-02-04",
+   "end": "2027-02-05",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "R8年度 ごみクレーン年次点検整備業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 78
+    }
+   ]
+  },
+  {
+   "id": "W0101",
+   "label": "消防用設備等点検（機器）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2026-07-14",
+   "end": "2026-07-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R8年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 79
+    }
+   ]
+  },
+  {
+   "id": "W0102",
+   "label": "消防用設備等点検（総合）",
+   "attribute": "INSPECT",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G18"
+   ],
+   "start": "2027-01-14",
+   "end": "2027-01-14",
+   "days": 1,
+   "vendor": "鉄紺防災設備㈱",
+   "contract": "R8年度 消防用設備等点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 79
+    }
+   ]
+  },
+  {
+   "id": "W0103",
+   "label": "非常用発電機 年次点検",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2026-06-30",
+   "end": "2026-06-30",
+   "days": 1,
+   "vendor": "黄櫨発電機サービス㈱",
+   "contract": "R8年度 非常用発電機点検業務委託",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 80
+    }
+   ]
+  },
+  {
+   "id": "W0104",
+   "label": "飛灰固化装置 混練機・セメント供給機 整備",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G14"
+   ],
+   "start": "2026-09-08",
+   "end": "2026-09-12",
+   "days": 5,
+   "vendor": "柿渋プラント㈱",
+   "contract": "R8年度 飛灰固化装置整備工事",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 83
+    }
+   ]
+  },
+  {
+   "id": "W0105",
+   "label": "流動砂循環装置 2号炉 振動篩 緊急修繕",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "G07"
+   ],
+   "start": "2022-12-07",
+   "end": "2022-12-09",
+   "days": 3,
+   "vendor": "千草炉機工業㈱",
+   "contract": "2号炉 流動砂循環装置 緊急修繕",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 30
+    }
+   ]
+  },
+  {
+   "id": "W0106",
+   "label": "誘引送風機 1号炉 軸受 取替",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "G12"
+   ],
+   "start": "2024-08-27",
+   "end": "2024-08-29",
+   "days": 3,
+   "vendor": "千草炉機工業㈱",
+   "contract": "1号炉 誘引送風機 軸受 緊急取替",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 57
+    }
+   ]
+  },
+  {
+   "id": "W0107",
+   "label": "ごみクレーン 1号 バケット油圧ユニット 修繕",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "G01"
+   ],
+   "start": "2026-01-14",
+   "end": "2026-01-15",
+   "days": 2,
+   "vendor": "桑染クレーン㈱",
+   "contract": "ごみクレーン 1号 バケット油圧ユニット 緊急修繕",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+     "sheet": "発注台帳",
+     "r": 70
+    }
+   ]
+  },
+  {
+   "id": "W0108",
+   "label": "日常点検 ごみクレーン 走行・巻上の異音",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G01",
+    "G02"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 0,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0109",
+   "label": "日常点検 ごみクレーン 油圧ユニット 油量",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G01",
+    "G02"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 1,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0110",
+   "label": "日常点検 計量機 ゼロ点（kg）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G03"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 2,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0111",
+   "label": "日常点検 焼却炉 炉内温度（℃）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G04"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 3,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0112",
+   "label": "日常点検 焼却炉 砂層差圧（kPa）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G04"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 4,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0113",
+   "label": "日常点検 流動砂循環装置 異音・漏れ",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G06"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 5,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0114",
+   "label": "日常点検 ガス冷却室 出口温度（℃）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G08"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 6,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0115",
+   "label": "日常点検 ろ過式集じん器 差圧（kPa）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G10"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 7,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0116",
+   "label": "日常点検 誘引送風機 軸受温度（℃）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G12"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 8,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0117",
+   "label": "日常点検 誘引送風機 振動・異音",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G12"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 9,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0118",
+   "label": "日常点検 飛灰固化装置 セメント供給",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G14"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 10,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0119",
+   "label": "日常点検 受変電設備 受電電圧（kV）",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G15"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 11,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0120",
+   "label": "日常点検 非常用発電機 燃料残量",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G16"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 12,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  },
+  {
+   "id": "W0121",
+   "label": "日常点検 中央監視制御装置 警報の有無",
+   "attribute": "INSPECT",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "G17"
+   ],
+   "start": "2026-09-17",
+   "end": "2026-09-17",
+   "days": 1,
+   "vendor": "運転班（職員）",
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+     "seq": 13,
+     "image": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg"
+    }
+   ]
+  }
+ ],
+ "unrecorded": [],
+ "defects": [
+  {
+   "kind": "精密機能検査の周期",
+   "where": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx の R7・R8 の表に精密機能検査の契約が無い（前回 R6。次は R9 の見込み）",
+   "check": "精密機能検査の周期（推奨：3 年に 1 回以上）。この施設では欠けではない（確かめ用）"
+  },
+  {
+   "kind": "法令の点検の抜け",
+   "where": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx の全年度でごみクレーンの性能検査（クレーン則）の契約が無い（年次の点検整備だけ）",
+   "check": "法令の点検の抜け（クレーン等安全規則の性能検査）"
+  }
+ ]
+}

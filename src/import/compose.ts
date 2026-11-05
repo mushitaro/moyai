@@ -253,6 +253,8 @@ export function compose(
     const p = placeOf.get(`${file}\u0000${sheet ?? ""}\u0000${ref}`);
     return { file, sheet, page: p?.page ?? null, cell: ref, box: p?.box ?? null };
   };
+  // 印の出どころ：印のセルと、行ごとに作業の列を書く星取表ならその行の作業の名前のセル
+  const markSources = (m: MarkRec) => [refOf(m.file, m.sheet, m.ref), ...(m.workRef ? [refOf(m.file, m.sheet, m.workRef)] : [])];
   const assets: AssetNodeT[] = [];
   for (const c of live) {
     if (c.pending) continue;
@@ -311,6 +313,22 @@ export function compose(
         tagList: [],
       });
     return wk;
+  };
+  // 作業の暦のきっかけ（src/plan/trigger.ts の Trigger）：星取表・作業の表のその行の周期（「周期(年)」「周期」）。
+  // 同じ作業に違う周期が書いてあれば、どちらかに決めつけず置かない
+  const cycleSeen = new Map<string, string>();
+  const putCycle = (wk: string, cycle: { years?: number; months?: number } | undefined) => {
+    const w = works.get(wk);
+    if (!cycle || !w) return;
+    const k = JSON.stringify(cycle);
+    const prev = cycleSeen.get(wk);
+    if (prev === undefined) {
+      cycleSeen.set(wk, k);
+      w.trigger = { branches: [{ kind: "calendar", ...cycle }], combine: "earliest" };
+    } else if (prev !== k) {
+      cycleSeen.set(wk, "conflict");
+      w.trigger = null;
+    }
   };
   // 読み方の決定（AI と会話から写した答え）ごとに、それで作者が決まった明細（決定のシートで、決定の行に付いて動く。Wire）
   const affected = new Map<string, string[]>();
@@ -413,6 +431,7 @@ export function compose(
     const ak = keyOf.get(c) ?? "";
     const parent = parentOfJob(j);
     const wk = workFor(`asset|${ak}|${keyName}|${parent ?? ""}`, kind, [ak], parent);
+    putCycle(wk, m?.cycle ?? j.units.flatMap((u) => u.events).find((e) => e.cycle)?.cycle);
     const v = jobValues(j);
     const r = range(j.units);
     const symbolQ = m ? [questionIdOf(`unknownSymbol|${m.tableId}|${m.symbol}`), questionIdOf(`noLegend|${m.tableId}|${m.symbol}`)] : [];
@@ -434,7 +453,7 @@ export function compose(
         measuredValue: null,
         previousValue: null,
         performer: null,
-        sources: [...(m ? [refOf(m.file, m.sheet, m.ref)] : []), ...jobSources(j)],
+        sources: [...(m ? markSources(m) : []), ...jobSources(j)],
         basis: `${m ? `星取表 ${m.ref} の印「${m.symbol}」と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
         author: authorOf(qs, decisions),
         needsReview: false,
@@ -454,6 +473,7 @@ export function compose(
     if (ls.length === 0) {
       const kind = m.workName ?? "";
       const wk = workFor(`asset|${ak}|${nameKey(kind)}|`, kind, [ak], null);
+      putCycle(wk, m.cycle);
       addDetail(
         {
           workKey: wk,
@@ -470,7 +490,7 @@ export function compose(
           measuredValue: null,
           previousValue: null,
           performer: null,
-          sources: [refOf(m.file, m.sheet, m.ref)],
+          sources: markSources(m),
           basis: `星取表 ${m.ref} の印「${m.symbol}」（${m.planOrActual === "plan" ? "予定" : "実績"}${m.workName ? `・${m.workName}` : ""}）`,
           author: authorOf([...c.decidedBy, ...symbolQ], decisions),
           needsReview: false,

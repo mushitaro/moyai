@@ -1,0 +1,805 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+ "plan": false,
+ "records": [
+  {
+   "sheet": "8月3日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-03",
+    "weather": "晴",
+    "writer": "笹倉",
+    "no": 121,
+    "inflow_m3": 30153,
+    "outflow_m3": 29901,
+    "rain_mm": 0,
+    "line": 1,
+    "system": "沈砂池",
+    "equipment": "除塵機 №1・№2",
+    "work": "し渣搬出・目視点検",
+    "time": "9:00～10:30",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月3日",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-03",
+    "weather": "晴",
+    "writer": "笹倉",
+    "no": 121,
+    "inflow_m3": 30153,
+    "outflow_m3": 29901,
+    "rain_mm": 0,
+    "line": 2,
+    "system": "電気",
+    "equipment": "自家発電設備",
+    "work": "月次 無負荷試運転",
+    "time": "10:00～10:30",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月4日",
+   "r": 2,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-04",
+    "weather": "雨",
+    "writer": "森下",
+    "no": 122,
+    "inflow_m3": 33746,
+    "outflow_m3": 33115,
+    "rain_mm": 12.5
+   }
+  },
+  {
+   "sheet": "8月5日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-05",
+    "weather": "晴",
+    "writer": "久遠",
+    "no": 123,
+    "inflow_m3": 29665,
+    "outflow_m3": 29089,
+    "rain_mm": 2.0,
+    "line": 1,
+    "system": "汚泥処理",
+    "equipment": "重力濃縮槽",
+    "work": "スカム除去",
+    "time": "13:30～15:00",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月5日",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-05",
+    "weather": "晴",
+    "writer": "久遠",
+    "no": 123,
+    "inflow_m3": 29665,
+    "outflow_m3": 29089,
+    "rain_mm": 2.0,
+    "line": 2,
+    "system": "水処理",
+    "equipment": "送風機 No.3",
+    "work": "定期点検（軸受・Vベルト）",
+    "time": "9:00～16:00",
+    "vendor": "瑠璃機械整備㈱",
+    "staff": 1,
+    "vendor_persons": 2
+   }
+  },
+  {
+   "sheet": "8月6日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-06",
+    "weather": "晴時々曇",
+    "writer": "森下",
+    "no": 124,
+    "inflow_m3": 33487,
+    "outflow_m3": 32839,
+    "rain_mm": 0,
+    "line": 1,
+    "system": "計装",
+    "equipment": "監視制御設備",
+    "work": "月次点検",
+    "time": "9:00～12:00",
+    "vendor": "江戸紫電気保安㈱",
+    "vendor_persons": 1
+   }
+  },
+  {
+   "sheet": "8月7日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-07",
+    "weather": "雨",
+    "writer": "笹倉",
+    "no": 125,
+    "inflow_m3": 38727,
+    "outflow_m3": 38078,
+    "rain_mm": 12.5,
+    "line": 1,
+    "system": "消毒",
+    "equipment": "次亜注入ﾎﾟﾝﾌﾟ",
+    "work": "注入量確認・配管点検",
+    "time": "14:00～15:00",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月10日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-10",
+    "weather": "晴時々曇",
+    "writer": "森下",
+    "no": 126,
+    "inflow_m3": 31646,
+    "outflow_m3": 31343,
+    "rain_mm": 2.0,
+    "line": 1,
+    "system": "沈砂池",
+    "equipment": "除塵機 №1・№2",
+    "work": "し渣搬出・目視点検",
+    "time": "9:00～10:30",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月11日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-11",
+    "weather": "雨",
+    "writer": "笹倉",
+    "no": 127,
+    "inflow_m3": 38122,
+    "outflow_m3": 37910,
+    "rain_mm": 8.0,
+    "line": 1,
+    "system": "ポンプ",
+    "equipment": "主ﾎﾟﾝﾌﾟ (2)",
+    "work": "グランドパッキン取替",
+    "time": "9:00～15:30",
+    "vendor": "浅葱ポンプ工業㈱",
+    "staff": 1,
+    "vendor_persons": 2,
+    "memo": "漏水量 増のため"
+   }
+  },
+  {
+   "sheet": "8月12日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-12",
+    "weather": "晴時々曇",
+    "writer": "森下",
+    "no": 128,
+    "inflow_m3": 27604,
+    "outflow_m3": 26981,
+    "rain_mm": 0.5,
+    "line": 1,
+    "system": "汚泥処理",
+    "equipment": "重力濃縮槽",
+    "work": "スカム除去",
+    "time": "13:30～15:00",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月12日",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-12",
+    "weather": "晴時々曇",
+    "writer": "森下",
+    "no": 128,
+    "inflow_m3": 27604,
+    "outflow_m3": 26981,
+    "rain_mm": 0.5,
+    "line": 2,
+    "system": "沈砂池",
+    "equipment": "沈砂かき揚げ機",
+    "work": "チェーン張り調整",
+    "time": "9:30～11:30",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月13日",
+   "r": 2,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-13",
+    "weather": "曇",
+    "writer": "久遠",
+    "no": 129,
+    "inflow_m3": 28692,
+    "outflow_m3": 28221,
+    "rain_mm": 2.0
+   }
+  },
+  {
+   "sheet": "8月14日",
+   "r": 2,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-14",
+    "weather": "晴",
+    "writer": "森下",
+    "no": 130,
+    "inflow_m3": 30109,
+    "outflow_m3": 29844,
+    "rain_mm": 0
+   }
+  },
+  {
+   "sheet": "8月17日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-17",
+    "weather": "晴",
+    "writer": "久遠",
+    "no": 131,
+    "inflow_m3": 32589,
+    "outflow_m3": 32172,
+    "rain_mm": 0,
+    "line": 1,
+    "system": "沈砂池",
+    "equipment": "除塵機 №1・№2",
+    "work": "し渣搬出・目視点検",
+    "time": "9:00～10:30",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月18日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-18",
+    "weather": "曇",
+    "writer": "森下",
+    "no": 132,
+    "inflow_m3": 29089,
+    "outflow_m3": 28415,
+    "rain_mm": 0,
+    "line": 1,
+    "system": "汚泥処理",
+    "equipment": "脱水機 No.2",
+    "work": "分解整備（1日目）",
+    "time": "8:30～17:00",
+    "vendor": "鶸色脱水機サービス㈱",
+    "staff": 1,
+    "vendor_persons": 3,
+    "memo": "ろ布取替を含む"
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 1,
+    "system": "汚泥処理",
+    "equipment": "重力濃縮槽",
+    "work": "スカム除去",
+    "time": "13:30～15:00",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 2,
+    "system": "汚泥処理",
+    "equipment": "脱水機 No.2",
+    "work": "分解整備（2日目）",
+    "time": "8:30～17:00",
+    "vendor": "鶸色脱水機サービス㈱",
+    "staff": 1,
+    "vendor_persons": 3
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 10,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 3,
+    "system": "電気",
+    "equipment": "受変電設備",
+    "work": "年次点検（全停電 9:00～15:00）",
+    "time": "8:30～16:00",
+    "vendor": "江戸紫電気保安㈱",
+    "staff": 1,
+    "vendor_persons": 4
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 11,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 4,
+    "system": "電気",
+    "equipment": "自家発電設備",
+    "work": "停電中の負荷運転",
+    "time": "8:50～15:10",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 12,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 5,
+    "system": "計装",
+    "equipment": "監視制御設備",
+    "work": "停電前の停止・復電後の再起動確認",
+    "time": "8:30～15:40",
+    "vendor": "江戸紫電気保安㈱",
+    "staff": 1,
+    "vendor_persons": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 13,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 6,
+    "system": "ポンプ",
+    "equipment": "主ポンプ ①",
+    "work": "復電後の起動確認",
+    "time": "15:00～15:30",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 14,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 7,
+    "system": "ポンプ",
+    "equipment": "主ポンプ ②",
+    "work": "復電後の起動確認",
+    "time": "15:00～15:30",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 15,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 8,
+    "system": "ポンプ",
+    "equipment": "主ポンプ ③",
+    "work": "復電後の起動確認",
+    "time": "15:00～15:30",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 16,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 9,
+    "system": "ポンプ",
+    "equipment": "主ポンプ ④",
+    "work": "復電後の起動確認",
+    "time": "15:00～15:30",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 17,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 10,
+    "system": "水処理",
+    "equipment": "送風機 1号",
+    "work": "復電後の起動確認",
+    "time": "15:10～15:40",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 18,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 11,
+    "system": "水処理",
+    "equipment": "送風機 2号",
+    "work": "復電後の起動確認",
+    "time": "15:10～15:40",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日",
+   "r": 19,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "inflow_m3": 29092,
+    "outflow_m3": 28270,
+    "rain_mm": 0,
+    "line": 12,
+    "system": "水処理",
+    "equipment": "送風機 3号",
+    "work": "復電後の起動確認",
+    "time": "15:10～15:40",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日 (続)",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "line": 13,
+    "system": "沈砂池",
+    "equipment": "除塵機 №1",
+    "work": "レーキ破損 補修",
+    "time": "10:00～14:00",
+    "vendor": "瑠璃機械整備㈱",
+    "staff": 1,
+    "vendor_persons": 2,
+    "memo": "停電中に実施"
+   }
+  },
+  {
+   "sheet": "8月19日 (続)",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "line": 14,
+    "system": "水処理",
+    "equipment": "最初沈殿池かき寄せ機（1・2系）",
+    "work": "復電後の運転確認",
+    "time": "15:20～15:50",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月19日 (続)",
+   "r": 10,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-19",
+    "weather": "曇",
+    "writer": "笹倉",
+    "no": 133,
+    "line": 15,
+    "system": "水処理",
+    "equipment": "最終沈殿池かき寄せ機（1・2系）",
+    "work": "復電後の運転確認",
+    "time": "15:20～15:50",
+    "staff": 1
+   }
+  },
+  {
+   "sheet": "8月20日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-20",
+    "weather": "曇",
+    "writer": "森下",
+    "no": 134,
+    "inflow_m3": 30832,
+    "outflow_m3": 30573,
+    "rain_mm": 2.0,
+    "line": 1,
+    "system": "汚泥処理",
+    "equipment": "脱水機 No.2",
+    "work": "分解整備（3日目）",
+    "time": "8:30～17:00",
+    "vendor": "鶸色脱水機サービス㈱",
+    "staff": 1,
+    "vendor_persons": 3
+   }
+  },
+  {
+   "sheet": "8月21日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-21",
+    "weather": "晴",
+    "writer": "久遠",
+    "no": 135,
+    "inflow_m3": 29030,
+    "outflow_m3": 28673,
+    "rain_mm": 0,
+    "line": 1,
+    "system": "ポンプ",
+    "equipment": "主ポンプ No.1～4",
+    "work": "月例点検",
+    "time": "9:00～11:30",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月24日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-24",
+    "weather": "曇",
+    "writer": "森下",
+    "no": 136,
+    "inflow_m3": 31752,
+    "outflow_m3": 31451,
+    "rain_mm": 2.0,
+    "line": 1,
+    "system": "沈砂池",
+    "equipment": "除塵機 №1・№2",
+    "work": "し渣搬出・目視点検",
+    "time": "9:00～10:30",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月25日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-25",
+    "weather": "曇",
+    "writer": "久遠",
+    "no": 137,
+    "inflow_m3": 29282,
+    "outflow_m3": 28936,
+    "rain_mm": 2.0,
+    "line": 1,
+    "system": "消毒",
+    "equipment": "次亜注入設備",
+    "work": "注入ポンプ No.2 ダイヤフラム取替",
+    "time": "9:00～12:00",
+    "vendor": "瑠璃機械整備㈱",
+    "vendor_persons": 2
+   }
+  },
+  {
+   "sheet": "8月26日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-26",
+    "weather": "晴",
+    "writer": "森下",
+    "no": 138,
+    "inflow_m3": 29626,
+    "outflow_m3": 28964,
+    "rain_mm": 0.5,
+    "line": 1,
+    "system": "汚泥処理",
+    "equipment": "重力濃縮槽",
+    "work": "スカム除去",
+    "time": "13:30～15:00",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月26日",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-26",
+    "weather": "晴",
+    "writer": "森下",
+    "no": 138,
+    "inflow_m3": 29626,
+    "outflow_m3": 28964,
+    "rain_mm": 0.5,
+    "line": 2,
+    "system": "水処理",
+    "equipment": "最初沈殿池 1系 かき寄せ機",
+    "work": "チェーン・フライト調整（1/2）",
+    "time": "8:30～17:00",
+    "vendor": "瑠璃機械整備㈱",
+    "staff": 1,
+    "vendor_persons": 3
+   }
+  },
+  {
+   "sheet": "8月27日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-27",
+    "weather": "晴",
+    "writer": "笹倉",
+    "no": 139,
+    "inflow_m3": 29558,
+    "outflow_m3": 28961,
+    "rain_mm": 2.0,
+    "line": 1,
+    "system": "水処理",
+    "equipment": "最初沈殿池 1系 かき寄せ機",
+    "work": "チェーン・フライト調整（2/2）",
+    "time": "8:30～17:00",
+    "vendor": "瑠璃機械整備㈱",
+    "staff": 1,
+    "vendor_persons": 3
+   }
+  },
+  {
+   "sheet": "8月28日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-28",
+    "weather": "晴時々曇",
+    "writer": "森下",
+    "no": 140,
+    "inflow_m3": 30007,
+    "outflow_m3": 29187,
+    "rain_mm": 0,
+    "line": 1,
+    "system": "水処理",
+    "equipment": "反応タンク1系 散気装置",
+    "work": "目詰まり点検（散気量確認）",
+    "time": "13:00～15:00",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月31日",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-31",
+    "weather": "雨",
+    "writer": "笹倉",
+    "no": 141,
+    "inflow_m3": 38786,
+    "outflow_m3": 38161,
+    "rain_mm": 8.0,
+    "line": 1,
+    "system": "沈砂池",
+    "equipment": "除塵機 №1・№2",
+    "work": "し渣搬出・目視点検",
+    "time": "9:00～10:30",
+    "staff": 2
+   }
+  },
+  {
+   "sheet": "8月31日",
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "date": "2026-08-31",
+    "weather": "雨",
+    "writer": "笹倉",
+    "no": 141,
+    "inflow_m3": 38786,
+    "outflow_m3": 38161,
+    "rain_mm": 8.0,
+    "line": 2,
+    "system": "汚泥処理",
+    "equipment": "脱水機 No.1",
+    "work": "ろ布洗浄ノズル清掃",
+    "time": "13:00～14:30",
+    "staff": 1
+   }
+  }
+ ]
+}

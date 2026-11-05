@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { bundleHash } from "../../scripts/heldout/hash.mjs";
+import { runAnswerSet } from "./answer";
 import { loadSet } from "./contract";
 import { runSet, type SetResult } from "./harness";
 
@@ -42,6 +43,8 @@ export interface HeldoutResult {
   reader: { tag: string | null; commit: string; src: string; packs: string };
   measuredAt: string;
   result: SetResult;
+  /** 指示書 §5 の形の組（施設ごとのフォルダ）：施設ごとの結果。result はそのまとめ */
+  facilities?: { key: string; industry: string; result: SetResult; unmapped: string[] }[];
 }
 
 /** その道を最初に足した commit（無ければ null。commit していない作業中の道も null） */
@@ -58,27 +61,44 @@ describe("import.heldout：見ていない様式", () => {
     expect(out, "MOYAI_HELDOUT_OUT（結果を書く道）").toBeTruthy();
     // 読み手に commit していない変更があれば測らない（タグと同じ src/ で測ったと言えなくなるため）
     expect(git("status", "--porcelain", "--", "src", "packs"), "src/ と packs/ の commit していない変更").toBe("");
-    const set = loadSet(dir!);
     const factsDir = join(dir!, "measured", "facts");
-    const facts: Record<string, unknown> = {};
-    if (existsSync(factsDir)) for (const f of set.truth.files) {
-      const p = join(factsDir, `${f.file.replace(/\//g, "__")}.facts.json`);
-      if (existsSync(p)) facts[f.file] = JSON.parse(readFileSync(p, "utf8"));
+    const factsOf = (prefix: string, files: string[]) => {
+      const facts: Record<string, unknown> = {};
+      if (existsSync(factsDir)) for (const f of files) {
+        const p = join(factsDir, `${prefix}${f.replace(/\//g, "__")}.facts.json`);
+        if (existsSync(p)) facts[f] = JSON.parse(readFileSync(p, "utf8"));
+      }
+      return facts;
+    };
+    // truth.json の組（場所の形）か、施設ごとのフォルダに answer/ を持つ組（指示書 §5 の形。samples/heldout/ANSWER.md）
+    let result: SetResult;
+    let facilities: HeldoutResult["facilities"];
+    let setName: string;
+    if (existsSync(join(dir!, "truth.json"))) {
+      const set = loadSet(dir!);
+      setName = set.truth.set;
+      result = (await runSet(set, { facts: factsOf("", set.truth.files.map((f) => f.file)) })).result;
+    } else {
+      const names = (key: string) => (existsSync(join(dir!, key, "answer", "files")) ? readdirSync(join(dir!, key, "answer", "files")).map((n) => JSON.parse(readFileSync(join(dir!, key, "answer", "files", n), "utf8")).file as string) : []);
+      const r = await runAnswerSet(dir!, (key) => factsOf(`${key}__`, names(key)));
+      result = r.result;
+      facilities = r.facilities;
+      setName = r.result.set;
     }
-    const { result } = await runSet(set, { facts });
     const head = git("rev-parse", "HEAD");
     const tag = gitOk("describe", "--tags", "--exact-match", "HEAD") ? git("describe", "--tags", "--exact-match", "HEAD") : null;
     const rec: HeldoutResult = {
       schema: "moyai.heldout.result/0",
-      set: set.truth.set,
+      set: setName,
       bundle: bundleHash(dir!).bundle,
       reader: { tag, commit: head, src: git("rev-parse", "HEAD:src"), packs: git("rev-parse", "HEAD:packs") },
       measuredAt: new Date().toISOString(),
       result,
+      ...(facilities ? { facilities } : {}),
     };
     mkdirSync(dirname(out!), { recursive: true });
     writeFileSync(out!, `${JSON.stringify(rec, null, 1)}\n`, "utf8");
-    console.log(`見ていない様式 ${set.truth.set}：${result.files.map((f) => `${f.file} ①${f.leak ?? "—"} ②${f.unresolved ?? "—"} ③${f.accuracy ? `${f.accuracy.correct}/${f.accuracy.total}` : "—"}`).join("、")}・⑤ ${result.asked}・計画 ${result.planMade ? "作った" : `作らなかった（${result.blockers.join("・")}）`}`);
+    console.log(`見ていない様式 ${setName}：${result.files.map((f) => `${f.file} ①${f.leak ?? "—"} ②${f.unresolved ?? "—"} ③${f.accuracy ? `${f.accuracy.correct}/${f.accuracy.total}` : "—"}`).join("、")}・⑤ ${result.asked}・計画 ${result.planMade ? "作った" : `作らなかった（${result.blockers.join("・")}）`}`);
   }, 600_000);
 
   it("組のハッシュは、measured/ を除くファイルの道の順の一覧から決まる", () => {

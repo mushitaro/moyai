@@ -1,0 +1,189 @@
+[
+  {
+    "schema": "moyai.reading/0",
+    "name": "【架空】ほたる川CCの読み方",
+    "scope": "facility",
+    "rules": [
+      {
+        "id": "nippo-no-exclude",
+        "text": "作業日報の「No.」は頁ごとの通し番号で、読まない列",
+        "kind": "columnRole",
+        "column": "No.",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "見本の行で 1・2・3 と頁ごとに振り直されていて、機器にも作業にも結びつかない",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-asset",
+        "text": "作業日報の「号炉・系統・機器・作業内容」を機器の名前として読む",
+        "kind": "columnRole",
+        "column": "号炉・系統・機器・作業内容",
+        "role": "assetRef",
+        "author": "ai",
+        "reason": "見本の行は「#1 誘引ﾌｧﾝ Vベルト張り調整」のように号炉・機器の名前が先に来る。作業内容も同じセルにあり、どこまでが機器の名前かは担当者に聞いている",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-contractor",
+        "text": "作業日報の「施工業者」は備考として読む",
+        "kind": "columnRole",
+        "column": "施工業者",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「(株)架空運転管理」「常駐（運転管理）」のような業者の名前で、計画の値ではないが根拠の文には残したい",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-tobi",
+        "text": "作業日報の「鳶工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "鳶工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "見本の行では職種別の人数の和が「人工計」と合う（1＋1＝2、2＋1＝3）。工数は「人工計」の 1 か所から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-kikai",
+        "text": "作業日報の「機械工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "機械工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数の和が「人工計」と合う。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-yosetsu",
+        "text": "作業日報の「溶接工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "溶接工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数の和が「人工計」と合う。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-denko",
+        "text": "作業日報の「電工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "電工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数の和が「人工計」と合う。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-hoon",
+        "text": "作業日報の「保温工」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "保温工",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数の和が「人工計」と合う。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-trade-sagyoin",
+        "text": "作業日報の「作業員」の人数は「人工計」に含まれるので、読まない列",
+        "kind": "columnRole",
+        "column": "作業員",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "職種別の人数の和が「人工計」と合う。工数は「人工計」から読む",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-effort",
+        "text": "作業日報の「人工計」を工数として読む",
+        "kind": "columnRole",
+        "column": "人工計",
+        "role": "effort",
+        "author": "ai",
+        "reason": "職種別の人数を足した列。単位（人数か人・日か）は担当者に聞いていて、まだ置かない",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-worktime",
+        "text": "作業日報の「作業時間」は備考として読む",
+        "kind": "columnRole",
+        "column": "作業時間",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「8:30-17:00」「13:00～17:00」のような時刻の幅で、日付でも工数の数でもない。半日か終日かの手がかりとして根拠の文に残す",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "nippo-remark",
+        "text": "作業日報の「備考」は備考として読む",
+        "kind": "columnRole",
+        "column": "備考",
+        "role": "remark",
+        "author": "ai",
+        "reason": "見本は「高所作業」。作業の条件の書き込みで、根拠の文に添える",
+        "when": { "headers": ["号炉・系統・機器・作業内容", "施工業者", "人工計"] }
+      },
+      {
+        "id": "order-method",
+        "text": "発注台帳の「契約方式」は備考として読む",
+        "kind": "columnRole",
+        "column": "契約方式",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「一般競争入札（総合評価）」「随意契約（特命）」などで、計画の値ではないが、誰がどう請けたかの根拠になる",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-party",
+        "text": "発注台帳の「契約の相手方」は備考として読む",
+        "kind": "columnRole",
+        "column": "契約の相手方",
+        "role": "remark",
+        "author": "ai",
+        "reason": "請けた業者の名前。根拠の文に添える",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-estimate-exclude",
+        "text": "発注台帳の「予定価格」は読まない列",
+        "kind": "columnRole",
+        "column": "予定価格",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "契約の前の見込みの額で、行われた作業を表さない。額は「契約金額」の 1 か所だけ根拠に残す",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-amount",
+        "text": "発注台帳の「契約金額」は備考として読む",
+        "kind": "columnRole",
+        "column": "契約金額",
+        "role": "remark",
+        "author": "ai",
+        "reason": "計画の値ではないが、作業の規模の手がかりとして根拠の文に残す",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-paid-exclude",
+        "text": "発注台帳の「支払額」は読まない列",
+        "kind": "columnRole",
+        "column": "支払額",
+        "role": "exclude",
+        "author": "ai",
+        "reason": "見本の 5 行はどれも「契約金額」と同じ額で、重ねて残すと根拠の文が重複する",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      },
+      {
+        "id": "order-section",
+        "text": "発注台帳の「所管」は備考として読む",
+        "kind": "columnRole",
+        "column": "所管",
+        "role": "remark",
+        "author": "ai",
+        "reason": "「施設係」「保全係」「管理係」のような係の名前。根拠の文に添える",
+        "when": { "headers": ["契約番号", "契約の相手方"] }
+      }
+    ]
+  }
+]

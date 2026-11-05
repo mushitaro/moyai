@@ -1,0 +1,408 @@
+[
+ {
+  "schema": "moyai.reading/0",
+  "name": "【架空】葦原クリーンプラザの読み方",
+  "scope": "facility",
+  "rules": [
+   {
+    "id": "report-header-row8",
+    "text": "「1号炉定期整備工事報告書」は 8 行目を見出しの行として読む",
+    "kind": "headerRow",
+    "row": 8,
+    "author": "ai",
+    "reason": "要約の見本で 8 行目に「No.」「機器」「作業内容」「着手」「完了」「日数」「延べ人工」「備考」が並ぶ。9 行目の空き行で表が切れ、10 行目からの行に見出しが付いていなかった（1 回目で 8 セルに効いた）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-asset",
+    "text": "「機器」を機器の名前として読む",
+    "kind": "columnRole",
+    "column": "機器",
+    "role": "assetRef",
+    "author": "ai",
+    "reason": "見本の 10〜14・41・42 行目で「焼却炉」が入っている欄",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-work",
+    "text": "「作業内容」を作業の名前として読む",
+    "kind": "columnRole",
+    "column": "作業内容",
+    "role": "workName",
+    "author": "ai",
+    "reason": "見出しの文字どおり。ただし 1 回目は 1 セルにしか効かず、作業の名前は見出しの無い列 C に入っている（下の report-answer-col-c）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-start",
+    "text": "「着手」を作業の始まりの日付として読む",
+    "kind": "columnRole",
+    "column": "着手",
+    "role": "date",
+    "author": "ai",
+    "reason": "見本の「5/12」「5/13」の欄。工期 R7.5.12〜R7.6.6 の中の日付",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-end",
+    "text": "「完了」を作業の終わりの日付として読む",
+    "kind": "columnRole",
+    "column": "完了",
+    "role": "end",
+    "author": "ai",
+    "reason": "見本で「着手」の次に並ぶ日付の欄（5/12→5/12、5/13→5/14）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-days",
+    "text": "「日数」を作業の日数として読む",
+    "kind": "columnRole",
+    "column": "日数",
+    "role": "days",
+    "author": "ai",
+    "reason": "見本で着手〜完了の日数と合う（5/13〜5/14 が 2）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-effort",
+    "text": "「延べ人工」を工数として読む",
+    "kind": "columnRole",
+    "column": "延べ人工",
+    "role": "effort",
+    "author": "ai",
+    "reason": "資料の A6 の注記「下表の延べ人工は、元請と協力会社の作業員の延べ人数」",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-remark",
+    "text": "「備考」を備考として残す",
+    "kind": "columnRole",
+    "column": "備考",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の「群青分析センター」（測定の会社）が入っている欄",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-col-no",
+    "text": "「No.」は計画に使わない",
+    "kind": "columnRole",
+    "column": "No.",
+    "role": "exclude",
+    "author": "ai",
+    "reason": "報告書の中の通し番号（1, 2, … 17）で、機器や作業を表さない",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-date-start-md",
+    "text": "「着手」は月/日の書き方として読む",
+    "kind": "dateFormat",
+    "column": "着手",
+    "format": "md",
+    "author": "ai",
+    "reason": "見本の値が「5/12」「6/3」で年が無い。年は工期 R7.5.12〜R7.6.6 から",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-date-end-md",
+    "text": "「完了」は月/日の書き方として読む",
+    "kind": "dateFormat",
+    "column": "完了",
+    "format": "md",
+    "author": "ai",
+    "reason": "見本の値が「5/12」「5/14」「6/3」で年が無い",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-effort-mandays",
+    "text": "「延べ人工」は人工（1 人 1 日 = 1 人工）として読む",
+    "kind": "effortUnit",
+    "column": "延べ人工",
+    "unit": "manDays",
+    "author": "ai",
+    "reason": "資料の A6 の注記「1 人 1 日 = 1 人工」",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-row-continued",
+    "text": "「（前ページから続く）」の行は注記として読む",
+    "kind": "rowRole",
+    "match": "（前ページ",
+    "role": "note",
+    "author": "ai",
+    "reason": "見本の 39 行目。2 頁目の頭の続きの印で、作業の行ではない（1 回目で 2 に効いた）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-a",
+    "text": "報告書の見出しの無い列 A は計画に使わない",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 A（見出し「なし」）",
+    "answer": "exclude",
+    "author": "ai",
+    "reason": "列 A は報告書の通し番号（見本の 10 行目「1」〜42 行目「17」）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-b",
+    "text": "報告書の見出しの無い列 B を機器の名前として読む",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 B（見出し「なし」）",
+    "answer": "assetRef",
+    "author": "ai",
+    "reason": "列 B は 1・2 頁とも「焼却炉」などの機器の欄（1 回目に「機器」の規則が両頁の 22 行に効いた）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-c",
+    "text": "報告書の見出しの無い列 C を作業の名前として読む",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 C（見出し「なし」）",
+    "answer": "workName",
+    "author": "ai",
+    "reason": "1 回目のあとも列 C（見本の「立下げ」「炉内冷却」「空打ち試運転」）が残った。見出し「作業内容」は PDF の格子で列 C の上に乗っておらず、規則が 1 セルにしか効かなかった",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-d",
+    "text": "報告書の見出しの無い列 D は備考として残す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 D（見出し「なし」）",
+    "answer": "remark",
+    "author": "ai",
+    "reason": "列 D には、作業の名前の 2 行目が割れて入る（32 行目「ラ点検」、41 行目「後測定」）。名前の続きなので消さずに備考に残す",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-e",
+    "text": "報告書の見出しの無い列 E は備考として残す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 E（見出し「なし」）",
+    "answer": "remark",
+    "author": "ai",
+    "reason": "見本の行で列 E に値が見えない。中身が分からないので消さずに備考に残す",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-f",
+    "text": "報告書の列 F（頁の下の「- 1 -」の下）は備考として残す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 F（見出し「- 1 -」）",
+    "answer": "remark",
+    "author": "ai",
+    "reason": "見出しに取られた「- 1 -」は 37 行目の頁番号で、列の名前ではない。中身が分からないので備考に残す",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-g",
+    "text": "報告書の見出しの無い列 G を作業の始まりの日付として読む",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 G（見出し「なし」）",
+    "answer": "date",
+    "author": "ai",
+    "reason": "1・2 頁とも列 G は着手の日付（32 行目「5/20」、41 行目「6/3」、42 行目「6/4」）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-i",
+    "text": "報告書の見出しの無い列 I を日数として読む",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 I（見出し「なし」）",
+    "answer": "days",
+    "author": "ai",
+    "reason": "1・2 頁とも列 I は日数（32 行目「3」＝5/20〜5/22、42 行目「2」＝6/4〜6/5）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-j",
+    "text": "報告書の見出しの無い列 J を工数（人工）として読む",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 J（見出し「なし」）",
+    "answer": "effort",
+    "author": "ai",
+    "reason": "1・2 頁とも列 J は延べ人工（32 行目「6.0」、44 行目の合計「198.5」）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-answer-col-k",
+    "text": "報告書の列 K（頁の下の札の下）は備考として残す",
+    "kind": "answer",
+    "question": "columnRole",
+    "match": "列 K（見出し「【架空】架空のデ」）",
+    "answer": "remark",
+    "author": "ai",
+    "reason": "見出しに取られた「【架空】架空のデ」は 37 行目の札。列 K は備考の欄（41 行目「群青分析センター」）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-row-footnote",
+    "text": "「から完了日までの」の行は注記として読む",
+    "kind": "rowRole",
+    "match": "から完了日までの",
+    "role": "note",
+    "author": "ai",
+    "reason": "2 回目のあと「から完了日までの」が機器の名前として質問に出た。表の下の説明の文が割れたもので、作業の行ではない",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "report-row-total",
+    "text": "「合 計」の行は合計として読む",
+    "kind": "rowRole",
+    "match": "合 計",
+    "role": "total",
+    "author": "ai",
+    "reason": "44 行目「合 計」「198.5」。延べ人工の合計で、作業の行ではない（J44 が残っていた）",
+    "when": { "file": "*1号炉定期整備工事報告書*" }
+   },
+   {
+    "id": "asset-idf-name",
+    "text": "報告書の「誘引送風機」は計画表の「誘引通風機」と同じ機器",
+    "kind": "sameAsset",
+    "names": ["誘引送風機", "誘引通風機"],
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 1「報告書の「誘引送風機」は計画表の「誘引通風機」と同じものです」（No.5-2-1、IDF-1101、46 行目）"
+   },
+   {
+    "id": "asset-idf-name-unit",
+    "text": "報告書の「誘引送風機」は計画表の「誘引通風機 1号炉」と同じ機器",
+    "kind": "sameAsset",
+    "names": ["誘引送風機", "誘引通風機 1号炉"],
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 1「計画表の No.5-2-1「誘引通風機 1号炉」」「報告書は全部 1 号炉の工事」。計画表の名前の書き方が号つきの場合に備える"
+   },
+   {
+    "id": "daily-col-system",
+    "text": "「系統」（電気・受入供給など）は備考として残す",
+    "kind": "columnRole",
+    "column": "系統",
+    "role": "remark",
+    "author": "ai",
+    "reason": "見本の値は「電気」「受入供給」で、設備の分類。1 系・2 系のような系列ではないので号・系統の役目にしない",
+    "when": { "file": "*作業日報データ*" }
+   },
+   {
+    "id": "plan-col-tag",
+    "text": "「機器番号」を機器番号として読む",
+    "kind": "columnRole",
+    "column": "機器番号",
+    "role": "tag",
+    "author": "ai",
+    "reason": "見出しの文字どおり。見本の値は「W-101・102」「CR-101/102」",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-col-cycle",
+    "text": "「周期（年）」は備考として残す",
+    "kind": "columnRole",
+    "column": "周期",
+    "role": "remark",
+    "author": "ai",
+    "reason": "年数の欄（1・2）。印の並びが実際の年度を表すので、根拠の文に添えるだけにする",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-col-cost",
+    "text": "「概算費用（千円/回）」は計画に使わない",
+    "kind": "columnRole",
+    "column": "概算費用",
+    "role": "exclude",
+    "author": "ai",
+    "reason": "1 回目の答え 3：持ち込むかは施設では決めていない（1 回あたりの概算、千円・税抜）。星取表の機器・作業・年度の印に入らないので外す",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-level-2",
+    "text": "名前が 2 段目の位置にある行は 2 段目として読む",
+    "kind": "answer",
+    "question": "levelSplit",
+    "match": "名前の列の位置は 2 段目",
+    "answer": "level:2",
+    "author": "ai",
+    "reason": "No. の「1-1」「1-2」と名前の列の位置がそろって 2 段目。No. の無い行は「〃」の行で、2 回目の答え「11 行目は 10 行目と同じ計量機、13 行目は 12 行目と同じごみクレーン。作業だけが違う」なので上の行と同じ段。グループの手がかりは 1 段ずれている",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-level-3",
+    "text": "名前が 3 段目の位置にある行は 3 段目として読む",
+    "kind": "answer",
+    "question": "levelSplit",
+    "match": "名前の列の位置は 3 段目",
+    "answer": "level:3",
+    "author": "ai",
+    "reason": "No. の「1-2-1」（14 行目 巻上装置）と名前の列の位置がそろって 3 段目。No. の無い行は「〃」の行なので上の行と同じ段",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-mark-filled-actual",
+    "text": "「●」は実施済みの印として読む",
+    "kind": "markMeaning",
+    "symbol": "●",
+    "planOrActual": "actual",
+    "meaning": "実施済み",
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 2「● は実施済み」（凡例は表の下の 70 行目）",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-mark-open-plan",
+    "text": "「○」は計画（予定）の印として読む",
+    "kind": "markMeaning",
+    "symbol": "○",
+    "planOrActual": "plan",
+    "meaning": "計画（予定）",
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 2「○ は計画（予定）」。令和 8 年度の列は、済んでいても ○ のままのものがある",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-mark-triangle-partial",
+    "text": "「△」は一部だけ実施の印として読む",
+    "kind": "markMeaning",
+    "symbol": "△",
+    "planOrActual": "actual",
+    "meaning": "一部だけ実施",
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 2「△：一部だけ実施」",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-mark-deferred",
+    "text": "「○→」は次の年度へ延ばした計画の印として読む",
+    "kind": "markMeaning",
+    "symbol": "○→",
+    "planOrActual": "plan",
+    "meaning": "次の年度へ延ばした（この年度は実施せず）",
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 2「○→：次の年度へ延ばしたもの」",
+    "when": { "file": "*設備整備計画表*" }
+   },
+   {
+    "id": "plan-mark-diamond-extra",
+    "text": "「◇」は計画に無かった臨時の実施の印として読む",
+    "kind": "markMeaning",
+    "symbol": "◇",
+    "planOrActual": "actual",
+    "meaning": "計画に無かったのに臨時で実施",
+    "author": "human",
+    "by": "担当者",
+    "reason": "1 回目の答え 2「◇：凡例には無いですが、計画に無かったのに臨時でやったもの」",
+    "when": { "file": "*設備整備計画表*" }
+   }
+  ]
+ }
+]

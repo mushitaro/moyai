@@ -232,8 +232,19 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           pattern = `${scope}byNumber`;
         } else pattern = "ambiguous";
       }
+      // 名前と親で 1 つに決まらないとき：機器番号が同じ機器がただ 1 つあれば、それを案にする（段や親の書き方が資料で違っても、番号は同じ機器を指す）
+      let options = cands;
+      if (!cand && r.tag) {
+        const tk = nk(r.tag);
+        const byTag = clusters.filter((c) => !!c.tag && nk(c.tag) === tk && c.recs.some((x) => done.has(x.tableId)));
+        if (byTag.length === 1 && byTag[0]) {
+          cand = byTag[0];
+          pattern = nk(cand.name) === key ? "tagName" : "tagOnly";
+          options = [cand];
+        }
+      }
       proposed.set(r.id, cand);
-      props.push({ r, cand, pattern, options: cands });
+      props.push({ r, cand, pattern, options });
     }
     // 形ごとにまとめて聞く
     const groups = new Map<string, Prop[]>();
@@ -271,6 +282,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         unique: "名前が同じで、同じ親の下にどちらも 1 つずつ",
         uniqueNumberDiffers: "名前が同じで 1 つずつだが、号の数と機器番号の数が違う",
         byNumber: "名前が同じものがいくつかあり、号の数と機器番号の末尾の数が同じ",
+        tagName: "機器番号と名前が同じ（段や親の書き方は資料で違う）",
+        tagOnly: "機器番号が同じ（名前の書き方は違う）",
       };
       const base = pattern.replace(/^global:/, "");
       const scopeNote = pattern.startsWith("global:") ? "（親どうしは結んでいない。名前と段だけで当てた）" : "";
@@ -280,7 +293,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         text: `${tableFile} の機器 ${ps.length} 件を、先の資料の機器と同じものとして結ぶか。結び方：${label[base] ?? base}${scopeNote}`,
         options: YES_SPLIT,
         valueKind: "option",
-        defaultAnswer: base === "uniqueNumberDiffers" ? "split" : "yes",
+        defaultAnswer: base === "uniqueNumberDiffers" || base === "tagOnly" ? "split" : "yes",
         sameShapeRows: ps.length,
         items: ps.map((p) => itemOfRec(p.r, p.cand ?? undefined)),
       });
@@ -362,11 +375,16 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const byTag = new Map<string, Cluster[]>();
   for (const c of clusters) {
     if (c.excluded) continue;
-    const k = nk(c.name);
-    byName.set(k, [...(byName.get(k) ?? []), c]);
+    // 資料をまたいで結んだ機器は、どの資料の名前でも引く（台帳の「1号炉ストーカ」と星取表の「ストーカ」）
+    for (const k of new Set([c.name, ...c.recs.map((r) => r.name)].map(nk))) byName.set(k, [...(byName.get(k) ?? []), c]);
     if (c.tag) byTag.set(nk(c.tag), [...(byTag.get(nk(c.tag)) ?? []), c]);
   }
+  // 機器番号の列から引いた名前（「名前（番号）」の形にしたもの）→ その番号。番号の書き方（「1-STK」のように数で始まるもの）が
+  // 名前の中の番号の形に合わなくても、列に書いた番号なので番号として引く
+  const fromTagCol = new Map<string, { name: string; tag: string }>();
   const tagged = (nm: string) => {
+    const col = fromTagCol.get(nk(nm));
+    if (col) return col;
     const sp = splitTag(nm);
     return sp && byTag.has(nk(sp.tag)) ? sp : null;
   };
@@ -404,7 +422,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       }
     }
     // 機器番号の列に、どれかの機器の番号を書いた行：「名前（番号）」と同じに番号で引く（番号は同一性の鍵）
-    if (names.length === 1 && e.tag && byTag.has(nk(e.tag)) && !tagged(whole)) names = [`${whole}（${e.tag}）`];
+    if (names.length === 1 && e.tag && byTag.has(nk(e.tag)) && !tagged(whole)) {
+      names = [`${whole}（${e.tag}）`];
+      fromTagCol.set(nk(names[0] ?? ""), { name: whole, tag: e.tag });
+    }
     const unitKey = !e.unit ? "-" : e.unit.kind === "number" ? `n${e.unit.n}` : e.unit.kind === "common" ? "common" : "ditto";
     eventNames.set(e.id, { names, unitKey });
     for (const nm of names) {
@@ -435,17 +456,59 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   // 同じ様式の表（同じ様式の帳票を何冊も入れたとき）は、同じ形の問いをまとめて聞く
   const formKey = (tableId: string) => rec.formOf.get(tableId)?.key ?? tableId;
   const caseGroups = new Map<string, Case[]>();
+  // 台帳も星取表も無い（機器の記録が 1 つも無い）組：日報・報告書の機器の名前は、どれも当てる先が無い。様式ごとにまとめて聞く
+  const noAssets = !clusters.some((c) => !c.excluded);
   for (const cs of cases.values()) {
-    const g = `${formKey(cs.tableId)}|${cs.pattern}`;
+    const g = `${formKey(cs.tableId)}|${noAssets && cs.cands.length === 0 ? "none" : cs.pattern}`;
     caseGroups.set(g, [...(caseGroups.get(g) ?? []), cs]);
   }
   const unitLabel = (u: string) => (u === "-" ? "号の欄が空" : u === "common" ? "共通" : `${u.slice(1)} 号`);
+  // 資料の名前のまま作った機器：同じ名前と号は、頁・表・様式をまたいで 1 つ
+  const made = new Map<string, Cluster>();
   for (const [g, css] of caseGroups) {
     const [tableId, pattern] = g.split("|") as [string, string];
     const ev0 = css[0]?.events[0];
     const fileName = filesLabel([...new Set(css.flatMap((c) => c.events.map((e) => e.file)))].sort()) || (ev0?.file ?? "");
     const rows = css.reduce((a, c) => a + c.events.length, 0);
-    if (pattern === "ambiguous") {
+    // 当てる先の機器が無い：資料の名前のまま、名前と号ごとに新しい機器にするか（推し量らず人が決める。1 つずつ決めるなら下の問い）
+    let one = pattern === "ambiguous";
+    if (pattern === "none") {
+      const nkey = `eventAssetNew|${tableId}`;
+      const a = ask.ask(nkey, {
+        kind: "eventAsset",
+        text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）は、台帳にも星取表にも無い（機器の記録の資料が無い）。この資料の名前のまま、名前と号ごとに新しい機器として入れるか`,
+        options: [
+          { id: "new", label: "この資料の名前のまま、新しい機器として入れる" },
+          { id: "split", label: "名前ごとに決める" },
+          { id: "exclude", label: "外す" },
+        ],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: rows,
+        items: css.slice(0, 20).map((cs) => ({ file: cs.events[0]?.file ?? "", sheet: cs.events[0]?.sheet ?? null, cells: cs.events.slice(0, 1).map((e) => e.refs[0] ?? ""), note: cs.name })),
+      });
+      if (a === "new")
+        for (const cs of css) {
+          const e0 = cs.events[0];
+          if (!e0) continue;
+          const same = made.get(`${nk(cs.name)}|${cs.unitKey}`);
+          if (same) {
+            resolved.set(cs.key, { c: same, qid: questionIdOf(nkey), excluded: false });
+            continue;
+          }
+          const series: Series | null = cs.unitKey.startsWith("n") ? { kind: "number", n: Number(cs.unitKey.slice(1)) } : cs.unitKey === "common" ? { kind: "common", meaning: "" } : null;
+          const nameRef = e0.nameRef ?? e0.refs[0] ?? "";
+          const r: AssetRec = { id: `ev:${cs.key}`, file: e0.file, sheet: e0.sheet, sheetIndex: e0.sheetIndex, tableId: e0.tableId, shape: "tree", order: 0, level: 1, parentId: null, rawName: cs.name, name: cs.name, tag: e0.tag, tagNumber: null, nameRef, series, specs: [], installed: null, refs: [nameRef], excluded: null, pending: false };
+          const c = newCluster(r);
+          c.decidedBy.add(questionIdOf(nkey));
+          made.set(`${nk(cs.name)}|${cs.unitKey}`, c);
+          resolved.set(cs.key, { c, qid: questionIdOf(nkey), excluded: false });
+        }
+      else if (a === "exclude") for (const cs of css) resolved.set(cs.key, { c: null, qid: questionIdOf(nkey), excluded: true });
+      else if (a === "split") one = true;
+      else for (const cs of css) resolved.set(cs.key, { c: null, qid: null, excluded: false });
+    }
+    if (one) {
       for (const cs of css) {
         const key = `eventAssetOne|${cs.key}`;
         // 名前で当たる機器が無いときは、同じ号の機器と、号の無い・共通の機器を選択肢に出す（推し量らない。決めるのは人）
@@ -474,6 +537,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       }
       continue;
     }
+    if (pattern === "none") continue;
     const gkey = `eventAsset|${tableId}|${pattern}`;
     const how: Record<string, string> = {
       nameUnit: "名前と号が同じ",
@@ -511,7 +575,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           valueKind: "option",
           defaultAnswer: null,
           sameShapeRows: cs.events.length,
-          items: cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1) })),
+          // 行ごとに、比べる相手（候補の機器の出どころ）を添える（人が台帳を開かずに見比べられるように）
+          items: cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), target: (c0?.recs ?? []).slice(0, 3).map((r) => ({ file: r.file, sheet: r.sheet, cells: [r.nameRef] })), note: cs.name })),
         });
         resolved.set(cs.key, { c: b === "c0" ? (c0 ?? null) : null, qid: b ? questionIdOf(k1) : null, excluded: b === "exclude" });
       } else resolved.set(cs.key, { c: null, qid: null, excluded: false });
@@ -547,8 +612,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     }
     const tkey = [...new Set(targets.map((t) => t.id))].sort().join(",");
     const wk = nk(e.workName);
-    // 期間を持つ行（「始まり〜終わり」）は、その行だけで 1 回の作業。1 日の日付の行は、同じ作業・機器・年度でまとめる
-    const k = `${e.tableId}|${wk}|${tkey}|${e.fiscalYear}${e.end ? `|r${e.row}` : ""}`;
+    // 期間を持つ行（「始まり〜終わり」）は、その行だけで 1 回の作業。1 日の日付の行は、同じ作業・機器・年度でまとめる。
+    // 同じ様式の表（帳票の頁・月のシート・年度のブック）は続いた 1 つの記録なので、様式のまとまりの中でまとめる
+    const k = `${formKey(e.tableId)}|${wk}|${tkey}|${e.fiscalYear}${e.end ? `|r${e.tableId}:${e.row}` : ""}`;
     let o = occMap.get(k);
     if (!o) {
       o = {
@@ -592,7 +658,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
 
   // ─── 資料をまたぐ同じ作業（機器ごと） ───
   const groupKey = (units: Occurrence[]) => [...new Set(units.map((u) => formKey(u.tableId)))].sort().join("+");
-  const jobs = joinAcrossDocuments(occurrences, ask, groupKey);
+  // 資料の単位は様式のまとまり（同じ様式の表は続いた 1 つの記録。帳票の頁どうしを、別の資料の同じ作業として結ばない）
+  const jobs = joinAcrossDocuments(occurrences, ask, groupKey, (o) => formKey(o.tableId));
 
   // ─── 作業 → 星取表の印 ───
   const markIndex = new Map<string, MarkRec[]>();
@@ -750,7 +817,7 @@ const byFile = (a: Occurrence, b: Occurrence) => a.file.localeCompare(b.file) ||
  * 日付の範囲が重なれば、同じ作業の案にする（呼び名は資料ごとに違うので、名前では決めない）。案は形ごとにまとめて聞き、
  * 人（か AI）が受けたものだけを結ぶ。重なる相手がいくつかあるもの・日付が重ならないものも、推し量らずに聞く。
  */
-function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (units: Occurrence[]) => string): Job[] {
+function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (units: Occurrence[]) => string, docOf: (o: Occurrence) => string = (o) => o.tableId): Job[] {
   const groups = new Map<string, { c: Cluster; fy: number; units: Occurrence[] }>();
   for (const o of occurrences)
     for (const c of o.targets) {
@@ -773,7 +840,7 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
   const leftovers = new Map<string, { c: Cluster; fy: number; u: Occurrence }>();
   for (const { c, fy, units } of groups.values()) {
     const us = [...units].sort(byFile);
-    if (new Set(us.map((u) => u.tableId)).size < 2) {
+    if (new Set(us.map((u) => docOf(u))).size < 2) {
       for (const u of us) mk(c, fy, [u], []);
       continue;
     }
@@ -784,7 +851,7 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
       for (let k = i + 1; k < us.length; k++) {
         const a = us[i] as Occurrence;
         const b = us[k] as Occurrence;
-        if (a.tableId !== b.tableId && overlap(a, b)) parent[find(i)] = find(k);
+        if (docOf(a) !== docOf(b) && overlap(a, b)) parent[find(i)] = find(k);
       }
     const comps = new Map<number, Occurrence[]>();
     us.forEach((u, i) => comps.set(find(i), [...(comps.get(find(i)) ?? []), u]));
@@ -795,7 +862,7 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
         continue;
       }
       const perTable = new Map<string, Occurrence[]>();
-      for (const u of comp) perTable.set(u.tableId, [...(perTable.get(u.tableId) ?? []), u]);
+      for (const u of comp) perTable.set(docOf(u), [...(perTable.get(docOf(u)) ?? []), u]);
       if ([...perTable.values()].every((x) => x.length === 1)) {
         props.push({ c, fy, units: comp, pattern: "overlap" });
         continue;
@@ -803,7 +870,7 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
       // 重なる相手がいくつかある：数のいちばん少ない表の作業ごとに、ほかの表のどれと同じかを聞く
       const tables = [...perTable.entries()].sort((a, b) => a[1].length - b[1].length || a[0].localeCompare(b[0]));
       const [anchorTable, anchors] = tables[0] as [string, Occurrence[]];
-      for (const u of comp) if (u.tableId !== anchorTable) leftovers.set(`${c.id}|${u.id}`, { c, fy, u });
+      for (const u of comp) if (docOf(u) !== anchorTable) leftovers.set(`${c.id}|${u.id}`, { c, fy, u });
       for (const anchor of anchors) {
         let any = false;
         for (const [table, cands] of tables) {
@@ -816,7 +883,7 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
       }
     }
     // 重なる相手の無い作業：同じ機器・同じ年度に、どの表にも 1 つずつしか無ければ、日付のずれかもしれないので聞く
-    const singleTables = new Set(singles.map((u) => u.tableId));
+    const singleTables = new Set(singles.map((u) => docOf(u)));
     if (singles.length >= 2 && singleTables.size === singles.length && singles.length === us.length) props.push({ c, fy, units: singles, pattern: "apart" });
     else for (const u of singles) mk(c, fy, [u], []);
   }

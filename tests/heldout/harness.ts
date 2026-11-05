@@ -3,7 +3,7 @@
 // calibrate.test.ts が、開発用の資料でこの道具が開発用の物差しと同じ数を出すことを確かめる（道具の誤りを読み手の誤りと取り違えないため）。
 // src/ は正解を読まない。試験の中の人だけの操作（質問に答える）は、この台本が人の代わりに押し、作者を human・理由に「試験の台本が押した」と書く。
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { IntakeSession, readSource } from "../../src/import";
 import type { SourceFile } from "../../src/import/grid";
 import type { Decision, QuestionItem, QuestionState } from "../../src/import/questions";
@@ -54,9 +54,9 @@ export class Index {
   private sameSheet(a: string | null | undefined, b: string | null | undefined) {
     return a === undefined || a === null || b === undefined || b === null || a === b;
   }
-  /** そのセルにある正解のもの */
+  /** そのセルにある正解のもの（セルで書いた場所か、行とその文字で書いた場所。行のすべてのセルで書いたものは assetInRow で引く） */
   assetAt(file: string, sheet: string | null | undefined, ref: string): Asset | null {
-    return this.assets.find((p) => p.at && p.item.file === file && this.sameSheet(p.at.sheet, sheet) && p.at.refs.has(ref) && "cell" in p.item.at)?.item ?? null;
+    return this.assets.find((p) => p.at && p.item.file === file && this.sameSheet(p.at.sheet, sheet) && p.at.refs.has(ref) && ("cell" in p.item.at || "text" in p.item.at))?.item ?? null;
   }
   /** その行にある正解のもの（kind で絞れる。1 つに決まらなければ null） */
   assetInRow(file: string, sheet: string | null | undefined, row: number, kind?: Asset["kind"]): Asset | null {
@@ -169,6 +169,12 @@ export function answer(q: QuestionState, ix: Index): string | null {
     case "assetUnmatched":
       return "yes";
     case "eventAsset": {
+      // 台帳も星取表も無い組の「この資料の名前のまま新しい機器にするか」：正解でその行に機器があれば入れる
+      if (q.options.some((o) => o.id === "new")) return q.items.every((it) => (eqIdsAt(it)?.length ?? 0) > 0) ? "new" : "split";
+      // 機器の欄の無い台帳の「件名から機器の名前を取るか」：正解でその行に機器があれば取る
+      if (q.options.some((o) => o.id === "title")) return q.items.every((it) => it.cells.some((c) => (ix.eventAt(it.file, it.sheet, c)?.equipment_ids.length ?? 0) > 0)) ? "title" : "exclude";
+      // 号炉・機器・作業の区切りの無いセルの問い（選べるのは「外す」だけ）：人もそれを選ぶしかない
+      if (q.options.length === 1 && q.options[0]?.id === "exclude") return "exclude";
       const ok = q.items.every((it) => {
         const ids = eqIdsAt(it);
         const e = eqOfKey(targetEnt(it));
@@ -586,7 +592,7 @@ export interface FileResult {
   leakDetail: string[];
   /** ② 未解決のセル */
   unresolved: number | null;
-  rows: { input: number; imported: number; excluded: number; unresolved: number; holds: boolean } | null;
+  rows: { input: number; imported: number; excluded: number; excludedBy?: Record<string, number>; unresolved: number; holds: boolean } | null;
   /** ③ 読み取りの正しさ（機器の節・印・行を合わせたもの） */
   accuracy: Accuracy | null;
   rejected: string | null;
@@ -628,7 +634,8 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
     facility: { facilityKey: opt.facilityKey ?? world.facility.id, name: world.facility.name, fiscalYearStartMonth: 4, scale: null, scaleUnit: null, legalFlags: [], fictional: true, inNationalTable: null },
   });
   if (opt.readings) s.setReadings(opt.readings);
-  const bytes = (f: string) => new Uint8Array(readFileSync(join(set.filesDir ?? join(set.dir, "files"), f)));
+  // 資料の道は資料の置き場所からの相対。ドライブの違う置き場所（Windows の一時のフォルダと作業場所）は相対にできないので、絶対の道のまま
+  const bytes = (f: string) => new Uint8Array(readFileSync(isAbsolute(f) ? f : join(set.filesDir ?? join(set.dir, "files"), f)));
   const rejected = await s.add(read.map((n) => ({ name: n, bytes: bytes(n) })));
   const before = s.analyze();
   const unresolvedBefore = [...before.composition.status.values()].filter((x) => x.s === "unresolved").length;
@@ -673,7 +680,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
       leakAgainst,
       leakDetail: leakDetail.slice(0, 50),
       unresolved: fc?.unresolvedCells ?? null,
-      rows: fc ? { input: fc.inputRows, imported: fc.importedRows, excluded: Object.values(fc.excludedRows).reduce((a, b) => a + b, 0), unresolved: fc.unresolvedRows, holds: fc.holds } : null,
+      rows: fc ? { input: fc.inputRows, imported: fc.importedRows, excluded: Object.values(fc.excludedRows).reduce((a, b) => a + b, 0), excludedBy: fc.excludedRows, unresolved: fc.unresolvedRows, holds: fc.holds } : null,
       accuracy: accuracy ? { ...accuracy, misses: accuracy.misses.slice(0, 50) } : null,
       rejected: rej ? rej.reason : read.includes(f.file) ? null : "読んでいない（写真は AI が読む）",
     });

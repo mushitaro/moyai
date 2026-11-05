@@ -1,0 +1,1536 @@
+{
+ "schema": "moyai.heldout.result/0",
+ "set": "moyai-heldout-4",
+ "bundle": "6da5e2a371f8764a8f05859bd395d897454f889d4244b349ada79832d3ee7e04",
+ "reader": {
+  "tag": "reader-freeze-5",
+  "commit": "fa16fac3307e461a58a2c2a5a0f32d4ada2293c5",
+  "src": "de288f4a2e86a48e19915290dae23a4c40979f63",
+  "packs": "1ef7e7c4d119dce5954f113f622aba24091aa02f"
+ },
+ "measuredAt": "2026-11-04T16:27:20.185Z",
+ "result": {
+  "set": "moyai-heldout-4",
+  "files": [
+   {
+    "file": "f-ashihara/【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf",
+    "format": "pdf",
+    "kind": "report",
+    "leak": null,
+    "leakAgainst": null,
+    "leakDetail": [],
+    "unresolved": 184,
+    "rows": {
+     "input": 52,
+     "imported": 0,
+     "excluded": 23,
+     "unresolved": 29,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-ashihara/【架空】葦原CP_作業日報データ_R7年度.csv",
+    "format": "csv",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 156,
+    "rows": {
+     "input": 159,
+     "imported": 0,
+     "excluded": 3,
+     "unresolved": 156,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-ashihara/【架空】葦原CP_設備整備計画表_R1-R12.xlsx",
+    "format": "xlsx",
+    "kind": "star",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 524,
+    "rows": {
+     "input": 68,
+     "imported": 10,
+     "excluded": 10,
+     "unresolved": 48,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-kirinose/【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+    "format": "xlsx",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 187,
+    "rows": {
+     "input": 20,
+     "imported": 0,
+     "excluded": 8,
+     "unresolved": 12,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-kirinose/【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+    "format": "xlsx",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 192,
+    "rows": {
+     "input": 440,
+     "imported": 1,
+     "excluded": 359,
+     "unresolved": 80,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-oboroya/【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+    "format": "jpg",
+    "kind": "photo",
+    "leak": null,
+    "leakAgainst": null,
+    "leakDetail": [],
+    "unresolved": null,
+    "rows": null,
+    "accuracy": null,
+    "rejected": "読んでいない（写真は AI が読む）"
+   },
+   {
+    "file": "f-oboroya/【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+    "format": "xlsx",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 511,
+    "rows": {
+     "input": 77,
+     "imported": 0,
+     "excluded": 15,
+     "unresolved": 62,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-tenkyodai/【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+    "format": "xlsx",
+    "kind": "daily",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 189,
+    "rows": {
+     "input": 122,
+     "imported": 11,
+     "excluded": 44,
+     "unresolved": 67,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-tenkyodai/【架空】天鏡台浄水場_機器台帳.pdf",
+    "format": "pdf",
+    "kind": "ledger",
+    "leak": null,
+    "leakAgainst": null,
+    "leakDetail": [],
+    "unresolved": 5,
+    "rows": {
+     "input": 55,
+     "imported": 47,
+     "excluded": 4,
+     "unresolved": 4,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-tenkyodai/【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+    "format": "xlsx",
+    "kind": "star",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 284,
+    "rows": {
+     "input": 41,
+     "imported": 0,
+     "excluded": 8,
+     "unresolved": 33,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   }
+  ],
+  "asked": 215,
+  "answered": 145,
+  "openAtEnd": [
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 C（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 A（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 B（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 C（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 D（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 E（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 F（見出し「- 1 -」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 G（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 I（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 J（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 K（見出し「【架空】架空のデ」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-ashihara：列 D（見出し「系統」）の役目が決まらない"
+   },
+   {
+    "kind": "levelSplit",
+    "rows": 25,
+    "text": "f-ashihara：段の手がかりが割れている（グループは 1 段目、名前の列の位置は 2 段目、番号は 2 段目）。この行は何段目か"
+   },
+   {
+    "kind": "levelSplit",
+    "rows": 3,
+    "text": "f-ashihara：段の手がかりが割れている（グループは 1 段目、名前の列の位置は 2 段目）。この行は何段目か"
+   },
+   {
+    "kind": "levelSplit",
+    "rows": 13,
+    "text": "f-ashihara：段の手がかりが割れている（グループは 2 段目、名前の列の位置は 3 段目、番号は 3 段目）。この行は何段目か"
+   },
+   {
+    "kind": "levelSplit",
+    "rows": 7,
+    "text": "f-ashihara：段の手がかりが割れている（グループは 2 段目、名前の列の位置は 3 段目）。この行は何段目か"
+   },
+   {
+    "kind": "eventAssetOne",
+    "rows": 1,
+    "text": "f-ashihara：【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf の機器「誘引送風機」（号の欄が空）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 D（見出し「No.1 主ポンプ / 振動\n(mm/s)」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 N（見出し「点検者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 D（見出し「No.1 主ポンプ / 振動\n(mm/s)」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 L（見出し「No.3 主ポンプ / 振動\n(mm/s)」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 R（見出し「点検者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 E（見出し「業者」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-kirinose：列 B（見出し「施設」）の役目が決まらない"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "f-kirinose：「流入水量（m³）」は、先の資料の「流入水量（m³）」と同じ機器か"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-oboroya：列 C（見出し「業者名」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-oboroya：列 F（見出し「契約金額（千円）」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-oboroya：列 E（見出し「契約方法」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-oboroya：列 F（見出し「業者名」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-oboroya：列 J（見出し「契約金額（円）」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-oboroya：列 K（見出し「変更後金額（円）」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-tenkyodai：列 C（見出し「送水ポンプ No.2」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-tenkyodai：列 D（見出し「送水ポンプ No.2」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-tenkyodai：列 F（見出し「SP-2」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-tenkyodai：列 G（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-tenkyodai：列 H（見出し「なし」）の役目が決まらない"
+   },
+   {
+    "kind": "planActualConflict",
+    "rows": 18,
+    "text": "f-tenkyodai：記号「●」は凡例では「実施済」だが、「予定」の列にある"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "f-tenkyodai：「故障の状況」は、先の資料の「故障の状況」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "f-tenkyodai：「処置の内容」は、先の資料の「処置の内容」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "f-tenkyodai：「3」は、先の資料の「3」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "f-tenkyodai：「4」は、先の資料の「4」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "f-tenkyodai：「5」は、先の資料の「5」と同じ機器か"
+   },
+   {
+    "kind": "assetLinkOne",
+    "rows": 1,
+    "text": "f-tenkyodai：「修繕費（円・税込）」は、先の資料の「修繕費（円・税込）」と同じ機器か"
+   }
+  ],
+  "unresolvedBefore": 4328,
+  "unresolvedAfter": 2232,
+  "planMade": false,
+  "blockers": [
+   "f-ashihara：未解決のセル 864",
+   "f-ashihara：答えの無い質問 17",
+   "f-kirinose：未解決のセル 379",
+   "f-kirinose：答えの無い質問 35",
+   "f-oboroya：未解決のセル 511",
+   "f-oboroya：答えの無い質問 6",
+   "f-tenkyodai：未解決のセル 478",
+   "f-tenkyodai：答えの無い質問 12"
+  ],
+  "plan": null,
+  "markWorkCount": null,
+  "recovery": {
+   "denominator": 501,
+   "together": 0,
+   "inPlan": 0,
+   "manDays": {
+    "correct": 0,
+    "total": 90
+   },
+   "days": {
+    "correct": 0,
+    "total": 18
+   },
+   "marksOnly": 264,
+   "notCounted": {
+    "f-ashihara：この組のどの資料にも書いていない": 6,
+    "f-oboroya：この組のどの資料にも書いていない": 14
+   },
+   "misses": [
+    "f-ashihara：作業 W0001（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0002（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0003（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0004（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0005（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0006（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0007（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0013（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0014（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0015（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0019（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0020（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0021（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0022（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0023（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0024（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0025（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0026（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0027（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0028（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0029（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0030（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0031（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0031：工数 なし≠5",
+    "f-ashihara：作業 W0032（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0032：工数 なし≠5",
+    "f-ashihara：作業 W0043（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0044（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0045（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0046（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0049（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0050（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0051（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0052（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0053（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0054（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0055（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0056（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0061（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0062（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0063（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0064（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0065（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0065：工数 なし≠4",
+    "f-ashihara：作業 W0066（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0066：工数 なし≠3",
+    "f-ashihara：作業 W0069（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0070（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0071（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+    "f-ashihara：作業 W0072（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない"
+   ]
+  },
+  "unplaced": [
+   "f-ashihara：【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":11,\"sheet\":\"整備計画表\",\"text\":\"計量機\"}：11 行に「計量機」のセルが無い",
+   "f-ashihara：【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":13,\"sheet\":\"整備計画表\",\"text\":\"ごみクレーン\"}：13 行に「ごみクレーン」のセルが無い",
+   "f-ashihara：【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":50,\"sheet\":\"整備計画表\",\"text\":\"蒸気タービン\"}：50 行に「蒸気タービン」のセルが無い",
+   "f-ashihara：【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":68,\"sheet\":\"整備計画表\",\"text\":\"○\",\"nth\":1}：68 行に「○」のセルが 2 つ無い",
+   "f-ashihara：【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":68,\"sheet\":\"整備計画表\",\"text\":\"○\",\"nth\":2}：68 行に「○」のセルが 3 つ無い",
+   "f-ashihara：【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"軸受・インペラ点検\",\"誘引送風機\",\"6.0\"],\"nth\":0}：「軸受・インペラ点検」「誘引送風機」「6.0」をそろえて持つ行が無い",
+   "f-ashihara：【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"養生撤去・作業後測定\",\"群青分析センター\",\"焼却炉\",\"6.0\"],\"nth\":0}：「養生撤去・作業後測定」「群青分析センター」「焼却炉」「6.0」をそろえて持つ行が無い",
+   "f-ashihara：【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"乾燥段・燃焼段\",\"可動火格子\",\"No.7\",\"枚\"],\"nth\":0}：「乾燥段・燃焼段」「可動火格子」「No.7」「枚」をそろえて持つ行が無い",
+   "f-ashihara：【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"耐火れんが（SK-34 相当）\",\"燃焼室側壁\",\"No.8\",\"t\"],\"nth\":0}：「耐火れんが（SK-34 相当）」「燃焼室側壁」「No.8」「t」をそろえて持つ行が無い",
+   "f-ashihara：【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"全 6 室\",\"No.12\",\"ろ布\",\"本\"],\"nth\":0}：「全 6 室」「No.12」「ろ布」「本」をそろえて持つ行が無い",
+   "f-ashihara：【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"誘引送風機 両側\",\"No.14\",\"軸受\",\"個\"],\"nth\":0}：「誘引送風機 両側」「No.14」「軸受」「個」をそろえて持つ行が無い"
+  ]
+ },
+ "facilities": [
+  {
+   "key": "f-ashihara",
+   "industry": "waste-incineration",
+   "result": {
+    "set": "moyai-heldout-4/f-ashihara",
+    "files": [
+     {
+      "file": "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf",
+      "format": "pdf",
+      "kind": "report",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 184,
+      "rows": {
+       "input": 52,
+       "imported": 0,
+       "excluded": 23,
+       "unresolved": 29,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】葦原CP_作業日報データ_R7年度.csv",
+      "format": "csv",
+      "kind": "daily",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 156,
+      "rows": {
+       "input": 159,
+       "imported": 0,
+       "excluded": 3,
+       "unresolved": 156,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】葦原CP_設備整備計画表_R1-R12.xlsx",
+      "format": "xlsx",
+      "kind": "star",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 524,
+      "rows": {
+       "input": 68,
+       "imported": 10,
+       "excluded": 10,
+       "unresolved": 48,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     }
+    ],
+    "asked": 70,
+    "answered": 53,
+    "openAtEnd": [
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 C（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 A（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 C（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 D（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 F（見出し「- 1 -」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 G（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 I（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 J（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 K（見出し「【架空】架空のデ」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 D（見出し「系統」）の役目が決まらない"
+     },
+     {
+      "kind": "levelSplit",
+      "rows": 25,
+      "text": "段の手がかりが割れている（グループは 1 段目、名前の列の位置は 2 段目、番号は 2 段目）。この行は何段目か"
+     },
+     {
+      "kind": "levelSplit",
+      "rows": 3,
+      "text": "段の手がかりが割れている（グループは 1 段目、名前の列の位置は 2 段目）。この行は何段目か"
+     },
+     {
+      "kind": "levelSplit",
+      "rows": 13,
+      "text": "段の手がかりが割れている（グループは 2 段目、名前の列の位置は 3 段目、番号は 3 段目）。この行は何段目か"
+     },
+     {
+      "kind": "levelSplit",
+      "rows": 7,
+      "text": "段の手がかりが割れている（グループは 2 段目、名前の列の位置は 3 段目）。この行は何段目か"
+     },
+     {
+      "kind": "eventAssetOne",
+      "rows": 1,
+      "text": "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf の機器「誘引送風機」（号の欄が空）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）"
+     }
+    ],
+    "unresolvedBefore": 2473,
+    "unresolvedAfter": 864,
+    "planMade": false,
+    "blockers": [
+     "未解決のセル 864",
+     "答えの無い質問 17"
+    ],
+    "plan": null,
+    "markWorkCount": null,
+    "recovery": {
+     "denominator": 295,
+     "together": 0,
+     "inPlan": 0,
+     "manDays": {
+      "correct": 0,
+      "total": 83
+     },
+     "days": {
+      "correct": 0,
+      "total": 18
+     },
+     "marksOnly": 242,
+     "notCounted": {
+      "この組のどの資料にも書いていない": 6
+     },
+     "misses": [
+      "作業 W0001（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0002（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0003（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0004（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0005（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0006（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0007（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+      "作業 W0013（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0014（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0015（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0019（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0020（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0021（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0022（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0023（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0024（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0025（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0026（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0027（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0028（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0029（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0030（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0031（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+      "作業 W0031：工数 なし≠5",
+      "作業 W0032（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+      "作業 W0032：工数 なし≠5",
+      "作業 W0043（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0044（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0045（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0046（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+      "作業 W0049（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0050（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0051（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0052（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0053（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0054（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0055（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0056（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0061（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0062（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0063（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0064（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0065（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+      "作業 W0065：工数 なし≠4",
+      "作業 W0066（【架空】葦原CP_設備整備計画表_R1-R12.xlsx・【架空】葦原CP_作業日報データ_R7年度.csv）：1 つの明細にそろっていない",
+      "作業 W0066：工数 なし≠3",
+      "作業 W0069（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0070（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0071（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない",
+      "作業 W0072（【架空】葦原CP_設備整備計画表_R1-R12.xlsx）：1 つの明細にそろっていない"
+     ]
+    },
+    "unplaced": [
+     "【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":11,\"sheet\":\"整備計画表\",\"text\":\"計量機\"}：11 行に「計量機」のセルが無い",
+     "【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":13,\"sheet\":\"整備計画表\",\"text\":\"ごみクレーン\"}：13 行に「ごみクレーン」のセルが無い",
+     "【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":50,\"sheet\":\"整備計画表\",\"text\":\"蒸気タービン\"}：50 行に「蒸気タービン」のセルが無い",
+     "【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":68,\"sheet\":\"整備計画表\",\"text\":\"○\",\"nth\":1}：68 行に「○」のセルが 2 つ無い",
+     "【架空】葦原CP_設備整備計画表_R1-R12.xlsx {\"row\":68,\"sheet\":\"整備計画表\",\"text\":\"○\",\"nth\":2}：68 行に「○」のセルが 3 つ無い",
+     "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"軸受・インペラ点検\",\"誘引送風機\",\"6.0\"],\"nth\":0}：「軸受・インペラ点検」「誘引送風機」「6.0」をそろえて持つ行が無い",
+     "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"養生撤去・作業後測定\",\"群青分析センター\",\"焼却炉\",\"6.0\"],\"nth\":0}：「養生撤去・作業後測定」「群青分析センター」「焼却炉」「6.0」をそろえて持つ行が無い",
+     "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"乾燥段・燃焼段\",\"可動火格子\",\"No.7\",\"枚\"],\"nth\":0}：「乾燥段・燃焼段」「可動火格子」「No.7」「枚」をそろえて持つ行が無い",
+     "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"耐火れんが（SK-34 相当）\",\"燃焼室側壁\",\"No.8\",\"t\"],\"nth\":0}：「耐火れんが（SK-34 相当）」「燃焼室側壁」「No.8」「t」をそろえて持つ行が無い",
+     "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"全 6 室\",\"No.12\",\"ろ布\",\"本\"],\"nth\":0}：「全 6 室」「No.12」「ろ布」「本」をそろえて持つ行が無い",
+     "【架空】葦原CP_1号炉定期整備工事報告書_R7.pdf {\"texts\":[\"誘引送風機 両側\",\"No.14\",\"軸受\",\"個\"],\"nth\":0}：「誘引送風機 両側」「No.14」「軸受」「個」をそろえて持つ行が無い"
+    ]
+   },
+   "unmapped": []
+  },
+  {
+   "key": "f-kirinose",
+   "industry": "sewer",
+   "result": {
+    "set": "moyai-heldout-4/f-kirinose",
+    "files": [
+     {
+      "file": "【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 187,
+      "rows": {
+       "input": 20,
+       "imported": 0,
+       "excluded": 8,
+       "unresolved": 12,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 192,
+      "rows": {
+       "input": 440,
+       "imported": 1,
+       "excluded": 359,
+       "unresolved": 80,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     }
+    ],
+    "asked": 99,
+    "answered": 64,
+    "openAtEnd": [
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 D（見出し「No.1 主ポンプ / 振動\n(mm/s)」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 N（見出し「点検者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 D（見出し「No.1 主ポンプ / 振動\n(mm/s)」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 L（見出し「No.3 主ポンプ / 振動\n(mm/s)」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 R（見出し「点検者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「業者」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「施設」）の役目が決まらない"
+     },
+     {
+      "kind": "assetLinkOne",
+      "rows": 1,
+      "text": "「流入水量（m³）」は、先の資料の「流入水量（m³）」と同じ機器か"
+     }
+    ],
+    "unresolvedBefore": 804,
+    "unresolvedAfter": 379,
+    "planMade": false,
+    "blockers": [
+     "未解決のセル 379",
+     "答えの無い質問 35"
+    ],
+    "plan": null,
+    "markWorkCount": null,
+    "recovery": {
+     "denominator": 75,
+     "together": 0,
+     "inPlan": 0,
+     "manDays": {
+      "correct": 0,
+      "total": 0
+     },
+     "days": {
+      "correct": 0,
+      "total": 0
+     },
+     "marksOnly": 0,
+     "notCounted": {},
+     "misses": [
+      "作業 W0001（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0002（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0003（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0004（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0005（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0006（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0007（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0008（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0009（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0010（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0011（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0012（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0013（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0014（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0015（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0016（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0017（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0018（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0019（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0020（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0021（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0022（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0023（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0024（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0025（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0026（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0027（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0028（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0029（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0030（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0031（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0032（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0033（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0034（【架空】霧ノ瀬浄化C_維持管理作業日報_R8.8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0035（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0036（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0037（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0038（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0039（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0040（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0041（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0042（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0043（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0044（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0045（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0046（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0047（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0048（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0049（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない",
+      "作業 W0050（【架空】霧ノ瀬浄化C_主ポンプ月例点検記録_R7.xlsx）：1 つの明細にそろっていない"
+     ]
+    },
+    "unplaced": []
+   },
+   "unmapped": []
+  },
+  {
+   "key": "f-oboroya",
+   "industry": "waste-incineration",
+   "result": {
+    "set": "moyai-heldout-4/f-oboroya",
+    "files": [
+     {
+      "file": "【架空】朧谷環境工場_日常点検表_R8.9.17.jpg",
+      "format": "jpg",
+      "kind": "photo",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": null,
+      "rows": null,
+      "accuracy": null,
+      "rejected": "読んでいない（写真は AI が読む）"
+     },
+     {
+      "file": "【架空】朧谷環境工場_発注台帳_R3-R8.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 511,
+      "rows": {
+       "input": 77,
+       "imported": 0,
+       "excluded": 15,
+       "unresolved": 62,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     }
+    ],
+    "asked": 6,
+    "answered": 0,
+    "openAtEnd": [
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 C（見出し「業者名」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 F（見出し「契約金額（千円）」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「契約方法」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 F（見出し「業者名」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 J（見出し「契約金額（円）」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 K（見出し「変更後金額（円）」）の役目が決まらない"
+     }
+    ],
+    "unresolvedBefore": 511,
+    "unresolvedAfter": 511,
+    "planMade": false,
+    "blockers": [
+     "未解決のセル 511",
+     "答えの無い質問 6"
+    ],
+    "plan": null,
+    "markWorkCount": null,
+    "recovery": {
+     "denominator": 101,
+     "together": 0,
+     "inPlan": 0,
+     "manDays": {
+      "correct": 0,
+      "total": 0
+     },
+     "days": {
+      "correct": 0,
+      "total": 0
+     },
+     "marksOnly": 0,
+     "notCounted": {
+      "この組のどの資料にも書いていない": 14
+     },
+     "misses": [
+      "作業 W0001（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0002（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0003（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0004（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0005（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0006（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0007（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0008（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0009（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0010（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0011（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0012（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0013（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0014（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0015（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0016（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0017（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0018（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0019（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0020（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0021（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0022（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0023（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0024（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0025（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0026（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0027（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0028（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0029（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0030（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0031（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0032（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0033（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0034（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0035（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0036（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0037（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0038（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0039（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0040（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0041（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0042（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0043（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0044（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0045（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0046（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0047（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0048（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0049（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0050（【架空】朧谷環境工場_発注台帳_R3-R8.xlsx）：1 つの明細にそろっていない"
+     ]
+    },
+    "unplaced": []
+   },
+   "unmapped": []
+  },
+  {
+   "key": "f-tenkyodai",
+   "industry": "industrial-water",
+   "result": {
+    "set": "moyai-heldout-4/f-tenkyodai",
+    "files": [
+     {
+      "file": "【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx",
+      "format": "xlsx",
+      "kind": "daily",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 189,
+      "rows": {
+       "input": 122,
+       "imported": 11,
+       "excluded": 44,
+       "unresolved": 67,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】天鏡台浄水場_機器台帳.pdf",
+      "format": "pdf",
+      "kind": "ledger",
+      "leak": null,
+      "leakAgainst": null,
+      "leakDetail": [],
+      "unresolved": 5,
+      "rows": {
+       "input": 55,
+       "imported": 47,
+       "excluded": 4,
+       "unresolved": 4,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx",
+      "format": "xlsx",
+      "kind": "star",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 284,
+      "rows": {
+       "input": 41,
+       "imported": 0,
+       "excluded": 8,
+       "unresolved": 33,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     }
+    ],
+    "asked": 40,
+    "answered": 28,
+    "openAtEnd": [
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 C（見出し「送水ポンプ No.2」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 D（見出し「送水ポンプ No.2」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 F（見出し「SP-2」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 G（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 H（見出し「なし」）の役目が決まらない"
+     },
+     {
+      "kind": "planActualConflict",
+      "rows": 18,
+      "text": "記号「●」は凡例では「実施済」だが、「予定」の列にある"
+     },
+     {
+      "kind": "assetLinkOne",
+      "rows": 1,
+      "text": "「故障の状況」は、先の資料の「故障の状況」と同じ機器か"
+     },
+     {
+      "kind": "assetLinkOne",
+      "rows": 1,
+      "text": "「処置の内容」は、先の資料の「処置の内容」と同じ機器か"
+     },
+     {
+      "kind": "assetLinkOne",
+      "rows": 1,
+      "text": "「3」は、先の資料の「3」と同じ機器か"
+     },
+     {
+      "kind": "assetLinkOne",
+      "rows": 1,
+      "text": "「4」は、先の資料の「4」と同じ機器か"
+     },
+     {
+      "kind": "assetLinkOne",
+      "rows": 1,
+      "text": "「5」は、先の資料の「5」と同じ機器か"
+     },
+     {
+      "kind": "assetLinkOne",
+      "rows": 1,
+      "text": "「修繕費（円・税込）」は、先の資料の「修繕費（円・税込）」と同じ機器か"
+     }
+    ],
+    "unresolvedBefore": 540,
+    "unresolvedAfter": 478,
+    "planMade": false,
+    "blockers": [
+     "未解決のセル 478",
+     "答えの無い質問 12"
+    ],
+    "plan": null,
+    "markWorkCount": null,
+    "recovery": {
+     "denominator": 30,
+     "together": 0,
+     "inPlan": 0,
+     "manDays": {
+      "correct": 0,
+      "total": 7
+     },
+     "days": {
+      "correct": 0,
+      "total": 0
+     },
+     "marksOnly": 22,
+     "notCounted": {},
+     "misses": [
+      "作業 W0003（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0016（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0022（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0023（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0024（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0037（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0045（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0046（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0047（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0048（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0059（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0062（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0076（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0081（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0082（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0083（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0097（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0098（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0099（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0113（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0114（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0115（【架空】天鏡台浄水場_長期保全計画表_2024-2038.xlsx）：1 つの明細にそろっていない",
+      "作業 W0128（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0128：工数 なし≠2.25",
+      "作業 W0129（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0129：工数 なし≠4",
+      "作業 W0130（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0131（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0131：工数 なし≠13.44",
+      "作業 W0132（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0132：工数 なし≠4.5",
+      "作業 W0133（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0133：工数 なし≠1.12",
+      "作業 W0134（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0134：工数 なし≠1.37",
+      "作業 W0135（【架空】天鏡台浄水場_修繕報告書_R7-R8.xlsx）：1 つの明細にそろっていない",
+      "作業 W0135：工数 なし≠0.87"
+     ]
+    },
+    "unplaced": []
+   },
+   "unmapped": []
+  }
+ ]
+}
