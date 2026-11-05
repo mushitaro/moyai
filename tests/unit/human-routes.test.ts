@@ -23,6 +23,7 @@ import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody } from "../../
 import { generateKeyPair, keyIdOf, openPlainKey, signBody, type PlainKey } from "../../src/share/sign";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
+const sha256Of = (b: Buffer) => createHash("sha256").update(b).digest("hex");
 const NEW_ROUTES = ROUTE_IDS.filter((id) => ROUTES[id].kind === "human" && id !== "commitTrial");
 /** 人だけの経路の道と操作の名前 */
 const R = (id: (typeof NEW_ROUTES)[number]) => ROUTES[id] as RouteDef & { path: string; action: HumanAction };
@@ -58,7 +59,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -341,6 +342,100 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
   });
 });
 
+describe("次の版に重ねる資料（1C・重-2）：先に置き、確定では SHA-256 だけを送り、あることとハッシュを照らす", () => {
+  it("置いた資料と決定と受けた規則が版の記録に入り、版の資料だけを照らして読める。無い・違う資料では確定しない", async () => {
+    extra = join(tmpdir(), `moyai-src-${process.pid}-${Date.now()}`);
+    const root = join(extra, "MOYAI");
+    mkdirSync(root, { recursive: true });
+    tb = await startTestBridge();
+    const t = await tab(tb);
+    const call = async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+      const text = JSON.stringify(payload);
+      return (await post(tb!, R(id).path, good(tb!), { token: await t.token(R(id).action, text), payload: text })).body;
+    };
+    expect(await call("settingsSave", { root, name: "【架空】試験の人" })).toMatchObject({ ok: true });
+    expect(await call("personKeyCreate", {})).toMatchObject({ ok: true });
+    const plan = truthToPlan("fictional-1");
+    const acceptances = aiDecisions(plan).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+    const bytes = Buffer.from("【架空】資料の中身");
+    const put = await call("planSourcePut", { planId: plan.planId, base64: bytes.toString("base64") });
+    expect(put).toMatchObject({ ok: true, sha256: sha256Of(bytes), size: bytes.length });
+    // 置き場所は SHA-256 だけ（名前は道に使わない）
+    expect(existsSync(join(root, "plans", plan.planId, "sources", put.sha256))).toBe(true);
+    const missing = "0".repeat(64);
+    const base = { plan, reason: "資料つきの確定", acceptances, basedOn: null };
+    const rule = { when: [{ field: "assetNode.name", op: "equals", values: ["計量機"] }], set: { field: "assetNode.commonItem", value: "WI.RECV.SCALE" }, reason: "名前が同じ" };
+    const decision = { questionId: "q-x", answer: "yes", author: "ai_relayed_human", reason: "会話で答えた", sources: [put.sha256] };
+    // 置いていない資料・決定が版の資料の外を指す・名前に道の区切り は断る（黙って記録を欠かさない）
+    expect((await call("planCommit", { ...base, sources: [{ name: "a.xlsx", sha256: missing, size: 3 }], decisions: [], crosswalk: [] })).reason).toBe("sourceMissing");
+    expect((await call("planCommit", { ...base, sources: [{ name: "a.xlsx", sha256: put.sha256, size: bytes.length }], decisions: [{ ...decision, sources: [missing] }], crosswalk: [] })).reason).toBe("sourcesInvalid");
+    expect((await call("planCommit", { ...base, sources: [{ name: "../a.xlsx", sha256: put.sha256, size: bytes.length }], decisions: [], crosswalk: [] })).reason).toBe("sourcesInvalid");
+    const c = await call("planCommit", { ...base, sources: [{ name: "a.xlsx", sha256: put.sha256, size: bytes.length }], decisions: [decision], crosswalk: [{ rule, target: "assetNode", value: "WI.RECV.SCALE", basis: "案の根拠" }] });
+    expect(c).toMatchObject({ ok: true, version: 1 });
+    // 版の記録（署名の中）に入り、plan_status の最新の版で読める
+    const st = await call("planStatus", { planId: plan.planId });
+    expect(st.latest.sources).toEqual([{ name: "a.xlsx", sha256: put.sha256, size: bytes.length }]);
+    expect(st.latest.decisions).toEqual([decision]);
+    expect(st.latest.crosswalk[0].value).toBe("WI.RECV.SCALE");
+    const got = await call("planSourceRead", { planId: plan.planId, version: 1, sha256: put.sha256 });
+    expect(got).toMatchObject({ ok: true, name: "a.xlsx" });
+    expect(Buffer.from(got.base64, "base64").equals(bytes)).toBe(true);
+    // 版の記録に無い資料は読ませない。書き換えた資料は渡さない
+    expect((await call("planSourceRead", { planId: plan.planId, version: 1, sha256: missing })).reason).toBe("sourceUnknown");
+    writeFileSync(join(root, "plans", plan.planId, "sources", put.sha256), Buffer.from("書き換えた"));
+    expect((await call("planSourceRead", { planId: plan.planId, version: 1, sha256: put.sha256 })).reason).toBe("sourceChanged");
+    // 戻すと、戻した先の版の資料の記録も写す
+    const back = await call("planRevert", { planId: plan.planId, to: 1, reason: "戻す", basedOn: 1 });
+    expect(back).toMatchObject({ ok: true, version: 2 });
+    expect((await call("planStatus", { planId: plan.planId })).latest.sources).toEqual(st.latest.sources);
+  });
+});
+
+describe("編集者：承認を頼んだ版の上に次の版を作れるのは、頼んだ人だけ（台帳の新-1）", () => {
+  it("承認されるまで（差戻されたあとも）ほかの人は確定も戻すもできない。承認されると誰でも作れる", async () => {
+    extra = join(tmpdir(), `moyai-turn-${process.pid}-${Date.now()}`);
+    const root = join(extra, "MOYAI");
+    mkdirSync(root, { recursive: true });
+    const a = await startTestBridge();
+    const b = await startTestBridge();
+    try {
+      const caller = async (x: TestBridge) => {
+        const t = await tab(x);
+        return async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+          const text = JSON.stringify(payload);
+          const r = await post(x, R(id).path, good(x), { token: await t.token(R(id).action, text), payload: text });
+          return r.body;
+        };
+      };
+      const ca = await caller(a);
+      const cb = await caller(b);
+      for (const [c, name] of [[ca, "【架空】頼んだ人"], [cb, "【架空】ほかの人"]] as const) {
+        expect(await c("settingsSave", { root, name })).toMatchObject({ ok: true });
+        expect(await c("personKeyCreate", {})).toMatchObject({ ok: true });
+      }
+      const plan = truthToPlan("fictional-1");
+      const acceptances = aiDecisions(plan).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+      const v1 = await ca("planCommit", { plan, reason: "承認を頼む", acceptances, basedOn: null, request: { kind: "approve", to: "boss@example.jp", note: "" } });
+      expect(v1).toMatchObject({ ok: true, version: 1 });
+      const next = { ...v1.plan };
+      // 承認待ち：ほかの人は確定も戻すもできない。頼んだ人はできる（ここでは試すだけで、作らない）
+      expect((await cb("planCommit", { plan: next, reason: "横から重ねる", acceptances: [], basedOn: 1 })).reason).toBe("notYourTurn");
+      expect((await cb("planRevert", { planId: plan.planId, to: 1, reason: "横から戻す", basedOn: 1 })).reason).toBe("notYourTurn");
+      // 差戻されたあとも、頼んだ人の番に戻るだけ
+      const boss = otherSigner("【架空】承認する人");
+      expect(await signLatest({ root, planId: plan.planId, version: 1, role: "return", reason: "直してください", signer: boss })).toMatchObject({ ok: true });
+      expect((await cb("planCommit", { plan: next, reason: "横から重ねる", acceptances: [], basedOn: 1 })).reason).toBe("notYourTurn");
+      expect(await ca("planCommit", { plan: next, reason: "直した", acceptances: [], basedOn: 1, request: { kind: "approve", to: "boss@example.jp", note: "" } })).toMatchObject({ ok: true, version: 2 });
+      // 承認されると閉じ、誰でも次の版を作れる
+      expect(await signLatest({ root, planId: plan.planId, version: 2, role: "approve", reason: "", signer: boss })).toMatchObject({ ok: true });
+      expect(await cb("planCommit", { plan: next, reason: "次の年の版", acceptances: [], basedOn: 2 })).toMatchObject({ ok: true, version: 3 });
+    } finally {
+      await a.close();
+      await b.close();
+    }
+  });
+});
+
 describe("受け手：似た施設と並べる（peers_compare）", () => {
   it("設定で選んだ台帳の clone を受け手の関数で読み、立場ごとに場を並べる。入札の対象が無ければ聞く", async () => {
     extra = join(tmpdir(), `moyai-peers-${process.pid}-${Date.now()}`);
@@ -400,7 +495,7 @@ describe("受け手：似た施設と並べる（peers_compare）", () => {
     // 知らない立場・パックの形でないものは断る
     const bad = await call("peersCompare", { ...base, position: "知らない立場" });
     expect(bad).toMatchObject({ ok: false, reason: "payloadInvalid" });
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });
 
 describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物の GitHub では未確認）", () => {
@@ -479,5 +574,5 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
     } finally {
       await stub.close();
     }
-  }, 60_000);
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });
