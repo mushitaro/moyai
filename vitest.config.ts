@@ -8,8 +8,9 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     environment: "node",
-    // 工場の資料を計画 §2.5 の厚さ（機器 217・作業 2,120）にしたので、取り込みを端まで動かす試験は、並べて走らせると 20 秒を越える
-    testTimeout: 60_000,
-    hookTimeout: 60_000,
+    // 工場の資料を計画 §2.5 の厚さ（機器 217・作業 2,120）にしたので、取り込みを端まで動かす試験は、並べて走らせると 20 秒を越える。
+    // windows-latest の CI では fictional-1 を端まで読む試験（tab-tools・crosswalk・photo・photo-measure）が 61〜75 秒かかる（11-05 に測った）ので、上限は測った値に合わせる
+    testTimeout: 180_000,
+    hookTimeout: 180_000,
   },
 });
