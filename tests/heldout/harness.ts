@@ -3,7 +3,7 @@
 // calibrate.test.ts が、開発用の資料でこの道具が開発用の物差しと同じ数を出すことを確かめる（道具の誤りを読み手の誤りと取り違えないため）。
 // src/ は正解を読まない。試験の中の人だけの操作（質問に答える）は、この台本が人の代わりに押し、作者を human・理由に「試験の台本が押した」と書く。
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { IntakeSession, readSource } from "../../src/import";
 import type { SourceFile } from "../../src/import/grid";
 import type { Decision, QuestionItem, QuestionState } from "../../src/import/questions";
@@ -634,7 +634,8 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
     facility: { facilityKey: opt.facilityKey ?? world.facility.id, name: world.facility.name, fiscalYearStartMonth: 4, scale: null, scaleUnit: null, legalFlags: [], fictional: true, inNationalTable: null },
   });
   if (opt.readings) s.setReadings(opt.readings);
-  const bytes = (f: string) => new Uint8Array(readFileSync(join(set.filesDir ?? join(set.dir, "files"), f)));
+  // 資料の道は資料の置き場所からの相対。ドライブの違う置き場所（Windows の一時のフォルダと作業場所）は相対にできないので、絶対の道のまま
+  const bytes = (f: string) => new Uint8Array(readFileSync(isAbsolute(f) ? f : join(set.filesDir ?? join(set.dir, "files"), f)));
   const rejected = await s.add(read.map((n) => ({ name: n, bytes: bytes(n) })));
   const before = s.analyze();
   const unresolvedBefore = [...before.composition.status.values()].filter((x) => x.s === "unresolved").length;

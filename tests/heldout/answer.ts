@@ -3,7 +3,7 @@
 // 行で書いた正解（Excel・CSV は行、PDF は文書の中の順）を、読み手の格子のセルに引き当てるのは contract.ts の resolve。
 // 読み手（src/）が決めた行の役割や列の役目は使わない（使うのは格子の文字だけ）。
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { z } from "zod";
 import { HeldoutTruth, type Asset, type Event, type FileEntry, type HeldoutWorld, type LoadedSet, type Locate, type Mark } from "./contract";
 import { runSet, type FileResult, type RunOptions, type SetResult } from "./harness";
@@ -190,7 +190,7 @@ function loadFacility(setDir: string, key: string, setName: string, filesDirOver
       format,
       kind,
       ...(a.hidden_data ? { hidden_data: a.hidden_data } : {}),
-      ...(format === "pdf" && a.source_xlsx ? { source_xlsx: relative(filesDir, join(setDir, a.source_xlsx)).split("\\").join("/") } : {}),
+      ...(format === "pdf" && a.source_xlsx ? { source_xlsx: relative(filesDir, resolve(setDir, a.source_xlsx)).split("\\").join("/") } : {}),
     });
   }
 
