@@ -87,6 +87,7 @@ export function TemplateExport({
   onSelect,
   onDrop,
   onRoles,
+  standardExported,
 }: {
   plan: Plan;
   templates: readonly SharedTemplate[];
@@ -94,6 +95,8 @@ export function TemplateExport({
   onSelect: (t: SharedTemplate | null) => void;
   onDrop: (f: File) => Promise<string | null>;
   onRoles: (t: SharedTemplate, columns: TemplateColumns) => void;
+  /** 標準の書き出しがあるか（確定の署名で書き出している） */
+  standardExported: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const rows = useMemo(() => rowsFor(plan), [plan]);
@@ -122,7 +125,18 @@ export function TemplateExport({
         {T.label}
       </Text>
       <div className="moyai-template-choices" data-testid="template-choices">
-        {row("standard", selected === null, () => onSelect(null), T.standard, null, "template-standard")}
+        {row(
+          "standard",
+          selected === null,
+          () => onSelect(null),
+          T.standard,
+          standardExported ? (
+            <Text span size="xs" c="var(--text-2)" data-testid="template-exported">
+              {T.exported}
+            </Text>
+          ) : null,
+          "template-standard",
+        )}
         {templates.map((t) =>
           row(
             templateKey(t),
@@ -130,6 +144,11 @@ export function TemplateExport({
             () => onSelect(t),
             t.name,
             <>
+              {t.exported && (
+                <Text span size="xs" c="var(--text-2)" mr="sm" data-testid="template-exported">
+                  {T.exported}
+                </Text>
+              )}
               {t.approval ? (
                 <Text span size="xs" c="var(--text-2)">
                   {T.approved(t.approval.in, t.approval.by)}
@@ -137,11 +156,6 @@ export function TemplateExport({
               ) : (
                 <Text span size="xs" c="var(--text-3)">
                   {T.draft}
-                </Text>
-              )}
-              {t.exported && (
-                <Text span size="xs" c="var(--text-2)" ml="sm" data-testid="template-exported">
-                  {T.exported}
                 </Text>
               )}
             </>,
@@ -225,9 +239,6 @@ export function TemplateExport({
               ))}
             </Table.Tbody>
           </Table>
-          <Text size="xs" c="dimmed" mt={4} data-testid="template-count">
-            {T.count(rows.length)}
-          </Text>
         </div>
       )}
     </Stack>

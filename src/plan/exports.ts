@@ -95,6 +95,11 @@ export function exportExcelName(version: number, excel: string): string {
   return `${String(version).padStart(6, "0")}-${excel.slice(0, 16)}.xlsx`;
 }
 
+/** 様式の版：様式のファイルの SHA-256 と写し方の中身のハッシュから（保管先の版と、書き出しの署名の template.version） */
+export function templateVersion(fileHash: string, columns: string): string {
+  return sha256Hex(`${fileHash}\u0000${columns}`);
+}
+
 /** 写し方（列の役目）の中身のハッシュ */
 export function columnsHash(columns: unknown): string {
   return sha256Hex(canonicalize(columns));
@@ -122,7 +127,8 @@ export function checkExports(files: readonly { name: string; text: string }[], p
       continue;
     }
     const s = f.statement;
-    if (s.planId !== planId || s.version !== version || s.contentHash !== hash || s.key !== m[2] || s.excel.slice(0, 16) !== m[3]) {
+    // template.version は file と columns から作るもの。食い違う署名は形の外れ（version の文字だけで写し方を承認させない。Architect の小 2）
+    if (s.planId !== planId || s.version !== version || s.contentHash !== hash || s.key !== m[2] || s.excel.slice(0, 16) !== m[3] || s.template.version !== templateVersion(s.template.file, s.template.columns)) {
       bad++;
       continue;
     }

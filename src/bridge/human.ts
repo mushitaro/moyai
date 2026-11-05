@@ -3,7 +3,7 @@
 // どれも MCP のツールにしない（src/shared/tools.ts に無い）。答えは JSON。断るときは { ok: false, reason }。
 // 鍵・トークン・計画の中身をログに出さない。
 import { spawn } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
@@ -780,7 +780,12 @@ export class HumanService {
         await mkdir(join(dir, "signatures"), { recursive: true });
         // Excel のバイト列を先に置き、署名をあとに置く（署名があるのに Excel が無い、を作らない。Architect の縛り 3）
         const xlsx = join(dir, "exports", exportExcelName(p.version, excelHash));
-        if (!existsSync(xlsx)) await writeFile(xlsx, excel);
+        // 同じ名前があっても、中身が違えば一時のファイルから置き換える（先に置かれた別の中身で、毎回 fileChanged にしない。Architect の小 1）
+        if (!existsSync(xlsx) || sha256Hex(await readFile(xlsx)) !== excelHash) {
+          const tmp = `${xlsx}.tmp-${process.pid}`;
+          await writeFile(tmp, excel);
+          await rename(tmp, xlsx);
+        }
         try {
           await writeFile(join(dir, "signatures", exportSignatureName(p.version, keyIdOf(signer.signer.pair.pub), excelHash)), `${JSON.stringify(file, null, 1)}\n`, { encoding: "utf8", flag: "wx" });
         } catch (e) {
@@ -796,9 +801,13 @@ export class HumanService {
         const pv = await readPlanVersion(root, p.planId, p.version);
         if (!pv.ok) return no(pv.reason);
         const v = (await readHistory(root, p.planId)).versions.find((x) => x.version === p.version);
-        // その様式の版で署名した書き出しのうち、いちばん新しいもの。Excel を読み、署名の SHA-256 と照らしてから渡す
-        const x = (v?.exports ?? []).filter((e) => e.template.name === p.name && e.template.version === p.templateVersion).sort((a, b) => (a.at < b.at ? 1 : -1))[0];
-        if (!x) return no("exportUnknown");
+        // その様式の版で署名した書き出しのうち、信じる鍵（自分か確認済み）のものを先に、その中で時刻の新しいもの。無ければほかの鍵のもの。
+        // 時刻は署名した人が書くので、未確認の鍵が先の時刻を書いても、信じる鍵の書き出しを差し置かない（Architect の 3C の直し）
+        const cands = (v?.exports ?? []).filter((e) => e.template.name === p.name && e.template.version === p.templateVersion).map((e) => ({ e, trust: trustOf(sd, e, now) }));
+        const newest = (xs: typeof cands) => [...xs].sort((a, b) => (a.e.at < b.e.at ? 1 : -1))[0];
+        const pick = newest(cands.filter((c) => countsForApproval(c.trust))) ?? newest(cands);
+        if (!pick) return no("exportUnknown");
+        const x = pick.e;
         let bytes: Buffer;
         try {
           bytes = await readFile(join(planDir(root, p.planId), "exports", exportExcelName(p.version, x.excel)));
@@ -806,7 +815,9 @@ export class HumanService {
           return no("fileMissing");
         }
         if (sha256Hex(bytes) !== x.excel) return no("fileChanged");
-        return { ok: true, version: p.version, name: p.name, base64: bytes.toString("base64") };
+        // 渡したファイルの署名者（画面は、この 1 つについて鍵の警告を出す）
+        const signer = { by: x.by, key: x.key, pub: x.pub, trust: pick.trust, fingerprint: fingerprint(x.pub), previous: pick.trust === "changed" ? previousOf(sd, x.pub) : null };
+        return { ok: true, version: p.version, name: p.name, base64: bytes.toString("base64"), signer };
       }
       case "person_key_create": {
         const p = parsePayload("person_key_create", call.payload);

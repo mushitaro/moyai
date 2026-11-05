@@ -325,7 +325,7 @@ describe("見ていない様式の道具の校正：開発用の資料で、開�
       // 資料は samples/out にあるものをそのまま読む（写さない）
       const set = loadSet(dir, { filesDir: `samples/out/${PACK}/${c.facility}` });
       await calibrate(c, t, files, set, "場所の形");
-    }, 600_000);
+    }, 600_000); // CI では、ほかの重い試験と並ぶと 383 秒かかった（11-05、ubuntu-latest）。上限は測った値に合わせる
 
     // 指示書 §5 の形（行で書いた正解）を answer.ts で写しても、同じ数になる
     test(`${c.facility}（§5 の形）`, async () => {
