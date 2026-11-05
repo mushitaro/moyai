@@ -83,7 +83,9 @@ function ledgerRequest(args: Record<string, unknown>): TabToolResult {
 
 /** 周期の案を置く（chart_propose。docs/plan.md §2.18.4）：足すだけ。引いた印は作者 AI で、人が決定のシートで受けるまで決まらない */
 function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabToolResult {
-  const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis));
+  // ledger は橋渡しが照らしてから渡す（照らせなければここまで来ない）。無ければ会話からの案
+  const author = args.author === "ai_relayed_human" ? "ai_relayed_human" : "ai";
+  const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis), { fromLedger: Boolean(args.ledger), author });
   if (!r.ok) return r;
   const marks = r.proposals.reduce((n, p) => n + p.detailKeys.length, 0);
   ws.note("ai", T.cyclesProposed(r.proposals.length, marks));

@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { MergeSideContext } from "../state/merge-side";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
-import { cycleIdOf } from "../../plan/cycle";
+import { cycleIdOf, isLedgerCycle } from "../../plan/cycle";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
@@ -123,7 +123,13 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   const baseV = getCrosswalkBase()?.version ?? null;
   const sameAs = allOpenRules.find((p) => p.sameAs !== undefined)?.sameAs ?? baseV;
   const kindOfGroup = (g: { ds: Decision[]; cycle: string | null }): Kind =>
-    g.cycle ? (baseV !== null && g.ds[0]!.basis.endsWith(W.sameAs(baseV)) ? "same" : "ledger") : g.ds[0]!.author === "ai_relayed_human" ? "relayed" : "ai";
+    g.cycle && baseV !== null && g.ds[0]!.basis.endsWith(W.sameAs(baseV))
+      ? "same"
+      : g.cycle && isLedgerCycle(g.cycle)
+        ? "ledger"
+        : g.ds[0]!.author === "ai_relayed_human"
+          ? "relayed"
+          : "ai";
   const counts: Record<Kind, number> = {
     same: allOpenRules.filter((p) => p.sameAs !== undefined).length + openGroups.filter((g) => kindOfGroup(g) === "same").length,
     crosswalk: allOpenRules.filter((p) => p.sameAs === undefined).length,
@@ -174,11 +180,11 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     const d = ds[0]!;
     const done = ds.every((x) => isAccepted(x.id, x.hash));
     return (
-      <Table.Tr key={key} data-testid="pending-row" data-kind={cycle ? "ledger" : d.author} data-accepted={done ? "true" : "false"}>
+      <Table.Tr key={key} data-testid="pending-row" data-kind={cycle && isLedgerCycle(cycle) ? "ledger" : d.author} data-accepted={done ? "true" : "false"}>
         <Table.Td>
           <Text size="sm">{cycle ? T.cycleWhat(cycle, ds.length) : what(d)}</Text>
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
-            {cycle ? T.kind.ledger : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
+            {cycle && isLedgerCycle(cycle) ? T.kind.ledger : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
           </Text>
           {d.kind === "reading" && d.where && (
             <Text size="xs" c="var(--text-3)" data-testid="pending-where">
