@@ -23,6 +23,7 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { TEXT } from "../text";
 import { getWorkingPlan, setWorkingPlan, updateWorkingPlan } from "./plan-store";
 import { AMBIGUOUS_KEY_PREFIX } from "../../import/compose";
+import { cycleIdOf } from "../../plan/cycle";
 
 /** もとにした版（1C）：MERGE で版を開いたときに置く。作り直すと、その版の当てはめを「第 n 版と同じ」の案として並べる */
 let base: { version: number; plan: Plan; crosswalk: readonly { rule: Rule; basis: string }[] } | null = null;
@@ -166,8 +167,30 @@ export function placeComposedPlan(next: Plan): CarryOverReport | null {
     T.acceptedBasis,
     b ? { ...b, reason: T.sameAs(b.version), ambiguousPrefix: AMBIGUOUS_KEY_PREFIX } : null,
   );
-  setWorkingPlan(r.plan, "intake", r.proposals);
+  setWorkingPlan(b ? carryFromBase(r.plan, b.plan, b.version) : r.plan, "intake", r.proposals);
   return r.report;
+}
+
+/**
+ * もとにした版から、当てはめのほかに引き継ぐもの（台帳の新-10）：
+ * - 施設の見え方の答え（profile・全国の表に載るか）は、作り直した計画に無ければ写す（人が施設の設定で答えたもの）
+ * - 人が受けた周期の案（台帳から置いた計画の印）は、同じ作業があれば「第 n 版と同じ」の案として並べ直す。
+ *   根拠に「第 n 版で受けた当てはめと同じ」を足すので、決定の中身が変わり、人がもう一度受けるまで決まらない
+ */
+export function carryFromBase(plan: Plan, basePlan: Plan, version: number): Plan {
+  const f = plan.facility;
+  const bf = basePlan.facility;
+  const facility = {
+    ...f,
+    ...(f.profile === undefined && bf.profile !== undefined ? { profile: bf.profile } : {}),
+    inNationalTable: f.inNationalTable ?? bf.inNationalTable,
+  };
+  const works = new Set(plan.works.map((w) => w.workKey));
+  const have = new Set(plan.details.map((d) => d.detailKey));
+  const carried = basePlan.details
+    .filter((d) => cycleIdOf(d.detailKey) !== null && works.has(d.workKey) && !have.has(d.detailKey))
+    .map((d) => ({ ...d, basis: `${d.basis}。${T.sameAs(version)}` }));
+  return { ...plan, facility, details: [...plan.details, ...carried] };
 }
 
 // ─── 人の道（画面だけが呼ぶ） ─────────────────────────────────────

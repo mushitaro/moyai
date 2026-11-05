@@ -13,7 +13,7 @@ import { cycleIdOf } from "../../plan/cycle";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
-import { acceptByHuman, rejectByHuman, valueLabel } from "../state/crosswalk";
+import { acceptByHuman, getCrosswalkBase, rejectByHuman, valueLabel } from "../state/crosswalk";
 import { acceptDecision, isAccepted, unacceptDecision, useAccepted } from "../state/decisions";
 import { useWorkingPlan } from "../state/plan-store";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -72,10 +72,13 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   const allOpenRules = proposals.filter((p) => p.state === "proposed");
   const doneRules = proposals.filter((p) => p.state !== "proposed");
   // 種類の切り替え（Wire、2026-11-05）：第 n 版と同じ ／ 当てはめの案 ／ 台帳からの案 ／ 会話から写した答え ／ Claude の決定。数が 0 の種類は出さず、先頭の種類を既定にする
-  const kindOfGroup = (g: { ds: Decision[]; cycle: string | null }): Kind => (g.cycle ? "ledger" : g.ds[0]!.author === "ai_relayed_human" ? "relayed" : "ai");
-  const sameAs = allOpenRules.find((p) => p.sameAs !== undefined)?.sameAs ?? null;
+  // もとにした版から並べ直した周期の案（根拠に「第 n 版で受けた当てはめと同じ」）も「第 n 版と同じ」に入れる（台帳の新-10）
+  const baseV = getCrosswalkBase()?.version ?? null;
+  const sameAs = allOpenRules.find((p) => p.sameAs !== undefined)?.sameAs ?? baseV;
+  const kindOfGroup = (g: { ds: Decision[]; cycle: string | null }): Kind =>
+    g.cycle ? (baseV !== null && g.ds[0]!.basis.endsWith(W.sameAs(baseV)) ? "same" : "ledger") : g.ds[0]!.author === "ai_relayed_human" ? "relayed" : "ai";
   const counts: Record<Kind, number> = {
-    same: allOpenRules.filter((p) => p.sameAs !== undefined).length,
+    same: allOpenRules.filter((p) => p.sameAs !== undefined).length + openGroups.filter((g) => kindOfGroup(g) === "same").length,
     crosswalk: allOpenRules.filter((p) => p.sameAs === undefined).length,
     ledger: openGroups.filter((g) => kindOfGroup(g) === "ledger").length,
     relayed: openGroups.filter((g) => kindOfGroup(g) === "relayed").length,
