@@ -1,14 +1,16 @@
 // デモの 3 施設（動画の材料。PM の決定 2026-11-05）：A＝fictional-1、B＝fictional-2（開発用の工場の資料）、C＝ほたる川（工場 v2、作業日報と発注台帳だけ）を、
 // 見ていない様式と同じ物差し（harness.ts・contract.ts）で測る。どれも見ていない様式ではない（開発用の資料とデモの材料）。結果は heldout とは別の表に出す。
 // MOYAI_DEMO_OUT=<フォルダ> のときだけ走る（result.json と README.md を書く）。MOYAI_DEMO_C=<施設 C のフォルダ>（files/ と answer/）。
+// MOYAI_DEMO_READINGS=<フォルダ> なら、施設ごとの <フォルダ>/<施設>/readings.json（会話で作った読み方の下書き）を当て、要約（survey.json）を書く（AI を入れた回）。
 // 質問には、正解だけを見る台本が人の代わりに答える。時間は、資料を入れてから計画ができる（か止まる）までの、台本が答える時間を含む壁の時計。
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
 import { exportWorld } from "../../scripts/heldout/export-world.mjs";
+import { ReadingSkill, type LoadedReading } from "../../src/import/reading";
 import { loadTruth } from "../unit/import/truth";
 import { loadSet, type LoadedSet } from "./contract";
 import { CASES, PACK, fromDev } from "./dev";
@@ -20,6 +22,8 @@ const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8",
 interface DemoRow {
   key: string;
   label: string;
+  /** 当てた読み方の規則の数（会話で作った下書き。無ければ 0） */
+  rules: number;
   seconds: number;
   dropped: Record<string, number>;
   result: SetResult;
@@ -54,8 +58,16 @@ describe("デモの 3 施設", () => {
     const rows: DemoRow[] = [];
     for (const s of sets) {
       const t0 = performance.now();
-      const { result } = await runSet(s.set, { facts: s.facts, facilityKey: s.set.world.facility.id });
-      rows.push({ key: s.key, label: s.label, seconds: Math.round((performance.now() - t0) / 100) / 10, dropped: s.dropped, result });
+      const rdir = process.env.MOYAI_DEMO_READINGS ? join(process.env.MOYAI_DEMO_READINGS, s.key) : null;
+      const rpath = rdir ? join(rdir, "readings.json") : null;
+      const skills = rpath && existsSync(rpath) ? (JSON.parse(readFileSync(rpath, "utf8")) as unknown[]).map((x) => ReadingSkill.parse(x)) : [];
+      const readings: LoadedReading[] = skills.map((skill) => ({ skill, version: "draft", path: null, approved: false, draft: true }));
+      const { result, survey, analysis } = await runSet(s.set, { facts: s.facts, facilityKey: s.set.world.facility.id, readings });
+      if (rdir) {
+        mkdirSync(rdir, { recursive: true });
+        writeFileSync(join(rdir, "survey.json"), `${JSON.stringify({ ...survey, ruleHits: skills.flatMap((k) => k.rules.map((r) => ({ id: r.id, hits: analysis.ruleHits.count(r.id) }))) }, null, 1)}\n`, "utf8");
+      }
+      rows.push({ key: s.key, label: s.label, rules: skills.reduce((n, k) => n + k.rules.length, 0), seconds: Math.round((performance.now() - t0) / 100) / 10, dropped: s.dropped, result });
     }
     rmSync(tmp, { recursive: true, force: true });
     const reader = { commit: git("rev-parse", "HEAD"), src: git("rev-parse", "HEAD:src"), dirty: git("status", "--porcelain", "--", "src", "packs") !== "" };
@@ -69,12 +81,12 @@ describe("デモの 3 施設", () => {
       `測った読み手：${reader.commit.slice(0, 7)}（src ${reader.src.slice(0, 7)}${reader.dirty ? "、commit していない変更あり" : ""}）。測った日時：${measuredAt}（UTC）。`,
       "質問には、正解だけを見る台本が人の代わりに答えた。時間は、資料を入れてから計画ができる（か止まる）までの壁の時計（台本が答える時間を含む）。",
       "",
-      "| 施設 | ⑤ 質問（台本が答えた・開いたまま） | ② 未解決（答える前 → 後） | 計画 | ③ 読み取りの正しさ | ⑥ 取り戻せた割合 | 工数 | 日数 | 時間 |",
-      "|---|---|---|---|---|---|---|---|---:|",
+      "| 施設 | 会話で作った規則 | ⑤ 質問（台本が答えた・開いたまま） | ② 未解決（答える前 → 後） | 計画 | ③ 読み取りの正しさ | ⑥ 取り戻せた割合 | 工数 | 日数 | 時間 |",
+      "|---|---:|---|---|---|---|---|---|---|---:|",
       ...rows.map((x) => {
         const r = x.result;
         const rc = r.recovery;
-        return `| ${x.key}：${x.label} | ${r.asked}（${r.answered}・${r.openAtEnd.length}） | ${r.unresolvedBefore} → ${r.unresolvedAfter} | ${r.plan ? `機器 ${r.plan.assets}・作業 ${r.plan.works}・明細 ${r.plan.details}` : `作れない（${r.blockers.join("・")}）`} | ${pct(at(r))} | ${rc.together}/${rc.denominator}（${rc.denominator ? ((rc.together / rc.denominator) * 100).toFixed(1) : "—"}%） | ${pct(rc.manDays)} | ${pct(rc.days)} | ${x.seconds} 秒 |`;
+        return `| ${x.key}：${x.label} | ${x.rules} | ${r.asked}（${r.answered}・${r.openAtEnd.length}） | ${r.unresolvedBefore} → ${r.unresolvedAfter} | ${r.plan ? `機器 ${r.plan.assets}・作業 ${r.plan.works}・明細 ${r.plan.details}` : `作れない（${r.blockers.join("・")}）`} | ${pct(at(r))} | ${rc.together}/${rc.denominator}（${rc.denominator ? ((rc.together / rc.denominator) * 100).toFixed(1) : "—"}%） | ${pct(rc.manDays)} | ${pct(rc.days)} | ${x.seconds} 秒 |`;
       }),
       "",
       "- ③ は、計画を作れた施設の、資料ごとの正しさの和（機器・印・作業の行）。計画が無ければ測れない（—）。",
