@@ -6,7 +6,7 @@ import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFi
 import { parseWithFormat } from "./reading";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
-import { assetFromTitle, parseEffort, parseUnit, splitFlatWork, splitTag, tagTrailingNumber, type TagSplit, type UnitValue } from "./text";
+import { assetFromTitle, cycleHeaderUnit, parseCycle, parseEffort, parseUnit, splitFlatWork, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
 
@@ -59,6 +59,8 @@ export interface MarkRec {
   workName: string | null;
   /** 行の作業の名前のセル（行ごとに作業の列を書く星取表）。記録の出どころに足す */
   workRef: string | null;
+  /** その行の周期（「周期(年)」の列）：作業の暦のきっかけ。書いていなければ省く */
+  cycle?: CycleSpan;
   assetId: string | null;
   excluded: string | null;
   pending: boolean;
@@ -84,6 +86,8 @@ export interface EventRec {
   assetNames: string[];
   /** 機器の名前を書いたセル（機器の列・号炉と機器と作業を 1 つに書いたセル・帳票の頭書きの値）。無ければ省く */
   nameRef?: string;
+  /** その行の周期（「周期」の列）：作業の暦のきっかけ。書いていなければ省く */
+  cycle?: CycleSpan;
   /** 機器番号の列に書いた番号（同一性の鍵）。無ければ null */
   tag: string | null;
   bundle: boolean;
@@ -168,6 +172,13 @@ export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOpt
     const off: Off = (ref) => noCache.has(ref) || rec.excluded.has(cellKey(pos(ref)));
     for (const t of lay.tables) {
       issuesToQuestions(t, lay, ask, exclude, pend, rec.formOf.get(t.id)?.key ?? t.id);
+      // 外す列（読み方の規則で外した列・費用の列）：作業の表は eventRecords で外す。木と星取表もここで理由つきで外す
+      if (t.shape !== "events")
+        for (const col of t.cols.filter((c) => c.ruleExclude))
+          for (const r of t.rows) {
+            const x = lay.index.at(r.r, col.c);
+            if (x && x.text !== "" && !off(x.ref)) exclude(x.ref, col.ruleExclude as string);
+          }
       if (t.shape === "tree") order = treeRecords(t, lay, ask, rec, order, exclude, pend, off);
       else if (t.shape === "grid") order = gridRecords(t, lay, ask, rec, order, exclude, pend, off);
       else eventRecords(t, lay, ask, rec, opts, date1904Of(lay.file), exclude, pend, off);
@@ -542,6 +553,38 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
 
 // ─── 星取表の形 ────────────────────────────────────────────────
 
+/** 行ごとの周期（「周期(年)」「周期」の列）：その行の作業の暦のきっかけ。数だけの書き方は見出しの単位で読む。読めない書き方（「毎回」）は推し量らず、同じ様式の表をまとめて聞く */
+function readCycles(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: number[], exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): Map<number, CycleSpan> {
+  const out = new Map<number, CycleSpan>();
+  const cycleCol = t.cols.find((c) => c.role === "cycle");
+  if (!cycleCol) return out;
+  const unit = cycleHeaderUnit(cycleCol.header);
+  const bad: { ref: string; text: string }[] = [];
+  for (const r of rows) {
+    const c = lay.index.at(r, cycleCol.c);
+    if (!c || c.text.trim() === "" || off(c.ref)) continue;
+    const sp = parseCycle(typeof c.value === "number" ? String(c.value) : c.text, unit);
+    if (sp) out.set(r, sp);
+    else bad.push({ ref: c.ref, text: c.text });
+  }
+  if (bad.length) {
+    const a = ask.ask(`cycleBad|${rec.formOf.get(t.id)?.key ?? t.id}|${cycleCol.c}`, {
+      kind: "yearUnknown",
+      text: `「${cycleCol.header.replace(/\s*\n\s*/g, "")}」の列に、周期として読めない書き方がある（${bad.length} 行、見本 ${[...new Set(bad.map((b) => b.text))].slice(0, 3).map((x) => `「${x}」`).join("")}）。周期を推し量らない`,
+      options: [{ id: "none", label: "その行の作業に周期を置かない（理由を残す）" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: bad.length,
+      items: [itemOf(lay, bad.slice(0, 10).map((b) => b.ref))],
+    });
+    for (const b of bad) {
+      if (a === "none") exclude(b.ref, "周期として読めない書き方（決定で周期を置かない）");
+      else pend(b.ref);
+    }
+  }
+  return out;
+}
+
 function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): number {
   const hier = t.cols.filter((c) => c.role === "hier").sort((a, b) => (a.hierLevel ?? 0) - (b.hierLevel ?? 0));
   const unitCol = t.cols.find((c) => c.role === "unit");
@@ -800,6 +843,15 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     prevLeaf = node && node.level === (leafCol?.hierLevel ?? -1) + offset ? { r: r.r, node } : null;
     if (prevLeaf) lastLeaf = prevLeaf.node;
   }
+  // 行ごとの周期（「周期(年)」）：その行の作業の暦のきっかけ。数だけの書き方は見出しの単位で読む。読めない書き方は推し量らず聞く
+  const cycleOf = readCycles(t, lay, ask, rec, data.map((r) => r.r), exclude, pend, off);
+  const cycleCol = t.cols.find((c) => c.role === "cycle");
+  if (cycleCol)
+    for (const r of cycleOf.keys()) {
+      const node = rowNode.get(r);
+      const ref = lay.index.at(r, cycleCol.c)?.ref;
+      if (node && ref && !node.refs.includes(ref)) node.refs.push(ref);
+    }
   // 印
   const legend = t.legend;
   for (const r of data) {
@@ -821,6 +873,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         planOrActual: null,
         workName: null,
         workRef: null,
+        ...(cycleOf.has(r.r) ? { cycle: cycleOf.get(r.r) } : {}),
         assetId: node?.id ?? null,
         excluded: null,
         pending: !node || node.pending || t.yearKind === null,
@@ -999,6 +1052,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   // 機器の欄も機器番号も無い台帳（発注台帳など）：件名の中の機器の名前の案（あとでまとめて聞く。推し量って決めない）
   const titleOnly = !assetCol && !tagCol && !flatCol && !headAsset && !headTag && titleCol ? titleCol : null;
   const titleRows: { id: string; ref: string; title: string; guess: { asset: string; work: string } | null }[] = [];
+  // 行ごとの周期（「周期」の列）：その行の作業の暦のきっかけ
+  const cycleOf = readCycles(t, lay, ask, rec, data.map((r) => r.r), exclude, pend, off);
   // 読み方の規則で外した列のセル：理由つきで外す
   for (const col of t.cols.filter((c) => c.ruleExclude)) for (const r of data) {
     const x = lay.index.at(r.r, col.c);
@@ -1081,6 +1136,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       manDays,
       effortPending: false,
       assetNames: stripped.text ? [stripped.text] : [],
+      ...(cycleOf.has(r.r) ? { cycle: cycleOf.get(r.r) } : {}),
       ...(() => {
         const ref = (assetCol && text(r.r, assetCol) ? lay.index.at(r.r, assetCol.c)?.ref : flat ? lay.index.at(r.r, flatCol?.c ?? 0)?.ref : headAsset ? headCell("name", "assetRef")?.ref : undefined) ?? undefined;
         return ref ? { nameRef: ref } : {};

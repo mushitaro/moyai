@@ -43,6 +43,8 @@ export type ColRole =
   | "end"
   /** 行ごとの予定・実績（星取表を予定の段と実績の段に分けて書く書き方） */
   | "planActual"
+  /** 作業の周期（「周期(年)」：その行の作業の暦のきっかけ） */
+  | "cycle"
   | "unknown";
 
 export type Shape = "tree" | "grid" | "events";
@@ -592,6 +594,17 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       continue;
     }
     if (!cs.length && !col.header) continue;
+    // 周期の列（「周期(年)」「点検周期」）：その行の作業の暦のきっかけ。段・号にしない（「1年」は号の書き方に見えるので、号より先に見る）
+    if (col.cue === "cycle") {
+      col.role = "cycle";
+      continue;
+    }
+    // 費用の列（「概算費用(千円/回)」「契約金額」）：計画には入れない（共有しない）。理由つきで外す
+    if (col.cue === "cost") {
+      col.role = "remark";
+      col.ruleExclude = "費用の列（計画に入れない）";
+      continue;
+    }
     // 工数の書き方（「24人工」「288時間」）は号・系列ではない（数と漢字の形が号の書き方と重なるため、先に外す）
     const isEffortText = (x: GridCell) => {
       const e = parseEffort(x.text);

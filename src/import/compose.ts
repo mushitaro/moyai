@@ -314,6 +314,22 @@ export function compose(
       });
     return wk;
   };
+  // 作業の暦のきっかけ（src/plan/trigger.ts の Trigger）：星取表・作業の表のその行の周期（「周期(年)」「周期」）。
+  // 同じ作業に違う周期が書いてあれば、どちらかに決めつけず置かない
+  const cycleSeen = new Map<string, string>();
+  const putCycle = (wk: string, cycle: { years?: number; months?: number } | undefined) => {
+    const w = works.get(wk);
+    if (!cycle || !w) return;
+    const k = JSON.stringify(cycle);
+    const prev = cycleSeen.get(wk);
+    if (prev === undefined) {
+      cycleSeen.set(wk, k);
+      w.trigger = { branches: [{ kind: "calendar", ...cycle }], combine: "earliest" };
+    } else if (prev !== k) {
+      cycleSeen.set(wk, "conflict");
+      w.trigger = null;
+    }
+  };
   // 読み方の決定（AI と会話から写した答え）ごとに、それで作者が決まった明細（決定のシートで、決定の行に付いて動く。Wire）
   const affected = new Map<string, string[]>();
   const addDetail = (d: Omit<WorkDetailT, "detailKey">, seed: string, qids: readonly string[]) => {
@@ -415,6 +431,7 @@ export function compose(
     const ak = keyOf.get(c) ?? "";
     const parent = parentOfJob(j);
     const wk = workFor(`asset|${ak}|${keyName}|${parent ?? ""}`, kind, [ak], parent);
+    putCycle(wk, m?.cycle ?? j.units.flatMap((u) => u.events).find((e) => e.cycle)?.cycle);
     const v = jobValues(j);
     const r = range(j.units);
     const symbolQ = m ? [questionIdOf(`unknownSymbol|${m.tableId}|${m.symbol}`), questionIdOf(`noLegend|${m.tableId}|${m.symbol}`)] : [];
@@ -456,6 +473,7 @@ export function compose(
     if (ls.length === 0) {
       const kind = m.workName ?? "";
       const wk = workFor(`asset|${ak}|${nameKey(kind)}|`, kind, [ak], null);
+      putCycle(wk, m.cycle);
       addDetail(
         {
           workKey: wk,

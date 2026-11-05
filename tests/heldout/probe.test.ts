@@ -52,7 +52,7 @@ describe("import.probe：資料を読んで形を見る", () => {
       files: comp.counts.map((c) => ({ file: c.file, input: c.inputRows, imported: c.importedRows, excluded: c.excludedRows, unresolvedRows: c.unresolvedRows, unresolvedCells: c.unresolvedCells })),
       first: { asked: askedFirst, kinds: kinds(first.questions), unresolved: unresolvedOf(first), open: first.open.slice(0, 30).map((q) => `${q.kind}：${q.text.slice(0, 160)}`) },
       defaults: { passes, open: an.open.map((q) => `${q.kind}：${q.text.slice(0, 160)}`).slice(0, 30), unresolved: unresolvedOf(an) },
-      plan: comp.plan ? { assets: comp.plan.assets.length, works: comp.plan.works.length, details: comp.plan.details.length } : null,
+      plan: comp.plan ? { assets: comp.plan.assets.length, works: comp.plan.works.length, details: comp.plan.details.length, withTrigger: comp.plan.works.filter((w) => w.trigger).length, triggers: [...new Set(comp.plan.works.map((w) => JSON.stringify(w.trigger)))].slice(0, 8) } : null,
       blockers: comp.blockers,
       stuck: s.survey().stuck.slice(0, 5),
       ...(shapes ? { shapes } : {}),

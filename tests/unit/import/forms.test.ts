@@ -3,7 +3,7 @@
 import { describe, expect, test } from "vitest";
 import { cue } from "../../../src/import/cues";
 import { fiscalYearInText, parseDateRange, parseMonthDay, withFiscalYear } from "../../../src/import/era";
-import { assetFromTitle, parseUnit, splitFlatWork } from "../../../src/import/text";
+import { assetFromTitle, cycleHeaderUnit, parseCycle, parseUnit, splitFlatWork } from "../../../src/import/text";
 import { acceptDefaults, human, rows, session, xlsxOf } from "./helpers";
 
 const csv = (lines: string[]) => new TextEncoder().encode(`${lines.join("\r\n")}\r\n`);
@@ -755,5 +755,68 @@ describe("帳票（1 日 1 枚・1 件 1 枚）と、heldout-4 で詰まった�
       expect(before).toBeGreaterThan(0);
       expect(after).toBe(0);
     }
+  });
+});
+
+describe("周期の列と費用の列（重-8b：作業ごとのきっかけを取り込みが置く）", () => {
+  test("周期の書き方：年・月・年 N 回・数だけ（見出しの単位）。読めない書き方は null", () => {
+    expect(parseCycle("1年", null)).toEqual({ years: 1 });
+    expect(parseCycle("3Y", null)).toEqual({ years: 3 });
+    expect(parseCycle("6か月", null)).toEqual({ months: 6 });
+    expect(parseCycle("130M", null)).toEqual({ months: 130 });
+    expect(parseCycle("24ヶ月", null)).toEqual({ years: 2 });
+    expect(parseCycle("年4回", null)).toEqual({ months: 3 });
+    expect(parseCycle("3", "years")).toEqual({ years: 3 });
+    expect(parseCycle("0.5", "years")).toEqual({ months: 6 });
+    expect(parseCycle("3", null)).toBeNull();
+    expect(parseCycle("毎回", "years")).toBeNull();
+    expect(parseCycle("年5回", null)).toBeNull();
+    expect(cycleHeaderUnit("周期\n(年)")).toBe("years");
+    expect(cycleHeaderUnit("周期（か月）")).toBe("months");
+    expect(cycleHeaderUnit("周期")).toBeNull();
+  });
+
+  test("星取表（xlsx）：「周期(年)」は段にも号にもせず、その行の作業の暦のきっかけ。「概算費用」は段にせず理由つきで外す", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [
+        ["機器", "作業内容", "周期\n(年)", "概算費用\n(千円/回)", "2024年度", "2025年度", "2026年度"],
+        ["ポンプ", "分解整備", "3", "1200", "●", null, null],
+        ["ブロワ", "定期点検", "1年", "300", "●", "●", "○"],
+        [],
+        [null, "凡例　○：計画　●：実施済"],
+      ]);
+    });
+    const s = session();
+    await s.add([{ name: "星取表.xlsx", bytes }]);
+    const an = s.analyze();
+    const t = an.layouts[0]?.tables[0];
+    expect(t?.cols.find((c) => c.header.startsWith("周期"))?.role).toBe("cycle");
+    expect(t?.cols.find((c) => c.header.startsWith("概算費用"))?.ruleExclude).toBe("費用の列（計画に入れない）");
+    expect(an.open.some((q) => q.kind === "unitMissing" || q.kind === "levelSplit")).toBe(false);
+    acceptDefaults(s);
+    const c = s.compose();
+    const trig = (asset: string) => {
+      const a = c.plan?.assets.find((x) => x.name === asset);
+      return c.plan?.works.find((w) => w.targets.includes(a?.nodeKey ?? ""))?.trigger;
+    };
+    expect(trig("ポンプ")).toEqual({ branches: [{ kind: "calendar", years: 3 }], combine: "earliest" });
+    expect(trig("ブロワ")).toEqual({ branches: [{ kind: "calendar", years: 1 }], combine: "earliest" });
+    expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason === "費用の列（計画に入れない）")).toBe(true);
+  });
+
+  test("作業の記録（CSV）：「周期」の列の行の周期も作業のきっかけ。「毎回」は推し量らず聞き、置かないと答えたら周期なしで入れる", async () => {
+    const s = session();
+    await s.add([{ name: "点検.csv", bytes: csv(["機器,作業,周期,実施日,工数(人日),契約金額", "ポンプ,点検,年4回,2024/4/6,1,50000", "ブロワ,点検,毎回,2024/4/7,1,30000"]) }]);
+    const an = s.analyze();
+    expect(an.open.some((q) => q.kind === "columnRole")).toBe(false);
+    const q = an.open.find((x) => x.kind === "yearUnknown" && x.text.includes("周期"));
+    expect(q?.text).toContain("「毎回」");
+    s.settle([human(q?.questionId ?? "", "none")]);
+    for (let i = 0; i < 4; i++) for (const x of s.analyze().open) s.settle([human(x.questionId, x.defaultAnswer ?? x.options.find((o) => o.id === "new")?.id ?? x.options[0]?.id ?? "")]);
+    const c = s.compose();
+    expect(c.plan).not.toBeNull();
+    const byAsset = (name: string) => c.plan?.works.find((w) => w.targets.includes(c.plan?.assets.find((a) => a.name === name)?.nodeKey ?? ""));
+    expect(byAsset("ポンプ")?.trigger).toEqual({ branches: [{ kind: "calendar", months: 3 }], combine: "earliest" });
+    expect(byAsset("ブロワ")?.trigger).toBeNull();
   });
 });

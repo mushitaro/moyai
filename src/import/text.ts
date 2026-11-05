@@ -126,6 +126,42 @@ export function splitFlatWork(text: string): FlatWork | null {
   return asset ? { unit, asset, work: (paren[3] ?? "").trim() } : null;
 }
 
+// ─── 周期 ────────────────────────────────────────────────────
+
+export interface CycleSpan {
+  years?: number;
+  months?: number;
+}
+
+/** 周期の見出しに書いた単位（「周期(年)」→ 年、「周期（月）」「周期(か月)」→ 月）。書いていなければ null */
+export function cycleHeaderUnit(header: string): "years" | "months" | null {
+  const h = nfkc(header).replace(/\s+/g, "");
+  if (/[(（][^)）]*(?:か月|ヶ月|カ月|ケ月|月)[^)）]*[)）]/u.test(h)) return "months";
+  if (/[(（][^)）]*年[^)）]*[)）]/u.test(h)) return "years";
+  return null;
+}
+
+/**
+ * 周期の書き方を読む：「1年」「3Y」は年、「6か月」「6ヶ月」「130M」は月。数だけ（「3」）は見出しの単位で読み、単位が無ければ読まない。
+ * 年の小数（「0.5」年）は月に直す（整数の月になるときだけ）。読めない書き方（「毎回」「隔回」「随時」）は null（呼ぶ側が聞く）
+ */
+export function parseCycle(text: string, headerUnit: "years" | "months" | null): CycleSpan | null {
+  const s = nfkc(text).replace(/\s+/g, "");
+  const toYears = (n: number): CycleSpan | null => (Number.isInteger(n) && n > 0 ? { years: n } : Number.isInteger(n * 12) && n > 0 ? { months: n * 12 } : null);
+  const toMonths = (n: number): CycleSpan | null => (Number.isInteger(n) && n > 0 ? (n % 12 === 0 ? { years: n / 12 } : { months: n }) : null);
+  let m = /^(\d+(?:\.\d+)?)(?:年|Y)$/iu.exec(s);
+  if (m) return toYears(Number(m[1]));
+  m = /^(\d+)(?:か月|ヶ月|カ月|ケ月|月|M)$/iu.exec(s);
+  if (m) return toMonths(Number(m[1]));
+  // 「年4回」「年12回」：12 か月を回数で割る（割り切れるときだけ）
+  m = /^年(\d+)回$/u.exec(s);
+  if (m && Number(m[1]) > 0 && 12 % Number(m[1]) === 0) return toMonths(12 / Number(m[1]));
+  m = /^(\d+(?:\.\d+)?)$/u.exec(s);
+  if (m && headerUnit === "years") return toYears(Number(m[1]));
+  if (m && headerUnit === "months") return toMonths(Number(m[1]));
+  return null;
+}
+
 // ─── 件名の中の機器の名前 ─────────────────────────────────────
 
 const TITLE_WORK = [...new Set(CUES.titleWork.map((w) => nfkc(w)))].sort((a, b) => b.length - a.length);
