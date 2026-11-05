@@ -153,10 +153,10 @@ export const ROUTES = {
     "/human/github-connect-start",
     "github_connect_start",
     16 * 1024,
-    "GitHub につなぐ：台帳の自分の鍵が無ければ作り、OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ）",
+    "GitHub につなぐ：OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ）。台帳に束を出す施設の鍵は、送ったときに保管先の計画のフォルダに書く",
   ),
   githubConnectState: human("/human/github-connect-state", "github_connect_state", 16 * 1024, "GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを状態フォルダに置く（包まない。見張りのフックが AI の読み取りを止める）"),
-  githubDisconnect: human("/human/github-disconnect", "github_disconnect", 16 * 1024, "GitHub との接続を切る（包んだトークンのファイルを消す）"),
+  githubDisconnect: human("/human/github-disconnect", "github_disconnect", 16 * 1024, "GitHub との接続を切る（状態フォルダのトークンのファイルを消す）"),
   readingsRead: human("/human/readings-read", "readings_read", 16 * 1024, "保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む"),
   peersCompare: human("/human/peers-compare", "peers_compare", 64 * 1024, "受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る"),
   // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）

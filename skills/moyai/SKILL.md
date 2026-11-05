@@ -35,7 +35,7 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 似た施設と台帳：peer_reference（place: ledger）で、公開の台帳だけを計画の見え方で読む（人が開かなくてよい。needs が返れば利用者に聞いて answers を添える）。place を省くと、人が星取表で開いた比べを読む。返るのは下限を守った集計と匿名の札だけで、場をまたいで混ぜない。施設を当てようとしない。計画に入れるときは chart_propose で周期の案（set: work.trigger に年数）を置き、basis に ledgerVersion と似た施設の数と帯を書き（費用は書かない）、ledger に ledgerVersion・commonItem・work を添える（似た施設が 5 に届かない行は根拠にできない）。案は人が MERGE の決定のシートで受けて署名するまで決まりません。
 
-渡す：人が MERGE で「署名して渡す」（編集を頼む・承認を頼む）を押すと、intake_survey の handoff に、MOYAI が用意したメールの文（宛先・件名・本文）が入る。利用者が送ってと言ったら、連携したメールから、その文のまま送る（決まり 1 の例外の 1 つめ。中身は版の場所とハッシュだけ）。承認と差し戻しは人が画面で署名する。
+渡す：人が MERGE で「署名して渡す」（編集を頼む・承認を頼む）を押すと、intake_survey の handoff に、MOYAI が用意したメールの文（宛先・件名・本文）が入る。利用者が送ってと言ったら、連携したメールから、その文のまま送る（決まり 1 の例外の 1 つめ。中身は版の場所とハッシュと、リンクの中の使い捨ての合言葉）。承認と差し戻しは人が画面で署名する。
 
 今動くのは intake_survey・intake_settle・intake_compose・chart_rows・crosswalk_propose・chart_propose・photo_transcribe・check_results・peer_reference・reading_rules_propose・reading_skill_register・reading_skills_list です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。
 
