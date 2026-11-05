@@ -27,6 +27,8 @@ node dist/cli.js verify demo-ring
 
 ## 確認済みの鍵について
 
-本物の輪では、仲間の鍵は指紋を電話で読み合わせてから「確認済み」になり、それまでは k に数えず ✗ にします。デモでは読み合わせる相手がいないので、`verify demo-ring` は `demo-ring.json` の鍵を確認済みに数えます（あなたの状態フォルダは読みません）。受けるのは、`demo-ring.json` の輪がコードに書いたデモの輪の ID（`DEMO_RING_ID`）と同じときだけで、違えば終了コード 2 と理由を出します。`moyai verify ring demo-ring` で確かめると、読み合わせていない仲間はすべて「未確認」の ✗ になります。
+本物の輪では、仲間の鍵は指紋を電話で読み合わせてから「確認済み」になり、それまでは k に数えず ✗ にします。デモでは読み合わせる相手がいないので、`verify demo-ring` は `demo-ring.json` の鍵を確認済みに数えます（あなたの状態フォルダは読みません）。受けるのは、`demo-ring.json` の輪がコードに書いたデモの輪の ID（`DEMO_RING_ID`）と同じときだけで、違えば終了コード 2 と理由を出します。
+
+`verify demo-ring` は、リポジトリの `demo-ring/` をそのまま確かめる道具です。`circle.json`・仲間・束・`demo-ring.json` をまとめて差し替えた写しは見分けません（`demo-ring.json` のハッシュをコードに置く直しは、締切のあとにします）。`moyai verify ring demo-ring` で確かめると、読み合わせていない仲間はすべて「未確認」の ✗ になります。
 
 改行の変換を受けないよう、`.gitattributes` で `demo-ring/**` を `-text` にしています（Windows の autocrlf で束のバイト列が変わると、署名とハッシュが ✗ になるため）。
