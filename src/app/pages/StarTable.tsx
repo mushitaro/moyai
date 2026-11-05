@@ -12,6 +12,7 @@ import type { Comparison } from "../../share/receive";
 import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
+import { DUE_TEXT, planDueViews, rowDue, type DueView } from "../../plan/due-view";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
 import { PeerPanel } from "../components/PeerPanel";
@@ -146,6 +147,51 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
   );
 }
 
+/** 今日の日（この PC の暦。次回の計算の基準日） */
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** 行を選んだとき、横の板に出す次回の詳細（docs/screens.md 3.2）。作業が 2 つ以上ある行は作業ごとに */
+function DueSide({ row, due, ix }: { row: ChartRow; due: ReadonlyMap<string, DueView>; ix: Index }) {
+  const views = (row.works ?? []).map((k) => due.get(k)).filter((v): v is DueView => !!v);
+  if (views.length === 0) return null;
+  const S = DUE_TEXT.side;
+  const head = rowDue(row.works, due);
+  const many = views.length > 1;
+  return (
+    <Stack gap={6} data-testid="due-side">
+      {(many ? views : [head!]).map((v) => {
+        const lines: [string, string | null][] = [
+          [S.due, v.text],
+          [S.latest, v.latest],
+          [S.window, v.window],
+          [S.basis, v.basis],
+          [S.origin, v.origin],
+          [S.notes, v.notes || null],
+        ];
+        return (
+          <Stack key={v.workKey} gap={0} className="moyai-num" data-testid="due-work" data-work={v.workKey}>
+            {many && (
+              <Text size="xs" fw={700}>
+                {ix.works.get(v.workKey)?.kind ?? v.workKey}
+              </Text>
+            )}
+            {lines
+              .filter(([, x]) => x !== null)
+              .map(([k, x]) => (
+                <Text key={k} size="sm" data-testid={`due-${k}`}>
+                  {k}　{x}
+                </Text>
+              ))}
+          </Stack>
+        );
+      })}
+    </Stack>
+  );
+}
+
 /** 似た施設の行と統計の行を選んだとき、横の板に出す帯と統計 */
 function PeerSide({ row }: { row: ChartRow }) {
   const name = row.levelCells[row.levelCells.length - 1] ?? "";
@@ -234,6 +280,9 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     return m;
   }, [plan, catalog, mode, period, layer, foldLevel, overlay, collapsed]);
 
+  // 作業ごとの次回の字（計画が変わったときだけ作る）
+  const due = useMemo(() => planDueViews(plan, todayLocal()), [plan]);
+
   const onFold = useCallback(
     (level: number) => {
       performance.mark("moyai-chart-update-start");
@@ -315,8 +364,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   }, [side, mode]);
 
   useEffect(() => {
-    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks);
-  }, [model, foldLevel, band, proposals, compare, commentMarks]);
+    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due);
+  }, [model, foldLevel, band, proposals, compare, commentMarks, due]);
 
   // 見出しで「重ねる」を選ぶと、共通の設備項目の行に替えて比べを開く。「外す」で閉じる
   useEffect(() => {
@@ -360,6 +409,50 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   useEffect(() => {
     sideRef.current?.select(selKey ? { mode, id: selKey, label: selLabel } : null);
   }, [selKey, mode, selLabel]);
+  const sideBody = (
+    <>
+          {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
+            <PeerSide row={selRow} />
+          ) : !selRow || !selPeriod ? (
+            selRow && selRow.kind === "node" && selRow.works ? (
+              <DueSide row={selRow} due={due} ix={ix} />
+            ) : (
+            <Text size="sm" c="dimmed">
+              {T.source.empty}
+            </Text>
+            )
+          ) : (
+            <Stack gap="sm">
+              {selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} />}
+              <Text size="sm" data-testid="source-cell">
+                {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
+              </Text>
+              {selCell?.detailKeys.some((k) => proposals.has(k)) && (
+                <Text size="xs" c="var(--shu)" data-testid="source-proposal">
+                  {T.legend.proposalNote}
+                </Text>
+              )}
+              {selCell?.change && (
+                <Alert color="orange" p="xs">
+                  <Text size="xs" style={{ whiteSpace: "pre-line" }}>
+                    {T.change(
+                      selCell.change.who ?? TEXT.author[selCell.change.author],
+                      selCell.change.reason,
+                      selCell.change.before ? T.markName[selCell.change.before] : T.markNone,
+                      selCell.change.after ? T.markName[selCell.change.after] : T.markRemoved,
+                    )}
+                  </Text>
+                </Alert>
+              )}
+              {(selCell?.detailKeys ?? []).slice(0, DETAILS_MAX).map((k) => {
+                const d = detailsByKey.get(k);
+                return d ? <DetailCard key={k} d={d} ix={ix} /> : null;
+              })}
+              {(selCell?.detailKeys.length ?? 0) > DETAILS_MAX && <Text size="xs">{T.details.more((selCell?.detailKeys.length ?? 0) - DETAILS_MAX)}</Text>}
+            </Stack>
+          )}
+    </>
+  );
   const open = openRow ? model.rows.find((r) => r.id === openRow) : undefined;
   const openDetails = open ? open.detailKeys.map((k) => detailsByKey.get(k)).filter((d): d is WorkDetailT => !!d).sort((a, b) => a.fiscalYear - b.fiscalYear) : [];
 
@@ -522,41 +615,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
           side.el &&
           createPortal(
             <div data-testid="source-panel" aria-label={T.source.title}>
-          {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
-            <PeerSide row={selRow} />
-          ) : !selRow || !selPeriod ? (
-            <Text size="sm" c="dimmed">
-              {T.source.empty}
-            </Text>
-          ) : (
-            <Stack gap="sm">
-              <Text size="sm" data-testid="source-cell">
-                {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
-              </Text>
-              {selCell?.detailKeys.some((k) => proposals.has(k)) && (
-                <Text size="xs" c="var(--shu)" data-testid="source-proposal">
-                  {T.legend.proposalNote}
-                </Text>
-              )}
-              {selCell?.change && (
-                <Alert color="orange" p="xs">
-                  <Text size="xs" style={{ whiteSpace: "pre-line" }}>
-                    {T.change(
-                      selCell.change.who ?? TEXT.author[selCell.change.author],
-                      selCell.change.reason,
-                      selCell.change.before ? T.markName[selCell.change.before] : T.markNone,
-                      selCell.change.after ? T.markName[selCell.change.after] : T.markRemoved,
-                    )}
-                  </Text>
-                </Alert>
-              )}
-              {(selCell?.detailKeys ?? []).slice(0, DETAILS_MAX).map((k) => {
-                const d = detailsByKey.get(k);
-                return d ? <DetailCard key={k} d={d} ix={ix} /> : null;
-              })}
-              {(selCell?.detailKeys.length ?? 0) > DETAILS_MAX && <Text size="xs">{T.details.more((selCell?.detailKeys.length ?? 0) - DETAILS_MAX)}</Text>}
-            </Stack>
-          )}
+{sideBody}
             </div>,
             side.el,
           )
@@ -565,41 +624,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
             <Title order={4} mb="xs">
               {T.source.title}
             </Title>
-          {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
-            <PeerSide row={selRow} />
-          ) : !selRow || !selPeriod ? (
-            <Text size="sm" c="dimmed">
-              {T.source.empty}
-            </Text>
-          ) : (
-            <Stack gap="sm">
-              <Text size="sm" data-testid="source-cell">
-                {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
-              </Text>
-              {selCell?.detailKeys.some((k) => proposals.has(k)) && (
-                <Text size="xs" c="var(--shu)" data-testid="source-proposal">
-                  {T.legend.proposalNote}
-                </Text>
-              )}
-              {selCell?.change && (
-                <Alert color="orange" p="xs">
-                  <Text size="xs" style={{ whiteSpace: "pre-line" }}>
-                    {T.change(
-                      selCell.change.who ?? TEXT.author[selCell.change.author],
-                      selCell.change.reason,
-                      selCell.change.before ? T.markName[selCell.change.before] : T.markNone,
-                      selCell.change.after ? T.markName[selCell.change.after] : T.markRemoved,
-                    )}
-                  </Text>
-                </Alert>
-              )}
-              {(selCell?.detailKeys ?? []).slice(0, DETAILS_MAX).map((k) => {
-                const d = detailsByKey.get(k);
-                return d ? <DetailCard key={k} d={d} ix={ix} /> : null;
-              })}
-              {(selCell?.detailKeys.length ?? 0) > DETAILS_MAX && <Text size="xs">{T.details.more((selCell?.detailKeys.length ?? 0) - DETAILS_MAX)}</Text>}
-            </Stack>
-          )}
+{sideBody}
           </aside>
         )}
       </div>

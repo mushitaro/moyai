@@ -40,7 +40,7 @@ describe("書き出し：人が見る様式の星取表", () => {
     expect(String(ws.getCell(4, 1).value)).toContain("○ 計画");
     const model = buildChart(plan, catalog, EXPORT_TEXT.labels, { mode: "ledger", period: "year", layer: "original", foldLevel: null });
     const head = ws.getRow(6).values as unknown[];
-    expect(head.slice(1)).toEqual([...model.levelNames, ...model.periods.map((p) => `${p.fiscalYear} 年度`)]);
+    expect(head.slice(1)).toEqual([...model.levelNames, ...model.periods.map((p) => `${p.fiscalYear} 年度`), "次回", "期限", "根拠", "備考"]);
   });
 
   it("A3 横・幅を 1 頁・見出しの行をくり返す・段の列と見出しで枠を固定・アウトラインは親が上", async () => {

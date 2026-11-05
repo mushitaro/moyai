@@ -190,6 +190,8 @@ export interface ChartRow {
   stats?: Record<StatField, StatCell>;
   /** 似た施設にだけある行（自分の計画にこの項目 × 作業の属性が無い） */
   ownMissing?: boolean;
+  /** この行の作業（次回の列と横の明細が読む。台帳の段の行は対象にその機器を持つ作業、共通の行は直に載る記録の作業）。作業の無い行は持たない */
+  works?: string[];
 }
 
 export type PlaceKind = "ledger" | "ring";
@@ -499,6 +501,15 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   };
   roots.forEach(collect);
 
+  // 台帳の段の行の作業：対象にその機器を持つ作業（記録が無くても、きっかけがあれば次回が出る）
+  const worksOfAsset = new Map<string, string[]>();
+  if (opts.mode === "ledger") for (const w of plan.works) for (const t of new Set(w.targets)) worksOfAsset.set(t, [...(worksOfAsset.get(t) ?? []), w.workKey]);
+  const ownWorks = (n: Node): string[] => {
+    if (n.kind !== "node") return [];
+    if (opts.mode === "ledger") return worksOfAsset.get(n.id.slice(2)) ?? [];
+    return [...new Set(n.direct.map((x) => x.d.workKey))];
+  };
+
   const rows: ChartRow[] = [];
   const emit = (n: Node, path: (string | null)[]) => {
     const p = path.slice();
@@ -521,12 +532,14 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
     }
     const count = folded ? (subtreeAssets.get(n.id) as Set<string>).size : n.kind === "unmapped" ? (subtreeDetails.get(n.id) as Set<string>).size : null;
     const ownMissing = n.overlay !== undefined && n.direct.length === 0 && n.children.length === 0;
+    const works = ownWorks(n);
     rows.push({
       id: n.id,
       level: n.level,
       parentId: n.parentId,
       kind: n.kind,
       ...(ownMissing ? { ownMissing } : {}),
+      ...(works.length > 0 ? { works } : {}),
       path: Array.from({ length: width }, (_, i) => p[i] ?? null),
       levelCells: [],
       hasChildren,

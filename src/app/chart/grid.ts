@@ -21,6 +21,7 @@ import {
 } from "ag-grid-community";
 import type { ChartCell, ChartModel, ChartRow, Mark, Period } from "../../plan/chart";
 import { changedFrom, oldMark } from "../../plan/chart-compare";
+import { DUE_TEXT, rowDue, type DueView } from "../../plan/due-view";
 import type { StatField } from "../../share/bands";
 import { bandShort, statText } from "../../share/stat-text";
 import { TEXT } from "../text";
@@ -129,6 +130,8 @@ interface GridContext {
   compare: { version: number; before: ReadonlyMap<string, Mark> } | null;
   /** コメントの付いた行（行の鍵 → 番号の字「①②」） */
   comments?: ReadonlyMap<string, string>;
+  /** 作業ごとの次回の字（重-8b） */
+  due?: ReadonlyMap<string, DueView>;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -354,8 +357,29 @@ function bandColumn(f: StatField): ColDef<ChartRow> {
   };
 }
 
+/** 次回の列の字：作業の行だけ。作業の無い行（親の段・未当てはめ・似た施設・統計）は空ける */
+export function dueCellText(row: ChartRow | undefined, due: ReadonlyMap<string, DueView> | undefined): string {
+  if (!row || row.kind !== "node" || !due) return "";
+  return rowDue(row.works, due)?.text ?? "";
+}
+
+/** 次回の列（docs/screens.md 3.2）：行の見出しのすぐ右に細く。左に固定して、年度の列を横に動かしても見える */
+function dueColumn(): ColDef<ChartRow> {
+  return {
+    colId: "next",
+    headerName: DUE_TEXT.col,
+    pinned: "left",
+    lockPinned: true,
+    width: 120,
+    cellClass: "moyai-next moyai-num",
+    headerClass: "moyai-num",
+    valueGetter: (p) => dueCellText(p.data, (p.context as GridContext | undefined)?.due),
+    editable: false,
+  };
+}
+
 function columns(model: ChartModel, foldLevel: number | null, h: GridHandlers, band: StatField): (ColDef<ChartRow> | ColGroupDef<ChartRow>)[] {
-  const out: (ColDef<ChartRow> | ColGroupDef<ChartRow>)[] = levelColumns(model, foldLevel, h);
+  const out: (ColDef<ChartRow> | ColGroupDef<ChartRow>)[] = [...levelColumns(model, foldLevel, h), dueColumn()];
   const monthly = model.periods.some((p) => p.month !== null);
   if (!monthly) {
     // 年だけの表は縦の罫を引かない（どの列も年度の境なので、罫が並んでうるさくなる）
@@ -424,9 +448,9 @@ export class ChartGrid {
   }
 
   /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
-  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null, comments?: ReadonlyMap<string, string>) {
+  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null, comments?: ReadonlyMap<string, string>, due?: ReadonlyMap<string, DueView>) {
     this.mode = model.mode;
-    this.api.setGridOption("context", { proposals, compare, comments } satisfies GridContext);
+    this.api.setGridOption("context", { proposals, compare, comments, due } satisfies GridContext);
     const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band]);
     if (key !== this.colKey) {
       this.colKey = key;

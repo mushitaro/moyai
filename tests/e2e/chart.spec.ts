@@ -264,3 +264,33 @@ test("厚い計画（機器 1,000 余り）の重さを測る", async ({ page },
   expect(fold).toBeLessThan(1000);
   expect(unfold).toBeLessThan(1000);
 });
+
+test("次回の列：作業の行だけに起点の粒度で。行を選ぶと横に次回・根拠・起点・備考（台帳の重-8b）", async ({ page }, info) => {
+  const tag = info.project.name;
+  // fictional-1 の作業を、機器と作業の名前が同じものどうし 1 つにまとめ（試しの計画は 1 回ごとに作業を作るため）、
+  // 「3 年ごと（暦）」のきっかけを置いた見本（試験の中で作る）
+  const p = JSON.parse(planJson.get("fictional-1")!);
+  const first = new Map<string, string>();
+  const to = new Map<string, string>();
+  for (const w of p.works) {
+    const k = `${w.targets.join(",")}|${w.kind}`;
+    if (!first.has(k)) first.set(k, w.workKey);
+    to.set(w.workKey, first.get(k)!);
+  }
+  p.works = p.works.filter((w: { workKey: string }) => to.get(w.workKey) === w.workKey);
+  for (const d of p.details) d.workKey = to.get(d.workKey);
+  for (const w of p.works) w.trigger = { branches: [{ kind: "calendar", years: 3 }], combine: "earliest" };
+  planJson.set("due-1", JSON.stringify(p));
+  await openPlan(page, "due-1");
+  await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='next']")).toHaveText("次回");
+  const crane = page.locator('.ag-row[row-index="2"]');
+  await expect(crane.locator("[col-id='lv2']")).toHaveText("ごみクレーン");
+  await expect(crane.locator("[col-id='next']")).toHaveText(/^(\d{4}-\d{2}-\d{2}|\d{4} 年度)$/);
+  // 1 段目の行（設備）には作業が無いので空ける
+  await expect(page.locator('.ag-row[row-index="0"] [col-id="next"]')).toHaveText("");
+  await crane.locator("[col-id='next']").click();
+  await expect(page.getByTestId("due-side")).toBeVisible();
+  await expect(page.getByTestId("due-side")).toContainText("根拠　暦");
+  await expect(page.getByTestId("due-side")).toContainText("起点　");
+  await page.screenshot({ path: shot(`chart-next-${tag}`) });
+});

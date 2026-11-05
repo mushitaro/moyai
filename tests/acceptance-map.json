@@ -27,8 +27,8 @@
     },
     {
       "name": "cross-layer",
-      "sources": [],
-      "scope": "tests/unit/cross/import-share.test.ts は取り込み → 写し取りの層をまたぐ試験で、きっかけの次回とは別のもの"
+      "sources": [{ "runner": "vitest", "file": "tests/unit/cross/next-due.test.ts" }],
+      "scope": "取り込み（周期の列と ●）→ 計画 → 星取表の行の次回 → Excel の次回の列。暦のきっかけだけ（取り込みは計量値の欄をまだ読まない。運転時間との早い方は tests/unit/plan-next.test.ts と plan-due-view.test.ts の計画の側だけ）"
     },
     {
       "name": "counts",
@@ -67,7 +67,7 @@
     {
       "name": "trigger.property",
       "sources": [{ "runner": "vitest", "file": "tests/property/trigger.test.ts" }],
-      "scope": "計算の関数だけ。取り込んだ実績や計量値の欄から次回を出すところ（cross-layer）は、まだつないでいない"
+      "scope": "計算の関数だけ。取り込んだ実績から次回を出すところは cross-layer。計量値の欄の取り込みは、まだ無い"
     },
     {
       "name": "human-only",
