@@ -226,6 +226,6 @@ describe("見ていない様式の道具の校正：開発用の資料で、開�
       }
 
       console.log(`校正 ${c.facility}：${g.result.files.map((f) => `${f.file} ${f.accuracy?.correct}/${f.accuracy?.total}`).join("、")}・⑥ ${g.result.recovery.together}/${g.result.recovery.denominator}・壊し方 A で落ちた ${fellBy.A}・B で落ちた ${fellBy.B}`);
-    }, 240_000);
+    }, 600_000); // CI では、ほかの重い試験と並ぶと 383 秒かかった（11-05、ubuntu-latest）。上限は測った値に合わせる
   }
 });
