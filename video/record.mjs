@@ -14,6 +14,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..");
 const scene = process.argv[2] ?? "s3";
 const composeOnly = process.argv.includes("--compose-only");
+// --dry：Claude Code を使わず、取り込みだけを MCP の SDK の台本で進める（人の操作の台本を確かめるため。撮る回には使わない）
+const dry = process.argv.includes("--dry");
 const out = join(here, "out", `${scene}.rec`);
 const RIGHT = { width: 1280, height: 1080 };
 const LEFT = { width: 640, height: 1080 };
@@ -48,6 +50,45 @@ async function startBridge(stateDir) {
     child.once("exit", (c) => reject(new Error(`止まった ${c}: ${buf}`)));
   });
   return { base, stop: () => child.kill() };
+}
+
+/** 人：決定のシートで、種類ごとに切り替えて、受けていない決定を全部受ける（「まとめて受ける」は見えている種類だけを受けるため） */
+async function acceptAll(page) {
+  // 版の履歴を読み終えて、行か「ありません」が出るまで待つ（早く数えると 0 と数えて受けずに進む）
+  await page.locator('[data-testid="pending-row"], [data-testid="decisions-none"], [data-testid="crosswalk-rule"]').first().waitFor({ timeout: 20_000 });
+  const open = () => page.locator('[data-testid="pending-row"][data-accepted="false"], [data-testid="crosswalk-rule"][data-state="proposed"]').count();
+  for (let pass = 0; pass < 4 && (await open()) > 0; pass++) {
+    const kinds = page.getByTestId("decisions-kind").locator("button");
+    const n = Math.max(1, await kinds.count());
+    for (let i = 0; i < n; i++) {
+      if ((await kinds.count()) > i && !(await kinds.nth(i).isDisabled())) await kinds.nth(i).click();
+      await page.waitForTimeout(500);
+      const bulk = page.getByTestId("decisions-bulk-accept");
+      await page.getByTestId("decisions-reason").fill(HUMAN);
+      if (await bulk.isEnabled()) await bulk.click();
+      await page.waitForTimeout(800);
+    }
+  }
+  await page.getByTestId("confirm-open").and(page.locator(":not([disabled])")).waitFor({ timeout: 20_000 });
+}
+
+/** --dry のとき：質問に既定の答えを置き、計画を作るところまでを台本が進める */
+async function runScripted(stateDir) {
+  const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+  const { StdioClientTransport } = await import("@modelcontextprotocol/sdk/client/stdio.js");
+  const c = new Client({ name: "moyai-video-dry", version: "0" });
+  await c.connect(new StdioClientTransport({ command: process.execPath, args: [join(repo, "dist/cli.js"), "mcp"], env: { ...process.env, MOYAI_STATE_DIR: stateDir } }));
+  const call = async (name, args = {}) => (await c.callTool({ name, arguments: args })).structuredContent;
+  mark("claude-start", { cmd: "（試し：台本が Claude の代わり。撮る回には使わない）" });
+  for (let round = 0; round < 15; round++) {
+    const q = await call("intake_survey", { part: "questions" });
+    if (!q?.questions?.length) break;
+    await call("intake_settle", { decisions: q.questions.map((x) => ({ questionId: x.questionId, answer: x.defaultAnswer, author: "ai_relayed_human", reason: "利用者がチャットで、既定の答えでよいと答えた" })) });
+  }
+  await call("intake_compose");
+  for (let i = 0; i < 100; i++) { if ((await call("intake_survey", { part: "compose" }))?.compose?.state !== "running") break; await new Promise((r) => setTimeout(r, 300)); }
+  await c.close();
+  mark("claude-end", { code: 0 });
 }
 
 /** 本物の Claude Code を端末なしで動かし、stream-json の 1 行ごとに受け取った時刻を付けて残す */
@@ -113,15 +154,13 @@ async function capture() {
     await page.getByTestId("dest-file").nth(files.length - 1).waitFor({ timeout: 20_000 });
 
     // Claude（本物）：取り込み → 計画 → 当てはめの案
-    await runClaude(stateDir, work);
+    if (dry) await runScripted(stateDir);
+    else await runClaude(stateDir, work);
 
     // 人：決定のシートで受ける → 星取表（共通の設備項目 × 作業の属性）→ 署名して確定
     mark("human", { what: "決定のシートで受ける" });
     await page.getByTestId("sheet-decisions").click();
-    await page.waitForTimeout(1500);
-    await page.getByTestId("decisions-reason").fill(HUMAN);
-    await page.getByTestId("decisions-bulk-accept").click();
-    await page.waitForTimeout(1000);
+    await acceptAll(page);
     mark("human", { what: "星取表を見る" });
     await page.getByTestId("sheet-chart").click();
     await page.getByTestId("rows-mode").getByText("共通の設備項目 × 作業の属性").click();
