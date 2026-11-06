@@ -41,16 +41,16 @@ describe("周期の案", () => {
     // 終わりの年度は 2036。w1：最後の実施が 2036 なので、その先は引けない（noHorizon）
     // w2：最後の実施 2030 → 2035 に置く。w3：実施が無いので置かない（noActual）
     expect(c).toMatchObject({ id: "L1", years: 5, works: 3, skipped: { noActual: 1, noHorizon: 1 } });
-    expect(c!.detailKeys).toEqual(["cy-L1-w2-2035"]);
-    const added = r.plan.details.find((d) => d.detailKey === "cy-L1-w2-2035")!;
+    expect(c!.detailKeys).toEqual(["cy-L1-5y-w2-2035"]);
+    const added = r.plan.details.find((d) => d.detailKey === "cy-L1-5y-w2-2035")!;
     expect(added).toMatchObject({ planOrActual: "plan", fiscalYear: 2035, author: "ai", sources: [{ file: LEDGER_SOURCE }] });
     expect(added.basis).toContain("公開の台帳（版 abc1234）・似た施設 6");
     expect(added.basis).toContain("5 年ごと");
     // 前の明細はそのまま（足すだけ）
     expect(r.plan.details.slice(0, p.details.length)).toEqual(p.details);
     // 決定は明細ごとに出るが、案の ID でまとめられる
-    expect(pendingDecisions(r.plan, []).filter((d) => d.id === "detail:cy-L1-w2-2035")).toHaveLength(1);
-    expect(cycleIdOf("cy-L1-w2-2035")).toBe("L1");
+    expect(pendingDecisions(r.plan, []).filter((d) => d.id === "detail:cy-L1-5y-w2-2035")).toHaveLength(1);
+    expect(cycleIdOf("cy-L1-5y-w2-2035")).toBe("L1");
     expect(cycleIdOf("d1")).toBeNull();
   });
 
@@ -71,15 +71,15 @@ describe("周期の案", () => {
   it("台帳を照らしていない案は、出どころを会話に、作者を会話から写した答えか Claude の決定にする（台帳の中-5 の残り）", () => {
     const r = proposeCycles(base(), [rule(5, ["誘引通風機"])], { nextId: () => "C1", basis: "利用者が「5 年ごと」と言った", fromLedger: false, author: "ai_relayed_human" });
     if (!r.ok) throw new Error(r.code);
-    const d = r.plan.details.find((x) => x.detailKey === "cy-C1-w2-2035")!;
+    const d = r.plan.details.find((x) => x.detailKey === "cy-C1-5y-w2-2035")!;
     expect(d).toMatchObject({ author: "ai_relayed_human", sources: [{ file: CONVERSATION_SOURCE }] });
     expect(isLedgerCycle("C1")).toBe(false);
     expect(isLedgerCycle("L1")).toBe(true);
     // 決定のシートでは「会話から写した答え」の決定として並ぶ（人が受けるまで決まらない）
-    expect(pendingDecisions(r.plan, []).find((x) => x.id === "detail:cy-C1-w2-2035")).toMatchObject({ author: "ai_relayed_human" });
+    expect(pendingDecisions(r.plan, []).find((x) => x.id === "detail:cy-C1-5y-w2-2035")).toMatchObject({ author: "ai_relayed_human" });
     // 台帳を照らした案は、作者を指定しても Claude の決定で、出どころは台帳
     const l = proposeCycles(base(), [rule(5, ["誘引通風機"])], { nextId: () => "L1", basis: "台帳", fromLedger: true, author: "ai_relayed_human" });
     if (!l.ok) throw new Error(l.code);
-    expect(l.plan.details.find((x) => x.detailKey === "cy-L1-w2-2035")).toMatchObject({ author: "ai", sources: [{ file: LEDGER_SOURCE }] });
+    expect(l.plan.details.find((x) => x.detailKey === "cy-L1-5y-w2-2035")).toMatchObject({ author: "ai", sources: [{ file: LEDGER_SOURCE }] });
   });
 });

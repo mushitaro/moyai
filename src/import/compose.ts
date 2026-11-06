@@ -347,23 +347,27 @@ export function compose(
   const jobSources = (j: Job) => j.units.flatMap(eventSources);
   /** 作業明細（日報の 1 行ずつ。足し上げる前の行）。日付の順。行が無ければ省く */
   // 読めない日付は null（推し量らない）。日付がその年度の外の行は、日付を null にして印を付ける（Architect の 43 の 3）
+  // 計画中の行（行ごとの予定・実績の列が計画）は作業明細に入れない（実績の行だけ。Architect の 53）
   const linesOf = (events: readonly EventRec[], fy: number | null) => {
-    const ls = events.map((e) => {
+    const ls = events.filter((e) => e.planOrActual !== "plan").map((e) => {
       const date = e.date ? ymdString(e.date) : null;
       const outOfYear = !!e.date && fy !== null && fiscalYearOf(e.date, opts.facility.fiscalYearStartMonth) !== fy;
       return {
         date: outOfYear ? null : date,
         content: [e.workTitle, e.workName].filter((x): x is string => !!x && x.trim() !== "").join(" "),
-        quantity: null,
+        quantity: e.quantity ?? null,
         manDays: e.manDays,
         days: e.days,
         source: refOf(e.file, e.sheet, e.refs[0] ?? ""),
+        ...(e.lineRemark ? { remark: e.lineRemark } : {}),
         ...(e.effortExcluded ? { flag: "effortExcluded" as const } : outOfYear ? { flag: "outOfYear" as const } : {}),
       };
     });
     ls.sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
     return ls.length ? { lines: ls } : {};
   };
+  /** 日報の行から作る年度の値の計画・実績：どの行も計画中なら計画、ほかは実績（Architect の 53。計画中の行を次回の起点にしない） */
+  const planOrActualOf = (events: readonly EventRec[]): "plan" | "actual" => (events.length > 0 && events.every((e) => e.planOrActual === "plan") ? "plan" : "actual");
   const okCluster = (c: Cluster | undefined): c is Cluster => !!c && !c.pending && !c.excluded;
   const linksOfMark = new Map<MarkRec, WorkLink[]>();
   for (const l of lk.links) if (l.mode === "mark" && l.mark) linksOfMark.set(l.mark, [...(linksOfMark.get(l.mark) ?? []), l]);
@@ -446,11 +450,12 @@ export function compose(
     return b ? bundleWork(b) : null;
   };
   /** 費用：候補の費用がどれも同じ値のときだけ（資料をまたいで違えば決めつけず置かない）。印の作業明細はその印の行の費用 */
-  const costOfUnits = (m: MarkRec | null, events: readonly EventRec[], file: (x: MarkRec | EventRec) => { file: string; sheet: string | null }) => {
+  // 実績の年度の値には、計画としてだけ読む費用（予定・見積の列。Architect の 45）を置かない
+  const costOfUnits = (m: MarkRec | null, events: readonly EventRec[], file: (x: MarkRec | EventRec) => { file: string; sheet: string | null }, pa: "plan" | "actual") => {
     const cands: { cost: CostCell; at: { file: string; sheet: string | null } }[] = [
       ...(m?.cost ? [{ cost: m.cost, at: file(m) }] : []),
       ...events.flatMap((e) => (e.cost ? [{ cost: e.cost, at: file(e) }] : [])),
-    ];
+    ].filter((x) => !(pa === "actual" && x.cost.planOnly));
     const pick = m?.planOrActual === "plan" && m.cost ? [{ cost: m.cost, at: file(m) }] : cands;
     if (!pick.length || new Set(pick.map((x) => x.cost.yen)).size !== 1) return { cost: null };
     const x = pick[0]!;
@@ -471,12 +476,12 @@ export function compose(
     addDetail(
       {
         workKey: wk,
-        planOrActual: m ? (m.planOrActual ?? "actual") : "actual",
+        planOrActual: m ? (m.planOrActual ?? "actual") : planOrActualOf(j.units.flatMap((u) => u.events)),
         step: null,
         startDate: r.start,
         endDate: r.end,
         fiscalYear: m ? m.fiscalYear : j.fiscalYear,
-        ...costOfUnits(m, j.units.flatMap((u) => u.events), at),
+        ...costOfUnits(m, j.units.flatMap((u) => u.events), at, m ? (m.planOrActual ?? "actual") : planOrActualOf(j.units.flatMap((u) => u.events))),
         ...linesOf(j.units.flatMap((u) => u.events), m ? m.fiscalYear : j.fiscalYear),
         manDays: v.manDays,
         days: v.days,
@@ -514,7 +519,7 @@ export function compose(
           startDate: null,
           endDate: null,
           fiscalYear: m.fiscalYear,
-          ...costOfUnits(m, [], at),
+          ...costOfUnits(m, [], at, m.planOrActual ?? "actual"),
           manDays: null,
           days: null,
           resultScale: null,
@@ -577,12 +582,12 @@ export function compose(
       addDetail(
         {
           workKey: parent,
-          planOrActual: "actual",
+          planOrActual: planOrActualOf(members.flatMap((u) => u.events)),
           step: null,
           startDate: r.start,
           endDate: r.end,
           fiscalYear: root.fiscalYear,
-          ...costOfUnits(null, members.flatMap((u) => u.events), at),
+          ...costOfUnits(null, members.flatMap((u) => u.events), at, planOrActualOf(members.flatMap((u) => u.events))),
           ...linesOf(members.flatMap((u) => u.events), root.fiscalYear),
           manDays: md.v,
           days: dy.v,

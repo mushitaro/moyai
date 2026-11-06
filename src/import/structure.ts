@@ -85,6 +85,8 @@ export interface ColInfo {
   ruleExclude?: string;
   /** 1 つの列に、いくつかの欄をまとめて書いた見出し（「号炉・系統・機器・作業内容」）の、手がかりの語の並び */
   compound?: ColumnCue[];
+  /** 読み方の規則がこの列に効かなかった・読み手の読み方を止めたこと（要約の注記に出す） */
+  ruleNotes?: string[];
 }
 
 export interface LegendEntry {
@@ -356,7 +358,17 @@ function ruleForColumn(ctx: BuildCtx, col: ColInfo, dataRows: number[]): void {
     if ((r.kind !== "columnRole" && r.kind !== "dateFormat" && r.kind !== "effortUnit") || !sameColumn(col.header, r.column)) continue;
     if (r.kind === "dateFormat" && !col.dateFormat) col.dateFormat = r.format;
     if (r.kind === "effortUnit" && !col.effortUnit) col.effortUnit = r.unit;
-    if (r.kind === "columnRole" && !(col as ColInfo & { forced?: string }).forced) (col as ColInfo & { forced?: string }).forced = r.role;
+    if (r.kind === "columnRole") {
+      const c = col as ColInfo & { forced?: string; forcedBy?: string };
+      if (!c.forced) {
+        c.forced = r.role;
+        c.forcedBy = r.id;
+      } else if (c.forced !== r.role) {
+        // 同じ列の 2 つ目の役目の規則は効かない（効いたセルにも数えない）。黙って捨てず、要約の注記に出す
+        (col.ruleNotes ??= []).push(`「${col.header.replace(/\s*\n\s*/g, "")}」の列に役目の規則が 2 つある。効いたのは先の規則「${c.forcedBy}」（${c.forced}）で、規則「${r.id}」（${r.role}）は効いていない（1 つの列に効く役目は 1 つ）`);
+        continue;
+      }
+    }
     for (const row of dataRows) {
       const x = ctx.idx.at(row, col.c);
       if (x && x.text !== "") ctx.hits?.add(r, ctx.file, x.ref);
@@ -371,6 +383,9 @@ function seriesValues(cs: GridCell[]): boolean {
   return own.length > 0 && ratio(own.filter((x) => /^\d{1,3}$/.test(norm(x.text)) || parseUnit(x.text) !== null).length, own.length) >= 0.8;
 }
 
+/** 金額らしい列か（見出しに額・価格・費、中身に円・¥）。役目の決まらない列の問いで、見本の字を伏せるのに使う */
+const moneyLike = (header: string, cs: readonly GridCell[]): boolean => /額|価格|費/u.test(header) || cs.some((x) => /[円¥￥]/u.test(x.text));
+
 /** 作業の表の、役目の決まらない列の問いの選択肢（どの役目にも答えられるように。既定は備考） */
 export const COLUMN_ROLE_OPTIONS: { id: string; label: string }[] = [
   { id: "remark", label: "備考として根拠の文に添える" },
@@ -381,6 +396,8 @@ export const COLUMN_ROLE_OPTIONS: { id: string; label: string }[] = [
   { id: "end", label: "日付（終わり）" },
   { id: "days", label: "日数" },
   { id: "effort", label: "工数" },
+  // 費用の列（Architect の 46）：見本では字を伏せ、作業の年度の値の費用に読む
+  { id: "cost", label: "費用" },
   { id: "exclude", label: "外す" },
 ];
 
@@ -580,6 +597,11 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     const cs = dataCellsOf(ctx, dataRows, col.c);
     // 読み方の規則で決めた役目（外すは理由つきで外す）
     const forced = forcedOf(col);
+    // 読み手が自分で分けて読む列（号炉・機器・作業を 1 つのセルに書いた列）に、規則で役目を置いた：分けて読む読み方を止めたことを、要約の注記に出す
+    if (forced && shape === "events" && compoundCues(col.headerParts[0] ?? ""))
+      (col.ruleNotes ??= []).push(
+        `「${col.header.replace(/\s*\n\s*/g, "")}」の列は、読み手が見出しの順に号炉・機器・作業に分けて読む列だが、規則「${(col as ColInfo & { forcedBy?: string }).forcedBy ?? ""}」で役目を「${forced}」に決めたので、分けて読んでいない（この規則を外すと、読み手が分けて読む）`,
+      );
     if (forced) {
       if (forced === "exclude") {
         col.role = "remark";
@@ -648,8 +670,8 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
           pattern: `col:${col.c}`,
           rows: [],
           cells: cs.slice(0, 10).map((x) => x.ref),
-          // 見出しの無い列でも答えられるように、中身の見本と、表の行の範囲を添える
-          detail: `列 ${colLetter(col.c)}（見出し「${col.header || "なし"}」・中身の見本 ${[...new Set(cs.map((x) => x.text.replace(/\s+/g, " ").trim().slice(0, 20)))].slice(0, 3).map((t) => `「${t}」`).join("")}・表の ${dataRows[0] ?? top}〜${dataRows[dataRows.length - 1] ?? top} 行目）の役目が決まらない`,
+          // 見出しの無い列でも答えられるように、中身の見本と、表の行の範囲を添える。金額らしい列（見出しに額・価格・費、中身に円）は見本を伏せる（Architect の 46。費用の値を AI に渡さない）
+          detail: `列 ${colLetter(col.c)}（見出し「${col.header || "なし"}」・中身の見本 ${moneyLike(col.header, cs) ? "（費用）" : [...new Set(cs.map((x) => x.text.replace(/\s+/g, " ").trim().slice(0, 20)))].slice(0, 3).map((t) => `「${t}」`).join("")}・表の ${dataRows[0] ?? top}〜${dataRows[dataRows.length - 1] ?? top} 行目）の役目が決まらない`,
           proposal: "remark",
           options: COLUMN_ROLE_OPTIONS,
         });

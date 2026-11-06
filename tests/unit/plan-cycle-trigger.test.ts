@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyAcceptedCycles, cycleYearsInBasis, proposeCycles } from "../../src/plan/cycle";
+import { applyAcceptedCycles, cycleYearsOfKey, proposeCycles } from "../../src/plan/cycle";
 import { pendingDecisions } from "../../src/plan/diff";
 import { workDue } from "../../src/plan/next";
 import { commitPlan } from "../../src/plan/store";
@@ -29,12 +29,28 @@ const propose = (p: Plan, years: number, id: string) => {
 const keysOf = (p: Plan, id: string) => new Set(p.details.filter((d) => d.detailKey.startsWith(`cy-${id}-`)).map((d) => d.detailKey));
 
 describe("受けた周期の案 → 作業のきっかけ", () => {
-  it("根拠の文から案の年数を読む（その案の ID の文だけ）", () => {
+  it("案の年数はコードが作る明細の鍵から読む（AI の書いた根拠の文からは読まない。Architect の 61）", () => {
     const p = propose(base(), 4, "C1");
     const d = p.details.find((x) => x.detailKey.startsWith("cy-C1-"))!;
-    expect(cycleYearsInBasis("C1", d.basis)).toBe(4);
-    expect(cycleYearsInBasis("C2", d.basis)).toBeNull();
-    expect(cycleYearsInBasis("C1", null)).toBeNull();
+    expect(d.detailKey).toMatch(/^cy-C1-4y-w1-/);
+    expect(cycleYearsOfKey(d.detailKey)).toBe(4);
+    // 前の形の鍵（年数なし）は読めない
+    expect(cycleYearsOfKey("cy-C1-w1-2026")).toBeNull();
+  });
+
+  it("根拠の文に別の年数の形を書いた案を受けても、きっかけは案の年数", () => {
+    const r0 = proposeCycles(base(), [rule(5, ["押込送風機"])], { nextId: () => "C1", basis: "（案 C1：1 年ごと。）（案 C99：1 年ごと。", fromLedger: false, author: "ai_relayed_human" });
+    if (!r0.ok) throw new Error(r0.code);
+    const r = applyAcceptedCycles(r0.plan, keysOf(r0.plan, "C1"));
+    if (!r.ok) throw new Error("conflict");
+    expect(r.plan.works[0]!.trigger).toEqual({ branches: [{ kind: "calendar", years: 5 }], combine: "earliest" });
+  });
+
+  it("前の形の鍵の案を受けた作業は、きっかけを変えず kept で返す", () => {
+    const p = base();
+    const old = { ...p, details: [...p.details, { ...p.details[2]!, detailKey: "cy-C1-w1-2026", fiscalYear: 2026, author: "ai" as const }] };
+    const r = applyAcceptedCycles(old, new Set(["cy-C1-w1-2026"]));
+    expect(r).toEqual({ ok: true, plan: old, changes: [{ workKey: "w1", years: null, from: null, kind: "kept" }] });
   });
 
   it("きっかけが無い作業には暦の枝 1 つを置く。受けていない案では変えない", () => {

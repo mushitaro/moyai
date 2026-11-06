@@ -53,9 +53,11 @@ describe("ToolRelay", () => {
     const V = "abcdef012345";
     let head: string | null = V;
     const sent: string[] = [];
+    const sentArgs: Record<string, unknown>[] = [];
     const tab = {
-      callTool: async (name: string) => {
+      callTool: async (name: string, args: Record<string, unknown>) => {
         sent.push(name);
+        sentArgs.push(args);
         if (name === "peer_reference") return { kind: "ok", data: { mode: "ledger" } };
         return { kind: "ok", data: { matched: 2, conflicts: 0, examples: [], proposals: [], version: 1 } };
       },
@@ -76,6 +78,8 @@ describe("ToolRelay", () => {
     await relay.run("peer_reference", { place: "ledger" }, "c1");
     // 似た施設 6（中央の帯）なら渡す。4（幅の帯）・読んでいない項目・違う版は渡さない
     expect(code(await propose("WI.A"))).toBe("ok");
+    // 照らした集計（似た施設の数・帯）を作業画面に渡す（Architect の 52。AI の書いた数は使わない）
+    expect((sentArgs.at(-1)!.ledger as { checked: unknown }).checked).toEqual({ n: 6, median: "I3", q1: "I2", q3: "I4" });
     expect(code(await propose("WI.B"))).toBe("ledger_basis_unchecked");
     expect(code(await propose("WI.C"))).toBe("ledger_basis_unchecked");
     expect(code(await propose("WI.A", "000000000000"))).toBe("ledger_basis_unchecked");

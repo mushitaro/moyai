@@ -330,7 +330,9 @@ function eqOfNodeFn(plan: Plan, ix: Index) {
     const a = byKey.get(k);
     if (!a) return null;
     for (const [eq, ps] of places) if (ps.some((p) => p.at && a.sources.some((s) => hits(s, p.item.file, p.at!)))) return eq;
-    return null;
+    // 台帳も星取表も無い組（機器の記録の行が正解に無い）：日報の名前から作った機器は、出どころの行の正解の機器（1 つに決まるときだけ）
+    const eqs = new Set(ix.events.filter((p) => p.at && a.sources.some((s) => hits(s, p.item.file, p.at!))).flatMap((p) => p.item.equipment_ids));
+    return eqs.size === 1 ? ([...eqs][0] ?? null) : null;
   };
 }
 

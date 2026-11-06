@@ -11,7 +11,7 @@ import { getCurrentReadings, subscribeCurrentReadings } from "./readings";
 
 let seq = 0;
 
-export type CyclesOutcome = { ok: true; plan: Plan; proposals: CycleProposal[]; version: number } | { ok: false; code: "no_working_plan" | "stale_version" | "tool_failed" };
+export type CyclesOutcome = { ok: true; plan: Plan; proposals: CycleProposal[]; version: number } | { ok: false; code: "no_working_plan" | "stale_version" | "tool_failed" | "ledger_basis_mismatch" };
 
 export function proposeCyclesFromAi(
   rules: Rule[],
@@ -30,7 +30,7 @@ export function proposeCyclesFromAi(
     ...(o.author ? { author: o.author } : {}),
     ...(o.verified ? { verified: o.verified } : {}),
   });
-  if (!r.ok) return { ok: false, code: "tool_failed" };
+  if (!r.ok) return { ok: false, code: r.code === "ledger_basis_mismatch" ? r.code : "tool_failed" };
   const next = updateWorkingPlan(r.plan, working.proposals);
   // 計画ルールの案が続けて出し直されると版が進むので、返す版は今の版（AI が次に置くときに合うように）
   return { ok: true, plan: getWorkingPlan()?.plan ?? r.plan, proposals: r.proposals, version: getWorkingPlan()?.revision ?? next?.revision ?? working.revision };

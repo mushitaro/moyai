@@ -103,6 +103,8 @@ export const WorkDetail = z.object({
           manDays: z.number().nullable(),
           days: z.number().nullable(),
           source: SourceRef,
+          /** その行の備考（日報の備考の列など）。当施設の画面だけに出し、共有ファイル・台帳・AI の結果には出さない（Architect の 54） */
+          remark: z.string().nullable().optional(),
           /** 和が年度の値と合わない理由の印：effortExcluded＝決定で工数を外した行、outOfYear＝日付がその年度の外（日付は null にする） */
           flag: z.enum(["effortExcluded", "outOfYear"]).optional(),
         })

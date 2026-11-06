@@ -51,6 +51,14 @@ function codeOf(prefix: string, lo: number, hi: number): string {
   return hi - lo === 1 ? `${prefix}${lo}` : `${prefix}${lo}_${hi - 1}`;
 }
 
+/** 帯のコード（「I5」「I6_7」「W1000P」）の値の幅（両端を含む。上が開いていれば hi は Infinity）。読めなければ null */
+export function bandSpan(code: string): { lo: number; hi: number } | null {
+  const m = /^[A-Z]([0-9]+)(?:_([0-9]+)|(P))?$/.exec(code);
+  if (!m) return null;
+  const lo = Number(m[1]);
+  return { lo, hi: m[3] ? Infinity : m[2] ? Number(m[2]) : lo };
+}
+
 /** 値の帯のコード。帯の外なら null。 */
 export function bandOf(def: BandDef, value: number, edges: readonly number[] = def.edges): string | null {
   if (!Number.isFinite(value)) return null;

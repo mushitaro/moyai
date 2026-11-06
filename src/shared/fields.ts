@@ -12,6 +12,8 @@ export interface FieldDef {
   values?: readonly string[];
   /** 共有で欄ごと出さないもの（費用・人など） */
   neverShared?: true;
+  /** 規則の欄（FIELD_REFS）に入れないもの：中身が組や一覧で、規則の比べ方が効かない欄（Architect の 47） */
+  noRule?: true;
 }
 
 /**
@@ -57,11 +59,13 @@ export const ENTITIES = {
       commonItem: f("共通の設備項目", "code"),
       commonItemAuthor: f("当てはめの作者", "enum", { values: AUTHOR_KINDS }),
       commonItemBasis: f("当てはめの根拠", "text"),
+      commonItemAccepted: f("当てはめを人が確定したか", "flag"),
       specs: f("仕様", "list"),
       installedOn: f("設置", "date"),
       removedOn: f("撤去", "date"),
       replacedOn: f("取替", "date"),
       series: f("系列", "code"),
+      sources: f("元の資料", "list", { noRule: true }),
     },
   },
   work: {
@@ -72,6 +76,7 @@ export const ENTITIES = {
       attribute: f("作業の属性", "enum", { values: WORK_ATTRIBUTES }),
       attributeAuthor: f("作業の属性の当てはめの作者", "enum", { values: AUTHOR_KINDS }),
       attributeBasis: f("作業の属性の当てはめの根拠", "text"),
+      attributeAccepted: f("作業の属性の当てはめを人が確定したか", "flag"),
       strategy: f("保全方式", "enum", { values: ["time_based", "condition_based", "corrective"] }),
       targets: f("対象の資産", "list"),
       trigger: f("きっかけ", "text"),
@@ -93,26 +98,28 @@ export const ENTITIES = {
       endDate: f("終了日", "date"),
       fiscalYear: f("年度", "fiscalYear"),
       cost: f("費用", "number", { neverShared: true }),
-      hours: f("工数", "number"),
+      costSource: f("費用の元の資料", "text", { neverShared: true, noRule: true }),
+      manDays: f("工数（人日）", "number"),
+      days: f("日数", "number"),
       resultScale: f("判定の尺度", "code"),
       resultValue: f("判定の値", "text"),
       measuredValue: f("測った値", "text"),
       previousValue: f("前回の値", "text"),
       performer: f("実施者", "text", { neverShared: true }),
-      source: f("出どころ", "text"),
+      sources: f("元の資料", "list", { noRule: true }),
+      lines: f("作業明細", "list", { neverShared: true, noRule: true }),
       basis: f("根拠", "text"),
       author: f("作者", "enum", { values: AUTHOR_KINDS }),
+      needsReview: f("要確認", "flag", { noRule: true }),
     },
   },
   meter: {
     label: "計量値",
     fields: {
-      meterKey: f("計量の鍵", "code"),
-      target: f("資産か施設", "code"),
+      nodeKey: f("資産の節", "code"),
+      meter: f("計量値の名前", "code"),
       date: f("日付", "date"),
       value: f("値", "number"),
-      unit: f("単位", "code"),
-      suspect: f("疑い", "flag"),
     },
   },
 } as const satisfies Record<string, { label: string; fields: Record<string, FieldDef> }>;
@@ -125,7 +132,9 @@ export type FieldRef = {
 }[EntityId];
 
 export const FIELD_REFS = Object.entries(ENTITIES).flatMap(([e, def]) =>
-  Object.keys(def.fields).map((k) => `${e}.${k}`),
+  Object.entries(def.fields as Record<string, FieldDef>)
+    .filter(([, d]) => !d.noRule)
+    .map(([k]) => `${e}.${k}`),
 ) as FieldRef[];
 
 export function fieldDef(ref: FieldRef): FieldDef {
