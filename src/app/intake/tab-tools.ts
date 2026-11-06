@@ -4,7 +4,17 @@
 // 当てはめ（crosswalk_propose）は規則で案を置くだけで、数と行の参照だけを返す。人が受ける道はここに無い（画面だけ）。
 // 写真（photo_transcribe）は、人が画面で許した写真の画像を 1 回だけ添えて返す（intake/photos.ts）。許す・確かめる道はここに無い。
 import type { TabSentCode } from "../../shared/errors";
-import { SKILL_CATALOG_TOOLS, toolDef, type PhotoCellIn, type PhotoImage, type Rule, type ToolName } from "../../shared/tools";
+import {
+  SKILL_CATALOG_TOOLS,
+  intakeAddFilesFromTabSchema,
+  intakeAddFilesToTabSchema,
+  toolDef,
+  type IntakeAddFilesFromTab,
+  type PhotoCellIn,
+  type PhotoImage,
+  type Rule,
+  type ToolName,
+} from "../../shared/tools";
 import { activeSkills, skillCatalog } from "../skills";
 import { getHandoffMail } from "../state/handoff";
 import { buildChart } from "../../plan/chart";
@@ -21,7 +31,8 @@ import { peerAggregates } from "../../share/peer-reference";
 import { checkResultsOf, getReferenceDate, packCheckOf } from "../state/review";
 import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
-import type { IntakeWorkspace } from "./workspace";
+import { sheetHash } from "../stages";
+import type { DroppedFile, IntakeWorkspace } from "./workspace";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -267,12 +278,77 @@ export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<
   return r;
 }
 
+/** 資料の中身を取りに行く手（橋渡しの経路 tabIntakeFile。BridgeClient.fetchIntakeFile。試験は差し替える） */
+export type FetchIntakeFile = (fileId: string) => Promise<Uint8Array | null>;
+
+/** 作業画面にある資料の名前と件数（取り込みの資料はシートと行の数、写真の欄の画像は null） */
+function namesIn(ws: IntakeWorkspace): Map<string, { sheets: number | null; rows: number | null }> {
+  const m = new Map<string, { sheets: number | null; rows: number | null }>();
+  for (const f of ws.survey().files) m.set(f.fileRef, { sheets: f.sheets, rows: f.rows });
+  for (const e of ws.photoBook.entries()) if (!m.has(e.input.name)) m.set(e.input.name, { sheets: null, rows: null });
+  return m;
+}
+
+/**
+ * intake_add_files の作業画面の側（受け手の種類は bridge_then_tab）：橋渡しが選んだ資料を、資料の印で 1 つずつ取りに行き、
+ * 人が落とした資料と同じ道（workspace の addFiles と、【架空】の印を見て架空にすること）で取り込む。
+ * 返すのは、入れた資料の名前と件数（シートと行の数）、断った資料の名前と理由だけ（セルの値・文字は返さない。安全の決まり 3）。
+ * デモの資料は、架空でない資料やほかのパックの資料と混ぜない。パックと施設の名前が空なら、デモのものにする。
+ */
+export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<string, unknown>, fetchFile: FetchIntakeFile): Promise<TabToolResult> {
+  const p = intakeAddFilesToTabSchema.safeParse(rawArgs);
+  if (!p.success) return { ok: false, code: "tool_failed" };
+  const a = p.data;
+  const demo = a.source === "demo";
+  if (demo) {
+    const otherPack = !!ws.settings.packId && !!a.pack && ws.settings.packId !== a.pack;
+    if (otherPack || (ws.fileCount > 0 && !ws.settings.fictional)) {
+      ws.note("ai", T.demoMixed);
+      return { ok: false, code: "intake_demo_mixed" };
+    }
+    if (!ws.settings.packId && a.pack) ws.setFacility({ packId: a.pack });
+    if (!ws.settings.facilityName.trim() && a.facilityName) ws.setFacility({ facilityName: a.facilityName });
+  }
+  const before = namesIn(ws);
+  const refused: IntakeAddFilesFromTab["refused"] = [];
+  const got: (DroppedFile & { name: string })[] = [];
+  for (const f of a.files) {
+    const bytes = await fetchFile(f.fileId);
+    if (!bytes || bytes.length !== f.size) refused.push({ name: f.name, reason: "changed" });
+    else got.push({ name: f.name, size: bytes.length, bytes: async () => bytes });
+  }
+  if (got.length) {
+    await ws.addFiles(got);
+    if (!ws.settings.fictional && ws.sourcesMarkedFictional()) ws.setFacility({ fictional: true });
+  }
+  const after = namesIn(ws);
+  const added: IntakeAddFilesFromTab["added"] = [];
+  for (const f of got) {
+    const x = after.get(f.name);
+    if (x && !before.has(f.name)) added.push({ name: f.name, sheets: x.sheets, rows: x.rows });
+    else refused.push({ name: f.name, reason: before.has(f.name) ? "same_name" : ws.skippedFiles.some((s) => s.file === f.name) ? "too_large" : "unreadable" });
+  }
+  ws.note("ai", T.filesAdded(demo, added.length, refused.length));
+  // 人が資料を落としたときと同じに、資料のシートへ移る（画面は AI の作業を追う）
+  if (added.length && typeof location !== "undefined") location.hash = sheetHash("files");
+  const data = { added, refused };
+  return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
+}
+
+/** 受け手の種類が bridge_then_tab のツールの、作業画面の側の受け手（中身を取りに行くので、答えを待つ） */
+export const TAB_ASYNC_TOOL_RECEIVERS: Partial<Record<ToolName, (ws: IntakeWorkspace, args: Record<string, unknown>, fetchFile: FetchIntakeFile) => Promise<TabToolResult>>> = {
+  intake_add_files: addFilesFromBridge,
+};
+
 /** 橋渡しとの接続に、このタブの作業場を AI のツールの受け手としてつなぐ（App が 1 回だけ呼ぶ） */
 export function connectTabTools(client: BridgeClient, ws: IntakeWorkspace): void {
   // 計画ルールの案（R）：作業中の計画か当てているルールが変わるたびに出し直す
   watchPlanRules();
   client.setToolHandlers({
-    call: async (name, args, ctx) => runTabTool(ws, name, args, ctx),
+    call: async (name, args, ctx) => {
+      const later = TAB_ASYNC_TOOL_RECEIVERS[name];
+      return later ? later(ws, args, (id) => client.fetchIntakeFile(id)) : runTabTool(ws, name, args, ctx);
+    },
     unknown: (name) => ws.note("unknown", TEXT.intake.activity.unknown(name)),
   });
 }

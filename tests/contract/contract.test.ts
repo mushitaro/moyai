@@ -12,6 +12,7 @@ import { ROUTES, ROUTE_IDS, type RouteDef } from "../../src/shared/routes";
 import { EXPOSED_TOOL_NAMES, TOOLS, TOOL_NAMES } from "../../src/shared/tools";
 import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
 import { createRelayServer } from "../../src/cli/relay";
+import { TAB_ASYNC_TOOL_RECEIVERS } from "../../src/app/intake/tab-tools";
 import toolNames from "../../src/shared/tool-names.json";
 
 function sources(dir: string): string {
@@ -66,8 +67,8 @@ describe("誤りの送り手と受け手", () => {
 });
 
 describe("ツールの送り手と受け手", () => {
-  it("tool-names.json と TOOLS が同じ 15。中継が出すのは今見せるものだけ", () => {
-    expect(toolNames).toHaveLength(15);
+  it("tool-names.json と TOOLS が同じ 16。中継が出すのは今見せるものだけ", () => {
+    expect(toolNames).toHaveLength(16);
     expect(Object.keys(TOOLS).sort()).toEqual([...toolNames].sort());
     expect(TOOL_NAMES).toEqual(toolNames);
     for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
@@ -87,7 +88,15 @@ describe("ツールの送り手と受け手", () => {
     // 保管先と台帳を読む・書くのは橋渡し（書くのは未承認の読み方の下書きだけ。決まり 1 の例外。docs/plan.md §2.17）。
     // 似た施設：人が開いた比べは作業画面が、公開の台帳だけを読むのは橋渡しが答える（§2.18.4）
     expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge").sort()).toEqual(["peer_reference", "reading_skill_register", "reading_skills_list"]);
+    // 橋渡しが選んだものを作業画面に渡す：資料を作業画面に入れる（橋渡しが道を確かめ、作業画面が中身を取りに来る）
+    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge_then_tab")).toEqual(["intake_add_files"]);
     expect(notImplemented).toHaveLength(3);
+  });
+
+  it("bridge_then_tab のツールには、作業画面の側の受け手（中身を取りに行くもの）がある", () => {
+    for (const n of TOOL_NAMES) expect(Boolean(TAB_ASYNC_TOOL_RECEIVERS[n]), n).toBe(BRIDGE_TOOL_RECEIVERS[n] === "bridge_then_tab");
+    expect(sources("src/app")).toContain("ROUTES.tabIntakeFile.path");
+    expect(sources("src/bridge")).toContain("takeStagedFile(");
   });
 
   it("確定・送る・昇格・保存のツールが無い", () => {

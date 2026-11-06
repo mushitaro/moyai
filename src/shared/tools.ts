@@ -232,9 +232,78 @@ function def<N extends string, I extends z.ZodObject, O extends z.ZodObject>(
   waitsFor: ToolWaitsFor = null,
 ) {
   // 作業画面の取り込み・星取表・検査・当てはめの結果には、今効いている Skill の目録を添える（docs/plan.md §2.18.3）
-  const out = (SKILL_CATALOG_TOOLS as readonly string[]).includes(name) ? (output.extend({ skills: skillCatalogSchema.optional() }) as unknown as O) : output;
+  const withSkills = (SKILL_CATALOG_TOOLS as readonly string[]).includes(name) ? output.extend({ skills: skillCatalogSchema.optional() }) : output;
+  // 中継が添える作業画面の URL（中継の最初の答えと、中継が橋渡しを起こした直後の答え。src/cli/relay.ts）
+  const out = withSkills.extend({ workScreenUrl: workScreenUrlSchema.optional() }) as unknown as O;
   return { name, kind, waitsFor, title, description: `${description} ${COMMON}`, input, output: out };
 }
+
+/** 作業画面の URL（橋渡しの 127.0.0.1 の 1 ポート） */
+export const workScreenUrlSchema = z.string().regex(/^http:\/\/127\.0\.0\.1:\d{1,5}\/$/);
+
+// ─── 資料を作業画面に入れる（intake_add_files）──────────────────────────
+// 橋渡しが道を確かめて資料を選び、作業画面のタブが中身を取りに来て、人が落とした資料と同じ道で取り込む。
+// AI に返すのは名前・大きさ・件数・断った理由だけで、セルの値や文字は返さない（安全の決まり 3）。
+
+/** 読む資料の種類（拡張子。大文字小文字は問わない） */
+export const INTAKE_ADD_EXTENSIONS = [".xlsx", ".xls", ".csv", ".pdf", ".jpg", ".png"] as const;
+/** 1 回に入れる資料の数の上限 */
+export const INTAKE_ADD_MAX_FILES = 200;
+/** 1 つの資料の大きさの上限（§2.12 のアップロードの上限と同じ） */
+export const INTAKE_ADD_MAX_BYTES = 64 * 1024 * 1024;
+/** 結果に並べる、断った資料の数の上限（越えた分は refusedTotal に数える） */
+export const INTAKE_ADD_MAX_REFUSED = 200;
+/**
+ * 断った理由（資料の種類の名前のものだけ。ほかの種類のファイルと下のフォルダは、名前を返さずに数だけ others に数える）：
+ * link シンボリックリンク／not_file ファイルでない／too_large 64 MB を越える／over_count 201 個目から／
+ * unreadable 作業画面が読めない形／same_name 同じ名前の資料がもう入っている／changed 読む間に変わったか消えた
+ */
+export const INTAKE_REFUSALS = ["link", "not_file", "too_large", "over_count", "unreadable", "same_name", "changed"] as const;
+export type IntakeRefusal = (typeof INTAKE_REFUSALS)[number];
+const INTAKE_SOURCES = ["demo", "folder"] as const;
+const PACK_ID_SHAPE = /^[a-z][a-z0-9-]{0,63}$/;
+const fileName = z.string().min(1).max(260);
+const refusedFile = z.object({ name: fileName, reason: z.enum(INTAKE_REFUSALS) });
+
+const intakeAddFilesInput = z
+  .object({
+    source: z.enum(INTAKE_SOURCES),
+    /** folder：利用者がチャットで言ったフォルダ（絶対の道） */
+    path: z.string().min(1).max(1000).optional(),
+    /** demo：デモの資料を取るパック（省くと、demo/ のあるパックが 1 つならそれ） */
+    pack: z.string().regex(PACK_ID_SHAPE).optional(),
+  })
+  .superRefine((a, ctx) => {
+    if (a.source === "folder" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "folder には path が要る" });
+    if (a.source === "demo" && a.path !== undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "demo では path を渡さない" });
+    if (a.source === "folder" && a.pack !== undefined) ctx.addIssue({ code: "custom", path: ["pack"], message: "pack は demo だけ" });
+  });
+
+/** 橋渡し → 作業画面：渡す資料の一覧（中身は作業画面が経路 tabIntakeFile で 1 つずつ取りに来る） */
+export const intakeAddFilesToTabSchema = z.object({
+  source: z.enum(INTAKE_SOURCES),
+  /** demo のパック（作業画面がまだパックを選んでいなければ、これにする） */
+  pack: z.string().regex(PACK_ID_SHAPE).nullable(),
+  /** demo の施設の名前（Skillパックの demo/demo.json。作業画面の施設の名前が空なら、これにする） */
+  facilityName: z.string().min(1).max(80).nullable(),
+  files: z
+    .array(z.object({ fileId: z.string().regex(/^[A-Za-z0-9_-]{22}$/), name: fileName, size: z.number().int().min(0).max(INTAKE_ADD_MAX_BYTES) }))
+    .max(INTAKE_ADD_MAX_FILES),
+});
+export type IntakeAddFilesToTab = z.infer<typeof intakeAddFilesToTabSchema>;
+
+/** 作業画面 → 橋渡し：入れた資料の名前と件数（シートと行の数。画像は null）、断った資料の名前と理由だけ */
+export const intakeAddFilesFromTabSchema = z
+  .object({
+    added: z.array(z.object({ name: fileName, sheets: z.number().int().min(0).nullable(), rows: z.number().int().min(0).nullable() }).strict()).max(INTAKE_ADD_MAX_FILES),
+    refused: z.array(refusedFile.strict()).max(INTAKE_ADD_MAX_FILES),
+  })
+  .strict();
+export type IntakeAddFilesFromTab = z.infer<typeof intakeAddFilesFromTabSchema>;
+
+/** 結果に添える次の手（Claude Desktop では instructions が効かないので、結果にも書く） */
+export const INTAKE_ADD_NOTE =
+  "次は intake_survey で要約と質問を読み、質問は利用者に聞く。画像と文字の無い PDF の頁は写真の欄に並び、人が 1 枚ずつ許すまで AI には渡らない。確定は人が画面でする。";
 
 /** 結果に Skill の目録を添えるツール */
 export const SKILL_CATALOG_TOOLS = ["intake_survey", "chart_rows", "check_results", "crosswalk_propose"] as const;
@@ -361,6 +430,28 @@ export const TOOLS = {
     "決定がそろったら、元の計画を作り始める。すぐに「作り始めた」ことだけを返す。結果は intake_survey の compose で読む。",
     z.object({}),
     z.object({ started: z.boolean(), startedAt: z.string() }),
+  ),
+  intake_add_files: def(
+    "intake_add_files",
+    "propose",
+    "資料を作業画面に入れる",
+    "資料を作業画面に入れる（人が資料を落としたのと同じ道で取り込む）。" +
+      "source: demo は Skillパックの demo/ の架空の資料（利用者が「デモして」と言ったとき。pack は省いてよい）。" +
+      "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
+      "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey の files で入った資料を確かめる。",
+    intakeAddFilesInput,
+    z.object({
+      source: z.enum(INTAKE_SOURCES),
+      /** demo のとき：資料を取ったパック。folder は null */
+      pack: z.string().nullable(),
+      added: z.array(z.object({ name: fileName, bytes: z.number().int().min(0), sheets: z.number().int().nullable(), rows: z.number().int().nullable() })).max(INTAKE_ADD_MAX_FILES),
+      refused: z.array(refusedFile).max(INTAKE_ADD_MAX_REFUSED),
+      /** 断った資料の数（refused に並べるのは 200 まで。越えた分もここに数える） */
+      refusedTotal: z.number().int().min(0),
+      /** 資料の種類でないもの（ほかの種類のファイル・下のフォルダ）の数。名前は返さない */
+      others: z.number().int().min(0),
+      note: z.string(),
+    }),
   ),
   photo_transcribe: def(
     "photo_transcribe",

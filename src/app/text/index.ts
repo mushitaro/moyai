@@ -529,6 +529,8 @@ export const TEXT = {
       crosswalkPlaced: (rules: number, placed: number, conflicts: number) =>
         `AI が紐付けのルールを ${rules} 個置きました（案 ${placed} 件・ぶつかり ${conflicts} 件。人が受けるまで決まりません）`,
       crosswalkRefused: (rules: number) => `AI の紐付けのルール ${rules} 個を断りました（置けない値か、もとにした版が古いので、どれも置いていません）`,
+      filesAdded: (demo: boolean, added: number, refused: number) => `AI が${demo ? "デモの" : "フォルダの"}資料を追加 ${added} 件${refused ? `・未追加 ${refused} 件` : ""}`,
+      demoMixed: "AI のデモの資料は未追加（架空でない資料か、ほかの Skillパックの資料があるため）",
     },
     questionKind: {
       encoding: "文字コード",
@@ -683,6 +685,7 @@ export const ERROR_TEXT: Record<TabErrorCode, string> = {
   bad_json: "中身を読めないので、ブリッジが断りました。",
   internal: "ブリッジの中で誤りが起きました。",
   tab_not_open: "このタブはブリッジにつながっていません。",
+  intake_file_unavailable: "AI が入れようとした資料が見つからないか、読む間に変わりました。",
   secret_missing: "タブの秘密が無いので、ブリッジが断りました。",
   secret_mismatch: "タブの秘密が違うので、ブリッジが断りました。",
   token_missing: "ワンタイムトークンが無いので、ブリッジが断りました。",

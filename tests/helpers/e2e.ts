@@ -119,7 +119,8 @@ export async function mcpClient(stateDir: string, expectTools: string[] = []): P
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: ["dist/cli.js", "mcp"],
-    env: { ...(process.env as Record<string, string>), MOYAI_STATE_DIR: stateDir },
+    // 試験の橋渡しは試験が起こす。中継に本物の橋渡し（既定のポート）を起こさせない
+    env: { ...(process.env as Record<string, string>), MOYAI_STATE_DIR: stateDir, MOYAI_NO_BRIDGE_LAUNCH: "1" },
     stderr: "pipe",
   });
   const client = new Client({ name: "moyai-e2e", version: "0" });

@@ -2,7 +2,7 @@
 // 手で書いた文は「決まりの説明」と「保証できないこと」だけで、ツール・上限・人だけの経路の表はコードの値から作る。
 // 画面の［AI に渡るもの］も、同じ関数から作る（未実装）。tests/contract/security-doc.test.ts が、docs/security.md と同じかを確かめる。
 import { HUMAN_ACTIONS, ROUTES, type RouteDef } from "./routes";
-import { EXAMPLES_MAX, PHOTO_SEND, ROWS_PER_CALL, ROWS_PER_CONVERSATION, SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, TOOL_NAMES, TOOL_TIMEOUTS, TOOLS, type ToolKind, type ToolName } from "./tools";
+import { EXAMPLES_MAX, INTAKE_ADD_EXTENSIONS, INTAKE_ADD_MAX_BYTES, INTAKE_ADD_MAX_FILES, PHOTO_SEND, ROWS_PER_CALL, ROWS_PER_CONVERSATION, SURVEY_TEXT_MAX, SURVEY_TOP_VALUES, TOOL_NAMES, TOOL_TIMEOUTS, TOOLS, type ToolKind, type ToolName } from "./tools";
 
 const KIND: Record<ToolKind, string> = { read: "読む", propose: "案を置く", start: "始める" };
 
@@ -63,6 +63,10 @@ export function securityMarkdown(i: SecurityDocInput): string {
       "Service Worker がブラウザに覚えるのは画面の殻（index.html・JS・CSS・書体）だけで、人だけの経路とツールの道は覚えません。",
   );
   L.push(
+    `- \`intake_add_files\` は、Skillパックの demo/ の架空の資料か、利用者がチャットで言ったフォルダの直下の ${INTAKE_ADD_EXTENSIONS.join("・")} だけを、1 回 ${INTAKE_ADD_MAX_FILES} 個まで、1 つ ${INTAKE_ADD_MAX_BYTES / 1024 / 1024} MB まで読みます。` +
+      "状態フォルダとリポジトリの中・`..` を含む道・シンボリックリンクは読みません。中身は橋渡しが資料ごとのワンタイムトークンで作業画面のタブに渡し、AI に返すのは名前・大きさ・件数（シートと行の数）・断った理由だけです。ほかの種類のファイルと下のフォルダは、名前を返さずに数だけを返します。",
+  );
+  L.push(
     `- 写真は、人が作業画面で 1 枚ずつ許したものだけを、1 回に 1 枚渡します。作業画面が長辺 ${PHOTO_SEND.longSideMin.toLocaleString("ja-JP")}〜${PHOTO_SEND.longSideMax.toLocaleString("ja-JP")} px・JPEG で約 ${PHOTO_SEND.targetBytes / 1024} KB 以下に描き直し（切り抜かず、位置などの付け足しの情報は落とす）、` +
       `橋渡しは、許した画像のハッシュと合うものだけを渡します（${PHOTO_SEND.maxBytes / 1024} KB を越えるものは渡しません）。許しは 1 回渡すと使い終わります。`,
   );
@@ -85,6 +89,17 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("");
   L.push(`人だけの操作の名前は ${HUMAN_ACTIONS.length} 個です。ツールの名前と重ならないことを試験で確かめています。`);
   L.push("");
+  L.push("## 作業画面だけが呼ぶ経路と、中継の経路");
+  L.push("");
+  L.push("作業画面だけが呼ぶ経路は、Origin・Sec-Fetch-Site とタブの秘密を求めます（人だけの操作ではないので、ワンタイムトークンは求めません）。中継の経路は、状態フォルダの鍵ファイルの鍵を求め、ブラウザからの要求（Origin・Sec-Fetch-Site のあるもの）を断ります。");
+  L.push("");
+  L.push("| 経路 | 求めるもの | 説明 |");
+  L.push("|---|---|---|");
+  for (const r of Object.values(ROUTES) as RouteDef[]) {
+    if (r.kind !== "tab" && r.kind !== "relay") continue;
+    L.push(`| \`${r.method} ${r.path}\` | ${r.kind === "tab" ? "タブの秘密" : "鍵ファイルの鍵"} | ${cell(r.note)} |`);
+  }
+  L.push("");
   L.push("## 網の外側");
   L.push("");
   L.push("- 橋渡しは 127.0.0.1 の 1 つのポートだけで待ち受け、Host・Origin・Sec-Fetch-Site を確かめます。これは Web ページからの呼び出しへの守りで、同じ PC の同じ利用者のプロセスは止めきれません（curl も Node も Origin を偽れます）。");
@@ -92,6 +107,7 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("- シェルを持つ AI（Claude Code）には、リポジトリの `.claude/settings.json` の deny と PreToolUse のフック（`scripts/guard-hook.mjs`）の二重で、127.0.0.1 への HTTP・状態フォルダの読み取り・保管先の計画のフォルダの施設の署名鍵（share/keys/）の読み書き・輪のフォルダへの書き込み・人だけのコマンド・見張りのフックと `.claude/settings.json`・`.claude/settings.local.json` の書き換えを止めます。悪意のある同じ利用者のプロセスは止めきれません。");
   L.push("- 鍵と GitHub のトークンは合言葉で包みません（運営者の決定 2026-11-04）。人の鍵とトークンは同期されない状態フォルダに、束に署名する施設の鍵は保管先の計画のフォルダ（share/keys/）に置きます。MCP のどのツールの結果にも、鍵とトークンの中身は入れません。");
   L.push("- 人だけのコマンド（鍵を作る、送る、台帳に出す）は、標準入力が端末でなければ断ります。");
+  L.push("- `moyai setup`（AI クライアントにつなぐ・送信者の名前）と `moyai uninstall`（消す）は、何をどこに書くか・消すかを先に出し、`--yes` が無ければ端末で「はい」をもらいます。`--yes` は、利用者がチャットで確かめたあとに Claude が付けます（運営者の決定 11-06「チャットだけで入れる・デモする・消す」）。保存先（計画の版）を消すのは `--remove-root` のときだけです。");
   L.push("- API のキーを読むのは、Skill の採点の CLI（`moyai eval`、`src/eval/`）だけで、環境変数 `ANTHROPIC_API_KEY` から読みます。写真の読み取りと MCP のツールはキーを読みません。チャットでもツールでもキーを受け取らず、値を画面・記録・ログに出しません。");
   L.push("");
   L.push("## 保証できないこと");
@@ -107,6 +123,7 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("9. シェルを持つ AI は、見張りのフックを越えられます（スクリプトを書いて走らせる・差分のファイルを git apply する・git reset や git checkout で枝ごと戻す・道に ./ を挟んだシェルの書き込み）。フックが見るのは、AI の道具の呼び出しの字だけです。");
   L.push("10. 施設の署名鍵のファイルを失くすと、その鍵の失効の記録に署名できません。受け手はその鍵を数え続けるので、再発行した新しい鍵が照合されると、同じ施設を 2 つに数えます（長く出していないメンバーを数えから外す決まりは、まだありません）。");
   L.push("11. 費用のセルを AI の見本で伏せるのは、取り込みが費用の列と見分けた列（括弧の外の見出しが「費用」「金額」「工事費」「修繕費」「予定価格」「支払額」「契約額」「請負額」「見積額」「概算額」で始まるか終わるもの。例「概算費用」「契約金額」）だけです。ほかの言い方の見出し（「見込額」「予算額」「単価」など）の列の値は、見本にそのまま出ることがあります。");
+  L.push("12. `intake_add_files` のフォルダが、利用者がチャットで言ったものかを、橋渡しは確かめられません。AI が別のフォルダ（状態フォルダとリポジトリの外）を指せば、その直下の資料が作業画面に入り、要約の見本として AI に渡ります。作業画面の作業の一覧に、AI が資料を入れたことが出ます。");
   L.push("");
   return L.join("\n");
 }

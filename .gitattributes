@@ -3,6 +3,8 @@
 
 # バイト列をそのまま持つもの（改行の変換をしない）
 samples/** -text
+# Skillパックのデモの資料（samples/ から写したもの。改行も変えず、パッチでもバイト列で運ぶ）
+packs/*/demo/*.csv binary
 tests/fixtures/** -text
 demo-ring/** -text
 ledger/** -text

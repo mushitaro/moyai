@@ -21,9 +21,11 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 5. 検査の数字は丸めず言い換えず、出典を添えて説明します。自己点検であって、審査の判断ではありません。
 
-6. 橋渡しが起きていなければ、利用者に端末で moyai start を走らせてもらいます。
+6. 橋渡しはツールを呼ぶと中継が起こし、直後の結果に workScreenUrl を添えます。作業画面が開いていなければ、その URL（既定 http://127.0.0.1:43110/）を開きます（シェルがあれば自分で開く）。
 
-7. 作業画面が開いていなければ、利用者に moyai start が出した URL を開いてもらいます。資料は利用者が作業画面に落とします（チャットに添付させません）。
+7. 資料は intake_add_files（利用者が言ったフォルダ）で入れるか、利用者が作業画面にドロップします。チャットに添付させません。
+
+入れる・デモ・消す：1 段目の Skill の手順で進め、利用者にチャットのほかの操作をさせません。「デモして」は intake_add_files（source: demo）から。消すのは moyai uninstall。
 
 取り込みの流れ：intake_survey（part: skills）で今効いている Skill の本文を読む → intake_survey で要約と質問（選択肢つき）を読む → 利用者に聞いて intake_settle で決定を置く（答えは選択肢の id だけ。作者は ai か ai_relayed_human、理由を添える）→ 質問が無くなるまで繰り返す → intake_compose で作り始める → intake_survey の compose で結果を読む → chart_rows で星取表の行を読む。
 
@@ -41,7 +43,7 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 渡す：人が HOSHITORI で「署名して渡す」（編集を頼む・承認を頼む）を押すと、intake_survey の handoff に、MOYAI が用意したメールの文（宛先・件名・本文）が入る。利用者が送ってと言ったら、連携したメールから、その文のまま送る（決まり 1 の例外の 1 つめ。中身は版の場所とハッシュと、リンクの中の使い捨ての合言葉）。承認と差し戻しは人が画面で署名する。
 
-今動くのは intake_survey・intake_settle・intake_compose・chart_rows・crosswalk_propose・chart_propose・photo_transcribe・check_results・peer_reference・reading_rules_propose・reading_skill_register・reading_skills_list です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。
+今動くのは intake_survey・intake_settle・intake_compose・intake_add_files・chart_rows・crosswalk_propose・chart_propose・photo_transcribe・check_results・peer_reference・reading_rules_propose・reading_skill_register・reading_skills_list です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。
 
 画面（利用者に「この画面は何？」と聞かれたら、これで答える。画面には説明の文を置いていない）：
 
@@ -54,6 +56,34 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 - 突き合せ：資料ごとの書き方を並べ、一致・片方だけ・食い違いを出す。検査：パックの基準から外れた所を、根拠の数字と出典つきで出す（自己点検で、審査の判断ではない）。
 
 - EXPORT（出力）：確定した版の Excel と差分レポートを、人が落とす。SHARE（共有）：相手から見たあなたを確かめ、署名して、共有フォルダか公開の台帳に出す（公開の台帳へは、人が押すと MOYAI が利用者の GitHub で PR を出す。Claude のツールは無い）。設定：保管先・送信者・台帳の clone・共有フォルダ・覚えた鍵。
+
+## チャットで入れる・デモ・消す
+
+利用者がするのは、チャットで頼むことと、画面での確定・署名・送信・承認・昇格だけ。端末を開く・コマンドを打つ・ダウンロード・ファイルのドラッグ・設定の画面は頼まない。ほかは Claude がする。コマンドは、何をするかを先に利用者に言い、チャットで「はい」をもらってから走らせる。
+
+### インストール（GitHub のリポジトリの URL を渡されたら）
+
+1. `node --version` で、Node が 22.13 以上かを確かめる。
+2. 無いか古ければ、利用者にチャットで聞いてから `winget install --id OpenJS.NodeJS.LTS -e` で入れる。git が無ければ、同じく聞いてから `winget install --id Git.Git -e`。入れたあとに今のシェルで見つからなければ、利用者に Claude を開き直してもらう。
+3. 利用者のホームの下に clone する（例 `git clone <URL> ~/moyai`。同期フォルダの下には置かない）。
+4. そのフォルダで `npm ci`、続けて `npm run build`。
+5. 送信者の名前（版の署名と画面に出す。40 字まで）を利用者に聞く。`node dist/cli.js setup --target code --name "<名前>"` を `--yes` なしで走らせ、出た中身（何をどこに書くか）を利用者に見せて確かめる。良ければ `--yes` を付けて走らせる。Claude Desktop のチャットでも使うなら、`--target desktop` も同じ順で走らせる（設定に moyai の 1 行を足し、前の設定を .bak に残す）。
+6. Claude Code には、出た `claude mcp add …` の 1 行を走らせる。開き直すと moyai のツールが出る（開き直しは利用者に頼む）。
+7. 作業画面を開く：`node dist/cli.js start` を後ろで走らせる（橋渡しが起き、既定のブラウザで作業画面が開く）。開き直したあとは、moyai のツールを呼べば中継が橋渡しを起こし、結果の workScreenUrl で開ける。
+8. 署名の鍵は最初の確定で作られる。合言葉は無い。
+
+### デモ
+
+利用者が「デモして」と言ったら：intake_add_files（source: demo）で Skillパックの demo/ の架空の資料を入れる → intake_survey で要約と質問を読む → 質問を利用者に聞き、答えを intake_settle で置く（作者は ai_relayed_human）→ 質問が無くなったら intake_compose → intake_survey（part: compose）で結果を読む → chart_rows で星取表の行を読み、利用者に話す → 確定は人が画面でする（HOSHITORI の確定のシート）。詳しくは Skillパックの demo/README.md。
+
+### アンインストール
+
+1. 保存先（計画の版・施設の署名鍵・資料）も消すかを利用者に聞く。既定は残す。
+2. `node dist/cli.js uninstall` を `--yes` なしで走らせ、出た中身（止める橋渡し・外す設定・消す状態フォルダ・保存先）を利用者に見せて確かめる。
+3. 良ければ `node dist/cli.js uninstall --yes` を走らせる。保存先も消すと言われたときだけ `--remove-root` を付ける。
+4. Claude Code に足していたら `claude mcp remove --scope user moyai` を走らせる。
+5. 最後に、リポジトリのフォルダを Claude が消す。消せなければ、作業画面のタブを閉じてもらってから消し直す。
+6. 消したあとは moyai のツールを呼ばない（呼ぶと中継が橋渡しを起こし直す）。利用者に Claude を開き直してもらう。
 
 ## データの名前
 

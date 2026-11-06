@@ -2,7 +2,7 @@
 // React を持たない純粋な TS にして、受け手の一覧（BRIDGE_EVENT_HANDLERS）を契約の試験から読めるようにする。
 import { ERRORS, errorBodySchema, type TabErrorCode } from "../shared/errors";
 import { decodeEvent, encodeEvent, type BridgeToTab, type EventData, type TabToBridge } from "../shared/events";
-import { HEADER_TAB_SECRET, type HumanAction } from "../shared/routes";
+import { HEADER_TAB_SECRET, ROUTES, type HumanAction } from "../shared/routes";
 import type { ToolName } from "../shared/tools";
 
 export type ConnectionState =
@@ -187,6 +187,26 @@ export class BridgeClient {
     const err = errorBodySchema.safeParse(body);
     if (err.success && ERRORS[err.data.error.code].to === "tab") return { ok: false, code: err.data.error.code as TabErrorCode };
     return { ok: false, code: "internal" };
+  }
+
+  /**
+   * AI が intake_add_files で入れる資料の中身を、橋渡しが渡した資料の印で取りに来る（タブの秘密が要る。印は 1 回きり）。
+   * 取れなければ null（見つからない・読む間に変わった・切れた）。
+   */
+  async fetchIntakeFile(fileId: string): Promise<Uint8Array | null> {
+    try {
+      const res = await fetch(ROUTES.tabIntakeFile.path, {
+        method: "POST",
+        headers: { "content-type": "application/json", [HEADER_TAB_SECRET]: this.secret },
+        body: JSON.stringify({ fileId }),
+        credentials: "omit",
+        cache: "no-store",
+      });
+      if (!res.ok || res.headers.get("content-type") !== "application/octet-stream") return null;
+      return new Uint8Array(await res.arrayBuffer());
+    } catch {
+      return null;
+    }
   }
 
   /** 人が押したその場で、中身に結んだ印をもらって人だけの経路を呼ぶ（印は 1 回きり）。 */

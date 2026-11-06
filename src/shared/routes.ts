@@ -8,8 +8,10 @@ export type RouteKind =
   | "public"
   /** タブとの WebSocket（Origin の一致が必須） */
   | "ws"
-  /** 中継（moyai mcp）だけが呼ぶ。状態フォルダの鍵ファイルで確かめる */
+  /** 中継（moyai mcp）と moyai uninstall だけが呼ぶ。状態フォルダの鍵ファイルで確かめる */
   | "relay"
+  /** 作業画面のタブだけが呼ぶ。Origin とタブの秘密が要る（人だけの操作ではないので、1 回きりの印は要らない） */
+  | "tab"
   /** 人だけの操作。タブの秘密と 1 回きりの印が要る */
   | "human";
 
@@ -79,8 +81,8 @@ export interface RouteDef {
   path?: string;
   prefix?: string;
   kind: RouteKind;
-  /** 人だけの経路の守り。kind が human なら両方 true でなければならない */
-  requires?: { tabSecret: true; oneTimeToken: true };
+  /** 守り。kind が human なら両方 true でなければならない。kind が tab ならタブの秘密だけ */
+  requires?: { tabSecret: true; oneTimeToken?: true };
   action?: HumanAction;
   /** 受ける中身の上限（バイト） */
   maxBody?: number;
@@ -108,6 +110,15 @@ export const ROUTES = {
   },
   ws: { method: "GET", path: "/ws", kind: "ws", note: "タブとの往復" },
   relayTool: { method: "POST", path: "/relay/tool", kind: "relay", maxBody: 1024 * 1024, note: "中継からのツールの呼び出し" },
+  relayStop: { method: "POST", path: "/relay/stop", kind: "relay", maxBody: 1024, note: "橋渡しを止める（moyai uninstall が、鍵ファイルの鍵を添えて送る）" },
+  tabIntakeFile: {
+    method: "POST",
+    path: "/tab/intake-file",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 1024,
+    note: "AI が intake_add_files で入れる資料の中身を、作業画面が 1 つずつ取りに来る（橋渡しが資料ごとに渡したワンタイムトークンと、そのタブの回だけ）",
+  },
   commitTrial: {
     method: "POST",
     path: "/human/commit-trial",
