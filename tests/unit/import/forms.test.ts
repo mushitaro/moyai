@@ -602,7 +602,8 @@ describe("見ていない様式の 3 回目（heldout-3）で詰まった形", (
     expect(an.layouts.find((l) => l.file === "表紙.xlsx")?.tables).toEqual([]);
     expect(an.records.assets.filter((a) => a.file === "表紙.xlsx")).toEqual([]);
     const q = an.open.find((x) => x.kind === "columnRole");
-    expect(q?.options.map((o) => o.id)).toEqual(["remark", "workName", "assetRef", "tag", "date", "end", "days", "effort", "cost", "exclude"]);
+    // 選択肢は列の役目の 1 つの一覧（roles.ts。ルールの役目と同じ。Architect の 46）
+    expect(q?.options.map((o) => o.id)).toEqual(["remark", "workName", "workTitle", "assetRef", "tag", "unit", "number", "date", "end", "days", "effort", "quantity", "cycle", "planActual", "cost", "exclude"]);
   });
 });
 

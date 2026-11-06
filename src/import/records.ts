@@ -5,6 +5,7 @@ import { cue, norm, type ColumnCue } from "./cues";
 import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFiscalYear, type Ymd } from "./era";
 import { parseWithFormat } from "./reading";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
+import { isAssignableRole } from "./roles";
 import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
 import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, parseCost, parseCycle, parseEffort, parseUnit, splitFlatWork, splitNameUnits, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type UnitValue } from "./text";
 
@@ -264,7 +265,7 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
       const c = Number(is.pattern.slice(4));
       const col = t.cols.find((x) => x.c === c);
       if (col) {
-        if (a === "remark" || a === "workName" || a === "assetRef" || a === "tag" || a === "date" || a === "end" || a === "days" || a === "effort" || a === "cost") col.role = a;
+        if (isAssignableRole(a) && a !== "exclude") col.role = a;
         else if (a === "exclude") {
           col.role = "unknown";
           for (const r of t.rows) {
@@ -731,7 +732,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const hier = t.cols.filter((c) => c.role === "hier").sort((a, b) => (a.hierLevel ?? 0) - (b.hierLevel ?? 0));
   const unitCol = t.cols.find((c) => c.role === "unit");
   const marks = t.cols.filter((c) => c.role === "mark");
-  const specCols = t.cols.filter((c) => c.role === "spec" || c.role === "remark" || c.role === "installed" || c.role === "number");
+  const specCols = t.cols.filter((c) => c.role === "spec" || c.role === "remark" || c.role === "quantity" || c.role === "installed" || c.role === "number");
   const tagCol = t.cols.find((c) => c.role === "tag");
   // 行ごとの作業の列（行が「機器 × 作業」の星取表）
   const workCol = t.cols.find((c) => c.role === "workName");
@@ -1416,8 +1417,9 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const unitCol = col("unit");
   const workCol = col("workName");
   const titleCol = col("workTitle");
-  const remarkCols = t.cols.filter((c) => c.role === "remark");
-  const quantityCols = remarkCols.filter((c) => c.cue === "quantity");
+  // 作業量の列（「数量」の見出しの備考の列か、答え・ルールで作業量にした列）：備考と同じに読み、作業明細の作業量に残す
+  const remarkCols = t.cols.filter((c) => c.role === "remark" || c.role === "quantity");
+  const quantityCols = remarkCols.filter((c) => c.role === "quantity" || c.cue === "quantity");
   const data = t.rows.filter((r) => r.role === "data");
   const text = (r: number, c: ColInfo | undefined) => (c ? (lay.index.at(r, c.c)?.text ?? "") : "");
   // 工数の時間：1 人・日の時間を聞く（表ごとに 1 回）

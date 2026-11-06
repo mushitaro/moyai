@@ -8,6 +8,7 @@ import { fiscalYearInText, nfkc as nfkcText, parseDateRange, parseDateText, pars
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit, splitSeriesCell } from "./text";
 import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type ReadingRule, type RuleHits } from "./reading";
+import { COLUMN_ROLE_OPTIONS, type ColRole } from "./roles";
 
 export type RowRole = "title" | "legend" | "header" | "parent" | "data" | "subtotal" | "total" | "note";
 export const ROW_ROLE_LABEL: Record<RowRole, string> = {
@@ -21,33 +22,8 @@ export const ROW_ROLE_LABEL: Record<RowRole, string> = {
   note: "注記",
 };
 
-export type ColRole =
-  /** 費用（作業明細の費用の欄。共有にも AI の見本にも出さない） */
-  | "cost"
-  | "hier"
-  | "name"
-  | "number"
-  | "unit"
-  | "mark"
-  | "date"
-  | "effort"
-  | "days"
-  | "workName"
-  | "workTitle"
-  | "assetRef"
-  | "spec"
-  | "installed"
-  | "remark"
-  | "label"
-  /** 機器番号（同一性の鍵）の列 */
-  | "tag"
-  /** 期間の終わりの日付（始まりと別の列に書く書き方：着手・完了） */
-  | "end"
-  /** 行ごとの予定・実績（星取表を予定の段と実績の段に分けて書く書き方） */
-  | "planActual"
-  /** 作業の周期（「周期(年)」：その行の作業の暦のきっかけ） */
-  | "cycle"
-  | "unknown";
+// 列の役目の一覧は roles.ts の 1 つだけ（読み手・質問の選択肢・ルールの役目が同じ一覧を引く。Architect の 46）
+export type { ColRole } from "./roles";
 
 export type Shape = "tree" | "grid" | "events";
 
@@ -397,20 +373,8 @@ function seriesValues(cs: GridCell[]): boolean {
 /** 金額らしい列か（見出しに額・価格・費、中身に円・¥）。役目の決まらない列の問いで、見本の字を伏せるのに使う */
 const moneyLike = (header: string, cs: readonly GridCell[]): boolean => /額|価格|費/u.test(header) || cs.some((x) => /[円¥￥]/u.test(x.text));
 
-/** 作業の表の、役目の決まらない列の問いの選択肢（どの役目にも答えられるように。既定は備考） */
-export const COLUMN_ROLE_OPTIONS: { id: string; label: string }[] = [
-  { id: "remark", label: "備考として根拠の文に添える" },
-  { id: "workName", label: "作業の名前" },
-  { id: "assetRef", label: "機器の名前" },
-  { id: "tag", label: "機器番号" },
-  { id: "date", label: "日付（始まり）" },
-  { id: "end", label: "日付（終わり）" },
-  { id: "days", label: "日数" },
-  { id: "effort", label: "工数" },
-  // 費用の列（Architect の 46）：見本では字を伏せ、作業の年度の値の費用に読む
-  { id: "cost", label: "費用" },
-  { id: "exclude", label: "外す" },
-];
+/** 作業の表の、役目の決まらない列の問いの選択肢（roles.ts の一覧から。どの役目にも答えられるように。既定は備考） */
+export { COLUMN_ROLE_OPTIONS } from "./roles";
 
 /** 英字まじりの符号（「STK-1」「SCL」「P101」）の列か：中身が 3 つ以上で、8 割以上が英字を含む符号の形、値はどれも違う */
 function codeColumn(cs: GridCell[]): boolean {
