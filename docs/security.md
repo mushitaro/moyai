@@ -67,26 +67,26 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/export-sign` | `export_sign` | いちばん新しい版を保存先の様式で書き出し、書き出した Excel に自分の鍵で署名して版に足す（版の中身は変えない。その写し方の承認になる） |
 | `POST /human/export-file-read` | `export_file_read` | 署名した書き出しの Excel を読み、署名のハッシュと照らしてから、画面がブラウザに落とす |
 | `POST /human/person-key-create` | `person_key_create` | 自分の鍵（版に署名する）を作り、状態フォルダに置く |
-| `POST /human/person-key-confirm` | `person_key_confirm` | ほかの人の鍵を、指紋を読み合わせて確認済みにする（それまでの署名では読み方を承認しない） |
-| `POST /human/settings-read` | `settings_read` | 置き場所・Documents の場所・輪の一覧を読む |
+| `POST /human/person-key-confirm` | `person_key_confirm` | ほかの人の鍵を、鍵番号を照合して確認済みにする（それまでの署名では読み方を承認しない） |
+| `POST /human/settings-read` | `settings_read` | 置き場所・Documents の場所・共有フォルダの一覧を読む |
 | `POST /human/settings-save` | `settings_save` | 置き場所・公開の台帳の clone の場所・自分の呼び名を保存する |
-| `POST /human/ring-create` | `ring_create` | 輪を作り、その輪の鍵の対を状態フォルダに置く |
-| `POST /human/checkpoint-preview` | `checkpoint_preview` | 検問所：出ていく束のバイト列とハッシュと数（送る処理と同じ関数） |
-| `POST /human/checkpoint-open-text` | `checkpoint_open_text` | 検問所：出ていく束を同期されない一時フォルダに写し、OS のテキストエディタで開く |
-| `POST /human/checkpoint-send` | `checkpoint_send` | 検問所：署名し、束を輪のフォルダに置く |
-| `POST /human/ring-verify` | `ring_verify` | 輪を受け手と同じ関数で確かめる |
-| `POST /human/ring-member-confirm` | `ring_member_confirm` | 輪の仲間の鍵を、指紋を読み合わせて確認済みにする（確認済みの仲間の束だけを数える） |
+| `POST /human/ring-create` | `ring_create` | 共有フォルダを作り、その鍵の対を状態フォルダに置く |
+| `POST /human/checkpoint-preview` | `checkpoint_preview` | 検問所：出ていく共有ファイルのバイト列とハッシュと数（送る処理と同じ関数） |
+| `POST /human/checkpoint-open-text` | `checkpoint_open_text` | 検問所：出ていく共有ファイルを同期されない一時フォルダに写し、OS のテキストエディタで開く |
+| `POST /human/checkpoint-send` | `checkpoint_send` | 検問所：署名し、共有ファイルを共有フォルダに置く |
+| `POST /human/ring-verify` | `ring_verify` | 共有フォルダを受け手と同じ関数で確かめる |
+| `POST /human/ring-member-confirm` | `ring_member_confirm` | 共有フォルダのメンバーの鍵を、鍵番号を照合して確認済みにする（確認済みのメンバーの共有ファイルだけを数える） |
 | `POST /human/facility-key-rotate` | `facility_key_rotate` | 共有フォルダへ出す施設の署名鍵を作り直す：今の鍵ごとに、その鍵自身の署名の引退の記録（鍵 ID・最後の連番・月だけ）を共有フォルダに置き、保管先の鍵を引退させる。新しい鍵は次に送るときに作る |
-| `POST /human/ring-rules-accept` | `ring_rules_accept` | 変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない） |
-| `POST /human/ledger-preview` | `ledger_preview` | 公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり） |
-| `POST /human/ledger-send` | `ledger_send` | 束に署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして束 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
+| `POST /human/ring-rules-accept` | `ring_rules_accept` | 変わった共有フォルダの決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない） |
+| `POST /human/ledger-preview` | `ledger_preview` | 公開の台帳へ出す共有ファイルのバイト列とハッシュと数（共有フォルダと同じ関数。行き先は台帳の clone の決まり） |
+| `POST /human/ledger-send` | `ledger_send` | 共有ファイルに署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして共有ファイル 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
 | `POST /human/ledger-rules-accept` | `ledger_rules_accept` | 変わった公開の台帳の決まりを、人が差を見て受け入れる（見た決まりのハッシュと同じで、緩くした決まりでないときだけ） |
-| `POST /human/ledger-prs` | `ledger_prs` | 出した束の PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ） |
-| `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ）。台帳に束を出す施設の鍵は、送ったときに保管先の計画のフォルダに書く |
+| `POST /human/ledger-prs` | `ledger_prs` | 出した共有ファイルの PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ） |
+| `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ）。台帳に共有ファイルを出す施設の鍵は、送ったときに保管先の計画のフォルダに書く |
 | `POST /human/github-connect-state` | `github_connect_state` | GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを状態フォルダに置く（包まない。見張りのフックが AI の読み取りを止める） |
 | `POST /human/github-disconnect` | `github_disconnect` | GitHub との接続を切る（状態フォルダのトークンのファイルを消す） |
 | `POST /human/readings-read` | `readings_read` | 保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む |
-| `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の輪の ✓ の束から、似た施設の行と統計の行を作る |
+| `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の共有フォルダの ✓ の共有ファイルから、類似施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
 人だけの操作の名前は 40 個です。ツールの名前と重ならないことを試験で確かめています。
