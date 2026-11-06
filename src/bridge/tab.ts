@@ -179,6 +179,8 @@ export class TabHub {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
         if (!this.calls.delete(requestId)) return;
+        // 切れたと見なすまでの時間は、呼び出しの時間切れのあとから数える（重い処理の間は pong を返せないため。Architect の 63）
+        if (this.active === tab) tab.lastSeen = Math.max(tab.lastSeen, this.o.now());
         if (notifyUnknown) this.send(tab.ws, "bridge.tool_unknown", { requestId, name });
         resolve({ kind: "no_answer", reason: "timeout" });
       }, timeoutMs);
@@ -211,7 +213,9 @@ export class TabHub {
   private beat(): void {
     const tab = this.active;
     if (!tab) return;
-    if (this.o.now() - tab.lastSeen > this.o.deadMs) {
+    // 待っているツールの呼び出しがある間は切らない（作業画面が重い処理で pong を返せないだけのことがある。Architect の 63）
+    const waiting = [...this.calls.values()].some((c) => c.ws === tab.ws);
+    if (!waiting && this.o.now() - tab.lastSeen > this.o.deadMs) {
       this.o.log("作業画面のタブから答えが無いので、切れたと見なしました");
       this.o.tokens.dropSession(tab.session);
       this.active = null;

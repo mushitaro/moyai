@@ -17,6 +17,8 @@ export const TEXT = {
     connecting: "ブリッジにつないでいます",
     open: "ブリッジ接続中",
     refused: "ブリッジに断られました",
+    /** 切れて、つなぎ直している間（Architect の 63。言葉は Wire に確かめる） */
+    reconnecting: "ブリッジにつなぎ直しています",
     closed: "ブリッジとの接続が切れました",
     refusedHelp: "ほかのタブを閉じてから、このタブを読み込み直してください。",
     closedHelp: "端末で moyai start が動いているかを確かめ、このタブを読み込み直してください。",

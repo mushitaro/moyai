@@ -170,7 +170,7 @@ export function answer(q: QuestionState, ix: Index): string | null {
       return "yes";
     case "eventAsset": {
       // 台帳も星取表も無い組の「この資料の名前のまま新しい機器にするか」：正解でその行に機器があれば入れる
-      if (q.options.some((o) => o.id === "new")) return q.items.every((it) => (eqIdsAt(it)?.length ?? 0) > 0) ? "new" : "split";
+      if (q.options.some((o) => o.id === "new")) return q.items.every((it) => (eqIdsAt(it)?.length ?? 0) > 0) ? "new" : "exclude";
       // 機器の欄の無い台帳の「件名から機器の名前を取るか」：正解でその行に機器があれば取る
       if (q.options.some((o) => o.id === "title")) return q.items.every((it) => it.cells.some((c) => (ix.eventAt(it.file, it.sheet, c)?.equipment_ids.length ?? 0) > 0)) ? "title" : "exclude";
       // 号炉・機器・作業の区切りの無いセルの問い（選べるのは「外す」だけ）：人もそれを選ぶしかない

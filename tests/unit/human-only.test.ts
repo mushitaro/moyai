@@ -286,6 +286,22 @@ describe("タブとの WebSocket", () => {
     expect(tb.bridge.tokens.size).toBe(0);
   });
 
+  it("ツールの呼び出しを待っている間は、生存確認に答えなくても切らない。時間切れのあとから数える（Architect の 63）", async () => {
+    tb = await startTestBridge({ heartbeatMs: 100, deadMs: 600 });
+    const tab = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await tab.opened;
+    tab.send("tab.hello", { secret: SECRET_A, build: "t" });
+    await tab.next("bridge.welcome");
+    // 重い処理で固まったタブ：pong も答えも返さない
+    tab.autoPong = false;
+    const call = tb.bridge.tabs.callTool("intake_settle", { decisions: [] }, "c1", 100, 1500, true);
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(tb.bridge.tabs.connected).toBe(true);
+    expect((await call).kind).toBe("no_answer");
+    // 時間切れのあとも答えなければ、そこから数えて切れたと見なす
+    expect(await tab.closed).toBe(4002);
+  });
+
   it("答えるタブは生きたまま", async () => {
     tb = await startTestBridge({ heartbeatMs: 100, deadMs: 600 });
     const tab = new FakeTab(`ws://${tb.host}/ws`, tb.origin);

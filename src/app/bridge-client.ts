@@ -9,6 +9,7 @@ export type ConnectionState =
   | { kind: "connecting" }
   | { kind: "open"; tokenTtlMs: number }
   | { kind: "refused"; code: TabErrorCode }
+  | { kind: "reconnecting" }
   | { kind: "closed" };
 
 type Handler<T extends BridgeToTab> = (client: BridgeClient, data: EventData<T>) => void;
@@ -45,6 +46,10 @@ export async function sha256Hex(text: string): Promise<string> {
 /** 人だけの経路の答え。通れば橋渡しが返した中身（{ ok: false, reason } で断ることもある）を body に入れる。 */
 export type HumanResult = { ok: true; body: unknown } | { ok: false; code: TabErrorCode | "network" };
 
+/** 切れたあとのつなぎ直しの待ち（1・2・5・10 秒、そのあとは 10 秒ごと）と、あきらめるまでの時間（2 分） */
+const RECONNECT_WAITS_MS = [1000, 2000, 5000, 10_000] as const;
+const RECONNECT_GIVE_UP_MS = 120_000;
+
 export class BridgeClient {
   private readonly secret = randomSecret();
   private ws: WebSocket | null = null;
@@ -55,6 +60,10 @@ export class BridgeClient {
   private tools: ToolHandlers | null = null;
   /** 飛ばした、読めない通信の数 */
   dropped = 0;
+  /** 続けてつなぎ直した回数（つながったら 0 に戻す） */
+  private retries = 0;
+  /** 切れた時刻（つながったら null） */
+  private droppedAt: number | null = null;
 
   constructor(private readonly wsUrl: string) {}
 
@@ -64,9 +73,25 @@ export class BridgeClient {
     ws.addEventListener("open", () => this.send("tab.hello", { secret: this.secret, build: __MOYAI_BUILD__.commit }));
     ws.addEventListener("message", (e) => this.receive(e.data));
     ws.addEventListener("close", () => {
+      if (this.ws !== ws) return;
       for (const r of this.pending.values()) r(null);
       this.pending.clear();
-      if (this.state.kind !== "refused") this.setState({ kind: "closed" });
+      if (this.state.kind === "refused") return;
+      // 切れたら、同じ秘密でつなぎ直す（1・2・5・10 秒…、2 分まで）。作業画面が重い処理で固まり、橋渡しが「切れた」と見なしたあとも、
+      // 作業を続けられるように（撮影で、つながり直さずに止まった。Video の報告・Architect の 63、11-06）。断られたとき（2 つ目のタブなど）はつなぎ直さない。
+      // 前の回のツールの呼び出しは返さない（橋渡しが時間切れで AI に返してある）
+      const now = Date.now();
+      this.droppedAt ??= now;
+      if (now - this.droppedAt > RECONNECT_GIVE_UP_MS) {
+        this.setState({ kind: "closed" });
+        return;
+      }
+      this.setState({ kind: "reconnecting" });
+      const wait = RECONNECT_WAITS_MS[Math.min(this.retries, RECONNECT_WAITS_MS.length - 1)]!;
+      this.retries++;
+      setTimeout(() => {
+        if (this.ws === ws && this.state.kind === "reconnecting") this.connect();
+      }, wait);
     });
   }
 
@@ -90,6 +115,8 @@ export class BridgeClient {
   }
 
   onWelcome(d: EventData<"bridge.welcome">): void {
+    this.retries = 0;
+    this.droppedAt = null;
     this.setState({ kind: "open", tokenTtlMs: d.tokenTtlMs });
   }
 

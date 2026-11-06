@@ -174,9 +174,11 @@ export class IntakeWorkspace {
   /** 資料と決定が変わるたびに 1 つ増える（読み直しはこれで決める。名前の変更では読み直さない） */
   private dataVersion = 0;
 
-  private changed(resetCompose = true, data = false): void {
+  private changed(resetCompose = true, data = false, analysis: Analysis | null = null): void {
     if (resetCompose && this.compose.state !== "running") this.compose = { state: "idle" };
     if (data) this.dataVersion++;
+    // 読み直した答えを持っていれば、新しい版の覚えにする（画面が読み直さないように。Architect の 63）
+    if (data && analysis) this.cache = { version: this.dataVersion, analysis };
     this.version++;
     for (const l of this.listeners) l();
   }
@@ -390,8 +392,11 @@ export class IntakeWorkspace {
       if (!answerOffered(q, d.answer)) return { ok: false, code: "answer_not_offered", questionId: d.questionId };
       if (q.decision?.author === "human" && d.author !== "human") return { ok: false, code: "human_decided", questionId: d.questionId };
     }
-    const r = this.session.settle(ds.map((d) => (byId.get(d.questionId)?.valueKind === "number" ? { ...d, answer: String(Number(d.answer)) } : d)));
-    this.changed(true, true);
+    const r = this.session.settle(
+      ds.map((d) => (byId.get(d.questionId)?.valueKind === "number" ? { ...d, answer: String(Number(d.answer)) } : d)),
+      an,
+    );
+    this.changed(true, true, this.session.takeAfter());
     return { ok: true, ...r };
   }
 
@@ -401,8 +406,8 @@ export class IntakeWorkspace {
   }
 
   undo(questionId: string): { cellsAffected: number; rowsAffected: number; unresolved: number } {
-    const r = this.session.undo(questionId);
-    this.changed(true, true);
+    const r = this.session.undo(questionId, this.analysis());
+    this.changed(true, true, this.session.takeAfter());
     return r;
   }
 

@@ -50,3 +50,24 @@ describe("決定をまとめて置く", () => {
     expect(await count(20)).toBe(one);
   });
 });
+
+describe("決定を置く 1 回で、資料を読み直すのは 1 回（Architect の 63）", () => {
+  test("AI・人の settle と undo のあと、画面が読むときに読み直さない", async () => {
+    const ws = new IntakeWorkspace(settings);
+    await ws.addFiles((await file()).map((f) => ({ name: f.name, size: f.bytes.length, bytes: async () => f.bytes })));
+    const q = ws.analysis().questions[0];
+    const spy = vi.spyOn(IntakeSession.prototype, "analyze");
+    if (q) {
+      const r = ws.settle([{ questionId: q.questionId, answer: q.defaultAnswer ?? q.options[0]?.id ?? "", author: "ai", reason: "試験" }]);
+      expect(r.ok).toBe(true);
+      ws.analysis();
+      expect(spy.mock.calls.length).toBe(1);
+      ws.undo(q.questionId);
+      ws.analysis();
+      expect(spy.mock.calls.length).toBe(2);
+    } else {
+      // 質問の出ない資料なら、置く決定が無い（試験の前提が崩れたことを知らせる）
+      throw new Error("質問が出なかった");
+    }
+  });
+});

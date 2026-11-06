@@ -469,6 +469,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const g = `${formKey(cs.tableId)}|${noAssets && cs.cands.length === 0 ? "none" : cs.pattern}`;
     caseGroups.set(g, [...(caseGroups.get(g) ?? []), cs]);
   }
+  /** 1 件ずつ聞く質問にしてよい名前の数の上限（越えれば「1 件ずつ聞く」を出さない。Architect の 64） */
+  const SPLIT_MAX = 30;
   const unitLabel = (u: string) => (u === "-" ? "号の欄が空" : u === "common" ? "共通" : `${u.slice(1)} 号`);
   // 資料の名前のまま作った機器：同じ名前と号は、頁・表・様式をまたいで 1 つ
   const made = new Map<string, Cluster>();
@@ -484,9 +486,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       const a = ask.ask(nkey, {
         kind: "eventAsset",
         text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）は、台帳にも星取表にも無い（機器の記録の資料が無い）。この資料の名前のまま、名前と号ごとに新しい機器として入れるか`,
+        // 「名前ごとに決める」は置かない：当てる先の機器が 1 つも無いので、名前ごとの質問はどれも「外す」しか選べず、
+        // 名前の数だけ質問が増えて作業画面が固まる（撮影で 3,478 件。Video の報告、11-06）
         options: [
           { id: "new", label: "この資料の名前のまま、新しい機器として入れる" },
-          { id: "split", label: "名前ごとに決める" },
           { id: "exclude", label: "外す" },
         ],
         valueKind: "option",
@@ -512,7 +515,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           resolved.set(cs.key, { c, qid: questionIdOf(nkey), excluded: false });
         }
       else if (a === "exclude") for (const cs of css) resolved.set(cs.key, { c: null, qid: questionIdOf(nkey), excluded: true });
-      else if (a === "split") one = true;
+      // 前の版で「名前ごとに決める」と答えた決定は、答えていないものとして扱う（選択肢から外した）
       else for (const cs of css) resolved.set(cs.key, { c: null, qid: null, excluded: false });
     }
     if (one) {
@@ -552,10 +555,12 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       tagName: "名前の中の機器番号と名前が同じ",
       tagOnly: "名前の中の機器番号が同じ（名前の書き方は違う）",
     };
+    // 名前が多いときは「1 件ずつ聞く」を置かない（名前の数だけ質問が増え、作業画面が固まる。Architect の 64）。違う名前は同じ機器のルール（呼び名の並び）で直す
+    const many = css.length > SPLIT_MAX;
     const a = ask.ask(gkey, {
       kind: "eventAsset",
-      text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）を、${how[pattern] ?? pattern}機器 1 つに当てるか`,
-      options: YES_SPLIT,
+      text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）を、${how[pattern] ?? pattern}機器 1 つに当てるか${many ? `（${css.length} 通りと多いので 1 件ずつは聞かない。違うものは同じ機器のルールで直す）` : ""}`,
+      options: many ? YES_SPLIT.filter((o) => o.id !== "split") : YES_SPLIT,
       valueKind: "option",
       defaultAnswer: "yes",
       sameShapeRows: rows,
@@ -569,7 +574,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     });
     for (const cs of css) {
       if (a === "yes") resolved.set(cs.key, { c: cs.cands[0] ?? null, qid: questionIdOf(gkey), excluded: false });
-      else if (a === "split") {
+      // 名前が多いときの前の「1 件ずつ聞く」の決定は、答えていないものとして扱う（選択肢から外した）
+      else if (a === "split" && !many) {
         const k1 = `eventAssetOne|${cs.key}`;
         const c0 = cs.cands[0];
         const b = ask.ask(k1, {

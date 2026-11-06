@@ -187,22 +187,31 @@ export class IntakeSession {
   }
 
   /** 決定を置く。同じ質問に置き直すと前の決定と入れ替わる。効いたセルと行の数を返す */
-  settle(ds: Decision[]): { cellsAffected: number; rowsAffected: number; unresolved: number } {
-    const before = this.analyze().composition.status;
+  // 置く前の読み取り（before）を呼ぶ側が持っていれば、それを使う（厚い資料では analyze 1 回が数秒。settle 1 回で analyze を 1 回にする。Architect の 63）
+  settle(ds: Decision[], before?: Analysis): { cellsAffected: number; rowsAffected: number; unresolved: number } {
+    const b = (before ?? this.analyze()).composition.status;
     for (const d of ds) this.decisions.set(d.questionId, d);
     this.composed = null;
-    const after = this.analyze().composition.status;
-    return diff(before, after);
+    this.after = this.analyze();
+    return diff(b, this.after.composition.status);
   }
 
   /** 決定を取り消す */
-  undo(questionId: string): { cellsAffected: number; rowsAffected: number; unresolved: number } {
-    const before = this.analyze().composition.status;
+  undo(questionId: string, before?: Analysis): { cellsAffected: number; rowsAffected: number; unresolved: number } {
+    const b = (before ?? this.analyze()).composition.status;
     this.decisions.delete(questionId);
     this.composed = null;
-    const after = this.analyze().composition.status;
-    return diff(before, after);
+    this.after = this.analyze();
+    return diff(b, this.after.composition.status);
   }
+
+  /** 直前の settle・undo のあとの読み取り（呼ぶ側が読み直さずに使えるように）。取ると空にする */
+  takeAfter(): Analysis | null {
+    const a = this.after;
+    this.after = null;
+    return a;
+  }
+  private after: Analysis | null = null;
 
   /** 当てる読み方を置き換える（承認済みの読み方と、作業中の版の下書き）。次の analyze から効く */
   setReadings(readings: readonly LoadedReading[]): void {
