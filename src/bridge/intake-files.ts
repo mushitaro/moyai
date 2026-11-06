@@ -2,12 +2,13 @@
 // - demo：Skillパックの demo/ の資料（パックの中の決まった場所。施設の名前は demo/demo.json）。
 // - folder：利用者がチャットで言ったフォルダの直下の資料だけ。絶対の道で、`..` を含まず、シンボリックリンクでなく、
 //   状態フォルダとリポジトリの中でないもの（実体の道でも確かめる）。下のフォルダとシンボリックリンクのファイルは読まない。
+//   AI が添えた Skillパック（作業画面で選べるものだけ）と施設名（40 字まで）は、そのまま作業画面へ渡す（置くのは欄が空のときだけ。作業画面が決める）。
 // 断った資料は、名前と理由を返す（黙って捨てない）。返すのは名前・大きさ・理由だけで、中身は AI に渡さない。
 import { lstatSync, readdirSync, readFileSync, realpathSync, statSync, type Stats } from "node:fs";
 import { open } from "node:fs/promises";
 import { extname, isAbsolute, join, resolve } from "node:path";
 import type { ErrorCode } from "../shared/errors";
-import { INTAKE_ADD_EXTENSIONS, INTAKE_ADD_MAX_BYTES, INTAKE_ADD_MAX_FILES, INTAKE_ADD_MAX_REFUSED, type IntakeRefusal } from "../shared/tools";
+import { INTAKE_ADD_EXTENSIONS, INTAKE_ADD_MAX_BYTES, INTAKE_ADD_MAX_FILES, INTAKE_ADD_MAX_REFUSED, intakeFacilityNameOk, type IntakeRefusal } from "../shared/tools";
 import { normPath } from "./places";
 
 export const DEMO_DIR = "demo";
@@ -156,8 +157,43 @@ export function demoPacks(packsDir: string): string[] {
   }
 }
 
+/**
+ * 作業画面の Skillパックの欄で選べる Skillパック（packs/<ID>/common.json のあるもの。src/app/chart/catalog.ts の packChoices と同じ決まり）。
+ * 名前は pack.json の name（無ければ ID）。ID の順
+ */
+export function skillPacks(packsDir: string): { id: string; name: string }[] {
+  let ids: string[];
+  try {
+    ids = readdirSync(packsDir).filter((d) => PACK_ID.test(d) && isFile(join(packsDir, d, "common.json")));
+  } catch {
+    return [];
+  }
+  return ids.sort().map((id) => {
+    try {
+      const n = (JSON.parse(readFileSync(join(packsDir, id, "pack.json"), "utf8")) as { name?: unknown }).name;
+      return { id, name: typeof n === "string" && n.trim() ? n.trim().slice(0, 80) : id };
+    } catch {
+      return { id, name: id };
+    }
+  });
+}
+
+/** 誤りの文に並べる、選べる Skillパックの ID と名前（intake_pack_unknown の {packs}） */
+export function skillPacksText(packsDir: string): string {
+  const list = skillPacks(packsDir);
+  return list.length ? list.map((p) => `${p.id}：${p.name}`).join("・") : "選べる Skillパックが 1 つもありません";
+}
+
+function isFile(p: string): boolean {
+  try {
+    return statSync(p).isFile();
+  } catch {
+    return false;
+  }
+}
+
 /** intake_add_files の引数から、読む資料を選ぶ */
-export function collectIntake(args: { source: "demo" | "folder"; path?: string; pack?: string }, env: IntakeEnv): IntakeCollection | ErrorCode {
+export function collectIntake(args: { source: "demo" | "folder"; path?: string; pack?: string; facilityName?: string }, env: IntakeEnv): IntakeCollection | ErrorCode {
   if (args.source === "demo") {
     const packs = demoPacks(env.packsDir);
     const pack = args.pack ?? (packs.length === 1 ? packs[0]! : null);
@@ -169,11 +205,14 @@ export function collectIntake(args: { source: "demo" | "folder"; path?: string; 
     if (r.files.length === 0) return "intake_demo_missing";
     return { source: "demo", pack, facilityName: demoFacilityName(dir), ...r };
   }
+  // 添えた Skillパックと施設名は、資料を読む前に確かめる（入力の型でも確かめてあるが、ここでも外れたものは直さずに断る）
+  if (args.pack !== undefined && !skillPacks(env.packsDir).some((p) => p.id === args.pack)) return "intake_pack_unknown";
+  if (args.facilityName !== undefined && !intakeFacilityNameOk(args.facilityName)) return "invalid_input";
   const c = checkFolder(args.path ?? "", env);
   if (typeof c === "string") return c;
   const r = pickFiles(c.path);
   if (typeof r === "string") return r;
-  return { source: "folder", pack: null, facilityName: null, ...r };
+  return { source: "folder", pack: args.pack ?? null, facilityName: args.facilityName ?? null, ...r };
 }
 
 /**

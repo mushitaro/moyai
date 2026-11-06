@@ -20,7 +20,7 @@ import {
 import { activeSkills, skillCatalog } from "../skills";
 import { getHandoffMail } from "../state/handoff";
 import { buildChart } from "../../plan/chart";
-import { catalogFor, emptyCatalog } from "../chart/catalog";
+import { catalogFor, emptyCatalog, packChoices } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
 import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
@@ -304,25 +304,60 @@ async function namesIn(ws: IntakeWorkspace): Promise<Map<string, { sheets: numbe
 }
 
 /**
+ * 施設設定の Skillパックと施設名を、作業画面のその欄が空のときだけ置く（人が画面で選んだ・打ったものは上書きしない）。
+ * 置いたものと、欄に違う値があって置かなかったものを、AI の作業の欄に知らせる。
+ */
+function placeFacility(ws: IntakeWorkspace, pack: { id: string; name: string } | null, facilityName: string | null): void {
+  const patch: { packId?: string; facilityName?: string } = {};
+  const set: string[] = [];
+  const kept: string[] = [];
+  if (pack) {
+    if (!ws.settings.packId) {
+      patch.packId = pack.id;
+      set.push(T.facilityPack(pack.name));
+    } else if (ws.settings.packId !== pack.id) kept.push(T.facilityPack(pack.name));
+  }
+  if (facilityName) {
+    const now = ws.settings.facilityName.trim();
+    if (!now) {
+      patch.facilityName = facilityName;
+      set.push(T.facilityName(facilityName));
+    } else if (now !== facilityName) kept.push(T.facilityName(facilityName));
+  }
+  // 1 回で置く（Skillパックが変わると読み直すので、2 回に分けない）
+  if (set.length) {
+    ws.setFacility(patch);
+    ws.note("ai", T.facilitySet(set));
+  }
+  if (kept.length) ws.note("ai", T.facilityKept(kept));
+}
+
+/**
  * intake_add_files の作業画面の側（受け手の種類は bridge_then_tab）：橋渡しが選んだ資料を、資料の印で 1 つずつ取りに行き、
  * 人が落とした資料と同じ道（workspace の addFiles と、【架空】の印を見て架空にすること）で取り込む。
  * 返すのは、入れた資料の名前と件数（シートと行の数）、断った資料の名前と理由だけ（セルの値・文字は返さない。安全の決まり 3）。
- * デモの資料は、架空でない資料やほかのパックの資料と混ぜない。パックと施設の名前が空なら、デモのものにする。
+ * デモの資料は、架空でない資料やほかのパックの資料と混ぜない。
+ * Skillパックと施設名（demo はデモのもの、folder は AI が添えたもの）は、作業画面のその欄が空のときだけ置く（人が画面で選んだ・打ったものは上書きしない）。
  */
 export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<string, unknown>, fetchFile: FetchIntakeFile): Promise<TabToolResult> {
   const p = intakeAddFilesToTabSchema.safeParse(rawArgs);
   if (!p.success) return { ok: false, code: "tool_failed" };
   const a = p.data;
   const demo = a.source === "demo";
+  // 作業画面の Skillパックの欄で選べないものは置かない（橋渡しの packs/ と作業画面のビルドが合っていない）
+  const pack = a.pack ? packChoices().find((c) => c.id === a.pack) : undefined;
+  if (a.pack && !pack) {
+    ws.note("ai", T.packNotOnScreen(a.pack));
+    return { ok: false, code: "intake_pack_not_on_screen" };
+  }
   if (demo) {
     const otherPack = !!ws.settings.packId && !!a.pack && ws.settings.packId !== a.pack;
     if (otherPack || (ws.fileCount > 0 && !ws.settings.fictional)) {
       ws.note("ai", T.demoMixed);
       return { ok: false, code: "intake_demo_mixed" };
     }
-    if (!ws.settings.packId && a.pack) ws.setFacility({ packId: a.pack });
-    if (!ws.settings.facilityName.trim() && a.facilityName) ws.setFacility({ facilityName: a.facilityName });
   }
+  placeFacility(ws, pack ?? null, a.facilityName);
   const before = await namesIn(ws);
   const refused: IntakeAddFilesFromTab["refused"] = [];
   const got: (DroppedFile & { name: string })[] = [];

@@ -539,6 +539,12 @@ export const TEXT = {
       crosswalkRefused: (rules: number) => `AI の紐付けのルール ${rules} 個を断りました（置けない値か、もとにした版が古いので、どれも置いていません）`,
       filesAdded: (demo: boolean, added: number, refused: number) => `AI が${demo ? "デモの" : "フォルダの"}資料を追加 ${added} 件${refused ? `・未追加 ${refused} 件` : ""}`,
       demoMixed: "AI のデモの資料は未追加（架空でない資料か、ほかの Skillパックの資料があるため）",
+      /** 施設設定（intake_add_files の pack・facilityName）：欄が空のときだけ置く */
+      facilityPack: (name: string) => `Skillパック「${name}」`,
+      facilityName: (name: string) => `施設名「${name}」`,
+      facilitySet: (items: string[]) => `AI が施設設定を入力（${items.join("・")}）`,
+      facilityKept: (items: string[]) => `AI の施設設定は未反映（${items.join("・")}。入力済みのため）`,
+      packNotOnScreen: (id: string) => `AI の資料は未追加（Skillパック「${id}」が、この画面の Skillパックの一覧に無いため）`,
       /** 要約の注記（AI に渡す）：資料の読込の途中に要約を読んだとき */
       readingNote: (done: number, total: number) => `資料の読込の途中（${done}/${total}）。まだ読んでいない資料は、この要約に入っていない`,
     },

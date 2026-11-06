@@ -13,13 +13,15 @@ import { afterEach, describe, expect, it } from "vitest";
 import { addFilesFromBridge, connectTabTools } from "../../src/app/intake/tab-tools";
 import { IntakeWorkspace, MAX_FILE_BYTES } from "../../src/app/intake/workspace";
 import { BridgeClient } from "../../src/app/bridge-client";
-import { checkFolder, collectIntake, demoPacks, pickFiles, readIntakeFile, type IntakeCollection } from "../../src/bridge/intake-files";
+import { checkFolder, collectIntake, demoPacks, pickFiles, readIntakeFile, skillPacks, skillPacksText, type IntakeCollection } from "../../src/bridge/intake-files";
 import { resolvePacksDir } from "../../src/share/pack";
 import { createRelayServer } from "../../src/cli/relay";
-import { ERRORS } from "../../src/shared/errors";
+import { ERRORS, errorBody } from "../../src/shared/errors";
 import { encodeEvent } from "../../src/shared/events";
 import { HEADER_TAB_SECRET, ROUTES } from "../../src/shared/routes";
-import { INTAKE_ADD_MAX_BYTES, INTAKE_ADD_MAX_FILES, TOOLS, intakeAddFilesToTabSchema } from "../../src/shared/tools";
+import { INTAKE_ADD_MAX_BYTES, INTAKE_ADD_MAX_FILES, INTAKE_FACILITY_NAME_MAX, TOOLS, intakeAddFilesToTabSchema, intakeFacilityNameOk } from "../../src/shared/tools";
+import { packChoices } from "../../src/app/chart/catalog";
+import { TEXT } from "../../src/app/text";
 import { FakeTab, SECRET_A, startTestBridge, type TestBridge } from "../helpers/bridge";
 
 const cleanups: (() => Promise<void> | void)[] = [];
@@ -298,8 +300,8 @@ describe("送り手と受け手：中継 → 橋渡し → 作業画面", () => 
       expect(e.content, path).toEqual([{ type: "text", text: ERRORS.intake_path_not_allowed.text }]);
     }
     expect(calls).toHaveLength(1);
-    // 型：folder には path が要り、demo には path を渡さない
-    for (const args of [{ source: "folder" }, { source: "demo", path: d }, { source: "folder", path: d, pack: "waste-incineration" }]) {
+    // 型：folder には path が要り、demo には path と facilityName を渡さない
+    for (const args of [{ source: "folder" }, { source: "demo", path: d }, { source: "demo", facilityName: "【架空】甲" }]) {
       expect(TOOLS.intake_add_files.input.safeParse(args).success, JSON.stringify(args)).toBe(false);
     }
   });
@@ -405,5 +407,195 @@ describe("作業画面：人が落とした資料と同じ道で取り込む", (
     expect(asked).toEqual([fileId]);
     // 大きさが合わない中身は入れない
     expect(sent[0].data.result).toEqual({ ok: true, data: { added: [], refused: [{ name: "a.csv", reason: "changed" }] } });
+  });
+});
+
+// folder の pack・facilityName：利用者にチャットのほかの操作をさせないため、Skillパックと施設名もチャットから施設設定に置く。
+// 置くのは作業画面の欄が空のときだけ（人が画面で選んだ・打ったものは上書きしない）。施設名はどれも架空。
+describe("folder の Skillパックと施設名", () => {
+  /** ふつうの（架空の印の無い）CSV が 1 つあるフォルダ */
+  const CSV = "日付,作業\n2024-04-01,点検\n";
+  const folder = () => {
+    const d = temp();
+    writeFileSync(join(d, "a.csv"), CSV);
+    return d;
+  };
+  const choice = (id: string) => packChoices().find((p) => p.id === id)!;
+  const A = TEXT.intake.ai;
+
+  it("型：施設名は 1〜40 字（サロゲートの組も 1 字）。空・41 字・前後の空白・制御の文字は断る。demo には添えない", () => {
+    const d = temp();
+    const ok = (a: object) => TOOLS.intake_add_files.input.safeParse(a).success;
+    expect(INTAKE_FACILITY_NAME_MAX).toBe(40);
+    expect(ok({ source: "folder", path: d, pack: "waste-incineration", facilityName: "あ".repeat(40) })).toBe(true);
+    expect(ok({ source: "folder", path: d, facilityName: "𠮷".repeat(40) })).toBe(true);
+    expect(ok({ source: "folder", path: d, pack: "waste-incineration" })).toBe(true);
+    for (const bad of ["", "あ".repeat(41), "𠮷".repeat(41), " 【架空】乙", "【架空】乙 ", "【架空】\n乙", "\u0000"]) {
+      expect(ok({ source: "folder", path: d, facilityName: bad }), JSON.stringify(bad)).toBe(false);
+      expect(intakeFacilityNameOk(bad), JSON.stringify(bad)).toBe(false);
+    }
+    expect(ok({ source: "folder", path: d, pack: "Waste_Incineration" })).toBe(false);
+    expect(ok({ source: "demo", facilityName: "【架空】乙" })).toBe(false);
+    // 作業画面へ渡す形も同じ決まり（folder は 40 字まで。demo の施設名は demo.json のもので 80 字まで）
+    const toTab = (facilityName: string, source = "folder") => intakeAddFilesToTabSchema.safeParse({ source, pack: null, facilityName, files: [] }).success;
+    expect(toTab("あ".repeat(40))).toBe(true);
+    expect(toTab("𠮷".repeat(40))).toBe(true);
+    expect(toTab("あ".repeat(41))).toBe(false);
+    expect(toTab(" 【架空】乙")).toBe(false);
+    expect(toTab("あ".repeat(41), "demo")).toBe(true);
+  });
+
+  it("橋渡し：pack は作業画面で選べる Skillパック（common.json のあるもの）だけ。無いものは資料を読む前に断る", () => {
+    const packs = temp("moyai-packs-");
+    const put = (dir: string, file: string, body: string) => {
+      mkdirSync(join(packs, dir), { recursive: true });
+      writeFileSync(join(packs, dir, file), body);
+    };
+    put("alpha", "common.json", "{}");
+    put("alpha", "pack.json", JSON.stringify({ name: "【架空】甲の業種" }));
+    put("beta", "pack.json", JSON.stringify({ name: "【架空】中身の無い業種" }));
+    put("gamma", "common.json", "{}");
+    put("_kinds", "common.json", "{}");
+    expect(skillPacks(packs)).toEqual([
+      { id: "alpha", name: "【架空】甲の業種" },
+      { id: "gamma", name: "gamma" },
+    ]);
+    expect(skillPacksText(packs)).toBe("alpha：【架空】甲の業種・gamma：gamma");
+    const e = { packsDir: packs, stateDir: temp("moyai-state-"), repoRoot: REPO };
+    const d = folder();
+    const r = collectIntake({ source: "folder", path: d, pack: "alpha", facilityName: "【架空】乙" }, e) as IntakeCollection;
+    expect(r).toMatchObject({ source: "folder", pack: "alpha", facilityName: "【架空】乙", refused: [], others: 0 });
+    expect(r.files.map((f) => f.name)).toEqual(["a.csv"]);
+    expect(collectIntake({ source: "folder", path: d }, e)).toMatchObject({ pack: null, facilityName: null });
+    for (const pack of ["beta", "_kinds", "no-such-pack"]) expect(collectIntake({ source: "folder", path: d, pack }, e), pack).toBe("intake_pack_unknown");
+    // 道が外れていても、先に Skillパックで断る（フォルダを見に行かない）
+    expect(collectIntake({ source: "folder", path: "relative", pack: "beta" }, e)).toBe("intake_pack_unknown");
+    // 型を通らない施設名は、ここでも直さずに断る
+    expect(collectIntake({ source: "folder", path: d, facilityName: "あ".repeat(41) }, e)).toBe("invalid_input");
+    // リポジトリの packs/ では、作業画面の Skillパックの欄と同じものを選べる
+    const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    expect(skillPacks(PACKS)).toEqual(packChoices().map(({ id, name }) => ({ id, name })).sort(byId));
+    expect(skillPacks(PACKS).length).toBeGreaterThan(0);
+  });
+
+  it("送り手と受け手：中継 → 橋渡し → 作業画面の欄まで届き、空の欄にだけ置く。2 回目の違う値は置かない", async () => {
+    const d = folder();
+    const ws = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
+    // 作業画面の受け手は本物。中身は経路 tabIntakeFile でワンタイムトークンを使って取りに行く
+    const { client, calls } = await chain(async (call, tb) =>
+      addFilesFromBridge(ws, call.args, async (id) => {
+        const r = await fetchFile(tb, id);
+        return r.status === 200 ? new Uint8Array(r.body) : null;
+      }),
+    );
+    const r: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, pack: "waste-incineration", facilityName: "【架空】乙" } });
+    expect(r.isError).toBeFalsy();
+    expect(intakeAddFilesToTabSchema.parse(calls[0]!.args)).toMatchObject({ source: "folder", pack: "waste-incineration", facilityName: "【架空】乙" });
+    expect(JSON.stringify(calls[0]!.args)).not.toContain(d);
+    expect(r.structuredContent).toMatchObject({ source: "folder", pack: "waste-incineration", refused: [], refusedTotal: 0 });
+    expect(r.structuredContent.added.map((a: { name: string }) => a.name)).toEqual(["a.csv"]);
+    expect(TOOLS.intake_add_files.output.safeParse(r.structuredContent).success).toBe(true);
+    expect(ws.settings).toMatchObject({ packId: "waste-incineration", facilityName: "【架空】乙", fictional: false });
+    expect(ws.notices.map((n) => n.text)).toContain(A.facilitySet([A.facilityPack(choice("waste-incineration").name), A.facilityName("【架空】乙")]));
+    // 2 回目：違う Skillパックと施設名を添えても、入っている値は変えない（資料は入る）
+    writeFileSync(join(d, "b.csv"), CSV);
+    const again: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, pack: "night-soil", facilityName: "【架空】丙" } });
+    expect(again.isError).toBeFalsy();
+    expect(again.structuredContent.added.map((a: { name: string }) => a.name)).toEqual(["b.csv"]);
+    expect(ws.settings).toMatchObject({ packId: "waste-incineration", facilityName: "【架空】乙" });
+    expect(ws.notices.map((n) => n.text)).toContain(A.facilityKept([A.facilityPack(choice("night-soil").name), A.facilityName("【架空】丙")]));
+  });
+
+  it("送り手と受け手：無い Skillパックは作業画面に渡さずに断り、選べる ID と名前を返す。型に合わない施設名も渡さない", async () => {
+    const d = folder();
+    const { client, calls } = await chain(async () => ({ ok: true, data: { added: [], refused: [] } }));
+    const r: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, pack: "no-such-pack", facilityName: "【架空】乙" } });
+    expect(r.isError).toBe(true);
+    const text = errorBody("intake_pack_unknown", { packs: skillPacksText(PACKS) }).error.message;
+    expect(r.content[0]).toEqual({ type: "text", text });
+    expect(text).not.toContain("{packs}");
+    for (const p of packChoices()) expect(text).toContain(`${p.id}：${p.name}`);
+    for (const facilityName of ["あ".repeat(41), " 【架空】乙", ""]) {
+      const e: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, facilityName } });
+      expect(e.isError, JSON.stringify(facilityName)).toBe(true);
+    }
+    expect(calls).toHaveLength(0);
+  });
+
+  describe("作業画面の受け手", () => {
+    const bytes = new TextEncoder().encode(CSV);
+    const args = (o: { pack?: string | null; facilityName?: string | null }) => ({
+      source: "folder",
+      pack: o.pack ?? null,
+      facilityName: o.facilityName ?? null,
+      files: [{ fileId: "a".repeat(22), name: "a.csv", size: bytes.length }],
+    });
+    const wsOf = (packId: string, facilityName: string) => new IntakeWorkspace({ packId, facilityName, fiscalYearStartMonth: 4, fictional: false });
+
+    it("空の欄に置き、AI の作業の欄に知らせる。架空の印の無い資料は架空にしない", async () => {
+      const ws = wsOf("", "");
+      const r = await addFilesFromBridge(ws, args({ pack: "waste-incineration", facilityName: "【架空】乙" }), async () => bytes);
+      if (!r.ok) throw new Error(r.code);
+      expect(r.data).toEqual({ added: [{ name: "a.csv", sheets: expect.any(Number), rows: expect.any(Number) }], refused: [] });
+      expect(ws.settings).toMatchObject({ packId: "waste-incineration", facilityName: "【架空】乙", fictional: false });
+      const notes = ws.notices.filter((n) => n.kind === "ai").map((n) => n.text);
+      expect(notes).toContain(A.facilitySet([A.facilityPack(choice("waste-incineration").name), A.facilityName("【架空】乙")]));
+      expect(notes).toContain(A.filesAdded(false, 1, 0));
+      // 添えなければ何も置かず、施設設定の知らせも出さない
+      const none = wsOf("", "");
+      await addFilesFromBridge(none, args({}), async () => bytes);
+      expect(none.settings).toMatchObject({ packId: "", facilityName: "" });
+      expect(none.notices.map((n) => n.text)).toEqual([A.filesAdded(false, 1, 0)]);
+    });
+
+    it("人が選んだ Skillパック・打った施設名は上書きしない（違う値は未反映と知らせる）。空の欄だけ置く", async () => {
+      const human = wsOf("night-soil", "【架空】人の施設");
+      const r = await addFilesFromBridge(human, args({ pack: "waste-incineration", facilityName: "【架空】AI の施設" }), async () => bytes);
+      if (!r.ok) throw new Error(r.code);
+      expect(r.data.added).toHaveLength(1);
+      expect(human.settings).toMatchObject({ packId: "night-soil", facilityName: "【架空】人の施設" });
+      const notes = human.notices.map((n) => n.text);
+      expect(notes).toContain(A.facilityKept([A.facilityPack(choice("waste-incineration").name), A.facilityName("【架空】AI の施設")]));
+      expect(notes.some((t) => t.startsWith("AI が施設設定を入力"))).toBe(false);
+      // 施設名だけ人が打ってある：Skillパックだけ置く
+      const nameOnly = wsOf("", "【架空】人の施設");
+      await addFilesFromBridge(nameOnly, args({ pack: "waste-incineration", facilityName: "【架空】AI の施設" }), async () => bytes);
+      expect(nameOnly.settings).toMatchObject({ packId: "waste-incineration", facilityName: "【架空】人の施設" });
+      expect(nameOnly.notices.map((n) => n.text)).toEqual(
+        expect.arrayContaining([A.facilitySet([A.facilityPack(choice("waste-incineration").name)]), A.facilityKept([A.facilityName("【架空】AI の施設")])]),
+      );
+      // Skillパックだけ人が選んである（同じ値なら知らせない）。空白だけの施設名は空として置く
+      const packOnly = wsOf("waste-incineration", "  ");
+      await addFilesFromBridge(packOnly, args({ pack: "waste-incineration", facilityName: "【架空】AI の施設" }), async () => bytes);
+      expect(packOnly.settings).toMatchObject({ packId: "waste-incineration", facilityName: "【架空】AI の施設" });
+      expect(packOnly.notices.map((n) => n.text)).toContain(A.facilitySet([A.facilityName("【架空】AI の施設")]));
+      expect(packOnly.notices.some((n) => n.text.startsWith("AI の施設設定は未反映"))).toBe(false);
+    });
+
+    it("作業画面の一覧に無い Skillパックは置かず、資料も取りに行かない（intake_pack_not_on_screen）", async () => {
+      const ws = wsOf("", "");
+      let asked = 0;
+      const r = await addFilesFromBridge(ws, args({ pack: "no-such-pack", facilityName: "【架空】乙" }), async () => (asked++, bytes));
+      expect(r).toEqual({ ok: false, code: "intake_pack_not_on_screen" });
+      expect(asked).toBe(0);
+      expect(ws.fileCount).toBe(0);
+      expect(ws.settings).toMatchObject({ packId: "", facilityName: "" });
+      expect(ws.notices[0]).toMatchObject({ kind: "ai", text: A.packNotOnScreen("no-such-pack") });
+    });
+
+    it("施設名の長さ：40 字は置き、41 字は型で断る（何も置かず、資料も入れない）", async () => {
+      for (const name of ["あ".repeat(40), "𠮷".repeat(40)]) {
+        const ws = wsOf("", "");
+        const r = await addFilesFromBridge(ws, args({ facilityName: name }), async () => bytes);
+        expect(r.ok, name).toBe(true);
+        expect(ws.settings.facilityName).toBe(name);
+      }
+      for (const name of ["あ".repeat(41), "𠮷".repeat(41)]) {
+        const ws = wsOf("", "");
+        expect(await addFilesFromBridge(ws, args({ facilityName: name }), async () => bytes)).toEqual({ ok: false, code: "tool_failed" });
+        expect(ws.settings.facilityName).toBe("");
+        expect(ws.fileCount).toBe(0);
+      }
+    });
   });
 });

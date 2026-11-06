@@ -265,31 +265,49 @@ const PACK_ID_SHAPE = /^[a-z][a-z0-9-]{0,63}$/;
 const fileName = z.string().min(1).max(260);
 const refusedFile = z.object({ name: fileName, reason: z.enum(INTAKE_REFUSALS) });
 
+/** folder で AI が添える施設名の上限（字。サロゲートの組も 1 字と数える） */
+export const INTAKE_FACILITY_NAME_MAX = 40;
+/** folder の施設名の形：1〜40 字で、前後に空白が無く、制御の文字を含まない。外れたものは直さずに断る */
+export function intakeFacilityNameOk(s: string): boolean {
+  return s.length > 0 && s.trim() === s && [...s].length <= INTAKE_FACILITY_NAME_MAX && !/[\u0000-\u001f\u007f-\u009f]/.test(s);
+}
+const FACILITY_NAME_MESSAGE = `facilityName は 1〜${INTAKE_FACILITY_NAME_MAX} 字（前後の空白と制御の文字は使えない）`;
+
 const intakeAddFilesInput = z
   .object({
     source: z.enum(INTAKE_SOURCES),
     /** folder：利用者がチャットで言ったフォルダ（絶対の道） */
     path: z.string().min(1).max(1000).optional(),
-    /** demo：デモの資料を取るパック（省くと、demo/ のあるパックが 1 つならそれ） */
+    /**
+     * Skillパックの ID。demo：デモの資料を取る Skillパック（省くと、demo/ のある Skillパックが 1 つならそれ）。
+     * folder：利用者の業種の Skillパック（作業画面の Skillパックの欄で選べるものだけ）。作業画面のその欄が空のときだけ置く
+     */
     pack: z.string().regex(PACK_ID_SHAPE).optional(),
+    /** folder：利用者の施設名（40 字まで）。作業画面の施設名の欄が空のときだけ置く。demo の施設名は Skillパックの demo/demo.json */
+    facilityName: z.string().min(1).refine(intakeFacilityNameOk, { message: FACILITY_NAME_MESSAGE }).optional(),
   })
   .superRefine((a, ctx) => {
     if (a.source === "folder" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "folder には path が要る" });
     if (a.source === "demo" && a.path !== undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "demo では path を渡さない" });
-    if (a.source === "folder" && a.pack !== undefined) ctx.addIssue({ code: "custom", path: ["pack"], message: "pack は demo だけ" });
+    if (a.source === "demo" && a.facilityName !== undefined) ctx.addIssue({ code: "custom", path: ["facilityName"], message: "facilityName は folder だけ" });
   });
 
 /** 橋渡し → 作業画面：渡す資料の一覧（中身は作業画面が経路 tabIntakeFile で 1 つずつ取りに来る） */
-export const intakeAddFilesToTabSchema = z.object({
-  source: z.enum(INTAKE_SOURCES),
-  /** demo のパック（作業画面がまだパックを選んでいなければ、これにする） */
-  pack: z.string().regex(PACK_ID_SHAPE).nullable(),
-  /** demo の施設の名前（Skillパックの demo/demo.json。作業画面の施設の名前が空なら、これにする） */
-  facilityName: z.string().min(1).max(80).nullable(),
-  files: z
-    .array(z.object({ fileId: z.string().regex(/^[A-Za-z0-9_-]{22}$/), name: fileName, size: z.number().int().min(0).max(INTAKE_ADD_MAX_BYTES) }))
-    .max(INTAKE_ADD_MAX_FILES),
-});
+export const intakeAddFilesToTabSchema = z
+  .object({
+    source: z.enum(INTAKE_SOURCES),
+    /** demo：資料を取った Skillパック。folder：AI が添えた Skillパック（無ければ null）。作業画面の Skillパックの欄が空なら、これにする */
+    pack: z.string().regex(PACK_ID_SHAPE).nullable(),
+    /** demo：Skillパックの demo/demo.json の施設名。folder：AI が添えた施設名（40 字まで。無ければ null）。作業画面の施設名の欄が空なら、これにする */
+    facilityName: z.string().min(1).max(80).nullable(),
+    files: z
+      .array(z.object({ fileId: z.string().regex(/^[A-Za-z0-9_-]{22}$/), name: fileName, size: z.number().int().min(0).max(INTAKE_ADD_MAX_BYTES) }))
+      .max(INTAKE_ADD_MAX_FILES),
+  })
+  .superRefine((a, ctx) => {
+    if (a.source === "folder" && a.facilityName !== null && !intakeFacilityNameOk(a.facilityName))
+      ctx.addIssue({ code: "custom", path: ["facilityName"], message: FACILITY_NAME_MESSAGE });
+  });
 export type IntakeAddFilesToTab = z.infer<typeof intakeAddFilesToTabSchema>;
 
 /** 作業画面 → 橋渡し：入れた資料の名前と件数（シートと行の数。画像は null）、断った資料の名前と理由だけ */
@@ -438,11 +456,12 @@ export const TOOLS = {
     "資料を作業画面に入れる（人が資料を落としたのと同じ道で取り込む）。" +
       "source: demo は Skillパックの demo/ の架空の資料（利用者が「デモして」と言ったとき。pack は省いてよい）。" +
       "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
+      "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
       "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey の files で入った資料を確かめる。",
     intakeAddFilesInput,
     z.object({
       source: z.enum(INTAKE_SOURCES),
-      /** demo のとき：資料を取ったパック。folder は null */
+      /** demo：資料を取った Skillパック。folder：添えた Skillパック（無ければ null。作業画面の欄が空のときだけ置いた） */
       pack: z.string().nullable(),
       added: z.array(z.object({ name: fileName, bytes: z.number().int().min(0), sheets: z.number().int().nullable(), rows: z.number().int().nullable() })).max(INTAKE_ADD_MAX_FILES),
       refused: z.array(refusedFile).max(INTAKE_ADD_MAX_REFUSED),

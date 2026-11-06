@@ -23,7 +23,7 @@ import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
-import { collectIntake, readIntakeFile } from "./intake-files";
+import { collectIntake, readIntakeFile, skillPacksText } from "./intake-files";
 import { HumanService, type HumanEnv } from "./human";
 import { makeEd25519Sample } from "./selftest";
 import { removeKeyFile, writeKeyFile } from "./state";
@@ -172,8 +172,15 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       return { path: w.path, version: w.version, approved, rules: w.rules };
     },
     // 資料を作業画面に入れる：道を確かめて資料を選ぶ（状態フォルダとリポジトリの中は読まない。中身は作業画面が経路で取りに来る）
-    intake_add_files: async (args) =>
-      collectIntake(args as { source: "demo" | "folder"; path?: string; pack?: string }, { packsDir, stateDir: opts.stateDir, repoRoot: opts.repoRoot ?? dirname(packsDir) }),
+    // 無い Skillパックは、選べる Skillパックの ID と名前を文に添えて返す（AI が利用者の業種に合うものを選び直せるように）
+    intake_add_files: async (args) => {
+      const c = collectIntake(args as { source: "demo" | "folder"; path?: string; pack?: string; facilityName?: string }, {
+        packsDir,
+        stateDir: opts.stateDir,
+        repoRoot: opts.repoRoot ?? dirname(packsDir),
+      });
+      return c === "intake_pack_unknown" ? errorBody(c, { packs: skillPacksText(packsDir) }) : c;
+    },
   });
   const relayKey = randomBytes(32).toString("base64url");
   let port = opts.port;
@@ -293,7 +300,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       // 会話は中継の 1 つの接続。中継が付けない呼び出しは 1 つの会話にまとめて数える
       const conv = typeof conversation === "string" && /^[A-Za-z0-9-]{1,64}$/.test(conversation) ? conversation : "none";
       const answer = await tools.run(name, parsed.data as Record<string, unknown>, conv);
-      return "ok" in answer ? sendJson(res, 200, answer) : reject(res, answer.error.code);
+      // 誤りは、橋渡しが作った文のまま返す（値を添えた文：intake_pack_unknown の選べる Skillパック）
+      return "ok" in answer ? sendJson(res, 200, answer) : sendJson(res, httpStatus(answer.error.code), answer);
     },
     // moyai uninstall の止める合図（鍵ファイルの鍵が要る）。答えを返してから止める
     relayStop: async ({ req, res, route }) => {

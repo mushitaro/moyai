@@ -37,8 +37,8 @@ export interface BridgeTools {
   peer_reference?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   /** 今の公開の台帳の clone の版（台帳を根拠にした周期の案を照らす。台帳の中-5） */
   ledger_version?: () => Promise<string | null>;
-  /** 資料を作業画面に入れる：道を確かめて読む資料を選ぶ（中身は読まない。src/bridge/intake-files.ts） */
-  intake_add_files?: (args: Record<string, unknown>) => Promise<IntakeCollection | ErrorCode>;
+  /** 資料を作業画面に入れる：道を確かめて読む資料を選ぶ（中身は読まない。src/bridge/intake-files.ts）。文に値を添える誤りは ErrorBody で返す */
+  intake_add_files?: (args: Record<string, unknown>) => Promise<IntakeCollection | ErrorCode | ErrorBody>;
 }
 
 /** 作業画面に渡した資料の印が効く時間の余り（ツールの待ちの上限に足す） */
@@ -335,6 +335,7 @@ export class ToolRelay {
     if (!session) return errorBody("work_screen_not_open");
     const c = await h(args);
     if (typeof c === "string") return errorBody(c);
+    if ("error" in c) return c;
     const ms = this.timeouts[def.kind] ?? TOOL_TIMEOUTS[def.kind].ms;
     const until = Date.now() + ms + STAGED_MARGIN_MS;
     const ids = c.files.map((f) => {
