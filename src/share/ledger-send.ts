@@ -100,7 +100,7 @@ export const LEDGER_PR_TEXT = {
       `台帳 \`${o.ledgerId}\` に、共有ファイルを 1 つ足します。`,
       "",
       `- 共有ファイル：\`${o.path}\``,
-      `- 鍵 ID \`${o.key}\`（指紋 \`${fingerprint(o.pub)}\`）・連番 ${o.seq}・ファイルの SHA-256 \`${o.hash}\``,
+      `- 鍵 ID \`${o.key}\`（鍵番号 \`${fingerprint(o.pub)}\`）・連番 ${o.seq}・ファイルの SHA-256 \`${o.hash}\``,
       `- 見え方：${o.profile}`,
       `- 塊：${o.chunks}`,
       "",
