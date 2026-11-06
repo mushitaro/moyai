@@ -319,7 +319,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           )}
         </Table.Td>
         <Table.Td c="var(--text-2)">{d.basis}</Table.Td>
-        <Table.Td className="moyai-num" ta="right" data-testid="pending-count">
+        <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
           {d.kind === "reading" ? (d.count ?? "―") : ds.length}
         </Table.Td>
         <Table.Td ta="right">
@@ -400,7 +400,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       <Table.Td c="var(--text-2)" title={p.basis}>
         {shortWhy(p.basis)}
       </Table.Td>
-      <Table.Td className="moyai-num" ta="right" data-testid="crosswalk-matched">
+      <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="crosswalk-matched">
         {p.matched}
       </Table.Td>
       <Table.Td ta="right">
@@ -427,7 +427,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     <Table.Thead>
       <Table.Tr>
         {cols.map((h, i) => (
-          <Table.Th key={h} ta={i >= 2 ? "right" : undefined} style={{ width: i === 0 ? (kind === "same" ? "76%" : "40%") : i === 1 && kind !== "same" ? "36%" : undefined }}>
+          <Table.Th key={h} ta={i >= 2 ? "right" : undefined} style={{ whiteSpace: "nowrap", width: i === 0 ? (kind === "same" ? "76%" : "40%") : i === 1 && kind !== "same" ? "36%" : i === cols.length - 2 ? 88 : undefined }}>
             {h}
           </Table.Th>
         ))}
@@ -489,14 +489,16 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     <Stack gap="md" px="xl" py="lg" data-testid="decisions-sheet">
       <Group align="flex-end" gap="md" wrap="wrap">
         <TextInput label={T.reasonLabel} placeholder={T.reasonPlaceholder} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={500} style={{ flex: "1 1 360px", maxWidth: 560 }} data-testid="decisions-reason" />
-        <Button variant="default" disabled={!ok || visibleCount === 0} onClick={acceptAll} data-testid="decisions-bulk-accept">
-          {kind === "same" && sameAs !== null ? T.sameAccept(sameAs, visibleCount) : T.visibleAccept(visibleCount)}
-        </Button>
-        {!ok && leftCount > 0 && (
-          <Text size="xs" c="dimmed">
-            {T.bulkNeedsReason}
-          </Text>
-        )}
+        <Group gap="md" align="center" wrap="nowrap" style={{ minHeight: "var(--h-m)" }}>
+          <Button variant="default" disabled={!ok || visibleCount === 0} onClick={acceptAll} data-testid="decisions-bulk-accept">
+            {kind === "same" && sameAs !== null ? T.sameAccept(sameAs, visibleCount) : T.visibleAccept(visibleCount)}
+          </Button>
+          {!ok && leftCount > 0 && (
+            <Text size="xs" c="dimmed" data-testid="decisions-bulk-reason">
+              {T.bulkNeedsReason}
+            </Text>
+          )}
+        </Group>
       </Group>
       {kinds.length > 0 && kind && (
         <Switch
@@ -589,7 +591,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
             <Text size="sm" c="var(--text-2)" data-testid="reject-item">
               {rejecting.target === "assetNode" ? T.ruleNodeHead : T.ruleWorkHead}{whenShort(rejecting, names)} → {targetPath(rejecting)}
             </Text>
-            <TextInput label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
+            <TextInput className="moyai-dialog-field" label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
             <Group justify="flex-end" gap="sm" wrap="nowrap">
               {!rejectOk && (
                 <Text size="xs" c="var(--text-3)" data-testid="reject-disabled-reason">
@@ -621,7 +623,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
             <Text size="sm" c="var(--text-2)" data-testid="reject-item">
               {T.cycleWhat(rejectingCycle.id, rejectingCycle.n)}
             </Text>
-            <TextInput label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
+            <TextInput className="moyai-dialog-field" label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
             <Group justify="flex-end" gap="sm" wrap="nowrap">
               {!rejectOk && (
                 <Text size="xs" c="var(--text-3)" data-testid="reject-disabled-reason">

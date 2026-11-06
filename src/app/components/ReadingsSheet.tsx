@@ -112,7 +112,7 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
                 <Table.Tr>
                   <Table.Th style={{ width: "60%" }}>{T.head[0]}</Table.Th>
                   <Table.Th>{T.head[1]}</Table.Th>
-                  <Table.Th ta="right">{T.head[2]}</Table.Th>
+                  <Table.Th ta="right" style={{ whiteSpace: "nowrap" }}>{T.head[2]}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>

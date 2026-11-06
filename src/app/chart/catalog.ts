@@ -45,3 +45,9 @@ export function packChoices(): { id: string; name: string; table: string }[] {
     })
     .sort((a, b) => a.id.localeCompare(b.id));
 }
+
+/** パックの版（pack.json の version）。無ければ null（設定の Skillパックの行に「v1」と出す。Wire、11-06） */
+export function packVersion(packId: string): number | string | null {
+  const v = (packJsons[`../../../packs/${packId}/pack.json`] as { version?: unknown } | undefined)?.version;
+  return typeof v === "number" || (typeof v === "string" && v !== "") ? v : null;
+}
