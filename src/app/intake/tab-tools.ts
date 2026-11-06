@@ -11,12 +11,14 @@ import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
-import { proposeCyclesFromAi } from "../state/cycles";
+import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
 import { getPeerView } from "../state/peers";
-import type { ReadingRule, ReadingScope } from "../../import/reading";
+import { activeRules, isPlanRule, type ReadingRule, type ReadingScope } from "../../import/reading";
+import type { VerifiedBases } from "../../plan/cycle";
+import type { Plan } from "../../shared/plan";
 import { RECEIVE_MIN_K } from "../../share/k";
 import { peerAggregates } from "../../share/peer-reference";
-import { checkResultsOf, getReferenceDate } from "../state/review";
+import { checkResultsOf, getReferenceDate, packCheckOf } from "../state/review";
 import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
 import type { IntakeWorkspace } from "./workspace";
@@ -88,7 +90,24 @@ function ledgerRequest(args: Record<string, unknown>): TabToolResult {
 function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabToolResult {
   // ledger は橋渡しが照らしてから渡す（照らせなければここまで来ない）。無ければ会話からの案
   const author = args.author === "ai_relayed_human" ? "ai_relayed_human" : "ai";
-  const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis), { fromLedger: Boolean(args.ledger), author });
+  // ほかの根拠は AI が指すだけ。中身（間隔・基準の名前と出典・ルールの版と文）は MOYAI が計画・パック・当てている読み方から引く（Architect の 42 の 3）
+  const bases = (args.bases ?? {}) as { record?: boolean; pack?: { checkId: string }; rule?: { name: string; ruleId: string } };
+  const working = getWorkingPlan();
+  if (!working) return { ok: false, code: "no_working_plan" };
+  const verified: VerifiedBases = {};
+  if (bases.record) verified.record = true;
+  if (bases.pack) {
+    const c = packCheckOf(working.plan.packId, bases.pack.checkId);
+    if (!c) return { ok: false, code: "pack_basis_unknown" };
+    verified.pack = c;
+  }
+  if (bases.rule) {
+    const want = bases.rule;
+    const a = activeRules(ws.currentReadings()).find((x) => x.from.name === want.name && x.rule.id === want.ruleId && isPlanRule(x.rule));
+    if (!a) return { ok: false, code: "plan_rule_unknown" };
+    verified.rule = { name: a.from.name, version: a.from.version, ruleId: a.rule.id, text: a.rule.text };
+  }
+  const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis), { fromLedger: Boolean(args.ledger), author, verified });
   if (!r.ok) return r;
   const marks = r.proposals.reduce((n, p) => n + p.detailKeys.length, 0);
   ws.note("ai", T.cyclesProposed(r.proposals.length, marks));
@@ -105,10 +124,16 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
       matched: marks,
       conflicts: 0,
       examples,
-      proposals: r.proposals.map((p) => ({ id: p.id, years: p.years, works: p.works, marks: p.detailKeys.length, skipped: p.skipped })),
+      proposals: r.proposals.map((p) => ({ id: p.id, years: p.years, works: p.works, marks: p.detailKeys.length, skipped: p.skipped, bases: basesOf(r.plan, p.detailKeys[0]) })),
       version: r.version,
     },
   };
+}
+
+/** 案の印の出どころから、照らした根拠の種類（印が無ければ空） */
+function basesOf(plan: Plan, detailKey: string | undefined): string[] {
+  const d = detailKey ? plan.details.find((x) => x.detailKey === detailKey) : undefined;
+  return (d?.sources ?? []).map((s) => s.file.slice(0, s.file.indexOf(":")));
 }
 
 /** 作業画面が今当てている Skill：選んでいるパック（作業中の計画のパック）と、当てている読み方 */
@@ -121,7 +146,15 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   reading_rules_propose: (ws, args) => {
     // AI の経路から来た規則は、作者を AI に固め、決めた人の呼び名は捨てる（人と名乗らせない。台帳の新-8）
     const fromAi = (args.rules as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);
-    const rules = ws.proposeReading(String(args.name), args.scope as ReadingScope, fromAi);
+    const placed = ws.proposeReading(String(args.name), args.scope as ReadingScope, fromAi);
+    // 計画ルールは、当たる作業に周期の案（R）を出す（人が確定のシートで受けるまで決まらない）。件数は引いた印の数
+    applyPlanRules();
+    const plan = getWorkingPlan()?.plan ?? null;
+    const mine = ws.draftReading(String(args.name))?.skill.rules ?? [];
+    const rules = placed.map((x) => {
+      const r = mine.find((y) => y.id === x.id);
+      return r && isPlanRule(r) ? { ...x, hits: planRuleMarks(plan, String(args.name), x.id) } : x;
+    });
     const an = ws.analysis();
     const unresolved = [...an.composition.status.values()].filter((x) => x.s === "unresolved").length;
     ws.note("ai", T.readingProposed(String(args.name), (args.rules as unknown[]).length));
@@ -227,6 +260,8 @@ export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<
 
 /** 橋渡しとの接続に、このタブの作業場を AI のツールの受け手としてつなぐ（App が 1 回だけ呼ぶ） */
 export function connectTabTools(client: BridgeClient, ws: IntakeWorkspace): void {
+  // 計画ルールの案（R）：作業中の計画か当てているルールが変わるたびに出し直す
+  watchPlanRules();
   client.setToolHandlers({
     call: async (name, args, ctx) => runTabTool(ws, name, args, ctx),
     unknown: (name) => ws.note("unknown", TEXT.intake.activity.unknown(name)),

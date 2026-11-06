@@ -16,7 +16,8 @@ import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previ
 import { checkSeen } from "./seen";
 import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
-import { approvedReadingVersions, listReadings, loadedOf, registerReading } from "./readings";
+import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, registerReading } from "./readings";
+import { ReadingSkill, isPlanRule } from "../import/reading";
 import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
 import { ruleSchema } from "../shared/tools";
 import { AUTHOR_KINDS } from "../shared/fields";
@@ -528,9 +529,21 @@ export class HumanService {
         if (!signer.ok) return no(signer.reason);
         // 使った読み方を保管先に書き、道と版を版の記録に書く（この版に人が署名すると、その版の読み方が承認済みになる）。担当者の範囲の読み方は、署名する人の呼び名の下に置く
         const readingSkills: { name: string; path: string; version: string }[] = [];
+        // 計画ルールは、承認済みの同じ中身か、この署名で人が受けた周期の案のもとになったものだけを載せる（Architect の 42 の 2）
+        const acceptedIds = new Set(p.acceptances.map((a) => a.id));
+        let approvedList: Awaited<ReturnType<typeof listReadings>> | null = null;
+        // 先にどれも照らしてから書く（途中で断ったときに、前の読み方だけを書かない）
         for (const x of p.readings ?? []) {
           // 担当者の範囲の読み方の持ち主は、署名する人だけ（タブから来たほかの呼び名は受けない。監査 D2）
           if (x.by !== null && x.by !== signer.signer.by) return no("readingInvalid");
+          const sk = ReadingSkill.safeParse(x.skill);
+          if (!sk.success) return no("readingInvalid");
+          if (sk.data.rules.some(isPlanRule)) {
+            approvedList ??= await listReadings(root, await approvedReadingVersions(root, (v) => countsForApproval(trustOf(sd, v, now))));
+            if (!planRulesBacked(sk.data, p.plan, acceptedIds, approvedList)) return no("readingInvalid");
+          }
+        }
+        for (const x of p.readings ?? []) {
           const w = await registerReading(root, x.skill, signer.signer.by, x.facilityKey);
           if (!w.ok) return no("readingInvalid");
           readingSkills.push({ name: (x.skill as { name: string }).name, path: w.path, version: w.version });

@@ -23,7 +23,7 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { TEXT } from "../text";
 import { getWorkingPlan, setWorkingPlan, updateWorkingPlan } from "./plan-store";
 import { AMBIGUOUS_KEY_PREFIX } from "../../import/compose";
-import { cycleIdOf } from "../../plan/cycle";
+import { cycleIdOf, isPlanRuleCycle } from "../../plan/cycle";
 
 /** もとにした版（1C）：MERGE で版を開いたときに置く。作り直すと、その版の当てはめを「第 n 版と同じ」の案として並べる */
 let base: { version: number; plan: Plan; crosswalk: readonly { rule: Rule; basis: string }[] } | null = null;
@@ -174,7 +174,7 @@ export function placeComposedPlan(next: Plan): CarryOverReport | null {
 /**
  * もとにした版から、当てはめのほかに引き継ぐもの（台帳の新-10）：
  * - 施設の見え方の答え（profile・全国の表に載るか）は、作り直した計画に無ければ写す（人が施設の設定で答えたもの）
- * - 人が受けた周期の案（台帳から置いた計画の印）は、同じ作業があれば「第 n 版と同じ」の案として並べ直す。
+ * - 人が受けた周期の案（台帳から置いた計画の印）は、同じ作業があれば「第 n 版と同じ」の案として並べ直す（計画ルールの案 R は写さない）。
  *   根拠に「第 n 版で受けた当てはめと同じ」を足すので、決定の中身が変わり、人がもう一度受けるまで決まらない
  */
 /** 根拠の末尾の「。第 n 版で受けた当てはめと同じ」（T.sameAs と同じ形） */
@@ -190,7 +190,11 @@ export function carryFromBase(plan: Plan, basePlan: Plan, version: number): Plan
   const works = new Set(plan.works.map((w) => w.workKey));
   const have = new Set(plan.details.map((d) => d.detailKey));
   const carried = basePlan.details
-    .filter((d) => cycleIdOf(d.detailKey) !== null && works.has(d.workKey) && !have.has(d.detailKey))
+    // 計画ルールの案（R）は写さない。次の版で、そのときのルールの版から出し直す（Architect の 42 の 4。state/cycles.ts）
+    .filter((d) => {
+      const c = cycleIdOf(d.detailKey);
+      return c !== null && !isPlanRuleCycle(c) && works.has(d.workKey) && !have.has(d.detailKey);
+    })
     // 前の版で足した同じ形の言葉は外してから足す（版を重ねても「…第 2 版と同じ。第 3 版と同じ」と伸ばさない）
     .map((d) => ({ ...d, basis: `${d.basis.replace(SAME_AS_TAIL, "")}。${T.sameAs(version)}` }));
   return { ...plan, facility, details: [...plan.details, ...carried] };

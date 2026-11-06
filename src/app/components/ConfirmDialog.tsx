@@ -4,7 +4,7 @@
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
 import { Alert, Anchor, Button, Group, Modal, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
-import { getCurrentReadings, readingsForCommit } from "../state/readings";
+import { readingsForCommit, readingsSigned } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
 import { pendingDeriveFor, setPendingDerive } from "../state/derive";
 import { getWorkingPlan } from "../state/plan-store";
@@ -192,7 +192,9 @@ export function ConfirmDialog({
   // 署名：呼び名が決まっていなければ署名できない。この PC に鍵が無ければ、鍵を作ってから署名する（合言葉はやめた。docs/plan.md §2.18）
   const name = status?.name ?? null;
   const newKey = !!status && !status.hasKey && keyMade === null;
-  const readings = getCurrentReadings().readings;
+  // この署名で承認する読み方（下書きの計画ルールは、この署名で受ける周期の案のもとになったものだけ。Architect の 42 の 2）
+  const acceptedIds = new Set(accepted.map((a) => a.id));
+  const readings = readingsSigned(plan, acceptedIds);
   const toOk = ask === "self" || /^[^\s@]+@[^\s@]+$/.test(to.trim());
   const canSubmit = !!status && !!name && toOk && reason.trim().length > 0 && left === 0 && !busy && !done;
   const blockReason = !toOk ? T.toMissing : !name ? T.needName : left > 0 ? T.pendingLeft(left) : reason.trim().length === 0 ? T.reasonEmpty : null;
@@ -232,7 +234,7 @@ export function ConfirmDialog({
       // もとにした版：この編集を始めた保管先の版（ほかの人がその後に版を足していれば、橋渡しが断る）
       basedOn: baseOf(plan, status.latest?.version ?? null),
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
-      readings: readingsForCommit(),
+      readings: readingsForCommit(plan, acceptedIds),
       request: { kind: ask, to: ask === "self" ? null : to.trim(), note: reason.trim() },
       // ほかの施設の版から作った新しい施設の第 1 版なら、その元（トップの「この版から別の施設をつくる」）
       derivedFrom: status.latest ? null : pendingDeriveFor(plan.planId),

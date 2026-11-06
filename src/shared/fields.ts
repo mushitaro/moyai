@@ -25,6 +25,9 @@ export type AuthorKind = (typeof AUTHOR_KINDS)[number];
 export const WORK_ATTRIBUTES = ["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"] as const;
 export type WorkAttribute = (typeof WORK_ATTRIBUTES)[number];
 
+/** 分類コードの形（docs/plan.md §2.1）。頭の文字はパックが決める */
+export const CLASS_CODE = /^[A-Z]{2,4}(\.[A-Z0-9_]{2,16}){1,4}$/;
+
 const f = (label: string, type: FieldType, extra: Partial<FieldDef> = {}): FieldDef => ({ label, type, ...extra });
 
 export const ENTITIES = {

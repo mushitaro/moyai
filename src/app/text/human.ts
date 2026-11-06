@@ -270,7 +270,7 @@ export const HUMAN_TEXT = {
     loading: "これまでに確定した決定（履歴）を読んでいます",
     // 決めた人は 1 列目の朱の小さな字が言うので、列にしない（Wire、Decisions.dc.html V44）
     head: ["項目", "理由", "件数", ""],
-    kind: { ai: "- Claude 判断", relayed: "- 会話の回答", ledger: "- 台帳案", crosswalk: "- 紐付け案" },
+    kind: { ai: "- Claude 判断", relayed: "- 会話の回答", ledger: "- 台帳案", rule: "- ルール案", crosswalk: "- 紐付け案" },
     /** 読み方の決定が効く所（明細の数で言えない決定。Wire） */
     where: (w: string) => `効く所　${w}`,
     blank: "空",
@@ -302,7 +302,7 @@ export const HUMAN_TEXT = {
     bulkAccept: "一括確定",
     // 種類の切り替え（Wire、2026-11-05）
     kindSwitch: "決定の種類",
-    kinds: { same: (n: number) => `第 ${n} 版と同じ`, crosswalk: "紐付け案", ledger: "台帳案", relayed: "会話の回答", ai: "Claude 判断" },
+    kinds: { same: (n: number) => `第 ${n} 版と同じ`, crosswalk: "紐付け案", ledger: "台帳案", rule: "ルール案", relayed: "会話の回答", ai: "Claude 判断" },
     visibleAccept: (n: number) => `表示中の ${fmt(n)} 件を一括確定`,
     sameAccept: (v: number, n: number) => `第 ${v} 版と同じ ${fmt(n)} 件を確定`,
     left: (n: number) => `未確定 ${fmt(n)}`,

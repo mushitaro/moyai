@@ -1,21 +1,153 @@
 // 周期の案を作業中の計画に置く（AI の chart_propose の受け手。docs/plan.md §2.18.4）。当てはめの案（state/crosswalk.ts の proposeFromAi）と同じく、
 // AI のツールの受け手（intake/tab-tools.ts）は計画を直に書き換えず、この関数を通す。置くのは作者が AI の計画の印だけで、受けるのは人（決定のシート）。
-import { LEDGER_CYCLE_PREFIX, proposeCycles, type CycleProposal } from "../../plan/cycle";
-import type { Plan } from "../../shared/plan";
+// 計画ルール（3 段目の Skill の planCycle。案 C、2026-11-06）は、当たる作業に周期の案（R）を出すだけ（work.trigger を直に書かない。Architect の 42 の 1）。
+// R の案は前の版から写さず（carryFromBase は写さない）、作業中の計画か当てているルールが変わるたびに、そのときのルールの版から出し直す（42 の 4）。
+import { activePlanRules, planRuleReason, type LoadedReading, type PlanCycleRule } from "../../import/reading";
+import { LEDGER_CYCLE_PREFIX, PLAN_RULE_CYCLE_PREFIX, PLAN_RULE_SOURCE, cycleIdOf, proposeCycles, type CycleProposal, type VerifiedBases } from "../../plan/cycle";
+import type { Plan, WorkT } from "../../shared/plan";
 import type { Rule } from "../../shared/tools";
-import { getWorkingPlan, updateWorkingPlan } from "./plan-store";
+import { getWorkingPlan, subscribeWorkingPlan, updateWorkingPlan } from "./plan-store";
+import { getCurrentReadings, subscribeCurrentReadings } from "./readings";
 
 let seq = 0;
 
 export type CyclesOutcome = { ok: true; plan: Plan; proposals: CycleProposal[]; version: number } | { ok: false; code: "no_working_plan" | "stale_version" | "tool_failed" };
 
-export function proposeCyclesFromAi(rules: Rule[], basedOnVersion: number, basis: string, o: { fromLedger: boolean; author?: "ai" | "ai_relayed_human" } = { fromLedger: false }): CyclesOutcome {
+export function proposeCyclesFromAi(
+  rules: Rule[],
+  basedOnVersion: number,
+  basis: string,
+  o: { fromLedger: boolean; author?: "ai" | "ai_relayed_human"; verified?: VerifiedBases } = { fromLedger: false },
+): CyclesOutcome {
   const working = getWorkingPlan();
   if (!working) return { ok: false, code: "no_working_plan" };
   if (basedOnVersion !== working.revision) return { ok: false, code: "stale_version" };
   // 台帳を照らした案は L、ほかは C の頭の ID（決定のシートの種類を分ける）
-  const r = proposeCycles(working.plan, rules, { nextId: () => `${o.fromLedger ? LEDGER_CYCLE_PREFIX : "C"}${++seq}`, basis, fromLedger: o.fromLedger, ...(o.author ? { author: o.author } : {}) });
+  const r = proposeCycles(working.plan, rules, {
+    nextId: () => `${o.fromLedger ? LEDGER_CYCLE_PREFIX : "C"}${++seq}`,
+    basis,
+    fromLedger: o.fromLedger,
+    ...(o.author ? { author: o.author } : {}),
+    ...(o.verified ? { verified: o.verified } : {}),
+  });
   if (!r.ok) return { ok: false, code: "tool_failed" };
   const next = updateWorkingPlan(r.plan, working.proposals);
-  return { ok: true, plan: r.plan, proposals: r.proposals, version: next?.revision ?? working.revision };
+  // 計画ルールの案が続けて出し直されると版が進むので、返す版は今の版（AI が次に置くときに合うように）
+  return { ok: true, plan: getWorkingPlan()?.plan ?? r.plan, proposals: r.proposals, version: getWorkingPlan()?.revision ?? next?.revision ?? working.revision };
+}
+
+// ─── 計画ルール → 周期の案（R） ───────────────────────────────────
+
+/** 計画ルールを、周期の案の規則の形にする（項目 × 属性の条件と、work.trigger の年数） */
+export function cycleRuleOf(r: PlanCycleRule): Rule {
+  return {
+    when: [
+      { field: "assetNode.commonItem", op: "equals", values: [r.commonItem] },
+      { field: "work.attribute", op: "equals", values: [r.attribute] },
+    ],
+    set: { field: "work.trigger", value: r.years },
+    reason: r.reason,
+  };
+}
+
+/** 計画ルールが当たる作業：作業の属性を人が受け、対象の節のどれかの共通の設備項目を人が受けたもの */
+export function acceptedFor(plan: Plan, r: PlanCycleRule): (w: WorkT) => boolean {
+  const nodes = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+  return (w) =>
+    w.attribute === r.attribute &&
+    w.attributeAccepted &&
+    w.targets.some((t) => {
+      const a = nodes.get(t);
+      return !!a && a.commonItem === r.commonItem && a.commonItemAccepted;
+    });
+}
+
+/** この回（作業中の計画の generation）に計画ルールから出した案：R の ID → ルールの鍵（名前・版・中身） */
+let owned = new Map<string, { key: string; generation: number; name: string; ruleId: string }>();
+let applying = false;
+
+/** 計画ルールの鍵：名前・版・ルールの中身（どれかが変わったら出し直す） */
+const keyOf = (a: { from: { name: string; version: string }; rule: PlanCycleRule }) => `${a.from.name}\u0000${a.from.version}\u0000${JSON.stringify(a.rule)}`;
+
+/**
+ * 当てている計画ルールから、作業中の計画に周期の案（R）を出し直す。同じルールで同じ結果なら計画を書き換えない（何度呼んでもよい）。
+ * 出し直すのはこの回に出した R の案だけ（保管先の版に入っている印・L・C の案には触らない）。変えたら true
+ */
+export function applyPlanRules(readings: readonly LoadedReading[] = getCurrentReadings().readings): boolean {
+  const working = getWorkingPlan();
+  if (!working || applying) return false;
+  const gen = working.generation;
+  const mine = new Map([...owned].filter(([, o]) => o.generation === gen));
+  const byKey = new Map([...mine].map(([id, o]) => [o.key, id]));
+  const isMine = (detailKey: string) => {
+    const c = cycleIdOf(detailKey);
+    return c !== null && mine.has(c);
+  };
+  const used = new Set(working.plan.details.map((d) => cycleIdOf(d.detailKey)).filter((x): x is string => x !== null));
+  let plan: Plan = { ...working.plan, details: working.plan.details.filter((d) => !isMine(d.detailKey)) };
+  const next = new Map<string, { key: string; generation: number; name: string; ruleId: string }>();
+  for (const a of activePlanRules(readings)) {
+    const key = keyOf(a);
+    let id = byKey.get(key);
+    if (!id) {
+      let n = 0;
+      do id = `${PLAN_RULE_CYCLE_PREFIX}${++n}`;
+      while (used.has(id) || mine.has(id) || next.has(id));
+    }
+    const rid = id;
+    const r = proposeCycles(plan, [cycleRuleOf(a.rule)], {
+      nextId: () => rid,
+      basis: planRuleReason(a),
+      fromLedger: false,
+      author: "ai",
+      planRule: { name: a.from.name, ruleId: a.rule.id },
+      onlyWorks: acceptedFor(plan, a.rule),
+    });
+    if (!r.ok) continue;
+    plan = r.plan;
+    next.set(rid, { key, generation: gen, name: a.from.name, ruleId: a.rule.id });
+  }
+  const sig = (p: Plan, ids: ReadonlyMap<string, unknown>) =>
+    JSON.stringify(
+      p.details
+        .filter((d) => {
+          const c = cycleIdOf(d.detailKey);
+          return c !== null && ids.has(c);
+        })
+        .map((d) => [d.detailKey, d.basis])
+        .sort(),
+    );
+  const same = sig(working.plan, mine) === sig(plan, next) && [...mine.keys()].sort().join() === [...next.keys()].sort().join();
+  owned = next;
+  if (same) return false;
+  applying = true;
+  try {
+    updateWorkingPlan(plan, working.proposals);
+  } finally {
+    applying = false;
+  }
+  return true;
+}
+
+/** 計画ルールごとに、作業中の計画に出した案の印の数（ルールのシートの件数） */
+export function planRuleMarks(plan: Plan | null, name: string, ruleId: string): number {
+  if (!plan) return 0;
+  return plan.details.filter((d) => cycleIdOf(d.detailKey) !== null && d.sources.some((s) => s.file === PLAN_RULE_SOURCE && s.sheet === name && s.cell === ruleId)).length;
+}
+
+let watching = false;
+/** 作業中の計画か当てているルールが変わるたびに、計画ルールの案を出し直す（App が 1 回だけ呼ぶ） */
+export function watchPlanRules(): void {
+  if (watching) return;
+  watching = true;
+  const run = () => {
+    applyPlanRules();
+  };
+  subscribeWorkingPlan(run);
+  subscribeCurrentReadings(run);
+}
+
+/** 試験用：この回に出した R の案の覚えを捨てる */
+export function resetPlanRulesForTest(): void {
+  owned = new Map();
 }

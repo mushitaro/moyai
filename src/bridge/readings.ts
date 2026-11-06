@@ -9,7 +9,8 @@ import { createHash } from "node:crypto";
 import { existsSync, readdirSync } from "node:fs";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { ReadingSkill, handWritten, skillMarkdown, type LoadedReading, type ReadingScope } from "../import/reading";
+import { ReadingSkill, handWritten, isPlanRule, skillMarkdown, type LoadedReading, type ReadingScope } from "../import/reading";
+import { CYCLE_KEY, PLAN_RULE_SOURCE } from "../plan/cycle";
 import { PLAN_ID, readHistory, type PlanHistory, type SignatureInfo } from "../plan/store";
 
 const SKILLS = "skills";
@@ -195,4 +196,28 @@ export function loadedOf(list: readonly ListedReading[], who: string | null): Lo
     out.push({ skill: pick.skill, version: pick.version, path: pick.path, approved: true, approvedIn: pick.approvedIn, draft: false, owner: pick.scope === "facility" ? pick.owner : null });
   }
   return out;
+}
+
+/**
+ * 計画ルールの承認の照らし（Architect の 42 の 2）：版の記録に載せる読み方の計画ルールは、どれも
+ * 承認済みの読み方に同じ中身で入っている（すでに承認済み）か、この署名で人が受けた周期の案（明細の鍵が cy-、出どころが計画ルールのその名前と id）が
+ * もとにしたものであること。案を受けていないルールを、版の署名で承認しない（会社の範囲はほかの施設にもそのまま効くため）。
+ * 承認は読み方の中身のハッシュ（版）に結ぶので、ここは「載せてよいか」だけを照らす。plan は形を確かめる前の版の計画（明細だけを見る）
+ */
+export function planRulesBacked(skill: ReadingSkill, plan: unknown, acceptedIds: ReadonlySet<string>, approved: readonly ListedReading[]): boolean {
+  const rules = skill.rules.filter(isPlanRule);
+  if (rules.length === 0) return true;
+  const details = Array.isArray((plan as { details?: unknown } | null)?.details) ? ((plan as { details: unknown[] }).details as { detailKey?: unknown; sources?: unknown }[]) : [];
+  const backed = new Set<string>();
+  for (const d of details) {
+    if (typeof d.detailKey !== "string" || !CYCLE_KEY.test(d.detailKey) || !acceptedIds.has(`detail:${d.detailKey}`) || !Array.isArray(d.sources)) continue;
+    for (const s of d.sources as { file?: unknown; sheet?: unknown; cell?: unknown }[]) {
+      if (s.file === PLAN_RULE_SOURCE && typeof s.sheet === "string" && typeof s.cell === "string") backed.add(`${s.sheet}\u0000${s.cell}`);
+    }
+  }
+  // 欄の順に依らずに比べる（保管先から読んだルールは型の順、タブから来たルールは送った順）
+  const canon = (v: unknown): unknown => (Array.isArray(v) ? v.map(canon) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon((v as Record<string, unknown>)[k])])) : v);
+  const same = (a: unknown, b: unknown) => JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+  const already = (r: (typeof rules)[number]) => approved.some((x) => x.approved && x.name === skill.name && x.scope === skill.scope && x.skill.rules.some((y) => same(y, r)));
+  return rules.every((r) => backed.has(`${skill.name}\u0000${r.id}`) || already(r));
 }
