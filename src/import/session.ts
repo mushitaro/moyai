@@ -67,6 +67,8 @@ export interface Survey {
 
 const SAMPLE_ROWS = 20;
 const SAMPLE_CELLS = 40;
+/** AI に渡す見本で、費用のセルの代わりに置く字 */
+export const COST_MASK = "（費用）";
 const SAMPLE_TEXT = 60;
 const STUCK_FILES = 20;
 const STUCK_ROWS = 5;
@@ -339,7 +341,15 @@ export class IntakeSession {
     const files = an.sources.map((s) => ({ fileRef: s.file, sheets: s.sheets.length, rows: s.sheets.reduce((a, g) => a + new Set(g.cells.map((c) => c.r)).size, 0) }));
     // 見本は資料ごとに分けて取る（1 つの資料の表が多くても、ほかの資料の見出しが見えるように）。資料ごとの枠に余りが出たら、次の巡で足す
     const samples: Survey["samples"] = [];
-    const rowText = (lay: SheetLayout, r: number) => lay.index.rowCells(r).slice(0, SAMPLE_CELLS).map((c) => c.text.slice(0, SAMPLE_TEXT));
+    // 費用の列のセルは、見出しの行のほかは字を伏せる（AI に費用の値を渡さない。運営者の決定 A 案・Architect の注文 1。列の見出しと件数だけが渡る）
+    const costCols = new Map<SheetLayout, { top: number; bottom: number; head: Set<number>; c: number }[]>();
+    for (const lay of an.layouts)
+      costCols.set(
+        lay,
+        lay.tables.flatMap((t) => t.cols.filter((c) => c.role === "cost").map((c) => ({ top: t.top, bottom: t.bottom, head: new Set(t.headerRows), c: c.c }))),
+      );
+    const masked = (lay: SheetLayout, r: number, c: number) => (costCols.get(lay) ?? []).some((x) => x.c === c && r >= x.top && r <= x.bottom && !x.head.has(r));
+    const rowText = (lay: SheetLayout, r: number) => lay.index.rowCells(r).slice(0, SAMPLE_CELLS).map((c) => (masked(lay, r, c.c) ? COST_MASK : c.text.slice(0, SAMPLE_TEXT)));
     const perFile = new Map<string, { lay: SheetLayout; r: number }[]>();
     for (const lay of an.layouts) {
       const xs = perFile.get(lay.file) ?? [];

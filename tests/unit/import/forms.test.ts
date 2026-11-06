@@ -776,7 +776,7 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     expect(cycleHeaderUnit("周期")).toBeNull();
   });
 
-  test("星取表（xlsx）：「周期(年)」は段にも号にもせず、その行の作業の暦のきっかけ。「概算費用」は段にせず理由つきで外す", async () => {
+  test("星取表（xlsx）：「周期(年)」は段にも号にもせず、その行の作業の暦のきっかけ。「概算費用」は段にせず作業明細の費用の欄に読む", async () => {
     const bytes = await xlsxOf((ws) => {
       rows(ws, 1, [
         ["機器", "作業内容", "周期\n(年)", "概算費用\n(千円/回)", "2024年度", "2025年度", "2026年度"],
@@ -791,8 +791,10 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     const an = s.analyze();
     const t = an.layouts[0]?.tables[0];
     expect(t?.cols.find((c) => c.header.startsWith("周期"))?.role).toBe("cycle");
-    expect(t?.cols.find((c) => c.header.startsWith("概算費用"))?.ruleExclude).toBe("費用の列（計画に入れない）");
-    expect(an.open.some((q) => q.kind === "unitMissing" || q.kind === "levelSplit")).toBe(false);
+    // 費用の列は作業明細の費用の欄に読む（運営者の決定 A 案、2026-11-06）。単位は見出し（千円）から。税の扱いは見出しに無いので聞く（既定は「資料に書いていない」）
+    expect(t?.cols.find((c) => c.header.startsWith("概算費用"))?.role).toBe("cost");
+    expect(an.open.some((q) => q.kind === "levelSplit")).toBe(false);
+    expect(an.open.filter((q) => q.kind === "unitMissing").map((q) => q.defaultAnswer)).toEqual(["unknown"]);
     acceptDefaults(s);
     const c = s.compose();
     const trig = (asset: string) => {
@@ -801,7 +803,11 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     };
     expect(trig("ポンプ")).toEqual({ branches: [{ kind: "calendar", years: 3 }], combine: "earliest" });
     expect(trig("ブロワ")).toEqual({ branches: [{ kind: "calendar", years: 1 }], combine: "earliest" });
-    expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason === "費用の列（計画に入れない）")).toBe(true);
+    // 費用は 1 回あたり（千円）を円にして、その行の印の作業明細に入れる
+    const pumpKey = c.plan?.assets.find((x) => x.name === "ポンプ")?.nodeKey ?? "";
+    const pumpWork = c.plan?.works.find((w) => w.targets.includes(pumpKey))?.workKey;
+    expect(c.plan?.details.filter((d) => d.workKey === pumpWork).map((d) => d.cost)).toEqual([1_200_000]);
+    expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason.startsWith("費用の列"))).toBe(false);
   });
 
   test("作業の記録（CSV）：「周期」の列の行の周期も作業のきっかけ。「毎回」は推し量らず聞き、置かないと答えたら周期なしで入れる", async () => {

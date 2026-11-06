@@ -75,7 +75,12 @@ export const WorkDetail = z.object({
   startDate: z.string().nullable(), // 時刻帯の無い文字（YYYY-MM-DD）。年度だけの印は null
   endDate: z.string().nullable(),
   fiscalYear: z.number().int(),
-  cost: z.number().nullable(), // 共有しない
+  cost: z.number().nullable(), // 円の整数。共有しない（写し取りの許可の一覧に無い）。AI にも渡さない
+  /** 費用の元のセル（資料・シート・セルと元の字）と税の扱い。費用が無ければ省く（運営者の決定 A 案、Architect の注文） */
+  costSource: z
+    .object({ file: z.string(), sheet: z.string().nullable(), ref: z.string(), text: z.string(), tax: z.enum(["incl", "excl", "unknown"]) })
+    .strict()
+    .optional(),
   manDays: z.number().nullable(), // 工数（人・日）
   days: z.number().nullable(), // 日数（工期）
   resultScale: z.string().nullable(),
@@ -84,6 +89,26 @@ export const WorkDetail = z.object({
   previousValue: z.string().nullable(),
   performer: z.string().nullable(), // 共有しない
   sources: z.array(SourceRef).min(1), // 出どころはいくつも持てる（資料をまたぐ同じ作業）
+  /**
+   * 作業明細（運営者の定義、2026-11-06：作業日報の 1 行。1 日の作業内容・作業量・工数が分かる粒度）。
+   * この型（作業の年度ごとの計画・実績）にまとめる前の行を、足し上げずに残す。共有には出さない（写し取りの許可の一覧に無い）。資料に日報が無ければ省く
+   */
+  lines: z
+    .array(
+      z
+        .object({
+          date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+          content: z.string(),
+          quantity: z.string().nullable(),
+          manDays: z.number().nullable(),
+          days: z.number().nullable(),
+          source: SourceRef,
+          /** 和が年度の値と合わない理由の印：effortExcluded＝決定で工数を外した行、outOfYear＝日付がその年度の外（日付は null にする） */
+          flag: z.enum(["effortExcluded", "outOfYear"]).optional(),
+        })
+        .strict(),
+    )
+    .optional(),
   basis: z.string().min(1),
   author: author,
   needsReview: z.boolean(), // 写真から読んだものは、人が画像と並べて確かめるまで true

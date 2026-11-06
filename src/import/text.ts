@@ -271,3 +271,39 @@ export function isSymbolLike(s: string): boolean {
 }
 
 export { norm };
+
+// ─── 費用の列（運営者の決定 A 案、2026-11-06。Architect の注文：単位を推測しない・円の整数で持つ・元のセルと元の字を残す） ─────
+
+/** 費用の列の見出しの単位：「(千円/回)」「千円」→ 1000、「万円」→ 10000、「(円)」「円」→ 1。決まらなければ null（呼ぶ側が聞く） */
+export function costHeaderUnit(header: string): number | null {
+  const h = nfkc(header).replace(/\s+/g, "");
+  if (/百万円/u.test(h)) return 1_000_000;
+  if (/千円/u.test(h)) return 1000;
+  if (/万円/u.test(h)) return 10_000;
+  if (/円/u.test(h)) return 1;
+  return null;
+}
+
+/** 費用の列の見出しの税の扱い：「税込」→ incl、「税抜」「税別」→ excl。決まらなければ null（呼ぶ側が聞く） */
+export function costHeaderTax(header: string): "incl" | "excl" | null {
+  const h = nfkc(header).replace(/\s+/g, "");
+  if (/税込/u.test(h)) return "incl";
+  if (/税抜|税別/u.test(h)) return "excl";
+  return null;
+}
+
+/**
+ * 費用のセルを読む：数の値か、「1,200」「¥1,200」「1200千円」の形。セルに単位（千円・万円・円）があればそれで、無ければ見出しの単位で円にする。
+ * 円の整数にならないもの・数の無いもの・単位の決まらないものは null（呼ぶ側が聞く。推し量らない）
+ */
+export function parseCost(text: string, value: unknown, headerUnit: number | null): number | null {
+  const s = nfkc(text).replace(/[\s,，]/g, "").replace(/^[¥￥]/u, "");
+  const num = typeof value === "number" && Number.isFinite(value) && s.replace(/[円千万百]/gu, "") === String(value).replace(/,/g, "") ? value : null;
+  const m = /^(\d+(?:\.\d+)?)(百万円|千円|万円|円)?$/u.exec(s);
+  const n = num ?? (m ? Number(m[1]) : null);
+  if (n === null || !Number.isFinite(n) || n < 0) return null;
+  const unit = m?.[2] === "百万円" ? 1_000_000 : m?.[2] === "千円" ? 1000 : m?.[2] === "万円" ? 10_000 : m?.[2] === "円" ? 1 : headerUnit;
+  if (unit === null) return null;
+  const yen = Math.round(n * unit * 1000) / 1000;
+  return Number.isInteger(yen) ? yen : null;
+}

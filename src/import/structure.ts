@@ -22,6 +22,8 @@ export const ROW_ROLE_LABEL: Record<RowRole, string> = {
 };
 
 export type ColRole =
+  /** 費用（作業明細の費用の欄。共有にも AI の見本にも出さない） */
+  | "cost"
   | "hier"
   | "name"
   | "number"
@@ -599,10 +601,10 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       col.role = "cycle";
       continue;
     }
-    // 費用の列（「概算費用(千円/回)」「契約金額」）：計画には入れない（共有しない）。理由つきで外す
+    // 費用の列（「概算費用(千円/回)」「契約金額」）：作業明細の費用の欄に読む（運営者の決定 A 案、2026-11-06）。印や作業にはしない。
+    // 当施設の画面と Excel にだけ出し、共有ファイル・公開台帳・AI の見本には出さない
     if (col.cue === "cost") {
-      col.role = "remark";
-      col.ruleExclude = "費用の列（計画に入れない）";
+      col.role = "cost";
       continue;
     }
     // 工数の書き方（「24人工」「288時間」）は号・系列ではない（数と漢字の形が号の書き方と重なるため、先に外す）

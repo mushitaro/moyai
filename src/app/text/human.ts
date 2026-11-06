@@ -60,6 +60,7 @@ export const HUMAN_TEXT = {
     deriveNotFirst: "ほかの施設の版から作れるのは、新しい施設の第 1 版だけです。",
     textEmpty: "コメントの文が空です。",
     deriveSourceInvalid: "元にした版が保存先に無いか、中身のハッシュが合いません。トップから開き直してください。",
+    versionTooLarge: "版の記録が大きすぎて確定できません（上限 48 MB）。資料を分けて取り込んでください。",
     mailToInvalid: "頼む相手のメールの宛先を書いてください（例 name@example.jp）。",
     notLatest: "保存先に、もっと新しい版があります。開き直してから署名してください。",
     selfApprove: "自分が作った版は、自分で承認できません。ほかの人に承認を依頼してください。",

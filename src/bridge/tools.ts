@@ -237,6 +237,23 @@ export class ToolRelay {
     const parsed = def.output.safeParse(out.data);
     if (!parsed.success) return fail("tab_bad_result");
     const data = parsed.data as Record<string, unknown>;
+    // 取り込みの見本の行（見本・詰まっている所の行と見出し）も、会話の行の上限に数える（台帳の中-11）。残りを越える分は渡さない
+    if (name === "intake_survey") {
+      type Stuck = { header: unknown[]; rows: unknown[] };
+      let left = Math.max(0, ROWS_PER_CONVERSATION - this.rowsReadIn(conversation));
+      const take = <T>(xs: readonly T[]): T[] => {
+        const kept = xs.slice(0, left);
+        left -= kept.length;
+        return kept;
+      };
+      const samples = take(data.samples as unknown[]);
+      const stuck = (data.stuck as Stuck[]).map((x) => ({ ...x, header: take(x.header), rows: take(x.rows) }));
+      const n = samples.length + stuck.reduce((m, x) => m + x.header.length + x.rows.length, 0);
+      this.rowsRead.set(conversation, this.rowsReadIn(conversation) + n);
+      data.samples = samples;
+      data.stuck = stuck;
+      setRows(n);
+    }
     if (name === "chart_rows") {
       const n = (data.rows as unknown[]).length;
       // タブが上限を越えて返した・残りの数を違えて返したものは渡さない

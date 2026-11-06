@@ -6,7 +6,7 @@ import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFi
 import { parseWithFormat } from "./reading";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
-import { assetFromTitle, cycleHeaderUnit, parseCycle, parseEffort, parseUnit, splitFlatWork, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type UnitValue } from "./text";
+import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, parseCost, parseCycle, parseEffort, parseUnit, splitFlatWork, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
 
@@ -44,6 +44,14 @@ export interface AssetRec {
   pending: boolean;
 }
 
+/** 費用のセル：円の整数・元のセルの場所と元の字・税の扱い（資料に書いていなければ unknown） */
+export interface CostCell {
+  yen: number;
+  ref: string;
+  text: string;
+  tax: "incl" | "excl" | "unknown";
+}
+
 export interface MarkRec {
   id: string;
   file: string;
@@ -61,6 +69,8 @@ export interface MarkRec {
   workRef: string | null;
   /** その行の周期（「周期(年)」の列）：作業の暦のきっかけ。書いていなければ省く */
   cycle?: CycleSpan;
+  /** その行の費用（「概算費用(千円/回)」の列。1 回あたり）。書いていなければ省く */
+  cost?: CostCell;
   assetId: string | null;
   excluded: string | null;
   pending: boolean;
@@ -88,6 +98,10 @@ export interface EventRec {
   nameRef?: string;
   /** その行の周期（「周期」の列）：作業の暦のきっかけ。書いていなければ省く */
   cycle?: CycleSpan;
+  /** その行の費用（「契約金額」の列）。書いていなければ省く */
+  cost?: CostCell;
+  /** 決定で工数を外した行 */
+  effortExcluded?: true;
   /** 機器番号の列に書いた番号（同一性の鍵）。無ければ null */
   tag: string | null;
   bundle: boolean;
@@ -585,6 +599,90 @@ function readCycles(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: 
   return out;
 }
 
+/**
+ * 行ごとの費用（費用の列）。単位は見出しから（「千円」「円」）、決まらなければ件数を添えて聞く。税込・税抜も見出しから、決まらなければ聞く。
+ * 読めない書き方は推し量らず聞き、外すと答えたら理由つきで外す。値は円の整数
+ */
+function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: number[], exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): Map<number, CostCell> {
+  const out = new Map<number, CostCell>();
+  const col = t.cols.find((c) => c.role === "cost");
+  if (!col) return out;
+  const header = col.header.replace(/\s*\n\s*/g, "");
+  const key = `${rec.formOf.get(t.id)?.key ?? t.id}|${col.c}`;
+  const cells = rows.map((r) => lay.index.at(r, col.c)).filter((c): c is GridCell => !!c && c.text.trim() !== "" && !off(c.ref));
+  if (!cells.length) return out;
+  let unit = costHeaderUnit(col.header);
+  if (unit === null) {
+    const a = ask.ask(`costUnit|${key}`, {
+      kind: "unitMissing",
+      text: `「${header}」の列の金額の単位が、見出しに書いてない（${cells.length} 行）。単位を推し量らない`,
+      options: [
+        { id: "1", label: "円" },
+        { id: "1000", label: "千円" },
+        { id: "10000", label: "万円" },
+        { id: "none", label: "この列を読まない（理由を残す）" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: cells.length,
+      items: [itemOf(lay, cells.slice(0, 10).map((c) => c.ref))],
+    });
+    if (a === "none") {
+      for (const c of cells) exclude(c.ref, "費用の列（単位が決まらないので読まない）");
+      return out;
+    }
+    if (a === null) {
+      for (const c of cells) pend(c.ref);
+      return out;
+    }
+    unit = Number(a);
+  }
+  let tax = costHeaderTax(col.header);
+  if (tax === null) {
+    const a = ask.ask(`costTax|${key}`, {
+      kind: "unitMissing",
+      text: `「${header}」の列の金額が税込か税抜か、見出しに書いてない（${cells.length} 行）`,
+      options: [
+        { id: "incl", label: "税込" },
+        { id: "excl", label: "税抜" },
+        { id: "unknown", label: "資料に書いていない（そのまま読む）" },
+      ],
+      valueKind: "option",
+      defaultAnswer: "unknown",
+      sameShapeRows: cells.length,
+      items: [itemOf(lay, cells.slice(0, 10).map((c) => c.ref))],
+    });
+    if (a === null) {
+      for (const c of cells) pend(c.ref);
+      return out;
+    }
+    tax = a === "incl" || a === "excl" ? a : null;
+  }
+  const bad: GridCell[] = [];
+  for (const c of cells) {
+    const yen = parseCost(c.text, c.value, unit);
+    if (yen === null) bad.push(c);
+    else out.set(c.r, { yen, ref: c.ref, text: c.text, tax: tax ?? "unknown" });
+  }
+  if (bad.length) {
+    const a = ask.ask(`costBad|${key}`, {
+      kind: "unitMissing",
+      // 費用の字は AI に渡さない（見本を出さず、件数だけ。Architect の注文 1）
+      text: `「${header}」の列に、金額として読めない書き方がある（${bad.length} 行）。金額を推し量らない`,
+      options: [{ id: "none", label: "その行の費用を置かない（理由を残す）" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: bad.length,
+      items: [itemOf(lay, bad.slice(0, 10).map((b) => b.ref))],
+    });
+    for (const b of bad) {
+      if (a === "none") exclude(b.ref, "金額として読めない書き方（決定で費用を置かない）");
+      else pend(b.ref);
+    }
+  }
+  return out;
+}
+
 function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): number {
   const hier = t.cols.filter((c) => c.role === "hier").sort((a, b) => (a.hierLevel ?? 0) - (b.hierLevel ?? 0));
   const unitCol = t.cols.find((c) => c.role === "unit");
@@ -852,6 +950,12 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       const ref = lay.index.at(r, cycleCol.c)?.ref;
       if (node && ref && !node.refs.includes(ref)) node.refs.push(ref);
     }
+  // 行ごとの費用（「概算費用(千円/回)」）：その行の印（1 回ごと）の作業明細の費用。印や作業にはしない
+  const costOf = readCosts(t, lay, ask, rec, data.map((r) => r.r), exclude, pend, off);
+  for (const [r, c] of costOf) {
+    const node = rowNode.get(r);
+    if (node && !node.refs.includes(c.ref)) node.refs.push(c.ref);
+  }
   // 印
   const legend = t.legend;
   for (const r of data) {
@@ -874,6 +978,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         workName: null,
         workRef: null,
         ...(cycleOf.has(r.r) ? { cycle: cycleOf.get(r.r) } : {}),
+        ...(costOf.has(r.r) ? { cost: costOf.get(r.r) } : {}),
         assetId: node?.id ?? null,
         excluded: null,
         pending: !node || node.pending || t.yearKind === null,
@@ -1054,6 +1159,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const titleRows: { id: string; ref: string; title: string; guess: { asset: string; work: string } | null }[] = [];
   // 行ごとの周期（「周期」の列）：その行の作業の暦のきっかけ
   const cycleOf = readCycles(t, lay, ask, rec, data.map((r) => r.r), exclude, pend, off);
+  // 行ごとの費用（「契約金額」の列）：その行の作業明細の費用
+  const costOf = readCosts(t, lay, ask, rec, data.map((r) => r.r), exclude, pend, off);
   // 読み方の規則で外した列のセル：理由つきで外す
   for (const col of t.cols.filter((c) => c.ruleExclude)) for (const r of data) {
     const x = lay.index.at(r.r, col.c);
@@ -1137,6 +1244,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       effortPending: false,
       assetNames: stripped.text ? [stripped.text] : [],
       ...(cycleOf.has(r.r) ? { cycle: cycleOf.get(r.r) } : {}),
+      ...(costOf.has(r.r) ? { cost: costOf.get(r.r) } : {}),
       ...(() => {
         const ref = (assetCol && text(r.r, assetCol) ? lay.index.at(r.r, assetCol.c)?.ref : flat ? lay.index.at(r.r, flatCol?.c ?? 0)?.ref : headAsset ? headCell("name", "assetRef")?.ref : undefined) ?? undefined;
         return ref ? { nameRef: ref } : {};
@@ -1384,6 +1492,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     for (const ref of effortExcluded) if (e.refs.includes(ref)) {
       e.refs = e.refs.filter((x) => x !== ref);
       exclude(ref, "工数を外した（決定）");
+      // 作業明細の行に印を残す（年度の値の工数の和が合わない理由が見えるように。Architect の 43 の 4）
+      e.effortExcluded = true;
     }
     if (e.excluded) for (const ref of e.refs) exclude(ref, e.excluded);
     else if (e.pending || e.effortPending) for (const ref of e.refs) pend(ref);

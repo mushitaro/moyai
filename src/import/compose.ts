@@ -5,10 +5,10 @@ import { Plan, type AssetNodeT, type WorkDetailT, type WorkT } from "../shared/p
 import type { AuthorKind } from "../shared/fields";
 import { CellIndex, type SourceFile } from "./grid";
 import { Asker, questionIdOf, type Decision } from "./questions";
-import { cellKey, type EventRec, type MarkRec, type Records } from "./records";
+import { cellKey, type CostCell, type EventRec, type MarkRec, type Records } from "./records";
 import { ROW_ROLE_LABEL, type SheetLayout, type Table } from "./structure";
 import { nk, seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
-import { daysInclusive, parseDayCount, type Ymd } from "./era";
+import { daysInclusive, fiscalYearOf, parseDayCount, ymdString, type Ymd } from "./era";
 import { nameKey, parseEffort } from "./text";
 import { cue } from "./cues";
 import { markPhotoRecords, type PhotoReview } from "./photo";
@@ -345,6 +345,25 @@ export function compose(
   };
   const eventSources = (o: Occurrence) => o.events.flatMap((e) => e.refs.map((ref) => refOf(e.file, e.sheet, ref)));
   const jobSources = (j: Job) => j.units.flatMap(eventSources);
+  /** 作業明細（日報の 1 行ずつ。足し上げる前の行）。日付の順。行が無ければ省く */
+  // 読めない日付は null（推し量らない）。日付がその年度の外の行は、日付を null にして印を付ける（Architect の 43 の 3）
+  const linesOf = (events: readonly EventRec[], fy: number | null) => {
+    const ls = events.map((e) => {
+      const date = e.date ? ymdString(e.date) : null;
+      const outOfYear = !!e.date && fy !== null && fiscalYearOf(e.date, opts.facility.fiscalYearStartMonth) !== fy;
+      return {
+        date: outOfYear ? null : date,
+        content: [e.workTitle, e.workName].filter((x): x is string => !!x && x.trim() !== "").join(" "),
+        quantity: null,
+        manDays: e.manDays,
+        days: e.days,
+        source: refOf(e.file, e.sheet, e.refs[0] ?? ""),
+        ...(e.effortExcluded ? { flag: "effortExcluded" as const } : outOfYear ? { flag: "outOfYear" as const } : {}),
+      };
+    });
+    ls.sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
+    return ls.length ? { lines: ls } : {};
+  };
   const okCluster = (c: Cluster | undefined): c is Cluster => !!c && !c.pending && !c.excluded;
   const linksOfMark = new Map<MarkRec, WorkLink[]>();
   for (const l of lk.links) if (l.mode === "mark" && l.mark) linksOfMark.set(l.mark, [...(linksOfMark.get(l.mark) ?? []), l]);
@@ -426,6 +445,18 @@ export function compose(
     const b = j.units.find((u) => u.bundle);
     return b ? bundleWork(b) : null;
   };
+  /** 費用：候補の費用がどれも同じ値のときだけ（資料をまたいで違えば決めつけず置かない）。印の作業明細はその印の行の費用 */
+  const costOfUnits = (m: MarkRec | null, events: readonly EventRec[], file: (x: MarkRec | EventRec) => { file: string; sheet: string | null }) => {
+    const cands: { cost: CostCell; at: { file: string; sheet: string | null } }[] = [
+      ...(m?.cost ? [{ cost: m.cost, at: file(m) }] : []),
+      ...events.flatMap((e) => (e.cost ? [{ cost: e.cost, at: file(e) }] : [])),
+    ];
+    const pick = m?.planOrActual === "plan" && m.cost ? [{ cost: m.cost, at: file(m) }] : cands;
+    if (!pick.length || new Set(pick.map((x) => x.cost.yen)).size !== 1) return { cost: null };
+    const x = pick[0]!;
+    return { cost: x.cost.yen, costSource: { file: x.at.file, sheet: x.at.sheet, ref: x.cost.ref, text: x.cost.text, tax: x.cost.tax } };
+  };
+  const at = (x: MarkRec | EventRec) => ({ file: x.file, sheet: x.sheet });
   const jobDetail = (j: Job, m: MarkRec | null, qids: Set<string>, kind: string, keyName: string) => {
     const c = j.cluster;
     const ak = keyOf.get(c) ?? "";
@@ -445,7 +476,8 @@ export function compose(
         startDate: r.start,
         endDate: r.end,
         fiscalYear: m ? m.fiscalYear : j.fiscalYear,
-        cost: null,
+        ...costOfUnits(m, j.units.flatMap((u) => u.events), at),
+        ...linesOf(j.units.flatMap((u) => u.events), m ? m.fiscalYear : j.fiscalYear),
         manDays: v.manDays,
         days: v.days,
         resultScale: null,
@@ -482,7 +514,7 @@ export function compose(
           startDate: null,
           endDate: null,
           fiscalYear: m.fiscalYear,
-          cost: null,
+          ...costOfUnits(m, [], at),
           manDays: null,
           days: null,
           resultScale: null,
@@ -550,7 +582,8 @@ export function compose(
           startDate: r.start,
           endDate: r.end,
           fiscalYear: root.fiscalYear,
-          cost: null,
+          ...costOfUnits(null, members.flatMap((u) => u.events), at),
+          ...linesOf(members.flatMap((u) => u.events), root.fiscalYear),
           manDays: md.v,
           days: dy.v,
           resultScale: null,

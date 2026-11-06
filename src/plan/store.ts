@@ -321,7 +321,7 @@ export type CommitResult =
   | { ok: true; version: number; record: VersionRecord; diff: PlanDiff; files: { version: string; report: string; export: string | null } }
   | {
       ok: false;
-      reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown" | "nameInvalid" | "historyBroken" | "deriveNotFirst" | "deriveSourceInvalid";
+      reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown" | "nameInvalid" | "historyBroken" | "deriveNotFirst" | "deriveSourceInvalid" | "versionTooLarge";
       pending?: number;
     };
 
@@ -444,6 +444,12 @@ export async function revertPlan(i: {
   });
 }
 
+/**
+ * 版の記録 1 つの大きさの上限（バイト）。版ごとに計画を全部写すので、作業明細（日報の行）の多い施設で大きくなる。
+ * 見本のいちばん厚い計画で測った大きさの数倍に置く（測った値は docs/progress/2026-11-06.md）
+ */
+export const MAX_VERSION_BYTES = 48 * 1024 * 1024;
+
 async function writeVersion(
   root: string,
   hist: PlanHistory,
@@ -499,6 +505,9 @@ async function writeVersion(
   const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty }) : null;
   const { plan: _plan, ...head } = base;
   const record: VersionRecord = { ...head, files: { report: sha(reportBytes), export: exportBytes ? sha(exportBytes) : null }, plan };
+  // 版の記録の大きさの上限（作業明細の日報の行で厚くなる。Architect の 43 の 1）。越えたら黙って切らずに、署名の前に理由つきで止める
+  const recordText = `${JSON.stringify(record, null, 1)}\n`;
+  if (Buffer.byteLength(recordText, "utf8") > MAX_VERSION_BYTES) return { ok: false, reason: "versionTooLarge" };
   const hash = contentHash(record);
   const role: SignRole = v.kind === "revert" ? "revert" : (v.role ?? "confirm");
   const signature = signStatement({ planId: plan.planId, version, contentHash: hash, role, by: v.signer.by, at: record.at, reason: v.reason }, v.signer.pair);
@@ -517,7 +526,7 @@ async function writeVersion(
     throw e;
   }
   try {
-    await writeFile(versionPath, `${JSON.stringify(record, null, 1)}\n`, { encoding: "utf8", flag: "wx" });
+    await writeFile(versionPath, recordText, { encoding: "utf8", flag: "wx" });
   } catch (e) {
     await rm(signaturePath, { force: true });
     if ((e as NodeJS.ErrnoException).code === "EEXIST") return { ok: false, reason: "exists" };
