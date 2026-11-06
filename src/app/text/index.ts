@@ -677,8 +677,8 @@ export const TEXT = {
   },
   author: {
     human: "人",
-    ai: "AI",
-    ai_relayed_human: "AI（チャットでの人の答え）",
+    ai: "Claude 判断",
+    ai_relayed_human: "会話の回答",
     ai_reading: "AI（読み取り）",
     rule_code: "決まり（コード）",
   },

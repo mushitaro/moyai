@@ -643,7 +643,7 @@ export const REPORT_TEXT = {
   mark: { plan: "○ 計画", actual: "● 実績", both: "◎ 計画と実績", none: "（星取なし）" } as Record<DiffMark | "none", string>,
   author: {
     human: "人",
-    ai: "AI",
+    ai: "Claude 判断",
     ai_relayed_human: "会話の回答",
     ai_reading: "AI（読み取り）",
     rule_code: "決まり（コード）",

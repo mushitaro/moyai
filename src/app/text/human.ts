@@ -153,7 +153,7 @@ export const HUMAN_TEXT = {
     /** 署名のダイアログの件数の 1 行（差分の行は差分と決定のシートが持つ） */
     summaryLine: (base: number | null, a: number, r: number, c: number) =>
       base === null ? `第 1 版　星取の追加 ${fmt(a)}` : `第 ${base} 版から：星取の追加 ${fmt(a)}・削除 ${fmt(r)}・変更 ${fmt(c)}`,
-    diffHead: ["機器", "作業", "年度", "前", "後", "誰が", "なぜ"],
+    diffHead: ["機器", "作業", "年度", "前の星取", "後の星取", "作者", "理由"],
     diffMore: (n: number) => `ほかに ${fmt(n)} 行。全行は差分（Excel）にあります。`,
     mark: { plan: "○", actual: "●", both: "◎", none: "—" },
     pendingTitle: (n: number) => `未確定（${fmt(n)}）`,
