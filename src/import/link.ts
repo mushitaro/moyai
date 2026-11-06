@@ -112,19 +112,26 @@ function ymd(d: { y: number; m: number; d: number }): string {
 /** 読み方の規則の同じ機器（辞書）：名前の鍵 → そろえる先の名前の鍵。link を呼ぶたびに入れ直す */
 let ALIAS = new Map<string, string>();
 export const nk = (s: string): string => {
-  const k = nameKey(s);
-  return ALIAS.get(k) ?? k;
+  let k = nameKey(s);
+  // 規則どうしがつながる（A→B と B→C）ときは、たどった先にそろえる（輪になっても止まる）
+  for (let i = 0; i < 20 && ALIAS.has(k); i++) k = ALIAS.get(k) as string;
+  return k;
 };
 
 export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = [], hits: RuleHits | null = null): Linked {
   ALIAS = new Map();
-  for (const a of rules) if (a.rule.kind === "sameAsset") ALIAS.set(nameKey(a.rule.names[0]), nameKey(a.rule.names[1]));
-  // 規則が効いた資産と行を数える（「読み方」のタブの効いたセル）
+  // 同じ機器の呼び名の並び：どの名前も、並びの最後の名前と同じ機器として読む
   for (const a of rules) {
     if (a.rule.kind !== "sameAsset") continue;
-    const k0 = nameKey(a.rule.names[0]);
-    for (const x of rec.assets) if (nameKey(x.name) === k0) hits?.add(a.rule, x.file, x.nameRef);
-    for (const e of rec.events) if (e.assetNames.some((n) => nameKey(n) === k0)) hits?.add(a.rule, e.file, e.refs[0] ?? "");
+    const to = nameKey(a.rule.names[a.rule.names.length - 1] ?? "");
+    for (const n of a.rule.names.slice(0, -1)) if (nameKey(n) !== to) ALIAS.set(nameKey(n), to);
+  }
+  // 規則が効いた資産と行を数える（「読み方」のタブの効いたセル）：並びの最後でない名前を書いた所
+  for (const a of rules) {
+    if (a.rule.kind !== "sameAsset") continue;
+    const ks = new Set(a.rule.names.slice(0, -1).map((n) => nameKey(n)));
+    for (const x of rec.assets) if (ks.has(nameKey(x.name))) hits?.add(a.rule, x.file, x.nameRef);
+    for (const e of rec.events) if (e.assetNames.some((n) => ks.has(nameKey(n)))) hits?.add(a.rule, e.file, e.refs[0] ?? "");
   }
   // ─── 機器 ───
   const parentOf = new Map<string, string | null>();

@@ -856,7 +856,12 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     // 作業だけを書いた行（機器の名前の欄が空で、結合でもなく、作業の欄がある）：上の行と同じ機器か（答えに従う）
     const workOnly = !!workCol && !!leafCol && (!leafCell || leafCell.text === "") && !leafMerged && !!rowWork(r.r) && !!lastLeaf;
     const workOnlyAnswer = workOnly && leafCol ? blankDecision.get(leafCol.c) : undefined;
-    if (workOnly && workOnlyAnswer !== "none") {
+    // 行が「機器 × 作業」の星取表で、機器の欄の「〃」と作業の欄がある行：上の行と同じ機器の別の作業（作業の列が無い星取表の「〃」は、名前だけ同じ別の機器）
+    const dittoSame = !!workCol && !!leafCell && cue.isDitto(leafCell.text) && !!rowWork(r.r) && !!lastLeaf;
+    if (dittoSame && lastLeaf) {
+      node = lastLeaf;
+      if (leafCell && !node.refs.includes(leafCell.ref)) node.refs.push(leafCell.ref);
+    } else if (workOnly && workOnlyAnswer !== "none") {
       if (workOnlyAnswer === "same") node = lastLeaf;
       else undecided = true;
     } else for (let i = 0; i < hier.length; i++) {

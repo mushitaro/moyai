@@ -85,6 +85,8 @@ export interface ColInfo {
   ruleExclude?: string;
   /** 1 つの列に、いくつかの欄をまとめて書いた見出し（「号炉・系統・機器・作業内容」）の、手がかりの語の並び */
   compound?: ColumnCue[];
+  /** 読み方の規則がこの列に効かなかった・読み手の読み方を止めたこと（要約の注記に出す） */
+  ruleNotes?: string[];
 }
 
 export interface LegendEntry {
@@ -356,7 +358,17 @@ function ruleForColumn(ctx: BuildCtx, col: ColInfo, dataRows: number[]): void {
     if ((r.kind !== "columnRole" && r.kind !== "dateFormat" && r.kind !== "effortUnit") || !sameColumn(col.header, r.column)) continue;
     if (r.kind === "dateFormat" && !col.dateFormat) col.dateFormat = r.format;
     if (r.kind === "effortUnit" && !col.effortUnit) col.effortUnit = r.unit;
-    if (r.kind === "columnRole" && !(col as ColInfo & { forced?: string }).forced) (col as ColInfo & { forced?: string }).forced = r.role;
+    if (r.kind === "columnRole") {
+      const c = col as ColInfo & { forced?: string; forcedBy?: string };
+      if (!c.forced) {
+        c.forced = r.role;
+        c.forcedBy = r.id;
+      } else if (c.forced !== r.role) {
+        // 同じ列の 2 つ目の役目の規則は効かない（効いたセルにも数えない）。黙って捨てず、要約の注記に出す
+        (col.ruleNotes ??= []).push(`「${col.header.replace(/\s*\n\s*/g, "")}」の列に役目の規則が 2 つある。効いたのは先の規則「${c.forcedBy}」（${c.forced}）で、規則「${r.id}」（${r.role}）は効いていない（1 つの列に効く役目は 1 つ）`);
+        continue;
+      }
+    }
     for (const row of dataRows) {
       const x = ctx.idx.at(row, col.c);
       if (x && x.text !== "") ctx.hits?.add(r, ctx.file, x.ref);
@@ -585,6 +597,11 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     const cs = dataCellsOf(ctx, dataRows, col.c);
     // 読み方の規則で決めた役目（外すは理由つきで外す）
     const forced = forcedOf(col);
+    // 読み手が自分で分けて読む列（号炉・機器・作業を 1 つのセルに書いた列）に、規則で役目を置いた：分けて読む読み方を止めたことを、要約の注記に出す
+    if (forced && shape === "events" && compoundCues(col.headerParts[0] ?? ""))
+      (col.ruleNotes ??= []).push(
+        `「${col.header.replace(/\s*\n\s*/g, "")}」の列は、読み手が見出しの順に号炉・機器・作業に分けて読む列だが、規則「${(col as ColInfo & { forcedBy?: string }).forcedBy ?? ""}」で役目を「${forced}」に決めたので、分けて読んでいない（この規則を外すと、読み手が分けて読む）`,
+      );
     if (forced) {
       if (forced === "exclude") {
         col.role = "remark";
