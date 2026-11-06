@@ -151,7 +151,7 @@ MOYAI の業界の標準パックの 1 つ。中身は `packs/waste-incineration
   1. `chart_rows` の rowRef に機器の行の id（n:…）を渡し、その機器の作業の行（id は w:…、欄は作業の名前と年度の星取）を読む。どの作業かが決まらなければ、作業の名前を並べて利用者に聞く。
   2. stars に置く：追加 { op: add, rowRef, value: plan か actual, fiscalYear }、削除 { op: remove, rowRef, value, fiscalYear }、計画の移動（延期・前倒し）{ op: move, rowRef, fromFiscalYear, fiscalYear }。年度は星取表の最初と最後の年度の中だけ。行の値は写さない。
   3. 1 つの頼みは 1 回の呼び出しで置く。同じ作業の同じ種類（計画の追加・計画の削除・計画の移動・実績の追加・実績の削除）は 1 つの案になり、確定のシートの 1 行になる。
-  4. 実績の追加は、利用者の言葉（author: ai_relayed_human）か、bases.record（同じ機器の同じ年度に、ほかの作業の実績があること）が要る。パックの基準と計画ルールは実績の根拠にしない。基準日の年度より後の実績は置けない。
+  4. 実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置く。記録や基準から実績を推し量って置かない（bases の record・pack・rule は実績の根拠にならない）。同じ機器の同じ年度に、ほかの作業の実績があれば、MOYAI が参考の行として添える。基準日の年度より後の実績は置けない。
   5. 実績の削除は、利用者の言葉（author: ai_relayed_human）だけ。計画の削除と移動は Claude の判断でも置けるが、理由を basis に書く。
   6. 案は、星取表では追加が朱の破線の円、削除が今の星取に朱の斜線で出る。人が HOSHITORI の確定のシートで確定するまで決まらない。
 
