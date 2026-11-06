@@ -286,7 +286,23 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   p.works.push({ ...base, workKey: "e2e-overhaul", kind: "ごみクレーンの分解整備", attribute: "OVERHAUL", trigger: { branches: [{ kind: "calendar", years: 5 }], combine: "earliest" } });
   p.works.push({ ...base, workKey: "e2e-none", kind: "ごみクレーンのワイヤ交換", attribute: "REPLACE", trigger: null });
   const d0 = p.details.find((d: { workKey: string }) => d.workKey === base.workKey);
-  p.details.push({ ...d0, detailKey: "e2e-overhaul.1", workKey: "e2e-overhaul", fiscalYear: 2021, startDate: "2021-10-04", endDate: "2021-10-20" });
+  // 分解整備：2021 年度の計画（予算）と実績（費用と日報の行）。費用は円の整数で持つ（試験の台本が置いた架空の値）
+  const src = d0.sources[0];
+  p.details.push({ ...d0, detailKey: "e2e-overhaul.p", workKey: "e2e-overhaul", planOrActual: "plan", fiscalYear: 2021, startDate: null, endDate: null, cost: 34_000_000 });
+  p.details.push({
+    ...d0,
+    detailKey: "e2e-overhaul.1",
+    workKey: "e2e-overhaul",
+    fiscalYear: 2021,
+    startDate: "2021-10-04",
+    endDate: "2021-10-20",
+    cost: 41_200_000,
+    manDays: 9,
+    lines: [
+      { date: "2021-10-04", content: "ごみクレーンの分解整備　分解", quantity: null, manDays: 4, days: 1, source: src },
+      { date: "2021-10-05", content: "ごみクレーンの分解整備　組立", quantity: null, manDays: 5, days: 1, source: src },
+    ],
+  });
   planJson.set("due-1", JSON.stringify(p));
   await openPlan(page, "due-1");
   await expect(page.locator(".ag-header .ag-grid-pinned-left-cells [col-id='next']")).toHaveText("次回");
@@ -309,16 +325,33 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   // 整備の詳細（docs/screens.md 3.9）：作業ごとの「| 整備の詳細」で、その作業の画面に本体を置き換える
   await page.getByTestId("open-work-detail").first().click();
   await expect(page.getByTestId("work-detail")).toBeVisible();
-  await expect(page.getByTestId("work-detail-title")).toHaveText("ごみクレーンの分解整備");
+  // 題は作業名だけ（機器は上の道に出ている）
+  await expect(page.getByTestId("work-detail-title")).toHaveText("分解整備");
+  await expect(page.locator('[data-testid="work-detail-row"][data-kind="actual"]')).toContainText("41,200");
+  await expect(page.locator('[data-testid="work-detail-row"][data-kind="actual"]')).toContainText("2021-10-04〜10-20");
   await expect(page.getByTestId("work-detail-row").first()).toBeVisible();
   await expect(page.getByTestId("work-detail-counts")).toContainText("計画");
   await page.getByTestId("work-detail-row").first().click();
   await expect(page.getByTestId("work-detail-side")).toBeVisible();
-  // 作業明細（日報の行）の無い作業の年度の値は「記録していない」（0 行と出さない）
-  await expect(page.getByTestId("work-lines-title")).toHaveText("作業明細　記録していない");
+  // 計画の行を選ぶと、日報の行の無い年度の値は「作業明細　記録なし」（0 行と出さない）。実績の行は作業明細 2 と計
+  await expect(page.getByTestId("work-lines-title")).toHaveText("作業明細　記録なし");
+  await page.locator('[data-testid="work-detail-row"][data-kind="actual"]').click({ timeout: 5000 });
+  await expect(page.getByTestId("work-lines-title")).toHaveText("作業明細 2");
+  await expect(page.getByTestId("work-lines")).toContainText("9");
   await page.screenshot({ path: shot(`work-detail-${tag}`) });
   await page.getByTestId("work-detail-back").click();
   await expect(page.getByTestId("work-detail")).toHaveCount(0);
   await expect(page.locator(".ag-row").first()).toBeVisible();
+  // 費用のシート（docs/screens.md 3.8）：予算と実績の推移。年度を選ぶと横の板に詳細と差異の上位、押すと整備の詳細
+  await page.getByTestId("sheet-cost").click({ timeout: 5000 });
+  await expect(page.getByTestId("cost-sheet")).toBeVisible();
+  await expect(page.getByTestId("cost-row-budget")).toContainText("34,000");
+  await expect(page.getByTestId("cost-row-actual")).toContainText("41,200");
+  await expect(page.getByTestId("cost-row-diff")).toContainText("+7,200");
+  await page.locator('[data-testid="cost-table"] th', { hasText: "2021 年度" }).click({ timeout: 5000 });
+  await expect(page.getByTestId("cost-detail")).toBeVisible();
+  await page.screenshot({ path: shot(`cost-${tag}`) });
+  await page.getByTestId("cost-top").first().click({ timeout: 5000 });
+  await expect(page.getByTestId("work-detail-title")).toHaveText("分解整備");
   await page.screenshot({ path: shot(`chart-next-${tag}`) });
 });

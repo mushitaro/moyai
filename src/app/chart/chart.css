@@ -229,3 +229,19 @@
 .moyai-work-detail td {
   white-space: nowrap;
 }
+
+/* 詳細の 2 列（見出し 88px。Wire） */
+.moyai-dl {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 13px;
+}
+.moyai-dl dt {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.moyai-dl dd {
+  margin: 0;
+}

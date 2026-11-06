@@ -605,7 +605,10 @@ function readCycles(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: 
  */
 function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: number[], exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): Map<number, CostCell> {
   const out = new Map<number, CostCell>();
-  const col = t.cols.find((c) => c.role === "cost");
+  // 費用の列がいくつもあるとき（発注台帳の「予定価格」「契約金額」「支払額」）：実際に払った額に近い列を選ぶ（支払・実績 → 契約 → そのほか → 予定・概算・見積）。
+  // 選んだ列は costSource のセルで分かる。ほかの費用の列は読まない（行の中のセルとして読取に数える）
+  const rank = (h: string) => (/支払|実績/u.test(h) ? 3 : /契約|請負/u.test(h) ? 2 : /予定|概算|見積|予算/u.test(h) ? 0 : 1);
+  const col = t.cols.filter((c) => c.role === "cost").sort((a, b) => rank(b.header) - rank(a.header))[0];
   if (!col) return out;
   const header = col.header.replace(/\s*\n\s*/g, "");
   const key = `${rec.formOf.get(t.id)?.key ?? t.id}|${col.c}`;

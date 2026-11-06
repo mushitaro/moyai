@@ -14,6 +14,7 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
 import { DUE_TEXT, planDueViews, rowDue, rowDues, type DueView } from "../../plan/due-view";
 import { WorkDetailView } from "../components/WorkDetailView";
+import { takeWorkDetailRequest } from "../state/work-detail";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
 import { PeerPanel } from "../components/PeerPanel";
@@ -250,7 +251,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const [selected, setSelected] = useState<{ rowId: string; periodKey: string | null } | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   // 整備の詳細で開いている作業（本体を置き換える。「‹ 星取表」で戻る）
-  const [detailWork, setDetailWork] = useState<string | null>(null);
+  const [detailWork, setDetailWork] = useState<string | null>(() => takeWorkDetailRequest());
   const [editNotice, setEditNotice] = useState(false);
   const [peersOpen, setPeersOpen] = useState(false);
   const [band, setBand] = useState<StatField>("interval");

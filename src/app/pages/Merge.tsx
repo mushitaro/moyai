@@ -15,6 +15,7 @@ import { KeyWarnLine, untrustedSigners, type TrustSig } from "../components/KeyW
 import { RequestRenewDialog } from "../components/RequestRenewDialog";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
 import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
+import { CostSheet } from "../components/CostSheet";
 import { ReadingsSheet, unapprovedReadings } from "../components/ReadingsSheet";
 import { MatchSheet } from "../components/MatchSheet";
 import { FictionMark } from "../components/FictionMark";
@@ -304,7 +305,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   };
   // 突き合せは、このタブに資料が 2 つ以上あるとき。資料は、重ねた資料ごとのタブ（無ければ「資料」の 1 枚）
   const fileNames = an ? an.sources.map((x) => x.file) : [];
-  const tabs: MergeSheet[] = plan ? ["chart", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : ["files"];
+  // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）
+  const tabs: MergeSheet[] = plan ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : ["files"];
   const fileParam = current === "files" ? new URLSearchParams(location.hash.split("?")[1] ?? "").get("f") : null;
   // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
   const sideOpen = !!an && openQuestions > 0;
@@ -463,6 +465,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         <div className="moyai-merge-main">
           <Suspense fallback={null}>
             {current === "chart" && <StarTable embedded />}
+            {current === "cost" && plan && <CostSheet plan={plan} />}
             {current === "check" && <Review embedded />}
             {current === "match" && <MatchSheet ws={ws} />}
             {current === "readings" && <ReadingsSheet ws={ws} />}

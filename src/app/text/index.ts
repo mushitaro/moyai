@@ -315,7 +315,7 @@ export const TEXT = {
     newFacility: "新しい施設",
     version: (n: number) => `第 ${n} 版`,
     facilitySettings: "施設設定",
-    sheets: { chart: "星取表", match: "突合", readings: "ルール", check: "照査", decisions: "確定", files: "資料" } as Record<string, string>,
+    sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", files: "資料" } as Record<string, string>,
     filesLabel: "資料",
     addFiles: "＋ 資料を追加",
     dropHere: (n: number) => `第 ${n} 版にマージします`,

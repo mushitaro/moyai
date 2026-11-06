@@ -7,6 +7,7 @@ import { useContext, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Plan, WorkDetailT } from "../../shared/plan";
 import { planDueViews } from "../../plan/due-view";
+import { sheetHash } from "../stages";
 import { MergeSideContext } from "../state/merge-side";
 import { HUMAN_TEXT } from "../text";
 
@@ -29,9 +30,21 @@ const sum = (xs: (number | null)[]) => (xs.some((x) => x !== null) ? xs.reduce<n
 const period = (ds: WorkDetailT[]) => {
   const s = ds.map((d) => d.startDate).filter((x): x is string => !!x).sort();
   const e = ds.map((d) => d.endDate ?? d.startDate).filter((x): x is string => !!x).sort();
-  return s.length ? (e.length && e.at(-1) !== s[0] ? `${s[0]}〜${e.at(-1)}` : s[0]!) : null;
+  if (!s.length) return null;
+  const end = e.at(-1);
+  if (!end || end === s[0]) return s[0]!;
+  // 同じ年の終わりの日は年を略す（「2021-10-04〜10-20」。Wire）
+  return end.slice(0, 4) === s[0]!.slice(0, 4) ? `${s[0]}〜${end.slice(5)}` : `${s[0]}〜${end}`;
 };
-const sourcesOf = (ds: WorkDetailT[]) => [...new Set(ds.flatMap((d) => d.sources.map((s) => `${s.file}${s.sheet ? `「${s.sheet}」` : ""}${s.cell ? ` ${s.cell}` : ""}`)))];
+/** 元の資料（資料名とセル）。同じものは 1 つ */
+const sourcesOf = (ds: WorkDetailT[]) => {
+  const seen = new Map<string, { file: string; label: string }>();
+  for (const s of ds.flatMap((d) => d.sources)) {
+    const label = `${s.file}${s.sheet ? `「${s.sheet}」` : ""}${s.cell ? `　${s.cell}` : ""}`;
+    if (!seen.has(label)) seen.set(label, { file: s.file, label });
+  }
+  return [...seen.values()];
+};
 
 export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBack }: { plan: Plan; workKey: string; asOf: string; path: string; attributeLabel: string | null; onBack: () => void }) {
   const work = plan.works.find((w) => w.workKey === workKey);
@@ -53,6 +66,7 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
   const [picked, setPicked] = useState<string | null>(null);
   const sel = rows.find((r) => r.key === picked) ?? null;
   if (!work) return null;
+  const title = shortName(work.kind, plan, work.targets);
   const budgetTotal = sum(ds.filter((d) => d.planOrActual === "plan").map((d) => d.cost));
   const actualTotal = sum(ds.filter((d) => d.planOrActual === "actual").map((d) => d.cost));
   const head: [string, string | null][] = [
@@ -65,7 +79,7 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
     [T.actualTotal, actualTotal !== null ? kyen(actualTotal) : null],
   ];
   const counts = { plan: rows.filter((r) => r.kind === "plan").length, actual: rows.filter((r) => r.kind !== "plan").length };
-  const detail = sel && <RowDetail row={sel} name={work.kind} contractor={work.contractor} strategy={work.strategy} />;
+  const detail = sel && <RowDetail row={sel} name={title} contractor={work.contractor} strategy={work.strategy} />;
   return (
     <div style={{ padding: "8px 32px 32px" }} data-testid="work-detail" data-work={workKey}>
       <button type="button" className="moyai-inline-act" style={{ marginLeft: 0 }} onClick={onBack} data-testid="work-detail-back">
@@ -75,7 +89,7 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
         {path}
       </Text>
       <Text fw={500} size="lg" data-testid="work-detail-title">
-        {work.kind}
+        {title}
       </Text>
       <Text size="sm" className="moyai-num" mt={4} data-testid="work-detail-head">
         {head
@@ -135,7 +149,7 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
                   )}
                 </Table.Td>
                 <Table.Td>{verdict ?? ""}</Table.Td>
-                <Table.Td c="var(--text-3)">{sourcesOf(r.details)[0] ?? ""}</Table.Td>
+                <Table.Td c="var(--text-3)" ff="monospace" fz="xs">{sourcesOf(r.details)[0]?.label ?? ""}</Table.Td>
               </Table.Tr>
             );
           })}
@@ -148,6 +162,18 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
       {side?.el && detail && createPortal(detail, side.el)}
     </div>
   );
+}
+
+/** 作業名から対象の機器の名前を外す（題は作業名だけ。機器は上の道に出ている。Wire） */
+function shortName(kind: string, plan: Plan, targets: readonly string[]): string {
+  for (const t of targets) {
+    const n = plan.assets.find((a) => a.nodeKey === t)?.name;
+    if (n && kind.startsWith(n)) {
+      const rest = kind.slice(n.length).replace(/^の/, "").trim();
+      if (rest) return rest;
+    }
+  }
+  return kind;
 }
 
 function fmtOr(n: number | null, digits = 0): string {
@@ -173,7 +199,7 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
   const measured = ds.map((d) => d.measuredValue).filter(Boolean).join("・");
   const fields: [string, string | null][] = [
     [T.period, period(ds)],
-    [T.manDays, fmtOr(sum(ds.map((d) => d.manDays)), 1) || null],
+    [T.manDays, sum(ds.map((d) => d.manDays)) !== null ? T.manDaysValue(fmtOr(sum(ds.map((d) => d.manDays)), 1)) : null],
     [T.cost, cost !== null ? kyen(cost) : null],
     [T.diff, diff !== null ? signed(diff) : null],
     [T.verdict, verdict ? (measured ? `${verdict}（${measured}）` : verdict) : null],
@@ -185,6 +211,8 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
   const recorded = ds.some((d) => d.lines !== undefined);
   const lines = ds.flatMap((d) => d.lines ?? []);
   const total = sum(lines.filter((l) => l.flag !== "effortExcluded").map((l) => l.manDays));
+  // 作業量の欄がどの行にも無ければ、列を置かない（狭い横の板で内容の字を折らないように）
+  const hasQty = lines.some((l) => l.quantity !== null && l.quantity !== "");
   return (
     <Stack gap="xs" data-testid="work-detail-side" data-kind={row.kind}>
       <Text size="xs" c="var(--text-3)">
@@ -193,16 +221,16 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
       <Text size="sm" fw={700}>
         {T.fy(row.fiscalYear)}　{name}
       </Text>
-      {fields
-        .filter(([, v]) => v !== null && v !== "")
-        .map(([k, v]) => (
-          <Text key={k} size="sm" className="moyai-num">
-            <Text span size="xs" c="var(--text-3)" mr={8}>
-              {k}
-            </Text>
-            {v}
-          </Text>
-        ))}
+      <dl className="moyai-dl moyai-num">
+        {fields
+          .filter(([, v]) => v !== null && v !== "")
+          .map(([k, v]) => (
+            <div key={k} style={{ display: "contents" }}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+      </dl>
       <Text size="xs" c="var(--text-3)" mt="xs" data-testid="work-lines-title">
         {recorded ? T.linesTitle(lines.length) : T.linesNotRecorded}
       </Text>
@@ -211,10 +239,10 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
           <Table.Tbody>
             {lines.map((l, i) => (
               <Table.Tr key={i} data-flag={l.flag ?? ""}>
-                <Table.Td>{l.date ?? "―"}</Table.Td>
+                <Table.Td style={{ whiteSpace: "nowrap" }}>{l.date ?? "―"}</Table.Td>
                 <Table.Td>{l.content}</Table.Td>
-                <Table.Td>{l.quantity ?? ""}</Table.Td>
-                <Table.Td ta="right">
+                {hasQty && <Table.Td>{l.quantity ?? ""}</Table.Td>}
+                <Table.Td ta="right" style={{ whiteSpace: "nowrap" }}>
                   {l.manDays !== null ? fmt(l.manDays, 1) : ""}
                   {l.flag && (
                     <Text span size="xs" c="var(--text-3)" ml={4}>
@@ -225,7 +253,7 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
               </Table.Tr>
             ))}
             <Table.Tr>
-              <Table.Td colSpan={3}>{T.linesTotal}</Table.Td>
+              <Table.Td colSpan={hasQty ? 3 : 2}>{T.linesTotal}</Table.Td>
               <Table.Td ta="right">{total !== null ? fmt(total, 1) : ""}</Table.Td>
             </Table.Tr>
           </Table.Tbody>
@@ -235,8 +263,11 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
         {T.sources}
       </Text>
       {sourcesOf(ds).map((s) => (
-        <Text key={s} size="xs">
-          - {s}
+        <Text key={s.label} size="xs" ff="monospace">
+          {s.label}
+          <a className="moyai-inline-act" href={`${sheetHash("files")}?f=${encodeURIComponent(s.file)}`}>
+            {T.showFile}
+          </a>
         </Text>
       ))}
     </Stack>
