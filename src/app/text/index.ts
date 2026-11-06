@@ -121,10 +121,11 @@ export const TEXT = {
       proposal: "未確定の案",
       proposalAria: "（未確定の案）",
       proposalNote: "台帳案・ルール案・会話の回答です。確定のシートで確定するまで未確定です。",
-      /** 星取の削除の案（今の星取に朱の破線の円を重ねる。言葉は Wire に確かめる） */
-      removal: "未確定の削除",
+      /** 会話からの星取の案（docs/screens.md 3.2、Wire、11-06 夜）：「未確定の案」の後に「◌ 追加　／ 削除」 */
+      starAdd: "追加",
+      starRemove: "削除",
+      starSep: "／",
       removalAria: "（未確定の削除）",
-      removalNote: "削除の案です。確定のシートで確定するまで、この星取は残ります。",
       changedFrom: (n: number) => `第 ${n} 版から変更`,
       changedFromSource: "元の資料から変更",
       oldPlan: (n: number) => `第 ${n} 版の印`,
@@ -216,6 +217,12 @@ export const TEXT = {
       review: "要確認",
       changed: "変更",
       proposal: "（案。未確定）",
+      /** 星取の案の詳しく（docs/screens.md 3.2）：xs「計画の追加（未確定）」、題「2028 年度　分解整備」、出どころ・理由、「| 確定のシートで見る」 */
+      starPending: (kind: string) => `${kind}（未確定）`,
+      starHead: (fy: number, work: string) => `${fy} 年度　${work}`,
+      starFrom: "出どころ",
+      starWhy: "理由",
+      seeInDecisions: "確定のシートで見る",
     },
     details: {
       title: (name: string) => `${name} の中の作業`,
@@ -512,7 +519,7 @@ export const TEXT = {
       readingProposed: (name: string, n: number) => `「${name}」に ${n} 件追加（下書き。承認は版の署名で）`,
       skillsRead: "AI が今効いている Skill の本文を読みました",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の印 ${marks}。確定のシートで確定するまで未確定）`,
-      starsProposed: (add: number, remove: number) => `AI が星取の案を置きました（追加 ${add}・削除 ${remove}。確定のシートで確定するまで未確定）`,
+      starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
       settled: (n: number, unresolved: number) => `AI が決定を ${n} 個置きました（残りの未解決 ${unresolved} セル）`,
       settleRefused: (n: number) => `AI の決定 ${n} 個を断りました（当てはまらないものがあったので、どれも置いていません）`,
       composeStarted: "AI が計画を作り始めました",

@@ -173,8 +173,8 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
   const s = stars.length > 0 ? proposeStarsFromAi(stars, r.version, String(args.basis), { ...starOpts, checkVersion: false }) : null;
   if (s && !s.ok) return s;
   const plan = getWorkingPlan()?.plan ?? r.plan;
-  const starRows = s && s.ok ? starResults(stars, s, plan) : [];
-  if (s && s.ok) ws.note("ai", T.starsProposed(starRows.filter((x) => x.op === "add" && x.placed).length, starRows.filter((x) => x.op === "remove" && x.placed).length));
+  const starRows = s && s.ok ? starResults(s, plan) : [];
+  if (s && s.ok) ws.note("ai", T.starsProposed(new Set(starRows.filter((x) => x.placed).map((x) => x.id)).size));
   const examples = r.proposals
     .flatMap((p) => p.detailKeys)
     .slice(0, 10)
@@ -182,13 +182,14 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
       const d = r.plan.details.find((x) => x.detailKey === k)!;
       return { rowRef: `d:${k}`, before: null, after: TEXT.chart.cycleMark(d.fiscalYear) };
     });
-  // 星取の案の例：作業の行の id と、前後の星取（足す案は前が無く後が案、消す案は前が今の星取で後が無い）
+  // 星取の案の例：作業の行の id と、前後の星取（追加は前が無く後が案、削除は前が今の星取で後が無い、移動は前が元の年度で後が先の年度）
   const starExamples = starRows
     .filter((x) => x.placed)
     .map((x) => {
       const st = stars[x.index]!;
-      const text = `${TEXT.chart.fiscalYear(st.fiscalYear)} ${TEXT.chart.mark[st.value]}`;
-      return { rowRef: st.rowRef, before: x.op === "add" ? null : text, after: x.op === "add" ? text : null };
+      const text = (fy: number, v: "plan" | "actual") => `${TEXT.chart.fiscalYear(fy)} ${TEXT.chart.mark[v]}`;
+      if (st.op === "move") return { rowRef: st.rowRef, before: text(st.fromFiscalYear, "plan"), after: text(st.fiscalYear, "plan") };
+      return { rowRef: st.rowRef, before: st.op === "add" ? null : text(st.fiscalYear, st.value), after: st.op === "add" ? text(st.fiscalYear, st.value) : null };
     });
   return {
     ok: true,
@@ -203,17 +204,11 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
   };
 }
 
-/** 星取の案の結果を、引数の順に（足す案は置いた明細の根拠の種類も） */
-function starResults(stars: readonly StarIn[], s: Extract<ReturnType<typeof proposeStarsFromAi>, { ok: true }>, plan: Plan) {
-  let a = 0;
-  let r = 0;
-  return stars.map((st, index) => {
-    if (st.op === "add") {
-      const p = s.placed[a++]!;
-      return { id: p.id, index, op: "add" as const, placed: p.detailKey !== null, details: p.detailKey !== null ? 1 : 0, bases: p.detailKey !== null ? basesOf(plan, p.detailKey) : [] };
-    }
-    const x = s.removals[r++]!;
-    return { id: x.id, index, op: "remove" as const, placed: !x.already, details: x.details };
+/** 星取の案の結果を、引数の順に（追加は置いた明細の根拠の種類も） */
+function starResults(s: Extract<ReturnType<typeof proposeStarsFromAi>, { ok: true }>, plan: Plan) {
+  return s.results.map(({ detailKeys, ...x }) => {
+    const add = detailKeys.find((k) => plan.details.some((d) => d.detailKey === k && d.author !== "human" && k.startsWith("st-")));
+    return add ? { ...x, bases: basesOf(plan, add) } : x;
   });
 }
 

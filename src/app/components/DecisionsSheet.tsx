@@ -3,8 +3,9 @@
 // - 当てはめの案（Claude が置いた規則）：1 規則 1 行。受けるか、確かめのダイアログを通して断る（state/crosswalk.ts の人だけの道）。
 // - 台帳からの案（chart_propose の周期の案）：案ごとに 1 行（引いた印の数を行に）。受けると、その案の印をすべて受ける。
 // - ルール案（計画ルールから出した周期の案。ID の頭 R）：台帳からの案と同じく案ごとに 1 行。
-// - 星取の案（chart_propose の stars。ID の頭 S。src/plan/star.ts）：足す案は明細 1 つで 1 行（受ける・却下は周期の案と同じ道）。
-//   消す案は計画に無いので、作業画面の状態（state/stars.ts）から 1 行ずつ出す。受けると、その明細を作業中の計画から外す。種類は作者で、会話の回答か Claude 判断。
+// - 会話からの星取の案（chart_propose の stars。ID の頭 S。docs/screens.md 3.2、Wire、11-06 夜）：1 案 1 行。題は「計画の追加」「計画の削除」「計画の移動」
+//   「実績の追加」「実績の削除」と機器 › 作業、下の行に年度と種類（会話の回答か Claude 判断）、件数は星取の数。詳しくに星取を 1 つずつ並べる。
+//   追加は計画の明細（確定は state/decisions.ts）、削除は作業画面の状態（state/stars.ts。確定すると明細を外す）。
 // - Claude の決定・会話から写した答え：1 行ずつ。
 // 理由の欄は上に 1 つ。1 行ずつ受けるときも、まとめて受けるときも、その理由を使う（空のあいだは押せない）。受けたものは下にたたむ。
 // 受けた決定はこのタブのメモリ（state/decisions.ts）に持ち、署名のダイアログがそこから読んで送る。
@@ -17,10 +18,21 @@ import { sheetHash } from "../stages";
 import { commonRowId, periodKeyOf } from "../../plan/chart";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
-import { applyAcceptedCycles, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
-import { isStarProposal, proposalIdOf } from "../../plan/star";
+import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
+import { STAR_KIND_TEXT, isStarProposal, proposalIdOf, starValueOfKey, type StarKind } from "../../plan/star";
 import { rejectCycleByHuman, rejectedCycles } from "../state/cycles";
-import { acceptRemovalByHuman, openRemovalCount, rejectRemovalByHuman, rejectedRemovals, starRemovals, undoRemovalByHuman, useStarRemovals, type StarRemoval } from "../state/stars";
+import {
+  acceptRemovalsByHuman,
+  openRemovalCount,
+  rejectStarGroupByHuman,
+  rejectedStarGroups,
+  starGroups,
+  clearStarPick,
+  peekStarPick,
+  undoRemovalsByHuman,
+  useStarGroups,
+  type StarGroup,
+} from "../state/stars";
 import type { Plan, WorkT } from "../../shared/plan";
 import type { Acceptance } from "../../plan/diff";
 import type { BridgeClient } from "../bridge-client";
@@ -49,8 +61,8 @@ export function usePending(client: BridgeClient, plan: Plan | null): { pending: 
   const status = load.kind === "ready" ? load.status : null;
   const working = useWorkingPlan();
   const proposals = working?.proposals ?? NO_PROPOSALS;
-  // 星取の消す案（計画に無いので、ここから数える。案のままのものは確定を止める）
-  useStarRemovals();
+  // 星取の削除の案（計画に無いので、ここから数える。案のままのものは確定を止める）
+  useStarGroups();
   const openRemovals = openRemovalCount();
   const pending = useMemo(() => {
     if (!plan || !status) return [];
@@ -120,6 +132,18 @@ function whenText(p: CrosswalkProposal, names: ReadonlyMap<string, string>): str
     .join(T.and);
 }
 
+/** 会話からの星取の案の 1 行（追加は計画の明細の決定、削除・移動・却下は state/stars.ts の案） */
+interface StarRow {
+  id: string;
+  kind: StarKind;
+  workKey: string;
+  author: "ai" | "ai_relayed_human";
+  basis: string;
+  /** 追加の決定（計画の明細） */
+  adds: Decision[];
+  group: StarGroup | undefined;
+}
+
 /** 「なぜ」は短い 1 句：AI の理由の頭（句点か 30 字まで）。全文は title と詳しくへ（PM の決定） */
 function shortWhy(basis: string): string {
   const head = basis.split(/[。\n]/)[0] ?? basis;
@@ -144,22 +168,29 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   // 周期の案（台帳案・ルール案・会話の回答・Claude 判断の L・C・R）を選ぶと、横の板の詳細に出す（「| 却下」「| 確定」）
   const [pickedCycle, setPickedCycle] = useState<string | null>(null);
   const [rejectingCycle, setRejectingCycle] = useState<{ id: string; n: number } | null>(null);
-  const [rejectingRemoval, setRejectingRemoval] = useState<StarRemoval | null>(null);
-  useStarRemovals();
-  const removals = starRemovals();
-  const openRemovals = removals.filter((r) => r.state === "proposed");
-  const doneRemovals = removals.filter((r) => r.state === "accepted");
+  // 会話からの星取の案（S）：選んだ案と、却下のダイアログ
+  const [pickedStar, setPickedStar] = useState<string | null>(null);
+  const [rejectingStar, setRejectingStar] = useState<StarRow | null>(null);
+  const starState = useStarGroups();
   // 却下のダイアログの「判断の理由」（開くときに上の欄の理由を入れておく。空のあいだは「却下」を押せない。Wire、11-06）
   const [rejectReason, setRejectReason] = useState("");
   const rejectOk = rejectReason.trim().length > 0;
   const pick = (p: CrosswalkProposal) => {
     setPicked(p);
     setPickedCycle(null);
+    setPickedStar(null);
     side?.show();
   };
   const pickCycle = (id: string) => {
     setPicked(null);
+    setPickedStar(null);
     setPickedCycle(id);
+    side?.show();
+  };
+  const pickStar = (id: string) => {
+    setPicked(null);
+    setPickedCycle(null);
+    setPickedStar(id);
     side?.show();
   };
   // 節と作業の鍵 → 名前（鍵で結んだ「第 n 版と同じ」の規則を、名前で読めるように）
@@ -176,7 +207,9 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     const out: { key: string; ds: Decision[]; cycle: string | null }[] = [];
     const byCycle = new Map<string, Decision[]>();
     for (const d of pending) {
-      const c = d.kind === "detail" ? proposalIdOf(d.id.slice("detail:".length)) : null;
+      // 星取の案（S）は下の starRows で 1 案 1 行にする
+      if (d.kind === "detail" && proposalIdOf(d.id.slice("detail:".length))?.startsWith("S")) continue;
+      const c = d.kind === "detail" ? cycleIdOf(d.id.slice("detail:".length)) : null;
       if (c === null) out.push({ key: d.id, ds: [d], cycle: null });
       else {
         if (!byCycle.has(c)) out.push({ key: `cycle:${c}`, ds: byCycle.set(c, []).get(c)!, cycle: c });
@@ -186,6 +219,57 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     return out;
   }, [pending]);
   const isDone = (ds: Decision[]) => ds.every((x) => accepted.has(`${x.id}\u0000${x.hash}`));
+  // 会話からの星取の案：追加の決定（明細の鍵 st-<案>-）と、作業画面の案（削除・移動）を案の ID でまとめる
+  const detailsByKey = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d])), [plan]);
+  const sg = starGroups();
+  const starRows: StarRow[] = (() => {
+    const adds = new Map<string, Decision[]>();
+    for (const d of pending) {
+      if (d.kind !== "detail") continue;
+      const id = proposalIdOf(d.id.slice("detail:".length));
+      if (id && isStarProposal(id)) adds.set(id, [...(adds.get(id) ?? []), d]);
+    }
+    const ids = [...new Set([...adds.keys(), ...sg.filter((g) => g.removes.length > 0 || adds.has(g.id)).map((g) => g.id)])];
+    return ids.map((id) => {
+      const ds = adds.get(id) ?? [];
+      const g = sg.find((x) => x.id === id);
+      const first = ds[0] ? detailsByKey.get(ds[0].id.slice("detail:".length)) : undefined;
+      const kind: StarKind = g?.kind ?? (starValueOfKey(first?.detailKey ?? "") === "actual" ? "actualAdd" : "planAdd");
+      return { id, kind, workKey: g?.workKey ?? first?.workKey ?? "", author: g?.author ?? (ds[0]?.author === "ai_relayed_human" ? "ai_relayed_human" : "ai"), basis: g?.basis ?? ds[0]?.basis ?? "", adds: ds, group: g };
+    });
+  })();
+  const starDone = (r: StarRow) => r.adds.every((x) => isAccepted(x.id, x.hash)) && (!r.group || r.group.removes.length === 0 || r.group.state === "accepted");
+  /** 星取の数（追加の明細と、削除する星取） */
+  const starCount = (r: StarRow) => r.adds.length + (r.group?.removes.length ?? 0);
+  const addYears = (r: StarRow) => r.adds.map((d) => detailsByKey.get(d.id.slice("detail:".length))?.fiscalYear).filter((y): y is number => y !== undefined).sort((a, b) => a - b);
+  /** 下の行の年度：「2028 年度・2031 年度」、移動は「2027 年度 → 2028 年度」 */
+  const starYears = (r: StarRow) =>
+    r.kind === "planMove"
+      ? (r.group?.pairs ?? []).map((p) => T.starMove(p.from, p.to)).join(T.starYearsSep)
+      : (r.kind === "planRemove" || r.kind === "actualRemove" ? (r.group?.removes ?? []).map((x) => x.fiscalYear).sort((a, b) => a - b) : addYears(r)).map(T.starYear).join(T.starYearsSep);
+  /** 題：「計画の追加　ごみクレーン › 分解整備」 */
+  const starTitle = (r: { kind: StarKind; workKey: string }) => {
+    const w = plan.works.find((x) => x.workKey === r.workKey);
+    return T.starTitle(STAR_KIND_TEXT[r.kind], (w?.targets ?? []).map((k) => names.get(k) ?? k).join("、"), w?.kind || r.workKey);
+  };
+  /** 詳しくに並べる星取：「2027 年度　計画の削除」「2028 年度　計画の追加」 */
+  const starItems = (r: StarRow) => {
+    const v = r.kind.startsWith("actual") ? "実績" : "計画";
+    return [
+      ...(r.group?.removes ?? []).map((x) => ({ fy: x.fiscalYear, text: T.starItem(x.fiscalYear, `${v}の削除`) })),
+      ...addYears(r).map((fy) => ({ fy, text: T.starItem(fy, `${v}の追加`) })),
+    ].sort((a, b) => a.fy - b.fy);
+  };
+  const acceptStar = (r: StarRow) => {
+    r.adds.forEach((x) => acceptDecision(x.id, x.hash, reason));
+    const x = r.group && r.group.removes.length > 0 ? acceptRemovalsByHuman(r.id, reason) : null;
+    if (x && !x.ok) return false;
+    return true;
+  };
+  const undoStar = (r: StarRow) => {
+    r.adds.forEach((x) => unacceptDecision(x.id, x.hash));
+    if (r.group?.state === "accepted") undoRemovalsByHuman(r.id);
+  };
   // 受けた周期の案が同じ作業で年数の違うとき、その案の行に「- 重複」（朱）
   const conflicted = useMemo(() => new Set(cycleConflicts(plan, accepted)), [plan, accepted]);
   const detailWork = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.workKey])), [plan]);
@@ -233,6 +317,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   };
   const openGroups = groups.filter((g) => !isDone(g.ds));
   const doneGroups = groups.filter((g) => isDone(g.ds));
+  const openStars = starRows.filter((r) => !starDone(r));
+  const doneStars = starRows.filter(starDone);
   const allOpenRules = proposals.filter((p) => p.state === "proposed");
   const doneRules = proposals.filter((p) => p.state !== "proposed");
   // 種類の切り替え（Wire、2026-11-05）：第 n 版と同じ ／ 当てはめの案 ／ 台帳からの案 ／ 会話から写した答え ／ Claude の決定。数が 0 の種類は出さず、先頭の種類を既定にする
@@ -249,22 +335,35 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           : g.ds[0]!.author === "ai_relayed_human"
           ? "relayed"
           : "ai";
+  // 星取の案の種類は出どころ：前の版から写した追加は「第 n 版と同じ」、ほかは会話の回答か Claude 判断（新しい種類は作らない）
+  const kindOfStar = (r: StarRow): Kind => (baseV !== null && r.adds[0]?.basis.endsWith(W.sameAs(baseV)) ? "same" : r.author === "ai_relayed_human" ? "relayed" : "ai");
+  const starsOf = (k: Kind) => openStars.filter((r) => kindOfStar(r) === k).length;
   const counts: Record<Kind, number> = {
-    same: allOpenRules.filter((p) => p.sameAs !== undefined).length + openGroups.filter((g) => kindOfGroup(g) === "same").length,
+    same: allOpenRules.filter((p) => p.sameAs !== undefined).length + openGroups.filter((g) => kindOfGroup(g) === "same").length + starsOf("same"),
     crosswalk: allOpenRules.filter((p) => p.sameAs === undefined).length,
     ledger: openGroups.filter((g) => kindOfGroup(g) === "ledger").length,
     rule: openGroups.filter((g) => kindOfGroup(g) === "rule").length,
-    relayed: openGroups.filter((g) => kindOfGroup(g) === "relayed").length + openRemovals.filter((r) => r.author === "ai_relayed_human").length,
-    ai: openGroups.filter((g) => kindOfGroup(g) === "ai").length + openRemovals.filter((r) => r.author !== "ai_relayed_human").length,
+    relayed: openGroups.filter((g) => kindOfGroup(g) === "relayed").length + starsOf("relayed"),
+    ai: openGroups.filter((g) => kindOfGroup(g) === "ai").length + starsOf("ai"),
   };
   const kinds = KINDS.filter((k) => counts[k] > 0);
   const kind: Kind | null = kindPick && kinds.includes(kindPick) ? kindPick : (kinds[0] ?? null);
   const openRules = allOpenRules.filter((p) => (kind === "same" ? p.sameAs !== undefined : kind === "crosswalk" ? p.sameAs === undefined : false));
   const visibleGroups = openGroups.filter((g) => kindOfGroup(g) === kind);
-  const removalKind = (r: StarRemoval): Kind => (r.author === "ai_relayed_human" ? "relayed" : "ai");
-  const visibleRemovals = openRemovals.filter((r) => removalKind(r) === kind);
-  const leftCount = openGroups.length + allOpenRules.length + openRemovals.length;
-  const visibleCount = visibleGroups.length + openRules.length + visibleRemovals.length;
+  const visibleStars = openStars.filter((r) => kindOfStar(r) === kind);
+  const leftCount = openGroups.length + allOpenRules.length + openStars.length;
+  const visibleCount = visibleGroups.length + openRules.length + visibleStars.length;
+  // 星取表の詳しくの「| 確定のシートで見る」：その案を選び、その種類に切り替える（1 回だけ）
+  useEffect(() => {
+    // 版の履歴を読み終えて、その案の行が並んでから受け取る
+    const id = peekStarPick();
+    if (!id) return;
+    const r = starRows.find((x) => x.id === id);
+    if (!r) return;
+    clearStarPick();
+    setKindPick(kindOfStar(r));
+    pickStar(id);
+  }, [starState, pending]);
   // 「第 n 版と同じ」が見えているあいだは、受ける理由が空なら「第 n 版で受けた当てはめと同じ」を入れておく（人が直せる。Wire）
   useEffect(() => {
     if (kind === "same" && sameAs !== null && reason.trim() === "") setReason(W.sameAs(sameAs));
@@ -284,14 +383,6 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     if (d.kind === "reading") return `${d.target} → ${d.value}`;
     return `${d.target} → ${d.kind === "attribute" ? attrName(d.value) : itemName(d.value)}`;
   };
-  /** 星取の 1 行：「機器 · 作業 · 計画 · 2027 年度」（決定の 1 行と同じ形） */
-  const starLine = (workKey: string, value: "plan" | "actual", fy: number) => {
-    const w = plan.works.find((x) => x.workKey === workKey);
-    const target = `${(w?.targets ?? []).map((k) => names.get(k) ?? k).join("、")} · ${w?.kind || workKey}`;
-    return `${target} · ${HUMAN_TEXT.confirm.pendingValue[value] ?? ""} · ${HUMAN_TEXT.confirm.pendingFiscal(String(fy))}`;
-  };
-  /** 案の行の 1 列目：周期の案は「周期の案 L1：…」、星取の足す案は「追加　…」 */
-  const groupWhat = (cycle: string, ds: readonly Decision[]) => (isStarProposal(cycle) ? T.starWhat("add", what(ds[0]!)) : T.cycleWhat(cycle, ds.length));
   const acceptRule = (p: CrosswalkProposal) => {
     const r = acceptByHuman(p.ruleId, reason);
     setMsg(r.ok ? { color: "gray", text: W.acceptedDone(p.ruleId, r.rows) } : { color: "red", text: W.refused[r.reason] ?? "" });
@@ -303,8 +394,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     for (const g of visibleGroups) for (const d of g.ds) acceptDecision(d.id, d.hash, reason);
     let refused = 0;
     for (const p of openRules) if (!acceptByHuman(p.ruleId, reason).ok) refused++;
-    for (const r of visibleRemovals) if (!acceptRemovalByHuman(r.id, reason).ok) refused++;
-    setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(visibleGroups.length + openRules.length + visibleRemovals.length - refused, refused) });
+    for (const r of visibleStars) if (!acceptStar(r)) refused++;
+    setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(visibleGroups.length + openRules.length + visibleStars.length - refused, refused) });
   };
 
   /** 周期の案の「| 却下」「| 確定」（行と横の板の詳細で同じ。判断の理由が要る） */
@@ -352,8 +443,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         {...(cycle ? { className: "moyai-pick-row", "aria-selected": pickedCycle === cycle, onClick: () => pickCycle(cycle), style: { cursor: "pointer" } } : {})}
       >
         <Table.Td>
-          <Text size="sm">{cycle ? groupWhat(cycle, ds) : what(d)}</Text>
-          {cycle && !isStarProposal(cycle) && effectLines(ds)}
+          <Text size="sm">{cycle ? T.cycleWhat(cycle, ds.length) : what(d)}</Text>
+          {cycle && effectLines(ds)}
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
             {cycle && isLedgerCycle(cycle) ? T.kind.ledger : cycle && isPlanRuleCycle(cycle) ? T.kind.rule : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
             {cycle && isDup(ds) && (
@@ -401,61 +492,96 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     );
   };
 
-  // 星取の消す案：1 案 1 行。受けると明細を外し、取り消すと戻す
-  const removalRow = (r: StarRemoval) => (
-    <Table.Tr key={`removal:${r.id}`} data-testid="pending-row" data-kind={r.author} data-removal={r.id} data-accepted={r.state === "accepted" ? "true" : "false"}>
-      <Table.Td>
-        <Text size="sm">{T.starWhat("remove", starLine(r.workKey, r.value, r.fiscalYear))}</Text>
-        <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
-          {r.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
-        </Text>
-      </Table.Td>
-      <Table.Td c="var(--text-2)">{r.basis}</Table.Td>
-      <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
-        {r.detailKeys.length}
-      </Table.Td>
-      <Table.Td ta="right">
-        {r.state === "accepted" ? (
-          <Group gap="xs" wrap="nowrap" justify="flex-end">
-            <Text size="xs" c="dimmed" data-testid="pending-accepted">
-              {T.accepted}
-            </Text>
-            <Button size="compact-xs" variant="subtle" onClick={() => undoRemovalByHuman(r.id)}>
-              {T.undo}
-            </Button>
-          </Group>
-        ) : (
-          <Group gap="xs" wrap="nowrap" justify="flex-end">
-            <Button
-              size="compact-sm"
-              variant="default"
-              disabled={!ok}
-              title={ok ? undefined : T.needsReason}
-              onClick={() => {
-                setRejectReason(reason);
-                setRejectingRemoval(r);
-              }}
-              data-testid="pending-reject"
-            >
-              {W.reject}
-            </Button>
-            <Button
-              size="compact-sm"
-              disabled={!ok}
-              title={ok ? undefined : T.needsReason}
-              onClick={() => {
-                const x = acceptRemovalByHuman(r.id, reason);
-                setMsg(x.ok ? { color: "gray", text: T.starRemoveDone(x.details) } : { color: "red", text: T.cycleRejectRefused });
-              }}
-              data-testid="pending-accept"
-            >
-              {T.accept}
-            </Button>
-          </Group>
-        )}
-      </Table.Td>
-    </Table.Tr>
+  /** 星取の案の「| 却下」「| 確定」（行と詳しくで同じ。判断の理由が要る） */
+  const starButtons = (r: StarRow) => (
+    <Group gap="xs" wrap="nowrap" justify="flex-end">
+      <Button
+        size="compact-sm"
+        variant="default"
+        disabled={!ok}
+        title={ok ? undefined : T.needsReason}
+        onClick={(e) => {
+          e.stopPropagation();
+          setRejectReason(reason);
+          setRejectingStar(r);
+        }}
+        data-testid="pending-reject"
+      >
+        {W.reject}
+      </Button>
+      <Button
+        size="compact-sm"
+        disabled={!ok}
+        title={ok ? undefined : T.needsReason}
+        onClick={(e) => {
+          e.stopPropagation();
+          setMsg(acceptStar(r) ? { color: "gray", text: T.starAcceptedDone(starCount(r)) } : { color: "red", text: T.cycleRejectRefused });
+        }}
+        data-testid="pending-accept"
+      >
+        {T.accept}
+      </Button>
+    </Group>
   );
+  // 会話からの星取の案：1 案 1 行。題、下の行に年度と種類、件数は星取の数
+  const starRow = (r: StarRow) => {
+    const done = starDone(r);
+    return (
+      <Table.Tr
+        key={`star:${r.id}`}
+        data-testid="pending-row"
+        data-kind={r.author}
+        data-star={r.id}
+        data-star-kind={r.kind}
+        data-accepted={done ? "true" : "false"}
+        className="moyai-pick-row"
+        aria-selected={pickedStar === r.id}
+        onClick={() => pickStar(r.id)}
+        style={{ cursor: "pointer" }}
+      >
+        <Table.Td>
+          <Text size="sm" data-testid="star-title">
+            {starTitle(r)}
+          </Text>
+          <Group gap={8} wrap="nowrap">
+            <Text size="xs" c="var(--text-2)" className="moyai-num" data-testid="star-years">
+              {starYears(r)}
+            </Text>
+            <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em", whiteSpace: "nowrap" }}>
+              {r.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
+            </Text>
+          </Group>
+        </Table.Td>
+        <Table.Td c="var(--text-2)" title={r.basis}>
+          {shortWhy(r.basis)}
+        </Table.Td>
+        <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
+          {starCount(r)}
+        </Table.Td>
+        <Table.Td ta="right">
+          {done ? (
+            <Group gap="xs" wrap="nowrap" justify="flex-end">
+              <Text size="xs" c="dimmed" data-testid="pending-accepted">
+                {T.accepted}
+              </Text>
+              <Button
+                size="compact-xs"
+                variant="subtle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  undoStar(r);
+                }}
+              >
+                {T.undo}
+              </Button>
+            </Group>
+          ) : (
+            starButtons(r)
+          )}
+        </Table.Td>
+      </Table.Tr>
+    );
+  };
 
   // 「第 n 版と同じ」：淡い字の 1 規則 1 行。行ごとの受ける・断るは置かない（Wire）
   const sameRow = (p: CrosswalkProposal) => (
@@ -549,8 +675,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       <Text size="sm" fw={700}>
         {cycleKind === "same" ? T.kinds.same(sameAs ?? 0) : T.kinds[cycleKind]}
       </Text>
-      <Text size="sm">{groupWhat(cycleGroup.cycle, cycleGroup.ds)}</Text>
-      {!isStarProposal(cycleGroup.cycle) && effectLines(cycleGroup.ds)}
+      <Text size="sm">{T.cycleWhat(cycleGroup.cycle, cycleGroup.ds.length)}</Text>
+      {effectLines(cycleGroup.ds)}
       {isLedgerCycle(cycleGroup.cycle) &&
         (() => {
           const j = cycleTarget(cycleGroup.ds);
@@ -576,7 +702,38 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     </Stack>
   );
   const rejectedRows = rejectedCycles();
-  const rejectedStarRemovals = rejectedRemovals();
+  const rejectedStars = rejectedStarGroups();
+  // 星取の案の詳しく：種類・題・星取を 1 つずつ・理由の全文と「| 却下」「| 確定」
+  const starPicked = pickedStar ? starRows.find((r) => r.id === pickedStar) : undefined;
+  const starDetail = starPicked && (
+    <Stack gap="xs" data-testid="decision-detail" data-star={starPicked.id}>
+      <Text size="sm" fw={700}>
+        {(() => {
+          const k = kindOfStar(starPicked);
+          return k === "same" ? T.kinds.same(sameAs ?? 0) : T.kinds[k];
+        })()}
+      </Text>
+      <Text size="sm">{starTitle(starPicked)}</Text>
+      <Stack gap={2} data-testid="star-items">
+        {starItems(starPicked).map((x) => (
+          <Text key={x.text} size="sm" className="moyai-num" data-testid="star-item">
+            {x.text}
+          </Text>
+        ))}
+      </Stack>
+      <Text size="xs" c="dimmed">
+        {T.detailWhy}
+      </Text>
+      <Text size="sm">{starPicked.basis}</Text>
+      {starDone(starPicked) ? (
+        <Text size="xs" c="dimmed">
+          {T.accepted}
+        </Text>
+      ) : (
+        starButtons(starPicked)
+      )}
+    </Stack>
+  );
 
   const detail = picked && (
     <Stack gap="xs" data-testid="decision-detail" data-rule={picked.ruleId}>
@@ -648,7 +805,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           <Table.Tbody>
             {openRules.map(kind === "same" ? sameRow : ruleRow)}
             {visibleGroups.map(groupRow)}
-            {visibleRemovals.map(removalRow)}
+            {visibleStars.map(starRow)}
           </Table.Tbody>
         </Table>
       )}
@@ -659,27 +816,27 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       )}
 
       {/* 受けたもの・断ったもの：下にたたむ（閉じていても DOM に残す） */}
-      {(doneRules.length > 0 || doneGroups.length > 0 || rejectedRows.length > 0 || doneRemovals.length > 0 || rejectedStarRemovals.length > 0) && (
+      {(doneRules.length > 0 || doneGroups.length > 0 || rejectedRows.length > 0 || doneStars.length > 0 || rejectedStars.length > 0) && (
         <details data-testid="decisions-done">
           <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>
-            {T.doneTitle(doneRules.length + doneGroups.length + rejectedRows.length + doneRemovals.length + rejectedStarRemovals.length)}
+            {T.doneTitle(doneRules.length + doneGroups.length + rejectedRows.length + doneStars.length + rejectedStars.length)}
           </summary>
           <Table verticalSpacing="xs" fz="sm" mt="xs">
             {head}
             <Table.Tbody>
               {doneRules.map(ruleRow)}
               {doneGroups.map(groupRow)}
-              {doneRemovals.map(removalRow)}
-              {rejectedStarRemovals.map((r) => (
-                <Table.Tr key={`rejected-removal:${r.id}`} data-testid="cycle-rejected" data-removal={r.id}>
+              {doneStars.map(starRow)}
+              {rejectedStars.map((g) => (
+                <Table.Tr key={`rejected-star:${g.id}`} data-testid="star-rejected" data-star={g.id}>
                   <Table.Td>
-                    <Text size="sm">{T.starWhat("remove", starLine(r.workKey, r.value, r.fiscalYear))}</Text>
+                    <Text size="sm">{starTitle(g)}</Text>
                   </Table.Td>
-                  <Table.Td c="var(--text-2)" title={r.basis}>
-                    {shortWhy(r.basis)}
+                  <Table.Td c="var(--text-2)" title={g.basis}>
+                    {shortWhy(g.basis)}
                   </Table.Td>
                   <Table.Td className="moyai-num" ta="right">
-                    {r.detailKeys.length}
+                    {(g.rejectedAdds?.length ?? 0) + g.removes.length}
                   </Table.Td>
                   <Table.Td ta="right">
                     <Text size="xs" c="dimmed">
@@ -691,7 +848,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
               {rejectedRows.map((r) => (
                 <Table.Tr key={`rejected:${r.id}`} data-testid="cycle-rejected" data-cycle={r.id}>
                   <Table.Td>
-                    <Text size="sm">{r.star ? T.starWhat("add", starLine(r.star.workKey, r.star.planOrActual, r.star.fiscalYear)) : T.cycleWhat(r.id, r.marks)}</Text>
+                    <Text size="sm">{T.cycleWhat(r.id, r.marks)}</Text>
                   </Table.Td>
                   <Table.Td c="var(--text-2)" title={r.basis}>
                     {shortWhy(r.basis)}
@@ -761,10 +918,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         {rejectingCycle && (
           <Stack gap="sm">
             <Text size="sm" c="var(--text-2)" data-testid="reject-item">
-              {(() => {
-                const g = groups.find((x) => x.cycle === rejectingCycle.id);
-                return g && isStarProposal(rejectingCycle.id) ? groupWhat(rejectingCycle.id, g.ds) : T.cycleWhat(rejectingCycle.id, rejectingCycle.n);
-              })()}
+              {T.cycleWhat(rejectingCycle.id, rejectingCycle.n)}
             </Text>
             <TextInput className="moyai-dialog-field" label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
             <Group justify="flex-end" gap="sm" wrap="nowrap">
@@ -782,11 +936,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
                 onClick={() => {
                   if (!rejectOk) return;
                   const r = rejectCycleByHuman(rejectingCycle.id, rejectReason);
-                  setMsg(
-                    r.ok
-                      ? { color: "gray", text: isStarProposal(rejectingCycle.id) ? T.starRejectedDone(r.marks) : T.cycleRejectedDone(rejectingCycle.id, r.marks) }
-                      : { color: "red", text: T.cycleRejectRefused },
-                  );
+                  setMsg(r.ok ? { color: "gray", text: T.cycleRejectedDone(rejectingCycle.id, r.marks) } : { color: "red", text: T.cycleRejectRefused });
                   if (pickedCycle === rejectingCycle.id) setPickedCycle(null);
                   setRejectingCycle(null);
                 }}
@@ -797,11 +947,11 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           </Stack>
         )}
       </Modal>
-      <Modal opened={!!rejectingRemoval} onClose={() => setRejectingRemoval(null)} title={T.rejectTitle} centered data-testid="removal-reject-dialog">
-        {rejectingRemoval && (
+      <Modal opened={!!rejectingStar} onClose={() => setRejectingStar(null)} title={T.rejectTitle} centered data-testid="star-reject-dialog">
+        {rejectingStar && (
           <Stack gap="sm">
             <Text size="sm" c="var(--text-2)" data-testid="reject-item">
-              {T.starWhat("remove", starLine(rejectingRemoval.workKey, rejectingRemoval.value, rejectingRemoval.fiscalYear))}
+              {starTitle(rejectingStar)}
             </Text>
             <TextInput className="moyai-dialog-field" label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
             <Group justify="flex-end" gap="sm" wrap="nowrap">
@@ -810,17 +960,19 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
                   {T.needsReason}
                 </Text>
               )}
-              <Button variant="default" onClick={() => setRejectingRemoval(null)}>
+              <Button variant="default" onClick={() => setRejectingStar(null)}>
                 {T.rejectLater}
               </Button>
               <Button
-                data-testid="removal-reject-confirm"
+                data-testid="star-reject-confirm"
                 disabled={!rejectOk}
                 onClick={() => {
                   if (!rejectOk) return;
-                  const r = rejectRemovalByHuman(rejectingRemoval.id, rejectReason);
-                  setMsg(r.ok ? { color: "gray", text: T.starRejectedDone(1) } : { color: "red", text: T.cycleRejectRefused });
-                  setRejectingRemoval(null);
+                  const r = rejectingStar;
+                  const x = rejectStarGroupByHuman(r.id, rejectReason, { kind: r.kind, workKey: r.workKey, value: r.kind.startsWith("actual") ? "actual" : "plan", author: r.author, basis: r.basis });
+                  setMsg(x.ok ? { color: "gray", text: T.starRejectedDone(starCount(r)) } : { color: "red", text: T.cycleRejectRefused });
+                  if (pickedStar === r.id) setPickedStar(null);
+                  setRejectingStar(null);
                 }}
               >
                 {T.rejectConfirm}
@@ -830,6 +982,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         )}
       </Modal>
       {side?.el && detail && createPortal(detail, side.el)}
+      {side?.el && !detail && starDetail && createPortal(starDetail, side.el)}
       {side?.el && !detail && cycleDetail && createPortal(cycleDetail, side.el)}
     </Stack>
   );

@@ -313,7 +313,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     }
   }, [questionsKey, openQuestions]);
   // 受けていない決定と、案のままの当てはめの規則（規則が当てている行は決定に二重に数えない。台帳の新-4）
-  // 星取の消す案（計画に無い案。state/stars.ts）も、案のままなら確定を止める
+  // 星取の削除の案（計画に無い案。state/stars.ts）も、案のままなら確定を止める
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules + openRemovals;
   // 同じ作業に年数の違う周期の案を受けている（確定を止める。Architect の 44、Wire、11-06）
   const cycleDup = useMemo(() => cycleConflicts(plan, accepted).length, [plan, accepted]);

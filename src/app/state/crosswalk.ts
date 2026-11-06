@@ -193,7 +193,7 @@ export function carryFromBase(plan: Plan, basePlan: Plan, version: number): Plan
   const carried = basePlan.details
     // 計画ルールの案（R）は写さない。次の版で、そのときのルールの版から出し直す（Architect の 42 の 4。state/cycles.ts）
     .filter((d) => {
-      // 星取の足す案（S。src/plan/star.ts）も、周期の案と同じく写す
+      // 星取の追加の案（S。src/plan/star.ts）も、周期の案と同じく写す
       const c = proposalIdOf(d.detailKey);
       return c !== null && !isPlanRuleCycle(c) && works.has(d.workKey) && !have.has(d.detailKey);
     })

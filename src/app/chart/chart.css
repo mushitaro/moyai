@@ -133,6 +133,30 @@
   border-color: var(--shu);
 }
 
+/* 会話からの星取の案（docs/screens.md 3.2、Wire、11-06 夜）：
+   実績の追加は、破線の円の中に朱の点（4px）。
+   削除は、今の星取を墨のまま残し、朱の斜線（1px、左下から右上、星取の円の幅）を重ねる */
+.moyai-mark.moyai-mark-proposal [data-mark="actual"]::before {
+  border: 1px dashed var(--shu);
+  background: radial-gradient(circle, var(--shu) 0 2px, transparent 2.5px);
+}
+.moyai-mark [data-strike] {
+  position: relative;
+}
+.moyai-mark [data-strike]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--shu);
+  transform: translateY(-50%) rotate(-45deg);
+}
+.moyai-mark [data-strike][data-mark="both"]::after {
+  width: 12px;
+}
+
 /* 共通台帳で、まとめたセルに未確定の案が混じったとき（Wire、11-06）：案を除いた印に、朱の破線の円を重ねる。
    案だけのセルは、上の施設台帳と同じ破線の円だけ */
 .moyai-mark.moyai-mark-ring [data-ring]::before {

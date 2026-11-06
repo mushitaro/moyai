@@ -1,13 +1,13 @@
 // 星取の案（chart_propose の stars）を、この PC の Chrome と Edge で端から端まで通す：
 // 見本の計画を HOSHITORI で開く → AI（試験の台本が MCP の SDK で代わる）が chart_rows で機器の作業の行を読み、足す案を置く
-// → 星取表のそのセルに朱の破線の円 → 人（試験の台本が押した）が確定のシートで確定 → 実線になる
-// → AI が今ある計画の星取に消す案を置く → 今の星取に朱の破線の円を重ねる → 人が確定 → 星取が消える。先に npm run build を走らせておく。
+// → 星取表のそのセルに朱の破線の円。詳しくに「計画の追加（未確定）」と「| 確定のシートで見る」→ 確定のシートでその行（「計画の追加　機器 › 作業」）を確定 → 実線になる
+// → AI が今ある計画の星取に削除の案を置く → 今の星取は墨のまま朱の斜線を重ねる → 人が確定 → 星取が消える（docs/screens.md 3.2）。先に npm run build を走らせておく。
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { E2E_NAME, callTool as call, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, callTool as call, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 let bridge: StartedBridge;
 let work = "";
@@ -22,9 +22,9 @@ test.afterAll(() => {
 
 const REASON = "試験の台本が押した（星取の案を確定した）";
 
-/** 確定のシートで、その種類に切り替え、行（文で選ぶ）の「確定」を押す */
-async function acceptRow(page: Page, kind: RegExp, text: RegExp): Promise<void> {
-  await page.getByTestId("sheet-decisions").click();
+/** 確定のシートで、その種類に切り替え、行（題で選ぶ）の「確定」を押す（open が false なら、もう確定のシートが開いている） */
+async function acceptRow(page: Page, kind: RegExp, text: RegExp, open = true): Promise<void> {
+  if (open) await page.getByTestId("sheet-decisions").click();
   await expect(page.getByTestId("decisions-sheet")).toBeVisible();
   const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasText: kind });
   if ((await kinds.count()) > 0) await kinds.first().click();
@@ -36,7 +36,7 @@ async function acceptRow(page: Page, kind: RegExp, text: RegExp): Promise<void> 
   await page.getByTestId("sheet-chart").click();
 }
 
-test("AI が星取の足す案・消す案を置き、星取表に朱の破線の円が出て、人が確定のシートで確定すると実線になる・消える", async ({ page }, info) => {
+test("AI が星取の追加・削除の案を置き、星取表に朱の破線の円・斜線が出て、人が確定のシートで確定すると実線になる・消える", async ({ page }, info) => {
   const tag = info.project.name;
   test.setTimeout(180_000);
   const root = join(work, tag, "置き場所");
@@ -107,18 +107,39 @@ test("AI が星取の足す案・消す案を置き、星取表に朱の破線�
       await expect(cell(add!.nodeKey, add!.fy)).toHaveClass(/moyai-mark-proposal/);
       expect(await cell(add!.nodeKey, add!.fy).getAttribute("aria-label")).toContain("未確定の案");
       await expect(page.getByTestId("legend-proposal")).toBeVisible();
+      await expect(page.getByTestId("legend-star")).toHaveText(/追加.*／.*削除/);
       await page.screenshot({ path: shot(`star-proposal-add-${tag}`) });
     });
 
-    await test.step("人：確定のシートの「追加」の行を確定 → 実線（破線の円が消え、計画の星取が残る）", async () => {
-      await acceptRow(page, /^会話の回答/, /^追加/);
+    const work = plan.works.find((w: any) => w.workKey === add!.workKey)!.kind as string;
+    await test.step("人：星取を選ぶと詳しくに「計画の追加（未確定）」「2028 年度　作業」「出どころ　会話の回答」。「| 確定のシートで見る」でその行が選ばれる", async () => {
+      await sideTab(page, "source");
+      await cell(add!.nodeKey, add!.fy).click();
+      const side = page.getByTestId("star-proposal");
+      await expect(side).toContainText("計画の追加（未確定）");
+      await expect(side).toContainText(`${add!.fy} 年度　${work}`);
+      await expect(side).toContainText("出どころ　会話の回答");
+      await side.getByTestId("star-see-in-decisions").click();
+      await expect(page.getByTestId("decisions-sheet")).toBeVisible();
+      const row = page.locator('[data-testid="pending-row"][data-star-kind="planAdd"]');
+      await expect(row).toHaveAttribute("aria-selected", "true");
+      await expect(row.getByTestId("star-title")).toHaveText(/^計画の追加　/);
+      await expect(row.getByTestId("star-title")).toContainText(` › ${work}`);
+      await expect(row.getByTestId("star-years")).toHaveText(`${add!.fy} 年度`);
+      await expect(row).toContainText("- 会話の回答");
+      await expect(row.getByTestId("pending-count")).toHaveText("1");
+      await page.screenshot({ path: shot(`star-proposal-decisions-${tag}`) });
+    });
+
+    await test.step("人：確定のシートの「計画の追加」の行を確定 → 実線（破線の円が消え、計画の星取が残る）", async () => {
+      await acceptRow(page, /^会話の回答/, /^計画の追加/, false);
       await expect(cell(add!.nodeKey, add!.fy)).not.toHaveClass(/moyai-mark-proposal/);
       await expect(cell(add!.nodeKey, add!.fy).locator("[data-mark]")).toHaveAttribute("data-mark", "plan");
     });
 
     const rm = pickRemove(add!.nodeKey);
     expect(rm, "計画の星取が 1 つだけの年度のある、描かれた機器").toBeTruthy();
-    await test.step("AI：今ある計画の星取に消す案を置く → 今の星取に朱の破線の円を重ねる（星取はまだ残る）", async () => {
+    await test.step("AI：今ある計画の星取に削除の案を置く → 今の星取は墨のまま、朱の斜線を重ねる", async () => {
       const rows = await call(c, "chart_rows", { rowRef: `n:${rm!.nodeKey}` });
       const r = await call(c, "chart_propose", {
         basedOnVersion: rows.version,
@@ -127,18 +148,24 @@ test("AI が星取の足す案・消す案を置き、星取表に朱の破線�
         stars: [{ op: "remove", rowRef: `w:${rm!.workKey}`, value: "plan", fiscalYear: rm!.fy }],
       });
       expect(r.stars).toEqual([expect.objectContaining({ op: "remove", placed: true, details: 1 })]);
-      await expect(cell(rm!.nodeKey, rm!.fy)).toHaveClass(/moyai-mark-ring/);
-      await expect(cell(rm!.nodeKey, rm!.fy).locator("[data-mark]")).toHaveAttribute("data-ring", "true");
+      await expect(cell(rm!.nodeKey, rm!.fy)).toHaveClass(/moyai-mark-strike/);
+      await expect(cell(rm!.nodeKey, rm!.fy)).not.toHaveClass(/moyai-mark-proposal/);
+      await expect(cell(rm!.nodeKey, rm!.fy).locator("[data-mark]")).toHaveAttribute("data-strike", "true");
+      await expect(cell(rm!.nodeKey, rm!.fy).locator("[data-mark]")).toHaveAttribute("data-mark", "plan");
       expect(await cell(rm!.nodeKey, rm!.fy).getAttribute("aria-label")).toContain("未確定の削除");
-      await expect(page.getByTestId("legend-removal")).toBeVisible();
+      await expect(page.getByTestId("legend-star")).toBeVisible();
       await page.screenshot({ path: shot(`star-proposal-remove-${tag}`) });
+      await page.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
+      await page.waitForTimeout(300);
+      const box = await cell(rm!.nodeKey, rm!.fy).boundingBox();
+      if (box) await page.screenshot({ path: shot(`star-proposal-remove-cell-${tag}`), clip: { x: Math.max(0, box.x - 200), y: box.y - 40, width: box.width + 240, height: box.height + 80 } });
     });
 
-    await test.step("人：確定のシートの「削除」の行を確定 → 星取が消える", async () => {
-      await acceptRow(page, /^会話の回答/, /^削除/);
-      await expect(cell(rm!.nodeKey, rm!.fy)).not.toHaveClass(/moyai-mark-ring/);
+    await test.step("人：確定のシートの「計画の削除」の行を確定 → 星取が消える", async () => {
+      await acceptRow(page, /^会話の回答/, /^計画の削除/);
+      await expect(cell(rm!.nodeKey, rm!.fy)).not.toHaveClass(/moyai-mark-strike/);
       await expect(cell(rm!.nodeKey, rm!.fy).locator("[data-mark]")).toHaveCount(0);
-      await expect(page.getByTestId("legend-removal")).toHaveCount(0);
+      await expect(page.getByTestId("legend-star")).toHaveCount(0);
     });
   } finally {
     await c.close();
