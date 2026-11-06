@@ -7,7 +7,7 @@
 // 画面の言葉と業種の名前はここに置かない（言葉は呼ぶ側から、名前はパックのデータから受ける）。
 import type { StarRow, StatCell } from "../share/aggregate";
 import { STAT_FIELDS, type StatField } from "../share/bands";
-import { WORK_ATTRIBUTES, type Plan, type WorkDetailT } from "../shared/plan";
+import { WORK_ATTRIBUTES, type AssetNodeT, type Plan, type WorkDetailT } from "../shared/plan";
 import type { AuthorKind } from "../shared/fields";
 
 export type WorkAttribute = (typeof WORK_ATTRIBUTES)[number];
@@ -227,8 +227,12 @@ export interface ChartLabels {
   commonLevels: [string, string, string];
   /** 未当てはめの行の名前 */
   unmapped: string;
-  /** 系列（号炉・系統など）の見出し。計画の series（"1" か "common.<意味>"）から。同じ親の下の同じ名前の機器を見分けるため名前に添える */
+  /** 系列（号炉・系統など）の見出し。計画の series（"1" か "common.<意味>"）から。号炉・系統の階層の行の名前 */
   series: (series: string) => string;
+  /** 号炉・系統の階層の名前（機器と部位のあいだに入れる。無ければ「号炉・系統」） */
+  seriesLevel?: string;
+  /** 号炉・系統を持たない機器の、号炉・系統の階層の行の名前（無ければ「―」） */
+  noSeries?: string;
 }
 
 export interface ChartOptions {
@@ -296,26 +300,70 @@ function addAgg(map: Map<string, Agg>, key: string, d: WorkDetailT, asset: strin
 
 const markOf = (a: { plan: boolean; actual: boolean }): Mark | null => (a.plan && a.actual ? "both" : a.plan ? "plan" : a.actual ? "actual" : null);
 
-/** 自分の台帳の段の木。対象が計画の機器に無い記録は orphan に数える。 */
-function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): Node[] {
+/**
+ * 号炉・系統の階層（運営者の決定 2026-10-30・11-06：設備 › 機器 › 号炉・系統（＋機器） › 部位。号炉・系統は必ず階層に分ける）。
+ * 計画の機器（資産の節）は号炉・系統を属性（series）で持つ。星取表・Claude が読む行・Excel の行では、系列を持つ機器のいちばん多い階層を「機器の階層」とし、
+ * その階層の節を「機器（名前）」と「号炉・系統」の 2 つの行に分ける。下の部位は 1 つ下がる。計画のデータ（鍵・紐付け・作業の対象）は変えない。
+ * 号炉・系統を持たない機器（同じ名前の兄弟も無いもの）は行を足さず、号炉・系統の欄を空ける（行が倍にならないように。Architect の 66 の 4）。
+ * 機器の行（id「m:」）は資産の節ではない（鍵として読まない。assetKeyOf）
+ */
+
+/** 行の id から資産の節の鍵（台帳の行「n:」だけ。機器の行「m:」・共通の行「c:」は null） */
+export const assetKeyOf = (rowId: string): string | null => (rowId.startsWith("n:") ? rowId.slice(2) : null);
+
+/** 自分の台帳の段の木。対象が計画の機器に無い記録は orphan に数える。分けた機器の階層（1 から。分けなければ null）も返す */
+function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): { roots: Node[]; machineLevel: number | null; unsplit: ReadonlySet<string> } {
   const byKey = new Map<string, Node>();
-  // 同じ親の下に同じ名前の機器が 2 つ以上あるときだけ、名前に系列を添えて見分ける
-  const sameName = new Map<string, number>();
-  for (const a of plan.assets) sameName.set(`${a.parentKey ?? ""}\u0000${a.name}`, (sameName.get(`${a.parentKey ?? ""}\u0000${a.name}`) ?? 0) + 1);
+  const levelCount = new Map<number, number>();
+  for (const a of plan.assets) if (a.series !== null) levelCount.set(a.level, (levelCount.get(a.level) ?? 0) + 1);
+  const machineLevel = [...levelCount.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0]?.[0] ?? null;
+  // 機器の階層の節を、同じ親の下の同じ名前ごとにまとめる。号炉・系統が無く、同じ名前の兄弟も無い機器は分けない
+  const groupKey = (a: AssetNodeT) => `${a.parentKey ?? ""}\u0000${a.name}`;
+  const groups = new Map<string, AssetNodeT[]>();
+  if (machineLevel !== null) for (const a of plan.assets) if (a.level === machineLevel) groups.set(groupKey(a), [...(groups.get(groupKey(a)) ?? []), a]);
+  const split = (a: AssetNodeT) => {
+    if (machineLevel === null || a.level !== machineLevel) return false;
+    const g = groups.get(groupKey(a)) ?? [];
+    return !(g.length === 1 && a.series === null);
+  };
+  /** 分けなかった機器（号炉・系統の欄を空ける。下の部位は 1 つ飛ばして置く） */
+  const unsplit = new Set<string>();
   for (const a of plan.assets) {
-    const dup = (sameName.get(`${a.parentKey ?? ""}\u0000${a.name}`) ?? 0) > 1;
-    const name = dup && a.series !== null ? `${a.name}（${labels.series(a.series)}）` : a.name;
+    // 分けた機器の節は、号炉・系統の行になる（行の名前は号炉・系統。機器の名前は上の行）
+    const name = split(a) ? (a.series !== null ? labels.series(a.series) : (labels.noSeries ?? "―")) : a.name;
     byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name, kind: "node", children: [], direct: [] });
+    if (machineLevel !== null && a.level === machineLevel && !split(a)) unsplit.add(`n:${a.nodeKey}`);
   }
   const roots: Node[] = [];
+  const machineRow = new Map<string, Node>();
   for (const a of plan.assets) {
     const n = byKey.get(a.nodeKey) as Node;
     const p = a.parentKey !== null ? byKey.get(a.parentKey) : undefined;
-    if (p) {
-      n.parentId = p.id;
-      p.children.push(n);
+    let parent: Node | undefined = p;
+    if (split(a)) {
+      const key = `${p?.id ?? ""}\u0000${a.name}`;
+      let m = machineRow.get(key);
+      if (!m) {
+        m = { id: `m:${p?.id ?? ""}|${a.name}`, level: a.level, parentId: p?.id ?? null, name: a.name, kind: "node", children: [], direct: [] };
+        machineRow.set(key, m);
+        if (p) p.children.push(m);
+        else roots.push(m);
+      }
+      parent = m;
+    }
+    if (parent) {
+      n.parentId = parent.id;
+      parent.children.push(n);
     } else roots.push(n);
   }
+  // 階層は木の深さで数え直す（号炉・系統の行を入れた分、下の部位は 1 つ下がる。分けなかった機器の部位も同じ列に置く）
+  const relevel = (ns: Node[], level: number) => {
+    for (const n of ns) {
+      n.level = level;
+      relevel(n.children, unsplit.has(n.id) ? level + 2 : level + 1);
+    }
+  };
+  if (machineLevel !== null) relevel(roots, 1);
   const works = new Map(plan.works.map((w) => [w.workKey, w]));
   for (const d of plan.details) {
     const w = works.get(d.workKey);
@@ -329,7 +377,7 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): Node[
       else orphan.add(d.detailKey);
     }
   }
-  return roots;
+  return { roots, machineLevel, unsplit };
 }
 
 /** 共通の設備項目 × 作業の属性の木。人が受けた当てはめと作業の属性の両方がある記録だけを項目に載せ、残りは 1 行に集める。 */
@@ -433,7 +481,9 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   // 似た施設は、共通の設備項目の行・年度の表のときだけ重ねる（塊は年度の粒度しか持たない）
   const overlay = opts.peers && opts.mode === "common" && opts.period === "year" ? opts.peers : null;
   const unknownPeer = new Set<string>();
-  const roots = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan) : commonTree(plan, catalog, labels, orphan, overlay, unknownPeer);
+  const ledger = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan) : null;
+  const machineLevel = ledger?.machineLevel ?? null;
+  const roots = ledger ? ledger.roots : commonTree(plan, catalog, labels, orphan, overlay, unknownPeer);
 
   let maxLevel = 0;
   const walkMax = (ns: Node[]) => {
@@ -443,9 +493,11 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
     }
   };
   walkMax(roots);
+  // 号炉・系統の行を入れたら、機器の階層の名前のあとに、号炉・系統の階層の名前を入れる
+  const planLevels = machineLevel !== null ? [...plan.levelNames.slice(0, machineLevel), labels.seriesLevel ?? "号炉・系統", ...plan.levelNames.slice(machineLevel)] : plan.levelNames;
   const levelNames =
     opts.mode === "ledger"
-      ? Array.from({ length: Math.max(maxLevel, plan.levelNames.length) }, (_, i) => plan.levelNames[i] || labels.levelFallback(i + 1))
+      ? Array.from({ length: Math.max(maxLevel, planLevels.length) }, (_, i) => planLevels[i] || labels.levelFallback(i + 1))
       : [...labels.commonLevels];
   const width = levelNames.length;
 
@@ -506,7 +558,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   if (opts.mode === "ledger") for (const w of plan.works) for (const t of new Set(w.targets)) worksOfAsset.set(t, [...(worksOfAsset.get(t) ?? []), w.workKey]);
   const ownWorks = (n: Node): string[] => {
     if (n.kind !== "node") return [];
-    if (opts.mode === "ledger") return worksOfAsset.get(n.id.slice(2)) ?? [];
+    if (opts.mode === "ledger") return worksOfAsset.get(assetKeyOf(n.id) ?? "") ?? [];
     return [...new Set(n.direct.map((x) => x.d.workKey))];
   };
 
@@ -514,6 +566,8 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   const emit = (n: Node, path: (string | null)[]) => {
     const p = path.slice();
     p[n.level - 1] = n.name;
+    // 号炉・系統を持たない機器は、号炉・系統の欄に「―」（空けると上と同じ号炉に読める。Wire）
+    if (ledger?.unsplit.has(n.id)) p[n.level] = labels.noSeries ?? "―";
     const hasChildren = n.children.length > 0;
     const folded = hasChildren && ((opts.foldLevel !== null && n.level >= opts.foldLevel) || (opts.collapsed?.has(n.id) ?? false));
     const cells: Record<string, ChartCell> = {};
@@ -521,8 +575,9 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
     for (const [k, a] of src) {
       cells[k] = { mark: markOf(a), summary: folded, count: folded ? a.assets.size : null, review: a.review, change: null, detailKeys: [...a.details] };
     }
-    if (!folded && n.kind === "node" && opts.mode === "ledger" && changes.size > 0) {
-      const nodeKey = n.id.slice(2);
+    const ownKey = assetKeyOf(n.id);
+    if (!folded && n.kind === "node" && opts.mode === "ledger" && changes.size > 0 && ownKey !== null) {
+      const nodeKey = ownKey;
       for (const [ck, c] of changes) {
         if (!ck.startsWith(`${nodeKey}|`)) continue;
         const k = ck.slice(nodeKey.length + 1);

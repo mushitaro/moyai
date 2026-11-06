@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  assetKeyOf,
   buildChart,
   buildPeriods,
   catalogFromPack,
@@ -321,8 +322,10 @@ describe("工場の正解から組んだ計画（試験の道具）", () => {
   it("fictional-2 は 4 段。1 段目で畳むと設備の数の行", () => {
     const p = truthToPlan("fictional-2");
     const m = buildChart(p, catalog, labels, base);
-    expect(m.levelNames).toEqual(p.levelNames);
-    expect(m.levelNames.length).toBe(4);
+    // 号炉・系統を持つ機器があれば、機器の階層のあとに号炉・系統の階層が入る（運営者の決定。設備 › 機器 › 号炉・系統 › 部位）
+    const hasSeries = p.assets.some((a) => a.series !== null);
+    expect(m.levelNames.length).toBe(p.levelNames.length + (hasSeries ? 1 : 0));
+    if (hasSeries) expect(m.levelNames).toContain("号炉・系統");
     const folded = buildChart(p, catalog, labels, { ...base, foldLevel: 1 });
     expect(folded.rows.length).toBe(p.assets.filter((a) => a.level === 1).length);
     expect(folded.rows.every((r) => r.folded && r.count !== null && r.count > 0)).toBe(true);
@@ -347,23 +350,36 @@ describe("工場の正解から組んだ計画（試験の道具）", () => {
 });
 
 describe("系列の見出し", () => {
-  it("同じ親の下の同じ名前の機器だけ、名前に系列を添えて見分けられる", () => {
+  it("号炉・系統は階層に分ける：機器の行の下に号炉・系統の行。部位は 1 つ下がる（運営者の決定 2026-10-30・11-06）", () => {
     const p = small();
     const two = {
       ...p,
+      levelNames: ["設備", "機器", "部位"],
       assets: [
-        ...p.assets,
+        ...p.assets.map((a) => (a.nodeKey === "E3" ? { ...a, series: "1" } : a)),
         asset("E4", 2, "S2", "eq3", { series: "2" }),
         asset("E5", 2, "S2", "eq3", { series: "common.共通" }),
         asset("E6", 2, "S1", "eq9", { series: "1" }),
       ],
     };
-    const names = buildChart(two, catalog, labels, base).rows.map((r) => r.levelCells.join("/"));
-    expect(names.some((n) => n.includes("eq3（S2）"))).toBe(true);
-    expect(names.some((n) => n.includes("eq3（Scommon.共通）"))).toBe(true);
-    expect(names).toContain("/eq3/");
-    // 同じ名前の兄弟が無ければ、系列があっても添えない
-    expect(names).toContain("/eq9/");
+    const m = buildChart(two, catalog, labels, base);
+    expect(m.levelNames).toEqual(["設備", "機器", "号炉・系統", "部位"]);
+    const cells = m.rows.map((r) => r.levelCells.join("/"));
+    // 同じ名前の機器は 1 つの機器の行にまとまり、その下に号炉・系統の行が並ぶ
+    expect(cells.filter((c) => c === "/eq3//")).toHaveLength(1);
+    expect(cells).toContain("//S1/");
+    expect(cells).toContain("//S2/");
+    expect(cells).toContain("//Scommon.共通/");
+    // 号炉・系統の無い機器は行を足さず、号炉・系統の欄に「―」（Architect の 66 の 4・Wire）。部位はその下（4 つ目の列）
+    expect(cells).toContain("/eq1/―/");
+    expect(cells.filter((c) => c.endsWith("/―/"))).toHaveLength(2);
+    expect(cells).toContain("///part1");
+    // 機器の行（m:）は資産の節ではない
+    expect(m.rows.filter((r) => r.id.startsWith("m:")).every((r) => assetKeyOf(r.id) === null)).toBe(true);
+    expect(assetKeyOf("n:E3")).toBe("E3");
+    // 作業の印は号炉・系統の行（もとの機器）に載る
+    const e3 = m.rows.find((r) => r.id === "n:E3");
+    expect(e3?.level).toBe(3);
   });
 });
 
