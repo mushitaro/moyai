@@ -274,3 +274,25 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* 値の無いセルの「―」：等幅の列でも本文の字（text-3）。等幅では「—」に見えるため（Wire、11-06） */
+.moyai-none {
+  font-family: var(--font-body);
+  color: var(--text-3);
+  letter-spacing: 0;
+}
+
+/* 元の資料のセル：資料名は「…」で切り、番地は残す（Wire、11-06） */
+.moyai-source-cell {
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+}
+.moyai-source-cell > .moyai-ellipsis {
+  min-width: 0;
+}
+
+/* 開発の道具：1 行の text-3 のボタン（Wire、11-06） */
+.moyai-dev-tools .moyai-inline-act {
+  color: var(--text-3);
+}

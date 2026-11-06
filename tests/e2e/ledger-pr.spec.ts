@@ -50,7 +50,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await page.getByTestId("ledger-input").fill(repo);
     await page.getByTestId("settings-save").click();
     await expect(page.getByTestId("current-ledger")).toHaveText(repo);
-    await expect(page.getByTestId("settings-github")).toHaveText("GitHub　未接続");
+    await expect(page.getByTestId("settings-github")).toHaveText("未接続");
   });
 
   await test.step("見本の計画を開き、決定を受けて、署名して確定する", async () => {
@@ -132,8 +132,8 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
 
   await test.step("設定：GitHub との接続を切る", async () => {
     await page.goto(`${bridge.base}/#/settings`);
-    await expect(page.getByTestId("settings-github")).toHaveText("GitHub　moyai-test");
+    await expect(page.getByTestId("settings-github")).toHaveText("moyai-test");
     await page.getByTestId("github-disconnect").click();
-    await expect(page.getByTestId("settings-github")).toHaveText("GitHub　未接続");
+    await expect(page.getByTestId("settings-github")).toHaveText("未接続");
   });
 });

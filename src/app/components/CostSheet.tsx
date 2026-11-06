@@ -2,7 +2,7 @@
 // 数の元は作業の年度ごとの計画・実績の費用（WorkDetail.cost。円の整数）。計画の費用＝予算、実績の費用＝実績。年度で合計する。
 // 当施設の画面にだけ出す（共有ファイル・公開台帳・AI には出さない）。朱は使わない（予算超過は判断を求めるものではない）
 import { Select, Stack, Table, Text } from "@mantine/core";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { fiscalYearOf } from "../../plan/chart";
 import type { Plan } from "../../shared/plan";
@@ -10,11 +10,11 @@ import { sheetHash } from "../stages";
 import { MergeSideContext } from "../state/merge-side";
 import { requestWorkDetail } from "../state/work-detail";
 import { HUMAN_TEXT } from "../text";
+import { NONE, NoneMark } from "./NoneMark";
 import { Switch } from "./Switch";
 
 const T = HUMAN_TEXT.cost;
 const kyen = (yen: number) => Math.round(yen / 1000).toLocaleString("ja-JP");
-const NONE = "\u2015";
 const rateOf = (a: number, b: number) => `${((a / b) * 100).toFixed(1)} %`;
 const signed = (yen: number) => (yen > 0 ? `+${kyen(yen)}` : yen < 0 ? `−${kyen(-yen)}` : "0");
 type Mode = "year" | "cumulative";
@@ -68,6 +68,17 @@ export function CostSheet({ plan }: { plan: Plan }) {
         });
   const max = Math.max(1, ...shown.flatMap((s) => [s.budget ?? 0, s.actual ?? 0]));
   const side = useContext(MergeSideContext);
+  // 見えている幅（グラフと表の列の幅を決める）
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [avail, setAvail] = useState(0);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setAvail(el.clientWidth));
+    ro.observe(el);
+    setAvail(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
   const [picked, setPicked] = useState<number | null>(null);
   const pick = (fy: number) => {
     setPicked(fy);
@@ -122,7 +133,7 @@ export function CostSheet({ plan }: { plan: Plan }) {
         ].map(([k, v]) => (
           <div key={k} style={{ display: "contents" }}>
             <dt>{k}</dt>
-            <dd>{v}</dd>
+            <dd>{v === NONE ? <NoneMark /> : v}</dd>
           </div>
         ))}
       </dl>
@@ -145,7 +156,8 @@ export function CostSheet({ plan }: { plan: Plan }) {
   );
   // グラフと表は同じ列の幅：行の名前の列 NAME_W（目盛りの数もここ）、年度の列 COL_W。年度の帯が表の列の真上に来る（Wire、11-06）
   const NAME_W = 88;
-  const COL_W = 84;
+  const COL_MIN = 76; // 「年度途中」「121.2 %」が 1 行に入る幅
+  const COL_W = Math.max(COL_MIN, Math.floor((avail - NAME_W) / Math.max(1, shown.length)));
   const TOP = 14; // 目盛りのいちばん上の数が切れないように
   const H = 160;
   const width = NAME_W + shown.length * COL_W;
@@ -175,7 +187,7 @@ export function CostSheet({ plan }: { plan: Plan }) {
           {T.unit}
         </Text>
       </div>
-      <div style={{ overflowX: "auto", marginTop: 16 }} data-testid="cost-scroll">
+      <div ref={scrollRef} style={{ overflowX: "auto", marginTop: 16 }} data-testid="cost-scroll">
       <div style={{ width }}>
       {/* グラフ：年度ごとに 2 本の棒。予算は枠だけ、実績は墨の塗り、年度途中の実績は淡い塗り。選んだ年度は帯 */}
       <svg role="img" aria-label={T.chartLabel} width={width} height={TOP + H + 28} style={{ display: "block" }} data-testid="cost-chart">
@@ -241,7 +253,7 @@ export function CostSheet({ plan }: { plan: Plan }) {
                 <Table.Td c="var(--text-3)" className="moyai-cost-name">{T[row]}</Table.Td>
                 {shown.map((s) => {
                   const future = s.fy > nowFy;
-                  const inProgress = s.fy === nowFy;
+                  const inProgress = s.fy === nowFy && (s.budget !== null || s.actual !== null);
                   const v =
                     row === "budget"
                       ? s.budget !== null ? kyen(s.budget) : NONE
@@ -251,7 +263,7 @@ export function CostSheet({ plan }: { plan: Plan }) {
                           ? NONE
                           : inProgress
                             ? T.inProgress
-                            : s.budget === null || s.actual === null
+                            : s.fy === nowFy || s.budget === null || s.actual === null
                               ? NONE
                               : row === "diff"
                                 ? signed(s.actual - s.budget)
@@ -260,7 +272,7 @@ export function CostSheet({ plan }: { plan: Plan }) {
                                   : NONE;
                   return (
                     <Table.Td key={s.fy} ta="right" onClick={() => pick(s.fy)} style={{ cursor: "pointer", padding: "6px 8px", background: picked === s.fy ? "var(--layer-1)" : undefined }}>
-                      {v}
+                      {v === NONE ? <NoneMark /> : v}
                     </Table.Td>
                   );
                 })}

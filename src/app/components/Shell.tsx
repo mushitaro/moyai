@@ -96,7 +96,8 @@ function StatusBar({ client, onSlot }: { client: BridgeClient; onSlot: (el: HTML
     <footer className="moyai-status">
       <div className="moyai-status-start">
         <span ref={onSlot} className="moyai-status-fiction" />
-        <span className="moyai-status-connection" data-testid="connection" data-state={state.kind}>
+        {/* つなぎ直している間は text-3（Wire、11-06） */}
+        <span className="moyai-status-connection" data-testid="connection" data-state={state.kind} style={state.kind === "reconnecting" ? { color: "var(--text-3)" } : undefined}>
           {TEXT.connection[state.kind]}
         </span>
       </div>

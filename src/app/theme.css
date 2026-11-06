@@ -922,3 +922,15 @@ tr.moyai-pick-row[aria-selected="true"] {
 .moyai-settings-name {
   padding-top: 2px;
 }
+
+/* 設定の行の中の小さな見出し（「clone」「GitHub」）：同じ幅（Wire、11-06） */
+.moyai-settings-label {
+  flex: none;
+  width: 72px;
+}
+
+/* ダイアログの中の欄（却下の「判断の理由」）：上の欄と同じ layer-2 の地。ダイアログも layer-2 なので、罫で欄と分かる形にする（Wire、11-06） */
+.moyai-dialog-field .mantine-Input-input {
+  background: var(--layer-2);
+  border: 1px solid var(--line-strong);
+}

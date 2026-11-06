@@ -273,9 +273,13 @@ export const HUMAN_TEXT = {
     months: (n: number) => `${n} か月`,
     period: "期間",
     manDays: "工数",
-    cost: "費用（千円）",
-    diff: "差異（予算）",
-    verdict: "判定（測定値）",
+    /** 横の板の欄の名前には単位を付けず、値に付ける（Wire、11-06） */
+    cost: "費用",
+    diff: "差異",
+    verdict: "判定",
+    costValue: (k: string) => `${k} 千円`,
+    diffValue: (d: string, budget: string) => `${d}（予算 ${budget}）`,
+    linesUnit: "工数（人日）",
     previous: "前回値",
     strategy: "保全方式",
     strategies: { time_based: "時間基準", condition_based: "状態基準", corrective: "事後" } as Record<string, string>,
@@ -372,7 +376,7 @@ export const HUMAN_TEXT = {
     keptBranches: (n: number) => `枝 ${fmt(n)}`,
     keptMonths: "月の周期",
     /** 年数を明細の鍵から読めない前の形の案（Architect の 61。言葉は Wire に確かめる） */
-    keptOldKey: "年数の無い案",
+    keptOldKey: "年数なし",
     cycleRejectTitle: (id: string) => `周期の案 ${id} を却下`,
     cycleRejectBody: (id: string, n: number, rule: boolean) =>
       rule ? `周期の案 ${id} の計画の印 ${fmt(n)} を外します。同じルールの版のあいだは、その作業に出し直しません。` : `周期の案 ${id} の計画の印 ${fmt(n)} を外します。`,
@@ -419,7 +423,7 @@ export const HUMAN_TEXT = {
     packsTitle: "Skillパック",
     packsNone: "使える Skillパックがありません",
     aiTitle: "AI への提供範囲",
-    aiScope: "形・件数・小さな見本だけ（費用の値は伏せる）。詳しくは docs/security.md",
+    aiScope: "形・件数・小さな見本（費用の列の値を除く）",
     evalTitle: "Skill の採点",
     evalNone: "未実行",
     devTitle: "開発の道具（会期中のみ）",
@@ -468,6 +472,9 @@ export const HUMAN_TEXT = {
     unconfirmed: "未照合",
     confirmKey: "照合済みにする",
     packsLink: "業種を表示",
+    packVersion: (v: number | string) => `v${v}`,
+    github: "GitHub",
+    githubNone: "未接続",
   },
 
   github: {

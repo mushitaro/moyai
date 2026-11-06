@@ -1,6 +1,6 @@
 // 開発の道具（会期のあいだだけ。設定の画面の下に置く）：確定の試し（人だけの経路の守りを通す）、前の画面への道、Ed25519 の試験のページ。
 // トップは星取表だけにするので、ここへ移した（Wire、2026-11-04）。
-import { Alert, Anchor, Button, Divider, Group, Modal, Stack, Text } from "@mantine/core";
+import { Alert, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { sha256Hex, type BridgeClient } from "../bridge-client";
 import { CHART_HASH } from "../chart/route";
@@ -78,29 +78,34 @@ export function DevTools() {
   const { client, state } = useConnection();
   const [trialOpen, setTrialOpen] = useState(false);
   const canTrial = state.kind === "open";
+  // 1 行の text-3 のボタンだけ（中の見出しと説明の文は置かない。節の名前と重なる。Wire、11-06）
   return (
     <>
-      <Divider my="xl" label={TEXT.home.title} labelPosition="left" />
-      <Stack gap="sm" align="flex-start" data-testid="dev-tools">
-        <Text size="sm" c="dimmed">
-          {TEXT.home.lead}
+      <Group gap={0} wrap="wrap" data-testid="dev-tools" className="moyai-dev-tools">
+        <button type="button" className="moyai-inline-act" style={{ marginLeft: 0 }} onClick={() => setTrialOpen(true)} disabled={!canTrial} data-testid="trial-open">
+          {TEXT.trial.button}
+        </button>
+        <a className="moyai-inline-act" href={APP_PAGES.intake}>
+          {TEXT.home.intakeLink}
+        </a>
+        <a className="moyai-inline-act" href={CHART_HASH}>
+          {TEXT.home.chartLink}
+        </a>
+        <a className="moyai-inline-act" href={APP_PAGES.review}>
+          {TEXT.home.reviewLink}
+        </a>
+        <a className="moyai-inline-act" href={APP_PAGES.checkpoint}>
+          {HUMAN_TEXT.checkpoint.title}
+        </a>
+        <a className="moyai-inline-act" href={APP_PAGES.selftest}>
+          {TEXT.home.selftestLink}
+        </a>
+      </Group>
+      {!canTrial && (
+        <Text size="xs" c="var(--text-3)" mt={4} data-testid="trial-disabled-reason">
+          {TEXT.trial.disabledReason}
         </Text>
-        <Group gap="sm">
-          <Button variant="default" size="xs" onClick={() => setTrialOpen(true)} disabled={!canTrial} data-testid="trial-open">
-            {TEXT.trial.button}
-          </Button>
-          {!canTrial && (
-            <Text size="sm" c="dimmed" data-testid="trial-disabled-reason">
-              {TEXT.trial.disabledReason}
-            </Text>
-          )}
-        </Group>
-        <Anchor href={APP_PAGES.intake}>{TEXT.home.intakeLink}</Anchor>
-        <Anchor href={CHART_HASH}>{TEXT.home.chartLink}</Anchor>
-        <Anchor href={APP_PAGES.review}>{TEXT.home.reviewLink}</Anchor>
-        <Anchor href={APP_PAGES.checkpoint}>{HUMAN_TEXT.checkpoint.title}</Anchor>
-        <Anchor href={APP_PAGES.selftest}>{TEXT.home.selftestLink}</Anchor>
-      </Stack>
+      )}
       <CommitTrialDialog client={client} opened={trialOpen} onClose={() => setTrialOpen(false)} />
     </>
   );

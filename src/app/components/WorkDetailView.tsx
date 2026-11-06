@@ -2,12 +2,13 @@
 // データの形（運営者の定義）：機器 › 作業（火格子交換）› 作業明細（作業日報の 1 行）。作業の年度ごとの計画・実績はコードの WorkDetail。
 // 本体を置き換え、左上の「| ‹ 星取表」で戻る。表の行は作業の年度ごとの計画・実績（年度ごとに 2 段）。行を選ぶと横の板の詳細に、
 // その年度の値の全部の欄（空の欄は出さない）と「作業明細 n」（日報の 1 行ずつ。lines の無い前の版は「記録していない」）。
-import { Stack, Table, Text } from "@mantine/core";
+import { Group, Stack, Table, Text } from "@mantine/core";
 import { useContext, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Plan, WorkDetailT } from "../../shared/plan";
 import { planDueViews } from "../../plan/due-view";
 import { sheetHash } from "../stages";
+import { NoneMark } from "./NoneMark";
 import { MergeSideContext } from "../state/merge-side";
 import { HUMAN_TEXT } from "../text";
 
@@ -38,11 +39,11 @@ const period = (ds: WorkDetailT[]) => {
 };
 /** 元の資料（資料名とセル）。同じものは 1 つ */
 const sourcesOf = (ds: WorkDetailT[]) => {
-  const seen = new Map<string, { file: string; label: string; short: string }>();
+  const seen = new Map<string, { file: string; label: string; short: string; cell: string | null }>();
   for (const s of ds.flatMap((d) => d.sources)) {
     const label = `${s.file}${s.sheet ? `「${s.sheet}」` : ""}${s.cell ? `　${s.cell}` : ""}`;
     // 横の板は 1 行に資料名とセルだけ（シート名は出さない。Wire、11-06）
-    if (!seen.has(label)) seen.set(label, { file: s.file, label, short: `${s.file}${s.cell ? `　${s.cell}` : ""}` });
+    if (!seen.has(label)) seen.set(label, { file: s.file, cell: s.cell ?? null, label, short: `${s.file}${s.cell ? `　${s.cell}` : ""}` });
   }
   return [...seen.values()];
 };
@@ -106,7 +107,7 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
       </Text>
       {/* 表だけを横に送る（面ごと送ると、見出しと戻るの字が左へ切れる） */}
       <div style={{ overflowX: "auto", marginTop: 16 }}>
-      <Table className="moyai-num moyai-work-detail" verticalSpacing={6} fz="sm" data-testid="work-detail-table" style={{ tableLayout: "fixed", width: "100%", minWidth: COL_WIDTHS.reduce((a, b) => a + b, 0) + 120 }}>
+      <Table className="moyai-num moyai-work-detail" verticalSpacing={6} horizontalSpacing="xs" fz="sm" data-testid="work-detail-table" style={{ tableLayout: "fixed", width: "100%", minWidth: COL_WIDTHS.reduce((a, b) => a + b, 0) + 120 }}>
         {/* 元の資料の列は残りの幅で、はみ出す字は「…」（表を面からはみ出させない。Wire、11-06） */}
         <colgroup>
           {COL_WIDTHS.map((w, i) => (
@@ -159,9 +160,16 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
                 <Table.Td>{verdict ?? ""}</Table.Td>
                 <Table.Td c="var(--text-3)" ff="monospace" fz="xs" title={sourcesOf(r.details)[0]?.label ?? ""}>
                   {/* 長い資料名は「…」で切る（全文は title と横の板。Wire、11-06） */}
-                  <span className="moyai-ellipsis" data-testid="work-detail-source">
-                    {sourcesOf(r.details)[0]?.label ?? ""}
-                  </span>
+                  {(() => {
+                    const s0 = sourcesOf(r.details)[0];
+                    if (!s0) return null;
+                    return (
+                      <span className="moyai-source-cell" data-testid="work-detail-source">
+                        <span className="moyai-ellipsis">{s0.file}</span>
+                        {s0.cell && <span style={{ flex: "none" }}>{`　${s0.cell}`}</span>}
+                      </span>
+                    );
+                  })()}
                 </Table.Td>
               </Table.Tr>
             );
@@ -178,7 +186,7 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
 }
 
 /** 表の列の幅（年度｜区分｜期間｜日数｜工数｜費用｜判定）。元の資料は残りの幅 */
-const COL_WIDTHS = [96, 112, 184, 56, 104, 144, 64];
+const COL_WIDTHS = [84, 104, 168, 52, 96, 128, 48];
 
 /** 作業名から対象の機器の名前を外す（題は作業名だけ。機器は上の道に出ている。Wire） */
 function shortName(kind: string, plan: Plan, targets: readonly string[]): string {
@@ -216,9 +224,10 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
   const fields: [string, string | null][] = [
     [T.period, period(ds)],
     [T.manDays, sum(ds.map((d) => d.manDays)) !== null ? T.manDaysValue(fmtOr(sum(ds.map((d) => d.manDays)), 1)) : null],
-    [T.cost, cost !== null ? kyen(cost) : null],
-    [T.diff, diff !== null ? signed(diff) : null],
-    [T.verdict, verdict ? (measured ? `${verdict}（${measured}）` : verdict) : null],
+    [T.cost, cost !== null ? T.costValue(kyen(cost)) : null],
+    [T.diff, diff !== null && row.budget !== null ? T.diffValue(signed(diff), kyen(row.budget)) : null],
+    // 判定は「B　火格子の摩耗 3.2 mm」の形（判定の値と測った値を全角の空白で）
+    [T.verdict, verdict ? (measured ? `${verdict}　${measured}` : verdict) : null],
     [T.previous, ds.map((d) => d.previousValue).filter(Boolean).join("・") || null],
     [T.strategy, strategy ? (T.strategies[strategy] ?? strategy) : null],
     [T.contractor, contractor],
@@ -247,14 +256,22 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
             </div>
           ))}
       </dl>
-      <Text size="xs" c="var(--text-3)" mt="xs" data-testid="work-lines-title">
-        {recorded ? T.linesTitle(lines.length) : T.linesNotRecorded}
-      </Text>
+      <Group justify="space-between" mt="xs" wrap="nowrap">
+        <Text size="xs" c="var(--text-3)" data-testid="work-lines-title">
+          {recorded ? T.linesTitle(lines.length) : T.linesNotRecorded}
+        </Text>
+        {/* 作業明細の工数の列の見出し（Wire、11-06） */}
+        {recorded && lines.length > 0 && (
+          <Text size="xs" c="var(--text-3)" data-testid="work-lines-unit">
+            {T.linesUnit}
+          </Text>
+        )}
+      </Group>
       {recorded && lines.length > 0 && (
         <div className="moyai-lines moyai-num" data-testid="work-lines" style={{ gridTemplateColumns: hasQty ? "44px 1fr 52px 28px" : "44px 1fr 28px" }}>
           {lines.map((l, i) => (
             <div key={i} style={{ display: "contents" }} data-flag={l.flag ?? ""}>
-              <span>{l.date ? l.date.slice(5) : "\u2015"}</span>
+              <span>{l.date ? l.date.slice(5) : <NoneMark />}</span>
               <span className="moyai-lines-content" title={l.content}>
                 {l.content}
                 {l.flag && <span style={{ color: "var(--text-3)", marginLeft: 4 }}>{T.lineFlags[l.flag]}</span>}

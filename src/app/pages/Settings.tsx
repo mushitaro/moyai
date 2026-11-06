@@ -7,7 +7,9 @@ import { useCallback, useEffect, useState } from "react";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
 import { DevTools } from "../components/DevTools";
+import { NoneMark } from "../components/NoneMark";
 import { KeyCheckDialog, type TrustSig } from "../components/KeyWarn";
+import { packVersion } from "../chart/catalog";
 import { useConnection } from "../state/bridge";
 import { HUMAN_TEXT, TEXT } from "../text";
 
@@ -209,7 +211,7 @@ export function Settings() {
             T.rootTitle,
             <Stack gap={6}>
               <Group gap="sm" wrap="nowrap" align="baseline">
-                <Val testid="current-root">{s.root ?? "―"}</Val>
+                <Val testid="current-root">{s.root ?? <NoneMark />}</Val>
                 {rootMarks && (
                   <Text size="xs" c="var(--text-3)" style={{ whiteSpace: "nowrap" }}>
                     {rootMarks}
@@ -311,7 +313,7 @@ export function Settings() {
                           <SyncedNotice synced={r.synced} kind="ring" />
                         </Table.Td>
                         <Table.Td>{s.packs.find((p) => p.id === r.pack)?.name ?? r.pack}</Table.Td>
-                        <Table.Td>{r.fingerprint ? <Fingerprint value={r.fingerprint} /> : "―"}</Table.Td>
+                        <Table.Td>{r.fingerprint ? <Fingerprint value={r.fingerprint} /> : <NoneMark />}</Table.Td>
                       </Table.Tr>
                     ))}
                   </Table.Tbody>
@@ -327,7 +329,7 @@ export function Settings() {
             T.ledgerTitle,
             <Stack gap={6} data-testid="ledger-setting">
               <Group gap="sm" wrap="nowrap" align="baseline">
-                <Text size="sm" c="var(--text-3)" style={{ minWidth: 56 }}>
+                <Text size="xs" c="var(--text-3)" className="moyai-settings-label">
                   {T.clone}
                 </Text>
                 <Val testid="current-ledger" mono={!!s.ledger}>
@@ -337,8 +339,12 @@ export function Settings() {
               </Group>
               {editLedger && <TextInput label={T.ledgerInput} value={ledger} onChange={(e) => setLedger(e.currentTarget.value)} data-testid="ledger-input" />}
               <Group gap="sm" wrap="nowrap" align="baseline" data-testid="github-setting">
+                {/* 「clone」と「GitHub」は text-3 の小さな字で同じ幅（Wire、11-06） */}
+                <Text size="xs" c="var(--text-3)" className="moyai-settings-label">
+                  {T.github}
+                </Text>
                 <Text size="sm" data-testid="settings-github">
-                  {s.github ? HUMAN_TEXT.github.connectedAs(s.github) : HUMAN_TEXT.github.none}
+                  {s.github ?? T.githubNone}
                 </Text>
                 {s.github && (
                   <button
@@ -361,10 +367,25 @@ export function Settings() {
           {row(
             T.packsTitle,
             <Text size="sm">
-              {s.packs
-                .filter((p) => p.ready)
-                .map((p) => p.name)
-                .join("・") || T.packsNone}
+              {/* パックの名前と版（pack.json の version。版は等幅の text-3。Wire、11-06） */}
+              {s.packs.filter((p) => p.ready).length === 0
+                ? T.packsNone
+                : s.packs
+                    .filter((p) => p.ready)
+                    .map((p, i) => {
+                      const v = packVersion(p.id);
+                      return (
+                        <span key={p.id} data-testid="pack-version" data-pack={p.id}>
+                          {i > 0 && "・"}
+                          {p.name}
+                          {v !== null && (
+                            <Text span size="sm" ff="monospace" c="var(--text-3)" ml={6}>
+                              {T.packVersion(v)}
+                            </Text>
+                          )}
+                        </span>
+                      );
+                    })}
               <a className="moyai-inline-act" href={APP_PAGES.industries} data-testid="industries-link">
                 {T.packsLink}
               </a>
@@ -373,7 +394,7 @@ export function Settings() {
           )}
           {/* AI への提供範囲・Skill の採点の画面はまだ無いので、「| 提供範囲を表示」「| 採点を表示」は置かない（動かない部品は置かない） */}
           {row(T.aiTitle, <Text size="sm">{T.aiScope}</Text>, "ai-setting")}
-          {row(T.evalTitle, <Text size="sm">{T.evalNone}</Text>, "eval-setting")}
+          {row(T.evalTitle, <Text size="sm" c="var(--text-3)">{T.evalNone}</Text>, "eval-setting")}
         </div>
       )}
       {/* 開発の道具は、設定を読めないとき（2 つ目のタブ・ブリッジ未接続）にも出す（押せない理由を出すため） */}

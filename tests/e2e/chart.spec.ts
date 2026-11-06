@@ -341,7 +341,13 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   // 横の板の元の資料は 1 行に資料名とセル（シート名は出さない。Wire、11-06）。表の元の資料は「…」で切る
   await expect(page.getByTestId("work-detail-side-source").first()).toHaveText(/^plan-hoshitori\.xlsx　[A-Z]+\d+/);
   await expect(page.getByTestId("work-detail-side-source").first()).not.toContainText("「");
-  expect(await page.getByTestId("work-detail-source").first().evaluate((el) => getComputedStyle(el).textOverflow)).toBe("ellipsis");
+  // 表の元の資料は「資料名　番地」。資料名だけを「…」で切り、番地は残す（Wire、11-06）
+  await expect(page.getByTestId("work-detail-source").first()).toHaveText(/^plan-hoshitori\.xlsx　[A-Z]+\d+$/);
+  expect(await page.getByTestId("work-detail-source").first().locator(".moyai-ellipsis").evaluate((el) => getComputedStyle(el).textOverflow)).toBe("ellipsis");
+  // 横の板：欄の名前に単位を付けず、値に付ける。作業明細の右に「工数（人日）」
+  await expect(page.getByTestId("work-detail-side")).toContainText("41,200 千円");
+  await expect(page.getByTestId("work-detail-side")).toContainText("+7,200（予算 34,000）");
+  await expect(page.getByTestId("work-lines-unit")).toHaveText("工数（人日）");
   await page.screenshot({ path: shot(`work-detail-${tag}`) });
   await page.getByTestId("work-detail-back").click();
   await expect(page.getByTestId("work-detail")).toHaveCount(0);
@@ -354,6 +360,8 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   await expect(page.getByTestId("cost-row-diff")).toContainText("+7,200");
   // 値の無いセルは「―」（U+2015。Wire、11-06）
   await expect(page.getByTestId("cost-row-budget")).toContainText("\u2015");
+  // 「―」は等幅の列でも本文の字（Wire、11-06）
+  expect(await page.getByTestId("cost-row-budget").locator(".moyai-none").first().evaluate((el) => getComputedStyle(el).fontFamily)).not.toMatch(/mono/i);
   await expect(page.getByTestId("cost-row-budget")).not.toContainText("\u2014");
   // グラフと表は同じ幅。年度の帯は表の年度の列の真上（Wire、11-06）
   {
