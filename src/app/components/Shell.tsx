@@ -73,7 +73,7 @@ function Header({ hash }: { hash: string }) {
               href={t.hash}
               title={t.ja}
               aria-current={stage === t.stage ? "page" : undefined}
-              data-testid={`tab-${t.en.toLowerCase()}`}
+              data-testid={`tab-${t.stage}`}
             >
               {t.en}
             </a>
