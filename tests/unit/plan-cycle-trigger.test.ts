@@ -113,6 +113,8 @@ describe("確定した版", () => {
     if (!v.ok) throw new Error(v.reason);
     const w = v.record.plan.works[0]!;
     expect(w.trigger).toEqual({ branches: [{ kind: "calendar", years: 4 }], combine: "earliest" });
+    // 確定の答えに、きっかけの変わり方を返す（Architect の 61）
+    expect(v.cycleChanges).toEqual([{ workKey: "w1", years: 4, from: null, kind: "set" }]);
     const due = workDue(v.record.plan, w, "2026-11-06");
     // 最後の実績は 2022 年度（年度の始まり 2022-04-01）→ 4 年ごとで 2026-04-01
     expect(due.status === "due" && due.due).toBe("2026-04-01");

@@ -13,7 +13,7 @@ import type { AuthorKind } from "../shared/fields";
 import { Plan } from "../shared/plan";
 import type { Rule } from "../shared/tools";
 import type { ChartCatalog } from "./chart";
-import { applyAcceptedCycles } from "./cycle";
+import { applyAcceptedCycles, type CycleTriggerChange } from "./cycle";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
 import { fixWorkbook } from "./xlsx-fix";
@@ -319,7 +319,7 @@ export async function readPlanVersion(
 }
 
 export type CommitResult =
-  | { ok: true; version: number; record: VersionRecord; diff: PlanDiff; files: { version: string; report: string; export: string | null } }
+  | { ok: true; version: number; record: VersionRecord; diff: PlanDiff; files: { version: string; report: string; export: string | null }; cycleChanges?: CycleTriggerChange[] }
   | {
       ok: false;
       reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown" | "nameInvalid" | "historyBroken" | "deriveNotFirst" | "deriveSourceInvalid" | "versionTooLarge" | "cycleConflict";
@@ -394,7 +394,7 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
   );
   if (!cycles.ok) return { ok: false, reason: "cycleConflict", pending: cycles.conflicts.length };
   const applied = cycles.plan;
-  return writeVersion(i.root, hist, {
+  const written = await writeVersion(i.root, hist, {
     kind: "confirm",
     revertOf: null,
     plan: applied,
@@ -412,6 +412,8 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     role: i.role ?? "confirm",
     derivedFrom: from,
   });
+  // 受けた周期の案で、作業のきっかけがどう変わったか（置いた・置き換えた・変えなかった）も返す（Architect の 61。画面が人に見せる）
+  return written.ok ? { ...written, cycleChanges: cycles.changes } : written;
 }
 
 /** 前の版に戻す：戻した先の版の計画をそのまま持つ、新しい版の記録を足す（前の版は書き換えない）。 */
