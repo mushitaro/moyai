@@ -2,6 +2,7 @@
 // 画面（確定のダイアログ）と橋渡し（版のファイルと差分レポート）が同じこの関数を使う。純粋な TS（UI もネットも持たない）。
 import type { AuthorKind } from "../shared/fields";
 import type { Plan } from "../shared/plan";
+import { cycleIdOf } from "./cycle";
 
 export type DiffMark = "plan" | "actual" | "both";
 
@@ -202,10 +203,18 @@ export function aiDecisions(plan: Plan): Decision[] {
       target: `${(w?.targets ?? []).map((k) => names.get(k) ?? k).join("、")} · ${w?.kind ?? d.workKey}`,
       value: `${d.planOrActual}:${d.fiscalYear}`,
       basis: d.basis,
-      hash: fnv64(JSON.stringify([d.detailKey, d.workKey, d.planOrActual, d.fiscalYear, d.startDate, d.endDate, d.author, d.basis])),
+      // 指紋は中身（何の・いつの・誰の・どこから）。資料から読んだ明細は、根拠の文の言い方（basis）を入れず、出どころのセル（資料・シート・セル。決まった順）を入れる
+      // （言い方だけが変わった版で、受けた明細を受け直しにしない。Architect の 69）。
+      // 周期の案（cy-）は、根拠の文が照らした中身そのもの（台帳の版・類似施設の数・「第 n 版で受けた当てはめと同じ」）なので、これまでどおり basis も入れる（新-10）
+      hash: fnv64(JSON.stringify([d.detailKey, d.workKey, d.planOrActual, d.fiscalYear, d.startDate, d.endDate, d.author, sourceKeys(d.sources), ...(cycleIdOf(d.detailKey) !== null ? [d.basis] : [])])),
     });
   }
   return out;
+}
+
+/** 明細の出どころの並び（資料・シート・セル）。並べ方で指紋が変わらないよう、決まった順にそろえる */
+function sourceKeys(sources: readonly { file: string; sheet: string | null; cell: string | null }[]): string[] {
+  return [...new Set(sources.map((x) => JSON.stringify([x.file, x.sheet ?? "", x.cell ?? ""])))].sort();
 }
 
 /** 人が受けていない決定：AI の決定のうち、前の版までに同じ中身で受けていないもの。 */

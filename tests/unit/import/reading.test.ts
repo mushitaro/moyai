@@ -85,6 +85,53 @@ describe("規則の種類ごとに、読み手が当てる", () => {
     expect([an.ruleHits.count("h"), an.ruleHits.count("x"), an.ruleHits.count("t")]).toEqual([5, 2, 2]);
   });
 
+  test("行の役割の前方一致（prefix）：頁ごとに番号の変わる題・60 字を越える注記にも当たり、prefix の無い規則は丸ごと一致だけ", async () => {
+    const long = `注）${"部分補修と機器一式更新を区別する。".repeat(4)}`;
+    const list = csv(["日付,機器,作業,工数", "2024/4/6,ポンプ,点検,2", "送水設備（1 / 43）,,,", "2024/4/7,ブロワ,点検,1", "送水設備（2 / 43）,,,", `${long},,,`]);
+    expect(long.length).toBeGreaterThan(60);
+    const s = session();
+    await s.add([{ name: "一覧.csv", bytes: list }]);
+    s.setReadings([
+      reading([
+        { ...base, id: "p", text: "「送水設備（」で始まる行は頁の題として外す", kind: "rowRole", match: "送水設備（", prefix: true, role: "note" },
+        { ...base, id: "n", text: "長い注記の行は注記として外す", kind: "rowRole", match: long, role: "note" },
+        { ...base, id: "e", text: "「送水設備」の行は注記として外す", kind: "rowRole", match: "送水設備", role: "note" },
+      ]),
+    ]);
+    const an = s.analyze();
+    const t = an.layouts.find((l) => l.file === "一覧.csv")?.tables[0];
+    expect([3, 5, 6].map((r) => t?.rows.find((x) => x.r === r)?.role)).toEqual(["note", "note", "note"]);
+    expect([an.ruleHits.count("p"), an.ruleHits.count("n"), an.ruleHits.count("e")]).toEqual([2, 1, 0]);
+  });
+
+  test("見本の読み方の決まった答え（heldout-4 の「記号「●」」）が、質問の字を「印」から「星取」にしたあとも同じ質問に当たる（Architect の 68）", async () => {
+    const { readFileSync } = await import("node:fs");
+    const skills = JSON.parse(readFileSync("samples/heldout/heldout-4/measured/ai-round-1/f-tenkyodai/readings.json", "utf8")) as { rules: ReadingRule[] }[];
+    const rule = skills.flatMap((x) => x.rules).find((r) => r.id === "plan-answer-filled-legend");
+    expect(rule).toMatchObject({ kind: "answer", question: "planActualConflict", match: "記号「●」", answer: "legend" });
+    // 計画の帯の列に、凡例では実施済の ● がある（列の見出しと凡例が食い違う）
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [
+        ["機器名称", "計画年度"],
+        [null, "2025年度", "2026年度"],
+        ["除塵機", "●", "○"],
+        [],
+        ["凡例　○：計画　●：実施済"],
+      ]);
+      ws.mergeCells("A1:A2");
+      ws.mergeCells("B1:C1");
+    });
+    const s = session();
+    await s.add([{ name: "【架空】長期保全計画表.xlsx", bytes }]);
+    const before = s.analyze().questions.find((q) => q.kind === "planActualConflict");
+    expect(before?.text).toContain("記号「●」");
+    expect(before?.decision).toBeNull();
+    s.setReadings([reading([rule!])]);
+    const q = s.analyze().questions.find((x) => x.kind === "planActualConflict");
+    expect(q?.questionId).toBe(before?.questionId);
+    expect(q?.decision).toMatchObject({ answer: "legend", author: "rule_code" });
+  });
+
   test("同じ機器（辞書）：書き方の違う名前を、台帳の機器に当てる", async () => {
     const d2 = csv(["日付,炉,機器,作業,工数", "2024/4/6,1,ブロワー,点検,延べ2人"]);
     const s = session();

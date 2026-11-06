@@ -6,7 +6,7 @@ import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFi
 import { parseWithFormat } from "./reading";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
-import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, parseCost, parseCycle, parseEffort, parseUnit, splitFlatWork, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type UnitValue } from "./text";
+import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, parseCost, parseCycle, parseEffort, parseUnit, splitFlatWork, splitNameUnits, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
 
@@ -75,6 +75,10 @@ export interface MarkRec {
   cycle?: CycleSpan;
   /** その行の費用（「概算費用(千円/回)」の列。1 回あたり）。書いていなければ省く */
   cost?: CostCell;
+  /** 記号でなく整備の内容の文を書いた年の欄（2 段の書き方の上の段）。workName がその文 */
+  content?: true;
+  /** 内容の文のうち、測った値の行（「最小厚 22.5mm」）。作業明細の測った値に残す */
+  measured?: string;
   assetId: string | null;
   excluded: string | null;
   pending: boolean;
@@ -745,7 +749,17 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const years = marks.map((m) => m.fiscalYear ?? 0);
   if (years.length) rec.gridYears.set(t.id, { from: Math.min(...years), to: Math.max(...years) });
   const blankDecision = (t as Table & { blankDecision?: Map<number, string | null> }).blankDecision ?? new Map<number, string | null>();
-  const data = t.rows.filter((r) => r.role === "data");
+  // 金額の行（2 段の書き方の下の段）は、機器の行でも星取の行でもない（上の行の内容の費用）
+  const amountRows = t.amountRows ?? new Map<number, number>();
+  // 表の上の題・注記に書いた凡例の符号（「重要度 A：安全・環境・共通系　B：…」）
+  const legendCodes = codeLegend([...lay.titles, ...lay.notes].map((x) => x.text));
+  const data = t.rows.filter((r) => r.role === "data" && !amountRows.has(r.r));
+  // 号炉・系統の列の位置：階層の列のあいだ（「設備｜機器｜号炉・系統｜部位」）なら、その左の階層（機器）の系列。
+  // 階層の列より右か左なら、葉（いちばん下の階層）の系列（これまでの書き方）
+  const leftOfUnit = unitCol ? hier.filter((h) => h.c < unitCol.c).length - 1 : -1;
+  const seriesIdx = leftOfUnit >= 0 && leftOfUnit < hier.length - 1 ? leftOfUnit : hier.length - 1;
+  // 号炉・系統の欄に号炉と号機を並べた書き方（「1号炉 No.1」）の号機：機器の側の番号（号炉ではない）
+  const machineOf = new Map<number, string>();
   // 号の列：〃 は上と同じ、共通は意味を聞く
   let commonMeaning: string | null | undefined;
   const commonCells: string[] = [];
@@ -760,7 +774,14 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         prev = null;
         continue;
       }
-      const u = parseUnit(cell.text);
+      let u: UnitValue | null = parseUnit(cell.text);
+      if (!u) {
+        const sp = splitSeriesCell(cell.text);
+        if (sp) {
+          u = sp.unit;
+          if (sp.machine) machineOf.set(r.r, sp.machine);
+        }
+      }
       if (!u) {
         unitBad.push(cell.ref);
         unitOf.set(r.r, undefined);
@@ -785,7 +806,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         valueKind: "option",
         defaultAnswer: "facility",
         sameShapeRows: commonCells.length,
-        items: [itemOf(lay, commonCells.slice(0, 10))],
+        items: [itemOf(lay, [...new Set(commonCells)].slice(0, 10))],
       });
       for (const [r, s] of unitOf) if (s?.kind === "common") unitOf.set(r, commonMeaning ? { kind: "common", meaning: commonMeaning } : undefined);
     }
@@ -911,16 +932,34 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       pathPrev[i] = text;
       pathPrevRef[i] = ref;
       const isLeaf = i === hier.length - 1;
-      const series = isLeaf ? (unitCol ? unitOf.get(r.r) : null) : null;
-      const key = isLeaf ? `${parent?.id ?? ""}>${norm(text)}#${seriesKey(series ?? null)}#r${r.r}` : `${parent?.id ?? ""}>${norm(text)}@${ref}`;
+      const isSeriesCol = i === seriesIdx;
+      const series = isSeriesCol ? (unitCol ? unitOf.get(r.r) : null) : null;
+      const machine = isSeriesCol && !isLeaf ? (machineOf.get(r.r) ?? null) : null;
+      // 機器の階層（号炉・系統の列のすぐ左）の節は、同じ親の下の同じ名前・号炉・号機で 1 つ（頁ごとに書き直した結合も同じ機器）。
+      // それより上の階層（設備）の節も、同じ親の下の同じ名前で 1 つ。号炉・系統の列の無い表は、これまでどおり結合ごと
+      const key = isLeaf
+        ? `${parent?.id ?? ""}>${norm(text)}#${seriesKey(series ?? null)}#r${r.r}`
+        : isSeriesCol
+          ? `${parent?.id ?? ""}>${norm(text)}#${seriesKey(series ?? null)}#${machine ?? ""}`
+          : seriesIdx < hier.length - 1 && i < seriesIdx
+            ? `${parent?.id ?? ""}>${norm(text)}`
+            : `${parent?.id ?? ""}>${norm(text)}@${ref}`;
       let n = nodeOf.get(key);
       if (!n) {
         const whole = text.replace(/\s*\n\s*/g, " ").trim();
         // 葉の名前の後ろの号（「ポンプ（1号機）」）：号の列が無いか空なら、名前から号を分ける
-        const sfx = isLeaf && (series === null || series === undefined) ? splitUnitSuffix(whole) : null;
-        const raw = sfx ? sfx.name : whole;
+        const sfx = isLeaf && isSeriesCol && (series === null || series === undefined) ? splitUnitSuffix(whole) : null;
+        // 機器の系列を号炉・系統の列から決めた表の葉：名前の中の号炉（その行の号炉と同じもの）と号機（「1号炉 No.1 減温塔噴霧P」）を名前から分ける。号機は葉の番号
+        const rowSeries = seriesIdx < hier.length - 1 ? unitOf.get(r.r) : null;
+        const inName = isLeaf && !isSeriesCol ? splitNameUnits(whole) : null;
+        const units = inName && (inName.unit === null || (rowSeries?.kind === "number" && rowSeries.n === inName.unit)) ? inName : null;
+        const named = sfx ? sfx.name : units ? units.name : whole;
+        // 凡例で決めた頭の符号（「重要度 A：安全…　B：…」の「A：」）：名前から分け、凡例の題を項目にして仕様に残す
+        const code = codePrefix(named, legendCodes);
+        const raw = code ? code.name : named;
         n = {
-          id: isLeaf ? `${t.id}:r${r.r}` : `${t.id}:h${col.hierLevel}:${ref}`,
+          // 1 つの結合に号炉・号機の違う機器がいくつもあるとき（機器群の結合の右に「1号炉 No.2」「2号炉 No.1」…）、節は号炉・号機ごと
+          id: isLeaf ? `${t.id}:r${r.r}` : isSeriesCol && seriesIdx < hier.length - 1 ? `${t.id}:h${col.hierLevel}:${ref}#${seriesKey(series ?? null)}#${machine ?? ""}` : `${t.id}:h${col.hierLevel}:${ref}`,
           file: lay.file,
           sheet: lay.sheet,
           sheetIndex: lay.sheetIndex,
@@ -931,22 +970,27 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
           parentId: parent?.id ?? null,
           rawName: raw,
           name: raw,
-          tag: null,
+          tag: machine ?? units?.machine ?? null,
           tagNumber: null,
           nameRef: ref,
           series: sfx ? { kind: "number", n: sfx.n } : (series ?? null),
-          specs: [],
+          specs: code ? [{ key: code.title, value: code.value, ref }] : [],
           installed: null,
           refs: [ref],
           excluded: null,
           pending: !sfx && series === undefined,
         };
-        if (isLeaf && unitCol) {
-          const uc = lay.index.at(r.r, unitCol.c);
-          if (uc) n.refs.push(uc.ref);
+        if (isSeriesCol && unitCol) {
+          const uc = isLeaf ? lay.index.at(r.r, unitCol.c) : lay.index.resolved(r.r, unitCol.c);
+          if (uc && (isLeaf || !n.refs.includes(uc.ref))) n.refs.push(uc.ref);
         }
         nodeOf.set(key, n);
         rec.assets.push(n);
+      } else if (!isLeaf) {
+        // 同じ節を別の所に書き直したもの（頁ごとに書き直した設備・機器の結合）：そのセルも出どころに足す
+        if (!n.refs.includes(ref)) n.refs.push(ref);
+        const uc = isSeriesCol && unitCol ? lay.index.resolved(r.r, unitCol.c) : null;
+        if (uc && !n.refs.includes(uc.ref)) n.refs.push(uc.ref);
       }
       if (dittoRef && !n.refs.includes(dittoRef)) n.refs.push(dittoRef);
       parent = n;
@@ -1001,12 +1045,15 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const node = rowNode.get(r);
     if (node && !node.refs.includes(c.ref)) node.refs.push(c.ref);
   }
+  // 2 段の書き方（年の欄に整備の内容、その下の行に金額）：内容のセルを星取として読む。金額はその費用
+  const content = amountRows.size ? contentMarks(t, lay, ask, rec, data, rowNode, marks, amountRows, exclude, pend, off) : null;
   // 印
   const legend = t.legend;
   for (const r of data) {
     for (const col of marks) {
       const cell = lay.index.at(r.r, col.c);
       if (!cell || cell.text === "" || off(cell.ref)) continue;
+      if (content?.has(cell.ref)) continue;
       const sym = nfkc(cell.text);
       const node = rowNode.get(r.r) ?? null;
       const m: MarkRec = {
@@ -1040,13 +1087,13 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         answer = ask.ask(`${noLegend ? "noLegend" : "unknownSymbol"}|${t.id}|${sym}`, {
           kind: noLegend ? "noLegend" : "unknownSymbol",
           text: noLegend
-            ? `凡例が無い。記号「${sym}」は何の印か`
-            : `記号「${sym}」は凡例に無い。何の印か`,
+            ? `凡例が無い。記号「${sym}」は何の星取か`
+            : `記号「${sym}」は凡例に無い。何の星取か`,
           options: [
             ...(colPA ? [{ id: "column", label: `列の見出しのとおり（${colPA === "plan" ? "予定" : "実績"}）` }] : []),
-            { id: "plan", label: "予定（計画）の印" },
-            { id: "actual", label: "実績（実施）の印" },
-            { id: "exclude", label: "印ではない（外す）" },
+            { id: "plan", label: "計画の星取" },
+            { id: "actual", label: "実績の星取" },
+            { id: "exclude", label: "星取ではない（外す）" },
           ],
           valueKind: "option",
           defaultAnswer: colPA ? "column" : null,
@@ -1098,7 +1145,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         m.workRef = wc.ref;
       }
       if (answer === "exclude") {
-        m.excluded = "印ではない記号（決定で外した）";
+        m.excluded = "星取ではない記号（決定で外した）";
         exclude(cell.ref, m.excluded);
         continue;
       }
@@ -1111,9 +1158,235 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     }
     // 作業の名前のセルで、印の 1 つも無い行のもの：理由つきで外す（印のある行は、印の記録の出どころ）
     const wc = rowWork(r.r);
-    if (wc && !rec.marks.some((m) => m.tableId === t.id && m.workRef === wc.ref && !m.excluded)) exclude(wc.ref, "印の無い行の作業の名前");
+    if (wc && !rec.marks.some((m) => m.tableId === t.id && m.workRef === wc.ref && !m.excluded)) exclude(wc.ref, "星取の無い行の作業の名前");
   }
   return order;
+}
+
+/**
+ * 凡例の行の、英数の短い符号と意味（「重要度 A：安全・環境・共通系　B：炉・能力影響」→ A・B）。符号の前の語（「重要度」）を題にする。
+ * 符号は英数 1〜3 字だけ（「【改】：」などの印の字は名前の頭の符号にしない）
+ */
+function codeLegend(texts: string[]): Map<string, { title: string; meaning: string }> {
+  const out = new Map<string, { title: string; meaning: string }>();
+  for (const text of texts) {
+    let title = "凡例";
+    for (const tok of nfkc(text).split(/\s+/u).filter(Boolean)) {
+      const m = /^([A-Za-z0-9]{1,3})[:：](.+)$/u.exec(tok);
+      if (m) {
+        if (!out.has(m[1] ?? "")) out.set(m[1] ?? "", { title, meaning: m[2] ?? "" });
+      } else if (!/[:：]/u.test(tok) && out.size === 0) title = tok;
+    }
+  }
+  return out;
+}
+
+/** 名前の頭の、凡例で決めた符号（「A：汽水ドラム」）。凡例に無い符号・符号のあとに名前の無いものは null */
+function codePrefix(name: string, codes: Map<string, { title: string; meaning: string }>): { name: string; title: string; value: string } | null {
+  if (!codes.size) return null;
+  const m = /^([A-Za-z0-9]{1,3})[:：]\s*(\S.*)$/u.exec(nfkc(name).trim());
+  const c = m ? codes.get(m[1] ?? "") : undefined;
+  return m && c ? { name: (m[2] ?? "").trim(), title: c.title, value: `${m[1]}：${c.meaning}` } : null;
+}
+
+/** 測った値だけの行（「最小厚 22.5mm」「振動 1.56mm/s」「設定差 0.4%」）：短い名前・数・英字や記号の単位。作業の名前ではない */
+function isMeasureLine(line: string): boolean {
+  return /^[^\d\s]{1,12}\s*[-+]?\d+(?:\.\d+)?\s*[A-Za-zμ°℃%‰/.²³]{0,8}$/u.test(nfkc(line).trim());
+}
+
+/**
+ * 2 段の書き方の内容のセルを星取にする：内容の文は作業の名前（測った値の行は明細の測った値）、すぐ下の金額の行の同じ列の数は、その費用。
+ * 測った値だけのセルは作業ではないので、その行の機器の仕様に残す（年の見出しを項目に）。予定・実績は列の見出し（帯）から。
+ * 帯の見出しに書いていなければ、帯ごとに 1 回聞く。金額の単位と税は見出しと表の上の題・注記から。決まらなければ 1 回聞く。
+ * 読んだ内容のセルの位置を返す（記号の星取の読み方に回さない）
+ */
+function contentMarks(
+  t: Table,
+  lay: SheetLayout,
+  ask: Asker,
+  rec: Records,
+  data: Table["rows"],
+  rowNode: Map<number, AssetRec | null>,
+  marks: ColInfo[],
+  amountRows: Map<number, number>,
+  exclude: (ref: string, why: string) => void,
+  pend: (ref: string) => void,
+  off: Off,
+): Set<string> {
+  const done = new Set<string>();
+  const formKey = rec.formOf.get(t.id)?.key ?? t.id;
+  const below = new Map<number, number>();
+  for (const [a, c] of amountRows) below.set(c, a);
+  const amountAt = (r: number, c: number) => {
+    const a = below.get(r);
+    const x = a !== undefined ? lay.index.at(a, c) : null;
+    return x && x.text.trim() !== "" && !off(x.ref) ? x : null;
+  };
+  const bandOf = (col: ColInfo) => col.headerParts.filter((p) => p !== col.yearLabel).join(" / ").replace(/\s*\n\s*/g, "") || "年の列";
+  type At = { r: number; col: ColInfo; cell: GridCell };
+  type Cell = At & { work: string | null; measured: string | null };
+  const cells: Cell[] = [];
+  const amountOnly: At[] = [];
+  for (const r of data) {
+    for (const col of marks) {
+      const cell = lay.index.at(r.r, col.c);
+      if (!cell || cell.text.trim() === "" || off(cell.ref)) {
+        // 内容の無い年の欄に、下の金額だけがある：名前の無い作業の費用（黙って捨てない）
+        const a = amountAt(r.r, col.c);
+        if (a && rowNode.get(r.r)) amountOnly.push({ r: r.r, col, cell: a });
+        continue;
+      }
+      if (typeof cell.value === "number") continue;
+      done.add(cell.ref);
+      const lines = nfkc(cell.text)
+        .split(/\r?\n/u)
+        .map((x) => x.trim())
+        .filter(Boolean);
+      const meas = lines.filter(isMeasureLine);
+      const work = lines.filter((x) => !isMeasureLine(x)).join(" ");
+      cells.push({ r: r.r, col, cell, work: work || null, measured: meas.length ? meas.join(" ") : null });
+    }
+  }
+  // 予定・実績：帯の見出しから。書いていない帯は、帯ごとに 1 回聞く（内容の文のあるセルを見本に）
+  const paOf = new Map<string, { pa: "plan" | "actual" | null; state: "ok" | "exclude" | "open" }>();
+  for (const x of [...cells.filter((c) => c.work !== null), ...amountOnly]) {
+    const band = bandOf(x.col);
+    if (paOf.has(band)) continue;
+    if (x.col.planOrActual) {
+      paOf.set(band, { pa: x.col.planOrActual, state: "ok" });
+      continue;
+    }
+    const inBand: At[] = cells.filter((c) => c.work !== null && bandOf(c.col) === band);
+    const sample = inBand.length ? inBand : amountOnly.filter((a) => bandOf(a.col) === band);
+    const cols = [...new Set(sample.map((c) => c.col))].sort((a, b) => a.c - b.c);
+    const years = cols.map((c) => c.fiscalYear ?? 0);
+    const a = ask.ask(`contentPA|${formKey}|${band}`, {
+      kind: "planActualConflict",
+      text: `「${band}」の年の列（${colLetter(cols[0]?.c ?? 1)}〜${colLetter(cols[cols.length - 1]?.c ?? 1)}、${Math.min(...years)}〜${Math.max(...years)} 年度）に書いた整備の内容（${sample.length} セル）は、予定か実績か（列の見出しに書いていない）`,
+      options: [
+        { id: "plan", label: "予定（計画）" },
+        { id: "actual", label: "実績（実施）" },
+        { id: "exclude", label: "外す" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: sample.length,
+      items: [itemOf(lay, sample.slice(0, 10).map((c) => c.cell.ref))],
+    });
+    paOf.set(band, a === "plan" || a === "actual" ? { pa: a, state: "ok" } : { pa: null, state: a === "exclude" ? "exclude" : "open" });
+  }
+  // 金額の単位と税：年の列の見出し、表の上の題・注記（「下段：原価予算［千円・税抜］」）。いくつもの単位が書いてあれば決めない
+  const texts = [...t.cols.flatMap((c) => c.headerParts), ...lay.titles.filter((x) => x.r < t.top).map((x) => x.text), ...lay.notes.filter((x) => x.r < t.top).map((x) => x.text)];
+  const units = [...new Set(texts.map((x) => costHeaderUnit(x)).filter((u): u is number => u !== null))];
+  const taxes = [...new Set(texts.map((x) => costHeaderTax(x)).filter((x): x is "incl" | "excl" => x !== null))];
+  const amountCells = [...cells.map((c) => amountAt(c.r, c.col.c)), ...amountOnly.map((a) => a.cell)].filter((x): x is GridCell => !!x);
+  let unit: number | null = units.length === 1 ? (units[0] ?? null) : null;
+  let tax: "incl" | "excl" | "unknown" | null = taxes.length === 1 ? (taxes[0] ?? null) : null;
+  let costOff: string | null = null;
+  let costOpen = false;
+  if (amountCells.length && unit === null) {
+    const a = ask.ask(`costUnit|${formKey}|amountRows`, {
+      kind: "costUnit",
+      text: `年の列の下の段の金額（${amountCells.length} セル）の単位が、見出しにも表の上の題にも書いてない。単位を推し量らない`,
+      options: [
+        { id: "1", label: "円" },
+        { id: "1000", label: "千円" },
+        { id: "10000", label: "万円" },
+        { id: "none", label: "金額を読まない（理由を残す）" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: amountCells.length,
+      items: [itemOf(lay, amountCells.slice(0, 10).map((c) => c.ref))],
+    });
+    if (a === "none") costOff = "年の列の下の段の金額（単位が決まらないので読まない）";
+    else if (a === null) costOpen = true;
+    else unit = Number(a);
+  }
+  if (amountCells.length && unit !== null && tax === null) {
+    const a = ask.ask(`costTax|${formKey}|amountRows`, {
+      kind: "costTax",
+      text: `年の列の下の段の金額（${amountCells.length} セル）が税込か税抜か、見出しにも表の上の題にも書いてない`,
+      options: [
+        { id: "incl", label: "税込" },
+        { id: "excl", label: "税抜" },
+        { id: "unknown", label: "資料に書いていない（そのまま読む）" },
+      ],
+      valueKind: "option",
+      defaultAnswer: "unknown",
+      sameShapeRows: amountCells.length,
+      items: [itemOf(lay, amountCells.slice(0, 10).map((c) => c.ref))],
+    });
+    if (a === null) costOpen = true;
+    else tax = a === "incl" || a === "excl" ? a : "unknown";
+  }
+  const costOf = (x: GridCell, node: AssetRec | null): CostCell | undefined => {
+    if (costOff) {
+      exclude(x.ref, costOff);
+      return undefined;
+    }
+    if (costOpen || unit === null) {
+      pend(x.ref);
+      return undefined;
+    }
+    const yen = parseCost(typeof x.value === "number" ? String(x.value) : x.text, x.value, unit);
+    if (yen === null) {
+      pend(x.ref);
+      return undefined;
+    }
+    if (node && !node.refs.includes(x.ref)) node.refs.push(x.ref);
+    return { yen, ref: x.ref, text: x.text, tax: tax ?? "unknown" };
+  };
+  const push = (x: At, work: string | null, measured: string | null, cost: GridCell | null) => {
+    const node = rowNode.get(x.r) ?? null;
+    const band = bandOf(x.col);
+    const st = paOf.get(band) ?? { pa: null, state: "open" as const };
+    if (st.state === "exclude") {
+      exclude(x.cell.ref, "年の列の整備の内容（決定で外した）");
+      if (cost) exclude(cost.ref, "年の列の整備の内容（決定で外した）");
+      return;
+    }
+    const m: MarkRec = {
+      id: `${t.id}:m:${x.cell.ref}`,
+      file: lay.file,
+      sheet: lay.sheet,
+      sheetIndex: lay.sheetIndex,
+      tableId: t.id,
+      ref: x.cell.ref,
+      row: x.r,
+      symbol: work ?? "",
+      fiscalYear: x.col.fiscalYear ?? 0,
+      planOrActual: st.pa,
+      workName: work,
+      workRef: null,
+      content: true,
+      ...(measured ? { measured } : {}),
+      assetId: node?.id ?? null,
+      excluded: null,
+      pending: !node || node.pending || t.yearKind === null || st.state === "open",
+      ...(t.yearKind === "calendar" ? { calendarYear: true as const } : {}),
+    };
+    const c = cost ? costOf(cost, node) : undefined;
+    if (c) m.cost = c;
+    if (m.pending) pend(x.cell.ref);
+    rec.marks.push(m);
+  };
+  for (const c of cells) {
+    const node = rowNode.get(c.r) ?? null;
+    if (c.work === null) {
+      // 測った値だけ（作業ではない）：その行の機器の仕様に、年の見出しを項目にして残す。下の段に金額があれば、名前の無い作業の費用
+      if (node) {
+        node.specs.push({ key: `${bandOf(c.col)} ${c.col.yearLabel ?? ""}`.replace(/\s*\n\s*/g, " ").trim(), value: c.cell.text, ref: c.cell.ref });
+        node.refs.push(c.cell.ref);
+        const a = amountAt(c.r, c.col.c);
+        if (a) push({ r: c.r, col: c.col, cell: a }, null, null, a);
+      } else pend(c.cell.ref);
+      continue;
+    }
+    push(c, c.work, c.measured, amountAt(c.r, c.col.c));
+  }
+  for (const a of amountOnly) push(a, null, null, a.cell);
+  return done;
 }
 
 function seriesKey(s: Series | null): string {
@@ -1438,8 +1711,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     personsAsMD = ask.ask(`effortPersons|${fkey}`, {
       kind: "effortUnknown",
       text: many
-        ? `${where}工数が「N 人」（延べの印なし）で書いてある行がある。1 行が 1 日なら人・日と同じ。どう読むか`
-        : `工数が「N 人」（延べの印なし）で書いてある行が ${personCells.length} 行ある。1 行が 1 日なら人・日と同じ。どう読むか`,
+        ? `${where}工数が「N 人」（「延べ」の字なし）で書いてある行がある。1 行が 1 日なら人・日と同じ。どう読むか`
+        : `工数が「N 人」（「延べ」の字なし）で書いてある行が ${personCells.length} 行ある。1 行が 1 日なら人・日と同じ。どう読むか`,
       options: [
         { id: "manDays", label: "1 行 1 日として人・日に読む" },
         { id: "exclude", label: "工数を外す（人数だけ分かる）" },

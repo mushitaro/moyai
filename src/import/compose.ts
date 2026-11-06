@@ -100,7 +100,19 @@ function checkTotals(
   const subs = t.rows.filter((r) => r.role === "subtotal").map((r) => r.r);
   // 小計を区切りの上に置く表か下に置く表か：最初の小計より前にデータの行が無ければ、上に置く表
   const above = subs.length > 0 && !allData.some((r) => r.r < (subs[0] ?? 0));
+  // あいだにデータの行の無い、並んだ小計（区分ごとの小計「単年度整備 小計」「基幹改良 小計」）：同じ範囲を分けたものなので、並んだ小計の和と照らす
+  const groupOf = new Map<number, number[]>();
+  for (let i = 0; i < subs.length; i++) {
+    const r = subs[i] ?? 0;
+    const prev = subs[i - 1];
+    const g = prev !== undefined && !allData.some((x) => x.r > prev && x.r < r) ? groupOf.get(prev) : undefined;
+    if (g) g.push(r);
+    groupOf.set(r, g ?? [r]);
+  }
   for (const row of sums) {
+    const group = row.role === "subtotal" ? (groupOf.get(row.r) ?? [row.r]) : [row.r];
+    // 並んだ小計の 2 つ目からは、1 つ目と一緒に照らした
+    if (group[0] !== row.r) continue;
     let data = allData;
     if (row.role === "subtotal") {
       if (above) {
@@ -111,7 +123,9 @@ function checkTotals(
         data = allData.filter((r) => r.r > prev && r.r < row.r);
       }
     }
-    const cells = lay.index.rowCells(row.r);
+    // 並んだ小計は、列ごとに並んだ行の数の和を書いた値として照らす（セルは 1 つ目の行のもの。無ければ 2 つ目からの行のもの）
+    const cells = group.length > 1 ? [...new Map(group.flatMap((g) => lay.index.rowCells(g)).map((c) => [c.c, c])).values()] : lay.index.rowCells(row.r);
+    const groupCells = group.flatMap((g) => lay.index.rowCells(g));
     const res: CheckResult = { file: lay.file, sheet: lay.sheet, row: row.r, kind: row.role as "subtotal" | "total", columns: 0, matched: 0, mismatches: [] };
     let waiting = false;
     const numberOf = (v: unknown): number | null =>
@@ -119,6 +133,10 @@ function checkTotals(
     for (const c of cells) {
       const col = t.cols.find((k) => k.c === c.c);
       let written = numberOf(c.value);
+      if (group.length > 1) {
+        const vs = group.map((g) => numberOf(lay.index.at(g, c.c)?.value)).filter((v): v is number => v !== null);
+        written = vs.length ? vs.reduce((a, v) => a + v, 0) : null;
+      }
       if (written === null && typeof c.value === "string" && t.shape === "events") {
         // 単位つきの合計（「253人・日」「61日」）
         const e = col?.role === "effort" ? parseEffort(c.value) : null;
@@ -131,6 +149,8 @@ function checkTotals(
       // 件数の行（「件数｜71」）：表の行の数と照らす
       const countRow = cells.some((x) => typeof x.value === "string" && cue.isCount(x.text));
       if (countRow) counted = data.length;
+      // 年の欄に整備の内容、その下の行に金額を書く表（2 段の書き方）：年の列の小計は金額の行の数の和
+      else if (col?.role === "mark" && t.amountRows) counted = data.filter((r) => t.amountRows?.has(r.r)).reduce((a, r) => a + (numberOf(lay.index.at(r.r, c.c)?.value) ?? 0), 0);
       else if (col?.role === "mark") counted = data.filter((r) => (lay.index.at(r.r, c.c)?.text ?? "") !== "").length;
       else if (t.shape === "events" && col?.role === "effort") {
         const evs = data.map((r) => eventOf(r.r)).filter((e): e is EventRec => !!e && !e.excluded);
@@ -162,8 +182,8 @@ function checkTotals(
       else res.mismatches.push({ ref: c.ref, written, counted });
     }
     const label = ROW_ROLE_LABEL[row.role];
-    if (waiting) for (const c of cells) pend(c.ref, null);
-    else if (res.mismatches.length === 0) for (const c of cells) exclude(c.ref, `${label}（検算して合った）`);
+    if (waiting) for (const c of groupCells) pend(c.ref, null);
+    else if (res.mismatches.length === 0) for (const c of groupCells) exclude(c.ref, `${label}（検算して合った）`);
     else {
       const key = `subtotalMismatch|${t.id}|${row.r}`;
       const a = ask.ask(key, {
@@ -175,7 +195,7 @@ function checkTotals(
         sameShapeRows: 1,
         items: [{ file: lay.file, sheet: lay.sheet, cells: res.mismatches.map((m) => m.ref) }],
       });
-      for (const c of cells) a === "exclude" ? exclude(c.ref, `${label}（検算で合わなかった。決定で外した）`) : pend(c.ref, questionIdOf(key));
+      for (const c of groupCells) a === "exclude" ? exclude(c.ref, `${label}（検算で合わなかった。決定で外した）`) : pend(c.ref, questionIdOf(key));
     }
     out.push(res);
   }
@@ -372,6 +392,11 @@ export function compose(
   const planOrActualOf = (events: readonly EventRec[]): "plan" | "actual" => (events.length > 0 && events.every((e) => e.planOrActual === "plan") ? "plan" : "actual");
   /** 暦年として書かれた印の根拠の注（年度 Y として読んだ。Architect の 58。言葉は Wire に確かめる） */
   const calNote = (m: MarkRec): string => (m.calendarYear ? "（暦年として書かれた年を年度として読んだ）" : "");
+  /**
+   * 根拠の文の星取の書き方：記号の星取は「の星取「○」」、年の欄に整備の内容を書いた表（2 段の書き方）は「の整備の内容」。セルの場所は残す。
+   * これから作る版の字だけを変える（前の版の字は書き直さない。Architect の 67、11-06）
+   */
+  const markWord = (m: MarkRec): string => (m.content ? "の整備の内容" : `の星取「${m.symbol}」`);
   const okCluster = (c: Cluster | undefined): c is Cluster => !!c && !c.pending && !c.excluded;
   const linksOfMark = new Map<MarkRec, WorkLink[]>();
   for (const l of lk.links) if (l.mode === "mark" && l.mark) linksOfMark.set(l.mark, [...(linksOfMark.get(l.mark) ?? []), l]);
@@ -491,11 +516,11 @@ export function compose(
         days: v.days,
         resultScale: null,
         resultValue: null,
-        measuredValue: null,
+        measuredValue: m?.measured ?? null,
         previousValue: null,
         performer: null,
         sources: [...(m ? markSources(m) : []), ...jobSources(j)],
-        basis: `${m ? `星取表 ${m.ref} の印「${m.symbol}」${calNote(m)}と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
+        basis: `${m ? `星取表 ${m.ref} ${markWord(m)}${calNote(m)}と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
         author: authorOf(qs, decisions),
         needsReview: false,
       },
@@ -528,11 +553,11 @@ export function compose(
           days: null,
           resultScale: null,
           resultValue: null,
-          measuredValue: null,
+          measuredValue: m.measured ?? null,
           previousValue: null,
           performer: null,
           sources: markSources(m),
-          basis: `星取表 ${m.ref} の印「${m.symbol}」（${m.planOrActual === "plan" ? "予定" : "実績"}${m.workName ? `・${m.workName}` : ""}）${calNote(m)}`,
+          basis: `星取表 ${m.ref} ${markWord(m)}（${m.planOrActual === "plan" ? "予定" : "実績"}${m.workName ? `・${m.workName}` : ""}）${calNote(m)}`,
           author: authorOf([...c.decidedBy, ...symbolQ], decisions),
           needsReview: false,
         },

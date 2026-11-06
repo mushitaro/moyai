@@ -350,7 +350,7 @@ describe("層 3 意味づけ：推測で埋めない", () => {
     acceptDefaults(s);
     const c = s.compose();
     expect(c.plan?.details.length).toBe(1);
-    expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason.includes("印ではない記号"))).toBe(true);
+    expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason.includes("星取ではない記号"))).toBe(true);
   });
 
   test("当てはまらない決定は計画を止める", async () => {

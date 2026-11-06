@@ -76,6 +76,11 @@ const STUCK_FILES = 20;
 const STUCK_ROWS = 5;
 /** 注記の数の上限（帳票を何百頁も入れると、頁ごとの頭書きの注記で要約が埋まるため。止まった表の理由は先に置く） */
 const NOTES = 60;
+/**
+ * 1 回の要約に載せる質問の大きさの上限（UTF-8 のバイト）。橋渡しの 1 通の上限（1 MB）の内に、要約のほかの欄の分を残す。
+ * 越える分は載せず、件数を注記の先頭に出す（答えて読み直すと、続きの質問が出る）
+ */
+const QUESTION_BYTES = 600_000;
 
 export class IntakeSession {
   private readonly files: InputFile[] = [];
@@ -440,12 +445,12 @@ export class IntakeSession {
     const moreNotes = shownNotes.length - NOTES;
     const cappedNotes = moreNotes > 0 ? [...shownNotes.slice(0, NOTES), `注記はほかに ${moreNotes} 件（頁ごとの頭書き・表の下の記入欄など）`] : shownNotes;
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";
-    return {
-      files,
-      samples,
-      legends,
-      notes: cappedNotes,
-      questions: an.open.map((q) => ({
+    // 質問は大きさの上限まで（分けて返す）。載せなかった件数は注記の先頭に
+    const enc = new TextEncoder();
+    const questions: Survey["questions"] = [];
+    let bytes = 0;
+    for (const q of an.open) {
+      const x = {
         questionId: q.questionId,
         kind: q.kind,
         text: q.text,
@@ -453,7 +458,18 @@ export class IntakeSession {
         defaultAnswer: q.defaultAnswer,
         valueKind: q.valueKind,
         options: q.options.map((o) => ({ id: o.id, label: o.label })),
-      })),
+      };
+      bytes += enc.encode(JSON.stringify(x)).length + 1;
+      if (bytes > QUESTION_BYTES && questions.length) break;
+      questions.push(x);
+    }
+    const restQuestions = an.open.length - questions.length;
+    return {
+      files,
+      samples,
+      legends,
+      notes: restQuestions > 0 ? [`質問はほかに ${restQuestions} 件（1 回の答えの大きさの上限のため。載せた質問に答えて読み直すと、続きが出る）`, ...cappedNotes] : cappedNotes,
+      questions,
       unresolvedCells: unresolved,
       stuck: [...stuck.values()].sort((a, b) => b.cells - a.cells).slice(0, STUCK_FILES),
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },

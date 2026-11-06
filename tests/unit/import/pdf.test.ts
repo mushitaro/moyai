@@ -134,7 +134,7 @@ describe("頁をまたぐ表（層 2 のくり返す領域）", () => {
     const lay = an.layouts[0];
     expect(lay?.tables).toHaveLength(1);
     expect(lay?.tables[0]?.rows.filter((r) => r.role === "data").length).toBe(5);
-    expect([...(lay?.rowReasons.values() ?? [])]).toContain("続きの印（前の表の続き）");
+    expect([...(lay?.rowReasons.values() ?? [])]).toContain("続きの表記（前の表の続き）");
     acceptDefaults(s);
     expect(s.compose().plan?.assets).toHaveLength(5);
   });

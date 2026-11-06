@@ -233,10 +233,17 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         const cn = cand ? numberOf(cand) : null;
         pattern = n !== null && cn !== null && n !== cn ? `${scope}uniqueNumberDiffers` : `${scope}unique`;
       } else {
-        const byNum = n === null ? [] : cands.filter((c) => numberOf(c) === n);
+        // 号炉が同じものがいくつかあれば、号機（機器番号）でも見分ける（「1号炉 No.1」と「1号炉 No.2」）
+        const sameNum = n === null ? [] : cands.filter((c) => numberOf(c) === n);
+        const byNum = sameNum.length > 1 && r.tag ? sameNum.filter((c) => !!c.tag && nk(c.tag) === nk(r.tag as string)) : sameNum;
+        // 号の数で決まらず、同じ名前がいくつかあるとき：号機（機器番号）が同じものがただ 1 つ（「No.1 減温塔噴霧P」と「No.2 減温塔噴霧P」）
+        const byMachine = byNum.length !== 1 && r.tag ? cands.filter((c) => !!c.tag && nk(c.tag) === nk(r.tag as string) && (n === null || numberOf(c) === n)) : [];
         if (byNum.length === 1) {
           cand = byNum[0] ?? null;
           pattern = `${scope}byNumber`;
+        } else if (byMachine.length === 1) {
+          cand = byMachine[0] ?? null;
+          pattern = `${scope}byMachine`;
         } else pattern = "ambiguous";
       }
       // 名前と親で 1 つに決まらないとき：機器番号が同じ機器がただ 1 つあれば、それを案にする（段や親の書き方が資料で違っても、番号は同じ機器を指す）
@@ -289,6 +296,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         unique: "名前が同じで、同じ親の下にどちらも 1 つずつ",
         uniqueNumberDiffers: "名前が同じで 1 つずつだが、号の数と機器番号の数が違う",
         byNumber: "名前が同じものがいくつかあり、号の数と機器番号の末尾の数が同じ",
+        byMachine: "名前が同じものがいくつかあり、号機（機器番号）が同じ",
         tagName: "機器番号と名前が同じ（階層や親の書き方は資料で違う）",
         tagOnly: "機器番号が同じ（名前の書き方は違う）",
       };
@@ -736,9 +744,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         const key = `workLinkOne|${primary(lp.j).id}|${lp.j.cluster.id}`;
         const a = ask.ask(key, {
           kind: "workLinkOne",
-          text: `${filesOf(lp.j)} の作業「${primary(lp.j).workName}」（${lp.j.cluster.name}、${lp.j.fiscalYear} 年度、${rowsOf(lp.j)} 行）に当たる星取表の印が、ほかの作業の印と同じか、いくつかある。どうするか`,
+          text: `${filesOf(lp.j)} の作業「${primary(lp.j).workName}」（${lp.j.cluster.name}、${lp.j.fiscalYear} 年度、${rowsOf(lp.j)} 行）に当たる星取が、ほかの作業の星取と同じか、いくつかある。どうするか`,
           options: [
-            ...lp.options.map((m, i) => ({ id: `m${i}`, label: `星取表の印「${m.symbol}」${m.workName ? `（${m.workName}）` : ""}も出どころにする（同じ作業）` })),
+            ...lp.options.map((m, i) => ({ id: `m${i}`, label: `星取「${m.symbol}」${m.workName ? `（${m.workName}）` : ""}も出どころにする（同じ作業）` })),
             { id: "eventOnly", label: "日報・報告書だけの記録にする" },
             { id: "exclude", label: "外す" },
           ],
@@ -756,10 +764,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       continue;
     }
     const label: Record<string, string> = {
-      named: "同じ機器・同じ年度で、星取表の印の凡例の意味と作業の名前が同じ",
-      namedPart: "同じ機器・同じ年度で、星取表の印の凡例の意味が作業の名前に含まれる（または作業の名前が凡例の意味に含まれる）",
-      plain: "同じ機器・同じ年度に、星取表の実績の印が 1 つと作業が 1 つ",
-      noMark: "星取表に、同じ機器・同じ年度の実績の印が無い",
+      named: "同じ機器・同じ年度で、星取の凡例の意味と作業の名前が同じ",
+      namedPart: "同じ機器・同じ年度で、星取の凡例の意味が作業の名前に含まれる（または作業の名前が凡例の意味に含まれる）",
+      plain: "同じ機器・同じ年度に、実績の星取が 1 つと作業が 1 つ",
+      noMark: "同じ機器・同じ年度の実績の星取が無い",
     };
     const gkey = `workLink|${tablesKey}|${pattern}`;
     const isNoMark = pattern === "noMark";
@@ -767,7 +775,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       kind: "workLink",
       text: isNoMark
         ? `${fileName} の作業 ${items.length} 件（${rows} 行）は、${label[pattern]}。日報・報告書だけの記録として入れるか`
-        : `${fileName} の作業 ${items.length} 件（${rows} 行）を、星取表の印と同じ作業として 1 つの記録に結ぶか。結び方：${label[pattern] ?? pattern}`,
+        : `${fileName} の作業 ${items.length} 件（${rows} 行）を、星取と同じ作業として 1 つの記録に結ぶか。結び方：${label[pattern] ?? pattern}`,
       options: isNoMark
         ? [
             { id: "yes", label: "日報・報告書だけの記録として入れる" },
@@ -792,7 +800,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         const k1 = `workLinkOne|${primary(lp.j).id}|${lp.j.cluster.id}`;
         const b = ask.ask(k1, {
           kind: "workLinkOne",
-          text: `${filesOf(lp.j)} の作業「${primary(lp.j).workName}」（${lp.j.cluster.name}、${lp.j.fiscalYear} 年度、${rowsOf(lp.j)} 行）は、星取表の印「${lp.m?.symbol ?? ""}」と同じ作業か`,
+          text: `${filesOf(lp.j)} の作業「${primary(lp.j).workName}」（${lp.j.cluster.name}、${lp.j.fiscalYear} 年度、${rowsOf(lp.j)} 行）は、星取「${lp.m?.symbol ?? ""}」と同じ作業か`,
           options: [
             { id: "m0", label: "同じ作業（1 つの記録に結ぶ）" },
             { id: "eventOnly", label: "別の作業（日報・報告書だけの記録）" },

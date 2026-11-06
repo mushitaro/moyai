@@ -172,6 +172,60 @@ describe("確定：版と差分レポート", () => {
     expect(aiDecisions(v1.record.plan).filter((d) => d.kind === "attribute")).toEqual([]);
   });
 
+  it("前の版と次の版で、同じ星取の basis の字が違って並んでも（「の印「○」」→「の星取「○」」。Architect の 67）、差分レポートが読め、前の版の字は書き直さない", async () => {
+    const rt = root();
+    const old = "星取表 E5 の印「○」（予定）";
+    const now = "星取表 E5 の星取「○」（予定）";
+    const p = plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "INSPECT", ["a1"])], details: [detail("d1", "w1", 2024, { planOrActual: "plan", basis: old })] });
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "初めの確定", acceptances: [], basedOn: null, signer: SIGNER, client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    const first = readFileSync(v1.files.version, "utf8");
+    // 次の版：同じ星取の字だけが新しい言い方になり、星取が 1 つ増える
+    const p2: Plan = { ...v1.record.plan, details: [{ ...v1.record.plan.details[0]!, basis: now }, detail("d2", "w1", 2025, { planOrActual: "plan", basis: "星取表 F5 の星取「○」（予定）" })] };
+    const v2 = await commitPlan({ root: rt, plan: p2, reason: "2025 を足した", acceptances: [], basedOn: 1, signer: SIGNER, client: "t" });
+    if (!v2.ok) throw new Error(v2.reason);
+    // 字が変わっただけの星取は「同じ」に数え、差の行にしない
+    expect(v2.record.summary).toMatchObject({ added: 1, removed: 0, changed: 0, same: 1 });
+    const rows = await readSheet(v2.files.report);
+    const head = rows.findIndex((r) => r[0] === "機器");
+    expect(rows.slice(head + 1)).toEqual([["架空の機器 a1", "架空の作業", "2025", "（星取なし）", "○ 計画", "人", "星取表 F5 の星取「○」（予定）"]]);
+    // 前の版のファイルと字はそのまま。版の記録の形（スキーマの版）は同じ
+    expect(readFileSync(v1.files.version, "utf8")).toBe(first);
+    expect(first).toContain(old);
+    const h = await readHistory(rt, "plan-test");
+    expect(h.versions.every((v) => v.problem === null)).toBe(true);
+    expect(JSON.parse(readFileSync(v2.files.version, "utf8")).schema).toBe(JSON.parse(first).schema);
+  });
+
+  it("版 n で受けた AI の明細は、basis の字だけ違う版 n+1 で受けていない決定に戻らず、出どころのセルが変われば戻る（Architect の 69）", async () => {
+    const rt = root();
+    const src = (cell: string) => [{ file: "【架空】星取表.xlsx", sheet: "計画", page: null, cell, box: null }];
+    const p = plan({
+      assets: [asset("a1", "T.FEED.LIFT")],
+      works: [work("w1", "INSPECT", ["a1"])],
+      details: [detail("d1", "w1", 2024, { planOrActual: "plan", author: "ai", basis: "星取表 E5 の印「○」（予定）", sources: src("E5") })],
+    });
+    const acc = aiDecisions(p).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+    expect(acc.map((a) => a.id)).toEqual(["detail:d1"]);
+    const v1 = await commitPlan({ root: rt, plan: p, reason: "初めの確定", acceptances: acc, basedOn: null, signer: SIGNER, client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    const accepted = (await readHistory(rt, "plan-test")).accepted;
+    const d1 = v1.record.plan.details[0]!;
+    // 根拠の文の言い方だけが変わった：受け直しにならない（確定もそのまま通る）
+    const wording: Plan = { ...v1.record.plan, details: [{ ...d1, basis: "星取表 E5 の星取「○」（予定）" }] };
+    expect(pendingDecisions(wording, accepted)).toEqual([]);
+    const v2 = await commitPlan({ root: rt, plan: wording, reason: "言い方の直し", acceptances: [], basedOn: 1, signer: SIGNER, client: "t" });
+    expect(v2.ok).toBe(true);
+    // 出どころのセルが変わった：同じ明細でも、受けていない決定に戻る
+    const moved: Plan = { ...v1.record.plan, details: [{ ...d1, sources: src("F5") }] };
+    expect(pendingDecisions(moved, (await readHistory(rt, "plan-test")).accepted).map((d) => d.id)).toEqual(["detail:d1"]);
+    // 出どころの並べ方だけが違うときは同じ指紋
+    const two = [...src("E5"), ...src("E6")];
+    const a = aiDecisions({ ...p, details: [{ ...p.details[0]!, sources: two }] })[0]!;
+    const b = aiDecisions({ ...p, details: [{ ...p.details[0]!, sources: [...two].reverse() }] })[0]!;
+    expect(a.hash).toBe(b.hash);
+  });
+
   it("差は機器・作業・年度ごとの印（計画と実施が重なれば ◎）", () => {
     const before = aiPlan();
     const after: Plan = { ...before, details: [...before.details, detail("d5", "w2", 2018)] };

@@ -89,6 +89,42 @@ function leadingUnit(s: string, inParen = false): { unit: UnitValue; rest: strin
   return m && u && (inParen || (m[2] ?? "") !== "") ? { unit: u, rest: (m[2] ?? "").trim() } : null;
 }
 
+/**
+ * 号炉・系統の欄に、号炉と号機を並べて書いたもの（「1号炉 No.1」「1号炉⏎No.2」「共通 2号機」）を、号炉と号機に分ける。
+ * 号機は号炉ではない（別の機器の番号）。号炉の語と号機の語のほかの語があれば null（読めない。呼ぶ側が聞く）
+ */
+export function splitSeriesCell(text: string): { unit: UnitValue | null; machine: string | null } | null {
+  const toks = nfkc(text).split(/\s+/u).filter(Boolean);
+  if (!toks.length) return null;
+  let unit: UnitValue | null = null;
+  let machine: string | null = null;
+  for (const t of toks) {
+    if (machine === null && RE_MACHINE.test(t)) machine = machineToken(t);
+    else if (unit === null && unitToken(t)) unit = unitToken(t);
+    else return null;
+  }
+  return unit && machine ? { unit, machine } : null;
+}
+
+/**
+ * 名前の中に書いた号炉と号機（「1号炉 No.1 減温塔噴霧P」）：空白で区切った語のうち、号炉の語（数のもの）と号機の語を除いた名前と、除いた号炉と号機。
+ * 除く語が無いか、除くと名前が残らなければ null
+ */
+export function splitNameUnits(text: string): { name: string; unit: number | null; machine: string | null } | null {
+  const toks = nfkc(text).split(/\s+/u).filter(Boolean);
+  let unit: number | null = null;
+  let machine: string | null = null;
+  const rest: string[] = [];
+  for (const t of toks) {
+    const u = unitToken(t);
+    if (unit === null && u?.kind === "number") unit = u.n;
+    else if (machine === null && RE_MACHINE.test(t)) machine = machineToken(t);
+    else rest.push(t);
+  }
+  if ((unit === null && machine === null) || !rest.length) return null;
+  return { name: rest.join(" "), unit, machine };
+}
+
 /** 括弧の外の空白があるか（「ST 開放点検（定期事業者検査）」は空白で分ける） */
 const spaceOutsideParen = (s: string) => /\s/u.test(s.replace(/[(（][^()（）]*[)）]/gu, ""));
 
