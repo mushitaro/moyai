@@ -74,6 +74,32 @@ export async function registerReading(root: string, skillIn: unknown, by: string
   return { ok: true, path: relPath(root, dir), version, rules: skill.rules.length };
 }
 
+/**
+ * 削った中身を、今の下書きのファイルに触らずに versions/<版>/ にだけ書く（Architect の 42 の答え 4）。
+ * 確定で、案を受けていない計画ルールを削った読み方を版の記録に載せるとき：保管先の今の下書きは削らずに残し、
+ * 版の記録が指す版（削った中身のハッシュ）は versions/ に置く。今のファイルと同じ中身なら何も書かない
+ */
+export async function recordReadingVersion(root: string, skillIn: unknown, by: string | null, facilityKey: string | null): Promise<RegisterResult> {
+  const p = ReadingSkill.safeParse(skillIn);
+  if (!p.success) return { ok: false, reason: "skillInvalid" };
+  const skill = p.data;
+  const dir = readingDir(root, skill.scope, skill.name, by, facilityKey);
+  if (!dir) return { ok: false, reason: "nameInvalid" };
+  const rules = `${JSON.stringify(skill, null, 1)}\n`;
+  const curMd = existsSync(join(dir, SKILL_MD)) ? await readFile(join(dir, SKILL_MD), "utf8") : null;
+  const md = skillMarkdown(skill, curMd ? handWritten(curMd) : null);
+  const version = readingVersion(md, rules);
+  const curRules = existsSync(join(dir, RULES)) ? await readFile(join(dir, RULES), "utf8") : null;
+  if (curRules !== null && readingVersion(curMd ?? "", curRules) === version) return { ok: true, path: relPath(root, dir), version, rules: skill.rules.length };
+  const keep = join(dir, "versions", version);
+  await mkdir(keep, { recursive: true });
+  if (!existsSync(join(keep, RULES))) {
+    await writeAtomic(join(keep, SKILL_MD), md);
+    await writeAtomic(join(keep, RULES), rules);
+  }
+  return { ok: true, path: relPath(root, dir), version, rules: skill.rules.length };
+}
+
 const relPath = (root: string, dir: string) => relative(root, dir).split(sep).join("/");
 
 const subdirs = (d: string): string[] => {

@@ -13,6 +13,7 @@ import { MergeSideContext } from "../state/merge-side";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
 import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
+import { rejectCycleByHuman, rejectedCycles } from "../state/cycles";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
@@ -99,8 +100,17 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   const ok = reason.trim().length > 0;
   const side = useContext(MergeSideContext);
   const [picked, setPicked] = useState<CrosswalkProposal | null>(null);
+  // 周期の案（台帳案・ルール案・会話の回答・Claude 判断の L・C・R）を選ぶと、横の板の詳細に出す（「| 却下」「| 確定」）
+  const [pickedCycle, setPickedCycle] = useState<string | null>(null);
+  const [rejectingCycle, setRejectingCycle] = useState<{ id: string; n: number } | null>(null);
   const pick = (p: CrosswalkProposal) => {
     setPicked(p);
+    setPickedCycle(null);
+    side?.show();
+  };
+  const pickCycle = (id: string) => {
+    setPicked(null);
+    setPickedCycle(id);
     side?.show();
   };
   // 節と作業の鍵 → 名前（鍵で結んだ「第 n 版と同じ」の規則を、名前で読めるように）
@@ -192,11 +202,49 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(visibleGroups.length + openRules.length - refused, refused) });
   };
 
+  /** 周期の案の「| 却下」「| 確定」（行と横の板の詳細で同じ。判断の理由が要る） */
+  const cycleButtons = (cycle: string, ds: Decision[]) => (
+    <Group gap="xs" wrap="nowrap" justify="flex-end">
+      <Button
+        size="compact-sm"
+        variant="default"
+        disabled={!ok}
+        title={ok ? undefined : T.needsReason}
+        onClick={(e) => {
+          e.stopPropagation();
+          setRejectingCycle({ id: cycle, n: ds.length });
+        }}
+        data-testid="pending-reject"
+      >
+        {W.reject}
+      </Button>
+      <Button
+        size="compact-sm"
+        disabled={!ok}
+        title={ok ? undefined : T.needsReason}
+        onClick={(e) => {
+          e.stopPropagation();
+          ds.forEach((x) => acceptDecision(x.id, x.hash, reason));
+        }}
+        data-testid="pending-accept"
+      >
+        {T.accept}
+      </Button>
+    </Group>
+  );
+
   const groupRow = ({ key, ds, cycle }: { key: string; ds: Decision[]; cycle: string | null }) => {
     const d = ds[0]!;
     const done = ds.every((x) => isAccepted(x.id, x.hash));
     return (
-      <Table.Tr key={key} data-testid="pending-row" data-kind={cycle && isLedgerCycle(cycle) ? "ledger" : cycle && isPlanRuleCycle(cycle) ? "rule" : d.author} data-accepted={done ? "true" : "false"}>
+      <Table.Tr
+        key={key}
+        data-testid="pending-row"
+        data-kind={cycle && isLedgerCycle(cycle) ? "ledger" : cycle && isPlanRuleCycle(cycle) ? "rule" : d.author}
+        data-accepted={done ? "true" : "false"}
+        data-cycle={cycle ?? undefined}
+        {...(cycle ? { className: "moyai-pick-row", "aria-selected": pickedCycle === cycle, onClick: () => pickCycle(cycle), style: { cursor: "pointer" } } : {})}
+      >
         <Table.Td>
           <Text size="sm">{cycle ? T.cycleWhat(cycle, ds.length) : what(d)}</Text>
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
@@ -218,10 +266,19 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
               <Text size="xs" c="dimmed" data-testid="pending-accepted">
                 {T.accepted}
               </Text>
-              <Button size="compact-xs" variant="subtle" onClick={() => ds.forEach((x) => unacceptDecision(x.id, x.hash))}>
+              <Button
+                size="compact-xs"
+                variant="subtle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  ds.forEach((x) => unacceptDecision(x.id, x.hash));
+                }}
+              >
                 {T.undo}
               </Button>
             </Group>
+          ) : cycle ? (
+            cycleButtons(cycle, ds)
           ) : (
             <Button size="compact-sm" disabled={!ok} title={ok ? undefined : T.needsReason} onClick={() => ds.forEach((x) => acceptDecision(x.id, x.hash, reason))} data-testid="pending-accept">
               {T.accept}
@@ -316,6 +373,30 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     </Table.Thead>
   );
 
+  // 周期の案の詳細：種類・何を・理由の全文と「| 却下」「| 確定」
+  const cycleGroup = pickedCycle ? groups.find((g) => g.cycle === pickedCycle) : undefined;
+  const cycleKind = cycleGroup ? kindOfGroup(cycleGroup) : null;
+  const cycleDetail = cycleGroup && cycleGroup.cycle && cycleKind && (
+    <Stack gap="xs" data-testid="decision-detail" data-cycle={cycleGroup.cycle}>
+      <Text size="sm" fw={700}>
+        {cycleKind === "same" ? T.kinds.same(sameAs ?? 0) : T.kinds[cycleKind]}
+      </Text>
+      <Text size="sm">{T.cycleWhat(cycleGroup.cycle, cycleGroup.ds.length)}</Text>
+      <Text size="xs" c="dimmed">
+        {T.detailWhy}
+      </Text>
+      <Text size="sm">{cycleGroup.ds[0]!.basis}</Text>
+      {isDone(cycleGroup.ds) ? (
+        <Text size="xs" c="dimmed">
+          {T.accepted}
+        </Text>
+      ) : (
+        cycleButtons(cycleGroup.cycle, cycleGroup.ds)
+      )}
+    </Stack>
+  );
+  const rejectedRows = rejectedCycles();
+
   const detail = picked && (
     <Stack gap="xs" data-testid="decision-detail" data-rule={picked.ruleId}>
       <Text size="sm" fw={700}>
@@ -394,14 +475,32 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       )}
 
       {/* 受けたもの・断ったもの：下にたたむ（閉じていても DOM に残す） */}
-      {(doneRules.length > 0 || doneGroups.length > 0) && (
+      {(doneRules.length > 0 || doneGroups.length > 0 || rejectedRows.length > 0) && (
         <details data-testid="decisions-done">
-          <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>{T.doneTitle(doneRules.length + doneGroups.length)}</summary>
+          <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>{T.doneTitle(doneRules.length + doneGroups.length + rejectedRows.length)}</summary>
           <Table verticalSpacing="xs" fz="sm" mt="xs">
             {head}
             <Table.Tbody>
               {doneRules.map(ruleRow)}
               {doneGroups.map(groupRow)}
+              {rejectedRows.map((r) => (
+                <Table.Tr key={`rejected:${r.id}`} data-testid="cycle-rejected" data-cycle={r.id}>
+                  <Table.Td>
+                    <Text size="sm">{T.cycleWhat(r.id, r.marks)}</Text>
+                  </Table.Td>
+                  <Table.Td c="var(--text-2)" title={r.basis}>
+                    {shortWhy(r.basis)}
+                  </Table.Td>
+                  <Table.Td className="moyai-num" ta="right">
+                    {r.marks}
+                  </Table.Td>
+                  <Table.Td ta="right">
+                    <Text size="xs" c="dimmed">
+                      {T.rejected}
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
             </Table.Tbody>
           </Table>
         </details>
@@ -446,7 +545,34 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           </Stack>
         )}
       </Modal>
+      <Modal opened={!!rejectingCycle} onClose={() => setRejectingCycle(null)} title={rejectingCycle ? T.cycleRejectTitle(rejectingCycle.id) : ""} centered data-testid="cycle-reject-dialog">
+        {rejectingCycle && (
+          <Stack gap="sm">
+            <Text size="sm">{T.cycleRejectBody(rejectingCycle.id, rejectingCycle.n, isPlanRuleCycle(rejectingCycle.id))}</Text>
+            <Text size="xs" c="dimmed">
+              {T.reasonLabel}：{reason}
+            </Text>
+            <Group justify="flex-end" gap="sm">
+              <Button variant="default" onClick={() => setRejectingCycle(null)}>
+                {W.cancel}
+              </Button>
+              <Button
+                data-testid="cycle-reject-confirm"
+                onClick={() => {
+                  const r = rejectCycleByHuman(rejectingCycle.id, reason);
+                  setMsg(r.ok ? { color: "gray", text: T.cycleRejectedDone(rejectingCycle.id, r.marks) } : { color: "red", text: T.cycleRejectRefused });
+                  if (pickedCycle === rejectingCycle.id) setPickedCycle(null);
+                  setRejectingCycle(null);
+                }}
+              >
+                {W.rejectConfirm}
+              </Button>
+            </Group>
+          </Stack>
+        )}
+      </Modal>
       {side?.el && detail && createPortal(detail, side.el)}
+      {side?.el && !detail && cycleDetail && createPortal(cycleDetail, side.el)}
     </Stack>
   );
 }

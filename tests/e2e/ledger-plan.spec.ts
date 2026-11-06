@@ -112,7 +112,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await page.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
       await expect(page.getByTestId("chart-grid").locator(".moyai-mark-proposal").first()).toBeVisible();
       const label = await page.getByTestId("chart-grid").locator(".moyai-mark-proposal").first().getAttribute("aria-label");
-      expect(label).toContain("Claude 案");
+      expect(label).toContain("未確定の案");
       await page.screenshot({ path: shot(`ledger-plan-proposal-${tag}`) });
     });
 

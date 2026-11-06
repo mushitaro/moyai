@@ -1,17 +1,18 @@
 // 計画ルール（3 段目の Skill の planCycle。運営者の決定「案 C」、2026-11-06・Architect の 42）：
 // 共通の設備項目 × 作業の属性 → 周期。同じ Skill のファイル・範囲・版・承認に入り、当たる作業に周期の案（R）を出すだけで、人が受けるまで決まらない。
 // chart_propose の根拠は、AI が指すだけで、中身は MOYAI が計画・パック・当てているルールから引く。
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { IntakeWorkspace } from "../../src/app/intake/workspace";
 import { runTabTool } from "../../src/app/intake/tab-tools";
 import { carryFromBase } from "../../src/app/state/crosswalk";
-import { applyPlanRules, resetPlanRulesForTest } from "../../src/app/state/cycles";
+import { applyPlanRules, planRuleMarks, planRuleWaiting, rejectCycleByHuman, rejectedCycles, resetPlanRulesForTest } from "../../src/app/state/cycles";
+import { readingTab } from "../../src/app/state/reading-tab";
 import { getWorkingPlan, setWorkingPlan } from "../../src/app/state/plan-store";
-import { readingsSigned, setCurrentReadings } from "../../src/app/state/readings";
-import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readingVersion, registerReading } from "../../src/bridge/readings";
+import { droppedPlanRules, readingsForCommit, readingsSigned, setCurrentReadings } from "../../src/app/state/readings";
+import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readingVersion, recordReadingVersion, registerReading } from "../../src/bridge/readings";
 import { READING_SCHEMA, ReadingRule, ReadingSkill, activePlanRules, skillMarkdown, type LoadedReading } from "../../src/import/reading";
 import { CONVERSATION_SOURCE, PACK_SOURCE, PLAN_RULE_SOURCE, RECORD_SOURCE, cycleIdOf } from "../../src/plan/cycle";
 import { pendingDecisions } from "../../src/plan/diff";
@@ -77,7 +78,8 @@ describe("計画ルール → 周期の案（R）", () => {
     ]);
     for (const d of rs) {
       expect(d).toMatchObject({ planOrActual: "plan", author: "ai", sources: [{ file: PLAN_RULE_SOURCE, sheet: "【架空】計画ルール", cell: "p1" }] });
-      expect(d.basis).toContain("計画ルール「【架空】計画ルール」版 ―：灰クレーンの整備は 5 年ごと");
+      // 根拠の行に、承認済みか未承認の下書きかを出す（人が受ける前に分かるように。Architect の 42 の答え 1）
+      expect(d.basis).toContain("計画ルール「【架空】計画ルール」版 ―（未承認の下書き）：灰クレーンの整備は 5 年ごと");
     }
     expect(p.works.every((w) => w.trigger === null || w.trigger === undefined)).toBe(true);
     const pending = pendingDecisions(p, []).map((d) => d.id);
@@ -153,6 +155,8 @@ describe("chart_propose の根拠（AI は指すだけ）", () => {
     expect(call(w, { rule: { name: "【架空】計画ルール", ruleId: "r1" } })).toEqual({ ok: false, code: "plan_rule_unknown" });
     expect(call(w, { rule: { name: "【架空】計画ルール", ruleId: "p1" } }).ok).toBe(true);
     expect(sourcesOf()).toContain(PLAN_RULE_SOURCE);
+    const c = getWorkingPlan()!.plan.details.filter((x) => cycleIdOf(x.detailKey)?.startsWith("C")).at(-1)!;
+    expect(c.basis).toContain("計画ルール「【架空】計画ルール」版 ―（未承認の下書き）：灰クレーンの整備は 5 年ごと");
   });
 
   it("① 自施設の実績：間隔は当たった作業の実績から数える。数えられなければ出どころは会話", () => {
@@ -235,5 +239,88 @@ describe("版の署名で承認する計画ルール（Architect の 42 の 2）
     expect(f.ok && f.path).toBe(`fac-x/skills/${name}`);
     const again = await listReadings(root, await approvedReadingVersions(root, (x) => x.key === keyIdOf(SIGNER.pair.pub)));
     expect(again.filter((x) => x.name === name && x.scope === "company").map((x) => x.version)).toEqual(mine.map((x) => x.version));
+  });
+});
+
+describe("却下（Wire、11-06）", () => {
+  it("R の案を却下すると印を外し、同じルールの版のあいだはその作業に出し直さない。ルールの版が変われば出し直す", () => {
+    setWorkingPlan(base(), "intake");
+    const r5 = [draftOf(skillOf([planRule()]))];
+    applyPlanRules(r5);
+    const id = cycleIdOf(rDetails(getWorkingPlan()!.plan)[0]!.detailKey)!;
+    expect(rejectCycleByHuman(id, " ")).toEqual({ ok: false, reason: "reasonEmpty" });
+    expect(rejectCycleByHuman(id, "現場の摩耗が少ない")).toEqual({ ok: true, marks: 2 });
+    expect(rDetails(getWorkingPlan()!.plan)).toEqual([]);
+    expect(rejectedCycles().map((x) => [x.id, x.marks, x.reason])).toEqual([[id, 2, "現場の摩耗が少ない"]]);
+    // 同じルールの版で何度当て直しても出ない
+    expect(applyPlanRules(r5)).toBe(false);
+    expect(rDetails(getWorkingPlan()!.plan)).toEqual([]);
+    // ルールの中身（版）が変われば出し直す
+    applyPlanRules([draftOf(skillOf([planRule({ years: 7 })]))]);
+    expect(rDetails(getWorkingPlan()!.plan).map((d) => d.fiscalYear)).toEqual([2028, 2035]);
+    expect(rejectCycleByHuman("R99", "無い案")).toEqual({ ok: false, reason: "notProposed" });
+  });
+
+  it("台帳案・会話の回答（L・C）も同じ形で却下できる（印を外すだけ）", () => {
+    const w = new IntakeWorkspace({ packId: "waste-incineration", facilityName: "【架空】却下の試験", fiscalYearStartMonth: 4, fictional: true });
+    setWorkingPlan(base(), "intake");
+    const rule = { when: [{ field: "assetNode.commonItem", op: "equals", values: [ITEM] }], set: { field: "work.trigger", value: 5 }, reason: "会話で決めた" };
+    const r = runTabTool(w, "chart_propose", { rules: [rule], basedOnVersion: getWorkingPlan()!.revision, basis: "利用者と決めた" }, { conversation: "c", rowsRemaining: 2000 });
+    if (!r.ok) throw new Error(r.code);
+    const id = (r.data.proposals as { id: string }[])[0]!.id;
+    expect(rejectCycleByHuman(id, "使わない").ok).toBe(true);
+    expect(getWorkingPlan()!.plan.details.some((d) => cycleIdOf(d.detailKey) === id)).toBe(false);
+  });
+});
+
+describe("ルールのシートの計画ルールの行（Wire、11-06）", () => {
+  it("件数は印の数で単位は印。紐付けを確定していない作業があれば、その数を返す（行に 1 行出す）", () => {
+    setWorkingPlan(base(), "intake");
+    const readings = [draftOf(skillOf([planRule()]))];
+    applyPlanRules(readings);
+    const p = getWorkingPlan()!.plan;
+    const an = { ruleHits: { count: () => 0, sample: () => null }, sources: [] } as unknown as Parameters<typeof readingTab>[1];
+    const tab = readingTab(readings, an, (name, r) => ({ marks: planRuleMarks(p, name, r.id), waiting: planRuleWaiting(p, r) }));
+    // w1 に 2 つ。w2 は属性が案のまま（紐付けを確定していない）
+    expect(tab.skills[0]!.rules.map((r) => [r.appliesTo, r.hits, r.unit, r.waiting])).toEqual([["計画", 2, "mark", 1]]);
+  });
+});
+
+describe("確定で削った計画ルール（Architect の 42 の答え 4）", () => {
+  const root = mkdtempSync(join(tmpdir(), "moyai-plan-trim-"));
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it("削った中身は versions/ にだけ書き、保管先の今の下書きは削らずに残す。ダイアログに載せない数を出す", async () => {
+    setWorkingPlan(base(), "intake");
+    const full = skillOf([planRule(), planRule({ id: "p2", text: "誘引送風機の整備は 9 年ごと", commonItem: "WI.FAN.IDF", years: 9 })], "【架空】削る");
+    // 保管先には削らない下書きが書いてある（reading_skill_register）
+    const reg = await registerReading(root, full, null, null);
+    if (!reg.ok) throw new Error(reg.reason);
+    const dir = join(root, reg.path);
+    const before = readFileSync(join(dir, "rules.json"), "utf8");
+    setCurrentReadings([draftOf(full)], null);
+    applyPlanRules();
+    const p = getWorkingPlan()!.plan;
+    const ids = new Set(rDetails(p).filter((d) => d.sources[0]!.cell === "p1").map((d) => `detail:${d.detailKey}`));
+    expect(droppedPlanRules(p, ids)).toBe(1);
+    const sent = readingsForCommit(p, ids);
+    expect(sent.map((x) => [x.skill.rules.map((r) => r.id), x.trimmed])).toEqual([[["p1"], true]]);
+    // 橋渡し：削った中身は今のファイルに触らず versions/<版>/ に書く。版の記録はそのハッシュを指す
+    const w = await recordReadingVersion(root, sent[0]!.skill, null, null);
+    if (!w.ok) throw new Error(w.reason);
+    expect(readFileSync(join(dir, "rules.json"), "utf8")).toBe(before);
+    expect(readdirSync(join(dir, "versions"))).toEqual([w.version]);
+    const list = await listReadings(root, new Map([[w.version, { in: 1, at: "2026-11-06T00:00:00Z" }]]));
+    const mine = list.filter((x) => x.name === "【架空】削る");
+    expect(mine.map((x) => [x.current, x.approved, x.rules])).toEqual([
+      [true, false, 2],
+      [false, true, 1],
+    ]);
+    // 承認されたのは削った版。今の下書き（削らない）は未承認のまま
+    expect(loadedOf(list, null).find((x) => x.skill.name === "【架空】削る")?.version).toBe(w.version);
+    // 同じ中身をもう一度：書き足さない
+    const again = await recordReadingVersion(root, sent[0]!.skill, null, null);
+    expect(again.ok && again.version).toBe(w.version);
+    expect(readdirSync(join(dir, "versions"))).toEqual([w.version]);
   });
 });

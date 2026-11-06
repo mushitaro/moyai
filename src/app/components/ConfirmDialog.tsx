@@ -4,7 +4,7 @@
 // 確定・戻すは、押したその場で中身に結んだ 1 回きりの印をもらって人だけの経路を呼ぶ。window.confirm は使わない。
 import { Alert, Anchor, Button, Group, Modal, Radio, Stack, Table, Text, TextInput } from "@mantine/core";
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
-import { readingsForCommit, readingsSigned } from "../state/readings";
+import { droppedPlanRules, readingsForCommit, readingsSigned } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
 import { pendingDeriveFor, setPendingDerive } from "../state/derive";
 import { getWorkingPlan } from "../state/plan-store";
@@ -195,6 +195,8 @@ export function ConfirmDialog({
   // この署名で承認する読み方（下書きの計画ルールは、この署名で受ける周期の案のもとになったものだけ。Architect の 42 の 2）
   const acceptedIds = new Set(accepted.map((a) => a.id));
   const readings = readingsSigned(plan, acceptedIds);
+  // この版に載せない計画ルール（案を受けていない下書きのルール）。人が知ったうえで署名する（Architect の 42 の答え 4）
+  const dropped = droppedPlanRules(plan, acceptedIds);
   const toOk = ask === "self" || /^[^\s@]+@[^\s@]+$/.test(to.trim());
   const canSubmit = !!status && !!name && toOk && reason.trim().length > 0 && left === 0 && !busy && !done;
   const blockReason = !toOk ? T.toMissing : !name ? T.needName : left > 0 ? T.pendingLeft(left) : reason.trim().length === 0 ? T.reasonEmpty : null;
@@ -334,6 +336,11 @@ export function ConfirmDialog({
                   </Group>
                 ))}
               </Stack>
+            )}
+            {dropped > 0 && (
+              <Text size="xs" c="var(--shu-text)" data-testid="sign-dropped-plan-rules">
+                {T.droppedPlanRules(dropped)}
+              </Text>
             )}
 
             <Stack gap={4} data-testid="sign">

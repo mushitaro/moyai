@@ -14,7 +14,7 @@ import { getWorkingPlan } from "../state/plan-store";
 import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
 import { getPeerView } from "../state/peers";
 import { activeRules, isPlanRule, type ReadingRule, type ReadingScope } from "../../import/reading";
-import type { VerifiedBases } from "../../plan/cycle";
+import { planRuleStatus, type VerifiedBases } from "../../plan/cycle";
 import type { Plan } from "../../shared/plan";
 import { RECEIVE_MIN_K } from "../../share/k";
 import { peerAggregates } from "../../share/peer-reference";
@@ -105,7 +105,7 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
     const want = bases.rule;
     const a = activeRules(ws.currentReadings()).find((x) => x.from.name === want.name && x.rule.id === want.ruleId && isPlanRule(x.rule));
     if (!a) return { ok: false, code: "plan_rule_unknown" };
-    verified.rule = { name: a.from.name, version: a.from.version, ruleId: a.rule.id, text: a.rule.text };
+    verified.rule = { name: a.from.name, version: a.from.version, ruleId: a.rule.id, text: a.rule.text, status: planRuleStatus(a.from) };
   }
   const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis), { fromLedger: Boolean(args.ledger), author, verified });
   if (!r.ok) return r;

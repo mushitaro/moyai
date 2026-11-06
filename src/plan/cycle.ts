@@ -40,6 +40,16 @@ export interface CycleProposal {
   skipped: { noActual: number; noHorizon: number };
 }
 
+/** 計画ルールの状態（根拠の行に出す。人が受ける前に、承認済みか未承認の下書きかが分かるように。Architect の 42 の答え 1） */
+export function planRuleStatus(from: { approved: boolean; draft: boolean }): string {
+  return from.approved && !from.draft ? "承認済み" : from.draft ? "未承認の下書き" : "未承認";
+}
+
+/** 計画ルールの根拠の行：「計画ルール「名前」版 xxxx xxxx（承認済み）：1 文」（下書きは版「―」） */
+export function planRuleLine(name: string, version: string, status: string, text: string): string {
+  return `計画ルール「${name}」版 ${shortVersion(version)}（${status}）：${text}`;
+}
+
 /** 計画ルールの出どころ（どのルールから出した案か） */
 export const planRuleSourceRef = (name: string, ruleId: string): SourceRef => ({ file: PLAN_RULE_SOURCE, sheet: name, page: null, cell: ruleId, box: null });
 const sourceRef = (file: string, sheet: string | null = null): SourceRef => ({ file, sheet, page: null, cell: null, box: null });
@@ -51,7 +61,7 @@ export interface VerifiedBases {
   /** パックの基準：検査の ID・名前・出典 */
   pack?: { checkId: string; name: string; source: string };
   /** 計画ルール：名前・版・ルールの id・1 文 */
-  rule?: { name: string; version: string; ruleId: string; text: string };
+  rule?: { name: string; version: string; ruleId: string; text: string; status: string };
 }
 
 /** 当たった作業の実績の間隔（年度の差）。実施が 2 回以上ある作業だけを数える。無ければ null */
@@ -129,7 +139,7 @@ export function proposeCycles(
     }
     if (v.rule) {
       sources.push(planRuleSourceRef(v.rule.name, v.rule.ruleId));
-      lines.push(`計画ルール「${v.rule.name}」版 ${shortVersion(v.rule.version)}：${v.rule.text}`);
+      lines.push(planRuleLine(v.rule.name, v.rule.version, v.rule.status, v.rule.text));
     }
     if (sources.length === 0) sources.push(sourceRef(CONVERSATION_SOURCE));
     const basis = `${opts.basis}（案 ${id}：${years} 年ごと。${rule.reason}）${lines.map((x) => `。${x}`).join("")}`;

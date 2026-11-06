@@ -2,8 +2,8 @@
 // AI のツールの受け手（intake/tab-tools.ts）は計画を直に書き換えず、この関数を通す。置くのは作者が AI の計画の印だけで、受けるのは人（決定のシート）。
 // 計画ルール（3 段目の Skill の planCycle。案 C、2026-11-06）は、当たる作業に周期の案（R）を出すだけ（work.trigger を直に書かない。Architect の 42 の 1）。
 // R の案は前の版から写さず（carryFromBase は写さない）、作業中の計画か当てているルールが変わるたびに、そのときのルールの版から出し直す（42 の 4）。
-import { activePlanRules, planRuleReason, type LoadedReading, type PlanCycleRule } from "../../import/reading";
-import { LEDGER_CYCLE_PREFIX, PLAN_RULE_CYCLE_PREFIX, PLAN_RULE_SOURCE, cycleIdOf, proposeCycles, type CycleProposal, type VerifiedBases } from "../../plan/cycle";
+import { activePlanRules, type LoadedReading, type PlanCycleRule } from "../../import/reading";
+import { LEDGER_CYCLE_PREFIX, PLAN_RULE_CYCLE_PREFIX, PLAN_RULE_SOURCE, cycleIdOf, planRuleLine, planRuleStatus, proposeCycles, type CycleProposal, type VerifiedBases } from "../../plan/cycle";
 import type { Plan, WorkT } from "../../shared/plan";
 import type { Rule } from "../../shared/tools";
 import { getWorkingPlan, subscribeWorkingPlan, updateWorkingPlan } from "./plan-store";
@@ -65,6 +65,43 @@ export function acceptedFor(plan: Plan, r: PlanCycleRule): (w: WorkT) => boolean
 /** この回（作業中の計画の generation）に計画ルールから出した案：R の ID → ルールの鍵（名前・版・中身） */
 let owned = new Map<string, { key: string; generation: number; name: string; ruleId: string }>();
 let applying = false;
+/**
+ * 人が却下した R の案：ルールの鍵（名前・版・中身）× 作業。同じルールの版のあいだは、その作業に出し直さない（ルールの版が変われば鍵が変わるので出し直す。Wire、11-06）。
+ * 覚えは作業画面の状態（このタブのメモリ）に置く。却下した案は版に入らず、署名するものが無いため（版の記録は署名した中身だけを持つ）
+ */
+let rejected = new Set<string>();
+const rejectKey = (ruleKey: string, workKey: string) => `${ruleKey}\u0001${workKey}`;
+
+/** 却下した周期の案（確定のシートの「却下済み」に出す。置き直した回のものだけ） */
+export interface RejectedCycle {
+  id: string;
+  marks: number;
+  basis: string;
+  reason: string;
+  generation: number;
+}
+let rejectedRows: RejectedCycle[] = [];
+
+export function rejectedCycles(): RejectedCycle[] {
+  const gen = getWorkingPlan()?.generation;
+  return rejectedRows.filter((r) => r.generation === gen);
+}
+
+/**
+ * 人が確定のシートで周期の案を却下する（人の道。AI のツールの受け手からは呼ばない）：その案の計画の印を作業中の計画から外す。
+ * R の案は、ルールの鍵と作業の組を覚え、同じルールの版のあいだは出し直さない。L・C の案は外すだけ（AI はまた置ける）
+ */
+export function rejectCycleByHuman(id: string, reason: string): { ok: true; marks: number } | { ok: false; reason: "notProposed" | "reasonEmpty" } {
+  if (reason.trim().length === 0) return { ok: false, reason: "reasonEmpty" };
+  const working = getWorkingPlan();
+  const mine = working?.plan.details.filter((d) => cycleIdOf(d.detailKey) === id) ?? [];
+  if (!working || mine.length === 0) return { ok: false, reason: "notProposed" };
+  const o = owned.get(id);
+  if (o) for (const d of mine) rejected.add(rejectKey(o.key, d.workKey));
+  rejectedRows = [...rejectedRows, { id, marks: mine.length, basis: mine[0]!.basis ?? "", reason: reason.trim(), generation: working.generation }];
+  updateWorkingPlan({ ...working.plan, details: working.plan.details.filter((d) => cycleIdOf(d.detailKey) !== id) }, working.proposals);
+  return { ok: true, marks: mine.length };
+}
 
 /** 計画ルールの鍵：名前・版・ルールの中身（どれかが変わったら出し直す） */
 const keyOf = (a: { from: { name: string; version: string }; rule: PlanCycleRule }) => `${a.from.name}\u0000${a.from.version}\u0000${JSON.stringify(a.rule)}`;
@@ -97,11 +134,12 @@ export function applyPlanRules(readings: readonly LoadedReading[] = getCurrentRe
     const rid = id;
     const r = proposeCycles(plan, [cycleRuleOf(a.rule)], {
       nextId: () => rid,
-      basis: planRuleReason(a),
+      // 根拠の頭：ルールの名前・版・承認済みか未承認の下書きか・1 文
+      basis: planRuleLine(a.from.name, a.from.version, planRuleStatus(a.from), a.rule.text),
       fromLedger: false,
       author: "ai",
       planRule: { name: a.from.name, ruleId: a.rule.id },
-      onlyWorks: acceptedFor(plan, a.rule),
+      onlyWorks: ((ok) => (w: WorkT) => ok(w) && !rejected.has(rejectKey(key, w.workKey)))(acceptedFor(plan, a.rule)),
     });
     if (!r.ok) continue;
     plan = r.plan;
@@ -135,6 +173,14 @@ export function planRuleMarks(plan: Plan | null, name: string, ruleId: string): 
   return plan.details.filter((d) => cycleIdOf(d.detailKey) !== null && d.sources.some((s) => s.file === PLAN_RULE_SOURCE && s.sheet === name && s.cell === ruleId)).length;
 }
 
+/** 計画ルールの項目と属性は当たるが、紐付け（項目か属性）をまだ人が確定していない作業の数（確定するまで R を出さない。Architect の 42 の答え 3） */
+export function planRuleWaiting(plan: Plan | null, r: PlanCycleRule): number {
+  if (!plan) return 0;
+  const nodes = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+  const ok = acceptedFor(plan, r);
+  return plan.works.filter((w) => w.attribute === r.attribute && w.targets.some((t) => nodes.get(t)?.commonItem === r.commonItem) && !ok(w)).length;
+}
+
 let watching = false;
 /** 作業中の計画か当てているルールが変わるたびに、計画ルールの案を出し直す（App が 1 回だけ呼ぶ） */
 export function watchPlanRules(): void {
@@ -150,4 +196,6 @@ export function watchPlanRules(): void {
 /** 試験用：この回に出した R の案の覚えを捨てる */
 export function resetPlanRulesForTest(): void {
   owned = new Map();
+  rejected = new Set();
+  rejectedRows = [];
 }

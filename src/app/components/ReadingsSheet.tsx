@@ -1,5 +1,5 @@
 // MERGE のシート「ルール」（docs/screens.md 3.2「読み方」・Wire のキャンバスの Reading.dc.html。MERGE r2）：作業画面が当てている 3 段目の Skill（ルール）。
-// 上に切り替え「下書き n ／ 全件 n」（既定は下書き。下書きが 0 なら全件）。ルールごとに見出しの 1 行（名前・範囲・状態）と、1 つの決まりを 1 行（内容｜元の資料｜元のセル）。
+// 上に切り替え「下書き n ／ 全件 n」（既定は下書き。下書きが 0 なら全件）。ルールごとに見出しの 1 行（名前・範囲・状態）と、1 つの決まりを 1 行（内容｜元の資料｜件数。値は「セル n」「印 n」）。
 // 確定者・元の版・承認・見本は本体に置かず、行を選ぶと横の板の「詳細」に出す。
 // データは state/reading-tab.ts の readingTab()。
 import { Stack, Table, Text } from "@mantine/core";
@@ -7,7 +7,7 @@ import { useContext, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { sheetHash } from "../stages";
-import { planRuleMarks } from "../state/cycles";
+import { planRuleMarks, planRuleWaiting } from "../state/cycles";
 import { MergeSideContext } from "../state/merge-side";
 import { useWorkingPlan } from "../state/plan-store";
 import { readingTab, type ReadingTabRule, type ReadingTabSkill } from "../state/reading-tab";
@@ -28,7 +28,10 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
   // 計画ルールの件数は、作業中の計画に出した周期の案の印の数（計画が変わると数え直す）
   const working = useWorkingPlan();
   const tab = useMemo(
-    () => (ws.fileCount ? readingTab(ws.currentReadings(), ws.analysis(), (name, id) => planRuleMarks(working?.plan ?? null, name, id)) : { skills: [], unapproved: 0 }),
+    () =>
+      ws.fileCount
+        ? readingTab(ws.currentReadings(), ws.analysis(), (name, r) => ({ marks: planRuleMarks(working?.plan ?? null, name, r.id), waiting: planRuleWaiting(working?.plan ?? null, r) }))
+        : { skills: [], unapproved: 0 },
     [ws, ws.version, working],
   );
   const draftRules = tab.skills.filter((k) => k.status !== "approved").reduce((n, k) => n + k.rules.length, 0);
@@ -63,7 +66,7 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
       <Row label={T.head[3]!} value={picked.rule.decidedBy.kind === "ai" ? T.byAi : (picked.rule.decidedBy.name ?? T.byHuman)} />
       <Row label={T.head[4]!} value={picked.rule.change === "same" ? T.same : T.change[picked.rule.change]!} />
       <Row label={T.approval} value={picked.skill.status === "approved" ? T.approved(picked.skill.approvedIn) : T.unapprovedOne} />
-      <Row label={T.head[2]!} value={fmt(picked.rule.hits)} />
+      <Row label={T.head[2]!} value={count(picked.rule)} />
       {picked.rule.sample && (
         <Text size="xs" c="dimmed" data-testid="reading-sample">
           {T.sample(picked.rule.sample.file, picked.rule.sample.ref, picked.rule.sample.text)}
@@ -123,10 +126,17 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
                     onClick={() => pick(k, r)}
                     style={{ cursor: "pointer" }}
                   >
-                    <Table.Td>{r.text}</Table.Td>
+                    <Table.Td>
+                      {r.text}
+                      {r.waiting > 0 && (
+                        <Text size="xs" c="var(--text-3)" data-testid="reading-plan-waiting">
+                          {T.planWaiting}
+                        </Text>
+                      )}
+                    </Table.Td>
                     <Table.Td c="var(--text-2)">{r.appliesTo ?? T.anyFile}</Table.Td>
                     <Table.Td className="moyai-num" ta="right">
-                      {fmt(r.hits)}
+                      {count(r)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -138,6 +148,11 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
       {side?.el && detail && createPortal(detail, side.el)}
     </div>
   );
+}
+
+/** 件数に単位を付ける（読み方の決まりは「セル 42」、計画ルールは「印 18」。Wire、11-06） */
+function count(r: ReadingTabRule): string {
+  return r.unit === "mark" ? T.marks(fmt(r.hits)) : T.cells(fmt(r.hits));
 }
 
 function statusText(k: ReadingTabSkill): string {

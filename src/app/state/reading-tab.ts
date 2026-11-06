@@ -3,7 +3,7 @@
 // 前の版からの差は、同じ名前の承認済みの読み方と比べる（無ければ、どの規則も「足した」）。
 // 規則を変えて前の版で承認済みのセルが変わる数は、版どうしのセルの差が要るので、まだ出さない（null）。
 import type { Analysis } from "../../import";
-import type { LoadedReading, ReadingRule, ReadingScope } from "../../import/reading";
+import type { LoadedReading, PlanCycleRule, ReadingRule, ReadingScope } from "../../import/reading";
 import { activeRules, isPlanRule, shortVersion } from "../../import/reading";
 
 export interface ReadingTabRule {
@@ -12,8 +12,12 @@ export interface ReadingTabRule {
   text: string;
   /** 効く資料（資料の名前の型と見出しの文字。無ければ「どの資料にも」） */
   appliesTo: string | null;
-  /** 効いたセル */
+  /** 件数：読み方の決まりは効いたセル、計画ルールは作業中の計画に出した周期の案の印 */
   hits: number;
+  /** 件数の単位（「セル 42」「印 18」。Wire、11-06） */
+  unit: "cell" | "mark";
+  /** 計画ルールだけ：項目と属性は当たるが、紐付けをまだ人が確定していない作業の数（確定するまで案を出さない） */
+  waiting: number;
   /** 決めた人：「Claude（会話で決めた）」か、人の呼び名 */
   decidedBy: { kind: "ai" } | { kind: "human"; name: string | null };
   /** 前の版から：足した・変えた・変わらない */
@@ -44,11 +48,11 @@ function appliesTo(r: ReadingRule): string | null {
   return parts.length ? parts.join("・") : null;
 }
 
-/** タブのデータ。readings：作業画面が当てている読み方。an：その読み方で読んだ結果。planMarks：計画ルールが作業中の計画に出した周期の案の印の数 */
+/** タブのデータ。readings：作業画面が当てている読み方。an：その読み方で読んだ結果。planInfo：計画ルールが作業中の計画に出した周期の案の印の数と、紐付けの確定を待つ作業の数 */
 export function readingTab(
   readings: readonly LoadedReading[],
   an: Pick<Analysis, "ruleHits" | "sources">,
-  planMarks: (name: string, ruleId: string) => number = () => 0,
+  planInfo: (name: string, rule: PlanCycleRule) => { marks: number; waiting: number } = () => ({ marks: 0, waiting: 0 }),
 ): { skills: ReadingTabSkill[]; unapproved: number } {
   const order = activeRules(readings);
   const names = [...new Set(order.map((a) => a.from.name))];
@@ -73,7 +77,9 @@ export function readingTab(
           id: r.id,
           text: r.text,
           appliesTo: appliesTo(r),
-          hits: isPlanRule(r) ? planMarks(name, r.id) : an.ruleHits.count(r.id),
+          hits: isPlanRule(r) ? planInfo(name, r).marks : an.ruleHits.count(r.id),
+          unit: isPlanRule(r) ? "mark" : "cell",
+          waiting: isPlanRule(r) ? planInfo(name, r).waiting : 0,
           decidedBy: r.author === "ai" ? { kind: "ai" } : { kind: "human", name: r.by ?? null },
           change: !approved || shown === approved ? (approved ? "same" : "added") : !before ? "added" : sameRule(before, r) ? "same" : "changed",
           approvedCellsChanged: null,
