@@ -85,3 +85,25 @@ describe("予定・実績の列の読めない値（Architect の 62）", () => 
     expect(p?.details.filter((d) => d.fiscalYear >= 2027).map((d) => [d.fiscalYear, d.planOrActual]).sort()).toEqual([[2027, "actual"], [2028, "plan"], [2029, "plan"]]);
   });
 });
+
+describe("1 つのセルに号炉・機器・作業を書いた列（Architect の 64(b)・Wire）", () => {
+  const CSV3 = ["日付,号炉・機器・作業内容,工数(人日)", "2022-05-10,1号 No.2 BFP 分解整備,3", "2022-05-11,2号 押込送風機 点検,2", "2022-05-12,給じん装置（1号炉）点検整備,1"].join("\r\n");
+  test("読み手が分けた行は「分けて読む（n 行）」を既定にして 1 回聞く。「その行を外す」なら外す", async () => {
+    for (const answer of ["split", "exclude"]) {
+      const s = session();
+      await s.add([{ name: "日報.csv", bytes: enc.encode(CSV3) }]);
+      const q = s.analyze().open.find((x) => x.kind === "flatSplit");
+      expect(q?.defaultAnswer).toBe("split");
+      expect(q?.options.map((o) => o.label)).toEqual(["空白・括弧で分けて読む（3 行）", "その行を外す"]);
+      s.settle([human(q!.questionId, answer)]);
+      for (let i = 0; i < 10; i++) {
+        const open = s.analyze().open.filter((x) => !x.decision);
+        if (!open.length) break;
+        s.settle(open.map((x) => human(x.questionId, x.defaultAnswer ?? x.options.find((o) => o.id === "new")?.id ?? x.options[0]?.id ?? "")));
+      }
+      const p = s.compose().plan;
+      if (answer === "split") expect(p?.details.length, answer).toBe(3);
+      else expect(p?.details.length ?? 0, answer).toBe(0);
+    }
+  });
+});

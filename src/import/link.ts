@@ -559,7 +559,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const many = css.length > SPLIT_MAX;
     const a = ask.ask(gkey, {
       kind: "eventAsset",
-      text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）を、${how[pattern] ?? pattern}機器 1 つに当てるか${many ? `（${css.length} 通りと多いので 1 件ずつは聞かない。違うものは同じ機器のルールで直す）` : ""}`,
+      text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）を、${how[pattern] ?? pattern}機器 1 つに当てるか${many ? "（1 件ずつは聞かない。違いは「同じ機器」のルールで直す）" : ""}`,
       options: many ? YES_SPLIT.filter((o) => o.id !== "split") : YES_SPLIT,
       valueKind: "option",
       defaultAnswer: "yes",

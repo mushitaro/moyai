@@ -368,6 +368,8 @@ export function compose(
   };
   /** 日報の行から作る年度の値の計画・実績：どの行も計画中なら計画、ほかは実績（Architect の 53。計画中の行を次回の起点にしない） */
   const planOrActualOf = (events: readonly EventRec[]): "plan" | "actual" => (events.length > 0 && events.every((e) => e.planOrActual === "plan") ? "plan" : "actual");
+  /** 暦年として書かれた印の根拠の注（年度 Y として読んだ。Architect の 58。言葉は Wire に確かめる） */
+  const calNote = (m: MarkRec): string => (m.calendarYear ? "（暦年として書かれた年を年度として読んだ）" : "");
   const okCluster = (c: Cluster | undefined): c is Cluster => !!c && !c.pending && !c.excluded;
   const linksOfMark = new Map<MarkRec, WorkLink[]>();
   for (const l of lk.links) if (l.mode === "mark" && l.mark) linksOfMark.set(l.mark, [...(linksOfMark.get(l.mark) ?? []), l]);
@@ -491,7 +493,7 @@ export function compose(
         previousValue: null,
         performer: null,
         sources: [...(m ? markSources(m) : []), ...jobSources(j)],
-        basis: `${m ? `星取表 ${m.ref} の印「${m.symbol}」と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
+        basis: `${m ? `星取表 ${m.ref} の印「${m.symbol}」${calNote(m)}と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
         author: authorOf(qs, decisions),
         needsReview: false,
       },
@@ -528,7 +530,7 @@ export function compose(
           previousValue: null,
           performer: null,
           sources: markSources(m),
-          basis: `星取表 ${m.ref} の印「${m.symbol}」（${m.planOrActual === "plan" ? "予定" : "実績"}${m.workName ? `・${m.workName}` : ""}）`,
+          basis: `星取表 ${m.ref} の印「${m.symbol}」（${m.planOrActual === "plan" ? "予定" : "実績"}${m.workName ? `・${m.workName}` : ""}）${calNote(m)}`,
           author: authorOf([...c.decidedBy, ...symbolQ], decisions),
           needsReview: false,
         },

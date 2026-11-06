@@ -55,6 +55,8 @@ export interface CostCell {
 }
 
 export interface MarkRec {
+  /** 列の年が暦年として書かれた（年度 Y として読んだ。Architect の 58） */
+  calendarYear?: true;
   id: string;
   file: string;
   sheet: string | null;
@@ -630,9 +632,9 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
       kind: "costKind",
       text: `費用の列が「${header}」だけ（${cells.length} 行）。実績の費用ではない`,
       options: [
-        { id: "plan", label: "計画の費用（予算）としてだけ読む" },
-        { id: "actual", label: "実績の費用としても読む" },
-        { id: "none", label: "この列を読まない（理由を残す）" },
+        { id: "plan", label: "予算として読む" },
+        { id: "actual", label: "予算と実績として読む" },
+        { id: "none", label: "この列を読まない" },
       ],
       valueKind: "option",
       defaultAnswer: "plan",
@@ -1025,6 +1027,8 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         assetId: node?.id ?? null,
         excluded: null,
         pending: !node || node.pending || t.yearKind === null,
+        // 暦年と答えた表の印：日付が無いので年度を決められない。年度 Y として読み、根拠に残す（Architect の 58）
+        ...(t.yearKind === "calendar" ? { calendarYear: true as const } : {}),
       };
       const entry = legend.find((e) => nfkc(e.symbol) === sym);
       // 行の予定・実績の欄があれば、それを列の見出しより先に使う（行の方が細かいため）
@@ -1200,6 +1204,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   // 号炉・機器・作業を 1 つのセルに書いた列（「号炉・系統・機器・作業内容」）：機器の列が無いときだけ、見出しの順に分けて読む
   const flatCol = !assetCol && workCol?.compound ? workCol : null;
   const unsplit: { id: string; ref: string }[] = [];
+  const flatSplit: { id: string; ref: string; sep: string }[] = [];
   // 機器の欄も機器番号も無い台帳（発注台帳など）：件名の中の機器の名前の案（あとでまとめて聞く。推し量って決めない）
   const titleOnly = !assetCol && !tagCol && !flatCol && !headAsset && !headTag && titleCol ? titleCol : null;
   const titleRows: { id: string; ref: string; title: string; guess: { asset: string; work: string } | null }[] = [];
@@ -1264,6 +1269,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     const flatText = flatCol ? text(r.r, flatCol) : "";
     const flat = flatText ? splitFlatWork(flatText) : null;
     if (flatText && !flat) unsplit.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, flatCol?.c ?? 0)?.ref ?? "" });
+    // 読み手が区切り（空白か括弧）で分けた行：分けたのは取り込みの判断なので、人が受けるまで決めない（Architect の 64(b)・Wire）
+    if (flatText && flat) flatSplit.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, flatCol?.c ?? 0)?.ref ?? "", sep: /\s/u.test(nfkc(flatText).trim().replace(/[(（][^()（）]*[)）]/gu, "")) ? "空白" : "括弧" });
     const titleText = titleOnly ? text(r.r, titleOnly).trim() : "";
     if (titleText) titleRows.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, titleOnly?.c ?? 0)?.ref ?? "", title: titleText, guess: assetFromTitle(titleText) });
     const assetText0 = text(r.r, assetCol) || flat?.asset || (headAsset ?? "");
@@ -1343,6 +1350,28 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const fkey = form?.key ?? t.id;
   const many = (form?.tables.length ?? 1) > 1;
   const where = many ? `${filesLabel(form?.files ?? [])}（同じ様式）の表に、` : "";
+  // 号炉・機器・作業を 1 つのセルに書いた列を、読み手が区切りで分けた行：分けて読むかを 1 回聞く（既定は分けて読む。Architect の 64(b)・Wire）
+  if (flatSplit.length && flatCol) {
+    const seps = [...new Set(flatSplit.map((x) => x.sep))].join("・");
+    const a = ask.ask(`flatSplit|${fkey}`, {
+      kind: "flatSplit",
+      text: `${where}「${flatCol.headerParts[0] ?? ""}」の列は、1 つのセルに号炉・機器・作業を書いている。${seps}で機器と作業に分けて読むか`,
+      options: [
+        { id: "split", label: `${seps}で分けて読む（${flatSplit.length} 行）` },
+        { id: "exclude", label: "その行を外す" },
+      ],
+      valueKind: "option",
+      defaultAnswer: "split",
+      sameShapeRows: flatSplit.length,
+      items: [itemOf(lay, flatSplit.slice(0, 10).map((u) => u.ref))],
+    });
+    const ids = new Set(flatSplit.map((u) => u.id));
+    for (const e of evs)
+      if (ids.has(e.id)) {
+        if (a === "exclude") e.excluded = "1 つのセルに書いた号炉・機器・作業の行（決定で外した）";
+        else if (a !== "split") e.pending = true;
+      }
+  }
   // 号炉・機器・作業の区切り（空白・括弧）の無いセル：機器と作業に分けられない。推し量らず、同じ様式の表をまとめて 1 回聞く
   if (unsplit.length && flatCol) {
     const a = ask.ask(`flatUnsplit|${fkey}`, {
@@ -1523,7 +1552,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
         options: [
           { id: "plan", label: "計画" },
           { id: "actual", label: "実績" },
-          { id: "exclude", label: "外す" },
+          { id: "exclude", label: "その行を外す" },
         ],
         valueKind: "option",
         defaultAnswer: null,

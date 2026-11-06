@@ -145,11 +145,16 @@ function skillsOf(ws: IntakeWorkspace) {
   return activeSkills(getWorkingPlan()?.plan.packId ?? (ws.settings.packId || null), ws.currentReadings());
 }
 
+/** 規則の when が効かない種類 */
+const WHEN_IGNORED: ReadonlySet<string> = new Set(["sameAsset", "answer", "planCycle"]);
+
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   chart_propose: (ws, args) => chartPropose(ws, args),
   reading_rules_propose: (ws, args) => {
     // AI の経路から来た規則は、作者を AI に固め、決めた人の呼び名は捨てる（人と名乗らせない。台帳の新-8）
     const fromAi = (args.rules as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);
+    // when が効かない種類（同じ機器・決まった答え・計画ルール）に when を付けた規則は断る（黙って広く当てない。Architect の 57。when を効かせるのは締切のあと）
+    if (fromAi.some((r) => r.when && WHEN_IGNORED.has(r.kind))) return { ok: false, code: "reading_when_ignored" };
     const placed = ws.proposeReading(String(args.name), args.scope as ReadingScope, fromAi);
     // 計画ルールは、当たる作業に周期の案（R）を出す（人が確定のシートで受けるまで決まらない）。件数は引いた印の数
     applyPlanRules();

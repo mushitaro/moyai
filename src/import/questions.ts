@@ -28,6 +28,7 @@ export type QuestionKind =
   | "costBad"
   | "cycleText"
   | "planActualUnknown"
+  | "flatSplit"
   | "hoursPerManDay"
   | "effortUnknown"
   | "dateUnknown"

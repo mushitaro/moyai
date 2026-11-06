@@ -536,6 +536,7 @@ export const TEXT = {
       costBad: "費用の書き方",
       cycleText: "周期の書き方",
       planActualUnknown: "予定・実績の書き方",
+      flatSplit: "1 つのセルの分け方",
       hoursPerManDay: "工数の単位",
       effortUnknown: "工数の読み方",
       dateUnknown: "日付の読み方",
