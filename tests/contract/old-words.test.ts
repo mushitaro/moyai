@@ -42,20 +42,10 @@ const BANNED: { word: string; re: RegExp }[] = [
 
 /**
  * 許す所。text はその語を含む字のまとまり（ファイルの中にそのままあること）。
- * 「束」「輪」は docs/words.md の表に置き換えが無い（11-06）。表に入ったら置き換えて、ここから消す。
+ * 束 → 共有ファイル、輪 → 共有フォルダ（運営者の決定、docs/words.md）。
  */
 const ALLOWED: { name: string; file: string; text: string; reason: string }[] = [
   { name: "data-names の目印の誤り", file: "src/shared/data-names.ts", text: "data-names の印が無い", reason: "ファイルの中の目印（moyai:data-names）の誤り。画面にも Claude にも出ない（words.md で対象外）" },
-  { name: "決まり 2 の束（instructions）", file: "src/shared/instructions.ts", text: "セル・ファイル・メモ・束の文", reason: "words.md の表に「束」の置き換えが無い" },
-  { name: "決まり 2 の束（Skill）", file: "skills/moyai/SKILL.md", text: "セル・ファイル・メモ・束の文", reason: "instructions から作る。words.md の表に「束」の置き換えが無い" },
-  { name: "check_results の共有の束", file: "src/shared/tools.ts", text: "共有の束に写す数", reason: "words.md の表に「束」の置き換えが無い" },
-  { name: "SHARE の輪（instructions）", file: "src/shared/instructions.ts", text: "輪か公開の台帳に出す", reason: "words.md の表に「輪」の置き換えが無い" },
-  { name: "設定の輪（instructions）", file: "src/shared/instructions.ts", text: "台帳の clone・輪・覚えた鍵", reason: "words.md の表に「輪」の置き換えが無い" },
-  { name: "SHARE の輪（Skill）", file: "skills/moyai/SKILL.md", text: "輪か公開の台帳に出す", reason: "instructions から作る。words.md の表に「輪」の置き換えが無い" },
-  { name: "設定の輪（Skill）", file: "skills/moyai/SKILL.md", text: "台帳の clone・輪・覚えた鍵", reason: "instructions から作る。words.md の表に「輪」の置き換えが無い" },
-  { name: "peer_reference の輪", file: "src/shared/tools.ts", text: "（輪は読まない）", reason: "words.md の表に「輪」の置き換えが無い" },
-  { name: "し尿の共有の輪", file: "packs/night-soil/SKILL.md", text: "共有（輪・公開の台帳）", reason: "words.md の表に「輪」の置き換えが無い" },
-  { name: "ごみ焼却の輪の数字", file: "packs/waste-incineration/SKILL.md", text: "輪（非公開）の数字", reason: "words.md の表に「輪」の置き換えが無い" },
 ];
 
 describe("古い言葉（印・決定のシート・束・輪）", () => {
