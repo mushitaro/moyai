@@ -325,7 +325,7 @@ describe("工場の正解から組んだ計画（試験の道具）", () => {
     // 号炉・系統を持つ機器があれば、機器の階層のあとに号炉・系統の階層が入る（運営者の決定。設備 › 機器 › 号炉・系統 › 部位）
     const hasSeries = p.assets.some((a) => a.series !== null);
     expect(m.levelNames.length).toBe(p.levelNames.length + (hasSeries ? 1 : 0));
-    if (hasSeries) expect(m.levelNames).toContain("号炉・系統");
+    if (hasSeries) expect(m.levelNames).toContain("号炉");
     const folded = buildChart(p, catalog, labels, { ...base, foldLevel: 1 });
     expect(folded.rows.length).toBe(p.assets.filter((a) => a.level === 1).length);
     expect(folded.rows.every((r) => r.folded && r.count !== null && r.count > 0)).toBe(true);
@@ -363,13 +363,14 @@ describe("系列の見出し", () => {
       ],
     };
     const m = buildChart(two, catalog, labels, base);
-    expect(m.levelNames).toEqual(["設備", "機器", "号炉・系統", "部位"]);
+    expect(m.levelNames).toEqual(["設備", "機器", "号炉", "部位"]);
     const cells = m.rows.map((r) => r.levelCells.join("/"));
     // 同じ名前の機器は 1 つの機器の行にまとまり、その下に号炉・系統の行が並ぶ
     expect(cells.filter((c) => c === "/eq3//")).toHaveLength(1);
-    expect(cells).toContain("//S1/");
-    expect(cells).toContain("//S2/");
-    expect(cells).toContain("//Scommon.共通/");
+    // 番号は Skillパックの単位の字で「1 号炉」、共通は「共通」だけ（Wire）
+    expect(cells).toContain("//1 号炉/");
+    expect(cells).toContain("//2 号炉/");
+    expect(cells).toContain("//共通/");
     // 号炉・系統の無い機器は行を足さず、号炉・系統の欄に「―」（Architect の 66 の 4・Wire）。部位はその下（4 つ目の列）
     expect(cells).toContain("/eq1/―/");
     expect(cells.filter((c) => c.endsWith("/―/"))).toHaveLength(2);

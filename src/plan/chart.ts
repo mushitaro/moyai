@@ -34,6 +34,8 @@ export interface ChartCatalog {
   workLabels: Record<WorkAttribute, string>;
   systems: Map<string, CatalogSystem>;
   items: Map<string, CatalogItem>;
+  /** 号炉・系統の単位の字（Skillパックの common.json の seriesUnit。ごみ焼却「号炉」・し尿「系統」）。無ければ null */
+  seriesUnit?: string | null;
 }
 
 type Json = Record<string, unknown>;
@@ -74,7 +76,7 @@ export function catalogFromPack(common: unknown, kindsWork: unknown): ChartCatal
       if (!items.has(ic)) items.set(ic, { code: ic, name: str(it.name, "items[].name"), systemCode: code, order: order++ });
     }
   });
-  return { workLabels, systems, items };
+  return { workLabels, systems, items, seriesUnit: typeof common.seriesUnit === "string" && common.seriesUnit !== "" ? common.seriesUnit : null };
 }
 
 // ---------------------------------------------------------------- 期
@@ -233,6 +235,8 @@ export interface ChartLabels {
   seriesLevel?: string;
   /** 号炉・系統を持たない機器の、号炉・系統の階層の行の名前（無ければ「―」） */
   noSeries?: string;
+  /** 号炉・系統が共通の行の字（無ければ「共通」） */
+  seriesCommon?: string;
 }
 
 export interface ChartOptions {
@@ -312,8 +316,14 @@ const markOf = (a: { plan: boolean; actual: boolean }): Mark | null => (a.plan &
 export const assetKeyOf = (rowId: string): string | null => (rowId.startsWith("n:") ? rowId.slice(2) : null);
 
 /** 自分の台帳の段の木。対象が計画の機器に無い記録は orphan に数える。分けた機器の階層（1 から。分けなければ null）も返す */
-function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): { roots: Node[]; machineLevel: number | null; unsplit: ReadonlySet<string> } {
+/** 号炉・系統の値が「共通」の書き方か（"common" か "common.<意味>"、「共通」） */
+const isCommonSeries = (s: string): boolean => s === "common" || s.startsWith("common.") || s === "共通";
+
+function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>, catalog: ChartCatalog): { roots: Node[]; machineLevel: number | null; unsplit: ReadonlyMap<string, string> } {
   const byKey = new Map<string, Node>();
+  // 号炉・系統の行の字：番号は Skillパックの単位の字で「1 号炉」、共通は「共通」だけ（意味は詳しくに。Wire、11-06）
+  const seriesText = (s: string): string =>
+    isCommonSeries(s) ? (labels.seriesCommon ?? "共通") : catalog.seriesUnit && /^\d+$/.test(s) ? `${s} ${catalog.seriesUnit}` : labels.series(s);
   const levelCount = new Map<number, number>();
   for (const a of plan.assets) if (a.series !== null) levelCount.set(a.level, (levelCount.get(a.level) ?? 0) + 1);
   const machineLevel = [...levelCount.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0]?.[0] ?? null;
@@ -324,15 +334,16 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>): { roo
   const split = (a: AssetNodeT) => {
     if (machineLevel === null || a.level !== machineLevel) return false;
     const g = groups.get(groupKey(a)) ?? [];
-    return !(g.length === 1 && a.series === null);
+    // 1 台きりで、号炉の番号を持たない（号炉・系統が無いか「共通」だけの）機器は分けない（行を倍にしない。Architect の 66 の 4）
+    return !(g.length === 1 && (a.series === null || isCommonSeries(a.series)));
   };
-  /** 分けなかった機器（号炉・系統の欄を空ける。下の部位は 1 つ飛ばして置く） */
-  const unsplit = new Set<string>();
+  /** 分けなかった機器（号炉・系統の欄に「共通」か「―」。下の部位は 1 つ飛ばして置く）：行の id → 号炉・系統の欄の字 */
+  const unsplit = new Map<string, string>();
   for (const a of plan.assets) {
     // 分けた機器の節は、号炉・系統の行になる（行の名前は号炉・系統。機器の名前は上の行）
-    const name = split(a) ? (a.series !== null ? labels.series(a.series) : (labels.noSeries ?? "―")) : a.name;
+    const name = split(a) ? (a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―")) : a.name;
     byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name, kind: "node", children: [], direct: [] });
-    if (machineLevel !== null && a.level === machineLevel && !split(a)) unsplit.add(`n:${a.nodeKey}`);
+    if (machineLevel !== null && a.level === machineLevel && !split(a)) unsplit.set(`n:${a.nodeKey}`, a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―"));
   }
   const roots: Node[] = [];
   const machineRow = new Map<string, Node>();
@@ -481,7 +492,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   // 似た施設は、共通の設備項目の行・年度の表のときだけ重ねる（塊は年度の粒度しか持たない）
   const overlay = opts.peers && opts.mode === "common" && opts.period === "year" ? opts.peers : null;
   const unknownPeer = new Set<string>();
-  const ledger = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan) : null;
+  const ledger = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan, catalog) : null;
   const machineLevel = ledger?.machineLevel ?? null;
   const roots = ledger ? ledger.roots : commonTree(plan, catalog, labels, orphan, overlay, unknownPeer);
 
@@ -494,7 +505,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   };
   walkMax(roots);
   // 号炉・系統の行を入れたら、機器の階層の名前のあとに、号炉・系統の階層の名前を入れる
-  const planLevels = machineLevel !== null ? [...plan.levelNames.slice(0, machineLevel), labels.seriesLevel ?? "号炉・系統", ...plan.levelNames.slice(machineLevel)] : plan.levelNames;
+  const planLevels = machineLevel !== null ? [...plan.levelNames.slice(0, machineLevel), catalog.seriesUnit ?? labels.seriesLevel ?? "号炉・系統", ...plan.levelNames.slice(machineLevel)] : plan.levelNames;
   const levelNames =
     opts.mode === "ledger"
       ? Array.from({ length: Math.max(maxLevel, planLevels.length) }, (_, i) => planLevels[i] || labels.levelFallback(i + 1))
@@ -566,8 +577,6 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   const emit = (n: Node, path: (string | null)[]) => {
     const p = path.slice();
     p[n.level - 1] = n.name;
-    // 号炉・系統を持たない機器は、号炉・系統の欄に「―」（空けると上と同じ号炉に読める。Wire）
-    if (ledger?.unsplit.has(n.id)) p[n.level] = labels.noSeries ?? "―";
     const hasChildren = n.children.length > 0;
     const folded = hasChildren && ((opts.foldLevel !== null && n.level >= opts.foldLevel) || (opts.collapsed?.has(n.id) ?? false));
     const cells: Record<string, ChartCell> = {};
@@ -650,6 +659,9 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
       for (let j = 0; j <= i; j++) if (prev.path[j] !== r.path[j]) return name;
       return "";
     });
+    // 号炉・系統を持たない機器の行は、号炉・系統の欄に「―」（空けると上と同じ号炉に読める。Wire）。道（aria-label・chart_rows）には入れない
+    const seriesCell = ledger?.unsplit.get(r.id);
+    if (seriesCell !== undefined && r.level < r.levelCells.length) r.levelCells[r.level] = seriesCell;
     prev = r;
   }
 
