@@ -88,15 +88,15 @@ node dist/cli.js start
 ### AI クライアントとつなぐ
 
 - **Claude Code**：リポジトリの `.mcp.json` が `moyai`（`node dist/cli.js mcp`）を登録しています。リポジトリのフォルダで Claude Code を開き、MCP の `moyai` を許可します。見張りのフックと deny（`.claude/settings.json`）も同じフォルダで効きます。
-- **Claude Desktop**：`setup`（Claude Desktop の設定に 1 行を足す）は未実装です。今は手で、Claude Desktop の設定ファイル `claude_desktop_config.json` の `mcpServers` に次を足します（`dist/cli.js` は絶対の道で書く）。MCP の instructions が Claude Desktop で効くかは未確認なので、同じ文を `skills/moyai/SKILL.md` にも置いています。
+- **Claude Desktop**：端末で次を走らせます。
 
-```json
-{
-  "mcpServers": {
-    "moyai": { "command": "node", "args": ["C:\\path\\to\\moyai\\dist\\cli.js", "mcp"] }
-  }
-}
+```bash
+node dist/cli.js setup
 ```
+
+`setup` は、Claude Desktop の設定（Windows は `%APPDATA%\Claude\claude_desktop_config.json`）の `mcpServers` に `moyai` の 1 行だけを足します。ほかのサーバーは消しません。書く前に足す行を出し、端末で「はい」と打つと書きます。前の設定は `.bak` に残します。端末でなければ断ります。
+
+そのあと、Claude Desktop を開き直す → 端末で `node dist/cli.js start` → 作業画面を開く、の順です。MCP の instructions が Claude Desktop で効くかは未確認なので、同じ文を `skills/moyai/SKILL.md` にも置いています。
 
 ### 共有フォルダと公開台帳を確かめる
 
@@ -236,7 +236,7 @@ npm run acceptance
 - 見ていない様式：5 組とも計画を作れなかった（⑥ 0%）。会話でルールを決める道は、デモの施設 C で計画まで届いた（⑥ 75.2%）が、見ていない様式では測っていない。写真は見ていない様式の台本では読んでいない。
 - 受け入れの試験で「試験が無い」もの（`docs/acceptance.md`、`e437dec`）：`cross-layer`・`counts`・`pack.map`・`trigger.property`・`windows`・`eval`。そのあと足した試験があるかは、表を作り直していないので未確認。
 - MCP のツール `note_for_human`・`share_preview` は名前と型だけ（呼ぶと「未実装」）。`skill_eval` は Skill の採点の画面ができるまで Claude に見せない。Skill の採点は CLI（`moyai eval`）だけ。
-- Claude Desktop の `setup`。Windows の Claude Desktop での端から端までの通し（未確認）。
+- Windows の Claude Desktop での端から端までの通し（未確認）。
 - `moyai send`（端末からの送信）。送信は作業画面の SHARE からだけ。
 - 外へ出た台帳（Claude に返した結果の大きさの記録）を画面に出すこと。
 - 長く送信していないメンバーを集計から外す決まり。
