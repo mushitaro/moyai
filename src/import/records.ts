@@ -331,8 +331,8 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const nameCols = t.cols.filter((c) => c.role === "name");
   const nameCol = nameCols[0];
   if (!nameCol) {
-    for (const r of t.rows) for (const cell of lay.index.rowCells(r.r)) pend(cell.ref);
-    ask.ask(`noName|${t.id}`, {
+    // 答えが「この表を外す」なら外す（Architect の 51。答えても保留のまま残ると計画を作れない）
+    const a = ask.ask(`noName|${t.id}`, {
       kind: "columnRole",
       text: "名前の列が見つからない表がある",
       options: [{ id: "exclude", label: "この表を外す" }],
@@ -341,6 +341,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       sameShapeRows: t.rows.length,
       items: [itemOf(lay, t.rows.slice(0, 10).map((r) => cellRef(r.r, 1)))],
     });
+    for (const r of t.rows) for (const cell of lay.index.rowCells(r.r)) (a === "exclude" ? exclude(cell.ref, "名前の列の無い表（決定で外した）") : pend(cell.ref));
     return order;
   }
   assignParents(t, nameCol.c);
@@ -427,9 +428,8 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     if (cells.every((c) => off(c.ref))) continue;
     const nc = nameCells.find((x) => x.r === r.r)?.cell;
     if (!nc || off(nc.ref)) {
-      // 名前の無い行：ほかの列だけに中身がある
-      for (const c of cells) if (!off(c.ref)) pend(c.ref);
-      ask.ask(`noNameRow|${t.id}`, {
+      // 名前の無い行：ほかの列だけに中身がある。答えが「外す」なら外す（Architect の 51）
+      const a = ask.ask(`noNameRow|${t.id}`, {
         kind: "stray",
         text: "名前の欄が空で、ほかの欄だけに中身がある行がある",
         options: [{ id: "exclude", label: "外す" }],
@@ -438,6 +438,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         sameShapeRows: 1,
         items: [itemOf(lay, cells.map((c) => c.ref))],
       });
+      for (const c of cells) if (!off(c.ref)) (a === "exclude" ? exclude(c.ref, "名前の欄が空の行（決定で外した）") : pend(c.ref));
       continue;
     }
     if (r.level === -1) {

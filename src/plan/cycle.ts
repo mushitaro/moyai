@@ -192,3 +192,73 @@ export function proposeCycles(
 
 /** 明細の鍵から、周期の案の ID（周期の案でなければ null） */
 export const cycleIdOf = (detailKey: string): string | null => CYCLE_KEY.exec(detailKey)?.[1] ?? null;
+
+// ─── 人が受けた周期の案 → 作業のきっかけ（Architect の 44） ───────────────
+// 周期の案は計画の印（○）を引くだけで、作業のきっかけ（次回の元）は AI が直に書かない（42 の 1）。人が確定のシートで案を受けて版を確定したときに、
+// その作業のきっかけを、案の年数で決める：
+// - きっかけが無い作業：暦の枝 1 つ（n 年ごと）を置く。
+// - 暦の枝が 1 つだけ（年だけ）で年数が違う作業：案の年数に置き換える（同じなら変えない）。
+// - 計量値の枝がある・枝がいくつもある・月や幅のある暦の枝：きっかけを変えず、変えていない作業として返す（画面が出す）。
+// - 同じ作業に年数の違う案を 2 つ以上受けていれば止める（どちらかに決めない）。
+
+/** 根拠の文から、その案の年数（proposeCycles が書いた「（案 <id>：n 年ごと。」）。読めなければ null */
+export function cycleYearsInBasis(id: string, basis: string | null): number | null {
+  if (!basis) return null;
+  const m = new RegExp(`（案 ${id}：([0-9]+) 年ごと。`).exec(basis);
+  const n = m ? Number(m[1]) : NaN;
+  return Number.isInteger(n) && n >= CYCLE_YEARS.min && n <= CYCLE_YEARS.max ? n : null;
+}
+
+export type CycleTriggerChange = { workKey: string; years: number; from: number | null; kind: "set" | "replaced" | "kept" };
+
+export type AcceptedCyclesOutcome = { ok: true; plan: Plan; changes: CycleTriggerChange[] } | { ok: false; conflicts: string[] };
+
+/** 暦の枝 1 つで年だけのきっかけなら、その年数。きっかけが無ければ "none"。ほかの形は "other" */
+function calendarYearsOf(trigger: unknown): number | "none" | "other" {
+  if (trigger === null || trigger === undefined) return "none";
+  const t = trigger as { branches?: unknown };
+  if (!Array.isArray(t.branches)) return "other";
+  if (t.branches.length === 0) return "none";
+  if (t.branches.length !== 1) return "other";
+  const b = t.branches[0] as { kind?: unknown; years?: unknown; months?: unknown; upTo?: unknown };
+  if (b.kind !== "calendar" || b.upTo !== undefined || (b.months !== undefined && b.months !== 0)) return "other";
+  return typeof b.years === "number" && Number.isInteger(b.years) ? b.years : "other";
+}
+
+/** 受けた周期の案（明細の鍵）から、作業のきっかけを決める。受けた案が無ければ計画をそのまま返す */
+export function applyAcceptedCycles(plan: Plan, acceptedDetailKeys: ReadonlySet<string>): AcceptedCyclesOutcome {
+  const byWork = new Map<string, Set<number>>();
+  for (const d of plan.details) {
+    if (!acceptedDetailKeys.has(d.detailKey)) continue;
+    const id = cycleIdOf(d.detailKey);
+    if (id === null) continue;
+    const years = cycleYearsInBasis(id, d.basis);
+    if (years === null) continue;
+    const s = byWork.get(d.workKey) ?? new Set<number>();
+    s.add(years);
+    byWork.set(d.workKey, s);
+  }
+  if (byWork.size === 0) return { ok: true, plan, changes: [] };
+  const conflicts = [...byWork].filter(([, s]) => s.size > 1).map(([k]) => k);
+  if (conflicts.length > 0) return { ok: false, conflicts };
+  const changes: CycleTriggerChange[] = [];
+  const works = plan.works.map((w) => {
+    const s = byWork.get(w.workKey);
+    if (!s) return w;
+    const years = [...s][0]!;
+    const cur = calendarYearsOf(w.trigger);
+    if (cur === "other") {
+      changes.push({ workKey: w.workKey, years, from: null, kind: "kept" });
+      return w;
+    }
+    if (cur === "none") {
+      changes.push({ workKey: w.workKey, years, from: null, kind: "set" });
+      return { ...w, trigger: { branches: [{ kind: "calendar", years }], combine: "earliest" } };
+    }
+    if (cur === years) return w;
+    changes.push({ workKey: w.workKey, years, from: cur, kind: "replaced" });
+    const t = w.trigger as { branches: unknown[] };
+    return { ...w, trigger: { ...t, branches: [{ ...(t.branches[0] as object), years }] } };
+  });
+  return { ok: true, plan: { ...plan, works }, changes };
+}

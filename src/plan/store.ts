@@ -13,6 +13,7 @@ import type { AuthorKind } from "../shared/fields";
 import { Plan } from "../shared/plan";
 import type { Rule } from "../shared/tools";
 import type { ChartCatalog } from "./chart";
+import { applyAcceptedCycles } from "./cycle";
 import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
 import { fixWorkbook } from "./xlsx-fix";
@@ -321,7 +322,7 @@ export type CommitResult =
   | { ok: true; version: number; record: VersionRecord; diff: PlanDiff; files: { version: string; report: string; export: string | null } }
   | {
       ok: false;
-      reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown" | "nameInvalid" | "historyBroken" | "deriveNotFirst" | "deriveSourceInvalid" | "versionTooLarge";
+      reason: "reasonEmpty" | "planInvalid" | "planIdInvalid" | "stale" | "pendingDecisions" | "acceptanceReasonEmpty" | "acceptanceUnknown" | "exists" | "revertUnknown" | "nameInvalid" | "historyBroken" | "deriveNotFirst" | "deriveSourceInvalid" | "versionTooLarge" | "cycleConflict";
       pending?: number;
     };
 
@@ -386,7 +387,13 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     const src = await readPlanVersion(i.root, from.planId, from.version);
     if (!src.ok || src.contentHash !== from.contentHash) return { ok: false, reason: "deriveSourceInvalid" };
   }
-  const applied = applyAcceptances(plan, i.acceptances);
+  // 人が受けた周期の案で、作業のきっかけを決める（Architect の 44。同じ作業に年数の違う案を受けていれば止める）
+  const cycles = applyAcceptedCycles(
+    applyAcceptances(plan, i.acceptances),
+    new Set(i.acceptances.filter((a) => a.id.startsWith("detail:")).map((a) => a.id.slice("detail:".length))),
+  );
+  if (!cycles.ok) return { ok: false, reason: "cycleConflict", pending: cycles.conflicts.length };
+  const applied = cycles.plan;
   return writeVersion(i.root, hist, {
     kind: "confirm",
     revertOf: null,
