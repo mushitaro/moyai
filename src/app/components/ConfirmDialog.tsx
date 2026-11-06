@@ -6,6 +6,7 @@ import { Alert, Anchor, Button, Group, Modal, Radio, Stack, Table, Text, TextInp
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
 import { droppedPlanRules, readingsForCommit, readingsSigned } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
+import { settleDraft } from "../state/draft";
 import { pendingDeriveFor, setPendingDerive } from "../state/derive";
 import { getWorkingPlan } from "../state/plan-store";
 import { sheetHash } from "../stages";
@@ -253,6 +254,8 @@ export function ConfirmDialog({
     setHandoffMail(r.body.mail);
     if (pendingDeriveFor(plan.planId)) setPendingDerive(null);
     clearAccepted();
+    // 確定したら、前の作業の写しを消す（pwa-v0）
+    settleDraft(plan.planId);
     onConfirmed(r.body.plan);
   };
 
@@ -465,6 +468,8 @@ export function HistoryDialog({
     setBusy(false);
     if (!r.ok) return setMsg({ color: "red", text: r.message });
     setMsg({ color: "teal", text: H.reverted(r.body.version) });
+    // 前の版に戻した（署名した）ので、前の作業の写しを消す（pwa-v0）
+    settleDraft(planId);
     setTarget(null);
     setReason("");
     onReverted(r.body.plan);

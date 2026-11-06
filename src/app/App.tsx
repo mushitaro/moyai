@@ -13,6 +13,12 @@ import { connectTabTools } from "./intake/tab-tools";
 import { SelfTest } from "./pages/SelfTest";
 import { APP_PAGES, ROUTES } from "../shared/routes";
 import { moyaiCssVariables, moyaiTheme } from "../ui/mantine-theme";
+import { DraftBand } from "./components/DraftBand";
+import { DraftKeeper, indexedDbPort, installDraftKeeper } from "./state/draft";
+import { guardLeave, planStateOf, type LeaveState } from "./state/leave";
+import { getWorkingPlan } from "./state/plan-store";
+import { acceptedList } from "./state/decisions";
+import { STAGE_HASH } from "./stages";
 
 // 検問所と設定は人だけの画面（開いたときに読む）
 const Checkpoint = lazy(() => import("./pages/Checkpoint").then((m) => ({ default: m.Checkpoint })));
@@ -26,6 +32,29 @@ const Export = lazy(() => import("./pages/Export").then((m) => ({ default: m.Exp
 // AI のツールの受け手は、つなぐ前に登録する
 const workspace = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
 const client = bridgeClient((c) => connectTabTools(c, workspace));
+
+// 前の作業の写し（作業中の計画と確定のシートの確定。IndexedDB。資料は書かない）。IndexedDB が無ければ置かない
+const draftPort = indexedDbPort();
+if (draftPort) installDraftKeeper(new DraftKeeper({ port: draftPort, build: `${__MOYAI_BUILD__.time} ${__MOYAI_BUILD__.commit}` }));
+
+/** 閉じる前の知らせに使う、今の作業（資料・答え・作業中の計画・確定のシートの確定） */
+function leaveState(): LeaveState {
+  const plan = planStateOf(getWorkingPlan());
+  return {
+    files: workspace.fileCount,
+    // 資料と答えが保管先の版に入っている：その版の資料を戻したか、このタブで作ったあと、資料も答えも変えていない
+    filesInStored: !workspace.notRecomposed() && (workspace.restoredFrom !== null || workspace.compose.state === "done"),
+    accepted: acceptedList().length,
+    plan,
+  };
+}
+guardLeave(window, leaveState);
+
+/** 前の作業を戻したら、計画の ID を取り込みの作業場に固定し（版を開いたときと同じ）、HOSHITORI を開く */
+function onDraftRestored(planId: string) {
+  workspace.pinPlanId(planId);
+  location.hash = STAGE_HASH.merge;
+}
 
 function useHash(): string {
   const [hash, setHash] = useState(location.hash || APP_PAGES.home);
@@ -66,7 +95,7 @@ export function App() {
     <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
       <ThemeSync />
       <ReadingsSync />
-      <Shell client={client} hash={hash}>
+      <Shell client={client} hash={hash} status={<DraftBand onRestored={onDraftRestored} />}>
       {route.stage === "selftest" ? (
         <SelfTest />
       ) : route.stage === "share" || route.stage === "settings" ? (

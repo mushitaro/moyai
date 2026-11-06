@@ -233,6 +233,11 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   const handlers: { [K in Exclude<RouteId, HumanRouteId>]: RouteHandler } = {
     app: async ({ res, url }) => serveStatic(res, url.pathname),
     assets: async ({ res, url }) => serveStatic(res, url.pathname),
+    // PWA：manifest・Service Worker・アイコン（型は static.ts の表。sw.js は no-store なので、版が変わればブラウザが読み直す）
+    manifest: async ({ res, url }) => serveStatic(res, url.pathname),
+    serviceWorker: async ({ res, url }) => serveStatic(res, url.pathname),
+    icon192: async ({ res, url }) => serveStatic(res, url.pathname),
+    icon512: async ({ res, url }) => serveStatic(res, url.pathname),
     selftestEd25519: ({ res }) => sendJson(res, 200, makeEd25519Sample()),
     // WebSocket の経路に、Upgrade の無い GET が来たとき
     ws: ({ res }) => reject(res, "method_not_allowed"),

@@ -33,6 +33,19 @@ export function buildStamp(now = new Date()) {
 
 export const STAMP_ENV = "MOYAI_BUILD_STAMP";
 
+/** Service Worker（src/app/public/sw.js）の印の置き場所。sw.js の中にちょうど 1 つ置く */
+export const SW_STAMP_TOKEN = '"__MOYAI_BUILD__"';
+
+/**
+ * ビルドした sw.js に印を埋める（覚えの名前に入り、版が変わると古い覚えを捨てる）。
+ * 置き場所がちょうど 1 つでなければ止める（印の無い Service Worker を黙って出さない）。
+ */
+export function stampServiceWorker(source, stamp) {
+  const n = source.split(SW_STAMP_TOKEN).length - 1;
+  if (n !== 1) throw new Error(`sw.js の印の置き場所が ${n} 個（1 個のはず）`);
+  return source.replace(SW_STAMP_TOKEN, JSON.stringify(`${stamp.time} ${stamp.commit}`));
+}
+
 /** scripts/build.mjs が 1 回だけ作って環境変数に入れた印を読む。無ければここで作る（設定を単独で使ったとき）。 */
 export function sharedBuildStamp(env = process.env) {
   if (env[STAMP_ENV]) return JSON.parse(env[STAMP_ENV]);

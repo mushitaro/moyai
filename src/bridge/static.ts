@@ -1,4 +1,4 @@
-// ビルドした画面のファイルを返す。道は許可の一覧（/ と /assets/）だけで、フォルダの外へは出ない。
+// ビルドした画面のファイルを返す。道は許可の一覧（/ と /assets/ と、PWA の manifest・sw.js・アイコン）だけで、フォルダの外へは出ない。
 import { readFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 
@@ -7,6 +7,8 @@ const TYPES: Record<string, string> = {
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  // PWA の manifest（public/manifest.webmanifest）
+  ".webmanifest": "application/manifest+json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".woff2": "font/woff2",

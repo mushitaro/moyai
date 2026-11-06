@@ -95,6 +95,11 @@ function human<A extends HumanAction, P extends string>(path: P, action: A, maxB
 export const ROUTES = {
   app: { method: "GET", path: "/", kind: "static", note: "画面の入口（index.html）" },
   assets: { method: "GET", prefix: "/assets/", kind: "static", note: "ビルドした JS・CSS・書体" },
+  // PWA（pwa-v0）：manifest・Service Worker・アイコン 2 つ。どれも完全一致の道だけ
+  manifest: { method: "GET", path: "/manifest.webmanifest", kind: "static", note: "PWA の manifest" },
+  serviceWorker: { method: "GET", path: "/sw.js", kind: "static", note: "Service Worker（画面の殻だけを覚える）" },
+  icon192: { method: "GET", path: "/brand/png/icon-192.png", kind: "static", note: "PWA のアイコン（192px）" },
+  icon512: { method: "GET", path: "/brand/png/icon-512.png", kind: "static", note: "PWA のアイコン（512px）" },
   selftestEd25519: {
     method: "GET",
     path: "/selftest/ed25519",

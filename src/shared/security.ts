@@ -59,6 +59,10 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push(`- 要約の欄ごとの多い値は ${SURVEY_TOP_VALUES} まで、文字は ${SURVEY_TEXT_MAX} 字まで。行の参照の例は ${EXAMPLES_MAX} 件まで。`);
   L.push(`- 資料は 1 ファイル ${Math.round(i.maxFileBytes / 1024 / 1024)} MB まで（作業画面のタブのメモリに読みます）。`);
   L.push(
+    "- 作業中の計画と、確定のシートで確定した行は、閉じたあとに戻せるよう、作業画面がこの PC のブラウザの保存領域（IndexedDB）にも 1 つだけ写します。資料は写しません。写しは確定・署名・「捨てる」で消します。" +
+      "Service Worker がブラウザに覚えるのは画面の殻（index.html・JS・CSS・書体）だけで、人だけの経路とツールの道は覚えません。",
+  );
+  L.push(
     `- 写真は、人が作業画面で 1 枚ずつ許したものだけを、1 回に 1 枚渡します。作業画面が長辺 ${PHOTO_SEND.longSideMin.toLocaleString("ja-JP")}〜${PHOTO_SEND.longSideMax.toLocaleString("ja-JP")} px・JPEG で約 ${PHOTO_SEND.targetBytes / 1024} KB 以下に描き直し（切り抜かず、位置などの付け足しの情報は落とす）、` +
       `橋渡しは、許した画像のハッシュと合うものだけを渡します（${PHOTO_SEND.maxBytes / 1024} KB を越えるものは渡しません）。許しは 1 回渡すと使い終わります。`,
   );
