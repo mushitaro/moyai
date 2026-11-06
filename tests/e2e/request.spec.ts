@@ -41,7 +41,9 @@ async function open(browser: Browser): Promise<Page> {
 
 async function settings(page: Page, base: string, root: string, name: string) {
   await page.goto(`${base}/#/settings`);
+  await page.getByTestId("root-change").click();
   await page.getByTestId("root-input").fill(root);
+  await page.getByTestId("name-change").click();
   await page.getByTestId("name-input").fill(name);
   await page.getByTestId("settings-save").click();
   await expect(page.getByTestId("current-name")).toHaveText(name);

@@ -39,8 +39,11 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
   try {
     await test.step("人：設定で置き場所・呼び名・台帳の clone の場所を選ぶ", async () => {
       await page.goto(`${bridge.base}/#/settings`);
+      await page.getByTestId("root-change").click();
       await page.getByTestId("root-input").fill(root);
+      await page.getByTestId("name-change").click();
       await page.getByTestId("name-input").fill(E2E_NAME);
+      await page.getByTestId("ledger-change").click();
       await page.getByTestId("ledger-input").fill(repo);
       await page.getByTestId("settings-save").click();
       await expect(page.getByTestId("current-ledger")).toHaveText(repo);
@@ -123,6 +126,23 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       await expect(row).toContainText("- 台帳案");
       await expect(row).toContainText(`周期の案 ${proposalId}`);
       await expect(row).toContainText("- 台帳案");
+      // 受けたら作業のきっかけがどう変わるかを、項目の行に出す（「周期 ― → 5 年」か「反映なし（…）」。Architect の 44、Wire、11-06）
+      await expect(row.getByTestId("cycle-change").or(row.getByTestId("cycle-kept")).first()).toBeVisible();
+      await expect(row.getByTestId("cycle-change").or(row.getByTestId("cycle-kept")).first()).toHaveText(/^(周期 (\u2015|\d+ 年) → \d+ 年|反映なし（.+）)$/);
+      // 却下のダイアログ（Wire、11-06）：題「却下」、項目の 1 行、欄「判断の理由」。空のあいだは押せない。「あとで」で閉じる
+      await page.getByTestId("decisions-reason").fill("試験の台本が開いた");
+      await row.getByTestId("pending-reject").click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toContainText("却下");
+      await expect(page.getByTestId("reject-item")).toContainText(`周期の案 ${proposalId}`);
+      await expect(page.getByTestId("reject-reason")).toHaveValue("試験の台本が開いた");
+      await page.getByTestId("reject-reason").fill("");
+      await expect(page.getByTestId("cycle-reject-confirm")).toBeDisabled();
+      await expect(page.getByTestId("reject-disabled-reason")).toHaveText("理由：判断の理由が未入力");
+      await page.screenshot({ path: shot(`ledger-plan-reject-${tag}`) });
+      await dialog.getByRole("button", { name: "あとで" }).click();
+      await expect(page.getByTestId("reject-item")).toHaveCount(0);
+      await page.getByTestId("decisions-reason").fill("");
       await page.screenshot({ path: shot(`ledger-plan-decisions-${tag}`), fullPage: true });
       await acceptDecisions(page, "試験の台本が押した（似た施設の帯を見て、周期の案を受けた）");
       // 受けたら、破線の円はふつうの計画の印になり、凡例の「Claude の案」も消える

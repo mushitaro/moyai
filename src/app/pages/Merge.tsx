@@ -14,7 +14,7 @@ import { SignDialog } from "../components/SignDialog";
 import { KeyWarnLine, untrustedSigners, type TrustSig } from "../components/KeyWarn";
 import { RequestRenewDialog } from "../components/RequestRenewDialog";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
-import { DecisionsSheet, usePending } from "../components/DecisionsSheet";
+import { DecisionsSheet, cycleConflicts, usePending } from "../components/DecisionsSheet";
 import { CostSheet } from "../components/CostSheet";
 import { ReadingsSheet, unapprovedReadings } from "../components/ReadingsSheet";
 import { MatchSheet } from "../components/MatchSheet";
@@ -270,6 +270,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const openQuestions = an ? an.open.length : 0;
   // 受けていない決定と、案のままの当てはめの規則（規則が当てている行は決定に二重に数えない。台帳の新-4）
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules;
+  // 同じ作業に年数の違う周期の案を受けている（確定を止める。Architect の 44、Wire、11-06）
+  const cycleDup = useMemo(() => cycleConflicts(plan, accepted).length, [plan, accepted]);
   // 白紙のあいだに「第 1 版をつくる」を止めている理由（取り込みと同じもの）
   const composeBlocks = !plan ? ws.composeBlockers() : [];
   const blocks = [
@@ -279,6 +281,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     plan && !viewOnly && ws.notRecomposed() ? T.block.notRecomposed : null,
     openQuestions > 0 ? T.block.open(openQuestions) : null,
     leftDecisions > 0 ? T.block.pending(leftDecisions) : null,
+    cycleDup > 0 ? T.block.cycleDup(cycleDup) : null,
     conn.kind !== "open" ? T.block.notConnected : null,
   ].filter((x): x is string => x !== null);
   const name = plan?.displayName || ws.settings.facilityName || T.newFacility;

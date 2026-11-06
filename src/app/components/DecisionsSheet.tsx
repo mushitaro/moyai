@@ -12,9 +12,10 @@ import { createPortal } from "react-dom";
 import { MergeSideContext } from "../state/merge-side";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
-import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
+import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import { rejectCycleByHuman, rejectedCycles } from "../state/cycles";
-import type { Plan } from "../../shared/plan";
+import type { Plan, WorkT } from "../../shared/plan";
+import type { Acceptance } from "../../plan/diff";
 import type { BridgeClient } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { acceptByHuman, getCrosswalkBase, rejectByHuman, valueLabel } from "../state/crosswalk";
@@ -48,6 +49,36 @@ export function usePending(client: BridgeClient, plan: Plan | null): { pending: 
     return pendingDecisions(plan, status.accepted ?? []).filter((d) => !held.has(d.id));
   }, [plan, status, proposals]);
   return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, ready: !!status };
+}
+
+// ─── 周期の案を受けたときの作業のきっかけ（Architect の 44。Wire、11-06） ───────────
+/** 受けた決定のうち、計画の印（明細）の鍵 */
+function acceptedDetailKeys(accepted: ReadonlyMap<string, Acceptance>): Set<string> {
+  return new Set([...accepted.values()].filter((a) => a.id.startsWith("detail:")).map((a) => a.id.slice("detail:".length)));
+}
+/** 同じ作業に年数の違う周期の案を受けている作業（確定を止める。下の帯の「周期の案の重複 n」） */
+export function cycleConflicts(plan: Plan | null, accepted: ReadonlyMap<string, Acceptance>): string[] {
+  if (!plan) return [];
+  const r = applyAcceptedCycles(plan, acceptedDetailKeys(accepted));
+  return r.ok ? [] : r.conflicts;
+}
+/** 受けても作業のきっかけを変えない理由（計量値の枝・枝がいくつも・月の周期） */
+function keptWhy(w: WorkT | undefined): string {
+  const bs = ((w?.trigger as { branches?: { kind: string; meter?: string }[] } | null)?.branches ?? []) as { kind: string; meter?: string }[];
+  if (bs.length > 1) return T.keptBranches(bs.length);
+  if (bs[0]?.kind === "meter") return T.keptMeter(bs[0].meter ?? "");
+  return T.keptMonths;
+}
+/** 1 つの周期の案を受けたら、作業のきっかけがどう変わるか：「周期 4 年 → 5 年」と「反映なし（…）」の字（同じ字は 1 つ） */
+function cycleEffect(plan: Plan, ds: readonly Decision[]): { changes: string[]; kept: string[] } {
+  const r = applyAcceptedCycles(plan, new Set(ds.map((d) => d.id.slice("detail:".length))));
+  if (!r.ok) return { changes: [], kept: [] };
+  const works = new Map(plan.works.map((w) => [w.workKey, w]));
+  return {
+    changes: [...new Set(r.changes.flatMap((c) => (c.kind !== "kept" && c.years !== null ? [T.cycleChange(c.from, c.years)] : [])))],
+    // 年数を鍵から読めない前の形の案（years が null）は、きっかけを変えない（Architect の 61）
+    kept: [...new Set(r.changes.filter((c) => c.kind === "kept").map((c) => T.cycleKept(c.years === null ? T.keptOldKey : keptWhy(works.get(c.workKey)))))],
+  };
 }
 
 /** 規則の条件の値を人の言葉で（節や作業の鍵の条件は、その名前に読み替える） */
@@ -103,6 +134,9 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   // 周期の案（台帳案・ルール案・会話の回答・Claude 判断の L・C・R）を選ぶと、横の板の詳細に出す（「| 却下」「| 確定」）
   const [pickedCycle, setPickedCycle] = useState<string | null>(null);
   const [rejectingCycle, setRejectingCycle] = useState<{ id: string; n: number } | null>(null);
+  // 却下のダイアログの「判断の理由」（開くときに上の欄の理由を入れておく。空のあいだは「却下」を押せない。Wire、11-06）
+  const [rejectReason, setRejectReason] = useState("");
+  const rejectOk = rejectReason.trim().length > 0;
   const pick = (p: CrosswalkProposal) => {
     setPicked(p);
     setPickedCycle(null);
@@ -137,6 +171,27 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     return out;
   }, [pending]);
   const isDone = (ds: Decision[]) => ds.every((x) => accepted.has(`${x.id}\u0000${x.hash}`));
+  // 受けた周期の案が同じ作業で年数の違うとき、その案の行に「- 重複」（朱）
+  const conflicted = useMemo(() => new Set(cycleConflicts(plan, accepted)), [plan, accepted]);
+  const detailWork = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.workKey])), [plan]);
+  const isDup = (ds: readonly Decision[]) => conflicted.size > 0 && ds.some((d) => isAccepted(d.id, d.hash) && conflicted.has(detailWork.get(d.id.slice("detail:".length)) ?? ""));
+  const effectLines = (ds: readonly Decision[]) => {
+    const e = cycleEffect(plan, ds);
+    return (
+      <>
+        {e.changes.map((t) => (
+          <Text key={t} size="xs" c="var(--text-2)" className="moyai-num" data-testid="cycle-change">
+            {t}
+          </Text>
+        ))}
+        {e.kept.map((t) => (
+          <Text key={t} size="xs" c="var(--text-3)" data-testid="cycle-kept">
+            {t}
+          </Text>
+        ))}
+      </>
+    );
+  };
   const openGroups = groups.filter((g) => !isDone(g.ds));
   const doneGroups = groups.filter((g) => isDone(g.ds));
   const allOpenRules = proposals.filter((p) => p.state === "proposed");
@@ -212,6 +267,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         title={ok ? undefined : T.needsReason}
         onClick={(e) => {
           e.stopPropagation();
+          setRejectReason(reason);
           setRejectingCycle({ id: cycle, n: ds.length });
         }}
         data-testid="pending-reject"
@@ -247,8 +303,14 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       >
         <Table.Td>
           <Text size="sm">{cycle ? T.cycleWhat(cycle, ds.length) : what(d)}</Text>
+          {cycle && effectLines(ds)}
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
             {cycle && isLedgerCycle(cycle) ? T.kind.ledger : cycle && isPlanRuleCycle(cycle) ? T.kind.rule : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
+            {cycle && isDup(ds) && (
+              <span style={{ marginLeft: 8 }} data-testid="cycle-dup">
+                {T.dup}
+              </span>
+            )}
           </Text>
           {d.kind === "reading" && d.where && (
             <Text size="xs" c="var(--text-3)" data-testid="pending-where">
@@ -344,7 +406,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       <Table.Td ta="right">
         {p.state === "proposed" ? (
           <Group gap="xs" wrap="nowrap" justify="flex-end">
-            <Button size="compact-sm" variant="default" disabled={!ok} title={ok ? undefined : T.needsReason} onClick={() => setRejecting(p)} data-testid="crosswalk-reject">
+            <Button size="compact-sm" variant="default" disabled={!ok} title={ok ? undefined : T.needsReason} onClick={() => (setRejectReason(reason), setRejecting(p))} data-testid="crosswalk-reject">
               {W.reject}
             </Button>
             <Button size="compact-sm" disabled={!ok} title={ok ? undefined : T.needsReason} onClick={() => acceptRule(p)} data-testid="crosswalk-accept">
@@ -382,6 +444,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         {cycleKind === "same" ? T.kinds.same(sameAs ?? 0) : T.kinds[cycleKind]}
       </Text>
       <Text size="sm">{T.cycleWhat(cycleGroup.cycle, cycleGroup.ds.length)}</Text>
+      {effectLines(cycleGroup.ds)}
       <Text size="xs" c="dimmed">
         {T.detailWhy}
       </Text>
@@ -520,52 +583,66 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         <DirectSet plan={plan} onDone={setMsg} />
       </details>
 
-      <Modal opened={!!rejecting} onClose={() => setRejecting(null)} title={rejecting ? W.rejectTitle(rejecting.ruleId) : ""} centered data-testid="crosswalk-reject-dialog">
+      <Modal opened={!!rejecting} onClose={() => setRejecting(null)} title={T.rejectTitle} centered data-testid="crosswalk-reject-dialog">
         {rejecting && (
           <Stack gap="sm">
-            <Text size="sm">{W.rejectBody(rejecting.ruleId, heldRows(plan, rejecting).length)}</Text>
-            <Text size="xs" c="dimmed">
-              {T.reasonLabel}：{reason}
+            <Text size="sm" c="var(--text-2)" data-testid="reject-item">
+              {rejecting.target === "assetNode" ? T.ruleNodeHead : T.ruleWorkHead}{whenShort(rejecting, names)} → {targetPath(rejecting)}
             </Text>
-            <Group justify="flex-end" gap="sm">
+            <TextInput label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
+            <Group justify="flex-end" gap="sm" wrap="nowrap">
+              {!rejectOk && (
+                <Text size="xs" c="var(--text-3)" data-testid="reject-disabled-reason">
+                  {T.needsReason}
+                </Text>
+              )}
               <Button variant="default" onClick={() => setRejecting(null)}>
-                {W.cancel}
+                {T.rejectLater}
               </Button>
               <Button
                 data-testid="crosswalk-reject-confirm"
+                disabled={!rejectOk}
                 onClick={() => {
-                  const r = rejectByHuman(rejecting.ruleId, reason);
+                  if (!rejectOk) return;
+                  const r = rejectByHuman(rejecting.ruleId, rejectReason);
                   setMsg(r.ok ? { color: "gray", text: W.rejectedDone(rejecting.ruleId, r.rows) } : { color: "red", text: W.refused[r.reason] ?? "" });
                   setRejecting(null);
                 }}
               >
-                {W.rejectConfirm}
+                {T.rejectConfirm}
               </Button>
             </Group>
           </Stack>
         )}
       </Modal>
-      <Modal opened={!!rejectingCycle} onClose={() => setRejectingCycle(null)} title={rejectingCycle ? T.cycleRejectTitle(rejectingCycle.id) : ""} centered data-testid="cycle-reject-dialog">
+      <Modal opened={!!rejectingCycle} onClose={() => setRejectingCycle(null)} title={T.rejectTitle} centered data-testid="cycle-reject-dialog">
         {rejectingCycle && (
           <Stack gap="sm">
-            <Text size="sm">{T.cycleRejectBody(rejectingCycle.id, rejectingCycle.n, isPlanRuleCycle(rejectingCycle.id))}</Text>
-            <Text size="xs" c="dimmed">
-              {T.reasonLabel}：{reason}
+            <Text size="sm" c="var(--text-2)" data-testid="reject-item">
+              {T.cycleWhat(rejectingCycle.id, rejectingCycle.n)}
             </Text>
-            <Group justify="flex-end" gap="sm">
+            <TextInput label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
+            <Group justify="flex-end" gap="sm" wrap="nowrap">
+              {!rejectOk && (
+                <Text size="xs" c="var(--text-3)" data-testid="reject-disabled-reason">
+                  {T.needsReason}
+                </Text>
+              )}
               <Button variant="default" onClick={() => setRejectingCycle(null)}>
-                {W.cancel}
+                {T.rejectLater}
               </Button>
               <Button
                 data-testid="cycle-reject-confirm"
+                disabled={!rejectOk}
                 onClick={() => {
-                  const r = rejectCycleByHuman(rejectingCycle.id, reason);
+                  if (!rejectOk) return;
+                  const r = rejectCycleByHuman(rejectingCycle.id, rejectReason);
                   setMsg(r.ok ? { color: "gray", text: T.cycleRejectedDone(rejectingCycle.id, r.marks) } : { color: "red", text: T.cycleRejectRefused });
                   if (pickedCycle === rejectingCycle.id) setPickedCycle(null);
                   setRejectingCycle(null);
                 }}
               >
-                {W.rejectConfirm}
+                {T.rejectConfirm}
               </Button>
             </Group>
           </Stack>

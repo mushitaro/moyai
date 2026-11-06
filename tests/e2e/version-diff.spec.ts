@@ -30,7 +30,9 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
   try {
     await test.step("人：設定で置き場所と呼び名。見本の計画を MERGE で開き、決定を受けて第 1 版に署名する", async () => {
       await page.goto(`${bridge.base}/#/settings`);
+      await page.getByTestId("root-change").click();
       await page.getByTestId("root-input").fill(root);
+      await page.getByTestId("name-change").click();
       await page.getByTestId("name-input").fill(E2E_NAME);
       await page.getByTestId("settings-save").click();
       await expect(page.getByTestId("current-name")).toHaveText(E2E_NAME);

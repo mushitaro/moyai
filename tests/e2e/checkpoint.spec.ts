@@ -92,17 +92,27 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
   await test.step("設定：Documents の場所と同期の知らせ。置き場所を選んで保存", async () => {
     await page.goto(`${base}/#/settings`);
     await expect(page.getByTestId("settings-page")).toBeVisible();
+    // 保存先は 1 行（道・既定・同期フォルダ・「| 変更」）。Documents の行・同期の知らせ・入力は「変更」を押したときだけ（Wire、11-06）
+    await expect(page.getByTestId("current-root")).toBeVisible();
+    await expect(page.getByTestId("documents-path")).toHaveCount(0);
+    await expect(page.getByTestId("root-input")).toHaveCount(0);
+    await expect(page.getByTestId("settings-save")).toBeDisabled();
+    await expect(page.getByTestId("settings-save-reason")).toHaveText("理由：変更なし");
+    await page.screenshot({ path: shot(`settings-${tag}`), fullPage: true });
+    // 下の節（Skillパック・AI への提供範囲・Skill の採点・開発の道具）も写しに入れる
+    await page.getByTestId("dev-setting").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: shot(`settings-bottom-${tag}`) });
+    await page.getByTestId("root-change").click();
     await expect(page.getByTestId("documents-path")).toBeVisible();
     // この PC の Documents は OneDrive の下にある（docs/plan.md §2.9）。そうでない PC では知らせが出ない
     const docs = (await page.getByTestId("documents-path").textContent()) ?? "";
     if (/onedrive/i.test(docs)) await expect(page.getByTestId("root-synced").first()).toBeVisible();
-    await expect(page.getByTestId("settings-save")).toBeDisabled();
-    await page.screenshot({ path: shot(`settings-${tag}`), fullPage: true });
     await page.getByTestId("root-input").fill(root);
     // 版の署名に出す呼び名（架空）
+    await page.getByTestId("name-change").click();
     await page.getByTestId("name-input").fill("【架空】試験の台本");
     await page.getByTestId("settings-save").click();
-    await expect(page.getByTestId("settings-saved")).toBeVisible();
+    await expect(page.getByTestId("settings-save")).toBeDisabled();
     await expect(page.getByTestId("current-root")).toHaveText(root);
     await expect(page.getByTestId("current-name")).toHaveText("【架空】試験の台本");
   });

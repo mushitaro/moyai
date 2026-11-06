@@ -28,7 +28,9 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
 
   await test.step("人：設定。見本の計画を第 1 版として署名する", async () => {
     await page.goto(`${bridge.base}/#/settings`);
+    await page.getByTestId("root-change").click();
     await page.getByTestId("root-input").fill(root);
+    await page.getByTestId("name-change").click();
     await page.getByTestId("name-input").fill(E2E_NAME);
     await page.getByTestId("settings-save").click();
     await expect(page.getByTestId("current-name")).toHaveText(E2E_NAME);

@@ -42,8 +42,11 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
 
   await test.step("人：設定で置き場所・呼び名・台帳の clone を選ぶ。GitHub はまだつないでいない", async () => {
     await page.goto(`${bridge.base}/#/settings`);
+    await page.getByTestId("root-change").click();
     await page.getByTestId("root-input").fill(root);
+    await page.getByTestId("name-change").click();
     await page.getByTestId("name-input").fill(E2E_NAME);
+    await page.getByTestId("ledger-change").click();
     await page.getByTestId("ledger-input").fill(repo);
     await page.getByTestId("settings-save").click();
     await expect(page.getByTestId("current-ledger")).toHaveText(repo);

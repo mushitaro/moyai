@@ -126,17 +126,16 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
                     onClick={() => pick(k, r)}
                     style={{ cursor: "pointer" }}
                   >
-                    <Table.Td>
-                      {r.text}
+                    <Table.Td>{r.text}</Table.Td>
+                    <Table.Td c="var(--text-2)">{r.appliesTo ?? T.anyFile}</Table.Td>
+                    <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }}>
+                      {count(r)}
+                      {/* 紐付けを人が確定していない作業の数（確定するまで案を出さない。文にしない。Wire、11-06） */}
                       {r.waiting > 0 && (
-                        <Text size="xs" c="var(--text-3)" data-testid="reading-plan-waiting">
-                          {T.planWaiting}
+                        <Text span size="xs" c="var(--text-3)" ml={8} data-testid="reading-plan-waiting">
+                          {T.planWaiting(r.waiting)}
                         </Text>
                       )}
-                    </Table.Td>
-                    <Table.Td c="var(--text-2)">{r.appliesTo ?? T.anyFile}</Table.Td>
-                    <Table.Td className="moyai-num" ta="right">
-                      {count(r)}
                     </Table.Td>
                   </Table.Tr>
                 ))}

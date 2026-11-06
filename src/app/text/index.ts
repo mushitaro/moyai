@@ -359,6 +359,8 @@ export const TEXT = {
       notConnected: "ブリッジ未接続",
       stale: "保存先に新しい版があります。開き直してください",
       notRecomposed: "作ったあとに資料や決定が変わりました。作り直していません",
+      /** 同じ作業に年数の違う周期の案を受けている（n は作業の数。Architect の 44、Wire、11-06） */
+      cycleDup: (n: number) => `周期の案の重複 ${n}`,
     },
     blockPrefix: "理由：",
     history: "版履歴",
