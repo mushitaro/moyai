@@ -164,7 +164,7 @@ MOYAI の業界の標準Skillパックの 1 つ。中身は `packs/waste-inciner
 ## デモ
 
 - 利用者が「デモして」と言ったら、`intake_add_files`（source: demo）で、この Skillパックの `demo/` の架空の資料（施設台帳・星取表・作業日報の 3 つ）を作業画面に入れる。
-- 進め方は `demo/README.md`：要約と質問を読む → 質問を利用者に聞く → 計画を作る → 星取表の行を読む → 確定は人が画面でする。
+- 進め方は `demo/README.md`。先に作業画面を開き、1 回の返事で 1 段だけ進め、画面の何が変わったかを短く言って、利用者の「次」を待つ。Claude だけで最後まで進めない。確定は人が画面でする。
 - デモの資料は架空。実在の施設として話さない。架空でない資料とは混ぜない。
 
 <!-- moyai:data-names:begin（src/shared/data-names.ts と packs/waste-incineration/data-names.json から作る。手で直さない） -->
