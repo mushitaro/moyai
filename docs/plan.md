@@ -876,6 +876,7 @@ MOYAI を作るときの決まりです。
 
 - 07:00 見ていない様式の 2 回目の結果で、S4 の語り（緑のとき／測った値のまま）のどちらにするかを決める（台本は 2 通りで用意しておく）。
 - 08:00 `demo-freeze`（デモの道筋・台本・撮影の台本）。このあとは直すだけで、検証の版も変えない。
+  - 凍結の前に流す試験（どれも緑で凍結する）：`npm test`（vitest と node:test）、`npm run build` のあとの `npx playwright test`（e2e、Chrome と Edge）、デモの通し `npx playwright test -c playwright.demo.config.ts tests/demo/walkthrough.spec.ts`（e2e の本数に入っていない。Architect の 65、11-06）、`node scripts/check-publish.mjs`。
 - 午前：画面の収録（撮る前に、MCP と Skill の一覧が MOYAI だけであることを画面で確かめ、日誌に残す）。S5 は PR を出すところまで撮る。
 - 13:00〜15:00 運営者：最初に S5 の PR をマージ（マージのあとの画面は続けて撮る）。声（台本を通しで 2 回）、Excel とメモ帳の 2 カット。素材は Google Drive か Release の添付で受け取る。
 - 午後〜夜：声の処理・字幕・組み立て。README・how-built・industries・sharing・trend の仕上げ。
