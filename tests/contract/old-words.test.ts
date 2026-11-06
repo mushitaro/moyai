@@ -54,6 +54,7 @@ const BANNED: { word: string; re: RegExp }[] = [
   { word: "パック", re: /(?<!Skill)パック/g },
   { word: "似た施設", re: /似た施設/g },
   { word: "計量値", re: /計量値/g },
+  { word: "作業の属性", re: /作業の属性/g },
 ];
 
 /**
@@ -63,6 +64,7 @@ const BANNED: { word: string; re: RegExp }[] = [
 const ALLOWED: { name: string; file: string; text: string; reason: string }[] = [
   { name: "words.md の表の引用（当てはめ）", file: "src/shared/data-names.ts", text: "docs/words.md「当てはめ → 紐付け」", reason: "decidedIn は置き換えの表の見出しを写した記録。表の「前」の列は記録なので直さない" },
   { name: "版をまたぐ紐付けの basis", file: "src/app/text/index.ts", text: "で受けた当てはめと同じ", reason: "sameAs は案の basis に入り、署名される字。前の版の字は直さない（docs/words.md「据え置き」）" },
+  { name: "作業分類の紐付けの basis（toAttr）", file: "src/app/text/index.ts", text: "`作業の属性「${label}」（${code}）`", reason: "toAttr は紐付けの案の basis に入り、署名される字（docs/words.md「据え置き」）" },
   { name: "words.md の表の引用（読み方）", file: "src/shared/data-names.ts", text: "docs/words.md「読み方 → ルール」", reason: "decidedIn は置き換えの表の見出しを写した記録" },
   { name: "words.md の表の引用（計量値）", file: "src/shared/data-names.ts", text: "「計量値」を「稼働」に", reason: "decidedIn は運営者の決めた置き換えを写した記録" },
   { name: "data-names の目印の誤り", file: "src/shared/data-names.ts", text: "data-names の印が無い", reason: "ファイルの中の目印（moyai:data-names）の誤り。画面にも Claude にも出ない（words.md で対象外）" },

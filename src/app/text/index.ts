@@ -61,7 +61,7 @@ export const TEXT = {
     filled: "中身あり",
     notBuilt: "作らない",
     emptyLine: "この業種のSkillパックはまだ中身がありません。",
-    candidates: "出どころの候補：",
+    candidates: "元の資料の候補：",
     candidate: (title: string, issuer: string | null) => (issuer ? `${issuer}『${title}』` : title),
     level: (v: string) => `（${v}）`,
     groupScope: "（群の候補）",
@@ -220,7 +220,7 @@ export const TEXT = {
       },
     },
     source: {
-      title: "出どころ",
+      title: "元の資料",
       empty: "星取を選ぶと、ここに出ます。",
       page: (n: number) => `${n} 頁`,
       planOrActual: { plan: "計画", actual: "実績" },
