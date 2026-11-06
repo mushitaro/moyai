@@ -5,7 +5,7 @@ export const SITE_TEXT = {
   title: "【架空】MOYAI 公開台帳",
   fiction: "【架空】このページの施設と数は、すべて架空です（会期中の公開台帳は架空の施設だけです）。",
   lead:
-    "公開台帳に出された共有ファイルを確かめ直し、類似施設の星取表と統計の行を描いたページです。共有する値は、塊（共通の設備項目 × 作業の属性）の年度と、間隔・工数・日数の帯だけです。費用・人・正確な日付・備考は、どの共有ファイルにもありません。",
+    "公開台帳に出された共有ファイルを確かめ直し、類似施設の星取表と統計の行を描いたページです。共有する値は、塊（共通の設備項目 × 作業の属性）の年度と、間隔・工数・日数の階級だけです。費用・人・正確な日付・備考は、どの共有ファイルにもありません。",
   rulesHead: "台帳の決まり",
   countsHead: "確かめた共有ファイル",
   sectionsHead: "類似施設の星取表と統計の行",
@@ -17,7 +17,7 @@ export const SITE_TEXT = {
   status: "決まりの確かめ",
   minK: "同区分の施設数の下限",
   fields: "写す欄（塊）",
-  bands: "帯の境目",
+  bands: "階級の境界",
   pack: "Skillパック",
   vocab: "公開語彙の SHA-256",
   national: "全国の表の SHA-256",
@@ -45,11 +45,13 @@ export const SITE_TEXT = {
   done: "●",
   statRow: (n: number) => `統計の行（この塊のある施設 ${n}）`,
   statX: "x",
-  statRange: (lo: string, hi: string, n: number) => (lo === hi ? `幅 ${lo}・n ${n}` : `幅 ${lo} から ${hi}・n ${n}`),
-  statMedian: (med: string, q1: string, q3: string, n: number) =>
-    q1 === med && q3 === med ? `中央 ${med}（四分位も同じ）・n ${n}` : `中央 ${med}（四分位 ${q1} から ${q3}）・n ${n}`,
+  /** 「範囲 2〜5 年・n 3」（docs/words.md） */
+  statRange: (span: string, n: number) => `範囲 ${span}・n ${n}`,
+  /** 「中央値 3 年（四分位 2〜5 年）・n 6」。四分位が中央値と同じなら null */
+  statMedian: (med: string, quartile: string | null, n: number) =>
+    quartile === null ? `中央値 ${med}（四分位も同じ）・n ${n}` : `中央値 ${med}（四分位 ${quartile}）・n ${n}`,
   statNote:
-    "統計の行の n は、その欄のある施設の数です。n が 0〜2 なら x、3〜4 なら幅の帯と n、5 以上なら中央の帯・四分位の帯・n を出します（帯の順の最近順位法）。集団を混ぜて数えません。",
+    "統計の行の n は、その欄のある施設の数です。n が 0〜2 なら x、3〜4 なら範囲と n、5 以上なら中央値・四分位・n を出します（階級の順の最近順位法）。集団を混ぜて数えません。",
   labelNote: "札は鍵番号の頭から作ります。同じ鍵なら、共有ファイルが増えても同じ札です。",
   footer: (build: string) => `このページは MOYAI の ledger site が、台帳の共有ファイルを受け手と同じ関数で確かめ直して作りました（生のファイルは写していません）。${build}`,
   bandUnit: { I: "年", W: "人・日", D: "日" } as Record<string, string>,

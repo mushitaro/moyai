@@ -94,8 +94,9 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.locator(".ag-row.moyai-row-peer")).toHaveCount(0);
       await expect(page.locator(".ag-header-cell.moyai-band-head")).toHaveCount(0);
       const label = page.locator(".ag-row.moyai-row-stat .moyai-lv").filter({ hasText: "類似施設" }).first();
-      await expect(label).toHaveText(/^類似施設　(帯 .+|5 施設に満たない)$/);
-      await expect(page.locator(".ag-header-cell", { hasText: /\d{4} 年度/ }).first()).toBeInViewport();
+      await expect(label).toHaveText(/^類似施設　(間隔の中央値 .+|5 施設に満たない)$/);
+      // 年度の列の見出しは「2023」の数だけ（Wire、11-06）
+      await expect(page.locator(".ag-header-cell.moyai-mark-head .ag-header-cell-text", { hasText: /^\d{4}$/ }).first()).toBeInViewport();
       await label.click();
       await expect(page.getByTestId("peer-side")).toHaveAttribute("data-kind", "stat");
       await expect(page.getByTestId("peer-side")).toContainText("公開台帳");
@@ -136,7 +137,7 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
       const r: any = await c.callTool({ name: "peer_reference", arguments: {} });
       expect(r.isError).toBe(true);
-      expect(JSON.stringify(r.content)).toContain("似た施設との比べを、利用者がまだ星取表の画面で開いていません");
+      expect(JSON.stringify(r.content)).toContain("類似施設との比べを、利用者がまだ星取表の画面で開いていません");
     });
   } finally {
     await c.close();

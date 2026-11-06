@@ -35,6 +35,19 @@
 .moyai-lv {
   font-size: 13px;
   letter-spacing: var(--track-body);
+  /* 列の幅に上限がある（上の階層 144px・いちばん下 240px）。入らない名前は後ろを「…」で切り、全文はセルの title（Wire、11-06） */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 年度の列（44px）の見出し「2023」：左右の余白を置かず、真ん中に */
+.ag-header-cell.moyai-mark-head {
+  padding-left: 0;
+  padding-right: 0;
+}
+.moyai-mark-head .ag-header-cell-label {
+  justify-content: center;
 }
 .moyai-lv-own {
   color: var(--text);
@@ -118,6 +131,13 @@
 .moyai-mark.moyai-mark-proposal [data-mark="both"]::before {
   border-style: dashed;
   border-color: var(--shu);
+}
+
+/* 共通台帳で、まとめたセルに未確定の案が混じったとき（Wire、11-06）：案を除いた印に、朱の破線の円を重ねる。
+   案だけのセルは、上の施設台帳と同じ破線の円だけ */
+.moyai-mark.moyai-mark-ring [data-ring]::before {
+  outline: 1px dashed var(--shu);
+  outline-offset: 2px;
 }
 
 /* 比べる版から変わった（docs/screens.md 3.2、絵は Review.dc.html の .mk.chg）：形を朱に、印のすぐ下に短い朱の線 */

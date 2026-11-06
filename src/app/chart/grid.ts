@@ -19,7 +19,7 @@ import {
   type SuppressKeyboardEventParams,
   type ValueFormatterParams,
 } from "ag-grid-community";
-import type { ChartCell, ChartModel, ChartRow, Mark, Period } from "../../plan/chart";
+import { markWithout, type ChartCell, type ChartModel, type ChartRow, type Mark, type Period } from "../../plan/chart";
 import { changedFrom, oldMark } from "../../plan/chart-compare";
 import { DUE_TEXT, rowDue, type DueView } from "../../plan/due-view";
 import type { StatField } from "../../share/bands";
@@ -79,9 +79,9 @@ export function markText(mark: Mark | null): string {
   return mark === null ? "" : T.mark[mark];
 }
 
-/** 期の見出しの名前 */
+/** 期の見出しの名前：年度の表は「2023」の数だけ（年度か月かは切り替えで分かる。Wire、11-06） */
 export function periodLabel(p: Period): string {
-  return p.month === null ? T.fiscalYear(p.fiscalYear) : T.month(p.month);
+  return p.month === null ? T.yearHead(p.fiscalYear) : T.month(p.month);
 }
 
 /** セルに出す文字：要確認なら「?」を前に、畳んだ行なら台数を後ろに */
@@ -132,6 +132,10 @@ interface GridContext {
   comments?: ReadonlyMap<string, string>;
   /** 作業ごとの次回の字（重-8b） */
   due?: ReadonlyMap<string, DueView>;
+  /** 共通台帳で見ているか（まとめたセルの案は、印に朱の破線の円を重ねる。Wire、11-06） */
+  common?: boolean;
+  /** 明細の鍵 → 計画か実績か（案を除いた印を描くため） */
+  kinds?: ReadonlyMap<string, "plan" | "actual">;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -153,6 +157,16 @@ function isProposal(cell: ChartCell | undefined, context: unknown): boolean {
   return !!cell && !!s && s.size > 0 && cell.detailKeys.some((k) => s.has(k));
 }
 
+/**
+ * 共通台帳のまとめたセルに未確定の案があるとき：案を除いた印の上に朱の破線の円を重ねる（ring）。
+ * 案だけのセルは、施設台帳と同じく破線の円だけ（ring は付けず、印は案の ○）。施設台帳では今のまま（null）
+ */
+function proposalRing(cell: ChartCell | undefined, context: unknown): Mark | null {
+  const c = context as GridContext | undefined;
+  if (!cell || !c?.common || !c.kinds || cell.change || !isProposal(cell, context)) return null;
+  return markWithout(cell.detailKeys, c.proposals, c.kinds);
+}
+
 /** 印のセルの描き手：文字を 1 つ置き、セルに aria-label を付けるだけ */
 class MarkCell implements ICellRendererComp<ChartRow> {
   private el = document.createElement("span");
@@ -167,8 +181,13 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     const period = (p.colDef?.cellRendererParams as { period: Period } | undefined)?.period;
     const cell = p.data && period ? p.data.cells[period.key] : undefined;
     // 形は CSS が data-mark で描く（字は読み上げと写しのために残す）。台数は data-count で右下に
-    if (cell?.mark) this.el.dataset.mark = cell.mark;
+    // 共通台帳で案の混じったセルは、案を除いた印に朱の破線の円（data-ring）を重ねる
+    const ring = proposalRing(cell, p.context);
+    const shown = ring ?? cell?.mark ?? null;
+    if (shown) this.el.dataset.mark = shown;
     else delete this.el.dataset.mark;
+    if (ring) this.el.dataset.ring = "true";
+    else delete this.el.dataset.ring;
     if (cell?.summary && cell.count !== null) this.el.dataset.count = String(cell.count);
     else delete this.el.dataset.count;
     // 比べる版にあって今は無い印は、淡い破線の円で残す（字は読み上げのために aria-label に）
@@ -220,14 +239,29 @@ function suppressTypingStart(p: SuppressKeyboardEventParams<ChartRow>): boolean 
   return e.key.length === 1 || e.key === "Backspace" || e.key === "Delete" || e.key === "Process";
 }
 
-/** 段の名前の見込みの幅（13px の字：全角 13px・半角 7.5px と字間、左右の余白） */
+/** 階層の名前の見込みの幅（13px の字：全角 13px・半角 7.5px と字間） */
 function textWidth(t: string): number {
   let w = 0;
   for (const ch of t) w += ch.charCodeAt(0) > 0xff ? 14 : 8;
   return w;
 }
-const LEVEL_MIN = [170, 160];
-const LEVEL_MAX = 360;
+/**
+ * 階層の列の幅（Wire、11-06。運営者「年度の欄が狭い」）：いちばん長い名前に合わせて広げず、上限を置く。
+ * 上の階層は 144px まで、いちばん下の階層は 240px まで。入らない名前は後ろを「…」で切り、全文はセルの title と詳しくに出す
+ */
+export const LEVEL_UPPER_MAX = 144;
+export const LEVEL_LOWEST_MAX = 240;
+const LEVEL_MIN = 72;
+/** セルの左右の余白（cellHorizontalPadding の 2 つ分） */
+const CELL_PAD = 32;
+export const NEXT_WIDTH = 88;
+export const YEAR_WIDTH = 44;
+/** 列の見出しの ▾ と間（12px の字） */
+const FOLD_MARK = 16;
+/** その列の名前と見出しが入る幅（上限まで） */
+function levelWidth(header: string, texts: readonly string[], max: number): number {
+  return Math.min(max, Math.max(LEVEL_MIN, textWidth(header) + FOLD_MARK + CELL_PAD, ...texts.map((t) => textWidth(t) + CELL_PAD)));
+}
 
 /**
  * 共通の設備項目 × 作業の属性で見るときの行の見出しは 1 列（Wire、2026-11-05。絵は Fold.dc.html）：
@@ -257,8 +291,8 @@ function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandle
         headerName: T.commonOneCol,
         pinned: "left",
         lockPinned: true,
-        width: Math.min(LEVEL_MAX + 120, Math.max(LEVEL_MIN[0]!, ...model.rows.map((r) => textWidth(commonRowText(r)) + 40))),
-        tooltipValueGetter: (p) => (p.data ? commonRowText(p.data) : null),
+        width: levelWidth(T.commonOneCol, model.rows.map(commonRowText), LEVEL_LOWEST_MAX),
+        tooltipValueGetter: (p) => (p.data ? commonRowText(p.data) || null : null),
         valueGetter: (p) => {
           if (!p.data) return "";
           const marks = (p.context as GridContext | undefined)?.comments?.get(p.data.id);
@@ -277,12 +311,13 @@ function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandle
     headerName: name,
     pinned: "left",
     lockPinned: true,
-    // その段のいちばん長い名前が切れない幅（上限を越える名前は切り、title に全文）
-    width: Math.min(LEVEL_MAX, Math.max(LEVEL_MIN[i === 0 ? 0 : 1]!, ...model.rows.map((r) => textWidth(levelText(r, i)) + 40))),
-    tooltipValueGetter: (p) => {
-      const t = p.data ? levelText(p.data, i) : "";
-      return t && textWidth(t) + 40 > LEVEL_MAX ? t : null;
-    },
+    // 名前の入る幅（上の階層は 144px、いちばん下の階層は 240px まで。越える名前は「…」で切り、title に全文）
+    width: levelWidth(
+      name,
+      model.rows.map((r) => levelText(r, i)),
+      i === model.levelNames.length - 1 ? LEVEL_LOWEST_MAX : LEVEL_UPPER_MAX,
+    ),
+    tooltipValueGetter: (p) => (p.data ? levelText(p.data, i) || null : null),
     valueGetter: (p) => {
       if (!p.data) return "";
       const text = levelText(p.data, i);
@@ -315,12 +350,14 @@ function markColumn(p: Period, width: number, fyStart: boolean): ColDef<ChartRow
     headerName: periodLabel(p),
     width,
     cellClass: fyStart ? "moyai-mark moyai-num moyai-fy-start" : "moyai-mark moyai-num",
-    headerClass: fyStart ? "moyai-num moyai-fy-start" : "moyai-num",
+    headerClass: fyStart ? "moyai-num moyai-mark-head moyai-fy-start" : "moyai-num moyai-mark-head",
     cellClassRules: {
       "moyai-mark-summary": (c: CellClassParams<ChartRow>) => !!get(c)?.summary,
       "moyai-mark-changed": (c: CellClassParams<ChartRow>) => !!get(c)?.change,
       "moyai-mark-review": (c: CellClassParams<ChartRow>) => !!get(c)?.review,
-      "moyai-mark-proposal": (c: CellClassParams<ChartRow>) => isProposal(get(c), c.context),
+      // 共通台帳で案の混じったセルは、破線の円を重ねる（data-ring）ので、印そのものは破線にしない
+      "moyai-mark-proposal": (c: CellClassParams<ChartRow>) => isProposal(get(c), c.context) && proposalRing(get(c), c.context) === null,
+      "moyai-mark-ring": (c: CellClassParams<ChartRow>) => proposalRing(get(c), c.context) !== null,
       "moyai-mark-vchg": (c: CellClassParams<ChartRow>) => isChanged(c.data, p, get(c), c.context),
     },
     valueGetter: (c) => markText(get(c)?.mark ?? null),
@@ -370,7 +407,7 @@ function dueColumn(): ColDef<ChartRow> {
     headerName: DUE_TEXT.col,
     pinned: "left",
     lockPinned: true,
-    width: 120,
+    width: NEXT_WIDTH,
     cellClass: "moyai-next moyai-num",
     headerClass: "moyai-num",
     valueGetter: (p) => dueCellText(p.data, (p.context as GridContext | undefined)?.due),
@@ -384,7 +421,7 @@ function columns(model: ChartModel, foldLevel: number | null, h: GridHandlers, b
   if (!monthly) {
     // 年だけの表は縦の罫を引かない（どの列も年度の境なので、罫が並んでうるさくなる）
     if (model.peersShown && !model.peersSummary) out.push(bandColumn(band));
-    for (const p of model.periods) out.push(markColumn(p, 112, false));
+    for (const p of model.periods) out.push(markColumn(p, YEAR_WIDTH, false));
     return out;
   }
   const groups = new Map<number, Period[]>();
@@ -415,7 +452,8 @@ export class ChartGrid {
       defaultColDef: { sortable: false, filter: false, resizable: true, suppressMovable: true, suppressHeaderMenuButton: true },
       suppressClickEdit: true, // ダブルクリックは畳んだ行の明細に使う。編集は Enter か F2
       stopEditingWhenCellsLoseFocus: true,
-      tooltipShowDelay: 300,
+      // 切った名前の全文と、変えた印の理由は、セルの title に出す（Wire、11-06）
+      enableBrowserTooltips: true,
       animateRows: false,
       suppressNoRowsOverlay: true,
       context: { proposals: NO_PROPOSALS, compare: null } satisfies GridContext,
@@ -447,19 +485,40 @@ export class ChartGrid {
     this.h.onSelect(rowId, colId && !colId.startsWith("lv") && !colId.startsWith("band.") ? colId : null);
   }
 
-  /** 列（段の名前・期・帯の列が変わったときだけ作り直す）と、見える行を渡す */
-  update(model: ChartModel, foldLevel: number | null, band: StatField = "interval", proposals: ReadonlySet<string> = NO_PROPOSALS, compare: GridCompare = null, comments?: ReadonlyMap<string, string>, due?: ReadonlyMap<string, DueView>) {
+  /** 列（段の名前・期・帯の列・階層の列の幅が変わったときだけ作り直す）と、見える行を渡す */
+  update(
+    model: ChartModel,
+    foldLevel: number | null,
+    band: StatField = "interval",
+    proposals: ReadonlySet<string> = NO_PROPOSALS,
+    compare: GridCompare = null,
+    comments?: ReadonlyMap<string, string>,
+    due?: ReadonlyMap<string, DueView>,
+    kinds?: ReadonlyMap<string, "plan" | "actual">,
+  ) {
     this.mode = model.mode;
-    this.api.setGridOption("context", { proposals, compare, comments, due } satisfies GridContext);
-    const key = JSON.stringify([model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band]);
+    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds } satisfies GridContext);
+    const cols = columns(model, foldLevel, this.h, band);
+    const key = JSON.stringify([model.mode, model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band, cols.map((c) => ("width" in c ? c.width : null))]);
     if (key !== this.colKey) {
       this.colKey = key;
-      this.api.setGridOption("columnDefs", columns(model, foldLevel, this.h, band));
+      this.api.setGridOption("columnDefs", cols);
     }
     this.api.setGridOption("rowData", model.mode === "common" ? commonRowsShown(model.rows) : model.rows);
     // 行の中身が同じ鍵のまま変わったとき（畳む・層の切り替え）に、セルの文字とクラスを描き直す
     this.api.refreshCells({ force: true });
     this.h.onRendered();
+  }
+
+  /** その行・期のセルを見える所へ送り、選ぶ（ほかのシートや横の板の「| 〜で見る」から。選ぶと横の板が開く） */
+  reveal(rowId: string, colKey: string | null): boolean {
+    const node = this.api.getRowNode(rowId);
+    if (!node || node.rowIndex === null) return false;
+    this.api.ensureNodeVisible(node, "middle");
+    const col = colKey && this.api.getColumn(colKey) ? colKey : null;
+    if (col) this.api.ensureColumnVisible(col, "middle");
+    this.api.setFocusedCell(node.rowIndex, col ?? "lv1");
+    return true;
   }
 
   destroy() {

@@ -82,7 +82,7 @@ describe("データの名前の画面の言葉と、画面の字", () => {
 
   test("共有の見え方のまとめた度合いは「集約度」（階層の「段」と取り違えない）", () => {
     expect(HUMAN_TEXT.checkpoint.tried).toBe("数えた集約度");
-    expect(HUMAN_TEXT.checkpoint.triedRow(2, true, 7)).toMatch(/^集約度 2（帯を粗くした）：/);
+    expect(HUMAN_TEXT.checkpoint.triedRow(2, true, 7)).toMatch(/^集約度 2（階級を粗くした）：/);
     expect(SITE_TEXT.stage(1)).toBe("集約度 1");
     expect(reasonText("k.stageMismatch")).toBe("見え方の集約度が合わない");
   });

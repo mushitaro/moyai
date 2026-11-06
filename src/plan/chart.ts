@@ -103,6 +103,11 @@ export function monthsOfFiscalYear(startMonth: number): number[] {
   return Array.from({ length: 12 }, (_, i) => ((startMonth - 1 + i) % 12) + 1);
 }
 
+/** 施設台帳の行の鍵（機器の nodeKey から。ledgerTree と同じ形） */
+export const ledgerRowId = (nodeKey: string): string => `n:${nodeKey}`;
+/** 共通台帳の行の鍵：項目 × 作業の属性（attribute あり）、項目・設備（なし）。commonTree と同じ形 */
+export const commonRowId = (code: string, attribute?: string): string => (attribute ? `c:${code}:${attribute}` : `c:${code}`);
+
 const yearKey = (fy: number) => `fy${fy}`;
 const monthKey = (fy: number, m: number) => `fy${fy}-m${String(m).padStart(2, "0")}`;
 const monthOf = (date: string) => Number(date.slice(5, 7));
@@ -303,6 +308,22 @@ function addAgg(map: Map<string, Agg>, key: string, d: WorkDetailT, asset: strin
 }
 
 const markOf = (a: { plan: boolean; actual: boolean }): Mark | null => (a.plan && a.actual ? "both" : a.plan ? "plan" : a.actual ? "actual" : null);
+
+/**
+ * 未確定の案を除いた明細から作る印（案だけなら null）。共通台帳のまとめたセルで、案を除いた印に朱の破線の円を重ねるため（docs/screens.md 3.2、Wire、11-06）。
+ * kinds は明細の鍵 → 計画か実績か。知らない鍵は数えない
+ */
+export function markWithout(detailKeys: readonly string[], proposals: ReadonlySet<string>, kinds: ReadonlyMap<string, "plan" | "actual">): Mark | null {
+  let plan = false;
+  let actual = false;
+  for (const k of detailKeys) {
+    if (proposals.has(k)) continue;
+    const v = kinds.get(k);
+    if (v === "plan") plan = true;
+    else if (v === "actual") actual = true;
+  }
+  return markOf({ plan, actual });
+}
 
 /**
  * 号炉・系統の階層（運営者の決定 2026-10-30・11-06：設備 › 機器 › 号炉・系統（＋機器） › 部位。号炉・系統は必ず階層に分ける）。

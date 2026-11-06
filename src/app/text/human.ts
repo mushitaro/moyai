@@ -359,10 +359,12 @@ export const HUMAN_TEXT = {
     accept: "確定",
     needsReason: "理由：判断の理由が未入力",
     reasonLabel: "判断の理由",
-    reasonPlaceholder: "例：台帳の帯と現場の摩耗の記録が合うので",
+    reasonPlaceholder: "例：台帳の中央値と現場の摩耗の記録が合うので",
     bulkDone: (ok: number, refused: number) => (refused ? `${fmt(ok)} 行を確定しました。${fmt(refused)} 行は確定できませんでした（理由は行ごとに確定すると出ます）。` : `${fmt(ok)} 行を確定しました。`),
     doneTitle: (n: number) => `確定済み・却下済み（${fmt(n)}）`,
     ledgerNote: "台帳案は、星取表では朱の破線の円で出ます。確定すると、ふつうの計画の印になります。",
+    /** 台帳案の詳細から、共通台帳のその行・年度を開く（前に縦の罫。Wire、11-06） */
+    seeInChart: "星取表で見る",
     cycleWhat: (id: string, n: number) => `周期の案 ${id}：計画の印 ${fmt(n)} を引く`,
     /** 却下のダイアログ（Wire、11-06）：題「却下」、項目の 1 行、欄「判断の理由」、「あとで」「却下」 */
     rejectTitle: "却下",
@@ -553,7 +555,7 @@ export const HUMAN_TEXT = {
     stage: (s: number) => (s === 0 ? "" : s >= 3 ? "業種だけを出します。" : "紛れるように、見え方の一部をまとめました。"),
     chunkPath: (cls: string, work: string) => `${cls} › ${work}`,
     tried: "数えた集約度",
-    triedRow: (stage: number, coarse: boolean, k: number) => `集約度 ${stage}${coarse ? "（帯を粗くした）" : ""}：${fmt(k)}`,
+    triedRow: (stage: number, coarse: boolean, k: number) => `集約度 ${stage}${coarse ? "（階級を粗くした）" : ""}：${fmt(k)}`,
     rowEffectsTitle: "減らしている行（分類）",
     rowEffect: (name: string, n: number) => `${name}：${fmt(n)} に減らす`,
     rowEffectsNone: "見え方の数を減らしている行はありません。",
@@ -562,7 +564,7 @@ export const HUMAN_TEXT = {
     col1Lead: "墨の欄は出ません。朱の値は変えて写します。",
     col1Head: ["機器", "作業", "分類", "属性", "年度", "日付", "工数", "日数", "費用", "人"],
     col1Lift: (from: string, to: string | null) => (to === null ? `${from} → 出さない` : from === to ? to : `${from} → ${to}`),
-    col1Band: "帯",
+    col1Band: "階級",
     col1More: (n: number) => `ほかに ${fmt(n)} 行`,
     copied: (c: number, r: number) => `写した ${fmt(c)}／写さなかった ${fmt(r - c)}（行の総数 ${fmt(r)}）`,
     skipped: "写さなかった理由",
@@ -666,7 +668,7 @@ export const HUMAN_TEXT = {
         : rule.startsWith("field:")
           ? `出す欄（${({ interval: "間隔", manDays: "工数", days: "日数", ageAtWork: "経過年" } as Record<string, string>)[rule.slice(6)] ?? rule.slice(6)}）`
           : rule.startsWith("band:")
-            ? `${({ interval: "間隔", manDays: "工数", days: "日数", ageAtWork: "経過年" } as Record<string, string>)[rule.slice(5)] ?? rule.slice(5)}の帯の幅`
+            ? `${({ interval: "間隔", manDays: "工数", days: "日数", ageAtWork: "経過年" } as Record<string, string>)[rule.slice(5)] ?? rule.slice(5)}の階級`
             : ({ pack: "Skillパック", vocab: "公開語彙", national: "全国の表" } as Record<string, string>)[rule] ?? rule,
     verifyStatus: { ok: "✓", ng: "✗", arriving: "届きかけ", missing: "無い" } as Record<string, string>,
   },

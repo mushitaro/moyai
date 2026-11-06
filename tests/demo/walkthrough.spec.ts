@@ -16,7 +16,7 @@ import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { packName, FICTIONAL_1, callTool as call, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { packName, FICTIONAL_1, callTool as call, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】みどり台クリーンセンター";
 const A = { name: "【架空】山田" };
@@ -152,15 +152,23 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-05-crosswalk-accepted") });
     });
 
-    await test.step("3 星取表：共通の設備項目 × 作業の属性の行", async () => {
+    await test.step("3 星取表：施設台帳（既定）と、共通の設備項目 × 作業の属性の行。横の板は既定でたたむ", async () => {
       await pa.getByTestId("sheet-chart").click();
+      // 既定の表示は施設台帳のまま。階層の列は上限の幅、年度の列は 44px で見出しは「2023」の数だけ（Wire、11-06）
+      await expect(pa.getByTestId("chart-grid")).toHaveAttribute("data-mode", "ledger");
+      await expect(pa.locator(".ag-row").first()).toBeVisible();
+      // 資料を落としたとき未回答があったので、横の板は決まっていない所で開いている。人がたたむと 40px の縦の帯になる
+      if (await pa.getByTestId("side-fold").isVisible()) await pa.getByTestId("side-fold").click();
+      await expect(pa.getByTestId("merge-side-band")).toBeVisible();
+      await expect(pa.locator(".ag-header-cell.moyai-mark-head .ag-header-cell-text").first()).toHaveText(/^\d{4}$/);
+      await pa.screenshot({ path: shot("demo-06a-chart-ledger-folded") });
       await pa.getByTestId("rows-mode").getByText("共通台帳").click();
       await expect(pa.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
       await expect(pa.locator(".ag-row").first()).toBeVisible();
       await pa.screenshot({ path: shot("demo-06-chart-common") });
     });
 
-    await test.step("3 似た施設を重ねる（共通台帳の上で、まず全国の似た施設と比べる。運営者の指摘、11-06）：見出しの「似た施設　重ねる」。共通の行の下に「似た施設　帯 …」の 1 行", async () => {
+    await test.step("3 似た施設を重ねる（共通台帳の上で、まず全国の似た施設と比べる。運営者の指摘、11-06）：見出しの「似た施設　重ねる」。共通の行の下に「類似施設　間隔の中央値 …」の 1 行", async () => {
       await pa.getByTestId("merge-peers").getByRole("button", { name: "比較" }).click();
       await expect(pa.getByTestId("peer-panel")).toBeVisible();
       // 見え方の答えは施設の設定で（星取表の上では答えない）
@@ -201,8 +209,8 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
         if (!(years >= 1) || !ledgerVersion) continue;
         const version = (await call(c, "intake_survey", { part: "crosswalk" })).crosswalk.version;
         // 根拠の文は人の言葉だけ（数と帯は MOYAI が照らして根拠の行に書く。Architect の 55）
-        const basis = "公開の台帳の似た施設の間隔の中央の帯から";
-        const rules = [{ when: [{ field: "assetNode.commonItem", op: "equals", values: [a.commonItem] }, { field: "work.attribute", op: "equals", values: [a.work] }], set: { field: "work.trigger", value: years }, reason: "似た施設の間隔の中央の帯から" }];
+        const basis = "公開の台帳の類似施設の間隔の中央値から";
+        const rules = [{ when: [{ field: "assetNode.commonItem", op: "equals", values: [a.commonItem] }, { field: "work.attribute", op: "equals", values: [a.work] }], set: { field: "work.trigger", value: years }, reason: "類似施設の間隔の中央値から" }];
         const p = await call(c, "chart_propose", { rules, basedOnVersion: version, basis, ledger: { ledgerVersion, commonItem: a.commonItem, work: a.work } });
         usedPairs.add(pair);
         if (p.matched > 0) return p.proposals[0].id as string;
@@ -218,10 +226,12 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       expect(ledgerShown.length, "台帳に帯の出た塊がある").toBeGreaterThan(0);
       proposalId = await proposeFromLedger();
       expect(proposalId, "計画に当たる台帳の案がある").not.toBe("");
-      // 案は、自分の台帳の段の行で見る（共通の行では、ほかの機器の実施と同じセルにまとまる）
-      await pa.getByTestId("rows-mode").getByText("施設台帳").click();
+      // 案は共通台帳のまま見る（Wire、11-06。運営者「共通台帳を先に」）：まとめたセルに案が 1 つでもあれば、印に朱の破線の円を重ねる。
+      // 案だけのセルは破線の円だけ（施設台帳と同じ形）
+      await pa.getByTestId("rows-mode").getByText("共通台帳").click();
+      await expect(pa.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
       await expect(pa.getByTestId("legend-proposal")).toBeVisible();
-      const prop = pa.getByTestId("chart-grid").locator(".moyai-mark-proposal");
+      const prop = pa.getByTestId("chart-grid").locator(".moyai-mark-proposal, .moyai-mark-ring");
       if ((await prop.count()) === 0) {
         await pa.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
         await pa.waitForTimeout(300);
@@ -232,9 +242,19 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
         await pa.waitForTimeout(120);
       }
       await expect(prop.first()).toBeVisible();
-      await pa.getByTestId("chart-grid").locator(".moyai-mark-proposal").first().click();
+      await expect(pa.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
+      await prop.first().click();
       await expect(pa.getByTestId("source-proposal")).toBeVisible();
+      // 詳しくに機器ごとの印。案の機器の行に「- 台帳案」と「| 施設台帳で見る」
+      const dev = pa.locator('[data-testid="device-mark"][data-proposal="true"]');
+      await expect(dev.first()).toBeVisible();
+      await expect(dev.first().getByTestId("device-mark-kind")).toHaveText("- 台帳案");
+      await expect(dev.first().getByTestId("see-in-ledger")).toHaveText("施設台帳で見る");
       await pa.screenshot({ path: shot("demo-07-ledger-proposal") });
+      // 横の板をたたむと、年度の欄が広がる（たたんだ帯は 40px）
+      await pa.getByTestId("side-fold").click();
+      await expect(pa.getByTestId("merge-side-band")).toBeVisible();
+      await pa.screenshot({ path: shot("demo-07b-ledger-proposal-folded") });
     });
 
     await test.step("3 決定のシート：台帳からの案が 1 行。人が理由を書いて受ける（ほかの決定も）", async () => {
@@ -243,8 +263,22 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await expect(row).toHaveCount(1);
       await expect(row).toContainText(`周期の案 ${proposalId}`);
       await pa.screenshot({ path: shot("demo-08-decisions") });
+      // 行を選ぶと、横の板の詳しくに根拠の全文。台帳の数は MOYAI が照らして書く（「間隔の中央値」。「帯」は言わない）
+      await row.click();
+      const detail = pa.getByTestId("decision-detail");
+      await expect(detail).toContainText("間隔の中央値");
+      await expect(detail).not.toContainText("帯");
+      await pa.screenshot({ path: shot("demo-08b-decision-basis") });
+      // 「| 星取表で見る」は、共通台帳のその行・年度を開く（台帳の案は項目 × 作業の単位で出るため）
+      await detail.getByTestId("cycle-see-in-chart").click();
+      await expect(pa.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
+      await expect(pa.getByTestId("source-proposal")).toBeVisible();
+      await expect(pa.locator('[data-testid="device-mark"][data-proposal="true"]').first()).toBeVisible();
+      await pa.screenshot({ path: shot("demo-08c-see-in-chart") });
+      await pa.getByTestId("sheet-decisions").click();
+      await expect(row).toHaveCount(1);
       // 人：上の欄に理由を書いて、まとめて受ける
-      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（似た施設の帯と、チャットの答えを見て受けた）");
+      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（類似施設の中央値と、チャットの答えを見て受けた）");
       // 一括確定は表示中の種類の行だけ（docs/screens.md 3.2）。種類ごとに、残りが無くなるまで押す
       const left = pa.locator('[data-testid="pending-row"][data-accepted="false"]');
       for (let i = 0; i < 6 && (await left.count()) > 0; i++) {
@@ -290,7 +324,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await settings(pb, two.base, root, B.name);
       await pb.goto(link.replace(/^http:\/\/[^/]+/, two.base));
       await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
-      await pb.getByTestId("side-signatures").click();
+      await sideTab(pb, "signatures");
       await pb.screenshot({ path: shot("demo-13-approver") });
       await pb.getByTestId("approve-open").click();
       await pb.getByTestId("sign-submit").click();
@@ -357,7 +391,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-19-version-diff") });
       // 人：まとめて受けて、第 2 版に自分で署名して確定する
       await pa.getByTestId("sheet-decisions").click();
-      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（似た施設の帯を見て、もう 1 つの周期の案も受けた）");
+      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（類似施設の中央値を見て、もう 1 つの周期の案も受けた）");
       const left2 = pa.locator('[data-testid="pending-row"][data-accepted="false"]');
       for (let i = 0; i < 6 && (i === 0 || (await left2.count()) > 0); i++) {
         await pa.getByTestId("decisions-bulk-accept").click();
@@ -390,8 +424,12 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
 
     await test.step("8 コメント：星取表の行を選んで書くと、その行に ① が付き、横の板に並ぶ", async () => {
       await pa.getByTestId("rows-mode").getByText("施設台帳").click();
-      await pa.locator('.ag-row [col-id="lv2"]').filter({ hasText: /\S/ }).first().click();
-      await pa.getByTestId("side-comments").click();
+      // 版を開いた直後は、資料を戻し終えると表を作り直す。選んだ行が消えたら選び直す
+      await expect(async () => {
+        await pa.locator('.ag-row [col-id="lv2"]').filter({ hasText: /\S/ }).first().click({ timeout: 5_000 });
+        await sideTab(pa, "comments");
+        await expect(pa.getByTestId("comment-to")).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 60_000 });
       await pa.getByTestId("comment-text").fill("この機器の点検は、来年度の全休止に合わせられますか。");
       await pa.getByTestId("comment-add").click();
       await expect(pa.getByTestId("comment")).toHaveCount(1);

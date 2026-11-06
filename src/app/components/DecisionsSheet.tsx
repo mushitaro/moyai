@@ -10,6 +10,9 @@ import { Alert, Button, Group, Modal, Stack, Table, Text, TextInput } from "@man
 import { useContext, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { MergeSideContext } from "../state/merge-side";
+import { requestChartJump, type ChartJump } from "../state/chart-jump";
+import { sheetHash } from "../stages";
+import { commonRowId, periodKeyOf } from "../../plan/chart";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
 import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
@@ -174,6 +177,30 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   // 受けた周期の案が同じ作業で年数の違うとき、その案の行に「- 重複」（朱）
   const conflicted = useMemo(() => new Set(cycleConflicts(plan, accepted)), [plan, accepted]);
   const detailWork = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.workKey])), [plan]);
+  // 台帳案の「| 星取表で見る」：共通台帳のその行（項目 × 作業）・いちばん早い年度を開く（台帳の案は項目 × 作業の単位で出るため。Wire、11-06）
+  const cycleTarget = (ds: readonly Decision[]): ChartJump | null => {
+    const byKey = new Map(plan.details.map((d) => [d.detailKey, d]));
+    const worksBy = new Map(plan.works.map((w) => [w.workKey, w]));
+    const assetsBy = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+    const first = ds
+      .map((x) => byKey.get(x.id.slice("detail:".length)))
+      .filter((d): d is NonNullable<typeof d> => !!d)
+      .sort((a, b) => a.fiscalYear - b.fiscalYear)[0];
+    const w = first ? worksBy.get(first.workKey) : undefined;
+    const a = w ? w.targets.map((t) => assetsBy.get(t)).find((x) => x?.commonItem && x.commonItemAccepted) : undefined;
+    if (!first || !w) return null;
+    const rowIds: string[] = [];
+    if (a?.commonItem && w.attribute && w.attributeAccepted) {
+      rowIds.push(commonRowId(a.commonItem, w.attribute), commonRowId(a.commonItem));
+      const sys = catalog?.items.get(a.commonItem)?.systemCode;
+      if (sys) rowIds.push(commonRowId(sys));
+    } else rowIds.push(commonRowId("unmapped"));
+    return { mode: "common", rowIds, periodKey: periodKeyOf(first, "year") };
+  };
+  const seeInChart = (j: ChartJump) => {
+    requestChartJump(j);
+    location.hash = sheetHash("chart");
+  };
   const isDup = (ds: readonly Decision[]) => conflicted.size > 0 && ds.some((d) => isAccepted(d.id, d.hash) && conflicted.has(detailWork.get(d.id.slice("detail:".length)) ?? ""));
   const effectLines = (ds: readonly Decision[]) => {
     const e = cycleEffect(plan, ds);
@@ -445,6 +472,17 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       </Text>
       <Text size="sm">{T.cycleWhat(cycleGroup.cycle, cycleGroup.ds.length)}</Text>
       {effectLines(cycleGroup.ds)}
+      {isLedgerCycle(cycleGroup.cycle) &&
+        (() => {
+          const j = cycleTarget(cycleGroup.ds);
+          return (
+            j && (
+              <button type="button" className="moyai-inline-act" style={{ marginLeft: 0, alignSelf: "flex-start" }} onClick={() => seeInChart(j)} data-testid="cycle-see-in-chart">
+                {T.seeInChart}
+              </button>
+            )
+          );
+        })()}
       <Text size="xs" c="dimmed">
         {T.detailWhy}
       </Text>

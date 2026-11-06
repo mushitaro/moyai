@@ -5,7 +5,7 @@
 import { Alert, Button, Group, Modal, Stack, Table, Text, Title } from "@mantine/core";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { buildChart, nextFoldLevel, type ChartRow, type Layer, type PeerOverlay, type PeriodMode, type RowMode } from "../../plan/chart";
+import { buildChart, ledgerRowId, markWithout, nextFoldLevel, type ChartCatalog, type ChartCell, type ChartModel, type ChartRow, type Layer, type Mark, type PeerOverlay, type PeriodMode, type RowMode } from "../../plan/chart";
 import { STAT_FIELDS, type StatField } from "../../share/bands";
 import { bandShort } from "../../share/stat-text";
 import type { Comparison } from "../../share/receive";
@@ -15,13 +15,14 @@ import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
 import { DUE_TEXT, planDueViews, rowDue, rowDues, type DueView } from "../../plan/due-view";
 import { WorkDetailView } from "../components/WorkDetailView";
 import { takeWorkDetailRequest } from "../state/work-detail";
+import { takeChartJump, type ChartJump } from "../state/chart-jump";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
 import { PeerPanel } from "../components/PeerPanel";
 import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
-import { cycleIdOf } from "../../plan/cycle";
+import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import { useAccepted } from "../state/decisions";
 import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey } from "../state/merge-side";
 import { compareCounts, marksOf } from "../../plan/chart-compare";
@@ -229,6 +230,75 @@ function PeerSide({ row }: { row: ChartRow }) {
   );
 }
 
+/** 共通台帳のまとめたセルの、機器ごとの印（Wire、11-06）。案の行には種類（「- 台帳案」など）と「| 施設台帳で見る」 */
+interface DeviceMark {
+  nodeKey: string;
+  name: string;
+  /** 案を除いた印（案だけなら null） */
+  base: Mark | null;
+  /** 未確定の案の種類（台帳案・ルール案・会話の回答・Claude 判断） */
+  kinds: (keyof typeof HUMAN_TEXT.decisions.kind)[];
+}
+
+/** 共通台帳の行（c:設備・c:項目・c:項目:作業の属性・c:unmapped）に、その機器と作業が載るか（chart.ts の commonTree と同じ決まり） */
+function inCommonRow(rowId: string, a: Plan["assets"][number] | undefined, w: WorkT | undefined, catalog: ChartCatalog): boolean {
+  if (!a || !w) return false;
+  const mapped = a.commonItem !== null && a.commonItemAccepted && w.attribute !== null && w.attributeAccepted;
+  if (rowId === "c:unmapped") return !mapped;
+  if (!mapped || !rowId.startsWith("c:")) return false;
+  const [code, attr] = rowId.slice(2).split(":") as [string, string | undefined];
+  if (attr !== undefined) return a.commonItem === code && w.attribute === attr;
+  if (catalog.items.has(code)) return a.commonItem === code;
+  return catalog.items.get(a.commonItem!)?.systemCode === code;
+}
+
+function deviceMarks(
+  row: ChartRow,
+  cell: ChartCell,
+  plan: Plan,
+  details: ReadonlyMap<string, WorkDetailT>,
+  ix: Index,
+  catalog: ChartCatalog,
+  proposals: ReadonlySet<string>,
+  kinds: ReadonlyMap<string, "plan" | "actual">,
+): DeviceMark[] {
+  const assets = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+  const by = new Map<string, { keys: string[]; kinds: Set<DeviceMark["kinds"][number]> }>();
+  for (const k of cell.detailKeys) {
+    const d = details.get(k);
+    const w = d ? ix.works.get(d.workKey) : undefined;
+    if (!d || !w) continue;
+    for (const t of new Set(w.targets)) {
+      if (!inCommonRow(row.id, assets.get(t), w, catalog)) continue;
+      let e = by.get(t);
+      if (!e) by.set(t, (e = { keys: [], kinds: new Set() }));
+      e.keys.push(k);
+      const c = cycleIdOf(k);
+      if (proposals.has(k)) e.kinds.add(c && isLedgerCycle(c) ? "ledger" : c && isPlanRuleCycle(c) ? "rule" : d.author === "ai_relayed_human" ? "relayed" : "ai");
+    }
+  }
+  // 並びは計画の機器の並び
+  return plan.assets
+    .filter((a) => by.has(a.nodeKey))
+    .map((a) => {
+      const e = by.get(a.nodeKey)!;
+      return { nodeKey: a.nodeKey, name: ix.assetName(a.nodeKey), base: markWithout(e.keys, proposals, kinds), kinds: [...e.kinds] };
+    });
+}
+
+/** 印の形（表のセルと同じクラス）。案だけは朱の破線の円、案の混じった印は破線の円を重ねる */
+function MarkGlyph({ base, proposal }: { base: Mark | null; proposal: boolean }) {
+  const ring = proposal && base !== null;
+  const m: Mark = base ?? "plan";
+  return (
+    <span className={`moyai-mark moyai-legend-mark${proposal && !ring ? " moyai-mark-proposal" : ""}${ring ? " moyai-mark-ring" : ""}`}>
+      <span data-mark={m} data-ring={ring ? "true" : undefined}>
+        {T.mark[m]}
+      </span>
+    </span>
+  );
+}
+
 function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; embedded: boolean }) {
   const { client, state: conn } = useConnection();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -242,10 +312,12 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     nextPlan.current = null;
   };
   const catalog = useMemo(() => catalogFor(plan.packId), [plan.packId]);
-  const [mode, setMode] = useState<RowMode>("ledger");
+  // ほかのシートの「| 星取表で見る」から開いたときは、その行の切り替えで開き、描いたあとにその行・期を選ぶ（1 回だけ）
+  const [jump, setJump] = useState<ChartJump | null>(() => takeChartJump());
+  const [mode, setMode] = useState<RowMode>(() => jump?.mode ?? "ledger");
   const [period, setPeriod] = useState<PeriodMode>("year");
   const [layer, setLayer] = useState<Layer>("adjusted");
-  const [foldLevel, setFoldLevel] = useState<number | null>(() => readFold("ledger"));
+  const [foldLevel, setFoldLevel] = useState<number | null>(() => readFold(jump?.mode ?? "ledger"));
   // 共通の設備項目で見るとき、畳んだ設備の見出しの行（Wire、2026-11-05）
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [selected, setSelected] = useState<{ rowId: string; periodKey: string | null } | null>(null);
@@ -297,6 +369,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     }
     return m;
   }, [plan, catalog, mode, period, layer, foldLevel, overlay, collapsed]);
+  const modelRef = useRef<ChartModel>(model);
+  modelRef.current = model;
 
   // 作業ごとの次回の字（計画が変わったときだけ作る）
   const due = useMemo(() => planDueViews(plan, todayLocal()), [plan]);
@@ -319,9 +393,13 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     if (!gridEl.current) return;
     const g = new ChartGrid(gridEl.current, {
       onFold: (l) => onFoldRef.current(l),
+      // 本体の行・印・セルを選ぶと、横の板を詳しくで開く（たたんでいたら開く）。共通台帳の設備の見出しの行は、押すと畳む・開くだけなので開かない
       onSelect: (rowId, periodKey) => {
         setSelected({ rowId, periodKey });
-        if (periodKey) sideRef.current?.show();
+        const m = modelRef.current;
+        const r = m.rows.find((x) => x.id === rowId);
+        const head = m.mode === "common" && r?.kind === "node" && r.level === 1 && r.hasChildren;
+        if (periodKey || !head) sideRef.current?.show();
       },
       onOpenFolded: (rowId) => setOpenRow(rowId),
       onToggle: (rowId) =>
@@ -381,9 +459,20 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     return out;
   }, [side, mode]);
 
+  // 明細の鍵 → 計画か実績か（共通台帳で、案を除いた印を描くため）
+  const kinds = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.planOrActual] as const)), [plan]);
+
   useEffect(() => {
-    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due);
-  }, [model, foldLevel, band, proposals, compare, commentMarks, due]);
+    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due, kinds);
+    // 「| 〜で見る」の頼み：行を渡したあとに、その行・期を見える所へ送って選ぶ（畳んでいて見えなければ親の行）
+    if (jump && jump.mode === model.mode) {
+      const j = jump;
+      setJump(null);
+      requestAnimationFrame(() => {
+        for (const id of j.rowIds) if (grid.current?.reveal(id, j.periodKey)) break;
+      });
+    }
+  }, [model, foldLevel, band, proposals, compare, commentMarks, due, kinds, jump]);
 
   // 見出しで「重ねる」を選ぶと、共通の設備項目の行に替えて比べを開く。「外す」で閉じる
   useEffect(() => {
@@ -424,6 +513,20 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   // 選んだ行を、MERGE の横の板（コメントを付ける先）へ知らせる。自分の行だけ（似た施設と統計の行には付けない）
   const selKey = selRow && (selRow.kind === "node" || selRow.kind === "unmapped") ? selRow.id : null;
   const selLabel = selRow ? selRow.path.filter((x): x is string => !!x).join(T.pathSep) : "";
+  // 共通台帳のまとめたセル：機器ごとの印（案の行に種類と「| 施設台帳で見る」）
+  const devices = useMemo(
+    () => (model.mode === "common" && catalog && selRow && selCell && (selRow.kind === "node" || selRow.kind === "unmapped") ? deviceMarks(selRow, selCell, plan, detailsByKey, ix, catalog, proposals, kinds) : []),
+    [model.mode, catalog, selRow, selCell, plan, detailsByKey, ix, proposals, kinds],
+  );
+  // 施設台帳のその機器の行・期を開く（畳んでいて見えなければ、見えている親の行）
+  const seeInLedger = (nodeKey: string) => {
+    const parents = new Map(plan.assets.map((a) => [a.nodeKey, a.parentKey]));
+    const rowIds: string[] = [];
+    for (let k: string | null | undefined = nodeKey; k; k = parents.get(k)) rowIds.push(ledgerRowId(k));
+    const periodKey = selected?.periodKey ?? null;
+    switchMode("ledger");
+    setJump({ mode: "ledger", rowIds, periodKey });
+  };
   useEffect(() => {
     sideRef.current?.select(selKey ? { mode, id: selKey, label: selLabel } : null);
   }, [selKey, mode, selLabel]);
@@ -433,8 +536,14 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
           {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
             <PeerSide row={selRow} />
           ) : !selRow || !selPeriod ? (
-            selRow && selRow.kind === "node" && selRow.works ? (
-              <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />
+            selRow && (selRow.kind === "node" || selRow.kind === "unmapped") ? (
+              // 行の名前の全文（表の階層の列は上限の幅で切るので、全文はここと title に。Wire、11-06）
+              <Stack gap="sm">
+                <Text size="sm" fw={700} data-testid="source-row">
+                  {selLabel}
+                </Text>
+                {selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />}
+              </Stack>
             ) : (
             <Text size="sm" c="dimmed">
               {T.source.empty}
@@ -442,7 +551,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
             )
           ) : (
             <Stack gap="sm">
-              {selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />}
+              {/* 共通台帳では、機器ごとの印を先に（作業が多いので、次回はその後ろ） */}
+              {model.mode !== "common" && selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />}
               <Text size="sm" data-testid="source-cell">
                 {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
               </Text>
@@ -450,6 +560,28 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
                 <Text size="xs" c="var(--shu)" data-testid="source-proposal">
                   {T.legend.proposalNote}
                 </Text>
+              )}
+              {devices.length > 0 && (
+                <Stack gap={2} data-testid="device-marks">
+                  {devices.map((m) => (
+                    <Group key={m.nodeKey} gap={6} wrap="nowrap" align="center" data-testid="device-mark" data-node={m.nodeKey} data-proposal={m.kinds.length > 0 ? "true" : "false"}>
+                      <MarkGlyph base={m.base} proposal={m.kinds.length > 0} />
+                      <Text size="sm" truncate title={m.name} style={{ minWidth: 0 }}>
+                        {m.name}
+                      </Text>
+                      {m.kinds.map((k) => (
+                        <Text key={k} size="xs" c="var(--shu-text)" style={{ whiteSpace: "nowrap" }} data-testid="device-mark-kind">
+                          {HUMAN_TEXT.decisions.kind[k]}
+                        </Text>
+                      ))}
+                      {m.kinds.length > 0 && (
+                        <button type="button" className="moyai-inline-act" style={{ whiteSpace: "nowrap" }} onClick={() => seeInLedger(m.nodeKey)} data-testid="see-in-ledger">
+                          {T.seeInLedger}
+                        </button>
+                      )}
+                    </Group>
+                  ))}
+                </Stack>
               )}
               {selCell?.change && (
                 <Alert color="orange" p="xs">
@@ -463,6 +595,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
                   </Text>
                 </Alert>
               )}
+              {model.mode === "common" && selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />}
               {(selCell?.detailKeys ?? []).slice(0, DETAILS_MAX).map((k) => {
                 const d = detailsByKey.get(k);
                 return d ? <DetailCard key={k} d={d} ix={ix} /> : null;

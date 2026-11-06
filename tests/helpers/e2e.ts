@@ -171,6 +171,18 @@ export async function chooseRootAndCreateRing(page: Page, base: string, root: st
  * 種類の切り替えごとに「見えている n 件をまとめて受ける」で受ける（工場の資料を計画 §2.5 の厚さにしてから、決定が数百ある）。
  * 当てはめの規則の種類（第 n 版と同じ・当てはめの案）は受けない（acceptRules で受ける）
  */
+/** MERGE の横の板の切り替えを開く（既定はたたんだ縦の帯。たたんでいれば帯の名前を押す。docs/screens.md 3.2、Wire、11-06） */
+export async function sideTab(page: Page, k: "signatures" | "comments" | "source" | "open"): Promise<void> {
+  const band = page.getByTestId(`side-band-${k}`);
+  const tab = page.getByTestId(`side-${k}`);
+  // 版を読み終えるまで、どちらも出ていないことがある。どちらかが出るまで待つ
+  await expect(band.or(tab).first()).toBeVisible();
+  if (await band.isVisible()) await band.click({ timeout: 15_000 });
+  else await tab.click({ timeout: 15_000 });
+  await expect(page.getByTestId("merge-side")).toBeVisible();
+  await expect(page.getByTestId(`side-${k}`)).toHaveAttribute("aria-selected", "true");
+}
+
 export async function acceptDecisions(page: Page, reason: string): Promise<number> {
   await page.getByTestId("sheet-decisions").click();
   await expect(page.getByTestId("decisions-sheet")).toBeVisible();

@@ -167,7 +167,7 @@ export function proposeCycles(
     if (opts.planRule) sources.push(planRuleSourceRef(opts.planRule.name, opts.planRule.ruleId));
     if (opts.fromLedger) sources.push(sourceRef(LEDGER_SOURCE));
     // 台帳の数は MOYAI が書く（AI の文の数は使わない。Architect の 52・55）
-    if (lg) lines.push(`公開台帳（版 ${lg.version}）：類似施設 ${lg.n}、間隔の中央の帯 ${bandYears(lg.median)}、四分位 ${quartileYears(lg.q1, lg.q3)}`);
+    if (lg) lines.push(`公開台帳（版 ${lg.version}）：類似施設 ${lg.n}、間隔の中央値 ${bandYears(lg.median)}、四分位 ${quartileYears(lg.q1, lg.q3)}`);
     const rec = v.record ? recordIntervals(details, hit) : null;
     if (rec) {
       sources.push(sourceRef(RECORD_SOURCE));

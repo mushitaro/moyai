@@ -143,7 +143,7 @@ export const CHECK_KINDS = [
 
 /**
  * 仲間の統計の行（§2.8）。生の数は渡さず、帯のコードだけ。n は自分を除いた施設数。
- * n が 0〜2 なら「x」、3〜4 なら幅の帯と n、5 以上なら中央の帯・四分位の帯・n。
+ * n が 0〜2 なら「x」、3〜4 なら範囲と n、5 以上なら中央値・四分位・n（値は帯のコード。画面の言葉は階級）。
  * 帯のコードは欄ごとに頭の文字が決まる：間隔 I…・工数 W…・日数 D…。
  * 境目（帯の閉じた一覧）は 11-05 に工場で決めてコードの定数にする（§2.8）。それまでは形だけを縛る【未確定】。
  */
@@ -421,7 +421,7 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で似た施設が 5 以上〔中央の帯〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の帯の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
+    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
     z.object({
       rules: z.array(ruleSchema).min(1).max(50),
       basedOnVersion: z.number().int().min(0),
@@ -434,7 +434,7 @@ export const TOOLS = {
           ledgerVersion: z.string().regex(/^[0-9a-f]{12}$/),
           commonItem: z.string().min(1).max(64),
           work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]),
-          /** 橋渡しが照らした集計（似た施設の数・中央の帯・四分位の帯）。AI が書いても橋渡しが置き換える（Architect の 52） */
+          /** 橋渡しが照らした集計（類似施設の数・中央値・四分位の階級のコード）。AI が書いても橋渡しが置き換える（Architect の 52） */
           checked: z.object({ n: z.number().int().min(5), median: z.string().max(16), q1: z.string().max(16), q3: z.string().max(16) }).strict().optional(),
         })
         .optional(),
@@ -533,7 +533,7 @@ export const TOOLS = {
     "peer_reference",
     "read",
     "仲間の参考を読む",
-    "似た施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。人が施設に答えた軸はそちらを使い、answers は人が答えていない軸にだけ効く（効いた軸は aiAxes に返るので、根拠に「会話から写した答え」と書く）。計画に入れるときは chart_propose で周期の案を置き、根拠に ledgerVersion と集計（似た施設の数と帯）を書く。場をまたいで混ぜない。施設を当てようとしない。",
+    "類似施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。人が施設に答えた軸はそちらを使い、answers は人が答えていない軸にだけ効く（効いた軸は aiAxes に返るので、根拠に「会話から写した答え」と書く）。計画に入れるときは chart_propose で周期の案を置き、ledger に ledgerVersion・commonItem・work を添える（類似施設の数・間隔の中央値・四分位は MOYAI が照らして根拠の行に書くので、basis に数を書かない）。場をまたいで混ぜない。施設を当てようとしない。",
     z.object({
       commonItem: z.string().max(64).optional(),
       place: z.enum(["ledger"]).optional(),

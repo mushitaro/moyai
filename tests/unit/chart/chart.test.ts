@@ -6,6 +6,9 @@ import {
   buildChart,
   buildPeriods,
   catalogFromPack,
+  commonRowId,
+  ledgerRowId,
+  markWithout,
   fiscalYearOf,
   monthsOfFiscalYear,
   nextFoldLevel,
@@ -464,5 +467,34 @@ describe("似た施設を重ねる（共通の設備項目の行・年度の表�
     expect(buildChart(small(), catalog, labels, { ...base, mode: "common" }).rows.map((r) => r.id)).toEqual(
       buildChart(small(), catalog, labels, { ...common, period: "month", peers: undefined }).rows.map((r) => r.id),
     );
+  });
+});
+
+describe("共通台帳の未確定の案（Wire、11-06）", () => {
+  const kinds = new Map<string, "plan" | "actual">([
+    ["a", "actual"],
+    ["p", "plan"],
+    ["cy-L1-x", "plan"],
+  ]);
+  it("案を除いた明細から印を作る。案だけなら null（破線の円だけを描く）", () => {
+    const proposals = new Set(["cy-L1-x"]);
+    expect(markWithout(["a", "cy-L1-x"], proposals, kinds)).toBe("actual");
+    expect(markWithout(["a", "p", "cy-L1-x"], proposals, kinds)).toBe("both");
+    expect(markWithout(["p"], proposals, kinds)).toBe("plan");
+    expect(markWithout(["cy-L1-x"], proposals, kinds)).toBeNull();
+    // 知らない鍵は数えない
+    expect(markWithout(["zz"], proposals, kinds)).toBeNull();
+  });
+  it("行の鍵は表と同じ形（「| 〜で見る」が行を探す）", () => {
+    const ledger = buildChart(small(), catalog, labels, base);
+    for (const r of ledger.rows.filter((x) => x.kind === "node")) expect(r.id).toBe(ledgerRowId(r.id.slice(2)));
+    const common = buildChart(small(), catalog, labels, { ...base, mode: "common" });
+    const leaves = common.rows.filter((r) => r.kind === "node" && r.level === 3);
+    expect(leaves.length).toBeGreaterThan(0);
+    for (const r of leaves) {
+      const [item, attr] = r.id.slice(2).split(":");
+      expect(r.id).toBe(commonRowId(item!, attr));
+      expect(common.rows.some((x) => x.id === commonRowId(item!))).toBe(true);
+    }
   });
 });

@@ -63,8 +63,8 @@ test("架空の台帳：verify ledger で ✓ → site → ブラウザで外へ
   await expect(page.getByText("✓ 10 件")).toBeVisible();
   await expect(page.getByText("類似施設 7", { exact: true })).toBeVisible();
   const statCells = await page.locator("tr.stat td.band").allTextContents();
-  expect(statCells.some((t) => t.startsWith("中央 "))).toBe(true);
-  expect(statCells.some((t) => t.startsWith("幅 "))).toBe(true);
+  expect(statCells.some((t) => t.startsWith("中央値 "))).toBe(true);
+  expect(statCells.some((t) => t.startsWith("範囲 "))).toBe(true);
   expect(statCells.some((t) => t === "x")).toBe(true);
   // スタイルは CSP のハッシュで許され、効いている（効かなければ表の線が無い）
   const border = await page.locator("table").first().locator("th").first().evaluate((el) => getComputedStyle(el).borderTopStyle);

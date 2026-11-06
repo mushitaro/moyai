@@ -38,18 +38,22 @@ const T = TEXT.merge;
 const SIDE_WIDTH = 340;
 const SIDE_MIN = 280;
 const SIDE_MAX = 560;
-const SIDE_PREF = "moyai.mergeSide";
-/** 横の板の開け閉めと幅（localStorage。読めなければ既定） */
-function readSidePref(): { folded: boolean; width: number } {
+// 前の鍵（moyai.mergeSide）は、開いたままの folded: false を人が選ばなくても書いていたので読まない（既定をたたむに替えた。Wire、11-06）
+const SIDE_PREF = "moyai.mergeSide.2";
+/**
+ * 横の板の開け閉めと幅（localStorage。読めなければ既定）。開け閉めは人が開け閉めしたときだけ覚える（folded が無ければ人はまだ選んでいない）。
+ * 既定はたたむ（Wire、11-06。本体の年度の欄を広くとるため）
+ */
+function readSidePref(): { folded: boolean | null; width: number } {
   try {
     const v = JSON.parse(localStorage.getItem(SIDE_PREF) ?? "null") as { folded?: unknown; width?: unknown } | null;
     const w = typeof v?.width === "number" ? Math.min(SIDE_MAX, Math.max(SIDE_MIN, v.width)) : SIDE_WIDTH;
-    return { folded: v?.folded === true, width: w };
+    return { folded: typeof v?.folded === "boolean" ? v.folded : null, width: w };
   } catch {
-    return { folded: false, width: SIDE_WIDTH };
+    return { folded: null, width: SIDE_WIDTH };
   }
 }
-function writeSidePref(p: { folded: boolean; width: number }): void {
+function writeSidePref(p: { folded: boolean | null; width: number }): void {
   try {
     localStorage.setItem(SIDE_PREF, JSON.stringify(p));
   } catch {
@@ -73,16 +77,31 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const nextPlan = useRef<Plan | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
   const [side, setSide] = useState<"open" | "signatures" | "source" | "comments">("open");
-  // 横の板の開け閉めと幅（この PC に 1 つだけ覚える。シートごとではない）
-  const [sideFolded, setSideFolded] = useState<boolean>(() => readSidePref().folded);
+  // 横の板の開け閉めと幅（この PC に 1 つだけ覚える。シートごとではない）。既定はたたむ。
+  // 本体の行・印・セルを選ぶ・開いた版に未回答があるときは開くが、それは覚えない（覚えるのは人が開け閉めしたときだけ。Wire、11-06）
+  const [sideFoldPref, setSideFoldPref] = useState<boolean | null>(() => readSidePref().folded);
+  const [sideFolded, setSideFolded] = useState<boolean>(() => readSidePref().folded ?? true);
   const [sideWidth, setSideWidth] = useState<number>(() => readSidePref().width);
-  useEffect(() => writeSidePref({ folded: sideFolded, width: sideWidth }), [sideFolded, sideWidth]);
+  useEffect(() => writeSidePref({ folded: sideFoldPref, width: sideWidth }), [sideFoldPref, sideWidth]);
+  /** 「| 見る」などで、その切り替えで板を開く（たたんでいたら開く。覚えない） */
+  const showSide = (k: "open" | "signatures" | "source" | "comments") => {
+    setSide(k);
+    setSideFolded(false);
+  };
+  /** 人が開け閉めした（覚える） */
+  const foldSide = (folded: boolean) => {
+    setSideFolded(folded);
+    setSideFoldPref(folded);
+  };
   // キー ］ で、たたむ・開く（字を打っている欄では効かせない）
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (e.key !== "]" || e.ctrlKey || e.metaKey || e.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
-      setSideFolded((f) => !f);
+      setSideFolded((f) => {
+        setSideFoldPref(!f);
+        return !f;
+      });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -112,7 +131,19 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     });
     return m;
   }, [comments]);
-  const sideCtx = useMemo<MergeSide>(() => ({ el: sourceEl, show: () => setSide("source"), select: setSelectedRow, commentMarks }), [sourceEl, commentMarks]);
+  // 本体で選ぶと、板を詳しくで開く（たたんでいたら開く。覚えない）
+  const sideCtx = useMemo<MergeSide>(
+    () => ({
+      el: sourceEl,
+      show: () => {
+        setSide("source");
+        setSideFolded(false);
+      },
+      select: setSelectedRow,
+      commentMarks,
+    }),
+    [sourceEl, commentMarks],
+  );
   const [notice, setNotice] = useState<string | null>(null);
   // 開いた版に資料の記録が無い（その版と、そのときの資料の数。資料を足すと消す）
   const [noSources, setNoSources] = useState<{ version: number; files: number } | null>(null);
@@ -268,6 +299,19 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const nextVersion = viewingOld ?? ((awaitingMe || askedApprove) && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
   const an = ws.fileCount ? ws.analysis() : null;
   const openQuestions = an ? an.open.length : 0;
+  // 開いた版に未回答があれば、横の板を決まっていない所で開く（下の帯の「未回答 n」と同じ行き先。Wire、11-06）。
+  // 版を開いたときと、未回答が 0 から増えたときだけ（人がたたんだあとに開き直さない）
+  const questionsKey = `${plan?.planId ?? ""}|${nextVersion}`;
+  const questionsSeen = useRef<{ key: string; any: boolean } | null>(null);
+  useEffect(() => {
+    const any = openQuestions > 0;
+    const prev = questionsSeen.current;
+    questionsSeen.current = { key: questionsKey, any };
+    if (any && (!prev || prev.key !== questionsKey || !prev.any)) {
+      setSide("open");
+      setSideFolded(false);
+    }
+  }, [questionsKey, openQuestions]);
   // 受けていない決定と、案のままの当てはめの規則（規則が当てている行は決定に二重に数えない。台帳の新-4）
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules;
   // 同じ作業に年数の違う周期の案を受けている（確定を止める。Architect の 44、Wire、11-06）
@@ -481,7 +525,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         </div>
         {sideNow && sideFolded && (
           <aside className="moyai-merge-side-band" data-testid="merge-side-band">
-            <button type="button" className="moyai-side-band-open" onClick={() => setSideFolded(false)} aria-label={T.side.unfold} data-testid="side-unfold">
+            <button type="button" className="moyai-side-band-open" onClick={() => foldSide(false)} aria-label={T.side.unfold} data-testid="side-unfold">
               ‹
             </button>
             {(
@@ -501,7 +545,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                   data-shu={shu ? "true" : undefined}
                   onClick={() => {
                     setSide(k);
-                    setSideFolded(false);
+                    foldSide(false);
                   }}
                   data-testid={`side-band-${k}`}
                 >
@@ -522,7 +566,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         )}
         {sideNow && !sideFolded && (
           <aside className="moyai-merge-side" style={{ width: sideWidth }} data-testid="merge-side">
-            <button type="button" className="moyai-side-fold" onClick={() => setSideFolded(true)} aria-label={T.side.fold} data-testid="side-fold">
+            <button type="button" className="moyai-side-fold" onClick={() => foldSide(true)} aria-label={T.side.fold} data-testid="side-fold">
               ›
             </button>
             {/* 切り替え：決まっていない所（n が 0 なら出さない）・署名（確定した版があるとき）・出どころ（星取表のとき） */}
@@ -618,11 +662,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               named={false}
             />
           )}
-          {awaitingMe && st?.latest && <KeyWarnLine signers={latestUntrusted} onConfirmed={reloadStatus} onShow={() => setSide("signatures")} />}
+          {awaitingMe && st?.latest && <KeyWarnLine signers={latestUntrusted} onConfirmed={reloadStatus} onShow={() => showSide("signatures")} />}
           {madeByMe && ignoredOther && !viewOnly && (
             <Text size="xs" c="var(--shu-text)" style={{ whiteSpace: "nowrap" }} data-testid="request-ignored">
               {HUMAN_TEXT.request.ignoredBar}
-              <button type="button" className="moyai-inline-act" onClick={() => setSide("signatures")} data-testid="request-ignored-show">
+              <button type="button" className="moyai-inline-act" onClick={() => showSide("signatures")} data-testid="request-ignored-show">
                 {HUMAN_TEXT.request.ignoredShow}
               </button>
             </Text>

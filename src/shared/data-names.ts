@@ -254,7 +254,7 @@ export const DATA_NAMES: readonly DataName[] = [
     definition: "作業の年度ごとの計画・実績の欄（作業した日の数）",
     decidedIn: "docs/words.md「整備の詳細」",
     screen: "日数",
-    code: "`WorkDetailT.days`・`lines[].days`。類似施設の帯は `D…`",
+    code: "`WorkDetailT.days`・`lines[].days`。類似施設の階級のコードは `D…`",
     avoid: ["「6日間」のような日数を工数にしない", "契約の工期の日数を作業の日数にしない"],
   },
   {
@@ -265,7 +265,7 @@ export const DATA_NAMES: readonly DataName[] = [
     definition: "作業の年度ごとの計画・実績の欄。単位は人日",
     decidedIn: "docs/words.md「工数（人日）」",
     screen: "工数（人日）・工数（人・日）",
-    code: "`WorkDetailT.manDays`・`lines[].manDays`。単位はルール「工数の単位」（`effortUnit`：`manDays`・`hours`）。類似施設の帯は `W…`",
+    code: "`WorkDetailT.manDays`・`lines[].manDays`。単位はルール「工数の単位」（`effortUnit`：`manDays`・`hours`）。類似施設の階級のコードは `W…`",
     avoid: [
       "時間（延べ時間・「延工数(h)」）を、1 人日の時間を聞かずに人日にしない",
       "人数と時間を足さない",
@@ -389,7 +389,7 @@ export const DATA_NAMES: readonly DataName[] = [
     avoid: [
       "案を計画の印（確定した ○）と呼ばない",
       "案で周期（`WorkT.trigger`）が変わったと言わない（足すのは計画の印だけ）",
-      "類似施設が 5 に届かない帯を根拠にしない",
+      "類似施設が 5 に届かない行を根拠にしない",
       "費用を根拠に書かない",
     ],
   },

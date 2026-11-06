@@ -29,7 +29,7 @@ describe("台帳を根拠にした周期の案", () => {
     if (!r.ok) throw new Error(r.code);
     const added = r.plan.details.filter((d) => d.detailKey.startsWith("cy-L1-"));
     expect([...new Set(added.map((d) => d.workKey))]).toEqual(["w1"]);
-    expect(added[0]!.basis).toContain("公開台帳（版 abcdef012345）：類似施設 6、間隔の中央の帯 3 年、四分位 2〜4 年");
+    expect(added[0]!.basis).toContain("公開台帳（版 abcdef012345）：類似施設 6、間隔の中央値 3 年、四分位 2〜4 年");
   });
 
   it("年数が四分位の帯の外なら置かない", () => {

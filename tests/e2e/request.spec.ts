@@ -12,7 +12,7 @@ import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { planDir } from "../../src/plan/paths";
 import { canonicalize } from "../../src/share/jcs";
 import { generateKeyPair, signBody } from "../../src/share/sign";
-import { acceptDecisions, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const A = "【架空】山田";
 const B = "【架空】課長";
@@ -201,8 +201,9 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await pa.goto(noToken(at(renewed, one.base)));
     await expect(pa.getByTestId("request-asked")).toContainText("承認を依頼しました　bucho@example.jp　まだ開かれていません");
     await expect(pa.getByTestId("request-ignored")).toContainText("! 効かない頼みが置かれています");
-    await expect(pa.getByTestId("side-signatures-ignored")).toHaveText("!");
+    // 「| 見る」で、横の板を署名の切り替えで開く（たたんでいても開く）
     await pa.getByTestId("request-ignored-show").click();
+    await expect(pa.getByTestId("side-signatures-ignored")).toHaveText("!");
     const row = pa.getByTestId("signature-ignored");
     await expect(row).toHaveCount(1);
     await expect(row).toHaveAttribute("data-why", "otherKey");
@@ -223,7 +224,7 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await expect(pc.getByTestId("approve-open")).toHaveCount(0);
     await expect(pc.getByTestId("confirm-open")).toHaveCount(0);
     // 受け取った人（課長は取り下げで外れた）の画面の帯には出さない。鎖の行は開いた全員に出る
-    await pc.getByTestId("side-signatures").click();
+    await sideTab(pc, "signatures");
     await expect(pc.getByTestId("signature-ignored")).toHaveCount(1);
     await expect(pc.getByTestId("request-ignored")).toHaveCount(0);
   });

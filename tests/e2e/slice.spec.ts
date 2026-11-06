@@ -286,7 +286,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.screenshot({ path: shot(`slice-files-${tag}`), fullPage: true });
       await page.getByTestId("sheet-chart").click();
       await expect(page.locator(".ag-row").first()).toBeVisible();
-      await page.getByTestId("side-fold").click();
+      // 横の板は既定でたたむ（Wire、11-06）。開いていれば（選んだ・未回答があった）たたむ
+      if (await page.getByTestId("side-fold").isVisible()) await page.getByTestId("side-fold").click();
       await expect(page.getByTestId("merge-side-band")).toBeVisible();
       await page.getByTestId("rows-mode").getByText("共通台帳").click();
       await expect(page.getByTestId("chart-grid")).toHaveAttribute("data-mode", "common");
