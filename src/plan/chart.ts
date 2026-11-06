@@ -261,6 +261,8 @@ export interface ChartModel {
   /** 行の切り替え（台帳の段 / 共通の設備項目 × 作業の属性） */
   mode: RowMode;
   levelNames: string[];
+  /** 号炉・系統の階層の列（0 から）。分けていなければ null（画面が列の幅を変える） */
+  seriesColumn: number | null;
   periods: Period[];
   /** 見える行（表に渡す行） */
   rows: ChartRow[];
@@ -691,6 +693,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   return {
     mode: opts.mode,
     levelNames,
+    seriesColumn: machineLevel !== null ? machineLevel : null,
     periods: buildPeriods(plan, opts.period, [...(opts.layer === "adjusted" ? (opts.changes ?? []) : []).map((c) => c.fiscalYear), ...peerYears]),
     rows,
     totalRows: total,

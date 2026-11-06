@@ -246,11 +246,16 @@ function textWidth(t: string): number {
   return w;
 }
 /**
- * 階層の列の幅（Wire、11-06。運営者「年度の欄が狭い」）：いちばん長い名前に合わせて広げず、上限を置く。
- * 上の階層は 144px まで、いちばん下の階層は 240px まで。入らない名前は後ろを「…」で切り、全文はセルの title と詳しくに出す
+ * 階層の列の幅（Wire、11-06。運営者「年度の欄が狭い」）：いちばん長い名前に合わせて広げず、役目で上限を分ける。
+ * いちばん上の階層（設備）144px・号炉・系統 96px・いちばん下の階層（部位）200px・ほか（機器）176px。どの列も、その列のいちばん長い名前に合わせて縮む。
+ * 入らない名前は後ろを「…」で切り、全文はセルの title と詳しくに出す
  */
 export const LEVEL_UPPER_MAX = 144;
 export const LEVEL_LOWEST_MAX = 240;
+export const LEVEL_TOP_MAX = 144;
+export const LEVEL_SERIES_MAX = 96;
+export const LEVEL_BOTTOM_MAX = 200;
+export const LEVEL_MIDDLE_MAX = 176;
 const LEVEL_MIN = 72;
 /** セルの左右の余白（cellHorizontalPadding の 2 つ分） */
 const CELL_PAD = 32;
@@ -315,7 +320,7 @@ function levelColumns(model: ChartModel, foldLevel: number | null, h: GridHandle
     width: levelWidth(
       name,
       model.rows.map((r) => levelText(r, i)),
-      i === model.levelNames.length - 1 ? LEVEL_LOWEST_MAX : LEVEL_UPPER_MAX,
+      i === 0 ? LEVEL_TOP_MAX : i === model.seriesColumn ? LEVEL_SERIES_MAX : i === model.levelNames.length - 1 ? LEVEL_BOTTOM_MAX : LEVEL_MIDDLE_MAX,
     ),
     tooltipValueGetter: (p) => (p.data ? levelText(p.data, i) || null : null),
     valueGetter: (p) => {
