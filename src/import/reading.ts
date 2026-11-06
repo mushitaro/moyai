@@ -2,6 +2,7 @@
 // 規則は、利用者と Claude が会話で決めて置くか、利用者が手で書く。読み手（層 2・3）はデータとして当て、規則で決まったものは質問にしない。
 // どの資料に効くかは、見出しの文字の並び（様式）と、資料の名前の型で決める。純粋な関数。
 import { z } from "zod";
+import { CLASS_CODE, WORK_ATTRIBUTES } from "../shared/fields";
 import { norm } from "./cues";
 
 export const READING_SCHEMA = "moyai.reading/0";
@@ -12,6 +13,8 @@ const column = z.string().min(1).max(60);
 export const COLUMN_ROLES = ["date", "end", "tag", "effort", "days", "assetRef", "workName", "unit", "number", "remark", "exclude"] as const;
 export const DATE_FORMATS = ["yyyymmdd", "yymmdd", "md"] as const;
 export type DateFormat = (typeof DATE_FORMATS)[number];
+/** 計画ルールの周期（年）。周期の案（src/plan/cycle.ts）と同じ幅 */
+export const PLAN_CYCLE_YEARS = { min: 1, max: 30 } as const;
 
 const base = {
   id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/),
@@ -42,6 +45,17 @@ export const ReadingRule = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("sameAsset"), names: z.tuple([z.string().min(1).max(80), z.string().min(1).max(80)]) }).strict(),
   z.object({ ...base, kind: z.literal("markMeaning"), symbol: z.string().min(1).max(8), planOrActual: z.enum(["plan", "actual"]), meaning: z.string().max(40).optional() }).strict(),
   z.object({ ...base, kind: z.literal("answer"), question: z.string().min(1).max(40), match: z.string().min(1).max(120), answer: z.string().min(1).max(60) }).strict(),
+  // 計画ルール（計画を作るルール。案 C、2026-11-06）：共通の設備項目 × 作業の属性 → 周期（年）。資料の読み方には効かず、
+  // 当たる作業（項目と属性を人が受けたもの）に周期の案（R）を出すだけ。案は人が確定のシートで受けるまで決まらない。when は使わない
+  z
+    .object({
+      ...base,
+      kind: z.literal("planCycle"),
+      commonItem: z.string().regex(CLASS_CODE),
+      attribute: z.enum(WORK_ATTRIBUTES),
+      years: z.number().int().min(PLAN_CYCLE_YEARS.min).max(PLAN_CYCLE_YEARS.max),
+    })
+    .strict(),
 ]);
 export type ReadingRule = z.infer<typeof ReadingRule>;
 
@@ -87,6 +101,28 @@ export function activeRules(readings: readonly LoadedReading[]): ActiveRule[] {
   return [...readings]
     .sort((a, b) => SCOPE_ORDER[a.skill.scope] - SCOPE_ORDER[b.skill.scope] || Number(b.draft) - Number(a.draft))
     .flatMap((r) => r.skill.rules.map((rule) => ({ rule, from: { name: r.skill.name, version: r.version, scope: r.skill.scope, approved: r.approved, draft: r.draft } })));
+}
+
+export type PlanCycleRule = Extract<ReadingRule, { kind: "planCycle" }>;
+export const isPlanRule = (r: ReadingRule): r is PlanCycleRule => r.kind === "planCycle";
+
+/** 当てる計画ルール：効く順（施設 → 担当 → 会社、下書きが先）で、同じ項目 × 属性は先のものだけ */
+export function activePlanRules(readings: readonly LoadedReading[]): (ActiveRule & { rule: PlanCycleRule })[] {
+  const seen = new Set<string>();
+  const out: (ActiveRule & { rule: PlanCycleRule })[] = [];
+  for (const a of activeRules(readings)) {
+    if (!isPlanRule(a.rule)) continue;
+    const k = `${a.rule.commonItem}|${a.rule.attribute}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(a as ActiveRule & { rule: PlanCycleRule });
+  }
+  return out;
+}
+
+/** 計画ルールの周期の案の根拠の頭：「計画ルール「名前」版 xxxx xxxx：1 文」（下書きは版「―」） */
+export function planRuleReason(a: ActiveRule): string {
+  return `計画ルール「${a.from.name}」版 ${shortVersion(a.from.version)}：${a.rule.text}`;
 }
 
 /** 規則の作者の理由（決定の理由に使う）：「読み方「名前」版 xxxx xxxx の規則：1 文」 */
@@ -173,9 +209,12 @@ export function skillMarkdown(skill: ReadingSkill, hand: string | null = null): 
     `範囲：${SCOPE_LABEL[skill.scope]}。MOYAI の取り込みが、資料を読むときに先に当てる決まり（3 段目の Skill。docs/plan.md §2.17）。`,
     `規則は rules.json にある。規則は手で編集してよい。人の言葉の補いは、この文の「${HAND}」の節の下に手で書く（規則から作り直しても残る）。編集すると版が変わり、その版を使った版に人が署名するまで、ほかの人の MOYAI では効かない。`,
     "",
+    // 計画ルールのある読み方だけに足す（計画ルールの無い読み方の文は変えない。文が変わると版が変わるため）
+    ...(skill.rules.some(isPlanRule) ? ["計画ルール（計画を作るルール）は、共通の設備項目と作業の属性が当たる作業に、周期の案を出す。案は人が確定のシートで受けるまで決まらない。", ""] : []),
     "## 規則",
     "",
     ...skill.rules.map((r) => {
+      if (isPlanRule(r)) return `- ${r.text}（計画ルール：${r.commonItem}・${r.attribute}・${r.years} 年）`;
       const where = [r.when?.file ? `資料「${r.when.file}」` : null, r.when?.headers?.length ? `見出しに「${r.when.headers.join("」「")}」` : null].filter(Boolean).join("・");
       return `- ${r.text}${where ? `（効く資料：${where}）` : ""}`;
     }),

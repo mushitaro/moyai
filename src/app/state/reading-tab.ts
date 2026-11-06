@@ -4,7 +4,7 @@
 // 規則を変えて前の版で承認済みのセルが変わる数は、版どうしのセルの差が要るので、まだ出さない（null）。
 import type { Analysis } from "../../import";
 import type { LoadedReading, ReadingRule, ReadingScope } from "../../import/reading";
-import { activeRules, shortVersion } from "../../import/reading";
+import { activeRules, isPlanRule, shortVersion } from "../../import/reading";
 
 export interface ReadingTabRule {
   id: string;
@@ -38,12 +38,18 @@ export interface ReadingTabSkill {
 const sameRule = (a: ReadingRule, b: ReadingRule) => JSON.stringify(a) === JSON.stringify(b);
 
 function appliesTo(r: ReadingRule): string | null {
+  // 計画ルールは資料でなく計画に効く（元の資料の欄は「計画」）
+  if (isPlanRule(r)) return "計画";
   const parts = [r.when?.file ? `資料「${r.when.file}」` : null, r.when?.headers?.length ? `見出しに「${r.when.headers.join("」「")}」` : null].filter((x): x is string => !!x);
   return parts.length ? parts.join("・") : null;
 }
 
-/** タブのデータ。readings：作業画面が当てている読み方。an：その読み方で読んだ結果 */
-export function readingTab(readings: readonly LoadedReading[], an: Pick<Analysis, "ruleHits" | "sources">): { skills: ReadingTabSkill[]; unapproved: number } {
+/** タブのデータ。readings：作業画面が当てている読み方。an：その読み方で読んだ結果。planMarks：計画ルールが作業中の計画に出した周期の案の印の数 */
+export function readingTab(
+  readings: readonly LoadedReading[],
+  an: Pick<Analysis, "ruleHits" | "sources">,
+  planMarks: (name: string, ruleId: string) => number = () => 0,
+): { skills: ReadingTabSkill[]; unapproved: number } {
   const order = activeRules(readings);
   const names = [...new Set(order.map((a) => a.from.name))];
   const skills: ReadingTabSkill[] = [];
@@ -67,7 +73,7 @@ export function readingTab(readings: readonly LoadedReading[], an: Pick<Analysis
           id: r.id,
           text: r.text,
           appliesTo: appliesTo(r),
-          hits: an.ruleHits.count(r.id),
+          hits: isPlanRule(r) ? planMarks(name, r.id) : an.ruleHits.count(r.id),
           decidedBy: r.author === "ai" ? { kind: "ai" } : { kind: "human", name: r.by ?? null },
           change: !approved || shown === approved ? (approved ? "same" : "added") : !before ? "added" : sameRule(before, r) ? "same" : "changed",
           approvedCellsChanged: null,

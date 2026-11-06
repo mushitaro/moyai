@@ -175,6 +175,15 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect((await call("personKeyCreate", {})).reason).toBe("personKeyExists");
     // 担当者の範囲の読み方の持ち主は、署名する人だけ（タブから来たほかの呼び名は断る。監査 D2）
     expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, readings: [{ skill: {}, by: "【架空】ほかの人", facilityKey: null }] })).reason).toBe("readingInvalid");
+    // 計画ルールは、この署名で人が受けた周期の案（R）のもとになったものだけを載せる。案の無いルールは断る（Architect の 42 の 2）
+    const planRuleSkill = {
+      schema: "moyai.reading/0",
+      name: "【架空】計画ルール",
+      scope: "company",
+      rules: [{ id: "p1", text: "灰クレーンの整備は 5 年ごと", kind: "planCycle", commonItem: "WI.CRANE.ASH", attribute: "OVERHAUL", years: 5, author: "ai", reason: "会話で直した" }],
+    };
+    expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null, readings: [{ skill: planRuleSkill, by: null, facilityKey: null }] })).reason).toBe("readingInvalid");
+    expect(existsSync(join(docs, "MOYAI", "skills", "会社", "【架空】計画ルール"))).toBe(false);
     expect((await call("planCommit", { plan, reason: "", acceptances: [], basedOn: null })).reason).toBe("reasonEmpty");
     expect((await call("planCommit", { plan, reason: "試験の確定", acceptances: [], basedOn: null })).reason).toBe("pendingDecisions");
     const c = await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null });

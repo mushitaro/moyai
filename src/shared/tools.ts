@@ -3,7 +3,7 @@
 // 確定する・送る・昇格する・保存するツールは作らない（人だけの操作）。
 import { z } from "zod";
 import toolNames from "./tool-names.json";
-import { FIELD_REFS, WORK_ATTRIBUTES, type FieldRef } from "./fields";
+import { CLASS_CODE, FIELD_REFS, WORK_ATTRIBUTES, type FieldRef } from "./fields";
 import { READING_SCOPES, ReadingRule } from "../import/reading";
 
 // ─── 規則の形（1 か所だけ）─────────────────────────────────────────
@@ -34,8 +34,7 @@ export const ruleSchema = z.object({
 });
 export type Rule = z.infer<typeof ruleSchema>;
 
-/** 分類コードの形（docs/plan.md §2.1）。頭の文字はパックが決める */
-export const CLASS_CODE = /^[A-Z]{2,4}(\.[A-Z0-9_]{2,16}){1,4}$/;
+export { CLASS_CODE };
 
 /**
  * 当てはめの規則（crosswalk_propose）。形は上の規則のまま、置ける欄と値を縛る：
@@ -422,7 +421,7 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠（公開の台帳の版 ledgerVersion と、似た施設の数と帯。費用は書かない）を書く。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で似た施設が 5 以上〔中央の帯〕かを照らし、合わなければ案を置かない）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
+    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠（公開の台帳の版 ledgerVersion と、似た施設の数と帯。費用は書かない）を書く。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で似た施設が 5 以上〔中央の帯〕かを照らし、合わなければ案を置かない）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が MERGE の決定のシートで受けて署名するまで決まらない。",
     z.object({
       rules: z.array(ruleSchema).min(1).max(50),
       basedOnVersion: z.number().int().min(0),
@@ -437,6 +436,18 @@ export const TOOLS = {
           work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]),
         })
         .optional(),
+      /** ほかの根拠（AI は指すだけ。中身は MOYAI が計画・パック・当てているルールから引く。Architect の 42 の 3） */
+      bases: z
+        .object({
+          /** ① 自施設の実績の間隔（当たった作業の実績の年度から MOYAI が数える。数えられなければ出どころは会話） */
+          record: z.literal(true).optional(),
+          /** ② パックの基準（checks.json の検査の ID） */
+          pack: z.object({ checkId: z.string().min(1).max(60) }).strict().optional(),
+          /** ④ 計画ルール（作業画面が当てているルールの名前と id） */
+          rule: z.object({ name: z.string().min(1).max(80), ruleId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/) }).strict().optional(),
+        })
+        .strict()
+        .optional(),
     }),
     z.object({
       /** 引いた計画の印の数 */
@@ -444,7 +455,7 @@ export const TOOLS = {
       conflicts: z.number().int(),
       examples: z.array(example).max(EXAMPLES_MAX),
       /** 案ごと：案の ID・当たった作業・引いた印・置かなかった作業（実施が無い・終わりの年度が足りない） */
-      proposals: z.array(z.object({ id: z.string(), years: z.number().int(), works: z.number().int(), marks: z.number().int(), skipped: z.object({ noActual: z.number().int(), noHorizon: z.number().int() }) })),
+      proposals: z.array(z.object({ id: z.string(), years: z.number().int(), works: z.number().int(), marks: z.number().int(), skipped: z.object({ noActual: z.number().int(), noHorizon: z.number().int() }), bases: z.array(z.string()).optional() })),
       version: z.number().int(),
     }),
   ),
@@ -556,7 +567,7 @@ export const TOOLS = {
     "reading_rules_propose",
     "propose",
     "読み方の規則を下書きで置く",
-    "取り込みを詰めきれないとき、利用者と会話で決めた読み方の規則を、作業中の版の下書きの読み方（3 段目の Skill）に置く。規則は決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・印の意味・同じ質問への決まった答え）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型）。同じ id の規則は置き換える。作業画面がすぐ読み直し、規則ごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
+    "取り込みを詰めきれないとき、利用者と会話で決めた読み方の規則を、作業中の版の下書きの読み方（3 段目の Skill）に置く。規則は決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・印の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業の属性 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料の読み方には効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその印の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型）。同じ id の規則は置き換える。作業画面がすぐ読み直し、規則ごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
     z.object({ name: z.string().min(1).max(80), scope: z.enum(READING_SCOPES), rules: z.array(ReadingRule).min(1).max(50) }),
     z.object({
       name: z.string(),

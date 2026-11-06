@@ -94,10 +94,11 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
       const r = await call(c, "chart_rows", { limit: 200 });
       expect(r.total).toBeGreaterThan(10);
       expect(r.rows.length).toBe(Math.min(200, r.total));
-      expect(r.remainingInConversation).toBe(2000 - r.rows.length);
+      // 取り込みの要約の見本の行も、会話の上限に数える（台帳の中-11）。だから残りは 2000 − この行より少ない
+      expect(r.remainingInConversation).toBeLessThan(2000 - r.rows.length);
       expect(r.rows.some((x: any) => Object.values(x.cells).includes("●"))).toBe(true);
       const r2 = await call(c, "chart_rows", { offset: 0, limit: 5 });
-      expect(r2.remainingInConversation).toBe(2000 - r.rows.length - 5);
+      expect(r2.remainingInConversation).toBe(r.remainingInConversation - 5);
     });
 
     await test.step("画面の星取表にも、AI が作った計画の行が出る", async () => {

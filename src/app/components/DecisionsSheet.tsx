@@ -2,6 +2,7 @@
 // 1 つの表に、受けていないものを先に並べる。列は「何を（種類の札）｜なぜ｜決めた人｜行｜受ける」。行は箱にせず、罫線だけ。
 // - 当てはめの案（Claude が置いた規則）：1 規則 1 行。受けるか、確かめのダイアログを通して断る（state/crosswalk.ts の人だけの道）。
 // - 台帳からの案（chart_propose の周期の案）：案ごとに 1 行（引いた印の数を行に）。受けると、その案の印をすべて受ける。
+// - ルール案（計画ルールから出した周期の案。ID の頭 R）：台帳からの案と同じく案ごとに 1 行。
 // - Claude の決定・会話から写した答え：1 行ずつ。
 // 理由の欄は上に 1 つ。1 行ずつ受けるときも、まとめて受けるときも、その理由を使う（空のあいだは押せない）。受けたものは下にたたむ。
 // 受けた決定はこのタブのメモリ（state/decisions.ts）に持ち、署名のダイアログがそこから読んで送る。
@@ -11,7 +12,7 @@ import { createPortal } from "react-dom";
 import { MergeSideContext } from "../state/merge-side";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
-import { cycleIdOf, isLedgerCycle } from "../../plan/cycle";
+import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
@@ -24,7 +25,7 @@ import { usePlanStatus } from "./ConfirmDialog";
 import { Switch } from "./Switch";
 
 const T = HUMAN_TEXT.decisions;
-const KINDS = ["same", "crosswalk", "ledger", "relayed", "ai"] as const;
+const KINDS = ["same", "crosswalk", "ledger", "rule", "relayed", "ai"] as const;
 type Kind = (typeof KINDS)[number];
 const W = TEXT.crosswalk;
 const NO_PROPOSALS: readonly CrosswalkProposal[] = [];
@@ -139,13 +140,16 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       ? "same"
       : g.cycle && isLedgerCycle(g.cycle)
         ? "ledger"
-        : g.ds[0]!.author === "ai_relayed_human"
+        : g.cycle && isPlanRuleCycle(g.cycle)
+          ? "rule"
+          : g.ds[0]!.author === "ai_relayed_human"
           ? "relayed"
           : "ai";
   const counts: Record<Kind, number> = {
     same: allOpenRules.filter((p) => p.sameAs !== undefined).length + openGroups.filter((g) => kindOfGroup(g) === "same").length,
     crosswalk: allOpenRules.filter((p) => p.sameAs === undefined).length,
     ledger: openGroups.filter((g) => kindOfGroup(g) === "ledger").length,
+    rule: openGroups.filter((g) => kindOfGroup(g) === "rule").length,
     relayed: openGroups.filter((g) => kindOfGroup(g) === "relayed").length,
     ai: openGroups.filter((g) => kindOfGroup(g) === "ai").length,
   };
@@ -192,11 +196,11 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     const d = ds[0]!;
     const done = ds.every((x) => isAccepted(x.id, x.hash));
     return (
-      <Table.Tr key={key} data-testid="pending-row" data-kind={cycle && isLedgerCycle(cycle) ? "ledger" : d.author} data-accepted={done ? "true" : "false"}>
+      <Table.Tr key={key} data-testid="pending-row" data-kind={cycle && isLedgerCycle(cycle) ? "ledger" : cycle && isPlanRuleCycle(cycle) ? "rule" : d.author} data-accepted={done ? "true" : "false"}>
         <Table.Td>
           <Text size="sm">{cycle ? T.cycleWhat(cycle, ds.length) : what(d)}</Text>
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
-            {cycle && isLedgerCycle(cycle) ? T.kind.ledger : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
+            {cycle && isLedgerCycle(cycle) ? T.kind.ledger : cycle && isPlanRuleCycle(cycle) ? T.kind.rule : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
           </Text>
           {d.kind === "reading" && d.where && (
             <Text size="xs" c="var(--text-3)" data-testid="pending-where">

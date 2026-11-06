@@ -65,6 +65,14 @@ function subscribe(l: () => void): () => void {
   return () => listeners.delete(l);
 }
 
+/** 作業中の計画が変わるたびに呼ぶ（計画ルールの案を出し直す。state/cycles.ts） */
+export const subscribeWorkingPlan = (l: () => void): (() => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+
 export function useWorkingPlan(): WorkingPlan | null {
   return useSyncExternalStore(subscribe, getWorkingPlan, getWorkingPlan);
 }

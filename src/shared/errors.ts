@@ -95,6 +95,18 @@ export const ERRORS = {
     http: 200,
     text: "その名前の読み方の下書きが、作業画面にありません。先に reading_rules_propose で規則を置き、利用者に読み直した結果を見てもらってください。",
   },
+  pack_basis_unknown: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "根拠に指したパックの基準（検査の ID）が、この計画のパックの checks.json にありません。案は置いていません。check_results で検査の ID を読み直してから指してください。",
+  },
+  plan_rule_unknown: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "根拠に指した計画ルール（名前と id）が、作業画面が当てているルール（承認済みと、作業中の版の下書き）にありません。案は置いていません。reading_skills_list か reading_rules_propose の答えで名前と id を確かめてください。",
+  },
   no_reading_root: {
     from: "bridge",
     to: "ai",

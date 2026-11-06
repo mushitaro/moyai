@@ -3,8 +3,9 @@
 // - 起点は、その作業の最後の実施の年度。実施が無い作業、計画の終わりの年度（計画のいちばん遅い年度）が起点より前の作業には置かず、数えて返す（推測で埋めない）。
 // - 引いた印は作者が AI の明細で、根拠に台帳の版と集計を書く。人が決定のシートで受けて署名するまで決まらない。
 // - 1 つの案（規則）で引いた印は、明細の鍵の頭（cy-<案>-）でまとめ、決定のシートでは 1 行にする。
-import type { Plan, WorkDetailT } from "../shared/plan";
+import type { Plan, SourceRef, WorkDetailT, WorkT } from "../shared/plan";
 import type { Rule } from "../shared/tools";
+import { shortVersion } from "../import/reading";
 import { worksHitBy } from "./crosswalk";
 
 export const CYCLE_FIELD = "work.trigger";
@@ -16,6 +17,15 @@ export const CONVERSATION_SOURCE = "conversation:Claude との会話";
 /** 台帳を照らした案の ID の頭（ほかは C。決定のシートの種類を分ける） */
 export const LEDGER_CYCLE_PREFIX = "L";
 export const isLedgerCycle = (id: string): boolean => id.startsWith(LEDGER_CYCLE_PREFIX);
+/** 計画ルール（3 段目の Skill の planCycle）から出した案の ID の頭（L・C と分ける。決定のシートの種類「ルール案」） */
+export const PLAN_RULE_CYCLE_PREFIX = "R";
+export const isPlanRuleCycle = (id: string): boolean => id.startsWith(PLAN_RULE_CYCLE_PREFIX);
+/** 計画ルールの出どころ。sheet にルールの名前、cell にルールの id を置く（版の署名でどのルールを承認するかを、橋渡しがこれで照らす） */
+export const PLAN_RULE_SOURCE = "rule:計画ルール";
+/** 自施設の実績の間隔（MOYAI が計画から数えたもの）を根拠にした案の出どころ */
+export const RECORD_SOURCE = "record:自施設の実績";
+/** パックの基準（checks.json の検査）を根拠にした案の出どころ。sheet に検査の ID を置く */
+export const PACK_SOURCE = "pack:パックの基準";
 export const CYCLE_KEY = /^cy-([A-Za-z0-9]+)-/;
 
 export interface CycleProposal {
@@ -29,6 +39,39 @@ export interface CycleProposal {
   /** 置かなかった作業：実施が無い・計画の終わりの年度が起点より前 */
   skipped: { noActual: number; noHorizon: number };
 }
+
+/** 計画ルールの出どころ（どのルールから出した案か） */
+export const planRuleSourceRef = (name: string, ruleId: string): SourceRef => ({ file: PLAN_RULE_SOURCE, sheet: name, page: null, cell: ruleId, box: null });
+const sourceRef = (file: string, sheet: string | null = null): SourceRef => ({ file, sheet, page: null, cell: null, box: null });
+
+/** MOYAI が照らした根拠（AI が書いた数は使わない。橋渡し・作業画面が計画・パック・保管先から引いたもの） */
+export interface VerifiedBases {
+  /** 自施設の実績の間隔を数える（AI は「使う」と指すだけ。間隔は当たった作業の実績の年度から数える） */
+  record?: boolean;
+  /** パックの基準：検査の ID・名前・出典 */
+  pack?: { checkId: string; name: string; source: string };
+  /** 計画ルール：名前・版・ルールの id・1 文 */
+  rule?: { name: string; version: string; ruleId: string; text: string };
+}
+
+/** 当たった作業の実績の間隔（年度の差）。実施が 2 回以上ある作業だけを数える。無ければ null */
+export function recordIntervals(details: readonly WorkDetailT[], works: readonly WorkT[]): { works: number; min: number; max: number } | null {
+  let n = 0;
+  let min = Infinity;
+  let max = -Infinity;
+  for (const w of works) {
+    const ys = [...new Set(details.filter((d) => d.workKey === w.workKey && d.planOrActual === "actual").map((d) => d.fiscalYear))].sort((a, b) => a - b);
+    if (ys.length < 2) continue;
+    n++;
+    for (let i = 1; i < ys.length; i++) {
+      min = Math.min(min, ys[i]! - ys[i - 1]!);
+      max = Math.max(max, ys[i]! - ys[i - 1]!);
+    }
+  }
+  return n === 0 ? null : { works: n, min, max };
+}
+
+const span = (a: number, b: number) => (a === b ? `${a} 年` : `${a}〜${b} 年`);
 
 export type CycleOutcome =
   | { ok: true; plan: Plan; proposals: CycleProposal[] }
@@ -52,9 +95,14 @@ export function proposeCycles(
     fromLedger: boolean;
     /** 台帳を照らしていない案の作者（会話から写した利用者の答えか、Claude の決定） */
     author?: "ai" | "ai_relayed_human";
+    /** MOYAI が照らした根拠（自施設の実績・パックの基準・計画ルール）。照らせたものだけ出どころに足す */
+    verified?: VerifiedBases;
+    /** 計画ルールから出す案：出どころは計画ルール（sheet に名前、cell に id） */
+    planRule?: { name: string; ruleId: string };
+    /** 当てる作業を絞る（計画ルールは、項目と属性を人が受けた作業だけ） */
+    onlyWorks?: (w: WorkT) => boolean;
   },
 ): CycleOutcome {
-  const source = opts.fromLedger ? LEDGER_SOURCE : CONVERSATION_SOURCE;
   const author = opts.fromLedger ? "ai" : (opts.author ?? "ai");
   for (const [i, r] of rules.entries()) if (cycleYearsOf(r) === null) return { ok: false, code: "rule_invalid", ruleIndex: i };
   const horizon = plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity);
@@ -63,9 +111,30 @@ export function proposeCycles(
   for (const rule of rules) {
     const years = cycleYearsOf(rule)!;
     const id = opts.nextId();
-    const basis = `${opts.basis}（案 ${id}：${years} 年ごと。${rule.reason}）`;
+    const hit = worksHitBy(plan, rule).filter((w) => !opts.onlyWorks || opts.onlyWorks(w));
+    // 出どころと、照らした根拠の文（照らせたものだけ。どれも照らせなければ会話。中-5 と同じ）
+    const v = opts.verified ?? {};
+    const sources: SourceRef[] = [];
+    const lines: string[] = [];
+    if (opts.planRule) sources.push(planRuleSourceRef(opts.planRule.name, opts.planRule.ruleId));
+    if (opts.fromLedger) sources.push(sourceRef(LEDGER_SOURCE));
+    const rec = v.record ? recordIntervals(details, hit) : null;
+    if (rec) {
+      sources.push(sourceRef(RECORD_SOURCE));
+      lines.push(`自施設の実績：実施が 2 回以上の作業 ${rec.works} の間隔 ${span(rec.min, rec.max)}`);
+    }
+    if (v.pack) {
+      sources.push(sourceRef(PACK_SOURCE, v.pack.checkId));
+      lines.push(`パックの基準「${v.pack.name}」（${v.pack.checkId}。出典 ${v.pack.source}）`);
+    }
+    if (v.rule) {
+      sources.push(planRuleSourceRef(v.rule.name, v.rule.ruleId));
+      lines.push(`計画ルール「${v.rule.name}」版 ${shortVersion(v.rule.version)}：${v.rule.text}`);
+    }
+    if (sources.length === 0) sources.push(sourceRef(CONVERSATION_SOURCE));
+    const basis = `${opts.basis}（案 ${id}：${years} 年ごと。${rule.reason}）${lines.map((x) => `。${x}`).join("")}`;
     const p: CycleProposal = { id, years, basis, detailKeys: [], works: 0, skipped: { noActual: 0, noHorizon: 0 } };
-    for (const w of worksHitBy(plan, rule)) {
+    for (const w of hit) {
       p.works++;
       const mine = details.filter((d) => d.workKey === w.workKey);
       const last = mine.filter((d) => d.planOrActual === "actual").reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity);
@@ -97,7 +166,7 @@ export function proposeCycles(
           measuredValue: null,
           previousValue: null,
           performer: null,
-          sources: [{ file: source, sheet: null, page: null, cell: null, box: null }],
+          sources: sources.map((x) => ({ ...x })),
           basis,
           author,
           needsReview: false,

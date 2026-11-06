@@ -22,6 +22,16 @@ export function reviewOf(plan: Plan, referenceDate: string): Review {
   return { kind: "ok", run: runChecks(loaded, { plan, referenceDate, approvals: [] }) };
 }
 
+/** パックの基準（checks.json の検査）を 1 つ引く：名前と出典（chart_propose の根拠の ② を照らす）。無ければ null */
+export function packCheckOf(packId: string, checkId: string): { checkId: string; name: string; source: string } | null {
+  const raw = checksJsons[`../../../packs/${packId}/checks.json`] as { checks?: unknown } | undefined;
+  const list = Array.isArray(raw?.checks) ? (raw.checks as { id?: unknown; name?: unknown; source?: { id?: unknown; clause?: unknown } | null }[]) : [];
+  const c = list.find((x) => x.id === checkId);
+  if (!c || typeof c.name !== "string") return null;
+  const src = c.source && typeof c.source.id === "string" ? `${c.source.id}${typeof c.source.clause === "string" ? ` ${c.source.clause}` : ""}` : "―";
+  return { checkId, name: c.name, source: src };
+}
+
 export const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 /** 今日の日本時間の日付（YYYY-MM-DD） */

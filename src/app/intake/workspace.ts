@@ -4,7 +4,7 @@
 // React を持たない純粋な TS にして、試験（vitest）から工場の資料で動かせるようにする。
 import { IntakeSession, type Analysis, type IntakeOptions, type Survey } from "../../import";
 import { PhotoBook, photoMimeOf } from "../../import/photo";
-import type { LoadedReading, ReadingRule, ReadingScope } from "../../import/reading";
+import { isPlanRule, type LoadedReading, type ReadingRule, type ReadingScope } from "../../import/reading";
 import { setCurrentReadings } from "../state/readings";
 import type { Decision, QuestionKind, QuestionState } from "../../import/questions";
 import type { InputFile } from "../../import/read";
@@ -271,10 +271,13 @@ export class IntakeWorkspace {
     const prev = this.readings.find((r) => r.draft && r.skill.name === name);
     const merged = [...(prev?.skill.rules ?? []).filter((x) => !rules.some((y) => y.id === x.id)), ...rules];
     const draft: LoadedReading = { skill: { schema: "moyai.reading/0", name, scope, rules: merged }, version: "", path: null, approved: false, draft: true };
+    // 資料の読み方が変わらない（計画ルールだけが変わった）ときは読み直さない。計画を作り直さずに、周期の案（R）だけが出し直される（state/cycles.ts）
+    const readingPart = (rs: readonly ReadingRule[]) => JSON.stringify(rs.filter((x) => !isPlanRule(x)));
+    const reread = prev?.skill.scope !== scope || readingPart(prev?.skill.rules ?? []) !== readingPart(merged);
     this.readings = [...this.readings.filter((r) => r !== prev), draft];
     this.session.setReadings(forFacility(this.readings, this.facilityKey()));
     setCurrentReadings(forFacility(this.readings, this.facilityKey()), this.facilityKey());
-    this.changed(true, true);
+    this.changed(reread, reread);
     const hits = this.analysis().ruleHits;
     return merged.map((x) => ({ id: x.id, text: x.text, hits: hits.count(x.id) }));
   }

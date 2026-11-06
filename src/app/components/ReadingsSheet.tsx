@@ -7,7 +7,9 @@ import { useContext, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { sheetHash } from "../stages";
+import { planRuleMarks } from "../state/cycles";
 import { MergeSideContext } from "../state/merge-side";
+import { useWorkingPlan } from "../state/plan-store";
 import { readingTab, type ReadingTabRule, type ReadingTabSkill } from "../state/reading-tab";
 import { HUMAN_TEXT } from "../text";
 import { Switch } from "./Switch";
@@ -23,7 +25,12 @@ export function unapprovedReadings(ws: IntakeWorkspace): number {
 }
 
 export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
-  const tab = useMemo(() => (ws.fileCount ? readingTab(ws.currentReadings(), ws.analysis()) : { skills: [], unapproved: 0 }), [ws, ws.version]);
+  // 計画ルールの件数は、作業中の計画に出した周期の案の印の数（計画が変わると数え直す）
+  const working = useWorkingPlan();
+  const tab = useMemo(
+    () => (ws.fileCount ? readingTab(ws.currentReadings(), ws.analysis(), (name, id) => planRuleMarks(working?.plan ?? null, name, id)) : { skills: [], unapproved: 0 }),
+    [ws, ws.version, working],
+  );
   const draftRules = tab.skills.filter((k) => k.status !== "approved").reduce((n, k) => n + k.rules.length, 0);
   const allRules = tab.skills.reduce((n, k) => n + k.rules.length, 0);
   const [chosen, setChosen] = useState<Filter | null>(null);
