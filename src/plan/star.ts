@@ -7,8 +7,9 @@
 //   人が確定すると、その明細を作業中の計画から外す。版には「その星取が無い計画」として入る（差分レポートが削除を出す）。
 // - 移動（延期・前倒し）は、同じ作業の計画の削除と追加の対で、1 つの案にする。
 // - 作業は chart_rows の作業の行（id「w:<作業の鍵>」）で指す。年度は計画の範囲（明細のいちばん早い年度〜いちばん遅い年度）の中だけ。
-// - 実績の追加の根拠は、自施設の実績（bases.record：同じ機器の同じ年度に、ほかの作業の実績があること。その作業明細の数も根拠に書く）か、
-//   利用者の言葉（author: ai_relayed_human）。パックの基準と計画ルールは実績の根拠にしない（基準は、した事を示さない）。
+// - 実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置く（Architect の 71。決まり 4：推測で埋めない）。
+//   同じ機器の同じ年度に、ほかの作業の実績があれば、根拠ではなく参考の行として根拠の文に添える（出どころには足さない）。
+//   bases（record・pack・rule）は実績の根拠にしない（基準は、した事を示さない。ほかの作業の実績は、その作業をした事を示さない）。
 // - 実績の削除は、利用者の言葉（author: ai_relayed_human）だけ。Claude の判断で施設の実績を消さない。
 import type { Plan, SourceRef, WorkDetailT } from "../shared/plan";
 import { CONVERSATION_SOURCE, PACK_SOURCE, RECORD_SOURCE, cycleIdOf, planRuleLine, planRuleSourceRef, recordIntervals, type VerifiedBases } from "./cycle";
@@ -94,9 +95,8 @@ export function checkStars(plan: Plan, stars: readonly StarIn[], o: StarCheckOpt
     if (o.fromLedger) return { code: "star_basis_invalid", index: i };
     if (s.op === "add" && s.value === "actual") {
       if (o.actualUpTo !== null && s.fiscalYear > o.actualUpTo) return { code: "star_out_of_range", index: i };
-      // 実績の根拠：パックの基準・計画ルールは使えない。自施設の実績か、利用者の言葉が要る
-      if (o.verified.pack || o.verified.rule) return { code: "star_basis_invalid", index: i };
-      if (o.verified.record ? actualEvidence(plan, wk, s.fiscalYear).length === 0 : o.author !== "ai_relayed_human") return { code: "star_basis_invalid", index: i };
+      // 実績の追加は利用者の言葉だけ（Architect の 71）。パックの基準・計画ルールは実績の根拠にしない
+      if (o.author !== "ai_relayed_human" || o.verified.pack || o.verified.rule) return { code: "star_basis_invalid", index: i };
     }
     if (s.op === "remove") {
       if (s.value === "actual" && o.author !== "ai_relayed_human") return { code: "star_basis_invalid", index: i };
@@ -110,8 +110,9 @@ export function checkStars(plan: Plan, stars: readonly StarIn[], o: StarCheckOpt
 const sourceRef = (file: string, sheet: string | null = null): SourceRef => ({ file, sheet, page: null, cell: null, box: null });
 /** 根拠の文に書く種類の字（docs/screens.md 3.2 の行の題と同じ） */
 export const STAR_KIND_TEXT: Record<StarKind, string> = { planAdd: "計画の追加", planRemove: "計画の削除", planMove: "計画の移動", actualAdd: "実績の追加", actualRemove: "実績の削除" };
-/** 実績の根拠に写す元のセルの数の上限 */
-const EVIDENCE_SOURCES_MAX = 5;
+/** 実績の追加の参考の行：「参考　同じ機器の 2024 年度の実績 1（作業明細 3）」 */
+export const actualReference = (fy: number, ev: readonly WorkDetailT[]): string =>
+  `参考　同じ機器の ${fy} 年度の実績 ${ev.length}（作業明細 ${ev.reduce((m, d) => m + (d.lines?.length ?? 0), 0)}）`;
 
 export interface StarAdd {
   /** 案の ID（同じ頼みの同じ作業・同じ種類で 1 つ） */
@@ -143,19 +144,9 @@ export function proposeStars(
     const sources: SourceRef[] = [];
     const lines: string[] = [];
     if (s.value === "actual") {
-      const ev = v.record ? actualEvidence({ ...plan, details }, s.workKey, s.fiscalYear) : [];
-      if (ev.length > 0) {
-        sources.push(sourceRef(RECORD_SOURCE));
-        const seen = new Set<string>();
-        for (const x of ev.flatMap((d) => d.sources)) {
-          const k = JSON.stringify(x);
-          if (seen.has(k) || seen.size >= EVIDENCE_SOURCES_MAX) continue;
-          seen.add(k);
-          sources.push({ ...x });
-        }
-        const n = ev.reduce((m, d) => m + (d.lines?.length ?? 0), 0);
-        lines.push(`自施設の実績：同じ機器の ${s.fiscalYear} 年度の実績 ${ev.length}（作業明細 ${n}）`);
-      }
+      // 参考の行（根拠ではない。出どころに足さない。言葉は Wire に確かめる）
+      const ev = actualEvidence({ ...plan, details }, s.workKey, s.fiscalYear);
+      if (ev.length > 0) lines.push(actualReference(s.fiscalYear, ev));
     } else {
       const w = plan.works.find((x) => x.workKey === s.workKey);
       const rec = v.record && w ? recordIntervals(details, [w]) : null;

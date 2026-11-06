@@ -135,7 +135,7 @@ export const ERRORS = {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "星取の案の根拠が足りません。案はどれも置いていません。実績の追加は、利用者の言葉（author: ai_relayed_human）か、自施設の実績（bases.record。同じ機器の同じ年度に、ほかの作業の実績があること）が要り、パックの基準と計画ルールは根拠になりません。実績の削除は利用者の言葉（author: ai_relayed_human）だけです。星取の案に ledger は使えません。",
+    text: "星取の案の根拠が足りません。案はどれも置いていません。実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置けます（Claude の判断では置けません。bases の record・pack・rule は実績の根拠になりません）。実績の削除は利用者の言葉（author: ai_relayed_human）だけです。星取の案に ledger は使えません。",
   },
   no_reading_root: {
     from: "bridge",

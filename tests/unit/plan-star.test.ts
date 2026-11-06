@@ -20,7 +20,7 @@ import {
   starGroups,
   undoRemovalsByHuman,
 } from "../../src/app/state/stars";
-import { CONVERSATION_SOURCE, PACK_SOURCE, RECORD_SOURCE } from "../../src/plan/cycle";
+import { CONVERSATION_SOURCE, PACK_SOURCE } from "../../src/plan/cycle";
 import { diffPlans, pendingDecisions } from "../../src/plan/diff";
 import { proposalIdOf, starIdOf, workRowRef } from "../../src/plan/star";
 import { commitPlan, readHistory } from "../../src/plan/store";
@@ -181,16 +181,19 @@ describe("実績の根拠（bases の決まりに合わせる）", () => {
     });
   });
 
-  it("bases.record：同じ機器の同じ年度に、ほかの作業の実績が無ければ置かない。あれば、その出どころ（元のセル）と数を根拠に書く", () => {
+  it("author: ai と bases.record だけの実績の追加は star_basis_invalid（Architect の 71）。同じ年度のほかの作業の実績は、利用者の言葉のときに参考の行として添える", () => {
     const w = ws();
-    expect(propose(w, { bases: { record: true }, stars: [{ op: "add", rowRef: "w:w1", value: "actual", fiscalYear: 2021 }] })).toEqual({ ok: false, code: "star_basis_invalid" });
-    // w2 の 2019 年度の実績：同じ機器 a1 の w1 に 2019 年度の実績（d1）がある
-    const r = ok(propose(w, { bases: { record: true }, stars: [{ op: "add", rowRef: "w:w2", value: "actual", fiscalYear: 2019 }] }));
+    // w2 の 2019 年度：同じ機器 a1 の w1 に 2019 年度の実績（d1）がある。それでも Claude の判断では置かない
+    expect(propose(w, { bases: { record: true }, stars: [{ op: "add", rowRef: "w:w2", value: "actual", fiscalYear: 2019 }] })).toEqual({ ok: false, code: "star_basis_invalid" });
+    expect(propose(w, { stars: [{ op: "add", rowRef: "w:w2", value: "actual", fiscalYear: 2019 }] })).toEqual({ ok: false, code: "star_basis_invalid" });
+    expect(starDetails(getWorkingPlan()!.plan)).toEqual([]);
+    const r = ok(propose(w, { author: "ai_relayed_human", bases: { record: true }, stars: [{ op: "add", rowRef: "w:w2", value: "actual", fiscalYear: 2019 }] }));
     expect((r.stars as { placed: boolean }[])[0]!.placed).toBe(true);
     const d = starDetails(getWorkingPlan()!.plan)[0]!;
-    expect(d).toMatchObject({ workKey: "w2", planOrActual: "actual", fiscalYear: 2019, author: "ai" });
-    expect(d.sources).toEqual([{ file: RECORD_SOURCE, sheet: null, page: null, cell: null, box: null }, ...base().details[0]!.sources]);
-    expect(d.basis).toContain("（案 S1：実績の追加 2019 年度）。自施設の実績：同じ機器の 2019 年度の実績 1（作業明細 0）");
+    expect(d).toMatchObject({ workKey: "w2", planOrActual: "actual", fiscalYear: 2019, author: "ai_relayed_human" });
+    // 出どころは会話だけ（ほかの作業の実績は根拠にしない）
+    expect(d.sources.map((s) => s.file)).toEqual([CONVERSATION_SOURCE]);
+    expect(d.basis).toContain("（案 S1：実績の追加 2019 年度）。参考　同じ機器の 2019 年度の実績 1（作業明細 0）");
   });
 
   it("利用者の言葉（ai_relayed_human）なら置ける。出どころは会話", () => {
