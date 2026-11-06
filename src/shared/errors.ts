@@ -93,7 +93,7 @@ export const ERRORS = {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "同じ機器・決まった答え・計画ルールの規則には when が効きません（どの資料にも当たります）。when を外して置き直すか、効く資料を利用者に確かめてください。規則は置いていません。when が効くのは、見出しの行・列の役目・日付の書き方・工数の単位・行の役割・印の意味です。",
+    text: "同じ機器・決まった答え・計画ルールの規則には when が効きません（どの資料にも当たります）。when を外して置き直すか、効く資料を利用者に確かめてください。規則は置いていません。when が効くのは、見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味です。",
   },
   no_reading_draft: {
     from: "tab",
@@ -234,10 +234,10 @@ export const ERRORS = {
   tab_not_open: { from: "bridge", to: "tab", http: 409, text: "作業画面が橋渡しにつながっていません。" },
   secret_missing: { from: "bridge", to: "tab", http: 403, text: "タブの秘密がありません。" },
   secret_mismatch: { from: "bridge", to: "tab", http: 403, text: "タブの秘密が違います。" },
-  token_missing: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印がありません。" },
-  token_unknown: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が無効です（使い終えたか、出していないもの）。" },
-  token_expired: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が切れました。" },
-  token_mismatch: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が、この操作か中身と結ばれていません。" },
+  token_missing: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンがありません。" },
+  token_unknown: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンが無効です（使い終えたか、出していないもの）。" },
+  token_expired: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンが切れました。" },
+  token_mismatch: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンが、この操作か中身と結ばれていません。" },
   // CLI → 端末
   port_in_use: {
     from: "cli",

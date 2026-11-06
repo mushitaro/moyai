@@ -19,10 +19,10 @@ export const EXPORT_TEXT = {
   fiction: "【架空】",
   plan: "計画",
   version: (n: number, at: string) => `第 ${n} 版（${at} に確定）`,
-  legend: "凡例：○ 計画　● 実績　◎ 同じ年度に計画と実績　? 写真から読んで人がまだ確かめていない印",
+  legend: "凡例：○ 計画　● 実績　◎ 同じ年度に計画と実績　? 写真から読んで人がまだ確かめていない星取",
   fy: (y: number) => `${y} 年度`,
   subtotal: (name: string) => `小計（${name}）`,
-  subtotalNote: "小計は、その年度に印のある行の数",
+  subtotalNote: "小計は、その年度に星取のある行の数",
   unmapped: (n: number) => `未紐付け（${n} 件）`,
   noCatalog: "このパックの名前の表が無いので、共通の設備項目のシートは作れません。",
   labels: {

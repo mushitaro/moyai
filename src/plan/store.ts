@@ -618,10 +618,10 @@ export const REPORT_TEXT = {
   kind: { confirm: "確定", revert: (n: number) => `第 ${n} 版に戻した` },
   at: "確定した時刻",
   reason: "確定の理由",
-  summary: (s: VersionRecord["summary"]) => `足した印 ${s.added}　消した印 ${s.removed}　変えた印 ${s.changed}　同じ印 ${s.same}`,
+  summary: (s: VersionRecord["summary"]) => `星取　追加 ${s.added}・削除 ${s.removed}・変更 ${s.changed}・変更なし ${s.same}`,
   fiction: "【架空】",
-  head: ["機器", "作業", "年度", "前の印", "後の印", "誰が", "なぜ"],
-  mark: { plan: "○ 計画", actual: "● 実施", both: "◎ 計画と実施", none: "（印なし）" } as Record<DiffMark | "none", string>,
+  head: ["機器", "作業", "年度", "前の星取", "後の星取", "誰が", "なぜ"],
+  mark: { plan: "○ 計画", actual: "● 実績", both: "◎ 計画と実績", none: "（星取なし）" } as Record<DiffMark | "none", string>,
   author: {
     human: "人",
     ai: "AI",
@@ -629,7 +629,7 @@ export const REPORT_TEXT = {
     ai_reading: "AI（読み取り）",
     rule_code: "決まり（コード）",
   } satisfies Record<AuthorKind, string>,
-  noRows: "前の版と同じです（印の差はありません）。",
+  noRows: "前の版と同じ（星取の差なし）",
   accepted: (n: number) => `この版で人が受けた AI の決定 ${n} 件`,
 };
 
