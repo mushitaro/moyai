@@ -21,6 +21,13 @@ export type QuestionKind =
   | "commonMeaning"
   | "unitSpelling"
   | "unitMissing"
+  // 費用の列（運営者の決定 A 案）と周期の列の質問は、それぞれの種類にする（Architect の 59。決まった答えのルールが種類で当たるので、号の抜けと分ける）
+  | "costKind"
+  | "costUnit"
+  | "costTax"
+  | "costBad"
+  | "cycleText"
+  | "planActualUnknown"
   | "hoursPerManDay"
   | "effortUnknown"
   | "dateUnknown"

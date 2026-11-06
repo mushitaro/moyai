@@ -1491,16 +1491,12 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
       roles.set(n.r, "legend");
       legends.push({ rows: [n.r], entries: entries.map((e) => ({ ...e, planOrActual: cue.planActual(e.meaning), refs: [n.ref], r: n.r })) });
     }
-  // 読み方の規則の印の意味（「▲ は実績、△ は予定」）：星取表の形の表の凡例に足す
+  // 読み方の規則の印の意味（「▲ は実績、△ は予定」）：どの星取表の形の表でも、資料の凡例より先に当てる（ルールは人が読み違いを直すために置く。Architect の 60）
   const markRules = rules.filter((a) => a.rule.kind === "markMeaning");
-  if (markRules.length && tables.some((t) => t.shape === "grid"))
-    legends.push({
-      rows: [],
-      entries: markRules.map((a) => {
-        const r = a.rule as Extract<typeof a.rule, { kind: "markMeaning" }>;
-        return { symbol: r.symbol, meaning: r.meaning ?? (r.planOrActual === "plan" ? "予定" : "実績"), planOrActual: r.planOrActual, refs: [], r: 0 };
-      }),
-    });
+  const ruleEntries: LegendEntry[] = markRules.map((a) => {
+    const r = a.rule as Extract<typeof a.rule, { kind: "markMeaning" }>;
+    return { symbol: r.symbol, meaning: r.meaning ?? (r.planOrActual === "plan" ? "予定" : "実績"), planOrActual: r.planOrActual, refs: [], r: 0 };
+  });
   // 凡例は、上にある一番近い星取表の形の表へ
   const looseLegends: LegendEntry[] = [];
   for (const lg of legends) {
@@ -1511,6 +1507,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
       target.legendRows.push(...lg.rows);
     } else looseLegends.push(...lg.entries);
   }
+  if (ruleEntries.length) for (const t of tables.filter((x) => x.shape === "grid")) t.legend.unshift(...ruleEntries.map((e) => ({ ...e })));
   const periods = new Map<string, { start: Ymd; end: Ymd; text: string }>();
   for (const n of [...titles, ...notes]) {
     // 項目の名前（「予定工期：」）と曜日の括弧を除いて、期間として読む

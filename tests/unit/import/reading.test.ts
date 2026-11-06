@@ -116,6 +116,23 @@ describe("規則の種類ごとに、読み手が当てる", () => {
     expect(an.records.marks.map((m) => `${m.ref}:${m.planOrActual}`).sort()).toEqual(["B2:actual", "C3:actual", "D2:plan"]);
   });
 
+  test("印の意味：資料の凡例と同じ記号なら、規則を先に当てる（Architect の 60。規則は人が読み違いを直すために置く）", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["機器名称", "2024", "2025", "2026"]]);
+      rows(ws, 2, [
+        ["ポンプ", "▲", null, "○"],
+        ["ブロワ", null, "▲", null],
+      ]);
+      rows(ws, 5, [[null, "凡例　○：計画　▲：計画"]]);
+    });
+    const s = session();
+    await s.add([{ name: "星取表.xlsx", bytes }]);
+    s.setReadings([reading([{ ...base, id: "m1", text: "▲ は実績", kind: "markMeaning", symbol: "▲", planOrActual: "actual" }])]);
+    acceptDefaults(s);
+    const marks = s.analyze().records.marks.map((m) => `${m.ref}:${m.planOrActual}`).sort();
+    expect(marks).toEqual(["B2:actual", "C3:actual", "D2:plan"]);
+  });
+
   test("決まった答え：人がまだ答えていない同じ質問に、規則の答え。作者は「決まり」、理由に読み方の名前と版。人の答えが先", async () => {
     const s = session();
     await s.add([

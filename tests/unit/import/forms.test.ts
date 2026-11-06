@@ -831,7 +831,7 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     expect(t?.cols.find((c) => c.header.startsWith("概算費用"))?.role).toBe("cost");
     expect(an.open.some((q) => q.kind === "levelSplit")).toBe(false);
     // 「概算費用」は予定・見積の列なので、実績の費用にしないかを先に聞く（Architect の 45。既定は計画の費用としてだけ読む）。税はそのあと
-    expect(an.open.filter((q) => q.kind === "unitMissing").map((q) => q.defaultAnswer)).toEqual(["plan"]);
+    expect(an.open.filter((q) => q.kind === "costKind").map((q) => q.defaultAnswer)).toEqual(["plan"]);
     acceptDefaults(s);
     const c = s.compose();
     const trig = (asset: string) => {
@@ -877,7 +877,7 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     await s.add([{ name: "点検.csv", bytes: csv(["機器,作業,周期,実施日,工数(人日),契約金額", "ポンプ,点検,年4回,2024/4/6,1,50000", "ブロワ,点検,毎回,2024/4/7,1,30000"]) }]);
     const an = s.analyze();
     expect(an.open.some((q) => q.kind === "columnRole")).toBe(false);
-    const q = an.open.find((x) => x.kind === "yearUnknown" && x.text.includes("周期"));
+    const q = an.open.find((x) => x.kind === "cycleText" && x.text.includes("周期"));
     expect(q?.text).toContain("「毎回」");
     s.settle([human(q?.questionId ?? "", "none")]);
     for (let i = 0; i < 4; i++) for (const x of s.analyze().open) s.settle([human(x.questionId, x.defaultAnswer ?? x.options.find((o) => o.id === "new")?.id ?? x.options[0]?.id ?? "")]);

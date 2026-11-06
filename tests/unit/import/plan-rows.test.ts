@@ -56,3 +56,32 @@ describe("作業明細の備考と作業量は共有しない（Architect の 54
     expect(JSON.stringify(pv.body).includes(SENTINEL)).toBe(false);
   });
 });
+
+describe("予定・実績の列の読めない値（Architect の 62）", () => {
+  // 予定・実績の列は 9 割が読める字（完了）のときに列の役目になる。そのうえで読めない字（延期）が混じる
+  const done = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027].map((y) => `${y}-05-10,押込送風機,分解整備,完了,3`);
+  const CSV2 = ["日付,機器,作業内容,状態,工数(人日)", ...done, "2028-05-10,押込送風機,分解整備,延期,3", "2029-05-10,押込送風機,分解整備,延期,3"].join("\r\n");
+  test("「延期」は推し量らず、同じ字ごとに 1 回聞く。答えるまで計画を作らない", async () => {
+    const s = session();
+    await s.add([{ name: "日報.csv", bytes: enc.encode(CSV2) }]);
+    const qs = s.analyze().open.filter((q) => q.kind === "planActualUnknown");
+    expect(qs).toHaveLength(1);
+    expect(qs[0]!.text).toContain("「延期」（2 行）");
+    expect(qs[0]!.defaultAnswer).toBeNull();
+    // ほかの質問に答えても、これに答えるまでは作らない
+    for (let i = 0; i < 10; i++) {
+      const open = s.analyze().open.filter((q) => !q.decision && q.kind !== "planActualUnknown");
+      if (!open.length) break;
+      s.settle(open.map((q) => human(q.questionId, q.defaultAnswer ?? q.options[0]?.id ?? "")));
+    }
+    expect(s.compose().plan).toBeNull();
+    s.settle([human(qs[0]!.questionId, "plan")]);
+    for (let i = 0; i < 10; i++) {
+      const open = s.analyze().open.filter((q) => !q.decision);
+      if (!open.length) break;
+      s.settle(open.map((q) => human(q.questionId, q.defaultAnswer ?? q.options[0]?.id ?? "")));
+    }
+    const p = s.compose().plan;
+    expect(p?.details.filter((d) => d.fiscalYear >= 2027).map((d) => [d.fiscalYear, d.planOrActual]).sort()).toEqual([[2027, "actual"], [2028, "plan"], [2029, "plan"]]);
+  });
+});

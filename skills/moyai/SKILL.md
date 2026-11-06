@@ -35,7 +35,7 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 詰めきれないとき（質問の選択肢に正しい答えが無い・読み違えている）：開いたままの質問と読み違いの見本の行を利用者に見せ、何がどうなっているかを会話で聞く → 決まった形の規則（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・印の意味・同じ質問への決まった答え）にして reading_rules_propose で下書きに置く（text は人の言葉の 1 文、体言止めか「〜として読む」、名前は「」）→ 読み直した結果を見せる → 利用者が良いと言えば reading_skill_register で保管先に未承認で書く。範囲は、その施設だけなら facility、会社で同じなら company、担当者の癖なら person。承認は、その読み方を使った版への人の署名です。reading_skills_list で保管先の読み方を見られます。
 
-似た施設と台帳：peer_reference（place: ledger）で、公開の台帳だけを計画の見え方で読む（人が開かなくてよい。needs が返れば利用者に聞いて answers を添える）。place を省くと、人が星取表で開いた比べを読む。返るのは下限を守った集計と匿名の札だけで、場をまたいで混ぜない。施設を当てようとしない。計画に入れるときは chart_propose で周期の案（set: work.trigger に年数）を置き、basis に ledgerVersion と似た施設の数と帯を書き（費用は書かない）、ledger に ledgerVersion・commonItem・work を添える（似た施設が 5 に届かない行は根拠にできない）。案は人が MERGE の決定のシートで受けて署名するまで決まりません。
+似た施設と台帳：peer_reference（place: ledger）で、公開の台帳だけを計画の見え方で読む（人が開かなくてよい。needs が返れば利用者に聞いて answers を添える）。place を省くと、人が星取表で開いた比べを読む。返るのは下限を守った集計と匿名の札だけで、場をまたいで混ぜない。施設を当てようとしない。計画に入れるときは chart_propose で周期の案（set: work.trigger に年数）を置き、ledger に ledgerVersion・commonItem・work を添える（似た施設の数と帯は MOYAI が照らして根拠に書くので、basis に数を書かない。費用も書かない。似た施設が 5 に届かない行と、年数が四分位の帯の外の案は置けない）。案は人が MERGE の確定のシートで確定し、署名するまで決まりません。
 
 計画の根拠は 4 つ：自施設の実績・パックの基準・公開の台帳・計画ルール。chart_propose の bases で record: true・pack: { checkId }・rule: { name, ruleId } を指すだけにする（中身と数は MOYAI が引く。basis に数を書かない）。利用者が会話で周期を直したら、計画ルール（kind: planCycle。commonItem × attribute → years と人の言葉の 1 文）にして reading_rules_propose で下書きに置く → 当たる作業に出た周期の案（R）を見せる（人が決定のシートで受けるまで決まらない）→ 利用者が良いと言えば reading_skill_register。
 

@@ -69,3 +69,17 @@ describe("役目の決まらない列を費用にする（Architect の 46）", 
     expect(p?.details.find((d) => d.fiscalYear === 2022)?.cost).toBe(12345);
   });
 });
+
+describe("費用の質問の種類（Architect の 59）", () => {
+  test("費用の列の種類・単位・税は、号の抜けと別の種類で聞く", async () => {
+    const s = session();
+    await s.add([{ name: "【架空】星取表.xlsx", bytes: await book("概算費用") }]);
+    const kinds = () => s.analyze().open.map((q) => q.kind);
+    expect(kinds()).toContain("costKind");
+    expect(kinds()).not.toContain("unitMissing");
+    const q = s.analyze().open.find((x) => x.kind === "costKind")!;
+    s.settle([human(q.questionId, "plan")]);
+    expect(kinds()).toContain("costUnit");
+    expect(kinds()).not.toContain("unitMissing");
+  });
+});

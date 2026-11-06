@@ -592,7 +592,7 @@ function readCycles(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: 
   }
   if (bad.length) {
     const a = ask.ask(`cycleBad|${rec.formOf.get(t.id)?.key ?? t.id}|${cycleCol.c}`, {
-      kind: "yearUnknown",
+      kind: "cycleText",
       text: `「${cycleCol.header.replace(/\s*\n\s*/g, "")}」の列に、周期として読めない書き方がある（${bad.length} 行、見本 ${[...new Set(bad.map((b) => b.text))].slice(0, 3).map((x) => `「${x}」`).join("")}）。周期を推し量らない`,
       options: [{ id: "none", label: "その行の作業に周期を置かない（理由を残す）" }],
       valueKind: "option",
@@ -627,7 +627,7 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
   let planOnly = false;
   if (rank(col.header) === 0) {
     const a = ask.ask(`costKind|${key}`, {
-      kind: "unitMissing",
+      kind: "costKind",
       text: `費用の列が「${header}」だけ（${cells.length} 行）。実績の費用ではない`,
       options: [
         { id: "plan", label: "計画の費用（予算）としてだけ読む" },
@@ -652,7 +652,7 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
   let unit = costHeaderUnit(col.header);
   if (unit === null) {
     const a = ask.ask(`costUnit|${key}`, {
-      kind: "unitMissing",
+      kind: "costUnit",
       text: `「${header}」の列の金額の単位が、見出しに書いてない（${cells.length} 行）。単位を推し量らない`,
       options: [
         { id: "1", label: "円" },
@@ -678,7 +678,7 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
   let tax = costHeaderTax(col.header);
   if (tax === null) {
     const a = ask.ask(`costTax|${key}`, {
-      kind: "unitMissing",
+      kind: "costTax",
       text: `「${header}」の列の金額が税込か税抜か、見出しに書いてない（${cells.length} 行）`,
       options: [
         { id: "incl", label: "税込" },
@@ -704,7 +704,7 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
   }
   if (bad.length) {
     const a = ask.ask(`costBad|${key}`, {
-      kind: "unitMissing",
+      kind: "costBad",
       // 費用の字は AI に渡さない（見本を出さず、件数だけ。Architect の注文 1）
       text: `「${header}」の列に、金額として読めない書き方がある（${bad.length} 行）。金額を推し量らない`,
       options: [{ id: "none", label: "その行の費用を置かない（理由を残す）" }],
@@ -1506,6 +1506,35 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       if (a === "none") e.unit = null;
       else if (a === "exclude") e.excluded = "号・系列として読めない行（決定で外した）";
       else e.pending = true;
+    }
+  }
+  // 予定・実績の列の、計画とも実績とも読めない値（「延期」「中止」）：推し量らず、同じ字ごとに 1 回聞く（Architect の 62。前は黙って実績になった）
+  if (paCol) {
+    const odd = new Map<string, typeof evs>();
+    for (const e of evs) {
+      const x = text(e.row, paCol).trim();
+      if (x === "" || cue.planActual(x) !== null) continue;
+      odd.set(x, [...(odd.get(x) ?? []), e]);
+    }
+    for (const [x, es] of odd) {
+      const a = ask.ask(`planActualUnknown|${t.id}|${x}`, {
+        kind: "planActualUnknown",
+        text: `「${paCol.header}」の列の「${x}」（${es.length} 行）は、計画か実績か読めない`,
+        options: [
+          { id: "plan", label: "計画" },
+          { id: "actual", label: "実績" },
+          { id: "exclude", label: "外す" },
+        ],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: es.length,
+        items: [itemOf(lay, es.slice(0, 10).map((e) => lay.index.at(e.row, paCol.c)?.ref ?? ""))],
+      });
+      for (const e of es) {
+        if (a === "plan") e.planOrActual = "plan";
+        else if (a === "exclude") e.excluded = "予定・実績の読めない行（決定で外した）";
+        else if (a !== "actual") e.pending = true;
+      }
     }
   }
   let spellOk: string | null = "yes";
