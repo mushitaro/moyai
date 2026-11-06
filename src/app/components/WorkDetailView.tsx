@@ -1,0 +1,244 @@
+// 整備の詳細（docs/screens.md 3.9、Wire、絵は WorkDetail.dc.html。11-06 の運営者の直しの形）：1 つの作業を開く画面。
+// データの形（運営者の定義）：機器 › 作業（火格子交換）› 作業明細（作業日報の 1 行）。作業の年度ごとの計画・実績はコードの WorkDetail。
+// 本体を置き換え、左上の「| ‹ 星取表」で戻る。表の行は作業の年度ごとの計画・実績（年度ごとに 2 段）。行を選ぶと横の板の詳細に、
+// その年度の値の全部の欄（空の欄は出さない）と「作業明細 n」（日報の 1 行ずつ。lines の無い前の版は「記録していない」）。
+import { Stack, Table, Text } from "@mantine/core";
+import { useContext, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import type { Plan, WorkDetailT } from "../../shared/plan";
+import { planDueViews } from "../../plan/due-view";
+import { MergeSideContext } from "../state/merge-side";
+import { HUMAN_TEXT } from "../text";
+
+const T = HUMAN_TEXT.workDetail;
+const fmt = (n: number, digits = 0) => n.toLocaleString("ja-JP", { maximumFractionDigits: digits });
+/** 費用は千円で見せる（円の整数で持つ） */
+const kyen = (yen: number) => fmt(yen / 1000, 1);
+
+type Kind = "plan" | "actual" | "unplanned";
+interface Row {
+  key: string;
+  fiscalYear: number;
+  kind: Kind;
+  details: WorkDetailT[];
+  /** 同じ年度の計画の費用（実績の差異に使う）。無ければ null */
+  budget: number | null;
+}
+
+const sum = (xs: (number | null)[]) => (xs.some((x) => x !== null) ? xs.reduce<number>((n, x) => n + (x ?? 0), 0) : null);
+const period = (ds: WorkDetailT[]) => {
+  const s = ds.map((d) => d.startDate).filter((x): x is string => !!x).sort();
+  const e = ds.map((d) => d.endDate ?? d.startDate).filter((x): x is string => !!x).sort();
+  return s.length ? (e.length && e.at(-1) !== s[0] ? `${s[0]}〜${e.at(-1)}` : s[0]!) : null;
+};
+const sourcesOf = (ds: WorkDetailT[]) => [...new Set(ds.flatMap((d) => d.sources.map((s) => `${s.file}${s.sheet ? `「${s.sheet}」` : ""}${s.cell ? ` ${s.cell}` : ""}`)))];
+
+export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBack }: { plan: Plan; workKey: string; asOf: string; path: string; attributeLabel: string | null; onBack: () => void }) {
+  const work = plan.works.find((w) => w.workKey === workKey);
+  const ds = useMemo(() => plan.details.filter((d) => d.workKey === workKey), [plan, workKey]);
+  const due = useMemo(() => planDueViews(plan, asOf).get(workKey) ?? null, [plan, asOf, workKey]);
+  const rows = useMemo<Row[]>(() => {
+    const years = [...new Set(ds.map((d) => d.fiscalYear))].sort((a, b) => a - b);
+    return years.flatMap((fy) => {
+      const plans = ds.filter((d) => d.fiscalYear === fy && d.planOrActual === "plan");
+      const acts = ds.filter((d) => d.fiscalYear === fy && d.planOrActual === "actual");
+      const budget = sum(plans.map((d) => d.cost));
+      const out: Row[] = [];
+      if (plans.length) out.push({ key: `${fy}:plan`, fiscalYear: fy, kind: "plan", details: plans, budget });
+      if (acts.length) out.push({ key: `${fy}:actual`, fiscalYear: fy, kind: plans.length ? "actual" : "unplanned", details: acts, budget });
+      return out;
+    });
+  }, [ds]);
+  const side = useContext(MergeSideContext);
+  const [picked, setPicked] = useState<string | null>(null);
+  const sel = rows.find((r) => r.key === picked) ?? null;
+  if (!work) return null;
+  const budgetTotal = sum(ds.filter((d) => d.planOrActual === "plan").map((d) => d.cost));
+  const actualTotal = sum(ds.filter((d) => d.planOrActual === "actual").map((d) => d.cost));
+  const head: [string, string | null][] = [
+    [T.attribute, attributeLabel],
+    [T.cycle, due?.decided || due?.basis ? (work.trigger ? cycleText(work.trigger) : null) : null],
+    [T.next, due?.text ?? null],
+    [T.basis, due?.basis ?? null],
+    [T.origin, due?.origin ?? null],
+    [T.budgetTotal, budgetTotal !== null ? kyen(budgetTotal) : null],
+    [T.actualTotal, actualTotal !== null ? kyen(actualTotal) : null],
+  ];
+  const counts = { plan: rows.filter((r) => r.kind === "plan").length, actual: rows.filter((r) => r.kind !== "plan").length };
+  const detail = sel && <RowDetail row={sel} name={work.kind} contractor={work.contractor} strategy={work.strategy} />;
+  return (
+    <div style={{ padding: "8px 32px 32px" }} data-testid="work-detail" data-work={workKey}>
+      <button type="button" className="moyai-inline-act" style={{ marginLeft: 0 }} onClick={onBack} data-testid="work-detail-back">
+        {T.back}
+      </button>
+      <Text size="xs" c="var(--text-3)" mt="sm">
+        {path}
+      </Text>
+      <Text fw={500} size="lg" data-testid="work-detail-title">
+        {work.kind}
+      </Text>
+      <Text size="sm" className="moyai-num" mt={4} data-testid="work-detail-head">
+        {head
+          .filter(([, v]) => v !== null)
+          .map(([k, v]) => (
+            <span key={k} style={{ marginRight: 20 }}>
+              <Text span size="xs" c="var(--text-3)" mr={6}>
+                {k}
+              </Text>
+              {v}
+            </span>
+          ))}
+      </Text>
+      {/* 表だけを横に送る（面ごと送ると、見出しと戻るの字が左へ切れる） */}
+      <div style={{ overflowX: "auto", marginTop: 16 }}>
+      <Table className="moyai-num moyai-work-detail" verticalSpacing={6} fz="sm" data-testid="work-detail-table">
+        <Table.Thead>
+          <Table.Tr>
+            {T.cols.map((c, i) => (
+              <Table.Th key={c} ta={i >= 3 && i <= 5 ? "right" : undefined}>
+                {c}
+              </Table.Th>
+            ))}
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {rows.map((r, i) => {
+            const firstOfYear = i === 0 || rows[i - 1]!.fiscalYear !== r.fiscalYear;
+            const span = rows.filter((x) => x.fiscalYear === r.fiscalYear).length;
+            const cost = sum(r.details.map((d) => d.cost));
+            const diff = r.kind !== "plan" && cost !== null && r.budget !== null ? cost - r.budget : null;
+            const verdict = r.details.map((d) => d.resultValue).filter(Boolean).join("・") || null;
+            return (
+              <Table.Tr
+                key={r.key}
+                data-testid="work-detail-row"
+                data-kind={r.kind}
+                className="moyai-pick-row"
+                aria-selected={picked === r.key}
+                onClick={() => {
+                  setPicked(r.key);
+                  side?.show();
+                }}
+                style={{ cursor: "pointer", borderTop: firstOfYear ? "1px solid var(--line-strong)" : undefined }}
+              >
+                {firstOfYear && <Table.Td rowSpan={span}>{T.fy(r.fiscalYear)}</Table.Td>}
+                <Table.Td>{T.kind[r.kind]}</Table.Td>
+                <Table.Td>{period(r.details) ?? ""}</Table.Td>
+                <Table.Td ta="right">{fmtOr(sum(r.details.map((d) => d.days)))}</Table.Td>
+                <Table.Td ta="right">{fmtOr(sum(r.details.map((d) => d.manDays)), 1)}</Table.Td>
+                <Table.Td ta="right">
+                  {cost !== null ? kyen(cost) : ""}
+                  {diff !== null && (
+                    <Text span size="xs" c="var(--text-3)" ml={6}>
+                      {signed(diff)}
+                    </Text>
+                  )}
+                </Table.Td>
+                <Table.Td>{verdict ?? ""}</Table.Td>
+                <Table.Td c="var(--text-3)">{sourcesOf(r.details)[0] ?? ""}</Table.Td>
+              </Table.Tr>
+            );
+          })}
+        </Table.Tbody>
+      </Table>
+      </div>
+      <Text size="xs" c="var(--text-3)" ta="right" mt="xs" data-testid="work-detail-counts">
+        {T.counts(counts.plan, counts.actual)}
+      </Text>
+      {side?.el && detail && createPortal(detail, side.el)}
+    </div>
+  );
+}
+
+function fmtOr(n: number | null, digits = 0): string {
+  return n === null ? "" : fmt(n, digits);
+}
+function signed(yen: number): string {
+  const k = kyen(Math.abs(yen));
+  return yen > 0 ? `+${k}` : yen < 0 ? `−${k}` : "0";
+}
+function cycleText(trigger: unknown): string | null {
+  const t = trigger as { branches?: { kind: string; years?: number; months?: number }[] };
+  const cal = t.branches?.find((b) => b.kind === "calendar");
+  if (!cal) return null;
+  const m = (cal.years ?? 0) * 12 + (cal.months ?? 0);
+  return m % 12 === 0 ? T.years(m / 12) : T.months(m);
+}
+
+function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string; contractor: string | null; strategy: string | null }) {
+  const ds = row.details;
+  const cost = sum(ds.map((d) => d.cost));
+  const diff = row.kind !== "plan" && cost !== null && row.budget !== null ? cost - row.budget : null;
+  const verdict = ds.map((d) => d.resultValue).filter(Boolean).join("・");
+  const measured = ds.map((d) => d.measuredValue).filter(Boolean).join("・");
+  const fields: [string, string | null][] = [
+    [T.period, period(ds)],
+    [T.manDays, fmtOr(sum(ds.map((d) => d.manDays)), 1) || null],
+    [T.cost, cost !== null ? kyen(cost) : null],
+    [T.diff, diff !== null ? signed(diff) : null],
+    [T.verdict, verdict ? (measured ? `${verdict}（${measured}）` : verdict) : null],
+    [T.previous, ds.map((d) => d.previousValue).filter(Boolean).join("・") || null],
+    [T.strategy, strategy ? (T.strategies[strategy] ?? strategy) : null],
+    [T.contractor, contractor],
+  ];
+  // 作業明細：lines の無い作業の年度の値（前の版・日報の無い資料）は「記録していない」（空の一覧と読まない。Architect の 43 の 5）
+  const recorded = ds.some((d) => d.lines !== undefined);
+  const lines = ds.flatMap((d) => d.lines ?? []);
+  const total = sum(lines.filter((l) => l.flag !== "effortExcluded").map((l) => l.manDays));
+  return (
+    <Stack gap="xs" data-testid="work-detail-side" data-kind={row.kind}>
+      <Text size="xs" c="var(--text-3)">
+        {T.kind[row.kind]}
+      </Text>
+      <Text size="sm" fw={700}>
+        {T.fy(row.fiscalYear)}　{name}
+      </Text>
+      {fields
+        .filter(([, v]) => v !== null && v !== "")
+        .map(([k, v]) => (
+          <Text key={k} size="sm" className="moyai-num">
+            <Text span size="xs" c="var(--text-3)" mr={8}>
+              {k}
+            </Text>
+            {v}
+          </Text>
+        ))}
+      <Text size="xs" c="var(--text-3)" mt="xs" data-testid="work-lines-title">
+        {recorded ? T.linesTitle(lines.length) : T.linesNotRecorded}
+      </Text>
+      {recorded && lines.length > 0 && (
+        <Table className="moyai-num" verticalSpacing={2} fz="xs" data-testid="work-lines">
+          <Table.Tbody>
+            {lines.map((l, i) => (
+              <Table.Tr key={i} data-flag={l.flag ?? ""}>
+                <Table.Td>{l.date ?? "―"}</Table.Td>
+                <Table.Td>{l.content}</Table.Td>
+                <Table.Td>{l.quantity ?? ""}</Table.Td>
+                <Table.Td ta="right">
+                  {l.manDays !== null ? fmt(l.manDays, 1) : ""}
+                  {l.flag && (
+                    <Text span size="xs" c="var(--text-3)" ml={4}>
+                      {T.lineFlags[l.flag]}
+                    </Text>
+                  )}
+                </Table.Td>
+              </Table.Tr>
+            ))}
+            <Table.Tr>
+              <Table.Td colSpan={3}>{T.linesTotal}</Table.Td>
+              <Table.Td ta="right">{total !== null ? fmt(total, 1) : ""}</Table.Td>
+            </Table.Tr>
+          </Table.Tbody>
+        </Table>
+      )}
+      <Text size="xs" c="var(--text-3)" mt="xs">
+        {T.sources}
+      </Text>
+      {sourcesOf(ds).map((s) => (
+        <Text key={s} size="xs">
+          - {s}
+        </Text>
+      ))}
+    </Stack>
+  );
+}

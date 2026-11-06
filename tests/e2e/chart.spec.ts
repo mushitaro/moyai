@@ -306,5 +306,19 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   // 作業の名前に機器の名前を付けない（板はごみクレーンの板）
   await expect(page.getByTestId("due-work").first()).toContainText("分解整備");
   await expect(page.getByTestId("due-work").first()).not.toContainText("ごみクレーンの");
+  // 整備の詳細（docs/screens.md 3.9）：作業ごとの「| 整備の詳細」で、その作業の画面に本体を置き換える
+  await page.getByTestId("open-work-detail").first().click();
+  await expect(page.getByTestId("work-detail")).toBeVisible();
+  await expect(page.getByTestId("work-detail-title")).toHaveText("ごみクレーンの分解整備");
+  await expect(page.getByTestId("work-detail-row").first()).toBeVisible();
+  await expect(page.getByTestId("work-detail-counts")).toContainText("計画");
+  await page.getByTestId("work-detail-row").first().click();
+  await expect(page.getByTestId("work-detail-side")).toBeVisible();
+  // 作業明細（日報の行）の無い作業の年度の値は「記録していない」（0 行と出さない）
+  await expect(page.getByTestId("work-lines-title")).toHaveText("作業明細　記録していない");
+  await page.screenshot({ path: shot(`work-detail-${tag}`) });
+  await page.getByTestId("work-detail-back").click();
+  await expect(page.getByTestId("work-detail")).toHaveCount(0);
+  await expect(page.locator(".ag-row").first()).toBeVisible();
   await page.screenshot({ path: shot(`chart-next-${tag}`) });
 });

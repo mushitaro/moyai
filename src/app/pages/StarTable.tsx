@@ -13,6 +13,7 @@ import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
 import { DUE_TEXT, planDueViews, rowDue, rowDues, type DueView } from "../../plan/due-view";
+import { WorkDetailView } from "../components/WorkDetailView";
 import "../chart/chart.css";
 import { FictionMark } from "../components/FictionMark";
 import { PeerPanel } from "../components/PeerPanel";
@@ -161,7 +162,7 @@ function workShort(kind: string, rowName: string): string {
 }
 
 /** 行を選んだとき、横の板に出す次回の詳細（docs/screens.md 3.2）。作業が 2 つ以上ある行は作業ごとに */
-function DueSide({ row, due, ix }: { row: ChartRow; due: ReadonlyMap<string, DueView>; ix: Index }) {
+function DueSide({ row, due, ix, onOpen }: { row: ChartRow; due: ReadonlyMap<string, DueView>; ix: Index; onOpen?: (workKey: string) => void }) {
   const views = rowDues(row.works, due);
   if (views.length === 0) return null;
   const S = DUE_TEXT.side;
@@ -193,6 +194,12 @@ function DueSide({ row, due, ix }: { row: ChartRow; due: ReadonlyMap<string, Due
                   {k}　{x}
                 </Text>
               ))}
+            {/* 整備の詳細（docs/screens.md 3.9）：作業ごとに、その作業の画面を開く */}
+            {onOpen && (
+              <button type="button" className="moyai-inline-act" style={{ marginLeft: 0, alignSelf: "flex-start" }} onClick={() => onOpen(v.workKey)} data-testid="open-work-detail">
+                {HUMAN_TEXT.workDetail.open}
+              </button>
+            )}
           </Stack>
         );
       })}
@@ -242,6 +249,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [selected, setSelected] = useState<{ rowId: string; periodKey: string | null } | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
+  // 整備の詳細で開いている作業（本体を置き換える。「‹ 星取表」で戻る）
+  const [detailWork, setDetailWork] = useState<string | null>(null);
   const [editNotice, setEditNotice] = useState(false);
   const [peersOpen, setPeersOpen] = useState(false);
   const [band, setBand] = useState<StatField>("interval");
@@ -417,13 +426,14 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   useEffect(() => {
     sideRef.current?.select(selKey ? { mode, id: selKey, label: selLabel } : null);
   }, [selKey, mode, selLabel]);
-  const sideBody = (
+  // 整備の詳細を開いているあいだは、横の板は整備の詳細だけが描く
+  const sideBody = detailWork ? null : (
     <>
           {selRow && (selRow.kind === "peer" || selRow.kind === "stat") ? (
             <PeerSide row={selRow} />
           ) : !selRow || !selPeriod ? (
             selRow && selRow.kind === "node" && selRow.works ? (
-              <DueSide row={selRow} due={due} ix={ix} />
+              <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />
             ) : (
             <Text size="sm" c="dimmed">
               {T.source.empty}
@@ -431,7 +441,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
             )
           ) : (
             <Stack gap="sm">
-              {selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} />}
+              {selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />}
               <Text size="sm" data-testid="source-cell">
                 {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
               </Text>
@@ -577,7 +587,31 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       {peersOpen && mode === "common" && catalog && <PeerPanel plan={plan} onComparison={setComparison} />}
 
       <div style={{ flex: 1, display: "flex", minHeight: 0, paddingBottom: 28 }}>
-        <div style={{ flex: 1, minWidth: 0, paddingLeft: embedded ? 32 : 16, display: "flex", flexDirection: "column" }}>
+        {detailWork && (
+          <div style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden" }}>
+            <WorkDetailView
+              plan={plan}
+              workKey={detailWork}
+              asOf={todayLocal()}
+              path={(() => {
+                const w = plan.works.find((x) => x.workKey === detailWork);
+                // 機器の道（親から：燃焼設備 › 焼却炉本体）。対象がいくつもあれば「、」でつなぐ
+                const byKey = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+                const pathOf = (k: string): string[] => {
+                  const a = byKey.get(k);
+                  return a ? [...(a.parentKey ? pathOf(a.parentKey) : []), a.name] : [k];
+                };
+                return (w?.targets ?? []).map((t) => pathOf(t).join(T.pathSep)).join("、");
+              })()}
+              attributeLabel={(() => {
+                const a = plan.works.find((x) => x.workKey === detailWork)?.attribute;
+                return a ? ((catalog ?? emptyCatalog()).workLabels as Record<string, string>)[a] ?? null : null;
+              })()}
+              onBack={() => setDetailWork(null)}
+            />
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0, paddingLeft: embedded ? 32 : 16, display: detailWork ? "none" : "flex", flexDirection: "column" }}>
           <div ref={gridEl} className="moyai-chart-grid" data-testid="chart-grid" data-mode={mode} data-fold={foldLevel ?? ""} />
           {/* 凡例は表の下に 1 行。行の数は右端に小さく */}
           <Group gap="md" wrap="nowrap" pt={8} pr={16} align="center">

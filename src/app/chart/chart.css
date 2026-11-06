@@ -223,3 +223,9 @@
 .moyai-band-head {
   border-right: 1px solid var(--line-strong) !important;
 }
+
+/* 整備の詳細の表（docs/screens.md 3.9）：見出しも字も折らない。表は面の中で横に送る */
+.moyai-work-detail th,
+.moyai-work-detail td {
+  white-space: nowrap;
+}
