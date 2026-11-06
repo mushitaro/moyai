@@ -33,9 +33,10 @@ import type { QuestionKind } from "../../import/questions";
 import { packChoices, packFiscalStart } from "../chart/catalog";
 import { PhotoPanel } from "../components/PhotoPanel";
 import "../intake/intake.css";
-import { answerOffered, type IntakeView, type IntakeWorkspace, type QuestionView, type SettleOutcome, type SheetData } from "../intake/workspace";
+import { answerOffered, type IntakeView, type IntakeWorkspace, type Notice, type QuestionView, type SettleOutcome, type SheetData } from "../intake/workspace";
 import { sheetHash } from "../stages";
 import { PHOTO_TEXT, TEXT } from "../text";
+import { TOOL_NAMES } from "../../shared/tools";
 
 const T = TEXT.intake;
 const KIND_LABEL: Record<QuestionKind, string> = T.questionKind;
@@ -399,6 +400,80 @@ export function composeReasons(ws: IntakeWorkspace): string[] {
     TEXT.merge.block.open(open),
     ...view.blockers.filter((b) => !QUESTION_BOUND.test(b)),
   ];
+}
+
+// ─── 止まった知らせ（下の帯の左、編集者の右。docs/screens.md 3.3「止まった知らせ」、Wire、11-07） ─────────────
+
+/** unknown：AI の作業の結果不明／stopped：取り込みの処理の停止 */
+export type StopKind = "unknown" | "stopped";
+
+/**
+ * 作業場の記録のうち、下の帯に出すもの：AI に「結果不明」と返した記録と、取り込みの処理が止まった記録（workerStopped・workerFallback）。
+ * ふつうに終わった作業の記録は出さない
+ */
+export function stopNotices(notices: readonly Notice[]): Record<StopKind, Notice[]> {
+  return {
+    unknown: notices.filter((n) => n.kind === "unknown"),
+    stopped: notices.filter((n) => n.kind === "info" && (n.text === TEXT.intake.workerStopped || n.text === TEXT.intake.workerFallback)),
+  };
+}
+
+/** 下の帯の朱の字「結果不明 n」「取り込み停止」。押すと横の板の詳細にその記録 */
+export function StopNotices({ notices, onShow }: { notices: readonly Notice[]; onShow: (k: StopKind) => void }) {
+  const s = stopNotices(notices);
+  return (
+    <>
+      {s.unknown.length > 0 && (
+        <button type="button" className="moyai-stop-notice" onClick={() => onShow("unknown")} data-testid="stop-unknown">
+          {T.stop.unknown(s.unknown.length)}
+        </button>
+      )}
+      {s.stopped.length > 0 && (
+        <button type="button" className="moyai-stop-notice" onClick={() => onShow("stopped")} data-testid="stop-worker">
+          {T.stop.stopped}
+        </button>
+      )}
+    </>
+  );
+}
+
+/** 結果不明の記録のツールの名前（記録の字は TEXT.intake.activity.unknown で作られる） */
+function toolOf(text: string): string | null {
+  return TOOL_NAMES.find((n) => TEXT.intake.activity.unknown(n) === text) ?? null;
+}
+
+/**
+ * 横の板の詳細：止まった記録（新しい順）。1 件ごとに、題と日時（いつ）、項目（何を）、停止箇所（止まった所）、記録の字。
+ * 「| やり直す」は置かない（今の作業場に、やり直しの口が無い）
+ */
+export function StopNoticeDetail({ notices, kind }: { notices: readonly Notice[]; kind: StopKind }) {
+  const list = stopNotices(notices)[kind];
+  return (
+    <Stack gap="md" data-testid="stop-detail" data-kind={kind}>
+      {list.map((n) => {
+        const what = kind === "unknown" ? toolOf(n.text) : T.stop.whatWorker;
+        const where = kind === "unknown" ? T.stop.whereTool : n.text === TEXT.intake.workerFallback ? T.stop.whereFallback : T.stop.whereStopped;
+        return (
+          <Stack key={n.id} gap={2} data-testid="stop-record">
+            <Text size="sm" fw={700} c="var(--shu-text)">
+              {kind === "unknown" ? T.stop.unknownTitle : T.stop.stopped}　<span className="moyai-num">{T.at(n.at)}</span>
+            </Text>
+            {what && (
+              <Text size="sm">
+                {T.stop.what}　{what}
+              </Text>
+            )}
+            <Text size="sm">
+              {T.stop.where}　{where}
+            </Text>
+            <Text size="xs" c="var(--text-2)">
+              {n.text}
+            </Text>
+          </Stack>
+        );
+      })}
+    </Stack>
+  );
 }
 
 // ─── 施設の欄（資料が無いあいだは資料のシートに、資料が入ったら白紙の「施設設定」のダイアログに） ──────────

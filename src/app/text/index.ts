@@ -479,6 +479,25 @@ export const TEXT = {
       cellQuestion: (text: string) => `この質問に答えると決まります：${text}`,
       loading: "読込中",
     },
+    /** 下の帯の止まった知らせ（docs/screens.md 3.3「止まった知らせ」）と、押したときの詳細 */
+    stop: {
+      unknown: (n: number) => `結果不明 ${n}`,
+      /** 詳細の 1 件の題 */
+      unknownTitle: "結果不明",
+      stopped: "取り込み停止",
+      what: "項目",
+      where: "停止箇所",
+      /** 結果不明：橋渡しがタブの答えを時間内に受けなかった */
+      whereTool: "タブの応答（時間切れ）",
+      whatWorker: "取り込みの処理",
+      whereStopped: "応答なし",
+      whereFallback: "別の処理の起動",
+    },
+    /** 日時「2026-11-07 06:30」 */
+    at: (iso: string) =>
+      new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+        .format(new Date(iso))
+        .replace(/\//g, "-"),
     /** HOSHITORI の横の板「未回答 n」の質問（docs/screens.md 3.2・3.3。Wire、11-07）：既定の答えに「- 既定」、「n 行」、「| 決める」 */
     questions: {
       none: "答えの要る質問はありません。",

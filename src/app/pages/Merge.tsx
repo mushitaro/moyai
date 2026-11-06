@@ -33,7 +33,7 @@ import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { FacilityDialog } from "../components/FacilityDialog";
 import { setFacilityDialog } from "../state/facility-dialog";
-import { Intake, IntakeFacilityDialog, Questions, composeReasons, useWorkspace } from "./Intake";
+import { Intake, IntakeFacilityDialog, Questions, StopNoticeDetail, StopNotices, composeReasons, stopNotices, useWorkspace, type StopKind } from "./Intake";
 
 const T = TEXT.merge;
 const SIDE_WIDTH = 340;
@@ -120,6 +120,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     window.addEventListener("mouseup", up);
   };
   const [sourceEl, setSourceEl] = useState<HTMLElement | null>(null);
+  // 下の帯の止まった知らせを押したとき、詳細にその記録を出す（本体の行・星取・セルを選ぶと、そちらに戻る）
+  const [stop, setStop] = useState<StopKind | null>(null);
   // コメント：保管先から読み、星取表で選んだ行に付ける
   const [comments, setComments] = useState<ListedComment[]>([]);
   const [selectedRow, setSelectedRow] = useState<CommentRow | null>(null);
@@ -137,6 +139,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     () => ({
       el: sourceEl,
       show: () => {
+        setStop(null);
         setSide("source");
         setSideFolded(false);
       },
@@ -384,7 +387,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const ignoredOther = ignored.some((q) => q.why === "otherKey");
   const madeByMe = !!latestInfo?.signatures.some((x) => (x.role === "confirm" || x.role === "edit" || x.role === "revert") && x.trust === "own");
   // 詳しく：どのシートでも、本体で選んだ行・印・セルの全文と根拠を出す所（前の「出どころ」。Wire、2026-11-05）
-  const sideSource = !!plan || (current === "files" && fileNames.length > 0);
+  const stopShown = stop !== null && stopNotices(ws.notices)[stop].length > 0 ? stop : null;
+  const sideSource = !!plan || (current === "files" && fileNames.length > 0) || stopShown !== null;
   const sideComments = !!plan;
   const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
   const sideNow: "open" | "signatures" | "source" | "comments" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : sideComments ? "comments" : null;
@@ -635,10 +639,14 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             {/* 詳しくは、星取表・検査のシートがここへ描く。見ていないあいだも場所は残す。何も選んでいなければ 1 行 */}
             {sideSource && (
               <div style={{ display: sideNow === "source" ? undefined : "none" }}>
-                <div ref={setSourceEl} className="moyai-side-detail" />
-                <Text size="sm" c="dimmed" className="moyai-side-detail-empty" data-testid="side-detail-empty">
-                  {T.side.detailEmpty}
-                </Text>
+                {/* 止まった知らせを押したあいだは、その記録だけ（シートが描いた詳細は隠して残す） */}
+                {stopShown && <StopNoticeDetail notices={ws.notices} kind={stopShown} />}
+                <div ref={setSourceEl} className="moyai-side-detail" style={stopShown ? { display: "none" } : undefined} />
+                {!stopShown && (
+                  <Text size="sm" c="dimmed" className="moyai-side-detail-empty" data-testid="side-detail-empty">
+                    {T.side.detailEmpty}
+                  </Text>
+                )}
               </div>
             )}
           </aside>
@@ -674,6 +682,14 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               </Text>
             )
           )}
+          {/* 止まった知らせ（編集者の右、朱の字）：結果不明と取り込みの停止だけ。ふつうに終わった作業は出さない */}
+          <StopNotices
+            notices={ws.notices}
+            onShow={(k) => {
+              setStop(k);
+              showSide("source");
+            }}
+          />
           {askedByMe && req?.received && (req.received.trust === "unconfirmed" || req.received.trust === "changed") && (
             <KeyWarnLine
               signers={[{ role: "confirm", by: req.received.by, pub: req.received.pub, fingerprint: req.received.fingerprint, trust: req.received.trust, previous: req.received.previous }]}

@@ -391,6 +391,17 @@ button.moyai-merge-link {
 .moyai-merge-bar {
   border-top: 1px solid var(--line);
 }
+/* 下の帯の止まった知らせ（「結果不明 n」「取り込み停止」。docs/screens.md 3.3、Wire、11-07）：編集者の右に朱の字。押すと横の板の詳細に記録 */
+button.moyai-stop-notice {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--shu-text);
+  white-space: nowrap;
+  cursor: pointer;
+}
 
 /* §10.20 ヘッダ */
 /* ヘッダ（絵は Review.dc.html・Main.dc.html）：左から、しるし（25×20、飾り）→ 段の列「MOYAI › MERGE › EXPORT › SHARE」。
