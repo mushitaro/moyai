@@ -2,6 +2,7 @@
   "schema": "moyai.common/0",
   "pack": "waste-incineration",
   "source": "MOE-GLPLE-PROV-R3",
+  "seriesUnit": "号炉",
   "table": "表Ⅱ-4 主要設備・機器リスト例",
   "page": { "printed": 29, "pdf": 37 },
   "verification": "原典照合済",

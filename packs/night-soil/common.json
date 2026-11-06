@@ -2,6 +2,7 @@
   "schema": "moyai.common/0",
   "pack": "night-soil",
   "source": "MOE-GLPLE-HW-R3",
+  "seriesUnit": "系統",
   "table": "表Ⅱ-4 主要設備・機器リスト例",
   "page": { "printed": 27, "pdf": 35 },
   "verification": "原典照合済",
