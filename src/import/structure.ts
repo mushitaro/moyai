@@ -371,6 +371,9 @@ function seriesValues(cs: GridCell[]): boolean {
   return own.length > 0 && ratio(own.filter((x) => /^\d{1,3}$/.test(norm(x.text)) || parseUnit(x.text) !== null).length, own.length) >= 0.8;
 }
 
+/** 金額らしい列か（見出しに額・価格・費、中身に円・¥）。役目の決まらない列の問いで、見本の字を伏せるのに使う */
+const moneyLike = (header: string, cs: readonly GridCell[]): boolean => /額|価格|費/u.test(header) || cs.some((x) => /[円¥￥]/u.test(x.text));
+
 /** 作業の表の、役目の決まらない列の問いの選択肢（どの役目にも答えられるように。既定は備考） */
 export const COLUMN_ROLE_OPTIONS: { id: string; label: string }[] = [
   { id: "remark", label: "備考として根拠の文に添える" },
@@ -381,6 +384,8 @@ export const COLUMN_ROLE_OPTIONS: { id: string; label: string }[] = [
   { id: "end", label: "日付（終わり）" },
   { id: "days", label: "日数" },
   { id: "effort", label: "工数" },
+  // 費用の列（Architect の 46）：見本では字を伏せ、作業の年度の値の費用に読む
+  { id: "cost", label: "費用" },
   { id: "exclude", label: "外す" },
 ];
 
@@ -648,8 +653,8 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
           pattern: `col:${col.c}`,
           rows: [],
           cells: cs.slice(0, 10).map((x) => x.ref),
-          // 見出しの無い列でも答えられるように、中身の見本と、表の行の範囲を添える
-          detail: `列 ${colLetter(col.c)}（見出し「${col.header || "なし"}」・中身の見本 ${[...new Set(cs.map((x) => x.text.replace(/\s+/g, " ").trim().slice(0, 20)))].slice(0, 3).map((t) => `「${t}」`).join("")}・表の ${dataRows[0] ?? top}〜${dataRows[dataRows.length - 1] ?? top} 行目）の役目が決まらない`,
+          // 見出しの無い列でも答えられるように、中身の見本と、表の行の範囲を添える。金額らしい列（見出しに額・価格・費、中身に円）は見本を伏せる（Architect の 46。費用の値を AI に渡さない）
+          detail: `列 ${colLetter(col.c)}（見出し「${col.header || "なし"}」・中身の見本 ${moneyLike(col.header, cs) ? "（費用）" : [...new Set(cs.map((x) => x.text.replace(/\s+/g, " ").trim().slice(0, 20)))].slice(0, 3).map((t) => `「${t}」`).join("")}・表の ${dataRows[0] ?? top}〜${dataRows[dataRows.length - 1] ?? top} 行目）の役目が決まらない`,
           proposal: "remark",
           options: COLUMN_ROLE_OPTIONS,
         });

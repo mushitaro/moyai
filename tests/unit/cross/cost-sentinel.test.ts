@@ -104,7 +104,7 @@ describe("費用の列：計画に入り、AI と共有には出ない（見張�
 });
 
 describe("見出しの言い方を変えても伏せる（Architect の注文）", () => {
-  for (const header of ["契約金額（円）", "工事費(千円)", "修繕費（千円/回）"]) {
+  for (const header of ["契約金額（円）", "工事費(千円)", "修繕費（千円/回）", "契約額(千円)", "請負額(円)", "概算額(千円)"]) {
     it(header, async () => {
       const s = session();
       await s.add([{ name: "【架空】星取表.xlsx", bytes: await book(header, Number(SENTINEL)) }]);
@@ -113,10 +113,10 @@ describe("見出しの言い方を変えても伏せる（Architect の注文）
       expect(t.includes(SENTINEL)).toBe(false);
     });
   }
-  it("見分けられない言い方（「概算額」）は費用の列にならない（docs/security.md の保証できないことの 11）", async () => {
+  it("見分けられない言い方（「見込額」）は費用の列にならない（docs/security.md の保証できないことの 11）", async () => {
     const s = session();
-    await s.add([{ name: "【架空】星取表.xlsx", bytes: await book("概算額(千円)", Number(SENTINEL)) }]);
+    await s.add([{ name: "【架空】星取表.xlsx", bytes: await book("見込額(千円)", Number(SENTINEL)) }]);
     const t = s.analyze().layouts[0]?.tables[0];
-    expect(t?.cols.find((c) => c.header.startsWith("概算額"))?.role).not.toBe("cost");
+    expect(t?.cols.find((c) => c.header.startsWith("見込額"))?.role).not.toBe("cost");
   });
 });

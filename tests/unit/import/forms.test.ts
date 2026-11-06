@@ -602,7 +602,7 @@ describe("見ていない様式の 3 回目（heldout-3）で詰まった形", (
     expect(an.layouts.find((l) => l.file === "表紙.xlsx")?.tables).toEqual([]);
     expect(an.records.assets.filter((a) => a.file === "表紙.xlsx")).toEqual([]);
     const q = an.open.find((x) => x.kind === "columnRole");
-    expect(q?.options.map((o) => o.id)).toEqual(["remark", "workName", "assetRef", "tag", "date", "end", "days", "effort", "exclude"]);
+    expect(q?.options.map((o) => o.id)).toEqual(["remark", "workName", "assetRef", "tag", "date", "end", "days", "effort", "cost", "exclude"]);
   });
 });
 
@@ -794,7 +794,8 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     // 費用の列は作業明細の費用の欄に読む（運営者の決定 A 案、2026-11-06）。単位は見出し（千円）から。税の扱いは見出しに無いので聞く（既定は「資料に書いていない」）
     expect(t?.cols.find((c) => c.header.startsWith("概算費用"))?.role).toBe("cost");
     expect(an.open.some((q) => q.kind === "levelSplit")).toBe(false);
-    expect(an.open.filter((q) => q.kind === "unitMissing").map((q) => q.defaultAnswer)).toEqual(["unknown"]);
+    // 「概算費用」は予定・見積の列なので、実績の費用にしないかを先に聞く（Architect の 45。既定は計画の費用としてだけ読む）。税はそのあと
+    expect(an.open.filter((q) => q.kind === "unitMissing").map((q) => q.defaultAnswer)).toEqual(["plan"]);
     acceptDefaults(s);
     const c = s.compose();
     const trig = (asset: string) => {
@@ -803,10 +804,10 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     };
     expect(trig("ポンプ")).toEqual({ branches: [{ kind: "calendar", years: 3 }], combine: "earliest" });
     expect(trig("ブロワ")).toEqual({ branches: [{ kind: "calendar", years: 1 }], combine: "earliest" });
-    // 費用は 1 回あたり（千円）を円にして、その行の印の作業明細に入れる
-    const pumpKey = c.plan?.assets.find((x) => x.name === "ポンプ")?.nodeKey ?? "";
-    const pumpWork = c.plan?.works.find((w) => w.targets.includes(pumpKey))?.workKey;
-    expect(c.plan?.details.filter((d) => d.workKey === pumpWork).map((d) => d.cost)).toEqual([1_200_000]);
+    // 費用は 1 回あたり（千円）を円にして、その行の印の年度の値に入れる。概算の列は計画の印にだけ（ポンプは実績の ● だけなので置かない。ブロワの計画の ○ には置く）
+    const workOf = (name: string) => c.plan?.works.find((w) => w.targets.includes(c.plan?.assets.find((x) => x.name === name)?.nodeKey ?? ""))?.workKey;
+    expect(c.plan?.details.filter((d) => d.workKey === workOf("ポンプ")).map((d) => d.cost)).toEqual([null]);
+    expect(c.plan?.details.filter((d) => d.workKey === workOf("ブロワ")).map((d) => [d.planOrActual, d.cost])).toEqual([["actual", null], ["actual", null], ["plan", 300_000]]);
     expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason.startsWith("費用の列"))).toBe(false);
   });
 

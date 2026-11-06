@@ -10,7 +10,7 @@ export const READING_SCHEMA = "moyai.reading/0";
 /** 列は見出しの文字で指す（「作業日」「延工数(h)」）。末尾の括弧は除いて比べる */
 const column = z.string().min(1).max(60);
 
-export const COLUMN_ROLES = ["date", "end", "tag", "effort", "days", "assetRef", "workName", "unit", "number", "remark", "exclude"] as const;
+export const COLUMN_ROLES = ["date", "end", "tag", "effort", "days", "cost", "assetRef", "workName", "unit", "number", "remark", "exclude"] as const;
 export const DATE_FORMATS = ["yyyymmdd", "yymmdd", "md"] as const;
 export type DateFormat = (typeof DATE_FORMATS)[number];
 /** 計画ルールの周期（年）。周期の案（src/plan/cycle.ts）と同じ幅 */

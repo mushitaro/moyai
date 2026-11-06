@@ -50,6 +50,8 @@ export interface CostCell {
   ref: string;
   text: string;
   tax: "incl" | "excl" | "unknown";
+  /** 予定・概算・見積・予算の列だけを費用に読んだとき、計画の年度の値にだけ置く（実績の費用にしない。Architect の 45） */
+  planOnly?: true;
 }
 
 export interface MarkRec {
@@ -102,6 +104,8 @@ export interface EventRec {
   cost?: CostCell;
   /** 決定で工数を外した行 */
   effortExcluded?: true;
+  /** 行ごとの予定・実績の列（「状態｜完了・計画中」）が計画の行（Architect の 53。実績の行と予定・実績の列の無い行は省く） */
+  planOrActual?: "plan";
   /** 機器番号の列に書いた番号（同一性の鍵）。無ければ null */
   tag: string | null;
   bundle: boolean;
@@ -109,6 +113,10 @@ export interface EventRec {
   workName: string;
   workTitle: string | null;
   remark: string | null;
+  /** 作業量の列（「数量」など）の文字。書いていなければ省く（Architect の 54） */
+  quantity?: string;
+  /** 作業明細に残す備考（備考の列のうち作業量の列を除いたもの）。書いていなければ省く */
+  lineRemark?: string;
   refs: string[];
   excluded: string | null;
   pending: boolean;
@@ -250,7 +258,7 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
       const c = Number(is.pattern.slice(4));
       const col = t.cols.find((x) => x.c === c);
       if (col) {
-        if (a === "remark" || a === "workName" || a === "assetRef" || a === "tag" || a === "date" || a === "end" || a === "days" || a === "effort") col.role = a;
+        if (a === "remark" || a === "workName" || a === "assetRef" || a === "tag" || a === "date" || a === "end" || a === "days" || a === "effort" || a === "cost") col.role = a;
         else if (a === "exclude") {
           col.role = "unknown";
           for (const r of t.rows) {
@@ -615,6 +623,32 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
   const key = `${rec.formOf.get(t.id)?.key ?? t.id}|${col.c}`;
   const cells = rows.map((r) => lay.index.at(r, col.c)).filter((c): c is GridCell => !!c && c.text.trim() !== "" && !off(c.ref));
   if (!cells.length) return out;
+  // 費用の列が予定・概算・見積・予算だけ：実績の費用にしない。計画（予算）として読むかを 1 回聞く（Architect の 45。既定は計画としてだけ読む）
+  let planOnly = false;
+  if (rank(col.header) === 0) {
+    const a = ask.ask(`costKind|${key}`, {
+      kind: "unitMissing",
+      text: `費用の列が「${header}」だけ（${cells.length} 行）。実績の費用ではない`,
+      options: [
+        { id: "plan", label: "計画の費用（予算）としてだけ読む" },
+        { id: "actual", label: "実績の費用としても読む" },
+        { id: "none", label: "この列を読まない（理由を残す）" },
+      ],
+      valueKind: "option",
+      defaultAnswer: "plan",
+      sameShapeRows: cells.length,
+      items: [itemOf(lay, cells.slice(0, 10).map((c) => c.ref))],
+    });
+    if (a === "none") {
+      for (const c of cells) exclude(c.ref, "費用の列（予定・見積の列なので読まない）");
+      return out;
+    }
+    if (a === null) {
+      for (const c of cells) pend(c.ref);
+      return out;
+    }
+    planOnly = a === "plan";
+  }
   let unit = costHeaderUnit(col.header);
   if (unit === null) {
     const a = ask.ask(`costUnit|${key}`, {
@@ -666,7 +700,7 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
   for (const c of cells) {
     const yen = parseCost(c.text, c.value, unit);
     if (yen === null) bad.push(c);
-    else out.set(c.r, { yen, ref: c.ref, text: c.text, tax: tax ?? "unknown" });
+    else out.set(c.r, { yen, ref: c.ref, text: c.text, tax: tax ?? "unknown", ...(planOnly ? { planOnly: true as const } : {}) });
   }
   if (bad.length) {
     const a = ask.ask(`costBad|${key}`, {
@@ -1086,6 +1120,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const tagCol = col("tag");
   const blankDecision = (t as Table & { blankDecision?: Map<number, string | null> }).blankDecision ?? new Map<number, string | null>();
   const daysCol = col("days");
+  // 行ごとの予定・実績の列：計画中の行は実績にしない（Architect の 53）
+  const paCol = col("planActual");
   // 工数の列がいくつか（「予定工数」「実績工数」）：行ごとに、実績の列を先に、書いてある列を使う
   const effortCols = t.cols.filter((c) => c.role === "effort").sort((a, b) => (cue.planActual(b.header) === "actual" ? 1 : 0) - (cue.planActual(a.header) === "actual" ? 1 : 0));
   const effortCol = effortCols[0];
@@ -1098,6 +1134,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const workCol = col("workName");
   const titleCol = col("workTitle");
   const remarkCols = t.cols.filter((c) => c.role === "remark");
+  const quantityCols = remarkCols.filter((c) => c.cue === "quantity");
   const data = t.rows.filter((r) => r.role === "data");
   const text = (r: number, c: ColInfo | undefined) => (c ? (lay.index.at(r, c.c)?.text ?? "") : "");
   // 工数の時間：1 人・日の時間を聞く（表ごとに 1 回）
@@ -1249,6 +1286,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       assetNames: stripped.text ? [stripped.text] : [],
       ...(cycleOf.has(r.r) ? { cycle: cycleOf.get(r.r) } : {}),
       ...(costOf.has(r.r) ? { cost: costOf.get(r.r) } : {}),
+      ...(paCol && cue.planActual(text(r.r, paCol)) === "plan" ? { planOrActual: "plan" as const } : {}),
       ...(() => {
         const ref = (assetCol && text(r.r, assetCol) ? lay.index.at(r.r, assetCol.c)?.ref : flat ? lay.index.at(r.r, flatCol?.c ?? 0)?.ref : headAsset ? headCell("name", "assetRef")?.ref : undefined) ?? undefined;
         return ref ? { nameRef: ref } : {};
@@ -1262,6 +1300,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       workName,
       workTitle: titleCol && workCol ? text(r.r, titleCol) || null : null,
       remark: remarkCols.map((c) => text(r.r, c)).filter(Boolean).join(" / ") || null,
+      ...((q) => (q ? { quantity: q } : {}))(quantityCols.map((c) => text(r.r, c).trim()).filter(Boolean).join(" / ")),
+      ...((x) => (x ? { lineRemark: x } : {}))(remarkCols.filter((c) => c.cue !== "quantity").map((c) => text(r.r, c).trim()).filter(Boolean).join(" / ")),
       refs,
       excluded: null,
       pending: !date || !workName,
