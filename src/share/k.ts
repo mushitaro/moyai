@@ -66,7 +66,7 @@ export function loadVocab(text: string): Vocab {
     const seen = new Set<string>();
     let p: string | null = c.code;
     while (p !== null) {
-      if (seen.has(p)) throw new Error("上の分類が輪になっている");
+      if (seen.has(p)) throw new Error("上の分類が循環している");
       seen.add(p);
       const cur = byCode.get(p);
       if (!cur) throw new Error("知らない上の分類");

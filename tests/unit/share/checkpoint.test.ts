@@ -188,7 +188,7 @@ describe("検問所の裏：架空の計画を端まで", () => {
     const rep2 = await verifyRing(root, ringId, PACK, new Set());
     expect(rep2.lines.filter((l) => l.kind === "member").every((l) => l.reasons.includes("member.unconfirmed"))).toBe(true);
     // CLI の文にも理由が日本語で出る
-    expect(formatReport(rep).join("\n")).toMatch(/✗ 束 bundles\/.+：.*(署名 ✗|ファイルの名前が中身)/);
+    expect(formatReport(rep).join("\n")).toMatch(/✗ 共有ファイル bundles\/.+：.*(署名 ✗|ファイルの名前が中身)/);
   });
 
   it("検問所で聞く軸は、パックの見え方のうち全国の表に列があるもの（規模の数から帯を読めれば候補にする）", () => {

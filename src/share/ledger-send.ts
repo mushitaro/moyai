@@ -93,19 +93,19 @@ export function checkAgainstLedger(L: Extract<LedgerLoad, { ok: true }>, pack: S
 
 /** PR の題・本文・commit の文（GitHub に出る。施設の名前も人の名前も入れない） */
 export const LEDGER_PR_TEXT = {
-  title: (key: string, seq: number) => `束を足す：鍵 ${key}・連番 ${seq}`,
-  commitMessage: (key: string, seq: number) => `束を足す：鍵 ${key}・連番 ${seq}`,
+  title: (key: string, seq: number) => `共有ファイルを足す：鍵 ${key}・連番 ${seq}`,
+  commitMessage: (key: string, seq: number) => `共有ファイルを足す：鍵 ${key}・連番 ${seq}`,
   body: (o: { key: string; pub: string; seq: number; hash: string; path: string; profile: string; chunks: number; ledgerId: string }) =>
     [
-      `台帳 \`${o.ledgerId}\` に、束を 1 つ足します。`,
+      `台帳 \`${o.ledgerId}\` に、共有ファイルを 1 つ足します。`,
       "",
-      `- 束：\`${o.path}\``,
+      `- 共有ファイル：\`${o.path}\``,
       `- 鍵 ID \`${o.key}\`（指紋 \`${fingerprint(o.pub)}\`）・連番 ${o.seq}・ファイルの SHA-256 \`${o.hash}\``,
       `- 見え方：${o.profile}`,
       `- 塊：${o.chunks}`,
       "",
-      "この束は、MOYAI の SHARE の画面で人が署名し、出す前に受け手と同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめて ✓ でした。PR は MOYAI が出しました。",
-      "鍵 ID と出した人の結びつきは束の署名で決まり、この PR を出したアカウントの名前は使いません。",
+      "この共有ファイルは、MOYAI の SHARE の画面で人が署名し、出す前に受け手と同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめて ✓ でした。PR は MOYAI が出しました。",
+      "鍵 ID と出した人の結びつきは共有ファイルの署名で決まり、この PR を出したアカウントの名前は使いません。",
       "",
     ].join("\n"),
 };

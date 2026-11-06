@@ -36,22 +36,22 @@ const HELP = `使い方：
   moyai uninstall [--yes] [--keep-root|--remove-root]
                                             消す。橋渡しを止め、Claude Desktop の設定から moyai の行を外し（.bak を残す）、状態フォルダを消す。
                                             保存先（計画の版）は既定で残す。--remove-root のときだけ消す。何を消すかを先に出す
-  moyai verify ring <輪のフォルダ>           輪の決まり・仲間・束を、受け手と同じ関数で確かめる（✓／✗ と理由）
-  moyai verify demo-ring [<フォルダ>]        リポジトリのデモの輪（架空の 7 拠点）を verify ring と同じ関数で確かめる
-                                            （全員 ✓、わざと入れた ✗ の束は理由つきで ✗ なら終了コード 0）
-  moyai verify ledger <台帳のリポジトリの根>  公開の台帳の決まりと束を、受け手と同じ関数で確かめる（✓／✗ と理由）
+  moyai verify ring <共有フォルダ>           共有フォルダの決まり・メンバー・共有ファイルを、受け手と同じ関数で確かめる（✓／✗ と理由）
+  moyai verify demo-ring [<フォルダ>]        リポジトリのデモの共有フォルダ（架空の 7 拠点）を verify ring と同じ関数で確かめる
+                                            （全員 ✓、わざと入れた ✗ の共有ファイルは理由つきで ✗ なら終了コード 0）
+  moyai verify ledger <台帳のリポジトリの根>  公開の台帳の決まりと共有ファイルを、受け手と同じ関数で確かめる（✓／✗ と理由）
   moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
                                             台帳の PR の変更を、checkout せずに git の木から確かめる（Actions の検証）
   moyai ledger site <台帳のリポジトリの根> <出すフォルダ>
-                                            束を確かめ直し、似た施設の星取表と統計の行の静的なページを書く
-  moyai ledger submit --bundle <束> --repo <台帳の clone>
-                                            署名済みの束を出す PR の支度をし、gh のコマンドを出す（人だけ。端末から）
-  moyai ledger init --root <台帳のリポジトリの根> --pack <パック> [--month YYYY-MM]
+                                            共有ファイルを確かめ直し、似た施設の星取表と統計の行の静的なページを書く
+  moyai ledger submit --bundle <共有ファイル> --repo <台帳の clone>
+                                            署名済みの共有ファイルを出す PR の支度をし、gh のコマンドを出す（人だけ。端末から）
+  moyai ledger init --root <台帳のリポジトリの根> --pack <Skillパック> [--month YYYY-MM]
                                             台帳の決まり（ledger.json）を作り、管理者の鍵で署名する（人だけ。端末から）
-  moyai keys create --root <輪のフォルダ> --pack <パック>
-                                            輪を作り、その輪の鍵を状態フォルダに置く（人だけ。端末から）
+  moyai keys create --root <共有フォルダ> --pack <Skillパック>
+                                            共有フォルダを作り、その共有フォルダの鍵を状態フォルダに置く（人だけ。端末から）
   moyai keys unwrap                         前の形の鍵（合言葉で包んだもの）を、前の合言葉で 1 度だけ開いて移す（人だけ。端末から）
-  moyai send                                束を送る（人だけ。検問所の画面から送る。端末からは未実装）
+  moyai send                                共有ファイルを送る（人だけ。検問所の画面から送る。端末からは未実装）
   moyai --version                           ビルドの版を出す`;
 
 function openBrowser(url: string): void {

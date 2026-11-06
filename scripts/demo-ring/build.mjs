@@ -59,11 +59,11 @@ async function main() {
   const core = await import(pathToFileURL(join(outDir, "demo-ring-core.js")).href);
   const r = await core.buildDemoRing({ repo: REPO, out: a.out, state, month: a.month });
   const ok = r.report.lines.filter((l) => l.status === "ok").length;
-  say(`輪 ${r.ringId} を書きました：${a.out}`);
-  say(`拠点 ${r.sites.length}（束 ${r.sites.map((s) => `塊 ${s.chunks}`).join("・")}）`);
-  say(`受け手と同じ関数で確かめました：✓ ${ok} 行・✗ ${r.report.lines.length - ok} 行（わざと入れた束とその鍵だけ）`);
+  say(`共有フォルダ ${r.ringId} を書きました：${a.out}`);
+  say(`拠点 ${r.sites.length}（共有ファイル ${r.sites.map((s) => `塊 ${s.chunks}`).join("・")}）`);
+  say(`受け手と同じ関数で確かめました：✓ ${ok} 行・✗ ${r.report.lines.length - ok} 行（わざと入れた共有ファイルとその鍵だけ）`);
   for (const e of r.manifest.expectNg) say(`  ✗ ${e.kind} ${e.name}：${e.reasons.join("・")}`);
-  say(`リポジトリの demo-ring/ を作り直したときは、src/share/demo-ring.ts の DEMO_RING_ID を ${r.ringId} に直してください（verify demo-ring はその輪だけを受けます）`);
+  say(`リポジトリの demo-ring/ を作り直したときは、src/share/demo-ring.ts の DEMO_RING_ID を ${r.ringId} に直してください（verify demo-ring はその共有フォルダだけを受けます）`);
   say(`状態のフォルダ（秘密鍵と、拠点と世界の対応。リポジトリに入れない）：${state}`);
   return 0;
 }

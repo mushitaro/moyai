@@ -284,7 +284,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
   await test.step("CLI：verify ring でも ✓。人だけの CLI は端末でなければ断る", async () => {
     const v = spawnSync(process.execPath, ["dist/cli.js", "verify", "ring", ringRoot], { env: { ...process.env, MOYAI_STATE_DIR: stateDir }, encoding: "utf8" });
     expect(v.status, v.stderr).toBe(0);
-    expect(v.stderr).toContain("✓ 束 bundles/");
+    expect(v.stderr).toContain("✓ 共有ファイル bundles/");
     expect(v.stderr).toContain("すべて ✓ です。");
     const k = spawnSync(process.execPath, ["dist/cli.js", "keys", "create", "--root", ringRoot, "--pack", "waste-incineration"], {
       env: { ...process.env, MOYAI_STATE_DIR: stateDir },

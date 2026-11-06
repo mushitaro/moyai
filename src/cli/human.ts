@@ -26,48 +26,48 @@ import { HEX16, fingerprint, isWrappedKey, keyIdOf, toPlainKey, unwrapPrivateKey
 
 export const CLI_TEXT = {
   notTerminal: "この操作は人だけがします。端末から直接走らせてください（標準入力が端末ではないので断りました）。",
-  verifyUsage: "使い方：moyai verify ring <輪のフォルダ>（<輪のフォルダ>/<輪ID>/ か、その上のフォルダ）",
-  noRing: (p: string) => `輪が見つかりません：${p}（circle.json のあるフォルダか、その上のフォルダを指してください）`,
+  verifyUsage: "使い方：moyai verify ring <共有フォルダ>（<共有フォルダ>/<共有フォルダ ID>/ か、その上のフォルダ）",
+  noRing: (p: string) => `共有フォルダが見つかりません：${p}（circle.json のあるフォルダか、その上のフォルダを指してください）`,
   circleUnreadable: "決まり（circle.json）を読めません",
-  packNotReady: (pack: string, reason: string) => `パック ${pack} の共有の部品を読めません（${reason}）`,
-  vocabMismatch: "公開語彙の版が、輪の決まりと違います",
-  nationalMismatch: "全国の表の版が、輪の決まりと違います",
-  ringHead: (id: string) => `輪 ${id}`,
+  packNotReady: (pack: string, reason: string) => `Skillパック ${pack} の共有の部品を読めません（${reason}）`,
+  vocabMismatch: "公開語彙の版が、共有フォルダの決まりと違います",
+  nationalMismatch: "全国の表の版が、共有フォルダの決まりと違います",
+  ringHead: (id: string) => `共有フォルダ ${id}`,
   circle: "決まり（circle.json）",
-  member: (key: string, fp: string | undefined) => `仲間 ${key}${fp ? `（指紋 ${fp}）` : ""}`,
-  bundle: (name: string) => `束 ${name}`,
+  member: (key: string, fp: string | undefined) => `メンバー ${key}${fp ? `（指紋 ${fp}）` : ""}`,
+  bundle: (name: string) => `共有ファイル ${name}`,
   arriving: "届きかけ",
   missing: "ありません",
-  notBundleFiles: (n: number) => `束の形をしていないファイル ${n} 件`,
+  notBundleFiles: (n: number) => `共有ファイルの形をしていないファイル ${n} 件`,
   summaryOk: "すべて ✓ です。",
-  demoUsage: "使い方：moyai verify demo-ring [<デモの輪のフォルダ>]（省くとリポジトリの demo-ring/）",
+  demoUsage: "使い方：moyai verify demo-ring [<デモの共有フォルダ>]（省くとリポジトリの demo-ring/）",
   demoNotOurs: (got: string, want: string) =>
-    `デモの輪ではありません：${DEMO_RING_FILE} の輪 ${got} は、リポジトリのデモの輪 ${want} と違います（ほかの輪は moyai verify ring で確かめてください）`,
-  demoNoManifest: (p: string) => `デモの輪の約束のファイル（${DEMO_RING_FILE}）を読めません：${p}`,
-  demoConfirmedNote: (n: number) => `デモの輪：指紋の読み合わせの代わりに、${DEMO_RING_FILE} の ${n} 個の鍵を確認済みに数えます（あなたの状態フォルダは読みません）`,
-  demoExpectedNg: (what: string) => `  （${what} の ✗ は、わざと入れた束によるものです。約束の理由で ✗ になりました）`,
+    `デモの共有フォルダではありません：${DEMO_RING_FILE} の共有フォルダ ${got} は、リポジトリのデモの共有フォルダ ${want} と違います（ほかの共有フォルダは moyai verify ring で確かめてください）`,
+  demoNoManifest: (p: string) => `デモの共有フォルダの約束のファイル（${DEMO_RING_FILE}）を読めません：${p}`,
+  demoConfirmedNote: (n: number) => `デモの共有フォルダ：指紋の読み合わせの代わりに、${DEMO_RING_FILE} の ${n} 個の鍵を確認済みに数えます（あなたの状態フォルダは読みません）`,
+  demoExpectedNg: (what: string) => `  （${what} の ✗ は、わざと入れた共有ファイルによるものです。約束の理由で ✗ になりました）`,
   demoUnexpected: (what: string) => `約束に無い ✗：${what}`,
   demoUnmet: (what: string, got: string) => `約束の ✗ になりません：${what}（${got}）`,
   demoGotOk: "✓ になった",
   demoGotMissing: "ありません",
   demoGotOther: (r: string) => `理由が違う：${r}`,
-  demoSummaryOk: (ok: number, n: number) => `デモの輪：拠点 ${ok}/${n} が ✓、わざと入れた ✗ は約束どおり ✗ です。`,
-  demoSummaryNg: (n: number) => `デモの輪：約束と違う所が ${n} 件あります。`,
+  demoSummaryOk: (ok: number, n: number) => `デモの共有フォルダ：拠点 ${ok}/${n} が ✓、わざと入れた ✗ は約束どおり ✗ です。`,
+  demoSummaryNg: (n: number) => `デモの共有フォルダ：約束と違う所が ${n} 件あります。`,
   summaryNg: (n: number) => `✗ が ${n} 件あります。`,
-  keysUsage: "使い方：moyai keys create --root <輪のフォルダ（絶対の道）> --pack <パック ID>　／　moyai keys unwrap",
+  keysUsage: "使い方：moyai keys create --root <共有フォルダ（絶対の道）> --pack <Skillパック ID>　／　moyai keys unwrap",
   noOldKeys: "前の形の鍵（合言葉で包んだもの）はありません。",
   oldKeyHead: (what: string, fp: string) => `前の形の鍵：${what}（指紋 ${fp}）`,
   oldPersonKey: (by: string) => `人の鍵「${by}」`,
-  oldPlaceKey: (id: string) => `輪か台帳の鍵 ${id}`,
+  oldPlaceKey: (id: string) => `共有フォルダか台帳の鍵 ${id}`,
   oldPassphrase: "前の合言葉（打った文字は「*」で出ます。日本語は変換を確定してから Enter。空で Enter なら、この鍵は飛ばす）：",
   wrongOld: "前の合言葉が鍵を開きませんでした。",
   skipped: "この鍵は飛ばしました（前の形のまま。アプリでは使えません）。",
   unwrapped: "包まない形に置き換えました。",
   unwrapSummary: (done: number, left: number) => `置き換えた鍵 ${done}・前の形のまま ${left}`,
-  created: (ringId: string, fp: string, dir: string) => `輪 ${ringId} を作りました：${dir}\n自分の鍵の指紋：${fp}（仲間と電話で読み合わせてください）`,
+  created: (ringId: string, fp: string, dir: string) => `共有フォルダ ${ringId} を作りました：${dir}\n自分の鍵の指紋：${fp}（メンバーと電話で読み合わせてください）`,
   createFailed: (r: string) => `作れませんでした（${r}）`,
   cancelled: "やめました。何も書いていません。",
-  sendNotHere: "束を送るのは、作業画面の検問所からです（端末から送るのは未実装）。",
+  sendNotHere: "共有ファイルを送るのは、作業画面の検問所からです（端末から送るのは未実装）。",
 };
 
 const say = (m: string) => process.stderr.write(`${m}\n`);
@@ -242,7 +242,7 @@ export async function verifyDemoRingCli(argv: string[], o: { packsDir?: string; 
     say(`  ✗ ${CLI_TEXT.demoUnmet(label(u.expect.kind, u.expect.name), got)}`);
   }
   ng += j.unexpected.length + j.unmet.length;
-  if (!j.ok && ng === 0) ng = 1; // 拠点の数が合わない・束の形でないファイル（上の行に出ている）
+  if (!j.ok && ng === 0) ng = 1; // 拠点の数が合わない・共有ファイルの形でないファイル（上の行に出ている）
   say(ng === 0 ? CLI_TEXT.demoSummaryOk(j.sitesOk, j.sites) : CLI_TEXT.demoSummaryNg(ng));
   return ng === 0 ? 0 : 1;
 }

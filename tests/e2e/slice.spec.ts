@@ -238,7 +238,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.screenshot({ path: shot(`slice-sent-${tag}`), fullPage: true });
       const v = spawnSync(process.execPath, ["dist/cli.js", "verify", "ring", ringRoot], { env: { ...process.env, MOYAI_STATE_DIR: bridge.stateDir }, encoding: "utf8" });
       expect(v.status, v.stderr).toBe(0);
-      expect(v.stderr).toContain("✓ 束 bundles/");
+      expect(v.stderr).toContain("✓ 共有ファイル bundles/");
       expect(v.stderr).toContain("すべて ✓ です。");
     });
 

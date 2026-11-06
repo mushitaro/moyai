@@ -39,14 +39,14 @@ export const LEDGER_CLI_TEXT = {
   rulesUnreadable: "台帳の決まり（ledger/ledger.json）を読めません。",
   /** 決まりが、どこにも出さない欄（経過年）を許している（前の版の決まり） */
   rulesFieldRemoved: (reason: string) => `台帳の決まり（ledger/ledger.json）を読めません：${reason}。`,
-  packNotReady: (pack: string, reason: string) => `パック ${pack} の共有の部品を読めません（${reason}）`,
+  packNotReady: (pack: string, reason: string) => `Skillパック ${pack} の共有の部品を読めません（${reason}）`,
   head: (id: string | null, version: number | null, hash: string | null) =>
     `台帳 ${id ?? "（ID 不明）"}${version !== null ? `（決まり 版 ${version}` : "（決まり"}、SHA-256 ${hash ? hash.slice(0, 16) : "不明"}…）`,
   rules: "決まり（ledger/ledger.json）",
-  bundle: (p: string) => `束 ${p}`,
+  bundle: (p: string) => `共有ファイル ${p}`,
   other: (p: string) => `許した形の外 ${p}`,
-  noBundles: "束は 0 件です。",
-  summaryOk: (n: number) => `すべて ✓ です（束 ${n} 件）。`,
+  noBundles: "共有ファイルは 0 件です。",
+  summaryOk: (n: number) => `すべて ✓ です（共有ファイル ${n} 件）。`,
   summaryNg: (n: number) => `✗ が ${n} 件あります。`,
 };
 
@@ -134,12 +134,12 @@ export async function verifyLedgerCli(argv: string[], o: { packsDir?: string } =
 export const LEDGER_USAGE = `使い方：
   moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
   moyai ledger site <台帳のリポジトリの根> <出すフォルダ>
-  moyai ledger submit --bundle <束> --repo <台帳の clone>（人だけ。端末から）
-  moyai ledger init --root <台帳のリポジトリの根> --pack <パック> [--month YYYY-MM]（人だけ。端末から。管理者の鍵で台帳の決まりに署名する）`;
+  moyai ledger submit --bundle <共有ファイル> --repo <台帳の clone>（人だけ。端末から）
+  moyai ledger init --root <台帳のリポジトリの根> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から。管理者の鍵で台帳の決まりに署名する）`;
 
 /** ledger init の言葉 */
 export const INIT_TEXT = {
-  usage: "使い方：moyai ledger init --root <台帳のリポジトリの根（絶対の道）> --pack <パック> [--month YYYY-MM]（人だけ。端末から）",
+  usage: "使い方：moyai ledger init --root <台帳のリポジトリの根（絶対の道）> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から）",
   intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。合言葉では包みません）。",
   failed: (r: string) =>
     ({
@@ -279,15 +279,15 @@ export const PR_TEXT = {
   title: (ok: boolean) => (ok ? "### MOYAI 台帳の検証：✓ 通りました" : "### MOYAI 台帳の検証：✗ 通りません"),
   titleError: "### MOYAI 台帳の検証：確かめられませんでした",
   scopePr: (n: number, base: string, head: string) => `- 確かめたもの：この PR が足す・変えるファイル ${n} 件（base \`${base.slice(0, 12)}\`・head \`${head.slice(0, 12)}\`）`,
-  scopeAll: (n: number, head: string) => `- 変更なし（base と head が同じ commit \`${head.slice(0, 12)}\`）。既定のブランチにある全部の束 ${n} 件を確かめ直しました`,
+  scopeAll: (n: number, head: string) => `- 変更なし（base と head が同じ commit \`${head.slice(0, 12)}\`）。既定のブランチにある全部の共有ファイル ${n} 件を確かめ直しました`,
   ledger: (id: string | null, version: number | null, hash: string | null, ok: boolean) =>
-    `- 台帳 \`${id ?? "不明"}\`・決まり 版 ${version ?? "不明"}（SHA-256 \`${hash ? hash.slice(0, 16) : "不明"}\`）${ok ? "" : "：決まりが ✓ でないので、束を確かめられません"}`,
+    `- 台帳 \`${id ?? "不明"}\`・決まり 版 ${version ?? "不明"}（SHA-256 \`${hash ? hash.slice(0, 16) : "不明"}\`）${ok ? "" : "：決まりが ✓ でないので、共有ファイルを確かめられません"}`,
   tableHead: "| 結果 | ファイル | 理由 |\n|---|---|---|",
   hidden: (h: string) => `（名前を表示しない道。道の SHA-256 \`${h.slice(0, 16)}\`）`,
   none: "—",
   input: (r: string) => `- 入力を読めません：${r}`,
   how:
-    "確かめ方：既定のブランチにある定義が、PR の head を checkout せず、git の木から blob のバイト列だけを読み、アプリと同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめました。鍵 ID と出した人の結びつきは束の署名で決めています（GitHub のアカウント名は使いません）。",
+    "確かめ方：既定のブランチにある定義が、PR の head を checkout せず、git の木から blob のバイト列だけを読み、アプリと同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめました。鍵 ID と出した人の結びつきは共有ファイルの署名で決めています（GitHub のアカウント名は使いません）。",
   error: (m: string) => `validate-pr：${m}`,
 };
 
@@ -513,32 +513,32 @@ function lstatOrNull(p: string) {
 // ─── submit（人だけ） ────────────────────────────────────────────
 
 export const SUBMIT_TEXT = {
-  usage: "使い方：moyai ledger submit --bundle <署名済みの束のファイル> --repo <台帳のリポジトリの clone> [--base main]（人だけ。端末から）",
+  usage: "使い方：moyai ledger submit --bundle <署名済みの共有ファイル> --repo <台帳のリポジトリの clone> [--base main]（人だけ。端末から）",
   account:
-    "知らせ：PR を出す GitHub のアカウントは、誰にでも見えます。束とそのアカウントが結びつくので、台帳専用のアカウントを使うことを勧めます。",
-  noBundle: "束のファイルを読めません（無いか、大きすぎます）。",
+    "知らせ：PR を出す GitHub のアカウントは、誰にでも見えます。共有ファイルとそのアカウントが結びつくので、台帳専用のアカウントを使うことを勧めます。",
+  noBundle: "共有ファイルを読めません（無いか、大きすぎます）。",
   notGit: "台帳のリポジトリの clone として読めません（git の誤り）。",
   noBase: (b: string) => `枝 ${b} がありません。台帳の既定のブランチを取ってから走らせてください。`,
-  notBundle: "束の形として読めません。",
-  ng: (reasons: string) => `この束は台帳の検証で ✗ になります：${reasons}`,
-  exists: (p: string) => `同じ束がもう台帳にあります：${p}`,
+  notBundle: "共有ファイルの形として読めません。",
+  ng: (reasons: string) => `この共有ファイルは台帳の検証で ✗ になります：${reasons}`,
+  exists: (p: string) => `同じ共有ファイルがもう台帳にあります：${p}`,
   branchExists: (b: string) => `枝 ${b} がもうあります。消すか、別の --base から走らせてください。`,
   commitFailed: "枝を作れませんでした（git の名前とメールの設定があるかを確かめてください）。",
-  prepared: (b: string, p: string) => `枝 ${b} を作り、束を ${p} に置いた commit を 1 つ載せました（作業の木と索引は変えていません）。`,
+  prepared: (b: string, p: string) => `枝 ${b} を作り、共有ファイルを ${p} に置いた commit を 1 つ載せました（作業の木と索引は変えていません）。`,
   next: "次の 2 つを、あなたが確かめてから走らせてください（MOYAI は送りません）：",
-  title: (key: string, seq: number) => `束を足す：鍵 ${key}・連番 ${seq}`,
-  commitMessage: (key: string, seq: number) => `束を足す：鍵 ${key}・連番 ${seq}`,
+  title: (key: string, seq: number) => `共有ファイルを足す：鍵 ${key}・連番 ${seq}`,
+  commitMessage: (key: string, seq: number) => `共有ファイルを足す：鍵 ${key}・連番 ${seq}`,
   body: (o: { key: string; fp: string; seq: number; hash: string; path: string; profile: string; chunks: number; ledgerId: string }) =>
     [
-      `台帳 \`${o.ledgerId}\` に、束を 1 つ足します。`,
+      `台帳 \`${o.ledgerId}\` に、共有ファイルを 1 つ足します。`,
       "",
-      `- 束：\`${o.path}\``,
+      `- 共有ファイル：\`${o.path}\``,
       `- 鍵 ID \`${o.key}\`（指紋 \`${o.fp}\`）・連番 ${o.seq}・ファイルの SHA-256 \`${o.hash}\``,
       `- 見え方：${o.profile}`,
       `- 塊：${o.chunks}`,
       "",
-      "この束は、出す前に `moyai ledger submit` が受け手と同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめ、✓ でした。",
-      "鍵 ID と出した人の結びつきは束の署名で決まり、この PR を出したアカウントの名前は使いません。",
+      "この共有ファイルは、出す前に `moyai ledger submit` が受け手と同じ関数（形・署名・鎖・粒度・禁止語・数え直し・紛れる数 k）で確かめ、✓ でした。",
+      "鍵 ID と出した人の結びつきは共有ファイルの署名で決まり、この PR を出したアカウントの名前は使いません。",
       "",
     ].join("\n"),
 };

@@ -43,7 +43,7 @@ test.afterAll(() => {
 test("架空の台帳：verify ledger で ✓ → site → ブラウザで外への要求なしに描ける", async ({ page }, info) => {
   const v = run(["dist/cli.js", "verify", "ledger", join(work, "repo")]);
   expect(v.code, v.err).toBe(0);
-  expect(v.err).toContain("すべて ✓ です（束 10 件）");
+  expect(v.err).toContain("すべて ✓ です（共有ファイル 10 件）");
   const site = join(work, `site-${info.project.name}`);
   const s = run(["dist/cli.js", "ledger", "site", join(work, "repo"), site]);
   expect(s.code, s.err).toBe(0);

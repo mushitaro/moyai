@@ -95,14 +95,14 @@ function seal(ctx: ShareContext, pack: SharePack, plan: Plan, answers: Record<st
 async function placeMember(out: string, ctx: ShareContext, ringId: string, pair: KeyPair, month: string): Promise<void> {
   const body = makeMemberBody(ringId, keyIdOf(pair.pub), pair.pub, month);
   const m = await writeMember(out, envelopeText(body, signBody(body, pair.privateKey)), ctx);
-  if (!m.ok) throw new Error(`仲間のファイルを置けない（${m.reason}）`);
+  if (!m.ok) throw new Error(`メンバーのファイルを置けない（${m.reason}）`);
 }
 
 export async function buildDemoRing(i: DemoRingInput): Promise<DemoRingResult> {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(i.month)) throw new Error("月の形でない（YYYY-MM）");
-  if (hasRing(i.out)) throw new Error("出す先にもう輪がある（足すだけの輪を上書きしない。作り直すときは人が消してから）");
+  if (hasRing(i.out)) throw new Error("出す先にもう共有フォルダがある（足すだけの共有フォルダを上書きしない。作り直すときは人が消してから）");
   const p = loadSharePack(join(i.repo, "packs"), DEMO_RING_PACK);
-  if (!p.ok) throw new Error(`パックを読めない（${p.reason}）`);
+  if (!p.ok) throw new Error(`Skillパックを読めない（${p.reason}）`);
   const pack = p.pack;
   mkdirSync(i.state, { recursive: true });
   mkdirSync(i.out, { recursive: true });
@@ -133,7 +133,7 @@ export async function buildDemoRing(i: DemoRingInput): Promise<DemoRingResult> {
     const { pv, s: sealed } = seal(sendCtx, pack, planOf(w), w.facility.answers, s.pair, i.month, ringId);
     await placeMember(i.out, sendCtx, ringId, s.pair, i.month);
     const placed = await writeBundle(i.out, sealed.text, sendCtx);
-    if (!placed.ok) throw new Error(`束を置けない（${placed.reason}）`);
+    if (!placed.ok) throw new Error(`共有ファイルを置けない（${placed.reason}）`);
     out.push({ world: s.world, key, chunks: pv.body.chunks.length, k: pv.body.counts.k });
   }
 
@@ -161,11 +161,11 @@ export async function buildDemoRing(i: DemoRingInput): Promise<DemoRingResult> {
   const ng = report.lines.filter((l) => l.status !== "ok");
   const onlyReject =
     ng.length === 2 && ng.every((l) => (l.kind === "member" && l.name === rejectKey) || (l.kind === "bundle" && l.name.startsWith(`${BUNDLES_DIR}/${rejectKey}/`)));
-  if (!onlyReject || ng.some((l) => l.reasons.length === 0) || report.notBundleFiles > 0) throw new Error("わざと外れた束のほかに ✗ がある（または理由が無い）");
+  if (!onlyReject || ng.some((l) => l.reasons.length === 0) || report.notBundleFiles > 0) throw new Error("わざと外れた共有ファイルのほかに ✗ がある（または理由が無い）");
 
   const manifest: DemoRingManifest = {
     v: DEMO_RING_V,
-    note: "【架空】デモの輪（7 拠点）。scripts/demo-ring/build.mjs が作った。秘密鍵はリポジトリに無い",
+    note: "【架空】デモの共有フォルダ（7 拠点）。scripts/demo-ring/build.mjs が作った。秘密鍵はリポジトリに無い",
     ring: ringId,
     month: i.month,
     confirmed: [
@@ -179,7 +179,7 @@ export async function buildDemoRing(i: DemoRingInput): Promise<DemoRingResult> {
   writeFileSync(
     join(i.state, "manifest.json"),
     JSON.stringify(
-      { note: "【架空】デモの輪の状態。秘密鍵（keys/）と、拠点と世界の対応を持つ。リポジトリに入れない", ringId, sites: out, reject: { world: DEMO_RING_REJECT_WORLD, key: rejectKey } },
+      { note: "【架空】デモの共有フォルダの状態。秘密鍵（keys/）と、拠点と世界の対応を持つ。リポジトリに入れない", ringId, sites: out, reject: { world: DEMO_RING_REJECT_WORLD, key: rejectKey } },
       null,
       2,
     ) + "\n",

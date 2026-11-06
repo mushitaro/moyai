@@ -62,7 +62,7 @@ export const SKIP_REASONS = [
   "notAccepted", // 当てはめを人が受けていない（案のまま）
   "classNotCountable", // 数えられる分類まで上げても上げ先が無い（分からないものは出さない）
   "upgradeLedger", // UPGRADE は公開の台帳に出さない
-  "upgradeBelowK", // UPGRADE は輪で k が下限に届くときだけ
+  "upgradeBelowK", // UPGRADE は共有フォルダで k が下限に届くときだけ
 ] as const;
 export type SkipReason = (typeof SKIP_REASONS)[number];
 

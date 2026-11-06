@@ -22,7 +22,7 @@ export const TEMP_SUFFIX = ".part";
 export const RENAME_RETRIES = 3;
 
 export function ringDir(root: string, ringId: string): string {
-  if (!HEX16.test(ringId)) throw new Error("輪 ID の形でない");
+  if (!HEX16.test(ringId)) throw new Error("共有フォルダ ID の形でない");
   return join(root, ringId);
 }
 

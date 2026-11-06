@@ -14,6 +14,10 @@ const TS_FILES = [
   "src/shared/tools.ts",
   "src/shared/errors.ts",
   "src/shared/data-names.ts",
+  // 橋渡し・CLI・共有の芯・台帳の検証・デモの共有フォルダが出す字（11-06 夜、第 2 弾）
+  ...["src/cli", "src/share", "src/bridge", "scripts/ledger", "scripts/demo-ring"].flatMap((d) =>
+    readdirSync(d).filter((f) => /\.(ts|mjs)$/.test(f) && !f.endsWith(".d.mts")).map((f) => `${d}/${f}`),
+  ),
 ];
 const SKILL_FILES = [
   ...readdirSync("packs", { withFileTypes: true })
@@ -30,14 +34,15 @@ const SKILL_FILES = [
   "skills/moyai/SKILL.md",
 ];
 const FILES = [...TS_FILES, ...SKILL_FILES];
-const body = (f: string) => (f.endsWith(".ts") ? stripComments(read(f)) : read(f));
+const body = (f: string) => (/\.(ts|mjs)$/.test(f) ? stripComments(read(f)) : read(f));
 
-/** 縛る語。「印」は印刷・押印（印鑑の意味）を許す */
+/** 縛る語。「印」は印刷・押印（印鑑の意味）を許す。「束」は約束・結束（別の語）を許す */
 const BANNED: { word: string; re: RegExp }[] = [
   { word: "印", re: /(?<!押)印(?!刷)/g },
   { word: "決定のシート", re: /決定のシート/g },
-  { word: "束", re: /束/g },
+  { word: "束", re: /(?<![約結])束/g },
   { word: "輪", re: /輪/g },
+  { word: "仲間", re: /仲間/g },
 ];
 
 /**
@@ -51,6 +56,7 @@ const ALLOWED: { name: string; file: string; text: string; reason: string }[] = 
 describe("古い言葉（印・決定のシート・束・輪）", () => {
   test("見る所を読めている", () => {
     expect(TS_FILES.length).toBeGreaterThan(8);
+    for (const f of ["src/cli/ledger.ts", "src/share/ledger-send.ts", "src/bridge/places.ts", "scripts/ledger/build-bundles.mjs", "scripts/demo-ring/build.mjs"]) expect(TS_FILES, f).toContain(f);
     expect(SKILL_FILES).toEqual(expect.arrayContaining(["packs/waste-incineration/SKILL.md", "packs/night-soil/SKILL.md", "skills/moyai/SKILL.md"]));
   });
 

@@ -13,7 +13,7 @@ const BASIS = "工場の正解の世界から直接書いた計画（架空の�
  * @param {{ scale?: number | null, scaleUnit?: string | null }} [o]  施設の規模（world.facility に無ければ null）
  */
 export function planFromWorld(world, o = {}) {
-  if (world?.schema !== "moyai.factory.world/0" || world.fictional !== true) throw new Error("工場の正解の世界の形でない（架空の印が無い）");
+  if (world?.schema !== "moyai.factory.world/0" || world.fictional !== true) throw new Error("工場の正解の世界の形でない（架空であることの記載が無い）");
   // 出どころは正解の世界（資料ではない）。名前に英数の語を入れない（束のファイル名の json と、固有名詞の網で当たるため）
   const source = { file: "【架空】工場の正解の世界", sheet: null, page: null, cell: null, box: null };
   const contractors = new Map((world.rules?.contractors ?? []).map((c) => [c.id, c.name]));

@@ -623,7 +623,7 @@ export const TOOLS = {
   peer_reference: def(
     "peer_reference",
     "read",
-    "仲間の参考を読む",
+    "メンバーの参考を読む",
     "類似施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（共有フォルダは読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。人が施設に答えた軸はそちらを使い、answers は人が答えていない軸にだけ効く（効いた軸は aiAxes に返るので、根拠に「会話から写した答え」と書く）。計画に入れるときは chart_propose で周期の案を置き、ledger に ledgerVersion・commonItem・work を添える（類似施設の数・間隔の中央値・四分位は MOYAI が照らして根拠の行に書くので、basis に数を書かない）。場をまたいで混ぜない。施設を当てようとしない。",
     z.object({
       commonItem: z.string().max(64).optional(),
