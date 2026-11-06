@@ -61,6 +61,8 @@ export const HUMAN_TEXT = {
     textEmpty: "コメントの文が空です。",
     deriveSourceInvalid: "元にした版が保存先に無いか、中身のハッシュが合いません。トップから開き直してください。",
     versionTooLarge: "版の記録が大きすぎて確定できません（上限 48 MB）。資料を分けて取り込んでください。",
+    /** 同じ作業に年数の違う周期の案を受けている（Architect の 44。言葉は Wire に確かめる） */
+    cycleConflict: "同じ作業に年数の違う周期の案が 2 つ以上あります。片方を却下してください。",
     mailToInvalid: "頼む相手のメールの宛先を書いてください（例 name@example.jp）。",
     notLatest: "保存先に、もっと新しい版があります。開き直してから署名してください。",
     selfApprove: "自分が作った版は、自分で承認できません。ほかの人に承認を依頼してください。",
@@ -238,7 +240,7 @@ export const HUMAN_TEXT = {
     unit: "単位　千円",
     chartLabel: "予算と実績の推移",
     legend: "□ 予算　■ 実績　▤ 年度途中",
-    noCost: (n: number) => `費用なし ${n} 件`,
+    noCost: (n: string) => `費用なし ${n} 件`,
     fy: (y: number) => `${y} 年度`,
     budget: "予算",
     actual: "実績",
@@ -395,6 +397,19 @@ export const HUMAN_TEXT = {
   },
 
   settings: {
+    /** 設定の 1 列の形（docs/screens.md 3.7、Wire、11-06） */
+    change: "変更",
+    defaultMark: "既定",
+    syncedMark: "同期フォルダ（OneDrive）",
+    createShort: "＋ 共有フォルダを作成",
+    clone: "clone",
+    packsTitle: "Skillパック",
+    packsNone: "使える Skillパックがありません",
+    aiTitle: "AI への提供範囲",
+    aiScope: "形・件数・小さな見本だけ（費用の値は伏せる）。詳しくは docs/security.md",
+    evalTitle: "Skill の採点",
+    evalNone: "未実行",
+    devTitle: "開発の道具（会期中のみ）",
     title: "設定",
     back: "画面へ",
     save: "保存",

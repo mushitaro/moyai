@@ -14,6 +14,8 @@ import { Switch } from "./Switch";
 
 const T = HUMAN_TEXT.cost;
 const kyen = (yen: number) => Math.round(yen / 1000).toLocaleString("ja-JP");
+const NONE = "\u2015";
+const rateOf = (a: number, b: number) => `${((a / b) * 100).toFixed(1)} %`;
 const signed = (yen: number) => (yen > 0 ? `+${kyen(yen)}` : yen < 0 ? `−${kyen(-yen)}` : "0");
 type Mode = "year" | "cumulative";
 
@@ -87,7 +89,11 @@ export function CostSheet({ plan }: { plan: Plan }) {
           const b = sum("plan");
           const a = sum("actual");
           const w = works.get(wk);
-          return { wk, label: `${(w?.targets ?? []).slice(0, 1).map(pathOf).join("")}${T.pathSep}${w?.kind ?? wk}`, budget: b, actual: a, diff: a !== null ? a - (b ?? 0) : null, unplanned: b === null && ds.some((d) => d.planOrActual === "actual") };
+          const target = (w?.targets ?? [])[0];
+          const assetName = target ? (byKey.get(target)?.name ?? "") : "";
+          const kind = w?.kind ?? wk;
+          const short = assetName && kind.startsWith(assetName) ? kind.slice(assetName.length).replace(/^の/, "").trim() || kind : kind;
+          return { wk, label: `${assetName}${T.pathSep}${short}`, budget: b, actual: a, diff: a !== null ? a - (b ?? 0) : null, unplanned: b === null && ds.some((d) => d.planOrActual === "actual") };
         })
         .filter((x) => x.diff !== null && x.diff !== 0)
         .sort((x, y) => Math.abs(y.diff!) - Math.abs(x.diff!))
@@ -105,20 +111,21 @@ export function CostSheet({ plan }: { plan: Plan }) {
       <Text size="sm" fw={700}>
         {T.fy(sel.fy)}
       </Text>
-      {[
-        [T.budget, sel.budget !== null ? kyen(sel.budget) : "―"],
-        [T.actual, sel.actual !== null ? kyen(sel.actual) : "―"],
-        [T.diff, sel.budget !== null && sel.actual !== null ? signed(sel.actual - sel.budget) : "―"],
-        [T.rate, sel.budget && sel.actual !== null ? `${Math.round((sel.actual / sel.budget) * 100)}%` : "―"],
-        [T.counts, T.countsValue(sel.planCount, sel.actualCount)],
-      ].map(([k, v]) => (
-        <Text key={k} size="sm" className="moyai-num">
-          <Text span size="xs" c="var(--text-3)" mr={8}>
-            {k}
-          </Text>
-          {v}
-        </Text>
-      ))}
+      {/* 6. 整備の詳細と同じ 2 列の dl */}
+      <dl className="moyai-dl moyai-num">
+        {[
+          [T.budget, sel.budget !== null ? kyen(sel.budget) : NONE],
+          [T.actual, sel.actual !== null ? kyen(sel.actual) : NONE],
+          [T.diff, sel.budget !== null && sel.actual !== null ? signed(sel.actual - sel.budget) : NONE],
+          [T.rate, sel.budget && sel.actual !== null ? rateOf(sel.actual, sel.budget) : NONE],
+          [T.counts, T.countsValue(sel.planCount, sel.actualCount)],
+        ].map(([k, v]) => (
+          <div key={k} style={{ display: "contents" }}>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+      </dl>
       {top.length > 0 && (
         <>
           <Text size="xs" c="var(--text-3)" mt="xs">
@@ -128,7 +135,7 @@ export function CostSheet({ plan }: { plan: Plan }) {
             <button key={t.wk} type="button" className="moyai-pick-row" onClick={() => open(t.wk)} data-testid="cost-top" style={{ all: "unset", cursor: "pointer", display: "block" }}>
               <Text size="sm">{t.label}</Text>
               <Text size="xs" c="var(--text-3)" className="moyai-num">
-                {t.unplanned ? T.unplanned : T.budgetActual(t.budget !== null ? kyen(t.budget) : "―", t.actual !== null ? kyen(t.actual) : "―")}　{signed(t.diff!)}
+                {t.unplanned ? T.unplanned : T.budgetActual(t.budget !== null ? kyen(t.budget) : NONE, t.actual !== null ? kyen(t.actual) : NONE)}　{signed(t.diff!)}
               </Text>
             </button>
           ))}
@@ -138,6 +145,16 @@ export function CostSheet({ plan }: { plan: Plan }) {
   );
   const W = 56;
   const H = 160;
+  const L = 64;
+  // 目盛り：上限を切りのよい数に（千円）
+  const step = (() => {
+    const k = max / 1000 / 4;
+    const p = Math.pow(10, Math.floor(Math.log10(Math.max(1, k))));
+    return ([1, 2, 5, 10].map((m) => m * p).find((m) => m >= k) ?? 10 * p) * 1000;
+  })();
+  const ticks = [0, 1, 2, 3, 4].map((i) => i * step);
+  const scaleTop = Math.max(max, step * 4);
+  const [hover, setHover] = useState<number | null>(null);
   return (
     <div style={{ padding: "8px 32px 32px" }} data-testid="cost-sheet">
       <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
@@ -156,14 +173,25 @@ export function CostSheet({ plan }: { plan: Plan }) {
         </Text>
       </div>
       {/* グラフ：年度ごとに 2 本の棒。予算は枠だけ、実績は墨の塗り、年度途中の実績は淡い塗り。選んだ年度は帯 */}
-      <svg role="img" aria-label={T.chartLabel} width={Math.max(320, shown.length * W + 40)} height={H + 28} style={{ display: "block", marginTop: 16 }} data-testid="cost-chart">
+      <svg role="img" aria-label={T.chartLabel} width={Math.max(320, shown.length * W + L + 16)} height={H + 28} style={{ display: "block", marginTop: 16 }} data-testid="cost-chart">
+        {ticks.map((v) => {
+          const y = H - (v / scaleTop) * H;
+          return (
+            <g key={v}>
+              <line x1={L} x2={L + shown.length * W} y1={y} y2={y} stroke="var(--line)" />
+              <text x={L - 8} y={y + 4} textAnchor="end" fontSize={11} fill="var(--text-3)" className="moyai-num">
+                {kyen(v)}
+              </text>
+            </g>
+          );
+        })}
         {shown.map((s, i) => {
-          const x = 20 + i * W;
-          const h = (v: number | null) => (v === null ? 0 : Math.max(1, (v / max) * H));
+          const x = L + 8 + i * W;
+          const h = (v: number | null) => (v === null ? 0 : Math.max(1, (v / scaleTop) * H));
           const inProgress = s.fy === nowFy;
           return (
-            <g key={s.fy} onClick={() => pick(s.fy)} style={{ cursor: "pointer" }} data-fy={s.fy}>
-              {picked === s.fy && <rect x={x - 6} y={0} width={W - 8} height={H + 26} fill="var(--layer-2)" />}
+            <g key={s.fy} onClick={() => pick(s.fy)} onMouseEnter={() => setHover(s.fy)} onMouseLeave={() => setHover(null)} style={{ cursor: "pointer" }} data-fy={s.fy} data-testid="cost-band">
+              <rect x={x - 6} y={0} width={W - 8} height={H + 26} fill={picked === s.fy ? "var(--layer-2)" : hover === s.fy ? "var(--layer-1)" : "transparent"} />
               <rect x={x} y={H - h(s.budget)} width={18} height={h(s.budget)} fill="none" stroke="var(--text-3)" />
               <rect x={x + 20} y={H - h(s.actual)} width={18} height={h(s.actual)} fill={inProgress ? "var(--mark-faint)" : "var(--text)"} />
               <text x={x + 19} y={H + 18} textAnchor="middle" fontSize={11} fill="var(--text-3)" className="moyai-num">
@@ -173,20 +201,22 @@ export function CostSheet({ plan }: { plan: Plan }) {
           );
         })}
       </svg>
-      <Text size="xs" c="var(--text-3)" mt={4} data-testid="cost-legend">
-        {T.legend}
-        <Text span ml={24}>
-          {T.noCost(noCost)}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }} data-testid="cost-legend">
+        <Text size="xs" c="var(--text-3)">
+          {T.legend}
         </Text>
-      </Text>
+        <Text size="xs" c="var(--text-3)" className="moyai-num">
+          {T.noCost(noCost.toLocaleString("ja-JP"))}
+        </Text>
+      </div>
       <div style={{ overflowX: "auto", marginTop: 16 }}>
         <Table className="moyai-num moyai-work-detail" verticalSpacing={6} fz="sm" data-testid="cost-table">
           <Table.Thead>
             <Table.Tr>
-              <Table.Th />
+              <Table.Th className="moyai-cost-name" />
               {shown.map((s) => (
-                <Table.Th key={s.fy} ta="right" onClick={() => pick(s.fy)} style={{ cursor: "pointer" }}>
-                  {T.fy(s.fy)}
+                <Table.Th key={s.fy} ta="right" onClick={() => pick(s.fy)} style={{ cursor: "pointer", padding: "6px 8px" }}>
+                  {s.fy}
                 </Table.Th>
               ))}
             </Table.Tr>
@@ -194,28 +224,28 @@ export function CostSheet({ plan }: { plan: Plan }) {
           <Table.Tbody>
             {(["budget", "actual", "diff", "rate"] as const).map((row) => (
               <Table.Tr key={row} data-testid={`cost-row-${row}`}>
-                <Table.Td c="var(--text-3)">{T[row]}</Table.Td>
+                <Table.Td c="var(--text-3)" className="moyai-cost-name">{T[row]}</Table.Td>
                 {shown.map((s) => {
                   const future = s.fy > nowFy;
                   const inProgress = s.fy === nowFy;
                   const v =
                     row === "budget"
-                      ? s.budget !== null ? kyen(s.budget) : "―"
+                      ? s.budget !== null ? kyen(s.budget) : NONE
                       : row === "actual"
-                        ? future ? "―" : s.actual !== null ? kyen(s.actual) : "―"
+                        ? future ? NONE : s.actual !== null ? kyen(s.actual) : NONE
                         : future
-                          ? "―"
+                          ? NONE
                           : inProgress
                             ? T.inProgress
                             : s.budget === null || s.actual === null
-                              ? "―"
+                              ? NONE
                               : row === "diff"
                                 ? signed(s.actual - s.budget)
                                 : s.budget
-                                  ? `${Math.round((s.actual / s.budget) * 100)}%`
-                                  : "―";
+                                  ? rateOf(s.actual, s.budget)
+                                  : NONE;
                   return (
-                    <Table.Td key={s.fy} ta="right" onClick={() => pick(s.fy)} style={{ cursor: "pointer", background: picked === s.fy ? "var(--layer-1)" : undefined }}>
+                    <Table.Td key={s.fy} ta="right" onClick={() => pick(s.fy)} style={{ cursor: "pointer", padding: "6px 8px", background: picked === s.fy ? "var(--layer-1)" : undefined }}>
                       {v}
                     </Table.Td>
                   );

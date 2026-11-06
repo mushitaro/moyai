@@ -149,7 +149,9 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
                   )}
                 </Table.Td>
                 <Table.Td>{verdict ?? ""}</Table.Td>
-                <Table.Td c="var(--text-3)" ff="monospace" fz="xs">{sourcesOf(r.details)[0]?.label ?? ""}</Table.Td>
+                <Table.Td c="var(--text-3)" ff="monospace" fz="xs" title={sourcesOf(r.details)[0]?.label ?? ""} style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {sourcesOf(r.details)[0]?.label ?? ""}
+                </Table.Td>
               </Table.Tr>
             );
           })}
@@ -235,29 +237,23 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
         {recorded ? T.linesTitle(lines.length) : T.linesNotRecorded}
       </Text>
       {recorded && lines.length > 0 && (
-        <Table className="moyai-num" verticalSpacing={2} fz="xs" data-testid="work-lines">
-          <Table.Tbody>
-            {lines.map((l, i) => (
-              <Table.Tr key={i} data-flag={l.flag ?? ""}>
-                <Table.Td style={{ whiteSpace: "nowrap" }}>{l.date ?? "―"}</Table.Td>
-                <Table.Td>{l.content}</Table.Td>
-                {hasQty && <Table.Td>{l.quantity ?? ""}</Table.Td>}
-                <Table.Td ta="right" style={{ whiteSpace: "nowrap" }}>
-                  {l.manDays !== null ? fmt(l.manDays, 1) : ""}
-                  {l.flag && (
-                    <Text span size="xs" c="var(--text-3)" ml={4}>
-                      {T.lineFlags[l.flag]}
-                    </Text>
-                  )}
-                </Table.Td>
-              </Table.Tr>
-            ))}
-            <Table.Tr>
-              <Table.Td colSpan={hasQty ? 3 : 2}>{T.linesTotal}</Table.Td>
-              <Table.Td ta="right">{total !== null ? fmt(total, 1) : ""}</Table.Td>
-            </Table.Tr>
-          </Table.Tbody>
-        </Table>
+        <div className="moyai-lines moyai-num" data-testid="work-lines" style={{ gridTemplateColumns: hasQty ? "44px 1fr 52px 28px" : "44px 1fr 28px" }}>
+          {lines.map((l, i) => (
+            <div key={i} style={{ display: "contents" }} data-flag={l.flag ?? ""}>
+              <span>{l.date ? l.date.slice(5) : "\u2015"}</span>
+              <span className="moyai-lines-content" title={l.content}>
+                {l.content}
+                {l.flag && <span style={{ color: "var(--text-3)", marginLeft: 4 }}>{T.lineFlags[l.flag]}</span>}
+              </span>
+              {hasQty && <span>{l.quantity ?? ""}</span>}
+              <span style={{ textAlign: "right" }}>{l.manDays !== null ? fmt(l.manDays, 1) : ""}</span>
+            </div>
+          ))}
+          <span />
+          <span style={{ color: "var(--text-3)" }}>{T.linesTotal}</span>
+          {hasQty && <span />}
+          <span style={{ textAlign: "right" }}>{total !== null ? fmt(total, 1) : ""}</span>
+        </div>
       )}
       <Text size="xs" c="var(--text-3)" mt="xs">
         {T.sources}

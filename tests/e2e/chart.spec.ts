@@ -348,7 +348,8 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   await expect(page.getByTestId("cost-row-budget")).toContainText("34,000");
   await expect(page.getByTestId("cost-row-actual")).toContainText("41,200");
   await expect(page.getByTestId("cost-row-diff")).toContainText("+7,200");
-  await page.locator('[data-testid="cost-table"] th', { hasText: "2021 年度" }).click({ timeout: 5000 });
+  // 年度の帯（2 本の棒と年度の字を含む縦の帯）を押すと、表の年度の見出しと同じ動き（Wire）
+  await page.locator('[data-testid="cost-band"][data-fy="2021"] rect').first().click({ timeout: 5000, force: true });
   await expect(page.getByTestId("cost-detail")).toBeVisible();
   await page.screenshot({ path: shot(`cost-${tag}`) });
   await page.getByTestId("cost-top").first().click({ timeout: 5000 });

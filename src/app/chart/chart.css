@@ -245,3 +245,24 @@
 .moyai-dl dd {
   margin: 0;
 }
+
+/* 費用の表：行の名前を左に固定 */
+.moyai-cost-name {
+  position: sticky;
+  left: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+/* 作業明細の 4 列の格子（Wire）。作業内容は 2 行まで */
+.moyai-lines {
+  display: grid;
+  gap: 4px 8px;
+  font-size: 12px;
+  align-items: start;
+}
+.moyai-lines-content {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

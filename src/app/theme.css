@@ -910,3 +910,15 @@ tr.moyai-pick-row[aria-selected="true"] {
   background: var(--layer-1);
   box-shadow: inset 2px 0 0 var(--text);
 }
+
+/* 設定の 1 列（docs/screens.md 3.7）：左に節の名前 168px、右に中身 */
+.moyai-settings-row {
+  display: grid;
+  grid-template-columns: 168px 1fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.moyai-settings-name {
+  padding-top: 2px;
+}
