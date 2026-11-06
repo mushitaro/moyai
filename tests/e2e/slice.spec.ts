@@ -63,7 +63,9 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
         if (state === "running") await page.waitForTimeout(100);
       }
       expect(state).toBe("done");
-      await expect(page.getByTestId("composed")).toContainText("AI が作りました");
+      // 知らせの箱は出さない（docs/screens.md 3.3）。つくったことと作った人は資料のシートの印で見る
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "ai");
       // 取り込んだばかりの計画は、どの当てはめも無い（決定のシートの当てはめの案の欄に、未当てはめの行に全部の記録と出る）
       await page.getByTestId("sheet-decisions").click();
       await expect(page.getByTestId("crosswalk-none")).toBeVisible();
@@ -257,7 +259,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.getByTestId("sheet-file").first().click();
       await expect(page.getByTestId("compose")).toBeEnabled();
       await page.getByTestId("compose").click();
-      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 60_000 });
       await page.getByTestId("sheet-decisions").click();
       const kinds = page.getByTestId("decisions-kind");
       await expect(kinds).toContainText("第 1 版と同じ");
@@ -303,7 +305,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.getByTestId("sheet-file").first().click();
       await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
       await page.getByTestId("compose").click();
-      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 60_000 });
       await acceptDecisions(page, "試験の台本が押した（第 2 版の決定を受けた）");
       await page.getByTestId("confirm-open").click();
       await page.getByTestId("confirm-reason").fill("縦の 1 本：第 1 版の資料と当てはめを重ねた第 2 版（e2e）");
@@ -314,7 +316,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.getByTestId("sheet-file").first().click();
       await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
       await page.getByTestId("compose").click();
-      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 60_000 });
       await page.getByTestId("sheet-decisions").click();
       await expect(page.getByTestId("decisions-kind")).toContainText("第 2 版と同じ", { timeout: 60_000 });
       await expect(page.getByTestId("decisions-kind")).not.toContainText("第 1 版と同じ");

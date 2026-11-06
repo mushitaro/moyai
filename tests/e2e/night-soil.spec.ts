@@ -48,6 +48,8 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
     await test.step("AI は既定の答えでよいと言われたものを置き、既定の答えの無い質問（同じ名前の機器が 2 系統にある）には人が画面で答える", async () => {
       // 人（試験の台本が押した）：星取表の上の行から順に、1 系・2 系の機器（選択肢の 1 つ目・2 つ目）と結ぶ。答えは正解の世界と同じ（確かめ済み）
       const seen = new Map<string, number>();
+      // 人が画面で答えた質問と答え（資料のシートに決定の一覧を置かないので、作者は AI が上書きできないことで確かめる）
+      let byHuman: { questionId: string; answer: string } | null = null;
       for (let round = 0; ; round++) {
         expect(round).toBeLessThan(30);
         const s = await call(c, "intake_survey", { part: "questions" });
@@ -67,13 +69,18 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
         const n = seen.get(name) ?? 0;
         seen.set(name, n + 1);
         await q.scrollIntoViewIfNeeded();
-        await q.getByRole("radio").nth(n).check();
+        const radio = q.getByRole("radio").nth(n);
+        await radio.check();
+        byHuman ??= { questionId: id ?? "", answer: (await radio.getAttribute("value")) ?? "" };
         await q.getByTestId("answer").click();
         await expect(q).toHaveCount(0);
       }
       await expect(page.getByTestId("question")).toHaveCount(0);
-      const authors = await page.getByTestId("decision").evaluateAll((els) => els.map((e) => e.getAttribute("data-author")));
-      expect(authors).toContain("human");
+      // 人が答えた質問は、AI が別の作者で置き直せない（作者は人）
+      expect(byHuman).not.toBeNull();
+      const over: any = await c.callTool({ name: "intake_settle", arguments: { decisions: [{ ...byHuman!, author: "ai", reason: "人の答えの上に置けないことを確かめる（試験の台本）" }] } });
+      expect(over.isError).toBe(true);
+      expect(JSON.stringify(over.content)).toContain("人が画面で答えています");
     });
 
     await test.step("AI：計画を作る", async () => {
@@ -85,7 +92,8 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
         if (state === "running") await page.waitForTimeout(100);
       }
       expect(state).toBe("done");
-      await expect(page.getByTestId("composed")).toContainText("AI が作りました");
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "ai");
     });
 
     let ruleCount = 0;

@@ -420,9 +420,7 @@ export const TEXT = {
     sourcesFailed: (n: number, why: string) => `第 ${n} 版を組んだ資料を読めないので、作り直せません（${why}）`,
   },
   intake: {
-    title: "取り込み",
     back: "画面へ",
-    compose: "計画を作る",
     composing: "計画を作っています",
     reasonsPrefix: "理由：",
     needFiles: "資料がまだ無い",
@@ -432,9 +430,6 @@ export const TEXT = {
     workerFallback: "取り込みの別の処理を起動できませんでした。資料の読込中は画面が止まります",
     /** 取り込みの worker が答えなくなったとき */
     workerStopped: "取り込みの処理が停止。このタブを読み込み直してください。",
-    composed: (assets: number, works: number, details: number) => `計画を作りました（機器の節 ${assets}・作業 ${works}・明細 ${details}）。作業中の計画として、星取表で見られます。`,
-    composedBy: { human: "画面で作りました", ai: "AI が作りました" },
-    toChart: "星取表を表示",
     composeFailed: "計画を作れませんでした",
     settings: {
       title: "施設",
@@ -454,20 +449,9 @@ export const TEXT = {
       skipped: "読まなかった資料",
       failed: "取り込みの処理の誤りで読めなかった",
     },
+    /** 資料のシートの詳細の字（セルの行き先） */
     dest: {
-      title: "セルの行き先",
-      none: "資料を入れると、どのセルにも行き先（データ・除外・未解決）を数えて出します。",
-      data: "データ",
-      excluded: "除外",
-      unresolved: "未解決",
       empty: "空",
-      cells: (n: number) => `${n} セル`,
-      rows: (input: number, imported: number, excluded: number, unresolved: number) =>
-        `入れた行 ${input}＝取り込んだ ${imported}＋除外 ${excluded}＋未解決 ${unresolved}`,
-      rowsNotHeld: "行の数え直しが合いません",
-      jump: (n: number) => `未解決 ${n}`,
-      jumpHint: "押すと、未解決のセルへ移ります",
-      reasons: "除外の理由",
     },
     /** MERGE の資料のタブ（MERGE r2。言葉は docs/words.md：読取・除外・未確定行・全行） */
     source: {
@@ -486,8 +470,6 @@ export const TEXT = {
       choose: "表を選ぶ",
       up: "上へ",
       down: "下へ",
-      nextUnresolved: "次の未解決へ",
-      rowsShown: (from: number, to: number, max: number) => `${from}〜${to} 行目（全部で ${max} 行）`,
       colsCut: (shown: number, max: number) => `列は ${shown} 列目まで（全部で ${max} 列）`,
       cell: (ref: string) => `セル ${ref}`,
       page: (page: number) => `（${page} 頁）`,
@@ -495,16 +477,14 @@ export const TEXT = {
       cellExcluded: (why: string) => `除外：${why}`,
       cellUnresolved: "未解決",
       cellQuestion: (text: string) => `この質問に答えると決まります：${text}`,
-      pick: "セルを押すと、行き先をここに出します。",
       loading: "読込中",
     },
+    /** HOSHITORI の横の板「未回答 n」の質問（docs/screens.md 3.2・3.3。Wire、11-07）：既定の答えに「- 既定」、「n 行」、「| 決める」 */
     questions: {
-      title: "質問",
       none: "答えの要る質問はありません。",
-      rows: (n: number) => `対象行（${n} 行）`,
-      defaultMark: "（既定）",
-      answer: "この答えにする",
-      answerGroup: (n: number) => `${n} 問を既定の答えで答える`,
+      rows: (n: number) => `${n} 行`,
+      defaultMark: "- 既定",
+      answer: "決める",
       numberLabel: "数",
       humanReason: "画面で人が選んだ",
       noDefault: "既定の答えはありません。選んでください。",
@@ -516,25 +496,8 @@ export const TEXT = {
       },
       other: "そのほか",
     },
-    decisions: {
-      title: "決定の一覧",
-      none: "まだ決定はありません。",
-      question: "質問",
-      answer: "答え",
-      author: "作者",
-      reason: "理由",
-      undo: "取り消す",
-      unused: "どの質問にも当たらない（効いていない）",
-    },
-    aiOnly: {
-      title: "AI だけで結んだもの",
-      none: "ありません。",
-      note: "AI だけで結んだものは、人が受けるまで確定できません。受ける操作はまだありません（未実装）。違うときは取り消して、質問に答え直してください。",
-    },
     activity: {
-      title: "AI の作業",
-      none: "まだありません。",
-      unknown: (tool: string) => `AI には「結果不明」と返しました（${tool}）。この画面の決定の一覧と計画の状態で、結果を確かめてください。`,
+      unknown: (tool: string) => `AI には「結果不明」と返しました（${tool}）。計画の状態で、結果を確かめてください。`,
     },
     ai: {
       surveyed: "AI が取り込みの要約を読みました",

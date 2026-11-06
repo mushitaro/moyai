@@ -1,6 +1,6 @@
 // MERGE（版に重ねる。docs/screens.md 3.2・3.3、絵は Review.dc.html）：資料・Claude の案・人の答えを、次の版に重ねる段。
 // 上は 2 行だけ（運営者の指示：データを広く）：見出しの 1 行（施設の名前・版・状態、右に施設の設定）と、シートのタブの 1 行。その下はすぐデータ。
-// シートのタブ：星取表｜読み方｜検査｜決定 n｜資料｜＋ 資料を足す。前の画面（星取表・検査・取り込み）を、そのままシートとして入れる。
+// シートのタブ：星取表｜読み方｜検査｜決定 n｜「資料」の札と資料ごとのタブ｜＋ 資料を足す。白紙（第 1 版の前）は「資料」の札と資料ごとのタブ｜＋ 資料を足す。
 // 右の横の板は 1 枚で、切り替えは「決まっていない所 n（0 なら出さない）/ 署名 n / 出どころ（星取表のとき）」。印を選ぶと出どころへ。
 // 下の帯は、止め札（決まっていない所・受けていない決定・橋渡しが切れている）とボタンだけ。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする）。
 // 画面のどこに資料を落としても受ける（引きずって入ったときだけ、全面に「第 n 版に重ねます」）。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
@@ -33,7 +33,7 @@ import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { FacilityDialog } from "../components/FacilityDialog";
 import { setFacilityDialog } from "../state/facility-dialog";
-import { Intake, Questions, useWorkspace } from "./Intake";
+import { Intake, IntakeFacilityDialog, Questions, composeReasons, useWorkspace } from "./Intake";
 
 const T = TEXT.merge;
 const SIDE_WIDTH = 340;
@@ -325,8 +325,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules + openRemovals;
   // 同じ作業に年数の違う周期の案を受けている（確定を止める。Architect の 44、Wire、11-06）
   const cycleDup = useMemo(() => cycleConflicts(plan, accepted).length, [plan, accepted]);
-  // 白紙のあいだに「第 1 版をつくる」を止めている理由（取り込みと同じもの）
-  const composeBlocks = !plan ? ws.composeBlockers() : [];
+  // 白紙のあいだに「第 1 版をつくる」を止めている理由（未回答があれば「未回答 n」。セルの数は出さない。Wire、11-07）
+  const composeBlocks = !plan ? composeReasons(ws) : [];
   const blocks = [
     !plan ? T.block.noPlan : null,
     staleBy ? T.block.stale : null,
@@ -361,11 +361,18 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     nextPlan.current = null;
     reloadStatus();
   };
-  // 突き合せは、このタブに資料が 2 つ以上あるとき。資料は、重ねた資料ごとのタブ（無ければ「資料」の 1 枚）
+  // 突き合せは、このタブに資料が 2 つ以上あるとき。資料は、重ねた資料ごとのタブ（白紙でも同じ。Wire、11-07）
   const fileNames = view ? view.files : [];
-  // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）
-  const tabs: MergeSheet[] = plan ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : ["files"];
+  // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）。白紙のシートのタブは「資料」の札と資料ごとのタブと「＋ 資料を足す」だけ
+  const tabs: MergeSheet[] = plan ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : [];
   const fileParam = current === "files" ? new URLSearchParams(location.hash.split("?")[1] ?? "").get("f") : null;
+  // 資料のシートで見せる資料：?f= の資料。無ければ最初の資料（どの資料も選ばれていない形にしない）
+  const shownFile = current === "files" ? (fileParam && fileNames.includes(fileParam) ? fileParam : (fileNames[0] ?? null)) : null;
+  // 白紙で資料が入ったら、道を資料のシートにしておく（第 1 版をつくったあとも、資料のタブを選んだ形で開く。Wire、11-07）。
+  // 版を開くリンク（?open=）と開発の見本（?plan=）のときは替えない
+  useEffect(() => {
+    if (!plan && !openId && !devSample && fileNames.length > 0 && sheet !== "files") location.hash = sheetHash("files");
+  }, [plan, openId, devSample, fileNames.length, sheet]);
   // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
   const sideOpen = !!view && openQuestions > 0;
   const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
@@ -377,7 +384,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const ignoredOther = ignored.some((q) => q.why === "otherKey");
   const madeByMe = !!latestInfo?.signatures.some((x) => (x.role === "confirm" || x.role === "edit" || x.role === "revert") && x.trust === "own");
   // 詳しく：どのシートでも、本体で選んだ行・印・セルの全文と根拠を出す所（前の「出どころ」。Wire、2026-11-05）
-  const sideSource = !!plan;
+  const sideSource = !!plan || (current === "files" && fileNames.length > 0);
   const sideComments = !!plan;
   const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
   const sideNow: "open" | "signatures" | "source" | "comments" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : sideComments ? "comments" : null;
@@ -457,7 +464,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               {T.version(compare.version)}
             </span>
           )}
-          {plan ? (
+          {/* 白紙で資料が入ったあとは、施設の欄は資料のシートに無いので、ダイアログで開く */}
+          {plan || ws.fileCount > 0 ? (
             <button type="button" className="moyai-merge-link" onClick={() => setFacilityDialog(true)} data-testid="facility-settings">
               {T.facilitySettings}
             </button>
@@ -496,11 +504,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               {s === "decisions" && leftDecisions > 0 && <span className="moyai-sheet-n moyai-num">{leftDecisions}</span>}
             </a>
           ))}
-          {plan && fileNames.length > 0 && (
+          {fileNames.length > 0 && (
             <>
               <span className="moyai-sheet-label">{T.filesLabel}</span>
               {fileNames.map((f) => (
-                <a key={f} role="tab" className="moyai-sheet-tab" href={`${sheetHash("files")}?f=${encodeURIComponent(f)}`} aria-selected={current === "files" && fileParam === f} data-testid="sheet-file" data-file={f}>
+                <a key={f} role="tab" className="moyai-sheet-tab" href={`${sheetHash("files")}?f=${encodeURIComponent(f)}`} aria-selected={shownFile === f} data-testid="sheet-file" data-file={f}>
                   {f}
                 </a>
               ))}
@@ -531,7 +539,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
           <div style={{ display: current === "files" ? undefined : "none" }}>
-            <Intake ws={ws} embedded file={fileParam} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} composeInBar={!plan} />
+            <Intake ws={ws} file={shownFile} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} composeInBar={!plan} />
           </div>
         </div>
         {sideNow && sideFolded && (
@@ -735,6 +743,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         )}
       </Group>
 
+      {!plan && ws.fileCount > 0 && <IntakeFacilityDialog ws={ws} />}
       {plan && (
         <>
           <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />

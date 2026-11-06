@@ -84,7 +84,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   console.log(`Claude Code の報告：\n${cc.result}`);
   expect(cc.status).toBe(0);
   for (const t of ["intake_settle", "intake_compose", "crosswalk_propose"]) expect(cc.calls).toContain(`mcp__moyai__${t}`);
-  await expect(page.getByTestId("composed")).toBeVisible();
+  await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");
   // 当てはめの案は、MERGE の決定のシートに 1 規則 1 行で並ぶ
   await page.getByTestId("sheet-decisions").click();
   await expect(page.getByTestId("decisions-sheet")).toBeVisible();

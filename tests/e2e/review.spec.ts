@@ -42,7 +42,9 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
         });
       }
       expect((await call(c, "intake_compose")).started).toBe(true);
-      await expect(page.getByTestId("composed")).toContainText("AI が作りました", { timeout: 20_000 });
+      // 知らせの箱は出さない（docs/screens.md 3.3）。つくったことと作った人は資料のシートの印で見る
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 20_000 });
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "ai");
       const version = (await call(c, "intake_survey", { part: "crosswalk" })).crosswalk.version;
       const { nodes, works } = f1Rules();
       const rules = [...nodes, ...works];

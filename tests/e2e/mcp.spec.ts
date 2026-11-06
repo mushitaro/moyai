@@ -64,11 +64,11 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
         expect(r.unresolved).toBeGreaterThanOrEqual(0);
       }
       expect(firstQuestions).toBeGreaterThan(0);
-      // 画面にも AI の作業と決定が出る（作者は AI（チャットでの人の答え））
-      await expect(page.getByTestId("ai-activity").first()).toBeVisible();
+      // 画面でも決まる：横の板の質問と「未回答 n」が消え、資料の未確定のセルが無くなり、第 1 版をつくれる
+      // （答えの作者は、第 1 版をつくったあとの確定のシートで見る。資料のシートの決定の一覧と AI の作業の記録は置かない。docs/screens.md 3.3）
       await expect(page.getByTestId("question")).toHaveCount(0);
-      const authors = await page.getByTestId("decision").evaluateAll((els) => els.map((e) => e.getAttribute("data-author")));
-      expect(new Set(authors)).toEqual(new Set(["ai_relayed_human"]));
+      await expect(page.getByTestId("side-open")).toHaveCount(0);
+      await expect(page.locator('[data-testid="source-tab"] [data-testid="sheet-grid"] td[data-s="unresolved"]')).toHaveCount(0);
       await expect(page.getByTestId("compose")).toBeEnabled();
     });
 
@@ -86,8 +86,17 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
         if (state === "running") await page.waitForTimeout(100);
       }
       expect(state, String(message)).toBe("done");
-      await expect(page.getByTestId("composed")).toContainText("AI が作りました");
+      // 知らせの箱は出さない。つくった人は資料のシートの印（data-compose-by）で見る。資料のタブを 1 つ選んだ形のまま
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "ai");
+      await expect(page.getByTestId("composed")).toHaveCount(0);
+      await expect(page.locator('[data-testid="sheet-file"][aria-selected="true"]')).toHaveCount(1);
       await page.screenshot({ path: shot(`mcp-composed-${tag}`), fullPage: true });
+      // 答えの作者は、確定のシートで「会話の回答」（AI がチャットでの人の答えとして置いたもの）だけ
+      await page.getByTestId("sheet-decisions").click();
+      await expect(page.getByTestId("decisions-kind")).toContainText("会話の回答");
+      await expect(page.getByTestId("decisions-kind")).not.toContainText("Claude 判断");
+      await expect(page.locator('[data-testid="pending-row"][data-kind="ai_relayed_human"]').first()).toBeVisible();
     });
 
     await test.step("chart_rows：星取表の行を 1 回 200 行まで読み、会話の残りが減る", async () => {
@@ -102,7 +111,7 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
     });
 
     await test.step("画面の星取表にも、AI が作った計画の行が出る", async () => {
-      await page.getByTestId("to-chart").click();
+      await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("plan-name")).toHaveText("【架空】第一清掃工場（AI）");
       await expect(page.locator(".ag-row").first()).toBeVisible();
       await page.screenshot({ path: shot(`mcp-chart-${tag}`) });

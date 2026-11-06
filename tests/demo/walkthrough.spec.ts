@@ -113,7 +113,9 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
         return d;
       }, files);
       await pa.getByTestId("drop").dispatchEvent("drop", { dataTransfer: dt });
-      await expect(pa.getByTestId("dest-file")).toHaveCount(files.length, { timeout: 20_000 });
+      // 資料ごとのタブ（白紙でも同じ。docs/screens.md 3.3）。最初の資料が選ばれている
+      await expect(pa.getByTestId("sheet-file")).toHaveCount(files.length, { timeout: 20_000 });
+      await expect(pa.locator('[data-testid="sheet-file"][aria-selected="true"]')).toHaveCount(1);
       await pa.screenshot({ path: shot("demo-02-files") });
     });
 
@@ -133,7 +135,9 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
         if (state === "running") await pa.waitForTimeout(200);
       }
       expect(state).toBe("done");
-      await expect(pa.getByTestId("composed")).toContainText("AI が作りました");
+      // 知らせの箱は出さない（docs/screens.md 3.3）。つくったことと作った人は資料のシートの印で見る
+      await expect(pa.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");
+      await expect(pa.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "ai");
       await pa.screenshot({ path: shot("demo-03-composed") });
     });
 

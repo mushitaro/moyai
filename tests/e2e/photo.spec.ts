@@ -170,7 +170,9 @@ test("写真：人が許した 1 枚だけを AI が受け取り、読んだ格�
         if (state === "running") await page.waitForTimeout(100);
       }
       expect(state, String(message)).toBe("done");
-      await expect(page.getByTestId("composed")).toContainText("AI が作りました");
+      // 知らせの箱は出さない（docs/screens.md 3.3）。つくったことと作った人は資料のシートの印で見る
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "ai");
       console.log(`[${tag}] 確かめたあと：${message}`);
       await page.screenshot({ path: shot(`photo-composed-${tag}`), fullPage: true });
     });

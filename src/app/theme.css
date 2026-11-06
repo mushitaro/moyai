@@ -219,6 +219,11 @@ button.moyai-merge-link {
 .moyai-inline-act:hover {
   color: var(--text-2);
 }
+/* 押せないとき（質問の「決める」など）：淡い字のまま、罫は残す */
+.moyai-inline-act:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
 /* シートのタブ（絵は Review.dc.html、Version 35）：高さ 36px、字は 12px・字間 0.1em・淡い字（ホバーで墨）。選んだシートは墨と太さ 500 で、下線なし。
    項目の間は、切り替えと同じ短い縦の罫（1×10px の --line-strong を上下の真ん中に、字との間は 12px）。最初の項目の前と「重ねた資料」の札のすぐ後には付けない。
    件数の n は朱の字。行の下に 1px の --line。横の板の切り替えも同じ形 */
@@ -277,6 +282,14 @@ button.moyai-merge-link {
   color: var(--text-disabled);
   padding: 0 12px 0 24px;
   white-space: nowrap;
+}
+/* 白紙（第 1 版の前）は「資料」の札が行の頭。資料が無いときは「＋ 資料を追加」が行の頭（前の隠れたファイルの欄は数えない） */
+.moyai-sheet-label:first-child,
+.moyai-sheet-tabs input[type="file"]:first-child + .moyai-sheet-tab {
+  padding-left: 0;
+}
+.moyai-sheet-tabs input[type="file"]:first-child + .moyai-sheet-tab::before {
+  display: none;
 }
 .moyai-merge-body {
   flex: 1;

@@ -132,7 +132,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await page.getByTestId("sheet-file").first().click();
       await expect(page.getByTestId("compose")).toBeEnabled();
       await page.getByTestId("compose").click();
-      await expect(page.getByTestId("composed")).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 60_000 });
       const again = await call(c, "chart_rows", { rowRef: pick!.node });
       const w = again.rows.find((x: any) => x.rowRef === pick!.workRef);
       expect(w, "作り直した計画にも同じ作業がある").toBeTruthy();

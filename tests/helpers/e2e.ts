@@ -87,8 +87,8 @@ export const FICTIONAL_1 = {
 const PHOTO_EXT = /\.(jpe?g|png)$/i;
 
 /**
- * 取り込みの画面を開き、パックと施設の名前を入れ、資料を受け口に落とす。
- * 資料はフォルダの下の道で書いてよい（落とすファイルの名前は最後の部分）。写真はセルの行き先ではなく写真の欄に並ぶ。
+ * 資料のシート（白紙）を開き、パックと施設の名前を入れ、資料を受け口に落とす。
+ * 資料はフォルダの下の道で書いてよい（落とすファイルの名前は最後の部分）。写真は資料のタブではなく写真の欄に並ぶ。
  */
 /** パックの欄に出る日本語の名前（packs/<パック>/pack.json の name。画面は内部の ID を出さない） */
 export function packName(packId: string): string {
@@ -110,7 +110,8 @@ export async function openIntakeAndDrop(page: Page, base: string, facilityName: 
     return d;
   }, files);
   await page.getByTestId("drop").dispatchEvent("drop", { dataTransfer: dt });
-  await expect(page.getByTestId("dest-file")).toHaveCount(set.files.length - photos, { timeout: 20_000 });
+  // 資料ごとのタブ（白紙でも同じ。docs/screens.md 3.3）。写真は読むまで資料のタブにならない
+  await expect(page.getByTestId("sheet-file")).toHaveCount(set.files.length - photos, { timeout: 20_000 });
   if (photos) await expect(page.getByTestId("photo-item")).toHaveCount(photos);
 }
 
