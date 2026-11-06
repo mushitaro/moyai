@@ -8,8 +8,10 @@ export type RouteKind =
   | "public"
   /** タブとの WebSocket（Origin の一致が必須） */
   | "ws"
-  /** 中継（moyai mcp）だけが呼ぶ。状態フォルダの鍵ファイルで確かめる */
+  /** 中継（moyai mcp）と moyai uninstall だけが呼ぶ。状態フォルダの鍵ファイルで確かめる */
   | "relay"
+  /** 作業画面のタブだけが呼ぶ。Origin とタブの秘密が要る（人だけの操作ではないので、1 回きりの印は要らない） */
+  | "tab"
   /** 人だけの操作。タブの秘密と 1 回きりの印が要る */
   | "human";
 
@@ -79,8 +81,8 @@ export interface RouteDef {
   path?: string;
   prefix?: string;
   kind: RouteKind;
-  /** 人だけの経路の守り。kind が human なら両方 true でなければならない */
-  requires?: { tabSecret: true; oneTimeToken: true };
+  /** 守り。kind が human なら両方 true でなければならない。kind が tab ならタブの秘密だけ */
+  requires?: { tabSecret: true; oneTimeToken?: true };
   action?: HumanAction;
   /** 受ける中身の上限（バイト） */
   maxBody?: number;
@@ -95,6 +97,11 @@ function human<A extends HumanAction, P extends string>(path: P, action: A, maxB
 export const ROUTES = {
   app: { method: "GET", path: "/", kind: "static", note: "画面の入口（index.html）" },
   assets: { method: "GET", prefix: "/assets/", kind: "static", note: "ビルドした JS・CSS・書体" },
+  // PWA（pwa-v0）：manifest・Service Worker・アイコン 2 つ。どれも完全一致の道だけ
+  manifest: { method: "GET", path: "/manifest.webmanifest", kind: "static", note: "PWA の manifest" },
+  serviceWorker: { method: "GET", path: "/sw.js", kind: "static", note: "Service Worker（画面の殻だけを覚える）" },
+  icon192: { method: "GET", path: "/brand/png/icon-192.png", kind: "static", note: "PWA のアイコン（192px）" },
+  icon512: { method: "GET", path: "/brand/png/icon-512.png", kind: "static", note: "PWA のアイコン（512px）" },
   selftestEd25519: {
     method: "GET",
     path: "/selftest/ed25519",
@@ -103,6 +110,15 @@ export const ROUTES = {
   },
   ws: { method: "GET", path: "/ws", kind: "ws", note: "タブとの往復" },
   relayTool: { method: "POST", path: "/relay/tool", kind: "relay", maxBody: 1024 * 1024, note: "中継からのツールの呼び出し" },
+  relayStop: { method: "POST", path: "/relay/stop", kind: "relay", maxBody: 1024, note: "橋渡しを止める（moyai uninstall が、鍵ファイルの鍵を添えて送る）" },
+  tabIntakeFile: {
+    method: "POST",
+    path: "/tab/intake-file",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 1024,
+    note: "AI が intake_add_files で入れる資料の中身を、作業画面が 1 つずつ取りに来る（橋渡しが資料ごとに渡したワンタイムトークンと、そのタブの回だけ）",
+  },
   commitTrial: {
     method: "POST",
     path: "/human/commit-trial",
@@ -119,7 +135,7 @@ export const ROUTES = {
   plansList: human("/human/plans-list", "plans_list", 16 * 1024, "保管先の施設と版の一覧（版の番号・時刻・署名の役目・確かめの結果・編集の番）を、トップのもやいの星取表に読む"),
   commentAdd: human("/human/comment-add", "comment_add", 16 * 1024, "計画にコメントを足す（星取表の行と、この PC の呼び名を添えて、保管先に置く。署名はしない）"),
   commentsList: human("/human/comments-list", "comments_list", 16 * 1024, "計画のコメントを古い順に読む（HOSHITORI の横の板の「コメント」）"),
-  planVersionRead: human("/human/plan-version-read", "plan_version_read", 16 * 1024, "確かめで合う版の計画を 1 つ読む（トップの版の印のメニュー：開く・この版から次の版・この版から別の施設をつくる）"),
+  planVersionRead: human("/human/plan-version-read", "plan_version_read", 16 * 1024, "確かめで合う版の計画を 1 つ読む（トップの版のメニュー：開く・この版から次の版・この版から別の施設をつくる）"),
   planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える（頼みを受け取った鍵だけ）"),
   requestReceive: human("/human/request-receive", "request_receive", 16 * 1024, "メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ）"),
   requestRenew: human("/human/request-renew", "request_renew", 16 * 1024, "頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する"),
@@ -144,7 +160,7 @@ export const ROUTES = {
     "/human/facility-key-rotate",
     "facility_key_rotate",
     16 * 1024,
-    "輪へ出す施設の署名鍵を作り直す：今の鍵ごとに、その鍵自身の署名の引退の印（鍵 ID・最後の連番・月だけ）を輪に置き、保管先の鍵を引退させる。新しい鍵は次に送るときに作る",
+    "共有フォルダへ出す施設の署名鍵を作り直す：今の鍵ごとに、その鍵自身の署名の引退の記録（鍵 ID・最後の連番・月だけ）を共有フォルダに置き、保管先の鍵を引退させる。新しい鍵は次に送るときに作る",
   ),
   ringRulesAccept: human("/human/ring-rules-accept", "ring_rules_accept", 16 * 1024, "変わった輪の決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない）"),
   ledgerPreview: human("/human/ledger-preview", "ledger_preview", 64 * 1024, "公開の台帳へ出す束のバイト列とハッシュと数（輪と同じ関数。行き先は台帳の clone の決まり）"),

@@ -6,7 +6,7 @@ import type { Plan } from "../shared/plan";
 import type { CrosswalkSurvey } from "../shared/tools";
 import { readCsv, ENCODING_LABEL, type CsvDelimiter, type CsvEncoding } from "./csv";
 import type { RejectedFile, SourceFile } from "./grid";
-import { extensionOf, READABLE, readSource, type InputFile } from "./read";
+import { extensionOf, READABLE, readSource, type InputFile, type ReadOutcome } from "./read";
 import { layoutFile, type SheetLayout } from "./structure";
 import { buildRecords, cellKey, type Records } from "./records";
 import { activeRules, RuleHits, type LoadedReading } from "./reading";
@@ -97,6 +97,8 @@ export class IntakeSession {
   constructor(
     readonly options: IntakeOptions,
     photos?: PhotoBook,
+    /** Excel と PDF の読み手（取り込みの worker が、資料ごとの覚えを挟むときに渡す。無ければ readSource） */
+    private readonly read: (f: InputFile) => Promise<ReadOutcome> = readSource,
   ) {
     this.photos = photos ?? new PhotoBook();
   }
@@ -149,7 +151,7 @@ export class IntakeSession {
         this.files.push(f);
         continue;
       }
-      const r = await readSource(f);
+      const r = await this.read(f);
       if (r.rejected) rejected.push(r.rejected);
       else if (r.source) {
         this.files.push(f);
@@ -346,9 +348,8 @@ export class IntakeSession {
     return this.composed;
   }
 
-  /** AI に渡す要約（行の中身は見本の 20 行まで） */
-  survey(): Survey {
-    const an = this.analyze();
+  /** AI に渡す要約（行の中身は見本の 20 行まで）。読み取り（an）を呼ぶ側が持っていれば、それを使う（読み直さない） */
+  survey(an: Analysis = this.analyze()): Survey {
     const files = an.sources.map((s) => ({ fileRef: s.file, sheets: s.sheets.length, rows: s.sheets.reduce((a, g) => a + new Set(g.cells.map((c) => c.r)).size, 0) }));
     // 見本は資料ごとに分けて取る（1 つの資料の表が多くても、ほかの資料の見出しが見えるように）。資料ごとの枠に余りが出たら、次の巡で足す
     const samples: Survey["samples"] = [];

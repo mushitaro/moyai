@@ -33,7 +33,7 @@ export const REVIEW_TEXT = {
   } satisfies Record<ChecksLoadProblem, string>,
   plan: "計画",
   referenceDate: "基準日",
-  referenceDateHelp: "この日で走らせます（AI が読む結果も同じ日）。年度だけの印は、その年度が終わってから「過ぎた」とします",
+  referenceDateHelp: "この日で走らせます（AI が読む結果も同じ日）。年度だけの星取は、その年度が終わってから「過ぎた」とします",
   referenceDateInvalid: "日付の形（年-月-日）で入れてください",
   referenceFiscalYear: (n: number) => `基準日の年度：${fy(n)}`,
   checksVersion: (n: number) => `Skillパックの照査の版：${n}`,
@@ -83,9 +83,9 @@ export const REVIEW_TEXT = {
   codeUnimplementedTitle: "照査の仕組みで、まだ無いもの（未実装）",
   codeUnimplemented: [
     "延長の承認の記録の置き場（人だけの画面）。今は、どの延長も承認の記録が無いものとして「基準外」にします",
-    "きっかけ（周期）から次回を出して期限と比べること。取り込んだ計画のきっかけの欄が空なので、次回は予定の印だけで見ます",
+    "きっかけ（周期）から次回を出して期限と比べること。取り込んだ計画のきっかけの欄が空なので、次回は計画の星取だけで見ます",
   ],
-  granularity: "年度だけの印は、年度の差で数えています（年度の粒度）",
+  granularity: "年度だけの星取は、年度の差で数えています（年度の粒度）",
   pathSep: " › ",
   aiRead: (n: number, date: string) => `AI が照査の結果を読みました（${n} 件、基準日 ${date}）`,
 } as const;
@@ -115,7 +115,7 @@ export function numberLabel(key: NumberKey, kind: CheckKind): string {
     fromFiscalYear: "期間の始まりの年度",
     toFiscalYear: "期間の終わりの年度",
     horizonYears: "計画の年数（年度）",
-    dateless: "年度だけの印の数",
+    dateless: "年度だけの星取の数",
   };
   return labels[key as Exclude<NumberKey, `missing.${string}`>] ?? key;
 }

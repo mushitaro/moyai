@@ -74,7 +74,7 @@ const EXACT: Record<string, string> = {
   "diff.statusUnknown": "知らない変更の形",
   "diff.symlink": "symlink（mode 120000）",
   "diff.submodule": "submodule（mode 160000）",
-  "diff.executable": "実行の印のあるファイル（mode 100755）",
+  "diff.executable": "実行権限のあるファイル（mode 100755）",
   "diff.mode": "ふつうのファイルでない（mode が 100644 でない）",
   "diff.malformed": "変更の一覧（git diff の出力）が読めない",
   "diff.tooLarge": "変更の一覧が大きすぎる",

@@ -144,13 +144,13 @@ describe("確定：版と差分レポート", () => {
     expect(readdirSync(join(d, "signatures"))).toHaveLength(3);
     expect(readdirSync(join(rt, "people"))).toEqual([`${keyIdOf(SIGNER.pair.pub)}.json`]);
 
-    // 差分レポート：機器・作業・年度・前の印・後の印・誰が・なぜ
+    // 差分レポート：機器・作業・年度・前の星取・後の星取・誰が・なぜ
     const rows = await readSheet(v2.files.report);
     const head = rows.findIndex((r) => r[0] === "機器");
-    expect(rows[head]).toEqual(["機器", "作業", "年度", "前の印", "後の印", "誰が", "なぜ"]);
+    expect(rows[head]).toEqual(["機器", "作業", "年度", "前の星取", "後の星取", "誰が", "なぜ"]);
     const body = rows.slice(head + 1);
-    expect(body).toContainEqual(["架空の機器 a1", "架空の作業", "2022", "（印なし）", "● 実施", "人", "架空の記録"]);
-    expect(body).toContainEqual(["架空の機器 a1", "架空の作業", "2016", "● 実施", "（印なし）", "人", "架空の記録"]);
+    expect(body).toContainEqual(["架空の機器 a1", "架空の作業", "2022", "（星取なし）", "● 実績", "人", "架空の記録"]);
+    expect(body).toContainEqual(["架空の機器 a1", "架空の作業", "2016", "● 実績", "（星取なし）", "人", "架空の記録"]);
     expect(rows.some((r) => r.includes("2022 の分解整備を足した"))).toBe(true);
   });
 

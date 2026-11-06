@@ -20,7 +20,7 @@ export const ERRORS = {
   bridge_not_running: {
     from: "relay",
     to: "ai",
-    text: "MOYAI の橋渡しが起きていません。先に、利用者の端末で `moyai start`（node dist/cli.js start）を走らせてもらってください。",
+    text: "MOYAI の橋渡しが起きていません。シェルがあれば、リポジトリのフォルダで `moyai start`（node dist/cli.js start）を後ろで走らせ、出た理由を利用者に伝えてください。",
   },
   bridge_timeout: {
     from: "relay",
@@ -62,7 +62,7 @@ export const ERRORS = {
     from: "bridge",
     to: "ai",
     http: 200,
-    text: "作業画面が開いていません。利用者に、moyai start が出した URL を Chrome か Edge で開いてもらってください。",
+    text: "作業画面が開いていません。作業画面の URL（橋渡しを起こした直後の結果の workScreenUrl。既定は http://127.0.0.1:43110/）を Chrome か Edge で開いてください（シェルがあれば自分で開き、無ければ利用者にリンクを開いてもらう）。",
   },
   tab_no_answer: {
     from: "bridge",
@@ -93,7 +93,7 @@ export const ERRORS = {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "同じ機器・決まった答え・計画ルールの規則には when が効きません（どの資料にも当たります）。when を外して置き直すか、効く資料を利用者に確かめてください。規則は置いていません。when が効くのは、見出しの行・列の役目・日付の書き方・工数の単位・行の役割・印の意味です。",
+    text: "同じ機器・決まった答え・計画ルールの規則には when が効きません（どの資料にも当たります）。when を外して置き直すか、効く資料を利用者に確かめてください。規則は置いていません。when が効くのは、見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味です。",
   },
   no_reading_draft: {
     from: "tab",
@@ -160,6 +160,31 @@ export const ERRORS = {
     to: "ai",
     http: 200,
     text: "台帳を根拠にした周期の案の年数が、照らした集計の四分位の外か、規則が当たった作業に、その項目と作業分類の作業がありません。案は置いていません。peer_reference（place: ledger）の集計の項目・作業分類・四分位に合う作業と年数で置き直してください。",
+  },
+  // 資料を作業画面に入れる（intake_add_files）。道を確かめるのは橋渡し
+  intake_path_not_allowed: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "そのフォルダからは資料を読みません。読むのは、絶対の道で、`..` を含まず、シンボリックリンクでなく、状態フォルダとリポジトリの外にあるフォルダだけです。利用者に、資料のあるフォルダの場所を聞き直してください。",
+  },
+  intake_folder_missing: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "そのフォルダが見つからないか、読めません。利用者に、フォルダの場所を確かめてもらってください。",
+  },
+  intake_demo_missing: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "デモの資料（Skillパックの demo/）が見つかりません。pack に Skillパックの ID を添えて呼び直すか、リポジトリの packs/ に demo/ があるかを確かめてください。",
+  },
+  intake_demo_mixed: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "作業画面に、架空でない資料か、ほかの Skillパックの資料が入っているので、デモの資料を入れませんでした（混ぜない）。今の作業を残すかを利用者に聞き、要らなければ作業画面を読み込み直してもらってから呼び直してください（読み込み直すと、確定していない作業は消えます）。",
   },
   ledger_pack_not_ready: {
     from: "bridge",
@@ -256,12 +281,13 @@ export const ERRORS = {
   bad_json: { from: "bridge", to: "tab", http: 400, text: "中身を読めません。" },
   internal: { from: "bridge", to: "tab", http: 500, text: "橋渡しの中で誤りが起きました。" },
   tab_not_open: { from: "bridge", to: "tab", http: 409, text: "作業画面が橋渡しにつながっていません。" },
+  intake_file_unavailable: { from: "bridge", to: "tab", http: 404, text: "渡す資料が見つからないか、読む間に変わりました。" },
   secret_missing: { from: "bridge", to: "tab", http: 403, text: "タブの秘密がありません。" },
   secret_mismatch: { from: "bridge", to: "tab", http: 403, text: "タブの秘密が違います。" },
-  token_missing: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印がありません。" },
-  token_unknown: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が無効です（使い終えたか、出していないもの）。" },
-  token_expired: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が切れました。" },
-  token_mismatch: { from: "bridge", to: "tab", http: 403, text: "1 回きりの印が、この操作か中身と結ばれていません。" },
+  token_missing: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンがありません。" },
+  token_unknown: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンが無効です（使い終えたか、出していないもの）。" },
+  token_expired: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンが切れました。" },
+  token_mismatch: { from: "bridge", to: "tab", http: 403, text: "ワンタイムトークンが、この操作か中身と結ばれていません。" },
   // CLI → 端末
   port_in_use: {
     from: "cli",

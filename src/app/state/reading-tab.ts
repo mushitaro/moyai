@@ -2,9 +2,36 @@
 // 読み方（3 段目の Skill）ごとの見出しの行と、1 規則 1 行。並べる順は効く順（施設 → 担当 → 会社）。1・2 段は編集できないので並べない。
 // 前の版からの差は、同じ名前の承認済みの読み方と比べる（無ければ、どの規則も「足した」）。
 // 規則を変えて前の版で承認済みのセルが変わる数は、版どうしのセルの差が要るので、まだ出さない（null）。
-import type { Analysis } from "../../import";
 import type { LoadedReading, PlanCycleRule, ReadingRule, ReadingScope } from "../../import/reading";
 import { activeRules, isPlanRule, shortVersion } from "../../import/reading";
+import type { IntakeView } from "../intake/worker-protocol";
+
+/** 規則ごとの効いたセルと、見本のセルの字（取り込みの読み取りのすべて、または作業場の写しから作ったもの） */
+export interface ReadingHits {
+  ruleHits: { count(id: string): number; sample(id: string): { file: string; ref: string } | null };
+  sources: readonly { file: string; sheets: readonly { cells: readonly { ref: string; text: string }[] }[] }[];
+}
+
+/** 作業場の写し（取り込みは worker の中）から、規則ごとの効いたセルと見本の字を引く形を作る */
+export function readingHitsOf(view: Pick<IntakeView, "ruleHits">): ReadingHits {
+  const byFile = new Map<string, { ref: string; text: string }[]>();
+  for (const h of Object.values(view.ruleHits)) {
+    if (!h.sample) continue;
+    const cells = byFile.get(h.sample.file) ?? [];
+    byFile.set(h.sample.file, cells);
+    if (!cells.some((c) => c.ref === h.sample?.ref)) cells.push({ ref: h.sample.ref, text: h.sample.text });
+  }
+  return {
+    ruleHits: {
+      count: (id) => view.ruleHits[id]?.count ?? 0,
+      sample: (id) => {
+        const s = view.ruleHits[id]?.sample;
+        return s ? { file: s.file, ref: s.ref } : null;
+      },
+    },
+    sources: [...byFile].map(([file, cells]) => ({ file, sheets: [{ cells }] })),
+  };
+}
 
 export interface ReadingTabRule {
   id: string;
@@ -51,7 +78,7 @@ function appliesTo(r: ReadingRule): string | null {
 /** タブのデータ。readings：作業画面が当てている読み方。an：その読み方で読んだ結果。planInfo：計画ルールが作業中の計画に出した周期の案の印の数と、紐付けの確定を待つ作業の数 */
 export function readingTab(
   readings: readonly LoadedReading[],
-  an: Pick<Analysis, "ruleHits" | "sources">,
+  an: ReadingHits,
   planInfo: (name: string, rule: PlanCycleRule) => { marks: number; waiting: number } = () => ({ marks: 0, waiting: 0 }),
 ): { skills: ReadingTabSkill[]; unapproved: number } {
   const order = activeRules(readings);

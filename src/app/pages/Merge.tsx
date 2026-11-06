@@ -297,8 +297,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const staleBy = !viewingOld && latestNo !== null && (base === null || latestNo > base) ? (st?.versions?.at(-1) ?? null) : null;
   // つくる版は、もとにした版の次（ほかの人が足した版があっても、この編集がつくるつもりの版を出す。署名は止まる）
   const nextVersion = viewingOld ?? ((awaitingMe || askedApprove) && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
-  const an = ws.fileCount ? ws.analysis() : null;
-  const openQuestions = an ? an.open.length : 0;
+  // 取り込みは受け手から返った写しを読む（取り込みは worker の中。読み取りの間も画面は止まらない）
+  const view = ws.fileCount ? ws.view : null;
+  const openQuestions = view ? view.open.length : 0;
   // 開いた版に未回答があれば、横の板を決まっていない所で開く（下の帯の「未回答 n」と同じ行き先。Wire、11-06）。
   // 版を開いたときと、未回答が 0 から増えたときだけ（人がたたんだあとに開き直さない）
   const questionsKey = `${plan?.planId ?? ""}|${nextVersion}`;
@@ -335,6 +336,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const addFiles = async (files: File[]) => {
     if (!files.length) return;
     await ws.addFiles(files.map((f) => ({ name: f.name, size: f.size, bytes: async () => new Uint8Array(await f.arrayBuffer()) })));
+    // 「架空」の印は、読み終わったあとの写しで見る
+    await ws.fresh(undefined, false).catch(() => undefined);
     if (!ws.settings.fictional && ws.sourcesMarkedFictional()) ws.setFacility({ fictional: true });
     location.hash = sheetHash("files");
   };
@@ -352,12 +355,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     reloadStatus();
   };
   // 突き合せは、このタブに資料が 2 つ以上あるとき。資料は、重ねた資料ごとのタブ（無ければ「資料」の 1 枚）
-  const fileNames = an ? an.sources.map((x) => x.file) : [];
+  const fileNames = view ? view.files : [];
   // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）
   const tabs: MergeSheet[] = plan ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : ["files"];
   const fileParam = current === "files" ? new URLSearchParams(location.hash.split("?")[1] ?? "").get("f") : null;
   // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
-  const sideOpen = !!an && openQuestions > 0;
+  const sideOpen = !!view && openQuestions > 0;
   const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
   // 承認を頼まれた人に知らせる、頼まれた版を作った鍵のうち、まだ確かめていないもの（KeyWarn.dc.html の 1）
   const latestUntrusted = latestInfo ? untrustedSigners([latestInfo as { signatures: TrustSig[] }]) : [];
@@ -598,9 +601,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                 </a>
               )}
             </Group>
-            {sideNow === "open" && an && (
+            {sideNow === "open" && view && (
               <>
-                <Questions ws={ws} an={an} />
+                <Questions ws={ws} view={view} />
               </>
             )}
             {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} onKeyConfirmed={reloadStatus} request={req && !req.done && req.version === latestInfo.version ? req : null} ignored={ignored} />}

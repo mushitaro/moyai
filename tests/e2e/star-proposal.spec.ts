@@ -161,11 +161,69 @@ test("AI が星取の追加・削除の案を置き、星取表に朱の破線�
       if (box) await page.screenshot({ path: shot(`star-proposal-remove-cell-${tag}`), clip: { x: Math.max(0, box.x - 200), y: box.y - 40, width: box.width + 240, height: box.height + 80 } });
     });
 
+    await test.step("共通台帳：まとめたセルに削除の案があれば、朱の破線の円を重ねる（斜線は施設台帳だけ）", async () => {
+      await page.getByTestId("rows-mode").getByText("共通台帳").click();
+      const col = grid.locator(`.ag-cell[col-id="fy${rm!.fy}"]`);
+      await expect(col.locator('[data-ring="true"]').first()).toBeAttached();
+      await expect(grid.locator(".moyai-mark-strike")).toHaveCount(0);
+      expect(await grid.locator(".moyai-mark-ring").count()).toBeGreaterThan(0);
+      await page.screenshot({ path: shot(`star-proposal-common-${tag}`) });
+      await page.getByTestId("rows-mode").getByText("施設台帳").click();
+      await expect(cell(rm!.nodeKey, rm!.fy)).toHaveClass(/moyai-mark-strike/);
+    });
+
     await test.step("人：確定のシートの「計画の削除」の行を確定 → 星取が消える", async () => {
       await acceptRow(page, /^会話の回答/, /^計画の削除/);
       await expect(cell(rm!.nodeKey, rm!.fy)).not.toHaveClass(/moyai-mark-strike/);
       await expect(cell(rm!.nodeKey, rm!.fy).locator("[data-mark]")).toHaveCount(0);
       await expect(page.getByTestId("legend-star")).toHaveCount(0);
+    });
+
+    // 実績の追加：基準日の年度（今日）までの、星取の無い年度
+    const nowFy = new Date().getMonth() >= 3 ? new Date().getFullYear() : new Date().getFullYear() - 1;
+    const act = (() => {
+      for (const n of shown) {
+        if (n === add!.nodeKey || n === rm!.nodeKey) continue;
+        const { works, ds } = byNode(n);
+        if (works.length === 0) continue;
+        for (let fy = Math.min(hi, nowFy); fy >= lo; fy--) if (!ds.some((d: any) => d.fiscalYear === fy)) return { nodeKey: n, workKey: works[0]!, fy };
+      }
+      return null;
+    })();
+    expect(act, "星取の無い過去の年度のある、描かれた機器").toBeTruthy();
+    await test.step("AI：利用者の言葉で実績の追加を置く → 朱の破線の円の中に朱の点。人が却下すると消える", async () => {
+      const rows = await call(c, "chart_rows", { rowRef: `n:${act!.nodeKey}` });
+      const r = await call(c, "chart_propose", {
+        basedOnVersion: rows.version,
+        basis: "利用者が会話で、この年度に実施したと言った",
+        author: "ai_relayed_human",
+        stars: [{ op: "add", rowRef: `w:${act!.workKey}`, value: "actual", fiscalYear: act!.fy }],
+      });
+      expect(r.stars).toEqual([expect.objectContaining({ op: "add", placed: true })]);
+      const c0 = cell(act!.nodeKey, act!.fy);
+      await expect(c0).toHaveClass(/moyai-mark-proposal/);
+      await expect(c0.locator("[data-mark]")).toHaveAttribute("data-mark", "actual");
+      const look = await c0.locator("[data-mark]").evaluate((el) => {
+        const b = getComputedStyle(el, "::before");
+        return { image: b.backgroundImage, border: b.borderTopStyle, width: b.width };
+      });
+      expect(look.image).toContain("radial-gradient");
+      expect(look.border).toBe("dashed");
+      expect(look.width).toBe("10px");
+      const box = await c0.boundingBox();
+      if (box) await page.screenshot({ path: shot(`star-proposal-actual-cell-${tag}`), clip: { x: Math.max(0, box.x - 120), y: box.y - 40, width: box.width + 160, height: box.height + 80 } });
+      // 却下：確定のシートの「実績の追加」の行の「| 却下」→ 判断の理由 →「却下」
+      await page.getByTestId("sheet-decisions").click();
+      const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasText: /^会話の回答/ });
+      if ((await kinds.count()) > 0) await kinds.first().click();
+      await page.getByTestId("decisions-reason").fill(REASON);
+      const row = page.locator('[data-testid="pending-row"][data-accepted="false"]').filter({ hasText: /^実績の追加/ });
+      await row.getByTestId("pending-reject").click();
+      await page.getByTestId("reject-reason").fill("利用者が取り消した（試験の台本）");
+      await page.getByTestId("star-reject-confirm").click();
+      await expect(page.locator('[data-testid="pending-row"][data-accepted="false"]').filter({ hasText: /^実績の追加/ })).toHaveCount(0);
+      await page.getByTestId("sheet-chart").click();
+      await expect(cell(act!.nodeKey, act!.fy).locator("[data-mark]")).toHaveCount(0);
     });
   } finally {
     await c.close();

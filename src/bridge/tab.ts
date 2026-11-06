@@ -93,6 +93,11 @@ export class TabHub {
     return this.active !== null;
   }
 
+  /** 今のタブの回（無ければ null）。資料を作業画面に入れるときの印をこの回に結ぶ */
+  get session(): string | null {
+    return this.active?.session ?? null;
+  }
+
   /** HTTP の人だけの経路で、見出しの秘密を今のタブの秘密と比べる。合えばその回の印を返す。 */
   checkSecret(secret: string | undefined): { session: string } | TabErrorCode {
     if (!this.active) return "tab_not_open";

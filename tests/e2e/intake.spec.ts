@@ -30,13 +30,16 @@ test("資料を落とし、質問に答え、計画を作って星取表で見�
     await page.screenshot({ path: shot(`intake-dropped-${tag}`), fullPage: true });
   });
 
+  // 答えは取り込みの worker が置く。置いて写しが届くまで、取り込みの画面に data-busy が付く（数えるのはそのあと）
+  const settled = () => expect(page.getByTestId("intake-page")).not.toHaveAttribute("data-busy", "true");
+
   await test.step("質問に人が答える（既定の答えを選んだまま、1 問ずつ）", async () => {
     for (let i = 0; i < 40; i++) {
       const answer = page.getByTestId("answer").first();
       if ((await page.getByTestId("question").count()) === 0) break;
       await expect(answer).toBeEnabled();
       await answer.click();
-      await page.waitForTimeout(50);
+      await settled();
     }
     await expect(page.getByTestId("question")).toHaveCount(0);
     await expect(page.getByTestId("jump-unresolved")).toHaveCount(0);
@@ -48,11 +51,16 @@ test("資料を落とし、質問に答え、計画を作って星取表で見�
   await test.step("決定を取り消すと止める決まりに戻り、答え直すと押せる", async () => {
     await expect(page.getByTestId("compose")).toBeEnabled();
     await page.getByTestId("undo").first().click();
+    await settled();
     await expect(page.getByTestId("compose")).toBeDisabled();
     await expect(page.getByTestId("compose-disabled-reason")).toBeVisible();
     await page.getByTestId("answer").first().click();
+    await settled();
     // 答えると次の質問が出ることがあるので、無くなるまで答える
-    for (let i = 0; i < 20 && (await page.getByTestId("question").count()) > 0; i++) await page.getByTestId("answer").first().click();
+    for (let i = 0; i < 20 && (await page.getByTestId("question").count()) > 0; i++) {
+      await page.getByTestId("answer").first().click();
+      await settled();
+    }
     await expect(page.getByTestId("compose")).toBeEnabled();
     await expect(page.getByTestId("compose-disabled-reason")).toHaveCount(0);
   });

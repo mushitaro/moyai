@@ -4,9 +4,12 @@
 // 星取表の行は、会話（中継の 1 つの接続）ごとにここで数える（タブを読み込み直しても数は戻らない）。
 // 写真（photo_transcribe の receive）は、人だけの経路で人が許した画像（タブの回とハッシュに結んだもの）だけを渡し、
 // 渡したら許しを使い終える。許しの無い画像・ほかのツールに添えた画像は渡さない。
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { errorBody, type ErrorBody, type ErrorCode } from "../shared/errors";
 import {
+  INTAKE_ADD_MAX_REFUSED,
+  INTAKE_ADD_NOTE,
+  intakeAddFilesFromTabSchema,
   ROWS_PER_CONVERSATION,
   TOOL_TIMEOUTS,
   photoAllowSchema,
@@ -16,10 +19,14 @@ import {
   type ToolKind,
   type ToolName,
 } from "../shared/tools";
+import type { IntakeCollection } from "./intake-files";
 import type { TabHub } from "./tab";
 
-/** tab：作業画面が答える。bridge：橋渡しが答える。tab_then_bridge：作業画面が渡した中身を、橋渡しが書く（読み方を保管先に書く） */
-export type ToolReceiver = "not_implemented" | "tab" | "bridge" | "tab_then_bridge";
+/**
+ * tab：作業画面が答える。bridge：橋渡しが答える。tab_then_bridge：作業画面が渡した中身を、橋渡しが書く（読み方を保管先に書く）。
+ * bridge_then_tab：橋渡しが選んだものを作業画面に渡し、作業画面が答える（資料を作業画面に入れる）
+ */
+export type ToolReceiver = "not_implemented" | "tab" | "bridge" | "tab_then_bridge" | "bridge_then_tab";
 
 /** 橋渡しが答えるツール（保管先を読む・書く）。誤りは誤りの名前で返す */
 export interface BridgeTools {
@@ -30,7 +37,12 @@ export interface BridgeTools {
   peer_reference?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   /** 今の公開の台帳の clone の版（台帳を根拠にした周期の案を照らす。台帳の中-5） */
   ledger_version?: () => Promise<string | null>;
+  /** 資料を作業画面に入れる：道を確かめて読む資料を選ぶ（中身は読まない。src/bridge/intake-files.ts） */
+  intake_add_files?: (args: Record<string, unknown>) => Promise<IntakeCollection | ErrorCode>;
 }
+
+/** 作業画面に渡した資料の印が効く時間の余り（ツールの待ちの上限に足す） */
+const STAGED_MARGIN_MS = 5_000;
 
 /** 周期の案の根拠にしてよい似た施設の数（中央の帯が出る数。送る側の下限と同じ） */
 export const LEDGER_BASIS_MIN_N = 5;
@@ -39,6 +51,7 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   intake_survey: "tab",
   intake_settle: "tab",
   intake_compose: "tab",
+  intake_add_files: "bridge_then_tab",
   photo_transcribe: "tab",
   crosswalk_propose: "tab",
   chart_rows: "tab",
@@ -96,6 +109,8 @@ export class ToolRelay {
   private readonly ledgerRead = new Map<string, { version: string | null; median: Map<string, { n: number; median: string; q1: string; q3: string }> }>();
   /** タブの回 → 写真の imageRef → 人の許し */
   private readonly permits = new Map<string, Map<string, PhotoPermit>>();
+  /** 作業画面に渡した資料の印 → その回・実体の道・大きさ（1 回取りに来ると使い終わる。呼び出しが終われば捨てる） */
+  private readonly staged = new Map<string, { session: string; path: string; size: number; until: number }>();
 
   /** 外へ出た台帳（新しいものが後ろ） */
   outboundLog(): readonly OutboundEntry[] {
@@ -154,6 +169,23 @@ export class ToolRelay {
     return this.permits.get(session)?.size ?? 0;
   }
 
+  /**
+   * 作業画面が経路 tabIntakeFile で資料を取りに来た：その回に渡した印で、まだ使っていないものだけ。1 回で使い終わる。
+   * 中身は返さず、実体の道と大きさを返す（読むのは server.ts。選んだときと形が変わっていれば読まない）
+   */
+  takeStagedFile(session: string, fileId: string): { path: string; size: number } | null {
+    const f = this.staged.get(fileId);
+    if (!f) return null;
+    this.staged.delete(fileId);
+    if (f.session !== session || Date.now() > f.until) return null;
+    return { path: f.path, size: f.size };
+  }
+
+  /** 今効いている資料の印の数（試験用。中身は返さない） */
+  stagedCount(): number {
+    return this.staged.size;
+  }
+
   /** 公開の台帳の集計を読んだら、版と、中央の帯（似た施設 5 以上）が出た行を覚える（同じ会話の周期の案を照らす） */
   private rememberLedger(conversation: string, data: Record<string, unknown>): void {
     const aggs = (data.aggregates ?? []) as { place: string; commonItem: string; work: string; interval: { shown: string; n?: number; median?: string; q1?: string; q3?: string } }[];
@@ -194,6 +226,7 @@ export class ToolRelay {
       const p = def.output.safeParse(r);
       return p.success ? { ok: true, data: p.data as Record<string, unknown> } : fail("tab_bad_result");
     };
+    if (BRIDGE_TOOL_RECEIVERS[name] === "bridge_then_tab") return this.addFiles(args, conversation);
     if (BRIDGE_TOOL_RECEIVERS[name] === "bridge") {
       const h = (this.bridgeTools as Record<string, ((a: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>) | undefined>)[name];
       return h ? finish(await h(args)) : fail("not_implemented");
@@ -286,6 +319,58 @@ export class ToolRelay {
     // 1 回渡すと使い終わる（もう一度渡すには、人がもう一度許す）
     mine?.delete(data.imageRef);
     return { ok: true, data, image: image.data };
+  }
+
+  /**
+   * 資料を作業画面に入れる（intake_add_files）：橋渡しが道を確かめて資料を選び、資料ごとに 1 回きりの印を作って作業画面に渡す。
+   * 作業画面は印で中身を取りに来て（経路 tabIntakeFile。タブの秘密とその回が要る）、人が落とした資料と同じ道で取り込み、
+   * 入れた資料の名前と件数・断った名前と理由だけを返す。AI へは、それに大きさと、橋渡しで断ったものを足して返す（中身は返さない）。
+   */
+  private async addFiles(args: Record<string, unknown>, conversation: string): Promise<ToolAnswer> {
+    const name = "intake_add_files" as const;
+    const def = toolDef(name);
+    const h = this.bridgeTools.intake_add_files;
+    if (!h) return errorBody("not_implemented");
+    const session = this.tabs.session;
+    if (!session) return errorBody("work_screen_not_open");
+    const c = await h(args);
+    if (typeof c === "string") return errorBody(c);
+    const ms = this.timeouts[def.kind] ?? TOOL_TIMEOUTS[def.kind].ms;
+    const until = Date.now() + ms + STAGED_MARGIN_MS;
+    const ids = c.files.map((f) => {
+      const id = randomBytes(16).toString("base64url");
+      this.staged.set(id, { session, path: f.path, size: f.size, until });
+      return id;
+    });
+    try {
+      const toTab = { source: c.source, pack: c.pack, facilityName: c.facilityName, files: c.files.map((f, i) => ({ fileId: ids[i]!, name: f.name, size: f.size })) };
+      const remaining = Math.max(0, ROWS_PER_CONVERSATION - this.rowsReadIn(conversation));
+      const out = await this.tabs.callTool(name, toTab, conversation, remaining, ms, true);
+      if (out.kind === "no_tab") return errorBody("work_screen_not_open");
+      if (out.kind === "no_answer") return errorBody("tab_no_answer");
+      if (out.kind === "error") return errorBody(out.code);
+      if (out.image) return errorBody("tab_bad_result");
+      const tab = intakeAddFilesFromTabSchema.safeParse(out.data);
+      if (!tab.success) return errorBody("tab_bad_result");
+      // 作業画面が答えるのは、渡した資料の名前だけ（ほかの名前・同じ名前の重なりは型違い）
+      const sizes = new Map(c.files.map((f) => [f.name, f.size]));
+      const named = [...tab.data.added.map((a) => a.name), ...tab.data.refused.map((r) => r.name)];
+      if (named.some((n) => !sizes.has(n)) || new Set(named).size !== named.length) return errorBody("tab_bad_result");
+      const refused = [...c.refused, ...tab.data.refused];
+      const data = {
+        source: c.source,
+        pack: c.pack,
+        added: tab.data.added.map((a) => ({ name: a.name, bytes: sizes.get(a.name)!, sheets: a.sheets, rows: a.rows })),
+        refused: refused.slice(0, INTAKE_ADD_MAX_REFUSED),
+        refusedTotal: c.refusedTotal + tab.data.refused.length,
+        others: c.others,
+        note: INTAKE_ADD_NOTE,
+      };
+      const p = def.output.safeParse(data);
+      return p.success ? { ok: true, data: p.data as Record<string, unknown> } : errorBody("tab_bad_result");
+    } finally {
+      for (const id of ids) this.staged.delete(id);
+    }
   }
 }
 

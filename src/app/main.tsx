@@ -21,3 +21,10 @@ if (root) {
     </StrictMode>,
   );
 }
+
+// PWA：ビルドした画面だけ、Service Worker（public/sw.js。画面の殻だけを覚える）を入れる。入れられなくても作業画面は動く
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+  });
+}

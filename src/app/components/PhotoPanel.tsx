@@ -4,11 +4,10 @@
 // 許す・直す・確かめる・外すは人だけで、AI のツールに無い。window.confirm は使わない。
 import { Alert, Badge, Button, Grid, Group, Modal, Paper, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
-import type { Analysis } from "../../import";
 import { PHOTO_LOW_CONFIDENCE, photoState, type PhotoCellRead, type PhotoEntry } from "../../import/photo";
 import { ROUTES } from "../../shared/routes";
 import { prepareForAi, type PreparedImage, type Transfer } from "../intake/photos";
-import type { IntakeWorkspace } from "../intake/workspace";
+import type { IntakeView, IntakeWorkspace } from "../intake/workspace";
 import { useConnection } from "../state/bridge";
 import { ERROR_TEXT, HUMAN_TEXT, PHOTO_TEXT } from "../text";
 
@@ -410,9 +409,9 @@ function PhotoCard({ ws, entry, records }: { ws: IntakeWorkspace; entry: PhotoEn
 
 // ─── 欄 ──────────────────────────────────────────────────────────
 
-export function PhotoPanel({ ws, an }: { ws: IntakeWorkspace; an: Analysis | null }) {
+export function PhotoPanel({ ws, view }: { ws: IntakeWorkspace; view: IntakeView | null }) {
   const entries = ws.photoBook.entries();
-  const byFile = an?.composition.photoReview.byFile ?? {};
+  const byFile = view?.photoReview.byFile ?? {};
   return (
     <Stack gap="xs" data-testid="photos">
       <Text size="xs" c="dimmed">

@@ -149,10 +149,10 @@ export const HUMAN_TEXT = {
     root: "保存先",
     first: "初めての確定です（前の版はありません）。",
     basedOn: (n: number) => `いま確定している版：第 ${n} 版`,
-    summary: (a: number, r: number, c: number, s: number) => `足した印 ${fmt(a)}　消した印 ${fmt(r)}　変更した印 ${fmt(c)}　同じ印 ${fmt(s)}`,
+    summary: (a: number, r: number, c: number, s: number) => `星取　追加 ${fmt(a)}・削除 ${fmt(r)}・変更 ${fmt(c)}・変更なし ${fmt(s)}`,
     /** 署名のダイアログの件数の 1 行（差分の行は差分と決定のシートが持つ） */
     summaryLine: (base: number | null, a: number, r: number, c: number) =>
-      base === null ? `初めての版です。足した印 ${fmt(a)}` : `第 ${base} 版から：足した印 ${fmt(a)}・消した印 ${fmt(r)}・変更した印 ${fmt(c)}`,
+      base === null ? `第 1 版　星取の追加 ${fmt(a)}` : `第 ${base} 版から：星取の追加 ${fmt(a)}・削除 ${fmt(r)}・変更 ${fmt(c)}`,
     diffHead: ["機器", "作業", "年度", "前", "後", "誰が", "なぜ"],
     diffMore: (n: number) => `ほかに ${fmt(n)} 行。全行は差分（Excel）にあります。`,
     mark: { plan: "○", actual: "●", both: "◎", none: "—" },
@@ -311,7 +311,7 @@ export const HUMAN_TEXT = {
     showFile: "資料を表示",
     head: ["内容", "元の資料", "件数", "確定者", "元の版"],
     cells: (n: string) => `セル ${n}`,
-    marks: (n: string) => `印 ${n}`,
+    marks: (n: string) => `星取 ${n}`,
     /** 計画ルールの行：紐付けを確定するまで案を出さない（仮の言葉。Wire に確かめる） */
     planWaiting: (n: number) => `紐付け未確定 ${fmt(n)}`,
     anyFile: "どの資料にも",
@@ -362,10 +362,9 @@ export const HUMAN_TEXT = {
     reasonPlaceholder: "例：台帳の中央値と現場の摩耗の記録が合うので",
     bulkDone: (ok: number, refused: number) => (refused ? `${fmt(ok)} 行を確定しました。${fmt(refused)} 行は確定できませんでした（理由は行ごとに確定すると出ます）。` : `${fmt(ok)} 行を確定しました。`),
     doneTitle: (n: number) => `確定済み・却下済み（${fmt(n)}）`,
-    ledgerNote: "台帳案は、星取表では朱の破線の円で出ます。確定すると、ふつうの計画の印になります。",
     /** 台帳案の詳細から、共通台帳のその行・年度を開く（前に縦の罫。Wire、11-06） */
     seeInChart: "星取表で見る",
-    cycleWhat: (id: string, n: number) => `周期の案 ${id}：計画の印 ${fmt(n)} を引く`,
+    cycleWhat: (id: string, n: number) => `周期の案 ${id}：計画の星取 ${fmt(n)}`,
     /** 会話からの星取の案（docs/screens.md 3.2、Wire、11-06 夜）：題「計画の追加　ごみクレーン › 分解整備」、下の行に年度「2028 年度・2031 年度」（移動は「2027 年度 → 2028 年度」） */
     starTitle: (kind: string, machine: string, work: string) => `${kind}　${machine} › ${work}`,
     starYear: (fy: number) => `${fy} 年度`,
@@ -390,8 +389,8 @@ export const HUMAN_TEXT = {
     keptOldKey: "年数なし",
     cycleRejectTitle: (id: string) => `周期の案 ${id} を却下`,
     cycleRejectBody: (id: string, n: number, rule: boolean) =>
-      rule ? `周期の案 ${id} の計画の印 ${fmt(n)} を外します。同じルールの版のあいだは、その作業に出し直しません。` : `周期の案 ${id} の計画の印 ${fmt(n)} を外します。`,
-    cycleRejectedDone: (id: string, n: number) => `周期の案 ${id} を却下しました（計画の印 ${fmt(n)}）`,
+      rule ? `周期の案 ${id} の計画の星取 ${fmt(n)} を外します。同じルールの版のあいだは、その作業に出し直しません。` : `周期の案 ${id} の計画の星取 ${fmt(n)} を外します。`,
+    cycleRejectedDone: (id: string, n: number) => `周期の案 ${id} を却下しました（計画の星取 ${fmt(n)}）`,
     cycleRejectRefused: "却下できませんでした（案が作業中の計画にありません）",
     reason: "判断の理由",
     accepted: "✓ 確定済み",
@@ -689,7 +688,7 @@ export const HUMAN_TEXT = {
   },
   skip: {
     workMissing: "作業が無い",
-    planned: "計画（予定）の印（写すのは実績だけ）",
+    planned: "計画の星取（写すのは実績だけ）",
     needsReview: "写真から読み、人がまだ確かめていない",
     attributeUndecided: "作業分類が決まらない",
     attributeNotAccepted: "作業分類の紐付けを人が受けていない",

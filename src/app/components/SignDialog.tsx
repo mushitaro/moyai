@@ -6,6 +6,7 @@ import { Alert, Button, Group, Modal, Stack, Text, TextInput } from "@mantine/co
 import { useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import type { BridgeClient } from "../bridge-client";
+import { settleDraft } from "../state/draft";
 import { HUMAN_TEXT } from "../text";
 import { readHuman } from "./ConfirmDialog";
 import { KeyWarnLine, type TrustSig } from "./KeyWarn";
@@ -60,6 +61,8 @@ export function SignDialog({
     const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("plan_sign", ROUTES.planSign.path, { planId, version, role, reason: reason.trim() }));
     setBusy(false);
     if (!r.ok) return setError(r.message);
+    // 署名したら、前の作業の写しを消す（pwa-v0）
+    settleDraft(planId);
     onSigned();
     onClose();
   };

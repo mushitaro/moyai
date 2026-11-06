@@ -68,7 +68,7 @@ const ruleOutcome = z.object({
 
 /**
  * ツールの種類。待ちの上限と送り直しは種類で決まる（§2.12）。
- * read：読む（20 秒、1 回だけ送り直す）／propose：案を置く（30 秒、送り直さない）／start：始めた印だけを返す（20 秒、送り直さない）
+ * read：読む（20 秒、1 回だけ送り直す）／propose：案を置く（30 秒、送り直さない）／start：始めたことだけを返す（20 秒、送り直さない）
  */
 export type ToolKind = "read" | "propose" | "start";
 export const TOOL_TIMEOUTS: Record<ToolKind, { ms: number; retries: number }> = {
@@ -232,9 +232,78 @@ function def<N extends string, I extends z.ZodObject, O extends z.ZodObject>(
   waitsFor: ToolWaitsFor = null,
 ) {
   // 作業画面の取り込み・星取表・検査・当てはめの結果には、今効いている Skill の目録を添える（docs/plan.md §2.18.3）
-  const out = (SKILL_CATALOG_TOOLS as readonly string[]).includes(name) ? (output.extend({ skills: skillCatalogSchema.optional() }) as unknown as O) : output;
+  const withSkills = (SKILL_CATALOG_TOOLS as readonly string[]).includes(name) ? output.extend({ skills: skillCatalogSchema.optional() }) : output;
+  // 中継が添える作業画面の URL（中継の最初の答えと、中継が橋渡しを起こした直後の答え。src/cli/relay.ts）
+  const out = withSkills.extend({ workScreenUrl: workScreenUrlSchema.optional() }) as unknown as O;
   return { name, kind, waitsFor, title, description: `${description} ${COMMON}`, input, output: out };
 }
+
+/** 作業画面の URL（橋渡しの 127.0.0.1 の 1 ポート） */
+export const workScreenUrlSchema = z.string().regex(/^http:\/\/127\.0\.0\.1:\d{1,5}\/$/);
+
+// ─── 資料を作業画面に入れる（intake_add_files）──────────────────────────
+// 橋渡しが道を確かめて資料を選び、作業画面のタブが中身を取りに来て、人が落とした資料と同じ道で取り込む。
+// AI に返すのは名前・大きさ・件数・断った理由だけで、セルの値や文字は返さない（安全の決まり 3）。
+
+/** 読む資料の種類（拡張子。大文字小文字は問わない） */
+export const INTAKE_ADD_EXTENSIONS = [".xlsx", ".xls", ".csv", ".pdf", ".jpg", ".png"] as const;
+/** 1 回に入れる資料の数の上限 */
+export const INTAKE_ADD_MAX_FILES = 200;
+/** 1 つの資料の大きさの上限（§2.12 のアップロードの上限と同じ） */
+export const INTAKE_ADD_MAX_BYTES = 64 * 1024 * 1024;
+/** 結果に並べる、断った資料の数の上限（越えた分は refusedTotal に数える） */
+export const INTAKE_ADD_MAX_REFUSED = 200;
+/**
+ * 断った理由（資料の種類の名前のものだけ。ほかの種類のファイルと下のフォルダは、名前を返さずに数だけ others に数える）：
+ * link シンボリックリンク／not_file ファイルでない／too_large 64 MB を越える／over_count 201 個目から／
+ * unreadable 作業画面が読めない形／same_name 同じ名前の資料がもう入っている／changed 読む間に変わったか消えた
+ */
+export const INTAKE_REFUSALS = ["link", "not_file", "too_large", "over_count", "unreadable", "same_name", "changed"] as const;
+export type IntakeRefusal = (typeof INTAKE_REFUSALS)[number];
+const INTAKE_SOURCES = ["demo", "folder"] as const;
+const PACK_ID_SHAPE = /^[a-z][a-z0-9-]{0,63}$/;
+const fileName = z.string().min(1).max(260);
+const refusedFile = z.object({ name: fileName, reason: z.enum(INTAKE_REFUSALS) });
+
+const intakeAddFilesInput = z
+  .object({
+    source: z.enum(INTAKE_SOURCES),
+    /** folder：利用者がチャットで言ったフォルダ（絶対の道） */
+    path: z.string().min(1).max(1000).optional(),
+    /** demo：デモの資料を取るパック（省くと、demo/ のあるパックが 1 つならそれ） */
+    pack: z.string().regex(PACK_ID_SHAPE).optional(),
+  })
+  .superRefine((a, ctx) => {
+    if (a.source === "folder" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "folder には path が要る" });
+    if (a.source === "demo" && a.path !== undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "demo では path を渡さない" });
+    if (a.source === "folder" && a.pack !== undefined) ctx.addIssue({ code: "custom", path: ["pack"], message: "pack は demo だけ" });
+  });
+
+/** 橋渡し → 作業画面：渡す資料の一覧（中身は作業画面が経路 tabIntakeFile で 1 つずつ取りに来る） */
+export const intakeAddFilesToTabSchema = z.object({
+  source: z.enum(INTAKE_SOURCES),
+  /** demo のパック（作業画面がまだパックを選んでいなければ、これにする） */
+  pack: z.string().regex(PACK_ID_SHAPE).nullable(),
+  /** demo の施設の名前（Skillパックの demo/demo.json。作業画面の施設の名前が空なら、これにする） */
+  facilityName: z.string().min(1).max(80).nullable(),
+  files: z
+    .array(z.object({ fileId: z.string().regex(/^[A-Za-z0-9_-]{22}$/), name: fileName, size: z.number().int().min(0).max(INTAKE_ADD_MAX_BYTES) }))
+    .max(INTAKE_ADD_MAX_FILES),
+});
+export type IntakeAddFilesToTab = z.infer<typeof intakeAddFilesToTabSchema>;
+
+/** 作業画面 → 橋渡し：入れた資料の名前と件数（シートと行の数。画像は null）、断った資料の名前と理由だけ */
+export const intakeAddFilesFromTabSchema = z
+  .object({
+    added: z.array(z.object({ name: fileName, sheets: z.number().int().min(0).nullable(), rows: z.number().int().min(0).nullable() }).strict()).max(INTAKE_ADD_MAX_FILES),
+    refused: z.array(refusedFile.strict()).max(INTAKE_ADD_MAX_FILES),
+  })
+  .strict();
+export type IntakeAddFilesFromTab = z.infer<typeof intakeAddFilesFromTabSchema>;
+
+/** 結果に添える次の手（Claude Desktop では instructions が効かないので、結果にも書く） */
+export const INTAKE_ADD_NOTE =
+  "次は intake_survey で要約と質問を読み、質問は利用者に聞く。画像と文字の無い PDF の頁は写真の欄に並び、人が 1 枚ずつ許すまで AI には渡らない。確定は人が画面でする。";
 
 /** 結果に Skill の目録を添えるツール */
 export const SKILL_CATALOG_TOOLS = ["intake_survey", "chart_rows", "check_results", "crosswalk_propose"] as const;
@@ -358,9 +427,31 @@ export const TOOLS = {
     "intake_compose",
     "start",
     "計画を作り始める",
-    "決定がそろったら、元の計画を作り始める。すぐに「作り始めた」印だけを返す。結果は intake_survey の compose で読む。",
+    "決定がそろったら、元の計画を作り始める。すぐに「作り始めた」ことだけを返す。結果は intake_survey の compose で読む。",
     z.object({}),
     z.object({ started: z.boolean(), startedAt: z.string() }),
+  ),
+  intake_add_files: def(
+    "intake_add_files",
+    "propose",
+    "資料を作業画面に入れる",
+    "資料を作業画面に入れる（人が資料を落としたのと同じ道で取り込む）。" +
+      "source: demo は Skillパックの demo/ の架空の資料（利用者が「デモして」と言ったとき。pack は省いてよい）。" +
+      "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
+      "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey の files で入った資料を確かめる。",
+    intakeAddFilesInput,
+    z.object({
+      source: z.enum(INTAKE_SOURCES),
+      /** demo のとき：資料を取ったパック。folder は null */
+      pack: z.string().nullable(),
+      added: z.array(z.object({ name: fileName, bytes: z.number().int().min(0), sheets: z.number().int().nullable(), rows: z.number().int().nullable() })).max(INTAKE_ADD_MAX_FILES),
+      refused: z.array(refusedFile).max(INTAKE_ADD_MAX_REFUSED),
+      /** 断った資料の数（refused に並べるのは 200 まで。越えた分もここに数える） */
+      refusedTotal: z.number().int().min(0),
+      /** 資料の種類でないもの（ほかの種類のファイル・下のフォルダ）の数。名前は返さない */
+      others: z.number().int().min(0),
+      note: z.string(),
+    }),
   ),
   photo_transcribe: def(
     "photo_transcribe",
@@ -423,7 +514,7 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加の根拠は、利用者の言葉（author: ai_relayed_human）か、自施設の実績（bases.record：同じ機器の同じ年度に、ほかの作業の実績があることを MOYAI が照らし、その数と作業明細の数を根拠に書く）。pack と rule は実績の根拠にならない。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。",
+    "規則で、星取表に周期の案を置く（足すだけ。今ある星取は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実績からその年数ごとに、計画のいちばん遅い年度まで計画の星取（○）を置く。計画の星取がもうある年度は飛ばす。実績が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加の根拠は、利用者の言葉（author: ai_relayed_human）か、自施設の実績（bases.record：同じ機器の同じ年度に、ほかの作業の実績があることを MOYAI が照らし、その数と作業明細の数を根拠に書く）。pack と rule は実績の根拠にならない。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。",
     z.object({
       rules: z.array(ruleSchema).max(50).default([]),
       basedOnVersion: z.number().int().min(0),
@@ -478,11 +569,11 @@ export const TOOLS = {
         .optional(),
     }),
     z.object({
-      /** 引いた計画の印の数 */
+      /** 置いた計画の星取の数 */
       matched: z.number().int(),
       conflicts: z.number().int(),
       examples: z.array(example).max(EXAMPLES_MAX),
-      /** 案ごと：案の ID・当たった作業・引いた印・置かなかった作業（実施が無い・終わりの年度が足りない） */
+      /** 案ごと：案の ID・当たった作業・置いた星取・置かなかった作業（実施が無い・終わりの年度が足りない） */
       proposals: z.array(z.object({ id: z.string(), years: z.number().int(), works: z.number().int(), marks: z.number().int(), skipped: z.object({ noActual: z.number().int(), noHorizon: z.number().int() }), bases: z.array(z.string()).optional() })),
       /** 星取ごと（引数の順）：案の ID（同じ頼みの同じ作業・同じ種類は同じ ID で、確定のシートの 1 行）・置いたか（同じ星取がもうある・同じ削除が案のままなら false）・変わる星取の数・照らした根拠の種類 */
       stars: z
@@ -552,7 +643,7 @@ export const TOOLS = {
     "share_preview",
     "read",
     "写し取りの見込み",
-    "共有の束に写す数、写さなかった理由ごとの数、k の集約度を読む。送るのは人が検問所でする。",
+    "共有ファイルに写す数、写さなかった理由ごとの数、k の集約度を読む。送るのは人が検問所でする。",
     z.object({}),
     z.object({
       copied: z.number().int(),
@@ -564,7 +655,7 @@ export const TOOLS = {
     "peer_reference",
     "read",
     "仲間の参考を読む",
-    "類似施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（輪は読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。人が施設に答えた軸はそちらを使い、answers は人が答えていない軸にだけ効く（効いた軸は aiAxes に返るので、根拠に「会話から写した答え」と書く）。計画に入れるときは chart_propose で周期の案を置き、ledger に ledgerVersion・commonItem・work を添える（類似施設の数・間隔の中央値・四分位は MOYAI が照らして根拠の行に書くので、basis に数を書かない）。場をまたいで混ぜない。施設を当てようとしない。",
+    "類似施設との比べから、下限を守った集計と匿名の札だけを読む。place を省くと、人が星取表の画面で開いた比べ（立場・見え方・場は人が選ぶ）を読む。place: ledger は、人が開かなくても、公開の台帳だけを作業中の計画の見え方（立場は市町村）で読む（共有フォルダは読まない）。見え方の答え（answers：軸のコードと全国の表に載るか）が無い・足りなければ、比べずに needs（聞く軸と選べるコード）を返すので、利用者に聞いてから answers を添えて読み直す。人が施設に答えた軸はそちらを使い、answers は人が答えていない軸にだけ効く（効いた軸は aiAxes に返るので、根拠に「会話から写した答え」と書く）。計画に入れるときは chart_propose で周期の案を置き、ledger に ledgerVersion・commonItem・work を添える（類似施設の数・間隔の中央値・四分位は MOYAI が照らして根拠の行に書くので、basis に数を書かない）。場をまたいで混ぜない。施設を当てようとしない。",
     z.object({
       commonItem: z.string().max(64).optional(),
       place: z.enum(["ledger"]).optional(),
@@ -600,7 +691,7 @@ export const TOOLS = {
     "reading_rules_propose",
     "propose",
     "読み方の規則を下書きで置く",
-    "取り込みを詰めきれないとき、利用者と会話で決めた読み方の規則を、作業中の版の下書きの読み方（3 段目の Skill）に置く。規則は決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・印の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業の属性 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料の読み方には効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその印の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・印の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。同じ id の規則は置き換える。作業画面がすぐ読み直し、規則ごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
+    "取り込みを詰めきれないとき、利用者と会話で決めた読み方の規則を、作業中の版の下書きの読み方（3 段目の Skill）に置く。規則は決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・星取の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業の属性 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料の読み方には効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその星取の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。同じ id の規則は置き換える。作業画面がすぐ読み直し、規則ごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
     z.object({ name: z.string().min(1).max(80), scope: z.enum(READING_SCOPES), rules: z.array(ReadingRule).min(1).max(50) }),
     z.object({
       name: z.string(),
@@ -614,7 +705,7 @@ export const TOOLS = {
     "reading_skill_register",
     "propose",
     "読み方を保管先に未承認で書く",
-    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：この PC の設定の呼び名の担当者。担当者を AI が選ぶ道は無い、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
+    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：この PC の設定の送信者（担当者）。担当者を AI が選ぶ道は無い、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
     z.object({ name: z.string().min(1).max(80) }),
     z.object({ path: z.string(), version: z.string(), approved: z.boolean(), rules: z.number().int() }),
   ),
@@ -622,7 +713,7 @@ export const TOOLS = {
     "reading_skills_list",
     "read",
     "保管先の読み方の一覧",
-    "保管先にある 3 段目の Skill（読み方）の一覧。名前・範囲・道・版・規則の数・承認済みか（その読み方を使った版に、信じる鍵の確定か承認の署名があるか）。withText: true で、SKILL.md の文（規則の 1 文と、人が手で書いた補い）も返す（直す前に読み直すため）。本文が返るのは、作業画面の今の施設・この PC の呼び名の担当・会社の範囲の読み方だけで、ほかの施設や担当の読み方は名前と数だけ。作業画面が開いていないと読めない。",
+    "保管先にある 3 段目の Skill（読み方）の一覧。名前・範囲・道・版・規則の数・承認済みか（その読み方を使った版に、信じる鍵の確定か承認の署名があるか）。withText: true で、SKILL.md の文（規則の 1 文と、人が手で書いた補い）も返す（直す前に読み直すため）。本文が返るのは、作業画面の今の施設・この PC の送信者の担当・会社の範囲の読み方だけで、ほかの施設や担当の読み方は名前と数だけ。作業画面が開いていないと読めない。",
     z.object({ withText: z.boolean().optional() }),
     z.object({
       skills: z.array(

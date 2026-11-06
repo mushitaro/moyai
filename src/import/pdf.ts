@@ -598,16 +598,46 @@ export interface PageImage {
   png: Uint8Array;
 }
 
+/** worker の中で頁を描く canvas（pdf.js の canvas の作り手と同じ形。DOM の canvas の代わりに OffscreenCanvas） */
+class OffscreenCanvasFactory {
+  constructor(_opts: unknown) {}
+  create(width: number, height: number): { canvas: OffscreenCanvas; context: OffscreenCanvasRenderingContext2D | null } {
+    const canvas = new OffscreenCanvas(width, height);
+    return { canvas, context: canvas.getContext("2d", { willReadFrequently: true }) };
+  }
+  reset(c: { canvas: OffscreenCanvas | null }, width: number, height: number): void {
+    if (!c.canvas) throw new Error("canvas が無い");
+    c.canvas.width = width;
+    c.canvas.height = height;
+  }
+  destroy(c: { canvas: OffscreenCanvas | null; context: unknown }): void {
+    if (c.canvas) c.canvas.width = c.canvas.height = 0;
+    c.canvas = null;
+    c.context = null;
+  }
+}
+
 /**
  * PDF の 1 頁を描いて PNG にする。文字の無い頁（SourceFile.pages の scanned）を写真の道に回すときに使う。
  * 写真の道（画像を人の許しで AI クライアントに渡して読む）につなぐのは呼ぶ側。ここは画像を作るだけ。
  * Node（試験）は pdfjs-dist の任意の依存 @napi-rs/canvas の canvas、タブは画面の canvas に描く。
  * 画像の復号に wasm の要る形（JBIG2・JPEG 2000）は、タブのビルドに wasm を入れていないので描けないことがある（未確認）。
+ * タブの取り込みの worker の中（document が無い）では OffscreenCanvas に描く。
  */
 export async function renderPdfPage(bytes: Uint8Array, page: number, opts: { scale?: number } = {}): Promise<PageImage> {
   const { lib, Files } = await pdfjs();
   const scale = opts.scale ?? 2;
-  const task = lib.getDocument({ data: bytes.slice(), BinaryDataFactory: Files, cMapPacked: true, disableFontFace: true, useSystemFonts: false, verbosity: 0, stopAtErrors: false });
+  const offscreen = !import.meta.env.SSR && typeof document === "undefined" && typeof OffscreenCanvas !== "undefined";
+  const task = lib.getDocument({
+    data: bytes.slice(),
+    BinaryDataFactory: Files,
+    cMapPacked: true,
+    disableFontFace: true,
+    useSystemFonts: false,
+    verbosity: 0,
+    stopAtErrors: false,
+    ...(offscreen ? { CanvasFactory: OffscreenCanvasFactory } : {}),
+  });
   try {
     const doc = await task.promise;
     if (!Number.isInteger(page) || page < 1 || page > doc.numPages) throw new Error(`頁 ${page} は無い（頁の数 ${doc.numPages}）`);

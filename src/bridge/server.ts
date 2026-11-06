@@ -3,6 +3,7 @@
 import { readSettings } from "./places";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { dirname } from "node:path";
 import type { Duplex } from "node:stream";
 import { WebSocketServer } from "ws";
 import { errorBody, httpStatus, type ErrorCode } from "../shared/errors";
@@ -22,6 +23,7 @@ import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
+import { collectIntake, readIntakeFile } from "./intake-files";
 import { HumanService, type HumanEnv } from "./human";
 import { makeEd25519Sample } from "./selftest";
 import { removeKeyFile, writeKeyFile } from "./state";
@@ -52,6 +54,10 @@ export interface BridgeOptions {
   packsDir?: string;
   /** 人だけの経路の、外とつながる部品（Documents の調べ方・テキストエディタ）。試験は差し替える */
   human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId">;
+  /** リポジトリの根（intake_add_files はこの中のフォルダを読まない）。無ければパックのフォルダの上 */
+  repoRoot?: string;
+  /** moyai uninstall が止める合図を送ってきたとき（moyai start はプロセスを終える）。無ければ橋渡しを閉じるだけ */
+  onStopRequest?: () => void;
 }
 
 export interface Bridge {
@@ -121,7 +127,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     now,
     log,
   });
-  const human = new HumanService({ stateDir: opts.stateDir, packsDir: opts.packsDir ?? resolvePacksDir(), now, ...opts.human });
+  const packsDir = opts.packsDir ?? resolvePacksDir();
+  const human = new HumanService({ stateDir: opts.stateDir, packsDir, now, ...opts.human });
   // 読み方（3 段目の Skill）：保管先を読む・未承認の下書きを書く（決まり 1 の例外。承認は人の署名。docs/plan.md §2.17・§2.18.2）
   // 承認に数える署名：この PC が信じる鍵（自分の鍵か、確認済みの鍵）のものだけ（§2.18.2）
   const sd = opts.stateDir;
@@ -164,9 +171,23 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       const approved = (await approvedReadingVersions(root, trusted)).has(w.version);
       return { path: w.path, version: w.version, approved, rules: w.rules };
     },
+    // 資料を作業画面に入れる：道を確かめて資料を選ぶ（状態フォルダとリポジトリの中は読まない。中身は作業画面が経路で取りに来る）
+    intake_add_files: async (args) =>
+      collectIntake(args as { source: "demo" | "folder"; path?: string; pack?: string }, { packsDir, stateDir: opts.stateDir, repoRoot: opts.repoRoot ?? dirname(packsDir) }),
   });
   const relayKey = randomBytes(32).toString("base64url");
   let port = opts.port;
+  let closing: Promise<void> | null = null;
+  // 閉じる（2 回目からは同じ約束を返す）。鍵ファイルは自分のものだけを消す
+  const close = (): Promise<void> =>
+    (closing ??= (async () => {
+      tabs.stop();
+      for (const c of wss.clients) c.terminate();
+      wss.close();
+      if (opts.stateDir) removeKeyFile(opts.stateDir, relayKey);
+      server.closeAllConnections();
+      await new Promise<void>((r) => server.close(() => r()));
+    })());
 
   const sendJson = (res: ServerResponse, status: number, body: unknown, extra: Record<string, string> = {}) => {
     res.writeHead(status, { ...SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...extra });
@@ -209,6 +230,23 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   };
 
   /**
+   * 作業画面だけが呼ぶ経路の守り：Origin・Sec-Fetch-Site・タブの秘密（人だけの操作ではないので 1 回きりの印は求めない）。
+   * 通れば、そのタブの回と中身を返す。
+   */
+  const guardTab = async (req: IncomingMessage, route: RouteDef): Promise<{ session: string; body: unknown } | ErrorCode> => {
+    if (!route.requires?.tabSecret) return "internal";
+    const o = checkOrigin(header(req, "origin"), header(req, "host"), port, true);
+    if (o) return o;
+    const s = checkFetchSite(header(req, "sec-fetch-site"), false);
+    if (s) return s;
+    const tab = tabs.checkSecret(header(req, HEADER_TAB_SECRET));
+    if (typeof tab === "string") return tab;
+    const body = await readJson(req, route.maxBody ?? 0);
+    if (typeof body === "string") return body;
+    return { session: tab.session, body: body.value };
+  };
+
+  /**
    * 人だけの経路の守り。kind が human の経路は、処理の前に必ずここを通る（経路ごとに書かない）。
    * Origin・Sec-Fetch-Site・タブの秘密・1 回きりの印（操作の名前と中身のハッシュとタブの回に結ぶ）のすべてを求める。
    */
@@ -233,6 +271,11 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   const handlers: { [K in Exclude<RouteId, HumanRouteId>]: RouteHandler } = {
     app: async ({ res, url }) => serveStatic(res, url.pathname),
     assets: async ({ res, url }) => serveStatic(res, url.pathname),
+    // PWA：manifest・Service Worker・アイコン（型は static.ts の表。sw.js は no-store なので、版が変わればブラウザが読み直す）
+    manifest: async ({ res, url }) => serveStatic(res, url.pathname),
+    serviceWorker: async ({ res, url }) => serveStatic(res, url.pathname),
+    icon192: async ({ res, url }) => serveStatic(res, url.pathname),
+    icon512: async ({ res, url }) => serveStatic(res, url.pathname),
     selftestEd25519: ({ res }) => sendJson(res, 200, makeEd25519Sample()),
     // WebSocket の経路に、Upgrade の無い GET が来たとき
     ws: ({ res }) => reject(res, "method_not_allowed"),
@@ -251,6 +294,28 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       const conv = typeof conversation === "string" && /^[A-Za-z0-9-]{1,64}$/.test(conversation) ? conversation : "none";
       const answer = await tools.run(name, parsed.data as Record<string, unknown>, conv);
       return "ok" in answer ? sendJson(res, 200, answer) : reject(res, answer.error.code);
+    },
+    // moyai uninstall の止める合図（鍵ファイルの鍵が要る）。答えを返してから止める
+    relayStop: async ({ req, res, route }) => {
+      const g = guardRelay(req);
+      if (g) return reject(res, g);
+      const body = await readJson(req, route.maxBody ?? 0);
+      if (typeof body === "string") return reject(res, body);
+      sendJson(res, 200, { ok: true, stopping: true });
+      log("moyai uninstall の合図で、橋渡しを止めます");
+      setImmediate(() => (opts.onStopRequest ? opts.onStopRequest() : void close()));
+    },
+    // intake_add_files：作業画面が、渡された資料の印で中身を取りに来る（その回の、まだ使っていない印だけ。1 回で使い終わる）
+    tabIntakeFile: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const fileId = (g.body as { fileId?: unknown } | null)?.fileId;
+      if (typeof fileId !== "string") return reject(res, "bad_json");
+      const f = tools.takeStagedFile(g.session, fileId);
+      const bytes = f ? await readIntakeFile(f) : null;
+      if (!bytes) return reject(res, "intake_file_unavailable");
+      res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": "application/octet-stream", "Cache-Control": "no-store", "Content-Length": String(bytes.length) });
+      res.end(bytes);
     },
   };
 
@@ -391,13 +456,6 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     tabs,
     tokens,
     tools,
-    close: async () => {
-      tabs.stop();
-      for (const c of wss.clients) c.terminate();
-      wss.close();
-      if (opts.stateDir) removeKeyFile(opts.stateDir, relayKey);
-      server.closeAllConnections();
-      await new Promise<void>((r) => server.close(() => r()));
-    },
+    close,
   };
 }

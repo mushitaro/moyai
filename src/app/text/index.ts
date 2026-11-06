@@ -38,6 +38,20 @@ export const TEXT = {
     themeDark: "暗",
     themeLight: "明",
     settings: "設定",
+    /** 下の帯：資料の読込の進み（読んでいる間だけ） */
+    reading: (done: number, total: number) => `読込 ${done}/${total}`,
+  },
+  /**
+   * 前の作業を戻す（下の帯。pwa-v0）：開いたときに、閉じる前の作業中の計画と確定のシートの確定が残っていれば出し、人が選ぶ。
+   * 施設か版が今の作業と違えば戻さない（押せない理由を出す）。資料は戻さない。
+   */
+  draft: {
+    label: "前の作業",
+    /** 施設名と、書いた時刻（この PC の時刻） */
+    what: (name: string, at: string) => `${name}　${at}`,
+    restore: "前の作業を戻す",
+    discard: "捨てる",
+    blocked: { facility: "理由：別の施設を作業中", version: "理由：別の版を作業中" },
   },
   /** 【業種】（設定からのリンク）：設備の地図の群ごとの設備の種類。名前・群の名前・作らない理由はパックから読む */
   industries: {
@@ -57,10 +71,10 @@ export const TEXT = {
     button: "確定の試験",
     disabledReason: "理由：ブリッジ未接続",
     title: "確定の試し",
-    body: "人だけの経路の守り（タブの秘密と 1 回きりの印）を通す試しです。計画は何も変わりません。",
-    waitingToken: "1 回きりの印を受け取っています",
-    tokenReady: (seconds: number) => `1 回きりの印を受け取りました（${seconds} 秒で切れます）`,
-    tokenFailed: "1 回きりの印を受け取れませんでした",
+    body: "人だけの経路の守り（タブの秘密と ワンタイムトークン）を通す試しです。計画は何も変わりません。",
+    waitingToken: "ワンタイムトークンを受け取っています",
+    tokenReady: (seconds: number) => `ワンタイムトークンを受け取りました（${seconds} 秒で切れます）`,
+    tokenFailed: "ワンタイムトークンを受け取れませんでした",
     confirm: "試しの経路を通す",
     cancel: "やめる",
     done: "試しの経路を通りました。何も変えていません。",
@@ -94,8 +108,8 @@ export const TEXT = {
     mark: { plan: "○", actual: "●", both: "◎" },
     cycleMark: (fy: number) => `○ ${fy} 年度（周期の案）`,
     markName: { plan: "計画", actual: "実績", both: "計画と実績" },
-    markNone: "印なし",
-    markRemoved: "印を消した",
+    markNone: "星取なし",
+    markRemoved: "星取の削除",
     reviewPrefix: "?",
     reviewName: "要確認（写真から読んだもの）",
     summaryName: "畳んだ行のまとめ",
@@ -128,9 +142,9 @@ export const TEXT = {
       removalAria: "（未確定の削除）",
       changedFrom: (n: number) => `第 ${n} 版から変更`,
       changedFromSource: "元の資料から変更",
-      oldPlan: (n: number) => `第 ${n} 版の印`,
+      oldPlan: (n: number) => `第 ${n} 版の星取`,
       changedFromAria: (n: number) => `（第 ${n} 版から変更）`,
-      oldPlanAria: (n: number, mark: string) => `（第 ${n} 版の印：${mark}）`,
+      oldPlanAria: (n: number, mark: string) => `（第 ${n} 版の星取：${mark}）`,
     },
     change: (who: string, why: string, before: string, after: string) => `誰が：${who}
 なぜ：${why}
@@ -207,7 +221,7 @@ export const TEXT = {
     },
     source: {
       title: "出どころ",
-      empty: "印を選ぶと、その印のもとの記録と出どころをここに出します。",
+      empty: "星取を選ぶと、ここに出ます。",
       page: (n: number) => `${n} 頁`,
       planOrActual: { plan: "計画", actual: "実績" },
       manDays: (n: number) => `工数 ${n} 人・日`,
@@ -311,7 +325,7 @@ export const TEXT = {
       openLatest: (n: number) => `第 ${n} 版を開く`,
       pending: (who: string) => `未承認　承認者 ${who}`,
       pendingSuffix: "_承認待ち",
-      role: { item: "← 項目", work: "← 作業", cycle: "← 周期", next: "← 次回", year: (fy: number) => `← ${fy} 年度の印`, none: "- 未定" },
+      role: { item: "← 項目", work: "← 作業", cycle: "← 周期", next: "← 次回", year: (fy: number) => `← ${fy} 年度の星取`, none: "- 未定" },
       roleOf: (col: string) => `${col} 列に写すもの`,
       fileName: (base: string, name: string, n: number, suffix = "") => `${base}_${name}_第${n}版${suffix}.xlsx`,
       noSheet: "様式にシートがありません。",
@@ -401,7 +415,7 @@ export const TEXT = {
     openFailed: (what: string) => `リンクの版を開けませんでした。保存先の版と、リンクの${what}が合いません。`,
     openWhat: { missing: "計画", version: "版の番号", hash: "ハッシュ", broken: "署名と鎖" } as Record<string, string>,
     // 1C・重-2：開いた版を組んだ資料（言葉は Wire に確かめる）
-    noSources: (n: number) => `第 ${n} 版は、どの資料から作ったかの記録がありません。資料を追加すると、追加した資料だけで作り直すので、第 ${n} 版の印は消えた行として出ます。`,
+    noSources: (n: number) => `第 ${n} 版は、どの資料から作ったかの記録がありません。資料を追加すると、追加した資料だけで作り直すので、第 ${n} 版の星取は消えた行として出ます。`,
     opening: (n: number) => `第 ${n} 版の資料を読んでいます`,
     sourcesFailed: (n: number, why: string) => `第 ${n} 版を組んだ資料を読めないので、作り直せません（${why}）`,
   },
@@ -414,6 +428,10 @@ export const TEXT = {
     needFiles: "資料がまだ無い",
     needPack: "Skillパックを選んでいない",
     needName: "施設名が空",
+    /** 取り込みの worker を起こせず、画面と同じスレッドで読むとき（読込の間は画面が止まる） */
+    workerFallback: "取り込みの別の処理を起動できませんでした。資料の読込中は画面が止まります",
+    /** 取り込みの worker が答えなくなったとき */
+    workerStopped: "取り込みの処理が停止。このタブを読み込み直してください。",
     composed: (assets: number, works: number, details: number) => `計画を作りました（機器の節 ${assets}・作業 ${works}・明細 ${details}）。作業中の計画として、星取表で見られます。`,
     composedBy: { human: "画面で作りました", ai: "AI が作りました" },
     toChart: "星取表を表示",
@@ -434,6 +452,7 @@ export const TEXT = {
       pick: "ファイルを選ぶ",
       reading: "読んでいます",
       skipped: "読まなかった資料",
+      failed: "取り込みの処理の誤りで読めなかった",
     },
     dest: {
       title: "セルの行き先",
@@ -475,6 +494,7 @@ export const TEXT = {
       cellUnresolved: "未解決",
       cellQuestion: (text: string) => `この質問に答えると決まります：${text}`,
       pick: "セルを押すと、行き先をここに出します。",
+      loading: "読込中",
     },
     questions: {
       title: "質問",
@@ -518,7 +538,7 @@ export const TEXT = {
       surveyed: "AI が取り込みの要約を読みました",
       readingProposed: (name: string, n: number) => `「${name}」に ${n} 件追加（下書き。承認は版の署名で）`,
       skillsRead: "AI が今効いている Skill の本文を読みました",
-      cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の印 ${marks}。確定のシートで確定するまで未確定）`,
+      cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の星取 ${marks}。確定のシートで確定するまで未確定）`,
       starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
       settled: (n: number, unresolved: number) => `AI が決定を ${n} 個置きました（残りの未解決 ${unresolved} セル）`,
       settleRefused: (n: number) => `AI の決定 ${n} 個を断りました（当てはまらないものがあったので、どれも置いていません）`,
@@ -530,6 +550,10 @@ export const TEXT = {
       crosswalkPlaced: (rules: number, placed: number, conflicts: number) =>
         `AI が紐付けのルールを ${rules} 個置きました（案 ${placed} 件・ぶつかり ${conflicts} 件。人が受けるまで決まりません）`,
       crosswalkRefused: (rules: number) => `AI の紐付けのルール ${rules} 個を断りました（置けない値か、もとにした版が古いので、どれも置いていません）`,
+      filesAdded: (demo: boolean, added: number, refused: number) => `AI が${demo ? "デモの" : "フォルダの"}資料を追加 ${added} 件${refused ? `・未追加 ${refused} 件` : ""}`,
+      demoMixed: "AI のデモの資料は未追加（架空でない資料か、ほかの Skillパックの資料があるため）",
+      /** 要約の注記（AI に渡す）：資料の読込の途中に要約を読んだとき */
+      readingNote: (done: number, total: number) => `資料の読込の途中（${done}/${total}）。まだ読んでいない資料は、この要約に入っていない`,
     },
     questionKind: {
       encoding: "文字コード",
@@ -684,12 +708,13 @@ export const ERROR_TEXT: Record<TabErrorCode, string> = {
   bad_json: "中身を読めないので、ブリッジが断りました。",
   internal: "ブリッジの中で誤りが起きました。",
   tab_not_open: "このタブはブリッジにつながっていません。",
+  intake_file_unavailable: "AI が入れようとした資料が見つからないか、読む間に変わりました。",
   secret_missing: "タブの秘密が無いので、ブリッジが断りました。",
   secret_mismatch: "タブの秘密が違うので、ブリッジが断りました。",
-  token_missing: "1 回きりの印が無いので、ブリッジが断りました。",
-  token_unknown: "1 回きりの印が無効です（使い終えたか、出していないもの）。",
-  token_expired: "1 回きりの印が切れました。もう一度開き直してください。",
-  token_mismatch: "1 回きりの印が、この操作か中身と結ばれていません。",
+  token_missing: "ワンタイムトークンが無いので、ブリッジが断りました。",
+  token_unknown: "ワンタイムトークンが無効です（使い終えたか、出していないもの）。",
+  token_expired: "ワンタイムトークンが切れました。もう一度開き直してください。",
+  token_mismatch: "ワンタイムトークンが、この操作か中身と結ばれていません。",
 };
 
 // 人だけの画面（確定・版・設定・検問所）の言葉と、共有フォルダを確かめた理由の言葉

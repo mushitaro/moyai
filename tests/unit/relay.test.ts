@@ -43,13 +43,13 @@ async function connect(opts: RelayOptions): Promise<Client> {
 }
 
 describe("中継の MCP", () => {
-  it("今見せるツール（15 のうち、F3 の画面を待つ skill_eval を除く 14）を、説明と入力・出力の型つきで出す", async () => {
+  it("今見せるツール（16 のうち、F3 の画面を待つ skill_eval を除く 15）を、説明と入力・出力の型つきで出す", async () => {
     const c = await connect({ stateDir: tempState() });
     const { tools } = await c.listTools();
-    expect(TOOL_NAMES).toHaveLength(15);
+    expect(TOOL_NAMES).toHaveLength(16);
     expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
     expect(tools.map((t) => t.name)).not.toContain("skill_eval");
-    expect(tools).toHaveLength(14);
+    expect(tools).toHaveLength(15);
     for (const t of tools) {
       expect(t.description, t.name).toMatch(/人だけ/);
       expect(t.inputSchema.type).toBe("object");
@@ -99,6 +99,7 @@ describe("中継の MCP", () => {
       note_for_human: { before: "confirm", text: "見てください" },
       reading_rules_propose: { name: "【架空】甲", scope: "facility", rules: [{ id: "r1", text: "1 行目を見出しとして読む", kind: "headerRow", row: 1, author: "ai", reason: "r" }] },
       reading_skill_register: { name: "【架空】甲" },
+      intake_add_files: { source: "demo" },
     };
     for (const name of EXPOSED_TOOL_NAMES) {
       const r = await c.callTool({ name, arguments: args[name] ?? {} });
@@ -108,7 +109,7 @@ describe("中継の MCP", () => {
         continue;
       }
       expect(r.isError, name).toBe(true);
-      if (BRIDGE_TOOL_RECEIVERS[name] === "tab" || BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
+      if (BRIDGE_TOOL_RECEIVERS[name] === "tab" || BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge" || BRIDGE_TOOL_RECEIVERS[name] === "bridge_then_tab") {
         expectError(r, "work_screen_not_open", name);
         expect(JSON.stringify(r.content), name).toContain("作業画面が開いていません");
       } else {
@@ -215,7 +216,8 @@ describe.skipIf(!existsSync(dist) && !needDist)("dist/cli.js mcp（標準入出�
     const transport = new StdioClientTransport({
       command: process.execPath,
       args: [dist, "mcp"],
-      env: { ...(process.env as Record<string, string>), MOYAI_STATE_DIR: stateDir },
+      // 中継が本物の橋渡し（既定のポート）を起こさないようにする（起こす道は tests/unit/relay-launch.test.ts で、起こす手を差し替えて確かめる）
+      env: { ...(process.env as Record<string, string>), MOYAI_STATE_DIR: stateDir, MOYAI_NO_BRIDGE_LAUNCH: "1" },
       stderr: "pipe",
     });
     const client = new Client({ name: "test", version: "0" });
@@ -225,5 +227,7 @@ describe.skipIf(!existsSync(dist) && !needDist)("dist/cli.js mcp（標準入出�
     expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
     const r = await client.callTool({ name: "share_preview", arguments: {} });
     expectError(r, "bridge_not_running");
+    // 起動中の印も残さない（起こしていない）
+    expect(existsSync(join(stateDir, "bridge.starting"))).toBe(false);
   });
 });

@@ -1,11 +1,13 @@
 // 画面の骨組み（デザイン定義 §5.2）：上にヘッダ、下に状態の帯、その間を主の面がすべて使う。
 // - ヘッダ（docs/screens.md 1）：左にしるし（飾り）、その右に段の列 MOYAI › MERGE › EXPORT › SHARE（今いる段だけ大きく墨、ほかは小さく淡い字）、
 // 右に表示の明暗の切り替えと設定。しるしと「MOYAI」の間は、トップでは 10px（組み）、ほかの段では 40px。
-// - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり、右にビルドの印。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする。運営者、2026-11-04）。
+// - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり（前の作業の写しが残っていれば、その右に「前の作業を戻す｜捨てる」）、右にビルドの印。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする。運営者、2026-11-04）。
+//   資料を読んでいる間だけ、つながりの右に読込の進み（「読込 37/200」）を出す。
 // 【架空】は各画面が <FictionMark /> を置くと、ここの枠に出る（架空のデータの画面には常に出す）。
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { BridgeClient, ConnectionState } from "../bridge-client";
+import type { IntakeWorkspace } from "../intake/workspace";
 import { TEXT } from "../text";
 import { APP_PAGES } from "../../shared/routes";
 import { STAGE_HASH, routeOf, type Stage } from "../stages";
@@ -73,7 +75,7 @@ function Header({ hash }: { hash: string }) {
               href={t.hash}
               title={t.ja}
               aria-current={stage === t.stage ? "page" : undefined}
-              data-testid={`tab-${t.en.toLowerCase()}`}
+              data-testid={`tab-${t.stage}`}
             >
               {t.en}
             </a>
@@ -90,7 +92,22 @@ function Header({ hash }: { hash: string }) {
   );
 }
 
-function StatusBar({ client, onSlot }: { client: BridgeClient; onSlot: (el: HTMLElement | null) => void }) {
+/** 資料の読込の進み（読んでいる間だけ） */
+function ReadProgress({ ws }: { ws: IntakeWorkspace }) {
+  const p = useSyncExternalStore(
+    (cb) => ws.subscribe(cb),
+    () => ws.readProgress,
+    () => ws.readProgress,
+  );
+  if (!p) return null;
+  return (
+    <span className="moyai-status-reading moyai-num" data-testid="read-progress" data-done={p.done} data-total={p.total}>
+      {S.reading(p.done, p.total)}
+    </span>
+  );
+}
+
+function StatusBar({ client, workspace, onSlot, extra }: { client: BridgeClient; workspace?: IntakeWorkspace; onSlot: (el: HTMLElement | null) => void; extra?: ReactNode }) {
   const state = useConnection(client);
   return (
     <footer className="moyai-status">
@@ -100,20 +117,23 @@ function StatusBar({ client, onSlot }: { client: BridgeClient; onSlot: (el: HTML
         <span className="moyai-status-connection" data-testid="connection" data-state={state.kind} style={state.kind === "reconnecting" ? { color: "var(--text-3)" } : undefined}>
           {TEXT.connection[state.kind]}
         </span>
+        {extra}
+        {workspace && <ReadProgress ws={workspace} />}
       </div>
       <BuildStamp />
     </footer>
   );
 }
 
-export function Shell({ client, hash, children }: { client: BridgeClient; hash: string; children: ReactNode }) {
+/** status：状態の帯の左に足すもの（前の作業を戻す帯。App.tsx） */
+export function Shell({ client, hash, workspace, children, status }: { client: BridgeClient; hash: string; workspace?: IntakeWorkspace; children: ReactNode; status?: ReactNode }) {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   return (
     <FictionSlot.Provider value={slot}>
       <div className="moyai-shell">
         <Header hash={hash} />
         <main className="moyai-main">{children}</main>
-        <StatusBar client={client} onSlot={setSlot} />
+        <StatusBar client={client} workspace={workspace} onSlot={setSlot} extra={status} />
       </div>
     </FictionSlot.Provider>
   );

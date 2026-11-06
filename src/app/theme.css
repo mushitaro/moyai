@@ -687,6 +687,33 @@ button.moyai-top-mk[data-kind="signed"] {
 .moyai-status-connection[data-state="closed"] {
   color: var(--shu-text);
 }
+/* 前の作業を戻す｜捨てる（pwa-v0）：帯の字の大きさのまま、字のボタン 2 つ */
+.moyai-status-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  white-space: nowrap;
+}
+.moyai-status-draft-what {
+  color: var(--text-2);
+}
+.moyai-status-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 11px/16px var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  cursor: pointer;
+}
+.moyai-status-button:disabled {
+  color: var(--text-3);
+  cursor: default;
+}
+.moyai-status-button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 .moyai-build-stamp {
   font: 400 11px/16px var(--font-num);
   color: var(--text-3);

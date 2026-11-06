@@ -2,6 +2,7 @@
   "intake_survey",
   "intake_settle",
   "intake_compose",
+  "intake_add_files",
   "photo_transcribe",
   "crosswalk_propose",
   "chart_rows",
