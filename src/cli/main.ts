@@ -45,7 +45,7 @@ const HELP = `使い方：
                                             輪を作り、その輪の鍵を状態フォルダに置く（人だけ。端末から）
   moyai keys unwrap                         前の形の鍵（合言葉で包んだもの）を、前の合言葉で 1 度だけ開いて移す（人だけ。端末から）
   moyai send                                束を送る（人だけ。検問所の画面から送る。端末からは未実装）
-  moyai --version                           ビルドの印を出す`;
+  moyai --version                           ビルドの版を出す`;
 
 function openBrowser(url: string): void {
   // 既定のブラウザで開く。開けなくても止めない（URL は端末に出してある）
