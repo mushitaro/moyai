@@ -456,13 +456,16 @@ export function StopNoticeDetail({ notices, kind }: { notices: readonly Notice[]
         return (
           <Stack key={n.id} gap={2} data-testid="stop-record">
             <Text size="sm" fw={700} c="var(--shu-text)">
-              {kind === "unknown" ? T.stop.unknownTitle : T.stop.stopped}　<span className="moyai-num">{T.at(n.at)}</span>
+              {kind === "unknown" ? T.stop.unknownTitle : T.stop.stopped}
             </Text>
             {what && (
               <Text size="sm">
                 {T.stop.what}　{what}
               </Text>
             )}
+            <Text size="sm">
+              {T.stop.when}　<span className="moyai-num">{T.at(n.at)}</span>
+            </Text>
             <Text size="sm">
               {T.stop.where}　{where}
             </Text>

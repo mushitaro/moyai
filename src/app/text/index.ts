@@ -485,13 +485,14 @@ export const TEXT = {
       /** 詳細の 1 件の題 */
       unknownTitle: "結果不明",
       stopped: "取り込み停止",
-      what: "項目",
+      what: "処理",
+      when: "日時",
       where: "停止箇所",
       /** 結果不明：橋渡しがタブの答えを時間内に受けなかった */
-      whereTool: "タブの応答（時間切れ）",
-      whatWorker: "取り込みの処理",
-      whereStopped: "応答なし",
-      whereFallback: "別の処理の起動",
+      whereTool: "作業画面（時間切れ）",
+      whatWorker: "取り込み処理",
+      whereStopped: "取り込み処理（応答なし）",
+      whereFallback: "取り込み処理（再起動）",
     },
     /** 日時「2026-11-07 06:30」 */
     at: (iso: string) =>

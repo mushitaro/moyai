@@ -160,8 +160,8 @@ describe("止まった知らせ（下の帯）", () => {
     expect(records).toHaveLength(1);
     const n = ws.notices.find((x) => x.kind === "unknown")!;
     expect(TEXT.intake.at(n.at)).toMatch(STAMP);
-    expect(records[0]).toContain(`結果不明　${TEXT.intake.at(n.at)}`);
-    expect(records[0]).toContain("項目　intake_settle");
+    expect(records[0]).toContain(`日時　${TEXT.intake.at(n.at)}`);
+    expect(records[0]).toContain("処理　intake_settle");
     expect(records[0]).toContain(`停止箇所　${TEXT.intake.stop.whereTool}`);
     expect(records[0]).toContain(n.text);
     // ふつうの記録は詳細にも出さない。やり直しの口は無いので「| やり直す」は出さない
@@ -187,8 +187,9 @@ describe("止まった知らせ（下の帯）", () => {
     const detail = render(<StopNoticeDetail notices={ws.notices} kind="stopped" />);
     const records = textsOf(detail, "stop-record");
     expect(records).toHaveLength(2);
-    expect(records[0]).toMatch(/^取り込み停止　\d{4}-\d{2}-\d{2} \d{2}:\d{2}/);
-    expect(records[0]).toContain(`項目　${TEXT.intake.stop.whatWorker}`);
+    // 欄の順は 処理・日時・停止箇所（Wire、11-07）
+    expect(records[0]).toMatch(/^取り込み停止処理　取り込み処理日時　\d{4}-\d{2}-\d{2} \d{2}:\d{2}停止箇所/);
+    expect(records[0]).toContain(`処理　${TEXT.intake.stop.whatWorker}`);
     expect(records[0]).toContain(`停止箇所　${TEXT.intake.stop.whereStopped}`);
     expect(records[0]).toContain(TEXT.intake.workerStopped);
     expect(records[1]).toContain(`停止箇所　${TEXT.intake.stop.whereFallback}`);
@@ -196,7 +197,7 @@ describe("止まった知らせ（下の帯）", () => {
     // 結果不明の記録は、結果不明の詳細だけに出す
     expect(detail).not.toContain("intake_settle");
     const unknown = textsOf(render(<StopNoticeDetail notices={ws.notices} kind="unknown" />), "stop-record");
-    expect(unknown.map((r) => /項目　([a-z_]+)/.exec(r)?.[1])).toEqual(["intake_settle", "intake_compose"]);
+    expect(unknown.map((r) => /処理　([a-z_]+)/.exec(r)?.[1])).toEqual(["intake_settle", "intake_compose"]);
   });
 });
 
