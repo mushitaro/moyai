@@ -23,6 +23,9 @@ import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
+import { STAR_KIND_TEXT, isStarProposal, proposalIdOf, starIdOf, starValueOfKey, type StarKind } from "../../plan/star";
+import { openRemovals, requestStarPick, starGroups, useStarGroups } from "../state/stars";
+import { sheetHash } from "../stages";
 import { useAccepted } from "../state/decisions";
 import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey } from "../state/merge-side";
 import { compareCounts, marksOf } from "../../plan/chart-compare";
@@ -430,9 +433,18 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     const keys = pending
       .filter((d) => d.kind === "detail" && !accepted.has(`${d.id}\u0000${d.hash}`))
       .map((d) => d.id.slice("detail:".length))
-      .filter((k) => cycleIdOf(k) !== null);
+      // 周期の案と星取の追加の案（src/plan/star.ts）
+      .filter((k) => proposalIdOf(k) !== null);
     return new Set(keys);
   }, [pending, accepted]);
+  // 星取の削除の案（人がまだ確定していないもの）が指す明細：施設台帳では今の星取に朱の斜線、共通台帳では朱の破線の円を重ねる
+  const starState = useStarGroups();
+  const removals = useMemo(
+    () => new Set<string>(openRemovals().flatMap((g) => g.removes.flatMap((r) => r.detailKeys))),
+    [starState, plan],
+  );
+  /** 会話からの星取の案があるか（凡例の「◌ 追加　／ 削除」） */
+  const anyStar = removals.size > 0 || [...proposals].some((k) => starIdOf(k) !== null);
 
   // 比べる版（MERGE の見出しの「比べる版　第 n 版」）：同じ作り方で比べる版の表を作り、セルごとの印を比べる
   const compareWith = useContext(MergeCompareContext);
@@ -463,7 +475,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const kinds = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.planOrActual] as const)), [plan]);
 
   useEffect(() => {
-    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due, kinds);
+    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals);
     // 「| 〜で見る」の頼み：行を渡したあとに、その行・期を見える所へ送って選ぶ（畳んでいて見えなければ親の行）
     if (jump && jump.mode === model.mode) {
       const j = jump;
@@ -472,7 +484,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         for (const id of j.rowIds) if (grid.current?.reveal(id, j.periodKey)) break;
       });
     }
-  }, [model, foldLevel, band, proposals, compare, commentMarks, due, kinds, jump]);
+  }, [model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals, jump]);
 
   // 見出しで「重ねる」を選ぶと、共通の設備項目の行に替えて比べを開く。「外す」で閉じる
   useEffect(() => {
@@ -556,11 +568,12 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               <Text size="sm" data-testid="source-cell">
                 {cellAria(selRow, selPeriod, selCell)} {formatCell(selCell)}
               </Text>
-              {selCell?.detailKeys.some((k) => proposals.has(k)) && (
+              {selCell?.detailKeys.some((k) => proposals.has(k) && !isStarProposal(proposalIdOf(k) ?? "")) && (
                 <Text size="xs" c="var(--shu)" data-testid="source-proposal">
                   {T.legend.proposalNote}
                 </Text>
               )}
+              {selCell && <StarProposalSide keys={selCell.detailKeys} proposals={proposals} removals={removals} plan={plan} detailsByKey={detailsByKey} />}
               {devices.length > 0 && (
                 <Stack gap={2} data-testid="device-marks">
                   {devices.map((m) => (
@@ -781,6 +794,21 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
                 {T.legend.proposal}
               </Text>
             )}
+            {anyStar && (
+              <Text size="xs" c="dimmed" span data-testid="legend-star">
+                <span className="moyai-mark moyai-legend-mark moyai-mark-proposal">
+                  <span data-mark="plan">{T.mark.plan}</span>
+                </span>
+                {T.legend.starAdd}
+                <span style={{ margin: "0 6px" }}>{T.legend.starSep}</span>
+                <span className="moyai-mark moyai-legend-mark moyai-mark-strike">
+                  <span data-mark="plan" data-strike="true">
+                    {T.mark.plan}
+                  </span>
+                </span>
+                {T.legend.starRemove}
+              </Text>
+            )}
           </Group>
           <Text size="xs" c="dimmed" className="moyai-num" ml="auto" data-testid="chart-rows-count" data-visible={model.rows.length} data-total={model.totalRows}>
             {T.rowsShort(model.rows.length, model.totalRows)}
@@ -874,6 +902,75 @@ export function StarTable({ embedded = false }: { embedded?: boolean } = {}) {
           {load.message}
         </Alert>
       )}
+    </Stack>
+  );
+}
+
+/**
+ * 星取の案の詳しく（docs/screens.md 3.2、Wire、11-06 夜）：選んだセルの会話からの星取の案ごとに、
+ * xs「計画の追加（未確定）」、題「2028 年度　分解整備」、「出どころ　会話の回答」「理由」、「| 確定のシートで見る」
+ */
+function StarProposalSide({
+  keys,
+  proposals,
+  removals,
+  plan,
+  detailsByKey,
+}: {
+  keys: readonly string[];
+  proposals: ReadonlySet<string>;
+  removals: ReadonlySet<string>;
+  plan: Plan;
+  detailsByKey: ReadonlyMap<string, WorkDetailT>;
+}) {
+  useStarGroups();
+  const groups = starGroups();
+  const items: { id: string; kind: StarKind; fy: number; workKey: string; author: string; basis: string }[] = [];
+  for (const k of keys) {
+    const d = detailsByKey.get(k);
+    if (!d) continue;
+    const id = starIdOf(k);
+    if (id && proposals.has(k)) {
+      const g = groups.find((x) => x.id === id);
+      items.push({ id, kind: g?.kind ?? (starValueOfKey(k) === "actual" ? "actualAdd" : "planAdd"), fy: d.fiscalYear, workKey: d.workKey, author: d.author, basis: d.basis });
+    } else if (removals.has(k)) {
+      const g = groups.find((x) => x.removes.some((r) => r.detailKeys.includes(k)));
+      if (g && !items.some((x) => x.id === g.id && x.fy === d.fiscalYear)) items.push({ id: g.id, kind: g.kind, fy: d.fiscalYear, workKey: g.workKey, author: g.author, basis: g.basis });
+    }
+  }
+  if (items.length === 0) return null;
+  const S = T.source;
+  const D = HUMAN_TEXT.decisions;
+  return (
+    <Stack gap="sm" data-testid="star-proposal-side">
+      {items.map((x) => (
+        <Stack key={`${x.id}:${x.fy}`} gap={2} data-testid="star-proposal" data-star={x.id}>
+          <Text size="xs" c="var(--shu-text)">
+            {S.starPending(STAR_KIND_TEXT[x.kind])}
+          </Text>
+          <Text size="sm" fw={700} className="moyai-num">
+            {S.starHead(x.fy, plan.works.find((w) => w.workKey === x.workKey)?.kind || x.workKey)}
+          </Text>
+          <Text size="xs" c="var(--text-2)">
+            {S.starFrom}　{x.author === "ai_relayed_human" ? D.kinds.relayed : D.kinds.ai}
+          </Text>
+          <Text size="xs" c="var(--text-2)">
+            {S.starWhy}　{x.basis}
+          </Text>
+          <button
+            type="button"
+            className="moyai-inline-act"
+            style={{ marginLeft: 0, alignSelf: "flex-start" }}
+            onClick={() => {
+              requestStarPick(x.id);
+              location.hash = sheetHash("decisions");
+            }}
+            data-testid="star-see-in-decisions"
+          >
+            {S.seeInDecisions}
+          </button>
+        </Stack>
+      ))}
     </Stack>
   );
 }

@@ -365,6 +365,15 @@ export const HUMAN_TEXT = {
     /** 台帳案の詳細から、共通台帳のその行・年度を開く（前に縦の罫。Wire、11-06） */
     seeInChart: "星取表で見る",
     cycleWhat: (id: string, n: number) => `周期の案 ${id}：計画の星取 ${fmt(n)}`,
+    /** 会話からの星取の案（docs/screens.md 3.2、Wire、11-06 夜）：題「計画の追加　ごみクレーン › 分解整備」、下の行に年度「2028 年度・2031 年度」（移動は「2027 年度 → 2028 年度」） */
+    starTitle: (kind: string, machine: string, work: string) => `${kind}　${machine} › ${work}`,
+    starYear: (fy: number) => `${fy} 年度`,
+    starMove: (from: number, to: number) => `${from} 年度 → ${to} 年度`,
+    starYearsSep: "・",
+    /** 詳しくの 1 つずつ：「2028 年度　計画の追加」 */
+    starItem: (fy: number, kind: string) => `${fy} 年度　${kind}`,
+    starRejectedDone: (n: number) => `星取の案を却下しました（星取 ${fmt(n)}）`,
+    starAcceptedDone: (n: number) => `星取の案を確定しました（星取 ${fmt(n)}）`,
     /** 却下のダイアログ（Wire、11-06）：題「却下」、項目の 1 行、欄「判断の理由」、「あとで」「却下」 */
     rejectTitle: "却下",
     rejectLater: "あとで",

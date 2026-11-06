@@ -23,7 +23,8 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { TEXT } from "../text";
 import { getWorkingPlan, setWorkingPlan, updateWorkingPlan } from "./plan-store";
 import { AMBIGUOUS_KEY_PREFIX } from "../../import/compose";
-import { cycleIdOf, isPlanRuleCycle } from "../../plan/cycle";
+import { isPlanRuleCycle } from "../../plan/cycle";
+import { proposalIdOf } from "../../plan/star";
 
 /** もとにした版（1C）：MERGE で版を開いたときに置く。作り直すと、その版の当てはめを「第 n 版と同じ」の案として並べる */
 let base: { version: number; plan: Plan; crosswalk: readonly { rule: Rule; basis: string }[] } | null = null;
@@ -192,7 +193,8 @@ export function carryFromBase(plan: Plan, basePlan: Plan, version: number): Plan
   const carried = basePlan.details
     // 計画ルールの案（R）は写さない。次の版で、そのときのルールの版から出し直す（Architect の 42 の 4。state/cycles.ts）
     .filter((d) => {
-      const c = cycleIdOf(d.detailKey);
+      // 星取の追加の案（S。src/plan/star.ts）も、周期の案と同じく写す
+      const c = proposalIdOf(d.detailKey);
       return c !== null && !isPlanRuleCycle(c) && works.has(d.workKey) && !have.has(d.detailKey);
     })
     // 前の版で足した同じ形の言葉は外してから足す（版を重ねても「…第 2 版と同じ。第 3 版と同じ」と伸ばさない）

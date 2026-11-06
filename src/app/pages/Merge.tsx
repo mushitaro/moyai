@@ -70,7 +70,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const plan = working?.plan ?? null;
   const { state: conn } = useConnection();
   const accepted = useAccepted();
-  const { pending, openRules } = usePending(client, plan);
+  const { pending, openRules, openRemovals } = usePending(client, plan);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [over, setOver] = useState(false);
@@ -314,7 +314,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     }
   }, [questionsKey, openQuestions]);
   // 受けていない決定と、案のままの当てはめの規則（規則が当てている行は決定に二重に数えない。台帳の新-4）
-  const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules;
+  // 星取の削除の案（計画に無い案。state/stars.ts）も、案のままなら確定を止める
+  const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules + openRemovals;
   // 同じ作業に年数の違う周期の案を受けている（確定を止める。Architect の 44、Wire、11-06）
   const cycleDup = useMemo(() => cycleConflicts(plan, accepted).length, [plan, accepted]);
   // 白紙のあいだに「第 1 版をつくる」を止めている理由（取り込みと同じもの）

@@ -113,6 +113,30 @@ export const ERRORS = {
     http: 200,
     text: "根拠に指した計画ルール（名前と id）が、作業画面が当てているルール（承認済みと、作業中の版の下書き）にありません。案は置いていません。reading_skills_list か reading_rules_propose の答えで名前と id を確かめてください。",
   },
+  star_work_unknown: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "星取の案の rowRef が、作業中の計画の作業を指していません。案はどれも置いていません。chart_rows に機器の行の id（n:…）を rowRef で渡し、返った作業の行の id（w:…）で指し直してください。",
+  },
+  star_out_of_range: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "星取の案の年度が、計画の範囲（星取表の最初と最後の年度）の外か、実績を基準日の年度より後に置こうとしているか、移動の元と先が同じ年度です。案はどれも置いていません。年度を利用者に確かめてください。",
+  },
+  star_unknown: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "削除か移動が指す星取（その作業 × 年度の計画か実績）が、作業中の計画にありません（未確定の案は削除で指せません。人が確定のシートで却下します）。案はどれも置いていません。chart_rows で作業の行を読み直してください。",
+  },
+  star_basis_invalid: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "星取の案の根拠が足りません。案はどれも置いていません。実績の追加は、利用者の言葉（author: ai_relayed_human）か、自施設の実績（bases.record。同じ機器の同じ年度に、ほかの作業の実績があること）が要り、パックの基準と計画ルールは根拠になりません。実績の削除は利用者の言葉（author: ai_relayed_human）だけです。星取の案に ledger は使えません。",
+  },
   no_reading_root: {
     from: "bridge",
     to: "ai",
