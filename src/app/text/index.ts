@@ -7,7 +7,7 @@ export const TEXT = {
   fictionMark: "架空",
   home: {
     title: "開発の道具（会期のあいだだけ）",
-    lead: "人だけの経路の守りの試し、前の画面への道（取り込み・星取表・照査は MERGE のシート）、署名の試験のページです。",
+    lead: "人だけの経路の守りの試し、前の画面への道（取り込み・星取表・照査は HOSHITORI のシート）、署名の試験のページです。",
     reviewLink: "照査",
     selftestLink: "Ed25519 の試験",
     chartLink: "星取表",
@@ -30,7 +30,7 @@ export const TEXT = {
     home: "最初の画面",
     tabsLabel: "画面",
     tabs: {
-      merge: { en: "MERGE", ja: "版に重ねる（星取表・照査・確定・資料）" },
+      merge: { en: "HOSHITORI", ja: "版に重ねる（星取表・照査・確定・資料）" },
       export: { en: "EXPORT", ja: "確定した版の Excel を出力" },
       share: { en: "SHARE", ja: "共有フォルダと公開台帳に出す" },
     },
@@ -312,8 +312,8 @@ export const TEXT = {
     report: "差分を出力",
     notConnected: "理由：ブリッジ未接続",
     noPlan: "作業中の計画がありません。",
-    toMerge: "MERGE へ",
-    notConfirmed: "まだ確定した版がありません。MERGE で署名して確定してください",
+    toMerge: "HOSHITORI へ",
+    notConfirmed: "まだ確定した版がありません。HOSHITORI で署名して確定してください",
     broken: "保存先のこの版の署名か鎖が合わないので、渡しません",
     fileName: (name: string, n: number) => `${name}_第${n}版_星取表.xlsx`,
     reportName: (name: string, n: number) => `${name}_第${n}版_差分.xlsx`,
