@@ -266,3 +266,11 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* 1 行に収め、はみ出す字は「…」で切る（全文は title。Wire、11-06） */
+.moyai-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

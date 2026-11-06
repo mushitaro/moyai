@@ -42,7 +42,8 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
   try {
     await test.step("設定で公開の台帳の clone の場所を選ぶ（相対の道は断る）", async () => {
       await page.goto(`${bridge.base}/#/settings`);
-      await expect(page.getByTestId("current-ledger")).toHaveText("選んでいません");
+      await expect(page.getByTestId("current-ledger")).toHaveText("未設定");
+      await page.getByTestId("ledger-change").click();
       await page.getByTestId("ledger-input").fill("相対の道");
       await page.getByTestId("settings-save").click();
       await expect(page.getByText("公開台帳の clone の場所は、ドライブから始まる絶対の道")).toBeVisible();

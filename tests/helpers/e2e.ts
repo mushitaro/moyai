@@ -150,10 +150,12 @@ export async function signInDialog(page: Page): Promise<void> {
 export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string): Promise<void> {
   await page.goto(`${base}/#/settings`);
   await expect(page.getByTestId("settings-page")).toBeVisible();
+  await page.getByTestId("root-change").click();
   await page.getByTestId("root-input").fill(root);
+  await page.getByTestId("name-change").click();
   await page.getByTestId("name-input").fill(E2E_NAME);
   await page.getByTestId("settings-save").click();
-  await expect(page.getByTestId("settings-saved")).toBeVisible();
+  await expect(page.getByTestId("settings-save")).toBeDisabled();
   await expect(page.getByTestId("current-root")).toHaveText(root);
   await page.getByTestId("ring-create-open").click();
   await page.getByTestId("ring-folder").fill(ringRoot);

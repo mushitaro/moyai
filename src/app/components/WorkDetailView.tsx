@@ -38,10 +38,11 @@ const period = (ds: WorkDetailT[]) => {
 };
 /** 元の資料（資料名とセル）。同じものは 1 つ */
 const sourcesOf = (ds: WorkDetailT[]) => {
-  const seen = new Map<string, { file: string; label: string }>();
+  const seen = new Map<string, { file: string; label: string; short: string }>();
   for (const s of ds.flatMap((d) => d.sources)) {
     const label = `${s.file}${s.sheet ? `「${s.sheet}」` : ""}${s.cell ? `　${s.cell}` : ""}`;
-    if (!seen.has(label)) seen.set(label, { file: s.file, label });
+    // 横の板は 1 行に資料名とセルだけ（シート名は出さない。Wire、11-06）
+    if (!seen.has(label)) seen.set(label, { file: s.file, label, short: `${s.file}${s.cell ? `　${s.cell}` : ""}` });
   }
   return [...seen.values()];
 };
@@ -105,7 +106,14 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
       </Text>
       {/* 表だけを横に送る（面ごと送ると、見出しと戻るの字が左へ切れる） */}
       <div style={{ overflowX: "auto", marginTop: 16 }}>
-      <Table className="moyai-num moyai-work-detail" verticalSpacing={6} fz="sm" data-testid="work-detail-table">
+      <Table className="moyai-num moyai-work-detail" verticalSpacing={6} fz="sm" data-testid="work-detail-table" style={{ tableLayout: "fixed", width: "100%", minWidth: COL_WIDTHS.reduce((a, b) => a + b, 0) + 120 }}>
+        {/* 元の資料の列は残りの幅で、はみ出す字は「…」（表を面からはみ出させない。Wire、11-06） */}
+        <colgroup>
+          {COL_WIDTHS.map((w, i) => (
+            <col key={i} style={{ width: w }} />
+          ))}
+          <col />
+        </colgroup>
         <Table.Thead>
           <Table.Tr>
             {T.cols.map((c, i) => (
@@ -149,8 +157,11 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
                   )}
                 </Table.Td>
                 <Table.Td>{verdict ?? ""}</Table.Td>
-                <Table.Td c="var(--text-3)" ff="monospace" fz="xs" title={sourcesOf(r.details)[0]?.label ?? ""} style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {sourcesOf(r.details)[0]?.label ?? ""}
+                <Table.Td c="var(--text-3)" ff="monospace" fz="xs" title={sourcesOf(r.details)[0]?.label ?? ""}>
+                  {/* 長い資料名は「…」で切る（全文は title と横の板。Wire、11-06） */}
+                  <span className="moyai-ellipsis" data-testid="work-detail-source">
+                    {sourcesOf(r.details)[0]?.label ?? ""}
+                  </span>
                 </Table.Td>
               </Table.Tr>
             );
@@ -165,6 +176,9 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
     </div>
   );
 }
+
+/** 表の列の幅（年度｜区分｜期間｜日数｜工数｜費用｜判定）。元の資料は残りの幅 */
+const COL_WIDTHS = [96, 112, 184, 56, 104, 144, 64];
 
 /** 作業名から対象の機器の名前を外す（題は作業名だけ。機器は上の道に出ている。Wire） */
 function shortName(kind: string, plan: Plan, targets: readonly string[]): string {
@@ -259,8 +273,8 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
         {T.sources}
       </Text>
       {sourcesOf(ds).map((s) => (
-        <Text key={s.label} size="xs" ff="monospace">
-          {s.label}
+        <Text key={s.label} size="xs" ff="monospace" title={s.label} data-testid="work-detail-side-source">
+          {s.short}
           <a className="moyai-inline-act" href={`${sheetHash("files")}?f=${encodeURIComponent(s.file)}`}>
             {T.showFile}
           </a>

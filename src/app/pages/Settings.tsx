@@ -1,8 +1,8 @@
 // 設定（docs/plan.md §2.14）：置き場所（Documents と同期フォルダの知らせ）、輪のフォルダと鍵、公開の台帳の clone の場所（受け手が読む）、
 // 自分の呼び名と署名の鍵（§2.18.2。ほかの人の鍵は、指紋を読み合わせて人が確認済みにする）。
 // 主ボタンは「保存」（変えたときだけ）で、見出しの行の右端。1 列で、左に節の名前（168px）、右に中身。見出しの下の説明の文は置かない（docs/screens.md 3.7）。
-// 値のある欄は「| 変更」で入力を開く。共有フォルダを作るのは、その節の「| ＋ 共有フォルダを作成」から開くダイアログ。
-import { Alert, Button, Code, Container, Group, Modal, NativeSelect, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+// 値の欄は「| 変更」を押したときだけ入力を開く（Wire、11-06）。共有フォルダを作るのは、その節の「| ＋ 共有フォルダを作成」から開くダイアログ。
+import { Alert, Button, Container, Group, Modal, NativeSelect, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useCallback, useEffect, useState } from "react";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
@@ -115,6 +115,16 @@ function CreateRingDialog({ opened, onClose, packs, onCreated }: { opened: boole
   );
 }
 
+
+/** 道・名前の値（地なしの等幅。値を地の色の箱に入れない。Wire、11-06） */
+function Val({ children, testid, mono = true }: { children: React.ReactNode; testid?: string; mono?: boolean }) {
+  return (
+    <Text component="span" size="sm" ff={mono ? "monospace" : undefined} data-testid={testid} style={{ overflowWrap: "anywhere" }}>
+      {children}
+    </Text>
+  );
+}
+
 export function Settings() {
   const { client, state } = useConnection();
   const [s, setS] = useState<SettingsBody | null>(null);
@@ -122,9 +132,12 @@ export function Settings() {
   const [root, setRoot] = useState("");
   const [ledger, setLedger] = useState("");
   const [name, setName] = useState("");
-  const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  // 値の欄は「| 変更」を押したときだけ入力を開く（docs/screens.md 3.7。Wire、11-06）
+  const [editRoot, setEditRoot] = useState(false);
+  const [editName, setEditName] = useState(false);
+  const [editLedger, setEditLedger] = useState(false);
 
   const load = useCallback(async () => {
     const r = readHuman<SettingsBody>(await client.callHuman("settings_read", ROUTES.settingsRead.path, {}));
@@ -148,21 +161,17 @@ export function Settings() {
     const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: orNull(root), ledger: orNull(ledger), name: orNull(name) }));
     setBusy(false);
     if (!r.ok) return setError(r.message);
-    setSaved(true);
+    // 保存できたら入力を閉じる（「保存しました」は置かない。保存のボタンが押せなくなる。docs/words.md）
+    setEditRoot(false);
+    setEditName(false);
+    setEditLedger(false);
     await load();
   };
   // ほかの人の鍵を、指紋を読み合わせて確認済みにする（人だけの経路）。どこからでも同じ読み合わせのダイアログを開く（KeyWarn.dc.html の 7）
   const [check, setCheck] = useState<TrustSig | null>(null);
 
-  // 値のある欄は「| 変更」で入力を開く。まだ値の無い欄は最初から開いておく（docs/screens.md 3.7）
-  const [editRoot, setEditRoot] = useState(false);
-  const [editName, setEditName] = useState(false);
-  const [editLedger, setEditLedger] = useState(false);
-  const rootOpen = editRoot || !s?.chosenRoot;
-  const nameOpen = editName || !s?.name;
-  const ledgerOpen = editLedger || !s?.ledger;
-  const change = (on: () => void, testid: string) => (
-    <button type="button" className="moyai-inline-act" onClick={on} data-testid={testid}>
+  const change = (open: boolean, set: (v: boolean) => void, testid: string) => (
+    <button type="button" className="moyai-inline-act" onClick={() => set(!open)} aria-expanded={open} data-testid={testid}>
       {T.change}
     </button>
   );
@@ -174,6 +183,7 @@ export function Settings() {
       <div style={{ minWidth: 0 }}>{body}</div>
     </div>
   );
+  const rootMarks = s ? [!s.chosenRoot ? T.defaultMark : null, s.rootSynced || (!s.chosenRoot && s.documentsSynced) ? T.syncedMark : null].filter(Boolean).join("・") : "";
 
   return (
     <Container size="lg" py="lg" data-testid="settings-page">
@@ -182,7 +192,7 @@ export function Settings() {
         <Title order={2}>{T.title}</Title>
         <Group gap="sm" wrap="nowrap">
           {!changed && (
-            <Text size="xs" c="var(--text-3)">
+            <Text size="xs" c="var(--text-3)" data-testid="settings-save-reason">
               {state.kind === "open" ? T.saveDisabled : HUMAN_TEXT.notConnected}
             </Text>
           )}
@@ -193,45 +203,49 @@ export function Settings() {
       </Group>
       {error && <Alert color="red">{error}</Alert>}
       {!s && !error && <Text size="sm">{T.loading}</Text>}
-      {saved && (
-        <Text size="sm" c="var(--text-3)" data-testid="settings-saved" mb="sm">
-          {T.saved}
-        </Text>
-      )}
       {s && (
         <div className="moyai-settings">
           {row(
             T.rootTitle,
             <Stack gap={6}>
-              <Group gap="sm" wrap="nowrap">
-                <Code data-testid="current-root">{s.root ?? "—"}</Code>
-                <Text size="xs" c="var(--text-3)">
-                  {[!s.chosenRoot ? T.defaultMark : null, s.rootSynced || (!s.chosenRoot && s.documentsSynced) ? T.syncedMark : null].filter(Boolean).join("・")}
-                </Text>
-                {!rootOpen && change(() => setEditRoot(true), "root-change")}
+              <Group gap="sm" wrap="nowrap" align="baseline">
+                <Val testid="current-root">{s.root ?? "―"}</Val>
+                {rootMarks && (
+                  <Text size="xs" c="var(--text-3)" style={{ whiteSpace: "nowrap" }}>
+                    {rootMarks}
+                  </Text>
+                )}
+                {change(editRoot, setEditRoot, "root-change")}
               </Group>
-              <Text size="xs" c="var(--text-3)">
-                {T.documents} {s.documents ? <Code data-testid="documents-path">{s.documents}</Code> : T.documentsUnknown}
-              </Text>
-              <SyncedNotice synced={s.documentsSynced} kind="root" />
-              {s.chosenRoot && <SyncedNotice synced={s.rootSynced} kind="root" />}
-              {rootOpen && (
-                <Group align="flex-end" gap="sm">
-                  <TextInput style={{ flex: 1 }} label={T.rootInput} value={root} onChange={(e) => (setRoot(e.currentTarget.value), setSaved(false))} placeholder={s.defaultRoot ?? ""} data-testid="root-input" />
-                  <Button variant="default" onClick={() => setRoot("")} disabled={root === ""}>
-                    {T.useDefault}
-                  </Button>
-                </Group>
+              {editRoot && (
+                <>
+                  <Text size="xs" c="var(--text-3)">
+                    {T.documents} {s.documents ? <Val testid="documents-path">{s.documents}</Val> : T.documentsUnknown}
+                  </Text>
+                  <SyncedNotice synced={s.documentsSynced} kind="root" />
+                  {s.chosenRoot && <SyncedNotice synced={s.rootSynced} kind="root" />}
+                  <Group align="flex-end" gap="sm">
+                    <TextInput style={{ flex: 1 }} label={T.rootInput} value={root} onChange={(e) => setRoot(e.currentTarget.value)} placeholder={s.defaultRoot ?? ""} data-testid="root-input" />
+                    <Button variant="default" onClick={() => setRoot("")} disabled={root === ""}>
+                      {T.useDefault}
+                    </Button>
+                  </Group>
+                </>
               )}
             </Stack>,
+            "root-setting",
           )}
           {row(
             T.nameTitle,
-            <Group gap="sm" align="flex-end">
-              <Code data-testid="current-name">{s.name ?? T.nameNone}</Code>
-              {!nameOpen && change(() => setEditName(true), "name-change")}
-              {nameOpen && <TextInput label={T.nameInput} value={name} maxLength={40} onChange={(e) => (setName(e.currentTarget.value), setSaved(false))} data-testid="name-input" />}
-            </Group>,
+            <Stack gap={6}>
+              <Group gap="sm" wrap="nowrap" align="baseline">
+                <Val testid="current-name" mono={false}>
+                  {s.name ?? T.nameNone}
+                </Val>
+                {change(editName, setEditName, "name-change")}
+              </Group>
+              {editName && <TextInput label={T.nameInput} value={name} maxLength={40} onChange={(e) => setName(e.currentTarget.value)} data-testid="name-input" style={{ maxWidth: 360 }} />}
+            </Stack>,
             "name-setting",
           )}
           {row(
@@ -293,11 +307,11 @@ export function Settings() {
                       <Table.Tr key={r.ringId}>
                         <Table.Td ff="monospace">{r.ringId}</Table.Td>
                         <Table.Td>
-                          <Code>{r.root}</Code>
+                          <Val>{r.root}</Val>
                           <SyncedNotice synced={r.synced} kind="ring" />
                         </Table.Td>
                         <Table.Td>{s.packs.find((p) => p.id === r.pack)?.name ?? r.pack}</Table.Td>
-                        <Table.Td>{r.fingerprint ? <Fingerprint value={r.fingerprint} /> : "—"}</Table.Td>
+                        <Table.Td>{r.fingerprint ? <Fingerprint value={r.fingerprint} /> : "―"}</Table.Td>
                       </Table.Tr>
                     ))}
                   </Table.Tbody>
@@ -307,19 +321,22 @@ export function Settings() {
                 {T.createShort}
               </button>
             </Stack>,
+            "rings",
           )}
           {row(
             T.ledgerTitle,
             <Stack gap={6} data-testid="ledger-setting">
-              <Group gap="sm" wrap="nowrap">
-                <Text size="xs" c="var(--text-3)">
+              <Group gap="sm" wrap="nowrap" align="baseline">
+                <Text size="sm" c="var(--text-3)" style={{ minWidth: 56 }}>
                   {T.clone}
                 </Text>
-                <Code data-testid="current-ledger">{s.ledger ?? T.ledgerNone}</Code>
-                {!ledgerOpen && change(() => setEditLedger(true), "ledger-change")}
+                <Val testid="current-ledger" mono={!!s.ledger}>
+                  {s.ledger ?? T.ledgerNone}
+                </Val>
+                {change(editLedger, setEditLedger, "ledger-change")}
               </Group>
-              {ledgerOpen && <TextInput label={T.ledgerInput} value={ledger} onChange={(e) => (setLedger(e.currentTarget.value), setSaved(false))} data-testid="ledger-input" />}
-              <Group gap="sm" align="center" data-testid="github-setting">
+              {editLedger && <TextInput label={T.ledgerInput} value={ledger} onChange={(e) => setLedger(e.currentTarget.value)} data-testid="ledger-input" />}
+              <Group gap="sm" wrap="nowrap" align="baseline" data-testid="github-setting">
                 <Text size="sm" data-testid="settings-github">
                   {s.github ? HUMAN_TEXT.github.connectedAs(s.github) : HUMAN_TEXT.github.none}
                 </Text>
@@ -349,12 +366,14 @@ export function Settings() {
                 .map((p) => p.name)
                 .join("・") || T.packsNone}
               <a className="moyai-inline-act" href={APP_PAGES.industries} data-testid="industries-link">
-                {TEXT.industries.link}
+                {T.packsLink}
               </a>
             </Text>,
+            "packs-setting",
           )}
-          {row(T.aiTitle, <Text size="sm">{T.aiScope}</Text>)}
-          {row(T.evalTitle, <Text size="sm">{T.evalNone}</Text>)}
+          {/* AI への提供範囲・Skill の採点の画面はまだ無いので、「| 提供範囲を表示」「| 採点を表示」は置かない（動かない部品は置かない） */}
+          {row(T.aiTitle, <Text size="sm">{T.aiScope}</Text>, "ai-setting")}
+          {row(T.evalTitle, <Text size="sm">{T.evalNone}</Text>, "eval-setting")}
         </div>
       )}
       {/* 開発の道具は、設定を読めないとき（2 つ目のタブ・ブリッジ未接続）にも出す（押せない理由を出すため） */}
@@ -364,6 +383,7 @@ export function Settings() {
           <div style={{ color: "var(--text-3)" }}>
             <DevTools />
           </div>,
+          "dev-setting",
         )}
       </div>
       {s && <CreateRingDialog opened={createOpen} onClose={() => setCreateOpen(false)} packs={s.packs} onCreated={() => void load()} />}

@@ -143,9 +143,12 @@ export function CostSheet({ plan }: { plan: Plan }) {
       )}
     </Stack>
   );
-  const W = 56;
+  // グラフと表は同じ列の幅：行の名前の列 NAME_W（目盛りの数もここ）、年度の列 COL_W。年度の帯が表の列の真上に来る（Wire、11-06）
+  const NAME_W = 88;
+  const COL_W = 84;
+  const TOP = 14; // 目盛りのいちばん上の数が切れないように
   const H = 160;
-  const L = 64;
+  const width = NAME_W + shown.length * COL_W;
   // 目盛り：上限を切りのよい数に（千円）
   const step = (() => {
     const k = max / 1000 / 4;
@@ -172,36 +175,41 @@ export function CostSheet({ plan }: { plan: Plan }) {
           {T.unit}
         </Text>
       </div>
+      <div style={{ overflowX: "auto", marginTop: 16 }} data-testid="cost-scroll">
+      <div style={{ width }}>
       {/* グラフ：年度ごとに 2 本の棒。予算は枠だけ、実績は墨の塗り、年度途中の実績は淡い塗り。選んだ年度は帯 */}
-      <svg role="img" aria-label={T.chartLabel} width={Math.max(320, shown.length * W + L + 16)} height={H + 28} style={{ display: "block", marginTop: 16 }} data-testid="cost-chart">
+      <svg role="img" aria-label={T.chartLabel} width={width} height={TOP + H + 28} style={{ display: "block" }} data-testid="cost-chart">
         {ticks.map((v) => {
-          const y = H - (v / scaleTop) * H;
+          const y = TOP + H - (v / scaleTop) * H;
           return (
             <g key={v}>
-              <line x1={L} x2={L + shown.length * W} y1={y} y2={y} stroke="var(--line)" />
-              <text x={L - 8} y={y + 4} textAnchor="end" fontSize={11} fill="var(--text-3)" className="moyai-num">
+              <line x1={NAME_W} x2={width} y1={y} y2={y} stroke="var(--line)" />
+              <text x={NAME_W - 8} y={y + 4} textAnchor="end" fontSize={11} fill="var(--text-3)" className="moyai-num">
                 {kyen(v)}
               </text>
             </g>
           );
         })}
         {shown.map((s, i) => {
-          const x = L + 8 + i * W;
+          const x0 = NAME_W + i * COL_W;
+          const mid = x0 + COL_W / 2;
           const h = (v: number | null) => (v === null ? 0 : Math.max(1, (v / scaleTop) * H));
           const inProgress = s.fy === nowFy;
           return (
             <g key={s.fy} onClick={() => pick(s.fy)} onMouseEnter={() => setHover(s.fy)} onMouseLeave={() => setHover(null)} style={{ cursor: "pointer" }} data-fy={s.fy} data-testid="cost-band">
-              <rect x={x - 6} y={0} width={W - 8} height={H + 26} fill={picked === s.fy ? "var(--layer-2)" : hover === s.fy ? "var(--layer-1)" : "transparent"} />
-              <rect x={x} y={H - h(s.budget)} width={18} height={h(s.budget)} fill="none" stroke="var(--text-3)" />
-              <rect x={x + 20} y={H - h(s.actual)} width={18} height={h(s.actual)} fill={inProgress ? "var(--mark-faint)" : "var(--text)"} />
-              <text x={x + 19} y={H + 18} textAnchor="middle" fontSize={11} fill="var(--text-3)" className="moyai-num">
+              <rect x={x0 + 2} y={0} width={COL_W - 4} height={TOP + H + 26} fill={picked === s.fy ? "var(--layer-2)" : hover === s.fy ? "var(--layer-1)" : "transparent"} />
+              <rect x={mid - 20} y={TOP + H - h(s.budget)} width={18} height={h(s.budget)} fill="none" stroke="var(--text-3)" />
+              <rect x={mid + 2} y={TOP + H - h(s.actual)} width={18} height={h(s.actual)} fill={inProgress ? "var(--mark-faint)" : "var(--text)"} />
+              <text x={mid} y={TOP + H + 18} textAnchor="middle" fontSize={11} fill="var(--text-3)" className="moyai-num">
                 {s.fy}
               </text>
             </g>
           );
         })}
       </svg>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }} data-testid="cost-legend">
+      </div>
+      {/* 凡例は見えている幅に置く（表を横に送っても「費用なし n 件」が右に見える） */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, position: "sticky", left: 0, maxWidth: width }} data-testid="cost-legend">
         <Text size="xs" c="var(--text-3)">
           {T.legend}
         </Text>
@@ -209,8 +217,14 @@ export function CostSheet({ plan }: { plan: Plan }) {
           {T.noCost(noCost.toLocaleString("ja-JP"))}
         </Text>
       </div>
-      <div style={{ overflowX: "auto", marginTop: 16 }}>
-        <Table className="moyai-num moyai-work-detail" verticalSpacing={6} fz="sm" data-testid="cost-table">
+      <div style={{ marginTop: 16, width }}>
+        <Table className="moyai-num moyai-work-detail" verticalSpacing={6} fz="sm" data-testid="cost-table" style={{ tableLayout: "fixed", width }}>
+          <colgroup>
+            <col style={{ width: NAME_W }} />
+            {shown.map((s) => (
+              <col key={s.fy} style={{ width: COL_W }} />
+            ))}
+          </colgroup>
           <Table.Thead>
             <Table.Tr>
               <Table.Th className="moyai-cost-name" />
@@ -254,6 +268,7 @@ export function CostSheet({ plan }: { plan: Plan }) {
             ))}
           </Table.Tbody>
         </Table>
+      </div>
       </div>
       {side?.el && detail && createPortal(detail, side.el)}
     </div>
