@@ -59,9 +59,32 @@
 - 見ていない様式（`import.heldout`）：凍結した読み手で 5 組を測り、どの組も計画を作れず、⑥ 取り戻せた割合は 0% でした（`docs/trend.md`）。コードを足すだけでは届かなかったので、未確定の所を会話で決め、ルールとして残す形にしました（`docs/plan.md` §2.17）。
 - 会話で決めたルールの例：星取表の無い施設 C（作業日報 5 冊と発注台帳）は、会話の 4 回目でルール 57 件、② 未解決 19,750 → 0、③ 86.1%（2942/3418）、⑥ 75.2%（2379/3164）。質問に答えたのは、正解だけを見る台本と担当者の役のサブエージェントです（`samples/heldout/demo/README.md`）。見ていない様式の結果ではありません。
 
-## Run Live：その場で走らせる
+## Run Live：チャットで入れる・デモ・消す
 
-要るもの：Node.js 22.13 以上・npm 11 以上、Chrome か Edge。確かめた PC は Windows 11 です（macOS・Linux は未確認）。
+人がするのは、チャットで頼んで答えることと、画面での確定・署名・送信・承認だけです。コマンドは Claude が、何をするかを先に言い、チャットで「はい」をもらってから走らせます（手順の正本は `skills/moyai/SKILL.md` の「チャットで入れる・デモ・消す」）。確かめた PC は Windows 11 です（macOS・Linux は未確認）。チャットで入れる・デモ・消すは main の `35e6ad4` で入りました。この節の書き手は、チャットからの通しを走らせていません（未確認）。
+
+### 入れる
+
+Claude Code に、このリポジトリの URL（<https://github.com/mushitaro/moyai>）を渡し、「MOYAI を入れて」と頼みます。Claude が次をします。
+
+1. Node.js が 22.13 以上かを確かめる。無いか古ければ、利用者に聞いてから winget で入れる（git も同じ）。
+2. ホームの下（同期フォルダの外）に clone し、`npm ci` → `npm run build`。
+3. 送信者の名前（版の署名と画面に出す）を聞き、`node dist/cli.js setup --target code --name "<名前>"` を下見で走らせて中身を見せ、良ければ `--yes` を付けて走らせる。出た `claude mcp add …` の 1 行も走らせ、Claude Code を開き直してもらう。Claude Desktop でも使うなら `--target desktop` を同じ順で（設定に moyai の 1 行だけを足し、前の設定を `.bak` に残す）。
+4. MOYAI の画面を開く（`node dist/cli.js start`。127.0.0.1 のブリッジが起き、ブラウザで画面が開く）。Claude Code を開き直したあとは、moyai のツールを呼べばブリッジが起きる。
+
+署名鍵は最初の確定で作られます。パスワードはありません。MCP の instructions が Claude Desktop で効くかは未確認なので、同じ文を `skills/moyai/SKILL.md` にも置いています。
+
+### デモ
+
+「デモして」と頼みます。Claude が、ごみ焼却の Skillパックの【架空】の資料（`packs/waste-incineration/demo/`：施設台帳・星取表・作業日報）を `intake_add_files` で画面に入れ、取り込みの確認を利用者に聞き、星取表を作ります。確定は人が HOSHITORI の確定のシートでします。利用者はダウンロードもドラッグもしません。
+
+### 消す
+
+「MOYAI を消して」と頼みます。Claude が、保存先（計画の版・施設の署名鍵・資料）も消すかを聞き（既定は残す）、`node dist/cli.js uninstall` を下見で見せてから `--yes` で走らせ、Claude Code の設定から moyai を外し、最後にリポジトリのフォルダを消します。
+
+### 手で走らせるとき
+
+要るもの：Node.js 22.13 以上・npm 11 以上、Chrome か Edge。
 
 ```bash
 git clone https://github.com/mushitaro/moyai
@@ -83,20 +106,7 @@ npm run build
 node dist/cli.js start
 ```
 
-`start` は 127.0.0.1 のブリッジを起こし、MOYAI の画面を開きます。AI クライアントを使う間は、走らせたままにします。試す資料は `samples/out/waste-incineration/fictional-1/`（【架空】。機器台帳・星取表・作業日報・工事報告書の PDF・日常点検表の写真）です。画面に資料をドロップし、AI クライアントで「この資料から星取表を作って」と頼みます。
-
-### AI クライアントとつなぐ
-
-- **Claude Code**：リポジトリの `.mcp.json` が `moyai`（`node dist/cli.js mcp`）を登録しています。リポジトリのフォルダで Claude Code を開き、MCP の `moyai` を許可します。見張りのフックと deny（`.claude/settings.json`）も同じフォルダで効きます。
-- **Claude Desktop**：端末で次を走らせます。
-
-```bash
-node dist/cli.js setup
-```
-
-`setup` は、Claude Desktop の設定（Windows は `%APPDATA%\Claude\claude_desktop_config.json`）の `mcpServers` に `moyai` の 1 行だけを足します。ほかのサーバーは消しません。書く前に足す行を出し、端末で「はい」と打つと書きます。前の設定は `.bak` に残します。端末でなければ断ります。
-
-そのあと、Claude Desktop を開き直す → 端末で `node dist/cli.js start` → MOYAI の画面を開く、の順です。MCP の instructions が Claude Desktop で効くかは未確認なので、同じ文を `skills/moyai/SKILL.md` にも置いています。
+Claude Code は、リポジトリの `.mcp.json` が `moyai`（`node dist/cli.js mcp`）を登録しています。見張りのフックと deny（`.claude/settings.json`）も同じフォルダで効きます。Claude Desktop は `node dist/cli.js setup --target desktop --name "<名前>"` で設定に足します。
 
 ### 共有フォルダと公開台帳を照合する
 
@@ -173,8 +183,8 @@ npm run acceptance
 
 | 受け継いだ考え（言葉だけ） | 会期中に新しく作ったもの |
 |---|---|
-| AI は案を出し、決めるのは人。変更には作者と根拠を付ける | 人だけの経路 40 個（タブの秘密と 1 回きりの印）、Claude のツール 15 個（動くのは 12。確定・送信のツールは無い）、拒む試験（`human-only`） |
-| AI が読むもの・変えるものは画面に出す | 画面（MOYAI・MERGE・EXPORT・SHARE・設定）、確定のシート、Claude 案の印 |
+| AI は案を出し、決めるのは人。変更には作者と根拠を付ける | 人だけの経路 40 個（タブの秘密とワンタイムトークン）、Claude のツール 16 個（動くのは 13。確定・送信のツールは無い）、拒む試験（`human-only`） |
+| AI が読むもの・変えるものは画面に出す | 画面（MOYAI・HOSHITORI・EXPORT・SHARE・設定）、確定のシート、未確定の案の星取 |
 | 推測で埋めない。どのセルにも行き先を数える | 取り込みの層（Excel・CSV・PDF・写真）、取り込みの確認と未回答、物差し ①〜⑥、見ていない様式の試験の道具 |
 | 判定はコード、説明は AI | ごみ焼却の照査 7 件（出典と照査状態つき）、純粋な関数と試験 |
 | データベースを置かない。版は足すだけ | 版と署名（人の鍵・施設の署名鍵）、差分、Excel の出力 |
@@ -191,7 +201,7 @@ npm run acceptance
 ### 確かめ方
 
 1. サーバーが付けた時刻：`gh api repos/mushitaro/moyai --jq .created_at`、push と Actions の履歴。
-2. 最初の日の画面：`docs/progress/shots/2026-11-03/`（ビルドの印つき）。
+2. 最初の日の画面：`docs/progress/shots/2026-11-03/`（ビルドの日時とコミットの表示つき）。
 3. 日誌：`docs/progress/2026-11-03.md` から毎日。
 4. 試験の推移：`docs/trend.md`・`ops/trend.jsonl`。API の費用：`ops/api-spend.jsonl`。
 5. 見ていない様式：ハッシュのコミットが、中身の公開より先（`samples/heldout/hashes/`、タグ `reader-freeze-1`〜`6`。順は `tests/heldout/heldout.test.ts` が確かめる）。
@@ -229,6 +239,7 @@ npm run acceptance
 9. シェルを持つ AI は、見張りのフックを越えられる（スクリプトを書いて走らせる・`git apply`・`git reset` など）。フックが見るのは、道具の呼び出しの字だけ。
 10. 施設の署名鍵のファイルを失くすと、その鍵の失効記録に署名できず、再発行した鍵と合わせて同じ施設を 2 つに数えることがある。
 11. 費用の値を Claude の見本で伏せるのは、取り込みが費用の列と見分けた列だけ。ほかの言い方の見出し（「見込額」「予算額」「単価」など）の値は、見本に出ることがある。
+12. `intake_add_files` のフォルダが、利用者がチャットで言ったものかを、ブリッジは確かめられない。AI が別のフォルダを指せば、その直下の資料が画面に入り、要約の見本として AI に渡る（画面の作業の一覧に、AI が資料を入れたことが出る）。
 
 ## 未完の一覧（2026-11-06 時点）
 
