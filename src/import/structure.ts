@@ -7,7 +7,7 @@ import { cue, norm, type ColumnCue } from "./cues";
 import { fiscalYearInText, nfkc as nfkcText, parseDateRange, parseDateText, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, serialToYmd, validYmd, type Ymd } from "./era";
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit } from "./text";
-import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type RuleHits } from "./reading";
+import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type ReadingRule, type RuleHits } from "./reading";
 
 export type RowRole = "title" | "legend" | "header" | "parent" | "data" | "subtotal" | "total" | "note";
 export const ROW_ROLE_LABEL: Record<RowRole, string> = {
@@ -95,6 +95,8 @@ export interface LegendEntry {
   planOrActual: "plan" | "actual" | null;
   refs: string[];
   r: number;
+  /** 読み方の規則の印の意味から足した凡例なら、その規則（印に当たった数を、規則を使った件数に数える。Architect の 60） */
+  rule?: ReadingRule;
 }
 
 export interface Issue {
@@ -1495,7 +1497,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
   const markRules = rules.filter((a) => a.rule.kind === "markMeaning");
   const ruleEntries: LegendEntry[] = markRules.map((a) => {
     const r = a.rule as Extract<typeof a.rule, { kind: "markMeaning" }>;
-    return { symbol: r.symbol, meaning: r.meaning ?? (r.planOrActual === "plan" ? "予定" : "実績"), planOrActual: r.planOrActual, refs: [], r: 0 };
+    return { symbol: r.symbol, meaning: r.meaning ?? (r.planOrActual === "plan" ? "予定" : "実績"), planOrActual: r.planOrActual, refs: [], r: 0, rule: a.rule };
   });
   // 凡例は、上にある一番近い星取表の形の表へ
   const looseLegends: LegendEntry[] = [];

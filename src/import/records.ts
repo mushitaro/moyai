@@ -1031,6 +1031,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         ...(t.yearKind === "calendar" ? { calendarYear: true as const } : {}),
       };
       const entry = legend.find((e) => nfkc(e.symbol) === sym);
+      if (entry?.rule) ask.hit(entry.rule, lay.file, cell.ref);
       // 行の予定・実績の欄があれば、それを列の見出しより先に使う（行の方が細かいため）
       const colPA = rowPA(r.r) ?? col.planOrActual ?? null;
       let answer: string | null = "ok";

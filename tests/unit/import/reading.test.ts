@@ -131,6 +131,8 @@ describe("規則の種類ごとに、読み手が当てる", () => {
     acceptDefaults(s);
     const marks = s.analyze().records.marks.map((m) => `${m.ref}:${m.planOrActual}`).sort();
     expect(marks).toEqual(["B2:actual", "C3:actual", "D2:plan"]);
+    // 使った件数は、規則の記号が当たった印の数（Architect の 60）
+    expect(s.analyze().ruleHits.count("m1")).toBe(2);
   });
 
   test("決まった答え：人がまだ答えていない同じ質問に、規則の答え。作者は「決まり」、理由に読み方の名前と版。人の答えが先", async () => {
