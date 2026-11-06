@@ -155,3 +155,13 @@
   outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
+
+/* 資料のタブ（MERGE r2）：未確定のセルは朱の枠（下線だけでなく 4 辺）。表は横の板の高さまで使う */
+.moyai-source {
+  max-height: calc(100vh - 260px);
+}
+.moyai-source td[data-s="unresolved"] {
+  outline: 1px solid var(--shu);
+  outline-offset: -1px;
+  border-bottom-width: 1px;
+}

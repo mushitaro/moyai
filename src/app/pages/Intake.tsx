@@ -22,7 +22,10 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+import { MergeSideContext } from "../state/merge-side";
+import { Switch } from "../components/Switch";
 import type { Analysis } from "../../import";
 import type { CellStatus } from "../../import/compose";
 import type { QuestionKind, QuestionState } from "../../import/questions";
@@ -216,6 +219,148 @@ function SheetView({ an, lay, focus, top, setTop, onFocus, onNext }: {
       <Text size="xs" data-testid="cell-info">
         {focusCell ? `${T.sheet.cell(focusCell.ref)}${focusCell.page !== undefined ? T.sheet.page(focusCell.page) : ""}：${cellInfo(focusStatus, an)}` : T.sheet.pick}
       </Text>
+    </Stack>
+  );
+}
+
+// ─── 資料のタブ（MERGE r2。docs/screens.md 3.2「資料のシート」、絵は Source.dc.html） ─────────────
+
+type SourceFilter = "open" | "all";
+
+/**
+ * MERGE の資料のタブ：その資料 1 つだけ。上に切り替え「未確定行 n ／ 全行 n」（既定は未確定行、数は朱）と凡例。その下に元の表
+ * （行の番号と列の字。未確定のセルは朱の枠）。セルを選ぶと、横の板の「詳細」にそのセルの行き先（未確定ならその質問）を出す。
+ * 施設の欄・すべての資料の行き先の一覧・AI の作業の記録は置かない
+ */
+function SourceTab({ an, layouts }: { an: Analysis; layouts: SheetLayout[] }) {
+  const S = T.source;
+  const [sheet, setSheet] = useState(0);
+  const lay = layouts[Math.min(sheet, layouts.length - 1)]!;
+  const statusOf = (ref: string) => an.composition.status.get(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }));
+  const cols = Math.min(lay.grid.maxCol, MAX_COLS);
+  // 未確定のセルがある行
+  const openRows = useMemo(() => {
+    const out = new Set<number>();
+    for (const cell of lay.grid.cells) if (statusOf(cell.ref)?.s === "unresolved") out.add(cell.r);
+    return [...out].sort((a, b) => a - b);
+  }, [an, lay]);
+  const [chosen, setChosen] = useState<SourceFilter | null>(null);
+  const filter: SourceFilter = chosen ?? (openRows.length > 0 ? "open" : "all");
+  const [top, setTop] = useState(1);
+  const allRows = Array.from({ length: lay.grid.maxRow }, (_, i) => i + 1);
+  const list = filter === "open" ? openRows : allRows;
+  const from = Math.max(0, Math.min(top - 1, Math.max(0, list.length - WINDOW_ROWS)));
+  const rows = list.slice(from, from + WINDOW_ROWS);
+  const side = useContext(MergeSideContext);
+  const [picked, setPicked] = useState<{ r: number; c: number } | null>(null);
+  const pickedCell = picked ? lay.index.at(picked.r, picked.c) : null;
+  const pickedStatus = pickedCell ? statusOf(pickedCell.ref) : undefined;
+  const detail = picked && (
+    <Stack gap="xs" data-testid="source-cell-detail" data-s={pickedStatus?.s ?? ""}>
+      <Text size="sm" fw={700} className="moyai-num">
+        {T.sheet.title(lay.file, lay.sheet)}　{pickedCell ? T.sheet.cell(pickedCell.ref) : `${colName(picked.c)}${picked.r}`}
+        {pickedCell?.page !== undefined ? T.sheet.page(pickedCell.page) : ""}
+      </Text>
+      {pickedCell?.text && <Text size="sm">「{pickedCell.text}」</Text>}
+      <Text size="sm" c={pickedStatus?.s === "unresolved" ? "var(--shu-text)" : undefined}>
+        {cellInfo(pickedStatus, an)}
+      </Text>
+    </Stack>
+  );
+  return (
+    <Stack gap="sm" data-testid="source-tab" data-file={lay.file}>
+      <Group justify="space-between" gap="md" wrap="nowrap">
+        <Group gap="lg" wrap="nowrap">
+          <Switch<SourceFilter>
+            aria-label={S.filterLabel}
+            value={filter}
+            onChange={(v) => {
+              setChosen(v);
+              setTop(1);
+            }}
+            data-testid="source-filter"
+            data={[
+              { value: "open", label: S.openRows, count: openRows.length, shu: openRows.length > 0 },
+              { value: "all", label: S.allRows, count: lay.grid.maxRow },
+            ]}
+          />
+          <Text size="xs" c="var(--text-3)" data-testid="source-legend">
+            <span className="moyai-swatch" data-s="data" /> {S.read}　<span className="moyai-swatch" data-s="excluded" /> {S.excluded}　<span className="moyai-swatch" data-s="unresolved" /> {S.open}
+          </Text>
+        </Group>
+        {layouts.length > 1 && (
+          <Select
+            size="xs"
+            aria-label={T.sheet.choose}
+            data={layouts.map((l, i) => ({ value: String(i), label: l.sheet ?? l.file }))}
+            value={String(Math.min(sheet, layouts.length - 1))}
+            onChange={(v) => {
+              if (v === null) return;
+              setSheet(Number(v));
+              setTop(1);
+              setPicked(null);
+            }}
+            w={240}
+          />
+        )}
+      </Group>
+      <div className="moyai-sheet moyai-source">
+        <Table withTableBorder={false} data-testid="sheet-grid">
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th className="moyai-rowhead" />
+              {Array.from({ length: cols }, (_, i) => (
+                <Table.Th key={i}>{colName(i + 1)}</Table.Th>
+              ))}
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {rows.map((r) => (
+              <Table.Tr key={r}>
+                <Table.Th className="moyai-rowhead">{r}</Table.Th>
+                {Array.from({ length: cols }, (_, i) => {
+                  const c = i + 1;
+                  const cell = lay.index.at(r, c);
+                  const st = cell ? statusOf(cell.ref) : undefined;
+                  const isPicked = !!picked && picked.r === r && picked.c === c;
+                  return (
+                    <Table.Td
+                      key={c}
+                      data-s={st?.s ?? ""}
+                      data-ref={cell?.ref ?? ""}
+                      data-focus={isPicked ? "true" : undefined}
+                      title={cell?.text ?? ""}
+                      onClick={() => {
+                        setPicked({ r, c });
+                        side?.show();
+                      }}
+                    >
+                      {cell?.text ?? ""}
+                    </Table.Td>
+                  );
+                })}
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      </div>
+      <Group justify="space-between" gap="xs">
+        <Text size="xs" c="var(--text-3)" className="moyai-num">
+          {list.length > WINDOW_ROWS ? S.rowsShown(from + 1, Math.min(list.length, from + WINDOW_ROWS), list.length) : ""}
+          {lay.grid.maxCol > cols ? `　${T.sheet.colsCut(cols, lay.grid.maxCol)}` : ""}
+        </Text>
+        {list.length > WINDOW_ROWS && (
+          <Group gap={4}>
+            <Button size="compact-xs" variant="default" disabled={from <= 0} onClick={() => setTop(Math.max(1, from + 1 - WINDOW_ROWS))}>
+              {T.sheet.up}
+            </Button>
+            <Button size="compact-xs" variant="default" disabled={from + WINDOW_ROWS >= list.length} onClick={() => setTop(from + 1 + WINDOW_ROWS)}>
+              {T.sheet.down}
+            </Button>
+          </Group>
+        )}
+      </Group>
+      {side?.el && detail && createPortal(detail, side.el)}
     </Stack>
   );
 }
@@ -545,6 +690,8 @@ export function Intake({
           </Paper>
         )}
 
+        {/* 施設の欄は資料のタブに置かない（施設設定にある。MERGE r2） */}
+        {!(embedded && file) && (
         <Paper withBorder p="sm">
           <Title order={4} fz={14} fw={500} mb="xs">
             {T.settings.title}
@@ -598,6 +745,7 @@ export function Intake({
             />
           </Group>
         </Paper>
+        )}
 
         {!(embedded && ws.fileCount > 0) && (
         <Paper
@@ -669,6 +817,10 @@ export function Intake({
           </Paper>
         )}
 
+        {embedded && file && an && layouts.some((l) => l.file === file) ? (
+          <SourceTab key={file} an={an} layouts={layouts.filter((l) => l.file === file)} />
+        ) : (
+        <>
         <Grid gap="md">
           <Grid.Col span={{ base: 12, md: 7 }}>
             <Stack gap="md">
@@ -741,6 +893,8 @@ export function Intake({
           </Title>
           {an && <AiOnly ws={ws} />}
         </Paper>
+        </>
+        )}
       </Stack>
     </Container>
   );

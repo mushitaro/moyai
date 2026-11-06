@@ -430,6 +430,16 @@ export const TEXT = {
       jumpHint: "押すと、未解決のセルへ移ります",
       reasons: "除外の理由",
     },
+    /** MERGE の資料のタブ（MERGE r2。言葉は docs/words.md：読取・除外・未確定行・全行） */
+    source: {
+      filterLabel: "資料の行の表示",
+      openRows: "未確定行",
+      allRows: "全行",
+      read: "読取",
+      excluded: "除外",
+      open: "未確定",
+      rowsShown: (from: number, to: number, n: number) => `${from}〜${to}（${n} 行）`,
+    },
     sheet: {
       title: (file: string, sheet: string | null) => (sheet ? `${file}「${sheet}」` : file),
       choose: "表を選ぶ",

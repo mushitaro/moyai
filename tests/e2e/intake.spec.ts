@@ -85,5 +85,14 @@ test("資料を落とし、質問に答え、計画を作って星取表で見�
     await page.locator('[data-testid="sheet-file"][data-file="daily-report.csv"]').click();
     await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
     await expect(page.locator('[data-testid="sheet-file"][data-file="daily-report.csv"]')).toHaveAttribute("aria-selected", "true");
+    // 資料のタブはその資料 1 つだけ（MERGE r2）：切り替え「未確定行 n ／ 全行 n」と凡例、元の表。行き先の一覧と AI の作業の記録は置かない
+    await expect(page.locator('[data-testid="source-tab"][data-file="daily-report.csv"]')).toBeVisible();
+    await expect(page.getByTestId("source-filter")).toContainText("全行");
+    await expect(page.getByTestId("source-legend")).toContainText("読取");
+    await expect(page.getByTestId("dest-file")).toHaveCount(0);
+    // セルを選ぶと、横の板の詳細にそのセルの行き先
+    await page.locator('[data-testid="source-tab"] [data-testid="sheet-grid"] td[data-ref]:not([data-ref=""])').first().click();
+    await expect(page.getByTestId("source-cell-detail")).toBeVisible();
+    await page.screenshot({ path: shot(`intake-source-${tag}`) });
   });
 });
