@@ -70,7 +70,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
     });
 
     let version = 0;
-    await test.step("AI：当てはめの要約（パックの項目・欄ごとの多い値・版）と星取表の段の道を読む。パックに無いコードは断られる", async () => {
+    await test.step("AI：当てはめの要約（パックの項目・欄ごとの多い値・版）と星取表の階層を読む。パックに無いコードは断られる", async () => {
       const s = await call(c, "intake_survey", { part: "crosswalk" });
       const cw = s.crosswalk;
       expect(cw.packId).toBe("waste-incineration");
@@ -80,7 +80,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       expect(cw.unmapped.records).toBeGreaterThan(100);
       const rows = await call(c, "chart_rows", { limit: 200 });
       expect(rows.version).toBe(cw.version);
-      expect(rows.rows.some((r: any) => String(r.cells["段の道"]).includes("計量機"))).toBe(true);
+      expect(rows.rows.some((r: any) => String(r.cells["階層"]).includes("計量機"))).toBe(true);
       version = cw.version;
       const bad: any = await c.callTool({
         name: "crosswalk_propose",

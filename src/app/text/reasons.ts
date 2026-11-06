@@ -33,7 +33,7 @@ const EXACT: Record<string, string> = {
   "chain.afterRetired": "失効後の署名",
   "chain.retiredBelowKnown": "失効記録の連番不正",
   "k.unreadable": "同区分の施設数を数えられない",
-  "k.stageMismatch": "見え方の段が合わない",
+  "k.stageMismatch": "見え方の集約度が合わない",
   "k.classNotCountable": "数えられない分類",
   "k.groupUnknown": "集団が分からない",
   "k.belowMin": "同区分の施設数が下限に届かない",
@@ -86,7 +86,7 @@ const EXACT: Record<string, string> = {
   "path.notAscii": "道に ASCII の外の文字がある",
   "path.notUtf8": "道が UTF-8 でない",
   "path.tooLong": "道が長すぎる",
-  "path.tooDeep": "道の段が深すぎる",
+  "path.tooDeep": "階層が深すぎる",
   "path.collides": "大文字小文字か Unicode の正規化だけが違う道が、ほかにある",
   "path.exists": "同じ道のファイルがすでにある",
 };

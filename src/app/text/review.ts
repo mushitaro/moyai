@@ -67,7 +67,7 @@ export const REVIEW_TEXT = {
   numbersLabel: "根拠の数字",
   examplesLabel: (shown: number, all: number) => (all > shown ? `例（${all} 件のうち ${shown} 件）` : `例（${all} 件）`),
   noExamples: "基準外はありません。",
-  exampleCols: { node: "機器（段の道）", years: "年度", what: "中身" },
+  exampleCols: { node: "機器（階層）", years: "年度", what: "中身" },
   wholePlan: "計画の全体",
   notApplicable: {
     noTargets: "見る対象が計画に無い",
@@ -126,7 +126,7 @@ export function numberValue(key: NumberKey, v: number | null | undefined): strin
   return String(v);
 }
 
-/** 例の中身の文（数と年度だけ。名前は段の道の欄に出す） */
+/** 例の中身の文（数と年度だけ。名前は階層の欄に出す） */
 export function exampleText(e: CheckExample, r: Pick<CheckResult, "kind" | "numbers">): string {
   const [a, b] = e.fiscalYears;
   switch (e.why) {
@@ -146,7 +146,7 @@ export function exampleText(e: CheckExample, r: Pick<CheckResult, "kind" | "numb
     case "missingFields":
       return `空の欄：${e.fields.map(fieldLabel).join("・")}${a !== undefined ? `（${fy(a)} からの作業）` : ""}`;
     case "outOfScale":
-      return `${fy(a!)} の判定の値「${e.value}」が、尺度の段に無い`;
+      return `${fy(a!)} の判定の値「${e.value}」が、尺度に無い`;
     case "noFollowup":
       return `${fy(a!)} の判定「${e.value}」のあとに、要る作業（計画か実績）が無い`;
   }

@@ -79,7 +79,7 @@ export const DATA_NAMES: readonly DataName[] = [
     status: "decided",
     decidedIn: "運営者（用語集のページ、2026-11-06。「段」を「階層」に）",
     definition: "機器の木の深さ。階層の数と名前は計画が持つ（既定はパックの階層の名前）。号炉・系列は階層ではない（plan §2.2）",
-    screen: "段の列の見出し（名前の無い段は「第 n 階層」）",
+    screen: "階層の列の見出し（名前の無い階層は「第 n 階層」）",
     code: "`Plan.levelNames`・`AssetNode.level`・`AssetNode.parentKey`",
     avoid: ["号炉・系列を階層にしない", "親の行の淡い印（下の行のまとめ）を親の機器の実績にしない"],
   },
@@ -99,11 +99,11 @@ export const DATA_NAMES: readonly DataName[] = [
     group: "asset",
     name: "共通の設備項目",
     status: "decided",
-    definition: "共通台帳の機器の軸。中身はパックの 1 段目（業種の公の設備・機器の一覧）",
+    definition: "共通台帳の機器の軸。中身はパックの第 1 階層（業種の公の設備・機器の一覧）",
     decidedIn: "docs/words.md「共通の設備項目 › 作業 → 共通の機器台帳 › 作業分類」",
     screen: "共通の機器台帳（列の見出し）・共通台帳（表示）・未紐付け",
     code: "`AssetNode.commonItem`（パックの `common.json` のコード）・`commonItemAuthor`・`commonItemBasis`・`commonItemAccepted`",
-    avoid: ["名前が似ているだけで当てない", "設備の段と部位の段に当てない（機器の段だけ）", "パックの一覧に無いコードを置かない"],
+    avoid: ["名前が似ているだけで当てない", "設備の階層と部位の階層に当てない（機器の階層だけ）", "パックの一覧に無いコードを置かない"],
   },
   // ─── 作業と、作業の年度の値 ───
   {
@@ -328,9 +328,9 @@ export const DATA_NAMES: readonly DataName[] = [
     status: "decided",
     decidedIn: "運営者（用語集のページ、2026-11-06。「計量値」を「稼働」に）",
     definition: "運転時間・起動回数など、機器ごとの日付つきの稼働の値。周期の稼働の枝が使う",
-    screen: "根拠「運転時間（見込み）」・備考「使用量なし」「使用量不足」",
+    screen: "根拠「運転時間（見込み）」（種類が分からなければ「稼働（見込み）」）・備考「暦のみ（稼働記録なし）」「稼働記録なし」「稼働記録不足」「稼働記録の減少」「稼働記録の変化なし」",
     code: "`Plan.meters[]`（`nodeKey`・`meter`・`date`・`value`）",
-    avoid: ["瞬時の測定値（温度・圧力）を稼働の値にしない", "減っている値をそのまま使わない（「使用量が減少」）"],
+    avoid: ["瞬時の測定値（温度・圧力）を稼働の値にしない", "減っている値をそのまま使わない（「稼働記録の減少」）"],
   },
   // ─── 紐付け・ルール・案 ───
   {

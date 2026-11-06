@@ -219,7 +219,7 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
     const key = `${is.kind}|${is.kind === "columnRole" ? formKey : t.id}|${is.pattern}`;
     const text =
       is.kind === "levelSplit"
-        ? `${is.detail}。この行は何段目か`
+        ? `${is.detail}。この行は第何階層か`
         : is.kind === "yearKind"
           ? `${is.detail}。年の列を年度として読むか`
           : is.kind === "blankSameAsAbove"
@@ -421,7 +421,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const group = questionIdOf(`${orphans.map((o) => o.r).join(",")}|${canAbove ? "above" : "no-above"}`).slice(2, 14);
     orphanAnswer = ask.ask(`dittoNoAbove|${t.id}|${group}`, {
       kind: "stray",
-      text: `名前の欄の「〃」で、同じ親の下の同じ段に上の行が無いものが ${orphans.length} 行ある（例：すぐ上の行は「${orphans[0]?.above ?? "なし"}」）。どう読むか`,
+      text: `名前の欄の「〃」で、同じ親の下の同じ階層に上の行が無いものが ${orphans.length} 行ある（例：すぐ上の行は「${orphans[0]?.above ?? "なし"}」）。どう読むか`,
       options: [
         ...(canAbove ? [{ id: "above", label: "すぐ上の行と同じ名前として読む" }] : []),
         { id: "literal", label: "「〃」の文字のまま名前にする" },
@@ -452,7 +452,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       continue;
     }
     if (r.level === -1) {
-      for (const c of cells) exclude(c.ref, "段の決まらない行（決定で外した）");
+      for (const c of cells) exclude(c.ref, "階層の決まらない行（決定で外した）");
       continue;
     }
     const ts = tags.get(r.r);

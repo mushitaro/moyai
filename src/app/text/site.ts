@@ -33,7 +33,7 @@ export const SITE_TEXT = {
   noBundles: "確かめて ✓ になった共有ファイルはまだありません。",
   profileHead: (n: number) => `見え方 ${n}`,
   group: { NATIONAL: "全国の表に載る施設", OUTSIDE: "全国の表に載らない施設" } as Record<string, string>,
-  stage: (s: number) => `段 ${s}`,
+  stage: (s: number) => `集約度 ${s}`,
   similar: (n: number) => `類似施設 ${n}`,
   belowFive: "この条件では 5 施設に届きません。",
   colClass: "共通の設備項目",

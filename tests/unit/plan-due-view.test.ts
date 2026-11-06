@@ -28,9 +28,9 @@ describe("次回の字", () => {
 
   it("決まらないときは「―」と理由（朱にしない・推測で埋めない）", () => {
     const none = plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "OVERHAUL", ["a1"])], details: [] });
-    expect(dueView(workDue(none, none.works[0]!, "2026-01-01"), 4)).toMatchObject({ decided: false, text: "―", notes: "起点なし" });
+    expect(dueView(workDue(none, none.works[0]!, "2026-01-01"), 4)).toMatchObject({ decided: false, text: "―", notes: "周期なし" });
     const bad = plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "OVERHAUL", ["a1"], { trigger: { every: "3Y" } })], details: [] });
-    expect(dueView(workDue(bad, bad.works[0]!, "2026-01-01"), 4)).toMatchObject({ text: "―", notes: "起点不正" });
+    expect(dueView(workDue(bad, bad.works[0]!, "2026-01-01"), 4)).toMatchObject({ text: "―", notes: "周期不正" });
     const noOrigin = plan({ assets: [asset("a1", "T.FEED.LIFT", { installedOn: null })], works: [work("w1", "OVERHAUL", ["a1"], { trigger: calendar3 })], details: [] });
     expect(dueView(workDue(noOrigin, noOrigin.works[0]!, "2026-01-01"), 4)).toMatchObject({ text: "―", notes: "起点なし" });
     const meterOnly = plan({
@@ -38,13 +38,13 @@ describe("次回の字", () => {
       works: [work("w1", "OVERHAUL", ["a1"], { trigger: { branches: [{ kind: "meter", meter: "運転時間", every: 8000 }], combine: "earliest" } })],
       details: [detail("d1", "w1", 2024, { startDate: "2024-04-01" })],
     });
-    expect(dueView(workDue(meterOnly, meterOnly.works[0]!, "2026-01-01"), 4)).toMatchObject({ text: "―", notes: "使用量不足" });
+    expect(dueView(workDue(meterOnly, meterOnly.works[0]!, "2026-01-01"), 4)).toMatchObject({ text: "―", notes: "稼働記録なし" });
   });
 
   it("運転時間の見込みが先なら、根拠は「運転時間（見込み）」。計量値が無く暦だけなら備考「暦のみ（使用量なし）」", () => {
     const trigger = { branches: [{ kind: "meter", meter: "運転時間", every: 8000 }, { kind: "calendar", years: 3 }], combine: "earliest" };
     const base = plan({ assets: [asset("a1", "T.FEED.LIFT")], works: [work("w1", "OVERHAUL", ["a1"], { trigger })], details: [detail("d1", "w1", 2024, { startDate: "2024-04-01" })] });
-    expect(dueView(workDue(base, base.works[0]!, "2025-04-01"), 4)).toMatchObject({ text: "2027-04-01", basis: "暦", notes: "暦のみ（使用量なし）" });
+    expect(dueView(workDue(base, base.works[0]!, "2025-04-01"), 4)).toMatchObject({ text: "2027-04-01", basis: "暦", notes: "暦のみ（稼働記録なし）" });
     const meters = [
       { nodeKey: "a1", meter: "運転時間", date: "2024-04-01", value: 1000 },
       { nodeKey: "a1", meter: "運転時間", date: "2025-04-01", value: 1000 + 365 * 24 },

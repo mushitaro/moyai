@@ -53,7 +53,7 @@ export const ENTITIES = {
       nodeKey: f("同一性の鍵", "code"),
       tag: f("表示の番号", "code"),
       name: f("名前", "text"),
-      level: f("段", "number"),
+      level: f("階層", "number"),
       parentKey: f("上の節", "code"),
       classCode: f("分類コード", "code"),
       commonItem: f("共通の設備項目", "code"),
@@ -114,10 +114,10 @@ export const ENTITIES = {
     },
   },
   meter: {
-    label: "計量値",
+    label: "稼働",
     fields: {
       nodeKey: f("資産の節", "code"),
-      meter: f("計量値の名前", "code"),
+      meter: f("稼働の種類", "code"),
       date: f("日付", "date"),
       value: f("値", "number"),
     },

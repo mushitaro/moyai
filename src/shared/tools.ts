@@ -47,7 +47,7 @@ export const crosswalkRuleSchema = ruleSchema.superRefine((r, ctx) => {
     if (typeof v !== "string" || !(WORK_ATTRIBUTES as readonly string[]).includes(v))
       ctx.addIssue({ code: "custom", path: ["set", "value"], message: `作業の属性は ${WORK_ATTRIBUTES.join("・")} のどれか` });
   } else if (r.set.field === "assetNode.commonItem") {
-    if (typeof v !== "string" || !CLASS_CODE.test(v)) ctx.addIssue({ code: "custom", path: ["set", "value"], message: "1 段目の項目のコード（パックの一覧のもの）" });
+    if (typeof v !== "string" || !CLASS_CODE.test(v)) ctx.addIssue({ code: "custom", path: ["set", "value"], message: "第 1 階層の項目のコード（パックの一覧のもの）" });
   } else ctx.addIssue({ code: "custom", path: ["set", "field"], message: "置ける欄は assetNode.commonItem と work.attribute だけ" });
   r.when.forEach((c, i) => {
     if (!c.field.startsWith("assetNode.") && !c.field.startsWith("work."))
@@ -288,7 +288,7 @@ export const TOOLS = {
     "intake_survey",
     "read",
     "取り込みの要約",
-    "作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose の規則で読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に当てはめの要約（パックの 1 段目の項目と作業の属性、欄ごとの多い値、未当てはめの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の段の道で読む。",
+    "作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose の規則で読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に当てはめの要約（パックの第 1 階層の項目と作業の属性、欄ごとの多い値、未当てはめの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
     z.object({ part: z.enum(["all", "questions", "compose", "crosswalk", "skills"]).default("all") }),
     z.object({
       files: z.array(z.object({ fileRef: z.string(), sheets: z.number().int(), rows: z.number().int() })),
@@ -389,7 +389,7 @@ export const TOOLS = {
     "crosswalk_propose",
     "propose",
     "当てはめの案を置く",
-    "資産の節を共通の設備項目の 1 段目に（set.field は assetNode.commonItem、値は intake_survey の crosswalk.items のコード）、作業を作業の属性に（set.field は work.attribute、値は INSPECT・OVERHAUL・REPLACE・UPGRADE）当てる規則を案として置く。行を写さず規則を書く（欄 × 比べ方 × 値の組〔20 個まで〕と置く値）。条件の欄は資産の節（assetNode.*）か作業（work.*）のもの。もう一方の物の欄は結んだ行で見る（節の規則の作業の欄は、その節を対象にする作業のどれか。作業の規則の節の欄は、作業の対象の節のどれか）。文字は全角・半角をそろえて比べる。basedOnVersion は intake_survey の crosswalk.version（か chart_rows の version）で、違えばどれも置かない。1 つでもパックに無いコードがあれば、どれも置かない。返すのは、当てた数・ぶつかった数（同じ行に違う値の規則が当たった、または行がもう違う値を持つ。ぶつかった行は変えない）・未当てはめの数・例 10 件まで（行の参照だけ）・規則ごとの数・新しい版。案は、人が画面で受けるまで決まらない（受けるツールは無い）。",
+    "資産の節を共通の設備項目の第 1 階層に（set.field は assetNode.commonItem、値は intake_survey の crosswalk.items のコード）、作業を作業の属性に（set.field は work.attribute、値は INSPECT・OVERHAUL・REPLACE・UPGRADE）当てる規則を案として置く。行を写さず規則を書く（欄 × 比べ方 × 値の組〔20 個まで〕と置く値）。条件の欄は資産の節（assetNode.*）か作業（work.*）のもの。もう一方の物の欄は結んだ行で見る（節の規則の作業の欄は、その節を対象にする作業のどれか。作業の規則の節の欄は、作業の対象の節のどれか）。文字は全角・半角をそろえて比べる。basedOnVersion は intake_survey の crosswalk.version（か chart_rows の version）で、違えばどれも置かない。1 つでもパックに無いコードがあれば、どれも置かない。返すのは、当てた数・ぶつかった数（同じ行に違う値の規則が当たった、または行がもう違う値を持つ。ぶつかった行は変えない）・未当てはめの数・例 10 件まで（行の参照だけ）・規則ごとの数・新しい版。案は、人が画面で受けるまで決まらない（受けるツールは無い）。",
     z.object({ rules: z.array(crosswalkRuleSchema).min(1).max(50), basedOnVersion: z.number().int().min(0) }),
     ruleOutcome.extend({
       unmapped: z.number().int(),
@@ -465,7 +465,7 @@ export const TOOLS = {
     "check_results",
     "read",
     "検査の結果を読む",
-    "作業中の計画に、パックの検査を、作業画面の基準日で走らせた結果を読む（読むだけ。検査を直す・判定を変える道は無い）。検査ごとの結果（met・notMet・notApplicable）、根拠の数字、例 10 件まで（段の道と年度）、外れの数、出典（資料・条項・頁・URL）、水準（requirement・recommendation・app）、閾値の出どころ（source・app）、確かめた度合いが入る。数字を丸めず言い換えず、自分で計算し直さず、出典を添えて説明する。notice のとおり、自己点検であって、審査の判断ではない。checkId を渡すと、その検査だけ。",
+    "作業中の計画に、パックの検査を、作業画面の基準日で走らせた結果を読む（読むだけ。検査を直す・判定を変える道は無い）。検査ごとの結果（met・notMet・notApplicable）、根拠の数字、例 10 件まで（階層と年度）、外れの数、出典（資料・条項・頁・URL）、水準（requirement・recommendation・app）、閾値の出どころ（source・app）、確かめた度合いが入る。数字を丸めず言い換えず、自分で計算し直さず、出典を添えて説明する。notice のとおり、自己点検であって、審査の判断ではない。checkId を渡すと、その検査だけ。",
     z.object({ checkId: z.string().max(60).optional() }),
     z.object({
       notice: z.string(),
@@ -521,7 +521,7 @@ export const TOOLS = {
     "share_preview",
     "read",
     "写し取りの見込み",
-    "共有の束に写す数、写さなかった理由ごとの数、k の段を読む。送るのは人が検問所でする。",
+    "共有の束に写す数、写さなかった理由ごとの数、k の集約度を読む。送るのは人が検問所でする。",
     z.object({}),
     z.object({
       copied: z.number().int(),

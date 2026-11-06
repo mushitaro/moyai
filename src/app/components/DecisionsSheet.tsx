@@ -62,11 +62,11 @@ export function cycleConflicts(plan: Plan | null, accepted: ReadonlyMap<string, 
   const r = applyAcceptedCycles(plan, acceptedDetailKeys(accepted));
   return r.ok ? [] : r.conflicts;
 }
-/** 受けても作業のきっかけを変えない理由（計量値の枝・枝がいくつも・月の周期） */
+/** 受けても作業のきっかけを変えない理由（稼働の枝・枝がいくつも・月の周期） */
 function keptWhy(w: WorkT | undefined): string {
   const bs = ((w?.trigger as { branches?: { kind: string; meter?: string }[] } | null)?.branches ?? []) as { kind: string; meter?: string }[];
   if (bs.length > 1) return T.keptBranches(bs.length);
-  if (bs[0]?.kind === "meter") return T.keptMeter(bs[0].meter ?? "");
+  if (bs[0]?.kind === "meter") return T.keptMeter;
   return T.keptMonths;
 }
 /** 1 つの周期の案を受けたら、作業のきっかけがどう変わるか：「周期 4 年 → 5 年」と「反映なし（…）」の字（同じ字は 1 つ） */

@@ -372,7 +372,7 @@ export const HUMAN_TEXT = {
     dup: "- 重複",
     cycleChange: (from: number | null, to: number) => `周期 ${from === null ? "\u2015" : `${fmt(from)} 年`} → ${fmt(to)} 年`,
     cycleKept: (why: string) => `反映なし（${why}）`,
-    keptMeter: (meter: string) => `${meter}の枝`,
+    keptMeter: "稼働の枝",
     keptBranches: (n: number) => `枝 ${fmt(n)}`,
     keptMonths: "月の周期",
     /** 年数を明細の鍵から読めない前の形の案（Architect の 61。言葉は Wire に確かめる） */
@@ -549,11 +549,11 @@ export const HUMAN_TEXT = {
     /** 同区分の施設（Wire、2026-11-06）：ふだんは「同区分の施設 m（全国 n）」、下限より少ないときは朱で「同区分の施設 3（下限 5）」 */
     kLine: (k: number, all: number | null) => (all === null ? `同区分の施設 ${fmt(k)}` : `同区分の施設 ${fmt(k)}（全国 ${fmt(all)}）`),
     kLineShort: (k: number, min: number) => `同区分の施設 ${fmt(k)}（下限 ${fmt(min)}）`,
-    /** 紛れる数に届くように見え方をまとめた度合い（0 はそのまま）。内部の「段」は出さない */
+    /** 紛れる数に届くように見え方をまとめた度合い（0 はそのまま）。内部の集約度の数は出さない */
     stage: (s: number) => (s === 0 ? "" : s >= 3 ? "業種だけを出します。" : "紛れるように、見え方の一部をまとめました。"),
     chunkPath: (cls: string, work: string) => `${cls} › ${work}`,
-    tried: "数えた段",
-    triedRow: (stage: number, coarse: boolean, k: number) => `段 ${stage}${coarse ? "（帯を粗くした）" : ""}：${fmt(k)}`,
+    tried: "数えた集約度",
+    triedRow: (stage: number, coarse: boolean, k: number) => `集約度 ${stage}${coarse ? "（帯を粗くした）" : ""}：${fmt(k)}`,
     rowEffectsTitle: "減らしている行（分類）",
     rowEffect: (name: string, n: number) => `${name}：${fmt(n)} に減らす`,
     rowEffectsNone: "見え方の数を減らしている行はありません。",

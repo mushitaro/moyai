@@ -89,13 +89,13 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
     });
 
     let ruleCount = 0;
-    await test.step("AI：パックの項目と段の道を読み、名前が同じ節に規則を置く（どれも案）", async () => {
+    await test.step("AI：パックの項目と階層を読み、名前が同じ節に規則を置く（どれも案）", async () => {
       const cw = (await call(c, "intake_survey", { part: "crosswalk" })).crosswalk;
       expect(cw.packId).toBe(PACK);
       const items = packItems();
       expect(cw.items.length).toBe(items.length);
       const rows = await call(c, "chart_rows", { limit: 200 });
-      const names = new Set<string>(rows.rows.flatMap((r: any) => String(r.cells["段の道"] ?? "").split(" › ")));
+      const names = new Set<string>(rows.rows.flatMap((r: any) => String(r.cells["階層"] ?? "").split(" › ")));
       const rules = items
         .filter((i) => names.has(i.name))
         .slice(0, 50)

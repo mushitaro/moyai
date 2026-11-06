@@ -183,7 +183,7 @@ export const ERRORS = {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "置く 1 段目の項目のコードが、この計画のパックの一覧にありません（型に合いません）。どの案も置いていません。intake_survey（part: crosswalk）の items のコードから選んでください。",
+    text: "置く第 1 階層の項目のコードが、この計画のパックの一覧にありません（型に合いません）。どの案も置いていません。intake_survey（part: crosswalk）の items のコードから選んでください。",
   },
   tool_failed: {
     from: "tab",

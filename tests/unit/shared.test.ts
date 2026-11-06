@@ -52,7 +52,7 @@ describe("ビルドの印", () => {
 
 describe("欄の名前", () => {
   it("芯のデータの形の 5 つ（施設・資産の節・作業・作業明細・計量値）がある", () => {
-    expect(Object.values(ENTITIES).map((e) => e.label)).toEqual(["施設", "資産の節", "作業", "作業明細", "計量値"]);
+    expect(Object.values(ENTITIES).map((e) => e.label)).toEqual(["施設", "資産の節", "作業", "作業明細", "稼働"]);
     expect(FIELD_REFS).toContain("workDetail.planOrActual");
     expect(fieldDef("workDetail.cost").neverShared).toBe(true);
     expect(fieldDef("workDetail.performer").neverShared).toBe(true);

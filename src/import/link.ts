@@ -289,11 +289,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         unique: "名前が同じで、同じ親の下にどちらも 1 つずつ",
         uniqueNumberDiffers: "名前が同じで 1 つずつだが、号の数と機器番号の数が違う",
         byNumber: "名前が同じものがいくつかあり、号の数と機器番号の末尾の数が同じ",
-        tagName: "機器番号と名前が同じ（段や親の書き方は資料で違う）",
+        tagName: "機器番号と名前が同じ（階層や親の書き方は資料で違う）",
         tagOnly: "機器番号が同じ（名前の書き方は違う）",
       };
       const base = pattern.replace(/^global:/, "");
-      const scopeNote = pattern.startsWith("global:") ? "（親どうしは結んでいない。名前と段だけで当てた）" : "";
+      const scopeNote = pattern.startsWith("global:") ? "（親どうしは結んでいない。名前と階層だけで当てた）" : "";
       const gkey = `assetLink|${tid}|${pattern}`;
       const a = ask.ask(gkey, {
         kind: "assetLink",

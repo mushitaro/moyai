@@ -924,9 +924,9 @@ function voteLevels(ctx: BuildCtx, t: Table) {
       pattern: sig,
       rows: rs.map((x) => x.r),
       cells: rs.map((x) => cellRef(x.r, nameCol.c)),
-      detail: `段の手がかりが割れている（${votes.map((v) => `${SIGNAL_LABEL[v.signal]}は ${v.level} 段目`).join("、")}）`,
+      detail: `階層の手がかりが割れている（${votes.map((v) => `${SIGNAL_LABEL[v.signal]}は第 ${v.level} 階層`).join("、")}）`,
       proposal: `level:${byNumber?.level ?? majority}`,
-      options: levels.map((l) => ({ id: `level:${l}`, label: `${l} 段目` })),
+      options: levels.map((l) => ({ id: `level:${l}`, label: `第 ${l} 階層` })),
     });
   }
   assignParents(t, nameCol.c);
@@ -959,7 +959,7 @@ export function assignParents(t: Table, nameC: number | null) {
           pattern: `jump:${parent.level}->${r.level}`,
           rows: [r.r],
           cells: nameC ? [cellRef(r.r, nameC)] : [],
-          detail: `${parent.level} 段目のすぐ下が ${r.level} 段目（間の段が無い）`,
+          detail: `第 ${parent.level} 階層のすぐ下が第 ${r.level} 階層（間の階層が無い）`,
           proposal: "keep",
           options: [
             { id: "keep", label: "そのまま（上の行を親にする）" },
@@ -974,7 +974,7 @@ export function assignParents(t: Table, nameC: number | null) {
         pattern: `orphan:${r.level}`,
         rows: [r.r],
         cells: nameC ? [cellRef(r.r, nameC)] : [],
-        detail: `${r.level} 段目の行の上に親が無い`,
+        detail: `第 ${r.level} 階層の行の上に親が無い`,
         proposal: "keep",
         options: [
           { id: "keep", label: "そのまま（親なし）" },
@@ -1038,7 +1038,7 @@ function gridLevels(ctx: BuildCtx, t: Table) {
             ]
           : [
               { id: "same", label: "上と同じ" },
-              { id: "none", label: "その段は無い" },
+              { id: "none", label: "その階層は無い" },
             ],
       });
   }

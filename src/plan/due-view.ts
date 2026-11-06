@@ -14,11 +14,12 @@ export const DUE_TEXT = {
   side: { due: "次回", latest: "期限", window: "許容幅", basis: "根拠", origin: "起点", notes: "備考" },
   exportCols: ["次回", "期限", "根拠", "備考"] as const,
   calendar: "暦",
-  projected: (meter: string) => `${meter}（見込み）`,
+  /** 根拠の見込み：稼働の種類の名前（「運転時間（見込み）」）。種類が分からないときは「稼働（見込み）」 */
+  projected: (meter: string) => `${meter.trim() || "稼働"}（見込み）`,
   originGrain: { fiscalYear: "年度単位", start: "使用開始" },
   windowRange: (from: string, to: string) => `${from}〜${to}`,
   notes: {
-    calendarOnly: "暦のみ（使用量なし）",
+    calendarOnly: "暦のみ（稼働記録なし）",
     firstCycle: "初回",
     pauseCapped: "休止を上限まで加算",
     extended: "延長",
@@ -26,13 +27,13 @@ export const DUE_TEXT = {
     extensionUnapproved: "延長未承認",
   } satisfies Record<DueNote, string>,
   undecided: {
-    noTrigger: "起点なし",
-    triggerInvalid: "起点不正",
+    noTrigger: "周期なし",
+    triggerInvalid: "周期不正",
     noOrigin: "起点なし",
-    meterNone: "使用量不足",
-    meterInsufficient: "使用量不足",
-    meterDecreasing: "使用量が減少",
-    meterNotGrowing: "使用量の変化なし",
+    meterNone: "稼働記録なし",
+    meterInsufficient: "稼働記録不足",
+    meterDecreasing: "稼働記録の減少",
+    meterNotGrowing: "稼働記録の変化なし",
   } satisfies Record<"noTrigger" | "triggerInvalid" | "noOrigin" | MeterWhy, string>,
   sep: "・",
   /** 同じ行に、次回の決まらない作業が残っているとき（台帳の重-8b-b。言葉は Wire に確かめる） */
@@ -57,7 +58,7 @@ export interface DueView {
   latest: string | null;
   /** 許容幅（窓のときだけ） */
   window: string | null;
-  /** 根拠（暦・計量値の名前） */
+  /** 根拠（暦・稼働の種類） */
   basis: string | null;
   /** 起点（年度単位・使用開始を添える） */
   origin: string | null;
@@ -79,7 +80,7 @@ export function dueView(w: WorkDue, fiscalYearStartMonth: number): DueView {
   const basis = !b ? null : b.kind === "calendar" ? T.calendar : b.due !== null ? T.projected(b.meter) : b.meter;
   const notes = w.notes.map((n) => T.notes[n]);
   if (w.due === null) {
-    // 決まらない理由：起点が無い、または計量値の枝が読めない（暦の枝が無いとき）
+    // 決まらない理由：起点が無い、または稼働の枝が読めない（暦の枝が無いとき）
     const why = w.origin === null ? [T.undecided.noOrigin] : w.branches.flatMap((x) => (x.kind === "meter" && x.due === null ? [T.undecided[x.why]] : []));
     return { workKey: w.workKey, decided: false, text: T.none, ...blank, origin, notes: [...new Set([...why, ...notes])].join(T.sep) };
   }
