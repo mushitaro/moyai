@@ -111,9 +111,9 @@ export const TEXT = {
     legend: {
       label: "凡例",
       changed: "変更",
-      proposal: "Claude 案",
-      proposalAria: "（Claude 案。確定のシートで確定するまで未確定）",
-      proposalNote: "Claude が公開台帳から置いた案です。確定のシートで確定するまで未確定です。",
+      proposal: "未確定の案",
+      proposalAria: "（未確定の案）",
+      proposalNote: "台帳案・ルール案・会話の回答です。確定のシートで確定するまで未確定です。",
       changedFrom: (n: number) => `第 ${n} 版から変更`,
       changedFromSource: "元の資料から変更",
       oldPlan: (n: number) => `第 ${n} 版の印`,

@@ -30,17 +30,42 @@ export function getCurrentReadings(): { readings: LoadedReading[]; facilityKey: 
  * 承認済みの読み方は中身を変えずに渡す（版が変わると、ほかの施設で承認済みの読み方を書き換えるため）。ルールが 0 になった下書きは載せない
  */
 export function readingsSigned(plan: Plan | null, acceptedIds: ReadonlySet<string> = new Set()): LoadedReading[] {
+  return signing(plan, acceptedIds).readings.map((x) => x.reading);
+}
+
+/** 載せる読み方と、削ったか（案を受けていない計画ルールを外した下書き）と、この版に載せない計画ルールの数 */
+function signing(plan: Plan | null, acceptedIds: ReadonlySet<string>): { readings: { reading: LoadedReading; trimmed: boolean }[]; dropped: number } {
   const backed = new Set<string>();
   for (const d of plan?.details ?? []) {
     if (cycleIdOf(d.detailKey) === null || !acceptedIds.has(`detail:${d.detailKey}`)) continue;
     for (const s of d.sources) if (s.file === PLAN_RULE_SOURCE && s.sheet !== null && s.cell !== null) backed.add(`${s.sheet}\u0000${s.cell}`);
   }
-  return current.readings
-    .map((r) => (r.draft ? { ...r, skill: { ...r.skill, rules: r.skill.rules.filter((x) => !isPlanRule(x) || backed.has(`${r.skill.name}\u0000${x.id}`)) } } : r))
-    .filter((r) => !r.draft || r.skill.rules.length > 0);
+  let dropped = 0;
+  const readings: { reading: LoadedReading; trimmed: boolean }[] = [];
+  for (const r of current.readings) {
+    if (!r.draft) {
+      readings.push({ reading: r, trimmed: false });
+      continue;
+    }
+    const rules = r.skill.rules.filter((x) => !isPlanRule(x) || backed.has(`${r.skill.name}\u0000${x.id}`));
+    dropped += r.skill.rules.length - rules.length;
+    if (rules.length > 0) readings.push({ reading: { ...r, skill: { ...r.skill, rules } }, trimmed: rules.length < r.skill.rules.length });
+  }
+  return { readings, dropped };
 }
 
-/** 確定のときに橋渡しへ渡す形 */
-export function readingsForCommit(plan: Plan | null = null, acceptedIds: ReadonlySet<string> = new Set()): { skill: LoadedReading["skill"]; by: string | null; facilityKey: string | null }[] {
-  return readingsSigned(plan, acceptedIds).map((r) => ({ skill: r.skill, by: null, facilityKey: current.facilityKey }));
+/** この版に載せない計画ルールの数（案を受けていない下書きのルール。署名のダイアログに出し、人が知ったうえで署名する） */
+export function droppedPlanRules(plan: Plan | null, acceptedIds: ReadonlySet<string> = new Set()): number {
+  return signing(plan, acceptedIds).dropped;
+}
+
+/**
+ * 確定のときに橋渡しへ渡す形。削った下書きは trimmed（橋渡しは保管先の今の下書きを書き直さず、削った中身を versions/ にだけ書く。
+ * 版の記録には削った中身のハッシュが載る。Architect の 42 の答え 4）
+ */
+export function readingsForCommit(
+  plan: Plan | null = null,
+  acceptedIds: ReadonlySet<string> = new Set(),
+): { skill: LoadedReading["skill"]; by: string | null; facilityKey: string | null; trimmed?: true }[] {
+  return signing(plan, acceptedIds).readings.map(({ reading, trimmed }) => ({ skill: reading.skill, by: null, facilityKey: current.facilityKey, ...(trimmed ? { trimmed: true as const } : {}) }));
 }

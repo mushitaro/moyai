@@ -16,7 +16,7 @@ import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previ
 import { checkSeen } from "./seen";
 import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
-import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, registerReading } from "./readings";
+import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, recordReadingVersion, registerReading } from "./readings";
 import { ReadingSkill, isPlanRule } from "../import/reading";
 import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
 import { ruleSchema } from "../shared/tools";
@@ -154,7 +154,8 @@ const SCHEMAS = {
       .optional(),
     crosswalk: z.array(z.object({ rule: ruleSchema, target: z.enum(["assetNode", "work"]), value: z.string().min(1).max(200), basis: z.string().max(2000) })).max(2000).optional(),
     /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
-    readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable() })).max(20).optional(),
+    /** trimmed：案を受けていない計画ルールを削った中身（保管先の今の下書きは書き直さず、versions/ にだけ書く。Architect の 42 の答え 4） */
+    readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable(), trimmed: z.boolean().optional() })).max(20).optional(),
   }),
   readings_read: z.object({}),
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
@@ -544,7 +545,7 @@ export class HumanService {
           }
         }
         for (const x of p.readings ?? []) {
-          const w = await registerReading(root, x.skill, signer.signer.by, x.facilityKey);
+          const w = await (x.trimmed ? recordReadingVersion : registerReading)(root, x.skill, signer.signer.by, x.facilityKey);
           if (!w.ok) return no("readingInvalid");
           readingSkills.push({ name: (x.skill as { name: string }).name, path: w.path, version: w.version });
         }
