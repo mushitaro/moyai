@@ -687,6 +687,42 @@ describe("帳票（1 日 1 枚・1 件 1 枚）と、heldout-4 で詰まった�
     expect(q?.text).toContain("分けられない");
   });
 
+  test("規則が読み手の読み方を止めたとき・同じ列に 2 つの役目の規則があるときは、要約の注記に出す（効かなかった規則は効いたセルに数えない）", async () => {
+    const s = session();
+    const rule = (id: string, role: "assetRef" | "workName") => ({ id, text: `「号炉・機器・作業内容」を${role}`, kind: "columnRole" as const, author: "ai" as const, reason: "試験", column: "号炉・機器・作業内容", role });
+    s.setReadings([{ skill: { schema: "moyai.reading/0", name: "【架空】試験の読み方", scope: "facility", rules: [rule("a", "assetRef"), rule("w", "workName")] }, version: "draft", path: null, approved: false, draft: true }]);
+    await s.add([{ name: "日報.csv", bytes: csv(["日付,号炉・機器・作業内容,人工", "2024/4/6,1号 No.2 ポンプ 分解整備,2", "2024/4/7,ブロワ（#2）給油,1"]) }]);
+    const sv = s.survey();
+    expect(sv.notes.some((n) => n.includes("分けて読んでいない") && n.includes("規則「a」"))).toBe(true);
+    expect(sv.notes.some((n) => n.includes("規則「w」（workName）は効いていない"))).toBe(true);
+    const an = s.analyze();
+    expect(an.ruleHits.count("a")).toBeGreaterThan(0);
+    expect(an.ruleHits.count("w")).toBe(0);
+  });
+
+  test("同じ機器の規則は、3 つ以上の呼び名を 1 つにまとめられる（どれも並びの最後の名前の機器。全角と半角の違いは書かなくてよい）", async () => {
+    const s = session();
+    s.setReadings([
+      {
+        skill: {
+          schema: "moyai.reading/0",
+          name: "【架空】試験の読み方",
+          scope: "facility",
+          rules: [{ id: "bfp", text: "「給水P」「BFP」「ボイラ給水ポンプ」は同じ機器", kind: "sameAsset", author: "human", by: "担当者", reason: "試験", names: ["給水P", "BFP", "ボイラ給水ポンプ"] }],
+        },
+        version: "draft",
+        path: null,
+        approved: false,
+        draft: true,
+      },
+    ]);
+    await s.add([{ name: "日報.csv", bytes: csv(["日付,機器,作業,工数(人日)", "2024/4/6,給水P,点検,1", "2024/4/7,BFP,給油,1", "2024/4/8,ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ,点検,1", "2024/4/9,ブロワ,点検,1"]) }]);
+    for (let i = 0; i < 4; i++) for (const x of s.analyze().open) s.settle([human(x.questionId, x.defaultAnswer ?? x.options.find((o) => o.id === "new")?.id ?? x.options[0]?.id ?? "")]);
+    const c = s.compose();
+    expect(c.plan?.assets.length).toBe(2);
+    expect(s.analyze().ruleHits.count("bfp")).toBe(2);
+  });
+
   test("日付の書き方の規則（月/日）は、日付の型のセルを壊さない", async () => {
     const bytes = await xlsxOf((ws) => {
       rows(ws, 1, [["点検日", "機器", "作業", "工数(人日)"]]);
@@ -808,6 +844,31 @@ describe("周期の列と費用の列（重-8b：作業ごとのきっかけを�
     const pumpWork = c.plan?.works.find((w) => w.targets.includes(pumpKey))?.workKey;
     expect(c.plan?.details.filter((d) => d.workKey === pumpWork).map((d) => d.cost)).toEqual([1_200_000]);
     expect([...c.status.values()].some((x) => x.s === "excluded" && x.reason.startsWith("費用の列"))).toBe(false);
+  });
+
+  test("作業の名前の見出し（「点検・整備内容」「点検・検査」「点検項目」）：星取表（xlsx）では機器の段でなくその行の作業、作業の一覧（CSV）では列の役目を聞かない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [["機器", "点検・整備内容", "周期\n(年)", "2024年度", "2025年度"], ["ポンプ", "分解整備", "3", "●", null], ["〃", "定期点検", "1", "●", "●"], [], [null, "凡例　○：計画　●：実施済"]]);
+    });
+    const s = session();
+    await s.add([{ name: "星取表.xlsx", bytes }]);
+    const t = s.analyze().layouts[0]?.tables[0];
+    expect(t?.cols.find((c) => c.header === "点検・整備内容")?.role).toBe("workName");
+    acceptDefaults(s);
+    const c = s.compose();
+    const pump = c.plan?.assets.find((a) => a.name === "ポンプ");
+    expect(c.plan?.assets.map((a) => a.name)).toEqual(["ポンプ"]);
+    expect(c.plan?.works.filter((w) => w.targets.includes(pump?.nodeKey ?? "")).map((w) => [w.kind, (w.trigger as { branches: unknown[] } | null)?.branches[0]])).toEqual([
+      ["分解整備", { kind: "calendar", years: 3 }],
+      ["定期点検", { kind: "calendar", years: 1 }],
+    ]);
+    for (const head of ["点検・検査", "点検項目"]) {
+      const s2 = session();
+      await s2.add([{ name: "一覧.csv", bytes: csv([`機器,${head},実施日,工数(人日)`, "ポンプ,分解整備,2024/4/6,1", "ブロワ,定期点検,2024/4/7,1"]) }]);
+      const an = s2.analyze();
+      expect(an.open.some((q) => q.kind === "columnRole")).toBe(false);
+      expect(an.records.events.map((e) => e.workName)).toEqual(["分解整備", "定期点検"]);
+    }
   });
 
   test("作業の記録（CSV）：「周期」の列の行の周期も作業のきっかけ。「毎回」は推し量らず聞き、置かないと答えたら周期なしで入れる", async () => {

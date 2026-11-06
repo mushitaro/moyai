@@ -42,7 +42,8 @@ export const ReadingRule = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("dateFormat"), column, format: z.enum(DATE_FORMATS) }).strict(),
   z.object({ ...base, kind: z.literal("effortUnit"), column, unit: z.enum(["manDays", "hours"]) }).strict(),
   z.object({ ...base, kind: z.literal("rowRole"), match: z.string().min(1).max(60), role: z.enum(["total", "subtotal", "note"]) }).strict(),
-  z.object({ ...base, kind: z.literal("sameAsset"), names: z.tuple([z.string().min(1).max(80), z.string().min(1).max(80)]) }).strict(),
+  // 同じ機器の呼び名の並び（2〜20。どれも最後の名前と同じ機器として読む。比べるのは NFKC にそろえた文字なので、全角と半角だけの違いは書かなくてよい）
+  z.object({ ...base, kind: z.literal("sameAsset"), names: z.array(z.string().min(1).max(80)).min(2).max(20) }).strict(),
   z.object({ ...base, kind: z.literal("markMeaning"), symbol: z.string().min(1).max(8), planOrActual: z.enum(["plan", "actual"]), meaning: z.string().max(40).optional() }).strict(),
   z.object({ ...base, kind: z.literal("answer"), question: z.string().min(1).max(40), match: z.string().min(1).max(120), answer: z.string().min(1).max(60) }).strict(),
   // 計画ルール（計画を作るルール。案 C、2026-11-06）：共通の設備項目 × 作業の属性 → 周期（年）。資料の読み方には効かず、
