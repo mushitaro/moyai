@@ -7,6 +7,20 @@ import type { Plan, SourceRef, WorkDetailT, WorkT } from "../shared/plan";
 import type { Rule } from "../shared/tools";
 import { shortVersion } from "../import/reading";
 import { worksHitBy } from "./crosswalk";
+import { bandSpan } from "../share/bands";
+
+/** 四分位の帯（下の帯の下〜上の帯の上）を年の字に */
+const quartileYears = (q1: string, q3: string): string => {
+  const lo = bandSpan(q1)?.lo;
+  const hi = bandSpan(q3)?.hi;
+  return lo === undefined || hi === undefined ? `${q1}〜${q3}` : hi === Infinity ? `${lo} 年以上` : lo === hi ? `${lo} 年` : `${lo}〜${hi} 年`;
+};
+
+/** 帯のコードを年の字に（「I6_7」→「6〜7 年」） */
+const bandYears = (code: string): string => {
+  const s = bandSpan(code);
+  return !s ? code : s.hi === Infinity ? `${s.lo} 年以上` : s.lo === s.hi ? `${s.lo} 年` : `${s.lo}〜${s.hi} 年`;
+};
 
 export const CYCLE_FIELD = "work.trigger";
 export const CYCLE_YEARS = { min: 1, max: 30 } as const;
@@ -27,6 +41,13 @@ export const RECORD_SOURCE = "record:自施設の実績";
 /** パックの基準（checks.json の検査）を根拠にした案の出どころ。sheet に検査の ID を置く */
 export const PACK_SOURCE = "pack:パックの基準";
 export const CYCLE_KEY = /^cy-([A-Za-z0-9]+)-/;
+/** 明細の鍵に入れた案の年数（cy-<案>-<n>y-<作業>-<年度>。Architect の 61：年数は AI の文から読まない）。前の形の鍵（年数なし）は null */
+const CYCLE_YEARS_KEY = /^cy-[A-Za-z0-9]+-([0-9]{1,2})y-/;
+export const cycleYearsOfKey = (detailKey: string): number | null => {
+  const m = CYCLE_YEARS_KEY.exec(detailKey);
+  const n = m ? Number(m[1]) : NaN;
+  return Number.isInteger(n) && n >= CYCLE_YEARS.min && n <= CYCLE_YEARS.max ? n : null;
+};
 
 export interface CycleProposal {
   id: string;
@@ -62,6 +83,8 @@ export interface VerifiedBases {
   pack?: { checkId: string; name: string; source: string };
   /** 計画ルール：名前・版・ルールの id・1 文 */
   rule?: { name: string; version: string; ruleId: string; text: string; status: string };
+  /** 公開台帳：橋渡しが照らした版と集計（項目・作業分類・似た施設の数・中央と四分位の帯。Architect の 52） */
+  ledger?: { version: string; commonItem: string; work: string; n: number; median: string; q1: string; q3: string };
 }
 
 /** 当たった作業の実績の間隔（年度の差）。実施が 2 回以上ある作業だけを数える。無ければ null */
@@ -85,7 +108,7 @@ const span = (a: number, b: number) => (a === b ? `${a} 年` : `${a}〜${b} 年`
 
 export type CycleOutcome =
   | { ok: true; plan: Plan; proposals: CycleProposal[] }
-  | { ok: false; code: "rule_invalid"; ruleIndex: number };
+  | { ok: false; code: "rule_invalid" | "ledger_basis_mismatch"; ruleIndex: number };
 
 /** 規則が周期の案として正しいか：置く欄は作業のきっかけ、値は 1〜30 の整数の年数 */
 export function cycleYearsOf(rule: Rule): number | null {
@@ -115,19 +138,36 @@ export function proposeCycles(
 ): CycleOutcome {
   const author = opts.fromLedger ? "ai" : (opts.author ?? "ai");
   for (const [i, r] of rules.entries()) if (cycleYearsOf(r) === null) return { ok: false, code: "rule_invalid", ruleIndex: i };
+  // 条件の欄は資産の節と作業だけ（作業の年度の値・計量値の欄は、作業に当てる規則では効かない。Architect の 47）
+  for (const [i, r] of rules.entries()) if (r.when.some((c) => !c.field.startsWith("assetNode.") && !c.field.startsWith("work."))) return { ok: false, code: "rule_invalid", ruleIndex: i };
+  // 台帳の根拠：年数が照らした集計の四分位の帯の中にあること（Architect の 52）
+  const lg = opts.verified?.ledger;
+  if (lg) {
+    const lo = bandSpan(lg.q1)?.lo;
+    const hi = bandSpan(lg.q3)?.hi;
+    for (const [i, r] of rules.entries()) {
+      const y = cycleYearsOf(r)!;
+      if (lo === undefined || hi === undefined || y < lo || y > hi) return { ok: false, code: "ledger_basis_mismatch", ruleIndex: i };
+    }
+  }
+  const nodeItem = new Map(plan.assets.map((a) => [a.nodeKey, a.commonItem]));
+  /** 台帳の集計の項目と作業分類の作業か（ほかの作業には台帳の根拠を付けない） */
+  const ledgerFits = (w: WorkT) => !lg || (w.attribute === lg.work && w.targets.some((t) => nodeItem.get(t) === lg.commonItem));
   const horizon = plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity);
   const details: WorkDetailT[] = [...plan.details];
   const proposals: CycleProposal[] = [];
   for (const rule of rules) {
     const years = cycleYearsOf(rule)!;
     const id = opts.nextId();
-    const hit = worksHitBy(plan, rule).filter((w) => !opts.onlyWorks || opts.onlyWorks(w));
+    const hit = worksHitBy(plan, rule).filter((w) => (!opts.onlyWorks || opts.onlyWorks(w)) && ledgerFits(w));
     // 出どころと、照らした根拠の文（照らせたものだけ。どれも照らせなければ会話。中-5 と同じ）
     const v = opts.verified ?? {};
     const sources: SourceRef[] = [];
     const lines: string[] = [];
     if (opts.planRule) sources.push(planRuleSourceRef(opts.planRule.name, opts.planRule.ruleId));
     if (opts.fromLedger) sources.push(sourceRef(LEDGER_SOURCE));
+    // 台帳の数は MOYAI が書く（AI の文の数は使わない。Architect の 52・55）
+    if (lg) lines.push(`公開台帳（版 ${lg.version}）：類似施設 ${lg.n}、間隔の中央の帯 ${bandYears(lg.median)}、四分位 ${quartileYears(lg.q1, lg.q3)}`);
     const rec = v.record ? recordIntervals(details, hit) : null;
     if (rec) {
       sources.push(sourceRef(RECORD_SOURCE));
@@ -159,7 +199,7 @@ export function proposeCycles(
       const planned = new Set(mine.filter((d) => d.planOrActual === "plan").map((d) => d.fiscalYear));
       for (let y = last + years; y <= horizon; y += years) {
         if (planned.has(y)) continue;
-        const detailKey = `cy-${id}-${w.workKey}-${y}`;
+        const detailKey = `cy-${id}-${years}y-${w.workKey}-${y}`;
         details.push({
           detailKey,
           workKey: w.workKey,
@@ -201,15 +241,8 @@ export const cycleIdOf = (detailKey: string): string | null => CYCLE_KEY.exec(de
 // - 計量値の枝がある・枝がいくつもある・月や幅のある暦の枝：きっかけを変えず、変えていない作業として返す（画面が出す）。
 // - 同じ作業に年数の違う案を 2 つ以上受けていれば止める（どちらかに決めない）。
 
-/** 根拠の文から、その案の年数（proposeCycles が書いた「（案 <id>：n 年ごと。」）。読めなければ null */
-export function cycleYearsInBasis(id: string, basis: string | null): number | null {
-  if (!basis) return null;
-  const m = new RegExp(`（案 ${id}：([0-9]+) 年ごと。`).exec(basis);
-  const n = m ? Number(m[1]) : NaN;
-  return Number.isInteger(n) && n >= CYCLE_YEARS.min && n <= CYCLE_YEARS.max ? n : null;
-}
-
-export type CycleTriggerChange = { workKey: string; years: number; from: number | null; kind: "set" | "replaced" | "kept" };
+/** 受けた案ごとの作業のきっかけの変わり方。kept の years は、前の形の鍵（年数なし）なら null */
+export type CycleTriggerChange = { workKey: string; years: number | null; from: number | null; kind: "set" | "replaced" | "kept" };
 
 export type AcceptedCyclesOutcome = { ok: true; plan: Plan; changes: CycleTriggerChange[] } | { ok: false; conflicts: string[] };
 
@@ -228,20 +261,24 @@ function calendarYearsOf(trigger: unknown): number | "none" | "other" {
 /** 受けた周期の案（明細の鍵）から、作業のきっかけを決める。受けた案が無ければ計画をそのまま返す */
 export function applyAcceptedCycles(plan: Plan, acceptedDetailKeys: ReadonlySet<string>): AcceptedCyclesOutcome {
   const byWork = new Map<string, Set<number>>();
+  /** 前の形の鍵（年数なし）の案を受けた作業：年数が分からないので、きっかけを変えない */
+  const unknownYears = new Set<string>();
   for (const d of plan.details) {
     if (!acceptedDetailKeys.has(d.detailKey)) continue;
-    const id = cycleIdOf(d.detailKey);
-    if (id === null) continue;
-    const years = cycleYearsInBasis(id, d.basis);
-    if (years === null) continue;
+    if (cycleIdOf(d.detailKey) === null) continue;
+    const years = cycleYearsOfKey(d.detailKey);
+    if (years === null) {
+      unknownYears.add(d.workKey);
+      continue;
+    }
     const s = byWork.get(d.workKey) ?? new Set<number>();
     s.add(years);
     byWork.set(d.workKey, s);
   }
-  if (byWork.size === 0) return { ok: true, plan, changes: [] };
+  if (byWork.size === 0) return { ok: true, plan, changes: [...unknownYears].map((workKey) => ({ workKey, years: null, from: null, kind: "kept" as const })) };
   const conflicts = [...byWork].filter(([, s]) => s.size > 1).map(([k]) => k);
   if (conflicts.length > 0) return { ok: false, conflicts };
-  const changes: CycleTriggerChange[] = [];
+  const changes: CycleTriggerChange[] = [...unknownYears].filter((k) => !byWork.has(k)).map((workKey) => ({ workKey, years: null, from: null, kind: "kept" as const }));
   const works = plan.works.map((w) => {
     const s = byWork.get(w.workKey);
     if (!s) return w;

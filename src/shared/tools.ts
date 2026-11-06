@@ -434,6 +434,8 @@ export const TOOLS = {
           ledgerVersion: z.string().regex(/^[0-9a-f]{12}$/),
           commonItem: z.string().min(1).max(64),
           work: z.enum(["INSPECT", "OVERHAUL", "REPLACE", "UPGRADE"]),
+          /** 橋渡しが照らした集計（似た施設の数・中央の帯・四分位の帯）。AI が書いても橋渡しが置き換える（Architect の 52） */
+          checked: z.object({ n: z.number().int().min(5), median: z.string().max(16), q1: z.string().max(16), q3: z.string().max(16) }).strict().optional(),
         })
         .optional(),
       /** ほかの根拠（AI は指すだけ。中身は MOYAI が計画・パック・当てているルールから引く。Architect の 42 の 3） */

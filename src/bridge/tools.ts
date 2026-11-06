@@ -92,7 +92,8 @@ export class ToolRelay {
   private readonly outbound: OutboundEntry[] = [];
   private readonly totals = new Map<string, { calls: number; bytes: number; rows: number; imageBytes: number }>();
   /** 会話 → この会話で読んだ公開の台帳の集計（版と、中央の帯が出た「項目|作業」）。台帳を根拠にした周期の案を照らす */
-  private readonly ledgerRead = new Map<string, { version: string | null; median: Set<string> }>();
+  /** 会話ごとに読んだ台帳の版と、中央の帯（似た施設 5 以上）が出た行の集計（項目|作業分類 → 数と帯） */
+  private readonly ledgerRead = new Map<string, { version: string | null; median: Map<string, { n: number; median: string; q1: string; q3: string }> }>();
   /** タブの回 → 写真の imageRef → 人の許し */
   private readonly permits = new Map<string, Map<string, PhotoPermit>>();
 
@@ -155,12 +156,16 @@ export class ToolRelay {
 
   /** 公開の台帳の集計を読んだら、版と、中央の帯（似た施設 5 以上）が出た行を覚える（同じ会話の周期の案を照らす） */
   private rememberLedger(conversation: string, data: Record<string, unknown>): void {
-    const aggs = (data.aggregates ?? []) as { place: string; commonItem: string; work: string; interval: { shown: string; n?: number } }[];
-    const median = new Set(aggs.filter((a) => a.place === "ledger" && a.interval.shown === "median" && (a.interval.n ?? 0) >= LEDGER_BASIS_MIN_N).map((a) => `${a.commonItem}|${a.work}`));
+    const aggs = (data.aggregates ?? []) as { place: string; commonItem: string; work: string; interval: { shown: string; n?: number; median?: string; q1?: string; q3?: string } }[];
+    const median = new Map(
+      aggs
+        .filter((a) => a.place === "ledger" && a.interval.shown === "median" && (a.interval.n ?? 0) >= LEDGER_BASIS_MIN_N && a.interval.median && a.interval.q1 && a.interval.q3)
+        .map((a) => [`${a.commonItem}|${a.work}`, { n: a.interval.n!, median: a.interval.median!, q1: a.interval.q1!, q3: a.interval.q3! }] as const),
+    );
     const prev = this.ledgerRead.get(conversation);
     const version = typeof data.ledgerVersion === "string" ? data.ledgerVersion : null;
     // 同じ版なら足し合わせる（項目を絞って何度か読むため）。版が変わったら読み直したものだけ
-    if (prev && prev.version === version) for (const k of median) prev.median.add(k);
+    if (prev && prev.version === version) for (const [k, v] of median) prev.median.set(k, v);
     else this.ledgerRead.set(conversation, { version, median });
   }
 
@@ -199,7 +204,10 @@ export class ToolRelay {
       const l = args.ledger as { ledgerVersion: string; commonItem: string; work: string };
       const seen = this.ledgerRead.get(conversation);
       const now = this.bridgeTools.ledger_version ? await this.bridgeTools.ledger_version() : null;
-      if (!seen || now === null || seen.version !== now || l.ledgerVersion !== now || !seen.median.has(`${l.commonItem}|${l.work}`)) return fail("ledger_basis_unchecked");
+      const checked = seen?.median.get(`${l.commonItem}|${l.work}`);
+      if (!seen || now === null || seen.version !== now || l.ledgerVersion !== now || !checked) return fail("ledger_basis_unchecked");
+      // 照らした集計を作業画面に渡す（作業画面が、項目・作業分類・年数の合う作業にだけ L の案を置き、数を根拠に書く。Architect の 52）
+      args = { ...args, ledger: { ...l, checked } };
     }
 
     let sendArgs = args;

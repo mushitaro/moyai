@@ -125,6 +125,12 @@ export const ERRORS = {
     http: 200,
     text: "台帳を根拠にした周期の案を、橋渡しが照らせませんでした。台帳の版が今の clone と違うか、この会話の peer_reference（place: ledger）で、その項目と作業の似た施設が 5 に届いていません（中央の帯が出ていません）。peer_reference（place: ledger）で読み直し、中央の帯が出た行だけを根拠にしてください。案は置いていません。",
   },
+  ledger_basis_mismatch: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "台帳を根拠にした周期の案の年数が、照らした集計の四分位の帯の外か、規則が当たった作業に、その項目と作業分類の作業がありません。案は置いていません。peer_reference（place: ledger）の集計の項目・作業分類・帯に合う作業と年数で置き直してください。",
+  },
   ledger_pack_not_ready: {
     from: "bridge",
     to: "ai",

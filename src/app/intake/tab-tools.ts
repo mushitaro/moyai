@@ -107,6 +107,10 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
     if (!a) return { ok: false, code: "plan_rule_unknown" };
     verified.rule = { name: a.from.name, version: a.from.version, ruleId: a.rule.id, text: a.rule.text, status: planRuleStatus(a.from) };
   }
+  // 台帳の根拠：橋渡しが照らした集計（checked）が無ければ台帳の案にしない（Architect の 52）
+  const lg = args.ledger as { ledgerVersion: string; commonItem: string; work: string; checked?: { n: number; median: string; q1: string; q3: string } } | undefined;
+  if (lg && !lg.checked) return { ok: false, code: "ledger_basis_mismatch" };
+  if (lg?.checked) verified.ledger = { version: lg.ledgerVersion, commonItem: lg.commonItem, work: lg.work, ...lg.checked };
   const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis), { fromLedger: Boolean(args.ledger), author, verified });
   if (!r.ok) return r;
   const marks = r.proposals.reduce((n, p) => n + p.detailKeys.length, 0);
