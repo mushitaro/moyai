@@ -2,8 +2,8 @@
 // 切り替えは「食い違い n / 片方だけ n / すべて n」（最初は、食い違いがあれば食い違い、無ければ片方だけ、それも無ければすべて）。
 // 中身は取り込みの作業場（このタブのメモリ）の結び方から作る（src/import/match.ts）。資料がこのタブに無ければ、そう出す。
 import { Table, Text } from "@mantine/core";
-import { useMemo, useState } from "react";
-import { matchRows, type MatchResult, type MatchRow } from "../../import/match";
+import { useEffect, useState } from "react";
+import type { Match, MatchResult, MatchRow } from "../../import/match";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { TEXT } from "../text";
 import { Switch } from "./Switch";
@@ -21,11 +21,33 @@ function resultText(r: MatchRow): string {
 const resultColor = (k: MatchResult) => (k === "diff" ? "var(--shu-text)" : k === "one" ? "var(--text-2)" : "var(--text-3)");
 
 export function MatchSheet({ ws }: { ws: IntakeWorkspace }) {
-  const an = ws.fileCount ? ws.analysis() : null;
-  const m = useMemo(() => (an ? matchRows(an.linked, T.noDate) : null), [an]);
+  // 突き合せの行は取り込みの受け手が作る（取り込みは worker の中）。資料と決定が変わったら（写しの版が進んだら）作り直す
+  const at = ws.fileCount ? ws.view.at : null;
+  const [got, setGot] = useState<{ at: number; m: Match } | null>(null);
+  useEffect(() => {
+    if (at === null) return;
+    let live = true;
+    void ws
+      .matchRows(T.noDate)
+      .then((m) => {
+        if (live) setGot({ at, m });
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [ws, at]);
+  const m = at === null ? null : (got?.m ?? null);
   const first: Filter = m && m.counts.diff > 0 ? "diff" : m && m.counts.one > 0 ? "one" : "all";
   const [filter, setFilter] = useState<Filter | null>(null);
   const f = filter ?? first;
+  if (at !== null && !m) {
+    return (
+      <Text size="sm" c="dimmed" px={32} py="md" data-testid="match-loading">
+        {TEXT.intake.sheet.loading}
+      </Text>
+    );
+  }
   if (!m) {
     return (
       <Text size="sm" c="dimmed" px={32} py="md" data-testid="match-none">

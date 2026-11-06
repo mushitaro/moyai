@@ -28,6 +28,10 @@ export default defineConfig({
   define: {
     __MOYAI_BUILD__: JSON.stringify(stamp),
   },
+  // 取り込みの worker（src/app/intake/intake.worker.ts）は ES モジュールで出す（中で pdf.js などを後から読み込むので、1 つのファイルにまとめられない）
+  worker: {
+    format: "es",
+  },
   build: {
     outDir,
     emptyOutDir: true,

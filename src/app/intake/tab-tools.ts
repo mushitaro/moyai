@@ -3,6 +3,8 @@
 // AI に行のデータを引数で渡させない。返す行は星取表の行の一部だけで、上限は橋渡しが会話ごとに数える（§2.12）。
 // 当てはめ（crosswalk_propose）は規則で案を置くだけで、数と行の参照だけを返す。人が受ける道はここに無い（画面だけ）。
 // 写真（photo_transcribe）は、人が画面で許した写真の画像を 1 回だけ添えて返す（intake/photos.ts）。許す・確かめる道はここに無い。
+// 取り込みを読む受け手（要約・決定・読み方）は、取り込みの答えを待ってから答える（画面のタブでは取り込みが worker の中にあるので、
+// 読み取りの途中に呼ばれたら、それが終わってから答える。古い写しで答えない）。worker の無い所（試験）では同じスレッドでその場で答える。
 import type { TabSentCode } from "../../shared/errors";
 import {
   SKILL_CATALOG_TOOLS,
@@ -32,7 +34,7 @@ import { checkResultsOf, getReferenceDate, packCheckOf } from "../state/review";
 import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
 import { sheetHash } from "../stages";
-import type { DroppedFile, IntakeWorkspace } from "./workspace";
+import { andThen, type DroppedFile, type IntakeWorkspace, type Maybe } from "./workspace";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -41,7 +43,7 @@ export interface TabToolContext {
   /** この会話であと読める星取表の行（橋渡しが数える） */
   rowsRemaining: number;
 }
-type Receiver = (ws: IntakeWorkspace, args: Record<string, unknown>, ctx: TabToolContext) => TabToolResult;
+type Receiver = (ws: IntakeWorkspace, args: Record<string, unknown>, ctx: TabToolContext) => Maybe<TabToolResult>;
 
 const T = TEXT.intake.ai;
 
@@ -166,19 +168,20 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     const fromAi = (args.rules as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);
     // when が効かない種類（同じ機器・決まった答え・計画ルール）に when を付けた規則は断る（黙って広く当てない。Architect の 57。when を効かせるのは締切のあと）
     if (fromAi.some((r) => r.when && WHEN_IGNORED.has(r.kind))) return { ok: false, code: "reading_when_ignored" };
-    const placed = ws.proposeReading(String(args.name), args.scope as ReadingScope, fromAi);
-    // 計画ルールは、当たる作業に周期の案（R）を出す（人が確定のシートで受けるまで決まらない）。件数は引いた印の数
-    applyPlanRules();
-    const plan = getWorkingPlan()?.plan ?? null;
-    const mine = ws.draftReading(String(args.name))?.skill.rules ?? [];
-    const rules = placed.map((x) => {
-      const r = mine.find((y) => y.id === x.id);
-      return r && isPlanRule(r) ? { ...x, hits: planRuleMarks(plan, String(args.name), x.id) } : x;
+    return andThen(ws.proposeReadingWith(String(args.name), args.scope as ReadingScope, fromAi), (placed) => {
+      // 計画ルールは、当たる作業に周期の案（R）を出す（人が確定のシートで受けるまで決まらない）。件数は引いた印の数
+      applyPlanRules();
+      const plan = getWorkingPlan()?.plan ?? null;
+      const mine = ws.draftReading(String(args.name))?.skill.rules ?? [];
+      const rules = placed.map((x) => {
+        const r = mine.find((y) => y.id === x.id);
+        return r && isPlanRule(r) ? { ...x, hits: planRuleMarks(plan, String(args.name), x.id) } : x;
+      });
+      // 数は、規則を置いたあとの写し（読み直しを待ってから）
+      const v = ws.view;
+      ws.note("ai", T.readingProposed(String(args.name), (args.rules as unknown[]).length));
+      return { ok: true, data: { name: args.name, rules, unresolvedCells: v.unresolvedCells, openQuestions: v.open.length, planReady: v.blockers.length === 0 } } as TabToolResult;
     });
-    const an = ws.analysis();
-    const unresolved = [...an.composition.status.values()].filter((x) => x.s === "unresolved").length;
-    ws.note("ai", T.readingProposed(String(args.name), (args.rules as unknown[]).length));
-    return { ok: true, data: { name: args.name, rules, unresolvedCells: unresolved, openQuestions: an.open.length, planReady: an.composition.blockers.length === 0 } };
   },
   // 保管先の読み方の一覧：作業画面は今の施設だけを渡し、橋渡しが保管先を読む（本文は今の施設の分だけ。台帳の中-4）
   reading_skills_list: (ws) => ({ ok: true, data: { facilityKey: ws.facilityKey() } }),
@@ -192,27 +195,30 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   peer_reference: (_ws, args) => (args.place === "ledger" ? ledgerRequest(args) : peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined)),
   intake_survey: (ws, args) => {
     const part = args.part as "all" | "questions" | "compose" | "crosswalk" | "skills";
-    if (part === "skills") {
-      const s: Record<string, unknown> = { ...ws.survey(), crosswalk: null, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] };
-      ws.note("ai", T.skillsRead);
-      return { ok: true, data: { ...s, skillTexts: skillsOf(ws) } };
-    }
-    // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
-    const s: Record<string, unknown> = { ...ws.survey(), crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null, handoff: getHandoffMail() };
-    ws.note("ai", T.surveyed);
-    if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] } };
-    if (part === "questions") return { ok: true, data: { ...s, samples: [], legends: [], notes: [] } };
-    return { ok: true, data: s };
+    return andThen(ws.surveyWith(), (survey): TabToolResult => {
+      if (part === "skills") {
+        const s: Record<string, unknown> = { ...survey, crosswalk: null, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] };
+        ws.note("ai", T.skillsRead);
+        return { ok: true, data: { ...s, skillTexts: skillsOf(ws) } };
+      }
+      // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
+      const s: Record<string, unknown> = { ...survey, crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null, handoff: getHandoffMail() };
+      ws.note("ai", T.surveyed);
+      if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] } };
+      if (part === "questions") return { ok: true, data: { ...s, samples: [], legends: [], notes: [] } };
+      return { ok: true, data: s };
+    });
   },
   intake_settle: (ws, args) => {
     const decisions = args.decisions as { questionId: string; answer: string; author: "ai" | "ai_relayed_human"; reason: string }[];
-    const r = ws.settle(decisions);
-    if (!r.ok) {
-      ws.note("ai", T.settleRefused(decisions.length));
-      return { ok: false, code: r.code };
-    }
-    ws.note("ai", T.settled(decisions.length, r.unresolved));
-    return { ok: true, data: { cellsAffected: r.cellsAffected, rowsAffected: r.rowsAffected, unresolved: r.unresolved } };
+    return andThen(ws.settleWith(decisions), (r): TabToolResult => {
+      if (!r.ok) {
+        ws.note("ai", T.settleRefused(decisions.length));
+        return { ok: false, code: r.code };
+      }
+      ws.note("ai", T.settled(decisions.length, r.unresolved));
+      return { ok: true, data: { cellsAffected: r.cellsAffected, rowsAffected: r.rowsAffected, unresolved: r.unresolved } };
+    });
   },
   intake_compose: (ws) => {
     const r = ws.startCompose("ai");
@@ -261,20 +267,28 @@ const INTERMEDIATE: Partial<Record<ToolName, (d: Record<string, unknown>) => boo
   peer_reference: (d) => d.mode === "ledger" && typeof d.packId === "string",
 };
 
-export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): TabToolResult {
+function runTabToolWith(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): Maybe<TabToolResult> {
   const receiver = TAB_TOOL_RECEIVERS[name];
   if (!receiver) return { ok: false, code: "tool_failed" };
   const def = toolDef(name);
   const args = def.input.safeParse(rawArgs);
   if (!args.success) return { ok: false, code: "tool_failed" };
-  const r0 = receiver(ws, args.data as Record<string, unknown>, ctx);
-  if (!r0.ok) return r0;
-  // 今効いている Skill の目録を添える（本文は intake_survey の part: skills。docs/plan.md §2.18.3）
-  const r: TabToolResult = (SKILL_CATALOG_TOOLS as readonly string[]).includes(name) ? { ...r0, data: { ...r0.data, skills: skillCatalog(skillsOf(ws)) } } : r0;
-  // AI へ返す答えは型で確かめる。橋渡しへ渡す途中の中身は、その形だけを確かめる
-  const mid = INTERMEDIATE[name];
-  if (mid?.(r.data)) return r;
-  if (!def.output.safeParse(r.data).success) return { ok: false, code: "tool_failed" };
+  return andThen(receiver(ws, args.data as Record<string, unknown>, ctx), (r0) => {
+    if (!r0.ok) return r0;
+    // 今効いている Skill の目録を添える（本文は intake_survey の part: skills。docs/plan.md §2.18.3）
+    const r: TabToolResult = (SKILL_CATALOG_TOOLS as readonly string[]).includes(name) ? { ...r0, data: { ...r0.data, skills: skillCatalog(skillsOf(ws)) } } : r0;
+    // AI へ返す答えは型で確かめる。橋渡しへ渡す途中の中身は、その形だけを確かめる
+    const mid = INTERMEDIATE[name];
+    if (mid?.(r.data)) return r;
+    if (!def.output.safeParse(r.data).success) return { ok: false, code: "tool_failed" };
+    return r;
+  });
+}
+
+/** AI のツールを 1 つ動かし、その場で答える（取り込みの受け手が同じスレッドのときだけ。試験が使う） */
+export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): TabToolResult {
+  const r = runTabToolWith(ws, name, rawArgs, ctx);
+  if (r instanceof Promise) throw new Error("取り込みが worker の中にあるときは runTabToolAsync で待つ");
   return r;
 }
 
@@ -282,9 +296,9 @@ export function runTabTool(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<
 export type FetchIntakeFile = (fileId: string) => Promise<Uint8Array | null>;
 
 /** 作業画面にある資料の名前と件数（取り込みの資料はシートと行の数、写真の欄の画像は null） */
-function namesIn(ws: IntakeWorkspace): Map<string, { sheets: number | null; rows: number | null }> {
+async function namesIn(ws: IntakeWorkspace): Promise<Map<string, { sheets: number | null; rows: number | null }>> {
   const m = new Map<string, { sheets: number | null; rows: number | null }>();
-  for (const f of ws.survey().files) m.set(f.fileRef, { sheets: f.sheets, rows: f.rows });
+  for (const f of (await ws.surveyWith()).files) m.set(f.fileRef, { sheets: f.sheets, rows: f.rows });
   for (const e of ws.photoBook.entries()) if (!m.has(e.input.name)) m.set(e.input.name, { sheets: null, rows: null });
   return m;
 }
@@ -309,7 +323,7 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
     if (!ws.settings.packId && a.pack) ws.setFacility({ packId: a.pack });
     if (!ws.settings.facilityName.trim() && a.facilityName) ws.setFacility({ facilityName: a.facilityName });
   }
-  const before = namesIn(ws);
+  const before = await namesIn(ws);
   const refused: IntakeAddFilesFromTab["refused"] = [];
   const got: (DroppedFile & { name: string })[] = [];
   for (const f of a.files) {
@@ -317,11 +331,10 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
     if (!bytes || bytes.length !== f.size) refused.push({ name: f.name, reason: "changed" });
     else got.push({ name: f.name, size: bytes.length, bytes: async () => bytes });
   }
-  if (got.length) {
-    await ws.addFiles(got);
-    if (!ws.settings.fictional && ws.sourcesMarkedFictional()) ws.setFacility({ fictional: true });
-  }
-  const after = namesIn(ws);
+  if (got.length) await ws.addFiles(got);
+  // 要約を待ってから見る（worker のときは、読み終わった写しが届いてから【架空】の印が分かる）
+  const after = await namesIn(ws);
+  if (got.length && !ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });
   const added: IntakeAddFilesFromTab["added"] = [];
   for (const f of got) {
     const x = after.get(f.name);
@@ -340,6 +353,11 @@ export const TAB_ASYNC_TOOL_RECEIVERS: Partial<Record<ToolName, (ws: IntakeWorks
   intake_add_files: addFilesFromBridge,
 };
 
+/** AI のツールを 1 つ動かし、取り込みの答えを待って答える（橋渡しからの呼び出しはこれ。時間の上限は橋渡しが持つ） */
+export async function runTabToolAsync(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): Promise<TabToolResult> {
+  return runTabToolWith(ws, name, rawArgs, ctx);
+}
+
 /** 橋渡しとの接続に、このタブの作業場を AI のツールの受け手としてつなぐ（App が 1 回だけ呼ぶ） */
 export function connectTabTools(client: BridgeClient, ws: IntakeWorkspace): void {
   // 計画ルールの案（R）：作業中の計画か当てているルールが変わるたびに出し直す
@@ -347,7 +365,7 @@ export function connectTabTools(client: BridgeClient, ws: IntakeWorkspace): void
   client.setToolHandlers({
     call: async (name, args, ctx) => {
       const later = TAB_ASYNC_TOOL_RECEIVERS[name];
-      return later ? later(ws, args, (id) => client.fetchIntakeFile(id)) : runTabTool(ws, name, args, ctx);
+      return later ? later(ws, args, (id) => client.fetchIntakeFile(id)) : runTabToolAsync(ws, name, args, ctx);
     },
     unknown: (name) => ws.note("unknown", TEXT.intake.activity.unknown(name)),
   });

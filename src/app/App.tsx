@@ -1,5 +1,6 @@
 // 画面の外枠：Mantine の設定、hash での段の切り替え（トップ・MERGE・EXPORT・SHARE・設定・Ed25519 の試験。src/app/stages.ts）、右下のビルドの印。
 // 取り込みの作業場はこのタブで 1 つだけ作り、画面と AI のツールの受け手（intake/tab-tools.ts）が同じものを使う。
+// 資料を読み、読み取るのは worker（intake/intake.worker.ts）。主のスレッドは写しを読むので、資料が多くても画面は止まらない。
 import { MantineProvider, useComputedColorScheme } from "@mantine/core";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Shell } from "./components/Shell";
@@ -10,6 +11,7 @@ import { Merge } from "./pages/Merge";
 import { routeOf } from "./stages";
 import { IntakeWorkspace } from "./intake/workspace";
 import { connectTabTools } from "./intake/tab-tools";
+import { startIntakeWorker } from "./intake/start-worker";
 import { SelfTest } from "./pages/SelfTest";
 import { APP_PAGES, ROUTES } from "../shared/routes";
 import { moyaiCssVariables, moyaiTheme } from "../ui/mantine-theme";
@@ -30,7 +32,7 @@ const Export = lazy(() => import("./pages/Export").then((m) => ({ default: m.Exp
 
 // タブの秘密を持つ接続は、このタブで 1 つだけ作る（state/bridge.ts。星取表・検問所・設定も同じ接続を使う）
 // AI のツールの受け手は、つなぐ前に登録する
-const workspace = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
+const workspace = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false }, startIntakeWorker());
 const client = bridgeClient((c) => connectTabTools(c, workspace));
 
 // 前の作業の写し（作業中の計画と確定のシートの確定。IndexedDB。資料は書かない）。IndexedDB が無ければ置かない
@@ -95,7 +97,7 @@ export function App() {
     <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
       <ThemeSync />
       <ReadingsSync />
-      <Shell client={client} hash={hash} status={<DraftBand onRestored={onDraftRestored} />}>
+      <Shell client={client} hash={hash} workspace={workspace} status={<DraftBand onRestored={onDraftRestored} />}>
       {route.stage === "selftest" ? (
         <SelfTest />
       ) : route.stage === "share" || route.stage === "settings" ? (

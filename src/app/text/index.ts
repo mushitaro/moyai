@@ -38,6 +38,8 @@ export const TEXT = {
     themeDark: "暗",
     themeLight: "明",
     settings: "設定",
+    /** 下の帯：資料の読込の進み（読んでいる間だけ） */
+    reading: (done: number, total: number) => `読込 ${done}/${total}`,
   },
   /**
    * 前の作業を戻す（下の帯。pwa-v0）：開いたときに、閉じる前の作業中の計画と確定のシートの確定が残っていれば出し、人が選ぶ。
@@ -415,6 +417,10 @@ export const TEXT = {
     needFiles: "資料がまだ無い",
     needPack: "Skillパックを選んでいない",
     needName: "施設名が空",
+    /** 取り込みの worker を起こせず、画面と同じスレッドで読むとき（読込の間は画面が止まる） */
+    workerFallback: "取り込みの別の処理を起動できませんでした。資料の読込中は画面が止まります",
+    /** 取り込みの worker が答えなくなったとき */
+    workerStopped: "取り込みの処理が停止。このタブを読み込み直してください。",
     composed: (assets: number, works: number, details: number) => `計画を作りました（機器の節 ${assets}・作業 ${works}・明細 ${details}）。作業中の計画として、星取表で見られます。`,
     composedBy: { human: "画面で作りました", ai: "AI が作りました" },
     toChart: "星取表を表示",
@@ -435,6 +441,7 @@ export const TEXT = {
       pick: "ファイルを選ぶ",
       reading: "読んでいます",
       skipped: "読まなかった資料",
+      failed: "取り込みの処理の誤りで読めなかった",
     },
     dest: {
       title: "セルの行き先",
@@ -476,6 +483,7 @@ export const TEXT = {
       cellUnresolved: "未解決",
       cellQuestion: (text: string) => `この質問に答えると決まります：${text}`,
       pick: "セルを押すと、行き先をここに出します。",
+      loading: "読込中",
     },
     questions: {
       title: "質問",
@@ -531,6 +539,8 @@ export const TEXT = {
       crosswalkRefused: (rules: number) => `AI の紐付けのルール ${rules} 個を断りました（置けない値か、もとにした版が古いので、どれも置いていません）`,
       filesAdded: (demo: boolean, added: number, refused: number) => `AI が${demo ? "デモの" : "フォルダの"}資料を追加 ${added} 件${refused ? `・未追加 ${refused} 件` : ""}`,
       demoMixed: "AI のデモの資料は未追加（架空でない資料か、ほかの Skillパックの資料があるため）",
+      /** 要約の注記（AI に渡す）：資料の読込の途中に要約を読んだとき */
+      readingNote: (done: number, total: number) => `資料の読込の途中（${done}/${total}）。まだ読んでいない資料は、この要約に入っていない`,
     },
     questionKind: {
       encoding: "文字コード",

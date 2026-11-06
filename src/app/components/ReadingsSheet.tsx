@@ -10,7 +10,7 @@ import { sheetHash } from "../stages";
 import { planRuleMarks, planRuleWaiting } from "../state/cycles";
 import { MergeSideContext } from "../state/merge-side";
 import { useWorkingPlan } from "../state/plan-store";
-import { readingTab, type ReadingTabRule, type ReadingTabSkill } from "../state/reading-tab";
+import { readingHitsOf, readingTab, type ReadingTabRule, type ReadingTabSkill } from "../state/reading-tab";
 import { HUMAN_TEXT } from "../text";
 import { Switch } from "./Switch";
 
@@ -21,7 +21,7 @@ type Filter = "draft" | "all";
 /** 未承認のルールの決まりの数（シートのタブの「ルール n」） */
 export function unapprovedReadings(ws: IntakeWorkspace): number {
   if (!ws.fileCount || ws.currentReadings().length === 0) return 0;
-  return readingTab(ws.currentReadings(), ws.analysis()).unapproved;
+  return readingTab(ws.currentReadings(), readingHitsOf(ws.view)).unapproved;
 }
 
 export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
@@ -30,7 +30,7 @@ export function ReadingsSheet({ ws }: { ws: IntakeWorkspace }) {
   const tab = useMemo(
     () =>
       ws.fileCount
-        ? readingTab(ws.currentReadings(), ws.analysis(), (name, r) => ({ marks: planRuleMarks(working?.plan ?? null, name, r.id), waiting: planRuleWaiting(working?.plan ?? null, r) }))
+        ? readingTab(ws.currentReadings(), readingHitsOf(ws.view), (name, r) => ({ marks: planRuleMarks(working?.plan ?? null, name, r.id), waiting: planRuleWaiting(working?.plan ?? null, r) }))
         : { skills: [], unapproved: 0 },
     [ws, ws.version, working],
   );
