@@ -12,6 +12,7 @@ import { PhotoDesk } from "./photos";
 import type { TabSentCode } from "../../shared/errors";
 import type { Plan } from "../../shared/plan";
 import { placeComposedPlan } from "../state/crosswalk";
+import { packLevelNames } from "../chart/catalog";
 import { TEXT } from "../text";
 
 /** 1 ファイルの上限（§2.12） */
@@ -148,6 +149,7 @@ export class IntakeWorkspace {
       planId: key,
       displayName: s.facilityName,
       packId: s.packId,
+      defaultLevelNames: packLevelNames(s.packId),
       facility: {
         facilityKey: key,
         name: s.facilityName,

@@ -160,6 +160,24 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-06-chart-common") });
     });
 
+    await test.step("3 似た施設を重ねる（共通台帳の上で、まず全国の似た施設と比べる。運営者の指摘、11-06）：見出しの「似た施設　重ねる」。共通の行の下に「似た施設　帯 …」の 1 行", async () => {
+      await pa.getByTestId("merge-peers").getByRole("button", { name: "比較" }).click();
+      await expect(pa.getByTestId("peer-panel")).toBeVisible();
+      // 見え方の答えは施設の設定で（星取表の上では答えない）
+      await pa.getByTestId("peer-fix").click();
+      await pa.getByTestId("facility-national").selectOption("yes");
+      await pa.getByTestId("facility-furnace").selectOption(PROFILE.furnace);
+      await pa.getByTestId("facility-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
+      await pa.getByTestId("facility-turbine").selectOption(PROFILE.turbine);
+      await pa.getByTestId("facility-ash").selectOption(PROFILE.ash);
+      await pa.getByTestId("facility-contract").selectOption(PROFILE.contract);
+      await pa.getByTestId("facility-save").click();
+      await expect(pa.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
+      await pa.screenshot({ path: shot("demo-22-peers") });
+      await pa.getByTestId("merge-peers").getByRole("button", { name: "戻す" }).click();
+      await expect(pa.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
+    });
+
     await test.step("3 突き合せ：資料をまたいで結んだ作業を、資料ごとの書き方で並べる（一致・片方だけ・食い違い）", async () => {
       await pa.getByTestId("sheet-match").click();
       await expect(pa.getByTestId("match-sheet")).toBeVisible();
@@ -368,24 +386,6 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("rows-mode").getByText("施設台帳").click();
       await expect(pa.getByTestId("legend-changed-from")).toContainText("第 2 版から変更");
       await pa.screenshot({ path: shot("demo-21-from-old") });
-    });
-
-    await test.step("7 似た施設を重ねる：見出しの「似た施設　重ねる」。共通の行の下に「似た施設　帯 …」の 1 行", async () => {
-      await pa.getByTestId("merge-peers").getByRole("button", { name: "比較" }).click();
-      await expect(pa.getByTestId("peer-panel")).toBeVisible();
-      // 見え方の答えは施設の設定で（星取表の上では答えない）
-      await pa.getByTestId("peer-fix").click();
-      await pa.getByTestId("facility-national").selectOption("yes");
-      await pa.getByTestId("facility-furnace").selectOption(PROFILE.furnace);
-      await pa.getByTestId("facility-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
-      await pa.getByTestId("facility-turbine").selectOption(PROFILE.turbine);
-      await pa.getByTestId("facility-ash").selectOption(PROFILE.ash);
-      await pa.getByTestId("facility-contract").selectOption(PROFILE.contract);
-      await pa.getByTestId("facility-save").click();
-      await expect(pa.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
-      await pa.screenshot({ path: shot("demo-22-peers") });
-      await pa.getByTestId("merge-peers").getByRole("button", { name: "戻す" }).click();
-      await expect(pa.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
     });
 
     await test.step("8 コメント：星取表の行を選んで書くと、その行に ① が付き、横の板に並ぶ", async () => {

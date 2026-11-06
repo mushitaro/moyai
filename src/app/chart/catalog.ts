@@ -36,6 +36,12 @@ export function packFiscalStart(packId: string): number | null {
   return typeof m === "number" && Number.isInteger(m) && m >= 1 && m <= 12 ? m : null;
 }
 
+/** パックの階層の名前（pack.json の levelNames）。無ければ空 */
+export function packLevelNames(packId: string): string[] {
+  const json = packJsons[`../../../packs/${packId}/pack.json`] as { levelNames?: unknown } | undefined;
+  return Array.isArray(json?.levelNames) ? json.levelNames.filter((x): x is string => typeof x === "string") : [];
+}
+
 /** 選べるパック（packs/<パック>/common.json があるもの）。画面に出すのは pack.json の名前（無ければ ID） */
 export function packChoices(): { id: string; name: string; table: string }[] {
   return [...byPack.entries()]

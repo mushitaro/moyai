@@ -24,6 +24,8 @@ export interface IntakeOptions {
   displayName: string;
   packId: string;
   facility: Plan["facility"];
+  /** パックの階層の名前（pack.json の levelNames）。資料の見出しに名前の無い階層は、この名前にする（docs/plan.md §2.2。無ければ「第 n 階層」） */
+  defaultLevelNames?: readonly string[];
 }
 
 export interface Analysis {

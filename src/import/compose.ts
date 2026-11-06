@@ -45,6 +45,8 @@ export interface ComposeOptions {
   displayName: string;
   packId: string;
   facility: Plan["facility"];
+  /** パックの階層の名前（資料の見出しに名前の無い階層に使う） */
+  defaultLevelNames?: readonly string[];
 }
 
 export interface Composition {
@@ -715,7 +717,7 @@ export function compose(
     displayName: opts.displayName,
     packId: opts.packId,
     version: 0,
-    levelNames: levelNames(rec, assets),
+    levelNames: levelNames(rec, assets, opts.defaultLevelNames ?? []),
     facility: opts.facility,
     assets,
     works: [...works.values()],
@@ -737,11 +739,12 @@ export function compose(
   return { plan, blockers, status, counts, checks, photoReview };
 }
 
-function levelNames(rec: Records, assets: AssetNodeT[]): string[] {
+/** 階層の名前：資料の見出しの名前、無ければパックの階層の名前（既定）、それも無ければ「第 n 階層」（docs/plan.md §2.2。運営者の指摘、11-06） */
+function levelNames(rec: Records, assets: AssetNodeT[], defaults: readonly string[]): string[] {
   const depth = assets.reduce((a, x) => Math.max(a, x.level), 0);
   const names: string[] = [];
   const grid = [...rec.levelNames.values()].sort((a, b) => b.length - a.length)[0] ?? [];
-  for (let i = 0; i < depth; i++) names.push(grid[i] && grid[i] !== "" ? (grid[i] ?? "") : `第${i + 1}階層`);
+  for (let i = 0; i < depth; i++) names.push(grid[i] && grid[i] !== "" ? (grid[i] ?? "") : defaults[i] && defaults[i] !== "" ? defaults[i]! : `第${i + 1}階層`);
   return names;
 }
 
