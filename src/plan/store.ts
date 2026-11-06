@@ -14,7 +14,7 @@ import { Plan } from "../shared/plan";
 import type { Rule } from "../shared/tools";
 import type { ChartCatalog } from "./chart";
 import { applyAcceptedCycles, type CycleTriggerChange } from "./cycle";
-import { applyAcceptances, diffPlans, pendingDecisions, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
+import { REMOVAL_PREFIX, applyAcceptances, diffPlans, isRemovalId, pendingDecisions, removalHash, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
 import { fixWorkbook } from "./xlsx-fix";
 import { EXPORT_SIGNATURE_FILE, checkExports, type ExportInfo } from "./exports";
@@ -295,7 +295,7 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
     };
     versions.push(info);
     // 人が受けた決定に数えるのは、確かめで合う署名のある版だけ（前の形の版の受けた決定は数えない）
-    if (!legacy && problem === null) for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason });
+    if (!legacy && problem === null) for (const a of record.acceptances) accepted.push({ id: a.id, hash: a.hash, reason: a.reason, version: record.version });
     if (prevInfo === null) derivedFrom = record.derivedFrom ?? null;
     previous = latest;
     latest = record;
@@ -373,9 +373,20 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
   if (hist.versions.some((v) => v.problem !== null)) return { ok: false, reason: "historyBroken" };
   const pending = pendingDecisions(plan, hist.accepted);
   const byId = new Map(i.acceptances.map((a) => [`${a.id}\u0000${a.hash}`, a]));
+  // 人が確定した星取の削除（remove:<明細の鍵>。Architect の 70）：その明細が今の計画に無いこと。前の版にあった明細なら、中身の指紋が合うこと
+  const now = new Set(plan.details.map((d) => d.detailKey));
+  const before = new Map((hist.latest?.plan.details ?? []).map((d) => [d.detailKey, d]));
+  const seenRemoval = new Set<string>();
   for (const a of i.acceptances) {
-    if (!pending.some((d) => d.id === a.id && d.hash === a.hash)) return { ok: false, reason: "acceptanceUnknown" };
     if (a.reason.trim().length === 0) return { ok: false, reason: "acceptanceReasonEmpty" };
+    if (isRemovalId(a.id)) {
+      const key = a.id.slice(REMOVAL_PREFIX.length);
+      const was = before.get(key);
+      if (key.length === 0 || now.has(key) || seenRemoval.has(key) || !/^[0-9a-f]{16}$/.test(a.hash) || (was && removalHash(was) !== a.hash)) return { ok: false, reason: "acceptanceUnknown" };
+      seenRemoval.add(key);
+      continue;
+    }
+    if (!pending.some((d) => d.id === a.id && d.hash === a.hash)) return { ok: false, reason: "acceptanceUnknown" };
   }
   const left = pending.filter((d) => !byId.has(`${d.id}\u0000${d.hash}`));
   if (left.length > 0) return { ok: false, reason: "pendingDecisions", pending: left.length };
@@ -509,7 +520,15 @@ async function writeVersion(
     plan,
   };
   // 差分レポートと書き出しは署名の前に作り、そのハッシュを版の記録に入れる（落とすときに照らす。監査 E1）
-  const reportBytes = await diffReport(base, diff, v.signer.by);
+  // 人が確定した星取の削除の理由（差分レポートの削除の行の「理由」に出す。Architect の 70・Wire）：作業 × 年度 → 理由
+  const removedReasons = new Map<string, string>();
+  const prevDetails = new Map((hist.latest?.plan.details ?? []).map((d) => [d.detailKey, d]));
+  for (const a of v.acceptances) {
+    if (!isRemovalId(a.id)) continue;
+    const d = prevDetails.get(a.id.slice(REMOVAL_PREFIX.length));
+    if (d) removedReasons.set(`${d.workKey}\u0000${d.fiscalYear}`, a.reason);
+  }
+  const reportBytes = await diffReport(base, diff, v.signer.by, removedReasons);
   const c = v.catalogs ? v.catalogs(plan.packId) : null;
   const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty }) : null;
   const { plan: _plan, ...head } = base;
@@ -620,12 +639,12 @@ export const REPORT_TEXT = {
   reason: "確定の理由",
   summary: (s: VersionRecord["summary"]) => `星取　追加 ${s.added}・削除 ${s.removed}・変更 ${s.changed}・変更なし ${s.same}`,
   fiction: "【架空】",
-  head: ["機器", "作業", "年度", "前の星取", "後の星取", "誰が", "なぜ"],
+  head: ["機器", "作業", "年度", "前の星取", "後の星取", "作者", "理由"],
   mark: { plan: "○ 計画", actual: "● 実績", both: "◎ 計画と実績", none: "（星取なし）" } as Record<DiffMark | "none", string>,
   author: {
     human: "人",
     ai: "AI",
-    ai_relayed_human: "AI（チャットでの人の答え）",
+    ai_relayed_human: "会話の回答",
     ai_reading: "AI（読み取り）",
     rule_code: "決まり（コード）",
   } satisfies Record<AuthorKind, string>,
@@ -634,7 +653,7 @@ export const REPORT_TEXT = {
 };
 
 /** 差分レポートの xlsx（人が見る様式：見出しの固定、列の幅、A4 横）。 */
-export async function diffReport(record: VersionRecord, diff: PlanDiff, by: string | null = null): Promise<Buffer> {
+export async function diffReport(record: VersionRecord, diff: PlanDiff, by: string | null = null, removedReasons: ReadonlyMap<string, string> = new Map()): Promise<Buffer> {
   const T = REPORT_TEXT;
   const wb = new ExcelJS.Workbook();
   wb.created = new Date(record.at);
@@ -662,14 +681,16 @@ export async function diffReport(record: VersionRecord, diff: PlanDiff, by: stri
   if (diff.rows.length === 0) ws.getRow(8).getCell(1).value = T.noRows;
   diff.rows.forEach((r, i) => {
     const row = ws.getRow(8 + i);
+    // 人が確定した削除の行：作者は人、理由は人の判断の理由（Architect の 70・Wire）
+    const removed = removedReasons.get(`${r.workKey}\u0000${r.fiscalYear}`);
     row.values = [
       r.equipment,
       r.work,
       r.fiscalYear,
       T.mark[r.before ?? "none"],
       T.mark[r.after ?? "none"],
-      r.authors.map((a) => T.author[a]).join("、"),
-      r.basis.join(" / "),
+      removed !== undefined ? T.author.human : r.authors.map((a) => T.author[a]).join("、"),
+      removed !== undefined ? removed : r.basis.join(" / "),
     ];
     row.getCell(3).numFmt = "0";
   });

@@ -3,6 +3,7 @@
 // 写真（人が 1 枚ずつ AI クライアントに渡すことを許し、読み取りを画像と並べて確かめる。components/PhotoPanel.tsx）。
 // 主ボタン「計画を作る」は見出しの行の右端。止める決まりに当たる間は押せず、理由を横に出す。
 // 状態は取り込みの作業場（intake/workspace.ts。このタブのメモリだけ）が持ち、AI のツールも同じ作業場を使う。
+import { removedCellOf } from "../state/stars";
 import {
   Alert,
   Badge,
@@ -272,6 +273,17 @@ function SourceTab({ view, layouts }: { view: IntakeView; layouts: SheetData[] }
       <Text size="sm" c={pickedStatus?.s === "unresolved" ? "var(--shu-text)" : undefined}>
         {cellInfo(pickedStatus, view)}
       </Text>
+      {(() => {
+        // 版の履歴で人が確定して消した星取のセル：「削除（第 n 版）」と理由（Architect の 70。Wire）
+        const rm = pickedCell ? removedCellOf(lay.file, lay.sheet, pickedCell.ref) : undefined;
+        return (
+          rm && (
+            <Text size="sm" data-testid="source-cell-removed">
+              {T.source.removedIn(rm.version)}　{rm.reason}
+            </Text>
+          )
+        );
+      })()}
     </Stack>
   );
   return (

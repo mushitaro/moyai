@@ -372,6 +372,8 @@ export const HUMAN_TEXT = {
     starYearsSep: "・",
     /** 詳しくの 1 つずつ：「2028 年度　計画の追加」 */
     starItem: (fy: number, kind: string) => `${fy} 年度　${kind}`,
+    /** 実績の追加の参考の作業ごとの行（Wire、11-06 夜）：「火格子交換　作業明細 3」 */
+    starRefItem: (name: string, lines: number) => `${name}　作業明細 ${fmt(lines)}`,
     starRejectedDone: (n: number) => `星取の案を却下しました（星取 ${fmt(n)}）`,
     starAcceptedDone: (n: number) => `星取の案を確定しました（星取 ${fmt(n)}）`,
     /** 却下のダイアログ（Wire、11-06）：題「却下」、項目の 1 行、欄「判断の理由」、「あとで」「却下」 */

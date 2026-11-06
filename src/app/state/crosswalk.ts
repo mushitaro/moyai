@@ -24,6 +24,7 @@ import { TEXT } from "../text";
 import { getWorkingPlan, setWorkingPlan, updateWorkingPlan } from "./plan-store";
 import { AMBIGUOUS_KEY_PREFIX } from "../../import/compose";
 import { isPlanRuleCycle } from "../../plan/cycle";
+import { dropRemovedInHistory } from "./stars";
 import { proposalIdOf } from "../../plan/star";
 
 /** もとにした版（1C）：MERGE で版を開いたときに置く。作り直すと、その版の当てはめを「第 n 版と同じ」の案として並べる */
@@ -149,7 +150,9 @@ export function crosswalkSurvey(): CrosswalkSurvey | null {
  * 取り込みが作った計画を作業中の計画に置く。前の作業中の計画が同じ計画（取り込みの、同じ計画の ID）なら、
  * その当てはめ（AI の案・人が受けた規則・人が直に当てた行）を引き継ぎ、引き継いだ数を返す。引き継ぐものが無ければ null。
  */
-export function placeComposedPlan(next: Plan): CarryOverReport | null {
+export function placeComposedPlan(composed: Plan): CarryOverReport | null {
+  // 版の履歴で人が確定して消した星取は、資料から読み直しても外したままにする（Architect の 70。state/stars.ts）
+  const next = dropRemovedInHistory(composed);
   const prev = getWorkingPlan();
   const same = prev !== null && prev.origin === "intake" && prev.plan.planId === next.planId;
   const b = base && base.plan.planId === next.planId ? base : null;

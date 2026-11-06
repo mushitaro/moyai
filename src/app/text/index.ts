@@ -472,6 +472,8 @@ export const TEXT = {
     /** MERGE の資料のタブ（MERGE r2。言葉は docs/words.md：読取・除外・未確定行・全行） */
     source: {
       filterLabel: "資料の行の表示",
+      /** 版の履歴で人が確定して消した星取のセル（Architect の 70。Wire、11-06 夜）：「削除（第 7 版）」と理由 */
+      removedIn: (v: number | null) => (v === null ? "削除" : `削除（第 ${v} 版）`),
       openRows: "未確定行",
       allRows: "全行",
       read: "読取",

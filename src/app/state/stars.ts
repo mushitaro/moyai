@@ -10,6 +10,7 @@ import { STAR_PREFIX, checkStars, proposalIdOf, proposeStars, removalBasis, remo
 import type { VerifiedBases } from "../../plan/cycle";
 import type { WorkDetailT } from "../../shared/plan";
 import type { TabSentCode } from "../../shared/errors";
+import { removalHash, removalId, type Acceptance } from "../../plan/diff";
 import { getWorkingPlan, updateWorkingPlan } from "./plan-store";
 
 /** 星取の案の確かめの答え → AI に返す誤り（作業画面が送り手。src/shared/errors.ts） */
@@ -227,6 +228,48 @@ export function rejectStarGroupByHuman(id: string, reason: string, fallback?: { 
   return { ok: true, details: mine.length + (g?.removes.length ?? 0) };
 }
 
+/**
+ * 確定した削除を、版の記録に入れる形にする（id「remove:<明細の鍵>」・消した明細の指紋・人の理由。作者は橋渡しが human にする。Architect の 70）。
+ * 署名のダイアログが acceptances に足して送る
+ */
+export function removalAcceptances(): Acceptance[] {
+  const out: Acceptance[] = [];
+  for (const g of starGroups()) {
+    if (g.state !== "accepted" || !g.humanReason) continue;
+    for (const d of g.removed ?? []) out.push({ id: removalId(d.detailKey), hash: removalHash(d), reason: g.humanReason });
+  }
+  return out;
+}
+
+// ─── 次の版：確定した削除を、資料から読み直した計画でも外したままにする（Architect の 70） ─────────────
+
+/** 版の履歴で確定した削除：明細の鍵 → 版と理由（確定のシートの「第 n 版と同じ」には出さない。資料のシートの行き先に出す。Wire） */
+let removedInHistory = new Map<string, { version: number | null; reason: string }>();
+export function setRemovedInHistory(accepted: readonly Acceptance[]): void {
+  const next = new Map<string, { version: number | null; reason: string }>();
+  for (const a of accepted) if (a.id.startsWith("remove:")) next.set(a.id.slice("remove:".length), { version: a.version ?? null, reason: a.reason });
+  removedInHistory = next;
+}
+export function removedInHistoryOf(detailKey: string): { version: number | null; reason: string } | undefined {
+  return removedInHistory.get(detailKey);
+}
+/** 外した星取の元のセル（資料・シート・セル → 版と理由。資料のシートの詳細に「削除（第 n 版）」と理由を出す。Wire） */
+let removedCells = new Map<string, { version: number | null; reason: string }>();
+const cellKeyOf = (file: string, sheet: string | null, cell: string) => `${file}\u0000${sheet ?? ""}\u0000${cell}`;
+export function removedCellOf(file: string, sheet: string | null, cell: string): { version: number | null; reason: string } | undefined {
+  return removedCells.get(cellKeyOf(file, sheet, cell));
+}
+/** 資料から作った計画から、版の履歴で人が確定して消した星取を外す（消したものが資料から戻らないように） */
+export function dropRemovedInHistory<P extends { details: readonly { detailKey: string; sources: readonly { file: string; sheet: string | null; cell: string | null }[] }[] }>(plan: P): P {
+  removedCells = new Map();
+  if (removedInHistory.size === 0 || !plan.details.some((d) => removedInHistory.has(d.detailKey))) return plan;
+  for (const d of plan.details) {
+    const r = removedInHistory.get(d.detailKey);
+    if (r) for (const s of d.sources) if (s.cell) removedCells.set(cellKeyOf(s.file, s.sheet, s.cell), r);
+  }
+  return { ...plan, details: plan.details.filter((d) => !removedInHistory.has(d.detailKey)) };
+}
+
 /** 確定のシートを開いたときに選ぶ案（星取表の詳しくの「| 確定のシートで見る」。1 回だけ受け取る） */
 let pick: string | null = null;
 export function requestStarPick(id: string): void {
@@ -244,6 +287,7 @@ export function clearStarPick(): void {
 /** 試験用 */
 export function resetStarsForTest(): void {
   groups = [];
+  removedInHistory = new Map();
   seq = 0;
   pick = null;
   notify();

@@ -12,6 +12,7 @@ import { getWorkingPlan } from "../state/plan-store";
 import { sheetHash } from "../stages";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
+import { removalAcceptances } from "../state/stars";
 import type { Plan } from "../../shared/plan";
 import type { Rule } from "../../shared/tools";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
@@ -233,7 +234,8 @@ export function ConfirmDialog({
       ...(src ? { sources: src.files.map((f) => ({ name: f.name, sha256: f.sha256, size: f.bytes.length })), decisions: src.decisions, crosswalk } : {}),
       plan,
       reason: reason.trim(),
-      acceptances: accepted,
+      // 確定した星取の削除も、確定の理由と作者を版の記録の署名の内側に入れる（remove:<明細の鍵>。Architect の 70）
+      acceptances: [...accepted, ...removalAcceptances()],
       // もとにした版：この編集を始めた保管先の版（ほかの人がその後に版を足していれば、橋渡しが断る）
       basedOn: baseOf(plan, status.latest?.version ?? null),
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる

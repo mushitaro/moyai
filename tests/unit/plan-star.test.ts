@@ -11,8 +11,14 @@ import { resetPlanRulesForTest } from "../../src/app/state/cycles";
 import { carryFromBase } from "../../src/app/state/crosswalk";
 import { getWorkingPlan, setWorkingPlan } from "../../src/app/state/plan-store";
 import { setReferenceDate } from "../../src/app/state/review";
+import ExcelJS from "exceljs";
+import { placeComposedPlan } from "../../src/app/state/crosswalk";
+import { removalHash, removalId } from "../../src/plan/diff";
 import {
   acceptRemovalsByHuman,
+  removalAcceptances,
+  removedCellOf,
+  setRemovedInHistory,
   openRemovalCount,
   rejectStarGroupByHuman,
   rejectedStarGroups,
@@ -22,8 +28,8 @@ import {
 } from "../../src/app/state/stars";
 import { CONVERSATION_SOURCE, PACK_SOURCE } from "../../src/plan/cycle";
 import { diffPlans, pendingDecisions } from "../../src/plan/diff";
-import { proposalIdOf, starIdOf, workRowRef } from "../../src/plan/star";
-import { commitPlan, readHistory } from "../../src/plan/store";
+import { actualReferenceView, basisWithoutReference, proposalIdOf, starIdOf, workRowRef } from "../../src/plan/star";
+import { commitPlan, planDir, readHistory } from "../../src/plan/store";
 import { ERRORS } from "../../src/shared/errors";
 import type { Plan } from "../../src/shared/plan";
 import { toolDef } from "../../src/shared/tools";
@@ -194,6 +200,14 @@ describe("実績の根拠（bases の決まりに合わせる）", () => {
     // 出どころは会話だけ（ほかの作業の実績は根拠にしない）
     expect(d.sources.map((s) => s.file)).toEqual([CONVERSATION_SOURCE]);
     expect(d.basis).toContain("（案 S1：実績の追加 2019 年度）。参考　同じ機器の 2019 年度の実績 1（作業明細 0）");
+  });
+
+  it("詳しくの参考：1 行目は根拠の文と同じ形、その下に作業ごとの作業明細の数を 3 つまで（Wire）。理由には参考を二重に出さない", () => {
+    const p = base();
+    expect(actualReferenceView(p, "w2", 2019)).toEqual({ head: "参考　同じ機器の 2019 年度の実績 1（作業明細 0）", items: [{ name: "耐火物の補修", lines: 0 }], more: 0 });
+    expect(actualReferenceView(p, "w1", 2022)).toEqual({ head: "参考　同じ機器の 2022 年度の実績 1（作業明細 1）", items: [{ name: "耐火物の点検", lines: 1 }], more: 0 });
+    expect(actualReferenceView(p, "w1", 2021)).toBeNull();
+    expect(basisWithoutReference("利用者の言葉（案 S1：実績の追加 2019 年度）。参考　同じ機器の 2019 年度の実績 1（作業明細 0）")).toBe("利用者の言葉（案 S1：実績の追加 2019 年度）");
   });
 
   it("利用者の言葉（ai_relayed_human）なら置ける。出どころは会話", () => {
@@ -379,3 +393,87 @@ describe("版を確定したあとの署名の確かめ", () => {
     expect(tampered.versions.map((x) => x.problem)).not.toEqual([null]);
   });
 });
+
+describe("星取の削除を版に残す（Architect の 70）", () => {
+  let dir = "";
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-plan-star-remove-"));
+  });
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+  const readSheet = async (path: string): Promise<string[][]> => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.readFile(path);
+    const out: string[][] = [];
+    wb.worksheets[0]!.eachRow((row) => out.push((row.values as unknown[]).slice(1).map((v) => (v === null || v === undefined ? "" : String(v)))));
+    return out;
+  };
+  /** 第 1 版（資料から読んだ計画）を確定して、作業中の計画をその版にする */
+  const firstVersion = async () => {
+    const v1 = await commitPlan({ root: dir, plan: base(), reason: "第 1 版", acceptances: [], basedOn: null, signer: SIGNER, client: "t" });
+    if (!v1.ok) throw new Error(v1.reason);
+    setWorkingPlan(v1.record.plan, "intake");
+    return v1;
+  };
+
+  it("資料から読んだ実績を消して確定：確定の理由と作者が版の記録の署名の内側（acceptances の remove:<明細の鍵>）に入り、差分レポートの削除の行の理由に出る", async () => {
+    await firstVersion();
+    const w = ws();
+    ok(propose(w, { author: "ai_relayed_human", stars: [{ op: "remove", rowRef: "w:w1", value: "actual", fiscalYear: 2019 }] }));
+    expect(removalAcceptances()).toEqual([]);
+    expect(acceptRemovalsByHuman(starGroups()[0]!.id, "二重に記録されていた（利用者）").ok).toBe(true);
+    const removals = removalAcceptances();
+    const d1 = base().details[0]!;
+    expect(removals).toEqual([{ id: removalId("d1"), hash: removalHash({ ...d1 }), reason: "二重に記録されていた（利用者）" }]);
+    const p = getWorkingPlan()!.plan;
+    const v2 = await commitPlan({ root: dir, plan: p, reason: "実績の誤りを消した", acceptances: removals, basedOn: 1, signer: SIGNER, client: "t" });
+    if (!v2.ok) throw new Error(v2.reason);
+    expect(v2.record.acceptances).toEqual([{ id: "remove:d1", hash: removals[0]!.hash, reason: "二重に記録されていた（利用者）", author: "human" }]);
+    expect(v2.record.plan.details.some((d) => d.detailKey === "d1")).toBe(false);
+    const h = await readHistory(dir, p.planId);
+    expect(h.versions.map((x) => x.problem)).toEqual([null, null]);
+    expect(h.accepted).toContainEqual({ id: "remove:d1", hash: removals[0]!.hash, reason: "二重に記録されていた（利用者）", version: 2 });
+    // 差分レポート：削除の行の作者は人、理由は人の判断の理由
+    const rows = await readSheet(v2.files.report);
+    const head = rows.findIndex((r) => r[0] === "機器");
+    expect(rows[head]).toEqual(["機器", "作業", "年度", "前の星取", "後の星取", "作者", "理由"]);
+    expect(rows.slice(head + 1)).toContainEqual(["耐火物", "耐火物の補修", "2019", "● 実績", "（星取なし）", "人", "二重に記録されていた（利用者）"]);
+    // 理由を書き換えると、署名の確かめで合わない
+    const file = join(planDir(dir, p.planId), "versions", "000002.json");
+    writeFileSync(file, readFileSync(file, "utf8").replace("二重に記録されていた（利用者）", "書き換えた理由"));
+    expect((await readHistory(dir, p.planId)).versions.map((x) => x.problem)[1]).not.toBeNull();
+  });
+
+  it("「＋ 次の版」で資料から作り直しても、確定して消した実績は戻らない。資料のセルには「削除（第 n 版）」と理由を引ける", async () => {
+    await firstVersion();
+    const w = ws();
+    ok(propose(w, { author: "ai_relayed_human", stars: [{ op: "remove", rowRef: "w:w1", value: "actual", fiscalYear: 2019 }] }));
+    acceptRemovalsByHuman(starGroups()[0]!.id, "二重に記録されていた");
+    const v2 = await commitPlan({ root: dir, plan: getWorkingPlan()!.plan, reason: "消した", acceptances: removalAcceptances(), basedOn: 1, signer: SIGNER, client: "t" });
+    if (!v2.ok) throw new Error(v2.reason);
+    // 次の版：橋渡しの版の履歴（確定した決定）を受け取り、同じ資料から計画を作り直す（取り込みの組み直しと同じ道）
+    resetStarsForTest();
+    setWorkingPlan(v2.record.plan, "intake");
+    setRemovedInHistory((await readHistory(dir, v2.record.plan.planId)).accepted);
+    const recomposed = { ...base(), planId: v2.record.plan.planId };
+    expect(recomposed.details.some((d) => d.detailKey === "d1")).toBe(true);
+    placeComposedPlan(recomposed);
+    const next = getWorkingPlan()!.plan;
+    expect(next.details.some((d) => d.detailKey === "d1")).toBe(false);
+    expect(next.details.map((d) => d.detailKey).sort()).toEqual(["d2", "d3", "d4", "d5", "d9"]);
+    const src = base().details[0]!.sources[0]!;
+    expect(removedCellOf(src.file, src.sheet, src.cell!)).toEqual({ version: 2, reason: "二重に記録されていた" });
+  });
+
+  it("橋渡しの確かめ：今の計画にまだある明細の削除・前の版と中身の指紋が合わない削除・理由の無い削除は確定しない", async () => {
+    const v1 = await firstVersion();
+    const p = v1.record.plan;
+    const without = { ...p, details: p.details.filter((d) => d.detailKey !== "d1") };
+    const good = { id: "remove:d1", hash: removalHash(p.details.find((d) => d.detailKey === "d1")!), reason: "誤り" };
+    expect(await commitPlan({ root: dir, plan: p, reason: "x", acceptances: [good], basedOn: 1, signer: SIGNER, client: "t" })).toMatchObject({ ok: false, reason: "acceptanceUnknown" });
+    expect(await commitPlan({ root: dir, plan: without, reason: "x", acceptances: [{ ...good, hash: "0".repeat(16) }], basedOn: 1, signer: SIGNER, client: "t" })).toMatchObject({ ok: false, reason: "acceptanceUnknown" });
+    expect(await commitPlan({ root: dir, plan: without, reason: "x", acceptances: [{ ...good, reason: " " }], basedOn: 1, signer: SIGNER, client: "t" })).toMatchObject({ ok: false, reason: "acceptanceReasonEmpty" });
+    expect((await commitPlan({ root: dir, plan: without, reason: "x", acceptances: [good], basedOn: 1, signer: SIGNER, client: "t" })).ok).toBe(true);
+  });
+});
+

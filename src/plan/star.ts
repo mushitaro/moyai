@@ -110,6 +110,23 @@ export function checkStars(plan: Plan, stars: readonly StarIn[], o: StarCheckOpt
 const sourceRef = (file: string, sheet: string | null = null): SourceRef => ({ file, sheet, page: null, cell: null, box: null });
 /** 根拠の文に書く種類の字（docs/screens.md 3.2 の行の題と同じ） */
 export const STAR_KIND_TEXT: Record<StarKind, string> = { planAdd: "計画の追加", planRemove: "計画の削除", planMove: "計画の移動", actualAdd: "実績の追加", actualRemove: "実績の削除" };
+/**
+ * 実績の追加の詳しくの参考（Wire、11-06 夜）：1 行目は根拠の文と同じ「参考　同じ機器の…」、その下に作業ごとの「火格子交換　作業明細 3」を 3 つまで、残りは数。
+ * 参考が無ければ null
+ */
+export function actualReferenceView(plan: Plan, workKey: string, fy: number): { head: string; items: { name: string; lines: number }[]; more: number } | null {
+  const ev = actualEvidence(plan, workKey, fy);
+  if (ev.length === 0) return null;
+  const by = new Map<string, number>();
+  for (const d of ev) by.set(d.workKey, (by.get(d.workKey) ?? 0) + (d.lines?.length ?? 0));
+  const names = new Map(plan.works.map((w) => [w.workKey, w.kind || w.workKey]));
+  const all = [...by].map(([k, lines]) => ({ name: names.get(k) ?? k, lines }));
+  return { head: actualReference(fy, ev), items: all.slice(0, 3), more: Math.max(0, all.length - 3) };
+}
+
+/** 詳しくに出す理由：根拠の文から参考の行を外したもの（参考は理由の下に別の行で出すので、二重に出さない） */
+export const basisWithoutReference = (basis: string): string => basis.split("。参考　同じ機器の")[0]!;
+
 /** 実績の追加の参考の行：「参考　同じ機器の 2024 年度の実績 1（作業明細 3）」 */
 export const actualReference = (fy: number, ev: readonly WorkDetailT[]): string =>
   `参考　同じ機器の ${fy} 年度の実績 ${ev.length}（作業明細 ${ev.reduce((m, d) => m + (d.lines?.length ?? 0), 0)}）`;

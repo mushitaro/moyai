@@ -147,7 +147,7 @@ describe("確定：版と差分レポート", () => {
     // 差分レポート：機器・作業・年度・前の星取・後の星取・誰が・なぜ
     const rows = await readSheet(v2.files.report);
     const head = rows.findIndex((r) => r[0] === "機器");
-    expect(rows[head]).toEqual(["機器", "作業", "年度", "前の星取", "後の星取", "誰が", "なぜ"]);
+    expect(rows[head]).toEqual(["機器", "作業", "年度", "前の星取", "後の星取", "作者", "理由"]);
     const body = rows.slice(head + 1);
     expect(body).toContainEqual(["架空の機器 a1", "架空の作業", "2022", "（星取なし）", "● 実績", "人", "架空の記録"]);
     expect(body).toContainEqual(["架空の機器 a1", "架空の作業", "2016", "● 実績", "（星取なし）", "人", "架空の記録"]);

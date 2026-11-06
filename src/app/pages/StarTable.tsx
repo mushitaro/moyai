@@ -23,9 +23,10 @@ import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
-import { STAR_KIND_TEXT, isStarProposal, proposalIdOf, starIdOf, starValueOfKey, type StarKind } from "../../plan/star";
+import { STAR_KIND_TEXT, basisWithoutReference, isStarProposal, proposalIdOf, starIdOf, starValueOfKey, type StarKind } from "../../plan/star";
 import { openRemovals, requestStarPick, starGroups, useStarGroups } from "../state/stars";
 import { sheetHash } from "../stages";
+import { StarReference } from "../components/StarReference";
 import { useAccepted } from "../state/decisions";
 import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey } from "../state/merge-side";
 import { compareCounts, marksOf } from "../../plan/chart-compare";
@@ -955,8 +956,9 @@ function StarProposalSide({
             {S.starFrom}　{x.author === "ai_relayed_human" ? D.kinds.relayed : D.kinds.ai}
           </Text>
           <Text size="xs" c="var(--text-2)">
-            {S.starWhy}　{x.basis}
+            {S.starWhy}　{x.kind === "actualAdd" ? basisWithoutReference(x.basis) : x.basis}
           </Text>
+          {x.kind === "actualAdd" && <StarReference plan={plan} workKey={x.workKey} fiscalYear={x.fy} />}
           <button
             type="button"
             className="moyai-inline-act"

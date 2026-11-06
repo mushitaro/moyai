@@ -19,7 +19,7 @@ import { commonRowId, periodKeyOf } from "../../plan/chart";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
 import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
-import { STAR_KIND_TEXT, isStarProposal, proposalIdOf, starValueOfKey, type StarKind } from "../../plan/star";
+import { STAR_KIND_TEXT, basisWithoutReference, isStarProposal, proposalIdOf, starValueOfKey, type StarKind } from "../../plan/star";
 import { rejectCycleByHuman, rejectedCycles } from "../state/cycles";
 import {
   acceptRemovalsByHuman,
@@ -44,6 +44,7 @@ import { HUMAN_TEXT, TEXT } from "../text";
 import { DirectSet } from "./CrosswalkPanel";
 import { usePlanStatus } from "./ConfirmDialog";
 import { Switch } from "./Switch";
+import { StarReference } from "./StarReference";
 
 const T = HUMAN_TEXT.decisions;
 const KINDS = ["same", "crosswalk", "ledger", "rule", "relayed", "ai"] as const;
@@ -724,7 +725,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       <Text size="xs" c="dimmed">
         {T.detailWhy}
       </Text>
-      <Text size="sm">{starPicked.basis}</Text>
+      <Text size="sm">{starPicked.kind === "actualAdd" ? basisWithoutReference(starPicked.basis) : starPicked.basis}</Text>
+      {starPicked.kind === "actualAdd" && addYears(starPicked).map((fy) => <StarReference key={fy} plan={plan} workKey={starPicked.workKey} fiscalYear={fy} />)}
       {starDone(starPicked) ? (
         <Text size="xs" c="dimmed">
           {T.accepted}

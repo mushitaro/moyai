@@ -130,7 +130,19 @@ export interface Acceptance {
   id: string;
   hash: string;
   reason: string;
+  /** 受けた版（版の履歴から読んだときだけ。署名される字ではない） */
+  version?: number;
 }
+
+// ─── 人が確定した星取の削除（Architect の 70） ─────────────────────────────
+// 削除は計画に案として置けない（消したものは計画に無い）ので、確定した削除は acceptances と同じ形で版の記録に入れる：
+// id「remove:<明細の鍵>」・消した明細の中身の指紋・人の理由・作者（human）。署名の内側に入り、次の版でも資料から読み直した星取を外したままにする。
+export const REMOVAL_PREFIX = "remove:";
+export const removalId = (detailKey: string): string => `${REMOVAL_PREFIX}${detailKey}`;
+export const isRemovalId = (id: string): boolean => id.startsWith(REMOVAL_PREFIX);
+/** 消した明細の中身の指紋（決定の明細と同じ欄から） */
+export const removalHash = (d: Pick<Plan["details"][number], "detailKey" | "workKey" | "planOrActual" | "fiscalYear" | "startDate" | "endDate" | "author" | "basis">): string =>
+  fnv64(JSON.stringify([d.detailKey, d.workKey, d.planOrActual, d.fiscalYear, d.startDate, d.endDate, d.author, d.basis]));
 
 /** 64 ビットの FNV-1a（16 進 16 文字）。暗号ではなく、受けた中身と今の中身を照らすだけ。 */
 export function fnv64(text: string): string {

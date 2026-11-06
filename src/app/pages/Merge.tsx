@@ -4,6 +4,7 @@
 // 右の横の板は 1 枚で、切り替えは「決まっていない所 n（0 なら出さない）/ 署名 n / 出どころ（星取表のとき）」。印を選ぶと出どころへ。
 // 下の帯は、止め札（決まっていない所・受けていない決定・橋渡しが切れている）とボタンだけ。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする）。
 // 画面のどこに資料を落としても受ける（引きずって入ったときだけ、全面に「第 n 版に重ねます」）。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
+import { setRemovedInHistory } from "../state/stars";
 import { Button, FileButton, Group, Text } from "@mantine/core";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import type { Plan } from "../../shared/plan";
@@ -174,6 +175,10 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const statusId = pendingOpen ? (openId ?? "") : (plan?.planId ?? "");
   const [status, reloadStatus] = usePlanStatus(client, statusId, !!statusId && conn.kind === "open");
   const st = status.kind === "ready" ? status.status : null;
+  // 版の履歴で人が確定した星取の削除：資料から計画を作り直しても外したままにする（下の版を開く処理より先に置く。Architect の 70）
+  useEffect(() => {
+    setRemovedInHistory(st?.accepted ?? []);
+  }, [st]);
   useEffect(() => {
     if (!pendingOpen || !st || !openKey || !openId) return;
     const fail = (k: string) => {
