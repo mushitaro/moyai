@@ -75,8 +75,9 @@ function cycleEffect(plan: Plan, ds: readonly Decision[]): { changes: string[]; 
   if (!r.ok) return { changes: [], kept: [] };
   const works = new Map(plan.works.map((w) => [w.workKey, w]));
   return {
-    changes: [...new Set(r.changes.filter((c) => c.kind !== "kept").map((c) => T.cycleChange(c.from, c.years)))],
-    kept: [...new Set(r.changes.filter((c) => c.kind === "kept").map((c) => T.cycleKept(keptWhy(works.get(c.workKey)))))],
+    changes: [...new Set(r.changes.flatMap((c) => (c.kind !== "kept" && c.years !== null ? [T.cycleChange(c.from, c.years)] : [])))],
+    // 年数を鍵から読めない前の形の案（years が null）は、きっかけを変えない（Architect の 61）
+    kept: [...new Set(r.changes.filter((c) => c.kind === "kept").map((c) => T.cycleKept(c.years === null ? T.keptOldKey : keptWhy(works.get(c.workKey)))))],
   };
 }
 

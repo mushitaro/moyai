@@ -371,6 +371,8 @@ export const HUMAN_TEXT = {
     keptMeter: (meter: string) => `${meter}の枝`,
     keptBranches: (n: number) => `枝 ${fmt(n)}`,
     keptMonths: "月の周期",
+    /** 年数を明細の鍵から読めない前の形の案（Architect の 61。言葉は Wire に確かめる） */
+    keptOldKey: "年数の無い案",
     cycleRejectTitle: (id: string) => `周期の案 ${id} を却下`,
     cycleRejectBody: (id: string, n: number, rule: boolean) =>
       rule ? `周期の案 ${id} の計画の印 ${fmt(n)} を外します。同じルールの版のあいだは、その作業に出し直しません。` : `周期の案 ${id} の計画の印 ${fmt(n)} を外します。`,
