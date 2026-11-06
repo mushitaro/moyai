@@ -245,10 +245,38 @@ export function removalAcceptances(): Acceptance[] {
 
 /** 版の履歴で確定した削除：明細の鍵 → 版と理由（確定のシートの「第 n 版と同じ」には出さない。資料のシートの行き先に出す。Wire） */
 let removedInHistory = new Map<string, { version: number | null; reason: string }>();
-export function setRemovedInHistory(accepted: readonly Acceptance[]): void {
+/** どの計画の、どの版までの履歴を読んだか（読む前に作り直しが走ったら待たせる。Architect の 70 の残り） */
+let historyOf: { planId: string; version: number } | null = null;
+/** 履歴を読み終えるまで待たせた作り直し（読み終えたら 1 回だけ流す） */
+let waiting: { planId: string; version: number; run: () => void } | null = null;
+
+/** 版の履歴（橋渡しの状態の accepted）から、確定した削除を置く。planId と、読んだいちばん新しい版を添える */
+export function setRemovedInHistory(planId: string, version: number, accepted: readonly Acceptance[]): void {
   const next = new Map<string, { version: number | null; reason: string }>();
   for (const a of accepted) if (a.id.startsWith("remove:")) next.set(a.id.slice("remove:".length), { version: a.version ?? null, reason: a.reason });
   removedInHistory = next;
+  historyOf = { planId, version };
+  flushWaiting();
+}
+/** 確定した直後：この版で送った削除を履歴に足す（橋渡しの状態を読み直す前に作り直しても外れるように）。前の版までの履歴を読んでいるときだけ、読んだ版を進める */
+export function noteCommittedRemovals(planId: string, version: number, sent: readonly Acceptance[]): void {
+  for (const a of sent) if (a.id.startsWith("remove:")) removedInHistory.set(a.id.slice("remove:".length), { version, reason: a.reason });
+  if (version === 1 || (historyOf?.planId === planId && historyOf.version >= version - 1)) historyOf = { planId, version };
+  flushWaiting();
+}
+/** その計画の、その版までの履歴を読んだか */
+export function historyReady(planId: string, version: number): boolean {
+  return historyOf !== null && historyOf.planId === planId && historyOf.version >= version;
+}
+/** 履歴を読み終えるまで作り直しを待たせる（新しいものが来れば、前に待たせたものは捨てる） */
+export function waitForHistory(planId: string, version: number, run: () => void): void {
+  waiting = { planId, version, run };
+}
+function flushWaiting(): void {
+  const w = waiting;
+  if (!w || !historyReady(w.planId, w.version)) return;
+  waiting = null;
+  w.run();
 }
 export function removedInHistoryOf(detailKey: string): { version: number | null; reason: string } | undefined {
   return removedInHistory.get(detailKey);
@@ -260,9 +288,9 @@ export function removedCellOf(file: string, sheet: string | null, cell: string):
   return removedCells.get(cellKeyOf(file, sheet, cell));
 }
 /** 資料から作った計画から、版の履歴で人が確定して消した星取を外す（消したものが資料から戻らないように） */
-export function dropRemovedInHistory<P extends { details: readonly { detailKey: string; sources: readonly { file: string; sheet: string | null; cell: string | null }[] }[] }>(plan: P): P {
+export function dropRemovedInHistory<P extends { planId: string; details: readonly { detailKey: string; sources: readonly { file: string; sheet: string | null; cell: string | null }[] }[] }>(plan: P): P {
   removedCells = new Map();
-  if (removedInHistory.size === 0 || !plan.details.some((d) => removedInHistory.has(d.detailKey))) return plan;
+  if (historyOf?.planId !== plan.planId || removedInHistory.size === 0 || !plan.details.some((d) => removedInHistory.has(d.detailKey))) return plan;
   for (const d of plan.details) {
     const r = removedInHistory.get(d.detailKey);
     if (r) for (const s of d.sources) if (s.cell) removedCells.set(cellKeyOf(s.file, s.sheet, s.cell), r);
@@ -288,6 +316,8 @@ export function clearStarPick(): void {
 export function resetStarsForTest(): void {
   groups = [];
   removedInHistory = new Map();
+  historyOf = null;
+  waiting = null;
   seq = 0;
   pick = null;
   notify();

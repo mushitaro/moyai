@@ -12,13 +12,14 @@ import { carryFromBase } from "../../src/app/state/crosswalk";
 import { getWorkingPlan, setWorkingPlan } from "../../src/app/state/plan-store";
 import { setReferenceDate } from "../../src/app/state/review";
 import ExcelJS from "exceljs";
-import { placeComposedPlan } from "../../src/app/state/crosswalk";
+import { placeComposedPlan, setCrosswalkBase } from "../../src/app/state/crosswalk";
 import { removalHash, removalId } from "../../src/plan/diff";
 import {
   acceptRemovalsByHuman,
   removalAcceptances,
   removedCellOf,
   setRemovedInHistory,
+  noteCommittedRemovals,
   openRemovalCount,
   rejectStarGroupByHuman,
   rejectedStarGroups,
@@ -454,7 +455,7 @@ describe("星取の削除を版に残す（Architect の 70）", () => {
     // 次の版：橋渡しの版の履歴（確定した決定）を受け取り、同じ資料から計画を作り直す（取り込みの組み直しと同じ道）
     resetStarsForTest();
     setWorkingPlan(v2.record.plan, "intake");
-    setRemovedInHistory((await readHistory(dir, v2.record.plan.planId)).accepted);
+    setRemovedInHistory(v2.record.plan.planId, 2, (await readHistory(dir, v2.record.plan.planId)).accepted);
     const recomposed = { ...base(), planId: v2.record.plan.planId };
     expect(recomposed.details.some((d) => d.detailKey === "d1")).toBe(true);
     placeComposedPlan(recomposed);
@@ -463,6 +464,57 @@ describe("星取の削除を版に残す（Architect の 70）", () => {
     expect(next.details.map((d) => d.detailKey).sort()).toEqual(["d2", "d3", "d4", "d5", "d9"]);
     const src = base().details[0]!.sources[0]!;
     expect(removedCellOf(src.file, src.sheet, src.cell!)).toEqual({ version: 2, reason: "二重に記録されていた" });
+  });
+
+  /** 第 2 版（d1 の実績を消した版）まで確定し、その版を開いた形（もとにした版は第 2 版）にする */
+  const removedV2 = async () => {
+    await firstVersion();
+    const w = ws();
+    ok(propose(w, { author: "ai_relayed_human", stars: [{ op: "remove", rowRef: "w:w1", value: "actual", fiscalYear: 2019 }] }));
+    acceptRemovalsByHuman(starGroups()[0]!.id, "二重に記録されていた");
+    const sent = removalAcceptances();
+    const v2 = await commitPlan({ root: dir, plan: getWorkingPlan()!.plan, reason: "消した", acceptances: sent, basedOn: 1, signer: SIGNER, client: "t" });
+    if (!v2.ok) throw new Error(v2.reason);
+    return { v2, sent };
+  };
+
+  it("作り直しの順：版を開いてすぐ作り直しが走っても（履歴の削除を読む前でも）、消した実績は戻らない。履歴を読み終えるまで置かずに待ち、読んだら置く", async () => {
+    const { v2 } = await removedV2();
+    const planId = v2.record.plan.planId;
+    resetStarsForTest();
+    setWorkingPlan(v2.record.plan, "intake");
+    setCrosswalkBase({ version: 2, plan: v2.record.plan, crosswalk: [] });
+    const recomposed = { ...base(), planId };
+    // 履歴を読む前に作り直しが走った：置かずに待つ（作業中の計画は第 2 版のまま）
+    expect(placeComposedPlan(recomposed)).toBeNull();
+    expect(getWorkingPlan()!.plan).toBe(v2.record.plan);
+    // 前の版（第 1 版）までの履歴では足りない：まだ待つ
+    setRemovedInHistory(planId, 1, []);
+    expect(getWorkingPlan()!.plan).toBe(v2.record.plan);
+    // 第 2 版までの履歴を読んだ：待たせた作り直しを置き、消した実績は外れたまま
+    setRemovedInHistory(planId, 2, (await readHistory(dir, planId)).accepted);
+    const next = getWorkingPlan()!.plan;
+    expect(next).not.toBe(v2.record.plan);
+    expect(next.details.map((d) => d.detailKey).sort()).toEqual(["d2", "d3", "d4", "d5", "d9"]);
+    setCrosswalkBase(null);
+  });
+
+  it("作り直しの順：確定した直後（橋渡しの状態を読み直す前）に同じタブで作り直しても、送った削除で外れる", async () => {
+    const planId = base().planId;
+    setRemovedInHistory(planId, 1, []);
+    const { v2, sent } = await removedV2();
+    noteCommittedRemovals(planId, 2, sent);
+    setWorkingPlan(v2.record.plan, "intake");
+    setCrosswalkBase({ version: 2, plan: v2.record.plan, crosswalk: [] });
+    expect(placeComposedPlan({ ...base(), planId })).not.toBeUndefined();
+    expect(getWorkingPlan()!.plan.details.some((d) => d.detailKey === "d1")).toBe(false);
+    setCrosswalkBase(null);
+  });
+
+  it("ほかの計画の履歴では外さない", async () => {
+    setRemovedInHistory("plan-other", 3, [{ id: "remove:d1", hash: "0".repeat(16), reason: "別の計画", version: 3 }]);
+    placeComposedPlan(base());
+    expect(getWorkingPlan()!.plan.details.some((d) => d.detailKey === "d1")).toBe(true);
   });
 
   it("橋渡しの確かめ：今の計画にまだある明細の削除・前の版と中身の指紋が合わない削除・理由の無い削除は確定しない", async () => {

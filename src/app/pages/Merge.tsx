@@ -177,7 +177,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const st = status.kind === "ready" ? status.status : null;
   // 版の履歴で人が確定した星取の削除：資料から計画を作り直しても外したままにする（下の版を開く処理より先に置く。Architect の 70）
   useEffect(() => {
-    setRemovedInHistory(st?.accepted ?? []);
+    if (st?.latest) setRemovedInHistory(st.latest.plan.planId, st.latest.version, st.accepted ?? []);
   }, [st]);
   useEffect(() => {
     if (!pendingOpen || !st || !openKey || !openId) return;
@@ -232,6 +232,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   }, [pendingOpen, st]);
   // 開いた版を組んだ資料と決定を画面に戻し、その版をもとにした版にする（1C・重-2）。資料が 1 つでも読めなければ戻さず、作り直しを止める
   const restoreFrom = async (planId: string, latest: NonNullable<NonNullable<typeof st>["latest"]>) => {
+    // 作り直しより先に、版の履歴の確定した削除を置く（下の useEffect を待たない。Architect の 70 の残り）
+    setRemovedInHistory(planId, latest.version, st?.accepted ?? []);
     setCrosswalkBase({ version: latest.version, plan: latest.plan, crosswalk: latest.crosswalk ?? [] });
     ws.pinPlanId(planId);
     ws.blockRestore(T.opening(latest.version));

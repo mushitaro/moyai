@@ -10,6 +10,7 @@ import { IntakeWorkspace } from "../../../src/app/intake/workspace";
 import { runTabTool } from "../../../src/app/intake/tab-tools";
 import { acceptByHuman, setCrosswalkBase } from "../../../src/app/state/crosswalk";
 import { clearWorkingPlan, getWorkingPlan, setWorkingPlan } from "../../../src/app/state/plan-store";
+import { setRemovedInHistory } from "../../../src/app/state/stars";
 import { pendingDecisions } from "../../../src/plan/diff";
 import type { Plan } from "../../../src/shared/plan";
 import { f1Rules } from "../../fixtures/crosswalk/rules";
@@ -117,6 +118,8 @@ describe("次の版に重ねる", () => {
     const b = newWs();
     setWorkingPlan(v1, "intake");
     setCrosswalkBase({ version: 1, plan: v1, crosswalk: accepted.map((p) => ({ rule: p.rule, basis: p.basis })) });
+    // 画面（Merge の restoreFrom）と同じく、作り直しの前に版の履歴（確定した削除）を置く。置かなければ作り直しは履歴を待つ（Architect の 70 の残り）
+    setRemovedInHistory(v1.planId, 1, []);
     await b.restoreVersion(1, rec!.files, rec!.decisions);
     ok(runTabTool(b, "intake_compose", {}, CTX));
     await b.whenComposed();

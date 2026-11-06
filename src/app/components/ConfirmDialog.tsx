@@ -12,7 +12,7 @@ import { getWorkingPlan } from "../state/plan-store";
 import { sheetHash } from "../stages";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
-import { removalAcceptances } from "../state/stars";
+import { noteCommittedRemovals, removalAcceptances } from "../state/stars";
 import type { Plan } from "../../shared/plan";
 import type { Rule } from "../../shared/tools";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
@@ -229,13 +229,14 @@ export function ConfirmDialog({
     }
     const crosswalk = (getWorkingPlan()?.proposals ?? []).filter((p) => p.state === "accepted").map((p) => ({ rule: p.rule, target: p.target, value: p.value, basis: p.basis }));
     const stats = intake ? intake() : null;
+    const sentRemovals = removalAcceptances();
     const payload = {
       ...(stats ? { intake: stats } : {}),
       ...(src ? { sources: src.files.map((f) => ({ name: f.name, sha256: f.sha256, size: f.bytes.length })), decisions: src.decisions, crosswalk } : {}),
       plan,
       reason: reason.trim(),
       // 確定した星取の削除も、確定の理由と作者を版の記録の署名の内側に入れる（remove:<明細の鍵>。Architect の 70）
-      acceptances: [...accepted, ...removalAcceptances()],
+      acceptances: [...accepted, ...sentRemovals],
       // もとにした版：この編集を始めた保管先の版（ほかの人がその後に版を足していれば、橋渡しが断る）
       basedOn: baseOf(plan, status.latest?.version ?? null),
       // 使った読み方（下書きと承認済み）。署名すると、この版の読み方は承認済みになる
@@ -256,6 +257,8 @@ export function ConfirmDialog({
     setHandoffMail(r.body.mail);
     if (pendingDeriveFor(plan.planId)) setPendingDerive(null);
     clearAccepted();
+    // 送った削除を履歴に足す（橋渡しの状態を読み直す前に作り直しても、消した星取が戻らないように。Architect の 70 の残り）
+    noteCommittedRemovals(plan.planId, r.body.version, sentRemovals);
     // 確定したら、前の作業の写しを消す（pwa-v0）
     settleDraft(plan.planId);
     onConfirmed(r.body.plan);
