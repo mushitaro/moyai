@@ -54,12 +54,12 @@ export const SKIP_REASONS = [
   "workMissing", // 作業明細の作業が無い
   "planned", // 計画（予定）の印。写すのは実績だけ
   "needsReview", // 写真から読み、人がまだ確かめていない
-  "attributeUndecided", // 作業の属性が決まらない
-  "attributeNotAccepted", // 作業の属性の当てはめを人が受けていない（案のまま）
+  "attributeUndecided", // 作業分類が決まらない
+  "attributeNotAccepted", // 作業分類の紐付けを人が受けていない（案のまま）
   "fiscalYearInvalid", // 年度が上下限の外
   "targetMissing", // 対象の資産が無い
   "commonItemUndecided", // 1 段目の項目が決まらない
-  "notAccepted", // 当てはめを人が受けていない（案のまま）
+  "notAccepted", // 紐付けを人が受けていない（案のまま）
   "classNotCountable", // 数えられる分類まで上げても上げ先が無い（分からないものは出さない）
   "upgradeLedger", // UPGRADE は公開の台帳に出さない
   "upgradeBelowK", // UPGRADE は共有フォルダで k が下限に届くときだけ

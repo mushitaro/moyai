@@ -43,14 +43,14 @@ const HELP = `使い方：
   moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
                                             台帳の PR の変更を、checkout せずに git の木から確かめる（Actions の検証）
   moyai ledger site <台帳のリポジトリの根> <出すフォルダ>
-                                            共有ファイルを確かめ直し、似た施設の星取表と統計の行の静的なページを書く
+                                            共有ファイルを再照合し、類似施設の星取表と統計の行の静的なページを書く
   moyai ledger submit --bundle <共有ファイル> --repo <台帳の clone>
                                             署名済みの共有ファイルを出す PR の支度をし、gh のコマンドを出す（人だけ。端末から）
   moyai ledger init --root <台帳のリポジトリの根> --pack <Skillパック> [--month YYYY-MM]
                                             台帳の決まり（ledger.json）を作り、管理者の鍵で署名する（人だけ。端末から）
   moyai keys create --root <共有フォルダ> --pack <Skillパック>
                                             共有フォルダを作り、その共有フォルダの鍵を状態フォルダに置く（人だけ。端末から）
-  moyai keys unwrap                         前の形の鍵（合言葉で包んだもの）を、前の合言葉で 1 度だけ開いて移す（人だけ。端末から）
+  moyai keys unwrap                         前の形の鍵（パスワードで包んだもの）を、前のパスワードで 1 度だけ開いて移す（人だけ。端末から）
   moyai send                                共有ファイルを送る（人だけ。検問所の画面から送る。端末からは未実装）
   moyai --version                           ビルドの版を出す`;
 

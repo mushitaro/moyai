@@ -80,7 +80,7 @@ export const ERRORS = {
     from: "bridge",
     to: "ai",
     http: 200,
-    text: "この会話で読める星取表の行の上限（2,000 行）に達しました。行を写さず、規則で案を置いてください。",
+    text: "この会話で読める星取表の行の上限（2,000 行）に達しました。行を写さず、ルールで案を置いてください。",
   },
   photo_permission_mismatch: {
     from: "bridge",
@@ -93,19 +93,19 @@ export const ERRORS = {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "同じ機器・決まった答え・計画ルールの規則には when が効きません（どの資料にも当たります）。when を外して置き直すか、効く資料を利用者に確かめてください。規則は置いていません。when が効くのは、見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味です。",
+    text: "同じ機器・決まった答え・計画ルールには when が効きません（どの資料にも当たります）。when を外して置き直すか、効く資料を利用者に確かめてください。ルールは置いていません。when が効くのは、見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味です。",
   },
   no_reading_draft: {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "その名前の読み方の下書きが、作業画面にありません。先に reading_rules_propose で規則を置き、利用者に読み直した結果を見てもらってください。",
+    text: "その名前のルールの下書きが、作業画面にありません。先に reading_rules_propose でルールを置き、利用者に読み直した結果を見てもらってください。",
   },
   pack_basis_unknown: {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "根拠に指したパックの基準（検査の ID）が、この計画のパックの checks.json にありません。案は置いていません。check_results で検査の ID を読み直してから指してください。",
+    text: "根拠に指したSkillパックの基準（照査の ID）が、この計画のSkillパックの checks.json にありません。案は置いていません。check_results で照査の ID を読み直してから指してください。",
   },
   plan_rule_unknown: {
     from: "tab",
@@ -141,7 +141,7 @@ export const ERRORS = {
     from: "bridge",
     to: "ai",
     http: 200,
-    text: "保管先が決まっていないので、読み方を書けません。利用者に、設定で保管先を選んでもらってください。",
+    text: "保管先が決まっていないので、ルールを書けません。利用者に、設定で保管先を選んでもらってください。",
   },
   no_ledger: {
     from: "bridge",
@@ -159,7 +159,7 @@ export const ERRORS = {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "台帳を根拠にした周期の案の年数が、照らした集計の四分位の外か、規則が当たった作業に、その項目と作業分類の作業がありません。案は置いていません。peer_reference（place: ledger）の集計の項目・作業分類・四分位に合う作業と年数で置き直してください。",
+    text: "台帳を根拠にした周期の案の年数が、照らした集計の四分位の外か、ルールが当たった作業に、その項目と作業分類の作業がありません。案は置いていません。peer_reference（place: ledger）の集計の項目・作業分類・四分位に合う作業と年数で置き直してください。",
   },
   // 資料を作業画面に入れる（intake_add_files）。道を確かめるのは橋渡し
   intake_path_not_allowed: {
@@ -203,7 +203,7 @@ export const ERRORS = {
     from: "bridge",
     to: "ai",
     http: 200,
-    text: "この計画のパックには、共有に使う部品（公開語彙・見え方の軸・全国の表）がありません。公開の台帳と比べられません。",
+    text: "この計画のSkillパックには、共有に使う部品（公開語彙・見え方の軸・全国の表）がありません。公開の台帳と比べられません。",
   },
   no_peer_view: {
     from: "tab",
@@ -245,7 +245,7 @@ export const ERRORS = {
     from: "tab",
     to: "ai",
     http: 200,
-    text: "置く第 1 階層の項目のコードが、この計画のパックの一覧にありません（型に合いません）。どの案も置いていません。intake_survey（part: crosswalk）の items のコードから選んでください。",
+    text: "置く第 1 階層の項目のコードが、この計画のSkillパックの一覧にありません（型に合いません）。どの案も置いていません。intake_survey（part: crosswalk）の items のコードから選んでください。",
   },
   tool_failed: {
     from: "tab",

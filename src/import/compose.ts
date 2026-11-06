@@ -696,8 +696,8 @@ export function compose(
     const key = `stray|${lay.file}|${lay.sheetIndex}`;
     const a = ask.ask(key, {
       kind: "stray",
-      text: `${lay.file}${lay.sheet ? ` の「${lay.sheet}」` : ""} に、読み方の決まらないセルが ${refs.length} ある`,
-      options: [{ id: "exclude", label: "外す（読み方が決まらないため）" }],
+      text: `${lay.file}${lay.sheet ? ` の「${lay.sheet}」` : ""} に、意味の決まらないセルが ${refs.length} ある`,
+      options: [{ id: "exclude", label: "外す（意味が決まらないため）" }],
       valueKind: "option",
       defaultAnswer: null,
       sameShapeRows: refs.length,
@@ -705,7 +705,7 @@ export function compose(
     });
     for (const ref of refs) {
       const k = cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref });
-      status.set(k, a === "exclude" ? { s: "excluded", reason: "読み方の決まらないセル（決定で外した）" } : { s: "unresolved", questionId: questionIdOf(key) });
+      status.set(k, a === "exclude" ? { s: "excluded", reason: "意味の決まらないセル（決定で外した）" } : { s: "unresolved", questionId: questionIdOf(key) });
     }
   }
 

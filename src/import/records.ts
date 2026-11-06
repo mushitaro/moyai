@@ -1762,7 +1762,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     })();
     const ruleFormat = [dateCol, endCol].find((c) => c?.dateFormat)?.dateFormat;
     const why = ruleFormat
-      ? `読み方の規則の書き方（${ruleFormat}）に合わない`
+      ? `ルールの書き方（${ruleFormat}）に合わない`
       : parseMonthDay(sample)
         ? "年が書いていない（シートの文に年度がただ 1 つ書いてあれば、その年度で読む）"
         : "日付の書き方として読めない";

@@ -239,7 +239,7 @@ function scanSheetXml(x: string, sheet: string, ledger: LedgerEntry[]) {
   ledgerPush(ledger, "unread", "control", count(x, /<control\b/g) + count(x, /<oleObject\b/g), "フォームの部品・埋め込みの物。読まない", sheet);
   const pane = /<pane\b[^>]*>/.exec(x);
   if (pane && /state="frozen"/.test(pane[0]))
-    ledgerPush(ledger, "unread", "frozenPane", 1, `ウィンドウ枠の固定（${attr(pane[0], "topLeftCell") ?? ""}）。読み方には使わない`, sheet);
+    ledgerPush(ledger, "unread", "frozenPane", 1, `ウィンドウ枠の固定（${attr(pane[0], "topLeftCell") ?? ""}）。取り込みには使わない`, sheet);
 }
 
 /** 行の改ページ（<rowBreaks><brk id="20"/>…）：その行の後で頁が替わる */
@@ -412,7 +412,7 @@ export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" |
     value: unxml(m[2] ?? ""),
   }));
   const printAreas = names.filter((n) => /^_xlnm\.Print_(Area|Titles)$/i.test(n.name));
-  ledgerPush(ledger, "unread", "printArea", printAreas.length, `印刷範囲・印刷の見出し（${printAreas.map((p) => p.value).join(" ")}）。読み方には使わない`);
+  ledgerPush(ledger, "unread", "printArea", printAreas.length, `印刷範囲・印刷の見出し（${printAreas.map((p) => p.value).join(" ")}）。取り込みには使わない`);
   ledgerPush(ledger, "unread", "definedName", names.length - printAreas.length, "名前の定義。読まない");
   const all = [...byName.keys()];
   ledgerPush(ledger, "unread", "pivotTable", all.filter((n) => /^xl\/pivotTables\/[^/]+\.xml$/.test(n)).length, "ピボットテーブル。読まない");

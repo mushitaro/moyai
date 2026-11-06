@@ -60,12 +60,12 @@ export const TEXT = {
     count: (n: number) => `${n}`,
     filled: "中身あり",
     notBuilt: "作らない",
-    emptyLine: "この業種のパックはまだ中身がありません。",
+    emptyLine: "この業種のSkillパックはまだ中身がありません。",
     candidates: "出どころの候補：",
     candidate: (title: string, issuer: string | null) => (issuer ? `${issuer}『${title}』` : title),
     level: (v: string) => `（${v}）`,
     groupScope: "（群の候補）",
-    invalid: (folder: string) => `読み込めないパック：${folder}`,
+    invalid: (folder: string) => `読み込めないSkillパック：${folder}`,
   },
   trial: {
     button: "確定の試験",
@@ -604,7 +604,7 @@ export const TEXT = {
       photoRoute: "文字の無い頁（写真の道）",
       subtotalMismatch: "小計と合計の検算",
       duplicateAsset: "同じ機器の重なり",
-      stray: "読み方の決まらないセル",
+      stray: "意味の決まらないセル",
     },
   },
   crosswalk: {

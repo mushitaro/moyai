@@ -140,7 +140,7 @@ export const LEDGER_USAGE = `使い方：
 /** ledger init の言葉 */
 export const INIT_TEXT = {
   usage: "使い方：moyai ledger init --root <台帳のリポジトリの根（絶対の道）> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から）",
-  intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。合言葉では包みません）。",
+  intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。パスワードでは包みません）。",
   failed: (r: string) =>
     ({
       exists: "ledger/ledger.json がもうあります（足すだけの台帳なので、上書きしません）。",
@@ -279,7 +279,7 @@ export const PR_TEXT = {
   title: (ok: boolean) => (ok ? "### MOYAI 台帳の検証：✓ 通りました" : "### MOYAI 台帳の検証：✗ 通りません"),
   titleError: "### MOYAI 台帳の検証：確かめられませんでした",
   scopePr: (n: number, base: string, head: string) => `- 確かめたもの：この PR が足す・変えるファイル ${n} 件（base \`${base.slice(0, 12)}\`・head \`${head.slice(0, 12)}\`）`,
-  scopeAll: (n: number, head: string) => `- 変更なし（base と head が同じ commit \`${head.slice(0, 12)}\`）。既定のブランチにある全部の共有ファイル ${n} 件を確かめ直しました`,
+  scopeAll: (n: number, head: string) => `- 変更なし（base と head が同じ commit \`${head.slice(0, 12)}\`）。既定のブランチにある全部の共有ファイル ${n} 件を再照合しました`,
   ledger: (id: string | null, version: number | null, hash: string | null, ok: boolean) =>
     `- 台帳 \`${id ?? "不明"}\`・決まり 版 ${version ?? "不明"}（SHA-256 \`${hash ? hash.slice(0, 16) : "不明"}\`）${ok ? "" : "：決まりが ✓ でないので、共有ファイルを確かめられません"}`,
   tableHead: "| 結果 | ファイル | 理由 |\n|---|---|---|",

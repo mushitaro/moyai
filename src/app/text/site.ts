@@ -5,7 +5,7 @@ export const SITE_TEXT = {
   title: "【架空】MOYAI 公開台帳",
   fiction: "【架空】このページの施設と数は、すべて架空です（会期中の公開台帳は架空の施設だけです）。",
   lead:
-    "公開台帳に出された共有ファイルを確かめ直し、類似施設の星取表と統計の行を描いたページです。共有する値は、塊（共通の設備項目 × 作業の属性）の年度と、間隔・工数・日数の階級だけです。費用・人・正確な日付・備考は、どの共有ファイルにもありません。",
+    "公開台帳に出された共有ファイルを再照合し、類似施設の星取表と統計の行を描いたページです。共有する値は、塊（共通の設備項目 × 作業分類）の年度と、間隔・工数・日数の階級だけです。費用・人・正確な日付・備考は、どの共有ファイルにもありません。",
   rulesHead: "台帳の決まり",
   countsHead: "確かめた共有ファイル",
   sectionsHead: "類似施設の星取表と統計の行",
@@ -37,7 +37,7 @@ export const SITE_TEXT = {
   similar: (n: number) => `類似施設 ${n}`,
   belowFive: "この条件では 5 施設に届きません。",
   colClass: "共通の設備項目",
-  colWork: "作業の属性",
+  colWork: "作業分類",
   colLabel: "施設（匿名の札）",
   colInterval: "間隔",
   colManDays: "工数",
@@ -53,7 +53,7 @@ export const SITE_TEXT = {
   statNote:
     "統計の行の n は、その欄のある施設の数です。n が 0〜2 なら x、3〜4 なら範囲と n、5 以上なら中央値・四分位・n を出します（階級の順の最近順位法）。集団を混ぜて数えません。",
   labelNote: "札は鍵番号の頭から作ります。同じ鍵なら、共有ファイルが増えても同じ札です。",
-  footer: (build: string) => `このページは MOYAI の ledger site が、台帳の共有ファイルを受け手と同じ関数で確かめ直して作りました（生のファイルは写していません）。${build}`,
+  footer: (build: string) => `このページは MOYAI の ledger site が、台帳の共有ファイルを受け手と同じ関数で再照合して作りました（生のファイルは写していません）。${build}`,
   bandUnit: { I: "年", W: "人・日", D: "日" } as Record<string, string>,
   bandAtLeast: (a: string, unit: string) => `${a} ${unit}以上`,
   bandRange: (a: string, b: string, unit: string) => (a === b ? `${a} ${unit}` : `${a}〜${b} ${unit}`),

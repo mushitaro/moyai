@@ -1,6 +1,6 @@
 // 署名：Ed25519 の鍵の対・署名・検証（Node の crypto）。署名するのは、正規化した body の SHA-256（32 バイト）。
 // 秘密鍵は包まずにファイルに置く（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。守りは置き場所と見張りのフックに頼る。
-// 前の形（合言葉から scrypt で作った鍵で包んだもの）は、人だけの CLI `moyai keys unwrap` が 1 度だけ開いて移すためにだけ読む。
+// 前の形（パスワードから scrypt で作った鍵で包んだもの）は、人だけの CLI `moyai keys unwrap` が 1 度だけ開いて移すためにだけ読む。
 // 指紋は 16 文字（4 文字 × 4 組）。鍵・署名する文をログに出さない。
 import {
   createCipheriv,
@@ -123,7 +123,7 @@ export function openPlainKey(k: PlainKey): KeyPair | null {
   }
 }
 
-/** 鍵のファイルの中身：包まない鍵か、前の形（合言葉で包んだ鍵） */
+/** 鍵のファイルの中身：包まない鍵か、前の形（パスワードで包んだ鍵） */
 export type KeyFile = PlainKey | WrappedKey;
 
 export function isWrappedKey(x: unknown): x is WrappedKey {
@@ -137,7 +137,7 @@ export function openKeyFile(f: KeyFile): KeyPair | "old" | null {
   return openPlainKey(f);
 }
 
-// ─── 前の形：合言葉で包んだ秘密鍵（移すときにだけ開く） ──────────────
+// ─── 前の形：パスワードで包んだ秘密鍵（移すときにだけ開く） ──────────────
 
 /** scrypt の重さは固定（ファイルの値で軽くさせない）。N=2^15・r=8・p=1、鍵は 32 バイト。 */
 export const SCRYPT = { N: 32768, r: 8, p: 1, keyLen: 32, maxmem: 64 * 1024 * 1024 } as const;
@@ -153,12 +153,12 @@ export interface WrappedKey {
 
 export class WrongPassphrase extends Error {
   constructor() {
-    super("合言葉が合わない");
+    super("パスワードが合わない");
   }
 }
 
 function deriveKey(passphrase: string, salt: Buffer): Buffer {
-  if (passphrase.length === 0) throw new Error("合言葉が空");
+  if (passphrase.length === 0) throw new Error("パスワードが空");
   return scryptSync(passphrase.normalize("NFC"), salt, SCRYPT.keyLen, {
     N: SCRYPT.N,
     r: SCRYPT.r,
@@ -167,7 +167,7 @@ function deriveKey(passphrase: string, salt: Buffer): Buffer {
   });
 }
 
-/** 秘密鍵を合言葉で包む。公開鍵は包まずに添える（開くと照らし合わせる）。 */
+/** 秘密鍵をパスワードで包む。公開鍵は包まずに添える（開くと照らし合わせる）。 */
 export function wrapPrivateKey(pair: KeyPair, passphrase: string): WrappedKey {
   const salt = randomBytes(16);
   const iv = randomBytes(12);
@@ -186,7 +186,7 @@ export function wrapPrivateKey(pair: KeyPair, passphrase: string): WrappedKey {
   };
 }
 
-/** 包んだ秘密鍵を開く。合言葉が違うか、ファイルが変わっていれば WrongPassphrase。 */
+/** 包んだ秘密鍵を開く。パスワードが違うか、ファイルが変わっていれば WrongPassphrase。 */
 export function unwrapPrivateKey(w: WrappedKey, passphrase: string): KeyPair {
   if (w.v !== "moyai.wrapped-key/0" || !HEX64.test(w.pub)) throw new Error("包んだ鍵の形でない");
   const key = deriveKey(passphrase, Buffer.from(w.salt, "hex"));

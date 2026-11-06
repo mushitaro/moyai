@@ -96,7 +96,7 @@ export interface NationalTable {
   sourceId: string;
 }
 
-/** 帯の軸のコード（全国の表の書き方：最初より下は頭＋LT＋境目、間は頭＋下_上、最後から上は頭＋最後＋P）。 */
+/** 階級の軸のコード（全国の表の書き方：最初より下は頭＋LT＋境目、間は頭＋下_上、最後から上は頭＋最後＋P）。 */
 export function profileBandCodes(prefix: string, edges: readonly number[]): { code: string; lo: number; hi: number }[] {
   const out = [{ code: `${prefix}LT${edges[0]!}`, lo: -Infinity, hi: edges[0]! }];
   for (let i = 0; i + 1 < edges.length; i++) out.push({ code: `${prefix}${edges[i]!}_${edges[i + 1]!}`, lo: edges[i]!, hi: edges[i + 1]! });
@@ -109,7 +109,7 @@ export function coarsenEdges(edges: readonly number[]): number[] {
   return edges.filter((_, i) => (edges.length - 1 - i) % 2 === 1);
 }
 
-/** 全国の表を読む。帯の軸のコードが境目から作ったものと違えば止める。 */
+/** 全国の表を読む。階級の軸のコードが境目から作ったものと違えば止める。 */
 export function loadNational(text: string): NationalTable {
   const t = JSON.parse(text) as {
     pack?: unknown;
@@ -134,7 +134,7 @@ export function loadNational(text: string): NationalTable {
       });
       const prefix = codes[0]!.replace(/LT\d+$/, "");
       const made = profileBandCodes(prefix, edges);
-      if (made.length !== codes.length || made.some((m, i) => m.code !== codes[i])) throw new Error("帯の軸のコードが境目と合わない");
+      if (made.length !== codes.length || made.some((m, i) => m.code !== codes[i])) throw new Error("階級の軸のコードが境目と合わない");
       band = { prefix, edges, ranges: new Map(made.map((m) => [m.code, [m.lo, m.hi] as [number, number]])) };
     }
     axes.push({ key: a.key, codes, band });
@@ -159,7 +159,7 @@ function axisOf(table: NationalTable, key: string): NationalAxis | undefined {
   return table.axes.find((a) => a.key === key);
 }
 
-/** 施設の規模の数を、帯の軸のコードにする（[下, 上)。境目ちょうどは上の帯）。帯の軸でなければ null。 */
+/** 施設の規模の数を、階級の軸のコードにする（[下, 上)。境目ちょうどは上の帯）。帯の軸でなければ null。 */
 export function profileBandOf(table: NationalTable, key: string, value: number): string | null {
   const axis = axisOf(table, key);
   if (!axis?.band || !Number.isFinite(value) || value < 0) return null;

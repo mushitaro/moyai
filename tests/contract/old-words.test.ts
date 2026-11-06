@@ -43,6 +43,17 @@ const BANNED: { word: string; re: RegExp }[] = [
   { word: "束", re: /(?<![約結])束/g },
   { word: "輪", re: /輪/g },
   { word: "仲間", re: /仲間/g },
+  // 2 回目（old-words-v2）。docs/words.md の置き換え
+  { word: "当てはめ", re: /当てはめ(?![るまなてた])/g },
+  { word: "未当てはめ", re: /未当てはめ/g },
+  // 「費用の読み方」「年度の読み方」など、読めない値の質問の名前は words.md が決めた言葉。ルールの意味の「読み方」だけを縛る
+  { word: "読み方", re: /(?<!(?:費用|計画・実績|工数|日付|年度)の)読み方/g },
+  { word: "検査", re: /(?<![精密機能定期点・])検査/g },
+  { word: "合言葉", re: /合言葉/g },
+  // 「Skillパック」は許す。単独の「パック」だけを縛る
+  { word: "パック", re: /(?<!Skill)パック/g },
+  { word: "似た施設", re: /似た施設/g },
+  { word: "計量値", re: /計量値/g },
 ];
 
 /**
@@ -50,10 +61,14 @@ const BANNED: { word: string; re: RegExp }[] = [
  * 束 → 共有ファイル、輪 → 共有フォルダ（運営者の決定、docs/words.md）。
  */
 const ALLOWED: { name: string; file: string; text: string; reason: string }[] = [
+  { name: "words.md の表の引用（当てはめ）", file: "src/shared/data-names.ts", text: "docs/words.md「当てはめ → 紐付け」", reason: "decidedIn は置き換えの表の見出しを写した記録。表の「前」の列は記録なので直さない" },
+  { name: "版をまたぐ紐付けの basis", file: "src/app/text/index.ts", text: "で受けた当てはめと同じ", reason: "sameAs は案の basis に入り、署名される字。前の版の字は直さない（docs/words.md「据え置き」）" },
+  { name: "words.md の表の引用（読み方）", file: "src/shared/data-names.ts", text: "docs/words.md「読み方 → ルール」", reason: "decidedIn は置き換えの表の見出しを写した記録" },
+  { name: "words.md の表の引用（計量値）", file: "src/shared/data-names.ts", text: "「計量値」を「稼働」に", reason: "decidedIn は運営者の決めた置き換えを写した記録" },
   { name: "data-names の目印の誤り", file: "src/shared/data-names.ts", text: "data-names の印が無い", reason: "ファイルの中の目印（moyai:data-names）の誤り。画面にも Claude にも出ない（words.md で対象外）" },
 ];
 
-describe("古い言葉（印・決定のシート・束・輪）", () => {
+describe("古い言葉（印・決定のシート・束・輪・当てはめ・読み方・検査・合言葉・パック・似た施設・計量値）", () => {
   test("見る所を読めている", () => {
     expect(TS_FILES.length).toBeGreaterThan(8);
     for (const f of ["src/cli/ledger.ts", "src/share/ledger-send.ts", "src/bridge/places.ts", "scripts/ledger/build-bundles.mjs", "scripts/demo-ring/build.mjs"]) expect(TS_FILES, f).toContain(f);

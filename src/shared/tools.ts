@@ -45,9 +45,9 @@ export const crosswalkRuleSchema = ruleSchema.superRefine((r, ctx) => {
   const v = r.set.value;
   if (r.set.field === "work.attribute") {
     if (typeof v !== "string" || !(WORK_ATTRIBUTES as readonly string[]).includes(v))
-      ctx.addIssue({ code: "custom", path: ["set", "value"], message: `作業の属性は ${WORK_ATTRIBUTES.join("・")} のどれか` });
+      ctx.addIssue({ code: "custom", path: ["set", "value"], message: `作業分類は ${WORK_ATTRIBUTES.join("・")} のどれか` });
   } else if (r.set.field === "assetNode.commonItem") {
-    if (typeof v !== "string" || !CLASS_CODE.test(v)) ctx.addIssue({ code: "custom", path: ["set", "value"], message: "第 1 階層の項目のコード（パックの一覧のもの）" });
+    if (typeof v !== "string" || !CLASS_CODE.test(v)) ctx.addIssue({ code: "custom", path: ["set", "value"], message: "第 1 階層の項目のコード（Skillパックの一覧のもの）" });
   } else ctx.addIssue({ code: "custom", path: ["set", "field"], message: "置ける欄は assetNode.commonItem と work.attribute だけ" });
   r.when.forEach((c, i) => {
     if (!c.field.startsWith("assetNode.") && !c.field.startsWith("work."))
@@ -375,7 +375,7 @@ export const TOOLS = {
     "intake_survey",
     "read",
     "取り込みの要約",
-    "作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose の規則で読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に当てはめの要約（パックの第 1 階層の項目と作業の属性、欄ごとの多い値、未当てはめの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
+    "作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
     z.object({ part: z.enum(["all", "questions", "compose", "crosswalk", "skills"]).default("all") }),
     z.object({
       files: z.array(z.object({ fileRef: z.string(), sheets: z.number().int(), rows: z.number().int() })),
@@ -498,8 +498,8 @@ export const TOOLS = {
   crosswalk_propose: def(
     "crosswalk_propose",
     "propose",
-    "当てはめの案を置く",
-    "資産の節を共通の設備項目の第 1 階層に（set.field は assetNode.commonItem、値は intake_survey の crosswalk.items のコード）、作業を作業の属性に（set.field は work.attribute、値は INSPECT・OVERHAUL・REPLACE・UPGRADE）当てる規則を案として置く。行を写さず規則を書く（欄 × 比べ方 × 値の組〔20 個まで〕と置く値）。条件の欄は資産の節（assetNode.*）か作業（work.*）のもの。もう一方の物の欄は結んだ行で見る（節の規則の作業の欄は、その節を対象にする作業のどれか。作業の規則の節の欄は、作業の対象の節のどれか）。文字は全角・半角をそろえて比べる。basedOnVersion は intake_survey の crosswalk.version（か chart_rows の version）で、違えばどれも置かない。1 つでもパックに無いコードがあれば、どれも置かない。返すのは、当てた数・ぶつかった数（同じ行に違う値の規則が当たった、または行がもう違う値を持つ。ぶつかった行は変えない）・未当てはめの数・例 10 件まで（行の参照だけ）・規則ごとの数・新しい版。案は、人が画面で受けるまで決まらない（受けるツールは無い）。",
+    "紐付けの案を置く",
+    "資産の節を共通の設備項目の第 1 階層に（set.field は assetNode.commonItem、値は intake_survey の crosswalk.items のコード）、作業を作業分類に（set.field は work.attribute、値は INSPECT・OVERHAUL・REPLACE・UPGRADE）当てるルールを案として置く。行を写さずルールを書く（欄 × 比べ方 × 値の組〔20 個まで〕と置く値）。条件の欄は資産の節（assetNode.*）か作業（work.*）のもの。もう一方の物の欄は結んだ行で見る（節のルールの作業の欄は、その節を対象にする作業のどれか。作業のルールの節の欄は、作業の対象の節のどれか）。文字は全角・半角をそろえて比べる。basedOnVersion は intake_survey の crosswalk.version（か chart_rows の version）で、違えばどれも置かない。1 つでもSkillパックに無いコードがあれば、どれも置かない。返すのは、当てた数・ぶつかった数（同じ行に違う値のルールが当たった、または行がもう違う値を持つ。ぶつかった行は変えない）・未紐付けの数・例 10 件まで（行の参照だけ）・ルールごとの数・新しい版。案は、人が画面で受けるまで決まらない（受けるツールは無い）。",
     z.object({ rules: z.array(crosswalkRuleSchema).min(1).max(50), basedOnVersion: z.number().int().min(0) }),
     ruleOutcome.extend({
       unmapped: z.number().int(),
@@ -514,7 +514,7 @@ export const TOOLS = {
     "chart_rows",
     "read",
     "星取表の行を読む",
-    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose で規則を置く。rowRef に機器の行の id（n:…）を渡すと、その機器を対象にする作業を 1 行ずつ返す（行の id は w:<作業>。星取は作業ごと。chart_propose の stars はこの id で指す）。",
+    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose でルールを置く。rowRef に機器の行の id（n:…）を渡すと、その機器を対象にする作業を 1 行ずつ返す（行の id は w:<作業>。星取は作業ごと。chart_propose の stars はこの id で指す）。",
     z.object({
       offset: z.number().int().min(0).default(0),
       limit: z.number().int().min(1).max(ROWS_PER_CALL).default(50),
@@ -533,7 +533,7 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で、星取表に周期の案を置く（足すだけ。今ある星取は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実績からその年数ごとに、計画のいちばん遅い年度まで計画の星取（○）を置く。計画の星取がもうある年度は飛ばす。実績が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置ける（Claude の判断では置かない。bases の record・pack・rule は実績の根拠にならない。同じ機器の同じ年度にほかの作業の実績があれば、MOYAI が参考の行として添える）。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。",
+    "ルールで、星取表に周期の案を置く（足すだけ。今ある星取は消さない）。ルールの set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実績からその年数ごとに、計画のいちばん遅い年度まで計画の星取（○）を置く。計画の星取がもうある年度は飛ばす。実績が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（Skillパックの基準。check_results の照査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置ける（Claude の判断では置かない。bases の record・pack・rule は実績の根拠にならない。同じ機器の同じ年度にほかの作業の実績があれば、MOYAI が参考の行として添える）。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。",
     z.object({
       rules: z.array(ruleSchema).max(50).default([]),
       basedOnVersion: z.number().int().min(0),
@@ -605,8 +605,8 @@ export const TOOLS = {
   check_results: def(
     "check_results",
     "read",
-    "検査の結果を読む",
-    "作業中の計画に、パックの検査を、作業画面の基準日で走らせた結果を読む（読むだけ。検査を直す・判定を変える道は無い）。検査ごとの結果（met・notMet・notApplicable）、根拠の数字、例 10 件まで（階層と年度）、外れの数、出典（資料・条項・頁・URL）、水準（requirement・recommendation・app）、閾値の出どころ（source・app）、確かめた度合いが入る。数字を丸めず言い換えず、自分で計算し直さず、出典を添えて説明する。notice のとおり、自己点検であって、審査の判断ではない。checkId を渡すと、その検査だけ。",
+    "照査の結果を読む",
+    "作業中の計画に、Skillパックの照査を、作業画面の基準日で走らせた結果を読む（読むだけ。照査を直す・判定を変える道は無い）。照査ごとの結果（met・notMet・notApplicable）、根拠の数字、例 10 件まで（階層と年度）、外れの数、出典（資料・条項・頁・URL）、水準（requirement・recommendation・app）、閾値の出どころ（source・app）、確かめた度合いが入る。数字を丸めず言い換えず、自分で計算し直さず、出典を添えて説明する。notice のとおり、自己点検であって、審査の判断ではない。checkId を渡すと、その照査だけ。",
     z.object({ checkId: z.string().max(60).optional() }),
     z.object({
       notice: z.string(),
@@ -709,8 +709,8 @@ export const TOOLS = {
   reading_rules_propose: def(
     "reading_rules_propose",
     "propose",
-    "読み方の規則を下書きで置く",
-    "取り込みを詰めきれないとき、利用者と会話で決めた読み方の規則を、作業中の版の下書きの読み方（3 段目の Skill）に置く。規則は決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・星取の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業の属性 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料の読み方には効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその星取の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。同じ id の規則は置き換える。作業画面がすぐ読み直し、規則ごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
+    "ルールを下書きで置く",
+    "取り込みを詰めきれないとき、利用者と会話で決めたルールを、作業中の版の下書きのルール（3 段目の Skill）に置く。ルールは決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・星取の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業分類 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料のルールには効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその星取の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。同じ id のルールは置き換える。作業画面がすぐ読み直し、ルールごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
     z.object({ name: z.string().min(1).max(80), scope: z.enum(READING_SCOPES), rules: z.array(ReadingRule).min(1).max(50) }),
     z.object({
       name: z.string(),
@@ -723,16 +723,16 @@ export const TOOLS = {
   reading_skill_register: def(
     "reading_skill_register",
     "propose",
-    "読み方を保管先に未承認で書く",
-    "作業中の版の下書きの読み方（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲は読み方の scope で決まる（facility：その施設、person：この PC の設定の送信者（担当者）。担当者を AI が選ぶ道は無い、company：会社）。前の版は消さない。書いた読み方は未承認で、ほかの人の MOYAI では効かない。その読み方を使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
+    "ルールを保管先に未承認で書く",
+    "作業中の版の下書きのルール（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。範囲はルールの scope で決まる（facility：その施設、person：この PC の設定の送信者（担当者）。担当者を AI が選ぶ道は無い、company：会社）。前の版は消さない。書いたルールは未承認で、ほかの人の MOYAI では効かない。そのルールを使った版に人が署名したとき承認される（署名は人だけ）。利用者が良いと言ってから呼ぶ。",
     z.object({ name: z.string().min(1).max(80) }),
     z.object({ path: z.string(), version: z.string(), approved: z.boolean(), rules: z.number().int() }),
   ),
   reading_skills_list: def(
     "reading_skills_list",
     "read",
-    "保管先の読み方の一覧",
-    "保管先にある 3 段目の Skill（読み方）の一覧。名前・範囲・道・版・規則の数・承認済みか（その読み方を使った版に、信じる鍵の確定か承認の署名があるか）。withText: true で、SKILL.md の文（規則の 1 文と、人が手で書いた補い）も返す（直す前に読み直すため）。本文が返るのは、作業画面の今の施設・この PC の送信者の担当・会社の範囲の読み方だけで、ほかの施設や担当の読み方は名前と数だけ。作業画面が開いていないと読めない。",
+    "保管先のルールの一覧",
+    "保管先にある 3 段目の Skill（ルール）の一覧。名前・範囲・道・版・ルールの数・承認済みか（そのルールを使った版に、信じる鍵の確定か承認の署名があるか）。withText: true で、SKILL.md の文（ルールの 1 文と、人が手で書いた補い）も返す（直す前に読み直すため）。本文が返るのは、作業画面の今の施設・この PC の送信者の担当・会社の範囲のルールだけで、ほかの施設や担当のルールは名前と数だけ。作業画面が開いていないと読めない。",
     z.object({ withText: z.boolean().optional() }),
     z.object({
       skills: z.array(

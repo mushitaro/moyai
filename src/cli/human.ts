@@ -3,11 +3,11 @@
 // - `moyai verify demo-ring [<フォルダ>]`：リポジトリのデモの輪（demo-ring/）を、verify ring と同じ関数で確かめ、
 //   全員 ✓・わざと入れた ✗ が約束の理由で ✗ かを照らす。確認済みに数える鍵は demo-ring.json から読む（状態フォルダは読まない）。
 // - `moyai keys create --root <輪のフォルダ> --pack <パック>`：輪を作り、その輪の鍵の対を状態フォルダに置く（包まない）。
-// - `moyai keys unwrap`：前の形の鍵（合言葉で包んだもの）を、前の合言葉で 1 度だけ開き、包まない形に置き換える。
-//   合言葉はやめた（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。前の形の鍵はアプリでは使わない。
+// - `moyai keys unwrap`：前の形の鍵（パスワードで包んだもの）を、前のパスワードで 1 度だけ開き、包まない形に置き換える。
+//   パスワードはやめた（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。前の形の鍵はアプリでは使わない。
 // - `moyai send`：束を送る（検問所の画面から送る。端末から送るのは未実装）。
 // 人だけの CLI（keys create・send）は、標準入力が端末でなければ断る（AI のシェルや別のプログラムから呼ばせない）。
-// 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。前の合言葉は画面に出さない。
+// 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。前のパスワードは画面に出さない。
 import { knownMaxSeq } from "../share/ring-seen";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
@@ -55,12 +55,12 @@ export const CLI_TEXT = {
   demoSummaryNg: (n: number) => `デモの共有フォルダ：約束と違う所が ${n} 件あります。`,
   summaryNg: (n: number) => `✗ が ${n} 件あります。`,
   keysUsage: "使い方：moyai keys create --root <共有フォルダ（絶対の道）> --pack <Skillパック ID>　／　moyai keys unwrap",
-  noOldKeys: "前の形の鍵（合言葉で包んだもの）はありません。",
+  noOldKeys: "前の形の鍵（パスワードで包んだもの）はありません。",
   oldKeyHead: (what: string, fp: string) => `前の形の鍵：${what}（鍵番号 ${fp}）`,
   oldPersonKey: (by: string) => `人の鍵「${by}」`,
   oldPlaceKey: (id: string) => `共有フォルダか台帳の鍵 ${id}`,
-  oldPassphrase: "前の合言葉（打った文字は「*」で出ます。日本語は変換を確定してから Enter。空で Enter なら、この鍵は飛ばす）：",
-  wrongOld: "前の合言葉が鍵を開きませんでした。",
+  oldPassphrase: "前のパスワード（打った文字は「*」で出ます。日本語は変換を確定してから Enter。空で Enter なら、この鍵は飛ばす）：",
+  wrongOld: "前のパスワードが鍵を開きませんでした。",
   skipped: "この鍵は飛ばしました（前の形のまま。アプリでは使えません）。",
   unwrapped: "包まない形に置き換えました。",
   unwrapSummary: (done: number, left: number) => `置き換えた鍵 ${done}・前の形のまま ${left}`,
@@ -254,7 +254,7 @@ export interface HiddenIO {
 }
 
 /**
- * 合言葉を、画面に出さずに 1 行読む。Ctrl+C か、空のときの Ctrl+D なら null（やめた）。
+ * パスワードを、画面に出さずに 1 行読む。Ctrl+C か、空のときの Ctrl+D なら null（やめた）。
  * readline は使わない（端末の行を描き直すときに問いの文字まで消すので、問いが見えず止まったように見えた）。
  * 端末を生のモードにして、Enter・Backspace・Ctrl+C を自分で読む。矢印などのエスケープの並びは捨てる。
  * 受け取った 1 文字ごとに「*」を出す（日本語を変換して確定すると、変換の欄の文字が消えて、受け取れたかが見えなかった）。
@@ -311,7 +311,7 @@ export function oldKeysOf(stateDir: string): { what: string; wrapped: WrappedKey
   return out;
 }
 
-/** keys unwrap：前の形の鍵を、前の合言葉で 1 度だけ開いて置き換える。人だけ。端末でなければ断る。前の形が残れば 1 */
+/** keys unwrap：前の形の鍵を、前のパスワードで 1 度だけ開いて置き換える。人だけ。端末でなければ断る。前の形が残れば 1 */
 export async function unwrapCli(o: { stdin?: { isTTY?: boolean }; stateDir?: string; ask?: (p: string) => Promise<string | null> } = {}): Promise<number> {
   if (!requireTerminal(o.stdin)) return 3;
   const old = oldKeysOf(o.stateDir ?? resolveStateDir());

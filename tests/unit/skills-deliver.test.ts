@@ -29,12 +29,12 @@ describe("Skill を AI に渡す", () => {
       [3, "【架空】甲工場の読み方（下書き）"],
     ]);
     for (const line of MCP_INSTRUCTIONS.split("\n")) expect(s[0]!.text).toContain(line);
-    expect(s[1]!.text).toContain("ごみ焼却施設のパック（2 段目の Skill）");
+    expect(s[1]!.text).toContain("ごみ焼却施設のSkillパック（2 段目の Skill）");
     expect(s[2]!.text).toContain("「作業日」の列の日付は yyyymmdd");
     expect(new Set(s.map((x) => x.version)).size).toBe(3);
     expect(activeSkills("waste-incineration", [reading])[1]!.version).toBe(s[1]!.version);
     // どのパックにも SKILL.md がある。パックを選んでいなければ 2 段は無い
-    expect(packSkill("night-soil")).toContain("し尿処理施設のパック");
+    expect(packSkill("night-soil")).toContain("し尿処理施設のSkillパック");
     expect(activeSkills(null, []).map((x) => x.tier)).toEqual([1]);
   });
 
@@ -47,12 +47,12 @@ describe("Skill を AI に渡す", () => {
       [2, "pack:waste-incineration"],
     ]);
     expect(all.data.skillTexts).toBeUndefined();
-    expect(JSON.stringify(all.data)).not.toContain("ごみ焼却施設のパック（2 段目の Skill）");
+    expect(JSON.stringify(all.data)).not.toContain("ごみ焼却施設のSkillパック（2 段目の Skill）");
     const sk = runTabTool(ws, "intake_survey", { part: "skills" }, CTX);
     if (!sk.ok) throw new Error(sk.code);
     const texts = sk.data.skillTexts as { tier: number; text: string; version: string }[];
     expect(texts.map((x) => x.tier)).toEqual([1, 2]);
-    expect(texts[1]!.text).toContain("ごみ焼却施設のパック（2 段目の Skill）");
+    expect(texts[1]!.text).toContain("ごみ焼却施設のSkillパック（2 段目の Skill）");
     expect(texts.map((x) => x.version)).toEqual((all.data.skills as { version: string }[]).map((x) => x.version));
     expect(TOOLS.intake_survey.output.safeParse(sk.data).success).toBe(true);
   });
