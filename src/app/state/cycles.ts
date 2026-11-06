@@ -4,6 +4,7 @@
 // R の案は前の版から写さず（carryFromBase は写さない）、作業中の計画か当てているルールが変わるたびに、そのときのルールの版から出し直す（42 の 4）。
 import { activePlanRules, type LoadedReading, type PlanCycleRule } from "../../import/reading";
 import { LEDGER_CYCLE_PREFIX, PLAN_RULE_CYCLE_PREFIX, PLAN_RULE_SOURCE, cycleIdOf, planRuleLine, planRuleStatus, proposeCycles, type CycleProposal, type VerifiedBases } from "../../plan/cycle";
+import { proposalIdOf } from "../../plan/star";
 import type { Plan, WorkT } from "../../shared/plan";
 import type { Rule } from "../../shared/tools";
 import { getWorkingPlan, subscribeWorkingPlan, updateWorkingPlan } from "./plan-store";
@@ -79,6 +80,8 @@ export interface RejectedCycle {
   basis: string;
   reason: string;
   generation: number;
+  /** 星取の足す案（ID の頭 S）を却下したとき：その星取（確定のシートの却下済みの行に出す） */
+  star?: { workKey: string; planOrActual: "plan" | "actual"; fiscalYear: number };
 }
 let rejectedRows: RejectedCycle[] = [];
 
@@ -94,12 +97,15 @@ export function rejectedCycles(): RejectedCycle[] {
 export function rejectCycleByHuman(id: string, reason: string): { ok: true; marks: number } | { ok: false; reason: "notProposed" | "reasonEmpty" } {
   if (reason.trim().length === 0) return { ok: false, reason: "reasonEmpty" };
   const working = getWorkingPlan();
-  const mine = working?.plan.details.filter((d) => cycleIdOf(d.detailKey) === id) ?? [];
+  // 星取の足す案（S）も同じ道で却下する（その明細を外すだけ。src/plan/star.ts）
+  const mine = working?.plan.details.filter((d) => proposalIdOf(d.detailKey) === id) ?? [];
   if (!working || mine.length === 0) return { ok: false, reason: "notProposed" };
   const o = owned.get(id);
   if (o) for (const d of mine) rejected.add(rejectKey(o.key, d.workKey));
-  rejectedRows = [...rejectedRows, { id, marks: mine.length, basis: mine[0]!.basis ?? "", reason: reason.trim(), generation: working.generation }];
-  updateWorkingPlan({ ...working.plan, details: working.plan.details.filter((d) => cycleIdOf(d.detailKey) !== id) }, working.proposals);
+  const first = mine[0]!;
+  const star = cycleIdOf(first.detailKey) === null ? { star: { workKey: first.workKey, planOrActual: first.planOrActual, fiscalYear: first.fiscalYear } } : {};
+  rejectedRows = [...rejectedRows, { id, marks: mine.length, basis: first.basis ?? "", reason: reason.trim(), generation: working.generation, ...star }];
+  updateWorkingPlan({ ...working.plan, details: working.plan.details.filter((d) => proposalIdOf(d.detailKey) !== id) }, working.proposals);
   return { ok: true, marks: mine.length };
 }
 

@@ -136,6 +136,8 @@ interface GridContext {
   common?: boolean;
   /** 明細の鍵 → 計画か実績か（案を除いた印を描くため） */
   kinds?: ReadonlyMap<string, "plan" | "actual">;
+  /** 星取の削除の案が指す明細の鍵（今の星取に朱の破線の円を重ねる。src/plan/star.ts） */
+  removals?: ReadonlySet<string>;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -155,6 +157,12 @@ function wasMark(row: ChartRow | undefined, p: Period, cell: ChartCell | undefin
 function isProposal(cell: ChartCell | undefined, context: unknown): boolean {
   const s = (context as GridContext | undefined)?.proposals;
   return !!cell && !!s && s.size > 0 && cell.detailKeys.some((k) => s.has(k));
+}
+
+/** この印が、まだ受けていない星取の削除の案に指されているか */
+function isRemoval(cell: ChartCell | undefined, context: unknown): boolean {
+  const s = (context as GridContext | undefined)?.removals;
+  return !!cell && !!s && s.size > 0 && !!cell.mark && cell.detailKeys.some((k) => s.has(k));
 }
 
 /**
@@ -182,7 +190,8 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     const cell = p.data && period ? p.data.cells[period.key] : undefined;
     // 形は CSS が data-mark で描く（字は読み上げと写しのために残す）。台数は data-count で右下に
     // 共通台帳で案の混じったセルは、案を除いた印に朱の破線の円（data-ring）を重ねる
-    const ring = proposalRing(cell, p.context);
+    // 星取の削除の案に指された印も、今の印の上に朱の破線の円を重ねる（共通台帳の案の混じったセルと同じ出し方）
+    const ring = proposalRing(cell, p.context) ?? (isRemoval(cell, p.context) ? (cell?.mark ?? null) : null);
     const shown = ring ?? cell?.mark ?? null;
     if (shown) this.el.dataset.mark = shown;
     else delete this.el.dataset.mark;
@@ -200,6 +209,7 @@ class MarkCell implements ICellRendererComp<ChartRow> {
         "aria-label",
         cellAria(p.data, period, cell) +
           (isProposal(cell, p.context) ? T.legend.proposalAria : "") +
+          (isRemoval(cell, p.context) ? T.legend.removalAria : "") +
           (isChanged(p.data, period, cell, p.context) ? T.legend.changedFromAria(version) : "") +
           (was ? T.legend.oldPlanAria(version, T.markName[was]) : ""),
       );
@@ -361,8 +371,8 @@ function markColumn(p: Period, width: number, fyStart: boolean): ColDef<ChartRow
       "moyai-mark-changed": (c: CellClassParams<ChartRow>) => !!get(c)?.change,
       "moyai-mark-review": (c: CellClassParams<ChartRow>) => !!get(c)?.review,
       // 共通台帳で案の混じったセルは、破線の円を重ねる（data-ring）ので、印そのものは破線にしない
-      "moyai-mark-proposal": (c: CellClassParams<ChartRow>) => isProposal(get(c), c.context) && proposalRing(get(c), c.context) === null,
-      "moyai-mark-ring": (c: CellClassParams<ChartRow>) => proposalRing(get(c), c.context) !== null,
+      "moyai-mark-proposal": (c: CellClassParams<ChartRow>) => isProposal(get(c), c.context) && proposalRing(get(c), c.context) === null && !isRemoval(get(c), c.context),
+      "moyai-mark-ring": (c: CellClassParams<ChartRow>) => proposalRing(get(c), c.context) !== null || isRemoval(get(c), c.context),
       "moyai-mark-vchg": (c: CellClassParams<ChartRow>) => isChanged(c.data, p, get(c), c.context),
     },
     valueGetter: (c) => markText(get(c)?.mark ?? null),
@@ -500,9 +510,10 @@ export class ChartGrid {
     comments?: ReadonlyMap<string, string>,
     due?: ReadonlyMap<string, DueView>,
     kinds?: ReadonlyMap<string, "plan" | "actual">,
+    removals?: ReadonlySet<string>,
   ) {
     this.mode = model.mode;
-    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds } satisfies GridContext);
+    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals } satisfies GridContext);
     const cols = columns(model, foldLevel, this.h, band);
     const key = JSON.stringify([model.mode, model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band, cols.map((c) => ("width" in c ? c.width : null))]);
     if (key !== this.colKey) {

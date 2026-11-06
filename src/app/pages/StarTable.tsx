@@ -23,6 +23,8 @@ import { Switch } from "../components/Switch";
 import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
+import { proposalIdOf } from "../../plan/star";
+import { starRemovals, useStarRemovals } from "../state/stars";
 import { useAccepted } from "../state/decisions";
 import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey } from "../state/merge-side";
 import { compareCounts, marksOf } from "../../plan/chart-compare";
@@ -430,9 +432,16 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     const keys = pending
       .filter((d) => d.kind === "detail" && !accepted.has(`${d.id}\u0000${d.hash}`))
       .map((d) => d.id.slice("detail:".length))
-      .filter((k) => cycleIdOf(k) !== null);
+      // 周期の案と星取の足す案（src/plan/star.ts）
+      .filter((k) => proposalIdOf(k) !== null);
     return new Set(keys);
   }, [pending, accepted]);
+  // 星取の削除の案（人がまだ受けていないもの）が指す明細：今の星取に朱の破線の円を重ねる
+  const removalState = useStarRemovals();
+  const removals = useMemo(
+    () => new Set(starRemovals().filter((r) => r.state === "proposed").flatMap((r) => r.detailKeys)),
+    [removalState, plan],
+  );
 
   // 比べる版（MERGE の見出しの「比べる版　第 n 版」）：同じ作り方で比べる版の表を作り、セルごとの印を比べる
   const compareWith = useContext(MergeCompareContext);
@@ -463,7 +472,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const kinds = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.planOrActual] as const)), [plan]);
 
   useEffect(() => {
-    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due, kinds);
+    grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals);
     // 「| 〜で見る」の頼み：行を渡したあとに、その行・期を見える所へ送って選ぶ（畳んでいて見えなければ親の行）
     if (jump && jump.mode === model.mode) {
       const j = jump;
@@ -472,7 +481,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         for (const id of j.rowIds) if (grid.current?.reveal(id, j.periodKey)) break;
       });
     }
-  }, [model, foldLevel, band, proposals, compare, commentMarks, due, kinds, jump]);
+  }, [model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals, jump]);
 
   // 見出しで「重ねる」を選ぶと、共通の設備項目の行に替えて比べを開く。「外す」で閉じる
   useEffect(() => {
@@ -559,6 +568,11 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               {selCell?.detailKeys.some((k) => proposals.has(k)) && (
                 <Text size="xs" c="var(--shu)" data-testid="source-proposal">
                   {T.legend.proposalNote}
+                </Text>
+              )}
+              {selCell?.detailKeys.some((k) => removals.has(k)) && (
+                <Text size="xs" c="var(--shu)" data-testid="source-removal">
+                  {T.legend.removalNote}
                 </Text>
               )}
               {devices.length > 0 && (
@@ -779,6 +793,14 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
                   <span data-mark="plan">{T.mark.plan}</span>
                 </span>
                 {T.legend.proposal}
+              </Text>
+            )}
+            {removals.size > 0 && (
+              <Text size="xs" c="dimmed" span data-testid="legend-removal">
+                <span className="moyai-mark moyai-legend-mark moyai-mark-ring">
+                  <span data-mark="plan" data-ring="true">{T.mark.plan}</span>
+                </span>
+                {T.legend.removal}
               </Text>
             )}
           </Group>

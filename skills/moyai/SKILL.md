@@ -39,6 +39,8 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 計画の根拠は 4 つ：自施設の実績・パックの基準・公開の台帳・計画ルール。chart_propose の bases で record: true・pack: { checkId }・rule: { name, ruleId } を指すだけにする（中身と数は MOYAI が引く。basis に数を書かない）。利用者が会話で周期を直したら、計画ルール（kind: planCycle。commonItem × attribute → years と人の言葉の 1 文）にして reading_rules_propose で下書きに置く → 当たる作業に出た周期の案（R）を見せる（人が確定のシートで受けるまで決まらない）→ 利用者が良いと言えば reading_skill_register。
 
+星取の案：利用者が言った作業 × 年度の星取は、chart_rows（rowRef に機器の行 n:…）で作業の行 w:… を読み、chart_propose の stars（op: add・remove、value、fiscalYear）で置く。実績の追加は利用者の言葉か bases.record、実績の削除は利用者の言葉だけ。
+
 渡す：人が HOSHITORI で「署名して渡す」（編集を頼む・承認を頼む）を押すと、intake_survey の handoff に、MOYAI が用意したメールの文（宛先・件名・本文）が入る。利用者が送ってと言ったら、連携したメールから、その文のまま送る（決まり 1 の例外の 1 つめ。中身は版の場所とハッシュと、リンクの中の使い捨ての合言葉）。承認と差し戻しは人が画面で署名する。
 
 今動くのは intake_survey・intake_settle・intake_compose・chart_rows・crosswalk_propose・chart_propose・photo_transcribe・check_results・peer_reference・reading_rules_propose・reading_skill_register・reading_skills_list です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。

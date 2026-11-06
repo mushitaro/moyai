@@ -12,6 +12,9 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
 import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
+import { checkStarsFromAi, proposeStarsFromAi } from "../state/stars";
+import { assetKeyOf, fiscalYearOf } from "../../plan/chart";
+import { workRowRef, type StarIn } from "../../plan/star";
 import { getPeerView } from "../state/peers";
 import { activeRules, isPlanRule, type ReadingRule, type ReadingScope } from "../../import/reading";
 import { planRuleStatus, type VerifiedBases } from "../../plan/cycle";
@@ -33,6 +36,41 @@ export interface TabToolContext {
 type Receiver = (ws: IntakeWorkspace, args: Record<string, unknown>, ctx: TabToolContext) => TabToolResult;
 
 const T = TEXT.intake.ai;
+
+/**
+ * 機器の行（n:…）の作業を 1 行ずつ（chart_propose の stars で指すため）：行の id は w:<作業>、欄は機器の段の道・作業の名前・星取のある年度。
+ * 機器の行でない id（m:・c:）や無い機器は 0 行
+ */
+function workRows(rowRef: string, offset: number, limit: number, rowsRemaining: number): TabToolResult {
+  const working = getWorkingPlan();
+  if (!working) return { ok: false, code: "no_working_plan" };
+  const { plan } = working;
+  const nodeKey = assetKeyOf(rowRef);
+  const byKey = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+  const path: string[] = [];
+  for (let a = nodeKey !== null ? byKey.get(nodeKey) : undefined; a; a = a.parentKey !== null ? byKey.get(a.parentKey) : undefined) path.unshift(a.name);
+  const works = nodeKey !== null && byKey.has(nodeKey) ? plan.works.filter((w) => w.targets.includes(nodeKey)) : [];
+  const take = Math.max(0, Math.min(limit, rowsRemaining));
+  const rows = works.slice(offset, offset + take).map((w) => {
+    const cells: Record<string, string> = { [T.rowPath]: path.join(TEXT.chart.pathSep), [T.rowWork]: w.kind || w.workKey };
+    const by = new Map<number, { plan: boolean; actual: boolean; review: boolean }>();
+    for (const d of plan.details) {
+      if (d.workKey !== w.workKey) continue;
+      const c = by.get(d.fiscalYear) ?? { plan: false, actual: false, review: false };
+      if (d.planOrActual === "plan") c.plan = true;
+      else c.actual = true;
+      if (d.needsReview) c.review = true;
+      by.set(d.fiscalYear, c);
+    }
+    for (const fy of [...by.keys()].sort((a, b) => a - b)) {
+      const c = by.get(fy)!;
+      const mark = c.plan && c.actual ? "both" : c.actual ? "actual" : "plan";
+      cells[TEXT.chart.fiscalYear(fy)] = `${c.review ? TEXT.chart.reviewPrefix : ""}${TEXT.chart.mark[mark]}`;
+    }
+    return { rowRef: workRowRef(w.workKey), cells };
+  });
+  return { ok: true, data: { rows, total: works.length, remainingInConversation: rowsRemaining - rows.length, version: working.revision } };
+}
 
 /** 星取表の行を AI に渡す形：段の道と、印のある年度だけ（印は画面と同じ記号） */
 function chartRows(view: "base" | "adjusted", offset: number, limit: number, rowsRemaining: number): TabToolResult {
@@ -111,10 +149,32 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
   const lg = args.ledger as { ledgerVersion: string; commonItem: string; work: string; checked?: { n: number; median: string; q1: string; q3: string } } | undefined;
   if (lg && !lg.checked) return { ok: false, code: "ledger_basis_mismatch" };
   if (lg?.checked) verified.ledger = { version: lg.ledgerVersion, commonItem: lg.commonItem, work: lg.work, ...lg.checked };
-  const r = proposeCyclesFromAi(args.rules as Rule[], Number(args.basedOnVersion), String(args.basis), { fromLedger: Boolean(args.ledger), author, verified });
+  const rules = (args.rules ?? []) as Rule[];
+  const stars = (args.stars ?? []) as StarIn[];
+  // 星取の案（src/plan/star.ts）：実績は基準日の年度まで。周期の案と一緒なら、周期の案を置く前に確かめる（1 つでも合わなければ、どれも置かない）
+  const starOpts = {
+    author,
+    verified,
+    fromLedger: Boolean(args.ledger),
+    actualUpTo: fiscalYearOf(getReferenceDate(), working.plan.facility.fiscalYearStartMonth),
+  } as const;
+  if (stars.length > 0) {
+    if (Number(args.basedOnVersion) !== working.revision) return { ok: false, code: "stale_version" };
+    const bad = checkStarsFromAi(stars, starOpts);
+    if (bad) return { ok: false, code: bad };
+  }
+  const r =
+    rules.length > 0
+      ? proposeCyclesFromAi(rules, Number(args.basedOnVersion), String(args.basis), { fromLedger: Boolean(args.ledger), author, verified })
+      : ({ ok: true, plan: working.plan, proposals: [], version: working.revision } as const);
   if (!r.ok) return r;
   const marks = r.proposals.reduce((n, p) => n + p.detailKeys.length, 0);
-  ws.note("ai", T.cyclesProposed(r.proposals.length, marks));
+  if (rules.length > 0) ws.note("ai", T.cyclesProposed(r.proposals.length, marks));
+  const s = stars.length > 0 ? proposeStarsFromAi(stars, r.version, String(args.basis), { ...starOpts, checkVersion: false }) : null;
+  if (s && !s.ok) return s;
+  const plan = getWorkingPlan()?.plan ?? r.plan;
+  const starRows = s && s.ok ? starResults(stars, s, plan) : [];
+  if (s && s.ok) ws.note("ai", T.starsProposed(starRows.filter((x) => x.op === "add" && x.placed).length, starRows.filter((x) => x.op === "remove" && x.placed).length));
   const examples = r.proposals
     .flatMap((p) => p.detailKeys)
     .slice(0, 10)
@@ -122,16 +182,39 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
       const d = r.plan.details.find((x) => x.detailKey === k)!;
       return { rowRef: `d:${k}`, before: null, after: TEXT.chart.cycleMark(d.fiscalYear) };
     });
+  // 星取の案の例：作業の行の id と、前後の星取（足す案は前が無く後が案、消す案は前が今の星取で後が無い）
+  const starExamples = starRows
+    .filter((x) => x.placed)
+    .map((x) => {
+      const st = stars[x.index]!;
+      const text = `${TEXT.chart.fiscalYear(st.fiscalYear)} ${TEXT.chart.mark[st.value]}`;
+      return { rowRef: st.rowRef, before: x.op === "add" ? null : text, after: x.op === "add" ? text : null };
+    });
   return {
     ok: true,
     data: {
-      matched: marks,
+      matched: marks + starRows.filter((x) => x.placed).length,
       conflicts: 0,
-      examples,
+      examples: [...examples, ...starExamples].slice(0, 10),
       proposals: r.proposals.map((p) => ({ id: p.id, years: p.years, works: p.works, marks: p.detailKeys.length, skipped: p.skipped, bases: basesOf(r.plan, p.detailKeys[0]) })),
-      version: r.version,
+      ...(stars.length > 0 ? { stars: starRows } : {}),
+      version: getWorkingPlan()?.revision ?? r.version,
     },
   };
+}
+
+/** 星取の案の結果を、引数の順に（足す案は置いた明細の根拠の種類も） */
+function starResults(stars: readonly StarIn[], s: Extract<ReturnType<typeof proposeStarsFromAi>, { ok: true }>, plan: Plan) {
+  let a = 0;
+  let r = 0;
+  return stars.map((st, index) => {
+    if (st.op === "add") {
+      const p = s.placed[a++]!;
+      return { id: p.id, index, op: "add" as const, placed: p.detailKey !== null, details: p.detailKey !== null ? 1 : 0, bases: p.detailKey !== null ? basesOf(plan, p.detailKey) : [] };
+    }
+    const x = s.removals[r++]!;
+    return { id: x.id, index, op: "remove" as const, placed: !x.already, details: x.details };
+  });
 }
 
 /** 案の印の出どころから、照らした根拠の種類（印が無ければ空） */
@@ -209,7 +292,10 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     return { ok: true, data: r };
   },
   chart_rows: (ws, args, ctx) => {
-    const r = chartRows(args.view as "base" | "adjusted", Number(args.offset), Number(args.limit), ctx.rowsRemaining);
+    const r =
+      typeof args.rowRef === "string"
+        ? workRows(args.rowRef, Number(args.offset), Number(args.limit), ctx.rowsRemaining)
+        : chartRows(args.view as "base" | "adjusted", Number(args.offset), Number(args.limit), ctx.rowsRemaining);
     if (r.ok) ws.note("ai", T.rowsRead((r.data.rows as unknown[]).length, Number(r.data.remainingInConversation)));
     return r;
   },

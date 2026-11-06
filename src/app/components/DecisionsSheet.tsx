@@ -3,6 +3,8 @@
 // - 当てはめの案（Claude が置いた規則）：1 規則 1 行。受けるか、確かめのダイアログを通して断る（state/crosswalk.ts の人だけの道）。
 // - 台帳からの案（chart_propose の周期の案）：案ごとに 1 行（引いた印の数を行に）。受けると、その案の印をすべて受ける。
 // - ルール案（計画ルールから出した周期の案。ID の頭 R）：台帳からの案と同じく案ごとに 1 行。
+// - 星取の案（chart_propose の stars。ID の頭 S。src/plan/star.ts）：足す案は明細 1 つで 1 行（受ける・却下は周期の案と同じ道）。
+//   消す案は計画に無いので、作業画面の状態（state/stars.ts）から 1 行ずつ出す。受けると、その明細を作業中の計画から外す。種類は作者で、会話の回答か Claude 判断。
 // - Claude の決定・会話から写した答え：1 行ずつ。
 // 理由の欄は上に 1 つ。1 行ずつ受けるときも、まとめて受けるときも、その理由を使う（空のあいだは押せない）。受けたものは下にたたむ。
 // 受けた決定はこのタブのメモリ（state/decisions.ts）に持ち、署名のダイアログがそこから読んで送る。
@@ -15,8 +17,10 @@ import { sheetHash } from "../stages";
 import { commonRowId, periodKeyOf } from "../../plan/chart";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
 import { pendingDecisions, type Decision } from "../../plan/diff";
-import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
+import { applyAcceptedCycles, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
+import { isStarProposal, proposalIdOf } from "../../plan/star";
 import { rejectCycleByHuman, rejectedCycles } from "../state/cycles";
+import { acceptRemovalByHuman, openRemovalCount, rejectRemovalByHuman, rejectedRemovals, starRemovals, undoRemovalByHuman, useStarRemovals, type StarRemoval } from "../state/stars";
 import type { Plan, WorkT } from "../../shared/plan";
 import type { Acceptance } from "../../plan/diff";
 import type { BridgeClient } from "../bridge-client";
@@ -40,18 +44,21 @@ const NO_PROPOSALS: readonly CrosswalkProposal[] = [];
  * 案のままの当てはめの規則が当てている行は、決定の 1 行ずつには出さない（規則の行で受ける。二重に出さない。台帳の新-4）。
  * openRules は案のままの規則の数（下の帯の数に足す）
  */
-export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; ready: boolean } {
+export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; openRemovals: number; ready: boolean } {
   const [load] = usePlanStatus(client, plan?.planId ?? "", !!plan);
   const status = load.kind === "ready" ? load.status : null;
   const working = useWorkingPlan();
   const proposals = working?.proposals ?? NO_PROPOSALS;
+  // 星取の消す案（計画に無いので、ここから数える。案のままのものは確定を止める）
+  useStarRemovals();
+  const openRemovals = openRemovalCount();
   const pending = useMemo(() => {
     if (!plan || !status) return [];
     const held = new Set<string>();
     for (const p of proposals) if (p.state === "proposed") for (const ref of heldRows(plan, p)) held.add(ref.startsWith("n:") ? `item:${ref.slice(2)}` : `attr:${ref.slice(2)}`);
     return pendingDecisions(plan, status.accepted ?? []).filter((d) => !held.has(d.id));
   }, [plan, status, proposals]);
-  return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, ready: !!status };
+  return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, openRemovals, ready: !!status };
 }
 
 // ─── 周期の案を受けたときの作業のきっかけ（Architect の 44。Wire、11-06） ───────────
@@ -137,6 +144,11 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   // 周期の案（台帳案・ルール案・会話の回答・Claude 判断の L・C・R）を選ぶと、横の板の詳細に出す（「| 却下」「| 確定」）
   const [pickedCycle, setPickedCycle] = useState<string | null>(null);
   const [rejectingCycle, setRejectingCycle] = useState<{ id: string; n: number } | null>(null);
+  const [rejectingRemoval, setRejectingRemoval] = useState<StarRemoval | null>(null);
+  useStarRemovals();
+  const removals = starRemovals();
+  const openRemovals = removals.filter((r) => r.state === "proposed");
+  const doneRemovals = removals.filter((r) => r.state === "accepted");
   // 却下のダイアログの「判断の理由」（開くときに上の欄の理由を入れておく。空のあいだは「却下」を押せない。Wire、11-06）
   const [rejectReason, setRejectReason] = useState("");
   const rejectOk = rejectReason.trim().length > 0;
@@ -164,7 +176,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     const out: { key: string; ds: Decision[]; cycle: string | null }[] = [];
     const byCycle = new Map<string, Decision[]>();
     for (const d of pending) {
-      const c = d.kind === "detail" ? cycleIdOf(d.id.slice("detail:".length)) : null;
+      const c = d.kind === "detail" ? proposalIdOf(d.id.slice("detail:".length)) : null;
       if (c === null) out.push({ key: d.id, ds: [d], cycle: null });
       else {
         if (!byCycle.has(c)) out.push({ key: `cycle:${c}`, ds: byCycle.set(c, []).get(c)!, cycle: c });
@@ -242,15 +254,17 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     crosswalk: allOpenRules.filter((p) => p.sameAs === undefined).length,
     ledger: openGroups.filter((g) => kindOfGroup(g) === "ledger").length,
     rule: openGroups.filter((g) => kindOfGroup(g) === "rule").length,
-    relayed: openGroups.filter((g) => kindOfGroup(g) === "relayed").length,
-    ai: openGroups.filter((g) => kindOfGroup(g) === "ai").length,
+    relayed: openGroups.filter((g) => kindOfGroup(g) === "relayed").length + openRemovals.filter((r) => r.author === "ai_relayed_human").length,
+    ai: openGroups.filter((g) => kindOfGroup(g) === "ai").length + openRemovals.filter((r) => r.author !== "ai_relayed_human").length,
   };
   const kinds = KINDS.filter((k) => counts[k] > 0);
   const kind: Kind | null = kindPick && kinds.includes(kindPick) ? kindPick : (kinds[0] ?? null);
   const openRules = allOpenRules.filter((p) => (kind === "same" ? p.sameAs !== undefined : kind === "crosswalk" ? p.sameAs === undefined : false));
   const visibleGroups = openGroups.filter((g) => kindOfGroup(g) === kind);
-  const leftCount = openGroups.length + allOpenRules.length;
-  const visibleCount = visibleGroups.length + openRules.length;
+  const removalKind = (r: StarRemoval): Kind => (r.author === "ai_relayed_human" ? "relayed" : "ai");
+  const visibleRemovals = openRemovals.filter((r) => removalKind(r) === kind);
+  const leftCount = openGroups.length + allOpenRules.length + openRemovals.length;
+  const visibleCount = visibleGroups.length + openRules.length + visibleRemovals.length;
   // 「第 n 版と同じ」が見えているあいだは、受ける理由が空なら「第 n 版で受けた当てはめと同じ」を入れておく（人が直せる。Wire）
   useEffect(() => {
     if (kind === "same" && sameAs !== null && reason.trim() === "") setReason(W.sameAs(sameAs));
@@ -270,6 +284,14 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     if (d.kind === "reading") return `${d.target} → ${d.value}`;
     return `${d.target} → ${d.kind === "attribute" ? attrName(d.value) : itemName(d.value)}`;
   };
+  /** 星取の 1 行：「機器 · 作業 · 計画 · 2027 年度」（決定の 1 行と同じ形） */
+  const starLine = (workKey: string, value: "plan" | "actual", fy: number) => {
+    const w = plan.works.find((x) => x.workKey === workKey);
+    const target = `${(w?.targets ?? []).map((k) => names.get(k) ?? k).join("、")} · ${w?.kind || workKey}`;
+    return `${target} · ${HUMAN_TEXT.confirm.pendingValue[value] ?? ""} · ${HUMAN_TEXT.confirm.pendingFiscal(String(fy))}`;
+  };
+  /** 案の行の 1 列目：周期の案は「周期の案 L1：…」、星取の足す案は「追加　…」 */
+  const groupWhat = (cycle: string, ds: readonly Decision[]) => (isStarProposal(cycle) ? T.starWhat("add", what(ds[0]!)) : T.cycleWhat(cycle, ds.length));
   const acceptRule = (p: CrosswalkProposal) => {
     const r = acceptByHuman(p.ruleId, reason);
     setMsg(r.ok ? { color: "gray", text: W.acceptedDone(p.ruleId, r.rows) } : { color: "red", text: W.refused[r.reason] ?? "" });
@@ -281,7 +303,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     for (const g of visibleGroups) for (const d of g.ds) acceptDecision(d.id, d.hash, reason);
     let refused = 0;
     for (const p of openRules) if (!acceptByHuman(p.ruleId, reason).ok) refused++;
-    setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(visibleGroups.length + openRules.length - refused, refused) });
+    for (const r of visibleRemovals) if (!acceptRemovalByHuman(r.id, reason).ok) refused++;
+    setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(visibleGroups.length + openRules.length + visibleRemovals.length - refused, refused) });
   };
 
   /** 周期の案の「| 却下」「| 確定」（行と横の板の詳細で同じ。判断の理由が要る） */
@@ -329,8 +352,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         {...(cycle ? { className: "moyai-pick-row", "aria-selected": pickedCycle === cycle, onClick: () => pickCycle(cycle), style: { cursor: "pointer" } } : {})}
       >
         <Table.Td>
-          <Text size="sm">{cycle ? T.cycleWhat(cycle, ds.length) : what(d)}</Text>
-          {cycle && effectLines(ds)}
+          <Text size="sm">{cycle ? groupWhat(cycle, ds) : what(d)}</Text>
+          {cycle && !isStarProposal(cycle) && effectLines(ds)}
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
             {cycle && isLedgerCycle(cycle) ? T.kind.ledger : cycle && isPlanRuleCycle(cycle) ? T.kind.rule : d.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
             {cycle && isDup(ds) && (
@@ -377,6 +400,62 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       </Table.Tr>
     );
   };
+
+  // 星取の消す案：1 案 1 行。受けると明細を外し、取り消すと戻す
+  const removalRow = (r: StarRemoval) => (
+    <Table.Tr key={`removal:${r.id}`} data-testid="pending-row" data-kind={r.author} data-removal={r.id} data-accepted={r.state === "accepted" ? "true" : "false"}>
+      <Table.Td>
+        <Text size="sm">{T.starWhat("remove", starLine(r.workKey, r.value, r.fiscalYear))}</Text>
+        <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
+          {r.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
+        </Text>
+      </Table.Td>
+      <Table.Td c="var(--text-2)">{r.basis}</Table.Td>
+      <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
+        {r.detailKeys.length}
+      </Table.Td>
+      <Table.Td ta="right">
+        {r.state === "accepted" ? (
+          <Group gap="xs" wrap="nowrap" justify="flex-end">
+            <Text size="xs" c="dimmed" data-testid="pending-accepted">
+              {T.accepted}
+            </Text>
+            <Button size="compact-xs" variant="subtle" onClick={() => undoRemovalByHuman(r.id)}>
+              {T.undo}
+            </Button>
+          </Group>
+        ) : (
+          <Group gap="xs" wrap="nowrap" justify="flex-end">
+            <Button
+              size="compact-sm"
+              variant="default"
+              disabled={!ok}
+              title={ok ? undefined : T.needsReason}
+              onClick={() => {
+                setRejectReason(reason);
+                setRejectingRemoval(r);
+              }}
+              data-testid="pending-reject"
+            >
+              {W.reject}
+            </Button>
+            <Button
+              size="compact-sm"
+              disabled={!ok}
+              title={ok ? undefined : T.needsReason}
+              onClick={() => {
+                const x = acceptRemovalByHuman(r.id, reason);
+                setMsg(x.ok ? { color: "gray", text: T.starRemoveDone(x.details) } : { color: "red", text: T.cycleRejectRefused });
+              }}
+              data-testid="pending-accept"
+            >
+              {T.accept}
+            </Button>
+          </Group>
+        )}
+      </Table.Td>
+    </Table.Tr>
+  );
 
   // 「第 n 版と同じ」：淡い字の 1 規則 1 行。行ごとの受ける・断るは置かない（Wire）
   const sameRow = (p: CrosswalkProposal) => (
@@ -470,8 +549,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       <Text size="sm" fw={700}>
         {cycleKind === "same" ? T.kinds.same(sameAs ?? 0) : T.kinds[cycleKind]}
       </Text>
-      <Text size="sm">{T.cycleWhat(cycleGroup.cycle, cycleGroup.ds.length)}</Text>
-      {effectLines(cycleGroup.ds)}
+      <Text size="sm">{groupWhat(cycleGroup.cycle, cycleGroup.ds)}</Text>
+      {!isStarProposal(cycleGroup.cycle) && effectLines(cycleGroup.ds)}
       {isLedgerCycle(cycleGroup.cycle) &&
         (() => {
           const j = cycleTarget(cycleGroup.ds);
@@ -497,6 +576,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     </Stack>
   );
   const rejectedRows = rejectedCycles();
+  const rejectedStarRemovals = rejectedRemovals();
 
   const detail = picked && (
     <Stack gap="xs" data-testid="decision-detail" data-rule={picked.ruleId}>
@@ -568,6 +648,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           <Table.Tbody>
             {openRules.map(kind === "same" ? sameRow : ruleRow)}
             {visibleGroups.map(groupRow)}
+            {visibleRemovals.map(removalRow)}
           </Table.Tbody>
         </Table>
       )}
@@ -578,18 +659,39 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       )}
 
       {/* 受けたもの・断ったもの：下にたたむ（閉じていても DOM に残す） */}
-      {(doneRules.length > 0 || doneGroups.length > 0 || rejectedRows.length > 0) && (
+      {(doneRules.length > 0 || doneGroups.length > 0 || rejectedRows.length > 0 || doneRemovals.length > 0 || rejectedStarRemovals.length > 0) && (
         <details data-testid="decisions-done">
-          <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>{T.doneTitle(doneRules.length + doneGroups.length + rejectedRows.length)}</summary>
+          <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>
+            {T.doneTitle(doneRules.length + doneGroups.length + rejectedRows.length + doneRemovals.length + rejectedStarRemovals.length)}
+          </summary>
           <Table verticalSpacing="xs" fz="sm" mt="xs">
             {head}
             <Table.Tbody>
               {doneRules.map(ruleRow)}
               {doneGroups.map(groupRow)}
+              {doneRemovals.map(removalRow)}
+              {rejectedStarRemovals.map((r) => (
+                <Table.Tr key={`rejected-removal:${r.id}`} data-testid="cycle-rejected" data-removal={r.id}>
+                  <Table.Td>
+                    <Text size="sm">{T.starWhat("remove", starLine(r.workKey, r.value, r.fiscalYear))}</Text>
+                  </Table.Td>
+                  <Table.Td c="var(--text-2)" title={r.basis}>
+                    {shortWhy(r.basis)}
+                  </Table.Td>
+                  <Table.Td className="moyai-num" ta="right">
+                    {r.detailKeys.length}
+                  </Table.Td>
+                  <Table.Td ta="right">
+                    <Text size="xs" c="dimmed">
+                      {T.rejected}
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
               {rejectedRows.map((r) => (
                 <Table.Tr key={`rejected:${r.id}`} data-testid="cycle-rejected" data-cycle={r.id}>
                   <Table.Td>
-                    <Text size="sm">{T.cycleWhat(r.id, r.marks)}</Text>
+                    <Text size="sm">{r.star ? T.starWhat("add", starLine(r.star.workKey, r.star.planOrActual, r.star.fiscalYear)) : T.cycleWhat(r.id, r.marks)}</Text>
                   </Table.Td>
                   <Table.Td c="var(--text-2)" title={r.basis}>
                     {shortWhy(r.basis)}
@@ -659,7 +761,10 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         {rejectingCycle && (
           <Stack gap="sm">
             <Text size="sm" c="var(--text-2)" data-testid="reject-item">
-              {T.cycleWhat(rejectingCycle.id, rejectingCycle.n)}
+              {(() => {
+                const g = groups.find((x) => x.cycle === rejectingCycle.id);
+                return g && isStarProposal(rejectingCycle.id) ? groupWhat(rejectingCycle.id, g.ds) : T.cycleWhat(rejectingCycle.id, rejectingCycle.n);
+              })()}
             </Text>
             <TextInput className="moyai-dialog-field" label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
             <Group justify="flex-end" gap="sm" wrap="nowrap">
@@ -677,9 +782,45 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
                 onClick={() => {
                   if (!rejectOk) return;
                   const r = rejectCycleByHuman(rejectingCycle.id, rejectReason);
-                  setMsg(r.ok ? { color: "gray", text: T.cycleRejectedDone(rejectingCycle.id, r.marks) } : { color: "red", text: T.cycleRejectRefused });
+                  setMsg(
+                    r.ok
+                      ? { color: "gray", text: isStarProposal(rejectingCycle.id) ? T.starRejectedDone(r.marks) : T.cycleRejectedDone(rejectingCycle.id, r.marks) }
+                      : { color: "red", text: T.cycleRejectRefused },
+                  );
                   if (pickedCycle === rejectingCycle.id) setPickedCycle(null);
                   setRejectingCycle(null);
+                }}
+              >
+                {T.rejectConfirm}
+              </Button>
+            </Group>
+          </Stack>
+        )}
+      </Modal>
+      <Modal opened={!!rejectingRemoval} onClose={() => setRejectingRemoval(null)} title={T.rejectTitle} centered data-testid="removal-reject-dialog">
+        {rejectingRemoval && (
+          <Stack gap="sm">
+            <Text size="sm" c="var(--text-2)" data-testid="reject-item">
+              {T.starWhat("remove", starLine(rejectingRemoval.workKey, rejectingRemoval.value, rejectingRemoval.fiscalYear))}
+            </Text>
+            <TextInput className="moyai-dialog-field" label={T.reasonLabel} value={rejectReason} onChange={(e) => setRejectReason(e.currentTarget.value)} maxLength={500} data-autofocus data-testid="reject-reason" />
+            <Group justify="flex-end" gap="sm" wrap="nowrap">
+              {!rejectOk && (
+                <Text size="xs" c="var(--text-3)" data-testid="reject-disabled-reason">
+                  {T.needsReason}
+                </Text>
+              )}
+              <Button variant="default" onClick={() => setRejectingRemoval(null)}>
+                {T.rejectLater}
+              </Button>
+              <Button
+                data-testid="removal-reject-confirm"
+                disabled={!rejectOk}
+                onClick={() => {
+                  if (!rejectOk) return;
+                  const r = rejectRemovalByHuman(rejectingRemoval.id, rejectReason);
+                  setMsg(r.ok ? { color: "gray", text: T.starRejectedDone(1) } : { color: "red", text: T.cycleRejectRefused });
+                  setRejectingRemoval(null);
                 }}
               >
                 {T.rejectConfirm}

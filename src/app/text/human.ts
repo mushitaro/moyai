@@ -366,6 +366,10 @@ export const HUMAN_TEXT = {
     /** 台帳案の詳細から、共通台帳のその行・年度を開く（前に縦の罫。Wire、11-06） */
     seeInChart: "星取表で見る",
     cycleWhat: (id: string, n: number) => `周期の案 ${id}：計画の印 ${fmt(n)} を引く`,
+    /** 星取の案（chart_propose の stars）：「追加　機器 · 作業 · 計画 · 2027 年度」。言葉は Wire に確かめる */
+    starWhat: (op: "add" | "remove", line: string) => `${op === "add" ? "追加" : "削除"}　${line}`,
+    starRejectedDone: (n: number) => `星取の案を却下しました（${fmt(n)}）`,
+    starRemoveDone: (n: number) => `削除を確定しました（作業明細 ${fmt(n)}）`,
     /** 却下のダイアログ（Wire、11-06）：題「却下」、項目の 1 行、欄「判断の理由」、「あとで」「却下」 */
     rejectTitle: "却下",
     rejectLater: "あとで",

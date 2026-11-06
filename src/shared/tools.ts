@@ -404,11 +404,13 @@ export const TOOLS = {
     "chart_rows",
     "read",
     "星取表の行を読む",
-    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose で規則を置く。",
+    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose で規則を置く。rowRef に機器の行の id（n:…）を渡すと、その機器を対象にする作業を 1 行ずつ返す（行の id は w:<作業>。星取は作業ごと。chart_propose の stars はこの id で指す）。",
     z.object({
       offset: z.number().int().min(0).default(0),
       limit: z.number().int().min(1).max(ROWS_PER_CALL).default(50),
       view: z.enum(["base", "adjusted"]).default("adjusted"),
+      /** 機器の行の id（n:…）。渡すと、その機器の作業の行（w:<作業>）を返す（chart_propose の stars で指すため） */
+      rowRef: z.string().min(3).max(200).optional(),
     }),
     z.object({
       rows: z.array(z.object({ rowRef: z.string(), cells: z.record(z.string(), z.string()) })),
@@ -421,9 +423,9 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。",
+    "規則で、星取表に周期の案を置く（足すだけ。今ある印は消さない）。規則の set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実施からその年数ごとに、計画のいちばん遅い年度まで計画の印（○）を引く。計画の印がもうある年度は飛ばす。実施が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（パックの基準。check_results の検査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、足す案（op: add）・消す案（op: remove）で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、fiscalYear は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取を消す案は、どれも置かずに誤りで返す。同じ星取がもうある足す案は置かない。実績を足す案の根拠は、利用者の言葉（author: ai_relayed_human）か、自施設の実績（bases.record：同じ機器の同じ年度に、ほかの作業の実績があることを MOYAI が照らし、その数と作業明細の数を根拠に書く）。pack と rule は実績の根拠にならない。基準日の年度より後の実績は置けない。実績を消す案は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。",
     z.object({
-      rules: z.array(ruleSchema).min(1).max(50),
+      rules: z.array(ruleSchema).max(50).default([]),
       basedOnVersion: z.number().int().min(0),
       basis: z.string().min(1).max(500),
       /** 台帳を根拠にしないときの作者：利用者が会話で言った周期なら ai_relayed_human、Claude の判断なら ai（既定） */
@@ -450,6 +452,20 @@ export const TOOLS = {
         })
         .strict()
         .optional(),
+      /** 星取の案：作業（chart_rows の作業の行の id）× 年度の星取を足す・消す。行のデータは写さない */
+      stars: z
+        .array(
+          z
+            .object({
+              op: z.enum(["add", "remove"]),
+              rowRef: z.string().regex(/^w:.{1,190}$/),
+              value: z.enum(["plan", "actual"]),
+              fiscalYear: z.number().int().min(1900).max(2200),
+            })
+            .strict(),
+        )
+        .max(50)
+        .optional(),
     }),
     z.object({
       /** 引いた計画の印の数 */
@@ -458,6 +474,11 @@ export const TOOLS = {
       examples: z.array(example).max(EXAMPLES_MAX),
       /** 案ごと：案の ID・当たった作業・引いた印・置かなかった作業（実施が無い・終わりの年度が足りない） */
       proposals: z.array(z.object({ id: z.string(), years: z.number().int(), works: z.number().int(), marks: z.number().int(), skipped: z.object({ noActual: z.number().int(), noHorizon: z.number().int() }), bases: z.array(z.string()).optional() })),
+      /** 星取の案ごと：案の ID・何番目か・置いたか（already はもう同じ星取がある足す案か、同じ消す案が案のまま）・消す明細の数・照らした根拠の種類 */
+      stars: z
+        .array(z.object({ id: z.string(), index: z.number().int(), op: z.enum(["add", "remove"]), placed: z.boolean(), details: z.number().int(), bases: z.array(z.string()).optional() }))
+        .max(50)
+        .optional(),
       version: z.number().int(),
     }),
   ),
