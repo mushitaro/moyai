@@ -128,4 +128,21 @@ describe("確定した版", () => {
     const v = await commitPlan({ root: dir, plan: p, reason: "周期の案を受けた", acceptances, basedOn: null, signer: SIGNER, client: "t" });
     expect(v).toMatchObject({ ok: false, reason: "cycleConflict" });
   });
+
+  // 確定のシートの出し方（DecisionsSheet の cycleEffect と同じく、受けた明細の鍵を元の計画に当てる）と、確定の答えの cycleChanges が同じ（Architect の 61）
+  it.each([
+    ["きっかけが無い作業に置く", null, 4, "set"],
+    ["今のきっかけを替える", { branches: [{ kind: "calendar", years: 3 }], combine: "earliest" }, 5, "replaced"],
+    ["稼働の枝は替えない", { branches: [{ kind: "meter", meter: "m1", every: 8000 }], combine: "earliest" }, 4, "kept"],
+  ])("確定のシートの変わり方と、確定の答えの cycleChanges が同じ：%s", async (_name, trigger, years, kind) => {
+    const p = propose(base(trigger), years as number, "C1");
+    const acceptances = pendingDecisions(p, []).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+    const keys = new Set(acceptances.filter((a) => a.id.startsWith("detail:")).map((a) => a.id.slice("detail:".length)));
+    const sheet = applyAcceptedCycles(p, keys);
+    if (!sheet.ok) throw new Error("conflict");
+    const v = await commitPlan({ root: dir, plan: p, reason: "周期の案を受けた", acceptances, basedOn: null, signer: SIGNER, client: "t" });
+    if (!v.ok) throw new Error(v.reason);
+    expect(sheet.changes.map((c) => c.kind)).toEqual([kind]);
+    expect(v.cycleChanges).toEqual(sheet.changes);
+  });
 });
