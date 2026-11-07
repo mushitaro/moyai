@@ -269,6 +269,7 @@ describe("intake_survey の答えは上限（60 KB）の内", () => {
       if (next === null) break;
       cursor = next;
     }
-    expect(ids).toEqual(an.open.map((q) => q.questionId));
+    // 並びは、既定の答えの無い質問が先（同じ組の中は出てきた順）
+    expect(ids).toEqual([...an.open.filter((q) => q.defaultAnswer === null), ...an.open.filter((q) => q.defaultAnswer !== null)].map((q) => q.questionId));
   });
 });
