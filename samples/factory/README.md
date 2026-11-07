@@ -33,6 +33,11 @@ fictional-ns-1（し尿処理の架空の 1 施設。機器台帳・星取表・
 - 星取表は 2 段（設備／機器）。機器台帳は 3 段、番号あり、設置年は和暦の文字、名前の中の機器番号は角括弧。
 - 生成器のコードは、見出しの語と施設の一覧（`build.py` の `RULES_FILES`）を足しただけ。作業の組み方・欠け（4 件）・汚しはすべて `rules-fictional-ns-1.json`。
 
+fictional-1-exports（fictional-1 の世界から書き出した業務の仕組みの一覧。資料を 100 個前後まとめて入れる試験の材料）。`samples/out/waste-incineration/fictional-1-exports/` の下。決まりは `world/exports-fictional-1.json`：
+
+- `orders/order-list-YYYY-MM.csv` 発注明細の一覧（2025 年度の月ごとに 12 本、UTF-8 の BOM 付き）。1 行目は題と抽出の条件（題・抽出日時・基準日・出力元を 1 行に並べる）、2 行目が列の見出し。どの月も見出しの並びは同じ。明細の無い月もある
+- `equipment-list.csv` 設備機器の一覧（Shift_JIS、機器の表）。1 行目は題と抽出の条件、2 行目が列の見出し。発注明細とは文字コード・表の形・列の並びが違う
+
 正解（試験だけが読む。AI には渡さない）：`samples/truth/.../` の `world.json`、資料ごとの `*.truth.json`、`crossdoc.truth.json`（どの資料のどの行が同じ作業か。星取表のセル・報告書の表の行・日報の行・台帳の行・写真の印）。`samples/facts/.../` は書いた xlsx を openpyxl で読み直した原本の事実。CSV の事実は `csv_facts.py`（Python の csv で、書き手が宣言した文字コードで読み直す）が書く：
 
 ```

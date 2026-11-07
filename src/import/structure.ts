@@ -1113,6 +1113,33 @@ function kvRow(cells: GridCell[], allowHeaderWords = false): boolean {
   return true;
 }
 
+/** 「項目：値」を 1 セルに書いたもの（「抽出日時：2026/11/01 10:00」）。項目は 12 字までの文字で、数・日付・時刻でない */
+function inlineField(text: string): boolean {
+  const m = /^([^:：]{1,12})[:：]\s*(\S.*)$/su.exec(norm(text));
+  if (!m) return false;
+  const label = (m[1] ?? "").trim();
+  return label.length > 0 && !/^[\d\s.,/\-]+$/u.test(label) && parseDateText(label) === null;
+}
+
+/** 日付か日時の文字（「2026/10/31」「2026/11/01 10:00」「令和8年10月31日」） */
+function dateTimeText(text: string): boolean {
+  return parseDateText(nfkcText(text).replace(/\s*\d{1,2}:\d{2}(?::\d{2})?$/u, "")) !== null;
+}
+
+/**
+ * 題と抽出の条件の行（「〇〇一覧｜抽出日時：2026/11/01 10:00｜基準日：2026/10/31」。書き出した CSV の 1 行目によくある書き方）：
+ * 列の見出しの行より上にあり、見出しの行よりセルが少なく、列の見出しの語だけのセルが無く、頭のセル（題）のほかが、どれも「項目：値」の 1 セルか
+ * 日付・日時、または項目と値の組。見出しにしない（表の外の項目なので記録には使わない）
+ */
+function conditionRow(cells: GridCell[], headerCells: number): boolean {
+  if (cells.length < 2 || cells.length >= headerCells) return false;
+  // 「項目：値」のセルは、項目が見出しの語（「対象：全設備」）でも見出しではない
+  if (cells.some((c) => !inlineField(c.text) && cue.column(c.text) !== null)) return false;
+  const [first, ...rest] = cells;
+  if (!first || typeof first.value !== "string") return false;
+  return rest.every((c) => inlineField(c.text) || dateTimeText(c.text)) || kvRow(rest);
+}
+
 /**
  * 塊の見出しの候補（頭の 1 セルだけの行（題）を除いた最初の行）より下の中身の半分以上が、その行に中身のある列（結合も見る）に並ぶか。
  * 候補の下に行が無ければ false
@@ -1468,6 +1495,8 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
       let hi = -1;
       for (let i = 0; i < Math.min(rest.length, 4); i++) if (headerLike(rowTexts(idx, rest[i] ?? 0)) && (hi < 0 || cueCount(rest[i] ?? 0) > cueCount(rest[hi] ?? 0))) hi = i;
       if (hi < 0) hi = rest.findIndex((r) => headerLike(rowTexts(idx, r)));
+      // 見出しの語の少ない表でも、1 行目が題と抽出の条件の行で、2 行目のほうがセルが多ければ、2 行目を見出しにする
+      if (hi < 0 && rest.length > 2 && conditionRow(rowTexts(idx, rest[0] ?? 0), rowTexts(idx, rest[1] ?? 0).length)) hi = 1;
       // 読み方の規則の見出しの行（「3 行目を見出しとして読む」）
       let ruleHeader = false;
       for (const a of rules) {
@@ -1490,7 +1519,12 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
           else break;
         }
       }
-      if (hi - upper > 0 && (ruleHeader || rest.slice(0, hi - upper).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)) || kvRow(rowTexts(idx, r), true)))) {
+      const headCells = hi >= 0 ? rowTexts(idx, rest[hi] ?? 0).length : 0;
+      if (
+        hi - upper > 0 &&
+        (ruleHeader ||
+          rest.slice(0, hi - upper).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)) || kvRow(rowTexts(idx, r), true) || conditionRow(rowTexts(idx, r), headCells)))
+      ) {
         for (const r of rest.splice(0, hi - upper)) {
           const cells = rowTexts(idx, r);
           roles.set(r, "note");

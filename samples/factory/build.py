@@ -1,6 +1,7 @@
 """入口。python -I -X utf8 samples/factory/build.py で、資料・正解・事実をすべて作り直す。
 LibreOffice が無いときは PDF を作らず、作れなかった数を知らせる（写真は PDF から作るので、同じく作らない）。"""
 import argparse
+import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -10,17 +11,21 @@ sys.path.insert(0, str(HERE))
 
 from world.build_world import build_world, load_rules  # noqa: E402
 from writers.crossdoc import build_crossdoc  # noqa: E402
+from writers.equipment_csv import write_equipment_list  # noqa: E402
 from writers.daily_csv import write_daily  # noqa: E402
 from writers.facts import read_facts  # noqa: E402
 from writers.hoshitori_xlsx import write_hoshitori  # noqa: E402
 from writers.ioutil import write_json  # noqa: E402
 from writers.ledger_xlsx import write_ledger  # noqa: E402
+from writers.orders_csv import write_orders  # noqa: E402
 from writers.pdfconv import find_soffice, xlsx_to_pdf  # noqa: E402
 from writers.photo import make_photo  # noqa: E402
 from writers.report_xlsx import write_reports  # noqa: E402
 
 REPO = HERE.parent.parent
 RULES_FILES = ("rules.json", "rules-fictional-2.json", "rules-fictional-ns-1.json")
+# 世界から書き出す、業務の仕組みの一覧（同じ様式の CSV を何本も。world/exports-*.json）
+EXPORT_FILES = ("exports-fictional-1.json",)
 NO_SOFFICE = "LibreOffice（soffice）が見つからない"
 
 
@@ -130,6 +135,20 @@ def build_with_counts(root: Path, pdf: bool = True, rules_files: tuple = RULES_F
                                             "note": "写真は報告書の PDF の 1 頁。印は手書きの丸（精密機能検査・一式の行の工数）とチェック（行）"})
 
         put_truth("crossdoc.truth.json", build_crossdoc(world, hoshi, ledger, reports, daily, photos))
+
+    for export_file in EXPORT_FILES:
+        cfg = json.loads((HERE / "world" / export_file).read_text(encoding="utf-8"))
+        world = build_world(load_rules(HERE / "world" / cfg["rules"]))
+        sub = Path(world["facility"]["pack"]) / cfg["out"]
+        orders = write_orders(world, cfg, root / "out" / sub)
+        written.extend(root / "out" / sub / f["file"] for f in orders["files"])
+        write_json(root / "truth" / sub / "orders.truth.json", orders)
+        written.append(root / "truth" / sub / "orders.truth.json")
+        if "equipment_list" in cfg:
+            eql = write_equipment_list(world, cfg["equipment_list"], root / "out" / sub)
+            written.append(root / "out" / sub / eql["file"])
+            write_json(root / "truth" / sub / "equipment-list.truth.json", eql)
+            written.append(root / "truth" / sub / "equipment-list.truth.json")
     return written, counts
 
 

@@ -765,6 +765,10 @@ export function compose(
   if (open.length) blockers.push(`答えの無い質問 ${open.length}`);
   const invalid = ask.invalidDecisions();
   if (invalid.length) blockers.push(`当てはまらない決定 ${invalid.length}`);
+  // 資料をまたいで結ぶかの決まらない機器（その資料だけの読みで節にしてある）：決まるまで計画を作らない。
+  // 結ぶ問いか、先の資料の未解決のセルが必ず残るので上で止まる。止める理由が 1 つも無いときだけ、念のためここで止める（画面の理由の字は変えない）
+  const held = lk.clusters.filter((c) => c.held && !c.pending && !c.excluded).length;
+  if (held && !blockers.length) blockers.push(`資料をまたいで結ぶかの決まらない機器 ${held}`);
   // 要確認：明細の印と、確かめていない写真から作った機器の節（機器の節には要確認の欄が無いので写真の側で数える）
   const review = details.filter((d) => d.needsReview).length + photoReview.assets;
   if (review) blockers.push(`要確認 ${review}`);

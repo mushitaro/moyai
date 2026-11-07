@@ -1,0 +1,21 @@
+{
+  "schema": "moyai.factory.exports/0",
+  "note": "fictional-1 の世界から書き出す、業務の仕組みの発注明細の一覧（月ごとの CSV）。1 行目が題と抽出の条件、2 行目が列の見出し。同じ様式（見出しの並びが同じ）の CSV を何本も入れる試験の材料。数はここだけ",
+  "rules": "rules.json",
+  "out": "fictional-1-exports",
+  "fiscal_year": 2025,
+  "months": 12,
+  "encoding": "utf-8-sig",
+  "title": "【架空】発注明細一覧（最新状態）",
+  "system": "【架空】みどり台 契約管理システム",
+  "extracted_at_hour": 9,
+  "columns": ["発注番号", "発注日", "件名", "機器", "号炉", "作業内容", "数量", "完了日", "発注先", "備考"],
+  "equipment_list": {
+    "file": "equipment-list.csv",
+    "encoding": "cp932",
+    "title": "【架空】設備機器一覧（全件）",
+    "extracted_at": "2026/10/01 09:00",
+    "scope": "全設備（撤去済みを除く）",
+    "columns": ["機器番号", "機器名称", "設備", "号炉", "設置年", "仕様"]
+  }
+}

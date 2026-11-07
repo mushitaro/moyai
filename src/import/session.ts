@@ -13,7 +13,7 @@ import { activeRules, RuleHits, type LoadedReading } from "./reading";
 import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
-import { Asker, type Decision, type QuestionState } from "./questions";
+import { Asker, questionShape, type Decision, type QuestionState } from "./questions";
 import { PhotoBook, photoMimeOf, photoState, scannedPageInput, type PhotoInput } from "./photo";
 
 /** 文字の無い PDF の頁を画像に描く倍率（pt → 画素。A4 の頁で長辺がおよそ 1,700 画素。AI に渡すときは写真の道がさらに描き直す） */
@@ -58,7 +58,14 @@ export interface Survey {
     defaultAnswer: string | null;
     valueKind: "option" | "number";
     options: { id: string; label: string }[];
+    /** 選択肢が、先の質問（この questionId）と同じ並び（options は空にしてある。同じ並びをくり返して送らない） */
+    sameOptionsAs?: string;
   }[];
+  /**
+   * 答えの無い質問を同じ形ごとにまとめた要約（形・件数・行の数・代表の 1 問）。どの質問も数える（questions の大きさの上限で載せなかったものも）。
+   * 答えが大きいとき、橋渡しが質問を分けて返す（src/bridge/survey-page.ts）のに使う
+   */
+  questionGroups?: { kind: string; shape: string; count: number; rows: number; example: { questionId: string; text: string } }[];
   unresolvedCells: number;
   /** 詰まっている所：未解決のセルのある資料ごとの数と、その行の見本（5 行まで）。questionId はその行を決める質問が分かるときだけ */
   stuck: { fileRef: string; cells: number; header: { row: number; cells: string[] }[]; rows: { sheet: string | null; row: number; cells: string[]; unresolved: string[]; questionId: string | null }[] }[];
@@ -81,6 +88,12 @@ const NOTES = 60;
  * 越える分は載せず、件数を注記の先頭に出す（答えて読み直すと、続きの質問が出る）
  */
 const QUESTION_BYTES = 600_000;
+/** 選択肢の並びを sameOptionsAs で指す下限の数（短い並びはそのまま書く） */
+const SHARED_OPTIONS_MIN = 3;
+/** 質問の形の要約の数の上限（多い形から） */
+const QUESTION_GROUPS = 200;
+/** 形の要約の代表の 1 問の文の長さ（字） */
+const GROUP_EXAMPLE_TEXT = 200;
 
 export class IntakeSession {
   private readonly files: InputFile[] = [];
@@ -445,11 +458,17 @@ export class IntakeSession {
     const moreNotes = shownNotes.length - NOTES;
     const cappedNotes = moreNotes > 0 ? [...shownNotes.slice(0, NOTES), `注記はほかに ${moreNotes} 件（頁ごとの頭書き・表の下の記入欄など）`] : shownNotes;
     const state: Survey["compose"]["state"] = this.composed ? (this.composed.plan ? "done" : "failed") : "idle";
-    // 質問は大きさの上限まで（分けて返す）。載せなかった件数は注記の先頭に
+    // 質問は大きさの上限まで（分けて返す）。載せなかった件数は注記の先頭に。
+    // 同じ選択肢の並び（列の役目の選択肢など）は先の質問だけに書き、後の質問は sameOptionsAs で指す（橋渡しが答えごとに書き直す）
     const enc = new TextEncoder();
     const questions: Survey["questions"] = [];
+    const firstWithOptions = new Map<string, string>();
     let bytes = 0;
     for (const q of an.open) {
+      const options = q.options.map((o) => ({ id: o.id, label: o.label }));
+      const ok = options.length >= SHARED_OPTIONS_MIN ? JSON.stringify(options) : null;
+      const same = ok === null ? undefined : firstWithOptions.get(ok);
+      if (ok !== null && same === undefined) firstWithOptions.set(ok, q.questionId);
       const x = {
         questionId: q.questionId,
         kind: q.kind,
@@ -457,19 +476,36 @@ export class IntakeSession {
         sameShapeRows: q.sameShapeRows,
         defaultAnswer: q.defaultAnswer,
         valueKind: q.valueKind,
-        options: q.options.map((o) => ({ id: o.id, label: o.label })),
+        options: same === undefined ? options : [],
+        ...(same === undefined ? {} : { sameOptionsAs: same }),
       };
       bytes += enc.encode(JSON.stringify(x)).length + 1;
       if (bytes > QUESTION_BYTES && questions.length) break;
       questions.push(x);
     }
     const restQuestions = an.open.length - questions.length;
+    // 同じ形の質問の要約（どの質問も数える）。多い形から
+    const groups = new Map<string, NonNullable<Survey["questionGroups"]>[number] & { first: number }>();
+    an.open.forEach((q, i) => {
+      const shape = questionShape(q.text);
+      const k = `${q.kind}\u0000${shape}`;
+      const g = groups.get(k);
+      if (g) {
+        g.count++;
+        g.rows += q.sameShapeRows;
+      } else groups.set(k, { kind: q.kind, shape, count: 1, rows: q.sameShapeRows, example: { questionId: q.questionId, text: q.text.slice(0, GROUP_EXAMPLE_TEXT) }, first: i });
+    });
+    const questionGroups = [...groups.values()]
+      .sort((a, b) => b.count - a.count || a.first - b.first)
+      .slice(0, QUESTION_GROUPS)
+      .map(({ first: _first, ...g }) => g);
     return {
       files,
       samples,
       legends,
       notes: restQuestions > 0 ? [`質問はほかに ${restQuestions} 件（1 回の答えの大きさの上限のため。載せた質問に答えて読み直すと、続きが出る）`, ...cappedNotes] : cappedNotes,
       questions,
+      questionGroups,
       unresolvedCells: unresolved,
       stuck: [...stuck.values()].sort((a, b) => b.cells - a.cells).slice(0, STUCK_FILES),
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },

@@ -1,0 +1,1803 @@
+{
+  "columns": [
+    "発注番号",
+    "発注日",
+    "件名",
+    "機器",
+    "号炉",
+    "作業内容",
+    "数量",
+    "完了日",
+    "発注先",
+    "備考"
+  ],
+  "encoding": "utf-8-sig",
+  "files": [
+    {
+      "file": "orders/order-list-2025-04.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E100",
+          "line": 3,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1275"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E112",
+          "line": 4,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1276"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E113",
+          "line": 5,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1277"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E114",
+          "line": 6,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1278"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E115",
+          "line": 7,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1279"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E116",
+          "line": 8,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1280"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E117",
+          "line": 9,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1281"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E118",
+          "line": 10,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1282"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E119",
+          "line": 11,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1283"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E120",
+          "line": 12,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1284"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E121",
+          "line": 13,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1285"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E122",
+          "line": 14,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1286"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E149",
+          "line": 15,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1287"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E15",
+          "line": 16,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1288"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E16",
+          "line": 17,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1289"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E17",
+          "line": 18,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1290"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E18",
+          "line": 19,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1291"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E184",
+          "line": 20,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1292"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E185",
+          "line": 21,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1293"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E186",
+          "line": 22,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1294"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E187",
+          "line": 23,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1295"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E188",
+          "line": 24,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1296"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E189",
+          "line": 25,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1297"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E19",
+          "line": 26,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1298"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E190",
+          "line": 27,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1299"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E191",
+          "line": 28,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1300"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E192",
+          "line": 29,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1301"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E193",
+          "line": 30,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1302"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E194",
+          "line": 31,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1303"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E195",
+          "line": 32,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1304"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E196",
+          "line": 33,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1305"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E197",
+          "line": 34,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1306"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E198",
+          "line": 35,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1307"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E199",
+          "line": 36,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1308"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E20",
+          "line": 37,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1309"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E200",
+          "line": 38,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1310"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E21",
+          "line": 39,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1311"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E22",
+          "line": 40,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1312"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E23",
+          "line": 41,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1313"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E24",
+          "line": 42,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1314"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E25",
+          "line": 43,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1315"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E56",
+          "line": 44,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1316"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E57",
+          "line": 45,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1317"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E58",
+          "line": 46,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1318"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E59",
+          "line": 47,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1319"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E60",
+          "line": 48,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1320"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E61",
+          "line": 49,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1321"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E62",
+          "line": 50,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1322"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E63",
+          "line": 51,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1323"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E64",
+          "line": 52,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1324"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E65",
+          "line": 53,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1325"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E66",
+          "line": 54,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1326"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E67",
+          "line": 55,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1327"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E68",
+          "line": 56,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1328"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E69",
+          "line": 57,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1329"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E70",
+          "line": 58,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1330"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E91",
+          "line": 59,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1331"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E92",
+          "line": 60,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1332"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E93",
+          "line": 61,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1333"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E94",
+          "line": 62,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1334"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E95",
+          "line": 63,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1335"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E96",
+          "line": 64,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1336"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E97",
+          "line": 65,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1337"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E98",
+          "line": 66,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1338"
+        },
+        {
+          "completed": "2025-04-17",
+          "equipment_id": "E99",
+          "line": 67,
+          "start": "2025-04-06",
+          "status": "actual",
+          "work_id": "W1339"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-05.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-05-14",
+          "equipment_id": "E02",
+          "line": 3,
+          "start": "2025-05-12",
+          "status": "actual",
+          "work_id": "W1340"
+        },
+        {
+          "completed": "2025-05-28",
+          "equipment_id": "E140",
+          "line": 4,
+          "start": "2025-05-26",
+          "status": "actual",
+          "work_id": "W1341"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-06.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-06-05",
+          "equipment_id": "E16",
+          "line": 3,
+          "start": "2025-06-01",
+          "status": "actual",
+          "work_id": "W1342"
+        },
+        {
+          "completed": "2025-06-17",
+          "equipment_id": "E86",
+          "line": 4,
+          "start": "2025-06-16",
+          "status": "actual",
+          "work_id": "W1343"
+        },
+        {
+          "completed": "2025-06-17",
+          "equipment_id": "E87",
+          "line": 5,
+          "start": "2025-06-16",
+          "status": "actual",
+          "work_id": "W1344"
+        },
+        {
+          "completed": "2025-06-17",
+          "equipment_id": "E88",
+          "line": 6,
+          "start": "2025-06-16",
+          "status": "actual",
+          "work_id": "W1345"
+        },
+        {
+          "completed": "2025-06-17",
+          "equipment_id": "E89",
+          "line": 7,
+          "start": "2025-06-16",
+          "status": "actual",
+          "work_id": "W1346"
+        },
+        {
+          "completed": "2025-06-17",
+          "equipment_id": "E90",
+          "line": 8,
+          "start": "2025-06-16",
+          "status": "actual",
+          "work_id": "W1347"
+        },
+        {
+          "completed": "2025-06-22",
+          "equipment_id": "E141",
+          "line": 9,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1348"
+        },
+        {
+          "completed": "2025-06-22",
+          "equipment_id": "E142",
+          "line": 10,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1349"
+        },
+        {
+          "completed": "2025-06-22",
+          "equipment_id": "E143",
+          "line": 11,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1350"
+        },
+        {
+          "completed": "2025-06-22",
+          "equipment_id": "E144",
+          "line": 12,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1351"
+        },
+        {
+          "completed": "2025-06-21",
+          "equipment_id": "E145",
+          "line": 13,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1352"
+        },
+        {
+          "completed": "2025-06-21",
+          "equipment_id": "E146",
+          "line": 14,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1353"
+        },
+        {
+          "completed": "2025-06-22",
+          "equipment_id": "E147",
+          "line": 15,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1354"
+        },
+        {
+          "completed": "2025-06-22",
+          "equipment_id": "E148",
+          "line": 16,
+          "start": "2025-06-20",
+          "status": "actual",
+          "work_id": "W1355"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-07.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-07-09",
+          "equipment_id": "E01",
+          "line": 3,
+          "start": "2025-07-08",
+          "status": "actual",
+          "work_id": "W1356"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-08.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-09.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-09-04",
+          "equipment_id": "E111",
+          "line": 3,
+          "start": "2025-09-01",
+          "status": "actual",
+          "work_id": "W1357"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-10.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E101",
+          "line": 3,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1358"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E102",
+          "line": 4,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1359"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E103",
+          "line": 5,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1360"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E104",
+          "line": 6,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1361"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E105",
+          "line": 7,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1362"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E106",
+          "line": 8,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1363"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E107",
+          "line": 9,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1364"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E108",
+          "line": 10,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1365"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E109",
+          "line": 11,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1366"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E110",
+          "line": 12,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1367"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E125",
+          "line": 13,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1368"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E126",
+          "line": 14,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1369"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E127",
+          "line": 15,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1370"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E128",
+          "line": 16,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1371"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E129",
+          "line": 17,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1372"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E130",
+          "line": 18,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1373"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E131",
+          "line": 19,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1374"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E132",
+          "line": 20,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1375"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E133",
+          "line": 21,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1376"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E150",
+          "line": 22,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1377"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E201",
+          "line": 23,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1378"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E202",
+          "line": 24,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1379"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E203",
+          "line": 25,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1380"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E204",
+          "line": 26,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1381"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E205",
+          "line": 27,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1382"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E206",
+          "line": 28,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1383"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E207",
+          "line": 29,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1384"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E208",
+          "line": 30,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1385"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E209",
+          "line": 31,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1386"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E210",
+          "line": 32,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1387"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E211",
+          "line": 33,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1388"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E212",
+          "line": 34,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1389"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E213",
+          "line": 35,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1390"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E214",
+          "line": 36,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1391"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E215",
+          "line": 37,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1392"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E216",
+          "line": 38,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1393"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E217",
+          "line": 39,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1394"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E26",
+          "line": 40,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1395"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E27",
+          "line": 41,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1396"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E28",
+          "line": 42,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1397"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E29",
+          "line": 43,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1398"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E30",
+          "line": 44,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1399"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E31",
+          "line": 45,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1400"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E32",
+          "line": 46,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1401"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E33",
+          "line": 47,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1402"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E34",
+          "line": 48,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1403"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E35",
+          "line": 49,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1404"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E36",
+          "line": 50,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1405"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E71",
+          "line": 51,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1406"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E72",
+          "line": 52,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1407"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E73",
+          "line": 53,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1408"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E74",
+          "line": 54,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1409"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E75",
+          "line": 55,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1410"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E76",
+          "line": 56,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1411"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E77",
+          "line": 57,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1412"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E78",
+          "line": 58,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1413"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E79",
+          "line": 59,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1414"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E80",
+          "line": 60,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1415"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E81",
+          "line": 61,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1416"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E82",
+          "line": 62,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1417"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E83",
+          "line": 63,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1418"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E84",
+          "line": 64,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1419"
+        },
+        {
+          "completed": "2025-10-16",
+          "equipment_id": "E85",
+          "line": 65,
+          "start": "2025-10-05",
+          "status": "actual",
+          "work_id": "W1420"
+        },
+        {
+          "completed": null,
+          "equipment_id": "E179",
+          "line": 66,
+          "start": "2025-10-14",
+          "status": "actual",
+          "work_id": "W1421"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-11.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E04",
+          "line": 3,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1422"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E05",
+          "line": 4,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1423"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E06",
+          "line": 5,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1424"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E07",
+          "line": 6,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1425"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E08",
+          "line": 7,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1426"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E09",
+          "line": 8,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1427"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E10",
+          "line": 9,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1428"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E11",
+          "line": 10,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1429"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E12",
+          "line": 11,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1430"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E13",
+          "line": 12,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1431"
+        },
+        {
+          "completed": "2025-11-12",
+          "equipment_id": "E14",
+          "line": 13,
+          "start": "2025-11-10",
+          "status": "actual",
+          "work_id": "W1432"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E38",
+          "line": 14,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1433"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E39",
+          "line": 15,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1434"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E40",
+          "line": 16,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1435"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E41",
+          "line": 17,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1436"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E42",
+          "line": 18,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1437"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E43",
+          "line": 19,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1438"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E44",
+          "line": 20,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1439"
+        },
+        {
+          "completed": "2025-11-27",
+          "equipment_id": "E45",
+          "line": 21,
+          "start": "2025-11-24",
+          "status": "actual",
+          "work_id": "W1440"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2025-12.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E46",
+          "line": 3,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1441"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E47",
+          "line": 4,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1442"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E48",
+          "line": 5,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1443"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E49",
+          "line": 6,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1444"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E50",
+          "line": 7,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1445"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E51",
+          "line": 8,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1446"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E52",
+          "line": 9,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1447"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E53",
+          "line": 10,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1448"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E54",
+          "line": 11,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1449"
+        },
+        {
+          "completed": "2025-12-12",
+          "equipment_id": "E55",
+          "line": 12,
+          "start": "2025-12-08",
+          "status": "actual",
+          "work_id": "W1450"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2026-01.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2026-01-21",
+          "equipment_id": "E180",
+          "line": 3,
+          "start": "2026-01-20",
+          "status": "actual",
+          "work_id": "W1451"
+        },
+        {
+          "completed": "2026-01-21",
+          "equipment_id": "E181",
+          "line": 4,
+          "start": "2026-01-20",
+          "status": "actual",
+          "work_id": "W1452"
+        },
+        {
+          "completed": "2026-01-28",
+          "equipment_id": "E182",
+          "line": 5,
+          "start": "2026-01-27",
+          "status": "actual",
+          "work_id": "W1453"
+        },
+        {
+          "completed": "2026-01-28",
+          "equipment_id": "E183",
+          "line": 6,
+          "start": "2026-01-27",
+          "status": "actual",
+          "work_id": "W1454"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2026-02.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E153",
+          "line": 3,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1455"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E154",
+          "line": 4,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1456"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E155",
+          "line": 5,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1457"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E156",
+          "line": 6,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1458"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E157",
+          "line": 7,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1459"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E158",
+          "line": 8,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1460"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E159",
+          "line": 9,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1461"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E160",
+          "line": 10,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1462"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E161",
+          "line": 11,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1463"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E162",
+          "line": 12,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1464"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E163",
+          "line": 13,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1465"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E164",
+          "line": 14,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1466"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E165",
+          "line": 15,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1467"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E166",
+          "line": 16,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1468"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E167",
+          "line": 17,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1469"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E168",
+          "line": 18,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1470"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E169",
+          "line": 19,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1471"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E170",
+          "line": 20,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1472"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E171",
+          "line": 21,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1473"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E172",
+          "line": 22,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1474"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E173",
+          "line": 23,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1475"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E174",
+          "line": 24,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1476"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E175",
+          "line": 25,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1477"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E176",
+          "line": 26,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1478"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E177",
+          "line": 27,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1479"
+        },
+        {
+          "completed": "2026-02-16",
+          "equipment_id": "E178",
+          "line": 28,
+          "start": "2026-02-15",
+          "status": "actual",
+          "work_id": "W1480"
+        }
+      ],
+      "title_line": 1
+    },
+    {
+      "file": "orders/order-list-2026-03.csv",
+      "first_data_line": 3,
+      "header_line": 2,
+      "rows": [
+        {
+          "completed": "2026-03-04",
+          "equipment_id": "E135",
+          "line": 3,
+          "start": "2026-03-02",
+          "status": "actual",
+          "work_id": "W1481"
+        },
+        {
+          "completed": "2026-03-04",
+          "equipment_id": "E136",
+          "line": 4,
+          "start": "2026-03-02",
+          "status": "actual",
+          "work_id": "W1482"
+        },
+        {
+          "completed": "2026-03-04",
+          "equipment_id": "E137",
+          "line": 5,
+          "start": "2026-03-02",
+          "status": "actual",
+          "work_id": "W1483"
+        },
+        {
+          "completed": "2026-03-04",
+          "equipment_id": "E138",
+          "line": 6,
+          "start": "2026-03-02",
+          "status": "actual",
+          "work_id": "W1484"
+        },
+        {
+          "completed": "2026-03-04",
+          "equipment_id": "E139",
+          "line": 7,
+          "start": "2026-03-02",
+          "status": "actual",
+          "work_id": "W1485"
+        }
+      ],
+      "title_line": 1
+    }
+  ],
+  "newline": "CRLF",
+  "note": "1 行目は題と抽出の条件（見出しではない）。2 行目が列の見出し。どの月も見出しの並びが同じ",
+  "schema": "moyai.factory.truth.orders/0"
+}

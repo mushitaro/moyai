@@ -173,3 +173,20 @@ export const YES_NO: QuestionOption[] = [
   { id: "yes", label: "はい" },
   { id: "no", label: "いいえ" },
 ];
+
+/** 質問の文の形の長さの上限（字） */
+const SHAPE_MAX = 80;
+
+/**
+ * 質問の形：同じ書き方の質問をまとめる鍵と、要約に出す文。「」の中・資料の名前・数・列とセルの番地を伏せる
+ * （「列 B（見出し「…」・中身の見本 「…」…）の役目が決まらない」と「列 D（…）…」は同じ形）
+ */
+export function questionShape(text: string): string {
+  return text
+    .replace(/「[^」]*」/gu, "「…」")
+    .replace(/[^\s「」（）()・、。]+\.(?:xlsx|xlsm|csv|tsv|txt|pdf|jpe?g|png)/giu, "（資料）")
+    .replace(/[A-Z]{1,3}\d+/gu, "（セル）")
+    .replace(/\d+(?:\.\d+)?/gu, "n")
+    .replace(/(^|[^A-Za-z])[A-Z]{1,3}(?=$|[^A-Za-z])/gu, "$1X")
+    .slice(0, SHAPE_MAX);
+}

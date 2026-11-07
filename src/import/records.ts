@@ -351,6 +351,9 @@ function splitUnitSuffix(text: string): { name: string; n: number } | null {
   return u?.kind === "number" ? { name: (m[1] ?? "").trim(), n: u.n } : null;
 }
 
+/** 「名前の欄が空」の質問の文に並べる行の番号の数 */
+const NO_NAME_ROWS_SHOWN = 10;
+
 function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: Pend, off: Off): number {
   // 名前の列は 1 つか、段ごとに名前を書く列の組（どれも名前の列。行ごとに、名前のある列）
   const nameCols = t.cols.filter((c) => c.role === "name");
@@ -448,22 +451,14 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       items: orphans.map((o) => itemOf(lay, [o.ref], { note: o.above ?? "" })),
     });
   }
+  // 名前の無い行（ほかの列だけに中身がある）：表ごとに 1 回聞く。文に資料・シート・行の番号を添える（人が資料を開いて探せるように）
+  const noNameRows: { r: number; cells: GridCell[] }[] = [];
   for (const r of dataRows) {
     const cells = lay.index.rowCells(r.r);
     if (cells.every((c) => off(c.ref))) continue;
     const nc = nameCells.find((x) => x.r === r.r)?.cell;
     if (!nc || off(nc.ref)) {
-      // 名前の無い行：ほかの列だけに中身がある。答えが「外す」なら外す（Architect の 51）
-      const a = ask.ask(`noNameRow|${t.id}`, {
-        kind: "stray",
-        text: "名前の欄が空で、ほかの欄だけに中身がある行がある",
-        options: [{ id: "exclude", label: "外す" }],
-        valueKind: "option",
-        defaultAnswer: null,
-        sameShapeRows: 1,
-        items: [itemOf(lay, cells.map((c) => c.ref))],
-      });
-      for (const c of cells) if (!off(c.ref)) (a === "exclude" ? exclude(c.ref, "名前の欄が空の行（決定で外した）") : pend(c.ref, questionIdOf(`noNameRow|${t.id}`)));
+      noNameRows.push({ r: r.r, cells });
       continue;
     }
     if (r.level === -1) {
@@ -563,6 +558,22 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const waiting = ts?.state === "undecided" && r.level !== null && !dittoPending ? ts.q : null;
     if (a.pending) for (const ref of a.refs) pend(ref, waiting);
     rec.assets.push(a);
+  }
+  if (noNameRows.length) {
+    // 答えが「外す」なら外す（Architect の 51）。質問の鍵は表ごと（文の行の番号が変わっても、前の答えが効く）
+    const shown = noNameRows.slice(0, NO_NAME_ROWS_SHOWN).map((x) => x.r);
+    const more = noNameRows.length - shown.length;
+    const where = `${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""}の ${shown.join("・")}${more > 0 ? ` ほか ${more}` : ""} 行目`;
+    const a = ask.ask(`noNameRow|${t.id}`, {
+      kind: "stray",
+      text: `名前の欄が空で、ほかの欄だけに中身がある行がある（${where}。${noNameRows.length} 行）`,
+      options: [{ id: "exclude", label: "外す" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: noNameRows.length,
+      items: noNameRows.map((x) => itemOf(lay, x.cells.map((c) => c.ref))),
+    });
+    for (const x of noNameRows) for (const c of x.cells) if (!off(c.ref)) (a === "exclude" ? exclude(c.ref, "名前の欄が空の行（決定で外した）") : pend(c.ref, questionIdOf(`noNameRow|${t.id}`)));
   }
   // 年として読めない設置年：書き方ごとにまとめて聞く（日付に見えない書き方を年と決めつけない）
   const byShape = new Map<string, { ref: string; text: string }[]>();

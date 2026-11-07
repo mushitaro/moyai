@@ -20,6 +20,7 @@ import {
   type ToolName,
 } from "../shared/tools";
 import type { IntakeCollection } from "./intake-files";
+import { pageSurvey } from "./survey-page";
 import type { TabHub } from "./tab";
 
 /**
@@ -277,9 +278,15 @@ export class ToolRelay {
 
     const parsed = def.output.safeParse(out.data);
     if (!parsed.success) return fail("tab_bad_result");
-    const data = parsed.data as Record<string, unknown>;
+    let data = parsed.data as Record<string, unknown>;
     // 取り込みの見本の行（見本・詰まっている所の行と見出し）も、会話の行の上限に数える（台帳の中-11）。残りを越える分は渡さない
     if (name === "intake_survey") {
+      // 先に答えの大きさを上限の内に収める（質問を分け、同じ形の要約と続きを読む道を添える）。行は、収めたあとに残ったものを数える
+      data = pageSurvey(data, {
+        part: typeof args.part === "string" ? args.part : "all",
+        ...(typeof args.cursor === "number" ? { cursor: args.cursor } : {}),
+        ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+      });
       type Stuck = { header: unknown[]; rows: unknown[] };
       let left = Math.max(0, ROWS_PER_CONVERSATION - this.rowsReadIn(conversation));
       const take = <T>(xs: readonly T[]): T[] => {

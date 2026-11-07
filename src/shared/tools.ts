@@ -168,6 +168,13 @@ const skillCatalogSchema = z.array(z.object({ tier: z.number().int().min(1).max(
 /** 要約の欄ごとの多い値は 20 まで、文字は 60 字まで（見本の行の上限と同じ） */
 export const SURVEY_TOP_VALUES = 20;
 export const SURVEY_TEXT_MAX = 60;
+/**
+ * intake_survey の 1 回の答えの大きさの上限（JSON の UTF-8 のバイト。AI の 1 回の結果の上限の内）。
+ * 越えるときは、橋渡しが質問を分け、同じ形ごとの要約と続きを読む道を添える（src/bridge/survey-page.ts）。part: skills の本文は別に縛る
+ */
+export const SURVEY_MAX_BYTES = 60_000;
+/** intake_survey の limit（1 回に載せる質問の数）の上限 */
+export const SURVEY_LIMIT_MAX = 1_000;
 
 /**
  * 当てはめの要約（intake_survey の crosswalk）。行は写さない：パックの 1 段目の項目と作業の属性の一覧、
@@ -376,7 +383,13 @@ export const TOOLS = {
     "read",
     "取り込みの要約",
     "結果の workScreenUrl は作業画面の URL。利用者が「画面を出して」と言ったら、窓を探さずにこの URL を開く（開いた新しいタブが作業画面を引き継ぐ。ふだんは外のブラウザ〔Claude in Chrome かシェル〕で開き、デモだけは中のブラウザでよい）。デモ（架空の資料）のときは、1 回の返事でツールを 1 つだけ呼び、画面の変わった所を 2 行までで言って、利用者の「次」を待つ（intake_add_files の説明のとおり）。作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
-    z.object({ part: z.enum(["all", "questions", "compose", "crosswalk", "skills"]).default("all") }),
+    z.object({
+      part: z.enum(["all", "questions", "compose", "crosswalk", "skills"]).default("all"),
+      /** 何件目の質問から読むか（0 から）。答えの questionsPage.nextCursor を渡すと続きを読める */
+      cursor: z.number().int().min(0).optional().describe("questions の何件目から読むか（0 から）。前の答えの questionsPage.nextCursor を渡すと続きが読める"),
+      /** 1 回に載せる質問の数の上限（大きさの上限のほうが先に効くことがある） */
+      limit: z.number().int().min(1).max(SURVEY_LIMIT_MAX).optional().describe("1 回に載せる質問の数の上限（答えの大きさの上限が先に効くことがある）"),
+    }),
     z.object({
       files: z.array(z.object({ fileRef: z.string(), sheets: z.number().int(), rows: z.number().int() })),
       samples: z
@@ -395,8 +408,30 @@ export const TOOLS = {
           /** option は options の id のどれかで答える。number は正の数で答える（options は空） */
           valueKind: z.enum(["option", "number"]),
           options: z.array(z.object({ id: z.string(), label: z.string() })),
+          /** 選択肢が、同じ答えの中の先の質問（この questionId）と同じ並び（options は空にしてある） */
+          sameOptionsAs: z.string().optional().describe("選択肢が、この答えの中の先の質問（この questionId）の options と同じ（options は空にしてある）"),
         }),
       ),
+      /** 答えの無い質問を同じ形ごとにまとめた要約（多い形から）。質問を分けて返したときだけ */
+      questionGroups: z
+        .array(
+          z.object({
+            kind: z.string(),
+            /** 形（「」の中・資料の名前・数・番地を伏せた文） */
+            shape: z.string(),
+            count: z.number().int(),
+            rows: z.number().int(),
+            /** 代表の 1 問 */
+            example: z.object({ questionId: z.string(), text: z.string() }),
+          }),
+        )
+        .optional()
+        .describe("答えの無い質問を同じ形ごとにまとめた要約（形・件数・行の数・代表の 1 問）。質問を分けて返したときだけ"),
+      /** 質問を分けて返したとき：全部の数・この答えの最初の位置・載せた数・続きの位置（無ければ null） */
+      questionsPage: z
+        .object({ total: z.number().int(), cursor: z.number().int(), returned: z.number().int(), nextCursor: z.number().int().nullable() })
+        .optional()
+        .describe("質問を分けて返したとき。nextCursor を cursor に渡して part: questions で続きを読む（null なら終わり）"),
       unresolvedCells: z.number().int(),
       /** 詰まっている所：資料ごとの未解決のセルの数と、その行の見本。questionId はその行を決める質問が分かるときだけ（null でも質問が残っていることがある） */
       stuck: z

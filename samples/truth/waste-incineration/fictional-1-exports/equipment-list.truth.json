@@ -1,0 +1,888 @@
+{
+  "columns": [
+    "機器番号",
+    "機器名称",
+    "設備",
+    "号炉",
+    "設置年",
+    "仕様"
+  ],
+  "encoding": "cp932",
+  "file": "equipment-list.csv",
+  "first_data_line": 3,
+  "header_line": 2,
+  "newline": "CRLF",
+  "note": "1 行目は題と抽出の条件（見出しではない）。2 行目が列の見出し",
+  "rows": [
+    {
+      "equipment_id": "E01",
+      "line": 3
+    },
+    {
+      "equipment_id": "E02",
+      "line": 4
+    },
+    {
+      "equipment_id": "E03",
+      "line": 5
+    },
+    {
+      "equipment_id": "E04",
+      "line": 6
+    },
+    {
+      "equipment_id": "E05",
+      "line": 7
+    },
+    {
+      "equipment_id": "E06",
+      "line": 8
+    },
+    {
+      "equipment_id": "E07",
+      "line": 9
+    },
+    {
+      "equipment_id": "E08",
+      "line": 10
+    },
+    {
+      "equipment_id": "E09",
+      "line": 11
+    },
+    {
+      "equipment_id": "E10",
+      "line": 12
+    },
+    {
+      "equipment_id": "E100",
+      "line": 13
+    },
+    {
+      "equipment_id": "E101",
+      "line": 14
+    },
+    {
+      "equipment_id": "E102",
+      "line": 15
+    },
+    {
+      "equipment_id": "E103",
+      "line": 16
+    },
+    {
+      "equipment_id": "E104",
+      "line": 17
+    },
+    {
+      "equipment_id": "E105",
+      "line": 18
+    },
+    {
+      "equipment_id": "E106",
+      "line": 19
+    },
+    {
+      "equipment_id": "E107",
+      "line": 20
+    },
+    {
+      "equipment_id": "E108",
+      "line": 21
+    },
+    {
+      "equipment_id": "E109",
+      "line": 22
+    },
+    {
+      "equipment_id": "E11",
+      "line": 23
+    },
+    {
+      "equipment_id": "E110",
+      "line": 24
+    },
+    {
+      "equipment_id": "E111",
+      "line": 25
+    },
+    {
+      "equipment_id": "E112",
+      "line": 26
+    },
+    {
+      "equipment_id": "E113",
+      "line": 27
+    },
+    {
+      "equipment_id": "E114",
+      "line": 28
+    },
+    {
+      "equipment_id": "E115",
+      "line": 29
+    },
+    {
+      "equipment_id": "E116",
+      "line": 30
+    },
+    {
+      "equipment_id": "E117",
+      "line": 31
+    },
+    {
+      "equipment_id": "E118",
+      "line": 32
+    },
+    {
+      "equipment_id": "E119",
+      "line": 33
+    },
+    {
+      "equipment_id": "E12",
+      "line": 34
+    },
+    {
+      "equipment_id": "E120",
+      "line": 35
+    },
+    {
+      "equipment_id": "E121",
+      "line": 36
+    },
+    {
+      "equipment_id": "E122",
+      "line": 37
+    },
+    {
+      "equipment_id": "E123",
+      "line": 38
+    },
+    {
+      "equipment_id": "E124",
+      "line": 39
+    },
+    {
+      "equipment_id": "E125",
+      "line": 40
+    },
+    {
+      "equipment_id": "E126",
+      "line": 41
+    },
+    {
+      "equipment_id": "E127",
+      "line": 42
+    },
+    {
+      "equipment_id": "E128",
+      "line": 43
+    },
+    {
+      "equipment_id": "E129",
+      "line": 44
+    },
+    {
+      "equipment_id": "E13",
+      "line": 45
+    },
+    {
+      "equipment_id": "E130",
+      "line": 46
+    },
+    {
+      "equipment_id": "E131",
+      "line": 47
+    },
+    {
+      "equipment_id": "E132",
+      "line": 48
+    },
+    {
+      "equipment_id": "E133",
+      "line": 49
+    },
+    {
+      "equipment_id": "E134",
+      "line": 50
+    },
+    {
+      "equipment_id": "E135",
+      "line": 51
+    },
+    {
+      "equipment_id": "E136",
+      "line": 52
+    },
+    {
+      "equipment_id": "E137",
+      "line": 53
+    },
+    {
+      "equipment_id": "E138",
+      "line": 54
+    },
+    {
+      "equipment_id": "E139",
+      "line": 55
+    },
+    {
+      "equipment_id": "E14",
+      "line": 56
+    },
+    {
+      "equipment_id": "E140",
+      "line": 57
+    },
+    {
+      "equipment_id": "E141",
+      "line": 58
+    },
+    {
+      "equipment_id": "E142",
+      "line": 59
+    },
+    {
+      "equipment_id": "E143",
+      "line": 60
+    },
+    {
+      "equipment_id": "E144",
+      "line": 61
+    },
+    {
+      "equipment_id": "E145",
+      "line": 62
+    },
+    {
+      "equipment_id": "E146",
+      "line": 63
+    },
+    {
+      "equipment_id": "E147",
+      "line": 64
+    },
+    {
+      "equipment_id": "E148",
+      "line": 65
+    },
+    {
+      "equipment_id": "E149",
+      "line": 66
+    },
+    {
+      "equipment_id": "E15",
+      "line": 67
+    },
+    {
+      "equipment_id": "E150",
+      "line": 68
+    },
+    {
+      "equipment_id": "E151",
+      "line": 69
+    },
+    {
+      "equipment_id": "E152",
+      "line": 70
+    },
+    {
+      "equipment_id": "E153",
+      "line": 71
+    },
+    {
+      "equipment_id": "E154",
+      "line": 72
+    },
+    {
+      "equipment_id": "E155",
+      "line": 73
+    },
+    {
+      "equipment_id": "E156",
+      "line": 74
+    },
+    {
+      "equipment_id": "E157",
+      "line": 75
+    },
+    {
+      "equipment_id": "E158",
+      "line": 76
+    },
+    {
+      "equipment_id": "E159",
+      "line": 77
+    },
+    {
+      "equipment_id": "E16",
+      "line": 78
+    },
+    {
+      "equipment_id": "E160",
+      "line": 79
+    },
+    {
+      "equipment_id": "E161",
+      "line": 80
+    },
+    {
+      "equipment_id": "E162",
+      "line": 81
+    },
+    {
+      "equipment_id": "E163",
+      "line": 82
+    },
+    {
+      "equipment_id": "E164",
+      "line": 83
+    },
+    {
+      "equipment_id": "E165",
+      "line": 84
+    },
+    {
+      "equipment_id": "E166",
+      "line": 85
+    },
+    {
+      "equipment_id": "E167",
+      "line": 86
+    },
+    {
+      "equipment_id": "E168",
+      "line": 87
+    },
+    {
+      "equipment_id": "E169",
+      "line": 88
+    },
+    {
+      "equipment_id": "E17",
+      "line": 89
+    },
+    {
+      "equipment_id": "E170",
+      "line": 90
+    },
+    {
+      "equipment_id": "E171",
+      "line": 91
+    },
+    {
+      "equipment_id": "E172",
+      "line": 92
+    },
+    {
+      "equipment_id": "E173",
+      "line": 93
+    },
+    {
+      "equipment_id": "E174",
+      "line": 94
+    },
+    {
+      "equipment_id": "E175",
+      "line": 95
+    },
+    {
+      "equipment_id": "E176",
+      "line": 96
+    },
+    {
+      "equipment_id": "E177",
+      "line": 97
+    },
+    {
+      "equipment_id": "E178",
+      "line": 98
+    },
+    {
+      "equipment_id": "E179",
+      "line": 99
+    },
+    {
+      "equipment_id": "E18",
+      "line": 100
+    },
+    {
+      "equipment_id": "E180",
+      "line": 101
+    },
+    {
+      "equipment_id": "E181",
+      "line": 102
+    },
+    {
+      "equipment_id": "E182",
+      "line": 103
+    },
+    {
+      "equipment_id": "E183",
+      "line": 104
+    },
+    {
+      "equipment_id": "E184",
+      "line": 105
+    },
+    {
+      "equipment_id": "E185",
+      "line": 106
+    },
+    {
+      "equipment_id": "E186",
+      "line": 107
+    },
+    {
+      "equipment_id": "E187",
+      "line": 108
+    },
+    {
+      "equipment_id": "E188",
+      "line": 109
+    },
+    {
+      "equipment_id": "E189",
+      "line": 110
+    },
+    {
+      "equipment_id": "E19",
+      "line": 111
+    },
+    {
+      "equipment_id": "E190",
+      "line": 112
+    },
+    {
+      "equipment_id": "E191",
+      "line": 113
+    },
+    {
+      "equipment_id": "E192",
+      "line": 114
+    },
+    {
+      "equipment_id": "E193",
+      "line": 115
+    },
+    {
+      "equipment_id": "E194",
+      "line": 116
+    },
+    {
+      "equipment_id": "E195",
+      "line": 117
+    },
+    {
+      "equipment_id": "E196",
+      "line": 118
+    },
+    {
+      "equipment_id": "E197",
+      "line": 119
+    },
+    {
+      "equipment_id": "E198",
+      "line": 120
+    },
+    {
+      "equipment_id": "E199",
+      "line": 121
+    },
+    {
+      "equipment_id": "E20",
+      "line": 122
+    },
+    {
+      "equipment_id": "E200",
+      "line": 123
+    },
+    {
+      "equipment_id": "E201",
+      "line": 124
+    },
+    {
+      "equipment_id": "E202",
+      "line": 125
+    },
+    {
+      "equipment_id": "E203",
+      "line": 126
+    },
+    {
+      "equipment_id": "E204",
+      "line": 127
+    },
+    {
+      "equipment_id": "E205",
+      "line": 128
+    },
+    {
+      "equipment_id": "E206",
+      "line": 129
+    },
+    {
+      "equipment_id": "E207",
+      "line": 130
+    },
+    {
+      "equipment_id": "E208",
+      "line": 131
+    },
+    {
+      "equipment_id": "E209",
+      "line": 132
+    },
+    {
+      "equipment_id": "E21",
+      "line": 133
+    },
+    {
+      "equipment_id": "E210",
+      "line": 134
+    },
+    {
+      "equipment_id": "E211",
+      "line": 135
+    },
+    {
+      "equipment_id": "E212",
+      "line": 136
+    },
+    {
+      "equipment_id": "E213",
+      "line": 137
+    },
+    {
+      "equipment_id": "E214",
+      "line": 138
+    },
+    {
+      "equipment_id": "E215",
+      "line": 139
+    },
+    {
+      "equipment_id": "E216",
+      "line": 140
+    },
+    {
+      "equipment_id": "E217",
+      "line": 141
+    },
+    {
+      "equipment_id": "E22",
+      "line": 142
+    },
+    {
+      "equipment_id": "E23",
+      "line": 143
+    },
+    {
+      "equipment_id": "E24",
+      "line": 144
+    },
+    {
+      "equipment_id": "E25",
+      "line": 145
+    },
+    {
+      "equipment_id": "E26",
+      "line": 146
+    },
+    {
+      "equipment_id": "E27",
+      "line": 147
+    },
+    {
+      "equipment_id": "E28",
+      "line": 148
+    },
+    {
+      "equipment_id": "E29",
+      "line": 149
+    },
+    {
+      "equipment_id": "E30",
+      "line": 150
+    },
+    {
+      "equipment_id": "E31",
+      "line": 151
+    },
+    {
+      "equipment_id": "E32",
+      "line": 152
+    },
+    {
+      "equipment_id": "E33",
+      "line": 153
+    },
+    {
+      "equipment_id": "E34",
+      "line": 154
+    },
+    {
+      "equipment_id": "E35",
+      "line": 155
+    },
+    {
+      "equipment_id": "E36",
+      "line": 156
+    },
+    {
+      "equipment_id": "E37",
+      "line": 157
+    },
+    {
+      "equipment_id": "E38",
+      "line": 158
+    },
+    {
+      "equipment_id": "E39",
+      "line": 159
+    },
+    {
+      "equipment_id": "E40",
+      "line": 160
+    },
+    {
+      "equipment_id": "E41",
+      "line": 161
+    },
+    {
+      "equipment_id": "E42",
+      "line": 162
+    },
+    {
+      "equipment_id": "E43",
+      "line": 163
+    },
+    {
+      "equipment_id": "E44",
+      "line": 164
+    },
+    {
+      "equipment_id": "E45",
+      "line": 165
+    },
+    {
+      "equipment_id": "E46",
+      "line": 166
+    },
+    {
+      "equipment_id": "E47",
+      "line": 167
+    },
+    {
+      "equipment_id": "E48",
+      "line": 168
+    },
+    {
+      "equipment_id": "E49",
+      "line": 169
+    },
+    {
+      "equipment_id": "E50",
+      "line": 170
+    },
+    {
+      "equipment_id": "E51",
+      "line": 171
+    },
+    {
+      "equipment_id": "E52",
+      "line": 172
+    },
+    {
+      "equipment_id": "E53",
+      "line": 173
+    },
+    {
+      "equipment_id": "E54",
+      "line": 174
+    },
+    {
+      "equipment_id": "E55",
+      "line": 175
+    },
+    {
+      "equipment_id": "E56",
+      "line": 176
+    },
+    {
+      "equipment_id": "E57",
+      "line": 177
+    },
+    {
+      "equipment_id": "E58",
+      "line": 178
+    },
+    {
+      "equipment_id": "E59",
+      "line": 179
+    },
+    {
+      "equipment_id": "E60",
+      "line": 180
+    },
+    {
+      "equipment_id": "E61",
+      "line": 181
+    },
+    {
+      "equipment_id": "E62",
+      "line": 182
+    },
+    {
+      "equipment_id": "E63",
+      "line": 183
+    },
+    {
+      "equipment_id": "E64",
+      "line": 184
+    },
+    {
+      "equipment_id": "E65",
+      "line": 185
+    },
+    {
+      "equipment_id": "E66",
+      "line": 186
+    },
+    {
+      "equipment_id": "E67",
+      "line": 187
+    },
+    {
+      "equipment_id": "E68",
+      "line": 188
+    },
+    {
+      "equipment_id": "E69",
+      "line": 189
+    },
+    {
+      "equipment_id": "E70",
+      "line": 190
+    },
+    {
+      "equipment_id": "E71",
+      "line": 191
+    },
+    {
+      "equipment_id": "E72",
+      "line": 192
+    },
+    {
+      "equipment_id": "E73",
+      "line": 193
+    },
+    {
+      "equipment_id": "E74",
+      "line": 194
+    },
+    {
+      "equipment_id": "E75",
+      "line": 195
+    },
+    {
+      "equipment_id": "E76",
+      "line": 196
+    },
+    {
+      "equipment_id": "E77",
+      "line": 197
+    },
+    {
+      "equipment_id": "E78",
+      "line": 198
+    },
+    {
+      "equipment_id": "E79",
+      "line": 199
+    },
+    {
+      "equipment_id": "E80",
+      "line": 200
+    },
+    {
+      "equipment_id": "E81",
+      "line": 201
+    },
+    {
+      "equipment_id": "E82",
+      "line": 202
+    },
+    {
+      "equipment_id": "E83",
+      "line": 203
+    },
+    {
+      "equipment_id": "E84",
+      "line": 204
+    },
+    {
+      "equipment_id": "E85",
+      "line": 205
+    },
+    {
+      "equipment_id": "E86",
+      "line": 206
+    },
+    {
+      "equipment_id": "E87",
+      "line": 207
+    },
+    {
+      "equipment_id": "E88",
+      "line": 208
+    },
+    {
+      "equipment_id": "E89",
+      "line": 209
+    },
+    {
+      "equipment_id": "E90",
+      "line": 210
+    },
+    {
+      "equipment_id": "E91",
+      "line": 211
+    },
+    {
+      "equipment_id": "E92",
+      "line": 212
+    },
+    {
+      "equipment_id": "E93",
+      "line": 213
+    },
+    {
+      "equipment_id": "E94",
+      "line": 214
+    },
+    {
+      "equipment_id": "E95",
+      "line": 215
+    },
+    {
+      "equipment_id": "E96",
+      "line": 216
+    },
+    {
+      "equipment_id": "E97",
+      "line": 217
+    },
+    {
+      "equipment_id": "E98",
+      "line": 218
+    },
+    {
+      "equipment_id": "E99",
+      "line": 219
+    }
+  ],
+  "schema": "moyai.factory.truth.equipment-list/0",
+  "title_line": 1
+}

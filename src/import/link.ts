@@ -20,6 +20,12 @@ export interface Cluster {
   decidedBy: Set<string>;
   pending: boolean;
   excluded: string | null;
+  /**
+   * 資料をまたいで結ぶかが決まっていない（結ぶ問いに答えが無い、または先の資料の決まっていない機器と同じ名前で、その決定を待つ）。
+   * 読みは決まっているので、その資料だけで読んだときと同じに節として持つ（セルは行き先を持つ）。問いが残るので計画は作らない。
+   * 名前の同じ後の資料の機器と日報の行は、これが決まるまで結ばない
+   */
+  held?: true;
 }
 
 export interface Occurrence {
@@ -90,6 +96,28 @@ export interface Linked {
 
 const numberOf = (c: { series: Series | null; tagNumber: number | null }): number | null =>
   c.series?.kind === "number" ? c.series.n : c.tagNumber;
+
+/**
+ * 機器が結ばれうる鍵：名前（名前の中の機器番号を分けた名前も）と機器番号。決まっていない機器の名前は、決定（番号を分ける・段・号）で
+ * 変わりうるので、元の書き方と分けた形の両方を鍵にする。結ぶ相手は名前か機器番号が同じものだけなので、鍵の重ならない機器は待たせない
+ */
+function matchKeys(names: readonly string[], tag: string | null): string[] {
+  const ks = new Set<string>();
+  for (const n of names) {
+    if (!n) continue;
+    ks.add(`n:${nk(n)}`);
+    const sp = splitTag(n);
+    if (sp) {
+      ks.add(`n:${nk(sp.name)}`);
+      ks.add(`t:${nk(sp.tag)}`);
+    }
+  }
+  if (tag) ks.add(`t:${nk(tag)}`);
+  ks.delete("n:");
+  ks.delete("t:");
+  return [...ks];
+}
+const recKeys = (r: AssetRec): string[] => matchKeys([r.name, r.rawName], r.tag);
 
 /**
  * 候補の機器の選択肢の文。名前と番号だけでは同じ文になることがある（番号の無い台帳で、系列ごとに同じ名前の機器）ので、
@@ -189,6 +217,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const childrenOf = (p: Cluster | null, tablesBefore: Set<string>) =>
     clusters.filter((c) => c.parent === p && c.recs.some((r) => tablesBefore.has(r.tableId)));
   const done = new Set<string>();
+  // 結ぶかが決まっていない機器（held）。先の資料の決まっていない機器と、結ぶかの決まっていない機器の鍵（waitKeys）
+  const held = new Set<string>();
+  const waitKeys = new Set<string>();
   for (const tid of tables) {
     const recs = rec.assets.filter((a) => a.tableId === tid).sort((a, b) => a.order - b.order);
     for (const r of recs) parentOf.set(r.id, r.parentId);
@@ -199,17 +230,15 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         if (c) c.parent = r.parentId ? (clusterOf.get(r.parentId) ?? null) : null;
       }
       done.add(tid);
+      for (const r of recs) if (r.pending && !r.excluded) for (const k of recKeys(r)) waitKeys.add(k);
       continue;
     }
-    // 先の資料の機器に決まっていないもの（名前の分け方・段など）があれば、結ぶ案はその決定のあとに作る
-    if (rec.assets.some((a) => done.has(a.tableId) && a.pending && !a.excluded)) {
-      for (const r of recs) {
-        r.pending = true;
-        const c = newCluster(r);
-        c.parent = r.parentId ? (clusterOf.get(r.parentId) ?? null) : null;
-      }
-      done.add(tid);
-      continue;
+    // 先の資料の機器に決まっていないもの（名前の分け方・段など）があれば、それと名前か機器番号が同じ機器だけ、結ぶ案をその決定のあとに作る。
+    // 鍵の重ならない機器は待たせない（ほかの資料の決まっていない行で、この資料の読みを止めない）。親が待つ機器も待つ
+    const waits = new Set<string>();
+    for (const r of recs) {
+      if (r.pending || r.excluded) continue;
+      if ((r.parentId && waits.has(r.parentId)) || recKeys(r).some((k) => waitKeys.has(k))) waits.add(r.id);
     }
     // 1 回目：親の案が受けられるとして、案を作る
     type Prop = { r: AssetRec; cand: Cluster | null; pattern: string; options: Cluster[] };
@@ -217,6 +246,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const proposed = new Map<string, Cluster | null>();
     for (const r of recs) {
       if (r.pending || r.excluded) {
+        props.push({ r, cand: null, pattern: "skip", options: [] });
+        continue;
+      }
+      if (waits.has(r.id)) {
+        held.add(r.id);
         props.push({ r, cand: null, pattern: "skip", options: [] });
         continue;
       }
@@ -301,7 +335,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
             if (c) accepted.set(p.r.id, { c, qid: questionIdOf(key) });
           } else if (a === "none") unmatched.push({ ...p, cand: null });
           else {
-            p.r.pending = true;
+            held.add(p.r.id);
             assetWaitingOn.set(p.r.id, questionIdOf(key));
           }
         }
@@ -347,11 +381,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           if (b === "c0") accepted.set(p.r.id, { c: p.cand, qid: questionIdOf(k1) });
           else if (b === "none") unmatched.push({ ...p, cand: null });
           else {
-            p.r.pending = true;
+            held.add(p.r.id);
             assetWaitingOn.set(p.r.id, questionIdOf(k1));
           }
         } else {
-          p.r.pending = true;
+          held.add(p.r.id);
           assetWaitingOn.set(p.r.id, questionIdOf(gkey));
         }
       }
@@ -377,7 +411,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           assetExcluded.set(p.r.id, p.r.excluded);
           assetExcludedBy.set(p.r.id, questionIdOf(ukey));
         } else if (a !== "yes") {
-          p.r.pending = true;
+          held.add(p.r.id);
           assetWaitingOn.set(p.r.id, questionIdOf(ukey));
         }
         else (p.r as AssetRec & { unmatchedQ?: string }).unmatchedQ = questionIdOf(ukey);
@@ -392,6 +426,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         const q = (r as AssetRec & { unmatchedQ?: string }).unmatchedQ;
         if (q) c.decidedBy.add(q);
         if (r.pending) c.pending = true;
+        else if (held.has(r.id)) c.held = true;
       }
     }
     for (const r of recs) {
@@ -401,6 +436,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       c.parent = r.parentId ? (clusterOf.get(r.parentId) ?? null) : null;
     }
     done.add(tid);
+    // 後の資料は、この表の決まっていない機器・結ぶかの決まっていない機器と同じ名前か機器番号のものだけ待つ
+    for (const r of recs) if (!r.excluded && (r.pending || held.has(r.id))) for (const k of recKeys(r)) waitKeys.add(k);
   }
   for (const c of clusters) {
     if (c.recs.some((r) => r.pending)) c.pending = true;
@@ -414,8 +451,12 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const byName = new Map<string, Cluster[]>();
   // 機器番号（同一性の鍵）でも引く：日報や報告書が「名前（機器番号）」と書く機器
   const byTag = new Map<string, Cluster[]>();
+  // 決まっていない機器（読みの決まらない機器と、結ぶかの決まらない機器）は引く先にしない。その鍵に当たる行は、決まるまで待つ
+  const heldKeys = new Set<string>();
+  for (const c of clusters) if (!c.excluded && (c.pending || c.held)) for (const r of c.recs) for (const k of recKeys(r)) heldKeys.add(k);
+  const unsettled = heldKeys.size > 0 || clusters.some((c) => !c.excluded && (c.pending || c.held));
   for (const c of clusters) {
-    if (c.excluded) continue;
+    if (c.excluded || c.pending || c.held) continue;
     // 資料をまたいで結んだ機器は、どの資料の名前でも引く（台帳の「1号炉ストーカ」と星取表の「ストーカ」）
     for (const k of new Set([c.name, ...c.recs.map((r) => r.name)].map(nk))) byName.set(k, [...(byName.get(k) ?? []), c]);
     if (c.tag) byTag.set(nk(c.tag), [...(byTag.get(nk(c.tag)) ?? []), c]);
@@ -432,14 +473,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   type Case = { key: string; tableId: string; name: string; unitKey: string; cands: Cluster[]; events: EventRec[]; pattern: string };
   const cases = new Map<string, Case>();
   const eventNames = new Map<string, { names: string[]; unitKey: string }>();
-  // 機器の節に決まっていないものがあれば、日報の行を機器に当てるのは、その決定のあとにする（先の答えで変わるため）
-  const assetsSettled = clusters.every((c) => c.excluded || !c.pending);
   for (const e of rec.events) {
     if (e.excluded || e.pending || e.effortPending) continue;
-    if (!assetsSettled) {
-      eventPending.add(e.id);
-      continue;
-    }
     const whole = e.assetNames[0] ?? "";
     if (!whole && !e.tag) {
       eventPending.add(e.id);
@@ -466,6 +501,22 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     if (names.length === 1 && e.tag && byTag.has(nk(e.tag)) && !tagged(whole)) {
       names = [`${whole}（${e.tag}）`];
       fromTagCol.set(nk(names[0] ?? ""), { name: whole, tag: e.tag });
+    }
+    // 決まっていない機器の名前か機器番号に当たる行と、決まっていない機器があるあいだに当たる機器の無い行は、その決定のあとに当てる
+    // （先の答えで当てる先が変わるため）。決まった機器だけに当たる行は待たせない
+    if (unsettled) {
+      if (matchKeys([whole, listed, ...names], e.tag).some((k) => heldKeys.has(k))) {
+        eventPending.add(e.id);
+        continue;
+      }
+      const hit = (nm: string) => {
+        const sp = tagged(nm);
+        return ((sp ? byTag.get(nk(sp.tag)) : byName.get(nk(nm))) ?? []).length > 0;
+      };
+      if (!names.every(hit)) {
+        eventPending.add(e.id);
+        continue;
+      }
     }
     const unitKey = !e.unit ? "-" : e.unit.kind === "number" ? `n${e.unit.n}` : e.unit.kind === "common" ? "common" : "ditto";
     eventNames.set(e.id, { names, unitKey });
@@ -559,7 +610,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         const none = cs.cands.length === 0;
         const unitN = cs.unitKey.startsWith("n") ? Number(cs.unitKey.slice(1)) : null;
         const choices = none
-          ? clusters.filter((c) => !c.excluded && !c.pending && c.recs.some((r) => r.level > 0) && (unitN === null || numberOf(c) === unitN || numberOf(c) === null)).slice(0, 40)
+          ? clusters.filter((c) => !c.excluded && !c.pending && !c.held && c.recs.some((r) => r.level > 0) && (unitN === null || numberOf(c) === unitN || numberOf(c) === null)).slice(0, 40)
           : cs.cands;
         const ev0 = cs.events[0];
         const a = ask.ask(key, {
