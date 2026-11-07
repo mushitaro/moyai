@@ -136,7 +136,62 @@ describe("moyai setup をチャットから走らせる", () => {
     expect(parseSetupArgs(["--target", "web"])).toEqual({ error: "bad_args" });
     expect(parseSetupArgs(["--name"])).toEqual({ error: "bad_args" });
     expect(parseSetupArgs(["--force"])).toEqual({ error: "bad_args" });
-    expect(parseSetupArgs([])).toEqual({ target: "desktop", yes: false, name: null });
-    expect(parseSetupArgs(["-y", "--target=code", "--name=甲"])).toEqual({ target: "code", yes: true, name: "甲" });
+    expect(parseSetupArgs([])).toEqual({ target: "desktop", yes: false, name: null, waitDesktop: false });
+    expect(parseSetupArgs(["-y", "--target=code", "--name=甲"])).toEqual({ target: "code", yes: true, name: "甲", waitDesktop: false });
+  });
+});
+
+describe("moyai setup：Claude Desktop が開いているとき", () => {
+  const argv = ["--target", "desktop", "--yes"];
+  it("書いたあと、Desktop が動いていれば見張りを起こし、開き直しを頼む字を出す。動いていなければ起こさない", async () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-setup-"));
+    const path = join(dir, "claude_desktop_config.json");
+    writeFileSync(path, JSON.stringify({ mcpServers: {} }));
+    let spawned = 0;
+    const said: string[] = [];
+    expect(await setupCli({ argv, path, line: LINE, say: (m) => said.push(m), desktopRunning: () => true, spawnWatcher: () => spawned++ })).toBe(0);
+    expect(spawned).toBe(1);
+    expect(said).toContain(SETUP_TEXT.desktopOpen);
+    expect(JSON.parse(readFileSync(path, "utf8")).mcpServers.moyai).toEqual(LINE);
+    writeFileSync(path, JSON.stringify({ mcpServers: {} }));
+    expect(await setupCli({ argv, path, line: LINE, say: () => {}, desktopRunning: () => false, spawnWatcher: () => spawned++ })).toBe(0);
+    expect(spawned).toBe(1);
+  });
+
+  it("見張り（--wait-desktop）は Desktop が閉じるのを待ってから、そのときの設定に足す。見張りは見張りを起こさない", async () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-setup-"));
+    const path = join(dir, "claude_desktop_config.json");
+    let checks = 0;
+    // Desktop が閉じるまでの間に、Desktop が自分の設定（moyai の無いもの）を書き直す
+    const running = () => {
+      checks++;
+      if (checks === 2) writeFileSync(path, JSON.stringify({ mcpServers: { other: { command: "x", args: [] } }, preferences: { a: 1 } }));
+      return checks < 3;
+    };
+    writeFileSync(path, JSON.stringify({ mcpServers: {} }));
+    let spawned = 0;
+    const code = await setupCli({ argv: [...argv, "--wait-desktop"], path, line: LINE, say: () => {}, desktopRunning: running, spawnWatcher: () => spawned++, waitMs: { poll: 1, settle: 1, limit: 10_000 } });
+    expect(code).toBe(0);
+    expect(spawned).toBe(0);
+    expect(JSON.parse(readFileSync(path, "utf8"))).toEqual({ mcpServers: { other: { command: "x", args: [] }, moyai: LINE }, preferences: { a: 1 } });
+  });
+
+  it("見張りは、上限まで Desktop が閉じなければ書かずに終える。--yes の無い見張りは断る", async () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-setup-"));
+    const path = join(dir, "claude_desktop_config.json");
+    writeFileSync(path, JSON.stringify({ mcpServers: {} }));
+    const said: string[] = [];
+    expect(await setupCli({ argv: [...argv, "--wait-desktop"], path, line: LINE, say: (m) => said.push(m), desktopRunning: () => true, waitMs: { poll: 1, settle: 1, limit: 5 } })).toBe(1);
+    expect(said).toContain(SETUP_TEXT.waitGaveUp);
+    expect(JSON.parse(readFileSync(path, "utf8")).mcpServers.moyai).toBeUndefined();
+    expect(await setupCli({ argv: ["--target", "desktop", "--wait-desktop"], path, line: LINE, say: () => {} })).toBe(2);
+  });
+
+  it("設定の場所を指したときは、本物の Desktop を見ない（見張りを起こさない）", async () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-setup-"));
+    const path = join(dir, "claude_desktop_config.json");
+    let spawned = 0;
+    expect(await setupCli({ argv, path, line: LINE, say: () => {}, spawnWatcher: () => spawned++ })).toBe(0);
+    expect(spawned).toBe(0);
   });
 });
