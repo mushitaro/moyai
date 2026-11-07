@@ -3,6 +3,9 @@
 import base from "./playwright.config";
 import { defineConfig } from "@playwright/test";
 
+// 試験の橋渡しは、作業画面が開いていなくても本物のブラウザを開かない（src/cli/main.ts）
+process.env.MOYAI_NO_AUTO_OPEN = "1";
+
 const slowMo = Number(process.env.MOYAI_DEMO_SLOWMO ?? 350);
 
 export default defineConfig({

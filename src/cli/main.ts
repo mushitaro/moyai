@@ -95,7 +95,8 @@ async function start(argv: string[]): Promise<void> {
       onStopRequest: () => void stopNow(),
       build: __MOYAI_BUILD__.commit,
       // 作業画面を開く手（work_screen_open と、作業画面が開いていないときに橋渡しが開く）
-      openUrl: openBrowser,
+      // MOYAI_NO_AUTO_OPEN=1（試験）では開かない。試験の橋渡しが本物のブラウザを開かないように
+      ...(process.env.MOYAI_NO_AUTO_OPEN === "1" ? {} : { openUrl: openBrowser }),
     });
     say(`${BUILD}`);
     say(`橋渡しを起こしました：${bridge.url}  （止めるには Ctrl+C）`);
