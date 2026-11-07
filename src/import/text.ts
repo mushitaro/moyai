@@ -1,4 +1,4 @@
-// セルの文字の書き方を読む小さな決まり（一般の性質だけ）：号・系列、工数、番号 1 / 1-1、名前の中の機器番号。
+// セルの文字の書き方を読む小さな決まり（一般の性質だけ）：号・系列、工数、人数と作業時間の幅、番号 1 / 1-1、名前の中の機器番号。
 // 決まらないものは null を返し、呼ぶ側が質問にする。
 import { nfkc } from "./era";
 import { CUES, cue, escapeRe, norm } from "./cues";
@@ -254,6 +254,96 @@ export function parseEffort(v: string | number): EffortValue | null {
   m = /^(\d{1,5}):([0-5]\d)$/.exec(s);
   if (m) return { amount: Number(m[1]) + Number(m[2]) / 60, unit: "hours", style: "{h}:{mm}" };
   return null;
+}
+
+// ─── 作業日報の人数と作業時間の幅（工数＝人数 × 時間 ÷ 1 人・日の時間） ─────────
+
+export type PersonsValue = { n: number; style: "数" | "計" | "職種" };
+
+const TRADES = CUES.effort.trades.map((w) => nfkc(w)).filter((w) => w !== "");
+/** 略した職種の 1 字（職種の語の頭の字）→ 職種の語。2 つの語の頭が同じ字なら、その字は略として読まない */
+const TRADE_ABBR = (() => {
+  const m = new Map<string, string | null>();
+  for (const w of TRADES) {
+    const ch = [...w][0] ?? "";
+    m.set(ch, m.has(ch) ? null : w);
+  }
+  return m;
+})();
+const PERSON_UNIT = W(CUES.effort.persons);
+const TOTAL_WORDS = W([...CUES.rowRole.totalExact, ...CUES.rowRole.total]);
+const RE_PERSONS_TOTAL = new RegExp(`^(?:${TOTAL_WORDS})(\\d+)(?:${PERSON_UNIT})(?:[(（][^()（）]*[)）])?$`, "u");
+const RE_PERSONS_PLAIN = new RegExp(`^(\\d+)(?:${PERSON_UNIT})?$`, "u");
+const RE_TRADE_TOKEN = new RegExp(`^(?:(${W(TRADES)})|(\\p{Script=Han}))(\\d+)(?:${PERSON_UNIT})?`, "u");
+const LIST_SEP = new RegExp(`[\\s、,，${CUES.listSeparators.map((x) => escapeRe(nfkc(x))).join("")}]+`, "gu");
+
+/**
+ * 人数の欄を読む（作業日報の「作業人員」）。読める書き方：数（「4」「4名」）、合計（「計4名（機械工3）」は 4。括弧の中は内訳で、足さない）、
+ * 職種の語＋数の並び（「機械工1 溶接工1 作業員2」は 4）、略した職種の 1 字＋数（「機2」）。職種の語は packs/_cues の手がかり。
+ * 読めなければ null（呼ぶ側が質問にする）
+ */
+export function parsePersons(v: string | number): PersonsValue | null {
+  if (typeof v === "number") return Number.isInteger(v) && v >= 0 ? { n: v, style: "数" } : null;
+  const s = nfkc(v).trim();
+  if (!s) return null;
+  const tight = s.replace(/[\s　]+/g, "");
+  let m = RE_PERSONS_PLAIN.exec(tight);
+  if (m) return { n: Number(m[1]), style: "数" };
+  m = RE_PERSONS_TOTAL.exec(tight);
+  if (m) return { n: Number(m[1]), style: "計" };
+  let rest = s.replace(LIST_SEP, "");
+  let n = 0;
+  let count = 0;
+  while (rest) {
+    const t = RE_TRADE_TOKEN.exec(rest);
+    if (!t) return null;
+    // 1 字の略は、職種の語の頭の字で、ほかの語と重ならないものだけ
+    if (!t[1] && !TRADE_ABBR.get(t[2] ?? "")) return null;
+    n += Number(t[3]);
+    count++;
+    rest = rest.slice(t[0].length);
+  }
+  return count ? { n, style: "職種" } : null;
+}
+
+/** 見出しの末尾の括弧が人数の単位か（「職種別人員（人）」）。上の段がこの形なら、下の段の列は人数の列 */
+export function personsHeaderUnit(header: string): boolean {
+  const h = nfkc(header).replace(/[\s　]+/g, "");
+  const paren = /[(（]([^()（）]*)[)）]$/u.exec(h)?.[1] ?? null;
+  return paren !== null && CUES.effort.persons.some((w) => nfkc(w) === paren);
+}
+
+export interface TimeSpan {
+  /** 始まりと終わり（0 時からの分） */
+  start: number;
+  end: number;
+  /** 幅の時間（昼休みは引かない） */
+  hours: number;
+}
+
+// 波線（全角・半角・波ダッシュ）とハイフン・ダッシュの類（NFKC のあと）
+const RE_SPAN = /^(\d{1,2}):(\d{2})[~〜\-‐‑‒–—―−ー](\d{1,2}):(\d{2})$/u;
+
+/**
+ * 作業時間の幅「開始～終了」（「8:30～17:00」「8:30-17:00」）を読む。昼休みは引かない（引くかは呼ぶ側が聞く）。
+ * 終わりが始まりより前（夜をまたぐ書き方）・時刻として読めないものは null
+ */
+export function parseTimeSpan(text: string): TimeSpan | null {
+  const m = RE_SPAN.exec(nfkc(text).replace(/[\s　]+/g, ""));
+  if (!m) return null;
+  const [h0, m0, h1, m1] = [m[1], m[2], m[3], m[4]].map(Number) as [number, number, number, number];
+  if (m0 > 59 || m1 > 59 || h0 > 24 || h1 > 24 || (h0 === 24 && m0 > 0) || (h1 === 24 && m1 > 0)) return null;
+  const start = h0 * 60 + m0;
+  const end = h1 * 60 + m1;
+  if (end <= start) return null;
+  return { start, end, hours: (end - start) / 60 };
+}
+
+/** 幅と、昼休み（12:00 から lunchHours 時間）の重なり（時間） */
+export function lunchOverlap(span: TimeSpan, lunchHours: number): number {
+  const a = Math.max(span.start, 12 * 60);
+  const b = Math.min(span.end, 12 * 60 + lunchHours * 60);
+  return b > a ? (b - a) / 60 : 0;
 }
 
 // ─── 番号 1 / 1-1 / 1-1-1 ─────────────────────────────────────

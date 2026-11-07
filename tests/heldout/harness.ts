@@ -87,6 +87,42 @@ export class Index {
 
 const eqOfKey = (k: string | null) => (k && k.startsWith("e:") ? k.slice(2) : null);
 
+/**
+ * 人数と作業時間の幅で工数を数える問い（src/import/records.ts の eventRecords）：見本の行（「人数 n・幅 h:mm～h:mm」・「人数 n」）と、
+ * その行の正解の工数から、正解に合う答えを返す。昼休みの問いは「含まない」「含む（12:00 から L 時間と重なる分を引く）」「1 行 1 日」のうち、
+ * 見本のどの行にも合うもの（昼休みの時間の問いには L）。合うものが無ければ外す。昼休みの問いでなければ undefined
+ */
+function spanAnswer(q: QuestionState, ix: Index): string | null | undefined {
+  const lunchQ = q.options.some((o) => o.id === "noon");
+  const hoursQ = q.valueKind === "number" && q.text.includes("昼休み");
+  const noTimeQ = !lunchQ && q.options.some((o) => o.id === "perDay");
+  if (!lunchQ && !hoursQ && !noTimeQ) return undefined;
+  const samples: { persons: number; start: number; end: number; md: number }[] = [];
+  for (const it of q.items) {
+    const m = /^人数 (\d+)(?:・幅 (\d+):(\d+)～(\d+):(\d+))?$/.exec(it.note ?? "");
+    if (!m) continue;
+    const md = it.cells.map((c) => ix.eventAt(it.file, it.sheet, c)).find((e) => !!e)?.man_days ?? null;
+    if (md === null) continue;
+    const at = (h?: string, mm?: string) => (h === undefined ? Number.NaN : Number(h) * 60 + Number(mm));
+    samples.push({ persons: Number(m[1]), start: at(m[2], m[3]), end: at(m[4], m[5]), md });
+  }
+  // 正解の工数は小数 3 桁に丸めてある
+  const near = (a: number, b: number) => Math.abs(a - b) < 6e-4;
+  const H = ix.world.man_day_hours;
+  const perDay = samples.length > 0 && samples.every((x) => near(x.md, x.persons));
+  if (noTimeQ) return perDay ? "perDay" : "exclude";
+  const hoursOf = (x: (typeof samples)[number], lunch: number) => (x.end - x.start) / 60 - Math.max(0, Math.min(x.end, 720 + lunch * 60) - Math.max(x.start, 720)) / 60;
+  const fits = (lunch: number) => samples.length > 0 && samples.every((x) => near(x.md, (x.persons * hoursOf(x, lunch)) / H));
+  // 昼休みの時間の候補：見本の行の、幅の時間と正解の時間の差
+  const cuts = [...new Set(samples.map((x) => Math.round(((x.end - x.start) / 60 - (x.md * H) / x.persons) * 100) / 100).filter((v) => v > 0))];
+  const lunch = cuts.find((v) => fits(v)) ?? null;
+  if (hoursQ) return lunch !== null ? String(lunch) : null;
+  if (fits(0)) return "no";
+  if (lunch !== null) return "noon";
+  if (perDay) return "perDay";
+  return "exclude";
+}
+
 export function answer(q: QuestionState, ix: Index): string | null {
   const ent = (it: { file: string; sheet: string | null; cells: string[] }) => ix.entityOf(it.file, it.sheet, it.cells[0] ?? "");
   const targetEnt = (it: QuestionItem) => {
@@ -147,6 +183,11 @@ export function answer(q: QuestionState, ix: Index): string | null {
     }
     case "hoursPerManDay":
       return String(ix.world.man_day_hours);
+    case "effortUnknown": {
+      const a = spanAnswer(q, ix);
+      if (a !== undefined) return a;
+      return q.options.length === 1 ? (q.options[0]?.id ?? null) : null;
+    }
     case "assetLink": {
       const ok = q.items.every((it) => {
         const a = ent(it);

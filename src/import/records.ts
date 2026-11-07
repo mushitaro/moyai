@@ -7,7 +7,7 @@ import { parseWithFormat } from "./reading";
 import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { isAssignableRole } from "./roles";
 import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
-import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, parseCost, parseCycle, parseEffort, parseUnit, splitFlatWork, splitNameUnits, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type UnitValue } from "./text";
+import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, lunchOverlap, parseCost, parseCycle, parseEffort, parsePersons, parseTimeSpan, parseUnit, personsHeaderUnit, splitFlatWork, splitNameUnits, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type TimeSpan, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
 
@@ -1420,6 +1420,36 @@ function seriesKey(s: Series | null): string {
 
 // ─── 日報の形 ──────────────────────────────────────────────────
 
+/**
+ * 人数の欄（作業日報の工数を、人数 × 作業時間の幅で数えるため）：1 つの列に人数を書く列（「作業人員」：数・「計 n 名」・職種の語＋数の並び）か、
+ * 上の段が「…人員（人）」で、下の段に職種ごとの列を並べた列（数の和。空欄は 0）。読み方の規則で役目を決めた列・外した列は使わない
+ */
+interface PersonsSource {
+  cols: ColInfo[];
+  /** 職種ごとの列の和で読む */
+  sum: boolean;
+  /** 職種ごとの列と並べた計の列（あれば、和と照らす） */
+  total: ColInfo | null;
+}
+
+function personsSource(t: Table): PersonsSource | null {
+  const cands = t.cols.filter((c) => c.role === "remark" && c.cue === "persons" && !c.ruleExclude && !(c as ColInfo & { forced?: string }).forced);
+  const top = cands.find((c) => c.headerParts.length >= 2 && personsHeaderUnit(c.headerParts[0] ?? ""));
+  if (top) {
+    const group = cands.filter((c) => c.headerParts.length >= 2 && c.headerParts[0] === top.headerParts[0]);
+    const sub = (c: ColInfo) => c.headerParts.slice(1).join(" ");
+    // 下の段が予定・実績の列なら、職種ごとの列ではない（足すと 2 重に数える）
+    if (!group.some((c) => cue.planActual(sub(c)) !== null)) {
+      const total = group.find((c) => cue.isTotal(sub(c))) ?? null;
+      return { cols: group.filter((c) => c !== total), sum: true, total };
+    }
+  }
+  const one = cands.find((c) => c.headerParts.length === 1);
+  return one ? { cols: [one], sum: false, total: null } : null;
+}
+
+const hhmm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+
 function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts: RecordOptions, date1904: boolean, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off) {
   const col = (role: ColInfo["role"]) => t.cols.find((c) => c.role === role);
   const dateCol = col("date");
@@ -1432,10 +1462,23 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   // 工数の列がいくつか（「予定工数」「実績工数」）：行ごとに、実績の列を先に、書いてある列を使う
   const effortCols = t.cols.filter((c) => c.role === "effort").sort((a, b) => (cue.planActual(b.header) === "actual" ? 1 : 0) - (cue.planActual(a.header) === "actual" ? 1 : 0));
   const effortCol = effortCols[0];
-  const effortColAt = (r: number) => effortCols.find((c) => {
-    const x = lay.index.at(r, c.c);
-    return !!x && x.text !== "";
-  }) ?? effortCol;
+  const effortColAt = (r: number) => {
+    const filled = effortCols.filter((c) => {
+      const x = lay.index.at(r, c.c);
+      return !!x && x.text !== "";
+    });
+    // 作業時間の幅（「9:00-12:00」）と、工数として読める列（「延べ時間」）を並べた行は、読める列を読む
+    const first = filled[0];
+    const firstCell = first ? lay.index.at(r, first.c) : null;
+    if (firstCell && parseTimeSpan(firstCell.text)) {
+      const other = filled.find((c) => {
+        const x = lay.index.at(r, c.c);
+        return c !== first && !!x && parseEffort(typeof x.value === "number" ? x.value : nfkc(x.text).replace(/,/g, "")) !== null;
+      });
+      if (other) return other;
+    }
+    return first ?? effortCol;
+  };
   const assetCol = col("assetRef");
   const unitCol = col("unit");
   const workCol = col("workName");
@@ -1450,12 +1493,59 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const personCells: string[] = [];
   const bareCells: string[] = [];
   const badEffort = new Map<string, string[]>();
+  // 人数 × 作業時間の幅で工数を数える表（作業日報）：工数の列に幅の書き方があり、人数の欄がある表だけ。ほかの表は今までどおり読む
+  const ps = personsSource(t);
+  const spanTable =
+    !!ps &&
+    data.some((r) =>
+      effortCols.some((c) => {
+        const x = lay.index.at(r.r, c.c);
+        return !!x && parseTimeSpan(x.text) !== null;
+      }),
+    );
+  /** その行の人数（読めない書き方なら bad にそのセル。書いていなければ n は null） */
+  const personsAt = (r: number): { n: number | null; bad: GridCell | null; refs: string[] } => {
+    if (!ps) return { n: null, bad: null, refs: [] };
+    const cells = ps.cols.map((c) => lay.index.at(r, c.c)).filter((x): x is GridCell => !!x && x.text.trim() !== "" && !off(x.ref));
+    const refs = cells.map((x) => x.ref);
+    const read = (x: GridCell) => parsePersons(typeof x.value === "number" ? x.value : x.text);
+    if (!ps.sum) {
+      const x = cells[0];
+      if (!x) return { n: null, bad: null, refs };
+      const p = read(x);
+      return p ? { n: p.n, bad: null, refs } : { n: null, bad: x, refs };
+    }
+    // 職種ごとの列：数の和（空欄は 0）。計の列があれば和と照らす（合わなければ読めないとする）
+    let n = 0;
+    for (const x of cells) {
+      const p = read(x);
+      if (!p || p.style !== "数") return { n: null, bad: x, refs };
+      n += p.n;
+    }
+    const tc = ps.total ? lay.index.at(r, ps.total.c) : null;
+    if (tc && tc.text.trim() !== "" && !off(tc.ref)) {
+      refs.push(tc.ref);
+      const p = read(tc);
+      if (!p || p.style !== "数" || (cells.length > 0 && p.n !== n)) return { n: null, bad: tc, refs };
+      return { n: p.n, bad: null, refs };
+    }
+    return { n: cells.length ? n : null, bad: null, refs };
+  };
+  /** 人数と幅で数える行（問いの見本は、表ごとに幅の書き方の違う行を 3 つまで） */
+  const spanItems: QuestionItem[] = [];
+  const spanSeen = new Set<string>();
+  let spanRows = 0;
+  /** 人数は書いてあるが作業時間の無い行 */
+  const noTimeItems: QuestionItem[] = [];
+  let noTimeRows = 0;
+  /** 人数の書き方が読めない行（幅はある）：書き方 → 見本と、その行の工数のセル・人数のセル */
+  const badPersons = new Map<string, { sample: string; refs: string[] }[]>();
   const spellings = new Map<string, string[]>();
   /** 系列の欄の、読めない書き方 → その行（書き方ごとに聞く） */
   const unitBadEv = new Map<string, { row: number; ref: string }[]>();
   const badDates = new Map<string, string[]>();
   const badDays = new Map<string, string[]>();
-  const evs: (EventRec & { _hours: number | null; _persons: number | null; _bare: number | null })[] = [];
+  const evs: (EventRec & { _hours: number | null; _persons: number | null; _bare: number | null; _span: (TimeSpan & { persons: number; ref: string }) | null; _noTime: { persons: number; refs: string[] } | null })[] = [];
   // 日付のセルを読む：〃 は上の行と同じ、年の無い日付はシートに書いた年度から、空欄は「上と同じ」の答えに従う
   const prevDate = new Map<number, { start: Ymd; end: Ymd; range: boolean } | null>();
   const readDate = (r: number, c: ColInfo | undefined): { period: { start: Ymd; end: Ymd; range: boolean } | null; cell: ReturnType<typeof lay.index.at>; bad: boolean; blank: boolean } => {
@@ -1541,11 +1631,27 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     let hours: number | null = null;
     let persons: number | null = null;
     let bare: number | null = null;
+    let span: (TimeSpan & { persons: number; ref: string }) | null = null;
+    let noTime: { persons: number; refs: string[] } | null = null;
     if (ec && !off(ec.ref)) {
       const raw = parseEffort(typeof ec.value === "number" ? ec.value : nfkc(ec.text).replace(/,/g, ""));
       // 数だけの工数は、見出しの単位で読む
       const e = raw && raw.unit === "bare" && effortUnit ? { ...raw, unit: effortUnit } : raw;
-      if (!e) badEffort.set(shapeOf(ec.text), [...(badEffort.get(shapeOf(ec.text)) ?? []), ec.ref]);
+      // 作業時間の幅（「8:30～17:00」）：同じ行の人数とかけて数える（昼休みと 1 人・日の時間は、あとでまとめて聞く）
+      const sp = !e && spanTable ? parseTimeSpan(ec.text) : null;
+      const pa = sp ? personsAt(r.r) : null;
+      if (sp && pa?.n) {
+        span = { ...sp, persons: pa.n, ref: ec.ref };
+        spanRows++;
+        const k = `${sp.start}-${sp.end}`;
+        if (spanItems.length < 3 && !spanSeen.has(k)) {
+          spanSeen.add(k);
+          spanItems.push(itemOf(lay, [ec.ref, ...pa.refs], { note: `人数 ${pa.n}・幅 ${hhmm(sp.start)}～${hhmm(sp.end)}` }));
+        }
+      } else if (sp && pa?.bad) {
+        const k = shapeOf(pa.bad.text);
+        badPersons.set(k, [...(badPersons.get(k) ?? []), { sample: pa.bad.text, refs: [ec.ref, pa.bad.ref] }]);
+      } else if (!e) badEffort.set(shapeOf(ec.text), [...(badEffort.get(shapeOf(ec.text)) ?? []), ec.ref]);
       else if (e.unit === "manDays") manDays = e.amount;
       else if (e.unit === "hours") {
         hours = e.amount;
@@ -1556,6 +1662,14 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       } else {
         bare = e.amount;
         bareCells.push(ec.ref);
+      }
+    } else if (spanTable && !ec) {
+      // 人数だけで作業時間の無い行：人数を人・日の数としない（あとでまとめて聞く）
+      const pa = personsAt(r.r);
+      if (pa.n) {
+        noTime = { persons: pa.n, refs: pa.refs };
+        noTimeRows++;
+        if (noTimeItems.length < 3) noTimeItems.push(itemOf(lay, pa.refs, { note: `人数 ${pa.n}` }));
       }
     }
     const uc = unitCol ? lay.index.at(r.r, unitCol.c) : null;
@@ -1619,6 +1733,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       _hours: hours,
       _persons: persons,
       _bare: bare,
+      _span: span,
+      _noTime: noTime,
     });
   }
   // 日付の欄の無い作業の表（工程表など）：表の外に書いた期間を使うか、まとめて 1 回聞く（推し量らない）
@@ -1718,18 +1834,73 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       }
     }
   }
+  // 人数と作業時間の幅で数える行：幅に昼休みを含むかを、同じ様式の表をまとめて 1 回聞く（既定の答えは無い。昼休みを黙って引かない）
+  let lunch: string | null = null;
+  let lunchHours: number | null = null;
+  if (spanRows) {
+    lunch = ask.ask(`effortSpanLunch|${fkey}`, {
+      kind: "effortUnknown",
+      text: `${where}作業時間の幅に昼休みを含むか（人数と作業時間の幅「開始～終了」で工数を数える行${many ? "" : ` ${spanRows} 行`}。工数＝人数 × 幅の時間 ÷ 1 人・日の時間）`,
+      options: [
+        { id: "no", label: "含まない（幅のまま時間にする）" },
+        { id: "noon", label: "含む（12:00 からの昼休みと重なる分を幅から引く。何時間かは次に聞く）" },
+        { id: "perDay", label: "幅は工数に使わない（1 行を 1 日として、人数を人・日にする）" },
+        { id: "exclude", label: "工数を外す（理由を残す）" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: spanRows,
+      items: spanItems,
+    });
+    if (lunch === "noon") {
+      const a = ask.ask(`effortSpanLunchHours|${fkey}`, {
+        kind: "effortUnknown",
+        text: `${where}昼休みは 12:00 から何時間か（作業時間の幅と重なる分を引く）`,
+        options: [],
+        valueKind: "number",
+        defaultAnswer: null,
+        sameShapeRows: spanRows,
+        items: spanItems,
+      });
+      lunchHours = a ? Number(a) : null;
+    }
+  }
   let hoursPer: number | null = null;
-  if (hourCells.length) {
+  const spanHours = spanRows > 0 && lunch !== "perDay" && lunch !== "exclude";
+  if (hourCells.length || spanHours) {
+    const n = hourCells.length + (spanHours ? spanRows : 0);
     const a = ask.ask(`hoursPerManDay|${fkey}`, {
       kind: "hoursPerManDay",
-      text: many ? `${where}工数が時間で書いてある行がある。1 人・日を何時間として人・日に直すか` : `工数が時間で書いてある行が ${hourCells.length} 行ある。1 人・日を何時間として人・日に直すか`,
+      text: !spanHours
+        ? many
+          ? `${where}工数が時間で書いてある行がある。1 人・日を何時間として人・日に直すか`
+          : `工数が時間で書いてある行が ${hourCells.length} 行ある。1 人・日を何時間として人・日に直すか`
+        : many
+          ? `${where}工数を時間で数える行（時間で書いた工数か、人数 × 作業時間の幅）がある。1 人・日を何時間として人・日に直すか`
+          : `工数を時間で数える行（時間で書いた工数か、人数 × 作業時間の幅）が ${n} 行ある。1 人・日を何時間として人・日に直すか`,
       options: [],
       valueKind: "number",
       defaultAnswer: "8",
-      sameShapeRows: hourCells.length,
-      items: [itemOf(lay, hourCells.slice(0, 10))],
+      sameShapeRows: n,
+      items: [...(hourCells.length ? [itemOf(lay, hourCells.slice(0, 10))] : []), ...(spanHours ? spanItems : [])],
     });
     hoursPer = a ? Number(a) : null;
+  }
+  // 人数だけで作業時間の無い行：人数を人・日の数としない。どう読むかを、同じ様式の表をまとめて 1 回聞く
+  let noTimeAs: string | null = null;
+  if (noTimeRows) {
+    noTimeAs = ask.ask(`effortNoTime|${fkey}`, {
+      kind: "effortUnknown",
+      text: `${where}人数は書いてあるが、作業時間が書いていない行がある${many ? "" : `（${noTimeRows} 行）`}。人数を人・日の数としない。どう読むか`,
+      options: [
+        { id: "perDay", label: "1 行を 1 日として、人数を人・日にする" },
+        { id: "exclude", label: "工数を外す（人数だけ分かる）" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: noTimeRows,
+      items: noTimeItems,
+    });
   }
   let personsAsMD: string | null = null;
   if (personCells.length) {
@@ -1776,6 +1947,21 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       items: [itemOf(lay, refs.slice(0, 10))],
     });
     for (const ref of refs) a === "exclude" ? (exclude(ref, "読めない工数（決定で外した）"), effortExcluded.add(ref)) : pend(ref);
+  }
+  // 作業時間の幅はあるが、人数の書き方が読めない行（書き方ごとに 1 回聞く。人数を推し量らない）
+  const header = (ps?.cols[0]?.headerParts[0] ?? "人数").replace(/\s*\n\s*/g, "");
+  for (const [shape, xs] of badPersons) {
+    const refs = xs.flatMap((x) => x.refs);
+    const a = ask.ask(`effortPersonsBad|${t.id}|${shape}`, {
+      kind: "effortUnknown",
+      text: `「${header}」の欄の人数の書き方が読めない（${xs.length} 行、見本「${(xs[0]?.sample ?? "").replace(/\s+/g, " ").slice(0, 24)}」）。人数を推し量らない`,
+      options: [{ id: "exclude", label: "工数を外す" }],
+      valueKind: "option",
+      defaultAnswer: null,
+      sameShapeRows: xs.length,
+      items: [itemOf(lay, refs.slice(0, 10))],
+    });
+    for (const ref of refs) a === "exclude" ? (exclude(ref, "人数の読めない行の工数（決定で外した）"), effortExcluded.add(ref)) : pend(ref);
   }
   for (const [shape, refs] of badDates) {
     // 読めなかった理由：年の無い月/日（シートに年度が 1 つだけ書いてあれば、その年度で読む）・読み方の規則の書き方に合わない・日付の書き方でない
@@ -1894,6 +2080,22 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       else if (bareAs === "exclude") effortExcluded.add(effortCol ? cellRef(e.row, effortCol.c) : "");
       else e.effortPending = true;
     }
+    // 人数 × 作業時間の幅 ÷ 1 人・日の時間（昼休みは答えのとおり）
+    if (e._span) {
+      const sp = e._span;
+      if (lunch === "perDay") e.manDays = sp.persons;
+      else if (lunch === "exclude") effortExcluded.add(sp.ref);
+      else {
+        const h = lunch === "no" ? sp.hours : lunch === "noon" && lunchHours ? sp.hours - lunchOverlap(sp, lunchHours) : null;
+        if (h !== null && h > 0 && hoursPer) e.manDays = (sp.persons * h) / hoursPer;
+        else e.effortPending = true;
+      }
+    }
+    if (e._noTime) {
+      if (noTimeAs === "perDay") e.manDays = e._noTime.persons;
+      else if (noTimeAs === "exclude") for (const ref of e._noTime.refs) effortExcluded.add(ref);
+      else e.effortPending = true;
+    }
     if (spellOk !== "yes" && e.unit?.kind === "number" && spellings.size > 1) e.pending = true;
     for (const ref of effortExcluded) if (e.refs.includes(ref)) {
       e.refs = e.refs.filter((x) => x !== ref);
@@ -1903,10 +2105,12 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     }
     if (e.excluded) for (const ref of e.refs) exclude(ref, e.excluded);
     else if (e.pending || e.effortPending) for (const ref of e.refs) pend(ref);
-    const { _hours, _persons, _bare, ...clean } = e;
+    const { _hours, _persons, _bare, _span, _noTime, ...clean } = e;
     void _hours;
     void _persons;
     void _bare;
+    void _span;
+    void _noTime;
     rec.events.push(clean);
   }
 }
