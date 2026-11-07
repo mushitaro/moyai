@@ -13,6 +13,8 @@ ledger-intake-v1（MOYAI 経由で公開台帳へ出す受け口）の続き。�
 
 先に読む：`AGENTS.md`、`docs/plan.md` §2.19（引退の印）、`docs/security.md`、`src/share/ledger.ts`（`verifyLedgerFiles`）、`src/share/ring.ts`（`readRing` と `moyai.retired/0`）、`services/ledger-intake/`（v1 の受け口）、`src/app/text/`（SHARE の下の帯の字）。
 
+台帳のリポジトリは `mushitaro/moyai-ledger` のまま（運営者の決定、11-07）。受け口の `LEDGER_REPO` の既定はこれにする。PR を出すのは、運営者が受け口に入れるトークンのアカウント（画面の字は「tsunagi（MOYAI の運営）」）。
+
 決まり（Architect の 72）：
 1. 形：`ledger/bundles/<鍵ID>/retired.json`。型は輪と同じ `moyai.retired/0` で、ring の代わりに ledger（台帳 ID）を持つ：`{ ledger, key, pub, last, month }`。次の鍵は書かない。
 2. 本人の確かめ：その鍵自身の署名で、道の鍵 ID・本文の key・pub から作った鍵 ID の 3 つが同じときだけ受ける（readRing と同じ）。
