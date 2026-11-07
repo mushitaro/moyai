@@ -3,7 +3,7 @@
 // グループ・結合・太字が、行ごとに「何段目か」へ票を入れ、割れたら「疑い」にする。
 // 層 2 は形式を知らない（格子だけを見る）。決まらないものは「問い」の種（Issue）として層 3 に渡す。
 import { CellIndex, cellRef, colLetter, type GridCell, type SheetGrid, type SourceFile } from "./grid";
-import { cue, norm, type ColumnCue, type ContractField } from "./cues";
+import { cue, norm, type ColumnCue, type ContractField, type OrderLineField } from "./cues";
 import { fiscalYearInText, nfkc as nfkcText, parseDateRange, parseDateText, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, serialToYmd, validYmd, type Ymd } from "./era";
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit, splitSeriesCell } from "./text";
@@ -25,8 +25,11 @@ export const ROW_ROLE_LABEL: Record<RowRole, string> = {
 // 列の役目の一覧は roles.ts の 1 つだけ（読み手・質問の選択肢・ルールの役目が同じ一覧を引く。Architect の 46）
 export type { ColRole } from "./roles";
 
-/** 表の形：機器の木・星取表・作業の表・契約の一覧（1 行が 1 契約。作業にはしない） */
-export type Shape = "tree" | "grid" | "events" | "contracts";
+/**
+ * 表の形：機器の木・星取表・作業の表・契約の一覧（1 行が 1 契約。作業にはしない）・発注明細（1 行が 1 品目・1 作業の明細、金額つき。
+ * 品名・仕様から号炉・機器・作業を取り出せた行だけを、ほかの資料の機器と結ぶ案にする）
+ */
+export type Shape = "tree" | "grid" | "events" | "contracts" | "orderLines";
 
 export type Signal = "indent" | "spaces" | "number" | "outline" | "position" | "merge";
 export interface Vote {
@@ -64,8 +67,8 @@ export interface ColInfo {
   compound?: ColumnCue[];
   /** 読み方の規則がこの列に効かなかった・読み手の読み方を止めたこと（要約の注記に出す） */
   ruleNotes?: string[];
-  /** 契約の一覧の表の列：契約の記録のどの欄か（契約の欄の語・列の見出しの語から）。記録の形に無い列は "other" */
-  contract?: ContractField | "rowNo" | "remark" | "fiscal" | "amount" | "other";
+  /** 契約の一覧・発注明細の表の列：記録のどの欄か（発注明細の欄の語・契約の欄の語・列の見出しの語から）。記録の形に無い列は "other" */
+  contract?: ContractField | OrderLineField | "rowNo" | "remark" | "fiscal" | "amount" | "other";
 }
 
 export interface LegendEntry {
@@ -117,6 +120,21 @@ export interface Table {
    * 金額の行は機器の行ではなく、上の行の、同じ列の内容の費用
    */
   amountRows?: Map<number, number>;
+  /**
+   * 表の上の題と抽出の条件の行（書き出した CSV の 1 行目「〇〇一覧｜抽出日時｜…｜工事年度｜2019｜金額：円・税抜」）の項目と値のうち、
+   * 金額の項目（単位・税の扱い）と年度の項目。記録の値には使わず、金額の単位と年度の手がかりにだけ使う。無ければ省く
+   */
+  conditions?: Condition[];
+}
+
+/** 題と抽出の条件の行のうち、金額の単位か年度を読んだ行の外す理由（行き先の字） */
+export const CONDITION_ROW_REASON = "表の上の題と抽出の条件（金額の単位・年度の手がかりに使った。記録の値には使わない）";
+
+/** 題と抽出の条件の行の項目と値（「金額：円・税抜」の 1 セルか、「工事年度｜2019」の 2 セル） */
+export interface Condition {
+  label: string;
+  value: string;
+  refs: string[];
 }
 
 export interface HeadField {
@@ -613,11 +631,16 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   if (amountRows) for (const r of amountRows.keys()) dataRows.splice(dataRows.indexOf(r), 1);
   if (yb.issue) issues.push({ ...yb.issue, tableId: id });
   const marks = cols.filter((c) => c.role === "mark");
+  // 発注明細（品名・数量・単価・金額と、明細の番号か検収の欄。1 行が 1 品目・1 作業の明細）：作業の表にせず、発注明細の記録として読む
+  const lineCols = marks.length ? null : orderLineFields(cols);
   // 契約・発注の一覧（件名の列と、契約の欄の語が 2 種類以上。1 行が 1 契約）：作業の表にせず、契約の記録として読む
-  const contractCols = marks.length ? null : contractFields(cols);
+  const contractCols = marks.length || lineCols ? null : contractFields(cols);
   let shape: Shape;
   if (marks.length) shape = "grid";
-  else if (contractCols) {
+  else if (lineCols) {
+    shape = "orderLines";
+    for (const col of cols) col.contract = lineCols.get(col.c) ?? "other";
+  } else if (contractCols) {
     shape = "contracts";
     for (const col of cols) col.contract = contractCols.get(col.c) ?? "other";
   } else {
@@ -644,8 +667,8 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       } else col.role = forced as ColRole;
       continue;
     }
-    // 契約の一覧の列：契約の記録の欄から役目を決める（金額の列は費用の役目にして、AI に渡す見本では字を伏せる）
-    if (shape === "contracts") {
+    // 契約の一覧・発注明細の列：記録の欄から役目を決める（金額の列は費用の役目にして、AI に渡す見本では字を伏せる）
+    if (shape === "contracts" || shape === "orderLines") {
       col.role = contractRole(col.contract ?? "other");
       continue;
     }
@@ -752,9 +775,9 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     }
     col.role = "label"; // 名前か階層の候補（下で決める）
   }
-  if (shape === "contracts") {
-    // 区分の見出しの行（「〈工事〉」：中身が件名の列でない 1 セルの字だけの行）は、契約の行でなく注記
-    const titleCols = new Set(cols.filter((c) => c.contract === "title").map((c) => c.c));
+  if (shape === "contracts" || shape === "orderLines") {
+    // 区分の見出しの行（「〈工事〉」：中身が件名・品名の列でない 1 セルの字だけの行）は、契約の行でなく注記
+    const titleCols = new Set(cols.filter((c) => c.contract === "title" || c.contract === "item").map((c) => c.c));
     for (const row of rows) {
       if (row.role !== "data") continue;
       const cs = rowTexts(ctx.idx, row.r);
@@ -890,6 +913,17 @@ const CONTRACT_KIND: Partial<Record<ContractField, string>> = {
 export const CONTRACT_KINDS_MIN = 2;
 /** 行が作業そのものの表の列（機器・機器番号・作業の内容・工数・人数・号炉）。契約の欄の語があっても、この列のある表は作業の表として読む */
 const WORK_ROW_CUES = new Set<ColumnCue>(["name", "assetRef", "tag", "workName", "effort", "persons", "series"]);
+/** 契約の欄の語の無い列の、列の見出しの語から決める記録の欄 */
+const BY_COLUMN_CUE: Partial<Record<ColumnCue, NonNullable<ColInfo["contract"]>>> = {
+  number: "rowNo",
+  workTitle: "title",
+  remark: "remark",
+  fiscal: "fiscal",
+  category: "category",
+  cost: "amount",
+  date: "start",
+  end: "end",
+};
 
 /**
  * 契約・発注の一覧の表か（見出しの語だけで見分ける）。件名の列があり、契約の欄の種類が CONTRACT_KINDS_MIN 以上で、
@@ -908,36 +942,54 @@ function contractFields(cols: readonly ColInfo[]): Map<number, NonNullable<ColIn
       continue;
     }
     if (col.cue && WORK_ROW_CUES.has(col.cue)) return null;
-    const byCue: Partial<Record<ColumnCue, NonNullable<ColInfo["contract"]>>> = {
-      number: "rowNo",
-      workTitle: "title",
-      remark: "remark",
-      fiscal: "fiscal",
-      category: "category",
-      cost: "amount",
-      date: "start",
-      end: "end",
-    };
-    const g = col.cue ? byCue[col.cue] : undefined;
+    const g = col.cue ? BY_COLUMN_CUE[col.cue] : undefined;
     if (g) out.set(col.c, g);
   }
   if (![...out.values()].includes("title") || kinds.size < CONTRACT_KINDS_MIN) return null;
   return out;
 }
 
-/** 契約の一覧の列の役目：件名・番号・金額（費用）・日付（始まり・終わり）。ほかの欄は備考の役目（記録の欄は ColInfo.contract で読む） */
+/**
+ * 発注明細と見分ける：品名・数量・単価・金額の欄がどれもあり、明細の番号か検収の欄（状況・日・額）があり、
+ * 作業そのものの列（WORK_ROW_CUES）が無い表。列ごとの記録の欄を返す（発注明細の欄の語 → 契約の欄の語 → 列の見出しの語の順）。ほかは null
+ */
+function orderLineFields(cols: readonly ColInfo[]): Map<number, NonNullable<ColInfo["contract"]>> | null {
+  const out = new Map<number, NonNullable<ColInfo["contract"]>>();
+  for (const col of cols) {
+    if (!col.header) continue;
+    const f = cue.orderLine(col.headerParts) ?? cue.contract(col.headerParts);
+    if (f) {
+      out.set(col.c, f);
+      continue;
+    }
+    if (col.cue && WORK_ROW_CUES.has(col.cue)) return null;
+    const g = col.cue ? BY_COLUMN_CUE[col.cue] : undefined;
+    if (g) out.set(col.c, g);
+  }
+  const has = (f: string) => [...out.values()].includes(f as NonNullable<ColInfo["contract"]>);
+  if (!["item", "quantity", "unitPrice", "orderAmount"].every(has)) return null;
+  return ["lineNo", "inspectStatus", "inspectDate", "inspectAmount"].some(has) ? out : null;
+}
+
+/** 契約の一覧・発注明細の列の役目：件名・番号・金額（費用）・日付（始まり・終わり）。ほかの欄は備考の役目（記録の欄は ColInfo.contract で読む） */
 function contractRole(f: NonNullable<ColInfo["contract"]>): ColRole {
   switch (f) {
     case "title":
       return "workTitle";
     case "number":
     case "rowNo":
+    case "orderNo":
+    case "lineNo":
+    case "revision":
       return "number";
     case "orderAmount":
     case "estimateAmount":
     case "inspectAmount":
     case "payAmount":
     case "amount":
+    case "unitPrice":
+    case "firstAmount":
+    case "remainAmount":
       return "cost";
     case "orderDate":
     case "estimateDate":
@@ -946,6 +998,8 @@ function contractRole(f: NonNullable<ColInfo["contract"]>): ColRole {
     case "done":
     case "inspectDate":
     case "payDate":
+    case "changeDate":
+    case "due":
       return "date";
     case "end":
       return "end";
@@ -1242,13 +1296,70 @@ function dateTimeText(text: string): boolean {
  * 列の見出しの行より上にあり、見出しの行よりセルが少なく、列の見出しの語だけのセルが無く、頭のセル（題）のほかが、どれも「項目：値」の 1 セルか
  * 日付・日時、または項目と値の組。見出しにしない（表の外の項目なので記録には使わない）
  */
-function conditionRow(cells: GridCell[], headerCells: number): boolean {
+function conditionRow(cells: GridCell[], headerCells: number, pairs = false): boolean {
   if (cells.length < 2 || cells.length >= headerCells) return false;
-  // 「項目：値」のセルは、項目が見出しの語（「対象：全設備」）でも見出しではない
-  if (cells.some((c) => !inlineField(c.text) && cue.column(c.text) !== null)) return false;
   const [first, ...rest] = cells;
   if (!first || typeof first.value !== "string") return false;
-  return rest.every((c) => inlineField(c.text) || dateTimeText(c.text)) || kvRow(rest);
+  // 「項目：値」のセルは、項目が見出しの語（「対象：全設備」）でも見出しではない
+  if (!cells.some((c) => !inlineField(c.text) && cue.column(c.text) !== null) && (rest.every((c) => inlineField(c.text) || dateTimeText(c.text)) || kvRow(rest))) return true;
+  // 見出しの行が下にあるとき（pairs）：項目と値を別のセルに並べ、値の無い条件もまじる書き方
+  // （「〇〇一覧｜抽出日時｜2020/04/01 08:15｜基準日｜2020/03/31｜工事年度｜2019｜取消を含む｜金額：円・税抜」）も題と条件の行
+  return pairs && cue.column(first.text) === null && conditionCells(rest);
+}
+
+/**
+ * 題のあとのセルが、どれも抽出の条件か：「項目：値」の 1 セル、項目（12 字までの字）と値（日付・日時・数・年）の 2 セル、
+ * 値の無い条件（「取消を含む」）のどれかで、日付か日時の値が 1 つ以上ある。列の見出しの語だけのセル（値の無いもの）があれば、見出しの行のしるしなので false
+ */
+function conditionCells(cells: GridCell[]): boolean {
+  let dated = false;
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i] as GridCell;
+    if (inlineField(c.text)) {
+      if (dateTimeText(c.text.replace(/^[^:：]*[:：]/u, ""))) dated = true;
+      continue;
+    }
+    if (dateTimeText(c.text)) {
+      dated = true;
+      continue;
+    }
+    const t = norm(c.text);
+    if (typeof c.value !== "string" || t.length < 1 || t.length > 12 || /^[\d\s.,/\-:]+$/u.test(t)) return false;
+    const next = cells[i + 1];
+    if (next && (dateTimeText(next.text) || isNumberish(next) || parseYearLabel(next.text) !== null)) {
+      if (dateTimeText(next.text)) dated = true;
+      i++;
+      continue;
+    }
+    if (cue.column(c.text) !== null) return false;
+  }
+  return dated;
+}
+
+/**
+ * 題と抽出の条件の行・頭書きの行の、金額の項目と年度の項目（「金額：円・税抜」「工事年度｜2019」）。
+ * 項目は列の見出しの語（費用・年度）で見分ける。値の無い項目は取らない
+ */
+function conditionsOf(cells: GridCell[]): Condition[] {
+  const out: Condition[] = [];
+  const wanted = (label: string) => {
+    const k = cue.column(label);
+    return k === "cost" || k === "fiscal";
+  };
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i] as GridCell;
+    const m = /^([^:：]{1,12})[:：]\s*(\S.*)$/su.exec(nfkcText(c.text).trim());
+    if (m && inlineField(c.text)) {
+      if (wanted(m[1] ?? "")) out.push({ label: (m[1] ?? "").trim(), value: (m[2] ?? "").trim(), refs: [c.ref] });
+      continue;
+    }
+    const next = cells[i + 1];
+    if (typeof c.value === "string" && next && !inlineField(next.text) && wanted(c.text)) {
+      out.push({ label: c.text.trim(), value: next.text.trim(), refs: [c.ref, next.ref] });
+      i++;
+    }
+  }
+  return out;
 }
 
 /**
@@ -1631,20 +1742,31 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
         }
       }
       const headCells = hi >= 0 ? rowTexts(idx, rest[hi] ?? 0).length : 0;
+      const conditions: Condition[] = [];
+      const conditionRows: number[] = [];
       if (
         hi - upper > 0 &&
         (ruleHeader ||
-          rest.slice(0, hi - upper).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)) || kvRow(rowTexts(idx, r), true) || conditionRow(rowTexts(idx, r), headCells)))
+          rest.slice(0, hi - upper).every((r) => rowTexts(idx, r).length <= 2 || kvRow(rowTexts(idx, r)) || kvRow(rowTexts(idx, r), true) || conditionRow(rowTexts(idx, r), headCells, true)))
       ) {
         for (const r of rest.splice(0, hi - upper)) {
           const cells = rowTexts(idx, r);
           roles.set(r, "note");
           rowReasons.set(r, "表の上の項目と値（頭書き）。記録には使わない");
           notes.push({ r, text: cells.map((c) => c.text).join(" "), ref: cells[0]?.ref ?? cellRef(r, 1) });
+          const cs = conditionsOf(cells);
+          if (cs.length) conditionRows.push(r);
+          conditions.push(...cs);
         }
         top = rest[0] ?? top;
       }
-      tables.push(buildTable(ctx, rest, top, roles));
+      const built = buildTable(ctx, rest, top, roles);
+      // 金額の単位と年度の手がかりを読むのは、契約の一覧と発注明細の表だけ（ほかの表では、今までどおり頭書き）
+      if (conditions.length && (built.shape === "contracts" || built.shape === "orderLines")) {
+        built.conditions = conditions;
+        for (const r of conditionRows) rowReasons.set(r, CONDITION_ROW_REASON);
+      }
+      tables.push(built);
     });
   });
   // 帳票の頭書き：同じ頁の、表の上（前の表より下）の項目と値を、その表に持たせる（表に無い欄を行に付けるため）
@@ -1658,7 +1780,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
     if (fields.length) t.head = fields;
     // 作業の表の、行の番号だけの行（帳票の記入欄の空き「3｜｜｜」）と、番号の欄に項目の名前を書いた 2 セルまでの行
     // （表の下の記入欄「安全・特記事項｜KY 活動実施。」）：記録にしない
-    if (t.shape === "events" || t.shape === "contracts")
+    if (t.shape === "events" || t.shape === "contracts" || t.shape === "orderLines")
       for (const row of t.rows) {
         const cs = rowTexts(idx, row.r);
         const roleOf = (c: GridCell) => t.cols.find((k) => k.c === c.c)?.role;

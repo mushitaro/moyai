@@ -36,6 +36,11 @@ const contractLists = (Object.entries(CUES.contract) as [string, unknown][])
   .filter((e): e is [ContractField, string[]] => e[0] !== "note" && e[0] !== "unitPrice" && Array.isArray(e[1]))
   .map(([k, ws]) => [k, normList(ws)] as const);
 const unitPriceWords = normList(CUES.contract.unitPrice);
+/** 発注明細の欄（packs/_cues/cues.json の orderLine。説明を除く） */
+export type OrderLineField = Exclude<keyof typeof CUES.orderLine, "note">;
+const orderLineLists = (Object.entries(CUES.orderLine) as [string, unknown][])
+  .filter((e): e is [OrderLineField, string[]] => e[0] !== "note" && Array.isArray(e[1]))
+  .map(([k, ws]) => [k, normList(ws)] as const);
 const dittoWords = normList(CUES.ditto);
 
 export function containsAny(text: string, list: readonly string[]): boolean {
@@ -131,25 +136,37 @@ export const cue = {
    * 見出しはそのまま・末尾の括弧（単位「（円）」・税の扱いなど）を 1 つか 2 つ除いた形で、語と同じものだけを取る。無ければ null
    */
   contract(parts: readonly string[]): ContractField | null {
-    const ps = parts.map(norm).filter((p) => p !== "");
-    if (!ps.length) return null;
-    const first = ps[0] ?? "";
-    const last = ps[ps.length - 1] ?? "";
-    const forms = [...(ps.length >= 2 ? [`${first}(${last})`] : []), last, first, ps.join("")];
-    for (const f of forms) {
-      const once = stripParen(f);
-      for (const h of [f, once, stripParen(once)]) {
-        const hit = contractLists.find(([, ws]) => ws.includes(h));
-        if (hit) return hit[0];
-      }
-    }
-    return null;
+    return headerHit(parts, contractLists);
+  },
+  /** 発注明細の欄の語（見出しの比べ方は契約の一覧と同じ）。無ければ null */
+  orderLine(parts: readonly string[]): OrderLineField | null {
+    return headerHit(parts, orderLineLists);
   },
   /** 単価契約の印（件名・契約方法・区分に書いたもの） */
   isUnitPrice: (t: string) => containsAny(t, unitPriceWords),
   /** 「〃」で始まる字（変更契約の行「〃（第1回変更）」：上の行と同じ契約） */
   startsWithDitto: (t: string) => dittoWords.some((w) => norm(t).startsWith(w)),
 };
+
+/**
+ * 見出しの段の並びを、欄の語の一覧と比べる。2 段の見出しは「上の段(下の段)」の形でも比べる。
+ * 見出しはそのまま・末尾の括弧を 1 つか 2 つ除いた形で、語と同じものだけを取る。無ければ null
+ */
+function headerHit<K extends string>(parts: readonly string[], lists: readonly (readonly [K, string[]])[]): K | null {
+  const ps = parts.map(norm).filter((p) => p !== "");
+  if (!ps.length) return null;
+  const first = ps[0] ?? "";
+  const last = ps[ps.length - 1] ?? "";
+  const forms = [...(ps.length >= 2 ? [`${first}(${last})`] : []), last, first, ps.join("")];
+  for (const f of forms) {
+    const once = stripParen(f);
+    for (const h of [f, once, stripParen(once)]) {
+      const hit = lists.find(([, ws]) => ws.includes(h));
+      if (hit) return hit[0];
+    }
+  }
+  return null;
+}
 
 /** 末尾の括弧（単位・番号など：() （） 〔〕 ［］ [] 【】）を除く。除くと空になるなら除かない */
 function stripParen(h: string): string {

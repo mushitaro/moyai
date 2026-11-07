@@ -162,6 +162,57 @@ export function splitFlatWork(text: string): FlatWork | null {
   return asset ? { unit, asset, work: (paren[3] ?? "").trim() } : null;
 }
 
+// ─── 発注明細の品名・仕様の中の号炉・機器・作業 ─────────────────────────
+
+export interface OrderItem {
+  /** 号炉の数（書いていなければ null） */
+  unit: number | null;
+  asset: string;
+  work: string;
+}
+
+/**
+ * 発注明細の品名・仕様を「／」で区切った並び（「1号炉 給じん装置／1号炉 給じん装置／機械班／撤去・整備・復旧」）から、号炉・機器・作業を取り出す。
+ * 品名と仕様の区切りを順につなぎ、同じ字の区切りは 1 つにする。作業は、作業の語（cues の titleWork）を含む最後の区切り。
+ * 機器は、作業より前の最初の区切りの、頭の号炉の語を除いた名前（号炉だけの区切りは号炉にして、次の区切りを機器にする）。間の区切り（班など）は使わない。
+ * 一式の印だけの区切りは数量の書き方として除く。区切りが 2 つに満たない・ほかの字と並べた一式の印がある（一式の工事）・作業の語が無い・
+ * 機器の名前が残らない・号炉が 2 つある、のどれかなら null（作業にしない。呼ぶ側が記録に残す）
+ */
+export function splitOrderItem(texts: readonly (string | null)[]): OrderItem | null {
+  const segs: string[] = [];
+  for (const t of texts) {
+    if (!t) continue;
+    for (const raw of nfkc(t).split("/")) {
+      const seg = raw.replace(/\s+/g, " ").trim();
+      if (!seg) continue;
+      const set = cue.stripSet(seg);
+      if (set.set) {
+        if (norm(set.text) === "") continue;
+        return null;
+      }
+      if (!segs.some((x) => norm(x) === norm(seg))) segs.push(seg);
+    }
+  }
+  if (segs.length < 2) return null;
+  let wi = -1;
+  for (let i = segs.length - 1; i >= 1 && wi < 0; i--) if (TITLE_WORK.some((w) => norm(segs[i] ?? "").includes(norm(w)))) wi = i;
+  const work = segs[wi];
+  if (wi < 1 || !work) return null;
+  // 作業より前の区切りに書いた号炉（2 つの号炉があれば、どちらかに決めない）
+  const units = new Set<number>();
+  let asset: string | null = null;
+  for (let i = 0; i < wi; i++) {
+    const seg = segs[i] ?? "";
+    const lead = leadingUnit(seg);
+    if (lead && lead.unit.kind !== "number") return null;
+    if (lead?.unit.kind === "number") units.add(lead.unit.n);
+    const name = lead ? lead.rest : seg;
+    if (asset === null && name) asset = name;
+  }
+  if (asset === null || units.size > 1) return null;
+  return { unit: units.size ? ([...units][0] ?? null) : null, asset, work };
+}
+
 // ─── 周期 ────────────────────────────────────────────────────
 
 export interface CycleSpan {

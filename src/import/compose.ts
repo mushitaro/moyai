@@ -723,8 +723,78 @@ export function compose(
     }
   }
 
+  // ─── 発注明細の行：品名・仕様から取り出した号炉と機器が、ほかの資料の機器と同じ鍵（名前と号炉）のときだけ、その機器の作業の年度の値と費用にする案。
+  // まとめた 1 問で聞く。取り出せない行・結ぶ相手の無い行は記録に残すだけで、作業にしない ───
+  const lineGroups = proposeOrderLines(rec.contracts, assets, ask);
+  const lineDrafts: ContractDraft[] = [];
+  const lineGroupOf = new Map<ContractRec, OrderLineGroup>();
+  for (const g of lineGroups) for (const c of g.lines) lineGroupOf.set(c, g);
+  for (const g of lineGroups) {
+    if (g.linked !== true) continue;
+    const wk = workFor(`asset|${g.asset.nodeKey}|${nameKey(g.work)}|`, g.work, [g.asset.nodeKey], null);
+    const cost = orderLinesCost(g.lines);
+    const same = details.find((d) => d.workKey === wk && d.fiscalYear === g.fiscalYear && d.planOrActual === g.planOrActual);
+    if (same) {
+      // ほかの資料の同じ作業・年度の値：費用が無いときだけ、明細の金額を置く（ある費用は書き換えない）
+      g.detail = same.detailKey;
+      if (same.cost === null && cost.cost !== null) {
+        same.cost = cost.cost;
+        same.costSource = cost.costSource;
+        g.costTo = same.detailKey;
+      }
+      continue;
+    }
+    const sources = g.lines.flatMap((c) => [c.line?.itemRef ?? c.refs[0] ?? "", c.line?.cost?.ref ?? ""].filter((r) => r !== "").map((r) => refOf(c.file, c.sheet, r)));
+    const before = new Set(details.map((d) => d.detailKey));
+    addDetail(
+      {
+        workKey: wk,
+        planOrActual: g.planOrActual,
+        step: null,
+        // 発注の日・納期・検収の日は作業の期間にしない（Skillパックの決まり：発注台帳の工期を作業の期間にしない）
+        startDate: null,
+        endDate: null,
+        fiscalYear: g.fiscalYear,
+        ...cost,
+        manDays: null,
+        days: null,
+        resultScale: null,
+        resultValue: null,
+        measuredValue: null,
+        previousValue: null,
+        performer: null,
+        sources,
+        basis: `発注明細 ${[...new Set(g.lines.map((c) => c.file))].join("・")} の ${g.lines.length} 行（${g.planOrActual === "actual" ? "検収あり" : "検収なし"}）`,
+        author: authorOf([g.question], decisionOf),
+        needsReview: false,
+      },
+      `orderLine|${g.key}`,
+      [g.question],
+    );
+    const made = details.find((d) => !before.has(d.detailKey));
+    if (made) {
+      g.detail = made.detailKey;
+      if (made.cost !== null) g.costTo = made.detailKey;
+    }
+  }
+  for (const c of rec.contracts) {
+    if (!c.line) continue;
+    const g = lineGroupOf.get(c);
+    lineDrafts.push({ contract: c, proposed: g?.detail ? [g.detail] : [], linked: g ? g.linked : null, costTo: g?.costTo ?? null, question: g?.question ?? null });
+  }
+
   // ─── 契約の記録（契約・発注の一覧の行）：作業にしない。件名の語と期間の合う作業の年度の値と結ぶ案を、まとめた 1 問で聞く ───
-  const contracts = linkContracts(rec.contracts, assets, works, details, ask, opts.facility.fiscalYearStartMonth);
+  const contracts = [
+    ...linkContracts(
+      rec.contracts.filter((c) => !c.line),
+      assets,
+      works,
+      details,
+      ask,
+      opts.facility.fiscalYearStartMonth,
+    ),
+    ...lineDrafts,
+  ];
 
   // ─── 行き先を数える ───
   /** データのセル → そのセルを出どころにする機器の節・明細を決めた質問 */
@@ -991,6 +1061,105 @@ function linkContracts(
     x.costTo = k;
   }
   return out;
+}
+
+/** 発注明細の結ぶ案の問いの鍵（まとめる鍵。どの発注明細の案も、この 1 問にまとめる） */
+export const ORDER_LINE_LINK_MERGE = "orderLineLink";
+
+/** 発注明細の、同じ機器・作業・年度・実績か予定の行のまとまり（結ぶ案の 1 つ） */
+interface OrderLineGroup {
+  key: string;
+  asset: AssetNodeT;
+  work: string;
+  fiscalYear: number;
+  planOrActual: "plan" | "actual";
+  lines: ContractRec[];
+  question: string;
+  linked: boolean | null;
+  /** 結んで置いた（か、同じ作業・年度の値に重ねた）明細の鍵 */
+  detail?: string;
+  costTo?: string;
+}
+
+/**
+ * 発注明細の行の結ぶ案：品名・仕様から取り出した号炉と機器の名前が、ほかの資料の機器と同じ鍵（名前の比べる形と号炉）で、
+ * その鍵の機器がただ 1 つのときだけ案にする（似た名前・号炉の違う機器とは結ばない）。年度の決まらない行・改訂の順の決まらない行は案にしない。
+ * 同じ機器・作業・年度・実績か予定の行を 1 つの案にし、どの案も 1 問にまとめて聞く（既定は結ぶ）
+ */
+function proposeOrderLines(contracts: readonly ContractRec[], assets: readonly AssetNodeT[], ask: Asker): OrderLineGroup[] {
+  const keyOfAsset = (name: string, series: string | null) => `${nameKey(name)}\u0000${series ?? ""}`;
+  const byKey = new Map<string, AssetNodeT[]>();
+  for (const a of assets) {
+    const k = keyOfAsset(a.name, a.series);
+    byKey.set(k, [...(byKey.get(k) ?? []), a]);
+  }
+  const groups = new Map<string, OrderLineGroup>();
+  for (const c of contracts) {
+    const t = c.line?.target;
+    if (!c.line || !t || c.line.revisionUnknown || c.fiscalYear === null) continue;
+    // 検収が無く、発注額が 0 の行（取り消した明細の最後の改訂）は、予定にもしない
+    if (c.line.planOrActual === "plan" && c.line.cost?.yen === 0) continue;
+    const hits = byKey.get(keyOfAsset(t.asset, t.unit === null ? null : String(t.unit))) ?? [];
+    const a = hits.length === 1 ? hits[0] : undefined;
+    if (!a) continue;
+    const key = `${a.nodeKey}|${nameKey(t.work)}|${c.fiscalYear}|${c.line.planOrActual}`;
+    const g = groups.get(key);
+    if (g) g.lines.push(c);
+    else groups.set(key, { key, asset: a, work: t.work, fiscalYear: c.fiscalYear, planOrActual: c.line.planOrActual, lines: [c], question: "", linked: null });
+  }
+  const text = (n: number) =>
+    `発注明細の ${n} 行が、品名・仕様の号炉と機器の名前で、ほかの資料の機器と同じ（名前と号炉が同じ機器がただ 1 つ）。` +
+    "結ぶと、その機器の作業の年度の値にする（検収のある行は実績、無い行は予定。同じ機器・作業・年度の行の金額の和を、費用の無い年度の値の費用にする）。" +
+    "結ばないと、明細は記録に残すだけで、計画は変わらない。取り出せない行（一式・諸経費・運搬など）は、どちらでも作業にしない。" +
+    "推す：結ぶ（機器の名前と号炉が同じ）";
+  const options = [
+    { id: "yes", label: "結ぶ（その機器の作業の年度の値と費用にする）" },
+    { id: "no", label: "結ばない（明細は記録に残すだけ）" },
+  ];
+  for (const g of groups.values()) {
+    const qkey = `orderLineLink|${g.key}|${g.lines.map((c) => c.id).sort().join(",")}`;
+    const byFile = new Map<string, ContractRec[]>();
+    for (const c of g.lines) byFile.set(`${c.file}\u0000${c.sheet ?? ""}`, [...(byFile.get(`${c.file}\u0000${c.sheet ?? ""}`) ?? []), c]);
+    const target = g.asset.sources.slice(0, 1).map((s) => ({ file: s.file, sheet: s.sheet, cells: s.cell ? [s.cell] : [] }));
+    const a = ask.ask(
+      qkey,
+      {
+        kind: "workJoin",
+        text: text(g.lines.length),
+        options,
+        valueKind: "option",
+        defaultAnswer: "yes",
+        sameShapeRows: g.lines.length,
+        items: [...byFile.values()].map((cs) => ({
+          file: cs[0]?.file ?? "",
+          sheet: cs[0]?.sheet ?? null,
+          cells: cs.map((c) => c.line?.itemRef ?? c.refs[0] ?? "").filter((r) => r !== ""),
+          target,
+        })),
+      },
+      { key: ORDER_LINE_LINK_MERGE, text },
+    );
+    g.question = questionIdOf(qkey);
+    g.linked = a === "yes" ? true : a === "no" ? false : null;
+  }
+  return [...groups.values()];
+}
+
+/**
+ * 結ぶ案の行の費用：どの行にも費用の候補（実績は検収累計額、予定は発注額）があるときだけ、その和（行の金額の和。割らない・推し量らない）。
+ * 元の字は行の字を「＋」でつないだもの、元のセルは 1 行目のセル。税の扱いが行で違えば unknown
+ */
+function orderLinesCost(lines: readonly ContractRec[]): { cost: number | null; costSource?: NonNullable<WorkDetailT["costSource"]> } {
+  const cs = lines.map((c) => c.line?.cost ?? null);
+  if (!cs.length || cs.some((x) => x === null)) return { cost: null };
+  const cells = cs as CostCell[];
+  const first = lines[0]!;
+  const taxes = new Set(cells.map((x) => x.tax));
+  const tax = taxes.size === 1 ? (cells[0]?.tax ?? "unknown") : "unknown";
+  return {
+    cost: cells.reduce((a, x) => a + x.yen, 0),
+    costSource: { file: first.file, sheet: first.sheet, ref: cells[0]?.ref ?? "", text: cells.map((x) => x.text).join("＋"), tax },
+  };
 }
 
 /** 階層の名前：資料の見出しの名前、無ければパックの階層の名前（既定）、それも無ければ「第 n 階層」（docs/plan.md §2.2。運営者の指摘、11-06） */
