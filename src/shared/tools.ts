@@ -514,7 +514,7 @@ export const TOOLS = {
     "chart_rows",
     "read",
     "星取表の行を読む",
-    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose でルールを置く。rowRef に機器の行の id（n:…）を渡すと、その機器を対象にする作業を 1 行ずつ返す（行の id は w:<作業>。星取は作業ごと。chart_propose の stars はこの id で指す）。",
+    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose でルールを置く。rowRef に機器の行の id（n:…）を渡すと、その機器を対象にする作業を 1 行ずつ返す（行の id は w:<作業>。星取は作業ごと。chart_propose の stars はこの id で指す）。同じ親の下の同じ名前の機器が号機で分かれるときは、階層の名前に号機を添えて返す（「ポンプ No.1」）。データの名前は変えていない（号機は assetNode.tag）ので、ルールの条件では名前と号機を分けて書く。",
     z.object({
       offset: z.number().int().min(0).default(0),
       limit: z.number().int().min(1).max(ROWS_PER_CALL).default(50),

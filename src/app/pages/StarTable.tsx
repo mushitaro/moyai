@@ -13,6 +13,7 @@ import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
 import { DUE_TEXT, planDueViews, rowDue, rowDues, type DueView } from "../../plan/due-view";
+import { assetLabels } from "../../plan/asset-names";
 import { WorkDetailView } from "../components/WorkDetailView";
 import { takeWorkDetailRequest } from "../state/work-detail";
 import { takeChartJump, type ChartJump } from "../state/chart-jump";
@@ -513,7 +514,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
 
   const detailsByKey = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d])), [plan]);
   const ix = useMemo<Index>(() => {
-    const names = new Map(plan.assets.map((a) => [a.nodeKey, a.name]));
+    // 機器の名前は星取表の階層と同じ見せる名前（号機で分かれる同じ名前の機器は「名前 号機」）
+    const names = assetLabels(plan.assets);
     return {
       works: new Map(plan.works.map((w) => [w.workKey, w])),
       assetName: (k) => names.get(k) ?? k,
@@ -745,9 +747,10 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
                 const w = plan.works.find((x) => x.workKey === detailWork);
                 // 機器の道（親から：燃焼設備 › 焼却炉本体）。対象がいくつもあれば「、」でつなぐ
                 const byKey = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+                const shown = assetLabels(plan.assets);
                 const pathOf = (k: string): string[] => {
                   const a = byKey.get(k);
-                  return a ? [...(a.parentKey ? pathOf(a.parentKey) : []), a.name] : [k];
+                  return a ? [...(a.parentKey ? pathOf(a.parentKey) : []), shown.get(a.nodeKey) ?? a.name] : [k];
                 };
                 return (w?.targets ?? []).map((t) => pathOf(t).join(T.pathSep)).join("、");
               })()}

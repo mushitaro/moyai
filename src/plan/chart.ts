@@ -9,6 +9,7 @@ import type { StarRow, StatCell } from "../share/aggregate";
 import { STAT_FIELDS, type StatField } from "../share/bands";
 import { WORK_ATTRIBUTES, type AssetNodeT, type Plan, type WorkDetailT } from "../shared/plan";
 import type { AuthorKind } from "../shared/fields";
+import { assetLabels, shownTag } from "./asset-names";
 
 export type WorkAttribute = (typeof WORK_ATTRIBUTES)[number];
 export type Mark = "plan" | "actual" | "both";
@@ -332,7 +333,10 @@ export function markWithout(detailKeys: readonly string[], proposals: ReadonlySe
  * 計画の機器（資産の節）は号炉・系統を属性（series）で持つ。星取表・Claude が読む行・Excel の行では、系列を持つ機器のいちばん多い階層を「機器の階層」とし、
  * その階層の節を「機器（名前）」と「号炉・系統」の 2 つの行に分ける。下の部位は 1 つ下がる。計画のデータ（鍵・紐付け・作業の対象）は変えない。
  * 号炉・系統を持たない機器（同じ名前の兄弟も無いもの）は行を足さず、号炉・系統の欄を空ける（行が倍にならないように。Architect の 66 の 4）。
- * 機器の行（id「m:」）は資産の節ではない（鍵として読まない。assetKeyOf）
+ * 機器の行（id「m:」）は資産の節ではない（鍵として読まない。assetKeyOf）。
+ * 号機（No.1・No.2。機器の tag）は号炉・系統の欄に入れない。同じ親の下の同じ名前の機器が号機で分かれるときは、機器の名前に号機を添え（「ポンプ No.1」）、
+ * 号機ごとに別の機器の行にする（asset-names.ts）。号機が無く名前だけが同じ機器は、これまでどおり（番号を振らない）。
+ * 機器の名前が号炉・系統と同じ（「1号炉」で号炉 1）なら、号炉・系統の行を足さず、号炉・系統の欄も空ける（2 回出さない）
  */
 
 /** 行の id から資産の節の鍵（台帳の行「n:」だけ。機器の行「m:」・共通の行「c:」は null） */
@@ -347,26 +351,35 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>, catalo
   // 号炉・系統の行の字：番号は Skillパックの単位の字で「1 号炉」、共通は「共通」だけ（意味は詳しくに。Wire、11-06）
   const seriesText = (s: string): string =>
     isCommonSeries(s) ? (labels.seriesCommon ?? "共通") : catalog.seriesUnit && /^\d+$/.test(s) ? `${s} ${catalog.seriesUnit}` : labels.series(s);
+  // 見せる名前：同じ親の下の同じ名前の機器が号機（tag）で分かれるときは「名前 号機」（asset-names.ts。計画のデータは変えない）
+  const shown = assetLabels(plan.assets);
+  const nameOf = (a: AssetNodeT): string => shown.get(a.nodeKey) ?? a.name;
   const levelCount = new Map<number, number>();
   for (const a of plan.assets) if (a.series !== null) levelCount.set(a.level, (levelCount.get(a.level) ?? 0) + 1);
   const machineLevel = [...levelCount.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0]?.[0] ?? null;
-  // 機器の階層の節を、同じ親の下の同じ名前ごとにまとめる。号炉・系統が無く、同じ名前の兄弟も無い機器は分けない
-  const groupKey = (a: AssetNodeT) => `${a.parentKey ?? ""}\u0000${a.name}`;
+  // 機器の階層の節を、同じ親の下の同じ名前（号機で分かれるときは号機も）ごとにまとめる。号炉・系統が無く、同じ名前の兄弟も無い機器は分けない
+  const machineKey = (a: AssetNodeT) => `${a.name}\u0000${shownTag(a, shown) ?? ""}`;
+  const groupKey = (a: AssetNodeT) => `${a.parentKey ?? ""}\u0000${machineKey(a)}`;
   const groups = new Map<string, AssetNodeT[]>();
   if (machineLevel !== null) for (const a of plan.assets) if (a.level === machineLevel) groups.set(groupKey(a), [...(groups.get(groupKey(a)) ?? []), a]);
+  // 機器の名前が号炉・系統と同じ（共通費の機器群の「1号炉」）：機器の行と号炉・系統の行に 2 回出さない（空白と全角・半角の違いは見ない）
+  const squash = (s: string) => s.normalize("NFKC").replace(/\s+/gu, "");
+  const sameAsSeries = (a: AssetNodeT) => a.series !== null && squash(nameOf(a)) === squash(seriesText(a.series));
   const split = (a: AssetNodeT) => {
     if (machineLevel === null || a.level !== machineLevel) return false;
+    if (sameAsSeries(a)) return false;
     const g = groups.get(groupKey(a)) ?? [];
     // 1 台きりで、号炉の番号を持たない（号炉・系統が無いか「共通」だけの）機器は分けない（行を倍にしない。Architect の 66 の 4）
     return !(g.length === 1 && (a.series === null || isCommonSeries(a.series)));
   };
-  /** 分けなかった機器（号炉・系統の欄に「共通」か「―」。下の部位は 1 つ飛ばして置く）：行の id → 号炉・系統の欄の字 */
+  /** 分けなかった機器（号炉・系統の欄に「共通」か「―」。名前が号炉・系統と同じ機器は空ける。下の部位は 1 つ飛ばして置く）：行の id → 号炉・系統の欄の字 */
   const unsplit = new Map<string, string>();
   for (const a of plan.assets) {
     // 分けた機器の節は、号炉・系統の行になる（行の名前は号炉・系統。機器の名前は上の行）
-    const name = split(a) ? (a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―")) : a.name;
+    const name = split(a) ? (a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―")) : nameOf(a);
     byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name, kind: "node", children: [], direct: [] });
-    if (machineLevel !== null && a.level === machineLevel && !split(a)) unsplit.set(`n:${a.nodeKey}`, a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―"));
+    if (machineLevel !== null && a.level === machineLevel && !split(a))
+      unsplit.set(`n:${a.nodeKey}`, sameAsSeries(a) ? "" : a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―"));
   }
   const roots: Node[] = [];
   const machineRow = new Map<string, Node>();
@@ -375,10 +388,12 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>, catalo
     const p = a.parentKey !== null ? byKey.get(a.parentKey) : undefined;
     let parent: Node | undefined = p;
     if (split(a)) {
-      const key = `${p?.id ?? ""}\u0000${a.name}`;
+      const key = `${p?.id ?? ""}\u0000${machineKey(a)}`;
       let m = machineRow.get(key);
       if (!m) {
-        m = { id: `m:${p?.id ?? ""}|${a.name}`, level: a.level, parentId: p?.id ?? null, name: a.name, kind: "node", children: [], direct: [] };
+        // 機器の行の id は、号機で分けたときだけ号機を添える（ほかはこれまでどおり）
+        const tag = shownTag(a, shown);
+        m = { id: `m:${p?.id ?? ""}|${a.name}${tag !== null ? `#${tag}` : ""}`, level: a.level, parentId: p?.id ?? null, name: nameOf(a), kind: "node", children: [], direct: [] };
         machineRow.set(key, m);
         if (p) p.children.push(m);
         else roots.push(m);

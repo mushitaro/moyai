@@ -26,6 +26,7 @@ import { getWorkingPlan } from "../state/plan-store";
 import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
 import { checkStarsFromAi, proposeStarsFromAi } from "../state/stars";
 import { assetKeyOf, fiscalYearOf } from "../../plan/chart";
+import { assetLabels } from "../../plan/asset-names";
 import { workRowRef, type StarIn } from "../../plan/star";
 import { getPeerView } from "../state/peers";
 import { activeRules, isPlanRule, type ReadingRule, type ReadingScope } from "../../import/reading";
@@ -60,8 +61,10 @@ function workRows(rowRef: string, offset: number, limit: number, rowsRemaining: 
   const { plan } = working;
   const nodeKey = assetKeyOf(rowRef);
   const byKey = new Map(plan.assets.map((a) => [a.nodeKey, a]));
+  // 機器の名前は星取表の階層と同じ見せる名前（号機で分かれる同じ名前の機器は「名前 号機」）
+  const shown = assetLabels(plan.assets);
   const path: string[] = [];
-  for (let a = nodeKey !== null ? byKey.get(nodeKey) : undefined; a; a = a.parentKey !== null ? byKey.get(a.parentKey) : undefined) path.unshift(a.name);
+  for (let a = nodeKey !== null ? byKey.get(nodeKey) : undefined; a; a = a.parentKey !== null ? byKey.get(a.parentKey) : undefined) path.unshift(shown.get(a.nodeKey) ?? a.name);
   const works = nodeKey !== null && byKey.has(nodeKey) ? plan.works.filter((w) => w.targets.includes(nodeKey)) : [];
   const take = Math.max(0, Math.min(limit, rowsRemaining));
   const rows = works.slice(offset, offset + take).map((w) => {

@@ -3,6 +3,7 @@
 import type { AuthorKind } from "../shared/fields";
 import type { Plan } from "../shared/plan";
 import { cycleIdOf } from "./cycle";
+import { assetLabels } from "./asset-names";
 
 export type DiffMark = "plan" | "actual" | "both";
 
@@ -11,7 +12,7 @@ export interface DiffRow {
   nodeKey: string;
   workKey: string;
   fiscalYear: number;
-  /** 機器の名前・作業の名前（資料に書いてあったもの） */
+  /** 機器の名前（星取表と同じ見せる名前：号機で分かれる同じ名前の機器は「名前 号機」）・作業の名前（資料に書いてあったもの） */
   equipment: string;
   work: string;
   before: DiffMark | null;
@@ -42,7 +43,8 @@ interface Cell {
 function cells(plan: Plan | null): Map<string, Cell & { nodeKey: string; workKey: string; fiscalYear: number }> {
   const out = new Map<string, Cell & { nodeKey: string; workKey: string; fiscalYear: number }>();
   if (!plan) return out;
-  const names = new Map(plan.assets.map((a) => [a.nodeKey, a.name]));
+  // 機器の名前は星取表と同じ見せる名前（号機で分かれる同じ名前の機器は「名前 号機」。asset-names.ts）。差の鍵と版の記録は変えない
+  const names = assetLabels(plan.assets);
   const works = new Map(plan.works.map((w) => [w.workKey, w]));
   for (const d of plan.details) {
     const w = works.get(d.workKey);
