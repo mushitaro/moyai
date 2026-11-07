@@ -1095,7 +1095,7 @@ export class HumanService {
         return { ok: true, pr: r.number, url: r.url, path, hash: s.hash, seq, login: r.login };
       }
       case "ledger_intake_send": {
-        // GitHub のアカウントなしで出す（運営者の決定 2026-11-07）：束は GitHub の道と同じ関数で作って署名し、台帳の clone の木で確かめてから、
+        // MOYAI 経由で出す（運営者の決定 2026-11-07。送信経路「MOYAI 経由」）：束は GitHub の道と同じ関数で作って署名し、台帳の clone の木で確かめてから、
         // 受け口（LEDGER_INTAKE_URL の 1 つだけ）に送る。受け口が運営者の GitHub のアカウントで PR を出す。行方は GitHub の道と同じ持ち出し簿と読み方
         const p = parsePayload("ledger_intake_send", call.payload);
         if (!p) return no("payloadInvalid");
@@ -1121,7 +1121,8 @@ export class HumanService {
         if (!c.sender.stored && storeFacilityKey(c.facility, c.L.id, sender.pair, this.pendingKeys) === "differs") return no("keysForked");
         if (!c.accepted) acceptLedger(sd, c.L, c.pack, now);
         const r = await sendToIntake(io, s.text);
-        if (!r.ok) return no(`intake.${r.reason}`, { reasons: r.reasons });
+        // 1 時間の上限：次に受けられる時刻を添える（画面は「送信の上限（1 時間）　14:20 以降」と出し、その時刻まで押せない）
+        if (!r.ok) return no(`intake.${r.reason}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
         // 同じ中身の束は、受け口が前の PR を返す。持ち出し簿に同じ PR があれば足さない
         const sentBefore = readPlanSent<LedgerSentEntry>(c.facility, c.L.id).some((e) => e.hash === s.hash && e.pr === r.number && e.repo === `${r.repo.owner}/${r.repo.name}`);
         if (!sentBefore) {

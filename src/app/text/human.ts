@@ -23,7 +23,7 @@ export const HUMAN_TEXT = {
     revertUnknown: "戻す先の版がありません。",
     rootInvalid: "保存先は、ドライブから始まる絶対の道で書いてください（例 D:\\MOYAI）。",
     readingInvalid: "使用ルールを保存先に書けませんでした（名前か中身の形が違う）。ルールを直してから確定してください。",
-    ledgerInvalid: "公開台帳の clone の場所は、ドライブから始まる絶対の道で書いてください（例 C:\\moyai-ledger）。",
+    ledgerInvalid: "公開台帳の clone の場所は、ドライブから始まる絶対の道で書いてください（例 C:\\moyai）。",
     packNotReady: "このSkillパックには、共有に使う公開語彙・見え方の軸・全国の表のどれかがありません（未実装）。",
     writeFailed: "共有フォルダに書けませんでした。",
     keyExists: "この共有フォルダの鍵はもうあります（作り直すのは未実装）。",
@@ -79,8 +79,8 @@ export const HUMAN_TEXT = {
     templateLayoutInvalid: "写し方の案が、保存先の様式に合いません。Claude に案を置き直してもらってください。",
     // 公開の台帳へ出す（GitHub に PR）
     "ledger.notChosen": "公開台帳の clone の場所が未確定です。設定で選んでください。",
-    "ledger.noLedgerDir": "台帳の clone の中に ledger/ がありません。",
-    "ledger.ledgerDirSymlink": "台帳の clone の ledger/ がリンクなので読みません。",
+    "ledger.noLedgerDir": "台帳の clone の中に ledger/ledger/ がありません（MOYAI の clone を選んでください）。",
+    "ledger.ledgerDirSymlink": "台帳の clone の ledger/ か ledger/ledger/ がリンクなので読みません。",
     "ledger.tooManyFiles": "台帳の clone のファイルが多すぎて読めません。",
     "ledger.missing": "台帳の clone に ledger.json がありません。",
     "ledger.rules": "台帳のルール（ledger.json）を読めません。",
@@ -98,8 +98,8 @@ export const HUMAN_TEXT = {
     "github.branchFailed": "フォークに枝を作れませんでした。",
     "github.fileFailed": "フォークに共有ファイルを置けませんでした。",
     "github.prFailed": "PR を出せませんでした。",
-    // GitHub アカウントなしで送る（公開台帳の受け口。運営者の決定 2026-11-07。言葉は Wire の確認待ち）
-    intakeNotReady: "GitHub アカウントなしで送る道は、まだ用意できていません。",
+    // MOYAI 経由で送る（公開台帳の受け口。運営者の決定 2026-11-07。言葉は docs/words.md・docs/screens.md §3.6「送信経路」）
+    intakeNotReady: "MOYAI 経由で送る道は、まだ用意できていません。",
     "intake.network": "受け口に届きませんでした。",
     "intake.refused": "受け口が受けませんでした（台帳の検証で ✗）。",
     "intake.tooLarge": "共有ファイルが受け口の上限（256 KB）を越えています。",
@@ -536,7 +536,7 @@ export const HUMAN_TEXT = {
     fingerprint: "鍵番号",
     peersNotYet: "メンバーの鍵番号を照合して「照合済み」にする画面は未実装です。",
     ledgerTitle: "公開台帳",
-    ledgerLead: "星取表で類似施設と並べるときに読む、公開台帳のリポジトリを clone したフォルダです。読むのは、受け手の関数で確かめて ✓ になった共有ファイルだけです。clone と git pull は、あなたが端末でします。",
+    ledgerLead: "星取表で類似施設と並べるときに読む、公開台帳を持つ MOYAI のリポジトリ（mushitaro/moyai）を clone したフォルダです。その中の ledger/ を読みます。読むのは、受け手の関数で確かめて ✓ になった共有ファイルだけです。clone と git pull は、あなたが端末でします。",
     ledgerInput: "台帳の clone の場所（絶対の道。空にすると使わない）",
     ledgerNone: "未設定",
     nameTitle: "送信者",
@@ -598,7 +598,9 @@ export const HUMAN_TEXT = {
     youTitleLedger: "公開時の表示",
     notOnLedger: "- 公開台帳には出しません",
     upgradeRow: (n: number) => `基幹改良（${fmt(n)} 行）`,
-    accountSeen: (login: string) => `- PR の GitHub アカウント名［${login}］は公開されます`,
+    /** 公開時の表示の 1 行（docs/screens.md §3.6「送信経路」）：「PR の GitHub アカウント　［名］」。GitHub［名］なら名前を朱、MOYAI 経由は運営の名 */
+    prAccount: "PR の GitHub アカウント",
+    prAccountIntake: "tsunagi（MOYAI の運営）",
     prsTitle: "公開台帳への送信履歴",
     prOpen: (n: number) => `PR #${n}`,
     /** どの版の共有ファイルか（共有ファイル 1　第 1 版　2026-11-04） */
@@ -613,10 +615,19 @@ export const HUMAN_TEXT = {
     sendLedger: "署名して公開台帳へ送信",
     ledgerBottom: "GitHub に PR を送信。掲載後の複製は残ります。",
     prSent: (n: number) => `PR #${n} を出しました`,
-    // MOYAI 経由で送る道（受け口が運営者の GitHub アカウントで PR を出す。docs/screens.md §3.6「送信経路」）
-    sendIntake: "MOYAI 経由",
+    // 送信経路（受け口が運営者の GitHub アカウントで PR を出す道が MOYAI 経由。docs/screens.md §3.6「送信経路」・docs/words.md）
+    routeLabel: "送信経路",
+    routeGitHub: (login: string) => `GitHub　${login}`,
+    routeGitHubNone: "GitHub　未接続",
+    routeIntake: "MOYAI 経由",
+    intakeIp: "送信元の IP は上限の判定のみ・保存なし",
+    // 取り下げのボタンが入るまで、下の帯で取り下げを約束しない（Architect の 72。docs/screens.md §3.6）
     intakeBottom: "MOYAI 経由で PR を送信。掲載後の複製は残ります。",
     prViaIntake: "MOYAI 経由",
+    /** 断られたとき（docs/screens.md §3.6「送信経路」）：台帳の検証で外れた・1 時間の上限・受け口に届かない */
+    intakeRefused: (reasons: string) => (reasons ? `受付不可　${reasons}` : "受付不可"),
+    intakeRateLimited: (at: string) => `送信の上限（1 時間）　${at} 以降`,
+    intakeNoAnswer: "受け口の応答なし",
     versionOf: (n: number) => `第 ${n} 版`,
     profileLine: (axes: string) => `施設 ― ${axes}、所在`,
     redacted: "伏せています",

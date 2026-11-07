@@ -1,12 +1,15 @@
-// 台帳のリポジトリの PR の照らし（docs/plan.md §2.8 台帳の守り方）。純粋な関数：入力は
-// `git diff --raw -z --no-renames --no-abbrev <base>...<head>` の出力のバイト列と、base の木の ledger/ の下の項目、追加の blob を読む関数。
+// MOYAI のリポジトリの PR の照らし（docs/plan.md §2.8 台帳の守り方。台帳は 2026-11-07 に mushitaro/moyai の ledger/ へ移した）。純粋な関数：入力は
+// `git diff --raw -z --no-renames --no-abbrev <base>...<head>` の出力のバイト列と、base の木の ledger/ledger/ の下の項目、追加の blob を読む関数。
 // head を checkout せず、head の側のコードも走らせない（読むのは blob のバイト列だけ）。
-// 許すのは、状態が追加（A）で mode が 100644 の、ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json だけ。
+// PR の分け方：ledger/ の中だけを変える PR が台帳の PR。ledger/ に触れない PR と、ledger/ledger/ に触れずに ledger/ の外も変える PR は
+// 「台帳の PR ではない」として検証しない（✗ にしない）。ledger/ の外も変える PR に ledger/ledger/ の変更が混ざっていれば ✗。
+// 台帳の PR で許すのは、状態が追加（A）で mode が 100644 の、ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json と
+// ledger/ledger/bundles/<鍵ID>/retired.json（取り下げの印）だけ。
 // 削除・変更・改名・写し・型の変更（D・M・R・C・T）、symlink（120000）、submodule（160000）、実行の印、
 // 大文字小文字や Unicode の正規化だけが違う道、.github/ に触れるものは ✗。入力の数・大きさ・深さに上限を置く。
-// 束の中身は、base の木に PR の束を足した台帳を verifyLedgerFiles（輪の受け手と同じ数え直しと鎖）で確かめる。
+// 束と印の中身は、base の木に PR のファイルを足した台帳を verifyLedgerFiles（輪の受け手と同じ数え直しと鎖）で確かめる。
 // 鍵 ID と出した人の結びつきは束の署名で決まり、GitHub のログイン名は使わない（この関数は受け取らない）。
-import { LEDGER_BUNDLE_PATH, LEDGER_LIMITS, verifyLedgerFiles, type LedgerFile, type LedgerRulesInfo } from "./ledger";
+import { LEDGER_BUNDLE_PATH, LEDGER_DIR, LEDGER_LIMITS, LEDGER_RETIRED_PATH, LEDGER_ROOT, verifyLedgerFiles, type LedgerFile, type LedgerRulesInfo } from "./ledger";
 import type { NationalTable, Vocab } from "./k";
 import { sha256Hex } from "./sign";
 
@@ -18,8 +21,8 @@ export const PR_LIMITS = {
   rawBytes: 256 * 1024,
   /** 道のバイト数 */
   pathBytes: 200,
-  /** 道の段の数（ledger/bundles/<鍵ID>/<名前> の 4 段） */
-  pathDepth: 4,
+  /** 道の段の数（ledger/ledger/bundles/<鍵ID>/<名前> の 5 段） */
+  pathDepth: 5,
 } as const;
 
 export interface DiffEntry {
@@ -83,6 +86,17 @@ export function foldPath(p: string): string {
   return p.normalize("NFC").toLowerCase();
 }
 
+/** 台帳の PR で足してよい道（束か取り下げの印） */
+function allowedPath(p: string): boolean {
+  return LEDGER_BUNDLE_PATH.test(p) || LEDGER_RETIRED_PATH.test(p);
+}
+
+/** 道が、この頭（ledger/ など）の下か。大文字小文字と Unicode の正規化だけが違う道も下に数える。UTF-8 で読めない道は下に数える（分からないものは厳しく） */
+function under(p: string | null, head: string): boolean {
+  if (p === null) return true;
+  return [p, foldPath(p), p.normalize("NFKC").toLowerCase()].some((x) => x.startsWith(`${head}/`));
+}
+
 /** 1 つの変更の、道と状態と mode の理由（中身は見ない） */
 export function entryIssues(e: DiffEntry): string[] {
   const out: string[] = [];
@@ -94,9 +108,9 @@ export function entryIssues(e: DiffEntry): string[] {
     if ([f, k].some((x) => x === ".github" || x.startsWith(".github/"))) out.push("path.github");
     if (e.pathBytes > PR_LIMITS.pathBytes) out.push("path.tooLong");
     if (p.split("/").length > PR_LIMITS.pathDepth) out.push("path.tooDeep");
-    if (!LEDGER_BUNDLE_PATH.test(p)) {
+    if (!allowedPath(p)) {
       // 正規化と小文字で許す形になるなら、大文字小文字か正規化だけの違い
-      if (LEDGER_BUNDLE_PATH.test(f) || LEDGER_BUNDLE_PATH.test(p.normalize("NFKC").toLowerCase())) out.push("path.caseOrNormalization");
+      if (allowedPath(f) || allowedPath(k)) out.push("path.caseOrNormalization");
       else if (/[^\x21-\x7e]/.test(p)) out.push("path.notAscii");
       else out.push("path.notAllowed");
     }
@@ -131,7 +145,8 @@ export interface PrFile {
 }
 
 export interface PrResult {
-  mode: "pr" | "all";
+  /** pr：台帳の PR を照らした。all：base と head が同じで全部を照らした。notLedger：台帳の PR ではない（ledger/ の外の変更。検証しない） */
+  mode: "pr" | "all" | "notLedger";
   ok: boolean;
   ledger: LedgerRulesInfo;
   files: PrFile[];
@@ -142,7 +157,7 @@ export interface PrResult {
 export interface PrInput {
   /** `git diff --raw -z --no-renames --no-abbrev <base>...<head>` の出力 */
   raw: Uint8Array;
-  /** base の木の ledger/ の下の項目（blob の中身つき） */
+  /** base の木の ledger/ledger/ の下の項目（blob の中身つき） */
   base: readonly LedgerFile[];
   /** base の木のすべての道（大文字小文字と正規化の重なりを見るため） */
   basePaths: readonly string[];
@@ -156,6 +171,16 @@ export function validatePr(i: PrInput): PrResult {
   const parsed = parseRawDiff(i.raw);
   const empty: LedgerRulesInfo = { status: "missing", reasons: [], id: null, hash: null, rules: null, version: null, month: null, founder: null };
   if (!parsed.ok) return { mode: "pr", ok: false, ledger: empty, files: [], inputReason: parsed.reason };
+
+  // 台帳の PR か：ledger/ の中だけを変える PR だけを照らす。ledger/ の外も変える PR（コードの PR）は検証しないが、
+  // ledger/ledger/（決まり・利用条件・束・取り下げの印）の変更が混ざっていれば ✗（台帳の守りを、コードの PR で越えさせない）
+  if (parsed.entries.length > 0 && !parsed.entries.every((e) => under(e.path, LEDGER_ROOT))) {
+    const mixed: PrFile[] = parsed.entries
+      .filter((e) => under(e.path, LEDGER_DIR))
+      .map((e) => ({ path: e.path, pathHash: e.pathHash, status: "ng", reasons: ["path.ledgerInCodePr"] }));
+    if (mixed.length === 0) return { mode: "notLedger", ok: true, ledger: empty, files: [], inputReason: null };
+    return { mode: "pr", ok: false, ledger: empty, files: mixed, inputReason: null };
+  }
 
   const files: PrFile[] = [];
   const added: { file: PrFile; lf: LedgerFile }[] = [];
@@ -192,8 +217,16 @@ export function validatePr(i: PrInput): PrResult {
   const read = verifyLedgerFiles(virtual, i.pack);
   for (const a of added) {
     const line = read.bundles.find((b) => b.path === a.lf.path);
-    if (!line) a.file.reasons.push("file.notAllowed");
-    else if (line.status !== "ok") a.file.reasons.push(...line.reasons);
+    const retired = read.retired.find((r) => r.path === a.lf.path);
+    if (line) {
+      if (line.status !== "ok") a.file.reasons.push(...line.reasons);
+      // 取り下げた鍵には足さない（✓ でも数えない）
+      else if (line.retired) a.file.reasons.push("ledger.keyRetired");
+    } else if (retired) {
+      if (retired.status !== "ok") a.file.reasons.push(...retired.reasons);
+      // 印の最後の連番が、載った束の連番より小さい：載った束を ✗ にする書き方なので断る
+      else if (retired.last !== null && retired.last < retired.placedMax) a.file.reasons.push("chain.retiredBelowKnown");
+    } else a.file.reasons.push("file.notAllowed");
   }
   for (const f of files) {
     f.reasons = [...new Set(f.reasons)];
@@ -208,6 +241,7 @@ export function validateAll(head: readonly LedgerFile[], pack: { table: National
   const read = verifyLedgerFiles(head, pack);
   const files: PrFile[] = [
     ...read.bundles.map((b) => ({ path: b.path, pathHash: sha256Hex(b.path), status: b.status, reasons: b.reasons })),
+    ...read.retired.map((r) => ({ path: r.path, pathHash: sha256Hex(r.path), status: r.status, reasons: r.reasons })),
     ...read.others.map((o) => ({ path: o.path, pathHash: sha256Hex(o.path), status: "ng" as const, reasons: o.reasons })),
   ];
   return { mode: "all", ok: read.ok, ledger: read.ledger, files, inputReason: null };

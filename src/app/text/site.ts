@@ -29,6 +29,8 @@ export const SITE_TEXT = {
   ngCount: (n: number) => `✗ ${n} 件`,
   keys: (n: number) => `鍵 ${n} 個（鍵ごとに最新の ✓ の共有ファイルを数える）`,
   others: (n: number) => `許した形の外のファイル ${n} 件`,
+  /** 取り下げの印が ✓ の鍵（Architect の 72。k にも集計にも数えない） */
+  retired: (n: number) => `取り下げ済みの鍵 ${n} 個（集計対象外）`,
   ngHead: "✗ の共有ファイルと理由（集計に入れていません）",
   noBundles: "確かめて ✓ になった共有ファイルはまだありません。",
   profileHead: (n: number) => `見え方 ${n}`,

@@ -55,8 +55,8 @@ describe("台帳のデモの束", () => {
 
   it("出す台帳には ledger.json と束だけ。秘密鍵・施設の名前・業者の名前・経過年・基幹改良は無い", () => {
     const files = walk(out()).map((p) => relative(out(), p).replace(/\\/g, "/")).sort();
-    expect(files.filter((f) => f === "ledger/ledger.json")).toHaveLength(1);
-    expect(files.filter((f) => /^ledger\/bundles\/[0-9a-f]{16}\/\d{6}-[0-9a-f]{16}\.json$/.test(f))).toHaveLength(10);
+    expect(files.filter((f) => f === "ledger/ledger/ledger.json")).toHaveLength(1);
+    expect(files.filter((f) => /^ledger\/ledger\/bundles\/[0-9a-f]{16}\/\d{6}-[0-9a-f]{16}\.json$/.test(f))).toHaveLength(10);
     expect(files).toHaveLength(11);
     const all = walk(out()).map((p) => readFileSync(p, "utf8").normalize("NFKC")).join("\n");
     expect(all).not.toContain("PRIVATE KEY");
@@ -96,7 +96,7 @@ describe("台帳のデモの束", () => {
     expect(by.facilityName).toEqual(expect.arrayContaining(["shape.type", "freeText"]));
     for (const x of r.rejects) {
       expect(x.reasons.some((y) => y.startsWith("chain.") || y.startsWith("file."))).toBe(false);
-      expect(x.path).toMatch(/^ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+      expect(x.path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
       const text = readFileSync(join(rejects(), x.case, ...x.path.split("/")), "utf8");
       expect(text.length).toBeGreaterThan(0);
     }

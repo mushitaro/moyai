@@ -57,6 +57,6 @@ describe("ledger init（人だけのコマンド）", () => {
     const tty = { isTTY: true };
     expect(await initCli(["--root", "相対の道", "--pack", "waste-incineration"], { stdin: tty, stateDir: state })).toBe(2);
     expect(await initCli(["--root", root, "--pack", "waste-incineration", "--month", "2026-11"], { stdin: tty, stateDir: state })).toBe(0);
-    expect(existsSync(join(root, "ledger", "ledger.json"))).toBe(true);
+    expect(existsSync(join(root, "ledger", "ledger", "ledger.json"))).toBe(true);
   });
 });

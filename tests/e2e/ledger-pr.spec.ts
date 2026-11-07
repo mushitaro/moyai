@@ -25,7 +25,7 @@ test.beforeAll(async () => {
   buildLedgerDemo({ repo: process.cwd(), out: repo, state: join(work, "demo-state"), month: "2026-11" });
   // 台帳の clone の出どころ（MOYAI は git を走らせず、.git/config の origin の URL だけを読む）
   mkdirSync(join(repo, ".git"), { recursive: true });
-  writeFileSync(join(repo, ".git", "config"), '[remote "origin"]\n\turl = https://github.com/ledger-owner/moyai-ledger.git\n');
+  writeFileSync(join(repo, ".git", "config"), '[remote "origin"]\n\turl = https://github.com/ledger-owner/moyai.git\n');
   stub = await startGitHubStub();
   bridge = await startBuiltBridge("moyai-e2e-ledger-pr-state-", { MOYAI_GITHUB_WEB: stub.web, MOYAI_GITHUB_API: stub.api, MOYAI_GITHUB_CLIENT_ID: stub.clientId });
 });
@@ -71,7 +71,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
 
   await test.step("SHARE：出す先を公開の台帳にする。見え方を選ぶと、誰からも見えるあなた。つなぐまでは出せない", async () => {
     await page.getByTestId("share-dest").getByText("公開台帳").click();
-    await expect(page.getByTestId("github-login")).toHaveText("未接続");
+    await expect(page.getByTestId("github-login")).toHaveText("GitHub　未接続");
     await page.getByTestId("q-national").selectOption("yes");
     await page.getByTestId("q-furnace").selectOption("STOKER");
     await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
@@ -95,8 +95,8 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("github-state")).toHaveAttribute("data-state", "ok", { timeout: 20_000 });
     await expect(page.getByTestId("github-state")).toHaveText("つながりました：moyai-test");
     await page.getByTestId("github-close").click();
-    await expect(page.getByTestId("github-login")).toHaveText("moyai-test");
-    await expect(page.getByTestId("account-seen")).toHaveText("- PR の GitHub アカウント名［moyai-test］は公開されます");
+    await expect(page.getByTestId("github-login")).toHaveText("GitHub　moyai-test");
+    await expect(page.getByTestId("account-seen")).toHaveText("PR の GitHub アカウント　moyai-test");
     await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
     await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");
   });

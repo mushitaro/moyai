@@ -3,7 +3,7 @@
 // （送る側の封は外れた束に署名しないので、台帳に PR を出す人が手で作る束の代わり）。
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { LEDGER_V, bundleFileName, envelopeText, fileHash, makeRulesDocBody, ringIdOf, type ShareContext } from "../../../src/share/bundle";
+import { LEDGER_V, bundleFileName, envelopeText, fileHash, makeLedgerRetiredBody, makeRulesDocBody, ringIdOf, type ShareContext } from "../../../src/share/bundle";
 import type { Plan } from "../../../src/shared/plan";
 import { baseRules, type Rules } from "../../../src/share/rules";
 import { previewBundle, sealBundle, type SendInput } from "../../../src/share/seal";
@@ -69,7 +69,7 @@ export function sealLedger(L: Ledger, s: Signer, p: Plan, o: Partial<SendInput> 
     folderPath: "/tmp/ledger",
   });
   if (!r.ok) throw new Error(`封ができない: ${r.reason}`);
-  return { text: r.text, hash: r.hash, fileName: r.fileName, key: s.key, path: `ledger/bundles/${s.key}/${r.fileName}` };
+  return { text: r.text, hash: r.hash, fileName: r.fileName, key: s.key, path: `ledger/ledger/bundles/${s.key}/${r.fileName}` };
 }
 
 /** 正しい束の body を書き換え、本物の署名の関数で署名し直す（わざと外れた束） */
@@ -80,16 +80,23 @@ export function forge(base: Sealed, s: Signer, edit: (body: Record<string, unkno
   const hash = fileHash(text);
   const seq = typeof body.seq === "number" ? body.seq : 1;
   const fileName = bundleFileName(seq, hash);
-  return { text, hash, fileName, key: s.key, path: `ledger/bundles/${s.key}/${fileName}` };
+  return { text, hash, fileName, key: s.key, path: `ledger/ledger/bundles/${s.key}/${fileName}` };
 }
 
-/** 台帳のリポジトリを書く（ledger/ledger.json・TERMS.md・束） */
+/** 台帳を持つリポジトリ（MOYAI の clone の形）を書く（ledger/ledger/ledger.json・TERMS.md・束） */
 export function writeRepo(dir: string, L: Ledger | { text: string }, bundles: readonly Sealed[]): void {
-  mkdirSync(join(dir, "ledger", "bundles"), { recursive: true });
-  writeFileSync(join(dir, "ledger", "ledger.json"), L.text);
-  writeFileSync(join(dir, "ledger", "TERMS.md"), "【架空】試験の利用条件\n");
+  mkdirSync(join(dir, "ledger", "ledger", "bundles"), { recursive: true });
+  writeFileSync(join(dir, "ledger", "ledger", "ledger.json"), L.text);
+  writeFileSync(join(dir, "ledger", "ledger", "TERMS.md"), "【架空】試験の利用条件\n");
   for (const b of bundles) {
-    mkdirSync(join(dir, "ledger", "bundles", b.key), { recursive: true });
+    mkdirSync(join(dir, "ledger", "ledger", "bundles", b.key), { recursive: true });
     writeFileSync(join(dir, ...b.path.split("/")), b.text);
   }
+}
+
+/** 公開台帳の取り下げの印（moyai.retired/0。ring の代わりに ledger）。既定はその鍵自身の署名。by で別の鍵の署名にできる（わざと外れた印） */
+export function sealRetired(L: Ledger, s: Signer, last: number, o: { by?: Signer; pub?: string; key?: string; ledger?: string; month?: string } = {}): Sealed {
+  const body = makeLedgerRetiredBody(o.ledger ?? L.id, o.key ?? s.key, o.pub ?? s.pair.pub, last, o.month ?? "2026-11");
+  const text = envelopeText(body, signBody(body, (o.by ?? s).pair.privateKey));
+  return { text, hash: fileHash(text), fileName: "retired.json", key: s.key, path: `ledger/ledger/bundles/${s.key}/retired.json` };
 }

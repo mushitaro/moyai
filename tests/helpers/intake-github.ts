@@ -1,6 +1,8 @@
 // 試験の中だけで動く GitHub の代わり（メモリの中。網は使わない）。受け口（services/ledger-intake）が使う呼び出しと、
 // アプリが PR の行方を読む呼び出し（src/bridge/github.ts の prStatus）だけを受ける：
 // 台帳のリポジトリ・既定のブランチの先・木・blob・枝の PR の一覧・枝・ファイル・PR・PR の行方。
+// 取り下げ（Architect の 72）のために、開いた PR の一覧・PR のファイル・PR への書き込み・PR を閉じる、も受ける。
+// 台帳は MOYAI のリポジトリの ledger/（2026-11-07 に移した）。名前の既定は mushitaro/moyai の形（架空の owner）。
 // 本物の GitHub では確かめていない（報告では「GitHub の本物では未確認」と分けて書く）。届いた束のファイルは試験が受け手の関数で確かめる。
 import { createHash } from "node:crypto";
 
@@ -13,6 +15,8 @@ export interface FakePr {
   files: Record<string, Buffer>;
   state: "open" | "closed";
   merged: boolean;
+  /** PR に書かれた文（受け口が書いたもの） */
+  comments: string[];
 }
 
 export interface FakeCall {
@@ -46,7 +50,7 @@ function blobSha(b: Buffer): string {
 
 export function fakeLedgerGitHub(o: { token: string; owner?: string; name?: string; files: Record<string, string | Uint8Array> }): FakeLedgerGitHub {
   const owner = o.owner ?? "ledger-owner";
-  const name = o.name ?? "moyai-ledger";
+  const name = o.name ?? "moyai";
   const main = new Map<string, Buffer>(Object.entries(o.files).map(([p, c]) => [p, Buffer.from(c)]));
   const modes = new Map<string, string>();
   const branches = new Map<string, Map<string, Buffer>>();
@@ -78,6 +82,11 @@ export function fakeLedgerGitHub(o: { token: string; owner?: string; name?: stri
       const pr = prs.find((p) => p.number === Number(pull[1]));
       return pr ? json(200, { number: pr.number, html_url: htmlUrl(pr.number), state: pr.state, merged: pr.merged, head: { sha: headSha(pr.number), ref: pr.head } }) : json(404, {});
     }
+    const pullFiles = /^\/pulls\/(\d+)\/files$/.exec(rest);
+    if (method === "GET" && pullFiles) {
+      const pr = prs.find((p) => p.number === Number(pullFiles[1]));
+      return pr ? json(200, Object.keys(pr.files).map((filename) => ({ filename, status: "added" }))) : json(404, {});
+    }
     if (method === "GET" && /^\/commits\/[0-9a-f]{40}\/check-runs$/.test(rest)) return json(200, { check_runs: [{ name: "ledger-validate", status: "in_progress", conclusion: null }] });
     if (method === "GET" && /^\/issues\/\d+\/comments$/.test(rest)) return json(200, []);
 
@@ -108,9 +117,30 @@ export function fakeLedgerGitHub(o: { token: string; owner?: string; name?: stri
       return hit ? json(200, { sha: blob[1], size: hit.length, encoding: "base64", content: hit.toString("base64").replace(/(.{60})/g, "$1\n") }) : json(404, {});
     }
     if (method === "GET" && rest === "/pulls") {
-      const head = u.searchParams.get("head") ?? "";
-      const list = prs.filter((p) => `${owner}:${p.head}` === head).map((p) => ({ number: p.number, html_url: htmlUrl(p.number), state: p.state }));
+      const head = u.searchParams.get("head");
+      const state = u.searchParams.get("state") ?? "open";
+      const page = Number(u.searchParams.get("page") ?? "1");
+      const per = Number(u.searchParams.get("per_page") ?? "30");
+      const list = prs
+        .filter((p) => (head === null ? true : `${owner}:${p.head}` === head || p.head === head))
+        .filter((p) => state === "all" || p.state === state)
+        .map((p) => ({ number: p.number, html_url: htmlUrl(p.number), state: p.state, title: p.title, head: { ref: p.head.replace(/^[^:]+:/, "") } }))
+        .slice((page - 1) * per, page * per);
       return json(200, list);
+    }
+    const patch = /^\/pulls\/(\d+)$/.exec(rest);
+    if (method === "PATCH" && patch) {
+      const pr = prs.find((p) => p.number === Number(patch[1]));
+      if (!pr) return json(404, {});
+      if (body.state === "closed") pr.state = "closed";
+      return json(200, { number: pr.number, html_url: htmlUrl(pr.number), state: pr.state });
+    }
+    const comment = /^\/issues\/(\d+)\/comments$/.exec(rest);
+    if (method === "POST" && comment) {
+      const pr = prs.find((p) => p.number === Number(comment[1]));
+      if (!pr) return json(404, {});
+      pr.comments.push(String(body.body ?? ""));
+      return json(201, { id: pr.comments.length });
     }
     if (method === "POST" && rest === "/git/refs") {
       const b = String(body.ref ?? "").replace(/^refs\/heads\//, "");
@@ -137,7 +167,7 @@ export function fakeLedgerGitHub(o: { token: string; owner?: string; name?: stri
       const files = branches.get(head);
       if (!files || files.size === 0) return json(422, { message: "No commits between main and head" });
       if (prs.some((p) => p.head === head)) return json(422, { message: "A pull request already exists" });
-      const pr: FakePr = { number: prs.length + 1, head, base: String(body.base ?? ""), title: String(body.title ?? ""), body: String(body.body ?? ""), files: Object.fromEntries(files), state: "open", merged: false };
+      const pr: FakePr = { number: prs.length + 1, head, base: String(body.base ?? ""), title: String(body.title ?? ""), body: String(body.body ?? ""), files: Object.fromEntries(files), state: "open", merged: false, comments: [] };
       prs.push(pr);
       return json(201, { number: pr.number, html_url: htmlUrl(pr.number) });
     }

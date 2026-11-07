@@ -11,6 +11,7 @@ import {
   LEDGER_V,
   MEMBER_BODY_TYPE,
   MEMBER_V,
+  LEDGER_RETIRED_BODY_TYPE,
   RETIRED_BODY_TYPE,
   RETIRED_V,
   BUNDLE_V,
@@ -220,7 +221,9 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
       : kind === "member"
         ? MEMBER_BODY_TYPE
         : kind === "retired"
-          ? RETIRED_BODY_TYPE
+          ? ctx.to.kind === "ledger"
+            ? LEDGER_RETIRED_BODY_TYPE
+            : RETIRED_BODY_TYPE
           : rulesDocBodyType(kind === "circle" ? CIRCLE_V : LEDGER_V);
   checkShape(p.value, envelopeType(bodyType), "", issues);
   if (issues.length > 0) shape("type", issues.length);
@@ -258,7 +261,9 @@ export function recount(file: string | Uint8Array, ctx: ShareContext): RecountRe
     countK(body, ctx, res, kShort);
   } else if (kind === "member" || kind === "retired") {
     if (typeof body.pub === "string" && /^[0-9a-f]{64}$/.test(body.pub) && keyIdOf(body.pub) !== body.key) chain("keyMismatch");
-    if (ctx.to.kind !== "ring" || body.ring !== ctx.to.id) chain("otherDestination");
+    // 行き先：仲間のファイルは輪だけ。取り下げの印は輪（ring）か公開台帳（ledger。Architect の 72）
+    const dest = kind === "retired" && ctx.to.kind === "ledger" ? body.ledger : ctx.to.kind === "ring" ? body.ring : undefined;
+    if (dest !== ctx.to.id) chain("otherDestination");
   } else {
     const b = body as { v?: unknown; founder?: unknown; nonce?: unknown; rules?: unknown };
     if (typeof b.v === "string" && typeof b.founder === "string" && typeof b.nonce === "string") {

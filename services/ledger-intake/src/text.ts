@@ -18,4 +18,28 @@ export const INTAKE_PR_TEXT = {
       "鍵 ID と出した人の結びつきは共有ファイルの署名で決まり、この PR を出したアカウントの名前は使いません。",
       "",
     ].join("\n"),
+  // 取り下げ（Architect の 72）：その鍵自身の署名の取り下げの印を受けたとき
+  retiredTitle: (key: string) => `失効記録を足す：鍵 ${key}（受け口から）`,
+  retiredCommitMessage: (key: string) => `失効記録を足す：鍵 ${key}（受け口から）`,
+  retiredBody: (o: { key: string; pub: string; last: number; hash: string; path: string; ledgerId: string; closed: number[] }) =>
+    [
+      "受け口から（GitHub のアカウントなし）",
+      "",
+      `台帳 \`${o.ledgerId}\` に、鍵 \`${o.key}\` の失効記録を 1 つ足します。`,
+      "",
+      `- 失効記録：\`${o.path}\``,
+      `- 鍵 ID \`${o.key}\`（鍵番号 \`${fingerprint(o.pub)}\`）・最後の連番 ${o.last}・ファイルの SHA-256 \`${o.hash}\``,
+      ...(o.closed.length ? [`- まだ載っていなかった共有ファイルの PR ${o.closed.map((n) => `#${n}`).join("・")} は、本人が取り下げたので閉じました`] : []),
+      "",
+      "失効記録はその鍵自身の署名です。受け口が、受ける前に台帳の検証と同じ関数で確かめ、✓ でした。載ると、この鍵の共有ファイルは集計対象外になり、最後の連番より大きい共有ファイルは ✗ になります。載った共有ファイルは消さず、掲載済みの複製は残ります。",
+      "",
+    ].join("\n"),
+  /** まだ載っていない束の PR を閉じるときに書く文 */
+  withdrawn: (key: string) =>
+    [
+      `本人が取り下げました（鍵 \`${key}\` 自身の署名の失効記録を、受け口が確かめました）。`,
+      "",
+      "この PR の共有ファイルはまだ台帳に載っていないので、載せずに閉じます。",
+      "",
+    ].join("\n"),
 };

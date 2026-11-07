@@ -111,6 +111,8 @@ export interface SiteModel {
   ok: number;
   ng: number;
   keys: number;
+  /** 取り下げの印が ✓ の鍵の数（集計に入れない） */
+  retired: number;
 }
 
 /** 集計：✓ の束（鍵ごとに最新）から、見え方ごとの節を作る（サイトに自分は無いので self は null） */
@@ -127,7 +129,8 @@ export function siteModel(i: Pick<SiteInput, "read" | "pack">): SiteModel {
     .map((s, k) => ({ s, k }))
     .sort((a, b) => b.s.aggregate.similar.length - a.s.aggregate.similar.length || a.k - b.k)
     .map(({ s }) => s);
-  return { sections, ok: okLines.length, ng: i.read.bundles.length - okLines.length, keys: peers.length };
+  const retired = i.read.retired.filter((r) => r.status === "ok").length;
+  return { sections, ok: okLines.length, ng: i.read.bundles.length - okLines.length + i.read.retired.length - retired, keys: peers.length, retired };
 }
 
 function rulesBlock(i: SiteInput): string {
@@ -156,8 +159,12 @@ function rulesBlock(i: SiteInput): string {
 }
 
 function countsBlock(i: SiteInput, m: SiteModel): string {
-  const out = [`<p><span class="ok">${h(T.okCount(m.ok))}</span>　<span class="${m.ng ? "ng" : "muted"}">${h(T.ngCount(m.ng))}</span>　${h(T.keys(m.keys))}　${h(T.others(i.read.others.length))}</p>`];
-  const ngs = [...i.read.bundles.filter((b) => b.status !== "ok").map((b) => ({ path: b.path, reasons: b.reasons })), ...i.read.others];
+  const out = [`<p><span class="ok">${h(T.okCount(m.ok))}</span>　<span class="${m.ng ? "ng" : "muted"}">${h(T.ngCount(m.ng))}</span>　${h(T.keys(m.keys))}${m.retired ? `　${h(T.retired(m.retired))}` : ""}　${h(T.others(i.read.others.length))}</p>`];
+  const ngs = [
+    ...i.read.bundles.filter((b) => b.status !== "ok").map((b) => ({ path: b.path, reasons: b.reasons })),
+    ...i.read.retired.filter((r) => r.status !== "ok").map((r) => ({ path: r.path, reasons: r.reasons })),
+    ...i.read.others,
+  ];
   if (ngs.length) {
     out.push(`<h3>${h(T.ngHead)}</h3><ul>`);
     for (const b of ngs) out.push(`<li><code>${h(b.path)}</code>：${h([...new Set(b.reasons.map(reasonText))].join("、"))}</li>`);

@@ -4,16 +4,16 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, unlinkSync, writeFileSync 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { envelopeText, makeRulesDocBody, CIRCLE_V } from "../../../src/share/bundle";
+import { envelopeText, makeRetiredBody, makeRulesDocBody, CIRCLE_V } from "../../../src/share/bundle";
 import { canonicalize } from "../../../src/share/jcs";
-import { LEDGER_JSON_PATH, jsonDepth, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../../src/share/ledger";
+import { LEDGER_JSON_PATH, checkBundleAdded, checkRetiredAdded, jsonDepth, ledgerRetiredPath, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../../src/share/ledger";
 import { isClean, recount } from "../../../src/share/recount";
 import { signBody } from "../../../src/share/sign";
 import { formatLedger, ledgerRootOf, loadLedger, verifyLedgerCli } from "../../../src/cli/ledger";
 import { reasonText } from "../../../src/app/text/reasons";
 import type { Rules } from "../../../src/share/rules";
 import { SPEC, TABLE_TEXT, VOCAB_TEXT, detail, plan, smallPlan, table, vocab, work, asset } from "./fixtures";
-import { LEDGER_FIELDS, forge, makeLedger, makeSigner, sealLedger, writeRepo, type Sealed } from "./ledger-fixtures";
+import { LEDGER_FIELDS, forge, makeLedger, makeSigner, sealLedger, sealRetired, writeRepo, type Sealed } from "./ledger-fixtures";
 
 const pack = { table, vocab };
 const L = makeLedger();
@@ -127,7 +127,7 @@ describe("verify ledger：share.tamper（輪と同じ外れ）", () => {
   });
 
   it("他人のフォルダ（鍵 ID と署名の鍵が合わない）", () => {
-    const moved = { ...b1, key: A.key, path: `ledger/bundles/${A.key}/${b1.fileName}` };
+    const moved = { ...b1, key: A.key, path: `ledger/ledger/bundles/${A.key}/${b1.fileName}` };
     const r = verifyLedgerFiles(files([a[0]!, moved]), pack);
     expect(lineOf(r, moved).reasons).toContain("file.otherFolder");
   });
@@ -253,11 +253,11 @@ describe("verify ledger：台帳だけの決まり", () => {
     expect(jsonDepth(deep.text)).toBeGreaterThan(8);
     const r = verifyLedgerFiles(
       files([deep], [
-        { path: `ledger/bundles/${B.key}/${b1.fileName}`, kind: "symlink", bytes: null },
-        { path: `ledger/bundles/${A.key}/000009-0000000000000000.json`, kind: "submodule", bytes: null },
-        { path: "ledger/notes.txt", kind: "file", bytes: Buffer.from("x") },
-        { path: `ledger/bundles/${A.key}/memo.json`, kind: "file", bytes: Buffer.from("{}") },
-        { path: "ledger/TERMS.md", kind: "symlink", bytes: null },
+        { path: `ledger/ledger/bundles/${B.key}/${b1.fileName}`, kind: "symlink", bytes: null },
+        { path: `ledger/ledger/bundles/${A.key}/000009-0000000000000000.json`, kind: "submodule", bytes: null },
+        { path: "ledger/ledger/notes.txt", kind: "file", bytes: Buffer.from("x") },
+        { path: `ledger/ledger/bundles/${A.key}/memo.json`, kind: "file", bytes: Buffer.from("{}") },
+        { path: "ledger/ledger/TERMS.md", kind: "symlink", bytes: null },
       ]),
       pack,
     );
@@ -265,9 +265,9 @@ describe("verify ledger：台帳だけの決まり", () => {
     expect(r.bundles.find((x) => x.path.endsWith(b1.fileName))!.reasons).toEqual(["file.symlink"]);
     expect(r.bundles.find((x) => x.path.endsWith("000009-0000000000000000.json"))!.reasons).toEqual(["file.submodule"]);
     expect(r.others).toEqual([
-      { path: "ledger/TERMS.md", reasons: ["file.symlink"] },
-      { path: `ledger/bundles/${A.key}/memo.json`, reasons: ["file.notBundleName"] },
-      { path: "ledger/notes.txt", reasons: ["file.notAllowed"] },
+      { path: "ledger/ledger/TERMS.md", reasons: ["file.symlink"] },
+      { path: `ledger/ledger/bundles/${A.key}/memo.json`, reasons: ["file.notBundleName"] },
+      { path: "ledger/ledger/notes.txt", reasons: ["file.notAllowed"] },
     ]);
   });
 
@@ -275,16 +275,90 @@ describe("verify ledger：台帳だけの決まり", () => {
     const d = repo([a[0]!]);
     const target = join(tmp, `elsewhere-${n}`);
     writeRepo(target, L, [b1]);
-    symlinkSync(join(target, "ledger", "bundles", B.key), join(d, "ledger", "bundles", B.key), process.platform === "win32" ? "junction" : "dir");
+    symlinkSync(join(target, "ledger", "ledger", "bundles", B.key), join(d, "ledger", "ledger", "bundles", B.key), process.platform === "win32" ? "junction" : "dir");
     const r = await read(d);
     expect(r.bundles.map((x) => x.path)).toEqual([a[0]!.path]);
-    expect(r.others).toEqual([{ path: `ledger/bundles/${B.key}`, reasons: ["file.notBundleName"] }]);
+    expect(r.others).toEqual([{ path: `ledger/ledger/bundles/${B.key}`, reasons: ["file.notBundleName"] }]);
     expect(r.ok).toBe(false);
     // ledger/ そのものが symlink なら読まない
     const d2 = join(tmp, `repo-link-${n}`);
     mkdirSync(d2);
     symlinkSync(join(d, "ledger"), join(d2, "ledger"), process.platform === "win32" ? "junction" : "dir");
     expect(await readLedgerDir(d2)).toEqual({ ok: false, reason: "ledgerDirSymlink" });
+    // 台帳の根の下の ledger/ledger/ が symlink でも読まない
+    const d3 = join(tmp, `repo-link-inner-${n}`);
+    mkdirSync(join(d3, "ledger"), { recursive: true });
+    symlinkSync(join(d, "ledger", "ledger"), join(d3, "ledger", "ledger"), process.platform === "win32" ? "junction" : "dir");
+    expect(await readLedgerDir(d3)).toEqual({ ok: false, reason: "ledgerDirSymlink" });
+  });
+});
+
+describe("verify ledger：取り下げの印（retired.json。Architect の 72）", () => {
+  const retiredOf = (r: ReturnType<typeof verifyLedgerFiles>, key: string) => r.retired.find((x) => x.key === key)!;
+
+  it("自分の署名の印：A の束は ✓ のまま残り、k にも集計にも数えない（body なし）。B は数える", async () => {
+    const own = sealRetired(L, A, 3);
+    expect(own.path).toBe(ledgerRetiredPath(A.key));
+    // フォルダから読んでも同じ（道の鍵 ID・本文の key・pub から作った鍵 ID がそろう）
+    const r = await read(repo([...a, b1, own]));
+    expect(r.ok).toBe(true);
+    expect(r.retired).toEqual([{ path: own.path, key: A.key, status: "ok", reasons: [], hash: own.hash, last: 3, placedMax: 3 }]);
+    for (const s of a) expect(lineOf(r, s)).toMatchObject({ status: "ok", reasons: [], retired: true, body: null });
+    expect(lineOf(r, b1)).toMatchObject({ status: "ok" });
+    expect(lineOf(r, b1).retired).toBeUndefined();
+    expect(lineOf(r, b1).body).not.toBeNull();
+    expect(formatLedger(r).join("\n")).toContain(`✓ 失効記録 ${own.path}`);
+    expect(formatLedger(r).join("\n")).toContain(reasonText("ledger.keyRetired"));
+    // 一度も出していない鍵の印も受ける（数える束が無いだけ）
+    const c = makeSigner();
+    const lone = verifyLedgerFiles(files([...a], [{ path: ledgerRetiredPath(c.key), kind: "file", bytes: Buffer.from(sealRetired(L, c, 0).text) }]), pack);
+    expect(lone.ok).toBe(true);
+    expect(retiredOf(lone, c.key)).toMatchObject({ status: "ok", last: 0 });
+  });
+
+  it("他人の鍵の署名の印は ✗。A の束は今までどおり数える", () => {
+    const cases: [string, Sealed, string][] = [
+      ["B の鍵で署名（本文は A）", sealRetired(L, A, 3, { by: B }), "chain.badSignature"],
+      ["B の公開鍵を名乗る（本文の key は A）", sealRetired(L, A, 3, { by: B, pub: B.pair.pub }), "chain.keyMismatch"],
+      ["B の正しい印を A のフォルダに置く", { ...sealRetired(L, B, 1), path: ledgerRetiredPath(A.key) }, "file.otherFolder"],
+      ["ほかの台帳の印", sealRetired(L, A, 3, { ledger: "00000000000000aa" }), "chain.otherDestination"],
+    ];
+    for (const [name, x, reason] of cases) {
+      const r = verifyLedgerFiles(files([...a, b1, x]), pack);
+      expect([name, r.ok]).toEqual([name, false]);
+      expect(retiredOf(r, A.key)).toMatchObject({ status: "ng", last: null });
+      expect([name, retiredOf(r, A.key).reasons]).toEqual([name, expect.arrayContaining([reason])]);
+      for (const s of a) expect([lineOf(r, s).status, lineOf(r, s).retired]).toEqual(["ok", undefined]);
+      expect(lineOf(r, a[2]!).body).not.toBeNull();
+    }
+    // 輪の形（ring を持つ）の印は、台帳では型の外れ
+    const ringBody = makeRetiredBody(L.id, A.key, A.pair.pub, 3, "2026-11");
+    const ringText = envelopeText(ringBody, signBody(ringBody, A.pair.privateKey));
+    const r = verifyLedgerFiles(files([...a], [{ path: ledgerRetiredPath(A.key), kind: "file", bytes: Buffer.from(ringText) }]), pack);
+    expect(retiredOf(r, A.key).reasons).toContain("shape.type");
+    // 束を retired.json の名前で置いても印にならない
+    const asBundle = verifyLedgerFiles(files([...a.slice(0, 1)], [{ path: ledgerRetiredPath(A.key), kind: "file", bytes: Buffer.from(a[1]!.text) }]), pack);
+    expect(retiredOf(asBundle, A.key).reasons).toContain("file.notRetired");
+  });
+
+  it("印のあとの束（最後の連番より大きい連番）は ✗（chain.afterRetired）。足すときも断る", () => {
+    const at1 = sealRetired(L, A, 1);
+    const r = verifyLedgerFiles(files([...a, at1]), pack);
+    expect(r.ok).toBe(false);
+    expect(lineOf(r, a[0]!)).toMatchObject({ status: "ok", retired: true });
+    expect(lineOf(r, a[1]!).reasons).toEqual(["chain.afterRetired"]);
+    expect(lineOf(r, a[2]!).reasons).toEqual(["chain.afterRetired"]);
+    // 印のある台帳に、次の束を足す
+    expect(checkBundleAdded(files([a[0]!, at1]), pack, a[1]!.path, Buffer.from(a[1]!.text))).toEqual({ ok: false, reasons: ["chain.afterRetired"] });
+    // 印の最後の連番までの束でも、取り下げた鍵には足さない
+    const at3 = sealRetired(L, A, 3);
+    expect(checkBundleAdded(files([a[0]!, at3]), pack, a[1]!.path, Buffer.from(a[1]!.text))).toEqual({ ok: false, reasons: ["ledger.keyRetired"] });
+    // 印を足すとき：載った束より小さい最後の連番は断る。同じ鍵の印が 2 つ目なら断る
+    expect(checkRetiredAdded(files([...a]), pack, at1.path, Buffer.from(at1.text))).toEqual({ ok: false, reasons: ["chain.retiredBelowKnown"] });
+    expect(checkRetiredAdded(files([...a]), pack, at3.path, Buffer.from(at3.text))).toEqual({ ok: true, key: A.key, last: 3 });
+    expect(checkRetiredAdded(files([...a, at3]), pack, at3.path, Buffer.from(at3.text))).toEqual({ ok: false, reasons: ["ledger.retiredExists"] });
+    const forged = sealRetired(L, A, 3, { by: B });
+    expect(checkRetiredAdded(files([...a]), pack, forged.path, Buffer.from(forged.text))).toMatchObject({ ok: false, reasons: expect.arrayContaining(["chain.badSignature"]) });
   });
 });
 
@@ -342,6 +416,7 @@ describe("CLI：verify ledger", () => {
     const good = repo([...a, b1]);
     expect(ledgerRootOf(good)).toBe(good);
     expect(ledgerRootOf(join(good, "ledger"))).toBe(good);
+    expect(ledgerRootOf(join(good, "ledger", "ledger"))).toBe(good);
     expect(await verifyLedgerCli(["ledger", good], { packsDir: pd })).toBe(0);
     expect(await verifyLedgerCli(["ledger", join(good, "ledger")], { packsDir: pd })).toBe(0);
     const t = a[1]!.text;
@@ -355,10 +430,10 @@ describe("CLI：verify ledger", () => {
   });
 
   it("端末に出す道の制御文字は ? にする（台帳に置いた人がファイル名で端末を操れないように）", () => {
-    const r = verifyLedgerFiles(files([], [{ path: "ledger/\u001b[2Jx\u0007.txt", kind: "file", bytes: Buffer.from("x") }]), pack);
+    const r = verifyLedgerFiles(files([], [{ path: "ledger/ledger/\u001b[2Jx\u0007.txt", kind: "file", bytes: Buffer.from("x") }]), pack);
     const lines = formatLedger(r);
     for (const l of lines) expect(l).not.toMatch(/[\u0000-\u001f]/);
-    expect(lines.join("\n")).toContain("ledger/?[2Jx?.txt");
+    expect(lines.join("\n")).toContain("ledger/ledger/?[2Jx?.txt");
   });
 
   it("束が 0 件でも、決まりが ✓ なら 0", async () => {

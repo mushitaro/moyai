@@ -47,7 +47,7 @@ async function setup() {
   const L0 = makeLedger();
   writeRepo(clone, L0, []);
   mkdirSync(join(clone, ".git"), { recursive: true });
-  writeFileSync(join(clone, ".git", "config"), '[core]\n\tbare = false\n[remote "origin"]\n\turl = https://github.com/ledger-owner/moyai-ledger.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n');
+  writeFileSync(join(clone, ".git", "config"), '[core]\n\tbare = false\n[remote "origin"]\n\turl = https://github.com/ledger-owner/moyai.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n');
   const L = await loadLedgerForSend(clone, PACK);
   if (!L.ok) throw new Error(L.reason);
   const facility: Facility = { root: join(dir, "保管先"), planId: smallPlan().planId };
@@ -59,8 +59,8 @@ const io = (s: GitHubStub): GitHubIo => ({ hosts: { web: s.web, api: s.api }, fe
 describe("公開の台帳へ出す：台帳の clone・鍵・束", () => {
   it("台帳の clone の origin から GitHub のリポジトリを読む（https・ssh。GitHub でなければ null）", async () => {
     const { clone } = await setup();
-    expect(repoOfRemote(gitRemote(clone))).toEqual({ owner: "ledger-owner", name: "moyai-ledger" });
-    expect(repoOfRemote("git@github.com:a-b/moyai-ledger.git")).toEqual({ owner: "a-b", name: "moyai-ledger" });
+    expect(repoOfRemote(gitRemote(clone))).toEqual({ owner: "ledger-owner", name: "moyai" });
+    expect(repoOfRemote("git@github.com:a-b/moyai.git")).toEqual({ owner: "a-b", name: "moyai" });
     expect(repoOfRemote("https://gitlab.com/a/b")).toBeNull();
     expect(repoOfRemote("https://github.com/a/b/c")).toBeNull();
     expect(gitRemote(join(dir, "無い"))).toBeNull();
@@ -95,7 +95,7 @@ describe("公開の台帳へ出す：台帳の clone・鍵・束", () => {
     const s = sealPlace(place, sender.pair, PACK, smallPlan(), ANSWERS, MONTH, v.bodyHash!);
     if (!s.ok) throw new Error(s.reason);
     const path = ledgerBundlePath(keyIdOf(sender.pair.pub), s.input.seq, s.hash);
-    expect(path).toMatch(/^ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+    expect(path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
     expect(checkAgainstLedger(L, PACK, path, Buffer.from(s.text, "utf8"))).toEqual({ ok: true });
     // 1 バイト変えた束は、受け手の関数で ✗
     const bad = Buffer.from(s.text.replace('"seq":1', '"seq":2'), "utf8");
@@ -108,7 +108,7 @@ describe("公開の台帳へ出す：台帳の clone・鍵・束", () => {
     const sender = senderOf(facility, L.id);
     storeFacilityKey(facility, L.id, sender.pair, pending);
     const key = keyIdOf(sender.pair.pub);
-    const e = { ledgerId: L.id, key, seq: 1, hash: "c".repeat(64), path: "ledger/bundles/x", month: MONTH, at: NOW.toISOString(), repo: "ledger-owner/moyai-ledger", pr: 7, url: "https://github.com/x/pull/7", login: "moyai-test" };
+    const e = { ledgerId: L.id, key, seq: 1, hash: "c".repeat(64), path: "ledger/ledger/bundles/x", month: MONTH, at: NOW.toISOString(), repo: "ledger-owner/moyai", pr: 7, url: "https://github.com/x/pull/7", login: "moyai-test" };
     // 持ち出し簿は保管先の計画のフォルダ（どの PC も、まだ載っていない PR を読める）
     writePlanSent<LedgerSentEntry>(facility, L.id, [{ ...e, state: "open" } as LedgerSentEntry]);
     expect(pendingSent(facility, L, key)?.pr).toBe(7);
@@ -182,7 +182,7 @@ describe("GitHub とのやりとり（試験の台）", () => {
       body: "架空の本文",
       commitMessage: LEDGER_PR_TEXT.commitMessage(key, s.input.seq),
     });
-    expect(r).toMatchObject({ ok: true, number: 1, login: "moyai-test", fork: "moyai-test/moyai-ledger" });
+    expect(r).toMatchObject({ ok: true, number: 1, login: "moyai-test", fork: "moyai-test/moyai" });
     const pr = stub.prs[0]!;
     expect(pr.base).toBe("main");
     expect(pr.head).toMatch(/^moyai-test:moyai\/bundle-[0-9a-f]{16}-000001-[0-9a-f]{8}$/);
@@ -197,23 +197,23 @@ describe("GitHub とのやりとり（試験の台）", () => {
     expect(JSON.stringify(stub.prs)).not.toContain(STUB_TOKEN);
 
     // 行方：審査中 → 検証 ✗（理由は台帳の検証が PR に書いた文）→ 閉じた
-    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai-ledger" }, 1)).toMatchObject({ state: "open", check: "pending", reason: null });
+    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai" }, 1)).toMatchObject({ state: "open", check: "pending", reason: null });
     pr.check = { status: "completed", conclusion: "failure" };
     pr.comments.push({ user: { login: "github-actions[bot]", type: "Bot" }, body: "## 台帳の検証 ✗\n\n- 紛れる数 k が 5 に届かない" });
     pr.state = "closed";
-    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai-ledger" }, 1)).toMatchObject({ state: "closed", check: "ng", reason: "台帳の検証 ✗ / 紛れる数 k が 5 に届かない" });
+    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai" }, 1)).toMatchObject({ state: "closed", check: "ng", reason: "台帳の検証 ✗ / 紛れる数 k が 5 に届かない" });
     pr.check = { status: "completed", conclusion: "success" };
     pr.state = "closed";
     pr.merged = true;
-    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai-ledger" }, 1)).toMatchObject({ state: "merged", check: "ok" });
-    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai-ledger" }, 99)).toBeNull();
+    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai" }, 1)).toMatchObject({ state: "merged", check: "ok" });
+    expect(await prStatus(g, { owner: "ledger-owner", name: "moyai" }, 99)).toBeNull();
   });
 
   it("トークンが無効なら、フォークもしない（unauthorized）", async () => {
     stub = await startGitHubStub();
     const r = await openLedgerPr(io(stub), "違うトークン", {
       upstream: stub.upstream,
-      path: "ledger/bundles/0123456789abcdef/000001-0123456789abcdef.json",
+      path: "ledger/ledger/bundles/0123456789abcdef/000001-0123456789abcdef.json",
       bytes: new Uint8Array([1]),
       branch: "moyai/x",
       title: "t",

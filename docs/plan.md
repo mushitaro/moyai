@@ -272,15 +272,18 @@ samples/heldout/                 見ていない様式（§2.6。先にハッシ
 - 橋渡しは自分の `bundles/<鍵ID>/` を見張り、持ち出し簿に無いハッシュのファイルが現れたら赤で知らせる（「あなたの名前の場所に、検問所を通っていないファイルがあります」）。受け手は束の形をしていないファイルも数えて出す。
 - P2P はアプリが持たない（使うなら Syncthing などに任せる）。
 
-**場 2　公開の台帳**（別のリポジトリ `mushitaro/moyai-ledger`。§7）：
+**場 2　公開の台帳**（MOYAI のリポジトリ `mushitaro/moyai` の `ledger/`。§7。初めは別のリポジトリ `mushitaro/moyai-ledger` に置き、2026-11-07 に履歴ごと `ledger/` へ移した。運営者の決定：審査は 1 本のリポジトリで、将来は MOYAI とセットで移す）：
 
 ```
-ledger/ledger.json      台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
-ledger/TERMS.md         利用条件：共有する値は塊の周期・工数・日数の帯だけ。費用は共有しない
-ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json
-site/                   GitHub Pages の静的なサイト（ビルドのときに束から集計して描く）
-.github/workflows/      PR の検証、マージのあとの集計と公開
+ledger/                 台帳の根（README・.gitattributes）。下の道は MOYAI のリポジトリの根から
+ledger/ledger/ledger.json      台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
+ledger/ledger/TERMS.md         利用条件：共有する値は塊の周期・工数・日数の帯だけ。費用は共有しない
+ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json
+ledger/ledger/bundles/<鍵ID>/retired.json   取り下げの失効記録（moyai.retired/0。輪と同じ形で ring の代わりに ledger。その鍵自身の署名。Architect の 72）
+.github/workflows/      PR の検証（ledger-validate.yml）、マージのあとの集計と公開（pages.yml）。どちらも ledger/** が変わったときだけ走る
 ```
+
+- 取り下げ（Architect の 72）：失効記録 `{ ledger, key, pub, last, month }` は、その鍵自身の署名で、道の鍵 ID・本文の key・pub から作った鍵 ID の 3 つが同じときだけ受ける（readRing と同じ）。載ったあと、ファイルは消さず、印のある鍵を k にも集計にも数えない。last より大きい連番の束は ✗（`chain.afterRetired`）。k が下限を割った塊は今の決まりどおり帯を出さない。GitHub の道は利用者の PR（CLI の `ledger submit`）、MOYAI 経由は受け口の `POST /submit`（束と同じ口・同じ IP の上限）。受け口は、その鍵の束の PR がまだマージされていなければ「本人が取り下げた」と書いて閉じ、取り下げの PR は出さない。マージ済みなら取り下げの PR を出す。画面の取り下げのボタンはまだ無い（それまで下の帯で取り下げを約束しない）。
 
 - 登録は、人が SHARE（検問所）を通して合言葉で署名した束を、MOYAI が PR で出す（運営者の決定、2026-11-04：「MOYAI が出す」。人が GitHub で出す道と比べたうえで）。PR を出すのは、人が画面でボタンを押し、合言葉で束に署名したときだけ。PR を出す処理は AI のツールにしない（決まり 1 は変わらない。送るのは人で、MOYAI はその道具）。MOYAI は利用者の GitHub のアカウントで台帳のリポジトリをフォークし、束のファイル 1 つを足す枝を作って PR を出す。CLI の `ledger submit` は、試験と人の予備の道として残す。
 - 検証は `pull_request_target` で、既定のブランチにある定義を走らせる（守り方は下）。検証の中身はアプリと同じ関数（形・署名・鎖・粒度・禁止語・数え直し・k）で、理由を PR に出す。必須のチェックにし、管理者も越えられない設定にする。マージを決めるのは管理者（人）。押すのは、管理者か、管理者がその都度チャットで指示した作る側のセッション（2026-11-04 の運営者の決定。§7）。
@@ -294,9 +297,10 @@ site/                   GitHub Pages の静的なサイト（ビルドのとき�
 - GitHub は 2026-12-02 から、公開リポジトリの `pull_request_target` を既定で止める。その前の試しの停止が 2026-11-09 と 11-16 の 16:00〜18:00 UTC（日本時間 11-10 と 11-17 の 1:00〜3:00。決勝の 11-10 13:00 には掛からない）にある（https://github.blog/changelog/2026-11-02-pull_request_target-blocked-by-default-december-2 ）。台帳のリポジトリを作ったらすぐ、Settings → Actions → Policies で event policy を作り、`pull_request_target` を検証のワークフローのファイルにだけ許す。`pull_request` は許さない（許すのは push・pull_request_target・workflow_dispatch だけ。偽のチェックを防ぐため）。効いていることを Policy insights で確かめ、日誌に残す。
 - 権限：ワークフローの先頭に `permissions: {}`。検証のジョブは `contents: read` だけで、secrets もトークンも使わない。PR に結果を書くジョブは `pull-requests: write` だけで、検証とは別のジョブにする。pages・id-token・environment は付けない。既定のトークンは read にし、「Actions に PR を作らせる」はオフのまま。
 - 中身の読み方：checkout は ref を指定せず（main を取る）、`persist-credentials: false`。PR の head は `git fetch --no-tags origin <head の SHA>` でオブジェクトだけを取り、checkout しない。変更の一覧は `git diff --raw -z --no-renames --no-ext-diff --no-textconv <base>...<head>`、中身は `git cat-file blob <head>:<path>` で読む。head の側で npm install・ビルド・スクリプトを走らせない。
-- 許すもの：状態が追加（A）で mode が 100644 の、`ledger/bundles/<鍵ID>/` の下のファイルだけ。削除・変更・改名・型の変更（D・M・R・T）、symlink（120000）、submodule（160000）、大文字小文字や Unicode の正規化だけが違うパス、`.github/` に触れるものは ✗。鍵 ID と出した人の結びつきは、束の署名をその鍵の公開鍵で確かめて決め、GitHub のログイン名には頼らない。
+- 台帳の PR：`ledger/` の中だけを変える PR。`ledger/` の外も変える PR（コードの PR）は「台帳の PR ではない」として検証しない（✗ にしない）が、`ledger/ledger/` の下の変更が混ざっていれば ✗（2026-11-07、台帳を移したとき）。
+- 許すもの：状態が追加（A）で mode が 100644 の、`ledger/ledger/bundles/<鍵ID>/` の下の束と失効記録（retired.json）だけ。削除・変更・改名・型の変更（D・M・R・T）、symlink（120000）、submodule（160000）、大文字小文字や Unicode の正規化だけが違うパス、`.github/` に触れるものは ✗。鍵 ID と出した人の結びつきは、束の署名をその鍵の公開鍵で確かめて決め、GitHub のログイン名には頼らない。
 - 注入を防ぐ：PR のタイトル・ブランチ名・ファイル名を `run:` に直接埋め込まない（env で渡して引用する。ファイル名は NUL 区切りで扱う）。`GITHUB_ENV`・`GITHUB_OUTPUT` に PR から来た値を書かない。PR への書き込みは本文をファイルで渡し、ファイル名はコードの枠に入れる。
-- 必須のチェック：必須にするジョブには if も paths の絞り込みも付けない。名前は一意（`ledger-validate`）にし、出どころは GitHub Actions に指定する。同じ PR の古い run は concurrency で止める。入力に上限（ファイルの数・大きさ・深さ）と `timeout-minutes` を付ける。MOYAI はタグではなく commit の SHA で固定し、`npm ci --ignore-scripts` で入れる。JSON は `__proto__` と知らないキーを拒む。
+- 必須のチェック：必須にするジョブには if を付けない。台帳を moyai に移したので、ワークフローは `ledger/**` が変わった PR と push だけで走る（paths。2026-11-07）。名前は一意（`ledger-validate`）にし、出どころは GitHub Actions に指定する。同じ PR の古い run は concurrency で止める。入力に上限（ファイルの数・大きさ・深さ）と `timeout-minutes` を付ける。検証に使う MOYAI は、同じリポジトリの main の commit（checkout で ref を指定しない）で、`npm ci --ignore-scripts` で入れる。JSON は `__proto__` と知らないキーを拒む。
 - main の守り：ruleset で PR を必須（承認は 0）、必須のチェック、force push と削除の禁止、bypass の一覧は空にする。オーナーは設定そのものを外せるので、これは運用の決まりだと README に書く。
 - Action はフルの SHA と版のコメントで固定する（候補：`actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`、`actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0`、`actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1`、`actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0`、`actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0`。使う前に `git ls-remote` で照らす）。SHA での固定を求める設定をオンにする。
 - Pages：`on: push`（main、`ledger/**`）と `workflow_dispatch`。build のジョブは `contents: read`、deploy のジョブだけ `pages: write` と `id-token: write`（environment は github-pages）。main を取り直して全部の束を検証し直し、確かめたデータから HTML を作る（生のファイルを写さない。symlink は拒む。HTML はエスケープし、CSP を付ける）。workflow_run や、ほかの run の artifact は使わない。検証のワークフローでは cache を書かない。
@@ -396,7 +400,7 @@ AI クライアント（Claude Code / Claude Desktop。写真もここで読む�
 - **API キー**は環境変数（手元）と Actions の secret（監査）だけに置く。製品の中で使うのは `moyai eval`（F3）だけ。作る側では、監査のエージェントと開発のエージェント（§3）が使う。チャットでもツールでも受け取らない。
 - **記録**：作業データ・キー・行の値をログにも console にも出さない。標準出力は MCP だけに使う。製品のクラウドもテレメトリも無く、ほかの通信は既定でオフ。
 - **通信の例外は公開の台帳への PR だけ**（運営者の決定、2026-11-04）：行き先は api.github.com と github.com だけ。PR を出すのは人がボタンを押したときだけ、出した束の行方（PR の状態）を読むのは SHARE を開いたときだけ。GitHub へのつなぎ方は OAuth のデバイスフロー（人が github.com でコードを入れる）で、scope は public_repo だけ。トークンは状態フォルダに置き、画面にもログにも AI にも出さない（合言葉では包まない。運営者「パスワードは絶対いやです」、§2.19）。設定に「GitHub との接続を切る」を置く。
-- **GitHub のアカウントなしの道**（運営者の決定、2026-11-07）：行き先は公開の台帳の受け口（`LEDGER_INTAKE_URL`）の 1 つだけ。送るのは、公開の台帳に載せるのと同じ束だけ。受け口は送り手の IP を数えるのに使い、残さない。受け口が運営者の GitHub のアカウントで台帳に PR を出す。送るのは人がボタンを押したときだけ。行方は今と同じく、公開の PR をトークン無しで読む。
+- **MOYAI 経由の道**（運営者の決定、2026-11-07。画面の字は「MOYAI 経由」）：行き先は公開の台帳の受け口（`LEDGER_INTAKE_URL`）の 1 つだけ。送るのは、公開の台帳に載せるのと同じ束（と失効記録）だけ。受け口は送り手の IP を数えるのに使い、残さない。受け口が運営者（tsunagi）の GitHub のアカウントで台帳（`mushitaro/moyai` の `ledger/`）に PR を出す。送るのは人がボタンを押したときだけ。行方は今と同じく、公開の PR をトークン無しで読む。
 - **Documents の調べ方**：`powershell -NoProfile` で `[Environment]::GetFolderPath('MyDocuments')` を取り、出力は UTF-8 で受ける（日本語のフォルダ名を化けさせない）。環境変数 `OneDrive`・`OneDriveCommercial` の指すフォルダの下にあれば同期フォルダと見なす。windows-latest では、Documents の場所を日本語の OneDrive の道に書き換えて試験する。
 - **AI に渡る範囲**は、ツール定義の 1 か所（`src/shared/`）で決め、`docs/security.md` と画面の［AI に渡るもの］はそこから生成する。`docs/security.md` と稟議に付ける表には、保証できないことをそのまま書く：① 1 回の上限は繰り返し呼べば越えられる（だから会話の合計に上限を置き、台帳に合計を出す） ② チャットに Excel を添付すれば、ファイル全体が AI の提供者に渡る ③ ファイルを読める AI は、確定した計画のファイルを直接読める ④ Documents が同期フォルダなら、確定した計画は会社のクラウドに上がる（だから最初に調べて知らせる） ⑤「外へは送らない」はアプリの通信の話で、データの行き先の保証ではない ⑥ 写真とスキャンの読み取りでは、人が許したその画像が AI の提供者に渡る ⑦ 画面を操作できる AI の道具（ブラウザやデスクトップの操作）は、人だけのボタンを押せる。
 - 伸びしろ：送る・昇格に、人がその場にいる証（WebAuthn の利用者確認＝Windows Hello）を求める。
@@ -636,7 +640,7 @@ Skill は 3 段：
    - 計画のフォルダを開ける人は、計画そのものも書き換えられる。台帳に出せる人を同じ範囲にしても、守りは弱くならない。公開の台帳には、もともと誰でも新しい鍵で出せる。
    - 出した束の記録（持ち出し簿）も、同じフォルダの `share/sent/` に置く。どの PC も、前の連番・ハッシュと、まだ載っていない PR を読める。
 2. 鍵は施設 × 場（輪ごと・台帳ごと）に 1 つ。運営者の決定（2026-11-04、Architect のセッションを通して）：社内の共有フォルダ（輪）に出す鍵と、公開の台帳に出す鍵を「分ける」。輪の仲間に、公開の台帳のどの束があなたの施設かを、鍵から突き合わせられないようにするため。
-3. 出した人の GitHub のアカウントが替わったら、台帳の検査が印を付ける。その鍵の前の PR と違うアカウントから PR が来たら「出した人が替わった」。台帳の管理者がマージする前に確かめる。
+3. 出した人の GitHub のアカウントが替わったら、台帳の検査が印を付ける。その鍵の前の PR と違うアカウントから PR が来たら「出した人が替わった」。台帳の管理者がマージする前に確かめる。受け口（MOYAI 経由）の PR はどれも運営者のアカウントなので、この印を付けない（Architect の 72 の 5）。
 4. フォルダをなくしたら、前の鍵の続きにできる。
    - 計画を作り直すと、新しい署名鍵ができる。SHARE で「前の鍵の続きとして出す」を選び、前の鍵は、自分の GitHub のアカウントから前に出した PR の一覧から選ぶ。
    - PR に「新しい鍵は、前の鍵 ○○ の続き」と書く。検査は「古い鍵の署名なし」と印を付ける。
@@ -939,7 +943,7 @@ MOYAI を作るときの決まりです。
 
 | 問い | 答え | それで起きること |
 |---|---|---|
-| 公開の台帳をどこに置くか | 別のリポジトリ `mushitaro/moyai-ledger` | 必須のチェックを管理者も越えられない設定にでき、アプリの開発の push とぶつからない。審査員への URL は 2 つになり、README に両方と「台帳を clone して `verify ledger`」の手順を書く。アプリの試験には、台帳の架空の束の写しを固定ファイルとして持つ |
+| 公開の台帳をどこに置くか | 別のリポジトリ `mushitaro/moyai-ledger` | 必須のチェックを管理者も越えられない設定にでき、アプリの開発の push とぶつからない。審査員への URL は 2 つになり、README に両方と「台帳を clone して `verify ledger`」の手順を書く。アプリの試験には、台帳の架空の束の写しを固定ファイルとして持つ。2026-11-07 に運営者が変えた：履歴ごと `mushitaro/moyai` の `ledger/` へ移した（§2.8） |
 | LibreOffice をこの PC に入れるか | winget で入れる | 工場を手元で回し、PDF の書き出しと数式の再計算をこの PC でする |
 | 写真の読み取りの費用 | Max プランで | MOYAI は写真の読み取りに API を使わない。人が許した画像を MCP で AI クライアント（運営者の契約の中の Claude Code・Claude Desktop）に渡して読ませる。API のキーを使うのは F3 の採点だけになる |
 | Windows の Claude Desktop の通し方 | 前の製品の拡張を切って通す | 11-06 21:00 に、いつもの Claude Desktop で 1 回通す（録画はしない）。穴が出ても凍結の前に直せる |

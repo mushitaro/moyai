@@ -128,13 +128,18 @@ fictional-1 は 2026-11-04 に計画 §2.5 の厚さ（機器 217・作業 2,120
 
 ## 3. 公開の台帳の検証（`verify ledger`）
 
-台帳のリポジトリの形（`docs/plan.md` §2.8 場 2）：
+台帳の形（`docs/plan.md` §2.8 場 2）。台帳は 2026-11-07 に mushitaro/moyai-ledger から MOYAI のリポジトリの `ledger/` へ移した。道は MOYAI のリポジトリの根から：
 
 ```
-ledger/ledger.json                                   台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
-ledger/TERMS.md                                      利用条件（検証では読まない）
-ledger/bundles/<鍵ID>/<連番 6 桁>-<ハッシュ先頭16>.json
+ledger/ledger/ledger.json                                   台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
+ledger/ledger/TERMS.md                                      利用条件（検証では読まない）
+ledger/ledger/bundles/<鍵ID>/<連番 6 桁>-<ハッシュ先頭16>.json
+ledger/ledger/bundles/<鍵ID>/retired.json                   取り下げの失効記録（Architect の 72）
 ```
+
+- 失効記録（`moyai.retired/0`。輪と同じ形で、`ring` の代わりに `ledger`（台帳 ID）：`{ ledger, key, pub, last, month }`）は、その鍵自身の署名で、道の鍵 ID・本文の `key`・`pub` から作った鍵 ID の 3 つが同じときだけ受ける（`readRing` と同じ）。ほかの鍵の署名・ほかの台帳・ほかのフォルダの記録は理由つきで ✗。
+- 失効記録が ✓ の鍵の束は、✓ のまま残して k にも集計にも数えない（`body` を渡さない）。`last` より大きい連番の束は ✗（`chain.afterRetired`）。数える施設が減って下限を割った塊は、今の決まりどおり帯を出さない。
+- 足すとき（`checkRetiredAdded`。CLI の `ledger submit`・validate-pr・受け口が同じ関数）：`last` が台帳に載った（鎖が ✓ の）その鍵の束の連番より小さければ ✗（`chain.retiredBelowKnown`）。失効記録のある鍵に束を足すのは ✗（`chain.afterRetired` か `ledger.keyRetired`）。
 
 - 確かめるのは `src/share/ledger.ts` の `verifyLedgerFiles`。数え直しは輪の受け手と同じ `recount`、鎖は輪と同じ `checkChain`（`src/share/ring.ts`）。引数で緩める切り替えは持たない。
 - 台帳 ID は ledger.json の body の変わらない部分（v・founder・nonce）から決まり、束の行き先（`to`）と照らす。決まりのハッシュ・全国の表と公開語彙のハッシュ・パックも照らす。
@@ -142,16 +147,17 @@ ledger/bundles/<鍵ID>/<連番 6 桁>-<ハッシュ先頭16>.json
 - 輪と台帳で同じ決まり（コードの定数）：経過年の欄がある束は ✗（`shape.fieldRemoved`）、前の帯の版の束は ✗（`shape.bandsVersion`）。経過年の欄を許す ledger.json は、決まりが ✗（`ledger.unreadable` と、コードの決まりで数え直した理由 `shape.rules.fieldRemoved`）で、どの束も数えない。CLI はパックを選ぶ前に止まり（終わりの値 2）、その理由を添える。
 - 粒度（輪と台帳で同じ）：1 回だけの行（N1）に間隔があれば ✗（`grain.intervalOnN1`）、回数の帯が年度の数と合わなければ ✗（`grain.observedMismatch`）。
 - 鍵 ID と出した人の結びつきは、束の署名をその鍵の公開鍵で確かめて決める（鍵 ID は公開鍵の SHA-256 の先頭で、フォルダの名前と照らす）。GitHub のログイン名は使わない。
-- symlink（Windows の junction も）はたどらない。ledger/ の下の、決まり・利用条件・束の形の外のファイルは理由つきで ✗。ファイルは 1 MiB、JSON の入れ子は 8 段、ファイルの数は 20,000 まで。
+- symlink（Windows の junction も）はたどらない。ledger/ledger/ の下の、決まり・利用条件・束・失効記録の形の外のファイルは理由つきで ✗。ファイルは 1 MiB、JSON の入れ子は 8 段、ファイルの数は 20,000 まで。
 - バイト列で受けた束の BOM も、黙って捨てずに形の外れ（`shape.bom`）に数える（この変更で輪の受け手も同じになった）。
 
-CLI：`node dist/cli.js verify ledger <台帳のリポジトリの根>`（根の下の `ledger/` を指してもよい）。決まりと束ごとに ✓ か理由つきの ✗ を標準エラーに出す。終わりの値は、すべて ✓ なら 0、どれかが ✗ なら 1、引数が違う・台帳が無い・決まりかパックを読めないときは 2。
+CLI：`node dist/cli.js verify ledger <MOYAI の clone>`（その下の `ledger/` か `ledger/ledger/` を指してもよい）。決まりと束ごとに ✓ か理由つきの ✗ を標準エラーに出す。終わりの値は、すべて ✓ なら 0、どれかが ✗ なら 1、引数が違う・台帳が無い・決まりかパックを読めないときは 2。
 
 ## 4. 台帳の PR の照らし（`ledger validate-pr`）
 
-`pull_request_target` の検証のワークフローが呼ぶ。純粋な関数（`src/share/prdiff.ts` の `validatePr`）は、`git diff --raw -z --no-renames --no-abbrev <base>...<head>` の出力のバイト列と、base の木の ledger/ の項目と、追加の blob を読む関数だけを受ける。
+`pull_request_target` の検証のワークフロー（MOYAI のリポジトリの `.github/workflows/ledger-validate.yml`。`ledger/**` が変わった PR だけで走る）が呼ぶ。純粋な関数（`src/share/prdiff.ts` の `validatePr`）は、`git diff --raw -z --no-renames --no-abbrev <base>...<head>` の出力のバイト列と、base の木の ledger/ledger/ の項目と、追加の blob を読む関数だけを受ける。
 
-- 許すのは、状態が追加（A）で mode が 100644 の `ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json` だけ。
+- 台帳の PR は `ledger/` の中だけを変える PR。`ledger/` の外も変える PR（コードの PR）は「台帳の PR ではない」（`mode: notLedger`、✓、終わりの値 0）として検証しない。ただし `ledger/ledger/` の下の変更が混ざっていれば ✗（`path.ledgerInCodePr`。大文字小文字・正規化だけが違う道と、UTF-8 で読めない道も混ざったものに数える）。
+- 許すのは、状態が追加（A）で mode が 100644 の `ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json` と `ledger/ledger/bundles/<鍵ID>/retired.json` だけ。
 - ✗ にするもの：削除・書き換え・改名・写し・型の変更（D・M・R・C・T）、symlink（120000）、submodule（160000）、実行の印（100755）、`.github/` に触れるもの（大文字小文字・全角も）、許す形の外の道、大文字小文字か NFC/NFD だけが base の道か PR のほかの道と違う道、ASCII の外・UTF-8 でない道、長すぎる・深すぎる道、1 MiB を越える blob、64 件を越える変更、256 KiB を越える diff の出力。
 - 中身は、base の木に PR の束を足した台帳を `verifyLedgerFiles` で確かめる（形・署名・鎖・粒度・禁止語・数え直し・k）。JSON の `__proto__` のキーと知らないキーは ✗。鎖は base の束の続きでなければ ✗（連番の飛び・同じ連番の別の束）。
 - 決まりとパックは base（既定のブランチ）の ledger.json から決める。PR は決まりを変えられない（ledger.json に触れる変更は ✗）。
@@ -159,13 +165,14 @@ CLI：`node dist/cli.js verify ledger <台帳のリポジトリの根>`（根の
 ワークフローの呼び方（そのまま受ける）：
 
 ```
-node ../moyai/dist/cli.js ledger validate-pr --base "$BASE_SHA" --head "$HEAD_SHA" --repo . --json ../out/result.json --markdown ../out/summary.md
+node dist/cli.js ledger validate-pr --base "$BASE_SHA" --head "$HEAD_SHA" --repo . --json ../out/result.json --markdown ../out/summary.md
 ```
 
 - `--base`・`--head` は commit の SHA（40 か 64 桁の 16 進）だけを受ける（ブランチ名や `-` で始まる値は 2）。head を checkout せず、`git ls-tree -r -z`・`git cat-file -s`・`git cat-file blob` で読み、head の側のコードは走らせない。git はシェルを通さず引数の並びで呼び、外の diff・textconv を使わない。
 - base と head が同じ commit（workflow_dispatch）なら「変更なし」として、その木の全部の束を確かめ直す。
 - 三点の diff は共通の祖先が要る。checkout が浅い（fetch-depth: 1）と祖先が無いことがあり、そのときは 2 で止まる（ワークフローは `fetch-depth: 0` か、base の履歴も取ること）。
-- `result.json`（`moyai.ledger-validate/0`）：`mode`（pr／all）・`ok`・`error` と `errorKind`（tool／input）・決まり（ID・ハッシュ・版・✓／✗）・ファイルごとの道（JSON の逃がし方で生のまま）・道の SHA-256・表示してよいか・✓／✗・理由のコードと日本語・数。
+- 検証に使う MOYAI は、同じリポジトリの main の commit（checkout で ref を指定しない）。
+- `result.json`（`moyai.ledger-validate/0`）：`mode`（pr／all／notLedger）・`ok`・`error` と `errorKind`（tool／input）・決まり（ID・ハッシュ・版・✓／✗）・ファイルごとの道（JSON の逃がし方で生のまま）・道の SHA-256・表示してよいか・✓／✗・理由のコードと日本語・数。
 - `summary.md`：日本語の PR のコメントの本文。ファイル名はコードの枠に入れる。英数と `. _ - /` の外の文字を含む道（`@` の名指し・HTML・改行・`|` など）は名前を出さず、道の SHA-256 の頭で示す。
 - 終わりの値：すべて ✓ なら 0、どれかが ✗（PR の側の数・大きさ・空を含む）なら 1、引数・git・決まり・パック・diff の形の誤りは 2。
 
@@ -183,10 +190,10 @@ node ../moyai/dist/cli.js ledger validate-pr --base "$BASE_SHA" --head "$HEAD_SH
 Pages のワークフローの呼び方（そのまま受ける）：
 
 ```
-node moyai/dist/cli.js ledger site ledger _site
+node dist/cli.js ledger site . _site
 ```
 
-- 1 つ目の引数は台帳のリポジトリの根（その下に ledger/ledger.json と ledger/bundles/）。出すフォルダは無ければ作る。
+- 1 つ目の引数は MOYAI の clone の根（その下に ledger/ledger/ledger.json と ledger/ledger/bundles/）。失効記録が ✓ の鍵の数を「取り下げ済みの鍵 n 個（集計対象外）」と出す。出すフォルダは無ければ作る。
 - `verify ledger` と同じ関数で確かめ直し、✓ の束から集計した 1 枚の `index.html` だけを書く。生のファイル（束・決まり・利用条件）は写さない。✗ の束は集計に入れず、数と理由を出す。
 - 描くもの：【架空】の帯、台帳の決まり（ID・版・月・ledger.json の SHA-256・管理者の鍵の指紋・下限・欄・帯の境目・パック・公開語彙と全国の表のハッシュ・台帳に出さない欄）、✓／✗ の数、見え方ごとの節（似た施設の多い順）に、匿名の札ごとの年度の印と帯、塊ごとの統計の行。
 - 文字はすべてエスケープする。CSP は `default-src 'none'` で、中の `<style>` 1 つだけをその SHA-256 で許す（スクリプト・画像・書体のファイル・接続・フォームは無し）。外への要求は無い（Playwright で Chrome と Edge から確かめた）。書体は端末の BIZ UDPゴシック から、年度と帯の列は `tabular-nums`。

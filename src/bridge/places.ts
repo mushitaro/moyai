@@ -293,7 +293,7 @@ export interface LedgerSentEntry {
   key: string;
   seq: number;
   hash: string;
-  /** 台帳の中の道（ledger/bundles/<鍵ID>/<名前>） */
+  /** 台帳の中の道（MOYAI のリポジトリの根から ledger/ledger/bundles/<鍵ID>/<名前>） */
   path: string;
   month: string;
   at: string;

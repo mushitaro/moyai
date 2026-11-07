@@ -60,6 +60,10 @@ const EXACT: Record<string, string> = {
   "ledger.kind": "台帳のルールの形でない",
   ledger: "台帳のルール（ledger.json）が ✓ でないので確かめられない",
   "ledger.exists": "同じ共有ファイルが台帳にもうある",
+  // 公開台帳の取り下げの印（ledger/ledger/bundles/<鍵ID>/retired.json。Architect の 72）
+  "ledger.keyRetired": "取り下げ済みの鍵（集計対象外）",
+  "ledger.retiredExists": "この鍵の失効記録が台帳にもうある",
+  "file.notRetired": "失効記録の形でない",
   // 公開台帳の受け口だけの理由（services/ledger-intake。言葉は Wire の確認待ち）
   "intake.notFound": "受け口の道ではない",
   "intake.method": "受け口は POST だけを受ける",
@@ -93,7 +97,9 @@ const EXACT: Record<string, string> = {
   "diff.tooMany": "1 つの PR の変更が多すぎる（64 件まで）",
   "diff.empty": "PR に変更が無い",
   "path.github": ".github/ に触れる",
-  "path.notAllowed": "ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json の形の外",
+  "path.notAllowed": "ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json か retired.json の形の外",
+  // MOYAI のリポジトリの PR（台帳は ledger/ に移した。2026-11-07）：ledger/ の外も変える PR に、台帳のファイルが混ざっている
+  "path.ledgerInCodePr": "コードの PR に台帳のファイルが混ざっている（台帳の PR は ledger/ の中だけを変える）",
   "path.caseOrNormalization": "大文字小文字か Unicode の正規化だけが、許す形と違う",
   "path.notAscii": "道に ASCII の外の文字がある",
   "path.notUtf8": "道が UTF-8 でない",

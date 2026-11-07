@@ -1,14 +1,20 @@
 name: ledger-validate
 
 # PR の束を、MOYAI と同じ関数で検証する（docs/plan.md §2.8 の「台帳の守り方」）。
+# 台帳は 2026-11-07 に mushitaro/moyai-ledger から、このリポジトリの ledger/ へ移した（運営者の決定）。このワークフローも ledger/.github/ から移した。
+# - ledger/ が変わった PR だけで走る（paths）。ledger/ の外も変える PR は、validate-pr が「台帳の PR ではない」として検証しない（✗ にしない）。
+#   ledger/ の外も変える PR に台帳のファイル（ledger/ledger/ の下）が混ざっていれば ✗。
 # - pull_request_target で、既定のブランチ（main）にあるこの定義だけを走らせる。PR の head のコードは走らせない。
 # - PR の head はオブジェクトだけを取り、checkout しない。変更の一覧は git diff --raw、中身は git cat-file で読む。
 # - 検証のジョブは contents: read だけ。secrets もトークンも使わない。PR への書き込みは別のジョブ。
-# - MOYAI は commit の SHA で固定し、npm ci --ignore-scripts で入れる。
+# - 検証に使う MOYAI は、同じリポジトリの main の commit（checkout で ref を指定しない。pull_request_target では base のブランチの先）。
+#   npm ci --ignore-scripts で入れる。PR の head の側で npm install・ビルド・スクリプトを走らせない。
 # - PR から来た値（タイトル・ブランチ名・ファイル名）は run: に直接埋め込まない（env で渡して引用する）。
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
+    paths:
+      - "ledger/**"
   workflow_dispatch:
 
 permissions: {}
@@ -17,55 +23,44 @@ concurrency:
   group: ledger-validate-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
-env:
-  MOYAI_REPO: mushitaro/moyai
-  MOYAI_SHA: 179a0be2192942ab4c37d147f66e15c98a7217a9 # MOYAI の検証の版（タグではなく commit）
-
 jobs:
   validate:
-    # 必須のチェックにするジョブ。if も paths の絞り込みも付けない
+    # 台帳の PR の必須のチェックにするジョブ（ジョブに if は付けない。走るかはワークフローの paths で決まる）
     name: ledger-validate
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
     steps:
-      - name: 台帳の main を取る（ref を指定しない）
+      - name: main を取る（ref を指定しない。検証に使う MOYAI も、台帳の base もこの commit の木）
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          path: ledger
-          fetch-depth: 0
-          persist-credentials: false
-      - name: MOYAI を固定の commit で取る
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: ${{ env.MOYAI_REPO }}
-          ref: ${{ env.MOYAI_SHA }}
           path: moyai
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22.19.0
-      - name: MOYAI を入れてビルドする（スクリプトは走らせない）
+      - name: main の MOYAI を入れてビルドする（スクリプトは走らせない）
         working-directory: moyai
         run: |
           npx -y npm@11.21.1 ci --ignore-scripts
           npm run build
       - name: PR の head のオブジェクトだけを取る（checkout しない）
         if: github.event_name == 'pull_request_target'
-        working-directory: ledger
+        working-directory: moyai
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: git fetch --no-tags --no-recurse-submodules origin "refs/pull/${PR_NUMBER}/head"
       - name: 検証する（MOYAI と同じ関数）
         id: validate
-        working-directory: ledger
+        working-directory: moyai
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           mkdir -p ../out
-          node ../moyai/dist/cli.js ledger validate-pr --base "$BASE_SHA" --head "$HEAD_SHA" --repo . --json ../out/result.json --markdown ../out/summary.md
+          node dist/cli.js ledger validate-pr --base "$BASE_SHA" --head "$HEAD_SHA" --repo . --json ../out/result.json --markdown ../out/summary.md
       - name: 結果を残す
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

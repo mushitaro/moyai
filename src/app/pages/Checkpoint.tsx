@@ -6,8 +6,11 @@
 // 出ていくものは橋渡しが作る（送る処理と同じ関数）。画面は橋渡しが返したバイト列を見せ、そのハッシュを送るときに照らす。
 // 公開の台帳（絵は SharePublic.dc.html。運営者の決定 2026-11-04「MOYAI が出す」）：出す先の右に GitHub のアカウント、誰からも見えるあなた、
 // 出した束の行方（SHARE を開いたときだけ読む）。PR を出すのは、人が主ボタンを押したときだけ。
-// GitHub アカウントなしの道（運営者の決定 2026-11-07）：受け口の URL が決まっていれば、主ボタンの左に「GitHub アカウントなしで送信」。
-// 押せるのは主ボタンと同じく束を見たあと（署名は押したときに決まる）。受け口が運営者の GitHub アカウントで PR を出し、行方は同じ節で読む。
+// 送信経路（docs/screens.md §3.6「送信経路」、Wire 11-07。運営者の決定 2026-11-07）：出す先の右の行を「送信経路　GitHub［名］ | MOYAI 経由」の切り替えにする。
+// 既定は GitHub につないでいれば GitHub［名］、いなければ MOYAI 経由（受け口の URL が決まっているときだけ）。選んだ経路は施設（計画）ごとに覚える。
+// MOYAI 経由は、受け口が運営者（tsunagi）の GitHub アカウントで PR を出す道。主ボタンは経路にかかわらず「署名して公開台帳へ送信」。
+// 断られたとき：台帳の検証で外れた → 送信履歴の行に朱で「受付不可　（理由）」、1 時間の上限 → 押せない理由「送信の上限（1 時間）　14:20 以降」、
+// 受け口に届かない → 下の帯の左に朱で「受け口の応答なし」（押し直せば再送信）。取り下げのボタンが入るまで、下の帯で取り下げを約束しない。
 import { Alert, Anchor, Button, Code, Container, Group, Modal, NativeSelect, Paper, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ROUTES } from "../../shared/routes";
@@ -20,6 +23,7 @@ import { GitHubConnect } from "../components/GitHubConnect";
 import { Switch } from "../components/Switch";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
+import { routeBlockers, shareRouteOf, type ShareRoute } from "../state/share-route";
 import { HUMAN_TEXT, bandText, reasonText } from "../text";
 import { bandShort } from "../../share/stat-text";
 import { defaultRingId, defaultShareFacility } from "../../share/share-preview";
@@ -109,7 +113,7 @@ interface PreviewBody {
   github?: { login: string | null; ready: boolean };
   ledger?: { id: string; repo: string | null; key: string | null; fingerprint: string | null };
   pending?: { pr: number; url: string } | null;
-  /** GitHub アカウントなしの道（公開台帳の受け口）があるか */
+  /** MOYAI 経由の道（公開台帳の受け口）があるか */
   intake?: boolean;
   /** 公開の台帳の決まりが、この PC が受け入れたものから変わったときの差（台帳の新-3） */
   rulesChange?: Omit<RulesChange, "changer" | "month"> | null;
@@ -122,7 +126,7 @@ interface LedgerPr {
   /** 束にした計画の版 */
   version: number | null;
   login: string;
-  /** 出した道（intake は GitHub アカウントなし） */
+  /** 出した道（intake は MOYAI 経由） */
   via?: "github" | "intake";
   status: { state: "open" | "merged" | "closed"; check: "pending" | "ok" | "ng" | "none"; reason: string | null } | null;
 }
@@ -423,6 +427,40 @@ function VerifyTable({
   );
 }
 
+type Route = ShareRoute;
+const routeKey = (planId: string) => `moyai.share.route.${planId}`;
+
+/** 覚えた送信経路（施設＝計画ごと。localStorage。読めなければ null） */
+function readRoute(planId: string | null): Route | null {
+  if (!planId) return null;
+  try {
+    const v = localStorage.getItem(routeKey(planId));
+    return v === "github" || v === "intake" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveRoute(planId: string | null, v: Route): void {
+  if (!planId) return;
+  try {
+    localStorage.setItem(routeKey(planId), v);
+  } catch {
+    /* 覚えられなくても、選んだ経路はこの画面で効く */
+  }
+}
+
+/** 理由のコードの並びを、台帳の検証と同じ言葉にする */
+function reasonsTextOf(reasons: unknown): string {
+  return Array.isArray(reasons) ? [...new Set(reasons.filter((x): x is string => typeof x === "string").map(reasonText))].join("、") : "";
+}
+
+/** その PC の時刻の時と分（14:20） */
+function hourMinute(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export function Checkpoint() {
   const working = useWorkingPlan();
   const { client, state } = useConnection();
@@ -453,6 +491,11 @@ export function Checkpoint() {
   const [connectOpen, setConnectOpen] = useState(false);
   const [prs, setPrs] = useState<LedgerPr[] | null>(null);
   const [sentPr, setSentPr] = useState<{ pr: number; url: string } | null>(null);
+  // 送信経路（施設＝計画ごとに覚える。null は人がまだ選んでいない）と、MOYAI 経由で断られたときの 3 つ
+  const [route, setRoute] = useState<Route | null>(null);
+  const [refusedRow, setRefusedRow] = useState<{ seq: number; version: number | null; at: string; reasons: string } | null>(null);
+  const [limitUntil, setLimitUntil] = useState<number | null>(null);
+  const [noAnswer, setNoAnswer] = useState(false);
   const [reload, setReload] = useState(0);
   const seq = useRef(0);
   const prefilled = useRef(false);
@@ -461,6 +504,16 @@ export function Checkpoint() {
 
   // 画面を閉じたら、AI の share_preview に渡す選びを消す（開き直した画面は既定の選びから始める）
   useEffect(() => () => setShareChoice(null), []);
+  // 送信経路は施設（計画）ごとに覚える
+  useEffect(() => setRoute(readRoute(planId)), [planId]);
+  // 1 時間の上限：その時刻まで押せない。過ぎたら押せる
+  useEffect(() => {
+    if (limitUntil === null) return;
+    const ms = limitUntil - Date.now();
+    if (ms <= 0) return setLimitUntil(null);
+    const t = setTimeout(() => setLimitUntil(null), Math.min(ms, 2 ** 31 - 1));
+    return () => clearTimeout(t);
+  }, [limitUntil]);
 
   // 輪・答えが変わるたびに、橋渡しで出ていくものを作り直す（送る処理と同じ関数）。
   // 断られても（輪が無い・見え方が決まらないなど）、聞くこと（輪の一覧と軸）は返ってくるので見せる。
@@ -522,39 +575,55 @@ export function Checkpoint() {
 
   const countsZero = !!view?.counts && Object.values(view.counts).every((n) => n === 0);
   const done = dest === "ledger" ? !!sentPr : !!sent;
-  const canSend = !!view && view.blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && !sending && !done;
   const login = res?.github?.login ?? null;
-  // GitHub アカウントなしの道：GitHub に未接続（noKey）のほかに押せない理由が無ければ押せる
-  const intakeOpen = dest === "ledger" && res?.intake === true;
-  const canIntake =
-    intakeOpen && !!view && view.blockers.every((b) => b === "noKey") && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && !sending && !done;
+  // 送信経路：MOYAI 経由は受け口があるときだけ選べる。GitHub につないでいなければ MOYAI 経由、つないでいれば覚えた経路（既定は GitHub［名］）
+  const intakeAvail = dest === "ledger" && res?.intake === true;
+  const viaIntake = dest === "ledger" && shareRouteOf({ login, intake: intakeAvail, chosen: route }) === "intake";
+  // MOYAI 経由では、GitHub に未接続（noKey）は押せない理由にしない
+  const blockers = view ? routeBlockers(viaIntake ? "intake" : "github", view.blockers) : [];
+  const limited = viaIntake && limitUntil !== null && limitUntil > Date.now();
+  const canPress = !!view && blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && !sending && !done && !limited;
   // 止め札は、いま効いている理由を 1 つだけ出す（公開の台帳でつないでいなければ、それがいちばん先）
   const sendReason = !view
     ? T.sendNeeds.noView
-    : view.blockers.includes("keysForked")
+    : blockers.includes("keysForked")
       ? T.sendNeeds.keysForked
-    : view.blockers.includes("chainForked")
+    : blockers.includes("chainForked")
       ? T.sendNeeds.chainForked
-    : view.blockers.includes("keyRetired")
+    : blockers.includes("keyRetired")
       ? T.sendNeeds.keyRetired
-    : view.blockers.includes("noKey")
+    : blockers.includes("noKey")
       ? T.sendNeeds.noKey
-      : view.blockers.includes("pending")
+      : blockers.includes("pending")
         ? T.sendNeeds.pending
-        : view.blockers.length > 0
-        ? (T.sendNeeds[view.blockers[0]!] ?? view.blockers[0]!)
-        : "";
+        : blockers.length > 0
+        ? (T.sendNeeds[blockers[0]!] ?? blockers[0]!)
+        : limited
+          ? T.intakeRateLimited(hourMinute(limitUntil!))
+          : "";
+  const chooseRoute = (v: Route) => {
+    setRoute(v);
+    saveRoute(planId, v);
+    setNoAnswer(false);
+    setSendError(null);
+  };
 
   const send = async () => {
-    if (!canSend || !view?.bodyHash || !res?.plan) return;
+    if (dest === "ledger" && viaIntake) return sendIntake();
+    if (!canPress || !view?.bodyHash || !res?.plan) return;
     if (dest === "ledger") {
       setSending(true);
       setSendError(null);
-      const r = readHuman<{ ok: boolean; reason?: string; pr: number; url: string }>(
-        await client.callHuman("ledger_send", ROUTES.ledgerSend.path, { planId, version: res.plan.version, answers, previewHash: view.bodyHash }),
-      );
+      setRefusedRow(null);
+      const raw = await client.callHuman("ledger_send", ROUTES.ledgerSend.path, { planId, version: res.plan.version, answers, previewHash: view.bodyHash });
+      const r = readHuman<{ ok: boolean; reason?: string; pr: number; url: string }>(raw);
       setSending(false);
-      if (!r.ok) return setSendError(r.message);
+      if (!r.ok) {
+        // 台帳の検証で外れた：送信履歴の行に「受付不可　（理由）」（clone で先に確かめたときと同じ字）
+        const b = raw.ok ? (raw.body as { reason?: unknown; reasons?: unknown }) : null;
+        if (b?.reason === "ledgerNg") return setRefusedRow({ seq: view.seq, version: res.plan.version, at: new Date().toISOString(), reasons: reasonsTextOf(b.reasons) });
+        return setSendError(r.message);
+      }
       setSentPr({ pr: r.body.pr, url: r.body.url });
       setReload((x) => x + 1);
       return;
@@ -571,19 +640,31 @@ export function Checkpoint() {
     setReceived(r.body.report);
   };
 
-  // GitHub アカウントなしで送る：束に署名し、受け口に送る（受け口が運営者の GitHub アカウントで PR を出す）
+  // MOYAI 経由で送る：束に署名し、受け口に送る（受け口が運営者の GitHub アカウントで PR を出す）
   const sendIntake = async () => {
-    if (!canIntake || !view?.bodyHash || !res?.plan) return;
+    if (!viaIntake || !canPress || !view?.bodyHash || !res?.plan) return;
     setSending(true);
     setSendError(null);
+    setRefusedRow(null);
+    setNoAnswer(false);
     const raw = await client.callHuman("ledger_intake_send", ROUTES.ledgerIntakeSend.path, { planId, version: res.plan.version, answers, previewHash: view.bodyHash });
     const r = readHuman<{ ok: boolean; reason?: string; pr: number; url: string }>(raw);
     setSending(false);
     if (!r.ok) {
-      // 受け口や台帳の検証の理由があれば、台帳の検証と同じ言葉で添える
-      const reasons = raw.ok ? ((raw.body as { reasons?: unknown }).reasons ?? []) : [];
-      const extra = Array.isArray(reasons) ? [...new Set(reasons.filter((x): x is string => typeof x === "string").map(reasonText))].join("、") : "";
-      return setSendError(extra ? `${r.message}　${extra}` : r.message);
+      const b = raw.ok ? (raw.body as { reason?: unknown; reasons?: unknown; retryAt?: unknown }) : null;
+      const reason = typeof b?.reason === "string" ? b.reason : "";
+      // 台帳の検証で外れた（clone で先に確かめたときも、受け口が断ったときも）：送信履歴の行に「受付不可　（理由）」。直せばもう一度押せる
+      if (reason === "ledgerNg" || reason === "intake.refused" || reason === "intake.tooLarge") {
+        return setRefusedRow({ seq: view.seq, version: res.plan.version, at: new Date().toISOString(), reasons: reasonsTextOf(b?.reasons) });
+      }
+      // 1 時間の上限：その時刻まで押せない（送信履歴には行を足さない）
+      if (reason === "intake.rateLimited") {
+        const at = typeof b?.retryAt === "string" ? Date.parse(b.retryAt) : NaN;
+        return setLimitUntil(Number.isNaN(at) ? Date.now() + 60 * 60 * 1000 : at);
+      }
+      // 受け口に届かない：下の帯の左に「受け口の応答なし」。押せる主ボタンはそのまま（押し直せば再送信）
+      if (!raw.ok || reason === "intake.network" || reason === "intake.unavailable") return setNoAnswer(true);
+      return setSendError(r.message);
     }
     setSentPr({ pr: r.body.pr, url: r.body.url });
     setReload((x) => x + 1);
@@ -665,6 +746,8 @@ export function Checkpoint() {
                 setSent(null);
                 setSentPr(null);
                 setSendError(null);
+                setRefusedRow(null);
+                setNoAnswer(false);
               }}
               data={[
                 { value: "ring", label: T.dest.ring },
@@ -685,24 +768,48 @@ export function Checkpoint() {
                 </button>
               </Text>
             )}
+            {/* 送信経路：「送信経路　GitHub［名］ | MOYAI 経由」（docs/screens.md §3.6）。MOYAI 経由のときだけ、下に IP の扱いを text-3 で */}
             {dest === "ledger" && (
-              <Group gap="xs" align="center" data-testid="github-account">
-                <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
-                  {T.github}
-                </Text>
-                <Text size="sm" data-testid="github-login">
-                  {login ?? T.githubNone}
-                </Text>
-                {res?.github?.ready === false ? (
-                  <Text size="xs" c="dimmed" data-testid="github-no-client">
-                    {T.githubNoClient}
+              <Stack gap={2} data-testid="share-route" data-route={viaIntake ? "intake" : "github"}>
+                <Group gap="xs" align="center" data-testid="github-account">
+                  <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
+                    {T.routeLabel}
                   </Text>
-                ) : (
-                  <Button variant="default" size="xs" onClick={() => setConnectOpen(true)} disabled={!packId} data-testid="github-open">
-                    {login ? T.githubReconnect : T.githubConnect}
-                  </Button>
+                  {login && intakeAvail ? (
+                    <Switch<Route>
+                      aria-label={T.routeLabel}
+                      value={viaIntake ? "intake" : "github"}
+                      onChange={chooseRoute}
+                      data={[
+                        { value: "github", label: T.routeGitHub(login) },
+                        { value: "intake", label: T.routeIntake },
+                      ]}
+                      data-testid="route-switch"
+                    />
+                  ) : (
+                    <Text size="sm" data-testid="github-login">
+                      {viaIntake ? T.routeIntake : login ? T.routeGitHub(login) : T.routeGitHubNone}
+                    </Text>
+                  )}
+                  {res?.github?.ready === false
+                    ? // つなぐ道が無いあいだは「| GitHub につなぐ」を出さない（MOYAI 経由で送れるなら、理由も出さない）
+                      !viaIntake && (
+                        <Text size="xs" c="dimmed" data-testid="github-no-client">
+                          {T.githubNoClient}
+                        </Text>
+                      )
+                    : (!login || !viaIntake) && (
+                        <button type="button" className="moyai-inline-act" onClick={() => setConnectOpen(true)} disabled={!packId} data-testid="github-open">
+                          {login ? T.githubReconnect : T.githubConnect}
+                        </button>
+                      )}
+                </Group>
+                {viaIntake && (
+                  <Text size="xs" c="var(--text-3)" data-testid="intake-ip">
+                    {T.intakeIp}
+                  </Text>
                 )}
-              </Group>
+              </Stack>
             )}
             {dest === "ring" && (res?.rings ?? []).length > 1 && (
               <NativeSelect
@@ -729,14 +836,23 @@ export function Checkpoint() {
             />
           )}
 
-          {/* 公開の台帳に出した束（SHARE を開いたときに読んだ行方）。出した束があれば、出す先の行のすぐ下。無ければ節ごと出さない */}
-          {dest === "ledger" && prs && prs.length > 0 && (
+          {/* 公開の台帳に出した束（SHARE を開いたときに読んだ行方）。出した束があれば、出す先の行のすぐ下。無ければ節ごと出さない。
+              台帳の検証で外れた束は、この画面の間だけ「受付不可　（理由）」の行を出す（PR は無い。まだ載っていないものには数えない） */}
+          {dest === "ledger" && ((prs && prs.length > 0) || refusedRow) && (
             <section data-testid="ledger-prs">
               <Title order={2} fz={14} fw={500} mb="xs">
                 {T.prsTitle}
               </Title>
               <Stack gap={4}>
-                {prs.map((p) => (
+                {refusedRow && (
+                  <Group gap="md" wrap="nowrap" className="moyai-num" data-testid="ledger-refused">
+                    <Text size="sm">{T.prBundle(refusedRow.seq, refusedRow.version, dayOf(refusedRow.at))}</Text>
+                    <Text size="sm" c="var(--shu-text)">
+                      {T.intakeRefused(refusedRow.reasons)}
+                    </Text>
+                  </Group>
+                )}
+                {(prs ?? []).map((p) => (
                   <PrLine key={p.pr} p={p} />
                 ))}
               </Stack>
@@ -835,9 +951,14 @@ export function Checkpoint() {
                     </Text>
                   </Text>
                 )}
-                {dest === "ledger" && login && (
-                  <Text size="xs" c="var(--shu-text)" data-testid="account-seen">
-                    {T.accountSeen(login)}
+                {/* 公開時の表示の 1 行：「PR の GitHub アカウント　［名］」。GitHub［名］なら名前を朱、MOYAI 経由は運営の名をふつうの字で */}
+                {dest === "ledger" && (viaIntake || login) && (
+                  <Text size="xs" data-testid="account-seen">
+                    {T.prAccount}
+                    {"　"}
+                    <Text span c={viaIntake ? undefined : "var(--shu-text)"} data-testid="account-name">
+                      {viaIntake ? T.prAccountIntake : login}
+                    </Text>
                   </Text>
                 )}
               </Stack>
@@ -1133,12 +1254,18 @@ export function Checkpoint() {
         <Stack gap={0} style={{ minWidth: 0 }}>
           {dest === "ledger" ? (
             <>
-              <Text size="xs" c="dimmed" style={{ textWrap: "pretty" }} data-testid="ledger-bottom">
-                {T.ledgerBottom}
-              </Text>
-              {intakeOpen && (
+              {viaIntake && noAnswer && (
+                <Text size="xs" c="var(--shu-text)" data-testid="intake-no-answer">
+                  {T.intakeNoAnswer}
+                </Text>
+              )}
+              {viaIntake ? (
                 <Text size="xs" c="dimmed" style={{ textWrap: "pretty" }} data-testid="intake-bottom">
                   {T.intakeBottom}
+                </Text>
+              ) : (
+                <Text size="xs" c="dimmed" style={{ textWrap: "pretty" }} data-testid="ledger-bottom">
+                  {T.ledgerBottom}
                 </Text>
               )}
             </>
@@ -1161,7 +1288,7 @@ export function Checkpoint() {
           </Text>
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
-          {!canSend && (dest === "ledger" || !done) && sendReason && (
+          {!canPress && (dest === "ledger" || !done) && sendReason && (
             <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
               {T.reasonHead}
               {dest === "ledger" && sendReason === T.sendNeeds.rules ? T.ledgerRulesNotAccepted : sendReason}
@@ -1232,13 +1359,8 @@ export function Checkpoint() {
             </Stack>
           </Modal>
           {/* 押せない理由が別にあるときは、押せない理由を先にする */}
-          {canSend && <KeyWarnLine signers={untrusted} onConfirmed={reloadStatus} />}
-          {intakeOpen && (
-            <Button variant="default" onClick={sendIntake} disabled={!canIntake} loading={sending} data-testid="send-intake">
-              {T.sendIntake}
-            </Button>
-          )}
-          <Button onClick={send} disabled={!canSend} loading={sending} data-testid="send">
+          {canPress && <KeyWarnLine signers={untrusted} onConfirmed={reloadStatus} />}
+          <Button onClick={send} disabled={!canPress} loading={sending} data-testid="send" data-route={dest === "ledger" ? (viaIntake ? "intake" : "github") : undefined}>
             {dest === "ledger" ? T.sendLedger : T.sendRing}
           </Button>
         </Group>

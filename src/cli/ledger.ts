@@ -1,16 +1,18 @@
-// 公開の台帳の CLI（docs/plan.md §2.8 場 2・docs/sharing.md）。
-// - `moyai verify ledger <台帳のリポジトリの根>`：輪の受け手と同じ関数で、決まり（ledger.json）と束ごとに ✓ か理由つきの ✗ を出す。
-// - `moyai ledger validate-pr --base <SHA> --head <SHA>`：台帳のリポジトリの pull_request_target の検証。head を checkout せず、
-//   git の木から blob だけを読む。結果を JSON（機械が読む）と日本語の markdown（PR のコメント）に書く。
-// - `moyai ledger site <台帳のリポジトリの根> <出すフォルダ>`：確かめ直した束から 1 枚の HTML を書く。
-// - `moyai ledger submit --bundle <束> --repo <clone>`：人だけ（端末でなければ断る）。PR の支度をし、gh のコマンドを出す（走らせない）。
+// 公開の台帳の CLI（docs/plan.md §2.8 場 2・docs/sharing.md）。台帳は MOYAI のリポジトリの ledger/（2026-11-07 に mushitaro/moyai-ledger から移した）。
+// 台帳の根を指すときは、MOYAI のリポジトリ（の clone）の根を指す（その下の ledger/ と ledger/ledger/ も受ける）。
+// - `moyai verify ledger <MOYAI の clone>`：輪の受け手と同じ関数で、決まり（ledger.json）と束ごとに ✓ か理由つきの ✗ を出す。
+// - `moyai ledger validate-pr --base <SHA> --head <SHA>`：MOYAI のリポジトリの pull_request_target の検証。head を checkout せず、
+//   git の木から blob だけを読む。ledger/ の外を変える PR は「台帳の PR ではない」として検証しない（台帳のファイルが混ざっていれば ✗）。
+//   結果を JSON（機械が読む）と日本語の markdown（PR のコメント）に書く。
+// - `moyai ledger site <MOYAI の clone> <出すフォルダ>`：確かめ直した束から 1 枚の HTML を書く。
+// - `moyai ledger submit --bundle <束か取り下げの印> --repo <clone>`：人だけ（端末でなければ断る）。PR の支度をし、gh のコマンドを出す（走らせない）。
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。終わりの値：すべて ✓ なら 0、どれかが ✗ なら 1、引数や読めない台帳・道具の誤りは 2。
 import { spawnSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { reasonText } from "../app/text/reasons";
-import { bundleFileName } from "../share/bundle";
+import { RETIRED_V, bundleFileName } from "../share/bundle";
 import { fingerprint, sha256Hex } from "../share/sign";
 import { requireTerminal } from "./human";
 import { createLedger } from "../share/ledger-init";
@@ -20,6 +22,9 @@ import {
   LEDGER_FILE,
   LEDGER_JSON_PATH,
   LEDGER_LIMITS,
+  LEDGER_ROOT,
+  checkRetiredAdded,
+  ledgerRetiredPath,
   ledgerRulesHaveRemovedField,
   ledgerRulesOf,
   readLedgerDir,
@@ -32,18 +37,19 @@ import { PR_LIMITS, displayablePath, validateAll, validatePr, type PrResult } fr
 import { profileText, renderLedgerSite } from "../share/site";
 
 export const LEDGER_CLI_TEXT = {
-  verifyUsage: "使い方：moyai verify ledger <台帳のリポジトリの根>（その下に ledger/ledger.json と ledger/bundles/ がある）",
-  noLedger: (p: string) => `台帳が見つかりません：${p}（ledger/ledger.json のあるリポジトリの根を指してください）`,
-  dirSymlink: "ledger/ が symlink です。たどらずに止めました。",
-  tooMany: "ledger/ の下のファイルが多すぎます（上限を越えたので止めました）。",
-  rulesUnreadable: "台帳の決まり（ledger/ledger.json）を読めません。",
+  verifyUsage: "使い方：moyai verify ledger <MOYAI の clone>（その下に ledger/ledger/ledger.json と ledger/ledger/bundles/ がある）",
+  noLedger: (p: string) => `台帳が見つかりません：${p}（ledger/ledger/ledger.json のある MOYAI の clone の根を指してください）`,
+  dirSymlink: "ledger/ か ledger/ledger/ が symlink です。たどらずに止めました。",
+  tooMany: "ledger/ledger/ の下のファイルが多すぎます（上限を越えたので止めました）。",
+  rulesUnreadable: "台帳の決まり（ledger/ledger/ledger.json）を読めません。",
   /** 決まりが、どこにも出さない欄（経過年）を許している（前の版の決まり） */
-  rulesFieldRemoved: (reason: string) => `台帳の決まり（ledger/ledger.json）を読めません：${reason}。`,
+  rulesFieldRemoved: (reason: string) => `台帳の決まり（ledger/ledger/ledger.json）を読めません：${reason}。`,
   packNotReady: (pack: string, reason: string) => `Skillパック ${pack} の共有の部品を読めません（${reason}）`,
   head: (id: string | null, version: number | null, hash: string | null) =>
     `台帳 ${id ?? "（ID 不明）"}${version !== null ? `（決まり 版 ${version}` : "（決まり"}、SHA-256 ${hash ? hash.slice(0, 16) : "不明"}…）`,
-  rules: "決まり（ledger/ledger.json）",
+  rules: "決まり（ledger/ledger/ledger.json）",
   bundle: (p: string) => `共有ファイル ${p}`,
+  retired: (p: string) => `失効記録 ${p}`,
   other: (p: string) => `許した形の外 ${p}`,
   noBundles: "共有ファイルは 0 件です。",
   summaryOk: (n: number) => `すべて ✓ です（共有ファイル ${n} 件）。`,
@@ -52,11 +58,13 @@ export const LEDGER_CLI_TEXT = {
 
 const say = (m: string) => process.stderr.write(`${m}\n`);
 
-/** 指した道から、台帳のリポジトリの根を決める（根か、その下の ledger/ を受ける）。見つからなければ null */
+/** 指した道から、MOYAI のリポジトリ（台帳を ledger/ に持つ）の根を決める（根か、その下の ledger/ か ledger/ledger/ を受ける）。見つからなければ null */
 export function ledgerRootOf(folder: string): string | null {
   const abs = resolve(folder);
-  if (existsSync(join(abs, LEDGER_DIR, LEDGER_FILE))) return abs;
-  if (basename(abs) === LEDGER_DIR && existsSync(join(abs, LEDGER_FILE))) return dirname(abs);
+  const inner = LEDGER_DIR.split("/");
+  if (existsSync(join(abs, ...inner, LEDGER_FILE))) return abs;
+  if (basename(abs) === LEDGER_ROOT && existsSync(join(abs, ...inner.slice(1), LEDGER_FILE))) return dirname(abs);
+  if (basename(abs) === inner[1] && basename(dirname(abs)) === LEDGER_ROOT && existsSync(join(abs, LEDGER_FILE))) return dirname(dirname(abs));
   return null;
 }
 
@@ -102,10 +110,11 @@ function isControl(n: number): boolean {
 export function formatLedger(r: LedgerRead): string[] {
   const lines = [LEDGER_CLI_TEXT.head(r.ledger.id, r.ledger.version, r.ledger.hash)];
   lines.push(r.ledger.status === "ok" ? `  ✓ ${LEDGER_CLI_TEXT.rules}` : `  ✗ ${LEDGER_CLI_TEXT.rules}：${reasonsText(r.ledger.reasons.length ? r.ledger.reasons : ["ledger.unreadable"])}`);
-  for (const b of r.bundles) lines.push(b.status === "ok" ? `  ✓ ${LEDGER_CLI_TEXT.bundle(b.path)}` : `  ✗ ${LEDGER_CLI_TEXT.bundle(terminalSafe(b.path))}：${reasonsText(b.reasons)}`);
+  for (const b of r.bundles) lines.push(b.status === "ok" ? `  ✓ ${LEDGER_CLI_TEXT.bundle(b.path)}${b.retired ? `（${reasonText("ledger.keyRetired")}）` : ""}` : `  ✗ ${LEDGER_CLI_TEXT.bundle(terminalSafe(b.path))}：${reasonsText(b.reasons)}`);
+  for (const x of r.retired) lines.push(x.status === "ok" ? `  ✓ ${LEDGER_CLI_TEXT.retired(x.path)}` : `  ✗ ${LEDGER_CLI_TEXT.retired(terminalSafe(x.path))}：${reasonsText(x.reasons)}`);
   for (const o of r.others) lines.push(`  ✗ ${LEDGER_CLI_TEXT.other(terminalSafe(o.path))}：${reasonsText(o.reasons)}`);
   if (r.bundles.length === 0) lines.push(`  ${LEDGER_CLI_TEXT.noBundles}`);
-  const ng = (r.ledger.status === "ok" ? 0 : 1) + r.bundles.filter((b) => b.status !== "ok").length + r.others.length;
+  const ng = (r.ledger.status === "ok" ? 0 : 1) + r.bundles.filter((b) => b.status !== "ok").length + r.retired.filter((x) => x.status !== "ok").length + r.others.length;
   lines.push(ng === 0 ? LEDGER_CLI_TEXT.summaryOk(r.bundles.length) : LEDGER_CLI_TEXT.summaryNg(ng));
   return lines;
 }
@@ -133,17 +142,17 @@ export async function verifyLedgerCli(argv: string[], o: { packsDir?: string } =
 
 export const LEDGER_USAGE = `使い方：
   moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
-  moyai ledger site <台帳のリポジトリの根> <出すフォルダ>
-  moyai ledger submit --bundle <共有ファイル> --repo <台帳の clone>（人だけ。端末から）
-  moyai ledger init --root <台帳のリポジトリの根> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から。管理者の鍵で台帳の決まりに署名する）`;
+  moyai ledger site <MOYAI の clone> <出すフォルダ>
+  moyai ledger submit --bundle <共有ファイルか失効記録> --repo <MOYAI の clone>（人だけ。端末から）
+  moyai ledger init --root <MOYAI の clone> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から。管理者の鍵で台帳の決まりに署名する）`;
 
 /** ledger init の言葉 */
 export const INIT_TEXT = {
-  usage: "使い方：moyai ledger init --root <台帳のリポジトリの根（絶対の道）> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から）",
-  intro: "公開の台帳の決まり（ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。パスワードでは包みません）。",
+  usage: "使い方：moyai ledger init --root <MOYAI の clone の根（絶対の道）> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から）",
+  intro: "公開の台帳の決まり（ledger/ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。パスワードでは包みません）。",
   failed: (r: string) =>
     ({
-      exists: "ledger/ledger.json がもうあります（足すだけの台帳なので、上書きしません）。",
+      exists: "ledger/ledger/ledger.json がもうあります（足すだけの台帳なので、上書きしません）。",
       monthInvalid: "月の形が違います（YYYY-MM）。",
       keyExists: "この台帳の鍵がもう状態フォルダにあります。",
       selfCheck: "作った決まりを、受け手と同じ関数で読めませんでした。何も書いていません。",
@@ -153,7 +162,7 @@ export const INIT_TEXT = {
       `台帳の決まりを書きました：${path}`,
       `台帳 ID：${id}`,
       `管理者の鍵番号：${fp}（台帳の README に載せ、電話などで照合すると、なりすましに気づけます）`,
-      "次に、このファイルを台帳のリポジトリに commit して push してください（このコマンドは git を走らせません）。",
+      "次に、このファイルを MOYAI のリポジトリに commit して push してください（このコマンドは git を走らせません）。",
     ].join("\n"),
 };
 
@@ -259,7 +268,7 @@ export function readBlobWith(git: GitRun, sha: string, limit = LEDGER_LIMITS.fil
   return b.ok ? new Uint8Array(b.out) : null;
 }
 
-/** 木の ledger/ の下の項目を LedgerFile にする（100644 だけをふつうのファイルとして中身を読む） */
+/** 木の ledger/ledger/ の下の項目を LedgerFile にする（100644 だけをふつうのファイルとして中身を読む） */
 export function ledgerFilesOfTree(git: GitRun, entries: readonly TreeEntry[]): LedgerFile[] {
   const out: LedgerFile[] = [];
   for (const e of entries) {
@@ -275,8 +284,11 @@ export function ledgerFilesOfTree(git: GitRun, entries: readonly TreeEntry[]): L
 // ─── validate-pr ─────────────────────────────────────────────
 
 export const PR_TEXT = {
-  usage: "使い方：moyai ledger validate-pr --base <commit の SHA> --head <commit の SHA> [--repo <台帳の clone>] [--json <道>] [--markdown <道>]",
+  usage: "使い方：moyai ledger validate-pr --base <commit の SHA> --head <commit の SHA> [--repo <MOYAI の clone>] [--json <道>] [--markdown <道>]",
   title: (ok: boolean) => (ok ? "### MOYAI 台帳の検証：✓ 通りました" : "### MOYAI 台帳の検証：✗ 通りません"),
+  titleNotLedger: "### MOYAI 台帳の検証：台帳の PR ではありません",
+  notLedger: (base: string, head: string) =>
+    `- ledger/ の外を変える PR で、台帳のファイル（ledger/ledger/ の下）を変えていません。共有ファイルの検証はしていません（base \`${base.slice(0, 12)}\`・head \`${head.slice(0, 12)}\`）。`,
   titleError: "### MOYAI 台帳の検証：確かめられませんでした",
   scopePr: (n: number, base: string, head: string) => `- 確かめたもの：この PR が足す・変えるファイル ${n} 件（base \`${base.slice(0, 12)}\`・head \`${head.slice(0, 12)}\`）`,
   scopeAll: (n: number, head: string) => `- 変更なし（base と head が同じ commit \`${head.slice(0, 12)}\`）。既定のブランチにある全部の共有ファイル ${n} 件を再照合しました`,
@@ -293,7 +305,7 @@ export const PR_TEXT = {
 
 export interface ValidateOutput {
   v: "moyai.ledger-validate/0";
-  mode: "pr" | "all" | null;
+  mode: "pr" | "all" | "notLedger" | null;
   base: string | null;
   head: string | null;
   ok: boolean;
@@ -334,6 +346,10 @@ export function validateMarkdown(o: ValidateOutput): string {
   const lines: string[] = [];
   if (o.error !== null && o.files.length === 0) {
     lines.push(o.errorKind === "tool" ? PR_TEXT.titleError : PR_TEXT.title(false), "", PR_TEXT.input(o.error), "", PR_TEXT.how);
+    return lines.join("\n") + "\n";
+  }
+  if (o.mode === "notLedger") {
+    lines.push(PR_TEXT.titleNotLedger, "", PR_TEXT.notLedger(o.base ?? "", o.head ?? ""));
     return lines.join("\n") + "\n";
   }
   lines.push(PR_TEXT.title(o.ok), "");
@@ -395,6 +411,7 @@ export async function validatePrCli(argv: string[], o: { packsDir?: string; git?
     writeOut(args.json, JSON.stringify(out, null, 2) + "\n");
     writeOut(args.markdown, validateMarkdown(out));
     if (error !== null) say(PR_TEXT.error(error));
+    else if (out.mode === "notLedger") say(PR_TEXT.notLedger(args.base, args.head).replace(/^- /, "").replace(/`/g, ""));
     else for (const f of out.files) say(`  ${f.status === "ok" ? "✓" : "✗"} ${f.display ? f.path : PR_TEXT.hidden(f.pathSha256)}${f.reasonsText.length ? `：${f.reasonsText.join("、")}` : ""}`);
     if (out.error !== null && error === null) say(PR_TEXT.error(out.error));
     // 道具の誤り（git・決まり・パック）と、diff の出力が読めないときは 2。PR の側の外れ（数・大きさ・空）は ✗ の 1
@@ -498,7 +515,7 @@ export async function siteCli(argv: string[], o: { packsDir?: string; build?: st
     return 2;
   }
   const ok = l.read.bundles.filter((b) => b.status === "ok").length;
-  say(SITE_CLI_TEXT.written(target, ok, l.read.bundles.length - ok + l.read.others.length));
+  say(SITE_CLI_TEXT.written(target, ok, l.read.bundles.length - ok + l.read.retired.filter((x) => x.status !== "ok").length + l.read.others.length));
   return l.read.ok ? 0 : 1;
 }
 
@@ -513,18 +530,32 @@ function lstatOrNull(p: string) {
 // ─── submit（人だけ） ────────────────────────────────────────────
 
 export const SUBMIT_TEXT = {
-  usage: "使い方：moyai ledger submit --bundle <署名済みの共有ファイル> --repo <台帳のリポジトリの clone> [--base main]（人だけ。端末から）",
+  usage: "使い方：moyai ledger submit --bundle <署名済みの共有ファイルか失効記録> --repo <MOYAI の clone> [--base main]（人だけ。端末から）",
   account:
     "知らせ：PR を出す GitHub のアカウントは、誰にでも見えます。共有ファイルとそのアカウントが結びつくので、台帳専用のアカウントを使うことを勧めます。",
   noBundle: "共有ファイルを読めません（無いか、大きすぎます）。",
-  notGit: "台帳のリポジトリの clone として読めません（git の誤り）。",
+  notGit: "MOYAI のリポジトリの clone として読めません（git の誤り）。",
   noBase: (b: string) => `枝 ${b} がありません。台帳の既定のブランチを取ってから走らせてください。`,
-  notBundle: "共有ファイルの形として読めません。",
+  notBundle: "共有ファイルか失効記録の形として読めません。",
   ng: (reasons: string) => `この共有ファイルは台帳の検証で ✗ になります：${reasons}`,
   exists: (p: string) => `同じ共有ファイルがもう台帳にあります：${p}`,
   branchExists: (b: string) => `枝 ${b} がもうあります。消すか、別の --base から走らせてください。`,
   commitFailed: "枝を作れませんでした（git の名前とメールの設定があるかを確かめてください）。",
   prepared: (b: string, p: string) => `枝 ${b} を作り、共有ファイルを ${p} に置いた commit を 1 つ載せました（作業の木と索引は変えていません）。`,
+  preparedRetired: (b: string, p: string) => `枝 ${b} を作り、失効記録を ${p} に置いた commit を 1 つ載せました（作業の木と索引は変えていません）。`,
+  retiredTitle: (key: string) => `失効記録を足す：鍵 ${key}`,
+  retiredCommitMessage: (key: string) => `失効記録を足す：鍵 ${key}`,
+  retiredBody: (o: { key: string; fp: string; last: number; hash: string; path: string; ledgerId: string }) =>
+    [
+      `台帳 \`${o.ledgerId}\` に、鍵 \`${o.key}\` の失効記録を 1 つ足します。`,
+      "",
+      `- 失効記録：\`${o.path}\``,
+      `- 鍵 ID \`${o.key}\`（鍵番号 \`${o.fp}\`）・最後の連番 ${o.last}・ファイルの SHA-256 \`${o.hash}\``,
+      "",
+      "失効記録はその鍵自身の署名です。載ると、この鍵の共有ファイルは集計対象外になり、最後の連番より大きい共有ファイルは ✗ になります。載った共有ファイルは消さず、掲載済みの複製は残ります。",
+      "この失効記録は、出す前に `moyai ledger submit` が受け手と同じ関数で確かめ、✓ でした。",
+      "",
+    ].join("\n"),
   next: "次の 2 つを、あなたが確かめてから走らせてください（MOYAI は送りません）：",
   title: (key: string, seq: number) => `共有ファイルを足す：鍵 ${key}・連番 ${seq}`,
   commitMessage: (key: string, seq: number) => `共有ファイルを足す：鍵 ${key}・連番 ${seq}`,
@@ -549,7 +580,7 @@ function gitEnv(repo: string, args: string[], env: NodeJS.ProcessEnv = {}): { ok
 }
 
 /**
- * submit：人だけ。標準入力が端末でなければ断る。検問所で人が署名した束を、台帳の既定のブランチの木に足したときに
+ * submit：人だけ。標準入力が端末でなければ断る。検問所で人が署名した束（か、その鍵自身の署名の取り下げの印）を、台帳の既定のブランチの木に足したときに
  * 受け手と同じ関数で ✓ になるかを確かめ、作業の木と索引を変えずに枝と commit を 1 つ作り（一時の索引を使う）、
  * PR の本文を一時のフォルダに書き、push と gh のコマンドを出す（送るのは人。MOYAI は走らせない）。
  * 終わりの値：支度ができたら 0、束が ✗・もうある・git の誤りは 1、引数が違えば 2、端末でなければ 3。
@@ -602,21 +633,44 @@ export async function submitCli(argv: string[], o: { packsDir?: string; stdin?: 
     say(LEDGER_CLI_TEXT.packNotReady(rules.pack, pack.reason));
     return 1;
   }
-  // 束の鍵と連番から、台帳の中の道を決める（名前は中身から決まる）
+  // 束の鍵と連番から、台帳の中の道を決める（名前は中身から決まる）。取り下げの印は、その鍵のフォルダの retired.json
   const parsed = (() => {
     try {
-      return JSON.parse(bytes.toString("utf8")) as { body?: { key?: unknown; seq?: unknown } };
+      return JSON.parse(bytes.toString("utf8")) as { body?: { v?: unknown; key?: unknown; seq?: unknown; last?: unknown } };
     } catch {
       return null;
     }
   })();
   const key = parsed?.body?.key;
+  const hash = sha256Hex(bytes);
+  if (parsed?.body?.v === RETIRED_V) {
+    if (typeof key !== "string" || !/^[0-9a-f]{16}$/.test(key)) {
+      say(SUBMIT_TEXT.notBundle);
+      return 1;
+    }
+    const path = ledgerRetiredPath(key);
+    const check = checkRetiredAdded(files, pack.pack, path, new Uint8Array(bytes));
+    if (!check.ok) {
+      say(SUBMIT_TEXT.ng(reasonsText(check.reasons)));
+      return 1;
+    }
+    const branch = `moyai/retired-${key}`;
+    const made = prepareBranch(repo, baseSha.out, branch, path, bytes, SUBMIT_TEXT.retiredCommitMessage(key));
+    if (made !== null) return made;
+    const pub = (parsed.body as { pub?: unknown }).pub;
+    const bodyFile = join(tmpdir(), `moyai-ledger-pr-${hash.slice(0, 16)}.md`);
+    writeFileSync(bodyFile, SUBMIT_TEXT.retiredBody({ key, fp: typeof pub === "string" ? fingerprint(pub) : "", last: check.last, hash, path, ledgerId: rulesId(files, pack.pack) }), "utf8");
+    say(SUBMIT_TEXT.preparedRetired(branch, path));
+    say(SUBMIT_TEXT.next);
+    say(`  git -C "${repo}" push origin ${branch}`);
+    say(`  gh pr create --repo <台帳のリポジトリ> --base ${baseRef} --head ${branch} --title "${SUBMIT_TEXT.retiredTitle(key)}" --body-file "${bodyFile}"`);
+    return 0;
+  }
   const seq = parsed?.body?.seq;
   if (typeof key !== "string" || !/^[0-9a-f]{16}$/.test(key) || typeof seq !== "number" || !Number.isInteger(seq) || seq < 1 || seq > 999_999) {
     say(SUBMIT_TEXT.notBundle);
     return 1;
   }
-  const hash = sha256Hex(bytes);
   const path = `${LEDGER_DIR}/bundles/${key}/${bundleFileName(seq, hash)}`;
   if (files.some((f) => f.path === path)) {
     say(SUBMIT_TEXT.exists(path));
@@ -624,37 +678,16 @@ export async function submitCli(argv: string[], o: { packsDir?: string; stdin?: 
   }
   const read = verifyLedgerFiles([...files, { path, kind: "file", bytes: new Uint8Array(bytes) }], pack.pack);
   const line = read.bundles.find((b) => b.path === path);
-  if (!line || line.status !== "ok" || read.ledger.status !== "ok") {
-    say(SUBMIT_TEXT.ng(reasonsText(line?.reasons.length ? line.reasons : read.ledger.reasons.length ? read.ledger.reasons : ["ledger"])));
+  if (!line || line.status !== "ok" || read.ledger.status !== "ok" || line.retired || !line.body) {
+    const reasons = line?.status === "ok" && line.retired ? ["ledger.keyRetired"] : line?.reasons.length ? line.reasons : read.ledger.reasons.length ? read.ledger.reasons : ["ledger"];
+    say(SUBMIT_TEXT.ng(reasonsText(reasons)));
     return 1;
   }
   // 枝を作る：一時の索引に base の木を読み、束の blob を足して木と commit を作る（作業の木と索引は変えない）
   const branch = `moyai/bundle-${key}-${String(seq).padStart(6, "0")}`;
-  if (gitEnv(repo, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]).ok) {
-    say(SUBMIT_TEXT.branchExists(branch));
-    return 1;
-  }
-  const work = mkdtempSync(join(tmpdir(), "moyai-ledger-submit-"));
-  try {
-    const bundleCopy = join(work, "bundle.json");
-    writeFileSync(bundleCopy, bytes, { flag: "wx" });
-    const env = { GIT_INDEX_FILE: join(work, "index") };
-    const blob = gitEnv(repo, ["hash-object", "-w", "--", bundleCopy]);
-    const steps =
-      blob.ok &&
-      gitEnv(repo, ["read-tree", baseSha.out], env).ok &&
-      gitEnv(repo, ["update-index", "--add", "--cacheinfo", `100644,${blob.out},${path}`], env).ok;
-    const treeSha = steps ? gitEnv(repo, ["write-tree"], env) : { ok: false, out: "" };
-    const commit = treeSha.ok ? gitEnv(repo, ["commit-tree", treeSha.out, "-p", baseSha.out, "-m", SUBMIT_TEXT.commitMessage(key, seq)]) : { ok: false, out: "" };
-    const made = commit.ok && SHA.test(commit.out) && gitEnv(repo, ["branch", branch, commit.out]).ok;
-    if (!made) {
-      say(SUBMIT_TEXT.commitFailed);
-      return 1;
-    }
-  } finally {
-    rmSync(work, { recursive: true, force: true });
-  }
-  const b = line.body!;
+  const made = prepareBranch(repo, baseSha.out, branch, path, bytes, SUBMIT_TEXT.commitMessage(key, seq));
+  if (made !== null) return made;
+  const b = line.body;
   const bodyFile = join(tmpdir(), `moyai-ledger-pr-${hash.slice(0, 16)}.md`);
   writeFileSync(
     bodyFile,
@@ -666,6 +699,43 @@ export async function submitCli(argv: string[], o: { packsDir?: string; stdin?: 
   say(`  git -C "${repo}" push origin ${branch}`);
   say(`  gh pr create --repo <台帳のリポジトリ> --base ${baseRef} --head ${branch} --title "${SUBMIT_TEXT.title(key, seq)}" --body-file "${bodyFile}"`);
   return 0;
+}
+
+/** 台帳 ID（決まりが ✓ のときだけ。読めなければ空） */
+function rulesId(files: readonly LedgerFile[], pack: SharePack): string {
+  return verifyLedgerFiles(files.filter((f) => f.path === LEDGER_JSON_PATH), pack).ledger.id ?? "";
+}
+
+/**
+ * 枝を作る：一時の索引に base の木を読み、ファイルの blob を足して木と commit を作る（作業の木と索引は変えない）。
+ * できたら null、できなければ終わりの値（1）
+ */
+function prepareBranch(repo: string, baseSha: string, branch: string, path: string, bytes: Buffer, message: string): number | null {
+  if (gitEnv(repo, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]).ok) {
+    say(SUBMIT_TEXT.branchExists(branch));
+    return 1;
+  }
+  const work = mkdtempSync(join(tmpdir(), "moyai-ledger-submit-"));
+  try {
+    const copy = join(work, "file.json");
+    writeFileSync(copy, bytes, { flag: "wx" });
+    const env = { GIT_INDEX_FILE: join(work, "index") };
+    const blob = gitEnv(repo, ["hash-object", "-w", "--", copy]);
+    const steps =
+      blob.ok &&
+      gitEnv(repo, ["read-tree", baseSha], env).ok &&
+      gitEnv(repo, ["update-index", "--add", "--cacheinfo", `100644,${blob.out},${path}`], env).ok;
+    const treeSha = steps ? gitEnv(repo, ["write-tree"], env) : { ok: false, out: "" };
+    const commit = treeSha.ok ? gitEnv(repo, ["commit-tree", treeSha.out, "-p", baseSha, "-m", message]) : { ok: false, out: "" };
+    const made = commit.ok && SHA.test(commit.out) && gitEnv(repo, ["branch", branch, commit.out]).ok;
+    if (!made) {
+      say(SUBMIT_TEXT.commitFailed);
+      return 1;
+    }
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+  return null;
 }
 
 function usage(): number {

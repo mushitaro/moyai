@@ -1,6 +1,6 @@
 // 公開の台帳へ GitHub のアカウントなしで出す（運営者の決定 2026-11-07）を、この PC の Chrome と Edge で画面から通す：
 // 設定で置き場所・呼び名・台帳の clone を選ぶ → 見本の計画を確定する → SHARE で共有先を公開台帳にする → GitHub は未接続のまま →
-// 人が「GitHub アカウントなしで送信」を押す → 受け口が台帳の検証と同じ関数で確かめ、運営者のアカウントで PR #1 → 行方（審査中・アカウントなし）。
+// 人が送信経路 MOYAI 経由で「署名して公開台帳へ送信」を押す → 受け口が台帳の検証と同じ関数で確かめ、運営者のアカウントで PR #1 → 行方（審査中・アカウントなし）。
 // 受け口は services/ledger-intake のハンドラそのものを 127.0.0.1 で動かす。GitHub はメモリの代わり（tests/helpers/intake-github.ts）を 127.0.0.1 で見せる。
 // 本物の Cloudflare と GitHub では確かめていない。先に npm run build を走らせておく。
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -53,12 +53,12 @@ test.beforeAll(async () => {
   repo = join(work, "台帳の clone");
   buildLedgerDemo({ repo: process.cwd(), out: repo, state: join(work, "demo-state"), month: "2026-11" });
   mkdirSync(join(repo, ".git"), { recursive: true });
-  writeFileSync(join(repo, ".git", "config"), '[remote "origin"]\n\turl = https://github.com/ledger-owner/moyai-ledger.git\n');
+  writeFileSync(join(repo, ".git", "config"), '[remote "origin"]\n\turl = https://github.com/ledger-owner/moyai.git\n');
   const dir = await readLedgerDir(repo);
   if (!dir.ok) throw new Error(dir.reason);
   clone = dir.files;
   gh = fakeLedgerGitHub({ token: TOKEN, files: Object.fromEntries(clone.filter((f) => f.kind === "file" && f.bytes).map((f) => [f.path, f.bytes!])) });
-  const env = { GITHUB_TOKEN: TOKEN, LEDGER_REPO: "ledger-owner/moyai-ledger", INTAKE_KV: memoryKv() };
+  const env = { GITHUB_TOKEN: TOKEN, LEDGER_REPO: "ledger-owner/moyai", INTAKE_KV: memoryKv() };
   // 受け口：送り手の IP は、Cloudflare の入口が付ける見出しの代わりに試験が付ける
   const intakeBase = await serve((method, path, headers, body) =>
     handleRequest(new Request(`https://intake.example${path}`, { method, headers: { ...headers, "cf-connecting-ip": "203.0.113.9" }, ...(body !== undefined ? { body } : {}) }), env, {
@@ -114,9 +114,10 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
   });
 
-  await test.step("SHARE：共有先を公開台帳にする。GitHub の道は未接続で押せず、アカウントなしの道は押せる", async () => {
+  await test.step("SHARE：共有先を公開台帳にする。GitHub に未接続なので、送信経路は MOYAI 経由（既定）で押せる", async () => {
     await page.getByTestId("share-dest").getByText("公開台帳").click();
-    await expect(page.getByTestId("github-login")).toHaveText("未接続");
+    await expect(page.getByTestId("github-login")).toHaveText("MOYAI 経由");
+    await expect(page.getByTestId("intake-ip")).toHaveText("送信元の IP は上限の判定のみ・保存なし");
     await page.getByTestId("q-national").selectOption("yes");
     await page.getByTestId("q-furnace").selectOption("STOKER");
     await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
@@ -126,25 +127,25 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await expect(page.getByText("公開時の表示")).toBeVisible();
     await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
     await expect(page.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
-    await expect(page.getByTestId("send")).toBeDisabled();
-    await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続");
-    await expect(page.getByTestId("send-intake")).toHaveText("MOYAI 経由");
-    await expect(page.getByTestId("send-intake")).toBeEnabled();
+    await expect(page.getByTestId("send")).toBeEnabled();
+    await expect(page.getByTestId("send")).toHaveAttribute("data-route", "intake");
+    await expect(page.getByTestId("send-reason")).toHaveCount(0);
     await expect(page.getByTestId("intake-bottom")).toHaveText("MOYAI 経由で PR を送信。掲載後の複製は残ります。");
-    await expect(page.getByTestId("account-seen")).toHaveCount(0);
+    await expect(page.getByTestId("ledger-bottom")).toHaveCount(0);
+    await expect(page.getByTestId("account-seen")).toHaveText("PR の GitHub アカウント　tsunagi（MOYAI の運営）");
     await page.screenshot({ path: shot(`ledger-intake-before-${tag}`), fullPage: true });
   });
 
-  await test.step("人が「GitHub アカウントなしで送信」を押すと署名して、受け口が PR を 1 つ出す。行方は審査中", async () => {
+  await test.step("人が送信経路 MOYAI 経由で「署名して公開台帳へ送信」を押すと署名して、受け口が PR を 1 つ出す。行方は審査中", async () => {
     expect(gh.prs).toHaveLength(0);
-    await page.getByTestId("send-intake").click();
+    await page.getByTestId("send").click();
     await expect(page.getByTestId("ledger-sent")).toContainText("PR #1 を出しました");
     await expect(page.locator('[data-testid="ledger-pr"][data-state="open"]')).toHaveCount(1);
     await expect(page.getByTestId("ledger-pr").first()).toContainText("審査中");
     await expect(page.getByTestId("ledger-pr-intake").first()).toHaveText("MOYAI 経由");
     await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^共有ファイル 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
     await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
-    await expect(page.getByTestId("send-intake")).toBeDisabled();
+    await expect(page.getByTestId("send")).toBeDisabled();
     await page.screenshot({ path: shot(`ledger-intake-sent-${tag}`), fullPage: true });
 
     // 届いた束：台帳の木に足して、受け手と同じ関数で ✓。本文の頭は「受け口から（GitHub のアカウントなし）」
@@ -153,7 +154,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     const files = Object.entries(pr.files);
     expect(files).toHaveLength(1);
     const [path, bytes] = files[0]!;
-    expect(path).toMatch(/^ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+    expect(path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
     const read = verifyLedgerFiles([...clone, { path, kind: "file", bytes: new Uint8Array(bytes) }], packOf("waste-incineration")!);
     expect(read.bundles.find((b) => b.path === path)?.status).toBe("ok");
     expect(pr.body.split("\n")[0]).toBe("受け口から（GitHub のアカウントなし）");

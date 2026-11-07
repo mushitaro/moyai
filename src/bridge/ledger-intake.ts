@@ -1,12 +1,12 @@
 // 公開の台帳の受け口へ束を出す（GitHub のアカウントが無い人の道。運営者の決定 2026-11-07）。
 // 通信の例外（docs/plan.md §2.12）：行き先は受け口の 1 つ（LEDGER_INTAKE_URL）だけ。送るのは、公開の台帳に載せるのと同じ束のファイル 1 つだけ。
 // 受け口は運営者の GitHub のアカウントで台帳に PR を出し、PR の番号と URL を返す。行方は今と同じく、公開の PR をトークン無しで読む（github.ts の prStatus）。
-// 出すのは、人が SHARE で「GitHub アカウントなしで送信」を押して束に署名したときだけ（AI のツールにしない）。
+// 出すのは、人が SHARE で送信経路「MOYAI 経由」を選び、主ボタン「署名して公開台帳へ送信」を押して束に署名したときだけ（AI のツールにしない）。
 // 束の中身をログに出さない。fetch は差し替えられる（試験のため）。
 
 /**
  * 受け口の URL（https。末尾の /submit は付けない）。運営者が受け口をデプロイしてから入れる。
- * 空の間は、SHARE に「GitHub アカウントなしで送信」の道を出さない。
+ * 空の間は、SHARE の送信経路に「MOYAI 経由」を出さない。
  */
 export const LEDGER_INTAKE_URL: string = "";
 
@@ -39,7 +39,7 @@ export interface IntakeIo {
 
 export type IntakeSend =
   | { ok: true; number: number; url: string; repo: { owner: string; name: string } }
-  | { ok: false; reason: "network" | "refused" | "tooLarge" | "rateLimited" | "unavailable" | "badAnswer"; reasons: string[] };
+  | { ok: false; reason: "network" | "refused" | "tooLarge" | "rateLimited" | "unavailable" | "badAnswer"; reasons: string[]; retryAfter?: number };
 
 const PR_URL = /^https:\/\/github\.com\/([A-Za-z0-9-]{1,39})\/([A-Za-z0-9._-]{1,100})\/pull\/(\d{1,9})$/;
 const CODE = /^[A-Za-z0-9._-]{1,80}$/;
@@ -85,7 +85,11 @@ export async function sendToIntake(io: IntakeIo, text: string): Promise<IntakeSe
   }
   if (status === 400) return { ok: false, reason: "refused", reasons };
   if (status === 413) return { ok: false, reason: "tooLarge", reasons };
-  if (status === 429) return { ok: false, reason: "rateLimited", reasons };
+  if (status === 429) {
+    // 次に受けられるまでの秒（受け口の答えの retryAfter。1 秒〜1 時間だけを受ける）
+    const ra = json && typeof json === "object" ? (json as { retryAfter?: unknown }).retryAfter : undefined;
+    return { ok: false, reason: "rateLimited", reasons, ...(typeof ra === "number" && Number.isInteger(ra) && ra >= 1 && ra <= 3600 ? { retryAfter: ra } : {}) };
+  }
   if (status >= 500) return { ok: false, reason: "unavailable", reasons };
   return { ok: false, reason: "badAnswer", reasons };
 }

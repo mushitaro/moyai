@@ -285,6 +285,22 @@ export const RETIRED_BODY_TYPE: T = {
   },
 };
 
+/**
+ * 公開台帳の取り下げの印（ledger/ledger/bundles/<鍵ID>/retired.json。Architect の 72）：輪と同じ moyai.retired/0 で、ring の代わりに ledger（台帳 ID）を持つ。
+ * その鍵自身の署名。次の鍵は書かない
+ */
+export const LEDGER_RETIRED_BODY_TYPE: T = {
+  t: "obj",
+  req: {
+    v: { t: "lit", v: RETIRED_V },
+    ledger: hex(HEX16),
+    key: hex(HEX16),
+    pub: hex(HEX64),
+    last: { t: "int", min: 0, max: LIMITS.seq },
+    month: hex(MONTH),
+  },
+};
+
 const edgesType: T = { t: "arr", of: { t: "int", min: 0, max: LIMITS.edges }, min: 2, max: 64 };
 
 export const RULES_TYPE: T = {
@@ -324,6 +340,7 @@ export function publicWords(ctx: ShareContext): Set<string> {
   schemaWords(envelopeType(bundleBodyType({ ...ctx, to: { kind: "ring", id: ctx.to.id } })), s);
   schemaWords(envelopeType(MEMBER_BODY_TYPE), s);
   schemaWords(envelopeType(RETIRED_BODY_TYPE), s);
+  schemaWords(envelopeType(LEDGER_RETIRED_BODY_TYPE), s);
   schemaWords(envelopeType(rulesDocBodyType(CIRCLE_V)), s);
   schemaWords(envelopeType(rulesDocBodyType(LEDGER_V)), s);
   return s;
@@ -412,6 +429,11 @@ export function makeRulesDocBody(v: typeof CIRCLE_V | typeof LEDGER_V, founder: 
 /** 引退の印の body（last はその鍵で最後に使った連番。まだ出していなければ 0） */
 export function makeRetiredBody(ring: string, key: string, pub: string, last: number, month: string) {
   return { v: RETIRED_V, ring, key, pub, last, month };
+}
+
+/** 公開台帳の取り下げの印の body（輪の印と同じ形で、ring の代わりに台帳 ID。last はその鍵で最後に使った連番） */
+export function makeLedgerRetiredBody(ledger: string, key: string, pub: string, last: number, month: string) {
+  return { v: RETIRED_V, ledger, key, pub, last, month };
 }
 
 export function makeMemberBody(ring: string, key: string, pub: string, month: string, state: (typeof MEMBER_STATES)[number] = "active") {

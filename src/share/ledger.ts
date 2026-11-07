@@ -1,8 +1,10 @@
-// 公開の台帳（場 2。docs/plan.md §2.8）：台帳のリポジトリの ledger/ の下を、輪の受け手と同じ関数（数え直し・鎖）で確かめる。
-//   ledger/ledger.json                                   台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
-//   ledger/TERMS.md                                      利用条件（検証では読まない）
-//   ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json     束（足すだけ）
-// 読み手（フォルダか git の木か）を問わない形（LedgerFile の並び）で受け、引数で緩める切り替えは持たない。
+// 公開の台帳（場 2。docs/plan.md §2.8）：MOYAI のリポジトリの ledger/（台帳の根）の下を、輪の受け手と同じ関数（数え直し・鎖）で確かめる。
+// 台帳は元は別のリポジトリ（mushitaro/moyai-ledger）。2026-11-07 に、履歴ごと mushitaro/moyai の ledger/ へ移した（運営者の決定）。
+//   ledger/ledger/ledger.json                                   台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
+//   ledger/ledger/TERMS.md                                      利用条件（検証では読まない）
+//   ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json     束（足すだけ）
+//   ledger/ledger/bundles/<鍵ID>/retired.json                   取り下げの印（moyai.retired/0。その鍵自身の署名。Architect の 72）
+// 読み手（フォルダか git の木か）を問わない形（LedgerFile の並び）で受け、引数で緩める切り替えは持たない。道はどれも MOYAI のリポジトリの根から。
 // 台帳 ID は ledger.json の body の変わらない部分（v・founder・nonce）から決まり、束の行き先（to）と照らす。
 // 鍵 ID と出した人の結びつきは、束の署名をその鍵の公開鍵で確かめて決める（GitHub のログイン名には頼らない）。
 import { lstat, readFile, readdir } from "node:fs/promises";
@@ -15,18 +17,37 @@ import { checkChain } from "./ring";
 import { baseRules, rulesHaveRemovedField, type Rules } from "./rules";
 import { HEX16, fingerprint, sha256Hex } from "./sign";
 
-export const LEDGER_DIR = "ledger";
+/** MOYAI のリポジトリの中の、台帳の根（元の mushitaro/moyai-ledger の根。README・.gitattributes を置く） */
+export const LEDGER_ROOT = "ledger";
+/** 台帳の根の下の、決まり・利用条件・束を置くフォルダ（リポジトリの根から） */
+export const LEDGER_DIR = `${LEDGER_ROOT}/ledger`;
 export const LEDGER_FILE = "ledger.json";
 export const LEDGER_TERMS = "TERMS.md";
 export const LEDGER_BUNDLES = "bundles";
 export const LEDGER_JSON_PATH = `${LEDGER_DIR}/${LEDGER_FILE}`;
 export const LEDGER_TERMS_PATH = `${LEDGER_DIR}/${LEDGER_TERMS}`;
+/** 束を置くフォルダ（この下に <鍵ID>/） */
+export const LEDGER_BUNDLES_PATH = `${LEDGER_DIR}/${LEDGER_BUNDLES}`;
+/** 取り下げの印のファイルの名前（鍵のフォルダに 1 つ） */
+export const LEDGER_RETIRED_FILE = "retired.json";
 
 /** 入力の上限（コードの定数）。束 1 つは塊が上限まであっても数百 KB に収まる */
 export const LEDGER_LIMITS = { fileBytes: 1024 * 1024, files: 20_000, jsonDepth: 8 } as const;
 
-/** 束の道：ledger/bundles/<鍵ID 16 桁>/<連番 6 桁>-<ハッシュ先頭 16>.json（ASCII の小文字と数字だけ） */
-export const LEDGER_BUNDLE_PATH = /^ledger\/bundles\/([0-9a-f]{16})\/(\d{6}-[0-9a-f]{16}\.json)$/;
+/** 束の道：ledger/ledger/bundles/<鍵ID 16 桁>/<連番 6 桁>-<ハッシュ先頭 16>.json（ASCII の小文字と数字だけ） */
+export const LEDGER_BUNDLE_PATH = /^ledger\/ledger\/bundles\/([0-9a-f]{16})\/(\d{6}-[0-9a-f]{16}\.json)$/;
+/** 取り下げの印の道：ledger/ledger/bundles/<鍵ID 16 桁>/retired.json */
+export const LEDGER_RETIRED_PATH = /^ledger\/ledger\/bundles\/([0-9a-f]{16})\/retired\.json$/;
+
+/** 鍵のフォルダの道（ledger/ledger/bundles/<鍵ID>） */
+export function ledgerKeyFolder(key: string): string {
+  return `${LEDGER_BUNDLES_PATH}/${key}`;
+}
+
+/** 取り下げの印の道（ledger/ledger/bundles/<鍵ID>/retired.json） */
+export function ledgerRetiredPath(key: string): string {
+  return `${ledgerKeyFolder(key)}/${LEDGER_RETIRED_FILE}`;
+}
 
 /** 台帳のリポジトリの中の 1 つの項目（読み手が作る）。道はリポジトリの根から / 区切り */
 export interface LedgerFile {
@@ -45,8 +66,24 @@ export interface LedgerBundleLine {
   reasons: string[];
   /** ファイルのバイト列の SHA-256 */
   hash: string | null;
-  /** ✓ の束の body（集計に使う） */
+  /** ✓ の束の body（集計に使う）。取り下げた鍵の束は ✓ でも null（k にも集計にも数えない） */
   body: BundleBody | null;
+  /** その鍵自身の署名の取り下げの印がある鍵の束（✓ のまま残し、数えない） */
+  retired?: true;
+}
+
+/** 取り下げの印（ledger/ledger/bundles/<鍵ID>/retired.json）の 1 行 */
+export interface LedgerRetiredLine {
+  path: string;
+  key: string;
+  status: "ok" | "ng";
+  reasons: string[];
+  /** ファイルのバイト列の SHA-256 */
+  hash: string | null;
+  /** 印に書いた最後の連番（✓ のときだけ） */
+  last: number | null;
+  /** 印を当てる前に、その鍵で鎖が ✓ だった最大の連番（無ければ 0）。足すときに last がこれより小さければ断る */
+  placedMax: number;
 }
 
 export interface LedgerRulesInfo {
@@ -66,6 +103,8 @@ export interface LedgerRulesInfo {
 export interface LedgerRead {
   ledger: LedgerRulesInfo;
   bundles: LedgerBundleLine[];
+  /** 取り下げの印（✓ の印の鍵は、k にも集計にも数えない） */
+  retired: LedgerRetiredLine[];
   /** 許した形の外の項目（ledger/ の下の、束でも決まりでも利用条件でもないもの） */
   others: { path: string; reasons: string[] }[];
   ok: boolean;
@@ -151,12 +190,12 @@ function kindReason(kind: LedgerFile["kind"]): string {
 }
 
 /**
- * 台帳を確かめる。files はリポジトリの中の項目（ledger/ の外のものは見ない）。
- * 決まり（ledger.json）が ✓ でなければ、どの束も ✗（理由 ledger）。束ごとに ✓ か理由つきの ✗ を出す。
+ * 台帳を確かめる。files はリポジトリの中の項目（ledger/ledger/ の外のものは見ない）。
+ * 決まり（ledger.json）が ✓ でなければ、どの束も ✗（理由 ledger）。束と取り下げの印ごとに ✓ か理由つきの ✗ を出す。
  */
 export function verifyLedgerFiles(files: readonly LedgerFile[], pack: { table: NationalTable; vocab: Vocab }): LedgerRead {
   const ledger: LedgerRulesInfo = { status: "missing", reasons: [], id: null, hash: null, rules: null, version: null, month: null, founder: null };
-  const out: LedgerRead = { ledger, bundles: [], others: [], ok: false };
+  const out: LedgerRead = { ledger, bundles: [], retired: [], others: [], ok: false };
   const inLedger = files.filter((f) => f.path === LEDGER_DIR || f.path.startsWith(`${LEDGER_DIR}/`));
 
   // 決まり
@@ -199,6 +238,11 @@ export function verifyLedgerFiles(files: readonly LedgerFile[], pack: { table: N
     if (f.path === LEDGER_JSON_PATH) continue;
     if (f.path === LEDGER_TERMS_PATH) {
       if (f.kind !== "file") out.others.push({ path: f.path, reasons: [kindReason(f.kind)] });
+      continue;
+    }
+    const rm = LEDGER_RETIRED_PATH.exec(f.path);
+    if (rm) {
+      out.retired.push(retiredLine(f, rm[1]!, ctx));
       continue;
     }
     const m = LEDGER_BUNDLE_PATH.exec(f.path);
@@ -245,16 +289,67 @@ export function verifyLedgerFiles(files: readonly LedgerFile[], pack: { table: N
   }
   // 鎖（輪の受け手と同じ関数）
   for (const list of byKey.values()) checkChain(list, prevOf);
-  for (const list of byKey.values()) for (const b of list) if (b.status !== "ok") b.body = null;
+  // 取り下げの印（readRing と同じ考え。Architect の 72）：その鍵自身の署名の印だけを受ける。
+  // 印の最後の連番より大きい束は ✗（盗んだ人が取り下げのあとに古い鍵で出し続ける道を止める）。印のある鍵の束は、✓ のまま残して数えない
+  for (const r of out.retired) {
+    const list = byKey.get(r.key) ?? [];
+    r.placedMax = Math.max(0, ...list.filter((b) => b.status === "ok" && b.seq !== null).map((b) => b.seq!));
+    if (r.status !== "ok" || r.last === null) continue;
+    for (const b of list) {
+      if (b.status !== "ok") continue;
+      if (b.seq !== null && b.seq > r.last) {
+        b.reasons.push("chain.afterRetired");
+        b.status = "ng";
+      } else b.retired = true;
+    }
+  }
+  for (const list of byKey.values()) for (const b of list) if (b.status !== "ok" || b.retired) b.body = null;
   out.bundles = [...byKey.values()].flat().sort((a, b) => (a.path < b.path ? -1 : 1));
-  out.ok = ledger.status === "ok" && out.others.length === 0 && out.bundles.every((b) => b.status === "ok");
+  out.retired.sort((a, b) => (a.path < b.path ? -1 : 1));
+  out.ok = ledger.status === "ok" && out.others.length === 0 && out.bundles.every((b) => b.status === "ok") && out.retired.every((r) => r.status === "ok");
   return out;
+}
+
+/**
+ * 取り下げの印を 1 つ確かめる。数え直し（recount）が、型（ring の代わりに ledger を持つ moyai.retired/0）・body.pub での署名・
+ * pub から作った鍵 ID と body.key・行き先（台帳 ID）を確かめる。道の鍵 ID と body の key が同じときだけ ✓（readRing と同じ 3 つの一致）
+ */
+function retiredLine(f: LedgerFile, key: string, ctx: ShareContext | null): LedgerRetiredLine {
+  const line: LedgerRetiredLine = { path: f.path, key, status: "ng", reasons: [], hash: null, last: null, placedMax: 0 };
+  if (f.kind !== "file") {
+    line.reasons.push(kindReason(f.kind));
+    return line;
+  }
+  if (f.bytes === null) {
+    line.reasons.push("file.tooLarge");
+    return line;
+  }
+  line.hash = sha256Hex(f.bytes);
+  if (!ctx) {
+    line.reasons.push("ledger");
+    return line;
+  }
+  if (jsonDepth(Buffer.from(f.bytes).toString("utf8")) > LEDGER_LIMITS.jsonDepth) {
+    line.reasons.push("file.tooDeep");
+    return line;
+  }
+  const r = recount(f.bytes, ctx);
+  const body = r.body as { key?: unknown; last?: unknown } | null;
+  if (r.kind !== "retired") line.reasons.push(...r.reasons, "file.notRetired");
+  else if (!isClean(r)) line.reasons.push(...r.reasons);
+  if (body && body.key !== key) line.reasons.push("file.otherFolder");
+  line.reasons = [...new Set(line.reasons)];
+  if (line.reasons.length === 0 && typeof body?.last === "number") {
+    line.status = "ok";
+    line.last = body.last;
+  } else if (line.reasons.length === 0) line.reasons.push("file.notRetired");
+  return line;
 }
 
 /**
  * 束 1 つを台帳の木に足したときに、受け手と同じ関数（verifyLedgerFiles）で ✓ になるか。✗ なら理由。
  * 出す側（アプリの ledger-send）と公開の台帳の受け口（services/ledger-intake）が、同じこの関数を使う。
- * files は台帳の木の ledger/ の下の項目（少なくとも ledger.json と、その束の鍵のフォルダ）。決まりが ✓ でなければ理由は ledger
+ * files は台帳の木の ledger/ledger/ の下の項目（少なくとも ledger.json と、その束の鍵のフォルダ）。決まりが ✓ でなければ理由は ledger
  */
 export function checkBundleAdded(
   files: readonly LedgerFile[],
@@ -265,8 +360,32 @@ export function checkBundleAdded(
   if (files.some((f) => f.path === path)) return { ok: false, reasons: ["ledger.exists"] };
   const read = verifyLedgerFiles([...files, { path, kind: "file", bytes }], pack);
   const line = read.bundles.find((b) => b.path === path);
+  // 取り下げた鍵には、もう足さない（✓ でも数えないので、載せる意味が無い）
+  if (line && line.status === "ok" && line.retired) return { ok: false, reasons: ["ledger.keyRetired"] };
   if (line && line.status === "ok" && read.ledger.status === "ok") return { ok: true };
   return { ok: false, reasons: line?.reasons.length ? line.reasons : read.ledger.reasons.length ? read.ledger.reasons : ["ledger"] };
+}
+
+/**
+ * 取り下げの印 1 つを台帳の木に足したときに ✓ になるか。✗ なら理由。束と同じく、出す側（CLI の ledger submit）・台帳の PR の検証・
+ * 受け口が同じこの関数を使う。印の最後の連番が、台帳に載った（鎖が ✓ の）その鍵の束の連番より小さければ断る
+ * （載った束を、印のあとの束にして ✗ にする書き方なので。輪の chain.retiredBelowKnown と同じ考え）
+ */
+export function checkRetiredAdded(
+  files: readonly LedgerFile[],
+  pack: { table: NationalTable; vocab: Vocab },
+  path: string,
+  bytes: Uint8Array,
+): { ok: true; key: string; last: number } | { ok: false; reasons: string[] } {
+  if (files.some((f) => f.path === path)) return { ok: false, reasons: ["ledger.retiredExists"] };
+  const read = verifyLedgerFiles([...files, { path, kind: "file", bytes }], pack);
+  const line = read.retired.find((r) => r.path === path);
+  if (!line) return { ok: false, reasons: ["path.notAllowed"] };
+  if (line.status !== "ok" || read.ledger.status !== "ok" || line.last === null) {
+    return { ok: false, reasons: line.reasons.length ? line.reasons : read.ledger.reasons.length ? read.ledger.reasons : ["ledger"] };
+  }
+  if (line.last < line.placedMax) return { ok: false, reasons: ["chain.retiredBelowKnown"] };
+  return { ok: true, key: line.key, last: line.last };
 }
 
 // ─── フォルダから読む ─────────────────────────────────────────
@@ -274,19 +393,22 @@ export function checkBundleAdded(
 export type LedgerDirRead = { ok: true; files: LedgerFile[] } | { ok: false; reason: "noLedgerDir" | "ledgerDirSymlink" | "tooManyFiles" };
 
 /**
- * 台帳のリポジトリの根のフォルダから、ledger/ の下の項目を読む。symlink（Windows の junction も）はたどらず、
+ * MOYAI のリポジトリ（の clone）の根のフォルダから、ledger/ledger/ の下の項目を読む。symlink（Windows の junction も）はたどらず、
  * 中身も読まずに symlink として返す。大きすぎるファイルは中身を読まない。
  */
 export async function readLedgerDir(root: string): Promise<LedgerDirRead> {
-  const base = join(root, LEDGER_DIR);
-  let st;
-  try {
-    st = await lstat(base);
-  } catch {
-    return { ok: false, reason: "noLedgerDir" };
+  // 台帳の根（ledger/）と、その下の ledger/ の、どちらかが symlink ならたどらない
+  for (const rel of [LEDGER_ROOT, LEDGER_DIR]) {
+    let st;
+    try {
+      st = await lstat(join(root, ...rel.split("/")));
+    } catch {
+      return { ok: false, reason: "noLedgerDir" };
+    }
+    if (st.isSymbolicLink()) return { ok: false, reason: "ledgerDirSymlink" };
+    if (!st.isDirectory()) return { ok: false, reason: "noLedgerDir" };
   }
-  if (st.isSymbolicLink()) return { ok: false, reason: "ledgerDirSymlink" };
-  if (!st.isDirectory()) return { ok: false, reason: "noLedgerDir" };
+  const base = join(root, ...LEDGER_DIR.split("/"));
   const files: LedgerFile[] = [];
   const walk = async (dir: string, rel: string): Promise<boolean> => {
     const entries = await readdir(dir, { withFileTypes: true });

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // 公開の台帳のデモの束を作る（docs/sharing.md §6）。架空の 10 施設の正解の世界から、本物の写し取りと署名で束を作り、
-// 出す台帳のフォルダ（ledger/ledger.json と ledger/bundles/）に書く。わざと外れた束 3 つ（k < 5・費用の欄・施設名）も別に書く。
+// 出す台帳のフォルダ（MOYAI のリポジトリの形。ledger/ledger/ledger.json と ledger/ledger/bundles/）に書く。わざと外れた束 3 つ（k < 5・費用の欄・施設名）も別に書く。
 // 鍵は走らせるたびに作り、秘密鍵は一時の状態のフォルダにだけ書く（場所を最後に出す）。GitHub には何も送らない（PR は人が出す）。
 //
-//   node scripts/ledger/build-bundles.mjs --out <出す台帳のリポジトリの根> [--rejects <外れた束のフォルダ>] [--month 2026-11]
+//   node scripts/ledger/build-bundles.mjs --out <出す先（MOYAI のリポジトリの形の根）> [--rejects <外れた束のフォルダ>] [--month 2026-11]
 //                                         [--state <状態のフォルダ>] [--ledger-json <前に作った ledger.json>]
 //
 // 芯（demo-core.ts）は TypeScript なので、Vite の SSR のビルドで状態のフォルダの下に 1 つの JS にしてから読む。
@@ -17,7 +17,7 @@ const REPO = resolve(HERE, "..", "..");
 
 const say = (m) => process.stderr.write(`${m}\n`);
 const USAGE =
-  "使い方：node scripts/ledger/build-bundles.mjs --out <出す台帳のリポジトリの根> [--rejects <外れた共有ファイルのフォルダ>] [--month YYYY-MM] [--state <状態のフォルダ>] [--ledger-json <ledger.json>]";
+  "使い方：node scripts/ledger/build-bundles.mjs --out <出す先（その下に ledger/ledger/ を作る）> [--rejects <外れた共有ファイルのフォルダ>] [--month YYYY-MM] [--state <状態のフォルダ>] [--ledger-json <ledger.json>]";
 
 function parse(argv) {
   const a = { out: null, rejects: null, month: "2026-11", state: null, ledgerJson: null };
@@ -72,8 +72,8 @@ async function main() {
     say(USAGE);
     return 2;
   }
-  if (existsSync(join(a.out, "ledger"))) {
-    say(`出す先にもう ledger/ があります：${a.out}（足すだけの台帳を上書きしません）`);
+  if (existsSync(join(a.out, "ledger", "ledger"))) {
+    say(`出す先にもう ledger/ledger/ があります：${a.out}（足すだけの台帳を上書きしません）`);
     return 2;
   }
   if (a.rejects && existsSync(a.rejects) && readdirSync(a.rejects).length > 0) {

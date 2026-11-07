@@ -138,7 +138,7 @@ function forged(body: Record<string, unknown>, pair: KeyPair): { text: string; f
 }
 
 export function buildLedgerDemo(i: DemoInput): DemoResult {
-  if (existsSync(join(i.out, LEDGER_DIR))) throw new Error("出す先にもう ledger/ がある（足すだけの台帳を上書きしない）");
+  if (existsSync(join(i.out, LEDGER_DIR))) throw new Error("出す先にもう ledger/ledger/ がある（足すだけの台帳を上書きしない）");
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(i.month)) throw new Error("月の形でない（YYYY-MM）");
   const p = loadSharePack(join(i.repo, "packs"), DEMO_PACK);
   if (!p.ok) throw new Error(`Skillパックを読めない（${p.reason}）`);

@@ -512,7 +512,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("q-contract").selectOption(PROFILE.contract);
       await expect(pa.getByText("公開時の表示")).toBeVisible();
       await expect(pa.getByTestId("you-steps")).toContainText("全国の");
-      await expect(pa.getByTestId("github-login")).toHaveText("未接続");
+      await expect(pa.getByTestId("github-login")).toHaveText("GitHub　未接続");
       await expect(pa.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
       await expect(pa.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続");
       await expect(pa.getByTestId("ledger-bottom")).toBeVisible();

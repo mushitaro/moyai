@@ -10,8 +10,9 @@ import { clientBucket } from "../../services/ledger-intake/src/limit";
 import { PACK_IDS, packOf } from "../../services/ledger-intake/src/packs";
 import worker from "../../services/ledger-intake/src/index";
 import { fakeLedgerGitHub, memoryKv } from "../helpers/intake-github";
+import { sendToIntake } from "../../src/bridge/ledger-intake";
 import { smallPlan, table, vocab } from "./share/fixtures";
-import { forge, makeLedger, makeSigner, sealLedger, type Sealed } from "./share/ledger-fixtures";
+import { forge, makeLedger, makeSigner, sealLedger, sealRetired, type Sealed } from "./share/ledger-fixtures";
 
 /** 試験だけのトークン（fine-grained の形。本物ではない） */
 const TOKEN = `github_pat_${"T3st".repeat(6)}_${"x".repeat(40)}`;
@@ -30,7 +31,7 @@ const b1 = sealLedger(L, B, smallPlan());
 
 const ledgerFiles = (bundles: readonly Sealed[]): Record<string, string> => ({
   [LEDGER_JSON_PATH]: L.text,
-  "ledger/TERMS.md": "【架空】試験の利用条件\n",
+  "ledger/ledger/TERMS.md": "【架空】試験の利用条件\n",
   ...Object.fromEntries(bundles.map((b) => [b.path, b.text])),
 });
 
@@ -45,14 +46,14 @@ interface Reply {
   status: number;
   headers: Headers;
   text: string;
-  body: { ok: boolean; pr?: { number: number; url: string }; reasons?: string[]; reasonsText?: string[] };
+  body: { ok: boolean; pr?: { number: number; url: string } | null; closed?: { number: number; url: string }[]; reasons?: string[]; reasonsText?: string[] };
 }
 
 function setup(onMain: readonly Sealed[] = [], envPatch: Partial<IntakeEnv> = {}) {
   const gh = fakeLedgerGitHub({ token: TOKEN, files: ledgerFiles(onMain) });
   const kv = memoryKv();
   let now = Date.UTC(2026, 10, 7, 3, 0, 0);
-  const env: IntakeEnv = { GITHUB_TOKEN: TOKEN, LEDGER_REPO: "ledger-owner/moyai-ledger", INTAKE_KV: kv, ...envPatch };
+  const env: IntakeEnv = { GITHUB_TOKEN: TOKEN, LEDGER_REPO: "ledger-owner/moyai", INTAKE_KV: kv, ...envPatch };
   const deps: IntakeDeps = { fetch: gh.fetch, now: () => now, packOf: (id) => (id === vocab.pack ? pack : null) };
   const replies: Reply[] = [];
   const submit = async (body: string | Uint8Array<ArrayBuffer> | null, o: { ip?: string | null; type?: string; method?: string; path?: string } = {}): Promise<Reply> => {
@@ -78,7 +79,7 @@ describe("受け口：束を受けて PR を出す", () => {
     const s = setup();
     const r = await s.submit(a1.text);
     expect(r.status).toBe(200);
-    expect(r.body).toEqual({ ok: true, pr: { number: 1, url: "https://github.com/ledger-owner/moyai-ledger/pull/1" } });
+    expect(r.body).toEqual({ ok: true, pr: { number: 1, url: "https://github.com/ledger-owner/moyai/pull/1" } });
     const pr = s.gh.prs[0]!;
     expect(pr.head).toBe(intakeBranch(a1.hash));
     expect(pr.head).toBe(`intake/${a1.hash.slice(0, 16)}`);
@@ -92,7 +93,7 @@ describe("受け口：束を受けて PR を出す", () => {
     // 届いた束は、台帳の Actions と同じ関数で ✓
     expect(actionsReasons([], a1)).toEqual([]);
     // 呼んだのは api.github.com だけ。書き込みは枝・ファイル・PR の 3 つ
-    expect(s.gh.calls.every((c) => c.url.startsWith("https://api.github.com/repos/ledger-owner/moyai-ledger"))).toBe(true);
+    expect(s.gh.calls.every((c) => c.url.startsWith("https://api.github.com/repos/ledger-owner/moyai"))).toBe(true);
     expect(s.writes().map((c) => `${c.method} ${new URL(c.url).pathname.split("/").slice(4, 6).join("/")}`)).toEqual(["POST git/refs", "PUT contents/ledger", "POST pulls"]);
   });
 
@@ -203,6 +204,105 @@ describe("受け口：断る", () => {
   });
 });
 
+describe("受け口：取り下げの印（retired.json。Architect の 72 の 4・5）", () => {
+  const prUrl = (n: number) => `https://github.com/ledger-owner/moyai/pull/${n}`;
+
+  it("その鍵の束の PR がまだマージされていなければ、PR を閉じて「本人が取り下げた」と書き、取り下げの PR は出さない", async () => {
+    const s = setup();
+    expect((await s.submit(a1.text)).body.pr).toEqual({ number: 1, url: prUrl(1) });
+    // ほかの鍵（B）の束の PR は閉じない
+    expect((await s.submit(b1.text)).body.pr).toEqual({ number: 2, url: prUrl(2) });
+    const before = s.writes().length;
+    const r = await s.submit(sealRetired(L, A, 1).text);
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ ok: true, pr: null, closed: [{ number: 1, url: prUrl(1) }] });
+    expect(s.gh.prs.map((p) => [p.number, p.state])).toEqual([
+      [1, "closed"],
+      [2, "open"],
+    ]);
+    expect(s.gh.prs[0]!.comments).toHaveLength(1);
+    expect(s.gh.prs[0]!.comments[0]).toContain("本人が取り下げました");
+    expect(s.gh.prs[0]!.comments[0]).toContain(A.key);
+    expect(s.gh.prs[1]!.comments).toEqual([]);
+    // 書いたのは、文と閉じる 2 つだけ（枝もファイルも PR も作らない）
+    expect(s.writes().slice(before).map((c) => `${c.method} ${new URL(c.url).pathname.split("/").slice(4).join("/")}`)).toEqual(["POST issues/1/comments", "PATCH pulls/1"]);
+  });
+
+  it("マージ済み（台帳に載った束がある）なら、取り下げの PR を出す。開いた次の束の PR は閉じる。届いた印は台帳の Actions と同じ関数で ✓", async () => {
+    const s = setup([a1]);
+    expect((await s.submit(a2.text)).body.pr).toEqual({ number: 1, url: prUrl(1) });
+    const own = sealRetired(L, A, 2);
+    const r = await s.submit(own.text);
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ ok: true, pr: { number: 2, url: prUrl(2) }, closed: [{ number: 1, url: prUrl(1) }] });
+    const pr = s.gh.prs[1]!;
+    expect(pr.head).toBe(intakeBranch(own.hash));
+    expect(Object.keys(pr.files)).toEqual([`ledger/ledger/bundles/${A.key}/retired.json`]);
+    expect(pr.files[own.path]!.toString("utf8")).toBe(own.text);
+    expect(pr.title).toContain(A.key);
+    expect(pr.body.split("\n")[0]).toBe("受け口から（GitHub のアカウントなし）");
+    expect(pr.body).toContain("#1");
+    // 台帳に印が載ると、A の束は ✓ のまま数えない
+    const files: LedgerFile[] = Object.entries(ledgerFiles([a1])).map(([path, text]) => ({ path, kind: "file", bytes: Buffer.from(text) }));
+    const read = verifyLedgerFiles([...files, { path: own.path, kind: "file", bytes: pr.files[own.path]! }], pack);
+    expect(read.ok).toBe(true);
+    expect(read.retired.map((x) => [x.key, x.status, x.last])).toEqual([[A.key, "ok", 2]]);
+    expect(read.bundles.find((b) => b.path === a1.path)).toMatchObject({ status: "ok", retired: true, body: null });
+    // 同じ印をもう一度：前の PR を返し、新しく出さない
+    const writes = s.writes().length;
+    const again = await s.submit(own.text);
+    expect(again.body).toEqual({ ok: true, pr: { number: 2, url: prUrl(2) }, closed: [] });
+    expect(s.writes()).toHaveLength(writes);
+  });
+
+  it("利用者のフォークから出た、その鍵の束の PR（GitHub の道）も閉じる。題に鍵 ID があっても、ほかの鍵のフォルダのファイルを持つ PR は閉じない", async () => {
+    const s = setup([a1]);
+    s.gh.prs.push(
+      { number: 1, head: "someone:moyai/bundle-x", base: "main", title: `共有ファイルを足す：鍵 ${A.key}・連番 2`, body: "", files: { [a2.path]: Buffer.from(a2.text) }, state: "open", merged: false, comments: [] },
+      { number: 2, head: "other:moyai/bundle-y", base: "main", title: `共有ファイルを足す：鍵 ${A.key}`, body: "", files: { [b1.path]: Buffer.from(b1.text) }, state: "open", merged: false, comments: [] },
+    );
+    const r = await s.submit(sealRetired(L, A, 2).text);
+    expect(r.body.closed).toEqual([{ number: 1, url: prUrl(1) }]);
+    expect(s.gh.prs.map((p) => p.state)).toEqual(["closed", "open", "open"]);
+    expect(r.body.pr).toEqual({ number: 3, url: prUrl(3) });
+  });
+
+  it("他人の鍵の署名の印・形の外れは 400（GitHub に書かない）。載った束より小さい最後の連番も 400", async () => {
+    const s = setup([a1, a2]);
+    const forged = await s.submit(sealRetired(L, A, 2, { by: B }).text);
+    expect(forged.status).toBe(400);
+    expect(forged.body.reasons).toContain("chain.badSignature");
+    const otherPub = await s.submit(sealRetired(L, A, 2, { by: B, pub: B.pair.pub }).text);
+    expect(otherPub.status).toBe(400);
+    expect(otherPub.body.reasons).toContain("chain.keyMismatch");
+    const otherLedger = await s.submit(sealRetired(L, A, 2, { ledger: "00000000000000aa" }).text);
+    expect(otherLedger.status).toBe(400);
+    expect(otherLedger.body.reasons).toContain("chain.otherDestination");
+    const below = await s.submit(sealRetired(L, A, 1).text);
+    expect(below.status).toBe(400);
+    expect(below.body.reasons).toEqual(["chain.retiredBelowKnown"]);
+    expect(below.body.reasonsText).toEqual([reasonText("chain.retiredBelowKnown")]);
+    expect(s.writes()).toHaveLength(0);
+    expect(s.gh.prs).toHaveLength(0);
+  });
+
+  it("束と同じ口・同じ IP の上限で数える", async () => {
+    const s = setup([a1]);
+    for (let i = 0; i < INTAKE_LIMITS.perHour; i++) expect((await s.submit("x")).status).toBe(400);
+    const r = await s.submit(sealRetired(L, A, 1).text);
+    expect(r.status).toBe(429);
+    expect(s.gh.calls).toHaveLength(0);
+  });
+
+  it("取り下げた鍵の束は、印が載ったあとは受けない（印の最後の連番より大きければ chain.afterRetired）", async () => {
+    const s = setup([a1, sealRetired(L, A, 1)]);
+    const r = await s.submit(a2.text);
+    expect(r.status).toBe(400);
+    expect(r.body.reasons).toContain("chain.afterRetired");
+    expect(s.gh.prs).toHaveLength(0);
+  });
+});
+
 describe("受け口：同じハッシュの束", () => {
   it("同じ中身の束は、前の PR を返して新しく出さない（PR が閉じていても）", async () => {
     const s = setup();
@@ -221,7 +321,7 @@ describe("受け口：同じハッシュの束", () => {
 
   it("前の試みが枝とファイルまで置いて止まっていたら、続きから PR を出す", async () => {
     const s = setup();
-    s.gh.failOn.add("POST /repos/ledger-owner/moyai-ledger/pulls");
+    s.gh.failOn.add("POST /repos/ledger-owner/moyai/pulls");
     const r1 = await s.submit(a1.text);
     expect(r1.status).toBe(502);
     expect(r1.body.reasons).toEqual(["intake.github"]);
@@ -256,6 +356,12 @@ describe("受け口：上限", () => {
     expect(over.status).toBe(429);
     expect(over.body.reasons).toEqual(["intake.rateLimited"]);
     expect(Number(over.headers.get("retry-after"))).toBeGreaterThan(0);
+    // 体にも同じ秒を入れる（アプリは「送信の上限（1 時間）　14:20 以降」をこの値から出す）
+    expect((over.body as { retryAfter?: number }).retryAfter).toBe(Number(over.headers.get("retry-after")));
+    const viaApp = await sendToIntake({ url: "https://intake.example", fetch: async (u, i) => handleRequest(new Request(u, { method: i.method, headers: { ...i.headers, "cf-connecting-ip": IP }, body: i.body ?? null }), s.env, s.deps) }, a1.text);
+    expect(viaApp).toMatchObject({ ok: false, reason: "rateLimited", reasons: ["intake.rateLimited"] });
+    expect(viaApp.ok === false && viaApp.retryAfter).toBeGreaterThan(0);
+    expect(viaApp.ok === false && viaApp.retryAfter).toBeLessThanOrEqual(3600);
     // 断った件も数えるので、正しい束でも断る
     expect((await s.submit(a1.text)).status).toBe(429);
     expect(s.gh.calls).toHaveLength(0);
@@ -298,7 +404,7 @@ describe("受け口：トークンと IP を出さない", () => {
     await s.submit(a1.text); // 同じハッシュ
     await s.submit("x"); // 形の外れ
     await s.submit(forge(a1, A, (b) => void ((b.chunks as Record<string, unknown>[])[0]!.cost = "1円")).text); // 台帳の検証で ✗
-    s.gh.failOn.add("GET /repos/ledger-owner/moyai-ledger/pulls");
+    s.gh.failOn.add("GET /repos/ledger-owner/moyai/pulls");
     await s.submit(b1.text); // GitHub が止まった
     expect(s.replies.map((r) => r.status)).toEqual([200, 200, 400, 400, 502]);
     for (const r of s.replies) {

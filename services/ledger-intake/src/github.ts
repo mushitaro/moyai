@@ -2,8 +2,10 @@
 // - 読む：台帳の既定のブランチの先の木から、ledger.json と、出した束と同じ鍵の束だけ（台帳の検証の CLI と同じく、100644 のファイルだけ中身を読む）。
 // - 前の PR：枝 intake/<ハッシュの頭 16 字> の PR（閉じたものも）。
 // - 出す：台帳のリポジトリに枝を作り、束のファイル 1 つを置き、PR を出す。途中で止まった前の試みが残っていても、同じ枝・同じファイルなら続きから出す。
+// - 取り下げ（Architect の 72）：その鍵の束の開いた PR を探し、「本人が取り下げた」と書いて閉じる。
+// 台帳は MOYAI のリポジトリの ledger/（2026-11-07 に移した）。木の道はリポジトリの根から（ledger/ledger/…）。
 // トークンは authorization の見出しにだけ入れる。答え・ログには出さない。fetch は差し替えられる（試験のため）。
-import { LEDGER_DIR, LEDGER_JSON_PATH, LEDGER_LIMITS, type LedgerFile } from "../../../src/share/ledger";
+import { LEDGER_BUNDLE_PATH, LEDGER_JSON_PATH, LEDGER_LIMITS, ledgerKeyFolder, type LedgerFile } from "../../../src/share/ledger";
 
 export const GITHUB_API = "https://api.github.com";
 const TIMEOUT_MS = 20_000;
@@ -90,7 +92,7 @@ export async function ledgerBase(gh: Gh): Promise<{ base: string; sha: string } 
 }
 
 /**
- * 台帳の木から、ledger.json と、その鍵のフォルダ（ledger/bundles/<鍵ID>/）の下の項目を読む。
+ * 台帳の木から、ledger.json と、その鍵のフォルダ（ledger/ledger/bundles/<鍵ID>/）の下の項目を読む。
  * 100644 の blob だけ中身を読み（上限を越えるものは読まない）、symlink・submodule・ほかの形は中身を読まずに形だけ返す。読めなければ null
  */
 export async function readLedgerFiles(gh: Gh, sha: string, key: string): Promise<LedgerFile[] | null> {
@@ -99,7 +101,7 @@ export async function readLedgerFiles(gh: Gh, sha: string, key: string): Promise
   const tj = obj(t.json);
   // 木が大きすぎて切られていたら、鍵の束を見落とすので受けない
   if (tj.truncated === true || !Array.isArray(tj.tree)) return null;
-  const folder = `${LEDGER_DIR}/bundles/${key}/`;
+  const folder = `${ledgerKeyFolder(key)}/`;
   const picked = tj.tree.map(obj).filter((e) => {
     const p = str(e.path);
     return p !== null && e.type !== "tree" && (p === LEDGER_JSON_PATH || p.startsWith(folder));
@@ -182,4 +184,41 @@ export async function openPr(gh: Gh, i: OpenPrInput): Promise<OpenPrResult> {
     if (found && found !== "error") return { ok: true, ...found };
   }
   return { ok: false, step: "pr" };
+}
+
+/** 開いた PR の一覧を読む頁の上限（1 頁 100 件） */
+export const OPEN_PR_PAGES = 5;
+
+/**
+ * その鍵の束の、開いた PR（受け口の PR も、利用者のフォークの PR も）。題か枝の名前に鍵 ID がある PR だけを候補にし、
+ * PR のファイルがすべてその鍵のフォルダの束（ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ>.json）のときだけ、その鍵の束の PR とする。
+ * 読めなければ "error"
+ */
+export async function openPrsOfKey(gh: Gh, key: string): Promise<PrRef[] | "error"> {
+  const out: PrRef[] = [];
+  const folder = `${ledgerKeyFolder(key)}/`;
+  for (let page = 1; page <= OPEN_PR_PAGES; page++) {
+    const r = await call(gh, "GET", `/pulls?state=open&per_page=100&page=${page}`);
+    if (!r || r.status !== 200 || !Array.isArray(r.json)) return "error";
+    for (const j of r.json.map(obj)) {
+      const pr = prOf(j);
+      const title = str(j.title) ?? "";
+      const ref = str(obj(j.head).ref) ?? "";
+      if (!pr || (!title.includes(key) && !ref.includes(key))) continue;
+      const f = await call(gh, "GET", `/pulls/${pr.number}/files?per_page=100`);
+      if (!f || f.status !== 200 || !Array.isArray(f.json)) return "error";
+      const names = f.json.map((x) => str(obj(x).filename));
+      if (names.length > 0 && names.every((n) => n !== null && n.startsWith(folder) && LEDGER_BUNDLE_PATH.test(n))) out.push(pr);
+    }
+    if (r.json.length < 100) break;
+  }
+  return out;
+}
+
+/** PR に文を書いて閉じる（本文はそのまま渡す）。できなければ false */
+export async function closePrWithComment(gh: Gh, number: number, comment: string): Promise<boolean> {
+  const c = await call(gh, "POST", `/issues/${number}/comments`, { body: comment });
+  if (!c || c.status !== 201) return false;
+  const p = await call(gh, "PATCH", `/pulls/${number}`, { state: "closed" });
+  return !!p && p.status === 200;
 }

@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { submitCli, validatePrCli } from "../../../src/cli/ledger";
 import { SPEC, TABLE_TEXT, VOCAB_TEXT, smallPlan } from "./fixtures";
-import { makeLedger, makeSigner, sealLedger, type Sealed } from "./ledger-fixtures";
+import { makeLedger, makeSigner, sealLedger, sealRetired, type Sealed } from "./ledger-fixtures";
 
 const L = makeLedger();
 const A = makeSigner();
@@ -45,8 +45,8 @@ beforeAll(() => {
   git(repo, "init", "-q", "-b", "main");
   git(repo, "config", "user.name", "moyai-test");
   git(repo, "config", "user.email", "test@example.invalid");
-  put(repo, "ledger/ledger.json", L.text);
-  put(repo, "ledger/TERMS.md", "【架空】試験の利用条件\n");
+  put(repo, "ledger/ledger/ledger.json", L.text);
+  put(repo, "ledger/ledger/TERMS.md", "【架空】試験の利用条件\n");
   put(repo, a1.path, a1.text);
   git(repo, "add", "-A");
   git(repo, "commit", "-q", "-m", "base");
@@ -115,5 +115,43 @@ describe("ledger submit", () => {
     writeFileSync(join(tmp, "bad.json"), "{");
     expect(await submitCli(["--bundle", join(tmp, "bad.json"), "--repo", repo], { packsDir, stdin: TTY })).toBe(1);
     expect(await submitCli(["--bundle", join(tmp, "無い.json"), "--repo", repo], { packsDir, stdin: TTY })).toBe(1);
+  });
+
+  it("取り下げの印（retired.json）も出せる：その鍵自身の署名なら枝を支度し、validate-pr でも ✓。他人の鍵の署名・載った束より小さい最後の連番は 1", async () => {
+    const own = sealRetired(L, A, 1);
+    writeFileSync(join(tmp, "retired-own.json"), own.text);
+    const forged = sealRetired(L, A, 1, { by: makeSigner() });
+    writeFileSync(join(tmp, "retired-forged.json"), forged.text);
+    const below = sealRetired(L, A, 0);
+    writeFileSync(join(tmp, "retired-below.json"), below.text);
+    expect(await submitCli(["--bundle", join(tmp, "retired-forged.json"), "--repo", repo], { packsDir, stdin: TTY })).toBe(1);
+    expect(await submitCli(["--bundle", join(tmp, "retired-below.json"), "--repo", repo], { packsDir, stdin: TTY })).toBe(1);
+    expect(git(repo, "branch", "--list", "moyai/retired-*")).toBe("");
+    const lines: string[] = [];
+    const spy = vi.spyOn(process.stderr, "write").mockImplementation((x: string | Uint8Array) => {
+      lines.push(String(x));
+      return true;
+    });
+    let code: number;
+    try {
+      code = await submitCli(["--bundle", join(tmp, "retired-own.json"), "--repo", repo], { packsDir, stdin: TTY });
+    } finally {
+      spy.mockRestore();
+    }
+    expect(code).toBe(0);
+    const branch = `moyai/retired-${A.key}`;
+    const out = lines.join("");
+    expect(out).toContain(`git -C "${repo}" push origin ${branch}`);
+    expect(git(repo, "status", "--porcelain")).toBe("");
+    expect(git(repo, "show", `${branch}:${own.path}`)).toBe(own.text);
+    expect(own.path).toBe(`ledger/ledger/bundles/${A.key}/retired.json`);
+    const bodyFile = /--body-file "([^"]+)"/.exec(out)![1]!;
+    const body = readFileSync(bodyFile, "utf8");
+    rmSync(bodyFile, { force: true });
+    expect(body).toContain(A.key);
+    expect(body).toContain(L.id);
+    const head = git(repo, "rev-parse", branch);
+    const base = git(repo, "rev-parse", "main");
+    expect(await validatePrCli(["--base", base, "--head", head, "--repo", repo], { packsDir })).toBe(0);
   });
 });

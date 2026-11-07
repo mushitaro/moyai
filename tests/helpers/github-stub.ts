@@ -42,7 +42,7 @@ const BASE_SHA = "a".repeat(40);
 
 export async function startGitHubStub(o: { login?: string; owner?: string; name?: string } = {}): Promise<GitHubStub> {
   const login = o.login ?? "moyai-test";
-  const upstream = { owner: o.owner ?? "ledger-owner", name: o.name ?? "moyai-ledger" };
+  const upstream = { owner: o.owner ?? "ledger-owner", name: o.name ?? "moyai" };
   let approved = false;
   let denied = false;
   const forks = new Set<string>();

@@ -606,7 +606,7 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
     const repo = join(extra, "台帳");
     buildLedgerDemo({ repo: fileURLToPath(new URL("../../", import.meta.url)), out: repo, state: join(extra, "demo-state"), month: "2026-11" });
     mkdirSync(join(repo, ".git"), { recursive: true });
-    writeFileSync(join(repo, ".git", "config"), `[remote "origin"]\n\turl = https://github.com/${"ledger-owner"}/moyai-ledger.git\n`);
+    writeFileSync(join(repo, ".git", "config"), `[remote "origin"]\n\turl = https://github.com/${"ledger-owner"}/moyai.git\n`);
     const stub = await startGitHubStub();
     try {
       const io: GitHubIo = { hosts: { web: stub.web, api: stub.api }, fetch: (u, i) => fetch(u, i), sleep: async () => {} };
@@ -628,7 +628,7 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
 
       // つなぐ前：誰からも見えるあなたは出るが、台帳の決まりを受け入れていないので束のバイト列は無く、送れない。施設の鍵はまだメモリだけ
       const pv0 = await call("ledgerPreview", { planId: plan.planId, answers });
-      expect(pv0).toMatchObject({ ok: true, github: { login: null, ready: true }, ledger: { repo: "ledger-owner/moyai-ledger", key: expect.stringMatching(/^[0-9a-f]{16}$/) } });
+      expect(pv0).toMatchObject({ ok: true, github: { login: null, ready: true }, ledger: { repo: "ledger-owner/moyai", key: expect.stringMatching(/^[0-9a-f]{16}$/) } });
       expect(existsSync(join(extra, "置き場所", "plans", plan.planId, "share"))).toBe(false);
       expect(pv0.view.blockers).toContain("noKey");
       expect(pv0.view.bodyHash).toBeNull();
@@ -698,14 +698,14 @@ describe("公開の台帳へ GitHub のアカウントなしで出す（受け�
     const repo = join(extra, "台帳");
     buildLedgerDemo({ repo: fileURLToPath(new URL("../../", import.meta.url)), out: repo, state: join(extra, "demo-state"), month: "2026-11" });
     mkdirSync(join(repo, ".git"), { recursive: true });
-    writeFileSync(join(repo, ".git", "config"), `[remote "origin"]\n\turl = https://github.com/${"ledger-owner"}/moyai-ledger.git\n`);
+    writeFileSync(join(repo, ".git", "config"), `[remote "origin"]\n\turl = https://github.com/${"ledger-owner"}/moyai.git\n`);
     // GitHub の代わり（メモリ）の main に、台帳の clone と同じファイルを置く
     const dir = await readLedgerDir(repo);
     if (!dir.ok) throw new Error(dir.reason);
     const onMain = Object.fromEntries(dir.files.filter((f) => f.kind === "file" && f.bytes).map((f) => [f.path, f.bytes!]));
     const token = `github_pat_${"Int4ke".repeat(4)}_${"y".repeat(40)}`;
     const gh = fakeLedgerGitHub({ token, files: onMain });
-    const env = { GITHUB_TOKEN: token, LEDGER_REPO: "ledger-owner/moyai-ledger", INTAKE_KV: memoryKv() };
+    const env = { GITHUB_TOKEN: token, LEDGER_REPO: "ledger-owner/moyai", INTAKE_KV: memoryKv() };
     const sentBodies: string[] = [];
     // 受け口（services/ledger-intake のハンドラそのもの。パックの部品は受け口に入れたもの）。送り手の IP は Cloudflare の入口が付ける見出しの代わり
     const ledgerIntake: IntakeIo = {
@@ -747,14 +747,14 @@ describe("公開の台帳へ GitHub のアカウントなしで出す（受け�
 
     // 人が押すと、束に署名して受け口へ送る。受け口が運営者のアカウントで PR を 1 つ出す
     const sent = await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash });
-    expect(sent).toMatchObject({ ok: true, pr: 1, seq: 1, url: "https://github.com/ledger-owner/moyai-ledger/pull/1" });
+    expect(sent).toMatchObject({ ok: true, pr: 1, seq: 1, url: "https://github.com/ledger-owner/moyai/pull/1" });
     expect(sentBodies).toHaveLength(1);
     const pr = gh.prs[0]!;
     expect(Object.keys(pr.files)).toEqual([sent.path]);
     expect(pr.files[sent.path]!.toString("utf8")).toBe(sentBodies[0]);
     expect(pr.head).toBe(`intake/${sent.hash.slice(0, 16)}`);
     expect(pr.body.split("\n")[0]).toBe("受け口から（GitHub のアカウントなし）");
-    expect(pr.body).toContain(sent.path.split("/")[2]);
+    expect(pr.body).toContain(sent.path.split("/")[3]);
     expect(pr.body).not.toContain(plan.displayName);
     // 届いた束は、受け手の関数（台帳の Actions と同じ）で ✓
     const after = verifyLedgerFiles([...dir.files, { path: sent.path, kind: "file", bytes: new Uint8Array(pr.files[sent.path]!) }], packOf("waste-incineration")!);
