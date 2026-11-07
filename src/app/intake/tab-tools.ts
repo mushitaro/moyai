@@ -423,6 +423,9 @@ function placeFacility(ws: IntakeWorkspace, pack: { id: string; name: string } |
  * デモの資料は、架空でない資料やほかのパックの資料と混ぜない。
  * Skillパックと施設名（demo はデモのもの、folder は AI が添えたもの）は、作業画面のその欄が空のときだけ置く（人が画面で選んだ・打ったものは上書きしない）。
  */
+/** 資料を入れたあと、読み終わるのを待つ上限（ツールの待ちの上限 30 秒より短く） */
+export const ADD_WAIT_MS = 20_000;
+
 export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<string, unknown>, fetchFile: FetchIntakeFile): Promise<TabToolResult> {
   const p = intakeAddFilesToTabSchema.safeParse(rawArgs);
   if (!p.success) return { ok: false, code: "tool_failed" };
@@ -450,7 +453,19 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
     if (!bytes || bytes.length !== f.size) refused.push({ name: f.name, reason: "changed" });
     else got.push({ name: f.name, size: bytes.length, bytes: async () => bytes });
   }
-  if (got.length) await ws.addFiles(got);
+  // 読み終わるまで待つのは 20 秒まで。資料が多い・大きいとき（北部CC の日報 5 冊など）は、入れたことだけを返し、
+  // 読込の進みは intake_survey が返す（ツールの待ちの上限を越えて「結果不明」にしない。11-07）
+  const reading = got.length ? ws.addFiles(got) : Promise.resolve();
+  const late = await Promise.race([reading.then(() => false), new Promise<boolean>((r) => setTimeout(() => r(true), ADD_WAIT_MS))]);
+  if (late) {
+    void reading.then(() => {
+      if (!ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });
+    });
+    ws.note("ai", T.filesAdded(demo, got.length, refused.length));
+    if (got.length && typeof location !== "undefined") location.hash = sheetHash("files");
+    const data = { added: got.map((f) => ({ name: f.name, sheets: null, rows: null })), refused };
+    return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
+  }
   // 要約を待ってから見る（worker のときは、読み終わった写しが届いてから【架空】の印が分かる）
   const after = await namesIn(ws);
   if (got.length && !ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });

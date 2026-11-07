@@ -328,7 +328,7 @@ export type IntakeAddFilesFromTab = z.infer<typeof intakeAddFilesFromTabSchema>;
 
 /** 結果に添える次の手（Claude Desktop では instructions が効かないので、結果にも書く） */
 export const INTAKE_ADD_NOTE =
-  "次は intake_survey で要約と質問を読み、質問は利用者に聞く。画像と文字の無い PDF の頁は写真の欄に並び、人が 1 枚ずつ許すまで AI には渡らない。確定は人が画面でする。";
+  "sheets と rows が null の資料は、まだ読込の途中（intake_survey の注記に進み）。次は intake_survey で要約と質問を読み、質問は利用者に聞く。画像と文字の無い PDF の頁は写真の欄に並び、人が 1 枚ずつ許すまで AI には渡らない。確定は人が画面でする。";
 
 /** 結果に Skill の目録を添えるツール */
 export const SKILL_CATALOG_TOOLS = ["intake_survey", "chart_rows", "check_results", "crosswalk_propose"] as const;
