@@ -40,6 +40,8 @@ export interface BridgeTools {
   ledger_version?: () => Promise<string | null>;
   /** 資料を作業画面に入れる：道を確かめて読む資料を選ぶ（中身は読まない。src/bridge/intake-files.ts）。文に値を添える誤りは ErrorBody で返す */
   intake_add_files?: (args: Record<string, unknown>) => Promise<IntakeCollection | ErrorCode | ErrorBody>;
+  /** 作業画面を既定のブラウザで開く（moyai start が開く手を渡したときだけ。試験の橋渡しには無い） */
+  work_screen_open?: () => Promise<Record<string, unknown> | ErrorCode>;
 }
 
 /** 作業画面に渡した資料の印が効く時間の余り（ツールの待ちの上限に足す） */
@@ -103,6 +105,8 @@ export type PhotoAllowOut = { ok: true; imageRef: string; sha256: string; at: st
 export class ToolRelay {
   /** 会話 → 読んだ星取表の行の数（答えを待つ間は、頼んだ数を先に取っておく） */
   private readonly rowsRead = new Map<string, number>();
+  /** 作業画面が開いていないときに橋渡しが開いた時刻（続けて開きすぎない） */
+  private autoOpenedAt = 0;
   private readonly outbound: OutboundEntry[] = [];
   private readonly totals = new Map<string, { calls: number; bytes: number; rows: number; imageBytes: number }>();
   /** 会話 → この会話で読んだ公開の台帳の集計（版と、中央の帯が出た「項目|作業」）。台帳を根拠にした周期の案を照らす */
@@ -257,7 +261,28 @@ export class ToolRelay {
     }
 
     const ms = this.timeouts[def.kind] ?? TOOL_TIMEOUTS[def.kind].ms;
-    const out = await this.tabs.callTool(name, sendArgs, conversation, remaining, ms, def.kind !== "read");
+    // 利用者が「立ち上げて」「画面を出して」と言ったとき（intake_survey の show）：橋渡しが作業画面を開いて前に出し、新しいタブがつながるのを待つ
+    if (name === "intake_survey" && "show" in sendArgs) {
+      const { show, ...rest } = sendArgs;
+      sendArgs = rest;
+      if (show === true && this.bridgeTools.work_screen_open) {
+        const before = this.tabs.session;
+        const opened = await this.bridgeTools.work_screen_open();
+        if (typeof opened !== "string" && opened.opened === true)
+          for (let i = 0; i < 40 && (!this.tabs.connected || this.tabs.session === before); i++) await new Promise((r) => setTimeout(r, 300));
+      }
+    }
+    let out = await this.tabs.callTool(name, sendArgs, conversation, remaining, ms, def.kind !== "read");
+    // 作業画面が開いていなければ、橋渡しが既定のブラウザで開き、タブがつながるのを待って 1 回だけ送り直す
+    // （利用者の「立ち上げて」で画面が前に出る。Claude に窓を探させない。11-07）。続けて開きすぎないよう、20 秒に 1 回まで
+    if (out.kind === "no_tab" && this.bridgeTools.work_screen_open && Date.now() - this.autoOpenedAt > 20_000) {
+      this.autoOpenedAt = Date.now();
+      const opened = await this.bridgeTools.work_screen_open();
+      if (typeof opened !== "string" && opened.opened === true) {
+        for (let i = 0; i < 40 && !this.tabs.connected; i++) await new Promise((r) => setTimeout(r, 300));
+        if (this.tabs.connected) out = await this.tabs.callTool(name, sendArgs, conversation, remaining, ms, def.kind !== "read");
+      }
+    }
     if (out.kind === "no_tab") return fail("work_screen_not_open");
     if (out.kind === "no_answer") return fail("tab_no_answer");
     if (out.kind === "error") return fail(out.code);

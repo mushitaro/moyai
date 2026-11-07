@@ -57,6 +57,8 @@ export interface BridgeOptions {
   human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId" | "ledgerIntake">;
   /** リポジトリの根（intake_add_files はこの中のフォルダを読まない）。無ければパックのフォルダの上 */
   repoRoot?: string;
+  /** 作業画面を既定のブラウザで開く手（moyai start が渡す。無ければ work_screen_open は opened: false、自動で開くこともしない） */
+  openUrl?: (url: string) => void;
   /** 止める合図（moyai uninstall か、古い版の橋渡しを替える中継）が来たとき（moyai start はプロセスを終える）。無ければ橋渡しを閉じるだけ */
   onStopRequest?: () => void;
   /** このビルドの commit。鍵ファイルに書き、中継が自分の版と比べる（違えば止めて替える）。無ければ書かない（版が分からない） */
@@ -178,6 +180,12 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     },
     // 資料を作業画面に入れる：道を確かめて資料を選ぶ（状態フォルダとリポジトリの中は読まない。中身は作業画面が経路で取りに来る）
     // 無い Skillパックは、選べる Skillパックの ID と名前を文に添えて返す（AI が利用者の業種に合うものを選び直せるように）
+    work_screen_open: async () => {
+      // 開く手が無い橋渡し（試験）は開かずに opened: false
+      if (!opts.openUrl) return { opened: false };
+      opts.openUrl(`http://${BIND_HOST}:${port}/`);
+      return { opened: true };
+    },
     intake_add_files: async (args) => {
       const c = collectIntake(args as { source: "demo" | "folder"; path?: string; pack?: string; facilityName?: string }, {
         packsDir,

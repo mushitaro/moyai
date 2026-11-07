@@ -21,7 +21,7 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 5. 照査の数字は丸めず言い換えず、出典を添えて説明します。自己点検であって、審査の判断ではありません。
 
-6. 橋渡しはツールを呼ぶと中継が起こし、直後の結果に workScreenUrl を添えます。作業画面が開いていなければ、その URL（既定 http://127.0.0.1:43110/）を開きます（シェルがあれば自分で開く）。
+6. 橋渡しはツールを呼ぶと中継が起こし、作業画面が開いていなければ橋渡しが開きます。利用者が「立ち上げて」「画面を出して」と言ったら intake_survey を show: true で呼びます（窓を探さない）。
 
 7. 資料は intake_add_files（利用者が言ったフォルダ。施設名と Skillパックも聞いて添える）で入れるか、利用者が作業画面にドロップします。チャットに添付させません。
 
@@ -45,7 +45,7 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 渡す：人が HOSHITORI で「署名して渡す」（編集を頼む・承認を頼む）を押すと、intake_survey の handoff に、MOYAI が用意したメールの文（宛先・件名・本文）が入る。利用者が送ってと言ったら、連携したメールから、その文のまま送る（決まり 1 の例外の 1 つめ。中身は版の場所とハッシュと、リンクの中のワンタイムトークン）。承認と差し戻しは人が画面で署名する。
 
-今動くのは intake_survey・intake_settle・intake_compose・intake_add_files・chart_rows・crosswalk_propose・chart_propose・photo_transcribe・check_results・peer_reference・reading_rules_propose・reading_skill_register・reading_skills_list です。ほかは名前と型だけがあり、呼ぶと「未実装」と返ります。
+今動くのは intake_survey・intake_settle・intake_compose・intake_add_files・chart_rows・crosswalk_propose・chart_propose・photo_transcribe・check_results・peer_reference・reading_rules_propose・reading_skill_register・reading_skills_list です。ほかは呼ぶと「未実装」と返ります。
 
 画面（「この画面は何？」と聞かれたら、これで答える）：
 
