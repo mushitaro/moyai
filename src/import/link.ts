@@ -99,6 +99,10 @@ export interface Linked {
 const numberOf = (c: { series: Series | null; tagNumber: number | null }): number | null =>
   c.series?.kind === "number" ? c.series.n : c.tagNumber;
 
+/** 号炉・系列の数がどちらにも書いてあって、違う（機器番号の末尾の数は見ない） */
+const seriesDiffer = (a: { series: Series | null }, b: { series: Series | null }): boolean =>
+  a.series?.kind === "number" && b.series?.kind === "number" && a.series.n !== b.series.n;
+
 /**
  * 機器が結ばれうる鍵：名前（名前の中の機器番号を分けた名前も）と機器番号。決まっていない機器の名前は、決定（番号を分ける・段・号）で
  * 変わりうるので、元の書き方と分けた形の両方を鍵にする。結ぶ相手は名前か機器番号が同じものだけなので、鍵の重ならない機器は待たせない
@@ -272,7 +276,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         pool = clusters.filter((c) => c.recs.some((x) => done.has(x.tableId) && x.level === r.level));
         scope = "global:";
       }
-      const cands = pool.filter((c) => nk(c.name) === key);
+      // 号炉・系列の数がどちらにも書いてあって違う機器（「1号炉 給水ポンプ」と「2号炉 給水ポンプ」）は、名前が同じでも別の機器。候補にしない
+      const cands = pool.filter((c) => nk(c.name) === key && !seriesDiffer(r, c));
       const sibs = recs.filter((x) => x.parentId === r.parentId && nk(x.name) === key && !x.pending && !x.excluded);
       const n = numberOf(r);
       let cand: Cluster | null = null;
@@ -300,7 +305,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       let options = cands;
       if (!cand && r.tag) {
         const tk = nk(r.tag);
-        const byTag = clusters.filter((c) => !!c.tag && nk(c.tag) === tk && c.recs.some((x) => done.has(x.tableId)));
+        const byTag = clusters.filter((c) => !!c.tag && nk(c.tag) === tk && !seriesDiffer(r, c) && c.recs.some((x) => done.has(x.tableId)));
         if (byTag.length === 1 && byTag[0]) {
           cand = byTag[0];
           pattern = nk(cand.name) === key ? "tagName" : "tagOnly";
@@ -314,6 +319,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const groups = new Map<string, Prop[]>();
     for (const p of props) if (p.pattern !== "skip") groups.set(p.pattern, [...(groups.get(p.pattern) ?? []), p]);
     const tableFile = recs[0]?.file ?? "";
+    // 同じ様式の表（頁ごと・資料ごとに同じ見出しの表）の、同じ結び方の問いは 1 問にまとめる（答えは様式の全部の表に当たる）
+    const fg = rec.formOf.get(tid);
+    const form = fg && fg.tables.length > 1 ? fg : null;
     const accepted = new Map<string, { c: Cluster; qid: string }>();
     const unmatched: Prop[] = [];
     for (const [pattern, ps] of groups) {
@@ -356,15 +364,16 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       const base = pattern.replace(/^global:/, "");
       const scopeNote = pattern.startsWith("global:") ? "（親どうしは結んでいない。名前と階層だけで当てた）" : "";
       const gkey = `assetLink|${tid}|${pattern}`;
+      const linkText = (where: string, n: number) => `${where} の機器 ${n} 件を、先の資料の機器と同じものとして結ぶか。結び方：${label[base] ?? base}${scopeNote}`;
       const a = ask.ask(gkey, {
         kind: "assetLink",
-        text: `${tableFile} の機器 ${ps.length} 件を、先の資料の機器と同じものとして結ぶか。結び方：${label[base] ?? base}${scopeNote}`,
+        text: linkText(tableFile, ps.length),
         options: YES_SPLIT,
         valueKind: "option",
         defaultAnswer: base === "uniqueNumberDiffers" || base === "tagOnly" ? "split" : "yes",
         sameShapeRows: ps.length,
         items: ps.map((p) => itemOfRec(p.r, p.cand ?? undefined)),
-      });
+      }, form ? { key: `assetLink|${form.key}|${pattern}`, text: (n) => linkText(filesLabel(form.files), n), always: true } : undefined);
       for (const p of ps) {
         if (!p.cand) continue;
         if (a === "yes") accepted.set(p.r.id, { c: p.cand, qid: questionIdOf(gkey) });
@@ -397,9 +406,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     // 先の資料に無い機器
     if (unmatched.length) {
       const ukey = `assetUnmatched|${tid}`;
+      const unmatchedText = (where: string, n: number) => `${where} の機器 ${n} 件は、先の資料に同じ名前の機器が無い。この資料だけの機器として入れるか`;
       const a = ask.ask(ukey, {
         kind: "assetUnmatched",
-        text: `${tableFile} の機器 ${unmatched.length} 件は、先の資料に同じ名前の機器が無い。この資料だけの機器として入れるか`,
+        text: unmatchedText(tableFile, unmatched.length),
         options: [
           { id: "yes", label: "この資料だけの機器として入れる" },
           { id: "exclude", label: "外す" },
@@ -408,7 +418,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         defaultAnswer: "yes",
         sameShapeRows: unmatched.length,
         items: unmatched.map((p) => itemOfRec(p.r)),
-      });
+      }, form ? { key: `assetUnmatched|${form.key}`, text: (n) => unmatchedText(filesLabel(form.files), n), always: true } : undefined);
       for (const p of unmatched) {
         if (a === "exclude") {
           p.r.excluded = "先の資料に無い機器（決定で外した）";

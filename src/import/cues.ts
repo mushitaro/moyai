@@ -139,14 +139,20 @@ export const cue = {
     const h = norm(header);
     const paren = /[(（]([^()（）]*)[)）]$/.exec(h)?.[1] ?? null;
     const inParen = (ws: readonly string[]) => paren !== null && ws.some((w) => norm(w).toLowerCase() === paren.toLowerCase());
-    const bareH = stripParen(h);
+    // 単位の語の後ろの計の語（「人工計」「延べ時間合計」）は、単位を変えない
+    const totals = normList([...CUES.rowRole.total, ...CUES.rowRole.totalExact]).sort((a, b) => b.length - a.length);
+    const dropTotal = (s: string) => {
+      const t = totals.find((w) => s.length > w.length && s.endsWith(w));
+      return t ? s.slice(0, -t.length) : s;
+    };
+    const bareH = dropTotal(stripParen(h));
     // 延べの人数の見出し（「延人員」）は、人・日を数えたもの
     if (CUES.headerUnit.manDays.some((w) => norm(w).length >= 3 && bareH.endsWith(norm(w)))) return "manDays";
     if (inParen(CUES.headerUnit.manDays)) return "manDays";
     if (inParen(CUES.headerUnit.hours)) return "hours";
-    // 括弧が無いとき：見出しそのものが単位の語を含む（「延べ時間」「作業時間」）
-    const bare = stripParen(h);
-    if (CUES.headerUnit.manDays.some((w) => bare.endsWith(norm(w)) && bare !== norm(w))) return "manDays";
+    // 括弧が無いとき：見出しそのものが単位の語を含む（「延べ時間」「作業時間」）。人・日の単位の語そのもの（「人工」「人日」）も人・日
+    const bare = bareH;
+    if (CUES.headerUnit.manDays.some((w) => bare.endsWith(norm(w)))) return "manDays";
     if (CUES.headerUnit.hours.some((w) => norm(w).length > 1 && bare.endsWith(norm(w)))) return "hours";
     return null;
   },

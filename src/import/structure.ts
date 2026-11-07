@@ -894,7 +894,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     legendRows: [],
     yearKind,
     issues,
-    form: `${shape}|${headerRows.map((r) => exactSig(rowTexts(ctx.idx, r))).join("\u0003")}`,
+    form: `${shape}|${headerRows.map((r) => formSig(rowTexts(ctx.idx, r))).join("\u0003")}`,
     ...(amountRows ? { amountRows } : {}),
   };
   if (shape === "tree") voteLevels(ctx, table);
@@ -1394,6 +1394,13 @@ function alignedUnderFirst(idx: CellIndex, block: number[]): boolean {
 }
 
 const exactSig = (cells: GridCell[]) => cells.map((c) => `${c.c}\u0001${norm(c.text)}`).join("\u0002");
+/**
+ * 様式の鍵の見出しの形：日付の見出し（工程表の日・週の列「2002/5/9」「12/11」）は、どの日かを除く。
+ * 期間だけ違う同じ様式の表（頁ごと・停止ごとの工程表）の問いを、1 問にまとめるため
+ */
+const formSig = (cells: GridCell[]) =>
+  cells.map((c) => `${c.c}\u0001${isDateHeader(c) ? "{日付}" : norm(c.text)}`).join("\u0002");
+const isDateHeader = (c: GridCell) => (c.type === "number" && isDateFormat(c.numFmt)) || (typeof c.value === "string" && (parseDateText(norm(c.text)) !== null || parseMonthDay(norm(c.text)) !== null));
 /** 頁ごとに変わる所（続きの印・頁の番号などの数）を除いた形 */
 const looseSig = (cells: GridCell[]) =>
   cells.map((c) => `${c.c}\u0001${norm(cue.stripContinued(c.text)).replace(/\d+/g, "#")}`).join("\u0002");
