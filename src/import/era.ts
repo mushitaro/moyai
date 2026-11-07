@@ -84,9 +84,19 @@ export function nfkc(s: string): string {
  * 日付の文字を読む。読めるのは年月日がそろった書き方だけ：
  * 2022/04/07・2022-4-7・2022.4.7・2022年4月7日・R4.4.6・R4/4/6・令和4年4月6日・令和元年5月1日。
  * 「昭和63年度末」「4月上旬」のように日に決まらないものは null。
+ * 後ろに曜日の括弧（「令和3年4月7日（水）」「2023/4/3(月曜日)」）があれば、その曜日が年月日の曜日と合うときだけ読む（合わなければ null。どちらが正しいか決めつけない）。
  */
 export function parseDateText(text: string): Ymd | null {
-  const s = nfkc(text).replace(/\s+/g, "");
+  const raw = nfkc(text).replace(/\s+/g, "");
+  const wd = /^(.+?)[(（]([日月火水木金土])(?:曜日?)?[)）]$/u.exec(raw);
+  if (!wd) return parseFullDate(raw);
+  const d = parseFullDate(wd[1] ?? "");
+  return d && WEEKDAYS[new Date(Date.UTC(d.y, d.m - 1, d.d)).getUTCDay()] === wd[2] ? d : null;
+}
+
+const WEEKDAYS = "日月火水木金土";
+
+function parseFullDate(s: string): Ymd | null {
   let m = /^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/.exec(s) ?? /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(s);
   if (m) {
     const y = Number(m[1]);
