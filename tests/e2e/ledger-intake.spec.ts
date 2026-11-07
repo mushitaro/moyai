@@ -108,7 +108,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await page.getByTestId("confirm-reason").fill("公開の台帳へ出す前の確定（e2e）");
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
-    await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+    await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await page.getByTestId("confirm-close").click();
     await page.getByTestId("tab-share").click();
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();

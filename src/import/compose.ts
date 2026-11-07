@@ -681,12 +681,23 @@ export function compose(
         for (const ref of r.refs) exclude(cellKey({ file: r.file, sheetIndex: r.sheetIndex, ref }), r.excluded ?? c.excluded, r.excluded && q ? [q] : []);
       }
     if (c.pending) for (const r of c.recs) for (const ref of r.refs) pend(cellKey({ file: r.file, sheetIndex: r.sheetIndex, ref }), lk.assetWaitingOn.get(r.id) ?? null);
+    // 結ぶかの問いに答えが無い機器（held）は、節は持つが、その問いを待つセルは未確定に見せる（答えのあるまで推測で決めない。
+    // 取り消した答えのセルが朱に戻る。11-07）。問いの無い held（先の資料の決定を待つだけ）はデータのまま数える
+    else if (c.held)
+      for (const r of c.recs) {
+        const q = lk.assetWaitingOn.get(r.id);
+        if (q) for (const ref of r.refs) pend(cellKey({ file: r.file, sheetIndex: r.sheetIndex, ref }), q);
+      }
   }
   for (const m of rec.marks) {
     const c = m.assetId ? lk.clusterOf.get(m.assetId) : undefined;
     const k = cellKey({ file: m.file, sheetIndex: m.sheetIndex, ref: m.ref });
     if (c?.excluded && !m.excluded) exclude(k, "機器を外した（決定）", assetExcludedQs(c));
     if (c?.pending) pend(k, c.recs.map((r) => lk.assetWaitingOn.get(r.id)).find((q) => !!q) ?? null);
+    else if (c?.held) {
+      const q = c.recs.map((r) => lk.assetWaitingOn.get(r.id)).find((x) => !!x);
+      if (q) pend(k, q);
+    }
   }
 
   // ─── 行き先を数える ───

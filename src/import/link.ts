@@ -411,8 +411,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           assetExcluded.set(p.r.id, p.r.excluded);
           assetExcludedBy.set(p.r.id, questionIdOf(ukey));
         } else if (a !== "yes") {
+          // 「この資料だけの機器か」に答えが無い機器は、1 冊のときと同じに読んだまま持つ（セルはデータのまま。問いを待つセルにしない。
+          // 資料を混ぜると後の資料が全部未確定になった 375t の形を戻さない。intake-many-v1）
           held.add(p.r.id);
-          assetWaitingOn.set(p.r.id, questionIdOf(ukey));
         }
         else (p.r as AssetRec & { unmatchedQ?: string }).unmatchedQ = questionIdOf(ukey);
       }
