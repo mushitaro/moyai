@@ -631,7 +631,9 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   for (let c = 1; c <= maxCol; c++) {
     const headerParts = columnHeader(ctx, headerRows, c);
     const header = headerParts.join(" / ");
-    cols.push({ c, role: "unknown", header, headerParts, cue: cue.column(headerParts[0] ?? ""), hidden: !!ctx.grid.cols[c]?.hidden });
+    // 列の役目は上の段の語で決める。上の段で決まらなければ下の段の語で決める（頁の頭書きの行が 2 段の見出しの上の段に入った表：「完成図書 第3編 機器仕様一覧表 / 機器名称」）
+    const colCue = cue.column(headerParts[0] ?? "") ?? (headerParts.length >= 2 ? cue.column(headerParts[headerParts.length - 1] ?? "") : null);
+    cols.push({ c, role: "unknown", header, headerParts, cue: colCue, hidden: !!ctx.grid.cols[c]?.hidden });
   }
   for (const col of cols) ruleForColumn(ctx, col, dataRows);
   // 数の並びだけの日付の列は、規則が無くても、その書き方で読む（規則で決めた書き方が先）
