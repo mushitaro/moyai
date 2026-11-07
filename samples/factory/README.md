@@ -69,4 +69,6 @@ cd samples/factory && /tmp/venv/bin/python -I -X utf8 -m unittest discover -s te
 - どの機器にも、計画の窓（2026〜2028 年度）に予定が入るようにした。入れた欠け（6 つ）は変えていない。
 - 工事報告書に載せる作業の型は、前のまま（定期整備・精密機能検査・排ガス処理設備の点検・通風機の分解整備）。
 
+動画の撮り直し用の世界（ほたる川クリーンセンター。ストーカ式 2 炉、令和 6〜8 年度、機器台帳・星取表・作業日報の 3 種）は `world/rules-hotarugawa.json` だけで作る。通常の作り直しには入れない（`build.py --rules rules-hotarugawa.json` か `video_world.py`）。置き場所は `video/world/hotarugawa/`（`video/world/README.md`）。呼び名を替えた機器は 火格子・バグフィルタ・誘引送風機・蒸気タービン。
+
 公開の台帳のデモの架空の 10 施設（`ledger_worlds.py`）は、厚くする前の決まり `world/rules-ledger-base.json` を土台にする。本物の台帳のリポジトリに載せた束と、リポジトリの正解の世界を食い違わせないため。

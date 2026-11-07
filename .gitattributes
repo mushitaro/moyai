@@ -5,6 +5,9 @@
 samples/** -text
 # Skillパックのデモの資料（samples/ から写したもの。改行も変えず、パッチでもバイト列で運ぶ）
 packs/*/demo/*.csv binary
+# 動画の世界の資料（作り手が書いたバイト列のまま。CSV は Shift_JIS・CRLF）
+video/world/hotarugawa/** -text
+video/world/hotarugawa/*.csv binary
 tests/fixtures/** -text
 demo-ring/** -text
 ledger/** -text

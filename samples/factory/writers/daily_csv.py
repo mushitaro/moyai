@@ -51,7 +51,9 @@ def write_daily(world: dict, path: Path) -> dict:
     recs.sort(key=lambda x: (x[0], x[1][0]["id"]))
 
     columns = [world["facility"].get("line_header", c) if c == "号炉" else c for c in COLUMNS]
-    lines = [[TITLE], AUTHOR.split(","), ["出力日", date_text(today, "wareki_kanji")], [], columns]
+    # 作成者の欄：決まりに daily_author（日報システムの持ち主の名前）があればそれ。無ければ今までの文
+    author = ["作成者", f"{world['rules']['daily_author']} 日報システム"] if "daily_author" in world["rules"] else AUTHOR.split(",")
+    lines = [[TITLE], author, ["出力日", date_text(today, "wareki_kanji")], [], columns]
     header_line = len(lines)
     truth_rows = []
     for d, ws in recs:

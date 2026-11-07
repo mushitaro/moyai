@@ -38,13 +38,13 @@ def _photo_marks(rep: dict) -> list[dict]:
     return marks
 
 
-def build_with_counts(root: Path, pdf: bool = True) -> tuple[list[Path], dict]:
+def build_with_counts(root: Path, pdf: bool = True, rules_files: tuple = RULES_FILES) -> tuple[list[Path], dict]:
     """root の下に out / truth / facts を作る。(書いたファイルの一覧, 数えた結果) を返す。"""
     written: list[Path] = []
     counts = {"pdf_expected": 0, "pdf_made": 0, "pdf_not_made": 0,
               "photo_expected": 0, "photo_made": 0, "photo_not_made": 0, "not_made_reason": None}
     soffice = find_soffice() if pdf else None
-    for rules_file in RULES_FILES:
+    for rules_file in rules_files:
         world = build_world(load_rules(HERE / "world" / rules_file))
         fac = world["facility"]
         docs = set(world["documents"])
@@ -133,16 +133,17 @@ def build_with_counts(root: Path, pdf: bool = True) -> tuple[list[Path], dict]:
     return written, counts
 
 
-def build(root: Path, pdf: bool = True) -> list[Path]:
-    return build_with_counts(root, pdf)[0]
+def build(root: Path, pdf: bool = True, rules_files: tuple = RULES_FILES) -> list[Path]:
+    return build_with_counts(root, pdf, rules_files)[0]
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", type=Path, default=HERE.parent, help="out / truth / facts を置く samples のフォルダ")
+    ap.add_argument("--rules", action="append", default=None, help="作る決まりのファイル（world/ の下の名前）。何度でも書ける。無ければ既定の全部。動画の世界は rules-hotarugawa.json")
     ap.add_argument("--no-pdf", action="store_true", help="PDF と写真を作らない（作れなかった数に数える）")
     a = ap.parse_args()
-    files, counts = build_with_counts(a.root, pdf=not a.no_pdf)
+    files, counts = build_with_counts(a.root, pdf=not a.no_pdf, rules_files=tuple(a.rules) if a.rules else RULES_FILES)
     for f in files:
         print(f.relative_to(a.root).as_posix())
     print(f"PDF: 作った {counts['pdf_made']} / 作れなかった {counts['pdf_not_made']}"

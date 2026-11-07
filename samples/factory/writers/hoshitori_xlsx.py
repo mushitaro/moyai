@@ -174,8 +174,10 @@ def write_hoshitori(world: dict, path: Path) -> dict:
         "merged_ranges": merged_ranges,
         "equipment_names": {e["id"]: e["base_name"] for e in eq},
         "year_columns": year_cols,
-        "era_switch": {"from_label": col_of[2019]["label"], "to_label": col_of[2020]["label"],
-                       "note": "2019 年度を H31、2020 年度を R2 と書く。令和元年度は 2019 年度に当たる"},
+        # 年号の切り替え（平成 → 令和）をまたぐ年度の幅のときだけ書く（令和だけの幅の世界には無い）
+        "era_switch": ({"from_label": col_of[2019]["label"], "to_label": col_of[2020]["label"],
+                        "note": "2019 年度を H31、2020 年度を R2 と書く。令和元年度は 2019 年度に当たる"}
+                       if 2019 in col_of and 2020 in col_of else None),
         "rows": rows,
         "merged_system_ranges": merged_systems,
         "ditto_cells": [f"{get_column_letter(furn_col)}{first + i}" for i, v in enumerate(ditto_in) if v == DITTO],

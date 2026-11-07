@@ -17,5 +17,5 @@
     "skipLibCheck": true,
     "types": ["node", "vite/client"]
   },
-  "include": ["src", "tests/**/*.ts", "tests/**/*.tsx", "vite.config.ts", "vite.cli.config.ts", "vitest.config.ts", "playwright.config.ts", "scripts/build-stamp.d.mts"]
+  "include": ["src", "tests/**/*.ts", "tests/**/*.tsx", "video/world/*.ts", "vite.config.ts", "vite.cli.config.ts", "vitest.config.ts", "playwright.config.ts", "scripts/build-stamp.d.mts"]
 }

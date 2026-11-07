@@ -1,0 +1,2549 @@
+{
+ "schema": "moyai.factory.rules/0",
+ "world_version": "video-v1",
+ "seed": 20261107,
+ "today": "2026-04-01",
+ "fiscal_years": {
+  "from": 2024,
+  "to": 2026
+ },
+ "plan_window": {
+  "fy_from": 2026,
+  "fy_to": 2026
+ },
+ "man_day_hours": 8,
+ "facility": {
+  "id": "hotaru-video",
+  "pack": "waste-incineration",
+  "name": "【架空】ほたる川クリーンセンター",
+  "furnace_type": "ストーカ式",
+  "furnaces": [
+   {
+    "no": 1,
+    "label": "1号炉"
+   },
+   {
+    "no": 2,
+    "label": "2号炉"
+   }
+  ]
+ },
+ "systems": [
+  {
+   "key": "recv",
+   "name": "受入供給設備"
+  },
+  {
+   "key": "comb",
+   "name": "燃焼設備"
+  },
+  {
+   "key": "cool",
+   "name": "燃焼ガス冷却設備"
+  },
+  {
+   "key": "flue",
+   "name": "排ガス処理設備"
+  },
+  {
+   "key": "draft",
+   "name": "通風設備"
+  },
+  {
+   "key": "heat",
+   "name": "余熱利用設備"
+  },
+  {
+   "key": "ashout",
+   "name": "灰出し設備"
+  },
+  {
+   "key": "elec",
+   "name": "電気設備"
+  },
+  {
+   "key": "inst",
+   "name": "計装設備"
+  }
+ ],
+ "equipment_templates": [
+  {
+   "key": "scale",
+   "name": "計量機",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.SCALE",
+   "tag": "SCL",
+   "install": 2002,
+   "spec": [
+    "ロードセル式 30 t",
+    "2 台"
+   ]
+  },
+  {
+   "key": "crane",
+   "name": "ごみクレーン",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.CRANE",
+   "tag": "CRN",
+   "install": 2002,
+   "spec": [
+    "バケット容量 4 m3",
+    "吊上荷重 6 t"
+   ]
+  },
+  {
+   "key": "shredder",
+   "name": "可燃性粗大ごみ切断機",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.SHREDDER",
+   "tag": "SHR",
+   "install": 2002,
+   "spec": [
+    "2 軸せん断式",
+    "処理能力 5 t/h"
+   ]
+  },
+  {
+   "key": "grate",
+   "name": "火格子",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_GRATE",
+   "tag": "STK",
+   "install": 2002,
+   "spec": [
+    "階段式 3 段",
+    "火格子面積 18 m2"
+   ]
+  },
+  {
+   "key": "furnace",
+   "name": "焼却炉本体",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_FURNACE",
+   "tag": "FNC",
+   "install": 2002,
+   "spec": [
+    "処理能力 75 t/日",
+    "耐火物 キャスタブル"
+   ],
+   "parts": [
+    {
+     "name": "耐火物",
+     "spec": [
+      "炉壁 キャスタブル",
+      "補修周期 3 年"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "boiler",
+   "name": "ボイラ",
+   "system": "cool",
+   "scope": "furnace",
+   "code": "WI.COOL.BOILER",
+   "tag": "BLR",
+   "install": 2002,
+   "spec": [
+    "自然循環式",
+    "蒸気圧力 3.0 MPa"
+   ]
+  },
+  {
+   "key": "condenser",
+   "name": "蒸気復水器",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.CONDENSER",
+   "tag": "CND",
+   "install": 2003,
+   "spec": [
+    "空冷式",
+    "処理蒸気量 25 t/h"
+   ]
+  },
+  {
+   "key": "dust",
+   "name": "バグフィルタ",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.DUST",
+   "tag": "BGF",
+   "install": 2002,
+   "spec": [
+    "ろ過式",
+    "ろ布面積 1,200 m2"
+   ]
+  },
+  {
+   "key": "hcl",
+   "name": "HCL、SOx 除去設備",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.HCL_SOX",
+   "tag": "DSC",
+   "install": 2002,
+   "spec": [
+    "乾式 消石灰吹込",
+    "処理ガス量 28,000 m3N/h"
+   ]
+  },
+  {
+   "key": "nox",
+   "name": "NOx 除去設備",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.NOX",
+   "tag": "NXR",
+   "install": 2008,
+   "spec": [
+    "無触媒脱硝",
+    "尿素水噴霧"
+   ]
+  },
+  {
+   "key": "fdf",
+   "name": "押込送風機",
+   "system": "draft",
+   "scope": "furnace",
+   "code": "WI.DRAFT.FDF",
+   "tag": "FDF",
+   "install": 2002,
+   "spec": [
+    "ターボ形",
+    "風量 1,200 m3/min"
+   ],
+   "parts": [
+    {
+     "name": "電動機",
+     "spec": [
+      "90 kW"
+     ]
+    },
+    {
+     "name": "旧電動機",
+     "spec": [
+      "90 kW"
+     ],
+     "furnace_only": 2,
+     "remark": "2021年12月 撤去（新品に取替）"
+    }
+   ]
+  },
+  {
+   "key": "idf",
+   "name": "誘引送風機",
+   "system": "draft",
+   "scope": "furnace",
+   "code": "WI.DRAFT.IDF",
+   "tag": "IDF",
+   "install": 2002,
+   "spec": [
+    "ターボ形",
+    "風量 2,100 m3/min"
+   ],
+   "parts": [
+    {
+     "name": "電動機",
+     "spec": [
+      "200 kW 4 極"
+     ]
+    },
+    {
+     "name": "軸受",
+     "spec": [
+      "すべり軸受"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "turbine",
+   "name": "蒸気タービン",
+   "system": "heat",
+   "scope": "common",
+   "code": "WI.HEAT.TURBINE",
+   "tag": "TBN",
+   "install": 2003,
+   "spec": [
+    "復水式",
+    "定格出力 1,990 kW"
+   ]
+  },
+  {
+   "key": "ashcrane",
+   "name": "灰クレーン",
+   "system": "ashout",
+   "scope": "common",
+   "code": "WI.ASHOUT.ASH_CRANE",
+   "tag": "ACR",
+   "install": 2002,
+   "spec": [
+    "バケット容量 2 m3",
+    "吊上荷重 4 t"
+   ]
+  },
+  {
+   "key": "substation",
+   "name": "受変電配電設備",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.SUBSTATION",
+   "tag": "SUB",
+   "install": 2002,
+   "spec": [
+    "受電 6.6 kV",
+    "変圧器 3 台"
+   ]
+  },
+  {
+   "key": "generator",
+   "name": "発電機",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.GENERATOR",
+   "tag": "GEN",
+   "install": 2003,
+   "spec": [
+    "非常用 ディーゼル",
+    "出力 300 kVA"
+   ]
+  },
+  {
+   "key": "dcs",
+   "name": "DCS",
+   "system": "inst",
+   "scope": "common",
+   "code": "WI.INST.DCS",
+   "tag": "DCS",
+   "install": 2002,
+   "spec": [
+    "監視操作卓 3 台",
+    "制御盤 4 面"
+   ]
+  },
+  {
+   "key": "pitdoor",
+   "name": "ごみ投入扉",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.CRANE",
+   "tag": "PTD",
+   "install": 2002,
+   "spec": [
+    "観音開き式",
+    "油圧駆動"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+   ]
+  },
+  {
+   "key": "cbucket",
+   "name": "ごみクレーン用バケット",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.CRANE",
+   "tag": "CBK",
+   "install": 2002,
+   "spec": [
+    "油圧開閉式",
+    "容量 4 m3"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "deodor",
+   "name": "ごみピット脱臭装置",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.CRANE",
+   "tag": "DEO",
+   "install": 2004,
+   "spec": [
+    "活性炭吸着式",
+    "風量 300 m3/min"
+   ]
+  },
+  {
+   "key": "sdp",
+   "name": "計量データ処理装置",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.SCALE",
+   "tag": "SDP",
+   "install": 2015,
+   "spec": [
+    "計量票印字",
+    "計量票 自動発行"
+   ]
+  },
+  {
+   "key": "scv",
+   "name": "切断機搬送コンベヤ",
+   "system": "recv",
+   "scope": "common",
+   "code": "WI.RECV.SHREDDER",
+   "tag": "SCV",
+   "install": 2002,
+   "spec": [
+    "ベルト式 幅 900 mm",
+    "電動機 7.5 kW"
+   ]
+  },
+  {
+   "key": "hopper",
+   "name": "ごみ投入ホッパ",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_GRATE",
+   "tag": "HOP",
+   "install": 2002,
+   "spec": [
+    "ブリッジ解除装置付",
+    "容量 40 m3"
+   ]
+  },
+  {
+   "key": "feeder",
+   "name": "給じん装置",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_GRATE",
+   "tag": "FDR",
+   "install": 2002,
+   "spec": [
+    "プッシャ式",
+    "油圧駆動"
+   ]
+  },
+  {
+   "key": "ghu",
+   "name": "火格子駆動油圧装置",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_GRATE",
+   "tag": "GHU",
+   "install": 2002,
+   "spec": [
+    "油圧ポンプ 2 台",
+    "作動油 VG46"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "siftconv",
+   "name": "落じんコンベヤ",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_GRATE",
+   "tag": "SFC",
+   "install": 2002,
+   "spec": [
+    "スクリュー式",
+    "電動機 2.2 kW"
+   ]
+  },
+  {
+   "key": "burner",
+   "name": "助燃バーナ",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_FURNACE",
+   "tag": "BNR",
+   "install": 2002,
+   "spec": [
+    "灯油焚き",
+    "燃焼量 200 L/h"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "pusher",
+   "name": "灰押出装置",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_FURNACE",
+   "tag": "APS",
+   "install": 2002,
+   "spec": [
+    "湿式",
+    "油圧駆動"
+   ]
+  },
+  {
+   "key": "fcam",
+   "name": "炉内監視カメラ",
+   "system": "comb",
+   "scope": "furnace",
+   "code": "WI.COMB.STK_FURNACE",
+   "tag": "FCM",
+   "install": 2012,
+   "spec": [
+    "水冷ケース入り",
+    "カラー 1 台"
+   ]
+  },
+  {
+   "key": "bfp",
+   "name": "ボイラ給水ポンプ",
+   "system": "cool",
+   "scope": "furnace",
+   "code": "WI.COOL.BOILER",
+   "tag": "BFP",
+   "install": 2002,
+   "spec": [
+    "多段渦巻式",
+    "電動機 75 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "sht",
+   "name": "過熱器",
+   "system": "cool",
+   "scope": "furnace",
+   "code": "WI.COOL.BOILER",
+   "tag": "SHT",
+   "install": 2002,
+   "spec": [
+    "2 段",
+    "伝熱面積 600 m2"
+   ]
+  },
+  {
+   "key": "eco",
+   "name": "節炭器",
+   "system": "cool",
+   "scope": "furnace",
+   "code": "WI.COOL.BOILER",
+   "tag": "ECO",
+   "install": 2002,
+   "spec": [
+    "裸管式",
+    "伝熱面積 900 m2"
+   ]
+  },
+  {
+   "key": "sbw",
+   "name": "スートブロワ",
+   "system": "cool",
+   "scope": "furnace",
+   "code": "WI.COOL.BOILER",
+   "tag": "SBW",
+   "install": 2002,
+   "spec": [
+    "長抜差式",
+    "蒸気噴射式"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+   ]
+  },
+  {
+   "key": "cbd",
+   "name": "連続ブロー装置",
+   "system": "cool",
+   "scope": "furnace",
+   "code": "WI.COOL.BOILER",
+   "tag": "CBD",
+   "install": 2002,
+   "spec": [
+    "流量調節弁付",
+    "ブロー率 2 %"
+   ]
+  },
+  {
+   "key": "fwh",
+   "name": "ボイラ給水予熱器",
+   "system": "cool",
+   "scope": "furnace",
+   "code": "WI.COOL.BOILER",
+   "tag": "FWH",
+   "install": 2002,
+   "spec": [
+    "シェルアンドチューブ式",
+    "伝熱面積 40 m2"
+   ]
+  },
+  {
+   "key": "dea",
+   "name": "脱気器",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.BOILER",
+   "tag": "DEA",
+   "install": 2002,
+   "spec": [
+    "加圧式",
+    "容量 15 m3"
+   ]
+  },
+  {
+   "key": "bci",
+   "name": "ボイラ水薬注装置",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.BOILER",
+   "tag": "BCI",
+   "install": 2002,
+   "spec": [
+    "清缶剤・脱酸素剤",
+    "定量ポンプ式"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "hsh",
+   "name": "高圧蒸気だめ",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.BOILER",
+   "tag": "HSH",
+   "install": 2002,
+   "spec": [
+    "第一種圧力容器",
+    "最高使用圧力 3.0 MPa"
+   ]
+  },
+  {
+   "key": "pwu",
+   "name": "純水装置",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.BOILER",
+   "tag": "PWU",
+   "install": 2002,
+   "spec": [
+    "イオン交換式",
+    "処理水量 5 m3/h"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "fwt",
+   "name": "ボイラ給水タンク",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.BOILER",
+   "tag": "FWT",
+   "install": 2002,
+   "spec": [
+    "容量 30 m3",
+    "SUS 製"
+   ]
+  },
+  {
+   "key": "cdt",
+   "name": "復水タンク",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.CONDENSER",
+   "tag": "CDT",
+   "install": 2003,
+   "spec": [
+    "容量 20 m3",
+    "SUS 製"
+   ]
+  },
+  {
+   "key": "cdp",
+   "name": "復水ポンプ",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.CONDENSER",
+   "tag": "CDP",
+   "install": 2003,
+   "spec": [
+    "横軸渦巻式",
+    "電動機 30 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "cdf",
+   "name": "蒸気復水器ファン",
+   "system": "cool",
+   "scope": "common",
+   "code": "WI.COOL.CONDENSER",
+   "tag": "CDF",
+   "install": 2003,
+   "spec": [
+    "軸流式",
+    "インバータ駆動"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+   ]
+  },
+  {
+   "key": "bpj",
+   "name": "集じん器逆洗装置",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.DUST",
+   "tag": "BPJ",
+   "install": 2002,
+   "spec": [
+    "パルスジェット式",
+    "圧縮空気式"
+   ]
+  },
+  {
+   "key": "bdv",
+   "name": "集じん器ダスト排出装置",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.DUST",
+   "tag": "BDV",
+   "install": 2002,
+   "spec": [
+    "ロータリーバルブ",
+    "電動機 0.75 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "lmf",
+   "name": "消石灰供給装置",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.HCL_SOX",
+   "tag": "LMF",
+   "install": 2002,
+   "spec": [
+    "定量切出機",
+    "ロータリーフィーダ"
+   ]
+  },
+  {
+   "key": "lms",
+   "name": "消石灰貯留サイロ",
+   "system": "flue",
+   "scope": "common",
+   "code": "WI.FLUE.HCL_SOX",
+   "tag": "LMS",
+   "install": 2002,
+   "spec": [
+    "容量 60 m3",
+    "SS 製"
+   ]
+  },
+  {
+   "key": "lmb",
+   "name": "消石灰輸送ブロワ",
+   "system": "flue",
+   "scope": "common",
+   "code": "WI.FLUE.HCL_SOX",
+   "tag": "LMB",
+   "install": 2002,
+   "spec": [
+    "ルーツ式",
+    "電動機 22 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "acf",
+   "name": "活性炭供給装置",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.DIOXIN",
+   "tag": "ACF",
+   "install": 2002,
+   "spec": [
+    "定量切出機",
+    "ロータリーフィーダ"
+   ]
+  },
+  {
+   "key": "acs",
+   "name": "活性炭貯留サイロ",
+   "system": "flue",
+   "scope": "common",
+   "code": "WI.FLUE.DIOXIN",
+   "tag": "ACS",
+   "install": 2002,
+   "spec": [
+    "容量 15 m3",
+    "SS 製"
+   ]
+  },
+  {
+   "key": "urp",
+   "name": "尿素水噴霧ポンプ",
+   "system": "flue",
+   "scope": "furnace",
+   "code": "WI.FLUE.NOX",
+   "tag": "URP",
+   "install": 2008,
+   "spec": [
+    "プランジャ式",
+    "電動機 1.5 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "urt",
+   "name": "尿素水貯槽",
+   "system": "flue",
+   "scope": "common",
+   "code": "WI.FLUE.NOX",
+   "tag": "URT",
+   "install": 2008,
+   "spec": [
+    "容量 10 m3",
+    "FRP 製"
+   ]
+  },
+  {
+   "key": "sfd",
+   "name": "二次押込送風機",
+   "system": "draft",
+   "scope": "furnace",
+   "code": "WI.DRAFT.FDF",
+   "tag": "SFD",
+   "install": 2002,
+   "spec": [
+    "ターボ形",
+    "電動機 55 kW"
+   ]
+  },
+  {
+   "key": "aph",
+   "name": "空気予熱器",
+   "system": "draft",
+   "scope": "furnace",
+   "code": "WI.DRAFT.FDF",
+   "tag": "APH",
+   "install": 2002,
+   "spec": [
+    "蒸気式",
+    "伝熱面積 300 m2"
+   ]
+  },
+  {
+   "key": "grf",
+   "name": "排ガス循環送風機",
+   "system": "draft",
+   "scope": "furnace",
+   "code": "WI.DRAFT.IDF",
+   "tag": "GRF",
+   "install": 2010,
+   "spec": [
+    "ターボ形",
+    "電動機 37 kW"
+   ]
+  },
+  {
+   "key": "dmp",
+   "name": "煙道ダンパ",
+   "system": "draft",
+   "scope": "furnace",
+   "code": "WI.DRAFT.IDF",
+   "tag": "DMP",
+   "install": 2002,
+   "spec": [
+    "電動バタフライ式",
+    "口径 1,600 mm"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+   ]
+  },
+  {
+   "key": "stack",
+   "name": "煙突",
+   "system": "draft",
+   "scope": "common",
+   "code": "WI.DRAFT.IDF",
+   "tag": "STC",
+   "install": 2002,
+   "spec": [
+    "外筒 RC 造 59 m",
+    "内筒 2 本"
+   ]
+  },
+  {
+   "key": "tlo",
+   "name": "タービン潤滑油装置",
+   "system": "heat",
+   "scope": "common",
+   "code": "WI.HEAT.TURBINE",
+   "tag": "TLO",
+   "install": 2003,
+   "spec": [
+    "主油ポンプ・補助油ポンプ",
+    "油量 3 m3"
+   ]
+  },
+  {
+   "key": "tbv",
+   "name": "タービンバイパス弁",
+   "system": "heat",
+   "scope": "common",
+   "code": "WI.HEAT.TURBINE",
+   "tag": "TBV",
+   "install": 2003,
+   "spec": [
+    "減温減圧装置付",
+    "口径 150 mm"
+   ]
+  },
+  {
+   "key": "gsc",
+   "name": "グランド蒸気復水器",
+   "system": "heat",
+   "scope": "common",
+   "code": "WI.HEAT.TURBINE",
+   "tag": "GSC",
+   "install": 2003,
+   "spec": [
+    "表面式",
+    "伝熱面積 20 m2"
+   ]
+  },
+  {
+   "key": "hwx",
+   "name": "場内給湯熱交換器",
+   "system": "heat",
+   "scope": "common",
+   "code": "WI.HEAT.TURBINE",
+   "tag": "HWX",
+   "install": 2003,
+   "spec": [
+    "プレート式",
+    "伝熱面積 15 m2"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "acv",
+   "name": "主灰搬出コンベヤ",
+   "system": "ashout",
+   "scope": "furnace",
+   "code": "WI.ASHOUT.ASH_CRANE",
+   "tag": "ACV",
+   "install": 2002,
+   "spec": [
+    "エプロン式",
+    "電動機 3.7 kW"
+   ]
+  },
+  {
+   "key": "abk",
+   "name": "灰クレーン用バケット",
+   "system": "ashout",
+   "scope": "common",
+   "code": "WI.ASHOUT.ASH_CRANE",
+   "tag": "ABK",
+   "install": 2002,
+   "spec": [
+    "油圧開閉式",
+    "容量 1.5 m3"
+   ]
+  },
+  {
+   "key": "fcv",
+   "name": "飛灰搬送コンベヤ",
+   "system": "ashout",
+   "scope": "common",
+   "code": "WI.ASHOUT.FLYASH_TREAT",
+   "tag": "FCV",
+   "install": 2002,
+   "spec": [
+    "チェーン式",
+    "電動機 3.7 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "fsl",
+   "name": "飛灰貯留槽",
+   "system": "ashout",
+   "scope": "common",
+   "code": "WI.ASHOUT.FLYASH_TREAT",
+   "tag": "FSL",
+   "install": 2002,
+   "spec": [
+    "容量 40 m3",
+    "SS 製"
+   ]
+  },
+  {
+   "key": "knd",
+   "name": "飛灰混練機",
+   "system": "ashout",
+   "scope": "common",
+   "code": "WI.ASHOUT.FLYASH_TREAT",
+   "tag": "KND",
+   "install": 2002,
+   "spec": [
+    "2 軸パドル式",
+    "電動機 30 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "chl",
+   "name": "キレート剤添加装置",
+   "system": "ashout",
+   "scope": "common",
+   "code": "WI.ASHOUT.FLYASH_TREAT",
+   "tag": "CHL",
+   "install": 2002,
+   "spec": [
+    "定量ポンプ式",
+    "タンク 2 m3"
+   ]
+  },
+  {
+   "key": "tcv",
+   "name": "処理物搬出コンベヤ",
+   "system": "ashout",
+   "scope": "common",
+   "code": "WI.ASHOUT.FLYASH_TREAT",
+   "tag": "TCV",
+   "install": 2002,
+   "spec": [
+    "ベルト式",
+    "電動機 2.2 kW"
+   ]
+  },
+  {
+   "key": "ehv",
+   "name": "特別高圧受電盤",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.SUBSTATION",
+   "tag": "EHV",
+   "install": 2002,
+   "spec": [
+    "66 kV",
+    "屋内キュービクル形"
+   ]
+  },
+  {
+   "key": "mtr",
+   "name": "主変圧器",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.SUBSTATION",
+   "tag": "MTR",
+   "install": 2002,
+   "spec": [
+    "油入自冷式 5,000 kVA",
+    "66/6.6 kV"
+   ]
+  },
+  {
+   "key": "hvp",
+   "name": "高圧配電盤",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.SUBSTATION",
+   "tag": "HVP",
+   "install": 2002,
+   "spec": [
+    "6.6 kV",
+    "閉鎖形"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+   ]
+  },
+  {
+   "key": "lvp",
+   "name": "低圧動力盤",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.SUBSTATION",
+   "tag": "LVP",
+   "install": 2002,
+   "spec": [
+    "440 V",
+    "閉鎖形"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L"
+   ]
+  },
+  {
+   "key": "dcp",
+   "name": "直流電源装置",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.SUBSTATION",
+   "tag": "DCP",
+   "install": 2002,
+   "spec": [
+    "蓄電池 100 V",
+    "制御弁式鉛蓄電池"
+   ]
+  },
+  {
+   "key": "ups",
+   "name": "無停電電源装置",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.SUBSTATION",
+   "tag": "UPS",
+   "install": 2002,
+   "spec": [
+    "30 kVA",
+    "常時インバータ給電"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "key": "egn",
+   "name": "非常用発電機",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.GENERATOR",
+   "tag": "EGN",
+   "install": 2002,
+   "spec": [
+    "ディーゼル 500 kVA",
+    "燃料 A 重油"
+   ]
+  },
+  {
+   "key": "gcb",
+   "name": "発電機遮断器",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.GENERATOR",
+   "tag": "GCB",
+   "install": 2003,
+   "spec": [
+    "真空遮断器",
+    "定格 6.6 kV"
+   ]
+  },
+  {
+   "key": "exc",
+   "name": "励磁装置",
+   "system": "elec",
+   "scope": "common",
+   "code": "WI.ELEC.GENERATOR",
+   "tag": "EXC",
+   "install": 2003,
+   "spec": [
+    "ブラシレス",
+    "自動電圧調整器付"
+   ]
+  },
+  {
+   "key": "cop",
+   "name": "中央操作盤",
+   "system": "inst",
+   "scope": "common",
+   "code": "WI.INST.DCS",
+   "tag": "COP",
+   "install": 2002,
+   "spec": [
+    "ディスプレイ 6 面",
+    "二重化"
+   ]
+  },
+  {
+   "key": "gan",
+   "name": "排ガス分析計",
+   "system": "inst",
+   "scope": "furnace",
+   "code": "WI.INST.DCS",
+   "tag": "GAN",
+   "install": 2002,
+   "spec": [
+    "CO・O2・NOx・HCl",
+    "連続式"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D"
+   ]
+  },
+  {
+   "key": "tic",
+   "name": "炉内温度計",
+   "system": "inst",
+   "scope": "furnace",
+   "code": "WI.INST.DCS",
+   "tag": "TIC",
+   "install": 2002,
+   "spec": [
+    "熱電対 K",
+    "挿入長 1,000 mm"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+   ]
+  },
+  {
+   "key": "fic",
+   "name": "流量計",
+   "system": "inst",
+   "scope": "furnace",
+   "code": "WI.INST.DCS",
+   "tag": "FIC",
+   "install": 2002,
+   "spec": [
+    "差圧式",
+    "伝送器付"
+   ],
+   "units": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+   ]
+  },
+  {
+   "key": "plc",
+   "name": "炉制御盤",
+   "system": "inst",
+   "scope": "furnace",
+   "code": "WI.INST.DCS",
+   "tag": "PLC",
+   "install": 2002,
+   "spec": [
+    "PLC 二重化",
+    "二重化"
+   ]
+  },
+  {
+   "key": "itv",
+   "name": "ITV 設備",
+   "system": "inst",
+   "scope": "common",
+   "code": "WI.INST.DCS",
+   "tag": "ITV",
+   "install": 2012,
+   "spec": [
+    "カメラ 24 台",
+    "録画装置付"
+   ]
+  },
+  {
+   "key": "iac",
+   "name": "計装用空気圧縮機",
+   "system": "inst",
+   "scope": "common",
+   "code": "WI.INST.DCS",
+   "tag": "IAC",
+   "install": 2002,
+   "spec": [
+    "スクリュー式",
+    "電動機 22 kW"
+   ],
+   "units": [
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "documents": [
+  "ledger",
+  "hoshitori",
+  "daily"
+ ],
+ "daily_author": "【架空】ほたる保全",
+ "ledger": {
+  "numbering": true,
+  "name_format": "{name}（{tag}）",
+  "tag_furnace_suffix": true,
+  "install_style": "seireki"
+ },
+ "contractors": [
+  {
+   "id": "C1",
+   "name": "【架空】ほたる保全",
+   "from": "2022-04-01"
+  },
+  {
+   "id": "C2",
+   "name": "【架空】かわせ機工",
+   "from": "2019-04-01"
+  },
+  {
+   "id": "C3",
+   "name": "【架空】つきみ環境サービス",
+   "from": "2019-04-01"
+  },
+  {
+   "id": "C4",
+   "name": "【架空】あけぼの電設",
+   "from": "2019-04-01"
+  }
+ ],
+ "outage": {
+  "note": "全休止。2 炉とも止めて、共通の設備を整備する年の決まり",
+  "years": [
+   2024,
+   2026
+  ],
+  "start_md": "09-14",
+  "days": 14,
+  "furnace_overhaul": {
+   "1": {
+    "anchor": "outage_start",
+    "offset_days": -14
+   },
+   "2": {
+    "anchor": "outage_end",
+    "offset_days": 3
+   }
+  }
+ },
+ "patterns": [
+  {
+   "id": "P-OVH",
+   "label": "定期整備（分解）",
+   "attr": "OVERHAUL",
+   "tag": "ANNUAL",
+   "targets": [
+    "grate",
+    "furnace",
+    "boiler"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": {
+     "1": "04-06",
+     "2": "10-05"
+    },
+    "follow_outage": true
+   },
+   "days": {
+    "1": 12,
+    "2": 12
+   },
+   "crew": {
+    "base": 3,
+    "jitter": 1
+   },
+   "contractor": "C1",
+   "bundle": true
+  },
+  {
+   "id": "P-PREC",
+   "label": "精密機能検査",
+   "attr": "INSPECT",
+   "tag": "PRECISION",
+   "targets": [
+    "furnace"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 3,
+    "from": {
+     "1": 2024,
+     "2": 2025
+    }
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": {
+     "1": "06-01",
+     "2": "08-17"
+    }
+   },
+   "days": {
+    "1": 5,
+    "2": 5
+   },
+   "crew": {
+    "base": 4,
+    "jitter": 1
+   },
+   "contractor": "C1",
+   "bundle": false
+  },
+  {
+   "id": "P-FLUE",
+   "label": "排ガス処理設備の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "dust",
+    "hcl",
+    "nox"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C1",
+   "bundle": true
+  },
+  {
+   "id": "P-DRAFT",
+   "label": "通風機の分解整備",
+   "attr": "OVERHAUL",
+   "tag": "ANNUAL",
+   "targets": [
+    "fdf",
+    "idf"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 2,
+    "from": {
+     "1": 2024,
+     "2": 2024
+    }
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 3,
+    "jitter": 1
+   },
+   "contractor": "C1",
+   "bundle": true
+  },
+  {
+   "id": "P-CRANE",
+   "label": "ごみクレーンの年次点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "crane"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "05-12"
+   },
+   "days": 3,
+   "crew": {
+    "base": 3,
+    "jitter": 0
+   },
+   "contractor": "C1",
+   "bundle": false
+  },
+  {
+   "id": "P-SCALE",
+   "label": "計量機の定期検査",
+   "attr": "INSPECT",
+   "tag": "LEGAL",
+   "targets": [
+    "scale"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "07-08"
+   },
+   "days": 2,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C1",
+   "bundle": false
+  },
+  {
+   "id": "P-SHRED",
+   "label": "切断機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "shredder"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "07-14"
+   },
+   "days": 3,
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C1",
+   "bundle": false
+  },
+  {
+   "id": "P-ASHCRANE",
+   "label": "灰クレーンの年次点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "ashcrane"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "05-26"
+   },
+   "days": 3,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C1",
+   "bundle": false
+  },
+  {
+   "id": "P-OUT-ELEC",
+   "label": "全休止の電気・計装の点検",
+   "attr": "INSPECT",
+   "tag": "SHUTDOWN",
+   "targets": [
+    "substation",
+    "generator",
+    "dcs"
+   ],
+   "per": "common",
+   "schedule": {
+    "kind": "outage"
+   },
+   "crew": {
+    "base": 4,
+    "jitter": 1
+   },
+   "contractor": "C1",
+   "bundle": true
+  },
+  {
+   "id": "P-OUT-TURB",
+   "label": "全休止のタービン系の分解整備",
+   "attr": "OVERHAUL",
+   "tag": "SHUTDOWN",
+   "targets": [
+    "turbine",
+    "condenser"
+   ],
+   "per": "common",
+   "schedule": {
+    "kind": "outage"
+   },
+   "crew": {
+    "base": 5,
+    "jitter": 1
+   },
+   "contractor": "C1",
+   "bundle": true
+  },
+  {
+   "id": "P-UPG-DCS",
+   "label": "DCS の更新（基幹改良）",
+   "attr": "UPGRADE",
+   "tag": "MAJOR",
+   "targets": [
+    "dcs"
+   ],
+   "per": "common",
+   "schedule": {
+    "kind": "dates",
+    "dates": [
+     [
+      "2025-10-14",
+      "2026-02-27"
+     ]
+    ]
+   },
+   "crew": {
+    "base": 4,
+    "jitter": 0
+   },
+   "contractor": "C1",
+   "bundle": false,
+   "note_text": "基幹改良"
+  },
+  {
+   "id": "P-REPL-PAST",
+   "label": "押込送風機の電動機取替",
+   "attr": "REPLACE",
+   "tag": "REPLACEMENT",
+   "targets": [
+    "fdf"
+   ],
+   "per": "furnace",
+   "only_furnace": 2,
+   "schedule": {
+    "kind": "dates",
+    "dates": [
+     [
+      "2025-12-01",
+      "2025-12-12"
+     ]
+    ]
+   },
+   "crew": {
+    "base": 4,
+    "jitter": 0
+   },
+   "contractor": null,
+   "bundle": false,
+   "note_text": "電動機取替"
+  },
+  {
+   "id": "P-REPL-FUT",
+   "label": "誘引送風機の取替",
+   "attr": "REPLACE",
+   "tag": "REPLACEMENT",
+   "targets": [
+    "idf"
+   ],
+   "per": "furnace",
+   "only_furnace": 1,
+   "schedule": {
+    "kind": "dates",
+    "dates": [
+     [
+      "2027-02-01",
+      "2027-02-26"
+     ]
+    ]
+   },
+   "crew": {
+    "base": 5,
+    "jitter": 0
+   },
+   "contractor": "C1",
+   "bundle": false,
+   "note_text": "取替"
+  },
+  {
+   "id": "P-COMB-AUX",
+   "label": "燃焼設備の補機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "hopper",
+    "feeder",
+    "ghu",
+    "siftconv",
+    "burner",
+    "pusher",
+    "fcam"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-BLR-AUX",
+   "label": "ボイラ補機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "sht",
+    "eco",
+    "cbd",
+    "fwh"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-BFP",
+   "label": "ボイラ給水ポンプの点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "bfp"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 2,
+    "from": {
+     "1": 2024,
+     "2": 2025
+    }
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C2",
+   "bundle": false
+  },
+  {
+   "id": "P-BFP-OVH",
+   "label": "ボイラ給水ポンプの分解整備",
+   "attr": "OVERHAUL",
+   "tag": "ANNUAL",
+   "targets": [
+    "bfp"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 2,
+    "from": {
+     "1": 2025,
+     "2": 2024
+    }
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 3,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": false
+  },
+  {
+   "id": "P-SBW-OVH",
+   "label": "スートブロワの分解整備",
+   "attr": "OVERHAUL",
+   "tag": "ANNUAL",
+   "targets": [
+    "sbw"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 2,
+    "from": {
+     "1": 2025,
+     "2": 2024
+    }
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 3,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-FLUE-AUX",
+   "label": "排ガス処理補機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "bpj",
+    "bdv",
+    "lmf",
+    "acf",
+    "urp"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C3",
+   "bundle": true
+  },
+  {
+   "id": "P-DRAFT-AUX",
+   "label": "通風補機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "sfd",
+    "aph",
+    "grf",
+    "dmp"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-ACV",
+   "label": "主灰搬出コンベヤの点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "acv"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C3",
+   "bundle": false
+  },
+  {
+   "id": "P-INST-CAL",
+   "label": "計装の年次校正",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "gan",
+    "tic",
+    "fic",
+    "plc"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C4",
+   "bundle": true
+  },
+  {
+   "id": "P-RECV-AUX",
+   "label": "受入供給設備の補機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "pitdoor",
+    "cbucket",
+    "deodor",
+    "sdp",
+    "scv"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "11-10"
+   },
+   "days": 3,
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-COND-SYS",
+   "label": "復水系の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "dea",
+    "bci",
+    "hsh",
+    "pwu",
+    "fwt",
+    "cdt"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "11-24"
+   },
+   "days": 4,
+   "crew": {
+    "base": 3,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-CDP-OVH",
+   "label": "復水ポンプ・復水器ファンの分解整備",
+   "attr": "OVERHAUL",
+   "tag": "ANNUAL",
+   "targets": [
+    "cdp",
+    "cdf"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2025
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "12-08"
+   },
+   "days": 5,
+   "crew": {
+    "base": 3,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-CHEM",
+   "label": "薬剤貯留設備の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "lms",
+    "lmb",
+    "acs",
+    "urt"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "06-16"
+   },
+   "days": 2,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C3",
+   "bundle": true
+  },
+  {
+   "id": "P-STACK",
+   "label": "煙突の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "stack"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "09-01"
+   },
+   "days": 4,
+   "crew": {
+    "base": 3,
+    "jitter": 0
+   },
+   "contractor": "C2",
+   "bundle": false
+  },
+  {
+   "id": "P-HEAT-AUX",
+   "label": "タービン補機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "tlo",
+    "tbv",
+    "gsc",
+    "hwx"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "03-02"
+   },
+   "days": 3,
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-FLY",
+   "label": "飛灰処理設備の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "abk",
+    "fcv",
+    "fsl",
+    "chl",
+    "tcv"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "06-20"
+   },
+   "days": 3,
+   "crew": {
+    "base": 2,
+    "jitter": 1
+   },
+   "contractor": "C3",
+   "bundle": true
+  },
+  {
+   "id": "P-KND-OVH",
+   "label": "飛灰混練機の分解整備",
+   "attr": "OVERHAUL",
+   "tag": "ANNUAL",
+   "targets": [
+    "knd"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "12-05"
+   },
+   "days": 4,
+   "crew": {
+    "base": 3,
+    "jitter": 0
+   },
+   "contractor": "C3",
+   "bundle": false
+  },
+  {
+   "id": "P-ELEC-LEGAL",
+   "label": "電気設備の年次点検",
+   "attr": "INSPECT",
+   "tag": "LEGAL",
+   "targets": [
+    "ehv",
+    "mtr",
+    "hvp",
+    "lvp",
+    "dcp",
+    "ups",
+    "egn",
+    "gcb",
+    "exc"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "02-15"
+   },
+   "days": 2,
+   "crew": {
+    "base": 3,
+    "jitter": 1
+   },
+   "contractor": "C4",
+   "bundle": true
+  },
+  {
+   "id": "P-INST-AUX",
+   "label": "計装設備の年次点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "cop",
+    "itv"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 1,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "01-20"
+   },
+   "days": 2,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C4",
+   "bundle": true
+  },
+  {
+   "id": "P-IAC-OVH",
+   "label": "計装用空気圧縮機の分解整備",
+   "attr": "OVERHAUL",
+   "tag": "ANNUAL",
+   "targets": [
+    "iac"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2025
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "01-27"
+   },
+   "days": 2,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C4",
+   "bundle": false
+  },
+  {
+   "id": "P-UPS-REPL",
+   "label": "無停電電源装置の蓄電池取替",
+   "attr": "REPLACE",
+   "tag": "REPLACEMENT",
+   "targets": [
+    "ups"
+   ],
+   "per": "common",
+   "schedule": {
+    "kind": "dates",
+    "dates": [
+     [
+      "2025-02-03",
+      "2025-02-07"
+     ]
+    ]
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C4",
+   "bundle": false,
+   "note_text": "蓄電池取替"
+  },
+  {
+   "id": "P-SBW-REPL",
+   "label": "スートブロワの取替",
+   "attr": "REPLACE",
+   "tag": "REPLACEMENT",
+   "targets": [
+    "sbw"
+   ],
+   "per": "furnace",
+   "only_furnace": 2,
+   "schedule": {
+    "kind": "dates",
+    "dates": [
+     [
+      "2024-10-07",
+      "2024-10-18"
+     ]
+    ]
+   },
+   "crew": {
+    "base": 3,
+    "jitter": 0
+   },
+   "contractor": "C2",
+   "bundle": false,
+   "note_text": "取替"
+  },
+  {
+   "id": "P-GAN-REPL",
+   "label": "排ガス分析計の更新",
+   "attr": "REPLACE",
+   "tag": "REPLACEMENT",
+   "targets": [
+    "gan"
+   ],
+   "per": "furnace",
+   "only_furnace": 1,
+   "schedule": {
+    "kind": "dates",
+    "dates": [
+     [
+      "2026-10-12",
+      "2026-10-23"
+     ]
+    ]
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C4",
+   "bundle": false,
+   "note_text": "更新"
+  },
+  {
+   "id": "P-SBW-INSP",
+   "label": "スートブロワの点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "sbw"
+   ],
+   "per": "furnace",
+   "cycle": {
+    "every": 2,
+    "from": {
+     "1": 2024,
+     "2": 2025
+    }
+   },
+   "schedule": {
+    "kind": "with",
+    "pattern": "P-OVH"
+   },
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-CDP-INSP",
+   "label": "復水ポンプ・復水器ファンの点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "cdp",
+    "cdf"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "11-24"
+   },
+   "days": 2,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C2",
+   "bundle": true
+  },
+  {
+   "id": "P-KND-INSP",
+   "label": "飛灰混練機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "knd"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2025
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "06-20"
+   },
+   "days": 2,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C3",
+   "bundle": false
+  },
+  {
+   "id": "P-IAC-INSP",
+   "label": "計装用空気圧縮機の点検",
+   "attr": "INSPECT",
+   "tag": "ANNUAL",
+   "targets": [
+    "iac"
+   ],
+   "per": "common",
+   "cycle": {
+    "every": 2,
+    "from": 2024
+   },
+   "schedule": {
+    "kind": "fixed",
+    "month_day": "01-20"
+   },
+   "days": 1,
+   "crew": {
+    "base": 2,
+    "jitter": 0
+   },
+   "contractor": "C4",
+   "bundle": false
+  }
+ ],
+ "inspections": [
+  {
+   "id": "INSP-NOACTUAL",
+   "text": "過去の予定に実績が無い"
+  },
+  {
+   "id": "INSP-NOPLAN",
+   "text": "計画の窓に予定が 1 つも無い機器"
+  }
+ ],
+ "interval_limit_years": 3,
+ "gap_injections": [
+  {
+   "id": "GAP-03",
+   "inspection": "INSP-NOACTUAL",
+   "op": "unrecord",
+   "match": {
+    "pattern": "P-CRANE",
+    "fy": 2025
+   }
+  },
+  {
+   "id": "GAP-04",
+   "inspection": "INSP-NOACTUAL",
+   "op": "unrecord",
+   "match": {
+    "pattern": "P-FLUE",
+    "equip_key": "dust",
+    "furnace": 2,
+    "fy": 2024
+   }
+  },
+  {
+   "id": "GAP-05",
+   "inspection": "INSP-NOPLAN",
+   "op": "remove",
+   "match": {
+    "pattern": "P-SCALE",
+    "fy": 2026
+   }
+  },
+  {
+   "id": "GAP-06",
+   "inspection": "INSP-NOPLAN",
+   "op": "remove",
+   "match": {
+    "pattern": "P-SHRED",
+    "fy": 2026
+   }
+  }
+ ],
+ "dirt": {
+  "sheet": {
+   "year_label_styles": {
+    "2024": "long",
+    "2025": "short",
+    "2026": "seireki"
+   },
+   "unknown_symbol": {
+    "symbol": "★",
+    "match": {
+     "pattern": "P-REPL-FUT"
+    },
+    "means": "PLANNED"
+   }
+  },
+  "csv": {
+   "halfwidth_kana_rate": 0.35,
+   "brackets_mixed_rate": 0.5,
+   "furnace_spellings": [
+    "{n}号炉",
+    "{zn}号炉",
+    "{n}号機",
+    "No.{n}炉"
+   ],
+   "missing_note": "実績の無い行は書かない"
+  }
+ }
+}
