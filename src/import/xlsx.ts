@@ -116,6 +116,8 @@ interface Normalized {
   rewrittenTargets: number;
   strippedDrawings: number;
   strippedDataValidations: number;
+  /** exceljs に渡す XML から外した、重なった結合セルの数 */
+  droppedMerges: number;
 }
 
 /**
@@ -123,6 +125,22 @@ interface Normalized {
  * 名前や絶対の行き先で落ちるか部品を失うので、名前と行き先をそろえる。図（DrawingML）は exceljs が読み損ねて
  * 落ちる形があるので外し（中身は元の zip から数える）、入力の規則は展開に時間がかかりすぎるので外す（範囲は XML から読む）。
  */
+/** 「B16:D17」の形の範囲（列と行の番号）。読めなければ null */
+function rangeOfMerge(ref: string): { c1: number; r1: number; c2: number; r2: number } | null {
+  const cell = (x: string) => {
+    const m = /^\$?([A-Z]+)\$?(\d+)$/.exec(x);
+    if (!m) return null;
+    let c = 0;
+    for (const ch of m[1]!) c = c * 26 + ch.charCodeAt(0) - 64;
+    return { c, r: Number(m[2]) };
+  };
+  const [a, b = a] = ref.split(":");
+  const p = a ? cell(a) : null;
+  const q = b ? cell(b) : null;
+  if (!p || !q) return null;
+  return { c1: Math.min(p.c, q.c), r1: Math.min(p.r, q.r), c2: Math.max(p.c, q.c), r2: Math.max(p.r, q.r) };
+}
+
 function normalizeForExceljs(src: ZipEntry[]): Normalized {
   const files = new Map<string, Uint8Array>(src.map((e) => [e.name, e.data]));
   const text = (n: string) => dec.decode(files.get(n) ?? new Uint8Array());
@@ -149,6 +167,29 @@ function normalizeForExceljs(src: ZipEntry[]): Normalized {
       return "";
     });
     if (out !== sx) files.set(n, enc.encode(out));
+  }
+  // 重なった結合セル（Excel は開くが、exceljs は「Cannot merge already merged cells」で止まる。北部CC の星取表、11-07）：
+  // exceljs に渡す XML からは、前の結合と重なる後の結合を外す。取り込みの格子の結合は、元の XML から読む（lineProps）ので変わらない
+  let droppedMerges = 0;
+  for (const n of [...files.keys()].filter((k) => /^xl\/worksheets\/[^/]+\.xml$/.test(k))) {
+    const sx = text(n);
+    if (!sx.includes("<mergeCell")) continue;
+    const kept: { c1: number; r1: number; c2: number; r2: number }[] = [];
+    let dropped = 0;
+    const out = sx.replace(/<mergeCell\s[^>]*?\/>/g, (tag) => {
+      const r = rangeOfMerge(attr(tag, "ref") ?? "");
+      if (!r) return tag;
+      if (kept.some((k) => r.c1 <= k.c2 && k.c1 <= r.c2 && r.r1 <= k.r2 && k.r1 <= r.r2)) {
+        dropped++;
+        return "";
+      }
+      kept.push(r);
+      return tag;
+    });
+    if (dropped) {
+      files.set(n, enc.encode(out.replace(/<mergeCells([^>]*)count="\d+"/, (_m, pre: string) => `<mergeCells${pre}count="${kept.length}"`)));
+      droppedMerges += dropped;
+    }
   }
   const relFiles = [...files.keys()].filter((n) => n.endsWith(".rels"));
   const rels = new Map<string, { xml: string; list: Rel[] }>();
@@ -211,6 +252,7 @@ function normalizeForExceljs(src: ZipEntry[]): Normalized {
     rewrittenTargets,
     strippedDrawings,
     strippedDataValidations,
+    droppedMerges,
   };
 }
 
@@ -441,6 +483,7 @@ export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" |
   ledgerPush(ledger, "normalized", "zipParts", norm.renamed + norm.rewrittenTargets, `読む前に部品の名前 ${norm.renamed} と行き先 ${norm.rewrittenTargets} をそろえた`);
   ledgerPush(ledger, "normalized", "drawingStripped", norm.strippedDrawings, "図の部品を読む前に外した（数は上の図形・画像・グラフ）");
   ledgerPush(ledger, "normalized", "dataValidationStripped", norm.strippedDataValidations, "入力の規則を読む前に外した（範囲は上に数えた）");
+  ledgerPush(ledger, "normalized", "mergeOverlapDropped", norm.droppedMerges, "前の結合と重なる結合セルを、読む部品に渡す前に外した（格子の結合は元のまま）");
 
   const ExcelJS = patchedExcelJS();
   const wb = new ExcelJS.Workbook();
