@@ -24,6 +24,8 @@ export const keyFileSchema = z.object({
   key: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
   pid: z.number().int(),
   startedAt: z.string(),
+  /** 橋渡しのビルドの commit（中継が自分の版と比べ、違えば替える）。無ければ分からないものとし、替えない */
+  build: z.string().max(80).optional(),
 });
 export type KeyFile = z.infer<typeof keyFileSchema>;
 

@@ -4,10 +4,15 @@
 // 新しい鍵ファイルができるまで待ってから 1 回だけ送る（拒まれたものは送れていないので、送り直しではない）。同時に 2 つ起こさないよう、
 // 鍵ファイルのそばに起動中の印（bridge.starting）を置く。起こせなければ「先に moyai start を」と返す。
 // 起こした直後の答えには、作業画面の URL を workScreenUrl として添える（--no-open なので、画面は開いていない）。
+// 古い版の橋渡しを替える（運営者 11-07「こういうのを全部自動でやってくれないと」）：鍵ファイルの橋渡しの版（ビルドの commit）が中継の版と違えば、
+// 鍵を添えて止める合図（経路 relayStop）を送り、鍵ファイルが消えるのを待って（上限 REPLACE_WAIT_MS）、新しい版の橋渡しを起こす。
+// 替えた直後の答えには、workScreenUrl と「作業画面を読み込み直す」の字を添える。版が片方でも分からなければ替えない。
+// 鍵が合わない・止まらないときは止めずに bridge_port_taken を返す。起こせなかったとき、起こすポートが使われていれば同じく bridge_port_taken。
 // 標準出力は MCP だけに使い、記録は標準エラーへ出す（作業データ・キー・行の値は出さない）。
 // 結果は JSON の文字と structuredContent。写真の receive だけは、橋渡しが添えた画像を MCP の画像の中身（type: image）で渡す。
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { connect as netConnect } from "node:net";
 import { join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
@@ -24,6 +29,8 @@ export interface LaunchHandle {
 
 /** 鍵ファイルができるまで待つ上限 */
 export const LAUNCH_WAIT_MS = 20_000;
+/** 古い版の橋渡しに止める合図を送ってから、鍵ファイルが消えてポートが空くまで待つ上限 */
+export const REPLACE_WAIT_MS = 5_000;
 /** 起動中の印のファイル（鍵ファイルのそば） */
 export const STARTING_MARK = "bridge.starting";
 /** 起動中の印が古いと見なす時間（待つ上限より長く。起こした中継が落ちて印だけが残ったとき） */
@@ -44,6 +51,89 @@ export interface RelayOptions {
   launch?: () => LaunchHandle | void | Promise<LaunchHandle | void>;
   /** 鍵ファイルができるまで待つ上限（既定 LAUNCH_WAIT_MS） */
   launchWaitMs?: number;
+  /**
+   * 起こす橋渡しのポート（moyai mcp は既定の 43110）。起こせなかったとき、このポートが使われていれば bridge_port_taken を返す。
+   * 無ければ確かめない（試験の既定）。
+   */
+  launchPort?: number;
+  /** 古い版の橋渡しが止まるのを待つ上限（既定 REPLACE_WAIT_MS） */
+  replaceWaitMs?: number;
+  /** 中継が起きた時刻（ミリ秒）。これより後に起きた橋渡しは替えない（既定は createRelayServer を呼んだ時刻） */
+  startedAt?: number;
+}
+
+/** 替えた直後の答えに添える字（Claude が読む） */
+export const RELAY_TEXT = {
+  replaced: (url: string) =>
+    `前の版の MOYAI の橋渡しを止め、この版の橋渡しを起こしました。開いている作業画面のタブは前の版のままなので、作業画面を読み込み直してください：${url} を開き直す（シェルがあれば自分で開き、無ければ利用者にこのリンクを開いてもらう）。`,
+};
+
+/** ビルドの commit として比べられる形か（"unknown" や試験の名前は分からないものとする） */
+export function knownBuild(v: unknown): v is string {
+  return typeof v === "string" && /^[0-9a-f]{7,40}\+?$/.test(v);
+}
+
+/**
+ * 鍵ファイルの橋渡しを替えるか：両方の版が分かり、違い、橋渡しが中継より前に起きたものだけ。
+ * 中継より後に起きた橋渡しは、ほかの中継が起こしたもの（ディスクのビルドが新しくなっていても、互いに替え合わない）。
+ */
+export function bridgeIsOld(key: KeyFile, relayBuild: string | undefined, relayStartedAt: number): boolean {
+  if (!knownBuild(key.build) || !knownBuild(relayBuild) || key.build === relayBuild) return false;
+  const at = Date.parse(key.startedAt);
+  return Number.isFinite(at) && at <= relayStartedAt;
+}
+
+/** 127.0.0.1 のポートで、何かが待ち受けているか（つなげたら true。拒まれた・時間切れは false） */
+export function portInUse(port: number, ms = 1_000): Promise<boolean> {
+  return new Promise((res) => {
+    const s = netConnect({ host: "127.0.0.1", port });
+    const done = (v: boolean) => {
+      s.destroy();
+      res(v);
+    };
+    s.setTimeout(ms, () => done(false));
+    s.once("connect", () => done(true));
+    s.once("error", () => done(false));
+  });
+}
+
+export type StopOutcome = "stopped" | "not_running" | "failed";
+
+/**
+ * 鍵ファイルの居場所に止める合図を送り、鍵ファイルが消えるまで待つ（上限 waitMs）。
+ * 合図を拒まれた（鍵が違う・ほかの道具）・上限までに消えなければ failed、接続を拒まれたら not_running（起きていない）。
+ * moyai uninstall と、古い版の橋渡しを替える中継が使う。
+ */
+export async function stopBridgeAt(stateDir: string, key: KeyFile, waitMs = 5_000): Promise<StopOutcome> {
+  try {
+    const res = await fetch(`http://127.0.0.1:${key.port}${ROUTES.relayStop.path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", [HEADER_RELAY_KEY]: key.key },
+      body: "{}",
+      signal: AbortSignal.timeout(5_000),
+    });
+    await res.arrayBuffer().catch(() => null);
+    if (!res.ok) return "failed";
+  } catch (e) {
+    return refused((e as { cause?: unknown }).cause) ? "not_running" : "failed";
+  }
+  const deadline = Date.now() + waitMs;
+  for (;;) {
+    const k = readKeyFile(stateDir);
+    if (!k || k.key !== key.key) return "stopped";
+    if (Date.now() >= deadline) return "failed";
+    await new Promise((r) => setTimeout(r, POLL_MS));
+  }
+}
+
+/** ポートが空くまで待つ（上限 ms）。空いたら true */
+async function waitPortFree(port: number, ms: number): Promise<boolean> {
+  const deadline = Date.now() + ms;
+  for (;;) {
+    if (!(await portInUse(port, 500))) return true;
+    if (Date.now() >= deadline) return false;
+    await new Promise((r) => setTimeout(r, POLL_MS));
+  }
 }
 
 /** 起動中の印を取る。取れたら印の中身（自分のものと見分ける）、ほかの中継が起こしている最中なら null */
@@ -212,34 +302,82 @@ export function workScreenUrl(key: Pick<KeyFile, "port">): string {
   return `http://127.0.0.1:${key.port}/`;
 }
 
-/** workScreenUrl を添えるときは、結果の JSON に、誤りなら文の横に JSON の 1 つの文として添える */
-export function toToolResult(answer: BridgeAnswer, url: string | null = null): CallToolResult {
+/**
+ * workScreenUrl を添えるときは、結果の JSON に、誤りなら文の横に JSON の 1 つの文として添える。
+ * notice（古い版の橋渡しを替えた知らせ）は、最後に文として添える（structuredContent には入れない。出力の型に無い欄なので）。
+ */
+export function toToolResult(answer: BridgeAnswer, url: string | null = null, notice: string | null = null): CallToolResult {
+  const tail = notice ? [{ type: "text" as const, text: notice }] : [];
   if ("ok" in answer) {
     const data = url ? { ...answer.data, workScreenUrl: url } : answer.data;
     const text = { type: "text" as const, text: JSON.stringify(data) };
     // 写真は文字にせず、MCP の画像の中身（type: image）として JSON の横に添える。AI クライアントが画像として読む
     if (answer.image) {
-      return { content: [text, { type: "image", data: answer.image.data, mimeType: answer.image.mimeType }], structuredContent: data };
+      return { content: [text, { type: "image", data: answer.image.data, mimeType: answer.image.mimeType }, ...tail], structuredContent: data };
     }
-    return { content: [text], structuredContent: data };
+    return { content: [text, ...tail], structuredContent: data };
   }
   // 誤りのときは structuredContent を付けない（出力の型で検証するクライアントが、誤りの形を型違いとして落とすため）。
   // 文は ERRORS の文だけで、内部の名前（誤りの型の名前）は出さない。
   const extra = url ? [{ type: "text" as const, text: JSON.stringify({ workScreenUrl: url }) }] : [];
-  return { isError: true, content: [{ type: "text", text: answer.error.message }, ...extra] };
+  return { isError: true, content: [{ type: "text", text: answer.error.message }, ...extra, ...tail] };
+}
+
+/**
+ * 古い版の橋渡しを替える。替えなくてよい・替えられない理由がほかの道で分かるときは null（今の道で送る）。
+ * - 止める合図が通って鍵ファイルが消えたら、ポートが空くのを待ち、ensure で新しい版を起こす。起きれば鍵ファイル。
+ * - 接続を拒まれた（鍵ファイルだけが残っている）ときは null。今の道で起こす。
+ * - 鍵が合わない・上限までに止まらない・止めたあと起こせないときは誤り（止めない。端末の操作は頼まない字）。
+ */
+async function replaceOldBridge(
+  opts: RelayOptions,
+  key: KeyFile,
+  ensure: (stale: string | null) => Promise<KeyFile | null>,
+): Promise<KeyFile | ErrorBody | null> {
+  const wait = opts.replaceWaitMs ?? REPLACE_WAIT_MS;
+  const stop = await stopBridgeAt(opts.stateDir, key, wait);
+  if (stop === "not_running") return null;
+  if (stop === "failed") return errorBody("bridge_port_taken", { port: key.port });
+  await waitPortFree(key.port, wait);
+  const k = await ensure(key.key);
+  if (k) return k;
+  return errorBody(opts.launchPort !== undefined && (await portInUse(opts.launchPort)) ? "bridge_port_taken" : "bridge_not_running", {
+    port: opts.launchPort ?? key.port,
+  });
 }
 
 export function createRelayServer(opts: RelayOptions): McpServer {
   const conversation = opts.conversation ?? randomUUID();
+  const relayStartedAt = opts.startedAt ?? Date.now();
   // 同じ中継の中で、同時に起こさない（並んだ呼び出しは同じ起こしを待つ）
   let starting: Promise<KeyFile | null> | null = null;
   // 起こした（か、ほかの中継が起こすのを待った）あと、まだ URL を添えていない
   let announce: KeyFile | null = null;
-  const ensure = async (stale: string | null): Promise<boolean> => {
+  // 古い版の橋渡しを替えたあと、まだ「作業画面を読み込み直す」を添えていない
+  let reload = false;
+  const start = async (stale: string | null): Promise<KeyFile | null> => {
     starting ??= ensureBridge(opts, stale).finally(() => (starting = null));
     const k = await starting;
     if (k) announce = k;
-    return k !== null;
+    return k;
+  };
+  const ensure = async (stale: string | null): Promise<boolean> => (await start(stale)) !== null;
+  // 同じ中継の中で、同時に替えない（並んだ呼び出しは同じ替えを待つ）
+  let replacing: Promise<KeyFile | ErrorBody | null> | null = null;
+  const replaceIfOld = async (): Promise<ErrorBody | null> => {
+    const key = readKeyFile(opts.stateDir);
+    if (!opts.launch || !key || !bridgeIsOld(key, opts.version, relayStartedAt)) return null;
+    replacing ??= replaceOldBridge(opts, key, start).finally(() => (replacing = null));
+    const r = await replacing;
+    if (r === null) return null;
+    if ("error" in r) return r;
+    reload = true;
+    return null;
+  };
+  // 起こせなかったとき、起こすポートが使われていれば（鍵ファイルの無い前の橋渡しか、ほかの道具）、そう返す
+  const explain = async (answer: BridgeAnswer): Promise<BridgeAnswer> => {
+    if (!("error" in answer) || answer.error.code !== "bridge_not_running" || !opts.launch || opts.launchPort === undefined) return answer;
+    return (await portInUse(opts.launchPort)) ? errorBody("bridge_port_taken", { port: opts.launchPort }) : answer;
   };
   const server = new McpServer(
     { name: "moyai", version: opts.version ?? "0.0.0" },
@@ -263,12 +401,18 @@ export function createRelayServer(opts: RelayOptions): McpServer {
         },
       },
       async (args: unknown) => {
-        const answer = await callBridge(opts, name, args, conversation, ensure);
-        // 起こした直後の最初の答え（橋渡しが答えたもの）に、作業画面の URL を添える
+        // 送る前に、古い版の橋渡しを替える（替えられなければ、送らずに理由を返す）
+        const blocked = await replaceIfOld();
+        if (blocked) return toToolResult(blocked);
+        const answer = await explain(await callBridge(opts, name, args, conversation, ensure));
+        // 起こした直後の最初の答え（橋渡しが答えたもの）に、作業画面の URL を添える。替えた直後なら、読み込み直しの字も添える
         const fromBridge = "ok" in answer || ERRORS[answer.error.code].from !== "relay";
         const k = fromBridge ? announce : null;
         if (k) announce = null;
-        return toToolResult(answer, k ? workScreenUrl(k) : null);
+        const url = k ? workScreenUrl(k) : null;
+        const notice = url && reload ? RELAY_TEXT.replaced(url) : null;
+        if (notice) reload = false;
+        return toToolResult(answer, url, notice);
       },
     );
   }

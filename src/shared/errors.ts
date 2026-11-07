@@ -22,6 +22,11 @@ export const ERRORS = {
     to: "ai",
     text: "MOYAI の橋渡しが起きていません。シェルがあれば、リポジトリのフォルダで `moyai start`（node dist/cli.js start）を後ろで走らせ、出た理由を利用者に伝えてください。",
   },
+  bridge_port_taken: {
+    from: "relay",
+    to: "ai",
+    text: "ポート {port} をほかの道具が使っています。MOYAI の橋渡しを起こせませんでした。そこにいるのが前の版の MOYAI の橋渡しでも、鍵ファイルが無い・鍵が合わない・止まらないときは、中継は止めません。このことを利用者に伝え、{port} を使っている道具を閉じるか PC を再起動してから、もう一度頼んでもらってください。",
+  },
   bridge_timeout: {
     from: "relay",
     to: "ai",

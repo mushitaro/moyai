@@ -98,7 +98,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | 経路 | 求めるもの | 説明 |
 |---|---|---|
 | `POST /relay/tool` | 鍵ファイルの鍵 | 中継からのツールの呼び出し |
-| `POST /relay/stop` | 鍵ファイルの鍵 | 橋渡しを止める（moyai uninstall が、鍵ファイルの鍵を添えて送る） |
+| `POST /relay/stop` | 鍵ファイルの鍵 | 橋渡しを止める（moyai uninstall と、古い版の橋渡しを替える中継が、鍵ファイルの鍵を添えて送る） |
 | `POST /tab/intake-file` | タブの秘密 | AI が intake_add_files で入れる資料の中身を、作業画面が 1 つずつ取りに来る（橋渡しが資料ごとに渡したワンタイムトークンと、そのタブの回だけ） |
 
 ## 網の外側

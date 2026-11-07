@@ -110,7 +110,7 @@ export const ROUTES = {
   },
   ws: { method: "GET", path: "/ws", kind: "ws", note: "タブとの往復" },
   relayTool: { method: "POST", path: "/relay/tool", kind: "relay", maxBody: 1024 * 1024, note: "中継からのツールの呼び出し" },
-  relayStop: { method: "POST", path: "/relay/stop", kind: "relay", maxBody: 1024, note: "橋渡しを止める（moyai uninstall が、鍵ファイルの鍵を添えて送る）" },
+  relayStop: { method: "POST", path: "/relay/stop", kind: "relay", maxBody: 1024, note: "橋渡しを止める（moyai uninstall と、古い版の橋渡しを替える中継が、鍵ファイルの鍵を添えて送る）" },
   tabIntakeFile: {
     method: "POST",
     path: "/tab/intake-file",

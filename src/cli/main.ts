@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { BridgeStartError, startBridge } from "../bridge/server";
+import { BridgeStartError, DEFAULT_PORT, startBridge } from "../bridge/server";
 import { resolveStateDir } from "../bridge/state";
 import { errorBody, type ErrorCode } from "../shared/errors";
 import { parseStartArgs } from "./args";
@@ -27,12 +27,14 @@ const fail = (code: ErrorCode, vars: Record<string, string | number> = {}): neve
 
 const HELP = `使い方：
   moyai start [--port 43110] [--no-open]   橋渡しを起こし、作業画面を開く
-  moyai mcp                                 AI クライアントとつなぐ中継（標準入出力の MCP）。橋渡しが起きていなければ moyai start --no-open で起こす
-                                            （MOYAI_NO_BRIDGE_LAUNCH=1 なら起こさない）
+  moyai mcp                                 AI クライアントとつなぐ中継（標準入出力の MCP）。橋渡しが起きていなければ moyai start --no-open で起こす。
+                                            前の版の橋渡しが動いていれば、止める合図を送って、この版の橋渡しに替える
+                                            （MOYAI_NO_BRIDGE_LAUNCH=1 なら起こさず、替えない）
   moyai setup [--target desktop|code] [--name <送信者>] [--yes]
                                             つなぐ支度。desktop（既定）は Claude Desktop の設定に moyai の 1 行だけを足す（.bak を残す）。
                                             code は Claude Code に渡す 1 行（.mcp.json か claude mcp add）を出す。--name は送信者の名前（40 字まで）。
-                                            何をどこに書くかを先に出す。--yes が無ければ端末で「はい」をもらう（--yes は、利用者がチャットで確かめたあとに Claude が付ける）
+                                            何をどこに書くかを先に出す。--yes が無ければ書かない。Claude は中身を利用者にチャットで見せ、
+                                            「はい」をもらったら --yes を付けて走らせる（人が端末から直に走らせたときだけ、その場で「はい」を聞く）
   moyai uninstall [--yes] [--keep-root|--remove-root]
                                             消す。橋渡しを止め、Claude Desktop の設定から moyai の行を外し（.bak を残す）、状態フォルダを消す。
                                             保存先（計画の版）は既定で残す。--remove-root のときだけ消す。何を消すかを先に出す
@@ -82,9 +84,17 @@ async function start(argv: string[]): Promise<void> {
   const staticDir = join(dirname(fileURLToPath(import.meta.url)), "app");
   if (!existsSync(join(staticDir, "index.html"))) return fail("app_missing");
   try {
-    // moyai uninstall の止める合図でも、Ctrl+C と同じに止める
+    // 止める合図（moyai uninstall か、古い版を替える中継）でも、SIGINT と同じに止める
     let stopRequested = false;
-    const bridge = await startBridge({ port: args.port, staticDir, stateDir: resolveStateDir(), log: say, onStopRequest: () => void stopNow() });
+    // 鍵ファイルに版（ビルドの commit）を書く。新しい版の中継は、これが自分と違えば止める合図を送って替える
+    const bridge = await startBridge({
+      port: args.port,
+      staticDir,
+      stateDir: resolveStateDir(),
+      log: say,
+      onStopRequest: () => void stopNow(),
+      build: __MOYAI_BUILD__.commit,
+    });
     say(`${BUILD}`);
     say(`橋渡しを起こしました：${bridge.url}  （止めるには Ctrl+C）`);
     if (args.open) openBrowser(bridge.url);
@@ -121,7 +131,12 @@ export const NO_LAUNCH_ENV = "MOYAI_NO_BRIDGE_LAUNCH";
 
 async function mcp(): Promise<void> {
   const launch = process.env[NO_LAUNCH_ENV] === "1" ? undefined : launchBridge;
-  const server = createRelayServer({ stateDir: resolveStateDir(), version: __MOYAI_BUILD__.commit, ...(launch ? { launch } : {}) });
+  // 起こす橋渡しは既定のポート。古い版の橋渡しが動いていれば、中継が止めて替える（版は鍵ファイルの build と比べる）
+  const server = createRelayServer({
+    stateDir: resolveStateDir(),
+    version: __MOYAI_BUILD__.commit,
+    ...(launch ? { launch, launchPort: DEFAULT_PORT } : {}),
+  });
   await server.connect(new StdioServerTransport());
   say("moyai mcp：中継を起こしました（標準入出力）");
 }

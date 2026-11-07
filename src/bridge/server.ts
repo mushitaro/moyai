@@ -56,8 +56,10 @@ export interface BridgeOptions {
   human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId">;
   /** リポジトリの根（intake_add_files はこの中のフォルダを読まない）。無ければパックのフォルダの上 */
   repoRoot?: string;
-  /** moyai uninstall が止める合図を送ってきたとき（moyai start はプロセスを終える）。無ければ橋渡しを閉じるだけ */
+  /** 止める合図（moyai uninstall か、古い版の橋渡しを替える中継）が来たとき（moyai start はプロセスを終える）。無ければ橋渡しを閉じるだけ */
   onStopRequest?: () => void;
+  /** このビルドの commit。鍵ファイルに書き、中継が自分の版と比べる（違えば止めて替える）。無ければ書かない（版が分からない） */
+  build?: string;
 }
 
 export interface Bridge {
@@ -303,14 +305,14 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       // 誤りは、橋渡しが作った文のまま返す（値を添えた文：intake_pack_unknown の選べる Skillパック）
       return "ok" in answer ? sendJson(res, 200, answer) : sendJson(res, httpStatus(answer.error.code), answer);
     },
-    // moyai uninstall の止める合図（鍵ファイルの鍵が要る）。答えを返してから止める
+    // 止める合図（moyai uninstall と、古い版の橋渡しを替える中継。鍵ファイルの鍵が要る）。答えを返してから止める
     relayStop: async ({ req, res, route }) => {
       const g = guardRelay(req);
       if (g) return reject(res, g);
       const body = await readJson(req, route.maxBody ?? 0);
       if (typeof body === "string") return reject(res, body);
       sendJson(res, 200, { ok: true, stopping: true });
-      log("moyai uninstall の合図で、橋渡しを止めます");
+      log("止める合図（moyai uninstall か、新しい版の中継）が来たので、橋渡しを止めます");
       setImmediate(() => (opts.onStopRequest ? opts.onStopRequest() : void close()));
     },
     // intake_add_files：作業画面が、渡された資料の印で中身を取りに来る（その回の、まだ使っていない印だけ。1 回で使い終わる）
@@ -454,7 +456,15 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   tabs.start();
 
   if (opts.stateDir) {
-    writeKeyFile(opts.stateDir, { version: 1, port, key: relayKey, pid: process.pid, startedAt: new Date(now()).toISOString() });
+    // 版（ビルドの commit）も書く。中継はこれを自分の版と比べ、違えば止める合図を送って新しい版を起こす（src/cli/relay.ts）
+    writeKeyFile(opts.stateDir, {
+      version: 1,
+      port,
+      key: relayKey,
+      pid: process.pid,
+      startedAt: new Date(now()).toISOString(),
+      ...(opts.build ? { build: opts.build } : {}),
+    });
   }
 
   return {

@@ -3,8 +3,9 @@
 //   前の設定は、同じフォルダに .bak を残してから書く。読めない設定（JSON でない）には書かない。
 // - --target code：Claude Code に渡す 1 行（リポジトリの .mcp.json か、claude mcp add に渡す 1 行）を出す。Claude Code の設定には書かない。
 // - --name <送信者>：状態フォルダの settings.json の name（送信者の名前。版の署名と画面に出す）を置く。40 字まで。空は断る。
-// - 書く前に、何をどこに書くか（.bak を残すこと）を出す。--yes が無ければ、端末で「はい」をもらう（端末でなければ書かずに終える）。
-//   --yes は、利用者がチャットで確かめたあとに Claude が付ける。
+// - 書く前に、何をどこに書くか（.bak を残すこと）を出す。--yes が無ければ書かない。
+//   Claude は出た中身を利用者にチャットで見せ、「はい」をもらったら --yes を付けて走らせる（利用者の端末の操作は要らない）。
+//   人が端末から直に走らせたときだけ、その場で「はい」を聞く（標準入力が端末でなければ、書かずに終える。拒む試験は残す）。
 // - 足すのは { command: Node の実行ファイル, args: [この dist/cli.js, "mcp"] }。橋渡しは、ツールを呼んだときに中継が起こす。
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う。AGENTS.md）。
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -35,7 +36,7 @@ export const SETUP_TEXT = {
   nameSame: (name: string) => `送信者の名前は、もう「${name}」です。変えません。`,
   ask: "書いてよければ「はい」と打って Enter：",
   yes: "--yes なので、確かめずに書きます（利用者がチャットで確かめた前提）。",
-  notTerminal: "端末ではなく --yes も無いので、何も書いていません。上の中身を利用者にチャットで確かめてから、--yes を付けて走らせてください。",
+  notTerminal: "--yes が無いので、何も書いていません。上の中身を利用者にチャットで見せ、良ければ --yes を付けて Claude が走らせてください（利用者の端末の操作は要りません）。",
   cancelled: "書きませんでした。",
   written: (bak: string | null) =>
     `書きました。${bak ? `前の設定は ${bak} に残しました。` : ""}Claude Desktop を開き直すと、moyai のツールが出ます。橋渡しは、moyai のツールを呼んだときに中継が起こします（作業画面の URL は、その答えの workScreenUrl）。`,
@@ -103,7 +104,7 @@ function rawSettings(stateDir: string): Record<string, unknown> {
 
 /**
  * setup。書いたら 0、やめた・同じ・書くものが無いなら 0、読めない設定なら 1、引数の形が違えば 2、
- * 端末でなく --yes も無ければ 3（何も書かない）。
+ * --yes が無く標準入力が端末でもなければ 3（何も書かない。Claude が中身をチャットで見せ、--yes を付けて走らせ直す）。
  */
 export async function setupCli(
   o: {
@@ -183,7 +184,7 @@ export async function setupCli(
   if (writes.length === 0) return 0;
   if (a.yes) say(SETUP_TEXT.yes);
   else {
-    // --yes が無ければ人だけ：端末で「はい」をもらう。端末でなければ書かない（拒む試験は消さない）
+    // --yes が無ければ書かない。人が端末から直に走らせたときだけ、その場で「はい」を聞く（標準入力が端末でなければ書かない。拒む試験は消さない）
     if ((o.stdin ?? process.stdin).isTTY !== true) {
       say(SETUP_TEXT.notTerminal);
       return 3;

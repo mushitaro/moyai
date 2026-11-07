@@ -4,7 +4,8 @@
 // 3. Claude Code の登録を外す手順（claude mcp remove）を出す（Claude Code の設定には書かない）。
 // 4. 状態フォルダを消す（人の鍵・覚えた鍵・GitHub のトークン・設定も消える）。
 // 5. 保存先（計画の版）は既定で残す。--remove-root のときだけ消す（Claude が利用者にチャットで聞いてから付ける）。
-// 何を消すかを先に出す。--yes が無ければ、端末で「はい」をもらう（端末でなければ何も消さずに終える）。
+// 何を消すかを先に出す。--yes が無ければ消さない（Claude が中身を利用者にチャットで見せ、「はい」をもらったら --yes を付けて走らせる）。
+// 人が端末から直に走らせたときだけ、その場で「はい」を聞く（標準入力が端末でなければ、何も消さずに終える）。
 // リポジトリのフォルダは消さない（このコマンドが動いている場所なので。Claude が最後に消す。1 段目の Skill の手順）。
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。
 import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -12,8 +13,7 @@ import { homedir } from "node:os";
 import { dirname, parse, resolve } from "node:path";
 import { defaultRoot, detectDocuments, normPath, readSettings } from "../bridge/places";
 import { readKeyFile, resolveStateDir, type KeyFile } from "../bridge/state";
-import { HEADER_RELAY_KEY, ROUTES } from "../shared/routes";
-import { refused } from "./relay";
+import { stopBridgeAt, type StopOutcome } from "./relay";
 import { SERVER_NAME, askLine, claudeConfigPath } from "./setup";
 
 export const UNINSTALL_TEXT = {
@@ -38,7 +38,7 @@ export const UNINSTALL_TEXT = {
   repo: (path: string) => `最後に、リポジトリのフォルダ（${path}）を消すと、MOYAI は残りません（このコマンドは消しません）。`,
   ask: "消してよければ「はい」と打って Enter：",
   yes: "--yes なので、確かめずに消します（利用者がチャットで確かめた前提）。",
-  notTerminal: "端末ではなく --yes も無いので、何も消していません。上の中身を利用者にチャットで確かめてから、--yes を付けて走らせてください。",
+  notTerminal: "--yes が無いので、何も消していません。上の中身を利用者にチャットで見せ、良ければ --yes を付けて Claude が走らせてください（利用者の端末の操作は要りません）。",
   cancelled: "何も消していません。",
   stopped: "橋渡しを止めました。",
   stopSkipped: "橋渡しは起きていませんでした。",
@@ -85,30 +85,8 @@ export function withoutMoyai(config: Record<string, unknown>): Record<string, un
   return { ...config, mcpServers: rest };
 }
 
-export type StopOutcome = "stopped" | "not_running" | "failed";
-
-/** 鍵ファイルの居場所に止める合図を送り、鍵ファイルが消えるまで待つ（上限 waitMs） */
-export async function stopBridgeAt(stateDir: string, key: KeyFile, waitMs = 5_000): Promise<StopOutcome> {
-  try {
-    const res = await fetch(`http://127.0.0.1:${key.port}${ROUTES.relayStop.path}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", [HEADER_RELAY_KEY]: key.key },
-      body: "{}",
-      signal: AbortSignal.timeout(5_000),
-    });
-    await res.arrayBuffer().catch(() => null);
-    if (!res.ok) return "failed";
-  } catch (e) {
-    return refused((e as { cause?: unknown }).cause) ? "not_running" : "failed";
-  }
-  const deadline = Date.now() + waitMs;
-  for (;;) {
-    const k = readKeyFile(stateDir);
-    if (!k || k.key !== key.key) return "stopped";
-    if (Date.now() >= deadline) return "failed";
-    await new Promise((r) => setTimeout(r, 100));
-  }
-}
+// 止める合図の道は、古い版の橋渡しを替える中継と同じもの（src/cli/relay.ts）
+export { stopBridgeAt, type StopOutcome };
 
 type DesktopPlan = { kind: "remove"; path: string; next: Record<string, unknown> } | { kind: "none" | "missing" | "invalid"; path: string };
 
