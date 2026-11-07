@@ -24,9 +24,9 @@ describe("人数と作業時間の幅の書き方を読む", () => {
   });
 
   test("職種の語に無い語・略として決まらない字・人数でない文は読まない（推し量らない）", () => {
-    expect(parsePersons("塗装工2")).toBeNull();
+    expect(parsePersons("鍛冶工2")).toBeNull();
     expect(parsePersons("職員2 業者3")).toBeNull();
-    expect(parsePersons("塗2")).toBeNull();
+    expect(parsePersons("鍛2")).toBeNull();
     expect(parsePersons("機械工")).toBeNull();
     expect(parsePersons("延べ4人")).toBeNull();
     expect(parsePersons("若干名")).toBeNull();
@@ -182,11 +182,11 @@ describe("形 A：人数の並び × 作業時間の幅", () => {
 
   test("読めない書き方だけが今どおり質問に残る：人数の読めない書き方・時刻でない作業時間・人数だけで時間の無い行", async () => {
     const s = session();
-    await s.add([{ name: "日報A.xlsx", bytes: await formA([...people, "塗装工2", "作業員1", "機械工2"], [...spans, "9:00～12:00", "終日", null]) }]);
+    await s.add([{ name: "日報A.xlsx", bytes: await formA([...people, "鍛冶工2", "作業員1", "機械工2"], [...spans, "9:00～12:00", "終日", null]) }]);
     const qs = effortQs(s);
     const texts = qs.map((q) => q.text);
     // 人数の書き方が読めない行（書き方ごとに 1 問）
-    expect(texts.filter((x) => x.includes("人数の書き方が読めない"))).toEqual(["「作業人員」の欄の人数の書き方が読めない（1 行、見本「塗装工2」）。人数を推し量らない"]);
+    expect(texts.filter((x) => x.includes("人数の書き方が読めない"))).toEqual(["「作業人員」の欄の人数の書き方が読めない（1 行、見本「鍛冶工2」）。人数を推し量らない"]);
     // 作業時間が時刻の幅でない行（今どおりの問い）
     expect(texts.filter((x) => x.startsWith("工数の書き方が読めない"))).toEqual(["工数の書き方が読めない（1 行）"]);
     // 人数だけで時間の無い行：人数を人・日の数としない（聞く。既定の答えなし）
