@@ -122,6 +122,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [sourceEl, setSourceEl] = useState<HTMLElement | null>(null);
   // 下の帯の止まった知らせを押したとき、詳細にその記録を出す（本体の行・星取・セルを選ぶと、そちらに戻る）
   const [stop, setStop] = useState<StopKind | null>(null);
+  // 資料のセルの詳細の「| 決める」で開いた質問（seq は押すたびに増やし、同じ質問でも見える所へ送り直す）
+  const [focusQuestion, setFocusQuestion] = useState<{ questionId: string; seq: number } | null>(null);
   // コメント：保管先から読み、星取表で選んだ行に付ける
   const [comments, setComments] = useState<ListedComment[]>([]);
   const [selectedRow, setSelectedRow] = useState<CommentRow | null>(null);
@@ -140,7 +142,15 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       el: sourceEl,
       show: () => {
         setStop(null);
+        setFocusQuestion(null);
         setSide("source");
+        setSideFolded(false);
+      },
+      // 未確定のセルの詳細の「| 決める」：板を「未回答」で開き、その質問へ（たたんでいたら開く。覚えない）
+      openQuestion: (questionId: string) => {
+        setStop(null);
+        setFocusQuestion((f) => ({ questionId, seq: (f?.seq ?? 0) + 1 }));
+        setSide("open");
         setSideFolded(false);
       },
       select: setSelectedRow,
@@ -437,9 +447,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         <h1 className="moyai-merge-name" data-testid="plan-name">
           {name}
         </h1>
-        <span className="moyai-merge-ver" data-testid="merge-version">
-          {T.version(nextVersion)}
-        </span>
+        {/* 第 1 版をつくる前は施設の名前だけ（まだ版が無い。つくる版の番号は下の帯の「第 1 版をつくる」にある。docs/screens.md 3.3 の末尾「写しの照らし」） */}
+        {plan && (
+          <span className="moyai-merge-ver" data-testid="merge-version">
+            {T.version(nextVersion)}
+          </span>
+        )}
         {stateLabel && (
           <span className="moyai-merge-state" data-view-only={viewOnly ? "true" : "false"} data-testid="merge-state">
             {stateLabel}
@@ -543,7 +556,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
           <div style={{ display: current === "files" ? undefined : "none" }}>
-            <Intake ws={ws} file={shownFile} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} composeInBar={!plan} />
+            <Intake ws={ws} file={shownFile} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} composeInBar={!plan} composeOffered={!!plan && ws.uncomposed(plan.planId)} />
           </div>
         </div>
         {sideNow && sideFolded && (
@@ -620,11 +633,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                 </a>
               )}
             </Group>
-            {sideNow === "open" && view && (
-              <>
-                <Questions ws={ws} view={view} />
-              </>
-            )}
+            {sideNow === "open" && view && <Questions ws={ws} view={view} focus={focusQuestion} />}
             {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} onKeyConfirmed={reloadStatus} request={req && !req.done && req.version === latestInfo.version ? req : null} ignored={ignored} />}
             {sideNow === "comments" && plan && (
               <CommentsPanel

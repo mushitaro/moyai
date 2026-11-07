@@ -7,6 +7,8 @@ export interface MergeSide {
   el: HTMLElement | null;
   /** 板を出どころへ切り替える */
   show(): void;
+  /** 板を「未回答」へ切り替え、その質問を開く（資料のセルの詳細の「| 決める」。docs/screens.md 3.3 の末尾「写しの照らし」） */
+  openQuestion?(questionId: string): void;
   /** 星取表で選んだ行（コメントを付ける先）。選んでいなければ null */
   select(row: CommentRow | null): void;
   /** コメントの付いた行（行の切り替え × 行の鍵 → 番号の字「①②」） */

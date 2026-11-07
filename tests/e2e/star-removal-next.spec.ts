@@ -128,10 +128,13 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
     await test.step("人：トップの「＋ 次の版」で資料と決定が戻り、作り直しても、消した実績は戻らない", async () => {
       await page.evaluate(() => (location.hash = "#/"));
       await page.getByTestId("moyai-next").first().click();
-      await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
+      await expect(page.getByTestId("intake-page")).toHaveAttribute("data-restored-from", "2", { timeout: 60_000 });
       await page.getByTestId("sheet-file").first().click();
-      await expect(page.getByTestId("compose")).toBeEnabled();
-      await page.getByTestId("compose").click();
+      await expect(page.getByTestId("source-tab")).toBeVisible();
+      // 戻した直後は第 2 版に入っていない変更が無いので、人の「| 資料を重ねて第 3 版をつくる」は出さない（docs/screens.md 3.3 の末尾「写しの照らし」）。
+      // 作り直しは AI の intake_compose で
+      await expect(page.getByTestId("compose")).toHaveCount(0);
+      expect((await call(c, "intake_compose")).started).toBe(true);
       await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 60_000 });
       const again = await call(c, "chart_rows", { rowRef: pick!.node });
       const w = again.rows.find((x: any) => x.rowRef === pick!.workRef);

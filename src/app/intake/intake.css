@@ -156,12 +156,20 @@
   outline-offset: -2px;
 }
 
-/* 資料のタブ（MERGE r2）：未確定のセルは朱の枠（下線だけでなく 4 辺）。表は横の板の高さまで使う */
+/* 資料のタブ（MERGE r2）：表は横の板の高さまで使う。
+   未確定のセルは朱の字と、セルの下の 2px の朱の線だけ（絵：Source.dc.html の td.q）。四方の枠では囲まない。
+   罫はほかのセルと同じ細い罫のまま、線はセルの内側に引く。枠（outline）は選んだセルの印だけ（.moyai-sheet td[data-focus]） */
 .moyai-source {
   max-height: calc(100vh - 260px);
 }
 .moyai-source td[data-s="unresolved"] {
-  outline: 1px solid var(--shu);
-  outline-offset: -1px;
-  border-bottom-width: 1px;
+  color: var(--shu-text);
+  border-bottom: 1px solid var(--line);
+  box-shadow: inset 0 -2px 0 var(--shu);
+}
+
+/* 横の板の質問：資料のセルの詳細の「| 決める」で開いた質問は、選んだセルと同じ枠の印 */
+.moyai-question[data-focus="true"] {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
 }

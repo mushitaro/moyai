@@ -169,6 +169,7 @@ export interface ToHost {
 
 /** 受け手 → 主のスレッドの 1 通 */
 export type FromHost =
-  | { kind: "ready" }
+  /** 起きた。alive は、止まるまで持っている見張りの lock の名前（alive.ts。Web Locks が無ければ無い） */
+  | { kind: "ready"; alive?: string }
   | { kind: "reply"; id: number; ok: true; reply: IntakeReplies[IntakeOp] }
   | { kind: "reply"; id: number; ok: false; error: string };

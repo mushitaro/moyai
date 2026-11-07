@@ -23,7 +23,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { MergeSideContext } from "../state/merge-side";
 import { setFacilityDialog, useFacilityDialog } from "../state/facility-dialog";
@@ -95,12 +95,42 @@ function useSheets(ws: IntakeWorkspace, file: string | null): SheetData[] | null
 
 // ─── セルの行き先（詳細の字） ──────────────────────────────────────────
 
-function cellInfo(st: CellStatus | undefined, view: IntakeView): string {
+/** 空・読取・除外のセルの行き先の字（未確定のセルは CellOpen が描く） */
+function cellInfo(st: CellStatus | undefined): string {
   if (!st) return T.dest.empty;
   if (st.s === "data") return T.sheet.cellData;
   if (st.s === "excluded") return T.sheet.cellExcluded(st.reason);
-  const q = st.questionId ? view.questions.find((x) => x.questionId === st.questionId) : undefined;
-  return q ? `${T.sheet.cellUnresolved}。${T.sheet.cellQuestion(q.text)}` : T.sheet.cellUnresolved;
+  return T.source.open;
+}
+
+/**
+ * 未確定のセルの詳細（docs/screens.md 3.3 の末尾「写しの照らし」、Wire、11-07）：種別「未確定」（朱。凡例と同じ言葉）の下に
+ * 「質問　{その質問の種類の名前}」（問いの文は長いので、開いた先に置く。Wire、11-07）と「| 決める」。押すと横の板の「未回答」でその質問を開く（onQuestion）。
+ * 質問が分からないセル（questionId が null か、写しに無い質問）は「質問」の行を出さない。
+ * 「| 決める」は、その質問が未回答で、開く先（横の板）があるときだけ出す
+ */
+export function CellOpen({ view, questionId, onQuestion }: { view: IntakeView; questionId: string | null; onQuestion: ((questionId: string) => void) | null }) {
+  const q = questionId ? view.questions.find((x) => x.questionId === questionId) : undefined;
+  const open = !!q && view.open.includes(q.questionId);
+  return (
+    <Stack gap={2} data-testid="cell-open">
+      <Text size="sm" c="var(--shu-text)" data-testid="cell-kind">
+        {T.source.open}
+      </Text>
+      {q && (
+        <Group gap="xs" wrap="nowrap" justify="space-between" align="flex-start" data-testid="cell-question" data-question={q.questionId}>
+          <Text size="sm" data-testid="cell-question-line">
+            {T.sheet.question((T.questionKind as Record<string, string>)[q.kind] ?? q.text)}
+          </Text>
+          {open && onQuestion && (
+            <button type="button" className="moyai-inline-act" style={{ whiteSpace: "nowrap", flex: "none" }} data-testid="cell-question-open" onClick={() => onQuestion(q.questionId)}>
+              {T.questions.answer}
+            </button>
+          )}
+        </Group>
+      )}
+    </Stack>
+  );
 }
 
 // ─── セルを決めた答え（docs/screens.md 3.3「答えの取り消し」、Wire、11-07） ─────────────────
@@ -133,23 +163,36 @@ export function cellAnswers(ws: IntakeWorkspace, view: IntakeView, qs: readonly 
 }
 
 /**
- * 横の板の詳細の、セルを決めた答え：質問ごとに 1 行「答え　{答えの字}　{作者}　{日時}」と「| 取り消す」。
+ * 横の板の詳細の、セルを決めた答え（docs/screens.md 3.3 の末尾「写しの照らし」、Wire、11-07）：質問ごとに 2 行。
+ * 1 行目「答え　{答えの字}」、2 行目「{作者}　{日時}」と右端に「| 取り消す」（折り返さない）。
  * 押すとその質問は未回答に戻り、同じ答えで決まったセルもまとめて戻る（決定を外して読み直す）。確定のシートには並べない
  */
 export function CellAnswers({ ws, view, qs }: { ws: IntakeWorkspace; view: IntakeView; qs: readonly string[] }) {
   const list = cellAnswers(ws, view, qs);
   if (!list.length) return null;
   return (
-    <Stack gap={4} data-testid="cell-answers">
+    <Stack gap={8} data-testid="cell-answers">
       {list.map((a) => (
-        <Group key={a.questionId} gap="xs" wrap="nowrap" justify="space-between" data-testid="cell-answer" data-question={a.questionId}>
-          <Text size="sm" className="moyai-num" data-testid="cell-answer-line">
-            {T.sheet.answerLine(a.answer, a.author, a.at)}
+        <Stack key={a.questionId} gap={0} data-testid="cell-answer" data-question={a.questionId}>
+          <Text size="sm" data-testid="cell-answer-line">
+            {T.sheet.answerLine(a.answer)}
           </Text>
-          <button type="button" className="moyai-inline-act" disabled={ws.busy} data-testid="cell-answer-undo" onClick={() => void ws.undoAsync(a.questionId)}>
-            {T.sheet.undo}
-          </button>
-        </Group>
+          <Group gap="xs" wrap="nowrap" justify="space-between">
+            <Text size="sm" className="moyai-num" data-testid="cell-answer-by">
+              {T.sheet.answerBy(a.author, a.at)}
+            </Text>
+            <button
+              type="button"
+              className="moyai-inline-act"
+              style={{ whiteSpace: "nowrap", flex: "none" }}
+              disabled={ws.busy}
+              data-testid="cell-answer-undo"
+              onClick={() => void ws.undoAsync(a.questionId)}
+            >
+              {T.sheet.undo}
+            </button>
+          </Group>
+        </Stack>
       ))}
     </Stack>
   );
@@ -161,11 +204,12 @@ type SourceFilter = "open" | "all";
 
 /**
  * HOSHITORI の資料のタブ：その資料 1 つだけ。上に切り替え「未確定行 n ／ 全行 n」（既定は未確定行、数は朱）と凡例。その下に元の表
- * （行の番号と列の字。未確定のセルは朱の枠）。セルを選ぶと、横の板の「詳細」にそのセルの行き先（除外ならその理由、未確定ならその質問）を出す。
- * 答えで決まったセルなら、決めた答えの行と「| 取り消す」も出す（CellAnswers）。
+ * （行の番号と列の字。未確定のセルは朱の字と下の 2px の朱の線）。セルを選ぶと、横の板の「詳細」にそのセルの行き先（除外ならその理由、
+ * 未確定なら種別「未確定」とその質問と「| 決める」）を出す。答えで決まったセルなら、決めた答えと「| 取り消す」も出す（CellAnswers）。
+ * end は凡例の行の右端に置くもの（版があるときの「| 資料を重ねて第 n 版をつくる」。凡例の上に行を足さない）。
  * 施設の欄・すべての資料の行き先の一覧・AI の作業の記録は置かない
  */
-function SourceTab({ ws, view, layouts }: { ws: IntakeWorkspace; view: IntakeView; layouts: SheetData[] }) {
+function SourceTab({ ws, view, layouts, end }: { ws: IntakeWorkspace; view: IntakeView; layouts: SheetData[]; end?: ReactNode }) {
   const S = T.source;
   const [sheet, setSheet] = useState(0);
   const lay = layouts[Math.min(sheet, layouts.length - 1)]!;
@@ -195,9 +239,11 @@ function SourceTab({ ws, view, layouts }: { ws: IntakeWorkspace; view: IntakeVie
         {pickedCell?.page !== undefined ? T.sheet.page(pickedCell.page) : ""}
       </Text>
       {pickedCell?.text && <Text size="sm">「{pickedCell.text}」</Text>}
-      <Text size="sm" c={pickedStatus?.s === "unresolved" ? "var(--shu-text)" : undefined}>
-        {cellInfo(pickedStatus, view)}
-      </Text>
+      {pickedStatus?.s === "unresolved" ? (
+        <CellOpen view={view} questionId={pickedStatus.questionId} onQuestion={side?.openQuestion ?? null} />
+      ) : (
+        <Text size="sm">{cellInfo(pickedStatus)}</Text>
+      )}
       {pickedStatus && pickedStatus.s !== "unresolved" && pickedStatus.qs && <CellAnswers ws={ws} view={view} qs={pickedStatus.qs} />}
       {(() => {
         // 版の履歴で人が確定して消した星取のセル：「削除（第 n 版）」と理由（Architect の 70。Wire）
@@ -233,21 +279,24 @@ function SourceTab({ ws, view, layouts }: { ws: IntakeWorkspace; view: IntakeVie
             <span className="moyai-swatch" data-s="data" /> {S.read}　<span className="moyai-swatch" data-s="excluded" /> {S.excluded}　<span className="moyai-swatch" data-s="unresolved" /> {S.open}
           </Text>
         </Group>
-        {layouts.length > 1 && (
-          <Select
-            size="xs"
-            aria-label={T.sheet.choose}
-            data={layouts.map((l, i) => ({ value: String(i), label: l.sheet ?? l.file }))}
-            value={String(Math.min(sheet, layouts.length - 1))}
-            onChange={(v) => {
-              if (v === null) return;
-              setSheet(Number(v));
-              setTop(1);
-              setPicked(null);
-            }}
-            w={240}
-          />
-        )}
+        <Group gap="md" wrap="nowrap">
+          {layouts.length > 1 && (
+            <Select
+              size="xs"
+              aria-label={T.sheet.choose}
+              data={layouts.map((l, i) => ({ value: String(i), label: l.sheet ?? l.file }))}
+              value={String(Math.min(sheet, layouts.length - 1))}
+              onChange={(v) => {
+                if (v === null) return;
+                setSheet(Number(v));
+                setTop(1);
+                setPicked(null);
+              }}
+              w={240}
+            />
+          )}
+          {end}
+        </Group>
       </Group>
       <div className="moyai-sheet moyai-source">
         <Table withTableBorder={false} data-testid="sheet-grid">
@@ -326,13 +375,20 @@ function DefaultMark() {
   );
 }
 
-/** 質問 1 つ：問いの文、「n 行」、ラジオ（既定の答えに「- 既定」）、「| 決める」 */
-function QuestionCard({ ws, q }: { ws: IntakeWorkspace; q: QuestionView }) {
+/**
+ * 質問 1 つ：問いの文、「n 行」、ラジオ（既定の答えに「- 既定」）、「| 決める」。
+ * focus（資料のセルの詳細の「| 決める」で開いた質問）なら印を付け、見える所へ送る（focusSeq は押すたびに増える）
+ */
+function QuestionCard({ ws, q, focus = false, focusSeq = 0 }: { ws: IntakeWorkspace; q: QuestionView; focus?: boolean; focusSeq?: number }) {
   const [value, setValue] = useState<string>(q.defaultAnswer ?? "");
   const [refused, setRefused] = useState<string | null>(null);
   const ok = answerOffered(q, value);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (focus) ref.current?.scrollIntoView?.({ block: "nearest" });
+  }, [focus, focusSeq]);
   return (
-    <Paper withBorder p="xs" data-testid="question" data-kind={q.kind} data-question={q.questionId}>
+    <Paper ref={ref} withBorder p="xs" className="moyai-question" data-testid="question" data-kind={q.kind} data-question={q.questionId} data-focus={focus ? "true" : undefined}>
       <Text size="sm">{q.text}</Text>
       <Text size="xs" c="var(--text-3)" className="moyai-num" data-testid="question-rows">
         {T.questions.rows(q.sameShapeRows)}
@@ -406,7 +462,8 @@ function QuestionCard({ ws, q }: { ws: IntakeWorkspace; q: QuestionView }) {
   );
 }
 
-export function Questions({ ws, view }: { ws: IntakeWorkspace; view: IntakeView }) {
+/** 横の板の「未回答 n」。focus は資料のセルの詳細の「| 決める」で開いた質問（無ければ null） */
+export function Questions({ ws, view, focus = null }: { ws: IntakeWorkspace; view: IntakeView; focus?: { questionId: string; seq: number } | null }) {
   const groups = useMemo(() => {
     const byId = new Map(view.questions.map((q) => [q.questionId, q]));
     const m = new Map<QuestionKind, QuestionView[]>();
@@ -425,7 +482,13 @@ export function Questions({ ws, view }: { ws: IntakeWorkspace; view: IntakeView 
             {KIND_LABEL[kind] ?? T.questions.other} <Badge variant="light" size="sm" className="moyai-num">{qs.length}</Badge>
           </Title>
           {qs.map((q) => (
-            <QuestionCard key={`${q.questionId}|${q.decision?.answer ?? ""}`} ws={ws} q={q} />
+            <QuestionCard
+              key={`${q.questionId}|${q.decision?.answer ?? ""}`}
+              ws={ws}
+              q={q}
+              focus={focus?.questionId === q.questionId}
+              focusSeq={focus?.questionId === q.questionId ? focus.seq : 0}
+            />
           ))}
         </Stack>
       ))}
@@ -607,19 +670,23 @@ export function IntakeFacilityDialog({ ws }: { ws: IntakeWorkspace }) {
 
 /**
  * 資料のシート（HOSHITORI の中。docs/screens.md 3.2・3.3）。file は今選んでいる資料（HOSHITORI のシートのタブが決める。資料が無ければ null）。
- * 計画をつくるボタン：白紙のあいだは HOSHITORI の下の帯にある（composeInBar）。版があるときは、ここの右上の副のボタン（composeLabel）。
+ * 計画をつくるボタン：白紙のあいだは HOSHITORI の下の帯にある（composeInBar）。版があるときは、凡例の行の右端の「| 資料を重ねて第 n 版をつくる」
+ * （composeLabel）。出すのは、つくった版に入っていない変更があるとき（composeOffered）だけ。つくった直後は出さない（docs/screens.md 3.3 の末尾「写しの照らし」）。
  * 計画をつくったあとの知らせの箱と決定の一覧は置かない（タブの星取表と、確定のシートで分かる。Wire、11-07）
  */
 export function Intake({
   ws,
   composeLabel,
   composeInBar = false,
+  composeOffered = false,
   file = null,
 }: {
   ws: IntakeWorkspace;
   composeLabel: string;
   /** 計画をつくるボタンは HOSHITORI の下の帯にある（白紙のあいだ）。ここには出さない */
   composeInBar?: boolean;
+  /** 版があるとき：つくった版に入っていない変更（資料の追加・答えの変更・取り消しなど）がある。無ければ「| 資料を重ねて第 n 版をつくる」を出さない */
+  composeOffered?: boolean;
   file?: string | null;
 }) {
   useWorkspace(ws);
@@ -652,6 +719,28 @@ export function Intake({
   // 開いている資料のシートだけを受け手から読む
   const sheetsOf = useSheets(ws, shown);
   const skipped = [...ws.skippedFiles, ...(view?.rejected ?? [])];
+  // 版があるときの「| 資料を重ねて第 n 版をつくる」と押せない理由（凡例の行の右端。白紙のあいだは下の帯にある）
+  const composeEnd = !composeInBar && composeOffered && (
+    <Group gap="sm" wrap="nowrap" data-testid="compose-next">
+      {reasons.length > 0 && compose.state !== "running" && (
+        <Text size="xs" c="dimmed" maw={420} lineClamp={2} title={reasons.join("・")} data-testid="compose-disabled-reason">
+          {T.reasonsPrefix}
+          {reasons.join("・")}
+        </Text>
+      )}
+      <button
+        type="button"
+        className="moyai-inline-act"
+        style={{ whiteSpace: "nowrap", flex: "none" }}
+        onClick={() => ws.startCompose("human")}
+        disabled={reasons.length > 0 || compose.state === "running"}
+        aria-busy={compose.state === "running" ? "true" : undefined}
+        data-testid="compose"
+      >
+        {composeLabel}
+      </button>
+    </Group>
+  );
 
   return (
     <Container
@@ -661,28 +750,8 @@ export function Intake({
       data-busy={ws.busy ? "true" : undefined}
       data-compose={compose.state}
       data-compose-by={compose.state === "idle" ? undefined : compose.by}
+      data-restored-from={ws.restoredFrom?.version}
     >
-      {/* 白紙の HOSHITORI の中では、上の行ごと出さない（主ボタンは下の帯にある） */}
-      {!composeInBar && (
-        <Group justify="flex-end" align="center" mb="md" wrap="nowrap" gap="sm">
-          {reasons.length > 0 && compose.state !== "running" && (
-            <Text size="xs" c="dimmed" maw={420} lineClamp={2} title={reasons.join("・")} data-testid="compose-disabled-reason">
-              {T.reasonsPrefix}
-              {reasons.join("・")}
-            </Text>
-          )}
-          <Button
-            variant="default"
-            onClick={() => ws.startCompose("human")}
-            disabled={reasons.length > 0 || compose.state === "running"}
-            loading={compose.state === "running"}
-            data-testid="compose"
-          >
-            {composeLabel}
-          </Button>
-        </Group>
-      )}
-
       <Stack gap="md">
         {compose.state === "failed" && (
           <Alert color="orange" title={T.composeFailed} data-testid="compose-failed">
@@ -760,11 +829,14 @@ export function Intake({
         {view &&
           shown &&
           (sheetsOf && sheetsOf.length > 0 ? (
-            <SourceTab key={shown} ws={ws} view={view} layouts={sheetsOf} />
+            <SourceTab key={shown} ws={ws} view={view} layouts={sheetsOf} end={composeEnd} />
           ) : (
-            <Text size="sm" c="dimmed" data-testid="source-loading" data-file={shown}>
-              {T.sheet.loading}
-            </Text>
+            <Group justify="space-between" gap="md" wrap="nowrap">
+              <Text size="sm" c="dimmed" data-testid="source-loading" data-file={shown}>
+                {T.sheet.loading}
+              </Text>
+              {composeEnd}
+            </Group>
           ))}
       </Stack>
     </Container>

@@ -589,9 +589,22 @@ export class IntakeWorkspace {
   /** 作業中の計画を作ったときの取り込みの版（作ったか版を開いて資料を戻したときに置く。無ければ照らさない） */
   private composedAt: number | null = null;
 
+  /** 作ったか戻した計画の ID（composedAt と組。uncomposed で、ほかの計画の版を開いているかを見る） */
+  private composedFor: string | null = null;
+
   /** 作業中の計画を作ったあと、資料・決定・読み方・写真が変わったか（変わっていれば作り直すまで署名を止める。台帳の中-6） */
   notRecomposed(): boolean {
     return this.composedAt !== null && this.composedAt !== this.dataVersion;
+  }
+
+  /**
+   * 計画 planId の版に入っていない、このタブの資料・決定・読み方・写真の変更があるか（版があるときの「| 資料を重ねて第 n 版をつくる」は、
+   * このときだけ出す。docs/screens.md 3.3 の末尾「写しの照らし」）。資料が無ければ無い。
+   * このタブでその計画を作ったか、その版の資料を戻したあとなら、そのあとに変わったか。どちらでもなければ、このタブの資料はその版に入っていない
+   */
+  uncomposed(planId: string): boolean {
+    if (this.inputs.length === 0) return false;
+    return this.composedAt === null || this.composedFor !== planId || this.composedAt !== this.dataVersion;
   }
 
   /** 戻した版（次の版に重ねるとき、その版を組んだ資料と決定を戻した。資料のタブで「第 n 版の資料」と出す） */
@@ -625,6 +638,7 @@ export class IntakeWorkspace {
     this.changed(true, true);
     // 戻した資料と決定は、開いた版の計画と同じ（作り直していないことにしない）
     this.composedAt = this.dataVersion;
+    this.composedFor = opts.planId;
   }
 
   /**
@@ -762,6 +776,7 @@ export class IntakeWorkspace {
           if (carried) this.note("info", TEXT.crosswalk.carried(carried));
           this.compose = { state: "done", startedAt, by, plan: c.plan };
           this.composedAt = at;
+          this.composedFor = c.plan.planId;
         } else this.compose = { state: "failed", startedAt, by, blockers: c.blockers };
       } catch (e) {
         this.compose = { state: "failed", startedAt, by, blockers: [`計画を作る途中で誤りが起きた（${e instanceof Error ? e.name : "誤り"}）`] };

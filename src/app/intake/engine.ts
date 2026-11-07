@@ -2,10 +2,11 @@
 // - SameThreadEngine：受け手を同じスレッドに置く（worker の無い所＝vitest の node）。同期でも読める。
 // - WorkerEngine：受け手を worker に置く（画面のタブ）。通信は worker-protocol.ts の型だけで、答えは Promise で待つ。
 //   worker が起きる前に落ちたら（読み込めない等）、同じ受け手を同じスレッドに置いて続ける（そのときは主のスレッドが止まる）。
+//   起きたあとに worker が止まったら（terminate・落ちた。alive.ts の見張り）、待っている答えを誤りで終え、止まった知らせを出す。
 import { IntakeHost } from "./intake-host";
 import type { FromHost, IntakeRequest, ReplyOf, ToHost } from "./worker-protocol";
 
-/** fallback：worker が起きずに同じスレッドで続けた／failed：受け手が答えなくなった */
+/** fallback：worker が起きずに同じスレッドで続けた／failed：受け手が答えなくなった（受け手の誤り・起きたあとに worker が止まった） */
 export type EngineFault = "fallback" | "failed";
 
 export interface IntakeEngine {
@@ -40,8 +41,11 @@ export class SameThreadEngine implements IntakeEngine {
 /** worker との通り道（ブラウザの Worker と、試験の node の worker_threads をそろえる） */
 export interface IntakePort {
   post(msg: ToHost, transfer: Transferable[]): void;
-  /** on：受け手からの 1 通。fail：worker が落ちた（起きる前なら読み込めなかった） */
-  listen(on: (msg: FromHost) => void, fail: () => void): void;
+  /**
+   * on：受け手からの 1 通。fail：worker が落ちた（起きる前なら読み込めなかった）。
+   * gone：起きたあとに worker が止まった（見張りの lock が離れた。alive.ts）。見張れない通り道は呼ばない
+   */
+  listen(on: (msg: FromHost) => void, fail: () => void, gone: () => void): void;
 }
 
 export class WorkerEngine implements IntakeEngine {
@@ -63,6 +67,7 @@ export class WorkerEngine implements IntakeEngine {
     port.listen(
       (m) => this.onMessage(m),
       () => this.onFail(),
+      () => this.onGone(),
     );
   }
 
@@ -98,6 +103,15 @@ export class WorkerEngine implements IntakeEngine {
       this.fault("fallback");
       return;
     }
+    this.dead = true;
+    for (const w of this.waiting.values()) w.reject(new Error("取り込みの worker が止まった"));
+    this.waiting.clear();
+    this.fault("failed");
+  }
+
+  /** 起きたあとに worker が止まった：待っている答えを誤りで終え、そのあとの要求も受けない。止まった知らせ（failed）を 1 回だけ出す */
+  private onGone(): void {
+    if (this.dead || this.fallbackHost) return;
     this.dead = true;
     for (const w of this.waiting.values()) w.reject(new Error("取り込みの worker が止まった"));
     this.waiting.clear();

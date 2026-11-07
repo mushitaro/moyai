@@ -479,13 +479,14 @@ export const TEXT = {
       page: (page: number) => `（${page} 頁）`,
       cellData: "データ（計画に入る）",
       cellExcluded: (why: string) => `除外：${why}`,
-      cellUnresolved: "未解決",
-      cellQuestion: (text: string) => `この質問に答えると決まります：${text}`,
+      /** 未確定のセルの詳細の、そのセルを決める質問（docs/screens.md 3.3 の末尾「写しの照らし」）：「質問　{その質問の題}」。種別の字は凡例の source.open */
+      question: (text: string) => `質問　${text}`,
       /**
-       * セルを決めた答えの 1 行（docs/screens.md 3.3「答えの取り消し」、Wire、11-07）：「答え　施設全体の共通の設備　人　2026-11-07 06:30」。
-       * 日時は、このタブで答えた時刻が分かるときだけ（版から戻した決定は時刻を持たない）
+       * セルを決めた答えの 1 行目（docs/screens.md 3.3 の末尾「写しの照らし」、Wire、11-07）：「答え　はい（まとめて当てる）」
        */
-      answerLine: (answer: string, author: string, at: string | null) => ["答え", answer, author, ...(at ? [at] : [])].join("　"),
+      answerLine: (answer: string) => `答え　${answer}`,
+      /** 2 行目：「人　2026-11-07 11:49」。日時は、このタブで答えた時刻が分かるときだけ（版から戻した決定は時刻を持たない） */
+      answerBy: (author: string, at: string | null) => [author, ...(at ? [at] : [])].join("　"),
       undo: "取り消す",
       loading: "読込中",
     },

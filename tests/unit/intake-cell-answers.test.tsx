@@ -1,7 +1,8 @@
 // 資料のセルを選ぶと、そのセルを決めた答えと「| 取り消す」を詳しくに出す（docs/screens.md 3.3 の末尾「答えの取り消し」、Wire、11-07。仕事 intake-screen-v3）。
 // - 取り込みの側：データ・除外のセルの行き先に、そのセルを決めた質問の ID の並び（qs）。同じスレッドの受け手でも worker の形でも同じ値が届く。
 //   未解決のセルを決める質問（questionId）は、分かる所では埋まる。答えた時刻は作業場が持ち（settle で書き、undo で消す）、Decision と版の記録には入らない。
-// - 画面：qs のあるセルの詳しくに、質問ごとに 1 行「答え　{答えの字}　{作者}　{日時}」と「| 取り消す」。押すと未回答が 1 増え、下の帯の押せない理由も増える。
+// - 画面：qs のあるセルの詳しくに、質問ごとに 2 行。1 行目「答え　{答えの字}」、2 行目「{作者}　{日時}」と右端に「| 取り消す」（折り返さない。
+//   docs/screens.md 3.3 の末尾「写しの照らし」、仕事 intake-screen-v4）。押すと未回答が 1 増え、下の帯の押せない理由も増える。
 // 画面は react-dom/server で描く（試験は node で走る）。押すのは、描いた要素の onClick を呼ぶ（DOM の無い所で、画面と同じ手を通す）。
 // 資料は工場の架空の資料（fictional-2 の台帳と星取表）。
 import { readFileSync } from "node:fs";
@@ -244,7 +245,7 @@ describe("取り込みの側：セルを決めた質問（qs）と答えた時�
 });
 
 describe("画面：資料のシートの詳しくの、セルを決めた答えと「| 取り消す」", () => {
-  test("答えで決まったセル：質問ごとに 1 行「答え　{答えの字}　{作者}　{日時}」と「| 取り消す」。押すと未回答が 1 増え、下の帯の理由も増える", async () => {
+  test("答えで決まったセル：質問ごとに「答え　{答えの字}」と「{作者}　{日時}」の 2 行、2 行目の右端に「| 取り消す」。押すと未回答が 1 増え、下の帯の理由も増える", async () => {
     const ws = sameThread();
     await drop(ws);
     await answerAll(ws);
@@ -261,15 +262,25 @@ describe("画面：資料のシートの詳しくの、セルを決めた答え�
     const rows = tags(html, "cell-answer");
     expect(rows.map((t) => attr(t, "data-question"))).toEqual(cellAnswers(ws, view, qs).map((x) => x.questionId));
     expect(rows.map((t) => attr(t, "data-question"))).toContain(q);
-    const line = textsOf(html, "cell-answer-line")[rows.findIndex((t) => attr(t, "data-question") === q)]!;
+    const at = rows.findIndex((t) => attr(t, "data-question") === q);
+    const line = textsOf(html, "cell-answer-line")[at]!;
+    const by = textsOf(html, "cell-answer-by")[at]!;
     const stamp = TEXT.intake.at(ws.answeredAt(q)!);
     expect(stamp).toMatch(STAMP);
-    expect(line).toBe(`答え　${label}　人　${stamp}`);
+    expect(line).toBe(`答え　${label}`);
+    expect(by).toBe(`人　${stamp}`);
+    expect(textsOf(html, "cell-answer-line")).toHaveLength(rows.length);
+    expect(textsOf(html, "cell-answer-by")).toHaveLength(rows.length);
+    // 1 行目と 2 行目は別の行（答えの字の行に作者と日時を並べない）。「| 取り消す」は 2 行目の右端にあり、折り返さない
+    const one = html.slice(html.indexOf(`data-question="${q}"`));
+    expect(one.indexOf('data-testid="cell-answer-line"')).toBeLessThan(one.indexOf('data-testid="cell-answer-by"'));
+    expect(one.indexOf('data-testid="cell-answer-by"')).toBeLessThan(one.indexOf('data-testid="cell-answer-undo"'));
     const undo = tags(html, "cell-answer-undo");
     expect(undo).toHaveLength(rows.length);
     for (const u of undo) {
       expect(u).toMatch(/^<button /);
       expect(attr(u, "class")).toBe("moyai-inline-act");
+      expect(attr(u, "style")).toContain("white-space:nowrap");
     }
     expect(textsOf(html, "cell-answer-undo")).toEqual(rows.map(() => "取り消す"));
 
@@ -310,7 +321,9 @@ describe("画面：資料のシートの詳しくの、セルを決めた答え�
       const qs = qsOf(statusAt(sheets, decidedBy(sheets, q)[0]!));
       const mine = cellAnswers(ws, ws.view, qs).find((x) => x.questionId === q)!;
       expect(mine).toEqual({ questionId: q, answer: label, author: word, at: TEXT.intake.at(ws.answeredAt(q)!) });
-      expect(textsOf(render(<CellAnswers ws={ws} view={ws.view} qs={[q]} />), "cell-answer-line")).toEqual([`答え　${label}　${word}　${mine.at}`]);
+      const html = render(<CellAnswers ws={ws} view={ws.view} qs={[q]} />);
+      expect(textsOf(html, "cell-answer-line")).toEqual([`答え　${label}`]);
+      expect(textsOf(html, "cell-answer-by")).toEqual([`${word}　${mine.at}`]);
     }
     expect([TEXT.author.human, TEXT.author.ai_relayed_human, TEXT.author.ai]).toEqual(["人", "会話の回答", "Claude 判断"]);
     // このタブの決定でない質問の ID は出さない
@@ -332,7 +345,8 @@ describe("画面：資料のシートの詳しくの、セルを決めた答え�
     const question = ws.view.questions.find((x) => x.questionId === q)!;
     const label = question.options.find((o) => o.id === question.decision!.answer)!.label;
     const html = render(<CellAnswers ws={ws} view={ws.view} qs={[q]} />);
-    expect(textsOf(html, "cell-answer-line")).toEqual([`答え　${label}　人`]);
+    expect(textsOf(html, "cell-answer-line")).toEqual([`答え　${label}`]);
+    expect(textsOf(html, "cell-answer-by")).toEqual(["人"]);
     expect(tags(html, "cell-answer-undo")).toHaveLength(1);
     expect(qs).toContain(q);
   });
