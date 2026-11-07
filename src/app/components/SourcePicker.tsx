@@ -275,7 +275,7 @@ export function SourcePicker({
   };
   return (
     <div className="moyai-srcpick moyai-srcpick-source" data-selected={selected ? "true" : undefined} data-testid="source-pick">
-      <Popover opened={opened} onChange={setOpened} position="bottom-start" width={LIST_WIDTH} offset={2} shadow="md" radius={0} trapFocus={false} returnFocus withRoles={false} classNames={{ dropdown: "moyai-srcpick-dropdown" }}>
+      <Popover opened={opened} onChange={setOpened} onClose={() => requestAnimationFrame(() => button.current?.focus())} position="bottom-start" width={LIST_WIDTH} offset={2} shadow="md" radius={0} trapFocus={false} returnFocus withRoles={false} classNames={{ dropdown: "moyai-srcpick-dropdown" }}>
         <Popover.Target>
           <button
             ref={button}
@@ -408,7 +408,7 @@ export function SheetPicker({ rows, current, onChoose, defaultOpened = false }: 
   const i = Math.max(0, Math.min(current, rows.length - 1));
   return (
     <div className="moyai-srcpick" data-testid="sheet-pick">
-      <Popover opened={opened} onChange={setOpened} position="bottom-start" width={320} offset={2} shadow="md" radius={0} trapFocus={false} returnFocus withRoles={false} classNames={{ dropdown: "moyai-srcpick-dropdown" }}>
+      <Popover opened={opened} onChange={setOpened} onClose={() => requestAnimationFrame(() => button.current?.focus())} position="bottom-start" width={320} offset={2} shadow="md" radius={0} trapFocus={false} returnFocus withRoles={false} classNames={{ dropdown: "moyai-srcpick-dropdown moyai-srcpick-sheets" }}>
         <Popover.Target>
           <button
             ref={button}

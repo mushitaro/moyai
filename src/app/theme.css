@@ -410,10 +410,15 @@ button.moyai-merge-link {
   cursor: default;
 }
 /* 一覧：幅 520px、高さは画面の 60% まで、中で縦に送る。行「名前｜シート n｜未確定 n｜状態」 */
+/* 幅は px で固定する（Mantine は width を rem に直し、この画面の文字の大きさ 14px では 520 が 455px になった） */
 .moyai-srcpick-dropdown {
+  width: 520px !important;
   padding: var(--sp-3) 0;
   background: var(--bg);
   border: 1px solid var(--line-strong);
+}
+.moyai-srcpick-dropdown.moyai-srcpick-sheets {
+  width: 320px !important;
 }
 .moyai-srcpick-head {
   display: flex;
