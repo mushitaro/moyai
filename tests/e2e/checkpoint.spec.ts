@@ -152,7 +152,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("confirm-submit")).toBeEnabled();
     await page.screenshot({ path: shot(`confirm-${tag}`) });
     await page.getByTestId("confirm-submit").click();
-    await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+    await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     const versions = join(root, "plans", "fixture-fictional-1", "versions");
     expect(readdirSync(versions)).toEqual(["000001.json"]);
     expect(readdirSync(join(root, "plans", "fixture-fictional-1", "reports"))).toEqual(["000001-diff.xlsx"]);

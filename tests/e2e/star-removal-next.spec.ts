@@ -68,7 +68,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await page.getByTestId("confirm-reason").fill("第 1 版（e2e）");
       await signInDialog(page);
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+      await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
       await page.getByTestId("confirm-close").click();
     });
 
@@ -116,7 +116,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await page.getByTestId("confirm-open").click({ timeout: 20_000 });
       await page.getByTestId("confirm-reason").fill("実績の誤りを消す（e2e）");
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+      await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
       await page.getByTestId("confirm-close").click();
       const plans = readdirSync(join(root, "plans"));
       const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000002.json"), "utf8"));

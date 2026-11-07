@@ -7,11 +7,20 @@ import { useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import type { BridgeClient } from "../bridge-client";
 import { settleDraft } from "../state/draft";
-import { HUMAN_TEXT } from "../text";
+import { HUMAN_TEXT, TEXT } from "../text";
+import { versionName } from "../version-name";
 import { readHuman } from "./ConfirmDialog";
 import { KeyWarnLine, type TrustSig } from "./KeyWarn";
 
 const T = HUMAN_TEXT.approve;
+
+/**
+ * 承認・差し戻しの結果の 1 文（docs/screens.md §3.4 の末尾）。承認した版は年度で呼ぶ（「令和 8 年度版（第 1 版）を承認しました。」）。
+ * 差し戻しは署名で版にならないので年度を付けない（「第 1 版を差戻しました。」）。at は承認の署名の時刻、startMonth は施設の年度の始まり（見せ方だけ）
+ */
+export function signResultLine(role: "approve" | "return", version: number, at: string | null, startMonth: number | null): string {
+  return TEXT.merge.signed(role, version, versionName(version, role === "approve" ? at : null, startMonth));
+}
 
 export function SignDialog({
   client,
@@ -36,7 +45,8 @@ export function SignDialog({
   onKeyConfirmed?: () => void;
   opened: boolean;
   onClose: () => void;
-  onSigned: () => void;
+  /** at は署名の時刻（橋渡しが返したもの。古い橋渡しなら null） */
+  onSigned: (at: string | null) => void;
 }) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -58,12 +68,12 @@ export function SignDialog({
         return setError(k.message);
       }
     }
-    const r = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("plan_sign", ROUTES.planSign.path, { planId, version, role, reason: reason.trim() }));
+    const r = readHuman<{ ok: boolean; reason?: string; at?: string }>(await client.callHuman("plan_sign", ROUTES.planSign.path, { planId, version, role, reason: reason.trim() }));
     setBusy(false);
     if (!r.ok) return setError(r.message);
     // 署名したら、前の作業の写しを消す（pwa-v0）
     settleDraft(planId);
-    onSigned();
+    onSigned(r.body.at ?? null);
     onClose();
   };
   return (

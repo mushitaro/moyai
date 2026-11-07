@@ -594,7 +594,8 @@ export class HumanService {
           const q = await createRequest({ root, planId, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), by, pair: signer.signer.pair, now });
           mail = handoffMail({ name: r.record.plan.displayName, version: r.version, contentHash, kind: req.kind, to: req.to!.trim(), note: req.note, by, planId, link: handoffLink(planId, r.version, contentHash, q.token) });
         }
-        return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files, mail };
+        // at は版の記録の署名の時刻（画面が結果の 1 文で版を年度で呼ぶのに使う。見せ方だけ。docs/screens.md §3.4 の末尾）
+        return { ok: true, version: r.version, at: r.record.at, plan: r.record.plan, summary: r.record.summary, files: r.files, mail };
       }
       case "plan_revert": {
         const p = parsePayload("plan_revert", call.payload);
@@ -688,11 +689,15 @@ export class HumanService {
               planId: id,
               displayName: h.latest.plan.displayName,
               fictional: h.latest.plan.facility.fictional,
+              // 施設の年度の始まり（トップで、確定した版を年度で呼ぶのに使う。docs/screens.md §3.4 の末尾）
+              fiscalYearStartMonth: h.latest.plan.facility.fiscalYearStartMonth,
               versions: h.versions.map((v) => ({
                 version: v.version,
                 at: v.at,
                 contentHash: v.contentHash,
                 roles: v.signatures.map((x) => x.role),
+                // 版を確定した署名の時刻（承認があれば承認、無ければ自分で確定した署名）。渡しただけ・差し戻し・戻すは null。トップで版を年度で呼ぶのに使う（見せ方だけ）
+                signedAt: (v.signatures.find((x) => x.role === "approve") ?? v.signatures.find((x) => x.role === "confirm"))?.at ?? null,
                 // 版を作った人（確定か渡すの署名の呼び名）。トップの「ほかの人が持っていた間」に使う
                 by: v.signatures.find((x) => x.role === "confirm" || x.role === "edit" || x.role === "revert")?.by ?? null,
                 // 版を作った鍵が、前に確かめた鍵と替わっている（トップは替わったときだけ朱で知らせる。KeyWarn.dc.html の 6）
@@ -781,7 +786,8 @@ export class HumanService {
           note: p.reason.trim(),
           at,
         });
-        return { ok: true, version: r.version, role: r.role };
+        // at は承認・差し戻しの署名の時刻（signLatest に渡した now と同じ）。承認の結果の 1 文で版を年度で呼ぶのに使う（見せ方だけ）
+        return { ok: true, version: r.version, role: r.role, at };
       }
       case "plan_file_read": {
         const p = parsePayload("plan_file_read", call.payload);

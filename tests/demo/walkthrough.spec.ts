@@ -405,7 +405,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("ask-self").check();
       await pa.getByTestId("confirm-reason").fill("台帳の周期の案をもう 1 つ入れた第 2 版");
       await pa.getByTestId("confirm-submit").click();
-      await expect(pa.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+      await expect(pa.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
       await pa.keyboard.press("Escape");
     });
 
@@ -466,7 +466,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.getByTestId("ask-self").check();
       await pa.getByTestId("confirm-reason").fill("みどり台の第 2 版から作った、東山の第 1 版");
       await pa.getByTestId("confirm-submit").click();
-      await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+      await expect(pa.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
       await pa.keyboard.press("Escape");
       await pa.goto(`${one.base}/#/`);
       await expect(pa.getByTestId("moyai-row")).toHaveCount(2);

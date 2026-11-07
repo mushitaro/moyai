@@ -185,7 +185,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await signInDialog(page);
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+      await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
       const plans = readdirSync(join(root, "plans"));
       expect(plans).toHaveLength(1);
       const versions = join(root, "plans", plans[0]!, "versions");
@@ -314,7 +314,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.getByTestId("confirm-reason").fill("縦の 1 本：第 1 版の資料と当てはめを重ねた第 2 版（e2e）");
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+      await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
       await page.getByTestId("confirm-close").click();
       await page.getByTestId("sheet-file").first().click();
       await expect(page.getByTestId("source-tab")).toBeVisible();

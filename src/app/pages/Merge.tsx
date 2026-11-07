@@ -11,7 +11,7 @@ import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { ConfirmDialog, HistoryDialog, readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { ROUTES } from "../../shared/routes";
-import { SignDialog } from "../components/SignDialog";
+import { SignDialog, signResultLine } from "../components/SignDialog";
 import { KeyWarnLine, untrustedSigners, type TrustSig } from "../components/KeyWarn";
 import { RequestRenewDialog } from "../components/RequestRenewDialog";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
@@ -787,8 +787,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               onKeyConfirmed={reloadStatus}
               opened={!!signRole}
               onClose={() => setSignRole(null)}
-              onSigned={() => {
-                setNotice(T.signed(signRole, st.latest!.version));
+              onSigned={(at) => {
+                // 承認した版は、承認の署名の時刻と施設の年度の始まりで年度を付けて呼ぶ（見せ方だけ。差し戻しは「第 n 版」のまま）
+                setNotice(signResultLine(signRole, st.latest!.version, at, st.latest!.plan.facility.fiscalYearStartMonth));
                 reloadStatus();
               }}
             />

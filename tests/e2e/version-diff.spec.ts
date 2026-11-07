@@ -47,7 +47,7 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       await page.getByTestId("confirm-reason").fill("見本の計画を第 1 版にする（e2e）");
       await signInDialog(page);
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+      await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
       await page.keyboard.press("Escape");
     });
 
@@ -96,7 +96,7 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       await page.getByTestId("confirm-open").click();
       await page.getByTestId("confirm-reason").fill("周期の案を入れて第 2 版にする（e2e）");
       await page.getByTestId("confirm-submit").click();
-      await expect(page.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+      await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
       await page.keyboard.press("Escape");
       await page.getByTestId("sheet-chart").click();
       await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "2");

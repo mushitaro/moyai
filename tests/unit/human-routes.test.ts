@@ -459,6 +459,53 @@ describe("編集者：承認を頼んだ版の上に次の版を作れるのは�
   });
 });
 
+describe("版を年度で呼ぶための時刻（見せ方だけ。docs/screens.md §3.4 の末尾、仕事 sign-words-v1）", () => {
+  it("確定の答えに署名の時刻。版の一覧に施設の年度の始まりと、版を確定した署名の時刻（承認か自分で確定。渡しただけは null）。版の記録には足さない", async () => {
+    extra = join(tmpdir(), `moyai-signed-at-${process.pid}-${Date.now()}`);
+    const root = join(extra, "MOYAI");
+    mkdirSync(root, { recursive: true });
+    const a = await startTestBridge();
+    try {
+      const t = await tab(a);
+      const call = async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+        const text = JSON.stringify(payload);
+        return (await post(a, R(id).path, good(a), { token: await t.token(R(id).action, text), payload: text })).body;
+      };
+      expect(await call("settingsSave", { root, name: "【架空】頼んだ人" })).toMatchObject({ ok: true });
+      expect(await call("personKeyCreate", {})).toMatchObject({ ok: true });
+      const plan = truthToPlan("fictional-1");
+      const acceptances = aiDecisions(plan).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+      // 承認を頼んで渡す：署名の時刻は返すが、まだ確定していないので一覧の確定の時刻は null
+      const v1 = await call("planCommit", { plan, reason: "承認を頼む", acceptances, basedOn: null, request: { kind: "approve", to: "boss@example.jp", note: "" } });
+      expect(v1).toMatchObject({ ok: true, version: 1 });
+      const record1 = JSON.parse(readFileSync(join(root, "plans", plan.planId, "versions", "000001.json"), "utf8"));
+      expect(v1.at).toBe(record1.at);
+      let listed = (await call("plansList", {})).plans.find((p: { planId: string }) => p.planId === plan.planId);
+      expect(listed.fiscalYearStartMonth).toBe(plan.facility.fiscalYearStartMonth);
+      expect(listed.versions[0]).toMatchObject({ version: 1, signedAt: null });
+      // 承認すると、承認の署名の時刻
+      const approvedAt = new Date("2026-03-31T15:00:00.000Z");
+      expect(await signLatest({ root, planId: plan.planId, version: 1, role: "approve", reason: "", signer: otherSigner("【架空】承認する人"), now: approvedAt })).toMatchObject({ ok: true });
+      listed = (await call("plansList", {})).plans.find((p: { planId: string }) => p.planId === plan.planId);
+      expect(listed.versions[0].signedAt).toBe(approvedAt.toISOString());
+      // 自分で確定すると、確定の署名の時刻（版の記録の時刻と同じ）
+      const v2 = await call("planCommit", { plan: { ...v1.plan }, reason: "次の版を自分で確定", acceptances: [], basedOn: 1 });
+      expect(v2).toMatchObject({ ok: true, version: 2 });
+      const record2Text = readFileSync(join(root, "plans", plan.planId, "versions", "000002.json"), "utf8");
+      expect(v2.at).toBe(JSON.parse(record2Text).at);
+      listed = (await call("plansList", {})).plans.find((p: { planId: string }) => p.planId === plan.planId);
+      expect(listed.versions[1]).toMatchObject({ version: 2, signedAt: v2.at });
+      // 年度の呼び名は見せ方だけ：版の記録には足さない
+      for (const text of [record2Text, JSON.stringify(record1)]) {
+        expect(text).not.toContain("signedAt");
+        expect(text).not.toContain("年度版");
+      }
+    } finally {
+      await a.close();
+    }
+  });
+});
+
 describe("受け手：似た施設と並べる（peers_compare）", () => {
   it("設定で選んだ台帳の clone を受け手の関数で読み、立場ごとに場を並べる。入札の対象が無ければ聞く", async () => {
     extra = join(tmpdir(), `moyai-peers-${process.pid}-${Date.now()}`);

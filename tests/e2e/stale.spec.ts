@@ -54,7 +54,7 @@ test("ほかの人が新しい版を足したら知らせて署名を止め、�
     await pa.getByTestId("confirm-reason").fill("山田の第 1 版（e2e）");
     await signInDialog(pa);
     await pa.getByTestId("confirm-submit").click();
-    await expect(pa.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+    await expect(pa.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await pa.keyboard.press("Escape");
     await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
     await expect(pa.getByTestId("merge-stale")).toHaveCount(0);
@@ -69,7 +69,7 @@ test("ほかの人が新しい版を足したら知らせて署名を止め、�
     await pb.getByTestId("confirm-reason").fill("課長が見直した第 2 版（e2e）");
     await signInDialog(pb);
     await pb.getByTestId("confirm-submit").click();
-    await expect(pb.getByTestId("confirm-done")).toContainText("第 2 版に署名しました");
+    await expect(pb.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
   });
 
   await test.step("山田：タブに戻ると、保管先に新しい版があると出て、署名は止まる", async () => {

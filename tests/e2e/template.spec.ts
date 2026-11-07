@@ -63,7 +63,7 @@ test("利用者の様式の見出しを読み、列ごとに写すものを決�
     await page.getByTestId("confirm-reason").fill("様式に写す試験の第 1 版（e2e）");
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
-    await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+    await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await page.keyboard.press("Escape");
   });
 

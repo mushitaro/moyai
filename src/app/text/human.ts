@@ -172,10 +172,20 @@ export const HUMAN_TEXT = {
     reasonEmpty: "理由：理由が未入力",
     cancel: "やめる",
     submit: "署名して確定する",
-    done: (n: number) => `第 ${n} 版に署名しました。`,
+    /** 自分で確定したときの結果の 1 文。name は版の呼び名（「令和 8 年度版（第 1 版）」。docs/screens.md §3.4 の末尾） */
+    doneSelf: (name: string) => `${name}を確定しました。`,
     /** 渡したとき：メールは MOYAI が用意し、送るのは利用者のメーラーか Claude（MOYAI は送らない） */
     doneHandoff: (n: number, to: string) => `第 ${n} 版に署名して、${to} へのメールを用意しました。`,
     close: "閉じる",
+  },
+  /**
+   * 署名した版の呼び名（docs/screens.md §3.4 の末尾。Wire、11-07）：署名した日の年度を和暦で。版を一意に決めるのは「第 n 版」。
+   * 出すのは署名の結果の 1 文とトップの版の履歴の行だけ。編集中の版（見出し・下の帯・題）は plain のまま
+   */
+  versionName: {
+    fiscalYear: (era: string, year: number) => (year === 1 ? `${era}元年度` : `${era} ${year} 年度`),
+    signed: (fiscalYear: string, n: number) => `${fiscalYear}版（第 ${n} 版）`,
+    plain: (n: number) => `第 ${n} 版`,
   },
   signatures: {
     version: (n: number) => `第 ${n} 版（保存先のいちばん新しい版）`,

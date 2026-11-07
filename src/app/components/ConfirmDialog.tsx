@@ -19,6 +19,7 @@ import { APP_PAGES, ROUTES } from "../../shared/routes";
 import type { BridgeClient, HumanResult } from "../bridge-client";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { ERROR_TEXT, HUMAN_TEXT, TEXT } from "../text";
+import { versionName } from "../version-name";
 import { KeyWarnLine, untrustedSigners, type TrustSig } from "./KeyWarn";
 
 const T = HUMAN_TEXT.confirm;
@@ -94,6 +95,27 @@ interface StatusBody {
 }
 
 
+/** 頼むこと：渡さずに自分で確定する・編集を頼む・承認を頼む */
+export type Ask = "self" | "edit" | "approve";
+
+/**
+ * 署名のダイアログの題と主ボタン（docs/screens.md §3.4 の末尾。Wire、11-07）：頼むことで替える。
+ * 自分で確定する：「第 n 版に署名して確定する」「署名して確定する」。編集・承認を頼む：「第 n 版に署名して渡す」「署名して渡す」。
+ * 承認を頼まれた人の「承認して署名する」はここでは使わない（SignDialog）。
+ */
+export function signDialogWords(ask: Ask, n: number): { title: string; submit: string } {
+  return ask === "self" ? { title: T.titleSign(n), submit: T.submit } : { title: T.titleHandoff(n), submit: T.submitHandoff };
+}
+
+/**
+ * 署名したあとの結果の 1 文。自分で確定した版は年度で呼ぶ（「令和 8 年度版（第 1 版）を確定しました。」）。
+ * 渡したとき（まだ確定していない）は年度を付けない（「第 1 版に署名して、［宛先］へのメールを用意しました。」）。
+ * at は版の記録の署名の時刻、startMonth は施設の年度の始まり（見せ方だけ。署名される字には足さない）
+ */
+export function signDoneLine(done: { version: number; at: string | null; startMonth: number | null }, mail: { to: string } | null): string {
+  return mail ? T.doneHandoff(done.version, mail.to) : T.doneSelf(versionName(done.version, done.at, done.startMonth));
+}
+
 /** 署名の「もとにした版」：作業中の計画がもとにした保管先の版（作業中の計画でなければ、保管先のいちばん新しい版） */
 function baseOf(plan: Plan, latest: number | null): number | null {
   const w = getWorkingPlan();
@@ -163,10 +185,11 @@ export function ConfirmDialog({
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ version: number; files: { version: string; report: string; export: string | null } } | null>(null);
+  const [done, setDone] = useState<{ version: number; at: string | null; startMonth: number | null; files: { version: string; report: string; export: string | null } } | null>(null);
   const [keyMade, setKeyMade] = useState<string | null>(null);
   // 頼むこと：自分で確定する・編集を頼む・承認を頼む
-  const [ask, setAsk] = useState<"self" | "edit" | "approve">("self");
+  // 下の帯の「署名して確定する」から開いたときの既定は、渡さずに自分で確定する
+  const [ask, setAsk] = useState<Ask>("self");
   const [to, setTo] = useState("");
   const [mail, setMail] = useState<HandoffMail | null>(null);
 
@@ -246,12 +269,13 @@ export function ConfirmDialog({
       derivedFrom: status.latest ? null : pendingDeriveFor(plan.planId),
       origin: location.origin,
     };
-    const r = readHuman<{ ok: boolean; reason?: string; version: number; plan: Plan; files: { version: string; report: string; export: string | null }; mail: HandoffMail | null }>(
+    const r = readHuman<{ ok: boolean; reason?: string; version: number; at?: string; plan: Plan; files: { version: string; report: string; export: string | null }; mail: HandoffMail | null }>(
       await client.callHuman("plan_commit", ROUTES.planCommit.path, payload),
     );
     setBusy(false);
     if (!r.ok) return setError(r.message);
-    setDone({ version: r.body.version, files: r.body.files });
+    // 結果の 1 文の年度は、版の記録の署名の時刻と、署名した版の施設の年度の始まりから出す（見せ方だけ）
+    setDone({ version: r.body.version, at: r.body.at ?? null, startMonth: r.body.plan?.facility?.fiscalYearStartMonth ?? null, files: r.body.files });
     setMail(r.body.mail);
     // 用意したメールの文は、AI にも intake_survey の handoff で渡す（Claude が利用者の連携したメールから送る）
     setHandoffMail(r.body.mail);
@@ -265,7 +289,7 @@ export function ConfirmDialog({
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title={status ? (ask === "self" ? T.titleSign((status.latest?.version ?? 0) + 1) : T.titleHandoff((status.latest?.version ?? 0) + 1)) : T.title} size={680} centered data-testid="confirm-dialog">
+    <Modal opened={opened} onClose={onClose} title={status ? signDialogWords(ask, (status.latest?.version ?? 0) + 1).title : T.title} size={680} centered data-testid="confirm-dialog">
       <Stack gap="sm">
         {load.kind === "loading" && <Text size="sm">{T.loading}</Text>}
         {load.kind === "error" && (
@@ -300,7 +324,7 @@ export function ConfirmDialog({
               </Alert>
             )}
 
-            <Radio.Group label={T.askTitle} value={ask} onChange={(v) => setAsk(v as typeof ask)} data-testid="ask">
+            <Radio.Group label={T.askTitle} value={ask} onChange={(v) => setAsk(v as Ask)} data-testid="ask">
               <Group gap="lg" mt={4}>
                 <Radio value="self" label={T.ask.self} disabled={!!done} data-testid="ask-self" />
                 <Radio value="edit" label={T.ask.edit} disabled={!!done} data-testid="ask-edit" />
@@ -382,7 +406,7 @@ export function ConfirmDialog({
               <Alert color="teal" data-testid="confirm-done">
                 {/* 結果は 1 文だけ（保管先のファイルの道は出さない。版と差分レポートは EXPORT から落とす） */}
                 <Text size="sm" fw={700}>
-                  {mail ? T.doneHandoff(done.version, mail.to) : T.done(done.version)}
+                  {signDoneLine(done, mail)}
                 </Text>
               </Alert>
             )}
@@ -434,7 +458,7 @@ export function ConfirmDialog({
                 {T.cancel}
               </Button>
               <Button onClick={submit} disabled={!canSubmit} loading={busy} data-testid="confirm-submit">
-                {ask === "self" ? T.submit : T.submitHandoff}
+                {signDialogWords(ask, (status?.latest?.version ?? 0) + 1).submit}
               </Button>
             </>
           )}

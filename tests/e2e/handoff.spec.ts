@@ -52,8 +52,12 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await expect(pa.locator(".ag-row").first()).toBeVisible();
     await acceptDecisions(pa, "試験の台本が押した（山田が見て受けた）");
     await pa.getByTestId("confirm-open").click();
+    // 下の帯から開いた既定は「渡さずに自分で確定する」：題と主ボタンは「確定する」。承認を頼むと「渡す」に替わる（docs/screens.md §3.4 の末尾）
+    await expect(pa.getByRole("dialog", { name: "第 1 版に署名して確定する" })).toBeVisible();
+    await expect(pa.getByTestId("confirm-submit")).toHaveText("署名して確定する");
     await pa.getByTestId("confirm-reason").fill("11 月の点検を入れた。承認をお願いする（e2e）");
     await pa.getByTestId("ask-approve").check();
+    await expect(pa.getByRole("dialog", { name: "第 1 版に署名して渡す" })).toBeVisible();
     await expect(pa.getByTestId("confirm-submit")).toHaveText("署名して渡す");
     // 宛先が無ければ押せない
     await expect(pa.getByTestId("confirm-submit")).toBeDisabled();
@@ -83,6 +87,8 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     const row = pa.getByTestId("moyai-row");
     await expect(row).toHaveCount(1);
     await expect(row).toContainText("第 1 版");
+    // 承認待ちの版はまだ確定していないので、年度を付けない
+    await expect(row.getByTestId("moyai-version")).toHaveText("第 1 版");
     await expect(row.getByTestId("moyai-state")).toHaveText("承認待ち");
     await expect(row.getByTestId("moyai-mark")).toHaveText("○");
     await pa.screenshot({ path: shot(`handoff-top-awaiting-${tag}`) });
@@ -144,8 +150,8 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await expect(pb.getByTestId("key-warn")).toHaveCount(0);
     await expect(pb.getByTestId("sign-submit")).toBeEnabled();
     await pb.getByTestId("sign-submit").click();
-    await expect(pb.getByTestId("merge-notice")).toContainText("第 1 版を承認しました");
-    // 承認したあとは編集の番が空き、次の版を編集できる（見出しの通知に「第 1 版を承認しました」）
+    await expect(pb.getByTestId("merge-notice")).toContainText(/令和 \d+ 年度版（第 1 版）を承認しました。/);
+    // 承認したあとは編集の番が空き、次の版を編集できる（見出しの通知に「令和 n 年度版（第 1 版）を承認しました。」。承認した版は年度で呼ぶ）
     await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "editing");
     await expect(pb.getByTestId("approve-open")).toHaveCount(0);
     // 承認の署名は、課長の PC の鍵（own）
@@ -166,6 +172,8 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pa.goto(`${one.base}/#/`);
     const row = pa.getByTestId("moyai-row");
     await expect(row.getByTestId("moyai-mark")).toHaveText("●");
+    // 承認された版は、承認の署名の日の年度で呼ぶ（docs/screens.md §3.4 の末尾）
+    await expect(row.getByTestId("moyai-version")).toHaveText(/^令和 \d+ 年度版（第 1 版）$/);
     await expect(row.getByTestId("moyai-state")).toHaveCount(0);
     const next = row.getByTestId("moyai-next");
     await expect(next).toHaveAttribute("href", /^#\/merge\?open=[^&]+&v=1&h=[0-9a-f]{16}$/);

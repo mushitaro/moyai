@@ -415,7 +415,8 @@ export const TEXT = {
           : state === "returned"
             ? `差戻されました　編集者 ${mine ? "あなた" : who}`
             : `編集者 ${mine ? "あなた" : who}`,
-    signed: (role: string, n: number) => (role === "approve" ? `第 ${n} 版を承認しました。` : `第 ${n} 版を差戻しました。`),
+    /** 承認・差し戻しの結果の 1 文。承認は版の呼び名（name：「令和 8 年度版（第 1 版）」）で、差し戻しは版にならないので「第 n 版」のまま（docs/screens.md §3.4 の末尾） */
+    signed: (role: "approve" | "return", n: number, name: string) => (role === "approve" ? `${name}を承認しました。` : `第 ${n} 版を差戻しました。`),
     openFailed: (what: string) => `リンクの版を開けませんでした。保存先の版と、リンクの${what}が合いません。`,
     openWhat: { missing: "計画", version: "版の番号", hash: "ハッシュ", broken: "署名と鎖" } as Record<string, string>,
     // 1C・重-2：開いた版を組んだ資料（言葉は Wire に確かめる）

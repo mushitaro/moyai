@@ -43,7 +43,7 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
     await page.getByTestId("confirm-reason").fill("元の施設の第 1 版（e2e）");
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
-    await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+    await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await page.keyboard.press("Escape");
   });
 
@@ -70,7 +70,7 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
     await page.getByTestId("confirm-open").click();
     await page.getByTestId("confirm-reason").fill("元の施設の第 1 版から作った（e2e）");
     await page.getByTestId("confirm-submit").click();
-    await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+    await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await page.keyboard.press("Escape");
     const plans = readdirSync(join(root, "plans")).sort();
     expect(plans).toHaveLength(2);

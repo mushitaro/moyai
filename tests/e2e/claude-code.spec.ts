@@ -106,7 +106,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   await page.getByTestId("confirm-reason").fill("Claude Code の通し：取り込みと当てはめを確定する（e2e）");
   await signInDialog(page);
   await page.getByTestId("confirm-submit").click();
-  await expect(page.getByTestId("confirm-done")).toContainText("第 1 版に署名しました");
+  await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
   const plans = readdirSync(join(root, "plans"));
   const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
   expect(rec.plan.assets.filter((a: any) => a.commonItemAccepted).length).toBe(accepted);

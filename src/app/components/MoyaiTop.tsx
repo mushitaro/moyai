@@ -1,7 +1,7 @@
 // MOYAI（トップ）のもやいの星取表（docs/screens.md 3.1、絵は Main.dc.html）：どの施設の、どの版から始めるかを選ぶ。主ボタンは無い。
 // 行は保管先の施設（派生した施設は元の施設の下に字下げ）、列は今月までの 20 か月、印は版
 // （● は署名して確定・承認した版、朱の ○ は渡して編集中か承認待ちの版、朱の × は確かめで合わない版）。
-// - 行の名前の右に、いちばん新しい版（「第 7 版」、等幅）と状態（編集中・承認待ち・差し戻し、朱）。
+// - 行の名前の右に、いちばん新しい版（「第 7 版」、等幅）と状態（編集中・承認待ち・差し戻し、朱）。確定した版は年度で呼ぶ（「令和 8 年度版（第 7 版）」。docs/screens.md §3.4 の末尾）。
 // - 派生：元の版の印から細い線（--text-3、1px）を下ろし、派生した施設の最初の印へつなぐ。
 // - ほかの人が持っていた間：その人が作った版の印の下に 2px の線（印に名前を添える）。
 // - 入口は 3 つ：行の右端「＋ 次の版」、版の印のメニュー（開く / この版から次の版 / この版から別の施設をつくる）、星取表の下「＋ 新しい施設」。どれも MERGE へ。
@@ -16,6 +16,7 @@ import { setPendingDerive } from "../state/derive";
 import { setWorkingPlan } from "../state/plan-store";
 import { STAGE_HASH, sheetHash } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
+import { versionName } from "../version-name";
 import { readHuman } from "./ConfirmDialog";
 
 const T = TEXT.top;
@@ -32,21 +33,25 @@ const CELL_W = 44;
 const HEAD_H = 36;
 const ROW_H = 48;
 
-interface ListedVersion {
+export interface ListedVersion {
   version: number;
   at: string;
   contentHash: string;
   roles: string[];
+  /** 版を確定した署名の時刻（承認か自分で確定）。渡しただけ・差し戻し・戻すは null（古い橋渡しには無い） */
+  signedAt?: string | null;
   by: string | null;
   /** 版を作った鍵が、前に確かめた鍵と替わっている */
   keyChanged?: boolean;
   problem: string | null;
   legacy: boolean;
 }
-interface ListedPlan {
+export interface ListedPlan {
   planId: string;
   displayName: string;
   fictional: boolean;
+  /** 施設の年度の始まり（いちばん新しい版の計画から。古い橋渡しには無い） */
+  fiscalYearStartMonth?: number;
   versions: ListedVersion[];
   turn: { version: number; state: "editing" | "awaitingApproval" | "approved" | "returned" } | null;
   derivedFrom: { planId: string; version: number; contentHash: string } | null;
@@ -86,6 +91,23 @@ function treeOrder(plans: ListedPlan[]): { p: ListedPlan; depth: number }[] {
   for (const r of roots) walk(r, 0);
   for (const p of plans) walk(p, 0); // 輪になった派生も落とさない
   return out;
+}
+
+/** いちばん新しい版が、渡して編集中・承認待ち・差し戻しのままか */
+function openLatest(p: ListedPlan): boolean {
+  const latest = p.versions.at(-1);
+  return !!p.turn && latest?.version === p.turn.version && (p.turn.state === "editing" || p.turn.state === "awaitingApproval" || p.turn.state === "returned");
+}
+
+/**
+ * 行の名前の右の版（版の履歴の行）。確定した版（自分で確定か承認）は、確定した署名の日の年度で「令和 8 年度版（第 7 版）」。
+ * 編集中・承認待ち・差し戻し・確かめで合わない版は「第 7 版」のまま（署名の前の版には年度を付けない）。版が無ければ null
+ */
+export function rowVersionLabel(p: ListedPlan): string | null {
+  const latest = p.versions.at(-1);
+  if (!latest) return null;
+  const settled = !latest.problem && !openLatest(p);
+  return versionName(latest.version, settled ? (latest.signedAt ?? null) : null, p.fiscalYearStartMonth);
 }
 
 const openLink = (planId: string, v: ListedVersion, next = false) => `${STAGE_HASH.merge}?open=${encodeURIComponent(planId)}&v=${v.version}&h=${v.contentHash.slice(0, 16)}${next ? "&next=1" : ""}`;
@@ -188,14 +210,14 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
             const latest = p.versions.at(-1);
             // 鍵が替わった版（いちばん新しいもの）。未確認は出さない（初めての相手はいつも未確認なので、毎回出すと見なくなる）
             const keyChanged = [...p.versions].reverse().find((v) => v.keyChanged) ?? null;
-            const open = !!p.turn && latest?.version === p.turn.version && (p.turn.state === "editing" || p.turn.state === "awaitingApproval" || p.turn.state === "returned");
+            const open = openLatest(p);
             return (
               <div key={p.planId} className="moyai-top-row" data-testid="moyai-row" data-plan={p.planId} data-depth={depth}>
                 <span className="moyai-top-name" title={p.displayName} style={{ paddingLeft: depth * 16 }}>
                   <span className="moyai-top-facility">{p.displayName}</span>
                   {latest && (
                     <span className="moyai-top-ver" data-testid="moyai-version">
-                      {T.version(latest.version)}
+                      {rowVersionLabel(p)}
                     </span>
                   )}
                   {open && p.turn && (
