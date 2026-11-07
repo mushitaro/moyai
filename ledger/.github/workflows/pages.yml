@@ -1,0 +1,68 @@
+name: pages
+
+# マージのあと、main を取り直して全部の束を MOYAI と同じ関数で検証し直し、確かめたデータから HTML を作って Pages に出す。
+# 生のファイルは写さない（symlink は拒む。HTML はエスケープし、CSP を付ける。作るのは MOYAI の ledger site）。
+# workflow_run や、ほかの run の artifact は使わない。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ledger/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  MOYAI_REPO: mushitaro/moyai
+  MOYAI_SHA: 179a0be2192942ab4c37d147f66e15c98a7217a9 # ledger-validate.yml と同じ版にする
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ledger
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ env.MOYAI_REPO }}
+          ref: ${{ env.MOYAI_SHA }}
+          path: moyai
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.19.0
+      - name: MOYAI を入れてビルドする（スクリプトは走らせない）
+        working-directory: moyai
+        run: |
+          npx -y npm@11.21.1 ci --ignore-scripts
+          npm run build
+      - name: 束を検証し直して、サイトを作る
+        run: node moyai/dist/cli.js ledger site ledger _site
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
