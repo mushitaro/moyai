@@ -24,6 +24,8 @@ import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { collectIntake, readIntakeFile, skillPacksText } from "./intake-files";
+import ExcelJS from "exceljs";
+import { templateShape } from "../plan/template-layout";
 import { HumanService, type HumanEnv } from "./human";
 import { makeEd25519Sample } from "./selftest";
 import { removeKeyFile, writeKeyFile } from "./state";
@@ -189,12 +191,24 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       return { opened: true };
     },
     intake_add_files: async (args) => {
-      const c = collectIntake(args as { source: "demo" | "folder"; path?: string; pack?: string; facilityName?: string }, {
+      const c = collectIntake(args as { source: "demo" | "folder" | "template"; path?: string; pack?: string; facilityName?: string }, {
         packsDir,
         stateDir: opts.stateDir,
         repoRoot: opts.repoRoot ?? dirname(packsDir),
       });
-      return c === "intake_pack_unknown" ? errorBody(c, { packs: skillPacksText(packsDir) }) : c;
+      if (c === "intake_pack_unknown") return errorBody(c, { packs: skillPacksText(packsDir) });
+      if (typeof c === "string" || c.source !== "template") return c;
+      // 様式：橋渡しが読んで形だけを作る（値の入ったデータの行の字と値は入れない。src/plan/template-layout.ts の templateShape）
+      const f = c.files[0]!;
+      const bytes = await readIntakeFile(f);
+      if (!bytes) return "intake_template_missing";
+      try {
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(bytes as unknown as ArrayBuffer);
+        return { ...c, template: templateShape(wb, f.name.replace(/\.xlsx$/i, "")) };
+      } catch {
+        return "intake_template_unreadable";
+      }
     },
   });
   const arrangeWindows = createWindowArranger(opts.windowArrange);
@@ -374,6 +388,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     ledgerRulesAccept: delegate,
     templatesRead: delegate,
     templateSave: delegate,
+    templateFileRead: delegate,
     exportSign: delegate,
     exportFileRead: delegate,
     planSign: delegate,

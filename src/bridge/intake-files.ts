@@ -6,10 +6,12 @@
 // 断った資料は、名前と理由を返す（黙って捨てない）。返すのは名前・大きさ・理由だけで、中身は AI に渡さない。
 import { lstatSync, readdirSync, readFileSync, realpathSync, statSync, type Stats } from "node:fs";
 import { open } from "node:fs/promises";
-import { extname, isAbsolute, join, resolve } from "node:path";
+import { basename, dirname, extname, isAbsolute, join, resolve } from "node:path";
 import type { ErrorCode } from "../shared/errors";
 import { INTAKE_ADD_EXTENSIONS, INTAKE_ADD_MAX_BYTES, INTAKE_ADD_MAX_FILES, INTAKE_ADD_MAX_REFUSED, intakeFacilityNameOk, type IntakeRefusal } from "../shared/tools";
+import type { TemplateShape } from "../shared/template-layout";
 import { normPath } from "./places";
+import { TEMPLATE_MAX_BYTES } from "./templates";
 
 export const DEMO_DIR = "demo";
 export const DEMO_MANIFEST = "demo.json";
@@ -23,7 +25,7 @@ export interface IntakeFile {
 }
 
 export interface IntakeCollection {
-  source: "demo" | "folder";
+  source: "demo" | "folder" | "template";
   pack: string | null;
   facilityName: string | null;
   files: IntakeFile[];
@@ -33,6 +35,8 @@ export interface IntakeCollection {
   refusedTotal: number;
   /** 資料の種類でないもの（ほかの種類のファイル・下のフォルダ・そのリンク）の数。名前は返さない */
   others: number;
+  /** template：様式の形（橋渡しが読んで作る。AI に返すのはこれと名前・大きさだけ） */
+  template?: TemplateShape;
 }
 
 export interface IntakeEnv {
@@ -192,8 +196,47 @@ function isFile(p: string): boolean {
   }
 }
 
+/** 道の形の確かめ（folder と template で同じ）：絶対の道で、`..`・装置の道・NUL を含まない */
+function pathShapeOk(t: string): boolean {
+  if (!t || t.includes("\u0000") || t.length > 1000) return false;
+  if (/^[\\/]{2}[?.][\\/]/.test(t)) return false;
+  if (!isAbsolute(t)) return false;
+  return !t.split(/[\\/]+/).some((s) => s === "..");
+}
+
+/**
+ * source: template の様式のファイルを確かめる（.xlsx 1 つ）：道の形は folder と同じ。シンボリックリンクでないファイルで、8 MB まで。
+ * 状態フォルダとリポジトリの中は読まない
+ */
+export function checkTemplateFile(raw: string, env: IntakeEnv): IntakeFile | ErrorCode {
+  const platform = env.platform ?? process.platform;
+  const t = raw.trim();
+  if (!pathShapeOk(t)) return "intake_path_not_allowed";
+  const path = resolve(t);
+  // 状態フォルダとリポジトリの中は、あるかどうかも確かめずに断る（入れ物の実体の道でも）
+  const forbidden = [env.repoRoot, ...(env.stateDir ? [env.stateDir] : [])].flatMap((b) => [resolve(b), realOr(resolve(b))]);
+  const within = (p: string) => forbidden.some((b) => inside(p, b, platform));
+  if (within(path) || within(join(realOr(dirname(path)), basename(path)))) return "intake_path_not_allowed";
+  let st: Stats;
+  try {
+    st = lstatSync(path);
+  } catch {
+    return "intake_template_missing";
+  }
+  if (st.isSymbolicLink()) return "intake_path_not_allowed";
+  if (within(realOr(path))) return "intake_path_not_allowed";
+  if (!st.isFile() || extname(path).toLowerCase() !== ".xlsx" || st.size > TEMPLATE_MAX_BYTES || st.size === 0) return "intake_template_missing";
+  return { path, name: basename(path), size: st.size };
+}
+
 /** intake_add_files の引数から、読む資料を選ぶ */
-export function collectIntake(args: { source: "demo" | "folder"; path?: string; pack?: string; facilityName?: string }, env: IntakeEnv): IntakeCollection | ErrorCode {
+export function collectIntake(args: { source: "demo" | "folder" | "template"; path?: string; pack?: string; facilityName?: string }, env: IntakeEnv): IntakeCollection | ErrorCode {
+  if (args.source === "template") {
+    if (args.pack !== undefined || args.facilityName !== undefined) return "invalid_input";
+    const f = checkTemplateFile(args.path ?? "", env);
+    if (typeof f === "string") return f;
+    return { source: "template", pack: null, facilityName: null, files: [f], refused: [], refusedTotal: 0, others: 0 };
+  }
   if (args.source === "demo") {
     const packs = demoPacks(env.packsDir);
     const pack = args.pack ?? (packs.length === 1 ? packs[0]! : null);

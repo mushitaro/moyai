@@ -5,6 +5,7 @@ import { z } from "zod";
 import toolNames from "./tool-names.json";
 import { CLASS_CODE, FIELD_REFS, WORK_ATTRIBUTES, type FieldRef } from "./fields";
 import { READING_SCOPES, ReadingRule } from "../import/reading";
+import { templateLayoutInputSchema, templateShapeSchema } from "./template-layout";
 
 // ─── 規則の形（1 か所だけ）─────────────────────────────────────────
 
@@ -267,7 +268,7 @@ export const INTAKE_ADD_MAX_REFUSED = 200;
  */
 export const INTAKE_REFUSALS = ["link", "not_file", "too_large", "over_count", "unreadable", "same_name", "changed"] as const;
 export type IntakeRefusal = (typeof INTAKE_REFUSALS)[number];
-const INTAKE_SOURCES = ["demo", "folder"] as const;
+const INTAKE_SOURCES = ["demo", "folder", "template"] as const;
 const PACK_ID_SHAPE = /^[a-z][a-z0-9-]{0,63}$/;
 const fileName = z.string().min(1).max(260);
 const refusedFile = z.object({ name: fileName, reason: z.enum(INTAKE_REFUSALS) });
@@ -283,7 +284,7 @@ const FACILITY_NAME_MESSAGE = `facilityName は 1〜${INTAKE_FACILITY_NAME_MAX} 
 const intakeAddFilesInput = z
   .object({
     source: z.enum(INTAKE_SOURCES),
-    /** folder：利用者がチャットで言ったフォルダ（絶対の道） */
+    /** folder：利用者がチャットで言ったフォルダ（絶対の道）。template：様式の .xlsx（絶対の道） */
     path: z.string().min(1).max(1000).optional(),
     /**
      * Skillパックの ID。demo：デモの資料を取る Skillパック（省くと、demo/ のある Skillパックが 1 つならそれ）。
@@ -295,6 +296,8 @@ const intakeAddFilesInput = z
   })
   .superRefine((a, ctx) => {
     if (a.source === "folder" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "folder には path が要る" });
+    if (a.source === "template" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "template には path（様式の .xlsx）が要る" });
+    if (a.source === "template" && (a.pack !== undefined || a.facilityName !== undefined)) ctx.addIssue({ code: "custom", path: ["pack"], message: "template では pack と facilityName を渡さない" });
     if (a.source === "demo" && a.path !== undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "demo では path を渡さない" });
     if (a.source === "demo" && a.facilityName !== undefined) ctx.addIssue({ code: "custom", path: ["facilityName"], message: "facilityName は folder だけ" });
   });
@@ -322,6 +325,8 @@ export const intakeAddFilesFromTabSchema = z
   .object({
     added: z.array(z.object({ name: fileName, sheets: z.number().int().min(0).nullable(), rows: z.number().int().min(0).nullable() }).strict()).max(INTAKE_ADD_MAX_FILES),
     refused: z.array(refusedFile.strict()).max(INTAKE_ADD_MAX_FILES),
+    /** template：作業中の計画の階層の名前（星取表の施設台帳の列。写し方の案の levels.columns の level の順）。計画が無ければ省く */
+    levels: z.array(z.string().max(40)).max(12).optional(),
   })
   .strict();
 export type IntakeAddFilesFromTab = z.infer<typeof intakeAddFilesFromTabSchema>;
@@ -329,6 +334,10 @@ export type IntakeAddFilesFromTab = z.infer<typeof intakeAddFilesFromTabSchema>;
 /** 結果に添える次の手（Claude Desktop では instructions が効かないので、結果にも書く） */
 export const INTAKE_ADD_NOTE =
   "sheets と rows が null の資料は、まだ読込の途中（intake_survey の注記に進み）。次は intake_survey で要約と質問を読み、質問は利用者に聞く。画像と文字の無い PDF の頁は写真の欄に並び、人が 1 枚ずつ許すまで AI には渡らない。確定は人が画面でする。";
+
+/** source: template の結果に添える次の手（「この様式で Excel を出して」の順） */
+export const TEMPLATE_ADD_NOTE =
+  "様式を作業画面の EXPORT に入れた（まだ保存していない）。template の形（見出しの字・結合・年度の式）と planLevels（計画の階層の名前。asset-first の順で、series-first では機器と号炉・系統が入れ替わる）を読み、写し方の案を screen_set の templateLayout で置く。置いた案は下書きで、EXPORT に案のとおりに書いた見本が出る。利用者に見本を見てもらい、出力と保存は利用者が「この写し方で出力」を押す。";
 
 /** 結果に Skill の目録を添えるツール */
 export const SKILL_CATALOG_TOOLS = ["intake_survey", "chart_rows", "check_results", "crosswalk_propose"] as const;
@@ -397,7 +406,7 @@ export type ScreenGo = (typeof SCREEN_GO)[number];
 /** 星取表の階層の並び：asset-first（既定）設備 › 機器 › 号炉・系統 › 部位、series-first 設備 › 号炉・系統 › 機器 › 部位 */
 export const LEVEL_ORDERS = ["asset-first", "series-first"] as const;
 export type LevelOrder = (typeof LEVEL_ORDERS)[number];
-export const SCREEN_ITEMS = ["theme", "go", "storageRoot", "levelOrder", "rowOrder", "lastFiscalYear"] as const;
+export const SCREEN_ITEMS = ["theme", "go", "storageRoot", "levelOrder", "rowOrder", "lastFiscalYear", "templateLayout"] as const;
 export type ScreenItem = (typeof SCREEN_ITEMS)[number];
 /** 変えなかった項目の理由（AI に返す文。内部の名前を出さない） */
 export const SCREEN_REFUSAL_TEXT = {
@@ -409,6 +418,8 @@ export const SCREEN_REFUSAL_TEXT = {
   row_not_sibling: "node と before が同じ親の下に無い。並びを変えられるのは同じ親の下の行だけ",
   year_before_stars: "その年度より後に計画の星取がある。列は星取を隠さないので、いちばん遅い星取の年度より前にはしない",
   go_replaced: "保存先の欄を見せるため、設定の画面を開いた",
+  template_unknown: "その名前の様式が作業画面の EXPORT に無い。intake_add_files（source: template）で入れ、返った template.name で置く",
+  layout_invalid: "写し方の案が様式に合わないので置いていない。様式の形（intake_add_files の template）を読み直して置き直す",
 } as const;
 export type ScreenRefusal = keyof typeof SCREEN_REFUSAL_TEXT;
 const SCREEN_REFUSALS = Object.keys(SCREEN_REFUSAL_TEXT) as [ScreenRefusal, ...ScreenRefusal[]];
@@ -430,6 +441,7 @@ const screenSetInput = z
       .optional()
       .describe("同じ親の下の行の並び。node の行を before の行の前に置く（どちらも chart_rows の行の id）"),
     lastFiscalYear: z.number().int().min(1900).max(2200).optional().describe("星取表の年度の列の最後の年度（例 2040）"),
+    templateLayout: templateLayoutInputSchema.optional().describe("様式の写し方の案（intake_add_files の source: template で入れた様式に置く。下書きで、利用者が EXPORT で見本を見て出力するまで使わない）"),
   })
   .strict()
   .superRefine((a, ctx) => {
@@ -452,6 +464,28 @@ const screenSetOutput = z.object({
     storageRoot: z.string().nullable().optional(),
     /** rowOrder を変えたとき：同じ親の下の行の、変えたあとの並び（50 まで） */
     siblings: z.array(z.object({ rowRef: z.string(), name: z.string() })).max(50).optional(),
+    /** templateLayout を置いたとき：案のとおりに作業中の版を書いたときの数（値は返さない。作業中の計画が無ければ summary は null） */
+    templateLayout: z
+      .object({
+        template: z.string(),
+        draft: z.literal(true),
+        summary: z
+          .object({
+            sheets: z.array(z.object({ sheet: z.string(), rows: z.number().int(), inserted: z.number().int(), firstYear: z.number().int().nullable(), lastYear: z.number().int().nullable(), totalRow: z.number().int() })),
+            startYear: z.number().int().nullable(),
+            details: z.number().int(),
+            outOfRange: z.number().int(),
+            amountMissing: z.number().int(),
+            taxMismatch: z.number().int(),
+            taxUnknown: z.number().int(),
+            namesWithoutColumn: z.number().int(),
+            levelsSkipped: z.number().int(),
+            orphans: z.number().int(),
+            facility: z.object({ written: z.number().int(), missing: z.array(z.string()) }),
+          })
+          .nullable(),
+      })
+      .optional(),
   }),
   note: z.string(),
 });
@@ -575,7 +609,9 @@ export const TOOLS = {
       "デモは、利用者が作業画面で動きを見るためにある。先に作業画面を開いて利用者が見ているかを確かめ、1 回の返事でツールを 1 つだけ呼び、画面の何が変わったかを 2 行までで言って、利用者の「次」を待つ。資料がもう入っていても同じ。最後まで続けて呼んで結果だけを話さない。" +
       "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
       "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
-      "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey の files で入った資料を確かめる。",
+      "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey の files で入った資料を確かめる。" +
+      "source: template は、利用者が「この様式で Excel を出して」と言った様式（path に .xlsx の絶対の道。8 MB まで）を、作業画面の EXPORT の様式の欄に入れる（保存はしない）。結果の template は様式の形だけ：シートの名前、字のあるセルの位置と字（見出し・ラベル・注記）、結合、式のあるセルの位置（年度の参照の式は参照先と足す数）。値の入ったデータの行は字を返さず、範囲と数だけ。planLevels は作業中の計画の階層の名前。" +
+      "「この様式で Excel を出して」の順：1. この source: template で様式を入れる 2. 形を読んで写し方の案を screen_set の templateLayout で置く 3. EXPORT の見本（案のとおりに書いた最初の 20 行ほど）を利用者に見てもらう 4. 出力と保存は利用者が「この写し方で出力」を押す（ツールではしない）。",
     intakeAddFilesInput,
     z.object({
       source: z.enum(INTAKE_SOURCES),
@@ -587,6 +623,10 @@ export const TOOLS = {
       refusedTotal: z.number().int().min(0),
       /** 資料の種類でないもの（ほかの種類のファイル・下のフォルダ）の数。名前は返さない */
       others: z.number().int().min(0),
+      /** template：様式の形（値は返さない） */
+      template: templateShapeSchema.optional(),
+      /** template：作業中の計画の階層の名前（写し方の案の level の順。計画が無ければ null） */
+      planLevels: z.array(z.string()).nullable().optional(),
       note: z.string(),
     }),
   ),
@@ -879,6 +919,7 @@ export const TOOLS = {
       "「A と B の並び順を入れ替えて」は、chart_rows で 2 つの行の id を読み、rowOrder: { node: B の id, before: A の id }（A が上で隣り合うとき。同じ親の下の行だけ。離れているときは 2 回に分ける）。" +
       "「計画の最大年度は 2040 年までにして」は lastFiscalYear: 2040（星取表の年度の列をその年度まで出し、周期の案と星取の案をその年度まで置ける。今の星取は変えない。いちばん遅い星取より前の年度にはできない）。" +
       "levelOrder・rowOrder・lastFiscalYear は施設ごとに覚える見せ方で、作業中の計画・版の記録・署名される字は変えない。機器の並びは、確定のときに書く Excel にも出る。並びを変えたあとの行は chart_rows で読み直す。" +
+      "「この様式で Excel を出して」は、intake_add_files（source: template）で様式を入れたあと、templateLayout に写し方の案を置く：template（様式の名前）、sheets（計画の表のシートごとに、見出しの行・年度の列と開始年度のセル・階層の列〔nested は入れ子の縦、flat は 1 行に横〕・組の行〔ラベルの列と、行ごとの中身 plan_content・plan_amount・actual_content・actual_amount・marks・cycle・next〕・明細を足す位置〔合計の行〕・continues〔年度で分かれる続きのシートなら前のシート〕）、amount（金額の単位と税）、facility（基本情報のシートの欄 → 施設の項目）。様式に合わなければ置かずに理由を返す。置いた案は下書きで、EXPORT に見本が出る。利用者に見本を見てもらい、出力と保存は利用者が「この写し方で出力」を押す。" +
       "答えは、変えた項目（changed）、変えなかった項目と理由（refused）、今の値（current）。確定・署名・送る・承認・昇格は、このツールではしない。",
     screenSetInput,
     screenSetOutput,

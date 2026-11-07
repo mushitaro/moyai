@@ -2,7 +2,8 @@
 // 様式を選んでいるときの見本（列の見出しの上の役目を、人が列ごとに直せる）。
 // 様式と写し方（列の役目）は保存先に置く（橋渡しの template_save）。直すと、その写し方は下書きになる。
 // 下書きの写し方は、その写し方で書き出した Excel に人が署名したとき承認される（export_sign。主ボタンは Export.tsx）。
-// 様式の中身は AI に渡さない。
+// 様式の中身は AI に渡さない（例外：Claude が intake_add_files の source: template で入れた様式は、橋渡しが形だけを返す。仕事 template-layout-v1）。
+// Claude が入れてまだ保存していない様式は「未保存」の行で並び、写し方の案（layout）のある様式は、列の役目の表の代わりに案の見本（TemplateLayoutPreview）を出す。
 import { Stack, Table, Text, FileButton, Menu } from "@mantine/core";
 import { useMemo, useState } from "react";
 import { patchedExcelJS } from "../../import/exceljs-setup";
@@ -91,6 +92,11 @@ export function TemplateExport({
   onDrop,
   onRoles,
   standardExported,
+  pending = [],
+  pendingSel = null,
+  onSelectPending,
+  draftNames,
+  layoutView = null,
 }: {
   plan: Plan;
   /** 次回の基準日（版を確定した日。橋渡しが署名して書き出すときと同じ日） */
@@ -102,6 +108,14 @@ export function TemplateExport({
   onRoles: (t: SharedTemplate, columns: TemplateColumns) => void;
   /** 標準の書き出しがあるか（確定の署名で書き出している） */
   standardExported: boolean;
+  /** Claude が入れて、まだ保存していない様式 */
+  pending?: readonly { name: string; hasDraft: boolean }[];
+  pendingSel?: string | null;
+  onSelectPending?: (name: string) => void;
+  /** 写し方の案（下書き）のある様式の名前 */
+  draftNames?: ReadonlySet<string>;
+  /** 写し方の案のある様式を選んでいるときの見本（列の役目の表の代わり） */
+  layoutView?: React.ReactNode;
 }) {
   const [error, setError] = useState<string | null>(null);
   const rows = useMemo(() => rowsFor(plan, asOf), [plan, asOf]);
@@ -132,7 +146,7 @@ export function TemplateExport({
       <div className="moyai-template-choices" data-testid="template-choices">
         {row(
           "standard",
-          selected === null,
+          selected === null && pendingSel === null,
           () => onSelect(null),
           T.standard,
           standardExported ? (
@@ -149,6 +163,11 @@ export function TemplateExport({
             () => onSelect(t),
             t.name,
             <>
+              {draftNames?.has(t.name) && (
+                <Text span size="xs" c="var(--shu-text)" mr="sm" data-testid="template-layout-draft">
+                  {T.layout.draft}
+                </Text>
+              )}
               {t.exported && (
                 <Text span size="xs" c="var(--text-2)" mr="sm" data-testid="template-exported">
                   {T.exported}
@@ -167,6 +186,25 @@ export function TemplateExport({
             "template-shared",
           ),
         )}
+        {pending.map((p) =>
+          row(
+            `pending|${p.name}`,
+            pendingSel === p.name,
+            () => onSelectPending?.(p.name),
+            p.name,
+            <>
+              {p.hasDraft && (
+                <Text span size="xs" c="var(--shu-text)" mr="sm" data-testid="template-layout-draft">
+                  {T.layout.draft}
+                </Text>
+              )}
+              <Text span size="xs" c="var(--text-3)">
+                {T.layout.pending}
+              </Text>
+            </>,
+            "template-pending",
+          ),
+        )}
         <FileButton accept=".xlsx,.xlsm" onChange={(f) => void pick(f)}>
           {(props) => (
             <button type="button" className="moyai-inline-act" {...props} data-testid="template-pick">
@@ -180,7 +218,8 @@ export function TemplateExport({
           {error}
         </Text>
       )}
-      {selected && columns && (
+      {layoutView}
+      {!layoutView && selected && columns && (
         <div style={{ overflowX: "auto" }}>
           <Table withColumnBorders fz="xs" verticalSpacing={8} horizontalSpacing={12} className="moyai-num moyai-template" data-testid="template-preview" style={{ width: "max-content" }}>
             <Table.Thead>

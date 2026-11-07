@@ -1063,6 +1063,36 @@ button.moyai-top-mk[data-kind="signed"] {
   color: var(--text);
 }
 
+/* 写し方の案の見本（template-layout-v1。仮の形、Wire の確認待ち）：様式の見た目のまま。列の字と行の番号は淡く、案が書くセルは淡い色 */
+.moyai-layout-grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 11px;
+}
+.moyai-layout-grid th,
+.moyai-layout-grid td {
+  border: 1px solid var(--line);
+  padding: 2px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+.moyai-layout-colhead,
+.moyai-layout-rowhead {
+  color: var(--text-3);
+  font-weight: 400;
+  text-align: center;
+}
+.moyai-layout-grid tr[data-gap="true"] td {
+  border-top: 2px dashed var(--line);
+}
+.moyai-layout-grid td[data-written="true"] {
+  background: var(--layer-3);
+}
+.moyai-layout-grid td[data-formula="true"] {
+  color: var(--text-2);
+}
+
 /* 様式の選び（EXPORT。Wire、Export.dc.html V48）：縦の並び。選んだ行は左の細い線と太字。右に状態（承認済み・下書き・書き出し済み） */
 .moyai-template-choices {
   display: flex;

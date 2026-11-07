@@ -41,6 +41,8 @@ export const HUMAN_ACTIONS = [
   "plan_source_read",
   "templates_read",
   "template_save",
+  // 写し方の案（template-layout-v1）：保存先の様式のファイルを読み、EXPORT が案のとおりに書いた見本を様式の見た目のまま描く
+  "template_file_read",
   "export_sign",
   "export_file_read",
   // 人の鍵（版の署名。§2.18.2）：自分の鍵を作る・ほかの人の鍵を確認済みにする
@@ -155,6 +157,7 @@ export const ROUTES = {
   planSourceRead: human("/human/plan-source-read", "plan_source_read", 16 * 1024, "確かめで合う版を組んだ資料を 1 つ読む（版の記録の SHA-256 と照らす。次の版に重ねるため、画面に戻す）"),
   templatesRead: human("/human/templates-read", "templates_read", 16 * 1024, "保存先の様式と写し方（列の役目）の一覧と、承認済みか下書きか、その版で書き出したか"),
   templateSave: human("/human/template-save", "template_save", 12 * 1024 * 1024, "利用者が落とした様式と、直した写し方（列の役目）を、保存先に下書きとして置く"),
+  templateFileRead: human("/human/template-file-read", "template_file_read", 16 * 1024, "保存先の様式のファイルを 1 つ読む（EXPORT が写し方の案のとおりに書いた見本を、様式の見た目のまま描くため。版のハッシュと照らす）"),
   exportSign: human("/human/export-sign", "export_sign", 16 * 1024, "いちばん新しい版を保存先の様式で書き出し、書き出した Excel に自分の鍵で署名して版に足す（版の中身は変えない。その写し方の承認になる）"),
   exportFileRead: human("/human/export-file-read", "export_file_read", 16 * 1024, "署名した書き出しの Excel を読み、署名のハッシュと照らしてから、画面がブラウザに落とす"),
   personKeyCreate: human("/human/person-key-create", "person_key_create", 16 * 1024, "自分の鍵（版に署名する）を作り、状態フォルダに置く"),

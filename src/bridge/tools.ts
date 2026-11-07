@@ -12,6 +12,7 @@ import {
   SCREEN_ITEMS,
   SCREEN_REFUSAL_TEXT,
   SCREEN_SET_NOTE,
+  TEMPLATE_ADD_NOTE,
   intakeAddFilesFromTabSchema,
   ROWS_PER_CONVERSATION,
   TOOL_TIMEOUTS,
@@ -428,7 +429,11 @@ export class ToolRelay {
       const sizes = new Map(c.files.map((f) => [f.name, f.size]));
       const named = [...tab.data.added.map((a) => a.name), ...tab.data.refused.map((r) => r.name)];
       if (named.some((n) => !sizes.has(n)) || new Set(named).size !== named.length) return errorBody("tab_bad_result");
+      // 階層の名前は様式のときだけ（ほかの資料の答えに付いていたら型違い）
+      if (c.source !== "template" && tab.data.levels !== undefined) return errorBody("tab_bad_result");
       const refused = [...c.refused, ...tab.data.refused];
+      // 様式の形は、作業画面が様式の欄に入れたときだけ返す（橋渡しが読んで作った形。値は入っていない）
+      const template = c.source === "template" && tab.data.added.length > 0 && c.template ? { template: c.template, planLevels: tab.data.levels ?? null } : {};
       const data = {
         source: c.source,
         pack: c.pack,
@@ -436,7 +441,8 @@ export class ToolRelay {
         refused: refused.slice(0, INTAKE_ADD_MAX_REFUSED),
         refusedTotal: c.refusedTotal + tab.data.refused.length,
         others: c.others,
-        note: INTAKE_ADD_NOTE,
+        ...template,
+        note: c.source === "template" ? TEMPLATE_ADD_NOTE : INTAKE_ADD_NOTE,
       };
       const p = def.output.safeParse(data);
       return p.success ? { ok: true, data: p.data as Record<string, unknown> } : errorBody("tab_bad_result");

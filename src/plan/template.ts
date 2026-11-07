@@ -6,6 +6,7 @@
 //   どの作業にもきっかけが無いときだけ、印の年度の差でいちばん多いもの（印が 2 つに満たなければ空）。台帳の新-11
 // - 次回は、画面と Excel の標準の様式と同じ字（due-view.ts）。見出しの言葉からは決めず、人が「← 次回」を当てた列にだけ写す（docs/screens.md 3.5）
 import type { Plan, WorkT } from "../shared/plan";
+import { templateLayoutSchema, type TemplateLayout } from "../shared/template-layout";
 import { planDueViews, rowDue } from "./due-view";
 import { TriggerSchema } from "./next";
 
@@ -91,6 +92,12 @@ function cycleOf(years: number[]): number | null {
   return [...count.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]![0];
 }
 
+/** 行の周期：作業のきっかけから。どの作業にもきっかけが無ければ印の年度の差でいちばん多いもの（様式の写し方の案〔template-layout.ts〕も同じ決まり） */
+export function cycleFor(works: readonly WorkT[], markYears: readonly number[]): number | string | null {
+  const fromTrigger = cycleOfTriggers(works);
+  return fromTrigger === undefined ? cycleOf([...markYears]) : fromTrigger;
+}
+
 /**
  * 確定した版の作業を、機器の名前 × 作業の言い方ごとに 1 行（同じ機器の同じ作業は印を合わせる）。
  * 作業の言い方は、作業の属性が決まっていればその言い方（点検・分解整備…）、無ければ資料の作業の名前
@@ -114,10 +121,7 @@ export function templateRows(plan: Plan, workLabel: (attribute: string) => strin
   }
   return [...byKey.values()]
     .filter((r) => r.marks.size > 0)
-    .map(({ works, ...r }) => {
-      const fromTrigger = cycleOfTriggers(works);
-      return { ...r, cycle: fromTrigger === undefined ? cycleOf([...r.marks.keys()]) : fromTrigger, next: rowDue(works.map((w) => w.workKey), due)?.text ?? "" };
-    })
+    .map(({ works, ...r }) => ({ ...r, cycle: cycleFor(works, [...r.marks.keys()]), next: rowDue(works.map((w) => w.workKey), due)?.text ?? "" }))
     .sort((a, b) => a.item.localeCompare(b.item, "ja") || a.work.localeCompare(b.work, "ja"));
 }
 
@@ -143,20 +147,27 @@ export function cellValue(role: ColumnRole, row: TemplateRow): string | number {
   }
 }
 
-/** 写し方（列の役目）：様式の見出しの行（1 から数える Excel の行）・見出しの言葉・列ごとの役目。保管先の 様式/<名前>/columns.json */
+/**
+ * 写し方（列の役目）：様式の見出しの行（1 から数える Excel の行）・見出しの言葉・列ごとの役目。保管先の 様式/<名前>/columns.json。
+ * layout があれば、列の役目ではなく写し方の案（TemplateLayout。人が EXPORT で受けたもの）で書く（template-layout.ts）。
+ * layout の無い写し方は前と同じ形（ハッシュも版も変わらない）
+ */
 export const COLUMNS_SCHEMA = "moyai.columns/0";
 export interface TemplateColumns {
   schema: typeof COLUMNS_SCHEMA;
   headerRow: number;
   headers: string[];
   roles: ColumnRole[];
+  layout?: TemplateLayout;
 }
 
 /** 写し方の形か（保管先や画面から来たものを確かめる） */
 export function isTemplateColumns(v: unknown): v is TemplateColumns {
   if (!v || typeof v !== "object") return false;
   const c = v as Partial<TemplateColumns>;
-  if (Object.keys(c).sort().join(",") !== "headerRow,headers,roles,schema" || c.schema !== COLUMNS_SCHEMA) return false;
+  const keys = Object.keys(c).sort().join(",");
+  if ((keys !== "headerRow,headers,roles,schema" && keys !== "headerRow,headers,layout,roles,schema") || c.schema !== COLUMNS_SCHEMA) return false;
+  if ("layout" in c && !templateLayoutSchema.safeParse(c.layout).success) return false;
   if (!Number.isInteger(c.headerRow) || c.headerRow! < 1 || c.headerRow! > 1000) return false;
   if (!Array.isArray(c.headers) || !Array.isArray(c.roles) || c.headers.length !== c.roles.length || c.headers.length === 0 || c.headers.length > 200) return false;
   if (!c.headers.every((h) => typeof h === "string" && h.length <= 200)) return false;

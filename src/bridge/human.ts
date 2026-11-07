@@ -23,7 +23,7 @@ import { ruleSchema } from "../shared/tools";
 import { AUTHOR_KINDS } from "../shared/fields";
 import { approvedTemplateVersions, listTemplates, readTemplateVersion, saveTemplate } from "./templates";
 import { exportExcelName, exportSignatureName, signExport } from "../plan/exports";
-import { fillTemplate, templateRows } from "../plan/template";
+import { writeTemplate } from "../plan/template-layout";
 import { dueBaseDate } from "../plan/due-view";
 import ExcelJS from "exceljs";
 import { catalogFromPack } from "../plan/chart";
@@ -169,6 +169,7 @@ const SCHEMAS = {
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
   plan_source_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
   templates_read: z.object({ planId: planIdSchema.nullable() }),
+  template_file_read: z.object({ name: z.string().min(1).max(80), version: z.string().regex(/^[0-9a-f]{64}$/) }),
   // 写し方だけを直すときは base64 を空にし、from に元の様式の版を書く（様式のファイルは共有フォルダのものを使う）
   template_save: z.object({ name: z.string().min(1).max(80), base64: z.string().max(12 * 1024 * 1024), columns: z.unknown(), from: z.string().regex(/^[0-9a-f]{64}$/).nullable().optional() }),
   export_sign: z.object({ planId: planIdSchema, version: z.number().int().min(1), name: z.string().min(1).max(80), templateVersion: z.string().regex(/^[0-9a-f]{64}$/) }),
@@ -888,6 +889,16 @@ export class HumanService {
         if (!r.ok) return no(r.reason);
         return { ok: true, name: r.name, version: r.version };
       }
+      case "template_file_read": {
+        const p = parsePayload("template_file_read", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        // 名前と版（様式のファイルと写し方のハッシュ）が合うものだけ
+        const t = await readTemplateVersion(root, p.name, p.version);
+        if (!t) return no("templateUnknown");
+        return { ok: true, name: p.name, version: p.version, base64: Buffer.from(t.bytes).toString("base64") };
+      }
       case "export_sign": {
         const p = parsePayload("export_sign", call.payload);
         if (!p) return no("payloadInvalid");
@@ -907,8 +918,13 @@ export class HumanService {
         if (!t) return no("templateUnknown");
         const plan = h.latest.plan;
         const cat = this.catalogsFor(plan.packId);
-        const labels = (cat.catalog ?? cat.empty).workLabels as Record<string, string>;
-        const excel = await fillTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, templateRows(plan, (a) => labels[a], dueBaseDate(h.latest.at)));
+        // 写し方に案（layout）があれば案のとおり、無ければ列の役目で平らに（src/plan/template-layout.ts の writeTemplate）
+        let excel: Uint8Array;
+        try {
+          excel = (await writeTemplate(new ExcelJS.Workbook(), t.bytes, t.columns, { plan, catalog: cat.catalog ?? cat.empty, asOf: dueBaseDate(h.latest.at) })).bytes;
+        } catch {
+          return no("templateLayoutInvalid");
+        }
         const excelHash = sha256Hex(excel);
         const file = signExport(
           { planId: p.planId, version: p.version, contentHash: v.contentHash, by: signer.signer.by, at: now.toISOString(), template: { name: p.name, file: t.fileHash, columns: t.columnsHash, version: p.templateVersion }, excel: excelHash },

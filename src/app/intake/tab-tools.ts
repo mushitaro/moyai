@@ -40,7 +40,9 @@ import type { BridgeClient } from "../bridge-client";
 import { sheetHash } from "../stages";
 import { andThen, type DroppedFile, type IntakeWorkspace, type Maybe } from "./workspace";
 import { screenSet, type ScreenSetArgs } from "./screen-set";
-import { displayPrefs } from "../state/screen";
+import { displayPrefs, goTo } from "../state/screen";
+import { patchedExcelJS } from "../../import/exceljs-setup";
+import { offerTemplate } from "../state/template-draft";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -431,10 +433,53 @@ function placeFacility(ws: IntakeWorkspace, pack: { id: string; name: string } |
 /** 資料を入れたあと、読み終わるのを待つ上限（ツールの待ちの上限 30 秒より短く） */
 export const ADD_WAIT_MS = 20_000;
 
+/** 作業中の計画の階層の名前（星取表の施設台帳の列。asset-first の順）。計画が無ければ undefined */
+function planLevelNames(): string[] | undefined {
+  const working = getWorkingPlan();
+  if (!working) return undefined;
+  const C = TEXT.chart;
+  const model = buildChart(working.plan, catalogFor(working.plan.packId) ?? emptyCatalog(), { levelFallback: C.levelFallback, commonLevels: C.commonLevels, unmapped: C.unmapped, series: C.series }, { mode: "ledger", period: "year", layer: "original", foldLevel: null });
+  return model.levelNames.slice(0, 12).map((n) => n.slice(0, 40));
+}
+
+/**
+ * source: template（様式を EXPORT の様式の欄に入れる）：橋渡しが確かめた .xlsx 1 つを資料の印で取りに行き、Excel として読めたら
+ * 画面の中の置き場（state/template-draft.ts）に置いて EXPORT を開く。保存はしない（出力と保存は人が「この写し方で出力」を押す）。
+ * 返すのは名前とシートの数と、作業中の計画の階層の名前だけ（様式の形は橋渡しが読んで AI に返す）
+ */
+async function addTemplateFromBridge(ws: IntakeWorkspace, files: { fileId: string; name: string; size: number }[], fetchFile: FetchIntakeFile): Promise<TabToolResult> {
+  const refused: IntakeAddFilesFromTab["refused"] = [];
+  const added: IntakeAddFilesFromTab["added"] = [];
+  for (const f of files) {
+    const bytes = await fetchFile(f.fileId);
+    if (!bytes || bytes.length !== f.size) {
+      refused.push({ name: f.name, reason: "changed" });
+      continue;
+    }
+    const name = f.name.replace(/\.xlsx$/i, "");
+    try {
+      const probe = new (patchedExcelJS().Workbook)();
+      await probe.xlsx.load(bytes.slice().buffer as ArrayBuffer);
+      if (probe.worksheets.length === 0) throw new Error("no sheet");
+      offerTemplate({ name, bytes, probe, saved: null });
+      added.push({ name: f.name, sheets: probe.worksheets.length, rows: null });
+      ws.note("ai", T.templateAdded(name));
+    } catch {
+      refused.push({ name: f.name, reason: "unreadable" });
+      ws.note("ai", T.templateRefused(name));
+    }
+  }
+  if (added.length) goTo("export");
+  const levels = added.length ? planLevelNames() : undefined;
+  const data = { added, refused, ...(levels ? { levels } : {}) };
+  return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
+}
+
 export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<string, unknown>, fetchFile: FetchIntakeFile): Promise<TabToolResult> {
   const p = intakeAddFilesToTabSchema.safeParse(rawArgs);
   if (!p.success) return { ok: false, code: "tool_failed" };
   const a = p.data;
+  if (a.source === "template") return addTemplateFromBridge(ws, a.files, fetchFile);
   const demo = a.source === "demo";
   // 作業画面の Skillパックの欄で選べないものは置かない（橋渡しの packs/ と作業画面のビルドが合っていない）
   const pack = a.pack ? packChoices().find((c) => c.id === a.pack) : undefined;

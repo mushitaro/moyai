@@ -4,7 +4,11 @@
 // 設定の画面の保存先の欄に入れて開くだけで、保存は人が押す。答えでは変えなかった項目に数え、理由を添える。
 // 星取表の見せ方（階層の並び・機器の並び・最大年度）は施設ごとに覚える見せ方で、作業中の計画は変えない。
 import { SCREEN_REFUSAL_TEXT, SCREEN_SET_NOTE, type LevelOrder, type ScreenGo, type ScreenItem, type ScreenRefusal } from "../../shared/tools";
+import type { TemplateLayoutInput } from "../../shared/template-layout";
 import { buildChart, siblingOrder } from "../../plan/chart";
+import { checkLayout, planLayout } from "../../plan/template-layout";
+import { knownTemplate, proposeLayout } from "../state/template-draft";
+import { getReferenceDate } from "../state/review";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { getWorkingPlan } from "../state/plan-store";
 import { applyTheme, currentGo, currentTheme, displayPrefs, goTo, offerRoot, setDisplayPrefs, type Theme } from "../state/screen";
@@ -18,6 +22,7 @@ export interface ScreenSetArgs {
   levelOrder?: LevelOrder;
   rowOrder?: { node: string; before: string };
   lastFiscalYear?: number;
+  templateLayout?: TemplateLayoutInput;
 }
 
 type Result = { ok: true; data: Record<string, unknown> };
@@ -43,6 +48,35 @@ function lastStarYear(): number | null {
   return plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity);
 }
 
+/** 合わない所を AI に返す数の上限 */
+const LAYOUT_PROBLEMS_SHOWN = 8;
+
+/**
+ * 写し方の案（templateLayout）を、EXPORT の様式（Claude が入れたか、画面が保存先から読んだもの）に照らして置く（下書き）。
+ * 合わなければ置かずに理由を返す。作業中の計画があれば、案のとおりに書いたときの数（値は返さない）を返す
+ */
+function placeLayout(ws: IntakeWorkspace, input: TemplateLayoutInput): { ok: true; summary: Record<string, unknown> | null } | { ok: false; reason: ScreenRefusal; problems: string[] } {
+  const { template, ...layout } = input;
+  const t = knownTemplate(template);
+  if (!t) return { ok: false, reason: "template_unknown", problems: [] };
+  const working = getWorkingPlan();
+  let problems: string[];
+  let summary: Record<string, unknown> | null = null;
+  if (working) {
+    const r = planLayout(t.probe, layout, { plan: working.plan, catalog: catalogFor(working.plan.packId) ?? emptyCatalog(), asOf: getReferenceDate() });
+    problems = r.problems;
+    const { sheets, ...rest } = r.summary;
+    summary = { ...rest, sheets: sheets.map(({ sheet, rows, inserted, firstYear, lastYear, totalRow }) => ({ sheet, rows, inserted, firstYear, lastYear, totalRow })) };
+  } else problems = checkLayout(t.probe, layout, layout.startYear ?? 2000);
+  if (problems.length) {
+    ws.note("ai", TEXT.intake.ai.templateLayoutRefused(template, problems.length));
+    return { ok: false, reason: "layout_invalid", problems };
+  }
+  proposeLayout(template, layout);
+  ws.note("ai", TEXT.intake.ai.templateLayoutPlaced(template));
+  return { ok: true, summary };
+}
+
 /** 施設の鍵：作業中の計画の施設（無ければ作業画面の施設設定から作る鍵） */
 export function screenFacilityKey(ws: IntakeWorkspace): string {
   return getWorkingPlan()?.plan.facility.facilityKey ?? ws.facilityKey();
@@ -51,7 +85,7 @@ export function screenFacilityKey(ws: IntakeWorkspace): string {
 export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
   const changed: ScreenItem[] = [];
   const refused: { item: ScreenItem; reason: ScreenRefusal; text: string }[] = [];
-  const refuse = (item: ScreenItem, reason: ScreenRefusal) => refused.push({ item, reason, text: SCREEN_REFUSAL_TEXT[reason] });
+  const refuse = (item: ScreenItem, reason: ScreenRefusal, more = "") => refused.push({ item, reason, text: `${SCREEN_REFUSAL_TEXT[reason]}${more}` });
   const facility = screenFacilityKey(ws);
   let siblings: { rowRef: string; name: string }[] | undefined;
 
@@ -88,6 +122,17 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
       }
     }
   }
+  // 写し方の案：EXPORT の様式に照らして下書きとして置き、EXPORT を開いて見本を出す（出力と保存は人が押す）
+  let layoutPlaced: { template: string; draft: true; summary: Record<string, unknown> | null } | undefined;
+  if (a.templateLayout !== undefined) {
+    const r = placeLayout(ws, a.templateLayout);
+    if (!r.ok) refuse("templateLayout", r.reason, r.problems.length ? `：${r.problems.slice(0, LAYOUT_PROBLEMS_SHOWN).join("／")}${r.problems.length > LAYOUT_PROBLEMS_SHOWN ? `（ほか ${r.problems.length - LAYOUT_PROBLEMS_SHOWN}）` : ""}` : "");
+    else {
+      changed.push("templateLayout");
+      layoutPlaced = { template: a.templateLayout.template, draft: true, summary: r.summary };
+      if (a.go === undefined && a.storageRoot === undefined) goTo("export");
+    }
+  }
   // 保存先：設定の画面の保存先の欄に入れて開く（保存は人。答えでは変えなかった項目に数える）
   if (a.storageRoot !== undefined) {
     offerRoot(a.storageRoot);
@@ -112,6 +157,7 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
         levelOrder: prefs.levelOrder,
         lastFiscalYear: prefs.lastFiscalYear,
         ...(siblings ? { siblings } : {}),
+        ...(layoutPlaced ? { templateLayout: layoutPlaced } : {}),
       },
       note: SCREEN_SET_NOTE,
     },

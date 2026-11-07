@@ -179,6 +179,19 @@ export const ERRORS = {
     http: 200,
     text: "そのフォルダが見つからないか、読めません。利用者に、フォルダの場所を確かめてもらってください。",
   },
+  // source: template の様式（.xlsx 1 つ）。道の確かめは folder と同じ（intake_path_not_allowed）
+  intake_template_missing: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "その様式のファイルが見つからないか、.xlsx でないか、8 MB を越えます。様式は入れていません。利用者に、様式の .xlsx の場所（絶対の道）を確かめてもらってください。",
+  },
+  intake_template_unreadable: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "その様式を Excel（.xlsx）として読めませんでした。様式は入れていません。Excel で開いて .xlsx で保存し直したものを使うよう、利用者に伝えてください。",
+  },
   intake_demo_missing: {
     from: "bridge",
     to: "ai",

@@ -27,6 +27,7 @@ import { readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
 import { handleRequest } from "../../services/ledger-intake/src/handler";
 import { packOf } from "../../services/ledger-intake/src/packs";
 import { fakeLedgerGitHub, memoryKv } from "../helpers/intake-github";
+import { SHEET_FIRST, layoutFor, templateBytes } from "../helpers/template-layout";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 const sha256Of = (b: Buffer) => createHash("sha256").update(b).digest("hex");
@@ -65,7 +66,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerIntakeSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "templateFileRead", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerIntakeSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -254,6 +255,30 @@ describe("正しいタブから：確定 → 輪を作る → 検問所 → 送�
     expect((await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: saved.version })).reason).toBe("fileChanged");
     writeFileSync(xl, keep);
     expect((await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式3", templateVersion: "0".repeat(64) })).reason).toBe("templateUnknown");
+    // 写し方の案（template-layout-v1）：案を入れた写し方も同じ道で置き、様式のファイルを版で照らして読み、署名して書き出すと案のとおりに書く
+    const lb = Buffer.from(await templateBytes());
+    const lcols = { schema: "moyai.columns/0", headerRow: 8, headers: ["設備"], roles: [{ kind: "none" }], layout: layoutFor() };
+    const ls = await call("templateSave", { name: "【架空】様式L", base64: lb.toString("base64"), columns: lcols });
+    expect(ls).toMatchObject({ ok: true, name: "【架空】様式L" });
+    expect(JSON.parse(readFileSync(join(docs, "MOYAI", "様式", "【架空】様式L", "columns.json"), "utf8")).layout).toEqual(layoutFor());
+    const lf = await call("templateFileRead", { name: "【架空】様式L", version: ls.version });
+    expect(Buffer.from(lf.base64, "base64").equals(lb)).toBe(true);
+    expect((await call("templateFileRead", { name: "【架空】様式L", version: "0".repeat(64) })).reason).toBe("templateUnknown");
+    expect((await call("templateFileRead", { name: "../外", version: ls.version })).reason).toBe("templateUnknown");
+    const lx = await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式L", templateVersion: ls.version });
+    expect(lx).toMatchObject({ ok: true, version: 1 });
+    const lgot = await call("exportFileRead", { planId: plan.planId, version: 1, name: "【架空】様式L", templateVersion: ls.version });
+    const lwb = new ExcelJS.Workbook();
+    await lwb.xlsx.load(Buffer.from(lgot.base64, "base64") as unknown as ArrayBuffer);
+    // 開始年度のセルに版の最初の年度、組のラベルの列に 4 行の組
+    expect(lwb.getWorksheet(SHEET_FIRST)!.getCell("C6").value).toBe(Math.min(...plan.details.map((d) => d.fiscalYear)));
+    const labels = new Set<unknown>();
+    lwb.getWorksheet(SHEET_FIRST)!.getColumn("F").eachCell((c) => labels.add(c.value));
+    for (const l of ["予定内容", "予定金額", "実績内容", "実績金額"]) expect(labels.has(l)).toBe(true);
+    // 様式に合わない案の写し方は、書き出さない
+    const bad = { ...lcols, layout: layoutFor({ sheets: [{ ...layoutFor().sheets[0]!, sheet: "無いシート" }] }) };
+    const lsBad = await call("templateSave", { name: "【架空】様式L", base64: "", columns: bad, from: ls.version });
+    expect((await call("exportSign", { planId: plan.planId, version: 1, name: "【架空】様式L", templateVersion: lsBad.version })).reason).toBe("templateLayoutInvalid");
     // 保存先に書ける人が、自分で作った鍵で偽の Excel と先の時刻の書き出しの署名を置いても、信じる鍵の書き出しが落ちる。
     // 渡した書き出しの署名者を返す（画面は、その 1 つについて鍵の警告を出す。Architect の 3C の直し）
     const forger = otherSigner("【架空】書き換えた人");

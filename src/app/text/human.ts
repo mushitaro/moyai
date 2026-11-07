@@ -75,6 +75,8 @@ export const HUMAN_TEXT = {
     exportUnknown: "この版を、その様式で出力した署名がありません。",
     columnsInvalid: "列対応の形が違います。",
     fileInvalid: "様式のファイルが .xlsx ではないか、大きすぎます。",
+    /** 写し方の案（layout）が保存先の様式に合わない（仕事 template-layout-v1。言葉は Wire に確かめる） */
+    templateLayoutInvalid: "写し方の案が、保存先の様式に合いません。Claude に案を置き直してもらってください。",
     // 公開の台帳へ出す（GitHub に PR）
     "ledger.notChosen": "公開台帳の clone の場所が未確定です。設定で選んでください。",
     "ledger.noLedgerDir": "台帳の clone の中に ledger/ がありません。",
