@@ -3,8 +3,8 @@ id: ledger-intake-v2
 role: dev-core
 agent: dev-core
 environment: env-kinds
-budgetUsd: 25
-timeoutMin: 180
+budgetUsd: 45
+timeoutMin: 240
 verify: ["npm ci --ignore-scripts", "npm run typecheck", "node scripts/run-tests.mjs", "node scripts/check-publish.mjs", "npm run build"]
 ---
 # 公開台帳の取り下げの印（retired.json）を、台帳の検証と受け口で受ける
@@ -13,7 +13,13 @@ ledger-intake-v1（MOYAI 経由で公開台帳へ出す受け口）の続き。�
 
 先に読む：`AGENTS.md`、`docs/plan.md` §2.19（引退の印）、`docs/security.md`、`src/share/ledger.ts`（`verifyLedgerFiles`）、`src/share/ring.ts`（`readRing` と `moyai.retired/0`）、`services/ledger-intake/`（v1 の受け口）、`src/app/text/`（SHARE の下の帯の字）。
 
-台帳のリポジトリは `mushitaro/moyai-ledger` のまま（運営者の決定、11-07）。受け口の `LEDGER_REPO` の既定はこれにする。PR を出すのは、運営者が受け口に入れるトークンのアカウント（画面の字は「tsunagi（MOYAI の運営）」）。
+台帳は mushitaro/moyai の `ledger/`（下の「台帳を moyai の中へ」）。PR を出すのは、運営者が受け口に入れるトークンのアカウント（画面の字は「tsunagi（MOYAI の運営）」）。
+
+**台帳を moyai の中へ**（運営者の決定、11-07 15:00。審査は 1 本のリポジトリで、将来は MOYAI とセットで移す）：台帳のリポジトリ（mushitaro/moyai-ledger）を、履歴ごと `ledger/` に取り込んだ（bca1ddb。`ledger/README.md`・`ledger/ledger/`（`ledger.json`・`TERMS.md`・`bundles/`）・`ledger/.github/workflows/`）。この仕事で、台帳を読む・書く所をすべて、mushitaro/moyai の `ledger/` にそろえる：
+- 台帳の根は「リポジトリの根」から「リポジトリの `ledger/`」にする（`readLedgerDir`・`ledger init`・`ledger submit`・`ledger validate-pr`・`ledger site`・`src/bridge/github.ts` の PR（フォークと枝と束のファイルの道）・`src/share/ledger-send.ts`・受け口の `LEDGER_REPO` の既定を `mushitaro/moyai` に、束の道に `ledger/` を足す）。設定の「台帳の clone」は moyai の clone を指し、その `ledger/` を読む。
+- Actions：`ledger/.github/workflows/ledger-validate.yml` と `pages.yml` を `.github/workflows/` に移し、`ledger/**` が変わった PR と push だけで動くようにする（paths）。validate-pr は、`ledger/` の外を変えた PR を「台帳の PR ではない」として検証しない（✗ にしない）。コードの PR に台帳の束が混ざっていたら ✗。`pull_request_target` で main の定義だけを走らせる守りは今のまま。MOYAI の版の固定（MOYAI_SHA）は、同じリポジトリの main の commit を使う形に直す。
+- 移したあとの `ledger/.github/` は消す。`ledger/README.md` に「元は mushitaro/moyai-ledger。11-07 に moyai の ledger/ へ移した」を足す。
+- `docs/plan.md` §2.8・§2.12 と `docs/security.md` の台帳のリポジトリの名前を直す。試験の台帳の道（tests/helpers）も合わせる。
 
 決まり（Architect の 72）：
 1. 形：`ledger/bundles/<鍵ID>/retired.json`。型は輪と同じ `moyai.retired/0` で、ring の代わりに ledger（台帳 ID）を持つ：`{ ledger, key, pub, last, month }`。次の鍵は書かない。
