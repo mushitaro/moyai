@@ -37,6 +37,10 @@ export const TEXT = {
     themeLabel: "表示の明暗",
     themeDark: "暗",
     themeLight: "明",
+    /** ヘッダの右：Claude Desktop の窓を左、MOYAI の窓を右に並べる（docs/screens.md §1。外のブラウザ・Windows・接続中だけ） */
+    arrange: "Claude と並べる",
+    /** 押して Claude Desktop の窓が見つからないとき、ボタンの右に 4 秒 */
+    arrangeNoClaude: "Claude の窓なし",
     settings: "設定",
     /** 下の帯：資料の読込の進み（読んでいる間だけ） */
     reading: (done: number, total: number) => `読込 ${done}/${total}`,

@@ -1,6 +1,6 @@
 // 画面の骨組み（デザイン定義 §5.2）：上にヘッダ、下に状態の帯、その間を主の面がすべて使う。
 // - ヘッダ（docs/screens.md 1）：左にしるし（飾り）、その右に段の列 MOYAI › MERGE › EXPORT › SHARE（今いる段だけ大きく墨、ほかは小さく淡い字）、
-// 右に表示の明暗の切り替えと設定。しるしと「MOYAI」の間は、トップでは 10px（組み）、ほかの段では 40px。
+// 右に「Claude と並べる」（外のブラウザ・Windows・接続中だけ。ArrangeButton.tsx）、表示の明暗の切り替えと設定。しるしと「MOYAI」の間は、トップでは 10px（組み）、ほかの段では 40px。
 // - 状態の帯（§10.21）：左に【架空】と橋渡しとのつながり（前の作業の写しが残っていれば、その右に「前の作業を戻す｜捨てる」）、右にビルドの印。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする。運営者、2026-11-04）。
 //   資料を読んでいる間だけ、つながりの右に読込の進み（「読込 37/200」）を出す。
 // 【架空】は各画面が <FictionMark /> を置くと、ここの枠に出る（架空のデータの画面には常に出す）。
@@ -11,6 +11,7 @@ import type { IntakeWorkspace } from "../intake/workspace";
 import { TEXT } from "../text";
 import { APP_PAGES } from "../../shared/routes";
 import { STAGE_HASH, routeOf, type Stage } from "../stages";
+import { ArrangeButton } from "./ArrangeButton";
 import { BrandMark } from "./BrandMark";
 import { BuildStamp } from "./BuildStamp";
 
@@ -54,7 +55,7 @@ function ThemeSwitch() {
   );
 }
 
-function Header({ hash }: { hash: string }) {
+function Header({ client, hash }: { client: BridgeClient; hash: string }) {
   const stage = routeOf(hash).stage;
   return (
     <header className="moyai-header" data-top={stage === "top" ? "true" : "false"}>
@@ -83,6 +84,7 @@ function Header({ hash }: { hash: string }) {
         ))}
       </nav>
       <div className="moyai-header-end">
+        <ArrangeButton client={client} />
         <ThemeSwitch />
         <a className="moyai-text-button" href={APP_PAGES.settings} aria-current={hash === APP_PAGES.settings || hash === APP_PAGES.industries ? "page" : undefined}>
           {S.settings}
@@ -131,7 +133,7 @@ export function Shell({ client, hash, workspace, children, status }: { client: B
   return (
     <FictionSlot.Provider value={slot}>
       <div className="moyai-shell">
-        <Header hash={hash} />
+        <Header client={client} hash={hash} />
         <main className="moyai-main">{children}</main>
         <StatusBar client={client} workspace={workspace} onSlot={setSlot} extra={status} />
       </div>

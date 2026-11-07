@@ -31,6 +31,7 @@ import { loadStatic } from "./static";
 import { DEAD_MS, HEARTBEAT_MS, HELLO_TIMEOUT_MS, TabHub } from "./tab";
 import { TOKEN_TTL_MS, TokenStore } from "./tokens";
 import { resolvePacksDir } from "../share/pack";
+import { createWindowArranger, type ScriptRunner } from "./window-arrange";
 
 export const DEFAULT_PORT = 43110;
 export const BIND_HOST = "127.0.0.1";
@@ -60,6 +61,8 @@ export interface BridgeOptions {
   onStopRequest?: () => void;
   /** このビルドの commit。鍵ファイルに書き、中継が自分の版と比べる（違えば止めて替える）。無ければ書かない（版が分からない） */
   build?: string;
+  /** 「Claude と並べる」の、OS の見分けと PowerShell を走らせる部品。試験は差し替える（無ければこの PC の OS と本物の PowerShell） */
+  windowArrange?: { platform?: NodeJS.Platform; run?: ScriptRunner };
 }
 
 export interface Bridge {
@@ -184,6 +187,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       return c === "intake_pack_unknown" ? errorBody(c, { packs: skillPacksText(packsDir) }) : c;
     },
   });
+  const arrangeWindows = createWindowArranger(opts.windowArrange);
   const relayKey = randomBytes(32).toString("base64url");
   let port = opts.port;
   let closing: Promise<void> | null = null;
@@ -238,9 +242,16 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     return a.length === b.length && timingSafeEqual(a, b) ? null : "relay_key_mismatch";
   };
 
+  /** 体を受けない経路（maxBody 0）：体があれば断る。 */
+  const readNoBody = async (req: IncomingMessage): Promise<{ value: null } | ErrorCode> => {
+    if (Number(req.headers["content-length"] ?? "0") > 0) return "body_too_large";
+    for await (const c of req) if ((c as Buffer).length > 0) return "body_too_large";
+    return { value: null };
+  };
+
   /**
    * 作業画面だけが呼ぶ経路の守り：Origin・Sec-Fetch-Site・タブの秘密（人だけの操作ではないので 1 回きりの印は求めない）。
-   * 通れば、そのタブの回と中身を返す。
+   * 通れば、そのタブの回と中身を返す。maxBody が 0 の経路は体を受けない（中身は null）。
    */
   const guardTab = async (req: IncomingMessage, route: RouteDef): Promise<{ session: string; body: unknown } | ErrorCode> => {
     if (!route.requires?.tabSecret) return "internal";
@@ -250,7 +261,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     if (s) return s;
     const tab = tabs.checkSecret(header(req, HEADER_TAB_SECRET));
     if (typeof tab === "string") return tab;
-    const body = await readJson(req, route.maxBody ?? 0);
+    const body = route.maxBody === 0 ? await readNoBody(req) : await readJson(req, route.maxBody ?? 0);
     if (typeof body === "string") return body;
     return { session: tab.session, body: body.value };
   };
@@ -326,6 +337,12 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (!bytes) return reject(res, "intake_file_unavailable");
       res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": "application/octet-stream", "Cache-Control": "no-store", "Content-Length": String(bytes.length) });
       res.end(bytes);
+    },
+    // ヘッダの「Claude と並べる」：守りを通ったら、決まった台本を走らせて答えを返す（体は無し。タブから受けた値は台本に渡さない）
+    tabWindowArrange: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      sendJson(res, 200, await arrangeWindows());
     },
   };
 

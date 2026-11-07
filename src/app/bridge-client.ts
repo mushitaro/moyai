@@ -4,6 +4,7 @@ import { ERRORS, errorBodySchema, type TabErrorCode } from "../shared/errors";
 import { decodeEvent, encodeEvent, type BridgeToTab, type EventData, type TabToBridge } from "../shared/events";
 import { HEADER_TAB_SECRET, ROUTES, type HumanAction } from "../shared/routes";
 import type { ToolName } from "../shared/tools";
+import { readWindowArrangeBody, type WindowArrangeResult } from "../shared/window-arrange";
 
 export type ConnectionState =
   | { kind: "connecting" }
@@ -107,6 +108,11 @@ export class BridgeClient {
     h?.(this, ev.data as EventData<BridgeToTab>);
   }
 
+  /** 今のつながりの状態（画面が useSyncExternalStore で読む。変わるまで同じ値） */
+  get connection(): ConnectionState {
+    return this.state;
+  }
+
   /** つながりの状態と、飛ばした通信の数を受ける。 */
   subscribe(fn: (s: ConnectionState, dropped: number) => void): () => void {
     this.listeners.add(fn);
@@ -206,6 +212,25 @@ export class BridgeClient {
       return new Uint8Array(await res.arrayBuffer());
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * ヘッダの「Claude と並べる」：橋渡しに窓を並べてもらう（タブの秘密が要る。体は無し）。
+   * 届かない・読めない答えは failed（並べたことにしない）。
+   */
+  async arrangeWindows(): Promise<WindowArrangeResult> {
+    try {
+      const res = await fetch(ROUTES.tabWindowArrange.path, {
+        method: "POST",
+        headers: { [HEADER_TAB_SECRET]: this.secret },
+        credentials: "omit",
+        cache: "no-store",
+      });
+      const body: unknown = await res.json().catch(() => null);
+      return (res.ok ? readWindowArrangeBody(body) : null) ?? { ok: false, reason: "failed" };
+    } catch {
+      return { ok: false, reason: "failed" };
     }
   }
 

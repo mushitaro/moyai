@@ -119,6 +119,15 @@ export const ROUTES = {
     maxBody: 1024,
     note: "AI が intake_add_files で入れる資料の中身を、作業画面が 1 つずつ取りに来る（橋渡しが資料ごとに渡したワンタイムトークンと、そのタブの回だけ）",
   },
+  // ヘッダの「Claude と並べる」（docs/screens.md §1）。体は無し（maxBody 0。体があれば断る）。処理は src/bridge/window-arrange.ts
+  tabWindowArrange: {
+    method: "POST",
+    path: "/tab/window-arrange",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 0,
+    note: "ヘッダの「Claude と並べる」：Windows で、Claude Desktop の窓を左、MOYAI の窓（押した直後の前面の窓）を右に並べる（体は無し。PowerShell の決まった台本だけを走らせ、利用者の値を渡さない）",
+  },
   commitTrial: {
     method: "POST",
     path: "/human/commit-trial",

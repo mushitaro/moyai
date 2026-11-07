@@ -100,6 +100,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /relay/tool` | 鍵ファイルの鍵 | 中継からのツールの呼び出し |
 | `POST /relay/stop` | 鍵ファイルの鍵 | 橋渡しを止める（moyai uninstall と、古い版の橋渡しを替える中継が、鍵ファイルの鍵を添えて送る） |
 | `POST /tab/intake-file` | タブの秘密 | AI が intake_add_files で入れる資料の中身を、作業画面が 1 つずつ取りに来る（橋渡しが資料ごとに渡したワンタイムトークンと、そのタブの回だけ） |
+| `POST /tab/window-arrange` | タブの秘密 | ヘッダの「Claude と並べる」：Windows で、Claude Desktop の窓を左、MOYAI の窓（押した直後の前面の窓）を右に並べる（体は無し。PowerShell の決まった台本だけを走らせ、利用者の値を渡さない） |
 
 ## 網の外側
 
