@@ -263,7 +263,8 @@ export function compose(
     const ex = (ref: string, why: string, qs?: readonly string[]) => exclude(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), why, qs);
     const pd = (ref: string, q: string | null) => pend(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), q);
     if (reference.has(lay.file)) continue;
-    for (const t of lay.tables) checks.push(...checkTotals(lay, t, ask, ex, pd, (r) => eventAt.get(`${t.id}\u0000${r}`)));
+    // 工程表（ガント）の行の和の行は、施工の期間と工数から層 3 で検算した（records.ts の ganttRecords）
+    for (const t of lay.tables) if (!t.gantt) checks.push(...checkTotals(lay, t, ask, ex, pd, (r) => eventAt.get(`${t.id}\u0000${r}`)));
   }
 
   // ─── 資産の節 ───

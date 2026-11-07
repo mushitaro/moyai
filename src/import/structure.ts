@@ -10,6 +10,7 @@ import { isSymbolLike, numberDepth, parseEffort, parseUnit, splitSeriesCell } fr
 import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type ReadingRule, type RuleHits } from "./reading";
 import { COLUMN_ROLE_OPTIONS, type ColRole } from "./roles";
 import { readRecordBlocks, type BlockTable } from "./blocks";
+import { readGantt, type GanttTable } from "./gantt";
 
 export type RowRole = "title" | "legend" | "header" | "parent" | "data" | "subtotal" | "total" | "note";
 export const ROW_ROLE_LABEL: Record<RowRole, string> = {
@@ -131,6 +132,11 @@ export interface Table {
    * 列（cols）は見出しの行の字の始まりの位置で決めた幅で、その幅に落ちるセルの字をつないである
    */
   blocks?: BlockTable;
+  /**
+   * 工程表（ガント）：時の列（日・週）と、行の種類（号炉の見出し・名前の段・作業・停止の帯・行の和）。あれば、施工の期間を
+   * 行の上の線の図形か時の列の数から読む（records.ts の ganttRecords）。小計の検算もそこでする
+   */
+  gantt?: GanttTable;
 }
 
 /** 題と抽出の条件の行のうち、金額の単位か年度を読んだ行の外す理由（行き先の字） */
@@ -1634,7 +1640,15 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
     titles.push(...blockRead.titles);
     tables.push(...blockRead.tables);
   }
-  const rest = blockRead ? all.filter((r) => !blockRead.consumed.has(r)) : all;
+  const afterBlocks = blockRead ? all.filter((r) => !blockRead.consumed.has(r)) : all;
+  // 工程表（ガント）：時の列のある見出しの行の表を先に読み、残りの行を今までどおりに読む
+  const ganttRead = readGantt(src, grid, idx, afterBlocks);
+  if (ganttRead) {
+    for (const [r, role] of ganttRead.roles) roles.set(r, role);
+    for (const [r, why] of ganttRead.reasons) rowReasons.set(r, why);
+    tables.push(...ganttRead.tables);
+  }
+  const rest = ganttRead ? afterBlocks.filter((r) => !ganttRead.consumed.has(r)) : afterBlocks;
   // CSV の記録が物理の何行にわたるか（囲みの中の改行の数＋1）
   const spans = new Map<number, number>();
   if (src.format === "csv" || src.format === "tsv")
@@ -1792,7 +1806,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
   });
   // 帳票の頭書き：同じ頁の、表の上（前の表より下）の項目と値を、その表に持たせる（表に無い欄を行に付けるため）
   for (const t of tables) {
-    if (t.blocks) continue;
+    if (t.blocks || t.gantt) continue;
     const p = pageOf.get(t.top);
     const prevBottom = Math.max(0, ...tables.filter((u) => u !== t && u.bottom < t.top && pageOf.get(u.top) === p).map((u) => u.bottom));
     const fields = [...notes, ...titles]

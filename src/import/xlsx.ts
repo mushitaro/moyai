@@ -8,7 +8,9 @@ import {
   cellRef,
   leadingSpaceWidth,
   parseRange,
+  type DrawnShape,
   type GridCell,
+  type ShapeAnchor,
   type LedgerEntry,
   type LineProps,
   type MergeRange,
@@ -290,6 +292,35 @@ function rowBreaksOf(x: string): number[] {
   return [...new Set([...rb.matchAll(/<brk\b[^>]*?\bid="(\d+)"/g)].map((m) => Number(m[1])).filter((n) => n > 0))].sort((a, b) => a - b);
 }
 
+/**
+ * 描画の部品から、セルに留めた（twoCellAnchor）線と四角の図形を読む。まとめた図形（grpSp）の中の図形・画像・グラフは読まない。
+ * 線は cxnSp か sp の prst="line"（つなぐ線の straightConnector1 も線）、四角は sp の prst="rect"
+ */
+function drawnShapes(xml: string): DrawnShape[] {
+  const out: DrawnShape[] = [];
+  const num = (s: string, tag: string) => Number(new RegExp(`<(?:xdr:)?${tag}>\\s*(-?\\d+)\\s*</(?:xdr:)?${tag}>`).exec(s)?.[1] ?? NaN);
+  const anchorOf = (s: string): ShapeAnchor | null => {
+    const a = { col: num(s, "col"), row: num(s, "row"), colOff: num(s, "colOff"), rowOff: num(s, "rowOff") };
+    return Number.isFinite(a.col) && Number.isFinite(a.row) ? { ...a, colOff: Number.isFinite(a.colOff) ? a.colOff : 0, rowOff: Number.isFinite(a.rowOff) ? a.rowOff : 0 } : null;
+  };
+  for (const m of xml.matchAll(/<(?:xdr:)?twoCellAnchor\b[^>]*>([\s\S]*?)<\/(?:xdr:)?twoCellAnchor>/g)) {
+    const body = m[1] ?? "";
+    if (/<(?:xdr:)?grpSp\b/.test(body)) continue;
+    const from = anchorOf(/<(?:xdr:)?from>([\s\S]*?)<\/(?:xdr:)?from>/.exec(body)?.[1] ?? "");
+    const to = anchorOf(/<(?:xdr:)?to>([\s\S]*?)<\/(?:xdr:)?to>/.exec(body)?.[1] ?? "");
+    if (!from || !to) continue;
+    const sp = /<(?:xdr:)?(cxnSp|sp)\b[\s\S]*?<\/(?:xdr:)?\1>/.exec(body);
+    if (!sp) continue;
+    const prst = attr(/<a:prstGeom\b[^>]*>/.exec(sp[0])?.[0] ?? "", "prst") ?? "";
+    const kind = prst === "line" || prst === "straightConnector1" ? "line" : prst === "rect" && sp[1] === "sp" ? "rect" : null;
+    if (!kind) continue;
+    const name = attr(/<(?:xdr:)?cNvPr\b[^>]*>/.exec(sp[0])?.[0] ?? "", "name") ?? "";
+    const text = [...sp[0].matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map((x) => unxml(x[1] ?? "")).join("").trim();
+    out.push({ kind, name, from, to, text: text || null });
+  }
+  return out;
+}
+
 function drawingCounts(xml: string): { shapes: number; withText: number; pictures: number; charts: number; groups: number } {
   let withText = 0;
   for (const m of xml.matchAll(/<(?:xdr:)?sp\b[\s\S]*?<\/(?:xdr:)?sp>/g)) {
@@ -425,6 +456,14 @@ function readCell(ExcelJS: typeof ExcelJSNS, cell: XCell, r: number, c: number, 
   return { ...base, value: out.value, text, type: out.type, error: out.error };
 }
 
+/** 塗りのあるセルの書式か（模様の塗りで「none」でないもの・グラデーション） */
+function solidFill(fill: unknown): boolean {
+  if (!fill || typeof fill !== "object") return false;
+  const f = fill as { type?: string; pattern?: string };
+  if (f.type === "gradient") return true;
+  return f.type === "pattern" && !!f.pattern && f.pattern !== "none";
+}
+
 // ─── 入口 ─────────────────────────────────────────────────────
 
 export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" | "xlsm"): Promise<SourceFile> {
@@ -462,6 +501,7 @@ export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" |
   ledgerPush(ledger, "unread", "vbaProject", all.includes("xl/vbaProject.bin") ? 1 : 0, "マクロ。読まない（動かさない）");
   ledgerPush(ledger, "unread", "embedding", all.filter((n) => /^xl\/embeddings\//.test(n)).length, "埋め込みのファイル。読まない");
   ledgerPush(ledger, "unread", "threadedComment", all.filter((n) => /^xl\/threadedComments\//.test(n)).length, "スレッドのコメント（メモとして残る分だけを読む）");
+  const shapesOf = new Map<string, DrawnShape[]>();
   for (const s of sheets) {
     if (s.type !== "worksheet") {
       ledgerPush(ledger, "unread", "nonWorksheet", 1, `ワークシートでないシート（${s.type || "不明"}）。読まない`, s.name);
@@ -472,8 +512,16 @@ export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" |
     scanSheetXml(sx, s.name, ledger);
     for (const r of parseRels(text(relsOf(s.part)), s.part)) {
       if (r.type === `${RT}drawing` && r.part && byName.has(r.part)) {
-        const d = drawingCounts(text(r.part));
-        ledgerPush(ledger, "unread", "shape", d.shapes, `図形（文字のあるもの ${d.withText}）。読まない`, s.name);
+        const xml = text(r.part);
+        const d = drawingCounts(xml);
+        // 線と四角の図形：位置を格子の横に持つ（工程表の施工の期間の線）。ほかの図形は今までどおり読まない
+        const held = drawnShapes(xml);
+        if (held.length) shapesOf.set(s.name, [...(shapesOf.get(s.name) ?? []), ...held]);
+        const lines = held.filter((k) => k.kind === "line").length;
+        ledgerPush(ledger, "decided", "drawnShape", held.length, `描画の図形 ${held.length}（線 ${lines}）。セルに留めた位置（from・to の列と行）を格子の横に持つ。セルの数には入れない`, s.name);
+        const unread = d.shapes + count(xml, /<(?:xdr:)?cxnSp\b/g) - held.length;
+        const unreadText = Math.max(0, d.withText - held.filter((k) => k.text !== null).length);
+        ledgerPush(ledger, "unread", "shape", unread, `図形（文字のあるもの ${unreadText}）。読まない`, s.name);
         ledgerPush(ledger, "unread", "picture", d.pictures, "画像。読まない", s.name);
         ledgerPush(ledger, "unread", "chart", d.charts, "グラフ。読まない", s.name);
       }
@@ -497,12 +545,15 @@ export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" |
     const ws = wb.getWorksheet(s.name);
     const props = lineProps(text(s.part));
     const cells: GridCell[] = [];
+    const fills: Record<number, number[]> = {};
     if (ws) {
       // 値の無いセルも見る（メモだけのセルを落とさないため。値もメモも無いセルは readCell が捨てる）
       ws.eachRow({ includeEmpty: true }, (row, r) => {
         row.eachCell({ includeEmpty: true }, (cell, c) => {
           const g = readCell(ExcelJS, cell, r, c, date1904, fmtFallbacks);
           if (g) cells.push(g);
+          // 塗りだけのセル（値もメモも無い）：セルには数えず、行ごとの列の並びに持つ
+          else if (cell.type === ExcelJS.ValueType.Null && solidFill(cell.fill)) (fills[r] ??= []).push(c);
         });
       });
     }
@@ -549,7 +600,21 @@ export async function readXlsx(file: string, bytes: Uint8Array, format: "xlsx" |
     const noCache = cells.filter((c) => c.formulaNoCache).length;
     ledgerPush(ledger, "warning", "formulaNoCache", noCache, "数式があって計算済みの値が無いセル（未解決に数える）", s.name);
     const rowBreaks = rowBreaksOf(text(s.part));
-    grids.push({ name: s.name, index: index++, state: s.state, cells, merges: props.merges, rows: props.rows, cols: props.cols, maxRow, maxCol, ...(rowBreaks.length ? { rowBreaks } : {}) });
+    const shapes = shapesOf.get(s.name) ?? [];
+    grids.push({
+      name: s.name,
+      index: index++,
+      state: s.state,
+      cells,
+      merges: props.merges,
+      rows: props.rows,
+      cols: props.cols,
+      maxRow,
+      maxCol,
+      ...(rowBreaks.length ? { rowBreaks } : {}),
+      ...(shapes.length ? { shapes } : {}),
+      ...(Object.keys(fills).length ? { fills } : {}),
+    });
   }
   ledgerPush(ledger, "warning", "formatFallback", fmtFallbacks.n, "表示形式を当てられず、値の文字のまま表示にしたセル");
   return { file, format, sheets: grids, ledger, date1904 };

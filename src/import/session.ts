@@ -420,6 +420,19 @@ export class IntakeSession {
         ([file, x]) =>
           `${file}：発注明細として読んだ（明細 ${x.n} 行。品名・仕様から号炉・機器・作業を取り出せた行 ${x.t}。ほかの資料の機器と名前と号炉が同じ行だけ、結ぶかをまとめた 1 問で聞く。取り出せない行は作業にしない）`,
       ),
+      // 工程表として読んだ表：時の列の数と間、作業の行の数、施工の期間を線の図形から読んだ行と時の列の数から読んだ行（名前・工数の値は渡さない）
+      ...an.layouts.flatMap((l) =>
+        l.tables.flatMap((t) => {
+          const g = t.gantt;
+          if (!g) return [];
+          const works = g.rows.filter((x) => x.kind === "work" || (x.kind === "node" && x.work));
+          const counted = works.filter((x) => x.counted).length;
+          const lined = works.filter((x) => !x.counted && x.bars.length > 0).length;
+          return [
+            `${l.file}${l.sheet ? `「${l.sheet}」` : ""}：工程表として読んだ（${g.step === 7 ? "週" : "日"}の列 ${g.times.length}、作業の行 ${works.length}。施工の期間は線の図形 ${lined} 行・時の列の数 ${counted} 行から${g.hoursPerManDay ? `。1 人・日＝${g.hoursPerManDay.hours} 時間（題・注記）` : ""}）`,
+          ];
+        }),
+      ),
       ...an.rejected.map((r) => `${r.file}：${r.reason}`),
       ...this.photos
         .entries()

@@ -59,6 +59,32 @@ export interface SheetGrid {
   maxCol: number;
   /** 印刷の改ページ（行）：その行の後で頁が替わる。同じ形の帳票を頁ごとに積んだシートの、頁の境に使う */
   rowBreaks?: number[];
+  /**
+   * 描画の図形のうち、線（prst="line"）と四角（prst="rect"）の、セルに留めた位置（twoCellAnchor の from・to）。
+   * セルではないので、セルの数には入れない。画像・グラフ・まとめた図形は持たない（台帳に数える）。無ければ省く
+   */
+  shapes?: DrawnShape[];
+  /** 値も文字も無く、塗りだけのセル（行 → 列の並び）。セルの数には入れない（工程の背景の帯を見分けるのに使う）。無ければ省く */
+  fills?: Record<number, number[]>;
+}
+
+/** 図形を留めたセルの位置。col・row は XML のとおり 0 から数える。colOff・rowOff はセルの左上からのずれ（EMU） */
+export interface ShapeAnchor {
+  col: number;
+  row: number;
+  colOff: number;
+  rowOff: number;
+}
+
+/** 描画の図形（線と四角） */
+export interface DrawnShape {
+  kind: "line" | "rect";
+  /** 図形の名前（cNvPr の name） */
+  name: string;
+  from: ShapeAnchor;
+  to: ShapeAnchor;
+  /** 図形の字（txBody）。無ければ null */
+  text: string | null;
 }
 
 /** 台帳：読まなかった物・読み方を決めたこと・直したこと（数えて残す）。 */

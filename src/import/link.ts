@@ -180,6 +180,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const assetExcluded = new Map<string, string>();
   const assetExcludedBy = new Map<string, string>();
   const assetWaitingOn = new Map<string, string>();
+  /** 「この資料だけの機器か」に答えの無い機器 → その問い（機器のセルは待たせず、その機器の作業の行だけが待つ） */
+  const heldUnmatchedQ = new Map<string, string>();
   const tables = [...new Set(rec.assets.map((a) => a.tableId))];
   const firstOf = (tid: string) => rec.assets.find((a) => a.tableId === tid);
   tables.sort((a, b) => {
@@ -416,6 +418,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           // 「この資料だけの機器か」に答えが無い機器は、1 冊のときと同じに読んだまま持つ（セルはデータのまま。問いを待つセルにしない。
           // 資料を混ぜると後の資料が全部未確定になった 375t の形を戻さない。intake-many-v1）
           held.add(p.r.id);
+          // 機器のセルはデータのまま。その機器の作業の行だけ、この問いを待つ（質問の無い未解決にしない）
+          heldUnmatchedQ.set(p.r.id, questionIdOf(ukey));
         }
         else (p.r as AssetRec & { unmatchedQ?: string }).unmatchedQ = questionIdOf(ukey);
       }
@@ -725,7 +729,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       }
       if (own.pending || own.held) {
         eventPending.add(e.id);
-        const q = assetWaitingOn.get(assetId);
+        const q = assetWaitingOn.get(assetId) ?? heldUnmatchedQ.get(assetId);
         if (q) eventWaitingOn.set(e.id, q);
         continue;
       }
@@ -793,7 +797,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const md = o.events.map((e) => e.manDays).filter((x): x is number => x !== null);
     o.manDays = md.length ? Math.round(md.reduce((a, b) => a + b, 0) * 1000) / 1000 : null;
     // 日数は、期間の行の日数の欄に書いてあるときだけ。1 日の日付の行をまとめたものからは数えない（推し量らない）
-    o.days = o.period ? (o.events[0]?.days ?? null) : null;
+    // 1 つの行の、いくつかの期間（工程表の飛んだ週）は、期間ごとの日数の和
+    o.days = o.period ? (o.events.every((e) => e.days !== null) ? o.events.reduce((a, e) => a + (e.days ?? 0), 0) : (o.events[0]?.days ?? null)) : null;
   }
 
   // ─── 資料をまたぐ同じ作業（機器ごと） ───
