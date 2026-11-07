@@ -556,7 +556,10 @@ export function checkLayout(wb: ExcelJS.Workbook, layout: TemplateLayout, startY
     const levelCols = new Set(s.levels.columns.map((l) => colNum(l.col)));
     rows: for (let r = first; r < s.insertBefore; r++) {
       for (const c of [...used.keys(), ...ys]) {
-        const f = formulaOf(ws.getCell(r, c) as unknown as CellLike);
+        const cell = ws.getCell(r, c);
+        // 縦に結合した欄の下のセルは、exceljs が上のセル（親）の式を返す。式を持つのは親だけなので、親でないセルは見ない（入れ子縦結合の様式、11-07）
+        if (cell.isMerged && cell.master && cell.master.address !== cell.address) continue;
+        const f = formulaOf(cell as unknown as CellLike);
         if (f === null) continue;
         if (s.continues !== null && levelCols.has(c) && isMirrorFormula(f, s.continues, r, c)) continue;
         p.push(`「${s.sheet}」の明細の欄 ${colLetter(c)}${r} に式がある`);
