@@ -1,6 +1,9 @@
 // MERGE の横の板の「署名」（docs/screens.md 3.2）：いちばん新しい版の中身のハッシュ（4 文字 × 2 組を 4 つ）、使った読み方、結び目の鎖（確定・渡す・承認・差し戻し）。
 // 署名ごとに、この PC が覚えた鍵と照らした信じ方（✓ この PC の鍵・✓ 確認済み・! 未確認・! 鍵が替わった）を出す。確かめで合わない版は朱で出す。
 // 未確認はふつうの字、替わったは朱。! の行の右端に「| 指紋を読み合わせる」（KeyWarn.dc.html の 5）。
+// 古い版を見るだけで開いたとき（Wire、11-07 夜。動画 C14）は、その版の署名を出す（いちばん新しい版のものは出さない）：
+// 版の名前「令和 8 年度版（第 5 版）」、署名ごとに 1 行「確定　山田　2026-06-12 14:20　✓ 照合済み」、その下に「適用 Skill」
+// （版の記録から。基本操作・Skillパック・ルールを 1 つ 1 行。ルールの行を押すと、ルールのシートでそのルールを選んで開く）。記録が無い版は「適用 Skill の記録なし」。
 import { Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import type { IgnoredRequest } from "./ConfirmDialog";
@@ -23,6 +26,18 @@ export interface PanelVersion {
   exports?: (Omit<TrustSig, "role"> & { template: { name: string } })[];
 }
 
+/** 古い版を開いたときの見せ方（Merge が版の記録から作る） */
+export interface PanelOld {
+  /** 版の名前（署名した版は「令和 8 年度版（第 5 版）」、ほかは「第 5 版」） */
+  name: string;
+  /** その版の計画の Skillパックの名前 */
+  pack: string;
+  /** その版の記録の読み方（null は記録なし）。no はルールの版の番号（v n。来歴を読むまでは null） */
+  skills: { name: string; path: string; version: string; no: number | null }[] | null;
+  /** ルールの行を押したとき（ルールのシートでそのルールを選んで開く） */
+  onRule: (path: string) => void;
+}
+
 /** 頼み（まだ済んでいないもの）：鎖の行に「承認　宛先　まだ開かれていません」か「承認　受け取った人　信じ方」（Wire の B1） */
 export interface PanelRequest {
   kind: "approve" | "edit";
@@ -36,6 +51,7 @@ export function SignaturesPanel({
   onKeyConfirmed,
   request = null,
   ignored = [],
+  old = null,
 }: {
   v: PanelVersion;
   readings: readonly LoadedReading[];
@@ -43,8 +59,92 @@ export function SignaturesPanel({
   request?: PanelRequest | null;
   /** 効かない頼み：頼みの行のすぐ下に 1 つ 1 行。別の鍵は朱で「!」と名乗りと指紋、版を作った鍵のほかの中身に宛てた頼みは淡い字（Wire の B1 の追い） */
   ignored?: readonly IgnoredRequest[];
+  /** 古い版を見るだけで開いているとき（その版の署名と適用 Skill を出す） */
+  old?: PanelOld | null;
 }) {
   const [check, setCheck] = useState<TrustSig | null>(null);
+  if (old)
+    return (
+      <Stack gap="xs" data-testid="signatures-panel" data-old="true" data-version={v.version}>
+        <Text size="sm" fw={700} data-testid="signatures-version">
+          {old.name}
+        </Text>
+        {v.contentHash && (
+          <Text size="xs" ff="monospace" className="moyai-num" data-testid="signatures-hash">
+            {showContentHash(v.contentHash)}
+          </Text>
+        )}
+        {v.problem && (
+          <Text size="sm" c="var(--shu)" data-testid="signatures-problem">
+            {H.problem[v.problem]}
+          </Text>
+        )}
+        {v.legacy && (
+          <Text size="xs" c="dimmed">
+            {H.legacy}
+          </Text>
+        )}
+        {v.signatures.map((s) => (
+          <Text size="xs" key={`${s.role}|${s.fingerprint}`} data-testid="signature" data-role={s.role} data-trust={s.trust}>
+            {T.role[s.role] ?? s.role}　{s.by}
+            {s.at ? `　${T.at(s.at)}` : ""}　<Text span c={s.trust === "changed" ? "var(--shu-text)" : undefined}>{T.trust[s.trust] ?? ""}</Text>
+            {(s.trust === "unconfirmed" || s.trust === "changed") && s.pub && (
+              <button type="button" className="moyai-inline-act" onClick={() => setCheck(s)} data-testid="signature-check">
+                {HUMAN_TEXT.keyWarn.check}
+              </button>
+            )}
+          </Text>
+        ))}
+        {(v.exports ?? []).map((x) => (
+          <Text size="xs" key={`export|${x.fingerprint}|${x.template.name}`} data-testid="signature" data-role="export" data-trust={x.trust}>
+            {T.role.export}　{x.by}　{x.template.name}　<Text span c={x.trust === "changed" ? "var(--shu-text)" : undefined}>{T.trust[x.trust] ?? ""}</Text>
+          </Text>
+        ))}
+        <Text size="xs" fw={700} mt="xs">
+          {T.applied}
+        </Text>
+        {old.skills === null ? (
+          <Text size="xs" c="var(--text-3)" data-testid="applied-none">
+            {T.appliedNone}
+          </Text>
+        ) : (
+          <>
+            {/* 基本操作と Skillパックの版は版の記録に無い（今の版は出さない） */}
+            <Text size="xs" data-testid="applied-skill" data-tier="base">
+              {T.tier.base}　<Text span c="var(--text-3)">{T.notRecorded}</Text>
+            </Text>
+            <Text size="xs" data-testid="applied-skill" data-tier="pack">
+              {T.tier.pack}　{old.pack}　<Text span c="var(--text-3)">{T.notRecorded}</Text>
+            </Text>
+            {old.skills.map((r) => (
+              <Text
+                size="xs"
+                key={`${r.path}|${r.version}`}
+                className="moyai-pick-row"
+                role="button"
+                tabIndex={0}
+                style={{ cursor: "pointer" }}
+                onClick={() => old.onRule(r.path)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") old.onRule(r.path);
+                }}
+                data-testid="applied-skill"
+                data-tier="rule"
+                data-path={r.path}
+              >
+                {T.tier.rule}　{r.name}
+                {r.no !== null && (
+                  <Text span ff="monospace" fz={11} c="var(--text-3)" ml={6}>
+                    {HUMAN_TEXT.readings.ruleVersion(r.no)}
+                  </Text>
+                )}
+              </Text>
+            ))}
+          </>
+        )}
+        <KeyCheckDialog signer={check} onClose={() => setCheck(null)} onConfirmed={() => onKeyConfirmed?.()} />
+      </Stack>
+    );
   return (
     <Stack gap="xs" data-testid="signatures-panel">
       <Text size="sm" fw={700}>

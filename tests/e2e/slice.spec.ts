@@ -328,6 +328,53 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("decisions-kind")).toContainText("第 2 版と同じ", { timeout: 60_000 });
       await expect(page.getByTestId("decisions-kind")).not.toContainText("第 1 版と同じ");
     });
+
+    await test.step("古い版の署名と適用 Skill、ルールの詳細の適用先（docs/screens.md 3.2、Wire、11-07 夜。仕事 lineage-screens-v1）", async () => {
+      // 第 2 版はルールの下書き 2 つを載せて確定した。第 3 版を確定して、第 2 版を古い版にする
+      await expect(page.getByTestId("decisions-bulk-accept")).toContainText("第 2 版と同じ");
+      await page.getByTestId("decisions-bulk-accept").click();
+      await expect(page.locator('[data-testid="crosswalk-rule"][data-same="1"][data-state="proposed"]')).toHaveCount(0);
+      await acceptDecisions(page, "試験の台本が押した（第 3 版の決定を受けた）");
+      await expect(page.getByTestId("confirm-open")).toBeEnabled({ timeout: 60_000 });
+      await page.getByTestId("confirm-open").click();
+      await page.getByTestId("confirm-reason").fill("第 2 版を古い版にする第 3 版（e2e）");
+      await expect(page.getByTestId("confirm-submit")).toBeEnabled();
+      await page.getByTestId("confirm-submit").click();
+      await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 3 版）を確定しました。/);
+      await page.getByTestId("confirm-close").click();
+      // トップの版の印のメニューで第 2 版を「開く」（見るだけ）
+      await page.goto(`${bridge.base}/#/`);
+      await page.locator('[data-testid="moyai-mark"][data-version="2"]').click();
+      await page.getByTestId("mark-open").click();
+      await expect(page.getByTestId("merge-state")).toHaveText("古い版（見るだけ）");
+      // 横の板の「署名 n」は第 2 版の署名（いちばん新しい第 3 版のものは出さない）と、第 2 版をつくったときの適用 Skill
+      if (await page.getByTestId("side-band-signatures").isVisible()) await page.getByTestId("side-band-signatures").click();
+      else await page.getByTestId("side-signatures").click();
+      const panel = page.getByTestId("signatures-panel");
+      await expect(panel).toHaveAttribute("data-old", "true");
+      await expect(panel).toHaveAttribute("data-version", "2");
+      await expect(page.getByTestId("signatures-version")).toHaveText(/令和 \d+ 年度版（第 2 版）/);
+      await expect(panel).toContainText("適用 Skill");
+      const rules = panel.locator('[data-testid="applied-skill"][data-tier="rule"]');
+      await expect(rules.first()).toBeVisible();
+      expect(await rules.count()).toBeGreaterThan(0);
+      await page.screenshot({ path: shot(`lineage-signatures-${tag}`) });
+      // ルールの行を押すと、ルールのシートでそのルールを選んで開く。古い版のルールのシートは見るだけ（切り替えを出さない）
+      await rules.first().click();
+      await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "readings");
+      await expect(page.getByTestId("readings-sheet")).toHaveAttribute("data-old", "true");
+      await expect(page.getByTestId("readings-filter")).toHaveCount(0);
+      await expect(page.getByTestId("reading-skill-status").first()).toHaveText("第 2 版で適用");
+      // 詳細にルールの来歴：適用先（MOYAI が読める版だけ、新しい順。第 2 版と第 3 版）と「| 開く」、ルールの版ごとの行
+      const lineage = page.getByTestId("rule-lineage");
+      await expect(lineage).toBeVisible();
+      await expect(page.getByTestId("rule-applied-count")).toHaveAttribute("data-count", /^[1-9]\d*$/);
+      const versions = await lineage.getByTestId("rule-applied").evaluateAll((els) => els.map((e) => Number(e.getAttribute("data-version"))));
+      expect(versions).toEqual([...versions].sort((a, b) => b - a));
+      await expect(lineage.getByTestId("rule-applied-open").first()).toBeVisible();
+      await expect(lineage.getByTestId("rule-version").first()).toBeVisible();
+      await page.screenshot({ path: shot(`lineage-rule-detail-${tag}`) });
+    });
   } finally {
     await c.close();
   }

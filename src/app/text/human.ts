@@ -204,6 +204,18 @@ export const HUMAN_TEXT = {
     draft: "- 下書き",
     chain: "結び目の鎖",
     role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差戻し", revert: "戻す", export: "出力" } as Record<string, string>,
+    /** 古い版を開いたとき（docs/screens.md 3.2、Wire、11-07 夜。動画 C14）：その版の署名と、その版をつくったときの Skill */
+    applied: "適用 Skill",
+    appliedNone: "適用 Skill の記録なし",
+    tier: { base: "基本操作", pack: "Skillパック", rule: "ルール" } as Record<string, string>,
+    /** 版の記録に版が無い段（基本操作・Skillパックの版は版の記録に無い。今の版を出さない） */
+    notRecorded: "版の記録なし",
+    /** 鍵の状態の字は設定の署名鍵と同じ（照合済み・未照合・! 鍵が変更） */
+    trust: { own: "✓ 当 PC の鍵", confirmed: "✓ 照合済み", unconfirmed: "未照合", changed: "! 鍵が変更" } as Record<string, string>,
+    at: (iso: string) =>
+      new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+        .format(new Date(iso))
+        .replace(/\//g, "-"),
   },
   /** 署名の鍵をまだ確かめていないときの知らせ（Wire の KeyWarn.dc.html）。人の署名を信じて何かをするボタンのすぐ左に 1 行 */
   /** 頼みを誰が受け取ったか（Wire の B1。運営者の決定「マジックリンクで鎖をつなぐ」） */
@@ -340,6 +352,18 @@ export const HUMAN_TEXT = {
     change: { added: "- 新規", changed: "- 変更" } as Record<string, string>,
     sample: (file: string, ref: string, text: string) => `見本　${file} ${ref}「${text}」`,
     unapproved: (n: number) => `未承認のルールが ${n} つ`,
+    /** 古い版を開いたとき（docs/screens.md 3.2、Wire、11-07 夜）：その版で当てていたルールを見るだけで並べる */
+    appliedIn: (n: number) => `第 ${n} 版で適用`,
+    appliedNone: "適用ルールの記録なし",
+    /** 版の記録が指す読み方の中身が、保管先に見つからない */
+    noContent: "保存先に中身なし",
+    /** ルールの詳細の適用先（同）。ルールの版は「v n」（計画の「第 n 版」と分ける） */
+    ruleVersion: (n: number) => `v${n}`,
+    scopeLabel: "範囲",
+    placeLabel: "置き場",
+    placeStore: "保存先",
+    appliedTo: (n: number) => `適用先 ${fmt(n)}`,
+    open: "開く",
   },
   approve: {
     titleApprove: (n: number) => `第 ${n} 版を承認して署名する`,

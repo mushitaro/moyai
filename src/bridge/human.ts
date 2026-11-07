@@ -16,7 +16,7 @@ import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previ
 import { checkSeen } from "./seen";
 import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
-import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, recordReadingVersion, registerReading } from "./readings";
+import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readingLineage, recordReadingVersion, recordedReadings, registerReading } from "./readings";
 import { ReadingSkill, isPlanRule } from "../import/reading";
 import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
 import { ruleSchema } from "../shared/tools";
@@ -166,6 +166,7 @@ const SCHEMAS = {
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable(), trimmed: z.boolean().optional() })).max(20).optional(),
   }),
   readings_read: z.object({}),
+  readings_lineage: z.object({}),
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
   plan_source_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
   templates_read: z.object({ planId: planIdSchema.nullable() }),
@@ -688,7 +689,9 @@ export class HumanService {
         if (!root) return no("noRoot");
         const r = await readPlanVersion(root, p.planId, p.version);
         if (!r.ok) return no(r.reason);
-        return { ok: true, version: r.record.version, plan: r.record.plan, contentHash: r.contentHash, at: r.record.at };
+        // その版をつくったときに当てていた読み方（版の記録から読むだけ。古い版のルールのシートと署名の「適用 Skill」。記録が無ければ null）
+        const recorded = r.record.readingSkills?.length ? await recordedReadings(root, r.record.readingSkills) : null;
+        return { ok: true, version: r.record.version, plan: r.record.plan, contentHash: r.contentHash, at: r.record.at, readingSkills: recorded };
       }
       case "plans_list": {
         if (!parsePayload("plans_list", call.payload)) return no("payloadInvalid");
@@ -1311,6 +1314,13 @@ export class HumanService {
         if (!root) return { ok: true, root: null, readings: [] };
         const list = await listReadings(root, await approvedReadingVersions(root, (x) => countsForApproval(trustOf(sd, x, now))));
         return { ok: true, root, readings: loadedOf(list, readSettings(sd).name) };
+      }
+      case "readings_lineage": {
+        // ルールの詳細の適用先（docs/screens.md 3.2）：保存先の版の記録から読むだけ。読めない施設は数えない
+        if (!parsePayload("readings_lineage", call.payload)) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return { ok: true, root: null, places: [], applied: [] };
+        return { ok: true, root, ...(await readingLineage(root)) };
       }
       case "peers_compare": {
         const p = parsePayload("peers_compare", call.payload);

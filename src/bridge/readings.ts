@@ -12,6 +12,7 @@ import { join, relative, sep } from "node:path";
 import { ReadingSkill, handWritten, isPlanRule, skillMarkdown, type LoadedReading, type ReadingScope } from "../import/reading";
 import { CYCLE_KEY, PLAN_RULE_SOURCE } from "../plan/cycle";
 import { PLAN_ID, readHistory, type PlanHistory, type SignatureInfo } from "../plan/store";
+import { readTurn } from "../plan/turn";
 
 const SKILLS = "skills";
 const COMPANY = "会社";
@@ -222,6 +223,98 @@ export function loadedOf(list: readonly ListedReading[], who: string | null): Lo
     out.push({ skill: pick.skill, version: pick.version, path: pick.path, approved: true, approvedIn: pick.approvedIn, draft: false, owner: pick.scope === "facility" ? pick.owner : null });
   }
   return out;
+}
+
+/** 版の記録に載った読み方を、保存先の中身と照らしたもの（古い版のルールのシート）。中身が保存先に見つからなければ scope と skill は null */
+export interface RecordedReading {
+  name: string;
+  path: string;
+  version: string;
+  scope: ReadingScope | null;
+  skill: ReadingSkill | null;
+}
+
+/** 版の記録の読み方（名前・道・版）を、保存先の置き場所の今の版か versions/ に残した版と照らす（読むだけ。docs/screens.md 3.2 の古い版を開いたとき） */
+export async function recordedReadings(root: string, recorded: readonly { name: string; path: string; version: string }[]): Promise<RecordedReading[]> {
+  const list = await listReadings(root, new Map());
+  return recorded.map((r) => {
+    const hit = list.find((x) => x.version === r.version && (x.path === r.path || x.path === `${r.path}/versions/${r.version}`));
+    return { name: r.name, path: r.path, version: r.version, scope: hit?.scope ?? null, skill: hit?.skill ?? null };
+  });
+}
+
+/** 読み方の置き場所（保存先の今の版のあるところ）。範囲と持ち主は置き場所で決まる */
+export interface ReadingPlace {
+  path: string;
+  name: string;
+  scope: ReadingScope;
+  owner: string | null;
+}
+
+/**
+ * ルールの適用先の 1 行：版の記録に読み方の版を載せた版。
+ * MOYAI が読める版だけ（保存先の版の記録で、確かめで合うもの）。共有フォルダの共有ファイルは版の記録を持たないので、今は保存先だけ
+ */
+export interface AppliedVersion {
+  planId: string;
+  /** 施設の名前（いちばん新しい版の計画のもの） */
+  displayName: string;
+  fictional: boolean;
+  fiscalYearStartMonth: number;
+  version: number;
+  /** 版の記録の時刻（並べる順） */
+  at: string;
+  contentHash: string;
+  /** 版を確定した署名の時刻（承認があれば承認、無ければ自分で確定）。渡しただけ・戻すは null（版を年度で呼ぶのに使う） */
+  signedAt: string | null;
+  /** いちばん新しい版で、編集の番が人に渡っている（編集中・承認待ち・差戻し）。ほかは null */
+  held: "editing" | "awaitingApproval" | "returned" | null;
+  /** 置いた所 */
+  from: "store";
+  /** この PC で開ける版か（保存先の確かめで合う版は開ける） */
+  openable: boolean;
+  skills: { name: string; path: string; version: string }[];
+}
+
+/**
+ * ルールの来歴（ルールの詳細の適用先。docs/screens.md 3.2、Wire、11-07）：保存先の読み方の置き場所と、読み方を版の記録に載せた版の一覧。
+ * 読めない計画（版のファイルが読めない）と、確かめで合わない版は数えない（「ほか n」とも言わない）。読むだけで、何も書かない
+ */
+export async function readingLineage(root: string): Promise<{ places: ReadingPlace[]; applied: AppliedVersion[] }> {
+  const places: ReadingPlace[] = (await listReadings(root, new Map())).filter((x) => x.current).map((x) => ({ path: x.path, name: x.name, scope: x.scope, owner: x.owner }));
+  const applied: AppliedVersion[] = [];
+  for (const planId of subdirs(join(root, "plans"))) {
+    if (!PLAN_ID.test(planId)) continue;
+    let hist: PlanHistory;
+    try {
+      hist = await readHistory(root, planId);
+    } catch {
+      continue; // 読めない施設は数えない
+    }
+    const latest = hist.latest;
+    if (!latest) continue;
+    const top = hist.versions.at(-1)!;
+    const turn = await readTurn(root, planId);
+    for (const v of hist.versions) {
+      if (v.problem !== null || v.legacy || !v.readingSkills) continue;
+      const held = turn && v === top && turn.version === v.version && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned") ? turn.state : null;
+      applied.push({
+        planId,
+        displayName: latest.plan.displayName,
+        fictional: latest.plan.facility.fictional,
+        fiscalYearStartMonth: latest.plan.facility.fiscalYearStartMonth,
+        version: v.version,
+        at: v.at,
+        contentHash: v.contentHash,
+        signedAt: (v.signatures.find((x) => x.role === "approve") ?? v.signatures.find((x) => x.role === "confirm"))?.at ?? null,
+        held,
+        from: "store",
+        openable: true,
+        skills: v.readingSkills,
+      });
+    }
+  }
+  return { places, applied };
 }
 
 /**

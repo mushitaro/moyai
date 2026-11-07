@@ -1209,6 +1209,11 @@ tr.moyai-pick-row[aria-selected="true"] {
   background: var(--layer-1);
   box-shadow: inset 2px 0 0 var(--text);
 }
+/* ルールの見出しの行・適用 Skill のルールの行（押すと詳細に来歴。Wire、11-07 夜）：選んだ見出しは表の行と同じ形 */
+.moyai-pick-row[data-picked="true"] {
+  background: var(--layer-1);
+  box-shadow: inset 2px 0 0 var(--text);
+}
 
 /* 設定の 1 列（docs/screens.md 3.7）：左に節の名前 168px、右に中身 */
 .moyai-settings-row {

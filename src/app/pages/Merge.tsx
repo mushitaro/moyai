@@ -3,6 +3,7 @@
 // シートのタブ：星取表｜読み方｜検査｜決定 n｜「資料」の札・資料の選び・シートの選び｜＋ 資料を足す。白紙（第 1 版の前）は「資料」の札・資料の選び・シートの選び｜＋ 資料を足す。
 // 資料ごとのタブは並べない（200 ファイル・1 ファイル 12 シートを前提に。docs/screens.md 3.2「資料の選び」、Wire、11-07）。
 // 右の横の板は 1 枚で、切り替えは「決まっていない所 n（0 なら出さない）/ 署名 n / 出どころ（星取表のとき）」。印を選ぶと出どころへ。
+// 古い版を見るだけで開いたときの「署名 n」は、その版の署名と適用 Skill（いちばん新しい版のものは出さない）。ルールのシートは、その版で当てていたルール（Wire、11-07 夜）。
 // 下の帯は、止め札（決まっていない所・受けていない決定・橋渡しが切れている）とボタンだけ。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする）。
 // 画面のどこに資料を落としても受ける（引きずって入ったときだけ、全面に「第 n 版に重ねます」）。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
 import { setRemovedInHistory } from "../state/stars";
@@ -18,7 +19,10 @@ import { RequestRenewDialog } from "../components/RequestRenewDialog";
 import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPanel";
 import { DecisionsSheet, cycleConflicts, usePending } from "../components/DecisionsSheet";
 import { CostSheet } from "../components/CostSheet";
-import { ReadingsSheet, unapprovedReadings } from "../components/ReadingsSheet";
+import { ReadingsSheet, ruleHash, unapprovedReadings, type OldReadings } from "../components/ReadingsSheet";
+import { placeOf, ruleVersionNo, signaturesVersion, type Lineage, type RecordedReading } from "../state/rule-lineage";
+import { packChoices } from "../chart/catalog";
+import { versionName } from "../version-name";
 import { MatchSheet } from "../components/MatchSheet";
 import { FictionMark } from "../components/FictionMark";
 import type { IntakeWorkspace } from "../intake/workspace";
@@ -194,6 +198,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   }, [pendingOpen]);
   // 古い版を見ているあいだは、その版の番号（見るだけ。確定はできない）
   const [oldView, setOldView] = useState<{ planId: string; version: number } | null>(null);
+  // 見るだけで開いた古い版の記録（その版の計画と、その版をつくったときに当てていた読み方。読むだけ。Wire、11-07 夜）
+  const [oldRecord, setOldRecord] = useState<{ planId: string; version: number; plan: Plan; skills: RecordedReading[] | null } | null>(null);
   const statusId = pendingOpen ? (openId ?? "") : (plan?.planId ?? "");
   const [status, reloadStatus] = usePlanStatus(client, statusId, !!statusId && conn.kind === "open");
   const st = status.kind === "ready" ? status.status : null;
@@ -216,6 +222,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     if (info.problem) return fail("broken");
     if (openV === latest.version) {
       setWorkingPlan(latest.plan, "intake");
+      setOldRecord(null);
       void restoreFrom(openId, latest).catch((e: unknown) => ws.blockRestore(T.sourcesFailed(latest.version, e instanceof Error ? e.message : String(e))));
       setOldView(null);
       setNotice(null);
@@ -240,8 +247,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       return;
     }
     void (async () => {
-      const r = readHuman<{ ok: boolean; reason?: string; plan: Plan }>(await client.callHuman("plan_version_read", ROUTES.planVersionRead.path, { planId: openId, version: openV }));
+      const r = readHuman<{ ok: boolean; reason?: string; plan: Plan; readingSkills?: RecordedReading[] | null }>(
+        await client.callHuman("plan_version_read", ROUTES.planVersionRead.path, { planId: openId, version: openV }),
+      );
       if (!r.ok) return fail("version");
+      setOldRecord(openNext ? null : { planId: openId, version: openV, plan: r.body.plan, skills: r.body.readingSkills ?? null });
       // この版から次の版：もとにした版は、保管先のいちばん新しい版（古い版の中身を、その上に重ねる）
       setWorkingPlan(r.body.plan, "intake", [], openNext ? latest.version : openV);
       setOldView(openNext ? null : { planId: openId, version: openV });
@@ -464,6 +474,10 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
   const sideOpen = !!view && openQuestions > 0;
   const latestInfo = (st?.versions?.at(-1) as PanelVersion | undefined) ?? null;
+  // 署名の切り替えに出す版：古い版を見るだけで開いているあいだは、その版（いちばん新しい版の署名は出さない。Wire、11-07 夜）
+  const sigOf = signaturesVersion(st?.versions as PanelVersion[] | undefined, viewingOld);
+  const oldOpen = sigOf.old && oldRecord && plan && oldRecord.planId === plan.planId && oldRecord.version === viewingOld ? oldRecord : null;
+  const panelInfo = oldOpen ? sigOf.info : latestInfo;
   // 承認を頼まれた人に知らせる、頼まれた版を作った鍵のうち、まだ確かめていないもの（KeyWarn.dc.html の 1）
   const latestUntrusted = latestInfo ? untrustedSigners([latestInfo as { signatures: TrustSig[] }]) : [];
   // 効かない頼み（Wire の B1 の追い）：鎖の行は開いた全員に。別の鍵の頼みがあれば、署名の切り替えに朱の「!」、
@@ -477,8 +491,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 詳細に、シートが描いたものの代わりに出す記録（止まった知らせ・読込不可の資料の理由）。シートが描いた詳細は隠して残す
   const sideNote = stopShown ? <StopNoticeDetail notices={ws.notices} kind={stopShown} /> : rejectedShown ? <RejectedDetail row={rejectedShown} /> : null;
   const sideComments = !!plan;
-  const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
-  const sideNow: "open" | "signatures" | "source" | "comments" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : sideComments ? "comments" : null;
+  const can = { open: sideOpen, signatures: !!panelInfo, source: sideSource, comments: sideComments };
+  const sideNow: "open" | "signatures" | "source" | "comments" | null = can[side] ? side : sideOpen ? "open" : panelInfo ? "signatures" : sideSource ? "source" : sideComments ? "comments" : null;
   // 見出しの状態と下の帯の左は、いま開いている版（つくっている版）のこと（Wire、2026-11-04）：
   // 編集の番が人に渡っている（編集を頼んだ・承認待ち・差し戻し）ならその番。番が空いている（確定・承認のあと）なら、次の版を編集中。
   // 「確定済み」は、古い版を見るだけで開いたときだけ
@@ -500,7 +514,38 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     () => (plan && compareWith && compareWith.plan.planId === plan.planId ? { version: compareWith.version, plan: compareWith.plan } : null),
     [plan, compareWith],
   );
-  const unapproved = unapprovedReadings(ws);
+  // 古い版を見ているあいだのタブの「ルール n」は出さない（その版のルールは見るだけで、承認するものが無い）
+  const unapproved = oldOpen ? 0 : unapprovedReadings(ws);
+  // ルールの来歴（ルールの詳細の適用先と、適用 Skill のルールの版 v n）：ルールのシートか古い版を開いたときに、保管先の版の記録から読む
+  const [lineage, setLineage] = useState<Lineage | null>(null);
+  const wantLineage = conn.kind === "open" && (current === "readings" || !!oldOpen);
+  useEffect(() => {
+    if (!wantLineage) return;
+    let live = true;
+    void (async () => {
+      const r = readHuman<{ ok: boolean; reason?: string; places?: Lineage["places"]; applied?: Lineage["applied"] }>(await client.callHuman("readings_lineage", ROUTES.readingsLineage.path, {}));
+      if (live && r.ok) setLineage({ places: r.body.places ?? [], applied: r.body.applied ?? [] });
+    })();
+    return () => {
+      live = false;
+    };
+  }, [wantLineage, st]);
+  const oldReadings = useMemo<OldReadings | null>(() => (oldOpen ? { version: oldOpen.version, skills: oldOpen.skills, plan: oldOpen.plan } : null), [oldOpen]);
+  // 古い版の署名の見せ方：版の名前、Skillパックの名前、適用 Skill（版の記録の読み方。ルールの版は来歴から v n）
+  const panelOld = oldOpen && panelInfo
+    ? {
+        name: versionName(
+          oldOpen.version,
+          (panelInfo.signatures.find((x) => x.role === "approve") ?? panelInfo.signatures.find((x) => x.role === "confirm"))?.at ?? null,
+          oldOpen.plan.facility.fiscalYearStartMonth,
+        ),
+        pack: packChoices().find((p) => p.id === oldOpen.plan.packId)?.name ?? oldOpen.plan.packId,
+        skills: oldOpen.skills?.map((x) => ({ name: x.name, path: x.path, version: x.version, no: ruleVersionNo(lineage, placeOf(x.path), x.version) })) ?? null,
+        onRule: (path: string) => {
+          location.hash = ruleHash(placeOf(path));
+        },
+      }
+    : null;
 
   return (
     <div
@@ -627,7 +672,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             {current === "cost" && plan && <CostSheet plan={plan} />}
             {current === "check" && <Review embedded />}
             {current === "match" && <MatchSheet ws={ws} />}
-            {current === "readings" && <ReadingsSheet ws={ws} />}
+            {current === "readings" && <ReadingsSheet ws={ws} old={oldReadings} lineage={lineage} />}
             {current === "decisions" && plan && <DecisionsSheet client={client} plan={plan} />}
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
@@ -653,7 +698,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               [
                 ["open", sideOpen, T.side.open(openQuestions), true],
                 ["source", sideSource, T.side.source, false],
-                ["signatures", !!latestInfo, T.side.signatures(latestInfo?.signatures.length ?? 0), false],
+                ["signatures", !!panelInfo, T.side.signatures(panelInfo?.signatures.length ?? 0), false],
                 ["comments", sideComments, T.side.comments(comments.length), false],
               ] as const
             )
@@ -692,10 +737,10 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                   {T.side.source}
                 </a>
               )}
-              {latestInfo && (
+              {panelInfo && (
                 <a className="moyai-sheet-tab" href="#" aria-selected={sideNow === "signatures"} onClick={(e) => (e.preventDefault(), setSide("signatures"))} data-testid="side-signatures">
-                  {T.side.signatures(latestInfo.signatures.length)}
-                  {ignoredOther && (
+                  {T.side.signatures(panelInfo.signatures.length)}
+                  {ignoredOther && !oldOpen && (
                     <span className="moyai-sheet-n" data-testid="side-signatures-ignored">
                       !
                     </span>
@@ -709,7 +754,16 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               )}
             </Group>
             {sideNow === "open" && view && <Questions ws={ws} view={view} focus={focusQuestion} />}
-            {sideNow === "signatures" && latestInfo && <SignaturesPanel v={latestInfo} readings={ws.currentReadings()} onKeyConfirmed={reloadStatus} request={req && !req.done && req.version === latestInfo.version ? req : null} ignored={ignored} />}
+            {sideNow === "signatures" && panelInfo && (
+              <SignaturesPanel
+                v={panelInfo}
+                readings={ws.currentReadings()}
+                onKeyConfirmed={reloadStatus}
+                request={req && !req.done && req.version === panelInfo.version ? req : null}
+                ignored={oldOpen ? [] : ignored}
+                old={panelOld}
+              />
+            )}
             {sideNow === "comments" && plan && (
               <CommentsPanel
                 client={client}

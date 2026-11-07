@@ -2,7 +2,7 @@
 // 読み方（3 段目の Skill）ごとの見出しの行と、1 規則 1 行。並べる順は効く順（施設 → 担当 → 会社）。1・2 段は編集できないので並べない。
 // 前の版からの差は、同じ名前の承認済みの読み方と比べる（無ければ、どの規則も「足した」）。
 // 規則を変えて前の版で承認済みのセルが変わる数は、版どうしのセルの差が要るので、まだ出さない（null）。
-import type { LoadedReading, PlanCycleRule, ReadingRule, ReadingScope } from "../../import/reading";
+import type { LoadedReading, PlanCycleRule, ReadingRule, ReadingScope, ReadingSkill } from "../../import/reading";
 import { activeRules, isPlanRule, shortVersion } from "../../import/reading";
 import type { IntakeView } from "../intake/worker-protocol";
 
@@ -63,6 +63,8 @@ export interface ReadingTabSkill {
   status: "draft" | "unapproved" | "approved";
   /** 承認した星取表の版の番号（「承認済み（第 n 版で）」）。承認済みでなければ null */
   approvedIn: number | null;
+  /** 保管先からの道と版の全長（作業中の下書きは道 null・版 ""。ルールの詳細の適用先を引く） */
+  ref: { path: string | null; version: string };
   rules: ReadingTabRule[];
 }
 
@@ -96,6 +98,7 @@ export function readingTab(
       version: shown.draft ? "―" : shortVersion(shown.version),
       status,
       approvedIn: status === "approved" ? (shown.approvedIn ?? null) : null,
+      ref: { path: shown.path, version: shown.draft ? "" : shown.version },
       rules: shown.skill.rules.map((r) => {
         const before = approved?.skill.rules.find((x) => x.id === r.id) ?? null;
         const s = an.ruleHits.sample(r.id);
@@ -117,4 +120,56 @@ export function readingTab(
   }
   const unapproved = skills.filter((x) => x.status !== "approved").reduce((n, x) => n + x.rules.filter((r) => r.change !== "same").length, 0);
   return { skills, unapproved };
+}
+
+/** 古い版のルールのシートの 1 行（見るだけ）。件数は版の記録から数えられるものだけ（計画ルールは、その版の計画に出た周期の案の星取。読み方の決まりのセルは版の記録に無いので null） */
+export interface AppliedTabRule {
+  id: string;
+  text: string;
+  appliesTo: string | null;
+  hits: number | null;
+  unit: "cell" | "mark";
+  decidedBy: ReadingTabRule["decidedBy"];
+}
+
+/** 古い版のルールのシートの読み方（その版の記録に載った読み方。Wire、11-07 夜） */
+export interface AppliedTabSkill {
+  name: string;
+  /** 範囲（中身が保管先に見つからなければ null） */
+  scope: ReadingScope | null;
+  path: string;
+  version: string;
+  /** 中身が保管先に見つかったか（見つからなければ rules は空） */
+  found: boolean;
+  rules: AppliedTabRule[];
+}
+
+const APPLIED_ORDER: Record<ReadingScope, number> = { facility: 0, person: 1, company: 2 };
+
+/**
+ * 古い版を開いたときのルールのシートのデータ：その版をつくったときに当てていたルール（版の記録の readingSkills を保管先の中身と照らしたもの）。
+ * 並びは効く順（施設 → 担当 → 会社）。marks：計画ルールがその版の計画に出した周期の案の星取の数
+ */
+export function appliedTab(
+  skills: readonly { name: string; path: string; version: string; scope: ReadingScope | null; skill: ReadingSkill | null }[],
+  marks: (name: string, rule: PlanCycleRule) => number,
+): AppliedTabSkill[] {
+  const rank = (s: ReadingScope | null) => (s === null ? 3 : APPLIED_ORDER[s]);
+  return [...skills]
+    .sort((a, b) => rank(a.scope) - rank(b.scope))
+    .map((s) => ({
+      name: s.name,
+      scope: s.scope,
+      path: s.path,
+      version: s.version,
+      found: s.skill !== null,
+      rules: (s.skill?.rules ?? []).map((r) => ({
+        id: r.id,
+        text: r.text,
+        appliesTo: appliesTo(r),
+        hits: isPlanRule(r) ? marks(s.name, r) : null,
+        unit: isPlanRule(r) ? ("mark" as const) : ("cell" as const),
+        decidedBy: r.author === "ai" ? { kind: "ai" as const } : { kind: "human" as const, name: r.by ?? null },
+      })),
+    }));
 }

@@ -90,10 +90,11 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/github-connect-state` | `github_connect_state` | GitHub につなぐ途中の様子（待っている・つながった・断られた・時間切れ）。つながったら、トークンを状態フォルダに置く（包まない。見張りのフックが AI の読み取りを止める） |
 | `POST /human/github-disconnect` | `github_disconnect` | GitHub との接続を切る（状態フォルダのトークンのファイルを消す） |
 | `POST /human/readings-read` | `readings_read` | 保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む |
+| `POST /human/readings-lineage` | `readings_lineage` | ルールの詳細の適用先：保管先の版の記録から、ルールの版を載せた版（施設・版・時刻・編集の番）とルールの置き場所を読む（読むだけ） |
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の共有フォルダの ✓ の共有ファイルから、類似施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 42 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 43 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 作業画面だけが呼ぶ経路と、中継の経路
 

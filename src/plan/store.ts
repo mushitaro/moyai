@@ -144,6 +144,11 @@ export interface VersionInfo {
   /** 様式で書き出した Excel への署名（確かめて合うものだけ。版を作る署名ではないので、鎖・承認・頼み・編集の番には数えない） */
   exports: ExportInfo[];
   /**
+   * この版を作るのに使った読み方（版の記録の readingSkills を読むだけ。名前・保管先からの道・版）。
+   * 記録に無い（前の版・使った読み方が 0）は null。形の外れた行は数えない
+   */
+  readingSkills: { name: string; path: string; version: string }[] | null;
+  /**
    * 確かめで合わなかったこと（無ければ null）。合わない版は開かない。
    * chain：鎖が合わない（署名の無い前の形の版が、署名のある版のあとに置かれたときも）。signature：署名のファイルが合わない。unsigned：版を作った署名が無い
    */
@@ -235,6 +240,15 @@ export interface PlanHistory {
   accepted: Acceptance[];
 }
 
+/** 版の記録の readingSkills を読む（書く形は変えない）。無い・空は null、形の外れた行は除く */
+function recordedSkills(x: unknown): VersionInfo["readingSkills"] {
+  if (!Array.isArray(x)) return null;
+  const out = x
+    .filter((r): r is { name: string; path: string; version: string } => !!r && typeof r === "object" && typeof r.name === "string" && typeof r.path === "string" && typeof r.version === "string")
+    .map((r) => ({ name: r.name, path: r.path, version: r.version }));
+  return out.length > 0 ? out : null;
+}
+
 /** 計画の版の一覧と、いちばん新しい版。読めない版があれば止める（黙って飛ばさない）。 */
 export async function readHistory(root: string, planId: string): Promise<PlanHistory> {
   const dir = planDir(root, planId);
@@ -292,6 +306,7 @@ export async function readHistory(root: string, planId: string): Promise<PlanHis
       unrecordedMakers,
       problem,
       exports,
+      readingSkills: recordedSkills(record.readingSkills),
     };
     versions.push(info);
     // 人が受けた決定に数えるのは、確かめで合う署名のある版だけ（前の形の版の受けた決定は数えない）
