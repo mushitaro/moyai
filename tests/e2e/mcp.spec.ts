@@ -101,6 +101,41 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
       await expect(page.locator('[data-testid="pending-row"][data-kind="ai_relayed_human"]').first()).toBeVisible();
     });
 
+    await test.step("確定のシート：会話の回答は判断の理由なしで受ける。件数は「n 行」、「| 確定」は右端で隠れない（docs/screens.md 3.2「会話の回答の受け方」）", async () => {
+      await page.getByTestId("decisions-kind").locator("button").filter({ hasText: /^会話の回答/ }).first().click();
+      await expect(page.getByTestId("decisions-sheet")).toHaveAttribute("data-kind", "relayed");
+      // 判断の理由の欄と、押せない理由は出さない
+      await expect(page.getByTestId("decisions-reason")).toHaveCount(0);
+      await expect(page.getByTestId("decisions-bulk-reason")).toHaveCount(0);
+      const rows = page.locator('[data-testid="pending-row"][data-kind="ai_relayed_human"][data-accepted="false"]');
+      const n = await rows.count();
+      expect(n).toBeGreaterThan(0);
+      const bulk = page.getByTestId("decisions-bulk-accept");
+      await expect(bulk).toHaveText(`会話の回答 ${n.toLocaleString("ja-JP")} 件を確定`);
+      await expect(bulk).toBeEnabled();
+      // 取り込みの質問の答えの件数は「n 行」。「—」「―」を並べない
+      const counts = page.locator('[data-testid="pending-row"][data-decision-kind="reading"] [data-testid="pending-count"]');
+      expect(await counts.count()).toBeGreaterThan(0);
+      for (const t of await counts.allTextContents()) expect(t).toMatch(/^[\d,]+ 行$/);
+      await expect(page.getByTestId("pending-count").filter({ hasText: /[—―]/ })).toHaveCount(0);
+      // 理由は 1 行で切り、全文は title
+      const why = rows.first().getByTestId("pending-why");
+      expect(await why.getAttribute("title")).toBe(await why.textContent());
+      expect(await why.evaluate((el) => getComputedStyle(el).whiteSpace)).toBe("nowrap");
+      // 行ごとの「| 確定」も理由なしで押せる。右端の列に固定され、ほかのものに隠れていない
+      const accept = rows.first().getByTestId("pending-accept");
+      await expect(accept).toBeEnabled();
+      await accept.click({ trial: true });
+      expect(await accept.evaluate((el) => getComputedStyle(el.closest("td")!).position)).toBe("sticky");
+      const box = await accept.boundingBox();
+      expect(box, "「| 確定」の位置").toBeTruthy();
+      expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+      await page.screenshot({ path: shot(`decisions-conversation-${tag}`) });
+      // 「| 会話の回答 n 件を確定」で、会話の回答をまとめて受ける
+      await bulk.click();
+      await expect(rows).toHaveCount(0);
+    });
+
     await test.step("chart_rows：星取表の行を 1 回 200 行まで読み、会話の残りが減る", async () => {
       const r = await call(c, "chart_rows", { limit: 200 });
       expect(r.total).toBeGreaterThan(10);

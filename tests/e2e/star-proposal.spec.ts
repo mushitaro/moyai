@@ -20,17 +20,20 @@ test.afterAll(() => {
   if (work) rmSync(work, { recursive: true, force: true });
 });
 
-const REASON = "試験の台本が押した（星取の案を確定した）";
-
-/** 確定のシートで、その種類に切り替え、行（題で選ぶ）の「確定」を押す（open が false なら、もう確定のシートが開いている） */
-async function acceptRow(page: Page, kind: RegExp, text: RegExp, open = true): Promise<void> {
+/**
+ * 確定のシートで、会話の回答に切り替え、行（題で選ぶ）の「確定」を押す（open が false なら、もう確定のシートが開いている）。
+ * 会話の回答は判断の理由を求めない：理由の欄は無く、行の「確定」は理由なしで押せる（docs/screens.md 3.2「会話の回答の受け方」）
+ */
+async function acceptRow(page: Page, text: RegExp, open = true): Promise<void> {
   if (open) await page.getByTestId("sheet-decisions").click();
   await expect(page.getByTestId("decisions-sheet")).toBeVisible();
-  const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasText: kind });
+  const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasText: /^会話の回答/ });
   if ((await kinds.count()) > 0) await kinds.first().click();
-  await page.getByTestId("decisions-reason").fill(REASON);
+  await expect(page.getByTestId("decisions-sheet")).toHaveAttribute("data-kind", "relayed");
+  await expect(page.getByTestId("decisions-reason")).toHaveCount(0);
   const row = page.locator('[data-testid="pending-row"][data-accepted="false"]').filter({ hasText: text });
   await expect(row).toHaveCount(1);
+  await expect(row.getByTestId("pending-accept")).toBeEnabled();
   await row.getByTestId("pending-accept").click();
   await expect(page.locator('[data-testid="pending-row"][data-accepted="false"]').filter({ hasText: text })).toHaveCount(0);
   await page.getByTestId("sheet-chart").click();
@@ -132,7 +135,7 @@ test("AI が星取の追加・削除の案を置き、星取表に朱の破線�
     });
 
     await test.step("人：確定のシートの「計画の追加」の行を確定 → 実線（破線の円が消え、計画の星取が残る）", async () => {
-      await acceptRow(page, /^会話の回答/, /^計画の追加/, false);
+      await acceptRow(page, /^計画の追加/, false);
       await expect(cell(add!.nodeKey, add!.fy)).not.toHaveClass(/moyai-mark-proposal/);
       await expect(cell(add!.nodeKey, add!.fy).locator("[data-mark]")).toHaveAttribute("data-mark", "plan");
     });
@@ -173,7 +176,7 @@ test("AI が星取の追加・削除の案を置き、星取表に朱の破線�
     });
 
     await test.step("人：確定のシートの「計画の削除」の行を確定 → 星取が消える", async () => {
-      await acceptRow(page, /^会話の回答/, /^計画の削除/);
+      await acceptRow(page, /^計画の削除/);
       await expect(cell(rm!.nodeKey, rm!.fy)).not.toHaveClass(/moyai-mark-strike/);
       await expect(cell(rm!.nodeKey, rm!.fy).locator("[data-mark]")).toHaveCount(0);
       await expect(page.getByTestId("legend-star")).toHaveCount(0);
@@ -212,13 +215,17 @@ test("AI が星取の追加・削除の案を置き、星取表に朱の破線�
       expect(look.width).toBe("10px");
       const box = await c0.boundingBox();
       if (box) await page.screenshot({ path: shot(`star-proposal-actual-cell-${tag}`), clip: { x: Math.max(0, box.x - 120), y: box.y - 40, width: box.width + 160, height: box.height + 80 } });
-      // 却下：確定のシートの「実績の追加」の行の「| 却下」→ 判断の理由 →「却下」
+      // 却下：確定のシートの「実績の追加」の行の「| 却下」→ 却下のダイアログで判断の理由 →「却下」（会話の回答でも、却下は今どおり理由を書く）
       await page.getByTestId("sheet-decisions").click();
       const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasText: /^会話の回答/ });
       if ((await kinds.count()) > 0) await kinds.first().click();
-      await page.getByTestId("decisions-reason").fill(REASON);
+      await expect(page.getByTestId("decisions-reason")).toHaveCount(0);
       const row = page.locator('[data-testid="pending-row"][data-accepted="false"]').filter({ hasText: /^実績の追加/ });
+      await expect(row.getByTestId("pending-reject")).toBeEnabled();
       await row.getByTestId("pending-reject").click();
+      await expect(page.getByTestId("reject-reason")).toHaveValue("");
+      await expect(page.getByTestId("star-reject-confirm")).toBeDisabled();
+      await expect(page.getByTestId("reject-disabled-reason")).toHaveText("理由：判断の理由が未入力");
       await page.getByTestId("reject-reason").fill("利用者が取り消した（試験の台本）");
       await page.getByTestId("star-reject-confirm").click();
       await expect(page.locator('[data-testid="pending-row"][data-accepted="false"]').filter({ hasText: /^実績の追加/ })).toHaveCount(0);

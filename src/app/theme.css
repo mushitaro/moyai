@@ -1215,6 +1215,34 @@ tr.moyai-pick-row[aria-selected="true"] {
   box-shadow: inset 2px 0 0 var(--text);
 }
 
+/* 確定のシートの表（docs/screens.md 3.2「会話の回答の受け方」、Wire、11-07）：幅が足りないときは表を横に送る */
+.moyai-decisions-scroll {
+  overflow-x: auto;
+}
+/* 「項目」は長い名前でも折る（区切りの無い英数字で表を広げない） */
+.moyai-decisions-what {
+  overflow-wrap: anywhere;
+}
+/* 「理由」は 1 行で切る。全文は title と横の板の詳しく */
+.moyai-decisions-why {
+  max-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 「| 却下」「| 確定」の列は右端に固定し、画面の幅で隠れない */
+.moyai-decisions-act {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  width: 1%;
+  white-space: nowrap;
+  background: var(--bg);
+}
+tr.moyai-pick-row[aria-selected="true"] > .moyai-decisions-act {
+  background: var(--layer-1);
+}
+
 /* 設定の 1 列（docs/screens.md 3.7）：左に節の名前 168px、右に中身 */
 .moyai-settings-row {
   display: grid;

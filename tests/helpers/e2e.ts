@@ -208,12 +208,24 @@ export async function sideTab(page: Page, k: "signatures" | "comments" | "source
   await expect(page.getByTestId(`side-${k}`)).toHaveAttribute("aria-selected", "true");
 }
 
+/**
+ * 確定のシートの「判断の理由」の欄に書く。種類で「会話の回答」を選んでいるときは欄が無い（理由なしで受ける。docs/screens.md 3.2
+ * 「会話の回答の受け方」、Wire、11-07）ので書かない
+ */
+export async function fillDecisionReason(page: Page, reason: string): Promise<void> {
+  if ((await page.getByTestId("decisions-sheet").getAttribute("data-kind")) === "relayed") {
+    await expect(page.getByTestId("decisions-reason")).toHaveCount(0);
+    return;
+  }
+  await page.getByTestId("decisions-reason").fill(reason);
+}
+
 export async function acceptDecisions(page: Page, reason: string): Promise<number> {
   await page.getByTestId("sheet-decisions").click();
   await expect(page.getByTestId("decisions-sheet")).toBeVisible();
   // 版の履歴を読んで、受けていない決定が並ぶ（無ければ「ありません」）まで待つ
   await expect(page.locator('[data-testid="pending-row"], [data-testid="crosswalk-rule"], [data-testid="decisions-none"]').filter({ visible: true }).first()).toBeVisible();
-  await page.getByTestId("decisions-reason").fill(reason);
+  await fillDecisionReason(page, reason);
   // 種類の切り替え（第 n 版と同じ・当てはめの案・台帳からの案・会話から写した答え・Claude の決定）ごとに、見えている種類をまとめて受ける。
   // 当てはめの規則（第 n 版と同じ・当てはめの案）は受けない（acceptRules で 1 規則ずつ受ける）。受け終えた種類は切り替えから消える
   const rows = page.locator('[data-testid="pending-row"][data-accepted="false"]');
@@ -224,8 +236,8 @@ export async function acceptDecisions(page: Page, reason: string): Promise<numbe
     const open = await rows.count();
     if (open === 0) break;
     n += open;
-    // 受けると計画が描き直され、理由の欄が空に戻ることがあるので、種類ごとに書き直す
-    await page.getByTestId("decisions-reason").fill(reason);
+    // 受けると計画が描き直され、理由の欄が空に戻ることがあるので、種類ごとに書き直す（会話の回答は欄が無く、理由なしで受ける）
+    await fillDecisionReason(page, reason);
     const kindText = () => page.getByTestId("decisions-kind").textContent({ timeout: 500 }).catch(() => "");
     const before = await kindText();
     await page.getByTestId("decisions-bulk-accept").click();

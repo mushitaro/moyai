@@ -8,6 +8,10 @@
 //   追加は計画の明細（確定は state/decisions.ts）、削除は作業画面の状態（state/stars.ts。確定すると明細を外す）。
 // - Claude の決定・会話から写した答え：1 行ずつ。
 // 理由の欄は上に 1 つ。1 行ずつ受けるときも、まとめて受けるときも、その理由を使う（空のあいだは押せない）。受けたものは下にたたむ。
+// 会話の回答は判断の理由を求めない（docs/screens.md 3.2「会話の回答の受け方」、Wire、11-07）：種類で「会話の回答」を選ぶと理由の欄を出さず、
+// 上の行は「| 会話の回答 n 件を確定」だけ。行ごとの「| 確定」も理由なしで押せる。版の記録に入る理由は、Claude が置いた理由（会話の回答の理由）のまま。
+// 「| 却下」は今どおり却下のダイアログで理由を書く。
+// 件数は、数のある行が表示中の種類に 1 つも無ければ列ごと出さない。「理由」は 1 行で切り（全文は title と詳しく）、「| 却下」「| 確定」の列は右端に固定する。
 // 受けた決定はこのタブのメモリ（state/decisions.ts）に持ち、署名のダイアログがそこから読んで送る。
 import { Alert, Button, Group, Modal, Stack, Table, Text, TextInput } from "@mantine/core";
 import { useContext, useEffect, useMemo, useState } from "react";
@@ -49,8 +53,34 @@ import { StarReference } from "./StarReference";
 const T = HUMAN_TEXT.decisions;
 const KINDS = ["same", "crosswalk", "ledger", "rule", "relayed", "ai"] as const;
 type Kind = (typeof KINDS)[number];
+/** 確定のシートの種類（第 n 版と同じ・紐付け案・台帳案・ルール案・会話の回答・Claude 判断） */
+export type DecisionKind = Kind;
 const W = TEXT.crosswalk;
 const NO_PROPOSALS: readonly CrosswalkProposal[] = [];
+/** 受けた記録の理由の上限（橋渡しの確定の形と、判断の理由の欄の上限） */
+const REASON_MAX = 500;
+
+/**
+ * 会話の回答を受けるときに、版の記録に入れる理由（docs/screens.md 3.2「会話の回答の受け方」、Wire、11-07）。
+ * 判断の理由は求めない（理由は会話にあり、受けるのは答えた本人）。入れるのは Claude が置いた理由（会話の回答の理由）のまま。
+ * 上限の 500 字を越える分は切る。空なら種類の名前（「会話の回答」）を入れる（記録の理由は空にできない）。
+ */
+export function relayedReason(basis: string): string {
+  const b = basis.trim();
+  return (b.length > 0 ? b : T.kinds.relayed).slice(0, REASON_MAX);
+}
+
+/** 種類ごとの、受けるときの理由：会話の回答は Claude が置いた理由、ほかは人が書いた判断の理由 */
+export function acceptReasonOf(kind: Kind, typed: string, basis: string): string {
+  return kind === "relayed" ? relayedReason(basis) : typed;
+}
+
+/** 決定を受ける（1 行ずつも、まとめても同じ）。受けた数を返す（判断の理由が空なら受けない） */
+export function acceptDecisionsAs(kind: Kind, ds: readonly Decision[], typed: string): number {
+  let n = 0;
+  for (const d of ds) if (acceptDecision(d.id, d.hash, acceptReasonOf(kind, typed, d.basis))) n++;
+  return n;
+}
 
 /**
  * 受けていない決定（版の履歴で受けたものを除く）。署名のダイアログと下の帯も同じ数を使う。
@@ -153,6 +183,11 @@ function shortWhy(basis: string): string {
 
 export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: Plan }) {
   const { pending, ready } = usePending(client, plan);
+  return <DecisionsView plan={plan} pending={pending} ready={ready} />;
+}
+
+/** 確定のシートの中身。受けていない決定（版の履歴で受けたものを除いたもの）を受け取って描く（試験は react-dom/server でここを描く） */
+export function DecisionsView({ plan, pending, ready }: { plan: Plan; pending: readonly Decision[]; ready: boolean }) {
   const accepted = useAccepted();
   const working = useWorkingPlan();
   const proposals = working?.proposals ?? [];
@@ -172,6 +207,8 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   // 会話からの星取の案（S）：選んだ案と、却下のダイアログ
   const [pickedStar, setPickedStar] = useState<string | null>(null);
   const [rejectingStar, setRejectingStar] = useState<StarRow | null>(null);
+  // 周期の案でない 1 決定 1 行（取り込みの質問の答え・紐付け・明細）：選ぶと横の板の詳しくに理由の全文（Wire、11-07）
+  const [pickedGroup, setPickedGroup] = useState<string | null>(null);
   const starState = useStarGroups();
   // 却下のダイアログの「判断の理由」（開くときに上の欄の理由を入れておく。空のあいだは「却下」を押せない。Wire、11-06）
   const [rejectReason, setRejectReason] = useState("");
@@ -180,20 +217,35 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     setPicked(p);
     setPickedCycle(null);
     setPickedStar(null);
+    setPickedGroup(null);
     side?.show();
   };
   const pickCycle = (id: string) => {
     setPicked(null);
     setPickedStar(null);
+    setPickedGroup(null);
     setPickedCycle(id);
     side?.show();
   };
   const pickStar = (id: string) => {
     setPicked(null);
     setPickedCycle(null);
+    setPickedGroup(null);
     setPickedStar(id);
     side?.show();
   };
+  const pickGroup = (key: string) => {
+    setPicked(null);
+    setPickedCycle(null);
+    setPickedStar(null);
+    setPickedGroup(key);
+    side?.show();
+  };
+  // 会話の回答は判断の理由なしで押せる。ほかの種類は判断の理由が要る（Wire、11-07）
+  const canAct = (k: Kind | null) => k === "relayed" || ok;
+  const actTitle = (k: Kind | null) => (canAct(k) ? undefined : T.needsReason);
+  // 却下のダイアログを開くときの理由：上の欄の理由（会話の回答は欄が無いので空から）
+  const rejectStart = (k: Kind) => (k === "relayed" ? "" : reason);
   // 節と作業の鍵 → 名前（鍵で結んだ「第 n 版と同じ」の規則を、名前で読めるように）
   const names = useMemo(() => new Map<string, string>([...plan.assets.map((a) => [a.nodeKey, a.name] as const), ...plan.works.map((w) => [w.workKey, w.kind || w.workKey] as const)]), [plan]);
   // 行き先は項目の道（受入供給設備 › 計量機）か作業の属性の名前。内部の ID は出さない（Wire）
@@ -262,8 +314,9 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     ].sort((a, b) => a.fy - b.fy);
   };
   const acceptStar = (r: StarRow) => {
-    r.adds.forEach((x) => acceptDecision(x.id, x.hash, reason));
-    const x = r.group && r.group.removes.length > 0 ? acceptRemovalsByHuman(r.id, reason) : null;
+    const k = kindOfStar(r);
+    acceptDecisionsAs(k, r.adds, reason);
+    const x = r.group && r.group.removes.length > 0 ? acceptRemovalsByHuman(r.id, acceptReasonOf(k, reason, r.basis)) : null;
     if (x && !x.ok) return false;
     return true;
   };
@@ -354,6 +407,17 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   const visibleStars = openStars.filter((r) => kindOfStar(r) === kind);
   const leftCount = openGroups.length + allOpenRules.length + openStars.length;
   const visibleCount = visibleGroups.length + openRules.length + visibleStars.length;
+  /**
+   * 件数（Wire、11-07）：取り込みの質問の答えは、その答えで決まった行の数を「n 行」（横の板の質問の「n 行」と同じ字）。
+   * ほかの 1 決定 1 行と周期の案は、今どおり決定の数。数の無い行は null（「―」を並べない）
+   */
+  const groupCount = (g: { ds: Decision[] }): string | number | null => {
+    const d = g.ds[0]!;
+    if (d.kind === "reading") return d.rows === undefined ? null : TEXT.intake.questions.rows(d.rows);
+    return g.ds.length;
+  };
+  // 表示中の種類に数のある行が 1 つも無ければ、件数の列を出さない（紐付けの規則と星取の案は、いつも数がある）
+  const showCount = openRules.length > 0 || visibleStars.length > 0 || visibleGroups.some((g) => groupCount(g) !== null);
   // 星取表の詳しくの「| 確定のシートで見る」：その案を選び、その種類に切り替える（1 回だけ）
   useEffect(() => {
     // 版の履歴を読み終えて、その案の行が並んでから受け取る
@@ -389,61 +453,74 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     setMsg(r.ok ? { color: "gray", text: W.acceptedDone(p.ruleId, r.rows) } : { color: "red", text: W.refused[r.reason] ?? "" });
     return r.ok;
   };
-  // まとめて受けるのは、いま見えている種類の行だけ
+  // まとめて受けるのは、いま見えている種類の行だけ（会話の回答は判断の理由なしで受ける）
   const acceptAll = () => {
-    if (!ok) return;
-    for (const g of visibleGroups) for (const d of g.ds) acceptDecision(d.id, d.hash, reason);
+    if (!canAct(kind)) return;
+    for (const g of visibleGroups) acceptDecisionsAs(kindOfGroup(g), g.ds, reason);
     let refused = 0;
     for (const p of openRules) if (!acceptByHuman(p.ruleId, reason).ok) refused++;
     for (const r of visibleStars) if (!acceptStar(r)) refused++;
     setMsg({ color: refused ? "red" : "gray", text: T.bulkDone(visibleGroups.length + openRules.length + visibleStars.length - refused, refused) });
   };
 
-  /** 周期の案の「| 却下」「| 確定」（行と横の板の詳細で同じ。判断の理由が要る） */
-  const cycleButtons = (cycle: string, ds: Decision[]) => (
+  /** 1 決定 1 行の「| 確定」（行と横の板の詳しくで同じ。会話の回答は判断の理由なしで押せる） */
+  const acceptButton = (k: Kind, ds: Decision[]) => (
+    <Button
+      size="compact-sm"
+      disabled={!canAct(k)}
+      title={actTitle(k)}
+      onClick={(e) => {
+        e.stopPropagation();
+        acceptDecisionsAs(k, ds, reason);
+      }}
+      data-testid="pending-accept"
+    >
+      {T.accept}
+    </Button>
+  );
+
+  /** 周期の案の「| 却下」「| 確定」（行と横の板の詳細で同じ。会話の回答のほかは判断の理由が要る） */
+  const cycleButtons = (cycle: string, ds: Decision[], k: Kind) => (
     <Group gap="xs" wrap="nowrap" justify="flex-end">
       <Button
         size="compact-sm"
         variant="default"
-        disabled={!ok}
-        title={ok ? undefined : T.needsReason}
+        disabled={!canAct(k)}
+        title={actTitle(k)}
         onClick={(e) => {
           e.stopPropagation();
-          setRejectReason(reason);
+          setRejectReason(rejectStart(k));
           setRejectingCycle({ id: cycle, n: ds.length });
         }}
         data-testid="pending-reject"
       >
         {W.reject}
       </Button>
-      <Button
-        size="compact-sm"
-        disabled={!ok}
-        title={ok ? undefined : T.needsReason}
-        onClick={(e) => {
-          e.stopPropagation();
-          ds.forEach((x) => acceptDecision(x.id, x.hash, reason));
-        }}
-        data-testid="pending-accept"
-      >
-        {T.accept}
-      </Button>
+      {acceptButton(k, ds)}
     </Group>
   );
 
-  const groupRow = ({ key, ds, cycle }: { key: string; ds: Decision[]; cycle: string | null }) => {
+  /** 1 決定 1 行と周期の案の行。withCount が false なら件数の列を出さない */
+  const groupRow = (g: { key: string; ds: Decision[]; cycle: string | null }, withCount: boolean) => {
+    const { key, ds, cycle } = g;
     const d = ds[0]!;
+    const k = kindOfGroup(g);
     const done = ds.every((x) => isAccepted(x.id, x.hash));
+    const n = groupCount(g);
     return (
       <Table.Tr
         key={key}
         data-testid="pending-row"
         data-kind={cycle && isLedgerCycle(cycle) ? "ledger" : cycle && isPlanRuleCycle(cycle) ? "rule" : d.author}
+        data-decision-kind={d.kind}
         data-accepted={done ? "true" : "false"}
         data-cycle={cycle ?? undefined}
-        {...(cycle ? { className: "moyai-pick-row", "aria-selected": pickedCycle === cycle, onClick: () => pickCycle(cycle), style: { cursor: "pointer" } } : {})}
+        className="moyai-pick-row"
+        aria-selected={cycle ? pickedCycle === cycle : pickedGroup === key}
+        onClick={() => (cycle ? pickCycle(cycle) : pickGroup(key))}
+        style={{ cursor: "pointer" }}
       >
-        <Table.Td>
+        <Table.Td className="moyai-decisions-what">
           <Text size="sm">{cycle ? T.cycleWhat(cycle, ds.length) : what(d)}</Text>
           {cycle && effectLines(ds)}
           <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em" }}>
@@ -460,11 +537,15 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
             </Text>
           )}
         </Table.Td>
-        <Table.Td c="var(--text-2)">{d.basis}</Table.Td>
-        <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
-          {d.kind === "reading" ? (d.count ?? "―") : ds.length}
+        <Table.Td c="var(--text-2)" className="moyai-decisions-why" title={d.basis} data-testid="pending-why">
+          {d.basis}
         </Table.Td>
-        <Table.Td ta="right">
+        {withCount && (
+          <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
+            {n}
+          </Table.Td>
+        )}
+        <Table.Td ta="right" className="moyai-decisions-act">
           {done ? (
             <Group gap="xs" wrap="nowrap" justify="flex-end">
               <Text size="xs" c="dimmed" data-testid="pending-accepted">
@@ -482,50 +563,51 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
               </Button>
             </Group>
           ) : cycle ? (
-            cycleButtons(cycle, ds)
+            cycleButtons(cycle, ds, k)
           ) : (
-            <Button size="compact-sm" disabled={!ok} title={ok ? undefined : T.needsReason} onClick={() => ds.forEach((x) => acceptDecision(x.id, x.hash, reason))} data-testid="pending-accept">
-              {T.accept}
-            </Button>
+            acceptButton(k, ds)
           )}
         </Table.Td>
       </Table.Tr>
     );
   };
 
-  /** 星取の案の「| 却下」「| 確定」（行と詳しくで同じ。判断の理由が要る） */
-  const starButtons = (r: StarRow) => (
-    <Group gap="xs" wrap="nowrap" justify="flex-end">
-      <Button
-        size="compact-sm"
-        variant="default"
-        disabled={!ok}
-        title={ok ? undefined : T.needsReason}
-        onClick={(e) => {
-          e.stopPropagation();
-          setRejectReason(reason);
-          setRejectingStar(r);
-        }}
-        data-testid="pending-reject"
-      >
-        {W.reject}
-      </Button>
-      <Button
-        size="compact-sm"
-        disabled={!ok}
-        title={ok ? undefined : T.needsReason}
-        onClick={(e) => {
-          e.stopPropagation();
-          setMsg(acceptStar(r) ? { color: "gray", text: T.starAcceptedDone(starCount(r)) } : { color: "red", text: T.cycleRejectRefused });
-        }}
-        data-testid="pending-accept"
-      >
-        {T.accept}
-      </Button>
-    </Group>
-  );
+  /** 星取の案の「| 却下」「| 確定」（行と詳しくで同じ。会話の回答のほかは判断の理由が要る） */
+  const starButtons = (r: StarRow) => {
+    const k = kindOfStar(r);
+    return (
+      <Group gap="xs" wrap="nowrap" justify="flex-end">
+        <Button
+          size="compact-sm"
+          variant="default"
+          disabled={!canAct(k)}
+          title={actTitle(k)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setRejectReason(rejectStart(k));
+            setRejectingStar(r);
+          }}
+          data-testid="pending-reject"
+        >
+          {W.reject}
+        </Button>
+        <Button
+          size="compact-sm"
+          disabled={!canAct(k)}
+          title={actTitle(k)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setMsg(acceptStar(r) ? { color: "gray", text: T.starAcceptedDone(starCount(r)) } : { color: "red", text: T.cycleRejectRefused });
+          }}
+          data-testid="pending-accept"
+        >
+          {T.accept}
+        </Button>
+      </Group>
+    );
+  };
   // 会話からの星取の案：1 案 1 行。題、下の行に年度と種類、件数は星取の数
-  const starRow = (r: StarRow) => {
+  const starRow = (r: StarRow, withCount: boolean) => {
     const done = starDone(r);
     return (
       <Table.Tr
@@ -540,7 +622,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
         onClick={() => pickStar(r.id)}
         style={{ cursor: "pointer" }}
       >
-        <Table.Td>
+        <Table.Td className="moyai-decisions-what">
           <Text size="sm" data-testid="star-title">
             {starTitle(r)}
           </Text>
@@ -553,13 +635,15 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
             </Text>
           </Group>
         </Table.Td>
-        <Table.Td c="var(--text-2)" title={r.basis}>
+        <Table.Td c="var(--text-2)" className="moyai-decisions-why" title={r.basis} data-testid="pending-why">
           {shortWhy(r.basis)}
         </Table.Td>
-        <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
-          {starCount(r)}
-        </Table.Td>
-        <Table.Td ta="right">
+        {withCount && (
+          <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="pending-count">
+            {starCount(r)}
+          </Table.Td>
+        )}
+        <Table.Td ta="right" className="moyai-decisions-act">
           {done ? (
             <Group gap="xs" wrap="nowrap" justify="flex-end">
               <Text size="xs" c="dimmed" data-testid="pending-accepted">
@@ -605,7 +689,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       <Table.Td className="moyai-num" ta="right" c="var(--text-3)">
         {p.matched}
       </Table.Td>
-      <Table.Td />
+      <Table.Td className="moyai-decisions-act" />
     </Table.Tr>
   );
 
@@ -621,7 +705,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       onClick={() => pick(p)}
       style={{ cursor: "pointer" }}
     >
-      <Table.Td>
+      <Table.Td className="moyai-decisions-what">
         <Text size="sm">
           {p.target === "assetNode" ? T.ruleNodeHead : T.ruleWorkHead}
           {whenShort(p, names)} → {targetPath(p)}
@@ -630,13 +714,13 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           {T.kind.crosswalk}
         </Text>
       </Table.Td>
-      <Table.Td c="var(--text-2)" title={p.basis}>
+      <Table.Td c="var(--text-2)" className="moyai-decisions-why" title={p.basis}>
         {shortWhy(p.basis)}
       </Table.Td>
       <Table.Td className="moyai-num" ta="right" style={{ whiteSpace: "nowrap" }} data-testid="crosswalk-matched">
         {p.matched}
       </Table.Td>
-      <Table.Td ta="right">
+      <Table.Td ta="right" className="moyai-decisions-act">
         {p.state === "proposed" ? (
           <Group gap="xs" wrap="nowrap" justify="flex-end">
             <Button size="compact-sm" variant="default" disabled={!ok} title={ok ? undefined : T.needsReason} onClick={() => (setRejectReason(reason), setRejecting(p))} data-testid="crosswalk-reject">
@@ -655,15 +739,18 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
     </Table.Tr>
   );
 
-  const cols = kind === "same" ? T.head.filter((_, i) => i !== 1) : T.head;
-  const head = (
+  // 列：項目｜理由（第 n 版と同じでは置かない）｜件数（数のある行が無ければ置かない）｜「| 却下」「| 確定」（右端に固定。Wire、11-07）
+  const headOf = (withWhy: boolean, withCount: boolean) => (
     <Table.Thead>
       <Table.Tr>
-        {cols.map((h, i) => (
-          <Table.Th key={h} ta={i >= 2 ? "right" : undefined} style={{ whiteSpace: "nowrap", width: i === 0 ? (kind === "same" ? "76%" : "40%") : i === 1 && kind !== "same" ? "36%" : i === cols.length - 2 ? 88 : undefined }}>
-            {h}
+        <Table.Th style={{ whiteSpace: "nowrap", width: withWhy ? "40%" : "76%" }}>{T.head[0]}</Table.Th>
+        {withWhy && <Table.Th style={{ whiteSpace: "nowrap", width: "36%" }}>{T.head[1]}</Table.Th>}
+        {withCount && (
+          <Table.Th ta="right" style={{ whiteSpace: "nowrap", width: 88 }} data-testid="decisions-count-head">
+            {T.head[2]}
           </Table.Th>
-        ))}
+        )}
+        <Table.Th className="moyai-decisions-act">{T.head[3]}</Table.Th>
       </Table.Tr>
     </Table.Thead>
   );
@@ -698,10 +785,51 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           {T.accepted}
         </Text>
       ) : (
-        cycleButtons(cycleGroup.cycle, cycleGroup.ds)
+        cycleButtons(cycleGroup.cycle, cycleGroup.ds, cycleKind)
       )}
     </Stack>
   );
+  // 1 決定 1 行（取り込みの質問の答え・紐付け・明細）の詳しく：種類・何を・効く所・件数（「n 行」）・理由の全文と「| 確定」
+  const plainGroup = pickedGroup ? groups.find((g) => g.cycle === null && g.key === pickedGroup) : undefined;
+  const plainDetail =
+    plainGroup &&
+    (() => {
+      const d = plainGroup.ds[0]!;
+      const k = kindOfGroup(plainGroup);
+      return (
+        <Stack gap="xs" data-testid="decision-detail" data-decision={d.id}>
+          <Text size="sm" fw={700}>
+            {k === "same" ? T.kinds.same(sameAs ?? 0) : T.kinds[k]}
+          </Text>
+          <Text size="sm">{what(d)}</Text>
+          {d.kind === "reading" && d.where && (
+            <Text size="xs" c="var(--text-3)">
+              {T.where(d.where)}
+            </Text>
+          )}
+          {d.kind === "reading" && d.rows !== undefined && (
+            <Text size="sm" className="moyai-num" data-testid="decision-detail-rows">
+              {TEXT.intake.questions.rows(d.rows)}
+            </Text>
+          )}
+          <Text size="xs" c="dimmed">
+            {T.detailWhy}
+          </Text>
+          <Text size="sm" data-testid="decision-detail-why">
+            {d.basis}
+          </Text>
+          {isDone(plainGroup.ds) ? (
+            <Text size="xs" c="dimmed">
+              {T.accepted}
+            </Text>
+          ) : (
+            <Group gap="xs" wrap="nowrap">
+              {acceptButton(k, plainGroup.ds)}
+            </Group>
+          )}
+        </Stack>
+      );
+    })();
   const rejectedRows = rejectedCycles();
   const rejectedStars = rejectedStarGroups();
   // 星取の案の詳しく：種類・題・星取を 1 つずつ・理由の全文と「| 却下」「| 確定」
@@ -763,20 +891,29 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
   );
 
   return (
-    <Stack gap="md" px="xl" py="lg" data-testid="decisions-sheet">
-      <Group align="flex-end" gap="md" wrap="wrap">
-        <TextInput label={T.reasonLabel} placeholder={T.reasonPlaceholder} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={500} style={{ flex: "1 1 360px", maxWidth: 560 }} data-testid="decisions-reason" />
+    <Stack gap="md" px="xl" py="lg" data-testid="decisions-sheet" data-kind={kind ?? undefined}>
+      {kind === "relayed" ? (
+        // 会話の回答：判断の理由の欄を出さず、上の行は「| 会話の回答 n 件を確定」だけ（押せる。Wire、11-07）
         <Group gap="md" align="center" wrap="nowrap" style={{ minHeight: "var(--h-m)" }}>
-          <Button variant="default" disabled={!ok || visibleCount === 0} onClick={acceptAll} data-testid="decisions-bulk-accept">
-            {kind === "same" && sameAs !== null ? T.sameAccept(sameAs, visibleCount) : T.visibleAccept(visibleCount)}
+          <Button variant="default" disabled={visibleCount === 0} onClick={acceptAll} data-testid="decisions-bulk-accept">
+            {T.relayedAccept(visibleCount)}
           </Button>
-          {!ok && leftCount > 0 && (
-            <Text size="xs" c="dimmed" data-testid="decisions-bulk-reason">
-              {T.bulkNeedsReason}
-            </Text>
-          )}
         </Group>
-      </Group>
+      ) : (
+        <Group align="flex-end" gap="md" wrap="wrap">
+          <TextInput label={T.reasonLabel} placeholder={T.reasonPlaceholder} value={reason} onChange={(e) => setReason(e.currentTarget.value)} maxLength={REASON_MAX} style={{ flex: "1 1 360px", maxWidth: 560 }} data-testid="decisions-reason" />
+          <Group gap="md" align="center" wrap="nowrap" style={{ minHeight: "var(--h-m)" }}>
+            <Button variant="default" disabled={!ok || visibleCount === 0} onClick={acceptAll} data-testid="decisions-bulk-accept">
+              {kind === "same" && sameAs !== null ? T.sameAccept(sameAs, visibleCount) : T.visibleAccept(visibleCount)}
+            </Button>
+            {!ok && leftCount > 0 && (
+              <Text size="xs" c="dimmed" data-testid="decisions-bulk-reason">
+                {T.bulkNeedsReason}
+              </Text>
+            )}
+          </Group>
+        </Group>
+      )}
       {kinds.length > 0 && kind && (
         <Switch
           value={kind}
@@ -802,14 +939,17 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           {T.none}
         </Text>
       ) : (
-        <Table data-testid="decisions-table" verticalSpacing="sm" fz="sm">
-          {head}
-          <Table.Tbody>
-            {openRules.map(kind === "same" ? sameRow : ruleRow)}
-            {visibleGroups.map(groupRow)}
-            {visibleStars.map(starRow)}
-          </Table.Tbody>
-        </Table>
+        // 幅が足りないときは表を横に送る。「| 却下」「| 確定」の列は右端に固定（theme.css の .moyai-decisions-act）
+        <div className="moyai-decisions-scroll">
+          <Table data-testid="decisions-table" verticalSpacing="sm" fz="sm">
+            {headOf(kind !== "same", showCount)}
+            <Table.Tbody>
+              {openRules.map(kind === "same" ? sameRow : ruleRow)}
+              {visibleGroups.map((g) => groupRow(g, showCount))}
+              {visibleStars.map((r) => starRow(r, showCount))}
+            </Table.Tbody>
+          </Table>
+        </div>
       )}
       {proposals.length === 0 && (
         <Text size="xs" c="dimmed" data-testid="crosswalk-none">
@@ -823,50 +963,52 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
           <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>
             {T.doneTitle(doneRules.length + doneGroups.length + rejectedRows.length + doneStars.length + rejectedStars.length)}
           </summary>
-          <Table verticalSpacing="xs" fz="sm" mt="xs">
-            {head}
-            <Table.Tbody>
-              {doneRules.map(ruleRow)}
-              {doneGroups.map(groupRow)}
-              {doneStars.map(starRow)}
-              {rejectedStars.map((g) => (
-                <Table.Tr key={`rejected-star:${g.id}`} data-testid="star-rejected" data-star={g.id}>
-                  <Table.Td>
-                    <Text size="sm">{starTitle(g)}</Text>
-                  </Table.Td>
-                  <Table.Td c="var(--text-2)" title={g.basis}>
-                    {shortWhy(g.basis)}
-                  </Table.Td>
-                  <Table.Td className="moyai-num" ta="right">
-                    {(g.rejectedAdds?.length ?? 0) + g.removes.length}
-                  </Table.Td>
-                  <Table.Td ta="right">
-                    <Text size="xs" c="dimmed">
-                      {T.rejected}
-                    </Text>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-              {rejectedRows.map((r) => (
-                <Table.Tr key={`rejected:${r.id}`} data-testid="cycle-rejected" data-cycle={r.id}>
-                  <Table.Td>
-                    <Text size="sm">{T.cycleWhat(r.id, r.marks)}</Text>
-                  </Table.Td>
-                  <Table.Td c="var(--text-2)" title={r.basis}>
-                    {shortWhy(r.basis)}
-                  </Table.Td>
-                  <Table.Td className="moyai-num" ta="right">
-                    {r.marks}
-                  </Table.Td>
-                  <Table.Td ta="right">
-                    <Text size="xs" c="dimmed">
-                      {T.rejected}
-                    </Text>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
+          <div className="moyai-decisions-scroll">
+            <Table verticalSpacing="xs" fz="sm" mt="xs">
+              {headOf(true, true)}
+              <Table.Tbody>
+                {doneRules.map(ruleRow)}
+                {doneGroups.map((g) => groupRow(g, true))}
+                {doneStars.map((r) => starRow(r, true))}
+                {rejectedStars.map((g) => (
+                  <Table.Tr key={`rejected-star:${g.id}`} data-testid="star-rejected" data-star={g.id}>
+                    <Table.Td>
+                      <Text size="sm">{starTitle(g)}</Text>
+                    </Table.Td>
+                    <Table.Td c="var(--text-2)" className="moyai-decisions-why" title={g.basis}>
+                      {shortWhy(g.basis)}
+                    </Table.Td>
+                    <Table.Td className="moyai-num" ta="right">
+                      {(g.rejectedAdds?.length ?? 0) + g.removes.length}
+                    </Table.Td>
+                    <Table.Td ta="right" className="moyai-decisions-act">
+                      <Text size="xs" c="dimmed">
+                        {T.rejected}
+                      </Text>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+                {rejectedRows.map((r) => (
+                  <Table.Tr key={`rejected:${r.id}`} data-testid="cycle-rejected" data-cycle={r.id}>
+                    <Table.Td>
+                      <Text size="sm">{T.cycleWhat(r.id, r.marks)}</Text>
+                    </Table.Td>
+                    <Table.Td c="var(--text-2)" className="moyai-decisions-why" title={r.basis}>
+                      {shortWhy(r.basis)}
+                    </Table.Td>
+                    <Table.Td className="moyai-num" ta="right">
+                      {r.marks}
+                    </Table.Td>
+                    <Table.Td ta="right" className="moyai-decisions-act">
+                      <Text size="xs" c="dimmed">
+                        {T.rejected}
+                      </Text>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </div>
         </details>
       )}
 
@@ -986,6 +1128,7 @@ export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: P
       {side?.el && detail && createPortal(detail, side.el)}
       {side?.el && !detail && starDetail && createPortal(starDetail, side.el)}
       {side?.el && !detail && cycleDetail && createPortal(cycleDetail, side.el)}
+      {side?.el && !detail && plainDetail && createPortal(plainDetail, side.el)}
     </Stack>
   );
 }

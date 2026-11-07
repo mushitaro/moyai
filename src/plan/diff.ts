@@ -126,6 +126,8 @@ export interface Decision {
   /** 読み方の決定：効く明細の数（明細の数で言えない決定は null）と、効く所（Wire） */
   count?: number | null;
   where?: string;
+  /** 読み方の決定：その答えで決まった行の数（取り込みの横の板の質問の「n 行」と同じ数。確定のシートの件数。指紋には入れない） */
+  rows?: number;
 }
 
 export interface Acceptance {
@@ -176,6 +178,7 @@ export function aiDecisions(plan: Plan): Decision[] {
       basis: r.reason,
       hash: fnv64(JSON.stringify([r.questionId, r.answer, r.author, r.reason, ds])),
       count: ds.length > 0 ? ds.length : null,
+      rows: r.rows,
       ...(r.where ? { where: r.where } : {}),
     });
   }

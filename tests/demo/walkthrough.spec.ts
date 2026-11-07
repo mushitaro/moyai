@@ -16,7 +16,7 @@ import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { packName, FICTIONAL_1, callTool as call, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { packName, FICTIONAL_1, callTool as call, fillDecisionReason, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】みどり台クリーンセンター";
 const A = { name: "【架空】山田" };
@@ -281,11 +281,11 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-08c-see-in-chart") });
       await pa.getByTestId("sheet-decisions").click();
       await expect(row).toHaveCount(1);
-      // 人：上の欄に理由を書いて、まとめて受ける
-      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（類似施設の中央値と、チャットの答えを見て受けた）");
-      // 一括確定は表示中の種類の行だけ（docs/screens.md 3.2）。種類ごとに、残りが無くなるまで押す
+      // 人：上の欄に理由を書いて、まとめて受ける。一括確定は表示中の種類の行だけ（docs/screens.md 3.2）。種類ごとに、残りが無くなるまで押す
+      // （会話の回答は理由の欄が無く、理由なしで「| 会話の回答 n 件を確定」を押す）
       const left = pa.locator('[data-testid="pending-row"][data-accepted="false"]');
       for (let i = 0; i < 6 && (await left.count()) > 0; i++) {
+        await fillDecisionReason(pa, "試験の台本が押した（類似施設の中央値と、チャットの答えを見て受けた）");
         await pa.getByTestId("decisions-bulk-accept").click();
         await pa.waitForTimeout(300);
       }
@@ -395,9 +395,10 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-19-version-diff") });
       // 人：まとめて受けて、第 2 版に自分で署名して確定する
       await pa.getByTestId("sheet-decisions").click();
-      await pa.getByTestId("decisions-reason").fill("試験の台本が押した（類似施設の中央値を見て、もう 1 つの周期の案も受けた）");
+      await expect(pa.getByTestId("decisions-sheet")).toBeVisible();
       const left2 = pa.locator('[data-testid="pending-row"][data-accepted="false"]');
       for (let i = 0; i < 6 && (i === 0 || (await left2.count()) > 0); i++) {
+        await fillDecisionReason(pa, "試験の台本が押した（類似施設の中央値を見て、もう 1 つの周期の案も受けた）");
         await pa.getByTestId("decisions-bulk-accept").click();
         await pa.waitForTimeout(300);
       }
@@ -454,9 +455,9 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await expect(pa.locator('[data-testid="pending-row"], [data-testid="decisions-none"]').first()).toBeVisible();
       const open = pa.locator('[data-testid="pending-row"][data-accepted="false"]');
       if ((await open.count()) > 0) {
-        await pa.getByTestId("decisions-reason").fill("試験の台本が押した（元の施設で受けた決定を、派生した施設でも受けた）");
-        // 一括確定は表示中の種類の行だけ。種類ごとに、残りが無くなるまで押す
+        // 一括確定は表示中の種類の行だけ。種類ごとに、残りが無くなるまで押す（会話の回答は理由なし）
         for (let i = 0; i < 6 && (await open.count()) > 0; i++) {
+          await fillDecisionReason(pa, "試験の台本が押した（元の施設で受けた決定を、派生した施設でも受けた）");
           await pa.getByTestId("decisions-bulk-accept").click();
           await pa.waitForTimeout(300);
         }

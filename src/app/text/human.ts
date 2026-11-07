@@ -448,6 +448,8 @@ export const HUMAN_TEXT = {
     kindSwitch: "決定の種類",
     kinds: { same: (n: number) => `第 ${n} 版と同じ`, crosswalk: "紐付け案", ledger: "台帳案", rule: "ルール案", relayed: "会話の回答", ai: "Claude 判断" },
     visibleAccept: (n: number) => `表示中の ${fmt(n)} 件を一括確定`,
+    /** 会話の回答をまとめて受ける（判断の理由の欄なし。docs/screens.md 3.2「会話の回答の受け方」、Wire、11-07） */
+    relayedAccept: (n: number) => `会話の回答 ${fmt(n)} 件を確定`,
     sameAccept: (v: number, n: number) => `第 ${v} 版と同じ ${fmt(n)} 件を確定`,
     left: (n: number) => `未確定 ${fmt(n)}`,
   },

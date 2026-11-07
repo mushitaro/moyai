@@ -170,10 +170,11 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
 
     await test.step("確定（人だけ）：AI が置いた決定を決定のシートで理由つきで受け、一言の理由を書いて署名して確定する", async () => {
       // 当てはめは当てはめの欄で人が受けたので、残るのは AI がチャットの答えで置いた取り込みの決定だけ。
-      // 1 つの決定は 1 行（質問の文 → 答え。数は効く明細の数か「―」、効く所。Wire）
+      // 1 つの決定は 1 行（質問の文 → 答え。件数はその答えで決まった行の数「n 行」、効く所。Wire、11-07）
       await page.getByTestId("sheet-decisions").click();
       await expect(page.locator('[data-testid="pending-row"]').first()).toBeVisible();
       await expect(page.getByTestId("pending-where").first()).toBeVisible();
+      await expect(page.locator('[data-testid="pending-row"][data-decision-kind="reading"] [data-testid="pending-count"]').first()).toHaveText(/^[\d,]+ 行$/);
       await page.screenshot({ path: shot(`slice-decisions-${tag}`), fullPage: true });
       await acceptDecisions(page, "試験の台本が押した（チャットの答えを画面で受けた）");
       await page.getByTestId("confirm-open").click();

@@ -9,7 +9,8 @@ import { expect, test } from "@playwright/test";
 import { E2E_NAME, acceptDecisions, callTool as call, chooseFirstSource, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】星取の削除を残す";
-const REASON = "試験の台本が押した（利用者が二重の記録と言った実績を消す）";
+// 会話の回答は判断の理由なしで受ける。版の記録に入る理由は、Claude が置いた理由（chart_propose の basis）のまま（docs/screens.md 3.2「会話の回答の受け方」）
+const BASIS = "利用者が会話で、この年度の実績は二重の記録だと言った";
 
 let bridge: StartedBridge;
 let work = "";
@@ -95,7 +96,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       const rows = await call(c, "chart_rows", { rowRef: pick!.node });
       const r = await call(c, "chart_propose", {
         basedOnVersion: rows.version,
-        basis: "利用者が会話で、この年度の実績は二重の記録だと言った",
+        basis: BASIS,
         author: "ai_relayed_human",
         stars: [{ op: "remove", rowRef: pick!.workRef, value: "actual", fiscalYear: pick!.fy }],
       });
@@ -103,7 +104,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await page.getByTestId("sheet-decisions").click();
       const kinds = page.getByTestId("decisions-kind").locator("button").filter({ hasText: /^会話の回答/ });
       if ((await kinds.count()) > 0) await kinds.first().click();
-      await page.getByTestId("decisions-reason").fill(REASON);
+      await expect(page.getByTestId("decisions-reason")).toHaveCount(0);
       const row = page.locator('[data-testid="pending-row"][data-accepted="false"]').filter({ hasText: /^実績の削除/ });
       await expect(row).toHaveCount(1);
       await row.getByTestId("pending-accept").click();
@@ -122,7 +123,12 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000002.json"), "utf8"));
       const removed = rec.acceptances.filter((a: any) => String(a.id).startsWith("remove:"));
       expect(removed.length).toBeGreaterThan(0);
-      for (const a of removed) expect(a).toMatchObject({ reason: REASON, author: "human" });
+      // 理由は削除の案の理由（Claude が置いた basis に、MOYAI が案の ID と年度を添えたもの。確定のシートの「理由」と同じ字）
+      for (const a of removed) {
+        expect(a).toMatchObject({ author: "human" });
+        expect(a.reason.startsWith(`${BASIS}（案 `)).toBe(true);
+        expect(a.reason).toContain(`実績の削除 ${pick!.fy} 年度`);
+      }
     });
 
     await test.step("人：トップの「＋ 次の版」で資料と決定が戻り、作り直しても、消した実績は戻らない", async () => {
