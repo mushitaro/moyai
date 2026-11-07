@@ -5,12 +5,14 @@ name: pages
 # ledger/ が変わった push（と、このファイルの変更）だけで走る。使う MOYAI は、同じ main の commit。
 # 生のファイルは写さない（symlink は拒む。HTML はエスケープし、CSP を付ける。作るのは MOYAI の ledger site）。
 # workflow_run や、ほかの run の artifact は使わない。
+# 2026-11-08：mushitaro/moyai の GitHub Pages がまだ有効でないので、手で起こすときだけ走る。
+# Pages を有効にしたら（運営者の操作）、次の push の引き金を戻す。
+#   push:
+#     branches: [main]
+#     paths:
+#       - "ledger/**"
+#       - ".github/workflows/pages.yml"
 on:
-  push:
-    branches: [main]
-    paths:
-      - "ledger/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions: {}
