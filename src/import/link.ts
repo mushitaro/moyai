@@ -54,6 +54,8 @@ export interface Job {
   decidedBy: Set<string>;
   /** 結ぶかどうかの答えを待っている */
   pending: boolean;
+  /** 待っている質問（pending で、分かるときだけ。画面の写しに使う） */
+  waitingOn?: string;
 }
 
 export type LinkMode = "mark" | "eventOnly" | "excluded" | "pending";
@@ -64,6 +66,8 @@ export interface WorkLink {
   mode: LinkMode;
   mark: MarkRec | null;
   decidedBy: Set<string>;
+  /** 待っている質問（mode が pending で、分かるときだけ。画面の写しに使う） */
+  waitingOn?: string;
 }
 
 export interface Linked {
@@ -75,7 +79,13 @@ export interface Linked {
   /** 日報の行で、機器が決まらない・外したもの */
   eventPending: Set<string>;
   eventExcluded: Map<string, string>;
+  /** 日報の行を外した決定の質問（行の ID → 質問の ID。画面の写しに使う） */
+  eventExcludedBy: Map<string, string[]>;
   assetExcluded: Map<string, string>;
+  /** 機器を外した決定の質問（機器の記録の ID → 質問の ID。画面の写しに使う） */
+  assetExcludedBy: Map<string, string>;
+  /** 結ぶ答えを待っている機器の記録（ID → 待っている質問の ID。画面の写しに使う） */
+  assetWaitingOn: Map<string, string>;
 }
 
 const numberOf = (c: { series: Series | null; tagNumber: number | null }): number | null =>
@@ -138,6 +148,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const clusterOf = new Map<string, Cluster>();
   const clusters: Cluster[] = [];
   const assetExcluded = new Map<string, string>();
+  const assetExcludedBy = new Map<string, string>();
+  const assetWaitingOn = new Map<string, string>();
   const tables = [...new Set(rec.assets.map((a) => a.tableId))];
   const firstOf = (tid: string) => rec.assets.find((a) => a.tableId === tid);
   tables.sort((a, b) => {
@@ -288,7 +300,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
             const c = p.options[Number(a.slice(1))];
             if (c) accepted.set(p.r.id, { c, qid: questionIdOf(key) });
           } else if (a === "none") unmatched.push({ ...p, cand: null });
-          else p.r.pending = true;
+          else {
+            p.r.pending = true;
+            assetWaitingOn.set(p.r.id, questionIdOf(key));
+          }
         }
         continue;
       }
@@ -331,8 +346,14 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           });
           if (b === "c0") accepted.set(p.r.id, { c: p.cand, qid: questionIdOf(k1) });
           else if (b === "none") unmatched.push({ ...p, cand: null });
-          else p.r.pending = true;
-        } else p.r.pending = true;
+          else {
+            p.r.pending = true;
+            assetWaitingOn.set(p.r.id, questionIdOf(k1));
+          }
+        } else {
+          p.r.pending = true;
+          assetWaitingOn.set(p.r.id, questionIdOf(gkey));
+        }
       }
     }
     // 先の資料に無い機器
@@ -354,7 +375,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         if (a === "exclude") {
           p.r.excluded = "先の資料に無い機器（決定で外した）";
           assetExcluded.set(p.r.id, p.r.excluded);
-        } else if (a !== "yes") p.r.pending = true;
+          assetExcludedBy.set(p.r.id, questionIdOf(ukey));
+        } else if (a !== "yes") {
+          p.r.pending = true;
+          assetWaitingOn.set(p.r.id, questionIdOf(ukey));
+        }
         else (p.r as AssetRec & { unmatchedQ?: string }).unmatchedQ = questionIdOf(ukey);
       }
     }
@@ -385,6 +410,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   // ─── 日報の行 → 機器 ───
   const eventPending = new Set<string>();
   const eventExcluded = new Map<string, string>();
+  const eventExcludedBy = new Map<string, string[]>();
   const byName = new Map<string, Cluster[]>();
   // 機器番号（同一性の鍵）でも引く：日報や報告書が「名前（機器番号）」と書く機器
   const byTag = new Map<string, Cluster[]>();
@@ -629,6 +655,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     }
     if (excl && targets.length === 0) {
       eventExcluded.set(e.id, "機器が当たらない行（決定で外した）");
+      eventExcludedBy.set(e.id, [...qids]);
       continue;
     }
     const tkey = [...new Set(targets.map((t) => t.id))].sort().join(",");
@@ -704,7 +731,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const links: WorkLink[] = [];
   for (const j of jobs) {
     if (j.pending) {
-      links.push({ job: j, cluster: j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
+      links.push({ job: j, cluster: j.cluster, mode: "pending", mark: null, decidedBy: new Set(), ...(j.waitingOn ? { waitingOn: j.waitingOn } : {}) });
       continue;
     }
     const ms = markIndex.get(`${j.cluster.id}|${j.fiscalYear}`) ?? [];
@@ -759,7 +786,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         if (a?.startsWith("m")) links.push({ job: lp.j, cluster: lp.j.cluster, mode: "mark", mark: lp.options[Number(a.slice(1))] ?? null, decidedBy: new Set([qid]) });
         else if (a === "eventOnly") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "eventOnly", mark: null, decidedBy: new Set([qid]) });
         else if (a === "exclude") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "excluded", mark: null, decidedBy: new Set([qid]) });
-        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
+        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set(), waitingOn: qid });
       }
       continue;
     }
@@ -792,7 +819,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       if (isNoMark) {
         if (a === "yes") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "eventOnly", mark: null, decidedBy: new Set([gq]) });
         else if (a === "exclude") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "excluded", mark: null, decidedBy: new Set([gq]) });
-        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
+        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set(), waitingOn: gq });
         continue;
       }
       if (a === "yes") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "mark", mark: lp.m, decidedBy: new Set([gq]) });
@@ -815,11 +842,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         if (b === "m0") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "mark", mark: lp.m, decidedBy: new Set([q1]) });
         else if (b === "eventOnly") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "eventOnly", mark: null, decidedBy: new Set([q1]) });
         else if (b === "exclude") links.push({ job: lp.j, cluster: lp.j.cluster, mode: "excluded", mark: null, decidedBy: new Set([q1]) });
-        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
-      } else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set() });
+        else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set(), waitingOn: q1 });
+      } else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set(), waitingOn: gq });
     }
   }
-  return { clusters, clusterOf, occurrences, jobs, links, eventPending, eventExcluded, assetExcluded };
+  return { clusters, clusterOf, occurrences, jobs, links, eventPending, eventExcluded, eventExcludedBy, assetExcluded, assetExcludedBy, assetWaitingOn };
 }
 
 /** 凡例の意味と作業の名前：同じなら named、どちらかがもう一方を含むなら namedPart、どれとも違えば null */
@@ -848,9 +875,9 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
       groups.set(k, g);
     }
   const jobs: Job[] = [];
-  const mk = (c: Cluster, fy: number, units: Occurrence[], decided: string[], pending = false) => {
+  const mk = (c: Cluster, fy: number, units: Occurrence[], decided: string[], pending = false, waitingOn: string | null = null) => {
     const us = [...units].sort(byFile);
-    jobs.push({ id: `j:${c.id}|${fy}|${us.map((u) => u.id).join("+")}`, cluster: c, fiscalYear: fy, units: us, decidedBy: new Set(decided), pending });
+    jobs.push({ id: `j:${c.id}|${fy}|${us.map((u) => u.id).join("+")}`, cluster: c, fiscalYear: fy, units: us, decidedBy: new Set(decided), pending, ...(pending && waitingOn ? { waitingOn } : {}) });
   };
   const overlap = (a: Occurrence, b: Occurrence) => !!a.start && !!a.end && !!b.start && !!b.end && a.start <= b.end && b.start <= a.end;
   type Prop = { c: Cluster; fy: number; units: Occurrence[]; pattern: "overlap" | "apart" };
@@ -960,13 +987,13 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
         const q1 = questionIdOf(k1);
         if (b === "yes") mk(p.c, p.fy, p.units, [q1]);
         else if (b === "no") for (const u of p.units) mk(p.c, p.fy, [u], [q1]);
-        else mk(p.c, p.fy, p.units, [], true);
-      } else mk(p.c, p.fy, p.units, [], true);
+        else mk(p.c, p.fy, p.units, [], true, q1);
+      } else mk(p.c, p.fy, p.units, [], true, gq);
     }
   }
   // 重なる相手がいくつかあるもの：1 件ずつ聞く。同じ相手を 2 度選んだら、あとの方は決まらないまま（推し量らない）
   const taken = new Map<string, string>();
-  const joinedWith = new Map<Occurrence, { units: Occurrence[]; decided: string[]; pending: boolean; c: Cluster; fy: number }>();
+  const joinedWith = new Map<Occurrence, { units: Occurrence[]; decided: string[]; pending: boolean; waitingOn: string | null; c: Cluster; fy: number }>();
   for (const p of picks) {
     const key = `workJoinPick|${p.c.id}|${p.anchor.id}|${p.table}`;
     const a = ask.ask(key, {
@@ -979,7 +1006,7 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
       items: p.cands.map((x) => itemOf({ c: p.c, units: [p.anchor, x] })),
     });
     const q = questionIdOf(key);
-    const cur = joinedWith.get(p.anchor) ?? { units: [p.anchor], decided: [], pending: false, c: p.c, fy: p.fy };
+    const cur = joinedWith.get(p.anchor) ?? { units: [p.anchor], decided: [], pending: false, waitingOn: null, c: p.c, fy: p.fy };
     joinedWith.set(p.anchor, cur);
     if (a?.startsWith("c")) {
       const x = p.cands[Number(a.slice(1))];
@@ -987,11 +1014,17 @@ function joinAcrossDocuments(occurrences: Occurrence[], ask: Asker, groupKey: (u
         taken.set(`${p.c.id}|${x.id}`, p.anchor.id);
         cur.units.push(x);
         cur.decided.push(q);
-      } else cur.pending = true;
+      } else {
+        cur.pending = true;
+        cur.waitingOn ??= q;
+      }
     } else if (a === "none") cur.decided.push(q);
-    else cur.pending = true;
+    else {
+      cur.pending = true;
+      cur.waitingOn ??= q;
+    }
   }
-  for (const j of joinedWith.values()) mk(j.c, j.fy, j.units, j.decided, j.pending);
+  for (const j of joinedWith.values()) mk(j.c, j.fy, j.units, j.decided, j.pending, j.waitingOn);
   for (const [k, l] of leftovers) if (!taken.has(k)) mk(l.c, l.fy, [l.u], []);
   return jobs;
 }

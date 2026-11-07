@@ -103,6 +103,58 @@ function cellInfo(st: CellStatus | undefined, view: IntakeView): string {
   return q ? `${T.sheet.cellUnresolved}。${T.sheet.cellQuestion(q.text)}` : T.sheet.cellUnresolved;
 }
 
+// ─── セルを決めた答え（docs/screens.md 3.3「答えの取り消し」、Wire、11-07） ─────────────────
+
+export interface CellAnswer {
+  questionId: string;
+  /** 答えの字（選択肢の名前。数の答えは数） */
+  answer: string;
+  /** 作者の字（人・会話の回答・Claude 判断） */
+  author: string;
+  /** 答えた日時「2026-11-07 06:30」。このタブで答えたときだけ */
+  at: string | null;
+}
+
+/**
+ * セルを決めた質問（qs）のうち、取り消せる答え（このタブの決定。読み方の規則の決まった答えは決定ではないので出さない）。
+ * 並びは qs の順
+ */
+export function cellAnswers(ws: IntakeWorkspace, view: IntakeView, qs: readonly string[]): CellAnswer[] {
+  const questions = new Map(view.questions.map((q) => [q.questionId, q]));
+  const decisions = new Map(view.decisions.map((d) => [d.questionId, d]));
+  return qs.flatMap((id): CellAnswer[] => {
+    const d = decisions.get(id);
+    const q = questions.get(id);
+    if (!d || !q || q.invalid) return [];
+    const answer = q.valueKind === "number" ? d.answer : (q.options.find((o) => o.id === d.answer)?.label ?? d.answer);
+    const at = ws.answeredAt(id);
+    return [{ questionId: id, answer, author: TEXT.author[d.author], at: at ? T.at(at) : null }];
+  });
+}
+
+/**
+ * 横の板の詳細の、セルを決めた答え：質問ごとに 1 行「答え　{答えの字}　{作者}　{日時}」と「| 取り消す」。
+ * 押すとその質問は未回答に戻り、同じ答えで決まったセルもまとめて戻る（決定を外して読み直す）。確定のシートには並べない
+ */
+export function CellAnswers({ ws, view, qs }: { ws: IntakeWorkspace; view: IntakeView; qs: readonly string[] }) {
+  const list = cellAnswers(ws, view, qs);
+  if (!list.length) return null;
+  return (
+    <Stack gap={4} data-testid="cell-answers">
+      {list.map((a) => (
+        <Group key={a.questionId} gap="xs" wrap="nowrap" justify="space-between" data-testid="cell-answer" data-question={a.questionId}>
+          <Text size="sm" className="moyai-num" data-testid="cell-answer-line">
+            {T.sheet.answerLine(a.answer, a.author, a.at)}
+          </Text>
+          <button type="button" className="moyai-inline-act" disabled={ws.busy} data-testid="cell-answer-undo" onClick={() => void ws.undoAsync(a.questionId)}>
+            {T.sheet.undo}
+          </button>
+        </Group>
+      ))}
+    </Stack>
+  );
+}
+
 // ─── 資料のタブ（MERGE r2。docs/screens.md 3.2「資料のシート」、絵は Source.dc.html） ─────────────
 
 type SourceFilter = "open" | "all";
@@ -110,9 +162,10 @@ type SourceFilter = "open" | "all";
 /**
  * HOSHITORI の資料のタブ：その資料 1 つだけ。上に切り替え「未確定行 n ／ 全行 n」（既定は未確定行、数は朱）と凡例。その下に元の表
  * （行の番号と列の字。未確定のセルは朱の枠）。セルを選ぶと、横の板の「詳細」にそのセルの行き先（除外ならその理由、未確定ならその質問）を出す。
+ * 答えで決まったセルなら、決めた答えの行と「| 取り消す」も出す（CellAnswers）。
  * 施設の欄・すべての資料の行き先の一覧・AI の作業の記録は置かない
  */
-function SourceTab({ view, layouts }: { view: IntakeView; layouts: SheetData[] }) {
+function SourceTab({ ws, view, layouts }: { ws: IntakeWorkspace; view: IntakeView; layouts: SheetData[] }) {
   const S = T.source;
   const [sheet, setSheet] = useState(0);
   const lay = layouts[Math.min(sheet, layouts.length - 1)]!;
@@ -145,6 +198,7 @@ function SourceTab({ view, layouts }: { view: IntakeView; layouts: SheetData[] }
       <Text size="sm" c={pickedStatus?.s === "unresolved" ? "var(--shu-text)" : undefined}>
         {cellInfo(pickedStatus, view)}
       </Text>
+      {pickedStatus && pickedStatus.s !== "unresolved" && pickedStatus.qs && <CellAnswers ws={ws} view={view} qs={pickedStatus.qs} />}
       {(() => {
         // 版の履歴で人が確定して消した星取のセル：「削除（第 n 版）」と理由（Architect の 70。Wire）
         const rm = pickedCell ? removedCellOf(lay.file, lay.sheet, pickedCell.ref) : undefined;
@@ -218,6 +272,7 @@ function SourceTab({ view, layouts }: { view: IntakeView; layouts: SheetData[] }
                     <Table.Td
                       key={c}
                       data-s={st?.s ?? ""}
+                      data-answered={st && st.s !== "unresolved" && st.qs?.length ? "true" : undefined}
                       data-ref={cell?.ref ?? ""}
                       data-focus={isPicked ? "true" : undefined}
                       title={cell?.text ?? ""}
@@ -705,7 +760,7 @@ export function Intake({
         {view &&
           shown &&
           (sheetsOf && sheetsOf.length > 0 ? (
-            <SourceTab key={shown} view={view} layouts={sheetsOf} />
+            <SourceTab key={shown} ws={ws} view={view} layouts={sheetsOf} />
           ) : (
             <Text size="sm" c="dimmed" data-testid="source-loading" data-file={shown}>
               {T.sheet.loading}

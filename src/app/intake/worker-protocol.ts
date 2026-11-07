@@ -123,6 +123,10 @@ export interface SheetWire {
   sheet: string | null;
   sheetIndex: number;
   grid: SheetGrid;
+  /**
+   * セルの行き先。データ・除外のセルには、そのセルを決めた質問の ID の並び（qs）が付く（答えが効いているものだけ）。
+   * 答えた時刻は作業場（workspace.ts の answeredAt）が持つ。worker の形でも同じスレッドの形でも同じ値
+   */
   status: [ref: string, status: CellStatus][];
 }
 

@@ -1,6 +1,8 @@
 // 資料のシート（白紙、第 1 版の前）を、この PC の Chrome と Edge で開く：工場の fictional-1 の資料を落とすと、版があるときの資料のシートと同じ形
 // （「資料」の札と資料ごとのタブ、最初の資料の元の表と凡例の 1 行。docs/screens.md 3.3）。未確定のセルと除外のセルを選ぶと詳細に行き先と理由、
-// 質問に人が「| 決める」で答えること、止める決まりの間は主ボタンが押せず理由「未回答 n」が出ること、第 1 版をつくっても資料のタブを選んだ形で、星取表で行が見えること。
+// 質問に人が「| 決める」で答えること、止める決まりの間は主ボタンが押せず理由「未回答 n」が出ること、
+// 答えで決まったセルを選ぶと詳細に「答え　{答えの字}　人　{日時}」と「| 取り消す」が出て、取り消すと未回答に戻り、答え直すと押せること（Wire、11-07）、
+// 第 1 版をつくっても資料のタブを選んだ形で、星取表で行が見えること。
 import { expect, test } from "@playwright/test";
 import { FICTIONAL_1, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
@@ -55,12 +57,8 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
 
   // 答えは取り込みの worker が置く。置いて写しが届くまで、資料のシートに data-busy が付く（数えるのはそのあと）
   const settled = () => expect(page.getByTestId("intake-page")).not.toHaveAttribute("data-busy", "true");
-
-  await test.step("質問に人が答える（既定の答え「- 既定」を選んだまま、1 問ずつ「| 決める」）", async () => {
-    // 詳細を見ていたので、横の板を「未回答 n」に切り替える
-    await page.getByTestId("side-open").click();
-    await expect(page.getByTestId("question").first()).toContainText("- 既定");
-    await expect(page.getByTestId("question-rows").first()).toHaveText(/^\d+ 行$/);
+  /** 既定の答えを選んだまま、質問が無くなるまで 1 問ずつ「| 決める」 */
+  const answerAll = async () => {
     for (let i = 0; i < 40; i++) {
       const answer = page.getByTestId("answer").first();
       if ((await page.getByTestId("question").count()) === 0) break;
@@ -70,8 +68,40 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
       await settled();
     }
     await expect(page.getByTestId("question")).toHaveCount(0);
+  };
+
+  await test.step("質問に人が答える（既定の答え「- 既定」を選んだまま、1 問ずつ「| 決める」）", async () => {
+    // 詳細を見ていたので、横の板を「未回答 n」に切り替える
+    await page.getByTestId("side-open").click();
+    await expect(page.getByTestId("question").first()).toContainText("- 既定");
+    await expect(page.getByTestId("question-rows").first()).toHaveText(/^\d+ 行$/);
+    await answerAll();
     // 未回答が 0 になると、横の板の「未回答 n」は消え、資料の未確定のセルも無くなる
     await expect(page.getByTestId("side-open")).toHaveCount(0);
+    await expect(sourceGrid.locator('td[data-s="unresolved"]')).toHaveCount(0);
+    await expect(page.getByTestId("compose")).toBeEnabled();
+    await expect(page.getByTestId("compose-disabled-reason")).toHaveCount(0);
+  });
+
+  await test.step("答えて、セルを選んで取り消して、答え直すと押せる", async () => {
+    // 答えで決まったセル（読取）を選ぶと、詳細に「答え　{答えの字}　人　{日時}」と「| 取り消す」
+    await sourceGrid.locator('td[data-answered="true"]').first().click();
+    const detail = page.getByTestId("source-cell-detail");
+    await expect(detail).toHaveAttribute("data-s", "data");
+    const row = detail.getByTestId("cell-answer").first();
+    await expect(row.getByTestId("cell-answer-line")).toHaveText(/^答え　.+　人　\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    await expect(row.getByTestId("cell-answer-undo")).toHaveText("取り消す");
+    await page.screenshot({ path: shot(`intake-cell-answer-${tag}`), fullPage: true });
+    // 取り消すと、その質問は未回答に戻り、同じ答えで決まったセルも未確定に戻る。主ボタンは押せず、理由「未回答 n」
+    await row.getByTestId("cell-answer-undo").click();
+    await settled();
+    await expect(page.getByTestId("compose")).toBeDisabled();
+    await expect(page.getByTestId("compose-disabled-reason")).toHaveText(/^理由：未回答 \d+$/);
+    await expect(page.getByTestId("side-open")).toContainText("未回答");
+    // 戻ったセルは、答えの質問が決めていた資料にある（資料をまたぐ機器の質問なら、後の資料の側）。開いている資料とは限らないので、ここでは数を見ない
+    // 答え直すと、また押せる
+    await page.getByTestId("side-open").click();
+    await answerAll();
     await expect(sourceGrid.locator('td[data-s="unresolved"]')).toHaveCount(0);
     await expect(page.getByTestId("compose")).toBeEnabled();
     await expect(page.getByTestId("compose-disabled-reason")).toHaveCount(0);

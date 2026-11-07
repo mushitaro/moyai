@@ -68,6 +68,7 @@ export interface SheetData {
   sheetIndex: number;
   grid: SheetGrid;
   index: CellIndex;
+  /** セルの位置 → 行き先（データ・除外のセルには、決めた質問の ID の並び qs。SheetWire の status と同じ値） */
   status: Map<string, CellStatus>;
 }
 
@@ -616,6 +617,8 @@ export class IntakeWorkspace {
     this.opts = opts;
     this.inputs = r.accepted;
     this.tooLarge = [];
+    // 決定は版の記録のものに置き換わった（答えた時刻は版の記録に無いので、分からないものとして持たない）
+    this.answered.clear();
     this.restoredFrom = { version, files: new Set(this.inputs) };
     this.restoreFailed = null;
     await this.listPhotos(r.listed);
@@ -642,6 +645,17 @@ export class IntakeWorkspace {
   // ─── 決定 ────────────────────────────────────────────────────
 
   private asking = 0;
+
+  /**
+   * 質問の ID → 答えた時刻（ISO）。このタブで置いた決定だけ。settle で書き、undo で消す。
+   * 資料のシートの詳細の「答え　{答えの字}　{作者}　{日時}」に使う。Decision には足さない（版の記録・署名される字に入れない）
+   */
+  private readonly answered = new Map<string, string>();
+
+  /** その質問に答えた時刻（ISO）。版から戻した決定など、このタブで置いていなければ null */
+  answeredAt(questionId: string): string | null {
+    return this.answered.get(questionId) ?? null;
+  }
 
   /** 決定を置く・取り消す途中（worker の答えと、そのあとの写しが届くまで）。画面は答えと取り消しのボタンを押せなくする */
   get busy(): boolean {
@@ -682,7 +696,12 @@ export class IntakeWorkspace {
    * 当てはまるのは、今出ている質問で、答えがその質問の選択肢に入っているもの。人が答えた質問は、人だけが変えられる（確かめるのは受け手）。
    */
   settleWith(ds: Decision[]): Maybe<SettleOutcome> {
-    return this.decide({ op: "settle", decisions: ds }, (r) => r.ok);
+    // 時刻は置こうとしたとき（worker の答えを待つ間ではない）。置けたときだけ書く
+    const at = now();
+    return this.decide({ op: "settle", decisions: ds }, (r) => {
+      if (r.ok) for (const d of ds) this.answered.set(d.questionId, at);
+      return r.ok;
+    });
   }
 
   settle(ds: Decision[]): SettleOutcome {
@@ -703,7 +722,10 @@ export class IntakeWorkspace {
   }
 
   undoWith(questionId: string): Maybe<{ cellsAffected: number; rowsAffected: number; unresolved: number }> {
-    return this.decide({ op: "undo", questionId }, () => true);
+    return this.decide({ op: "undo", questionId }, () => {
+      this.answered.delete(questionId);
+      return true;
+    });
   }
 
   undo(questionId: string): { cellsAffected: number; rowsAffected: number; unresolved: number } {

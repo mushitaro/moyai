@@ -481,6 +481,12 @@ export const TEXT = {
       cellExcluded: (why: string) => `除外：${why}`,
       cellUnresolved: "未解決",
       cellQuestion: (text: string) => `この質問に答えると決まります：${text}`,
+      /**
+       * セルを決めた答えの 1 行（docs/screens.md 3.3「答えの取り消し」、Wire、11-07）：「答え　施設全体の共通の設備　人　2026-11-07 06:30」。
+       * 日時は、このタブで答えた時刻が分かるときだけ（版から戻した決定は時刻を持たない）
+       */
+      answerLine: (answer: string, author: string, at: string | null) => ["答え", answer, author, ...(at ? [at] : [])].join("　"),
+      undo: "取り消す",
       loading: "読込中",
     },
     /** 下の帯の止まった知らせ（docs/screens.md 3.3「止まった知らせ」）と、押したときの詳細 */

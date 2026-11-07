@@ -13,7 +13,15 @@ import { nameKey, parseEffort } from "./text";
 import { cue } from "./cues";
 import { markPhotoRecords, type PhotoReview } from "./photo";
 
-export type CellStatus = { s: "data" } | { s: "excluded"; reason: string } | { s: "unresolved"; questionId: string | null };
+/**
+ * セルの行き先。画面への写しだけに使う（版の記録・署名される字には入れない）。
+ * qs：そのセルを決めた質問の ID の並び（答えが効いている質問だけ。機器の節・明細・除外を決めたときの decidedBy から）。無ければ付けない。
+ * questionId：未解決のセルを決める質問（分かるときだけ）
+ */
+export type CellStatus =
+  | { s: "data"; qs?: string[] }
+  | { s: "excluded"; reason: string; qs?: string[] }
+  | { s: "unresolved"; questionId: string | null };
 
 export interface FileCounts {
   file: string;
@@ -89,7 +97,7 @@ function checkTotals(
   lay: SheetLayout,
   t: Table,
   ask: Asker,
-  exclude: (ref: string, why: string) => void,
+  exclude: (ref: string, why: string, qs?: readonly string[]) => void,
   pend: (ref: string, q: string | null) => void,
   eventOf: (r: number) => EventRec | undefined,
 ): CheckResult[] {
@@ -195,7 +203,7 @@ function checkTotals(
         sameShapeRows: 1,
         items: [{ file: lay.file, sheet: lay.sheet, cells: res.mismatches.map((m) => m.ref) }],
       });
-      for (const c of groupCells) a === "exclude" ? exclude(c.ref, `${label}（検算で合わなかった。決定で外した）`) : pend(c.ref, questionIdOf(key));
+      for (const c of groupCells) a === "exclude" ? exclude(c.ref, `${label}（検算で合わなかった。決定で外した）`, [questionIdOf(key)]) : pend(c.ref, questionIdOf(key));
     }
     out.push(res);
   }
@@ -213,13 +221,25 @@ export function compose(
 ): Composition {
   const status = new Map<string, CellStatus>();
   const excluded = new Map(rec.excluded);
-  const pending = new Map<string, string | null>([...rec.pending].map((k) => [k, null]));
+  /** 除外を決めた質問（セルの鍵 → 質問の ID。除外の理由と一緒に置き直す。画面の写しだけに使う） */
+  const excludedBy = new Map<string, readonly string[]>();
+  const exclude = (k: string, why: string, qs: Iterable<string> = []) => {
+    excluded.set(k, why);
+    const list = [...new Set(qs)];
+    if (list.length) excludedBy.set(k, list);
+    else excludedBy.delete(k);
+  };
+  const pending = new Map<string, string | null>([...rec.pending].map((k) => [k, rec.pendingBy.get(k) ?? null]));
+  /** 未解決にする。決める質問が分からない（null）ときは、先に分かっていた質問を消さない */
+  const pend = (k: string, q: string | null) => {
+    if (q !== null || !pending.get(k)) pending.set(k, q);
+  };
   const checks: CheckResult[] = [];
   const eventAt = new Map<string, EventRec>();
   for (const e of rec.events) eventAt.set(`${e.tableId}\u0000${e.row}`, e);
   for (const lay of layouts) {
-    const ex = (ref: string, why: string) => excluded.set(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), why);
-    const pd = (ref: string, q: string | null) => pending.set(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), q);
+    const ex = (ref: string, why: string, qs?: readonly string[]) => exclude(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), why, qs);
+    const pd = (ref: string, q: string | null) => pend(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), q);
     for (const t of lay.tables) checks.push(...checkTotals(lay, t, ask, ex, pd, (r) => eventAt.get(`${t.id}\u0000${r}`)));
   }
 
@@ -278,6 +298,8 @@ export function compose(
   // 印の出どころ：印のセルと、行ごとに作業の列を書く星取表ならその行の作業の名前のセル
   const markSources = (m: MarkRec) => [refOf(m.file, m.sheet, m.ref), ...(m.workRef ? [refOf(m.file, m.sheet, m.workRef)] : [])];
   const assets: AssetNodeT[] = [];
+  /** 機器の節・明細を決めた質問（画面の写しの qs に使う。計画には入れない） */
+  const decidedOf = new Map<AssetNodeT | WorkDetailT, readonly string[]>();
   for (const c of live) {
     if (c.pending) continue;
     const specs: { key: string; value: string }[] = [];
@@ -290,7 +312,7 @@ export function compose(
       for (const ref of r.refs) sources.push(refOf(r.file, r.sheet, ref));
     }
     const parent = c.parent && !c.parent.excluded && !c.parent.pending ? c.parent : null;
-    assets.push({
+    const node: AssetNodeT = {
       nodeKey: keyOf.get(c) ?? "",
       tag: c.tag,
       name: c.name,
@@ -307,7 +329,9 @@ export function compose(
       replacedOn: null,
       series: c.series ? (c.series.kind === "number" ? String(c.series.n) : `common.${c.series.meaning}`) : null,
       sources,
-    });
+    };
+    assets.push(node);
+    decidedOf.set(node, [...c.decidedBy]);
   }
 
   // ─── 作業と明細 ───
@@ -359,7 +383,9 @@ export function compose(
     let i = 2;
     while (detailKeys.has(k)) k = `d-${hash(`${seed}|${i++}`)}`;
     detailKeys.add(k);
-    details.push({ ...d, detailKey: k });
+    const detail: WorkDetailT = { ...d, detailKey: k };
+    details.push(detail);
+    decidedOf.set(detail, qids);
     for (const q of new Set(qids)) {
       const a = decisions.get(q)?.author;
       if (a === "ai" || a === "ai_relayed_human") affected.set(q, [...(affected.get(q) ?? []), k]);
@@ -637,43 +663,62 @@ export function compose(
   }
   for (const l of lk.links) {
     const evs = l.job.units.flatMap((u) => u.events);
-    if (l.mode === "excluded") for (const e of evs) for (const ref of e.refs) excluded.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), "作業を外した（決定）");
-    if (l.mode === "pending") for (const e of evs) for (const ref of e.refs) pending.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), null);
+    if (l.mode === "excluded") for (const e of evs) for (const ref of e.refs) exclude(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), "作業を外した（決定）", l.decidedBy);
+    if (l.mode === "pending") for (const e of evs) for (const ref of e.refs) pend(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), l.waitingOn ?? null);
   }
-  for (const { j, q } of conflictPending) for (const e of j.units.flatMap((u) => u.events)) for (const ref of e.refs) pending.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), q);
+  for (const { j, q } of conflictPending) for (const e of j.units.flatMap((u) => u.events)) for (const ref of e.refs) pend(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), q);
   for (const e of rec.events) {
-    if (lk.eventPending.has(e.id)) for (const ref of e.refs) pending.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), null);
+    if (lk.eventPending.has(e.id)) for (const ref of e.refs) pend(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), null);
     const why = lk.eventExcluded.get(e.id);
-    if (why) for (const ref of e.refs) excluded.set(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), why);
+    if (why) for (const ref of e.refs) exclude(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), why, lk.eventExcludedBy.get(e.id));
   }
+  // 機器を外した決定の質問（機器の記録ごと）。外した機器の上の印にも付ける
+  const assetExcludedQs = (c: Cluster) => c.recs.flatMap((r) => (r.excluded && lk.assetExcludedBy.has(r.id) ? [lk.assetExcludedBy.get(r.id) as string] : []));
   for (const c of lk.clusters) {
-    if (c.excluded) for (const r of c.recs) for (const ref of r.refs) excluded.set(cellKey({ file: r.file, sheetIndex: r.sheetIndex, ref }), r.excluded ?? c.excluded);
-    if (c.pending) for (const r of c.recs) for (const ref of r.refs) pending.set(cellKey({ file: r.file, sheetIndex: r.sheetIndex, ref }), null);
+    if (c.excluded)
+      for (const r of c.recs) {
+        const q = lk.assetExcludedBy.get(r.id);
+        for (const ref of r.refs) exclude(cellKey({ file: r.file, sheetIndex: r.sheetIndex, ref }), r.excluded ?? c.excluded, r.excluded && q ? [q] : []);
+      }
+    if (c.pending) for (const r of c.recs) for (const ref of r.refs) pend(cellKey({ file: r.file, sheetIndex: r.sheetIndex, ref }), lk.assetWaitingOn.get(r.id) ?? null);
   }
   for (const m of rec.marks) {
     const c = m.assetId ? lk.clusterOf.get(m.assetId) : undefined;
     const k = cellKey({ file: m.file, sheetIndex: m.sheetIndex, ref: m.ref });
-    if (c?.excluded && !m.excluded) excluded.set(k, "機器を外した（決定）");
-    if (c?.pending) pending.set(k, null);
+    if (c?.excluded && !m.excluded) exclude(k, "機器を外した（決定）", assetExcludedQs(c));
+    if (c?.pending) pend(k, c.recs.map((r) => lk.assetWaitingOn.get(r.id)).find((q) => !!q) ?? null);
   }
 
   // ─── 行き先を数える ───
-  const dataKeys = new Set<string>();
+  /** データのセル → そのセルを出どころにする機器の節・明細を決めた質問 */
+  const dataKeys = new Map<string, Set<string>>();
   const sheetIndexOf = new Map<string, number>();
   for (const lay of layouts) sheetIndexOf.set(`${lay.file}\u0000${lay.sheet ?? ""}`, lay.sheetIndex);
-  const addData = (s: { file: string; sheet: string | null; cell: string | null }) => {
+  const addData = (s: { file: string; sheet: string | null; cell: string | null }, qs: readonly string[]) => {
     const si = sheetIndexOf.get(`${s.file}\u0000${s.sheet ?? ""}`) ?? 0;
-    if (s.cell) dataKeys.add(cellKey({ file: s.file, sheetIndex: si, ref: s.cell }));
+    if (!s.cell) return;
+    const k = cellKey({ file: s.file, sheetIndex: si, ref: s.cell });
+    const set = dataKeys.get(k) ?? new Set<string>();
+    for (const q of qs) set.add(q);
+    dataKeys.set(k, set);
   };
-  for (const a of assets) for (const s of a.sources) addData(s);
-  for (const d of details) for (const s of d.sources) addData(s);
+  for (const a of assets) for (const s of a.sources) addData(s, decidedOf.get(a) ?? []);
+  for (const d of details) for (const s of d.sources) addData(s, decidedOf.get(d) ?? []);
+  // セルを決めた質問は、答えが効いているものだけ（答えの無い質問・当てはまらない決定・聞かなかった質問の ID は付けない）
+  const qsOf = (qs: Iterable<string> | undefined): { qs?: string[] } => {
+    const list = [...new Set(qs ?? [])].filter((q) => {
+      const st = ask.asked.get(q);
+      return !!st?.decision && !st.invalid;
+    });
+    return list.length ? { qs: list } : {};
+  };
   const strays: { lay: SheetLayout; ref: string }[] = [];
   for (const lay of layouts) {
     for (const cell of lay.grid.cells) {
       const k = cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref: cell.ref });
       if (pending.has(k)) status.set(k, { s: "unresolved", questionId: pending.get(k) ?? null });
-      else if (dataKeys.has(k)) status.set(k, { s: "data" });
-      else if (excluded.has(k)) status.set(k, { s: "excluded", reason: excluded.get(k) ?? "" });
+      else if (dataKeys.has(k)) status.set(k, { s: "data", ...qsOf(dataKeys.get(k)) });
+      else if (excluded.has(k)) status.set(k, { s: "excluded", reason: excluded.get(k) ?? "", ...qsOf(excludedBy.get(k)) });
       else if (lay.rowReasons.has(cell.r)) status.set(k, { s: "excluded", reason: lay.rowReasons.get(cell.r) ?? "" });
       else {
         const role = lay.rowRoles.get(cell.r);
@@ -705,7 +750,7 @@ export function compose(
     });
     for (const ref of refs) {
       const k = cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref });
-      status.set(k, a === "exclude" ? { s: "excluded", reason: "意味の決まらないセル（決定で外した）" } : { s: "unresolved", questionId: questionIdOf(key) });
+      status.set(k, a === "exclude" ? { s: "excluded", reason: "意味の決まらないセル（決定で外した）", ...qsOf([questionIdOf(key)]) } : { s: "unresolved", questionId: questionIdOf(key) });
     }
   }
 

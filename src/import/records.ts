@@ -138,6 +138,8 @@ export interface Records {
   /** 外したセル（理由つき）と、未解決のまま残ったセル */
   excluded: Map<string, string>;
   pending: Set<string>;
+  /** 未解決のセル → それを決める質問の ID（分かるときだけ。画面の写しに使う） */
+  pendingBy: Map<string, string>;
   /** 星取表の年の範囲（表ごと） */
   gridYears: Map<string, { from: number; to: number }>;
   /** 表 → 同じ様式の表のまとまり（問いをまとめる鍵）。まとまりの表の顔ぶれが変われば鍵も変わる（聞き直す） */
@@ -173,6 +175,9 @@ export function filesLabel(files: string[]): string {
   return files.length <= 2 ? files.join(" と ") : `${files.slice(0, 2).join("・")} ほか ${files.length - 2} 冊`;
 }
 
+/** セルを未解決にする。q はそのセルを決める質問の ID（分かるときだけ） */
+type Pend = (ref: string, q?: string | null) => void;
+
 export interface RecordOptions {
   fiscalYearStartMonth: number;
 }
@@ -189,12 +194,16 @@ function shapeOf(text: string): string {
 }
 
 export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOptions, date1904Of: (file: string) => boolean): Records {
-  const rec: Records = { assets: [], marks: [], events: [], levelNames: new Map(), excluded: new Map(), pending: new Set(), gridYears: new Map(), formOf: formGroups(layouts) };
+  const rec: Records = { assets: [], marks: [], events: [], levelNames: new Map(), excluded: new Map(), pending: new Set(), pendingBy: new Map(), gridYears: new Map(), formOf: formGroups(layouts) };
   let order = 0;
   for (const lay of layouts) {
     const pos = (ref: string): CellPos => ({ file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, ref });
     const exclude = (ref: string, why: string) => rec.excluded.set(cellKey(pos(ref)), why);
-    const pend = (ref: string) => rec.pending.add(cellKey(pos(ref)));
+    const pend: Pend = (ref, q = null) => {
+      const k = cellKey(pos(ref));
+      rec.pending.add(k);
+      if (q && !rec.pendingBy.has(k)) rec.pendingBy.set(k, q);
+    };
     // 計算済みの値の無い数式のセルは、決定（外す）か未解決のどちらかだけ。記録には使わない
     formulaQuestions(lay, ask, exclude, pend);
     const noCache = new Set(lay.grid.cells.filter((c) => c.formulaNoCache).map((c) => c.ref));
@@ -217,7 +226,7 @@ export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOpt
 }
 
 /** 層 2 の問いの種を質問にし、決定を当てる */
-function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, formKey: string) {
+function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref: string, why: string) => void, pend: Pend, formKey: string) {
   for (const is of t.issues) {
     if (is.kind === "levelJump") continue; // 段が決まってから（treeRecords で）
     // 列の役目は様式の決まり：同じ様式の表（年度ごとのシート・帳票の頁）は、同じ列をまとめて 1 回聞く
@@ -246,7 +255,7 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
       for (const r of t.rows) if (is.rows.includes(r.r)) r.level = lv;
     } else if (is.kind === "yearKind") {
       t.yearKind = a === "fiscal" ? "fiscal" : a === "calendar" ? "calendar" : null;
-      if (!a) for (const c of t.cols.filter((x) => x.role === "mark")) pendColumn(t, lay, c, pend);
+      if (!a) for (const c of t.cols.filter((x) => x.role === "mark")) pendColumn(t, lay, c, pend, questionIdOf(key));
     } else if (is.kind === "hiddenData") {
       if (a === "exclude") {
         for (const c of t.cols.filter((x) => x.hidden)) for (const r of t.rows) {
@@ -255,8 +264,8 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
         }
         for (const r of t.rows.filter((x) => is.rows.includes(x.r))) for (const cell of lay.index.rowCells(r.r)) exclude(cell.ref, "隠した行（決定で外した）");
       } else if (!a) {
-        for (const ref of is.cells) pend(ref);
-        for (const r of is.rows) for (const cell of lay.index.rowCells(r)) pend(cell.ref);
+        for (const ref of is.cells) pend(ref, questionIdOf(key));
+        for (const r of is.rows) for (const cell of lay.index.rowCells(r)) pend(cell.ref, questionIdOf(key));
       }
     } else if (is.kind === "blankSameAsAbove") {
       (t as Table & { blankDecision?: Map<number, string | null> }).blankDecision ??= new Map();
@@ -272,22 +281,22 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
             const cell = lay.index.at(r.r, c);
             if (cell) exclude(cell.ref, "役目の決まらない列（決定で外した）");
           }
-        } else pendColumn(t, lay, col, pend);
+        } else pendColumn(t, lay, col, pend, questionIdOf(key));
       }
     }
   }
 }
 
-function pendColumn(t: Table, lay: SheetLayout, col: ColInfo, pend: (ref: string) => void) {
+function pendColumn(t: Table, lay: SheetLayout, col: ColInfo, pend: Pend, q: string | null = null) {
   for (const r of t.rows) {
     const cell = lay.index.at(r.r, col.c);
-    if (cell) pend(cell.ref);
+    if (cell) pend(cell.ref, q);
   }
 }
 
 // ─── 名前の中の機器番号 ───────────────────────────────────────
 
-type TagState = { state: "split"; split: TagSplit } | { state: "keep" } | { state: "undecided" };
+type TagState = { state: "split"; split: TagSplit } | { state: "keep" } | { state: "undecided"; q: string };
 
 function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; text: string; ref: string }[]): Map<number, TagState> {
   const out = new Map<number, TagState>();
@@ -307,7 +316,8 @@ function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; 
       sameShapeRows: items.length,
       items: items.map((i) => itemOf(lay, [i.ref], { note: i.split.tag })),
     });
-    for (const i of items) out.set(i.r, a === "yes" ? { state: "split", split: i.split } : a === "no" ? { state: "keep" } : { state: "undecided" });
+    const q = questionIdOf(`tagSplit|${t.id}|${pattern}`);
+    for (const i of items) out.set(i.r, a === "yes" ? { state: "split", split: i.split } : a === "no" ? { state: "keep" } : { state: "undecided", q });
   }
   return out;
 }
@@ -341,7 +351,7 @@ function splitUnitSuffix(text: string): { name: string; n: number } | null {
   return u?.kind === "number" ? { name: (m[1] ?? "").trim(), n: u.n } : null;
 }
 
-function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): number {
+function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: Pend, off: Off): number {
   // 名前の列は 1 つか、段ごとに名前を書く列の組（どれも名前の列。行ごとに、名前のある列）
   const nameCols = t.cols.filter((c) => c.role === "name");
   const nameCol = nameCols[0];
@@ -356,7 +366,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       sameShapeRows: t.rows.length,
       items: [itemOf(lay, t.rows.slice(0, 10).map((r) => cellRef(r.r, 1)))],
     });
-    for (const r of t.rows) for (const cell of lay.index.rowCells(r.r)) (a === "exclude" ? exclude(cell.ref, "名前の列の無い表（決定で外した）") : pend(cell.ref));
+    for (const r of t.rows) for (const cell of lay.index.rowCells(r.r)) (a === "exclude" ? exclude(cell.ref, "名前の列の無い表（決定で外した）") : pend(cell.ref, questionIdOf(`noName|${t.id}`)));
     return order;
   }
   assignParents(t, nameCol.c);
@@ -453,7 +463,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         sameShapeRows: 1,
         items: [itemOf(lay, cells.map((c) => c.ref))],
       });
-      for (const c of cells) if (!off(c.ref)) (a === "exclude" ? exclude(c.ref, "名前の欄が空の行（決定で外した）") : pend(c.ref));
+      for (const c of cells) if (!off(c.ref)) (a === "exclude" ? exclude(c.ref, "名前の欄が空の行（決定で外した）") : pend(c.ref, questionIdOf(`noNameRow|${t.id}`)));
       continue;
     }
     if (r.level === -1) {
@@ -549,7 +559,9 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       a.specs.push({ key, value: c.text, ref: c.ref });
       a.refs.push(c.ref);
     }
-    if (a.pending) for (const ref of a.refs) pend(ref);
+    // 機器番号の分け方だけを待っている行は、その質問が決める
+    const waiting = ts?.state === "undecided" && r.level !== null && !dittoPending ? ts.q : null;
+    if (a.pending) for (const ref of a.refs) pend(ref, waiting);
     rec.assets.push(a);
   }
   // 年として読めない設置年：書き方ごとにまとめて聞く（日付に見えない書き方を年と決めつけない）
@@ -1890,7 +1902,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
 
 // ─── 数式があって計算済みの値が無いセル ─────────────────────────
 
-function formulaQuestions(lay: SheetLayout, ask: Asker, exclude: (ref: string, why: string) => void, pend: (ref: string) => void) {
+function formulaQuestions(lay: SheetLayout, ask: Asker, exclude: (ref: string, why: string) => void, pend: Pend) {
   const cells = lay.grid.cells.filter((c) => c.formulaNoCache);
   if (!cells.length) return;
   const a = ask.ask(`formulaNoCache|${lay.file}|${lay.sheetIndex}`, {
@@ -1902,7 +1914,7 @@ function formulaQuestions(lay: SheetLayout, ask: Asker, exclude: (ref: string, w
     sameShapeRows: cells.length,
     items: [itemOf(lay, cells.slice(0, 10).map((c) => c.ref))],
   });
-  for (const c of cells) a === "exclude" ? exclude(c.ref, "数式に計算済みの値が無い（決定で外した）") : pend(c.ref);
+  for (const c of cells) a === "exclude" ? exclude(c.ref, "数式に計算済みの値が無い（決定で外した）") : pend(c.ref, questionIdOf(`formulaNoCache|${lay.file}|${lay.sheetIndex}`));
 }
 
 export function gridOf(lay: SheetLayout): SheetGrid {
