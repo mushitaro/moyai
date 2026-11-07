@@ -375,7 +375,7 @@ export const TOOLS = {
     "intake_survey",
     "read",
     "取り込みの要約",
-    "結果の workScreenUrl は作業画面の URL。利用者が「画面を出して」と言ったら、窓を探さずにこの URL を開く（開いた新しいタブが作業画面になる）。デモ（架空の資料）のときは、1 回の返事でツールを 1 つだけ呼び、画面の変わった所を 2 行までで言って、利用者の「次」を待つ（intake_add_files の説明のとおり）。作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
+    "結果の workScreenUrl は作業画面の URL。利用者が「画面を出して」と言ったら、窓を探さずにこの URL を開く（開いた新しいタブが作業画面を引き継ぐ。ふだんは外のブラウザ〔Claude in Chrome かシェル〕で開き、デモだけは中のブラウザでよい）。デモ（架空の資料）のときは、1 回の返事でツールを 1 つだけ呼び、画面の変わった所を 2 行までで言って、利用者の「次」を待つ（intake_add_files の説明のとおり）。作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
     z.object({ part: z.enum(["all", "questions", "compose", "crosswalk", "skills"]).default("all") }),
     z.object({
       files: z.array(z.object({ fileRef: z.string(), sheets: z.number().int(), rows: z.number().int() })),

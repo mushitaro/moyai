@@ -1,6 +1,6 @@
 // human-only（docs/plan.md §5.1）：人だけの経路は、素の HTTP・Origin の無い POST・偽った Origin で秘密なし・
 // 使い終えた印・切れた印を、すべて拒む。拒む試験は消さない。
-// あわせて、Host の違う要求、2 つ目のタブ、Origin の無い WebSocket、生存確認、中継の経路の守りを試す。
+// あわせて、Host の違う要求、あとから開いたタブの引き継ぎ、Origin の無い WebSocket、生存確認、中継の経路の守りを試す。
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
@@ -220,7 +220,7 @@ describe("タブとの WebSocket", () => {
     await expect(t.opened).rejects.toThrow(/refused 421/);
   });
 
-  it("2 つ目のタブは断り、理由を出す", async () => {
+  it("あとから開いたタブが引き継ぎ、前のタブには理由を送って閉じる（11-07）", async () => {
     tb = await startTestBridge();
     const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
     await a.opened;
@@ -229,13 +229,14 @@ describe("タブとの WebSocket", () => {
     const b = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
     await b.opened;
     b.send("tab.hello", { secret: SECRET_B, build: "t" });
-    const refused = await b.next("bridge.refused");
-    expect(refused.code).toBe("tab_already_open");
+    await b.next("bridge.welcome");
+    const refused = await a.next("bridge.refused");
+    expect(refused.code).toBe("tab_taken_over");
     expect(refused.message.length).toBeGreaterThan(0);
-    expect(await b.closed).toBe(4001);
-    // 1 つ目は生きたまま。2 つ目の秘密では人だけの経路を通れない
-    expect(tb.bridge.tabs.checkSecret(SECRET_B)).toBe("secret_mismatch");
-    expect(tb.bridge.tabs.checkSecret(SECRET_A)).toHaveProperty("session");
+    expect(await a.closed).toBe(4001);
+    // 前のタブの秘密では人だけの経路を通れない。あとのタブの秘密で通る
+    expect(tb.bridge.tabs.checkSecret(SECRET_A)).toBe("secret_mismatch");
+    expect(tb.bridge.tabs.checkSecret(SECRET_B)).toHaveProperty("session");
   });
 
   it("1 つ目が閉じたら、次のタブを受ける", async () => {

@@ -284,7 +284,7 @@ export const ERRORS = {
     text: "その写真の格子は、人が画面で直したか確かめています。どのセルも置いていません。変えるときは、利用者に画面で直してもらってください。",
   },
   // 橋渡し → タブ（WebSocket）
-  tab_already_open: { from: "bridge", to: "tab", text: "作業画面はほかのタブで開いています。" },
+  tab_taken_over: { from: "bridge", to: "tab", text: "作業画面は、あとから開いたタブに移りました。" },
   hello_invalid: { from: "bridge", to: "tab", text: "最初の握手の形が違います。" },
   hello_timeout: { from: "bridge", to: "tab", text: "最初の握手が時間内に来ませんでした。" },
   // 橋渡し → タブ（HTTP。正しいタブだけがこれらの経路を呼ぶ）

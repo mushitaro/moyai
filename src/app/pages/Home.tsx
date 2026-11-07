@@ -20,8 +20,8 @@ export function Home({ client }: { client: BridgeClient }) {
     <div className="moyai-top-page">
       <div className="moyai-top-body">
         {state.kind === "refused" && (
-          <Alert color="red" title={TEXT.connection.refused} data-testid="refused" mx={32} mt="md">
-            {ERROR_TEXT[state.code]} {TEXT.connection.refusedHelp}
+          <Alert color="red" title={state.code === "tab_taken_over" ? TEXT.connection.takenOver : TEXT.connection.refused} data-testid="refused" data-code={state.code} mx={32} mt="md">
+            {ERROR_TEXT[state.code]} {state.code === "tab_taken_over" ? "" : TEXT.connection.refusedHelp}
           </Alert>
         )}
         {state.kind === "closed" && (

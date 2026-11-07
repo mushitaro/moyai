@@ -22,6 +22,8 @@ export const TEXT = {
     /** 2 分つながらないとき（押せない理由「理由：ブリッジ未接続」と同じ言葉。Wire、11-06） */
     closed: "ブリッジ未接続",
     refusedHelp: "ほかのタブを閉じてから、このタブを読み込み直してください。",
+    /** あとから開いたタブが引き継いだときの、前のタブの題 */
+    takenOver: "ほかのタブに移りました",
     closedHelp: "端末で moyai start が動いているかを確かめ、このタブを読み込み直してください。",
     dropped: (n: number) => `ブリッジからの読めない通信を ${n} 件飛ばしました。`,
   },
@@ -697,7 +699,7 @@ export const TEXT = {
 
 /** ブリッジから受ける誤りの文。src/shared/errors.ts で受け手が tab のものは、すべてここにある。 */
 export const ERROR_TEXT: Record<TabErrorCode, string> = {
-  tab_already_open: "画面はほかのタブで開いています。開けるタブは 1 つだけです。",
+  tab_taken_over: "作業画面は、あとから開いたタブに移りました。",
   hello_invalid: "ブリッジとの最初の握手の形が違いました。",
   hello_timeout: "ブリッジとの最初の握手が時間内に終わりませんでした。",
   host_not_allowed: "宛先の名前が違うので、ブリッジが断りました。",

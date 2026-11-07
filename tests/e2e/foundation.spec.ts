@@ -87,17 +87,22 @@ test("作業画面・2 つ目のタブ・確定の試し・Ed25519", async ({ pa
     expect(fontRequests.filter((u) => !u.startsWith(base))).toEqual([]);
   });
 
-  await test.step("2 つ目のタブは断られ、理由が出る", async () => {
+  await test.step("あとから開いたタブが引き継ぎ、前のタブには「ほかのタブに移りました」が出る", async () => {
     const second = await context.newPage();
     await second.goto(base);
-    await expect(second.getByTestId("refused")).toBeVisible();
-    await expect(second.getByTestId("connection")).toHaveAttribute("data-state", "refused");
-    // 確定の試しは、設定の画面の下の開発の道具にある
-    await second.goto(`${base}#/settings`);
-    await expect(second.getByTestId("trial-open")).toBeDisabled();
-    await expect(second.getByTestId("trial-disabled-reason")).toBeVisible();
-    await second.screenshot({ path: shot(`second-tab-${tag}`) });
+    await expect(second.getByTestId("connection")).toHaveAttribute("data-state", "open");
+    await expect(page.getByTestId("refused")).toBeVisible();
+    await expect(page.getByTestId("refused")).toHaveAttribute("data-code", "tab_taken_over");
+    await expect(page.getByTestId("connection")).toHaveAttribute("data-state", "refused");
+    // 前のタブでは、確定の試しは押せない
+    await page.goto(`${base}#/settings`);
+    await expect(page.getByTestId("trial-open")).toBeDisabled();
+    await expect(page.getByTestId("trial-disabled-reason")).toBeVisible();
+    await page.screenshot({ path: shot(`second-tab-${tag}`) });
     await second.close();
+    // 前のタブを読み込み直すと、またこのタブが作業画面になる
+    await page.reload();
+    await expect(page.getByTestId("connection")).toHaveAttribute("data-state", "open");
   });
 
   await test.step("確定の試し：印を受け取り、人だけの経路を通る（何も変えない）", async () => {

@@ -1,4 +1,5 @@
-// タブとの WebSocket。タブは 1 つだけ受け、2 つ目は断って理由を出す。
+// タブとの WebSocket。タブは 1 つだけ受ける。あとから開いたタブが引き継ぎ、前のタブには「ほかのタブに移った」と知らせて閉じる
+// （11-07。前は 2 つ目を断っていたので、Claude が開いたタブが使えず、利用者に前のタブを閉じてもらうしかなかった）。
 // 最初の握手でページが作ったタブの秘密を登録する。15 秒ごとに生存を確かめ、45 秒答えが無ければ切れたと見なす。
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import type { WebSocket } from "ws";
@@ -143,7 +144,15 @@ export class TabHub {
 
   onHello(conn: Conn, data: EventData<"tab.hello">): void {
     if (conn.active) return; // 2 回目の握手は無視する
-    if (this.active) return this.refuse(conn, "tab_already_open");
+    // 前のタブがあれば、あとから開いたこのタブが引き継ぐ。前のタブの待っている呼び出しは終え、前のタブには理由を送って閉じる
+    const prev = this.active;
+    if (prev) {
+      this.active = null;
+      this.dropCalls(prev.ws);
+      this.send(prev.ws, "bridge.refused", { code: "tab_taken_over", message: errorBody("tab_taken_over").error.message });
+      prev.ws.close(CLOSE_REFUSED, "tab_taken_over");
+      this.o.log("あとから開いた作業画面のタブが引き継ぎました");
+    }
     const tab: ActiveTab = { ws: conn.ws, secret: Buffer.from(data.secret, "utf8"), session: randomUUID(), lastSeen: this.o.now() };
     conn.active = tab;
     this.active = tab;

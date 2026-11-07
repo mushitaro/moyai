@@ -19,7 +19,7 @@ const CHROME_MAC: BrowserInfo = { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac 
 const CHROME_LINUX: BrowserInfo = { userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36" };
 
 const OPEN: ConnectionState = { kind: "open", tokenTtlMs: 120_000 };
-const NOT_OPEN: ConnectionState[] = [{ kind: "connecting" }, { kind: "reconnecting" }, { kind: "closed" }, { kind: "refused", code: "tab_already_open" }];
+const NOT_OPEN: ConnectionState[] = [{ kind: "connecting" }, { kind: "reconnecting" }, { kind: "closed" }, { kind: "refused", code: "tab_taken_over" }];
 
 /** 橋渡しの握手を受けた（つながった）タブの側。WebSocket はつながない */
 function openClient(): BridgeClient {
