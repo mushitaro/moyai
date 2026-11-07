@@ -23,6 +23,7 @@ test("MOYAI のツール名が使わない名前と 1 つも一致しない", (t
   const hits = names.filter((n) => reserved.includes(n));
   assert.deepEqual(hits, []);
   // docs/plan.md §2.13 の 12 と、§2.17 の読み方の 3（reading_rules_propose・reading_skill_register・reading_skills_list）と、
-  // 運営者の決定 11-06「チャットだけで入れる・デモする・消す」の資料を作業画面に入れる 1（intake_add_files）
-  assert.ok(names.length <= 16, `ツールは 16 以下: ${names.length}`);
+  // 運営者の決定 11-06「チャットだけで入れる・デモする・消す」の資料を作業画面に入れる 1（intake_add_files）と、
+  // 運営者の決定 11-07「利用者の想定のプロンプトで、アプリがチャットだけで動く」の作業画面の見せ方を変える 1（screen_set）
+  assert.ok(names.length <= 17, `ツールは 17 以下: ${names.length}`);
 });

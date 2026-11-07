@@ -256,6 +256,15 @@ export interface ChartOptions {
   changes?: ChartChange[];
   /** 似た施設を重ねる（共通の設備項目の行・年度の表のときだけ効く） */
   peers?: PeerOverlay;
+  /**
+   * 施設台帳の階層の並び（見せ方だけ。計画のデータは変えない。仕事 chat-ops-v1）：asset-first（既定）は 設備 › 機器 › 号炉・系統 › 部位、
+   * series-first は 設備 › 号炉・系統 › 機器 › 部位（号炉・系統の行の下に、その号炉・系統の機器を並べる）
+   */
+  levelOrder?: "asset-first" | "series-first";
+  /** 施設台帳の行の並び（見せ方だけ）：親の行の id（いちばん上は ""）→ 子の行の id の並び。並びに無い子は、そのあとに元の順で置く */
+  rowOrder?: Readonly<Record<string, readonly string[]>>;
+  /** 年度の列の最後の年度（見せ方だけ）。計画の最後の年度より後なら、その年度まで列を足す。前なら効かない（星取を隠さない） */
+  lastFiscalYear?: number | null;
 }
 
 export interface ChartModel {
@@ -346,7 +355,13 @@ export const assetKeyOf = (rowId: string): string | null => (rowId.startsWith("n
 /** 号炉・系統の値が「共通」の書き方か（"common" か "common.<意味>"、「共通」） */
 const isCommonSeries = (s: string): boolean => s === "common" || s.startsWith("common.") || s === "共通";
 
-function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>, catalog: ChartCatalog): { roots: Node[]; machineLevel: number | null; unsplit: ReadonlyMap<string, string> } {
+function ledgerTree(
+  plan: Plan,
+  labels: ChartLabels,
+  orphan: Set<string>,
+  catalog: ChartCatalog,
+  seriesFirst = false,
+): { roots: Node[]; machineLevel: number | null; unsplit: ReadonlyMap<string, string> } {
   const byKey = new Map<string, Node>();
   // 号炉・系統の行の字：番号は Skillパックの単位の字で「1 号炉」、共通は「共通」だけ（意味は詳しくに。Wire、11-06）
   const seriesText = (s: string): string =>
@@ -374,20 +389,35 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>, catalo
   };
   /** 分けなかった機器（号炉・系統の欄に「共通」か「―」。名前が号炉・系統と同じ機器は空ける。下の部位は 1 つ飛ばして置く）：行の id → 号炉・系統の欄の字 */
   const unsplit = new Map<string, string>();
+  const seriesName = (a: AssetNodeT) => (a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―"));
   for (const a of plan.assets) {
-    // 分けた機器の節は、号炉・系統の行になる（行の名前は号炉・系統。機器の名前は上の行）
-    const name = split(a) ? (a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―")) : nameOf(a);
+    // 分けた機器の節は、号炉・系統の行になる（行の名前は号炉・系統。機器の名前は上の行）。
+    // 号炉・系統を先に並べるときは、節は機器の行のまま（号炉・系統は上の行）
+    const name = split(a) && !seriesFirst ? seriesName(a) : nameOf(a);
     byKey.set(a.nodeKey, { id: `n:${a.nodeKey}`, level: a.level, parentId: null, name, kind: "node", children: [], direct: [] });
     if (machineLevel !== null && a.level === machineLevel && !split(a))
       unsplit.set(`n:${a.nodeKey}`, sameAsSeries(a) ? "" : a.series !== null ? seriesText(a.series) : (labels.noSeries ?? "―"));
   }
   const roots: Node[] = [];
   const machineRow = new Map<string, Node>();
+  const seriesRow = new Map<string, Node>();
   for (const a of plan.assets) {
     const n = byKey.get(a.nodeKey) as Node;
     const p = a.parentKey !== null ? byKey.get(a.parentKey) : undefined;
     let parent: Node | undefined = p;
-    if (split(a)) {
+    if (split(a) && seriesFirst) {
+      // 号炉・系統を先に：同じ親の下の同じ号炉・系統の字（「1 号炉」「共通」「―」）ごとに 1 行。機器の節はその下
+      const s = seriesName(a);
+      const key = `${p?.id ?? ""}\u0000${s}`;
+      let row = seriesRow.get(key);
+      if (!row) {
+        row = { id: `s:${p?.id ?? ""}|${s}`, level: a.level, parentId: p?.id ?? null, name: s, kind: "node", children: [], direct: [] };
+        seriesRow.set(key, row);
+        if (p) p.children.push(row);
+        else roots.push(row);
+      }
+      parent = row;
+    } else if (split(a)) {
       const key = `${p?.id ?? ""}\u0000${machineKey(a)}`;
       let m = machineRow.get(key);
       if (!m) {
@@ -406,10 +436,12 @@ function ledgerTree(plan: Plan, labels: ChartLabels, orphan: Set<string>, catalo
     } else roots.push(n);
   }
   // 階層は木の深さで数え直す（号炉・系統の行を入れた分、下の部位は 1 つ下がる。分けなかった機器の部位も同じ列に置く）
+  // 号炉・系統を先に並べるときは、分けなかった機器を機器の列（号炉・系統の列の右）に置く
   const relevel = (ns: Node[], level: number) => {
     for (const n of ns) {
-      n.level = level;
-      relevel(n.children, unsplit.has(n.id) ? level + 2 : level + 1);
+      const skip = unsplit.has(n.id);
+      n.level = skip && seriesFirst ? level + 1 : level;
+      relevel(n.children, skip ? level + 2 : level + 1);
     }
   };
   if (machineLevel !== null) relevel(roots, 1);
@@ -530,9 +562,14 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   // 似た施設は、共通の設備項目の行・年度の表のときだけ重ねる（塊は年度の粒度しか持たない）
   const overlay = opts.peers && opts.mode === "common" && opts.period === "year" ? opts.peers : null;
   const unknownPeer = new Set<string>();
-  const ledger = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan, catalog) : null;
+  const seriesFirst = opts.levelOrder === "series-first";
+  const ledger = opts.mode === "ledger" ? ledgerTree(plan, labels, orphan, catalog, seriesFirst) : null;
   const machineLevel = ledger?.machineLevel ?? null;
   const roots = ledger ? ledger.roots : commonTree(plan, catalog, labels, orphan, overlay, unknownPeer);
+  // 施設台帳の行の並び（人か AI が入れ替えた見せ方）
+  if (ledger && opts.rowOrder) applyRowOrder(roots, opts.rowOrder);
+  /** 号炉・系統の列（0 から）。号炉・系統を先に並べるときは機器の列の左 */
+  const seriesCol = machineLevel === null ? null : seriesFirst ? machineLevel - 1 : machineLevel;
 
   let maxLevel = 0;
   const walkMax = (ns: Node[]) => {
@@ -543,7 +580,8 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   };
   walkMax(roots);
   // 号炉・系統の行を入れたら、機器の階層の名前のあとに、号炉・系統の階層の名前を入れる
-  const planLevels = machineLevel !== null ? [...plan.levelNames.slice(0, machineLevel), catalog.seriesUnit ?? labels.seriesLevel ?? "号炉・系統", ...plan.levelNames.slice(machineLevel)] : plan.levelNames;
+  const planLevels =
+    seriesCol !== null ? [...plan.levelNames.slice(0, seriesCol), catalog.seriesUnit ?? labels.seriesLevel ?? "号炉・系統", ...plan.levelNames.slice(seriesCol)] : plan.levelNames;
   const levelNames =
     opts.mode === "ledger"
       ? Array.from({ length: Math.max(maxLevel, planLevels.length) }, (_, i) => planLevels[i] || labels.levelFallback(i + 1))
@@ -699,7 +737,7 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
     });
     // 号炉・系統を持たない機器の行は、号炉・系統の欄に「―」（空けると上と同じ号炉に読める。Wire）。道（aria-label・chart_rows）には入れない
     const seriesCell = ledger?.unsplit.get(r.id);
-    if (seriesCell !== undefined && r.level < r.levelCells.length) r.levelCells[r.level] = seriesCell;
+    if (seriesCell !== undefined && seriesCol !== null && seriesCol < r.levelCells.length) r.levelCells[seriesCol] = seriesCell;
     prev = r;
   }
 
@@ -708,8 +746,12 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
   return {
     mode: opts.mode,
     levelNames,
-    seriesColumn: machineLevel !== null ? machineLevel : null,
-    periods: buildPeriods(plan, opts.period, [...(opts.layer === "adjusted" ? (opts.changes ?? []) : []).map((c) => c.fiscalYear), ...peerYears]),
+    seriesColumn: seriesCol,
+    periods: buildPeriods(plan, opts.period, [
+      ...(opts.layer === "adjusted" ? (opts.changes ?? []) : []).map((c) => c.fiscalYear),
+      ...peerYears,
+      ...lastYearExtra(plan, opts.lastFiscalYear),
+    ]),
     rows,
     totalRows: total,
     orphanDetails: [...orphan],
@@ -717,6 +759,42 @@ export function buildChart(plan: Plan, catalog: ChartCatalog, labels: ChartLabel
     peersSummary: overlay !== null && !!overlay.summary,
     unknownPeerClasses: [...unknownPeer].sort(),
   };
+}
+
+/** 年度の列の最後の年度を足すか（計画の星取のいちばん遅い年度より後のときだけ。前なら足さない：列は星取を隠さない） */
+function lastYearExtra(plan: Plan, last: number | null | undefined): number[] {
+  if (last === null || last === undefined || !Number.isInteger(last)) return [];
+  if (plan.details.length === 0) return [last];
+  const hi = plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity);
+  return last > hi ? [last] : [];
+}
+
+/** 行の並びを当てる：並びにある子をその順に先に、並びに無い子をそのあとに元の順で置く（深さを問わず、どの親にも効く） */
+function applyRowOrder(ns: Node[], order: Readonly<Record<string, readonly string[]>>, parent = ""): void {
+  const want = order[parent];
+  if (want && want.length > 0) {
+    const at = new Map(want.map((id, i) => [id, i]));
+    const listed = ns.filter((n) => at.has(n.id)).sort((a, b) => at.get(a.id)! - at.get(b.id)!);
+    const rest = ns.filter((n) => !at.has(n.id));
+    ns.splice(0, ns.length, ...listed, ...rest);
+  }
+  for (const n of ns) applyRowOrder(n.children, order, n.id);
+}
+
+/**
+ * 行の並びを入れ替える：node の行を、同じ親の下の before の行の前に置いた、親の子の並び（並びの見せ方に覚える形）。
+ * model は畳まずに作ったもの（隠れた行が無いもの）。行が無ければ row_unknown、親が違えば row_not_sibling
+ */
+export function siblingOrder(model: ChartModel, node: string, before: string): { parent: string; order: string[] } | "row_unknown" | "row_not_sibling" {
+  const own = model.rows.filter((r) => r.kind === "node" || r.kind === "unmapped");
+  const a = own.find((r) => r.id === node);
+  const b = own.find((r) => r.id === before);
+  if (!a || !b) return "row_unknown";
+  if (a.parentId !== b.parentId) return "row_not_sibling";
+  const siblings = own.filter((r) => r.parentId === a.parentId).map((r) => r.id);
+  const order = siblings.filter((id) => id !== node);
+  order.splice(order.indexOf(before), 0, node);
+  return { parent: a.parentId ?? "", order };
 }
 
 /** 段の見出しを押したときの次の畳む段：同じ段なら開き、違う段ならその段で畳む。 */

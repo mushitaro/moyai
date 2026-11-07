@@ -9,6 +9,9 @@ import { errorBody, type ErrorBody, type ErrorCode } from "../shared/errors";
 import {
   INTAKE_ADD_MAX_REFUSED,
   INTAKE_ADD_NOTE,
+  SCREEN_ITEMS,
+  SCREEN_REFUSAL_TEXT,
+  SCREEN_SET_NOTE,
   intakeAddFilesFromTabSchema,
   ROWS_PER_CONVERSATION,
   TOOL_TIMEOUTS,
@@ -42,6 +45,11 @@ export interface BridgeTools {
   intake_add_files?: (args: Record<string, unknown>) => Promise<IntakeCollection | ErrorCode | ErrorBody>;
   /** 作業画面を既定のブラウザで開く（moyai start が開く手を渡したときだけ。試験の橋渡しには無い） */
   work_screen_open?: () => Promise<Record<string, unknown> | ErrorCode>;
+  /**
+   * 作業画面の見せ方（screen_set）の保存先：設定の保存先と同じ確かめ（places.ts の validRoot）を通した道（通らなければ null）と、今の保存先。
+   * 保存はしない（設定は人だけの経路。作業画面が設定の画面の欄に入れ、人が「保存」を押す）
+   */
+  storage_root?: (path: string) => Promise<{ valid: string | null; current: string | null }>;
 }
 
 /** 作業画面に渡した資料の印が効く時間の余り（ツールの待ちの上限に足す） */
@@ -67,6 +75,8 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   reading_skill_register: "tab_then_bridge",
   reading_skills_list: "tab_then_bridge",
   skill_eval: "not_implemented",
+  // 作業画面の見せ方（chat-ops-v1）。保存先の道だけは、渡す前に橋渡しが設定と同じ確かめを通す（保存はしない）
+  screen_set: "tab",
 };
 
 /** image は photo_transcribe の receive だけ（中継が MCP の画像の中身として添える） */
@@ -248,6 +258,26 @@ export class ToolRelay {
       args = { ...args, ledger: { ...l, checked } };
     }
 
+    // 作業画面の見せ方の保存先：設定と同じ確かめを通した道だけを作業画面へ渡す（作業画面は設定の画面の欄に入れるだけ。保存は人）
+    let screenRoot: { valid: string | null; current: string | null } | null = null;
+    if (name === "screen_set" && typeof args.storageRoot === "string") {
+      const h = this.bridgeTools.storage_root;
+      if (!h) return fail("not_implemented");
+      const c = await h(args.storageRoot);
+      screenRoot = { valid: c.valid, current: c.current };
+      const { storageRoot: _root, ...rest } = args;
+      args = c.valid === null ? rest : { ...rest, storageRoot: c.valid };
+      // 保存先のほかに頼みが無く、道が確かめを通らなければ、作業画面へは渡さない
+      if (c.valid === null && !SCREEN_ITEMS.some((k) => k !== "storageRoot" && args[k] !== undefined)) {
+        return finish({
+          changed: [],
+          refused: [{ item: "storageRoot", reason: "root_invalid", text: SCREEN_REFUSAL_TEXT.root_invalid }],
+          current: { theme: null, go: null, levelOrder: null, lastFiscalYear: null, storageRoot: c.current },
+          note: SCREEN_SET_NOTE,
+        });
+      }
+    }
+
     let sendArgs = args;
     const used = this.rowsReadIn(conversation);
     const remaining = Math.max(0, ROWS_PER_CONVERSATION - used);
@@ -304,6 +334,15 @@ export class ToolRelay {
     const parsed = def.output.safeParse(out.data);
     if (!parsed.success) return fail("tab_bad_result");
     let data = parsed.data as Record<string, unknown>;
+    // 作業画面の見せ方の保存先：橋渡しが断った道を答えに足し、今の保存先を添える（作業画面は保存先を知らない）
+    if (name === "screen_set" && screenRoot) {
+      const refused = [...(data.refused as { item: string }[])];
+      if (screenRoot.valid === null) refused.push({ item: "storageRoot", reason: "root_invalid", text: SCREEN_REFUSAL_TEXT.root_invalid } as { item: string });
+      const merged = { ...data, refused, current: { ...(data.current as Record<string, unknown>), storageRoot: screenRoot.current } };
+      const p = def.output.safeParse(merged);
+      if (!p.success) return fail("tab_bad_result");
+      data = p.data as Record<string, unknown>;
+    }
     // 取り込みの見本の行（見本・詰まっている所の行と見出し）も、会話の行の上限に数える（台帳の中-11）。残りを越える分は渡さない
     if (name === "intake_survey") {
       // 先に答えの大きさを上限の内に収める（質問を分け、同じ形の要約と続きを読む道を添える）。行は、収めたあとに残ったものを数える

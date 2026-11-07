@@ -11,6 +11,9 @@ import { NoneMark } from "../components/NoneMark";
 import { KeyCheckDialog, type TrustSig } from "../components/KeyWarn";
 import { packVersion } from "../chart/catalog";
 import { useConnection } from "../state/bridge";
+import { takeRootOffer, useRootOffer } from "../state/screen";
+import { useWorkingPlan } from "../state/plan-store";
+import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
 
 const T = HUMAN_TEXT.settings;
@@ -155,6 +158,19 @@ export function Settings() {
     if (state.kind === "open") void load();
   }, [state.kind, load]);
 
+  // Claude が screen_set で渡した保存先の道（橋渡しが設定と同じ確かめを通したもの）：保存先の欄に入れて開くだけ。保存は人が押す
+  const offered = useRootOffer();
+  const [rootOffered, setRootOffered] = useState(false);
+  useEffect(() => {
+    if (!s || offered === null) return;
+    const path = takeRootOffer();
+    if (path === null) return;
+    setRoot(path);
+    setEditRoot(true);
+    setRootOffered(true);
+  }, [s, offered]);
+  const working = useWorkingPlan();
+
   const orNull = (v: string) => (v.trim() === "" ? null : v.trim());
   const changed = s !== null && (orNull(root) !== s.chosenRoot || orNull(ledger) !== s.ledger || orNull(name) !== s.name);
   const save = async () => {
@@ -165,6 +181,7 @@ export function Settings() {
     if (!r.ok) return setError(r.message);
     // 保存できたら入力を閉じる（「保存しました」は置かない。保存のボタンが押せなくなる。docs/words.md）
     setEditRoot(false);
+    setRootOffered(false);
     setEditName(false);
     setEditLedger(false);
     await load();
@@ -226,6 +243,11 @@ export function Settings() {
                   </Text>
                   <SyncedNotice synced={s.documentsSynced} kind="root" />
                   {s.chosenRoot && <SyncedNotice synced={s.rootSynced} kind="root" />}
+                  {rootOffered && (
+                    <Text size="xs" data-testid="root-offered">
+                      {T.rootOffered}
+                    </Text>
+                  )}
                   <Group align="flex-end" gap="sm">
                     <TextInput style={{ flex: 1 }} label={T.rootInput} value={root} onChange={(e) => setRoot(e.currentTarget.value)} placeholder={s.defaultRoot ?? ""} data-testid="root-input" />
                     <Button variant="default" onClick={() => setRoot("")} disabled={root === ""}>
@@ -399,6 +421,8 @@ export function Settings() {
       )}
       {/* 開発の道具は、設定を読めないとき（2 つ目のタブ・ブリッジ未接続）にも出す（押せない理由を出すため） */}
       <div className="moyai-settings">
+        {/* 表示：星取表の見せ方（施設ごとにブラウザに覚える。橋渡しが無くても変えられる。docs/screens.md に無いので仮の置き場。Wire の確認待ち） */}
+        {row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
         {row(
           T.devTitle,
           <div style={{ color: "var(--text-3)" }}>

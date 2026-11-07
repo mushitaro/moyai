@@ -81,13 +81,16 @@ export interface StarCheckOpts {
   fromLedger: boolean;
   /** 実績を置ける最後の年度（基準日の年度）。無ければ縛らない */
   actualUpTo: number | null;
+  /** 計画の最大年度（施設の見せ方。星取表の列の最後の年度）。計画の最後の年度より後なら、範囲をこの年度まで広げる */
+  lastFiscalYear?: number | null;
 }
 
 /** 星取の案を確かめる（1 つでも合わなければ、どれも置かない）。合えば null、合わなければ誤りのコードと何番目か */
 export function checkStars(plan: Plan, stars: readonly StarIn[], o: StarCheckOpts): { code: StarCode; index: number } | null {
   const years = planYears(plan);
   const works = new Set(plan.works.map((w) => w.workKey));
-  const inRange = (fy: number) => !!years && fy >= years.lo && fy <= years.hi;
+  const hi = years ? Math.max(years.hi, o.lastFiscalYear ?? -Infinity) : -Infinity;
+  const inRange = (fy: number) => !!years && fy >= years.lo && fy <= hi;
   for (const [i, s] of stars.entries()) {
     const wk = workKeyOfRef(s.rowRef);
     if (wk === null || !works.has(wk)) return { code: "star_work_unknown", index: i };

@@ -39,6 +39,8 @@ import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
 import { sheetHash } from "../stages";
 import { andThen, type DroppedFile, type IntakeWorkspace, type Maybe } from "./workspace";
+import { screenSet, type ScreenSetArgs } from "./screen-set";
+import { displayPrefs } from "../state/screen";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -88,16 +90,17 @@ function workRows(rowRef: string, offset: number, limit: number, rowsRemaining: 
   return { ok: true, data: { rows, total: works.length, remainingInConversation: rowsRemaining - rows.length, version: working.revision } };
 }
 
-/** 星取表の行を AI に渡す形：段の道と、印のある年度だけ（印は画面と同じ記号） */
+/** 星取表の行を AI に渡す形：段の道と、印のある年度だけ（印は画面と同じ記号）。階層と行の並びは、画面の星取表と同じ施設の見せ方 */
 function chartRows(view: "base" | "adjusted", offset: number, limit: number, rowsRemaining: number): TabToolResult {
   const working = getWorkingPlan();
   if (!working) return { ok: false, code: "no_working_plan" };
   const { plan } = working;
+  const prefs = displayPrefs(plan.facility.facilityKey);
   const model = buildChart(
     plan,
     catalogFor(plan.packId) ?? emptyCatalog(),
     { levelFallback: TEXT.chart.levelFallback, commonLevels: TEXT.chart.commonLevels, unmapped: TEXT.chart.unmapped, series: TEXT.chart.series },
-    { mode: "ledger", period: "year", layer: view === "base" ? "original" : "adjusted", foldLevel: null },
+    { mode: "ledger", period: "year", layer: view === "base" ? "original" : "adjusted", foldLevel: null, levelOrder: prefs.levelOrder, rowOrder: prefs.rowOrder },
   );
   const take = Math.max(0, Math.min(limit, rowsRemaining));
   const rows = model.rows.slice(offset, offset + take).map((r) => {
@@ -244,6 +247,8 @@ const WHEN_IGNORED: ReadonlySet<string> = new Set(["sameAsset", "answer", "planC
 
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   chart_propose: (ws, args) => chartPropose(ws, args),
+  // 作業画面の見せ方（chat-ops-v1）：人の操作と同じ関数を通す。保存先は設定の画面の欄に入れるだけ（保存は人）
+  screen_set: (ws, args) => screenSet(ws, args as ScreenSetArgs),
   reading_rules_propose: (ws, args) => {
     // AI の経路から来た規則は、作者を AI に固め、決めた人の呼び名は捨てる（人と名乗らせない。台帳の新-8）
     const fromAi = (args.rules as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);

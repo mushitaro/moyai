@@ -539,6 +539,8 @@ export const TEXT = {
       skillsRead: "AI が今効いている Skill の本文を読みました",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の星取 ${marks}。確定のシートで確定するまで未確定）`,
       starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
+      screenSet: (changed: number, refused: number) =>
+        changed > 0 ? `AI が画面の見せ方を ${changed} つ変えました${refused > 0 ? `（変えなかったもの ${refused}）` : ""}` : `AI が画面の見せ方を変えようとしました（変えなかったもの ${refused}）`,
       settled: (n: number, unresolved: number) => `AI が決定を ${n} 個置きました（残りの未解決 ${unresolved} セル）`,
       settleRefused: (n: number) => `AI の決定 ${n} 個を断りました（当てはまらないものがあったので、どれも置いていません）`,
       composeStarted: "AI が計画を作り始めました",

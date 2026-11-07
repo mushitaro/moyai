@@ -156,6 +156,11 @@ const SCHEMAS = {
       })
       .optional(),
     crosswalk: z.array(z.object({ rule: ruleSchema, target: z.enum(["assetNode", "work"]), value: z.string().min(1).max(200), basis: z.string().max(2000) })).max(2000).optional(),
+    /** 画面の星取表の行の並び（見せ方。書き出しの Excel の行の並びにだけ使い、版の記録の計画には入れない。仕事 chat-ops-v1） */
+    rowOrder: z
+      .record(z.string().max(400), z.array(z.string().min(1).max(400)).max(2000))
+      .refine((r) => Object.keys(r).length <= 500)
+      .optional(),
     /** 使った読み方（作業画面が当てていた下書きと承認済みの読み方）。確定のときに橋渡しが保管先に書き（同じ中身なら書き直さない）、道と版を版の記録に書く */
     /** trimmed：案を受けていない計画ルールを削った中身（保管先の今の下書きは書き直さず、versions/ にだけ書く。Architect の 42 の答え 4） */
     readings: z.array(z.object({ skill: z.unknown(), by: z.string().max(40).nullable(), facilityKey: z.string().max(200).nullable(), trimmed: z.boolean().optional() })).max(20).optional(),
@@ -595,6 +600,7 @@ export class HumanService {
           derivedFrom: p.derivedFrom ?? null,
           ...(p.sources ? { sources: p.sources, decisions: p.decisions ?? [], crosswalk: p.crosswalk ?? [] } : {}),
           ...(p.intake ? { intake: p.intake } : {}),
+          ...(p.rowOrder ? { rowOrder: p.rowOrder } : {}),
         });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         const at = now.toISOString();

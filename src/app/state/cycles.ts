@@ -8,6 +8,7 @@ import type { Plan, WorkT } from "../../shared/plan";
 import type { Rule } from "../../shared/tools";
 import { getWorkingPlan, subscribeWorkingPlan, updateWorkingPlan } from "./plan-store";
 import { getCurrentReadings, subscribeCurrentReadings } from "./readings";
+import { displayPrefs } from "./screen";
 
 let seq = 0;
 
@@ -29,6 +30,8 @@ export function proposeCyclesFromAi(
     fromLedger: o.fromLedger,
     ...(o.author ? { author: o.author } : {}),
     ...(o.verified ? { verified: o.verified } : {}),
+    // 施設の計画の最大年度まで出す（見せ方の設定。今の星取は変えない）
+    lastFiscalYear: displayPrefs(working.plan.facility.facilityKey).lastFiscalYear,
   });
   if (!r.ok) return { ok: false, code: r.code === "ledger_basis_mismatch" ? r.code : "tool_failed" };
   const next = updateWorkingPlan(r.plan, working.proposals);
@@ -139,6 +142,7 @@ export function applyPlanRules(readings: readonly LoadedReading[] = getCurrentRe
       fromLedger: false,
       author: "ai",
       planRule: { name: a.from.name, ruleId: a.rule.id },
+      lastFiscalYear: displayPrefs(plan.facility.facilityKey).lastFiscalYear,
       onlyWorks: ((ok) => (w: WorkT) => ok(w) && !rejected.has(rejectKey(key, w.workKey)))(acceptedFor(plan, a.rule)),
     });
     if (!r.ok) continue;

@@ -33,6 +33,7 @@ import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKe
 import { compareCounts, marksOf } from "../../plan/chart-compare";
 import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
+import { useDisplayPrefs } from "../state/screen";
 import { HUMAN_TEXT, TEXT } from "../text";
 
 const T = TEXT.chart;
@@ -359,13 +360,16 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   sideRef.current = side;
   const firstPaint = useRef(true);
 
+  // 施設ごとの見せ方（階層の並び・機器の並び・最大年度。設定の「表示」と AI の screen_set で変える。計画は変えない）
+  const display = useDisplayPrefs(plan.facility.facilityKey);
+  const view = useMemo(() => ({ levelOrder: display.levelOrder, rowOrder: display.rowOrder, lastFiscalYear: display.lastFiscalYear }), [display]);
   const model = useMemo(() => {
     const t0 = performance.now();
     const m = buildChart(
       plan,
       catalog ?? emptyCatalog(),
       { levelFallback: T.levelFallback, commonLevels: T.commonLevels, unmapped: T.unmapped, series: T.series },
-      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel, ...(mode === "common" ? { collapsed } : {}), ...(overlay ? { peers: overlay } : {}) },
+      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel, ...(mode === "common" ? { collapsed } : {}), ...(overlay ? { peers: overlay } : {}), ...view },
     );
     try {
       performance.measure("moyai-chart-build", { start: t0, end: performance.now() });
@@ -373,7 +377,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       // 測れない環境では測らない
     }
     return m;
-  }, [plan, catalog, mode, period, layer, foldLevel, overlay, collapsed]);
+  }, [plan, catalog, mode, period, layer, foldLevel, overlay, collapsed, view]);
   const modelRef = useRef<ChartModel>(model);
   modelRef.current = model;
 
@@ -456,10 +460,10 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       compareWith.plan,
       catalog ?? emptyCatalog(),
       { levelFallback: T.levelFallback, commonLevels: T.commonLevels, unmapped: T.unmapped, series: T.series },
-      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel },
+      { mode: mode === "common" && !catalog ? "ledger" : mode, period, layer, foldLevel, ...view },
     );
     return { version: compareWith.version, before: marksOf(before) };
-  }, [compareWith, catalog, mode, period, layer, foldLevel]);
+  }, [compareWith, catalog, mode, period, layer, foldLevel, view]);
   const compared = useMemo(() => (compare ? compareCounts(compare.before, model) : null), [compare, model]);
 
   // コメントの付いた行（今の行の切り替えの分だけ）

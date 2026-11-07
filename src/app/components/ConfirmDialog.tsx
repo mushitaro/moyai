@@ -9,6 +9,7 @@ import { acceptancesFor, clearAccepted } from "../state/decisions";
 import { settleDraft } from "../state/draft";
 import { pendingDeriveFor, setPendingDerive } from "../state/derive";
 import { getWorkingPlan } from "../state/plan-store";
+import { displayPrefs } from "../state/screen";
 import { sheetHash } from "../stages";
 import { useEffect, useMemo, useState } from "react";
 import { diffPlans, pendingDecisions, type Acceptance, type DiffMark } from "../../plan/diff";
@@ -268,6 +269,8 @@ export function ConfirmDialog({
       // ほかの施設の版から作った新しい施設の第 1 版なら、その元（トップの「この版から別の施設をつくる」）
       derivedFrom: status.latest ? null : pendingDeriveFor(plan.planId),
       origin: location.origin,
+      // 画面の星取表の行の並び（見せ方）：書き出しの Excel を同じ並びにする。版の記録の計画には入らない（仕事 chat-ops-v1）
+      ...(Object.keys(rowOrderOf(plan)).length > 0 ? { rowOrder: rowOrderOf(plan) } : {}),
     };
     const r = readHuman<{ ok: boolean; reason?: string; version: number; at?: string; plan: Plan; files: { version: string; report: string; export: string | null }; mail: HandoffMail | null }>(
       await client.callHuman("plan_commit", ROUTES.planCommit.path, payload),
@@ -587,4 +590,9 @@ function base64Of(b: Uint8Array): string {
   let s = "";
   for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000));
   return btoa(s);
+}
+
+/** 施設の星取表の行の並び（設定の「表示」・AI の screen_set で入れ替えたもの） */
+function rowOrderOf(plan: Plan): Record<string, readonly string[]> {
+  return { ...displayPrefs(plan.facility.facilityKey).rowOrder };
 }

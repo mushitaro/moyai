@@ -356,6 +356,8 @@ export interface CommitInput {
   crosswalk?: VersionCrosswalkRule[];
   /** ほかの施設の版から作った第 1 版のとき、その計画・版・中身のハッシュ（確かめで合う版だけ） */
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
+  /** 書き出しの星取表のシートの行の並び（画面の見せ方。計画と版の記録の計画には入れない。仕事 chat-ops-v1） */
+  rowOrder?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** 計画を確定する：人が受けていない決定が残っていれば止める。版の記録と差分レポートを足す。 */
@@ -418,6 +420,7 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     sources: i.sources,
     decisions: i.decisions,
     crosswalk: i.crosswalk,
+    ...(i.rowOrder ? { rowOrder: i.rowOrder } : {}),
     intake: i.intake,
     signer: i.signer,
     role: i.role ?? "confirm",
@@ -490,6 +493,7 @@ async function writeVersion(
     signer: Signer;
     role?: "confirm" | "edit";
     derivedFrom?: VersionRecord["derivedFrom"];
+    rowOrder?: Readonly<Record<string, readonly string[]>>;
   },
 ): Promise<CommitResult> {
   const dir = planDir(root, v.plan.planId);
@@ -530,7 +534,7 @@ async function writeVersion(
   }
   const reportBytes = await diffReport(base, diff, v.signer.by, removedReasons);
   const c = v.catalogs ? v.catalogs(plan.packId) : null;
-  const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty }) : null;
+  const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty, ...(v.rowOrder ? { rowOrder: v.rowOrder } : {}) }) : null;
   const { plan: _plan, ...head } = base;
   const record: VersionRecord = { ...head, files: { report: sha(reportBytes), export: exportBytes ? sha(exportBytes) : null }, plan };
   // 版の記録の大きさの上限（作業明細の日報の行で厚くなる。Architect の 43 の 1）。越えたら黙って切らずに、署名の前に理由つきで止める

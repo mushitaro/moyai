@@ -60,6 +60,8 @@ export interface ExportInput {
   catalog: ChartCatalog | null;
   /** 名前の表が無いときも台帳の行は描けるように、作業の属性の名前だけの表 */
   emptyCatalog: ChartCatalog;
+  /** 星取表のシートの行の並び（画面の星取表で人か AI が入れ替えた見せ方。chart.ts の rowOrder）。無ければ計画の順 */
+  rowOrder?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** 1 つのシートを書く。返すのは書いたデータの行の数 */
@@ -186,7 +188,7 @@ export async function planWorkbook(input: ExportInput): Promise<Buffer> {
   const opts = { period: "year" as const, layer: "original" as const, foldLevel: null };
 
   const due = planDueViews(input.plan, dueBaseDate(input.at));
-  const ledger = buildChart(input.plan, input.catalog ?? input.emptyCatalog, T.labels, { ...opts, mode: "ledger" });
+  const ledger = buildChart(input.plan, input.catalog ?? input.emptyCatalog, T.labels, { ...opts, mode: "ledger", ...(input.rowOrder ? { rowOrder: input.rowOrder } : {}) });
   const ws1 = wb.addWorksheet(T.sheetLedger);
   writeSheet(ws1, ledger, input, true, due);
   setupPrint(ws1, ledger.levelNames.length);

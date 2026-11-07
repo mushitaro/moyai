@@ -1,6 +1,6 @@
 // 橋渡し（moyai start）：1 プロセス、127.0.0.1 の 1 ポート。
 // HTTP は許可の一覧（src/shared/routes.ts）の経路だけを受け、WebSocket はタブ 1 つだけを受ける。
-import { readSettings } from "./places";
+import { readSettings, validRoot } from "./places";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { dirname } from "node:path";
@@ -168,6 +168,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       });
     },
     ledger_version: async () => human.ledgerHead(),
+    // 作業画面の見せ方（screen_set）の保存先：設定の保存と同じ確かめ（validRoot）だけを通す。保存はしない（人が設定の画面で押す）
+    storage_root: async (path) => ({ valid: validRoot(path), current: await human.root() }),
     reading_skill_register: async (fromTab) => {
       const root = await human.root();
       if (!root) return "no_reading_root";

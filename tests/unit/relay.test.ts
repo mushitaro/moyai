@@ -47,13 +47,13 @@ async function connect(opts: RelayOptions): Promise<Client> {
 }
 
 describe("中継の MCP", () => {
-  it("今見せるツール（16 のうち、F3 の画面を待つ skill_eval を除く 15）を、説明と入力・出力の型つきで出す", async () => {
+  it("今見せるツール（17 のうち、F3 の画面を待つ skill_eval を除く 16）を、説明と入力・出力の型つきで出す", async () => {
     const c = await connect({ stateDir: tempState() });
     const { tools } = await c.listTools();
-    expect(TOOL_NAMES).toHaveLength(16);
+    expect(TOOL_NAMES).toHaveLength(17);
     expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
     expect(tools.map((t) => t.name)).not.toContain("skill_eval");
-    expect(tools).toHaveLength(15);
+    expect(tools).toHaveLength(16);
     for (const t of tools) {
       expect(t.description, t.name).toMatch(/人だけ/);
       expect(t.inputSchema.type).toBe("object");
@@ -104,6 +104,7 @@ describe("中継の MCP", () => {
       reading_rules_propose: { name: "【架空】甲", scope: "facility", rules: [{ id: "r1", text: "1 行目を見出しとして読む", kind: "headerRow", row: 1, author: "ai", reason: "r" }] },
       reading_skill_register: { name: "【架空】甲" },
       intake_add_files: { source: "demo" },
+      screen_set: { theme: "light" },
     };
     for (const name of EXPOSED_TOOL_NAMES) {
       const r = await c.callTool({ name, arguments: args[name] ?? {} });

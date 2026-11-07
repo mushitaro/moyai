@@ -134,6 +134,8 @@ export function proposeCycles(
     planRule?: { name: string; ruleId: string };
     /** 当てる作業を絞る（計画ルールは、項目と属性を人が受けた作業だけ） */
     onlyWorks?: (w: WorkT) => boolean;
+    /** 計画の最大年度（施設の見せ方。仕事 chat-ops-v1）：計画のいちばん遅い年度より後なら、案をこの年度まで出す */
+    lastFiscalYear?: number | null;
   },
 ): CycleOutcome {
   const author = opts.fromLedger ? "ai" : (opts.author ?? "ai");
@@ -153,7 +155,10 @@ export function proposeCycles(
   const nodeItem = new Map(plan.assets.map((a) => [a.nodeKey, a.commonItem]));
   /** 台帳の集計の項目と作業分類の作業か（ほかの作業には台帳の根拠を付けない） */
   const ledgerFits = (w: WorkT) => !lg || (w.attribute === lg.work && w.targets.some((t) => nodeItem.get(t) === lg.commonItem));
-  const horizon = plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity);
+  const horizon = Math.max(
+    plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity),
+    opts.lastFiscalYear ?? -Infinity,
+  );
   const details: WorkDetailT[] = [...plan.details];
   const proposals: CycleProposal[] = [];
   for (const rule of rules) {

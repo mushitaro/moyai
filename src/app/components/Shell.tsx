@@ -12,6 +12,7 @@ import { TEXT } from "../text";
 import { APP_PAGES } from "../../shared/routes";
 import { STAGE_HASH, routeOf, type Stage } from "../stages";
 import { ArrangeButton } from "./ArrangeButton";
+import { applyTheme, bindTheme, noteTheme } from "../state/screen";
 import { BrandMark } from "./BrandMark";
 import { BuildStamp } from "./BuildStamp";
 
@@ -35,12 +36,15 @@ function useConnection(client: BridgeClient): ConnectionState {
 function ThemeSwitch() {
   const { setColorScheme } = useMantineColorScheme();
   const scheme = useComputedColorScheme("dark");
+  // 人が押したときも AI の screen_set（theme）も、同じ applyTheme を通す（state/screen.ts。仕事 chat-ops-v1）
+  useEffect(() => bindTheme(setColorScheme), [setColorScheme]);
+  noteTheme(scheme);
   const item = (value: "dark" | "light", label: string) => (
     <button
       type="button"
       className="moyai-switch-item"
       aria-pressed={scheme === value}
-      onClick={() => setColorScheme(value)}
+      onClick={() => applyTheme(value) || setColorScheme(value)}
       data-testid={`theme-${value}`}
     >
       {label}

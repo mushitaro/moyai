@@ -12,6 +12,7 @@ import type { WorkDetailT } from "../../shared/plan";
 import type { TabSentCode } from "../../shared/errors";
 import { removalHash, removalId, type Acceptance } from "../../plan/diff";
 import { getWorkingPlan, updateWorkingPlan } from "./plan-store";
+import { displayPrefs } from "./screen";
 
 /** 星取の案の確かめの答え → AI に返す誤り（作業画面が送り手。src/shared/errors.ts） */
 const SENT: Record<StarCode, TabSentCode> = {
@@ -90,7 +91,7 @@ export type StarsOutcome =
 export function checkStarsFromAi(stars: readonly StarIn[], o: { author: "ai" | "ai_relayed_human"; verified: VerifiedBases; fromLedger: boolean; actualUpTo: number | null }): TabSentCode | null {
   const w = getWorkingPlan();
   if (!w) return null;
-  const bad = checkStars(w.plan, stars, o);
+  const bad = checkStars(w.plan, stars, { ...o, lastFiscalYear: displayPrefs(w.plan.facility.facilityKey).lastFiscalYear });
   return bad ? SENT[bad.code] : null;
 }
 
@@ -108,7 +109,8 @@ export function proposeStarsFromAi(
   const working = getWorkingPlan();
   if (!working) return { ok: false, code: "no_working_plan" };
   if (o.checkVersion !== false && basedOnVersion !== working.revision) return { ok: false, code: "stale_version" };
-  const bad = checkStars(working.plan, stars, o);
+  // 範囲は星取表の列と同じ（施設の計画の最大年度まで）
+  const bad = checkStars(working.plan, stars, { ...o, lastFiscalYear: displayPrefs(working.plan.facility.facilityKey).lastFiscalYear });
   if (bad) return { ok: false, code: SENT[bad.code] };
   // 案の ID：計画の明細と、ここの案で使っていないもの
   const used = new Set<string>([...working.plan.details.map((d) => proposalIdOf(d.detailKey) ?? ""), ...groups.map((g) => g.id)]);

@@ -375,6 +375,87 @@ const photoTranscribeInput = z
     });
   });
 
+// ─── 作業画面の見せ方（screen_set。仕事 chat-ops-v1）───────────────────
+// チャットの頼みで作業画面を動かす。人だけの操作（確定・署名・送る・承認・昇格）はしない。
+// 保存先は設定（人だけの経路。AGENTS.md・docs/plan.md §2.12）なので、橋渡しが設定と同じ確かめを通した道を、設定の画面の欄に入れて開くだけ。
+
+/** 開く画面とシート（HOSHITORI のシートは hoshitori.<シート>） */
+export const SCREEN_GO = [
+  "top",
+  "hoshitori.chart",
+  "hoshitori.cost",
+  "hoshitori.match",
+  "hoshitori.rules",
+  "hoshitori.review",
+  "hoshitori.decisions",
+  "hoshitori.files",
+  "export",
+  "share",
+  "settings",
+] as const;
+export type ScreenGo = (typeof SCREEN_GO)[number];
+/** 星取表の階層の並び：asset-first（既定）設備 › 機器 › 号炉・系統 › 部位、series-first 設備 › 号炉・系統 › 機器 › 部位 */
+export const LEVEL_ORDERS = ["asset-first", "series-first"] as const;
+export type LevelOrder = (typeof LEVEL_ORDERS)[number];
+export const SCREEN_ITEMS = ["theme", "go", "storageRoot", "levelOrder", "rowOrder", "lastFiscalYear"] as const;
+export type ScreenItem = (typeof SCREEN_ITEMS)[number];
+/** 変えなかった項目の理由（AI に返す文。内部の名前を出さない） */
+export const SCREEN_REFUSAL_TEXT = {
+  root_invalid: "保存先は絶対の道で書く（設定の保存先と同じ確かめで断った）。利用者に道を聞き直す",
+  root_human_save: "保存先は人だけが変える。設定の画面の保存先の欄にこの道を入れて開いたので、利用者に「保存」を押してもらう",
+  not_on_screen: "作業画面がまだこの操作を受けられない（読み込み中）。少し待って呼び直す",
+  no_working_plan: "作業中の計画が無い。計画を作ってから chart_rows の行の id で指す",
+  row_unknown: "node か before が星取表の行に無い。chart_rows で読んだ行の id で指す",
+  row_not_sibling: "node と before が同じ親の下に無い。並びを変えられるのは同じ親の下の行だけ",
+  year_before_stars: "その年度より後に計画の星取がある。列は星取を隠さないので、いちばん遅い星取の年度より前にはしない",
+  go_replaced: "保存先の欄を見せるため、設定の画面を開いた",
+} as const;
+export type ScreenRefusal = keyof typeof SCREEN_REFUSAL_TEXT;
+const SCREEN_REFUSALS = Object.keys(SCREEN_REFUSAL_TEXT) as [ScreenRefusal, ...ScreenRefusal[]];
+/** 結果に添える次の手（Claude Desktop では instructions が効かないので、結果にも書く） */
+export const SCREEN_SET_NOTE =
+  "見せ方（階層の並び・機器の並び・最大年度）は施設ごとに覚え、作業中の計画と版の記録は変えない。確定・署名・送る・承認・昇格は人が画面でする。";
+/** 機器の並びの行の id の形（chart_rows の行の id） */
+const screenRowRef = z.string().min(3).max(400);
+
+const screenSetInput = z
+  .object({
+    theme: z.enum(["light", "dark"]).optional().describe("「ライトモードにして」は light、「ダークモードにして」は dark（ヘッダの 暗 / 明 と同じ）"),
+    go: z.enum(SCREEN_GO).optional().describe("開く画面。「星取表画面に切り替えて」は hoshitori.chart"),
+    storageRoot: z.string().min(1).max(1000).optional().describe("保存先の絶対の道。保存は利用者が設定の画面で押す"),
+    levelOrder: z.enum(LEVEL_ORDERS).optional().describe("「機器階層を入れ替えて表示して」は今と逆の並び（既定は asset-first）"),
+    rowOrder: z
+      .object({ node: screenRowRef, before: screenRowRef })
+      .strict()
+      .optional()
+      .describe("同じ親の下の行の並び。node の行を before の行の前に置く（どちらも chart_rows の行の id）"),
+    lastFiscalYear: z.number().int().min(1900).max(2200).optional().describe("星取表の年度の列の最後の年度（例 2040）"),
+  })
+  .strict()
+  .superRefine((a, ctx) => {
+    if (!SCREEN_ITEMS.some((k) => a[k] !== undefined)) ctx.addIssue({ code: "custom", path: [], message: `${SCREEN_ITEMS.join("・")} のどれか 1 つ以上を渡す` });
+  });
+
+const screenSetOutput = z.object({
+  /** 変えた項目 */
+  changed: z.array(z.enum(SCREEN_ITEMS)).max(SCREEN_ITEMS.length),
+  /** 変えなかった項目と理由 */
+  refused: z.array(z.object({ item: z.enum(SCREEN_ITEMS), reason: z.enum(SCREEN_REFUSALS), text: z.string() })).max(SCREEN_ITEMS.length + 1),
+  /** 今の値（分からないものは null） */
+  current: z.object({
+    theme: z.enum(["light", "dark"]).nullable(),
+    go: z.enum(SCREEN_GO).nullable(),
+    levelOrder: z.enum(LEVEL_ORDERS).nullable(),
+    /** null は計画の最後の年度まで */
+    lastFiscalYear: z.number().int().nullable(),
+    /** storageRoot を渡したとき：今の保存先（人が保存するまで変わらない） */
+    storageRoot: z.string().nullable().optional(),
+    /** rowOrder を変えたとき：同じ親の下の行の、変えたあとの並び（50 まで） */
+    siblings: z.array(z.object({ rowRef: z.string(), name: z.string() })).max(50).optional(),
+  }),
+  note: z.string(),
+});
+
 // ─── 12 のツール ─────────────────────────────────────────────────
 
 export const TOOLS = {
@@ -551,7 +632,7 @@ export const TOOLS = {
     "chart_rows",
     "read",
     "星取表の行を読む",
-    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose でルールを置く。rowRef に機器の行の id（n:…）を渡すと、その機器を対象にする作業を 1 行ずつ返す（行の id は w:<作業>。星取は作業ごと。chart_propose の stars はこの id で指す）。同じ親の下の同じ名前の機器が号機で分かれるときは、階層の名前に号機を添えて返す（「ポンプ No.1」）。データの名前は変えていない（号機は assetNode.tag）ので、ルールの条件では名前と号機を分けて書く。",
+    "星取表の行の一部を読む。1 回 200 行、会話で 2,000 行まで。変えたいときは行を写さず chart_propose でルールを置く。rowRef に機器の行の id（n:…）を渡すと、その機器を対象にする作業を 1 行ずつ返す（行の id は w:<作業>。星取は作業ごと。chart_propose の stars はこの id で指す）。同じ親の下の同じ名前の機器が号機で分かれるときは、階層の名前に号機を添えて返す（「ポンプ No.1」）。データの名前は変えていない（号機は assetNode.tag）ので、ルールの条件では名前と号機を分けて書く。行の階層と並びは画面の星取表と同じ（施設の見せ方。screen_set で変わる）。",
     z.object({
       offset: z.number().int().min(0).default(0),
       limit: z.number().int().min(1).max(ROWS_PER_CALL).default(50),
@@ -785,6 +866,22 @@ export const TOOLS = {
         }),
       ),
     }),
+  ),
+  screen_set: def(
+    "screen_set",
+    "propose",
+    "作業画面の見せ方を変える",
+    "チャットの頼みで作業画面の見せ方を変える。引数はどれか 1 つ以上で、1 回に並べて渡してよい。" +
+      "「ライトモードにして」は theme: light、「ダークモードにして」は dark。" +
+      "「星取表画面に切り替えて」は go: hoshitori.chart（ほかに top＝トップ、hoshitori.cost＝費用、hoshitori.match＝突合、hoshitori.rules＝ルール、hoshitori.review＝照査、hoshitori.decisions＝確定、hoshitori.files＝資料、export、share、settings＝設定）。" +
+      "「ファイルの保管場所を変更して」は、利用者に道を聞いて storageRoot に絶対の道を書く。保存先は人だけが変えるので、MOYAI は設定と同じ確かめを通した道を設定の画面の保存先の欄に入れて開くだけ。利用者に「保存」を押してもらう。" +
+      "「機器階層を入れ替えて表示して」は levelOrder を今と逆にする（asset-first は既定の 設備 › 機器 › 号炉・系統 › 部位、series-first は 設備 › 号炉・系統 › 機器 › 部位）。" +
+      "「A と B の並び順を入れ替えて」は、chart_rows で 2 つの行の id を読み、rowOrder: { node: B の id, before: A の id }（A が上で隣り合うとき。同じ親の下の行だけ。離れているときは 2 回に分ける）。" +
+      "「計画の最大年度は 2040 年までにして」は lastFiscalYear: 2040（星取表の年度の列をその年度まで出し、周期の案と星取の案をその年度まで置ける。今の星取は変えない。いちばん遅い星取より前の年度にはできない）。" +
+      "levelOrder・rowOrder・lastFiscalYear は施設ごとに覚える見せ方で、作業中の計画・版の記録・署名される字は変えない。機器の並びは、確定のときに書く Excel にも出る。並びを変えたあとの行は chart_rows で読み直す。" +
+      "答えは、変えた項目（changed）、変えなかった項目と理由（refused）、今の値（current）。確定・署名・送る・承認・昇格は、このツールではしない。",
+    screenSetInput,
+    screenSetOutput,
   ),
   skill_eval: def(
     "skill_eval",
