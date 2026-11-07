@@ -23,15 +23,6 @@ describe("工数の見出しの単位", () => {
     expect(an.open.some((q) => q.kind === "effortUnknown")).toBe(false);
     expect(an.records.events.map((e) => e.manDays)).toEqual([2, 0.5]);
   });
-
-  test("工数の見出しの語でも、中身に数が 1 つも無い列は工数の列にせず、役目を聞く（既定は備考）", async () => {
-    const s = session();
-    await s.add([{ name: "記録.csv", bytes: csv(["日付,機器,作業,立上げまでの時間", "2024/4/6,バーナ,点検,記録を照査した。工事は要らない", "2024/4/7,ブロワ,給油,記録を照査した。工事は要らない"]) }]);
-    const an = s.analyze();
-    expect(an.open.some((q) => q.kind === "effortUnknown")).toBe(false);
-    const role = an.open.find((q) => q.kind === "columnRole");
-    expect(role?.defaultAnswer).toBe("remark");
-  });
 });
 
 describe("同じ様式の表", () => {

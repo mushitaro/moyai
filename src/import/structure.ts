@@ -737,8 +737,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
       // 号・系列の見出しの列で、中身が数だけ（「1」「2」）：号の列
       else if (col.cue === "series" && seriesValues(cs)) col.role = "unit";
       else if (col.cue === "remark" || col.cue === "spec" || col.cue === "category" || col.cue === "persons" || col.cue === "fiscal" || col.cue === "quantity") col.role = "remark";
-      // 工数の見出しの語でも、中身に数が 1 つも無い列（「…までの時間」の見出しの下の文）は工数の列ではない。役目を聞く（既定は備考。数が無いので、外す工数も無い）
-      else if (col.cue === "effort" && !(cs.length && cs.every((x) => typeof x.value !== "number" && !/\d/.test(nfkcText(x.text))))) col.role = "effort";
+      else if (col.cue === "effort") col.role = "effort";
       else if (cs.length) {
         col.role = "unknown";
         issues.push({
