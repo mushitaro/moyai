@@ -3,9 +3,12 @@
 // - 行の並びは星取表の施設台帳と同じ関数（buildChart）。階層の並びは案の levelOrder（施設ごとの見せ方は使わない：見本・出力・署名した書き出しを同じにする）
 // - 入れ子の縦の書き方：組の無い節は 1 行（その階層の列に名前だけ）、作業の記録のある節は組の行（最初の行にその階層の列の名前）。
 //   1 行に横に並べる書き方：組の最初の行に、上の階層からの名前を横に並べる。
-// - 年度の列：開始年度のセルに版の最初の年度（案の startYear があればそれ）を書き、年度の見出しの式（=G6・=G8+1・='前'!O8+1 の形）をたどって列ごとの年度を出す。
+// - 年度の列：開始年度のセルに版の最初の年度（案の startYear があればそれ）を書き、年度の見出しの式（=G6・=G8+1・='前'!O8+1 の形と、
+//   それを IF・ISNUMBER などで包んだ IF(ISNUMBER(前!$D$6),前!$D$6+1,"") の形。仕事 template-layout-v2）をたどって列ごとの年度を出す。
 // - 明細は合計の行（insertBefore）の前の空行に書く。足りなければ最後の空行の前に行を足し、合計の行とその下を下へずらし、ブックのすべての式の参照を直す
 //   （空行の範囲を指す合計の式 =SUM(G9:G30) は、足した行まで広がる）。
+// - 続きのシートの階層の欄が前のシートの同じセルを写す式（IF(前!A9="","",前!A9) の形）なら、名前は書かない（前のシートに書いた名前が式で出る）。
+//   名前の行に式が無ければ同じ形の式をその行へ写し、行を足せば足した行にも写す。前のシートと同じ行・同じ数を足す（template-layout-v2）。
 // - 金額は明細の費用（円）の和を単位に合わせる（千円は ÷ 1000。丸めない）。税は換算しない（様式と違う・分からない明細は数える）。
 // - 基本情報のシートは、計画の施設にある項目だけを書く（無い項目は書かずに数える）。
 // 書かないもの・書けないものは、黙って捨てずに数えて返す（LayoutSummary）。
@@ -65,9 +68,17 @@ const NOT_START = /[A-Za-z0-9_.$'!\u0080-\uffff]/;
 const NOT_END = /[A-Za-z0-9_(!]/;
 const sameSheet = (a: string, b: string) => a === b || a.toLowerCase() === b.toLowerCase();
 
-/** 式の中の参照を 1 つずつ書き換える（字の中は触らない）。fn は参照のシート（前置きが無ければ null）と行・列を受け、書き換えた行を返す */
-function mapRefs(formula: string, fn: (sheet: string | null, row: number) => number): string {
-  let out = "";
+/** 式を分けたもの：字（"…"）、参照（シートの前置きが無ければ sheet は null）、そのほかの字 */
+type FormulaPart = { kind: "string"; text: string } | { kind: "other"; text: string } | { kind: "ref"; text: string; m: RegExpExecArray; sheet: string | null };
+
+/** 式を、字・参照・そのほかに分ける（字の中の参照らしいものは参照にしない） */
+function formulaParts(formula: string): FormulaPart[] {
+  const parts: FormulaPart[] = [];
+  let other = "";
+  const flush = () => {
+    if (other) parts.push({ kind: "other", text: other });
+    other = "";
+  };
   let i = 0;
   while (i < formula.length) {
     const ch = formula[i]!;
@@ -83,7 +94,8 @@ function mapRefs(formula: string, fn: (sheet: string | null, row: number) => num
         }
         j++;
       }
-      out += formula.slice(i, j + 1);
+      flush();
+      parts.push({ kind: "string", text: formula.slice(i, j + 1) });
       i = j + 1;
       continue;
     }
@@ -91,23 +103,35 @@ function mapRefs(formula: string, fn: (sheet: string | null, row: number) => num
       REF_RE.lastIndex = i;
       const m = REF_RE.exec(formula);
       if (m && !NOT_END.test(formula[REF_RE.lastIndex] ?? "")) {
-        const sheet = m[1] !== undefined ? m[1].replace(/''/g, "'") : (m[2] ?? null);
         const c1 = colNum(m[4]!);
         const c2 = m[8] ? colNum(m[8]) : c1;
         if (c1 <= 16384 && c2 <= 16384) {
-          const prefix = m[1] !== undefined ? `'${m[1]}'!` : m[2] !== undefined ? `${m[2]}!` : "";
-          let text = `${prefix}${m[3]}${m[4]}${m[5]}${fn(sheet, Number(m[6]))}`;
-          if (m[7] !== undefined) text += `:${m[7]}${m[8]}${m[9]}${fn(sheet, Number(m[10]))}`;
-          out += text;
+          flush();
+          parts.push({ kind: "ref", text: m[0], m, sheet: m[1] !== undefined ? m[1].replace(/''/g, "'") : (m[2] ?? null) });
           i = REF_RE.lastIndex;
           continue;
         }
       }
     }
-    out += ch;
+    other += ch;
     i++;
   }
-  return out;
+  flush();
+  return parts;
+}
+
+/** 式の中の参照を 1 つずつ書き換える（字の中は触らない）。fn は参照のシート（前置きが無ければ null）と行を受け、書き換えた行を返す */
+function mapRefs(formula: string, fn: (sheet: string | null, row: number) => number): string {
+  return formulaParts(formula)
+    .map((p) => {
+      if (p.kind !== "ref") return p.text;
+      const m = p.m;
+      const prefix = m[1] !== undefined ? `'${m[1]}'!` : m[2] !== undefined ? `${m[2]}!` : "";
+      let text = `${prefix}${m[3]}${m[4]}${m[5]}${fn(p.sheet, Number(m[6]))}`;
+      if (m[7] !== undefined) text += `:${m[7]}${m[8]}${m[9]}${fn(p.sheet, Number(m[10]))}`;
+      return text;
+    })
+    .join("");
 }
 
 /**
@@ -118,18 +142,100 @@ export function shiftFormulaRows(formula: string, own: string, target: string, a
   return mapRefs(formula, (sheet, row) => (sameSheet(sheet ?? own, target) && row >= at ? row + count : row));
 }
 
-const YEAR_REF = new RegExp(String.raw`^\s*=?\s*(?:${SHEET})?\$?([A-Za-z]{1,3})\$?(\d{1,7})\s*(?:([+-])\s*(\d{1,3}))?\s*$`);
+/** 年度の式で包みに使ってよい関数（IS で始まる関数は、参照 1 つだけを受ける確かめ） */
+const YEAR_WRAP = /^(?:IF|IFERROR|AND|OR|NOT|IS[A-Z]+|)$/;
+/** 参照のあとの「＋数」と、その次（, か ) か式の終わり） */
+const YEAR_ADD = /^(?:([+-])(\d{1,3}))?(?=[),]|$)/;
 
-/** 年度の参照の式（=G6・=$G$6・=G8+1・='前のシート'!O8+1）なら、参照のシート（前置きが無ければ null）・セル・足す数 */
+/**
+ * 年度の参照の式なら、参照のシート（前置きが無ければ null）・セル・足す数。
+ * 形：=G6・=$G$6・=G8+1・='前のシート'!O8+1 と、それを IF・IFERROR・ISNUMBER などで包んだ式
+ * （IF(ISNUMBER(前!$D$6),前!$D$6+1,"") の形）。式の中の参照はすべて同じセルで、ISNUMBER(…) などの確かめの中のほかに
+ * 「（シート!）セル＋数」が 1 つ以上あり、足す数が 1 つに決まるときだけ。決まらなければ null
+ */
 export function yearRefOf(formula: string): { sheet: string | null; cell: string; add: number } | null {
-  const m = YEAR_REF.exec(formula);
-  if (!m) return null;
-  const sheet = m[1] !== undefined ? m[1].replace(/''/g, "'") : (m[2] ?? null);
-  const c = parseCell(`${m[3]}${m[4]}`);
-  if (!c) return null;
-  const n = m[6] ? Number(m[6]) * (m[5] === "-" ? -1 : 1) : 0;
-  return { sheet, cell: `${colLetter(c.col)}${c.row}`, add: n };
+  const refs: Extract<FormulaPart, { kind: "ref" }>[] = [];
+  let s = "";
+  for (const p of formulaParts(formula.replace(/^\s*=/, ""))) {
+    if (p.kind === "ref") {
+      if (p.m[8] !== undefined) return null;
+      s += `\u0000${refs.length}\u0001`;
+      refs.push(p);
+    } else s += p.kind === "string" ? '""' : p.text.replace(/\s+/g, "");
+  }
+  const first = refs[0];
+  if (!first) return null;
+  const cell = parseCell(`${first.m[4]}${first.m[6]}`);
+  if (!cell) return null;
+  for (const r of refs) {
+    const c = parseCell(`${r.m[4]}${r.m[6]}`);
+    const sheetOk = r.sheet === null ? first.sheet === null : first.sheet !== null && sameSheet(r.sheet, first.sheet);
+    if (!c || c.row !== cell.row || c.col !== cell.col || !sheetOk) return null;
+  }
+  const stack: string[] = [];
+  const adds = new Set<number>();
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]!;
+    if (ch === "(") {
+      const name = /[A-Za-z0-9_.]*$/.exec(s.slice(0, i))![0].toUpperCase().replace(/^_XLFN\./, "");
+      if (!YEAR_WRAP.test(name)) return null;
+      stack.push(name);
+      continue;
+    }
+    if (ch === ")") {
+      stack.pop();
+      continue;
+    }
+    if (ch !== "\u0000") continue;
+    const end = s.indexOf("\u0001", i);
+    const before = s[i - 1] ?? "";
+    const after = s.slice(end + 1);
+    const fn = stack.at(-1) ?? "";
+    i = end;
+    // ISNUMBER(参照) などの確かめ：参照 1 つだけ
+    if (fn.startsWith("IS")) {
+      if (before === "(" && after.startsWith(")")) continue;
+      return null;
+    }
+    if (fn === "AND" || fn === "OR" || fn === "NOT") return null;
+    if (before !== "" && before !== "(" && before !== ",") return null;
+    const m = YEAR_ADD.exec(after);
+    if (!m) return null;
+    adds.add(m[2] ? Number(m[2]) * (m[1] === "-" ? -1 : 1) : 0);
+    i += m[0].length;
+  }
+  if (adds.size !== 1) return null;
+  // 参照と「＋数」のほかに、計算の記号を残さない（IF(…)*2 などは年度の参照ではない）
+  const rest = s.replace(/\u0000\d+\u0001(?:[+-]\d{1,3}(?=[),]|$))?/g, "R").replace(/""/g, "");
+  if (!/^[A-Za-z0-9_.(),]*$/.test(rest)) return null;
+  return { sheet: first.sheet, cell: `${colLetter(cell.col)}${cell.row}`, add: [...adds][0]! };
 }
+
+/** 続きのシートの階層の欄が、前のシートの同じセルを写す式の形（@ は前のシートの同じセル。空白と関数の名前の大小は見ない） */
+const MIRROR_FORMS = new Set(["@", 'IF(@="","",@)', 'IF(@<>"",@,"")', 'IF(ISBLANK(@),"",@)']);
+
+/**
+ * 式が、前のシート（prev）の同じ行・同じ列のセルを写す式か（IF(前!A9="","",前!A9) の形）。
+ * 続きのシートの階層の欄にあれば、前のシートに書いた名前が式で出る（名前は書かない）
+ */
+export function isMirrorFormula(formula: string, prev: string, row: number, col: number): boolean {
+  let s = "";
+  let refs = 0;
+  for (const p of formulaParts(formula.replace(/^\s*=/, ""))) {
+    if (p.kind === "string") s += p.text;
+    else if (p.kind === "other") s += p.text.replace(/\s+/g, "").toUpperCase();
+    else {
+      if (p.m[8] !== undefined || p.sheet === null || !sameSheet(p.sheet, prev)) return false;
+      if (Number(p.m[6]) !== row || colNum(p.m[4]!) !== col) return false;
+      s += "@";
+      refs++;
+    }
+  }
+  return refs > 0 && MIRROR_FORMS.has(s);
+}
+
+/** 前のシートを写す式を、ほかの行へ写す（参照の行を row にする） */
+const mirrorAt = (formula: string, row: number): string => mapRefs(formula, () => row);
 
 // ─── セルの値 ─────────────────────────────────────────────────
 
@@ -177,6 +283,9 @@ function rewriteFormulas(wb: ExcelJS.Workbook, fn: (formula: string, own: string
   for (const ws of wb.worksheets) {
     ws.eachRow((row) =>
       row.eachCell((cell) => {
+        // 結合の中のセルは左上のセルの式を読み書きする（2 回書き換えないよう、左上のセルだけ）
+        const cl = cell as unknown as CellLike;
+        if (cl.isMerged && cl.master && cl.master.address !== cell.address) return;
         const v = cell.value as { formula?: string; result?: unknown; shareType?: string; ref?: string } | null;
         if (!v || typeof v !== "object" || v instanceof Date || typeof v.formula !== "string") return;
         const next = fn(v.formula, ws.name);
@@ -323,16 +432,18 @@ const yearCols = (s: LayoutPlanSheet): number[] => {
  * 見出しの字は R8・令和8年度・2026・2026年度・FY2026 など（plan/template.ts の fiscalYearOfHeader）
  */
 export function layoutYears(wb: ExcelJS.Workbook, layout: TemplateLayout, startYear: number): Map<string, Map<number, number | null>> {
+  const sheetOf = (n: string) => wb.worksheets.find((w) => sameSheet(w.name, n));
+  // 鍵はブックのシートの名前（式の中の名前と、案の名前の大小の違いをそろえる）
   const starts = new Map<string, number>();
-  for (const s of layout.sheets) if (s.years.startCell) starts.set(`${s.sheet}!${s.years.startCell}`, startYear);
+  for (const s of layout.sheets) if (s.years.startCell) starts.set(`${sheetOf(s.sheet)?.name ?? s.sheet}!${s.years.startCell}`, startYear);
   const memo = new Map<string, number | null>();
   const resolve = (sheet: string, address: string, depth: number): number | null => {
-    const key = `${sheet}!${address}`;
+    const ws = sheetOf(sheet);
+    const key = `${ws?.name ?? sheet}!${address}`;
     if (starts.has(key)) return starts.get(key)!;
     if (memo.has(key)) return memo.get(key)!;
     if (depth > 60) return null;
     memo.set(key, null);
-    const ws = wb.worksheets.find((w) => sameSheet(w.name, sheet));
     let out: number | null = null;
     if (ws) {
       const cell = ws.getCell(address) as unknown as CellLike;
@@ -360,6 +471,40 @@ export function layoutYears(wb: ExcelJS.Workbook, layout: TemplateLayout, startY
   }
   return result;
 }
+
+// ─── 前のシートを写す階層の欄 ─────────────────────────────────────
+
+/**
+ * 続きのシートの階層の列のうち、明細の行（見出しの下から合計の行の前まで）に前のシートの同じセルを写す式があるもの：列の番号 → 式の見本（最初に見つかった式）。
+ * この列には名前を書かない（前のシートに書いた名前が式で出る）。名前の行に式が無ければ見本の式を写し、行を足せば足した行にも写す
+ */
+export function mirrorColumns(wb: ExcelJS.Workbook, s: LayoutPlanSheet): Map<number, string> {
+  const out = new Map<number, string>();
+  const ws = wb.worksheets.find((w) => sameSheet(w.name, s.sheet));
+  if (!ws || s.continues === null) return out;
+  const first = Math.max(...s.headerRows) + 1;
+  for (const l of s.levels.columns) {
+    const c = colNum(l.col);
+    for (let r = first; r < s.insertBefore; r++) {
+      const f = formulaOf(ws.getCell(r, c) as unknown as CellLike);
+      if (f !== null && isMirrorFormula(f, s.continues, r, c)) {
+        out.set(c, f);
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+/** 続きのシートが前のシートと同じ行に同じ節を書くか：見出しの下の最初の行・合計の行・階層の列・組の行の数が同じ */
+const sameRowsAs = (a: LayoutPlanSheet, b: LayoutPlanSheet): boolean => {
+  const cols = (x: LayoutPlanSheet) =>
+    [...x.levels.columns]
+      .sort((p, q) => p.level - q.level)
+      .map((l) => `${l.level}:${l.col}`)
+      .join(",");
+  return Math.max(...a.headerRows) === Math.max(...b.headerRows) && a.insertBefore === b.insertBefore && a.levels.mode === b.levels.mode && cols(a) === cols(b) && a.group.rows.length === b.group.rows.length;
+};
 
 // ─── 案の確かめ ───────────────────────────────────────────────
 
@@ -407,15 +552,21 @@ export function checkLayout(wb: ExcelJS.Workbook, layout: TemplateLayout, startY
       if (!one && g.col) p.push(`「${s.sheet}」の組の行「${g.label}」（${g.content}）は年度の列に書くので col は null`);
       if (one && g.col) use(g.col, `組の行「${g.label}」`);
     }
-    // 明細を書く欄に式があれば書かない（様式の式を消さない）
+    // 明細を書く欄に式があれば書かない（様式の式を消さない）。続きのシートの階層の欄の、前のシートの同じセルを写す式は除く
+    const levelCols = new Set(s.levels.columns.map((l) => colNum(l.col)));
     rows: for (let r = first; r < s.insertBefore; r++) {
       for (const c of [...used.keys(), ...ys]) {
-        if (formulaOf(ws.getCell(r, c) as unknown as CellLike) !== null) {
-          p.push(`「${s.sheet}」の明細の欄 ${colLetter(c)}${r} に式がある`);
-          break rows;
-        }
+        const f = formulaOf(ws.getCell(r, c) as unknown as CellLike);
+        if (f === null) continue;
+        if (s.continues !== null && levelCols.has(c) && isMirrorFormula(f, s.continues, r, c)) continue;
+        p.push(`「${s.sheet}」の明細の欄 ${colLetter(c)}${r} に式がある`);
+        break rows;
       }
     }
+    // 前のシートの同じ行を写す式があれば、前のシートと同じ行に同じ節を書く（足す行の数と位置もそろう）
+    const prev = layout.sheets.slice(0, i).find((x) => x.sheet === s.continues);
+    if (prev && mirrorColumns(wb, s).size > 0 && !sameRowsAs(s, prev))
+      p.push(`「${s.sheet}」の階層の欄は「${prev.sheet}」の同じ行を写す式なので、見出しの行・insertBefore・階層の列・組の行の数を「${prev.sheet}」とそろえる`);
   });
   if (p.length === 0) {
     const years = layoutYears(wb, layout, startYear);
@@ -431,7 +582,7 @@ export function checkLayout(wb: ExcelJS.Workbook, layout: TemplateLayout, startY
     for (const s of layout.sheets) {
       const m = years.get(s.sheet)!;
       const missing = [...m.entries()].filter(([, y]) => y === null).map(([c]) => colLetter(c));
-      if (missing.length) p.push(`「${s.sheet}」の年度が決まらない列：${missing.slice(0, 8).join("・")}（見出しの字か、開始年度のセルからの式 =G6・=G8+1 の形だけを読む）`);
+      if (missing.length) p.push(`「${s.sheet}」の年度が決まらない列：${missing.slice(0, 8).join("・")}（見出しの字か、開始年度のセルからの式 =G6・=G8+1・IF(ISNUMBER($G$6),$G$6+1,"") の形だけを読む）`);
       for (const y of m.values()) {
         if (y === null) continue;
         if (all.has(y)) p.push(`${y} 年度の列が 2 つある（シートをまたいでも 1 つ）`);
@@ -676,16 +827,43 @@ export function fillLayout(wb: ExcelJS.Workbook, layout: TemplateLayout, input: 
   if (planned.problems.length) throw new Error(planned.problems.join("\n"));
   const { summary, rows, years, valueOf } = planned;
   unshareFormulas(wb);
+  // 続きのシートの、前のシートの同じ行を写す階層の列（行を足す前に読む。足す行の数と位置は前のシートと同じ：checkLayout が確かめた）
+  const mirrors = new Map(layout.sheets.map((s) => [s.sheet, mirrorColumns(wb, s)]));
+  /** 計算済みの値を残す式のセル（年度の見出しと、前のシートを写す名前の欄） */
+  const keep = new Set<string>();
   for (const s of layout.sheets) {
     const ws = wb.worksheets.find((w) => sameSheet(w.name, s.sheet))!;
     const out = rows.get(s.sheet)!;
     const sum = summary.sheets.find((x) => x.sheet === s.sheet)!;
+    const mirror = mirrors.get(s.sheet)!;
     // 最後の空行の前に足す（空行の範囲を指す合計の式が、足した行まで広がる）
-    if (sum.inserted > 0) insertRows(wb, ws, s.insertBefore - 1, sum.inserted);
+    if (sum.inserted > 0) {
+      const at = s.insertBefore - 1;
+      insertRows(wb, ws, at, sum.inserted);
+      // 前のシートを写す式は、足した行にも写す（行の番号をずらす）。前のシートは先に同じ位置に同じ数を足したので、もとの行の式も同じ行を指している
+      const moved = at + sum.inserted;
+      for (const c of mirror.keys()) {
+        const f = formulaOf(ws.getCell(moved, c) as unknown as CellLike);
+        if (f === null || !isMirrorFormula(f, s.continues!, moved, c)) continue;
+        for (let k = 0; k < sum.inserted; k++) ws.getCell(at + k, c).value = { formula: mirrorAt(f, at + k) } as ExcelJS.CellValue;
+      }
+    }
     const ym = years.get(s.sheet)!;
     out.forEach((o, i) => {
       const r = sum.firstRow + i;
-      for (const n of o.names) ws.getCell(`${n.col}${r}`).value = n.text;
+      for (const n of o.names) {
+        const c = colNum(n.col);
+        const model = mirror.get(c);
+        const cell = ws.getCell(r, c);
+        if (model === undefined) {
+          cell.value = n.text;
+          continue;
+        }
+        // 前のシートを写す列：名前は書かず、式（無ければ見本の式をこの行へ写す）に、前のシートに書いた名前を計算済みの値として入れる
+        const f = formulaOf(cell as unknown as CellLike);
+        cell.value = { formula: f !== null && isMirrorFormula(f, s.continues!, r, c) ? f : mirrorAt(model, r), result: n.text } as ExcelJS.CellValue;
+        keep.add(`${ws.name}!${cell.address}`);
+      }
       if (!o.group) return;
       const g = s.group.rows[o.group.index]!;
       if (s.group.labelCol) ws.getCell(`${s.group.labelCol}${r}`).value = g.label;
@@ -702,13 +880,13 @@ export function fillLayout(wb: ExcelJS.Workbook, layout: TemplateLayout, input: 
     });
     if (s.years.startCell && summary.startYear !== null) ws.getCell(s.years.startCell).value = summary.startYear;
   }
-  // 年度の見出しの式には、たどった年度を計算済みの値として入れる（保護ビューのように計算し直さない所でも年度が合う）。ほかの式の値は捨てて、開いたときに計算させる
-  const yearCells = new Set<string>();
+  // 年度の見出しの式には、たどった年度を計算済みの値として入れる（保護ビューのように計算し直さない所でも年度が合う）。
+  // 前のシートを写す名前の欄も同じ（上で入れた）。ほかの式の値は捨てて、開いたときに計算させる
   for (const s of layout.sheets) {
     const ws = wb.worksheets.find((w) => sameSheet(w.name, s.sheet))!;
     for (const [c, y] of years.get(s.sheet)!) {
       const cell = ws.getCell(s.years.row, c);
-      yearCells.add(`${ws.name}!${cell.address}`);
+      keep.add(`${ws.name}!${cell.address}`);
       const f = formulaOf(cell as unknown as CellLike);
       if (f !== null && y !== null) cell.value = { formula: f, result: y } as ExcelJS.CellValue;
     }
@@ -716,8 +894,11 @@ export function fillLayout(wb: ExcelJS.Workbook, layout: TemplateLayout, input: 
   for (const ws of wb.worksheets)
     ws.eachRow((row) =>
       row.eachCell((cell) => {
+        // 結合の中のセルは左上のセルの値を読み書きする（左上のセルで決める）
+        const cl = cell as unknown as CellLike;
+        if (cl.isMerged && cl.master && cl.master.address !== cell.address) return;
         const v = cell.value as { formula?: string; result?: unknown } | null;
-        if (v && typeof v === "object" && !(v instanceof Date) && typeof v.formula === "string" && v.result !== undefined && !yearCells.has(`${ws.name}!${cell.address}`))
+        if (v && typeof v === "object" && !(v instanceof Date) && typeof v.formula === "string" && v.result !== undefined && !keep.has(`${ws.name}!${cell.address}`))
           cell.value = { formula: v.formula } as ExcelJS.CellValue;
       }),
     );

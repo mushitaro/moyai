@@ -134,7 +134,7 @@ export const templateShapeSchema = z
                 z
                   .object({
                     cell: z.string(),
-                    /** 年度の参照の式（=G6・=G8+1・='前のシート'!O8+1 の形）なら、参照するセルと足す数。ほかの式は null */
+                    /** 年度の参照の式（=G6・=G8+1・='前のシート'!O8+1 の形と、IF(ISNUMBER(前!$D$6),前!$D$6+1,"") のように包んだ形）なら、参照するセルと足す数。ほかの式は null */
                     yearRef: z.object({ sheet: z.string().nullable(), cell: z.string(), add: z.number().int() }).strict().nullable(),
                   })
                   .strict(),
