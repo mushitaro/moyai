@@ -28,6 +28,8 @@ ledger-intake-v1（MOYAI 経由で公開台帳へ出す受け口）の続き。�
 - 取り下げを約束しない字にする（画面の取り下げのボタンが入るまで）：GitHub の道の下の帯から「取り下げても」を外す（「GitHub に PR を送信。掲載後の複製は残ります。」）。MOYAI 経由は「MOYAI 経由で PR を送信。掲載後の複製は残ります。」。`docs/words.md` の字と合わせる。
 - `docs/security.md` の「保証できないこと」に「公開台帳に載せた束は、今は画面から取り下げられない（印の形は決めた）」を足す。
 
+- **SHARE の画面を Wire の決めた形に**（`docs/screens.md` §3.6「送信経路」、`docs/words.md`）：v1 は字を仮に置いた（「GitHub アカウントなしで送信」など）。出す先の右の行を「送信経路　GitHub［名］ | MOYAI 経由」の切り替えにし（既定は GitHub につないでいれば GitHub［名］、いなければ MOYAI 経由。施設ごとに覚える）、「PR の GitHub アカウント　［名］」の 1 行（MOYAI 経由なら「tsunagi（MOYAI の運営）」）、MOYAI 経由のときだけ経路の行の下に text-3 で「送信元の IP は上限の判定のみ・保存なし」、主ボタン「署名して公開台帳へ送信」、断られたとき 3 つ（受付不可・送信の上限・受け口の応答なし）を §3.6 のとおりに。
+
 触らないもの：`src/import/`、`src/app/intake/`、`packs/`、束の形と署名の字（retired の型は輪と同じ形を使う）。
 
 済んだと言える条件：verify が通る。report.md に、変えた所、試験の数、未確認のこと（本物の GitHub と Cloudflare）を書く。
