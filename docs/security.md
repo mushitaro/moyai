@@ -80,6 +80,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/ring-rules-accept` | `ring_rules_accept` | 変わった共有フォルダの決まり（circle.json）を受け入れる（受け入れるまで送らない。緩くした決まりは受け入れない） |
 | `POST /human/ledger-preview` | `ledger_preview` | 公開の台帳へ出す共有ファイルのバイト列とハッシュと数（共有フォルダと同じ関数。行き先は台帳の clone の決まり） |
 | `POST /human/ledger-send` | `ledger_send` | 共有ファイルに署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、GitHub で台帳をフォークして共有ファイル 1 つの PR を出す（通信の例外。行き先は github.com と api.github.com だけ） |
+| `POST /human/ledger-intake-send` | `ledger_intake_send` | 共有ファイルに署名し、台帳の clone に足したときに受け手と同じ関数で ✓ になるかを確かめてから、公開の台帳の受け口に共有ファイル 1 つを送る。受け口が運営者の GitHub のアカウントで PR を出す（GitHub のアカウントなしの道。通信の例外。行き先は受け口の 1 つだけ） |
 | `POST /human/ledger-rules-accept` | `ledger_rules_accept` | 変わった公開の台帳の決まりを、人が差を見て受け入れる（見た決まりのハッシュと同じで、緩くした決まりでないときだけ） |
 | `POST /human/ledger-prs` | `ledger_prs` | 出した共有ファイルの PR の行方（審査中・台帳の検証・載った・差し戻しの理由）を、公開の PR からトークン無しで読む（SHARE を開いたときだけ） |
 | `POST /human/github-connect-start` | `github_connect_start` | GitHub につなぐ：OAuth のデバイスフローを始める（人が github.com でコードを入れる。scope は public_repo だけ）。台帳に共有ファイルを出す施設の鍵は、送ったときに保管先の計画のフォルダに書く |
@@ -89,7 +90,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `POST /human/peers-compare` | `peers_compare` | 受け手：立場ごとに、台帳の clone と自分の共有フォルダの ✓ の共有ファイルから、類似施設の行と統計の行を作る |
 | `POST /human/photo-allow` | `photo_allow` | 写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる） |
 
-人だけの操作の名前は 40 個です。ツールの名前と重ならないことを試験で確かめています。
+人だけの操作の名前は 41 個です。ツールの名前と重ならないことを試験で確かめています。
 
 ## 作業画面だけが呼ぶ経路と、中継の経路
 
@@ -107,6 +108,8 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 - 橋渡しは 127.0.0.1 の 1 つのポートだけで待ち受け、Host・Origin・Sec-Fetch-Site を確かめます。これは Web ページからの呼び出しへの守りで、同じ PC の同じ利用者のプロセスは止めきれません（curl も Node も Origin を偽れます）。
 - 中継と橋渡しの間は、状態フォルダの鍵ファイル（利用者だけが読める既定の権限）で確かめます。同じ利用者のプロセスには読めます。
 - シェルを持つ AI（Claude Code）には、リポジトリの `.claude/settings.json` の deny と PreToolUse のフック（`scripts/guard-hook.mjs`）の二重で、127.0.0.1 への HTTP・状態フォルダの読み取り・保管先の計画のフォルダの施設の署名鍵（share/keys/）の読み書き・輪のフォルダへの書き込み・人だけのコマンド・見張りのフックと `.claude/settings.json`・`.claude/settings.local.json` の書き換えを止めます。悪意のある同じ利用者のプロセスは止めきれません。
+- 通信の例外は公開の台帳だけです。GitHub の道は、行き先が github.com と api.github.com だけです。
+- GitHub のアカウントなしの道（運営者の決定 2026-11-07）は、行き先が公開の台帳の受け口の 1 つだけです。送るのは、公開の台帳に載せるのと同じ共有ファイルだけです。受け口は送り手の IP を数えるのに使い、残しません。受け口が運営者の GitHub のアカウントで PR を出します。
 - 鍵と GitHub のトークンは合言葉で包みません（運営者の決定 2026-11-04）。人の鍵とトークンは同期されない状態フォルダに、束に署名する施設の鍵は保管先の計画のフォルダ（share/keys/）に置きます。MCP のどのツールの結果にも、鍵とトークンの中身は入れません。
 - 人だけのコマンド（鍵を作る、送る、台帳に出す）は、標準入力が端末でなければ断ります。
 - `moyai setup`（AI クライアントにつなぐ・送信者の名前）と `moyai uninstall`（消す）は、何をどこに書くか・消すかを先に出し、`--yes` が無ければ端末で「はい」をもらいます。`--yes` は、利用者がチャットで確かめたあとに Claude が付けます（運営者の決定 11-06「チャットだけで入れる・デモする・消す」）。保存先（計画の版）を消すのは `--remove-root` のときだけです。

@@ -96,6 +96,14 @@ export const HUMAN_TEXT = {
     "github.branchFailed": "フォークに枝を作れませんでした。",
     "github.fileFailed": "フォークに共有ファイルを置けませんでした。",
     "github.prFailed": "PR を出せませんでした。",
+    // GitHub アカウントなしで送る（公開台帳の受け口。運営者の決定 2026-11-07。言葉は Wire の確認待ち）
+    intakeNotReady: "GitHub アカウントなしで送る道は、まだ用意できていません。",
+    "intake.network": "受け口に届きませんでした。",
+    "intake.refused": "受け口が受けませんでした（台帳の検証で ✗）。",
+    "intake.tooLarge": "共有ファイルが受け口の上限（256 KB）を越えています。",
+    "intake.rateLimited": "受け口への送信が多すぎます。1 時間あけて送り直してください。",
+    "intake.unavailable": "受け口が止まっています。あとで送り直してください。",
+    "intake.badAnswer": "受け口の答えの形が違います（結果不明）。PR が出たかは、公開台帳で確かめてください。",
   } as Record<string, string>,
   packReason: {
     packIdInvalid: "Skillパック ID の形が違う",
@@ -555,6 +563,10 @@ export const HUMAN_TEXT = {
     sendLedger: "署名して公開台帳へ送信",
     ledgerBottom: "GitHub に PR を送信。掲載後は取り下げても複製は残ります。",
     prSent: (n: number) => `PR #${n} を出しました`,
+    // GitHub アカウントなしで送る道（受け口が運営者の GitHub アカウントで PR を出す）。置き場所と言葉は Wire の確認待ち
+    sendIntake: "GitHub アカウントなしで送信",
+    intakeBottom: "アカウントなしの送信は、運営者の GitHub アカウントで PR を送信。",
+    prViaIntake: "アカウントなし",
     versionOf: (n: number) => `第 ${n} 版`,
     profileLine: (axes: string) => `施設 ― ${axes}、所在`,
     redacted: "伏せています",

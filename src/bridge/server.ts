@@ -54,7 +54,7 @@ export interface BridgeOptions {
   /** パックのフォルダ（共有の公開語彙・見え方・全国の表）。無ければリポジトリの packs/ */
   packsDir?: string;
   /** 人だけの経路の、外とつながる部品（Documents の調べ方・テキストエディタ）。試験は差し替える */
-  human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId">;
+  human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId" | "ledgerIntake">;
   /** リポジトリの根（intake_add_files はこの中のフォルダを読まない）。無ければパックのフォルダの上 */
   repoRoot?: string;
   /** 止める合図（moyai uninstall か、古い版の橋渡しを替える中継）が来たとき（moyai start はプロセスを終える）。無ければ橋渡しを閉じるだけ */
@@ -388,6 +388,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     // 公開の台帳へ出す（通信の例外：github.com と api.github.com だけ。PR を出すのは人がボタンを押したときだけ）
     ledgerPreview: delegate,
     ledgerSend: delegate,
+    // GitHub のアカウントなしで出す（通信の例外：受け口の 1 つだけ。送るのは人がボタンを押したときだけ）
+    ledgerIntakeSend: delegate,
     ledgerPrs: delegate,
     githubConnectStart: delegate,
     githubConnectState: delegate,

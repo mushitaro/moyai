@@ -1,0 +1,15 @@
+// 公開の台帳の受け口（Cloudflare Workers）。デプロイは運営者がする（手順は README.md）。
+// - 秘密 GITHUB_TOKEN は `wrangler secret put GITHUB_TOKEN` で入れる（このファイルに書かない）。
+// - KV INTAKE_KV は `wrangler kv namespace create moyai-ledger-intake --binding INTAKE_KV --update-config` で作ると、ここに足される。
+// - 記録（observability）は切る。受け口は IP を数えるのに使い、残さない。
+{
+  "name": "moyai-ledger-intake",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": false },
+  "vars": {
+    "LEDGER_REPO": "mushitaro/moyai-ledger"
+  }
+}

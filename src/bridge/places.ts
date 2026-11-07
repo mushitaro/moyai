@@ -302,6 +302,8 @@ export interface LedgerSentEntry {
   pr: number;
   url: string;
   login: string;
+  /** 出した道：intake は公開の台帳の受け口（GitHub のアカウントなし。PR は運営者のアカウントで出る。login は空）。無ければ GitHub の道 */
+  via?: "intake";
   /** 束にした計画の版（画面の「束 1　第 1 版　2026-11-04」に出す。この PC の記録だけで、束には入らない） */
   version?: number;
   /** SHARE を開いたときに読んだ PR の行方（最後に読めたもの） */

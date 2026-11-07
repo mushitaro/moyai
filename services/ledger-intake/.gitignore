@@ -1,0 +1,3 @@
+# wrangler が作るもの（ビルドと手元の試し）と、手元の秘密
+.wrangler/
+.dev.vars

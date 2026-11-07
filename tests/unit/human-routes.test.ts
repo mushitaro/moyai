@@ -21,6 +21,12 @@ import { STUB_TOKEN, startGitHubStub } from "../helpers/github-stub";
 import type { GitHubIo } from "../../src/bridge/github";
 import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody } from "../../src/share/bundle";
 import { generateKeyPair, keyIdOf, openPlainKey, signBody, type PlainKey } from "../../src/share/sign";
+import type { IntakeIo } from "../../src/bridge/ledger-intake";
+import { readLedgers } from "../../src/bridge/places";
+import { readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
+import { handleRequest } from "../../services/ledger-intake/src/handler";
+import { packOf } from "../../services/ledger-intake/src/packs";
+import { fakeLedgerGitHub, memoryKv } from "../helpers/intake-github";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 const sha256Of = (b: Buffer) => createHash("sha256").update(b).digest("hex");
@@ -59,7 +65,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerIntakeSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -602,6 +608,9 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
       expect(pv0.view.blockers).toContain("noKey");
       expect(pv0.view.bodyHash).toBeNull();
       expect(pv0.view.k).toBeGreaterThanOrEqual(5);
+      // 受け口の URL が決まっていなければ、GitHub のアカウントなしの道は出さず、送る経路も断る
+      expect(pv0.intake).toBe(false);
+      expect((await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: "0".repeat(64) })).reason).toBe("intakeNotReady");
 
       // GitHub につなぐ：台帳の決まりを受け入れ、デバイスフローのコードを返す。人が github.com で入れるまで待つ
       const st = await call("githubConnectStart", { packId: "waste-incineration" });
@@ -654,5 +663,88 @@ describe("公開の台帳へ出す（GitHub の代わりの試験の台。本物
     } finally {
       await stub.close();
     }
+  }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
+});
+
+describe("公開の台帳へ GitHub のアカウントなしで出す（受け口。GitHub の代わりはメモリの台。本物の Cloudflare と GitHub では未確認）", () => {
+  it("確定 → 束を見る（GitHub に未接続でも送れる）→ 署名して受け口へ → 受け口が台帳の検証と同じ関数で確かめて PR → 行方を公開の PR から読む", async () => {
+    extra = join(tmpdir(), `moyai-ledger-intake-${process.pid}-${Date.now()}`);
+    mkdirSync(extra, { recursive: true });
+    const repo = join(extra, "台帳");
+    buildLedgerDemo({ repo: fileURLToPath(new URL("../../", import.meta.url)), out: repo, state: join(extra, "demo-state"), month: "2026-11" });
+    mkdirSync(join(repo, ".git"), { recursive: true });
+    writeFileSync(join(repo, ".git", "config"), `[remote "origin"]\n\turl = https://github.com/${"ledger-owner"}/moyai-ledger.git\n`);
+    // GitHub の代わり（メモリ）の main に、台帳の clone と同じファイルを置く
+    const dir = await readLedgerDir(repo);
+    if (!dir.ok) throw new Error(dir.reason);
+    const onMain = Object.fromEntries(dir.files.filter((f) => f.kind === "file" && f.bytes).map((f) => [f.path, f.bytes!]));
+    const token = `github_pat_${"Int4ke".repeat(4)}_${"y".repeat(40)}`;
+    const gh = fakeLedgerGitHub({ token, files: onMain });
+    const env = { GITHUB_TOKEN: token, LEDGER_REPO: "ledger-owner/moyai-ledger", INTAKE_KV: memoryKv() };
+    const sentBodies: string[] = [];
+    // 受け口（services/ledger-intake のハンドラそのもの。パックの部品は受け口に入れたもの）。送り手の IP は Cloudflare の入口が付ける見出しの代わり
+    const ledgerIntake: IntakeIo = {
+      url: "https://intake.example",
+      fetch: async (u, i) => {
+        sentBodies.push(i.body ?? "");
+        const req = new Request(u, { method: i.method, headers: { ...i.headers, "cf-connecting-ip": "203.0.113.9" }, ...(i.body !== undefined ? { body: i.body } : {}) });
+        return handleRequest(req, env, { fetch: gh.fetch, now: () => Date.now(), packOf });
+      },
+    };
+    // 行方は今と同じ読み方（公開の PR をトークン無しで読む）。行き先は同じメモリの台
+    const github: GitHubIo = { hosts: { web: "https://github.com", api: "https://api.github.com" }, fetch: (u, i) => gh.fetch(u, i), sleep: async () => {} };
+    tb = await startTestBridge({ human: { shell: async () => ({ documents: join(extra, "Documents"), mounts: [] }), github, githubClientId: null, ledgerIntake } });
+    const t = await tab(tb);
+    const call = async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+      const text = JSON.stringify(payload);
+      const tok = await t.token(R(id).action, text);
+      const r = await post(tb!, R(id).path, good(tb!), { token: tok, payload: text });
+      expect(r.status, id).toBe(200);
+      return r.body;
+    };
+    await call("settingsSave", { root: join(extra, "置き場所"), ledger: repo, name: "【架空】試験の人" });
+    await call("personKeyCreate", {});
+    const plan = truthToPlan("fictional-1");
+    const ds = aiDecisions(plan);
+    expect(await call("planCommit", { plan, reason: "試験の確定", acceptances: ds.map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" })), basedOn: null })).toMatchObject({ ok: true, version: 1 });
+    const answers = { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true };
+
+    // GitHub に未接続でも、受け口の道があれば束のバイト列が出る。GitHub の道は noKey で止まり、受け口の道は送れる
+    const pv = await call("ledgerPreview", { planId: plan.planId, answers });
+    expect(pv).toMatchObject({ ok: true, intake: true, github: { login: null, ready: false } });
+    expect(pv.view.blockers).toEqual(["noKey"]);
+    expect(sha(pv.view.bodyText)).toBe(pv.view.bodyHash);
+    expect(readLedgers(tb.stateDir!)).toEqual([]);
+    expect((await call("ledgerSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash })).reason).toBe("githubNotConnected");
+    // 見たハッシュと違えば署名しない
+    expect((await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: "f".repeat(64) })).reason).toBe("previewChanged");
+    expect(gh.prs).toHaveLength(0);
+
+    // 人が押すと、束に署名して受け口へ送る。受け口が運営者のアカウントで PR を 1 つ出す
+    const sent = await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash });
+    expect(sent).toMatchObject({ ok: true, pr: 1, seq: 1, url: "https://github.com/ledger-owner/moyai-ledger/pull/1" });
+    expect(sentBodies).toHaveLength(1);
+    const pr = gh.prs[0]!;
+    expect(Object.keys(pr.files)).toEqual([sent.path]);
+    expect(pr.files[sent.path]!.toString("utf8")).toBe(sentBodies[0]);
+    expect(pr.head).toBe(`intake/${sent.hash.slice(0, 16)}`);
+    expect(pr.body.split("\n")[0]).toBe("受け口から（GitHub のアカウントなし）");
+    expect(pr.body).toContain(sent.path.split("/")[2]);
+    expect(pr.body).not.toContain(plan.displayName);
+    // 届いた束は、受け手の関数（台帳の Actions と同じ）で ✓
+    const after = verifyLedgerFiles([...dir.files, { path: sent.path, kind: "file", bytes: new Uint8Array(pr.files[sent.path]!) }], packOf("waste-incineration")!);
+    expect(after.bundles.find((b) => b.path === sent.path)).toMatchObject({ status: "ok", reasons: [] });
+    // 台帳の決まりの受け入れは、人が押したときに記録した。トークンは画面に返す答えに入らない
+    expect(readLedgers(tb.stateDir!).map((e) => e.pack)).toEqual(["waste-incineration"]);
+    expect(JSON.stringify(sent)).not.toContain(token);
+
+    // 前の束が台帳に載るまでは、次の束は出さない。行方は公開の PR から読む（GitHub の道と同じ持ち出し簿）
+    expect((await call("ledgerPreview", { planId: plan.planId, answers })).view.blockers).toContain("pending");
+    expect((await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash })).reason).toBe("ledgerPending");
+    expect(sentBodies).toHaveLength(1);
+    const prs = await call("ledgerPrs", { packId: "waste-incineration" });
+    expect(prs.prs).toMatchObject([{ pr: 1, seq: 1, version: 1, via: "intake", login: "", status: { state: "open", check: "pending" } }]);
+    // 行方を読むのはトークン無し
+    expect(gh.calls.filter((c) => /\/pulls\/1$/.test(new URL(c.url).pathname)).every((c) => c.auth === null)).toBe(true);
   }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
 });

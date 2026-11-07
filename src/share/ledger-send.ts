@@ -7,7 +7,7 @@
 // 束の中身・鍵・トークンをログに出さない。
 import { addLedger, readLedgers, type LedgerEntry, type LedgerSentEntry } from "../bridge/places";
 import { bundleFileName, type ShareContext } from "./bundle";
-import { LEDGER_DIR, LEDGER_JSON_PATH, ledgerContext, readLedgerDir, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "./ledger";
+import { LEDGER_DIR, LEDGER_JSON_PATH, checkBundleAdded, ledgerContext, readLedgerDir, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "./ledger";
 import type { SharePack } from "./pack";
 import type { Rules } from "./rules";
 import type { SendPlace, Sender } from "./checkpoint";
@@ -82,13 +82,9 @@ export function ledgerBundlePath(key: string, seq: number, hash: string): string
   return `${LEDGER_DIR}/bundles/${key}/${bundleFileName(seq, hash)}`;
 }
 
-/** 束を clone の木に足したときに、受け手と同じ関数で ✓ になるか。✗ なら理由 */
+/** 束を clone の木に足したときに、受け手と同じ関数で ✓ になるか。✗ なら理由（公開の台帳の受け口と同じ checkBundleAdded） */
 export function checkAgainstLedger(L: Extract<LedgerLoad, { ok: true }>, pack: SharePack, path: string, bytes: Uint8Array): { ok: true } | { ok: false; reasons: string[] } {
-  if (L.files.some((f) => f.path === path)) return { ok: false, reasons: ["ledger.exists"] };
-  const read = verifyLedgerFiles([...L.files, { path, kind: "file", bytes }], pack);
-  const line = read.bundles.find((b) => b.path === path);
-  if (line && line.status === "ok" && read.ledger.status === "ok") return { ok: true };
-  return { ok: false, reasons: line?.reasons.length ? line.reasons : read.ledger.reasons.length ? read.ledger.reasons : ["ledger"] };
+  return checkBundleAdded(L.files, pack, path, bytes);
 }
 
 /** PR の題・本文・commit の文（GitHub に出る。施設の名前も人の名前も入れない） */

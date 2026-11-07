@@ -251,6 +251,24 @@ export function verifyLedgerFiles(files: readonly LedgerFile[], pack: { table: N
   return out;
 }
 
+/**
+ * 束 1 つを台帳の木に足したときに、受け手と同じ関数（verifyLedgerFiles）で ✓ になるか。✗ なら理由。
+ * 出す側（アプリの ledger-send）と公開の台帳の受け口（services/ledger-intake）が、同じこの関数を使う。
+ * files は台帳の木の ledger/ の下の項目（少なくとも ledger.json と、その束の鍵のフォルダ）。決まりが ✓ でなければ理由は ledger
+ */
+export function checkBundleAdded(
+  files: readonly LedgerFile[],
+  pack: { table: NationalTable; vocab: Vocab },
+  path: string,
+  bytes: Uint8Array,
+): { ok: true } | { ok: false; reasons: string[] } {
+  if (files.some((f) => f.path === path)) return { ok: false, reasons: ["ledger.exists"] };
+  const read = verifyLedgerFiles([...files, { path, kind: "file", bytes }], pack);
+  const line = read.bundles.find((b) => b.path === path);
+  if (line && line.status === "ok" && read.ledger.status === "ok") return { ok: true };
+  return { ok: false, reasons: line?.reasons.length ? line.reasons : read.ledger.reasons.length ? read.ledger.reasons : ["ledger"] };
+}
+
 // ─── フォルダから読む ─────────────────────────────────────────
 
 export type LedgerDirRead = { ok: true; files: LedgerFile[] } | { ok: false; reason: "noLedgerDir" | "ledgerDirSymlink" | "tooManyFiles" };

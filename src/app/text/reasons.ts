@@ -59,6 +59,18 @@ const EXACT: Record<string, string> = {
   "ledger.unreadable": "台帳のルール（ledger.json）を読めない",
   "ledger.kind": "台帳のルールの形でない",
   ledger: "台帳のルール（ledger.json）が ✓ でないので確かめられない",
+  "ledger.exists": "同じ共有ファイルが台帳にもうある",
+  // 公開台帳の受け口だけの理由（services/ledger-intake。言葉は Wire の確認待ち）
+  "intake.notFound": "受け口の道ではない",
+  "intake.method": "受け口は POST だけを受ける",
+  "intake.notConfigured": "受け口の設定が未完了",
+  "intake.noClient": "送り手を数えられない",
+  "intake.rateLimited": "送信が多すぎる（同じ送り手から 1 時間に 10 件まで）",
+  "intake.unavailable": "受け口が件数を数えられない",
+  "intake.contentType": "共有ファイルの JSON ではない（Content-Type）",
+  "intake.packMissing": "台帳のSkillパックが受け口に無い",
+  "intake.github": "受け口から GitHub に届かない",
+  "intake.failed": "受け口の処理の誤り",
   "file.symlink": "symlink（たどらない）",
   "file.submodule": "submodule",
   "file.notRegular": "ふつうのファイルでない",
@@ -102,6 +114,7 @@ const PREFIX: [string, string][] = [
   ["ledger.", "公開台帳のルール"],
   ["path.", "道（ファイル名）"],
   ["diff.", "PR の変更"],
+  ["intake.", "受け口"],
 ];
 
 export function reasonText(code: string): string {

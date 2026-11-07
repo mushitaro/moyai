@@ -31,6 +31,7 @@ import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, rotateKeysOf, rotateRingKey, unmarkedRetired, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
 import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, ledgerBranch, ledgerBundlePath, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
+import { LEDGER_INTAKE_URL, ledgerIntakeUrlOf, sendToIntake, type IntakeIo } from "./ledger-intake";
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
 import { parsePack } from "../shared/pack";
@@ -97,6 +98,8 @@ export interface HumanEnv {
   github?: GitHubIo;
   /** OAuth App の Client ID（既定は github.ts の GITHUB_CLIENT_ID） */
   githubClientId?: string | null;
+  /** 公開の台帳の受け口（既定は ledger-intake.ts の LEDGER_INTAKE_URL。null か空なら、GitHub のアカウントなしの道を出さない）。試験は差し替える */
+  ledgerIntake?: IntakeIo | null;
 }
 
 /** GitHub につなぐ途中（デバイスフロー）。デバイスのコードはつながるか終わるまでこのメモリだけに置き、どこにも書かない */
@@ -200,6 +203,12 @@ const SCHEMAS = {
   facility_key_rotate: z.object({ planId: planIdSchema, ringId: ringIdSchema, keys: z.array(z.string().regex(/^[0-9a-f]{16}$/)).min(1).max(8) }),
   ledger_preview: z.object({ planId: planIdSchema, answers: answersSchema }),
   ledger_send: z.object({
+    planId: planIdSchema,
+    version: z.number().int().min(1),
+    answers: answersSchema,
+    previewHash: z.string().regex(HEX64),
+  }),
+  ledger_intake_send: z.object({
     planId: planIdSchema,
     version: z.number().int().min(1),
     answers: answersSchema,
@@ -326,6 +335,13 @@ export class HumanService {
 
   private githubIo(): GitHubIo {
     return this.e.github ?? githubIo(githubHostsOf(this.e.env ?? process.env));
+  }
+
+  /** 公開の台帳の受け口（GitHub のアカウントなしの道）。URL が決まっていなければ null（道を出さない） */
+  private intakeIo(): IntakeIo | null {
+    if (this.e.ledgerIntake !== undefined) return this.e.ledgerIntake;
+    const url = ledgerIntakeUrlOf(LEDGER_INTAKE_URL, this.e.env ?? process.env);
+    return url ? { url, fetch: (u, i) => fetch(u, i) } : null;
   }
 
   private githubClientId(io: GitHubIo): string | null {
@@ -1000,7 +1016,7 @@ export class HumanService {
         const c = await this.ledgerSendContext(p.planId);
         if (!c.ok) return c.out;
         const pend = c.sender.ok ? pendingSent(c.facility, c.L, keyIdOf(c.sender.pair.pub)) : null;
-        const view = this.ledgerView(c, p.answers, monthOf(now), !!pend);
+        const view = this.ledgerView(c, p.answers, monthOf(now), !!pend, c.info.intake);
         // 台帳の決まりが、この PC が受け入れたものから変わっていれば、その差（受け入れ直しは ledger_rules_accept。台帳の新-3）
         const rulesHash = sha256Hex(c.L.ledgerBytes);
         const rulesChange =
@@ -1052,6 +1068,41 @@ export class HumanService {
         appendPlanSent(c.facility, c.L.id, { ledgerId: c.L.id, key, seq, hash: s.hash, path, month: monthOf(now), at: now.toISOString(), repo: `${c.repo.owner}/${c.repo.name}`, pr: r.number, url: r.url, login: r.login, version: c.version, state: "open" });
         return { ok: true, pr: r.number, url: r.url, path, hash: s.hash, seq, login: r.login };
       }
+      case "ledger_intake_send": {
+        // GitHub のアカウントなしで出す（運営者の決定 2026-11-07）：束は GitHub の道と同じ関数で作って署名し、台帳の clone の木で確かめてから、
+        // 受け口（LEDGER_INTAKE_URL の 1 つだけ）に送る。受け口が運営者の GitHub のアカウントで PR を出す。行方は GitHub の道と同じ持ち出し簿と読み方
+        const p = parsePayload("ledger_intake_send", call.payload);
+        if (!p) return no("payloadInvalid");
+        const io = this.intakeIo();
+        if (!io) return no("intakeNotReady");
+        const c = await this.ledgerSendContext(p.planId);
+        if (!c.ok) return c.out;
+        if (c.version !== p.version) return no("versionChanged");
+        if (!c.sender.ok) return no("keysForked");
+        const sender = { facility: c.facility, pair: c.sender.pair };
+        if (pendingSent(c.facility, c.L, keyIdOf(sender.pair.pub))) return no("ledgerPending");
+        // 台帳の決まりをまだ受け入れていなければ、今の決まりで束を作る（プレビューと同じ）。受け入れの記録は、送る直前に書く
+        const accepted = c.accepted ?? { ledgerId: c.L.id, pack: c.pack.id, acceptedRulesHash: sha256OfLedger(c.L), acceptedRules: c.L.rules, createdAt: now.toISOString() };
+        const s = sealPlace(ledgerPlace(c.L, accepted, sender), sender.pair, c.pack, c.plan, p.answers, monthOf(now), p.previewHash);
+        if (!s.ok) return no(s.reason);
+        const bytes = new Uint8Array(Buffer.from(s.text, "utf8"));
+        const seq = s.input.seq;
+        const key = keyIdOf(s.input.pub);
+        const path = ledgerBundlePath(key, seq, s.hash);
+        const check = checkAgainstLedger(c.L, c.pack, path, bytes);
+        if (!check.ok) return no("ledgerNg", { reasons: check.reasons });
+        // 施設の鍵を先に置く（PR だけが出て、鍵が保管先に無い状態を作らない）。ほかの PC が先に別の鍵を書いていれば出さない
+        if (!c.sender.stored && storeFacilityKey(c.facility, c.L.id, sender.pair, this.pendingKeys) === "differs") return no("keysForked");
+        if (!c.accepted) acceptLedger(sd, c.L, c.pack, now);
+        const r = await sendToIntake(io, s.text);
+        if (!r.ok) return no(`intake.${r.reason}`, { reasons: r.reasons });
+        // 同じ中身の束は、受け口が前の PR を返す。持ち出し簿に同じ PR があれば足さない
+        const sentBefore = readPlanSent<LedgerSentEntry>(c.facility, c.L.id).some((e) => e.hash === s.hash && e.pr === r.number && e.repo === `${r.repo.owner}/${r.repo.name}`);
+        if (!sentBefore) {
+          appendPlanSent(c.facility, c.L.id, { ledgerId: c.L.id, key, seq, hash: s.hash, path, month: monthOf(now), at: now.toISOString(), repo: `${r.repo.owner}/${r.repo.name}`, pr: r.number, url: r.url, login: "", via: "intake", version: c.version, state: "open" } satisfies LedgerSentEntry);
+        }
+        return { ok: true, pr: r.number, url: r.url, path, hash: s.hash, seq };
+      }
       case "ledger_prs": {
         const p = parsePayload("ledger_prs", call.payload);
         if (!p) return no("payloadInvalid");
@@ -1073,7 +1124,7 @@ export class HumanService {
             e.state = st.state;
             touched.add(b);
           }
-          prs.push({ pr: e.pr, url: e.url, seq: e.seq, at: e.at, version: e.version ?? null, login: e.login, status: st });
+          prs.push({ pr: e.pr, url: e.url, seq: e.seq, at: e.at, version: e.version ?? null, login: e.login, via: e.via ?? "github", status: st });
         }
         for (const b of touched) writePlanSent(b.facility, L.id, b.entries);
         return { ok: true, prs };
@@ -1298,6 +1349,8 @@ export class HumanService {
       axes: pack.axes,
       packName: pack.name,
       github,
+      // GitHub のアカウントなしの道（受け口の URL が決まっているときだけ出す）
+      intake: this.intakeIo() !== null,
     };
     const ledgerRoot = readSettings(sd).ledger;
     const L = await loadLedgerForSend(ledgerRoot, pack);
@@ -1311,16 +1364,20 @@ export class HumanService {
     return { ok: true as const, L, pack, plan, version: h.latest.version, repo, info, facility, sender, accepted };
   }
 
-  /** 公開の台帳の見え方（GitHub につないでいないか、施設の鍵が 2 つあれば、相手から見たあなたまでを出し、束のバイト列は出さない） */
-  private ledgerView(c: Extract<Awaited<ReturnType<HumanService["ledgerSendContext"]>>, { ok: true }>, answers: Answers, month: string, pending: boolean): PreviewView {
+  /**
+   * 公開の台帳の見え方（GitHub につないでいないか、施設の鍵が 2 つあれば、相手から見たあなたまでを出し、束のバイト列は出さない）。
+   * GitHub のアカウントなしの道（受け口）があれば、つないでいなくても束のバイト列を出す（GitHub の道は noKey で止め、受け口の道は送れる）
+   */
+  private ledgerView(c: Extract<Awaited<ReturnType<HumanService["ledgerSendContext"]>>, { ok: true }>, answers: Answers, month: string, pending: boolean, intake: boolean): PreviewView {
     const accepted = c.accepted ?? { ledgerId: c.L.id, pack: c.pack.id, acceptedRulesHash: sha256OfLedger(c.L), acceptedRules: c.L.rules, createdAt: "" };
     const place = ledgerPlace(c.L, accepted, { facility: c.facility, pair: c.sender.ok ? c.sender.pair : PLACEHOLDER_PAIR });
     // 台帳では、出した束が審査中で clone にまだ無いのはふつうのこと（「消えた」ではない）。次の束を止めるのは pending
     const v = { ...previewPlace(place, c.pack, c.plan, answers, month), vanished: false };
     // 見え方と塊（鍵によらない）は見せるが、送れないので、ハッシュとバイト列は出さない（画面は「出ていくもの」を出さない）
     if (!c.sender.ok) return { ...v, blockers: [...v.blockers, "keysForked"], bodyHash: null, bodyText: null, bytes: null };
-    if (!c.accepted) return { ...v, blockers: [...v.blockers, "noKey"], bodyHash: null, bodyText: null, bytes: null };
-    return pending ? { ...v, blockers: [...v.blockers, "pending"] } : v;
+    if (!c.accepted && !intake) return { ...v, blockers: [...v.blockers, "noKey"], bodyHash: null, bodyText: null, bytes: null };
+    const blockers: PreviewView["blockers"] = [...v.blockers, ...(c.accepted ? [] : (["noKey"] as const)), ...(pending ? (["pending"] as const) : [])];
+    return { ...v, blockers };
   }
 
   /** 輪の見え方。施設の鍵が 2 つあれば、相手から見たあなたまでを出し、束のバイト列は出さない */
