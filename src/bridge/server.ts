@@ -61,6 +61,8 @@ export interface BridgeOptions {
   repoRoot?: string;
   /** 作業画面を既定のブラウザで開く手（moyai start が渡す。無ければ work_screen_open は opened: false、自動で開くこともしない） */
   openUrl?: (url: string) => void;
+  /** intake_survey（show: true）で開いたタブを待つ上限（試験で短くするときだけ。既定は SCREEN_OPEN_WAIT_MS） */
+  screenOpenWaitMs?: number;
   /** 止める合図（moyai uninstall か、古い版の橋渡しを替える中継）が来たとき（moyai start はプロセスを終える）。無ければ橋渡しを閉じるだけ */
   onStopRequest?: () => void;
   /** このビルドの commit。鍵ファイルに書き、中継が自分の版と比べる（違えば止めて替える）。無ければ書かない（版が分からない） */
@@ -210,7 +212,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
         return "intake_template_unreadable";
       }
     },
-  });
+  }, opts.screenOpenWaitMs);
   const arrangeWindows = createWindowArranger(opts.windowArrange);
   const relayKey = randomBytes(32).toString("base64url");
   let port = opts.port;

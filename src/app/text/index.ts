@@ -600,7 +600,7 @@ export const TEXT = {
         `AI が紐付けのルールを ${rules} 個置きました（案 ${placed} 件・ぶつかり ${conflicts} 件。人が受けるまで決まりません）`,
       crosswalkRefused: (rules: number) => `AI の紐付けのルール ${rules} 個を断りました（置けない値か、もとにした版が古いので、どれも置いていません）`,
       filesAdded: (demo: boolean, added: number, refused: number) => `AI が${demo ? "デモの" : "フォルダの"}資料を追加 ${added} 件${refused ? `・未追加 ${refused} 件` : ""}`,
-      demoMixed: "AI のデモの資料は未追加（架空でない資料か、ほかの Skillパックの資料があるため）",
+      demoMixed: "AI のデモの資料は未追加（デモでない資料か、ほかの Skillパックの資料があるため）",
       /** 様式（intake_add_files の source: template）と写し方の案（screen_set の templateLayout）。言葉は Wire に確かめる */
       templateAdded: (name: string) => `AI が様式「${name}」を出力の様式に追加（未保存）`,
       templateRefused: (name: string) => `AI の様式「${name}」は未追加（読めない形のため）`,

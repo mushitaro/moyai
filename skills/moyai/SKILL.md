@@ -65,8 +65,9 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 
 前の版の橋渡しが動いたままでも、利用者に止めてもらわない。moyai のツールを呼べば、中継が前の版を止め、この版の橋渡しを起こす。その答えに「作業画面を読み込み直す」の字と workScreenUrl が添えられるので、その URL を開き直す（シェルがあれば Claude が開く）。「ポート 43110 をほかの道具が使っています」と返ったら、その文のとおり利用者に伝える。
 
-### インストール（GitHub のリポジトリの URL を渡されたら）
+### インストール（「MOYAI をインストールして」と言われたか、GitHub のリポジトリの URL を渡されたら）
 
+0. もう入っているか：moyai のツールが呼べれば、`intake_survey`（part: skills）の版を見て、新しい版なら入れ直さない。版は本文から決まる（同じ本文なら同じ版）ので、1 段目（moyai）の本文がリポジトリの `skills/moyai/SKILL.md` と同じなら新しい版。そのときは「もう入っています」と伝え、作業画面を出す（intake_survey を show: true で呼ぶ）。本文が違えば、下の手順で入れ直す（clone したフォルダが残っていれば、clone の代わりにそのフォルダで `git pull`）。ツールが呼べなければ、下の手順で入れる。
 1. `node --version` で、Node が 22.13 以上かを確かめる。
 2. 無いか古ければ、利用者にチャットで聞いてから `winget install --id OpenJS.NodeJS.LTS -e` で入れる。git が無ければ、同じく聞いてから `winget install --id Git.Git -e`。入れたあとに今のシェルで見つからなければ、利用者に Claude を開き直してもらう。
 3. 利用者のホームの下に clone する（例 `git clone <URL> ~/moyai`。同期フォルダの下には置かない）。
@@ -80,6 +81,8 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 ### デモ
 
 利用者が「デモして」と言ったら：intake_add_files（source: demo）で Skillパックの demo/ の架空の資料を入れる → intake_survey で要約と質問を読む → 質問を利用者に聞き、答えを intake_settle で置く（作者は ai_relayed_human）→ 質問が無くなったら intake_compose → intake_survey（part: compose）で結果を読む → chart_rows で星取表の行を読み、利用者に話す → 確定は人が画面でする（HOSHITORI の確定のシート）。詳しくは Skillパックの demo/README.md。
+
+架空でない資料とは混ぜない。利用者の資料（人が落とした・フォルダから入れた資料。【架空】とあっても）が入っている作業画面には、デモの資料は入らない（intake_add_files の refused の理由が mixed になり、note に次の手が入る）。そのときは note のとおり、今の作業を残すかを利用者に聞く。
 
 ### 利用者の資料
 

@@ -172,6 +172,8 @@ export class IntakeWorkspace {
   private opts: IntakeOptions;
   /** 資料として持ったものの名前 */
   private inputs: string[] = [];
+  /** AI がデモ（source: demo）で入れた資料の名前（userFileNames） */
+  private readonly demoInputs = new Set<string>();
   private tooLarge: { file: string; reason: string }[] = [];
   /** 受け手から返った最新の写し */
   private copy: IntakeView | null = null;
@@ -407,6 +409,24 @@ export class IntakeWorkspace {
     return this.inputs.length;
   }
 
+  /** 入れた資料の名前（読み終えて取り込みが受けたもの。写し） */
+  get fileNames(): string[] {
+    return [...this.inputs];
+  }
+
+  /**
+   * 利用者の資料の名前：AI がデモ（intake_add_files の source: demo）で入れたもののほか。人が落とした・フォルダから入れた・版から戻した資料。
+   * 資料に【架空】とあっても、デモで入れたものでなければ利用者の資料（デモの資料と混ぜない。仕事 chat-prompts-v1）
+   */
+  get userFileNames(): string[] {
+    return this.inputs.filter((n) => !this.demoInputs.has(n));
+  }
+
+  /** AI がデモで入れた資料に印を付ける（取り込みが受けた名前だけ） */
+  markDemoFiles(names: Iterable<string>): void {
+    for (const n of names) if (this.inputs.includes(n)) this.demoInputs.add(n);
+  }
+
   /** 大きすぎて読まなかったファイル（理由つき） */
   get skippedFiles(): { file: string; reason: string }[] {
     return [...this.tooLarge];
@@ -629,6 +649,8 @@ export class IntakeWorkspace {
     );
     this.opts = opts;
     this.inputs = r.accepted;
+    // 版から戻した資料は利用者の資料（デモで入れた印は消す）
+    this.demoInputs.clear();
     this.tooLarge = [];
     // 決定は版の記録のものに置き換わった（答えた時刻は版の記録に無いので、分からないものとして持たない）
     this.answered.clear();

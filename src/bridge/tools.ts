@@ -7,8 +7,10 @@
 import { createHash, randomBytes } from "node:crypto";
 import { errorBody, type ErrorBody, type ErrorCode } from "../shared/errors";
 import {
+  DEMO_MIXED_NOTE,
   INTAKE_ADD_MAX_REFUSED,
   INTAKE_ADD_NOTE,
+  SCREEN_NOT_CONNECTED_NOTE,
   SCREEN_ITEMS,
   SCREEN_REFUSAL_TEXT,
   SCREEN_SET_NOTE,
@@ -52,6 +54,9 @@ export interface BridgeTools {
    */
   storage_root?: (path: string) => Promise<{ valid: string | null; current: string | null }>;
 }
+
+/** intake_survey（show: true）で、橋渡しが開いた新しいタブが引き継ぐのを待つ上限 */
+export const SCREEN_OPEN_WAIT_MS = 12_000;
 
 /** 作業画面に渡した資料の印が効く時間の余り（ツールの待ちの上限に足す） */
 const STAGED_MARGIN_MS = 5_000;
@@ -153,6 +158,8 @@ export class ToolRelay {
     private readonly tabs: TabHub,
     private readonly timeouts: Partial<Record<ToolKind, number>> = {},
     private readonly bridgeTools: BridgeTools = {},
+    /** show: true で開いたタブを待つ上限（試験で短くするときだけ） */
+    private readonly openWaitMs: number = SCREEN_OPEN_WAIT_MS,
   ) {}
 
   rowsReadIn(conversation: string): number {
@@ -273,7 +280,7 @@ export class ToolRelay {
         return finish({
           changed: [],
           refused: [{ item: "storageRoot", reason: "root_invalid", text: SCREEN_REFUSAL_TEXT.root_invalid }],
-          current: { theme: null, go: null, levelOrder: null, lastFiscalYear: null, storageRoot: c.current },
+          current: { theme: null, go: null, levelOrder: null, lastFiscalYear: null, facility: null, planVersion: null, storageRoot: c.current },
           note: SCREEN_SET_NOTE,
         });
       }
@@ -292,15 +299,24 @@ export class ToolRelay {
     }
 
     const ms = this.timeouts[def.kind] ?? TOOL_TIMEOUTS[def.kind].ms;
-    // 利用者が「立ち上げて」「画面を出して」と言ったとき（intake_survey の show）：橋渡しが作業画面を開いて前に出し、新しいタブがつながるのを待つ
+    // 利用者が「立ち上げて」「画面を出して」と言ったとき（intake_survey の show）：橋渡しが作業画面を開いて前に出し、新しいタブがつながるのを待つ。
+    // 答えには、開いたか（opened）と、タブがつながったか（connected。開いたときは、新しいタブが引き継いだか）を添える
+    let shown: { opened: boolean; before: string | null } | null = null;
     if (name === "intake_survey" && "show" in sendArgs) {
       const { show, ...rest } = sendArgs;
       sendArgs = rest;
-      if (show === true && this.bridgeTools.work_screen_open) {
-        const before = this.tabs.session;
-        const opened = await this.bridgeTools.work_screen_open();
-        if (typeof opened !== "string" && opened.opened === true)
-          for (let i = 0; i < 40 && (!this.tabs.connected || this.tabs.session === before); i++) await new Promise((r) => setTimeout(r, 300));
+      if (show === true) {
+        shown = { opened: false, before: this.tabs.session };
+        if (this.bridgeTools.work_screen_open) {
+          const opened = await this.bridgeTools.work_screen_open();
+          shown.opened = typeof opened !== "string" && opened.opened === true;
+          if (shown.opened) {
+            // 下の「開いていなければ開く」で、続けてもう 1 つ開かない
+            this.autoOpenedAt = Date.now();
+            const until = Date.now() + this.openWaitMs;
+            while (Date.now() < until && (!this.tabs.connected || this.tabs.session === shown.before)) await new Promise((r) => setTimeout(r, Math.min(300, this.openWaitMs)));
+          }
+        }
       }
     }
     let out = await this.tabs.callTool(name, sendArgs, conversation, remaining, ms, def.kind !== "read");
@@ -314,7 +330,8 @@ export class ToolRelay {
         if (this.tabs.connected) out = await this.tabs.callTool(name, sendArgs, conversation, remaining, ms, def.kind !== "read");
       }
     }
-    if (out.kind === "no_tab") return fail("work_screen_not_open");
+    // show: true で開いたのにタブがつながらなかったときは、利用者に開いたタブを見てもらう（もう 1 つ開かせない）
+    if (out.kind === "no_tab") return fail(shown?.opened ? "work_screen_not_connected" : "work_screen_not_open");
     if (out.kind === "no_answer") return fail("tab_no_answer");
     if (out.kind === "error") return fail(out.code);
     if (BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
@@ -366,6 +383,15 @@ export class ToolRelay {
       data.samples = samples;
       data.stuck = stuck;
       setRows(n);
+      // 作業画面の出し方の印（作業画面は知らないので、橋渡しが足す。タブの答えに付いていたものは使わない）
+      delete data.screen;
+      delete data.note;
+      if (shown) {
+        // 開いたときは、答えたタブが開く前のタブと違うこと（新しいタブが引き継いだ）。開いていなければ、タブが答えたこと
+        const connected = !shown.opened || out.session !== shown.before;
+        data.screen = { opened: shown.opened, connected };
+        if (!connected) data.note = SCREEN_NOT_CONNECTED_NOTE;
+      }
     }
     if (name === "chart_rows") {
       const n = (data.rows as unknown[]).length;
@@ -431,6 +457,9 @@ export class ToolRelay {
       if (named.some((n) => !sizes.has(n)) || new Set(named).size !== named.length) return errorBody("tab_bad_result");
       // 階層の名前は様式のときだけ（ほかの資料の答えに付いていたら型違い）
       if (c.source !== "template" && tab.data.levels !== undefined) return errorBody("tab_bad_result");
+      // デモの資料を、利用者の資料のある作業画面に入れなかった（作業画面が、渡した資料をどれも mixed で断る）
+      const mixed = tab.data.refused.some((r) => r.reason === "mixed");
+      if (mixed && (c.source !== "demo" || tab.data.added.length > 0 || tab.data.refused.some((r) => r.reason !== "mixed"))) return errorBody("tab_bad_result");
       const refused = [...c.refused, ...tab.data.refused];
       // 様式の形は、作業画面が様式の欄に入れたときだけ返す（橋渡しが読んで作った形。値は入っていない）
       const template = c.source === "template" && tab.data.added.length > 0 && c.template ? { template: c.template, planLevels: tab.data.levels ?? null } : {};
@@ -442,7 +471,7 @@ export class ToolRelay {
         refusedTotal: c.refusedTotal + tab.data.refused.length,
         others: c.others,
         ...template,
-        note: c.source === "template" ? TEMPLATE_ADD_NOTE : INTAKE_ADD_NOTE,
+        note: c.source === "template" ? TEMPLATE_ADD_NOTE : mixed ? DEMO_MIXED_NOTE : INTAKE_ADD_NOTE,
       };
       const p = def.output.safeParse(data);
       return p.success ? { ok: true, data: p.data as Record<string, unknown> } : errorBody("tab_bad_result");

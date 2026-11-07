@@ -410,8 +410,8 @@ export function createRelayServer(opts: RelayOptions): McpServer {
         const fromBridge = "ok" in answer || ERRORS[answer.error.code].from !== "relay";
         const k = fromBridge ? announce : null;
         if (k) announce = null;
-        // 起こした直後でなければ、結果が返ったときと「作業画面が開いていません」のときだけ添える（ほかの誤りには足さない）
-        const wants = "ok" in answer || answer.error.code === "work_screen_not_open";
+        // 起こした直後でなければ、結果が返ったときと「作業画面が開いていません」「まだつながっていません」のときだけ添える（ほかの誤りには足さない）
+        const wants = "ok" in answer || answer.error.code === "work_screen_not_open" || answer.error.code === "work_screen_not_connected";
         const current = fromBridge ? (k ?? (wants ? readKeyFile(opts.stateDir) : null)) : null;
         const url = current ? workScreenUrl(current) : null;
         const notice = k && reload ? RELAY_TEXT.replaced(workScreenUrl(k)) : null;

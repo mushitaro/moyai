@@ -146,6 +146,9 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
   }
   ws.note("ai", TEXT.intake.ai.screenSet(changed.length, refused.length));
   const prefs = displayPrefs(facility);
+  // 見せ方を覚えた施設の名前と、作業中の計画の版（どの施設のどの計画に効いたかを、Claude が利用者に言えるように。仕事 chat-prompts-v1）
+  const working = getWorkingPlan();
+  const facilityName = working ? working.plan.facility.name : ws.settings.facilityName;
   return {
     ok: true,
     data: {
@@ -156,6 +159,8 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
         go: currentGo(),
         levelOrder: prefs.levelOrder,
         lastFiscalYear: prefs.lastFiscalYear,
+        facility: facilityName || null,
+        planVersion: working ? working.revision : null,
         ...(siblings ? { siblings } : {}),
         ...(layoutPlaced ? { templateLayout: layoutPlaced } : {}),
       },

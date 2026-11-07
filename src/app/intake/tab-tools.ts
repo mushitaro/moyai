@@ -427,7 +427,7 @@ function placeFacility(ws: IntakeWorkspace, pack: { id: string; name: string } |
  * intake_add_files の作業画面の側（受け手の種類は bridge_then_tab）：橋渡しが選んだ資料を、資料の印で 1 つずつ取りに行き、
  * 人が落とした資料と同じ道（workspace の addFiles と、【架空】の印を見て架空にすること）で取り込む。
  * 返すのは、入れた資料の名前と件数（シートと行の数）、断った資料の名前と理由だけ（セルの値・文字は返さない。安全の決まり 3）。
- * デモの資料は、架空でない資料やほかのパックの資料と混ぜない。
+ * デモの資料は、利用者の資料（デモで入れたもののほか。資料に【架空】とあっても）・架空でない資料・ほかのパックの資料と混ぜない。
  * Skillパックと施設名（demo はデモのもの、folder は AI が添えたもの）は、作業画面のその欄が空のときだけ置く（人が画面で選んだ・打ったものは上書きしない）。
  */
 /** 資料を入れたあと、読み終わるのを待つ上限（ツールの待ちの上限 30 秒より短く） */
@@ -488,10 +488,18 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
     return { ok: false, code: "intake_pack_not_on_screen" };
   }
   if (demo) {
+    // ほかの Skillパックが選ばれている作業画面には入れない（誤りで返す）
     const otherPack = !!ws.settings.packId && !!a.pack && ws.settings.packId !== a.pack;
-    if (otherPack || (ws.fileCount > 0 && !ws.settings.fictional)) {
+    if (otherPack) {
       ws.note("ai", T.demoMixed);
       return { ok: false, code: "intake_demo_mixed" };
+    }
+    // 利用者の資料（デモで入れたもののほか。資料に【架空】とあっても）・架空でない資料・読込の途中の資料があれば、
+    // どれも入れずに mixed で断る（利用者の資料と架空の資料を混ぜない。デモの資料どうしは今どおり、同じ名前として断る）
+    if (ws.userFileNames.length > 0 || ws.readProgress !== null || (ws.fileCount > 0 && !ws.settings.fictional)) {
+      ws.note("ai", T.demoMixed);
+      const data = { added: [], refused: a.files.map((f) => ({ name: f.name, reason: "mixed" as const })) };
+      return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
     }
   }
   placeFacility(ws, pack ?? null, a.facilityName);
@@ -509,6 +517,7 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
   const late = await Promise.race([reading.then(() => false), new Promise<boolean>((r) => setTimeout(() => r(true), ADD_WAIT_MS))]);
   if (late) {
     void reading.then(() => {
+      if (demo) ws.markDemoFiles(got.map((f) => f.name));
       if (!ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });
     });
     ws.note("ai", T.filesAdded(demo, got.length, refused.length));
@@ -516,6 +525,8 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
     const data = { added: got.map((f) => ({ name: f.name, sheets: null, rows: null })), refused };
     return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
   }
+  // デモで入れた資料に印を付ける（ほかの資料は利用者の資料。次のデモを混ぜないため）
+  if (demo) ws.markDemoFiles(got.map((f) => f.name));
   // 要約を待ってから見る（worker のときは、読み終わった写しが届いてから【架空】の印が分かる）
   const after = await namesIn(ws);
   if (got.length && !ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });

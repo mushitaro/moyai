@@ -224,6 +224,24 @@ describe("6 つの引数がそれぞれ作業画面の状態を変える", () =>
     expect(early.refused[0]).toMatchObject({ item: "lastFiscalYear", reason: "year_before_stars" });
     expect(displayPrefs(FAC).lastFiscalYear).toBe(2040);
   });
+
+  it("答えの current に、見せ方を覚えた施設の名前と作業中の計画の版（chart_rows の version と同じ数）。計画が無ければ施設設定の施設名と null（仕事 chat-prompts-v1）", () => {
+    // 計画が無い：作業画面の施設設定の施設名、版は null
+    const none = call({ levelOrder: "series-first" });
+    expect(none.current).toMatchObject({ facility: "【架空】見せ方の試験", planVersion: null });
+    // 施設名も無ければ null（推測で埋めない）
+    const blank = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
+    expect(call({ theme: "light" }, blank).current).toMatchObject({ facility: null, planVersion: null });
+    // 計画がある：作業中の計画の施設と版
+    const p = screenPlan();
+    setWorkingPlan({ ...p, facility: { ...p.facility, name: "【架空】見せ方の計画の施設" } }, "intake");
+    const w = ws();
+    const r = call({ lastFiscalYear: 2040 }, w);
+    const version = ok(runTabTool(w, "chart_rows", { limit: 1 }, CTX)).version;
+    expect(r.current).toMatchObject({ facility: "【架空】見せ方の計画の施設", planVersion: getWorkingPlan()!.revision });
+    expect(r.current.planVersion).toBe(version);
+    expect(TOOLS.screen_set.output.safeParse(r).success).toBe(true);
+  });
 });
 
 describe("最大年度と周期の案・星取の案", () => {
@@ -404,7 +422,7 @@ describe("橋渡し：保存先の道は設定と同じ確かめを通し、保�
         data: {
           changed: a.theme ? ["theme"] : [],
           refused: a.storageRoot ? [{ item: "storageRoot", reason: "root_human_save", text: "人が保存" }] : [],
-          current: { theme: a.theme ?? null, go: a.storageRoot ? "settings" : null, levelOrder: "asset-first", lastFiscalYear: null },
+          current: { theme: a.theme ?? null, go: a.storageRoot ? "settings" : null, levelOrder: "asset-first", lastFiscalYear: null, facility: "【架空】見せ方の試験", planVersion: null },
           note: "n",
         },
       };
@@ -432,12 +450,15 @@ describe("橋渡し：保存先の道は設定と同じ確かめを通し、保�
     expect(r.changed).toEqual([]);
     expect(r.refused).toEqual([expect.objectContaining({ item: "storageRoot", reason: "root_invalid" })]);
     expect(r.current.storageRoot).toBe("/tmp/架空の今の保存先");
+    // 作業画面に聞いていないので、施設と計画の版は分からない（null）
+    expect(r.current).toMatchObject({ facility: null, planVersion: null });
     expect(readSettings(tb.stateDir).root).toBe("/tmp/架空の今の保存先");
     // ほかの頼みと一緒なら、ほかは作業画面へ渡し、保存先は断ったことを足す
     const both = await run({ storageRoot: "相対の道", theme: "light" });
     expect(calls).toHaveLength(1);
     expect(calls[0]!.args).toEqual({ theme: "light" });
     expect(both.changed).toEqual(["theme"]);
+    expect(both.current).toMatchObject({ facility: "【架空】見せ方の試験", planVersion: null });
     expect(both.refused).toEqual([expect.objectContaining({ item: "storageRoot", reason: "root_invalid" })]);
   });
 

@@ -4,7 +4,7 @@
 import { z } from "zod";
 import toolNames from "./tool-names.json";
 import { CLASS_CODE, FIELD_REFS, WORK_ATTRIBUTES, type FieldRef } from "./fields";
-import { READING_SCOPES, ReadingRule } from "../import/reading";
+import { COLUMN_ROLES, DATE_FORMATS, PLAN_CYCLE_YEARS, READING_SCOPES, ReadingRule } from "../import/reading";
 import { templateLayoutInputSchema, templateShapeSchema } from "./template-layout";
 
 // ─── 規則の形（1 か所だけ）─────────────────────────────────────────
@@ -264,9 +264,10 @@ export const INTAKE_ADD_MAX_REFUSED = 200;
 /**
  * 断った理由（資料の種類の名前のものだけ。ほかの種類のファイルと下のフォルダは、名前を返さずに数だけ others に数える）：
  * link シンボリックリンク／not_file ファイルでない／too_large 64 MB を越える／over_count 201 個目から／
- * unreadable 作業画面が読めない形／same_name 同じ名前の資料がもう入っている／changed 読む間に変わったか消えた
+ * unreadable 作業画面が読めない形／same_name 同じ名前の資料がもう入っている／changed 読む間に変わったか消えた／
+ * mixed デモの資料（source: demo）で、作業画面に利用者の資料（人が落とした・フォルダから入れた資料。【架空】とあっても）か架空でない資料が入っている
  */
-export const INTAKE_REFUSALS = ["link", "not_file", "too_large", "over_count", "unreadable", "same_name", "changed"] as const;
+export const INTAKE_REFUSALS = ["link", "not_file", "too_large", "over_count", "unreadable", "same_name", "changed", "mixed"] as const;
 export type IntakeRefusal = (typeof INTAKE_REFUSALS)[number];
 const INTAKE_SOURCES = ["demo", "folder", "template"] as const;
 const PACK_ID_SHAPE = /^[a-z][a-z0-9-]{0,63}$/;
@@ -335,9 +336,19 @@ export type IntakeAddFilesFromTab = z.infer<typeof intakeAddFilesFromTabSchema>;
 export const INTAKE_ADD_NOTE =
   "sheets と rows が null の資料は、まだ読込の途中（intake_survey の注記に進み）。次は intake_survey で要約と質問を読み、質問は利用者に聞く。画像と文字の無い PDF の頁は写真の欄に並び、人が 1 枚ずつ許すまで AI には渡らない。確定は人が画面でする。";
 
+/** source: demo を断ったとき（refused の理由が mixed）の次の手。作業画面から資料を外すボタンは無いので、空の作業画面で始め直す道だけを書く */
+export const DEMO_MIXED_NOTE =
+  "利用者の資料と架空の資料を混ぜないので、デモの資料は入れていない。デモは空の作業画面で始める：今の作業を残すかを利用者に聞き、要らなければ作業画面のタブを読み込み直してもらってから呼び直す（入れた資料と施設設定は消える。確定していない作業中の計画は下の帯の「前の作業」に出る）。作業画面から資料を外すボタンは無い。";
+
 /** source: template の結果に添える次の手（「この様式で Excel を出して」の順） */
 export const TEMPLATE_ADD_NOTE =
   "様式を作業画面の EXPORT に入れた（まだ保存していない）。template の形（見出しの字・結合・年度の式）と planLevels（計画の階層の名前。asset-first の順で、series-first では機器と号炉・系統が入れ替わる）を読み、写し方の案を screen_set の templateLayout で置く。置いた案は下書きで、EXPORT に案のとおりに書いた見本が出る。利用者に見本を見てもらい、出力と保存は利用者が「この写し方で出力」を押す。";
+
+/**
+ * intake_survey（show: true）で、作業画面のタブがつながっていないとき（橋渡しが開いた新しいタブが時間内に引き継がなかった）に、
+ * Claude が利用者に言う 1 文（答えの note）
+ */
+export const SCREEN_NOT_CONNECTED_NOTE = "作業画面がまだつながっていません。開いたタブを見てください。";
 
 /** 結果に Skill の目録を添えるツール */
 export const SKILL_CATALOG_TOOLS = ["intake_survey", "chart_rows", "check_results", "crosswalk_propose"] as const;
@@ -460,6 +471,10 @@ const screenSetOutput = z.object({
     levelOrder: z.enum(LEVEL_ORDERS).nullable(),
     /** null は計画の最後の年度まで */
     lastFiscalYear: z.number().int().nullable(),
+    /** 見せ方を覚えた施設の名前（作業中の計画の施設。計画が無ければ作業画面の施設設定の施設名。どちらも無いか分からなければ null） */
+    facility: z.string().nullable(),
+    /** 作業中の計画の版（intake_survey の crosswalk.version・chart_rows の version と同じ数。計画が無いか分からなければ null） */
+    planVersion: z.number().int().nullable(),
     /** storageRoot を渡したとき：今の保存先（人が保存するまで変わらない） */
     storageRoot: z.string().nullable().optional(),
     /** rowOrder を変えたとき：同じ親の下の行の、変えたあとの並び（50 まで） */
@@ -490,6 +505,46 @@ const screenSetOutput = z.object({
   note: z.string(),
 });
 
+// ─── ルールの形の見本（reading_rules_propose の説明。仕事 chat-prompts-v1）────────
+// ツールの入力の型（JSON Schema）だけでは、Claude のクライアントによって rules の中身の形が見えないので、kind ごとの欄を説明に書く。
+// 見本は型に通ることを試験が確かめる（tests/unit/chat-prompts.test.ts）。( ) の値は、ほかの答えから写すもの。
+
+/** どの kind にも足す欄の見本（when と replaces は省ける） */
+export const READING_RULE_COMMON_EXAMPLE = { id: "r1", text: "7 行目を見出しの行として読む", author: "ai", reason: "利用者が会話で決めた" } as const;
+/** kind ごとの欄の見本（kind ごとに 1 つ） */
+export const READING_RULE_EXAMPLES: Record<ReadingRule["kind"], Record<string, unknown>> = {
+  headerRow: { row: 7 },
+  columnRole: { column: "作業日", role: "date" },
+  dateFormat: { column: "作業日", format: "yyyymmdd" },
+  effortUnit: { column: "延工数", unit: "hours" },
+  rowRole: { match: "合計", role: "total" },
+  sameAsset: { names: ["1号ポンプ", "ポンプ No.1"] },
+  markMeaning: { symbol: "◎", planOrActual: "actual", meaning: "交換" },
+  answer: { question: "(質問の kind)", match: "(質問の文に含む字)", answer: "(質問の options の id)" },
+  planCycle: { commonItem: "(crosswalk.items のコード)", attribute: "OVERHAUL", years: 4 },
+};
+/** kind ごとの欄の言い添え（選べる値） */
+const READING_RULE_HINTS: Partial<Record<ReadingRule["kind"], string>> = {
+  headerRow: "row は 1 から",
+  columnRole: `column は見出しの字、role は ${COLUMN_ROLES.join("・")}`,
+  dateFormat: `format は ${DATE_FORMATS.join("・")}`,
+  effortUnit: "unit は manDays・hours",
+  rowRole: "role は total・subtotal・note。prefix: true で match で始まる行",
+  sameAsset: "2〜20 の名前を、どれも最後の名前と同じ機器として読む",
+  markMeaning: "planOrActual は plan・actual。meaning は省ける",
+  answer: "同じ質問への決まった答え。valueKind が number の質問は answer に数の字",
+  planCycle: `attribute は ${WORK_ATTRIBUTES.join("・")}、years は ${PLAN_CYCLE_YEARS.min}〜${PLAN_CYCLE_YEARS.max}`,
+};
+/** reading_rules_propose の説明に足す、ルールの形の見本の文 */
+export function readingRuleExamplesText(): string {
+  const full = JSON.stringify({ ...READING_RULE_COMMON_EXAMPLE, kind: "headerRow", ...READING_RULE_EXAMPLES.headerRow, when: { headers: ["作業日", "作業内容"] } });
+  const kinds = (Object.keys(READING_RULE_EXAMPLES) as ReadingRule["kind"][]).map((k) => {
+    const hint = READING_RULE_HINTS[k];
+    return `${k} ${JSON.stringify(READING_RULE_EXAMPLES[k])}${hint ? `（${hint}）` : ""}`;
+  });
+  return `ルールの形の見本：どの kind にも id（英数・_・-、40 字まで）・text・author（"ai"）・reason を書き、when と replaces は省ける。全部の欄の例 ${full}。kind ごとの欄（( ) の値はほかの答えから写す）：${kinds.join("／")}。`;
+}
+
 // ─── 12 のツール ─────────────────────────────────────────────────
 
 export const TOOLS = {
@@ -497,7 +552,7 @@ export const TOOLS = {
     "intake_survey",
     "read",
     "取り込みの要約",
-    "結果の workScreenUrl は作業画面の URL。利用者が「立ち上げて」「画面を出して」と言ったら、窓を探さずに show: true で呼ぶ（橋渡しが既定のブラウザで開き、新しいタブが作業画面を引き継ぐ）。デモ（架空の資料）のときは、1 回の返事でツールを 1 つだけ呼び、画面の変わった所を 2 行までで言って、利用者の「次」を待つ（intake_add_files の説明のとおり）。作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
+    "結果の workScreenUrl は作業画面の URL。利用者が「立ち上げて」「画面を出して」と言ったら、窓を探さずに show: true で呼ぶ（橋渡しが既定のブラウザで開き、新しいタブが作業画面を引き継ぐ）。show: true の答えの screen は、橋渡しがブラウザを開いたか（opened）と、作業画面のタブがつながったか（connected）。connected が false なら、note の 1 文を利用者に言う。デモ（架空の資料）のときは、1 回の返事でツールを 1 つだけ呼び、画面の変わった所を 2 行までで言って、利用者の「次」を待つ（intake_add_files の説明のとおり）。作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
     z.object({
       part: z.enum(["all", "questions", "compose", "crosswalk", "skills"]).default("all"),
       show: z.boolean().optional().describe("true で、作業画面を利用者の PC の既定のブラウザで開いて前に出してから読む。利用者が「立ち上げて」「画面を出して」「見えない」と言ったら付ける（窓を探さない）"),
@@ -570,6 +625,13 @@ export const TOOLS = {
       handoff: z.object({ to: z.string(), subject: z.string(), body: z.string() }).nullable().optional(),
       /** part: skills のとき：今効いている Skill の本文 */
       skillTexts: z.array(z.object({ tier: z.number().int().min(1).max(3), name: z.string(), version: z.string(), text: z.string().max(60_000) })).max(30).optional(),
+      /** show: true のときだけ：橋渡しがブラウザを開いたか（opened）、作業画面のタブがつながったか（connected。開いたときは、新しいタブが引き継いだか） */
+      screen: z
+        .object({ opened: z.boolean(), connected: z.boolean() })
+        .optional()
+        .describe("show: true のときだけ。opened は橋渡しがブラウザを開いたか、connected は作業画面のタブがつながったか（開いたときは、開いたタブが引き継いだか）"),
+      /** show: true でつながっていないとき：Claude が利用者に言う 1 文 */
+      note: z.string().optional().describe("show: true で作業画面がつながっていないとき、利用者に言う 1 文"),
     }),
   ),
   intake_settle: def(
@@ -606,6 +668,7 @@ export const TOOLS = {
     "資料を作業画面に入れる",
     "資料を作業画面に入れる（人が資料を落としたのと同じ道で取り込む）。" +
       "source: demo は Skillパックの demo/ の架空の資料（利用者が「デモして」と言ったとき。pack は省いてよい）。" +
+      "利用者の資料（人が落とした・フォルダから入れた資料。【架空】とあっても）か架空でない資料が入っている作業画面には、デモの資料を入れず、どれも refused（理由 mixed）で返す。そのときは note のとおりにする。" +
       "デモは、利用者が作業画面で動きを見るためにある。先に作業画面を開いて利用者が見ているかを確かめ、1 回の返事でツールを 1 つだけ呼び、画面の何が変わったかを 2 行までで言って、利用者の「次」を待つ。資料がもう入っていても同じ。最後まで続けて呼んで結果だけを話さない。" +
       "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
       "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
@@ -868,7 +931,8 @@ export const TOOLS = {
     "reading_rules_propose",
     "propose",
     "ルールを下書きで置く",
-    "取り込みを詰めきれないとき、利用者と会話で決めたルールを、作業中の版の下書きのルール（3 段目の Skill）に置く。ルールは決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・星取の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業分類 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料のルールには効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその星取の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。同じ id のルールは置き換える。作業画面がすぐ読み直し、ルールごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。",
+    "取り込みを詰めきれないとき、利用者と会話で決めたルールを、作業中の版の下書きのルール（3 段目の Skill）に置く。ルールは決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・星取の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業分類 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料のルールには効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその星取の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。同じ id のルールは置き換える。作業画面がすぐ読み直し、ルールごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。" +
+      readingRuleExamplesText(),
     z.object({ name: z.string().min(1).max(80), scope: z.enum(READING_SCOPES), rules: z.array(ReadingRule).min(1).max(50) }),
     z.object({
       name: z.string(),
@@ -920,7 +984,7 @@ export const TOOLS = {
       "「計画の最大年度は 2040 年までにして」は lastFiscalYear: 2040（星取表の年度の列をその年度まで出し、周期の案と星取の案をその年度まで置ける。今の星取は変えない。いちばん遅い星取より前の年度にはできない）。" +
       "levelOrder・rowOrder・lastFiscalYear は施設ごとに覚える見せ方で、作業中の計画・版の記録・署名される字は変えない。機器の並びは、確定のときに書く Excel にも出る。並びを変えたあとの行は chart_rows で読み直す。" +
       "「この様式で Excel を出して」は、intake_add_files（source: template）で様式を入れたあと、templateLayout に写し方の案を置く：template（様式の名前）、sheets（計画の表のシートごとに、見出しの行・年度の列と開始年度のセル・階層の列〔nested は入れ子の縦、flat は 1 行に横〕・組の行〔ラベルの列と、行ごとの中身 plan_content・plan_amount・actual_content・actual_amount・marks・cycle・next〕・明細を足す位置〔合計の行〕・continues〔年度で分かれる続きのシートなら前のシート〕）、amount（金額の単位と税）、facility（基本情報のシートの欄 → 施設の項目）。様式に合わなければ置かずに理由を返す。置いた案は下書きで、EXPORT に見本が出る。利用者に見本を見てもらい、出力と保存は利用者が「この写し方で出力」を押す。" +
-      "答えは、変えた項目（changed）、変えなかった項目と理由（refused）、今の値（current）。確定・署名・送る・承認・昇格は、このツールではしない。",
+      "答えは、変えた項目（changed）、変えなかった項目と理由（refused）、今の値（current。facility は見せ方を覚えた施設の名前、planVersion は作業中の計画の版で、計画が無ければ null）。確定・署名・送る・承認・昇格は、このツールではしない。",
     screenSetInput,
     screenSetOutput,
   ),

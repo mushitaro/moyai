@@ -11,7 +11,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(() => bridge?.stop());
 
-const mcpClient = (stateDir: string) => connect(stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows"]);
+const mcpClient = (stateDir: string) => connect(stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "screen_set", "intake_add_files"]);
 
 test("AI が MCP で取り込みを最後まで動かし、星取表の行を読む", async ({ page }, info) => {
   const tag = info.project.name;
@@ -152,6 +152,47 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
       await expect(page.getByTestId("plan-name")).toHaveText("【架空】第一清掃工場（AI）");
       await expect(page.locator(".ag-row").first()).toBeVisible();
       await page.screenshot({ path: shot(`mcp-chart-${tag}`) });
+    });
+
+    await test.step("screen_set の答えに、見せ方を覚えた施設の名前と作業中の計画の版（chart_rows の version と同じ。仕事 chat-prompts-v1）", async () => {
+      const rows = await call(c, "chart_rows", { limit: 1 });
+      const set = await call(c, "screen_set", { levelOrder: "asset-first" });
+      expect(set.current.facility).toBe("【架空】第一清掃工場（AI）");
+      expect(set.current.planVersion).toBe(rows.version);
+    });
+  } finally {
+    await c.close();
+  }
+});
+
+// 想定のプロンプトの試験（docs/progress/prompt-test-2026-11-07.md）の小さな穴（仕事 chat-prompts-v1）。計画を作る前の作業画面で確かめる
+test("「画面を出して」の開いた印・screen_set の施設の名前・「デモして」は人が落とした資料の横に入れない", async ({ page }) => {
+  test.setTimeout(60_000);
+  const c = await mcpClient(bridge.stateDir);
+  try {
+    await test.step("人が資料を画面に落とす（Skillパックのデモと同じ架空の資料でも、人が入れたものは利用者の資料）", async () => {
+      await openIntakeAndDrop(page, bridge.base, "【架空】第二清掃工場（混ざり）");
+    });
+
+    await test.step("「画面を出して」：show: true の答えに開いた印（試験の橋渡しは開く手を持たないので opened は false、タブはつながっている）", async () => {
+      const s = await call(c, "intake_survey", { show: true, part: "compose" });
+      expect(s.screen).toEqual({ opened: false, connected: true });
+      expect(s.note).toBeUndefined();
+    });
+
+    await test.step("screen_set の答えに、見せ方を覚えた施設の名前。計画が無いので版は null", async () => {
+      const set = await call(c, "screen_set", { levelOrder: "asset-first" });
+      expect(set.current.facility).toBe("【架空】第二清掃工場（混ざり）");
+      expect(set.current.planVersion).toBeNull();
+    });
+
+    await test.step("「デモして」：人が落とした資料の横に、デモの資料を入れない（どれも mixed、note に次の手）", async () => {
+      const d = await call(c, "intake_add_files", { source: "demo" });
+      expect(d.added).toEqual([]);
+      expect(d.refused.map((x: { reason: string }) => x.reason)).toEqual(["mixed", "mixed", "mixed"]);
+      expect(d.note).toContain("利用者の資料と架空の資料を混ぜない");
+      // 資料の選びの数は、人が落とした 3 つのまま
+      await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", "3");
     });
   } finally {
     await c.close();

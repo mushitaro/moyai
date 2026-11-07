@@ -361,7 +361,8 @@ describe("作業画面：人が落とした資料と同じ道で取り込む", (
     const { args, fetch } = demoArgs();
     const real = new IntakeWorkspace({ packId: "waste-incineration", facilityName: "x", fiscalYearStartMonth: 4, fictional: false });
     await real.addFiles([{ name: "mine.csv", size: 4, bytes: async () => new TextEncoder().encode("a,b\n") }]);
-    expect(await addFilesFromBridge(real, args, fetch)).toEqual({ ok: false, code: "intake_demo_mixed" });
+    // 架空でない資料があれば、どれも入れずに mixed で断る（誤りでなく答えで返す。仕事 chat-prompts-v1）
+    expect(await addFilesFromBridge(real, args, fetch)).toEqual({ ok: true, data: { added: [], refused: DEMO_FILES.map((name) => ({ name, reason: "mixed" })) } });
     expect(real.fileCount).toBe(1);
     const other = new IntakeWorkspace({ packId: "night-soil", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
     expect(await addFilesFromBridge(other, args, fetch)).toEqual({ ok: false, code: "intake_demo_mixed" });
