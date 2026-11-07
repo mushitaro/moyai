@@ -116,7 +116,7 @@ describe("古い版の橋渡しを中継が替える", () => {
 
     // 次の答えには添えない。もう替えない・起こさない
     const r2: any = await c.callTool({ name: "check_results", arguments: {} });
-    expect(texts(r2)).toEqual([ERRORS.work_screen_not_open.text]);
+    expect(texts(r2).slice(0, 1)).toEqual([ERRORS.work_screen_not_open.text]);
     expect(l.state.count).toBe(1);
   });
 
@@ -197,7 +197,7 @@ describe("古い版の橋渡しを中継が替える", () => {
     const l = launcher(stateDir);
     const c = await connect({ stateDir, version: NEW, launch: l.launch });
     const r: any = await c.callTool({ name: "check_results", arguments: {} });
-    expect(texts(r)).toEqual([ERRORS.work_screen_not_open.text]);
+    expect(texts(r).slice(0, 1)).toEqual([ERRORS.work_screen_not_open.text]);
     expect(l.state.count).toBe(0);
     expect(await portInUse(old.port)).toBe(true);
     expect(readKeyFile(stateDir)?.key).toBe(old.relayKey);
@@ -210,7 +210,7 @@ describe("古い版の橋渡しを中継が替える", () => {
       const l = launcher(stateDir);
       const c = await connect({ stateDir, launch: l.launch, ...(version ? { version } : {}) });
       const r: any = await c.callTool({ name: "check_results", arguments: {} });
-      expect(texts(r), String(version)).toEqual([ERRORS.work_screen_not_open.text]);
+      expect(texts(r).slice(0, 1), String(version)).toEqual([ERRORS.work_screen_not_open.text]);
       expect(l.state.count).toBe(0);
       expect(readKeyFile(stateDir)?.key).toBe(old.relayKey);
     }
@@ -221,7 +221,7 @@ describe("古い版の橋渡しを中継が替える", () => {
     const s = await bridge(same, NEW);
     const l1 = launcher(same);
     const c1 = await connect({ stateDir: same, version: NEW, launch: l1.launch });
-    expect(texts(await c1.callTool({ name: "check_results", arguments: {} }))).toEqual([ERRORS.work_screen_not_open.text]);
+    expect(texts(await c1.callTool({ name: "check_results", arguments: {} })).slice(0, 1)).toEqual([ERRORS.work_screen_not_open.text]);
     expect(l1.state.count).toBe(0);
     expect(readKeyFile(same)?.key).toBe(s.relayKey);
 
@@ -229,7 +229,7 @@ describe("古い版の橋渡しを中継が替える", () => {
     const l2 = launcher(later);
     const c2 = await connect({ stateDir: later, version: NEW, launch: l2.launch, startedAt: Date.now() - 60_000 });
     const other = await bridge(later, OLD);
-    expect(texts(await c2.callTool({ name: "check_results", arguments: {} }))).toEqual([ERRORS.work_screen_not_open.text]);
+    expect(texts(await c2.callTool({ name: "check_results", arguments: {} })).slice(0, 1)).toEqual([ERRORS.work_screen_not_open.text]);
     expect(l2.state.count).toBe(0);
     expect(readKeyFile(later)?.key).toBe(other.relayKey);
   });
@@ -238,7 +238,7 @@ describe("古い版の橋渡しを中継が替える", () => {
     const stateDir = join(tempDir("moyai-replace-"), "state");
     const old = await bridge(stateDir, OLD);
     const c = await connect({ stateDir, version: NEW });
-    expect(texts(await c.callTool({ name: "check_results", arguments: {} }))).toEqual([ERRORS.work_screen_not_open.text]);
+    expect(texts(await c.callTool({ name: "check_results", arguments: {} })).slice(0, 1)).toEqual([ERRORS.work_screen_not_open.text]);
     expect(await portInUse(old.port)).toBe(true);
     expect(readKeyFile(stateDir)?.key).toBe(old.relayKey);
   });

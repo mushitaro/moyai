@@ -57,7 +57,11 @@ async function tab(tb: TestBridge, answer: (call: Call) => unknown | null): Prom
 
 function expectError(r: any, code: ErrorCode, label = ""): void {
   expect(r.isError, label).toBe(true);
-  expect(r.content, label).toEqual([{ type: "text", text: ERRORS[code].text }]);
+  expect(r.content[0], label).toEqual({ type: "text", text: ERRORS[code].text });
+  // 作業画面が開いていないときだけ、作業画面の URL を JSON の 1 文で添える（ほかの誤りには足さない）
+  const rest = r.content.slice(1);
+  if (code === "work_screen_not_open") expect(rest.every((x: any) => x.type === "text" && "workScreenUrl" in JSON.parse(x.text)), label).toBe(true);
+  else expect(rest, label).toEqual([]);
 }
 
 const SURVEY = {
@@ -96,7 +100,7 @@ describe("作業画面へ渡す", () => {
     const c = await client(tb);
     const r: any = await c.callTool({ name: "intake_survey", arguments: {} });
     expect(r.isError).toBeFalsy();
-    expect(r.structuredContent).toEqual(SURVEY);
+    expect(r.structuredContent).toEqual({ ...SURVEY, workScreenUrl: expect.stringMatching(/^http:\/\/127\.0\.0\.1:\d+\/$/) });
     expect(t.calls[0]?.args).toEqual({ part: "all" });
     expect(t.calls[0]?.conversation).toMatch(/^[0-9a-f-]{36}$/);
   });
@@ -132,7 +136,7 @@ describe("待ちの上限と送り直し（橋渡しは 1 回だけ渡し、送�
     const t = await tab(tb, () => (++n === 1 ? null : { ok: true, data: SURVEY }));
     const c = await client(tb);
     const r: any = await c.callTool({ name: "intake_survey", arguments: {} });
-    expect(r.structuredContent).toEqual(SURVEY);
+    expect(r.structuredContent).toEqual({ ...SURVEY, workScreenUrl: expect.stringMatching(/^http:\/\/127\.0\.0\.1:\d+\/$/) });
     expect(t.calls).toHaveLength(2);
   });
 

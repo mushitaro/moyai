@@ -83,7 +83,7 @@ function expectNotOpen(r: any, url: string | null): void {
 }
 
 describe("中継が橋渡しを起こす", () => {
-  it("鍵ファイルが無ければ起こし、鍵ファイルができてから送る。起こした直後の答えにだけ workScreenUrl を添える", async () => {
+  it("鍵ファイルが無ければ起こし、鍵ファイルができてから送る。起こした直後の答えに workScreenUrl を添える（開いていなければ次の答えにも）", async () => {
     const stateDir = join(tempDir("moyai-launch-"), "state");
     const l = launcher(stateDir, { delayMs: 200 });
     const c = await connect({ stateDir, launch: l.launch });
@@ -92,8 +92,8 @@ describe("中継が橋渡しを起こす", () => {
     expectNotOpen(r1, urlOf(l.state.bridges[0]!));
     // 起動中の印は残さない
     expect(existsSync(join(stateDir, STARTING_MARK))).toBe(false);
-    // 次の答えには添えない。もう起きているので起こさない
-    expectNotOpen(await c.callTool({ name: "check_results", arguments: {} }), null);
+    // 次の答えにも、作業画面が開いていなければ URL を添える（利用者が「画面を出して」と言ったとき開けるように）。もう起きているので起こさない
+    expectNotOpen(await c.callTool({ name: "check_results", arguments: {} }), urlOf(l.state.bridges[0]!));
     expect(l.state.count).toBe(1);
   });
 
@@ -107,7 +107,8 @@ describe("中継が橋渡しを起こす", () => {
     expect(r.structuredContent).toEqual({ started: true, startedAt: "2026-11-06T00:00:00.000Z", workScreenUrl: url });
     expect(JSON.parse(r.content[0].text).workScreenUrl).toBe(url);
     const r2: any = await c.callTool({ name: "intake_compose", arguments: {} });
-    expect(r2.structuredContent.workScreenUrl).toBeUndefined();
+    // 結果には、いつも URL を添える
+    expect(r2.structuredContent.workScreenUrl).toBe(url);
   });
 
   it("接続を拒まれたら（古い鍵ファイル）起こし、前と違う新しい鍵ファイルを待つ", async () => {

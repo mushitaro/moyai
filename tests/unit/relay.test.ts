@@ -24,7 +24,11 @@ afterEach(async () => {
 function expectError(r: any, code: ErrorCode, label = ""): void {
   expect(r.isError, label).toBe(true);
   expect(r.structuredContent, label).toBeUndefined();
-  expect(r.content, label).toEqual([{ type: "text", text: ERRORS[code].text }]);
+  expect(r.content[0], label).toEqual({ type: "text", text: ERRORS[code].text });
+  // 作業画面が開いていないときだけ、作業画面の URL を JSON の 1 文で添える（ほかの誤りには足さない）
+  const rest = r.content.slice(1);
+  if (code === "work_screen_not_open") expect(rest.every((x: any) => x.type === "text" && "workScreenUrl" in JSON.parse(x.text)), label).toBe(true);
+  else expect(rest, label).toEqual([]);
 }
 
 function tempState(): string {

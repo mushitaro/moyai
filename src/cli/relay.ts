@@ -405,12 +405,16 @@ export function createRelayServer(opts: RelayOptions): McpServer {
         const blocked = await replaceIfOld();
         if (blocked) return toToolResult(blocked);
         const answer = await explain(await callBridge(opts, name, args, conversation, ensure));
-        // 起こした直後の最初の答え（橋渡しが答えたもの）に、作業画面の URL を添える。替えた直後なら、読み込み直しの字も添える
+        // 橋渡しが答えたものには、いつも作業画面の URL を添える（利用者が「画面を出して」と言ったとき、Claude が開けるように。11-07、
+        // Claude Desktop のチャットが作業画面の窓を探して見つけられなかった）。替えた直後の最初の答えには、読み込み直しの字も添える
         const fromBridge = "ok" in answer || ERRORS[answer.error.code].from !== "relay";
         const k = fromBridge ? announce : null;
         if (k) announce = null;
-        const url = k ? workScreenUrl(k) : null;
-        const notice = url && reload ? RELAY_TEXT.replaced(url) : null;
+        // 起こした直後でなければ、結果が返ったときと「作業画面が開いていません」のときだけ添える（ほかの誤りには足さない）
+        const wants = "ok" in answer || answer.error.code === "work_screen_not_open";
+        const current = fromBridge ? (k ?? (wants ? readKeyFile(opts.stateDir) : null)) : null;
+        const url = current ? workScreenUrl(current) : null;
+        const notice = k && reload ? RELAY_TEXT.replaced(workScreenUrl(k)) : null;
         if (notice) reload = false;
         return toToolResult(answer, url, notice);
       },
