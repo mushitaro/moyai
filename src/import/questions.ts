@@ -115,6 +115,11 @@ export interface MergeSpec {
   key: string;
   /** まとめたときの文（合わせた行の数から作る）。無ければ最初の質問の文 */
   text?: (rows: number) => string;
+  /**
+   * 問いが 1 つだけのうちから、まとめた質問として見せる（ID はまとめた質問の ID）。
+   * 後の問いが先の問いの答えを待って出てくる（資料をまたいで結ぶ機器）ときに使う：先の問いへの答えが、後から出る同じ形の問いにも当たる
+   */
+  always?: boolean;
 }
 
 /** まとめた質問の見本に、セルの番地を残す問いの数（ほかの問いは資料とシートだけ残す） */
@@ -139,6 +144,7 @@ interface Group {
   stored: boolean;
   rule: ActiveRule | null;
   invalid: string | null;
+  always: boolean;
 }
 
 export class Asker {
@@ -217,7 +223,7 @@ export class Asker {
         const stored = this.decisions.get(gid) ?? null;
         const rule = stored ? null : this.ruleFor(q);
         const decision: Decision | null = stored ?? (rule && rule.rule.kind === "answer" ? { questionId: gid, answer: rule.rule.answer, author: "rule_code", reason: ruleReason(rule) } : null);
-        g = { id: gid, first: { ...q, items: [] }, text: merge.text, members: new Map(), decision, stored: !!stored, rule, invalid: decision ? invalidOf(decision, q) : null };
+        g = { id: gid, first: { ...q, items: [] }, text: merge.text, members: new Map(), decision, stored: !!stored, rule, invalid: decision ? invalidOf(decision, q) : null, always: merge.always === true };
         this.groups.set(gid, g);
         this.order.push(g);
       }
@@ -274,7 +280,7 @@ export class Asker {
       asked.set(o.id, {
         ...o.first,
         questionId: o.id,
-        text: ms.length > 1 ? mergedText(o, rows, ms) : o.first.text,
+        text: ms.length > 1 ? mergedText(o, rows, ms) : (o.text?.(rows) ?? o.first.text),
         sameShapeRows: rows,
         items: sampleItems(ms),
         decision: o.decision,
@@ -303,7 +309,7 @@ export class Asker {
 
 /** まとめた質問として見せるか（問いが 2 つ以上か、まとめた質問の ID に決定がある）。問いが 1 つだけなら、まとめる前の質問のまま見せる */
 function shownAsGroup(g: Group): boolean {
-  return g.members.size > 1 || g.stored;
+  return g.members.size > 1 || g.stored || g.always;
 }
 
 function invalidOf(d: Decision, q: Pick<Question, "options" | "valueKind">): string | null {
