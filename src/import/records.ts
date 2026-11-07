@@ -4,7 +4,7 @@ import { cellRef, colLetter, type GridCell, type SheetGrid } from "./grid";
 import { cue, norm, type ColumnCue } from "./cues";
 import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFiscalYear, type Ymd } from "./era";
 import { parseWithFormat } from "./reading";
-import { Asker, type QuestionItem, YES_NO, questionIdOf } from "./questions";
+import { Asker, type MergeSpec, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { isAssignableRole } from "./roles";
 import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
 import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, lunchOverlap, parseCost, parseCycle, parseEffort, parsePersons, parseTimeSpan, parseUnit, personsHeaderUnit, splitFlatWork, splitNameUnits, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type TagSplit, type TimeSpan, type UnitValue } from "./text";
@@ -186,6 +186,19 @@ function itemOf(t: { file: string; sheet: string | null }, cells: string[], extr
   return { file: t.file, sheet: t.sheet, cells, ...extra };
 }
 
+/**
+ * 同じ様式の表（formGroups）の同じ列の問いを、シート・塊・資料をまたいで 1 問にまとめる手がかり（questions.ts の MergeSpec）。
+ * 鍵は「問いの名前|様式|列や書き方」。種類と選択肢は Asker が足す。text は合わせた行の数からまとめた質問の文を作る
+ */
+function sameForm(family: string, formKey: string, part: string, text?: (rows: number) => string): MergeSpec {
+  return { key: `${family}|${formKey}|${part}`, ...(text ? { text } : {}) };
+}
+
+/** 表の様式の鍵（同じ様式の表が無ければ、その表の ID） */
+function formKeyOf(rec: Records, t: { id: string }): string {
+  return rec.formOf.get(t.id)?.key ?? t.id;
+}
+
 function shapeOf(text: string): string {
   return nfkc(text)
     .replace(/\d+/g, "n")
@@ -241,15 +254,26 @@ function issuesToQuestions(t: Table, lay: SheetLayout, ask: Asker, exclude: (ref
             : is.kind === "hiddenData"
               ? `${is.detail}。取り込むか`
               : `${is.detail}`;
-    const a = ask.ask(key, {
-      kind: is.kind,
-      text,
-      options: is.options,
-      valueKind: "option",
-      defaultAnswer: is.proposal,
-      sameShapeRows: Math.max(is.rows.length, 1),
-      items: [itemOf(t, is.cells.length ? is.cells : is.rows.map((r) => cellRef(r, 1)))],
-    });
+    // 段の割れ方・年の見出し・空欄の列は、同じ様式の表の同じ書き方をまとめて 1 問にする（列の役目は鍵がもう様式ごと。隠した中身は表ごと）
+    const merge =
+      is.kind === "levelSplit" || is.kind === "yearKind"
+        ? sameForm(is.kind, formKey, is.pattern)
+        : is.kind === "blankSameAsAbove"
+          ? sameForm(is.kind, formKey, is.pattern, (rows) => `${is.detail.replace(/（\d+ 行）$/u, `（${rows} 行）`)}は、上の行と同じか`)
+          : undefined;
+    const a = ask.ask(
+      key,
+      {
+        kind: is.kind,
+        text,
+        options: is.options,
+        valueKind: "option",
+        defaultAnswer: is.proposal,
+        sameShapeRows: Math.max(is.rows.length, 1),
+        items: [itemOf(t, is.cells.length ? is.cells : is.rows.map((r) => cellRef(r, 1)))],
+      },
+      merge,
+    );
     if (is.kind === "levelSplit") {
       const lv = a ? Number(a.slice("level:".length)) : null;
       for (const r of t.rows) if (is.rows.includes(r.r)) r.level = lv;
@@ -298,7 +322,7 @@ function pendColumn(t: Table, lay: SheetLayout, col: ColInfo, pend: Pend, q: str
 
 type TagState = { state: "split"; split: TagSplit } | { state: "keep" } | { state: "undecided"; q: string };
 
-function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; text: string; ref: string }[]): Map<number, TagState> {
+function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; text: string; ref: string }[], formKey: string): Map<number, TagState> {
   const out = new Map<number, TagState>();
   const byPattern = new Map<string, { r: number; ref: string; split: TagSplit }[]>();
   for (const x of rows) {
@@ -307,15 +331,19 @@ function tagDecision(t: Table, lay: SheetLayout, ask: Asker, rows: { r: number; 
   }
   for (const [pattern, items] of byPattern) {
     const sample = items[0]?.split;
-    const a = ask.ask(`tagSplit|${t.id}|${pattern}`, {
-      kind: "tagSplit",
-      text: `名前の${pattern === "trailingParen" ? "末尾の括弧の中" : "頭"}の英大文字の符号（例「${sample?.tag ?? ""}」）を、機器番号（タグ）として名前から分けるか`,
-      options: YES_NO,
-      valueKind: "option",
-      defaultAnswer: "yes",
-      sameShapeRows: items.length,
-      items: items.map((i) => itemOf(lay, [i.ref], { note: i.split.tag })),
-    });
+    const a = ask.ask(
+      `tagSplit|${t.id}|${pattern}`,
+      {
+        kind: "tagSplit",
+        text: `名前の${pattern === "trailingParen" ? "末尾の括弧の中" : "頭"}の英大文字の符号（例「${sample?.tag ?? ""}」）を、機器番号（タグ）として名前から分けるか`,
+        options: YES_NO,
+        valueKind: "option",
+        defaultAnswer: "yes",
+        sameShapeRows: items.length,
+        items: items.map((i) => itemOf(lay, [i.ref], { note: i.split.tag })),
+      },
+      sameForm("tagSplit", formKey, pattern),
+    );
     const q = questionIdOf(`tagSplit|${t.id}|${pattern}`);
     for (const i of items) out.set(i.r, a === "yes" ? { state: "split", split: i.split } : a === "no" ? { state: "keep" } : { state: "undecided", q });
   }
@@ -360,15 +388,19 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const nameCol = nameCols[0];
   if (!nameCol) {
     // 答えが「この表を外す」なら外す（Architect の 51。答えても保留のまま残ると計画を作れない）
-    const a = ask.ask(`noName|${t.id}`, {
-      kind: "columnRole",
-      text: "名前の列が見つからない表がある",
-      options: [{ id: "exclude", label: "この表を外す" }],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: t.rows.length,
-      items: [itemOf(lay, t.rows.slice(0, 10).map((r) => cellRef(r.r, 1)))],
-    });
+    const a = ask.ask(
+      `noName|${t.id}`,
+      {
+        kind: "columnRole",
+        text: "名前の列が見つからない表がある",
+        options: [{ id: "exclude", label: "この表を外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: t.rows.length,
+        items: [itemOf(lay, t.rows.slice(0, 10).map((r) => cellRef(r.r, 1)))],
+      },
+      sameForm("noName", formKeyOf(rec, t), "-"),
+    );
     for (const r of t.rows) for (const cell of lay.index.rowCells(r.r)) (a === "exclude" ? exclude(cell.ref, "名前の列の無い表（決定で外した）") : pend(cell.ref, questionIdOf(`noName|${t.id}`)));
     return order;
   }
@@ -381,15 +413,19 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   if (headRec) rec.assets.push(headRec);
   // 段が飛ぶ・親が無い行
   for (const is of t.issues.filter((i) => i.kind === "levelJump")) {
-    const a = ask.ask(`levelJump|${t.id}|${is.pattern}`, {
-      kind: "levelJump",
-      text: `${is.detail}。どう読むか`,
-      options: is.options,
-      valueKind: "option",
-      defaultAnswer: is.proposal,
-      sameShapeRows: is.rows.length,
-      items: [itemOf(lay, is.cells)],
-    });
+    const a = ask.ask(
+      `levelJump|${t.id}|${is.pattern}`,
+      {
+        kind: "levelJump",
+        text: `${is.detail}。どう読むか`,
+        options: is.options,
+        valueKind: "option",
+        defaultAnswer: is.proposal,
+        sameShapeRows: is.rows.length,
+        items: [itemOf(lay, is.cells)],
+      },
+      sameForm("levelJump", formKeyOf(rec, t), is.pattern),
+    );
     for (const r of t.rows.filter((x) => is.rows.includes(x.r))) {
       if (a === "exclude") r.level = -1;
       else if (!a) r.level = null;
@@ -399,7 +435,7 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const nameCells = dataRows
     .map((r) => ({ r: r.r, cell: nameCols.map((c) => lay.index.resolved(r.r, c.c)).find((x) => !!x && x.text !== "") ?? null }))
     .filter((x): x is { r: number; cell: NonNullable<typeof x.cell> } => !!x.cell && x.cell.text !== "");
-  const tags = tagDecision(t, lay, ask, nameCells.map((x) => ({ r: x.r, text: x.cell.text, ref: x.cell.ref })));
+  const tags = tagDecision(t, lay, ask, nameCells.map((x) => ({ r: x.r, text: x.cell.text, ref: x.cell.ref })), formKeyOf(rec, t));
   // 号・系列の列：数の号と共通（〃 は上の行と同じ、「-」は号なし）
   const unitCol = t.cols.find((c) => c.role === "unit");
   let prevSeries: Series | null = null;
@@ -437,19 +473,24 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const canAbove = orphans.every((o) => o.above !== null);
     // 鍵に孤立した行の組と「上と同じ」を出せるかを入れる（組が変わったら聞き直す）
     const group = questionIdOf(`${orphans.map((o) => o.r).join(",")}|${canAbove ? "above" : "no-above"}`).slice(2, 14);
-    orphanAnswer = ask.ask(`dittoNoAbove|${t.id}|${group}`, {
-      kind: "stray",
-      text: `名前の欄の「〃」で、同じ親の下の同じ階層に上の行が無いものが ${orphans.length} 行ある（例：すぐ上の行は「${orphans[0]?.above ?? "なし"}」）。どう読むか`,
-      options: [
-        ...(canAbove ? [{ id: "above", label: "すぐ上の行と同じ名前として読む" }] : []),
-        { id: "literal", label: "「〃」の文字のまま名前にする" },
-        { id: "exclude", label: "外す" },
-      ],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: orphans.length,
-      items: orphans.map((o) => itemOf(lay, [o.ref], { note: o.above ?? "" })),
-    });
+    const example = orphans[0]?.above ?? "なし";
+    orphanAnswer = ask.ask(
+      `dittoNoAbove|${t.id}|${group}`,
+      {
+        kind: "stray",
+        text: `名前の欄の「〃」で、同じ親の下の同じ階層に上の行が無いものが ${orphans.length} 行ある（例：すぐ上の行は「${example}」）。どう読むか`,
+        options: [
+          ...(canAbove ? [{ id: "above", label: "すぐ上の行と同じ名前として読む" }] : []),
+          { id: "literal", label: "「〃」の文字のまま名前にする" },
+          { id: "exclude", label: "外す" },
+        ],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: orphans.length,
+        items: orphans.map((o) => itemOf(lay, [o.ref], { note: o.above ?? "" })),
+      },
+      sameForm("dittoNoAbove", formKeyOf(rec, t), canAbove ? "above" : "no-above", (rows) => `名前の欄の「〃」で、同じ親の下の同じ階層に上の行が無いものが ${rows} 行ある（例：すぐ上の行は「${example}」）。どう読むか`),
+    );
   }
   // 名前の無い行（ほかの列だけに中身がある）：表ごとに 1 回聞く。文に資料・シート・行の番号を添える（人が資料を開いて探せるように）
   const noNameRows: { r: number; cells: GridCell[] }[] = [];
@@ -564,33 +605,41 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     const shown = noNameRows.slice(0, NO_NAME_ROWS_SHOWN).map((x) => x.r);
     const more = noNameRows.length - shown.length;
     const where = `${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""}の ${shown.join("・")}${more > 0 ? ` ほか ${more}` : ""} 行目`;
-    const a = ask.ask(`noNameRow|${t.id}`, {
-      kind: "stray",
-      text: `名前の欄が空で、ほかの欄だけに中身がある行がある（${where}。${noNameRows.length} 行）`,
-      options: [{ id: "exclude", label: "外す" }],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: noNameRows.length,
-      items: noNameRows.map((x) => itemOf(lay, x.cells.map((c) => c.ref))),
-    });
+    const a = ask.ask(
+      `noNameRow|${t.id}`,
+      {
+        kind: "stray",
+        text: `名前の欄が空で、ほかの欄だけに中身がある行がある（${where}。${noNameRows.length} 行）`,
+        options: [{ id: "exclude", label: "外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: noNameRows.length,
+        items: noNameRows.map((x) => itemOf(lay, x.cells.map((c) => c.ref))),
+      },
+      sameForm("noNameRow", formKeyOf(rec, t), "-", (rows) => `名前の欄が空で、ほかの欄だけに中身がある行がある（${rows} 行）`),
+    );
     for (const x of noNameRows) for (const c of x.cells) if (!off(c.ref)) (a === "exclude" ? exclude(c.ref, "名前の欄が空の行（決定で外した）") : pend(c.ref, questionIdOf(`noNameRow|${t.id}`)));
   }
   // 年として読めない設置年：書き方ごとにまとめて聞く（日付に見えない書き方を年と決めつけない）
   const byShape = new Map<string, { ref: string; text: string }[]>();
   for (const y of yearUnknown) byShape.set(shapeOf(y.text), [...(byShape.get(shapeOf(y.text)) ?? []), y]);
   for (const [shape, ys] of byShape) {
-    const ans = ask.ask(`yearUnknown|${t.id}|${shape}`, {
-      kind: "yearUnknown",
-      text: `年の欄に、年として読めない書き方がある（例「${ys[0]?.text ?? ""}」）。どう扱うか`,
-      options: [
-        { id: "spec", label: "年にせず、仕様の文として持つ" },
-        { id: "exclude", label: "外す" },
-      ],
-      valueKind: "option",
-      defaultAnswer: "spec",
-      sameShapeRows: ys.length,
-      items: ys.map((y) => itemOf(lay, [y.ref])),
-    });
+    const ans = ask.ask(
+      `yearUnknown|${t.id}|${shape}`,
+      {
+        kind: "yearUnknown",
+        text: `年の欄に、年として読めない書き方がある（例「${ys[0]?.text ?? ""}」）。どう扱うか`,
+        options: [
+          { id: "spec", label: "年にせず、仕様の文として持つ" },
+          { id: "exclude", label: "外す" },
+        ],
+        valueKind: "option",
+        defaultAnswer: "spec",
+        sameShapeRows: ys.length,
+        items: ys.map((y) => itemOf(lay, [y.ref])),
+      },
+      sameForm("yearUnknown", formKeyOf(rec, t), `${t.cols.find((k) => k.role === "installed")?.c ?? "-"}|${shape}`),
+    );
     for (const y of ys) {
       const owner = rec.assets.find((x) => x.tableId === t.id && Number(/\d+$/.exec(y.ref)?.[0]) === Number(/\d+$/.exec(x.nameRef)?.[0]));
       if (ans === "spec" && owner) {
@@ -751,7 +800,7 @@ function readCosts(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: n
   return out;
 }
 
-function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off): number {
+function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order: number, exclude: (ref: string, why: string) => void, pend: Pend, off: Off): number {
   const hier = t.cols.filter((c) => c.role === "hier").sort((a, b) => (a.hierLevel ?? 0) - (b.hierLevel ?? 0));
   const unitCol = t.cols.find((c) => c.role === "unit");
   const marks = t.cols.filter((c) => c.role === "mark");
@@ -823,27 +872,35 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       unitOf.set(r.r, prev);
     }
     if (commonCells.length) {
-      commonMeaning = ask.ask(`commonMeaning|${t.id}`, {
-        kind: "commonMeaning",
-        text: `「${unitCol.header}」の列の「共通」（${commonCells.length} 行）は、どの意味の共通か`,
-        options: cue.commonMeanings.map((m) => ({ id: m.id, label: m.label })),
-        valueKind: "option",
-        defaultAnswer: "facility",
-        sameShapeRows: commonCells.length,
-        items: [itemOf(lay, [...new Set(commonCells)].slice(0, 10))],
-      });
+      commonMeaning = ask.ask(
+        `commonMeaning|${t.id}`,
+        {
+          kind: "commonMeaning",
+          text: `「${unitCol.header}」の列の「共通」（${commonCells.length} 行）は、どの意味の共通か`,
+          options: cue.commonMeanings.map((m) => ({ id: m.id, label: m.label })),
+          valueKind: "option",
+          defaultAnswer: "facility",
+          sameShapeRows: commonCells.length,
+          items: [itemOf(lay, [...new Set(commonCells)].slice(0, 10))],
+        },
+        sameForm("commonMeaning", formKeyOf(rec, t), String(unitCol.c), (rows) => `「${unitCol.header}」の列の「共通」（${rows} 行）は、どの意味の共通か`),
+      );
       for (const [r, s] of unitOf) if (s?.kind === "common") unitOf.set(r, commonMeaning ? { kind: "common", meaning: commonMeaning } : undefined);
     }
     if (unitBad.length) {
-      const a = ask.ask(`unitUnknown|${t.id}`, {
-        kind: "unitMissing",
-        text: `「${unitCol.header}」の列に、号として読めない書き方がある（${unitBad.length} 行）`,
-        options: [{ id: "none", label: "号なしとして読む" }],
-        valueKind: "option",
-        defaultAnswer: null,
-        sameShapeRows: unitBad.length,
-        items: [itemOf(lay, unitBad.slice(0, 10))],
-      });
+      const a = ask.ask(
+        `unitUnknown|${t.id}`,
+        {
+          kind: "unitMissing",
+          text: `「${unitCol.header}」の列に、号として読めない書き方がある（${unitBad.length} 行）`,
+          options: [{ id: "none", label: "号なしとして読む" }],
+          valueKind: "option",
+          defaultAnswer: null,
+          sameShapeRows: unitBad.length,
+          items: [itemOf(lay, unitBad.slice(0, 10))],
+        },
+        sameForm("unitUnknown", formKeyOf(rec, t), String(unitCol.c), (rows) => `「${unitCol.header}」の列に、号として読めない書き方がある（${rows} 行）`),
+      );
       if (a === "none") for (const [r, s] of unitOf) if (s === undefined) unitOf.set(r, null);
     }
   }
@@ -1106,59 +1163,78 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       // 行の予定・実績の欄があれば、それを列の見出しより先に使う（行の方が細かいため）
       const colPA = rowPA(r.r) ?? col.planOrActual ?? null;
       let answer: string | null = "ok";
+      /** この印に聞いた質問の鍵（答えが無ければ、印のセルはこの質問を待つ） */
+      let askedKey: string | null = null;
       if (!entry) {
         const noLegend = legend.length === 0;
-        answer = ask.ask(`${noLegend ? "noLegend" : "unknownSymbol"}|${t.id}|${sym}`, {
-          kind: noLegend ? "noLegend" : "unknownSymbol",
-          text: noLegend
-            ? `凡例が無い。記号「${sym}」は何の星取か`
-            : `記号「${sym}」は凡例に無い。何の星取か`,
-          options: [
-            ...(colPA ? [{ id: "column", label: `列の見出しのとおり（${colPA === "plan" ? "予定" : "実績"}）` }] : []),
-            { id: "plan", label: "計画の星取" },
-            { id: "actual", label: "実績の星取" },
-            { id: "exclude", label: "星取ではない（外す）" },
-          ],
-          valueKind: "option",
-          defaultAnswer: colPA ? "column" : null,
-          sameShapeRows: 1,
-          items: [itemOf(lay, [cell.ref])],
-        });
+        // 同じ様式の表の同じ記号は 1 問（凡例の無い表と、凡例に無い記号は別の問い）
+        const family = noLegend ? "noLegend" : "unknownSymbol";
+        askedKey = `${family}|${t.id}|${sym}`;
+        answer = ask.ask(
+          `${family}|${t.id}|${sym}`,
+          {
+            kind: noLegend ? "noLegend" : "unknownSymbol",
+            text: noLegend
+              ? `凡例が無い。記号「${sym}」は何の星取か`
+              : `記号「${sym}」は凡例に無い。何の星取か`,
+            options: [
+              ...(colPA ? [{ id: "column", label: `列の見出しのとおり（${colPA === "plan" ? "予定" : "実績"}）` }] : []),
+              { id: "plan", label: "計画の星取" },
+              { id: "actual", label: "実績の星取" },
+              { id: "exclude", label: "星取ではない（外す）" },
+            ],
+            valueKind: "option",
+            defaultAnswer: colPA ? "column" : null,
+            sameShapeRows: 1,
+            items: [itemOf(lay, [cell.ref])],
+          },
+          sameForm(family, formKeyOf(rec, t), sym),
+        );
         if (answer === "column") m.planOrActual = colPA;
         else if (answer === "plan" || answer === "actual") m.planOrActual = answer;
       } else if (entry.planOrActual === null) {
         m.workName = entry.meaning;
         m.planOrActual = colPA;
         if (!colPA) {
-          answer = ask.ask(`legendNoPA|${t.id}|${sym}`, {
+          askedKey = `legendNoPA|${t.id}|${sym}`;
+          answer = ask.ask(
+            `legendNoPA|${t.id}|${sym}`,
+            {
+              kind: "planActualConflict",
+              text: `記号「${sym}」（凡例「${entry.meaning}」）は、予定か実績か（列の見出しにも書いていない）`,
+              options: [
+                { id: "plan", label: "予定（計画）" },
+                { id: "actual", label: "実績（実施）" },
+                { id: "exclude", label: "外す" },
+              ],
+              valueKind: "option",
+              defaultAnswer: null,
+              sameShapeRows: 1,
+              items: [itemOf(lay, [cell.ref])],
+            },
+            sameForm("legendNoPA", formKeyOf(rec, t), `${sym}|${entry.meaning}`),
+          );
+          if (answer === "plan" || answer === "actual") m.planOrActual = answer;
+        }
+      } else if (colPA && entry.planOrActual !== colPA) {
+        askedKey = `paConflict|${t.id}|${sym}|${colPA}`;
+        answer = ask.ask(
+          `paConflict|${t.id}|${sym}|${colPA}`,
+          {
             kind: "planActualConflict",
-            text: `記号「${sym}」（凡例「${entry.meaning}」）は、予定か実績か（列の見出しにも書いていない）`,
+            text: `記号「${sym}」は凡例では「${entry.meaning}」だが、「${colPA === "plan" ? "予定" : "実績"}」の列にある`,
             options: [
-              { id: "plan", label: "予定（計画）" },
-              { id: "actual", label: "実績（実施）" },
+              { id: "column", label: "列の見出しのとおり" },
+              { id: "legend", label: "凡例のとおり" },
               { id: "exclude", label: "外す" },
             ],
             valueKind: "option",
             defaultAnswer: null,
             sameShapeRows: 1,
             items: [itemOf(lay, [cell.ref])],
-          });
-          if (answer === "plan" || answer === "actual") m.planOrActual = answer;
-        }
-      } else if (colPA && entry.planOrActual !== colPA) {
-        answer = ask.ask(`paConflict|${t.id}|${sym}|${colPA}`, {
-          kind: "planActualConflict",
-          text: `記号「${sym}」は凡例では「${entry.meaning}」だが、「${colPA === "plan" ? "予定" : "実績"}」の列にある`,
-          options: [
-            { id: "column", label: "列の見出しのとおり" },
-            { id: "legend", label: "凡例のとおり" },
-            { id: "exclude", label: "外す" },
-          ],
-          valueKind: "option",
-          defaultAnswer: null,
-          sameShapeRows: 1,
-          items: [itemOf(lay, [cell.ref])],
-        });
+          },
+          sameForm("paConflict", formKeyOf(rec, t), `${sym}|${entry.meaning}|${colPA}`),
+        );
         if (answer === "column") m.planOrActual = colPA;
         else if (answer === "legend") m.planOrActual = entry.planOrActual;
       } else m.planOrActual = entry.planOrActual;
@@ -1175,8 +1251,9 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       }
       if (answer === null || m.planOrActual === null) m.pending = true;
       if (m.pending) {
-        pend(cell.ref);
-        if (m.workRef) pend(m.workRef);
+        const waiting = answer === null && askedKey ? questionIdOf(askedKey) : null;
+        pend(cell.ref, waiting);
+        if (m.workRef) pend(m.workRef, waiting);
       }
       rec.marks.push(m);
     }
@@ -1450,7 +1527,7 @@ function personsSource(t: Table): PersonsSource | null {
 
 const hhmm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
 
-function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts: RecordOptions, date1904: boolean, exclude: (ref: string, why: string) => void, pend: (ref: string) => void, off: Off) {
+function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts: RecordOptions, date1904: boolean, exclude: (ref: string, why: string) => void, pend: Pend, off: Off) {
   const col = (role: ColInfo["role"]) => t.cols.find((c) => c.role === role);
   const dateCol = col("date");
   const endCol = col("end");
@@ -1546,6 +1623,11 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const badDates = new Map<string, string[]>();
   const badDays = new Map<string, string[]>();
   const evs: (EventRec & { _hours: number | null; _persons: number | null; _bare: number | null; _span: (TimeSpan & { persons: number; ref: string }) | null; _noTime: { persons: number; refs: string[] } | null })[] = [];
+  /** 未解決の行 → その行が待つ質問の ID（最初に分かったもの。画面の写しと、質問の無い未解決のセルを数えるのに使う） */
+  const waits = new Map<string, string>();
+  const wait = (id: string, key: string) => {
+    if (!waits.has(id)) waits.set(id, questionIdOf(key));
+  };
   // 日付のセルを読む：〃 は上の行と同じ、年の無い日付はシートに書いた年度から、空欄は「上と同じ」の答えに従う
   const prevDate = new Map<number, { start: Ymd; end: Ymd; range: boolean } | null>();
   const readDate = (r: number, c: ColInfo | undefined): { period: { start: Ymd; end: Ymd; range: boolean } | null; cell: ReturnType<typeof lay.index.at>; bad: boolean; blank: boolean } => {
@@ -1740,17 +1822,26 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   // 日付の欄の無い作業の表（工程表など）：表の外に書いた期間を使うか、まとめて 1 回聞く（推し量らない）
   if (!dateCol && !headDate && evs.length) {
     const cp = lay.contextPeriod;
-    const a = ask.ask(`dateMissing|${t.id}`, {
-      kind: "dateUnknown",
-      text: cp
-        ? `作業の行に日付が書いていない（${evs.length} 行）。表の外に書いた期間（「${cp.text.slice(0, 60)}」）をその行の期間にするか`
-        : `作業の行に日付が書いていない（${evs.length} 行）`,
-      options: [...(cp ? [{ id: "heading", label: "表の外に書いた期間にする" }] : []), { id: "exclude", label: "その行を外す" }],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: evs.length,
-      items: [itemOf(lay, evs.slice(0, 10).map((e) => e.refs[0] ?? ""))],
-    });
+    // 同じ様式の表（シートごと・日ごとの塊）は 1 問。表の外の期間の答えは、表ごとに自分の表の外の期間を使う
+    const dateText = (rows: number) =>
+      cp
+        ? `作業の行に日付が書いていない（${rows} 行）。表の外に書いた期間（見本「${cp.text.slice(0, 60)}」）をその行の期間にするか`
+        : `作業の行に日付が書いていない（${rows} 行）`;
+    const a = ask.ask(
+      `dateMissing|${t.id}`,
+      {
+        kind: "dateUnknown",
+        text: cp
+          ? `作業の行に日付が書いていない（${evs.length} 行）。表の外に書いた期間（「${cp.text.slice(0, 60)}」）をその行の期間にするか`
+          : `作業の行に日付が書いていない（${evs.length} 行）`,
+        options: [...(cp ? [{ id: "heading", label: "表の外に書いた期間にする" }] : []), { id: "exclude", label: "その行を外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: evs.length,
+        items: [itemOf(lay, evs.slice(0, 10).map((e) => e.refs[0] ?? ""))],
+      },
+      sameForm("dateMissing", formKeyOf(rec, t), "-", dateText),
+    );
     for (const e of evs) {
       if (a === "heading" && cp) {
         e.date = cp.start;
@@ -1758,6 +1849,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
         e.fiscalYear = fiscalYearOf(cp.start, opts.fiscalYearStartMonth);
         e.pending = !e.workName;
       } else if (a === "exclude") e.excluded = "日付の書いていない行（決定で外した）";
+      else wait(e.id, `dateMissing|${t.id}`);
     }
   }
   // 工数の単位の問いは、同じ様式の表をまとめて 1 回聞く（同じ鍵で聞くと、件数と見本は足される）
@@ -1784,7 +1876,10 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     for (const e of evs)
       if (ids.has(e.id)) {
         if (a === "exclude") e.excluded = "1 つのセルに書いた号炉・機器・作業の行（決定で外した）";
-        else if (a !== "split") e.pending = true;
+        else if (a !== "split") {
+          e.pending = true;
+          wait(e.id, `flatSplit|${fkey}`);
+        }
       }
   }
   // 号炉・機器・作業の区切り（空白・括弧）の無いセル：機器と作業に分けられない。推し量らず、同じ様式の表をまとめて 1 回聞く
@@ -1802,7 +1897,10 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     for (const e of evs)
       if (ids.has(e.id)) {
         if (a === "exclude") e.excluded = "機器と作業の区切りの無いセルの行（決定で外した）";
-        else e.pending = true;
+        else {
+          e.pending = true;
+          wait(e.id, `flatUnsplit|${fkey}`);
+        }
       }
   }
   // 件名の中の機器の名前：見本を添えて、同じ様式の表をまとめて 1 回聞く
@@ -1937,16 +2035,21 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   }
   const effortExcluded = new Set<string>();
   for (const [shape, refs] of badEffort) {
-    const a = ask.ask(`effortBad|${t.id}|${shape}`, {
-      kind: "effortUnknown",
-      text: `工数の書き方が読めない（${refs.length} 行）`,
-      options: [{ id: "exclude", label: "工数を外す" }],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: refs.length,
-      items: [itemOf(lay, refs.slice(0, 10))],
-    });
-    for (const ref of refs) a === "exclude" ? (exclude(ref, "読めない工数（決定で外した）"), effortExcluded.add(ref)) : pend(ref);
+    // 同じ様式の表の工数の列の読めない書き方は、書き方をまたいで 1 問（答えは「工数を外す」だけで、書き方によらない）
+    const a = ask.ask(
+      `effortBad|${t.id}|${shape}`,
+      {
+        kind: "effortUnknown",
+        text: `工数の書き方が読めない（${refs.length} 行）`,
+        options: [{ id: "exclude", label: "工数を外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: refs.length,
+        items: [itemOf(lay, refs.slice(0, 10))],
+      },
+      sameForm("effortBad", fkey, String(effortCol?.c ?? "-"), (rows) => `工数の書き方が読めない（${rows} 行）`),
+    );
+    for (const ref of refs) a === "exclude" ? (exclude(ref, "読めない工数（決定で外した）"), effortExcluded.add(ref)) : pend(ref, questionIdOf(`effortBad|${t.id}|${shape}`));
   }
   // 作業時間の幅はあるが、人数の書き方が読めない行（書き方ごとに 1 回聞く。人数を推し量らない）
   const header = (ps?.cols[0]?.headerParts[0] ?? "人数").replace(/\s*\n\s*/g, "");
@@ -1977,49 +2080,69 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       : parseMonthDay(sample)
         ? "年が書いていない（シートの文に年度がただ 1 つ書いてあれば、その年度で読む）"
         : "日付の書き方として読めない";
-    const a = ask.ask(`dateBad|${t.id}|${shape}`, {
-      kind: "dateUnknown",
-      text: `日付として読めない書き方がある（${refs.length} 行、見本「${sample.slice(0, 24)}」：${why}）。日付に見えない書き方を日付と決めつけない`,
-      options: [{ id: "exclude", label: "その行を外す" }],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: refs.length,
-      items: [itemOf(lay, refs.slice(0, 10))],
-    });
-    if (a === "exclude")
-      for (const e of evs) if (refs.some((ref) => e.refs.includes(ref))) e.excluded = "日付として読めない行（決定で外した）";
+    // 同じ様式の表の日付の列の、同じ理由で読めない書き方は 1 問（理由が違えば別の問い）
+    const dateCols = [dateCol, endCol].map((c) => c?.c ?? "-").join(",");
+    const a = ask.ask(
+      `dateBad|${t.id}|${shape}`,
+      {
+        kind: "dateUnknown",
+        text: `日付として読めない書き方がある（${refs.length} 行、見本「${sample.slice(0, 24)}」：${why}）。日付に見えない書き方を日付と決めつけない`,
+        options: [{ id: "exclude", label: "その行を外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: refs.length,
+        items: [itemOf(lay, refs.slice(0, 10))],
+      },
+      sameForm("dateBad", fkey, `${dateCols}|${why}`, (rows) => `日付として読めない書き方がある（${rows} 行、見本「${sample.slice(0, 24)}」：${why}）。日付に見えない書き方を日付と決めつけない`),
+    );
+    for (const e of evs)
+      if (refs.some((ref) => e.refs.includes(ref))) {
+        if (a === "exclude") e.excluded = "日付として読めない行（決定で外した）";
+        else wait(e.id, `dateBad|${t.id}|${shape}`);
+      }
   }
   // 日数の欄の、日数として読めない書き方（書き方ごとに 1 回聞く。答えるまで、そのセルは未解決）
   for (const [shape, refs] of badDays) {
-    const a = ask.ask(`daysBad|${t.id}|${shape}`, {
-      kind: "dateUnknown",
-      text: `「${daysCol?.header ?? "日数"}」の列に、日数として読めない書き方がある（${refs.length} 行）。日数を推し量らない`,
-      options: [{ id: "exclude", label: "日数を外す（理由を残す）" }],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: refs.length,
-      items: [itemOf(lay, refs.slice(0, 10))],
-    });
-    for (const ref of refs) a === "exclude" ? exclude(ref, "日数として読めない（決定で外した）") : pend(ref);
+    const a = ask.ask(
+      `daysBad|${t.id}|${shape}`,
+      {
+        kind: "dateUnknown",
+        text: `「${daysCol?.header ?? "日数"}」の列に、日数として読めない書き方がある（${refs.length} 行）。日数を推し量らない`,
+        options: [{ id: "exclude", label: "日数を外す（理由を残す）" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: refs.length,
+        items: [itemOf(lay, refs.slice(0, 10))],
+      },
+      sameForm("daysBad", fkey, String(daysCol?.c ?? "-"), (rows) => `「${daysCol?.header ?? "日数"}」の列に、日数として読めない書き方がある（${rows} 行）。日数を推し量らない`),
+    );
+    for (const ref of refs) a === "exclude" ? exclude(ref, "日数として読めない（決定で外した）") : pend(ref, questionIdOf(`daysBad|${t.id}|${shape}`));
     if (a === "exclude") for (const e of evs) e.refs = e.refs.filter((x) => !refs.includes(x));
   }
   // 系列の欄の、号・系列として読めない書き方（書き方ごとに 1 回聞く。答えるまで、その行は未解決）
   for (const [text, cells] of unitBadEv) {
-    const a = ask.ask(`unitUnknownEv|${t.id}|${text}`, {
-      kind: "unitMissing",
-      text: `「${unitCol?.header ?? "号"}」の列の「${text}」（${cells.length} 行）は、号・系列として読めない`,
-      options: [{ id: "none", label: "号・系列なしとして読む" }, { id: "exclude", label: "この行を外す" }],
-      valueKind: "option",
-      defaultAnswer: null,
-      sameShapeRows: cells.length,
-      items: [itemOf(lay, cells.slice(0, 10).map((c) => c.ref))],
-    });
+    const a = ask.ask(
+      `unitUnknownEv|${t.id}|${text}`,
+      {
+        kind: "unitMissing",
+        text: `「${unitCol?.header ?? "号"}」の列の「${text}」（${cells.length} 行）は、号・系列として読めない`,
+        options: [{ id: "none", label: "号・系列なしとして読む" }, { id: "exclude", label: "この行を外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: cells.length,
+        items: [itemOf(lay, cells.slice(0, 10).map((c) => c.ref))],
+      },
+      sameForm("unitUnknownEv", fkey, `${unitCol?.c ?? "-"}|${text}`, (rows) => `「${unitCol?.header ?? "号"}」の列の「${text}」（${rows} 行）は、号・系列として読めない`),
+    );
     const rows = new Set(cells.map((c) => c.row));
     for (const e of evs) {
       if (!rows.has(e.row)) continue;
       if (a === "none") e.unit = null;
       else if (a === "exclude") e.excluded = "号・系列として読めない行（決定で外した）";
-      else e.pending = true;
+      else {
+        e.pending = true;
+        wait(e.id, `unitUnknownEv|${t.id}|${text}`);
+      }
     }
   }
   // 予定・実績の列の、計画とも実績とも読めない値（「延期」「中止」）：推し量らず、同じ字ごとに 1 回聞く（Architect の 62。前は黙って実績になった）
@@ -2031,54 +2154,80 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       odd.set(x, [...(odd.get(x) ?? []), e]);
     }
     for (const [x, es] of odd) {
-      const a = ask.ask(`planActualUnknown|${t.id}|${x}`, {
-        kind: "planActualUnknown",
-        text: `「${paCol.header}」の列の「${x}」（${es.length} 行）は、計画か実績か読めない`,
-        options: [
-          { id: "plan", label: "計画" },
-          { id: "actual", label: "実績" },
-          { id: "exclude", label: "その行を外す" },
-        ],
-        valueKind: "option",
-        defaultAnswer: null,
-        sameShapeRows: es.length,
-        items: [itemOf(lay, es.slice(0, 10).map((e) => lay.index.at(e.row, paCol.c)?.ref ?? ""))],
-      });
+      const a = ask.ask(
+        `planActualUnknown|${t.id}|${x}`,
+        {
+          kind: "planActualUnknown",
+          text: `「${paCol.header}」の列の「${x}」（${es.length} 行）は、計画か実績か読めない`,
+          options: [
+            { id: "plan", label: "計画" },
+            { id: "actual", label: "実績" },
+            { id: "exclude", label: "その行を外す" },
+          ],
+          valueKind: "option",
+          defaultAnswer: null,
+          sameShapeRows: es.length,
+          items: [itemOf(lay, es.slice(0, 10).map((e) => lay.index.at(e.row, paCol.c)?.ref ?? ""))],
+        },
+        sameForm("planActualUnknown", fkey, `${paCol.c}|${x}`, (rows) => `「${paCol.header}」の列の「${x}」（${rows} 行）は、計画か実績か読めない`),
+      );
       for (const e of es) {
         if (a === "plan") e.planOrActual = "plan";
         else if (a === "exclude") e.excluded = "予定・実績の読めない行（決定で外した）";
-        else if (a !== "actual") e.pending = true;
+        else if (a !== "actual") {
+          e.pending = true;
+          wait(e.id, `planActualUnknown|${t.id}|${x}`);
+        }
       }
     }
   }
   let spellOk: string | null = "yes";
   if (spellings.size > 1) {
     const all = [...spellings.values()].flat();
-    spellOk = ask.ask(`unitSpelling|${t.id}`, {
-      kind: "unitSpelling",
-      text: `「${unitCol?.header ?? "号"}」の書き方が ${spellings.size} 通りある（${[...spellings.keys()].map((s) => s.replace("{n}", "1")).join("・")}）。数が同じなら同じ号として読むか`,
-      options: YES_NO,
-      valueKind: "option",
-      defaultAnswer: "yes",
-      sameShapeRows: all.length,
-      items: [...spellings.entries()].map(([s, refs]) => itemOf(lay, refs.slice(0, 5), { note: s })),
-    });
+    // 同じ様式の表の同じ列で、書き方の組が同じものは 1 問（書き方の組ごとに 1 問）
+    const kinds = [...spellings.keys()].sort();
+    const spellText = `「${unitCol?.header ?? "号"}」の書き方が ${spellings.size} 通りある（${[...spellings.keys()].map((s) => s.replace("{n}", "1")).join("・")}）。数が同じなら同じ号として読むか`;
+    spellOk = ask.ask(
+      `unitSpelling|${t.id}`,
+      {
+        kind: "unitSpelling",
+        text: spellText,
+        options: YES_NO,
+        valueKind: "option",
+        defaultAnswer: "yes",
+        sameShapeRows: all.length,
+        items: [...spellings.entries()].map(([s, refs]) => itemOf(lay, refs.slice(0, 5), { note: s })),
+      },
+      sameForm("unitSpelling", fkey, `${unitCol?.c ?? "-"}|${kinds.join("\u0001")}`),
+    );
   }
   for (const e of evs) {
     if (e._hours !== null) {
       if (hoursPer) e.manDays = e._hours / hoursPer;
-      else e.effortPending = true;
+      else {
+        e.effortPending = true;
+        wait(e.id, `hoursPerManDay|${fkey}`);
+      }
     }
     if (e._persons !== null) {
       if (personsAsMD === "manDays") e.manDays = e._persons;
-      else if (personsAsMD !== "exclude") e.effortPending = true;
-      else effortExcluded.add(effortCol ? cellRef(e.row, effortCol.c) : "");
+      else if (personsAsMD !== "exclude") {
+        e.effortPending = true;
+        wait(e.id, `effortPersons|${fkey}`);
+      } else effortExcluded.add(effortCol ? cellRef(e.row, effortCol.c) : "");
     }
     if (e._bare !== null) {
       if (bareAs === "manDays") e.manDays = e._bare;
       else if (bareAs === "hours" && hoursPer) e.manDays = e._bare / hoursPer;
       else if (bareAs === "exclude") effortExcluded.add(effortCol ? cellRef(e.row, effortCol.c) : "");
-      else e.effortPending = true;
+      else {
+        e.effortPending = true;
+        wait(e.id, bareAs === "hours" ? `hoursPerManDay|${fkey}` : `effortBare|${fkey}`);
+      }
+    }
+    if (spellOk !== "yes" && e.unit?.kind === "number" && spellings.size > 1) {
+      e.pending = true;
+      if (spellOk === null) wait(e.id, `unitSpelling|${t.id}`);
     }
     // 人数 × 作業時間の幅 ÷ 1 人・日の時間（昼休みは答えのとおり）
     if (e._span) {
@@ -2104,7 +2253,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       e.effortExcluded = true;
     }
     if (e.excluded) for (const ref of e.refs) exclude(ref, e.excluded);
-    else if (e.pending || e.effortPending) for (const ref of e.refs) pend(ref);
+    else if (e.pending || e.effortPending) for (const ref of e.refs) pend(ref, waits.get(e.id) ?? null);
     const { _hours, _persons, _bare, _span, _noTime, ...clean } = e;
     void _hours;
     void _persons;

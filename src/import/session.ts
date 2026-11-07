@@ -15,6 +15,7 @@ import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
 import { Asker, questionShape, type Decision, type QuestionState } from "./questions";
 import { PhotoBook, photoMimeOf, photoState, scannedPageInput, type PhotoInput } from "./photo";
+import { referenceFiles } from "./reference";
 
 /** 文字の無い PDF の頁を画像に描く倍率（pt → 画素。A4 の頁で長辺がおよそ 1,700 画素。AI に渡すときは写真の道がさらに描き直す） */
 const SCANNED_PAGE_SCALE = 2;
@@ -327,9 +328,12 @@ export class IntakeSession {
     rejected.push(...this.photos.excludedFiles());
     const layouts = sources.flatMap((s) => layoutFile(s, rules, hits));
     const date1904 = new Map(sources.map((s) => [s.file, s.date1904]));
-    const records = buildRecords(layouts, ask, { fiscalYearStartMonth: this.options.facility.fiscalYearStartMonth }, (f) => date1904.get(f) ?? false);
+    // 参考として外すと決めた資料（reference.ts）：記録を作らず、セルは「参考の資料」として外す。計画は残りの資料で作る
+    const reference = referenceFiles(sources, ask);
+    const used = reference.size ? layouts.filter((l) => !reference.has(l.file)) : layouts;
+    const records = buildRecords(used, ask, { fiscalYearStartMonth: this.options.facility.fiscalYearStartMonth }, (f) => date1904.get(f) ?? false);
     const linked = link(records, ask, rules, hits);
-    const composition = compose(sources, layouts, records, linked, ask, this.decisions, this.options);
+    const composition = compose(sources, layouts, records, linked, ask, this.decisions, this.options, reference);
     if (unreadable.length) {
       composition.blockers.push(`読めなかった資料 ${unreadable.length}（${unreadable.join("・")}）`);
       composition.plan = null;

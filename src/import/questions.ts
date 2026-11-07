@@ -103,8 +103,54 @@ export function questionIdOf(key: string): string {
   return `q-${h.toString(36)}${h2.toString(36)}`;
 }
 
+/**
+ * 同じ形の質問をまとめる手がかり（ask の 3 つめの引数）。
+ * 種類と選択肢（数の答えかどうかも）が同じで、この鍵が同じ質問は、シート・塊・資料をまたいで 1 問にまとめ、答えを全部の行に当てる。
+ */
+export interface MergeSpec {
+  /**
+   * まとめる鍵：まとめる前の鍵のうち、表（シート・塊）の所を様式（formGroups の鍵）に、書き方ごとの所を列に置き換えたもの。
+   * まとめた質問の ID はこの鍵と種類と選択肢から決まる（聞く順・答え・ほかの決定で変わらない）
+   */
+  key: string;
+  /** まとめたときの文（合わせた行の数から作る）。無ければ最初の質問の文 */
+  text?: (rows: number) => string;
+}
+
+/** まとめた質問の見本に、セルの番地を残す問いの数（ほかの問いは資料とシートだけ残す） */
+const MERGE_SAMPLES = 3;
+/** まとめた質問の文に名前を出す所（資料とシート）の数 */
+const MERGE_PLACES = 2;
+
+interface Member {
+  id: string;
+  rows: number;
+  items: QuestionItem[];
+}
+
+interface Group {
+  id: string;
+  /** 最初の問い（文・選択肢・既定の答え） */
+  first: Omit<Question, "questionId">;
+  text: ((rows: number) => string) | undefined;
+  members: Map<string, Member>;
+  decision: Decision | null;
+  /** 決定が、まとめた質問の ID に置いた決定（読み方の規則の答えでない） */
+  stored: boolean;
+  rule: ActiveRule | null;
+  invalid: string | null;
+}
+
 export class Asker {
-  readonly asked = new Map<string, QuestionState>();
+  /** まとめない質問と、自分の決定を持つ問い（まとめる前の ID に置いた決定は、その問いの行にだけ効く） */
+  private readonly single = new Map<string, QuestionState>();
+  private readonly groups = new Map<string, Group>();
+  /** まとめる前の ID → まとまり */
+  private readonly memberOf = new Map<string, Group>();
+  /** 出てきた順（質問の並びはこの順） */
+  private readonly order: (string | Group)[] = [];
+  /** 見える質問の一覧（問いを置くたびに作り直す） */
+  private view: { asked: Map<string, QuestionState> } | null = null;
   constructor(
     private readonly decisions: ReadonlyMap<string, Decision>,
     /** 読み方の規則の決まった答え（人の決定が先。規則は、人がまだ答えていない質問にだけ効く） */
@@ -117,37 +163,126 @@ export class Asker {
     this.hits?.add(rule, file, ref);
   }
 
+  /** 見える質問（ID → 質問）。まとめた問いは、まとめた質問 1 つにだけ出る */
+  get asked(): ReadonlyMap<string, QuestionState> {
+    return this.built().asked;
+  }
+
+  /** 見える質問の ID（まとめた問いは、まとめた質問の ID。ほかはそのまま） */
+  resolve(questionId: string): string;
+  resolve(questionId: string | null): string | null;
+  resolve(questionId: string | null): string | null {
+    if (questionId === null) return null;
+    const g = this.memberOf.get(questionId);
+    return g && shownAsGroup(g) ? g.id : questionId;
+  }
+
+  /** その問いに効いている質問（まとめる前の ID でも引ける） */
+  stateOf(questionId: string): QuestionState | undefined {
+    return this.asked.get(this.resolve(questionId));
+  }
+
+  /** その問いに効いている決定（当てはまらない決定も返す。一覧を作り直さずに引く） */
+  decisionOf(questionId: string): Decision | null {
+    const g = this.memberOf.get(questionId) ?? this.groups.get(questionId);
+    if (g) return g.decision ? { ...g.decision, questionId: this.resolve(questionId) ?? questionId } : null;
+    return this.single.get(questionId)?.decision ?? null;
+  }
+
+  /** この鍵の質問に、置いた決定か読み方の規則の答えがあるか（聞かずに確かめる） */
+  hasAnswer(key: string, q: Pick<Question, "kind" | "text" | "options" | "valueKind">): boolean {
+    return this.decisions.has(questionIdOf(key)) || this.ruleFor(q) !== null;
+  }
+
   /**
    * 質問を置き、決定があれば答えを返す（無い・当てはまらないときは null）。
    * 同じ鍵の質問を 2 回置いたら、件数と見本を足す。
+   * merge があれば、同じ形の質問（種類・選択肢・merge.key が同じ）を 1 問にまとめる。ただし、まとめる前の ID に決定があれば、その問いは自分の決定で読む
    */
-  ask(key: string, q: Omit<Question, "questionId">): string | null {
+  ask(key: string, q: Omit<Question, "questionId">, merge?: MergeSpec): string | null {
     const questionId = questionIdOf(key);
-    const prev = this.asked.get(questionId);
+    this.view = null;
+    const prev = this.single.get(questionId);
     if (prev) {
       prev.sameShapeRows += q.sameShapeRows;
       prev.items.push(...q.items);
       return prev.invalid ? null : (prev.decision?.answer ?? null);
     }
+    const joined = this.memberOf.get(questionId);
+    if (joined) return this.join(joined, questionId, q);
+    if (merge && !this.decisions.has(questionId)) {
+      const gid = questionIdOf(`merge|${merge.key}|${q.kind}|${q.valueKind}|${JSON.stringify(q.options.map((o) => [o.id, o.label]))}`);
+      let g = this.groups.get(gid);
+      if (!g) {
+        const stored = this.decisions.get(gid) ?? null;
+        const rule = stored ? null : this.ruleFor(q);
+        const decision: Decision | null = stored ?? (rule && rule.rule.kind === "answer" ? { questionId: gid, answer: rule.rule.answer, author: "rule_code", reason: ruleReason(rule) } : null);
+        g = { id: gid, first: { ...q, items: [] }, text: merge.text, members: new Map(), decision, stored: !!stored, rule, invalid: decision ? invalidOf(decision, q) : null };
+        this.groups.set(gid, g);
+        this.order.push(g);
+      }
+      return this.join(g, questionId, q);
+    }
     let d = this.decisions.get(questionId) ?? null;
     if (!d) {
-      const a = this.answerRules.find((x) => x.rule.kind === "answer" && x.rule.question === q.kind && q.text.includes(x.rule.match) && (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer)));
+      const a = this.ruleFor(q);
       if (a && a.rule.kind === "answer") {
         d = { questionId, answer: a.rule.answer, author: "rule_code", reason: ruleReason(a) };
         for (const it of q.items) for (const c of it.cells) this.hits?.add(a.rule, it.file, c);
       }
     }
-    let invalid: string | null = null;
-    if (d) {
-      if (!AUTHOR_KINDS.includes(d.author)) invalid = "作者の種類が違う";
-      else if (!d.reason || d.reason.length < 1) invalid = "理由が無い";
-      else if (q.valueKind === "number") {
-        const n = Number(d.answer);
-        if (!Number.isFinite(n) || n <= 0) invalid = "数の答えが要る";
-      } else if (!q.options.some((o) => o.id === d.answer)) invalid = `答え「${d.answer}」は選択肢に無い`;
-    }
-    this.asked.set(questionId, { ...q, questionId, items: [...q.items], decision: d, invalid });
+    const invalid = d ? invalidOf(d, q) : null;
+    this.single.set(questionId, { ...q, questionId, items: [...q.items], decision: d, invalid });
+    this.order.push(questionId);
     return d && !invalid ? d.answer : null;
+  }
+
+  private join(g: Group, questionId: string, q: Omit<Question, "questionId">): string | null {
+    const m = g.members.get(questionId);
+    if (m) {
+      m.rows += q.sameShapeRows;
+      m.items.push(...q.items);
+    } else {
+      g.members.set(questionId, { id: questionId, rows: q.sameShapeRows, items: [...q.items] });
+      this.memberOf.set(questionId, g);
+    }
+    if (g.rule) for (const it of q.items) for (const c of it.cells) this.hits?.add(g.rule.rule, it.file, c);
+    return g.decision && !g.invalid ? g.decision.answer : null;
+  }
+
+  private ruleFor(q: Pick<Question, "kind" | "text" | "options" | "valueKind">): ActiveRule | null {
+    return this.answerRules.find((x) => x.rule.kind === "answer" && x.rule.question === q.kind && q.text.includes(x.rule.match) && (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer))) ?? null;
+  }
+
+  private built(): { asked: Map<string, QuestionState> } {
+    if (this.view) return this.view;
+    const asked = new Map<string, QuestionState>();
+    for (const o of this.order) {
+      if (typeof o === "string") {
+        const st = this.single.get(o);
+        if (st) asked.set(o, st);
+        continue;
+      }
+      const ms = [...o.members.values()];
+      const rows = ms.reduce((a, m) => a + m.rows, 0);
+      const only = ms.length === 1 ? ms[0] : undefined;
+      if (only && !shownAsGroup(o)) {
+        // 問いが 1 つだけ：まとめる前の質問のまま（ID も文も変えない）
+        asked.set(only.id, { ...o.first, questionId: only.id, sameShapeRows: only.rows, items: only.items, decision: o.decision ? { ...o.decision, questionId: only.id } : null, invalid: o.invalid });
+        continue;
+      }
+      asked.set(o.id, {
+        ...o.first,
+        questionId: o.id,
+        text: ms.length > 1 ? mergedText(o, rows, ms) : o.first.text,
+        sameShapeRows: rows,
+        items: sampleItems(ms),
+        decision: o.decision,
+        invalid: o.invalid,
+      });
+    }
+    this.view = { asked };
+    return this.view;
   }
 
   open(): QuestionState[] {
@@ -161,8 +296,51 @@ export class Asker {
   }
   /** どの質問にも当たらなかった決定（ファイルが変わったなど）。効かないので一覧に出す */
   unusedDecisions(): Decision[] {
-    return [...this.decisions.values()].filter((d) => !this.asked.has(d.questionId));
+    const asked = this.asked;
+    return [...this.decisions.values()].filter((d) => !asked.has(d.questionId));
   }
+}
+
+/** まとめた質問として見せるか（問いが 2 つ以上か、まとめた質問の ID に決定がある）。問いが 1 つだけなら、まとめる前の質問のまま見せる */
+function shownAsGroup(g: Group): boolean {
+  return g.members.size > 1 || g.stored;
+}
+
+function invalidOf(d: Decision, q: Pick<Question, "options" | "valueKind">): string | null {
+  if (!AUTHOR_KINDS.includes(d.author)) return "作者の種類が違う";
+  if (!d.reason || d.reason.length < 1) return "理由が無い";
+  if (q.valueKind === "number") {
+    const n = Number(d.answer);
+    return !Number.isFinite(n) || n <= 0 ? "数の答えが要る" : null;
+  }
+  return q.options.some((o) => o.id === d.answer) ? null : `答え「${d.answer}」は選択肢に無い`;
+}
+
+/** 資料とシートの名前（出てきた順・重なりなし） */
+function placesOf(items: readonly QuestionItem[]): string[] {
+  return [...new Set(items.map((i) => `${i.file}${i.sheet ? `「${i.sheet}」` : ""}`))];
+}
+
+/** まとめた質問の文：合わせた行の数の文と、まとめた問いの数と所 */
+function mergedText(g: Group, rows: number, ms: readonly Member[]): string {
+  const places = placesOf(ms.flatMap((m) => m.items));
+  const shown = places.slice(0, MERGE_PLACES).join("・");
+  const more = places.length - MERGE_PLACES;
+  return `${g.text ? g.text(rows) : g.first.text}（${ms.length} 問をまとめた：${shown}${more > 0 ? ` ほか ${more} か所` : ""}）`;
+}
+
+/** まとめた質問の見本：先の数問はセルの番地まで、ほかは資料とシートだけ（効く所の見出しと、資料の一覧に使う） */
+function sampleItems(ms: readonly Member[]): QuestionItem[] {
+  const out = ms.slice(0, MERGE_SAMPLES).flatMap((m) => m.items);
+  const seen = new Set(placesOf(out));
+  for (const m of ms.slice(MERGE_SAMPLES))
+    for (const it of m.items) {
+      const p = placesOf([it])[0] ?? "";
+      if (seen.has(p) && !it.target?.length) continue;
+      seen.add(p);
+      out.push({ file: it.file, sheet: it.sheet, cells: [], ...(it.target?.length ? { target: it.target } : {}) });
+    }
+  return out;
 }
 
 export const YES_SPLIT: QuestionOption[] = [

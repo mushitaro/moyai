@@ -84,6 +84,8 @@ export interface Linked {
   links: WorkLink[];
   /** 日報の行で、機器が決まらない・外したもの */
   eventPending: Set<string>;
+  /** 機器の決まらない日報の行 → その行が待つ質問の ID（分かるときだけ。未解決のセルに付ける） */
+  eventWaitingOn: Map<string, string>;
   eventExcluded: Map<string, string>;
   /** 日報の行を外した決定の質問（行の ID → 質問の ID。画面の写しに使う） */
   eventExcludedBy: Map<string, string[]>;
@@ -447,14 +449,24 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
 
   // ─── 日報の行 → 機器 ───
   const eventPending = new Set<string>();
+  /** 機器の決まらない日報の行 → その行が待つ質問の ID（分かるときだけ） */
+  const eventWaitingOn = new Map<string, string>();
   const eventExcluded = new Map<string, string>();
   const eventExcludedBy = new Map<string, string[]>();
   const byName = new Map<string, Cluster[]>();
   // 機器番号（同一性の鍵）でも引く：日報や報告書が「名前（機器番号）」と書く機器
   const byTag = new Map<string, Cluster[]>();
   // 決まっていない機器（読みの決まらない機器と、結ぶかの決まらない機器）は引く先にしない。その鍵に当たる行は、決まるまで待つ
-  const heldKeys = new Set<string>();
-  for (const c of clusters) if (!c.excluded && (c.pending || c.held)) for (const r of c.recs) for (const k of recKeys(r)) heldKeys.add(k);
+  // 鍵 → その機器が待つ結ぶかの質問（分かるときだけ。待つ日報の行の未解決のセルに付ける）
+  const heldKeys = new Map<string, string | null>();
+  let heldQ: string | null = null;
+  for (const c of clusters)
+    if (!c.excluded && (c.pending || c.held))
+      for (const r of c.recs) {
+        const q = assetWaitingOn.get(r.id) ?? null;
+        heldQ ??= q;
+        for (const k of recKeys(r)) if (!heldKeys.get(k)) heldKeys.set(k, q);
+      }
   const unsettled = heldKeys.size > 0 || clusters.some((c) => !c.excluded && (c.pending || c.held));
   for (const c of clusters) {
     if (c.excluded || c.pending || c.held) continue;
@@ -506,8 +518,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     // 決まっていない機器の名前か機器番号に当たる行と、決まっていない機器があるあいだに当たる機器の無い行は、その決定のあとに当てる
     // （先の答えで当てる先が変わるため）。決まった機器だけに当たる行は待たせない
     if (unsettled) {
-      if (matchKeys([whole, listed, ...names], e.tag).some((k) => heldKeys.has(k))) {
+      const heldHit = matchKeys([whole, listed, ...names], e.tag).filter((k) => heldKeys.has(k));
+      if (heldHit.length) {
         eventPending.add(e.id);
+        const q = heldHit.map((k) => heldKeys.get(k)).find((x) => !!x) ?? heldQ;
+        if (q) eventWaitingOn.set(e.id, q);
         continue;
       }
       const hit = (nm: string) => {
@@ -515,7 +530,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         return ((sp ? byTag.get(nk(sp.tag)) : byName.get(nk(nm))) ?? []).length > 0;
       };
       if (!names.every(hit)) {
+        // 当たる機器が無い行は、決まっていない機器が決まるのを待つ（待つ質問は、その機器の結ぶかの質問）
         eventPending.add(e.id);
+        if (heldQ) eventWaitingOn.set(e.id, heldQ);
         continue;
       }
     }
@@ -545,7 +562,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       cs.events.push(e);
     }
   }
-  const resolved = new Map<string, { c: Cluster | null; qid: string | null; excluded: boolean }>();
+  /** wait：答えの無いとき、その名前の行が待つ質問の ID（未解決のセルに付ける） */
+  const resolved = new Map<string, { c: Cluster | null; qid: string | null; excluded: boolean; wait?: string }>();
   // 同じ様式の表（同じ様式の帳票を何冊も入れたとき）は、同じ形の問いをまとめて聞く
   const formKey = (tableId: string) => rec.formOf.get(tableId)?.key ?? tableId;
   const caseGroups = new Map<string, Case[]>();
@@ -602,7 +620,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         }
       else if (a === "exclude") for (const cs of css) resolved.set(cs.key, { c: null, qid: questionIdOf(nkey), excluded: true });
       // 前の版で「名前ごとに決める」と答えた決定は、答えていないものとして扱う（選択肢から外した）
-      else for (const cs of css) resolved.set(cs.key, { c: null, qid: null, excluded: false });
+      else for (const cs of css) resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(nkey) });
     }
     if (one) {
       for (const cs of css) {
@@ -629,7 +647,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
             : cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), note: cs.name })),
         });
         const pick = a?.startsWith("c") ? (choices[Number(a.slice(1))] ?? null) : null;
-        resolved.set(cs.key, { c: pick, qid: a ? questionIdOf(key) : null, excluded: a === "exclude" });
+        resolved.set(cs.key, { c: pick, qid: a ? questionIdOf(key) : null, excluded: a === "exclude", ...(a ? {} : { wait: questionIdOf(key) }) });
       }
       continue;
     }
@@ -677,8 +695,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           // 行ごとに、比べる相手（候補の機器の出どころ）を添える（人が台帳を開かずに見比べられるように）
           items: cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), target: (c0?.recs ?? []).slice(0, 3).map((r) => ({ file: r.file, sheet: r.sheet, cells: [r.nameRef] })), note: cs.name })),
         });
-        resolved.set(cs.key, { c: b === "c0" ? (c0 ?? null) : null, qid: b ? questionIdOf(k1) : null, excluded: b === "exclude" });
-      } else resolved.set(cs.key, { c: null, qid: null, excluded: false });
+        resolved.set(cs.key, { c: b === "c0" ? (c0 ?? null) : null, qid: b ? questionIdOf(k1) : null, excluded: b === "exclude", ...(b ? {} : { wait: questionIdOf(k1) }) });
+      } else resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(gkey) });
     }
   }
   // ─── 日報の行 → 作業のまとまり ───
@@ -696,7 +714,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     let excl = false;
     for (const nm of en.names) {
       const r = resolved.get(`${e.tableId}|${nk(nm)}|${en.unitKey}`);
-      if (!r || (!r.c && !r.excluded)) pend = true;
+      if (!r || (!r.c && !r.excluded)) {
+        pend = true;
+        if (r?.wait && !eventWaitingOn.has(e.id)) eventWaitingOn.set(e.id, r.wait);
+      }
       else if (r.excluded) excl = true;
       else if (r.c) targets.push(r.c);
       if (r?.qid) qids.add(r.qid);
@@ -898,7 +919,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       } else links.push({ job: lp.j, cluster: lp.j.cluster, mode: "pending", mark: null, decidedBy: new Set(), waitingOn: gq });
     }
   }
-  return { clusters, clusterOf, occurrences, jobs, links, eventPending, eventExcluded, eventExcludedBy, assetExcluded, assetExcludedBy, assetWaitingOn };
+  return { clusters, clusterOf, occurrences, jobs, links, eventPending, eventWaitingOn, eventExcluded, eventExcludedBy, assetExcluded, assetExcludedBy, assetWaitingOn };
 }
 
 /** 凡例の意味と作業の名前：同じなら named、どちらかがもう一方を含むなら namedPart、どれとも違えば null */

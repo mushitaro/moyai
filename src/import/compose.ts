@@ -12,6 +12,7 @@ import { daysInclusive, fiscalYearOf, parseDayCount, ymdString, type Ymd } from 
 import { nameKey, parseEffort } from "./text";
 import { cue } from "./cues";
 import { markPhotoRecords, type PhotoReview } from "./photo";
+import { askReference, REFERENCE_REASON, referenceKey } from "./reference";
 
 /**
  * セルの行き先。画面への写しだけに使う（版の記録・署名される字には入れない）。
@@ -77,10 +78,11 @@ const AUTHOR_RANK: AuthorKind[] = ["ai", "ai_reading", "ai_relayed_human", "huma
 /** 同じ計画の中で機器を見分ける値が同じだった機器の鍵の頭（前の版と結ばず、当てはめの案にも並べない。台帳の中-8） */
 export const AMBIGUOUS_KEY_PREFIX = "nx-";
 
-function authorOf(qids: Iterable<string>, decisions: ReadonlyMap<string, Decision>): AuthorKind {
+/** 決めた質問の作者のうち、いちばん人の手に近いもの。まとめた質問の問いは、まとめた質問の決定で見る */
+function authorOf(qids: Iterable<string>, decisionOf: (q: string) => Decision | null): AuthorKind {
   let best: AuthorKind = "rule_code";
   for (const q of qids) {
-    const d = decisions.get(q);
+    const d = decisionOf(q);
     if (d && AUTHOR_RANK.indexOf(d.author) < AUTHOR_RANK.indexOf(best)) best = d.author;
   }
   return best;
@@ -216,9 +218,13 @@ export function compose(
   rec: Records,
   lk: Linked,
   ask: Asker,
-  decisions: ReadonlyMap<string, Decision>,
+  _decisions: ReadonlyMap<string, Decision>,
   opts: ComposeOptions,
+  /** 参考として外すと決めた資料（記録は作っていない。セルは「参考の資料」として外す） */
+  reference: ReadonlySet<string> = new Set(),
 ): Composition {
+  // 決定は、見える質問（同じ形の問いをまとめた質問）の決定で引く
+  const decisionOf = (q: string) => ask.decisionOf(q);
   const status = new Map<string, CellStatus>();
   const excluded = new Map(rec.excluded);
   /** 除外を決めた質問（セルの鍵 → 質問の ID。除外の理由と一緒に置き直す。画面の写しだけに使う） */
@@ -240,6 +246,7 @@ export function compose(
   for (const lay of layouts) {
     const ex = (ref: string, why: string, qs?: readonly string[]) => exclude(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), why, qs);
     const pd = (ref: string, q: string | null) => pend(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), q);
+    if (reference.has(lay.file)) continue;
     for (const t of lay.tables) checks.push(...checkTotals(lay, t, ask, ex, pd, (r) => eventAt.get(`${t.id}\u0000${r}`)));
   }
 
@@ -386,8 +393,8 @@ export function compose(
     const detail: WorkDetailT = { ...d, detailKey: k };
     details.push(detail);
     decidedOf.set(detail, qids);
-    for (const q of new Set(qids)) {
-      const a = decisions.get(q)?.author;
+    for (const q of new Set(qids.map((x) => ask.resolve(x)))) {
+      const a = decisionOf(q)?.author;
       if (a === "ai" || a === "ai_relayed_human") affected.set(q, [...(affected.get(q) ?? []), k]);
     }
   };
@@ -547,7 +554,7 @@ export function compose(
         performer: null,
         sources: [...(m ? markSources(m) : []), ...jobSources(j)],
         basis: `${m ? `星取表 ${m.ref} ${markWord(m)}${calNote(m)}と ` : ""}${docsOf(j.units)}${bundled && v.manDays === null ? "。工数はまとめ工事の明細に" : ""}`,
-        author: authorOf(qs, decisions),
+        author: authorOf(qs, decisionOf),
         needsReview: false,
       },
       m ? `mark|${m.file}|${m.sheetIndex}|${m.ref}|${j.id}` : `event|${j.id}`,
@@ -584,7 +591,7 @@ export function compose(
           performer: null,
           sources: markSources(m),
           basis: `星取表 ${m.ref} ${markWord(m)}（${m.planOrActual === "plan" ? "予定" : "実績"}${m.workName ? `・${m.workName}` : ""}）${calNote(m)}`,
-          author: authorOf([...c.decidedBy, ...symbolQ], decisions),
+          author: authorOf([...c.decidedBy, ...symbolQ], decisionOf),
           needsReview: false,
         },
         `mark|${m.file}|${m.sheetIndex}|${m.ref}`,
@@ -653,7 +660,7 @@ export function compose(
           performer: null,
           sources: members.flatMap(eventSources),
           basis: `まとめ工事（${bundleTargets(root).map((t) => t.name + seriesLabel(t.series)).join("・")}）。${docsOf(members)}`,
-          author: authorOf(qs, decisions),
+          author: authorOf(qs, decisionOf),
           needsReview: false,
         },
         `bundle|${root.id}`,
@@ -668,7 +675,7 @@ export function compose(
   }
   for (const { j, q } of conflictPending) for (const e of j.units.flatMap((u) => u.events)) for (const ref of e.refs) pend(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), q);
   for (const e of rec.events) {
-    if (lk.eventPending.has(e.id)) for (const ref of e.refs) pend(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), null);
+    if (lk.eventPending.has(e.id)) for (const ref of e.refs) pend(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), lk.eventWaitingOn.get(e.id) ?? null);
     const why = lk.eventExcluded.get(e.id);
     if (why) for (const ref of e.refs) exclude(cellKey({ file: e.file, sheetIndex: e.sheetIndex, ref }), why, lk.eventExcludedBy.get(e.id));
   }
@@ -716,8 +723,9 @@ export function compose(
   for (const a of assets) for (const s of a.sources) addData(s, decidedOf.get(a) ?? []);
   for (const d of details) for (const s of d.sources) addData(s, decidedOf.get(d) ?? []);
   // セルを決めた質問は、答えが効いているものだけ（答えの無い質問・当てはまらない決定・聞かなかった質問の ID は付けない）
+  // まとめた質問の問いは、まとめた質問の ID にする（画面が見える質問と結べるように）
   const qsOf = (qs: Iterable<string> | undefined): { qs?: string[] } => {
-    const list = [...new Set(qs ?? [])].filter((q) => {
+    const list = [...new Set([...(qs ?? [])].map((q) => ask.resolve(q)))].filter((q) => {
       const st = ask.asked.get(q);
       return !!st?.decision && !st.invalid;
     });
@@ -725,9 +733,15 @@ export function compose(
   };
   const strays: { lay: SheetLayout; ref: string }[] = [];
   for (const lay of layouts) {
+    if (reference.has(lay.file)) {
+      // 参考として外した資料：どのセルも「参考の資料」に数える（記録は作っていない）
+      const by = qsOf([questionIdOf(referenceKey(lay.file))]);
+      for (const cell of lay.grid.cells) status.set(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref: cell.ref }), { s: "excluded", reason: REFERENCE_REASON, ...by });
+      continue;
+    }
     for (const cell of lay.grid.cells) {
       const k = cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref: cell.ref });
-      if (pending.has(k)) status.set(k, { s: "unresolved", questionId: pending.get(k) ?? null });
+      if (pending.has(k)) status.set(k, { s: "unresolved", questionId: ask.resolve(pending.get(k) ?? null) });
       else if (dataKeys.has(k)) status.set(k, { s: "data", ...qsOf(dataKeys.get(k)) });
       else if (excluded.has(k)) status.set(k, { s: "excluded", reason: excluded.get(k) ?? "", ...qsOf(excludedBy.get(k)) });
       else if (lay.rowReasons.has(cell.r)) status.set(k, { s: "excluded", reason: lay.rowReasons.get(cell.r) ?? "" });
@@ -765,6 +779,9 @@ export function compose(
     }
   }
 
+  // 読めていない未解決のセル（決める質問の無いセルと、役目の決まらない列のセル）が多く残る資料：今回は参考として計画に使わないかを、資料ごとに 1 問聞く
+  askReference(sources, layouts, status, ask, reference);
+
   // ─── 写真から読んだもの（photo.ts）：出どころに画像の位置を付け、人が画像と並べて確かめるまで要確認に数える ───
   const photoReview = markPhotoRecords(sources, assets, details);
 
@@ -776,6 +793,8 @@ export function compose(
   if (open.length) blockers.push(`答えの無い質問 ${open.length}`);
   const invalid = ask.invalidDecisions();
   if (invalid.length) blockers.push(`当てはまらない決定 ${invalid.length}`);
+  // どの資料も参考として外したときは、計画に使う資料が無い（空の計画を作らない）
+  if (reference.size && sources.length && sources.every((x) => reference.has(x.file))) blockers.push(`計画に使う資料が無い（どの資料も参考として外した ${reference.size}）`);
   // 資料をまたいで結ぶかの決まらない機器（その資料だけの読みで節にしてある）：決まるまで計画を作らない。
   // 結ぶ問いか、先の資料の未解決のセルが必ず残るので上で止まる。止める理由が 1 つも無いときだけ、念のためここで止める（画面の理由の字は変えない）
   const held = lk.clusters.filter((c) => c.held && !c.pending && !c.excluded).length;
