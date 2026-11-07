@@ -69,6 +69,26 @@ describe("契約・発注の一覧と見分ける（packs/_cues の契約の欄�
     ]);
   });
 
+  test("短い台帳（件名・業者名・契約日・工期・契約金額）も契約の一覧。工期の 1 つの欄の期間を、着手と完了に読む。契約の欄が発注の 1 種類だけの表は作業の表のまま", async () => {
+    const s = session();
+    await s.add([
+      {
+        name: "委託の一覧.csv",
+        bytes: enc(["No.,件名,業者名,契約日,工期,契約金額（千円）,備考", "1,【架空】計装設備点検業務委託,【架空】甲社,R6.4.1,R6.4.1～R7.3.31,1200,", "2,【架空】誘引送風機分解整備工事,【架空】乙社,R6.5.10,R6.6.1～R6.7.31,5060,【架空】"]),
+      },
+      { name: "工事の一覧.csv", bytes: enc(["番号,件名,契約日,工期（自）,工期（至）", "1,【架空】計量機更新工事,R5.8.1,R5.9.1,R5.9.30"]) },
+    ]);
+    const an = s.analyze();
+    const shapes = (f: string) => an.layouts.filter((l) => l.file === f).flatMap((l) => l.tables.map((t) => t.shape));
+    expect(shapes("委託の一覧.csv")).toEqual(["contracts"]);
+    expect(shapes("工事の一覧.csv")).toEqual(["events"]);
+    const c = an.records.contracts.find((x) => x.title === "【架空】誘引送風機分解整備工事")!;
+    expect(c.period).toEqual({ start: { y: 2024, m: 6, d: 1 }, end: { y: 2024, m: 7, d: 31 } });
+    expect(c.amounts.map((a) => [a.field, a.cost.yen])).toEqual([["orderAmount", 5_060_000]]);
+    expect(silent(an, "委託の一覧.csv")).toBe(0);
+    expect(unresolved(an, "委託の一覧.csv")).toBe(0);
+  });
+
   test("契約の欄の語があっても、機器・作業の内容・工数の列のある表は作業の表のまま（行が作業そのもの）", async () => {
     const s = session();
     await s.add([

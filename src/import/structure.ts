@@ -613,7 +613,7 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   if (amountRows) for (const r of amountRows.keys()) dataRows.splice(dataRows.indexOf(r), 1);
   if (yb.issue) issues.push({ ...yb.issue, tableId: id });
   const marks = cols.filter((c) => c.role === "mark");
-  // 契約・発注の一覧（件名の列と、契約の欄の語が 3 種類以上。1 行が 1 契約）：作業の表にせず、契約の記録として読む
+  // 契約・発注の一覧（件名の列と、契約の欄の語が 2 種類以上。1 行が 1 契約）：作業の表にせず、契約の記録として読む
   const contractCols = marks.length ? null : contractFields(cols);
   let shape: Shape;
   if (marks.length) shape = "grid";
@@ -883,8 +883,11 @@ const CONTRACT_KIND: Partial<Record<ContractField, string>> = {
   payDate: "pay",
   payAmount: "pay",
 };
-/** 契約の一覧と見分ける下限：件名の列のほかに、契約の欄の種類がこの数以上 */
-export const CONTRACT_KINDS_MIN = 3;
+/**
+ * 契約の一覧と見分ける下限：件名の列のほかに、契約の欄の種類がこの数以上（「件名・業者名・契約金額」の短い台帳も契約の一覧。
+ * 「番号・件名・契約日・工期」のように、契約の欄が発注の 1 種類だけの表は、作業の表のまま）
+ */
+export const CONTRACT_KINDS_MIN = 2;
 /** 行が作業そのものの表の列（機器・機器番号・作業の内容・工数・人数・号炉）。契約の欄の語があっても、この列のある表は作業の表として読む */
 const WORK_ROW_CUES = new Set<ColumnCue>(["name", "assetRef", "tag", "workName", "effort", "persons", "series"]);
 
