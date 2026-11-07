@@ -17,7 +17,7 @@ import {
   type RouteDef,
   type RouteId,
 } from "../shared/routes";
-import { EXPOSED_TOOL_NAMES, isToolName, toolDef, type ToolKind } from "../shared/tools";
+import { EXPOSED_TOOL_NAMES, isToolName, sharePreviewFromTabSchema, toolDef, type ToolKind } from "../shared/tools";
 import { approvedReadingVersions, listReadings, readingTextShown, registerReading } from "./readings";
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
@@ -170,6 +170,14 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
         ...(typeof fromTab.commonItem === "string" ? { commonItem: fromTab.commonItem } : {}),
         aiAxes: Array.isArray(fromTab.aiAxes) ? fromTab.aiAxes.filter((x): x is string => typeof x === "string") : [],
       });
+    },
+    // 共有ファイルの形と数（share-preview-v1）：作業画面が計画と SHARE の選びを渡し、SHARE の画面と同じ関数で数える（読むだけ。署名も書き込みもしない）。
+    // 作業画面に計画が無ければ、作業画面の答え（needs）をそのまま返す
+    share_preview: async (fromTab) => {
+      if (fromTab.mode !== "share") return fromTab;
+      const p = sharePreviewFromTabSchema.safeParse(fromTab);
+      if (!p.success) return "tab_bad_result";
+      return human.sharePreview(p.data);
     },
     ledger_version: async () => human.ledgerHead(),
     // 作業画面の見せ方（screen_set）の保存先：設定の保存と同じ確かめ（validRoot）だけを通す。保存はしない（人が設定の画面で押す）

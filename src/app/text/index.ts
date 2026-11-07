@@ -585,6 +585,7 @@ export const TEXT = {
       surveyed: "AI が取り込みの要約を読みました",
       readingProposed: (name: string, n: number) => `「${name}」に ${n} 件追加（下書き。承認は版の署名で）`,
       skillsRead: "AI が今効いている Skill の本文を読みました",
+      sharePreviewRead: "AI が共有ファイルの形と数を読みました（署名して送るのは SHARE の主ボタン）",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の星取 ${marks}。確定のシートで確定するまで未確定）`,
       starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
       screenSet: (changed: number, refused: number) =>

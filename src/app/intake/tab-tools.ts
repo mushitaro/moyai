@@ -43,6 +43,8 @@ import { screenSet, type ScreenSetArgs } from "./screen-set";
 import { displayPrefs, goTo } from "../state/screen";
 import { patchedExcelJS } from "../../import/exceljs-setup";
 import { offerTemplate } from "../state/template-draft";
+import { getShareChoice } from "../state/share";
+import { sharePreviewNeeds } from "../../share/share-preview";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -143,6 +145,33 @@ function ledgerRequest(args: Record<string, unknown>): TabToolResult {
   const aiAxes = Object.keys(ai?.facility ?? {}).filter((k) => !(k in human)).sort();
   if (ai && f.inNationalTable === null && typeof ai.inNationalTable === "boolean") aiAxes.push("inNationalTable");
   return { ok: true, data: { mode: "ledger", packId: working.plan.packId, facility: { scale: f.scale, scaleUnit: f.scaleUnit }, answers, aiAxes, commonItem: args.commonItem ?? null } };
+}
+
+/**
+ * 共有ファイルの形と数（share_preview。仕事 share-preview-v1）：作業画面は、作業中の計画の ID と、SHARE の画面で人が選んでいる共有先・
+ * 共有フォルダ・見え方の答え（画面が開いていなければ null で、画面を開いたときの既定の選び）を橋渡しに渡し、SHARE を開く（screen_set の go: share と同じ）。
+ * 共有ファイルは橋渡しが SHARE の画面と同じ関数で作り、形と数だけを AI に返す。署名・送る道はここに無い。計画が無ければ画面は動かさず、needs を返す
+ */
+function sharePreviewRequest(ws: IntakeWorkspace): TabToolResult {
+  const working = getWorkingPlan();
+  if (!working) return { ok: true, data: sharePreviewNeeds("no_plan", false) };
+  const planId = working.plan.planId;
+  const c = getShareChoice();
+  const mine = c && c.planId === planId ? c : null;
+  const screen = goTo("share");
+  ws.note("ai", T.sharePreviewRead);
+  return {
+    ok: true,
+    data: {
+      mode: "share",
+      planId,
+      dest: mine?.dest ?? "ring",
+      ringId: mine?.ringId ?? null,
+      answers: mine ? { facility: { ...mine.answers.facility }, inNationalTable: mine.answers.inNationalTable } : null,
+      national: working.plan.facility.inNationalTable,
+      screen,
+    },
+  };
 }
 
 /** 周期の案を置く（chart_propose。docs/plan.md §2.18.4）：足すだけ。引いた印は作者 AI で、人が決定のシートで受けるまで決まらない */
@@ -281,6 +310,8 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     return { ok: true, data: { skill: d.skill, facilityKey: ws.facilityKey() } };
   },
   peer_reference: (_ws, args) => (args.place === "ledger" ? ledgerRequest(args) : peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined)),
+  // 共有ファイルの形と数：作業画面は計画と SHARE の選びを渡し、SHARE を開くだけ（数えるのは橋渡し）
+  share_preview: (ws) => sharePreviewRequest(ws),
   intake_survey: (ws, args) => {
     const part = args.part as "all" | "questions" | "compose" | "crosswalk" | "skills";
     return andThen(ws.surveyWith(), (survey): TabToolResult => {
@@ -351,11 +382,13 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
 /** AI のツールを 1 つ動かす。受け手の無いもの・型に合わないもの・途中の誤りは tool_failed */
 /**
  * 橋渡しが続きを作るツール（作業画面の答えは途中の中身で、AI へ返す型は橋渡しが確かめる）の、途中の中身の型。
- * 読み方を保管先に書く（作業画面は下書きを渡す）と、公開の台帳だけを読む（作業画面は計画のパックと規模を渡す）。
+ * 読み方を保管先に書く（作業画面は下書きを渡す）と、公開の台帳だけを読む（作業画面は計画のパックと規模を渡す）と、
+ * 共有ファイルの形と数（作業画面は計画と SHARE の選びを渡す）。
  */
 const INTERMEDIATE: Partial<Record<ToolName, (d: Record<string, unknown>) => boolean>> = {
   reading_skill_register: (d) => !!d.skill && typeof d.skill === "object",
   peer_reference: (d) => d.mode === "ledger" && typeof d.packId === "string",
+  share_preview: (d) => d.mode === "share" && typeof d.planId === "string",
 };
 
 function runTabToolWith(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): Maybe<TabToolResult> {

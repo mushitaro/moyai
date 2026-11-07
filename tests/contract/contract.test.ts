@@ -98,11 +98,18 @@ describe("ツールの送り手と受け手", () => {
       "screen_set",
     ]);
     // 保管先と台帳を読む・書くのは橋渡し（書くのは未承認の読み方の下書きだけ。決まり 1 の例外。docs/plan.md §2.17）。
-    // 似た施設：人が開いた比べは作業画面が、公開の台帳だけを読むのは橋渡しが答える（§2.18.4）
-    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge").sort()).toEqual(["peer_reference", "reading_skill_register", "reading_skills_list"]);
+    // 似た施設：人が開いた比べは作業画面が、公開の台帳だけを読むのは橋渡しが答える（§2.18.4）。
+    // 共有ファイルの形と数：作業画面が計画と SHARE の選びを渡し、橋渡しが SHARE の画面と同じ関数で数える（share-preview-v1）
+    expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge").sort()).toEqual([
+      "peer_reference",
+      "reading_skill_register",
+      "reading_skills_list",
+      "share_preview",
+    ]);
     // 橋渡しが選んだものを作業画面に渡す：資料を作業画面に入れる（橋渡しが道を確かめ、作業画面が中身を取りに来る）
     expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge_then_tab")).toEqual(["intake_add_files"]);
-    expect(notImplemented).toHaveLength(3);
+    // 未実装は人へのメモ（note_for_human）と、F3 の画面を待つ Skill の採点（skill_eval）
+    expect(notImplemented).toEqual(["note_for_human", "skill_eval"]);
   });
 
   it("bridge_then_tab のツールには、作業画面の側の受け手（中身を取りに行くもの）がある", () => {

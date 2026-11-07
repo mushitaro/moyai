@@ -544,6 +544,115 @@ export function readingRuleExamplesText(): string {
   });
   return `ルールの形の見本：どの kind にも id（英数・_・-、40 字まで）・text・author（"ai"）・reason を書き、when と replaces は省ける。全部の欄の例 ${full}。kind ごとの欄（( ) の値はほかの答えから写す）：${kinds.join("／")}。`;
 }
+// ─── 共有ファイルの形と数（share_preview。仕事 share-preview-v1）──────────────
+// SHARE の画面が共有ファイルに書く中身を、橋渡しが画面と同じ関数で作り、形と数だけを返す（src/share/share-preview.ts）。
+// 行の値（機器・作業の名前、年度、階級、費用）と共有ファイルのバイト列は返さない（安全の決まり 3）。署名して送るのは人だけ（決まり 1）。
+// 作業画面は SHARE に切り替える（screen_set の go: share と同じ）。人が SHARE で選んでいる共有先と見え方の答えで数える。
+
+/** 数えられなかったときの理由と、AI に返す文（内部の名前を出さない） */
+export const SHARE_NEEDS_TEXT = {
+  no_plan: "作業画面に開いている計画がありません。MOYAI（トップ）で施設の版を開いてから",
+  not_confirmed: "確定した版がありません。HOSHITORI の確定のシートで確定してから",
+  no_root: "保存先が決まっていません。利用者に設定の画面で保存先を選んでもらってから",
+  no_ring: "この Skillパックの共有フォルダがありません。利用者に設定の画面で共有フォルダを作ってもらうか、SHARE で共有先を公開台帳にしてもらってから",
+  no_ledger: "公開台帳の clone を読めません。利用者に設定の画面で公開台帳の clone を選んでもらうか、SHARE で共有先を共有フォルダにしてもらってから",
+  pack_not_ready: "この Skillパックには、共有に使う公開語彙・見え方の軸・全国の表のどれかがありません（未実装）",
+  history_broken: "保存先の版の署名か鎖が合いません。利用者に MOYAI（トップ）の版の履歴で確かめてもらってから",
+  history_vanished: "この PC が前に見た版か署名が、保存先から無くなっています。利用者に保存先を確かめてもらってから",
+  other: "SHARE の画面が共有ファイルを作れませんでした。利用者に SHARE の画面の知らせを見てもらってから",
+} as const;
+export type ShareNeeds = keyof typeof SHARE_NEEDS_TEXT;
+const SHARE_NEEDS = Object.keys(SHARE_NEEDS_TEXT) as [ShareNeeds, ...ShareNeeds[]];
+
+/** 共有ファイルの塊の欄の名前（塊は共通の設備項目 × 作業分類の 1 行） */
+export const SHARE_FILE_COLUMNS = {
+  class: "共通の設備項目",
+  work: "作業分類",
+  years: "年度",
+  observed: "回数の階級",
+  interval: "周期の階級",
+  manDays: "工数の階級",
+  days: "日数の階級",
+} as const;
+
+/** 結果に添える文（Claude Desktop では instructions が効かないので、結果にも書く） */
+export const SHARE_PREVIEW_NOTE =
+  "数だけで、値（名前・年度・階級・費用）は返していない。当施設の中（HOSHITORI・EXPORT）では全部見せ、絞るのは共有ファイルだけ。作業の名前も写らない（塊は共通の設備項目 × 作業分類）。" +
+  "署名して送るのは利用者が SHARE の主ボタンでする（このツールは送らない）。共有先と見え方の答えは、利用者が SHARE の画面で選ぶ。";
+
+/** 作業画面が橋渡しに渡す途中の中身：作業中の計画の ID と、SHARE の画面で人が選んでいる共有先と見え方の答え（画面が開いていなければ null で、既定の選び） */
+export const sharePreviewFromTabSchema = z
+  .object({
+    mode: z.literal("share"),
+    planId: z.string().min(1).max(200),
+    dest: z.enum(["ring", "ledger"]),
+    ringId: z.string().regex(/^[0-9a-f]{16}$/).nullable(),
+    answers: z.object({ facility: z.record(z.string().max(64), z.string().max(64).nullable()), inNationalTable: z.boolean().nullable() }).strict().nullable(),
+    /** 作業中の計画の、全国の表に載るかの答え（画面の既定の選びと同じく、先に使う） */
+    national: z.boolean().nullable(),
+    /** 作業画面を SHARE に切り替えたか */
+    screen: z.boolean(),
+  })
+  .strict();
+export type SharePreviewFromTab = z.infer<typeof sharePreviewFromTabSchema>;
+
+const shareCount = z.object({ inPlan: z.number().int().min(0), shared: z.number().int().min(0).nullable() });
+const shareChecks = z.object({ shape: z.number().int(), properNoun: z.number().int(), money: z.number().int(), freeText: z.number().int(), exactDate: z.number().int() });
+
+export const sharePreviewOutputSchema = z.object({
+  /** 数えられなかったときの理由と文（数えたときは null。ほかの欄は空） */
+  needs: z.object({ reason: z.enum(SHARE_NEEDS), text: z.string() }).nullable(),
+  /** 作業画面を SHARE に切り替えたか */
+  screen: z.boolean(),
+  /** 共有先の種類（ring：共有フォルダ、ledger：公開台帳） */
+  destination: z.object({ kind: z.enum(["ring", "ledger"]), name: z.string() }).nullable(),
+  /** 共有ファイルにする確定した版：番号・署名した日の年度（西暦）・呼び名・中身のハッシュの頭 16 字 */
+  version: z
+    .object({ number: z.number().int().min(1), fiscalYear: z.number().int().nullable(), name: z.string(), hashHead: z.string().regex(/^[0-9a-f]{16}$/) })
+    .nullable(),
+  /** 確定した版の中の数（inPlan）と、共有ファイルの塊に写る数（shared。見え方が決まるまで null）。費用はいつも 0 */
+  counts: z
+    .object({
+      equipment: shareCount,
+      works: shareCount,
+      yearValues: shareCount,
+      costRows: z.object({ inPlan: z.number().int().min(0), shared: z.literal(0) }),
+    })
+    .nullable(),
+  /** 写した行・行の総数（作業の年度の値 × 対象の機器）・写さなかった理由ごとの行の数（0 は出さない） */
+  copy: z.object({ copied: z.number().int(), rows: z.number().int(), skippedByReason: z.record(z.string(), z.number().int()) }).nullable(),
+  /** 伏せる欄（共有ファイルに欄ごと写さないもの）と、確定した版の中の値の数（見え方が決まるまで null） */
+  hidden: z.array(z.object({ field: z.string(), values: z.number().int().nullable() })).max(20),
+  /** 相手から見たあなた：施設の札（見え方の 1 行）・全国の表に載るか・k の段（0 はそのまま、3 は業種だけ）・同区分の施設の数と下限・全国 → 見え方 → この行 */
+  you: z
+    .object({
+      label: z.string(),
+      group: z.string(),
+      kLevel: z.number().int().min(0).max(3),
+      k: z.number().int(),
+      minK: z.number().int(),
+      steps: z.object({ all: z.number().int(), profile: z.number().int(), rows: z.number().int() }),
+    })
+    .nullable(),
+  /** 見え方の答えが足りない軸の名前（利用者が SHARE で選ぶ） */
+  missingAxes: z.array(z.string()).max(20),
+  /** 共有ファイル：塊の数、欄ごとの塊の数、中身のハッシュの頭 16 字、大きさ、連番（出ていくものが無ければ null） */
+  file: z
+    .object({
+      chunks: z.number().int(),
+      columns: z.array(z.object({ name: z.string(), chunks: z.number().int() })).max(10),
+      hashHead: z.string().regex(/^[0-9a-f]{16}$/),
+      bytes: z.number().int(),
+      seq: z.number().int(),
+    })
+    .nullable(),
+  /** 数え直しの数（形の外れ・固有名詞・金額・自由記述・正確な日付。どれも 0 でないと送れない） */
+  checks: shareChecks.nullable(),
+  /** 今、主ボタンを押せない理由（SHARE の画面の言葉） */
+  blocked: z.array(z.string()).max(20),
+  note: z.string(),
+});
+export type SharePreviewOut = z.infer<typeof sharePreviewOutputSchema>;
 
 // ─── 12 のツール ─────────────────────────────────────────────────
 
@@ -882,14 +991,15 @@ export const TOOLS = {
   share_preview: def(
     "share_preview",
     "read",
-    "写し取りの見込み",
-    "共有ファイルに写す数、写さなかった理由ごとの数、k の集約度を読む。送るのは人が検問所でする。",
+    "共有ファイルの形と数",
+    "SHARE の画面が共有ファイルに書く中身の、形と数だけを読む（利用者が「社内で共有して」と言ったとき）。" +
+      "作業画面を SHARE に切り替え、利用者が SHARE で選んでいる共有先（共有フォルダか公開台帳）と見え方の答えで、画面と同じ関数で数える。" +
+      "返すのは、共有先の種類、版（年度・第 n 版・ハッシュの頭）、確定した版の中と共有ファイルに写る機器・作業・作業の年度の値・費用の行の数（費用はいつも 0）、写さなかった理由ごとの行の数、" +
+      "伏せる欄、相手から見たあなた（施設の札・k の段・同区分の施設の数）、見え方の答えが足りない軸、塊の数と欄ごとの数、数え直しの数、主ボタンを押せない理由。" +
+      "行の値（名前・年度・階級・費用）と共有ファイルのバイト列は返さない。確定した版が無いなどで数えられなければ、needs に理由と次の手が入る。" +
+      "見え方の軸を選ぶ・署名して送るのは、利用者が SHARE の画面でする（このツールは読むだけで、送らない）。",
     z.object({}),
-    z.object({
-      copied: z.number().int(),
-      skippedByReason: z.record(z.string(), z.number().int()),
-      kLevel: z.number().int(),
-    }),
+    sharePreviewOutputSchema,
   ),
   peer_reference: def(
     "peer_reference",

@@ -293,7 +293,16 @@ export interface PreviewView {
   steps: { all: number; profile: number; rows: number } | null;
   /** 分類ごとに、見え方の n からどれだけ減らすか（減らす分類だけ） */
   rowEffects: { class: string; n: number }[];
-  copy: { copied: number; rows: number; skipped: Record<SkipReason, number>; withheld: Record<WithheldField, number>; omitted: Record<OmitReason, number> } | null;
+  /** 写し取りの数。chunks は塊の数、fromPlan は塊に写した行のもとの数（機器・作業・作業の年度の値。AI の share_preview が返す） */
+  copy: {
+    copied: number;
+    rows: number;
+    skipped: Record<SkipReason, number>;
+    withheld: Record<WithheldField, number>;
+    omitted: Record<OmitReason, number>;
+    chunks: number;
+    fromPlan: CopyResult["fromPlan"];
+  } | null;
   original: OriginalRow[];
   originalTotal: number;
   vanished: boolean;
@@ -417,7 +426,7 @@ export function previewPlace(place: SendPlace, pack: SharePack, plan: Plan, a: A
 }
 
 function copySummary(c: CopyResult): NonNullable<PreviewView["copy"]> {
-  return { copied: c.copied, rows: c.rows, skipped: c.skipped, withheld: c.withheld, omitted: c.omitted };
+  return { copied: c.copied, rows: c.rows, skipped: c.skipped, withheld: c.withheld, omitted: c.omitted, chunks: c.chunks.length, fromPlan: c.fromPlan };
 }
 
 // ─── 送る ──────────────────────────────────────────────────

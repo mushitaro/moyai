@@ -22,6 +22,8 @@ import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
 import { HUMAN_TEXT, bandText, reasonText } from "../text";
 import { bandShort } from "../../share/stat-text";
+import { defaultRingId, defaultShareFacility } from "../../share/share-preview";
+import { setShareChoice } from "../state/share";
 
 const T = HUMAN_TEXT.checkpoint;
 
@@ -457,10 +459,15 @@ export function Checkpoint() {
 
   const answers = useMemo(() => ({ facility, inNationalTable: national }), [facility, national]);
 
+  // 画面を閉じたら、AI の share_preview に渡す選びを消す（開き直した画面は既定の選びから始める）
+  useEffect(() => () => setShareChoice(null), []);
+
   // 輪・答えが変わるたびに、橋渡しで出ていくものを作り直す（送る処理と同じ関数）。
   // 断られても（輪が無い・見え方が決まらないなど）、聞くこと（輪の一覧と軸）は返ってくるので見せる。
   useEffect(() => {
     if (state.kind !== "open" || !planId) return;
+    // 既定の選びを入れたあとの選びを、AI の share_preview にも渡す（画面と同じ数を返すため。src/app/state/share.ts）
+    if (prefilled.current) setShareChoice({ planId, dest, ringId, answers });
     const n = ++seq.current;
     setLoading(true);
     void (async () => {
@@ -477,16 +484,14 @@ export function Checkpoint() {
       setRes(b);
       if (!prefilled.current && b.questions) {
         prefilled.current = true;
-        // 施設の設定の答えを先に入れ、無い軸だけ規模からの見込み（人が直せる）
-        const pre: Record<string, string | null> = {};
-        for (const q of b.questions) if (q.suggested) pre[q.key] = q.suggested;
-        Object.assign(pre, b.plan?.profile ?? {});
+        // 施設の設定の答えを先に入れ、無い軸だけ規模からの見込み（人が直せる）。AI の share_preview の既定の選びと同じ関数
+        const pre = defaultShareFacility(b.questions, b.plan?.profile ?? null);
         if (b.plan && b.plan.inNationalTable !== null && national === null) setNational(b.plan.inNationalTable);
         if (Object.keys(pre).length > 0) setFacility((f) => ({ ...pre, ...f }));
       }
       if (dest === "ring" && ringId === null && b.rings && b.plan) {
-        const first = b.rings.find((x) => x.pack === b.plan!.packId);
-        if (first) setRingId(first.ringId);
+        const first = defaultRingId(b.rings, b.plan.packId);
+        if (first) setRingId(first);
       }
     })();
   }, [client, state.kind, planId, ringId, answers, dest, reload]);

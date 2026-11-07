@@ -19,7 +19,8 @@ import { checkRules, diffRuleRows } from "../share/rules";
 import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readingLineage, recordReadingVersion, recordedReadings, registerReading } from "./readings";
 import { ReadingSkill, isPlanRule } from "../import/reading";
 import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
-import { ruleSchema } from "../shared/tools";
+import { ruleSchema, type SharePreviewFromTab, type SharePreviewOut } from "../shared/tools";
+import { defaultRingId, defaultShareFacility, shareNeedsOf, sharePreviewNeeds, sharePreviewOf } from "../share/share-preview";
 import { AUTHOR_KINDS } from "../shared/fields";
 import { approvedTemplateVersions, listTemplates, readTemplateVersion, saveTemplate } from "./templates";
 import { exportExcelName, exportSignatureName, signExport } from "../plan/exports";
@@ -1351,6 +1352,52 @@ export class HumanService {
       default:
         return no("unknownAction");
     }
+  }
+
+  /**
+   * AI の share_preview（仕事 share-preview-v1）：SHARE の画面と同じ文脈（shareContext・ledgerSendContext）と同じ関数（ringView・ledgerView）で
+   * 出ていくものを作り、形と数だけにして返す（src/share/share-preview.ts）。人だけの経路ではない：署名も書き込みもしない（読むだけ）。
+   * 作業画面が SHARE の選び（共有先・共有フォルダ・見え方の答え）を渡さなければ、画面を開いたときと同じ既定の選びで数える。
+   */
+  async sharePreview(req: SharePreviewFromTab): Promise<SharePreviewOut> {
+    const needs = (reason: string) => sharePreviewNeeds(shareNeedsOf(reason), req.screen);
+    const sd = this.e.stateDir;
+    if (!sd || !PLAN_ID.test(req.planId)) return needs("other");
+    const root = await this.root();
+    if (!root) return needs("noRoot");
+    const h = await readHistory(root, req.planId);
+    if (!h.latest) return needs("notConfirmed");
+    const pack = this.pack(h.latest.plan.packId);
+    if (typeof pack === "string") return needs("packNotReady");
+    // 画面の既定の選び（src/app/pages/Checkpoint.tsx と同じ関数）。全国の表に載るかは、作業中の計画の答えを先に使う
+    const first = h.latest.plan;
+    const answers: Answers = req.answers ?? {
+      facility: defaultShareFacility(questionsOf(pack, first), first.facility.profile ?? null),
+      inNationalTable: req.national ?? first.facility.inNationalTable,
+    };
+    const month = monthOf(new Date(this.e.now()));
+    let view: PreviewView;
+    let plan: typeof first;
+    let version: number;
+    if (req.dest === "ledger") {
+      const c = await this.ledgerSendContext(req.planId);
+      if (!c.ok) return needs(String(c.out.reason));
+      const pend = c.sender.ok ? pendingSent(c.facility, c.L, keyIdOf(c.sender.pair.pub)) : null;
+      view = this.ledgerView(c, answers, month, !!pend, c.info.intake);
+      plan = c.plan;
+      version = c.version;
+    } else {
+      const ctx = await this.shareContext(req.planId, req.ringId ?? defaultRingId(readRings(sd).rings, first.packId), answers);
+      if (!ctx.ok) return needs(String(ctx.out.reason));
+      view = this.ringView(ctx, month);
+      plan = ctx.plan;
+      version = ctx.version;
+    }
+    const v = h.versions.find((x) => x.version === version);
+    if (!v) return needs("other");
+    // 版を確定した署名の時刻（承認があれば承認、無ければ自分で確定した署名）。トップの版の呼び名と同じ
+    const signedAt = (v.signatures.find((x) => x.role === "approve") ?? v.signatures.find((x) => x.role === "confirm"))?.at ?? null;
+    return sharePreviewOf({ dest: req.dest, screen: req.screen, plan, version: { number: version, contentHash: v.contentHash, signedAt }, view, axes: pack.axes });
   }
 
   private async syncedOfPath(path: string) {

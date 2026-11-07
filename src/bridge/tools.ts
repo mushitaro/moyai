@@ -42,6 +42,11 @@ export interface BridgeTools {
   reading_skill_register?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   /** 作業画面が人の開いた比べを返したらそのまま、公開の台帳だけを読む頼みなら橋渡しが台帳を読んで比べる */
   peer_reference?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+  /**
+   * 共有ファイルの形と数（share_preview）：作業画面が作業中の計画と SHARE の選びを渡し、橋渡しが SHARE の画面と同じ関数で共有ファイルを作って、
+   * 形と数だけを返す（行の値は返さない）。作業画面に計画が無ければ、作業画面の答え（needs）をそのまま返す
+   */
+  share_preview?: (fromTab: Record<string, unknown>, args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   /** 今の公開の台帳の clone の版（台帳を根拠にした周期の案を照らす。台帳の中-5） */
   ledger_version?: () => Promise<string | null>;
   /** 資料を作業画面に入れる：道を確かめて読む資料を選ぶ（中身は読まない。src/bridge/intake-files.ts）。文に値を添える誤りは ErrorBody で返す */
@@ -75,7 +80,8 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   chart_propose: "tab",
   check_results: "tab",
   note_for_human: "not_implemented",
-  share_preview: "not_implemented",
+  // 共有ファイルの形と数（share-preview-v1）：作業画面が計画と SHARE の選びを渡し、橋渡しが画面と同じ関数で数える
+  share_preview: "tab_then_bridge",
   peer_reference: "tab_then_bridge",
   reading_rules_propose: "tab",
   reading_skill_register: "tab_then_bridge",
@@ -342,7 +348,9 @@ export class ToolRelay {
             ? this.bridgeTools.peer_reference
             : name === "reading_skills_list"
               ? this.bridgeTools.reading_skills_list
-              : undefined;
+              : name === "share_preview"
+                ? this.bridgeTools.share_preview
+                : undefined;
       if (!h) return fail("not_implemented");
       const answer = finish(await h(out.data as Record<string, unknown>, args));
       if (name === "peer_reference" && isOk(answer) && answer.data.mode === "ledger") this.rememberLedger(conversation, answer.data);

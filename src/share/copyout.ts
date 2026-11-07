@@ -116,6 +116,8 @@ export interface CopyResult {
   omitted: Record<OmitReason, number>;
   /** 行の総数 */
   rows: number;
+  /** 塊に写した行のもとの数（重ねない）：機器（資産の節）・作業・作業の年度の値。名前も値も持たない（AI の share_preview が数を返す） */
+  fromPlan: { assets: number; works: number; details: number };
 }
 
 /** 写す候補の分類：当てはめを人が受けた資産の 1 段目の項目（重ねない、コード順）。 */
@@ -242,6 +244,10 @@ export function copyOut(input: CopyInput): CopyResult {
   const groups = new Map<string, Gathered>();
   let copied = 0;
   let rows = 0;
+  // 写した行のもと（数えるだけ。塊の中身には入れない）
+  const fromAssets = new Set<string>();
+  const fromWorks = new Set<string>();
+  const fromDetails = new Set<string>();
   for (const d of plan.details) {
     const w = works.get(d.workKey);
     if (!w) {
@@ -296,6 +302,9 @@ export function copyOut(input: CopyInput): CopyResult {
       g.yearsBySeries.get(seriesKey)!.add(d.fiscalYear);
       if (!g.visits.has(d.detailKey)) g.visits.set(d.detailKey, { manDays: d.manDays, days: d.days, bundled: isBundled(w), child: w.parentWorkKey !== null });
       copied++;
+      fromAssets.add(a.nodeKey);
+      fromWorks.add(w.workKey);
+      fromDetails.add(d.detailKey);
     }
   }
 
@@ -314,5 +323,5 @@ export function copyOut(input: CopyInput): CopyResult {
     }
     return out as unknown as Chunk;
   });
-  return { chunks, copied, skipped, withheld, omitted, rows };
+  return { chunks, copied, skipped, withheld, omitted, rows, fromPlan: { assets: fromAssets.size, works: fromWorks.size, details: fromDetails.size } };
 }
