@@ -581,12 +581,12 @@ export const HUMAN_TEXT = {
     prUnread: "行方を読めませんでした",
     prLink: "PR を表示",
     sendLedger: "署名して公開台帳へ送信",
-    ledgerBottom: "GitHub に PR を送信。掲載後は取り下げても複製は残ります。",
+    ledgerBottom: "GitHub に PR を送信。掲載後の複製は残ります。",
     prSent: (n: number) => `PR #${n} を出しました`,
-    // GitHub アカウントなしで送る道（受け口が運営者の GitHub アカウントで PR を出す）。置き場所と言葉は Wire の確認待ち
-    sendIntake: "GitHub アカウントなしで送信",
-    intakeBottom: "アカウントなしの送信は、運営者の GitHub アカウントで PR を送信。",
-    prViaIntake: "アカウントなし",
+    // MOYAI 経由で送る道（受け口が運営者の GitHub アカウントで PR を出す。docs/screens.md §3.6「送信経路」）
+    sendIntake: "MOYAI 経由",
+    intakeBottom: "MOYAI 経由で PR を送信。掲載後の複製は残ります。",
+    prViaIntake: "MOYAI 経由",
     versionOf: (n: number) => `第 ${n} 版`,
     profileLine: (axes: string) => `施設 ― ${axes}、所在`,
     redacted: "伏せています",

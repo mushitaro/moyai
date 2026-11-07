@@ -128,9 +128,9 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await expect(page.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
     await expect(page.getByTestId("send")).toBeDisabled();
     await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続");
-    await expect(page.getByTestId("send-intake")).toHaveText("GitHub アカウントなしで送信");
+    await expect(page.getByTestId("send-intake")).toHaveText("MOYAI 経由");
     await expect(page.getByTestId("send-intake")).toBeEnabled();
-    await expect(page.getByTestId("intake-bottom")).toHaveText("アカウントなしの送信は、運営者の GitHub アカウントで PR を送信。");
+    await expect(page.getByTestId("intake-bottom")).toHaveText("MOYAI 経由で PR を送信。掲載後の複製は残ります。");
     await expect(page.getByTestId("account-seen")).toHaveCount(0);
     await page.screenshot({ path: shot(`ledger-intake-before-${tag}`), fullPage: true });
   });
@@ -141,7 +141,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await expect(page.getByTestId("ledger-sent")).toContainText("PR #1 を出しました");
     await expect(page.locator('[data-testid="ledger-pr"][data-state="open"]')).toHaveCount(1);
     await expect(page.getByTestId("ledger-pr").first()).toContainText("審査中");
-    await expect(page.getByTestId("ledger-pr-intake").first()).toHaveText("アカウントなし");
+    await expect(page.getByTestId("ledger-pr-intake").first()).toHaveText("MOYAI 経由");
     await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^共有ファイル 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
     await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
     await expect(page.getByTestId("send-intake")).toBeDisabled();

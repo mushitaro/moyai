@@ -82,7 +82,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
     await expect(page.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
     await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続");
-    await expect(page.getByTestId("ledger-bottom")).toHaveText("GitHub に PR を送信。掲載後は取り下げても複製は残ります。");
+    await expect(page.getByTestId("ledger-bottom")).toHaveText("GitHub に PR を送信。掲載後の複製は残ります。");
   });
 
   await test.step("GitHub につなぐ：コードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる", async () => {
