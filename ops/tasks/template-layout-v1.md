@@ -1,5 +1,5 @@
 ---
-id: template-claude-v1
+id: template-layout-v1
 role: dev-core
 agent: dev-core
 environment: env-kinds
