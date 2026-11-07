@@ -1965,6 +1965,30 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       else wait(e.id, `dateMissing|${t.id}`);
     }
   }
+  // 日付はあるが、作業の名前の欄が空の行：作業を推し量らず、同じ資料の同じ見出しの欄をまとめて 1 回聞く（答えるまで、その行はこの問いを待つ未解決）
+  const noWork = evs.filter((e) => e.date && !e.workName && !e.excluded);
+  if (noWork.length) {
+    const header = ((workCol ?? titleCol)?.headerParts[0] ?? "作業").replace(/\s*\n\s*/g, "");
+    const noWorkText = (rows: number) => `「${header}」の欄が空の作業の行がある（${rows} 行）。作業の名前を推し量らない`;
+    const a = ask.ask(
+      `noWork|${t.id}`,
+      {
+        kind: "eventAsset",
+        text: noWorkText(noWork.length),
+        options: [{ id: "exclude", label: "その行を外す（理由を残す）" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: noWork.length,
+        items: [itemOf(lay, noWork.slice(0, 10).map((e) => e.refs[0] ?? ""))],
+      },
+      // 答えは「外す」だけで、列の書き方によらない：同じ資料の同じ見出しの欄は、表（PDF の頁ごとの表）をまたいで 1 問
+      sameForm("noWork", `file:${lay.file}`, header, noWorkText),
+    );
+    for (const e of noWork) {
+      if (a === "exclude") e.excluded = "作業の名前の欄が空の行（決定で外した）";
+      else wait(e.id, `noWork|${t.id}`);
+    }
+  }
   // 工数の単位の問いは、同じ様式の表をまとめて 1 回聞く（同じ鍵で聞くと、件数と見本は足される）
   const form = rec.formOf.get(t.id);
   const fkey = form?.key ?? t.id;
@@ -2350,13 +2374,21 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       else {
         const h = lunch === "no" ? sp.hours : lunch === "noon" && lunchHours ? sp.hours - lunchOverlap(sp, lunchHours) : null;
         if (h !== null && h > 0 && hoursPer) e.manDays = (sp.persons * h) / hoursPer;
-        else e.effortPending = true;
+        else {
+          e.effortPending = true;
+          // 待つ問い（昼休みを含むか → 昼休みの時間 → 1 人・日の時間）を行に結ぶ。答えの無い問いを待つセルを、質問の無い未解決にしない
+          const q = lunch === null ? "effortSpanLunch" : lunch === "noon" && !lunchHours ? "effortSpanLunchHours" : !hoursPer ? "hoursPerManDay" : null;
+          if (q) wait(e.id, `${q}|${fkey}`);
+        }
       }
     }
     if (e._noTime) {
       if (noTimeAs === "perDay") e.manDays = e._noTime.persons;
       else if (noTimeAs === "exclude") for (const ref of e._noTime.refs) effortExcluded.add(ref);
-      else e.effortPending = true;
+      else {
+        e.effortPending = true;
+        wait(e.id, `effortNoTime|${fkey}`);
+      }
     }
     if (spellOk !== "yes" && e.unit?.kind === "number" && spellings.size > 1) e.pending = true;
     for (const ref of effortExcluded) if (e.refs.includes(ref)) {

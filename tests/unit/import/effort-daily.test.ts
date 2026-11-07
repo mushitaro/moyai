@@ -315,3 +315,75 @@ describe("職種の語と「作業人員」の見出しの手がかり（packs/_
     expect(ca.effort + ca.columnRole).toBeGreaterThan(cb.effort + cb.columnRole);
   });
 });
+
+// 形 C：頭書きの日付を元号と曜日の括弧で書いた日報（「作業日」の項目、値は 1 つ空けた列）。頁ごとに日が替わる
+const formC = (dates: string[], people: (string | null)[], spans: (string | null)[]) =>
+  xlsxOf((ws) => {
+    dates.forEach((date, k) => {
+      const top = 1 + k * 10;
+      rows(ws, top, [["【架空】作業日報"], [], ["作業日", null, date, null, "天候", "晴"], []]);
+      rows(ws, top + 4, [["No.", "号炉", "作業場所", "作業内容", "業者名", "作業人員", "作業時間"]]);
+      rows(ws, top + 5, people.map((p, i) => [i + 1, `${(i % 2) + 1}号炉`, `【架空】機器${i + 1}`, "点検", "【架空】甲社", p, spans[i] ?? null]));
+      ws.getRow(top + 8).addPageBreak();
+    });
+  }, "4月");
+
+describe("形 C：頭書きの日付（元号・曜日の括弧）と、答えを待つ行の問い", () => {
+  test("頭書きの「令和8年4月6日（月）」を、その頁の行の日付として読む。曜日が日付と合わなければ日付にしない", async () => {
+    const s = session();
+    await s.add([{ name: "日報C.xlsx", bytes: await formC(["令和8年4月6日（月）", "令和8年4月7日（火）"], ["機械工2", "作業員1"], ["8:30～17:00", "9:00～12:00"]) }]);
+    const an = s.analyze();
+    expect(an.open.some((q) => q.kind === "dateUnknown")).toBe(false);
+    expect(an.records.events.map((e) => `${e.date?.m}/${e.date?.d}`)).toEqual(["4/6", "4/6", "4/7", "4/7"]);
+
+    const w = session();
+    await w.add([{ name: "日報C.xlsx", bytes: await formC(["令和8年4月6日（火）", "令和8年4月7日（火）"], ["機械工2"], ["8:30～17:00"]) }]);
+    expect(w.analyze().open.some((q) => q.kind === "dateUnknown")).toBe(true);
+    expect(w.analyze().records.events.map((e) => (e.date ? `${e.date.m}/${e.date.d}` : null))).toEqual([null, "4/7"]);
+  });
+
+  test("昼休みの問い・作業時間の無い行の問いに答えるまで、その行のセルは未解決で、どれもその問いを待つ（質問の無い未解決にしない）", async () => {
+    const s = session();
+    await s.add([{ name: "日報C.xlsx", bytes: await formC(["令和8年4月6日"], ["機械工2", "作業員1"], ["8:30～17:00", null]) }]);
+    acceptDefaults(s);
+    const lunch = lunchQ(s);
+    const noTime = s.analyze().open.find((q) => q.kind === "effortUnknown" && q.text.includes("作業時間が書いていない"));
+    expect(lunch).toBeTruthy();
+    expect(noTime).toBeTruthy();
+    const waiting = [...s.compose().status.values()].filter((v) => v.s === "unresolved");
+    expect(waiting.length).toBeGreaterThan(0);
+    expect(waiting.filter((v) => v.s === "unresolved" && v.questionId === null)).toEqual([]);
+    expect(new Set(waiting.map((v) => (v.s === "unresolved" ? v.questionId : null)))).toEqual(new Set([lunch?.questionId, noTime?.questionId]));
+    s.settle([human(lunch!.questionId, "no"), human(noTime!.questionId, "perDay")]);
+    acceptDefaults(s);
+    expect([...s.compose().status.values()].filter((v) => v.s === "unresolved" && v.questionId !== null && [lunch?.questionId, noTime?.questionId].includes(v.questionId))).toEqual([]);
+    expect(manDaysOf(s, "日報C.xlsx")).toEqual([(2 * 8.5) / 8, 1]);
+  });
+});
+
+describe("機器の欄・作業の欄が空の作業の行", () => {
+  const bytes = csv(["日付,機器,作業内容,工数(人日)", "2026/04/06,【架空】ポンプ,点検,1", "2026/04/07,,点検,1", "2026/04/08,【架空】ブロワ,,1"]);
+  const waitingOn = (s: IntakeSession) => [...s.compose().status.values()].flatMap((v) => (v.s === "unresolved" ? [v.questionId] : []));
+
+  test("推し量らず、それぞれ 1 問にして、その行のセルはその問いを待つ。外すと答えれば理由を残して外す", async () => {
+    const s = session();
+    await s.add([{ name: "日報.csv", bytes }]);
+    acceptDefaults(s);
+    const open = s.analyze().open;
+    const noAsset = open.find((q) => q.text.startsWith("機器の名前も機器番号も書いていない作業の行がある（1 行）"));
+    const noWork = open.find((q) => q.text.startsWith("「作業内容」の欄が空の作業の行がある（1 行）"));
+    expect(noAsset?.defaultAnswer).toBeNull();
+    expect(noWork?.defaultAnswer).toBeNull();
+    expect(waitingOn(s)).not.toContain(null);
+    expect(new Set(waitingOn(s))).toEqual(new Set(open.map((q) => q.questionId)));
+    expect(waitingOn(s)).toEqual(expect.arrayContaining([noAsset?.questionId, noWork?.questionId]));
+    s.settle([human(noAsset!.questionId, "exclude"), human(noWork!.questionId, "exclude")]);
+    const reasons = [...s.compose().status.values()].flatMap((v) => (v.s === "excluded" ? [v.reason] : []));
+    expect(reasons).toContain("機器の名前も機器番号も無い行（決定で外した）");
+    expect(reasons).toContain("作業の名前の欄が空の行（決定で外した）");
+    // 残りは、台帳の無い機器を新しく入れるかの問いを待つセルだけ（質問の無い未解決は無い）
+    expect(waitingOn(s)).not.toContain(null);
+    expect(waitingOn(s)).not.toContain(noAsset?.questionId);
+    expect(waitingOn(s)).not.toContain(noWork?.questionId);
+  });
+});

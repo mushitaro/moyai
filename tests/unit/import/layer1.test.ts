@@ -39,6 +39,11 @@ describe("表示の文字（ssf と元号の表）", () => {
     expect(parseDateText("H31.2.30")).toBeNull();
     expect(parseDateText("昭和63年度末")).toBeNull();
     expect(parseDateText("4月上旬")).toBeNull();
+    // 後ろの曜日の括弧は、年月日の曜日と合うときだけ読む（2026-04-06 は月曜日）
+    expect(parseDateText("令和8年4月6日（月）")).toEqual({ y: 2026, m: 4, d: 6 });
+    expect(parseDateText("2026/4/6(月曜日)")).toEqual({ y: 2026, m: 4, d: 6 });
+    expect(parseDateText("令和8年4月6日（火）")).toBeNull();
+    expect(parseDateText("2026/4/6（雨）")).toBeNull();
     expect(parseYearLabel("H31")).toEqual({ year: 2019, fiscal: null, era: "H" });
     expect(parseYearLabel("令和3年度")).toEqual({ year: 2021, fiscal: true, era: "令和" });
     expect(parseYearLabel("2028年度")?.year).toBe(2028);

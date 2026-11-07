@@ -486,12 +486,14 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   type Case = { key: string; tableId: string; name: string; unitKey: string; cands: Cluster[]; events: EventRec[]; pattern: string };
   const cases = new Map<string, Case>();
   const eventNames = new Map<string, { names: string[]; unitKey: string }>();
+  /** 機器の名前も機器番号も無い作業の行（表ごと）。あとで様式ごとに 1 回聞く */
+  const noAsset = new Map<string, EventRec[]>();
   for (const e of rec.events) {
     // 同じ記録の名前の欄から作った機器のある行（PDF の折り返した記録）は、名前で引かない（下でその機器に当てる）
     if (e.excluded || e.pending || e.effortPending || e.assetId !== undefined) continue;
     const whole = e.assetNames[0] ?? "";
     if (!whole && !e.tag) {
-      eventPending.add(e.id);
+      noAsset.set(e.tableId, [...(noAsset.get(e.tableId) ?? []), e]);
       continue;
     }
     // 並べた機器（「A・B・C（一式）」）：分けたどれもが機器の名前か機器番号で引ければ分ける。
@@ -567,6 +569,33 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const resolved = new Map<string, { c: Cluster | null; qid: string | null; excluded: boolean; wait?: string }>();
   // 同じ様式の表（同じ様式の帳票を何冊も入れたとき）は、同じ形の問いをまとめて聞く
   const formKey = (tableId: string) => rec.formOf.get(tableId)?.key ?? tableId;
+  // 機器の名前も機器番号も無い作業の行：機器に当てられない。推し量らず、同じ資料・同じ様式の表をまとめて 1 回聞く（答えるまで、その行はこの問いを待つ未解決）
+  for (const [tableId, evs] of noAsset) {
+    const key = `eventNoAsset|${tableId}`;
+    const text = (rows: number) => `機器の名前も機器番号も書いていない作業の行がある（${rows} 行）。機器に当てられない`;
+    const a = ask.ask(
+      key,
+      {
+        kind: "eventAsset",
+        text: text(evs.length),
+        options: [{ id: "exclude", label: "その行を外す（理由を残す）" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: evs.length,
+        items: [{ file: evs[0]?.file ?? "", sheet: evs[0]?.sheet ?? null, cells: evs.slice(0, 10).map((e) => e.refs[0] ?? "") }],
+      },
+      // 答えは「外す」だけ：同じ資料の表（PDF の頁ごとの表）と、同じ様式の表をまとめて 1 問
+      { key: `eventNoAsset|${(rec.formOf.get(tableId)?.tables.length ?? 1) > 1 ? formKey(tableId) : `file:${evs[0]?.file ?? ""}`}|-`, text },
+    );
+    for (const e of evs)
+      if (a === "exclude") {
+        eventExcluded.set(e.id, "機器の名前も機器番号も無い行（決定で外した）");
+        eventExcludedBy.set(e.id, [questionIdOf(key)]);
+      } else {
+        eventPending.add(e.id);
+        eventWaitingOn.set(e.id, questionIdOf(key));
+      }
+  }
   const caseGroups = new Map<string, Case[]>();
   // 台帳も星取表も無い（機器の記録が 1 つも無い）組：日報・報告書の機器の名前は、どれも当てる先が無い。様式ごとにまとめて聞く
   const noAssets = !clusters.some((c) => !c.excluded);
@@ -703,7 +732,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   // ─── 日報の行 → 作業のまとまり ───
   const occMap = new Map<string, Occurrence>();
   for (const e of rec.events) {
-    if (e.excluded) continue;
+    if (e.excluded || eventExcluded.has(e.id)) continue;
     // 同じ記録の名前の欄から作った機器（資料をまたいで結べば、結んだ機器）
     const own = e.assetId !== undefined ? (clusterOf.get(e.assetId) ?? null) : undefined;
     const en = eventNames.get(e.id);
