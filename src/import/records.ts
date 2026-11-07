@@ -2,10 +2,11 @@
 // どのセルを何に使ったかを数えるため、記録はセルの位置を持つ。
 import { cellRef, colLetter, type GridCell, type SheetGrid } from "./grid";
 import { cue, norm, type ColumnCue } from "./cues";
-import { fiscalYearInText, fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, withFiscalYear, type Ymd } from "./era";
+import { fiscalYearInText, fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, validYmd, withFiscalYear, ymdString, type Ymd } from "./era";
 import { parseWithFormat } from "./reading";
 import { Asker, type MergeSpec, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { isAssignableRole } from "./roles";
+import { blockPeriod, joinWrap, parseBlockName, parseEffortLine, type BlockTable, type RecordBlock } from "./blocks";
 import { UNIT_LABEL, assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
 import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, lunchOverlap, parseCost, parseCycle, parseEffort, parsePersons, parseTimeSpan, parseUnit, personsHeaderUnit, splitFlatWork, splitNameUnits, splitOrderItem, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type OrderItem, type TagSplit, type TimeSpan, type UnitValue } from "./text";
 
@@ -127,6 +128,11 @@ export interface EventRec {
   refs: string[];
   excluded: string | null;
   pending: boolean;
+  /**
+   * 同じ記録の名前の欄から作った機器の記録の ID（PDF の表の、何行にも折り返した記録。blockRecords）。あれば、名前で引かずにその機器に当てる
+   * （機器の記録が資料をまたいで結ばれれば、結んだ機器）。無ければ省く
+   */
+  assetId?: string;
 }
 
 /** 契約の記録の日付の欄（changeDate・due は発注明細の最終変更日・納期） */
@@ -296,6 +302,7 @@ export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOpt
       if (t.shape === "tree") order = treeRecords(t, lay, ask, rec, order, exclude, pend, off);
       else if (t.shape === "grid") order = gridRecords(t, lay, ask, rec, order, exclude, pend, off);
       else if (t.shape === "contracts" || t.shape === "orderLines") contractRecords(t, lay, ask, rec, opts, date1904Of(lay.file), exclude, pend, off);
+      else if (t.blocks) order = blockRecords(t, t.blocks, lay, ask, rec, order, opts, exclude, pend, off);
       else eventRecords(t, lay, ask, rec, opts, date1904Of(lay.file), exclude, pend, off);
     }
   }
@@ -2368,6 +2375,347 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     void _noTime;
     rec.events.push(clean);
   }
+}
+
+// ─── PDF の表の、何行にも折り返した記録（reader-pdf-blocks-v1） ─────────────────
+
+/** 何行にも折り返した記録の、決定で外した理由（行き先の字） */
+export const BLOCK_EXCLUDE = {
+  stray: "名前の欄が空の行（決定で外した）",
+  name: "名前の欄の並びが読めない記録（決定で外した）",
+  work: "作業の内容の欄が空の記録（決定で外した）",
+  period: "期間の書いていない記録（決定で外した）",
+  state: "予定・実績の読めない記録（決定で外した）",
+} as const;
+
+/**
+ * PDF の表の、何行にも折り返した記録（blocks.ts の塊）を、塊ごとに 1 つの記録にする。行ごとには聞かない。
+ * - 名前の欄の行をつないで「設備 号炉 設備／部位」の並びを読み、機器の階層（設備 › 部位）の機器の記録にする。作業の記録は、その記録のいちばん下の段の機器に当てる。
+ * - 期間（年月日のそろった期間・年の無い月-日の期間）→ 作業の期間と年度。年の無い期間は、資料の属性の工期、無ければシートの文の年度で年を補う。補えなければ 1 問にまとめて聞く。
+ * - 状態の列の 1 行目（「実施済」→ 実績、「予定」→ 予定）。予定・実績の語で読めない短い字は 1 問にまとめて聞く。
+ * - 施工量と工数の行 → 作業量と人・日（工数の前の語は職種として注記に残す）。
+ * - ほかのまとまり（「根拠：」「判断：」「備考：」「施工記録 …」・結果の文）→ 記録の注記（作業明細の備考）。塊のどのセルも記録の出どころ（読めたもの）に数える。
+ * 決まらないものは、同じ様式の表をまとめて 1 問にする（鍵は intake-group-v1 の形：問いの名前|様式|書き方）
+ */
+function blockRecords(t: Table, bt: BlockTable, lay: SheetLayout, ask: Asker, rec: Records, order: number, opts: RecordOptions, exclude: (ref: string, why: string) => void, pend: Pend, off: Off): number {
+  const fkey = formKeyOf(rec, t);
+  const form = rec.formOf.get(t.id);
+  const many = (form?.tables.length ?? 1) > 1;
+  const where = many ? `${filesLabel(form?.files ?? [])}（同じ様式）の表に、` : "";
+  // 塊にできなかった行（名前の欄が空で、前に記録の無い行）：表ごとに 1 回聞く。同じ様式の表は 1 問（木の表の問いと同じ鍵の形）
+  if (bt.strays.length) {
+    const shown = bt.strays.slice(0, NO_NAME_ROWS_SHOWN).map((x) => x.r);
+    const more = bt.strays.length - shown.length;
+    const at = `${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""}の ${shown.join("・")}${more > 0 ? ` ほか ${more}` : ""} 行目`;
+    const key = `noNameRow|${t.id}`;
+    const a = ask.ask(
+      key,
+      {
+        kind: "stray",
+        text: `名前の欄が空で、ほかの欄だけに中身がある行がある（${at}。${bt.strays.length} 行）`,
+        options: [{ id: "exclude", label: "外す" }],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: bt.strays.length,
+        items: bt.strays.map((x) => itemOf(lay, x.refs)),
+      },
+      sameForm("noNameRow", fkey, "-", (rows) => `名前の欄が空で、ほかの欄だけに中身がある行がある（${rows} 行）`),
+    );
+    for (const x of bt.strays) for (const ref of x.refs) if (!off(ref)) (a === "exclude" ? exclude(ref, BLOCK_EXCLUDE.stray) : pend(ref, questionIdOf(key)));
+  }
+  type Period = { start: Ymd; end: Ymd } | { md: { start: { m: number; d: number }; end: { m: number; d: number } } };
+  interface Parsed {
+    b: RecordBlock;
+    refs: string[];
+    lines: string[];
+    nameRefs: string[][];
+    name: ReturnType<typeof parseBlockName>;
+    work: string | null;
+    period: Period | null;
+    periodText: string;
+    state: "plan" | "actual" | null;
+    stateText: string | null;
+    quantity: string | null;
+    manDays: number | null;
+    notes: string[];
+  }
+  const parsed: Parsed[] = bt.records.map((b) => {
+    const used = new Set<object>();
+    const effortText = new Map<object, string>();
+    const items = (c: number) => b.items.get(c) ?? [];
+    // 期間：作業の内容の欄から、無ければほかの欄から（最初に読めたもの）
+    let period: Period | null = null;
+    let periodText = "";
+    for (const c of [bt.workCol, ...[...b.items.keys()].filter((k) => k !== bt.workCol)]) {
+      const it = items(c).find((x) => blockPeriod(x.text) !== null);
+      if (it) {
+        period = blockPeriod(it.text);
+        periodText = it.text;
+        used.add(it);
+        break;
+      }
+    }
+    // 作業の内容：作業の内容の欄の、期間でない最初のまとまり
+    const workIt = items(bt.workCol).find((x) => !used.has(x));
+    if (workIt) used.add(workIt);
+    // 状態：状態の列の、記録の 1 行目の字
+    let state: Parsed["state"] = null;
+    let stateText: string | null = null;
+    const st = bt.stateCol !== null ? items(bt.stateCol)[0] : undefined;
+    if (st && st.rows[0] === b.rows[0]) {
+      const x = st.text.replace(/[。．.]$/u, "").trim();
+      const pa = cue.planActual(x);
+      if (pa || (norm(x).length <= 10 && !/\d/u.test(x))) {
+        state = pa;
+        stateText = x;
+        used.add(st);
+      }
+    }
+    // 施工量と工数（最初の 1 行）
+    let quantity: string | null = null;
+    let manDays: number | null = null;
+    for (const its of b.items.values())
+      for (const it of its) {
+        if (used.has(it) || manDays !== null) continue;
+        const e = parseEffortLine(it.text);
+        if (!e) continue;
+        manDays = e.manDays;
+        quantity = e.quantity.join(" / ") || null;
+        effortText.set(it, e.trades.join(" / "));
+      }
+    // 注記：ほかのまとまり（列の順、行の順）。工数の行は職種と人工の字だけを残す
+    const notes: string[] = [];
+    for (const its of b.items.values())
+      for (const it of its) {
+        if (used.has(it)) continue;
+        notes.push(effortText.get(it) ?? it.text);
+      }
+    return {
+      b,
+      refs: b.refs.filter((r) => !off(r)),
+      lines: b.name.map((l) => l.text),
+      nameRefs: b.name.map((l) => l.refs.filter((r) => !off(r))),
+      name: parseBlockName(b.name.map((l) => l.text)),
+      work: workIt ? workIt.text : null,
+      period,
+      periodText,
+      state,
+      stateText,
+      quantity,
+      manDays,
+      notes,
+    };
+  });
+  // ─── 決まらないものを、同じ様式の表をまとめて 1 問ずつ聞く ───
+  const excluded = new Map<Parsed, string>();
+  const waiting = new Map<Parsed, string>();
+  const askAll = (key: string, part: string, list: Parsed[], q: Omit<Parameters<Asker["ask"]>[1], "sameShapeRows" | "items">, text: (rows: number) => string): string | null => {
+    if (!list.length) return null;
+    return ask.ask(
+      key,
+      { ...q, sameShapeRows: list.length, items: list.slice(0, 10).map((p) => itemOf(lay, p.refs.slice(0, 3))) },
+      sameForm(key.split("|")[0] ?? key, fkey, part, text),
+    );
+  };
+  const holdOrDrop = (list: Parsed[], key: string, a: string | null, why: string) => {
+    for (const p of list) {
+      if (excluded.has(p)) continue;
+      if (a === "exclude") excluded.set(p, why);
+      else if (!waiting.has(p)) waiting.set(p, questionIdOf(key));
+    }
+  };
+  // 名前の欄の並びが読めない（号炉が 2 つ・名前が残らない）
+  const badName = parsed.filter((p) => !p.name);
+  const nameKeyQ = `blockName|${t.id}`;
+  const nameAns = askAll(
+    nameKeyQ,
+    "-",
+    badName,
+    {
+      kind: "eventAsset",
+      text: `${where}名前の欄の並び（設備 号炉 設備／部位）が読めない記録がある（${badName.length} 記録、見本「${(badName[0]?.lines ?? []).join(" ").slice(0, 40)}」）。どう読むか`,
+      options: [
+        { id: "literal", label: "名前の欄の字のまま、1 つの機器にする" },
+        { id: "exclude", label: "外す" },
+      ],
+      valueKind: "option",
+      defaultAnswer: null,
+    },
+    (rows) => `${where}名前の欄の並び（設備 号炉 設備／部位）が読めない記録がある（${rows} 記録）。どう読むか`,
+  );
+  if (nameAns !== "literal") holdOrDrop(badName, nameKeyQ, nameAns, BLOCK_EXCLUDE.name);
+  // 作業の内容が空
+  const noWork = parsed.filter((p) => !p.work);
+  const workKeyQ = `blockWork|${t.id}`;
+  holdOrDrop(
+    noWork,
+    workKeyQ,
+    askAll(workKeyQ, "-", noWork, { kind: "eventAsset", text: `${where}作業の内容の欄が空の記録がある（${noWork.length} 記録）`, options: [{ id: "exclude", label: "外す" }], valueKind: "option", defaultAnswer: null }, (rows) => `${where}作業の内容の欄が空の記録がある（${rows} 記録）`),
+    BLOCK_EXCLUDE.work,
+  );
+  // 期間が書いていない
+  const noPeriod = parsed.filter((p) => !p.period);
+  const periodKeyQ = `blockPeriod|${t.id}`;
+  holdOrDrop(
+    noPeriod,
+    periodKeyQ,
+    askAll(
+      periodKeyQ,
+      "-",
+      noPeriod,
+      { kind: "dateUnknown", text: `${where}期間の書いていない記録がある（${noPeriod.length} 記録）。期間を推し量らない`, options: [{ id: "exclude", label: "外す" }], valueKind: "option", defaultAnswer: null },
+      (rows) => `${where}期間の書いていない記録がある（${rows} 記録）。期間を推し量らない`,
+    ),
+    BLOCK_EXCLUDE.period,
+  );
+  // 年の無い期間：資料の属性の工期、無ければシートの文の年度で年を補う。補えなければ年度を 1 問で聞く
+  const attrsPeriod = bt.attrs?.period ?? null;
+  const withYear = (md: { start: { m: number; d: number }; end: { m: number; d: number } }, fiscal: number | null): { start: Ymd; end: Ymd } | null => {
+    let start: Ymd | null = null;
+    if (attrsPeriod && fiscal === null)
+      for (const y of new Set([attrsPeriod.start.y, attrsPeriod.end.y])) {
+        const s = { y, m: md.start.m, d: md.start.d };
+        if (validYmd(s.y, s.m, s.d) && ymdString(s) >= ymdString(attrsPeriod.start) && ymdString(s) <= ymdString(attrsPeriod.end)) {
+          start = s;
+          break;
+        }
+      }
+    const fy = fiscal ?? lay.contextFiscalYear;
+    if (!start && fy !== null) start = withFiscalYear(md.start, fy, opts.fiscalYearStartMonth);
+    if (!start) return null;
+    const ey = md.end.m < md.start.m ? start.y + 1 : start.y;
+    if (!validYmd(ey, md.end.m, md.end.d)) return null;
+    const end = { y: ey, m: md.end.m, d: md.end.d };
+    return ymdString(end) >= ymdString(start) ? { start, end } : null;
+  };
+  const dates = new Map<Parsed, { start: Ymd; end: Ymd }>();
+  const noYear: Parsed[] = [];
+  for (const p of parsed) {
+    if (!p.period) continue;
+    if ("md" in p.period) {
+      const d = withYear(p.period.md, null);
+      if (d) dates.set(p, d);
+      else noYear.push(p);
+    } else dates.set(p, p.period);
+  }
+  if (noYear.length) {
+    const yearKeyQ = `blockYear|${t.id}`;
+    const a = askAll(
+      yearKeyQ,
+      "-",
+      noYear,
+      {
+        kind: "dateUnknown",
+        text: `${where}期間に年が書いていない記録がある（${noYear.length} 記録、見本「${noYear[0]?.periodText.slice(0, 24) ?? ""}」）。資料の題・工期・年度から年を補えない。何年度の記録か（年度を数で答える）`,
+        options: [],
+        valueKind: "number",
+        defaultAnswer: null,
+      },
+      (rows) => `${where}期間に年が書いていない記録がある（${rows} 記録）。資料の題・工期・年度から年を補えない。何年度の記録か（年度を数で答える）`,
+    );
+    const fy = a !== null && /^\d{4}$/.test(a.trim()) ? Number(a) : null;
+    for (const p of noYear) {
+      const d = fy !== null && p.period && "md" in p.period ? withYear(p.period.md, fy) : null;
+      if (d) dates.set(p, d);
+      else if (!waiting.has(p) && !excluded.has(p)) waiting.set(p, questionIdOf(yearKeyQ));
+    }
+  }
+  // 予定・実績の語で読めない状態（「延期」「中止」など）：同じ字ごとに 1 問
+  const odd = new Map<string, Parsed[]>();
+  for (const p of parsed) if (p.stateText !== null && p.state === null) odd.set(p.stateText, [...(odd.get(p.stateText) ?? []), p]);
+  for (const [x, list] of odd) {
+    const key = `blockState|${t.id}|${x}`;
+    const a = askAll(
+      key,
+      x,
+      list,
+      {
+        kind: "planActualUnknown",
+        text: `${where}状態の欄の「${x}」（${list.length} 記録）は、予定か実績か読めない`,
+        options: [
+          { id: "plan", label: "予定" },
+          { id: "actual", label: "実績" },
+          { id: "exclude", label: "その記録を外す" },
+        ],
+        valueKind: "option",
+        defaultAnswer: null,
+      },
+      (rows) => `${where}状態の欄の「${x}」（${rows} 記録）は、予定か実績か読めない`,
+    );
+    for (const p of list) {
+      if (a === "plan" || a === "actual") p.state = a;
+      else holdOrDrop([p], key, a, BLOCK_EXCLUDE.state);
+    }
+  }
+  // ─── 機器の階層と作業の記録 ───
+  const assetIds = new Map<string, string>();
+  const seriesOf = (u: UnitValue | null): Series | null => (!u ? null : u.kind === "number" ? { kind: "number", n: u.n } : u.kind === "common" ? { kind: "common", meaning: "" } : null);
+  for (const p of parsed) {
+    const why = excluded.get(p);
+    if (why) {
+      for (const ref of p.refs) exclude(ref, why);
+      continue;
+    }
+    const nm = p.name ?? (nameAns === "literal" ? { unit: null, path: [p.lines.reduce((a, b) => joinWrap(a, b), "")], unitLevel: null } : null);
+    let leaf: string | null = null;
+    if (nm && nm.path.length) {
+      const ukey = !nm.unit ? "-" : nm.unit.kind === "number" ? `n${nm.unit.n}` : nm.unit.kind;
+      // 段の名前のセル：設備の短い名前が下の名前と同じなら、2 行目から（「号炉 設備／部位」の行）
+      const shift = p.lines.length >= 2 && nm.path.length < p.lines.length ? 1 : 0;
+      let parent: string | null = null;
+      nm.path.forEach((name, i) => {
+        const key = `${nm.unitLevel !== null && i >= nm.unitLevel ? ukey : "-"}|${nm.path
+          .slice(0, i + 1)
+          .map((x) => norm(x))
+          .join("\u0001")}`;
+        let id = assetIds.get(key);
+        if (!id) {
+          id = `${t.id}:a${questionIdOf(key).slice(2)}`;
+          const ref = p.nameRefs[Math.min(i + shift, p.nameRefs.length - 1)]?.[0] ?? p.nameRefs[0]?.[0] ?? p.refs[0] ?? "";
+          rec.assets.push({ id, file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, tableId: t.id, shape: "tree", order: order++, level: i + 1, parentId: parent, rawName: name, name, tag: null, tagNumber: null, nameRef: ref, series: i === nm.unitLevel ? seriesOf(nm.unit) : null, specs: [], installed: null, refs: [ref], excluded: null, pending: false });
+          assetIds.set(key, id);
+        }
+        parent = id;
+        leaf = id;
+      });
+    }
+    const d = dates.get(p) ?? null;
+    const same = d && ymdString(d.start) === ymdString(d.end);
+    const remark = p.notes.join(" / ") || null;
+    const q = waiting.get(p) ?? null;
+    const e: EventRec = {
+      id: `${t.id}:b${p.b.rows[0] ?? 0}`,
+      file: lay.file,
+      sheet: lay.sheet,
+      sheetIndex: lay.sheetIndex,
+      tableId: t.id,
+      row: p.b.rows[0] ?? 0,
+      date: d?.start ?? null,
+      end: d && !same ? d.end : null,
+      days: null,
+      fiscalYear: d ? fiscalYearOf(d.start, opts.fiscalYearStartMonth) : null,
+      manDays: p.manDays,
+      effortPending: false,
+      assetNames: nm?.path.length ? [nm.path[nm.path.length - 1] ?? ""] : [],
+      ...(p.nameRefs[0]?.[0] ? { nameRef: p.nameRefs[0][0] } : {}),
+      tag: null,
+      bundle: false,
+      unit: nm?.unit ?? null,
+      workName: p.work ?? "",
+      workTitle: null,
+      remark,
+      ...(p.quantity ? { quantity: p.quantity } : {}),
+      ...(remark ? { lineRemark: remark } : {}),
+      ...(p.state === "plan" ? { planOrActual: "plan" as const } : {}),
+      refs: p.refs,
+      excluded: null,
+      pending: q !== null || !d || !p.work || !leaf,
+      ...(leaf ? { assetId: leaf } : {}),
+    };
+    if (e.pending) for (const ref of e.refs) pend(ref, q);
+    rec.events.push(e);
+  }
+  return order;
 }
 
 // ─── 契約・発注の一覧 ──────────────────────────────────────────

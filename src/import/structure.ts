@@ -9,6 +9,7 @@ import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit, splitSeriesCell } from "./text";
 import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type ReadingRule, type RuleHits } from "./reading";
 import { COLUMN_ROLE_OPTIONS, type ColRole } from "./roles";
+import { readRecordBlocks, type BlockTable } from "./blocks";
 
 export type RowRole = "title" | "legend" | "header" | "parent" | "data" | "subtotal" | "total" | "note";
 export const ROW_ROLE_LABEL: Record<RowRole, string> = {
@@ -125,6 +126,11 @@ export interface Table {
    * 金額の項目（単位・税の扱い）と年度の項目。記録の値には使わず、金額の単位と年度の手がかりにだけ使う。無ければ省く
    */
   conditions?: Condition[];
+  /**
+   * PDF の表の、何行にも折り返した記録の塊（blocks.ts）。あれば、行ごとでなく塊ごとに 1 つの記録として読む（records.ts の blockRecords）。
+   * 列（cols）は見出しの行の字の始まりの位置で決めた幅で、その幅に落ちるセルの字をつないである
+   */
+  blocks?: BlockTable;
 }
 
 /** 題と抽出の条件の行のうち、金額の単位か年度を読んだ行の外す理由（行き先の字） */
@@ -1619,6 +1625,16 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
     });
     return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends: [], rowReasons, contextFiscalYear, contextPeriod: null };
   }
+  // PDF の表の、何行にも折り返した記録の塊（PDF の格子のときだけ）：塊の表と、表の外の頁の頭書き・節の題・文の段落・項目と内容の表の行き先を先に決め、
+  // 残りの行を今までどおりに読む
+  const blockRead = readRecordBlocks(src, grid, idx, all);
+  if (blockRead) {
+    for (const [r, role] of blockRead.roles) roles.set(r, role);
+    for (const [r, why] of blockRead.reasons) rowReasons.set(r, why);
+    titles.push(...blockRead.titles);
+    tables.push(...blockRead.tables);
+  }
+  const rest = blockRead ? all.filter((r) => !blockRead.consumed.has(r)) : all;
   // CSV の記録が物理の何行にわたるか（囲みの中の改行の数＋1）
   const spans = new Map<number, number>();
   if (src.format === "csv" || src.format === "tsv")
@@ -1627,7 +1643,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
       if (n > 1 && n > (spans.get(c.r) ?? 1)) spans.set(c.r, n);
     }
   // 帳票を頁ごとに積んだシートは、頁ごとに表を切る（頁をまたいで表をつながない）
-  const pages = formPages(idx, all, grid) ?? [all];
+  const pages = formPages(idx, rest, grid) ?? [rest];
   const pageOf = new Map<number, number>();
   pages.forEach((p, i) => {
     for (const r of p) pageOf.set(r, i);
@@ -1776,6 +1792,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
   });
   // 帳票の頭書き：同じ頁の、表の上（前の表より下）の項目と値を、その表に持たせる（表に無い欄を行に付けるため）
   for (const t of tables) {
+    if (t.blocks) continue;
     const p = pageOf.get(t.top);
     const prevBottom = Math.max(0, ...tables.filter((u) => u !== t && u.bottom < t.top && pageOf.get(u.top) === p).map((u) => u.bottom));
     const fields = [...notes, ...titles]

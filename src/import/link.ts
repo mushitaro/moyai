@@ -487,7 +487,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const cases = new Map<string, Case>();
   const eventNames = new Map<string, { names: string[]; unitKey: string }>();
   for (const e of rec.events) {
-    if (e.excluded || e.pending || e.effortPending) continue;
+    // 同じ記録の名前の欄から作った機器のある行（PDF の折り返した記録）は、名前で引かない（下でその機器に当てる）
+    if (e.excluded || e.pending || e.effortPending || e.assetId !== undefined) continue;
     const whole = e.assetNames[0] ?? "";
     if (!whole && !e.tag) {
       eventPending.add(e.id);
@@ -703,8 +704,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const occMap = new Map<string, Occurrence>();
   for (const e of rec.events) {
     if (e.excluded) continue;
+    // 同じ記録の名前の欄から作った機器（資料をまたいで結べば、結んだ機器）
+    const own = e.assetId !== undefined ? (clusterOf.get(e.assetId) ?? null) : undefined;
     const en = eventNames.get(e.id);
-    if (!en || e.pending || e.effortPending || e.fiscalYear === null || !e.date) {
+    if ((own === undefined && !en) || own === null || e.pending || e.effortPending || e.fiscalYear === null || !e.date) {
       eventPending.add(e.id);
       continue;
     }
@@ -712,8 +715,24 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const qids = new Set<string>();
     let pend = false;
     let excl = false;
-    for (const nm of en.names) {
-      const r = resolved.get(`${e.tableId}|${nk(nm)}|${en.unitKey}`);
+    if (own) {
+      const assetId = e.assetId ?? "";
+      if (own.excluded) {
+        eventExcluded.set(e.id, "機器を外した記録（決定で外した）");
+        const q = assetExcludedBy.get(assetId);
+        if (q) eventExcludedBy.set(e.id, [q]);
+        continue;
+      }
+      if (own.pending || own.held) {
+        eventPending.add(e.id);
+        const q = assetWaitingOn.get(assetId);
+        if (q) eventWaitingOn.set(e.id, q);
+        continue;
+      }
+      targets.push(own);
+    }
+    for (const nm of own ? [] : (en?.names ?? [])) {
+      const r = resolved.get(`${e.tableId}|${nk(nm)}|${en?.unitKey ?? "-"}`);
       if (!r || (!r.c && !r.excluded)) {
         pend = true;
         if (r?.wait && !eventWaitingOn.has(e.id)) eventWaitingOn.set(e.id, r.wait);

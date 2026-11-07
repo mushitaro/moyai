@@ -75,7 +75,7 @@ function unitToken(t: string): UnitValue | null {
 /** 号炉の印の頭（空白で区切らずに続けた「１号落塵CV」「#1BFP」「—投入扉」も）。括弧の中（inParen）なら共通の略の頭（「共B号機」）も */
 const RE_UNIT_HEAD = /^(#\s*\d{1,3}|\d{1,3}\s*(?:号炉|号(?!機)|炉)|[-－―—‐]+)\s*(.*)$/u;
 const RE_UNIT_HEAD_PAREN = /^(#\s*\d{1,3}|\d{1,3}\s*(?:号炉|号(?!機)|炉)|[-－―—‐]+|共通|共)\s*(.*)$/u;
-function leadingUnit(s: string, inParen = false): { unit: UnitValue; rest: string } | null {
+export function leadingUnit(s: string, inParen = false): { unit: UnitValue; rest: string } | null {
   const sp = /^(\S+)\s+(\S.*)$/u.exec(s);
   if (sp) {
     const u = unitToken(sp[1] ?? "");
