@@ -54,8 +54,8 @@
   "budgetUsd": {
     "stopAt": 485,
     "f3": 0,
-    "audit": 110,
-    "dev": 305,
+    "audit": 70,
+    "dev": 345,
     "review": 70,
     "reserve": 0
   }

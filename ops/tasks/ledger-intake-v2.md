@@ -3,7 +3,7 @@ id: ledger-intake-v2
 role: dev-core
 agent: dev-core
 environment: env-kinds
-budgetUsd: 45
+budgetUsd: 25
 timeoutMin: 240
 verify: ["npm ci --ignore-scripts", "npm run typecheck", "node scripts/run-tests.mjs", "node scripts/check-publish.mjs", "npm run build"]
 ---
