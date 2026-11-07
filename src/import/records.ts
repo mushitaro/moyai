@@ -6,7 +6,7 @@ import { fiscalYearInText, fiscalYearOf, nfkc, parseDayCount, parseMonthDay, par
 import { parseWithFormat } from "./reading";
 import { Asker, type MergeSpec, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { isAssignableRole } from "./roles";
-import { assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
+import { UNIT_LABEL, assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
 import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, lunchOverlap, parseCost, parseCycle, parseEffort, parsePersons, parseTimeSpan, parseUnit, personsHeaderUnit, splitFlatWork, splitNameUnits, splitOrderItem, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type OrderItem, type TagSplit, type TimeSpan, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
@@ -2413,7 +2413,7 @@ export const ORDER_LINE_EXCLUDE = {
 function tableConditions(t: Table): { unit: number | null; tax: "incl" | "excl" | null; fiscalYear: number | null } {
   const conds = t.conditions ?? [];
   const one = <T>(xs: T[]): T | null => (new Set(xs).size === 1 ? (xs[0] ?? null) : null);
-  const money = conds.filter((c) => cue.column(c.label) === "cost");
+  const money = conds.filter((c) => cue.column(c.label) === "cost" || (UNIT_LABEL.test(norm(c.label)) && costHeaderUnit(c.value) !== null));
   const units = money.map((c) => costHeaderUnit(c.value)).filter((u): u is number => u !== null);
   const taxes = money.map((c) => costHeaderTax(c.value)).filter((x): x is "incl" | "excl" => x !== null);
   const years = conds.filter((c) => cue.column(c.label) === "fiscal").map((c) => parseYearLabel(c.value)?.year ?? null).filter((y): y is number => y !== null);

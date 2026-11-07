@@ -950,7 +950,7 @@ function contractFields(cols: readonly ColInfo[]): Map<number, NonNullable<ColIn
 }
 
 /**
- * 発注明細と見分ける：品名・数量・単価・金額の欄がどれもあり、明細の番号か検収の欄（状況・日・額）があり、
+ * 発注明細と見分ける：品名・数量・金額（発注額か検収額）の欄があり（単価の欄は無くてよい）、明細の番号か検収の欄（状況・日・額）があり、
  * 作業そのものの列（WORK_ROW_CUES）が無い表。列ごとの記録の欄を返す（発注明細の欄の語 → 契約の欄の語 → 列の見出しの語の順）。ほかは null
  */
 function orderLineFields(cols: readonly ColInfo[]): Map<number, NonNullable<ColInfo["contract"]>> | null {
@@ -967,7 +967,8 @@ function orderLineFields(cols: readonly ColInfo[]): Map<number, NonNullable<ColI
     if (g) out.set(col.c, g);
   }
   const has = (f: string) => [...out.values()].includes(f as NonNullable<ColInfo["contract"]>);
-  if (!["item", "quantity", "unitPrice", "orderAmount"].every(has)) return null;
+  // 単価の列は無くてよい（購買の出力に多い：品名・数量・発注額・検収額だけ）。金額は発注額か検収額のどちらか
+  if (!["item", "quantity"].every(has) || !["orderAmount", "inspectAmount"].some(has)) return null;
   return ["lineNo", "inspectStatus", "inspectDate", "inspectAmount"].some(has) ? out : null;
 }
 
@@ -1336,6 +1337,9 @@ function conditionCells(cells: GridCell[]): boolean {
   return dated;
 }
 
+/** 題と条件の行の、金額の単位を書く項目の名前（「単位」「金額単位」） */
+export const UNIT_LABEL = /^(金額)?単位$/u;
+
 /**
  * 題と抽出の条件の行・頭書きの行の、金額の項目と年度の項目（「金額：円・税抜」「工事年度｜2019」）。
  * 項目は列の見出しの語（費用・年度）で見分ける。値の無い項目は取らない
@@ -1344,7 +1348,8 @@ function conditionsOf(cells: GridCell[]): Condition[] {
   const out: Condition[] = [];
   const wanted = (label: string) => {
     const k = cue.column(label);
-    return k === "cost" || k === "fiscal";
+    // 「単位：円（税抜）」のように、金額の単位を「単位」の項目で書く出力もある（値が円・千円などのときだけ金額の単位として records が読む）
+    return k === "cost" || k === "fiscal" || UNIT_LABEL.test(norm(label));
   };
   for (let i = 0; i < cells.length; i++) {
     const c = cells[i] as GridCell;
