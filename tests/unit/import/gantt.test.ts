@@ -272,10 +272,11 @@ describe("合計の行・月の見出し・運転状況の行を、理由つき�
     const s = await opened(LINE, await lineBook({ mismatch: true }));
     const an = s.analyze();
     const qs = an.open.filter((q) => q.kind === "subtotalMismatch");
-    expect(qs).toHaveLength(2);
-    expect(qs[0]?.text).toContain("1 列が、表の中身から数えた値と合わない");
+    // 同じ様式の頁のシートの合わない小計の行は 1 問にまとめる（2 行）
+    expect(qs).toHaveLength(1);
+    expect(qs[0]?.text).toContain("表の中身から数えた値と合わない列がある行（2 行）");
     // 頁 1 の「本頁 協力会社計」は 20 行目、頁 2 は 12 行目。合わないのは最初の日の列（E）
-    expect(qs.map((q) => q.items[0]?.cells)).toEqual([["E20"], ["E12"]]);
+    expect(qs[0]?.items.map((it) => it.cells)).toEqual([["E20"], ["E12"]]);
     expect(silent(an, LINE)).toBe(0);
     s.settle(qs.map((q) => human(q.questionId, "exclude")));
     acceptDefaults(s);
@@ -304,8 +305,10 @@ describe("合計の行・月の見出し・運転状況の行を、理由つき�
   test("形 2：見出しの行の延べ人工が下の行の和と合わなければ、小計の食い違いの問い", async () => {
     const an = (await opened(WEEK, await weekBook({ mismatch: true }))).analyze();
     const qs = an.open.filter((q) => q.kind === "subtotalMismatch");
-    expect(qs.length).toBe(3);
-    expect(qs.every((q) => q.items[0]?.cells.every((c) => c.startsWith("H")))).toBe(true);
+    // 合わない 3 行は 1 問にまとめる
+    expect(qs.length).toBe(1);
+    expect(qs[0]?.sameShapeRows).toBe(3);
+    expect(qs[0]?.items.every((it) => it.cells.every((c) => c.startsWith("H")))).toBe(true);
     expect(silent(an, WEEK)).toBe(0);
   });
 });

@@ -9,7 +9,7 @@ import { cellKey, type ContractRec, type CostCell, type EventRec, type MarkRec, 
 import { ROW_ROLE_LABEL, type SheetLayout, type Table } from "./structure";
 import { nk, seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
 import { daysInclusive, fiscalYearOf, parseDayCount, ymdString, type Ymd } from "./era";
-import { nameKey, parseEffort, unitInText } from "./text";
+import { costHeaderUnit, nameKey, parseEffort, unitInText } from "./text";
 import { cue } from "./cues";
 import { markPhotoRecords, type PhotoReview } from "./photo";
 import { askReference, REFERENCE_REASON, referenceKey } from "./reference";
@@ -118,6 +118,8 @@ function checkTotals(
   exclude: (ref: string, why: string, qs?: readonly string[]) => void,
   pend: (ref: string, q: string | null) => void,
   eventOf: (r: number) => EventRec | undefined,
+  /** 表の様式の鍵（同じ見出しの並びの表。合わない小計の問いを、シート・資料をまたいで 1 問にまとめる） */
+  formKey: string = t.id,
 ): CheckResult[] {
   const out: CheckResult[] = [];
   const isData = (r: { role: string }) => r.role === "data" || r.role === "parent";
@@ -154,6 +156,12 @@ function checkTotals(
     const groupCells = group.flatMap((g) => lay.index.rowCells(g));
     const res: CheckResult = { file: lay.file, sheet: lay.sheet, row: row.r, kind: row.role as "subtotal" | "total", columns: 0, matched: 0, mismatches: [] };
     let waiting = false;
+    /**
+     * 行の名前に金額の単位を書いた合計の行（「年度別概算費用　計（千円）」）の、星取の列のセル：星取の数ではなく金額の合計で、
+     * 星取の数と照らせない（金額は作業の行ごとの費用と回数から決まり、表の中身だけでは検算できない）
+     */
+    const moneyRow = cells.some((x) => typeof x.value === "string" && costHeaderUnit(x.text) !== null && t.cols.find((k) => k.c === x.c)?.role !== "mark");
+    const notCount = new Set<string>();
     const numberOf = (v: unknown): number | null =>
       typeof v === "number" ? v : typeof v === "string" && /^\s*[\d,.]+\s*$/.test(v) ? Number(v.replace(/,/g, "")) : null;
     for (const c of cells) {
@@ -177,7 +185,10 @@ function checkTotals(
       if (countRow) counted = data.length;
       // 年の欄に整備の内容、その下の行に金額を書く表（2 段の書き方）：年の列の小計は金額の行の数の和
       else if (col?.role === "mark" && t.amountRows) counted = data.filter((r) => t.amountRows?.has(r.r)).reduce((a, r) => a + (numberOf(lay.index.at(r.r, c.c)?.value) ?? 0), 0);
-      else if (col?.role === "mark") counted = data.filter((r) => (lay.index.at(r.r, c.c)?.text ?? "") !== "").length;
+      else if (col?.role === "mark" && moneyRow) {
+        notCount.add(c.ref);
+        continue;
+      } else if (col?.role === "mark") counted = data.filter((r) => (lay.index.at(r.r, c.c)?.text ?? "") !== "").length;
       else if (t.shape === "events" && col?.role === "effort") {
         const evs = data.map((r) => eventOf(r.r)).filter((e): e is EventRec => !!e && !e.excluded);
         if (evs.some((e) => e.effortPending)) {
@@ -209,7 +220,8 @@ function checkTotals(
     }
     const label = ROW_ROLE_LABEL[row.role];
     if (waiting) for (const c of groupCells) pend(c.ref, null);
-    else if (res.mismatches.length === 0) for (const c of groupCells) exclude(c.ref, `${label}（検算して合った）`);
+    else if (res.mismatches.length === 0)
+      for (const c of groupCells) exclude(c.ref, notCount.has(c.ref) ? `${label}（金額の合計。星取の数ではないので、検算せずに外した）` : `${label}（検算して合った）`);
     else {
       const key = `subtotalMismatch|${t.id}|${row.r}`;
       const a = ask.ask(key, {
@@ -220,7 +232,10 @@ function checkTotals(
         defaultAnswer: null,
         sameShapeRows: 1,
         items: [{ file: lay.file, sheet: lay.sheet, cells: res.mismatches.map((m) => m.ref) }],
-      });
+      },
+      // 同じ様式の表の合わない小計（合計）の行は 1 問にまとめる（答えは「合わないまま外す」だけで、行ごとに変わらない）
+      { key: `subtotalMismatch|${formKey}|${row.role}`, text: (rows) => `${label}の行のうち、表の中身から数えた値と合わない列がある行（${rows} 行）` },
+      );
       for (const c of groupCells) a === "exclude" ? exclude(c.ref, `${label}（検算で合わなかった。決定で外した）`, [questionIdOf(key)]) : pend(c.ref, questionIdOf(key));
     }
     out.push(res);
@@ -264,7 +279,7 @@ export function compose(
     const pd = (ref: string, q: string | null) => pend(cellKey({ file: lay.file, sheetIndex: lay.sheetIndex, ref }), q);
     if (reference.has(lay.file)) continue;
     // 工程表（ガント）の行の和の行は、施工の期間と工数から層 3 で検算した（records.ts の ganttRecords）
-    for (const t of lay.tables) if (!t.gantt) checks.push(...checkTotals(lay, t, ask, ex, pd, (r) => eventAt.get(`${t.id}\u0000${r}`)));
+    for (const t of lay.tables) if (!t.gantt) checks.push(...checkTotals(lay, t, ask, ex, pd, (r) => eventAt.get(`${t.id}\u0000${r}`), rec.formOf.get(t.id)?.key ?? t.id));
   }
 
   // ─── 資産の節 ───

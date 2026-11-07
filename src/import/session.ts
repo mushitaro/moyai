@@ -7,9 +7,9 @@ import type { CrosswalkSurvey } from "../shared/tools";
 import { readCsv, ENCODING_LABEL, type CsvDelimiter, type CsvEncoding } from "./csv";
 import type { RejectedFile, SourceFile } from "./grid";
 import { extensionOf, READABLE, readSource, type InputFile, type ReadOutcome } from "./read";
-import { layoutFile, type SheetLayout } from "./structure";
+import { layoutFile, type SheetLayout, type Table } from "./structure";
 import { buildRecords, cellKey, type Records } from "./records";
-import { activeRules, RuleHits, type LoadedReading } from "./reading";
+import { activeRules, RuleHits, type LoadedReading, type ReadingRule } from "./reading";
 import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
@@ -101,6 +101,8 @@ export class IntakeSession {
   /** 資料 → 中身の SHA-256（質問の鍵に使う。中身の違うファイルに前の答えを当てない） */
   private readonly digests = new WeakMap<InputFile, string>();
   private readonly xlsx = new Map<string, SourceFile>();
+  /** 資料ごとの表の形の覚え（資料と読み方の規則が同じあいだ、読み取りのたびに作り直さない。資料が 200 個でも答えを置くたびの読み直しを短くする） */
+  private readonly layoutMemo = new WeakMap<SourceFile, LayoutMemo>();
   private readonly rejectedFiles: RejectedFile[] = [];
   private decisions = new Map<string, Decision>();
   private composed: Composition | null = null;
@@ -244,6 +246,24 @@ export class IntakeSession {
     return [...this.readings];
   }
 
+  /**
+   * 資料の表の形（layoutFile）。同じ資料・同じ読み方の規則なら覚えたものを使い、規則が効いたセルの数え（hits）は作ったときのものを足し直す。
+   * 表の形のうち決定で書き換わる欄（行の階層・年の種類・列の役目・空欄の答え。records.ts）は、使う前に作ったときの値へ戻す（決定を取り消したら戻るように）
+   */
+  private layoutOf(src: SourceFile, rules: ReturnType<typeof activeRules>, rulesKey: string, hits: RuleHits): SheetLayout[] {
+    const hit = this.layoutMemo.get(src);
+    if (hit && hit.rules === rulesKey) {
+      for (const [rule, file, ref] of hit.hits) hits.add(rule, file, ref);
+      for (const x of hit.snap) restoreTable(x);
+      return hit.layouts;
+    }
+    const rec = new RecordingHits();
+    const layouts = layoutFile(src, rules, rec);
+    for (const [rule, file, ref] of rec.log) hits.add(rule, file, ref);
+    this.layoutMemo.set(src, { rules: rulesKey, layouts, hits: rec.log, snap: layouts.flatMap((l) => l.tables.map(snapshotTable)) });
+    return layouts;
+  }
+
   analyze(): Analysis {
     const rules = activeRules(this.readings);
     const hits = new RuleHits();
@@ -326,7 +346,8 @@ export class IntakeSession {
     // 写真：AI が読んだ格子を置いたものだけを、ほかの形式と同じ格子として渡す。人が読まずに外したものは理由つきで数える
     sources.push(...this.photos.sources());
     rejected.push(...this.photos.excludedFiles());
-    const layouts = sources.flatMap((s) => layoutFile(s, rules, hits));
+    const rulesKey = JSON.stringify(rules);
+    const layouts = sources.flatMap((s) => this.layoutOf(s, rules, rulesKey, hits));
     const date1904 = new Map(sources.map((s) => [s.file, s.date1904]));
     // 参考として外すと決めた資料（reference.ts）：記録を作らず、セルは「参考の資料」として外す。計画は残りの資料で作る
     const reference = referenceFiles(sources, ask);
@@ -497,7 +518,9 @@ export class IntakeSession {
     const questions: Survey["questions"] = [];
     const firstWithOptions = new Map<string, string>();
     let bytes = 0;
-    for (const q of an.open) {
+    // 既定の答えの無い質問を先に並べる（人に聞くものを先に。既定の答えのあるものは、そのあとにまとめて受けられる）。同じ組の中は出てきた順
+    const open = [...an.open.filter((q) => q.defaultAnswer === null), ...an.open.filter((q) => q.defaultAnswer !== null)];
+    for (const q of open) {
       const options = q.options.map((o) => ({ id: o.id, label: o.label }));
       const ok = options.length >= SHARED_OPTIONS_MIN ? JSON.stringify(options) : null;
       const same = ok === null ? undefined : firstWithOptions.get(ok);
@@ -516,10 +539,10 @@ export class IntakeSession {
       if (bytes > QUESTION_BYTES && questions.length) break;
       questions.push(x);
     }
-    const restQuestions = an.open.length - questions.length;
+    const restQuestions = open.length - questions.length;
     // 同じ形の質問の要約（どの質問も数える）。多い形から
     const groups = new Map<string, NonNullable<Survey["questionGroups"]>[number] & { first: number }>();
-    an.open.forEach((q, i) => {
+    open.forEach((q, i) => {
       const shape = questionShape(q.text);
       const k = `${q.kind}\u0000${shape}`;
       const g = groups.get(k);
@@ -566,4 +589,44 @@ function diff(before: Map<string, { s: string }>, after: Map<string, { s: string
   }
   const unresolved = [...after.values()].filter((v) => v.s === "unresolved").length;
   return { cellsAffected: cells, rowsAffected: rows.size, unresolved };
+}
+
+/** 表の形の覚え（資料ごと） */
+interface LayoutMemo {
+  rules: string;
+  layouts: SheetLayout[];
+  hits: [ReadingRule, string, string][];
+  snap: TableSnapshot[];
+}
+
+/** 規則が効いたセルを数えながら、あとで足し直せるように残す */
+class RecordingHits extends RuleHits {
+  readonly log: [ReadingRule, string, string][] = [];
+  override add(rule: ReadingRule, file: string, ref: string): void {
+    this.log.push([rule, file, ref]);
+    super.add(rule, file, ref);
+  }
+}
+
+/** 表の形のうち、決定で書き換わる欄の、作ったときの値 */
+interface TableSnapshot {
+  t: Table;
+  yearKind: Table["yearKind"];
+  roles: Table["cols"][number]["role"][];
+  levels: Table["rows"][number]["level"][];
+}
+
+function snapshotTable(t: Table): TableSnapshot {
+  return { t, yearKind: t.yearKind, roles: t.cols.map((c) => c.role), levels: t.rows.map((r) => r.level) };
+}
+
+function restoreTable(x: TableSnapshot): void {
+  x.t.yearKind = x.yearKind;
+  x.t.cols.forEach((c, i) => {
+    if (i < x.roles.length) c.role = x.roles[i]!;
+  });
+  x.t.rows.forEach((r, i) => {
+    if (i < x.levels.length) r.level = x.levels[i]!;
+  });
+  delete (x.t as Table & { blankDecision?: unknown }).blankDecision;
 }

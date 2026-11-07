@@ -4,9 +4,18 @@ import { nfkc, parseDateText, parseYearLabel } from "./era";
 
 export const CUES = cuesJson;
 
+/** 比べるための形の覚え（nfkc と同じ。上限を越えたら空にする） */
+const NORM_MEMO = new Map<string, string>();
+const NORM_MEMO_MAX = 200_000;
+
 /** 比べるための形：NFKC にし、空白をすべて除く */
 export function norm(s: string): string {
-  return nfkc(s).replace(/[\s　]+/g, "");
+  const hit = NORM_MEMO.get(s);
+  if (hit !== undefined) return hit;
+  const v = nfkc(s).replace(/[\s　]+/g, "");
+  if (NORM_MEMO.size >= NORM_MEMO_MAX) NORM_MEMO.clear();
+  NORM_MEMO.set(s, v);
+  return v;
 }
 
 const normList = (xs: readonly string[]) => xs.map(norm).filter((x) => x !== "");
@@ -29,6 +38,8 @@ const sets = {
 };
 
 export type ColumnCue = keyof typeof CUES.column;
+/** 列の役目の手がかりの語（比べる形にしたもの。column が呼ばれるたびに作り直さない） */
+const columnLists = (Object.entries(CUES.column) as [ColumnCue, string[]][]).map(([k, words]) => [k, normList(words)] as const);
 
 /** 契約の一覧の欄（packs/_cues/cues.json の contract。説明と単価契約の印を除く） */
 export type ContractField = Exclude<keyof typeof CUES.contract, "note" | "unitPrice">;
@@ -43,6 +54,25 @@ const orderLineLists = (Object.entries(CUES.orderLine) as [string, unknown][])
   .map(([k, ws]) => [k, normList(ws)] as const);
 const dittoWords = normList(CUES.ditto);
 
+/** 見出しの語から列の役目の手がかり（cue.column の中身。覚えは cue.column が持つ） */
+const COLUMN_MEMO = new Map<string, ColumnCue | null>();
+function columnOf(header: string): ColumnCue | null {
+  const h = stripParen(norm(header));
+  if (!h) return null;
+  // 年や日付そのもの（「令和8年度」「2026/10/01」）は見出しの語ではなく値
+  if (parseYearLabel(h) !== null || parseDateText(h) !== null) return null;
+  let best: { k: ColumnCue; len: number } | null = null;
+  for (const [k, words] of columnLists) {
+    for (const w of words) {
+      if (h === w || h.startsWith(w) || h.endsWith(w)) {
+        const len = w.length + (h === w ? 100 : 0);
+        if (!best || len > best.len) best = { k, len };
+      }
+    }
+  }
+  return best?.k ?? null;
+}
+
 export function containsAny(text: string, list: readonly string[]): boolean {
   const t = norm(text);
   return list.some((w) => t.includes(w));
@@ -51,7 +81,8 @@ export function containsAny(text: string, list: readonly string[]): boolean {
 export const cue = {
   isSubtotal: (t: string) => containsAny(t, sets.subtotal),
   // 「延人員 計」のように、列の名前と「計」を空白で分けた書き方も合計
-  isTotal: (t: string) => containsAny(t, sets.total) || sets.totalExact.includes(norm(t)) || /\S[\s　]+計$/u.test(nfkc(t)),
+  // 末尾に単位の括弧を添えた書き方（「年度別概算費用　計（千円）」）も同じ
+  isTotal: (t: string) => containsAny(t, sets.total) || sets.totalExact.includes(norm(t)) || /\S[\s　]+計(?:\s*[(（][^()（）]*[)）])?$/u.test(nfkc(t)),
   /** 件数の行（「件数」）：表の行の数を書いたもの */
   isCount: (t: string) => sets.count.includes(norm(t)),
   isLegendTitle: (t: string) => containsAny(t, sets.legend),
@@ -81,22 +112,25 @@ export const cue = {
     if (a === p) return null;
     return a ? "actual" : "plan";
   },
+  /**
+   * 実績・予定の語を両方含む文（凡例「計画どおり実施」「実施予定」）の、述語の語：文の終わりの語がどちらか。
+   * 日本語の句は終わりの語が述語（「計画どおり」は「実施」にかかる）。終わりがどちらの語でもなければ null
+   */
+  planActualHead(t: string): "plan" | "actual" | null {
+    const n = norm(t).replace(/[。.、,]+$/u, "");
+    const a = sets.actual.filter((w) => n.endsWith(w)).reduce((m, w) => Math.max(m, w.length), 0);
+    const p = sets.plan.filter((w) => n.endsWith(w)).reduce((m, w) => Math.max(m, w.length), 0);
+    if (a === p) return null;
+    return a > p ? "actual" : "plan";
+  },
   /** 見出しの語から列の役目の手がかり（一致した語の長いもの優先）。末尾の括弧（単位など：「工数(人日)」「延工数(h)」）は除いて比べる */
   column(header: string): ColumnCue | null {
-    const h = stripParen(norm(header));
-    if (!h) return null;
-    // 年や日付そのもの（「令和8年度」「2026/10/01」）は見出しの語ではなく値
-    if (parseYearLabel(h) !== null || parseDateText(h) !== null) return null;
-    let best: { k: ColumnCue; len: number } | null = null;
-    for (const [k, words] of Object.entries(CUES.column) as [ColumnCue, string[]][]) {
-      for (const w of normList(words)) {
-        if (h === w || h.startsWith(w) || h.endsWith(w)) {
-          const len = w.length + (h === w ? 100 : 0);
-          if (!best || len > best.len) best = { k, len };
-        }
-      }
-    }
-    return best?.k ?? null;
+    const hit = COLUMN_MEMO.get(header);
+    if (hit !== undefined) return hit;
+    const v = columnOf(header);
+    if (COLUMN_MEMO.size >= NORM_MEMO_MAX) COLUMN_MEMO.clear();
+    COLUMN_MEMO.set(header, v);
+    return v;
   },
   /** その役目の見出しの語（そろえた文字） */
   words: (k: ColumnCue): string[] => normList(CUES.column[k]),

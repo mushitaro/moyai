@@ -257,6 +257,13 @@ function itemOf(t: { file: string; sheet: string | null }, cells: string[], extr
 }
 
 /**
+ * 昼休みの問い（作業時間の幅に昼休みを含むかと、その時間）：施設の勤めの決まりで、様式ごとには変わらないので、
+ * 様式・資料をまたいで 1 問にまとめる（答えは全部の行に当たる。まとめる前の問いに置いた決定は、その問いの行にだけ効く）
+ */
+const LUNCH_MERGE: MergeSpec = { key: "effortSpanLunch", text: (rows) => `作業時間の幅に昼休みを含むか（人数と作業時間の幅「開始～終了」で工数を数える行 ${rows} 行。工数＝人数 × 幅の時間 ÷ 1 人・日の時間）` };
+const LUNCH_HOURS_MERGE: MergeSpec = { key: "effortSpanLunchHours", text: () => "昼休みは 12:00 から何時間か（作業時間の幅と重なる分を引く）" };
+
+/**
  * 同じ様式の表（formGroups）の同じ列の問いを、シート・塊・資料をまたいで 1 問にまとめる手がかり（questions.ts の MergeSpec）。
  * 鍵は「問いの名前|様式|列や書き方」。種類と選択肢は Asker が足す。text は合わせた行の数からまとめた質問の文を作る
  */
@@ -484,6 +491,12 @@ function splitUnitPrefix(text: string): { name: string; n: number; spelling: str
 /** 「-」だけのセル（号なし・該当なし） */
 function isNone(text: string): boolean {
   return /^[-－―—‐ー]+$/u.test(nfkc(text).trim());
+}
+
+/** 数が書いてあるか（算用数字と漢数字の号「三号」）。頭の節の番号（「0.」「１．」「2)」）は除いて見る */
+function hasNumber(text: string): boolean {
+  const s = nfkc(text).replace(/^\s*\d+\s*[.．、)）]\s*(?=\D|$)/u, "");
+  return /\d/u.test(s) || /[一二三四五六七八九十]+号/u.test(s);
 }
 
 /** 名前の後ろの号（「ポンプ（1号機）」「ポンプ (1号機)」）。括弧の中が号の書き方なら、名前と号に分ける */
@@ -776,26 +789,41 @@ function readCycles(t: Table, lay: SheetLayout, ask: Asker, rec: Records, rows: 
   const cycleCol = t.cols.find((c) => c.role === "cycle");
   if (!cycleCol) return out;
   const unit = cycleHeaderUnit(cycleCol.header);
-  const bad: { ref: string; text: string }[] = [];
+  const bad: { r: number; ref: string; text: string }[] = [];
   for (const r of rows) {
     const c = lay.index.at(r, cycleCol.c);
     if (!c || c.text.trim() === "" || off(c.ref)) continue;
-    const sp = parseCycle(typeof c.value === "number" ? String(c.value) : c.text, unit);
+    const text = typeof c.value === "number" ? String(c.value) : c.text;
+    const sp = parseCycle(text, unit);
     if (sp) out.set(r, sp);
-    else bad.push({ ref: c.ref, text: c.text });
+    else bad.push({ r, ref: c.ref, text });
   }
   if (bad.length) {
+    // 「—」だけの書き方は、書類の決まりで「無し」。どれも「—」なら、周期を置かないのが資料の書いたこと（既定の答え）
+    const allNone = bad.every((b) => isNone(b.text));
+    // 見出しに単位の無い列の、数だけの書き方（「3」）：年か月かは資料に書いていないので既定の答えにせず、選べるようにだけする
+    const bare = unit === null && bad.every((b) => /^\d+$/u.test(nfkc(b.text).replace(/\s+/g, "")));
     const a = ask.ask(`cycleBad|${rec.formOf.get(t.id)?.key ?? t.id}|${cycleCol.c}`, {
       kind: "cycleText",
-      text: `「${cycleCol.header.replace(/\s*\n\s*/g, "")}」の列に、周期として読めない書き方がある（${bad.length} 行、見本 ${[...new Set(bad.map((b) => b.text))].slice(0, 3).map((x) => `「${x}」`).join("")}）。周期を推し量らない`,
-      options: [{ id: "none", label: "その行の作業に周期を置かない（理由を残す）" }],
+      text: `「${cycleCol.header.replace(/\s*\n\s*/g, "")}」の列に、周期として読めない書き方がある（${bad.length} 行、見本 ${[...new Set(bad.map((b) => b.text))].slice(0, 3).map((x) => `「${x}」`).join("")}）。${bare ? "見出しに年か月かが書いていない。" : ""}周期を推し量らない`,
+      options: [
+        ...(bare
+          ? [
+              { id: "years", label: "年として読む（「3」は 3 年）" },
+              { id: "months", label: "月として読む（「3」は 3 か月）" },
+            ]
+          : []),
+        { id: "none", label: "その行の作業に周期を置かない（理由を残す）" },
+      ],
       valueKind: "option",
-      defaultAnswer: null,
+      defaultAnswer: allNone ? "none" : null,
       sameShapeRows: bad.length,
       items: [itemOf(lay, bad.slice(0, 10).map((b) => b.ref))],
     });
     for (const b of bad) {
-      if (a === "none") exclude(b.ref, "周期として読めない書き方（決定で周期を置かない）");
+      const sp = a === "years" || a === "months" ? parseCycle(b.text, a) : null;
+      if (sp) out.set(b.r, sp);
+      else if (a === "none") exclude(b.ref, allNone ? "周期の欄が「—」（周期なし。決定で周期を置かない）" : "周期として読めない書き方（決定で周期を置かない）");
       else pend(b.ref);
     }
   }
@@ -952,6 +980,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   let commonMeaning: string | null | undefined;
   const commonCells: string[] = [];
   const unitBad: string[] = [];
+  const unitBadText: string[] = [];
   const unitOf = new Map<number, Series | null | undefined>();
   if (unitCol) {
     let prev: Series | null | undefined = null;
@@ -972,6 +1001,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       }
       if (!u) {
         unitBad.push(cell.ref);
+        unitBadText.push(cell.text);
         unitOf.set(r.r, undefined);
         prev = undefined;
         continue;
@@ -1003,14 +1033,16 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       for (const [r, s] of unitOf) if (s?.kind === "common") unitOf.set(r, commonMeaning ? { kind: "common", meaning: commonMeaning } : undefined);
     }
     if (unitBad.length) {
+      // 数の書いていないセル（「炉全体」「共通設備」。頭の節の番号「0.」「１．」は除いて見る）には、号は書いていない。どれもそうなら「号なし」が資料の書いたこと
+      const noNumber = unitBadText.every((x) => !hasNumber(x));
       const a = ask.ask(
         `unitUnknown|${t.id}`,
         {
           kind: "unitMissing",
-          text: `「${unitCol.header}」の列に、号として読めない書き方がある（${unitBad.length} 行）`,
+          text: `「${unitCol.header}」の列に、号として読めない書き方がある（${unitBad.length} 行${noNumber ? "。どれも数が書いていない" : ""}）`,
           options: [{ id: "none", label: "号なしとして読む" }],
           valueKind: "option",
-          defaultAnswer: null,
+          defaultAnswer: noNumber ? "none" : null,
           sameShapeRows: unitBad.length,
           items: [itemOf(lay, unitBad.slice(0, 10))],
         },
@@ -1312,22 +1344,25 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         m.planOrActual = colPA;
         if (!colPA) {
           askedKey = `legendNoPA|${t.id}|${sym}`;
+          // 凡例の文が計画と実績の語を両方含む（「計画どおり実施」）：文の終わりの語（述語）が凡例の書いた意味。それを既定の答えにする
+          const head = cue.planActualHead(entry.meaning);
           answer = ask.ask(
             `legendNoPA|${t.id}|${sym}`,
             {
               kind: "planActualConflict",
-              text: `記号「${sym}」（凡例「${entry.meaning}」）は、予定か実績か（列の見出しにも書いていない）`,
+              text: `記号「${sym}」（凡例「${entry.meaning}」）は、計画か実績か（列の見出しにも書いていない）`,
               options: [
-                { id: "plan", label: "予定（計画）" },
-                { id: "actual", label: "実績（実施）" },
-                { id: "exclude", label: "外す" },
+                { id: "plan", label: "計画の星取" },
+                { id: "actual", label: "実績の星取" },
+                { id: "exclude", label: "星取ではない（外す）" },
               ],
               valueKind: "option",
-              defaultAnswer: null,
+              defaultAnswer: head,
               sameShapeRows: 1,
               items: [itemOf(lay, [cell.ref])],
             },
-            sameForm("legendNoPA", formKeyOf(rec, t), `${sym}|${entry.meaning}`),
+            // 答えは凡例の記号と文だけで決まるので、様式・資料をまたいで 1 問にまとめる
+            { key: `legendNoPA|${sym}|${nfkc(entry.meaning)}` },
           );
           if (answer === "plan" || answer === "actual") m.planOrActual = answer;
         }
@@ -2064,7 +2099,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       defaultAnswer: null,
       sameShapeRows: spanRows,
       items: spanItems,
-    });
+    }, LUNCH_MERGE);
     if (lunch === "noon") {
       const a = ask.ask(`effortSpanLunchHours|${fkey}`, {
         kind: "effortUnknown",
@@ -2074,7 +2109,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
         defaultAnswer: null,
         sameShapeRows: spanRows,
         items: spanItems,
-      });
+      }, LUNCH_HOURS_MERGE);
       lunchHours = a ? Number(a) : null;
     }
   }
@@ -3563,7 +3598,10 @@ function ganttRecords(t: Table, g: GanttTable, lay: SheetLayout, ask: Asker, rec
       defaultAnswer: null,
       sameShapeRows: 1,
       items: [itemOf(lay, mismatches)],
-    });
+    },
+    // 同じ様式の工程表（年度ごとのシートなど）の合わない小計の行は 1 問にまとめる（答えは「合わないまま外す」だけ）
+    sameForm("subtotalMismatch", formKeyOf(rec, t), "gantt", (rows) => `小計の行のうち、表の中身から数えた値と合わない列がある行（${rows} 行）`),
+    );
     for (const x of all) a === "exclude" ? exclude(x.ref, GANTT_REASON.subtotalMismatch) : pend(x.ref, questionIdOf(key));
   }
   return order;

@@ -66,9 +66,18 @@ export function validYmd(y: number, m: number, d: number): boolean {
   return dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
+/** NFKC の覚え（同じセルの字を何度も比べるので、読み取り 1 回で同じ字を何千回も正規化しない。上限を越えたら空にする） */
+const NFKC_MEMO = new Map<string, string>();
+const NFKC_MEMO_MAX = 200_000;
+
 /** 前後の空白を除き、全角の数字と記号を半角にする（比べるための形。表示には使わない）。 */
 export function nfkc(s: string): string {
-  return s.normalize("NFKC").trim();
+  const hit = NFKC_MEMO.get(s);
+  if (hit !== undefined) return hit;
+  const v = s.normalize("NFKC").trim();
+  if (NFKC_MEMO.size >= NFKC_MEMO_MAX) NFKC_MEMO.clear();
+  NFKC_MEMO.set(s, v);
+  return v;
 }
 
 /**
