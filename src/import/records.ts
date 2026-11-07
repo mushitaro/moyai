@@ -2,7 +2,7 @@
 // どのセルを何に使ったかを数えるため、記録はセルの位置を持つ。
 import { cellRef, colLetter, type GridCell, type SheetGrid } from "./grid";
 import { cue, norm, type ColumnCue } from "./cues";
-import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearOnly, withFiscalYear, type Ymd } from "./era";
+import { fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, withFiscalYear, type Ymd } from "./era";
 import { parseWithFormat } from "./reading";
 import { Asker, type MergeSpec, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { isAssignableRole } from "./roles";
@@ -129,10 +129,48 @@ export interface EventRec {
   pending: boolean;
 }
 
+/** 契約の記録の日付の欄 */
+export type ContractDateField = "orderDate" | "estimateDate" | "start" | "end" | "done" | "inspectDate" | "payDate";
+/** 契約の記録の金額の欄（amount は、契約の欄の語の無い金額の列） */
+export type ContractAmountField = "orderAmount" | "estimateAmount" | "inspectAmount" | "payAmount" | "amount";
+
+/**
+ * 契約の記録：契約・発注の一覧の 1 行（件名・業者・金額・工期・検収日・区分・契約方法）。作業にはしない（計画の作業を増やさない）。
+ * 金額は費用の候補として持ち、件名の語と期間の合う作業の年度の値と結ぶ案にだけ使う（compose.ts）
+ */
+export interface ContractRec {
+  id: string;
+  file: string;
+  sheet: string | null;
+  sheetIndex: number;
+  tableId: string;
+  row: number;
+  number: string | null;
+  title: string | null;
+  titleRef: string | null;
+  /** 変更契約の行（件名が「〃（第1回変更）」のように「〃」で始まる）：上の契約の記録の id。件名は上の契約のもの */
+  changeOf: string | null;
+  category: string | null;
+  method: string | null;
+  vendor: string | null;
+  /** 単価契約（件名・契約方法・区分に印がある）：予定の総額を実績の費用にしない */
+  unitPrice: boolean;
+  amounts: { field: ContractAmountField; header: string; cost: CostCell }[];
+  dates: { field: ContractDateField; date: Ymd; ref: string }[];
+  /** 工期（着手・完了）。片方だけなら、その日だけ。書いていなければ null */
+  period: { start: Ymd; end: Ymd } | null;
+  /** 契約の年度：工期の始まり、無ければ発注・見積・完了・検収・支払の日、年度の列、シートに書いた年度の順で決める。決まらなければ null */
+  fiscalYear: number | null;
+  /** 記録に読んだセル（データに数える） */
+  refs: string[];
+}
+
 export interface Records {
   assets: AssetRec[];
   marks: MarkRec[];
   events: EventRec[];
+  /** 契約・発注の一覧の行（作業にしない記録） */
+  contracts: ContractRec[];
   /** 表ごとの段の名前（星取表の段の列の見出し） */
   levelNames: Map<string, string[]>;
   /** 外したセル（理由つき）と、未解決のまま残ったセル */
@@ -207,7 +245,7 @@ function shapeOf(text: string): string {
 }
 
 export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOptions, date1904Of: (file: string) => boolean): Records {
-  const rec: Records = { assets: [], marks: [], events: [], levelNames: new Map(), excluded: new Map(), pending: new Set(), pendingBy: new Map(), gridYears: new Map(), formOf: formGroups(layouts) };
+  const rec: Records = { assets: [], marks: [], events: [], contracts: [], levelNames: new Map(), excluded: new Map(), pending: new Set(), pendingBy: new Map(), gridYears: new Map(), formOf: formGroups(layouts) };
   let order = 0;
   for (const lay of layouts) {
     const pos = (ref: string): CellPos => ({ file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, ref });
@@ -232,6 +270,7 @@ export function buildRecords(layouts: SheetLayout[], ask: Asker, opts: RecordOpt
           }
       if (t.shape === "tree") order = treeRecords(t, lay, ask, rec, order, exclude, pend, off);
       else if (t.shape === "grid") order = gridRecords(t, lay, ask, rec, order, exclude, pend, off);
+      else if (t.shape === "contracts") contractRecords(t, lay, ask, rec, opts, date1904Of(lay.file), exclude, pend, off);
       else eventRecords(t, lay, ask, rec, opts, date1904Of(lay.file), exclude, pend, off);
     }
   }
@@ -2261,6 +2300,233 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     void _span;
     void _noTime;
     rec.events.push(clean);
+  }
+}
+
+// ─── 契約・発注の一覧 ──────────────────────────────────────────
+
+const CONTRACT_DATE_FIELDS: ReadonlySet<string> = new Set(["orderDate", "estimateDate", "period", "start", "end", "done", "inspectDate", "payDate"]);
+const CONTRACT_AMOUNT_FIELDS: ReadonlySet<string> = new Set(["orderAmount", "estimateAmount", "inspectAmount", "payAmount", "amount"]);
+
+/** 契約の一覧で外すセルの理由（行き先の字） */
+export const CONTRACT_EXCLUDE = {
+  staff: "契約の一覧の担当の欄（人の名前。契約の記録に使わない）",
+  remark: "契約の一覧の備考の欄（契約の記録に使わない）",
+  other: "契約の一覧の、契約の記録の形に無い欄",
+  fiscal: "契約の一覧の年度の欄の、年度として読めない字",
+  none: "空欄の印（「－」など）",
+  emptyRow: "契約の一覧の、件名・業者・金額・日付の無い行",
+  unitNone: "金額の欄（単位が決まらないので読まない）",
+  badAmount: "金額として読めない書き方（決定で金額を置かない）",
+  badDate: "日付として読めない書き方（決定で日付を置かない）",
+} as const;
+
+/** 列の見出しの名前（2 段の見出しは「上の段（下の段）」） */
+function contractLabel(c: ColInfo): string {
+  const ps = c.headerParts.map((p) => p.replace(/\s*\n\s*/g, "").trim()).filter((p) => p !== "");
+  return ps.length >= 2 ? `${ps[0]}（${ps[ps.length - 1]}）` : (ps[0] ?? "");
+}
+
+/**
+ * 契約・発注の一覧の表（structure.ts の contracts の形）：1 行を 1 つの契約の記録にする。作業にはしない。
+ * どのセルも、記録に読んだもの（データ）か、理由つきで外したもの（担当・備考・記録の形に無い欄）に数える。
+ * 決まらない所（金額の単位・読めない金額・読めない日付）だけを、同じ様式の表をまとめて聞く（年度ごとのシート・年度ごとの CSV で 1 問）
+ */
+function contractRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts: RecordOptions, date1904: boolean, exclude: (ref: string, why: string) => void, pend: Pend, off: Off) {
+  const formKey = formKeyOf(rec, t);
+  const data = t.rows.filter((r) => r.role === "data");
+  const colAt = new Map(t.cols.map((c) => [c.c, c]));
+  const cellsOf = (c: ColInfo) => data.map((r) => lay.index.at(r.r, c.c)).filter((x): x is GridCell => !!x && x.text.trim() !== "" && !off(x.ref) && !isNone(x.text));
+  // 金額の単位：見出しに書いてあればそれ。書いていない金額の欄は、まとめて 1 回聞く（推し量らない）
+  const amountCols = t.cols.filter((c) => !c.ruleExclude && CONTRACT_AMOUNT_FIELDS.has(c.contract ?? ""));
+  const unitOf = new Map<number, number | "none" | null>();
+  for (const c of amountCols) {
+    const u = costHeaderUnit(c.header);
+    if (u !== null) unitOf.set(c.c, u);
+  }
+  const noUnit = amountCols.filter((c) => !unitOf.has(c.c) && cellsOf(c).length > 0);
+  let unitQ: string | null = null;
+  if (noUnit.length) {
+    const key = `contractUnit|${t.id}`;
+    const cells = noUnit.flatMap(cellsOf);
+    const rows = new Set(cells.map((c) => c.r)).size;
+    const names = noUnit.map((c) => `「${contractLabel(c)}」`).join("");
+    const text = (n: number) => `契約の一覧の金額の欄（${names}）の単位が、見出しに書いてない（${n} 行）。単位を推し量らない`;
+    const a = ask.ask(
+      key,
+      {
+        kind: "costUnit",
+        text: text(rows),
+        options: [
+          { id: "1", label: "円" },
+          { id: "1000", label: "千円" },
+          { id: "10000", label: "万円" },
+          { id: "none", label: "この欄を読まない（理由を残す）" },
+        ],
+        valueKind: "option",
+        defaultAnswer: null,
+        sameShapeRows: rows,
+        items: [itemOf(t, cells.slice(0, 10).map((c) => c.ref))],
+      },
+      sameForm("contractUnit", formKey, noUnit.map((c) => c.c).join(","), text),
+    );
+    unitQ = questionIdOf(key);
+    for (const c of noUnit) unitOf.set(c.c, a === null ? null : a === "none" ? "none" : Number(a));
+  }
+  const badAmounts: GridCell[] = [];
+  const badDates: GridCell[] = [];
+  const prevText = new Map<number, string>();
+  const prevDate = new Map<number, { start: Ymd; end: Ymd }>();
+  let prev: ContractRec | null = null;
+  const text1 = (s: string) => s.replace(/\s*\n\s*/g, " ").trim();
+  for (const r of data) {
+    const cells = lay.index.rowCells(r.r).filter((c) => !off(c.ref));
+    if (!cells.length) continue;
+    const c0: ContractRec = {
+      id: `${t.id}#${r.r}`,
+      file: t.file,
+      sheet: t.sheet,
+      sheetIndex: t.sheetIndex,
+      tableId: t.id,
+      row: r.r,
+      number: null,
+      title: null,
+      titleRef: null,
+      changeOf: null,
+      category: null,
+      method: null,
+      vendor: null,
+      unitPrice: false,
+      amounts: [],
+      dates: [],
+      period: null,
+      fiscalYear: null,
+      refs: [],
+    };
+    let fiscalCol: number | null = null;
+    const putText = (col: ColInfo, cell: GridCell): string => {
+      const v = cue.isDitto(cell.text) ? (prevText.get(col.c) ?? "") : text1(cell.text);
+      prevText.set(col.c, v);
+      return v;
+    };
+    const putDate = (f: string, d: Ymd, ref: string) => c0.dates.push({ field: f as ContractRec["dates"][number]["field"], date: d, ref });
+    for (const cell of cells) {
+      const col = colAt.get(cell.c);
+      const f = col?.contract ?? "other";
+      if (!col || cell.text.trim() === "") {
+        if (col && f !== "staff" && f !== "remark" && f !== "other") c0.refs.push(cell.ref);
+        else exclude(cell.ref, f === "staff" ? CONTRACT_EXCLUDE.staff : f === "remark" ? CONTRACT_EXCLUDE.remark : CONTRACT_EXCLUDE.other);
+        continue;
+      }
+      if (f === "staff") exclude(cell.ref, CONTRACT_EXCLUDE.staff);
+      else if (f === "remark") exclude(cell.ref, CONTRACT_EXCLUDE.remark);
+      else if (f === "other") exclude(cell.ref, CONTRACT_EXCLUDE.other);
+      else if (f === "title") {
+        // 変更契約の行（「〃（第1回変更）」）：上の契約と同じ件名。別の契約として結ばない
+        if (cue.startsWithDitto(cell.text) && prev) {
+          c0.changeOf = prev.changeOf ?? prev.id;
+          c0.title = prev.title;
+        } else c0.title = text1(cell.text);
+        c0.titleRef = cell.ref;
+        c0.refs.push(cell.ref);
+      } else if (f === "number" || f === "rowNo") {
+        if (f === "number") c0.number = text1(cell.text);
+        c0.refs.push(cell.ref);
+      } else if (f === "category" || f === "method" || f === "vendor") {
+        c0[f] = putText(col, cell);
+        c0.refs.push(cell.ref);
+      } else if (f === "fiscal") {
+        const y = typeof cell.value === "number" && Number.isInteger(cell.value) ? (parseYearLabel(String(cell.value))?.year ?? null) : (parseYearLabel(cell.text)?.year ?? null);
+        if (y === null) exclude(cell.ref, CONTRACT_EXCLUDE.fiscal);
+        else {
+          fiscalCol = y;
+          c0.refs.push(cell.ref);
+        }
+      } else if (isNone(cell.text)) exclude(cell.ref, CONTRACT_EXCLUDE.none);
+      else if (CONTRACT_AMOUNT_FIELDS.has(f)) {
+        const unit = unitOf.get(col.c) ?? null;
+        if (unit === null) pend(cell.ref, unitQ);
+        else if (unit === "none") exclude(cell.ref, CONTRACT_EXCLUDE.unitNone);
+        else {
+          const yen = parseCost(cell.text, cell.value, unit);
+          if (yen === null) badAmounts.push(cell);
+          else {
+            c0.amounts.push({ field: f as ContractRec["amounts"][number]["field"], header: contractLabel(col), cost: { yen, ref: cell.ref, text: cell.text, tax: costHeaderTax(col.header) ?? "unknown" } });
+            c0.refs.push(cell.ref);
+          }
+        }
+      } else if (CONTRACT_DATE_FIELDS.has(f)) {
+        let p: { start: Ymd; end: Ymd } | null = cue.isDitto(cell.text) ? (prevDate.get(col.c) ?? null) : cellPeriod(cell, date1904);
+        if (!p && lay.contextFiscalYear !== null && typeof cell.value === "string") {
+          const md = parseMonthDay(cell.value);
+          const ymd = md ? withFiscalYear(md, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
+          if (ymd) p = { start: ymd, end: ymd };
+        }
+        if (!p) badDates.push(cell);
+        else {
+          prevDate.set(col.c, p);
+          if (f === "period") {
+            putDate("start", p.start, cell.ref);
+            putDate("end", p.end, cell.ref);
+          } else putDate(f, f === "end" ? p.end : p.start, cell.ref);
+          c0.refs.push(cell.ref);
+        }
+      } else c0.refs.push(cell.ref);
+    }
+    // 件名・業者・金額・日付のどれも無い行（番号だけの行など）は、契約の記録にしない
+    if (c0.title === null && c0.vendor === null && !c0.amounts.length && !c0.dates.length) {
+      for (const ref of c0.refs) exclude(ref, CONTRACT_EXCLUDE.emptyRow);
+      continue;
+    }
+    const at = (f: string) => c0.dates.find((d) => d.field === f)?.date ?? null;
+    const start = at("start");
+    const end = at("end");
+    c0.period = start && end ? { start, end } : start ? { start, end: start } : end ? { start: end, end } : null;
+    const first = start ?? at("orderDate") ?? at("estimateDate") ?? at("done") ?? at("inspectDate") ?? at("payDate") ?? end;
+    c0.fiscalYear = first ? fiscalYearOf(first, opts.fiscalYearStartMonth) : (fiscalCol ?? lay.contextFiscalYear);
+    c0.unitPrice = [c0.title, c0.method, c0.category].some((x) => !!x && cue.isUnitPrice(x));
+    rec.contracts.push(c0);
+    prev = c0;
+  }
+  if (badAmounts.length) {
+    const key = `contractCostBad|${t.id}`;
+    const text = (n: number) => `契約の一覧の金額の欄に、金額として読めない書き方がある（${n} 行）。金額を推し量らない`;
+    const rows = new Set(badAmounts.map((c) => c.r)).size;
+    const a = ask.ask(
+      key,
+      {
+        kind: "costBad",
+        // 費用の字は AI に渡さない（見本を出さず、件数だけ）
+        text: text(rows),
+        options: [{ id: "none", label: "その金額を置かない（理由を残す）" }],
+        valueKind: "option",
+        defaultAnswer: "none",
+        sameShapeRows: rows,
+        items: [itemOf(t, badAmounts.slice(0, 10).map((c) => c.ref))],
+      },
+      sameForm("contractCostBad", formKey, "", text),
+    );
+    for (const c of badAmounts) a === "none" ? exclude(c.ref, CONTRACT_EXCLUDE.badAmount) : pend(c.ref, questionIdOf(key));
+  }
+  if (badDates.length) {
+    const key = `contractDate|${t.id}`;
+    const rows = new Set(badDates.map((c) => c.r)).size;
+    const samples = [...new Set(badDates.map((c) => text1(c.text).slice(0, 20)))].slice(0, 3).map((x) => `「${x}」`).join("");
+    const text = (n: number) => `契約の一覧の日付の欄に、日付として読めない書き方がある（${n} 行。見本 ${samples}）。日付を推し量らない`;
+    const a = ask.ask(
+      key,
+      {
+        kind: "dateUnknown",
+        text: text(rows),
+        options: [{ id: "exclude", label: "その日付を置かない（理由を残す）" }],
+        valueKind: "option",
+        defaultAnswer: "exclude",
+        sameShapeRows: rows,
+        items: [itemOf(t, badDates.slice(0, 10).map((c) => c.ref))],
+      },
+      sameForm("contractDate", formKey, "", text),
+    );
+    for (const c of badDates) a === "exclude" ? exclude(c.ref, CONTRACT_EXCLUDE.badDate) : pend(c.ref, questionIdOf(key));
   }
 }
 

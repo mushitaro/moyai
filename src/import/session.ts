@@ -404,6 +404,10 @@ export class IntakeSession {
     const notes = [
       ...an.layouts.flatMap((l) => l.notes.map((n) => `${l.file} ${n.ref}：${n.text.slice(0, SAMPLE_TEXT)}`)),
       ...an.sources.flatMap((s) => s.ledger.map((e) => `${s.file}${e.sheet ? `「${e.sheet}」` : ""}：${e.detail}（${e.count}）`)),
+      // 契約・発注の一覧として読んだ資料：契約の件数だけ（件名・業者・金額は渡さない）
+      ...[...an.records.contracts.reduce((m, c) => m.set(c.file, (m.get(c.file) ?? 0) + 1), new Map<string, number>())].map(
+        ([file, n]) => `${file}：契約の一覧として読んだ（契約 ${n} 件。作業にはしない。件名と期間の合う作業と結ぶかは、まとめた 1 問で聞く）`,
+      ),
       ...an.rejected.map((r) => `${r.file}：${r.reason}`),
       ...this.photos
         .entries()
@@ -451,7 +455,7 @@ export class IntakeSession {
             : t.shape === "tree"
               ? [!has("name", "hier") && "機器の名前"].filter(Boolean)
               : [];
-        const shape = t.shape === "events" ? "作業の表" : t.shape === "grid" ? "星取表の形の表" : "機器の木の表";
+        const shape = t.shape === "events" ? "作業の表" : t.shape === "grid" ? "星取表の形の表" : t.shape === "contracts" ? "契約の一覧" : "機器の木の表";
         const key = `${lay.file}\u0000${t.form}`;
         if (why.has(key)) continue;
         why.set(key, `${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""} ${t.top}〜${t.bottom} 行目の表が止まっている：${shape}${missing.length ? `で、${missing.join("・")}の欄が読めていない` : ""}（質問の無い未解決のセル ${silent}）`);

@@ -5,11 +5,11 @@ import { Plan, type AssetNodeT, type WorkDetailT, type WorkT } from "../shared/p
 import type { AuthorKind } from "../shared/fields";
 import { CellIndex, type SourceFile } from "./grid";
 import { Asker, questionIdOf, type Decision } from "./questions";
-import { cellKey, type CostCell, type EventRec, type MarkRec, type Records } from "./records";
+import { cellKey, type ContractRec, type CostCell, type EventRec, type MarkRec, type Records } from "./records";
 import { ROW_ROLE_LABEL, type SheetLayout, type Table } from "./structure";
 import { nk, seriesLabel, type Cluster, type Job, type Linked, type Occurrence, type WorkLink } from "./link";
 import { daysInclusive, fiscalYearOf, parseDayCount, ymdString, type Ymd } from "./era";
-import { nameKey, parseEffort } from "./text";
+import { nameKey, parseEffort, unitInText } from "./text";
 import { cue } from "./cues";
 import { markPhotoRecords, type PhotoReview } from "./photo";
 import { askReference, REFERENCE_REASON, referenceKey } from "./reference";
@@ -67,6 +67,22 @@ export interface Composition {
   checks: CheckResult[];
   /** 写真から作った記録の数（要確認のもの・写真ごと）。写真が無ければ 0 と空 */
   photoReview: PhotoReview;
+  /**
+   * 契約の記録（契約・発注の一覧の行。作業にしない）と、件名の語と期間で作業の年度の値と結ぶ案。
+   * linked は結ぶと決めたもの、cost は結んで金額を費用に置いた明細。計画には入れない（版の記録・署名される字は変えない）
+   */
+  contracts: ContractLink[];
+}
+
+/** 契約の記録 1 つと、結ぶ案の明細 */
+export interface ContractLink {
+  contract: ContractRec;
+  /** 件名の語と期間の合う作業の年度の値（実績）の明細の鍵。無ければ空 */
+  proposed: string[];
+  /** 結ぶと決めた（まとめた 1 問の答え） */
+  linked: boolean;
+  /** 金額を費用に置いた明細の鍵（結んで、契約と作業が 1 つずつ合い、明細に費用が無かったときだけ） */
+  costTo: string | null;
 }
 
 function hash(s: string): string {
@@ -707,6 +723,9 @@ export function compose(
     }
   }
 
+  // ─── 契約の記録（契約・発注の一覧の行）：作業にしない。件名の語と期間の合う作業の年度の値と結ぶ案を、まとめた 1 問で聞く ───
+  const contracts = linkContracts(rec.contracts, assets, works, details, ask, opts.facility.fiscalYearStartMonth);
+
   // ─── 行き先を数える ───
   /** データのセル → そのセルを出どころにする機器の節・明細を決めた質問 */
   const dataKeys = new Map<string, Set<string>>();
@@ -722,6 +741,14 @@ export function compose(
   };
   for (const a of assets) for (const s of a.sources) addData(s, decidedOf.get(a) ?? []);
   for (const d of details) for (const s of d.sources) addData(s, decidedOf.get(d) ?? []);
+  // 契約の記録に読んだセル：データ（計画の外に残す記録。結ぶと決めた契約は、その問いを決めた質問に数える）
+  const contractCells: { file: string; sheet: string | null; cell: string }[] = [];
+  for (const x of contracts)
+    for (const ref of x.contract.refs) {
+      const s = { file: x.contract.file, sheet: x.contract.sheet, cell: ref };
+      contractCells.push(s);
+      addData(s, x.question && x.linked !== null ? [x.question] : []);
+    }
   // セルを決めた質問は、答えが効いているものだけ（答えの無い質問・当てはまらない決定・聞かなかった質問の ID は付けない）
   // まとめた質問の問いは、まとめた質問の ID にする（画面が見える質問と結べるように）
   const qsOf = (qs: Iterable<string> | undefined): { qs?: string[] } => {
@@ -795,6 +822,8 @@ export function compose(
   if (invalid.length) blockers.push(`当てはまらない決定 ${invalid.length}`);
   // どの資料も参考として外したときは、計画に使う資料が無い（空の計画を作らない）
   if (reference.size && sources.length && sources.every((x) => reference.has(x.file))) blockers.push(`計画に使う資料が無い（どの資料も参考として外した ${reference.size}）`);
+  // 契約の一覧だけのとき（契約は作業にしないので、機器も作業も無い）：空の計画を作らない
+  else if (!assets.length && !details.length && rec.contracts.length) blockers.push(`計画に使う資料が無い（契約の一覧の契約 ${rec.contracts.length} 件は作業にしない。機器か作業の資料と一緒に入れる）`);
   // 資料をまたいで結ぶかの決まらない機器（その資料だけの読みで節にしてある）：決まるまで計画を作らない。
   // 結ぶ問いか、先の資料の未解決のセルが必ず残るので上で止まる。止める理由が 1 つも無いときだけ、念のためここで止める（画面の理由の字は変えない）
   const held = lk.clusters.filter((c) => c.held && !c.pending && !c.excluded).length;
@@ -834,13 +863,134 @@ export function compose(
     else blockers.push(`計画の形が違う：${parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")} ${i.message}`).join("、")}`);
   }
   // 保存した計画（作れなければ下書き）の出どころから数え直し、行の行き先が合わなければ計画を出さない
-  const counts = countRows(sources, layouts, status, plan ? (JSON.parse(JSON.stringify(plan)) as Plan) : draft);
+  const counts = countRows(sources, layouts, status, plan ? (JSON.parse(JSON.stringify(plan)) as Plan) : draft, contractCells);
   const lost = counts.filter((c) => !c.holds);
   if (lost.length) {
     blockers.push(`行の数え直しが合わない資料 ${lost.length}（${lost.map((c) => c.file).join("・")}）`);
     plan = null;
   }
-  return { plan, blockers, status, counts, checks, photoReview };
+  return { plan, blockers, status, counts, checks, photoReview, contracts: contracts.map(({ question: _q, ...x }) => ({ ...x, linked: x.linked === true })) };
+}
+
+/** 契約と結ぶ案の、明細の日付の重なり（両方に期間があるときだけ見る） */
+function overlaps(a: { start: Ymd; end: Ymd }, start: string | null, end: string | null): boolean {
+  if (!start || !end) return true;
+  return ymdString(a.start) <= end && start <= ymdString(a.end);
+}
+
+/** 契約の金額のうち、作業の年度の値（実績）の費用にするもの：支払 → 検収 → 発注・契約 → そのほか。見積は使わない。単価契約は支払と検収だけ */
+function actualCost(c: ContractRec): CostCell | null {
+  const rank: Record<string, number> = { payAmount: 4, inspectAmount: 3, orderAmount: 2, amount: 1 };
+  const xs = c.amounts.filter((a) => (rank[a.field] ?? 0) > 0 && (!c.unitPrice || (rank[a.field] ?? 0) >= 3)).sort((a, b) => (rank[b.field] ?? 0) - (rank[a.field] ?? 0));
+  return xs[0]?.cost ?? null;
+}
+
+/** 結ぶ案を聞いている途中の契約の記録（linked は答えが無ければ null。question は案の問いの ID） */
+type ContractDraft = Omit<ContractLink, "linked"> & { linked: boolean | null; question: string | null };
+
+/** 結ぶ案を探す契約の期間の年度の数の上限（長い期間の契約で、明細を何十年分も見ない） */
+const CONTRACT_YEARS_MAX = 10;
+
+/** 契約と結ぶ案の問いの鍵（まとめる鍵。どの契約の一覧の案も、この 1 問にまとめる） */
+export const CONTRACT_LINK_MERGE = "contractLink";
+
+/**
+ * 契約の記録と、件名の語と期間で結べる作業の年度の値（実績の明細）：件名に、作業の名前と、その作業の機器の名前がどちらも入っていて
+ * （件名に号炉があれば機器の号炉と同じ）、明細の年度が契約の期間（無ければ契約の年度）に入り、両方に日付があれば重なるもの。
+ * 変更契約の行と件名の無い行は結ばない。案のある契約ごとに問いを置き、どれも 1 問にまとめて聞く（既定は結ぶ）。
+ * 結ぶと決めた契約は、契約と明細が 1 つずつ合い、明細に費用が無く、変更契約の行が無いときだけ、金額をその明細の費用にする（推し量って割らない・足さない）。
+ * 結んでも結ばなくても、計画の作業と明細は増えない
+ */
+function linkContracts(
+  contracts: readonly ContractRec[],
+  assets: readonly AssetNodeT[],
+  works: ReadonlyMap<string, WorkT>,
+  details: WorkDetailT[],
+  ask: Asker,
+  startMonth: number,
+): ContractDraft[] {
+  const assetOf = new Map(assets.map((a) => [a.nodeKey, a]));
+  // 実績の明細を年度ごとに、作業の名前と機器の名前（号炉）の比べる形にしておく（契約ごとに作り直さない）
+  const byYear = new Map<number, { d: WorkDetailT; kind: string; names: { n: string; series: number | null }[] }[]>();
+  for (const d of details) {
+    if (d.planOrActual !== "actual") continue;
+    const w = works.get(d.workKey);
+    const kind = nameKey(w?.kind ?? "");
+    if (!w || kind.length < 2) continue;
+    const names = w.targets.flatMap((k) => {
+      const a = assetOf.get(k);
+      const n = nameKey(a?.name ?? "");
+      return a && n.length >= 2 ? [{ n, series: a.series !== null && /^\d+$/.test(a.series) ? Number(a.series) : null }] : [];
+    });
+    if (names.length) byYear.set(d.fiscalYear, [...(byYear.get(d.fiscalYear) ?? []), { d, kind, names }]);
+  }
+  const out: ContractDraft[] = [];
+  const text = (n: number) =>
+    `契約の一覧の契約 ${n} 件が、件名の語（機器と作業の名前）と期間で、ほかの資料の作業の実績と合う。` +
+    "結ぶと、契約の金額を、その作業の年度の値の費用にする（契約と作業が 1 つずつ合い、費用の無い年度の値だけ）。" +
+    "結ばないと、契約は記録に残すだけで、計画は変わらない。どちらでも計画の作業は増えない。" +
+    "推す：結ぶ（件名に機器と作業の名前があり、期間が合う）";
+  const options = [
+    { id: "yes", label: "結ぶ（金額を作業の年度の値の費用にする）" },
+    { id: "no", label: "結ばない（契約は記録に残すだけ）" },
+  ];
+  for (const c of contracts) {
+    const proposed: WorkDetailT[] = [];
+    if (!c.changeOf && c.title && c.fiscalYear !== null) {
+      const title = nameKey(c.title);
+      const titleUnit = unitInText(c.title);
+      const from = c.period ? fiscalYearOf(c.period.start, startMonth) : c.fiscalYear;
+      const to = c.period ? fiscalYearOf(c.period.end, startMonth) : c.fiscalYear;
+      for (let fy = from; fy <= to && fy - from < CONTRACT_YEARS_MAX; fy++)
+        for (const x of byYear.get(fy) ?? []) {
+          if (!title.includes(x.kind) || (c.period && !overlaps(c.period, x.d.startDate, x.d.endDate))) continue;
+          if (x.names.some((a) => title.includes(a.n) && (titleUnit === null || a.series === null || a.series === titleUnit))) proposed.push(x.d);
+        }
+    }
+    if (!proposed.length) {
+      out.push({ contract: c, proposed: [], linked: null, costTo: null, question: null });
+      continue;
+    }
+    const key = `contractLink|${c.id}|${proposed.map((d) => d.detailKey).sort().join(",")}`;
+    const a = ask.ask(
+      key,
+      {
+        kind: "workJoin",
+        text: text(1),
+        options,
+        valueKind: "option",
+        defaultAnswer: "yes",
+        sameShapeRows: 1,
+        items: [
+          {
+            file: c.file,
+            sheet: c.sheet,
+            cells: c.titleRef ? [c.titleRef] : c.refs.slice(0, 1),
+            target: proposed.map((d) => ({ file: d.sources[0]?.file ?? "", sheet: d.sources[0]?.sheet ?? null, cells: d.sources[0]?.cell ? [d.sources[0].cell] : [] })),
+          },
+        ],
+      },
+      { key: CONTRACT_LINK_MERGE, text },
+    );
+    out.push({ contract: c, proposed: proposed.map((d) => d.detailKey), linked: a === "yes" ? true : a === "no" ? false : null, costTo: null, question: questionIdOf(key) });
+  }
+  // 結ぶと決めた契約の金額：契約と明細が 1 つずつ合うときだけ、費用の無い明細に置く
+  const linksOf = new Map<string, number>();
+  for (const x of out) if (x.linked) for (const k of x.proposed) linksOf.set(k, (linksOf.get(k) ?? 0) + 1);
+  const detailOf = new Map(details.map((d) => [d.detailKey, d]));
+  // 変更契約の行のある契約は、どの金額が実績か決めつけない（足しも選びもしない）
+  const changed = new Set(contracts.flatMap((c) => (c.changeOf ? [c.changeOf] : [])));
+  for (const x of out) {
+    if (!x.linked || x.proposed.length !== 1 || changed.has(x.contract.id)) continue;
+    const k = x.proposed[0] ?? "";
+    const d = detailOf.get(k);
+    const cost = actualCost(x.contract);
+    if (!d || d.cost !== null || linksOf.get(k) !== 1 || !cost) continue;
+    d.cost = cost.yen;
+    d.costSource = { file: x.contract.file, sheet: x.contract.sheet, ref: cost.ref, text: cost.text, tax: cost.tax };
+    x.costTo = k;
+  }
+  return out;
 }
 
 /** 階層の名前：資料の見出しの名前、無ければパックの階層の名前（既定）、それも無ければ「第 n 階層」（docs/plan.md §2.2。運営者の指摘、11-06） */
@@ -853,16 +1003,23 @@ function levelNames(rec: Records, assets: AssetNodeT[], defaults: readonly strin
 }
 
 /**
- * 行を数える。別々に数えて照らす：入れた行（格子から）、取り込んだ行（保存した計画の出どころだけから）、
+ * 行を数える。別々に数えて照らす：入れた行（格子から）、取り込んだ行（保存した計画の出どころと、計画の外に残す契約の記録のセルだけから）、
  * 外した行と未解決の行（セルの行き先だけから。外した行は、行のすべてのセルが外したもの）。
  * 行は「未解決のセルがある」「計画に入った」「すべて外した」の順に 1 つへ数える。
  * 計画に入った行がすべて外した行でもある・どこにも入らない行がある・データのセルが計画に無い、のどれかなら合わない。
  */
-export function countRows(sources: SourceFile[], layouts: SheetLayout[], status: Map<string, CellStatus>, plan: { assets: { sources: { file: string; sheet: string | null; cell: string | null }[] }[]; details: { sources: { file: string; sheet: string | null; cell: string | null }[] }[] }): FileCounts[] {
+export function countRows(
+  sources: SourceFile[],
+  layouts: SheetLayout[],
+  status: Map<string, CellStatus>,
+  plan: { assets: { sources: { file: string; sheet: string | null; cell: string | null }[] }[]; details: { sources: { file: string; sheet: string | null; cell: string | null }[] }[] },
+  /** 計画の外に残す記録（契約の記録）に読んだセル。計画の出どころと同じに、取り込んだ行に数える */
+  kept: readonly { file: string; sheet: string | null; cell: string | null }[] = [],
+): FileCounts[] {
   const SEP = "\u0000";
   const rowsInPlan = new Set<string>();
   const cellsInPlan = new Set<string>();
-  for (const x of [...plan.assets, ...plan.details])
+  for (const x of [...plan.assets, ...plan.details, { sources: kept }])
     for (const s of x.sources) {
       const r = /\d+$/.exec(s.cell ?? "")?.[0];
       rowsInPlan.add([s.file, s.sheet ?? "", r].join(SEP));

@@ -277,16 +277,22 @@ describe("読めない形の資料を、参考として外す", () => {
       { name: "日報.xlsx", bytes: await dailyBook(1) },
       { name: "契約の一覧.xlsx", bytes: await contractBook() },
       { name: "工程表.xlsx", bytes: await ganttBook() },
+      { name: "週の工程表.xlsx", bytes: await ganttBook() },
     ]);
     return s;
   }
+  /** 読めない形の資料（週のガント 2 冊）。契約の一覧は契約の記録として読める形（仕事 reader-contracts-v1）なので、参考の質問を出さない */
+  const GANTTS = ["工程表.xlsx", "週の工程表.xlsx"];
   const refText = (file: string) => `この資料（${file}）は、今回は参考として計画に使わないか`;
 
-  test("契約の一覧と週のガントの形の資料に参考の質問が出て、外すと残りの資料で計画が作れる。取り消すと戻る", async () => {
+  test("週のガントの形の資料に参考の質問が出て、外すと残りの資料で計画が作れる。取り消すと戻る。契約の一覧は読める形なので参考の質問を出さない", async () => {
     const s = await four();
     const an = s.analyze();
     const refs = an.open.filter((q) => q.text.startsWith("この資料（"));
-    expect(refs.map((q) => q.text).sort()).toEqual([refText("契約の一覧.xlsx"), refText("工程表.xlsx")].sort());
+    expect(refs.map((q) => q.text).sort()).toEqual(GANTTS.map(refText).sort());
+    // 契約の一覧：契約の記録として読み、質問の無い未解決のセルを残さない
+    expect(an.layouts.filter((l) => l.file === "契約の一覧.xlsx").flatMap((l) => l.tables.map((t) => t.shape))).toEqual(["contracts", "contracts"]);
+    expect([...an.composition.status.entries()].some(([k, v]) => k.startsWith("契約の一覧.xlsx\u0000") && v.s === "unresolved")).toBe(false);
     for (const q of refs) {
       expect(q.options).toEqual([{ id: "reference", label: "参考として外す" }]);
       expect(q.defaultAnswer).toBeNull();
@@ -296,7 +302,7 @@ describe("読めない形の資料を、参考として外す", () => {
 
     s.settle(refs.map((q) => human(q.questionId, "reference")));
     const after = s.takeAfter()!;
-    for (const file of ["契約の一覧.xlsx", "工程表.xlsx"]) {
+    for (const file of GANTTS) {
       const mine = [...after.composition.status.entries()].filter(([k]) => k.startsWith(`${file}\u0000`));
       expect(mine.length).toBeGreaterThan(0);
       expect(mine.every(([, v]) => v.s === "excluded" && v.reason === REFERENCE_REASON)).toBe(true);
@@ -312,20 +318,25 @@ describe("読めない形の資料を、参考として外す", () => {
     expect(c.blockers).toEqual([]);
     expect(c.plan).not.toBeNull();
     // 入れた行＝取り込んだ数＋外した数（参考の資料の行は「参考の資料」に数える）
-    for (const file of ["契約の一覧.xlsx", "工程表.xlsx"]) {
+    for (const file of GANTTS) {
       const fc = c.counts.find((x) => x.file === file)!;
       expect(fc.holds).toBe(true);
       expect(fc.importedRows).toBe(0);
       expect(fc.excludedRows[REFERENCE_REASON]).toBe(fc.inputRows);
     }
+    // 契約の一覧の契約の行（2 シート × 6 行）は、契約の記録として取り込んだ行に数える（計画の作業にはしない）
+    const cf = c.counts.find((x) => x.file === "契約の一覧.xlsx")!;
+    expect(cf.holds).toBe(true);
+    expect(cf.importedRows).toBe(12);
+    expect(cf.unresolvedRows).toBe(0);
     const sources = [...(c.plan?.assets ?? []), ...(c.plan?.details ?? [])].flatMap((x) => x.sources.map((y) => y.file));
-    expect(sources.some((f) => f === "契約の一覧.xlsx" || f === "工程表.xlsx")).toBe(false);
+    expect(sources.some((f) => f === "契約の一覧.xlsx" || GANTTS.includes(f))).toBe(false);
     // 版の記録：外した資料は「参考」の決定として残る（署名される字の形は今のまま）
     const rd = (c.plan?.readingDecisions ?? []).filter((x) => x.question.startsWith("この資料（"));
     expect(rd.map((x) => [x.question, x.answer, x.where]).sort()).toEqual(
       [
-        [refText("契約の一覧.xlsx"), "参考として外す", "契約の一覧.xlsx"],
         [refText("工程表.xlsx"), "参考として外す", "工程表.xlsx"],
+        [refText("週の工程表.xlsx"), "参考として外す", "週の工程表.xlsx"],
       ].sort(),
     );
 
@@ -340,17 +351,17 @@ describe("読めない形の資料を、参考として外す", () => {
 
   test("どの資料も参考として外したら、空の計画を作らない", async () => {
     const s = session();
-    await s.add([{ name: "契約の一覧.xlsx", bytes: await contractBook() }]);
-    const q = s.analyze().open.find((x) => x.text === refText("契約の一覧.xlsx"))!;
+    await s.add([{ name: "工程表.xlsx", bytes: await ganttBook() }]);
+    const q = s.analyze().open.find((x) => x.text === refText("工程表.xlsx"))!;
     s.settle([human(q.questionId, "reference")]);
     const c = s.compose();
     expect(c.plan).toBeNull();
     expect(c.blockers.join("・")).toContain("計画に使う資料が無い");
   });
 
-  test("読める資料（台帳・日報）には参考の質問を出さない", async () => {
+  test("読める資料（台帳・日報・契約の一覧）には参考の質問を出さない", async () => {
     const s = await four();
     const an = s.analyze();
-    for (const file of ["台帳.csv", "日報.xlsx"]) expect(an.open.some((q) => q.text === refText(file))).toBe(false);
+    for (const file of ["台帳.csv", "日報.xlsx", "契約の一覧.xlsx"]) expect(an.open.some((q) => q.text === refText(file))).toBe(false);
   });
 });
