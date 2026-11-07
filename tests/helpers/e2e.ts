@@ -110,9 +110,32 @@ export async function openIntakeAndDrop(page: Page, base: string, facilityName: 
     return d;
   }, files);
   await page.getByTestId("drop").dispatchEvent("drop", { dataTransfer: dt });
-  // 資料ごとのタブ（白紙でも同じ。docs/screens.md 3.3）。写真は読むまで資料のタブにならない
-  await expect(page.getByTestId("sheet-file")).toHaveCount(set.files.length - photos, { timeout: 20_000 });
+  // 資料の選び（白紙でも同じ。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」・3.3）。写真は読むまで資料の数に入らない
+  await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", String(set.files.length - photos), { timeout: 20_000 });
   if (photos) await expect(page.getByTestId("photo-item")).toHaveCount(photos);
+}
+
+/**
+ * 資料の選び（シートのタブの行。docs/screens.md 3.2「資料の選び」）：一覧を開き、その名前の行を選ぶ。
+ * 資料のシートで、その資料が開くまで待つ
+ */
+export async function chooseSource(page: Page, name: string): Promise<void> {
+  await page.getByTestId("source-picker").click();
+  await page.locator(`[data-testid="source-row"][data-file="${name}"]`).click();
+  await expect(page.getByTestId("source-list")).toHaveCount(0);
+  await expect(page.getByTestId("source-picker")).toHaveAttribute("data-file", name);
+  await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
+}
+
+/** 資料の選びで、名前順の最初の資料を開く（どの資料でもよいとき） */
+export async function chooseFirstSource(page: Page): Promise<string> {
+  await page.getByTestId("source-picker").click();
+  const row = page.locator('[data-testid="source-row"][data-state="ready"]').first();
+  const name = (await row.getAttribute("data-file")) ?? "";
+  await row.click();
+  await expect(page.getByTestId("source-picker")).toHaveAttribute("data-file", name);
+  await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
+  return name;
 }
 
 /** 本物の中継（dist/cli.js mcp）に MCP のクライアントでつなぎ、ツールの一覧（出力の型）を先に読む */

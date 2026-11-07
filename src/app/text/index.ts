@@ -356,6 +356,25 @@ export const TEXT = {
     sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", files: "資料" } as Record<string, string>,
     filesLabel: "資料",
     addFiles: "＋ 資料を追加",
+    /**
+     * 資料の選びとシートの選び（docs/screens.md 3.2「資料の選び」、Wire、11-07。言葉は docs/words.md）：
+     * 「daily-report.xlsx ▾　3 / 200　‹ ›」「4月 ▾　1 / 12」「読込 120 / 200」。一覧の行は「名前｜シート n｜未確定 n｜状態」
+     */
+    picker: {
+      source: "資料の選び",
+      sheet: "シートの選び",
+      none: "―",
+      position: (i: number, n: number) => `${i} / ${n}`,
+      prev: "前の資料",
+      next: "次の資料",
+      reading: (done: number, total: number) => `読込 ${done} / ${total}`,
+      filter: "名前",
+      orderLabel: "一覧の並び",
+      order: { name: "名前順", open: "未確定の多い順" },
+      sheets: (n: number) => `シート ${n}`,
+      open: (n: number) => `未確定 ${n}`,
+      state: { reading: "読込中", rejected: "読込不可" },
+    },
     dropHere: (n: number) => `第 ${n} 版にマージします`,
     composeFirst: "第 1 版をつくる",
     composeNext: (n: number) => `資料を重ねて第 ${n} 版をつくる`,
@@ -453,7 +472,6 @@ export const TEXT = {
       empty: "ここに資料をドロップ",
       pick: "ファイルを選ぶ",
       reading: "読んでいます",
-      skipped: "読まなかった資料",
       failed: "取り込みの処理の誤りで読めなかった",
     },
     /** 資料のシートの詳細の字（セルの行き先） */
@@ -474,7 +492,6 @@ export const TEXT = {
     },
     sheet: {
       title: (file: string, sheet: string | null) => (sheet ? `${file}「${sheet}」` : file),
-      choose: "表を選ぶ",
       up: "上へ",
       down: "下へ",
       colsCut: (shown: number, max: number) => `列は ${shown} 列目まで（全部で ${max} 列）`,

@@ -2,10 +2,20 @@
 // exceljs を試験の中で import すると、Playwright のモジュールの読み込みが壊れるため）。
 //   node tests/helpers/xlsx-cli.mjs write <道> <JSON：{ sheet, cells: { "A1": 値, ... } }>
 //   node tests/helpers/xlsx-cli.mjs read <道>   → 最初のシートの値を JSON（行の配列。1 行目が先頭）で標準出力へ
+//   node tests/helpers/xlsx-cli.mjs book <道>   ← 標準入力に JSON：{ sheets: [{ name, rows: [[値, ...], ...] }] }（シートを並べた本。行が多いので引数で渡さない）
+import { readFileSync } from "node:fs";
 import ExcelJS from "exceljs";
 
 const [cmd, path, arg] = process.argv.slice(2);
-if (cmd === "write") {
+if (cmd === "book") {
+  const spec = JSON.parse(readFileSync(0, "utf8"));
+  const wb = new ExcelJS.Workbook();
+  for (const sh of spec.sheets) {
+    const ws = wb.addWorksheet(sh.name);
+    for (const r of sh.rows) ws.addRow(r);
+  }
+  await wb.xlsx.writeFile(path);
+} else if (cmd === "write") {
   const spec = JSON.parse(arg);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(spec.sheet ?? "Sheet1");
@@ -26,6 +36,6 @@ if (cmd === "write") {
   }
   process.stdout.write(JSON.stringify(rows));
 } else {
-  process.stderr.write("使い方：write <道> <JSON> | read <道>\n");
+  process.stderr.write("使い方：write <道> <JSON> | read <道> | book <道>（標準入力に JSON）\n");
   process.exit(2);
 }

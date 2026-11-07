@@ -1,12 +1,12 @@
 // 資料のシート（白紙、第 1 版の前）を、この PC の Chrome と Edge で開く：工場の fictional-1 の資料を落とすと、版があるときの資料のシートと同じ形
-// （「資料」の札と資料ごとのタブ、最初の資料の元の表と凡例の 1 行。docs/screens.md 3.3）。見出しは施設の名前だけ（「第 1 版」の札は出さない）。
+// （「資料」の札と資料の選び、未確定のいちばん多い資料の元の表と凡例の 1 行。docs/screens.md 3.2「資料の選び」・3.3）。見出しは施設の名前だけ（「第 1 版」の札は出さない）。
 // 未確定のセルは朱の字と下の 2px の朱の線（四方の枠は選んだセルの印だけ）。選ぶと詳細に種別「未確定」と「質問　{題}」と「| 決める」、
 // 押すと横の板の「未回答」でその質問を開く。除外のセルなら除外の理由。質問に人が「| 決める」で答えること、止める決まりの間は主ボタンが押せず理由「未回答 n」が出ること、
 // 答えで決まったセルを選ぶと詳細に「答え　{答えの字}」と「人　{日時}」と「| 取り消す」が出て、取り消すと未回答に戻り、答え直すと押せること、
 // 第 1 版をつくると見出しは「第 1 版　編集中」、資料のタブを選んだ形で、「| 資料を重ねて第 1 版をつくる」は出さず、星取表で行が見えること。
 // つくったあとに答えを取り消すと、凡例の行の右端に「| 資料を重ねて第 1 版をつくる」が出ること（docs/screens.md 3.3 の末尾「写しの照らし」、Wire、11-07）。
 import { expect, test } from "@playwright/test";
-import { FICTIONAL_1, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { FICTIONAL_1, chooseSource, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 let bridge: StartedBridge;
 test.beforeAll(async () => {
@@ -21,7 +21,7 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
   const first = FICTIONAL_1.files[0]!;
   const sourceGrid = page.locator('[data-testid="source-tab"] [data-testid="sheet-grid"]');
 
-  await test.step("資料を落とすと、資料のタブが並び、最初の資料の元の表が出る。【架空】の印を読み取る", async () => {
+  await test.step("資料を落とすと、資料の選びに未確定のいちばん多い資料が開き、その元の表が出る。【架空】の印を読み取る", async () => {
     await openIntakeAndDrop(page, bridge.base, "【架空】第一清掃工場");
     await expect(page.getByTestId("fiction-mark")).toBeVisible();
     // 見出しは施設の名前だけ：まだ版が無いので「第 1 版」の札も状態も出さない（つくる版の番号は下の帯の「第 1 版をつくる」）
@@ -33,9 +33,20 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
     await expect(page.getByTestId("fictional")).toBeChecked();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("fictional")).toHaveCount(0);
-    // 「資料」の札と資料ごとのタブ。最初の資料が選ばれ、本体はその資料の元の表（資料を 1 つのタブに積まない）
-    await expect(page.getByTestId("sheet-file")).toHaveCount(FICTIONAL_1.files.length);
-    await expect(page.locator(`[data-testid="sheet-file"][data-file="${first}"]`)).toHaveAttribute("aria-selected", "true");
+    // 「資料」の札と資料の選び（資料ごとのタブは並べない）。第 1 版の前は未確定のいちばん多い資料が開き、本体はその資料の元の表
+    await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", String(FICTIONAL_1.files.length));
+    await expect(page.getByTestId("sheet-file")).toHaveCount(0);
+    const opened = (await page.getByTestId("source-picker").getAttribute("data-file")) ?? "";
+    expect(FICTIONAL_1.files).toContain(opened);
+    await expect(page.locator(`[data-testid="source-tab"][data-file="${opened}"]`)).toBeVisible();
+    // 一覧を未確定の多い順にすると、開いた資料が先頭。Esc で閉じる
+    await page.getByTestId("source-picker").click();
+    await page.getByTestId("source-order").getByRole("button", { name: "未確定の多い順" }).click();
+    await expect(page.getByTestId("source-row").first()).toHaveAttribute("data-file", opened);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("source-list")).toHaveCount(0);
+    // ここからは最初の資料（設備台帳）で見る
+    await chooseSource(page, first);
     await expect(page.locator(`[data-testid="source-tab"][data-file="${first}"]`)).toBeVisible();
     await expect(page.getByTestId("source-filter")).toContainText("未確定行");
     await expect(page.getByTestId("source-legend")).toContainText("読取");
@@ -149,7 +160,7 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
     await expect(page.getByTestId("compose-disabled-reason")).toHaveCount(0);
   });
 
-  await test.step("第 1 版をつくる：見出しは「第 1 版　編集中」。知らせの箱と決定の一覧と「| 資料を重ねて第 1 版をつくる」は出さず、資料のタブを 1 つ選んだ形のまま。星取表のタブで見る", async () => {
+  await test.step("第 1 版をつくる：見出しは「第 1 版　編集中」。知らせの箱と決定の一覧と「| 資料を重ねて第 1 版をつくる」は出さず、資料を 1 つ選んだ形のまま。星取表のタブで見る", async () => {
     await page.getByTestId("compose").click();
     await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 20_000 });
     await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "human");
@@ -161,8 +172,8 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
     await expect(page.getByTestId("merge-page")).not.toContainText("資料を重ねて");
     await expect(page.getByTestId("sheet-chart")).toBeVisible();
     await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
-    await expect(page.locator('[data-testid="sheet-file"][aria-selected="true"]')).toHaveCount(1);
-    await expect(page.locator(`[data-testid="sheet-file"][data-file="${first}"]`)).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId("source-pick")).toHaveAttribute("data-selected", "true");
+    await expect(page.getByTestId("source-picker")).toHaveAttribute("data-file", first);
     await expect(page.getByTestId("composed")).toHaveCount(0);
     await expect(page.getByTestId("decisions")).toHaveCount(0);
     await expect(page.getByTestId("merge-page")).not.toContainText("決定の一覧");
@@ -177,7 +188,7 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
     await page.screenshot({ path: shot(`intake-chart-${tag}`) });
   });
 
-  await test.step("突き合せ：資料をまたいで結んだ作業を、資料ごとに並べる。重ねた資料は資料ごとのタブ", async () => {
+  await test.step("突き合せ：資料をまたいで結んだ作業を、資料ごとに並べる。重ねた資料は資料の選びで開く", async () => {
     await page.getByTestId("sheet-match").click();
     await expect(page.getByTestId("match-sheet")).toBeVisible();
     // 切り替えの「すべて」で、結んだ作業が並ぶ（星取表と作業日報の両方の列）
@@ -187,11 +198,10 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
     await expect(page.getByTestId("match-table")).toContainText("daily-report.csv");
     await expect(page.locator('[data-testid="match-row"][data-result="ok"]').first()).toContainText("✓ 一致");
     await page.screenshot({ path: shot(`intake-match-${tag}`) });
-    // 資料ごとのタブ：押すと、資料のシートでその資料を見せる
-    await expect(page.getByTestId("sheet-file")).toHaveCount(3);
-    await page.locator('[data-testid="sheet-file"][data-file="daily-report.csv"]').click();
-    await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
-    await expect(page.locator('[data-testid="sheet-file"][data-file="daily-report.csv"]')).toHaveAttribute("aria-selected", "true");
+    // 資料の選び：一覧で選ぶと、資料のシートでその資料を見せる
+    await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", "3");
+    await chooseSource(page, "daily-report.csv");
+    await expect(page.getByTestId("source-pick")).toHaveAttribute("data-selected", "true");
     // 資料のタブはその資料 1 つだけ（MERGE r2）：切り替え「未確定行 n ／ 全行 n」と凡例、元の表。行き先の一覧と AI の作業の記録は置かない
     await expect(page.locator('[data-testid="source-tab"][data-file="daily-report.csv"]')).toBeVisible();
     await expect(page.getByTestId("source-filter")).toContainText("全行");
@@ -204,7 +214,7 @@ test("資料を落とし、質問に答え、第 1 版をつくって星取表�
   });
 
   await test.step("つくったあとに答えを取り消すと、凡例の行の右端に「| 資料を重ねて第 1 版をつくる」。答え直すと押せ、つくり直すとまた出さない", async () => {
-    await page.locator(`[data-testid="sheet-file"][data-file="${first}"]`).click();
+    await chooseSource(page, first);
     await expect(page.locator(`[data-testid="source-tab"][data-file="${first}"]`)).toBeVisible();
     await expect(page.getByTestId("compose")).toHaveCount(0);
     await page.getByTestId("source-filter").locator("button", { hasText: "全行" }).click();

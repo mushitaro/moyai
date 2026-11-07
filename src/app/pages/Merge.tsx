@@ -1,12 +1,13 @@
 // MERGE（版に重ねる。docs/screens.md 3.2・3.3、絵は Review.dc.html）：資料・Claude の案・人の答えを、次の版に重ねる段。
 // 上は 2 行だけ（運営者の指示：データを広く）：見出しの 1 行（施設の名前・版・状態、右に施設の設定）と、シートのタブの 1 行。その下はすぐデータ。
-// シートのタブ：星取表｜読み方｜検査｜決定 n｜「資料」の札と資料ごとのタブ｜＋ 資料を足す。白紙（第 1 版の前）は「資料」の札と資料ごとのタブ｜＋ 資料を足す。
+// シートのタブ：星取表｜読み方｜検査｜決定 n｜「資料」の札・資料の選び・シートの選び｜＋ 資料を足す。白紙（第 1 版の前）は「資料」の札・資料の選び・シートの選び｜＋ 資料を足す。
+// 資料ごとのタブは並べない（200 ファイル・1 ファイル 12 シートを前提に。docs/screens.md 3.2「資料の選び」、Wire、11-07）。
 // 右の横の板は 1 枚で、切り替えは「決まっていない所 n（0 なら出さない）/ 署名 n / 出どころ（星取表のとき）」。印を選ぶと出どころへ。
 // 下の帯は、止め札（決まっていない所・受けていない決定・橋渡しが切れている）とボタンだけ。画面の説明と「Claude に話す」の例は置かない（説明は Claude がする）。
 // 画面のどこに資料を落としても受ける（引きずって入ったときだけ、全面に「第 n 版に重ねます」）。版の下書きが無いあいだは、資料のシートだけ（白紙。新しい施設）。
 import { setRemovedInHistory } from "../state/stars";
 import { Button, FileButton, Group, Text } from "@mantine/core";
-import { Suspense, lazy, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, useSyncExternalStore, type DragEvent } from "react";
 import type { Plan } from "../../shared/plan";
 import type { BridgeClient } from "../bridge-client";
 import { ConfirmDialog, HistoryDialog, readHuman, usePlanStatus } from "../components/ConfirmDialog";
@@ -33,28 +34,27 @@ import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { FacilityDialog } from "../components/FacilityDialog";
 import { setFacilityDialog } from "../state/facility-dialog";
-import { Intake, IntakeFacilityDialog, Questions, StopNoticeDetail, StopNotices, composeReasons, stopNotices, useWorkspace, type StopKind } from "./Intake";
+import { Intake, IntakeFacilityDialog, Questions, StopNoticeDetail, StopNotices, composeReasons, stopNotices, useSheets, useWorkspace, type StopKind } from "./Intake";
+import { RejectedDetail, SheetPicker, SourcePicker, defaultSource, sourceRows, type SheetRow, type SourceOrder, type SourceRow } from "../components/SourcePicker";
 
 const T = TEXT.merge;
-const SIDE_WIDTH = 340;
-const SIDE_MIN = 280;
-const SIDE_MAX = 560;
+/** 横の板の幅：320px に固定し、本体は残りの幅（docs/screens.md 3.2「資料の選び」の幅、Wire、11-07） */
+export const SIDE_WIDTH = 320;
 // 前の鍵（moyai.mergeSide）は、開いたままの folded: false を人が選ばなくても書いていたので読まない（既定をたたむに替えた。Wire、11-06）
 const SIDE_PREF = "moyai.mergeSide.2";
 /**
- * 横の板の開け閉めと幅（localStorage。読めなければ既定）。開け閉めは人が開け閉めしたときだけ覚える（folded が無ければ人はまだ選んでいない）。
- * 既定はたたむ（Wire、11-06。本体の年度の欄を広くとるため）
+ * 横の板の開け閉め（localStorage。読めなければ既定）。開け閉めは人が開け閉めしたときだけ覚える（folded が無ければ人はまだ選んでいない）。
+ * 既定はたたむ（Wire、11-06。本体の年度の欄を広くとるため）。幅は固定なので覚えない（前に覚えた幅は読まない）
  */
-function readSidePref(): { folded: boolean | null; width: number } {
+function readSidePref(): { folded: boolean | null } {
   try {
-    const v = JSON.parse(localStorage.getItem(SIDE_PREF) ?? "null") as { folded?: unknown; width?: unknown } | null;
-    const w = typeof v?.width === "number" ? Math.min(SIDE_MAX, Math.max(SIDE_MIN, v.width)) : SIDE_WIDTH;
-    return { folded: typeof v?.folded === "boolean" ? v.folded : null, width: w };
+    const v = JSON.parse(localStorage.getItem(SIDE_PREF) ?? "null") as { folded?: unknown } | null;
+    return { folded: typeof v?.folded === "boolean" ? v.folded : null };
   } catch {
-    return { folded: null, width: SIDE_WIDTH };
+    return { folded: null };
   }
 }
-function writeSidePref(p: { folded: boolean | null; width: number }): void {
+function writeSidePref(p: { folded: boolean | null }): void {
   try {
     localStorage.setItem(SIDE_PREF, JSON.stringify(p));
   } catch {
@@ -64,6 +64,24 @@ function writeSidePref(p: { folded: boolean | null; width: number }): void {
 // 星取表と検査は AG Grid や検査の関数を含むので、開いたときに読む
 const StarTable = lazy(() => import("./StarTable").then((m) => ({ default: m.StarTable })));
 const Review = lazy(() => import("./Review").then((m) => ({ default: m.Review })));
+
+/**
+ * 読込の途中だけ、選びの右に text-3 の「読込 120 / 200」（済んだら消す。docs/screens.md 3.2「資料の選び」）。
+ * 作業場は進みを知らせるだけで版を進めないので、この字だけが読み、画面の全体は描き直さない
+ */
+function SourceReading({ ws }: { ws: IntakeWorkspace }) {
+  const p = useSyncExternalStore(
+    (cb) => ws.subscribe(cb),
+    () => ws.readProgress,
+    () => ws.readProgress,
+  );
+  if (!p) return null;
+  return (
+    <span className="moyai-srcpick-reading moyai-num" data-testid="source-reading" data-done={p.done} data-total={p.total}>
+      {T.picker.reading(p.done, p.total)}
+    </span>
+  );
+}
 
 export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: BridgeClient; sheet: MergeSheet | null }) {
   useWorkspace(ws);
@@ -78,12 +96,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const nextPlan = useRef<Plan | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
   const [side, setSide] = useState<"open" | "signatures" | "source" | "comments">("open");
-  // 横の板の開け閉めと幅（この PC に 1 つだけ覚える。シートごとではない）。既定はたたむ。
+  // 横の板の開け閉め（この PC に 1 つだけ覚える。シートごとではない）。既定はたたむ。幅は 320px に固定（Wire、11-07）。
   // 本体の行・印・セルを選ぶ・開いた版に未回答があるときは開くが、それは覚えない（覚えるのは人が開け閉めしたときだけ。Wire、11-06）
   const [sideFoldPref, setSideFoldPref] = useState<boolean | null>(() => readSidePref().folded);
   const [sideFolded, setSideFolded] = useState<boolean>(() => readSidePref().folded ?? true);
-  const [sideWidth, setSideWidth] = useState<number>(() => readSidePref().width);
-  useEffect(() => writeSidePref({ folded: sideFoldPref, width: sideWidth }), [sideFoldPref, sideWidth]);
+  useEffect(() => writeSidePref({ folded: sideFoldPref }), [sideFoldPref]);
   /** 「| 見る」などで、その切り替えで板を開く（たたんでいたら開く。覚えない） */
   const showSide = (k: "open" | "signatures" | "source" | "comments") => {
     setSide(k);
@@ -107,21 +124,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  const startResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const x0 = e.clientX;
-    const w0 = sideWidth;
-    const move = (m: MouseEvent) => setSideWidth(Math.min(SIDE_MAX, Math.max(SIDE_MIN, w0 + (x0 - m.clientX))));
-    const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
   const [sourceEl, setSourceEl] = useState<HTMLElement | null>(null);
   // 下の帯の止まった知らせを押したとき、詳細にその記録を出す（本体の行・星取・セルを選ぶと、そちらに戻る）
   const [stop, setStop] = useState<StopKind | null>(null);
+  // 資料の一覧で選んだ読込不可の行：詳細にその理由を出す（本体の行・星取・セルを選ぶと、そちらに戻る）
+  const [rejectedShown, setRejectedShown] = useState<SourceRow | null>(null);
   // 資料のセルの詳細の「| 決める」で開いた質問（seq は押すたびに増やし、同じ質問でも見える所へ送り直す）
   const [focusQuestion, setFocusQuestion] = useState<{ questionId: string; seq: number } | null>(null);
   // コメント：保管先から読み、星取表で選んだ行に付ける
@@ -142,6 +149,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       el: sourceEl,
       show: () => {
         setStop(null);
+        setRejectedShown(null);
         setFocusQuestion(null);
         setSide("source");
         setSideFolded(false);
@@ -149,6 +157,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       // 未確定のセルの詳細の「| 決める」：板を「未回答」で開き、その質問へ（たたんでいたら開く。覚えない）
       openQuestion: (questionId: string) => {
         setStop(null);
+        setRejectedShown(null);
         setFocusQuestion((f) => ({ questionId, seq: (f?.seq ?? 0) + 1 }));
         setSide("open");
         setSideFolded(false);
@@ -353,11 +362,27 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const name = plan?.displayName || ws.settings.facilityName || T.newFacility;
   const fictional = plan ? plan.facility.fictional : ws.settings.fictional;
 
+  // 読込中の資料の名前（この画面から入れたもので、読み終わるまで。資料の一覧の「読込中」の行）
+  const [readingNames, setReadingNames] = useState<string[]>([]);
+  /** 資料を入れる（シートのタブの「＋ 資料を追加」・画面に落とす・資料が無いときの落とし場所） */
   const addFiles = async (files: File[]) => {
     if (!files.length) return;
-    await ws.addFiles(files.map((f) => ({ name: f.name, size: f.size, bytes: async () => new Uint8Array(await f.arrayBuffer()) })));
-    // 「架空」の印は、読み終わったあとの写しで見る
-    await ws.fresh(undefined, false).catch(() => undefined);
+    const names = files.map((f) => f.name);
+    setReadingNames((r) => [...r, ...names]);
+    try {
+      await ws.addFiles(files.map((f) => ({ name: f.name, size: f.size, bytes: async () => new Uint8Array(await f.arrayBuffer()) })));
+      // 「架空」の印は、読み終わったあとの写しで見る
+      await ws.fresh(undefined, false).catch(() => undefined);
+    } finally {
+      setReadingNames((r) => {
+        const left = [...r];
+        for (const n of names) {
+          const i = left.indexOf(n);
+          if (i >= 0) left.splice(i, 1);
+        }
+        return left;
+      });
+    }
     if (!ws.settings.fictional && ws.sourcesMarkedFictional()) ws.setFacility({ fictional: true });
     location.hash = sheetHash("files");
   };
@@ -374,13 +399,63 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     nextPlan.current = null;
     reloadStatus();
   };
-  // 突き合せは、このタブに資料が 2 つ以上あるとき。資料は、重ねた資料ごとのタブ（白紙でも同じ。Wire、11-07）
+  // 突き合せは、このタブに資料が 2 つ以上あるとき
   const fileNames = view ? view.files : [];
-  // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）。白紙のシートのタブは「資料」の札と資料ごとのタブと「＋ 資料を足す」だけ
+  // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）。白紙のシートのタブは「資料」の札と資料の選び・シートの選びと「＋ 資料を足す」だけ
   const tabs: MergeSheet[] = plan ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : [];
+  // 資料の一覧の行（読めた資料・読込中・読込不可。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）
+  const skipped = ws.skippedFiles;
+  const rows = useMemo(
+    () => sourceRows({ files: fileNames, sheets: view?.sheets ?? [], counts: view?.counts ?? [], rejected: [...skipped, ...(view?.rejected ?? [])], reading: readingNames }),
+    [view, readingNames, skipped.length],
+  );
+  const [order, setOrder] = useState<SourceOrder>("name");
   const fileParam = current === "files" ? new URLSearchParams(location.hash.split("?")[1] ?? "").get("f") : null;
-  // 資料のシートで見せる資料：?f= の資料。無ければ最初の資料（どの資料も選ばれていない形にしない）
-  const shownFile = current === "files" ? (fileParam && fileNames.includes(fileParam) ? fileParam : (fileNames[0] ?? null)) : null;
+  // 開く資料：?f= の資料、無ければこの画面で前に開いた資料、無ければ既定（第 1 版の前は未確定のいちばん多い資料、版のあとは名前順の最初）。
+  // 前に開いた資料を覚えるのは、答えて未確定の数が変わっても、見ている資料を替えないため
+  const [pinnedFile, setPinnedFile] = useState<string | null>(null);
+  const readySet = useMemo(() => new Set(fileNames), [fileNames]);
+  const pickedFile = fileParam && readySet.has(fileParam) ? fileParam : pinnedFile && readySet.has(pinnedFile) ? pinnedFile : defaultSource(rows, !plan);
+  const shownFile = current === "files" ? pickedFile : null;
+  useEffect(() => {
+    if (current === "files" && pickedFile && pickedFile !== pinnedFile) setPinnedFile(pickedFile);
+  }, [current, pickedFile, pinnedFile]);
+  // シートの選び：資料ごとに、この画面で選んだシート（並びは取り込みの順。無ければ最初のシート）
+  const [sheetOf, setSheetOf] = useState<Record<string, number>>({});
+  const sheetNames = useMemo(() => (pickedFile ? (view?.sheets ?? []).filter((s) => s.file === pickedFile).map((s) => s.sheet ?? s.file) : []), [view, pickedFile]);
+  const sheetIndex = pickedFile ? Math.min(sheetOf[pickedFile] ?? 0, Math.max(0, sheetNames.length - 1)) : 0;
+  // 資料のシートを見ているときは、開いている資料のシート（セルと行き先）を読む。シートの一覧の「未確定 n」はここから数える
+  const sheetsOf = useSheets(ws, shownFile);
+  const sheetRows = useMemo<SheetRow[]>(
+    () =>
+      sheetNames.map((name, i) => {
+        const lay = sheetsOf && sheetsOf.length === sheetNames.length && sheetsOf[0]?.file === pickedFile ? sheetsOf[i] : undefined;
+        if (!lay) return { name, open: null };
+        const open = new Set<number>();
+        for (const c of lay.grid.cells) if (lay.status.get(c.ref)?.s === "unresolved") open.add(c.r);
+        return { name, open: open.size };
+      }),
+    [sheetNames, sheetsOf, pickedFile],
+  );
+  const toFile = (name: string) => {
+    setPinnedFile(name);
+    location.hash = `${sheetHash("files")}?f=${encodeURIComponent(name)}`;
+  };
+  const chooseSource = (r: SourceRow) => {
+    if (r.state === "ready") {
+      setRejectedShown(null);
+      return toFile(r.name);
+    }
+    // 読込不可：理由は詳細に（Wire、11-07）
+    setStop(null);
+    setRejectedShown(r);
+    showSide("source");
+  };
+  const chooseSheet = (i: number) => {
+    if (!pickedFile) return;
+    setSheetOf((m) => ({ ...m, [pickedFile]: i }));
+    if (current !== "files") toFile(pickedFile);
+  };
   // 白紙で資料が入ったら、道を資料のシートにしておく（第 1 版をつくったあとも、資料のタブを選んだ形で開く。Wire、11-07）。
   // 版を開くリンク（?open=）と開発の見本（?plan=）のときは替えない
   useEffect(() => {
@@ -398,7 +473,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const madeByMe = !!latestInfo?.signatures.some((x) => (x.role === "confirm" || x.role === "edit" || x.role === "revert") && x.trust === "own");
   // 詳しく：どのシートでも、本体で選んだ行・印・セルの全文と根拠を出す所（前の「出どころ」。Wire、2026-11-05）
   const stopShown = stop !== null && stopNotices(ws.notices)[stop].length > 0 ? stop : null;
-  const sideSource = !!plan || (current === "files" && fileNames.length > 0) || stopShown !== null;
+  const sideSource = !!plan || (current === "files" && fileNames.length > 0) || stopShown !== null || rejectedShown !== null;
+  // 詳細に、シートが描いたものの代わりに出す記録（止まった知らせ・読込不可の資料の理由）。シートが描いた詳細は隠して残す
+  const sideNote = stopShown ? <StopNoticeDetail notices={ws.notices} kind={stopShown} /> : rejectedShown ? <RejectedDetail row={rejectedShown} /> : null;
   const sideComments = !!plan;
   const can = { open: sideOpen, signatures: !!latestInfo, source: sideSource, comments: sideComments };
   const sideNow: "open" | "signatures" | "source" | "comments" | null = can[side] ? side : sideOpen ? "open" : latestInfo ? "signatures" : sideSource ? "source" : sideComments ? "comments" : null;
@@ -512,8 +589,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         </Text>
       )}
 
-      <Group justify="space-between" px={32} pt={4} wrap="nowrap" className="moyai-sheet-tabs">
-        <Group gap={0} wrap="nowrap" role="tablist">
+      {/* シートのタブの 1 行：折り返さない。入らないときは資料の名前から切る（docs/screens.md 3.2「資料の選び」の幅） */}
+      <div className="moyai-sheet-tabs moyai-merge-tabs" data-testid="merge-tabs">
+        <div className="moyai-merge-tablist" role="tablist">
           {tabs.map((s) => (
             <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s)} aria-selected={current === s} data-testid={`sheet-${s}`}>
               {T.sheets[s]}
@@ -521,16 +599,14 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               {s === "decisions" && leftDecisions > 0 && <span className="moyai-sheet-n moyai-num">{leftDecisions}</span>}
             </a>
           ))}
-          {fileNames.length > 0 && (
+          {rows.length > 0 && (
             <>
               <span className="moyai-sheet-label">{T.filesLabel}</span>
-              {fileNames.map((f) => (
-                <a key={f} role="tab" className="moyai-sheet-tab" href={`${sheetHash("files")}?f=${encodeURIComponent(f)}`} aria-selected={shownFile === f} data-testid="sheet-file" data-file={f}>
-                  {f}
-                </a>
-              ))}
+              <SourcePicker rows={rows} current={pickedFile} selected={current === "files"} order={order} onOrder={setOrder} onChoose={chooseSource} />
+              {sheetRows.length >= 2 && <SheetPicker key={pickedFile ?? ""} rows={sheetRows} current={sheetIndex} onChoose={chooseSheet} />}
             </>
           )}
+          <SourceReading ws={ws} />
           <FileButton multiple onChange={(fs) => void addFiles(fs)}>
             {(props) => (
               <button type="button" className="moyai-sheet-tab" {...props} data-testid="merge-add-files">
@@ -538,8 +614,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               </button>
             )}
           </FileButton>
-        </Group>
-      </Group>
+        </div>
+      </div>
 
       <MergePeersContext.Provider value={peersOn}>
       <MergeCompareContext.Provider value={compare}>
@@ -556,7 +632,16 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
           <div style={{ display: current === "files" ? undefined : "none" }}>
-            <Intake ws={ws} file={shownFile} composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst} composeInBar={!plan} composeOffered={!!plan && ws.uncomposed(plan.planId)} />
+            <Intake
+              ws={ws}
+              file={shownFile}
+              layouts={sheetsOf}
+              sheetIndex={sheetIndex}
+              onAddFiles={addFiles}
+              composeLabel={plan ? T.composeNext(nextVersion) : T.composeFirst}
+              composeInBar={!plan}
+              composeOffered={!!plan && ws.uncomposed(plan.planId)}
+            />
           </div>
         </div>
         {sideNow && sideFolded && (
@@ -591,17 +676,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           </aside>
         )}
         {sideNow && !sideFolded && (
-          <div
-            className="moyai-side-resize"
-            role="separator"
-            aria-orientation="vertical"
-            onMouseDown={startResize}
-            onDoubleClick={() => setSideWidth(SIDE_WIDTH)}
-            data-testid="side-resize"
-          />
-        )}
-        {sideNow && !sideFolded && (
-          <aside className="moyai-merge-side" style={{ width: sideWidth }} data-testid="merge-side">
+          <aside className="moyai-merge-side" style={{ width: SIDE_WIDTH }} data-testid="merge-side">
             <button type="button" className="moyai-side-fold" onClick={() => foldSide(true)} aria-label={T.side.fold} data-testid="side-fold">
               ›
             </button>
@@ -648,10 +723,10 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             {/* 詳しくは、星取表・検査のシートがここへ描く。見ていないあいだも場所は残す。何も選んでいなければ 1 行 */}
             {sideSource && (
               <div style={{ display: sideNow === "source" ? undefined : "none" }}>
-                {/* 止まった知らせを押したあいだは、その記録だけ（シートが描いた詳細は隠して残す） */}
-                {stopShown && <StopNoticeDetail notices={ws.notices} kind={stopShown} />}
-                <div ref={setSourceEl} className="moyai-side-detail" style={stopShown ? { display: "none" } : undefined} />
-                {!stopShown && (
+                {/* 止まった知らせ・読込不可の資料を押したあいだは、その記録だけ（シートが描いた詳細は隠して残す） */}
+                {sideNote}
+                <div ref={setSourceEl} className="moyai-side-detail" style={sideNote ? { display: "none" } : undefined} />
+                {!sideNote && (
                   <Text size="sm" c="dimmed" className="moyai-side-detail-empty" data-testid="side-detail-empty">
                     {T.side.detailEmpty}
                   </Text>
@@ -696,6 +771,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             notices={ws.notices}
             onShow={(k) => {
               setStop(k);
+              setRejectedShown(null);
               showSide("source");
             }}
           />

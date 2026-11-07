@@ -113,9 +113,9 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
         return d;
       }, files);
       await pa.getByTestId("drop").dispatchEvent("drop", { dataTransfer: dt });
-      // 資料ごとのタブ（白紙でも同じ。docs/screens.md 3.3）。最初の資料が選ばれている
-      await expect(pa.getByTestId("sheet-file")).toHaveCount(files.length, { timeout: 20_000 });
-      await expect(pa.locator('[data-testid="sheet-file"][aria-selected="true"]')).toHaveCount(1);
+      // 資料の選び（白紙でも同じ。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）。未確定のいちばん多い資料が開いている
+      await expect(pa.getByTestId("source-picker")).toHaveAttribute("data-count", String(files.length), { timeout: 20_000 });
+      await expect(pa.getByTestId("source-picker")).not.toHaveAttribute("data-file", "");
       await pa.screenshot({ path: shot("demo-02-files") });
     });
 

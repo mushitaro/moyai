@@ -109,10 +109,12 @@ body {
   overflow: auto;
 }
 
-/* MERGE（docs/screens.md 3.2）：見出し・シートのタブ・本体（シート＋右の横の板）・下の帯。本体だけが送られる */
+/* MERGE（docs/screens.md 3.2）：見出し・シートのタブ・本体（シート＋右の横の板）・下の帯。本体だけが送られる。
+   ページは横に送らない（画面の外へ出るものを作らない。「資料の選び」の幅、Wire、11-07）：幅の下限を置かず、はみ出しは本体の中で送る */
 .moyai-merge {
   height: 100%;
-  min-width: 1024px;
+  min-width: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -291,6 +293,219 @@ button.moyai-merge-link {
 .moyai-sheet-tabs input[type="file"]:first-child + .moyai-sheet-tab::before {
   display: none;
 }
+/* シートのタブの行（MERGE）：折り返さない。入らないときは資料の名前から切る（ほかの項目は縮めない。docs/screens.md 3.2「資料の選び」の幅） */
+.moyai-merge-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  padding: 4px var(--sp-7) 0;
+}
+.moyai-merge-tablist {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.moyai-merge-tablist > * {
+  flex: none;
+}
+/* 資料の選びとシートの選び（Wire、11-07）：「daily-report.xlsx ▾　3 / 200　‹ ›」「4月 ▾　1 / 12」。項目の間はシートのタブと同じ短い縦の罫 */
+.moyai-merge-tablist > .moyai-srcpick-source {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.moyai-srcpick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.moyai-srcpick::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 13px;
+  width: 1px;
+  height: 10px;
+  background: var(--line-strong);
+}
+.moyai-sheet-label + .moyai-srcpick {
+  padding-left: 0;
+}
+.moyai-sheet-label + .moyai-srcpick::before {
+  display: none;
+}
+.moyai-srcpick > * {
+  flex: none;
+}
+/* 名前の入る所だけ縮む：名前は最大 280px、入らなければ後ろを「…」（title に全文） */
+.moyai-srcpick > :first-child {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.moyai-srcpick-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.moyai-srcpick-button:hover,
+.moyai-srcpick[data-selected="true"] .moyai-srcpick-button {
+  color: var(--text);
+}
+.moyai-srcpick[data-selected="true"] .moyai-srcpick-label {
+  font-weight: 500;
+}
+.moyai-srcpick-label {
+  min-width: 0;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.moyai-srcpick-caret {
+  flex: none;
+}
+.moyai-srcpick-pos,
+.moyai-srcpick-reading {
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.moyai-srcpick-reading {
+  padding: 0 12px;
+  font-size: 12px;
+}
+.moyai-srcpick-steps {
+  display: inline-flex;
+  gap: 4px;
+}
+.moyai-srcpick-step {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.moyai-srcpick-step:hover {
+  color: var(--text);
+}
+.moyai-srcpick-step:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+/* 一覧：幅 520px、高さは画面の 60% まで、中で縦に送る。行「名前｜シート n｜未確定 n｜状態」 */
+.moyai-srcpick-dropdown {
+  padding: var(--sp-3) 0;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+}
+.moyai-srcpick-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+.moyai-srcpick-filter {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: var(--layer-1);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.moyai-srcpick-filter::placeholder {
+  color: var(--text-3);
+}
+.moyai-srcpick-filter:focus {
+  outline: none;
+  background: var(--layer-2);
+}
+.moyai-srcpick-rows {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.moyai-srcpick-rows:focus {
+  outline: none;
+}
+.moyai-srcpick-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 88px 64px;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 28px;
+  padding: 0 var(--sp-4);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.moyai-srcpick-sheets .moyai-srcpick-row {
+  grid-template-columns: minmax(0, 1fr) 88px;
+}
+.moyai-srcpick-row[aria-selected="true"] {
+  background: var(--layer-1);
+  box-shadow: inset 2px 0 0 var(--text);
+}
+.moyai-srcpick-row[data-current="true"] {
+  font-weight: 500;
+}
+.moyai-srcpick-row[aria-disabled="true"] {
+  cursor: default;
+  color: var(--text-3);
+}
+.moyai-srcpick-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moyai-srcpick-open {
+  color: var(--text-3);
+}
+.moyai-srcpick-open[data-shu="true"] {
+  color: var(--shu-text);
+}
+.moyai-srcpick-state[data-state="reading"] {
+  color: var(--text-3);
+}
+.moyai-srcpick-state[data-state="rejected"] {
+  color: var(--shu-text);
+}
+/* 詳細：読込不可の資料の名前・「読込不可」（朱）・理由 */
+.moyai-srcpick-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-size: 14px;
+}
+.moyai-srcpick-detail-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.moyai-srcpick-detail-state {
+  color: var(--shu-text);
+}
+.moyai-srcpick-detail-reason {
+  overflow-wrap: anywhere;
+}
 .moyai-merge-body {
   flex: 1;
   min-height: 0;
@@ -301,11 +516,11 @@ button.moyai-merge-link {
   min-width: 0;
   overflow: auto;
 }
-/* 横の板は 1 枚（地は --layer-1、余白 24px で見出しの行とそろえる） */
+/* 横の板は 1 枚（地は --layer-1、余白 24px で見出しの行とそろえる）。幅は 320px に固定し、本体は残りの幅（Wire、11-07） */
 .moyai-merge-side {
   position: relative;
   flex: none;
-  width: 340px;
+  width: 320px;
   overflow: auto;
   padding: var(--sp-6);
   background: var(--layer-1);
@@ -327,18 +542,6 @@ button.moyai-merge-link {
 }
 .moyai-side-fold:hover {
   color: var(--text);
-}
-/* データとの境目（引いて幅を変える。ダブルクリックで 340px） */
-.moyai-side-resize {
-  flex: none;
-  width: 4px;
-  margin-right: -4px;
-  cursor: col-resize;
-  background: transparent;
-  z-index: 1;
-}
-.moyai-side-resize:hover {
-  background: var(--line-strong);
 }
 /* たたんだ帯：幅 40px。切り替えの名前と数を縦書きで並べ、決まっていない所の数は朱 */
 .moyai-merge-side-band {
@@ -383,9 +586,6 @@ button.moyai-merge-link {
     bottom: 0;
     z-index: 5;
     border-left: 1px solid var(--line-strong);
-  }
-  .moyai-side-resize {
-    display: none;
   }
 }
 .moyai-merge-bar {
@@ -991,6 +1191,23 @@ tr.moyai-pick-row[aria-selected="true"] {
 .moyai-settings-label {
   flex: none;
   width: 72px;
+}
+/* 設定の「表示」の最終年度の欄（等幅。空の字「2040」。docs/screens.md 3.7） */
+.moyai-display-year {
+  width: 72px;
+  height: 28px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: var(--layer-1);
+  color: var(--text);
+  font-size: 14px;
+}
+.moyai-display-year::placeholder {
+  color: var(--text-3);
+}
+.moyai-display-year:focus {
+  outline: none;
+  background: var(--layer-2);
 }
 
 /* ダイアログの中の欄（却下の「判断の理由」）：上の欄と同じ layer-2 の地。ダイアログも layer-2 なので、罫で欄と分かる形にする（Wire、11-06） */

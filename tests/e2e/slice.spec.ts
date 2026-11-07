@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { attr, f1Rules } from "../fixtures/crosswalk/rules";
-import { acceptDecisions, acceptRules, callTool as call, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, acceptRules, callTool as call, chooseFirstSource, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（AI と人）";
 const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
@@ -255,8 +255,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.getByTestId("moyai-next").first().click();
       // 第 1 版の資料と決定が戻るのを待つ。質問は戻した決定で残らない
       await expect(page.getByTestId("intake-page")).toHaveAttribute("data-restored-from", "1", { timeout: 60_000 });
-      await expect(page.getByTestId("sheet-file")).toHaveCount(3);
-      await page.getByTestId("sheet-file").first().click();
+      await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", "3");
+      await chooseFirstSource(page);
       await expect(page.getByTestId("source-tab")).toBeVisible();
       // 戻した直後は第 1 版に入っていない変更が無いので、人の「| 資料を重ねて第 2 版をつくる」は出さない（docs/screens.md 3.3 の末尾「写しの照らし」）。
       // 作り直しは AI の intake_compose で
@@ -285,7 +285,9 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       }).toPass({ timeout: 30_000 });
       await page.screenshot({ path: shot(`slice-readings-${tag}`), fullPage: true });
       await expect(async () => {
-        await page.getByTestId("sheet-file").first().click();
+        // 資料の選びの一覧を開き（開いていれば開いたまま）、名前順の最初の資料を選ぶ
+        if (!(await page.getByTestId("source-list").isVisible())) await page.getByTestId("source-picker").click();
+        await page.locator('[data-testid="source-row"][data-state="ready"]').first().click({ timeout: 2000 });
         await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files", { timeout: 2000 });
       }).toPass({ timeout: 30_000 });
       await page.screenshot({ path: shot(`slice-files-${tag}`), fullPage: true });
@@ -305,7 +307,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
 
     await test.step("同じタブで第 2 版を確定して作り直すと、案は「第 2 版と同じ」になる（台帳の新-9）", async () => {
       // 写しのために読み方の下書きを置いたので、作り直すまで署名できない（台帳の中-6）。作り直してから受ける
-      await page.getByTestId("sheet-file").first().click();
+      await chooseFirstSource(page);
       await expect(page.getByTestId("compose")).toBeEnabled({ timeout: 60_000 });
       await page.getByTestId("compose").click();
       await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done", { timeout: 60_000 });
@@ -316,7 +318,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
       await page.getByTestId("confirm-close").click();
-      await page.getByTestId("sheet-file").first().click();
+      await chooseFirstSource(page);
       await expect(page.getByTestId("source-tab")).toBeVisible();
       // 確定した直後は第 2 版に入っていない変更が無いので、人のボタンは出さない。作り直しは AI の intake_compose で
       await expect(page.getByTestId("compose")).toHaveCount(0);

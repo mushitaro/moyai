@@ -6,7 +6,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { E2E_NAME, acceptDecisions, callTool as call, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, acceptDecisions, callTool as call, chooseFirstSource, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】星取の削除を残す";
 const REASON = "試験の台本が押した（利用者が二重の記録と言った実績を消す）";
@@ -129,7 +129,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await page.evaluate(() => (location.hash = "#/"));
       await page.getByTestId("moyai-next").first().click();
       await expect(page.getByTestId("intake-page")).toHaveAttribute("data-restored-from", "2", { timeout: 60_000 });
-      await page.getByTestId("sheet-file").first().click();
+      await chooseFirstSource(page);
       await expect(page.getByTestId("source-tab")).toBeVisible();
       // 戻した直後は第 2 版に入っていない変更が無いので、人の「| 資料を重ねて第 3 版をつくる」は出さない（docs/screens.md 3.3 の末尾「写しの照らし」）。
       // 作り直しは AI の intake_compose で

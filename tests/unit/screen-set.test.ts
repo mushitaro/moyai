@@ -348,14 +348,19 @@ describe("Excel と版の記録", () => {
 });
 
 describe("設定の「表示」の節（人が切り替える所）", () => {
-  it("階層・並び・最大年度の切り替えがあり、今の見せ方を出す。作業中の計画が無ければそう出す", () => {
+  it("階層・並び・最終年度の切り替えがあり、今の見せ方を出す（docs/screens.md 3.7 の字）。作業中の計画が無ければ「作業中の計画なし」", () => {
     setDisplayPrefs(FAC, { levelOrder: "series-first", lastFiscalYear: 2040 });
     const html = renderToStaticMarkup(createElement(DisplaySettings, { plan: screenPlan() }));
-    for (const id of ["display-level-order", "display-row-order", "display-row-parent", "display-last-year", "display-last-year-input"]) expect(html).toContain(`data-testid="${id}"`);
-    expect(html).toMatch(/aria-pressed="true"[^>]*>設備 › 号炉・系統 › 機器</);
-    expect(html).toContain("2040 年度");
-    expect(html).toContain("計画の最後の年度に戻す");
-    expect(renderToStaticMarkup(createElement(DisplaySettings, { plan: null }))).toContain("作業中の計画がありません");
+    for (const id of ["display-level-order", "display-row-order", "display-last-year", "display-last-year-input", "display-last-year-reset"]) expect(html).toContain(`data-testid="${id}"`);
+    // 並べ替えはここでしない（「親の行」「上へ」は置かない）
+    expect(html).not.toContain('data-testid="display-row-parent"');
+    expect(html).not.toContain("親の行");
+    // 号炉・系統の字は Skillパックの既定の階層の名前（ごみ焼却は号炉）
+    expect(html).toMatch(/aria-pressed="true"[^>]*>設備 › 号炉 › 機器</);
+    expect(html).toMatch(/aria-pressed="false"[^>]*>設備 › 機器 › 号炉</);
+    expect(html).toMatch(/data-testid="display-last-year-input"[^>]*value="2040"|value="2040"[^>]*data-testid="display-last-year-input"/);
+    expect(html).toContain("計画の最終年度に戻す");
+    expect(renderToStaticMarkup(createElement(DisplaySettings, { plan: null }))).toContain("作業中の計画なし");
   });
 
   it("入れ替えられる親の行と子の並びは、AI の rowOrder と同じ関数で動く", () => {

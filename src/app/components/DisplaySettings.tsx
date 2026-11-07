@@ -1,8 +1,11 @@
-// 設定の「表示」の節（仕事 chat-ops-v1。置き場と字は docs/screens.md に無いので仮。Wire の確認待ち）：
-// 星取表の階層の並び・機器の並び・計画の最大年度を、作業中の計画の施設ごとに人が切り替える。
-// AI の screen_set と同じ関数（state/screen.ts の setDisplayPrefs、plan/chart.ts の siblingOrder）を通す。見せ方だけで、計画は変えない。
+// 設定の「表示」の節（docs/screens.md 3.7、Wire、11-07。言葉は docs/words.md）：星取表の見せ方。施設ごとにブラウザに覚え、版には入れない。
+// 押すとすぐ効く（上の行の「保存」とは別）。ふだんは Claude との会話で変えるので、ここは今の値と戻す口だけ：
+// 階層「設備 › 機器 › 号炉」「設備 › 号炉 › 機器」の切り替え（号炉・系統の字は Skillパックの既定の階層の名前）、並び「計画の順」か「入れ替え n」と「| 計画の順に戻す」
+// （並べ替えはここでしない。「親の行」「上へ」は置かない）、最終年度（等幅の欄と「| 適用」、既定は「計画の最終年度」、変えたら「| 計画の最終年度に戻す」、
+// 当てられないときは「理由：2040 年度より後の星取 n」）。作業中の計画が無ければ「作業中の計画なし」の 1 行。
+// AI の screen_set と同じ関数（state/screen.ts の setDisplayPrefs）を通す。見せ方だけで、計画は変えない。
 import { useMemo, useState } from "react";
-import { buildChart, siblingOrder, type ChartModel } from "../../plan/chart";
+import { buildChart, type ChartModel } from "../../plan/chart";
 import type { Plan } from "../../shared/plan";
 import { LEVEL_ORDERS, type LevelOrder } from "../../shared/tools";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
@@ -38,37 +41,50 @@ export function reorderParents(model: ChartModel): { id: string; name: string; c
   return [...by.entries()].filter(([, c]) => c.length >= 2).map(([id, children]) => ({ id, name: id === "" ? T.rowOrderTop : nameOf(id), children }));
 }
 
+/** 号炉・系統の階層の名前（Skillパックの既定。ごみ焼却は号炉、し尿は系統。無ければ「号炉・系統」） */
+export function seriesLevelName(packId: string): string {
+  return catalogFor(packId)?.seriesUnit ?? T.seriesFallback;
+}
+
+/** 最終年度の欄の字を読む：当てられる年度か、当てられない理由（その年度より後の星取の数）か、読めない（null） */
+export function lastYearCheck(plan: Plan, text: string): { year: number; after: number } | null {
+  const t = text.normalize("NFKC").trim();
+  if (!/^\d{4}$/.test(t)) return null;
+  const y = Number(t);
+  if (y < FISCAL_YEAR_MIN || y > FISCAL_YEAR_MAX) return null;
+  // 列は星取を隠さない：その年度より後の星取があれば当てない（screen_set と同じ決まり）
+  return { year: y, after: plan.details.filter((d) => d.fiscalYear > y).length };
+}
+
 export function DisplaySettings({ plan }: { plan: Plan | null }) {
   const key = plan?.facility.facilityKey ?? null;
   const prefs = useDisplayPrefs(key);
-  const model = useMemo(() => (plan ? displayModel(plan, prefs) : null), [plan, prefs]);
-  const parents = useMemo(() => (model ? reorderParents(model) : []), [model]);
-  const [parent, setParent] = useState("");
-  const [year, setYear] = useState("");
-  const [yearError, setYearError] = useState<string | null>(null);
-  if (!plan || !key || !model) return <span data-testid="display-no-plan">{T.displayNoPlan}</span>;
-  const lastStar = plan.details.length > 0 ? plan.details.reduce((m, d) => Math.max(m, d.fiscalYear), -Infinity) : null;
+  // 欄の字（人が打っているあいだだけ持つ。打っていなければ今の最終年度）
+  const [typed, setTyped] = useState<string | null>(null);
+  const series = useMemo(() => (plan ? seriesLevelName(plan.packId) : T.seriesFallback), [plan?.packId]);
+  if (!plan || !key) {
+    return (
+      <span style={{ fontSize: "var(--mantine-font-size-sm)", color: "var(--text-3)" }} data-testid="display-no-plan">
+        {T.displayNoPlan}
+      </span>
+    );
+  }
   const moved = Object.keys(prefs.rowOrder).length;
-  const chosen = parents.find((p) => p.id === parent) ?? null;
-  const applyYear = () => {
-    const y = Number(year.trim());
-    if (!Number.isInteger(y) || y < FISCAL_YEAR_MIN || y > FISCAL_YEAR_MAX) return setYearError(T.lastYearInput);
-    if (lastStar !== null && y < lastStar) return setYearError(T.lastYearBefore(y));
-    setYearError(null);
-    setDisplayPrefs(key, { lastFiscalYear: y });
-    setYear("");
-  };
-  const up = (i: number) => {
-    if (!chosen || i === 0) return;
-    const r = siblingOrder(model, chosen.children[i]!.id, chosen.children[i - 1]!.id);
-    if (typeof r === "string") return;
-    setDisplayPrefs(key, { rowOrder: { ...prefs.rowOrder, [r.parent]: r.order } });
+  const text = typed ?? (prefs.lastFiscalYear === null ? "" : String(prefs.lastFiscalYear));
+  const check = lastYearCheck(plan, text);
+  const blocked = check !== null && check.after > 0;
+  const canApply = check !== null && !blocked && check.year !== prefs.lastFiscalYear;
+  const apply = () => {
+    if (!canApply || !check) return;
+    setDisplayPrefs(key, { lastFiscalYear: check.year });
+    setTyped(null);
   };
   const label = (s: string) => (
     <span className="moyai-settings-label" style={{ fontSize: "var(--mantine-font-size-xs)", color: "var(--text-3)", minWidth: 72, display: "inline-block" }}>
       {s}
     </span>
   );
+  const levels = T.levelOrder(series);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }} data-testid="display-settings">
       <div style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
@@ -76,69 +92,60 @@ export function DisplaySettings({ plan }: { plan: Plan | null }) {
         <Switch<LevelOrder>
           value={prefs.levelOrder}
           onChange={(v) => setDisplayPrefs(key, { levelOrder: v })}
-          data={LEVEL_ORDERS.map((v) => ({ value: v, label: T.levelOrder[v] ?? v }))}
+          data={LEVEL_ORDERS.map((v) => ({ value: v, label: levels[v] }))}
           aria-label={T.levelOrderLabel}
           data-testid="display-level-order"
         />
       </div>
       <div style={{ display: "flex", gap: 12, alignItems: "baseline", flexWrap: "wrap" }} data-testid="display-row-order">
         {label(T.rowOrderLabel)}
-        <span style={{ fontSize: "var(--mantine-font-size-sm)" }}>{moved === 0 ? T.rowOrderDefault : T.rowOrderChanged(moved)}</span>
+        <span style={{ fontSize: "var(--mantine-font-size-sm)" }} className={moved > 0 ? "moyai-num" : undefined} data-testid="display-row-order-value">
+          {moved === 0 ? T.rowOrderDefault : T.rowOrderChanged(moved)}
+        </span>
         {moved > 0 && (
           <button type="button" className="moyai-inline-act" onClick={() => setDisplayPrefs(key, { rowOrder: DEFAULT_DISPLAY.rowOrder })} data-testid="display-row-order-reset">
             {T.rowOrderReset}
           </button>
         )}
-        {parents.length > 0 && (
-          <select aria-label={T.rowOrderParent} value={parent} onChange={(e) => setParent(e.currentTarget.value)} data-testid="display-row-parent">
-            <option value="">{T.rowOrderParent}</option>
-            {parents.map((p) => (
-              <option key={p.id || "top"} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        )}
       </div>
-      {chosen && (
-        <ol style={{ margin: 0, paddingLeft: 96, fontSize: "var(--mantine-font-size-sm)" }} data-testid="display-row-children">
-          {chosen.children.map((c, i) => (
-            <li key={c.id} data-row={c.id}>
-              {c.name}
-              {i > 0 && (
-                <button type="button" className="moyai-inline-act" onClick={() => up(i)} data-testid="display-row-up">
-                  {T.rowOrderUp}
-                </button>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
       <div style={{ display: "flex", gap: 12, alignItems: "baseline", flexWrap: "wrap" }} data-testid="display-last-year">
         {label(T.lastYearLabel)}
-        <span style={{ fontSize: "var(--mantine-font-size-sm)" }} className="moyai-num">
-          {prefs.lastFiscalYear === null ? T.lastYearNone : T.lastYearValue(prefs.lastFiscalYear)}
-        </span>
         <input
-          aria-label={T.lastYearInput}
-          placeholder={T.lastYearInput}
+          className="moyai-display-year moyai-num"
+          aria-label={T.lastYearLabel}
+          placeholder={T.lastYearPlaceholder}
           inputMode="numeric"
-          value={year}
-          onChange={(e) => setYear(e.currentTarget.value)}
-          style={{ width: 140 }}
+          maxLength={4}
+          value={text}
+          onChange={(e) => setTyped(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") apply();
+          }}
           data-testid="display-last-year-input"
         />
-        <button type="button" className="moyai-inline-act" onClick={applyYear} disabled={year.trim() === ""} data-testid="display-last-year-apply">
+        <button type="button" className="moyai-inline-act" onClick={apply} disabled={!canApply} data-testid="display-last-year-apply">
           {T.lastYearApply}
         </button>
-        {prefs.lastFiscalYear !== null && (
-          <button type="button" className="moyai-inline-act" onClick={() => setDisplayPrefs(key, { lastFiscalYear: null })} data-testid="display-last-year-reset">
+        {prefs.lastFiscalYear === null ? (
+          <span style={{ fontSize: "var(--mantine-font-size-xs)", color: "var(--text-3)" }} data-testid="display-last-year-default">
+            {T.lastYearDefault}
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="moyai-inline-act"
+            onClick={() => {
+              setDisplayPrefs(key, { lastFiscalYear: null });
+              setTyped(null);
+            }}
+            data-testid="display-last-year-reset"
+          >
             {T.lastYearReset}
           </button>
         )}
-        {yearError && (
-          <span style={{ fontSize: "var(--mantine-font-size-xs)", color: "var(--shu-text)" }} data-testid="display-last-year-error">
-            {yearError}
+        {blocked && check && (
+          <span style={{ fontSize: "var(--mantine-font-size-xs)", color: "var(--text-3)" }} data-testid="display-last-year-blocked">
+            {T.lastYearBlocked(check.year, check.after)}
           </span>
         )}
       </div>

@@ -130,6 +130,23 @@ function Val({ children, testid, mono = true }: { children: React.ReactNode; tes
   );
 }
 
+/** Claude が保存先の欄に入れたときの、欄の下の 1 行：朱の小さな字「- Claude の入力」と、その右に text-3 で「前　（元の道）」 */
+export function RootOffered({ before }: { before: string | null }) {
+  return (
+    <Group gap="md" wrap="nowrap" align="baseline" data-testid="root-offered">
+      <Text size="xs" c="var(--shu-text)" style={{ whiteSpace: "nowrap", letterSpacing: "0.1em" }} data-testid="root-offered-mark">
+        {T.rootOfferedMark}
+      </Text>
+      <Text size="xs" c="var(--text-3)" data-testid="root-offered-before" style={{ overflowWrap: "anywhere" }}>
+        {`${T.rootBefore}　`}
+        <Text span size="xs" ff="monospace" c="var(--text-3)">
+          {before ?? <NoneMark />}
+        </Text>
+      </Text>
+    </Group>
+  );
+}
+
 export function Settings() {
   const { client, state } = useConnection();
   const [s, setS] = useState<SettingsBody | null>(null);
@@ -160,14 +177,15 @@ export function Settings() {
 
   // Claude が screen_set で渡した保存先の道（橋渡しが設定と同じ確かめを通したもの）：保存先の欄に入れて開くだけ。保存は人が押す
   const offered = useRootOffer();
-  const [rootOffered, setRootOffered] = useState(false);
+  // Claude が入れた道（人が欄を書き替えたら、Claude の入力ではなくなる）
+  const [rootOffered, setRootOffered] = useState<string | null>(null);
   useEffect(() => {
     if (!s || offered === null) return;
     const path = takeRootOffer();
     if (path === null) return;
     setRoot(path);
     setEditRoot(true);
-    setRootOffered(true);
+    setRootOffered(path);
   }, [s, offered]);
   const working = useWorkingPlan();
 
@@ -181,7 +199,7 @@ export function Settings() {
     if (!r.ok) return setError(r.message);
     // 保存できたら入力を閉じる（「保存しました」は置かない。保存のボタンが押せなくなる。docs/words.md）
     setEditRoot(false);
-    setRootOffered(false);
+    setRootOffered(null);
     setEditName(false);
     setEditLedger(false);
     await load();
@@ -243,17 +261,14 @@ export function Settings() {
                   </Text>
                   <SyncedNotice synced={s.documentsSynced} kind="root" />
                   {s.chosenRoot && <SyncedNotice synced={s.rootSynced} kind="root" />}
-                  {rootOffered && (
-                    <Text size="xs" data-testid="root-offered">
-                      {T.rootOffered}
-                    </Text>
-                  )}
                   <Group align="flex-end" gap="sm">
                     <TextInput style={{ flex: 1 }} label={T.rootInput} value={root} onChange={(e) => setRoot(e.currentTarget.value)} placeholder={s.defaultRoot ?? ""} data-testid="root-input" />
                     <Button variant="default" onClick={() => setRoot("")} disabled={root === ""}>
                       {T.useDefault}
                     </Button>
                   </Group>
+                  {/* Claude が入れた道：欄の下に朱の小さな字「- Claude の入力」と、text-3 の「前　（元の道）」。保存は人が上の行の「| 保存」で（docs/screens.md 3.7） */}
+                  {rootOffered !== null && root === rootOffered && <RootOffered before={s.root} />}
                 </>
               )}
             </Stack>,
@@ -386,6 +401,8 @@ export function Settings() {
               </Group>
             </Stack>,
           )}
+          {/* 表示：星取表の見せ方（施設ごとにブラウザに覚える。押すとすぐ効き、上の行の「保存」とは別。Skillパックの上。docs/screens.md 3.7） */}
+          {row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
           {row(
             T.packsTitle,
             <Text size="sm">
@@ -421,8 +438,8 @@ export function Settings() {
       )}
       {/* 開発の道具は、設定を読めないとき（2 つ目のタブ・ブリッジ未接続）にも出す（押せない理由を出すため） */}
       <div className="moyai-settings">
-        {/* 表示：星取表の見せ方（施設ごとにブラウザに覚える。橋渡しが無くても変えられる。docs/screens.md に無いので仮の置き場。Wire の確認待ち） */}
-        {row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
+        {/* 設定を読めないあいだ（橋渡しが無い）も、表示は変えられるので出す（読めたら Skillパックの上に置く） */}
+        {!s && row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
         {row(
           T.devTitle,
           <div style={{ color: "var(--text-3)" }}>

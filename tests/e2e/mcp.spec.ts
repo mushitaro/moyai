@@ -86,11 +86,13 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
         if (state === "running") await page.waitForTimeout(100);
       }
       expect(state, String(message)).toBe("done");
-      // 知らせの箱は出さない。つくった人は資料のシートの印（data-compose-by）で見る。資料のタブを 1 つ選んだ形のまま
+      // 知らせの箱は出さない。つくった人は資料のシートの印（data-compose-by）で見る。資料を 1 つ選んだ形のまま（資料の選び。資料ごとのタブは無い）
       await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");
       await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose-by", "ai");
       await expect(page.getByTestId("composed")).toHaveCount(0);
-      await expect(page.locator('[data-testid="sheet-file"][aria-selected="true"]')).toHaveCount(1);
+      await expect(page.getByTestId("source-pick")).toHaveAttribute("data-selected", "true");
+      await expect(page.getByTestId("source-picker")).not.toHaveAttribute("data-file", "");
+      await expect(page.getByTestId("sheet-file")).toHaveCount(0);
       await page.screenshot({ path: shot(`mcp-composed-${tag}`), fullPage: true });
       // 答えの作者は、確定のシートで「会話の回答」（AI がチャットでの人の答えとして置いたもの）だけ
       await page.getByTestId("sheet-decisions").click();

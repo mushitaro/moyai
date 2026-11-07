@@ -1,6 +1,7 @@
 // 資料を落としたあとの画面（第 1 版の前）が、版があるときの資料のシートと同じ形であること（docs/screens.md 3.3 の末尾、Wire、11-07）。
-// 白紙で資料 2 つ：資料のタブが 2 つ・最初の資料が選ばれている・本体はその資料の元の表と凡例の 1 行だけ・数の行と知らせの箱と決定の一覧が無い・
-// 押せない理由は「理由：未回答 n」。横の板の質問は「- 既定」「n 行」「| 決める」。第 1 版をつくったあとも、知らせの箱と決定の一覧を出さず、資料のタブを 1 つ選んだ形。
+// 白紙で資料 2 つ：資料の選びが 1 つ（資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）・未確定のいちばん多い資料が開く・
+// 本体はその資料の元の表と凡例の 1 行だけ・数の行と知らせの箱と決定の一覧が無い・押せない理由は「理由：未回答 n」。
+// 横の板の質問は「- 既定」「n 行」「| 決める」。第 1 版をつくったあとも、知らせの箱と決定の一覧を出さず、資料を 1 つ選んだ形（名前順の最初）。
 // 画面は react-dom/server で描く（試験は node で走る）。資料は工場の架空の資料（fictional-1）の 2 つ。
 import { readFileSync } from "node:fs";
 import { MantineProvider } from "@mantine/core";
@@ -57,6 +58,12 @@ function page(ws: IntakeWorkspace, sheet: MergeSheet | null): string {
   );
 }
 
+/** 第 1 版の前に開く資料：未確定の行がいちばん多い資料（同じ数なら名前順の先） */
+function mostOpen(ws: IntakeWorkspace): string {
+  const n = (f: string) => ws.view.counts.find((c) => c.file === f)?.unresolvedRows ?? 0;
+  return [...ws.view.files].sort((a, b) => n(b) - n(a) || a.localeCompare(b))[0]!;
+}
+
 /** 開きタグの属性（data-testid で探す。同じ testid がいくつもあれば全部） */
 function tags(html: string, testid: string): string[] {
   return [...html.matchAll(new RegExp(`<[a-z]+[^>]*data-testid="${testid}"[^>]*>`, "g"))].map((m) => m[0]);
@@ -84,16 +91,19 @@ describe("資料を落としたあとの画面（第 1 版の前）", () => {
     clearWorkingPlan();
     ws = await dropTwo();
     // 本体の表は、開いた資料のシートを受け手から読んでから描く（画面の最初の描画で出るように、先に読んでおく）
-    await loadSheets(ws, ws.view.files[0]!);
+    await loadSheets(ws, mostOpen(ws));
   });
 
-  test("白紙で資料 2 つ：「資料」の札と資料のタブ 2 つと「＋ 資料を追加」。最初の資料が選ばれている", () => {
+  test("白紙で資料 2 つ：「資料」の札と資料の選び 1 つと「＋ 資料を追加」。資料ごとのタブは無い。未確定のいちばん多い資料が開く", () => {
     expect(ws.view.files).toEqual(FILES);
     const html = page(ws, null);
     expect(getWorkingPlan()).toBeNull();
-    const fileTabs = tags(html, "sheet-file");
-    expect(fileTabs.map((t) => attr(t, "data-file"))).toEqual(FILES);
-    expect(fileTabs.map((t) => attr(t, "aria-selected"))).toEqual(["true", "false"]);
+    expect(tags(html, "sheet-file")).toEqual([]);
+    const picker = tags(html, "source-picker");
+    expect(picker).toHaveLength(1);
+    expect(attr(picker[0]!, "data-file")).toBe(mostOpen(ws));
+    expect(attr(picker[0]!, "data-count")).toBe("2");
+    expect(textOf(html, "source-position")).toBe(`${[...FILES].sort().indexOf(mostOpen(ws)) + 1} / 2`);
     expect(html).toContain(`<span class="moyai-sheet-label">${TEXT.merge.filesLabel}</span>`);
     expect(tags(html, "merge-add-files")).toHaveLength(1);
     // 版があるときのシート（星取表・確定など）と、資料を 1 つのタブに積んだ「資料」のシートのタブは出さない
@@ -105,7 +115,7 @@ describe("資料を落としたあとの画面（第 1 版の前）", () => {
     const html = page(ws, null);
     const source = tags(html, "source-tab");
     expect(source).toHaveLength(1);
-    expect(attr(source[0]!, "data-file")).toBe(FILES[0]);
+    expect(attr(source[0]!, "data-file")).toBe(mostOpen(ws));
     expect(tags(html, "sheet-grid")).toHaveLength(1);
     expect(html).toContain(TEXT.intake.source.openRows);
     expect(html).toContain(TEXT.intake.source.allRows);
@@ -167,7 +177,7 @@ describe("資料を落としたあとの画面（第 1 版の前）", () => {
 });
 
 describe("第 1 版をつくったあと", () => {
-  test("知らせの箱と決定の一覧を出さず、資料のタブを 1 つ選んだ形で開く", async () => {
+  test("知らせの箱と決定の一覧を出さず、資料を 1 つ選んだ形（名前順の最初）で開く", async () => {
     clearWorkingPlan();
     const ws = await dropTwo();
     // 既定の答えで、人が画面で答える（試験の台本が押した）。答えで次の質問が出ることがあるので、無くなるまで
@@ -190,11 +200,11 @@ describe("第 1 版をつくったあと", () => {
     at("#/merge/files");
     await loadSheets(ws, FILES[0]!);
     const html = page(ws, "files");
-    // 版があるときのシートのタブが並び、資料のタブは 2 つで、最初が選ばれている
+    // 版があるときのシートのタブが並び、資料の選びは 1 つで、名前順の最初の資料を開いている（資料ごとのタブは無い）
     expect(tags(html, "sheet-chart")).toHaveLength(1);
-    const fileTabs = tags(html, "sheet-file");
-    expect(fileTabs.map((t) => attr(t, "data-file"))).toEqual(FILES);
-    expect(fileTabs.map((t) => attr(t, "aria-selected"))).toEqual(["true", "false"]);
+    expect(tags(html, "sheet-file")).toEqual([]);
+    expect(tags(html, "source-picker").map((t) => attr(t, "data-file"))).toEqual([FILES[0]]);
+    expect(attr(tags(html, "source-pick")[0]!, "data-selected")).toBe("true");
     expect(attr(tags(html, "merge-page")[0]!, "data-sheet")).toBe("files");
     expect(attr(tags(html, "source-tab")[0]!, "data-file")).toBe(FILES[0]);
     // つくったことは画面の印（data-compose）にだけ残し、知らせの箱は出さない
@@ -204,7 +214,7 @@ describe("第 1 版をつくったあと", () => {
     // ?f= で選んだ資料を開く
     at(`#/merge/files?f=${encodeURIComponent(FILES[1]!)}`);
     const second = page(ws, "files");
-    expect(tags(second, "sheet-file").map((t) => attr(t, "aria-selected"))).toEqual(["false", "true"]);
+    expect(tags(second, "source-picker").map((t) => attr(t, "data-file"))).toEqual([FILES[1]]);
     at("#/merge");
   });
 });

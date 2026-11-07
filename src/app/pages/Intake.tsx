@@ -1,6 +1,7 @@
 // 資料のシート（HOSHITORI の中。docs/screens.md 3.2「資料のシート」・3.3、絵は Source.dc.html・MergeNew.dc.html）。
 // 資料が無いあいだ：施設の欄と、資料の落とし場所だけ。資料があるとき：選んだ資料 1 つの元の表（SourceTab）を幅いっぱいに。
-// 白紙（第 1 版の前）も版があるときも同じ形（Wire、11-07。運営者「取り込みの画面が古いまま」）。資料ごとのタブは HOSHITORI のシートのタブの行にある。
+// 白紙（第 1 版の前）も版があるときも同じ形（Wire、11-07。運営者「取り込みの画面が古いまま」）。資料の選びとシートの選びは HOSHITORI のシートのタブの行にある
+// （資料ごとのタブは並べない。components/SourcePicker、docs/screens.md 3.2「資料の選び」）。
 // 質問は HOSHITORI の横の板（Questions）。写真は PhotoPanel（人が 1 枚ずつ AI クライアントに渡すことを許し、読み取りを画像と並べて確かめる）。
 // 状態は取り込みの作業場（intake/workspace.ts。このタブのメモリだけ）が持ち、AI のツールも同じ作業場を使う。
 import { removedCellOf } from "../state/stars";
@@ -73,7 +74,7 @@ export async function loadSheets(ws: IntakeWorkspace, file: string): Promise<She
  * 1 つの資料のシート（セルと行き先）を、取り込みの受け手から読む。資料と決定が変わったら（写しの版が進んだら）読み直す。
  * 読み直している間は、前に読んだものを出したままにする
  */
-function useSheets(ws: IntakeWorkspace, file: string | null): SheetData[] | null {
+export function useSheets(ws: IntakeWorkspace, file: string | null): SheetData[] | null {
   const at = ws.view.at;
   const [got, setGot] = useState<{ file: string; at: number; sheets: SheetData[] } | null>(() => lastSheets.get(ws) ?? null);
   useEffect(() => {
@@ -203,16 +204,16 @@ export function CellAnswers({ ws, view, qs }: { ws: IntakeWorkspace; view: Intak
 type SourceFilter = "open" | "all";
 
 /**
- * HOSHITORI の資料のタブ：その資料 1 つだけ。上に切り替え「未確定行 n ／ 全行 n」（既定は未確定行、数は朱）と凡例。その下に元の表
+ * HOSHITORI の資料のタブ：その資料の 1 つのシートだけ（sheet はシートの選びで選んだシートの番号。シートの選びはシートのタブの行にある）。
+ * 上に切り替え「未確定行 n ／ 全行 n」（既定は未確定行、数は朱）と凡例。その下に元の表
  * （行の番号と列の字。未確定のセルは朱の字と下の 2px の朱の線）。セルを選ぶと、横の板の「詳細」にそのセルの行き先（除外ならその理由、
  * 未確定なら種別「未確定」とその質問と「| 決める」）を出す。答えで決まったセルなら、決めた答えと「| 取り消す」も出す（CellAnswers）。
  * end は凡例の行の右端に置くもの（版があるときの「| 資料を重ねて第 n 版をつくる」。凡例の上に行を足さない）。
  * 施設の欄・すべての資料の行き先の一覧・AI の作業の記録は置かない
  */
-function SourceTab({ ws, view, layouts, end }: { ws: IntakeWorkspace; view: IntakeView; layouts: SheetData[]; end?: ReactNode }) {
+function SourceTab({ ws, view, layouts, sheet, end }: { ws: IntakeWorkspace; view: IntakeView; layouts: SheetData[]; sheet: number; end?: ReactNode }) {
   const S = T.source;
-  const [sheet, setSheet] = useState(0);
-  const lay = layouts[Math.min(sheet, layouts.length - 1)]!;
+  const lay = layouts[Math.max(0, Math.min(sheet, layouts.length - 1))]!;
   const statusOf = (ref: string) => lay.status.get(ref);
   const cols = Math.min(lay.grid.maxCol, MAX_COLS);
   // 未確定のセルがある行
@@ -259,7 +260,7 @@ function SourceTab({ ws, view, layouts, end }: { ws: IntakeWorkspace; view: Inta
     </Stack>
   );
   return (
-    <Stack gap="sm" data-testid="source-tab" data-file={lay.file}>
+    <Stack gap="sm" data-testid="source-tab" data-file={lay.file} data-sheet={lay.sheet ?? ""}>
       <Group justify="space-between" gap="md" wrap="nowrap">
         <Group gap="lg" wrap="nowrap">
           <Switch<SourceFilter>
@@ -280,21 +281,6 @@ function SourceTab({ ws, view, layouts, end }: { ws: IntakeWorkspace; view: Inta
           </Text>
         </Group>
         <Group gap="md" wrap="nowrap">
-          {layouts.length > 1 && (
-            <Select
-              size="xs"
-              aria-label={T.sheet.choose}
-              data={layouts.map((l, i) => ({ value: String(i), label: l.sheet ?? l.file }))}
-              value={String(Math.min(sheet, layouts.length - 1))}
-              onChange={(v) => {
-                if (v === null) return;
-                setSheet(Number(v));
-                setTop(1);
-                setPicked(null);
-              }}
-              w={240}
-            />
-          )}
           {end}
         </Group>
       </Group>
@@ -680,9 +666,18 @@ export function Intake({
   composeInBar = false,
   composeOffered = false,
   file = null,
+  layouts: given,
+  sheetIndex = 0,
+  onAddFiles,
 }: {
   ws: IntakeWorkspace;
   composeLabel: string;
+  /** 開いている資料のシート（セルと行き先）。HOSHITORI が読んで渡す（シートの一覧の数にも使うので、2 度読まない）。渡さなければここで読む */
+  layouts?: SheetData[] | null;
+  /** シートの選びで選んだシートの番号（資料の中の順） */
+  sheetIndex?: number;
+  /** 資料を入れる（HOSHITORI の「＋ 資料を追加」と同じ道。読込中の名前を一覧に出すため）。無ければ作業場に直に入れる */
+  onAddFiles?: (files: File[]) => Promise<void>;
   /** 計画をつくるボタンは HOSHITORI の下の帯にある（白紙のあいだ）。ここには出さない */
   composeInBar?: boolean;
   /** 版があるとき：つくった版に入っていない変更（資料の追加・答えの変更・取り消しなど）がある。無ければ「| 資料を重ねて第 n 版をつくる」を出さない */
@@ -701,6 +696,7 @@ export function Intake({
     if (!files.length) return;
     setReading(true);
     try {
+      if (onAddFiles) return await onAddFiles(files);
       await ws.addFiles(files.map((f) => ({ name: f.name, size: f.size, bytes: async () => new Uint8Array(await f.arrayBuffer()) })));
       // 「架空」の印は、読み終わったあとの写しで見る
       await ws.fresh(undefined, false).catch(() => undefined);
@@ -716,9 +712,9 @@ export function Intake({
 
   const layouts = view?.sheets ?? [];
   const shown = file && layouts.some((l) => l.file === file) ? file : null;
-  // 開いている資料のシートだけを受け手から読む
-  const sheetsOf = useSheets(ws, shown);
-  const skipped = [...ws.skippedFiles, ...(view?.rejected ?? [])];
+  // 開いている資料のシートだけを受け手から読む（HOSHITORI が読んで渡したときは、それを使う）
+  const own = useSheets(ws, given === undefined ? shown : null);
+  const sheetsOf = given === undefined ? own : given && given[0]?.file === shown ? given : null;
   // 版があるときの「| 資料を重ねて第 n 版をつくる」と押せない理由（凡例の行の右端。白紙のあいだは下の帯にある）
   const composeEnd = !composeInBar && composeOffered && (
     <Group gap="sm" wrap="nowrap" data-testid="compose-next">
@@ -804,18 +800,7 @@ export function Intake({
             )}
           </Paper>
         )}
-        {skipped.length > 0 && (
-          <Stack gap={0} data-testid="skipped">
-            <Text size="xs" fw={700}>
-              {T.drop.skipped}
-            </Text>
-            {skipped.map((r, i) => (
-              <Text key={i} size="xs" c="orange">
-                {r.file}：{r.reason}
-              </Text>
-            ))}
-          </Stack>
-        )}
+        {/* 読まなかった資料は、資料の一覧の「読込不可」の行と、その詳細の理由に出す（docs/screens.md 3.2「資料の選び」） */}
 
         {ws.photoBook.entries().length > 0 && (
           <Paper withBorder p="sm">
@@ -829,7 +814,7 @@ export function Intake({
         {view &&
           shown &&
           (sheetsOf && sheetsOf.length > 0 ? (
-            <SourceTab key={shown} ws={ws} view={view} layouts={sheetsOf} end={composeEnd} />
+            <SourceTab key={`${shown}\u0000${sheetIndex}`} ws={ws} view={view} layouts={sheetsOf} sheet={sheetIndex} end={composeEnd} />
           ) : (
             <Group justify="space-between" gap="md" wrap="nowrap">
               <Text size="sm" c="dimmed" data-testid="source-loading" data-file={shown}>

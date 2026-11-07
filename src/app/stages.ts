@@ -4,7 +4,7 @@ import { APP_PAGES } from "../shared/routes";
 import { CHART_HASH } from "./chart/route";
 
 export type Stage = "top" | "merge" | "export" | "share" | "settings" | "industries" | "selftest";
-/** MERGE のシート：星取表・突き合せ・読み方・検査・決定・資料（取り込み。重ねた資料ごとのタブは ?f=<資料の名前>） */
+/** MERGE のシート：星取表・突き合せ・読み方・検査・決定・資料（取り込み。開く資料は ?f=<資料の名前>。資料の選びで選ぶ） */
 export type MergeSheet = "chart" | "cost" | "match" | "readings" | "check" | "decisions" | "files";
 export const MERGE_SHEETS: readonly MergeSheet[] = ["chart", "cost", "match", "readings", "check", "decisions", "files"];
 
