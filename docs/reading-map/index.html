@@ -44,34 +44,36 @@ ol { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; max-width: 72ch; }
 <main>
   <header style="display:grid;gap:8px">
     <h1>MOYAI 読みの地図</h1>
-    <p class="muted">運営者が OK した試験の資料（Moyai_Sample の 4 施設、資料 295）を、1 ファイルずつ取り込みの芯に入れ、既定の答えで答えたあとに測った。版 47e6c4a（11-07 23:00）。施設：375t 85・北部CC 9・汐見台 115・青葉台 86。</p>
+    <p class="muted">運営者が OK した試験の資料（Moyai_Sample の 4 施設、資料 295）を、1 ファイルずつ取り込みの芯に入れ、既定の答えで答えたあとに測った。前は版 47e6c4a（11-07 23:00）、今は版 2d2607b（11-08 03:40。PDF 以外は c7db342 で測り、汐見台の購買の出力 2 本だけ 7f740a3 で測り直した）。施設：375t 85・北部CC 9・汐見台 115・青葉台 86。</p>
   </header>
 
   <section class="stats" aria-label="全体の数">
     <div class="stat"><span class="muted">測った資料</span><b class="num">295 / 295</b></div>
-    <div class="stat"><span class="muted">1 冊で計画まで作れた</span><b class="num shu">9</b><span class="muted">どれも作業日報</span></div>
-    <div class="stat"><span class="muted">読めたセル</span><b class="num">28%</b><span class="muted num">312,131 / 1,095,355</span></div>
-    <div class="stat"><span class="muted">質問の無い未解決のセル</span><b class="num shu">254,872</b><span class="muted">答える問いも出ていない所</span></div>
+    <div class="stat"><span class="muted">1 冊で計画まで作れた</span><b class="num">9 → 40</b><span class="muted">日報 9・整備総括 30・報告書 1</span></div>
+    <div class="stat"><span class="muted">読めたセル</span><b class="num">28% → 49%</b><span class="muted num">538,638 / 1,095,355</span></div>
+    <div class="stat"><span class="muted">質問の無い未解決のセル</span><b class="num shu">254,872 → 15,957</b><span class="muted">答える問いも出ていない所</span></div>
+    <div class="stat"><span class="muted">未解決のセル</span><b class="num">390,167 → 121,856</b></div>
+    <div class="stat"><span class="muted">残る問い</span><b class="num">6,127 → 4,196</b></div>
   </section>
 
   <section>
     <h2>書き方の形ごとの読み</h2>
-    <p class="muted" style="margin-bottom:10px">未解決のセルの多い順。読めたセルの割合は、その形の資料の全部のセルに対して。</p>
+    <p class="muted" style="margin-bottom:10px">未解決のセルの多い順。読めたセルの割合は、その形の資料の全部のセルに対して。整備総括の割合は、前に行の切れ端（「対象設備」「んコンベヤ」など）を機器として数えていた分が、理由つきで外れた分を含む（下がった 41 本のうち 39 本は、未解決が減るか 0 になり、計画まで作れた）。</p>
     <div class="wrap"><table>
       <thead><tr><th>書き方の形</th><th class="r">資料</th><th>読めたセル</th><th class="r">未解決</th><th class="r">うち質問なし</th><th class="r">残る質問</th><th class="r">計画まで</th><th>施設</th></tr></thead>
       <tbody>
-        <tr><td>発注明細（CSV）</td><td class="r num">24</td><td><span class="bar"><i style="width:0%"></i></span><span class="num">0%</span></td><td class="r num">187,632</td><td class="r num shu">186,990</td><td class="r num">100</td><td class="r num">0</td><td>375t・青葉台</td></tr>
-        <tr><td>工程表（Excel）</td><td class="r num">38</td><td><span class="bar"><i style="width:6%"></i></span><span class="num">6%</span></td><td class="r num">63,664</td><td class="r num">25</td><td class="r num shu">1,024</td><td class="r num">0</td><td>北部CC・汐見台</td></tr>
-        <tr><td>その他の一覧（CSV）</td><td class="r num">2</td><td><span class="bar"><i style="width:0%"></i></span><span class="num">0%</span></td><td class="r num">40,618</td><td class="r num shu">40,618</td><td class="r num">3</td><td class="r num">0</td><td>汐見台</td></tr>
-        <tr><td>整備総括（PDF）</td><td class="r num">71</td><td><span class="bar"><i style="width:32%"></i></span><span class="num">32%</span></td><td class="r num">37,440</td><td class="r num shu">4,719</td><td class="r num shu">2,722</td><td class="r num">0</td><td>375t</td></tr>
-        <tr><td>工事報告書（PDF）</td><td class="r num">109</td><td><span class="bar"><i style="width:47%"></i></span><span class="num">47%</span></td><td class="r num">34,722</td><td class="r num shu">4,696</td><td class="r num shu">1,880</td><td class="r num">0</td><td>汐見台・青葉台</td></tr>
+        <tr><td>工程表（Excel）</td><td class="r num">38</td><td><span class="bar"><i style="width:6%"></i></span><span class="num">6%</span></td><td class="r num">63,664</td><td class="r num">25</td><td class="r num">1,024</td><td class="r num">0</td><td>北部CC・汐見台</td></tr>
+        <tr><td>整備総括（PDF）</td><td class="r num">71</td><td><span class="bar"><i style="width:38%"></i></span><span class="num">32% → 38%</span></td><td class="r num">37,440 → 24,095</td><td class="r num shu">4,719 → 3,704</td><td class="r num">1,677</td><td class="r num ok">30</td><td>375t</td></tr>
+        <tr><td>工事報告書（PDF）</td><td class="r num">109</td><td><span class="bar"><i style="width:47%"></i></span><span class="num">47%</span></td><td class="r num">34,722 → 15,539</td><td class="r num shu">4,696 → 1,937</td><td class="r num">1,099</td><td class="r num ok">1</td><td>汐見台・青葉台</td></tr>
         <tr><td>作業日報（Excel）</td><td class="r num">42</td><td><span class="bar"><i style="width:21%"></i></span><span class="num">21%</span></td><td class="r num">14,445</td><td class="r num shu">9,100</td><td class="r num">86</td><td class="r num ok">9</td><td>北部CC・汐見台</td></tr>
-        <tr><td>発注台帳（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:0%"></i></span><span class="num">0%</span></td><td class="r num">7,533</td><td class="r num shu">7,533</td><td class="r num">2</td><td class="r num">0</td><td>北部CC</td></tr>
         <tr><td>中長期計画（Excel）</td><td class="r num">2</td><td><span class="bar"><i style="width:63%"></i></span><span class="num">63%</span></td><td class="r num">2,450</td><td class="r num shu">1,052</td><td class="r num">6</td><td class="r num">0</td><td>375t・青葉台</td></tr>
         <tr><td>星取表（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:48%"></i></span><span class="num">48%</span></td><td class="r num">976</td><td class="r num">124</td><td class="r num">27</td><td class="r num">0</td><td>北部CC</td></tr>
         <tr><td>設備診断（PDF）</td><td class="r num">2</td><td><span class="bar"><i style="width:91%"></i></span><span class="num">91%</span></td><td class="r num">478</td><td class="r num">0</td><td class="r num">219</td><td class="r num">0</td><td>375t・青葉台</td></tr>
         <tr><td>発注（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:60%"></i></span><span class="num">60%</span></td><td class="r num">174</td><td class="r num">0</td><td class="r num">57</td><td class="r num">0</td><td>汐見台</td></tr>
         <tr><td>機器仕様一覧（PDF）</td><td class="r num">1</td><td><span class="bar"><i style="width:91%"></i></span><span class="num">91%</span></td><td class="r num">20</td><td class="r num">0</td><td class="r num">1</td><td class="r num">0</td><td>北部CC</td></tr>
+        <tr><td>その他（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:0%"></i></span><span class="num">0%</span></td><td class="r num">15</td><td class="r num">15</td><td class="r num">0</td><td class="r num">0</td><td>汐見台</td></tr>
+        <tr><td>発注明細（CSV）</td><td class="r num">26</td><td><span class="bar"><i style="width:94%"></i></span><span class="num">0% → 94%</span></td><td class="r num">228,250 → 0</td><td class="r num">227,608 → 0</td><td class="r num">0</td><td class="r num">0</td><td>375t・汐見台・青葉台</td></tr>
+        <tr><td>発注台帳（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:90%"></i></span><span class="num">0% → 90%</span></td><td class="r num">7,533 → 0</td><td class="r num">7,533 → 0</td><td class="r num">0</td><td class="r num">0</td><td>北部CC</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -82,20 +84,21 @@ ol { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; max-width: 72ch; }
     <div class="wrap"><table>
       <thead><tr><th>原因</th><th class="r">効く資料</th><th class="r">いま止まっているセル・問い</th><th>直し方</th></tr></thead>
       <tbody>
-        <tr><td>契約・発注の一覧の形を読む型が無い（1 行が 1 契約。件名・業者・金額・工期）</td><td class="r num">28</td><td class="r num">セル 235,000 余り</td><td>契約の一覧として読み、作業と結ぶ（作業にはしない。Skillパックの決まりのとおり）</td></tr>
-        <tr><td>意味の決まらないセル（総括・報告書の PDF の文の欄、題、見出しの続き）</td><td class="r num">183</td><td class="r num">問い 3,626</td><td>PDF の表の行の役割（題・見出し・注記・文の欄）を広げ、同じ形の問いを 1 つにまとめる</td></tr>
-        <tr><td>週・月のガント（工程表。機器の行 × 週の列、塗りが期間）</td><td class="r num">38</td><td class="r num">セル 63,664</td><td>塗りの範囲を作業の期間と年度の値として読む</td></tr>
-        <tr><td>日付が頁の頭書きにある日報・報告書（「作業日 令和3年4月7日」）</td><td class="r num">130</td><td class="r num">問い 346</td><td>頭書きの日付を、その頁の行の日付として読む</td></tr>
-        <tr><td>工数の書き方（職種の語・時間の幅）</td><td class="r num">97</td><td class="r num">問い 455</td><td>今日入れた形に、残りの書き方を足す</td></tr>
-        <tr><td>資料をまたいで結ぶ機器（1 ファイルずつ測ると出る）</td><td class="r num">79</td><td class="r num">問い 1,284</td><td>施設ごとに全部を入れたときの数で見直す</td></tr>
-        <tr><td>号炉の書き忘れ</td><td class="r num">31</td><td class="r num">問い 325</td><td>同じ形の問いを 1 つにまとめる</td></tr>
+        <tr><td><span class="tag ok">済</span> 契約・発注の一覧と発注明細の形を読む型が無い</td><td class="r num">28</td><td class="r num">セル 235,141 → 0</td><td>契約の一覧（1 行 1 契約）と発注明細（1 行 1 品目、品名の「／」から号炉・機器・作業）として読み、作業と結ぶ案は 1 問。単価の無い購買の出力・別の見出しの言い方も（6a6b4f1・c7db342・7f740a3）</td></tr>
+        <tr><td><span class="tag ok">済</span> PDF の表の、何行にも折り返した 1 つの記録（名前の欄が空の行）</td><td class="r num">183</td><td class="r num">問い 3,598 → 1,831</td><td>空の行で区切った塊を 1 つの記録に、見出しの字の位置で列の幅を決めてつなぐ。頁の頭書き・節の題・文の段落は理由つきで外す（2d2607b）。残りは表の形でない頁</td></tr>
+        <tr><td><span class="tag">API で作業中</span> 工程表の施工の期間（線の図形・週の列の数）</td><td class="r num">38</td><td class="r num">セル 63,664</td><td>日の列の上の線の図形と、週の列の塗りと日数を、作業の期間と実績として読む（reader-gantt-v1）</td></tr>
+        <tr><td>日付が頁の頭書きにある日報・報告書（「作業日 令和3年4月7日」）</td><td class="r num">130</td><td class="r num">問い 319</td><td>頭書きの日付を、その頁の行の日付として読む</td></tr>
+        <tr><td>工数の書き方（職種の語・時間の幅）</td><td class="r num">97</td><td class="r num">問い 412</td><td>今ある形に、残りの書き方を足す</td></tr>
+        <tr><td>資料をまたいで結ぶ機器（1 ファイルずつ測ると出る）</td><td class="r num">79</td><td class="r num">問い 1,253</td><td>施設ごとに全部を入れたときの数で見直す</td></tr>
+        <tr><td>号炉の書き忘れ・単位の書き忘れ</td><td class="r num">31</td><td class="r num">問い 325</td><td>同じ形の問いを 1 つにまとめる</td></tr>
+        <tr><td>作業日報の質問の無い未解決のセル（北部CC の R5〜R7 ほか）</td><td class="r num">42</td><td class="r num">セル 9,100</td><td>頭書きの日付の直しと合わせて見る</td></tr>
       </tbody>
     </table></div>
   </section>
 
   <section style="display:grid;gap:10px">
     <h2>あと何回か</h2>
-    <p>直すべき原因は、いま見えているかぎり上の 7 つです。上の 3 つ（契約の一覧・PDF の文の欄・ガント）で、止まっているセルの 9 割を占めます。1 つ直すたびに、この地図を作り直し、全体の割合が上がったことと、ほかの形が下がっていないことを確かめます。新しい施設の資料で新しい原因が出たら、この表に 1 行足します。</p>
+    <p>11-08 03:40 までに、いちばん大きな 2 つ（契約・発注の一覧、PDF の折り返した記録）を直し、質問の無い未解決のセルは 254,872 から 15,957 に減りました。直した形はどの施設の資料にも効き、ほかの形の数は 1 つも下がっていません。次は工程表です。1 つ直すたびに、この地図を作り直します。新しい施設の資料で新しい原因が出たら、この表に 1 行足します。</p>
     <ol>
       <li>直しの前後で、この地図の全部の数を比べる（1 施設だけを見ない）。</li>
       <li>直す単位は原因の形。施設や資料の名前に合わせた手がかりは入れない。</li>
