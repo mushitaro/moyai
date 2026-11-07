@@ -1,0 +1,105 @@
+<title>MOYAI 読みの地図</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDGothic:wght@400;700&display=swap">
+<style>
+/* 1 段の読み物：上に全体の数、その下に書き方の形ごとの表、原因の表、決まり。表は横に送る */
+:root {
+  --bg: #f6f7f5; --panel: #ffffff; --fg: #1d2421; --muted: #5d6763; --line: #d7dcd8;
+  --shu: #b4402a; --ok: #2f6b4f; --bar: #2f6b4f; --barbg: #e3e8e4;
+  --font-body: "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-num: "BIZ UDGothic", "Hiragino Sans", "Yu Gothic", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141917; --panel: #1b211e; --fg: #e4e9e6; --muted: #9aa5a0; --line: #2f3833;
+  --shu: #e0775f; --ok: #7cc4a0; --bar: #7cc4a0; --barbg: #26302b; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141917; --panel: #1b211e; --fg: #e4e9e6; --muted: #9aa5a0; --line: #2f3833;
+  --shu: #e0775f; --ok: #7cc4a0; --bar: #7cc4a0; --barbg: #26302b; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 56px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 36px; }
+h1 { font-size: 26px; margin: 0; text-wrap: balance; letter-spacing: 0.02em; }
+h2 { font-size: 18px; margin: 0 0 10px; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.muted { color: var(--muted); font-size: 13px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.stat { background: var(--panel); border: 1px solid var(--line); padding: 14px 16px; display: grid; gap: 2px; }
+.stat b { font-family: var(--font-num); font-size: 24px; font-variant-numeric: tabular-nums; }
+.stat .shu { color: var(--shu); }
+.wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+th, td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { font-size: 12px; color: var(--muted); font-weight: 400; letter-spacing: 0.04em; }
+td.r, th.r { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+.bar { display: inline-block; width: 90px; height: 8px; background: var(--barbg); vertical-align: middle; margin-right: 8px; }
+.bar i { display: block; height: 100%; background: var(--bar); }
+.shu { color: var(--shu); }
+.ok { color: var(--ok); }
+ol { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; max-width: 72ch; }
+.tag { font-size: 12px; border: 1px solid var(--line); padding: 0 6px; white-space: nowrap; }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>MOYAI 読みの地図</h1>
+    <p class="muted">運営者が OK した試験の資料（Moyai_Sample の 4 施設、資料 295）を、1 ファイルずつ取り込みの芯に入れ、既定の答えで答えたあとに測った。版 47e6c4a（11-07 23:00）。施設：375t 85・北部CC 9・汐見台 115・青葉台 86。</p>
+  </header>
+
+  <section class="stats" aria-label="全体の数">
+    <div class="stat"><span class="muted">測った資料</span><b class="num">295 / 295</b></div>
+    <div class="stat"><span class="muted">1 冊で計画まで作れた</span><b class="num shu">9</b><span class="muted">どれも作業日報</span></div>
+    <div class="stat"><span class="muted">読めたセル</span><b class="num">28%</b><span class="muted num">312,131 / 1,095,355</span></div>
+    <div class="stat"><span class="muted">質問の無い未解決のセル</span><b class="num shu">254,872</b><span class="muted">答える問いも出ていない所</span></div>
+  </section>
+
+  <section>
+    <h2>書き方の形ごとの読み</h2>
+    <p class="muted" style="margin-bottom:10px">未解決のセルの多い順。読めたセルの割合は、その形の資料の全部のセルに対して。</p>
+    <div class="wrap"><table>
+      <thead><tr><th>書き方の形</th><th class="r">資料</th><th>読めたセル</th><th class="r">未解決</th><th class="r">うち質問なし</th><th class="r">残る質問</th><th class="r">計画まで</th><th>施設</th></tr></thead>
+      <tbody>
+        <tr><td>発注明細（CSV）</td><td class="r num">24</td><td><span class="bar"><i style="width:0%"></i></span><span class="num">0%</span></td><td class="r num">187,632</td><td class="r num shu">186,990</td><td class="r num">100</td><td class="r num">0</td><td>375t・青葉台</td></tr>
+        <tr><td>工程表（Excel）</td><td class="r num">38</td><td><span class="bar"><i style="width:6%"></i></span><span class="num">6%</span></td><td class="r num">63,664</td><td class="r num">25</td><td class="r num shu">1,024</td><td class="r num">0</td><td>北部CC・汐見台</td></tr>
+        <tr><td>その他の一覧（CSV）</td><td class="r num">2</td><td><span class="bar"><i style="width:0%"></i></span><span class="num">0%</span></td><td class="r num">40,618</td><td class="r num shu">40,618</td><td class="r num">3</td><td class="r num">0</td><td>汐見台</td></tr>
+        <tr><td>整備総括（PDF）</td><td class="r num">71</td><td><span class="bar"><i style="width:32%"></i></span><span class="num">32%</span></td><td class="r num">37,440</td><td class="r num shu">4,719</td><td class="r num shu">2,722</td><td class="r num">0</td><td>375t</td></tr>
+        <tr><td>工事報告書（PDF）</td><td class="r num">109</td><td><span class="bar"><i style="width:47%"></i></span><span class="num">47%</span></td><td class="r num">34,722</td><td class="r num shu">4,696</td><td class="r num shu">1,880</td><td class="r num">0</td><td>汐見台・青葉台</td></tr>
+        <tr><td>作業日報（Excel）</td><td class="r num">42</td><td><span class="bar"><i style="width:21%"></i></span><span class="num">21%</span></td><td class="r num">14,445</td><td class="r num shu">9,100</td><td class="r num">86</td><td class="r num ok">9</td><td>北部CC・汐見台</td></tr>
+        <tr><td>発注台帳（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:0%"></i></span><span class="num">0%</span></td><td class="r num">7,533</td><td class="r num shu">7,533</td><td class="r num">2</td><td class="r num">0</td><td>北部CC</td></tr>
+        <tr><td>中長期計画（Excel）</td><td class="r num">2</td><td><span class="bar"><i style="width:63%"></i></span><span class="num">63%</span></td><td class="r num">2,450</td><td class="r num shu">1,052</td><td class="r num">6</td><td class="r num">0</td><td>375t・青葉台</td></tr>
+        <tr><td>星取表（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:48%"></i></span><span class="num">48%</span></td><td class="r num">976</td><td class="r num">124</td><td class="r num">27</td><td class="r num">0</td><td>北部CC</td></tr>
+        <tr><td>設備診断（PDF）</td><td class="r num">2</td><td><span class="bar"><i style="width:91%"></i></span><span class="num">91%</span></td><td class="r num">478</td><td class="r num">0</td><td class="r num">219</td><td class="r num">0</td><td>375t・青葉台</td></tr>
+        <tr><td>発注（Excel）</td><td class="r num">1</td><td><span class="bar"><i style="width:60%"></i></span><span class="num">60%</span></td><td class="r num">174</td><td class="r num">0</td><td class="r num">57</td><td class="r num">0</td><td>汐見台</td></tr>
+        <tr><td>機器仕様一覧（PDF）</td><td class="r num">1</td><td><span class="bar"><i style="width:91%"></i></span><span class="num">91%</span></td><td class="r num">20</td><td class="r num">0</td><td class="r num">1</td><td class="r num">0</td><td>北部CC</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>直す原因（一般の形）と、効く資料の数</h2>
+    <p class="muted" style="margin-bottom:10px">1 つの原因を直すと、その形のどの施設の資料にも効く。効く資料の多い順に直す。1 ファイルだけが上がる直しは入れない。</p>
+    <div class="wrap"><table>
+      <thead><tr><th>原因</th><th class="r">効く資料</th><th class="r">いま止まっているセル・問い</th><th>直し方</th></tr></thead>
+      <tbody>
+        <tr><td>契約・発注の一覧の形を読む型が無い（1 行が 1 契約。件名・業者・金額・工期）</td><td class="r num">28</td><td class="r num">セル 235,000 余り</td><td>契約の一覧として読み、作業と結ぶ（作業にはしない。Skillパックの決まりのとおり）</td></tr>
+        <tr><td>意味の決まらないセル（総括・報告書の PDF の文の欄、題、見出しの続き）</td><td class="r num">183</td><td class="r num">問い 3,626</td><td>PDF の表の行の役割（題・見出し・注記・文の欄）を広げ、同じ形の問いを 1 つにまとめる</td></tr>
+        <tr><td>週・月のガント（工程表。機器の行 × 週の列、塗りが期間）</td><td class="r num">38</td><td class="r num">セル 63,664</td><td>塗りの範囲を作業の期間と年度の値として読む</td></tr>
+        <tr><td>日付が頁の頭書きにある日報・報告書（「作業日 令和3年4月7日」）</td><td class="r num">130</td><td class="r num">問い 346</td><td>頭書きの日付を、その頁の行の日付として読む</td></tr>
+        <tr><td>工数の書き方（職種の語・時間の幅）</td><td class="r num">97</td><td class="r num">問い 455</td><td>今日入れた形に、残りの書き方を足す</td></tr>
+        <tr><td>資料をまたいで結ぶ機器（1 ファイルずつ測ると出る）</td><td class="r num">79</td><td class="r num">問い 1,284</td><td>施設ごとに全部を入れたときの数で見直す</td></tr>
+        <tr><td>号炉の書き忘れ</td><td class="r num">31</td><td class="r num">問い 325</td><td>同じ形の問いを 1 つにまとめる</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section style="display:grid;gap:10px">
+    <h2>あと何回か</h2>
+    <p>直すべき原因は、いま見えているかぎり上の 7 つです。上の 3 つ（契約の一覧・PDF の文の欄・ガント）で、止まっているセルの 9 割を占めます。1 つ直すたびに、この地図を作り直し、全体の割合が上がったことと、ほかの形が下がっていないことを確かめます。新しい施設の資料で新しい原因が出たら、この表に 1 行足します。</p>
+    <ol>
+      <li>直しの前後で、この地図の全部の数を比べる（1 施設だけを見ない）。</li>
+      <li>直す単位は原因の形。施設や資料の名前に合わせた手がかりは入れない。</li>
+      <li>手がかりの語を足すのは、性質の違う 2 つ以上の資料で問いが減るときだけ。</li>
+    </ol>
+  </section>
+</main>
