@@ -119,7 +119,8 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     const files = Object.entries(stub.prs[0]!.files);
     expect(files).toHaveLength(1);
     const [path, bytes] = files[0]!;
-    expect(path).toMatch(/^ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+    // 台帳は moyai の ledger/ に取り込んだ（中の ledger/ はそのまま）。束の道はリポジトリの根から ledger/ledger/bundles/…
+    expect(path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
     const pack = loadSharePack(join(process.cwd(), "packs"), "waste-incineration");
     if (!pack.ok) throw new Error(pack.reason);
     const dir = await readLedgerDir(repo);

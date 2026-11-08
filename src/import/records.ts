@@ -1107,7 +1107,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     // 作業だけを書いた行（機器の名前の欄が空で、結合でもなく、作業の欄がある）：上の行と同じ機器か（答えに従う）
     const workOnly = !!workCol && !!leafCol && (!leafCell || leafCell.text === "") && !leafMerged && !!rowWork(r.r) && !!lastLeaf;
     const workOnlyAnswer = workOnly && leafCol ? blankDecision.get(leafCol.c) : undefined;
-    // 節の行（名前だけの行「　特別高圧受変電設備」）のすぐ下の、作業だけを書いた行（まだ葉の行が無い）：その節の機器の作業として読む
+    // 節の行（名前だけの行。上の段の設備の名前）のすぐ下の、作業だけを書いた行（まだ葉の行が無い）：その節の機器の作業として読む
     // （前は機器が決まらず、問いの無い未解決になった。星取表の「電気・計装」のシートの書き方）
     const sectionWork = !workOnly && !!workCol && !!leafCol && (!leafCell || leafCell.text === "") && !leafMerged && !!rowWork(r.r) && !lastLeaf && !prevLeaf && !!group;
     // 行が「機器 × 作業」の星取表で、機器の欄の「〃」と作業の欄がある行：上の行と同じ機器の別の作業（作業の列が無い星取表の「〃」は、名前だけ同じ別の機器）
