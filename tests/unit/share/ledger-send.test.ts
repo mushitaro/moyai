@@ -209,6 +209,32 @@ describe("GitHub とのやりとり（試験の台）", () => {
     expect(await prStatus(g, { owner: "ledger-owner", name: "moyai" }, 99)).toBeNull();
   });
 
+  it("台帳の持ち主のアカウントなら、フォークせずに台帳のリポジトリに枝を作って PR を出す（自分のリポジトリはフォークできない）", async () => {
+    const { stateDir, L, clone, facility } = await setup();
+    stub = await startGitHubStub({ login: "ledger-owner" });
+    const g = io(stub);
+    const accepted = acceptLedger(stateDir, L, PACK, NOW);
+    const sender = senderOf(facility, L.id);
+    const key = keyIdOf(sender.pair.pub);
+    const place = ledgerPlace(L, accepted, sender);
+    const v = previewPlace(place, PACK, smallPlan(), ANSWERS, MONTH);
+    const s = sealPlace(place, sender.pair, PACK, smallPlan(), ANSWERS, MONTH, v.bodyHash!);
+    if (!s.ok) throw new Error(s.reason);
+    const path = ledgerBundlePath(key, s.input.seq, s.hash);
+    const r = await openLedgerPr(g, STUB_TOKEN, {
+      upstream: repoOfRemote(gitRemote(clone))!,
+      path,
+      bytes: Buffer.from(s.text, "utf8"),
+      branch: ledgerBranch(key, s.input.seq, s.hash),
+      title: LEDGER_PR_TEXT.title(key, s.input.seq),
+      body: "架空の本文",
+      commitMessage: LEDGER_PR_TEXT.commitMessage(key, s.input.seq),
+    });
+    expect(r).toMatchObject({ ok: true, number: 1, login: "ledger-owner", fork: "ledger-owner/moyai" });
+    expect(stub.prs[0]!.head).toMatch(/^ledger-owner:moyai\/bundle-/);
+    expect(Object.keys(stub.prs[0]!.files)).toEqual([path]);
+  });
+
   it("トークンが無効なら、フォークもしない（unauthorized）", async () => {
     stub = await startGitHubStub();
     const r = await openLedgerPr(io(stub), "違うトークン", {

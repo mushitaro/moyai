@@ -190,13 +190,18 @@ export async function openLedgerPr(io: GitHubIo, token: string, i: LedgerPrInput
   const baseSha = ref && ref.status === 200 ? str(obj(obj(ref.json).object).sha) : null;
   if (!baseSha || !/^[0-9a-f]{40}$/.test(baseSha)) return { ok: false, reason: "noRepo" };
 
-  // フォーク（もうあれば、GitHub は同じものを返す）。できあがるまで少し待つ
-  const f = await call(io, "POST", `${A}/repos/${repoPath(i.upstream)}/forks`, token, { default_branch_only: true });
-  const forkName = f && (f.status === 202 || f.status === 200) ? str(obj(f.json).full_name) : null;
-  const forkParts = forkName?.split("/") ?? [];
-  if (!forkName || forkParts.length !== 2 || forkParts[0] !== login || !NAME.test(forkParts[1]!)) return { ok: false, reason: f ? "forkFailed" : "network" };
-  const fork: Repo = { owner: login, name: forkParts[1]! };
-  let ready = false;
+  // 台帳の持ち主のアカウント（自分のリポジトリはフォークできない）：フォークせず、台帳のリポジトリに枝を作って PR を出す
+  const owner = login.toLowerCase() === i.upstream.owner.toLowerCase();
+  let fork: Repo = i.upstream;
+  let ready = owner;
+  if (!owner) {
+    // フォーク（もうあれば、GitHub は同じものを返す）。できあがるまで少し待つ
+    const f = await call(io, "POST", `${A}/repos/${repoPath(i.upstream)}/forks`, token, { default_branch_only: true });
+    const forkName = f && (f.status === 202 || f.status === 200) ? str(obj(f.json).full_name) : null;
+    const forkParts = forkName?.split("/") ?? [];
+    if (!forkName || forkParts.length !== 2 || forkParts[0] !== login || !NAME.test(forkParts[1]!)) return { ok: false, reason: f ? "forkFailed" : "network" };
+    fork = { owner: login, name: forkParts[1]! };
+  }
   for (let n = 0; n < 10 && !ready; n++) {
     const g = await call(io, "GET", `${A}/repos/${repoPath(fork)}`, token);
     ready = !!g && g.status === 200;
