@@ -1754,7 +1754,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     if (!ps) return { n: null, bad: null, refs: [] };
     const cells = ps.cols.map((c) => lay.index.at(r, c.c)).filter((x): x is GridCell => !!x && x.text.trim() !== "" && !off(x.ref));
     const refs = cells.map((x) => x.ref);
-    const read = (x: GridCell) => parsePersons(typeof x.value === "number" ? x.value : x.text);
+    const trades = ask.tradeWords;
+    const read = (x: GridCell) => parsePersons(typeof x.value === "number" ? x.value : x.text, trades);
     if (!ps.sum) {
       const x = cells[0];
       if (!x) return { n: null, bad: null, refs };

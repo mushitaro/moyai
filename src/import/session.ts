@@ -10,6 +10,7 @@ import { extensionOf, READABLE, readSource, type InputFile, type ReadOutcome } f
 import { layoutFile, type SheetLayout, type Table } from "./structure";
 import { buildRecords, cellKey, type Records } from "./records";
 import { activeRules, RuleHits, type LoadedReading, type ReadingRule } from "./reading";
+import { packReadingRules } from "./pack-reading";
 import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
@@ -265,7 +266,8 @@ export class IntakeSession {
   }
 
   analyze(): Analysis {
-    const rules = activeRules(this.readings);
+    // 効く順：3 段目（施設 → 担当 → 会社）→ Skillパック（2 段目）。同じ種類・同じ対象の規則は先のものが効く
+    const rules = [...activeRules(this.readings), ...packReadingRules(this.options.packId)];
     const hits = new RuleHits();
     const ask = new Asker(this.decisions, rules, hits);
     const sources: SourceFile[] = [];

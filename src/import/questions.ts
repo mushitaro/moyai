@@ -2,7 +2,7 @@
 // 決定は同じ種類の行すべてに効き、取り消せる（決定を外して読み直す。同じ入力と決定からはいつも同じ出力）。
 // 決定の作者は src/shared/fields.ts の AUTHOR_KINDS。推測で埋めない：答えが無ければ、そのセルは未解決。
 import { AUTHOR_KINDS, type AuthorKind } from "../shared/fields";
-import { ruleReason, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
+import { ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
 
 export type QuestionKind =
   | "encoding"
@@ -163,6 +163,11 @@ export class Asker {
     private readonly answerRules: readonly ActiveRule[] = [],
     private readonly hits: RuleHits | null = null,
   ) {}
+
+  /** 規則の職種の語（3 段目と Skillパックの effortTrade。標準の職種の語に足す） */
+  get tradeWords(): string[] {
+    return tradeWordsOf(this.answerRules);
+  }
 
   /** 読み方の規則が効いたセルを数える（印の意味の規則が当たった印など） */
   hit(rule: ReadingRule, file: string, ref: string): void {

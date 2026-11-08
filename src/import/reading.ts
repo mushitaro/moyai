@@ -49,6 +49,8 @@ export const ReadingRule = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("sameAsset"), names: z.array(z.string().min(1).max(80)).min(2).max(20) }).strict(),
   z.object({ ...base, kind: z.literal("markMeaning"), symbol: z.string().min(1).max(8), planOrActual: z.enum(["plan", "actual"]), meaning: z.string().max(40).optional() }).strict(),
   z.object({ ...base, kind: z.literal("answer"), question: z.string().min(1).max(40), match: z.string().min(1).max(120), answer: z.string().min(1).max(60) }).strict(),
+  // 職種の語（作業日報の人数の欄の「築炉工2 鳶工1」）：標準の職種の語（packs/_cues の effort.trades）に足す。業種の語は Skillパックの読み方に置く
+  z.object({ ...base, kind: z.literal("effortTrade"), words: z.array(z.string().min(1).max(12)).min(1).max(40) }).strict(),
   // 計画ルール（計画を作るルール。案 C、2026-11-06）：共通の設備項目 × 作業の属性 → 周期（年）。資料の読み方には効かず、
   // 当たる作業（項目と属性を人が受けたもの）に周期の案（R）を出すだけ。案は人が確定のシートで受けるまで決まらない。when は使わない
   z
@@ -92,10 +94,33 @@ export interface LoadedReading {
   owner?: string | null;
 }
 
-/** 当てる規則と、その出どころ */
+/** 当てる規則と、その出どころ（scope の pack は Skillパック（2 段目）の読み方。いちばん後に効く） */
 export interface ActiveRule {
   rule: ReadingRule;
-  from: { name: string; version: string; scope: ReadingScope; approved: boolean; draft: boolean };
+  from: { name: string; version: string; scope: ReadingScope | "pack"; approved: boolean; draft: boolean };
+}
+
+/** Skillパック（2 段目）の読み方の形：packs/<id>/reading.json。規則の形は 3 段目と同じ。範囲は持たない（その Skillパックの施設のどれにも効く） */
+export const PackReading = z
+  .object({
+    schema: z.literal(READING_SCHEMA),
+    name: z.string().min(1).max(80),
+    rules: z.array(ReadingRule).max(500),
+  })
+  .strict();
+export type PackReading = z.infer<typeof PackReading>;
+
+/** Skillパックの読み方を、当てる規則にする（承認済み：Skillパックはリポジトリの版で決まる） */
+export function packRules(pack: PackReading | null, version: string): ActiveRule[] {
+  if (!pack) return [];
+  return pack.rules.map((rule) => ({ rule, from: { name: pack.name, version, scope: "pack" as const, approved: true, draft: false } }));
+}
+
+/** 規則の職種の語（effortTrade）を、効く順に重なりなく */
+export function tradeWordsOf(rules: readonly ActiveRule[]): string[] {
+  const out: string[] = [];
+  for (const a of rules) if (a.rule.kind === "effortTrade") for (const w of a.rule.words) if (!out.includes(w)) out.push(w);
+  return out;
 }
 
 const SCOPE_ORDER: Record<ReadingScope, number> = { facility: 0, person: 1, company: 2 };

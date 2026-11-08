@@ -326,6 +326,24 @@ const TOTAL_WORDS = W([...CUES.rowRole.totalExact, ...CUES.rowRole.total]);
 const RE_PERSONS_TOTAL = new RegExp(`^(?:${TOTAL_WORDS})(\\d+)(?:${PERSON_UNIT})(?:[(（][^()（）]*[)）])?$`, "u");
 const RE_PERSONS_PLAIN = new RegExp(`^(\\d+)(?:${PERSON_UNIT})?$`, "u");
 const RE_TRADE_TOKEN = new RegExp(`^(?:(${W(TRADES)})|(\\p{Script=Han}))(\\d+)(?:${PERSON_UNIT})?`, "u");
+/** 規則の職種の語（Skillパック・3 段目の effortTrade）を足した読み手。足す語の組ごとに 1 つ作って覚える */
+const tradeParsers = new Map<string, { token: RegExp; abbr: Map<string, string | null> }>();
+function tradeParser(extra: readonly string[]): { token: RegExp; abbr: Map<string, string | null> } {
+  const add = extra.map((w) => nfkc(w)).filter((w) => w !== "" && !TRADES.includes(w));
+  if (!add.length) return { token: RE_TRADE_TOKEN, abbr: TRADE_ABBR };
+  const key = add.join("\u0001");
+  const hit = tradeParsers.get(key);
+  if (hit) return hit;
+  const words = [...TRADES, ...add];
+  const abbr = new Map<string, string | null>();
+  for (const w of words) {
+    const ch = [...w][0] ?? "";
+    abbr.set(ch, abbr.has(ch) ? null : w);
+  }
+  const made = { token: new RegExp(`^(?:(${W(words)})|(\\p{Script=Han}))(\\d+)(?:${PERSON_UNIT})?`, "u"), abbr };
+  tradeParsers.set(key, made);
+  return made;
+}
 const LIST_SEP = new RegExp(`[\\s、,，${CUES.listSeparators.map((x) => escapeRe(nfkc(x))).join("")}]+`, "gu");
 
 /**
@@ -333,7 +351,8 @@ const LIST_SEP = new RegExp(`[\\s、,，${CUES.listSeparators.map((x) => escapeR
  * 職種の語＋数の並び（「機械工1 溶接工1 作業員2」は 4）、略した職種の 1 字＋数（「機2」）。職種の語は packs/_cues の手がかり。
  * 読めなければ null（呼ぶ側が質問にする）
  */
-export function parsePersons(v: string | number): PersonsValue | null {
+export function parsePersons(v: string | number, extraTrades: readonly string[] = []): PersonsValue | null {
+  const { token: tradeToken, abbr: tradeAbbr } = tradeParser(extraTrades);
   if (typeof v === "number") return Number.isInteger(v) && v >= 0 ? { n: v, style: "数" } : null;
   const s = nfkc(v).trim();
   if (!s) return null;
@@ -346,10 +365,10 @@ export function parsePersons(v: string | number): PersonsValue | null {
   let n = 0;
   let count = 0;
   while (rest) {
-    const t = RE_TRADE_TOKEN.exec(rest);
+    const t = tradeToken.exec(rest);
     if (!t) return null;
     // 1 字の略は、職種の語の頭の字で、ほかの語と重ならないものだけ
-    if (!t[1] && !TRADE_ABBR.get(t[2] ?? "")) return null;
+    if (!t[1] && !tradeAbbr.get(t[2] ?? "")) return null;
     n += Number(t[3]);
     count++;
     rest = rest.slice(t[0].length);
