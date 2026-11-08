@@ -19,6 +19,8 @@ const head = process.env.HEAD || git("rev-parse", "HEAD").trim();
 let base = process.env.BASE || "";
 if (!base || /^0+$/.test(base)) base = git("rev-list", "--max-parents=0", head).trim().split("\n")[0];
 
+// 起こした人が書いた base・head は、git の引数とファイルの名前に使うので、40 桁の SHA だけを受ける（Security の点検 11-08 の低 4）
+for (const [k, v] of [["HEAD", head], ["BASE", base]]) if (!/^[0-9a-f]{40}$/.test(v)) throw new Error(`${k} は 40 桁の commit の SHA で渡す`);
 const diff = git("diff", "--no-color", "--no-ext-diff", `${base}..${head}`);
 const { included, skipped } = planDiff(diff);
 

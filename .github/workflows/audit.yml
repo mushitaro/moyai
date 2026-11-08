@@ -11,6 +11,8 @@ on:
       - "ops/api-spend.jsonl"
       - "ops/trend.jsonl"
       - "docs/trend.md"
+      # 公開台帳の束（外の人の書いたもの）は監査の LLM に渡さない（Security の点検 11-08 の低 5）
+      - "ledger/ledger/bundles/**"
   workflow_dispatch:
     inputs:
       base:

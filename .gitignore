@@ -28,3 +28,7 @@ audit-result.json
 # 道具の一時の出力（監査の結果など）
 .cache/
 .claude/worktrees/
+
+# 秘密の値のファイル（今は無い。Security の点検 11-08 の低 9）
+.env
+.env.*
