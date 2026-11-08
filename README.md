@@ -65,7 +65,7 @@ MOYAI のアカウントもログインも要りません。
 | 想定のプロンプト 17（インストール・デモ・資料・様式・共有・承認のメール・設定など） | 17 とも進んだ。「この様式で Excel を出して」は 1 回目に時間切れ（画面のタブが休止中）、直したあと通った | `fabb4de`、11-08 午前。[docs/progress/prompt-test-2026-11-08.md](docs/progress/prompt-test-2026-11-08.md) |
 | 見ていない様式（凍結した読み手で 5 組） | どの組も計画まで作れず、⑥ 取り戻せた割合は 0% | 11-05 の読み手（`reader-freeze-1`〜`6`）。[docs/trend.md](docs/trend.md) |
 | 開発用の資料（工場の fictional-1・fictional-2） | Excel・CSV・PDF のどれも ① 原本の漏れ 0・② 未解決 0・③ 読み取りの正しさ 100% | 11-05 の実行。[docs/trend.md](docs/trend.md) |
-| 試験の数 | | |
+| 試験の数（提出の版） | vitest 1,806・node:test 177・e2e 72（飛ばし 2）・デモの通し 39（飛ばし 1）が通った。落ちたものは無い | `d483e36`（タグ `submission`・枝 `hackathon-release`）、11-08。Dev が回した |
 
 ## Showcase：結果をすぐ見る
 
@@ -202,7 +202,8 @@ npm test
 4. 試験の推移：`docs/trend.md`・`ops/trend.jsonl`。API の費用：`ops/api-spend.jsonl`。
 5. 見ていない様式：ハッシュのコミットが、中身の公開より先（`samples/heldout/hashes/`、タグ `reader-freeze-1`〜`6`。順は `tests/heldout/heldout.test.ts` が確かめる）。
 6. Claude の使い方と、セッションの分担：`docs/how-built.md`。
-7. コミット：`d483e36` まで 594（11-03 126・11-04 105・11-05 128・11-06 106・11-07 86・11-08 43。`git log --format=%ad --date=short | sort | uniq -c`）。
+7. 提出の版：タグ `submission` と枝 `hackathon-release`（どちらも `d483e36`）。
+8. コミット：`d483e36` まで 594（11-03 126・11-04 105・11-05 128・11-06 106・11-07 86・11-08 43。`git log --format=%ad --date=short | sort | uniq -c`）。
 
 ## 保証できないこと
 
