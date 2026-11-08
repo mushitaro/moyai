@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { addFilesFromBridge, connectTabTools } from "../../src/app/intake/tab-tools";
 import { IntakeWorkspace, MAX_FILE_BYTES } from "../../src/app/intake/workspace";
 import { BridgeClient } from "../../src/app/bridge-client";
-import { checkFolder, collectIntake, demoPacks, pickFiles, readIntakeFile, skillPacks, skillPacksText, type IntakeCollection } from "../../src/bridge/intake-files";
+import { checkFolder, checkTemplateFile, collectIntake, demoPacks, pickFiles, readIntakeFile, skillPacks, skillPacksText, type IntakeCollection } from "../../src/bridge/intake-files";
 import { resolvePacksDir } from "../../src/share/pack";
 import { createRelayServer } from "../../src/cli/relay";
 import { ERRORS, errorBody } from "../../src/shared/errors";
@@ -124,6 +124,11 @@ describe("橋渡し：道を確かめて資料を選ぶ", () => {
     expect(checkFolder(`${d}/x/../x`, e)).toBe("intake_path_not_allowed");
     expect(checkFolder("\\\\?\\C:\\data", e)).toBe("intake_path_not_allowed");
     expect(checkFolder("\\\\.\\PhysicalDrive0", e)).toBe("intake_path_not_allowed");
+    // ネットワークの道（見るだけで SMB・WebDAV で外へつなぐ）とローカルの管理共有も受けない（Security の点検 11-08 の中5）
+    expect(checkFolder("\\\\attacker.example\\s", e)).toBe("intake_path_not_allowed");
+    expect(checkFolder("//attacker.example/s", e)).toBe("intake_path_not_allowed");
+    expect(checkFolder("\\\\localhost\\C$\\Users", e)).toBe("intake_path_not_allowed");
+    expect(checkTemplateFile("\\\\attacker.example\\s\\様式.xlsx", e)).toBe("intake_path_not_allowed");
     expect(checkFolder("", e)).toBe("intake_path_not_allowed");
     // 状態フォルダとその下
     mkdirSync(join(state, "inner"));

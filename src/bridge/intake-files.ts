@@ -57,6 +57,9 @@ function inside(path: string, base: string, platform: NodeJS.Platform): boolean 
   return p === b || p.startsWith(`${b}/`);
 }
 
+/** ネットワークの道（\\server\share・//server/share）と装置の道。ドライブ文字か / から始まる道だけを受ける（Security の点検 11-08 の中5） */
+export const NETWORK_PATH = /^[\\/]{2}/;
+
 function realOr(path: string): string {
   try {
     return realpathSync.native(path);
@@ -70,8 +73,8 @@ export function checkFolder(raw: string, env: IntakeEnv): { path: string; real: 
   const platform = env.platform ?? process.platform;
   const t = raw.trim();
   if (!t || t.includes("\u0000") || t.length > 1000) return "intake_path_not_allowed";
-  // Windows の装置の道（\\?\・\\.\）は受けない
-  if (/^[\\/]{2}[?.][\\/]/.test(t)) return "intake_path_not_allowed";
+  // ネットワークの道と装置の道（\\server\share・//server/share・\\?\・\\.\）は受けない（見るだけで SMB・WebDAV で外へつなぐ）
+  if (NETWORK_PATH.test(t)) return "intake_path_not_allowed";
   if (!isAbsolute(t)) return "intake_path_not_allowed";
   if (t.split(/[\\/]+/).some((s) => s === "..")) return "intake_path_not_allowed";
   const path = resolve(t);
@@ -84,6 +87,7 @@ export function checkFolder(raw: string, env: IntakeEnv): { path: string; real: 
   if (st.isSymbolicLink()) return "intake_path_not_allowed";
   if (!st.isDirectory()) return "intake_folder_missing";
   const real = realOr(path);
+  if (NETWORK_PATH.test(real)) return "intake_path_not_allowed";
   const forbidden = [env.repoRoot, ...(env.stateDir ? [env.stateDir] : [])].flatMap((b) => [resolve(b), realOr(resolve(b))]);
   if (forbidden.some((b) => inside(path, b, platform) || inside(real, b, platform))) return "intake_path_not_allowed";
   return { path, real };
@@ -199,7 +203,7 @@ function isFile(p: string): boolean {
 /** 道の形の確かめ（folder と template で同じ）：絶対の道で、`..`・装置の道・NUL を含まない */
 function pathShapeOk(t: string): boolean {
   if (!t || t.includes("\u0000") || t.length > 1000) return false;
-  if (/^[\\/]{2}[?.][\\/]/.test(t)) return false;
+  if (NETWORK_PATH.test(t)) return false;
   if (!isAbsolute(t)) return false;
   return !t.split(/[\\/]+/).some((s) => s === "..");
 }
@@ -224,7 +228,7 @@ export function checkTemplateFile(raw: string, env: IntakeEnv): IntakeFile | Err
     return "intake_template_missing";
   }
   if (st.isSymbolicLink()) return "intake_path_not_allowed";
-  if (within(realOr(path))) return "intake_path_not_allowed";
+  if (within(realOr(path)) || NETWORK_PATH.test(realOr(path))) return "intake_path_not_allowed";
   if (!st.isFile() || extname(path).toLowerCase() !== ".xlsx" || st.size > TEMPLATE_MAX_BYTES || st.size === 0) return "intake_template_missing";
   return { path, name: basename(path), size: st.size };
 }
