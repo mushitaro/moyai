@@ -82,7 +82,7 @@ MOYAI のアカウントもログインも要りません。
 | 見るもの | 場所 |
 |---|---|
 | 公開台帳（【架空】10 施設の共有ファイル） | このリポジトリの [ledger/](ledger/)。元は mushitaro/moyai-ledger で、11-07 に履歴ごと移した（`bca1ddb`）。移す前の旧台帳 mushitaro/moyai-ledger での PR の検証（Actions の `ledger-validate`）：10 施設の PR [#1](https://github.com/mushitaro/moyai-ledger/pull/1) は ✓、わざと外した PR [#2](https://github.com/mushitaro/moyai-ledger/pull/2)（同区分の施設が 5 未満）・[#3](https://github.com/mushitaro/moyai-ledger/pull/3)（費用の欄）・[#4](https://github.com/mushitaro/moyai-ledger/pull/4)（施設名）は ✗ |
-| 公開台帳のサイト（類似施設の星取表と、統計の行の中央値・四分位・範囲） | 手元で作る：`node dist/cli.js ledger site ledger <出すフォルダ>` → `index.html`。moyai には Pages を置いていない（旧台帳 mushitaro/moyai-ledger のサイトは、移したときに更新を止めた） |
+| 公開台帳のサイト（類似施設の星取表と、統計の行の中央値・四分位・範囲） | moyai には Pages を置いていない。旧台帳 mushitaro/moyai-ledger のサイト（<https://mushitaro.github.io/moyai-ledger/>）は、11-07 に移したときの中身のまま残っている。今の台帳は `ledger/` で、サイトは手元で作る：`node dist/cli.js ledger site ledger <出すフォルダ>` → `index.html` |
 | 読みの地図（295 本の、書き方の形ごとの読めたセル・未解決・計画まで） | [docs/reading-map/index.html](docs/reading-map/index.html)（clone して開く） |
 | 受け入れの試験の表（試験の実行から生成） | [docs/acceptance.md](docs/acceptance.md)（11-05 の表） |
 | 試験の数と取り込みの物差しの推移、見ていない様式の結果 | [docs/trend.md](docs/trend.md) |
