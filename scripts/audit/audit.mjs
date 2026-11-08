@@ -114,7 +114,8 @@ const gate = budgetCheck(config.budgetUsd, ledger.rows, ROLE, PER_RUN_USD + pend
 if (included.length === 0) {
   stopReason = "監査に入れる差分が無い";
 } else if (gate.stop) {
-  failed = true;
+  // 費用の配分で呼ばなかった回は、落とさずに「この差分は見ていない（未確認）」と要約に書いて終える。
+  // 監査の答えが悪いのではなく、呼ばなかっただけなので（赤の × は、見た差分に問題があったときと、呼んで受け取れなかったときだけ）
   stopReason = gate.reason;
 } else {
   const client = new Anthropic({ timeout: 15 * 60 * 1000, maxRetries: 1 });
