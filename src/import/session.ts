@@ -41,6 +41,8 @@ export interface Analysis {
   readings: LoadedReading[];
   ruleHits: RuleHits;
   questions: QuestionState[];
+  /** 読み方の規則の決まった答えで決まった質問（見える質問の ID → 規則の id） */
+  ruleAnswers: Map<string, string>;
   open: QuestionState[];
   unusedDecisions: Decision[];
 }
@@ -71,7 +73,11 @@ export interface Survey {
   unresolvedCells: number;
   /** 詰まっている所：未解決のセルのある資料ごとの数と、その行の見本（5 行まで）。questionId はその行を決める質問が分かるときだけ */
   stuck: { fileRef: string; cells: number; header: { row: number; cells: string[] }[]; rows: { sheet: string | null; row: number; cells: string[]; unresolved: string[]; questionId: string | null }[] }[];
-  compose: { state: "idle" | "running" | "done" | "failed"; message: string | null };
+  /**
+   * 計画を作る進み。作ったとき（done）は、資料ごとの新しい機器の節の数（多い資料から 10 まで）と、
+   * 同じ名前の機器の節が 20 以上できた資料の知らせ（note。無ければ省く）を添える（作業画面の側が足す。src/plan/new-nodes.ts）
+   */
+  compose: { state: "idle" | "running" | "done" | "failed"; message: string | null; newNodesByFile?: { fileRef: string; nodes: number }[]; note?: string };
   /** 取り込みは当てはめを持たないので null。作業画面の側が作業中の計画から足す */
   crosswalk: CrosswalkSurvey | null;
 }
@@ -254,13 +260,13 @@ export class IntakeSession {
   private layoutOf(src: SourceFile, rules: ReturnType<typeof activeRules>, rulesKey: string, hits: RuleHits): SheetLayout[] {
     const hit = this.layoutMemo.get(src);
     if (hit && hit.rules === rulesKey) {
-      for (const [rule, file, ref] of hit.hits) hits.add(rule, file, ref);
+      for (const [rule, file, ref, sheet] of hit.hits) hits.add(rule, file, ref, sheet);
       for (const x of hit.snap) restoreTable(x);
       return hit.layouts;
     }
     const rec = new RecordingHits();
     const layouts = layoutFile(src, rules, rec);
-    for (const [rule, file, ref] of rec.log) hits.add(rule, file, ref);
+    for (const [rule, file, ref, sheet] of rec.log) hits.add(rule, file, ref, sheet);
     this.layoutMemo.set(src, { rules: rulesKey, layouts, hits: rec.log, snap: layouts.flatMap((l) => l.tables.map(snapshotTable)) });
     return layouts;
   }
@@ -382,6 +388,7 @@ export class IntakeSession {
       readings: [...this.readings],
       ruleHits: hits,
       questions,
+      ruleAnswers: ask.ruleAnswers(),
       open: ask.open(),
       unusedDecisions: ask.unusedDecisions(),
     };
@@ -597,16 +604,16 @@ function diff(before: Map<string, { s: string }>, after: Map<string, { s: string
 interface LayoutMemo {
   rules: string;
   layouts: SheetLayout[];
-  hits: [ReadingRule, string, string][];
+  hits: [ReadingRule, string, string, number | undefined][];
   snap: TableSnapshot[];
 }
 
 /** 規則が効いたセルを数えながら、あとで足し直せるように残す */
 class RecordingHits extends RuleHits {
-  readonly log: [ReadingRule, string, string][] = [];
-  override add(rule: ReadingRule, file: string, ref: string): void {
-    this.log.push([rule, file, ref]);
-    super.add(rule, file, ref);
+  readonly log: [ReadingRule, string, string, number | undefined][] = [];
+  override add(rule: ReadingRule, file: string, ref: string, sheetIndex?: number): void {
+    this.log.push([rule, file, ref, sheetIndex]);
+    super.add(rule, file, ref, sheetIndex);
   }
 }
 

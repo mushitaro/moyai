@@ -18,8 +18,11 @@ export type DateFormat = (typeof DATE_FORMATS)[number];
 /** 計画ルールの周期（年）。周期の案（src/plan/cycle.ts）と同じ幅 */
 export const PLAN_CYCLE_YEARS = { min: 1, max: 30 } as const;
 
+/** 規則の id（英数・_・-、40 字まで） */
+export const RULE_ID = z.string().regex(/^[A-Za-z0-9_-]{1,40}$/);
+
 const base = {
-  id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/),
+  id: RULE_ID,
   /** 人の言葉の 1 文（体言止めか「〜として読む」。名前は「」で囲む） */
   text: z.string().min(1).max(200),
   /** どの資料に効くか。見出しの文字（どれもシートにあること）と、資料の名前の型（* を使える）。省くとどの資料にも */
@@ -43,7 +46,8 @@ export const ReadingRule = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("columnRole"), column, role: z.enum(COLUMN_ROLES) }).strict(),
   z.object({ ...base, kind: z.literal("dateFormat"), column, format: z.enum(DATE_FORMATS) }).strict(),
   z.object({ ...base, kind: z.literal("effortUnit"), column, unit: z.enum(["manDays", "hours"]) }).strict(),
-  // 行の役割：行のどれかのセルの文字（NFKC・空白を除く）が match と同じ行。prefix が true なら、match で始まる行（頁ごとに番号の変わる題「受入供給設備（8 / 43）」、長い注記「注）…」）
+  // 行の役割：行のどれかのセルの文字（NFKC・空白を除く）が match と同じ行。prefix が true なら、行のいちばん左の字のあるセルが match で始まる行
+  // （頁ごとに番号の変わる題「受入供給設備（8 / 43）」、長い注記「注）…」）。prefix はほかの列の字とは比べない（仕入先の名前などに当てない）
   z.object({ ...base, kind: z.literal("rowRole"), match: z.string().min(1).max(200), prefix: z.boolean().optional(), role: z.enum(["total", "subtotal", "note"]) }).strict(),
   // 同じ機器の呼び名の並び（2〜20。どれも最後の名前と同じ機器として読む。比べるのは NFKC にそろえた文字なので、全角と半角だけの違いは書かなくてよい）
   z.object({ ...base, kind: z.literal("sameAsset"), names: z.array(z.string().min(1).max(80)).min(2).max(20) }).strict(),
@@ -172,15 +176,44 @@ export function sameColumn(header: string, ruleColumn: string): boolean {
   return h.includes(want) || strip(header) === want;
 }
 
+/** 資料の名前が、規則の資料の名前の型（* を使える）に合うか。道の付いた名前は、最後の名前でも比べる */
+export function fileMatches(pattern: string, file: string): boolean {
+  const re = new RegExp(`^${pattern.split("*").map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(".*")}$`, "u");
+  return re.test(file) || re.test(file.split("/").pop() ?? file);
+}
+
 /** 規則がその資料（シート）に効くか：資料の名前の型と、見出しの文字がどれもシートにあること */
 export function ruleApplies(rule: ReadingRule, file: string, sheetTexts: ReadonlySet<string>): boolean {
   const w = rule.when;
   if (!w) return true;
-  if (w.file) {
-    const re = new RegExp(`^${w.file.split("*").map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(".*")}$`, "u");
-    if (!re.test(file) && !re.test(file.split("/").pop() ?? file)) return false;
-  }
+  if (w.file && !fileMatches(w.file, file)) return false;
   return (w.headers ?? []).every((h) => sheetTexts.has(norm(h)));
+}
+
+/**
+ * 資料を丸ごと外す答え：reference（参考として計画に使わない。reference.ts）と reject（読めない資料を外す。session.ts の文字コード・区切りの質問）。
+ * 決まった答えの規則でこの答えを置くときは、when.file で資料を指したときだけ効く（指さないと、同じ形の質問の出る資料がどれも外れる）
+ */
+export const WHOLE_FILE_ANSWERS: readonly string[] = ["reference", "reject"];
+
+/** 資料を丸ごと外す決まった答えの規則か */
+export function dropsWholeFile(rule: ReadingRule): boolean {
+  return rule.kind === "answer" && WHOLE_FILE_ANSWERS.includes(rule.answer);
+}
+
+/** 資料を丸ごと外す決まった答えの規則が、資料を指していない（when.file が無い）ので効かないか */
+export function wholeFileUnaimed(rule: ReadingRule): boolean {
+  return dropsWholeFile(rule) && !rule.when?.file;
+}
+
+/**
+ * 決まった答えの規則が、その質問の資料に効くか。資料を丸ごと外す答えは、when.file が質問のどの資料にも合うときだけ効く。
+ * ほかの答えは資料で絞らない（when は置くときに断る。tab-tools.ts）
+ */
+export function answerAppliesTo(rule: ReadingRule, files: readonly string[]): boolean {
+  if (!dropsWholeFile(rule)) return true;
+  const pattern = rule.when?.file;
+  return !!pattern && files.length > 0 && files.every((f) => fileMatches(pattern, f));
 }
 
 /** 年月日の書き方で日付を読む（yyyymmdd・yymmdd は数の並び。md は呼ぶ側が年度から年を付ける）。読めなければ null */
@@ -199,16 +232,36 @@ export function parseWithFormat(text: string, format: DateFormat): { y: number |
   return m ? valid(null, Number(m[1]), Number(m[2])) : null;
 }
 
-/** 規則ごとの、効いたセル（「読み方」のタブの「効いたセル」） */
+/** 規則ごとの、効いたセル（「読み方」のタブの「効いたセル」）と、その行と資料 */
 export class RuleHits {
   private readonly cells = new Map<string, Set<string>>();
-  add(rule: ReadingRule, file: string, ref: string) {
+  /** シートの分かるセルの位置（records.ts の cellKey と同じ形。規則が読めていたセルを外したかを数える） */
+  private readonly at = new Map<string, Set<string>>();
+  private readonly rowSet = new Map<string, Set<string>>();
+  private readonly fileSet = new Map<string, Set<string>>();
+  /** sheetIndex はセルのシートの番号（分かるときだけ。分からないセルは、資料と行の番号だけで行を数える） */
+  add(rule: ReadingRule, file: string, ref: string, sheetIndex?: number) {
     const k = rule.id;
-    if (!this.cells.has(k)) this.cells.set(k, new Set());
-    this.cells.get(k)!.add(`${file}\u0000${ref}`);
+    put(this.cells, k, `${file}\u0000${ref}`);
+    put(this.fileSet, k, file);
+    const row = /(\d+)$/.exec(ref)?.[1];
+    if (row) put(this.rowSet, k, `${file}\u0000${sheetIndex ?? "?"}\u0000${row}`);
+    if (sheetIndex !== undefined) put(this.at, k, `${file}\u0000${sheetIndex}\u0000${ref}`);
   }
   count(id: string): number {
     return this.cells.get(id)?.size ?? 0;
+  }
+  /** 効いたセルのある行の数 */
+  rows(id: string): number {
+    return this.rowSet.get(id)?.size ?? 0;
+  }
+  /** 効いたセルのある資料の数 */
+  files(id: string): number {
+    return this.fileSet.get(id)?.size ?? 0;
+  }
+  /** 効いたセルのうち、シートの分かるものの位置（cellKey の形） */
+  located(id: string): ReadonlySet<string> {
+    return this.at.get(id) ?? EMPTY_SET;
   }
   /** 規則が効いたセルの見本（資料と位置） */
   sample(id: string): { file: string; ref: string } | null {
@@ -217,6 +270,14 @@ export class RuleHits {
     const [file, ref] = v.split("\u0000") as [string, string];
     return { file, ref };
   }
+}
+
+const EMPTY_SET: ReadonlySet<string> = new Set();
+
+function put(m: Map<string, Set<string>>, k: string, v: string): void {
+  let s = m.get(k);
+  if (!s) m.set(k, (s = new Set()));
+  s.add(v);
 }
 
 // ─── SKILL.md の文（3 段目。保管先に書く文と、AI に渡す本文で同じもの） ─────────────

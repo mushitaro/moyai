@@ -7,7 +7,9 @@
 // 読み取りの途中に呼ばれたら、それが終わってから答える。古い写しで答えない）。worker の無い所（試験）では同じスレッドでその場で答える。
 import type { TabSentCode } from "../../shared/errors";
 import {
+  READING_DROP_NOTE_MIN,
   SKILL_CATALOG_TOOLS,
+  SURVEY_FILES_DEFAULT,
   intakeAddFilesFromTabSchema,
   intakeAddFilesToTabSchema,
   toolDef,
@@ -29,7 +31,7 @@ import { assetKeyOf, fiscalYearOf } from "../../plan/chart";
 import { assetLabels } from "../../plan/asset-names";
 import { workRowRef, type StarIn } from "../../plan/star";
 import { getPeerView } from "../state/peers";
-import { activeRules, isPlanRule, type ReadingRule, type ReadingScope } from "../../import/reading";
+import { activeRules, dropsWholeFile, isPlanRule, wholeFileUnaimed, type ReadingRule, type ReadingScope } from "../../import/reading";
 import { planRuleStatus, type VerifiedBases } from "../../plan/cycle";
 import type { Plan } from "../../shared/plan";
 import { RECEIVE_MIN_K } from "../../share/k";
@@ -38,7 +40,7 @@ import { checkResultsOf, getReferenceDate, packCheckOf } from "../state/review";
 import { REVIEW_TEXT, TEXT } from "../text";
 import type { BridgeClient } from "../bridge-client";
 import { sheetHash } from "../stages";
-import { andThen, type DroppedFile, type IntakeWorkspace, type Maybe } from "./workspace";
+import { andThen, type DroppedFile, type IntakeWorkspace, type Maybe, type ProposeOutcome } from "./workspace";
 import { screenSet, type ScreenSetArgs } from "./screen-set";
 import { displayPrefs, goTo } from "../state/screen";
 import { patchedExcelJS } from "../../import/exceljs-setup";
@@ -273,8 +275,23 @@ function skillsOf(ws: IntakeWorkspace) {
   return activeSkills(getWorkingPlan()?.plan.packId ?? (ws.settings.packId || null), ws.currentReadings());
 }
 
-/** 規則の when が効かない種類 */
+/** 規則の when が効かない種類（資料を丸ごと外す決まった答えの when.file だけは効く） */
 const WHEN_IGNORED: ReadonlySet<string> = new Set(["sameAsset", "answer", "planCycle"]);
+
+/**
+ * reading_rules_propose の答えの note：置いた規則が、置く前に読めていたデータのセルを多く外したこと（READING_DROP_NOTE_MIN 以上）、
+ * 資料を指していないので効かない「資料を丸ごと外す答え」、下書きに無いので外せなかった id。どれも無ければ null
+ */
+function proposeNote(placed: readonly ReadingRule[], out: ProposeOutcome): string | null {
+  const ids = new Set(placed.map((r) => r.id));
+  const parts: string[] = [];
+  const heavy = out.rules.filter((r) => ids.has(r.id) && r.dropped >= READING_DROP_NOTE_MIN);
+  if (heavy.length) parts.push(`${heavy.map((r) => `ルール ${r.id} が読めていた ${r.dropped.toLocaleString("en-US")} セルを外した`).join("。")}。外したい行・列だけに当たっているかを、利用者に見せて確かめてください`);
+  const unaimed = placed.filter(wholeFileUnaimed).map((r) => r.id);
+  if (unaimed.length) parts.push(`資料を丸ごと外す答えは、when.file で資料を指してください（${unaimed.join("・")} は効いていない）`);
+  if (out.missing.length) parts.push(`下書きに無いので外していない id：${out.missing.join("・")}（承認済みのルールは外せない）`);
+  return parts.length ? `${parts.join("。")}。` : null;
+}
 
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   chart_propose: (ws, args) => chartPropose(ws, args),
@@ -282,22 +299,30 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   screen_set: (ws, args) => screenSet(ws, args as ScreenSetArgs),
   reading_rules_propose: (ws, args) => {
     // AI の経路から来た規則は、作者を AI に固め、決めた人の呼び名は捨てる（人と名乗らせない。台帳の新-8）
-    const fromAi = (args.rules as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);
-    // when が効かない種類（同じ機器・決まった答え・計画ルール）に when を付けた規則は断る（黙って広く当てない。Architect の 57。when を効かせるのは締切のあと）
-    if (fromAi.some((r) => r.when && WHEN_IGNORED.has(r.kind))) return { ok: false, code: "reading_when_ignored" };
-    return andThen(ws.proposeReadingWith(String(args.name), args.scope as ReadingScope, fromAi), (placed) => {
+    const fromAi = ((args.rules ?? []) as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);
+    const remove = (args.remove ?? []) as string[];
+    // when が効かない種類（同じ機器・決まった答え・計画ルール）に when を付けた規則は断る（黙って広く当てない。Architect の 57）。
+    // ただし資料を丸ごと外す決まった答えは、when.file で資料を指したときだけ効く（見出しの文字では絞れない。会話の繰り返しの試験 11-08）
+    if (fromAi.some((r) => r.when && WHEN_IGNORED.has(r.kind) && !(dropsWholeFile(r) && r.when.file && !r.when.headers))) return { ok: false, code: "reading_when_ignored" };
+    const name = String(args.name);
+    return andThen(ws.proposeReadingWith(name, args.scope as ReadingScope, fromAi, remove), (placed) => {
       // 計画ルールは、当たる作業に周期の案（R）を出す（人が確定のシートで受けるまで決まらない）。件数は引いた印の数
       applyPlanRules();
       const plan = getWorkingPlan()?.plan ?? null;
-      const mine = ws.draftReading(String(args.name))?.skill.rules ?? [];
-      const rules = placed.map((x) => {
+      const mine = ws.draftReading(name)?.skill.rules ?? [];
+      const rules = placed.rules.map(({ dropped: _d, ...x }) => {
         const r = mine.find((y) => y.id === x.id);
-        return r && isPlanRule(r) ? { ...x, hits: planRuleMarks(plan, String(args.name), x.id) } : x;
+        return r && isPlanRule(r) ? { ...x, hits: planRuleMarks(plan, name, x.id) } : x;
       });
       // 数は、規則を置いたあとの写し（読み直しを待ってから）
       const v = ws.view;
-      ws.note("ai", T.readingProposed(String(args.name), (args.rules as unknown[]).length));
-      return { ok: true, data: { name: args.name, rules, unresolvedCells: v.unresolvedCells, openQuestions: v.open.length, planReady: v.blockers.length === 0 } } as TabToolResult;
+      if (fromAi.length) ws.note("ai", T.readingProposed(name, fromAi.length));
+      if (placed.removed.length) ws.note("ai", T.readingRemoved(name, placed.removed.length));
+      const note = proposeNote(fromAi, placed);
+      return {
+        ok: true,
+        data: { name: args.name, rules, removed: placed.removed, unresolvedCells: v.unresolvedCells, openQuestions: v.open.length, planReady: v.blockers.length === 0, ...(note ? { note } : {}) },
+      } as TabToolResult;
     });
   },
   // 保管先の読み方の一覧：作業画面は今の施設だけを渡し、橋渡しが保管先を読む（本文は今の施設の分だけ。台帳の中-4）
@@ -313,18 +338,30 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   // 共有ファイルの形と数：作業画面は計画と SHARE の選びを渡し、SHARE を開くだけ（数えるのは橋渡し）
   share_preview: (ws) => sharePreviewRequest(ws),
   intake_survey: (ws, args) => {
-    const part = args.part as "all" | "questions" | "compose" | "crosswalk" | "skills";
+    const part = args.part as "all" | "questions" | "compose" | "crosswalk" | "skills" | "files";
+    // 資料の一覧は part: all か files のときだけ、limit（既定 20）まで。part: files は cursor から（全部の数は filesTotal）
+    const fileLimit = typeof args.limit === "number" ? args.limit : SURVEY_FILES_DEFAULT;
+    const fileCursor = part === "files" && typeof args.cursor === "number" ? args.cursor : 0;
     return andThen(ws.surveyWith(), (survey): TabToolResult => {
+      const empty = { files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] };
+      const filesTotal = survey.files.length;
       if (part === "skills") {
-        const s: Record<string, unknown> = { ...survey, crosswalk: null, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] };
+        const s: Record<string, unknown> = { ...survey, crosswalk: null, ...empty, filesTotal };
         ws.note("ai", T.skillsRead);
         return { ok: true, data: { ...s, skillTexts: skillsOf(ws) } };
       }
       // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
-      const s: Record<string, unknown> = { ...survey, crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null, handoff: getHandoffMail() };
+      const s: Record<string, unknown> = {
+        ...survey,
+        files: survey.files.slice(fileCursor, fileCursor + fileLimit),
+        filesTotal,
+        crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null,
+        handoff: getHandoffMail(),
+      };
       ws.note("ai", T.surveyed);
-      if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] } };
-      if (part === "questions") return { ok: true, data: { ...s, samples: [], legends: [], notes: [] } };
+      if (part === "compose" || part === "crosswalk") return { ok: true, data: { ...s, ...empty } };
+      if (part === "files") return { ok: true, data: { ...s, ...empty, files: s.files } };
+      if (part === "questions") return { ok: true, data: { ...s, files: [], samples: [], legends: [], notes: [] } };
       return { ok: true, data: s };
     });
   },

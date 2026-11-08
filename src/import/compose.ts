@@ -907,7 +907,11 @@ export function compose(
   const invalid = ask.invalidDecisions();
   if (invalid.length) blockers.push(`当てはまらない決定 ${invalid.length}`);
   // どの資料も参考として外したときは、計画に使う資料が無い（空の計画を作らない）
-  if (reference.size && sources.length && sources.every((x) => reference.has(x.file))) blockers.push(`計画に使う資料が無い（どの資料も参考として外した ${reference.size}）`);
+  // 決まった答えのルールで外した資料があれば、そのルールの id を添える（どのルールを直すか・外すかが分かるように）
+  if (reference.size && sources.length && sources.every((x) => reference.has(x.file))) {
+    const byRules = [...new Set([...reference].map((f) => ask.ruleIdOf(questionIdOf(referenceKey(f)))).filter((x): x is string => x !== null))];
+    blockers.push(`計画に使う資料が無い（どの資料も参考として外した ${reference.size}${byRules.length ? `。外したルール：${byRules.join("・")}` : ""}）`);
+  }
   // 契約の一覧だけのとき（契約は作業にしないので、機器も作業も無い）：空の計画を作らない
   else if (!assets.length && !details.length && rec.contracts.length) blockers.push(`計画に使う資料が無い（契約の一覧の契約 ${rec.contracts.length} 件は作業にしない。機器か作業の資料と一緒に入れる）`);
   // 資料をまたいで結ぶかの決まらない機器（その資料だけの読みで節にしてある）：決まるまで計画を作らない。

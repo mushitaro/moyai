@@ -391,7 +391,7 @@ function ruleForColumn(ctx: BuildCtx, col: ColInfo, dataRows: number[]): void {
     }
     for (const row of dataRows) {
       const x = ctx.idx.at(row, col.c);
-      if (x && x.text !== "") ctx.hits?.add(r, ctx.file, x.ref);
+      if (x && x.text !== "") ctx.hits?.add(r, ctx.file, x.ref, ctx.sheetIndex);
     }
   }
 }
@@ -610,14 +610,16 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     let role: RowRole = "data";
     if (st) role = st;
     else if (first && cells.length === 1 && cue.isNote(first.text)) role = "note";
-    // 読み方の規則の行の役割（「『年度計』の行は合計として外す」）
+    // 読み方の規則の行の役割（「『年度計』の行は合計として外す」）。丸ごとの一致はどのセルでもよい。
+    // 前方一致（prefix）は、行のいちばん左の字のあるセルとだけ比べる（頁の頭書きの字で始まる仕入先の名前などの列に当てない。会話の繰り返しの試験 11-08）
+    const lead = cells.map((c) => norm(c.text)).find((t) => t !== "") ?? null;
     for (const a of ctx.rules) {
       if (a.rule.kind !== "rowRole") continue;
       const want = norm(a.rule.match);
-      const prefix = a.rule.prefix === true;
-      if (cells.some((c) => norm(c.text) === want || (prefix && norm(c.text).startsWith(want)))) {
+      const hit = a.rule.prefix === true ? lead !== null && lead.startsWith(want) : cells.some((c) => norm(c.text) === want);
+      if (hit) {
         role = a.rule.role;
-        for (const c of cells) ctx.hits?.add(a.rule, ctx.file, c.ref);
+        for (const c of cells) ctx.hits?.add(a.rule, ctx.file, c.ref, ctx.sheetIndex);
         break;
       }
     }
@@ -1771,7 +1773,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
         if (i >= 0) {
           hi = i;
           ruleHeader = true;
-          for (const c of rowTexts(idx, a.rule.row)) hits?.add(a.rule, src.file, c.ref);
+          for (const c of rowTexts(idx, a.rule.row)) hits?.add(a.rule, src.file, c.ref, grid.index);
           break;
         }
       }

@@ -26,8 +26,11 @@ export type IntakeRequest =
   | { op: "open"; options: IntakeOptions }
   /** 計画の ID・パック・施設の名前を変える（reread：資料の読み方に効くので読み直す） */
   | { op: "options"; options: IntakeOptions; reread: boolean }
-  /** 当てる読み方を置き換える（reread：資料の読み方が変わったので読み直す） */
-  | { op: "readings"; readings: LoadedReading[]; reread: boolean }
+  /**
+   * 当てる読み方を置き換える（reread：資料の読み方が変わったので読み直す）。
+   * measure：置き換える前に読めていたデータのセルを覚える（reading_rules_propose だけ。ruleEffects が、規則が外したセルを数える）
+   */
+  | { op: "readings"; readings: LoadedReading[]; reread: boolean; measure?: boolean }
   /** 資料を 1 つ読む */
   | { op: "read"; name: string; bytes: Uint8Array }
   /**
@@ -56,7 +59,9 @@ export type IntakeRequest =
   /** 突き合せの行 */
   | { op: "match"; noDate: string }
   /** 確定のときに版の記録に残す資料と、質問ごとに掛かった資料 */
-  | { op: "commit" };
+  | { op: "commit" }
+  /** 読み方の規則ごとの効き（reading_rules_propose の答え）：当たった行と資料の数と、読み方を変える前に読めていたデータのセルのうち外したセルの数 */
+  | { op: "ruleEffects"; ids: string[] };
 
 export interface CellPos {
   file: string;
@@ -137,6 +142,17 @@ export interface CommitReply {
   decisions: Decision[];
 }
 
+/**
+ * 読み方の規則 1 つの効き。rows・files は当たった行と資料の数（決まった答えの規則は、決めた質問の行と資料）。
+ * dropped は、最後に読み方を変える前にデータとして読めていたセルのうち、その規則が当たって今はデータでないセルの数（読み直さなかったときは 0）
+ */
+export interface RuleEffect {
+  id: string;
+  rows: number;
+  files: number;
+  dropped: number;
+}
+
 /** 要求ごとの答えの型 */
 export interface IntakeReplies {
   open: null;
@@ -155,6 +171,7 @@ export interface IntakeReplies {
   nextUnresolved: CellPos | null;
   match: Match;
   commit: CommitReply;
+  ruleEffects: RuleEffect[];
 }
 
 export type IntakeOp = IntakeRequest["op"];

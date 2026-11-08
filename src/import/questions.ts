@@ -2,7 +2,7 @@
 // 決定は同じ種類の行すべてに効き、取り消せる（決定を外して読み直す。同じ入力と決定からはいつも同じ出力）。
 // 決定の作者は src/shared/fields.ts の AUTHOR_KINDS。推測で埋めない：答えが無ければ、そのセルは未解決。
 import { AUTHOR_KINDS, type AuthorKind } from "../shared/fields";
-import { ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
+import { answerAppliesTo, ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
 
 export type QuestionKind =
   | "encoding"
@@ -155,6 +155,8 @@ export class Asker {
   private readonly memberOf = new Map<string, Group>();
   /** 出てきた順（質問の並びはこの順） */
   private readonly order: (string | Group)[] = [];
+  /** まとめない質問のうち、読み方の規則の決まった答えで決まったもの（質問の ID → 規則） */
+  private readonly singleRule = new Map<string, ActiveRule>();
   /** 見える質問の一覧（問いを置くたびに作り直す） */
   private view: { asked: Map<string, QuestionState> } | null = null;
   constructor(
@@ -170,8 +172,8 @@ export class Asker {
   }
 
   /** 読み方の規則が効いたセルを数える（印の意味の規則が当たった印など） */
-  hit(rule: ReadingRule, file: string, ref: string): void {
-    this.hits?.add(rule, file, ref);
+  hit(rule: ReadingRule, file: string, ref: string, sheetIndex?: number): void {
+    this.hits?.add(rule, file, ref, sheetIndex);
   }
 
   /** 見える質問（ID → 質問）。まとめた問いは、まとめた質問 1 つにだけ出る */
@@ -201,7 +203,7 @@ export class Asker {
   }
 
   /** この鍵の質問に、置いた決定か読み方の規則の答えがあるか（聞かずに確かめる） */
-  hasAnswer(key: string, q: Pick<Question, "kind" | "text" | "options" | "valueKind">): boolean {
+  hasAnswer(key: string, q: Pick<Question, "kind" | "text" | "options" | "valueKind" | "items">): boolean {
     return this.decisions.has(questionIdOf(key)) || this.ruleFor(q) !== null;
   }
 
@@ -239,6 +241,7 @@ export class Asker {
       const a = this.ruleFor(q);
       if (a && a.rule.kind === "answer") {
         d = { questionId, answer: a.rule.answer, author: "rule_code", reason: ruleReason(a) };
+        this.singleRule.set(questionId, a);
         for (const it of q.items) for (const c of it.cells) this.hits?.add(a.rule, it.file, c);
       }
     }
@@ -261,8 +264,40 @@ export class Asker {
     return g.decision && !g.invalid ? g.decision.answer : null;
   }
 
-  private ruleFor(q: Pick<Question, "kind" | "text" | "options" | "valueKind">): ActiveRule | null {
-    return this.answerRules.find((x) => x.rule.kind === "answer" && x.rule.question === q.kind && q.text.includes(x.rule.match) && (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer))) ?? null;
+  /**
+   * 質問に当たる決まった答えの規則：種類が同じで、質問の文に match の字を含み、答えが選択肢にあるもの。
+   * 資料を丸ごと外す答え（参考として外す・読めない資料を外す）は、when.file が質問の資料を指すときだけ（reading.ts の answerAppliesTo）
+   */
+  private ruleFor(q: Pick<Question, "kind" | "text" | "options" | "valueKind" | "items">): ActiveRule | null {
+    const files = [...new Set(q.items.map((i) => i.file))];
+    return (
+      this.answerRules.find(
+        (x) =>
+          x.rule.kind === "answer" &&
+          x.rule.question === q.kind &&
+          q.text.includes(x.rule.match) &&
+          (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer)) &&
+          answerAppliesTo(x.rule, files),
+      ) ?? null
+    );
+  }
+
+  /** その問いに効いている決定が読み方の規則の決まった答えなら、その規則の id（人・AI の決定や、答えの無い問いは null）。まとめる前の ID でも引ける */
+  ruleIdOf(questionId: string): string | null {
+    const g = this.memberOf.get(questionId) ?? this.groups.get(questionId);
+    if (g) return !g.stored && g.rule && g.decision ? g.rule.rule.id : null;
+    const st = this.single.get(questionId);
+    return st?.decision?.author === "rule_code" ? (this.singleRule.get(questionId)?.rule.id ?? null) : null;
+  }
+
+  /** 見える質問のうち、読み方の規則の決まった答えで決まったもの（質問の ID → 規則の id） */
+  ruleAnswers(): Map<string, string> {
+    const out = new Map<string, string>();
+    for (const id of this.asked.keys()) {
+      const r = this.ruleIdOf(id);
+      if (r !== null) out.set(id, r);
+    }
+    return out;
   }
 
   private built(): { asked: Map<string, QuestionState> } {

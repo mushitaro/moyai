@@ -4,7 +4,7 @@
 import { z } from "zod";
 import toolNames from "./tool-names.json";
 import { CLASS_CODE, FIELD_REFS, WORK_ATTRIBUTES, type FieldRef } from "./fields";
-import { COLUMN_ROLES, DATE_FORMATS, PLAN_CYCLE_YEARS, READING_SCOPES, ReadingRule } from "../import/reading";
+import { COLUMN_ROLES, DATE_FORMATS, PLAN_CYCLE_YEARS, READING_SCOPES, ReadingRule, RULE_ID } from "../import/reading";
 import { templateLayoutInputSchema, templateShapeSchema } from "./template-layout";
 
 // ─── 規則の形（1 か所だけ）─────────────────────────────────────────
@@ -176,6 +176,12 @@ export const SURVEY_TEXT_MAX = 60;
 export const SURVEY_MAX_BYTES = 60_000;
 /** intake_survey の limit（1 回に載せる質問の数）の上限 */
 export const SURVEY_LIMIT_MAX = 1_000;
+/** intake_survey の資料の一覧（files）に載せる数の既定（limit を渡せばその数まで。全部の数は filesTotal） */
+export const SURVEY_FILES_DEFAULT = 20;
+/** reading_rules_propose：1 つのルールが、置く前に読めていたデータのセルをこの数以上外したら、答えの note で知らせる */
+export const READING_DROP_NOTE_MIN = 1_000;
+/** reading_rules_propose の remove（下書きから外すルールの id）の上限 */
+export const READING_REMOVE_MAX = 50;
 
 /**
  * 当てはめの要約（intake_survey の crosswalk）。行は写さない：パックの 1 段目の項目と作業の属性の一覧、
@@ -530,10 +536,10 @@ const READING_RULE_HINTS: Partial<Record<ReadingRule["kind"], string>> = {
   columnRole: `column は見出しの字、role は ${COLUMN_ROLES.join("・")}`,
   dateFormat: `format は ${DATE_FORMATS.join("・")}`,
   effortUnit: "unit は manDays・hours",
-  rowRole: "role は total・subtotal・note。prefix: true で match で始まる行",
+  rowRole: "role は total・subtotal・note。prefix なしは、行のどれかのセルの字が match と丸ごと同じ行。prefix: true は、行のいちばん左の字のあるセルが match で始まる行（ほかの列の字とは比べない）。字は NFKC にそろえ空白を除いて比べる",
   sameAsset: "2〜20 の名前を、どれも最後の名前と同じ機器として読む",
   markMeaning: "planOrActual は plan・actual。meaning は省ける",
-  answer: "同じ質問への決まった答え。valueKind が number の質問は answer に数の字",
+  answer: "同じ質問への決まった答え。valueKind が number の質問は answer に数の字。資料を丸ごと外す答え（reference・reject）は when: { file: \"資料の名前の型\" } で資料を指したときだけ効く",
   planCycle: `attribute は ${WORK_ATTRIBUTES.join("・")}、years は ${PLAN_CYCLE_YEARS.min}〜${PLAN_CYCLE_YEARS.max}`,
 };
 /** reading_rules_propose の説明に足す、ルールの形の見本の文 */
@@ -662,17 +668,31 @@ export const TOOLS = {
     "intake_survey",
     "read",
     "取り込みの要約",
-    "結果の workScreenUrl は作業画面の URL。利用者が「立ち上げて」「画面を出して」と言ったら、窓を探さずに show: true で呼ぶ（橋渡しが既定のブラウザで開き、新しいタブが作業画面を引き継ぐ）。show: true の答えの screen は、橋渡しがブラウザを開いたか（opened）と、作業画面のタブがつながったか（connected）。connected が false なら、note の 1 文を利用者に言う。デモ（架空の資料）のときは、1 回の返事でツールを 1 つだけ呼び、画面の変わった所を 2 行までで言って、利用者の「次」を待つ（intake_add_files の説明のとおり）。作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。",
+    "結果の workScreenUrl は作業画面の URL。利用者が「立ち上げて」「画面を出して」と言ったら、窓を探さずに show: true で呼ぶ（橋渡しが既定のブラウザで開き、新しいタブが作業画面を引き継ぐ）。show: true の答えの screen は、橋渡しがブラウザを開いたか（opened）と、作業画面のタブがつながったか（connected）。connected が false なら、note の 1 文を利用者に言う。デモ（架空の資料）のときは、1 回の返事でツールを 1 つだけ呼び、画面の変わった所を 2 行までで言って、利用者の「次」を待つ（intake_add_files の説明のとおり）。作業画面に入れた資料の要約、行番号つきの見本、凡例、注記、質問の候補、詰まっている所（stuck：資料ごとの未解決のセルの数とその行の見本。先に質問に答え、それでも残る行は reading_rules_propose のルールで読ませる）、計画を作った結果を読む。行の中身は写さず、質問に答えるときは intake_settle で決定を置く。計画ができたら、crosswalk（part: crosswalk か all）に紐付けの要約（Skillパックの第 1 階層の項目と作業分類、欄ごとの多い値、未紐付けの数、作業中の計画の版）が入る。節の名前の残りは chart_rows の階層で読む。" +
+      "part を指定すると、その欄だけに中身が入る（資料の一覧 files は part: all か files のときだけで、limit〔既定 20〕まで。全部の数は filesTotal、続きは part: files と cursor）。" +
+      "計画を作ったときの compose には、資料ごとの新しい機器の節の数（newNodesByFile、多い資料から 10 まで）が入り、同じ名前の機器の節が 20 以上できた資料があれば note に名前と数が入るので、利用者に見せて、切れ端が質問なしに入っていないかを確かめる。",
     z.object({
-      part: z.enum(["all", "questions", "compose", "crosswalk", "skills"]).default("all"),
+      part: z
+        .enum(["all", "questions", "compose", "crosswalk", "skills", "files"])
+        .default("all")
+        .describe("読む欄。all は全部（資料の一覧は limit まで）。questions は質問と詰まっている所、compose は計画を作った結果、crosswalk は紐付けの要約、skills は Skill の本文、files は資料の一覧だけ。all のほかは、その欄だけに中身が入る"),
       show: z.boolean().optional().describe("true で、作業画面を利用者の PC の既定のブラウザで開いて前に出してから読む。利用者が「立ち上げて」「画面を出して」「見えない」と言ったら付ける（窓を探さない）"),
       /** 何件目の質問から読むか（0 から）。答えの questionsPage.nextCursor を渡すと続きを読める */
-      cursor: z.number().int().min(0).optional().describe("questions の何件目から読むか（0 から）。前の答えの questionsPage.nextCursor を渡すと続きが読める"),
+      cursor: z.number().int().min(0).optional().describe("questions の何件目から読むか（0 から）。前の答えの questionsPage.nextCursor を渡すと続きが読める。part: files では資料の一覧の何件目から読むか"),
       /** 1 回に載せる質問の数の上限（大きさの上限のほうが先に効くことがある） */
-      limit: z.number().int().min(1).max(SURVEY_LIMIT_MAX).optional().describe("1 回に載せる質問の数の上限（答えの大きさの上限が先に効くことがある）"),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(SURVEY_LIMIT_MAX)
+        .optional()
+        .describe(`1 回に載せる質問の数の上限（答えの大きさの上限が先に効くことがある）。資料の一覧（files）の数の上限にも効く（省くと ${SURVEY_FILES_DEFAULT}）`),
     }),
     z.object({
+      /** 資料の一覧（part: all か files のときだけ。limit〔既定 20〕まで。ほかの part では空） */
       files: z.array(z.object({ fileRef: z.string(), sheets: z.number().int(), rows: z.number().int() })),
+      /** 作業画面に入れた資料の全部の数（files に載せきれなかった分も数える） */
+      filesTotal: z.number().int().optional().describe("作業画面に入れた資料の全部の数。files は part: all か files のときだけ、limit（既定 20）まで載る。続きは part: files と cursor で読む"),
       samples: z
         .array(z.object({ fileRef: z.string(), row: z.number().int(), cells: z.array(z.string()).max(40) }))
         .max(20),
@@ -728,7 +748,18 @@ export const TOOLS = {
           }),
         )
         .max(20),
-      compose: z.object({ state: z.enum(["idle", "running", "done", "failed"]), message: z.string().nullable() }),
+      compose: z.object({
+        state: z.enum(["idle", "running", "done", "failed"]),
+        message: z.string().nullable(),
+        /** 作ったとき：資料ごとの新しい機器の節（その資料で初めて出た節）の数。多い資料から 10 まで */
+        newNodesByFile: z
+          .array(z.object({ fileRef: z.string(), nodes: z.number().int() }))
+          .max(10)
+          .optional()
+          .describe("計画を作ったとき：資料ごとの新しい機器の節（その資料で初めて出た節）の数。多い資料から 10 まで"),
+        /** 作ったとき：同じ名前の機器の節が 20 以上できた資料の名前・節の名前・数（利用者に見せて確かめる） */
+        note: z.string().optional().describe("計画を作ったとき、同じ名前の機器の節が 20 以上できた資料があれば、その資料・名前・数。頁の頭書きなどの切れ端が質問なしに入っていないか、利用者に見せて確かめる"),
+      }),
       crosswalk: crosswalkSurveySchema.nullable(),
       skills: skillCatalogSchema.optional(),
       /** 人が「署名して渡す」を押したときに橋渡しが用意したメールの文（宛先・件名・本文）。利用者の連携したメールから送る（決まり 1 の例外の 1 つめ） */
@@ -782,7 +813,7 @@ export const TOOLS = {
       "デモは、利用者が作業画面で動きを見るためにある。先に作業画面を開いて利用者が見ているかを確かめ、1 回の返事でツールを 1 つだけ呼び、画面の何が変わったかを 2 行までで言って、利用者の「次」を待つ。資料がもう入っていても同じ。最後まで続けて呼んで結果だけを話さない。" +
       "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
       "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
-      "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey の files で入った資料を確かめる。" +
+      "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey（part: files）の files と filesTotal で入った資料を確かめる。" +
       "source: template は、利用者が「この様式で Excel を出して」と言った様式（path に .xlsx の絶対の道。8 MB まで）を、作業画面の EXPORT の様式の欄に入れる（保存はしない）。結果の template は様式の形だけ：シートの名前、字のあるセルの位置と字（見出し・ラベル・注記）、結合、式のあるセルの位置（年度の参照の式は参照先と足す数）。値の入ったデータの行は字を返さず、範囲と数だけ。planLevels は作業中の計画の階層の名前。" +
       "「この様式で Excel を出して」の順：1. この source: template で様式を入れる 2. 形を読んで写し方の案を screen_set の templateLayout で置く 3. EXPORT の見本（案のとおりに書いた最初の 20 行ほど）を利用者に見てもらう 4. 出力と保存は利用者が「この写し方で出力」を押す（ツールではしない）。",
     intakeAddFilesInput,
@@ -1042,15 +1073,39 @@ export const TOOLS = {
     "reading_rules_propose",
     "propose",
     "ルールを下書きで置く",
-    "取り込みを詰めきれないとき、利用者と会話で決めたルールを、作業中の版の下書きのルール（3 段目の Skill）に置く。ルールは決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・星取の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業分類 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料のルールには効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその星取の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。同じ id のルールは置き換える。作業画面がすぐ読み直し、ルールごとに効いたセルの数と、残りの未解決の数・質問の数を返す。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。" +
+    "取り込みを詰めきれないとき、利用者と会話で決めたルールを、作業中の版の下書きのルール（3 段目の Skill）に置く。ルールは決まった形だけ（見出しの行・列の役目・日付の書き方・工数の単位・行の役割・同じ機器・星取の意味・同じ質問への決まった答え、と計画ルール planCycle：共通の設備項目 commonItem × 作業分類 attribute → 周期 years。利用者が会話で周期を直したときに置く。資料のルールには効かず、項目と属性を人が受けた作業に周期の案〔R〕を出すだけで、hits はその星取の数）で、text は人の言葉の 1 文（体言止めか「〜として読む」、名前は「」で囲む）。when で効く資料を絞る（見出しの文字・資料の名前の型。効くのは見出しの行・列の役目・日付の書き方・工数の単位・行の役割・星取の意味だけで、同じ機器・決まった答え・計画ルールに when を付けると断る）。" +
+      "資料を丸ごと外す決まった答え（answer が reference・reject）だけは when.file で資料を指したときだけ効き、when.file の無いものは置いても効かない（note で知らせる）。" +
+      "行の役割（rowRole）は、prefix なしなら行のどのセルでも字が丸ごと同じなら当たり、prefix: true なら行のいちばん左の字のあるセルの頭だけと比べる。" +
+      "同じ id のルールは置き換え、remove に id を並べると下書きから外す（承認済みのルールは外せない。答えの removed に外した id）。" +
+      "作業画面がすぐ読み直し、ルールごとに効いたセルの数・当たった行と資料の数（rows・files）と、残りの未解決の数・質問の数を返す。1 つのルールが読めていたデータのセルを 1,000 以上外したときは note に書くので、利用者に見せて確かめる。下書きは作った人の作業中の版でだけ効き、承認は版の署名でする。保管先に書くのは reading_skill_register。" +
       readingRuleExamplesText(),
-    z.object({ name: z.string().min(1).max(80), scope: z.enum(READING_SCOPES), rules: z.array(ReadingRule).min(1).max(50) }),
+    z
+      .object({
+        name: z.string().min(1).max(80),
+        scope: z.enum(READING_SCOPES),
+        rules: z.array(ReadingRule).max(50).default([]),
+        remove: z
+          .array(RULE_ID)
+          .max(READING_REMOVE_MAX)
+          .optional()
+          .describe(`下書きから外すルールの id（${READING_REMOVE_MAX} まで）。外せるのはこの名前の下書きのルールだけ（承認済みのルールは外せない）`),
+      })
+      .superRefine((a, ctx) => {
+        if (a.rules.length === 0 && !(a.remove?.length ?? 0)) ctx.addIssue({ code: "custom", path: ["rules"], message: "rules か remove のどちらかに 1 つ以上を渡す" });
+        const ids = new Set(a.rules.map((r) => r.id));
+        if (a.remove?.some((id) => ids.has(id))) ctx.addIssue({ code: "custom", path: ["remove"], message: "同じ id を rules と remove の両方に書かない" });
+      }),
     z.object({
       name: z.string(),
-      rules: z.array(z.object({ id: z.string(), text: z.string(), hits: z.number().int() })),
+      /** 下書きのルールごとの効き：hits は効いたセル、rows・files は当たった行と資料の数（決まった答えは、決めた質問の行と資料） */
+      rules: z.array(z.object({ id: z.string(), text: z.string(), hits: z.number().int(), rows: z.number().int(), files: z.number().int() })),
+      /** 下書きから外した id */
+      removed: z.array(z.string()),
       unresolvedCells: z.number().int(),
       openQuestions: z.number().int(),
       planReady: z.boolean(),
+      /** 確かめてほしいこと（読めていたセルを多く外したルール・資料を指していない「資料を丸ごと外す答え」・外せなかった id）。無ければ省く */
+      note: z.string().optional(),
     }),
   ),
   reading_skill_register: def(

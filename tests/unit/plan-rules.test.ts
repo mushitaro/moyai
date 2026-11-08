@@ -147,8 +147,8 @@ describe("chart_propose の根拠（AI は指すだけ）", () => {
     expect(call(w, { rule: { name: "【架空】計画ルール", ruleId: "p1" } })).toEqual({ ok: false, code: "plan_rule_unknown" });
     const placed = runTabTool(w, "reading_rules_propose", { name: "【架空】計画ルール", scope: "company", rules: [planRule()] }, ctx);
     expect(placed.ok).toBe(true);
-    // 件数は、出した R の案の印の数（w1 の 2026・2031）
-    expect(placed.ok && placed.data.rules).toEqual([{ id: "p1", text: "灰クレーンの整備は 5 年ごと", hits: 2 }]);
+    // 件数は、出した R の案の印の数（w1 の 2026・2031）。計画ルールは資料の行に当たらないので、行と資料の数は 0
+    expect(placed.ok && placed.data.rules).toEqual([{ id: "p1", text: "灰クレーンの整備は 5 年ごと", hits: 2, rows: 0, files: 0 }]);
     expect(call(w, { rule: { name: "【架空】計画ルール", ruleId: "nope" } })).toEqual({ ok: false, code: "plan_rule_unknown" });
     // 読み方の規則（計画ルールでない）を指しても通さない
     runTabTool(w, "reading_rules_propose", { name: "【架空】計画ルール", scope: "company", rules: [{ id: "r1", text: "1 行目を見出しとして読む", kind: "headerRow", row: 1, author: "ai", reason: "会話" }] }, ctx);

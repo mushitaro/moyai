@@ -21,6 +21,7 @@ import type {
   PhotoCall,
   ReadReply,
   ResetReply,
+  RuleEffect,
   SettleReply,
   SheetWire,
   ToHost,
@@ -62,6 +63,11 @@ export class IntakeHost {
   private hv = 0;
   private cache: { hv: number; an: Analysis } | null = null;
   private viewCache: { hv: number; view: Omit<IntakeView, "at"> } | null = null;
+  /**
+   * reading_rules_propose で読み方を変える（読み直す）前に、データとして読めていたセルの位置（cellKey）。規則が読めていたセルを外したかを数える（ruleEffects）。
+   * 読み直さない変更・ほかの読み方の変更・取り込みを始め直したあとは null（外した数を数えない）
+   */
+  private dataBefore: ReadonlySet<string> | null = null;
   /** 最後に受けた要求の、主のスレッドの版 */
   private applied = 0;
   private lastCached = false;
@@ -188,6 +194,7 @@ export class IntakeHost {
       case "open":
         this.session = this.newSession(req.options);
         this.inputs = [];
+        this.dataBefore = null;
         this.bump();
         return null;
       case "options": {
@@ -201,6 +208,9 @@ export class IntakeHost {
         return null;
       }
       case "readings":
+        // 読み方を変える前に読めていたデータのセル（reading_rules_propose のときだけ。覚えた読み取りがあれば、それから数える）。
+        // ほかの読み方の変更（承認済みの読み方を読んだときなど）は数えない（読込の途中に読み取りを足さない）
+        this.dataBefore = req.reread && req.measure === true ? dataCells(this.analysis()) : null;
         this.s.setReadings(req.readings);
         if (req.reread) this.bump();
         return null;
@@ -232,6 +242,8 @@ export class IntakeHost {
         return this.nextUnresolved(req.after, req.file);
       case "match":
         return matchRows(this.analysis().linked, req.noDate);
+      case "ruleEffects":
+        return ruleEffectsOf(this.analysis(), req.ids, this.dataBefore);
     }
   }
 
@@ -266,6 +278,7 @@ export class IntakeHost {
     // 決定はまとめて 1 回で置く（1 つずつ置くと置くたびに資料を読み直す）
     if (decisions.length > 0) s.settle([...decisions]);
     this.session = s;
+    this.dataBefore = null;
     if (req.files) this.inputs = files.filter((f) => !rejected.has(f.name));
     this.bump(s.takeAfter());
     return { accepted: this.inputs.map((f) => f.name), listed: this.listedSince(before) };
@@ -368,6 +381,51 @@ export class IntakeHost {
     );
     return all[i >= 0 ? i : 0] ?? null;
   }
+}
+
+/** 読み取りで、データとして読めたセルの位置（cellKey） */
+function dataCells(an: Analysis): Set<string> {
+  const out = new Set<string>();
+  for (const [k, st] of an.composition.status) if (st.s === "data") out.add(k);
+  return out;
+}
+
+/**
+ * 読み方の規則ごとの効き：当たった行と資料の数、読み方を変える前に読めていたデータのセルのうち外したセルの数。
+ * 決まった答えの規則は、決めた質問の行（同じ形の行の数）と資料で数え、その質問で外したセル（行き先の決めた質問にその質問があるセル）を外したセルに数える。
+ * ほかの規則は、効いたセルの行と資料で数え、効いたセルのうち今はデータでないセルを外したセルに数える
+ */
+export function ruleEffectsOf(an: Analysis, ids: readonly string[], before: ReadonlySet<string> | null): RuleEffect[] {
+  const want = new Set(ids);
+  const answered = new Map<string, { rows: number; files: Set<string> }>();
+  for (const q of an.questions) {
+    const id = an.ruleAnswers.get(q.questionId);
+    if (id === undefined || !want.has(id)) continue;
+    const a = answered.get(id) ?? { rows: 0, files: new Set<string>() };
+    a.rows += q.sameShapeRows;
+    for (const it of q.items) a.files.add(it.file);
+    answered.set(id, a);
+  }
+  const status = an.composition.status;
+  const dropped = new Map<string, number>();
+  if (before) {
+    // 決まった答えで外したセル（1 つのセルは 1 つの規則に 1 回だけ数える）
+    for (const [k, st] of status) {
+      if (st.s === "data" || st.s === "unresolved" || !st.qs || !before.has(k)) continue;
+      const by = new Set(st.qs.map((q) => an.ruleAnswers.get(q)).filter((x): x is string => x !== undefined && want.has(x)));
+      for (const id of by) dropped.set(id, (dropped.get(id) ?? 0) + 1);
+    }
+    for (const id of want) {
+      if (answered.has(id)) continue;
+      let n = 0;
+      for (const k of an.ruleHits.located(id)) if (before.has(k) && status.get(k)?.s !== "data") n++;
+      if (n) dropped.set(id, (dropped.get(id) ?? 0) + n);
+    }
+  }
+  return ids.map((id) => {
+    const a = answered.get(id);
+    return { id, rows: a ? a.rows : an.ruleHits.rows(id), files: a ? a.files.size : an.ruleHits.files(id), dropped: dropped.get(id) ?? 0 };
+  });
 }
 
 /** 読み取りから、画面とツールが同期で読む写しを作る（かかるセルの一覧・格子・行の中身は入れない） */

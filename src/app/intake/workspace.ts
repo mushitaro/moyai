@@ -17,11 +17,12 @@ import { PhotoDesk } from "./photos";
 import type { TabSentCode } from "../../shared/errors";
 import type { Plan } from "../../shared/plan";
 import { placeComposedPlan } from "../state/crosswalk";
+import { newNodesOf, sameNameNote } from "../../plan/new-nodes";
 import { packLevelNames } from "../chart/catalog";
 import { TEXT } from "../text";
 import { SameThreadEngine, type IntakeEngine } from "./engine";
 import { IntakeHost } from "./intake-host";
-import type { CellPos, IntakeRequest, IntakeView, PhotoCall, QuestionView, ReplyOf } from "./worker-protocol";
+import type { CellPos, IntakeRequest, IntakeView, PhotoCall, QuestionView, ReplyOf, RuleEffect } from "./worker-protocol";
 
 export { answerOffered } from "./intake-host";
 export type { IntakeView, QuestionView, CellPos } from "./worker-protocol";
@@ -55,6 +56,13 @@ export interface DroppedFile {
   name: string;
   size: number;
   bytes(): Promise<Uint8Array>;
+}
+
+/** 規則を下書きに置いた答え：規則ごとの効き（hits は効いたセル、rows・files は当たった行と資料、dropped は読めていたデータのセルを外した数）と、外した id・下書きに無かった id */
+export interface ProposeOutcome {
+  rules: { id: string; text: string; hits: number; rows: number; files: number; dropped: number }[];
+  removed: string[];
+  missing: string[];
 }
 
 export type SettleOutcome =
@@ -544,25 +552,49 @@ export class IntakeWorkspace {
   }
 
   /**
-   * 会話で決めた規則を、作業中の版の下書きの読み方に置く（同じ id の規則は置き換え、ほかは足す）。読み直して、規則ごとに効いたセルを返す。
-   * 保管先には書かない（書くのは reading_skill_register）
+   * 会話で決めた規則を、作業中の版の下書きの読み方に置く（同じ id の規則は置き換え、ほかは足す）。remove の id の規則は下書きから外す
+   * （下書きに無い id は missing に返す。承認済みの読み方の規則は外せない）。規則が 1 つも残らなければ、下書きの読み方ごと外す。
+   * 読み直して、規則ごとに効いたセル・当たった行と資料の数・読めていたセルを外した数を返す。保管先には書かない（書くのは reading_skill_register）
    */
-  proposeReadingWith(name: string, scope: ReadingScope, rules: readonly ReadingRule[]): Maybe<{ id: string; text: string; hits: number }[]> {
+  proposeReadingWith(name: string, scope: ReadingScope, rules: readonly ReadingRule[], remove: readonly string[] = []): Maybe<ProposeOutcome> {
     const prev = this.readings.find((r) => r.draft && r.skill.name === name);
-    const merged = [...(prev?.skill.rules ?? []).filter((x) => !rules.some((y) => y.id === x.id)), ...rules];
-    const draft: LoadedReading = { skill: { schema: "moyai.reading/0", name, scope, rules: merged }, version: "", path: null, approved: false, draft: true };
+    const before = prev?.skill.rules ?? [];
+    const gone = new Set(remove);
+    const removed = before.filter((x) => gone.has(x.id)).map((x) => x.id);
+    const missing = [...gone].filter((id) => !removed.includes(id));
+    const merged = [...before.filter((x) => !gone.has(x.id) && !rules.some((y) => y.id === x.id)), ...rules];
+    const draft: LoadedReading | null = merged.length ? { skill: { schema: "moyai.reading/0", name, scope, rules: merged }, version: "", path: null, approved: false, draft: true } : null;
     // 資料の読み方が変わらない（計画ルールだけが変わった）ときは読み直さない。計画を作り直さずに、周期の案（R）だけが出し直される（state/cycles.ts）
     const readingPart = (rs: readonly ReadingRule[]) => JSON.stringify(rs.filter((x) => !isPlanRule(x)));
-    const reread = prev?.skill.scope !== scope || readingPart(prev?.skill.rules ?? []) !== readingPart(merged);
-    this.readings = [...this.readings.filter((r) => r !== prev), draft];
-    this.send({ op: "readings", readings: forFacility(this.readings, this.facilityKey()), reread }, reread);
+    const reread = draft ? prev?.skill.scope !== scope || readingPart(before) !== readingPart(merged) : readingPart(before) !== readingPart([]);
+    this.readings = [...this.readings.filter((r) => r !== prev), ...(draft ? [draft] : [])];
+    this.send({ op: "readings", readings: forFacility(this.readings, this.facilityKey()), reread, measure: true }, reread);
     setCurrentReadings(forFacility(this.readings, this.facilityKey()), this.facilityKey());
     this.changed(reread);
-    return andThen(this.viewWith(), (v) => merged.map((x) => ({ id: x.id, text: x.text, hits: v.ruleHits[x.id]?.count ?? 0 })));
+    const ids = merged.map((x) => x.id);
+    return andThen(this.viewWith(), (v) =>
+      andThen(this.ruleEffects(ids), (eff) => {
+        const byId = new Map(eff.map((e) => [e.id, e]));
+        return {
+          rules: merged.map((x) => {
+            const e = byId.get(x.id);
+            return { id: x.id, text: x.text, hits: v.ruleHits[x.id]?.count ?? 0, rows: e?.rows ?? 0, files: e?.files ?? 0, dropped: e?.dropped ?? 0 };
+          }),
+          removed,
+          missing,
+        };
+      }),
+    );
   }
 
-  proposeReading(name: string, scope: ReadingScope, rules: readonly ReadingRule[]): { id: string; text: string; hits: number }[] {
-    return sync(this.proposeReadingWith(name, scope, rules));
+  proposeReading(name: string, scope: ReadingScope, rules: readonly ReadingRule[], remove: readonly string[] = []): ProposeOutcome {
+    return sync(this.proposeReadingWith(name, scope, rules, remove));
+  }
+
+  /** 読み方の規則ごとの効き（当たった行と資料の数・読めていたセルを外した数） */
+  private ruleEffects(ids: string[]): Maybe<RuleEffect[]> {
+    const h = this.engine.local;
+    return h ? h.applySync({ op: "ruleEffects", ids }, this.dataVersion) : this.engine.request({ op: "ruleEffects", ids }, this.dataVersion);
   }
 
   /** 施設の鍵（施設の読み方の置き場所の名前に使う） */
@@ -825,7 +857,7 @@ export class IntakeWorkspace {
           : c.state === "running"
             ? { state: "running", message: null }
             : c.state === "done"
-              ? { state: "done", message: `作った：機器の節 ${c.plan.assets.length}・作業 ${c.plan.works.length}・明細 ${c.plan.details.length}` }
+              ? { state: "done", message: `作った：機器の節 ${c.plan.assets.length}・作業 ${c.plan.works.length}・明細 ${c.plan.details.length}`, ...newNodesSurvey(c.plan, this.inputs) }
               : { state: "failed", message: c.blockers.join("・") };
       const p = this.readProgress;
       const reading = p ? [TEXT.intake.ai.readingNote(p.done, p.total)] : [];
@@ -848,6 +880,13 @@ export class IntakeWorkspace {
     this.notices = [{ id: ++this.noticeSeq, at: now(), kind, text }, ...this.notices].slice(0, NOTICES_MAX);
     this.changed(false);
   }
+}
+
+/** 作った計画の、資料ごとの新しい機器の節の数（上位 10 資料）と、同じ名前の節が多くできた資料の知らせ（intake_survey の compose） */
+function newNodesSurvey(plan: Plan, fileOrder: readonly string[]): { newNodesByFile: { fileRef: string; nodes: number }[]; note?: string } {
+  const n = newNodesOf(plan, fileOrder);
+  const note = sameNameNote(n.sameName);
+  return { newNodesByFile: n.byFile, ...(note ? { note } : {}) };
 }
 
 /** 当てる読み方：下書きと、会社・担当者の読み方と、今の施設の読み方（ほかの施設の読み方は当てない。Db の重-5） */
