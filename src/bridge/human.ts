@@ -742,21 +742,18 @@ export class HumanService {
         return { ok: true, root, plans, name: readSettings(sd).name };
       }
       case "request_receive": {
-        // メールのリンクを開いた人：合言葉を頼みと照らし、自分の鍵で受け取りに署名する（鍵がまだ無ければ作る。呼び名は要る）
+        // メールのリンクで開いた人が「受け取る」を押したとき：合言葉を頼みと照らし、自分の鍵で受け取りに署名する。
+        // 鍵はここでは作らない（鍵が無ければ断る）。頼んだ鍵では受け取らない（Security の点検 11-08 の中6）
         const p = parsePayload("request_receive", call.payload);
         if (!p) return no("payloadInvalid");
         const root = await this.root();
         if (!root) return no("noRoot");
-        let signer = this.signer(sd);
-        if (!signer.ok && signer.reason === "personKeyMissing") {
-          const name = readSettings(sd).name;
-          if (name) createOwnKey(sd, name, now);
-          signer = this.signer(sd);
-        }
+        const signer = this.signer(sd);
         if (!signer.ok) return no(signer.reason);
         const v = (await readHistory(root, p.planId)).versions.find((x) => x.version === p.version);
         if (!v) return { ok: true, state: "unknown" };
         const r = await receiveRequest({ root, planId: p.planId, version: v, token: p.token, by: signer.signer.by, pair: signer.signer.pair, now });
+        if (r.state === "ownRequest") return no("ownRequest");
         if (r.state === "takenByOther") return { ok: true, state: r.state, requester: r.request.body.by, receiver: { by: r.receipt.by, fingerprint: fingerprint(r.receipt.pub) } };
         if (r.state === "received" || r.state === "mine") return { ok: true, state: r.state, requester: r.request.body.by, kind: r.request.body.kind };
         return { ok: true, state: r.state };

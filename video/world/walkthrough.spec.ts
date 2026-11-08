@@ -323,12 +323,15 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-12-top-awaiting") });
     });
 
-    await test.step("4 山田：別の MOYAI で同じ保管先。メールのリンクで開くと、署名と鎖を確かめてから見せる → 承認して署名する", async () => {
+    await test.step("4 山田：別の MOYAI で同じ保管先。メールのリンクで開くと、署名と鎖を確かめてから見るだけで見せる →「受け取る」→ 承認して署名する", async () => {
       const pb = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
       await record(pb, "b");
       await settings(pb, two.base, root, B.name);
       await pb.goto(link.replace(/^http:\/\/[^/]+/, two.base));
       await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
+      // 開いただけでは受け取らない。「受け取る」を押すと受け取りに署名し、承認と差戻しへ進める（Security の点検 11-08 の中6）
+      await pb.getByTestId("request-receive").click();
+      await expect(pb.getByTestId("approve-open")).toBeVisible();
       await sideTab(pb, "signatures");
       await pb.screenshot({ path: shot("demo-13-approver") });
       await pb.getByTestId("approve-open").click();

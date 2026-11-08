@@ -1,8 +1,9 @@
 // 人をまたいで版を重ねる（docs/plan.md §2.18.2・docs/screens.md 3.4）を、この PC の Chrome と Edge で、2 人の MOYAI（状態フォルダも鍵も別、保管先は同じ）で通す：
 // 山田（1 人目）が版に署名して「承認を頼む」→ 渡すメールの文（版の場所とハッシュだけ）→ 課長（2 人目）がメールのリンクで開くと、保管先の版の署名と鎖を確かめてから見せる
-// → 課長は「承認して署名する」（自分の版ではないので押せる）→ 編集の番は承認済み。山田の側では、自分の版を承認する道は出ない。リンクのハッシュが違えば開かない。
+// → 開いただけでは受け取らない（見るだけ）。課長が「受け取る」を押すと受け取りに署名する（Security の点検 11-08 の中6）
+// → 課長は「承認して署名する」（自分の版ではないので押せる）→ 編集の番は承認済み。山田の側では、自分の版を承認する道は出ない。リンクのハッシュが違えば・空なら開かない。
 // AI は使わない（メールは人が自分のメーラーで開く道。Claude が送る道は intake_survey の handoff）。先に npm run build を走らせておく。
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -72,7 +73,7 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     expect(await pa.getByTestId("handoff-mailto").getAttribute("href")).toMatch(/^mailto:kacho%40example\.jp\?subject=/);
     link = /http:\/\/[^\s]+#\/merge\?open=[^\s]+/.exec(mailBody)?.[0] ?? "";
     expect(link).toContain("&v=1&h=");
-    // リンクにだけ、使い捨ての合言葉が入る（監査 B1。最初に開いた鍵が受け取りに署名する）
+    // リンクにだけ、使い捨ての合言葉が入る（監査 B1。最初に「受け取る」を押した鍵が受け取りに署名する）
     expect(link).toMatch(/&t=[A-Za-z0-9_-]{43}$/);
     await pa.screenshot({ path: shot(`handoff-mail-${tag}`), fullPage: true });
     await pa.keyboard.press("Escape");
@@ -94,14 +95,46 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pa.screenshot({ path: shot(`handoff-top-awaiting-${tag}`) });
   });
 
-  await test.step("課長：別の MOYAI で同じ保管先を開き、リンクのハッシュが違えば開かない。正しいリンクなら署名を確かめてから見せる", async () => {
+  await test.step("課長：別の MOYAI で同じ保管先を開き、リンクのハッシュが違えば・空なら・短ければ開かない。正しいリンクなら署名を確かめてから見るだけで見せ、「受け取る」を押すと受け取る", async () => {
     await settings(pb, two.base, root, B.name);
     const theirs = link.replace(/^http:\/\/[^/]+/, two.base);
-    await pb.goto(theirs.replace(/h=[0-9a-f]+/, "h=0000000000000000"));
-    await expect(pb.getByTestId("merge-notice")).toContainText("ハッシュが合いません");
+    const receipts = () => {
+      const plans = readdirSync(join(root, "plans"));
+      const dir = join(root, "plans", plans[0]!, "receipts");
+      return existsSync(dir) ? readdirSync(dir).length : 0;
+    };
+    const head = /h=([0-9a-f]+)/.exec(theirs)?.[1] ?? "";
+    expect(head).toHaveLength(16);
+    // 違うハッシュ・空の h・16 字に満たない h（頭は合っていても）は、どれも開かない。受け取りの道も出ない
+    for (const h of ["0000000000000000", "", head.slice(0, 8)]) {
+      await pb.goto(`${two.base}/#/`);
+      await pb.goto(theirs.replace(/h=[0-9a-f]+/, `h=${h}`));
+      await expect(pb.getByTestId("merge-notice")).toContainText("ハッシュが合いません");
+      await expect(pb.getByTestId("request-receive")).toHaveCount(0);
+    }
     await pb.goto(`${two.base}/#/`);
     await pb.goto(theirs);
     await expect(pb.getByTestId("plan-name")).toContainText("【架空】");
+    // 開いただけでは受け取らない：見るだけ。下の帯の右は「受け取る」（承認と差戻しの前の段階）。受け取りの署名は置かれない
+    await expect(pb.getByTestId("request-receive")).toHaveText("受け取る");
+    await expect(pb.getByTestId("merge-state")).toHaveText("見るだけ");
+    await expect(pb.getByTestId("merge-state")).toHaveAttribute("data-view-only", "true");
+    await expect(pb.getByTestId("approve-open")).toHaveCount(0);
+    await expect(pb.getByTestId("return-open")).toHaveCount(0);
+    await expect(pb.getByTestId("confirm-open")).toHaveCount(0);
+    await expect(pb.getByTestId("confirm-disabled-reason")).toHaveCount(0);
+    await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
+    // この PC にはまだ鍵が無い（開いただけでは作らない）。押したときに作ることを、ボタンの左に出す
+    await expect(pb.getByTestId("request-receive-new-key")).toHaveText("はじめての署名なので、この PC にあなたの署名の鍵を作ります。");
+    expect(receipts()).toBe(0);
+    await pb.screenshot({ path: shot(`handoff-receive-${tag}`) });
+    // 押すと、鍵を作って受け取りに署名する。承認と差戻しへ進める
+    await pb.getByTestId("request-receive").click();
+    await expect(pb.getByTestId("approve-open")).toBeVisible();
+    await expect(pb.getByTestId("return-open")).toBeVisible();
+    await expect(pb.getByTestId("request-receive")).toHaveCount(0);
+    await expect(pb.getByTestId("request-receive-new-key")).toHaveCount(0);
+    expect(receipts()).toBe(1);
     await expect(pb.getByTestId("merge-turn")).toHaveAttribute("data-state", "awaitingApproval");
     // 承認を頼まれた人は編集しないので、下の帯には頼まれていることだけ
     await expect(pb.getByTestId("merge-turn")).toHaveText("承認を頼まれています");
@@ -135,9 +168,9 @@ test("山田が承認を頼んで渡し、課長がメールのリンクで開�
     await pb.screenshot({ path: shot(`handoff-comment-${tag}`) });
   });
 
-  await test.step("課長：承認して署名する（鍵はリンクを開いて受け取ったときに作った。合言葉は打たない）", async () => {
+  await test.step("課長：承認して署名する（鍵は「受け取る」を押したときに作った。合言葉は打たない）", async () => {
     await pb.getByTestId("approve-open").click();
-    // 合言葉の欄は無い。鍵はリンクを開いたとき（受け取りに署名したとき）にもう作ってある
+    // 合言葉の欄は無い。鍵は「受け取る」を押したとき（受け取りに署名したとき）にもう作ってある
     await expect(pb.getByTestId("sign-dialog-new-key")).toHaveCount(0);
     // 承認のダイアログでも、主ボタンのすぐ上に同じ 1 行。指紋を読み合わせると確認済みになり、1 行は消える（試験の台本が押した）
     const warn = pb.getByTestId("sign-dialog").getByTestId("key-warn");

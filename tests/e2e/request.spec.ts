@@ -1,10 +1,11 @@
 // 頼みと受け取りの画面（Wire の B1、docs/screens.md の 13・14）を、3 人の MOYAI（状態フォルダも鍵も別、保管先は同じ）で通す：
-// 山田が承認を頼む → 下の帯「まだ開かれていません」→ 課長がリンクで受け取る → 山田の帯に受け取った人と鍵の警告
-// → 佐藤が同じリンクを開くと「ほかの鍵が受け取っています」で見るだけ → 山田が頼み直す → 佐藤が古いリンクを開くと「取り下げられました」
+// 山田が承認を頼む → 下の帯「まだ開かれていません」→ 悪いページが課長のブラウザでリンクを開いても受け取らない
+// → 課長がリンクで開き「受け取る」を押して受け取る（押したときだけ。Security の点検 11-08 の中6）→ 山田の帯に受け取った人と鍵の警告
+// → 佐藤が同じリンクを開いて押すと「ほかの鍵が受け取っています」で見るだけ → 山田が頼み直す → 佐藤が古いリンクで押すと「取り下げられました」
 // → 佐藤が自分の鍵で頼みを保管先に直接置く（時刻は未来）→ 効かない。山田の帯と鎖に出て、佐藤のリンクは「この頼みは効いていません」。
 // 写しは暗・1440×900（Wire が照らす。日誌に残すときは MOYAI_SHOTS_DIR=docs/progress/shots/<日付>/b1 を渡す）。先に npm run build を走らせておく。
 import { createHash, randomBytes } from "node:crypto";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Browser, type Page } from "@playwright/test";
@@ -52,6 +53,13 @@ async function settings(page: Page, base: string, root: string, name: string) {
 const at = (link: string, base: string) => link.replace(/^http:\/\/[^/]+/, base);
 const noToken = (link: string) => link.replace(/&t=[A-Za-z0-9_-]+$/, "");
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+
+/** 保管先の受け取りの署名の数（計画は 1 つ） */
+function receiptCount(root: string): number {
+  const plans = readdirSync(join(root, "plans"));
+  const dir = join(root, "plans", plans[0]!, "receipts");
+  return existsSync(dir) ? readdirSync(dir).length : 0;
+}
 
 /** 保管先に書ける人が、橋渡しを通さずに、自分の鍵で頼みを置く（その版を作った鍵ではない）。合言葉を返す */
 function plantRequest(root: string, planId: string, by: string, at: string): string {
@@ -101,10 +109,37 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await expect(pa.getByTestId("request-renew")).toBeVisible();
     await expect(pa.getByTestId("history-open")).toBeVisible();
     await pa.screenshot({ path: shot(`b1-1-asked-unopened-${tag}`) });
+    // 山田が自分のリンク（合言葉つき）を開いても、受け取りの道は出ない。頼んだ鍵では受け取らない
+    await pa.goto(`${one.base}/#/`);
+    await pa.goto(at(link, one.base));
+    await expect(pa.getByTestId("request-asked")).toContainText("承認を依頼しました　kacho@example.jp　まだ開かれていません");
+    await expect(pa.getByTestId("request-receive")).toHaveCount(0);
+    expect(receiptCount(root)).toBe(0);
   });
 
-  await test.step("課長：Web メールのリンクを押して開き、受け取る（ほかのサイトからの移動でも開ける。台帳の中-16）", async () => {
+  await test.step("悪いページが課長のブラウザでリンクを開いても（window.open）、受け取りの署名は置かれない。鍵も作られない", async () => {
     await settings(pb, two.base, root, B);
+    await pb.route("http://evil.example/**", (route) =>
+      route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: `<!doctype html><meta charset="utf-8"><script>window.open(${JSON.stringify(at(link, two.base))});</script>` }),
+    );
+    const popupWait = pb.waitForEvent("popup");
+    await pb.goto("http://evil.example/page");
+    const popup = await popupWait;
+    // 版は見るだけで開く。受け取るのは、人が「受け取る」を押したときだけ
+    await expect(popup.getByTestId("request-receive")).toHaveText("受け取る");
+    await expect(popup.getByTestId("merge-state")).toHaveText("見るだけ");
+    await expect(popup.getByTestId("approve-open")).toHaveCount(0);
+    // この PC の鍵も作らない（押したときに作る、と出ている）
+    await expect(popup.getByTestId("request-receive-new-key")).toBeVisible();
+    expect(receiptCount(root)).toBe(0);
+    await popup.close();
+    // 山田の帯も「まだ開かれていません」のまま（本当の承認者は締め出されない）
+    await pa.goto(`${one.base}/#/`);
+    await pa.goto(noToken(at(link, one.base)));
+    await expect(pa.getByTestId("request-asked")).toHaveAttribute("data-received", "false");
+  });
+
+  await test.step("課長：Web メールのリンクを押して開き、「受け取る」を押して受け取る（ほかのサイトからの移動でも開ける。台帳の中-16）", async () => {
     // ほかのサイト（架空の Web メール）のページのリンクを押す。ブラウザは Sec-Fetch-Site: cross-site・navigate・document で開く
     await pb.route("http://mail.example/**", (route) =>
       route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: `<!doctype html><meta charset="utf-8"><a id="l" href="${at(link, two.base)}">承認のリンク</a>` }),
@@ -114,7 +149,17 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await pb.locator("#l").click();
     // 前は静的の経路が cross-site を断り、403 で止まっていた
     expect((await (await nav).response())?.status()).toBe(200);
+    // 開いただけでは受け取らない。下の帯の右は「受け取る」だけ
+    await expect(pb.getByTestId("request-receive")).toHaveText("受け取る");
+    await expect(pb.getByTestId("approve-open")).toHaveCount(0);
+    expect(receiptCount(root)).toBe(0);
+    await pb.screenshot({ path: shot(`b1-0-receive-${tag}`) });
+    await pb.getByTestId("request-receive").click();
+    // 受け取ると、承認と差戻しへ進める
     await expect(pb.getByTestId("approve-open")).toBeVisible();
+    await expect(pb.getByTestId("return-open")).toBeVisible();
+    await expect(pb.getByTestId("merge-turn")).toHaveText("承認を頼まれています");
+    expect(receiptCount(root)).toBe(1);
   });
 
   await test.step("山田：開き直すと、下の帯に受け取った人と指紋。課長の鍵はまだ確かめていないので、鍵の警告の行", async () => {
@@ -134,9 +179,10 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await pa.screenshot({ path: shot(`b1-2-asked-received-${tag}`) });
   });
 
-  await test.step("佐藤：同じリンクを開くと、ほかの鍵が受け取っている。見るだけで、承認の道は出ない", async () => {
+  await test.step("佐藤：同じリンクを開いて「受け取る」を押すと、ほかの鍵が受け取っている。見るだけで、承認の道は出ない", async () => {
     await settings(pc, three.base, root, C);
     await pc.goto(at(link, three.base));
+    await pc.getByTestId("request-receive").click();
     const other = pc.getByTestId("request-other");
     await expect(other).toHaveAttribute("data-state", "takenByOther");
     await expect(other).toContainText(`この頼みは、ほかの鍵が受け取っています　${B}`);
@@ -149,6 +195,8 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await expect(pc.getByTestId("confirm-open")).toHaveCount(0);
     await expect(pc.getByTestId("confirm-disabled-reason")).toHaveCount(0);
     await expect(pc.locator(".ag-row").first()).toBeVisible();
+    await expect(pc.getByTestId("request-receive")).toHaveCount(0);
+    expect(receiptCount(root)).toBe(1);
     await pc.screenshot({ path: shot(`b1-3-taken-by-other-${tag}`) });
   });
 
@@ -172,9 +220,10 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     await expect(pa.getByTestId("request-asked")).toContainText("承認を依頼しました　bucho@example.jp　まだ開かれていません");
   });
 
-  await test.step("佐藤：古いリンクを開くと「この頼みは取り下げられました」。見るだけ", async () => {
+  await test.step("佐藤：古いリンクで「受け取る」を押すと「この頼みは取り下げられました」。見るだけ", async () => {
     await pc.goto(`${three.base}/#/`);
     await pc.goto(at(link, three.base));
+    await pc.getByTestId("request-receive").click();
     const other = pc.getByTestId("request-other");
     await expect(other).toHaveAttribute("data-state", "withdrawn");
     await expect(other).toHaveText("この頼みは取り下げられました");
@@ -218,6 +267,7 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
     const planted = `${at(renewed, three.base).replace(/&t=[A-Za-z0-9_-]+$/, "")}&t=${token}`;
     await pc.goto(`${three.base}/#/`);
     await pc.goto(planted);
+    await pc.getByTestId("request-receive").click();
     await expect(pc.getByTestId("request-other")).toHaveAttribute("data-state", "unknown");
     await expect(pc.getByTestId("request-other")).toHaveText("この頼みは効いていません");
     await expect(pc.getByTestId("merge-state")).toHaveText("見るだけ");

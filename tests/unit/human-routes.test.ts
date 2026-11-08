@@ -23,6 +23,7 @@ import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody } from "../../
 import { generateKeyPair, keyIdOf, openPlainKey, signBody, type PlainKey } from "../../src/share/sign";
 import type { IntakeIo } from "../../src/bridge/ledger-intake";
 import { readLedgers } from "../../src/bridge/places";
+import { ownKeys } from "../../src/bridge/people";
 import { readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
 import { handleRequest } from "../../services/ledger-intake/src/handler";
 import { packOf } from "../../services/ledger-intake/src/packs";
@@ -487,6 +488,82 @@ describe("編集者：承認を頼んだ版の上に次の版を作れるのは�
       await a.close();
       await b.close();
     }
+  });
+});
+
+describe("メールのリンクの受け取り（request_receive）：鍵は作らない。頼んだ鍵では受け取らない（Security の点検 11-08 の中6）", () => {
+  /** 頼んだ人の橋渡し（a）が承認を頼んで渡し、受け手の橋渡し（b）は保管先だけを設定する。メールのリンクの合言葉を返す */
+  async function asked(run: (x: Awaited<ReturnType<typeof setup>>) => Promise<void>) {
+    extra = join(tmpdir(), `moyai-receive-${process.pid}-${Date.now()}`);
+    const a = await startTestBridge();
+    const b = await startTestBridge();
+    try {
+      await run(await setup(a, b));
+    } finally {
+      await a.close();
+      await b.close();
+    }
+  }
+  async function setup(a: TestBridge, b: TestBridge) {
+    const root = join(extra, "MOYAI");
+    mkdirSync(root, { recursive: true });
+    const caller = async (x: TestBridge) => {
+      const t = await tab(x);
+      return async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+        const text = JSON.stringify(payload);
+        return (await post(x, R(id).path, good(x), { token: await t.token(R(id).action, text), payload: text })).body;
+      };
+    };
+    const ca = await caller(a);
+    const cb = await caller(b);
+    expect(await ca("settingsSave", { root, name: "【架空】頼んだ人" })).toMatchObject({ ok: true });
+    expect(await ca("personKeyCreate", {})).toMatchObject({ ok: true });
+    const plan = truthToPlan("fictional-1");
+    const acceptances = aiDecisions(plan).map((d) => ({ id: d.id, hash: d.hash, reason: "画面で見て受けた" }));
+    const v1 = await ca("planCommit", { plan, reason: "承認を頼む", acceptances, basedOn: null, request: { kind: "approve", to: "boss@example.jp", note: "" } });
+    expect(v1).toMatchObject({ ok: true, version: 1 });
+    const token = /&t=([A-Za-z0-9_-]{43})/.exec(v1.mail.body)?.[1] ?? "";
+    expect(token).not.toBe("");
+    expect(await cb("settingsSave", { root })).toMatchObject({ ok: true });
+    return { a, b, ca, cb, root, planId: plan.planId, receive: { planId: plan.planId, version: 1, token }, receipts: join(root, "plans", plan.planId, "receipts") };
+  }
+
+  it("鍵が無い PC は受け取らず、鍵も作らない。人が鍵を作ってからなら受け取れる", async () => {
+    await asked(async ({ b, cb, root, planId, receive, receipts }) => {
+      // 呼び名が無ければ断る（設定で送信者の名前を入れてから）。鍵も作らない
+      expect(await cb("requestReceive", receive)).toEqual({ ok: false, reason: "nameMissing" });
+      expect(ownKeys(b.stateDir)).toHaveLength(0);
+      // 呼び名があっても、鍵が無ければ断る。鍵は作らない（前は、ここで鍵を作って受け取りに署名していた）
+      expect(await cb("settingsSave", { root, name: "【架空】受け手" })).toMatchObject({ ok: true });
+      expect(await cb("requestReceive", receive)).toEqual({ ok: false, reason: "personKeyMissing" });
+      expect(ownKeys(b.stateDir)).toHaveLength(0);
+      const st = await cb("planStatus", { planId });
+      expect(st.hasKey).toBe(false);
+      expect(st.request).toMatchObject({ received: null, receivedByMe: false });
+      expect(existsSync(receipts)).toBe(false);
+      // 人が鍵を作ってから押すと受け取れる（最初の 1 つ）。もう一度押しても自分のもの
+      expect(await cb("personKeyCreate", {})).toMatchObject({ ok: true });
+      expect(ownKeys(b.stateDir)).toHaveLength(1);
+      expect(await cb("requestReceive", receive)).toMatchObject({ ok: true, state: "received", requester: "【架空】頼んだ人", kind: "approve" });
+      expect(readdirSync(receipts)).toHaveLength(1);
+      expect(await cb("requestReceive", receive)).toMatchObject({ ok: true, state: "mine" });
+      expect((await cb("planStatus", { planId })).request).toMatchObject({ receivedByMe: true, received: { by: "【架空】受け手" } });
+    });
+  });
+
+  it("頼んだ人の鍵では受け取らない（自分の頼みは受け取れない）。受け取りの署名を置かず、本当の受け手が受け取れる", async () => {
+    await asked(async ({ ca, cb, root, planId, receive, receipts }) => {
+      expect(await ca("requestReceive", receive)).toEqual({ ok: false, reason: "ownRequest" });
+      expect(existsSync(receipts)).toBe(false);
+      expect((await ca("planStatus", { planId })).request).toMatchObject({ mine: true, received: null });
+      // 本当の受け手は締め出されない
+      expect(await cb("settingsSave", { root, name: "【架空】受け手" })).toMatchObject({ ok: true });
+      expect(await cb("personKeyCreate", {})).toMatchObject({ ok: true });
+      expect(await cb("requestReceive", receive)).toMatchObject({ ok: true, state: "received" });
+      // 受け取られたあとも、頼んだ人の鍵は「自分の頼み」で断る
+      expect(await ca("requestReceive", receive)).toEqual({ ok: false, reason: "ownRequest" });
+      expect(readdirSync(receipts)).toHaveLength(1);
+    });
   });
 });
 

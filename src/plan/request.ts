@@ -2,7 +2,8 @@
 // ① 頼む人が「署名して渡す」を押すと、頼む人の鍵で署名した「頼み」を保管先の計画のフォルダ（requests/）に置く。
 //    中身は計画・版・中身のハッシュ・頼むこと（承認か編集か）・宛先・使い捨ての合言葉の SHA-256。
 // ② メールのリンクにだけ、使い捨ての合言葉（MOYAI が作る長い乱数。人が覚えて打つものではない）を入れる。
-// ③ 受け手がリンクを開くと、受け手の MOYAI が合言葉を頼みと照らし、受け手の鍵で「受け取り」に署名して置く（receipts/。最初の 1 つだけ）。
+// ③ 受け手がリンクを開き、画面の「受け取る」を押すと、受け手の MOYAI が合言葉を頼みと照らし、受け手の鍵で「受け取り」に署名して置く（receipts/。最初の 1 つだけ）。
+//    開いただけでは署名しない（ほかのページが開いたタブで、その PC の鍵の受け取りが置かれないように。Security の点検 11-08 の中6）。頼んだ鍵では受け取らない。
 // ④ 承認・差し戻しは、受け取った鍵だけに通す。編集を頼んだときは、受け取った鍵の人が編集の番。
 // 頼み直すと新しい頼みを置き、同じ版の前の頼みとその受け取りは効かなくなる（いちばん新しい頼みだけが効く）。
 // ファイルは保管先の 1 組なので、頼む側と受け手の両方の PC から同じものが見える。
@@ -153,6 +154,8 @@ export async function activeRequest(root: string, planId: string, v: RequestVers
 
 export type ReceiveResult =
   | { state: "received" | "mine"; request: Request }
+  /** 頼んだ鍵と同じ鍵では受け取らない（自分の頼みは受け取れない。Security の点検 11-08 の中6） */
+  | { state: "ownRequest"; request: Request }
   /** ほかの鍵が先に受け取っていた */
   | { state: "takenByOther"; request: Request; receipt: ReceiptBody }
   /** 頼み直されて、この合言葉の頼みはもう効かない */
@@ -160,12 +163,13 @@ export type ReceiveResult =
   /** この版に、この合言葉の頼みが無い */
   | { state: "unknown" };
 
-/** リンクを開いた人の MOYAI が、合言葉を頼みと照らし、受け手の鍵で受け取りに署名して置く（最初の 1 つだけ） */
+/** 「受け取る」を押した人の MOYAI が、合言葉を頼みと照らし、受け手の鍵で受け取りに署名して置く（最初の 1 つだけ。頼んだ鍵では置かない） */
 export async function receiveRequest(i: { root: string; planId: string; version: RequestVersion; token: string; by: string; pair: KeyPair; now: Date }): Promise<ReceiveResult> {
   const { requests: all } = await readRequests(i.root, i.planId, i.version);
   const hit = all.find((r) => r.body.tokenHash === sha(i.token));
   if (!hit) return { state: "unknown" };
   if (hit !== all.at(-1)) return { state: "withdrawn" };
+  if (hit.body.pub === i.pair.pub) return { state: "ownRequest", request: hit };
   const existing = await readReceipt(i.root, hit);
   if (existing) return existing.pub === i.pair.pub ? { state: "mine", request: hit } : { state: "takenByOther", request: hit, receipt: existing };
   const body: ReceiptBody = { v: RECEIPT_V, planId: i.planId, version: i.version.version, request: hit.hash, token: i.token, by: i.by, pub: i.pair.pub, at: i.now.toISOString() };

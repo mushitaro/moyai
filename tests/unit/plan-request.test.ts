@@ -39,11 +39,16 @@ describe("頼みと受け取り", () => {
     const files = readdirSync(join(planDir(rt, "plan-test"), "requests"));
     expect(readFileSync(join(planDir(rt, "plan-test"), "requests", files[0]!), "utf8")).not.toContain(q.token);
     expect((await activeRequest(rt, "plan-test", V1))?.receipt).toBeNull();
+    // 頼んだ鍵では、まだ誰も受け取っていなくても受け取らない。受け取りを置かない
+    expect(await receiveRequest({ root: rt, planId: "plan-test", version: V1, token: q.token, by: SIGNER.by, pair: SIGNER.pair, now })).toMatchObject({ state: "ownRequest" });
+    expect((await activeRequest(rt, "plan-test", V1))?.receipt).toBeNull();
     expect(await receiveRequest({ root: rt, planId: "plan-test", version: V1, token: q.token, by: boss.by, pair: boss.pair, now })).toMatchObject({ state: "received" });
     expect(await receiveRequest({ root: rt, planId: "plan-test", version: V1, token: q.token, by: boss.by, pair: boss.pair, now })).toMatchObject({ state: "mine" });
     const taken = await receiveRequest({ root: rt, planId: "plan-test", version: V1, token: q.token, by: other.by, pair: other.pair, now });
     expect(taken).toMatchObject({ state: "takenByOther", receipt: { by: boss.by, pub: boss.pair.pub } });
     expect((await activeRequest(rt, "plan-test", V1))?.receipt).toMatchObject({ by: boss.by, pub: boss.pair.pub });
+    // 頼んだ鍵では受け取らない（自分の頼みは受け取れない。Security の点検 11-08 の中6）
+    expect(await receiveRequest({ root: rt, planId: "plan-test", version: V1, token: q.token, by: SIGNER.by, pair: SIGNER.pair, now })).toMatchObject({ state: "ownRequest" });
     // 違う合言葉・違う版は受け取れない
     expect(await receiveRequest({ root: rt, planId: "plan-test", version: V1, token: "x".repeat(43), by: other.by, pair: other.pair, now })).toEqual({ state: "unknown" });
     expect(await receiveRequest({ root: rt, planId: "plan-test", version: made(2), token: q.token, by: other.by, pair: other.pair, now })).toEqual({ state: "unknown" });

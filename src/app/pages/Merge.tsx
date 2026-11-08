@@ -177,6 +177,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // リンクを開いたとき、頼みをほかの鍵がもう受け取っていた・頼みが取り下げられていた（見るだけで開く。Wire の B1）
   // 合言葉がどの効いている頼みにも当たらない（その版を作った鍵でない頼みなど）ときも、見るだけで開く
   const [receive, setReceive] = useState<{ state: "takenByOther"; requester: string; receiver: { by: string; fingerprint: string } } | { state: "withdrawn" | "unknown" } | null>(null);
+  // メールのリンクの使い捨ての合言葉（まだ受け取っていない頼み）。開いただけでは受け取らず、下の帯の「受け取る」を押したときだけ使う（Security の点検 11-08 の中6）
+  const [link, setLink] = useState<{ planId: string; version: number; token: string } | null>(null);
+  const [receiving, setReceiving] = useState(false);
   const [renew, setRenew] = useState<{ version: number; to: string } | null>(null);
   // 似た施設を重ねるか（見出しの右。既定は外す）
   const [peersOn, setPeersOn] = useState(false);
@@ -209,6 +212,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   }, [st]);
   useEffect(() => {
     if (!pendingOpen || !st || !openKey || !openId) return;
+    setLink(null);
     const fail = (k: string) => {
       ws.blockRestore(null);
       setNotice(T.openFailed(T.openWhat[k] ?? ""));
@@ -218,7 +222,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     if (!latest || latest.plan.planId !== openId) return fail("missing");
     const info = st.versions?.find((x) => x.version === openV) as { contentHash?: string; problem?: string | null } | undefined;
     if (!info) return fail("version");
-    if (!info.contentHash?.startsWith(open.get("h") ?? "\u0000")) return fail("hash");
+    // h が無いか 16 字に満たなければ開かない（空の h は、どのハッシュの頭にも合ってしまう。Security の点検 11-08 の中6）
+    const h = open.get("h") ?? "";
+    if (h.length < 16 || !info.contentHash?.startsWith(h)) return fail("hash");
     if (info.problem) return fail("broken");
     if (openV === latest.version) {
       setWorkingPlan(latest.plan, "intake");
@@ -227,23 +233,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       setOldView(null);
       setNotice(null);
       setDoneKey(openKey);
-      // メールのリンクの使い捨ての合言葉：頼みと照らし、自分の鍵で受け取りに署名する（監査 B1）。ほかの鍵が受け取っていた・取り下げられていたら、見るだけ
+      // メールのリンクの使い捨ての合言葉：開いただけでは受け取らない。見るだけで開き、下の帯の「受け取る」を押したときだけ、
+      // 頼みと照らして自分の鍵で受け取りに署名する（監査 B1・Security の点検 11-08 の中6）
       const token = open.get("t");
-      if (token) {
-        void (async () => {
-          const r = readHuman<{ ok: boolean; reason?: string; state: string; requester?: string; receiver?: { by: string; fingerprint: string } }>(
-            await client.callHuman("request_receive", ROUTES.requestReceive.path, { planId: openId, version: openV, token }),
-          );
-          if (r.ok && r.body.state === "takenByOther" && r.body.receiver) {
-            setReceive({ state: "takenByOther", requester: r.body.requester ?? "", receiver: r.body.receiver });
-            setOldView({ planId: openId, version: openV });
-          } else if (r.ok && (r.body.state === "withdrawn" || r.body.state === "unknown")) {
-            setReceive({ state: r.body.state });
-            setOldView({ planId: openId, version: openV });
-          } else setReceive(null);
-          reloadStatus();
-        })();
-      } else setReceive(null);
+      setReceive(null);
+      if (token) setLink({ planId: openId, version: openV, token });
       return;
     }
     void (async () => {
@@ -323,8 +317,44 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const askedByMe = !!req && req.mine && !req.done && req.version === st?.latest?.version;
   // 承認を頼んだあいだは、頼んだ版を見る。自分では確定しない（頼みと食い違うため。Wire の B1）
   const askedApprove = askedByMe && req?.kind === "approve";
-  // 見るだけで開いたとき（古い版・ほかの鍵が受け取った頼み・取り下げられた頼み）は、主ボタンも押せない理由も出さない（Wire の B1）
-  const viewOnly = viewingOld !== null;
+  // メールのリンクで開いて、まだ受け取っていない頼み：見るだけで開き、下の帯の右に「受け取る」だけを置く（Security の点検 11-08 の中6）。
+  // 頼んだ本人と、もう受け取った人には出さない（頼んだ人の帯・承認と差し戻しのまま）
+  const toReceive =
+    link && plan && plan.planId === link.planId && st?.latest?.plan.planId === link.planId && st.latest.version === link.version && !viewingOld && !(req && req.version === link.version && (req.mine || req.receivedByMe))
+      ? link
+      : null;
+  // 見るだけで開いたとき（古い版・ほかの鍵が受け取った頼み・取り下げられた頼み・まだ受け取っていない頼み）は、主ボタンも押せない理由も出さない（Wire の B1）
+  const viewOnly = viewingOld !== null || toReceive !== null;
+  // 「受け取る」を押したときだけ、合言葉を頼みと照らし、自分の鍵で受け取りに署名する（監査 B1・Security の点検 11-08 の中6）。
+  // この PC に鍵がまだ無ければ、押したときに鍵を作ってから受け取る（承認のダイアログと同じ人だけの経路。橋渡しの受け取りは鍵を作らない）。
+  // ほかの鍵が受け取っていた・取り下げられていた・効いていない頼みなら、見るだけ
+  const receiveNow = async () => {
+    if (!toReceive || receiving) return;
+    const { planId, version, token } = toReceive;
+    setReceiving(true);
+    try {
+      if (!st?.hasKey) {
+        const k = readHuman<{ ok: boolean; reason?: string }>(await client.callHuman("person_key_create", ROUTES.personKeyCreate.path, {}));
+        if (!k.ok) return setNotice(k.message);
+      }
+      const r = readHuman<{ ok: boolean; reason?: string; state: string; requester?: string; receiver?: { by: string; fingerprint: string } }>(
+        await client.callHuman("request_receive", ROUTES.requestReceive.path, { planId, version, token }),
+      );
+      if (!r.ok) return setNotice(r.message);
+      setNotice(null);
+      setLink(null);
+      if (r.body.state === "takenByOther" && r.body.receiver) {
+        setReceive({ state: "takenByOther", requester: r.body.requester ?? "", receiver: r.body.receiver });
+        setOldView({ planId, version });
+      } else if (r.body.state === "withdrawn" || r.body.state === "unknown") {
+        setReceive({ state: r.body.state });
+        setOldView({ planId, version });
+      } else setReceive(null);
+    } finally {
+      setReceiving(false);
+      reloadStatus();
+    }
+  };
 
   // 版の下書きが無いあいだは白紙（資料のシートだけ）。開発と試験の見本（?plan=）は、星取表のシートが読んで作業中の計画に置く
   const devSample = new URLSearchParams(location.search).has("plan");
@@ -335,7 +365,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const base = working?.base ?? null;
   const staleBy = !viewingOld && latestNo !== null && (base === null || latestNo > base) ? (st?.versions?.at(-1) ?? null) : null;
   // つくる版は、もとにした版の次（ほかの人が足した版があっても、この編集がつくるつもりの版を出す。署名は止まる）
-  const nextVersion = viewingOld ?? ((awaitingMe || askedApprove) && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
+  const nextVersion = viewingOld ?? ((awaitingMe || askedApprove || toReceive) && latestNo !== null ? latestNo : (base ?? latestNo ?? plan?.version ?? 0) + 1);
   // 取り込みは受け手から返った写しを読む（取り込みは worker の中。読み取りの間も画面は止まらない）
   const view = ws.fileCount ? ws.view : null;
   const openQuestions = view ? view.open.length : 0;
@@ -497,7 +527,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 編集の番が人に渡っている（編集を頼んだ・承認待ち・差し戻し）ならその番。番が空いている（確定・承認のあと）なら、次の版を編集中。
   // 「確定済み」は、古い版を見るだけで開いたときだけ
   const turnHeld = !!turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned");
-  const stateLabel = viewingOld ? (receive ? T.viewOnlyLabel : T.oldVersionLabel) : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
+  const stateLabel = viewingOld ? (receive ? T.viewOnlyLabel : T.oldVersionLabel) : toReceive ? T.viewOnlyLabel : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
   const turnLine: { state: string; text: string } | null = viewingOld
     ? { state: "confirmed", text: T.confirmedLine }
     : turnHeld && turn
@@ -509,7 +539,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         ? { state: "editing", text: T.turnLine("editing", true, "") }
         : null;
   // 比べる版：承認を頼まれた人も頼んだ人も、頼んだ版のひとつ前（無ければ出さない）。ほかは保管先のいちばん新しい版（同じ計画のときだけ）
-  const compareWith = viewingOld ? null : awaitingMe || askedApprove ? (st?.previous ?? null) : (st?.latest ?? null);
+  const compareWith = viewingOld ? null : awaitingMe || askedApprove || toReceive ? (st?.previous ?? null) : (st?.latest ?? null);
   const compare = useMemo<MergeCompare | null>(
     () => (plan && compareWith && compareWith.plan.planId === plan.planId ? { version: compareWith.version, plan: compareWith.plan } : null),
     [plan, compareWith],
@@ -877,10 +907,20 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
               {HUMAN_TEXT.request.renew}
             </Button>
           )}
+          {toReceive && !st?.hasKey && (
+            <Text size="xs" c="dimmed" data-testid="request-receive-new-key">
+              {HUMAN_TEXT.confirm.keyNew}
+            </Text>
+          )}
           <Button variant="default" onClick={() => setHistoryOpen(true)} disabled={!plan || conn.kind !== "open"} data-testid="history-open">
             {T.history}
           </Button>
-          {viewOnly || askedApprove ? null : awaitingMe && st?.latest ? (
+          {toReceive ? (
+            // 承認と差し戻しの前の段階：押したときだけ受け取る（Security の点検 11-08 の中6）
+            <Button onClick={() => void receiveNow()} loading={receiving} disabled={conn.kind !== "open"} data-testid="request-receive">
+              {HUMAN_TEXT.request.receive}
+            </Button>
+          ) : viewOnly || askedApprove ? null : awaitingMe && st?.latest ? (
             <>
               <Button variant="default" onClick={() => setSignRole("return")} disabled={conn.kind !== "open"} data-testid="return-open">
                 {T.returnBack}
@@ -901,7 +941,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       {!plan && ws.fileCount > 0 && <IntakeFacilityDialog ws={ws} />}
       {plan && (
         <>
-          <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe} />
+          <FacilityDialog plan={plan} readOnly={viewingOld !== null || awaitingMe || toReceive !== null} />
           <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={onConfirmed} sources={() => ws.sourcesForCommit()} intake={() => ws.intakeStats()} />
           <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />
           {/* 頼み直す相手は開いたときに覚える（読み直しの間に状態が消えても、出したメールの文を消さない） */}

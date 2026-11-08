@@ -4,7 +4,7 @@
 //   1 トップ（施設が無い）→「＋ 新しい施設」→ MERGE の資料のシートに資料を落とす
 //   2 Claude が取り込みを最後まで動かす（質問に既定の答え・計画を作る）→ 当てはめの規則の案 → 人が規則ごとに受ける
 //   3 星取表（共通の設備項目 × 作業の属性）→ 突き合せ → Claude が公開の台帳を読み、周期の案（朱の破線の円）→ 人が決定のシートで受ける
-//   4 検査のシート → 署名して承認を頼み、渡すメールの文 → 課長がリンクで開き、承認して署名する
+//   4 検査のシート → 署名して承認を頼み、渡すメールの文 → 課長がリンクで開き、「受け取る」を押して、承認して署名する
 //   5 トップに ● →「＋ 次の版」で開く → EXPORT で Excel を落とす → SHARE の検問所 → 人が押して署名し、輪に置き、✓
 //   6〜10 版どうしの差・古い版から次の版・似た施設の重ね・コメント・派生・様式に写す
 //   11 SHARE の公開の台帳：誰からも見えるあなた。GitHub にはつないでいない（MOYAI の OAuth App の登録待ち。PR を出す流れは tests/e2e/ledger-pr.spec.ts）
@@ -322,12 +322,15 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-12-top-awaiting") });
     });
 
-    await test.step("4 課長：別の MOYAI で同じ保管先。メールのリンクで開くと、署名と鎖を確かめてから見せる → 承認して署名する", async () => {
+    await test.step("4 課長：別の MOYAI で同じ保管先。メールのリンクで開くと、署名と鎖を確かめてから見るだけで見せる →「受け取る」→ 承認して署名する", async () => {
       const pb = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
       await record(pb, "b");
       await settings(pb, two.base, root, B.name);
       await pb.goto(link.replace(/^http:\/\/[^/]+/, two.base));
       await expect(pb.getByTestId("merge-version")).toHaveText("第 1 版");
+      // 開いただけでは受け取らない。「受け取る」を押すと受け取りに署名し、承認と差戻しへ進める（Security の点検 11-08 の中6）
+      await pb.getByTestId("request-receive").click();
+      await expect(pb.getByTestId("approve-open")).toBeVisible();
       await sideTab(pb, "signatures");
       await pb.screenshot({ path: shot("demo-13-approver") });
       await pb.getByTestId("approve-open").click();

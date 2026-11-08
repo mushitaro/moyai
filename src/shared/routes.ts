@@ -152,7 +152,7 @@ export const ROUTES = {
   commentsList: human("/human/comments-list", "comments_list", 16 * 1024, "計画のコメントを古い順に読む（HOSHITORI の横の板の「コメント」）"),
   planVersionRead: human("/human/plan-version-read", "plan_version_read", 16 * 1024, "確かめで合う版の計画を 1 つ読む（トップの版のメニュー：開く・この版から次の版・この版から別の施設をつくる）"),
   planSign: human("/human/plan-sign", "plan_sign", 16 * 1024, "いちばん新しい版に、自分の鍵で承認か差し戻しの署名を足し、編集の番を替える（頼みを受け取った鍵だけ）"),
-  requestReceive: human("/human/request-receive", "request_receive", 16 * 1024, "メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ）"),
+  requestReceive: human("/human/request-receive", "request_receive", 16 * 1024, "人が「受け取る」を押したときだけ、メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ。鍵は作らない。頼んだ鍵では受け取らない）"),
   requestRenew: human("/human/request-renew", "request_renew", 16 * 1024, "頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する"),
   planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
   planSourcePut: human("/human/plan-source-put", "plan_source_put", 90 * 1024 * 1024, "次の版に重ねるため、版を組んだ資料を 1 つ、保存先の計画のフォルダに中身のアドレス（SHA-256）で置く（確定では SHA-256 だけを送る）"),
