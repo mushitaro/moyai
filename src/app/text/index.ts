@@ -564,6 +564,8 @@ export const TEXT = {
     /** HOSHITORI の横の板「未回答 n」の質問（docs/screens.md 3.2・3.3。Wire、11-07）：既定の答えに「- 既定」、「n 行」、「| 決める」 */
     questions: {
       none: "答えの要る質問はありません。",
+      more: (n: number) => `ほか ${n} 問`,
+      showMore: "| もっと見る",
       rows: (n: number) => `${n} 行`,
       defaultMark: "- 既定",
       answer: "決める",

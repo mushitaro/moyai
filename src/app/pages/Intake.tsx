@@ -448,6 +448,9 @@ function QuestionCard({ ws, q, focus = false, focusSeq = 0 }: { ws: IntakeWorksp
   );
 }
 
+/** 横の板で、種類ごとに初めに描く問いの数（「| もっと見る」で同じ数ずつ足す） */
+export const QUESTIONS_SHOWN = 20;
+
 /** 横の板の「未回答 n」。focus は資料のセルの詳細の「| 決める」で開いた質問（無ければ null） */
 export function Questions({ ws, view, focus = null }: { ws: IntakeWorkspace; view: IntakeView; focus?: { questionId: string; seq: number } | null }) {
   const groups = useMemo(() => {
@@ -459,25 +462,45 @@ export function Questions({ ws, view, focus = null }: { ws: IntakeWorkspace; vie
     }
     return [...m.entries()];
   }, [view]);
+  // 種類ごとに描くカードの数（数百の問いを毎回全部描くと、答えを置くたびに画面が数秒止まった。11-08 の測り）
+  const [shown, setShown] = useState<Partial<Record<QuestionKind, number>>>({});
   if (!groups.length) return <Text size="sm" c="dimmed">{T.questions.none}</Text>;
   return (
     <Stack gap="sm" data-testid="questions">
-      {groups.map(([kind, qs]) => (
-        <Stack key={kind} gap={6} data-testid="question-group" data-kind={kind}>
-          <Title order={5}>
-            {KIND_LABEL[kind] ?? T.questions.other} <Badge variant="light" size="sm" className="moyai-num">{qs.length}</Badge>
-          </Title>
-          {qs.map((q) => (
-            <QuestionCard
-              key={`${q.questionId}|${q.decision?.answer ?? ""}`}
-              ws={ws}
-              q={q}
-              focus={focus?.questionId === q.questionId}
-              focusSeq={focus?.questionId === q.questionId ? focus.seq : 0}
-            />
-          ))}
-        </Stack>
-      ))}
+      {groups.map(([kind, qs]) => {
+        const limit = shown[kind] ?? QUESTIONS_SHOWN;
+        const head = qs.slice(0, limit);
+        // 資料のセルの「| 決める」で開いた質問は、数の外でも描く
+        const focused = focus ? qs.find((q) => q.questionId === focus.questionId && !head.includes(q)) : undefined;
+        const visible = focused ? [...head, focused] : head;
+        const rest = qs.length - visible.length;
+        return (
+          <Stack key={kind} gap={6} data-testid="question-group" data-kind={kind}>
+            <Title order={5}>
+              {KIND_LABEL[kind] ?? T.questions.other} <Badge variant="light" size="sm" className="moyai-num">{qs.length}</Badge>
+            </Title>
+            {visible.map((q) => (
+              <QuestionCard
+                key={`${q.questionId}|${q.decision?.answer ?? ""}`}
+                ws={ws}
+                q={q}
+                focus={focus?.questionId === q.questionId}
+                focusSeq={focus?.questionId === q.questionId ? focus.seq : 0}
+              />
+            ))}
+            {rest > 0 && (
+              <Group gap="xs" data-testid="questions-more">
+                <Text size="sm" c="dimmed" className="moyai-num">
+                  {T.questions.more(rest)}
+                </Text>
+                <button type="button" className="moyai-inline-act" data-testid="questions-show-more" onClick={() => setShown((s) => ({ ...s, [kind]: limit + QUESTIONS_SHOWN }))}>
+                  {T.questions.showMore}
+                </button>
+              </Group>
+            )}
+          </Stack>
+        );
+      })}
     </Stack>
   );
 }
