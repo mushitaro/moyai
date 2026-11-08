@@ -17,7 +17,7 @@ export interface GitHubHosts {
  * OAuth App の Client ID（秘密ではない値。Client secret は使わない）。運営者が GitHub に MOYAI の OAuth App を登録し、
  * デバイスフローを許してから入れる。null の間は、SHARE は「GitHub につなぐ」を押せず、理由を出す。
  */
-export const GITHUB_CLIENT_ID: string | null = null;
+export const GITHUB_CLIENT_ID: string | null = "Ov23litNaRa8MtHyXFGc";
 
 export const GITHUB_HOSTS: GitHubHosts = { web: "https://github.com", api: "https://api.github.com" };
 export const GITHUB_SCOPE = "public_repo";
