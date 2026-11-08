@@ -3262,6 +3262,11 @@ function ganttRecords(t: Table, g: GanttTable, lay: SheetLayout, ask: Asker, rec
         for (const uc of unitCols) {
           const u = at(x.r, uc.c);
           if (!live(u) || isNone(u.text)) continue;
+          // 「号機」の列（No.1・No.2）は機器の側の番号で、号炉ではない（2 炉の施設に 3〜9 号炉ができた。想定のプロンプトの試験 11-08）。出どころにだけ数える
+          if (/号機/u.test(uc.header)) {
+            refs.push(u.ref);
+            continue;
+          }
           const s = seriesOfUnit(parseUnit(u.text));
           if (s) {
             series ??= s;

@@ -266,6 +266,9 @@ export interface WeekRow {
   tag: string;
   name: string;
   vendor: string;
+  /** 号機の欄（「No.3」）と、号炉の記載の欄を号炉の見出しの字のかわりに書くとき（「なし／共通」） */
+  machine?: string;
+  unitText?: string;
   effort: number;
   /** 週の列の位置（0 から。I が 0）→ その週に施工した日数 */
   weeks: Record<number, number>;
@@ -342,6 +345,8 @@ export interface WeekBookOptions {
   mapSheet?: boolean;
   /** 工数を時間で書く（見出し「延べ時間」、2 行目の注記「1人工＝8時間」） */
   hours?: boolean;
+  /** 年度のシートを差し替える（既定は R3・R4） */
+  sheets?: WeekSheet[];
 }
 
 function weekSheet(wb: ExcelJS.Workbook, s: WeekSheet, opts: WeekBookOptions) {
@@ -386,7 +391,8 @@ function weekSheet(wb: ExcelJS.Workbook, s: WeekSheet, opts: WeekBookOptions) {
       if (x.equipment) ws.getCell(r, 1).value = x.equipment;
       ws.getCell(r, 2).value = x.tag;
       ws.getCell(r, 3).value = x.name;
-      ws.getCell(r, 5).value = `${unitNo}号炉`;
+      if (x.machine) ws.getCell(r, 4).value = x.machine;
+      ws.getCell(r, 5).value = x.unitText ?? `${unitNo}号炉`;
       ws.getCell(r, 6).value = x.vendor;
       ws.getCell(r, 7).value = Object.values(x.weeks).reduce((p, q) => p + q, 0);
       ws.getCell(r, 8).value = x.effort * (opts.hours ? 8 : 1);
@@ -404,8 +410,7 @@ function weekSheet(wb: ExcelJS.Workbook, s: WeekSheet, opts: WeekBookOptions) {
 export async function weekBook(opts: WeekBookOptions = {}): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "【架空】試験";
-  weekSheet(wb, R3, opts);
-  weekSheet(wb, R4, opts);
+  for (const sh of opts.sheets ?? [R3, R4]) weekSheet(wb, sh, opts);
   if (opts.mapSheet) {
     const ws = wb.addWorksheet("読替");
     ws.getCell("A1").value = "旧機器番号";

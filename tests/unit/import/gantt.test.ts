@@ -389,3 +389,29 @@ describe("1 冊で計画まで作る", () => {
     expect(EFFORT_COL).toBe(DAY_TO + 1);
   });
 });
+
+describe("号機の欄は号炉にしない（想定のプロンプトの試験 11-08：2 炉の施設に 3〜9 号炉ができた）", () => {
+  test("「号機 No.3」「号炉の記載 なし／共通」の行の機器は 3 号炉にならない。号機のセルは出どころに数え、問いの無い未解決にしない", async () => {
+    const sheet = {
+      ...R3,
+      units: [
+        {
+          title: "■ 1号炉",
+          stop: [6, 12] as [number, number],
+          rows: [
+            { equipment: "燃焼設備", tag: "H-203", name: "給じん装置", vendor: "【架空】甲工業", effort: 11, weeks: { 7: 3 } },
+            { equipment: "受入供給設備", tag: "C-102", name: "クレーン用バケット", machine: "No.3", unitText: "なし／共通", vendor: "【架空】甲工業", effort: 15, weeks: { 8: 3 } },
+          ],
+        },
+      ],
+    };
+    const s = await opened(WEEK, await weekBook({ sheets: [sheet] }));
+    acceptDefaults(s, 15);
+    const an = s.analyze();
+    const bucket = an.records.assets.filter((a) => a.name === "クレーン用バケット");
+    expect(bucket.length).toBeGreaterThan(0);
+    for (const b of bucket) expect(b.series?.kind === "number" ? b.series.n : null).not.toBe(3);
+    const silent = [...an.composition.status.entries()].filter(([k, v]) => k.includes("D") && v.s === "unresolved" && !v.questionId);
+    expect(silent.filter(([k]) => /\u0000D\d+$/.test(k))).toEqual([]);
+  });
+});
