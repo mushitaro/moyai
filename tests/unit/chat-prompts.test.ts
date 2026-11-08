@@ -230,19 +230,32 @@ const SURVEY = (who: string) => ({
 async function showBridge(open: "new_tab" | "nothing" | null) {
   const opened: string[] = [];
   let tb: TestBridge | null = null;
+  // 時計をずらすと、つながっているタブが眠った（ping に答えない）ことになる
+  let skew = 0;
   const openUrl = (url: string) => {
     opened.push(url);
     if (open === "new_tab") setTimeout(() => void fakeTab(tb!, SECRET_B, () => ({ ok: true, data: SURVEY("new") })), 50);
   };
-  tb = await startTestBridge({ toolTimeouts: SHORT, screenOpenWaitMs: 1500, ...(open ? { openUrl } : {}) });
+  tb = await startTestBridge({ toolTimeouts: SHORT, screenOpenWaitMs: 1500, now: () => Date.now() + skew, ...(open ? { openUrl } : {}) });
   cleanups.push(() => tb!.close());
-  return { tb, opened, client: await relayClient(tb) };
+  return { tb, opened, client: await relayClient(tb), sleep: () => (skew = 60_000) };
 }
 
 describe("開いた印：intake_survey（show: true）", () => {
-  it("橋渡しが開いた新しいタブが引き継いだ：screen は opened・connected とも true、note は無い。開くのは 1 回", async () => {
+  it("つながって返事をしているタブがあれば、新しいタブを開かない（前のタブの資料と下書きのルールが消えない。11-08）", async () => {
     const { tb, opened, client } = await showBridge("new_tab");
     await fakeTab(tb, SECRET_A, () => ({ ok: true, data: SURVEY("old") }));
+    const r: any = await client.callTool({ name: "intake_survey", arguments: { show: true } });
+    expect(r.isError, JSON.stringify(r.content)).toBeFalsy();
+    expect(r.structuredContent.screen).toEqual({ opened: false, connected: true });
+    expect(r.structuredContent.notes).toEqual(["old"]);
+    expect(opened).toEqual([]);
+  });
+
+  it("眠ったタブ（ping に答えない）のとき、橋渡しが開いた新しいタブが引き継いだ：screen は opened・connected とも true、note は無い。開くのは 1 回", async () => {
+    const { tb, opened, client, sleep } = await showBridge("new_tab");
+    await fakeTab(tb, SECRET_A, () => ({ ok: true, data: SURVEY("old") }));
+    sleep();
     const r: any = await client.callTool({ name: "intake_survey", arguments: { show: true } });
     expect(r.isError, JSON.stringify(r.content)).toBeFalsy();
     expect(r.structuredContent.screen).toEqual({ opened: true, connected: true });
@@ -252,9 +265,10 @@ describe("開いた印：intake_survey（show: true）", () => {
     expect(TOOLS.intake_survey.output.safeParse(r.structuredContent).success).toBe(true);
   });
 
-  it("開いたのに新しいタブがつながらない（前のタブが答えた）：connected は false で、note に利用者に言う 1 文", async () => {
-    const { tb, opened, client } = await showBridge("nothing");
+  it("眠ったタブのとき、開いたのに新しいタブがつながらない（前のタブが答えた）：connected は false で、note に利用者に言う 1 文", async () => {
+    const { tb, opened, client, sleep } = await showBridge("nothing");
     await fakeTab(tb, SECRET_A, () => ({ ok: true, data: SURVEY("old") }));
+    sleep();
     const r: any = await client.callTool({ name: "intake_survey", arguments: { show: true, part: "skills" } });
     expect(r.isError, JSON.stringify(r.content)).toBeFalsy();
     expect(r.structuredContent.screen).toEqual({ opened: true, connected: false });

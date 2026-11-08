@@ -95,6 +95,11 @@ export class TabHub {
   }
 
   /** 今のタブの回（無ければ null）。資料を作業画面に入れるときの印をこの回に結ぶ */
+  /** つながっているタブから最後に便りがあってからの時間（ミリ秒）。タブが無ければ null（眠ったタブは ping に答えないので伸びる） */
+  get sinceSeen(): number | null {
+    return this.active ? this.o.now() - this.active.lastSeen : null;
+  }
+
   get session(): string | null {
     return this.active?.session ?? null;
   }

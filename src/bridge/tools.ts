@@ -27,7 +27,7 @@ import {
 } from "../shared/tools";
 import type { IntakeCollection } from "./intake-files";
 import { pageSurvey } from "./survey-page";
-import type { TabHub } from "./tab";
+import { HEARTBEAT_MS, type TabHub } from "./tab";
 
 /**
  * tab：作業画面が答える。bridge：橋渡しが答える。tab_then_bridge：作業画面が渡した中身を、橋渡しが書く（読み方を保管先に書く）。
@@ -313,7 +313,11 @@ export class ToolRelay {
       sendArgs = rest;
       if (show === true) {
         shown = { opened: false, before: this.tabs.session };
-        if (this.bridgeTools.work_screen_open) {
+        // つながって返事をしている作業画面があれば、新しいタブを開かない（新しいタブが引き継ぐと、前のタブのメモリにある資料と下書きのルールが
+        // 見えなくなり、作業画面が空に戻った。想定のプロンプトの試験 11-08）。眠っている（ping に答えない）か、つながっていないときだけ開く
+        const since = this.tabs.sinceSeen;
+        const alive = this.tabs.connected && since !== null && since <= 2 * HEARTBEAT_MS;
+        if (!alive && this.bridgeTools.work_screen_open) {
           const opened = await this.bridgeTools.work_screen_open();
           shown.opened = typeof opened !== "string" && opened.opened === true;
           if (shown.opened) {
