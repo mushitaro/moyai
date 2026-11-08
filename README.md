@@ -2,14 +2,29 @@
 
 保全の資料から星取表を作り、全国の類似施設と周期・工数・日数を比べる道具。行は共通台帳（国の手引きの機器リスト × 作業分類）、列は年度。ごみ焼却施設から作り、ほかの設備へは Skillパック（データ）を足して広げます。
 
-- 動画：未（YouTube の URL は提出の前に書く）
-- 公開リポジトリ：<https://github.com/mushitaro/moyai>
-- 公開台帳：<https://github.com/mushitaro/moyai-ledger>（サイト <https://mushitaro.github.io/moyai-ledger/>）
+- 動画：
+- テーマ：本来、誰にでも届くべきものを。
 - 資料・施設・拠点は、どれも【架空】です。
 
-## 課題：類似施設と比べられない
+## 試し方
 
-ごみ焼却施設の保全は、次の 4 者で回っています。
+MOYAI のアカウントもログインも要りません。
+
+| 要るもの | |
+|---|---|
+| PC | Windows か macOS（確かめたのは Windows 11。macOS は未確認） |
+| Node.js | 22 以上（無ければ Claude が、聞いてから入れる） |
+| AI クライアント | Claude Desktop（Code のタブか Chat）か Claude Code |
+
+1. チャットに、このリポジトリの URL（<https://github.com/mushitaro/moyai>）を渡し、「MOYAI をインストールして」と頼む。Claude が Node を確かめ、clone → `npm ci` → `npm run build` → `setup` をします。`setup` は、送信者の名前を聞き、何をどこに書くかをチャットで見せ、「はい」をもらってから書きます。Claude Desktop が開いていれば、閉じるのを待ってから設定に足すので、Desktop を 1 回開き直します。
+2. 「デモして」と頼む。Claude が、ごみ焼却の Skillパックの【架空】の資料（`packs/waste-incineration/demo/`：施設台帳・星取表・作業日報）を画面に入れ、確認を 1 つずつ聞き、星取表を作ります。1 回の返事で進めるのは 1 段だけで、画面の変化を見ながら進みます。確定は人が HOSHITORI の確定のシートでします。
+3. 「MOYAI をアンインストールして」と頼む。Claude が、保存先（計画の版・施設の署名鍵・資料）も消すかを聞き（既定は残す）、`uninstall` の中身を見せてから消し、最後にリポジトリのフォルダを消します。
+
+人がするのは、チャットで答えることと、画面での確定・署名・送信・承認だけです。端末・ダウンロード・ドラッグは頼みません。署名鍵は最初の確定で作られ、パスワードはありません。手順の正本は `skills/moyai/SKILL.md`（「チャットで入れる・デモ・消す」）と `packs/waste-incineration/demo/README.md` です。
+
+## 課題：似たプラントと、比べられない
+
+市町村も、保全の会社も、運転を請け負う会社も、見たい履歴は、ほかの誰かが持っています。
 
 | 立場 | 役目 |
 |---|---|
@@ -18,9 +33,11 @@
 | メーカー系列の保全の会社 | 建てたメーカーの系列として、整備を随意契約で請けることが多い（運営者の経験。割合は数えていない） |
 | O&M の事業者 | 運転と維持管理を、何年もまとめて請け負う |
 
-このため、整備の履歴は施設ごと・請けた会社ごとに分かれ、書き方も施設ごとに違います。市町村は、自施設の周期・工数・日数が妥当かを全国の類似施設と比べられません。保全の会社は他社が建てたプラントと、O&M の事業者は入札の対象の類似施設と比べたいのに、相手の履歴は見えません。比べる物差しも、共有する場もありません。
+整備の履歴は施設ごと・請けた会社ごとに分かれ、書き方も施設ごとに違います。市町村は、自施設の周期・工数・日数が妥当かを全国の類似施設と比べられません。保全の会社は他社が建てたプラントと、O&M の事業者は入札の対象の類似施設と比べたいのに、相手の履歴は見えません。比べる物差しも、共有する場もありません。
 
-## MOYAI がすること
+## 仕組み
+
+### MOYAI がすること
 
 1. **取り込み**：Excel・CSV・PDF・写真をそのまま入れる。Claude は資料の形（見出し・列・件数・小さな見本）を読み、未確定の所だけを聞く。行のデータは Claude に渡さない。
 2. **星取表**：記録を共通台帳に紐付け、年度の列に並べる。共通台帳は、共通の設備項目（環境省『廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）』表Ⅱ-4）× 作業分類（点検・分解整備・更新・基幹改良）。周期の案には根拠（自施設の実績・Skillパックの基準・公開台帳・計画ルール）を付ける。
@@ -28,16 +45,38 @@
 4. **共有**：周期・工数・日数を階級（例：間隔 6〜7 年）に区切った値だけを、施設の署名鍵で署名して共有フォルダか公開台帳に送信する。同区分の施設が 5 に届かなければ送らない。費用・施設名・日付は出さない。
 5. **確定は人だけ**：確定・署名・送信・承認は画面のボタンにだけあり、Claude のツールに無い（`docs/security.md`）。
 
+### Skill の 3 段（`docs/plan.md` §2.17）
+
+| 段 | 中身 | 置き場所 |
+|---|---|---|
+| 1 段目 | 標準の読み手と、操作の手順（入れる・取り込む・確定を頼む・詰めきれないときの手順） | `skills/moyai/SKILL.md`、`src/import/`、`packs/_cues/` |
+| 2 段目 | 業種の Skillパック（共通の設備項目・照査・データの名前・業種の語のルール） | `packs/<業種>/`。ごみ焼却は `packs/waste-incineration/reading.json` にルールを置いた |
+| 3 段目 | 会話で作るルール（施設・担当・会社ごと）。人が版に署名すると承認される | 利用者の保存先の `skills/` |
+
+ルールを当てる順は 3 段目 → 2 段目 → 1 段目です。資料の形の読み（表・見出し・結合など）は 1 段目、業種の語は 2 段目、施設ごとの細かい読みは 3 段目に置きます。新しい施設は、Claude と利用者の会話を繰り返して 3 段目のルールで詰めます。1 段目と 2 段目に足すのは、どの施設の資料にも出る形だと示せたときだけです。
+
+## 数（測った時点とコミット）
+
+| 何を | 結果 | 時点・出どころ |
+|---|---|---|
+| 運営者の試験の資料 295 本（【架空】4 施設）を 1 本ずつ取り込み、既定の答えで答える | 読めたセル 28% → 52%、質問の無い未解決のセル 254,872 → 2,087、1 冊で計画まで作れた資料 9 → 69 | 読みの地図 版 4（`fabb4de`、11-08 11:07）。前は `47e6c4a`。[docs/reading-map/index.html](docs/reading-map/index.html) |
+| 北部CC の 9 本をまとめて入れ、全部の確認に答える | 計画まで作れる（機器の節 514・作業 1,001・作業明細 2,798） | 確認には台本が答えた（Dev の 11-08 の測り。測ったコミットと記録の場所は未確認） |
+| 会話の繰り返し（青葉台、読み手を合わせていない施設、86 本） | 利用者に聞いた回数：1 回目（47 本）3・2 回目（39 本を足す）1。どちらも計画まで作れた | `50a3428`、11-08 14:30。答えを知っている Claude が進めた数で、初めての Claude の数ではない。[docs/progress/conversation-loop-2026-11-08.md](docs/progress/conversation-loop-2026-11-08.md) |
+| 想定のプロンプト 17（インストール・デモ・資料・様式・共有・承認のメール・設定など） | 17 とも進んだ。「この様式で Excel を出して」は 1 回目に時間切れ（画面のタブが休止中）、直したあと通った | `fabb4de`、11-08 午前。[docs/progress/prompt-test-2026-11-08.md](docs/progress/prompt-test-2026-11-08.md) |
+| 見ていない様式（凍結した読み手で 5 組） | どの組も計画まで作れず、⑥ 取り戻せた割合は 0% | 11-05 の読み手（`reader-freeze-1`〜`6`）。[docs/trend.md](docs/trend.md) |
+| 開発用の資料（工場の fictional-1・fictional-2） | Excel・CSV・PDF のどれも ① 原本の漏れ 0・② 未解決 0・③ 読み取りの正しさ 100% | 11-05 の実行。[docs/trend.md](docs/trend.md) |
+| 試験の数 | | |
+
 ## Showcase：結果をすぐ見る
 
 | 見るもの | 場所 |
 |---|---|
-| 公開台帳のサイト（【架空】10 施設の類似施設の星取表と、統計の行の中央値・四分位・範囲） | <https://mushitaro.github.io/moyai-ledger/> |
-| 公開台帳の PR の検証（Actions の `ledger-validate`） | 10 施設の PR [#1](https://github.com/mushitaro/moyai-ledger/pull/1) は ✓ でマージ済み。わざと外した PR [#2](https://github.com/mushitaro/moyai-ledger/pull/2)（同区分の施設が 5 未満）・[#3](https://github.com/mushitaro/moyai-ledger/pull/3)（費用の欄）・[#4](https://github.com/mushitaro/moyai-ledger/pull/4)（施設名）は ✗。#2〜#4 は作る側のセッションが【架空】の共有ファイルで出したもの |
-| 受け入れの試験の表（試験の実行から生成） | [docs/acceptance.md](docs/acceptance.md)。2026-11-05 12:34 JST・`e437dec` の実行で、通った 18・一部 3・落ちた 0・試験が無い 6・測っていない 2（全 29）。そのあとの main では作り直していない |
+| 公開台帳（【架空】10 施設の共有ファイル） | このリポジトリの [ledger/](ledger/)。元は mushitaro/moyai-ledger で、11-07 に履歴ごと移した（`bca1ddb`）。移す前の PR の検証（Actions の `ledger-validate`）：10 施設の PR [#1](https://github.com/mushitaro/moyai-ledger/pull/1) は ✓、わざと外した PR [#2](https://github.com/mushitaro/moyai-ledger/pull/2)（同区分の施設が 5 未満）・[#3](https://github.com/mushitaro/moyai-ledger/pull/3)（費用の欄）・[#4](https://github.com/mushitaro/moyai-ledger/pull/4)（施設名）は ✗ |
+| 公開台帳のサイト（類似施設の星取表と、統計の行の中央値・四分位・範囲） | 手元で作る：`node dist/cli.js ledger site ledger <出すフォルダ>` → `index.html`。Pages は置いていない |
+| 読みの地図（295 本の、書き方の形ごとの読めたセル・未解決・計画まで） | [docs/reading-map/index.html](docs/reading-map/index.html)（clone して開く） |
+| 受け入れの試験の表（試験の実行から生成） | [docs/acceptance.md](docs/acceptance.md)（11-05 の表） |
 | 試験の数と取り込みの物差しの推移、見ていない様式の結果 | [docs/trend.md](docs/trend.md) |
 | Skill の採点の表 | 下の表。元は [eval/runs/](eval/runs/) の `report.json`・`report.html` |
-| デモの 3 施設の物差し | [samples/heldout/demo/README.md](samples/heldout/demo/README.md) |
 | Claude の使い方と作り方 | [docs/how-built.md](docs/how-built.md) |
 
 ### Skill の採点（F3、2026-11-05、1 問 3 回）
@@ -53,38 +92,9 @@
 
 比べた結果はどちらも「差なし」です。ごみ焼却は試験用の問題で 96.0% → 100%（差 4.0%、前の版の揺れの幅 4.0% の内）、し尿処理は 91.3% → 100%（差 8.7%、揺れの幅 10.0% の内）。
 
-### 取り込みの物差し
+## 手で走らせる・照合する
 
-- 開発用の資料（工場の fictional-1・fictional-2）：Excel・CSV・PDF のどれも ① 原本の漏れ 0・② 未解決 0・③ 読み取りの正しさ 100%（2026-11-05 の実行。`docs/trend.md`）。
-- 見ていない様式（`import.heldout`）：凍結した読み手で 5 組を測り、どの組も計画を作れず、⑥ 取り戻せた割合は 0% でした（`docs/trend.md`）。コードを足すだけでは届かなかったので、未確定の所を会話で決め、ルールとして残す形にしました（`docs/plan.md` §2.17）。
-- 会話で決めたルールの例：星取表の無い施設 C（作業日報 5 冊と発注台帳）は、会話の 4 回目でルール 57 件、② 未解決 19,750 → 0、③ 86.1%（2942/3418）、⑥ 75.2%（2379/3164）。質問に答えたのは、正解だけを見る台本と担当者の役のサブエージェントです（`samples/heldout/demo/README.md`）。見ていない様式の結果ではありません。
-
-## Run Live：チャットで入れる・デモ・消す
-
-人がするのは、チャットで頼んで答えることと、画面での確定・署名・送信・承認だけです。コマンドは Claude が、何をするかを先に言い、チャットで「はい」をもらってから走らせます（手順の正本は `skills/moyai/SKILL.md` の「チャットで入れる・デモ・消す」）。確かめた PC は Windows 11 です（macOS・Linux は未確認）。チャットで入れる・デモ・消すは main の `35e6ad4` で入りました。この節の書き手は、チャットからの通しを走らせていません（未確認）。
-
-### 入れる
-
-Claude Code に、このリポジトリの URL（<https://github.com/mushitaro/moyai>）を渡し、「MOYAI を入れて」と頼みます。Claude が次をします。
-
-1. Node.js が 22.13 以上かを確かめる。無いか古ければ、利用者に聞いてから winget で入れる（git も同じ）。
-2. ホームの下（同期フォルダの外）に clone し、`npm ci` → `npm run build`。
-3. 送信者の名前（版の署名と画面に出す）を聞き、`node dist/cli.js setup --target code --name "<名前>"` を下見で走らせて中身を見せ、良ければ `--yes` を付けて走らせる。出た `claude mcp add …` の 1 行も走らせ、Claude Code を開き直してもらう。Claude Desktop でも使うなら `--target desktop` を同じ順で（設定に moyai の 1 行だけを足し、前の設定を `.bak` に残す）。
-4. MOYAI の画面を開く（`node dist/cli.js start`。127.0.0.1 のブリッジが起き、ブラウザで画面が開く）。Claude Code を開き直したあとは、moyai のツールを呼べばブリッジが起きる。
-
-署名鍵は最初の確定で作られます。パスワードはありません。MCP の instructions が Claude Desktop で効くかは未確認なので、同じ文を `skills/moyai/SKILL.md` にも置いています。
-
-### デモ
-
-「デモして」と頼みます。Claude が、ごみ焼却の Skillパックの【架空】の資料（`packs/waste-incineration/demo/`：施設台帳・星取表・作業日報）を `intake_add_files` で画面に入れ、取り込みの確認を利用者に聞き、星取表を作ります。確定は人が HOSHITORI の確定のシートでします。利用者はダウンロードもドラッグもしません。
-
-### 消す
-
-「MOYAI を消して」と頼みます。Claude が、保存先（計画の版・施設の署名鍵・資料）も消すかを聞き（既定は残す）、`node dist/cli.js uninstall` を下見で見せてから `--yes` で走らせ、Claude Code の設定から moyai を外し、最後にリポジトリのフォルダを消します。
-
-### 手で走らせるとき
-
-要るもの：Node.js 22.13 以上・npm 11 以上、Chrome か Edge。
+チャットを使わずに走らせるときの手順です。要るもの：Node.js 22.13 以上・npm 11 以上、Chrome か Edge。
 
 ```bash
 git clone https://github.com/mushitaro/moyai
@@ -108,8 +118,6 @@ node dist/cli.js start
 
 Claude Code は、リポジトリの `.mcp.json` が `moyai`（`node dist/cli.js mcp`）を登録しています。見張りのフックと deny（`.claude/settings.json`）も同じフォルダで効きます。Claude Desktop は `node dist/cli.js setup --target desktop --name "<名前>"` で設定に足します。
 
-### 共有フォルダと公開台帳を照合する
-
 ```bash
 node dist/cli.js verify demo-ring
 ```
@@ -117,30 +125,18 @@ node dist/cli.js verify demo-ring
 【架空】の 7 拠点の共有フォルダ（`demo-ring/`）を、受信側と同じ関数で照合します。全員 ✓、わざと入れた ✗ の共有ファイルは理由つきで ✗ のとき、終了コード 0。秘密鍵はリポジトリにありません（`demo-ring/README.md`）。
 
 ```bash
-git clone https://github.com/mushitaro/moyai-ledger ../moyai-ledger
+node dist/cli.js verify ledger ledger
 ```
 
-```bash
-node dist/cli.js verify ledger ../moyai-ledger
-```
+公開台帳（`ledger/`）の決まりと共有ファイルを、PR の検証（Actions）と同じ関数で照合します。すべて ✓ なら終了コード 0。
 
-公開台帳の決まりと共有ファイルを、PR の検証（Actions）と同じ関数で照合します。すべて ✓ なら終了コード 0。
-
-2026-11-06 に、このリポジトリの `e61f316` をこの PC（Windows 11）でビルドして走らせた結果：`verify demo-ring` は拠点 7/7 が ✓、わざと入れた ✗ は約束どおり ✗（終了コード 0）。`verify ledger` は共有ファイル 10 件がすべて ✓（終了コード 0）。
-
-### 試験
+2026-11-08 15:04 JST に、この枝の `1acbd6a`（main `d483e36` を取り込んだもの）をこの PC（Windows 11）でビルドして走らせた結果：`verify demo-ring` は終了コード 0、`verify ledger ledger` は共有ファイル 10 件がすべて ✓（終了コード 0）、`ledger site` は ✓ 10 件・✗ 0 件で `index.html` を書いた。
 
 ```bash
 npm test
 ```
 
-```bash
-npm run acceptance
-```
-
-`npm test` は node:test と vitest を走らせ、最後に件数を出します。`npm run acceptance` は試験を走らせて `docs/acceptance.md` を作り直します。結果は「通った／一部／落ちた／試験が無い／測っていない」で、試験の無いものは「試験が無い」と書きます。
-
-2026-11-06 16:08 JST に `e61f316` をこの PC（Windows 11）で走らせた結果：node:test 173 件と vitest 1,163 件が通った（vitest は飛ばした 5 件を除く。終了コード 0、508 秒）。e2e（Playwright、Chrome と Edge）は 54 件あり、このときは件数を数えただけで走らせていない（未確認）。
+`npm test` は node:test と vitest を走らせ、最後に件数を出します。`npm run acceptance` は試験を走らせて `docs/acceptance.md` を作り直します。
 
 ## 使い続ける人と場面
 
@@ -183,13 +179,13 @@ npm run acceptance
 
 | 受け継いだ考え（言葉だけ） | 会期中に新しく作ったもの |
 |---|---|
-| AI は案を出し、決めるのは人。変更には作者と根拠を付ける | 人だけの経路 40 個（タブの秘密とワンタイムトークン）、Claude のツール 16 個（動くのは 13。確定・送信のツールは無い）、拒む試験（`human-only`） |
+| AI は案を出し、決めるのは人。変更には作者と根拠を付ける | 人だけの経路 43 個（タブの秘密とワンタイムトークン）、Claude のツール 17 個（動くのは 15。確定・送信のツールは無い）、拒む試験（`human-only`） |
 | AI が読むもの・変えるものは画面に出す | 画面（MOYAI・HOSHITORI・EXPORT・SHARE・設定）、確定のシート、未確定の案の星取 |
-| 推測で埋めない。どのセルにも行き先を数える | 取り込みの層（Excel・CSV・PDF・写真）、取り込みの確認と未回答、物差し ①〜⑥、見ていない様式の試験の道具 |
+| 推測で埋めない。どのセルにも行き先を数える | 取り込みの層（Excel・CSV・PDF・写真）、取り込みの確認と未回答、物差し ①〜⑥、見ていない様式の試験の道具、読みの地図 |
 | 判定はコード、説明は AI | ごみ焼却の照査 7 件（出典と照査状態つき）、純粋な関数と試験 |
 | データベースを置かない。版は足すだけ | 版と署名（人の鍵・施設の署名鍵）、差分、Excel の出力 |
 | 秘密を守りながら比べる | 共通台帳への紐付け、同区分の施設数（全国の表で数える）、周期・工数・日数を階級で送る共有ファイル、共有フォルダ、公開台帳と PR の検証、類似施設の星取表 |
-| Skill と、画面が回すコードの二本立て | Skill の 3 つの層（基本操作・業種の Skillパック・会話で作るルール）、Skillパック 37、Skill の採点（`moyai eval`） |
+| Skill と、画面が回すコードの二本立て | Skill の 3 段（標準・業種の Skillパック・会話で作るルール）、Skillパック 37、チャットで入れる・デモ・消す、Skill の採点（`moyai eval`） |
 
 ### 前からあったもの
 
@@ -206,7 +202,7 @@ npm run acceptance
 4. 試験の推移：`docs/trend.md`・`ops/trend.jsonl`。API の費用：`ops/api-spend.jsonl`。
 5. 見ていない様式：ハッシュのコミットが、中身の公開より先（`samples/heldout/hashes/`、タグ `reader-freeze-1`〜`6`。順は `tests/heldout/heldout.test.ts` が確かめる）。
 6. Claude の使い方と、セッションの分担：`docs/how-built.md`。
-7. コミット：2026-11-03 125・11-04 99・11-05 128・11-06 63（`e61f316` まで 415。`git log --format=%ad --date=short | sort | uniq -c`）。
+7. コミット：`d483e36` まで 594（11-03 126・11-04 105・11-05 128・11-06 106・11-07 86・11-08 43。`git log --format=%ad --date=short | sort | uniq -c`）。
 
 ## 保証できないこと
 
@@ -240,21 +236,21 @@ npm run acceptance
 10. 施設の署名鍵のファイルを失くすと、その鍵の失効記録に署名できず、再発行した鍵と合わせて同じ施設を 2 つに数えることがある。
 11. 費用の値を Claude の見本で伏せるのは、取り込みが費用の列と見分けた列だけ。ほかの言い方の見出し（「見込額」「予算額」「単価」など）の値は、見本に出ることがある。
 12. `intake_add_files` のフォルダが、利用者がチャットで言ったものかを、ブリッジは確かめられない。AI が別のフォルダを指せば、その直下の資料が画面に入り、要約の見本として AI に渡る（画面の作業の一覧に、AI が資料を入れたことが出る）。
+13. 公開台帳に載せた共有ファイルは、今は画面から取り下げられない。取り下げても、載ったファイルは消えず、受け取った人の複製も残る。
 
-## 未完の一覧（2026-11-06 時点）
+## 未完の一覧（2026-11-08 時点）
 
-- 動画（URL は未）。提出の要約。
-- 見ていない様式：5 組とも計画を作れなかった（⑥ 0%）。会話でルールを決める道は、デモの施設 C で計画まで届いた（⑥ 75.2%）が、見ていない様式では測っていない。写真は見ていない様式の台本では読んでいない。
-- 受け入れの試験で「試験が無い」もの（`docs/acceptance.md`、`e437dec`）：`cross-layer`・`counts`・`pack.map`・`trigger.property`・`windows`・`eval`。そのあと足した試験があるかは、表を作り直していないので未確認。
-- MCP のツール `note_for_human`・`share_preview` は名前と型だけ（呼ぶと「未実装」）。`skill_eval` は Skill の採点の画面ができるまで Claude に見せない。Skill の採点は CLI（`moyai eval`）だけ。
-- Windows の Claude Desktop での端から端までの通し（未確認）。
-- `moyai send`（端末からの送信）。送信は画面の SHARE からだけ。
-- Claude に返した結果の記録（ツールの名前・大きさ・行の数）を画面に出すこと。
-- 長く送信していないメンバーを集計から外す決まり。
-- `verify demo-ring` が `demo-ring.json` のハッシュを照らすこと（`demo-ring/README.md`）。
-- し尿処理の Skillパックの全国の表・公開台帳の語彙・照査。B〜H の Skillパックの中身。
-- 費用・整備の詳細・設定の画面は、運営者のレビュー前（`docs/words.md`）。
+- 公開台帳の受け口（配置していない）。GitHub の OAuth App（未登録）。
+- 工程表の合計の行・線の無い行。
+- 計画の ○ と実績の ● が、別の機器の行に分かれる所（号機の書き方と親の設備の有無が違う資料どうし）。
+- 報告書 PDF の、何行にも折り返す表。1 頁 1 機器の診断のカード。
+- 号炉の書き方の語を、1 段目の読み手のコードから 2 段目の Skillパックへ移すこと。
+- 大量の資料で、答えを置く段の待ち時間（青葉台 86 本で 216 秒。画面は止まらない）。
+- 見ていない様式：11-05 の読み手では 5 組とも計画を作れなかった（⑥ 0%）。そのあとの読み手では測っていない。
+- 受け入れの試験の表（`docs/acceptance.md`）は 11-05 のまま。
+- MCP のツール `note_for_human` は名前と型だけ（呼ぶと「未実装」）。`skill_eval` は Skill の採点の画面ができるまで Claude に見せない。Skill の採点は CLI（`moyai eval`）だけ。
 - 手元のモデル（F4）は構想だけ。
+- 審査のあとに回す一覧：`docs/progress/2026-11-08.md` の末尾「審査後に回すもの」。
 
 ## 会期の後に作るもの
 
