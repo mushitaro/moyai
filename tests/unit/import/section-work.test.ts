@@ -56,3 +56,30 @@ describe("2 段の見出しの上の段に頁の頭書きが入った表", () =>
     expect(byTag.get("H-201")).toBe("ごみホッパ");
   });
 });
+
+describe("機器仕様一覧の番号つきの節の行", () => {
+  test("名前の列より左に「１．受入・供給設備」だけを書いた行は、下の機器の親（設備の段）。問いにしない", async () => {
+    const bytes = await xlsxOf((ws) => {
+      rows(ws, 1, [
+        ["No.", "機器番号", "機器名称", "数量", "形式", "製作者"],
+        ["１．受入・供給設備", null, null, null, null, null],
+        [1, "W-101", "計量機", "2 基", "ロードセル式", "架空計器"],
+        [2, "W-102", "計量機データ処理装置", "1 式", "パソコン式", "架空計器"],
+        ["２．燃焼設備", null, null, null, null, null],
+        [3, "H-201", "ごみホッパ", "2 基", "鋼板溶接製", "架空重工"],
+      ]);
+    });
+    const s = session();
+    await s.add([{ name: "機器仕様一覧.xlsx", bytes }]);
+    acceptDefaults(s, 15);
+    const an = s.analyze();
+    const byId = new Map(an.records.assets.map((a) => [a.id, a]));
+    const parentName = (tag: string) => {
+      const a = an.records.assets.find((x) => x.tag === tag);
+      return a?.parentId ? byId.get(a.parentId)?.name : null;
+    };
+    expect(parentName("W-101")).toBe("受入・供給設備");
+    expect(parentName("H-201")).toBe("燃焼設備");
+    expect(an.open.filter((q) => q.kind === "stray")).toEqual([]);
+  });
+});

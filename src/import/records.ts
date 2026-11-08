@@ -622,10 +622,20 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   }
   // 名前の無い行（ほかの列だけに中身がある）：表ごとに 1 回聞く。文に資料・シート・行の番号を添える（人が資料を開いて探せるように）
   const noNameRows: { r: number; cells: GridCell[] }[] = [];
+  // 名前の列より左の列だけに番号つきの節の題を書いた行（機器仕様一覧の「１．受入・供給設備」）：下の行の親のまとまり（設備の段）。表の段は 1 つ下がる
+  let section: AssetRec | null = null;
   for (const r of dataRows) {
     const cells = lay.index.rowCells(r.r);
     if (cells.every((c) => off(c.ref))) continue;
     const nc = nameCells.find((x) => x.r === r.r)?.cell;
+    const live = cells.filter((c) => !off(c.ref) && c.text.trim() !== "");
+    const sec = !nc && live.length === 1 && live[0] && nameCols.every((k) => live[0]!.c < k.c) && NUMBERED_SECTION.test(nfkc(live[0].text).trim()) ? live[0] : null;
+    if (sec) {
+      const nm = nfkc(sec.text).trim().replace(NUMBERED_SECTION_HEAD, "").trim();
+      section = { id: `${t.id}:s${r.r}`, file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, tableId: t.id, shape: "tree", order: order++, level: headRec ? 2 : 1, parentId: headRec?.id ?? null, rawName: nm, name: nm, tag: null, tagNumber: null, nameRef: sec.ref, series: null, specs: [], installed: null, refs: [sec.ref], excluded: null, pending: false };
+      rec.assets.push(section);
+      continue;
+    }
     if (!nc || off(nc.ref)) {
       noNameRows.push({ r: r.r, cells });
       continue;
@@ -664,8 +674,8 @@ function treeRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       tableId: t.id,
       shape: "tree",
       order: order++,
-      level: r.level === null ? 0 : r.level + (headRec ? 1 : 0),
-      parentId: r.parentRow ? idOf(r.parentRow) : (headRec?.id ?? null),
+      level: r.level === null ? 0 : r.level + (headRec ? 1 : 0) + (section ? 1 : 0),
+      parentId: r.parentRow ? idOf(r.parentRow) : (section?.id ?? headRec?.id ?? null),
       rawName: raw,
       name,
       tag: tagged ? tagged.tag : null,
@@ -1064,7 +1074,10 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const isSection = (r: number) => {
     if (hier.length !== 1) return false;
     const cs = lay.index.rowCells(r).filter((c) => c.text !== "" && !off(c.ref));
-    return cs.length === 1 && cs[0]?.c === hier[0]?.c;
+    if (cs.length !== 1 || !cs[0] || !hier[0]) return false;
+    if (cs[0].c === hier[0].c) return true;
+    // 名前の列より左の列だけに、番号つきの節の題（「１．受入・供給設備」「2. 燃焼設備」）を書いた行（機器仕様一覧の書き方）
+    return cs[0].c < hier[0].c && NUMBERED_SECTION.test(nfkc(cs[0].text).trim());
   };
   let group: AssetRec | null = null;
   for (const r of data) {
@@ -1074,9 +1087,10 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       continue;
     }
     if (isSection(r.r)) {
-      const cell = lay.index.at(r.r, hier[0]?.c ?? 0);
+      const cell = lay.index.at(r.r, hier[0]?.c ?? 0) ?? lay.index.rowCells(r.r).find((c) => c.text !== "" && !off(c.ref)) ?? null;
       if (cell) {
-        const name = cell.text.replace(/\s*\n\s*/g, " ").trim();
+        const whole = cell.text.replace(/\s*\n\s*/g, " ").trim();
+        const name = cell.c === hier[0]?.c ? whole : nfkc(whole).replace(NUMBERED_SECTION_HEAD, "").trim();
         group = { id: `${t.id}:g${r.r}`, file: lay.file, sheet: lay.sheet, sheetIndex: lay.sheetIndex, tableId: t.id, shape: "grid", order: order++, level: 1, parentId: null, rawName: name, name, tag: null, tagNumber: null, nameRef: cell.ref, series: null, specs: [], installed: null, refs: [cell.ref], excluded: null, pending: false };
         rec.assets.push(group);
       }
@@ -2827,6 +2841,10 @@ export const ORDER_LINE_EXCLUDE = {
   badAmount: "金額として読めない書き方（決定で金額を置かない）",
   badDate: "日付として読めない書き方（決定で日付を置かない）",
 } as const;
+
+/** 番号つきの節の題（「１．受入・供給設備」「12. 雑設備」）。数だけの行・文の行は当たらない */
+const NUMBERED_SECTION = /^\d{1,2}\s*[.．、]\s*[^\d\s.．、][^。]{0,28}$/u;
+const NUMBERED_SECTION_HEAD = /^\d{1,2}\s*[.．、]\s*/u;
 
 /**
  * 表の上の題と抽出の条件の行の、金額の単位と税の扱い（「金額：円・税抜」）と年度（「工事年度｜2019」）。
