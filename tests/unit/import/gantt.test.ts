@@ -6,7 +6,7 @@ import { describe, expect, test } from "vitest";
 import type { Analysis } from "../../../src/import";
 import { datesOfTimes, hoursPerManDayInText, timeRun, GANTT_REASON } from "../../../src/import/gantt";
 import type { GridCell } from "../../../src/import/grid";
-import { DAY_FROM, DAY_TO, EFFORT_COL, PAGE_1, PAGE_2, R3, WEEKS, WEEK_FROM, lineBook, weekBook } from "./gantt-fixtures";
+import { DAY_FROM, DAY_TO, EFFORT_COL, PAGE_1, PAGE_2, R3, WEEKS, WEEK_FROM, lineBook, weekBook, type WeekSheet } from "./gantt-fixtures";
 import { acceptDefaults, human, session } from "./helpers";
 
 const LINE = "工程表_線.xlsx";
@@ -392,12 +392,12 @@ describe("1 冊で計画まで作る", () => {
 
 describe("号機の欄は号炉にしない（想定のプロンプトの試験 11-08：2 炉の施設に 3〜9 号炉ができた）", () => {
   test("「号機 No.3」「号炉の記載 なし／共通」の行の機器は 3 号炉にならない。号機のセルは出どころに数え、問いの無い未解決にしない", async () => {
-    const sheet = {
+    const sheet: WeekSheet = {
       ...R3,
       units: [
         {
           title: "■ 1号炉",
-          stop: [6, 12] as [number, number],
+          stop: [6, 12],
           rows: [
             { equipment: "燃焼設備", tag: "H-203", name: "給じん装置", vendor: "【架空】甲工業", effort: 11, weeks: { 7: 3 } },
             { equipment: "受入供給設備", tag: "C-102", name: "クレーン用バケット", machine: "No.3", unitText: "なし／共通", vendor: "【架空】甲工業", effort: 15, weeks: { 8: 3 } },
