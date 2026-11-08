@@ -469,7 +469,8 @@ export function Questions({ ws, view, focus = null }: { ws: IntakeWorkspace; vie
     <Stack gap="sm" data-testid="questions">
       {groups.map(([kind, qs]) => {
         const limit = shown[kind] ?? QUESTIONS_SHOWN;
-        const head = qs.slice(0, limit);
+        // 答えで決まる行の多い問いを先に（20 問の外に残るのは影響の小さいもの。Wire、11-08。docs/screens.md §3.3）
+        const head = [...qs].sort((a, b) => b.sameShapeRows - a.sameShapeRows).slice(0, limit);
         // 資料のセルの「| 決める」で開いた質問は、数の外でも描く
         const focused = focus ? qs.find((q) => q.questionId === focus.questionId && !head.includes(q)) : undefined;
         const visible = focused ? [...head, focused] : head;

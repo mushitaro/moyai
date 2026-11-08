@@ -565,7 +565,7 @@ export const TEXT = {
     questions: {
       none: "答えの要る質問はありません。",
       more: (n: number) => `ほか ${n} 問`,
-      showMore: "| もっと見る",
+      showMore: "| 続きを表示",
       rows: (n: number) => `${n} 行`,
       defaultMark: "- 既定",
       answer: "決める",
