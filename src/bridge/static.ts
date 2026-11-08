@@ -11,6 +11,8 @@ const TYPES: Record<string, string> = {
   ".webmanifest": "application/manifest+json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  // ブラウザのタブのしるし（brand/favicon.ico）
+  ".ico": "image/x-icon",
   ".woff2": "font/woff2",
   ".woff": "font/woff",
   // PDF の読み手（pdf.js）：worker と、同梱の cMap・標準の書体（ビルドに入れたもの。外から取らない）

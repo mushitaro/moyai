@@ -147,7 +147,7 @@ describe("ビルドの印", () => {
 });
 
 describe("manifest", () => {
-  const m = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as { name: string; display: string; start_url: string; icons: { src: string; sizes: string; type: string }[] };
+  const m = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as { name: string; display: string; start_url: string; icons: { src: string; sizes: string; type: string; purpose: string }[] };
 
   it("名前は MOYAI、standalone、入口は /", () => {
     expect(m.name).toBe("MOYAI");
@@ -156,7 +156,9 @@ describe("manifest", () => {
   });
 
   it("アイコンは 192 と 512 の PNG で、ファイルの大きさが書いたとおり。道は橋渡しの許可の一覧にある", () => {
-    expect(m.icons.map((i) => i.sizes).sort()).toEqual(["192x192", "512x512"]);
+    // any と maskable（Android の丸・角丸の切り抜き）の 2 つずつ
+    expect(m.icons.map((i) => i.sizes).sort()).toEqual(["192x192", "192x192", "512x512", "512x512"]);
+    expect(m.icons.map((i) => i.purpose).sort()).toEqual(["any", "any", "maskable", "maskable"]);
     const allowed = Object.values(ROUTES).map((r) => ("path" in r ? r.path : null));
     for (const i of m.icons) {
       expect(i.type).toBe("image/png");
@@ -170,6 +172,17 @@ describe("manifest", () => {
 
   it("index.html が manifest を指す", () => {
     expect(readFileSync("src/app/index.html", "utf8")).toContain('<link rel="manifest" href="/manifest.webmanifest" />');
+  });
+
+  it("index.html がタブとホーム画面のしるしを指し、その道は橋渡しの許可の一覧にあり、ファイルがある", () => {
+    const html = readFileSync("src/app/index.html", "utf8");
+    const allowed = Object.values(ROUTES).map((r) => ("path" in r ? r.path : null));
+    const hrefs = [...html.matchAll(/<link rel="(?:icon|apple-touch-icon)" href="([^"]+)"/g)].map((x) => x[1]!);
+    expect(hrefs).toEqual(["/brand/favicon.ico", "/brand/favicon.svg", "/brand/png/apple-touch-icon.png"]);
+    for (const h of [...hrefs, "/favicon.ico"]) {
+      expect(allowed).toContain(h);
+      expect(readFileSync(join("src/app/public", h)).length).toBeGreaterThan(0);
+    }
   });
 });
 

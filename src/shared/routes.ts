@@ -108,6 +108,13 @@ export const ROUTES = {
   serviceWorker: { method: "GET", path: "/sw.js", kind: "static", note: "Service Worker（画面の殻だけを覚える）" },
   icon192: { method: "GET", path: "/brand/png/icon-192.png", kind: "static", note: "PWA のアイコン（192px）" },
   icon512: { method: "GET", path: "/brand/png/icon-512.png", kind: "static", note: "PWA のアイコン（512px）" },
+  iconMaskable192: { method: "GET", path: "/brand/png/icon-maskable-192.png", kind: "static", note: "PWA のアイコン（maskable、192px）" },
+  iconMaskable512: { method: "GET", path: "/brand/png/icon-maskable-512.png", kind: "static", note: "PWA のアイコン（maskable、512px）" },
+  faviconIco: { method: "GET", path: "/brand/favicon.ico", kind: "static", note: "ブラウザのタブのしるし（16・32・48）" },
+  faviconSvg: { method: "GET", path: "/brand/favicon.svg", kind: "static", note: "ブラウザのタブのしるし（暗・明は読み手の設定に従う）" },
+  appleTouchIcon: { method: "GET", path: "/brand/png/apple-touch-icon.png", kind: "static", note: "ホーム画面のしるし（iOS、180px）" },
+  // 何も指していないページでもブラウザが取りに来る道（無いと 404 の記録が残る）
+  faviconRoot: { method: "GET", path: "/favicon.ico", kind: "static", note: "ブラウザが自分で取りに来るタブのしるし" },
   selftestEd25519: {
     method: "GET",
     path: "/selftest/ed25519",

@@ -330,6 +330,13 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     serviceWorker: async ({ res, url }) => serveStatic(res, url.pathname),
     icon192: async ({ res, url }) => serveStatic(res, url.pathname),
     icon512: async ({ res, url }) => serveStatic(res, url.pathname),
+    iconMaskable192: async ({ res, url }) => serveStatic(res, url.pathname),
+    iconMaskable512: async ({ res, url }) => serveStatic(res, url.pathname),
+    // タブとホーム画面のしるし（src/app/public/brand/README.md）
+    faviconIco: async ({ res, url }) => serveStatic(res, url.pathname),
+    faviconSvg: async ({ res, url }) => serveStatic(res, url.pathname),
+    appleTouchIcon: async ({ res, url }) => serveStatic(res, url.pathname),
+    faviconRoot: async ({ res, url }) => serveStatic(res, url.pathname),
     selftestEd25519: ({ res }) => sendJson(res, 200, makeEd25519Sample()),
     // WebSocket の経路に、Upgrade の無い GET が来たとき
     ws: ({ res }) => reject(res, "method_not_allowed"),
