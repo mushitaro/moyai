@@ -82,6 +82,7 @@ MOYAI のアカウントもログインも要りません。
 | 見るもの | 場所 |
 |---|---|
 | 公開台帳（【架空】10 施設の共有ファイル） | このリポジトリの [ledger/](ledger/)。元は mushitaro/moyai-ledger で、11-07 に履歴ごと移した（`bca1ddb`）。移す前の旧台帳 mushitaro/moyai-ledger での PR の検証（Actions の `ledger-validate`）：10 施設の PR [#1](https://github.com/mushitaro/moyai-ledger/pull/1) は ✓、わざと外した PR [#2](https://github.com/mushitaro/moyai-ledger/pull/2)（同区分の施設が 5 未満）・[#3](https://github.com/mushitaro/moyai-ledger/pull/3)（費用の欄）・[#4](https://github.com/mushitaro/moyai-ledger/pull/4)（施設名）は ✗ |
+| 公開台帳への PR（アプリから） | 11-08 19:44 に、僕が SHARE の「署名して公開台帳へ送信」を押し、MOYAI が GitHub に PR を出した：[mushitaro/moyai#8](https://github.com/mushitaro/moyai/pull/8)（【架空】デモ工場の共有ファイル 1 つ。台帳の検証 `ledger-validate` が走る）。GitHub の OAuth App は 11-08 に登録した（`f01c57b`） |
 | 公開台帳のサイト（類似施設の星取表と、統計の行の中央値・四分位・範囲） | moyai には Pages を置いていない。旧台帳 mushitaro/moyai-ledger のサイト（<https://mushitaro.github.io/moyai-ledger/>）は、11-07 に移したときの中身のまま残っている。今の台帳は `ledger/` で、サイトは手元で作る：`node dist/cli.js ledger site ledger <出すフォルダ>` → `index.html` |
 | 読みの地図（295 本の、書き方の形ごとの読めたセル・未解決・計画まで） | [docs/reading-map/index.html](docs/reading-map/index.html)（clone して開く） |
 | 受け入れの試験の表（試験の実行から生成） | [docs/acceptance.md](docs/acceptance.md)（11-05 の表） |
@@ -252,7 +253,7 @@ npm test
 
 ## 未完の一覧（2026-11-08 時点）
 
-- 公開台帳の受け口（配置していない）。GitHub の OAuth App（未登録）。
+- 公開台帳の受け口（GitHub のアカウントが無い人の道。配置していない）。GitHub のアカウントがある人の道は動く（下の Showcase の PR #8）。
 - 工程表の合計の行・線の無い行。
 - 計画の ○ と実績の ● が、別の機器の行に分かれる所（号機の書き方と親の設備の有無が違う資料どうし）。
 - 報告書 PDF の、何行にも折り返す表。1 頁 1 機器の診断のカード。
