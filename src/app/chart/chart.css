@@ -417,6 +417,7 @@
 }
 .moyai-mark [draggable="true"] {
   cursor: grab;
+}
 
 /* 時間の地図 3（mushitaro/moyai#33。絵は TimeMap3.dc.html）：版の変化は、元の版と比べるときだけ静かに現れる（--dur-base。reduced-motion では 0） */
 .moyai-mark.moyai-mark-vchg [data-mark]::before,
