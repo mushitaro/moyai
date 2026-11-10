@@ -3,12 +3,16 @@
 // 会話で作った読み方（3 段目）は当てない。標準（1 段目）と Skillパック（2 段目）だけで、どこまで読めるかを見る。
 // MOYAI_BENCH_OUT=<フォルダ> のときだけ走る（result.json と README.md を書く）。MOYAI_BENCH_PACK（既定 waste-incineration）、
 // MOYAI_BENCH_ONLY=<施設,施設>（絞る。絞った結果は表に「絞った」と書く）。走らせるのは scripts/bench/pack-bench.mjs。
+// MOYAI_BENCH_RULES=<ルールの案の JSON>（moyai.reading/0。3 段目の rules.json か、Skillパックの reading.json と同じ形）なら、その案を
+// 下書きの読み方として当てて測る（Skillパックに入れる前の試し。案の名前・数・ハッシュを結果に書く。scripts/bench/pack-candidate.mjs が使う）。
 // 質問には、正解だけを見る台本が人の代わりに答える。AI も API も使わない。
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
+import { ReadingSkill, type LoadedReading } from "../../src/import/reading";
 import { runSet, type SetResult } from "./harness";
 import { loadV2Facility } from "./v2";
 
@@ -59,7 +63,18 @@ describe("Skillパックの物差し", () => {
   const out = process.env.MOYAI_BENCH_OUT;
   const pack = process.env.MOYAI_BENCH_PACK ?? "waste-incineration";
   const only = (process.env.MOYAI_BENCH_ONLY ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+  const rulesPath = process.env.MOYAI_BENCH_RULES;
   it.runIf(!!out)("工場 v2 の施設をすべて測り、表を書く", async () => {
+    // ルールの案：範囲（scope）は書いていなければ会社にする（Skillパックの読み方は範囲を持たない。効き方は同じで、下書きとして先に当たる）
+    let candidate: { name: string; rules: number; sha256: string } | null = null;
+    const readings: LoadedReading[] = [];
+    if (rulesPath) {
+      const bytes = readFileSync(rulesPath);
+      const raw = JSON.parse(bytes.toString("utf8")) as Record<string, unknown>;
+      const skill = ReadingSkill.parse({ scope: "company", ...raw });
+      candidate = { name: skill.name, rules: skill.rules.length, sha256: createHash("sha256").update(bytes).digest("hex") };
+      readings.push({ skill, version: `candidate-${candidate.sha256.slice(0, 8)}`, path: null, approved: false, draft: true });
+    }
     const root = join("samples", pack);
     const all = readdirSync(root, { withFileTypes: true })
       .filter((e) => e.isDirectory() && existsSync(join(root, e.name, "answer", "world.json")))
@@ -73,7 +88,7 @@ describe("Skillパックの物差し", () => {
       const base = { facility: n, name: n, files: 0, seconds: 0, asked: 0, answered: 0, open: 0, openKinds: {}, defaulted: {}, unresolvedBy: {}, openSamples: [], unresolvedBefore: 0, unresolvedAfter: 0, planMade: false, blockers: [], plan: null, accuracy: null, recovery: { correct: 0, total: 0 }, manDays: null, days: null, unplaced: 0, dropped: {}, error: null } satisfies BenchRow;
       try {
         const v = loadV2Facility(join(root, n), n);
-        const { result: r, analysis } = await runSet(v.set, { facilityKey: v.set.world.facility.id, acceptDefaults: true });
+        const { result: r, analysis } = await runSet(v.set, { facilityKey: v.set.world.facility.id, acceptDefaults: true, ...(readings.length ? { readings } : {}) });
         const openKinds: Record<string, number> = {};
         const openSamples: BenchRow["openSamples"] = [];
         for (const q of r.openAtEnd) {
@@ -132,14 +147,15 @@ describe("Skillパックの物差し", () => {
       errors: rows.filter((x) => x.error).length,
     };
     mkdirSync(out!, { recursive: true });
-    writeFileSync(join(out!, "result.json"), `${JSON.stringify({ schema: "moyai.pack-bench.result/0", pack, only: only.length ? only : null, reader, measuredAt, total, facilities: rows }, null, 1)}\n`, "utf8");
+    writeFileSync(join(out!, "result.json"), `${JSON.stringify({ schema: "moyai.pack-bench.result/0", pack, only: only.length ? only : null, candidate, reader, measuredAt, total, facilities: rows }, null, 1)}\n`, "utf8");
     const L = [
       `# Skillパックの物差し：${pack}（開発用の資料。見ていない様式の結果ではない）`,
       "",
       "`node scripts/bench/pack-bench.mjs` が作る（手で書かない）。",
       "",
       `測った読み手：${reader.commit.slice(0, 7)}（src ${reader.src.slice(0, 7)}・packs ${reader.packs.slice(0, 7)}${reader.dirty ? "、commit していない変更あり" : ""}）。測った日時：${measuredAt}（UTC）。${only.length ? `施設を絞った（${only.join("・")}）。` : ""}`,
-      "会話で作った読み方（3 段目）は当てていない。質問には、正解だけを見る台本が人の代わりに答えた。台本が正解から答えられない問いは、既定の答えがあればそれを受けた（人が推された答えを押すのと同じ。数は下の注）。AI も API も使っていない。",
+      candidate ? `ルールの案を当てた：「${candidate.name}」（${candidate.rules} 件・SHA-256 ${candidate.sha256.slice(0, 16)}…）。Skillパックに入れる前の試しで、この値は案の値。` : "会話で作った読み方（3 段目）は当てていない。",
+      "質問には、正解だけを見る台本が人の代わりに答えた。台本が正解から答えられない問いは、既定の答えがあればそれを受けた（人が推された答えを押すのと同じ。数は下の注）。AI も API も使っていない。",
       "",
       `合計：計画を作れた ${total.planMade}/${total.facilities} 施設・⑤ 質問 ${total.asked}（開いたまま ${total.open}）・② 未解決 ${total.unresolvedAfter}・③ ${pct(total.accuracy)}・⑥ ${pct(total.recovery)}・工数 ${pct(total.manDays)}・日数 ${pct(total.days)}${total.errors ? `・測れなかった ${total.errors}` : ""}`,
       "",
