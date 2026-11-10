@@ -49,3 +49,26 @@ jobs:
         run: node scripts/run-tests.mjs
       - name: 公開の前の検査
         run: node scripts/check-publish.mjs
+
+  pack-bench:
+    name: pack-bench（Skillパックの物差し）
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.19.0
+      - name: 依存を入れる（npm 11、スクリプトは走らせない）
+        run: npx -y npm@11.21.1 ci --ignore-scripts
+      - name: 物差しを測る（工場 v2 の施設。AI も API も使わない）
+        run: node scripts/bench/pack-bench.mjs waste-incineration --out "$RUNNER_TEMP/bench"
+      - name: 記録した表（eval/bench/）と比べる（数が違えば落ちる）
+        run: |
+          set +e
+          node scripts/bench/compare.mjs eval/bench/waste-incineration/result.json "$RUNNER_TEMP/bench/result.json" --strict --md "$RUNNER_TEMP/bench/compare.md"
+          code=$?
+          cat "$RUNNER_TEMP/bench/compare.md" >> "$GITHUB_STEP_SUMMARY"
+          exit $code
