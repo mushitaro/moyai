@@ -116,7 +116,15 @@
 | （新）同じ実績につながる資料 | 資料 n つが同じ整備を指す | 2 つ以上のときだけ |
 | record:自施設の実績 などの出どころの字 | 周期の根拠　自施設の実績／Skillパックの基準／公開台帳／計画ルール／Claude との会話 | 資料ではない出どころ |
 
-### EXPORT
+### 段とシート（2026-11-10 夜、mushitaro/moyai#30）
+| 前 | 後 | |
+|---|---|---|
+| 段の列 MOYAI › HOSHITORI › EXPORT › SHARE | MOYAI › HOSHITORI | 出力と共有は帳票の中のシート。将来の帳票（KOUTEI・NIPPOU・HOUKOKU）の段は、動くようになってから並べる |
+| 段 EXPORT | HOSHITORI のシート「出力」 | 確定した版があるときだけ並ぶ。道は #/merge/export（前の #/export も同じ所に着く） |
+| 段 SHARE | HOSHITORI のシート「共有」 | 同上。道は #/merge/share（前の #/share・#/checkpoint も同じ所に着く） |
+| （AI 向けの文）EXPORT・SHARE の画面 | 出力のシート・共有のシート | screen_set の go は hoshitori.export・hoshitori.share（前の export・share も残す） |
+
+### EXPORT（いまは HOSHITORI の出力のシート）
 | 前 | 後 | |
 |---|---|---|
 | 書き出す・書き出し済み | 出力・出力済み | 運営者「落とすってなに？」 |
@@ -130,7 +138,7 @@
 | まだ承認されていません　承認する人 | 未承認　承認者 | |
 | ! 佐藤 の鍵を、まだ確かめていません | ! 佐藤 の鍵：未照合 | |
 
-### SHARE
+### SHARE（いまは HOSHITORI の共有のシート）
 | 前 | 後 | |
 |---|---|---|
 | 出す先 | 共有先 | |

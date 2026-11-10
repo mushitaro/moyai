@@ -34,7 +34,7 @@ import { Switch } from "../components/Switch";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { setCrosswalkBase } from "../state/crosswalk";
 import type { Decision } from "../../import/questions";
-import { STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
+import { CONFIRMED_SHEETS, STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { FacilityDialog } from "../components/FacilityDialog";
 import { setFacilityDialog } from "../state/facility-dialog";
@@ -68,6 +68,9 @@ function writeSidePref(p: { folded: boolean | null }): void {
 // 星取表と検査は AG Grid や検査の関数を含むので、開いたときに読む
 const StarTable = lazy(() => import("./StarTable").then((m) => ({ default: m.StarTable })));
 const Review = lazy(() => import("./Review").then((m) => ({ default: m.Review })));
+// 出力と共有のシート（確定した版を Excel で落とす・共有フォルダと公開台帳に送る。開いたときに読む）
+const Export = lazy(() => import("./Export").then((m) => ({ default: m.Export })));
+const Checkpoint = lazy(() => import("./Checkpoint").then((m) => ({ default: m.Checkpoint })));
 
 /**
  * 読込の途中だけ、選びの右に text-3 の「読込 120 / 200」（済んだら消す。docs/screens.md 3.2「資料の選び」）。
@@ -359,6 +362,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 版の下書きが無いあいだは白紙（資料のシートだけ）。開発と試験の見本（?plan=）は、星取表のシートが読んで作業中の計画に置く
   const devSample = new URLSearchParams(location.search).has("plan");
   const current: MergeSheet = !plan ? (devSample && (sheet ?? "chart") === "chart" ? "chart" : "files") : (sheet ?? "chart");
+  // 出力と共有のシートは、確定した版を見る（見出しの版はその版。資料を落とす場所ではない）
+  const outSheet = current === "export" || current === "share";
   // 見出しの版：承認を頼まれた人には、頼まれた版（いちばん新しい版）を、ほかは次につくる版を出す
   const latestNo = st?.latest && plan && st.latest.plan.planId === plan.planId ? st.latest.version : null;
   // 2 人が同時に書こうとしたとき（docs/screens.md 4 の 6）：この編集がもとにした版より新しい版が保管先にあれば、知らせて署名を止める
@@ -442,7 +447,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 突き合せは、このタブに資料が 2 つ以上あるとき
   const fileNames = view ? view.files : [];
   // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）。白紙のシートのタブは「資料」の札と資料の選び・シートの選びと「＋ 資料を足す」だけ
-  const tabs: MergeSheet[] = plan ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions"] : [];
+  // 出力と共有は、確定した版があるときだけ（確定のすぐ右。mushitaro/moyai#30）
+  const confirmedVersion = st?.latest && plan && st.latest.plan.planId === plan.planId ? st.latest.version : null;
+  const tabs: MergeSheet[] = plan
+    ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions", ...(confirmedVersion !== null ? CONFIRMED_SHEETS : [])]
+    : [];
   // 資料の一覧の行（読めた資料・読込中・読込不可。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）
   const skipped = ws.skippedFiles;
   const rows = useMemo(
@@ -584,11 +593,14 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       data-sheet={current}
       data-over={over ? "true" : "false"}
       onDragOver={(e) => {
+        if (outSheet) return;
         e.preventDefault();
         setOver(true);
       }}
       onDragLeave={() => setOver(false)}
-      onDrop={onDrop}
+      onDrop={(e) => {
+        if (!outSheet) onDrop(e);
+      }}
     >
       {over && (
         <div className="moyai-merge-over" aria-hidden="true">
@@ -600,12 +612,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           {name}
         </h1>
         {/* 第 1 版をつくる前は施設の名前だけ（まだ版が無い。つくる版の番号は下の帯の「第 1 版をつくる」にある。docs/screens.md 3.3 の末尾「写しの照らし」） */}
-        {plan && (
+        {/* 出力・共有のシートは確定した版の番号（確定した版が無ければ版を出さない） */}
+        {plan && !(outSheet && confirmedVersion === null) && (
           <span className="moyai-merge-ver" data-testid="merge-version">
-            {T.version(nextVersion)}
+            {T.version(outSheet && confirmedVersion !== null ? confirmedVersion : nextVersion)}
           </span>
         )}
-        {stateLabel && (
+        {stateLabel && !outSheet && (
           <span className="moyai-merge-state" data-view-only={viewOnly ? "true" : "false"} data-testid="merge-state">
             {stateLabel}
           </span>
@@ -692,6 +705,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         </div>
       </div>
 
+      {/* 出力と共有のシート：中身と下の帯はそのシートが持つ（11-10 の引き算のまま。横の板は出さない。mushitaro/moyai#30） */}
+      {outSheet ? (
+        <Suspense fallback={null}>{current === "export" ? <Export embedded /> : <Checkpoint embedded />}</Suspense>
+      ) : (
+      <>
       <MergePeersContext.Provider value={peersOn}>
       <MergeCompareContext.Provider value={compare}>
       <MergeSideContext.Provider value={sideCtx}>
@@ -937,6 +955,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         </Group>
         )}
       </Group>
+      </>
+      )}
 
       {!plan && ws.fileCount > 0 && <IntakeFacilityDialog ws={ws} />}
       {plan && (
