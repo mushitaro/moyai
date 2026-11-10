@@ -160,6 +160,15 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("tab-share").click();
   });
 
+  await test.step("EXPORT：標準の Excel を出力すると、ファイル名の 1 行", async () => {
+    await page.evaluate(() => (location.hash = "#/export"));
+    await expect(page.getByTestId("export-excel")).toBeEnabled();
+    await expect(page.getByTestId("export-blocked")).toHaveCount(0);
+    await Promise.all([page.waitForEvent("download"), page.getByTestId("export-excel").click()]);
+    await expect(page.getByTestId("export-saved")).toHaveText(/^出力済み　.+_第1版_星取表\.xlsx$/);
+    await page.evaluate(() => (location.hash = "#/share"));
+  });
+
   await test.step("検問所：見え方を選ぶと、相手から見たあなた・3 つの欄・数がすべて 0", async () => {
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
     await expect(page.getByTestId("q-furnace")).toBeVisible();
@@ -202,8 +211,13 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     // 受け取った束（SHARE の下の節）：置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
     await expect(page.getByTestId("received")).toContainText("受信した共有ファイル");
     await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toHaveCount(0);
+    // 共有先の右に、選んだ共有フォルダの場所（状態の 1 行）
+    await expect(page.getByTestId("ring-folder-path")).toContainText(ringRoot);
     await page.getByTestId("send").click();
     await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
+    // 結果の 1 行に置いた先の共有フォルダ。押せなくなった主ボタンの左は「理由：送信済み」
+    await expect(page.getByTestId("sent")).toContainText(ringRoot);
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：送信済み");
     await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
     await expect(page.locator('[data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="verify-line"][data-kind="bundle"][data-status="ok"]')).toHaveCount(1);

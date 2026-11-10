@@ -70,6 +70,10 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
   });
 
   await test.step("SHARE：出す先を公開の台帳にする。見え方を選ぶと、誰からも見えるあなた。つなぐまでは出せない", async () => {
+    // 共有フォルダを作っていないので、共有先の右に「共有フォルダがありません　| 設定へ」。同じことを上の知らせで重ねない
+    await expect(page.getByTestId("ring-none")).toContainText("共有フォルダがありません");
+    await expect(page.getByTestId("ring-none-to-settings")).toHaveAttribute("href", "#/settings");
+    await expect(page.getByTestId("checkpoint-refused")).toHaveCount(0);
     await page.getByTestId("share-dest").getByText("公開台帳").click();
     await expect(page.getByTestId("github-login")).toHaveText("GitHub　未接続");
     await page.getByTestId("q-national").selectOption("yes");

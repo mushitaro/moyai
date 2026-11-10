@@ -24,7 +24,8 @@ import { getReferenceDate } from "../state/review";
 import { readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
-import { sheetHash } from "../stages";
+import { STAGE_HASH, sheetHash } from "../stages";
+import { exportBlockOf, withReasonHead, type ExportBlock } from "../state/export-reason";
 import { TEXT } from "../text";
 import { dueBaseDate } from "../../plan/due-view";
 
@@ -93,6 +94,21 @@ function Sample({ plan }: { plan: Plan }) {
   );
 }
 
+/** 押せない理由の 1 行（SHARE の send-reason と同じ形）。確定版なし・計画なしは、右に HOSHITORI への道 */
+function Reason({ text, testid }: { text: string; testid: string }) {
+  const to = text === T.notConfirmed ? STAGE_HASH.merge : text === T.noPlanReason ? sheetHash("files") : null;
+  return (
+    <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid={testid}>
+      {text}
+      {to && (
+        <a className="moyai-inline-act" href={to} data-testid="export-blocked-to">
+          {T.toMerge}
+        </a>
+      )}
+    </Text>
+  );
+}
+
 export function Export() {
   const { client, state } = useConnection();
   const working = useWorkingPlan();
@@ -114,7 +130,34 @@ export function Export() {
   const broken = !!info && info.problem !== null;
   const returned = !!info && info.signatures.some((x) => x.role === "return");
   const approved = !!info && info.signatures.some((x) => x.role === "approve");
-  const blocked = state.kind !== "open" ? T.notConnected : !working ? T.noPlan : status && !latest ? T.notConfirmed : broken ? T.broken : null;
+  // 標準と差分を止めている理由（押せないボタンには、いつも「理由：」の 1 行。版の読込の誤りも出す）
+  const block = exportBlockOf({
+    connected: state.kind === "open",
+    hasPlan: !!working,
+    load: load.kind === "ready" ? { kind: "ready" } : load,
+    hasLatest: !!latest,
+    broken,
+  });
+  const blockText = (b: ExportBlock | null): string | null => {
+    if (!b) return null;
+    switch (b.kind) {
+      case "notConnected":
+        return T.notConnected;
+      case "noPlan":
+        return T.noPlanReason;
+      case "loading":
+        return T.loading;
+      case "loadError":
+        return withReasonHead(b.message);
+      case "notConfirmed":
+        return T.notConfirmed;
+      case "broken":
+        return withReasonHead(T.broken);
+    }
+  };
+  const blocked = blockText(block);
+  // 標準・差分・様式の Excel をブラウザに渡したあとの 1 行（ファイル名）
+  const [saved, setSaved] = useState<string | null>(null);
 
   const loadTemplates = useCallback(
     async (keep?: { name: string; version: string }) => {
@@ -192,22 +235,28 @@ export function Export() {
     if (!latest || blocked) return;
     setBusy(kind);
     setError(null);
+    setSaved(null);
     if (kind === "export" && selected) {
       const r = readHuman<{ ok: boolean; base64: string }>(await client.callHuman("export_file_read", ROUTES.exportFileRead.path, { planId, version: latest.version, name: selected.name, templateVersion: selected.version }));
       setBusy(null);
       if (!r.ok) return setError(r.message);
       // 承認待ちのあいだに落としたファイルは、名前の末尾で分かるようにする（セルには何も足さない。Wire）
-      return download(r.body.base64, T.template.fileName(selected.name, latest.plan.displayName, latest.version, pendingWho ? T.template.pendingSuffix : ""));
+      const name = T.template.fileName(selected.name, latest.plan.displayName, latest.version, pendingWho ? T.template.pendingSuffix : "");
+      download(r.body.base64, name);
+      return setSaved(name);
     }
     const r = readHuman<{ ok: boolean; reason?: string; base64: string }>(await client.callHuman("plan_file_read", ROUTES.planFileRead.path, { planId, version: latest.version, kind }));
     setBusy(null);
     if (!r.ok) return setError(r.message);
-    download(r.body.base64, kind === "export" ? T.fileName(latest.plan.displayName, latest.version) : T.reportName(latest.plan.displayName, latest.version));
+    const name = kind === "export" ? T.fileName(latest.plan.displayName, latest.version) : T.reportName(latest.plan.displayName, latest.version);
+    download(r.body.base64, name);
+    setSaved(name);
   };
   const sign = async () => {
     if (!latest || !selected) return;
     setBusy("sign");
     setError(null);
+    setSaved(null);
     const r = readHuman<{ ok: boolean }>(await client.callHuman("export_sign", ROUTES.exportSign.path, { planId, version: latest.version, name: selected.name, templateVersion: selected.version }));
     setBusy(null);
     setSigning(false);
@@ -231,7 +280,7 @@ export function Export() {
   const catalog = useMemo(() => (target ? (catalogFor(target.packId) ?? emptyCatalog()) : emptyCatalog()), [target]);
   // 「この写し方で出力」：案（下書き）か未保存の様式を選んでいるとき、確定した版の無い保存した写し方のとき
   const layoutButton = pendingSel !== null || (!!layout && (!!draft || !latest));
-  const layoutBlocked = state.kind !== "open" ? T.notConnected : !target ? T.noPlan : !layout ? L.noLayoutReason : latest && broken ? T.broken : null;
+  const layoutBlocked = state.kind !== "open" ? T.notConnected : !target ? T.noPlanReason : !layout ? L.noLayoutReason : latest && broken ? withReasonHead(T.broken) : null;
   const outputLayout = async () => {
     if (!selName || !layout || !layoutBytes || !target || layoutBlocked) return;
     const probe = (pendingT ?? savedT)?.probe;
@@ -239,6 +288,7 @@ export function Export() {
     setBusy("layout");
     setError(null);
     setDone(null);
+    setSaved(null);
     try {
       const columns = layoutColumns(probe, layout);
       const out = await writeTemplate(new (patchedExcelJS().Workbook)(), layoutBytes, columns, { plan: target, catalog, asOf: targetAsOf });
@@ -272,7 +322,10 @@ export function Export() {
     ) : null;
 
   const toSign = !!selected && !selected.exported;
-  const signBlocked = toSign && returned ? T.template.returned : null;
+  const signBlocked = toSign && returned ? withReasonHead(T.template.returned) : null;
+  // 下の帯の押せない理由：差分（副）と主ボタン（この写し方で出力・署名して出力・Excel を出力）
+  const reportReason = blocked;
+  const mainReason = layoutButton ? (layoutBlocked ?? (!layoutBytes ? T.loading : null)) : (blocked ?? (toSign ? signBlocked : null));
   // 承認待ち：承認を頼まれた人（受け取った人か宛先）。承認されたら出さない
   const req = status?.request ?? null;
   const pendingWho = latest && !approved && req && req.kind === "approve" && !req.done ? (req.received?.by ?? req.to) : null;
@@ -333,6 +386,11 @@ export function Export() {
               {done}
             </Text>
           )}
+          {saved && (
+            <Text size="sm" className="moyai-num" data-testid="export-saved">
+              {T.saved(saved)}
+            </Text>
+          )}
           {!working && (
             <Text size="sm">
               {T.noPlan} <a href={sheetHash("files")}>{T.toMerge}</a>
@@ -345,16 +403,6 @@ export function Export() {
           さらに左に、押せない理由・承認待ちの 1 行・鍵の警告（2 行のときは承認待ちが上） */}
       <Group justify="flex-end" px={32} py="xs" wrap="nowrap" gap="md" className="moyai-merge-bar">
         <Stack gap={2} align="flex-end">
-          {layoutButton && layoutBlocked && (
-            <Text size="xs" c="dimmed" data-testid="export-blocked">
-              {layoutBlocked}
-            </Text>
-          )}
-          {!layoutButton && (blocked || signBlocked) && (
-            <Text size="xs" c="dimmed" data-testid="export-blocked">
-              {blocked ?? signBlocked}
-            </Text>
-          )}
           {!blocked && selected && !toSign && pendingWho && (
             <Text size="xs" c="var(--text)" data-testid="export-pending">
               {T.template.pending(pendingWho)}
@@ -362,7 +410,9 @@ export function Export() {
           )}
           {!blocked && exportSigners.length > 0 && <KeyWarnLine signers={exportSigners} onConfirmed={() => reload()} />}
         </Stack>
-        <Group gap="sm" wrap="nowrap">
+        <Group gap="sm" wrap="nowrap" align="center">
+          {/* 押せない理由は、そのボタンのすぐ左（SHARE の send-reason と同じ形）。差分と主ボタンが同じ理由なら、差分の左に 1 つだけ */}
+          {reportReason && <Reason text={reportReason} testid={reportReason === mainReason ? "export-blocked" : "export-report-blocked"} />}
           <Button variant="default" onClick={() => void get("report")} disabled={!!blocked || !latest} loading={busy === "report"} data-testid="export-report">
             {T.report}
           </Button>
@@ -371,6 +421,7 @@ export function Export() {
               {L.discard}
             </Button>
           )}
+          {mainReason && mainReason !== reportReason && <Reason text={mainReason} testid="export-blocked" />}
           {layoutButton ? (
             <Button onClick={() => void outputLayout()} disabled={!!layoutBlocked || !layoutBytes} loading={busy === "layout"} data-testid="layout-output">
               {L.output}
