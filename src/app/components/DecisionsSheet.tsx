@@ -21,6 +21,7 @@ import { requestChartJump, type ChartJump } from "../state/chart-jump";
 import { sheetHash } from "../stages";
 import { commonRowId, periodKeyOf } from "../../plan/chart";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
+import { useConnection } from "../state/bridge";
 import { pendingDecisions, type Decision } from "../../plan/diff";
 import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import { STAR_KIND_TEXT, basisWithoutReference, isStarProposal, proposalIdOf, starValueOfKey, type StarKind } from "../../plan/star";
@@ -88,7 +89,9 @@ export function acceptDecisionsAs(kind: Kind, ds: readonly Decision[], typed: st
  * openRules は案のままの規則の数（下の帯の数に足す）
  */
 export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; openRemovals: number; ready: boolean; problem: string | null } {
-  const [load] = usePlanStatus(client, plan?.planId ?? "", !!plan);
+  // つながっているあいだだけ読む（つながる前に送って失敗したまま止まらないように。つなぎ直すと読み直す。Merge の版の読みと同じ）
+  const { state: conn } = useConnection();
+  const [load] = usePlanStatus(client, plan?.planId ?? "", !!plan && conn.kind === "open");
   const status = load.kind === "ready" ? load.status : null;
   const working = useWorkingPlan();
   const proposals = working?.proposals ?? NO_PROPOSALS;
