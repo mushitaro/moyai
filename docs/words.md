@@ -125,6 +125,11 @@
 | 段 SHARE | HOSHITORI のシート「共有」 | 同上。道は #/merge/share（前の #/share・#/checkpoint も同じ所に着く） |
 | （AI 向けの文）EXPORT・SHARE の画面 | 出力のシート・共有のシート | screen_set の go は hoshitori.export・hoshitori.share（前の export・share も残す） |
 
+### 時間の地図 3（2026-11-10 夜、mushitaro/moyai#33）
+| 前 | 後 | |
+|---|---|---|
+| 類似施設　間隔の中央値 n 年（行の名前） | 類似施設　台帳／類似施設　共有フォルダ | 統計は行を選んだときだけ横の板に |
+
 ### EXPORT（いまは HOSHITORI の出力のシート）
 | 前 | 後 | |
 |---|---|---|

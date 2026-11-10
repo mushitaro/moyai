@@ -359,7 +359,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               wholeSystem: P.wholeSystem,
               peer: (k, l) => P.peerRow(P.placeShort[k] ?? k, l),
               stat: (k) => P.statRow(P.placeShort[k] ?? k),
-              summary: (k, stats) => (stats.interval.shown === "median" ? P.summaryRow(bandShort(stats.interval.median)) : P.summaryFew),
+              // 統計（中央値・四分位・範囲）は、行を選んだときだけ横の板に出す（時間の地図 3、mushitaro/moyai#33）。行の名前は場と状態だけ
+              summary: (k, stats) => (stats.interval.shown === "median" ? P.summaryRow(P.placeShort[k] ?? k) : P.summaryFew),
             },
           }
         : undefined,
@@ -625,7 +626,9 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     const pickedNow = row && selected?.periodKey && row.cells[selected.periodKey]?.mark ? { rowId: row.id, periodKey: selected.periodKey } : null;
     const keys = period === "year" ? model.periods.map((p) => p.key) : [];
     const marks = row ? keys.filter((k) => row.cells[k]?.mark).length : 0;
-    grid.current?.pick(pickedNow, row && marks >= 2 ? { rowId: row.id, keys } : null);
+    // 似た施設の行（まとめた行・統計の行）には周期の線を引かない（どれかの施設が作業した年度のまとめで、周期ではない）
+    const own = !!row && row.kind !== "peer" && row.kind !== "stat";
+    grid.current?.pick(pickedNow, own && marks >= 2 ? { rowId: row!.id, keys } : null);
   }, [selected, model, period]);
 
 
