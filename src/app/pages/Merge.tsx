@@ -612,7 +612,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           {name}
         </h1>
         {/* 第 1 版をつくる前は施設の名前だけ（まだ版が無い。つくる版の番号は下の帯の「第 1 版をつくる」にある。docs/screens.md 3.3 の末尾「写しの照らし」） */}
-        {plan && (
+        {/* 出力・共有のシートは確定した版の番号（確定した版が無ければ版を出さない） */}
+        {plan && !(outSheet && confirmedVersion === null) && (
           <span className="moyai-merge-ver" data-testid="merge-version">
             {T.version(outSheet && confirmedVersion !== null ? confirmedVersion : nextVersion)}
           </span>

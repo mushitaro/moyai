@@ -348,7 +348,7 @@ export const DEMO_MIXED_NOTE =
 
 /** source: template の結果に添える次の手（「この様式で Excel を出して」の順） */
 export const TEMPLATE_ADD_NOTE =
-  "様式を作業画面の 出力のシート に入れた（まだ保存していない）。template の形（見出しの字・結合・年度の式）と planLevels（計画の階層の名前。asset-first の順で、series-first では機器と号炉・系統が入れ替わる）を読み、写し方の案を screen_set の templateLayout で置く。置いた案は下書きで、出力のシート に案のとおりに書いた見本が出る。利用者に見本を見てもらい、出力と保存は利用者が 出力のシート の主ボタン「署名して出力」を押す（確定した版が要る）。";
+  "様式を作業画面の出力のシートに入れた（まだ保存していない）。template の形（見出しの字・結合・年度の式）と planLevels（計画の階層の名前。asset-first の順で、series-first では機器と号炉・系統が入れ替わる）を読み、写し方の案を screen_set の templateLayout で置く。置いた案は下書きで、出力のシートに案のとおりに書いた見本が出る。利用者に見本を見てもらい、出力と保存は利用者が出力のシートの主ボタン「署名して出力」を押す（確定した版が要る）。";
 
 /**
  * intake_survey（show: true）で、作業画面のタブがつながっていないとき（橋渡しが開いた新しいタブが時間内に引き継がなかった）に、
@@ -438,7 +438,7 @@ export const SCREEN_REFUSAL_TEXT = {
   row_not_sibling: "node と before が同じ親の下に無い。並びを変えられるのは同じ親の下の行だけ",
   year_before_stars: "その年度より後に計画の星取がある。列は星取を隠さないので、いちばん遅い星取の年度より前にはしない",
   go_replaced: "保存先の欄を見せるため、設定の画面を開いた",
-  template_unknown: "その名前の様式が作業画面の 出力のシート に無い。intake_add_files（source: template）で入れ、返った template.name で置く",
+  template_unknown: "その名前の様式が作業画面の出力のシートに無い。intake_add_files（source: template）で入れ、返った template.name で置く",
   layout_invalid: "写し方の案が様式に合わないので置いていない。様式の形（intake_add_files の template）を読み直して置き直す",
 } as const;
 export type ScreenRefusal = keyof typeof SCREEN_REFUSAL_TEXT;
@@ -461,7 +461,7 @@ const screenSetInput = z
       .optional()
       .describe("同じ親の下の行の並び。node の行を before の行の前に置く（どちらも chart_rows の行の id）"),
     lastFiscalYear: z.number().int().min(1900).max(2200).optional().describe("星取表の年度の列の最後の年度（例 2040）"),
-    templateLayout: templateLayoutInputSchema.optional().describe("様式の写し方の案（intake_add_files の source: template で入れた様式に置く。下書きで、利用者が 出力のシート で見本を見て出力するまで使わない）"),
+    templateLayout: templateLayoutInputSchema.optional().describe("様式の写し方の案（intake_add_files の source: template で入れた様式に置く。下書きで、利用者が出力のシートで見本を見て出力するまで使わない）"),
   })
   .strict()
   .superRefine((a, ctx) => {
@@ -557,8 +557,8 @@ export function readingRuleExamplesText(): string {
 // ─── 共有ファイルの形と数（share_preview。仕事 share-preview-v1）──────────────
 // 共有のシートが共有ファイルに書く中身を、橋渡しが画面と同じ関数で作り、形と数だけを返す（src/share/share-preview.ts）。
 // 行の値（機器・作業の名前、年度、階級、費用）と共有ファイルのバイト列は返さない（安全の決まり 3）。署名して送るのは人だけ（決まり 1）。
-// 作業画面は 共有のシート に切り替える（screen_set の go: hoshitori.share と同じ）。見え方の答えは、施設の答えと規模からの見込みに、Claude が会話で聞いて置いた答え（answers）を重ねたもの。
-// 置いた答えと共有先（dest）は 共有のシートの今の選びになるだけで、署名・送る・設定はしない（2026-11-10、共有のシート の引き算）。
+// 作業画面は共有のシートに切り替える（screen_set の go: hoshitori.share と同じ）。見え方の答えは、施設の答えと規模からの見込みに、Claude が会話で聞いて置いた答え（answers）を重ねたもの。
+// 置いた答えと共有先（dest）は共有のシートの今の選びになるだけで、署名・送る・設定はしない（2026-11-10、共有のシートの引き算）。
 
 /** 数えられなかったときの理由と、AI に返す文（内部の名前を出さない） */
 export const SHARE_NEEDS_TEXT = {
@@ -570,7 +570,7 @@ export const SHARE_NEEDS_TEXT = {
   pack_not_ready: "この Skillパックには、共有に使う公開語彙・見え方の軸・全国の表のどれかがありません（未実装）",
   history_broken: "保存先の版の署名か鎖が合いません。利用者に MOYAI（トップ）の版の履歴で確かめてもらってから",
   history_vanished: "この PC が前に見た版か署名が、保存先から無くなっています。利用者に保存先を確かめてもらってから",
-  other: "共有のシートが共有ファイルを作れませんでした。利用者に 共有のシートの知らせを見てもらってから",
+  other: "共有のシートが共有ファイルを作れませんでした。利用者に共有のシートの知らせを見てもらってから",
 } as const;
 export type ShareNeeds = keyof typeof SHARE_NEEDS_TEXT;
 const SHARE_NEEDS = Object.keys(SHARE_NEEDS_TEXT) as [ShareNeeds, ...ShareNeeds[]];
@@ -589,7 +589,7 @@ export const SHARE_FILE_COLUMNS = {
 /** 結果に添える文（Claude Desktop では instructions が効かないので、結果にも書く） */
 export const SHARE_PREVIEW_NOTE =
   "数だけで、値（名前・年度・階級・費用）は返していない。当施設の中（HOSHITORI の星取表・出力）では全部見せ、絞るのは共有ファイルだけ。作業の名前も写らない（塊は共通の設備項目 × 作業分類）。" +
-  "署名して送るのは利用者が 共有のシート の主ボタンでする（このツールは送らない）。見え方の答えが足りなければ（missingAxes）、推測で埋めず利用者に聞き、answers で置く。利用者は 共有のシート の見え方の 1 行を確かめて主ボタンを押す。";
+  "署名して送るのは利用者が共有のシートの主ボタンでする（このツールは送らない）。見え方の答えが足りなければ（missingAxes）、推測で埋めず利用者に聞き、answers で置く。利用者は共有のシートの見え方の 1 行を確かめて主ボタンを押す。";
 
 /** 見え方の答えの形（peer_reference の answers と同じ）：軸のコードと、全国の表に載るか */
 export const shareAnswersSchema = z.object({ facility: z.record(z.string().max(64), z.string().max(64).nullable()), inNationalTable: z.boolean().nullable() });
@@ -607,7 +607,7 @@ export const sharePreviewFromTabSchema = z
     ai: shareAnswersSchema.strict().nullable(),
     /** 作業中の計画の、全国の表に載るかの答え（画面の既定の選びと同じく、先に使う） */
     national: z.boolean().nullable(),
-    /** 作業画面を 共有のシート に切り替えたか */
+    /** 作業画面を共有のシートに切り替えたか */
     screen: z.boolean(),
   })
   .strict();
@@ -619,7 +619,7 @@ const shareChecks = z.object({ shape: z.number().int(), properNoun: z.number().i
 export const sharePreviewOutputSchema = z.object({
   /** 数えられなかったときの理由と文（数えたときは null。ほかの欄は空） */
   needs: z.object({ reason: z.enum(SHARE_NEEDS), text: z.string() }).nullable(),
-  /** 作業画面を 共有のシート に切り替えたか */
+  /** 作業画面を共有のシートに切り替えたか */
   screen: z.boolean(),
   /** 共有先の種類（ring：共有フォルダ、ledger：公開台帳） */
   destination: z.object({ kind: z.enum(["ring", "ledger"]), name: z.string() }).nullable(),
@@ -826,8 +826,8 @@ export const TOOLS = {
       "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
       "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
       "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey（part: files）の files と filesTotal で入った資料を確かめる。" +
-      "source: template は、利用者が「この様式で Excel を出して」と言った様式（path に .xlsx の絶対の道。8 MB まで）を、作業画面の 出力のシート の様式の欄に入れる（保存はしない）。結果の template は様式の形だけ：シートの名前、字のあるセルの位置と字（見出し・ラベル・注記）、結合、式のあるセルの位置（年度の参照の式は参照先と足す数）。値の入ったデータの行は字を返さず、範囲と数だけ。planLevels は作業中の計画の階層の名前。" +
-      "「この様式で Excel を出して」の順：1. この source: template で様式を入れる 2. 形を読んで写し方の案を screen_set の templateLayout で置く 3. 出力のシート の見本（案のとおりに書いた最初の 20 行ほど）を利用者に見てもらう 4. 出力と保存は利用者が 出力のシート の主ボタン「署名して出力」を押す（ツールではしない。確定した版が要る）。",
+      "source: template は、利用者が「この様式で Excel を出して」と言った様式（path に .xlsx の絶対の道。8 MB まで）を、作業画面の出力のシートの様式の欄に入れる（保存はしない）。結果の template は様式の形だけ：シートの名前、字のあるセルの位置と字（見出し・ラベル・注記）、結合、式のあるセルの位置（年度の参照の式は参照先と足す数）。値の入ったデータの行は字を返さず、範囲と数だけ。planLevels は作業中の計画の階層の名前。" +
+      "「この様式で Excel を出して」の順：1. この source: template で様式を入れる 2. 形を読んで写し方の案を screen_set の templateLayout で置く 3. 出力のシートの見本（案のとおりに書いた最初の 20 行ほど）を利用者に見てもらう 4. 出力と保存は利用者が出力のシートの主ボタン「署名して出力」を押す（ツールではしない。確定した版が要る）。",
     intakeAddFilesInput,
     z.object({
       source: z.enum(INTAKE_SOURCES),
@@ -1037,12 +1037,12 @@ export const TOOLS = {
     "read",
     "共有ファイルの形と数",
     "共有のシートが共有ファイルに書く中身の、形と数だけを読む（利用者が「社内で共有して」と言ったとき）。" +
-      "作業画面を 共有のシート に切り替え、共有のシートと同じ共有先（共有フォルダか公開台帳）と見え方の答えで、画面と同じ関数で数える。" +
+      "作業画面を共有のシートに切り替え、共有のシートと同じ共有先（共有フォルダか公開台帳）と見え方の答えで、画面と同じ関数で数える。" +
       "返すのは、共有先の種類、版（年度・第 n 版・ハッシュの頭）、確定した版の中と共有ファイルに写る機器・作業・作業の年度の値・費用の行の数（費用はいつも 0）、写さなかった理由ごとの行の数、" +
       "伏せる欄、相手から見たあなた（施設の札・k の段・同区分の施設の数）、見え方の答えが足りない軸、塊の数と欄ごとの数、数え直しの数、主ボタンを押せない理由。" +
       "行の値（名前・年度・階級・費用）と共有ファイルのバイト列は返さない。確定した版が無いなどで数えられなければ、needs に理由と次の手が入る。" +
       "見え方の答えは、施設の答えと規模からの見込みを使う。足りない軸（missingAxes）は推測で埋めず、利用者に聞いて answers（peer_reference と同じ形。施設の答えがある軸には効かない）で置く。共有先は dest で置ける。" +
-      "置いた答えと共有先は 共有のシートの今の選びになるだけで（画面に「Claude の入力」と出る）、利用者が見え方の 1 行を確かめ、署名して送る主ボタンを押す（このツールは読むだけで、送らない）。",
+      "置いた答えと共有先は共有のシートの今の選びになるだけで（画面に「Claude の入力」と出る）、利用者が見え方の 1 行を確かめ、署名して送る主ボタンを押す（このツールは読むだけで、送らない）。",
     z.object({ dest: z.enum(["ring", "ledger"]).optional(), answers: shareAnswersSchema.optional() }),
     sharePreviewOutputSchema,
   ),
@@ -1162,7 +1162,7 @@ export const TOOLS = {
       "「A と B の並び順を入れ替えて」は、chart_rows で 2 つの行の id を読み、rowOrder: { node: B の id, before: A の id }（A が上で隣り合うとき。同じ親の下の行だけ。離れているときは 2 回に分ける）。" +
       "「計画の最大年度は 2040 年までにして」は lastFiscalYear: 2040（星取表の年度の列をその年度まで出し、周期の案と星取の案をその年度まで置ける。今の星取は変えない。いちばん遅い星取より前の年度にはできない）。" +
       "levelOrder・rowOrder・lastFiscalYear は施設ごとに覚える見せ方で、作業中の計画・版の記録・署名される字は変えない。機器の並びは、確定のときに書く Excel にも出る。並びを変えたあとの行は chart_rows で読み直す。" +
-      "「この様式で Excel を出して」は、intake_add_files（source: template）で様式を入れたあと、templateLayout に写し方の案を置く：template（様式の名前）、sheets（計画の表のシートごとに、見出しの行・年度の列と開始年度のセル・階層の列〔nested は入れ子の縦、flat は 1 行に横〕・組の行〔ラベルの列と、行ごとの中身 plan_content・plan_amount・actual_content・actual_amount・marks・cycle・next〕・明細を足す位置〔合計の行〕・continues〔年度で分かれる続きのシートなら前のシート〕）、amount（金額の単位と税）、facility（基本情報のシートの欄 → 施設の項目）。様式に合わなければ置かずに理由を返す。置いた案は下書きで、出力のシート に見本が出る。利用者に見本を見てもらい、出力と保存は利用者が 出力のシート の主ボタン「署名して出力」を押す（確定した版が要る）。" +
+      "「この様式で Excel を出して」は、intake_add_files（source: template）で様式を入れたあと、templateLayout に写し方の案を置く：template（様式の名前）、sheets（計画の表のシートごとに、見出しの行・年度の列と開始年度のセル・階層の列〔nested は入れ子の縦、flat は 1 行に横〕・組の行〔ラベルの列と、行ごとの中身 plan_content・plan_amount・actual_content・actual_amount・marks・cycle・next〕・明細を足す位置〔合計の行〕・continues〔年度で分かれる続きのシートなら前のシート〕）、amount（金額の単位と税）、facility（基本情報のシートの欄 → 施設の項目）。様式に合わなければ置かずに理由を返す。置いた案は下書きで、出力のシートに見本が出る。利用者に見本を見てもらい、出力と保存は利用者が出力のシートの主ボタン「署名して出力」を押す（確定した版が要る）。" +
       "答えは、変えた項目（changed）、変えなかった項目と理由（refused）、今の値（current。facility は見せ方を覚えた施設の名前、planVersion は作業中の計画の版で、計画が無ければ null）。確定・署名・送る・承認・昇格は、このツールではしない。",
     screenSetInput,
     screenSetOutput,
