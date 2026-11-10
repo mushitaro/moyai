@@ -13,7 +13,7 @@
 // 受け口に届かない → 下の帯の左に朱で「受け口の応答なし」（押し直せば再送信）。取り下げのボタンが入るまで、下の帯で取り下げを約束しない。
 import { Alert, Anchor, Button, Code, Container, Group, Modal, NativeSelect, Paper, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ROUTES } from "../../shared/routes";
+import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { emptyCatalog } from "../chart/catalog";
 import { CHART_HASH } from "../chart/route";
 import { SyncedNotice, readHuman, usePlanStatus } from "../components/ConfirmDialog";
@@ -23,7 +23,7 @@ import { GitHubConnect } from "../components/GitHubConnect";
 import { Switch } from "../components/Switch";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
-import { routeBlockers, shareRouteOf, type ShareRoute } from "../state/share-route";
+import { ringLabels, routeBlockers, shareRouteOf, type ShareRoute } from "../state/share-route";
 import { HUMAN_TEXT, bandText, reasonText } from "../text";
 import { bandShort } from "../../share/stat-text";
 import { defaultRingId, defaultShareFacility } from "../../share/share-preview";
@@ -473,9 +473,16 @@ export function Checkpoint() {
   const [national, setNational] = useState<boolean | null>(working?.plan.facility.inNationalTable ?? null);
   const [res, setRes] = useState<PreviewBody | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 断られた理由のコード（設定で直すもの：共有フォルダなし・台帳の clone が未設定。設定への道を添える）
+  const [errorReason, setErrorReason] = useState<string | null>(null);
+  const sentRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState<{ fileName: string; report: Report } | null>(null);
+  const [sent, setSent] = useState<{ fileName: string; report: Report; folder: string | null } | null>(null);
+  // 送ったあとの結果の 1 行は、本文の下のほうにあるので、見える所まで送る
+  useEffect(() => {
+    if (sent) sentRef.current?.scrollIntoView({ block: "nearest" });
+  }, [sent]);
   // 受け取った束（docs/screens.md 3.6。受け取り箱をこの画面の下の節に移した）：輪を受け手と同じ関数で確かめた結果
   const [received, setReceived] = useState<Report | null>(null);
   // 受け取った束の行で直す：仲間の鍵の読み合わせと、輪の決まりの受け入れ（Share.dc.html Version 46。監査 D1）
@@ -532,6 +539,7 @@ export function Checkpoint() {
       setLoading(false);
       const h = readHuman<PreviewBody>(r);
       setError(h.ok ? null : h.message);
+      setErrorReason(!h.ok && r.ok && typeof (r.body as PreviewBody).reason === "string" ? ((r.body as PreviewBody).reason as string) : null);
       if (!r.ok) return;
       const b = r.body as PreviewBody;
       setRes(b);
@@ -573,6 +581,8 @@ export function Checkpoint() {
   const axisName = (key: string) => res?.axes?.find((a) => a.key === key)?.name ?? key;
   const codeName = (key: string, code: string) => res?.axes?.find((a) => a.key === key)?.codes.find((c) => c.code === code)?.name ?? code;
 
+  const noRings = !!res && (res.rings ?? []).length === 0;
+  const labels = useMemo(() => ringLabels(res?.rings ?? []), [res?.rings]);
   const countsZero = !!view?.counts && Object.values(view.counts).every((n) => n === 0);
   const done = dest === "ledger" ? !!sentPr : !!sent;
   const login = res?.github?.login ?? null;
@@ -600,7 +610,9 @@ export function Checkpoint() {
         ? (T.sendNeeds[blockers[0]!] ?? blockers[0]!)
         : limited
           ? T.intakeRateLimited(hourMinute(limitUntil!))
-          : "";
+          : dest === "ring" && done
+            ? T.sendNeeds.sent!
+            : "";
   const chooseRoute = (v: Route) => {
     setRoute(v);
     saveRoute(planId, v);
@@ -636,7 +648,7 @@ export function Checkpoint() {
     );
     setSending(false);
     if (!r.ok) return setSendError(r.message);
-    setSent({ fileName: r.body.fileName, report: r.body.report });
+    setSent({ fileName: r.body.fileName, report: r.body.report, folder: res.ring?.ringId === ringId ? res.ring.folder : null });
     setReceived(r.body.report);
   };
 
@@ -726,9 +738,15 @@ export function Checkpoint() {
 
         <Stack gap="lg">
           {state.kind !== "open" && <Alert color="orange">{HUMAN_TEXT.notConnected}</Alert>}
-          {error && (
+          {/* 共有フォルダが 1 つも無いときの「選んでください」は、共有先の右の「共有フォルダがありません　| 設定へ」と同じことなので重ねない */}
+          {error && !(errorReason === "noRingChosen" && noRings) && (
             <Alert color="orange" data-testid="checkpoint-refused">
               {error}
+              {errorReason === "ledger.notChosen" && (
+                <a className="moyai-inline-act" href={APP_PAGES.settings} data-testid="checkpoint-to-settings">
+                  {T.toSettings}
+                </a>
+              )}
             </Alert>
           )}
 
@@ -817,13 +835,22 @@ export function Checkpoint() {
                 aria-label={T.ring}
                 value={ringId ?? ""}
                 onChange={(e) => setRingId(e.currentTarget.value || null)}
-                data={[{ value: "", label: T.choose }, ...(res?.rings ?? []).map((r) => ({ value: r.ringId, label: r.ringId }))]}
+                data={[{ value: "", label: T.choose }, ...(res?.rings ?? []).map((r) => ({ value: r.ringId, label: labels.get(r.ringId) ?? r.ringId }))]}
                 data-testid="ring-select"
               />
             )}
-            {dest === "ring" && (res?.rings ?? []).length === 0 && res && (
-              <Text size="xs" c="var(--shu-text)">
+            {/* 選んだ共有フォルダの場所（状態の 1 行） */}
+            {dest === "ring" && ringId && res?.ring?.ringId === ringId && res.ring.folder && (
+              <Text size="xs" c="var(--text-3)" ff="monospace" style={{ wordBreak: "break-all" }} data-testid="ring-folder-path">
+                {res.ring.folder}
+              </Text>
+            )}
+            {dest === "ring" && noRings && (
+              <Text size="xs" c="var(--shu-text)" data-testid="ring-none">
                 {T.ringNone}
+                <a className="moyai-inline-act" href={APP_PAGES.settings} data-testid="ring-none-to-settings">
+                  {T.toSettings}
+                </a>
               </Text>
             )}
           </Group>
@@ -1169,8 +1196,8 @@ export function Checkpoint() {
             </Alert>
           )}
           {sent && (
-            <Alert color="gray" data-testid="sent">
-              {T.sent(sent.fileName)}
+            <Alert color="gray" data-testid="sent" ref={sentRef}>
+              {T.sent(sent.fileName, sent.folder)}
             </Alert>
           )}
 
@@ -1288,8 +1315,8 @@ export function Checkpoint() {
           </Text>
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
-          {!canPress && (dest === "ledger" || !done) && sendReason && (
-            <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason">
+          {!canPress && sendReason && (
+            <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason" data-state={dest === "ring" && done && sendReason === T.sendNeeds.sent ? "sent" : undefined}>
               {T.reasonHead}
               {dest === "ledger" && sendReason === T.sendNeeds.rules ? T.ledgerRulesNotAccepted : sendReason}
               {dest === "ledger" && sendReason === T.sendNeeds.rules && res?.rulesChange && (

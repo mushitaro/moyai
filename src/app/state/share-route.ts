@@ -25,3 +25,18 @@ export function shareRouteOf(i: RouteInput): ShareRoute {
 export function routeBlockers(route: ShareRoute, blockers: readonly string[]): string[] {
   return route === "intake" ? blockers.filter((b) => b !== "noKey") : [...blockers];
 }
+
+/** 道の最後の名前（末尾の区切りは除く。Windows と POSIX の両方の区切り） */
+export function lastSegment(path: string): string {
+  return path.replace(/[\\/]+$/, "").split(/[\\/]/).filter(Boolean).at(-1) ?? path;
+}
+
+/**
+ * 共有フォルダの選びに出す名前：設定で選んだフォルダ（root）の最後の名前。共有フォルダの型に名前の欄は無いので、内部の ID は出さない。
+ * 同じ名前が 2 つ以上あれば、ID の頭 4 字を括弧で添えて分ける（選びの値は ID のまま）
+ */
+export function ringLabels(rings: readonly { ringId: string; root: string }[]): Map<string, string> {
+  const count = new Map<string, number>();
+  for (const r of rings) count.set(lastSegment(r.root), (count.get(lastSegment(r.root)) ?? 0) + 1);
+  return new Map(rings.map((r) => [r.ringId, (count.get(lastSegment(r.root)) ?? 0) > 1 ? `${lastSegment(r.root)}（${r.ringId.slice(0, 4)}）` : lastSegment(r.root)]));
+}

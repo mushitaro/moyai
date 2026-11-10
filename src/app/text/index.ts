@@ -309,8 +309,6 @@ export const TEXT = {
     title: "出力",
     version: (n: number) => `第 ${n} 版`,
     fiscal: (y: number) => `${y} 年度`,
-    format: "人が見る様式（MOYAI の標準）：入れ子・縦の結合・アウトライン・小計の行・A3 横・凡例・【架空】",
-    fromVersion: (n: number) => `確定した第 ${n} 版から作ります。`,
     template: {
       label: "様式",
       // 様式の選び（Wire、Export.dc.html V48。名前は運営者の用語集の直しに合わせた）
@@ -369,14 +367,18 @@ export const TEXT = {
         workingFileName: (base: string, name: string) => `${base}_${name}_作業中.xlsx`,
       },
     },
-    lead: "確定した版から作った Excel を出力します。版は、保存先の署名と鎖を確かめてから渡します。下は中身の見本（台帳の階層の行の先頭）です。",
     excel: "Excel を出力",
     report: "差分を出力",
     notConnected: "理由：ブリッジ未接続",
     noPlan: "作業中の計画がありません。",
     toMerge: "HOSHITORI へ",
-    notConfirmed: "まだ確定した版がありません。HOSHITORI で署名して確定してください",
+    // 下の帯の押せない理由（頭に「理由：」。状態は名詞で。docs/words.md「好み」）。確定版なしの右に「| HOSHITORI へ」
+    noPlanReason: "理由：作業中の計画なし",
+    loading: "理由：読込中",
+    notConfirmed: "理由：確定版なし",
     broken: "保存先のこの版の署名か鎖が合わないので、渡しません",
+    /** 標準・差分・様式の Excel をブラウザに渡したあとの 1 行（保存先はブラウザが決めるので、ファイル名だけ） */
+    saved: (name: string) => `出力済み　${name}`,
     fileName: (name: string, n: number) => `${name}_第${n}版_星取表.xlsx`,
     reportName: (name: string, n: number) => `${name}_第${n}版_差分.xlsx`,
   },
