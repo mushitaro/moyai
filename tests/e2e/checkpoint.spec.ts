@@ -165,7 +165,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("export-excel")).toBeEnabled();
     await expect(page.getByTestId("export-blocked")).toHaveCount(0);
     await Promise.all([page.waitForEvent("download"), page.getByTestId("export-excel").click()]);
-    await expect(page.getByTestId("export-saved")).toHaveText(/^出力済み　.+_第1版_星取表\.xlsx$/);
+    await expect(page.getByTestId("export-saved")).toHaveText(/^✓ 出力　.+_第1版_星取表\.xlsx$/);
     await page.evaluate(() => (location.hash = "#/share"));
   });
 

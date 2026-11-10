@@ -514,7 +514,7 @@ function planLevelNames(): string[] | undefined {
 
 /**
  * source: template（様式を EXPORT の様式の欄に入れる）：橋渡しが確かめた .xlsx 1 つを資料の印で取りに行き、Excel として読めたら
- * 画面の中の置き場（state/template-draft.ts）に置いて EXPORT を開く。保存はしない（出力と保存は人が「この写し方で出力」を押す）。
+ * 画面の中の置き場（state/template-draft.ts）に置いて EXPORT を開く。保存はしない（出力と保存は人が「署名して出力」を押す）。
  * 返すのは名前とシートの数と、作業中の計画の階層の名前だけ（様式の形は橋渡しが読んで AI に返す）
  */
 async function addTemplateFromBridge(ws: IntakeWorkspace, files: { fileId: string; name: string; size: number }[], fetchFile: FetchIntakeFile): Promise<TabToolResult> {

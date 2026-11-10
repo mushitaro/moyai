@@ -1043,27 +1043,29 @@ button.moyai-top-mk[data-kind="signed"] {
 .moyai-template td {
   white-space: nowrap;
 }
-/* 列の上の役目：箱の無い 11px の字。押すと選ぶ欄。字は切らず、長ければ折る。未定は朱 */
-.moyai-template-role {
-  padding: 0;
+/* 列の上の列対応：箱の無い 11px の字で、読むだけ（決める・直すのは Claude。運営者 2026-11-10）。字は切らず、長ければ折る。未定は朱 */
+.moyai-template .moyai-template-role,
+.moyai-layout-grid .moyai-template-role {
   border: 0;
   background: none;
-  cursor: pointer;
   text-align: left;
   white-space: normal;
   font-size: 11px;
   line-height: 16px;
+  font-weight: 400;
   letter-spacing: 0.1em;
-  color: var(--text-2);
+  color: var(--text-3);
 }
-.moyai-template-role[data-none="true"] {
+.moyai-layout-grid .moyai-template-role {
+  white-space: nowrap;
+  overflow: visible;
+}
+.moyai-template .moyai-template-role[data-none="true"],
+.moyai-layout-grid .moyai-template-role[data-none="true"] {
   color: var(--shu-text);
 }
-.moyai-template-role:hover {
-  color: var(--text);
-}
 
-/* 写し方の案の見本（template-layout-v1。仮の形、Wire の確認待ち）：様式の見た目のまま。列の字と行の番号は淡く、案が書くセルは淡い色 */
+/* 列対応の案の見本（template-layout-v1）：様式の見た目のまま。列の字と行の番号は淡く、案が書くセルは淡い色 */
 .moyai-layout-grid {
   border-collapse: collapse;
   table-layout: fixed;
@@ -1125,6 +1127,15 @@ button.moyai-top-mk[data-kind="signed"] {
 .moyai-template-choice-state {
   font-weight: 400;
   white-space: nowrap;
+}
+/* Claude が置いた列対応（署名するまで）：朱の「- Claude の入力」 */
+.moyai-template-choice-tag {
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--shu-text);
+  white-space: nowrap;
+  margin-left: var(--sp-3);
 }
 .moyai-template-choices .moyai-inline-act {
   margin: 6px 0 0 0;

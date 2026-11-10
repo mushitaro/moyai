@@ -478,11 +478,11 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-25-top-derived") });
     });
 
-    await test.step("10 様式に写す：EXPORT で「別の様式を落とす」。見出しから列ごとに写すものが出て、「この様式で落とす」", async () => {
-      // 架空の様式（題と見出し：設備名・作業区分・周期・R3〜R5・備考）を、別のプロセスの exceljs で作る
+    await test.step("10 様式に写す：EXPORT で「＋ 様式を追加」。見出しから列対応が読むだけの字で出て、「署名して出力」の 1 回で落とす", async () => {
+      // 架空の様式（題と見出し：設備名・作業区分・周期・R3〜R5。未定の列があると主ボタンは止まる）を、別のプロセスの exceljs で作る
       const tpl = join(work, "長寿命化計画_様式3.xlsx");
       const cells: Record<string, string> = { A1: "【架空】長寿命化計画 様式 3" };
-      ["設備名", "作業区分", "周期（年）", "R3", "R4", "R5", "備考"].forEach((h, i) => (cells[`${String.fromCharCode(65 + i)}3`] = h));
+      ["設備名", "作業区分", "周期（年）", "R3", "R4", "R5"].forEach((h, i) => (cells[`${String.fromCharCode(65 + i)}3`] = h));
       const w = spawnSync(process.execPath, ["tests/helpers/xlsx-cli.mjs", "write", tpl, JSON.stringify({ sheet: "様式3", cells })], { encoding: "utf8" });
       expect(w.status, w.stderr).toBe(0);
       await pa.locator('[data-testid="moyai-row"]').first().getByTestId("moyai-next").click();
@@ -491,15 +491,14 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       const chooser = pa.waitForEvent("filechooser");
       await pa.getByTestId("template-pick").click();
       await (await chooser).setFiles(tpl);
-      await expect(pa.getByTestId("template-role")).toHaveCount(7);
+      await expect(pa.getByTestId("template-role")).toHaveCount(6);
       await pa.screenshot({ path: shot("demo-26-template") });
-      // 様式で出すときは、列の写し方を承認して署名してから落とす（docs/screens.md 3.5。e2e の template.spec と同じ流れ）
-      await pa.getByTestId("export-sign").click();
-      await expect(pa.getByTestId("export-sign-dialog")).toContainText("で出力");
-      await pa.getByTestId("export-sign-submit").click();
-      await expect(pa.getByTestId("export-signed")).toBeVisible();
+      // 様式で出すときは、主ボタン「署名して出力」の 1 回で、列対応を承認する署名をして落とす（docs/screens.md 3.5。e2e の template.spec と同じ流れ）
+      await expect(pa.getByTestId("export-sign")).toHaveText("署名して出力");
+      const [download] = await Promise.all([pa.waitForEvent("download"), pa.getByTestId("export-sign").click()]);
+      await expect(pa.getByTestId("export-saved")).toBeVisible();
+      await expect(pa.getByTestId("export-excel")).toBeVisible();
       await pa.screenshot({ path: shot("demo-26b-template-signed") });
-      const [download] = await Promise.all([pa.waitForEvent("download"), pa.getByTestId("export-excel").click()]);
       await download.saveAs(shot("demo-26-template").replace(/\.png$/, ".xlsx"));
     });
 

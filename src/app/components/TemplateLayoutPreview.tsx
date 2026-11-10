@@ -1,17 +1,19 @@
-// 写し方の案の見本（仕事 template-layout-v1。docs/screens.md 3.5 に無いので仮の形。Wire の確認待ち）：
+// 列対応（案。仕事 template-layout-v1）の見本（docs/screens.md 3.5）：
 // 案のとおりに版を様式に書いたブックを、様式の見た目のまま（結合・太字・背景・列の幅）表に描く。計画の表は見出しの下の明細の最初の 20 行と合計の行、
-// 基本情報のシートは上から。案が書くセルに色を付ける。書かないもの・書けないものの数を添える（黙って捨てない）。
-// 書くのは出力と同じ関数（plan/template-layout.ts の fillLayout）。出力・保存・案を捨てるのは人が押す（pages/Export.tsx）。
+// 基本情報のシートは上から。列の上に列対応を読むだけの字で出し（← 項目・← 年度・← 周期・← 次回）、案が書くセルに色を付ける。
+// 書かないもの・書けないものの数を添える（黙って捨てない）。説明の文は置かない（運営者 2026-11-10「引き算」）。
+// 書くのは出力と同じ関数（plan/template-layout.ts の fillLayout）。出力・保存は人が主ボタンを押したときだけ（pages/Export.tsx）。
 import { Group, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { patchedExcelJS } from "../../import/exceljs-setup";
 import type { ChartCatalog } from "../../plan/chart";
-import { fillLayout, previewGrid, writtenCellsOf, type LayoutSummary, type PreviewGrid } from "../../plan/template-layout";
+import { colLetter, colNum, fillLayout, previewGrid, writtenCellsOf, type LayoutSummary, type PreviewGrid } from "../../plan/template-layout";
 import type { Plan } from "../../shared/plan";
 import type { TemplateLayout } from "../../shared/template-layout";
 import { TEXT } from "../text";
 
 const L = TEXT.export.template.layout;
+const R = TEXT.export.template.role;
 /** 計画の表の見本に出す明細の行の数 */
 export const PREVIEW_DATA_ROWS = 20;
 /** 基本情報のシートの見本に出す行の数 */
@@ -41,7 +43,22 @@ export async function buildPreview(bytes: Uint8Array, layout: TemplateLayout, in
   }
 }
 
-function Grid({ g }: { g: PreviewGrid }) {
+/** 列の字 → 列対応の字（読むだけ）：階層の列は「← 項目」、年度の列は「← 2026 年度」、周期・次回の列 */
+export function layoutRoles(layout: TemplateLayout, summary: LayoutSummary, sheet: string): Map<string, string> {
+  const m = new Map<string, string>();
+  const s = layout.sheets.find((x) => x.sheet === sheet);
+  if (!s) return m;
+  for (const c of s.levels.columns) m.set(c.col, R.item);
+  const years = summary.sheets.find((x) => x.sheet === sheet)?.yearOf ?? {};
+  for (let i = colNum(s.years.from); i <= colNum(s.years.to); i++) {
+    const fy = years[colLetter(i)];
+    if (fy !== undefined) m.set(colLetter(i), R.fiscal(fy));
+  }
+  for (const g of s.group.rows) if (g.col) m.set(g.col, g.content === "cycle" ? R.cycle : R.next);
+  return m;
+}
+
+function Grid({ g, roles }: { g: PreviewGrid; roles: Map<string, string> }) {
   return (
     <div style={{ overflowX: "auto" }}>
       <table className="moyai-num moyai-template moyai-layout-grid" data-testid="layout-grid" data-sheet={g.sheet}>
@@ -52,6 +69,16 @@ function Grid({ g }: { g: PreviewGrid }) {
           ))}
         </colgroup>
         <thead>
+          {roles.size > 0 && (
+            <tr>
+              <th style={{ border: 0 }} />
+              {g.cols.map((c) => (
+                <th key={c.letter} className="moyai-template-role" style={{ border: 0 }} data-testid="layout-role">
+                  {roles.get(c.letter) ?? ""}
+                </th>
+              ))}
+            </tr>
+          )}
           <tr>
             <th />
             {g.cols.map((c) => (
@@ -87,8 +114,8 @@ function Grid({ g }: { g: PreviewGrid }) {
   );
 }
 
-/** 写し方の案の見本。draft は Claude が置いてまだ人が受けていない案 */
-export function TemplateLayoutPreview({ bytes, layout, plan, catalog, asOf, draft, basis }: { bytes: Uint8Array; layout: TemplateLayout; plan: Plan; catalog: ChartCatalog; asOf: string; draft: boolean; basis: string }) {
+/** 列対応の見本。draft は Claude が置いてまだ人が署名していない列対応 */
+export function TemplateLayoutPreview({ bytes, layout, plan, catalog, asOf, draft }: { bytes: Uint8Array; layout: TemplateLayout; plan: Plan; catalog: ChartCatalog; asOf: string; draft: boolean }) {
   const [built, setBuilt] = useState<Built>({ kind: "reading" });
   useEffect(() => {
     let alive = true;
@@ -98,11 +125,11 @@ export function TemplateLayoutPreview({ bytes, layout, plan, catalog, asOf, draf
       alive = false;
     };
   }, [bytes, layout, plan, catalog, asOf]);
-  return <LayoutPreviewView built={built} layout={layout} draft={draft} basis={basis} />;
+  return <LayoutPreviewView built={built} layout={layout} draft={draft} />;
 }
 
 /** 見本の描き方（作った見本を受けて描くだけ） */
-export function LayoutPreviewView({ built, layout, draft, basis }: { built: Built; layout: TemplateLayout; draft: boolean; basis: string }) {
+export function LayoutPreviewView({ built, layout, draft }: { built: Built; layout: TemplateLayout; draft: boolean }) {
   const [sheet, setSheet] = useState<string | null>(null);
   if (built.kind === "reading") return <Text size="sm" c="dimmed">{L.reading}</Text>;
   if (built.kind === "error")
@@ -125,9 +152,8 @@ export function LayoutPreviewView({ built, layout, draft, basis }: { built: Buil
   ].filter((x): x is string => x !== null);
   return (
     <Stack gap="xs" data-testid="layout-preview" data-draft={draft ? "true" : undefined}>
-      <Text size="sm">{draft ? L.headDraft : L.headSaved}</Text>
       <Text size="xs" c="var(--text-2)">
-        {basis}　{L.unit(layout.amount.unit === "thousand_yen", layout.amount.tax)}
+        {L.unit(layout.amount.unit === "thousand_yen", layout.amount.tax)}
       </Text>
       {s.sheets.map((x) => (
         <Text key={x.sheet} size="xs" c="var(--text-2)" data-testid="layout-sheet-line">
@@ -146,10 +172,7 @@ export function LayoutPreviewView({ built, layout, draft, basis }: { built: Buil
           </button>
         ))}
       </Group>
-      {shown && <Grid g={shown} />}
-      <Text size="xs" c="dimmed">
-        {L.legend}
-      </Text>
+      {shown && <Grid g={shown} roles={layoutRoles(layout, s, shown.sheet)} />}
     </Stack>
   );
 }
