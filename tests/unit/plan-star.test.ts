@@ -537,16 +537,16 @@ describe("人の試し（時間の地図 2、mushitaro/moyai#32）：星取表�
   const at = (wk: string, fy: number) => getWorkingPlan()!.plan.details.filter((d) => d.workKey === wk && d.fiscalYear === fy && d.planOrActual === "plan");
   beforeEach(() => setWorkingPlan(base(), "intake"));
 
-  it("動かすと、先の年度に作者「人」の明細（出どころは人の試し）、元の年度の明細は人の確定した削除（理由は空）", () => {
+  it("動かすと、先の年度に作者「人」の明細（出どころは人の試し）、元の年度の明細は人の確定した削除（理由は「人の試し（理由 未記入）」）", () => {
     const r = trial.moveStarByHuman("w1", 2025, 2027, range);
     expect(r.ok).toBe(true);
     expect(at("w1", 2025)).toHaveLength(0);
     const [d] = at("w1", 2027);
     expect(d!.author).toBe("human");
     expect(d!.sources[0]!.file).toBe(TRIAL_SOURCE);
-    // 人が受ける決定は要らない（作者が人）。元の年度の削除は署名の内側に入る（理由は空のまま。止めない）
+    // 人が受ける決定は要らない（作者が人）。元の年度の削除は署名の内側に入る（理由を書いていないことをそのまま書く。署名の理由は空にできないので）
     expect(pendingDecisions(getWorkingPlan()!.plan, []).some((x) => x.id.endsWith(d!.detailKey))).toBe(false);
-    expect(removalAcceptances()).toEqual([expect.objectContaining({ id: removalId("d3"), reason: "" })]);
+    expect(removalAcceptances()).toEqual([expect.objectContaining({ id: removalId("d3"), reason: trial.TRIAL_REASON })]);
     expect(trial.trialOrigins()).toEqual([expect.objectContaining({ workKey: "w1", from: 2025, to: 2027 })]);
   });
 
@@ -573,6 +573,17 @@ describe("人の試し（時間の地図 2、mushitaro/moyai#32）：星取表�
     trial.moveStarByHuman("w3", 2028, 2027, range);
     expect(trial.canMoveStarByHuman("w3", 2027, 2027, range)).toEqual({ ok: false, reason: "outOfRange" });
     expect(getWorkingPlan()!.plan.details.filter((d) => d.workKey === "w1").length).toBe(3);
+  });
+
+  it("置き直した（generation が変わった）あとは、前の試しを戻さない・やり直さない", () => {
+    trial.moveStarByHuman("w1", 2025, 2027, range);
+    expect(trial.undoTrialByHuman()).toBe(true);
+    setWorkingPlan(base(), "intake");
+    expect(trial.redoTrialByHuman(range)).toBe(false);
+    trial.moveStarByHuman("w1", 2025, 2026, range);
+    setWorkingPlan(base(), "intake");
+    expect(trial.undoTrialByHuman()).toBe(false);
+    expect(trial.trialOrigins()).toEqual([]);
   });
 
   it("AI のツールの受け手には、人の試しを動かす・戻す道が無い", () => {

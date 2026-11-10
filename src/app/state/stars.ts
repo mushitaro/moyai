@@ -238,16 +238,15 @@ export function rejectStarGroupByHuman(id: string, reason: string, fallback?: { 
 export function removalAcceptances(): Acceptance[] {
   const out: Acceptance[] = [];
   for (const g of starGroups()) {
-    // 人の試しは理由が無くても確定できる（止めない。理由は空のまま署名の内側に入る）
-    if (g.state !== "accepted" || (!g.humanReason && g.author !== "human")) continue;
-    for (const d of g.removed ?? []) out.push({ id: removalId(d.detailKey), hash: removalHash(d), reason: g.humanReason ?? "" });
+    if (g.state !== "accepted" || !g.humanReason) continue;
+    for (const d of g.removed ?? []) out.push({ id: removalId(d.detailKey), hash: removalHash(d), reason: g.humanReason });
   }
   return out;
 }
 
 // ─── 人の試し（時間の地図 2、mushitaro/moyai#32）：星取表で人が未来の ○ を別の年度へ動かす ─────────────
 // 画面の人の操作だけが呼ぶ（AI のツールの受け手 intake/tab-tools.ts からは呼ばない。tests/unit/human-only.test.ts が見張る）。
-// 動かした先は作者「人」の明細（人が受ける決定は要らない）、元の年度は人が確定した削除（理由は空のまま）。版は変えない（確定・署名は確定のシートと署名のダイアログで人がする）。
+// 動かした先は作者「人」の明細（人が受ける決定は要らない）、元の年度は人が確定した削除（理由は「人の試し（理由 未記入）」）。版は変えない（確定・署名は確定のシートと署名のダイアログで人がする）。
 // 取り消し・やり直しは何度でも（このタブのメモリ）。
 
 export type TrialOutcome = { ok: true; id: string } | { ok: false; reason: "noPlan" | "notPlanOnly" | "occupied" | "outOfRange" };
@@ -256,8 +255,15 @@ interface Trial {
   from: number;
   to: number;
 }
-let undoStack: { id: string; trial: Trial }[] = [];
-let redoStack: Trial[] = [];
+let undoStack: { id: string; trial: Trial; generation: number }[] = [];
+let redoStack: { trial: Trial; generation: number }[] = [];
+/** 置き直した回（generation）が変わった・確定のシートで取り消した・却下した試しは、戻す・やり直すの列から捨てる */
+function dropStaleTrials(): number | null {
+  const gen = getWorkingPlan()?.generation ?? null;
+  undoStack = undoStack.filter((u) => u.generation === gen && starGroups().some((g) => g.id === u.id && g.author === "human" && g.state === "accepted"));
+  redoStack = redoStack.filter((r) => r.generation === gen);
+  return gen;
+}
 
 /** 動かせるか：その作業の計画だけ（実績の無い年度）・先の年度にその作業の計画が無い・範囲の中 */
 export function canMoveStarByHuman(workKey: string, from: number, to: number, range: { min: number; max: number }): TrialOutcome | null {
@@ -283,10 +289,10 @@ function applyTrial(t: Trial, range: { min: number; max: number }): TrialOutcome
   const r = proposeStars(working.plan, [{ id, kind: "planMove", workKey: t.workKey, value: "plan", fiscalYear: t.to }], { basis: TRIAL_BASIS, author: "human", verified: {} });
   const removed = r.plan.details.filter((d) => d.workKey === t.workKey && d.planOrActual === "plan" && d.fiscalYear === t.from);
   const keys = new Set(removed.map((d) => d.detailKey));
-  const g: StarGroup = { id, kind: "planMove", workKey: t.workKey, value: "plan", author: "human", basis, generation: working.generation, removes: [{ fiscalYear: t.from, detailKeys: [...keys] }], pairs: [{ from: t.from, to: t.to }], state: "accepted", humanReason: "", removed };
+  const g: StarGroup = { id, kind: "planMove", workKey: t.workKey, value: "plan", author: "human", basis, generation: working.generation, removes: [{ fiscalYear: t.from, detailKeys: [...keys] }], pairs: [{ from: t.from, to: t.to }], state: "accepted", humanReason: TRIAL_REASON, removed };
   updateWorkingPlan({ ...r.plan, details: r.plan.details.filter((d) => !keys.has(d.detailKey)) }, working.proposals);
   groups = [...groups, g];
-  undoStack = [...undoStack, { id, trial: t }];
+  undoStack = [...undoStack, { id, trial: t, generation: working.generation }];
   notify();
   return { ok: true, id };
 }
@@ -300,6 +306,7 @@ export function moveStarByHuman(workKey: string, from: number, to: number, range
 
 /** 人の試しを 1 つ取り消す（Ctrl+Z）：先の年度の明細を外し、元の年度の明細を戻す。試しが無ければ false */
 export function undoTrialByHuman(): boolean {
+  dropStaleTrials();
   const last = undoStack[undoStack.length - 1];
   const working = getWorkingPlan();
   if (!last || !working) return false;
@@ -309,14 +316,15 @@ export function undoTrialByHuman(): boolean {
   const back = (g?.removed ?? []).filter((d) => !have.has(d.detailKey));
   updateWorkingPlan({ ...working.plan, details: [...working.plan.details.filter((d) => proposalIdOf(d.detailKey) !== last.id), ...back] }, working.proposals);
   groups = groups.filter((x) => x.id !== last.id);
-  redoStack = [...redoStack, last.trial];
+  redoStack = [...redoStack, { trial: last.trial, generation: working.generation }];
   notify();
   return true;
 }
 
 /** 取り消した試しをやり直す（Ctrl+Shift+Z）。やり直せなければ false */
 export function redoTrialByHuman(range: { min: number; max: number }): boolean {
-  const t = redoStack[redoStack.length - 1];
+  dropStaleTrials();
+  const t = redoStack[redoStack.length - 1]?.trial;
   if (!t) return false;
   const r = applyTrial(t, range);
   redoStack = redoStack.slice(0, -1);
@@ -325,10 +333,15 @@ export function redoTrialByHuman(range: { min: number; max: number }): boolean {
 
 /** 人の試しの、動かす前の位置（星取表に薄い ○ を残す）：作業の鍵 → 元の年度 */
 export function trialOrigins(): { id: string; workKey: string; from: number; to: number }[] {
-  return groups.filter((g) => g.author === "human" && g.state === "accepted").flatMap((g) => g.pairs.map((p) => ({ id: g.id, workKey: g.workKey, from: p.from, to: p.to })));
+  return starGroups().filter((g) => g.author === "human" && g.state === "accepted").flatMap((g) => g.pairs.map((p) => ({ id: g.id, workKey: g.workKey, from: p.from, to: p.to })));
 }
 
 const TRIAL_BASIS = "人の試し";
+/**
+ * 人の試しの削除の理由。人が理由を書かなくても確定は止めない。署名の内側の理由は空にできない（plan/store.ts の acceptanceReasonEmpty。守りは弱めない）ので、
+ * 「理由を書いていない」ことをそのまま書く（推測した理由は書かない）
+ */
+export const TRIAL_REASON = "人の試し（理由 未記入）";
 
 // ─── 次の版：確定した削除を、資料から読み直した計画でも外したままにする（Architect の 70） ─────────────
 

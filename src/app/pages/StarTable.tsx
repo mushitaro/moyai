@@ -549,12 +549,18 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     const el = gridEl.current;
     if (!el) return;
     const onKey = (e: KeyboardEvent) => {
+      // 編集欄・入力欄の中のキーは、その欄のもの（文字の取り消しを横取りしない）
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('input, textarea, [contenteditable="true"], .ag-cell-inline-editing')) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
         const done = e.shiftKey ? redoTrialByHuman(trialRange()) : undoTrialByHuman();
         if (done) e.preventDefault();
         return;
       }
-      if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight") || !selected?.periodKey) return;
+      if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+      // 星取表の中の Alt+← / Alt+→ は、ブラウザの「戻る」にしない
+      e.preventDefault();
+      if (!selected?.periodKey) return;
       const fy = fyOf(selected.periodKey);
       if (fy === null) return;
       if (tryMove(selected.rowId, selected.periodKey, fy + (e.key === "ArrowRight" ? 1 : -1))) {
@@ -587,20 +593,25 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       if (to && to.rowId === from.rowId && fyOf(to.col) !== null) e.preventDefault();
     };
     const onDrop = (e: DragEvent) => {
+      if (!from) return;
+      // 星取表の中のドラッグは、資料の取り込みに渡さない（落とす先が違っても）
+      e.preventDefault();
+      e.stopPropagation();
       const to = cellOf(e.target);
       const fy = to ? fyOf(to.col) : null;
-      if (from && to && fy !== null && to.rowId === from.rowId) {
-        e.preventDefault();
-        e.stopPropagation();
-        tryMove(from.rowId, from.col, fy);
-      }
+      if (to && fy !== null && to.rowId === from.rowId) tryMove(from.rowId, from.col, fy);
+      from = null;
+    };
+    const onEnd = () => {
       from = null;
     };
     el.addEventListener("keydown", onKey, true);
     el.addEventListener("dragstart", onStart);
     el.addEventListener("dragover", onOver);
     el.addEventListener("drop", onDrop);
+    el.addEventListener("dragend", onEnd);
     return () => {
+      el.removeEventListener("dragend", onEnd);
       el.removeEventListener("keydown", onKey, true);
       el.removeEventListener("dragstart", onStart);
       el.removeEventListener("dragover", onOver);
