@@ -3,6 +3,7 @@
 // 使い方：node scripts/bench/pack-candidate.mjs <パック> <ルールの案.json> [--out フォルダ]
 //   ルールの案は moyai.reading/0（施設の 3 段目の rules.json、または packs/<パック>/reading.json と同じ形）。
 //   書くもの：<out>/base/・<out>/candidate/（物差しの結果）と <out>/compare.md（比べた表と判定）。
+//   案は、今の Skillパックの上に下書きとして足して測る。今あるルールを外す・緩める案は、この道具では試せない（reading.json を直した枝で物差しを測る）。
 // packs/ には書かない。Skillパックに入れるか（昇格）を決めるのは人。AI も API も使わない。
 // 終了コード：退行あり 1・良くなった 0・差なし 0（道具の失敗は 2）
 import { spawnSync } from "node:child_process";

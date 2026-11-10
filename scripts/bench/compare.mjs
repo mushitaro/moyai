@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Skillパックの物差しの 2 つの結果（moyai.pack-bench.result/0）を比べる。判定は数だけで決める（AI に判定させない）。
 // 使い方：node scripts/bench/compare.mjs <もとの result.json> <比べる result.json> [--strict] [--md <書き出す .md>]
-//   退行あり（終了コード 1）：計画を作れなくなった施設がある／⑥・③・工数の合った数が減った／未解決のセルか開いたままの問いが増えた／施設が減った
+//   退行あり（終了コード 1）：計画を作れなくなった施設がある／⑥・③・工数の合った数が減った／③ の読みすぎ・未解決のセル・開いたままの問いが増えた／施設が減った
 //   良くなった（0）：退行が無く、上のどれかが良い向きに動いた
 //   差なし（0）：どの数も同じ
 // --strict：数が 1 つでも違えば終了コード 1（CI が、記録した表 eval/bench/ と今のコードの測った値が同じかを確かめるのに使う）
@@ -18,16 +18,22 @@ export function metricsOf(row) {
     accuracy: n(row.accuracy),
     manDays: n(row.manDays),
     days: n(row.days),
+    extra: row.extra ?? 0,
     unresolved: row.unresolvedAfter,
     open: row.open,
     asked: row.asked,
+    // 分母（正解の側の数）。同じ資料なら変わらない。変わったら、物差しか資料が変わっている（--strict が拾う）
+    recoveryTotal: row.recovery?.total ?? 0,
+    accuracyTotal: row.accuracy?.total ?? 0,
   };
 }
 
-// 大きいほど良い数と、小さいほど良い数。asked（質問の数）は記録するだけで、退行の判定には使わない（答えた結果は ②⑥ が数える）
+// 大きいほど良い数と、小さいほど良い数。extra は ③ の読みすぎ（正解に無いのに計画に読んだ数。合った数が増えても、読みすぎが増えれば退行）。
+// asked（質問の数）と分母は記録するだけで、退行の判定には使わない（違えば changed になり、--strict が拾う）
 const UP = ["planMade", "recovery", "accuracy", "manDays", "days"];
-const DOWN = ["unresolved", "open"];
-const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問" };
+const DOWN = ["extra", "unresolved", "open"];
+const NOTE = ["asked", "recoveryTotal", "accuracyTotal"];
+const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", extra: "③ の読みすぎ", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問", recoveryTotal: "⑥ の分母", accuracyTotal: "③ の分母" };
 
 export function compare(base, head) {
   if (base.schema !== "moyai.pack-bench.result/0" || head.schema !== "moyai.pack-bench.result/0") throw new Error("moyai.pack-bench.result/0 でない");
@@ -37,6 +43,7 @@ export function compare(base, head) {
   const rows = [];
   const worse = [];
   const better = [];
+  const notes = [];
   let changed = false;
   for (const [id, b] of bm) {
     const h = hm.get(id);
@@ -49,11 +56,14 @@ export function compare(base, head) {
     const mb = metricsOf(b);
     const mh = metricsOf(h);
     const diff = {};
-    for (const k of [...UP, ...DOWN, "asked"]) {
+    for (const k of [...UP, ...DOWN, ...NOTE]) {
       if (mb[k] === mh[k]) continue;
       changed = true;
       diff[k] = [mb[k], mh[k]];
-      if (k === "asked") continue;
+      if (NOTE.includes(k)) {
+        if (k !== "asked") notes.push(`${id}：${LABEL[k]} ${mb[k]} → ${mh[k]}`);
+        continue;
+      }
       const good = UP.includes(k) ? mh[k] > mb[k] : mh[k] < mb[k];
       (good ? better : worse).push(`${id}：${LABEL[k]} ${mb[k]} → ${mh[k]}`);
     }
@@ -65,7 +75,7 @@ export function compare(base, head) {
       better.push(`${id}：新しく測った`);
     }
   const verdict = worse.length ? "退行あり" : better.length ? "良くなった" : "差なし";
-  return { verdict, changed, worse, better, rows };
+  return { verdict, changed, worse, better, notes, rows };
 }
 
 export function toMarkdown(base, head, c) {
@@ -75,12 +85,13 @@ export function toMarkdown(base, head, c) {
     "",
     `判定：**${c.verdict}**（数だけで決める。もと ${String(base.reader?.commit ?? "").slice(0, 7)}・比べる側 ${String(head.reader?.commit ?? "").slice(0, 7)}${head.reader?.dirty ? "〔commit していない変更あり〕" : ""}）`,
     "",
-    "| 施設 | 計画 | ⑥ | ③ | 工数 | ② 未解決 | 開いたままの問い | ⑤ 質問 |",
-    "|---|---|---|---|---|---|---|---|",
-    ...c.rows.map((r) => `| ${r.facility} | ${cell(r, "planMade")} | ${cell(r, "recovery")} | ${cell(r, "accuracy")} | ${cell(r, "manDays")} | ${cell(r, "unresolved")} | ${cell(r, "open")} | ${cell(r, "asked")} |`),
+    "| 施設 | 計画 | ⑥ | ③ | ③ の読みすぎ | 工数 | ② 未解決 | 開いたままの問い | ⑤ 質問 |",
+    "|---|---|---|---|---|---|---|---|---|",
+    ...c.rows.map((r) => `| ${r.facility} | ${cell(r, "planMade")} | ${cell(r, "recovery")} | ${cell(r, "accuracy")} | ${cell(r, "extra")} | ${cell(r, "manDays")} | ${cell(r, "unresolved")} | ${cell(r, "open")} | ${cell(r, "asked")} |`),
     "",
     ...(c.worse.length ? ["退行：", ...c.worse.map((x) => `- ${x}`), ""] : []),
     ...(c.better.length ? ["良くなった所：", ...c.better.map((x) => `- ${x}`), ""] : []),
+    ...(c.notes.length ? ["分母が変わった所（物差しか資料が変わっている。前と後の数をそのまま比べられない）：", ...c.notes.map((x) => `- ${x}`), ""] : []),
     "- 数は、合った数（分子）と件数。分母は正解の側で決まり、同じ資料なら変わらない。",
     "- 開発用の資料での値。見ていない様式の結果ではない。昇格（Skillパックの版を上げること）を決めるのは人。",
     "",

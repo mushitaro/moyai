@@ -45,6 +45,8 @@ export interface BenchRow {
   blockers: string[];
   plan: SetResult["plan"];
   accuracy: Ratio | null;
+  /** ③ の読みすぎ（正解に無いのに、計画に読んだ数）。計画が無ければ null */
+  extra: number | null;
   recovery: Ratio;
   manDays: Ratio | null;
   days: Ratio | null;
@@ -85,10 +87,10 @@ describe("Skillパックの物差し", () => {
     const rows: BenchRow[] = [];
     for (const n of names) {
       const t0 = performance.now();
-      const base = { facility: n, name: n, files: 0, seconds: 0, asked: 0, answered: 0, open: 0, openKinds: {}, defaulted: {}, unresolvedBy: {}, openSamples: [], unresolvedBefore: 0, unresolvedAfter: 0, planMade: false, blockers: [], plan: null, accuracy: null, recovery: { correct: 0, total: 0 }, manDays: null, days: null, unplaced: 0, dropped: {}, error: null } satisfies BenchRow;
+      const base = { facility: n, name: n, files: 0, seconds: 0, asked: 0, answered: 0, open: 0, openKinds: {}, defaulted: {}, unresolvedBy: {}, openSamples: [], unresolvedBefore: 0, unresolvedAfter: 0, planMade: false, blockers: [], plan: null, accuracy: null, extra: null, recovery: { correct: 0, total: 0 }, manDays: null, days: null, unplaced: 0, dropped: {}, error: null } satisfies BenchRow;
       try {
         const v = loadV2Facility(join(root, n), n);
-        const { result: r, analysis } = await runSet(v.set, { facilityKey: v.set.world.facility.id, acceptDefaults: true, ...(readings.length ? { readings } : {}) });
+        const { result: r, analysis } = await runSet(v.set, { facilityKey: v.set.world.facility.id, acceptDefaults: true, deferWholeFile: true, ...(readings.length ? { readings } : {}) });
         const openKinds: Record<string, number> = {};
         const openSamples: BenchRow["openSamples"] = [];
         for (const q of r.openAtEnd) {
@@ -120,6 +122,7 @@ describe("Skillパックの物差し", () => {
           blockers: r.blockers,
           plan: r.plan,
           accuracy: r.planMade ? sum(r.files.flatMap((f) => (f.accuracy ? [{ correct: f.accuracy.correct, total: f.accuracy.total }] : []))) : null,
+          extra: r.planMade ? r.files.reduce((a, f) => a + (f.accuracy?.extra ?? 0), 0) : null,
           recovery: { correct: r.recovery.together, total: r.recovery.denominator },
           manDays: ratio(r.recovery.manDays),
           days: ratio(r.recovery.days),
@@ -168,6 +171,7 @@ describe("Skillパックの物差し", () => {
       ),
       "",
       "- ③ は、計画を作れた施設の、資料ごとの正しさの和（機器・印・作業の行）。計画が無ければ測れない（—）。合計の ③ は、計画を作れた施設だけの和。",
+      ...(rows.some((x) => x.extra) ? [`- ③ の読みすぎ（正解に無いのに計画に読んだ数）：${rows.filter((x) => x.extra).map((x) => `${x.facility} ${x.extra}`).join("、")}`] : []),
       "- ⑥ は、作業そのものを書いた行のある作業のうち、計画の作業に、機器・年度・資料の行がそろって取り戻せた数。計画を作れなかった施設は 0 として分母に入れる。",
       "- 正解は工場 v2 の形で、tests/heldout/v2.ts が契約の形に写す。契約の行だけの結び（年間の委託・まとめた工事）は出来事にしない。",
       ...rows.filter((x) => x.open).map((x) => `- ${x.facility} の開いたままの問い：${Object.entries(x.openKinds).map(([k, v]) => `${k} ${v}`).join("、")}`),
