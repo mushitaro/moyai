@@ -44,12 +44,21 @@ export function undecidedOf(columns: { roles: readonly { kind: string }[]; layou
   return columns.roles.filter((r) => r.kind === "none").length;
 }
 
+/**
+ * 列対応で、書く先の決まった列が 1 つも無いか（どの列も「- 未定」）。このときだけ主ボタンを止める。
+ * 未定の列が残っていても止めない：様式には MOYAI が書かない列（備考・点検者など）がふつうにあり、そこは様式のまま残す（絵 Export.dc.html と同じ）
+ */
+export function nothingMapped(columns: { roles: readonly { kind: string }[]; layout?: unknown }): boolean {
+  if (columns.layout) return false;
+  return columns.roles.every((r) => r.kind === "none");
+}
+
 /** 選んだ行 */
 export type ExportChoice =
   | { kind: "standard" }
   | { kind: "diff" }
   /** 保存先の様式（Claude の案が置かれていないもの） */
-  | { kind: "template"; exported: boolean; approved: boolean; undecided: number }
+  | { kind: "template"; exported: boolean; approved: boolean; /** 書く先の決まった列が 1 つも無い */ empty: boolean }
   /** Claude が置いた列対応（Claude が入れた様式か、保存先の様式に置いた案）。hasLayout が false なら列対応はまだ無い。ready は様式のファイルを読んだか */
   | { kind: "claude"; hasLayout: boolean; ready: boolean };
 
@@ -79,7 +88,7 @@ export function exportPrimaryOf(choice: ExportChoice, base: ExportBlock | null, 
       return { action: "report", label: "excel", testid: "export-excel", stop: base };
     case "template": {
       if (choice.exported) return { action: "read", label: "excel", testid: "export-excel", stop: base };
-      const stop: ExportStop | null = base ?? (returned ? { kind: "returned" } : choice.undecided > 0 ? { kind: "undecided", n: choice.undecided } : null);
+      const stop: ExportStop | null = base ?? (returned ? { kind: "returned" } : choice.empty ? { kind: "undecided", n: null } : null);
       // 承認済みの列対応は「Excel を出力」（書き出しの署名は残す）。下書きは「署名して出力」
       return { action: "sign", label: choice.approved ? "excel" : "sign", testid: "export-sign", stop };
     }

@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { TemplateExport, sharedState, type SharedTemplate } from "../../src/app/components/TemplateExport";
-import { exportPrimaryOf, undecidedOf } from "../../src/app/state/export-reason";
+import { exportPrimaryOf, nothingMapped, undecidedOf } from "../../src/app/state/export-reason";
 import { runExport, type HumanCall } from "../../src/app/state/export-run";
 import { COLUMNS_SCHEMA, type TemplateColumns } from "../../src/plan/template";
 import { TEXT } from "../../src/app/text";
@@ -76,21 +76,24 @@ describe("主ボタン 1 つ：字は 2 つ、押せない理由は 1 つ", () =
   it("標準・差分・出力済みの様式は「Excel を出力」（署名しない）", () => {
     expect(exportPrimaryOf({ kind: "standard" }, null, false)).toEqual({ action: "plan", label: "excel", testid: "export-excel", stop: null });
     expect(exportPrimaryOf({ kind: "diff" }, null, false)).toEqual({ action: "report", label: "excel", testid: "export-excel", stop: null });
-    expect(exportPrimaryOf({ kind: "template", exported: true, approved: false, undecided: 0 }, null, false)).toMatchObject({ action: "read", label: "excel" });
+    expect(exportPrimaryOf({ kind: "template", exported: true, approved: false, empty: false }, null, false)).toMatchObject({ action: "read", label: "excel" });
   });
 
   it("列対応が下書きなら「署名して出力」、承認済みなら「Excel を出力」（どちらも書き出しに署名する道）。Claude の入力は「署名して出力」", () => {
-    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, undecided: 0 }, null, false)).toEqual({ action: "sign", label: "sign", testid: "export-sign", stop: null });
-    expect(exportPrimaryOf({ kind: "template", exported: false, approved: true, undecided: 0 }, null, false)).toMatchObject({ action: "sign", label: "excel", testid: "export-sign" });
+    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, empty: false }, null, false)).toEqual({ action: "sign", label: "sign", testid: "export-sign", stop: null });
+    expect(exportPrimaryOf({ kind: "template", exported: false, approved: true, empty: false }, null, false)).toMatchObject({ action: "sign", label: "excel", testid: "export-sign" });
     expect(exportPrimaryOf({ kind: "claude", hasLayout: true, ready: true }, null, false)).toEqual({ action: "layout", label: "sign", testid: "layout-output", stop: null });
     expect(T.sign).toBe("署名して出力");
     expect(TEXT.export.excel).toBe("Excel を出力");
   });
 
-  it("未定の列があれば止まる：「理由：列対応 未定 n」。Claude の入力で列対応がまだ無ければ「理由：列対応 未定」", () => {
-    const p = exportPrimaryOf({ kind: "template", exported: false, approved: false, undecided: undecidedOf(oneOpen) }, null, false);
-    expect(p.stop).toEqual({ kind: "undecided", n: 1 });
-    expect(T.undecidedReason(1)).toBe("理由：列対応 未定 1");
+  it("未定の列が残っていても止めない（様式には MOYAI が書かない列がある）。どの列も未定のときだけ「理由：列対応 未定」。Claude の入力で列対応がまだ無いときも同じ", () => {
+    expect(undecidedOf(oneOpen)).toBe(1);
+    expect(nothingMapped(oneOpen)).toBe(false);
+    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, empty: nothingMapped(oneOpen) }, null, false).stop).toBeNull();
+    const allOpen = { ...oneOpen, roles: oneOpen.roles.map(() => ({ kind: "none" as const })) };
+    expect(nothingMapped(allOpen)).toBe(true);
+    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, empty: nothingMapped(allOpen) }, null, false).stop).toEqual({ kind: "undecided", n: null });
     expect(exportPrimaryOf({ kind: "claude", hasLayout: false, ready: true }, null, false).stop).toEqual({ kind: "undecided", n: null });
     expect(T.undecidedReason(null)).toBe("理由：列対応 未定");
     // 案（layout）のある列対応は案で決まっている
@@ -99,8 +102,8 @@ describe("主ボタン 1 つ：字は 2 つ、押せない理由は 1 つ", () =
   });
 
   it("前の段の理由が先：確定版なし・差戻しは、列対応より先に止める", () => {
-    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, undecided: 2 }, { kind: "notConfirmed" }, true).stop).toEqual({ kind: "notConfirmed" });
-    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, undecided: 2 }, null, true).stop).toEqual({ kind: "returned" });
+    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, empty: true }, { kind: "notConfirmed" }, true).stop).toEqual({ kind: "notConfirmed" });
+    expect(exportPrimaryOf({ kind: "template", exported: false, approved: false, empty: true }, null, true).stop).toEqual({ kind: "returned" });
     expect(exportPrimaryOf({ kind: "claude", hasLayout: true, ready: true }, { kind: "notConfirmed" }, false).stop).toEqual({ kind: "notConfirmed" });
     expect(exportPrimaryOf({ kind: "claude", hasLayout: true, ready: false }, null, false).stop).toEqual({ kind: "reading" });
   });

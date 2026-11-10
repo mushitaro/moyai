@@ -1,7 +1,7 @@
 // 様式に写す（docs/screens.md 3.5、P2 の 7）を、この PC の Chrome と Edge で通す：
 // 見本の計画を第 1 版として署名 → EXPORT で「＋ 様式を追加」（試験の台本が作った架空の様式。保存先に下書きで置く）→ 見出しの言葉から
 // 列の上に列対応（← 項目・← 作業・← 周期・← 年度の星取。決まらない列は朱の「- 未定」）が読むだけの字で出る。
-// 未定の列がある様式は、主ボタンが「理由：列対応 未定 n」で止まる（列対応を決めるのは Claude との会話。画面にメニューは無い。運営者 2026-11-10）。
+// 未定の列が残っていても止めない（様式には MOYAI が書かない列がある。そこは様式のまま）。列対応を決めるのは Claude との会話。画面にメニューは無い。（運営者 2026-11-10）。
 // 列対応が決まっている様式は、主ボタン「署名して出力」の 1 回で、書き出しに署名して Excel を落とす（ダイアログは無い）→ 承認済み・出力済み →
 // 次からは「Excel を出力」。
 // AI は使わない。先に npm run build を走らせておく。
@@ -76,7 +76,7 @@ test("利用者の様式の見出しから列対応を読み、決まってい�
     await page.keyboard.press("Escape");
   });
 
-  await test.step("EXPORT：未定の列がある様式は、列対応が読むだけの字で出て、主ボタンは「理由：列対応 未定 2」で止まる", async () => {
+  await test.step("EXPORT：未定の列がある様式は、列対応が読むだけの字で出る。未定の列は様式のまま残すので、主ボタンは止まらない", async () => {
     await page.evaluate(() => (location.hash = "#/export"));
     await expect(page.getByTestId("template-pick")).toBeVisible();
     // 様式の行の並び：標準・（保存先の様式）・＋ 様式を追加。第 1 版なので差分の行は無い
@@ -95,8 +95,8 @@ test("利用者の様式の見出しから列対応を読み、決まってい�
     await expect(roles.nth(6)).toHaveText("- 未定");
     // 列対応は読むだけ：列の上に押せるものは無い
     await expect(page.getByTestId("template-preview").getByRole("button")).toHaveCount(0);
-    await expect(page.getByTestId("export-sign")).toBeDisabled();
-    await expect(page.getByTestId("export-blocked")).toHaveText("理由：列対応 未定 2");
+    await expect(page.getByTestId("export-sign")).toBeEnabled();
+    await expect(page.getByTestId("export-blocked")).toHaveCount(0);
     await page.screenshot({ path: shot(`template-undecided-${tag}`), fullPage: true });
   });
 

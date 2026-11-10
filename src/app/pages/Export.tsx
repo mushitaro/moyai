@@ -25,7 +25,7 @@ import { readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
 import { STAGE_HASH, sheetHash } from "../stages";
-import { exportBlockOf, exportPrimaryOf, undecidedOf, withReasonHead, type ExportChoice, type ExportStop } from "../state/export-reason";
+import { exportBlockOf, exportPrimaryOf, nothingMapped, withReasonHead, type ExportChoice, type ExportStop } from "../state/export-reason";
 import { runExport, type ExportJob, type HumanCall } from "../state/export-run";
 import { TEXT } from "../text";
 import { dueBaseDate } from "../../plan/due-view";
@@ -268,7 +268,7 @@ export function Export() {
       : selected && draft
         ? { kind: "claude", hasLayout: true, ready: !!layoutBytes && !!layoutProbe }
         : selected
-          ? { kind: "template", exported: selected.exported, approved: !!selected.approval, undecided: undecidedOf(selected.columns) }
+          ? { kind: "template", exported: selected.exported, approved: !!selected.approval, empty: nothingMapped(selected.columns) }
           : diffRow?.active
             ? { kind: "diff" }
             : { kind: "standard" };

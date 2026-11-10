@@ -125,11 +125,11 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
       await page.getByTestId("template-pick").click();
       await (await chooser).setFiles({ name, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: readFileSync(path) });
     };
-    // 未定の列（備考）がある様式：列対応は読むだけの字、未定は朱。主ボタンは「理由：列対応 未定 1」で止まる
+    // 未定の列（備考）がある様式：列対応は読むだけの字、未定は朱。未定の列は様式のまま残すので、主ボタンは止まらない
     await add("長寿命化計画_様式3.xlsx", tpl);
     await expect(page.getByTestId("template-shared").filter({ hasText: "長寿命化計画_様式3" })).toHaveAttribute("data-active", "true");
-    await expect(page.getByTestId("export-blocked")).toHaveText("理由：列対応 未定 1");
-    await expect(page.getByTestId("export-sign")).toBeDisabled();
+    await expect(page.getByTestId("export-blocked")).toHaveCount(0);
+    await expect(page.getByTestId("export-sign")).toBeEnabled();
     await snap(page, "07-export-template-undecided");
     // 列対応が決まった様式：「列対応 下書き」、主ボタン「署名して出力」
     const decided = join(work, "年次計画.xlsx");
