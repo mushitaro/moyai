@@ -784,10 +784,13 @@ describe("公開の台帳へ GitHub のアカウントなしで出す（受け�
     const gh = fakeLedgerGitHub({ token, files: onMain });
     const env = { GITHUB_TOKEN: token, LEDGER_REPO: "ledger-owner/moyai", INTAKE_KV: memoryKv() };
     const sentBodies: string[] = [];
+    /** 受け口の答えを、ほかのリポジトリの PR にすり替える（外から来た答えを確かめるかの試験） */
+    let otherRepoAnswer = false;
     // 受け口（services/ledger-intake のハンドラそのもの。パックの部品は受け口に入れたもの）。送り手の IP は Cloudflare の入口が付ける見出しの代わり
     const ledgerIntake: IntakeIo = {
       url: "https://intake.example",
       fetch: async (u, i) => {
+        if (otherRepoAnswer) return new Response(JSON.stringify({ ok: true, pr: { number: 7, url: "https://github.com/someone/other/pull/7" } }), { status: 200 });
         sentBodies.push(i.body ?? "");
         const req = new Request(u, { method: i.method, headers: { ...i.headers, "cf-connecting-ip": "203.0.113.9" }, ...(i.body !== undefined ? { body: i.body } : {}) });
         return handleRequest(req, env, { fetch: gh.fetch, now: () => Date.now(), packOf });
@@ -821,6 +824,11 @@ describe("公開の台帳へ GitHub のアカウントなしで出す（受け�
     // 見たハッシュと違えば署名しない
     expect((await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: "f".repeat(64) })).reason).toBe("previewChanged");
     expect(gh.prs).toHaveLength(0);
+    // 受け口が台帳の clone のリポジトリと違うリポジトリの PR を返したら、受けず、持ち出し簿に書かない（次の送信を止めない）
+    otherRepoAnswer = true;
+    expect((await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash })).reason).toBe("intake.badAnswer");
+    otherRepoAnswer = false;
+    expect((await call("ledgerPrs", { packId: "waste-incineration" })).prs).toEqual([]);
 
     // 人が押すと、束に署名して受け口へ送る。受け口が運営者のアカウントで PR を 1 つ出す
     const sent = await call("ledgerIntakeSend", { planId: plan.planId, version: 1, answers, previewHash: pv.view.bodyHash });

@@ -1,12 +1,13 @@
 // 公開の台帳の受け口（運営者の決定 2026-11-07）：GitHub のアカウントを持たない人の束を受け、運営者の GitHub のアカウントで台帳に PR を出す。
 // 道は POST /submit だけ。体は束のファイル 1 つか、取り下げの印 1 つ（JSON、256 KB まで）。確かめの順：
 //   1. 道と方法・設定（GITHUB_TOKEN・LEDGER_REPO・KV）
-//   2. 濫用の防ぎ：同じ IP から 1 時間に 10 件まで（limit.ts。IP は鍵つきのハッシュにして数え、残さない）
+//   2. 濫用の防ぎ：同じ IP から 1 時間に 10 件まで、まわりの網（/24・/48）から 30 件まで（limit.ts。IP は鍵つきのハッシュにして数え、残さない）
 //   3. Content-Type（application/json）と大きさ（256 KB まで）
 //   4. JSON の形と深さ（UTF-8・入れ子 8 段まで・厳しい読み・正規形・束か印の形）と、署名（body の公開鍵で）。ここまでは GitHub を呼ばない
 //   5. 同じ中身のハッシュの PR（枝 intake/<ハッシュの頭 16 字>）があれば、それを返して新しく出さない
 //   6. 台帳の検証：台帳の既定のブランチから ledger.json と同じ鍵の束を読み、束を足した木を verifyLedgerFiles（台帳の Actions と同じ関数）で確かめる
-//   7. 枝を作り、束のファイル 1 つを置き、PR を出す
+//   7. 開いた受け口の PR を数える（同じ鍵で 1 つ、全部で 20 まで。KV の数は拠点をまたぐとずれるので、GitHub の PR で数える）。
+//      枝を作り、束のファイル 1 つを置き、PR を出す
 // 取り下げの印（ledger/ledger/bundles/<鍵ID>/retired.json。Architect の 72）は、束と同じ口・同じ IP の上限で受ける：
 //   6'. 印を足した木を同じ関数で確かめる（その鍵自身の署名・道の鍵 ID・本文の key・pub から作った鍵 ID がそろうときだけ）
 //   7'. その鍵の束の、まだマージされていない PR を「本人が取り下げた」と書いて閉じる。その鍵の束が台帳に載っていれば（マージ済み）、
@@ -33,8 +34,8 @@ import {
   type LedgerFile,
 } from "../../../src/share/ledger";
 import { HEX128, HEX16, HEX64, keyIdOf, sha256Hex, verifyBody } from "../../../src/share/sign";
-import { closePrWithComment, findPr, ledgerBase, openPr, openPrsOfKey, readLedgerFiles, repoOf, type FetchLike, type Gh, type PrRef } from "./github";
-import { RATE_LIMIT, bucketKey, clientBucket, takeSlot, type KvLike } from "./limit";
+import { closePrWithComment, findPr, ledgerBase, openIntakePrs, openPr, openPrsOfKey, readLedgerFiles, repoOf, type FetchLike, type Gh, type PrRef } from "./github";
+import { RATE_LIMIT, bucketKey, clientBucket, networkBucket, takeSlot, type KvLike } from "./limit";
 import { INTAKE_PR_TEXT } from "./text";
 
 /** 受け口の上限（コードの定数） */
@@ -43,6 +44,12 @@ export const INTAKE_LIMITS = {
   bodyBytes: 256 * 1024,
   /** 同じ送り手（IP）から 1 時間に受ける件数 */
   perHour: RATE_LIMIT.max,
+  /** まわりの網（IPv4 の /24・IPv6 の /48）から 1 時間に受ける件数 */
+  perHourNetwork: RATE_LIMIT.networkMax,
+  /** 開いた受け口の PR の数（全部で）。越えたら、運営者が審査するまで新しく出さない */
+  openPrs: 20,
+  /** 開いた受け口の PR の数（同じ鍵で）。台帳の鎖は載った束の次しか ✓ にしないので、正しい送り手は 1 つずつ出す */
+  openPrsPerKey: 1,
 } as const;
 
 export const INTAKE_PATH = "/submit";
@@ -261,12 +268,21 @@ async function handle(req: Request, env: IntakeEnv, deps: IntakeDeps): Promise<R
   const kv = env.INTAKE_KV;
   if (!repo || !TOKEN_SHAPE.test(token) || !kv) return refuse(503, ["intake.notConfigured"]);
 
-  // 2. 同じ IP から 1 時間に 10 件まで（断った束も数える）
-  const bucket = clientBucket(req.headers.get("cf-connecting-ip"));
-  if (!bucket) return refuse(400, ["intake.noClient"]);
+  // 2. 同じ IP から 1 時間に 10 件まで、まわりの網から 30 件まで（断った束も数える）。IP は Cloudflare が付ける cf-connecting-ip だけを見る
+  const ip = req.headers.get("cf-connecting-ip");
+  const bucket = clientBucket(ip);
+  const net = networkBucket(ip);
+  if (!bucket || !net) return refuse(400, ["intake.noClient"]);
   let slot;
   try {
-    slot = await takeSlot(kv, bucketKey(token, bucket), deps.now());
+    slot = await takeSlot(
+      kv,
+      [
+        { key: bucketKey(token, bucket), max: RATE_LIMIT.max },
+        { key: bucketKey(token, `net:${net}`), max: RATE_LIMIT.networkMax },
+      ],
+      deps.now(),
+    );
   } catch {
     return refuse(503, ["intake.unavailable"]);
   }
@@ -315,7 +331,9 @@ async function handle(req: Request, env: IntakeEnv, deps: IntakeDeps): Promise<R
     return refuse(check.reasons.includes("ledger") ? 503 : 400, check.reasons);
   }
 
-  // 7. 枝・ファイル・PR
+  // 7. 開いた受け口の PR の数（同じ鍵・全部）。それから枝・ファイル・PR
+  const cap = await intakeRoom(gh, key);
+  if (cap) return cap;
   const r = await openPr(gh, {
     base: base.base,
     baseSha: base.sha,
@@ -328,6 +346,18 @@ async function handle(req: Request, env: IntakeEnv, deps: IntakeDeps): Promise<R
   });
   if (!r.ok) return refuse(502, ["intake.github"]);
   return accepted(r);
+}
+
+/**
+ * 受け口の PR を新しく出せるか：開いた受け口の PR が全部で openPrs 未満、同じ鍵（key を渡したとき）で openPrsPerKey 未満。
+ * 出せれば null、出せなければ断りの答え（PR の洪水を、IP の数え方とは別に GitHub の実際の数で止める）
+ */
+async function intakeRoom(gh: Gh, key: string | null): Promise<Response | null> {
+  const open = await openIntakePrs(gh);
+  if (open === "error") return refuse(502, ["intake.github"]);
+  if (open === "tooMany" || open.length >= INTAKE_LIMITS.openPrs) return refuse(503, ["intake.busy"]);
+  if (key !== null && open.filter((p) => p.title.includes(key)).length >= INTAKE_LIMITS.openPrsPerKey) return refuse(400, ["intake.keyPending"]);
+  return null;
 }
 
 /** 台帳の決まりとパックを、読んだ木から決める（束と印で同じ） */
@@ -383,6 +413,8 @@ async function handleRetired(bytes: Uint8Array, token: string, repo: NonNullable
   const folder = `${ledgerKeyFolder(key)}/`;
   const merged = files.some((f) => f.path.startsWith(folder) && LEDGER_BUNDLE_PATH.test(f.path));
   if (!merged) return reply(200, { ok: true, pr: null, closed });
+  const cap = await intakeRoom(gh, null);
+  if (cap) return cap;
   const r = await openPr(gh, {
     base: base.base,
     baseSha: base.sha,
