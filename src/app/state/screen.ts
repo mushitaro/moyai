@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from "react";
 import { LEVEL_ORDERS, SCREEN_GO, type LevelOrder, type ScreenGo } from "../../shared/tools";
 import { APP_PAGES } from "../../shared/routes";
-import { STAGE_HASH, routeOf, sheetHash } from "../stages";
+import { routeOf, sheetHash } from "../stages";
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -59,9 +59,12 @@ export const GO_HASH: Record<ScreenGo, string> = {
   "hoshitori.rules": sheetHash("readings"),
   "hoshitori.review": sheetHash("check"),
   "hoshitori.decisions": sheetHash("decisions"),
+  "hoshitori.export": sheetHash("export"),
+  "hoshitori.share": sheetHash("share"),
   "hoshitori.files": sheetHash("files"),
-  export: STAGE_HASH.export,
-  share: STAGE_HASH.share,
+  // 前の値（Claude Desktop は再起動までツールの定義を持ち続けるので断らない）。同じシートを開く
+  export: sheetHash("export"),
+  share: sheetHash("share"),
   settings: APP_PAGES.settings,
 };
 
@@ -77,7 +80,7 @@ export function currentGo(): ScreenGo | null {
   if (typeof location === "undefined") return null;
   const r = routeOf(location.hash);
   if (r.stage === "top") return "top";
-  if (r.stage === "export" || r.stage === "share" || r.stage === "settings") return r.stage;
+  if (r.stage === "settings") return r.stage;
   if (r.stage !== "merge" || r.sheet === null) return null;
   return SCREEN_GO.find((g) => GO_HASH[g] === sheetHash(r.sheet!)) ?? null;
 }

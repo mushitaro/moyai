@@ -61,13 +61,17 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
   template(tpl);
   const c = await mcpClient(bridge.stateDir, ["share_preview"]);
 
-  await test.step("計画なし", async () => {
+  await test.step("計画なし：前の道 #/export と #/share は HOSHITORI に着き、計画が無いので資料のシート（出力・共有のシートは並ばない）", async () => {
     await page.goto(`${bridge.base}/#/export`);
-    await expect(page.getByTestId("export-page")).toBeVisible();
-    await expect(page.getByTestId("export-excel")).toBeVisible();
+    await expect(page).toHaveURL(/#\/merge\/export$/);
+    await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
+    await expect(page.getByTestId("sheet-export")).toHaveCount(0);
+    await expect(page.getByTestId("tab-export")).toHaveCount(0);
+    await expect(page.getByTestId("tab-share")).toHaveCount(0);
     await snap(page, "01-export-no-plan");
-    await go(page, "#/share");
-    await expect(page.getByTestId("checkpoint-no-plan")).toBeVisible();
+    await go(page, "#/merge/share");
+    await expect(page).toHaveURL(/#\/merge\/share$/);
+    await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "files");
     await snap(page, "02-share-no-plan");
   });
 
@@ -83,14 +87,18 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
     await page.route("**/assets/dev-plans/*.json", (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
     await page.goto(`${bridge.base}/?plan=fictional-1#/merge/chart`);
     await expect(page.locator(".ag-row").first()).toBeVisible();
-    await go(page, "#/export");
+    // 確定した版が無いあいだ、出力・共有のシートは並ばない。前の道で開くと、出力のシートが「理由：確定版なし　| HOSHITORI へ」（確定のシートへ）
+    await expect(page.getByTestId("sheet-decisions")).toBeVisible();
+    await expect(page.getByTestId("sheet-export")).toHaveCount(0);
+    await expect(page.getByTestId("sheet-share")).toHaveCount(0);
+    await go(page, "#/merge/export");
+    await expect(page).toHaveURL(/#\/merge\/export$/);
     await expect(page.getByTestId("export-page")).toBeVisible();
     await expect(page.getByTestId("template-export")).toBeVisible();
-    // 確定版なし：主ボタンのすぐ左に「理由：確定版なし　| HOSHITORI へ」
     await expect(page.getByTestId("export-blocked")).toContainText("理由：確定版なし");
-    await expect(page.getByTestId("export-blocked-to")).toHaveAttribute("href", "#/merge");
+    await expect(page.getByTestId("export-blocked-to")).toHaveAttribute("href", "#/merge/decisions");
     await snap(page, "03-export-unconfirmed");
-    await go(page, "#/share");
+    await go(page, "#/merge/share");
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
     await expect(page.getByTestId("checkpoint-refused")).toBeVisible();
     await snap(page, "04-share-unconfirmed");
@@ -106,7 +114,12 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/第 1 版）を確定しました。/);
     await page.keyboard.press("Escape");
-    await go(page, "#/export");
+    // 確定すると、確定のすぐ右に出力・共有のシートが現れる。ヘッダの段は MOYAI › HOSHITORI だけ
+    await expect(page.getByTestId("tab-export")).toHaveCount(0);
+    await expect(page.locator(".moyai-merge-tablist [role=tab]")).toHaveText(["星取表", "費用", "ルール", "照査", "確定", "出力", "共有"]);
+    await page.getByTestId("sheet-export").click();
+    await expect(page).toHaveURL(/#\/merge\/export$/);
+    await expect(page.getByTestId("merge-version")).toHaveText("第 1 版");
     await expect(page.getByTestId("export-excel")).toBeEnabled();
     await expect(page.getByTestId("export-sample")).toBeVisible();
     await snap(page, "05-export-confirmed-standard");
@@ -161,7 +174,7 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
     } finally {
       await c.close();
     }
-    await go(page, "#/export");
+    await go(page, "#/merge/export");
     await expect(row.getByTestId("template-claude")).toHaveText("- Claude の入力");
     await expect(page.getByTestId("layout-output")).toHaveText("署名して出力");
     await expect(page.getByTestId("layout-preview")).toBeVisible();
@@ -169,7 +182,7 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
   });
 
   await test.step("SHARE：共有フォルダなし・（Claude が共有先を公開台帳にして）clone 未設定", async () => {
-    await go(page, "#/share");
+    await go(page, "#/merge/share");
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
     await expect(page.locator('[data-testid^="q-"]')).toHaveCount(0);
     await expect(page.getByTestId("share-dest")).toHaveCount(0);
@@ -197,7 +210,7 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
   });
 
   await test.step("SHARE：見え方が未確定・Claude が答えを置いて送る前・送ったあと", async () => {
-    await go(page, "#/share");
+    await go(page, "#/merge/share");
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
     // 共有フォルダと台帳の clone の両方があるので、共有先の切り替えが出る
     await expect(page.getByTestId("share-dest")).toBeVisible();

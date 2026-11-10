@@ -32,9 +32,7 @@ export const TEXT = {
     home: "最初の画面",
     tabsLabel: "画面",
     tabs: {
-      merge: { en: "HOSHITORI", ja: "版に重ねる（星取表・照査・確定・資料）" },
-      export: { en: "EXPORT", ja: "確定した版の Excel を出力" },
-      share: { en: "SHARE", ja: "共有フォルダと公開台帳に出す" },
+      merge: { en: "HOSHITORI", ja: "版に重ねる（星取表・照査・確定・出力・共有・資料）" },
     },
     themeLabel: "表示の明暗",
     themeDark: "暗",
@@ -369,7 +367,7 @@ export const TEXT = {
     newFacility: "新しい施設",
     version: (n: number) => `第 ${n} 版`,
     facilitySettings: "施設設定",
-    sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", files: "資料" } as Record<string, string>,
+    sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", export: "出力", share: "共有", files: "資料" } as Record<string, string>,
     filesLabel: "資料",
     addFiles: "＋ 資料を追加",
     /**
@@ -573,7 +571,7 @@ export const TEXT = {
       readingProposed: (name: string, n: number) => `「${name}」に ${n} 件追加（下書き。承認は版の署名で）`,
       readingRemoved: (name: string, n: number) => `「${name}」から ${n} 件外した（下書き）`,
       skillsRead: "AI が今効いている Skill の本文を読みました",
-      sharePreviewRead: "AI が共有ファイルの形と数を読みました（署名して送るのは SHARE の主ボタン）",
+      sharePreviewRead: "AI が共有ファイルの形と数を読みました（署名して送るのは HOSHITORI の共有のシートの主ボタン）",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の星取 ${marks}。確定のシートで確定するまで未確定）`,
       starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
       screenSet: (changed: number, refused: number) =>

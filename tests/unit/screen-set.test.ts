@@ -143,7 +143,7 @@ describe("6 つの引数がそれぞれ作業画面の状態を変える", () =>
     expect(set).toEqual(["light", "dark"]);
   });
 
-  it("go：段のリンクと同じ hash に移る。11 の行き先はどれも、画面の道の読み方で同じ画面に戻る", () => {
+  it("go：段のリンクと同じ hash に移る。どの行き先も、画面の道の読み方で同じ画面に戻る（前の export・share は出力・共有のシート）", () => {
     const r = call({ go: "hoshitori.chart" });
     expect(fakeLocation.hash).toBe("#/merge/chart");
     expect(r.changed).toEqual(["go"]);
@@ -151,11 +151,16 @@ describe("6 つの引数がそれぞれ作業画面の状態を変える", () =>
     for (const g of SCREEN_GO) {
       call({ go: g });
       expect(fakeLocation.hash).toBe(GO_HASH[g]);
-      expect(currentGo(), g).toBe(g);
-      expect(routeOf(fakeLocation.hash).stage, g).toBe(g === "top" ? "top" : g.startsWith("hoshitori.") ? "merge" : g);
+      // 前の値 export・share は HOSHITORI の出力・共有のシートを開き、今の画面は新しい値で返す（mushitaro/moyai#30）
+      const now = g === "export" || g === "share" ? (`hoshitori.${g}` as const) : g;
+      expect(currentGo(), g).toBe(now);
+      expect(routeOf(fakeLocation.hash).stage, g).toBe(now === "top" ? "top" : now.startsWith("hoshitori.") ? "merge" : now);
     }
     expect(routeOf(GO_HASH["hoshitori.rules"]).sheet).toBe("readings");
     expect(routeOf(GO_HASH["hoshitori.review"]).sheet).toBe("check");
+    expect(GO_HASH.export).toBe("#/merge/export");
+    expect(GO_HASH.share).toBe("#/merge/share");
+    expect(routeOf("#/checkpoint")).toEqual({ stage: "merge", sheet: "share" });
   });
 
   it("storageRoot：設定の画面の保存先の欄に入れて開くだけ（保存は人）。変えなかった項目に数え、理由を添える", () => {
