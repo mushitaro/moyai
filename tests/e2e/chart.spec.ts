@@ -380,3 +380,33 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   await expect(page.getByTestId("work-detail-title")).toHaveText("分解整備");
   await page.screenshot({ path: shot(`chart-next-${tag}`) });
 });
+
+test("時間の地図 1：星を選ぶとその星だけ強まり、行の星どうしを周期の線で結ぶ。選びを外すと元に戻る（#31）", async ({ page }, info) => {
+  const tag = info.project.name;
+  await openPlan(page, "fictional-1");
+  const grid = page.getByTestId("chart-grid");
+  await expect(grid).not.toHaveAttribute("data-picked", "true");
+  await expect(page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]")).toHaveCount(0);
+
+  await cell(page, "受入供給設備 › ごみクレーン · 2020 年度").click();
+  await expect(grid).toHaveAttribute("data-picked", "true");
+  await expect(page.locator(".moyai-mark [data-sel]")).toHaveCount(1);
+  // 周期の線：選んだ行だけ。間隔は始まりの星の右に「n 年」。良否の印は付けない
+  const crane = cell(page, "受入供給設備 › ごみクレーン · 2020 年度");
+  await expect(crane).toHaveAttribute("data-cyc-r", /solid|dash/);
+  await expect(crane).toHaveAttribute("data-gap", /^\d+ 年$/);
+  const rowIds = await page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]").evaluateAll((els) => [...new Set(els.map((e) => e.closest(".ag-row")?.getAttribute("row-id")))]);
+  expect(rowIds).toHaveLength(1);
+  // 由来は今の横の板の「詳細」（新しい板は足さない）
+  await expect(page.getByTestId("source-ref").first()).toContainText("plan-hoshitori.xlsx");
+  await page.screenshot({ path: shot(`chart-time-map-1-${tag}`) });
+
+  // 名前の列（星でないセル）を選ぶと、星の強めは外れ、周期の線はその行のまま
+  await page.locator(`.ag-row[row-id="${rowIds[0]}"] [col-id='lv2']`).click();
+  await expect(grid).toHaveAttribute("data-picked", "false");
+  await expect(crane).toHaveAttribute("data-cyc-r", /solid|dash/);
+
+  // 月の表示では周期の線を引かない
+  await page.getByTestId("period-mode").getByRole("button", { name: "月", exact: true }).click();
+  await expect(page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]")).toHaveCount(0);
+});
