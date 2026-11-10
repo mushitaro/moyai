@@ -24,7 +24,7 @@ import { getReferenceDate } from "../state/review";
 import { readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
-import { STAGE_HASH, sheetHash } from "../stages";
+import { sheetHash } from "../stages";
 import { exportBlockOf, exportPrimaryOf, nothingMapped, withReasonHead, type ExportChoice, type ExportStop } from "../state/export-reason";
 import { runExport, type ExportJob, type HumanCall } from "../state/export-run";
 import { TEXT } from "../text";
@@ -97,7 +97,7 @@ function Sample({ plan }: { plan: Plan }) {
 
 /** 押せない理由の 1 行（SHARE の send-reason と同じ形）。確定版なし・計画なしは、右に HOSHITORI への道 */
 function Reason({ text }: { text: string }) {
-  const to = text === T.notConfirmed ? STAGE_HASH.merge : text === T.noPlanReason ? sheetHash("files") : null;
+  const to = text === T.notConfirmed ? sheetHash("decisions") : text === T.noPlanReason ? sheetHash("files") : null;
   return (
     <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="export-blocked">
       {text}
@@ -133,7 +133,8 @@ function stopText(s: ExportStop): string {
   }
 }
 
-export function Export() {
+/** embedded：HOSHITORI の出力のシートの中（施設の名前と版は HOSHITORI の見出しが出す。mushitaro/moyai#30） */
+export function Export({ embedded = false }: { embedded?: boolean } = {}) {
   const { client, state } = useConnection();
   const working = useWorkingPlan();
   const planId = working?.plan.planId ?? "";
@@ -340,6 +341,7 @@ export function Export() {
     <div className="moyai-share-page" data-testid="export-page">
       <div className="moyai-share-body">
         {/* 段の名前はヘッダが大きく出すので、見出しは施設の名前と版の 1 行だけ（MERGE と同じ形） */}
+        {!embedded && (
         <div className="moyai-page-head" data-testid="export-plan">
           {latest && (
             <>
@@ -349,6 +351,7 @@ export function Export() {
           )}
           {latest?.plan.facility.fictional && <FictionMark />}
         </div>
+        )}
         <Stack gap="md">
           {target && (
             <TemplateExport

@@ -138,6 +138,15 @@ interface GridContext {
   kinds?: ReadonlyMap<string, "plan" | "actual">;
   /** 星取の削除の案が指す明細の鍵（施設台帳では今の星取に朱の斜線、共通台帳とまとめたセルでは朱の破線の円を重ねる。docs/screens.md 3.2） */
   removals?: ReadonlySet<string>;
+  /** 選んだ星（行と期）。その星だけを細い墨の枠で強め、ほかの星を薄くする（時間の地図 1、mushitaro/moyai#31） */
+  picked?: { rowId: string; periodKey: string } | null;
+  /** 周期の線を引く行と、その行の期の鍵（年度の表示のときだけ。列の順） */
+  cycle?: { rowId: string; keys: readonly string[] } | null;
+  /** 人の試し（時間の地図 2）：動かす前の位置（行の鍵 + "\u0000" + 期の鍵。薄い ○）と、動かした先の明細の鍵（朱の細い枠） */
+  ghosts?: ReadonlySet<string>;
+  trials?: ReadonlySet<string>;
+  /** 時間の地図 4：答えの結果で新しく現れた星（行の鍵 + "\u0000" + 期の鍵）。出るときだけ静かに現れる */
+  fresh?: ReadonlySet<string>;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -180,6 +189,25 @@ function proposalRing(cell: ChartCell | undefined, context: unknown): Mark | nul
   return markWithout(cell.detailKeys, c.proposals, c.kinds);
 }
 
+/**
+ * 周期の線（時間の地図 1）：選んだ行の星どうしを、セルの左半分・右半分の細い線で結ぶ。
+ * 未来の ○（計画だけ）へ向かう線は破線。間隔（年）は始まりの星の右に小さく出す。良否は判定しない（色も印も変えない）
+ */
+export function cycleOf(row: ChartRow, keys: readonly string[], key: string): { left: "solid" | "dash" | null; right: "solid" | "dash" | null; gap: number | null } {
+  const none = { left: null, right: null, gap: null };
+  const i = keys.indexOf(key);
+  if (i < 0) return none;
+  const marks = keys.map((k, j) => (row.cells[k]?.mark ? j : -1)).filter((j) => j >= 0);
+  const prev = [...marks].reverse().find((j) => j < i);
+  const next = marks.find((j) => j > i);
+  const here = marks.includes(i);
+  const style = (to: number) => (row.cells[keys[to]!]?.mark === "plan" ? "dash" : "solid");
+  if (here) return { left: prev !== undefined ? style(i) : null, right: next !== undefined ? style(next) : null, gap: next !== undefined ? next - i : null };
+  if (prev === undefined || next === undefined) return none;
+  const st = style(next);
+  return { left: st, right: st, gap: null };
+}
+
 /** 印のセルの描き手：文字を 1 つ置き、セルに aria-label を付けるだけ */
 class MarkCell implements ICellRendererComp<ChartRow> {
   private el = document.createElement("span");
@@ -203,8 +231,33 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     const shown = ring ?? cell?.mark ?? null;
     if (shown) this.el.dataset.mark = shown;
     else delete this.el.dataset.mark;
+    // 人の試し：動かした先は朱の細い枠、動かす前の位置は薄い ○（字は aria-label に）。計画だけの ○ はドラッグで動かせる
+    const tctx = p.context as GridContext | undefined;
+    const ghost = !shown && !!p.data && !!period && !!tctx?.ghosts?.has(`${p.data.id}\u0000${period.key}`);
+    if (ghost) this.el.dataset.ghost = "plan";
+    else delete this.el.dataset.ghost;
+    const trial = !!cell && !!tctx?.trials && cell.detailKeys.some((k) => tctx.trials!.has(k));
+    if (trial) this.el.dataset.trial = "true";
+    else delete this.el.dataset.trial;
+    const fresh = !!shown && !!p.data && !!period && !!tctx?.fresh?.has(`${p.data.id}\u0000${period.key}`);
+    if (fresh) this.el.dataset.fresh = "true";
+    else delete this.el.dataset.fresh;
+    this.el.draggable = shown === "plan" && !cell?.summary;
     if (ring) this.el.dataset.ring = "true";
     else delete this.el.dataset.ring;
+    // 選んだ星と周期の線（時間の地図 1）。選びを外すと消える
+    const ctx = p.context as GridContext | undefined;
+    const picked = !!ctx?.picked && !!p.data && !!period && !!shown && ctx.picked.rowId === p.data.id && ctx.picked.periodKey === period.key;
+    if (picked) this.el.dataset.sel = "true";
+    else delete this.el.dataset.sel;
+    const cyc = ctx?.cycle && p.data && period && ctx.cycle.rowId === p.data.id ? cycleOf(p.data, ctx.cycle.keys, period.key) : null;
+    const g = p.eGridCell;
+    if (cyc?.left) g.dataset.cycL = cyc.left;
+    else delete g.dataset.cycL;
+    if (cyc?.right) g.dataset.cycR = cyc.right;
+    else delete g.dataset.cycR;
+    if (cyc?.gap) g.dataset.gap = T.cycleGap(cyc.gap);
+    else delete g.dataset.gap;
     if (cell?.summary && cell.count !== null) this.el.dataset.count = String(cell.count);
     else delete this.el.dataset.count;
     // 比べる版にあって今は無い印は、淡い破線の円で残す（字は読み上げのために aria-label に）
@@ -219,7 +272,9 @@ class MarkCell implements ICellRendererComp<ChartRow> {
           (isProposal(cell, p.context) ? T.legend.proposalAria : "") +
           (isRemoval(cell, p.context) ? T.legend.removalAria : "") +
           (isChanged(p.data, period, cell, p.context) ? T.legend.changedFromAria(version) : "") +
-          (was ? T.legend.oldPlanAria(version, T.markName[was]) : ""),
+          (was ? T.legend.oldPlanAria(version, T.markName[was]) : "") +
+          (ghost ? T.legend.trialFromAria : "") +
+          (trial ? T.legend.trialAria : ""),
       );
     return true;
   }
@@ -467,7 +522,7 @@ export class ChartGrid {
   private colKey = "";
 
   private mode: ChartModel["mode"] = "ledger";
-  constructor(el: HTMLElement, private h: GridHandlers) {
+  constructor(private el: HTMLElement, private h: GridHandlers) {
     this.api = createGrid<ChartRow>(el, {
       theme,
       columnDefs: [],
@@ -505,6 +560,60 @@ export class ChartGrid {
     });
   }
 
+  private fresh: ReadonlySet<string> = new Set();
+
+  /** 新しく現れた星（答えの結果で計画が作り直されたとき）。その行だけ描き直す。次の描き直しで外れる */
+  setFresh(fresh: ReadonlySet<string>) {
+    const rowsOf = (set: ReadonlySet<string>) => [...set].map((k) => k.split("\u0000")[0]!);
+    const ids = new Set([...rowsOf(this.fresh), ...rowsOf(fresh)]);
+    this.fresh = fresh;
+    const ctx = this.api.getGridOption("context") as GridContext;
+    this.api.setGridOption("context", { ...ctx, fresh } satisfies GridContext);
+    const rowNodes = [...ids].map((id) => this.api.getRowNode(id)).filter((n): n is NonNullable<typeof n> => !!n);
+    if (rowNodes.length) this.api.refreshCells({ rowNodes, force: true });
+    // 現れ終えたら外す（あとで送った・描き直したセルが、もう一度現れないように）。描いた印は次の描き直しで消える
+    if (this.freshTimer) clearTimeout(this.freshTimer);
+    if (fresh.size > 0)
+      this.freshTimer = setTimeout(() => {
+        this.freshTimer = null;
+        this.fresh = new Set();
+        const c = this.api.getGridOption("context") as GridContext;
+        this.api.setGridOption("context", { ...c, fresh: this.fresh } satisfies GridContext);
+      }, 600);
+  }
+  private freshTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private ghosts: ReadonlySet<string> = new Set();
+  private trials: ReadonlySet<string> = new Set();
+
+  /** 人の試し（動かす前の薄い ○ と、動かした先）を描き直す。試しが変わったときだけ呼ぶ */
+  setTrials(ghosts: ReadonlySet<string>, trials: ReadonlySet<string>) {
+    this.ghosts = ghosts;
+    this.trials = trials;
+    const ctx = this.api.getGridOption("context") as GridContext;
+    this.api.setGridOption("context", { ...ctx, ghosts, trials } satisfies GridContext);
+    this.api.refreshCells({ force: true });
+  }
+
+  private picked: GridContext["picked"] = null;
+  private cycle: GridContext["cycle"] = null;
+
+  /** 選んだ星と周期の線を描き直す（行は渡し直さない）。星を選んでいるあいだ、ほかの星を薄くする（CSS。動きは --dur-base、prefers-reduced-motion では 0） */
+  pick(picked: GridContext["picked"], cycle: GridContext["cycle"]) {
+    if (JSON.stringify([picked, cycle?.rowId, cycle?.keys]) === JSON.stringify([this.picked, this.cycle?.rowId, this.cycle?.keys])) return;
+    this.picked = picked;
+    this.cycle = cycle;
+    const ctx = this.api.getGridOption("context") as GridContext;
+    this.api.setGridOption("context", { ...ctx, picked, cycle } satisfies GridContext);
+    this.el.dataset.picked = picked ? "true" : "false";
+    // 描き直すのは、前と今の選びの行だけ（矢印のキーで焦点を動かすたびに表全体を描き直さない）
+    const ids = new Set([this.lastPickRows, [picked?.rowId, cycle?.rowId]].flat().filter((x): x is string => !!x));
+    this.lastPickRows = [picked?.rowId, cycle?.rowId].filter((x): x is string => !!x);
+    const rowNodes = [...ids].map((id) => this.api.getRowNode(id)).filter((n): n is NonNullable<typeof n> => !!n);
+    if (rowNodes.length) this.api.refreshCells({ rowNodes, force: true });
+  }
+  private lastPickRows: string[] = [];
+
   private select(rowId: string, colId: string | null) {
     this.h.onSelect(rowId, colId && !colId.startsWith("lv") && !colId.startsWith("band.") ? colId : null);
   }
@@ -522,7 +631,7 @@ export class ChartGrid {
     removals?: ReadonlySet<string>,
   ) {
     this.mode = model.mode;
-    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals } satisfies GridContext);
+    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals, picked: this.picked, cycle: this.cycle, ghosts: this.ghosts, trials: this.trials, fresh: this.fresh } satisfies GridContext);
     const cols = columns(model, foldLevel, this.h, band);
     const key = JSON.stringify([model.mode, model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band, cols.map((c) => ("width" in c ? c.width : null))]);
     if (key !== this.colKey) {

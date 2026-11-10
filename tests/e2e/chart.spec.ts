@@ -43,9 +43,13 @@ const planJson = new Map<string, string>();
 test.beforeAll(async () => {
   for (const [name, make] of Object.entries(DEV_PLANS)) planJson.set(name, JSON.stringify(make()));
   stateDir = mkdtempSync(join(tmpdir(), "moyai-e2e-chart-"));
+  // Windows の外では、既定の保存先は HOME の Documents の下（src/bridge/places.ts）。無いと保存先が決まらず、受けた決定を読めない。
+  // 一時の HOME に Documents を作って渡す（Windows は OS に聞くので、そのまま。mushitaro/moyai#36）
+  const home = join(stateDir, "home");
+  mkdirSync(join(home, "Documents"), { recursive: true });
   const port = await freePort();
   child = spawn(process.execPath, ["dist/cli.js", "start", "--port", String(port), "--no-open"], {
-    env: { ...process.env, MOYAI_STATE_DIR: stateDir },
+    env: { ...process.env, MOYAI_STATE_DIR: stateDir, ...(process.platform === "win32" ? {} : { HOME: home }) },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";
@@ -379,4 +383,82 @@ test("次回の列：作業の行だけに起点の粒度で。行を選ぶと�
   await page.getByTestId("cost-top").first().click({ timeout: 5000 });
   await expect(page.getByTestId("work-detail-title")).toHaveText("分解整備");
   await page.screenshot({ path: shot(`chart-next-${tag}`) });
+});
+
+test("時間の地図 1：星を選ぶとその星だけ強まり、行の星どうしを周期の線で結ぶ。選びを外すと元に戻る（#31）", async ({ page }, info) => {
+  const tag = info.project.name;
+  await openPlan(page, "fictional-1");
+  const grid = page.getByTestId("chart-grid");
+  await expect(grid).not.toHaveAttribute("data-picked", "true");
+  // 開いたときの星は「現れる」動きを付けない（#34）
+  await expect(page.locator("[data-fresh]")).toHaveCount(0);
+  await expect(page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]")).toHaveCount(0);
+
+  await cell(page, "受入供給設備 › ごみクレーン · 2020 年度").click();
+  await expect(grid).toHaveAttribute("data-picked", "true");
+  await expect(page.locator(".moyai-mark [data-sel]")).toHaveCount(1);
+  // 周期の線：選んだ行だけ。間隔は始まりの星の右に「n 年」。良否の印は付けない
+  const crane = cell(page, "受入供給設備 › ごみクレーン · 2020 年度");
+  await expect(crane).toHaveAttribute("data-cyc-r", /solid|dash/);
+  await expect(crane).toHaveAttribute("data-gap", /^\d+ 年$/);
+  const rowIds = await page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]").evaluateAll((els) => [...new Set(els.map((e) => e.closest(".ag-row")?.getAttribute("row-id")))]);
+  expect(rowIds).toHaveLength(1);
+  // 由来は今の横の板の「詳細」（新しい板は足さない）
+  await expect(page.getByTestId("source-ref").first()).toContainText("plan-hoshitori.xlsx");
+  await page.screenshot({ path: shot(`chart-time-map-1-${tag}`) });
+
+  // 名前の列（星でないセル）を選ぶと、星の強めは外れ、周期の線はその行のまま
+  await page.locator(`.ag-row[row-id="${rowIds[0]}"] [col-id='lv2']`).click();
+  await expect(grid).toHaveAttribute("data-picked", "false");
+  await expect(crane).toHaveAttribute("data-cyc-r", /solid|dash/);
+
+  // 月の表示では周期の線を引かない
+  await page.getByTestId("period-mode").getByRole("button", { name: "月", exact: true }).click();
+  await expect(page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]")).toHaveCount(0);
+});
+
+test("時間の地図 2：未来の ○ を Alt+← / Alt+→ で動かすと、元の位置に薄い ○、先に朱の細い枠。Ctrl+Z で戻り、Ctrl+Shift+Z でやり直す（#32）", async ({ page }, info) => {
+  const tag = info.project.name;
+  // 開発用の施設は毎年度に計画があるので、動かす先を空けた写しを使う：2027 年度の計画を外す
+  const gap = DEV_PLANS["fictional-1"]();
+  gap.details = gap.details.filter((d: { planOrActual: string; fiscalYear: number }) => !(d.planOrActual === "plan" && d.fiscalYear === 2027));
+  planJson.set("fictional-1-gap", JSON.stringify(gap));
+  await openPlan(page, "fictional-1-gap");
+  // 計画だけの未来の ○ で、隣の年度（今の年度より先）が空いているもの
+  const now = (() => {
+    const d = new Date();
+    return d.getMonth() + 1 >= 4 ? d.getFullYear() : d.getFullYear() - 1;
+  })();
+  const target = await page.locator('[role="gridcell"][col-id^="fy"]').evaluateAll((els, now) => {
+    for (const e of els) {
+      const m = / · (20\d\d) 年度 · 計画$/.exec(e.getAttribute("aria-label") ?? "");
+      if (!m || Number(m[1]) < now) continue;
+      const fy = Number(m[1]);
+      const row = e.closest(".ag-row");
+      for (const dir of [1, -1]) {
+        const next = row?.querySelector(`[col-id="fy${fy + dir}"]`);
+        if (next && fy + dir >= now && !next.querySelector("[data-mark]")) return { row: row!.getAttribute("row-id")!, fy, dir };
+      }
+    }
+    return null;
+  }, now);
+  expect(target).not.toBeNull();
+  const at = (fy: number) => page.locator(`.ag-row[row-id="${target!.row}"] [col-id="fy${fy}"]`).first();
+  const to = target!.fy + target!.dir;
+  await at(target!.fy).click();
+  // 選びが表に届いてからキーを押す（選んだ直後は行を描き直していて、その間のキーは星取表に届かないことがある。mushitaro/moyai#36）
+  await expect(page.locator('[data-picked="true"]')).toHaveCount(1);
+  await page.keyboard.press(target!.dir > 0 ? "Alt+ArrowRight" : "Alt+ArrowLeft");
+  await expect(at(to).locator("[data-trial]")).toHaveCount(1);
+  await expect(at(target!.fy).locator("[data-ghost]")).toHaveCount(1);
+  await expect(at(to)).toHaveAttribute("aria-label", /人の試し/);
+  // 時間の地図 4（#34）：新しく現れた星だけが静かに現れる（開いたときの星には付かない）
+  await expect(at(to).locator("[data-fresh]")).toHaveCount(1);
+  expect(await page.locator("[data-fresh]").count()).toBeLessThanOrEqual(2);
+  await page.screenshot({ path: shot(`chart-time-map-2-${tag}`) });
+  await page.keyboard.press("Control+z");
+  await expect(at(target!.fy).locator("[data-mark='plan']")).toHaveCount(1);
+  await expect(at(to).locator("[data-mark]")).toHaveCount(0);
+  await page.keyboard.press("Control+Shift+z");
+  await expect(at(to).locator("[data-trial]")).toHaveCount(1);
 });

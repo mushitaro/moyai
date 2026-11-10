@@ -1,6 +1,7 @@
 // ledger submit（人だけの CLI。docs/plan.md §2.8 場 2・§2.12）：標準入力が端末でなければ断る。署名済みの束を、台帳の既定のブランチの木に
 // 足したときに受け手と同じ関数で ✓ かを確かめ、作業の木と索引を変えずに枝を作り、push と gh のコマンドを出す（走らせない）。
 // 支度した枝は validate-pr でも ✓。一時のフォルダの本物の git のリポジトリで試す。
+import { LEDGER_DIR } from "../../../src/share/ledger";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -45,8 +46,8 @@ beforeAll(() => {
   git(repo, "init", "-q", "-b", "main");
   git(repo, "config", "user.name", "moyai-test");
   git(repo, "config", "user.email", "test@example.invalid");
-  put(repo, "ledger/ledger/ledger.json", L.text);
-  put(repo, "ledger/ledger/TERMS.md", "【架空】試験の利用条件\n");
+  put(repo, `${LEDGER_DIR}/ledger.json`, L.text);
+  put(repo, `${LEDGER_DIR}/TERMS.md`, "【架空】試験の利用条件\n");
   put(repo, a1.path, a1.text);
   git(repo, "add", "-A");
   git(repo, "commit", "-q", "-m", "base");
@@ -144,7 +145,7 @@ describe("ledger submit", () => {
     expect(out).toContain(`git -C "${repo}" push origin ${branch}`);
     expect(git(repo, "status", "--porcelain")).toBe("");
     expect(git(repo, "show", `${branch}:${own.path}`)).toBe(own.text);
-    expect(own.path).toBe(`ledger/ledger/bundles/${A.key}/retired.json`);
+    expect(own.path).toBe(`${LEDGER_DIR}/bundles/${A.key}/retired.json`);
     const bodyFile = /--body-file "([^"]+)"/.exec(out)![1]!;
     const body = readFileSync(bodyFile, "utf8");
     rmSync(bodyFile, { force: true });

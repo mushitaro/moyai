@@ -21,6 +21,7 @@ import { requestChartJump, type ChartJump } from "../state/chart-jump";
 import { sheetHash } from "../stages";
 import { commonRowId, periodKeyOf } from "../../plan/chart";
 import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
+import { useConnection } from "../state/bridge";
 import { pendingDecisions, type Decision } from "../../plan/diff";
 import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import { STAR_KIND_TEXT, basisWithoutReference, isStarProposal, proposalIdOf, starValueOfKey, type StarKind } from "../../plan/star";
@@ -87,8 +88,10 @@ export function acceptDecisionsAs(kind: Kind, ds: readonly Decision[], typed: st
  * 案のままの当てはめの規則が当てている行は、決定の 1 行ずつには出さない（規則の行で受ける。二重に出さない。台帳の新-4）。
  * openRules は案のままの規則の数（下の帯の数に足す）
  */
-export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; openRemovals: number; ready: boolean } {
-  const [load] = usePlanStatus(client, plan?.planId ?? "", !!plan);
+export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; openRemovals: number; ready: boolean; problem: string | null } {
+  // つながっているあいだだけ読む（つながる前に送って失敗したまま止まらないように。つなぎ直すと読み直す。Merge の版の読みと同じ）
+  const { state: conn } = useConnection();
+  const [load] = usePlanStatus(client, plan?.planId ?? "", !!plan && conn.kind === "open");
   const status = load.kind === "ready" ? load.status : null;
   const working = useWorkingPlan();
   const proposals = working?.proposals ?? NO_PROPOSALS;
@@ -101,7 +104,8 @@ export function usePending(client: BridgeClient, plan: Plan | null): { pending: 
     for (const p of proposals) if (p.state === "proposed") for (const ref of heldRows(plan, p)) held.add(ref.startsWith("n:") ? `item:${ref.slice(2)}` : `attr:${ref.slice(2)}`);
     return pendingDecisions(plan, status.accepted ?? []).filter((d) => !held.has(d.id));
   }, [plan, status, proposals]);
-  return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, openRemovals, ready: !!status };
+  // 受けた決定を読めないあいだ（読込中・保存先が無い・読めない）は、受けていない決定を 0 と数えない。ready が false のうちは確定を止める（mushitaro/moyai#36）
+  return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, openRemovals, ready: !!status, problem: load.kind === "error" ? load.message : null };
 }
 
 // ─── 周期の案を受けたときの作業のきっかけ（Architect の 44。Wire、11-06） ───────────
@@ -168,7 +172,8 @@ interface StarRow {
   id: string;
   kind: StarKind;
   workKey: string;
-  author: "ai" | "ai_relayed_human";
+  /** human は人の試し（星取表で人が動かした ○。人が確定した削除なので、受けたものに並ぶ） */
+  author: "ai" | "ai_relayed_human" | "human";
   basis: string;
   /** 追加の決定（計画の明細） */
   adds: Decision[];
@@ -631,7 +636,7 @@ export function DecisionsView({ plan, pending, ready }: { plan: Plan; pending: r
               {starYears(r)}
             </Text>
             <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em", whiteSpace: "nowrap" }}>
-              {r.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
+              {r.author === "human" ? T.kind.human : r.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
             </Text>
           </Group>
         </Table.Td>

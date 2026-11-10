@@ -18,6 +18,7 @@ import { requireTerminal } from "./human";
 import { createLedger } from "../share/ledger-init";
 import { resolveStateDir } from "../bridge/state";
 import {
+  LEDGER_BUNDLES_PATH,
   LEDGER_DIR,
   LEDGER_FILE,
   LEDGER_JSON_PATH,
@@ -37,17 +38,17 @@ import { PR_LIMITS, displayablePath, validateAll, validatePr, type PrResult } fr
 import { profileText, renderLedgerSite } from "../share/site";
 
 export const LEDGER_CLI_TEXT = {
-  verifyUsage: "使い方：moyai verify ledger <MOYAI の clone>（その下に ledger/ledger/ledger.json と ledger/ledger/bundles/ がある）",
-  noLedger: (p: string) => `台帳が見つかりません：${p}（ledger/ledger/ledger.json のある MOYAI の clone の根を指してください）`,
-  dirSymlink: "ledger/ か ledger/ledger/ が symlink です。たどらずに止めました。",
-  tooMany: "ledger/ledger/ の下のファイルが多すぎます（上限を越えたので止めました）。",
-  rulesUnreadable: "台帳の決まり（ledger/ledger/ledger.json）を読めません。",
+  verifyUsage: `使い方：moyai verify ledger <台帳の clone>（その下に ${LEDGER_JSON_PATH} と ${LEDGER_BUNDLES_PATH}/ がある）`,
+  noLedger: (p: string) => `台帳が見つかりません：${p}（${LEDGER_JSON_PATH} のある台帳の clone の根を指してください）`,
+  dirSymlink: `${LEDGER_ROOT ? `${LEDGER_ROOT}/ か ` : ""}${LEDGER_DIR}/ が symlink です。たどらずに止めました。`,
+  tooMany: `${LEDGER_DIR}/ の下のファイルが多すぎます（上限を越えたので止めました）。`,
+  rulesUnreadable: `台帳の決まり（${LEDGER_JSON_PATH}）を読めません。`,
   /** 決まりが、どこにも出さない欄（経過年）を許している（前の版の決まり） */
-  rulesFieldRemoved: (reason: string) => `台帳の決まり（ledger/ledger/ledger.json）を読めません：${reason}。`,
+  rulesFieldRemoved: (reason: string) => `台帳の決まり（${LEDGER_JSON_PATH}）を読めません：${reason}。`,
   packNotReady: (pack: string, reason: string) => `Skillパック ${pack} の共有の部品を読めません（${reason}）`,
   head: (id: string | null, version: number | null, hash: string | null) =>
     `台帳 ${id ?? "（ID 不明）"}${version !== null ? `（決まり 版 ${version}` : "（決まり"}、SHA-256 ${hash ? hash.slice(0, 16) : "不明"}…）`,
-  rules: "決まり（ledger/ledger/ledger.json）",
+  rules: `決まり（${LEDGER_JSON_PATH}）`,
   bundle: (p: string) => `共有ファイル ${p}`,
   retired: (p: string) => `失効記録 ${p}`,
   other: (p: string) => `許した形の外 ${p}`,
@@ -58,13 +59,20 @@ export const LEDGER_CLI_TEXT = {
 
 const say = (m: string) => process.stderr.write(`${m}\n`);
 
-/** 指した道から、MOYAI のリポジトリ（台帳を ledger/ に持つ）の根を決める（根か、その下の ledger/ か ledger/ledger/ を受ける）。見つからなければ null */
+/** 指した道から、台帳のリポジトリの根を決める（根か、その下の台帳の根か、決まりのあるフォルダを受ける）。見つからなければ null */
 export function ledgerRootOf(folder: string): string | null {
   const abs = resolve(folder);
   const inner = LEDGER_DIR.split("/");
-  if (existsSync(join(abs, ...inner, LEDGER_FILE))) return abs;
-  if (basename(abs) === LEDGER_ROOT && existsSync(join(abs, ...inner.slice(1), LEDGER_FILE))) return dirname(abs);
-  if (basename(abs) === inner[1] && basename(dirname(abs)) === LEDGER_ROOT && existsSync(join(abs, LEDGER_FILE))) return dirname(dirname(abs));
+  // 指した道が、台帳のフォルダの道の up 段目まで入った所のとき：末尾の up 段の名前が合い、残りの下に決まりがある
+  for (let up = 0; up <= inner.length; up++) {
+    let base = abs;
+    let ok = true;
+    for (let k = up - 1; k >= 0 && ok; k--) {
+      if (basename(base) !== inner[k]) ok = false;
+      else base = dirname(base);
+    }
+    if (ok && existsSync(join(abs, ...inner.slice(up), LEDGER_FILE))) return base;
+  }
   return null;
 }
 
@@ -149,10 +157,10 @@ export const LEDGER_USAGE = `使い方：
 /** ledger init の言葉 */
 export const INIT_TEXT = {
   usage: "使い方：moyai ledger init --root <MOYAI の clone の根（絶対の道）> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から）",
-  intro: "公開の台帳の決まり（ledger/ledger/ledger.json）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。パスワードでは包みません）。",
+  intro: `公開の台帳の決まり（${LEDGER_JSON_PATH}）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。パスワードでは包みません）。`,
   failed: (r: string) =>
     ({
-      exists: "ledger/ledger/ledger.json がもうあります（足すだけの台帳なので、上書きしません）。",
+      exists: `${LEDGER_JSON_PATH} がもうあります（足すだけの台帳なので、上書きしません）。`,
       monthInvalid: "月の形が違います（YYYY-MM）。",
       keyExists: "この台帳の鍵がもう状態フォルダにあります。",
       selfCheck: "作った決まりを、受け手と同じ関数で読めませんでした。何も書いていません。",
@@ -288,7 +296,7 @@ export const PR_TEXT = {
   title: (ok: boolean) => (ok ? "### MOYAI 台帳の検証：✓ 通りました" : "### MOYAI 台帳の検証：✗ 通りません"),
   titleNotLedger: "### MOYAI 台帳の検証：台帳の PR ではありません",
   notLedger: (base: string, head: string) =>
-    `- ledger/ の外を変える PR で、台帳のファイル（ledger/ledger/ の下）を変えていません。共有ファイルの検証はしていません（base \`${base.slice(0, 12)}\`・head \`${head.slice(0, 12)}\`）。`,
+    `- ${LEDGER_ROOT}/ の外を変える PR で、台帳のファイル（${LEDGER_DIR}/ の下）を変えていません。共有ファイルの検証はしていません（base \`${base.slice(0, 12)}\`・head \`${head.slice(0, 12)}\`）。`,
   titleError: "### MOYAI 台帳の検証：確かめられませんでした",
   scopePr: (n: number, base: string, head: string) => `- 確かめたもの：この PR が足す・変えるファイル ${n} 件（base \`${base.slice(0, 12)}\`・head \`${head.slice(0, 12)}\`）`,
   scopeAll: (n: number, head: string) => `- 変更なし（base と head が同じ commit \`${head.slice(0, 12)}\`）。既定のブランチにある全部の共有ファイル ${n} 件を再照合しました`,

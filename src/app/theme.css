@@ -609,7 +609,7 @@ button.moyai-stop-notice {
 }
 
 /* §10.20 ヘッダ */
-/* ヘッダ（絵は Review.dc.html・Main.dc.html）：左から、しるし（25×20、飾り）→ 段の列「MOYAI › MERGE › EXPORT › SHARE」。
+/* ヘッダ（絵は Review.dc.html・Main.dc.html）：左から、しるし（25×20、飾り）→ 段の列「MOYAI › HOSHITORI」。
    しるしと「MOYAI」の間は、トップ（MOYAI が今の段で大きい）では 10px（しるしと字の組み）、ほかの段では 40px 離す */
 .moyai-header {
   position: relative;
@@ -1022,6 +1022,12 @@ button.moyai-top-mk[data-kind="signed"] {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+/* HOSHITORI の出力・共有のシートの中（mushitaro/moyai#30）：見出しとシートのタブの下の残りの高さ */
+.moyai-merge > .moyai-share-page {
+  height: auto;
+  flex: 1;
+  min-height: 0;
 }
 .moyai-share-body {
   flex: 1;

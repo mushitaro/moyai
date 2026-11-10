@@ -1,5 +1,6 @@
 // 画面の言葉はここだけに置く。内部の言葉（型の名前など）を利用者に見せない。
 import type { TabErrorCode } from "../../shared/errors";
+import { LEDGER_PLACE } from "../../share/ledger-place";
 
 export const TEXT = {
   appName: "MOYAI",
@@ -32,9 +33,7 @@ export const TEXT = {
     home: "最初の画面",
     tabsLabel: "画面",
     tabs: {
-      merge: { en: "HOSHITORI", ja: "版に重ねる（星取表・照査・確定・資料）" },
-      export: { en: "EXPORT", ja: "確定した版の Excel を出力" },
-      share: { en: "SHARE", ja: "共有フォルダと公開台帳に出す" },
+      merge: { en: "HOSHITORI", ja: "版に重ねる（星取表・照査・確定・出力・共有・資料）" },
     },
     themeLabel: "表示の明暗",
     themeDark: "暗",
@@ -114,6 +113,8 @@ export const TEXT = {
     mark: { plan: "○", actual: "●", both: "◎" },
     cycleMark: (fy: number) => `○ ${fy} 年度（周期の案）`,
     markName: { plan: "計画", actual: "実績", both: "計画と実績" },
+    /** 周期の線の上の間隔（時間の地図 1。良否は言わない） */
+    cycleGap: (n: number) => `${n} 年`,
     markNone: "星取なし",
     markRemoved: "星取の削除",
     reviewPrefix: "?",
@@ -151,6 +152,9 @@ export const TEXT = {
       oldPlan: (n: number) => `第 ${n} 版の星取`,
       changedFromAria: (n: number) => `（第 ${n} 版から変更）`,
       oldPlanAria: (n: number, mark: string) => `（第 ${n} 版の星取：${mark}）`,
+      /** 人の試し（時間の地図 2）の読み上げ */
+      trialFromAria: " · 人の試しで動かす前の位置",
+      trialAria: " · 人の試し（未署名）",
     },
     change: (who: string, why: string, before: string, after: string) => `誰が：${who}
 なぜ：${why}
@@ -192,8 +196,8 @@ export const TEXT = {
       ng: (n: number) => `✗ の共有ファイル ${n} は数えていません`,
       loadReason: {
         "ledger.notChosen": "公開台帳の clone の場所を、設定でまだ選んでいません",
-        "ledger.noLedgerDir": "選んだ場所に ledger/ のフォルダがありません",
-        "ledger.missing": "選んだ場所に台帳のルール（ledger/ledger.json）がありません",
+        "ledger.noLedgerDir": `選んだ場所に ${LEDGER_PLACE.dir}/ のフォルダがありません`,
+        "ledger.missing": `選んだ場所に台帳のルール（${LEDGER_PLACE.dir}/ledger.json）がありません`,
         "ledger.rules": "台帳のルールが ✓ になりません",
         "ledger.otherPack": "この台帳は、計画とは別のSkillパックの台帳です",
         "ring.none": "このSkillパックの共有フォルダに入っていません",
@@ -209,7 +213,7 @@ export const TEXT = {
       aiNote: "AI（peer_reference）が読めるのは、ここで開いた比べの、下限を守った集計と匿名の札だけです。",
       peerRow: (place: string, label: string) => `${label}（${place}）`,
       statRow: (place: string) => `統計（${place}）`,
-      summaryRow: (band: string) => `類似施設　間隔の中央値 ${band}`,
+      summaryRow: (place: string) => `類似施設　${place}`,
       summaryFew: "類似施設　5 施設に満たない",
       profileMissing: "類似施設　見え方が未確定",
       fixDecide: "施設設定で決める",
@@ -237,6 +241,12 @@ export const TEXT = {
       review: "要確認",
       changed: "変更",
       proposal: "（案。未確定）",
+      /** 同じ整備に、違う資料がいくつつながっているか（2 つ以上のときだけ。時間の地図 1） */
+      sameWork: (n: number) => `資料 ${n} つが同じ整備を指す`,
+      /** 人の試し（星取表で人が動かした ○。時間の地図 2）の出どころと、理由の欄（入力欄は置かない） */
+      trial: "人の試し　理由 未記入",
+      /** 周期の根拠の出どころ（資料ではない出どころの、画面の言葉） */
+      basisOf: { record: "周期の根拠　自施設の実績", pack: "周期の根拠　Skillパックの基準", ledger: "周期の根拠　公開台帳", rule: "周期の根拠　計画ルール", conversation: "周期の根拠　Claude との会話" } as Record<string, string>,
       /** 星取の案の詳しく（docs/screens.md 3.2）：xs「計画の追加（未確定）」、題「2028 年度　分解整備」、出どころ・理由、「| 確定のシートで見る」 */
       starPending: (kind: string) => `${kind}（未確定）`,
       starHead: (fy: number, work: string) => `${fy} 年度　${work}`,
@@ -369,7 +379,7 @@ export const TEXT = {
     newFacility: "新しい施設",
     version: (n: number) => `第 ${n} 版`,
     facilitySettings: "施設設定",
-    sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", files: "資料" } as Record<string, string>,
+    sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", export: "出力", share: "共有", files: "資料" } as Record<string, string>,
     filesLabel: "資料",
     addFiles: "＋ 資料を追加",
     /**
@@ -426,6 +436,8 @@ export const TEXT = {
       noPlan: "まだ版の下書きがありません。資料をドロップして第 1 版をつくってください",
       open: (n: number) => `未回答 ${n}`,
       pending: (n: number) => `未確定 ${n}`,
+      /** 受けた決定を保存先から読んでいるあいだ（読めるまで確定を止める） */
+      reading: "読込中",
       // 下の帯が頭に「理由：」を付ける
       notConnected: "ブリッジ未接続",
       stale: "保存先に新しい版があります。開き直してください",
@@ -573,7 +585,7 @@ export const TEXT = {
       readingProposed: (name: string, n: number) => `「${name}」に ${n} 件追加（下書き。承認は版の署名で）`,
       readingRemoved: (name: string, n: number) => `「${name}」から ${n} 件外した（下書き）`,
       skillsRead: "AI が今効いている Skill の本文を読みました",
-      sharePreviewRead: "AI が共有ファイルの形と数を読みました（署名して送るのは SHARE の主ボタン）",
+      sharePreviewRead: "AI が共有ファイルの形と数を読みました（署名して送るのは HOSHITORI の共有のシートの主ボタン）",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の星取 ${marks}。確定のシートで確定するまで未確定）`,
       starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
       screenSet: (changed: number, refused: number) =>

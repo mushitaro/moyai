@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
-import { readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
+import { LEDGER_BUNDLE_PATH, readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
 import { loadSharePack } from "../../src/share/pack";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { E2E_NAME, PROFILE_ANSWERED, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
@@ -65,7 +65,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await page.getByTestId("confirm-close").click();
-    await page.getByTestId("tab-share").click();
+    await page.getByTestId("sheet-share").click();
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
   });
 
@@ -121,7 +121,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await page.screenshot({ path: shot(`ledger-pr-sent-${tag}`), fullPage: true });
     // 開き直すと：止め札は「前に出した共有ファイルが、まだ台帳に載っていません」の 1 つ。主ボタンは押せない
     await page.getByTestId("tab-merge").click();
-    await page.getByTestId("tab-share").click();
+    await page.getByTestId("sheet-share").click();
     await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
     await expect(page.getByTestId("send")).toBeDisabled();
 
@@ -131,7 +131,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     expect(files).toHaveLength(1);
     const [path, bytes] = files[0]!;
     // 台帳は moyai の ledger/ に取り込んだ（中の ledger/ はそのまま）。束の道はリポジトリの根から ledger/ledger/bundles/…
-    expect(path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+    expect(LEDGER_BUNDLE_PATH.exec(path)?.[2]).toMatch(/^000001-/);
     const pack = loadSharePack(join(process.cwd(), "packs"), "waste-incineration");
     if (!pack.ok) throw new Error(pack.reason);
     const dir = await readLedgerDir(repo);

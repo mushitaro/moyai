@@ -12,7 +12,7 @@ import { readGitHub, readLedgers, writeGitHub, type LedgerSentEntry } from "../.
 import { previewPlace, sealPlace, type Answers } from "../../../src/share/checkpoint";
 import { facilityKey, storeFacilityKey, writePlanSent, type Facility } from "../../../src/share/facility";
 import { keyIdOf, type KeyPair } from "../../../src/share/sign";
-import { readLedgerDir, verifyLedgerFiles } from "../../../src/share/ledger";
+import { LEDGER_BUNDLE_PATH, LEDGER_DIR, readLedgerDir, verifyLedgerFiles } from "../../../src/share/ledger";
 import { LEDGER_PR_TEXT, acceptLedger, checkAgainstLedger, ledgerAcceptance, ledgerBranch, ledgerBundlePath, ledgerPlace, loadLedgerForSend, pendingSent } from "../../../src/share/ledger-send";
 import type { SharePack } from "../../../src/share/pack";
 import { startGitHubStub, STUB_TOKEN, type GitHubStub } from "../../helpers/github-stub";
@@ -95,7 +95,7 @@ describe("公開の台帳へ出す：台帳の clone・鍵・束", () => {
     const s = sealPlace(place, sender.pair, PACK, smallPlan(), ANSWERS, MONTH, v.bodyHash!);
     if (!s.ok) throw new Error(s.reason);
     const path = ledgerBundlePath(keyIdOf(sender.pair.pub), s.input.seq, s.hash);
-    expect(path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+    expect(LEDGER_BUNDLE_PATH.exec(path)?.[2]).toMatch(/^000001-/);
     expect(checkAgainstLedger(L, PACK, path, Buffer.from(s.text, "utf8"))).toEqual({ ok: true });
     // 1 バイト変えた束は、受け手の関数で ✗
     const bad = Buffer.from(s.text.replace('"seq":1', '"seq":2'), "utf8");
@@ -108,7 +108,7 @@ describe("公開の台帳へ出す：台帳の clone・鍵・束", () => {
     const sender = senderOf(facility, L.id);
     storeFacilityKey(facility, L.id, sender.pair, pending);
     const key = keyIdOf(sender.pair.pub);
-    const e = { ledgerId: L.id, key, seq: 1, hash: "c".repeat(64), path: "ledger/ledger/bundles/x", month: MONTH, at: NOW.toISOString(), repo: "ledger-owner/moyai", pr: 7, url: "https://github.com/x/pull/7", login: "moyai-test" };
+    const e = { ledgerId: L.id, key, seq: 1, hash: "c".repeat(64), path: `${LEDGER_DIR}/bundles/x`, month: MONTH, at: NOW.toISOString(), repo: "ledger-owner/moyai", pr: 7, url: "https://github.com/x/pull/7", login: "moyai-test" };
     // 持ち出し簿は保管先の計画のフォルダ（どの PC も、まだ載っていない PR を読める）
     writePlanSent<LedgerSentEntry>(facility, L.id, [{ ...e, state: "open" } as LedgerSentEntry]);
     expect(pendingSent(facility, L, key)?.pr).toBe(7);
@@ -239,7 +239,7 @@ describe("GitHub とのやりとり（試験の台）", () => {
     stub = await startGitHubStub();
     const r = await openLedgerPr(io(stub), "違うトークン", {
       upstream: stub.upstream,
-      path: "ledger/ledger/bundles/0123456789abcdef/000001-0123456789abcdef.json",
+      path: `${LEDGER_DIR}/bundles/0123456789abcdef/000001-0123456789abcdef.json`,
       bytes: new Uint8Array([1]),
       branch: "moyai/x",
       title: "t",

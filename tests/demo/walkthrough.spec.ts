@@ -172,7 +172,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-06-chart-common") });
     });
 
-    await test.step("3 似た施設を重ねる（共通台帳の上で、まず全国の似た施設と比べる。運営者の指摘、11-06）：見出しの「似た施設　重ねる」。共通の行の下に「類似施設　間隔の中央値 …」の 1 行", async () => {
+    await test.step("3 似た施設を重ねる（共通台帳の上で、まず全国の似た施設と比べる。運営者の指摘、11-06）：見出しの「似た施設　重ねる」。共通の行の下に「類似施設　台帳」の 1 行（統計は選んだときだけ横の板に）", async () => {
       await pa.getByTestId("merge-peers").getByRole("button", { name: "比較" }).click();
       await expect(pa.getByTestId("peer-panel")).toBeVisible();
       // 見え方の答えは施設の設定で（星取表の上では答えない）

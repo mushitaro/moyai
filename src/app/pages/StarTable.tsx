@@ -25,7 +25,7 @@ import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import { STAR_KIND_TEXT, basisWithoutReference, isStarProposal, proposalIdOf, starIdOf, starValueOfKey, type StarKind } from "../../plan/star";
-import { openRemovals, requestStarPick, starGroups, useStarGroups } from "../state/stars";
+import { moveStarByHuman, openRemovals, redoTrialByHuman, requestStarPick, starGroups, trialOrigins, undoTrialByHuman, useStarGroups } from "../state/stars";
 import { sheetHash } from "../stages";
 import { StarReference } from "../components/StarReference";
 import { useAccepted } from "../state/decisions";
@@ -113,8 +113,16 @@ function measureAfterPaint(name: string, start: string) {
   );
 }
 
+/** 資料ではない出どころ（record:・pack:・ledger:・rule:・conversation:）は、周期の根拠として言葉で出す */
 function sourceText(s: Plan["details"][number]["sources"][number]): string {
-  return [s.file, s.sheet, s.cell, s.page !== null ? T.source.page(s.page) : null].filter((x) => x !== null && x !== "").join(" · ");
+  const kind = /^([a-z]+):/.exec(s.file)?.[1];
+  if (kind === "trial") return T.source.trial;
+  const head = kind && T.source.basisOf[kind] ? T.source.basisOf[kind]! : s.file;
+  return [head, s.sheet, s.cell, s.page !== null ? T.source.page(s.page) : null].filter((x) => x !== null && x !== "").join(" · ");
+}
+/** 同じ整備につながる資料の数（資料ではない出どころは数えない） */
+function documentCount(d: WorkDetailT): number {
+  return new Set(d.sources.filter((s) => !/^[a-z]+:/.test(s.file)).map((s) => s.file)).size;
 }
 
 interface Index {
@@ -145,6 +153,11 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
         {T.source.by}：{TEXT.author[d.author]} · {T.source.basis}：{d.basis}
         {d.needsReview ? ` · ${T.source.review}` : ""}
       </Text>
+      {documentCount(d) >= 2 && (
+        <Text size="xs" data-testid="source-same-work">
+          {T.source.sameWork(documentCount(d))}
+        </Text>
+      )}
       <Stack gap={0}>
         {d.sources.map((s, i) => (
           <Text key={i} size="xs" data-testid="source-ref">
@@ -346,7 +359,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               wholeSystem: P.wholeSystem,
               peer: (k, l) => P.peerRow(P.placeShort[k] ?? k, l),
               stat: (k) => P.statRow(P.placeShort[k] ?? k),
-              summary: (k, stats) => (stats.interval.shown === "median" ? P.summaryRow(bandShort(stats.interval.median)) : P.summaryFew),
+              // 統計（中央値・四分位・範囲）は、行を選んだときだけ横の板に出す（時間の地図 3、mushitaro/moyai#33）。行の名前は場と状態だけ
+              summary: (k, stats) => (stats.interval.shown === "median" ? P.summaryRow(P.placeShort[k] ?? k) : P.summaryFew),
             },
           }
         : undefined,
@@ -491,6 +505,155 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       });
     }
   }, [model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals, jump]);
+
+  // 時間の地図 2（mushitaro/moyai#32）：人が未来の ○ を動かして試す。画面の人の操作だけ（AI のツールの受け手からは動かさない）
+  const fyOf = (key: string | null): number | null => {
+    const m = key ? /^fy(\d{4})$/.exec(key) : null;
+    return m ? Number(m[1]) : null;
+  };
+  const trialRange = () => {
+    const d = new Date();
+    const now = d.getMonth() + 1 >= plan.facility.fiscalYearStartMonth ? d.getFullYear() : d.getFullYear() - 1;
+    const years = model.periods.map((p) => fyOf(p.key)).filter((y): y is number => y !== null);
+    return { min: now, max: years.length ? Math.max(...years) : now };
+  };
+  /** そのセルの、動かせる計画の作業（計画だけの 1 作業のとき。今の年度より前は動かさない） */
+  const movableWork = (rowId: string, periodKey: string): { workKey: string; fy: number } | null => {
+    const fy = fyOf(periodKey);
+    const row = model.rows.find((r) => r.id === rowId);
+    const cell = row?.cells[periodKey];
+    if (fy === null || !cell || cell.mark !== "plan" || cell.summary || fy < trialRange().min) return null;
+    const works = new Set(plan.details.filter((d) => cell.detailKeys.includes(d.detailKey) && d.planOrActual === "plan").map((d) => d.workKey));
+    return works.size === 1 ? { workKey: [...works][0]!, fy } : null;
+  };
+  const tryMove = (rowId: string, periodKey: string, to: number): boolean => {
+    const w = movableWork(rowId, periodKey);
+    if (!w) return false;
+    const r = moveStarByHuman(w.workKey, w.fy, to, trialRange());
+    if (r.ok) setSelected({ rowId, periodKey: `fy${to}` });
+    return r.ok;
+  };
+  // 動かす前の位置（薄い ○）と動かした先：試しの明細の鍵から行を引く
+  useEffect(() => {
+    const origins = trialOrigins();
+    const ids = new Set(origins.map((o) => o.id));
+    const trialKeys = new Set(plan.details.filter((d) => ids.has(proposalIdOf(d.detailKey) ?? "")).map((d) => d.detailKey));
+    const ghosts = new Set<string>();
+    for (const o of origins) {
+      const row = model.rows.find((r) => r.kind === "node" && Object.values(r.cells).some((c) => c.detailKeys.some((k) => trialKeys.has(k) && proposalIdOf(k) === o.id)));
+      if (row && !row.cells[`fy${o.from}`]?.mark) ghosts.add(`${row.id}\u0000fy${o.from}`);
+    }
+    grid.current?.setTrials(ghosts, trialKeys);
+  }, [starState, model, plan]);
+  // キーボード：Alt+← / Alt+→ で選んだ ○ を 1 年動かす、Ctrl+Z で戻す、Ctrl+Shift+Z でやり直す。ドラッグ：同じ行のほかの年度へ落とす
+  useEffect(() => {
+    const el = gridEl.current;
+    if (!el) return;
+    const onKey = (e: KeyboardEvent) => {
+      // 編集欄・入力欄の中のキーは、その欄のもの（文字の取り消しを横取りしない）
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('input, textarea, [contenteditable="true"], .ag-cell-inline-editing')) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        const done = e.shiftKey ? redoTrialByHuman(trialRange()) : undoTrialByHuman();
+        if (done) e.preventDefault();
+        return;
+      }
+      if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+      // 星取表の中の Alt+← / Alt+→ は、ブラウザの「戻る」にしない
+      e.preventDefault();
+      if (!selected?.periodKey) return;
+      const fy = fyOf(selected.periodKey);
+      if (fy === null) return;
+      if (tryMove(selected.rowId, selected.periodKey, fy + (e.key === "ArrowRight" ? 1 : -1))) {
+        e.preventDefault();
+        e.stopPropagation();
+        grid.current?.reveal(selected.rowId, `fy${fy + (e.key === "ArrowRight" ? 1 : -1)}`);
+      }
+    };
+    const cellOf = (t: EventTarget | null) => {
+      const c = (t as HTMLElement | null)?.closest?.('[role="gridcell"]');
+      const rowId = c?.closest(".ag-row")?.getAttribute("row-id") ?? null;
+      const col = c?.getAttribute("col-id") ?? null;
+      return rowId && col ? { rowId, col } : null;
+    };
+    let from: { rowId: string; col: string } | null = null;
+    const onStart = (e: DragEvent) => {
+      from = cellOf(e.target);
+      if (!from || !movableWork(from.rowId, from.col)) {
+        from = null;
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer?.setData("text/plain", "");
+    };
+    const onOver = (e: DragEvent) => {
+      if (!from) return;
+      // 星取表の中のドラッグは、資料を落とす場所の知らせ（HOSHITORI の枠）を出さない
+      e.stopPropagation();
+      const to = cellOf(e.target);
+      if (to && to.rowId === from.rowId && fyOf(to.col) !== null) e.preventDefault();
+    };
+    const onDrop = (e: DragEvent) => {
+      if (!from) return;
+      // 星取表の中のドラッグは、資料の取り込みに渡さない（落とす先が違っても）
+      e.preventDefault();
+      e.stopPropagation();
+      const to = cellOf(e.target);
+      const fy = to ? fyOf(to.col) : null;
+      if (to && fy !== null && to.rowId === from.rowId) tryMove(from.rowId, from.col, fy);
+      from = null;
+    };
+    const onEnd = () => {
+      from = null;
+    };
+    el.addEventListener("keydown", onKey, true);
+    el.addEventListener("dragstart", onStart);
+    el.addEventListener("dragover", onOver);
+    el.addEventListener("drop", onDrop);
+    el.addEventListener("dragend", onEnd);
+    return () => {
+      el.removeEventListener("dragend", onEnd);
+      el.removeEventListener("keydown", onKey, true);
+      el.removeEventListener("dragstart", onStart);
+      el.removeEventListener("dragover", onOver);
+      el.removeEventListener("drop", onDrop);
+    };
+  });
+
+  // 時間の地図 4（mushitaro/moyai#34）：答えの結果で計画が作り直されたら、新しく現れた星だけを静かに現す。
+  // 開いたとき・表示（台帳・期・層・畳み）を替えたときは動かさない（前の星と比べられないので）
+  const lastMarks = useRef<{ key: string; rows: Set<string>; marks: Set<string> } | null>(null);
+  useEffect(() => {
+    const viewKey = [plan.planId, mode, period, layer, foldLevel].join("|");
+    const rows = new Set<string>();
+    const marks = new Set<string>();
+    for (const r of model.rows) {
+      if (r.kind === "peer" || r.kind === "stat" || r.folded) continue;
+      rows.add(r.id);
+      for (const [k, c] of Object.entries(r.cells)) if (c.mark) marks.add(`${r.id}\u0000${k}`);
+    }
+    const prev = lastMarks.current;
+    lastMarks.current = { key: viewKey, rows, marks };
+    if (!prev || prev.key !== viewKey) {
+      grid.current?.setFresh(new Set());
+      return;
+    }
+    // 前にもあった行の、前には無かった星だけ（畳む・開く・重ねる・絞るで見えた行の星は数えない）
+    const fresh = new Set([...marks].filter((m) => !prev.marks.has(m) && prev.rows.has(m.split("\u0000")[0]!)));
+    grid.current?.setFresh(fresh);
+  }, [model, plan.planId, mode, period, layer, foldLevel]);
+
+  // 時間の地図 1（mushitaro/moyai#31。行を渡したあとに描く）：選んだ星を強め、その行の星どうしを周期の線で結ぶ（年度の表示のときだけ）。選びを外すと消える
+  useEffect(() => {
+    const row = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;
+    const pickedNow = row && selected?.periodKey && row.cells[selected.periodKey]?.mark ? { rowId: row.id, periodKey: selected.periodKey } : null;
+    const keys = period === "year" ? model.periods.map((p) => p.key) : [];
+    const marks = row ? keys.filter((k) => row.cells[k]?.mark).length : 0;
+    // 似た施設の行（まとめた行・統計の行）には周期の線を引かない（どれかの施設が作業した年度のまとめで、周期ではない）
+    const own = !!row && row.kind !== "peer" && row.kind !== "stat";
+    grid.current?.pick(pickedNow, own && marks >= 2 ? { rowId: row!.id, keys } : null);
+  }, [selected, model, period]);
+
 
   // 見出しで「重ねる」を選ぶと、共通の設備項目の行に替えて比べを開く。「外す」で閉じる
   useEffect(() => {

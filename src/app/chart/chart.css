@@ -340,3 +340,102 @@
 .moyai-dev-tools .moyai-inline-act {
   color: var(--text-3);
 }
+
+/* 時間の地図 1（mushitaro/moyai#31。絵は TimeMap1.dc.html）：普段は静か。選んだときだけ動く。色は増やさない（墨の線と濃淡だけ）。
+   動きは --dur-base（200ms）。prefers-reduced-motion では tokens.css が 0 にする */
+.moyai-mark [data-mark] {
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+/* 選んだ星：細い墨の枠。ほかの星は薄く */
+.moyai-mark [data-sel]::before {
+  outline: 1px solid var(--text);
+  outline-offset: 3px;
+}
+[data-picked="true"] .moyai-mark [data-mark]:not([data-sel]) {
+  opacity: 0.35;
+}
+/* 周期の線：選んだ行の星どうしを、セルの左半分・右半分の細い線で結ぶ。未来の ○ へは破線。間隔は始まりの星の右に小さく */
+.moyai-mark[data-cyc-l="solid"] {
+  --cyc-l: linear-gradient(var(--text-3), var(--text-3));
+}
+.moyai-mark[data-cyc-l="dash"] {
+  --cyc-l: repeating-linear-gradient(to right, var(--text-3) 0 3px, transparent 3px 6px);
+}
+.moyai-mark[data-cyc-r="solid"] {
+  --cyc-r: linear-gradient(var(--text-3), var(--text-3));
+}
+.moyai-mark[data-cyc-r="dash"] {
+  --cyc-r: repeating-linear-gradient(to right, var(--text-3) 0 3px, transparent 3px 6px);
+}
+.moyai-mark[data-cyc-l],
+.moyai-mark[data-cyc-r] {
+  background-image: var(--cyc-l, none), var(--cyc-r, none);
+  background-position: left center, right center;
+  background-size: 50% 1px;
+  background-repeat: no-repeat;
+  animation: moyai-cycle-in var(--dur-base) var(--ease-enter);
+}
+@keyframes moyai-cycle-in {
+  from {
+    background-size: 0 1px;
+  }
+}
+.moyai-mark[data-gap] {
+  overflow: visible;
+}
+.moyai-mark[data-gap]::after {
+  content: attr(data-gap);
+  position: absolute;
+  top: 1px;
+  left: calc(50% + 8px);
+  white-space: nowrap;
+  letter-spacing: 0;
+  font: 400 10px/14px var(--font-num);
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+/* 時間の地図 2（mushitaro/moyai#32。絵は TimeMap2.dc.html）：人の試し。動かした先は朱の細い枠（署名するまで未確定）、動かす前の位置は薄い ○ */
+.moyai-mark [data-trial]::before {
+  outline: 1px solid var(--shu);
+  outline-offset: 3px;
+}
+.moyai-mark [data-ghost] {
+  font-size: 0;
+  display: inline-flex;
+  vertical-align: middle;
+}
+.moyai-mark [data-ghost]::before {
+  content: "";
+  box-sizing: border-box;
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--text-3);
+  opacity: 0.5;
+}
+.moyai-mark [draggable="true"] {
+  cursor: grab;
+}
+
+/* 時間の地図 3（mushitaro/moyai#33。絵は TimeMap3.dc.html）：版の変化は、元の版と比べるときだけ静かに現れる（--dur-base。reduced-motion では 0） */
+.moyai-mark.moyai-mark-vchg [data-mark]::before,
+.moyai-mark [data-old]::before {
+  animation: moyai-version-in var(--dur-base) var(--ease-enter);
+}
+@keyframes moyai-version-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+/* 重ねた似た施設の星は淡く（自施設の星より前に出さない） */
+.moyai-row-stat .moyai-mark [data-mark] {
+  opacity: 0.6;
+}
+
+/* 時間の地図 4（mushitaro/moyai#34。絵は TimeMap4.dc.html）：答えの結果で新しく現れた星だけ、静かに現れる。完了しても演出はしない */
+.moyai-mark [data-fresh]::before {
+  animation: moyai-version-in var(--dur-base) var(--ease-enter);
+}

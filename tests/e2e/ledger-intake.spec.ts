@@ -12,7 +12,7 @@ import { expect, test } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { handleRequest } from "../../services/ledger-intake/src/handler";
 import { packOf } from "../../services/ledger-intake/src/packs";
-import { readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../src/share/ledger";
+import { LEDGER_BUNDLE_PATH, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../src/share/ledger";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
 import { E2E_NAME, PROFILE_ANSWERED, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 import { fakeLedgerGitHub, memoryKv, type FakeLedgerGitHub } from "../helpers/intake-github";
@@ -110,7 +110,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await page.getByTestId("confirm-close").click();
-    await page.getByTestId("tab-share").click();
+    await page.getByTestId("sheet-share").click();
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
   });
 
@@ -147,7 +147,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await page.screenshot({ path: shot(`ledger-intake-sent-${tag}`), fullPage: true });
     // 開き直すと：止め札は「前に出した共有ファイルが、まだ台帳に載っていません」
     await page.getByTestId("tab-merge").click();
-    await page.getByTestId("tab-share").click();
+    await page.getByTestId("sheet-share").click();
     await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
     await expect(page.getByTestId("send")).toBeDisabled();
 
@@ -157,7 +157,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     const files = Object.entries(pr.files);
     expect(files).toHaveLength(1);
     const [path, bytes] = files[0]!;
-    expect(path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+    expect(LEDGER_BUNDLE_PATH.exec(path)?.[2]).toMatch(/^000001-/);
     const read = verifyLedgerFiles([...clone, { path, kind: "file", bytes: new Uint8Array(bytes) }], packOf("waste-incineration")!);
     expect(read.bundles.find((b) => b.path === path)?.status).toBe("ok");
     expect(pr.body.split("\n")[0]).toBe("受け口から（GitHub のアカウントなし）");

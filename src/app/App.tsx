@@ -1,4 +1,4 @@
-// 画面の外枠：Mantine の設定、hash での段の切り替え（トップ・MERGE・EXPORT・SHARE・設定・Ed25519 の試験。src/app/stages.ts）、右下のビルドの印。
+// 画面の外枠：Mantine の設定、hash での段の切り替え（トップ・HOSHITORI・設定・Ed25519 の試験。src/app/stages.ts。出力と共有は HOSHITORI のシート）、右下のビルドの印。
 // 取り込みの作業場はこのタブで 1 つだけ作り、画面と AI のツールの受け手（intake/tab-tools.ts）が同じものを使う。
 // 資料を読み、読み取るのは worker（intake/intake.worker.ts）。主のスレッドは写しを読むので、資料が多くても画面は止まらない。
 import { MantineProvider, useComputedColorScheme } from "@mantine/core";
@@ -20,15 +20,12 @@ import { DraftKeeper, indexedDbPort, installDraftKeeper } from "./state/draft";
 import { guardLeave, planStateOf, type LeaveState } from "./state/leave";
 import { getWorkingPlan } from "./state/plan-store";
 import { acceptedList } from "./state/decisions";
-import { STAGE_HASH } from "./stages";
+import { STAGE_HASH, canonicalHash } from "./stages";
 
-// 検問所と設定は人だけの画面（開いたときに読む）
-const Checkpoint = lazy(() => import("./pages/Checkpoint").then((m) => ({ default: m.Checkpoint })));
+// 設定は人だけの画面（開いたときに読む。共有と出力は HOSHITORI のシートが開いたときに読む）
 const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
 // 【業種】（設定からのリンク。設備の地図。開いたときに読む）
 const Industries = lazy(() => import("./pages/Industries").then((m) => ({ default: m.Industries })));
-// EXPORT（確定した版の Excel を落とす。開いたときに読む）
-const Export = lazy(() => import("./pages/Export").then((m) => ({ default: m.Export })));
 
 // タブの秘密を持つ接続は、このタブで 1 つだけ作る（state/bridge.ts。星取表・検問所・設定も同じ接続を使う）
 // AI のツールの受け手は、つなぐ前に登録する
@@ -58,10 +55,19 @@ function onDraftRestored(planId: string) {
   location.hash = STAGE_HASH.merge;
 }
 
+/** 前の段の道（#/export・#/share・#/checkpoint）は、HOSHITORI のシートの道に置き換える（履歴は増やさない） */
+function currentHash(): string {
+  const now = location.hash || APP_PAGES.home;
+  const to = canonicalHash(now);
+  if (!to) return now;
+  history.replaceState(history.state, "", to);
+  return to;
+}
+
 function useHash(): string {
-  const [hash, setHash] = useState(location.hash || APP_PAGES.home);
+  const [hash, setHash] = useState(currentHash);
   useEffect(() => {
-    const on = () => setHash(location.hash || APP_PAGES.home);
+    const on = () => setHash(currentHash());
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
@@ -100,15 +106,13 @@ export function App() {
       <Shell client={client} hash={hash} workspace={workspace} status={<DraftBand onRestored={onDraftRestored} />}>
       {route.stage === "selftest" ? (
         <SelfTest />
-      ) : route.stage === "share" || route.stage === "settings" ? (
-        <Suspense fallback={null}>{route.stage === "share" ? <Checkpoint /> : <Settings />}</Suspense>
+      ) : route.stage === "settings" ? (
+        <Suspense fallback={null}>
+          <Settings />
+        </Suspense>
       ) : route.stage === "industries" ? (
         <Suspense fallback={null}>
           <Industries />
-        </Suspense>
-      ) : route.stage === "export" ? (
-        <Suspense fallback={null}>
-          <Export />
         </Suspense>
       ) : route.stage === "merge" ? (
         <Merge ws={workspace} client={client} sheet={route.sheet} />
