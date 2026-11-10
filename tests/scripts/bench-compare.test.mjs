@@ -45,3 +45,16 @@ test("表に、変わった数を「前 → 後」で出す", () => {
   assert.match(md, /判定：\*\*良くなった\*\*/);
   assert.match(md, /10 → 12/);
 });
+
+test("合った数が増えても、読みすぎ（正解に無いのに読んだ数）が増えれば退行", () => {
+  const c = compare(res([row("a", { extra: 0 })]), res([row("a", { extra: 40, accuracy: { correct: 6, total: 6 } })]));
+  assert.equal(c.verdict, "退行あり");
+  assert.ok(c.worse.some((x) => x.includes("読みすぎ")));
+});
+
+test("分母が変われば changed（--strict が拾う）。判定には使わず、注に出す", () => {
+  const c = compare(res([row("a")]), res([row("a", { recovery: { correct: 10, total: 25 } })]));
+  assert.equal(c.verdict, "差なし");
+  assert.equal(c.changed, true);
+  assert.ok(c.notes.some((x) => x.includes("⑥ の分母")));
+});

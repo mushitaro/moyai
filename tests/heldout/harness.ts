@@ -189,8 +189,6 @@ export function answer(q: QuestionState, ix: Index): string | null {
       return q.options.length === 1 ? (q.options[0]?.id ?? null) : null;
     }
     case "assetLink": {
-      // 正解に機器の位置が 1 つも無い組（工場 v2 の正解を写した組。v2.ts は出来事だけを写す）では、結ぶかを正解から答えられない
-      if (ix.truth.assets.length === 0) return null;
       const ok = q.items.every((it) => {
         const a = ent(it);
         return a !== null && a === targetEnt(it);
@@ -323,12 +321,22 @@ export interface Script {
 /** 既定の答えを受けたときの理由（正解から答えた問いと分けて数えるため） */
 export const DEFAULT_REASON = "既定の答えを受けた（台本は正解から答えられない）";
 
-/**
- * 質問がなくなるまで、台本で答える（答えられない質問は開いたまま）。
- * acceptDefaults：正解から答えられない問いに既定の答えがあれば、それを受ける（人が推された答えを押すのと同じ。数は defaulted に分けて出す）。
- * 見ていない様式の測り（heldout）では使わない。Skillパックの物差し（pack-bench）だけが使う
- */
-export function runScript(session: { analyze(): Analysis; settle(ds: Decision[]): unknown }, mk: (an: Analysis) => Index, opt: { acceptDefaults?: boolean } = {}): Script {
+/** 台本の選び。どれも Skillパックの物差し（pack-bench）だけが使う。見ていない様式の測り（heldout）・calibrate・demo は渡さない（測り方を変えない） */
+export interface ScriptOptions {
+  /**
+   * 正解から答えられない問いに既定の答えがあれば、それを受ける（人が推された答えを押すのと同じ。数は defaulted に分けて出す）。
+   * 正解に機器の位置が 1 つも無い組（工場 v2 の正解を写した組。v2.ts は出来事だけを写す）の、機器を結ぶ問い（assetLink）も、正解から答えられない問いに数える
+   */
+  acceptDefaults?: boolean;
+  /**
+   * 資料を丸ごと外す答え（参考として外す・読めない資料を外す）は、ほかに答えられる問いが無くなってから押す。
+   * 読み手は、ほかの問いの答えを待つセルの多い資料にも、最初から「参考として外すか」を聞くことがある（答えれば読める星取表）。人は先にほかの問いに答える
+   */
+  deferWholeFile?: boolean;
+}
+
+/** 質問がなくなるまで、台本で答える（答えられない質問は開いたまま） */
+export function runScript(session: { analyze(): Analysis; settle(ds: Decision[]): unknown }, mk: (an: Analysis) => Index, opt: ScriptOptions = {}): Script {
   const answered = new Map<string, Decision>();
   const defaulted: Record<string, number> = {};
   let rounds = 0;
@@ -338,17 +346,17 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
     const ds: Decision[] = [];
     for (const q of an.open) {
       if (answered.has(q.questionId)) continue;
-      const a = answer(q, ix);
+      const a = opt.acceptDefaults && q.kind === "assetLink" && ix.truth.assets.length === 0 ? null : answer(q, ix);
       if (a !== null) ds.push({ questionId: q.questionId, answer: a, author: "human", reason: AUTHOR_REASON });
       else if (opt.acceptDefaults && q.defaultAnswer !== null && q.options.some((o) => o.id === q.defaultAnswer)) {
         ds.push({ questionId: q.questionId, answer: q.defaultAnswer, author: "human", reason: DEFAULT_REASON });
         defaulted[q.kind] = (defaulted[q.kind] ?? 0) + 1;
       }
     }
-    // 資料を丸ごと外す答え（参考として外す・読めない資料を外す）は、ほかに答えられる問いが無くなってから押す。
-    // 読み手は、ほかの問いの答えを待つセルの多い資料にも、最初から「参考として外すか」を聞くことがある（答えれば読める星取表）。人は先にほかの問いに答える
-    const rest = ds.filter((d) => !WHOLE_FILE_ANSWERS.includes(d.answer));
-    if (rest.length) ds.splice(0, ds.length, ...rest);
+    if (opt.deferWholeFile) {
+      const rest = ds.filter((d) => !WHOLE_FILE_ANSWERS.includes(d.answer));
+      if (rest.length) ds.splice(0, ds.length, ...rest);
+    }
     if (!ds.length) break;
     for (const d of ds) answered.set(d.questionId, d);
     session.settle(ds);
@@ -687,8 +695,9 @@ export interface RunOptions {
   facilityKey?: string;
   /** 当てる読み方（AI を入れた回で、Claude が会話で作った下書き） */
   readings?: LoadedReading[];
-  /** 正解から答えられない問いに、既定の答えを受ける（pack-bench だけ） */
+  /** 台本の選び（pack-bench だけ。ScriptOptions） */
   acceptDefaults?: boolean;
+  deferWholeFile?: boolean;
 }
 
 export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ result: SetResult; plan: Plan | null; analysis: Analysis; index: Index; survey: Survey }> {
@@ -706,7 +715,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
   const rejected = await s.add(read.map((n) => ({ name: n, bytes: bytes(n) })));
   const before = s.analyze();
   const unresolvedBefore = [...before.composition.status.values()].filter((x) => x.s === "unresolved").length;
-  const script = runScript(s, (an) => new Index(truth, world, an.sources), { acceptDefaults: opt.acceptDefaults });
+  const script = runScript(s, (an) => new Index(truth, world, an.sources), { acceptDefaults: opt.acceptDefaults, deferWholeFile: opt.deferWholeFile });
   const comp = s.compose();
   const an = s.analyze();
   const ix = new Index(truth, world, an.sources);
