@@ -386,6 +386,8 @@ test("時間の地図 1：星を選ぶとその星だけ強まり、行の星ど
   await openPlan(page, "fictional-1");
   const grid = page.getByTestId("chart-grid");
   await expect(grid).not.toHaveAttribute("data-picked", "true");
+  // 開いたときの星は「現れる」動きを付けない（#34）
+  await expect(page.locator("[data-fresh]")).toHaveCount(0);
   await expect(page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]")).toHaveCount(0);
 
   await cell(page, "受入供給設備 › ごみクレーン · 2020 年度").click();
@@ -444,6 +446,9 @@ test("時間の地図 2：未来の ○ を Alt+← / Alt+→ で動かすと、
   await expect(at(to).locator("[data-trial]")).toHaveCount(1);
   await expect(at(target!.fy).locator("[data-ghost]")).toHaveCount(1);
   await expect(at(to)).toHaveAttribute("aria-label", /人の試し/);
+  // 時間の地図 4（#34）：新しく現れた星だけが静かに現れる（開いたときの星には付かない）
+  await expect(at(to).locator("[data-fresh]")).toHaveCount(1);
+  expect(await page.locator("[data-fresh]").count()).toBeLessThanOrEqual(2);
   await page.screenshot({ path: shot(`chart-time-map-2-${tag}`) });
   await page.keyboard.press("Control+z");
   await expect(at(target!.fy).locator("[data-mark='plan']")).toHaveCount(1);

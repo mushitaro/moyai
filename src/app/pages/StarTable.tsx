@@ -620,6 +620,23 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     };
   });
 
+  // 時間の地図 4（mushitaro/moyai#34）：答えの結果で計画が作り直されたら、新しく現れた星だけを静かに現す。
+  // 開いたとき・表示（台帳・期・層・畳み）を替えたときは動かさない（前の星と比べられないので）
+  const lastMarks = useRef<{ key: string; marks: Set<string> } | null>(null);
+  useEffect(() => {
+    const viewKey = [plan.planId, mode, period, layer, foldLevel].join("|");
+    const marks = new Set<string>();
+    for (const r of model.rows) {
+      if (r.kind === "peer" || r.kind === "stat") continue;
+      for (const [k, c] of Object.entries(r.cells)) if (c.mark) marks.add(`${r.id}\u0000${k}`);
+    }
+    const prev = lastMarks.current;
+    lastMarks.current = { key: viewKey, marks };
+    if (!prev || prev.key !== viewKey) return;
+    const fresh = new Set([...marks].filter((m) => !prev.marks.has(m)));
+    grid.current?.setFresh(fresh);
+  }, [model, plan.planId, mode, period, layer, foldLevel]);
+
   // 時間の地図 1（mushitaro/moyai#31。行を渡したあとに描く）：選んだ星を強め、その行の星どうしを周期の線で結ぶ（年度の表示のときだけ）。選びを外すと消える
   useEffect(() => {
     const row = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;
