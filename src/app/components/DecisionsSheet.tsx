@@ -87,7 +87,7 @@ export function acceptDecisionsAs(kind: Kind, ds: readonly Decision[], typed: st
  * 案のままの当てはめの規則が当てている行は、決定の 1 行ずつには出さない（規則の行で受ける。二重に出さない。台帳の新-4）。
  * openRules は案のままの規則の数（下の帯の数に足す）
  */
-export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; openRemovals: number; ready: boolean } {
+export function usePending(client: BridgeClient, plan: Plan | null): { pending: Decision[]; openRules: number; openRemovals: number; ready: boolean; problem: string | null } {
   const [load] = usePlanStatus(client, plan?.planId ?? "", !!plan);
   const status = load.kind === "ready" ? load.status : null;
   const working = useWorkingPlan();
@@ -101,7 +101,8 @@ export function usePending(client: BridgeClient, plan: Plan | null): { pending: 
     for (const p of proposals) if (p.state === "proposed") for (const ref of heldRows(plan, p)) held.add(ref.startsWith("n:") ? `item:${ref.slice(2)}` : `attr:${ref.slice(2)}`);
     return pendingDecisions(plan, status.accepted ?? []).filter((d) => !held.has(d.id));
   }, [plan, status, proposals]);
-  return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, openRemovals, ready: !!status };
+  // 受けた決定を読めないあいだ（読込中・保存先が無い・読めない）は、受けていない決定を 0 と数えない。ready が false のうちは確定を止める（mushitaro/moyai#36）
+  return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, openRemovals, ready: !!status, problem: load.kind === "error" ? load.message : null };
 }
 
 // ─── 周期の案を受けたときの作業のきっかけ（Architect の 44。Wire、11-06） ───────────

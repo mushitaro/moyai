@@ -43,9 +43,13 @@ const planJson = new Map<string, string>();
 test.beforeAll(async () => {
   for (const [name, make] of Object.entries(DEV_PLANS)) planJson.set(name, JSON.stringify(make()));
   stateDir = mkdtempSync(join(tmpdir(), "moyai-e2e-chart-"));
+  // Windows の外では、既定の保存先は HOME の Documents の下（src/bridge/places.ts）。無いと保存先が決まらず、受けた決定を読めない。
+  // 一時の HOME に Documents を作って渡す（Windows は OS に聞くので、そのまま。mushitaro/moyai#36）
+  const home = join(stateDir, "home");
+  mkdirSync(join(home, "Documents"), { recursive: true });
   const port = await freePort();
   child = spawn(process.execPath, ["dist/cli.js", "start", "--port", String(port), "--no-open"], {
-    env: { ...process.env, MOYAI_STATE_DIR: stateDir },
+    env: { ...process.env, MOYAI_STATE_DIR: stateDir, ...(process.platform === "win32" ? {} : { HOME: home }) },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";
@@ -442,6 +446,8 @@ test("時間の地図 2：未来の ○ を Alt+← / Alt+→ で動かすと、
   const at = (fy: number) => page.locator(`.ag-row[row-id="${target!.row}"] [col-id="fy${fy}"]`).first();
   const to = target!.fy + target!.dir;
   await at(target!.fy).click();
+  // 選びが表に届いてからキーを押す（選んだ直後は行を描き直していて、その間のキーは星取表に届かないことがある。mushitaro/moyai#36）
+  await expect(page.locator('[data-picked="true"]')).toHaveCount(1);
   await page.keyboard.press(target!.dir > 0 ? "Alt+ArrowRight" : "Alt+ArrowLeft");
   await expect(at(to).locator("[data-trial]")).toHaveCount(1);
   await expect(at(target!.fy).locator("[data-ghost]")).toHaveCount(1);
