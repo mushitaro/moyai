@@ -1,5 +1,6 @@
 // 画面の言葉はここだけに置く。内部の言葉（型の名前など）を利用者に見せない。
 import type { TabErrorCode } from "../../shared/errors";
+import { LEDGER_PLACE } from "../../share/ledger-place";
 
 export const TEXT = {
   appName: "MOYAI",
@@ -195,8 +196,8 @@ export const TEXT = {
       ng: (n: number) => `✗ の共有ファイル ${n} は数えていません`,
       loadReason: {
         "ledger.notChosen": "公開台帳の clone の場所を、設定でまだ選んでいません",
-        "ledger.noLedgerDir": "選んだ場所に ledger/ のフォルダがありません",
-        "ledger.missing": "選んだ場所に台帳のルール（ledger/ledger.json）がありません",
+        "ledger.noLedgerDir": `選んだ場所に ${LEDGER_PLACE.dir}/ のフォルダがありません`,
+        "ledger.missing": `選んだ場所に台帳のルール（${LEDGER_PLACE.dir}/ledger.json）がありません`,
         "ledger.rules": "台帳のルールが ✓ になりません",
         "ledger.otherPack": "この台帳は、計画とは別のSkillパックの台帳です",
         "ring.none": "このSkillパックの共有フォルダに入っていません",

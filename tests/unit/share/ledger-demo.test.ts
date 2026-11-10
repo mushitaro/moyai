@@ -1,6 +1,7 @@
 // 公開の台帳のデモの束の道具（scripts/ledger/demo-core.ts。docs/sharing.md §6）。架空の 10 施設の正解の世界から、
 // 本物の写し取りと署名で束を作り、受け手と同じ関数ですべて ✓。サイトの集計に x・幅の帯・中央の帯がどれも出る。
 // 秘密鍵と施設の名前は出す台帳に無い。わざと外れた 3 つの束は、それぞれの理由だけで ✗。一時のフォルダで行う。
+import { LEDGER_BUNDLE_PATH, LEDGER_DIR } from "../../../src/share/ledger";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
@@ -55,8 +56,8 @@ describe("台帳のデモの束", () => {
 
   it("出す台帳には ledger.json と束だけ。秘密鍵・施設の名前・業者の名前・経過年・基幹改良は無い", () => {
     const files = walk(out()).map((p) => relative(out(), p).replace(/\\/g, "/")).sort();
-    expect(files.filter((f) => f === "ledger/ledger/ledger.json")).toHaveLength(1);
-    expect(files.filter((f) => /^ledger\/ledger\/bundles\/[0-9a-f]{16}\/\d{6}-[0-9a-f]{16}\.json$/.test(f))).toHaveLength(10);
+    expect(files.filter((f) => f === `${LEDGER_DIR}/ledger.json`)).toHaveLength(1);
+    expect(files.filter((f) => LEDGER_BUNDLE_PATH.test(f))).toHaveLength(10);
     expect(files).toHaveLength(11);
     const all = walk(out()).map((p) => readFileSync(p, "utf8").normalize("NFKC")).join("\n");
     expect(all).not.toContain("PRIVATE KEY");
@@ -96,7 +97,7 @@ describe("台帳のデモの束", () => {
     expect(by.facilityName).toEqual(expect.arrayContaining(["shape.type", "freeText"]));
     for (const x of r.rejects) {
       expect(x.reasons.some((y) => y.startsWith("chain.") || y.startsWith("file."))).toBe(false);
-      expect(x.path).toMatch(/^ledger\/ledger\/bundles\/[0-9a-f]{16}\/000001-[0-9a-f]{16}\.json$/);
+      expect(LEDGER_BUNDLE_PATH.exec(x.path)?.[2]).toMatch(/^000001-/);
       const text = readFileSync(join(rejects(), x.case, ...x.path.split("/")), "utf8");
       expect(text.length).toBeGreaterThan(0);
     }

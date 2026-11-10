@@ -1,5 +1,7 @@
 // 共有フォルダを確かめたときの ✗ の理由の言葉（画面の受け取り・検問所と、CLI の verify ring が同じものを使う）。
 // 理由のコードは src/share/recount.ts と src/share/ring.ts が出す。知らないコードは、頭の分け方で言う（黙って捨てない）。
+import { LEDGER_PLACE } from "../../share/ledger-place";
+
 
 const EXACT: Record<string, string> = {
   freeText: "自由記述（公開語彙に無い文字列）",
@@ -99,7 +101,7 @@ const EXACT: Record<string, string> = {
   "diff.tooMany": "1 つの PR の変更が多すぎる（64 件まで）",
   "diff.empty": "PR に変更が無い",
   "path.github": ".github/ に触れる",
-  "path.notAllowed": "ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json か retired.json の形の外",
+  "path.notAllowed": `${LEDGER_PLACE.dir}/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json か retired.json の形の外`,
   // MOYAI のリポジトリの PR（台帳は ledger/ に移した。2026-11-07）：ledger/ の外も変える PR に、台帳のファイルが混ざっている
   "path.ledgerInCodePr": "コードの PR に台帳のファイルが混ざっている（台帳の PR は ledger/ の中だけを変える）",
   "path.caseOrNormalization": "大文字小文字か Unicode の正規化だけが、許す形と違う",
