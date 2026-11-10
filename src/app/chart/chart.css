@@ -434,3 +434,8 @@
 .moyai-row-stat .moyai-mark [data-mark] {
   opacity: 0.6;
 }
+
+/* 時間の地図 4（mushitaro/moyai#34。絵は TimeMap4.dc.html）：答えの結果で新しく現れた星だけ、静かに現れる。完了しても演出はしない */
+.moyai-mark [data-fresh]::before {
+  animation: moyai-version-in var(--dur-base) var(--ease-enter);
+}

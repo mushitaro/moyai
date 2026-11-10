@@ -145,6 +145,8 @@ interface GridContext {
   /** 人の試し（時間の地図 2）：動かす前の位置（行の鍵 + "\u0000" + 期の鍵。薄い ○）と、動かした先の明細の鍵（朱の細い枠） */
   ghosts?: ReadonlySet<string>;
   trials?: ReadonlySet<string>;
+  /** 時間の地図 4：答えの結果で新しく現れた星（行の鍵 + "\u0000" + 期の鍵）。出るときだけ静かに現れる */
+  fresh?: ReadonlySet<string>;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -237,6 +239,9 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     const trial = !!cell && !!tctx?.trials && cell.detailKeys.some((k) => tctx.trials!.has(k));
     if (trial) this.el.dataset.trial = "true";
     else delete this.el.dataset.trial;
+    const fresh = !!shown && !!p.data && !!period && !!tctx?.fresh?.has(`${p.data.id}\u0000${period.key}`);
+    if (fresh) this.el.dataset.fresh = "true";
+    else delete this.el.dataset.fresh;
     this.el.draggable = shown === "plan" && !cell?.summary;
     if (ring) this.el.dataset.ring = "true";
     else delete this.el.dataset.ring;
@@ -555,6 +560,29 @@ export class ChartGrid {
     });
   }
 
+  private fresh: ReadonlySet<string> = new Set();
+
+  /** 新しく現れた星（答えの結果で計画が作り直されたとき）。その行だけ描き直す。次の描き直しで外れる */
+  setFresh(fresh: ReadonlySet<string>) {
+    const rowsOf = (set: ReadonlySet<string>) => [...set].map((k) => k.split("\u0000")[0]!);
+    const ids = new Set([...rowsOf(this.fresh), ...rowsOf(fresh)]);
+    this.fresh = fresh;
+    const ctx = this.api.getGridOption("context") as GridContext;
+    this.api.setGridOption("context", { ...ctx, fresh } satisfies GridContext);
+    const rowNodes = [...ids].map((id) => this.api.getRowNode(id)).filter((n): n is NonNullable<typeof n> => !!n);
+    if (rowNodes.length) this.api.refreshCells({ rowNodes, force: true });
+    // 現れ終えたら外す（あとで送った・描き直したセルが、もう一度現れないように）。描いた印は次の描き直しで消える
+    if (this.freshTimer) clearTimeout(this.freshTimer);
+    if (fresh.size > 0)
+      this.freshTimer = setTimeout(() => {
+        this.freshTimer = null;
+        this.fresh = new Set();
+        const c = this.api.getGridOption("context") as GridContext;
+        this.api.setGridOption("context", { ...c, fresh: this.fresh } satisfies GridContext);
+      }, 600);
+  }
+  private freshTimer: ReturnType<typeof setTimeout> | null = null;
+
   private ghosts: ReadonlySet<string> = new Set();
   private trials: ReadonlySet<string> = new Set();
 
@@ -603,7 +631,7 @@ export class ChartGrid {
     removals?: ReadonlySet<string>,
   ) {
     this.mode = model.mode;
-    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals, picked: this.picked, cycle: this.cycle, ghosts: this.ghosts, trials: this.trials } satisfies GridContext);
+    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals, picked: this.picked, cycle: this.cycle, ghosts: this.ghosts, trials: this.trials, fresh: this.fresh } satisfies GridContext);
     const cols = columns(model, foldLevel, this.h, band);
     const key = JSON.stringify([model.mode, model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band, cols.map((c) => ("width" in c ? c.width : null))]);
     if (key !== this.colKey) {
