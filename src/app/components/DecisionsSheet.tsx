@@ -168,7 +168,8 @@ interface StarRow {
   id: string;
   kind: StarKind;
   workKey: string;
-  author: "ai" | "ai_relayed_human";
+  /** human は人の試し（星取表で人が動かした ○。人が確定した削除なので、受けたものに並ぶ） */
+  author: "ai" | "ai_relayed_human" | "human";
   basis: string;
   /** 追加の決定（計画の明細） */
   adds: Decision[];
@@ -631,7 +632,7 @@ export function DecisionsView({ plan, pending, ready }: { plan: Plan; pending: r
               {starYears(r)}
             </Text>
             <Text size="xs" c="var(--shu-text)" style={{ letterSpacing: "0.1em", whiteSpace: "nowrap" }}>
-              {r.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
+              {r.author === "human" ? T.kind.human : r.author === "ai_relayed_human" ? T.kind.relayed : T.kind.ai}
             </Text>
           </Group>
         </Table.Td>

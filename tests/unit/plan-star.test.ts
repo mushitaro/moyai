@@ -28,6 +28,8 @@ import {
   undoRemovalsByHuman,
 } from "../../src/app/state/stars";
 import { CONVERSATION_SOURCE, PACK_SOURCE } from "../../src/plan/cycle";
+import * as trial from "../../src/app/state/stars";
+import { TRIAL_SOURCE } from "../../src/plan/star";
 import { diffPlans, pendingDecisions } from "../../src/plan/diff";
 import { actualReferenceView, basisWithoutReference, proposalIdOf, starIdOf, workRowRef } from "../../src/plan/star";
 import { commitPlan, planDir, readHistory } from "../../src/plan/store";
@@ -529,3 +531,82 @@ describe("星取の削除を版に残す（Architect の 70）", () => {
   });
 });
 
+
+describe("人の試し（時間の地図 2、mushitaro/moyai#32）：星取表で人が未来の ○ を動かす。AI の道とは別", () => {
+  const range = { min: 2019, max: 2028 };
+  const at = (wk: string, fy: number) => getWorkingPlan()!.plan.details.filter((d) => d.workKey === wk && d.fiscalYear === fy && d.planOrActual === "plan");
+  beforeEach(() => setWorkingPlan(base(), "intake"));
+
+  it("動かすと、先の年度に作者「人」の明細（出どころは人の試し）、元の年度の明細は人の確定した削除（理由は「人の試し（理由 未記入）」）", () => {
+    const r = trial.moveStarByHuman("w1", 2025, 2027, range);
+    expect(r.ok).toBe(true);
+    expect(at("w1", 2025)).toHaveLength(0);
+    const [d] = at("w1", 2027);
+    expect(d!.author).toBe("human");
+    expect(d!.sources[0]!.file).toBe(TRIAL_SOURCE);
+    // 人が受ける決定は要らない（作者が人）。元の年度の削除は署名の内側に入る（理由を書いていないことをそのまま書く。署名の理由は空にできないので）
+    expect(pendingDecisions(getWorkingPlan()!.plan, []).some((x) => x.id.endsWith(d!.detailKey))).toBe(false);
+    expect(removalAcceptances()).toEqual([expect.objectContaining({ id: removalId("d3"), reason: trial.TRIAL_REASON })]);
+    expect(trial.trialOrigins()).toEqual([expect.objectContaining({ workKey: "w1", from: 2025, to: 2027 })]);
+  });
+
+  it("試しは版を変えない。確定のシートの案（starGroups）と計画の明細は、取り消し・やり直しでずれない", () => {
+    const v0 = getWorkingPlan()!.plan.version;
+    const humanGroups = () => trial.starGroups().filter((g) => g.author === "human");
+    const trialKeys = () => getWorkingPlan()!.plan.details.filter((d) => d.sources.some((x) => x.file === TRIAL_SOURCE)).map((d) => d.detailKey);
+    trial.moveStarByHuman("w1", 2025, 2027, range);
+    expect(getWorkingPlan()!.plan.version).toBe(v0);
+    expect(humanGroups()).toHaveLength(1);
+    expect(trialKeys()).toHaveLength(1);
+    trial.undoTrialByHuman();
+    expect(humanGroups()).toHaveLength(0);
+    expect(trialKeys()).toHaveLength(0);
+    expect(removalAcceptances()).toEqual([]);
+    trial.redoTrialByHuman(range);
+    expect(humanGroups().map((g) => g.pairs)).toEqual([[{ from: 2025, to: 2027 }]]);
+    expect(trialKeys()).toHaveLength(1);
+    expect(removalAcceptances()).toHaveLength(1);
+    expect(getWorkingPlan()!.plan.version).toBe(v0);
+  });
+
+  it("取り消しとやり直しは何度でも。取り消すと元に戻り、署名の内側にも入らない", () => {
+    trial.moveStarByHuman("w1", 2025, 2026, range);
+    trial.moveStarByHuman("w1", 2026, 2027, range);
+    expect(at("w1", 2027)).toHaveLength(1);
+    expect(trial.undoTrialByHuman()).toBe(true);
+    expect(at("w1", 2026)).toHaveLength(1);
+    expect(trial.undoTrialByHuman()).toBe(true);
+    expect(at("w1", 2025).map((d) => d.detailKey)).toEqual(["d3"]);
+    expect(removalAcceptances()).toEqual([]);
+    expect(trial.undoTrialByHuman()).toBe(false);
+    expect(trial.redoTrialByHuman(range)).toBe(true);
+    expect(trial.redoTrialByHuman(range)).toBe(true);
+    expect(at("w1", 2027)).toHaveLength(1);
+    expect(trial.redoTrialByHuman(range)).toBe(false);
+  });
+
+  it("動かせないもの：実績のある年度・先にもう計画がある・範囲の外", () => {
+    expect(trial.canMoveStarByHuman("w1", 2022, 2023, range)).toEqual({ ok: false, reason: "notPlanOnly" });
+    expect(trial.canMoveStarByHuman("w1", 2025, 2025, range)).toEqual({ ok: false, reason: "outOfRange" });
+    expect(trial.canMoveStarByHuman("w1", 2025, 2029, range)).toEqual({ ok: false, reason: "outOfRange" });
+    trial.moveStarByHuman("w3", 2028, 2027, range);
+    expect(trial.canMoveStarByHuman("w3", 2027, 2027, range)).toEqual({ ok: false, reason: "outOfRange" });
+    expect(getWorkingPlan()!.plan.details.filter((d) => d.workKey === "w1").length).toBe(3);
+  });
+
+  it("置き直した（generation が変わった）あとは、前の試しを戻さない・やり直さない", () => {
+    trial.moveStarByHuman("w1", 2025, 2027, range);
+    expect(trial.undoTrialByHuman()).toBe(true);
+    setWorkingPlan(base(), "intake");
+    expect(trial.redoTrialByHuman(range)).toBe(false);
+    trial.moveStarByHuman("w1", 2025, 2026, range);
+    setWorkingPlan(base(), "intake");
+    expect(trial.undoTrialByHuman()).toBe(false);
+    expect(trial.trialOrigins()).toEqual([]);
+  });
+
+  it("AI のツールの受け手には、人の試しを動かす・戻す道が無い", () => {
+    const src = readFileSync("src/app/intake/tab-tools.ts", "utf8");
+    for (const f of ["moveStarByHuman", "undoTrialByHuman", "redoTrialByHuman", "acceptRemovalsByHuman", "undoRemovalsByHuman"]) expect(src).not.toContain(f);
+  });
+});
