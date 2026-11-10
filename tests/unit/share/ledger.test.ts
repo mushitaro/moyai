@@ -2,11 +2,11 @@
 // 決まり（ledger.json）と束ごとに ✓ か理由つきの ✗ を出す。台帳のリポジトリは一時のフォルダに作る。
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { envelopeText, makeRetiredBody, makeRulesDocBody, CIRCLE_V } from "../../../src/share/bundle";
 import { canonicalize } from "../../../src/share/jcs";
-import { LEDGER_JSON_PATH, checkBundleAdded, checkRetiredAdded, jsonDepth, ledgerRetiredPath, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../../src/share/ledger";
+import { LEDGER_DIR, LEDGER_JSON_PATH, LEDGER_ROOT, checkBundleAdded, checkRetiredAdded, jsonDepth, ledgerRetiredPath, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../../src/share/ledger";
 import { isClean, recount } from "../../../src/share/recount";
 import { signBody } from "../../../src/share/sign";
 import { formatLedger, ledgerRootOf, loadLedger, verifyLedgerCli } from "../../../src/cli/ledger";
@@ -127,7 +127,7 @@ describe("verify ledger：share.tamper（輪と同じ外れ）", () => {
   });
 
   it("他人のフォルダ（鍵 ID と署名の鍵が合わない）", () => {
-    const moved = { ...b1, key: A.key, path: `ledger/ledger/bundles/${A.key}/${b1.fileName}` };
+    const moved = { ...b1, key: A.key, path: `${LEDGER_DIR}/bundles/${A.key}/${b1.fileName}` };
     const r = verifyLedgerFiles(files([a[0]!, moved]), pack);
     expect(lineOf(r, moved).reasons).toContain("file.otherFolder");
   });
@@ -253,11 +253,11 @@ describe("verify ledger：台帳だけの決まり", () => {
     expect(jsonDepth(deep.text)).toBeGreaterThan(8);
     const r = verifyLedgerFiles(
       files([deep], [
-        { path: `ledger/ledger/bundles/${B.key}/${b1.fileName}`, kind: "symlink", bytes: null },
-        { path: `ledger/ledger/bundles/${A.key}/000009-0000000000000000.json`, kind: "submodule", bytes: null },
-        { path: "ledger/ledger/notes.txt", kind: "file", bytes: Buffer.from("x") },
-        { path: `ledger/ledger/bundles/${A.key}/memo.json`, kind: "file", bytes: Buffer.from("{}") },
-        { path: "ledger/ledger/TERMS.md", kind: "symlink", bytes: null },
+        { path: `${LEDGER_DIR}/bundles/${B.key}/${b1.fileName}`, kind: "symlink", bytes: null },
+        { path: `${LEDGER_DIR}/bundles/${A.key}/000009-0000000000000000.json`, kind: "submodule", bytes: null },
+        { path: `${LEDGER_DIR}/notes.txt`, kind: "file", bytes: Buffer.from("x") },
+        { path: `${LEDGER_DIR}/bundles/${A.key}/memo.json`, kind: "file", bytes: Buffer.from("{}") },
+        { path: `${LEDGER_DIR}/TERMS.md`, kind: "symlink", bytes: null },
       ]),
       pack,
     );
@@ -265,9 +265,9 @@ describe("verify ledger：台帳だけの決まり", () => {
     expect(r.bundles.find((x) => x.path.endsWith(b1.fileName))!.reasons).toEqual(["file.symlink"]);
     expect(r.bundles.find((x) => x.path.endsWith("000009-0000000000000000.json"))!.reasons).toEqual(["file.submodule"]);
     expect(r.others).toEqual([
-      { path: "ledger/ledger/TERMS.md", reasons: ["file.symlink"] },
-      { path: `ledger/ledger/bundles/${A.key}/memo.json`, reasons: ["file.notBundleName"] },
-      { path: "ledger/ledger/notes.txt", reasons: ["file.notAllowed"] },
+      { path: `${LEDGER_DIR}/TERMS.md`, reasons: ["file.symlink"] },
+      { path: `${LEDGER_DIR}/bundles/${A.key}/memo.json`, reasons: ["file.notBundleName"] },
+      { path: `${LEDGER_DIR}/notes.txt`, reasons: ["file.notAllowed"] },
     ]);
   });
 
@@ -275,20 +275,22 @@ describe("verify ledger：台帳だけの決まり", () => {
     const d = repo([a[0]!]);
     const target = join(tmp, `elsewhere-${n}`);
     writeRepo(target, L, [b1]);
-    symlinkSync(join(target, "ledger", "ledger", "bundles", B.key), join(d, "ledger", "ledger", "bundles", B.key), process.platform === "win32" ? "junction" : "dir");
+    symlinkSync(join(target, ...LEDGER_DIR.split("/"), "bundles", B.key), join(d, ...LEDGER_DIR.split("/"), "bundles", B.key), process.platform === "win32" ? "junction" : "dir");
     const r = await read(d);
     expect(r.bundles.map((x) => x.path)).toEqual([a[0]!.path]);
-    expect(r.others).toEqual([{ path: `ledger/ledger/bundles/${B.key}`, reasons: ["file.notBundleName"] }]);
+    expect(r.others).toEqual([{ path: `${LEDGER_DIR}/bundles/${B.key}`, reasons: ["file.notBundleName"] }]);
     expect(r.ok).toBe(false);
-    // ledger/ そのものが symlink なら読まない
-    const d2 = join(tmp, `repo-link-${n}`);
-    mkdirSync(d2);
-    symlinkSync(join(d, "ledger"), join(d2, "ledger"), process.platform === "win32" ? "junction" : "dir");
-    expect(await readLedgerDir(d2)).toEqual({ ok: false, reason: "ledgerDirSymlink" });
-    // 台帳の根の下の ledger/ledger/ が symlink でも読まない
+    // 台帳の根そのものが symlink なら読まない（台帳の根がリポジトリの根そのものの置き場所では、根のフォルダは無い）
+    if (LEDGER_ROOT) {
+      const d2 = join(tmp, `repo-link-${n}`);
+      mkdirSync(d2);
+      symlinkSync(join(d, LEDGER_ROOT), join(d2, LEDGER_ROOT), process.platform === "win32" ? "junction" : "dir");
+      expect(await readLedgerDir(d2)).toEqual({ ok: false, reason: "ledgerDirSymlink" });
+    }
+    // 台帳の根の下の ledger/ が symlink でも読まない
     const d3 = join(tmp, `repo-link-inner-${n}`);
-    mkdirSync(join(d3, "ledger"), { recursive: true });
-    symlinkSync(join(d, "ledger", "ledger"), join(d3, "ledger", "ledger"), process.platform === "win32" ? "junction" : "dir");
+    mkdirSync(dirname(join(d3, ...LEDGER_DIR.split("/"))), { recursive: true });
+    symlinkSync(join(d, ...LEDGER_DIR.split("/")), join(d3, ...LEDGER_DIR.split("/")), process.platform === "win32" ? "junction" : "dir");
     expect(await readLedgerDir(d3)).toEqual({ ok: false, reason: "ledgerDirSymlink" });
   });
 });
@@ -415,10 +417,10 @@ describe("CLI：verify ledger", () => {
     const pd = packsDir();
     const good = repo([...a, b1]);
     expect(ledgerRootOf(good)).toBe(good);
-    expect(ledgerRootOf(join(good, "ledger"))).toBe(good);
-    expect(ledgerRootOf(join(good, "ledger", "ledger"))).toBe(good);
+    expect(ledgerRootOf(join(good, LEDGER_DIR.split("/")[0]!))).toBe(good);
+    expect(ledgerRootOf(join(good, ...LEDGER_DIR.split("/")))).toBe(good);
     expect(await verifyLedgerCli(["ledger", good], { packsDir: pd })).toBe(0);
-    expect(await verifyLedgerCli(["ledger", join(good, "ledger")], { packsDir: pd })).toBe(0);
+    expect(await verifyLedgerCli(["ledger", join(good, LEDGER_DIR.split("/")[0]!)], { packsDir: pd })).toBe(0);
     const t = a[1]!.text;
     const bad = repo([a[0]!, { ...a[1]!, text: t.replace("FY2019", "FY2018") }, a[2]!]);
     expect(await verifyLedgerCli(["ledger", bad], { packsDir: pd })).toBe(1);
@@ -430,10 +432,10 @@ describe("CLI：verify ledger", () => {
   });
 
   it("端末に出す道の制御文字は ? にする（台帳に置いた人がファイル名で端末を操れないように）", () => {
-    const r = verifyLedgerFiles(files([], [{ path: "ledger/ledger/\u001b[2Jx\u0007.txt", kind: "file", bytes: Buffer.from("x") }]), pack);
+    const r = verifyLedgerFiles(files([], [{ path: `${LEDGER_DIR}/\u001b[2Jx\u0007.txt`, kind: "file", bytes: Buffer.from("x") }]), pack);
     const lines = formatLedger(r);
     for (const l of lines) expect(l).not.toMatch(/[\u0000-\u001f]/);
-    expect(lines.join("\n")).toContain("ledger/ledger/?[2Jx?.txt");
+    expect(lines.join("\n")).toContain(`${LEDGER_DIR}/?[2Jx?.txt`);
   });
 
   it("束が 0 件でも、決まりが ✓ なら 0", async () => {

@@ -1,5 +1,6 @@
 // 人だけの画面の言葉：確定のダイアログ・履歴・設定・検問所（docs/plan.md §2.8・§2.9・§2.14）。
 // 内部の言葉（型の名前・理由のコード）は利用者に見せず、ここの言葉に置き換える。
+import { LEDGER_PLACE } from "../../share/ledger-place";
 
 const fmt = (n: number) => n.toLocaleString("ja-JP");
 
@@ -81,8 +82,8 @@ export const HUMAN_TEXT = {
     templateLayoutInvalid: "写し方の案が、保存先の様式に合いません。Claude に案を置き直してもらってください。",
     // 公開の台帳へ出す（GitHub に PR）
     "ledger.notChosen": "公開台帳の clone の場所が未確定です。設定で選んでください。",
-    "ledger.noLedgerDir": "台帳の clone の中に ledger/ledger/ がありません（MOYAI の clone を選んでください）。",
-    "ledger.ledgerDirSymlink": "台帳の clone の ledger/ か ledger/ledger/ がリンクなので読みません。",
+    "ledger.noLedgerDir": `台帳の clone の中に ${LEDGER_PLACE.dir}/ がありません（${LEDGER_PLACE.repo} の clone を選んでください）。`,
+    "ledger.ledgerDirSymlink": `台帳の clone の ${LEDGER_PLACE.root ? `${LEDGER_PLACE.root}/ か ` : ""}${LEDGER_PLACE.dir}/ がリンクなので読みません。`,
     "ledger.tooManyFiles": "台帳の clone のファイルが多すぎて読めません。",
     "ledger.missing": "台帳の clone に ledger.json がありません。",
     "ledger.rules": "台帳のルール（ledger.json）を読めません。",
@@ -540,7 +541,7 @@ export const HUMAN_TEXT = {
     fingerprint: "鍵番号",
     peersNotYet: "メンバーの鍵番号を照合して「照合済み」にする画面は未実装です。",
     ledgerTitle: "公開台帳",
-    ledgerLead: "星取表で類似施設と並べるときに読む、公開台帳を持つ MOYAI のリポジトリ（mushitaro/moyai）を clone したフォルダです。その中の ledger/ を読みます。読むのは、受け手の関数で確かめて ✓ になった共有ファイルだけです。clone と git pull は、あなたが端末でします。",
+    ledgerLead: `星取表で類似施設と並べるときに読む、公開台帳のリポジトリ（${LEDGER_PLACE.repo}）を clone したフォルダです。その中の ${LEDGER_PLACE.dir}/ を読みます。読むのは、受け手の関数で確かめて ✓ になった共有ファイルだけです。clone と git pull は、あなたが端末でします。`,
     ledgerInput: "台帳の clone の場所（絶対の道。空にすると使わない）",
     ledgerNone: "未設定",
     nameTitle: "送信者",

@@ -1,10 +1,11 @@
-// 公開の台帳（場 2。docs/plan.md §2.8）：MOYAI のリポジトリの ledger/（台帳の根）の下を、輪の受け手と同じ関数（数え直し・鎖）で確かめる。
-// 台帳は元は別のリポジトリ（mushitaro/moyai-ledger）。2026-11-07 に、履歴ごと mushitaro/moyai の ledger/ へ移した（運営者の決定）。
-//   ledger/ledger/ledger.json                                   台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
-//   ledger/ledger/TERMS.md                                      利用条件（検証では読まない）
-//   ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json     束（足すだけ）
-//   ledger/ledger/bundles/<鍵ID>/retired.json                   取り下げの印（moyai.retired/0。その鍵自身の署名。Architect の 72）
-// 読み手（フォルダか git の木か）を問わない形（LedgerFile の並び）で受け、引数で緩める切り替えは持たない。道はどれも MOYAI のリポジトリの根から。
+// 公開の台帳（場 2。docs/plan.md §2.8）：台帳のリポジトリの、台帳の根の下を、輪の受け手と同じ関数（数え直し・鎖）で確かめる。
+// 台帳の置き場所（リポジトリの名前と、その中の台帳の根）は config/ledger.json の 1 か所（src/share/ledger-place.ts。mushitaro/moyai#20）。
+// 下の <dir> は、台帳の根の下の ledger/（今は MOYAI のリポジトリの ledger/ledger/。2026-11-07 に別のリポジトリから移した）。
+//   <dir>/ledger.json                                   台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
+//   <dir>/TERMS.md                                      利用条件（検証では読まない）
+//   <dir>/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json     束（足すだけ）
+//   <dir>/bundles/<鍵ID>/retired.json                   取り下げの印（moyai.retired/0。その鍵自身の署名。Architect の 72）
+// 読み手（フォルダか git の木か）を問わない形（LedgerFile の並び）で受け、引数で緩める切り替えは持たない。道はどれも台帳のリポジトリの根から。
 // 台帳 ID は ledger.json の body の変わらない部分（v・founder・nonce）から決まり、束の行き先（to）と照らす。
 // 鍵 ID と出した人の結びつきは、束の署名をその鍵の公開鍵で確かめて決める（GitHub のログイン名には頼らない）。
 import { lstat, readFile, readdir } from "node:fs/promises";
@@ -13,14 +14,17 @@ import { BUNDLE_FILE_NAME, LEDGER_V, RULES_TYPE, checkShape, ringIdOf, type Bund
 import { parseJsonStrict } from "./jcs";
 import type { NationalTable, Vocab } from "./k";
 import { isClean, recount } from "./recount";
+import { LEDGER_PLACE } from "./ledger-place";
 import { checkChain } from "./ring";
 import { baseRules, rulesHaveRemovedField, type Rules } from "./rules";
 import { HEX16, fingerprint, sha256Hex } from "./sign";
 
-/** MOYAI のリポジトリの中の、台帳の根（元の mushitaro/moyai-ledger の根。README・.gitattributes を置く） */
-export const LEDGER_ROOT = "ledger";
+/** 台帳を持つリポジトリ（owner/name。config/ledger.json） */
+export const LEDGER_REPO = LEDGER_PLACE.repo;
+/** 台帳のリポジトリの中の、台帳の根（README・.gitattributes を置く）。リポジトリの根そのものなら "" */
+export const LEDGER_ROOT = LEDGER_PLACE.root;
 /** 台帳の根の下の、決まり・利用条件・束を置くフォルダ（リポジトリの根から） */
-export const LEDGER_DIR = `${LEDGER_ROOT}/ledger`;
+export const LEDGER_DIR = LEDGER_PLACE.dir;
 export const LEDGER_FILE = "ledger.json";
 export const LEDGER_TERMS = "TERMS.md";
 export const LEDGER_BUNDLES = "bundles";
@@ -34,10 +38,10 @@ export const LEDGER_RETIRED_FILE = "retired.json";
 /** 入力の上限（コードの定数）。束 1 つは塊が上限まであっても数百 KB に収まる */
 export const LEDGER_LIMITS = { fileBytes: 1024 * 1024, files: 20_000, jsonDepth: 8 } as const;
 
-/** 束の道：ledger/ledger/bundles/<鍵ID 16 桁>/<連番 6 桁>-<ハッシュ先頭 16>.json（ASCII の小文字と数字だけ） */
-export const LEDGER_BUNDLE_PATH = /^ledger\/ledger\/bundles\/([0-9a-f]{16})\/(\d{6}-[0-9a-f]{16}\.json)$/;
-/** 取り下げの印の道：ledger/ledger/bundles/<鍵ID 16 桁>/retired.json */
-export const LEDGER_RETIRED_PATH = /^ledger\/ledger\/bundles\/([0-9a-f]{16})\/retired\.json$/;
+/** 束の道：<dir>/bundles/<鍵ID 16 桁>/<連番 6 桁>-<ハッシュ先頭 16>.json（ASCII の小文字と数字だけ） */
+export const LEDGER_BUNDLE_PATH = LEDGER_PLACE.bundlePath;
+/** 取り下げの印の道：<dir>/bundles/<鍵ID 16 桁>/retired.json */
+export const LEDGER_RETIRED_PATH = LEDGER_PLACE.retiredPath;
 
 /** 鍵のフォルダの道（ledger/ledger/bundles/<鍵ID>） */
 export function ledgerKeyFolder(key: string): string {
@@ -397,8 +401,8 @@ export type LedgerDirRead = { ok: true; files: LedgerFile[] } | { ok: false; rea
  * 中身も読まずに symlink として返す。大きすぎるファイルは中身を読まない。
  */
 export async function readLedgerDir(root: string): Promise<LedgerDirRead> {
-  // 台帳の根（ledger/）と、その下の ledger/ の、どちらかが symlink ならたどらない
-  for (const rel of [LEDGER_ROOT, LEDGER_DIR]) {
+  // 台帳の根と、その下の ledger/ の、どちらかが symlink ならたどらない（台帳の根がリポジトリの根そのものなら、下の ledger/ だけ）
+  for (const rel of LEDGER_ROOT ? [LEDGER_ROOT, LEDGER_DIR] : [LEDGER_DIR]) {
     let st;
     try {
       st = await lstat(join(root, ...rel.split("/")));

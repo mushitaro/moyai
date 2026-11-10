@@ -9,6 +9,7 @@
 // 大文字小文字や Unicode の正規化だけが違う道、.github/ に触れるものは ✗。入力の数・大きさ・深さに上限を置く。
 // 束と印の中身は、base の木に PR のファイルを足した台帳を verifyLedgerFiles（輪の受け手と同じ数え直しと鎖）で確かめる。
 // 鍵 ID と出した人の結びつきは束の署名で決まり、GitHub のログイン名は使わない（この関数は受け取らない）。
+import { LEDGER_PLACE } from "./ledger-place";
 import { LEDGER_BUNDLE_PATH, LEDGER_DIR, LEDGER_LIMITS, LEDGER_RETIRED_PATH, LEDGER_ROOT, verifyLedgerFiles, type LedgerFile, type LedgerRulesInfo } from "./ledger";
 import type { NationalTable, Vocab } from "./k";
 import { sha256Hex } from "./sign";
@@ -21,8 +22,8 @@ export const PR_LIMITS = {
   rawBytes: 256 * 1024,
   /** 道のバイト数 */
   pathBytes: 200,
-  /** 道の段の数（ledger/ledger/bundles/<鍵ID>/<名前> の 5 段） */
-  pathDepth: 5,
+  /** 道の段の数（<台帳のフォルダ>/bundles/<鍵ID>/<名前>。今の置き場所では 5 段） */
+  pathDepth: LEDGER_PLACE.pathDepth,
 } as const;
 
 export interface DiffEntry {
@@ -94,6 +95,8 @@ function allowedPath(p: string): boolean {
 /** 道が、この頭（ledger/ など）の下か。大文字小文字と Unicode の正規化だけが違う道も下に数える。UTF-8 で読めない道は下に数える（分からないものは厳しく） */
 function under(p: string | null, head: string): boolean {
   if (p === null) return true;
+  // 頭が空（台帳の根がリポジトリの根そのもの）なら、どの道もその下
+  if (head === "") return true;
   return [p, foldPath(p), p.normalize("NFKC").toLowerCase()].some((x) => x.startsWith(`${head}/`));
 }
 

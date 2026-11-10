@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { aggregate, latestPerKey } from "../../../src/share/aggregate";
-import { LEDGER_JSON_PATH, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "../../../src/share/ledger";
+import { LEDGER_DIR, LEDGER_JSON_PATH, verifyLedgerFiles, type LedgerFile, type LedgerRead } from "../../../src/share/ledger";
 import { SITE_CSS, bandShort, escapeHtml, renderLedgerSite, siteCsp, siteModel } from "../../../src/share/site";
 import { siteCli } from "../../../src/cli/ledger";
 import type { Plan } from "../../../src/shared/plan";
@@ -121,14 +121,14 @@ describe("取り下げの印（Architect の 72）と集計", () => {
 describe("サイトのエスケープと CSP", () => {
   it("名前・道・理由のどれもエスケープする", () => {
     const evilPack = { ...pack, classNames: { ...pack.classNames, "T.FEED.LIFT": `<script>alert("x")</script>&'` } };
-    const evilPath = `ledger/ledger/<img src=x onerror=alert(1)>.json`;
+    const evilPath = `${LEDGER_DIR}/<img src=x onerror=alert(1)>.json`;
     const r = verifyLedgerFiles(files(bundles, [{ path: evilPath, kind: "file", bytes: Buffer.from("x") }]), { table, vocab });
     const html = render(r, evilPack, { OVERHAUL: `"><svg onload=alert(1)>` });
     expect(html).not.toMatch(/<script/i);
     expect(html).not.toMatch(/<img/i);
     expect(html).not.toMatch(/<svg/i);
     expect(html).toContain("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&#39;");
-    expect(html).toContain("ledger/ledger/&lt;img src=x onerror=alert(1)&gt;.json");
+    expect(html).toContain(`${LEDGER_DIR}/&lt;img src=x onerror=alert(1)&gt;.json`);
   });
 
   it("厳しい CSP：default-src 'none'、スタイルは中の 1 つをハッシュで許し、スクリプト・外への要求・書体のファイルは無い", () => {
@@ -218,7 +218,7 @@ describe("CLI：ledger site", () => {
     writeRepo(repo, L, bundles.slice(0, 6));
     const other = join(tmp, "other-ledger");
     writeRepo(other, L, [bundles[6]!]);
-    symlinkSync(join(other, "ledger", "ledger", "bundles", bundles[6]!.key), join(repo, "ledger", "ledger", "bundles", bundles[6]!.key), process.platform === "win32" ? "junction" : "dir");
+    symlinkSync(join(other, ...LEDGER_DIR.split("/"), "bundles", bundles[6]!.key), join(repo, ...LEDGER_DIR.split("/"), "bundles", bundles[6]!.key), process.platform === "win32" ? "junction" : "dir");
     const out = join(tmp, "site-inner");
     expect(await siteCli([repo, out], { packsDir: packsDir() })).toBe(1);
     const html = readFileSync(join(out, "index.html"), "utf8");

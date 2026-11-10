@@ -1,5 +1,6 @@
 // 画面の言葉はここだけに置く。内部の言葉（型の名前など）を利用者に見せない。
 import type { TabErrorCode } from "../../shared/errors";
+import { LEDGER_PLACE } from "../../share/ledger-place";
 
 export const TEXT = {
   appName: "MOYAI",
@@ -195,8 +196,8 @@ export const TEXT = {
       ng: (n: number) => `✗ の共有ファイル ${n} は数えていません`,
       loadReason: {
         "ledger.notChosen": "公開台帳の clone の場所を、設定でまだ選んでいません",
-        "ledger.noLedgerDir": "選んだ場所に ledger/ のフォルダがありません",
-        "ledger.missing": "選んだ場所に台帳のルール（ledger/ledger.json）がありません",
+        "ledger.noLedgerDir": `選んだ場所に ${LEDGER_PLACE.dir}/ のフォルダがありません`,
+        "ledger.missing": `選んだ場所に台帳のルール（${LEDGER_PLACE.dir}/ledger.json）がありません`,
         "ledger.rules": "台帳のルールが ✓ になりません",
         "ledger.otherPack": "この台帳は、計画とは別のSkillパックの台帳です",
         "ring.none": "このSkillパックの共有フォルダに入っていません",
@@ -435,6 +436,8 @@ export const TEXT = {
       noPlan: "まだ版の下書きがありません。資料をドロップして第 1 版をつくってください",
       open: (n: number) => `未回答 ${n}`,
       pending: (n: number) => `未確定 ${n}`,
+      /** 受けた決定を保存先から読んでいるあいだ（読めるまで確定を止める） */
+      reading: "読込中",
       // 下の帯が頭に「理由：」を付ける
       notConnected: "ブリッジ未接続",
       stale: "保存先に新しい版があります。開き直してください",

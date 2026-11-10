@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { LEDGER_JSON_PATH, LEDGER_LIMITS, type LedgerFile } from "../../../src/share/ledger";
+import { LEDGER_DIR, LEDGER_JSON_PATH, LEDGER_LIMITS, LEDGER_ROOT, type LedgerFile } from "../../../src/share/ledger";
 import { PR_LIMITS, displayablePath, entryIssues, foldPath, parseRawDiff, validateAll, validatePr } from "../../../src/share/prdiff";
 import { sha256Hex } from "../../../src/share/sign";
 import { validateMarkdown, validateOutputOf, validatePrCli, type ValidateOutput } from "../../../src/cli/ledger";
@@ -42,7 +42,7 @@ function rec(status: string, path: string | Buffer, o: { src?: string; dst?: str
 }
 const baseFiles = (bundles: readonly Sealed[] = []): LedgerFile[] => [
   { path: LEDGER_JSON_PATH, kind: "file", bytes: Buffer.from(L.text) },
-  { path: "ledger/ledger/TERMS.md", kind: "file", bytes: Buffer.from("【架空】") },
+  { path: `${LEDGER_DIR}/TERMS.md`, kind: "file", bytes: Buffer.from("【架空】") },
   ...bundles.map((b) => ({ path: b.path, kind: "file" as const, bytes: Buffer.from(b.text) })),
 ];
 function run(entries: Buffer[], blobs: Record<string, string | Uint8Array>, base: Sealed[] = [], basePaths?: string[]) {
@@ -83,9 +83,9 @@ describe("PR の照らし（純粋な関数）", () => {
     const r = run(
       [
         rec("D", a1.path, { src: blobSha(a1.text) }),
-        rec("M", "ledger/ledger/TERMS.md", { src: ZERO, dst: blobSha("x") }),
-        rec("R", a1.path, { src: blobSha(a1.text), dst: blobSha(a1.text), path2: `ledger/ledger/bundles/${A.key}/000001-ffffffffffffffff.json` }),
-        rec("C", a1.path, { src: blobSha(a1.text), dst: blobSha(a1.text), path2: `ledger/ledger/bundles/${B.key}/000001-ffffffffffffffff.json` }),
+        rec("M", `${LEDGER_DIR}/TERMS.md`, { src: ZERO, dst: blobSha("x") }),
+        rec("R", a1.path, { src: blobSha(a1.text), dst: blobSha(a1.text), path2: `${LEDGER_DIR}/bundles/${A.key}/000001-ffffffffffffffff.json` }),
+        rec("C", a1.path, { src: blobSha(a1.text), dst: blobSha(a1.text), path2: `${LEDGER_DIR}/bundles/${B.key}/000001-ffffffffffffffff.json` }),
         rec("T", b1.path, { srcMode: "100644", dstMode: "120000" }),
       ],
       {},
@@ -94,8 +94,8 @@ describe("PR の照らし（純粋な関数）", () => {
     expect(r.ok).toBe(false);
     expect(r.files.map((f) => f.reasons.find((x) => x.startsWith("diff.")))).toEqual(["diff.deleted", "diff.modified", "diff.renamed", "diff.copied", "diff.typeChanged"]);
     // 改名と写しは、行き先の道で照らす（2 つ目の道）
-    expect(r.files[2]!.path).toBe(`ledger/ledger/bundles/${A.key}/000001-ffffffffffffffff.json`);
-    expect(reasonsOf(r, "ledger/ledger/TERMS.md")).toContain("path.notAllowed");
+    expect(r.files[2]!.path).toBe(`${LEDGER_DIR}/bundles/${A.key}/000001-ffffffffffffffff.json`);
+    expect(reasonsOf(r, `${LEDGER_DIR}/TERMS.md`)).toContain("path.notAllowed");
   });
 
   it("symlink（120000）・submodule（160000）・実行の印（100755）は ✗", () => {
@@ -103,7 +103,7 @@ describe("PR の照らし（純粋な関数）", () => {
       [
         rec("A", a1.path, { dstMode: "120000", dst: blobSha(a1.text) }),
         rec("A", b1.path, { dstMode: "160000", dst: blobSha(b1.text) }),
-        rec("A", `ledger/ledger/bundles/${A.key}/000002-0000000000000000.json`, { dstMode: "100755", dst: blobSha(a2.text) }),
+        rec("A", `${LEDGER_DIR}/bundles/${A.key}/000002-0000000000000000.json`, { dstMode: "100755", dst: blobSha(a2.text) }),
       ],
       blobsOf(a1, b1, a2),
     );
@@ -115,27 +115,34 @@ describe("PR の照らし（純粋な関数）", () => {
       const e = parseRawDiff(rec("A", p, { dst: blobSha("x") }));
       expect(e.ok && entryIssues(e.entries[0]!)).toContain("path.github");
     }
-    // .github/ は ledger/ の外。束と一緒に変える PR はコードの PR に台帳の束が混ざったものなので ✗（束も通さない）
     const r = run([add(a1), rec("A", ".github/workflows/evil.yml", { dst: blobSha("x") })], { ...blobsOf(a1), [blobSha("x")]: "x" });
     expect(r.ok).toBe(false);
     expect(r.mode).toBe("pr");
-    expect(r.files.map((f) => [f.path, f.status, f.reasons])).toEqual([[a1.path, "ng", ["path.ledgerInCodePr"]]]);
-    // 台帳の根の下の .github/（ledger/.github/）は台帳の PR の中の、許す形の外
-    const inner = run([rec("A", "ledger/.github/workflows/evil.yml", { dst: blobSha("x") })], { [blobSha("x")]: "x" });
+    if (LEDGER_ROOT) {
+      // .github/ は台帳の根の外。束と一緒に変える PR はコードの PR に台帳の束が混ざったものなので ✗（束も通さない）
+      expect(r.files.map((f) => [f.path, f.status, f.reasons])).toEqual([[a1.path, "ng", ["path.ledgerInCodePr"]]]);
+    } else {
+      // 台帳の根がリポジトリの根そのものの置き場所：.github/ も台帳の PR の中の、許す形の外（PR は ✗）
+      expect(r.files.find((f) => f.path === ".github/workflows/evil.yml")).toMatchObject({ status: "ng" });
+      expect(r.files.find((f) => f.path === ".github/workflows/evil.yml")!.reasons).toEqual(expect.arrayContaining(["path.github", "path.notAllowed"]));
+    }
+    // 台帳の根の下の .github/ は台帳の PR の中の、許す形の外
+    const inner = run([rec("A", `${LEDGER_ROOT ? `${LEDGER_ROOT}/` : ""}.github/workflows/evil.yml`, { dst: blobSha("x") })], { [blobSha("x")]: "x" });
     expect(inner.ok).toBe(false);
     expect(inner.files[0]!.reasons).toContain("path.notAllowed");
   });
 
-  it("ledger/ の外を変える PR は台帳の PR ではない（検証しない・✗ にしない）。台帳のファイルが混ざっていれば ✗", () => {
+  // 台帳の根がリポジトリの根そのものの置き場所（別のリポジトリ）では、台帳の根の外が無いので、この分け方は起きない
+  it.skipIf(LEDGER_ROOT === "")("台帳の根の外を変える PR は台帳の PR ではない（検証しない・✗ にしない）。台帳のファイルが混ざっていれば ✗", () => {
     const x = { [blobSha("x")]: "x" };
     // ledger/ に触れない PR
     const code = run([rec("M", "src/share/ledger.ts", { src: blobSha("y"), dst: blobSha("x") })], x);
     expect(code).toMatchObject({ mode: "notLedger", ok: true, files: [], inputReason: null });
     // ledger/ledger/ の外（台帳の README）だけを、コードと一緒に変える PR
-    const readme = run([rec("M", "ledger/README.md", { src: blobSha("y"), dst: blobSha("x") }), rec("A", "docs/x.md", { dst: blobSha("x") })], x);
+    const readme = run([rec("M", `${LEDGER_ROOT}/README.md`, { src: blobSha("y"), dst: blobSha("x") }), rec("A", "docs/x.md", { dst: blobSha("x") })], x);
     expect(readme).toMatchObject({ mode: "notLedger", ok: true, files: [] });
     // コードの PR に、台帳の決まり・利用条件・束・取り下げの印の変更が混ざる（大文字小文字だけが違う道も）
-    for (const p of [LEDGER_JSON_PATH, "ledger/ledger/TERMS.md", a1.path, `ledger/ledger/bundles/${A.key}/retired.json`, a1.path.replace("ledger/ledger/", "Ledger/LEDGER/")]) {
+    for (const p of [LEDGER_JSON_PATH, `${LEDGER_DIR}/TERMS.md`, a1.path, `${LEDGER_DIR}/bundles/${A.key}/retired.json`, a1.path.replace(`${LEDGER_DIR}/`, `${LEDGER_DIR.replace(/^l/, "L").replace(/ledger$/, "LEDGER")}/`)]) {
       const r = run([rec("M", p, { src: blobSha("y"), dst: blobSha("x") }), rec("M", "src/x.ts", { src: blobSha("y"), dst: blobSha("x") })], x);
       expect([p, r.ok, r.files.map((f) => f.reasons)]).toEqual([p, false, [["path.ledgerInCodePr"]]]);
     }
@@ -186,8 +193,8 @@ describe("PR の照らし（純粋な関数）", () => {
     const r2 = run([rec("A", upper, { dst: blobSha(a1.text) })], blobsOf(a1), [], [...baseFiles().map((f) => f.path), a1.path]);
     expect(r2.files[0]!.reasons).toContain("path.collides");
     // NFC と NFD だけが違う 2 つの道（どちらも ASCII の外）
-    const nfc = `ledger/ledger/bundles/${A.key}/caf\u00e9.json`;
-    const nfd = `ledger/ledger/bundles/${A.key}/cafe\u0301.json`;
+    const nfc = `${LEDGER_DIR}/bundles/${A.key}/caf\u00e9.json`;
+    const nfd = `${LEDGER_DIR}/bundles/${A.key}/cafe\u0301.json`;
     expect(foldPath(nfc)).toBe(foldPath(nfd));
     const r3 = run([rec("A", nfd, { dst: blobSha("x") })], { [blobSha("x")]: "x" }, [], [...baseFiles().map((f) => f.path), nfc]);
     expect(r3.files[0]!.reasons).toEqual(expect.arrayContaining(["path.notAscii", "path.collides"]));
@@ -196,8 +203,8 @@ describe("PR の照らし（純粋な関数）", () => {
   });
 
   it("道の形：深すぎる・長すぎる・ASCII の外・UTF-8 でない", () => {
-    const deep = `ledger/ledger/bundles/${A.key}/x/000001-0000000000000000.json`;
-    const long = `ledger/ledger/bundles/${A.key}/${"a".repeat(220)}.json`;
+    const deep = `${LEDGER_DIR}/bundles/${A.key}/x/000001-0000000000000000.json`;
+    const long = `${LEDGER_DIR}/bundles/${A.key}/${"a".repeat(220)}.json`;
     const bad = Buffer.from([0x6c, 0x65, 0x64, 0x67, 0x65, 0x72, 0x2f, 0xff, 0xfe]);
     const r = run([rec("A", deep), rec("A", long), rec("A", bad)], {});
     expect(r.files[0]!.reasons).toEqual(expect.arrayContaining(["path.tooDeep", "path.notAllowed"]));
@@ -221,7 +228,7 @@ describe("PR の照らし（純粋な関数）", () => {
     const big = new Uint8Array(LEDGER_LIMITS.fileBytes + 1).fill(0x20);
     const r = run([rec("A", a1.path, { dst: blobSha(big) })], { [blobSha(big)]: big });
     expect(r.files[0]!.reasons).toEqual(["file.tooLarge"]);
-    const many = Array.from({ length: PR_LIMITS.entries + 1 }, (_, i) => rec("A", `ledger/ledger/bundles/${A.key}/${String(i + 1).padStart(6, "0")}-0000000000000000.json`));
+    const many = Array.from({ length: PR_LIMITS.entries + 1 }, (_, i) => rec("A", `${LEDGER_DIR}/bundles/${A.key}/${String(i + 1).padStart(6, "0")}-0000000000000000.json`));
     expect(run(many, {})).toMatchObject({ ok: false, files: [], inputReason: "diff.tooMany" });
     expect(parseRawDiff(Buffer.from(":100644 100644 x y M\0a"))).toEqual({ ok: false, reason: "diff.malformed" });
     expect(parseRawDiff(Buffer.from("garbage\0"))).toEqual({ ok: false, reason: "diff.malformed" });
@@ -230,7 +237,7 @@ describe("PR の照らし（純粋な関数）", () => {
   });
 
   it("中身の外れ：署名の鍵が他人のフォルダ・k < 5・施設名・費用・UPGRADE・OUTSIDE", () => {
-    const moved = { ...b1, path: `ledger/ledger/bundles/${A.key}/${b1.fileName}`, key: A.key };
+    const moved = { ...b1, path: `${LEDGER_DIR}/bundles/${A.key}/${b1.fileName}`, key: A.key };
     const lowK = forge(a1, A, (body) => {
       (body.profile as Record<string, unknown>).axes = { furnace: "OTHER", capacity_t_per_day: "C400P", turbine: "YES", ash: "MELT", contract: "OM" };
     });
@@ -270,7 +277,7 @@ describe("PR の照らし（純粋な関数）", () => {
 
 describe("PR のコメントと JSON", () => {
   it("表示できない道は名前を出さず、ファイル名はコードの枠に入れる", () => {
-    const evil = "ledger/ledger/bundles/`@someone`<img src=x>|.json";
+    const evil = LEDGER_DIR + "/bundles/`@someone`<img src=x>|.json";
     const r = run([add(a1), rec("A", evil, { dst: blobSha("x") })], { ...blobsOf(a1), [blobSha("x")]: "x" });
     const o = validateOutputOf(r, "a".repeat(40), "b".repeat(40), null);
     const md = validateMarkdown(o);
@@ -314,8 +321,8 @@ describe("CLI：ledger validate-pr（本物の git。head を checkout しない
     repo = join(tmp, "台帳 repo");
     mkdirSync(repo);
     git(repo, "init", "-q", "-b", "main");
-    put(repo, "ledger/ledger/ledger.json", L.text);
-    put(repo, "ledger/ledger/TERMS.md", "【架空】試験の利用条件\n");
+    put(repo, `${LEDGER_DIR}/ledger.json`, L.text);
+    put(repo, `${LEDGER_DIR}/TERMS.md`, "【架空】試験の利用条件\n");
     put(repo, a1.path, a1.text);
     git(repo, "add", "-A");
     git(repo, "commit", "-q", "-m", "base");
@@ -364,7 +371,8 @@ describe("CLI：ledger validate-pr（本物の git。head を checkout しない
           put(repo, ".github/workflows/evil.yml", "on: push\n");
           put(repo, b1.path, b1.text);
         },
-        "path.ledgerInCodePr",
+        // 台帳の根がリポジトリの根そのものの置き場所では、.github/ も台帳の PR の中（許す形の外）
+        LEDGER_ROOT ? "path.ledgerInCodePr" : "path.github",
       ],
       ["lowk", () => put(repo, lowK.path, lowK.text), "k.belowMin"],
       [
@@ -388,10 +396,10 @@ describe("CLI：ledger validate-pr（本物の git。head を checkout しない
     }
   });
 
-  it("ledger/ の外だけを変える PR は 0（台帳の PR ではない。検証しない）", async () => {
+  it.skipIf(LEDGER_ROOT === "")("台帳の根の外だけを変える PR は 0（台帳の PR ではない。検証しない）", async () => {
     const head = branch("code", () => {
       put(repo, "src/x.ts", "export {};\n");
-      put(repo, "ledger/README.md", "【架空】\n");
+      put(repo, `${LEDGER_ROOT}/README.md`, "【架空】\n");
     });
     const v = await validate(head);
     expect(v.code).toBe(0);

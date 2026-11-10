@@ -2,7 +2,7 @@
 // - 秘密 GITHUB_TOKEN は `wrangler secret put GITHUB_TOKEN` で入れる（このファイルに書かない）。
 // - KV INTAKE_KV は `wrangler kv namespace create moyai-ledger-intake --binding INTAKE_KV --update-config` で作ると、ここに足される。
 // - 記録（observability）は切る。受け口は IP を数えるのに使い、残さない。
-// - 台帳は mushitaro/moyai の ledger/（2026-11-07 に mushitaro/moyai-ledger から移した）。LEDGER_REPO の既定は mushitaro/moyai。
+// - LEDGER_REPO は config/ledger.json の repo と同じにする（食い違えば tests/unit/share/ledger-place.test.ts が落ちる。切り替えの設計は docs/ledger-split.md）。
 {
   "name": "moyai-ledger-intake",
   "main": "src/index.ts",

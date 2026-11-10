@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { reasonText } from "../../src/app/text/reasons";
 import { loadSharePack, resolvePacksDir } from "../../src/share/pack";
-import { LEDGER_JSON_PATH, verifyLedgerFiles, type LedgerFile } from "../../src/share/ledger";
+import { LEDGER_DIR, LEDGER_JSON_PATH, verifyLedgerFiles, type LedgerFile } from "../../src/share/ledger";
 import { handleRequest, INTAKE_LIMITS, intakeBranch, type IntakeDeps, type IntakeEnv } from "../../services/ledger-intake/src/handler";
 import { findPr } from "../../services/ledger-intake/src/github";
 import { clientBucket, networkBucket } from "../../services/ledger-intake/src/limit";
@@ -32,7 +32,7 @@ const b1 = sealLedger(L, B, smallPlan());
 
 const ledgerFiles = (bundles: readonly Sealed[]): Record<string, string> => ({
   [LEDGER_JSON_PATH]: L.text,
-  "ledger/ledger/TERMS.md": "【架空】試験の利用条件\n",
+  [`${LEDGER_DIR}/TERMS.md`]: "【架空】試験の利用条件\n",
   ...Object.fromEntries(bundles.map((b) => [b.path, b.text])),
 });
 
@@ -238,7 +238,7 @@ describe("受け口：取り下げの印（retired.json。Architect の 72 の 4
     expect(r.body).toEqual({ ok: true, pr: { number: 2, url: prUrl(2) }, closed: [{ number: 1, url: prUrl(1) }] });
     const pr = s.gh.prs[1]!;
     expect(pr.head).toBe(intakeBranch(own.hash));
-    expect(Object.keys(pr.files)).toEqual([`ledger/ledger/bundles/${A.key}/retired.json`]);
+    expect(Object.keys(pr.files)).toEqual([`${LEDGER_DIR}/bundles/${A.key}/retired.json`]);
     expect(pr.files[own.path]!.toString("utf8")).toBe(own.text);
     expect(pr.title).toContain(A.key);
     expect(pr.body.split("\n")[0]).toBe("受け口から（GitHub のアカウントなし）");
@@ -568,7 +568,7 @@ describe("受け口：Security の点検（11-10）で足した守り", () => {
 
   it("取り下げ（低 5）：ファイルが 1 頁（100 件）に収まらない PR は、残りを見ていないので閉じない", async () => {
     const s = setup([a1]);
-    const files = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`ledger/ledger/bundles/${A.key}/${String(i + 2).padStart(6, "0")}-${"0".repeat(16)}.json`, Buffer.from("{}")]));
+    const files = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`${LEDGER_DIR}/bundles/${A.key}/${String(i + 2).padStart(6, "0")}-${"0".repeat(16)}.json`, Buffer.from("{}")]));
     s.gh.prs.push(fakePr(1, "someone:big", `鍵 ${A.key}`, files));
     const r = await s.submit(sealRetired(L, A, 1).text);
     expect(r.status).toBe(200);

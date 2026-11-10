@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { initCli } from "../../../src/cli/ledger";
 import { createLedger } from "../../../src/share/ledger-init";
-import { readLedgerDir, verifyLedgerFiles } from "../../../src/share/ledger";
+import { LEDGER_DIR, readLedgerDir, verifyLedgerFiles } from "../../../src/share/ledger";
 import { loadSharePack, resolvePacksDir } from "../../../src/share/pack";
 
 const dirs: string[] = [];
@@ -44,7 +44,7 @@ describe("createLedger", () => {
     const root = tmp("moyai-ledger-init-");
     const state = tmp("moyai-ledger-state-");
     expect(createLedger({ root, pack, stateDir: state, month: "2026-13" })).toEqual({ ok: false, reason: "monthInvalid" });
-    expect(existsSync(join(root, "ledger"))).toBe(false);
+    expect(existsSync(join(root, LEDGER_DIR.split("/")[0]!))).toBe(false);
   });
 });
 
@@ -53,10 +53,10 @@ describe("ledger init（人だけのコマンド）", () => {
     const root = tmp("moyai-ledger-init-");
     const state = tmp("moyai-ledger-state-");
     expect(await initCli(["--root", root, "--pack", "waste-incineration"], { stdin: { isTTY: false }, stateDir: state })).toBe(3);
-    expect(existsSync(join(root, "ledger"))).toBe(false);
+    expect(existsSync(join(root, LEDGER_DIR.split("/")[0]!))).toBe(false);
     const tty = { isTTY: true };
     expect(await initCli(["--root", "相対の道", "--pack", "waste-incineration"], { stdin: tty, stateDir: state })).toBe(2);
     expect(await initCli(["--root", root, "--pack", "waste-incineration", "--month", "2026-11"], { stdin: tty, stateDir: state })).toBe(0);
-    expect(existsSync(join(root, "ledger", "ledger", "ledger.json"))).toBe(true);
+    expect(existsSync(join(root, ...LEDGER_DIR.split("/"), "ledger.json"))).toBe(true);
   });
 });

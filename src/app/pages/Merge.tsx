@@ -96,7 +96,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const plan = working?.plan ?? null;
   const { state: conn } = useConnection();
   const accepted = useAccepted();
-  const { pending, openRules, openRemovals } = usePending(client, plan);
+  const { pending, openRules, openRemovals, ready: pendingReady, problem: pendingProblem } = usePending(client, plan);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [over, setOver] = useState(false);
@@ -401,6 +401,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     plan && !viewOnly && ws.notRecomposed() ? T.block.notRecomposed : null,
     openQuestions > 0 ? T.block.open(openQuestions) : null,
     leftDecisions > 0 ? T.block.pending(leftDecisions) : null,
+    // 受けた決定をまだ読めていない・読めない（保存先が無いなど）あいだは、未確定を 0 と見なして押せるようにしない（mushitaro/moyai#36）
+    plan && conn.kind === "open" && !pendingReady ? (pendingProblem ?? T.block.reading) : null,
     cycleDup > 0 ? T.block.cycleDup(cycleDup) : null,
     conn.kind !== "open" ? T.block.notConnected : null,
   ].filter((x): x is string => x !== null);
