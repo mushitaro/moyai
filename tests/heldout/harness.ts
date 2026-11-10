@@ -189,6 +189,8 @@ export function answer(q: QuestionState, ix: Index): string | null {
       return q.options.length === 1 ? (q.options[0]?.id ?? null) : null;
     }
     case "assetLink": {
+      // 正解に機器の位置が 1 つも無い組（工場 v2 の正解を写した組。v2.ts は出来事だけを写す）では、結ぶかを正解から答えられない
+      if (ix.truth.assets.length === 0) return null;
       const ok = q.items.every((it) => {
         const a = ent(it);
         return a !== null && a === targetEnt(it);

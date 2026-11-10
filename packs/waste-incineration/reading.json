@@ -5,10 +5,22 @@
     {
       "id": "trades-incineration",
       "kind": "effortTrade",
-      "words": ["築炉工"],
+      "words": [
+        "築炉工"
+      ],
       "text": "作業日報の人数の欄の「築炉工」を職種の語として読む",
       "author": "human",
       "reason": "焼却炉の耐火物の補修に就く職種。ほかの業種の資料には出ない語なので、標準の職種の語から Skillパックのルールへ移した（11-08）"
+    },
+    {
+      "id": "unit-common-short",
+      "kind": "answer",
+      "question": "unitMissing",
+      "match": "の列の「共」（",
+      "answer": "none",
+      "text": "号炉の列の「共」を号・系列なし（共通）として読む",
+      "author": "human",
+      "reason": "作業日報・作業実績の号炉の欄は、共通の設備を「共」と略して書く（1・2・共）。号炉の無い行として読む"
     }
   ]
 }
