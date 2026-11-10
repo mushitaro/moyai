@@ -16,6 +16,8 @@ import { CONVERSATION_SOURCE, PACK_SOURCE, RECORD_SOURCE, cycleIdOf, planRuleLin
 
 /** 星取の案の ID の頭（周期の案の L・R・C と分ける） */
 export const STAR_PREFIX = "S";
+/** 人の試し（星取表で人が未来の ○ を動かした。時間の地図 2、mushitaro/moyai#32）の出どころ */
+export const TRIAL_SOURCE = "trial:人の試し";
 export const STAR_KEY = /^st-([A-Za-z0-9]+)-/;
 /** 明細の鍵から、星取の案の ID（星取の追加の案でなければ null） */
 export const starIdOf = (detailKey: string): string | null => STAR_KEY.exec(detailKey)?.[1] ?? null;
@@ -150,7 +152,7 @@ export interface StarAdd {
 export function proposeStars(
   plan: Plan,
   adds: readonly StarAdd[],
-  o: { basis: string; author: "ai" | "ai_relayed_human"; verified: VerifiedBases },
+  o: { basis: string; author: "ai" | "ai_relayed_human" | "human"; verified: VerifiedBases },
 ): { plan: Plan; placed: (StarAdd & { detailKey: string | null })[] } {
   const details = [...plan.details];
   const placed: (StarAdd & { detailKey: string | null })[] = [];
@@ -183,7 +185,9 @@ export function proposeStars(
         lines.push(planRuleLine(v.rule.name, v.rule.version, v.rule.status, v.rule.text));
       }
     }
-    if (o.author === "ai_relayed_human" || sources.length === 0) sources.unshift(sourceRef(CONVERSATION_SOURCE));
+    // 人の試し（星取表で人が動かした ○）は、会話ではなく人の操作が出どころ
+    if (o.author === "human") sources.unshift(sourceRef(TRIAL_SOURCE));
+    else if (o.author === "ai_relayed_human" || sources.length === 0) sources.unshift(sourceRef(CONVERSATION_SOURCE));
     const detailKey = `st-${s.id}-${s.value === "plan" ? "p" : "a"}-${s.workKey}-${s.fiscalYear}`;
     details.push({
       detailKey,

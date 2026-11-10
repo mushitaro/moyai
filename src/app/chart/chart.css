@@ -394,3 +394,27 @@
   color: var(--text-3);
   pointer-events: none;
 }
+
+/* 時間の地図 2（mushitaro/moyai#32。絵は TimeMap2.dc.html）：人の試し。動かした先は朱の細い枠（署名するまで未確定）、動かす前の位置は薄い ○ */
+.moyai-mark [data-trial]::before {
+  outline: 1px solid var(--shu);
+  outline-offset: 3px;
+}
+.moyai-mark [data-ghost] {
+  font-size: 0;
+  display: inline-flex;
+  vertical-align: middle;
+}
+.moyai-mark [data-ghost]::before {
+  content: "";
+  box-sizing: border-box;
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--text-3);
+  opacity: 0.5;
+}
+.moyai-mark [draggable="true"] {
+  cursor: grab;
+}
