@@ -158,7 +158,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     expect(readdirSync(versions)).toEqual(["000001.json"]);
     expect(readdirSync(join(root, "plans", "fixture-fictional-1", "reports"))).toEqual(["000001-diff.xlsx"]);
     await page.getByTestId("confirm-close").click();
-    await page.getByTestId("tab-share").click();
+    await page.getByTestId("sheet-share").click();
   });
 
   await test.step("EXPORT：標準の Excel を出力すると、ファイル名の 1 行", async () => {

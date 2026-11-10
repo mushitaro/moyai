@@ -451,7 +451,7 @@ export function ConfirmDialog({
             </Text>
           )}
           {done ? (
-            // 確定のあとに SHARE へ行く道は、上の段の SHARE だけ（閉じるだけ）
+            // 確定のあとに共有へ行く道は、HOSHITORI の共有のシートだけ（閉じるだけ）
             <Button onClick={onClose} data-testid="confirm-close">
               {T.close}
             </Button>

@@ -207,7 +207,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       copyFileSync(join(planDir, "reports", "000001-diff.xlsx"), shot(`slice-diff-${tag}`).replace(/\.png$/, ".xlsx"));
       await page.screenshot({ path: shot(`slice-confirmed-${tag}`) });
       await page.getByTestId("confirm-close").click();
-      await page.getByTestId("tab-share").click();
+      await page.getByTestId("sheet-share").click();
     });
 
     await test.step("SHARE：Claude が会話で聞いた見え方の答えを share_preview の answers で置くと（画面に選びは無い）、k ≥ 5 の段で塊が出て、数がすべて 0", async () => {

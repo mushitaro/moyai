@@ -73,7 +73,7 @@ test("確定した版で、share_preview の数が SHARE の画面の数と同�
     });
 
     await test.step("SHARE を開くと、見え方が決まらない（全国の表に載るかを答えていない）：朱の 1 行と押せない理由だけで、選びは無い", async () => {
-      await page.getByTestId("tab-share").click();
+      await page.getByTestId("sheet-share").click();
       await expect(page.getByTestId("checkpoint-page")).toBeVisible();
       const out = await callTool(c, "share_preview");
       expect(out.needs).toBeNull();

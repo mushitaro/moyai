@@ -535,7 +535,8 @@ const Label = ({ children }: { children: ReactNode }) => (
   </Text>
 );
 
-export function Checkpoint() {
+/** embedded：HOSHITORI の共有のシートの中（施設の名前と版は HOSHITORI の見出しが出す。mushitaro/moyai#30） */
+export function Checkpoint({ embedded = false }: { embedded?: boolean } = {}) {
   const working = useWorkingPlan();
   const { client, state } = useConnection();
   const planId = working?.plan.planId ?? null;
@@ -862,11 +863,13 @@ export function Checkpoint() {
   return (
     <div className="moyai-share-page" data-testid="checkpoint-page">
       <div className="moyai-share-body">
-        <div className="moyai-page-head">
-          <h1 className="moyai-merge-name">{res?.plan?.displayName ?? working?.plan.displayName}</h1>
-          {res?.plan && <span className="moyai-merge-ver">{T.versionOf(res.plan.version)}</span>}
-          {(res?.plan?.fictional ?? working?.plan.facility.fictional) && <FictionMark />}
-        </div>
+        {!embedded && (
+          <div className="moyai-page-head">
+            <h1 className="moyai-merge-name">{res?.plan?.displayName ?? working?.plan.displayName}</h1>
+            {res?.plan && <span className="moyai-merge-ver">{T.versionOf(res.plan.version)}</span>}
+            {(res?.plan?.fictional ?? working?.plan.facility.fictional) && <FictionMark />}
+          </div>
+        )}
 
         <Stack gap="lg">
           {state.kind !== "open" && <Alert color="orange">{HUMAN_TEXT.notConnected}</Alert>}

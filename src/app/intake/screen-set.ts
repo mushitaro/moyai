@@ -130,7 +130,7 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
     else {
       changed.push("templateLayout");
       layoutPlaced = { template: a.templateLayout.template, draft: true, summary: r.summary };
-      if (a.go === undefined && a.storageRoot === undefined) goTo("export");
+      if (a.go === undefined && a.storageRoot === undefined) goTo("hoshitori.export");
     }
   }
   // 保存先：設定の画面の保存先の欄に入れて開く（保存は人。答えでは変えなかった項目に数える）

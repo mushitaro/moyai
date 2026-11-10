@@ -436,7 +436,7 @@ AI クライアント（Claude Code / Claude Desktop。写真もここで読む�
 
 画面の仕様は `docs/screens.md`（Wire のセッションが書いたもの）に置く。この節の前の表（取り込み・星取表・検査・検問所…の 9 画面）は、それに置き換えた。作る順は `docs/screens.md` 5 章の P0 → P1 → P2 で、**運営者が 2026-11-04 に決めた**。
 
-- 段は MOYAI（トップ）› MERGE › EXPORT › SHARE。取り込み・星取表・検査・決定は MERGE のシートになる。
+- 段は MOYAI（トップ）› MERGE › EXPORT › SHARE。取り込み・星取表・検査・決定は MERGE のシートになる。2026-11-10 夜（mushitaro/moyai#30）：段は MOYAI › HOSHITORI に。EXPORT と SHARE は HOSHITORI のシート「出力」「共有」（確定した版があるときだけ）。帳票ごとに出力と共有を持つ。`docs/screens.md` §1・3.5・3.6。
 - 決めるのは Claude との会話でする。MOYAI の画面は、見て確かめる面と、人だけの操作（署名・渡す・承認・書き出し・出す）を押す所。
 - 主ボタンは 1 画面に 1 つまで（`docs/screens.md` の各画面のとおり）。取り消せない操作や捨てる操作は、確かめのダイアログを通す。
 - ボタンの言葉は裏の動きと合わせる。`window.confirm` を使わない。動かない部品は置かない（P2 の部品は作るまで置かない）。命令を部分一致で判定しない。

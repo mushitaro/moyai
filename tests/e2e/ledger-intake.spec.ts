@@ -110,7 +110,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
     await page.getByTestId("confirm-close").click();
-    await page.getByTestId("tab-share").click();
+    await page.getByTestId("sheet-share").click();
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
   });
 
@@ -147,7 +147,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await page.screenshot({ path: shot(`ledger-intake-sent-${tag}`), fullPage: true });
     // 開き直すと：止め札は「前に出した共有ファイルが、まだ台帳に載っていません」
     await page.getByTestId("tab-merge").click();
-    await page.getByTestId("tab-share").click();
+    await page.getByTestId("sheet-share").click();
     await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
     await expect(page.getByTestId("send")).toBeDisabled();
 

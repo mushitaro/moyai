@@ -111,7 +111,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
   expect(rec.plan.assets.filter((a: any) => a.commonItemAccepted).length).toBe(accepted);
   await page.getByTestId("confirm-close").click();
-  await page.getByTestId("tab-share").click();
+  await page.getByTestId("sheet-share").click();
 
   // SHARE → 署名 → 輪。見え方の答えは、会話で聞いた答えとして試験の台本が share_preview の answers で置く（画面に選びは無い）
   await expect(page.getByTestId("checkpoint-page")).toBeVisible();

@@ -165,7 +165,7 @@ function sharePreviewRequest(ws: IntakeWorkspace, args: Record<string, unknown>)
   });
   const c = getShareChoice();
   const mine = c && c.planId === planId ? c : null;
-  const screen = goTo("share");
+  const screen = goTo("hoshitori.share");
   ws.note("ai", T.sharePreviewRead);
   return {
     ok: true,
@@ -545,7 +545,7 @@ async function addTemplateFromBridge(ws: IntakeWorkspace, files: { fileId: strin
       ws.note("ai", T.templateRefused(name));
     }
   }
-  if (added.length) goTo("export");
+  if (added.length) goTo("hoshitori.export");
   const levels = added.length ? planLevelNames() : undefined;
   const data = { added, refused, ...(levels ? { levels } : {}) };
   return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
