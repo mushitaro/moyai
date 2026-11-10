@@ -394,3 +394,19 @@
   color: var(--text-3);
   pointer-events: none;
 }
+
+/* 時間の地図 3（mushitaro/moyai#33。絵は TimeMap3.dc.html）：版の変化は、元の版と比べるときだけ静かに現れる（--dur-base。reduced-motion では 0） */
+.moyai-mark.moyai-mark-vchg [data-mark]::before,
+.moyai-mark [data-old]::before {
+  animation: moyai-version-in var(--dur-base) var(--ease-enter);
+}
+@keyframes moyai-version-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+/* 重ねた似た施設の星は淡く（自施設の星より前に出さない） */
+.moyai-row-stat .moyai-mark [data-mark] {
+  opacity: 0.6;
+}

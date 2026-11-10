@@ -94,11 +94,14 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.locator(".ag-row.moyai-row-peer")).toHaveCount(0);
       await expect(page.locator(".ag-header-cell.moyai-band-head")).toHaveCount(0);
       const label = page.locator(".ag-row.moyai-row-stat .moyai-lv").filter({ hasText: "類似施設" }).first();
-      await expect(label).toHaveText(/^類似施設　(間隔の中央値 .+|5 施設に満たない)$/);
+      // 統計は選んだときだけ横の板に出す（時間の地図 3、#33）。行の名前は場と状態だけ
+      await expect(label).toHaveText(/^類似施設　(台帳|共有フォルダ|5 施設に満たない)$/);
       // 年度の列の見出しは「2023」の数だけ（Wire、11-06）
       await expect(page.locator(".ag-header-cell.moyai-mark-head .ag-header-cell-text", { hasText: /^\d{4}$/ }).first()).toBeInViewport();
       await label.click();
       await expect(page.getByTestId("peer-side")).toHaveAttribute("data-kind", "stat");
+      // 似た施設のまとめた行には周期の線を引かない（周期ではないので。#33）
+      await expect(page.locator(".ag-row.moyai-row-stat .moyai-mark[data-cyc-l], .ag-row.moyai-row-stat .moyai-mark[data-cyc-r]")).toHaveCount(0);
       await expect(page.getByTestId("peer-side")).toContainText("公開台帳");
       await page.screenshot({ path: shot(`peers-${tag}-ledger`), fullPage: false });
     });

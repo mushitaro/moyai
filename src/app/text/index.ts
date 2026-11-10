@@ -209,7 +209,7 @@ export const TEXT = {
       aiNote: "AI（peer_reference）が読めるのは、ここで開いた比べの、下限を守った集計と匿名の札だけです。",
       peerRow: (place: string, label: string) => `${label}（${place}）`,
       statRow: (place: string) => `統計（${place}）`,
-      summaryRow: (band: string) => `類似施設　間隔の中央値 ${band}`,
+      summaryRow: (place: string) => `類似施設　${place}`,
       summaryFew: "類似施設　5 施設に満たない",
       profileMissing: "類似施設　見え方が未確定",
       fixDecide: "施設設定で決める",
