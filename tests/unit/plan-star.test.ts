@@ -550,6 +550,25 @@ describe("人の試し（時間の地図 2、mushitaro/moyai#32）：星取表�
     expect(trial.trialOrigins()).toEqual([expect.objectContaining({ workKey: "w1", from: 2025, to: 2027 })]);
   });
 
+  it("試しは版を変えない。確定のシートの案（starGroups）と計画の明細は、取り消し・やり直しでずれない", () => {
+    const v0 = getWorkingPlan()!.plan.version;
+    const humanGroups = () => trial.starGroups().filter((g) => g.author === "human");
+    const trialKeys = () => getWorkingPlan()!.plan.details.filter((d) => d.sources.some((x) => x.file === TRIAL_SOURCE)).map((d) => d.detailKey);
+    trial.moveStarByHuman("w1", 2025, 2027, range);
+    expect(getWorkingPlan()!.plan.version).toBe(v0);
+    expect(humanGroups()).toHaveLength(1);
+    expect(trialKeys()).toHaveLength(1);
+    trial.undoTrialByHuman();
+    expect(humanGroups()).toHaveLength(0);
+    expect(trialKeys()).toHaveLength(0);
+    expect(removalAcceptances()).toEqual([]);
+    trial.redoTrialByHuman(range);
+    expect(humanGroups().map((g) => g.pairs)).toEqual([[{ from: 2025, to: 2027 }]]);
+    expect(trialKeys()).toHaveLength(1);
+    expect(removalAcceptances()).toHaveLength(1);
+    expect(getWorkingPlan()!.plan.version).toBe(v0);
+  });
+
   it("取り消しとやり直しは何度でも。取り消すと元に戻り、署名の内側にも入らない", () => {
     trial.moveStarByHuman("w1", 2025, 2026, range);
     trial.moveStarByHuman("w1", 2026, 2027, range);
