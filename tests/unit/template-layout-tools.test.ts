@@ -2,7 +2,7 @@
 // - intake_add_files の source: template：橋渡しが道を確かめて様式を読み、AI には様式の形だけを返す（値の入ったデータの行は字も値も返さない）。
 //   作業画面は様式を EXPORT の様式の欄に入れる（保存はしない）。
 // - screen_set の templateLayout：作業画面が様式に照らして写し方の案を下書きとして置く。合わなければ置かずに理由を返す。
-//   出力と保存は人が「この写し方で出力」を押したときだけ（ツールには道が無い）。
+//   出力と保存は人が「署名して出力」を押したときだけ（ツールには道が無い）。
 // 様式と計画はどれも架空。ファイルは一時のフォルダに置く。
 import { closeSync, existsSync, ftruncateSync, mkdtempSync, openSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
@@ -131,7 +131,7 @@ describe("ツールの型と説明", () => {
       expect(d).toContain("「この様式で Excel を出して」");
       expect(d).toContain("templateLayout");
       expect(d).toContain("見本");
-      expect(d).toContain("「この写し方で出力」");
+      expect(d).toContain("「署名して出力」");
     }
     expect(TOOLS.intake_add_files.description).toContain("source: template");
   });
@@ -267,7 +267,7 @@ describe("送り手と受け手：中継 → 橋渡し → 作業画面", () => 
   });
 });
 
-describe("人が「この写し方で出力」を押す道（画面の関数）", () => {
+describe("人が「署名して出力」を押す道（画面の関数）", () => {
   it("見本は出力と同じ関数で書く。保存する写し方には案が入り、保存先から読み直しても同じ Excel になる", async () => {
     setWorkingPlan(layoutPlan(), "intake");
     const w = ws();

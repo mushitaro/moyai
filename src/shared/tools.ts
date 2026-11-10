@@ -348,7 +348,7 @@ export const DEMO_MIXED_NOTE =
 
 /** source: template の結果に添える次の手（「この様式で Excel を出して」の順） */
 export const TEMPLATE_ADD_NOTE =
-  "様式を作業画面の EXPORT に入れた（まだ保存していない）。template の形（見出しの字・結合・年度の式）と planLevels（計画の階層の名前。asset-first の順で、series-first では機器と号炉・系統が入れ替わる）を読み、写し方の案を screen_set の templateLayout で置く。置いた案は下書きで、EXPORT に案のとおりに書いた見本が出る。利用者に見本を見てもらい、出力と保存は利用者が「この写し方で出力」を押す。";
+  "様式を作業画面の EXPORT に入れた（まだ保存していない）。template の形（見出しの字・結合・年度の式）と planLevels（計画の階層の名前。asset-first の順で、series-first では機器と号炉・系統が入れ替わる）を読み、写し方の案を screen_set の templateLayout で置く。置いた案は下書きで、EXPORT に案のとおりに書いた見本が出る。利用者に見本を見てもらい、出力と保存は利用者が EXPORT の主ボタン「署名して出力」を押す（確定した版が要る）。";
 
 /**
  * intake_survey（show: true）で、作業画面のタブがつながっていないとき（橋渡しが開いた新しいタブが時間内に引き継がなかった）に、
@@ -824,7 +824,7 @@ export const TOOLS = {
       "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
       "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey（part: files）の files と filesTotal で入った資料を確かめる。" +
       "source: template は、利用者が「この様式で Excel を出して」と言った様式（path に .xlsx の絶対の道。8 MB まで）を、作業画面の EXPORT の様式の欄に入れる（保存はしない）。結果の template は様式の形だけ：シートの名前、字のあるセルの位置と字（見出し・ラベル・注記）、結合、式のあるセルの位置（年度の参照の式は参照先と足す数）。値の入ったデータの行は字を返さず、範囲と数だけ。planLevels は作業中の計画の階層の名前。" +
-      "「この様式で Excel を出して」の順：1. この source: template で様式を入れる 2. 形を読んで写し方の案を screen_set の templateLayout で置く 3. EXPORT の見本（案のとおりに書いた最初の 20 行ほど）を利用者に見てもらう 4. 出力と保存は利用者が「この写し方で出力」を押す（ツールではしない）。",
+      "「この様式で Excel を出して」の順：1. この source: template で様式を入れる 2. 形を読んで写し方の案を screen_set の templateLayout で置く 3. EXPORT の見本（案のとおりに書いた最初の 20 行ほど）を利用者に見てもらう 4. 出力と保存は利用者が EXPORT の主ボタン「署名して出力」を押す（ツールではしない。確定した版が要る）。",
     intakeAddFilesInput,
     z.object({
       source: z.enum(INTAKE_SOURCES),
@@ -1159,7 +1159,7 @@ export const TOOLS = {
       "「A と B の並び順を入れ替えて」は、chart_rows で 2 つの行の id を読み、rowOrder: { node: B の id, before: A の id }（A が上で隣り合うとき。同じ親の下の行だけ。離れているときは 2 回に分ける）。" +
       "「計画の最大年度は 2040 年までにして」は lastFiscalYear: 2040（星取表の年度の列をその年度まで出し、周期の案と星取の案をその年度まで置ける。今の星取は変えない。いちばん遅い星取より前の年度にはできない）。" +
       "levelOrder・rowOrder・lastFiscalYear は施設ごとに覚える見せ方で、作業中の計画・版の記録・署名される字は変えない。機器の並びは、確定のときに書く Excel にも出る。並びを変えたあとの行は chart_rows で読み直す。" +
-      "「この様式で Excel を出して」は、intake_add_files（source: template）で様式を入れたあと、templateLayout に写し方の案を置く：template（様式の名前）、sheets（計画の表のシートごとに、見出しの行・年度の列と開始年度のセル・階層の列〔nested は入れ子の縦、flat は 1 行に横〕・組の行〔ラベルの列と、行ごとの中身 plan_content・plan_amount・actual_content・actual_amount・marks・cycle・next〕・明細を足す位置〔合計の行〕・continues〔年度で分かれる続きのシートなら前のシート〕）、amount（金額の単位と税）、facility（基本情報のシートの欄 → 施設の項目）。様式に合わなければ置かずに理由を返す。置いた案は下書きで、EXPORT に見本が出る。利用者に見本を見てもらい、出力と保存は利用者が「この写し方で出力」を押す。" +
+      "「この様式で Excel を出して」は、intake_add_files（source: template）で様式を入れたあと、templateLayout に写し方の案を置く：template（様式の名前）、sheets（計画の表のシートごとに、見出しの行・年度の列と開始年度のセル・階層の列〔nested は入れ子の縦、flat は 1 行に横〕・組の行〔ラベルの列と、行ごとの中身 plan_content・plan_amount・actual_content・actual_amount・marks・cycle・next〕・明細を足す位置〔合計の行〕・continues〔年度で分かれる続きのシートなら前のシート〕）、amount（金額の単位と税）、facility（基本情報のシートの欄 → 施設の項目）。様式に合わなければ置かずに理由を返す。置いた案は下書きで、EXPORT に見本が出る。利用者に見本を見てもらい、出力と保存は利用者が EXPORT の主ボタン「署名して出力」を押す（確定した版が要る）。" +
       "答えは、変えた項目（changed）、変えなかった項目と理由（refused）、今の値（current。facility は見せ方を覚えた施設の名前、planVersion は作業中の計画の版で、計画が無ければ null）。確定・署名・送る・承認・昇格は、このツールではしない。",
     screenSetInput,
     screenSetOutput,
