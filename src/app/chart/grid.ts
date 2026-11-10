@@ -564,13 +564,24 @@ export class ChartGrid {
 
   /** 新しく現れた星（答えの結果で計画が作り直されたとき）。その行だけ描き直す。次の描き直しで外れる */
   setFresh(fresh: ReadonlySet<string>) {
+    const rowsOf = (set: ReadonlySet<string>) => [...set].map((k) => k.split("\u0000")[0]!);
+    const ids = new Set([...rowsOf(this.fresh), ...rowsOf(fresh)]);
     this.fresh = fresh;
     const ctx = this.api.getGridOption("context") as GridContext;
     this.api.setGridOption("context", { ...ctx, fresh } satisfies GridContext);
-    const ids = new Set([...fresh].map((k) => k.split("\u0000")[0]!));
     const rowNodes = [...ids].map((id) => this.api.getRowNode(id)).filter((n): n is NonNullable<typeof n> => !!n);
     if (rowNodes.length) this.api.refreshCells({ rowNodes, force: true });
+    // 現れ終えたら外す（あとで送った・描き直したセルが、もう一度現れないように）。描いた印は次の描き直しで消える
+    if (this.freshTimer) clearTimeout(this.freshTimer);
+    if (fresh.size > 0)
+      this.freshTimer = setTimeout(() => {
+        this.freshTimer = null;
+        this.fresh = new Set();
+        const c = this.api.getGridOption("context") as GridContext;
+        this.api.setGridOption("context", { ...c, fresh: this.fresh } satisfies GridContext);
+      }, 600);
   }
+  private freshTimer: ReturnType<typeof setTimeout> | null = null;
 
   private ghosts: ReadonlySet<string> = new Set();
   private trials: ReadonlySet<string> = new Set();

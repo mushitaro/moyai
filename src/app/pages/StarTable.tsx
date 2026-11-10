@@ -622,18 +622,24 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
 
   // 時間の地図 4（mushitaro/moyai#34）：答えの結果で計画が作り直されたら、新しく現れた星だけを静かに現す。
   // 開いたとき・表示（台帳・期・層・畳み）を替えたときは動かさない（前の星と比べられないので）
-  const lastMarks = useRef<{ key: string; marks: Set<string> } | null>(null);
+  const lastMarks = useRef<{ key: string; rows: Set<string>; marks: Set<string> } | null>(null);
   useEffect(() => {
     const viewKey = [plan.planId, mode, period, layer, foldLevel].join("|");
+    const rows = new Set<string>();
     const marks = new Set<string>();
     for (const r of model.rows) {
-      if (r.kind === "peer" || r.kind === "stat") continue;
+      if (r.kind === "peer" || r.kind === "stat" || r.folded) continue;
+      rows.add(r.id);
       for (const [k, c] of Object.entries(r.cells)) if (c.mark) marks.add(`${r.id}\u0000${k}`);
     }
     const prev = lastMarks.current;
-    lastMarks.current = { key: viewKey, marks };
-    if (!prev || prev.key !== viewKey) return;
-    const fresh = new Set([...marks].filter((m) => !prev.marks.has(m)));
+    lastMarks.current = { key: viewKey, rows, marks };
+    if (!prev || prev.key !== viewKey) {
+      grid.current?.setFresh(new Set());
+      return;
+    }
+    // 前にもあった行の、前には無かった星だけ（畳む・開く・重ねる・絞るで見えた行の星は数えない）
+    const fresh = new Set([...marks].filter((m) => !prev.marks.has(m) && prev.rows.has(m.split("\u0000")[0]!)));
     grid.current?.setFresh(fresh);
   }, [model, plan.planId, mode, period, layer, foldLevel]);
 
