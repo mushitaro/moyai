@@ -546,13 +546,19 @@ export class ChartGrid {
 
   /** 選んだ星と周期の線を描き直す（行は渡し直さない）。星を選んでいるあいだ、ほかの星を薄くする（CSS。動きは --dur-base、prefers-reduced-motion では 0） */
   pick(picked: GridContext["picked"], cycle: GridContext["cycle"]) {
+    if (JSON.stringify([picked, cycle?.rowId, cycle?.keys]) === JSON.stringify([this.picked, this.cycle?.rowId, this.cycle?.keys])) return;
     this.picked = picked;
     this.cycle = cycle;
     const ctx = this.api.getGridOption("context") as GridContext;
     this.api.setGridOption("context", { ...ctx, picked, cycle } satisfies GridContext);
     this.el.dataset.picked = picked ? "true" : "false";
-    this.api.refreshCells({ force: true });
+    // 描き直すのは、前と今の選びの行だけ（矢印のキーで焦点を動かすたびに表全体を描き直さない）
+    const ids = new Set([this.lastPickRows, [picked?.rowId, cycle?.rowId]].flat().filter((x): x is string => !!x));
+    this.lastPickRows = [picked?.rowId, cycle?.rowId].filter((x): x is string => !!x);
+    const rowNodes = [...ids].map((id) => this.api.getRowNode(id)).filter((n): n is NonNullable<typeof n> => !!n);
+    if (rowNodes.length) this.api.refreshCells({ rowNodes, force: true });
   }
+  private lastPickRows: string[] = [];
 
   private select(rowId: string, colId: string | null) {
     this.h.onSelect(rowId, colId && !colId.startsWith("lv") && !colId.startsWith("band.") ? colId : null);

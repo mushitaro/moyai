@@ -492,15 +492,6 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   // 明細の鍵 → 計画か実績か（共通台帳で、案を除いた印を描くため）
   const kinds = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.planOrActual] as const)), [plan]);
 
-  // 時間の地図 1（mushitaro/moyai#31）：選んだ星を強め、その行の星どうしを周期の線で結ぶ（年度の表示のときだけ）。選びを外すと消える
-  useEffect(() => {
-    const row = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;
-    const pickedNow = row && selected?.periodKey && row.cells[selected.periodKey]?.mark ? { rowId: row.id, periodKey: selected.periodKey } : null;
-    const keys = period === "year" ? model.periods.map((p) => p.key) : [];
-    const marks = row ? keys.filter((k) => row.cells[k]?.mark).length : 0;
-    grid.current?.pick(pickedNow, row && marks >= 2 ? { rowId: row.id, keys } : null);
-  }, [selected, model, period]);
-
   useEffect(() => {
     grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals);
     // 「| 〜で見る」の頼み：行を渡したあとに、その行・期を見える所へ送って選ぶ（畳んでいて見えなければ親の行）
@@ -512,6 +503,16 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       });
     }
   }, [model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals, jump]);
+
+  // 時間の地図 1（mushitaro/moyai#31。行を渡したあとに描く）：選んだ星を強め、その行の星どうしを周期の線で結ぶ（年度の表示のときだけ）。選びを外すと消える
+  useEffect(() => {
+    const row = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;
+    const pickedNow = row && selected?.periodKey && row.cells[selected.periodKey]?.mark ? { rowId: row.id, periodKey: selected.periodKey } : null;
+    const keys = period === "year" ? model.periods.map((p) => p.key) : [];
+    const marks = row ? keys.filter((k) => row.cells[k]?.mark).length : 0;
+    grid.current?.pick(pickedNow, row && marks >= 2 ? { rowId: row.id, keys } : null);
+  }, [selected, model, period]);
+
 
   // 見出しで「重ねる」を選ぶと、共通の設備項目の行に替えて比べを開く。「外す」で閉じる
   useEffect(() => {
