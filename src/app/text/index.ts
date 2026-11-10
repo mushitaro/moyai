@@ -114,6 +114,8 @@ export const TEXT = {
     mark: { plan: "○", actual: "●", both: "◎" },
     cycleMark: (fy: number) => `○ ${fy} 年度（周期の案）`,
     markName: { plan: "計画", actual: "実績", both: "計画と実績" },
+    /** 周期の線の上の間隔（時間の地図 1。良否は言わない） */
+    cycleGap: (n: number) => `${n} 年`,
     markNone: "星取なし",
     markRemoved: "星取の削除",
     reviewPrefix: "?",
@@ -237,6 +239,10 @@ export const TEXT = {
       review: "要確認",
       changed: "変更",
       proposal: "（案。未確定）",
+      /** 同じ整備に、違う資料がいくつつながっているか（2 つ以上のときだけ。時間の地図 1） */
+      sameWork: (n: number) => `資料 ${n} つが同じ整備を指す`,
+      /** 周期の根拠の出どころ（資料ではない出どころの、画面の言葉） */
+      basisOf: { record: "周期の根拠　自施設の実績", pack: "周期の根拠　Skillパックの基準", ledger: "周期の根拠　公開台帳", rule: "周期の根拠　計画ルール", conversation: "周期の根拠　Claude との会話" } as Record<string, string>,
       /** 星取の案の詳しく（docs/screens.md 3.2）：xs「計画の追加（未確定）」、題「2028 年度　分解整備」、出どころ・理由、「| 確定のシートで見る」 */
       starPending: (kind: string) => `${kind}（未確定）`,
       starHead: (fy: number, work: string) => `${fy} 年度　${work}`,

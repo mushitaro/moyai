@@ -113,8 +113,15 @@ function measureAfterPaint(name: string, start: string) {
   );
 }
 
+/** 資料ではない出どころ（record:・pack:・ledger:・rule:・conversation:）は、周期の根拠として言葉で出す */
 function sourceText(s: Plan["details"][number]["sources"][number]): string {
-  return [s.file, s.sheet, s.cell, s.page !== null ? T.source.page(s.page) : null].filter((x) => x !== null && x !== "").join(" · ");
+  const kind = /^([a-z]+):/.exec(s.file)?.[1];
+  const head = kind && T.source.basisOf[kind] ? T.source.basisOf[kind]! : s.file;
+  return [head, s.sheet, s.cell, s.page !== null ? T.source.page(s.page) : null].filter((x) => x !== null && x !== "").join(" · ");
+}
+/** 同じ整備につながる資料の数（資料ではない出どころは数えない） */
+function documentCount(d: WorkDetailT): number {
+  return new Set(d.sources.filter((s) => !/^[a-z]+:/.test(s.file)).map((s) => s.file)).size;
 }
 
 interface Index {
@@ -145,6 +152,11 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
         {T.source.by}：{TEXT.author[d.author]} · {T.source.basis}：{d.basis}
         {d.needsReview ? ` · ${T.source.review}` : ""}
       </Text>
+      {documentCount(d) >= 2 && (
+        <Text size="xs" data-testid="source-same-work">
+          {T.source.sameWork(documentCount(d))}
+        </Text>
+      )}
       <Stack gap={0}>
         {d.sources.map((s, i) => (
           <Text key={i} size="xs" data-testid="source-ref">
@@ -479,6 +491,15 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
 
   // 明細の鍵 → 計画か実績か（共通台帳で、案を除いた印を描くため）
   const kinds = useMemo(() => new Map(plan.details.map((d) => [d.detailKey, d.planOrActual] as const)), [plan]);
+
+  // 時間の地図 1（mushitaro/moyai#31）：選んだ星を強め、その行の星どうしを周期の線で結ぶ（年度の表示のときだけ）。選びを外すと消える
+  useEffect(() => {
+    const row = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;
+    const pickedNow = row && selected?.periodKey && row.cells[selected.periodKey]?.mark ? { rowId: row.id, periodKey: selected.periodKey } : null;
+    const keys = period === "year" ? model.periods.map((p) => p.key) : [];
+    const marks = row ? keys.filter((k) => row.cells[k]?.mark).length : 0;
+    grid.current?.pick(pickedNow, row && marks >= 2 ? { rowId: row.id, keys } : null);
+  }, [selected, model, period]);
 
   useEffect(() => {
     grid.current?.update(model, foldLevel, band, proposals, compare, commentMarks, due, kinds, removals);
