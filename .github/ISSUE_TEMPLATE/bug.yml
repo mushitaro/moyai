@@ -1,0 +1,40 @@
+name: 不具合
+description: 動かない・違う結果になる
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        このリポジトリは公開です。資料の中身・キー・実在の施設の名前を書かないでください。
+  - type: dropdown
+    id: area
+    attributes:
+      label: どこで
+      options:
+        - 取り込み（資料を入れる・質問）
+        - 星取表（HOSHITORI）
+        - 出力（EXPORT）
+        - 共有（SHARE）・公開台帳
+        - セットアップ・Claude との接続
+        - そのほか
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: したこと・起きたこと・期待したこと
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: ビルド（設定の画面の下に出る字）
+      placeholder: "MOYAI · build 2026-11-10 15:07 JST · 5d6ec55"
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Windows
+        - macOS
+        - Linux

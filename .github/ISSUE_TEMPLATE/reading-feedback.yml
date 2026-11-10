@@ -1,0 +1,54 @@
+name: 読み方のフィードバック（Skillパック）
+description: 資料の読み取りが違っていた・聞かれなくてよいことを聞かれた、を知らせる
+labels: ["area:skill-loop", "feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        このリポジトリは公開です。**資料の中身（行の値・金額・会社や人の名前・実在の施設の名前）を書かないでください。**
+        書いてよいのは、資料の種類と、見出しや記号のような「書き方」だけです。
+  - type: dropdown
+    id: pack
+    attributes:
+      label: 業種（Skillパック）
+      options:
+        - ごみ焼却（waste-incineration）
+        - し尿処理（night-soil）
+        - そのほか
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: 資料の種類
+      options:
+        - 星取表（保全計画表）
+        - 機器台帳
+        - 作業日報・作業実績
+        - 工事報告書
+        - 発注台帳・契約の一覧
+        - 工程表
+        - 写真・スキャン
+        - そのほか
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: どう読まれて、どう読まれるべきだったか
+      description: "例：号炉の列の「共」が読めないと聞かれた。共通の設備の意味で、どの施設でもそう書く。"
+    validations:
+      required: true
+  - type: textarea
+    id: rule
+    attributes:
+      label: 会話で作ったルール（あれば）
+      description: 施設の Skill の rules.json から、当てはまるルールを貼ってください（名前や値が入っていないか見てから）。
+      render: json
+  - type: checkboxes
+    id: check
+    attributes:
+      label: 確かめ
+      options:
+        - label: 資料の中身（行の値・金額・固有名詞）を書いていない
+          required: true

@@ -1,0 +1,19 @@
+name: 開発の課題
+description: 統括のセッションが、見つけた課題を書く型
+body:
+  - type: textarea
+    id: now
+    attributes:
+      label: 今（測った値・再現の手順）
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 終わったと言える条件
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 手がかり（ファイル・前の調べ）
