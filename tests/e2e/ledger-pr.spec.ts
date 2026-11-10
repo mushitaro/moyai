@@ -1,7 +1,7 @@
 // 公開の台帳へ PR を出す（docs/plan.md §2.8・§2.12。運営者の決定、2026-11-04「MOYAI が出す」）を、この PC の Chrome と Edge で画面から通す：
-// 設定で置き場所・呼び名・台帳の clone を選ぶ → 見本の計画を確定する → SHARE で出す先を「公開の台帳」にする → 誰からも見えるあなた →
-// 「GitHub につなぐ」でコードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる →
-// 人が「署名して公開の台帳へ出す」を押す → PR #1 → 出した束の行方（審査中）。
+// 設定で置き場所・呼び名・台帳の clone を選ぶ → 見本の計画（施設の見え方は答えてある）を確定する → SHARE は共有フォルダが無いので公開台帳 → 公開時の表示 →
+// 押せない理由「GitHub　未接続」の右の「GitHub につなぐ」でコードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる →
+// 人が「署名して公開台帳へ送信」を押す → PR #1 → 下の帯の左に「✓ 送信」、送信履歴（審査中）。開き直すと「まだ台帳に載っていません」で止まる。
 // GitHub は、試験の中だけで動く代わり（tests/helpers/github-stub.ts）。本物の GitHub では確かめていない。先に npm run build を走らせておく。
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -11,7 +11,7 @@ import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
 import { loadSharePack } from "../../src/share/pack";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, PROFILE_ANSWERED, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 import { startGitHubStub, type GitHubStub } from "../helpers/github-stub";
 
 
@@ -54,7 +54,7 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
   });
 
   await test.step("見本の計画を開き、決定を受けて、署名して確定する", async () => {
-    const body = JSON.stringify(DEV_PLANS["fictional-1"]());
+    const body = JSON.stringify(PROFILE_ANSWERED(DEV_PLANS["fictional-1"]()));
     await page.route("**/assets/dev-plans/*.json", (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
     await page.goto(`${bridge.base}/?plan=fictional-1#/merge/chart`);
     await expect(page.locator(".ag-row").first()).toBeVisible();
@@ -69,24 +69,23 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
   });
 
-  await test.step("SHARE：出す先を公開の台帳にする。見え方を選ぶと、誰からも見えるあなた。つなぐまでは出せない", async () => {
-    // 共有フォルダを作っていないので、共有先の右に「共有フォルダがありません　| 設定へ」。同じことを上の知らせで重ねない
-    await expect(page.getByTestId("ring-none")).toContainText("共有フォルダがありません");
-    await expect(page.getByTestId("ring-none-to-settings")).toHaveAttribute("href", "#/settings");
+  await test.step("SHARE：共有フォルダが無く台帳の clone があるので、共有先は公開台帳（字で、切り替えは無い）。公開時の表示。つなぐまでは出せない", async () => {
+    await expect(page.getByTestId("dest-name")).toHaveText("公開台帳");
+    await expect(page.getByTestId("share-dest")).toHaveCount(0);
     await expect(page.getByTestId("checkpoint-refused")).toHaveCount(0);
-    await page.getByTestId("share-dest").getByText("公開台帳").click();
     await expect(page.getByTestId("github-login")).toHaveText("GitHub　未接続");
-    await page.getByTestId("q-national").selectOption("yes");
-    await page.getByTestId("q-furnace").selectOption("STOKER");
-    await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
-    await page.getByTestId("q-turbine").selectOption("YES");
-    await page.getByTestId("q-ash").selectOption("OUT");
-    await page.getByTestId("q-contract").selectOption("SINGLE");
+    // 見え方は施設の答え（計画）から。画面に選びは無く、Claude の入力でもない
+    await expect(page.locator('[data-testid^="q-"]')).toHaveCount(0);
+    await expect(page.getByTestId("ai-answers-mark")).toHaveCount(0);
     await expect(page.getByText("公開時の表示")).toBeVisible();
+    await expect(page.getByTestId("you-k")).toContainText("（全国 844）");
     await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
     await expect(page.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
-    await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続");
-    await expect(page.getByTestId("ledger-bottom")).toHaveText("GitHub に PR を送信。掲載後の複製は残ります。");
+    await expect(page.getByTestId("send")).toBeDisabled();
+    // GitHub につなぐのは、押せない理由の右の 1 つだけ
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続GitHub につなぐ");
+    await expect(page.getByTestId("send-reason").getByTestId("github-open")).toHaveCount(1);
+    await expect(page.getByTestId("share-note")).toHaveText("公開。掲載後の複製は残ります。");
   });
 
   await test.step("GitHub につなぐ：コードを出す → 人が github.com でコードを入れる（試験の台本が押した）→ つながる", async () => {
@@ -101,7 +100,9 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await page.getByTestId("github-close").click();
     await expect(page.getByTestId("github-login")).toHaveText("GitHub　moyai-test");
     await expect(page.getByTestId("account-seen")).toHaveText("PR の GitHub アカウント　moyai-test");
-    await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
+    // 数え直しが 0 ばかりのときは、上に出さない（共有ファイルの中身の中だけ）
+    await expect(page.getByTestId("counts")).toHaveCount(0);
+    await expect(page.getByTestId("counts-all")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
     await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");
   });
 
@@ -109,14 +110,20 @@ test("SHARE で GitHub につなぎ、署名して、公開の台帳に PR を�
     await expect(page.getByTestId("passphrase")).toHaveCount(0);
     expect(stub.prs).toHaveLength(0);
     await page.getByTestId("send").click();
-    await expect(page.getByTestId("ledger-sent")).toContainText("PR #1 を出しました");
+    await expect(page.getByTestId("ledger-sent")).toHaveText("✓ 送信　共有ファイル 1　PR #1");
+    await expect(page.getByTestId("share-note")).toHaveCount(0);
     await expect(page.locator('[data-testid="ledger-pr"][data-state="open"]')).toHaveCount(1);
     await expect(page.getByTestId("ledger-pr").first()).toContainText("審査中");
     await expect(page.getByTestId("ledger-pr-bundle").first()).toHaveText(/^共有ファイル 1　第 1 版　\d{4}-\d{2}-\d{2}$/);
-    // 出したあと：止め札は「前に出した束が、まだ台帳に載っていません」の 1 つ。主ボタンは押せない
-    await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
+    // 出したあと：「理由：送信済み」。主ボタンは押せない
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：送信済み");
     await expect(page.getByTestId("send")).toBeDisabled();
     await page.screenshot({ path: shot(`ledger-pr-sent-${tag}`), fullPage: true });
+    // 開き直すと：止め札は「前に出した共有ファイルが、まだ台帳に載っていません」の 1 つ。主ボタンは押せない
+    await page.getByTestId("tab-merge").click();
+    await page.getByTestId("tab-share").click();
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：前に出した共有ファイルが、まだ台帳に載っていません");
+    await expect(page.getByTestId("send")).toBeDisabled();
 
     // 届いた束：台帳の木に足して、受け手と同じ関数で ✓（台帳の Actions の検証と同じ関数）
     expect(stub.prs).toHaveLength(1);

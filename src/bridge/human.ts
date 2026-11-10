@@ -20,7 +20,7 @@ import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readi
 import { ReadingSkill, isPlanRule } from "../import/reading";
 import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
 import { ruleSchema, type SharePreviewFromTab, type SharePreviewOut } from "../shared/tools";
-import { defaultRingId, defaultShareFacility, shareNeedsOf, sharePreviewNeeds, sharePreviewOf } from "../share/share-preview";
+import { defaultRingId, defaultShareDest, shareAnswersOf, shareNeedsOf, sharePreviewNeeds, sharePreviewOf } from "../share/share-preview";
 import { AUTHOR_KINDS } from "../shared/fields";
 import { approvedTemplateVersions, listTemplates, readTemplateVersion, saveTemplate } from "./templates";
 import { exportExcelName, exportSignatureName, signExport } from "../plan/exports";
@@ -1357,7 +1357,7 @@ export class HumanService {
   /**
    * AI の share_preview（仕事 share-preview-v1）：SHARE の画面と同じ文脈（shareContext・ledgerSendContext）と同じ関数（ringView・ledgerView）で
    * 出ていくものを作り、形と数だけにして返す（src/share/share-preview.ts）。人だけの経路ではない：署名も書き込みもしない（読むだけ）。
-   * 作業画面が SHARE の選び（共有先・共有フォルダ・見え方の答え）を渡さなければ、画面を開いたときと同じ既定の選びで数える。
+   * 共有先・共有フォルダが null なら、画面を開いたときと同じ既定で数える。見え方の答えは画面と同じ関数（shareAnswersOf）で、施設の答えに Claude の答えを重ねる。
    */
   async sharePreview(req: SharePreviewFromTab): Promise<SharePreviewOut> {
     const needs = (reason: string) => sharePreviewNeeds(shareNeedsOf(reason), req.screen);
@@ -1369,17 +1369,21 @@ export class HumanService {
     if (!h.latest) return needs("notConfirmed");
     const pack = this.pack(h.latest.plan.packId);
     if (typeof pack === "string") return needs("packNotReady");
-    // 画面の既定の選び（src/app/pages/Checkpoint.tsx と同じ関数）。全国の表に載るかは、作業中の計画の答えを先に使う
+    // 画面と同じ関数（src/app/pages/Checkpoint.tsx）。全国の表に載るかは、作業中の計画の答えを先に使う
     const first = h.latest.plan;
-    const answers: Answers = req.answers ?? {
-      facility: defaultShareFacility(questionsOf(pack, first), first.facility.profile ?? null),
-      inNationalTable: req.national ?? first.facility.inNationalTable,
-    };
+    const { answers, aiAxes }: { answers: Answers; aiAxes: string[] } = shareAnswersOf({
+      questions: questionsOf(pack, first),
+      profile: first.facility.profile ?? null,
+      national: req.national ?? first.facility.inNationalTable,
+      ai: req.ai,
+    });
+    const rings = readRings(sd).rings;
+    const dest = req.dest ?? defaultShareDest(rings.some((r) => r.pack === first.packId), !!readSettings(sd).ledger);
     const month = monthOf(new Date(this.e.now()));
     let view: PreviewView;
     let plan: typeof first;
     let version: number;
-    if (req.dest === "ledger") {
+    if (dest === "ledger") {
       const c = await this.ledgerSendContext(req.planId);
       if (!c.ok) return needs(String(c.out.reason));
       const pend = c.sender.ok ? pendingSent(c.facility, c.L, keyIdOf(c.sender.pair.pub)) : null;
@@ -1387,7 +1391,7 @@ export class HumanService {
       plan = c.plan;
       version = c.version;
     } else {
-      const ctx = await this.shareContext(req.planId, req.ringId ?? defaultRingId(readRings(sd).rings, first.packId), answers);
+      const ctx = await this.shareContext(req.planId, req.ringId ?? defaultRingId(rings, first.packId), answers);
       if (!ctx.ok) return needs(String(ctx.out.reason));
       view = this.ringView(ctx, month);
       plan = ctx.plan;
@@ -1397,7 +1401,7 @@ export class HumanService {
     if (!v) return needs("other");
     // 版を確定した署名の時刻（承認があれば承認、無ければ自分で確定した署名）。トップの版の呼び名と同じ
     const signedAt = (v.signatures.find((x) => x.role === "approve") ?? v.signatures.find((x) => x.role === "confirm"))?.at ?? null;
-    return sharePreviewOf({ dest: req.dest, screen: req.screen, plan, version: { number: version, contentHash: v.contentHash, signedAt }, view, axes: pack.axes });
+    return sharePreviewOf({ dest, screen: req.screen, plan, version: { number: version, contentHash: v.contentHash, signedAt }, view, axes: pack.axes, aiAxes });
   }
 
   private async syncedOfPath(path: string) {
@@ -1411,7 +1415,9 @@ export class HumanService {
     const io = this.githubIo();
     const gh = readGitHub(sd);
     const github = { login: gh?.login ?? null, ready: this.githubClientId(io) !== null };
-    const fail = (reason: string, extra: Record<string, unknown> = {}) => ({ ok: false as const, out: no(reason, { github, ...extra }) });
+    // 共有先の切り替えを出すか（共有フォルダと台帳の clone の両方があるときだけ）を画面が決めるための、共有フォルダの一覧（名前は出さない Skillパックと ID と道）
+    const rings = readRings(sd).rings.map((r) => ({ ringId: r.ringId, root: r.root, pack: r.pack }));
+    const fail = (reason: string, extra: Record<string, unknown> = {}) => ({ ok: false as const, out: no(reason, { github, rings, ledgerSet: !!readSettings(sd).ledger, ...extra }) });
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
@@ -1439,7 +1445,7 @@ export class HumanService {
     const sender = facilityKey(facility, L.id, this.pendingKeys);
     const accepted = ledgerAcceptance(sd, L.id);
     const key = sender.ok ? keyIdOf(sender.pair.pub) : null;
-    const info = { ...base, ledger: { id: L.id, repo: repo ? `${repo.owner}/${repo.name}` : null, key, fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null } };
+    const info = { ...base, rings, ledgerSet: true, ledger: { id: L.id, repo: repo ? `${repo.owner}/${repo.name}` : null, key, fingerprint: sender.ok ? fingerprint(sender.pair.pub) : null } };
     return { ok: true as const, L, pack, plan, version: h.latest.version, repo, info, facility, sender, accepted };
   }
 
@@ -1473,7 +1479,9 @@ export class HumanService {
     const root = await this.root();
     const docs = await this.documents();
     const rings = readRings(sd).rings.map((r) => ({ ringId: r.ringId, root: r.root, pack: r.pack, synced: syncedOf(r.root, docs.syncRoots) }));
-    const fail = (reason: string, extra: Record<string, unknown> = {}) => ({ ok: false as const, out: no(reason, { rings, ...extra }) });
+    // 台帳の clone を設定で選んであるか（共有先の切り替えを出すかを画面が決める。道は出さない）
+    const ledgerSet = !!readSettings(sd).ledger;
+    const fail = (reason: string, extra: Record<string, unknown> = {}) => ({ ok: false as const, out: no(reason, { rings, ledgerSet, ...extra }) });
     if (!root) return fail("noRoot");
     const h = await readHistory(root, planId);
     if (!h.latest) return fail("notConfirmed");
@@ -1490,6 +1498,7 @@ export class HumanService {
       classNames: pack.classNames,
       axes: pack.axes,
       rings,
+      ledgerSet,
       packName: pack.name,
     };
     if (ringId === null) return fail("noRingChosen", base);

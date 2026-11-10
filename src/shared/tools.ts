@@ -554,15 +554,16 @@ export function readingRuleExamplesText(): string {
 // ─── 共有ファイルの形と数（share_preview。仕事 share-preview-v1）──────────────
 // SHARE の画面が共有ファイルに書く中身を、橋渡しが画面と同じ関数で作り、形と数だけを返す（src/share/share-preview.ts）。
 // 行の値（機器・作業の名前、年度、階級、費用）と共有ファイルのバイト列は返さない（安全の決まり 3）。署名して送るのは人だけ（決まり 1）。
-// 作業画面は SHARE に切り替える（screen_set の go: share と同じ）。人が SHARE で選んでいる共有先と見え方の答えで数える。
+// 作業画面は SHARE に切り替える（screen_set の go: share と同じ）。見え方の答えは、施設の答えと規模からの見込みに、Claude が会話で聞いて置いた答え（answers）を重ねたもの。
+// 置いた答えと共有先（dest）は SHARE の画面の今の選びになるだけで、署名・送る・設定はしない（2026-11-10、SHARE の引き算）。
 
 /** 数えられなかったときの理由と、AI に返す文（内部の名前を出さない） */
 export const SHARE_NEEDS_TEXT = {
   no_plan: "作業画面に開いている計画がありません。MOYAI（トップ）で施設の版を開いてから",
   not_confirmed: "確定した版がありません。HOSHITORI の確定のシートで確定してから",
   no_root: "保存先が決まっていません。利用者に設定の画面で保存先を選んでもらってから",
-  no_ring: "この Skillパックの共有フォルダがありません。利用者に設定の画面で共有フォルダを作ってもらうか、SHARE で共有先を公開台帳にしてもらってから",
-  no_ledger: "公開台帳の clone を読めません。利用者に設定の画面で公開台帳の clone を選んでもらうか、SHARE で共有先を共有フォルダにしてもらってから",
+  no_ring: "この Skillパックの共有フォルダがありません。利用者に設定の画面で共有フォルダを作ってもらうか、公開台帳でよいかを聞いて dest: ledger で読み直してから",
+  no_ledger: "公開台帳の clone を読めません。利用者に設定の画面で公開台帳の clone を選んでもらうか、共有フォルダでよいかを聞いて dest: ring で読み直してから",
   pack_not_ready: "この Skillパックには、共有に使う公開語彙・見え方の軸・全国の表のどれかがありません（未実装）",
   history_broken: "保存先の版の署名か鎖が合いません。利用者に MOYAI（トップ）の版の履歴で確かめてもらってから",
   history_vanished: "この PC が前に見た版か署名が、保存先から無くなっています。利用者に保存先を確かめてもらってから",
@@ -585,16 +586,22 @@ export const SHARE_FILE_COLUMNS = {
 /** 結果に添える文（Claude Desktop では instructions が効かないので、結果にも書く） */
 export const SHARE_PREVIEW_NOTE =
   "数だけで、値（名前・年度・階級・費用）は返していない。当施設の中（HOSHITORI・EXPORT）では全部見せ、絞るのは共有ファイルだけ。作業の名前も写らない（塊は共通の設備項目 × 作業分類）。" +
-  "署名して送るのは利用者が SHARE の主ボタンでする（このツールは送らない）。共有先と見え方の答えは、利用者が SHARE の画面で選ぶ。";
+  "署名して送るのは利用者が SHARE の主ボタンでする（このツールは送らない）。見え方の答えが足りなければ（missingAxes）、推測で埋めず利用者に聞き、answers で置く。利用者は SHARE の見え方の 1 行を確かめて主ボタンを押す。";
 
-/** 作業画面が橋渡しに渡す途中の中身：作業中の計画の ID と、SHARE の画面で人が選んでいる共有先と見え方の答え（画面が開いていなければ null で、既定の選び） */
+/** 見え方の答えの形（peer_reference の answers と同じ）：軸のコードと、全国の表に載るか */
+export const shareAnswersSchema = z.object({ facility: z.record(z.string().max(64), z.string().max(64).nullable()), inNationalTable: z.boolean().nullable() });
+
+/**
+ * 作業画面が橋渡しに渡す途中の中身：作業中の計画の ID と、SHARE の画面の共有先（null は既定：その Skillパックの共有フォルダがあれば共有フォルダ、無く台帳の clone があれば公開台帳）・
+ * 共有フォルダ（null は既定）と、このタブで Claude が置いた見え方の答え（無ければ null）
+ */
 export const sharePreviewFromTabSchema = z
   .object({
     mode: z.literal("share"),
     planId: z.string().min(1).max(200),
-    dest: z.enum(["ring", "ledger"]),
+    dest: z.enum(["ring", "ledger"]).nullable(),
     ringId: z.string().regex(/^[0-9a-f]{16}$/).nullable(),
-    answers: z.object({ facility: z.record(z.string().max(64), z.string().max(64).nullable()), inNationalTable: z.boolean().nullable() }).strict().nullable(),
+    ai: shareAnswersSchema.strict().nullable(),
     /** 作業中の計画の、全国の表に載るかの答え（画面の既定の選びと同じく、先に使う） */
     national: z.boolean().nullable(),
     /** 作業画面を SHARE に切り替えたか */
@@ -641,8 +648,10 @@ export const sharePreviewOutputSchema = z.object({
       steps: z.object({ all: z.number().int(), profile: z.number().int(), rows: z.number().int() }),
     })
     .nullable(),
-  /** 見え方の答えが足りない軸の名前（利用者が SHARE で選ぶ） */
+  /** 見え方の答えが足りない軸の名前（推測で埋めず、利用者に聞いて answers で置く） */
   missingAxes: z.array(z.string()).max(20),
+  /** 見え方の答えのうち、Claude が置いた答えで埋めた軸の名前（施設の答えがある軸には効かない） */
+  aiAxes: z.array(z.string()).max(20),
   /** 共有ファイル：塊の数、欄ごとの塊の数、中身のハッシュの頭 16 字、大きさ、連番（出ていくものが無ければ null） */
   file: z
     .object({
@@ -1025,12 +1034,13 @@ export const TOOLS = {
     "read",
     "共有ファイルの形と数",
     "SHARE の画面が共有ファイルに書く中身の、形と数だけを読む（利用者が「社内で共有して」と言ったとき）。" +
-      "作業画面を SHARE に切り替え、利用者が SHARE で選んでいる共有先（共有フォルダか公開台帳）と見え方の答えで、画面と同じ関数で数える。" +
+      "作業画面を SHARE に切り替え、SHARE の画面と同じ共有先（共有フォルダか公開台帳）と見え方の答えで、画面と同じ関数で数える。" +
       "返すのは、共有先の種類、版（年度・第 n 版・ハッシュの頭）、確定した版の中と共有ファイルに写る機器・作業・作業の年度の値・費用の行の数（費用はいつも 0）、写さなかった理由ごとの行の数、" +
       "伏せる欄、相手から見たあなた（施設の札・k の段・同区分の施設の数）、見え方の答えが足りない軸、塊の数と欄ごとの数、数え直しの数、主ボタンを押せない理由。" +
       "行の値（名前・年度・階級・費用）と共有ファイルのバイト列は返さない。確定した版が無いなどで数えられなければ、needs に理由と次の手が入る。" +
-      "見え方の軸を選ぶ・署名して送るのは、利用者が SHARE の画面でする（このツールは読むだけで、送らない）。",
-    z.object({}),
+      "見え方の答えは、施設の答えと規模からの見込みを使う。足りない軸（missingAxes）は推測で埋めず、利用者に聞いて answers（peer_reference と同じ形。施設の答えがある軸には効かない）で置く。共有先は dest で置ける。" +
+      "置いた答えと共有先は SHARE の画面の今の選びになるだけで（画面に「Claude の入力」と出る）、利用者が見え方の 1 行を確かめ、署名して送る主ボタンを押す（このツールは読むだけで、送らない）。",
+    z.object({ dest: z.enum(["ring", "ledger"]).optional(), answers: shareAnswersSchema.optional() }),
     sharePreviewOutputSchema,
   ),
   peer_reference: def(

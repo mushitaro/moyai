@@ -1,6 +1,6 @@
 // 縦の 1 本の人だけの半分を、この PC の Chrome と Edge で通す：
 // 設定（Documents と OneDrive の知らせ・置き場所を一時のフォルダに・輪と鍵を作る）→ 星取表の試しの計画（架空）を確定（人が受けていない決定を理由つきで受ける）
-// → 検問所（見え方を選ぶ・相手から見たあなた・数がすべて 0・［送る］）→ 署名して輪に置く → 受け手と同じ関数で ✓ → CLI の verify ring でも ✓。
+// → SHARE（見え方は計画の施設の答えから。選びは無い・相手から見たあなた・数がすべて 0・［送る］）→ 署名して輪に置く → 受け手と同じ関数で ✓ → CLI の verify ring でも ✓。
 // 人だけの CLI（keys create）は、標準入力が端末でなければ断る。置き場所と輪は一時のフォルダに作り、この PC の Documents には書かない。
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { acceptDecisions } from "../helpers/e2e";
+import { PROFILE_ANSWERED, acceptDecisions } from "../helpers/e2e";
 import { envelopeText, makeMemberBody } from "../../src/share/bundle";
 import { generateKeyPair, keyIdOf, signBody, toPlainKey } from "../../src/share/sign";
 
@@ -75,7 +75,8 @@ test.afterAll(async () => {
 });
 
 async function openPlan(page: Page, name: "fictional-1") {
-  const body = JSON.stringify(DEV_PLANS[name]());
+  // 施設の見え方は計画に答えてある（SHARE の画面に選びは無い。2026-11-10）
+  const body = JSON.stringify(PROFILE_ANSWERED(DEV_PLANS[name]()));
   await page.route("**/assets/dev-plans/*.json", (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
   await page.goto(`${base}/?plan=${name}#/chart`);
   await expect(page.getByTestId("chart-page")).toBeVisible();
@@ -169,21 +170,21 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.evaluate(() => (location.hash = "#/share"));
   });
 
-  await test.step("検問所：見え方を選ぶと、相手から見たあなた・3 つの欄・数がすべて 0", async () => {
+  await test.step("SHARE：見え方は計画の施設の答えから（選びは無い）。相手から見たあなた・数がすべて 0", async () => {
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
-    await expect(page.getByTestId("q-furnace")).toBeVisible();
-    // 送る前は押せない（見え方が決まっていない）
-    await expect(page.getByTestId("send")).toBeDisabled();
-    await page.getByTestId("q-national").selectOption("yes");
-    await page.getByTestId("q-furnace").selectOption("STOKER");
-    await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
-    await page.getByTestId("q-turbine").selectOption("YES");
-    await page.getByTestId("q-ash").selectOption("OUT");
-    await page.getByTestId("q-contract").selectOption("SINGLE");
+    await expect(page.locator('[data-testid^="q-"]')).toHaveCount(0);
+    // 共有先は字で（台帳の clone が無いので切り替えは無い）。共有フォルダの名前と、下の帯に状態の 1 行
+    await expect(page.getByTestId("dest-name")).toHaveText("共有フォルダ");
+    await expect(page.getByTestId("share-dest")).toHaveCount(0);
+    await expect(page.getByTestId("ring-label")).toHaveText("輪のフォルダ");
+    await expect(page.getByTestId("share-note")).toHaveText(/^輪のフォルダの \d+ 施設に公開$/);
     await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
+    await expect(page.getByTestId("you-k")).toContainText("（全国 844）");
     const k = Number(await page.getByTestId("you-k").getAttribute("data-k"));
     expect(k).toBeGreaterThanOrEqual(5);
-    await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
+    // 数え直しが 0 ばかりのときは上に出さない（共有ファイルの中身の中だけ）
+    await expect(page.getByTestId("counts")).toHaveCount(0);
+    await expect(page.getByTestId("counts-all")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
     await expect(page.getByTestId("body-hash")).toHaveText(/^[0-9a-f]{64}$/);
     const bodyText = (await page.getByTestId("body-text").textContent()) ?? "";
     expect(bodyText).toContain('"v":"moyai.bundle/0"');
@@ -197,7 +198,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("plain-chunk").first().locator(".moyai-redact")).toHaveCount(1);
     // 出元：束の鎖（初めて出すので 束 1）
     await expect(page.getByTestId("share-chain")).toHaveText("共有ファイル 1");
-    // 出ていくバイト列・原本・相手の星取表は「中身を見る」にたたんである
+    // 出ていくバイト列・原本・相手の星取表は「共有ファイルの中身」にたたんである
     await expect(page.getByTestId("their-chart")).toBeHidden();
     await page.getByTestId("share-contents").locator("summary").click();
     await expect(page.getByTestId("their-chart")).toBeVisible();
@@ -208,16 +209,19 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
   });
 
   await test.step("人が主ボタンを押すと、署名して輪に置き、受け手と同じ関数で ✓", async () => {
-    // 受け取った束（SHARE の下の節）：置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
-    await expect(page.getByTestId("received")).toContainText("受信した共有ファイル");
-    await expect(page.locator('[data-testid="received"] [data-testid="verify-line"][data-kind="bundle"]')).toHaveCount(0);
-    // 共有先の右に、選んだ共有フォルダの場所（状態の 1 行）
-    await expect(page.getByTestId("ring-folder-path")).toContainText(ringRoot);
+    // 受け取った束（SHARE の下の節）：人が要る行が無いので 1 行にたたんである。置く前は、輪の決まりと自分の仲間の行だけ（束はまだ無い）
+    await expect(page.getByTestId("received-summary")).toContainText("受信した共有ファイル");
+    await expect(page.getByTestId("received")).toHaveAttribute("data-open", "false");
+    await expect(page.getByTestId("verify-table")).toHaveCount(0);
     await page.getByTestId("send").click();
-    await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
-    // 結果の 1 行に置いた先の共有フォルダ。押せなくなった主ボタンの左は「理由：送信済み」
-    await expect(page.getByTestId("sent")).toContainText(ringRoot);
+    // 下の帯の左が結果の 1 行になる。押せなくなった主ボタンの左は「理由：送信済み」
+    await expect(page.getByTestId("sent")).toHaveText(/^✓ 送信　共有ファイル 1　\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    await expect(page.getByTestId("share-note")).toHaveCount(0);
     await expect(page.getByTestId("send-reason")).toHaveText("理由：送信済み");
+    await expect(page.getByTestId("send")).toBeDisabled();
+    // 受信した共有ファイルを開く（人が 1 行を押す）
+    await page.getByTestId("received-summary").click();
+    await expect(page.getByTestId("received")).toHaveAttribute("data-open", "true");
     await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
     await expect(page.locator('[data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="verify-line"][data-kind="bundle"][data-status="ok"]')).toHaveCount(1);
@@ -270,10 +274,8 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     const ringId = readdirSync(ringRoot).find((d) => /^[0-9a-f]{16}$/.test(d))!;
     const keysDir = join(root, "plans", "fixture-fictional-1", "share", "keys");
     writeFileSync(join(keysDir, `${ringId}-PC2.json`), JSON.stringify(toPlainKey(generateKeyPair())));
-    // 送った知らせを閉じるため、共有先を切り替えて戻す（戻すと出ていくものを作り直す）
-    const destSwitch = page.locator('[role="group"]').filter({ has: page.locator("button", { hasText: "共有フォルダ" }) }).first();
-    await destSwitch.locator("button").nth(1).click();
-    await destSwitch.locator("button").nth(0).click();
+    // 再照合で出ていくものを作り直すと、送ったあとでも、押せない理由は「署名鍵の重複」（再発行の道を添える）
+    await page.getByTestId("received-again").click();
     await expect(page.getByTestId("send-reason")).toHaveText(/^理由：署名鍵の重複/);
     await expect(page.getByTestId("send")).toBeDisabled();
     await page.getByTestId("rotate-open").click();

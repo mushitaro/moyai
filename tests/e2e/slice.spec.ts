@@ -37,7 +37,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
   // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする
   const ringRoot = join(tmpdir(), `moyai-e2e-slice-ring-${tag}-${Date.now()}`, "輪のフォルダ");
   rings.push(join(ringRoot, ".."));
-  const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose", "reading_rules_propose"]);
+  const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose", "reading_rules_propose", "share_preview"]);
   try {
     await test.step("人：設定で置き場所を選び、輪を作って鍵を作る", async () => {
       await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
@@ -210,20 +210,18 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await page.getByTestId("tab-share").click();
     });
 
-    await test.step("検問所：見え方を選ぶと、k ≥ 5 の段で塊が出て、数がすべて 0", async () => {
+    await test.step("SHARE：Claude が会話で聞いた見え方の答えを share_preview の answers で置くと（画面に選びは無い）、k ≥ 5 の段で塊が出て、数がすべて 0", async () => {
       await expect(page.getByTestId("checkpoint-page")).toBeVisible();
       await expect(page.getByTestId("send")).toBeDisabled();
-      await page.getByTestId("q-national").selectOption("yes");
-      await page.getByTestId("q-furnace").selectOption("STOKER");
-      await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
-      await page.getByTestId("q-turbine").selectOption("YES");
-      await page.getByTestId("q-ash").selectOption("OUT");
-      await page.getByTestId("q-contract").selectOption("SINGLE");
+      await expect(page.locator('[data-testid^="q-"]')).toHaveCount(0);
+      expect((await call(c, "share_preview", { answers: { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true } })).needs).toBeNull();
+      await expect(page.getByTestId("ai-answers-mark")).toHaveText("- Claude の入力");
       await expect(page.getByTestId("you-steps")).toContainText("全国の 844 施設のどれか");
       await expect(page.getByTestId("you-k")).not.toHaveAttribute("data-k", "");
       const k = Number(await page.getByTestId("you-k").getAttribute("data-k"));
       expect(k).toBeGreaterThanOrEqual(5);
-      await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
+      await expect(page.getByTestId("counts")).toHaveCount(0);
+      await expect(page.getByTestId("counts-all")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
       expect(await page.getByTestId("plain-chunk").count()).toBeGreaterThan(0);
       const body = (await page.getByTestId("body-text").textContent()) ?? "";
       expect(body).toContain('"v":"moyai.bundle/0"');
@@ -234,7 +232,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
 
     await test.step("人が押して署名し、輪に置き、受け手と同じ関数で ✓。CLI の verify ring でも ✓", async () => {
       await page.getByTestId("send").click();
-      await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
+      await expect(page.getByTestId("sent")).toHaveText(/^✓ 送信　共有ファイル 1　/);
+      await page.getByTestId("received-summary").click();
       await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
       await expect(page.locator('[data-testid="verify-line"][data-status="ng"]')).toHaveCount(0);
       await expect(page.locator('[data-testid="verify-line"][data-kind="bundle"][data-status="ok"]')).toHaveCount(1);

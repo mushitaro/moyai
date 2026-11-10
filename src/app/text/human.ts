@@ -578,25 +578,27 @@ export const HUMAN_TEXT = {
   },
   checkpoint: {
     title: "共有",
-    toChart: "星取表へ",
     toSettings: "設定へ",
-    noPlan: "このタブに確定した計画がありません。星取表で確定してから開いてください。",
+    // 計画が無いとき（EXPORT と同じ形と言葉）
+    noPlan: "作業中の計画がありません。",
+    toMerge: "HOSHITORI へ",
     loading: "出ていくものを作っています",
     ring: "送る共有フォルダ",
     ringNone: "共有フォルダがありません",
     choose: "選んでください",
     nationalQ: "全国の表に載る施設か",
-    yes: "はい",
-    noAnswer: "いいえ",
-    suggested: "計画の規模から読んだ値",
     youTitle: "相手側の表示",
+    /** 見え方の答えが足りないとき（朱。2026-11-10、画面に選びを置かない：Claude が会話で聞いて置く） */
+    profileUndetermined: (n: number, names: string) => `施設 ― 見え方 未確定 ${n}（${names}）`,
+    /** 見え方の答えが、このタブで Claude が置いたもののとき（設定の保存先と同じ朱の小さな字） */
+    aiMark: "- Claude の入力",
+    /** 共有先の 1 行：共有フォルダのメンバーの数 */
+    ringMembers: (n: number) => `${fmt(n)} 施設`,
     destLabel: "共有先",
     dest: { ring: "共有フォルダ", ledger: "公開台帳" },
     github: "GitHub",
     githubNone: "未接続",
     githubConnect: "GitHub につなぐ",
-    githubReconnect: "再接続",
-    githubNoClient: "GitHub につなぐ道は、まだ用意できていません",
     youTitleLedger: "公開時の表示",
     notOnLedger: "- 公開台帳には出しません",
     upgradeRow: (n: number) => `基幹改良（${fmt(n)} 行）`,
@@ -615,16 +617,18 @@ export const HUMAN_TEXT = {
     prUnread: "行方を読めませんでした",
     prLink: "PR を表示",
     sendLedger: "署名して公開台帳へ送信",
-    ledgerBottom: "GitHub に PR を送信。掲載後の複製は残ります。",
-    prSent: (n: number) => `PR #${n} を出しました`,
+    /** 下の帯の左の状態の 1 行（2026-11-10、SHARE の引き算） */
+    ledgerNote: "公開。掲載後の複製は残ります。",
+    ringNote: (folder: string, n: number | null) => (n === null ? folder : `${folder}の ${fmt(n)} 施設に公開`),
+    /** 送ったあとの下の帯の左（頭の「✓ 送信　」は変えない） */
+    sentRing: (seq: number, at: string) => `✓ 送信　共有ファイル ${seq}　${at}`,
+    sentLedger: (seq: number, pr: number) => `✓ 送信　共有ファイル ${seq}　PR #${pr}`,
     // 送信経路（受け口が運営者の GitHub アカウントで PR を出す道が MOYAI 経由。docs/screens.md §3.6「送信経路」・docs/words.md）
     routeLabel: "送信経路",
     routeGitHub: (login: string) => `GitHub　${login}`,
     routeGitHubNone: "GitHub　未接続",
     routeIntake: "MOYAI 経由",
     intakeIp: "送信元の IP は上限の判定のみ・保存なし",
-    // 取り下げのボタンが入るまで、下の帯で取り下げを約束しない（Architect の 72。docs/screens.md §3.6）
-    intakeBottom: "MOYAI 経由で PR を送信。掲載後の複製は残ります。",
     prViaIntake: "MOYAI 経由",
     /** 断られたとき（docs/screens.md §3.6「送信経路」）：台帳の検証で外れた・1 時間の上限・受け口に届かない */
     intakeRefused: (reasons: string) => (reasons ? `受付不可　${reasons}` : "受付不可"),
@@ -638,7 +642,7 @@ export const HUMAN_TEXT = {
     sourceTitle: "提供元",
     fingerprint: "鍵番号",
     bundleN: (n: number) => `共有ファイル ${n}`,
-    contentsTitle: "中身を見る（出ていくバイト列・原本・相手の星取表）",
+    contentsTitle: "共有ファイルの中身",
     sendRing: "署名して共有フォルダへ送信",
     youSteps: (all: number, profile: number, rows: number) =>
       `全国の ${fmt(all)} 施設のどれか → 見え方で ${fmt(profile)} → この行で ${fmt(rows)}`,
@@ -675,12 +679,8 @@ export const HUMAN_TEXT = {
     col3Years: (ys: string) => `年度：${ys}`,
     chartTitle: "相手の星取表に、あなたの施設はこう並ぶ",
     noBody: "まだ出ていくものはありません。",
-    leaveAlways: "置き場所は、置いた人の名前と時刻を別に残します。",
-    keyInPlan: "施設の署名鍵は、計画のフォルダに置きます。フォルダを開ける人は、この施設として出せます。",
-    twoRings: "同じ施設を 2 つの共有フォルダに送ると、中身が同じなので、2 つの共有フォルダの共有ファイルがつながります。",
     counts: (c: { shape: number; properNoun: number; money: number; freeText: number; exactDate: number }) =>
       `形 ${c.shape}｜固有名詞 ${c.properNoun}｜金額 ${c.money}｜自由記述 ${c.freeText}｜正確な日付 ${c.exactDate}`,
-    known: "共有フォルダのメンバーには、あなたの拠点の共有ファイルだと分かります。",
     /** 署名鍵の再発行（docs/plan.md §2.19 の 5・6。言葉は Wire、2026-11-06） */
     rotate: {
       open: "署名鍵を再発行",
@@ -710,12 +710,11 @@ export const HUMAN_TEXT = {
       /** 共有フォルダへ送ったあと（同じ版をもう一度は送らない。共有先を切り替えると戻る） */
       sent: "送信済み",
     } as Record<string, string>,
-    missingAxes: (names: string) => `未確定の軸：${names}`,
     vanished: "持ち出し簿にある共有ファイルが、共有フォルダのあなたのフォルダに見えません（前に見た共有ファイルが消えています）。",
-    /** 送ったあとの 1 行：置いたファイルの名前と、共有フォルダの道（頭の「共有ファイルを共有フォルダに置きました」は変えない） */
-    sent: (name: string, folder: string | null) => `共有ファイルを共有フォルダに置きました：${name}${folder ? `　${folder}` : ""}`,
-    bottom: "メンバーに渡るのは、このファイルの中身だけです。置き場所は、置いた人の名前と時刻を別に残します。",
     receivedTitle: "受信した共有ファイル",
+    /** 受信した共有ファイルの 1 行（たたんだとき）：「✓ 7　! 未照合 1　! ルール変更　✗ 1」（0 の部分は出さない） */
+    receivedSummary: (c: { ok: number; unconfirmed: number; rules: boolean; ng: number }) =>
+      [c.ok > 0 ? `✓ ${c.ok}` : null, c.unconfirmed > 0 ? `! 未照合 ${c.unconfirmed}` : null, c.rules ? "! ルール変更" : null, c.ng > 0 ? `✗ ${c.ng}` : null].filter(Boolean).join("　"),
     notBundleRow: "共有ファイルの形でないファイル",
     memberNotBundle: "共有ファイルでないファイルが混じっています",
     memberNgBundle: "✗ の共有ファイルが混じっています",

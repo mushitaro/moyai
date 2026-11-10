@@ -24,6 +24,49 @@ export function defaultShareFacility(questions: readonly { key: string; suggeste
   return out;
 }
 
+export interface ShareAnswersOf {
+  /** 規模から読んだ値（questions の suggested） */
+  questions: readonly { key: string; suggested: string | null; codes?: readonly { code: string }[] }[];
+  /** 施設の答え（人が答えた軸） */
+  profile: Record<string, string | null> | null;
+  /** 全国の表に載るか（人の答え。無ければ null） */
+  national: boolean | null;
+  /** このタブで Claude が会話で聞いて置いた答え（無ければ null） */
+  ai: { facility: Record<string, string | null>; inNationalTable: boolean | null } | null;
+}
+
+/**
+ * SHARE の見え方の答え（2026-11-10、SHARE の引き算：画面に選びを置かない）：規模からの見込みに Claude の答えを重ね、その上に施設の答えを重ねる。
+ * Claude の答えは、施設の答えがある軸には効かず、軸のコードに無い値は捨てる（推測で埋めない。足りなければ未確定のまま）。
+ * 画面（src/app/pages/Checkpoint.tsx）と橋渡しの share_preview が同じ関数で作る。aiAxes は Claude の答えで埋めた軸のキー（全国の表は inNationalTable）
+ */
+export function shareAnswersOf(i: ShareAnswersOf): { answers: { facility: Record<string, string | null>; inNationalTable: boolean | null }; aiAxes: string[] } {
+  const human = Object.fromEntries(Object.entries(i.profile ?? {}).filter(([, v]) => v !== null && v !== undefined));
+  const facility: Record<string, string | null> = {};
+  for (const q of i.questions) if (q.suggested) facility[q.key] = q.suggested;
+  const aiAxes: string[] = [];
+  for (const q of i.questions) {
+    const v = i.ai?.facility[q.key];
+    if (typeof v !== "string" || q.key in human) continue;
+    if (q.codes && !q.codes.some((c) => c.code === v)) continue;
+    facility[q.key] = v;
+    aiAxes.push(q.key);
+  }
+  // 施設の答え（null は「答えていない」：Claude が埋めていなければ、規模からの見込みも消す。前の画面の既定と同じ）
+  for (const [k, v] of Object.entries(i.profile ?? {})) if (v !== null || !aiAxes.includes(k)) facility[k] = v;
+  let inNationalTable = i.national;
+  if (inNationalTable === null && typeof i.ai?.inNationalTable === "boolean") {
+    inNationalTable = i.ai.inNationalTable;
+    aiAxes.push("inNationalTable");
+  }
+  return { answers: { facility, inNationalTable }, aiAxes };
+}
+
+/** 共有先の既定：その Skillパックの共有フォルダがあれば共有フォルダ、無く公開台帳の clone があれば公開台帳 */
+export function defaultShareDest(hasRing: boolean, ledgerSet: boolean): "ring" | "ledger" {
+  return !hasRing && ledgerSet ? "ledger" : "ring";
+}
+
 /** SHARE の画面を開いたときの共有フォルダの既定：計画と同じ Skillパックの、一覧の最初の共有フォルダ */
 export function defaultRingId(rings: readonly { ringId: string; pack: string }[], packId: string): string | null {
   return rings.find((r) => r.pack === packId)?.ringId ?? null;
@@ -41,6 +84,7 @@ export function sharePreviewNeeds(reason: ShareNeeds, screen: boolean): SharePre
     hidden: [],
     you: null,
     missingAxes: [],
+    aiAxes: [],
     file: null,
     checks: null,
     blocked: [],
@@ -70,6 +114,8 @@ export interface SharePreviewInput {
   version: { number: number; contentHash: string; signedAt: string | null };
   view: PreviewView;
   axes: SharePack["axes"];
+  /** Claude の答えで埋めた軸のキー（shareAnswersOf の aiAxes） */
+  aiAxes?: readonly string[];
 }
 
 /** 塊の欄ごとの塊の数（共有ファイルの body から。値は見ない） */
@@ -141,6 +187,7 @@ export function sharePreviewOf(i: SharePreviewInput): SharePreviewOut {
           }
         : null,
     missingAxes: view.missing.map((k) => i.axes.find((a) => a.key === k)?.name ?? k),
+    aiAxes: (i.aiAxes ?? []).map((k) => (k === "inNationalTable" ? T.nationalQ : (i.axes.find((a) => a.key === k)?.name ?? k))),
     file:
       view.bodyHash && view.bytes !== null && columns
         ? { chunks: copy?.chunks ?? 0, columns, hashHead: view.bodyHash.slice(0, HASH_HEAD), bytes: view.bytes, seq: view.seq }

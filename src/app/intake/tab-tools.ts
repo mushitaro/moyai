@@ -45,7 +45,7 @@ import { screenSet, type ScreenSetArgs } from "./screen-set";
 import { displayPrefs, goTo } from "../state/screen";
 import { patchedExcelJS } from "../../import/exceljs-setup";
 import { offerTemplate } from "../state/template-draft";
-import { getShareChoice } from "../state/share";
+import { getShareChoice, placeClaudeShare } from "../state/share";
 import { sharePreviewNeeds } from "../../share/share-preview";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
@@ -150,14 +150,19 @@ function ledgerRequest(args: Record<string, unknown>): TabToolResult {
 }
 
 /**
- * 共有ファイルの形と数（share_preview。仕事 share-preview-v1）：作業画面は、作業中の計画の ID と、SHARE の画面で人が選んでいる共有先・
- * 共有フォルダ・見え方の答え（画面が開いていなければ null で、画面を開いたときの既定の選び）を橋渡しに渡し、SHARE を開く（screen_set の go: share と同じ）。
- * 共有ファイルは橋渡しが SHARE の画面と同じ関数で作り、形と数だけを AI に返す。署名・送る道はここに無い。計画が無ければ画面は動かさず、needs を返す
+ * 共有ファイルの形と数（share_preview。仕事 share-preview-v1）：作業画面は、作業中の計画の ID と、SHARE の画面の共有先・共有フォルダ
+ * （画面が開いていなければ null で、画面を開いたときの既定）と、このタブで Claude が置いた見え方の答えを橋渡しに渡し、SHARE を開く（screen_set の go: share と同じ）。
+ * Claude の answers・dest は、SHARE の画面の今の選びにするだけ（画面に「- Claude の入力」。2026-11-10、SHARE の引き算）。署名・送る・設定の道はここに無い。
+ * 共有ファイルは橋渡しが SHARE の画面と同じ関数で作り、形と数だけを AI に返す。計画が無ければ画面は動かさず、何も置かずに needs を返す
  */
-function sharePreviewRequest(ws: IntakeWorkspace): TabToolResult {
+function sharePreviewRequest(ws: IntakeWorkspace, args: Record<string, unknown>): TabToolResult {
   const working = getWorkingPlan();
   if (!working) return { ok: true, data: sharePreviewNeeds("no_plan", false) };
   const planId = working.plan.planId;
+  const placed = placeClaudeShare(planId, {
+    ...(args.dest === "ring" || args.dest === "ledger" ? { dest: args.dest } : {}),
+    ...(args.answers ? { answers: args.answers as { facility: Record<string, string | null>; inNationalTable: boolean | null } } : {}),
+  });
   const c = getShareChoice();
   const mine = c && c.planId === planId ? c : null;
   const screen = goTo("share");
@@ -167,9 +172,10 @@ function sharePreviewRequest(ws: IntakeWorkspace): TabToolResult {
     data: {
       mode: "share",
       planId,
-      dest: mine?.dest ?? "ring",
+      // Claude が今置いた共有先が先、なければ画面の選び、どちらも無ければ既定（橋渡しが決める）
+      dest: (args.dest === "ring" || args.dest === "ledger" ? args.dest : null) ?? mine?.dest ?? placed.dest ?? null,
       ringId: mine?.ringId ?? null,
-      answers: mine ? { facility: { ...mine.answers.facility }, inNationalTable: mine.answers.inNationalTable } : null,
+      ai: placed.answers ? { facility: { ...placed.answers.facility }, inNationalTable: placed.answers.inNationalTable } : null,
       national: working.plan.facility.inNationalTable,
       screen,
     },
@@ -336,7 +342,7 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   },
   peer_reference: (_ws, args) => (args.place === "ledger" ? ledgerRequest(args) : peerReference(typeof args.commonItem === "string" ? args.commonItem : undefined)),
   // 共有ファイルの形と数：作業画面は計画と SHARE の選びを渡し、SHARE を開くだけ（数えるのは橋渡し）
-  share_preview: (ws) => sharePreviewRequest(ws),
+  share_preview: (ws, args) => sharePreviewRequest(ws, args),
   intake_survey: (ws, args) => {
     const part = args.part as "all" | "questions" | "compose" | "crosswalk" | "skills" | "files";
     // 資料の一覧は part: all か files のときだけ、limit（既定 20）まで。part: files は cursor から（全部の数は filesTotal）

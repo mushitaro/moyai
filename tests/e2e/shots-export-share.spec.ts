@@ -1,6 +1,7 @@
 // EXPORT と SHARE の画面の写し（初めて使う人の目で見直すため）。MOYAI_SHOTS_DIR を渡したときだけ走る（ふだんの試験では飛ばす）。
 // 写すもの：EXPORT（計画なし・未確定・確定して標準・出力のあと・列対応が未定の様式・下書きの様式・署名して出力したあと・Claude の入力）、SHARE（計画なし・未確定・確定して共有フォルダなし・
-// 公開台帳で clone 未設定・共有フォルダを作って送る前・送ったあと・公開台帳で GitHub 未接続）。
+// Claude が共有先を公開台帳にして clone 未設定・共有フォルダを作って見え方が未確定・Claude が答えを置いて送る前・送ったあと・公開台帳で GitHub 未接続）。
+// SHARE に見え方の選びは無い（2026-11-10）：答えは Claude が share_preview の answers で置く（本物の中継 dist/cli.js mcp を通す）。
 // GitHub は試験の中だけで動く代わり（tests/helpers/github-stub.ts）。本物の GitHub には届かない。置き場所・共有フォルダ・台帳の clone は一時のフォルダ。
 // 先に npm run build を走らせておく。例：MOYAI_SHOTS_DIR=/tmp/x npx playwright test --project=chrome tests/e2e/shots-export-share.spec.ts
 import { spawnSync } from "node:child_process";
@@ -49,14 +50,8 @@ function template(path: string, heads = ["設備名", "作業区分", "周期（
   if (r.status !== 0) throw new Error(r.stderr);
 }
 
-async function answer(page: Page) {
-  await page.getByTestId("q-national").selectOption("yes");
-  await page.getByTestId("q-furnace").selectOption("STOKER");
-  await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
-  await page.getByTestId("q-turbine").selectOption("YES");
-  await page.getByTestId("q-ash").selectOption("OUT");
-  await page.getByTestId("q-contract").selectOption("SINGLE");
-}
+/** Claude が会話で聞いた見え方の答え（架空の施設） */
+const ANSWERS = { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true };
 
 test("EXPORT と SHARE の写し", async ({ page }) => {
   test.setTimeout(300_000);
@@ -64,6 +59,7 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
   const ringRoot = join(tmpdir(), `moyai-e2e-shots-ring-${Date.now()}`, "共有フォルダ");
   const tpl = join(work, "長寿命化計画_様式3.xlsx");
   template(tpl);
+  const c = await mcpClient(bridge.stateDir, ["share_preview"]);
 
   await test.step("計画なし", async () => {
     await page.goto(`${bridge.base}/#/export`);
@@ -172,15 +168,17 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
     await snap(page, "09-export-claude-input");
   });
 
-  await test.step("SHARE：共有フォルダなし・公開台帳で clone 未設定", async () => {
+  await test.step("SHARE：共有フォルダなし・（Claude が共有先を公開台帳にして）clone 未設定", async () => {
     await go(page, "#/share");
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
-    await expect(page.getByTestId("q-furnace")).toBeVisible();
+    await expect(page.locator('[data-testid^="q-"]')).toHaveCount(0);
+    await expect(page.getByTestId("share-dest")).toHaveCount(0);
     await expect(page.getByTestId("ring-none-to-settings")).toHaveAttribute("href", "#/settings");
     await snap(page, "09-share-confirmed-no-ring");
-    await page.getByTestId("share-dest").getByText("公開台帳").click();
+    expect((await callTool(c, "share_preview", { dest: "ledger" })).needs?.reason).toBe("no_ledger");
     await expect(page.getByTestId("checkpoint-to-settings")).toHaveAttribute("href", "#/settings");
     await snap(page, "10-share-ledger-no-clone");
+    await callTool(c, "share_preview", { dest: "ring" });
   });
 
   await test.step("設定：共有フォルダを作り、台帳の clone を選ぶ", async () => {
@@ -198,29 +196,33 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
     await expect(page.getByTestId("current-ledger")).toHaveText(repo);
   });
 
-  await test.step("SHARE：共有フォルダへ送る前・送ったあと", async () => {
+  await test.step("SHARE：見え方が未確定・Claude が答えを置いて送る前・送ったあと", async () => {
     await go(page, "#/share");
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
-    // 共有先は前に選んだ公開台帳のままのことがある
-    await page.getByTestId("share-dest").getByText("共有フォルダ", { exact: true }).click();
-    await expect(page.getByTestId("q-furnace")).toBeVisible();
-    await answer(page);
+    // 共有フォルダと台帳の clone の両方があるので、共有先の切り替えが出る
+    await expect(page.getByTestId("share-dest")).toBeVisible();
+    await expect(page.getByTestId("ring-label")).toHaveText("共有フォルダ");
+    await expect(page.getByTestId("you-profile")).toHaveAttribute("data-state", "undetermined");
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：全国の表に載る施設かが未確定");
+    await snap(page, "11-share-ring-undetermined");
+    expect((await callTool(c, "share_preview", { answers: ANSWERS })).blocked).toEqual([]);
+    await expect(page.getByTestId("ai-answers-mark")).toHaveText("- Claude の入力");
     await expect(page.getByTestId("send")).toBeEnabled();
-    await expect(page.getByTestId("ring-folder-path")).toContainText(ringRoot);
-    await snap(page, "11-share-ring-before-send");
+    await expect(page.getByTestId("share-note")).toHaveText(/^共有フォルダの \d+ 施設に公開$/);
+    await snap(page, "12-share-ring-before-send");
     await page.getByTestId("send").click();
-    await expect(page.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
-    await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
-    await expect(page.getByTestId("sent")).toContainText(ringRoot);
+    await expect(page.getByTestId("sent")).toHaveText(/^✓ 送信　共有ファイル 1　/);
     await expect(page.getByTestId("send-reason")).toHaveText("理由：送信済み");
-    await snap(page, "12-share-ring-after-send");
+    await expect(page.getByTestId("ai-answers-mark")).toHaveCount(0);
+    await snap(page, "13-share-ring-after-send");
   });
 
   await test.step("SHARE：公開台帳で GitHub 未接続", async () => {
     await page.getByTestId("share-dest").getByText("公開台帳").click();
     await expect(page.getByTestId("github-login")).toHaveText("GitHub　未接続");
-    await expect(page.getByTestId("send-reason")).toBeVisible();
-    await snap(page, "13-share-ledger-github-not-connected");
+    await expect(page.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続GitHub につなぐ");
+    await snap(page, "14-share-ledger-github-not-connected");
   });
+  await c.close();
   rmSync(join(ringRoot, ".."), { recursive: true, force: true });
 });
