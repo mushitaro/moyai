@@ -1,0 +1,11 @@
+{
+  // 受け口（Cloudflare Workers）の型の確かめ。npm run typecheck が、根の tsconfig.json のあとに走らせる。
+  // Workers には DOM が無いので lib に DOM を入れない。fetch・Request・Response・Buffer・node:crypto は @types/node の型で見る
+  // （Workers の nodejs_compat が持つもの。Workers だけの型（KVNamespace など）は使わず limit.ts の KvLike で受けるので、@cloudflare/workers-types は入れない）。
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"]
+  },
+  "include": ["src"]
+}
