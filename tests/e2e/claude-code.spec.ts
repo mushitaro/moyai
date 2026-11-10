@@ -7,7 +7,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { acceptDecisions, acceptRules, chooseRootAndCreateRing, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, acceptRules, callTool, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（Claude Code）";
 const HUMAN = "試験の台本が押した（Claude Code の案を画面で受けた）";
@@ -113,20 +113,21 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   await page.getByTestId("confirm-close").click();
   await page.getByTestId("tab-share").click();
 
-  // 検問所 → 署名 → 輪
+  // SHARE → 署名 → 輪。見え方の答えは、会話で聞いた答えとして試験の台本が share_preview の answers で置く（画面に選びは無い）
   await expect(page.getByTestId("checkpoint-page")).toBeVisible();
-  await page.getByTestId("q-national").selectOption("yes");
-  await page.getByTestId("q-furnace").selectOption("STOKER");
-  await page.getByTestId("q-capacity_t_per_day").selectOption("C100_200");
-  await page.getByTestId("q-turbine").selectOption("YES");
-  await page.getByTestId("q-ash").selectOption("OUT");
-  await page.getByTestId("q-contract").selectOption("SINGLE");
+  const sc = await mcpClient(bridge.stateDir, ["share_preview"]);
+  expect((await callTool(sc, "share_preview", { answers: { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true } })).needs).toBeNull();
+  await sc.close();
+  await expect(page.getByTestId("ai-answers-mark")).toBeVisible();
   await expect(page.getByTestId("you-k")).not.toHaveAttribute("data-k", "");
   expect(Number(await page.getByTestId("you-k").getAttribute("data-k"))).toBeGreaterThanOrEqual(5);
-  await expect(page.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
+  await expect(page.getByTestId("counts")).toHaveCount(0);
+  await expect(page.getByTestId("counts-all")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
   expect(await page.getByTestId("plain-chunk").count()).toBeGreaterThan(0);
   await page.screenshot({ path: shot(`cc-checkpoint-${tag}`), fullPage: true });
   await page.getByTestId("send").click();
+  await expect(page.getByTestId("sent")).toHaveText(/^✓ 送信　共有ファイル 1　/);
+  await page.getByTestId("received-summary").click();
   await expect(page.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
   const v = spawnSync(process.execPath, ["dist/cli.js", "verify", "ring", ringRoot], { env: { ...process.env, MOYAI_STATE_DIR: bridge.stateDir }, encoding: "utf8" });
   expect(v.status, v.stderr).toBe(0);

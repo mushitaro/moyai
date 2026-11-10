@@ -33,3 +33,68 @@ export function exportBlockOf(i: ExportBlockInput): ExportBlock | null {
 export function withReasonHead(text: string): string {
   return text.startsWith("理由：") ? text : `理由：${text}`;
 }
+
+// ─── 様式の行と、主ボタン 1 つ（docs/screens.md 3.5、運営者 2026-11-10「引き算」）───────────────
+// 様式の欄の行が、画面の唯一の選び。主ボタンは 1 つで、字は「Excel を出力」か「署名して出力」の 2 つだけ。
+// 列対応を決める・直すのは Claude（screen_set の templateLayout）。画面は見せて、人が 1 つ押す。
+
+/** 列対応で、まだ決まっていない列の数（列の役目が「- 未定」の列。案〔layout〕のある列対応は案で決まっているので 0） */
+export function undecidedOf(columns: { roles: readonly { kind: string }[]; layout?: unknown }): number {
+  if (columns.layout) return 0;
+  return columns.roles.filter((r) => r.kind === "none").length;
+}
+
+/**
+ * 列対応で、書く先の決まった列が 1 つも無いか（どの列も「- 未定」）。このときだけ主ボタンを止める。
+ * 未定の列が残っていても止めない：様式には MOYAI が書かない列（備考・点検者など）がふつうにあり、そこは様式のまま残す（絵 Export.dc.html と同じ）
+ */
+export function nothingMapped(columns: { roles: readonly { kind: string }[]; layout?: unknown }): boolean {
+  if (columns.layout) return false;
+  return columns.roles.every((r) => r.kind === "none");
+}
+
+/** 選んだ行 */
+export type ExportChoice =
+  | { kind: "standard" }
+  | { kind: "diff" }
+  /** 保存先の様式（Claude の案が置かれていないもの） */
+  | { kind: "template"; exported: boolean; approved: boolean; /** 書く先の決まった列が 1 つも無い */ empty: boolean }
+  /** Claude が置いた列対応（Claude が入れた様式か、保存先の様式に置いた案）。hasLayout が false なら列対応はまだ無い。ready は様式のファイルを読んだか */
+  | { kind: "claude"; hasLayout: boolean; ready: boolean };
+
+/** 主ボタンを止める理由（前の段から） */
+export type ExportStop = ExportBlock | { kind: "returned" } | { kind: "undecided"; n: number | null } | { kind: "reading" };
+
+/**
+ * 主ボタンがすること：plan 標準の Excel・report 差分・read 署名済みの書き出しを読む・sign 署名して書き出してから読む・
+ * layout Claude の列対応と様式を保存先に置き、署名して書き出してから読む
+ */
+export type ExportAction = "plan" | "report" | "read" | "sign" | "layout";
+
+export interface ExportPrimary {
+  action: ExportAction;
+  /** 字：excel「Excel を出力」、sign「署名して出力」 */
+  label: "excel" | "sign";
+  testid: "export-excel" | "export-sign" | "layout-output";
+  stop: ExportStop | null;
+}
+
+/** 主ボタンの中身と、押せない理由。base は標準・差分と同じ止め方（exportBlockOf）。returned はいちばん新しい版が差し戻されたか */
+export function exportPrimaryOf(choice: ExportChoice, base: ExportBlock | null, returned: boolean): ExportPrimary {
+  switch (choice.kind) {
+    case "standard":
+      return { action: "plan", label: "excel", testid: "export-excel", stop: base };
+    case "diff":
+      return { action: "report", label: "excel", testid: "export-excel", stop: base };
+    case "template": {
+      if (choice.exported) return { action: "read", label: "excel", testid: "export-excel", stop: base };
+      const stop: ExportStop | null = base ?? (returned ? { kind: "returned" } : choice.empty ? { kind: "undecided", n: null } : null);
+      // 承認済みの列対応は「Excel を出力」（書き出しの署名は残す）。下書きは「署名して出力」
+      return { action: "sign", label: choice.approved ? "excel" : "sign", testid: "export-sign", stop };
+    }
+    case "claude": {
+      const stop: ExportStop | null = base ?? (returned ? { kind: "returned" } : !choice.hasLayout ? { kind: "undecided", n: null } : !choice.ready ? { kind: "reading" } : null);
+      return { action: "layout", label: "sign", testid: "layout-output", stop };
+    }
+  }
+}

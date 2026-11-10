@@ -1,22 +1,21 @@
-// SHARE（共有。docs/screens.md 3.6、絵は Share.dc.html。P2 の 2 で引き算した）：
-// 出す先（自社の輪 / 公開の台帳）、見え方の答え、相手から見たあなた（見え方の 1 行・何施設のどれかに見えるか・塊ごとの帯。委託先は伏せる）、
-// 出元（鍵の指紋と束の鎖）。原本・出ていくバイト列そのもの（ハッシュ・メモ帳で開く）・相手の星取表は「中身を見る」にたたむ。
-// 下の帯に、出したあとに起きることと、主ボタン 1 つ「署名して自社の輪へ出す」か「署名して公開の台帳へ出す」。
-// 合言葉はやめた（運営者の決定 2026-11-04「パスワードは絶対いやです」、docs/plan.md §2.19）。署名は、人が主ボタンを押したときに決まる。
-// 出ていくものは橋渡しが作る（送る処理と同じ関数）。画面は橋渡しが返したバイト列を見せ、そのハッシュを送るときに照らす。
-// 公開の台帳（絵は SharePublic.dc.html。運営者の決定 2026-11-04「MOYAI が出す」）：出す先の右に GitHub のアカウント、誰からも見えるあなた、
-// 出した束の行方（SHARE を開いたときだけ読む）。PR を出すのは、人が主ボタンを押したときだけ。
-// 送信経路（docs/screens.md §3.6「送信経路」、Wire 11-07。運営者の決定 2026-11-07）：出す先の右の行を「送信経路　GitHub［名］ | MOYAI 経由」の切り替えにする。
-// 既定は GitHub につないでいれば GitHub［名］、いなければ MOYAI 経由（受け口の URL が決まっているときだけ）。選んだ経路は施設（計画）ごとに覚える。
-// MOYAI 経由は、受け口が運営者（tsunagi）の GitHub アカウントで PR を出す道。主ボタンは経路にかかわらず「署名して公開台帳へ送信」。
+// SHARE（共有。docs/screens.md 3.6、絵は ShareOne.dc.html。2026-11-10 に引き算した：運営者「足すのではなく引く。画面を人に操作させない。結果を見せて、ボタンを 1 つ押させる」）。
+// 1 つの目的（相手から見たあなたを確かめる）と、人の操作 1 つ（主ボタン「署名して共有フォルダへ送信」か「署名して公開台帳へ送信」）。
+// - 共有先は字で出す（共有フォルダ　フォルダの名前　n 施設／公開台帳　送信経路 …）。切り替えは、もう一方の共有先があるときだけ。送信経路は shareRouteOf が決め、
+//   GitHub につないでいて受け口もあるときだけ切り替えを出す。GitHub につなぐのは、押せない理由「GitHub　未接続」の右の 1 つだけ。
+// - 見え方の答えは画面で選ばない：施設の答えと規模からの見込みに、Claude が会話で聞いて share_preview の answers で置いた答えを重ねる（shareAnswersOf）。
+//   Claude の答えなら「- Claude の入力」。足りなければ朱で「見え方 未確定 n（軸）」と押せない理由だけ（推測で埋めない）。
+// - 数え直しの数は 0 でないときだけ。数えた段・原本・出ていくバイト列そのもの（ハッシュ・メモ帳で開く）・相手の星取表は「共有ファイルの中身」にたたむ。
+// - 受信した共有ファイルは 1 行にたたみ、人が要る行（未照合・ルール変更・✗）があれば開いておく。
+// - 下の帯の左は状態の 1 行（送ったあとは「✓ 送信　共有ファイル n　…」）。
+// 署名は、人が主ボタンを押したときに決まる（合言葉はやめた。docs/plan.md §2.19）。出ていくものは橋渡しが作る（送る処理と同じ関数）。
+// 公開の台帳へ PR を出すのは、人が主ボタンを押したときだけ（GitHub［名］か、受け口が運営者のアカウントで出す MOYAI 経由）。
 // 断られたとき：台帳の検証で外れた → 送信履歴の行に朱で「受付不可　（理由）」、1 時間の上限 → 押せない理由「送信の上限（1 時間）　14:20 以降」、
 // 受け口に届かない → 下の帯の左に朱で「受け口の応答なし」（押し直せば再送信）。取り下げのボタンが入るまで、下の帯で取り下げを約束しない。
-import { Alert, Anchor, Button, Code, Container, Group, Modal, NativeSelect, Paper, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Button, Code, Container, Group, Modal, NativeSelect, Paper, ScrollArea, Stack, Table, Text, Title } from "@mantine/core";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { emptyCatalog } from "../chart/catalog";
-import { CHART_HASH } from "../chart/route";
-import { SyncedNotice, readHuman, usePlanStatus } from "../components/ConfirmDialog";
+import { readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { KeyCheckDialog, KeyWarnLine, untrustedSigners, type TrustSig } from "../components/KeyWarn";
 import { FictionMark } from "../components/FictionMark";
 import { GitHubConnect } from "../components/GitHubConnect";
@@ -26,8 +25,9 @@ import { useWorkingPlan } from "../state/plan-store";
 import { ringLabels, routeBlockers, shareRouteOf, type ShareRoute } from "../state/share-route";
 import { HUMAN_TEXT, bandText, reasonText } from "../text";
 import { bandShort } from "../../share/stat-text";
-import { defaultRingId, defaultShareFacility } from "../../share/share-preview";
-import { setShareChoice } from "../state/share";
+import { defaultRingId, defaultShareDest, shareAnswersOf } from "../../share/share-preview";
+import { setShareChoice, useClaudeShare } from "../state/share";
+import { sheetHash } from "../stages";
 
 const T = HUMAN_TEXT.checkpoint;
 
@@ -88,7 +88,7 @@ interface RingInfo {
   ringId: string;
   root: string;
   pack: string;
-  synced: Synced | null;
+  synced?: Synced | null;
 }
 interface PreviewBody {
   ok: boolean;
@@ -98,6 +98,8 @@ interface PreviewBody {
   classNames?: Record<string, string>;
   axes?: { key: string; name: string; codes: { code: string; name: string }[] }[];
   rings?: RingInfo[];
+  /** 台帳の clone を設定で選んであるか（共有先の切り替えを出すかを決める） */
+  ledgerSet?: boolean;
   ring?: RingInfo & {
     key: string;
     keys?: string[];
@@ -311,6 +313,23 @@ function Num({ v }: { v: number | null }) {
   return v === null ? <Text span c="dimmed">—</Text> : <Text span className="moyai-shu">{v}</Text>;
 }
 
+/** 受け取った束の行ごとの分け方（表の印とたたんだ 1 行の数で同じ） */
+function lineMarks(report: Report, rulesChange: RulesChange | null) {
+  // まだ確かめていないだけの仲間（ほかの理由が無い）と、その束：✗ と朱を使わず、確かめる道を行の右端に置く
+  const unconfirmedOnly = (l: VerifyLine) => l.kind === "member" && l.reasons.length === 1 && l.reasons[0] === "member.unconfirmed";
+  const notCounted = new Set(report.lines.filter(unconfirmedOnly).map((l) => l.name));
+  return report.lines.map((line) => {
+    const folder = line.kind === "bundle" ? (/bundles\/([0-9a-f]{16})\//.exec(line.name)?.[1] ?? null) : null;
+    const unconfirmed = unconfirmedOnly(line);
+    const short = line.kind === "bundle" && line.status === "ok" && !!line.short;
+    // 失効した鍵の仲間と束は、集計に入れないので ✓ を付けない（薄い字で「失効」。Wire）
+    const retired = !!line.retired;
+    const uncounted = retired || short || (line.kind === "bundle" && line.status === "ok" && !!folder && notCounted.has(folder));
+    const rulesRow = line.kind === "circle" && !!rulesChange;
+    return { line, folder, unconfirmed, short, retired, uncounted, rulesRow, soft: unconfirmed || rulesRow };
+  });
+}
+
 /**
  * 受け取った束の表（受け手と同じ関数で確かめた結果）。内部の ID（輪・鍵・ファイルの道）は出さず、
  * 人が電話で読み合わせる鍵の指紋で示す：「決まり」「仲間　指紋（あなた）」「束 n　指紋」と、✓／✗ と理由
@@ -331,9 +350,6 @@ function VerifyTable({
   onCheckMember?: (l: VerifyLine) => void;
   onViewRules?: () => void;
 }) {
-  // まだ確かめていないだけの仲間（ほかの理由が無い）と、その束：✗ と朱を使わず、確かめる道を行の右端に置く
-  const unconfirmedOnly = (l: VerifyLine) => l.kind === "member" && l.reasons.length === 1 && l.reasons[0] === "member.unconfirmed";
-  const notCounted = new Set(report.lines.filter(unconfirmedOnly).map((l) => l.name));
   const fpOf = new Map(report.lines.filter((l) => l.kind === "member" && l.fingerprint).map((l) => [l.name, l.fingerprint!]));
   // 仲間ごとに、その束の行の理由（仲間の行に写ってきたもの）
   const bundleReasons = new Map<string, Set<string>>();
@@ -354,19 +370,11 @@ function VerifyTable({
   return (
     <Table className="moyai-num" data-testid="verify-table" data-ok={report.ok} verticalSpacing={6}>
       <Table.Tbody>
-        {report.lines.map((l) => {
+        {lineMarks(report, rulesChange).map(({ line: l, folder, unconfirmed, short, retired, uncounted, rulesRow, soft }) => {
           const b = l.kind === "bundle" ? /bundles\/([0-9a-f]{16})\/(\d{6})-/.exec(l.name) : null;
-          const folder = l.kind === "bundle" ? (/bundles\/([0-9a-f]{16})\//.exec(l.name)?.[1] ?? null) : null;
           const label =
             l.kind === "circle" ? T.verifyKind.circle : l.kind === "member" ? T.verifyKind.member : b ? T.prBundle(Number(b[2]), l.version ?? null, l.day ?? l.month ?? "") : T.notBundleRow;
           const key = l.kind === "member" ? l.name : folder;
-          const unconfirmed = unconfirmedOnly(l);
-          const short = l.kind === "bundle" && l.status === "ok" && !!l.short;
-          // 失効した鍵の仲間と束は、集計に入れないので ✓ を付けない（薄い字で「失効」。Wire）
-          const retired = !!l.retired;
-          const uncounted = retired || short || (l.kind === "bundle" && l.status === "ok" && !!folder && notCounted.has(folder));
-          const rulesRow = l.kind === "circle" && !!rulesChange;
-          const soft = unconfirmed || rulesRow;
           const mark = soft ? "!" : uncounted ? "―" : (T.verifyStatus[l.status] ?? l.status);
           return (
             <Table.Tr
@@ -461,6 +469,72 @@ function hourMinute(ms: number): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+/** 受信した共有ファイルの数（たたんだ 1 行）。表の印と同じ分け方（✓・! 未照合・! ルール変更・✗。集計対象外と失効は数えない） */
+function receivedCounts(report: Report, rulesChange: RulesChange | null) {
+  const c = { ok: 0, unconfirmed: 0, rules: false, ng: 0 };
+  for (const m of lineMarks(report, rulesChange)) {
+    if (m.unconfirmed) c.unconfirmed++;
+    else if (m.rulesRow) c.rules = true;
+    else if (m.uncounted) continue;
+    else if (m.line.status === "ok") c.ok++;
+    else c.ng++;
+  }
+  return c;
+}
+
+/**
+ * 見え方の 1 行（画面に選びは置かない。2026-11-10）：「施設 ― ストーカ炉、…　同区分の施設 38（全国 844）」。
+ * 答えが足りなければ朱で「施設 ― 見え方 未確定 n（軸）」だけ。Claude が置いた答えなら右に朱の小さな字「- Claude の入力」
+ */
+export function YouProfile({
+  undetermined,
+  profile,
+  k,
+  loading,
+  ai,
+}: {
+  /** 決まらない軸の名前（決まっていれば null） */
+  undetermined: string[] | null;
+  /** 見え方の 1 行（施設 ― …、所在） */
+  profile: string | null;
+  k: { k: number; minK: number; all: number | null } | null;
+  loading: boolean;
+  ai: boolean;
+}) {
+  return (
+    <Text size="sm" c="var(--text-2)" className="moyai-num">
+      {undetermined ? (
+        <Text span c="var(--shu-text)" data-testid="you-profile" data-state="undetermined">
+          {T.profileUndetermined(undetermined.length, undetermined.join("・"))}
+        </Text>
+      ) : profile && k ? (
+        <>
+          <Text span data-testid="you-profile">
+            {profile} <span className="moyai-redact" aria-label={T.redacted} />
+          </Text>
+          {"　"}
+          <Text span c={k.k < k.minK ? "var(--shu-text)" : "var(--text)"} data-testid="you-k" data-k={k.k}>
+            {k.k < k.minK ? T.kLineShort(k.k, k.minK) : T.kLine(k.k, k.all)}
+          </Text>
+        </>
+      ) : (
+        <Text span>{loading ? T.loading : T.noBody}</Text>
+      )}
+      {ai && (
+        <Text span size="xs" c="var(--shu-text)" ml={16} style={{ letterSpacing: "0.1em" }} data-testid="ai-answers-mark">
+          {T.aiMark}
+        </Text>
+      )}
+    </Text>
+  );
+}
+
+const Label = ({ children }: { children: ReactNode }) => (
+  <Text span size="xs" c="var(--text-3)" style={{ letterSpacing: "0.1em" }}>
+    {children}
+  </Text>
+);
+
 export function Checkpoint() {
   const working = useWorkingPlan();
   const { client, state } = useConnection();
@@ -468,23 +542,21 @@ export function Checkpoint() {
   // 送る版の鎖に、まだ確かめていない鍵があれば、主ボタンの左（押せない理由と同じ所）に 1 行（KeyWarn.dc.html の 4。止めない）
   const [status, reloadStatus] = usePlanStatus(client, planId ?? "", !!planId && state.kind === "open");
   const untrusted = status.kind === "ready" && status.status.versions ? untrustedSigners(status.status.versions) : [];
+  // このタブで Claude が会話で聞いて置いた見え方の答えと共有先（share_preview。画面の今の選びになるだけ）
+  const claude = useClaudeShare(planId);
   const [ringId, setRingId] = useState<string | null>(null);
-  const [facility, setFacility] = useState<Record<string, string | null>>({});
-  const [national, setNational] = useState<boolean | null>(working?.plan.facility.inNationalTable ?? null);
+  // 見え方の答えのもと（橋渡しが返した軸と、確定した版の施設の答え）。答えは画面に選びを置かず、shareAnswersOf で決める
+  const [qs, setQs] = useState<{ questions: Question[]; profile: Record<string, string> | null; national: boolean | null } | null>(null);
   const [res, setRes] = useState<PreviewBody | null>(null);
   const [error, setError] = useState<string | null>(null);
   // 断られた理由のコード（設定で直すもの：共有フォルダなし・台帳の clone が未設定。設定への道を添える）
   const [errorReason, setErrorReason] = useState<string | null>(null);
-  const sentRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState<{ fileName: string; report: Report; folder: string | null } | null>(null);
-  // 送ったあとの結果の 1 行は、本文の下のほうにあるので、見える所まで送る
-  useEffect(() => {
-    if (sent) sentRef.current?.scrollIntoView({ block: "nearest" });
-  }, [sent]);
-  // 受け取った束（docs/screens.md 3.6。受け取り箱をこの画面の下の節に移した）：輪を受け手と同じ関数で確かめた結果
+  const [sent, setSent] = useState<{ seq: number; at: string } | null>(null);
+  // 受け取った束（docs/screens.md 3.6）：輪を受け手と同じ関数で確かめた結果。ふだんは 1 行にたたむ（人が要る行があれば開く）
   const [received, setReceived] = useState<Report | null>(null);
+  const [recvOpen, setRecvOpen] = useState<boolean | null>(null);
   // 受け取った束の行で直す：仲間の鍵の読み合わせと、輪の決まりの受け入れ（Share.dc.html Version 46。監査 D1）
   const [memberCheck, setMemberCheck] = useState<TrustSig | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
@@ -494,10 +566,14 @@ export function Checkpoint() {
   const [rotateUnsigned, setRotateUnsigned] = useState(0);
   const [sendError, setSendError] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
-  const [dest, setDest] = useState<"ring" | "ledger">("ring");
+  const [dest, setDest] = useState<"ring" | "ledger">(claude?.dest ?? "ring");
+  // 人か Claude が共有先を選んだか（選んでいなければ、この Skillパックの共有フォルダが無く台帳の clone があるとき公開台帳にする）
+  const destChosen = useRef(!!claude?.dest);
+  // 選べる共有先（最後に読めた答えから。共有先の切り替えは、もう一方があるときだけ出す）
+  const [avail, setAvail] = useState<{ ring: boolean; ledger: boolean } | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
   const [prs, setPrs] = useState<LedgerPr[] | null>(null);
-  const [sentPr, setSentPr] = useState<{ pr: number; url: string } | null>(null);
+  const [sentPr, setSentPr] = useState<{ pr: number; url: string; seq: number } | null>(null);
   // 送信経路（施設＝計画ごとに覚える。null は人がまだ選んでいない）と、MOYAI 経由で断られたときの 3 つ
   const [route, setRoute] = useState<Route | null>(null);
   const [refusedRow, setRefusedRow] = useState<{ seq: number; version: number | null; at: string; reasons: string } | null>(null);
@@ -505,12 +581,40 @@ export function Checkpoint() {
   const [noAnswer, setNoAnswer] = useState(false);
   const [reload, setReload] = useState(0);
   const seq = useRef(0);
-  const prefilled = useRef(false);
 
-  const answers = useMemo(() => ({ facility, inNationalTable: national }), [facility, national]);
+  const packOfPlan = working?.plan.packId ?? null;
+  // 見え方の答え：規模からの見込み＋Claude の答え＋施設の答え（橋渡しの share_preview と同じ関数）。全国の表に載るかは作業中の計画の答えを先に
+  const shared = useMemo(
+    () =>
+      shareAnswersOf({
+        questions: qs?.questions ?? [],
+        profile: qs?.profile ?? null,
+        national: working?.plan.facility.inNationalTable ?? qs?.national ?? null,
+        ai: claude?.answers ?? null,
+      }),
+    [qs, claude?.answers, working?.plan.facility.inNationalTable],
+  );
+  const answers = shared.answers;
 
-  // 画面を閉じたら、AI の share_preview に渡す選びを消す（開き直した画面は既定の選びから始める）
+  const switchDest = (v: "ring" | "ledger") => {
+    setDest(v);
+    setRes(null);
+    setSent(null);
+    setSentPr(null);
+    setSendError(null);
+    setRefusedRow(null);
+    setNoAnswer(false);
+  };
+
+  // 画面を閉じたら、AI の share_preview に渡す選びを消す（Claude の置いた答えはこのタブの間残る）
   useEffect(() => () => setShareChoice(null), []);
+  // Claude が共有先を置いたら、それにする（人があとで切り替えられる）
+  useEffect(() => {
+    if (!claude?.dest || claude.destSeq === 0) return;
+    destChosen.current = true;
+    if (claude.dest !== dest) switchDest(claude.dest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claude?.destSeq]);
   // 送信経路は施設（計画）ごとに覚える
   useEffect(() => setRoute(readRoute(planId)), [planId]);
   // 1 時間の上限：その時刻まで押せない。過ぎたら押せる
@@ -522,12 +626,12 @@ export function Checkpoint() {
     return () => clearTimeout(t);
   }, [limitUntil]);
 
-  // 輪・答えが変わるたびに、橋渡しで出ていくものを作り直す（送る処理と同じ関数）。
-  // 断られても（輪が無い・見え方が決まらないなど）、聞くこと（輪の一覧と軸）は返ってくるので見せる。
+  // 共有先・共有フォルダ・答えが変わるたびに、橋渡しで出ていくものを作り直す（送る処理と同じ関数）。
+  // 断られても（共有フォルダが無い・見え方が決まらないなど）、共有フォルダの一覧と軸は返ってくるので使う。
   useEffect(() => {
     if (state.kind !== "open" || !planId) return;
-    // 既定の選びを入れたあとの選びを、AI の share_preview にも渡す（画面と同じ数を返すため。src/app/state/share.ts）
-    if (prefilled.current) setShareChoice({ planId, dest, ringId, answers });
+    // 画面の選びを、AI の share_preview にも渡す（画面と同じ数を返すため。src/app/state/share.ts）
+    setShareChoice({ planId, dest, ringId });
     const n = ++seq.current;
     setLoading(true);
     void (async () => {
@@ -543,22 +647,26 @@ export function Checkpoint() {
       if (!r.ok) return;
       const b = r.body as PreviewBody;
       setRes(b);
-      if (!prefilled.current && b.questions) {
-        prefilled.current = true;
-        // 施設の設定の答えを先に入れ、無い軸だけ規模からの見込み（人が直せる）。AI の share_preview の既定の選びと同じ関数
-        const pre = defaultShareFacility(b.questions, b.plan?.profile ?? null);
-        if (b.plan && b.plan.inNationalTable !== null && national === null) setNational(b.plan.inNationalTable);
-        if (Object.keys(pre).length > 0) setFacility((f) => ({ ...pre, ...f }));
+      if (b.questions) setQs((q) => q ?? { questions: b.questions!, profile: b.plan?.profile ?? null, national: b.plan?.inNationalTable ?? null });
+      const pack = b.plan?.packId ?? packOfPlan;
+      const hasRing = !!b.rings && b.rings.some((x) => x.pack === pack);
+      if (b.rings && typeof b.ledgerSet === "boolean") setAvail({ ring: hasRing, ledger: b.ledgerSet });
+      // 共有先の既定：この Skillパックの共有フォルダが無く、台帳の clone があれば公開台帳（橋渡しの share_preview と同じ関数）
+      if (!destChosen.current && b.rings && typeof b.ledgerSet === "boolean") {
+        destChosen.current = true;
+        const d = defaultShareDest(hasRing, b.ledgerSet);
+        if (d !== dest) return switchDest(d);
       }
-      if (dest === "ring" && ringId === null && b.rings && b.plan) {
-        const first = defaultRingId(b.rings, b.plan.packId);
+      if (dest === "ring" && ringId === null && b.rings && pack) {
+        const first = defaultRingId(b.rings, pack);
         if (first) setRingId(first);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, state.kind, planId, ringId, answers, dest, reload]);
 
   // 出した束の行方：公開の台帳を選んで SHARE を開いたときだけ、公開の PR を読む（トークンは使わない）
-  const packId = res?.plan?.packId ?? working?.plan.packId ?? null;
+  const packId = res?.plan?.packId ?? packOfPlan;
   useEffect(() => {
     if (dest !== "ledger" || state.kind !== "open" || !packId) return;
     void (async () => {
@@ -581,38 +689,42 @@ export function Checkpoint() {
   const axisName = (key: string) => res?.axes?.find((a) => a.key === key)?.name ?? key;
   const codeName = (key: string, code: string) => res?.axes?.find((a) => a.key === key)?.codes.find((c) => c.code === code)?.name ?? code;
 
-  const noRings = !!res && (res.rings ?? []).length === 0;
+  const ringsForPack = (res?.rings ?? []).filter((r) => r.pack === packId);
+  const noRings = !!res?.rings && ringsForPack.length === 0;
   const labels = useMemo(() => ringLabels(res?.rings ?? []), [res?.rings]);
   const countsZero = !!view?.counts && Object.values(view.counts).every((n) => n === 0);
   const done = dest === "ledger" ? !!sentPr : !!sent;
   const login = res?.github?.login ?? null;
-  // 送信経路：MOYAI 経由は受け口があるときだけ選べる。GitHub につないでいなければ MOYAI 経由、つないでいれば覚えた経路（既定は GitHub［名］）
+  // 送信経路：MOYAI 経由は受け口があるときだけ。GitHub につないでいなければ MOYAI 経由、つないでいれば覚えた経路（既定は GitHub［名］）
   const intakeAvail = dest === "ledger" && res?.intake === true;
   const viaIntake = dest === "ledger" && shareRouteOf({ login, intake: intakeAvail, chosen: route }) === "intake";
   // MOYAI 経由では、GitHub に未接続（noKey）は押せない理由にしない
   const blockers = view ? routeBlockers(viaIntake ? "intake" : "github", view.blockers) : [];
   const limited = viaIntake && limitUntil !== null && limitUntil > Date.now();
   const canPress = !!view && blockers.length === 0 && !!view.bodyHash && countsZero && view.k !== null && view.k >= view.minK && !sending && !done && !limited;
-  // 止め札は、いま効いている理由を 1 つだけ出す（公開の台帳でつないでいなければ、それがいちばん先）
-  const sendReason = !view
-    ? T.sendNeeds.noView
-    : blockers.includes("keysForked")
-      ? T.sendNeeds.keysForked
-    : blockers.includes("chainForked")
-      ? T.sendNeeds.chainForked
-    : blockers.includes("keyRetired")
-      ? T.sendNeeds.keyRetired
-    : blockers.includes("noKey")
-      ? T.sendNeeds.noKey
-      : blockers.includes("pending")
-        ? T.sendNeeds.pending
-        : blockers.length > 0
-        ? (T.sendNeeds[blockers[0]!] ?? blockers[0]!)
-        : limited
-          ? T.intakeRateLimited(hourMinute(limitUntil!))
-          : dest === "ring" && done
-            ? T.sendNeeds.sent!
-            : "";
+  // 送ったあと：ほかに押せない理由が無ければ「送信済み」（台帳の「まだ載っていません」は送ったことの続きなので、この画面の間は「送信済み」）。
+  // 送ったあとに署名鍵の重複などが出たら、そちらを出す（再発行の道を添えるため）
+  const afterSend = done && blockers.every((b) => b === "pending");
+  // 止め札は、いま効いている理由を 1 つだけ出す（公開の台帳でつないでいなければ、それが先）
+  const sendReason = afterSend
+    ? T.sendNeeds.sent!
+    : !view
+      ? T.sendNeeds.noView
+      : blockers.includes("keysForked")
+        ? T.sendNeeds.keysForked
+        : blockers.includes("chainForked")
+          ? T.sendNeeds.chainForked
+          : blockers.includes("keyRetired")
+            ? T.sendNeeds.keyRetired
+            : blockers.includes("noKey")
+              ? T.sendNeeds.noKey
+              : blockers.includes("pending")
+                ? T.sendNeeds.pending
+                : blockers.length > 0
+                  ? (T.sendNeeds[blockers[0]!] ?? blockers[0]!)
+                  : limited
+                    ? T.intakeRateLimited(hourMinute(limitUntil!))
+                    : "";
   const chooseRoute = (v: Route) => {
     setRoute(v);
     saveRoute(planId, v);
@@ -636,7 +748,7 @@ export function Checkpoint() {
         if (b?.reason === "ledgerNg") return setRefusedRow({ seq: view.seq, version: res.plan.version, at: new Date().toISOString(), reasons: reasonsTextOf(b.reasons) });
         return setSendError(r.message);
       }
-      setSentPr({ pr: r.body.pr, url: r.body.url });
+      setSentPr({ pr: r.body.pr, url: r.body.url, seq: view.seq });
       setReload((x) => x + 1);
       return;
     }
@@ -648,7 +760,8 @@ export function Checkpoint() {
     );
     setSending(false);
     if (!r.ok) return setSendError(r.message);
-    setSent({ fileName: r.body.fileName, report: r.body.report, folder: res.ring?.ringId === ringId ? res.ring.folder : null });
+    const at = new Date();
+    setSent({ seq: view.seq, at: `${dayOf(at.toISOString())} ${hourMinute(at.getTime())}` });
     setReceived(r.body.report);
   };
 
@@ -678,7 +791,7 @@ export function Checkpoint() {
       if (!raw.ok || reason === "intake.network" || reason === "intake.unavailable") return setNoAnswer(true);
       return setSendError(r.message);
     }
-    setSentPr({ pr: r.body.pr, url: r.body.url });
+    setSentPr({ pr: r.body.pr, url: r.body.url, seq: view.seq });
     setReload((x) => x + 1);
   };
 
@@ -710,22 +823,41 @@ export function Checkpoint() {
     else setSendError(r.message);
   };
 
+  // 計画が無いとき：EXPORT と同じ形と言葉（作業中の計画がありません。HOSHITORI へ）
   if (!planId) {
     return (
-      <Container size="lg" py="lg">
-        <Title order={2}>{T.title}</Title>
-        <Text mt="md" data-testid="checkpoint-no-plan">
-          {T.noPlan}
-        </Text>
-        <Anchor href={CHART_HASH}>{T.toChart}</Anchor>
-      </Container>
+      <div className="moyai-share-page" data-testid="checkpoint-page">
+        <div className="moyai-share-body">
+          <Text size="sm" data-testid="checkpoint-no-plan">
+            {T.noPlan} <a href={sheetHash("files")}>{T.toMerge}</a>
+          </Text>
+        </div>
+      </div>
     );
   }
 
   const years = body ? [...new Set(body.chunks.flatMap((c) => c.years))].sort() : [];
-
   const chain = view ? Array.from({ length: Math.min(3, view.seq) }, (_, i) => view.seq - i) : [];
-  const profileLine = body ? Object.entries(body.profile.axes).map(([k, v]) => codeName(k, v)).join("、") : null;
+  // 見え方の 1 行：共有ファイルの body と同じ軸の順（JCS。鍵の順）。送れないあいだ（GitHub に未接続など）も、見え方が決まっていれば出す
+  const profileAxes = body?.profile.axes ?? view?.profile?.axes ?? null;
+  const profileLine = profileAxes
+    ? Object.keys(profileAxes)
+        .sort()
+        .map((k) => codeName(k, profileAxes[k]!))
+        .join("、")
+    : null;
+  // 見え方が決まらない：全国の表に載るかと、足りない軸（画面に選びは置かない。Claude が会話で聞いて置く）
+  const undetermined = !!view && (view.blockers.includes("groupUnknown") || view.blockers.includes("profileIncomplete"));
+  const undeterminedNames = [...(answers.inNationalTable === null ? [T.nationalQ] : []), ...(view?.missing ?? []).map(axisName)];
+  const aiShown = shared.aiAxes.length > 0 && !done;
+  // 共有先の切り替えは、もう一方の共有先があるときだけ
+  const other = dest === "ring" ? avail?.ledger : avail?.ring;
+  const ringLabel = ringId ? (labels.get(ringId) ?? null) : null;
+  const members = received ? received.lines.filter((l) => l.kind === "member" && !l.retired).length : null;
+  const recvCounts = received ? receivedCounts(received, res?.ring?.rulesChange ?? null) : null;
+  const recvNeedsPerson = !!recvCounts && (recvCounts.unconfirmed > 0 || recvCounts.rules || recvCounts.ng > 0);
+  const recvIsOpen = recvOpen ?? recvNeedsPerson;
+  const countsNonZero = !!view?.counts && !countsZero;
 
   return (
     <div className="moyai-share-page" data-testid="checkpoint-page">
@@ -750,30 +882,85 @@ export function Checkpoint() {
             </Alert>
           )}
 
-          {/* 出す先：自社の輪 / 公開の台帳。公開の台帳の右に、PR を出す GitHub のアカウント */}
-          <Group gap="md" align="center" data-testid="share-dest">
-            <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
-              {T.destLabel}
-            </Text>
-            <Switch<"ring" | "ledger">
-              aria-label={T.destLabel}
-              value={dest}
-              onChange={(v) => {
-                setDest(v);
-                setRes(null);
-                setSent(null);
-                setSentPr(null);
-                setSendError(null);
-                setRefusedRow(null);
-                setNoAnswer(false);
-              }}
-              data={[
-                { value: "ring", label: T.dest.ring },
-                { value: "ledger", label: T.dest.ledger },
-              ]}
-            />
+          {/* 共有先の 1 行（字。切り替えは、もう一方の共有先があるときだけ）：「共有先　共有フォルダ　北部ブロック　8 施設」「共有先　公開台帳　送信経路 GitHub［名］」 */}
+          <Group align="center" data-testid="share-dest-line" style={{ fontSize: 13, columnGap: 16, rowGap: 4 }}>
+            <Label>{T.destLabel}</Label>
+            {other ? (
+              <Switch<"ring" | "ledger">
+                aria-label={T.destLabel}
+                value={dest}
+                onChange={(v) => {
+                  destChosen.current = true;
+                  switchDest(v);
+                }}
+                data={[
+                  { value: "ring", label: T.dest.ring },
+                  { value: "ledger", label: T.dest.ledger },
+                ]}
+                data-testid="share-dest"
+              />
+            ) : (
+              <Text span size="sm" fw={500} data-testid="dest-name">
+                {T.dest[dest]}
+              </Text>
+            )}
+            {dest === "ring" && ringsForPack.length > 1 && (
+              <NativeSelect
+                size="xs"
+                aria-label={T.ring}
+                value={ringId ?? ""}
+                onChange={(e) => setRingId(e.currentTarget.value || null)}
+                data={[{ value: "", label: T.choose }, ...ringsForPack.map((r) => ({ value: r.ringId, label: labels.get(r.ringId) ?? r.ringId }))]}
+                data-testid="ring-select"
+              />
+            )}
+            {dest === "ring" && ringsForPack.length === 1 && ringLabel && (
+              <Text span size="sm" c="var(--text-2)" data-testid="ring-label">
+                {ringLabel}
+              </Text>
+            )}
+            {dest === "ring" && members !== null && (
+              <Text span size="sm" c="var(--text-2)" className="moyai-num" data-testid="ring-members">
+                {T.ringMembers(members)}
+              </Text>
+            )}
+            {dest === "ring" && noRings && (
+              <Text span size="xs" c="var(--shu-text)" data-testid="ring-none">
+                {T.ringNone}
+                <a className="moyai-inline-act" href={APP_PAGES.settings} data-testid="ring-none-to-settings">
+                  {T.toSettings}
+                </a>
+              </Text>
+            )}
+            {/* 送信経路：決まった経路を字で。GitHub につないでいて受け口もあるときだけ切り替え（docs/screens.md §3.6） */}
+            {dest === "ledger" && (
+              <Group gap="xs" align="center" data-testid="share-route" data-route={viaIntake ? "intake" : "github"}>
+                <Label>{T.routeLabel}</Label>
+                {login && intakeAvail ? (
+                  <Switch<Route>
+                    aria-label={T.routeLabel}
+                    value={viaIntake ? "intake" : "github"}
+                    onChange={chooseRoute}
+                    data={[
+                      { value: "github", label: T.routeGitHub(login) },
+                      { value: "intake", label: T.routeIntake },
+                    ]}
+                    data-testid="route-switch"
+                  />
+                ) : (
+                  <Text span size="sm" c="var(--text-2)" data-testid="github-login">
+                    {viaIntake ? T.routeIntake : login ? T.routeGitHub(login) : T.routeGitHubNone}
+                  </Text>
+                )}
+                {viaIntake && (
+                  <Text span size="xs" c="var(--text-3)" data-testid="intake-ip">
+                    {T.intakeIp}
+                  </Text>
+                )}
+              </Group>
+            )}
             {dest === "ledger" && res?.rulesChange && (
-              <Text size="sm" data-testid="ledger-rules-changed">
+              <Text span size="sm" data-testid="ledger-rules-changed">
                 {T.ledgerRulesMark}
                 {T.ledgerRulesChanged}
                 {"　"}
@@ -786,84 +973,91 @@ export function Checkpoint() {
                 </button>
               </Text>
             )}
-            {/* 送信経路：「送信経路　GitHub［名］ | MOYAI 経由」（docs/screens.md §3.6）。MOYAI 経由のときだけ、下に IP の扱いを text-3 で */}
-            {dest === "ledger" && (
-              <Stack gap={2} data-testid="share-route" data-route={viaIntake ? "intake" : "github"}>
-                <Group gap="xs" align="center" data-testid="github-account">
-                  <Text size="xs" c="dimmed" style={{ letterSpacing: "0.1em" }}>
-                    {T.routeLabel}
-                  </Text>
-                  {login && intakeAvail ? (
-                    <Switch<Route>
-                      aria-label={T.routeLabel}
-                      value={viaIntake ? "intake" : "github"}
-                      onChange={chooseRoute}
-                      data={[
-                        { value: "github", label: T.routeGitHub(login) },
-                        { value: "intake", label: T.routeIntake },
-                      ]}
-                      data-testid="route-switch"
-                    />
-                  ) : (
-                    <Text size="sm" data-testid="github-login">
-                      {viaIntake ? T.routeIntake : login ? T.routeGitHub(login) : T.routeGitHubNone}
-                    </Text>
-                  )}
-                  {res?.github?.ready === false
-                    ? // つなぐ道が無いあいだは「| GitHub につなぐ」を出さない（MOYAI 経由で送れるなら、理由も出さない）
-                      !viaIntake && (
-                        <Text size="xs" c="dimmed" data-testid="github-no-client">
-                          {T.githubNoClient}
-                        </Text>
-                      )
-                    : (!login || !viaIntake) && (
-                        <button type="button" className="moyai-inline-act" onClick={() => setConnectOpen(true)} disabled={!packId} data-testid="github-open">
-                          {login ? T.githubReconnect : T.githubConnect}
-                        </button>
-                      )}
-                </Group>
-                {viaIntake && (
-                  <Text size="xs" c="var(--text-3)" data-testid="intake-ip">
-                    {T.intakeIp}
-                  </Text>
-                )}
-              </Stack>
-            )}
-            {dest === "ring" && (res?.rings ?? []).length > 1 && (
-              <NativeSelect
-                size="xs"
-                aria-label={T.ring}
-                value={ringId ?? ""}
-                onChange={(e) => setRingId(e.currentTarget.value || null)}
-                data={[{ value: "", label: T.choose }, ...(res?.rings ?? []).map((r) => ({ value: r.ringId, label: labels.get(r.ringId) ?? r.ringId }))]}
-                data-testid="ring-select"
-              />
-            )}
-            {/* 選んだ共有フォルダの場所（状態の 1 行） */}
-            {dest === "ring" && ringId && res?.ring?.ringId === ringId && res.ring.folder && (
-              <Text size="xs" c="var(--text-3)" ff="monospace" style={{ wordBreak: "break-all" }} data-testid="ring-folder-path">
-                {res.ring.folder}
-              </Text>
-            )}
-            {dest === "ring" && noRings && (
-              <Text size="xs" c="var(--shu-text)" data-testid="ring-none">
-                {T.ringNone}
-                <a className="moyai-inline-act" href={APP_PAGES.settings} data-testid="ring-none-to-settings">
-                  {T.toSettings}
-                </a>
-              </Text>
-            )}
           </Group>
-          {packId && (
-            <GitHubConnect
-              opened={connectOpen}
-              packId={packId}
-              onClose={() => setConnectOpen(false)}
-              onConnected={() => setReload((x) => x + 1)}
+          {packId && <GitHubConnect opened={connectOpen} packId={packId} onClose={() => setConnectOpen(false)} onConnected={() => setReload((x) => x + 1)} />}
+
+          {/* 相手から見たあなた：見え方の 1 行（施設 ― …　同区分の施設 m（全国 n））と、塊ごとの周期・工数・日数の帯（委託先は伏せる）。
+              答えが足りなければ、朱で「見え方 未確定 n（軸）」だけ（表は出さない。選びも置かない） */}
+          <section data-testid="you" style={{ background: "var(--layer-1)", padding: 24 }}>
+            <Title order={2} fz={14} fw={500} mb="sm">
+              {dest === "ledger" ? T.youTitleLedger : T.youTitle}
+            </Title>
+            <YouProfile
+              undetermined={undetermined ? undeterminedNames : null}
+              profile={view?.steps && profileLine ? T.profileLine(profileLine) : null}
+              k={view?.steps && view.k !== null ? { k: view.k, minK: view.minK, all: view.profile?.group === "NATIONAL" ? view.steps.all : null } : null}
+              loading={loading}
+              ai={aiShown}
             />
+            {body && !undetermined && (
+              <Table verticalSpacing={6} fz="sm" mt="xs" className="moyai-num" style={{ maxWidth: 920 }}>
+                <Table.Thead>
+                  <Table.Tr>
+                    {T.youHead.map((h) => (
+                      <Table.Th key={h}>{h}</Table.Th>
+                    ))}
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {body.chunks.map((c, i) => (
+                    <Table.Tr key={i} data-testid="plain-chunk">
+                      <Table.Td>{T.chunkPath(className(c.class), workLabels[c.work] ?? c.work)}</Table.Td>
+                      <Table.Td>{c.interval ? bandShort(c.interval) : T.none}</Table.Td>
+                      <Table.Td>{c.manDays ? bandShort(c.manDays) : T.none}</Table.Td>
+                      <Table.Td>{c.days ? bandShort(c.days) : T.none}</Table.Td>
+                      <Table.Td>
+                        <span className="moyai-redact" aria-label={T.redacted} />
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            )}
+            {dest === "ledger" && view?.steps && (view.copy?.skipped.upgradeLedger ?? 0) > 0 && (
+              <Text size="sm" className="moyai-num" mt="xs" data-testid="not-on-ledger">
+                {T.upgradeRow(view.copy?.skipped.upgradeLedger ?? 0)}
+                <Text span size="xs" c="dimmed">
+                  {T.notOnLedger}
+                </Text>
+              </Text>
+            )}
+          </section>
+
+          {/* 提供元の 1 行：鍵番号・共有ファイルの連番・（公開台帳）PR のアカウント */}
+          {((dest === "ledger" && res?.ledger?.fingerprint) || (dest === "ring" && res?.ring)) && (
+            <Group align="baseline" data-testid="share-source" style={{ fontSize: 13, columnGap: 16, rowGap: 4 }}>
+              <Label>{T.sourceTitle}</Label>
+              {(dest === "ledger" ? res?.ledger?.fingerprint : res?.ring?.fingerprint) && (
+                <Text span size="sm" ff="monospace" className="moyai-num">
+                  {T.fingerprint} {dest === "ledger" ? res?.ledger?.fingerprint : res?.ring?.fingerprint}
+                </Text>
+              )}
+              {chain.length > 0 && (
+                <Text span size="sm" ff="monospace" c="var(--text-3)" className="moyai-num" data-testid="share-chain">
+                  {chain.map((n) => T.bundleN(n)).join(" ← ")}
+                </Text>
+              )}
+              {/* 「PR の GitHub アカウント　［名］」。GitHub［名］なら名前を朱、MOYAI 経由は運営の名をふつうの字で */}
+              {dest === "ledger" && (viaIntake || login) && (
+                <Text span size="xs" c="var(--text-3)" data-testid="account-seen">
+                  {T.prAccount}
+                  {"　"}
+                  <Text span c={viaIntake ? undefined : "var(--shu-text)"} data-testid="account-name">
+                    {viaIntake ? T.prAccountIntake : login}
+                  </Text>
+                </Text>
+              )}
+            </Group>
           )}
 
-          {/* 公開の台帳に出した束（SHARE を開いたときに読んだ行方）。出した束があれば、出す先の行のすぐ下。無ければ節ごと出さない。
+          {/* 数え直しの数：どれかが 0 でないときだけ（そのときは押せない理由） */}
+          {countsNonZero && (
+            <Text size="xs" c="var(--shu-text)" className="moyai-num" data-testid="counts">
+              {T.counts(view!.counts!)}
+            </Text>
+          )}
+
+          {/* 公開の台帳に出した束（SHARE を開いたときに読んだ行方）。無ければ出さない。
               台帳の検証で外れた束は、この画面の間だけ「受付不可　（理由）」の行を出す（PR は無い。まだ載っていないものには数えない） */}
           {dest === "ledger" && ((prs && prs.length > 0) || refusedRow) && (
             <section data-testid="ledger-prs">
@@ -886,167 +1080,67 @@ export function Checkpoint() {
             </section>
           )}
 
-          {/* 見え方の答え（Claude との会話で決めてもよい。答えがそろうと、相手から見たあなたが出る） */}
-          <Group gap="sm" align="flex-end" wrap="wrap">
-            <NativeSelect
-              size="xs"
-              label={T.nationalQ}
-              value={national === null ? "" : national ? "yes" : "no"}
-              onChange={(e) => setNational(e.currentTarget.value === "" ? null : e.currentTarget.value === "yes")}
-              data={[
-                { value: "", label: T.choose },
-                { value: "yes", label: T.yes },
-                { value: "no", label: T.noAnswer },
-              ]}
-              data-testid="q-national"
-            />
-            {(res?.questions ?? []).map((q) => (
-              <NativeSelect
-                size="xs"
-                key={q.key}
-                label={q.name}
-                value={facility[q.key] ?? ""}
-                onChange={(e) => {
-                  const v = e.currentTarget.value;
-                  setFacility((f) => ({ ...f, [q.key]: v === "" ? null : v }));
-                }}
-                data={[{ value: "", label: T.choose }, ...q.codes.map((c) => ({ value: c.code, label: c.name }))]}
-                data-testid={`q-${q.key}`}
-              />
-            ))}
-          </Group>
-          {view && view.missing.length > 0 && (
-            <Text size="xs" c="var(--shu-text)">
-              {T.missingAxes(view.missing.map(axisName).join("、"))}
-            </Text>
+          {/* 受信した共有ファイル：ふだんは 1 行（✓ 7　! 未照合 1）。人が要る行（未照合・ルール変更・✗）があれば開いておく */}
+          {dest === "ring" && received && recvCounts && (
+            <section data-testid="received" data-open={recvIsOpen}>
+              <button
+                type="button"
+                onClick={() => setRecvOpen(!recvIsOpen)}
+                aria-expanded={recvIsOpen}
+                data-testid="received-summary"
+                style={{ all: "unset", cursor: "pointer", display: "flex", gap: 16, alignItems: "baseline", fontSize: 13, minHeight: 40 }}
+              >
+                <Label>{T.receivedTitle}</Label>
+                <Text span size="sm" c="var(--text-2)" className="moyai-num">
+                  {T.receivedSummary(recvCounts)}
+                </Text>
+              </button>
+              {recvIsOpen && (
+                <Stack gap="xs">
+                  <VerifyTable
+                    report={received}
+                    ownKey={res?.ring?.key ?? null}
+                    retiredCount={res?.ring?.retiredCount ?? 0}
+                    rulesChange={res?.ring?.rulesChange ?? null}
+                    onCheckMember={(l) => l.pub && setMemberCheck({ role: "member", by: "", pub: l.pub, fingerprint: l.fingerprint ?? "", trust: "unconfirmed" })}
+                    onViewRules={() => setRulesOpen(true)}
+                  />
+                  <Group justify="flex-end">
+                    <Button variant="default" size="xs" onClick={() => void verifyAgain()} data-testid="received-again">
+                      {T.verifyAgain}
+                    </Button>
+                  </Group>
+                </Stack>
+              )}
+            </section>
           )}
 
-          {/* 相手から見たあなた：見え方の 1 行と、何施設のどれかに見えるか。塊ごとの周期・工数・日数の帯（委託先は伏せる） */}
-          <section data-testid="you">
-            <Title order={2} fz={14} fw={500} mb="xs">
-              {dest === "ledger" ? T.youTitleLedger : T.youTitle}
-            </Title>
-            {view?.steps ? (
-              <Stack gap={4}>
-                {profileLine && (
-                  <Text size="sm" data-testid="you-profile">
-                    {T.profileLine(profileLine)} <span className="moyai-redact" aria-label={T.redacted} />
+          {/* 共有ファイルの中身（ここから PC の外へ出るものの証拠）：数えた段・出ていくバイト列（ハッシュ・メモ帳で開く）・原本・相手の星取表。閉じていても DOM には残す */}
+          <details data-testid="share-contents">
+            <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>{T.contentsTitle}</summary>
+            <Stack gap="md" mt="sm">
+              {view?.steps && (
+                <Stack gap={2}>
+                  <Text size="sm" className="moyai-num" data-testid="you-steps">
+                    {view.profile?.group === "NATIONAL" ? T.youSteps(view.steps.all, view.steps.profile, view.steps.rows) : T.youPeers(view.steps.rows)}
                   </Text>
-                )}
-                <Text size="lg" fw={500} className="moyai-num" data-testid="you-steps">
-                  {view.profile?.group === "NATIONAL" ? T.youSteps(view.steps.all, view.steps.profile, view.steps.rows) : T.youPeers(view.steps.rows)}
-                </Text>
-                <Text size="xs" c={(view.k ?? 0) < view.minK ? "var(--shu-text)" : "dimmed"} className="moyai-num" data-testid="you-k" data-k={view.k ?? ""}>
-                  {(view.k ?? 0) < view.minK ? T.kLineShort(view.k ?? 0, view.minK) : T.kLine(view.k ?? 0, view.profile?.group === "NATIONAL" ? view.steps.all : null)}
-                  {T.stage(view.profile?.stage ?? 0) ? `　${T.stage(view.profile?.stage ?? 0)}` : ""}
-                </Text>
-                {view.rowEffects.length > 0 &&
-                  view.rowEffects.map((e) => (
+                  {T.stage(view.profile?.stage ?? 0) && (
+                    <Text size="xs" c="dimmed">
+                      {T.stage(view.profile?.stage ?? 0)}
+                    </Text>
+                  )}
+                  {view.rowEffects.map((e) => (
                     <Text size="xs" key={e.class} className="moyai-num">
                       {T.rowEffect(className(e.class), e.n)}
                     </Text>
                   ))}
-                {body && (
-                  <Table verticalSpacing={6} fz="sm" mt="xs" className="moyai-num" style={{ maxWidth: 920 }}>
-                    <Table.Thead>
-                      <Table.Tr>
-                        {T.youHead.map((h) => (
-                          <Table.Th key={h}>{h}</Table.Th>
-                        ))}
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {body.chunks.map((c, i) => (
-                        <Table.Tr key={i} data-testid="plain-chunk">
-                          <Table.Td>{T.chunkPath(className(c.class), workLabels[c.work] ?? c.work)}</Table.Td>
-                          <Table.Td>{c.interval ? bandShort(c.interval) : T.none}</Table.Td>
-                          <Table.Td>{c.manDays ? bandShort(c.manDays) : T.none}</Table.Td>
-                          <Table.Td>{c.days ? bandShort(c.days) : T.none}</Table.Td>
-                          <Table.Td>
-                            <span className="moyai-redact" aria-label={T.redacted} />
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                )}
-                {dest === "ledger" && (view.copy?.skipped.upgradeLedger ?? 0) > 0 && (
-                  <Text size="sm" className="moyai-num" data-testid="not-on-ledger">
-                    {T.upgradeRow(view.copy?.skipped.upgradeLedger ?? 0)}
-                    <Text span size="xs" c="dimmed">
-                      {T.notOnLedger}
-                    </Text>
-                  </Text>
-                )}
-                {/* 公開時の表示の 1 行：「PR の GitHub アカウント　［名］」。GitHub［名］なら名前を朱、MOYAI 経由は運営の名をふつうの字で */}
-                {dest === "ledger" && (viaIntake || login) && (
-                  <Text size="xs" data-testid="account-seen">
-                    {T.prAccount}
-                    {"　"}
-                    <Text span c={viaIntake ? undefined : "var(--shu-text)"} data-testid="account-name">
-                      {viaIntake ? T.prAccountIntake : login}
-                    </Text>
-                  </Text>
-                )}
-              </Stack>
-            ) : (
-              <Stack gap={4}>
-                <Text size="sm">{loading ? T.loading : T.noBody}</Text>
-                {view && view.tried.length > 0 && (
-                  <Text size="xs" c="dimmed" className="moyai-num">
-                    {T.tried}：{view.tried.map((t) => T.triedRow(t.stage, t.coarse, t.k)).join(" → ")}
-                  </Text>
-                )}
-              </Stack>
-            )}
-          </section>
-
-          {/* 出元：鍵の指紋と、束の鎖（名前は出ない） */}
-          {dest === "ledger" && res?.ledger?.fingerprint && (
-            <section data-testid="share-source">
-              <Title order={2} fz={14} fw={500} mb="xs">
-                {T.sourceTitle}
-              </Title>
-              <Stack gap={2}>
+                </Stack>
+              )}
+              {view && !view.steps && view.tried.length > 0 && (
                 <Text size="xs" c="dimmed" className="moyai-num">
-                  {T.fingerprint}　{res.ledger.fingerprint}
+                  {T.tried}：{view.tried.map((t) => T.triedRow(t.stage, t.coarse, t.k)).join(" → ")}
                 </Text>
-                {chain.length > 0 && (
-                  <Text size="xs" c="dimmed" className="moyai-num" data-testid="share-chain">
-                    {chain.map((n) => T.bundleN(n)).join(" ← ")}
-                  </Text>
-                )}
-              </Stack>
-            </section>
-          )}
-          {dest === "ring" && res?.ring && (
-            <section data-testid="share-source">
-              <Title order={2} fz={14} fw={500} mb="xs">
-                {T.sourceTitle}
-              </Title>
-              <Stack gap={2}>
-                {res.ring.fingerprint && (
-                  <Text size="xs" c="dimmed" className="moyai-num">
-                    {T.fingerprint}　{res.ring.fingerprint}
-                  </Text>
-                )}
-                {chain.length > 0 && (
-                  <Text size="xs" c="dimmed" className="moyai-num" data-testid="share-chain">
-                    {chain.map((n) => T.bundleN(n)).join(" ← ")}
-                  </Text>
-                )}
-              </Stack>
-            </section>
-          )}
-
-          <Text size="xs" c="dimmed" className="moyai-num" data-testid="counts">
-            {view?.counts ? T.counts(view.counts) : T.counts({ shape: NaN, properNoun: NaN, money: NaN, freeText: NaN, exactDate: NaN }).replace(/NaN/g, "—")}
-          </Text>
-
-          {/* 中身を見る：原本・出ていくバイト列そのもの（ハッシュ・メモ帳で開く）・相手の星取表。閉じていても DOM には残す */}
-          <details data-testid="share-contents">
-            <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>{T.contentsTitle}</summary>
-            <Stack gap="md" mt="sm">
+              )}
               <Paper withBorder p="sm" data-testid="col-outgoing">
                 <Group justify="space-between" align="flex-start">
                   <Title order={4}>{T.col2}</Title>
@@ -1066,6 +1160,11 @@ export function Checkpoint() {
                     <Text size="xs" className="moyai-num">
                       {T.bytes(view.bytes ?? 0)} · {T.seq(view.seq)}
                     </Text>
+                    {view.counts && (
+                      <Text size="xs" c="dimmed" className="moyai-num" data-testid="counts-all">
+                        {T.counts(view.counts)}
+                      </Text>
+                    )}
                     <ScrollArea h={240} mt={4}>
                       <Code block data-testid="body-text" style={{ whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
                         {view.bodyText}
@@ -1187,41 +1286,7 @@ export function Checkpoint() {
               {sendError}
             </Alert>
           )}
-          {sentPr && (
-            <Alert color="gray" data-testid="ledger-sent">
-              {T.prSent(sentPr.pr)}{" "}
-              <Button component="a" href={sentPr.url} target="_blank" rel="noopener noreferrer" variant="default" size="xs">
-                {T.prLink}
-              </Button>
-            </Alert>
-          )}
-          {sent && (
-            <Alert color="gray" data-testid="sent" ref={sentRef}>
-              {T.sent(sent.fileName, sent.folder)}
-            </Alert>
-          )}
 
-          {/* 受け取った束：輪の決まり・仲間・束ごとの ✓／✗ と理由（受け手と同じ関数）、検問所を通っていないファイルの数 */}
-          {dest === "ring" && received && (
-            <section data-testid="received">
-              <Group justify="space-between" align="baseline" mb="xs">
-                <Title order={2} fz={14} fw={500}>
-                  {T.receivedTitle}
-                </Title>
-                <Button variant="default" size="xs" onClick={() => void verifyAgain()} data-testid="received-again">
-                  {T.verifyAgain}
-                </Button>
-              </Group>
-              <VerifyTable
-                report={received}
-                ownKey={res?.ring?.key ?? null}
-                retiredCount={res?.ring?.retiredCount ?? 0}
-                rulesChange={res?.ring?.rulesChange ?? null}
-                onCheckMember={(l) => l.pub && setMemberCheck({ role: "member", by: "", pub: l.pub, fingerprint: l.fingerprint ?? "", trust: "unconfirmed" })}
-                onViewRules={() => setRulesOpen(true)}
-              />
-            </section>
-          )}
           <KeyCheckDialog
             signer={memberCheck}
             title={T.memberTitle}
@@ -1276,49 +1341,38 @@ export function Checkpoint() {
         </Stack>
       </div>
 
-      {/* 下の帯：出したあとに起きること（置き場所が残すもの・仲間に分かること）と、主ボタン 1 つ */}
+      {/* 下の帯：左に状態の 1 行（送ったあとは結果）、右に押せない理由と主ボタン 1 つ */}
       <Group justify="space-between" px={32} py="xs" wrap="nowrap" gap="md" className="moyai-merge-bar" data-testid="leave">
         <Stack gap={0} style={{ minWidth: 0 }}>
-          {dest === "ledger" ? (
-            <>
-              {viaIntake && noAnswer && (
-                <Text size="xs" c="var(--shu-text)" data-testid="intake-no-answer">
-                  {T.intakeNoAnswer}
-                </Text>
-              )}
-              {viaIntake ? (
-                <Text size="xs" c="dimmed" style={{ textWrap: "pretty" }} data-testid="intake-bottom">
-                  {T.intakeBottom}
-                </Text>
-              ) : (
-                <Text size="xs" c="dimmed" style={{ textWrap: "pretty" }} data-testid="ledger-bottom">
-                  {T.ledgerBottom}
-                </Text>
-              )}
-            </>
-          ) : (
-            <>
-              <Text size="xs" c="dimmed">
-                {T.known}
-                {(res?.ringCount ?? 0) > 1 ? ` ${T.twoRings}` : ""}
-              </Text>
-              <SyncedNotice synced={res?.ring?.synced} kind="ring" />
-            </>
-          )}
-          {dest === "ring" && view?.vanished && (
+          {done ? (
+            <Text size="xs" c="var(--text)" className="moyai-num" data-testid={dest === "ledger" ? "ledger-sent" : "sent"}>
+              {dest === "ledger" && sentPr ? T.sentLedger(sentPr.seq, sentPr.pr) : sent ? T.sentRing(sent.seq, sent.at) : ""}
+            </Text>
+          ) : dest === "ledger" && viaIntake && noAnswer ? (
+            <Text size="xs" c="var(--shu-text)" data-testid="intake-no-answer">
+              {T.intakeNoAnswer}
+            </Text>
+          ) : dest === "ring" && view?.vanished ? (
             <Text size="xs" c="var(--shu-text)">
               {T.vanished}
             </Text>
+          ) : (
+            <Text size="xs" c="var(--text-3)" data-testid="share-note">
+              {dest === "ledger" ? T.ledgerNote : ringLabel ? T.ringNote(ringLabel, members) : ""}
+            </Text>
           )}
-          <Text size="xs" c="dimmed" data-testid="key-in-plan">
-            {T.keyInPlan}
-          </Text>
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center" style={{ flex: "none" }}>
           {!canPress && sendReason && (
-            <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason" data-state={dest === "ring" && done && sendReason === T.sendNeeds.sent ? "sent" : undefined}>
+            <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="send-reason" data-state={afterSend ? "sent" : undefined}>
               {T.reasonHead}
               {dest === "ledger" && sendReason === T.sendNeeds.rules ? T.ledgerRulesNotAccepted : sendReason}
+              {/* GitHub につなぐのは、この理由の右の 1 つだけ（つなぐ道が用意できていなければ出さない） */}
+              {dest === "ledger" && sendReason === T.sendNeeds.noKey && res?.github?.ready !== false && (
+                <button type="button" className="moyai-inline-act" onClick={() => setConnectOpen(true)} disabled={!packId} data-testid="github-open">
+                  {T.githubConnect}
+                </button>
+              )}
               {dest === "ledger" && sendReason === T.sendNeeds.rules && res?.rulesChange && (
                 <button type="button" className="moyai-inline-act" onClick={() => setLedgerRulesOpen(true)} data-testid="send-ledger-rules-view">
                   {T.rulesView}

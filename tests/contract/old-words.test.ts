@@ -97,6 +97,19 @@ describe("古い言葉（印・決定のシート・束・輪・当てはめ・�
     }
   });
 
+  test("EXPORT の字に「写し方」「列の役目」「落とす」が無い（docs/words.md：列対応・出力）", async () => {
+    const { TEXT } = await import("../../src/app/text");
+    const strings: string[] = [];
+    const walk = (v: unknown): void => {
+      if (typeof v === "string") strings.push(v);
+      else if (typeof v === "function") strings.push(String((v as (...a: unknown[]) => unknown)(1, "名", 1, 1, 1)));
+      else if (v && typeof v === "object") Object.values(v).forEach(walk);
+    };
+    walk(TEXT.export);
+    expect(strings.length).toBeGreaterThan(20);
+    for (const w of ["写し方", "列の役目", "落とす"]) expect(strings.filter((s) => s.includes(w)), w).toEqual([]);
+  });
+
   test("星取の言葉（差分の数・差分レポート・凡例）", async () => {
     const { HUMAN_TEXT, TEXT } = await import("../../src/app/text");
     expect(HUMAN_TEXT.confirm.summary(1, 2, 3, 4)).toBe("星取　追加 1・削除 2・変更 3・変更なし 4");

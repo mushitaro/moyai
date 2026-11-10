@@ -1,10 +1,11 @@
-// EXPORT（docs/screens.md 3.5）：確定した版から、人が見る様式の Excel（MOYAI の標準）を落とす。差分レポートも副のボタンで落とす。
-// Excel は確定のときに橋渡しが保管先に書いたもの（plans/<計画ID>/exports・reports）で、人だけの経路 plan_file_read で読んでブラウザに落とす。
-// 署名と鎖が合わない版の Excel は渡さない。保存先の様式で書き出すときは、書き出した Excel に人が署名する（3C。components/TemplateExport.tsx）：
-// 主ボタンは 1 つで、まだ書き出していない様式なら「署名して書き出す」、書き出し済みなら「Excel を落とす」（Wire、Export.dc.html V48・V50）。
-// 写し方の案（template-layout-v1）：Claude が入れた様式と置いた案は画面の中だけにあり（state/template-draft.ts）、見本を確かめた人が
-// 「この写し方で出力」を押したときだけ、写し方と様式を保存先に置き（template_save）、確定した版（無ければ作業中の版）を案のとおりに書いて落とす。
-import { Alert, Button, Group, Modal, Stack, Table, Text } from "@mantine/core";
+// EXPORT（docs/screens.md 3.5、Wire の ExportOne.dc.html）：確定した版から、人が Excel を落とす。
+// 運営者 2026-11-10「引き算」：画面で人がするのは、様式の行を選んで、主ボタンを 1 つ押すことだけ。列対応は Claude との会話で決める（screen_set の templateLayout）。
+// 様式の行：標準・差分（前の確定版があるとき）・保存先の様式・Claude が入れた様式・＋ 様式を追加。下の帯のボタンは主ボタンの 1 つだけで、
+// 字は「Excel を出力」（標準・差分・承認済みの様式）か「署名して出力」（列対応が下書きか Claude の入力）。署名のダイアログは置かない。
+// どの出力も、押したときだけ人だけの経路（callHuman）で読む・署名する（state/export-run.ts）。署名と鎖が合わない版の Excel は渡さない。
+// Claude の列対応（template-layout-v1）は画面の中だけにあり（state/template-draft.ts）、「署名して出力」を押したときだけ、列対応と様式を保存先に置き（template_save）、
+// その版で署名して書き出し（export_sign）、照らして落とす（export_file_read）。
+import { Alert, Button, Group, Stack, Table, Text } from "@mantine/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { buildChart } from "../../plan/chart";
 import type { Plan } from "../../shared/plan";
@@ -16,16 +17,16 @@ import { TemplateExport, readTemplate, templateKey, type SharedTemplate } from "
 import { TemplateLayoutPreview } from "../components/TemplateLayoutPreview";
 import { KeyWarnLine } from "../components/KeyWarn";
 import { COLUMNS_SCHEMA, type TemplateColumns } from "../../plan/template";
-import { writeTemplate } from "../../plan/template-layout";
 import type { TemplateLayout } from "../../shared/template-layout";
 import { patchedExcelJS } from "../../import/exceljs-setup";
-import { discardLayout, markSaved, offerTemplate, pendingTemplates, takeSelectRequest, useTemplateDrafts } from "../state/template-draft";
+import { markSaved, offerTemplate, pendingTemplates, takeSelectRequest, useTemplateDrafts } from "../state/template-draft";
 import { getReferenceDate } from "../state/review";
 import { readHuman, usePlanStatus } from "../components/ConfirmDialog";
 import { useConnection } from "../state/bridge";
 import { useWorkingPlan } from "../state/plan-store";
 import { STAGE_HASH, sheetHash } from "../stages";
-import { exportBlockOf, withReasonHead, type ExportBlock } from "../state/export-reason";
+import { exportBlockOf, exportPrimaryOf, nothingMapped, withReasonHead, type ExportChoice, type ExportStop } from "../state/export-reason";
+import { runExport, type ExportJob, type HumanCall } from "../state/export-run";
 import { TEXT } from "../text";
 import { dueBaseDate } from "../../plan/due-view";
 
@@ -37,7 +38,7 @@ const SAMPLE_YEARS = 6;
 
 const toBase64 = (b: Uint8Array) => btoa(Array.from(b, (c) => String.fromCharCode(c)).join(""));
 
-/** 写し方の案を、保存先に置く写し方（columns.json）にする。見出しの字は案の最初の計画の表の見出しの下の行（列の役目は使わないので未定） */
+/** Claude の列対応（案）を、保存先に置く列対応（columns.json）にする。見出しの字は案の最初の計画の表の見出しの下の行（列の役目は使わないので未定） */
 export function layoutColumns(probe: { worksheets: { name: string; columnCount: number; getRow(r: number): { getCell(c: number): { text?: string } } }[] }, layout: TemplateLayout): TemplateColumns {
   const s = layout.sheets[0]!;
   const headerRow = Math.max(...s.headerRows);
@@ -95,10 +96,10 @@ function Sample({ plan }: { plan: Plan }) {
 }
 
 /** 押せない理由の 1 行（SHARE の send-reason と同じ形）。確定版なし・計画なしは、右に HOSHITORI への道 */
-function Reason({ text, testid }: { text: string; testid: string }) {
+function Reason({ text }: { text: string }) {
   const to = text === T.notConfirmed ? STAGE_HASH.merge : text === T.noPlanReason ? sheetHash("files") : null;
   return (
-    <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid={testid}>
+    <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }} data-testid="export-blocked">
       {text}
       {to && (
         <a className="moyai-inline-act" href={to} data-testid="export-blocked-to">
@@ -109,28 +110,53 @@ function Reason({ text, testid }: { text: string; testid: string }) {
   );
 }
 
+/** 主ボタンを止める理由の字 */
+function stopText(s: ExportStop): string {
+  switch (s.kind) {
+    case "notConnected":
+      return T.notConnected;
+    case "noPlan":
+      return T.noPlanReason;
+    case "loading":
+    case "reading":
+      return T.loading;
+    case "loadError":
+      return withReasonHead(s.message);
+    case "notConfirmed":
+      return T.notConfirmed;
+    case "broken":
+      return withReasonHead(T.broken);
+    case "returned":
+      return withReasonHead(T.template.returned);
+    case "undecided":
+      return T.template.undecidedReason(s.n);
+  }
+}
+
 export function Export() {
   const { client, state } = useConnection();
   const working = useWorkingPlan();
   const planId = working?.plan.planId ?? "";
   const [load, reload] = usePlanStatus(client, planId, !!working && state.kind === "open");
-  const [busy, setBusy] = useState<"export" | "report" | "sign" | "layout" | null>(null);
-  // Claude が入れて、まだ保存していない様式を選んでいるとき（その名前）。選んでいれば selected は null
+  const [busy, setBusy] = useState(false);
+  // 選んだ行：保存先の様式（selected）・Claude が入れてまだ保存していない様式（pendingSel、その名前）・差分（diffSel）。どれでもなければ標準
   const [pendingSel, setPendingSel] = useState<string | null>(null);
+  const [diffSel, setDiffSel] = useState(false);
   const drafts = useTemplateDrafts();
-  // 保存先の様式（null は標準）
   const [templates, setTemplates] = useState<SharedTemplate[]>([]);
   const [selected, setSelected] = useState<SharedTemplate | null>(null);
-  const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  // 出力したあとの、下の帯の左の 1 行（ファイル名）。差分はこの画面で出力したら行に「✓ 出力済み」
+  const [saved, setSaved] = useState<string | null>(null);
+  const [diffOut, setDiffOut] = useState(false);
   const status = load.kind === "ready" ? load.status : null;
   const latest = status?.latest ?? null;
+  const previous = status?.previous ?? null;
   const info = status?.versions?.find((v) => v.version === latest?.version) ?? null;
   const broken = !!info && info.problem !== null;
   const returned = !!info && info.signatures.some((x) => x.role === "return");
   const approved = !!info && info.signatures.some((x) => x.role === "approve");
-  // 標準と差分を止めている理由（押せないボタンには、いつも「理由：」の 1 行。版の読込の誤りも出す）
+  // どの出力も止める理由（押せないボタンには、いつも「理由：」の 1 行。版の読込の誤りも出す）
   const block = exportBlockOf({
     connected: state.kind === "open",
     hasPlan: !!working,
@@ -138,26 +164,6 @@ export function Export() {
     hasLatest: !!latest,
     broken,
   });
-  const blockText = (b: ExportBlock | null): string | null => {
-    if (!b) return null;
-    switch (b.kind) {
-      case "notConnected":
-        return T.notConnected;
-      case "noPlan":
-        return T.noPlanReason;
-      case "loading":
-        return T.loading;
-      case "loadError":
-        return withReasonHead(b.message);
-      case "notConfirmed":
-        return T.notConfirmed;
-      case "broken":
-        return withReasonHead(T.broken);
-    }
-  };
-  const blocked = blockText(block);
-  // 標準・差分・様式の Excel をブラウザに渡したあとの 1 行（ファイル名）
-  const [saved, setSaved] = useState<string | null>(null);
 
   const loadTemplates = useCallback(
     async (keep?: { name: string; version: string }) => {
@@ -176,23 +182,24 @@ export function Export() {
     void loadTemplates();
   }, [loadTemplates, latest?.version]);
 
-  // Claude が様式を入れた・案を置いたら、その様式を選ぶ（画面は AI の作業を追う）
+  const choose = (next: { selected?: SharedTemplate | null; pending?: string | null; diff?: boolean }) => {
+    setSelected(next.selected ?? null);
+    setPendingSel(next.pending ?? null);
+    setDiffSel(next.diff ?? false);
+    setSaved(null);
+    setError(null);
+  };
+
+  // Claude が様式を入れた・列対応を置いたら、その様式を選ぶ（画面は AI の作業を追う）
   useEffect(() => {
     const want = takeSelectRequest();
     if (!want) return;
-    if (pendingTemplates(drafts).some((k) => k.name === want)) {
-      setPendingSel(want);
-      setSelected(null);
-      return;
-    }
+    if (pendingTemplates(drafts).some((k) => k.name === want)) return choose({ pending: want });
     const t = templates.find((x) => x.name === want && x.current);
-    if (t) {
-      setSelected(t);
-      setPendingSel(null);
-    }
+    if (t) choose({ selected: t });
   }, [drafts, templates]);
 
-  // 保存先の様式を選んだら、様式のファイルを読む（案の見本を様式の見た目のまま描くため。Claude が保存先の様式に案を置くときにも使う）
+  // 保存先の様式を選んだら、様式のファイルを読む（列対応の見本を様式の見た目のまま描くため。Claude が保存先の様式に列対応を置くときにも使う）
   useEffect(() => {
     if (!selected || state.kind !== "open") return;
     if (drafts.known.some((k) => k.name === selected.name && k.saved?.version === selected.version)) return;
@@ -206,7 +213,7 @@ export function Export() {
         await probe.xlsx.load(bytes.slice().buffer as ArrayBuffer);
         offerTemplate({ name: selected.name, bytes, probe, saved: { version: selected.version } });
       } catch {
-        // 読めない様式は見本を出さない（列の役目の表は出る）
+        // 読めない様式は見本を出さない（列対応の表は出る）
       }
     })();
     return () => {
@@ -214,118 +221,60 @@ export function Export() {
     };
   }, [selected, client, state.kind, drafts.known]);
 
-  // 様式と写し方を保存先に置く（下書き）。base64 が空なら、from の版の様式のファイルを使い、写し方だけを直す
-  const save = async (name: string, base64: string, columns: TemplateColumns, from: string | null): Promise<string | null> => {
-    const r = readHuman<{ ok: boolean; name: string; version: string }>(await client.callHuman("template_save", ROUTES.templateSave.path, { name, base64, columns, from }));
-    if (!r.ok) return r.message;
-    await loadTemplates({ name: r.body.name, version: r.body.version });
-    return null;
-  };
+  // ＋ 様式を追加：追加した様式を、見出しの言葉から読んだ列対応で保存先に置く（下書き）
   const onDrop = async (f: File) => {
     const t = await readTemplate(f);
     if (!t.ok) return t.message;
-    return save(t.name, btoa(Array.from(new Uint8Array(t.bytes), (c) => String.fromCharCode(c)).join("")), t.columns, null);
-  };
-  // 列の役目を直すと、同じ名前の下書きになる（承認済みのほうは消えない。Wire）
-  const onRoles = (t: SharedTemplate, columns: TemplateColumns) => {
-    void save(t.name, "", columns, t.version).then((m) => m && setError(m));
+    const r = readHuman<{ ok: boolean; name: string; version: string }>(
+      await client.callHuman("template_save", ROUTES.templateSave.path, { name: t.name, base64: toBase64(new Uint8Array(t.bytes)), columns: t.columns, from: null }),
+    );
+    if (!r.ok) return r.message;
+    setPendingSel(null);
+    setDiffSel(false);
+    setSaved(null);
+    await loadTemplates({ name: r.body.name, version: r.body.version });
+    return null;
   };
 
-  const get = async (kind: "export" | "report") => {
-    if (!latest || blocked) return;
-    setBusy(kind);
-    setError(null);
-    setSaved(null);
-    if (kind === "export" && selected) {
-      const r = readHuman<{ ok: boolean; base64: string }>(await client.callHuman("export_file_read", ROUTES.exportFileRead.path, { planId, version: latest.version, name: selected.name, templateVersion: selected.version }));
-      setBusy(null);
-      if (!r.ok) return setError(r.message);
-      // 承認待ちのあいだに落としたファイルは、名前の末尾で分かるようにする（セルには何も足さない。Wire）
-      const name = T.template.fileName(selected.name, latest.plan.displayName, latest.version, pendingWho ? T.template.pendingSuffix : "");
-      download(r.body.base64, name);
-      return setSaved(name);
-    }
-    const r = readHuman<{ ok: boolean; reason?: string; base64: string }>(await client.callHuman("plan_file_read", ROUTES.planFileRead.path, { planId, version: latest.version, kind }));
-    setBusy(null);
-    if (!r.ok) return setError(r.message);
-    const name = kind === "export" ? T.fileName(latest.plan.displayName, latest.version) : T.reportName(latest.plan.displayName, latest.version);
-    download(r.body.base64, name);
-    setSaved(name);
-  };
-  const sign = async () => {
-    if (!latest || !selected) return;
-    setBusy("sign");
-    setError(null);
-    setSaved(null);
-    const r = readHuman<{ ok: boolean }>(await client.callHuman("export_sign", ROUTES.exportSign.path, { planId, version: latest.version, name: selected.name, templateVersion: selected.version }));
-    setBusy(null);
-    setSigning(false);
-    if (!r.ok) return setError(r.message);
-    setDone(T.template.signed(latest.version, selected.name));
-    reload();
-    await loadTemplates();
-  };
-
-  // 写し方の案：選んだ様式（Claude が入れたものを先に）・案（下書きか保存した写し方）・書く版
+  // Claude の列対応：選んだ様式（Claude が入れたものを先に）・列対応（Claude の案か保存した列対応）・見本に書く版
   const pendingT = pendingSel ? (drafts.known.find((k) => k.saved === null && k.name === pendingSel) ?? null) : null;
   const savedT = selected ? (drafts.known.find((k) => k.name === selected.name && k.saved?.version === selected.version) ?? null) : null;
   const selName = pendingSel ?? selected?.name ?? null;
   const draftOf = selName ? (drafts.drafts.get(selName) ?? null) : null;
-  // 案は、同じ名前の未保存の様式があればそちらのもの
-  const draft = draftOf && (pendingSel !== null || !pendingTemplates(drafts).some((k) => k.name === selName)) ? draftOf : null;
+  // Claude の案は、Claude が入れた様式か、保存先の様式のいちばん上の版のもの（同じ名前の Claude が入れた様式があれば、そちらのもの）
+  const draft = draftOf && (pendingSel !== null || (!!selected?.current && !pendingTemplates(drafts).some((k) => k.name === selName))) ? draftOf : null;
   const layout: TemplateLayout | null = draft?.layout ?? selected?.columns.layout ?? null;
   const layoutBytes = pendingT?.bytes ?? savedT?.bytes ?? null;
+  const layoutProbe = (pendingT ?? savedT)?.probe ?? null;
   const target = latest?.plan ?? working?.plan ?? null;
   const targetAsOf = latest && info ? dueBaseDate(info.at) : getReferenceDate();
   const catalog = useMemo(() => (target ? (catalogFor(target.packId) ?? emptyCatalog()) : emptyCatalog()), [target]);
-  // 「この写し方で出力」：案（下書き）か未保存の様式を選んでいるとき、確定した版の無い保存した写し方のとき
-  const layoutButton = pendingSel !== null || (!!layout && (!!draft || !latest));
-  const layoutBlocked = state.kind !== "open" ? T.notConnected : !target ? T.noPlanReason : !layout ? L.noLayoutReason : latest && broken ? withReasonHead(T.broken) : null;
-  const outputLayout = async () => {
-    if (!selName || !layout || !layoutBytes || !target || layoutBlocked) return;
-    const probe = (pendingT ?? savedT)?.probe;
-    if (!probe) return;
-    setBusy("layout");
-    setError(null);
-    setDone(null);
-    setSaved(null);
-    try {
-      const columns = layoutColumns(probe, layout);
-      const out = await writeTemplate(new (patchedExcelJS().Workbook)(), layoutBytes, columns, { plan: target, catalog, asOf: targetAsOf });
-      // 写し方と様式を保存先に置く（同じ中身なら書き直さない。下書きで、署名して書き出したときに承認される）
-      const r = readHuman<{ ok: boolean; name: string; version: string }>(await client.callHuman("template_save", ROUTES.templateSave.path, { name: selName, base64: toBase64(layoutBytes), columns, from: null }));
-      download(toBase64(out.bytes), latest ? T.template.fileName(selName, target.displayName, latest.version) : L.workingFileName(selName, target.displayName));
-      if (r.ok) {
-        markSaved(selName, r.body.version);
-        setPendingSel(null);
-        await loadTemplates({ name: r.body.name, version: r.body.version });
-        setDone(L.done(selName));
-      } else {
-        setError(r.message);
-        setDone(L.doneUnsaved(selName));
-      }
-    } catch (e) {
-      setError(L.invalid(e instanceof Error ? e.message.split("\n")[0]! : String(e)));
-    } finally {
-      setBusy(null);
-    }
-  };
   const layoutView =
-    pendingSel !== null || (selected && (layout || draft)) ? (
-      layout && layoutBytes && target ? (
-        <TemplateLayoutPreview bytes={layoutBytes} layout={layout} plan={target} catalog={catalog} asOf={targetAsOf} draft={!!draft} basis={latest ? L.basisConfirmed(latest.version) : L.basisWorking} />
+    (pendingSel !== null || selected) && layout ? (
+      layoutBytes && target ? (
+        <TemplateLayoutPreview bytes={layoutBytes} layout={layout} plan={target} catalog={catalog} asOf={targetAsOf} draft={!!draft} />
       ) : (
         <Text size="sm" c="dimmed" data-testid="layout-empty">
-          {!layout ? L.noLayout : !target ? T.noPlan : L.reading}
+          {L.reading}
         </Text>
       )
     ) : null;
 
-  const toSign = !!selected && !selected.exported;
-  const signBlocked = toSign && returned ? withReasonHead(T.template.returned) : null;
-  // 下の帯の押せない理由：差分（副）と主ボタン（この写し方で出力・署名して出力・Excel を出力）
-  const reportReason = blocked;
-  const mainReason = layoutButton ? (layoutBlocked ?? (!layoutBytes ? T.loading : null)) : (blocked ?? (toSign ? signBlocked : null));
+  // 差分の行は、前の確定版があるときだけ（確かめで合うときだけ橋渡しが返す）
+  const diffRow = latest && previous ? { from: previous.version, active: diffSel, exported: diffOut } : null;
+  const choice: ExportChoice =
+    pendingSel !== null
+      ? { kind: "claude", hasLayout: !!draft, ready: !!layoutBytes && !!layoutProbe }
+      : selected && draft
+        ? { kind: "claude", hasLayout: true, ready: !!layoutBytes && !!layoutProbe }
+        : selected
+          ? { kind: "template", exported: selected.exported, approved: !!selected.approval, empty: nothingMapped(selected.columns) }
+          : diffRow?.active
+            ? { kind: "diff" }
+            : { kind: "standard" };
+  const primary = exportPrimaryOf(choice, block, returned);
+  const reason = primary.stop ? stopText(primary.stop) : null;
+
   // 承認待ち：承認を頼まれた人（受け取った人か宛先）。承認されたら出さない
   const req = status?.request ?? null;
   const pendingWho = latest && !approved && req && req.kind === "approve" && !req.done ? (req.received?.by ?? req.to) : null;
@@ -338,6 +287,54 @@ export function Export() {
     return newest(xs.filter((x) => x.trust === "own" || x.trust === "confirmed")) ?? newest(xs) ?? null;
   })();
   const exportSigners = served && (served.trust === "unconfirmed" || served.trust === "changed") ? [{ ...served, role: "export" }] : [];
+
+  const call: HumanCall = async (action, path, payload) => readHuman(await client.callHuman(action, path, payload));
+  // 主ボタンの 1 回（人が押したときだけ）。署名する道（sign・layout）も、この 1 回で署名して落とす
+  const output = async () => {
+    if (primary.stop || !latest || busy) return;
+    const fileOf = (name: string) => T.template.fileName(name, latest.plan.displayName, latest.version, pendingWho ? T.template.pendingSuffix : "");
+    let job: ExportJob;
+    switch (primary.action) {
+      case "plan":
+        job = { action: "plan", planId, version: latest.version, fileName: T.fileName(latest.plan.displayName, latest.version) };
+        break;
+      case "report":
+        job = { action: "report", planId, version: latest.version, fileName: T.reportName(latest.plan.displayName, latest.version) };
+        break;
+      case "read":
+      case "sign":
+        if (!selected) return;
+        job = { action: primary.action, planId, version: latest.version, template: { name: selected.name, version: selected.version }, fileName: fileOf(selected.name) };
+        break;
+      case "layout":
+        if (!selName || !layout || !layoutBytes || !layoutProbe) return;
+        job = { action: "layout", planId, version: latest.version, name: selName, base64: toBase64(layoutBytes), columns: layoutColumns(layoutProbe, layout), fileName: fileOf(selName) };
+        break;
+    }
+    setBusy(true);
+    setError(null);
+    setSaved(null);
+    try {
+      const r = await runExport(job, call);
+      if (r.saved) {
+        // 列対応と様式を保存先に置いた：Claude の案を捨て、その版を選ぶ
+        markSaved(r.saved.name, r.saved.version);
+        setPendingSel(null);
+      }
+      if (r.ok) {
+        download(r.base64, r.fileName);
+        setSaved(r.fileName);
+        if (job.action === "report") setDiffOut(true);
+      } else setError(r.message);
+      // 署名したら（拒まれても）、版の一覧と様式の行を読み直す（承認済み・出力済み）
+      if (job.action === "sign" || job.action === "layout") {
+        reload();
+        await loadTemplates(r.saved ?? undefined);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="moyai-share-page" data-testid="export-page">
@@ -359,19 +356,14 @@ export function Export() {
               asOf={targetAsOf}
               templates={templates}
               selected={selected}
-              onSelect={(t) => {
-                setSelected(t);
-                setPendingSel(null);
-              }}
+              onSelect={(t) => choose({ selected: t })}
               onDrop={onDrop}
-              onRoles={onRoles}
               standardExported={!!latest && !broken}
+              diff={diffRow}
+              onSelectDiff={() => choose({ diff: true })}
               pending={pendingTemplates(drafts).map((k) => ({ name: k.name, hasDraft: drafts.drafts.has(k.name) }))}
               pendingSel={pendingSel}
-              onSelectPending={(name) => {
-                setPendingSel(name);
-                setSelected(null);
-              }}
+              onSelectPending={(name) => choose({ pending: name })}
               draftNames={new Set([...drafts.drafts.keys()].filter((n) => !pendingTemplates(drafts).some((k) => k.name === n)))}
               layoutView={layoutView}
             />
@@ -381,87 +373,36 @@ export function Export() {
               {error}
             </Alert>
           )}
-          {done && (
-            <Text size="sm" data-testid="export-signed">
-              {done}
-            </Text>
-          )}
-          {saved && (
-            <Text size="sm" className="moyai-num" data-testid="export-saved">
-              {T.saved(saved)}
-            </Text>
-          )}
           {!working && (
             <Text size="sm">
               {T.noPlan} <a href={sheetHash("files")}>{T.toMerge}</a>
             </Text>
           )}
-          {latest && !selected && pendingSel === null && <Sample plan={latest.plan} />}
+          {latest && choice.kind === "standard" && <Sample plan={latest.plan} />}
         </Stack>
       </div>
-      {/* 下の帯：右端に主ボタン 1 つ（標準と書き出し済みの様式は「Excel を落とす」、まだ書き出していない様式は「署名して書き出す」）、その左に差分レポート。
-          さらに左に、押せない理由・承認待ちの 1 行・鍵の警告（2 行のときは承認待ちが上） */}
+      {/* 下の帯：左に出力のあとの 1 行。右端に主ボタン 1 つ、そのすぐ左に押せない理由。その左に承認待ちの 1 行・鍵の警告（2 行のときは承認待ちが上） */}
       <Group justify="flex-end" px={32} py="xs" wrap="nowrap" gap="md" className="moyai-merge-bar">
+        {saved && (
+          <Text size="xs" c="var(--text)" className="moyai-num" mr="auto" data-testid="export-saved">
+            {T.saved(saved)}
+          </Text>
+        )}
         <Stack gap={2} align="flex-end">
-          {!blocked && selected && !toSign && pendingWho && (
+          {!block && selected && selected.exported && !draft && pendingWho && (
             <Text size="xs" c="var(--text)" data-testid="export-pending">
               {T.template.pending(pendingWho)}
             </Text>
           )}
-          {!blocked && exportSigners.length > 0 && <KeyWarnLine signers={exportSigners} onConfirmed={() => reload()} />}
+          {!block && exportSigners.length > 0 && <KeyWarnLine signers={exportSigners} onConfirmed={() => reload()} />}
         </Stack>
         <Group gap="sm" wrap="nowrap" align="center">
-          {/* 押せない理由は、そのボタンのすぐ左（SHARE の send-reason と同じ形）。差分と主ボタンが同じ理由なら、差分の左に 1 つだけ */}
-          {reportReason && <Reason text={reportReason} testid={reportReason === mainReason ? "export-blocked" : "export-report-blocked"} />}
-          <Button variant="default" onClick={() => void get("report")} disabled={!!blocked || !latest} loading={busy === "report"} data-testid="export-report">
-            {T.report}
+          {reason && <Reason text={reason} />}
+          <Button onClick={() => void output()} disabled={!!primary.stop} loading={busy} data-testid={primary.testid}>
+            {primary.label === "sign" ? T.template.sign : T.excel}
           </Button>
-          {draft && selName && (
-            <Button variant="default" onClick={() => discardLayout(selName)} data-testid="layout-discard">
-              {L.discard}
-            </Button>
-          )}
-          {mainReason && mainReason !== reportReason && <Reason text={mainReason} testid="export-blocked" />}
-          {layoutButton ? (
-            <Button onClick={() => void outputLayout()} disabled={!!layoutBlocked || !layoutBytes} loading={busy === "layout"} data-testid="layout-output">
-              {L.output}
-            </Button>
-          ) : toSign ? (
-            <Button onClick={() => setSigning(true)} disabled={!!blocked || !!signBlocked || !latest} loading={busy === "sign"} data-testid="export-sign">
-              {T.template.sign}
-            </Button>
-          ) : (
-            <Button onClick={() => void get("export")} disabled={!!blocked || !latest} loading={busy === "export"} data-testid="export-excel">
-              {T.excel}
-            </Button>
-          )}
         </Group>
       </Group>
-      {latest && selected && (
-        <Modal opened={signing} onClose={() => setSigning(false)} title={T.template.dialogTitle(selected.name)} centered size={560} data-testid="export-sign-dialog">
-          <Stack gap="sm">
-            {!selected.approval && (
-              <div>
-                <Text size="sm">{T.template.approveLine(1)}</Text>
-                <Group justify="space-between" wrap="nowrap" mt={6} pt={6} style={{ borderTop: "1px solid var(--line)" }} data-testid="export-sign-approve-row">
-                  <Text size="sm">{T.template.approveRow(selected.name)}</Text>
-                  <Text size="xs" c="var(--text-3)">
-                    - {T.template.draft}
-                  </Text>
-                </Group>
-              </div>
-            )}
-            <Group justify="flex-end" gap="sm">
-              <Button variant="default" onClick={() => setSigning(false)}>
-                {T.template.cancel}
-              </Button>
-              <Button onClick={() => void sign()} loading={busy === "sign"} data-testid="export-sign-submit">
-                {T.template.sign}
-              </Button>
-            </Group>
-          </Stack>
-        </Modal>
-      )}
     </div>
   );
 }

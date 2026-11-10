@@ -164,6 +164,17 @@ export async function callTool(c: Client, name: string, args: Record<string, unk
 }
 
 /** 人が設定の画面で、置き場所を選んで保存し、輪を作ってこの輪の鍵を作る */
+/**
+ * 施設の見え方を答えてある計画（全国の表に載る・炉の形式など。SHARE の画面に見え方の選びは無いので、計画の施設の答えで渡す。2026-11-10）。
+ * 答えはどれも架空の施設のもの
+ */
+export function PROFILE_ANSWERED<P extends { facility: Record<string, unknown> }>(plan: P): P {
+  return {
+    ...plan,
+    facility: { ...plan.facility, inNationalTable: true, profile: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" } },
+  };
+}
+
 /** 試験の台本が版に署名するときの呼び名（架空） */
 export const E2E_NAME = "【架空】試験の台本";
 

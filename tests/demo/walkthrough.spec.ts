@@ -360,16 +360,14 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
     await test.step("5 SHARE：検問所で相手から見たあなたを確かめ、押して署名し、輪に置く → ✓", async () => {
       await pa.goto(`${one.base}/#/share`);
       await expect(pa.getByTestId("checkpoint-page")).toBeVisible();
-      await pa.getByTestId("q-national").selectOption("yes");
-      await pa.getByTestId("q-furnace").selectOption(PROFILE.furnace);
-      await pa.getByTestId("q-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
-      await pa.getByTestId("q-turbine").selectOption(PROFILE.turbine);
-      await pa.getByTestId("q-ash").selectOption(PROFILE.ash);
-      await pa.getByTestId("q-contract").selectOption(PROFILE.contract);
-      await expect(pa.getByTestId("counts")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
+      // 見え方は施設の答え（取り込みで答えた）から。SHARE に選びは無い（2026-11-10）
+      await expect(pa.locator('[data-testid^="q-"]')).toHaveCount(0);
+      await expect(pa.getByTestId("counts")).toHaveCount(0);
+      await expect(pa.getByTestId("counts-all")).toHaveText("形 0｜固有名詞 0｜金額 0｜自由記述 0｜正確な日付 0");
       await pa.screenshot({ path: shot("demo-17-checkpoint"), fullPage: true });
       await pa.getByTestId("send").click();
-      await expect(pa.getByTestId("sent")).toContainText("共有ファイルを共有フォルダに置きました");
+      await expect(pa.getByTestId("sent")).toHaveText(/^✓ 送信　共有ファイル 1　/);
+      await pa.getByTestId("received-summary").click();
       await expect(pa.getByTestId("verify-table")).toHaveAttribute("data-ok", "true");
       await pa.screenshot({ path: shot("demo-18-sent"), fullPage: true });
     });
@@ -478,11 +476,11 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.screenshot({ path: shot("demo-25-top-derived") });
     });
 
-    await test.step("10 様式に写す：EXPORT で「別の様式を落とす」。見出しから列ごとに写すものが出て、「この様式で落とす」", async () => {
-      // 架空の様式（題と見出し：設備名・作業区分・周期・R3〜R5・備考）を、別のプロセスの exceljs で作る
+    await test.step("10 様式に写す：EXPORT で「＋ 様式を追加」。見出しから列対応が読むだけの字で出て、「署名して出力」の 1 回で落とす", async () => {
+      // 架空の様式（題と見出し：設備名・作業区分・周期・R3〜R5。未定の列があると主ボタンは止まる）を、別のプロセスの exceljs で作る
       const tpl = join(work, "長寿命化計画_様式3.xlsx");
       const cells: Record<string, string> = { A1: "【架空】長寿命化計画 様式 3" };
-      ["設備名", "作業区分", "周期（年）", "R3", "R4", "R5", "備考"].forEach((h, i) => (cells[`${String.fromCharCode(65 + i)}3`] = h));
+      ["設備名", "作業区分", "周期（年）", "R3", "R4", "R5"].forEach((h, i) => (cells[`${String.fromCharCode(65 + i)}3`] = h));
       const w = spawnSync(process.execPath, ["tests/helpers/xlsx-cli.mjs", "write", tpl, JSON.stringify({ sheet: "様式3", cells })], { encoding: "utf8" });
       expect(w.status, w.stderr).toBe(0);
       await pa.locator('[data-testid="moyai-row"]').first().getByTestId("moyai-next").click();
@@ -491,15 +489,14 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       const chooser = pa.waitForEvent("filechooser");
       await pa.getByTestId("template-pick").click();
       await (await chooser).setFiles(tpl);
-      await expect(pa.getByTestId("template-role")).toHaveCount(7);
+      await expect(pa.getByTestId("template-role")).toHaveCount(6);
       await pa.screenshot({ path: shot("demo-26-template") });
-      // 様式で出すときは、列の写し方を承認して署名してから落とす（docs/screens.md 3.5。e2e の template.spec と同じ流れ）
-      await pa.getByTestId("export-sign").click();
-      await expect(pa.getByTestId("export-sign-dialog")).toContainText("で出力");
-      await pa.getByTestId("export-sign-submit").click();
-      await expect(pa.getByTestId("export-signed")).toBeVisible();
+      // 様式で出すときは、主ボタン「署名して出力」の 1 回で、列対応を承認する署名をして落とす（docs/screens.md 3.5。e2e の template.spec と同じ流れ）
+      await expect(pa.getByTestId("export-sign")).toHaveText("署名して出力");
+      const [download] = await Promise.all([pa.waitForEvent("download"), pa.getByTestId("export-sign").click()]);
+      await expect(pa.getByTestId("export-saved")).toBeVisible();
+      await expect(pa.getByTestId("export-excel")).toBeVisible();
       await pa.screenshot({ path: shot("demo-26b-template-signed") });
-      const [download] = await Promise.all([pa.waitForEvent("download"), pa.getByTestId("export-excel").click()]);
       await download.saveAs(shot("demo-26-template").replace(/\.png$/, ".xlsx"));
     });
 
@@ -507,18 +504,14 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.goto(`${one.base}/#/share`);
       await expect(pa.getByTestId("checkpoint-page")).toBeVisible();
       await pa.getByTestId("share-dest").getByText("公開台帳").click();
-      await pa.getByTestId("q-national").selectOption("yes");
-      await pa.getByTestId("q-furnace").selectOption(PROFILE.furnace);
-      await pa.getByTestId("q-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
-      await pa.getByTestId("q-turbine").selectOption(PROFILE.turbine);
-      await pa.getByTestId("q-ash").selectOption(PROFILE.ash);
-      await pa.getByTestId("q-contract").selectOption(PROFILE.contract);
+      // 見え方は施設の答え（取り込みで答えた）から。SHARE に選びは無い（2026-11-10）
+      await expect(pa.locator('[data-testid^="q-"]')).toHaveCount(0);
       await expect(pa.getByText("公開時の表示")).toBeVisible();
       await expect(pa.getByTestId("you-steps")).toContainText("全国の");
       await expect(pa.getByTestId("github-login")).toHaveText("GitHub　未接続");
       await expect(pa.getByTestId("send")).toHaveText("署名して公開台帳へ送信");
-      await expect(pa.getByTestId("send-reason")).toHaveText("理由：GitHub　未接続");
-      await expect(pa.getByTestId("ledger-bottom")).toBeVisible();
+      await expect(pa.getByTestId("send-reason")).toHaveText(/^理由：GitHub　未接続/);
+      await expect(pa.getByTestId("share-note")).toHaveText("公開。掲載後の複製は残ります。");
       await pa.screenshot({ path: shot("demo-27-share-ledger") });
     });
   } finally {

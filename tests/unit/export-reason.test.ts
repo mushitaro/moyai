@@ -27,7 +27,13 @@ describe("EXPORT の押せない理由", () => {
     for (const s of [T.notConnected, T.noPlanReason, T.loading, T.notConfirmed]) expect(s.startsWith("理由：")).toBe(true);
   });
 
-  it("出力のあとの 1 行は、状態とファイル名だけ", () => {
-    expect(TEXT.export.saved("A_第1版_星取表.xlsx")).toBe("出力済み　A_第1版_星取表.xlsx");
+  it("出力のあとの 1 行（下の帯の左）は、状態とファイル名だけ", () => {
+    expect(TEXT.export.saved("A_第1版_星取表.xlsx")).toBe("✓ 出力　A_第1版_星取表.xlsx");
+  });
+
+  it("押せない理由は 1 つだけ（副のボタンは無いので、2 つめの理由の置き場も無い）。列対応の未定と差戻しも「理由：」で始まる", () => {
+    const T = TEXT.export.template;
+    for (const s of [T.undecidedReason(1), T.undecidedReason(null), withReasonHead(T.returned)]) expect(s.startsWith("理由：")).toBe(true);
+    expect((TEXT.export as Record<string, unknown>).report).toBeUndefined();
   });
 });

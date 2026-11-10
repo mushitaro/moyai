@@ -1,6 +1,6 @@
 // EXPORT の様式の欄の、画面の中だけの置き場（仕事 template-layout-v1）：
 // - Claude が intake_add_files（source: template）で入れた様式（まだ保存していない）と、画面が保存先から読んだ様式のバイト列
-// - Claude が screen_set の templateLayout で置いた写し方の案（下書き。人が EXPORT で見本を見て「この写し方で出力」を押すまで使わない）
+// - Claude が screen_set の templateLayout で置いた列対応の案（下書き。人が EXPORT で見本を見て「署名して出力」を押すまで使わない）
 // 保存（template_save）と出力は、人が押したときだけ（pages/Export.tsx）。このタブを閉じると、保存していない様式と案は消える。
 import { useSyncExternalStore } from "react";
 import type ExcelJS from "exceljs";
@@ -89,7 +89,7 @@ export function discardLayout(template: string): void {
   if (drafts.delete(template)) emit();
 }
 
-/** 人が「この写し方で出力」を押して保存した：案を捨て、様式は保存先の版として持つ */
+/** 人が「署名して出力」を押して保存した：案を捨て、様式は保存先の版として持つ */
 export function markSaved(template: string, version: string): void {
   const k = knownTemplate(template);
   drafts.delete(template);

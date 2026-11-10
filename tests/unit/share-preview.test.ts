@@ -14,7 +14,7 @@ import type { TabHub } from "../../src/bridge/tab";
 import { IntakeWorkspace } from "../../src/app/intake/workspace";
 import { runTabTool, type TabToolResult } from "../../src/app/intake/tab-tools";
 import { clearWorkingPlan, setWorkingPlan } from "../../src/app/state/plan-store";
-import { getShareChoice, setShareChoice } from "../../src/app/state/share";
+import { clearClaudeShare, getClaudeShare, getShareChoice, setShareChoice } from "../../src/app/state/share";
 import { GO_HASH, resetScreenForTest } from "../../src/app/state/screen";
 import { aiDecisions } from "../../src/plan/diff";
 import { readHistory } from "../../src/plan/store";
@@ -23,7 +23,7 @@ import { SHARE_NEEDS_TEXT, TOOLS, sharePreviewFromTabSchema, sharePreviewOutputS
 import type { Plan } from "../../src/shared/plan";
 import { candidateClasses, copyOut } from "../../src/share/copyout";
 import { chooseProfile } from "../../src/share/k";
-import { defaultRingId, defaultShareFacility } from "../../src/share/share-preview";
+import { defaultRingId, defaultShareDest, shareAnswersOf } from "../../src/share/share-preview";
 import { truthToPlan } from "../fixtures/chart/truth-to-plan.mjs";
 import { FACILITY_COMMON, SPEC, asset, detail, plan as planOf, table, vocab, work } from "./share/fixtures";
 
@@ -47,8 +47,8 @@ function service() {
   return { human, call, root: join(dir, "MOYAI"), ringRoot: join(dir, "共有フォルダ") };
 }
 
-const req = (planId: string, o: Partial<{ dest: "ring" | "ledger"; ringId: string | null; answers: typeof ANSWERS | null; national: boolean | null; screen: boolean }> = {}) =>
-  sharePreviewFromTabSchema.parse({ mode: "share", planId, dest: "ring", ringId: null, answers: null, national: null, screen: true, ...o });
+const req = (planId: string, o: Partial<{ dest: "ring" | "ledger" | null; ringId: string | null; ai: typeof ANSWERS | null; national: boolean | null; screen: boolean }> = {}) =>
+  sharePreviewFromTabSchema.parse({ mode: "share", planId, dest: "ring", ringId: null, ai: null, national: null, screen: true, ...o });
 
 /** 計画を人が確定し（AI の決定を理由つきで受ける）、共有フォルダを作る */
 async function confirmed(s: ReturnType<typeof service>) {
@@ -74,9 +74,12 @@ describe("形：ツールの型と受け手と instructions", () => {
     const now = MCP_INSTRUCTIONS.split("\n").find((l) => l.startsWith("今動くのは"))!;
     expect(now).toContain("・share_preview");
     expect(MCP_INSTRUCTIONS.length).toBeLessThanOrEqual(4096);
-    // 引数は無い（共有先と見え方は人が SHARE で選ぶ）。送る・署名する欄は無い
+    // 引数は、Claude が会話で聞いた共有先と見え方の答え（どちらも省ける。peer_reference の answers と同じ形）だけ。送る・署名する欄は無い
     expect(TOOLS.share_preview.input.safeParse({}).success).toBe(true);
-    expect(Object.keys(TOOLS.share_preview.input.shape)).toEqual([]);
+    expect(Object.keys(TOOLS.share_preview.input.shape)).toEqual(["dest", "answers"]);
+    expect(TOOLS.share_preview.input.safeParse({ dest: "ledger", answers: ANSWERS }).success).toBe(true);
+    expect(TOOLS.share_preview.input.safeParse({ dest: "send" }).success).toBe(false);
+    expect(TOOLS.share_preview.description).toContain("推測で埋めず、利用者に聞いて");
     expect(TOOLS.share_preview.description).toContain("このツールは読むだけで、送らない");
     expect(TOOLS.share_preview.description).toContain("「社内で共有して」");
   });
@@ -100,7 +103,7 @@ describe("数：SHARE の画面と同じ関数で、同じ数", () => {
     const c = await confirmed(s);
     const pv = await s.call("checkpoint_preview", { planId: c.planId, ringId: c.ringId, answers: ANSWERS });
     expect(pv.view.blockers).toEqual([]);
-    const out: SharePreviewOut = await s.human.sharePreview(req(c.planId, { ringId: c.ringId, answers: ANSWERS }));
+    const out: SharePreviewOut = await s.human.sharePreview(req(c.planId, { ringId: c.ringId, ai: ANSWERS }));
     expect(sharePreviewOutputSchema.parse(out)).toEqual(out);
     expect(out.needs).toBeNull();
     expect(out.screen).toBe(true);
@@ -148,12 +151,15 @@ describe("数：SHARE の画面と同じ関数で、同じ数", () => {
     const c = await confirmed(s);
     const pv0 = await s.call("checkpoint_preview", { planId: c.planId, ringId: null, answers: { facility: {}, inNationalTable: null } });
     expect(pv0.reason).toBe("noRingChosen");
-    const answers = { facility: defaultShareFacility(pv0.questions, pv0.plan.profile), inNationalTable: pv0.plan.inNationalTable };
+    const answers = shareAnswersOf({ questions: pv0.questions, profile: pv0.plan.profile, national: pv0.plan.inNationalTable, ai: null }).answers;
     const ringId = defaultRingId(pv0.rings, pv0.plan.packId);
     expect(ringId).toBe(c.ringId);
     const pv = await s.call("checkpoint_preview", { planId: c.planId, ringId, answers });
-    const out = await s.human.sharePreview(req(c.planId));
+    const out = await s.human.sharePreview(req(c.planId, { dest: null }));
     expect(out.needs).toBeNull();
+    // 共有先の既定：この Skillパックの共有フォルダがあるので共有フォルダ
+    expect(out.destination?.kind).toBe("ring");
+    expect(out.aiAxes).toEqual([]);
     expect(out.missingAxes.length).toBe(pv.view.missing.length);
     expect(out.blocked.length).toBe(pv.view.blockers.length);
     expect(out.copy?.copied ?? null).toBe(pv.view.copy?.copied ?? null);
@@ -167,7 +173,7 @@ describe("数：SHARE の画面と同じ関数で、同じ数", () => {
     expect(withNational.blocked.length).toBe(pvN.view.blockers.length);
     expect(withNational.missingAxes.length).toBe(pvN.view.missing.length);
     // 共有先が公開台帳で、台帳の clone を選んでいなければ、数えずに needs（次の手つき）
-    const ledger = await s.human.sharePreview(req(c.planId, { dest: "ledger", answers: ANSWERS }));
+    const ledger = await s.human.sharePreview(req(c.planId, { dest: "ledger", ai: ANSWERS }));
     expect(ledger.needs?.reason).toBe("no_ledger");
     expect(ledger.destination).toBeNull();
   });
@@ -212,7 +218,7 @@ describe("行の値を返さない（安全の決まり 3）", () => {
     const s = service();
     const c = await confirmed(s);
     const pv = await s.call("checkpoint_preview", { planId: c.planId, ringId: c.ringId, answers: ANSWERS });
-    const out = await s.human.sharePreview(req(c.planId, { ringId: c.ringId, answers: ANSWERS }));
+    const out = await s.human.sharePreview(req(c.planId, { ringId: c.ringId, ai: ANSWERS }));
     expect(out.file).not.toBeNull();
     const text = JSON.stringify(out);
     const p: Plan = c.confirmedPlan;
@@ -258,6 +264,7 @@ describe("作業画面の側", () => {
   afterEach(() => {
     clearWorkingPlan();
     setShareChoice(null);
+    clearClaudeShare();
     delete (globalThis as { location?: unknown }).location;
   });
 
@@ -273,14 +280,52 @@ describe("作業画面の側", () => {
     const p = truthToPlan("fictional-1");
     setWorkingPlan(p, "intake");
     const d0 = data(runTabTool(ws(), "share_preview", {}, CTX));
-    expect(sharePreviewFromTabSchema.parse(d0)).toEqual({ mode: "share", planId: p.planId, dest: "ring", ringId: null, answers: null, national: p.facility.inNationalTable, screen: true });
+    expect(sharePreviewFromTabSchema.parse(d0)).toEqual({ mode: "share", planId: p.planId, dest: null, ringId: null, ai: null, national: p.facility.inNationalTable, screen: true });
     expect(fakeLocation.hash).toBe(GO_HASH.share);
-    setShareChoice({ planId: p.planId, dest: "ledger", ringId: null, answers: ANSWERS });
+    setShareChoice({ planId: p.planId, dest: "ledger", ringId: null });
     const d1 = data(runTabTool(ws(), "share_preview", {}, CTX));
-    expect(d1).toMatchObject({ dest: "ledger", answers: ANSWERS });
-    setShareChoice({ planId: "plan-other", dest: "ledger", ringId: null, answers: ANSWERS });
-    expect(data(runTabTool(ws(), "share_preview", {}, CTX))).toMatchObject({ dest: "ring", answers: null });
+    expect(d1).toMatchObject({ dest: "ledger", ai: null });
+    setShareChoice({ planId: "plan-other", dest: "ledger", ringId: null });
+    expect(data(runTabTool(ws(), "share_preview", {}, CTX))).toMatchObject({ dest: null, ai: null });
     expect(getShareChoice()?.planId).toBe("plan-other");
+  });
+
+  it("Claude の answers・dest は、SHARE の画面の今の選びにするだけ（署名・送る・設定はしない）。前に置いた軸は残り、ほかの計画には効かない", () => {
+    const p = truthToPlan("fictional-1");
+    setWorkingPlan(p, "intake");
+    const d = data(runTabTool(ws(), "share_preview", { dest: "ledger", answers: { facility: { furnace: "STOKER" }, inNationalTable: true } }, CTX));
+    expect(sharePreviewFromTabSchema.parse(d)).toEqual({ mode: "share", planId: p.planId, dest: "ledger", ringId: null, ai: { facility: { furnace: "STOKER" }, inNationalTable: true }, national: p.facility.inNationalTable, screen: true });
+    expect(getClaudeShare(p.planId)).toMatchObject({ dest: "ledger", answers: { facility: { furnace: "STOKER" }, inNationalTable: true } });
+    // 画面の選びは変えない（画面が開いたときに Claude の答えを読む）。途中の中身に署名・送る欄は無い
+    expect(getShareChoice()).toBeNull();
+    expect(Object.keys(d).sort()).toEqual(["ai", "dest", "mode", "national", "planId", "ringId", "screen"]);
+    // 2 回目は足りない軸だけ置く：前に置いた軸は残る
+    const d2 = data(runTabTool(ws(), "share_preview", { answers: { facility: { capacity_t_per_day: "C100_200" }, inNationalTable: null } }, CTX));
+    expect(d2.ai).toEqual({ facility: { furnace: "STOKER", capacity_t_per_day: "C100_200" }, inNationalTable: true });
+    expect(d2.dest).toBe("ledger");
+    expect(getClaudeShare("plan-other")).toBeNull();
+  });
+
+  it("見え方の答え：施設の答えが先で、Claude の答えは答えていない軸だけ。コードに無い値は捨てる（推測で埋めない）。共有先の既定", () => {
+    const questions = [
+      { key: "furnace", suggested: null, codes: [{ code: "STOKER" }, { code: "FLUID" }] },
+      { key: "capacity_t_per_day", suggested: "C100_200", codes: [{ code: "C100_200" }, { code: "C200_300" }] },
+      { key: "turbine", suggested: null, codes: [{ code: "YES" }, { code: "NO" }] },
+    ];
+    const r = shareAnswersOf({
+      questions,
+      profile: { turbine: "NO" },
+      national: null,
+      ai: { facility: { furnace: "STOKER", capacity_t_per_day: "C200_300", turbine: "YES", ash: "OUT" }, inNationalTable: true },
+    });
+    expect(r.answers).toEqual({ facility: { furnace: "STOKER", capacity_t_per_day: "C200_300", turbine: "NO" }, inNationalTable: true });
+    expect(r.aiAxes).toEqual(["furnace", "capacity_t_per_day", "inNationalTable"]);
+    const bad = shareAnswersOf({ questions, profile: null, national: false, ai: { facility: { furnace: "推測" }, inNationalTable: true } });
+    expect(bad.answers).toEqual({ facility: { capacity_t_per_day: "C100_200" }, inNationalTable: false });
+    expect(bad.aiAxes).toEqual([]);
+    expect(defaultShareDest(true, true)).toBe("ring");
+    expect(defaultShareDest(false, true)).toBe("ledger");
+    expect(defaultShareDest(false, false)).toBe("ring");
   });
 
   it("橋渡しは作業画面の途中の中身を確かめ、形の外れは渡さない。数えた答えは出力の型で確かめる", async () => {
@@ -295,11 +340,11 @@ describe("作業画面の側", () => {
         return p.success ? { ...(await import("../../src/share/share-preview")).sharePreviewNeeds("not_confirmed", true) } : "tab_bad_result";
       },
     });
-    fromTab = { mode: "share", planId: "fixture-fictional-1", dest: "ring", ringId: null, answers: null, national: null, screen: true };
+    fromTab = { mode: "share", planId: "fixture-fictional-1", dest: "ring", ringId: null, ai: null, national: null, screen: true };
     const ok = await relay.run("share_preview", {}, "c1");
     expect("ok" in ok && ok.ok && (ok.data as SharePreviewOut).needs?.reason).toBe("not_confirmed");
     expect(got).toEqual(fromTab);
-    fromTab = { mode: "share", planId: "fixture-fictional-1", dest: "send", ringId: null, answers: null, national: null, screen: true };
+    fromTab = { mode: "share", planId: "fixture-fictional-1", dest: "send", ringId: null, ai: null, national: null, screen: true };
     const bad = await relay.run("share_preview", {}, "c1");
     expect("error" in bad && bad.error.code).toBe("tab_bad_result");
     // 型に無い欄（行の値）を足した答えは、出力の型で落とさず、渡す欄だけにする

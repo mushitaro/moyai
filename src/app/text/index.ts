@@ -315,36 +315,26 @@ export const TEXT = {
       standard: "標準",
       pick: "＋ 様式を追加",
       approved: (n: number, by: string) => `承認済み　第 ${n} 版で　${by}`,
-      draft: "下書き",
+      // 様式の行の状態（Wire、ExportOne.dc.html。運営者 2026-11-10「引き算」）
+      draft: "列対応 下書き",
+      undecided: (n: number | null) => (n === null ? "列対応 未定" : `列対応 未定 ${n}`),
+      /** Claude が置いた列対応（署名するまで朱で出す） */
+      claude: "- Claude の入力",
+      diff: (from: number) => `差分（第 ${from} 版から）`,
       exported: "✓ 出力済み",
-      // 署名して書き出す（3C）
+      // 主ボタンの 2 つめの字（列対応が下書きか Claude の入力のとき。押すと、その 1 回で書き出しに署名して落とす）
       sign: "署名して出力",
-      dialogTitle: (name: string) => `${name} で出力`,
-      approveLine: (k: number) => `承認する列対応（${k}）`,
-      approveRow: (name: string) => `${name} の列対応`,
-      cancel: "やめる",
-      signed: (n: number, name: string) => `第 ${n} 版を ${name} で出力し、署名しました`,
       returned: "差戻された版は出力できません",
-      notLatest: (n: number) => `第 ${n} 版があるので、この版は新しく出力できません`,
-      openLatest: (n: number) => `第 ${n} 版を開く`,
+      undecidedReason: (n: number | null) => (n === null ? "理由：列対応 未定" : `理由：列対応 未定 ${n}`),
       pending: (who: string) => `未承認　承認者 ${who}`,
       pendingSuffix: "_承認待ち",
-      role: { item: "← 項目", work: "← 作業", cycle: "← 周期", next: "← 次回", year: (fy: number) => `← ${fy} 年度の星取`, none: "- 未定" },
-      roleOf: (col: string) => `${col} 列に写すもの`,
+      role: { item: "← 項目", work: "← 作業", cycle: "← 周期", next: "← 次回", year: (fy: number) => `← ${fy} 年度の星取`, fiscal: (fy: number) => `← ${fy} 年度`, none: "- 未定" },
       fileName: (base: string, name: string, n: number, suffix = "") => `${base}_${name}_第${n}版${suffix}.xlsx`,
       noSheet: "様式にシートがありません。",
       noHeader: "様式の見出しの行（2 つ以上の欄に字がある行）が見つかりません。",
       unreadable: "様式を読めませんでした（.xlsx か .xlsm を追加してください）。",
-      // 写し方の案（仕事 template-layout-v1。docs/screens.md 3.5 に無いので仮に置いた。言葉と置き場所は Wire の確認待ち）
+      // Claude が置いた列対応（仕事 template-layout-v1）の見本：様式の見た目のまま。数えたものを添える（黙って捨てない）
       layout: {
-        pending: "未保存",
-        draft: "写し方の案",
-        headDraft: "写し方の案（AI）：まだ使っていません。見本を確かめて「この写し方で出力」を押すと、写し方と様式を保存先に置いて出力します。",
-        headSaved: "保存した写し方",
-        noLayout: "写し方の案はまだありません。Claude に「この様式で Excel を出して」と頼むと、案と、案のとおりに書いた見本がここに出ます。",
-        basisConfirmed: (n: number) => `確定した第 ${n} 版を書きます。`,
-        basisWorking: "確定した版が無いので、作業中の版を書きます。",
-        legend: "色の付いたセルが、案のとおりに書くセルです。＝ は式（開いたときに計算します）。",
         sheetLine: (sheet: string, rows: number, inserted: number, first: number | null, last: number | null) =>
           `${sheet}：明細 ${rows} 行（足す行 ${inserted}）${first !== null && last !== null ? `　${first}〜${last} 年度` : ""}`,
         unit: (thousand: boolean, tax: "incl" | "excl" | "unknown") =>
@@ -357,18 +347,11 @@ export const TEXT = {
         levelsSkipped: (n: number) => `列の無い階層の行 ${n} 件（書きません）`,
         orphans: (n: number) => `機器が計画に無い明細 ${n} 件（書けません）`,
         facility: (written: number, missing: number) => `基本情報：書く欄 ${written}${missing ? `・施設の項目に無い欄 ${missing}（書きません）` : ""}`,
-        invalid: (msg: string) => `写し方の案が様式に合いません：${msg}`,
+        invalid: (msg: string) => `列対応が様式に合いません：${msg}`,
         reading: "見本を作っています",
-        output: "この写し方で出力",
-        discard: "案を捨てる",
-        noLayoutReason: "理由：写し方の案がまだありません",
-        done: (name: string) => `写し方と様式を保存先に置き、${name} で出力しました`,
-        doneUnsaved: (name: string) => `${name} で出力しました（写し方と様式は保存先に置けませんでした）`,
-        workingFileName: (base: string, name: string) => `${base}_${name}_作業中.xlsx`,
       },
     },
     excel: "Excel を出力",
-    report: "差分を出力",
     notConnected: "理由：ブリッジ未接続",
     noPlan: "作業中の計画がありません。",
     toMerge: "HOSHITORI へ",
@@ -377,8 +360,8 @@ export const TEXT = {
     loading: "理由：読込中",
     notConfirmed: "理由：確定版なし",
     broken: "保存先のこの版の署名か鎖が合わないので、渡しません",
-    /** 標準・差分・様式の Excel をブラウザに渡したあとの 1 行（保存先はブラウザが決めるので、ファイル名だけ） */
-    saved: (name: string) => `出力済み　${name}`,
+    /** 標準・差分・様式の Excel をブラウザに渡したあとの、下の帯の左の 1 行（保存先はブラウザが決めるので、ファイル名だけ） */
+    saved: (name: string) => `✓ 出力　${name}`,
     fileName: (name: string, n: number) => `${name}_第${n}版_星取表.xlsx`,
     reportName: (name: string, n: number) => `${name}_第${n}版_差分.xlsx`,
   },
@@ -607,11 +590,11 @@ export const TEXT = {
       crosswalkRefused: (rules: number) => `AI の紐付けのルール ${rules} 個を断りました（置けない値か、もとにした版が古いので、どれも置いていません）`,
       filesAdded: (demo: boolean, added: number, refused: number) => `AI が${demo ? "デモの" : "フォルダの"}資料を追加 ${added} 件${refused ? `・未追加 ${refused} 件` : ""}`,
       demoMixed: "AI のデモの資料は未追加（デモでない資料か、ほかの Skillパックの資料があるため）",
-      /** 様式（intake_add_files の source: template）と写し方の案（screen_set の templateLayout）。言葉は Wire に確かめる */
+      /** 様式（intake_add_files の source: template）と列対応の案（screen_set の templateLayout）。言葉は Wire に確かめる */
       templateAdded: (name: string) => `AI が様式「${name}」を出力の様式に追加（未保存）`,
       templateRefused: (name: string) => `AI の様式「${name}」は未追加（読めない形のため）`,
-      templateLayoutPlaced: (name: string) => `AI が様式「${name}」の写し方の案を置きました（見本を確かめて出力するまで使いません）`,
-      templateLayoutRefused: (name: string, n: number) => `AI の様式「${name}」の写し方の案を断りました（様式に合わない所 ${n}）`,
+      templateLayoutPlaced: (name: string) => `AI が様式「${name}」の列対応の案を置きました（署名して出力するまで使いません）`,
+      templateLayoutRefused: (name: string, n: number) => `AI の様式「${name}」の列対応の案を断りました（様式に合わない所 ${n}）`,
       /** 施設設定（intake_add_files の pack・facilityName）：欄が空のときだけ置く */
       facilityPack: (name: string) => `Skillパック「${name}」`,
       facilityName: (name: string) => `施設名「${name}」`,
