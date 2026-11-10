@@ -3,6 +3,7 @@
 // 受け口は運営者の GitHub のアカウントで台帳に PR を出し、PR の番号と URL を返す。行方は今と同じく、公開の PR をトークン無しで読む（github.ts の prStatus）。
 // 出すのは、人が SHARE で送信経路「MOYAI 経由」を選び、主ボタン「署名して公開台帳へ送信」を押して束に署名したときだけ（AI のツールにしない）。
 // 束の中身をログに出さない。fetch は差し替えられる（試験のため）。
+// 転送（3xx）はたどらない：たどると、束が LEDGER_INTAKE_URL の外へ送られうる（行き先は 1 つだけ、の約束が崩れる）。
 
 /**
  * 受け口の URL（https。末尾の /submit は付けない）。運営者が受け口をデプロイしてから入れる。
@@ -29,7 +30,10 @@ export function ledgerIntakeUrlOf(configured: string, env: NodeJS.ProcessEnv): s
   }
 }
 
-export type IntakeFetch = (url: string, init: { method: string; headers: Record<string, string>; body?: string; signal?: AbortSignal }) => Promise<{ status: number; json(): Promise<unknown> }>;
+export type IntakeFetch = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body?: string; signal?: AbortSignal; redirect?: "error" },
+) => Promise<{ status: number; json(): Promise<unknown> }>;
 
 export interface IntakeIo {
   /** 受け口の URL（ledgerIntakeUrlOf で確かめたもの） */
@@ -62,6 +66,7 @@ export async function sendToIntake(io: IntakeIo, text: string): Promise<IntakeSe
       headers: { "content-type": "application/json", accept: "application/json", "user-agent": "moyai" },
       body: text,
       signal: ctl.signal,
+      redirect: "error",
     });
     status = r.status;
     try {

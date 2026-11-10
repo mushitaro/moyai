@@ -75,6 +75,8 @@ const EXACT: Record<string, string> = {
   "intake.packMissing": "台帳のSkillパックが受け口に無い",
   "intake.github": "受け口から GitHub に届かない",
   "intake.failed": "受け口の処理の誤り",
+  "intake.keyPending": "同じ鍵の共有ファイルの PR が審査中",
+  "intake.busy": "受け口の PR が審査待ちでたまっている",
   "file.symlink": "symlink（たどらない）",
   "file.submodule": "submodule",
   "file.notRegular": "ふつうのファイルでない",

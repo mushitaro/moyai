@@ -1120,6 +1120,8 @@ export class HumanService {
         const r = await sendToIntake(io, s.text);
         // 1 時間の上限：次に受けられる時刻を添える（画面は「送信の上限（1 時間）　14:20 以降」と出し、その時刻まで押せない）
         if (!r.ok) return no(`intake.${r.reason}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
+        // 受け口の答えは外から来た値：台帳の clone の持ち主のリポジトリが分かっていれば、PR がそのリポジトリのものでなければ受けない（持ち出し簿に書かない）
+        if (c.repo && `${r.repo.owner}/${r.repo.name}`.toLowerCase() !== `${c.repo.owner}/${c.repo.name}`.toLowerCase()) return no("intake.badAnswer", { reasons: [] });
         // 同じ中身の束は、受け口が前の PR を返す。持ち出し簿に同じ PR があれば足さない
         const sentBefore = readPlanSent<LedgerSentEntry>(c.facility, c.L.id).some((e) => e.hash === s.hash && e.pr === r.number && e.repo === `${r.repo.owner}/${r.repo.name}`);
         if (!sentBefore) {

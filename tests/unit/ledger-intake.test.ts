@@ -6,7 +6,8 @@ import { reasonText } from "../../src/app/text/reasons";
 import { loadSharePack, resolvePacksDir } from "../../src/share/pack";
 import { LEDGER_JSON_PATH, verifyLedgerFiles, type LedgerFile } from "../../src/share/ledger";
 import { handleRequest, INTAKE_LIMITS, intakeBranch, type IntakeDeps, type IntakeEnv } from "../../services/ledger-intake/src/handler";
-import { clientBucket } from "../../services/ledger-intake/src/limit";
+import { findPr } from "../../services/ledger-intake/src/github";
+import { clientBucket, networkBucket } from "../../services/ledger-intake/src/limit";
 import { PACK_IDS, packOf } from "../../services/ledger-intake/src/packs";
 import worker from "../../services/ledger-intake/src/index";
 import { fakeLedgerGitHub, memoryKv } from "../helpers/intake-github";
@@ -484,5 +485,107 @@ describe("受け口：道・設定・入口", () => {
     // 入口：道の外は 404、設定が無ければ 503
     expect((await worker.fetch(new Request("https://intake.example/"), {})).status).toBe(404);
     expect((await worker.fetch(new Request("https://intake.example/submit", { method: "POST", body: "{}" }), {})).status).toBe(503);
+  });
+});
+
+describe("受け口：Security の点検（11-10）で足した守り", () => {
+  const prUrl = (n: number) => `https://github.com/ledger-owner/moyai/pull/${n}`;
+  const fakePr = (number: number, head: string, title: string, files: Record<string, Buffer> = {}) =>
+    ({ number, head, base: "main", title, body: "", files, state: "open" as const, merged: false, comments: [] });
+
+  it("PR の洪水（中 1）：同じ鍵の受け口の PR が開いていれば、中身の違う束でも新しく出さない（400 intake.keyPending）。閉じれば出せる", async () => {
+    const s = setup();
+    expect((await s.submit(a1.text)).status).toBe(200);
+    const other = sealLedger(L, A, smallPlan(), { month: "2026-10" });
+    expect(other.hash).not.toBe(a1.hash);
+    const writes = s.writes().length;
+    const r = await s.submit(other.text);
+    expect(r.status).toBe(400);
+    expect(r.body.reasons).toEqual(["intake.keyPending"]);
+    expect(r.body.reasonsText).toEqual([reasonText("intake.keyPending")]);
+    expect(s.writes()).toHaveLength(writes);
+    expect(s.gh.prs).toHaveLength(1);
+    // 同じ中身の束は、前の PR を返す（上限より前に）
+    expect((await s.submit(a1.text)).body.pr).toEqual({ number: 1, url: prUrl(1) });
+    s.gh.prs[0]!.state = "closed";
+    expect((await s.submit(other.text)).status).toBe(200);
+  });
+
+  it(`PR の洪水（中 1）：開いた受け口の PR が全部で ${INTAKE_LIMITS.openPrs} あれば、新しく出さない（503 intake.busy）。フォークの同じ名前の枝の PR は数えない`, async () => {
+    const s = setup();
+    for (let i = 0; i < INTAKE_LIMITS.openPrs; i++) s.gh.prs.push(fakePr(i + 1, `evil:intake/${String(i).padStart(16, "0")}`, "共有ファイルを足す"));
+    // フォークの PR は数えないので受ける
+    expect((await s.submit(b1.text)).status).toBe(200);
+    const t = setup();
+    for (let i = 0; i < INTAKE_LIMITS.openPrs; i++) t.gh.prs.push(fakePr(i + 1, `intake/${String(i).padStart(16, "0")}`, "共有ファイルを足す"));
+    const r = await t.submit(b1.text);
+    expect(r.status).toBe(503);
+    expect(r.body.reasons).toEqual(["intake.busy"]);
+    expect(t.writes()).toHaveLength(0);
+  });
+
+  it(`件数（中 2）：まわりの網（IPv6 の /48・IPv4 の /24）からは 1 時間に ${INTAKE_LIMITS.perHourNetwork} 件まで。/64 を替えてもすり抜けない`, async () => {
+    expect(networkBucket("2001:db8:1:2::1")).toBe("2001:0db8:0001::/48");
+    expect(networkBucket("203.0.113.7")).toBe("203.0.113.0/24");
+    expect(networkBucket("::ffff:203.0.113.7")).toBe("203.0.113.0/24");
+    for (const bad of [null, "", "x", "1::2::3"]) expect(networkBucket(bad)).toBeNull();
+    const s = setup();
+    let n = 0;
+    for (let net = 0; n < INTAKE_LIMITS.perHourNetwork; net++) {
+      for (let i = 0; i < INTAKE_LIMITS.perHour && n < INTAKE_LIMITS.perHourNetwork; i++, n++) expect((await s.submit("x", { ip: `2001:db8:1:${net.toString(16)}::${i + 1}` })).status).toBe(400);
+    }
+    const over = await s.submit("x", { ip: "2001:db8:1:ff::1" });
+    expect(over.status).toBe(429);
+    expect(over.body.reasons).toEqual(["intake.rateLimited"]);
+    // ほかの /48 は通る
+    expect((await s.submit("x", { ip: "2001:db8:2:ff::1" })).status).toBe(400);
+    const v4 = setup();
+    for (let i = 0; i < INTAKE_LIMITS.perHourNetwork; i++) expect((await v4.submit("x", { ip: `198.51.100.${(i % 200) + 1}` })).status).toBe(400);
+    expect((await v4.submit("x", { ip: "198.51.100.250" })).status).toBe(429);
+    expect((await v4.submit("x", { ip: "198.51.101.1" })).status).toBe(400);
+    // 断った 429 は数えないので、KV の項目の時刻の並びは上限より長くならない
+    for (const [, v] of v4.kv.data) expect((JSON.parse(v.value) as number[]).length).toBeLessThanOrEqual(INTAKE_LIMITS.perHourNetwork);
+  });
+
+  it("前の試みの枝（低 4）：既定のブランチとの差が束のファイル 1 つでない枝は、受け口の PR にしない（502）", async () => {
+    const s = setup();
+    s.gh.branches.set(intakeBranch(a1.hash), new Map([[".github/workflows/x.yml", Buffer.from("on: push\n")]]));
+    const r = await s.submit(a1.text);
+    expect(r.status).toBe(502);
+    expect(r.body.reasons).toEqual(["intake.github"]);
+    expect(s.gh.prs).toHaveLength(0);
+    expect(s.writes().map((c) => c.method)).toEqual(["POST"]);
+  });
+
+  it("枝の PR（低 3）：GitHub が返した PR の head が、台帳のリポジトリのその枝でなければ、前の PR として返さない", async () => {
+    const list = (head: unknown) => async () => ({ status: 200, json: async () => [{ number: 9, html_url: prUrl(9), head }] });
+    const gh = (fetch: Parameters<typeof findPr>[0]["fetch"]) => ({ fetch, token: TOKEN, repo: { owner: "ledger-owner", name: "moyai" } });
+    expect(await findPr(gh(list({ ref: "intake/0000000000000000", repo: { full_name: "ledger-owner/moyai" } })), "intake/0000000000000000")).toEqual({ number: 9, url: prUrl(9) });
+    expect(await findPr(gh(list({ ref: "intake/1111111111111111", repo: { full_name: "ledger-owner/moyai" } })), "intake/0000000000000000")).toBe("error");
+    expect(await findPr(gh(list({ ref: "intake/0000000000000000", repo: { full_name: "evil/moyai" } })), "intake/0000000000000000")).toBe("error");
+    expect(await findPr(gh(list({ ref: "intake/0000000000000000", repo: null })), "intake/0000000000000000")).toBe("error");
+  });
+
+  it("取り下げ（低 5）：ファイルが 1 頁（100 件）に収まらない PR は、残りを見ていないので閉じない", async () => {
+    const s = setup([a1]);
+    const files = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`ledger/ledger/bundles/${A.key}/${String(i + 2).padStart(6, "0")}-${"0".repeat(16)}.json`, Buffer.from("{}")]));
+    s.gh.prs.push(fakePr(1, "someone:big", `鍵 ${A.key}`, files));
+    const r = await s.submit(sealRetired(L, A, 1).text);
+    expect(r.status).toBe(200);
+    expect(r.body.closed).toEqual([]);
+    expect(s.gh.prs[0]!.state).toBe("open");
+  });
+
+  it("転送（低 6）：GitHub への呼び出しは転送をたどらない（redirect: manual）。アプリから受け口への送信も転送をたどらない（redirect: error）", async () => {
+    const s = setup();
+    const seen: (string | undefined)[] = [];
+    const deps: IntakeDeps = { ...s.deps, fetch: (u, i) => (seen.push(i.redirect), s.deps.fetch(u, i)) };
+    const res = await handleRequest(new Request("https://intake.example/submit", { method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": IP }, body: a1.text }), s.env, deps);
+    expect(res.status).toBe(200);
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((r) => r === "manual")).toBe(true);
+    const app: (string | undefined)[] = [];
+    await sendToIntake({ url: "https://intake.example", fetch: async (_u, i) => (app.push(i.redirect), { status: 503, json: async () => ({}) }) }, a1.text);
+    expect(app).toEqual(["error"]);
   });
 });

@@ -5,6 +5,7 @@
 // - 取り下げ（Architect の 72）：その鍵の束の開いた PR を探し、「本人が取り下げた」と書いて閉じる。
 // 台帳は MOYAI のリポジトリの ledger/（2026-11-07 に移した）。木の道はリポジトリの根から（ledger/ledger/…）。
 // トークンは authorization の見出しにだけ入れる。答え・ログには出さない。fetch は差し替えられる（試験のため）。
+// 転送（3xx）はたどらない（トークンを api.github.com の外へ運ばない。たどらずに誤りにする）。
 import { LEDGER_BUNDLE_PATH, LEDGER_JSON_PATH, LEDGER_LIMITS, ledgerKeyFolder, type LedgerFile } from "../../../src/share/ledger";
 
 export const GITHUB_API = "https://api.github.com";
@@ -14,7 +15,7 @@ export const KEY_FILES_MAX = 500;
 
 export type FetchLike = (
   url: string,
-  init: { method: string; headers: Record<string, string>; body?: string; signal?: AbortSignal },
+  init: { method: string; headers: Record<string, string>; body?: string; signal?: AbortSignal; redirect?: "manual" },
 ) => Promise<{ status: number; json(): Promise<unknown> }>;
 
 export interface Repo {
@@ -48,6 +49,7 @@ async function call(gh: Gh, method: string, path: string, body?: unknown): Promi
       headers: { ...HEADERS, authorization: `Bearer ${gh.token}`, ...(body !== undefined ? { "content-type": "application/json" } : {}) },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       signal: ctl.signal,
+      redirect: "manual",
     });
     let json: Json = null;
     try {
@@ -131,12 +133,21 @@ export async function readLedgerFiles(gh: Gh, sha: string, key: string): Promise
   return out;
 }
 
-/** 枝の PR（閉じたものも）。無ければ null、読めなければ "error" */
+/** PR の head が、台帳のリポジトリの中のこの枝か（フォークの同じ名前の枝を取り違えない） */
+function headIs(gh: Gh, j: unknown, branch: string | null): boolean {
+  const head = obj(obj(j).head);
+  const full = str(obj(head.repo).full_name);
+  if (!full || full.toLowerCase() !== `${gh.repo.owner}/${gh.repo.name}`.toLowerCase()) return false;
+  return branch === null || head.ref === branch;
+}
+
+/** 枝の PR（閉じたものも）。無ければ null、読めなければ "error"。返った PR の head が、台帳のリポジトリのこの枝でなければ "error" */
 export async function findPr(gh: Gh, branch: string): Promise<PrRef | null | "error"> {
   const head = encodeURIComponent(`${gh.repo.owner}:${branch}`);
   const r = await call(gh, "GET", `/pulls?head=${head}&state=all&per_page=1`);
   if (!r || r.status !== 200 || !Array.isArray(r.json)) return "error";
-  return r.json.length === 0 ? null : (prOf(r.json[0]) ?? "error");
+  if (r.json.length === 0) return null;
+  return headIs(gh, r.json[0], branch) ? (prOf(r.json[0]) ?? "error") : "error";
 }
 
 export interface OpenPrInput {
@@ -157,9 +168,13 @@ export async function openPr(gh: Gh, i: OpenPrInput): Promise<OpenPrResult> {
   const b = await call(gh, "POST", "/git/refs", { ref: `refs/heads/${i.branch}`, sha: i.baseSha });
   if (!b || (b.status !== 201 && b.status !== 422)) return { ok: false, step: "branch" };
   if (b.status === 422) {
-    // 前の試みが作った枝なら、そのまま使う
+    // 前の試みが作った枝なら、そのまま使う。ただし、既定のブランチとの差がこの 1 つのファイルだけのときに限る
+    // （ほかの変更を持つ枝を、受け口の PR として運営者のアカウントで出さない）
     const g = await call(gh, "GET", `/git/ref/heads/${refPath(i.branch)}`);
     if (!g || g.status !== 200) return { ok: false, step: "branch" };
+    const c = await call(gh, "GET", `/compare/${i.baseSha}...${refPath(i.branch)}`);
+    const files = c && c.status === 200 ? obj(c.json).files : null;
+    if (!Array.isArray(files) || files.length > 1 || !files.every((f) => str(obj(f).filename) === i.path)) return { ok: false, step: "branch" };
   }
   const put = await call(gh, "PUT", `/contents/${refPath(i.path)}`, {
     message: i.commitMessage,
@@ -208,11 +223,30 @@ export async function openPrsOfKey(gh: Gh, key: string): Promise<PrRef[] | "erro
       const f = await call(gh, "GET", `/pulls/${pr.number}/files?per_page=100`);
       if (!f || f.status !== 200 || !Array.isArray(f.json)) return "error";
       const names = f.json.map((x) => str(obj(x).filename));
-      if (names.length > 0 && names.every((n) => n !== null && n.startsWith(folder) && LEDGER_BUNDLE_PATH.test(n))) out.push(pr);
+      // 1 頁（100 件）で読み切れない PR は、残りのファイルを見ていないので閉じない
+      if (names.length > 0 && names.length < 100 && names.every((n) => n !== null && n.startsWith(folder) && LEDGER_BUNDLE_PATH.test(n))) out.push(pr);
     }
     if (r.json.length < 100) break;
   }
   return out;
+}
+
+/**
+ * 台帳のリポジトリの中の枝 intake/… から出た、開いた PR（受け口が出したもの）の題。数える上限を越えて読み切れなければ "tooMany"、
+ * 読めなければ "error"。フォークの同じ名前の枝は数えない（GitHub のアカウントがあれば誰でも作れるので）
+ */
+export async function openIntakePrs(gh: Gh): Promise<{ title: string }[] | "tooMany" | "error"> {
+  const out: { title: string }[] = [];
+  for (let page = 1; page <= OPEN_PR_PAGES; page++) {
+    const r = await call(gh, "GET", `/pulls?state=open&per_page=100&page=${page}`);
+    if (!r || r.status !== 200 || !Array.isArray(r.json)) return "error";
+    for (const j of r.json) {
+      const ref = str(obj(obj(j).head).ref) ?? "";
+      if (ref.startsWith("intake/") && headIs(gh, j, null)) out.push({ title: str(obj(j).title) ?? "" });
+    }
+    if (r.json.length < 100) return out;
+  }
+  return "tooMany";
 }
 
 /** PR に文を書いて閉じる（本文はそのまま渡す）。できなければ false */

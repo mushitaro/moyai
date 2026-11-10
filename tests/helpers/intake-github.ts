@@ -124,7 +124,14 @@ export function fakeLedgerGitHub(o: { token: string; owner?: string; name?: stri
       const list = prs
         .filter((p) => (head === null ? true : `${owner}:${p.head}` === head || p.head === head))
         .filter((p) => state === "all" || p.state === state)
-        .map((p) => ({ number: p.number, html_url: htmlUrl(p.number), state: p.state, title: p.title, head: { ref: p.head.replace(/^[^:]+:/, "") } }))
+        .map((p) => ({
+          number: p.number,
+          html_url: htmlUrl(p.number),
+          state: p.state,
+          title: p.title,
+          // フォーク（"持ち主:枝"）の PR は、head のリポジトリがフォークになる
+          head: { ref: p.head.replace(/^[^:]+:/, ""), repo: { full_name: p.head.includes(":") ? `${p.head.split(":")[0]}/${name}` : `${owner}/${name}` } },
+        }))
         .slice((page - 1) * per, page * per);
       return json(200, list);
     }
@@ -148,6 +155,12 @@ export function fakeLedgerGitHub(o: { token: string; owner?: string; name?: stri
       if (branches.has(b)) return json(422, { message: "Reference already exists" });
       branches.set(b, new Map());
       return json(201, { ref: `refs/heads/${b}` });
+    }
+    // 既定のブランチと枝の差（枝に置いたファイル）
+    const compare = /^\/compare\/([0-9a-f]{40})\.\.\.(.+)$/.exec(rest);
+    if (method === "GET" && compare) {
+      const files = branches.get(compare[2]!);
+      return files && compare[1] === MAIN_SHA ? json(200, { status: "ahead", files: [...files.keys()].map((filename) => ({ filename, status: "added" })) }) : json(404, {});
     }
     const contents = /^\/contents\/(.+)$/.exec(rest);
     if (method === "PUT" && contents) {
