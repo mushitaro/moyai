@@ -8,7 +8,7 @@ import { IntakeSession, readSource } from "../../src/import";
 import type { SourceFile } from "../../src/import/grid";
 import type { Decision, QuestionItem, QuestionState } from "../../src/import/questions";
 import type { Analysis, Survey } from "../../src/import/session";
-import type { LoadedReading } from "../../src/import/reading";
+import { WHOLE_FILE_ANSWERS, type LoadedReading } from "../../src/import/reading";
 import { Plan } from "../../src/shared/plan";
 import { measureFacts, measurePdfAgainstXlsx } from "../unit/import/truth";
 import { hits, nf, resolve, rowOf, type Asset, type Event, type HeldoutTruth, type HeldoutWorld, type LoadedSet, type Mark, type Resolved } from "./contract";
@@ -345,6 +345,10 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
         defaulted[q.kind] = (defaulted[q.kind] ?? 0) + 1;
       }
     }
+    // 資料を丸ごと外す答え（参考として外す・読めない資料を外す）は、ほかに答えられる問いが無くなってから押す。
+    // 読み手は、ほかの問いの答えを待つセルの多い資料にも、最初から「参考として外すか」を聞くことがある（答えれば読める星取表）。人は先にほかの問いに答える
+    const rest = ds.filter((d) => !WHOLE_FILE_ANSWERS.includes(d.answer));
+    if (rest.length) ds.splice(0, ds.length, ...rest);
     if (!ds.length) break;
     for (const d of ds) answered.set(d.questionId, d);
     session.settle(ds);

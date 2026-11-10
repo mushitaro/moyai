@@ -2,22 +2,23 @@
  "schema": "moyai.pack-bench.result/0",
  "pack": "waste-incineration",
  "only": null,
+ "candidate": null,
  "reader": {
-  "commit": "55d66fc71ff542c8a4224da903373ac920da2c58",
-  "src": "35b30320ab055bcd6e873e4e9a3686f8c44ee459",
-  "packs": "f5f36e3470d8cf8f6a9653406acfdecf25c15f83",
+  "commit": "9a8e71c287348eed4491e42a2d5f91863848a87d",
+  "src": "607a6ce948bd6e9bc89c960b146c003fe58632be",
+  "packs": "d162fa4ffe65199c7ebf8f7caf5a273fdae84ce7",
   "dirty": true
  },
- "measuredAt": "2026-11-10T06:24:15.690Z",
+ "measuredAt": "2026-11-10T06:43:58.408Z",
  "total": {
   "facilities": 11,
-  "planMade": 5,
-  "asked": 10598,
-  "open": 60,
-  "unresolvedAfter": 780,
+  "planMade": 4,
+  "asked": 10633,
+  "open": 92,
+  "unresolvedAfter": 1433,
   "accuracy": {
    "correct": 2942,
-   "total": 4858
+   "total": 4420
   },
   "recovery": {
    "correct": 4589,
@@ -87,7 +88,7 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 6.7,
+   "seconds": 6.9,
    "asked": 1945,
    "answered": 1934,
    "open": 11,
@@ -232,7 +233,7 @@
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 19.1,
+   "seconds": 19.4,
    "asked": 6,
    "answered": 6,
    "open": 0,
@@ -506,7 +507,7 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 9.6,
+   "seconds": 9.8,
    "asked": 2517,
    "answered": 2502,
    "open": 15,
@@ -653,7 +654,7 @@
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 15.6,
+   "seconds": 14.8,
    "asked": 3278,
    "answered": 3278,
    "open": 0,
@@ -698,30 +699,53 @@
    "facility": "tsubasadai",
    "name": "つばさ台環境エネルギーセンター",
    "files": 3,
-   "seconds": 0.8,
-   "asked": 15,
-   "answered": 15,
-   "open": 0,
-   "openKinds": {},
+   "seconds": 1.1,
+   "asked": 50,
+   "answered": 18,
+   "open": 32,
+   "openKinds": {
+    "assetLinkOne": 32
+   },
    "defaulted": {
     "costKind": 1,
-    "yearUnknown": 1
+    "yearUnknown": 1,
+    "costTax": 1,
+    "assetLink": 1
    },
-   "unresolvedBy": {},
-   "openSamples": [],
+   "unresolvedBy": {
+    "assetLinkOne": 653
+   },
+   "openSamples": [
+    {
+     "kind": "assetLinkOne",
+     "rows": 1,
+     "text": "「巻上装置」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
+     "options": [
+      "c0=巻上装置：1-2-1・【架空】つばさ台EC_機器台帳.xlsx 機器台帳 B8",
+      "none=どれとも違う（別の機器）"
+     ],
+     "defaultAnswer": null
+    },
+    {
+     "kind": "assetLinkOne",
+     "rows": 1,
+     "text": "「走行装置」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
+     "options": [
+      "c0=走行装置：1-2-2・【架空】つばさ台EC_機器台帳.xlsx 機器台帳 B9",
+      "none=どれとも違う（別の機器）"
+     ],
+     "defaultAnswer": null
+    }
+   ],
    "unresolvedBefore": 2333,
-   "unresolvedAfter": 0,
-   "planMade": true,
-   "blockers": [],
-   "plan": {
-    "assets": 114,
-    "works": 0,
-    "details": 0
-   },
-   "accuracy": {
-    "correct": 0,
-    "total": 438
-   },
+   "unresolvedAfter": 653,
+   "planMade": false,
+   "blockers": [
+    "未解決のセル 653",
+    "答えの無い質問 32"
+   ],
+   "plan": null,
+   "accuracy": null,
    "recovery": {
     "correct": 0,
     "total": 1637
@@ -745,7 +769,7 @@
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 10.8,
+   "seconds": 10.4,
    "asked": 2757,
    "answered": 2737,
    "open": 20,
