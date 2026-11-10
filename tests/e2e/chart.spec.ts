@@ -410,3 +410,44 @@ test("時間の地図 1：星を選ぶとその星だけ強まり、行の星ど
   await page.getByTestId("period-mode").getByRole("button", { name: "月", exact: true }).click();
   await expect(page.locator(".moyai-mark[data-cyc-l], .moyai-mark[data-cyc-r]")).toHaveCount(0);
 });
+
+test("時間の地図 2：未来の ○ を Alt+← / Alt+→ で動かすと、元の位置に薄い ○、先に朱の細い枠。Ctrl+Z で戻り、Ctrl+Shift+Z でやり直す（#32）", async ({ page }, info) => {
+  const tag = info.project.name;
+  // 開発用の施設は毎年度に計画があるので、動かす先を空けた写しを使う：2027 年度の計画を外す
+  const gap = DEV_PLANS["fictional-1"]();
+  gap.details = gap.details.filter((d: { planOrActual: string; fiscalYear: number }) => !(d.planOrActual === "plan" && d.fiscalYear === 2027));
+  planJson.set("fictional-1-gap", JSON.stringify(gap));
+  await openPlan(page, "fictional-1-gap");
+  // 計画だけの未来の ○ で、隣の年度（今の年度より先）が空いているもの
+  const now = (() => {
+    const d = new Date();
+    return d.getMonth() + 1 >= 4 ? d.getFullYear() : d.getFullYear() - 1;
+  })();
+  const target = await page.locator('[role="gridcell"][col-id^="fy"]').evaluateAll((els, now) => {
+    for (const e of els) {
+      const m = / · (20\d\d) 年度 · 計画$/.exec(e.getAttribute("aria-label") ?? "");
+      if (!m || Number(m[1]) < now) continue;
+      const fy = Number(m[1]);
+      const row = e.closest(".ag-row");
+      for (const dir of [1, -1]) {
+        const next = row?.querySelector(`[col-id="fy${fy + dir}"]`);
+        if (next && fy + dir >= now && !next.querySelector("[data-mark]")) return { row: row!.getAttribute("row-id")!, fy, dir };
+      }
+    }
+    return null;
+  }, now);
+  expect(target).not.toBeNull();
+  const at = (fy: number) => page.locator(`.ag-row[row-id="${target!.row}"] [col-id="fy${fy}"]`).first();
+  const to = target!.fy + target!.dir;
+  await at(target!.fy).click();
+  await page.keyboard.press(target!.dir > 0 ? "Alt+ArrowRight" : "Alt+ArrowLeft");
+  await expect(at(to).locator("[data-trial]")).toHaveCount(1);
+  await expect(at(target!.fy).locator("[data-ghost]")).toHaveCount(1);
+  await expect(at(to)).toHaveAttribute("aria-label", /人の試し/);
+  await page.screenshot({ path: shot(`chart-time-map-2-${tag}`) });
+  await page.keyboard.press("Control+z");
+  await expect(at(target!.fy).locator("[data-mark='plan']")).toHaveCount(1);
+  await expect(at(to).locator("[data-mark]")).toHaveCount(0);
+  await page.keyboard.press("Control+Shift+z");
+  await expect(at(to).locator("[data-trial]")).toHaveCount(1);
+});

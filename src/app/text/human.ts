@@ -388,7 +388,7 @@ export const HUMAN_TEXT = {
     loading: "これまでに確定した決定（履歴）を読んでいます",
     // 決めた人は 1 列目の朱の小さな字が言うので、列にしない（Wire、Decisions.dc.html V44）
     head: ["項目", "理由", "件数", ""],
-    kind: { ai: "- Claude 判断", relayed: "- 会話の回答", ledger: "- 台帳案", rule: "- ルール案", crosswalk: "- 紐付け案" },
+    kind: { ai: "- Claude 判断", relayed: "- 会話の回答", ledger: "- 台帳案", rule: "- ルール案", crosswalk: "- 紐付け案", human: "- 人の試し" },
     /** 読み方の決定が効く所（明細の数で言えない決定。Wire） */
     where: (w: string) => `効く所　${w}`,
     blank: "空",

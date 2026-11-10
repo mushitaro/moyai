@@ -142,6 +142,9 @@ interface GridContext {
   picked?: { rowId: string; periodKey: string } | null;
   /** 周期の線を引く行と、その行の期の鍵（年度の表示のときだけ。列の順） */
   cycle?: { rowId: string; keys: readonly string[] } | null;
+  /** 人の試し（時間の地図 2）：動かす前の位置（行の鍵 + "\u0000" + 期の鍵。薄い ○）と、動かした先の明細の鍵（朱の細い枠） */
+  ghosts?: ReadonlySet<string>;
+  trials?: ReadonlySet<string>;
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -226,6 +229,15 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     const shown = ring ?? cell?.mark ?? null;
     if (shown) this.el.dataset.mark = shown;
     else delete this.el.dataset.mark;
+    // 人の試し：動かした先は朱の細い枠、動かす前の位置は薄い ○（字は aria-label に）。計画だけの ○ はドラッグで動かせる
+    const tctx = p.context as GridContext | undefined;
+    const ghost = !shown && !!p.data && !!period && !!tctx?.ghosts?.has(`${p.data.id}\u0000${period.key}`);
+    if (ghost) this.el.dataset.ghost = "plan";
+    else delete this.el.dataset.ghost;
+    const trial = !!cell && !!tctx?.trials && cell.detailKeys.some((k) => tctx.trials!.has(k));
+    if (trial) this.el.dataset.trial = "true";
+    else delete this.el.dataset.trial;
+    this.el.draggable = shown === "plan" && !cell?.summary;
     if (ring) this.el.dataset.ring = "true";
     else delete this.el.dataset.ring;
     // 選んだ星と周期の線（時間の地図 1）。選びを外すと消える
@@ -255,7 +267,9 @@ class MarkCell implements ICellRendererComp<ChartRow> {
           (isProposal(cell, p.context) ? T.legend.proposalAria : "") +
           (isRemoval(cell, p.context) ? T.legend.removalAria : "") +
           (isChanged(p.data, period, cell, p.context) ? T.legend.changedFromAria(version) : "") +
-          (was ? T.legend.oldPlanAria(version, T.markName[was]) : ""),
+          (was ? T.legend.oldPlanAria(version, T.markName[was]) : "") +
+          (ghost ? T.legend.trialFromAria : "") +
+          (trial ? T.legend.trialAria : ""),
       );
     return true;
   }
@@ -541,6 +555,18 @@ export class ChartGrid {
     });
   }
 
+  private ghosts: ReadonlySet<string> = new Set();
+  private trials: ReadonlySet<string> = new Set();
+
+  /** 人の試し（動かす前の薄い ○ と、動かした先）を描き直す。試しが変わったときだけ呼ぶ */
+  setTrials(ghosts: ReadonlySet<string>, trials: ReadonlySet<string>) {
+    this.ghosts = ghosts;
+    this.trials = trials;
+    const ctx = this.api.getGridOption("context") as GridContext;
+    this.api.setGridOption("context", { ...ctx, ghosts, trials } satisfies GridContext);
+    this.api.refreshCells({ force: true });
+  }
+
   private picked: GridContext["picked"] = null;
   private cycle: GridContext["cycle"] = null;
 
@@ -577,7 +603,7 @@ export class ChartGrid {
     removals?: ReadonlySet<string>,
   ) {
     this.mode = model.mode;
-    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals, picked: this.picked, cycle: this.cycle } satisfies GridContext);
+    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals, picked: this.picked, cycle: this.cycle, ghosts: this.ghosts, trials: this.trials } satisfies GridContext);
     const cols = columns(model, foldLevel, this.h, band);
     const key = JSON.stringify([model.mode, model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band, cols.map((c) => ("width" in c ? c.width : null))]);
     if (key !== this.colKey) {

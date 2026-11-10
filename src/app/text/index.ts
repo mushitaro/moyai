@@ -151,6 +151,9 @@ export const TEXT = {
       oldPlan: (n: number) => `第 ${n} 版の星取`,
       changedFromAria: (n: number) => `（第 ${n} 版から変更）`,
       oldPlanAria: (n: number, mark: string) => `（第 ${n} 版の星取：${mark}）`,
+      /** 人の試し（時間の地図 2）の読み上げ */
+      trialFromAria: " · 人の試しで動かす前の位置",
+      trialAria: " · 人の試し（未署名）",
     },
     change: (who: string, why: string, before: string, after: string) => `誰が：${who}
 なぜ：${why}
@@ -239,6 +242,8 @@ export const TEXT = {
       proposal: "（案。未確定）",
       /** 同じ整備に、違う資料がいくつつながっているか（2 つ以上のときだけ。時間の地図 1） */
       sameWork: (n: number) => `資料 ${n} つが同じ整備を指す`,
+      /** 人の試し（星取表で人が動かした ○。時間の地図 2）の出どころと、理由の欄（入力欄は置かない） */
+      trial: "人の試し　理由 未記入",
       /** 周期の根拠の出どころ（資料ではない出どころの、画面の言葉） */
       basisOf: { record: "周期の根拠　自施設の実績", pack: "周期の根拠　Skillパックの基準", ledger: "周期の根拠　公開台帳", rule: "周期の根拠　計画ルール", conversation: "周期の根拠　Claude との会話" } as Record<string, string>,
       /** 星取の案の詳しく（docs/screens.md 3.2）：xs「計画の追加（未確定）」、題「2028 年度　分解整備」、出どころ・理由、「| 確定のシートで見る」 */

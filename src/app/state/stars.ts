@@ -28,7 +28,8 @@ export interface StarGroup {
   kind: StarKind;
   workKey: string;
   value: StarValue;
-  author: "ai" | "ai_relayed_human";
+  /** human は人の試し（星取表で人が未来の ○ を動かした。下の「人の試し」。AI のツールの受け手からは作らない） */
+  author: "ai" | "ai_relayed_human" | "human";
   basis: string;
   generation: number;
   /** 削除する星取（計画の削除・実績の削除・計画の移動の元の年度） */
@@ -214,7 +215,7 @@ export function undoRemovalsByHuman(id: string): boolean {
  * 人が案を却下する：追加の明細を作業中の計画から外し、削除は捨てる（今の星取はそのまま）。
  * 前の版から写した追加（ここに案の覚えが無いもの）も、明細から種類を読んで却下済みに残す
  */
-export function rejectStarGroupByHuman(id: string, reason: string, fallback?: { kind: StarKind; workKey: string; value: StarValue; author: "ai" | "ai_relayed_human"; basis: string }): StarHumanOutcome {
+export function rejectStarGroupByHuman(id: string, reason: string, fallback?: { kind: StarKind; workKey: string; value: StarValue; author: StarGroup["author"]; basis: string }): StarHumanOutcome {
   if (reason.trim().length === 0) return { ok: false, reason: "reasonEmpty" };
   const working = getWorkingPlan();
   if (!working) return { ok: false, reason: "notProposed" };
@@ -237,11 +238,97 @@ export function rejectStarGroupByHuman(id: string, reason: string, fallback?: { 
 export function removalAcceptances(): Acceptance[] {
   const out: Acceptance[] = [];
   for (const g of starGroups()) {
-    if (g.state !== "accepted" || !g.humanReason) continue;
-    for (const d of g.removed ?? []) out.push({ id: removalId(d.detailKey), hash: removalHash(d), reason: g.humanReason });
+    // 人の試しは理由が無くても確定できる（止めない。理由は空のまま署名の内側に入る）
+    if (g.state !== "accepted" || (!g.humanReason && g.author !== "human")) continue;
+    for (const d of g.removed ?? []) out.push({ id: removalId(d.detailKey), hash: removalHash(d), reason: g.humanReason ?? "" });
   }
   return out;
 }
+
+// ─── 人の試し（時間の地図 2、mushitaro/moyai#32）：星取表で人が未来の ○ を別の年度へ動かす ─────────────
+// 画面の人の操作だけが呼ぶ（AI のツールの受け手 intake/tab-tools.ts からは呼ばない。tests/unit/human-only.test.ts が見張る）。
+// 動かした先は作者「人」の明細（人が受ける決定は要らない）、元の年度は人が確定した削除（理由は空のまま）。版は変えない（確定・署名は確定のシートと署名のダイアログで人がする）。
+// 取り消し・やり直しは何度でも（このタブのメモリ）。
+
+export type TrialOutcome = { ok: true; id: string } | { ok: false; reason: "noPlan" | "notPlanOnly" | "occupied" | "outOfRange" };
+interface Trial {
+  workKey: string;
+  from: number;
+  to: number;
+}
+let undoStack: { id: string; trial: Trial }[] = [];
+let redoStack: Trial[] = [];
+
+/** 動かせるか：その作業の計画だけ（実績の無い年度）・先の年度にその作業の計画が無い・範囲の中 */
+export function canMoveStarByHuman(workKey: string, from: number, to: number, range: { min: number; max: number }): TrialOutcome | null {
+  const working = getWorkingPlan();
+  if (!working) return { ok: false, reason: "noPlan" };
+  if (from === to || to < range.min || to > range.max) return { ok: false, reason: "outOfRange" };
+  const ds = working.plan.details.filter((d) => d.workKey === workKey);
+  const at = (fy: number) => ds.filter((d) => d.fiscalYear === fy);
+  if (!at(from).some((d) => d.planOrActual === "plan") || at(from).some((d) => d.planOrActual === "actual")) return { ok: false, reason: "notPlanOnly" };
+  if (at(to).some((d) => d.planOrActual === "plan")) return { ok: false, reason: "occupied" };
+  return null;
+}
+
+function applyTrial(t: Trial, range: { min: number; max: number }): TrialOutcome {
+  const bad = canMoveStarByHuman(t.workKey, t.from, t.to, range);
+  if (bad) return bad;
+  const working = getWorkingPlan()!;
+  const used = new Set<string>([...working.plan.details.map((d) => proposalIdOf(d.detailKey) ?? ""), ...groups.map((g) => g.id)]);
+  let id: string;
+  do id = `${STAR_PREFIX}${++seq}`;
+  while (used.has(id));
+  const basis = removalBasis(TRIAL_BASIS, id, "planMove", [t.from]);
+  const r = proposeStars(working.plan, [{ id, kind: "planMove", workKey: t.workKey, value: "plan", fiscalYear: t.to }], { basis: TRIAL_BASIS, author: "human", verified: {} });
+  const removed = r.plan.details.filter((d) => d.workKey === t.workKey && d.planOrActual === "plan" && d.fiscalYear === t.from);
+  const keys = new Set(removed.map((d) => d.detailKey));
+  const g: StarGroup = { id, kind: "planMove", workKey: t.workKey, value: "plan", author: "human", basis, generation: working.generation, removes: [{ fiscalYear: t.from, detailKeys: [...keys] }], pairs: [{ from: t.from, to: t.to }], state: "accepted", humanReason: "", removed };
+  updateWorkingPlan({ ...r.plan, details: r.plan.details.filter((d) => !keys.has(d.detailKey)) }, working.proposals);
+  groups = [...groups, g];
+  undoStack = [...undoStack, { id, trial: t }];
+  notify();
+  return { ok: true, id };
+}
+
+/** 人が未来の ○ を動かす（星取表のドラッグか Alt+← / Alt+→）。やり直しの列は捨てる */
+export function moveStarByHuman(workKey: string, from: number, to: number, range: { min: number; max: number }): TrialOutcome {
+  const r = applyTrial({ workKey, from, to }, range);
+  if (r.ok) redoStack = [];
+  return r;
+}
+
+/** 人の試しを 1 つ取り消す（Ctrl+Z）：先の年度の明細を外し、元の年度の明細を戻す。試しが無ければ false */
+export function undoTrialByHuman(): boolean {
+  const last = undoStack[undoStack.length - 1];
+  const working = getWorkingPlan();
+  if (!last || !working) return false;
+  undoStack = undoStack.slice(0, -1);
+  const g = starGroup(last.id);
+  const have = new Set(working.plan.details.map((d) => d.detailKey));
+  const back = (g?.removed ?? []).filter((d) => !have.has(d.detailKey));
+  updateWorkingPlan({ ...working.plan, details: [...working.plan.details.filter((d) => proposalIdOf(d.detailKey) !== last.id), ...back] }, working.proposals);
+  groups = groups.filter((x) => x.id !== last.id);
+  redoStack = [...redoStack, last.trial];
+  notify();
+  return true;
+}
+
+/** 取り消した試しをやり直す（Ctrl+Shift+Z）。やり直せなければ false */
+export function redoTrialByHuman(range: { min: number; max: number }): boolean {
+  const t = redoStack[redoStack.length - 1];
+  if (!t) return false;
+  const r = applyTrial(t, range);
+  redoStack = redoStack.slice(0, -1);
+  return r.ok;
+}
+
+/** 人の試しの、動かす前の位置（星取表に薄い ○ を残す）：作業の鍵 → 元の年度 */
+export function trialOrigins(): { id: string; workKey: string; from: number; to: number }[] {
+  return groups.filter((g) => g.author === "human" && g.state === "accepted").flatMap((g) => g.pairs.map((p) => ({ id: g.id, workKey: g.workKey, from: p.from, to: p.to })));
+}
+
+const TRIAL_BASIS = "人の試し";
 
 // ─── 次の版：確定した削除を、資料から読み直した計画でも外したままにする（Architect の 70） ─────────────
 
@@ -316,6 +403,8 @@ export function clearStarPick(): void {
 
 /** 試験用 */
 export function resetStarsForTest(): void {
+  undoStack = [];
+  redoStack = [];
   groups = [];
   removedInHistory = new Map();
   historyOf = null;
