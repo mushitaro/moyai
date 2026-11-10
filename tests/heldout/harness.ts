@@ -314,11 +314,21 @@ export interface Script {
   answered: Decision[];
   asked: number;
   openAtEnd: QuestionState[];
+  /** 正解から答えられず、既定の答えを受けた問い（acceptDefaults のときだけ）。種類ごとの数 */
+  defaulted: Record<string, number>;
 }
 
-/** 質問がなくなるまで、台本で答える（答えられない質問は開いたまま） */
-export function runScript(session: { analyze(): Analysis; settle(ds: Decision[]): unknown }, mk: (an: Analysis) => Index): Script {
+/** 既定の答えを受けたときの理由（正解から答えた問いと分けて数えるため） */
+export const DEFAULT_REASON = "既定の答えを受けた（台本は正解から答えられない）";
+
+/**
+ * 質問がなくなるまで、台本で答える（答えられない質問は開いたまま）。
+ * acceptDefaults：正解から答えられない問いに既定の答えがあれば、それを受ける（人が推された答えを押すのと同じ。数は defaulted に分けて出す）。
+ * 見ていない様式の測り（heldout）では使わない。Skillパックの物差し（pack-bench）だけが使う
+ */
+export function runScript(session: { analyze(): Analysis; settle(ds: Decision[]): unknown }, mk: (an: Analysis) => Index, opt: { acceptDefaults?: boolean } = {}): Script {
   const answered = new Map<string, Decision>();
+  const defaulted: Record<string, number> = {};
   let rounds = 0;
   let an = session.analyze();
   const ix = mk(an);
@@ -328,6 +338,10 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
       if (answered.has(q.questionId)) continue;
       const a = answer(q, ix);
       if (a !== null) ds.push({ questionId: q.questionId, answer: a, author: "human", reason: AUTHOR_REASON });
+      else if (opt.acceptDefaults && q.defaultAnswer !== null && q.options.some((o) => o.id === q.defaultAnswer)) {
+        ds.push({ questionId: q.questionId, answer: q.defaultAnswer, author: "human", reason: DEFAULT_REASON });
+        defaulted[q.kind] = (defaulted[q.kind] ?? 0) + 1;
+      }
     }
     if (!ds.length) break;
     for (const d of ds) answered.set(d.questionId, d);
@@ -335,7 +349,7 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
     an = session.analyze();
   }
   const asked = new Set([...answered.keys(), ...an.open.map((q) => q.questionId)]).size;
-  return { rounds, answered: [...answered.values()], asked, openAtEnd: an.open };
+  return { rounds, answered: [...answered.values()], asked, openAtEnd: an.open, defaulted };
 }
 
 // ─── 物差し ③ 読み取りの正しさ ────────────────────────────────────
@@ -646,7 +660,9 @@ export interface SetResult {
   files: FileResult[];
   asked: number;
   answered: number;
-  openAtEnd: { kind: string; rows: number; text: string }[];
+  openAtEnd: { kind: string; rows: number; text: string; options?: string[]; defaultAnswer?: string | null }[];
+  /** 既定の答えを受けた問いの、種類ごとの数（acceptDefaults のときだけ。answered に含む） */
+  defaulted?: Record<string, number>;
   unresolvedBefore: number;
   unresolvedAfter: number;
   planMade: boolean;
@@ -665,6 +681,8 @@ export interface RunOptions {
   facilityKey?: string;
   /** 当てる読み方（AI を入れた回で、Claude が会話で作った下書き） */
   readings?: LoadedReading[];
+  /** 正解から答えられない問いに、既定の答えを受ける（pack-bench だけ） */
+  acceptDefaults?: boolean;
 }
 
 export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ result: SetResult; plan: Plan | null; analysis: Analysis; index: Index; survey: Survey }> {
@@ -682,7 +700,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
   const rejected = await s.add(read.map((n) => ({ name: n, bytes: bytes(n) })));
   const before = s.analyze();
   const unresolvedBefore = [...before.composition.status.values()].filter((x) => x.s === "unresolved").length;
-  const script = runScript(s, (an) => new Index(truth, world, an.sources));
+  const script = runScript(s, (an) => new Index(truth, world, an.sources), { acceptDefaults: opt.acceptDefaults });
   const comp = s.compose();
   const an = s.analyze();
   const ix = new Index(truth, world, an.sources);
@@ -735,7 +753,8 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
     files,
     asked: script.asked,
     answered: script.answered.length,
-    openAtEnd: script.openAtEnd.map((q) => ({ kind: q.kind, rows: q.sameShapeRows, text: q.text.slice(0, 200) })),
+    openAtEnd: script.openAtEnd.map((q) => ({ kind: q.kind, rows: q.sameShapeRows, text: q.text.slice(0, 200), options: q.options.map((o) => `${o.id}=${o.label}`.slice(0, 80)), defaultAnswer: q.defaultAnswer })),
+    ...(opt.acceptDefaults ? { defaulted: script.defaulted } : {}),
     unresolvedBefore,
     unresolvedAfter: [...comp.status.values()].filter((x) => x.s === "unresolved").length,
     planMade: plan !== null,
