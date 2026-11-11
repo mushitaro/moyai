@@ -551,6 +551,12 @@ async function addTemplateFromBridge(ws: IntakeWorkspace, files: { fileId: strin
   return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
 }
 
+/** 資料のシートを、足した資料を選んだ形で開く（道の f。HOSHITORI の資料の選びと同じ） */
+function showAdded(name: string): void {
+  if (typeof location === "undefined") return;
+  location.hash = `${sheetHash("files")}?${new URLSearchParams({ f: name }).toString()}`;
+}
+
 export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<string, unknown>, fetchFile: FetchIntakeFile): Promise<TabToolResult> {
   const p = intakeAddFilesToTabSchema.safeParse(rawArgs);
   if (!p.success) return { ok: false, code: "tool_failed" };
@@ -583,6 +589,11 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
   const refused: IntakeAddFilesFromTab["refused"] = [];
   const got: (DroppedFile & { name: string })[] = [];
   for (const f of a.files) {
+    // もう入っている名前の資料は取りに行かない（加工したファイルを足すとき、フォルダごと入れ直されても、前の資料を読み直さない。#47）
+    if (before.has(f.name)) {
+      refused.push({ name: f.name, reason: "same_name" });
+      continue;
+    }
     const bytes = await fetchFile(f.fileId);
     if (!bytes || bytes.length !== f.size) refused.push({ name: f.name, reason: "changed" });
     else got.push({ name: f.name, size: bytes.length, bytes: async () => bytes });
@@ -597,7 +608,7 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
       if (!ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });
     });
     ws.note("ai", T.filesAdded(demo, got.length, refused.length));
-    if (got.length && typeof location !== "undefined") location.hash = sheetHash("files");
+    if (got.length) showAdded(got.at(-1)!.name);
     const data = { added: got.map((f) => ({ name: f.name, sheets: null, rows: null })), refused };
     return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
   }
@@ -614,7 +625,8 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
   }
   ws.note("ai", T.filesAdded(demo, added.length, refused.length));
   // 人が資料を落としたときと同じに、資料のシートへ移る（画面は AI の作業を追う）
-  if (added.length && typeof location !== "undefined") location.hash = sheetHash("files");
+  // 資料の選びは、足した資料に移る（#47。前の資料はそのまま）
+  if (added.length) showAdded(added.at(-1)!.name);
   const data = { added, refused };
   return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
 }
