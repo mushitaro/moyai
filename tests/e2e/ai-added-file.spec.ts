@@ -31,7 +31,7 @@ test("115 個の資料のあとに、加工したファイルを足しても、�
   const c = await mcpClient(bridge.stateDir, ["intake_add_files"]);
   try {
     const first = await call(c, "intake_add_files", { source: "folder", path: many, facilityName: "【架空】第一清掃工場", pack: "waste-incineration" });
-    expect(first.added.length + (first.late ? 0 : 0)).toBeGreaterThan(0);
+    expect(first.added.length).toBe(115);
     await expect(page.getByTestId("source-picker")).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", "115", { timeout: 60_000 });
     await page.screenshot({ path: shot(`ai-added-before-${info.project.name}`) });

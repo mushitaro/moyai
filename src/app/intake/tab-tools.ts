@@ -588,12 +588,15 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
   const before = await namesIn(ws);
   const refused: IntakeAddFilesFromTab["refused"] = [];
   const got: (DroppedFile & { name: string })[] = [];
+  // もう入っている名前（読み終えた資料・作業場の一覧・この呼び出しで先に取った資料）は取りに行かない
+  // （加工したファイルを足すとき、フォルダごと入れ直されても、前の資料を読み直さない。#47）
+  const taken = new Set<string>([...before.keys(), ...ws.fileNames]);
   for (const f of a.files) {
-    // もう入っている名前の資料は取りに行かない（加工したファイルを足すとき、フォルダごと入れ直されても、前の資料を読み直さない。#47）
-    if (before.has(f.name)) {
+    if (taken.has(f.name)) {
       refused.push({ name: f.name, reason: "same_name" });
       continue;
     }
+    taken.add(f.name);
     const bytes = await fetchFile(f.fileId);
     if (!bytes || bytes.length !== f.size) refused.push({ name: f.name, reason: "changed" });
     else got.push({ name: f.name, size: bytes.length, bytes: async () => bytes });
