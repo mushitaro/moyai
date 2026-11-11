@@ -149,7 +149,7 @@ interface GridContext {
   fresh?: ReadonlySet<string>;
   /**
    * 金額の表示（mushitaro/moyai#48）：明細の鍵 → 費用（円）と計画か実績か。あれば、星のセルに金額（千円、3 桁の区切り）を出す。
-   * 実績の金額があれば実績（--text）、無ければ予算（--text-3。字の濃さで分ける）。金額の無い星は星のまま。費用は当施設の画面の中だけ
+   * 実績の金額があれば実績（--text）、無ければ予算（--text-3。字の濃さで分ける）。金額の無い星・畳んだ行のまとめ・案の印のあるセルは星のまま。費用は当施設の画面の中だけ
    */
   amounts?: ReadonlyMap<string, { yen: number; kind: "plan" | "actual" }> | null;
 }
@@ -159,7 +159,8 @@ export function cellAmount(
   cell: ChartCell | undefined,
   amounts: ReadonlyMap<string, { yen: number; kind: "plan" | "actual" }> | null | undefined,
 ): { yen: number; kind: "plan" | "actual" } | null {
-  if (!cell || !amounts) return null;
+  // 畳んだ行のまとめは、ほかの作業の金額を混ぜるので出さない（星のまま）
+  if (!cell || !amounts || cell.summary) return null;
   let plan = 0;
   let actual = 0;
   let hasPlan = false;
@@ -182,6 +183,7 @@ export function cellAmount(
 
 /** 金額の字：千円で、3 桁の区切り（1,000 円未満は「0」にせず「<1」） */
 export function formatThousandYen(yen: number): string {
+  if (yen < 0) return `-${formatThousandYen(-yen)}`;
   const k = Math.round(yen / 1000);
   if (k === 0 && yen > 0) return "<1";
   return k.toLocaleString("ja-JP");
@@ -268,7 +270,8 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     else delete this.el.dataset.strike;
     const shown = ring ?? cell?.mark ?? null;
     // 金額の表示：金額のある星は、星の形の代わりに金額の字（千円）。金額の無い星は星のまま（#48）
-    const amount = cellAmount(cell, (p.context as GridContext | undefined)?.amounts);
+    // 案・削除の案の印（朱の破線の円・斜線。あなたの判断が要る）があるセルは星のまま
+    const amount = ring || removal ? null : cellAmount(cell, (p.context as GridContext | undefined)?.amounts);
     if (amount) {
       this.el.textContent = formatThousandYen(amount.yen);
       this.el.dataset.amount = amount.kind;

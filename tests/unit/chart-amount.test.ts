@@ -18,11 +18,15 @@ describe("金額の表示", () => {
     expect(cellAmount(cell(["x"]), amounts)).toBeNull();
     expect(cellAmount(cell(["a1"]), null)).toBeNull();
     expect(cellAmount(undefined, amounts)).toBeNull();
+    // 畳んだ行のまとめは、ほかの作業の金額を混ぜるので出さない
+    expect(cellAmount({ ...cell(["a1"]), summary: true } as ChartCell, amounts)).toBeNull();
   });
   it("千円で 3 桁の区切り。1,000 円未満の金額は 0 と言わない", () => {
     expect(formatThousandYen(1_234_567)).toBe("1,235");
     expect(formatThousandYen(12_345_678)).toBe("12,346");
     expect(formatThousandYen(400)).toBe("<1");
     expect(formatThousandYen(0)).toBe("0");
+    expect(formatThousandYen(-1_234_567)).toBe("-1,235");
+    expect(formatThousandYen(-400)).toBe("-<1");
   });
 });
