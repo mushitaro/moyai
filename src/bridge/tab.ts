@@ -39,7 +39,7 @@ export interface TabHubOptions {
   /** 前のタブが今も答えるかを確かめる待ち（既定 PROBE_MS） */
   probeMs?: number;
   tokenTtlMs: number;
-  /** 橋渡しのビルドの commit。前のビルドのままのタブは、あとから開いたタブに渡す */
+  /** 橋渡しのビルドの commit。bridge.welcome で画面に渡す。前のビルドのままのタブは、あとから開いたタブに渡す */
   build?: string;
   now: () => number;
   log: (msg: string) => void;
@@ -207,6 +207,7 @@ export class TabHub {
       heartbeatMs: this.o.heartbeatMs,
       deadMs: this.o.deadMs,
       tokenTtlMs: this.o.tokenTtlMs,
+      ...(this.o.build ? { build: this.o.build } : {}),
     });
     this.o.log("作業画面のタブがつながりました");
   }

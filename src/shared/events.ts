@@ -24,7 +24,8 @@ export const EVENTS = {
   "bridge.welcome": {
     from: "bridge",
     to: "tab",
-    data: z.object({ heartbeatMs: z.number().int(), deadMs: z.number().int(), tokenTtlMs: z.number().int() }),
+    // build は橋渡しのビルドの commit（前の版の橋渡しは送らない）。画面は自分のビルドと違えば、状態の帯のビルドの印を朱にする（#43）
+    data: z.object({ heartbeatMs: z.number().int(), deadMs: z.number().int(), tokenTtlMs: z.number().int(), build: z.string().max(80).optional() }),
   },
   "bridge.refused": {
     from: "bridge",

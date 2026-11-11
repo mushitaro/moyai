@@ -316,7 +316,7 @@ describe("開いた印：intake_survey（show: true）", () => {
 // ─── 3. 入っているかの確かめ ──────────────────────────────────────
 
 describe("入っているかの確かめ：1 段目の Skill", () => {
-  const CHECK = "もう入っているか：moyai のツールが呼べれば、`intake_survey`（part: skills）の版を見て、新しい版なら入れ直さない";
+  const CHECK = "もう入っているか：moyai のツールが呼べれば、入れ直さず、下の「最新にする」の手順で進める";
 
   it("「インストール」の手順の頭（手順 1 の前）に、もう入っているかの確かめがある。題は「MOYAI をインストールして」にも当たる", () => {
     const s = CHAT_INSTALL_SECTION;
@@ -333,6 +333,15 @@ describe("入っているかの確かめ：1 段目の Skill", () => {
     // instructions（4,096 字で切れる）には足していない
     expect(MCP_INSTRUCTIONS).not.toContain(CHECK);
     expect(MCP_INSTRUCTIONS.length).toBeLessThanOrEqual(4096);
+  });
+
+  it("「最新にする」の節（#43）：版はビルドの版で見て、moyai update を --yes なしで先に走らせ、開き直しは出たときだけ頼む", () => {
+    const s = CHAT_INSTALL_SECTION;
+    const sec = s.slice(s.indexOf("### 最新にする"), s.indexOf("### デモ"));
+    expect(sec).toContain("「MOYAI を最新にして」");
+    expect(sec).toContain("`node dist/cli.js update` を `--yes` なしで走らせる");
+    expect(sec).toContain("「開き直してください」と出たときだけ");
+    expect(sec).not.toContain("SKILL.md");
   });
 
   it("「本文がリポジトリの skills/moyai/SKILL.md と同じなら新しい版」は本当：part: skills の 1 段目の本文はそのファイルと同じで、版は本文から決まる", () => {

@@ -8,7 +8,7 @@ import { readWindowArrangeBody, type WindowArrangeResult } from "../shared/windo
 
 export type ConnectionState =
   | { kind: "connecting" }
-  | { kind: "open"; tokenTtlMs: number }
+  | { kind: "open"; tokenTtlMs: number; build?: string }
   | { kind: "refused"; code: TabErrorCode }
   | { kind: "reconnecting" }
   | { kind: "closed" };
@@ -136,7 +136,7 @@ export class BridgeClient {
   onWelcome(d: EventData<"bridge.welcome">): void {
     this.retries = 0;
     this.droppedAt = null;
-    this.setState({ kind: "open", tokenTtlMs: d.tokenTtlMs });
+    this.setState({ kind: "open", tokenTtlMs: d.tokenTtlMs, ...(d.build ? { build: d.build } : {}) });
     this.send("tab.work", { work: this.work });
   }
 
