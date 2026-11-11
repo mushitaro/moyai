@@ -12,7 +12,7 @@ import { TEXT } from "../text";
 import { APP_PAGES } from "../../shared/routes";
 import { STAGE_HASH, routeOf, type Stage } from "../stages";
 import { ArrangeButton } from "./ArrangeButton";
-import { applyTheme, bindTheme, noteTheme } from "../state/screen";
+import { bindTheme, noteTheme } from "../state/screen";
 import { BrandMark } from "./BrandMark";
 import { BuildStamp } from "./BuildStamp";
 
@@ -30,30 +30,14 @@ function useConnection(client: BridgeClient): ConnectionState {
   return state;
 }
 
-function ThemeSwitch() {
+/** 明暗の手を渡すだけ（画面には何も出さない。切り替えは設定の画面。#61）。既定は PC の設定（App の defaultColorScheme="auto"） */
+function ThemeBinder() {
   const { setColorScheme } = useMantineColorScheme();
   const scheme = useComputedColorScheme("dark");
-  // 人が押したときも AI の screen_set（theme）も、同じ applyTheme を通す（state/screen.ts。仕事 chat-ops-v1）
+  // 人が設定の画面で押したときも AI の screen_set（theme）も、同じ applyTheme を通す（state/screen.ts）
   useEffect(() => bindTheme(setColorScheme), [setColorScheme]);
   noteTheme(scheme);
-  const item = (value: "dark" | "light", label: string) => (
-    <button
-      type="button"
-      className="moyai-switch-item"
-      aria-pressed={scheme === value}
-      onClick={() => applyTheme(value) || setColorScheme(value)}
-      data-testid={`theme-${value}`}
-    >
-      {label}
-    </button>
-  );
-  return (
-    <div className="moyai-switch" role="group" aria-label={S.themeLabel}>
-      {item("dark", S.themeDark)}
-      <span className="moyai-switch-sep" aria-hidden="true" />
-      {item("light", S.themeLight)}
-    </div>
-  );
+  return null;
 }
 
 function Header({ client, hash }: { client: BridgeClient; hash: string }) {
@@ -86,7 +70,7 @@ function Header({ client, hash }: { client: BridgeClient; hash: string }) {
       </nav>
       <div className="moyai-header-end">
         <ArrangeButton client={client} />
-        <ThemeSwitch />
+        <ThemeBinder />
         <a className="moyai-text-button" href={APP_PAGES.settings} aria-current={hash === APP_PAGES.settings || hash === APP_PAGES.industries ? "page" : undefined}>
           {S.settings}
         </a>

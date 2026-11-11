@@ -491,6 +491,7 @@ export const HUMAN_TEXT = {
     evalNone: "未実行",
     /** 表示（星取表の見せ方。施設ごとにブラウザに覚える。docs/screens.md 3.7、Wire、11-07。言葉は docs/words.md） */
     displayTitle: "表示",
+    themeTitle: "明暗",
     displayNoPlan: "作業中の計画なし",
     levelOrderLabel: "階層",
     /** 号炉・系統の字は Skillパックの既定の階層の名前（ごみ焼却は号炉、し尿は系統） */

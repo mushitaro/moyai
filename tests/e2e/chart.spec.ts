@@ -200,13 +200,27 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
     await page.screenshot({ path: shot(`chart-month-${tag}`) });
   });
 
-  // 暗が既定（デザイン定義 §2.2）。明に切り替えて撮り、暗に戻す
-  await test.step("明るい表示", async () => {
-    await page.getByTestId("theme-light").click();
+  // 明暗は PC の設定に従い（既定は自動）、設定の画面の「明暗　自動 | 暗 | 明」で固定できる（#61。ヘッダに暗 / 明は無い）
+  await test.step("明暗：PC の設定に従う・設定の画面で固定する", async () => {
+    await expect(page.locator(".moyai-header").getByText("暗", { exact: true })).toHaveCount(0);
+    await page.emulateMedia({ colorScheme: "light" });
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     await page.screenshot({ path: shot(`chart-light-${tag}`) });
-    await page.getByTestId("theme-dark").click();
+    await page.emulateMedia({ colorScheme: "dark" });
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    const chartUrl = page.url();
+    await page.goto(`${base}/#/settings`);
+    const choice = page.getByTestId("theme-choice");
+    await expect(choice.getByRole("button", { name: "自動", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await choice.getByRole("button", { name: "明", exact: true }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    // 固定したら、PC の設定が暗でも明のまま
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await page.screenshot({ path: shot(`settings-theme-${tag}`) });
+    await choice.getByRole("button", { name: "自動", exact: true }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.goto(chartUrl);
   });
 });
 
