@@ -6,6 +6,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   ARRANGE,
+  CLAUDE_TITLE_PATTERN,
+  isClaudeBrowserTitle,
   WINDOW_ARRANGE_SCRIPT,
   arrangeRects,
   buildArrangeScript,
@@ -19,6 +21,34 @@ import { readWindowArrangeBody } from "../../src/shared/window-arrange";
 import { FakeTab, SECRET_A, SECRET_B, http, startTestBridge, type TestBridge } from "../helpers/bridge";
 
 const PATH = ROUTES.tabWindowArrange.path;
+
+describe("Claude をブラウザ（claude.ai）で使うときの窓（#44）", () => {
+  it("claude.ai のタブの題の形だけを当てる", () => {
+    expect(isClaudeBrowserTitle("Claude - Google Chrome")).toBe(true);
+    expect(isClaudeBrowserTitle("点検の周期を決める - Claude - Google Chrome")).toBe(true);
+    expect(isClaudeBrowserTitle("Claude - 個人 - Microsoft Edge")).toBe(true);
+    expect(isClaudeBrowserTitle("Claude and 2 more pages - 個人 - Microsoft Edge")).toBe(true);
+    expect(isClaudeBrowserTitle("Claude、他 2 ページ - 個人 - Microsoft Edge")).toBe(true);
+    expect(isClaudeBrowserTitle("MOYAI - Google Chrome")).toBe(false);
+    expect(isClaudeBrowserTitle("Claude と並べる - Google Chrome")).toBe(false);
+    expect(isClaudeBrowserTitle("ClaudeCode の記事 - Google Chrome")).toBe(false);
+  });
+
+  it("台本は、Claude Desktop の窓が無いときだけ、chrome か msedge の窓を同じ正規表現で探し、MOYAI の窓を除く", () => {
+    expect(WINDOW_ARRANGE_SCRIPT).toContain(`Regex.IsMatch(sb.ToString(), @"${CLAUDE_TITLE_PATTERN}")`);
+    expect(CLAUDE_TITLE_PATTERN).not.toContain('"');
+    expect(WINDOW_ARRANGE_SCRIPT).toContain('!name.Equals("chrome", System.StringComparison.OrdinalIgnoreCase) && !name.Equals("msedge", System.StringComparison.OrdinalIgnoreCase)');
+    expect(WINDOW_ARRANGE_SCRIPT).toContain("if (h == moyai || !IsWindowVisible(h)) return true;");
+    const desktop = WINDOW_ARRANGE_SCRIPT.indexOf("$claude = $p.MainWindowHandle");
+    const browser = WINDOW_ARRANGE_SCRIPT.indexOf("if ($claude -eq [System.IntPtr]::Zero) { $claude = [MoyaiArrange.Win]::FindClaudeBrowser($moyai) }");
+    const none = WINDOW_ARRANGE_SCRIPT.indexOf("if ($claude -eq [System.IntPtr]::Zero) { $r = 'no_claude_window' }");
+    expect(desktop).toBeGreaterThan(0);
+    expect(browser).toBeGreaterThan(desktop);
+    expect(none).toBeGreaterThan(browser);
+    // 窓の題は答えに出さない
+    expect(WINDOW_ARRANGE_SCRIPT).not.toMatch(/WriteLine\([^)]*sb/);
+  });
+});
 
 describe("台本の組み立て：Claude を左 40%（最小 560px）、MOYAI を右の残り", () => {
   const work = (w: number, h = 1040, left = 0, top = 0) => ({ left, top, right: left + w, bottom: top + h });

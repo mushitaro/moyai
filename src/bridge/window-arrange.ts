@@ -3,11 +3,26 @@
 // - 台本はこのファイルの定数。引数は決まった字と、台本を UTF-16LE で base64 にしたものだけ（利用者の値を混ぜない）。
 // - MOYAI の窓は、押した直後の前面の窓（GetForegroundWindow）。Claude Desktop の窓は、プロセスの名前が claude で、
 //   実行ファイルの道が \WindowsApps\Claude_ か \AnthropicClaude\ を含み、MainWindowHandle が 0 でないもの。無ければ窓は動かさない。
+// - Claude Desktop の窓が無ければ（Claude をブラウザの claude.ai で使っているとき。mushitaro/moyai#44）、見える最上位の窓のうち、
+//   プロセスが chrome か msedge で、窓の題（前のタブの題）が claude.ai の形（CLAUDE_TITLE_PATTERN）のものを Claude の窓にする。MOYAI の窓（前面の窓）は除く。
+//   MOYAI が同じ窓のタブなら、その窓の題は MOYAI なので見つからず、窓は動かさない（橋渡しは作業画面を別の窓で開く。src/cli/open-browser.ts）。
 // - MOYAI の窓がある画面の作業領域（MonitorFromWindow・GetMonitorInfo の rcWork）で、Claude を左 40%（最小 560px）、MOYAI を右の残りに。
 //   最大化・最小化の窓は先に元に戻す（ShowWindow の SW_RESTORE）。動かすのは SetWindowPos。
 // - 台本の組み立て（buildArrangeScript）と答えの読み取り（readArrangeOutput）は、PowerShell を走らせずに試験する（tests/unit/window-arrange.test.ts）。
 import { execFile } from "node:child_process";
 import type { WindowArrangeResult } from "../shared/window-arrange";
+
+/**
+ * claude.ai のタブの題の形（「Claude」か「<会話の題> - Claude」）。ブラウザの窓の題は「<タブの題> - Google Chrome」なので、
+ * 「Claude」が字の頭か、前後が「 - 」「 – 」「 | 」の区切りのときだけ当てる。Edge はタブが多いと「<タブの題> and 2 more pages - …」（日本語は「、他 2 ページ」）になるので、それも当てる。台本の C# と同じ正規表現（ダブルクォートを含めない）。
+ * 実機の claude.ai のタブの題は未確認。
+ */
+export const CLAUDE_TITLE_PATTERN = String.raw`(^|\s[-–|]\s)Claude(\s[-–|]\s|\sand\s\d+\smore\s|、|$)`;
+export function isClaudeBrowserTitle(title: string): boolean {
+  return new RegExp(CLAUDE_TITLE_PATTERN).test(title);
+}
+/** Claude の窓として探すブラウザのプロセスの名前 */
+export const CLAUDE_BROWSERS = ["chrome", "msedge"] as const;
 
 /** Claude の窓の幅：作業領域の幅の 40%。ただし 560px より狭くしない（docs/screens.md §1） */
 export const ARRANGE = { share: 0.4, minWidth: 560 } as const;
@@ -65,6 +80,28 @@ public struct MONITORINFO { public int cbSize; public RECT rcMonitor; public REC
 [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetWindowPos(System.IntPtr hwnd, System.IntPtr after, int x, int y, int cx, int cy, uint flags);
 [System.Runtime.InteropServices.DllImport("user32.dll")] static extern System.IntPtr SetThreadDpiAwarenessContext(System.IntPtr context);
 [System.Runtime.InteropServices.DllImport("shcore.dll")] static extern int GetDpiForMonitor(System.IntPtr monitor, int type, out uint dpiX, out uint dpiY);
+public delegate bool EnumProc(System.IntPtr hwnd, System.IntPtr lParam);
+[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool EnumWindows(EnumProc cb, System.IntPtr lParam);
+[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool IsWindowVisible(System.IntPtr hwnd);
+[System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] static extern int GetWindowText(System.IntPtr hwnd, System.Text.StringBuilder text, int max);
+[System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(System.IntPtr hwnd, out uint pid);
+public static System.IntPtr FindClaudeBrowser(System.IntPtr moyai) {
+  System.IntPtr found = System.IntPtr.Zero;
+  EnumWindows(delegate (System.IntPtr h, System.IntPtr l) {
+    if (h == moyai || !IsWindowVisible(h)) return true;
+    System.Text.StringBuilder sb = new System.Text.StringBuilder(512);
+    if (GetWindowText(h, sb, 512) <= 0) return true;
+    if (!System.Text.RegularExpressions.Regex.IsMatch(sb.ToString(), @"${CLAUDE_TITLE_PATTERN}")) return true;
+    uint pid;
+    GetWindowThreadProcessId(h, out pid);
+    string name = "";
+    try { name = System.Diagnostics.Process.GetProcessById((int)pid).ProcessName; } catch (System.Exception) { return true; }
+    if (${CLAUDE_BROWSERS.map((b) => `!name.Equals("${b}", System.StringComparison.OrdinalIgnoreCase)`).join(" && ")}) return true;
+    found = h;
+    return false;
+  }, System.IntPtr.Zero);
+  return found;
+}
 public static string Arrange(System.IntPtr moyai, System.IntPtr claude) {
   if (moyai == System.IntPtr.Zero || claude == System.IntPtr.Zero || moyai == claude) return "failed";
   bool aware = false;
@@ -104,6 +141,7 @@ foreach ($p in @(Get-Process -Name 'claude' -ErrorAction SilentlyContinue)) {
   $claude = $p.MainWindowHandle
   break
 }
+if ($claude -eq [System.IntPtr]::Zero) { $claude = [MoyaiArrange.Win]::FindClaudeBrowser($moyai) }
 if ($claude -eq [System.IntPtr]::Zero) { $r = 'no_claude_window' } else { $r = [MoyaiArrange.Win]::Arrange($moyai, $claude) }
 } catch { $r = 'failed' }
 [Console]::Out.WriteLine('{"result":"' + $r + '"}')
