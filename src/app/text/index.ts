@@ -97,6 +97,11 @@ export const TEXT = {
     period: { year: "年度", month: "月" },
     layerLabel: "計画",
     layer: { original: "当初計画", adjusted: "調整後" },
+    // 星のセルに出すもの（#48）：星取か金額（千円）。金額は当施設の画面の中だけ
+    showLabel: "表示",
+    show: { mark: "星取", amount: "金額" },
+    amountAria: (k: string, kind: "plan" | "actual") => `、金額 ${k} 千円（${kind === "actual" ? "実績" : "予算"}）`,
+    amountLine: (k: string, kind: "plan" | "actual") => `金額　${k} 千円（${kind === "actual" ? "実績" : "予算"}）`,
     adjustedSame: "調整はまだありません。調整後は当初計画と同じです。",
     noCatalog: "この計画のSkillパックの項目が見つからないので、共通の設備項目の行は出せません。",
     confirm: "確定する",

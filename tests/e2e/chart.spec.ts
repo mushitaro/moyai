@@ -42,6 +42,14 @@ const planJson = new Map<string, string>();
 
 test.beforeAll(async () => {
   for (const [name, make] of Object.entries(DEV_PLANS)) planJson.set(name, JSON.stringify(make()));
+  // 金額の表示（#48）の試し：fictional-1 の 2020 年度の実績の明細に金額と出どころを置いた計画（金額の無い星は星のまま）
+  const withCost = DEV_PLANS["fictional-1"]() as { details: { planOrActual: string; fiscalYear: number; cost: number | null; costSource?: unknown }[] };
+  for (const d of withCost.details)
+    if (d.planOrActual === "actual" && d.fiscalYear === 2020) {
+      d.cost = 1_234_567;
+      d.costSource = { file: "【架空】発注台帳.xlsx", sheet: "R2", ref: "H12", text: "1,234,567", tax: "incl" };
+    }
+  planJson.set("fictional-1-cost", JSON.stringify(withCost));
   stateDir = mkdtempSync(join(tmpdir(), "moyai-e2e-chart-"));
   // Windows の外では、既定の保存先は HOME の Documents の下（src/bridge/places.ts）。無いと保存先が決まらず、受けた決定を読めない。
   // 一時の HOME に Documents を作って渡す（Windows は OS に聞くので、そのまま。mushitaro/moyai#36）
@@ -461,4 +469,22 @@ test("時間の地図 2：未来の ○ を Alt+← / Alt+→ で動かすと、
   await expect(at(to).locator("[data-mark]")).toHaveCount(0);
   await page.keyboard.press("Control+Shift+z");
   await expect(at(to).locator("[data-trial]")).toHaveCount(1);
+});
+
+test("金額の表示に切り替えると、金額のある星に千円の金額、星の詳細に金額と出どころ（#48）", async ({ page }, info) => {
+  await openPlan(page, "fictional-1-cost");
+  const crane = cell(page, "受入供給設備 › ごみクレーン · 2020 年度");
+  await expect(crane).toHaveText("●");
+  await page.getByTestId("show-mode").getByText("金額", { exact: true }).click();
+  await expect(crane).toHaveText("1,235");
+  await expect(crane.locator("[data-amount]")).toHaveAttribute("data-amount", "actual");
+  await expect(crane).toHaveAttribute("aria-label", /金額 1,235 千円（実績）/);
+  // 金額の無い星は星のまま
+  await expect(cell(page, "受入供給設備 › ごみクレーン · 2021 年度").locator("[data-amount]")).toHaveCount(0);
+  await crane.click();
+  await expect(page.getByTestId("source-amount").first()).toHaveText("金額　1,235 千円（実績） · 【架空】発注台帳.xlsx · R2 · H12");
+  await page.screenshot({ path: shot(`chart-amount-${info.project.name}`) });
+  // 星取に戻す
+  await page.getByTestId("show-mode").getByText("星取", { exact: true }).click();
+  await expect(crane).toHaveText("●");
 });
