@@ -33,7 +33,7 @@ function useConnection(client: BridgeClient): ConnectionState {
 /** 明暗の手を渡すだけ（画面には何も出さない。切り替えは設定の画面。#61）。既定は PC の設定（App の defaultColorScheme="auto"） */
 function ThemeBinder() {
   const { setColorScheme } = useMantineColorScheme();
-  const scheme = useComputedColorScheme("dark");
+  const scheme = useComputedColorScheme("dark", { getInitialValueInEffect: false });
   // 人が設定の画面で押したときも AI の screen_set（theme）も、同じ applyTheme を通す（state/screen.ts）
   useEffect(() => bindTheme(setColorScheme), [setColorScheme]);
   noteTheme(scheme);

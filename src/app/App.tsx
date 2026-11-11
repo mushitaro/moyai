@@ -83,7 +83,7 @@ function useHash(): string {
 
 // 役割のトークン（src/ui/tokens.css）は暗が既定で、明は html の data-theme="light" で入れ替える
 function ThemeSync() {
-  const scheme = useComputedColorScheme("dark");
+  const scheme = useComputedColorScheme("dark", { getInitialValueInEffect: false });
   useEffect(() => {
     document.documentElement.dataset.theme = scheme;
   }, [scheme]);
