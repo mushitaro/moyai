@@ -11,6 +11,7 @@ import { errorBody, type ErrorCode } from "../shared/errors";
 import { parseStartArgs } from "./args";
 import { keysCli, sendCli, verifyDemoRingCli, verifyRingCli } from "./human";
 import { ledgerCli, verifyLedgerCli } from "./ledger";
+import { openBrowser } from "./open-browser";
 import { createRelayServer, type LaunchHandle } from "./relay";
 
 declare const __MOYAI_BUILD__: { time: string; commit: string };
@@ -56,27 +57,6 @@ const HELP = `使い方：
   moyai send                                共有ファイルを送る（人だけ。検問所の画面から送る。端末からは未実装）
   moyai --version                           ビルドの版を出す`;
 
-function openBrowser(url: string): void {
-  // 既定のブラウザで開く。開けなくても止めない（URL は端末に出してある）
-  const [cmd, args] =
-    process.platform === "win32"
-      ? ["cmd", ["/c", "start", '""', url]]
-      : process.platform === "darwin"
-        ? ["open", [url]]
-        : ["xdg-open", [url]];
-  try {
-    const child = spawn(cmd as string, args as string[], {
-      detached: true,
-      stdio: "ignore",
-      windowsHide: true,
-      windowsVerbatimArguments: process.platform === "win32",
-    });
-    child.on("error", () => {});
-    child.unref();
-  } catch {
-    /* 開けなかった */
-  }
-}
 
 async function start(argv: string[]): Promise<void> {
   const args = parseStartArgs(argv);
