@@ -1,5 +1,6 @@
 // 作業画面は 1 つ（mushitaro/moyai#46）：作業（資料）のあるタブが開いているとき、あとから開いたタブは断られ、
 // 「作業画面は別のタブで開いています。」の 1 行だけになる（中身も操作できるものも出さない）。前のタブはつながったまま。
+// 前のタブを閉じると、断られたタブはつなぎ直して作業画面になる。
 import { expect, test, type Page } from "@playwright/test";
 import { shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
@@ -31,5 +32,9 @@ test("作業のあるタブがあれば、あとから開いたタブは 1 行�
   await second.screenshot({ path: shot(`one-tab-elsewhere-${info.project.name}`) });
 
   await expect(page.getByTestId("connection")).toHaveAttribute("data-state", "open");
+
+  // 前のタブを閉じると、1 行だけのタブが 5 秒ごとのつなぎ直しで作業画面になる
+  await page.close();
+  await expect(second.getByTestId("connection")).toHaveAttribute("data-state", "open", { timeout: 15_000 });
   await second.close();
 });

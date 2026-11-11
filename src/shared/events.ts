@@ -18,7 +18,8 @@ export const EVENTS = {
   "tab.hello": {
     from: "tab",
     to: "bridge",
-    data: z.object({ secret: tabSecretSchema, build: z.string().max(80) }),
+    // work：このタブに作業（資料か作業中の計画）があるか（#46。つなぎ直しの直後から、作業のあるタブを守る）
+    data: z.object({ secret: tabSecretSchema, build: z.string().max(80), work: z.boolean().optional() }),
   },
   "bridge.welcome": {
     from: "bridge",

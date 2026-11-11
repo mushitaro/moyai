@@ -11,6 +11,8 @@ import type { TokenStore } from "./tokens";
 export const HEARTBEAT_MS = 15_000;
 export const DEAD_MS = 45_000;
 export const HELLO_TIMEOUT_MS = 10_000;
+/** 作業のある前のタブが今も答えるかを確かめる待ち（#46）。この間に何か届けば前のタブを残し、あとから開いたタブを断る */
+export const PROBE_MS = 1_500;
 
 /** 閉じるときの番号（4000 番台は使い手が決めてよい） */
 export const CLOSE_REFUSED = 4001;
@@ -23,8 +25,10 @@ interface ActiveTab {
   lastSeen: number;
   /** タブのビルドの commit（tab.hello） */
   build: string;
-  /** 作業（資料か作業中の計画）があるか（tab.work。送らない前の版のタブは false） */
+  /** 作業（資料か作業中の計画）があるか（tab.hello と tab.work。送らない前の版のタブは false） */
   work: boolean;
+  /** 最後にこのタブから何かが届いた時刻（lastSeen と違い、呼び出しの時間切れでは進めない） */
+  heard: number;
 }
 
 export interface TabHubOptions {
@@ -32,6 +36,8 @@ export interface TabHubOptions {
   heartbeatMs: number;
   deadMs: number;
   helloTimeoutMs: number;
+  /** 前のタブが今も答えるかを確かめる待ち（既定 PROBE_MS） */
+  probeMs?: number;
   tokenTtlMs: number;
   /** 橋渡しのビルドの commit。前のビルドのままのタブは、あとから開いたタブに渡す */
   build?: string;
@@ -42,6 +48,8 @@ export interface TabHubOptions {
 interface Conn {
   ws: WebSocket;
   active: ActiveTab | null;
+  /** 握手を受け、前のタブを確かめている（2 回目の握手と、握手の時間切れを無視する） */
+  probing?: boolean;
 }
 
 type Handler<T extends TabToBridge> = (hub: TabHub, conn: Conn, data: EventData<T>) => void;
@@ -124,7 +132,7 @@ export class TabHub {
   accept(ws: WebSocket): void {
     const conn: Conn = { ws, active: null };
     const helloTimer = setTimeout(() => {
-      if (!conn.active) this.refuse(conn, "hello_timeout");
+      if (!conn.active && !conn.probing) this.refuse(conn, "hello_timeout");
     }, this.o.helloTimeoutMs);
     helloTimer.unref();
 
@@ -138,7 +146,7 @@ export class TabHub {
         return;
       }
       if (!conn.active && ev.type !== "tab.hello") return this.refuse(conn, "hello_invalid");
-      if (conn.active) conn.active.lastSeen = this.o.now();
+      if (conn.active) conn.active.lastSeen = conn.active.heard = this.o.now();
       const handler = TAB_EVENT_HANDLERS[ev.type as TabToBridge] as Handler<TabToBridge> | undefined;
       handler?.(this, conn, ev.data as EventData<TabToBridge>);
     });
@@ -155,16 +163,34 @@ export class TabHub {
   }
 
   onHello(conn: Conn, data: EventData<"tab.hello">): void {
-    if (conn.active) return; // 2 回目の握手は無視する
+    if (conn.active || conn.probing) return; // 2 回目の握手は無視する
     const prev = this.active;
     // 作業画面は 1 つ（#46）：作業（資料か作業中の計画）のある生きたタブがあれば、あとから開いたタブを断る（「別のタブで開いています」）。
     // 前のタブの作業はタブのメモリにあり、引き継ぐと消えるので。Claude がブラウザを操作する道具で開いたタブも、ここで断られる。
-    // 引き継ぐのは、前のタブに作業が無い・答えが無い・前のビルドのまま（更新のあとの読み込み直し）・同じタブのつなぎ直し（同じ秘密）のとき
+    // 引き継ぐのは、前のタブに作業が無い・前のビルドのまま（更新のあとの読み込み直し）・同じタブのつなぎ直し（同じ秘密）・
+    // 確かめの ping に PROBE_MS の間に何も返さない（読み込み直した・固まった・閉じかけのタブ）とき
     if (prev && this.keepsPrevious(prev, data)) {
-      this.o.log("作業のあるタブが開いているので、あとから開いたタブを断りました");
-      return this.refuse(conn, "tab_elsewhere");
+      conn.probing = true;
+      const asked = this.o.now();
+      this.send(prev.ws, "bridge.ping", { at: asked });
+      const t = setTimeout(() => {
+        conn.probing = false;
+        if (conn.ws.readyState !== conn.ws.OPEN) return;
+        if (this.active === prev && prev.heard >= asked && prev.ws.readyState === prev.ws.OPEN) {
+          this.o.log("作業のあるタブが開いているので、あとから開いたタブを断りました");
+          return this.refuse(conn, "tab_elsewhere");
+        }
+        this.takeOver(conn, data);
+      }, this.o.probeMs ?? PROBE_MS);
+      t.unref();
+      return;
     }
-    // ほかは、あとから開いたこのタブが引き継ぐ。前のタブの待っている呼び出しは終え、前のタブには理由を送って閉じる
+    this.takeOver(conn, data);
+  }
+
+  /** あとから開いたこのタブが引き継ぐ。前のタブ（今もあれば）の待っている呼び出しは終え、前のタブには理由を送って閉じる */
+  private takeOver(conn: Conn, data: EventData<"tab.hello">): void {
+    const prev = this.active;
     if (prev) {
       this.active = null;
       this.dropCalls(prev.ws);
@@ -172,7 +198,8 @@ export class TabHub {
       prev.ws.close(CLOSE_REFUSED, "tab_taken_over");
       this.o.log("あとから開いた作業画面のタブが引き継ぎました");
     }
-    const tab: ActiveTab = { ws: conn.ws, secret: Buffer.from(data.secret, "utf8"), session: randomUUID(), lastSeen: this.o.now(), build: data.build, work: false };
+    const now = this.o.now();
+    const tab: ActiveTab = { ws: conn.ws, secret: Buffer.from(data.secret, "utf8"), session: randomUUID(), lastSeen: now, heard: now, build: data.build, work: data.work === true };
     conn.active = tab;
     this.active = tab;
     this.dropped = 0; // 数はタブの回ごと
