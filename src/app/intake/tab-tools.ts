@@ -48,6 +48,7 @@ import { patchedExcelJS } from "../../import/exceljs-setup";
 import { offerTemplate } from "../state/template-draft";
 import { getShareChoice, placeClaudeShare } from "../state/share";
 import { sharePreviewNeeds } from "../../share/share-preview";
+import { fileKinds, matchFiles, shortName } from "../../shared/file-match";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -303,6 +304,23 @@ function skillsOf(ws: IntakeWorkspace) {
   return activeSkills(getWorkingPlan()?.plan.packId ?? (ws.settings.packId || null), ws.currentReadings());
 }
 
+/**
+ * 規則の when.file が「*」の無い名前の一部なら、資料を引く（#57）。ちょうど 1 つの資料に当たればその名前に置き換え、
+ * 2 つ以上なら置き換えずに候補を note に返す（推し量って選ばない）。どの資料の名前とも同じ・「*」を使う型・当たりが無いときは、そのまま
+ */
+function resolveRuleFiles(rules: ReadingRule[], names: readonly string[]): { rules: ReadingRule[]; note: string | null } {
+  const notes: string[] = [];
+  const out = rules.map((r) => {
+    const f = r.when?.file;
+    if (!f || f.includes("*") || names.includes(f)) return r;
+    const hits = matchFiles(f, names);
+    if (hits.length === 1) return { ...r, when: { ...r.when, file: hits[0]! } } as ReadingRule;
+    if (hits.length >= 2) notes.push(`「${f}」に当たる資料が ${hits.length} 本（${hits.slice(0, 5).map((h) => shortName(h)).join("・")}${hits.length > 5 ? " ほか" : ""}）。when.file に 1 本の名前を書いてください`);
+    return r;
+  });
+  return { rules: out, note: notes.length ? notes.join(" ") : null };
+}
+
 /** 規則の when が効かない種類（資料を丸ごと外す決まった答えの when.file だけは効く） */
 const WHEN_IGNORED: ReadonlySet<string> = new Set(["sameAsset", "answer", "planCycle"]);
 
@@ -327,7 +345,11 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   screen_set: (ws, args) => screenSet(ws, args as ScreenSetArgs),
   reading_rules_propose: (ws, args) => {
     // AI の経路から来た規則は、作者を AI に固め、決めた人の呼び名は捨てる（人と名乗らせない。台帳の新-8）
-    const fromAi = ((args.rules ?? []) as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule);
+    const aimed = resolveRuleFiles(
+      ((args.rules ?? []) as ReadingRule[]).map(({ by: _by, ...r }) => ({ ...r, author: "ai" as const }) as ReadingRule),
+      ws.fileNames,
+    );
+    const fromAi = aimed.rules;
     const remove = (args.remove ?? []) as string[];
     // when が効かない種類（同じ機器・決まった答え・計画ルール）に when を付けた規則は断る（黙って広く当てない。Architect の 57）。
     // ただし資料を丸ごと外す決まった答えは、when.file で資料を指したときだけ効く（見出しの文字では絞れない。会話の繰り返しの試験 11-08）
@@ -346,7 +368,7 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
       const v = ws.view;
       if (fromAi.length) ws.note("ai", T.readingProposed(name, fromAi.length));
       if (placed.removed.length) ws.note("ai", T.readingRemoved(name, placed.removed.length));
-      const note = proposeNote(fromAi, placed);
+      const note = [proposeNote(fromAi, placed), aimed.note].filter(Boolean).join(" ") || null;
       return {
         ok: true,
         data: { name: args.name, rules, removed: placed.removed, unresolvedCells: v.unresolvedCells, openQuestions: v.open.length, planReady: v.blockers.length === 0, ...(note ? { note } : {}) },
@@ -370,6 +392,7 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     // 資料の一覧は part: all か files のときだけ、limit（既定 20）まで。part: files は cursor から（全部の数は filesTotal）
     const fileLimit = typeof args.limit === "number" ? args.limit : SURVEY_FILES_DEFAULT;
     const fileCursor = part === "files" && typeof args.cursor === "number" ? args.cursor : 0;
+    const match = part === "files" && typeof args.match === "string" ? args.match : null;
     return andThen(ws.surveyWith(), (survey): TabToolResult => {
       const empty = { files: [], samples: [], legends: [], notes: [], questions: [], stuck: [] };
       const filesTotal = survey.files.length;
@@ -379,10 +402,15 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
         return { ok: true, data: { ...s, skillTexts: skillsOf(ws) } };
       }
       // 当てはめの要約は、作業中の計画があるときだけ（行は写さず、欄ごとの要約と数だけ）
+      // 名前の一部で引く（#57）。当たった資料だけを cursor・limit で返し、当たった数を filesMatched に
+      const hit = match === null ? null : new Set(matchFiles(match, survey.files.map((f) => f.fileRef)));
+      const pool = hit ? survey.files.filter((f) => hit.has(f.fileRef)) : survey.files;
       const s: Record<string, unknown> = {
         ...survey,
-        files: survey.files.slice(fileCursor, fileCursor + fileLimit),
+        files: pool.slice(fileCursor, fileCursor + fileLimit),
         filesTotal,
+        ...(part === "all" || part === "files" ? { fileKinds: fileKinds(survey.files.map((f) => f.fileRef)) } : {}),
+        ...(hit ? { filesMatched: pool.length } : {}),
         crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null,
         handoff: getHandoffMail(),
       };
