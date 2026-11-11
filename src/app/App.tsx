@@ -83,7 +83,7 @@ function useHash(): string {
 
 // 役割のトークン（src/ui/tokens.css）は暗が既定で、明は html の data-theme="light" で入れ替える
 function ThemeSync() {
-  const scheme = useComputedColorScheme("dark");
+  const scheme = useComputedColorScheme("dark", { getInitialValueInEffect: false });
   useEffect(() => {
     document.documentElement.dataset.theme = scheme;
   }, [scheme]);
@@ -110,7 +110,7 @@ export function App() {
   // 作業のあるタブがほかに開いている（#46）：このタブは 1 行だけにする（中身を出さない。操作できるものを置かない）
   if (state.kind === "refused" && state.code === "tab_elsewhere") {
     return (
-      <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
+      <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="auto">
         <ThemeSync />
         <p className="moyai-elsewhere" data-testid="refused" data-code="tab_elsewhere">
           {ERROR_TEXT.tab_elsewhere}
@@ -119,7 +119,7 @@ export function App() {
     );
   }
   return (
-    <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
+    <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="auto">
       <ThemeSync />
       <ReadingsSync />
       <Shell client={client} hash={hash} workspace={workspace} status={<DraftBand onRestored={onDraftRestored} />}>

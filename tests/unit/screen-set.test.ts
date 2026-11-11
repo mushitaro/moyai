@@ -120,6 +120,8 @@ describe("ツールの定義", () => {
     const input = TOOLS.screen_set.input;
     expect(input.safeParse({}).success).toBe(false);
     expect(input.safeParse({ theme: "sepia" }).success).toBe(false);
+    // 「PC の設定に合わせて」は auto（#61。既定も自動）
+    expect(input.safeParse({ theme: "auto" }).success).toBe(true);
     expect(input.safeParse({ go: "hoshitori.unknown" }).success).toBe(false);
     expect(input.safeParse({ confirm: true, theme: "light" }).success).toBe(false);
     expect(input.safeParse({ lastFiscalYear: 2040.5 }).success).toBe(false);

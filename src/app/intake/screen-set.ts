@@ -11,12 +11,12 @@ import { knownTemplate, proposeLayout } from "../state/template-draft";
 import { getReferenceDate } from "../state/review";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { getWorkingPlan } from "../state/plan-store";
-import { applyTheme, currentGo, currentTheme, displayPrefs, goTo, offerRoot, setDisplayPrefs, type Theme } from "../state/screen";
+import { applyTheme, currentGo, currentTheme, displayPrefs, goTo, offerRoot, setDisplayPrefs, type ThemeChoice } from "../state/screen";
 import { TEXT } from "../text";
 import type { IntakeWorkspace } from "./workspace";
 
 export interface ScreenSetArgs {
-  theme?: Theme;
+  theme?: ThemeChoice;
   go?: ScreenGo;
   storageRoot?: string;
   levelOrder?: LevelOrder;

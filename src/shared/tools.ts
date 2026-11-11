@@ -451,7 +451,7 @@ const screenRowRef = z.string().min(3).max(400);
 
 const screenSetInput = z
   .object({
-    theme: z.enum(["light", "dark"]).optional().describe("「ライトモードにして」は light、「ダークモードにして」は dark（ヘッダの 暗 / 明 と同じ）"),
+    theme: z.enum(["auto", "light", "dark"]).optional().describe("「ライトモードにして」は light、「ダークモードにして」は dark、「PC の設定に合わせて」は auto（設定の画面の明暗と同じ）"),
     go: z.enum(SCREEN_GO).optional().describe("開く画面。「星取表画面に切り替えて」は hoshitori.chart"),
     storageRoot: z.string().min(1).max(1000).optional().describe("保存先の絶対の道。保存は利用者が設定の画面で押す"),
     levelOrder: z.enum(LEVEL_ORDERS).optional().describe("「機器階層を入れ替えて表示して」は今と逆の並び（既定は asset-first）"),
@@ -1160,7 +1160,7 @@ export const TOOLS = {
     "propose",
     "作業画面の見せ方を変える",
     "チャットの頼みで作業画面の見せ方を変える。引数はどれか 1 つ以上で、1 回に並べて渡してよい。" +
-      "「ライトモードにして」は theme: light、「ダークモードにして」は dark。" +
+      "「ライトモードにして」は theme: light、「ダークモードにして」は dark、「PC の設定に合わせて」は auto。" +
       "「星取表画面に切り替えて」は go: hoshitori.chart（ほかに top＝トップ、hoshitori.cost＝費用、hoshitori.match＝突合、hoshitori.rules＝ルール、hoshitori.review＝照査、hoshitori.decisions＝確定、hoshitori.export＝出力、hoshitori.share＝共有、hoshitori.files＝資料、settings＝設定。前の export・share も同じシート）。" +
       "「ファイルの保管場所を変更して」は、利用者に道を聞いて storageRoot に絶対の道を書く。保存先は人だけが変えるので、MOYAI は設定と同じ確かめを通した道を設定の画面の保存先の欄に入れて開くだけ。利用者に「保存」を押してもらう。" +
       "「機器階層を入れ替えて表示して」は levelOrder を今と逆にする（asset-first は既定の 設備 › 機器 › 号炉・系統 › 部位、series-first は 設備 › 号炉・系統 › 機器 › 部位）。" +

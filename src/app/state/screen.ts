@@ -1,5 +1,5 @@
 // 作業画面の見せ方（仕事 chat-ops-v1）：明暗・開く画面・保存先の入力・星取表の階層の並び・機器の並び・計画の最大年度。
-// 人の操作（ヘッダの 暗 / 明、段のリンク、設定の「表示」の節）と、AI のツール screen_set（intake/screen-set.ts）が、同じ関数を通す。
+// 人の操作（設定の画面の明暗、段のリンク、設定の「表示」の節）と、AI のツール screen_set（intake/screen-set.ts）が、同じ関数を通す。
 // 星取表の見せ方の 3 つは施設ごとにブラウザに覚える（見せ方だけ。作業中の計画・版の記録・署名される字には入れない）。
 // 保存先は人だけが変える（設定は人だけの経路。AGENTS.md）：ここでは設定の画面の入力に入れて開くだけで、保存は人が押す。
 import { useSyncExternalStore } from "react";
@@ -17,33 +17,36 @@ function subscribe(l: Listener): () => void {
   return () => listeners.delete(l);
 }
 
-// ─── 明暗（ヘッダの 暗 / 明 と同じ） ─────────────────────────────
+// ─── 明暗（既定は PC の設定に従う。設定の画面の「明暗　自動 | 暗 | 明」で固定できる。#61） ─────────────
 
 export type Theme = "light" | "dark";
-let themeSetter: ((t: Theme) => void) | null = null;
+/** 人が選ぶ明暗：auto は PC の設定（prefers-color-scheme）に従う */
+export type ThemeChoice = "auto" | Theme;
+let themeSetter: ((t: ThemeChoice) => void) | null = null;
 let theme: Theme | null = null;
 
-/** ヘッダの切り替えが、明暗を変える手（Mantine の setColorScheme）と今の明暗を渡す。外すときは返した関数を呼ぶ */
-export function bindTheme(setter: (t: Theme) => void): () => void {
+/** 画面の外枠が、明暗を変える手（Mantine の setColorScheme。選びはこの PC に覚える）を渡す。外すときは返した関数を呼ぶ */
+export function bindTheme(setter: (t: ThemeChoice) => void): () => void {
   themeSetter = setter;
   return () => {
     if (themeSetter === setter) themeSetter = null;
   };
 }
 
-/** 今の明暗を覚える（ヘッダの切り替えが、描くたびに渡す） */
+/** 今の明暗（PC の設定で決まったものを含む）を覚える。画面の外枠が、描くたびに渡す */
 export function noteTheme(t: Theme): void {
   theme = t;
 }
 
-/** 明暗を変える（人がヘッダで押したときも、AI の screen_set も、この関数）。変える手がまだ無ければ false */
-export function applyTheme(t: Theme): boolean {
+/** 明暗を変える（人が設定の画面で押したときも、AI の screen_set も、この関数）。変える手がまだ無ければ false */
+export function applyTheme(t: ThemeChoice): boolean {
   if (!themeSetter) return false;
   themeSetter(t);
-  theme = t;
+  if (t !== "auto") theme = t;
   return true;
 }
 
+/** 今の明暗（暗か明。自動なら、PC の設定で決まったほう） */
 export function currentTheme(): Theme | null {
   return theme;
 }
