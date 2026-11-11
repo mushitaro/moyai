@@ -13,6 +13,7 @@ import { packVersion } from "../chart/catalog";
 import { useConnection } from "../state/bridge";
 import { takeRootOffer, useRootOffer } from "../state/screen";
 import { ThemeChoice } from "../components/ThemeChoice";
+import { Switch } from "../components/Switch";
 import { useWorkingPlan } from "../state/plan-store";
 import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -38,6 +39,8 @@ interface SettingsBody {
   rings: { ringId: string; root: string; pack: string; key: string; fingerprint: string | null; synced: Synced | null }[];
   packs: { id: string; name: string; ready: boolean; reason: string | null }[];
   name: string | null;
+  /** 最新の確かめ（#65 の 5）。古い橋渡しは送らない */
+  autoUpdate?: boolean;
   people: { by: string; key: string; pub: string; fingerprint: string; confirmed: boolean; own: boolean; changed: boolean; firstSeen: string; previous?: { fingerprint: string; at: string } | null }[];
 }
 
@@ -203,6 +206,12 @@ export function Settings() {
     setRootOffered(null);
     setEditName(false);
     setEditLedger(false);
+    await load();
+  };
+  const saveAutoUpdate = async (on: boolean) => {
+    if (!s) return;
+    const r = readHuman<{ ok: boolean }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: s.chosenRoot, autoUpdate: on }));
+    if (!r.ok) return setError(r.message);
     await load();
   };
   // ほかの人の鍵を、指紋を読み合わせて確認済みにする（人だけの経路）。どこからでも同じ読み合わせのダイアログを開く（KeyWarn.dc.html の 7）
@@ -405,6 +414,22 @@ export function Settings() {
           {/* 表示：星取表の見せ方（施設ごとにブラウザに覚える。押すとすぐ効き、上の行の「保存」とは別。Skillパックの上。docs/screens.md 3.7） */}
           {/* 明暗：既定は自動（PC の設定に従う）。暗・明に固定できる（#61。ヘッダには置かない） */}
           {row(T.themeTitle, <ThemeChoice />, "theme-setting")}
+          {/* 最新の確かめ（#65 の 5）：押すとすぐ保存する（人だけの経路）。切ったら一切問い合わせない。説明の文は置かない */}
+          {s.autoUpdate !== undefined &&
+            row(
+              T.updateTitle,
+              <Switch
+                aria-label={T.updateTitle}
+                data-testid="update-choice"
+                value={s.autoUpdate ? "on" : "off"}
+                onChange={(v) => void saveAutoUpdate(v === "on")}
+                data={[
+                  { value: "on", label: T.updateOn },
+                  { value: "off", label: T.updateOff },
+                ]}
+              />,
+              "update-setting",
+            )}
           {row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
           {row(
             T.packsTitle,

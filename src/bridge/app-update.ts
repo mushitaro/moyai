@@ -11,6 +11,7 @@ import { execFile, type ExecFileOptions } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
+import { randomUUID } from "node:crypto";
 
 /** 取ってくる先（固定。ツールの引数・環境で変えない） */
 export const UPDATE_SOURCE = "https://github.com/mushitaro/moyai.git";
@@ -82,9 +83,13 @@ export function installedCommitOf(root: string, cliPath: string): string | null 
 /** 走らせる手（試験は git を本物、npm と node を差し替える）。失敗したら投げる。橋渡しの中で走るので、待つあいだ止めない（非同期） */
 export type Run = (cmd: "git" | "npm" | "node", args: readonly string[], cwd: string) => Promise<string>;
 
+const GIT_PLACE_ENV = ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_NAMESPACE"];
+
 export const defaultRun: Run = (cmd, args, cwd) =>
   new Promise((done, fail) => {
-    const o: ExecFileOptions = { cwd, encoding: "utf8", windowsHide: true, maxBuffer: 64 * 1024 * 1024, timeout: 20 * 60_000 };
+    // 外から渡った git の置き場所の変数（GIT_DIR など）で、取ってくる先や版のフォルダがずれないように外す
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !GIT_PLACE_ENV.includes(k)));
+    const o: ExecFileOptions = { cwd, env, encoding: "utf8", windowsHide: true, maxBuffer: 64 * 1024 * 1024, timeout: 20 * 60_000 };
     const [file, extra] =
       cmd === "node" ? [process.execPath, {}] : cmd === "npm" && process.platform === "win32" ? ["npm.cmd", { shell: true }] : [cmd, {}];
     // moyai の人への知らせ（--version など）は標準エラーに出るので、両方を返す
@@ -114,9 +119,26 @@ async function fetchCache(e: UpdateEnv): Promise<string> {
   const src = e.sourceForTest ?? UPDATE_SOURCE;
   const cache = join(e.root, "cache.git");
   mkdirSync(e.root, { recursive: true });
-  if (!existsSync(join(cache, "HEAD"))) await run("git", ["clone", "--quiet", "--bare", "--single-branch", "--branch", UPDATE_BRANCH, src, cache], e.root);
-  else await run("git", ["fetch", "--quiet", src, `+refs/heads/${UPDATE_BRANCH}:refs/heads/${UPDATE_BRANCH}`], cache);
+  if (!existsSync(join(cache, "HEAD"))) {
+    // 途中で止まった取得を覚えと取り違えないよう、別の名前に取ってから移す
+    const tmp = join(e.root, `cache.git.tmp-${process.pid}`);
+    rmSync(tmp, { recursive: true, force: true });
+    try {
+      await run("git", ["clone", "--quiet", "--bare", "--single-branch", "--branch", UPDATE_BRANCH, src, tmp], e.root);
+      rmSync(cache, { recursive: true, force: true });
+      renameSync(tmp, cache);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  } else await run("git", ["fetch", "--quiet", src, `+refs/heads/${UPDATE_BRANCH}:refs/heads/${UPDATE_BRANCH}`], cache);
   return cache;
+}
+
+/** 題を 120 字（UTF-16 の数。ツールの答えの型と同じ数え方）に切る。サロゲートの対を割らない */
+export function clip120(s: string): string {
+  if (s.length <= 120) return s;
+  const hi = s.charCodeAt(118);
+  return `${s.slice(0, hi >= 0xd800 && hi <= 0xdbff ? 118 : 119)}…`;
 }
 
 /** 新しい版があるかを読む（入っている MOYAI のときだけ。中身は送らない。読むのはコミットと題だけ） */
@@ -129,19 +151,31 @@ export async function checkUpdate(e: UpdateEnv): Promise<CheckResult> {
   } catch {
     return { state: "fetch_failed" };
   }
-  const latest = (await run("git", ["rev-parse", `refs/heads/${UPDATE_BRANCH}`], cache)).trim();
+  let latest: string;
+  try {
+    latest = (await run("git", ["rev-parse", `refs/heads/${UPDATE_BRANCH}`], cache)).trim();
+  } catch {
+    return { state: "fetch_failed" };
+  }
+  if (!COMMIT.test(latest)) return { state: "fetch_failed" };
   if (latest === e.running) return { state: "up_to_date", current: e.running };
   try {
     await run("git", ["merge-base", "--is-ancestor", e.running, latest], cache);
   } catch {
     return { state: "not_fast_forward", current: e.running, latest };
   }
-  const titles = (await run("git", ["log", "--format=%s", "-n", "10", `${e.running}..${latest}`], cache))
-    .split("\n")
-    .map((s) => s.trim())
-    .filter((s) => s !== "")
-    .map((s) => ([...s].length > 120 ? `${[...s].slice(0, 119).join("")}…` : s));
-  const commits = Number((await run("git", ["rev-list", "--count", `${e.running}..${latest}`], cache)).trim()) || titles.length;
+  let titles: string[];
+  let commits: number;
+  try {
+    titles = (await run("git", ["log", "--format=%s", "-n", "10", `${e.running}..${latest}`], cache))
+      .split("\n")
+      .map((s) => s.trim())
+      .filter((s) => s !== "")
+      .map(clip120);
+    commits = Number((await run("git", ["rev-list", "--count", `${e.running}..${latest}`], cache)).trim()) || titles.length;
+  } catch {
+    return { state: "fetch_failed" };
+  }
   return { state: "available", current: e.running, latest, titles, commits, ready: isReady(e.root, latest) };
 }
 
@@ -197,10 +231,24 @@ export async function buildVersion(e: UpdateEnv, from: string, commit: string): 
     rmSync(staging, { recursive: true, force: true });
     return { ok: false, step: failed };
   }
-  writeFileSync(join(staging, READY), `${JSON.stringify({ commit, builtAt: new Date((e.now ?? Date.now)()).toISOString() })}\n`);
-  mkdirSync(join(e.root, "versions"), { recursive: true });
-  rmSync(versionDir(e.root, commit), { recursive: true, force: true });
-  renameSync(staging, versionDir(e.root, commit));
+  try {
+    writeFileSync(join(staging, READY), `${JSON.stringify({ commit, builtAt: new Date((e.now ?? Date.now)()).toISOString() })}\n`);
+    mkdirSync(join(e.root, "versions"), { recursive: true });
+    // 同じ版の作りかけ（印の無いもの）だけが残りうる。消してから移す。Windows では、ウイルス対策や検索がファイルをつかんで移せないことがあるので、待って何回か試す
+    rmSync(versionDir(e.root, commit), { recursive: true, force: true });
+    for (let i = 0; ; i++) {
+      try {
+        renameSync(staging, versionDir(e.root, commit));
+        break;
+      } catch (err) {
+        if (i >= 5) throw err;
+        await new Promise((r) => setTimeout(r, 250 * 2 ** i));
+      }
+    }
+  } catch {
+    rmSync(staging, { recursive: true, force: true });
+    return { ok: false, step: "install" };
+  }
   return { ok: true };
 }
 
@@ -216,17 +264,34 @@ export async function beginPrepare(e: UpdateEnv): Promise<BeginPrepare> {
   const running = e.running;
   const now = (e.now ?? Date.now)();
   const lock = join(e.root, LOCK);
+  // lock は「wx」で 1 つだけ作る（同じ時に 2 つの橋渡しが作らない）。持ち主が止まっている・古い lock だけを外す
+  const token = `${process.pid} ${randomUUID()}`;
+  const take = (): boolean => {
+    try {
+      writeFileSync(lock, token, { flag: "wx" });
+      return true;
+    } catch {
+      return false;
+    }
+  };
   try {
     mkdirSync(e.root, { recursive: true });
-    if (existsSync(lock) && now - statSync(lock).mtimeMs < LOCK_STALE_MS) return { result: { state: "busy" } };
-    writeFileSync(lock, String(process.pid));
+    if (!take()) {
+      if (lockLive(e.root, now)) return { result: { state: "busy" } };
+      rmSync(lock, { force: true });
+      if (!take()) return { result: { state: "busy" } };
+    }
     // lock を持ったので、前に途中で止まった用意の残り（staging-…）を消す
     for (const d of readdirSync(e.root)) if (d.startsWith("staging-")) rmSync(join(e.root, d), { recursive: true, force: true });
   } catch {
     return { result: { state: "busy" } };
   }
   const finish = (r: PrepareResult): PrepareResult => {
-    rmSync(lock, { force: true });
+    try {
+      if (readFileSync(lock, "utf8") === token) rmSync(lock, { force: true });
+    } catch {
+      /* もう無い */
+    }
     try {
       writeFileSync(join(e.root, LAST), `${JSON.stringify({ ...r, at: new Date((e.now ?? Date.now)()).toISOString() })}\n`);
     } catch {
@@ -264,6 +329,48 @@ export async function prepareUpdate(e: UpdateEnv): Promise<PrepareResult> {
   return "result" in b ? b.result : b.done;
 }
 
+/** 自動の確かめ（運営者の決定 2026-11-11。#65 の 5）：起動のあと少しして 1 回と、動いている間 6 時間ごと */
+export const AUTO_CHECK_FIRST_MS = 60_000;
+export const AUTO_CHECK_EVERY_MS = 6 * 60 * 60_000;
+
+/**
+ * 1 回の自動の確かめ。設定で切ってあれば、何も問い合わせない（git も走らせない）。
+ * 入っている MOYAI で、新しい版があれば prepare を裏で始める（切り替えは次の起動）。送るのは問い合わせ（git の取得）だけ
+ */
+export async function autoCheckOnce(e: UpdateEnv, enabled: () => boolean, onReady: (latest: string) => void): Promise<string> {
+  if (!enabled()) return "off";
+  if (!e.running) return "dev_clone";
+  if (preparing(e.root, (e.now ?? Date.now)())) return "busy";
+  const b = await beginPrepare(e);
+  if ("result" in b) return b.result.state;
+  void b.done.then((r) => {
+    if (r.state === "ready") onReady(r.latest);
+  });
+  return "started";
+}
+
+/** 自動の確かめを回す。止める手を返す（橋渡しを閉じるとき）。毎回、設定を読み直す（切ったら次から問い合わせない） */
+export function startAutoCheck(
+  e: UpdateEnv,
+  enabled: () => boolean,
+  onReady: (latest: string) => void,
+  ms: { first: number; every: number } = { first: AUTO_CHECK_FIRST_MS, every: AUTO_CHECK_EVERY_MS },
+): () => void {
+  let stopped = false;
+  const tick = () => {
+    if (!stopped) void autoCheckOnce(e, enabled, onReady).catch(() => {});
+  };
+  const first = setTimeout(tick, ms.first);
+  const every = setInterval(tick, ms.every);
+  first.unref?.();
+  every.unref?.();
+  return () => {
+    stopped = true;
+    clearTimeout(first);
+    clearInterval(every);
+  };
+}
+
 /** 最後の用意の結果（無ければ null） */
 export function lastPrepare(root: string): Record<string, unknown> | null {
   try {
@@ -273,13 +380,60 @@ export function lastPrepare(root: string): Record<string, unknown> | null {
   }
 }
 
-/** 用意が走っているか（lock がある・新しい） */
-export function preparing(root: string, now = Date.now()): boolean {
+/** プロセスが生きているか（同じ PC。分からなければ生きているとみなす） */
+export function pidAlive(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
-    return now - statSync(join(root, LOCK)).mtimeMs < LOCK_STALE_MS;
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return (err as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+/** 用意の lock が生きているか：新しく、持ち主のプロセスが生きている */
+function lockLive(root: string, now: number): boolean {
+  try {
+    const f = join(root, LOCK);
+    if (now - statSync(f).mtimeMs >= LOCK_STALE_MS) return false;
+    return pidAlive(Number(readFileSync(f, "utf8").split(" ")[0]));
   } catch {
     return false;
   }
+}
+
+/** 用意が走っているか（lock が生きている） */
+export function preparing(root: string, now = Date.now()): boolean {
+  return lockLive(root, now);
+}
+
+/** その版から動いているプロセス（橋渡し・中継）の印を置く。止まるときに消す手を返す。起動の台本は、印の生きている版を消さない */
+export function markRunning(root: string, commit: string): () => void {
+  const dir = join(root, "running");
+  const f = join(dir, `${commit}.${process.pid}`);
+  try {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(f, "");
+  } catch {
+    return () => {};
+  }
+  return () => rmSync(f, { force: true });
+}
+
+/** 印の生きている版（死んだ印は消す） */
+export function liveVersions(root: string): Set<string> {
+  const out = new Set<string>();
+  const dir = join(root, "running");
+  try {
+    for (const f of readdirSync(dir)) {
+      const [c, pid] = f.split(".");
+      if (c && COMMIT.test(c) && pidAlive(Number(pid))) out.add(c);
+      else rmSync(join(dir, f), { force: true });
+    }
+  } catch {
+    /* 印が無い */
+  }
+  return out;
 }
 
 /**
@@ -296,9 +450,12 @@ export function promote(root: string): string | null {
     if (next.previous && isReady(root, next.previous)) next = { current: next.previous, previous: null, next: null };
   }
   if (JSON.stringify(next) !== JSON.stringify(p)) writePointer(root, next);
-  const keep = new Set([next.current, next.previous].filter((x): x is string => !!x));
-  const vdir = join(root, "versions");
-  if (existsSync(vdir)) for (const d of readdirSync(vdir)) if (!keep.has(d)) rmSync(join(vdir, d), { recursive: true, force: true });
+  // 用意が走っている間は消さない（次の版を移してから current.json に書くまでの間を守る）。動いている版も消さない
+  if (!preparing(root)) {
+    const keep = new Set([next.current, next.previous, ...liveVersions(root)].filter((x): x is string => !!x));
+    const vdir = join(root, "versions");
+    if (existsSync(vdir)) for (const d of readdirSync(vdir)) if (!keep.has(d)) rmSync(join(vdir, d), { recursive: true, force: true });
+  }
   return next.current;
 }
 
@@ -314,8 +471,11 @@ const { spawn } = require("child_process");
 const root = __dirname;
 const C = /^[0-9a-f]{40}$/;
 const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return null; } };
+const alive = (pid) => { if (!Number.isInteger(pid) || pid <= 0) return false; try { process.kill(pid, 0); return true; } catch (e) { return e.code === "EPERM"; } };
 const ready = (c) => { const v = c && readJson(path.join(root, "versions", c, ${JSON.stringify(READY)})); return !!v && v.commit === c && fs.existsSync(path.join(root, "versions", c, "dist", "cli.js")); };
-const p0 = readJson(path.join(root, ${JSON.stringify(POINTER)})) || {};
+let p0 = readJson(path.join(root, ${JSON.stringify(POINTER)}));
+// 書き換えの途中で読めなかったときは、少し待ってもう 1 回読む
+if (!p0) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 300); p0 = readJson(path.join(root, ${JSON.stringify(POINTER)})) || {}; }
 const ok = (x) => (typeof x === "string" && C.test(x) ? x : null);
 let p = { current: ok(p0.current), previous: ok(p0.previous), next: ok(p0.next) };
 if (p.next && ready(p.next) && p.next !== p.current) p = { current: p.next, previous: p.current, next: null };
@@ -327,9 +487,19 @@ if (JSON.stringify(p) !== JSON.stringify({ current: ok(p0.current), previous: ok
   fs.renameSync(tmp, path.join(root, ${JSON.stringify(POINTER)}));
 }
 if (!p.current || !ready(p.current)) { process.stderr.write("MOYAI：起動できる版がありません。moyai setup で入れ直してください。\\n"); process.exit(1); }
-// 前の版を 1 つ残し、ほかの版を消す（動いている前の版の橋渡しは previous にいるので消さない。消せなければ次の起動で）
-try { for (const d of fs.readdirSync(path.join(root, "versions"))) if (d !== p.current && d !== p.previous) fs.rmSync(path.join(root, "versions", d), { recursive: true, force: true }); } catch {}
+// 前の版を 1 つ残し、ほかの版を消す。用意が走っている間（lock が生きている）と、動いている版（running/ の印）は消さない。消せなければ次の起動で
+try {
+  const lk = path.join(root, ${JSON.stringify(LOCK)});
+  let busy = false;
+  try { busy = Date.now() - fs.statSync(lk).mtimeMs < ${LOCK_STALE_MS} && alive(Number(fs.readFileSync(lk, "utf8").split(" ")[0])); } catch {}
+  if (!busy) {
+    const keep = new Set([p.current, p.previous]);
+    try { for (const f of fs.readdirSync(path.join(root, "running"))) { const [c, pid] = f.split("."); if (alive(Number(pid))) keep.add(c); else fs.rmSync(path.join(root, "running", f), { force: true }); } } catch {}
+    for (const d of fs.readdirSync(path.join(root, "versions"))) if (!keep.has(d)) fs.rmSync(path.join(root, "versions", d), { recursive: true, force: true });
+  }
+} catch {}
 const child = spawn(process.execPath, [path.join(root, "versions", p.current, "dist", "cli.js"), ...process.argv.slice(2)], { stdio: "inherit", windowsHide: true });
+child.on("error", () => { process.stderr.write("MOYAI：版を起こせませんでした。moyai setup で入れ直してください。\\n"); process.exit(1); });
 child.on("exit", (code, signal) => process.exit(code === null ? (signal ? 1 : 0) : code));
 for (const s of ["SIGINT", "SIGTERM"]) process.on(s, () => child.kill(s));
 `;
@@ -349,8 +519,12 @@ export async function installFromClone(e: Omit<UpdateEnv, "running">, clone: str
   try {
     commit = (await run("git", ["rev-parse", "HEAD"], clone)).trim();
     if ((await run("git", ["status", "--porcelain", "--untracked-files=no"], clone)).trim() !== "") return { ok: false, step: "local_changes" };
-  } catch {
-    return { ok: false, step: "not_repo" };
+    // 入れた版は、あとで mushitaro/moyai の main から fast-forward で進める。main に無いコミットは入れない（--dev を使う）
+    await run("git", ["merge-base", "--is-ancestor", "HEAD", `refs/remotes/origin/${UPDATE_BRANCH}`], clone).catch(() => {
+      throw new Error("not_on_main");
+    });
+  } catch (err) {
+    return { ok: false, step: (err as Error).message === "not_on_main" ? "not_on_main" : "not_repo" };
   }
   if (!isReady(e.root, commit)) {
     const b = await buildVersion({ ...e, running: null }, clone, commit);

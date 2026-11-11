@@ -22,7 +22,7 @@ import { approvedReadingVersions, listReadings, readingTextShown, registerReadin
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
-import { beginPrepare, checkUpdate, isReady, lastPrepare, preparing, readPointer, type UpdateEnv } from "./app-update";
+import { beginPrepare, checkUpdate, isReady, startAutoCheck, lastPrepare, preparing, readPointer, type UpdateEnv } from "./app-update";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { collectIntake, readIntakeFile, skillPacksText } from "./intake-files";
 import ExcelJS from "exceljs";
@@ -77,6 +77,8 @@ export interface BridgeOptions {
    * 無ければ dev_clone と答える。試験だけが run と取ってくる先を差し替える
    */
   appUpdate?: Pick<UpdateEnv, "root" | "running" | "run" | "sourceForTest">;
+  /** 自動の確かめの間（試験で短くするときだけ。既定は起動の 1 分あとと 6 時間ごと） */
+  autoCheckMs?: { first: number; every: number };
 }
 
 export interface Bridge {
@@ -264,10 +266,13 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   const relayKey = randomBytes(32).toString("base64url");
   let port = opts.port;
   let closing: Promise<void> | null = null;
+  // 自動の確かめ（#65 の 5）を止める手。橋渡しが待ち受けを始めてから回す
+  let stopAutoCheck = (): void => {};
   // 閉じる（2 回目からは同じ約束を返す）。鍵ファイルは自分のものだけを消す
   const close = (): Promise<void> =>
     (closing ??= (async () => {
       tabs.stop();
+      stopAutoCheck();
       for (const c of wss.clients) c.terminate();
       wss.close();
       if (opts.stateDir) removeKeyFile(opts.stateDir, relayKey);
@@ -555,6 +560,11 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   const addr = server.address();
   port = typeof addr === "object" && addr ? addr.port : opts.port;
   tabs.start();
+  // 自動の確かめ（運営者の決定 2026-11-11。#65 の 5）：入っている MOYAI だけ。設定の「最新の確かめ」を切ったら問い合わせない（毎回読み直す）
+  if (opts.appUpdate?.running && sd) {
+    const u = opts.appUpdate;
+    stopAutoCheck = startAutoCheck(u, () => readSettings(sd).autoUpdate !== false, (latest) => tabs.announceNext(latest), opts.autoCheckMs);
+  }
 
   if (opts.stateDir) {
     // 版（ビルドの commit）も書く。中継はこれを自分の版と比べ、違えば止める合図を送って新しい版を起こす（src/cli/relay.ts）

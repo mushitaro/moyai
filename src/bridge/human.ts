@@ -193,7 +193,12 @@ const SCHEMAS = {
   person_key_create: z.object({}),
   person_key_confirm: z.object({ pub: z.string().regex(HEX64) }),
   settings_read: z.object({}),
-  settings_save: z.object({ root: z.string().max(1000).nullable(), ledger: z.string().max(1000).nullable().optional(), name: z.string().max(40).nullable().optional() }),
+  settings_save: z.object({
+    root: z.string().max(1000).nullable(),
+    ledger: z.string().max(1000).nullable().optional(),
+    name: z.string().max(40).nullable().optional(),
+    autoUpdate: z.boolean().optional(),
+  }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID) }),
   checkpoint_preview: z.object({ planId: planIdSchema, ringId: ringIdSchema.nullable(), answers: answersSchema }),
   checkpoint_open_text: z.object({ planId: planIdSchema, ringId: ringIdSchema, answers: answersSchema }),
@@ -646,7 +651,7 @@ export class HumanService {
           const w = readKeyFile(sd, r.ringId);
           return { ringId: r.ringId, root: r.root, pack: r.pack, key: r.key, fingerprint: w ? fingerprint(w.pub) : null, synced: syncedOf(r.root, docs.syncRoots) };
         });
-        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, github: readGitHub(sd)?.login ?? null, rings, packs: this.packs(), name: s.name, people: trustList(sd) };
+        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, github: readGitHub(sd)?.login ?? null, rings, packs: this.packs(), name: s.name, autoUpdate: s.autoUpdate !== false, people: trustList(sd) };
       }
       case "settings_save": {
         const p = parsePayload("settings_save", call.payload);
@@ -660,8 +665,10 @@ export class HumanService {
         // 呼び名も、送られたときだけ変える
         const name = p.name === undefined ? prev.name : p.name === null ? null : validName(p.name) ? p.name : undefined;
         if (name === undefined) return no("nameInvalid");
-        writeSettings(sd, { v: 1, root, ledger, name });
-        return { ok: true, root, ledger, name };
+        // 最新の確かめ（#65）も、送られたときだけ変える。切ったときだけ false を置く
+        const autoUpdate = p.autoUpdate === undefined ? prev.autoUpdate !== false : p.autoUpdate;
+        writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }) });
+        return { ok: true, root, ledger, name, autoUpdate };
       }
       case "comment_add": {
         const p = parsePayload("comment_add", call.payload);

@@ -33,7 +33,12 @@ export const SETUP_TEXT = {
     `MOYAI を ${root} の版ごとのフォルダに入れます（この clone の今のコミットを別のフォルダで取得 → npm ci → build → 自己点検。数分かかります。clone は変えません）。Claude Desktop は、版のフォルダの外の起動の台本（launch.cjs）を指します。`,
   installSame: (commit: string) => `版 ${commit.slice(0, 7)} は、もう入っています。`,
   installed: (commit: string) => `版 ${commit.slice(0, 7)} を入れました。`,
-  installFailed: (step: string) => `入れられませんでした（${step} で止まりました）。Claude Desktop の設定は変えていません。`,
+  installFailed: (step: string) =>
+    step === "not_on_main"
+      ? "この clone の今のコミットが main にないので、入れませんでした（入れた版は main から最新にします）。main に戻すか、clone を直に指すなら --dev を付けてください。Claude Desktop の設定は変えていません。"
+      : step === "local_changes"
+        ? "この clone に手元の変更があるので、入れませんでした。Claude Desktop の設定は変えていません。"
+        : `入れられませんでした（${step} で止まりました）。Claude Desktop の設定は変えていません。`,
   desktopOpen:
     "Claude Desktop が開いています。開いているあいだは Desktop が設定を書き直すので、この 1 行は消えます。Desktop が閉じたら、もう一度足します（見張りを後ろで起こしました。1 時間待ちます）。利用者には、Claude Desktop を 1 回閉じて開き直してもらってください。",
   waitGaveUp: "Claude Desktop が 1 時間閉じなかったので、書かずに終えました。",

@@ -492,6 +492,10 @@ export const HUMAN_TEXT = {
     /** 表示（星取表の見せ方。施設ごとにブラウザに覚える。docs/screens.md 3.7、Wire、11-07。言葉は docs/words.md） */
     displayTitle: "表示",
     themeTitle: "明暗",
+    // 最新の確かめ（#65 の 5。入っている MOYAI が mushitaro/moyai の main を問い合わせる。切ったら一切問い合わせない。説明の文は足さない）
+    updateTitle: "最新の確かめ",
+    updateOn: "する",
+    updateOff: "しない",
     displayNoPlan: "作業中の計画なし",
     levelOrderLabel: "階層",
     /** 号炉・系統の字は Skillパックの既定の階層の名前（ごみ焼却は号炉、し尿は系統） */

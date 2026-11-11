@@ -10,16 +10,20 @@ import {
   LAUNCHER_SOURCE,
   UPDATE_SOURCE,
   appRoot,
+  autoCheckOnce,
   beginPrepare,
+  clip120,
   checkUpdate,
   defaultRun,
   installFromClone,
   installedCommitOf,
   isReady,
   lastPrepare,
+  markRunning,
   prepareUpdate,
   promote,
   readPointer,
+  startAutoCheck,
   versionDir,
   writeLauncher,
   type Run,
@@ -27,6 +31,8 @@ import {
 import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
 import { MCP_INSTRUCTIONS } from "../../src/shared/instructions";
 import { TOOLS } from "../../src/shared/tools";
+import { readSettings, writeSettings } from "../../src/bridge/places";
+import { startTestBridge } from "../helpers/bridge";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => {
@@ -284,5 +290,114 @@ describe("次の起動で切り替える（起動の台本）", () => {
     expect(promote(d)).toBe(C(3));
     expect(readPointer(d)).toEqual({ current: C(3), previous: C(2), next: null });
     expect(readdirSync(join(d, "versions")).sort()).toEqual([C(2), C(3)]);
+  });
+});
+
+describe("自動の確かめ（#65 の 5）", () => {
+  it("切ってあれば一切問い合わせない（git も npm も走らせない）", async () => {
+    const calls: string[] = [];
+    const run: Run = async (cmd, args) => {
+      calls.push(`${cmd} ${args.join(" ")}`);
+      return "";
+    };
+    expect(await autoCheckOnce({ root: "/nonexistent", running: "1".repeat(40), run }, () => false, () => {})).toBe("off");
+    let ticks = 0;
+    const stop = startAutoCheck({ root: "/nonexistent", running: "1".repeat(40), run }, () => (ticks++, false), () => {}, { first: 1, every: 5 });
+    await new Promise((r) => setTimeout(r, 60));
+    stop();
+    expect(ticks).toBeGreaterThan(1);
+    expect(calls).toEqual([]);
+  });
+
+  it("入れてあれば、新しい版があるとき裏で用意し、用意できたら知らせる。開発の clone では問い合わせない", async () => {
+    const w = world();
+    const e = await installed(w);
+    const c2 = w.push("2\n");
+    let told = "";
+    expect(await autoCheckOnce({ ...e, run: runner().run }, () => true, (l) => (told = l))).toBe("started");
+    for (let i = 0; i < 100 && !told; i++) await new Promise((r) => setTimeout(r, 20));
+    expect(told).toBe(c2);
+    expect(readPointer(w.root).next).toBe(c2);
+    const calls: string[] = [];
+    expect(await autoCheckOnce({ ...e, running: null, run: async (c) => (calls.push(c), "") }, () => true, () => {})).toBe("dev_clone");
+    expect(calls).toEqual([]);
+  });
+});
+
+describe("見直しで直したこと", () => {
+  it("題は UTF-16 で 120 字に切り、サロゲートの対を割らない", () => {
+    expect(clip120("あ".repeat(120))).toBe("あ".repeat(120));
+    expect(clip120("あ".repeat(121))).toHaveLength(120);
+    const emoji = "😀".repeat(70);
+    const c = clip120(emoji);
+    expect(c.length).toBeLessThanOrEqual(120);
+    expect(c.endsWith("…")).toBe(true);
+    expect(/[\uD800-\uDBFF]…$/.test(c)).toBe(false);
+  });
+
+  it("main にないコミットの clone は入れない（あとで fast-forward で進められないので）", async () => {
+    const w = world();
+    writeFileSync(join(w.dev, "b.txt"), "x\n");
+    git(w.dev, "add", "b.txt");
+    git(w.dev, "commit", "--quiet", "-m", "手元だけ");
+    expect(await installFromClone({ root: w.root, run: runner().run }, w.dev)).toEqual({ ok: false, step: "not_on_main" });
+    expect(existsSync(join(w.root, "versions"))).toBe(false);
+  });
+
+  it("起動の台本は、動いている版（running/ の印）と、用意が走っている間は消さない", () => {
+    const d = mkdtempSync(join(tmpdir(), "moyai-launch-"));
+    cleanups.push(() => rmSync(d, { recursive: true, force: true }));
+    const C = (n: number) => String(n).repeat(40).slice(0, 40);
+    for (const n of [1, 2, 3]) {
+      const v = versionDir(d, C(n));
+      mkdirSync(join(v, "dist"), { recursive: true });
+      writeFileSync(join(v, "dist", "cli.js"), "");
+      writeFileSync(join(v, ".moyai-ready.json"), JSON.stringify({ commit: C(n) }));
+    }
+    writeFileSync(join(d, "current.json"), JSON.stringify({ current: C(3), previous: C(2), next: null }));
+    const unmark = markRunning(d, C(1));
+    const f = writeLauncher(d);
+    execFileSync(process.execPath, [f, "x"], { stdio: "ignore" });
+    expect(readdirSync(join(d, "versions")).sort()).toEqual([C(1), C(2), C(3)]);
+    unmark();
+    // 用意が走っている（この試験のプロセスが持つ lock）
+    writeFileSync(join(d, "prepare.lock"), `${process.pid} t`);
+    execFileSync(process.execPath, [f, "x"], { stdio: "ignore" });
+    expect(readdirSync(join(d, "versions")).sort()).toEqual([C(1), C(2), C(3)]);
+    rmSync(join(d, "prepare.lock"));
+    execFileSync(process.execPath, [f, "x"], { stdio: "ignore" });
+    expect(readdirSync(join(d, "versions")).sort()).toEqual([C(2), C(3)]);
+  });
+
+  it("持ち主の止まった lock は外して用意する", async () => {
+    const w = world();
+    const e = await installed(w);
+    w.push("2\n");
+    writeFileSync(join(w.root, "prepare.lock"), "999999999 dead");
+    expect((await prepareUpdate({ ...e, run: runner().run })).state).toBe("ready");
+  });
+});
+
+describe("自動の確かめ：設定の「最新の確かめ」", () => {
+  it("既定は入。「しない」にした橋渡しは、起動のときも間をおいても、一切問い合わせない", async () => {
+    const calls: string[] = [];
+    const run: Run = async (cmd, args, cwd) => {
+      calls.push(`${cmd} ${args.join(" ")} @ ${cwd}`);
+      throw new Error("no network in test");
+    };
+    const d = mkdtempSync(join(tmpdir(), "moyai-auto-"));
+    cleanups.push(() => rmSync(d, { recursive: true, force: true }));
+    // 切った橋渡し
+    const off = await startTestBridge({ appUpdate: { root: join(d, "off"), running: "1".repeat(40), run }, autoCheckMs: { first: 40, every: 20 } });
+    cleanups.push(() => off.close());
+    writeSettings(off.stateDir, { v: 1, root: null, ledger: null, name: null, autoUpdate: false });
+    expect(readSettings(off.stateDir).autoUpdate).toBe(false);
+    // 入の橋渡し（既定）は問い合わせる
+    const on = await startTestBridge({ appUpdate: { root: join(d, "on"), running: "2".repeat(40), run }, autoCheckMs: { first: 30, every: 1000 } });
+    cleanups.push(() => on.close());
+    expect(readSettings(on.stateDir).autoUpdate).toBeUndefined();
+    await new Promise((r) => setTimeout(r, 150));
+    expect(calls.some((c) => c.includes(join(d, "on")))).toBe(true);
+    expect(calls.some((c) => c.includes(join(d, "off")))).toBe(false);
   });
 });
