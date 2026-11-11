@@ -668,7 +668,7 @@ export class HumanService {
         // 最新の確かめ（#65）も、送られたときだけ変える。切ったときだけ false を置く
         const autoUpdate = p.autoUpdate === undefined ? prev.autoUpdate !== false : p.autoUpdate;
         writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }) });
-        return { ok: true, root, ledger, name, autoUpdate };
+        return { ok: true, root, ledger, name };
       }
       case "comment_add": {
         const p = parsePayload("comment_add", call.payload);
