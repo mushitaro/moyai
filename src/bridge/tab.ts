@@ -29,6 +29,8 @@ export interface TabHubOptions {
   deadMs: number;
   helloTimeoutMs: number;
   tokenTtlMs: number;
+  /** 橋渡しのビルドの commit。bridge.welcome で画面に渡す */
+  build?: string;
   now: () => number;
   log: (msg: string) => void;
 }
@@ -166,6 +168,7 @@ export class TabHub {
       heartbeatMs: this.o.heartbeatMs,
       deadMs: this.o.deadMs,
       tokenTtlMs: this.o.tokenTtlMs,
+      ...(this.o.build ? { build: this.o.build } : {}),
     });
     this.o.log("作業画面のタブがつながりました");
   }

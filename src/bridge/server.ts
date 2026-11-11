@@ -135,6 +135,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     deadMs: opts.deadMs ?? DEAD_MS,
     helloTimeoutMs: opts.helloTimeoutMs ?? HELLO_TIMEOUT_MS,
     tokenTtlMs,
+    ...(opts.build ? { build: opts.build } : {}),
     now,
     log,
   });

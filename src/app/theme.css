@@ -961,6 +961,10 @@ button.moyai-top-mk[data-kind="signed"] {
   color: var(--text-3);
   user-select: text;
 }
+/* 橋渡しのビルドが画面と違う（#43）：朱にするだけ */
+.moyai-build-stamp[data-differ="true"] {
+  color: var(--shu-text);
+}
 
 /* タグ：縁も【】も持たず、言葉の前に短い横の線「-」だけ（運営者の指示 2026-11-04）。線は字の色 */
 .moyai-tag-mark::before,
