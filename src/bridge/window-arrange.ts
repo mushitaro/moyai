@@ -14,10 +14,10 @@ import type { WindowArrangeResult } from "../shared/window-arrange";
 
 /**
  * claude.ai のタブの題の形（「Claude」か「<会話の題> - Claude」）。ブラウザの窓の題は「<タブの題> - Google Chrome」なので、
- * 「Claude」が字の頭か、前後が「 - 」「 – 」「 | 」の区切りのときだけ当てる。台本の C# と同じ正規表現（ダブルクォートを含めない）。
+ * 「Claude」が字の頭か、前後が「 - 」「 – 」「 | 」の区切りのときだけ当てる。Edge はタブが多いと「<タブの題> and 2 more pages - …」（日本語は「、他 2 ページ」）になるので、それも当てる。台本の C# と同じ正規表現（ダブルクォートを含めない）。
  * 実機の claude.ai のタブの題は未確認。
  */
-export const CLAUDE_TITLE_PATTERN = String.raw`(^|\s[-–|]\s)Claude(\s[-–|]\s|$)`;
+export const CLAUDE_TITLE_PATTERN = String.raw`(^|\s[-–|]\s)Claude(\s[-–|]\s|\sand\s\d+\smore\s|、|$)`;
 export function isClaudeBrowserTitle(title: string): boolean {
   return new RegExp(CLAUDE_TITLE_PATTERN).test(title);
 }

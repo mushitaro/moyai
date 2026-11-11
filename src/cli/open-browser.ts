@@ -37,10 +37,28 @@ function defaultBrowserWindows(): NewWindowBrowser | null {
       ["query", "HKCU\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice", "/v", "ProgId"],
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], windowsHide: true, timeout: 3000 },
     );
-    return browserOfProgId(readProgId(out));
+    const b = browserOfProgId(readProgId(out));
+    // start が見つけられる（App Paths に登録がある）ときだけ。無ければ「見つかりません」の窓が出るので、今までどおり既定のブラウザに渡す
+    return b && hasAppPath(b) ? b : null;
   } catch {
     return null;
   }
+}
+
+function hasAppPath(b: NewWindowBrowser): boolean {
+  for (const root of ["HKLM", "HKCU"]) {
+    try {
+      execFileSync("reg", ["query", `${root}\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\${b}.exe`], {
+        stdio: "ignore",
+        windowsHide: true,
+        timeout: 3000,
+      });
+      return true;
+    } catch {
+      /* 無い */
+    }
+  }
+  return false;
 }
 
 export function openBrowser(url: string): void {

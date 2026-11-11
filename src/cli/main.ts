@@ -57,7 +57,6 @@ const HELP = `使い方：
   moyai send                                共有ファイルを送る（人だけ。検問所の画面から送る。端末からは未実装）
   moyai --version                           ビルドの版を出す`;
 
-
 async function start(argv: string[]): Promise<void> {
   const args = parseStartArgs(argv);
   if (!args) return fail("bad_args");

@@ -27,6 +27,8 @@ describe("Claude をブラウザ（claude.ai）で使うときの窓（#44）", 
     expect(isClaudeBrowserTitle("Claude - Google Chrome")).toBe(true);
     expect(isClaudeBrowserTitle("点検の周期を決める - Claude - Google Chrome")).toBe(true);
     expect(isClaudeBrowserTitle("Claude - 個人 - Microsoft Edge")).toBe(true);
+    expect(isClaudeBrowserTitle("Claude and 2 more pages - 個人 - Microsoft Edge")).toBe(true);
+    expect(isClaudeBrowserTitle("Claude、他 2 ページ - 個人 - Microsoft Edge")).toBe(true);
     expect(isClaudeBrowserTitle("MOYAI - Google Chrome")).toBe(false);
     expect(isClaudeBrowserTitle("Claude と並べる - Google Chrome")).toBe(false);
     expect(isClaudeBrowserTitle("ClaudeCode の記事 - Google Chrome")).toBe(false);
