@@ -239,6 +239,88 @@ describe("タブとの WebSocket", () => {
     expect(tb.bridge.tabs.checkSecret(SECRET_B)).toHaveProperty("session");
   });
 
+  it("作業のある生きたタブがあれば、あとから開いたタブを断り（別のタブで開いています）、前のタブを残す（#46）", async () => {
+    tb = await startTestBridge({ probeMs: 200 });
+    const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await a.opened;
+    a.send("tab.hello", { secret: SECRET_A, build: "t" });
+    await a.next("bridge.welcome");
+    a.send("tab.work", { work: true });
+    await new Promise((r) => setTimeout(r, 50));
+    const b = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await b.opened;
+    b.send("tab.hello", { secret: SECRET_B, build: "t" });
+    const refused = await b.next("bridge.refused", 10_000);
+    expect(refused.code).toBe("tab_elsewhere");
+    expect(await b.closed).toBe(4001);
+    // 断られたタブの秘密では人だけの経路を通れない。前のタブの秘密で通る（守りは今と同じ強さ）
+    expect(tb.bridge.tabs.checkSecret(SECRET_B)).toBe("secret_mismatch");
+    expect(tb.bridge.tabs.checkSecret(SECRET_A)).toHaveProperty("session");
+    // 前のタブは生きたまま：token を受けられる
+    a.send("tab.token_request", { requestId: "r1", action: "commit_trial", payloadHash: sha("{}") });
+    await a.next("bridge.token");
+    // 同じタブのつなぎ直し（同じ秘密）は断らない
+    const a2 = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await a2.opened;
+    a2.send("tab.hello", { secret: SECRET_A, build: "t" });
+    await a2.next("bridge.welcome");
+    a2.ws.close();
+  });
+
+  it("作業のある前のタブが確かめの ping に答えなければ（読み込み直した・固まった）、あとから開いたタブが引き継ぐ（#46）", async () => {
+    tb = await startTestBridge({ probeMs: 200 });
+    const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await a.opened;
+    // 握手に作業を添える（つなぎ直しの直後から守る）
+    a.send("tab.hello", { secret: SECRET_A, build: "t", work: true });
+    await a.next("bridge.welcome");
+    a.autoPong = false;
+    const b = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await b.opened;
+    b.send("tab.hello", { secret: SECRET_B, build: "t" });
+    // 確かめの待ちのあとに引き継ぐ（全部の試験を並べて走らせると遅れるので、待ちを長めに）
+    await b.next("bridge.welcome", 10_000);
+    expect((await a.next("bridge.refused")).code).toBe("tab_taken_over");
+    expect(tb.bridge.tabs.checkSecret(SECRET_A)).toBe("secret_mismatch");
+    expect(tb.bridge.tabs.checkSecret(SECRET_B)).toHaveProperty("session");
+    b.ws.close();
+  });
+
+  it("握手に添えた作業でも守る：作業のあるタブは、確かめの ping に答えれば残る（#46）", async () => {
+    tb = await startTestBridge({ probeMs: 200 });
+    const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await a.opened;
+    a.send("tab.hello", { secret: SECRET_A, build: "t", work: true });
+    await a.next("bridge.welcome");
+    const b = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await b.opened;
+    b.send("tab.hello", { secret: SECRET_B, build: "t" });
+    expect((await b.next("bridge.refused", 10_000)).code).toBe("tab_elsewhere");
+    a.ws.close();
+  });
+
+  it("前のタブに作業が無い・前のビルドのまま（更新のあと）なら、あとから開いたタブが引き継ぐ（#46）", async () => {
+    tb = await startTestBridge({ build: "new", probeMs: 200 });
+    const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await a.opened;
+    a.send("tab.hello", { secret: SECRET_A, build: "old" });
+    await a.next("bridge.welcome");
+    a.send("tab.work", { work: true });
+    await new Promise((r) => setTimeout(r, 50));
+    const b = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await b.opened;
+    b.send("tab.hello", { secret: SECRET_B, build: "new" });
+    await b.next("bridge.welcome");
+    expect((await a.next("bridge.refused")).code).toBe("tab_taken_over");
+    // 作業の無いタブ（b は tab.work を送っていない）は、次のタブに渡す
+    const c = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await c.opened;
+    c.send("tab.hello", { secret: SECRET_A, build: "new" });
+    await c.next("bridge.welcome");
+    expect((await b.next("bridge.refused")).code).toBe("tab_taken_over");
+    c.ws.close();
+  });
+
   it("1 つ目が閉じたら、次のタブを受ける", async () => {
     tb = await startTestBridge();
     const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);

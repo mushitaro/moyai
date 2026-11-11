@@ -1304,3 +1304,13 @@ tr.moyai-pick-row[aria-selected="true"] > .moyai-decisions-act {
   background: var(--layer-2);
   border: 1px solid var(--line-strong);
 }
+
+/* 作業のあるタブがほかに開いている（#46）：1 行だけ。左 32px から */
+.moyai-elsewhere {
+  margin: 0;
+  padding: var(--sp-6) 32px;
+  font: 400 13px/20px var(--font-body);
+  color: var(--text-2);
+  background: var(--bg);
+  min-height: 100vh;
+}

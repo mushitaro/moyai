@@ -48,6 +48,8 @@ export interface BridgeOptions {
   heartbeatMs?: number;
   deadMs?: number;
   helloTimeoutMs?: number;
+  /** 作業のある前のタブが今も答えるかを確かめる待ち（#46。試験は短くする） */
+  probeMs?: number;
   tokenTtlMs?: number;
   /** 作業画面を待つ上限（試験で短くするときだけ。既定は TOOL_TIMEOUTS） */
   toolTimeouts?: Partial<Record<ToolKind, number>>;
@@ -134,6 +136,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     heartbeatMs: opts.heartbeatMs ?? HEARTBEAT_MS,
     deadMs: opts.deadMs ?? DEAD_MS,
     helloTimeoutMs: opts.helloTimeoutMs ?? HELLO_TIMEOUT_MS,
+    ...(opts.probeMs !== undefined ? { probeMs: opts.probeMs } : {}),
     tokenTtlMs,
     ...(opts.build ? { build: opts.build } : {}),
     now,

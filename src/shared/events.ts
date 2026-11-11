@@ -18,7 +18,8 @@ export const EVENTS = {
   "tab.hello": {
     from: "tab",
     to: "bridge",
-    data: z.object({ secret: tabSecretSchema, build: z.string().max(80) }),
+    // work：このタブに作業（資料か作業中の計画）があるか（#46。つなぎ直しの直後から、作業のあるタブを守る）
+    data: z.object({ secret: tabSecretSchema, build: z.string().max(80), work: z.boolean().optional() }),
   },
   "bridge.welcome": {
     from: "bridge",
@@ -33,6 +34,8 @@ export const EVENTS = {
   },
   "bridge.ping": { from: "bridge", to: "tab", data: z.object({ at: z.number() }) },
   "tab.pong": { from: "tab", to: "bridge", data: z.object({ at: z.number() }) },
+  // タブに作業（資料か作業中の計画）があるか。変わるたびと握手のあとに送る。橋渡しは、作業のある生きたタブを、あとから開いたタブに渡さない（#46）
+  "tab.work": { from: "tab", to: "bridge", data: z.object({ work: z.boolean() }) },
   "tab.token_request": {
     from: "tab",
     to: "bridge",

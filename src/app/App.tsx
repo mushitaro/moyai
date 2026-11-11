@@ -4,6 +4,7 @@
 import { MantineProvider, useComputedColorScheme } from "@mantine/core";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Shell } from "./components/Shell";
+import { ERROR_TEXT } from "./text";
 import { bridgeClient, useConnection } from "./state/bridge";
 import type { LoadedReading } from "../import/reading";
 import { Home } from "./pages/Home";
@@ -18,7 +19,7 @@ import { moyaiCssVariables, moyaiTheme } from "../ui/mantine-theme";
 import { DraftBand } from "./components/DraftBand";
 import { DraftKeeper, indexedDbPort, installDraftKeeper } from "./state/draft";
 import { guardLeave, planStateOf, type LeaveState } from "./state/leave";
-import { getWorkingPlan } from "./state/plan-store";
+import { getWorkingPlan, subscribeWorkingPlan } from "./state/plan-store";
 import { acceptedList } from "./state/decisions";
 import { STAGE_HASH, canonicalHash } from "./stages";
 
@@ -48,6 +49,12 @@ function leaveState(): LeaveState {
   };
 }
 guardLeave(window, leaveState);
+
+// 作業（資料か作業中の計画）があるかを橋渡しに知らせる。作業のあるタブは、あとから開いたタブに渡さない（#46。作業はタブのメモリにある）
+const reportWork = () => client.setWork(workspace.fileCount > 0 || getWorkingPlan() !== null);
+workspace.subscribe(reportWork);
+subscribeWorkingPlan(reportWork);
+reportWork();
 
 /** 前の作業を戻したら、計画の ID を取り込みの作業場に固定し（版を開いたときと同じ）、HOSHITORI を開く */
 function onDraftRestored(planId: string) {
@@ -99,6 +106,18 @@ function ReadingsSync() {
 export function App() {
   const hash = useHash();
   const route = routeOf(hash);
+  const { state } = useConnection();
+  // 作業のあるタブがほかに開いている（#46）：このタブは 1 行だけにする（中身を出さない。操作できるものを置かない）
+  if (state.kind === "refused" && state.code === "tab_elsewhere") {
+    return (
+      <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
+        <ThemeSync />
+        <p className="moyai-elsewhere" data-testid="refused" data-code="tab_elsewhere">
+          {ERROR_TEXT.tab_elsewhere}
+        </p>
+      </MantineProvider>
+    );
+  }
   return (
     <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="dark">
       <ThemeSync />

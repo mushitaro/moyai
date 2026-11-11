@@ -50,6 +50,8 @@ export type HumanResult = { ok: true; body: unknown } | { ok: false; code: TabEr
 /** 切れたあとのつなぎ直しの待ち（1・2・5・10 秒、そのあとは 10 秒ごと）と、あきらめるまでの時間（2 分） */
 const RECONNECT_WAITS_MS = [1000, 2000, 5000, 10_000] as const;
 const RECONNECT_GIVE_UP_MS = 120_000;
+/** 作業のあるタブがほかにあると断られたタブが、つなぎ直すまでの待ち */
+export const ELSEWHERE_RETRY_MS = 5_000;
 
 export class BridgeClient {
   private readonly secret = randomSecret();
@@ -65,19 +67,30 @@ export class BridgeClient {
   private retries = 0;
   /** 切れた時刻（つながったら null） */
   private droppedAt: number | null = null;
+  /** このタブに作業（資料か作業中の計画）があるか。橋渡しに知らせる（作業のあるタブを、あとから開いたタブに渡さない。#46） */
+  private work = false;
 
   constructor(private readonly wsUrl: string) {}
 
   connect(): void {
     const ws = new WebSocket(this.wsUrl);
     this.ws = ws;
-    ws.addEventListener("open", () => this.send("tab.hello", { secret: this.secret, build: __MOYAI_BUILD__.commit }));
+    ws.addEventListener("open", () => this.send("tab.hello", { secret: this.secret, build: __MOYAI_BUILD__.commit, work: this.work }));
     ws.addEventListener("message", (e) => this.receive(e.data));
     ws.addEventListener("close", () => {
       if (this.ws !== ws) return;
       for (const r of this.pending.values()) r(null);
       this.pending.clear();
-      if (this.state.kind === "refused") return;
+      // 作業のあるタブがほかにある（tab_elsewhere）ときは、5 秒ごとにつなぎ直す（そのタブが閉じたら、このタブが作業画面になる。#46）。
+      // ほかの断り（2 つ目の握手の形など）はつなぎ直さない
+      if (this.state.kind === "refused") {
+        if (this.state.code === "tab_elsewhere") {
+          setTimeout(() => {
+            if (this.ws === ws && this.state.kind === "refused") this.connect();
+          }, ELSEWHERE_RETRY_MS);
+        }
+        return;
+      }
       // 切れたら、同じ秘密でつなぎ直す（1・2・5・10 秒…、2 分まで）。作業画面が重い処理で固まり、橋渡しが「切れた」と見なしたあとも、
       // 作業を続けられるように（撮影で、つながり直さずに止まった。Video の報告・Architect の 63、11-06）。断られたとき（2 つ目のタブなど）はつなぎ直さない。
       // 前の回のツールの呼び出しは返さない（橋渡しが時間切れで AI に返してある）
@@ -124,6 +137,14 @@ export class BridgeClient {
     this.retries = 0;
     this.droppedAt = null;
     this.setState({ kind: "open", tokenTtlMs: d.tokenTtlMs, ...(d.build ? { build: d.build } : {}) });
+    this.send("tab.work", { work: this.work });
+  }
+
+  /** 作業があるかを変える。つながっていれば橋渡しに送る（変わったときだけ） */
+  setWork(work: boolean): void {
+    if (this.work === work) return;
+    this.work = work;
+    if (this.state.kind === "open") this.send("tab.work", { work });
   }
 
   onRefused(d: EventData<"bridge.refused">): void {

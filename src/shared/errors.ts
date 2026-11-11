@@ -305,6 +305,7 @@ export const ERRORS = {
   },
   // 橋渡し → タブ（WebSocket）
   tab_taken_over: { from: "bridge", to: "tab", text: "作業画面は、あとから開いたタブに移りました。" },
+  tab_elsewhere: { from: "bridge", to: "tab", text: "作業画面は別のタブで開いています。" },
   hello_invalid: { from: "bridge", to: "tab", text: "最初の握手の形が違います。" },
   hello_timeout: { from: "bridge", to: "tab", text: "最初の握手が時間内に来ませんでした。" },
   // 橋渡し → タブ（HTTP。正しいタブだけがこれらの経路を呼ぶ）
