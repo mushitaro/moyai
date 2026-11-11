@@ -88,3 +88,20 @@ describe("施設の名前（chart_propose の facilityName）", () => {
     expect(getWorkingPlan()!.plan.nameProposal).toBeUndefined();
   });
 });
+
+describe("施設の名前（取り込みの作り直しをまたぐ。見直しの指摘）", () => {
+  it("人が見出しで直した名前と、Claude の名前の案は、取り込みが計画を作り直しても残る（計画の ID が同じときだけ）", async () => {
+    const { placeComposedPlan } = await import("../../src/app/state/crosswalk");
+    const { rememberHumanName, proposeNameFromAi } = await import("../../src/app/state/facility-name");
+    placeComposedPlan(base());
+    expect(proposeNameFromAi("北部清掃工場", "ai_relayed_human", "利用者が会話で頼んだ")).toEqual({ ok: true, state: "proposed" });
+    placeComposedPlan(base());
+    expect(getWorkingPlan()!.plan.nameProposal?.name).toBe("北部清掃工場");
+    rememberHumanName(base().planId, "南部清掃工場");
+    placeComposedPlan(base());
+    expect(getWorkingPlan()!.plan.displayName).toBe("南部清掃工場");
+    // ほかの計画には効かない
+    placeComposedPlan({ ...base(), planId: "plan-other" });
+    expect(getWorkingPlan()!.plan.displayName).toBe("第一清掃工場");
+  });
+});

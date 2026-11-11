@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { renameByHuman } from "../../plan/facility-name";
 import { getWorkingPlan, updateWorkingPlan } from "../state/plan-store";
+import { rememberHumanName } from "../state/facility-name";
 
 export function InlineName({ name, editable, label }: { name: string; editable: boolean; label: string }) {
   const [editing, setEditing] = useState<string | null>(null);
@@ -25,7 +26,11 @@ export function InlineName({ name, editable, label }: { name: string; editable: 
   const commit = () => {
     const wp = getWorkingPlan();
     const next = wp ? renameByHuman(wp.plan, editing) : null;
-    if (wp && next && next !== wp.plan) updateWorkingPlan(next, wp.proposals);
+    if (wp && next && next !== wp.plan) {
+      updateWorkingPlan(next, wp.proposals);
+      // 取り込みが計画を作り直しても、この名前にする
+      rememberHumanName(next.planId, next.displayName);
+    }
     setEditing(null);
   };
   return (
