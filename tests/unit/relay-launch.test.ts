@@ -122,7 +122,8 @@ describe("中継が橋渡しを起こす", () => {
     const r = await c.callTool({ name: "chart_rows", arguments: {} });
     expect(l.state.count).toBe(1);
     const b = l.state.bridges[0]!;
-    expect(b.port).not.toBe(oldPort);
+    // 番号の口は、閉じたあと OS がもう一度同じ番号を割り当てることがあるので比べない。古い鍵ファイルを待ち続けず、新しく起こした橋渡しの鍵に移ったことを見る
+    expect(b.relayKey).not.toBe("k".repeat(43));
     expectNotOpen(r, urlOf(b));
     expect(readKeyFile(stateDir)?.key).toBe(b.relayKey);
   });
