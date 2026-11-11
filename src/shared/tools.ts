@@ -912,7 +912,7 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "ルールで、星取表に周期の案を置く（足すだけ。今ある星取は消さない）。ルールの set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実績からその年数ごとに、計画のいちばん遅い年度まで計画の星取（○）を置く。計画の星取がもうある年度は飛ばす。実績が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（Skillパックの基準。check_results の照査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置ける（Claude の判断では置かない。bases の record・pack・rule は実績の根拠にならない。同じ機器の同じ年度にほかの作業の実績があれば、MOYAI が参考の行として添える）。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。",
+    "ルールで、星取表に周期の案を置く（足すだけ。今ある星取は消さない）。ルールの set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実績からその年数ごとに、計画のいちばん遅い年度まで計画の星取（○）を置く。計画の星取がもうある年度は飛ばす。実績が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（Skillパックの基準。check_results の照査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置ける（Claude の判断では置かない。bases の record・pack・rule は実績の根拠にならない。同じ機器の同じ年度にほかの作業の実績があれば、MOYAI が参考の行として添える）。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。facilityName：施設の名前の案（利用者が会話で頼んだときだけ。確定のシートで人が受けて署名した版から効く。今と同じ名前なら案を消す。架空の施設は【架空】を外せない）。",
     z.object({
       rules: z.array(ruleSchema).max(50).default([]),
       basedOnVersion: z.number().int().min(0),
@@ -941,6 +941,8 @@ export const TOOLS = {
         })
         .strict()
         .optional(),
+      /** 施設の名前の案（#56。人が確定のシートで受けて署名するまで決まらない） */
+      facilityName: z.string().min(1).max(80).optional(),
       /** 星取の案：作業（chart_rows の作業の行の id）× 年度の星取の追加・削除・移動（計画だけ）。行のデータは写さない */
       stars: z
         .array(
@@ -979,6 +981,8 @@ export const TOOLS = {
         .max(50)
         .optional(),
       version: z.number().int(),
+      /** 施設の名前の案：置いた（proposed）か、今と同じなので案を消した（same）か（facilityName を渡したときだけ） */
+      facilityName: z.enum(["proposed", "same"]).optional(),
     }),
   ),
   check_results: def(
