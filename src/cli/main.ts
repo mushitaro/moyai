@@ -1,4 +1,4 @@
-// moyai のコマンド。`moyai start`（橋渡し）と `moyai mcp`（中継）、`moyai setup`・`moyai uninstall`（入れる・消す）。
+// moyai のコマンド。`moyai start`（橋渡し）と `moyai mcp`（中継）、`moyai setup`・`moyai update`・`moyai uninstall`（入れる・最新にする・消す）。
 // 標準出力は MCP だけに使う。人への知らせは標準エラーへ出す。
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -12,6 +12,7 @@ import { parseStartArgs } from "./args";
 import { keysCli, sendCli, verifyDemoRingCli, verifyRingCli } from "./human";
 import { ledgerCli, verifyLedgerCli } from "./ledger";
 import { createRelayServer, type LaunchHandle } from "./relay";
+import { writeRelayDigest } from "./tools-digest";
 
 declare const __MOYAI_BUILD__: { time: string; commit: string };
 
@@ -35,6 +36,9 @@ const HELP = `使い方：
                                             code は Claude Code に渡す 1 行（.mcp.json か claude mcp add）を出す。--name は送信者の名前（40 字まで）。
                                             何をどこに書くかを先に出す。--yes が無ければ書かない。Claude は中身を利用者にチャットで見せ、
                                             「はい」をもらったら --yes を付けて走らせる（人が端末から直に走らせたときだけ、その場で「はい」を聞く）
+  moyai update [--yes]                      MOYAI を origin/main の版にする。ビルドの版のコミットと clone の先を比べ、古ければ
+                                            git pull --ff-only → npm ci → npm run build → 動いている橋渡しを止める（次のツールの呼び出しで新しい橋渡しが起きる）。
+                                            手元に変更があれば止めて理由を言う。何をするかを先に出す。--yes が無ければ変えない
   moyai uninstall [--yes] [--keep-root|--remove-root]
                                             消す。橋渡しを止め、Claude Desktop の設定から moyai の行を外し（.bak を残す）、状態フォルダを消す。
                                             保存先（計画の版）は既定で残す。--remove-root のときだけ消す。何を消すかを先に出す
@@ -141,6 +145,8 @@ async function mcp(): Promise<void> {
     ...(launch ? { launch, launchPort: DEFAULT_PORT } : {}),
   });
   await server.connect(new StdioServerTransport());
+  // AI クライアントが受けたツールの定義の指紋を残す（moyai update が開き直しの要る・要らないを決める。#43）
+  writeRelayDigest(resolveStateDir());
   say("moyai mcp：中継を起こしました（標準入出力）");
 }
 
@@ -157,6 +163,7 @@ async function main(argv: string[]): Promise<void> {
     return process.exit(await verifyRingCli(rest));
   }
   if (cmd === "setup") return process.exit(await (await import("./setup")).setupCli({ argv: rest }));
+  if (cmd === "update") return process.exit(await (await import("./update")).updateCli({ argv: rest, buildCommit: __MOYAI_BUILD__.commit }));
   if (cmd === "uninstall") return process.exit(await (await import("./uninstall")).uninstallCli({ argv: rest }));
   if (cmd === "ledger") return process.exit(await ledgerCli(rest, { build: BUILD }));
   if (cmd === "keys") return process.exit(await keysCli(rest));

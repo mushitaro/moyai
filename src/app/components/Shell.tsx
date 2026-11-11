@@ -123,7 +123,8 @@ function StatusBar({ client, workspace, onSlot, extra }: { client: BridgeClient;
         {extra}
         {workspace && <ReadProgress ws={workspace} />}
       </div>
-      <BuildStamp />
+      {/* 橋渡しのビルドが画面のビルドと違えば、印を朱にするだけ（説明の文は置かない。#43） */}
+      <BuildStamp bridgeBuild={state.kind === "open" ? state.build : undefined} />
     </footer>
   );
 }
