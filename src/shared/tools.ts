@@ -699,12 +699,17 @@ export const TOOLS = {
         .max(SURVEY_LIMIT_MAX)
         .optional()
         .describe(`1 回に載せる質問の数の上限（答えの大きさの上限が先に効くことがある）。資料の一覧（files）の数の上限にも効く（省くと ${SURVEY_FILES_DEFAULT}）`),
+      match: z.string().min(1).max(100).optional().describe("part: files で、名前の一部（空白で区切った語がどれも入る資料だけ。全角・半角・大文字小文字を問わない）。当たった数は filesMatched"),
     }),
     z.object({
       /** 資料の一覧（part: all か files のときだけ。limit〔既定 20〕まで。ほかの part では空） */
       files: z.array(z.object({ fileRef: z.string(), sheets: z.number().int(), rows: z.number().int() })),
       /** 作業画面に入れた資料の全部の数（files に載せきれなかった分も数える） */
       filesTotal: z.number().int().optional().describe("作業画面に入れた資料の全部の数。files は part: all か files のときだけ、limit（既定 20）まで載る。続きは part: files と cursor で読む"),
+      /** 資料の種類（拡張子）ごとの数と最初の数本の名前（長い名前は頭と尾だけ）。part: all と files のとき */
+      fileKinds: z.array(z.object({ kind: z.string(), count: z.number().int(), names: z.array(z.string()).max(3) })).max(12).optional().describe("資料の種類ごとの数と最初の名前。名前の一部で探すときは part: files と match"),
+      /** match で当たった資料の数（match を渡したときだけ） */
+      filesMatched: z.number().int().optional(),
       samples: z
         .array(z.object({ fileRef: z.string(), row: z.number().int(), cells: z.array(z.string()).max(40) }))
         .max(20),
