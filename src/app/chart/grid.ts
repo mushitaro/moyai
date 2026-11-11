@@ -147,6 +147,46 @@ interface GridContext {
   trials?: ReadonlySet<string>;
   /** 時間の地図 4：答えの結果で新しく現れた星（行の鍵 + "\u0000" + 期の鍵）。出るときだけ静かに現れる */
   fresh?: ReadonlySet<string>;
+  /**
+   * 金額の表示（mushitaro/moyai#48）：明細の鍵 → 費用（円）と計画か実績か。あれば、星のセルに金額（千円、3 桁の区切り）を出す。
+   * 実績の金額があれば実績（--text）、無ければ予算（--text-3。字の濃さで分ける）。金額の無い星・畳んだ行のまとめ・案の印のあるセルは星のまま。費用は当施設の画面の中だけ
+   */
+  amounts?: ReadonlyMap<string, { yen: number; kind: "plan" | "actual" }> | null;
+}
+
+/** セルの金額：実績の合計があれば実績、無ければ予算の合計。どちらも無ければ null */
+export function cellAmount(
+  cell: ChartCell | undefined,
+  amounts: ReadonlyMap<string, { yen: number; kind: "plan" | "actual" }> | null | undefined,
+): { yen: number; kind: "plan" | "actual" } | null {
+  // 畳んだ行のまとめは、ほかの作業の金額を混ぜるので出さない（星のまま）
+  if (!cell || !amounts || cell.summary) return null;
+  let plan = 0;
+  let actual = 0;
+  let hasPlan = false;
+  let hasActual = false;
+  for (const k of cell.detailKeys) {
+    const a = amounts.get(k);
+    if (!a) continue;
+    if (a.kind === "actual") {
+      actual += a.yen;
+      hasActual = true;
+    } else {
+      plan += a.yen;
+      hasPlan = true;
+    }
+  }
+  if (hasActual) return { yen: actual, kind: "actual" };
+  if (hasPlan) return { yen: plan, kind: "plan" };
+  return null;
+}
+
+/** 金額の字：千円で、3 桁の区切り（1,000 円未満は「0」にせず「<1」） */
+export function formatThousandYen(yen: number): string {
+  if (yen < 0) return `-${formatThousandYen(-yen)}`;
+  const k = Math.round(yen / 1000);
+  if (k === 0 && yen > 0) return "<1";
+  return k.toLocaleString("ja-JP");
 }
 const NO_PROPOSALS: ReadonlySet<string> = new Set();
 export type GridCompare = GridContext["compare"];
@@ -229,8 +269,18 @@ class MarkCell implements ICellRendererComp<ChartRow> {
     if (removal === "strike") this.el.dataset.strike = "true";
     else delete this.el.dataset.strike;
     const shown = ring ?? cell?.mark ?? null;
-    if (shown) this.el.dataset.mark = shown;
-    else delete this.el.dataset.mark;
+    // 金額の表示：金額のある星は、星の形の代わりに金額の字（千円）。金額の無い星は星のまま（#48）
+    // 案・削除の案の印（朱の破線の円・斜線。あなたの判断が要る）があるセルは星のまま
+    const amount = ring || removal ? null : cellAmount(cell, (p.context as GridContext | undefined)?.amounts);
+    if (amount) {
+      this.el.textContent = formatThousandYen(amount.yen);
+      this.el.dataset.amount = amount.kind;
+      delete this.el.dataset.mark;
+    } else {
+      delete this.el.dataset.amount;
+      if (shown) this.el.dataset.mark = shown;
+      else delete this.el.dataset.mark;
+    }
     // 人の試し：動かした先は朱の細い枠、動かす前の位置は薄い ○（字は aria-label に）。計画だけの ○ はドラッグで動かせる
     const tctx = p.context as GridContext | undefined;
     const ghost = !shown && !!p.data && !!period && !!tctx?.ghosts?.has(`${p.data.id}\u0000${period.key}`);
@@ -274,7 +324,8 @@ class MarkCell implements ICellRendererComp<ChartRow> {
           (isChanged(p.data, period, cell, p.context) ? T.legend.changedFromAria(version) : "") +
           (was ? T.legend.oldPlanAria(version, T.markName[was]) : "") +
           (ghost ? T.legend.trialFromAria : "") +
-          (trial ? T.legend.trialAria : ""),
+          (trial ? T.legend.trialAria : "") +
+          (amount ? T.amountAria(formatThousandYen(amount.yen), amount.kind) : ""),
       );
     return true;
   }
@@ -597,6 +648,17 @@ export class ChartGrid {
 
   private picked: GridContext["picked"] = null;
   private cycle: GridContext["cycle"] = null;
+  private amounts: GridContext["amounts"] = null;
+
+  /** 金額の表示を切り替える（null で星の表示に戻す。#48） */
+  setAmounts(amounts: GridContext["amounts"]) {
+    if (amounts === this.amounts) return;
+    this.amounts = amounts;
+    const ctx = this.api.getGridOption("context") as GridContext;
+    this.api.setGridOption("context", { ...ctx, amounts } satisfies GridContext);
+    this.el.dataset.amounts = amounts ? "true" : "false";
+    this.api.refreshCells({ force: true });
+  }
 
   /** 選んだ星と周期の線を描き直す（行は渡し直さない）。星を選んでいるあいだ、ほかの星を薄くする（CSS。動きは --dur-base、prefers-reduced-motion では 0） */
   pick(picked: GridContext["picked"], cycle: GridContext["cycle"]) {
@@ -631,7 +693,7 @@ export class ChartGrid {
     removals?: ReadonlySet<string>,
   ) {
     this.mode = model.mode;
-    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals, picked: this.picked, cycle: this.cycle, ghosts: this.ghosts, trials: this.trials, fresh: this.fresh } satisfies GridContext);
+    this.api.setGridOption("context", { proposals, compare, comments, due, common: model.mode === "common", kinds, removals, picked: this.picked, cycle: this.cycle, ghosts: this.ghosts, trials: this.trials, fresh: this.fresh, amounts: this.amounts } satisfies GridContext);
     const cols = columns(model, foldLevel, this.h, band);
     const key = JSON.stringify([model.mode, model.levelNames, model.periods.map((p) => p.key), foldLevel, model.peersShown, model.peersSummary, band, cols.map((c) => ("width" in c ? c.width : null))]);
     if (key !== this.colKey) {

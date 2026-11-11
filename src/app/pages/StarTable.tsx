@@ -11,7 +11,7 @@ import { bandShort } from "../../share/stat-text";
 import type { Comparison } from "../../share/receive";
 import { Plan, type WorkDetailT, type WorkT } from "../../shared/plan";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
-import { ChartGrid, bandCellText, cellAria, formatCell } from "../chart/grid";
+import { ChartGrid, bandCellText, cellAria, formatCell, formatThousandYen } from "../chart/grid";
 import { DUE_TEXT, planDueViews, rowDue, rowDues, type DueView } from "../../plan/due-view";
 import { assetLabels } from "../../plan/asset-names";
 import { WorkDetailView } from "../components/WorkDetailView";
@@ -153,6 +153,13 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
         {T.source.by}：{TEXT.author[d.author]} · {T.source.basis}：{d.basis}
         {d.needsReview ? ` · ${T.source.review}` : ""}
       </Text>
+      {/* 金額と出どころ（#48）。当施設の画面の中だけ（共有ファイル・公開台帳・AI には渡らない） */}
+      {d.cost !== null && (
+        <Text size="xs" data-testid="source-amount">
+          {T.amountLine(formatThousandYen(d.cost), d.planOrActual)}
+          {d.costSource ? ` · ${[d.costSource.file, d.costSource.sheet, d.costSource.ref].filter((x) => x !== null && x !== "").join(" · ")}` : ""}
+        </Text>
+      )}
       {documentCount(d) >= 2 && (
         <Text size="xs" data-testid="source-same-work">
           {T.source.sameWork(documentCount(d))}
@@ -336,6 +343,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const [mode, setMode] = useState<RowMode>(() => jump?.mode ?? "ledger");
   const [period, setPeriod] = useState<PeriodMode>("year");
   const [layer, setLayer] = useState<Layer>("adjusted");
+  // 星のセルに出すもの：星取か金額（#48。金額は当施設の画面の中だけ。共有・AI には渡らない）
+  const [show, setShow] = useState<"mark" | "amount">("mark");
   const [foldLevel, setFoldLevel] = useState<number | null>(() => readFold(jump?.mode ?? "ledger"));
   // 共通の設備項目で見るとき、畳んだ設備の見出しの行（Wire、2026-11-05）
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
@@ -533,6 +542,16 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
     if (r.ok) setSelected({ rowId, periodKey: `fy${to}` });
     return r.ok;
   };
+  // 金額の表示：明細の鍵 → 費用（円）と計画か実績か。費用の無い明細は入れない（その星は星のまま）
+  const amounts = useMemo(() => {
+    if (show !== "amount") return null;
+    const m = new Map<string, { yen: number; kind: "plan" | "actual" }>();
+    for (const d of plan.details) if (d.cost !== null && d.cost !== undefined) m.set(d.detailKey, { yen: d.cost, kind: d.planOrActual });
+    return m;
+  }, [plan, show]);
+  useEffect(() => {
+    grid.current?.setAmounts(amounts);
+  }, [amounts]);
   // 動かす前の位置（薄い ○）と動かした先：試しの明細の鍵から行を引く
   useEffect(() => {
     const origins = trialOrigins();
@@ -853,6 +872,16 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
           data={[
             { value: "original", label: T.layer.original },
             { value: "adjusted", label: T.layer.adjusted },
+          ]}
+        />
+        <Switch
+          aria-label={T.showLabel}
+          data-testid="show-mode"
+          value={show}
+          onChange={(v) => setShow(v as "mark" | "amount")}
+          data={[
+            { value: "mark", label: T.show.mark },
+            { value: "amount", label: T.show.amount },
           ]}
         />
         {mode === "common" && (
