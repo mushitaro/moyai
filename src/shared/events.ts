@@ -32,6 +32,8 @@ export const EVENTS = {
   },
   "bridge.ping": { from: "bridge", to: "tab", data: z.object({ at: z.number() }) },
   "tab.pong": { from: "tab", to: "bridge", data: z.object({ at: z.number() }) },
+  // タブに作業（資料か作業中の計画）があるか。変わるたびと握手のあとに送る。橋渡しは、作業のある生きたタブを、あとから開いたタブに渡さない（#46）
+  "tab.work": { from: "tab", to: "bridge", data: z.object({ work: z.boolean() }) },
   "tab.token_request": {
     from: "tab",
     to: "bridge",

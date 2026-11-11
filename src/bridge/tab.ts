@@ -21,6 +21,10 @@ interface ActiveTab {
   secret: Buffer;
   session: string;
   lastSeen: number;
+  /** タブのビルドの commit（tab.hello） */
+  build: string;
+  /** 作業（資料か作業中の計画）があるか（tab.work。送らない前の版のタブは false） */
+  work: boolean;
 }
 
 export interface TabHubOptions {
@@ -29,6 +33,8 @@ export interface TabHubOptions {
   deadMs: number;
   helloTimeoutMs: number;
   tokenTtlMs: number;
+  /** 橋渡しのビルドの commit。前のビルドのままのタブは、あとから開いたタブに渡す */
+  build?: string;
   now: () => number;
   log: (msg: string) => void;
 }
@@ -62,6 +68,7 @@ interface PendingCall {
 export const TAB_EVENT_HANDLERS: { [K in TabToBridge]: Handler<K> } = {
   "tab.hello": (hub, conn, data) => hub.onHello(conn, data),
   "tab.pong": (hub, conn) => hub.onPong(conn),
+  "tab.work": (hub, conn, data) => hub.onWork(conn, data),
   "tab.token_request": (hub, conn, data) => hub.onTokenRequest(conn, data),
   "tab.tool_result": (hub, conn, data) => hub.onToolResult(conn, data),
 };
@@ -149,8 +156,15 @@ export class TabHub {
 
   onHello(conn: Conn, data: EventData<"tab.hello">): void {
     if (conn.active) return; // 2 回目の握手は無視する
-    // 前のタブがあれば、あとから開いたこのタブが引き継ぐ。前のタブの待っている呼び出しは終え、前のタブには理由を送って閉じる
     const prev = this.active;
+    // 作業画面は 1 つ（#46）：作業（資料か作業中の計画）のある生きたタブがあれば、あとから開いたタブを断る（「別のタブで開いています」）。
+    // 前のタブの作業はタブのメモリにあり、引き継ぐと消えるので。Claude がブラウザを操作する道具で開いたタブも、ここで断られる。
+    // 引き継ぐのは、前のタブに作業が無い・答えが無い・前のビルドのまま（更新のあとの読み込み直し）・同じタブのつなぎ直し（同じ秘密）のとき
+    if (prev && this.keepsPrevious(prev, data)) {
+      this.o.log("作業のあるタブが開いているので、あとから開いたタブを断りました");
+      return this.refuse(conn, "tab_elsewhere");
+    }
+    // ほかは、あとから開いたこのタブが引き継ぐ。前のタブの待っている呼び出しは終え、前のタブには理由を送って閉じる
     if (prev) {
       this.active = null;
       this.dropCalls(prev.ws);
@@ -158,7 +172,7 @@ export class TabHub {
       prev.ws.close(CLOSE_REFUSED, "tab_taken_over");
       this.o.log("あとから開いた作業画面のタブが引き継ぎました");
     }
-    const tab: ActiveTab = { ws: conn.ws, secret: Buffer.from(data.secret, "utf8"), session: randomUUID(), lastSeen: this.o.now() };
+    const tab: ActiveTab = { ws: conn.ws, secret: Buffer.from(data.secret, "utf8"), session: randomUUID(), lastSeen: this.o.now(), build: data.build, work: false };
     conn.active = tab;
     this.active = tab;
     this.dropped = 0; // 数はタブの回ごと
@@ -168,6 +182,20 @@ export class TabHub {
       tokenTtlMs: this.o.tokenTtlMs,
     });
     this.o.log("作業画面のタブがつながりました");
+  }
+
+  /** 前のタブを残して、あとから開いたタブを断るか */
+  private keepsPrevious(prev: ActiveTab, hello: EventData<"tab.hello">): boolean {
+    if (!prev.work) return false;
+    if (this.o.now() - prev.lastSeen > this.o.deadMs) return false;
+    if (this.o.build && prev.build !== this.o.build) return false;
+    const got = Buffer.from(hello.secret, "utf8");
+    if (got.length === prev.secret.length && timingSafeEqual(got, prev.secret)) return false;
+    return true;
+  }
+
+  onWork(conn: Conn, data: EventData<"tab.work">): void {
+    if (conn.active) conn.active.work = data.work;
   }
 
   onPong(_conn: Conn): void {

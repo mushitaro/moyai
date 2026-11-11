@@ -65,6 +65,8 @@ export class BridgeClient {
   private retries = 0;
   /** 切れた時刻（つながったら null） */
   private droppedAt: number | null = null;
+  /** このタブに作業（資料か作業中の計画）があるか。橋渡しに知らせる（作業のあるタブを、あとから開いたタブに渡さない。#46） */
+  private work = false;
 
   constructor(private readonly wsUrl: string) {}
 
@@ -124,6 +126,14 @@ export class BridgeClient {
     this.retries = 0;
     this.droppedAt = null;
     this.setState({ kind: "open", tokenTtlMs: d.tokenTtlMs });
+    this.send("tab.work", { work: this.work });
+  }
+
+  /** 作業があるかを変える。つながっていれば橋渡しに送る（変わったときだけ） */
+  setWork(work: boolean): void {
+    if (this.work === work) return;
+    this.work = work;
+    if (this.state.kind === "open") this.send("tab.work", { work });
   }
 
   onRefused(d: EventData<"bridge.refused">): void {

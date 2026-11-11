@@ -756,6 +756,7 @@ export const TEXT = {
 /** ブリッジから受ける誤りの文。src/shared/errors.ts で受け手が tab のものは、すべてここにある。 */
 export const ERROR_TEXT: Record<TabErrorCode, string> = {
   tab_taken_over: "作業画面は、あとから開いたタブに移りました。",
+  tab_elsewhere: "作業画面は別のタブで開いています。",
   hello_invalid: "ブリッジとの最初の握手の形が違いました。",
   hello_timeout: "ブリッジとの最初の握手が時間内に終わりませんでした。",
   host_not_allowed: "宛先の名前が違うので、ブリッジが断りました。",
