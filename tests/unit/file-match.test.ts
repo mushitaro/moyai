@@ -25,6 +25,13 @@ describe("名前の一部で引く", () => {
     const k = fileKinds([...names, "b.xlsx", "c.xlsx"]);
     expect(k[0]).toEqual({ kind: ".xlsx", count: 4, names: names.slice(0, 2).concat("b.xlsx") });
     expect(k.map((x) => x.kind)).toEqual([".xlsx", ".csv", ".pdf"]);
+    // 載せきれない種類は「ほか」にまとめ、数の合計は資料の数と合う。拡張子らしくないものは種類なし。\ の道も最後の名前で
+    const many = fileKinds(Array.from({ length: 14 }, (_, i) => `f.e${i}`), 3, 12);
+    expect(many).toHaveLength(12);
+    expect(many.at(-1)).toEqual({ kind: "ほか", count: 3, names: [] });
+    expect(many.reduce((n, x) => n + x.count, 0)).toBe(14);
+    expect(fileKinds(["R6.台帳 最終"])[0]?.kind).toBe("");
+    expect(fileKinds(["C:\\x.y\\a.csv"])[0]?.kind).toBe(".csv");
   });
 });
 

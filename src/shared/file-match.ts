@@ -29,17 +29,23 @@ export function shortName(name: string, max = 32): string {
 }
 
 /** 資料の種類（拡張子）ごとの数と、最初の数本の名前（短くした名前）。多い種類から */
-export function fileKinds(names: readonly string[], perKind = 3): { kind: string; count: number; names: string[] }[] {
+export function fileKinds(names: readonly string[], perKind = 3, maxKinds = 12): { kind: string; count: number; names: string[] }[] {
   const by = new Map<string, string[]>();
   for (const n of names) {
-    const base = n.split("/").pop() ?? n;
+    const base = n.split(/[/\\]/).pop() ?? n;
     const dot = base.lastIndexOf(".");
-    const kind = dot > 0 ? base.slice(dot).toLowerCase() : "";
+    const ext = dot > 0 ? base.slice(dot).toLowerCase() : "";
+    // 拡張子らしくないもの（長い・空白を含む）は種類なし
+    const kind = ext.length <= 8 && !/\s/.test(ext) ? ext : "";
     const xs = by.get(kind) ?? [];
     xs.push(n);
     by.set(kind, xs);
   }
-  return [...by.entries()]
+  const all = [...by.entries()]
     .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
     .map(([kind, xs]) => ({ kind, count: xs.length, names: xs.slice(0, perKind).map((n) => shortName(n)) }));
+  if (all.length <= maxKinds) return all;
+  // 載せきれない種類は「ほか」の 1 行にまとめる（数の合計が資料の数と合うように）
+  const rest = all.slice(maxKinds - 1);
+  return [...all.slice(0, maxKinds - 1), { kind: "ほか", count: rest.reduce((n, k) => n + k.count, 0), names: [] }];
 }

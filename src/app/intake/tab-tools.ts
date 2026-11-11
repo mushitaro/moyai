@@ -47,7 +47,7 @@ import { patchedExcelJS } from "../../import/exceljs-setup";
 import { offerTemplate } from "../state/template-draft";
 import { getShareChoice, placeClaudeShare } from "../state/share";
 import { sharePreviewNeeds } from "../../share/share-preview";
-import { fileKinds, matchFiles } from "../../shared/file-match";
+import { fileKinds, matchFiles, shortName } from "../../shared/file-match";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -293,7 +293,7 @@ function resolveRuleFiles(rules: ReadingRule[], names: readonly string[]): { rul
     if (!f || f.includes("*") || names.includes(f)) return r;
     const hits = matchFiles(f, names);
     if (hits.length === 1) return { ...r, when: { ...r.when, file: hits[0]! } } as ReadingRule;
-    if (hits.length >= 2) notes.push(`「${f}」に当たる資料が ${hits.length} 本（${hits.slice(0, 5).join("・")}${hits.length > 5 ? " ほか" : ""}）。when.file に 1 本の名前を書いてください`);
+    if (hits.length >= 2) notes.push(`「${f}」に当たる資料が ${hits.length} 本（${hits.slice(0, 5).map((h) => shortName(h)).join("・")}${hits.length > 5 ? " ほか" : ""}）。when.file に 1 本の名前を書いてください`);
     return r;
   });
   return { rules: out, note: notes.length ? notes.join(" ") : null };
@@ -387,7 +387,7 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
         ...survey,
         files: pool.slice(fileCursor, fileCursor + fileLimit),
         filesTotal,
-        ...(part === "all" || part === "files" ? { fileKinds: fileKinds(survey.files.map((f) => f.fileRef)).slice(0, 12) } : {}),
+        ...(part === "all" || part === "files" ? { fileKinds: fileKinds(survey.files.map((f) => f.fileRef)) } : {}),
         ...(hit ? { filesMatched: pool.length } : {}),
         crosswalk: part === "all" || part === "crosswalk" ? crosswalkSurvey() : null,
         handoff: getHandoffMail(),
