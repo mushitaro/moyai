@@ -22,6 +22,7 @@ import { approvedReadingVersions, listReadings, readingTextShown, registerReadin
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
+import { beginPrepare, checkUpdate, isReady, lastPrepare, preparing, readPointer, type UpdateEnv } from "./app-update";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { collectIntake, readIntakeFile, skillPacksText } from "./intake-files";
 import ExcelJS from "exceljs";
@@ -71,6 +72,11 @@ export interface BridgeOptions {
   build?: string;
   /** 「Claude と並べる」の、OS の見分けと PowerShell を走らせる部品。試験は差し替える（無ければこの PC の OS と本物の PowerShell） */
   windowArrange?: { platform?: NodeJS.Platform; run?: ScriptRunner };
+  /**
+   * 入っている MOYAI の更新（moyai_update。#65）：版のフォルダの親と、今動いている版（開発の clone なら null）。
+   * 無ければ dev_clone と答える。試験だけが run と取ってくる先を差し替える
+   */
+  appUpdate?: Pick<UpdateEnv, "root" | "running" | "run" | "sourceForTest">;
 }
 
 export interface Bridge {
@@ -142,6 +148,11 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     now,
     log,
   });
+  // 前に用意できた次の版が残っていれば（橋渡しだけを起こし直したとき）、画面のビルドの印を朱にする（#65）
+  if (opts.appUpdate?.running) {
+    const n = readPointer(opts.appUpdate.root).next;
+    if (n && n !== opts.appUpdate.running && isReady(opts.appUpdate.root, n)) tabs.announceNext(n);
+  }
   const packsDir = opts.packsDir ?? resolvePacksDir();
   const human = new HumanService({ stateDir: opts.stateDir, packsDir, now, ...opts.human });
   // 読み方（3 段目の Skill）：保管先を読む・未承認の下書きを書く（決まり 1 の例外。承認は人の署名。docs/plan.md §2.17・§2.18.2）
@@ -184,6 +195,30 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       return human.sharePreview(p.data);
     },
     ledger_version: async () => human.ledgerHead(),
+    // 入っている MOYAI の更新（#65）。取ってくる先は固定（引数は action だけ）。動いているものは止めない。用意できたら画面のビルドの印を朱にするだけ
+    moyai_update: async (args) => {
+      const action = args.action === "prepare" ? "prepare" : "check";
+      const u = opts.appUpdate;
+      if (!u || !u.running) return { action, state: "dev_clone" };
+      if (action === "check") {
+        const c = await checkUpdate(u);
+        const last = lastPrepare(u.root);
+        const pick = (k: string) => (typeof last?.[k] === "string" ? { [k]: String(last[k]) } : {});
+        return {
+          action,
+          ...c,
+          next: readPointer(u.root).next,
+          preparing: preparing(u.root),
+          last: last && typeof last.state === "string" ? { state: last.state, ...pick("step"), ...pick("latest"), ...pick("at") } : null,
+        };
+      }
+      const b = await beginPrepare(u);
+      if ("result" in b) return { action, ...b.result };
+      void b.done.then((r) => {
+        if (r.state === "ready") tabs.announceNext(r.latest);
+      });
+      return { action, state: "started", ...b.started };
+    },
     // 作業画面の見せ方（screen_set）の保存先：設定の保存と同じ確かめ（validRoot）だけを通す。保存はしない（人が設定の画面で押す）
     storage_root: async (path) => ({ valid: validRoot(path), current: await human.root() }),
     reading_skill_register: async (fromTab) => {

@@ -67,9 +67,10 @@ describe("誤りの送り手と受け手", () => {
 });
 
 describe("ツールの送り手と受け手", () => {
-  it("tool-names.json と TOOLS が同じ 17。中継が出すのは今見せるものだけ", () => {
+  it("tool-names.json と TOOLS が同じ 18。中継が出すのは今見せるものだけ", () => {
     // 17 個目は作業画面の見せ方を変える screen_set（運営者の決定 11-07：利用者の想定のプロンプトで、アプリがチャットだけで動く）
-    expect(toolNames).toHaveLength(17);
+    // 18 個目は入っている MOYAI を最新にする moyai_update（mushitaro/moyai#65）
+    expect(toolNames).toHaveLength(18);
     expect(Object.keys(TOOLS).sort()).toEqual([...toolNames].sort());
     expect(TOOL_NAMES).toEqual(toolNames);
     for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
@@ -100,7 +101,9 @@ describe("ツールの送り手と受け手", () => {
     // 保管先と台帳を読む・書くのは橋渡し（書くのは未承認の読み方の下書きだけ。決まり 1 の例外。docs/plan.md §2.17）。
     // 似た施設：人が開いた比べは作業画面が、公開の台帳だけを読むのは橋渡しが答える（§2.18.4）。
     // 共有ファイルの形と数：作業画面が計画と SHARE の選びを渡し、橋渡しが SHARE の画面と同じ関数で数える（share-preview-v1）
+    // 入っている MOYAI の更新は橋渡しが答える（版のフォルダを読み、別のフォルダで次の版を用意する。#65）
     expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge").sort()).toEqual([
+      "moyai_update",
       "peer_reference",
       "reading_skill_register",
       "reading_skills_list",

@@ -8,7 +8,7 @@ import { readWindowArrangeBody, type WindowArrangeResult } from "../shared/windo
 
 export type ConnectionState =
   | { kind: "connecting" }
-  | { kind: "open"; tokenTtlMs: number; build?: string }
+  | { kind: "open"; tokenTtlMs: number; build?: string; next?: string }
   | { kind: "refused"; code: TabErrorCode }
   | { kind: "reconnecting" }
   | { kind: "closed" };
@@ -27,6 +27,7 @@ export interface ToolHandlers {
 export const BRIDGE_EVENT_HANDLERS: { [K in BridgeToTab]: Handler<K> } = {
   "bridge.welcome": (c, d) => c.onWelcome(d),
   "bridge.refused": (c, d) => c.onRefused(d),
+  "bridge.next": (c, d) => c.onNext(d),
   "bridge.ping": (c, d) => c.onPing(d),
   "bridge.token": (c, d) => c.onToken(d),
   "bridge.tool_call": (c, d) => void c.onToolCall(d),
@@ -138,6 +139,11 @@ export class BridgeClient {
     this.droppedAt = null;
     this.setState({ kind: "open", tokenTtlMs: d.tokenTtlMs, ...(d.build ? { build: d.build } : {}) });
     this.send("tab.work", { work: this.work });
+  }
+
+  /** 次の版が用意できた（#65）。状態の帯のビルドの印を朱にするだけ */
+  onNext(d: EventData<"bridge.next">): void {
+    if (this.state.kind === "open") this.setState({ ...this.state, next: d.next });
   }
 
   /** 作業があるかを変える。つながっていれば橋渡しに送る（変わったときだけ） */

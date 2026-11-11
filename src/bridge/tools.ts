@@ -58,6 +58,8 @@ export interface BridgeTools {
    * 保存はしない（設定は人だけの経路。作業画面が設定の画面の欄に入れ、人が「保存」を押す）
    */
   storage_root?: (path: string) => Promise<{ valid: string | null; current: string | null }>;
+  /** 入っている MOYAI の更新（check・prepare。src/bridge/app-update.ts。#65） */
+  moyai_update?: (args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
 }
 
 /** intake_survey（show: true）で、橋渡しが開いた新しいタブが引き継ぐのを待つ上限 */
@@ -89,6 +91,8 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   skill_eval: "not_implemented",
   // 作業画面の見せ方（chat-ops-v1）。保存先の道だけは、渡す前に橋渡しが設定と同じ確かめを通す（保存はしない）
   screen_set: "tab",
+  // 入っている MOYAI の更新（#65）：橋渡しが版のフォルダを読み、別のフォルダで次の版を用意する。取ってくる先は固定
+  moyai_update: "bridge",
 };
 
 /** image は photo_transcribe の receive だけ（中継が MCP の画像の中身として添える） */

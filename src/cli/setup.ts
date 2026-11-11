@@ -6,7 +6,11 @@
 // - 書く前に、何をどこに書くか（.bak を残すこと）を出す。--yes が無ければ書かない。
 //   Claude は出た中身を利用者にチャットで見せ、「はい」をもらったら --yes を付けて走らせる（利用者の端末の操作は要らない）。
 //   人が端末から直に走らせたときだけ、その場で「はい」を聞く（標準入力が端末でなければ、書かずに終える。拒む試験は残す）。
-// - 足すのは { command: Node の実行ファイル, args: [この dist/cli.js, "mcp"] }。橋渡しは、ツールを呼んだときに中継が起こす。
+// - --target desktop の既定は、この clone の今のコミットを版ごとのフォルダ（<appRoot>/versions/<コミット>/）に入れ
+//   （取得 → npm ci → build → 自己点検。clone は変えない）、{ command: Node の実行ファイル, args: [<appRoot>/launch.cjs, "mcp"] } を足す。
+//   起動の台本は版のフォルダの外にあり、用意できた次の版に次の起動で切り替える（moyai_update。mushitaro/moyai#65）。
+// - --dev：開発の clone の dist/cli.js を直に指す（前のとおり。版のフォルダには入れない。moyai_update は dev_clone と答える）。
+//   --target code は、いつも clone を指す（Claude Code はこのリポジトリのフォルダで開く）。橋渡しは、ツールを呼んだときに中継が起こす。
 // - Claude Desktop は、動いているあいだ自分の覚えている設定で claude_desktop_config.json を書き直すので、開いているときに足した行は消える
 //   （2026-11-07、運営者の PC で起きた）。Desktop が動いていれば、書いたあとに見張り（setup --wait-desktop）を切り離して起こし、
 //   Desktop が閉じたらもう一度足す。利用者に頼むのは Desktop の開き直しの 1 回だけ。
@@ -18,12 +22,18 @@ import { dirname, join, resolve } from "node:path";
 import { readJson, writeJson } from "../bridge/places";
 import { resolveStateDir } from "../bridge/state";
 import { validName } from "../plan/signature";
+import { appRoot, installFromClone, installedCommitOf, writeLauncher } from "../bridge/app-update";
 
 export const SERVER_NAME = "moyai";
 const SETTINGS_FILE = "settings.json";
 
 export const SETUP_TEXT = {
-  usage: "使い方：moyai setup [--target desktop|code] [--name <送信者の名前>] [--yes]",
+  usage: "使い方：moyai setup [--target desktop|code] [--dev] [--name <送信者の名前>] [--yes]",
+  installWill: (root: string) =>
+    `MOYAI を ${root} の版ごとのフォルダに入れます（この clone の今のコミットを別のフォルダで取得 → npm ci → build → 自己点検。数分かかります。clone は変えません）。Claude Desktop は、版のフォルダの外の起動の台本（launch.cjs）を指します。`,
+  installSame: (commit: string) => `版 ${commit.slice(0, 7)} は、もう入っています。`,
+  installed: (commit: string) => `版 ${commit.slice(0, 7)} を入れました。`,
+  installFailed: (step: string) => `入れられませんでした（${step} で止まりました）。Claude Desktop の設定は変えていません。`,
   desktopOpen:
     "Claude Desktop が開いています。開いているあいだは Desktop が設定を書き直すので、この 1 行は消えます。Desktop が閉じたら、もう一度足します（見張りを後ろで起こしました。1 時間待ちます）。利用者には、Claude Desktop を 1 回閉じて開き直してもらってください。",
   waitGaveUp: "Claude Desktop が 1 時間閉じなかったので、書かずに終えました。",
@@ -81,16 +91,19 @@ export interface SetupArgs {
   name: string | null;
   /** 見張り：Claude Desktop が閉じるのを待ってから書く（setup が自分で切り離して起こす） */
   waitDesktop: boolean;
+  /** 開発の clone の dist/cli.js を直に指す（版のフォルダに入れない） */
+  dev: boolean;
 }
 
 /** setup の引数を読む。形が違えば bad_args、名前が使えなければ bad_name */
 export function parseSetupArgs(argv: readonly string[]): SetupArgs | { error: "bad_args" | "bad_name" } {
-  const out: SetupArgs = { target: "desktop", yes: false, name: null, waitDesktop: false };
+  const out: SetupArgs = { target: "desktop", yes: false, name: null, waitDesktop: false, dev: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
     const value = (flag: string): string | undefined => (a === flag ? argv[++i] : a.startsWith(`${flag}=`) ? a.slice(flag.length + 1) : undefined);
     if (a === "--yes" || a === "-y") out.yes = true;
     else if (a === "--wait-desktop") out.waitDesktop = true;
+    else if (a === "--dev") out.dev = true;
     else if (a === "--target" || a.startsWith("--target=")) {
       const v = value("--target");
       if (v !== "desktop" && v !== "code") return { error: "bad_args" };
@@ -122,9 +135,9 @@ export function desktopRunning(platform: NodeJS.Platform = process.platform): bo
 }
 
 /** 見張りを切り離して起こす（この setup が終わっても、Desktop が閉じても残る） */
-function spawnWatcher(): void {
+function spawnWatcher(dev: boolean): void {
   const cli = resolve(process.argv[1] ?? "dist/cli.js");
-  const child = spawn(process.execPath, [cli, "setup", "--target", "desktop", "--yes", "--wait-desktop"], { detached: true, stdio: "ignore", windowsHide: true });
+  const child = spawn(process.execPath, [cli, "setup", "--target", "desktop", "--yes", "--wait-desktop", ...(dev ? ["--dev"] : [])], { detached: true, stdio: "ignore", windowsHide: true });
   child.on("error", () => {});
   child.unref();
 }
@@ -152,6 +165,11 @@ export async function setupCli(
     desktopRunning?: () => boolean;
     /** 見張りを起こす（試験で差し替える） */
     spawnWatcher?: () => void;
+    /**
+     * 版ごとのフォルダに入れる手（--dev でない desktop。試験で差し替える）。既定は、この clone を <appRoot> に入れて起動の台本を置く。
+     * line を渡したとき（試験）は、install も渡さなければ入れない
+     */
+    install?: { root: string; run: () => Promise<{ ok: true; commit: string; same?: boolean } | { ok: false; step: string }> };
     /** 見張りが待つ間（ミリ秒。試験で差し替える） */
     waitMs?: { poll: number; settle: number; limit: number };
   } = {},
@@ -180,9 +198,14 @@ export async function setupCli(
     }
     await new Promise((r) => setTimeout(r, w.settle));
   }
-  const line = o.line ?? { command: process.execPath, args: [resolve(process.argv[1] ?? "dist/cli.js"), "mcp"] };
+  // 版ごとのフォルダに入れる（--dev でない Claude Desktop）。clone の dist/cli.js でなく、版のフォルダの外の起動の台本を指す（#65）
+  const cliPath = resolve(process.argv[1] ?? "dist/cli.js");
+  const install = a.target === "desktop" && !a.dev ? (o.install ?? (o.line ? undefined : defaultInstall(cliPath))) : undefined;
+  const line =
+    o.line ?? (install ? { command: process.execPath, args: [join(install.root, "launch.cjs"), "mcp"] } : { command: process.execPath, args: [cliPath, "mcp"] });
   const writes: (() => string)[] = [];
 
+  if (install) say(SETUP_TEXT.installWill(install.root));
   if (a.target === "desktop") {
     const path = o.path ?? claudeConfigPath();
     say(SETUP_TEXT.head(path));
@@ -238,7 +261,7 @@ export async function setupCli(
     }
   }
 
-  if (writes.length === 0) return 0;
+  if (writes.length === 0 && !install) return 0;
   if (a.yes) say(SETUP_TEXT.yes);
   else {
     // --yes が無ければ書かない。人が端末から直に走らせたときだけ、その場で「はい」を聞く（標準入力が端末でなければ書かない。拒む試験は消さない）
@@ -252,12 +275,38 @@ export async function setupCli(
       return 0;
     }
   }
+  if (install) {
+    // 入れ終わってから設定を書く（入れられなければ、設定は変えない）
+    const r = await install.run();
+    if (!r.ok) {
+      say(SETUP_TEXT.installFailed(r.step));
+      return 1;
+    }
+    say(r.same ? SETUP_TEXT.installSame(r.commit) : SETUP_TEXT.installed(r.commit));
+  }
   for (const w of writes) say(w());
   if (a.target === "desktop" && !a.waitDesktop && running()) {
-    (o.spawnWatcher ?? spawnWatcher)();
+    (o.spawnWatcher ?? (() => spawnWatcher(a.dev)))();
     say(SETUP_TEXT.desktopOpen);
   }
   return 0;
+}
+
+/** 既定の入れ方：入っている版から走らせたら（moyai setup を版のフォルダの cli.js で）起動の台本だけを置き直す。clone からなら、その HEAD を入れる */
+function defaultInstall(cliPath: string): NonNullable<Parameters<typeof setupCli>[0]>["install"] {
+  const root = appRoot();
+  return {
+    root,
+    run: async () => {
+      const inside = installedCommitOf(root, cliPath);
+      if (inside) {
+        writeLauncher(root);
+        return { ok: true, commit: inside, same: true };
+      }
+      const r = await installFromClone({ root }, resolve(dirname(cliPath), ".."));
+      return r;
+    },
+  };
 }
 
 /** 1 行を読む（見える字で。Ctrl+C か入力の終わりなら null） */

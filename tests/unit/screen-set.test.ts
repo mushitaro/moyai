@@ -98,8 +98,8 @@ afterEach(() => {
 });
 
 describe("ツールの定義", () => {
-  it("ツールは 17。screen_set は作業画面が受ける案のツールで、instructions には名前の 1 語だけ", () => {
-    expect(TOOL_NAMES).toHaveLength(17);
+  it("ツールは 18。screen_set は作業画面が受ける案のツールで、instructions には名前の 1 語だけ", () => {
+    expect(TOOL_NAMES).toHaveLength(18);
     expect(toolNames).toContain("screen_set");
     expect(TOOLS.screen_set.kind).toBe("propose");
     expect(TOOLS.screen_set.waitsFor).toBeNull();

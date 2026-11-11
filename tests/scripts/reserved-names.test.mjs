@@ -24,6 +24,7 @@ test("MOYAI のツール名が使わない名前と 1 つも一致しない", (t
   assert.deepEqual(hits, []);
   // docs/plan.md §2.13 の 12 と、§2.17 の読み方の 3（reading_rules_propose・reading_skill_register・reading_skills_list）と、
   // 運営者の決定 11-06「チャットだけで入れる・デモする・消す」の資料を作業画面に入れる 1（intake_add_files）と、
-  // 運営者の決定 11-07「利用者の想定のプロンプトで、アプリがチャットだけで動く」の作業画面の見せ方を変える 1（screen_set）
-  assert.ok(names.length <= 17, `ツールは 17 以下: ${names.length}`);
+  // 運営者の決定 11-07「利用者の想定のプロンプトで、アプリがチャットだけで動く」の作業画面の見せ方を変える 1（screen_set）と、
+  // mushitaro/moyai#65「入っている MOYAI を最新にする」の 1（moyai_update）
+  assert.ok(names.length <= 18, `ツールは 18 以下: ${names.length}`);
 });

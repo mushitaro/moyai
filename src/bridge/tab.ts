@@ -83,6 +83,8 @@ export const TAB_EVENT_HANDLERS: { [K in TabToBridge]: Handler<K> } = {
 
 export class TabHub {
   private active: ActiveTab | null = null;
+  /** 入っている MOYAI の次の版（moyai_update の prepare が用意した。#65） */
+  private nextBuild: string | null = null;
   /** 今のタブの回で、握手のあとに飛ばした読めない通信の数 */
   dropped = 0;
   private timer: NodeJS.Timeout | null = null;
@@ -209,6 +211,7 @@ export class TabHub {
       tokenTtlMs: this.o.tokenTtlMs,
       ...(this.o.build ? { build: this.o.build } : {}),
     });
+    if (this.nextBuild) this.send(conn.ws, "bridge.next", { next: this.nextBuild });
     this.o.log("作業画面のタブがつながりました");
   }
 
@@ -220,6 +223,12 @@ export class TabHub {
     const got = Buffer.from(hello.secret, "utf8");
     if (got.length === prev.secret.length && timingSafeEqual(got, prev.secret)) return false;
     return true;
+  }
+
+  /** 入っている MOYAI の次の版が用意できた（#65）。今のタブと、あとからつながるタブに知らせる（切り替えは次の起動） */
+  announceNext(next: string): void {
+    this.nextBuild = next;
+    if (this.active) this.send(this.active.ws, "bridge.next", { next });
   }
 
   onWork(conn: Conn, data: EventData<"tab.work">): void {

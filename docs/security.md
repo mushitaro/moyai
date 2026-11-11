@@ -32,6 +32,7 @@ AI クライアント（Claude Code・Claude Desktop）は、標準入出力の 
 | `reading_skill_register` | 案を置く | 動く | 作業中の版の下書きのルール（reading_rules_propose で置いたもの）を、保管先の決まった場所に、未承認の 3 段目の Skill（SKILL.md と rules.json）として書く。 | 30 秒、送り直さない（来なければ「結果不明」） |
 | `reading_skills_list` | 読む | 動く | 保管先にある 3 段目の Skill（ルール）の一覧。 | 20 秒、1 回だけ送り直す |
 | `screen_set` | 案を置く | 動く | チャットの頼みで作業画面の見せ方を変える。 | 30 秒、送り直さない（来なければ「結果不明」） |
+| `moyai_update` | 始める | 動く | 入っている MOYAI（moyai setup が入れたもの）を最新にする（利用者が「MOYAI を最新にして」と言ったとき）。 | 20 秒、送り直さない（来なければ「結果不明」） |
 
 ## 上限
 

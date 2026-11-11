@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { BridgeStartError, DEFAULT_PORT, startBridge } from "../bridge/server";
 import { resolveStateDir } from "../bridge/state";
+import { appRoot, installedCommitOf } from "../bridge/app-update";
 import { errorBody, type ErrorCode } from "../shared/errors";
 import { parseStartArgs } from "./args";
 import { keysCli, sendCli, verifyDemoRingCli, verifyRingCli } from "./human";
@@ -77,6 +78,8 @@ async function start(argv: string[]): Promise<void> {
       log: say,
       onStopRequest: () => void stopNow(),
       build: __MOYAI_BUILD__.commit,
+      // 入っている MOYAI の更新（moyai_update。#65）：この cli.js が版のフォルダの中なら、その版。開発の clone なら null
+      appUpdate: { root: appRoot(), running: installedCommitOf(appRoot(), process.argv[1] ?? fileURLToPath(import.meta.url)) },
       // 作業画面を開く手（work_screen_open と、作業画面が開いていないときに橋渡しが開く）
       // MOYAI_NO_AUTO_OPEN=1（試験）では開かない。試験の橋渡しが本物のブラウザを開かないように
       ...(process.env.MOYAI_NO_AUTO_OPEN === "1" ? {} : { openUrl: openBrowser }),
