@@ -7,17 +7,20 @@
 //                                         [--state <状態のフォルダ>] [--ledger-json <前に作った ledger.json>]
 //
 // 芯（demo-core.ts）は TypeScript なので、Vite の SSR のビルドで状態のフォルダの下に 1 つの JS にしてから読む。
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+// 台帳の置き場所は config/ledger.json の 1 か所（src/share/ledger-place.ts と同じ導き方。mushitaro/moyai#20）
+const LEDGER_ROOT = JSON.parse(readFileSync(join(HERE, "..", "..", "config", "ledger.json"), "utf8")).root;
+const LEDGER_DIR = LEDGER_ROOT ? `${LEDGER_ROOT}/ledger` : "ledger";
 const REPO = resolve(HERE, "..", "..");
 
 const say = (m) => process.stderr.write(`${m}\n`);
 const USAGE =
-  "使い方：node scripts/ledger/build-bundles.mjs --out <出す先（その下に ledger/ledger/ を作る）> [--rejects <外れた共有ファイルのフォルダ>] [--month YYYY-MM] [--state <状態のフォルダ>] [--ledger-json <ledger.json>]";
+  "使い方：node scripts/ledger/build-bundles.mjs --out <出す先（その下に台帳のフォルダを作る）> [--rejects <外れた共有ファイルのフォルダ>] [--month YYYY-MM] [--state <状態のフォルダ>] [--ledger-json <ledger.json>]";
 
 function parse(argv) {
   const a = { out: null, rejects: null, month: "2026-11", state: null, ledgerJson: null };
@@ -72,8 +75,8 @@ async function main() {
     say(USAGE);
     return 2;
   }
-  if (existsSync(join(a.out, "ledger", "ledger"))) {
-    say(`出す先にもう ledger/ledger/ があります：${a.out}（足すだけの台帳を上書きしません）`);
+  if (existsSync(join(a.out, ...LEDGER_DIR.split("/")))) {
+    say(`出す先にもう ${LEDGER_DIR}/ があります：${a.out}（足すだけの台帳を上書きしません）`);
     return 2;
   }
   if (a.rejects && existsSync(a.rejects) && readdirSync(a.rejects).length > 0) {

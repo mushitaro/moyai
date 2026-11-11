@@ -4,25 +4,25 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "65bb40602ed9bbc2cb1928d7fb14947dd4fd3bba",
-  "src": "f8570c6698ff946aebba32d4110e86d69e419f5d",
+  "commit": "9532624e2adf6f6749254e7eb4b7bbf2c6a10ea4",
+  "src": "828cafef864df611cd5a35ca53eb5bf82a1e13ad",
   "packs": "d162fa4ffe65199c7ebf8f7caf5a273fdae84ce7",
-  "dirty": true
+  "dirty": false
  },
- "measuredAt": "2026-11-10T07:16:06.780Z",
+ "measuredAt": "2026-11-11T18:54:54.558Z",
  "total": {
   "facilities": 11,
   "planMade": 4,
-  "asked": 10633,
+  "asked": 10743,
   "open": 92,
-  "unresolvedAfter": 1433,
+  "unresolvedAfter": 1778,
   "accuracy": {
-   "correct": 2942,
-   "total": 4420
+   "correct": 5523,
+   "total": 7295
   },
   "recovery": {
-   "correct": 4589,
-   "total": 25692
+   "correct": 4949,
+   "total": 25026
   },
   "manDays": {
    "correct": 1618,
@@ -39,7 +39,7 @@
    "facility": "hinatano",
    "name": "ひなた野クリーンプラザ",
    "files": 2,
-   "seconds": 2.5,
+   "seconds": 1.9,
    "asked": 15,
    "answered": 15,
    "open": 0,
@@ -57,17 +57,17 @@
    "blockers": [],
    "plan": {
     "assets": 102,
-    "works": 123,
-    "details": 659
+    "works": 124,
+    "details": 1343
    },
    "accuracy": {
-    "correct": 0,
-    "total": 447
+    "correct": 563,
+    "total": 1548
    },
    "extra": 0,
    "recovery": {
-    "correct": 772,
-    "total": 1877
+    "correct": 1241,
+    "total": 1712
    },
    "manDays": {
     "correct": 0,
@@ -81,7 +81,9 @@
    "dropped": {
     "契約の行の結び（annual）": 521,
     "契約の行の結び（bundle）": 1093,
-    "契約の行の結び（upgrade）": 28
+    "契約の行の結び（upgrade）": 28,
+    "星取表：記号でない文字の印（年度をまたいで結合したセルなど）": 3,
+    "星取表：何台もの機器をまとめた行の印": 250
    },
    "error": null
   },
@@ -89,9 +91,9 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 7.2,
-   "asked": 1945,
-   "answered": 1934,
+   "seconds": 8.2,
+   "asked": 1986,
+   "answered": 1975,
    "open": 11,
    "openKinds": {
     "eventAssetOne": 11
@@ -215,7 +217,7 @@
    "extra": null,
    "recovery": {
     "correct": 0,
-    "total": 2816
+    "total": 2808
    },
    "manDays": {
     "correct": 0,
@@ -227,7 +229,9 @@
    },
    "unplaced": 0,
    "dropped": {
-    "契約の行の結び（bundle）": 400
+    "契約の行の結び（bundle）": 400,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 2,
+    "星取表：何台もの機器をまとめた行の印": 287
    },
    "error": null
   },
@@ -235,7 +239,7 @@
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 21.4,
+   "seconds": 17.8,
    "asked": 6,
    "answered": 6,
    "open": 0,
@@ -332,7 +336,7 @@
    "extra": null,
    "recovery": {
     "correct": 0,
-    "total": 913
+    "total": 825
    },
    "manDays": {
     "correct": 0,
@@ -343,7 +347,9 @@
     "total": 0
    },
    "unplaced": 0,
-   "dropped": {},
+   "dropped": {
+    "星取表：何台もの機器をまとめた行の印": 205
+   },
    "error": null
   },
   {
@@ -368,16 +374,16 @@
    "plan": {
     "assets": 74,
     "works": 67,
-    "details": 269
+    "details": 281
    },
    "accuracy": {
-    "correct": 0,
-    "total": 125
+    "correct": 318,
+    "total": 376
    },
    "extra": 0,
    "recovery": {
-    "correct": 219,
-    "total": 288
+    "correct": 198,
+    "total": 267
    },
    "manDays": {
     "correct": 0,
@@ -390,7 +396,8 @@
    "unplaced": 0,
    "dropped": {
     "契約の行の結び（annual）": 164,
-    "契約の行の結び（bundle）": 117
+    "契約の行の結び（bundle）": 117,
+    "星取表：何台もの機器をまとめた行の印": 31
    },
    "error": null
   },
@@ -412,7 +419,7 @@
     "costTax": 2
    },
    "unresolvedBy": {
-    "assetLinkOne": 442
+    "assetLinkOne": 458
    },
    "openSamples": [
     {
@@ -437,10 +444,10 @@
     }
    ],
    "unresolvedBefore": 2357,
-   "unresolvedAfter": 442,
+   "unresolvedAfter": 458,
    "planMade": false,
    "blockers": [
-    "未解決のセル 442",
+    "未解決のセル 458",
     "答えの無い質問 12"
    ],
    "plan": null,
@@ -448,7 +455,7 @@
    "extra": null,
    "recovery": {
     "correct": 0,
-    "total": 1305
+    "total": 1199
    },
    "manDays": {
     "correct": 0,
@@ -459,14 +466,17 @@
     "total": 0
    },
    "unplaced": 0,
-   "dropped": {},
+   "dropped": {
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 1,
+    "星取表：何台もの機器をまとめた行の印": 219
+   },
    "error": null
   },
   {
    "facility": "nagarebashi",
    "name": "ながれ橋清掃工場",
    "files": 2,
-   "seconds": 1.6,
+   "seconds": 1.5,
    "asked": 9,
    "answered": 9,
    "open": 0,
@@ -487,13 +497,13 @@
     "details": 1844
    },
    "accuracy": {
-    "correct": 0,
-    "total": 430
+    "correct": 1700,
+    "total": 1953
    },
    "extra": 0,
    "recovery": {
-    "correct": 1268,
-    "total": 1689
+    "correct": 1180,
+    "total": 1601
    },
    "manDays": {
     "correct": 0,
@@ -506,7 +516,9 @@
    "unplaced": 0,
    "dropped": {
     "契約の行の結び（annual）": 469,
-    "契約の行の結び（bundle）": 978
+    "契約の行の結び（bundle）": 978,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 4,
+    "星取表：何台もの機器をまとめた行の印": 329
    },
    "error": null
   },
@@ -514,9 +526,9 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 10,
-   "asked": 2517,
-   "answered": 2502,
+   "seconds": 9.4,
+   "asked": 2518,
+   "answered": 2503,
    "open": 15,
    "openKinds": {
     "eventAssetOne": 15
@@ -642,7 +654,7 @@
    "extra": null,
    "recovery": {
     "correct": 0,
-    "total": 3910
+    "total": 3884
    },
    "manDays": {
     "correct": 0,
@@ -654,7 +666,9 @@
    },
    "unplaced": 0,
    "dropped": {
-    "契約の行の結び（bundle）": 553
+    "契約の行の結び（bundle）": 553,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 3,
+    "星取表：何台もの機器をまとめた行の印": 234
    },
    "error": null
   },
@@ -662,9 +676,9 @@
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 15.4,
-   "asked": 3278,
-   "answered": 3278,
+   "seconds": 16.5,
+   "asked": 3285,
+   "answered": 3285,
    "open": 0,
    "openKinds": {},
    "defaulted": {
@@ -685,7 +699,7 @@
    "extra": null,
    "recovery": {
     "correct": 0,
-    "total": 4355
+    "total": 4336
    },
    "manDays": {
     "correct": 0,
@@ -700,7 +714,10 @@
     "契約の行の結び（rollup）": 15,
     "契約の行の結び（annual）": 2599,
     "契約の行の結び（bundle）": 1403,
-    "契約の行の結び（upgrade）": 28
+    "契約の行の結び（upgrade）": 28,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 2,
+    "星取表：記号でない文字の印（年度をまたいで結合したセルなど）": 3,
+    "星取表：何台もの機器をまとめた行の印": 269
    },
    "error": null
   },
@@ -708,7 +725,7 @@
    "facility": "tsubasadai",
    "name": "つばさ台環境エネルギーセンター",
    "files": 3,
-   "seconds": 1,
+   "seconds": 1.1,
    "asked": 50,
    "answered": 18,
    "open": 32,
@@ -722,7 +739,7 @@
     "assetLink": 1
    },
    "unresolvedBy": {
-    "assetLinkOne": 653
+    "assetLinkOne": 982
    },
    "openSamples": [
     {
@@ -747,10 +764,10 @@
     }
    ],
    "unresolvedBefore": 2333,
-   "unresolvedAfter": 653,
+   "unresolvedAfter": 982,
    "planMade": false,
    "blockers": [
-    "未解決のセル 653",
+    "未解決のセル 982",
     "答えの無い質問 32"
    ],
    "plan": null,
@@ -758,7 +775,7 @@
    "extra": null,
    "recovery": {
     "correct": 0,
-    "total": 1637
+    "total": 1502
    },
    "manDays": {
     "correct": 0,
@@ -771,7 +788,9 @@
    "unplaced": 0,
    "dropped": {
     "契約の行の結び（annual）": 460,
-    "契約の行の結び（bundle）": 914
+    "契約の行の結び（bundle）": 914,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 3,
+    "星取表：何台もの機器をまとめた行の印": 245
    },
    "error": null
   },
@@ -779,9 +798,9 @@
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 11.2,
-   "asked": 2757,
-   "answered": 2737,
+   "seconds": 12.4,
+   "asked": 2818,
+   "answered": 2798,
    "open": 20,
    "openKinds": {
     "eventAssetOne": 20
@@ -905,7 +924,7 @@
    "extra": null,
    "recovery": {
     "correct": 0,
-    "total": 3738
+    "total": 3728
    },
    "manDays": {
     "correct": 0,
@@ -917,7 +936,9 @@
    },
    "unplaced": 0,
    "dropped": {
-    "契約の行の結び（bundle）": 784
+    "契約の行の結び（bundle）": 784,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 2,
+    "星取表：何台もの機器をまとめた行の印": 279
    },
    "error": null
   }

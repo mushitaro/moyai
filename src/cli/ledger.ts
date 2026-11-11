@@ -1,10 +1,10 @@
 // 公開の台帳の CLI（docs/plan.md §2.8 場 2・docs/sharing.md）。台帳は MOYAI のリポジトリの ledger/（2026-11-07 に mushitaro/moyai-ledger から移した）。
 // 台帳の根を指すときは、MOYAI のリポジトリ（の clone）の根を指す（その下の ledger/ と ledger/ledger/ も受ける）。
-// - `moyai verify ledger <MOYAI の clone>`：輪の受け手と同じ関数で、決まり（ledger.json）と束ごとに ✓ か理由つきの ✗ を出す。
+// - `moyai verify ledger <台帳の clone>`：輪の受け手と同じ関数で、決まり（ledger.json）と束ごとに ✓ か理由つきの ✗ を出す。
 // - `moyai ledger validate-pr --base <SHA> --head <SHA>`：MOYAI のリポジトリの pull_request_target の検証。head を checkout せず、
 //   git の木から blob だけを読む。ledger/ の外を変える PR は「台帳の PR ではない」として検証しない（台帳のファイルが混ざっていれば ✗）。
 //   結果を JSON（機械が読む）と日本語の markdown（PR のコメント）に書く。
-// - `moyai ledger site <MOYAI の clone> <出すフォルダ>`：確かめ直した束から 1 枚の HTML を書く。
+// - `moyai ledger site <台帳の clone> <出すフォルダ>`：確かめ直した束から 1 枚の HTML を書く。
 // - `moyai ledger submit --bundle <束か取り下げの印> --repo <clone>`：人だけ（端末でなければ断る）。PR の支度をし、gh のコマンドを出す（走らせない）。
 // 人への知らせは標準エラーへ出す（標準出力は MCP だけに使う）。終わりの値：すべて ✓ なら 0、どれかが ✗ なら 1、引数や読めない台帳・道具の誤りは 2。
 import { spawnSync } from "node:child_process";
@@ -150,13 +150,13 @@ export async function verifyLedgerCli(argv: string[], o: { packsDir?: string } =
 
 export const LEDGER_USAGE = `使い方：
   moyai ledger validate-pr --base <SHA> --head <SHA> [--repo <道>] [--json <道>] [--markdown <道>]
-  moyai ledger site <MOYAI の clone> <出すフォルダ>
-  moyai ledger submit --bundle <共有ファイルか失効記録> --repo <MOYAI の clone>（人だけ。端末から）
-  moyai ledger init --root <MOYAI の clone> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から。管理者の鍵で台帳の決まりに署名する）`;
+  moyai ledger site <台帳の clone> <出すフォルダ>
+  moyai ledger submit --bundle <共有ファイルか失効記録> --repo <台帳の clone>（人だけ。端末から）
+  moyai ledger init --root <台帳の clone> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から。管理者の鍵で台帳の決まりに署名する）`;
 
 /** ledger init の言葉 */
 export const INIT_TEXT = {
-  usage: "使い方：moyai ledger init --root <MOYAI の clone の根（絶対の道）> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から）",
+  usage: "使い方：moyai ledger init --root <台帳の clone の根（絶対の道）> --pack <Skillパック> [--month YYYY-MM]（人だけ。端末から）",
   intro: `公開の台帳の決まり（${LEDGER_JSON_PATH}）を作り、管理者の鍵で署名します。管理者の鍵は、この PC の状態フォルダに置きます（台帳には書きません。パスワードでは包みません）。`,
   failed: (r: string) =>
     ({
@@ -292,7 +292,7 @@ export function ledgerFilesOfTree(git: GitRun, entries: readonly TreeEntry[]): L
 // ─── validate-pr ─────────────────────────────────────────────
 
 export const PR_TEXT = {
-  usage: "使い方：moyai ledger validate-pr --base <commit の SHA> --head <commit の SHA> [--repo <MOYAI の clone>] [--json <道>] [--markdown <道>]",
+  usage: "使い方：moyai ledger validate-pr --base <commit の SHA> --head <commit の SHA> [--repo <台帳の clone>] [--json <道>] [--markdown <道>]",
   title: (ok: boolean) => (ok ? "### MOYAI 台帳の検証：✓ 通りました" : "### MOYAI 台帳の検証：✗ 通りません"),
   titleNotLedger: "### MOYAI 台帳の検証：台帳の PR ではありません",
   notLedger: (base: string, head: string) =>
@@ -538,11 +538,11 @@ function lstatOrNull(p: string) {
 // ─── submit（人だけ） ────────────────────────────────────────────
 
 export const SUBMIT_TEXT = {
-  usage: "使い方：moyai ledger submit --bundle <署名済みの共有ファイルか失効記録> --repo <MOYAI の clone> [--base main]（人だけ。端末から）",
+  usage: "使い方：moyai ledger submit --bundle <署名済みの共有ファイルか失効記録> --repo <台帳の clone> [--base main]（人だけ。端末から）",
   account:
     "知らせ：PR を出す GitHub のアカウントは、誰にでも見えます。共有ファイルとそのアカウントが結びつくので、台帳専用のアカウントを使うことを勧めます。",
   noBundle: "共有ファイルを読めません（無いか、大きすぎます）。",
-  notGit: "MOYAI のリポジトリの clone として読めません（git の誤り）。",
+  notGit: "台帳の clone として読めません（git の誤り）。",
   noBase: (b: string) => `枝 ${b} がありません。台帳の既定のブランチを取ってから走らせてください。`,
   notBundle: "共有ファイルか失効記録の形として読めません。",
   ng: (reasons: string) => `この共有ファイルは台帳の検証で ✗ になります：${reasons}`,

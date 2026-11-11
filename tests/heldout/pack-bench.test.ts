@@ -90,7 +90,7 @@ describe("Skillパックの物差し", () => {
       const base = { facility: n, name: n, files: 0, seconds: 0, asked: 0, answered: 0, open: 0, openKinds: {}, defaulted: {}, unresolvedBy: {}, openSamples: [], unresolvedBefore: 0, unresolvedAfter: 0, planMade: false, blockers: [], plan: null, accuracy: null, extra: null, recovery: { correct: 0, total: 0 }, manDays: null, days: null, unplaced: 0, dropped: {}, error: null } satisfies BenchRow;
       try {
         const v = loadV2Facility(join(root, n), n);
-        const { result: r, analysis } = await runSet(v.set, { facilityKey: v.set.world.facility.id, acceptDefaults: true, deferWholeFile: true, ...(readings.length ? { readings } : {}) });
+        const { result: r, analysis } = await runSet(v.set, { facilityKey: v.set.world.facility.id, acceptDefaults: true, deferWholeFile: true, asWritten: true, ...(readings.length ? { readings } : {}) });
         const openKinds: Record<string, number> = {};
         const openSamples: BenchRow["openSamples"] = [];
         for (const q of r.openAtEnd) {
@@ -173,7 +173,14 @@ describe("Skillパックの物差し", () => {
       "- ③ は、計画を作れた施設の、資料ごとの正しさの和（機器・印・作業の行）。計画が無ければ測れない（—）。合計の ③ は、計画を作れた施設だけの和。",
       ...(rows.some((x) => x.extra) ? [`- ③ の読みすぎ（正解に無いのに計画に読んだ数）：${rows.filter((x) => x.extra).map((x) => `${x.facility} ${x.extra}`).join("、")}`] : []),
       "- ⑥ は、作業そのものを書いた行のある作業のうち、計画の作業に、機器・年度・資料の行がそろって取り戻せた数。計画を作れなかった施設は 0 として分母に入れる。",
+      "- ⑥ の作業の場所は、実績として書いてある印と行。予定として書いてある印（予定の列・実績を書かずに予定のまま残した印）は、作業をしたという記録に数えない。",
       "- 正解は工場 v2 の形で、tests/heldout/v2.ts が契約の形に写す。契約の行だけの結び（年間の委託・まとめた工事）は出来事にしない。",
+      "- 星取表は、印・機器・まとまりを写す。機器台帳の行（1 行が何台もの機器を表す）は写していない。機器を結ぶ問いは、正解が両方の機器を知っているときだけ台本が答える。",
+      ...(() => {
+        const star = (k: string) => rows.filter((x) => x.dropped[k]).map((x) => `${x.facility} ${x.dropped[k]}`).join("、");
+        const keys = [...new Set(rows.flatMap((x) => Object.keys(x.dropped)))].filter((k) => k.startsWith("星取表：")).sort();
+        return keys.map((k) => `- ③ に数えていない印（${k.slice("星取表：".length)}）：${star(k)}`);
+      })(),
       ...rows.filter((x) => x.open).map((x) => `- ${x.facility} の開いたままの問い：${Object.entries(x.openKinds).map(([k, v]) => `${k} ${v}`).join("、")}`),
       ...rows.filter((x) => Object.keys(x.defaulted).length).map((x) => `- ${x.facility} の既定の答えを受けた問い：${Object.entries(x.defaulted).map(([k, v]) => `${k} ${v}`).join("、")}`),
       ...rows.filter((x) => x.unresolvedAfter).map((x) => `- ${x.facility} の未解決のセルが待っている問い：${Object.entries(x.unresolvedBy).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join("、")}`),
