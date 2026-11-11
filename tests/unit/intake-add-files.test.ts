@@ -354,8 +354,10 @@ describe("作業画面：人が落とした資料と同じ道で取り込む", (
     expect(ws.fileCount).toBe(3);
     expect(ws.settings).toMatchObject({ packId: "waste-incineration", facilityName: args.facilityName, fictional: true });
     expect(ws.notices[0]?.kind).toBe("ai");
-    // 2 回目：同じ名前の資料はもう入っている
-    const again = await addFilesFromBridge(ws, args, fetch);
+    // 2 回目：同じ名前の資料はもう入っている。取りに行かない（加工したファイルを足すとき、前の資料を読み直さない。#47）
+    let fetched = 0;
+    const again = await addFilesFromBridge(ws, args, async (id) => (fetched++, fetch(id)));
+    expect(fetched).toBe(0);
     if (!again.ok) throw new Error(again.code);
     expect(again.data.added).toEqual([]);
     expect((again.data.refused as { reason: string }[]).map((x) => x.reason)).toEqual(["same_name", "same_name", "same_name"]);
