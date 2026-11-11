@@ -60,6 +60,11 @@ export const Asset = z
     path: z.array(z.string()).optional(),
     /** セルに書いた文字そのもの */
     name_text: z.string().min(1),
+    /**
+     * true：name_text は、セルに書いた文字そのものではなく、番号や記号の飾りを除いた名前（工場 v2 の正解は、書いた文字そのものを持たない）。
+     * このときは、引き当てたセルの文字そのものの名前も正しいとする（書いた文字そのものを名前にするのは、ほかの組でも正しい読み）
+     */
+    name_cleaned: z.boolean().optional(),
     /** 機器の名前（番号を除いた、その資料での呼び名）と、番号（タグ）。書いていなければ null */
     name: z.string().nullable().optional(),
     tag: z.string().nullable().optional(),
@@ -82,6 +87,8 @@ export const Mark = z
     equipment_id: id,
     work_ids: z.array(id).min(1),
     symbol: z.string().min(1).max(8),
+    /** false：③ に数えない（何台もの機器をまとめた行の印。対象の機器が 1 つに決まらない）。台本の答え・読みすぎの数え・⑥ には使う */
+    measure: z.boolean().optional(),
   })
   .strict();
 export type Mark = z.infer<typeof Mark>;

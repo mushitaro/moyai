@@ -319,13 +319,25 @@ export interface Script {
 }
 
 /** 既定の答えを受けたときの理由（正解から答えた問いと分けて数えるため） */
+/**
+ * 機器を結ぶ問い（assetLink・assetLinkOne）を、正解から答えられるか：問いの行と、結ぶ相手の行の、どちらの機器も正解が知っているときだけ。
+ * 工場 v2 の正解を写した組（v2.ts）は、星取表の行（1 行 1 機器の行）だけに機器の位置があり、機器台帳の行には無い。
+ * 知らない行を「別のもの」と答えない（答えられない問いに数える）。ほかの問いは true
+ */
+function linkKnown(q: QuestionState, ix: Index): boolean {
+  if (q.kind !== "assetLink" && q.kind !== "assetLinkOne") return true;
+  const known = (it: { file: string; sheet: string | null; cells: string[] } | undefined) => !!it && ix.entityOf(it.file, it.sheet, it.cells[0] ?? "") !== null;
+  return q.items.length > 0 && q.items.every((it) => known(it) && (!it.target?.length || known(it.target[0])));
+}
+
 export const DEFAULT_REASON = "既定の答えを受けた（台本は正解から答えられない）";
 
 /** 台本の選び。どれも Skillパックの物差し（pack-bench）だけが使う。見ていない様式の測り（heldout）・calibrate・demo は渡さない（測り方を変えない） */
 export interface ScriptOptions {
   /**
    * 正解から答えられない問いに既定の答えがあれば、それを受ける（人が推された答えを押すのと同じ。数は defaulted に分けて出す）。
-   * 正解に機器の位置が 1 つも無い組（工場 v2 の正解を写した組。v2.ts は出来事だけを写す）の、機器を結ぶ問い（assetLink）も、正解から答えられない問いに数える
+   * 機器を結ぶ問い（assetLink・assetLinkOne）は、問いの行と相手の行の機器を、どちらも正解が知っているときだけ正解から答える（linkKnown）。
+   * 知らなければ、正解から答えられない問いに数える（工場 v2 の正解を写した組は、機器台帳の行の機器を持たない）
    */
   acceptDefaults?: boolean;
   /**
@@ -346,7 +358,7 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
     const ds: Decision[] = [];
     for (const q of an.open) {
       if (answered.has(q.questionId)) continue;
-      const a = opt.acceptDefaults && q.kind === "assetLink" && ix.truth.assets.length === 0 ? null : answer(q, ix);
+      const a = opt.acceptDefaults && !linkKnown(q, ix) ? null : answer(q, ix);
       if (a !== null) ds.push({ questionId: q.questionId, answer: a, author: "human", reason: AUTHOR_REASON });
       else if (opt.acceptDefaults && q.defaultAnswer !== null && q.options.some((o) => o.id === q.defaultAnswer)) {
         ds.push({ questionId: q.questionId, answer: q.defaultAnswer, author: "human", reason: DEFAULT_REASON });
@@ -444,7 +456,10 @@ export function measureAssets(plan: Plan, ix: Index): Record<string, Accuracy> {
       const text = nf(x.name_text);
       const alt = x.equipment_id ? (namesOf.get(x.equipment_id) ?? new Set<string>()) : new Set<string>();
       const nameOk = nf(a.name) === nf(x.name ?? "\u0000") || alt.has(nf(a.name)) || (a.tag ? text.includes(nf(a.tag)) && nf(text.replace(nf(a.tag), "").replace(/[()（）［］[\]]/g, "")) === nf(a.name) : nf(a.name) === text);
-      if (!nameOk) why.push(`名前 ${a.name}${a.tag ? `／${a.tag}` : ""}`);
+      // 飾りを除いた名前で書いた正解（name_cleaned）：引き当てたセルの文字そのものの名前も正しい
+      const written = x.name_cleaned ? (src(x.file)?.sheets.find((sh) => sh.name === p.at!.sheet)?.cells.find((c) => p.at!.refs.has(c.ref))?.text ?? null) : null;
+      const writtenOk = written !== null && (nf(a.name) === nf(written) || (!!a.tag && nf(written).includes(nf(a.tag)) && nf(nf(written).replace(nf(a.tag), "").replace(/[()（）［］[\]]/g, "")) === nf(a.name)));
+      if (!nameOk && !writtenOk) why.push(`名前 ${a.name}${a.tag ? `／${a.tag}` : ""}`);
       if (x.kind === "equipment" && x.equipment_id) {
         for (const o of places.get(x.equipment_id) ?? []) {
           if (o === p || !o.at || o.item.file === x.file) continue;
@@ -461,7 +476,7 @@ export function measureAssets(plan: Plan, ix: Index): Record<string, Accuracy> {
 }
 
 /** 資料ごとの、印の正しさ：明細がある・予定と実績・年度・対象の機器・精密機能検査の印。余分＝正解の印でないセルを出どころに持つ明細 */
-export function measureMarks(plan: Plan, ix: Index): Record<string, Accuracy> {
+export function measureMarks(plan: Plan, ix: Index, o: { extraByDetail?: boolean } = {}): Record<string, Accuracy> {
   const out: Record<string, Accuracy> = {};
   const workOf = new Map(plan.works.map((w) => [w.workKey, w]));
   const precisionLabel = ix.world.works.find((w) => w.precision)?.label ?? null;
@@ -470,6 +485,11 @@ export function measureMarks(plan: Plan, ix: Index): Record<string, Accuracy> {
   for (const p of ix.marks) {
     const x = p.item;
     const acc = (out[x.file] ??= acc0());
+    // 数えない印（何台もの機器をまとめた行）：正解の印ではあるので、読んだ明細を読みすぎに数えない
+    if (x.measure === false) {
+      if (p.at) claimed.add(`${x.file}|${p.at.sheet}|${[...p.at.refs][0]}`);
+      continue;
+    }
     acc.total++;
     if (!p.at) {
       acc.misses.push(`${where(p)}：${p.why}`);
@@ -495,12 +515,18 @@ export function measureMarks(plan: Plan, ix: Index): Record<string, Accuracy> {
     if (why.length) acc.misses.push(`${where(p)}：${why.join("・")}`);
     else acc.correct++;
   }
-  // 余分：印の資料の、正解の印でないセルを出どころに持つ明細の数（セルごとに 1 つ）
+  // 余分：印の資料の、正解の印でないセルを出どころに持つ明細の数（セルごとに 1 つ）。extraByDetail のときは、明細ごと（下）
   for (const f of markFiles) {
     const extra = new Set<string>();
-    for (const d of plan.details)
-      for (const s of d.sources) if (s.file === f && s.cell && !claimed.has(`${f}|${s.sheet}|${s.cell}`) && !ix.events.some((e) => e.at && hits(s, f, e.at))) extra.add(`${s.sheet}|${s.cell}`);
-    out[f]!.extra += extra.size;
+    const known = (s: Detail["sources"][number]) => claimed.has(`${f}|${s.sheet}|${s.cell}`) || ix.events.some((e) => e.at && hits(s, f, e.at));
+    for (const d of plan.details) {
+      const here = d.sources.filter((s) => s.file === f && s.cell);
+      if (o.extraByDetail) {
+        // 明細ごと：その資料の出どころのどれも正解の印・行でない明細（出どころの組ごとに 1 つ）。明細は、印のセルのほかに作業の名前のセルも出どころに持つ
+        if (here.length > 0 && !here.some(known)) extra.add(here.map((s) => `${s.sheet}|${s.cell}`).sort().join(","));
+      } else for (const s of here) if (!known(s)) extra.add(`${s.sheet}|${s.cell}`);
+    }
+    (out[f] ??= acc0()).extra += extra.size;
   }
   return out;
 }
@@ -509,6 +535,7 @@ export function measureMarks(plan: Plan, ix: Index): Record<string, Accuracy> {
 export function measureMarkWorkCount(plan: Plan, ix: Index): Accuracy {
   const acc = acc0();
   for (const p of ix.marks) {
+    if (p.item.measure === false) continue;
     acc.total++;
     const got = p.at ? plan.details.filter((d) => d.sources.some((s) => hits(s, p.item.file, p.at!))).length : 0;
     if (got === p.item.work_ids.length) acc.correct++;
@@ -609,12 +636,13 @@ export interface Recovery {
  * 戻せた：その作業の、読んだ資料の場所（印のセル・行）をすべて出どころに持つ実績の明細が 1 つある。
  * 工数：一式でない行に工数が書いてある作業のうち、その明細の工数が世界と同じ。日数：行に日数が書いてある作業のうち、その明細の日数が世界と同じ。
  */
-export function measureRecovery(plan: Plan, ix: Index, read: Set<string>): Recovery {
+export function measureRecovery(plan: Plan, ix: Index, read: Set<string>, o: { actualMarksOnly?: boolean } = {}): Recovery {
   const out: Recovery = { denominator: 0, together: 0, inPlan: 0, manDays: { correct: 0, total: 0 }, days: { correct: 0, total: 0 }, marksOnly: 0, notCounted: {}, misses: [] };
   const actual = plan.details.filter((d) => d.planOrActual === "actual");
   const workOf = new Map(plan.works.map((w) => [w.workKey, w]));
   const single = (d: Detail) => (workOf.get(d.workKey)?.targets.length ?? 0) === 1;
-  const placedOf = (w: string) => [...ix.marks.filter((p) => p.item.work_ids.includes(w)), ...ix.events.filter((p) => p.item.work_ids.includes(w))];
+  // actualMarksOnly：実績の作業の場所は、実績として書いてある印と行。予定として書いてある印（予定の列・実績を書かずに予定のまま残した印）は、その作業をしたという記録ではない
+  const placedOf = (w: string) => [...ix.marks.filter((p) => (!o.actualMarksOnly || p.item.status === "actual") && p.item.work_ids.includes(w)), ...ix.events.filter((p) => p.item.work_ids.includes(w))];
   for (const w of ix.world.works) {
     if (w.status !== "actual") continue;
     const all = placedOf(w.id);
@@ -698,6 +726,11 @@ export interface RunOptions {
   /** 台本の選び（pack-bench だけ。ScriptOptions） */
   acceptDefaults?: boolean;
   deferWholeFile?: boolean;
+  /**
+   * 工場 v2 の正解を写した組（v2.ts。印は「書いてあるもの」で予定・実績を決める）の数え方（pack-bench だけ。見ていない様式・calibrate・demo の測り方は変えない）：
+   * ⑥ の作業の場所は、実績として書いてある印と行だけ。読みすぎは、正解の印・行に 1 つも結ばない明細を数える（作業の名前のセルを読みすぎに数えない）
+   */
+  asWritten?: boolean;
 }
 
 export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ result: SetResult; plan: Plan | null; analysis: Analysis; index: Index; survey: Survey }> {
@@ -721,7 +754,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
   const ix = new Index(truth, world, an.sources);
   const plan = comp.plan;
   const assets = plan ? measureAssets(plan, ix) : {};
-  const marks = plan ? measureMarks(plan, ix) : {};
+  const marks = plan ? measureMarks(plan, ix, { extraByDetail: opt.asWritten }) : {};
   const events = plan ? measureEvents(plan, ix) : {};
   const files: FileResult[] = [];
   for (const f of truth.files) {
@@ -761,7 +794,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
       rejected: rej ? rej.reason : read.includes(f.file) ? null : "読んでいない（写真は AI が読む）",
     });
   }
-  const rc = plan ? measureRecovery(plan, ix, new Set(read)) : measureRecovery({ assets: [], works: [], details: [] } as unknown as Plan, ix, new Set(read));
+  const rc = plan ? measureRecovery(plan, ix, new Set(read), { actualMarksOnly: opt.asWritten }) : measureRecovery({ assets: [], works: [], details: [] } as unknown as Plan, ix, new Set(read), { actualMarksOnly: opt.asWritten });
   const unplaced = [...ix.assets, ...ix.marks, ...ix.events].filter((p) => !p.at).map((p) => `${where(p)}：${p.why}`);
   const result: SetResult = {
     set: truth.set,
