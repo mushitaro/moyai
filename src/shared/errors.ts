@@ -113,6 +113,18 @@ export const ERRORS = {
     http: 200,
     text: "その名前のルールの下書きが、作業画面にありません。先に reading_rules_propose でルールを置き、利用者に読み直した結果を見てもらってください。",
   },
+  facility_name_invalid: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "施設の名前の案の形が違います（1〜40 字、前後に空白なし）。どの案も置いていません。",
+  },
+  facility_name_fictional: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "架空の施設の名前から【架空】は外せません。【架空】を含む名前で置き直してください。どの案も置いていません。",
+  },
   pack_basis_unknown: {
     from: "tab",
     to: "ai",

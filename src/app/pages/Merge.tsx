@@ -36,6 +36,7 @@ import { setCrosswalkBase } from "../state/crosswalk";
 import type { Decision } from "../../import/questions";
 import { CONFIRMED_SHEETS, STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
+import { InlineName } from "../components/InlineName";
 import { FacilityDialog } from "../components/FacilityDialog";
 import { setFacilityDialog } from "../state/facility-dialog";
 import { Intake, IntakeFacilityDialog, Questions, StopNoticeDetail, StopNotices, composeReasons, stopNotices, useSheets, useWorkspace, type StopKind } from "./Intake";
@@ -610,9 +611,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         </div>
       )}
       <div className="moyai-merge-head">
-        <h1 className="moyai-merge-name" data-testid="plan-name">
-          {name}
-        </h1>
+        {/* 施設の名前：作業中の計画があり、見るだけでないときは、押してその場で直せる（#56。次に署名した版から効く） */}
+        <InlineName name={name} editable={!!plan && viewingOld === null && !awaitingMe && toReceive === null} label={T.renameLabel} />
         {/* 第 1 版をつくる前は施設の名前だけ（まだ版が無い。つくる版の番号は下の帯の「第 1 版をつくる」にある。docs/screens.md 3.3 の末尾「写しの照らし」） */}
         {/* 出力・共有のシートは確定した版の番号（確定した版が無ければ版を出さない） */}
         {plan && !(outSheet && confirmedVersion === null) && (

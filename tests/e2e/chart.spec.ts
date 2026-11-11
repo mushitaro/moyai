@@ -502,3 +502,20 @@ test("金額の表示に切り替えると、金額のある星に千円の金�
   await page.getByTestId("show-mode").getByText("星取", { exact: true }).click();
   await expect(crane).toHaveText("●");
 });
+
+test("見出しの施設の名前を押してその場で直す。Enter で決め、Esc で戻す。架空の施設は【架空】を付け直す（#56）", async ({ page }, info) => {
+  await openPlan(page, "fictional-1");
+  const name = page.getByTestId("plan-name");
+  const before = (await name.textContent()) ?? "";
+  expect(before).toContain("【架空】");
+  await name.click();
+  const input = page.getByTestId("plan-name-input");
+  await input.fill("北部清掃工場");
+  await input.press("Escape");
+  await expect(name).toHaveText(before);
+  await name.click();
+  await page.getByTestId("plan-name-input").fill("北部清掃工場");
+  await page.getByTestId("plan-name-input").press("Enter");
+  await expect(name).toHaveText("【架空】北部清掃工場");
+  await page.screenshot({ path: shot(`merge-rename-${info.project.name}`) });
+});

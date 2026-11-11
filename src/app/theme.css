@@ -1314,3 +1314,18 @@ tr.moyai-pick-row[aria-selected="true"] > .moyai-decisions-act {
   background: var(--bg);
   min-height: 100vh;
 }
+
+/* 見出しの施設の名前をその場で直す（#56）：同じ字のまま、下に細い墨の線。押せる名前は指の形 */
+.moyai-merge-name[data-editable="true"] {
+  cursor: text;
+}
+.moyai-merge-name-input {
+  font-family: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--text);
+  padding: 0;
+  outline: 0;
+  min-width: 8em;
+}

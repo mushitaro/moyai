@@ -2,6 +2,7 @@
 // AI の道：proposeFromAi（crosswalk_propose の受け手 intake/tab-tools.ts だけが呼ぶ）と、要約の crosswalkSurvey。
 // 人の道：acceptByHuman・rejectByHuman・setByHuman（取り込みの画面の当てはめの欄だけが呼ぶ。AI のツールの受け手からは呼ばない）。
 // 案は作者「AI」・人が受けていない。受けるのは人だけで、受けた行だけが星取表の共通の行と共有に入る。
+import { carryNames } from "./facility-name";
 import {
   acceptProposal,
   carryOverCrosswalk,
@@ -158,8 +159,9 @@ export function placeComposedPlan(composed: Plan): CarryOverReport | null {
     return null;
   }
   // 版の履歴で人が確定して消した星取は、資料から読み直しても外したままにする（Architect の 70。state/stars.ts）
-  const next = dropRemovedInHistory(composed);
   const prev = getWorkingPlan();
+  // 人が見出しで直した名前と Claude の名前の案は、作り直しても残す（#56）
+  const next = carryNames(prev?.plan ?? null, dropRemovedInHistory(composed));
   const same = prev !== null && prev.origin === "intake" && prev.plan.planId === next.planId;
   const b = base && base.plan.planId === next.planId ? base : null;
   const any =

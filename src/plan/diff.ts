@@ -1,5 +1,6 @@
 // 版どうしの差（印の前後）と、人が受けていない決定（docs/plan.md §2.9）。
 // 画面（確定のダイアログ）と橋渡し（版のファイルと差分レポート）が同じこの関数を使う。純粋な TS（UI もネットも持たない）。
+import { applyNameAcceptance } from "./facility-name";
 import type { AuthorKind } from "../shared/fields";
 import type { Plan } from "../shared/plan";
 import { cycleIdOf } from "./cycle";
@@ -114,7 +115,7 @@ export const NEEDS_HUMAN_AUTHORS: readonly AuthorKind[] = ["ai", "ai_relayed_hum
 export interface Decision {
   /** 決定の ID（何の決定か）："item:<資産の鍵>"・"attr:<作業の鍵>"・"detail:<明細の鍵>"・"reading:<質問の番号>" */
   id: string;
-  kind: "commonItem" | "attribute" | "detail" | "reading";
+  kind: "commonItem" | "attribute" | "detail" | "reading" | "facilityName";
   author: AuthorKind;
   /** 画面に出す対象（機器の名前・作業の名前） */
   target: string;
@@ -165,6 +166,19 @@ export function aiDecisions(plan: Plan): Decision[] {
   // 読み方の決定は、明細の作者に写らなくても（年度の読み方・列の役目など）ここで受けてもらう。1 つの決定は 1 行で、
   // それで作者が決まった明細は行に出さず、決定に付いて動く（効く明細が変われば、また受けていない決定になる。Wire）
   const covered = new Set<string>();
+  // 施設の名前の案（#56）：「施設の名前　前 → 後」の 1 行
+  const np = plan.nameProposal;
+  if (np && NEEDS_HUMAN_AUTHORS.includes(np.author)) {
+    out.push({
+      id: "name:",
+      kind: "facilityName",
+      author: np.author,
+      target: "施設の名前",
+      value: `${plan.displayName} → ${np.name}`,
+      basis: np.basis,
+      hash: fnv64(JSON.stringify([plan.displayName, np.name, np.author, np.basis])),
+    });
+  }
   for (const r of plan.readingDecisions ?? []) {
     if (!NEEDS_HUMAN_AUTHORS.includes(r.author)) continue;
     const ds = [...(r.details ?? [])].sort();
@@ -244,10 +258,12 @@ export function pendingDecisions(plan: Plan, accepted: readonly { id: string; ha
 export function applyAcceptances(plan: Plan, acceptances: readonly Acceptance[]): Plan {
   const items = new Set(acceptances.filter((a) => a.id.startsWith("item:")).map((a) => a.id.slice("item:".length)));
   const attrs = new Set(acceptances.filter((a) => a.id.startsWith("attr:")).map((a) => a.id.slice("attr:".length)));
-  if (items.size === 0 && attrs.size === 0) return plan;
+  // 施設の名前の案を受けたら、名前を替える（#56）
+  const named = applyNameAcceptance(plan, acceptances.some((a) => a.id === "name:"));
+  if (items.size === 0 && attrs.size === 0) return named;
   return {
-    ...plan,
-    assets: plan.assets.map((a) => (items.has(a.nodeKey) ? { ...a, commonItemAccepted: true } : a)),
-    works: plan.works.map((w) => (attrs.has(w.workKey) ? { ...w, attributeAccepted: true } : w)),
+    ...named,
+    assets: named.assets.map((a) => (items.has(a.nodeKey) ? { ...a, commonItemAccepted: true } : a)),
+    works: named.works.map((w) => (attrs.has(w.workKey) ? { ...w, attributeAccepted: true } : w)),
   };
 }
