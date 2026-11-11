@@ -25,6 +25,7 @@ import { buildChart } from "../../plan/chart";
 import { catalogFor, emptyCatalog, packChoices } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
+import { checkNameFromAi, proposeNameFromAi, type NameFromAi } from "../state/facility-name";
 import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
 import { checkStarsFromAi, proposeStarsFromAi } from "../state/stars";
 import { assetKeyOf, fiscalYearOf } from "../../plan/chart";
@@ -183,6 +184,13 @@ function sharePreviewRequest(ws: IntakeWorkspace, args: Record<string, unknown>)
 }
 
 /** 周期の案を置く（chart_propose。docs/plan.md §2.18.4）：足すだけ。引いた印は作者 AI で、人が決定のシートで受けるまで決まらない */
+/** 施設の名前の案を断った理由（誤りの名前は字のまま書く。送り手を数える試験のため） */
+function nameRefused(r: Extract<NameFromAi, { ok: false }>): TabToolResult {
+  if (r.code === "facility_name_fictional") return { ok: false, code: "facility_name_fictional" };
+  if (r.code === "facility_name_invalid") return { ok: false, code: "facility_name_invalid" };
+  return { ok: false, code: "no_working_plan" };
+}
+
 function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabToolResult {
   // ledger は橋渡しが照らしてから渡す（照らせなければここまで来ない）。無ければ会話からの案
   const author = args.author === "ai_relayed_human" ? "ai_relayed_human" : "ai";
@@ -207,6 +215,12 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
   const lg = args.ledger as { ledgerVersion: string; commonItem: string; work: string; checked?: { n: number; median: string; q1: string; q3: string } } | undefined;
   if (lg && !lg.checked) return { ok: false, code: "ledger_basis_mismatch" };
   if (lg?.checked) verified.ledger = { version: lg.ledgerVersion, commonItem: lg.commonItem, work: lg.work, ...lg.checked };
+  // 施設の名前の案（#56）：先に確かめ（合わなければどの案も置かない）、ほかの案のあとに置く
+  const nameIn = typeof args.facilityName === "string" ? args.facilityName : null;
+  if (nameIn !== null) {
+    const pre = checkNameFromAi(nameIn, author, String(args.basis));
+    if (!pre.ok) return nameRefused(pre);
+  }
   const rules = (args.rules ?? []) as Rule[];
   const stars = (args.stars ?? []) as StarIn[];
   // 星取の案（src/plan/star.ts）：実績は基準日の年度まで。周期の案と一緒なら、周期の案を置く前に確かめる（1 つでも合わなければ、どれも置かない）
@@ -230,6 +244,13 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
   if (rules.length > 0) ws.note("ai", T.cyclesProposed(r.proposals.length, marks));
   const s = stars.length > 0 ? proposeStarsFromAi(stars, r.version, String(args.basis), { ...starOpts, checkVersion: false }) : null;
   if (s && !s.ok) return s;
+  let nameState: "proposed" | "same" | null = null;
+  if (nameIn !== null) {
+    const named = proposeNameFromAi(nameIn, author, String(args.basis));
+    if (!named.ok) return nameRefused(named);
+    nameState = named.state;
+    ws.note("ai", T.nameProposed);
+  }
   const plan = getWorkingPlan()?.plan ?? r.plan;
   const starRows = s && s.ok ? starResults(s, plan) : [];
   if (s && s.ok) ws.note("ai", T.starsProposed(new Set(starRows.filter((x) => x.placed).map((x) => x.id)).size));
@@ -258,6 +279,7 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
       proposals: r.proposals.map((p) => ({ id: p.id, years: p.years, works: p.works, marks: p.detailKeys.length, skipped: p.skipped, bases: basesOf(r.plan, p.detailKeys[0]) })),
       ...(stars.length > 0 ? { stars: starRows } : {}),
       version: getWorkingPlan()?.revision ?? r.version,
+      ...(nameState ? { facilityName: nameState } : {}),
     },
   };
 }

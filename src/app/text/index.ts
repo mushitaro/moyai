@@ -382,6 +382,7 @@ export const TEXT = {
   },
   merge: {
     newFacility: "新しい施設",
+    renameLabel: "施設の名前（押して直す。Enter で決める）",
     version: (n: number) => `第 ${n} 版`,
     facilitySettings: "施設設定",
     sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", export: "出力", share: "共有", files: "資料" } as Record<string, string>,
@@ -593,6 +594,7 @@ export const TEXT = {
       sharePreviewRead: "AI が共有ファイルの形と数を読みました（署名して送るのは HOSHITORI の共有のシートの主ボタン）",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の星取 ${marks}。確定のシートで確定するまで未確定）`,
       starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
+      nameProposed: "AI が施設の名前の案を置きました（確定のシートで確定するまで未確定）",
       screenSet: (changed: number, refused: number) =>
         changed > 0 ? `AI が画面の見せ方を ${changed} つ変えました${refused > 0 ? `（変えなかったもの ${refused}）` : ""}` : `AI が画面の見せ方を変えようとしました（変えなかったもの ${refused}）`,
       settled: (n: number, unresolved: number) => `AI が決定を ${n} 個置きました（残りの未解決 ${unresolved} セル）`,

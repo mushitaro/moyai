@@ -144,6 +144,8 @@ export const Plan = z.object({
   readingDecisions: z.array(ReadingDecision).optional(), // 答えた質問が無ければ置かない
   // 計量値の記録（運転時間・起動回数など。資産の節ごとの日付つきの値）。記録が無ければ置かない。きっかけの計量値の枝が読む（src/plan/next.ts）
   meters: z.array(z.object({ nodeKey: code, meter: z.string().min(1).max(40), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), value: z.number() }).strict()).optional(),
+  // 施設の名前の案（Claude が置く。人が確定のシートで受けて署名すると名前が替わり、案は消える。src/plan/facility-name.ts。#56）
+  nameProposal: z.object({ name: z.string().min(1).max(80), author: z.enum(["ai", "ai_relayed_human"]), basis: z.string().max(500) }).strict().optional(),
 });
 export type Plan = z.infer<typeof Plan>;
 export type AssetNodeT = z.infer<typeof AssetNode>;
