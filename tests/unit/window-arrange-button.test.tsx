@@ -66,14 +66,14 @@ describe("ボタンを出す条件", () => {
     expect(renderToStaticMarkup(<ArrangeButton client={new BridgeClient("ws://unused")} browser={CHROME_WIN} />)).toBe("");
   });
 
-  it("ヘッダの並び：Claude と並べる・暗 / 明・設定", () => {
+  it("ヘッダの並び：Claude と並べる・設定（暗 / 明はヘッダに置かない。設定の画面の明暗。#61）", () => {
     const src = readFileSync("src/app/components/Shell.tsx", "utf8");
     const a = src.indexOf("<ArrangeButton client={client} />");
-    const b = src.indexOf("<ThemeSwitch />", a);
-    const c = src.indexOf("{S.settings}", b);
+    const c = src.indexOf("{S.settings}", a);
     expect(a).toBeGreaterThan(0);
-    expect(b).toBeGreaterThan(a);
-    expect(c).toBeGreaterThan(b);
+    expect(c).toBeGreaterThan(a);
+    expect(src).not.toContain("S.themeDark");
+    expect(src).not.toContain("S.themeLight");
   });
 });
 

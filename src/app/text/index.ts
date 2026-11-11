@@ -35,7 +35,8 @@ export const TEXT = {
     tabs: {
       merge: { en: "HOSHITORI", ja: "版に重ねる（星取表・照査・確定・出力・共有・資料）" },
     },
-    themeLabel: "表示の明暗",
+    themeLabel: "明暗",
+    themeAuto: "自動",
     themeDark: "暗",
     themeLight: "明",
     /** ヘッダの右：Claude Desktop の窓を左、MOYAI の窓を右に並べる（docs/screens.md §1。外のブラウザ・Windows・接続中だけ） */

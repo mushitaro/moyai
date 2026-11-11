@@ -12,6 +12,7 @@ import { KeyCheckDialog, type TrustSig } from "../components/KeyWarn";
 import { packVersion } from "../chart/catalog";
 import { useConnection } from "../state/bridge";
 import { takeRootOffer, useRootOffer } from "../state/screen";
+import { ThemeChoice } from "../components/ThemeChoice";
 import { useWorkingPlan } from "../state/plan-store";
 import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -402,6 +403,8 @@ export function Settings() {
             </Stack>,
           )}
           {/* 表示：星取表の見せ方（施設ごとにブラウザに覚える。押すとすぐ効き、上の行の「保存」とは別。Skillパックの上。docs/screens.md 3.7） */}
+          {/* 明暗：既定は自動（PC の設定に従う）。暗・明に固定できる（#61。ヘッダには置かない） */}
+          {row(T.themeTitle, <ThemeChoice />, "theme-setting")}
           {row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
           {row(
             T.packsTitle,
@@ -439,6 +442,7 @@ export function Settings() {
       {/* 開発の道具は、設定を読めないとき（2 つ目のタブ・ブリッジ未接続）にも出す（押せない理由を出すため） */}
       <div className="moyai-settings">
         {/* 設定を読めないあいだ（橋渡しが無い）も、表示は変えられるので出す（読めたら Skillパックの上に置く） */}
+        {!s && row(T.themeTitle, <ThemeChoice />, "theme-setting")}
         {!s && row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
         {row(
           T.devTitle,
