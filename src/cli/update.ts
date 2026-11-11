@@ -102,7 +102,7 @@ export function planUpdate(repoDir: string, buildCommit: string, run: Run = defa
   try {
     if (git("rev-parse", "--is-inside-work-tree") !== "true") return { kind: "not_repo" };
     // MOYAI のフォルダそのものが clone の根であること（ほかのリポジトリの中に置いたフォルダで、そのリポジトリを pull しない）
-    if (realpathSync(git("rev-parse", "--show-toplevel")) !== realpathSync(repoDir)) return { kind: "not_repo" };
+    if (!samePath(git("rev-parse", "--show-toplevel"), repoDir)) return { kind: "not_repo" };
   } catch {
     return { kind: "not_repo" };
   }
@@ -128,6 +128,22 @@ export function planUpdate(repoDir: string, buildCommit: string, run: Run = defa
 }
 
 const short = (c: string): string => c.slice(0, 7);
+
+/** 同じフォルダか。Windows の短い名前（RUNNER~1）と / ・ \ の違い・大文字小文字を、実の道（realpath.native）にそろえて比べる */
+export function samePath(a: string, b: string, platform: NodeJS.Platform = process.platform): boolean {
+  const real = (p: string): string => {
+    try {
+      return realpathSync.native(p);
+    } catch {
+      return p;
+    }
+  };
+  const norm = (p: string): string => {
+    const r = real(p).replace(/\\/g, "/").replace(/\/+$/, "");
+    return platform === "win32" ? r.toLowerCase() : r;
+  };
+  return norm(a) === norm(b);
+}
 
 /** 止まった道具の標準エラーの終わりの数行（npm と git の知らせ。作業データは通らない） */
 function errTail(e: unknown): string {

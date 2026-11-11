@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { writeKeyFile, type KeyFile } from "../../../src/bridge/state";
-import { UPDATE_TEXT, defaultRun, parseUpdateArgs, planUpdate, stampIs, toolsDigest, updateCli, type Run } from "../../../src/cli/update";
+import { UPDATE_TEXT, defaultRun, samePath, parseUpdateArgs, planUpdate, stampIs, toolsDigest, updateCli, type Run } from "../../../src/cli/update";
 import { readRelayDigest, writeRelayDigest } from "../../../src/cli/tools-digest";
 
 const cleanups: (() => void)[] = [];
@@ -98,6 +98,12 @@ describe("moyai update の引数", () => {
     expect(stampIs("abc1234+", "abc1234def")).toBe(false);
     expect(stampIs("unknown", "abc1234def")).toBe(false);
     expect(stampIs("abc1235", "abc1234def")).toBe(false);
+  });
+  it("同じフォルダかは、区切りの / と \\・末尾の区切り・（Windows では）大文字小文字を問わない", () => {
+    expect(samePath("C:/Users/a/moyai", "c:\\users\\A\\moyai\\", "win32")).toBe(true);
+    expect(samePath("/home/a/moyai", "/home/a/moyai/", "linux")).toBe(true);
+    expect(samePath("/home/a/moyai", "/home/a/Moyai", "linux")).toBe(false);
+    expect(samePath("/home/a/moyai", "/home/a", "linux")).toBe(false);
   });
   it("ツールの定義の指紋は 64 字の 16 進で、同じビルドなら同じ", () => {
     expect(toolsDigest()).toMatch(/^[0-9a-f]{64}$/);
