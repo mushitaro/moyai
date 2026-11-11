@@ -320,11 +320,15 @@ export interface Script {
 
 /** 既定の答えを受けたときの理由（正解から答えた問いと分けて数えるため） */
 /**
- * 機器を結ぶ問い（assetLink・assetLinkOne）を、正解から答えられるか：問いの行と、結ぶ相手の行の、どちらの機器も正解が知っているときだけ。
- * 工場 v2 の正解を写した組（v2.ts）は、星取表の行（1 行 1 機器の行）だけに機器の位置があり、機器台帳の行には無い。
- * 知らない行を「別のもの」と答えない（答えられない問いに数える）。ほかの問いは true
+ * 正解の一部しか機器の位置を持たない組（工場 v2 の正解を写した組。v2.ts は、星取表の 1 行 1 機器の行だけに機器を置き、機器台帳の行には置かない）で、
+ * 問いを正解から答えられるか。知らない行を「別のもの」「違う」と答えない（答えられない問いに数える）。pack-bench だけが使う
+ * - 機器を結ぶ問い（assetLink・assetLinkOne）：問いの行と、結ぶ相手の行の、どちらの機器も正解が知っているときだけ
+ * - 番号を分ける問い（tagSplit）：どの行にも正解の機器・まとまりがあるときだけ
+ * - 「共」の意味の問い（commonMeaning）：工場 v2 の正解は、共通の種類（施設全体・系列の合流・共有の部品）を写していないので、答えない
  */
-function linkKnown(q: QuestionState, ix: Index): boolean {
+function truthKnows(q: QuestionState, ix: Index): boolean {
+  if (q.kind === "commonMeaning") return !ix.truth.assets.some((a) => a.name_cleaned);
+  if (q.kind === "tagSplit") return q.items.every((it) => !!(ix.assetAt(it.file, it.sheet, it.cells[0] ?? "") ?? ix.assetInRow(it.file, it.sheet, rowOf(it.cells[0] ?? ""))));
   if (q.kind !== "assetLink" && q.kind !== "assetLinkOne") return true;
   const known = (it: { file: string; sheet: string | null; cells: string[] } | undefined) => !!it && ix.entityOf(it.file, it.sheet, it.cells[0] ?? "") !== null;
   return q.items.length > 0 && q.items.every((it) => known(it) && (!it.target?.length || known(it.target[0])));
@@ -336,7 +340,7 @@ export const DEFAULT_REASON = "既定の答えを受けた（台本は正解か�
 export interface ScriptOptions {
   /**
    * 正解から答えられない問いに既定の答えがあれば、それを受ける（人が推された答えを押すのと同じ。数は defaulted に分けて出す）。
-   * 機器を結ぶ問い（assetLink・assetLinkOne）は、問いの行と相手の行の機器を、どちらも正解が知っているときだけ正解から答える（linkKnown）。
+   * 機器を結ぶ問い（assetLink・assetLinkOne）は、問いの行と相手の行の機器を、どちらも正解が知っているときだけ正解から答える（truthKnows。番号を分ける問い・「共」の意味の問いも）。
    * 知らなければ、正解から答えられない問いに数える（工場 v2 の正解を写した組は、機器台帳の行の機器を持たない）
    */
   acceptDefaults?: boolean;
@@ -358,7 +362,7 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
     const ds: Decision[] = [];
     for (const q of an.open) {
       if (answered.has(q.questionId)) continue;
-      const a = opt.acceptDefaults && !linkKnown(q, ix) ? null : answer(q, ix);
+      const a = opt.acceptDefaults && !truthKnows(q, ix) ? null : answer(q, ix);
       if (a !== null) ds.push({ questionId: q.questionId, answer: a, author: "human", reason: AUTHOR_REASON });
       else if (opt.acceptDefaults && q.defaultAnswer !== null && q.options.some((o) => o.id === q.defaultAnswer)) {
         ds.push({ questionId: q.questionId, answer: q.defaultAnswer, author: "human", reason: DEFAULT_REASON });

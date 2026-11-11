@@ -21,18 +21,23 @@ describe("工場 v2 の正解の写し：星取表", () => {
   });
 
   it("印：正解の印を 1 つも黙って捨てない（置いた印＋理由つきで外した印＝正解の印の数）。星取表の行は出来事にしない", () => {
-    for (const n of ["hinatano", "nagarebashi", "kodamadani"]) {
+    const stars = readdirSync(ROOT).filter((n) => { try { return !!starAnswer(n); } catch { return false; } });
+    expect(stars.length).toBeGreaterThanOrEqual(9);
+    for (const n of stars) {
       const { set, dropped } = load(n);
       const a = starAnswer(n);
       let written = 0;
       for (const r of a.records) for (const col of ["marks", "plans"]) for (const v of Object.values(r.fields?.[col] ?? {})) written += (Array.isArray(v) ? v : [v]).filter((x) => String(x) !== "").length;
       const out = Object.entries(dropped)
-        .filter(([k]) => k.startsWith("星取表：") && !k.includes("何台もの機器"))
+        .filter(([k]) => k.startsWith("星取表：") && !k.includes("何台もの機器") && !k.includes("年度の無い結び"))
         .reduce((s, [, v]) => s + v, 0);
       expect([n, set.truth.marks.length + out]).toEqual([n, written]);
       // 何台もの機器をまとめた行の印は、置くが数えない
       expect(set.truth.marks.filter((m) => m.measure === false).length).toBe(dropped["星取表：何台もの機器をまとめた行の印"] ?? 0);
       expect(set.truth.events.some((e) => e.file === a.file)).toBe(false);
+      // 星取表の結びは、印にしたか、理由つきで外した（年度の無い結び）。出来事にしないぶんを黙って落とさない
+      const yearless = (world(n).links as { file: string; year?: number }[]).filter((l) => l.file === a.file && typeof l.year !== "number").length;
+      expect([n, dropped["星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）"] ?? 0]).toEqual([n, yearless]);
       expect(set.truth.files.find((f) => f.file === a.file)?.kind).toBe("star");
     }
   });
@@ -43,6 +48,11 @@ describe("工場 v2 の正解の写し：星取表", () => {
     const byCell = new Map<string, string[]>();
     for (const m of split) byCell.set(`${JSON.stringify("row" in m.at ? m.at.row : m.at)}|${m.fiscal_year}`, [...(byCell.get(`${JSON.stringify("row" in m.at ? m.at.row : m.at)}|${m.fiscal_year}`) ?? []), m.status]);
     expect([...byCell.values()].some((s) => s.includes("planned") && s.includes("actual"))).toBe(true);
+    // 予定の列（plans）の印は、どれも予定。実績の列（marks）に予定の記号は無い
+    const splitAnswer = starAnswer("nagarebashi");
+    const planSymbols = new Set<string>(splitAnswer.records.flatMap((r: { fields?: { plans?: Record<string, string> } }) => Object.values(r.fields?.plans ?? {})));
+    expect(planSymbols.size).toBeGreaterThan(0);
+    for (const m of split) if (planSymbols.has(m.symbol)) expect([m.symbol, m.status]).toEqual([m.symbol, "planned"]);
     // 1 列の表：書き漏れと記録されたセルの印は、世界の作業が済んでいても予定
     const w = world("hinatano");
     const { set } = load("hinatano");
@@ -55,10 +65,16 @@ describe("工場 v2 の正解の写し：星取表", () => {
       for (const m of ms) expect([e.r, e.year, m.status]).toEqual([e.r, e.year, "planned"]);
     }
     expect(seen).toBeGreaterThan(0);
-    // 記号の何番目か（列の順）：同じ行の同じ記号に、0 から続きの番号
-    const rows = new Map<string, number[]>();
-    for (const m of set.truth.marks) if ("row" in m.at) rows.set(`${m.at.sheet}|${m.at.row}|${m.symbol}`, [...(rows.get(`${m.at.sheet}|${m.at.row}|${m.symbol}`) ?? []), m.at.nth ?? 0]);
-    for (const [k, ns] of rows) expect([k, new Set(ns).size]).toEqual([k, ns.length]);
+    // 記号の何番目か（列の順＝年度の順）：同じ行の同じ記号は、年度の若い順に 0, 1, 2, …
+    const rows = new Map<string, { y: number; nth: number }[]>();
+    for (const m of set.truth.marks) if ("row" in m.at) rows.set(`${m.at.sheet}|${m.at.row}|${m.symbol}`, [...(rows.get(`${m.at.sheet}|${m.at.row}|${m.symbol}`) ?? []), { y: m.fiscal_year, nth: m.at.nth ?? 0 }]);
+    for (const [k, xs] of rows) expect([k, xs.sort((p, q) => p.y - q.y).map((x) => x.nth)]).toEqual([k, xs.map((_, i) => i)]);
+    // しなかった作業（not_done）に残った印は予定
+    const sk = world("sakurazaka");
+    const notDone = new Set((sk.works as { id: string; status: string }[]).filter((x) => x.status === "not_done").map((x) => x.id));
+    const nd = load("sakurazaka").set.truth.marks.filter((m) => m.work_ids.length > 0 && m.work_ids.every((id) => notDone.has(id)));
+    expect(nd.length).toBeGreaterThan(0);
+    for (const m of nd) expect(m.status).toBe("planned");
   });
 
   it("機器：行の作業の機器が 1 つに決まる行だけ。シートの中で 1 つの機器に 1 つ。まとまりと同じ行には置かない", () => {
@@ -75,6 +91,15 @@ describe("工場 v2 の正解の写し：星取表", () => {
     // 数える印の機器は、どれも機器として置いてある
     const eqIds = new Set(eq.map((a) => a.equipment_id));
     expect(set.truth.marks.filter((m) => m.measure !== false && !eqIds.has(m.equipment_id))).toEqual([]);
-    for (const a of set.truth.assets) expect(a.name_cleaned).toBe(true);
+    // 呼び名（name）は、号機だけを書いた行にだけ：同じ名前の機器が、最後の名前だけが違う道に並ぶもの。まとまりの名前を機器の呼び名にしない
+    const w = world("hinatano");
+    const byId = new Map((w.assets as { id: string; name: string }[]).map((x) => [x.id, x]));
+    const named = eq.filter((a) => a.name !== undefined);
+    expect(named.length).toBeGreaterThan(0);
+    for (const a of named) {
+      const sameName = (w.assets as { id: string; name: string }[]).filter((x) => x.id !== a.equipment_id && x.name === byId.get(a.equipment_id!)?.name);
+      expect([a.equipment_id, sameName.length > 0]).toEqual([a.equipment_id, true]);
+    }
+    expect(eq.find((a) => a.name_text === "ごみホッパ" || a.name_text === "トラックスケール")?.name).toBeUndefined();
   });
 });

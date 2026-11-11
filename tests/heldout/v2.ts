@@ -9,7 +9,8 @@
 // 写す決まり（星取表。plan が true の資料。mushitaro/moyai#14）：
 // - 印：記録の marks（予定と実績を 2 列に分けた表は、実績が marks・予定が plans）の 1 つ 1 つ。場所は、その行の、その記号のセル（列の順の何番目か）。
 //   作業は、世界の結び（links の file・sheet・r・year）。予定か実績かは「書いてあるもの」で決める：plans の列は予定。marks の列は世界の作業の状態。
-//   ただし、書き漏れ（errata の omitMark・lastYearUnreflected。実績を書かずに予定の印のまま）と記録されたセルは予定。記号の意味を道具が推し量ることはしない。
+//   ただし、書き漏れ（errata の omitMark・lastYearUnreflected。実績を書かずに予定の印のまま）と記録された作業と、しなかった作業（not_done）は予定。
+//   記号の意味を道具が推し量ることはしない。年度の無い結び（備考の欄など）は印ではない（数は dropped に書く）。
 // - 機器：行の印が結ぶ作業の機器が、ただ 1 つに決まる行だけ。その機器の、シートの中の最初の行の、名前のセル（道の最後の名前）。
 //   何台もの機器をまとめた行の印は、正解に置くが ③ には数えない（measure: false。数は dropped に書く。台本の答え・読みすぎの数え・⑥ には使う）。
 //   世界の作業に結んでいない行は、機器にも印にもしない（数は dropped に書く）。
@@ -18,7 +19,7 @@
 // - 名前：正解の道の名前は、番号や記号の飾り（「１．」「■」「・」）を除いたもの。セルに書いた字そのものの名前も正しいとする（name_cleaned）。
 //   号機だけを書いた行（「1号炉」「#1」）の機器は、その資料の 1 つ上の名前（機器の名前）で呼んでも正しい。
 // - 星取表の段と親は、親があることだけを見る（answer.ts と同じ。段は名前の列の位置で読むため資料ごとに違う）。
-// - 写さないもの：機器台帳の行（1 行が何台もの機器を表す。正解の形の Asset は 1 行 1 機器）。機器を結ぶ問いは、正解が両方の機器を知っているときだけ台本が答える（harness.ts）。
+// - 写さないもの：機器台帳の行（1 行が何台もの機器を表す。正解の形の Asset は 1 行 1 機器）。機器を結ぶ問いは、正解が両方の機器を知っているときだけ台本が答える（harness.ts の truthKnows）。
 import { readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { HeldoutTruth, type Asset, type Event, type HeldoutWorld, type LoadedSet, type Mark } from "./contract";
@@ -29,10 +30,13 @@ const CONTRACT_ONLY = new Set(["annual", "bundle", "rollup", "upgrade"]);
 const PLANNED = new Set(["planned", "postponed"]);
 /** 実績を書かずに、予定の印のまま残したセル（正解の errata に 1 件ずつ記録してある） */
 const LEFT_AS_PLAN = new Set(["omitMark", "lastYearUnreflected"]);
+/** 印が予定として書いてある作業の状態：予定・延期と、しなかった作業（予定の印だけが残る） */
+const MARK_PLANNED = new Set([...PLANNED, "not_done"]);
 const DROP = {
   multi: "星取表：何台もの機器をまとめた行の印",
   unlinkedRow: "星取表：世界の作業に結んでいない行の印",
   unlinkedMark: "星取表：世界の作業に結んでいない印",
+  noYear: "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）",
   notSymbol: "星取表：記号でない文字の印（年度をまたいで結合したセルなど）",
 } as const;
 
@@ -106,7 +110,11 @@ export function loadV2Facility(dir: string, set = basename(dir)): { set: LoadedS
   // 星取表の行 → 年度 → 世界の作業
   const starLinks = new Map<string, Map<number, J[]>>();
   for (const l of w.links as J[]) {
-    if (!starFiles.has(l.file) || typeof l.year !== "number") continue;
+    if (!starFiles.has(l.file)) continue;
+    if (typeof l.year !== "number") {
+      dropped[DROP.noYear] = (dropped[DROP.noYear] ?? 0) + 1;
+      continue;
+    }
     const x = works.get(l.work);
     if (!x) continue;
     const k = at3(l.file, l.sheet, l.r);
@@ -130,10 +138,17 @@ export function loadV2Facility(dir: string, set = basename(dir)): { set: LoadedS
     if (!x || path.length < 2) return null;
     const head = path.slice(0, -1).join(SEP) + SEP;
     const sibs = pathsByClass.get(`${file}\u0000${x.class}\u0000${x.part ?? ""}`) ?? new Map<string, string>();
-    for (const [id, p] of sibs) if (id !== eq && p.startsWith(head) && !p.slice(head.length).includes(SEP) && p !== path.join(SEP)) return path[path.length - 2]!;
+    // 同じ名前の機器（号機だけが違う）が、最後の名前だけが違う道に並ぶときだけ
+    for (const [id, p] of sibs) if (id !== eq && assetById.get(id)?.name === x.name && p.startsWith(head) && !p.slice(head.length).includes(SEP) && p !== path.join(SEP)) return path[path.length - 2]!;
     return null;
   };
-  const leftAsPlan = new Set<string>((w.errata as J[] | undefined ?? []).filter((e) => LEFT_AS_PLAN.has(e.type)).map((e) => `${at3(e.file, e.sheet, e.r)}\u0000${e.year}`));
+  // 実績を書かずに予定のまま残したセル → その作業（同じセルに、ほかの作業の実績の印が書いてあることがある）
+  const leftAsPlan = new Map<string, Set<string>>();
+  for (const e of (w.errata as J[] | undefined) ?? []) {
+    if (!LEFT_AS_PLAN.has(e.type)) continue;
+    const k = `${at3(e.file, e.sheet, e.r)}\u0000${e.year}`;
+    leftAsPlan.set(k, new Set([...(leftAsPlan.get(k) ?? []), ...((e.works as string[] | undefined) ?? [])]));
+  }
   for (const a of answers) {
     if (!a.plan) continue;
     const eqSeen = new Set<string>();
@@ -190,7 +205,9 @@ export function loadV2Facility(dir: string, set = basename(dir)): { set: LoadedS
           drop(DROP.unlinkedMark);
           continue;
         }
-        const written = m.col === "plans" || leftAsPlan.has(`${at3(a.file, rec.sheet, rec.r)}\u0000${m.y}`) || ws.every((x) => PLANNED.has(x.status));
+        // 予定として書いてあるか：予定の列。そのセルの作業が、どれも「予定・延期・しなかった」か「実績を書かずに予定のまま残した」と記録されたもの
+        const left = leftAsPlan.get(`${at3(a.file, rec.sheet, rec.r)}\u0000${m.y}`);
+        const written = m.col === "plans" || ws.every((x) => MARK_PLANNED.has(x.status) || !!left?.has(x.id));
         marks.push({
           file: a.file,
           at: { row: rec.r, sheet, text: m.s, ...(nth ? { nth } : {}) },
