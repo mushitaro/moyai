@@ -2,7 +2,7 @@
   "schema": "moyai.eval.skill-score/0",
   "pack": "waste-incineration",
   "suite": "waste-incineration",
-  "suiteSha": "4f0b8bfc20b562d2a25c2ef5d28d61f0a67dd85ee562c3ecd287635030cb350b",
+  "suiteSha": "431f45dcb13555163399f75947189e716a3c13c4dba119c14151697dbccb333c",
   "skills": [
     {
       "path": "skills/moyai/SKILL.md",
@@ -14,11 +14,23 @@
     }
   ],
   "skillSha": "e950e881e9b08269f030a3666d759be41f1111d587393be9ed3a1a5399110004",
-  "label": "PR #88（道 D。1 段目の 5 の match の文を戻した＋ごみ焼却）",
-  "at": "2026-11-12T11:03:55.553Z",
+  "label": "PR #88 の文（道 D。1 段目の 5 の match の文を戻した＋ごみ焼却）",
+  "at": "2026-11-12T13:06:52.743Z",
   "cases": 100,
   "answered": 100,
-  "pass": 90,
+  "pass": 100,
+  "runs": [
+    {
+      "solver": "解く役1",
+      "pass": 100,
+      "failing": []
+    },
+    {
+      "solver": "解く役2",
+      "pass": 100,
+      "failing": []
+    }
+  ],
   "perRule": {
     "R01": {
       "pass": 10,
@@ -37,7 +49,7 @@
       "total": 10
     },
     "R05": {
-      "pass": 0,
+      "pass": 10,
       "total": 10
     },
     "R06": {
@@ -67,11 +79,11 @@
       "total": 100
     },
     "no_guess": {
-      "pass": 170,
+      "pass": 190,
       "total": 190
     },
     "not_in_record": {
-      "pass": 180,
+      "pass": 200,
       "total": 200
     },
     "identity": {
@@ -87,16 +99,5 @@
       "total": 120
     }
   },
-  "failing": [
-    "R05-01",
-    "R05-02",
-    "R05-03",
-    "R05-04",
-    "R05-05",
-    "R05-06",
-    "R05-07",
-    "R05-08",
-    "R05-09",
-    "R05-10"
-  ]
+  "failing": []
 }
