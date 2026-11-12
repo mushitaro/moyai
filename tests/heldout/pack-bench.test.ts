@@ -278,7 +278,7 @@ describe("Skillパックの物差し", () => {
     mkdirSync(out!, { recursive: true });
     writeFileSync(join(out!, "result.json"), `${JSON.stringify({ schema: "moyai.pack-bench.result/0", pack, ...(samplesDir ? { samples: basename(samplesDir) } : {}), ...(firstRead ? { mode: "first-read" } : {}), only: only.length ? only : null, candidate, reader, measuredAt, total, facilities: rows }, null, 1)}\n`, "utf8");
     const L = [
-      firstRead ? `# 初めて読む物差し：${pack} の資料をパックなしで（開発用の資料。見ていない様式の結果ではない）` : `# Skillパックの物差し：${pack}（開発用の資料。見ていない様式の結果ではない）`,
+      firstRead ? `# 初めて読む物差し：${samplesDir ? basename(samplesDir) : pack} の資料をパックなしで（開発用の資料。見ていない様式の結果ではない）` : `# Skillパックの物差し：${samplesDir ? `${basename(samplesDir)}（パック ${pack}）` : pack}（開発用の資料。見ていない様式の結果ではない）`,
       "",
       firstRead ? "`node scripts/bench/pack-bench.mjs --first-read` が作る（手で書かない）。" : "`node scripts/bench/pack-bench.mjs` が作る（手で書かない）。",
       "",
