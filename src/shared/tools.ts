@@ -300,8 +300,13 @@ const intakeAddFilesInput = z
     pack: z.string().regex(PACK_ID_SHAPE).optional(),
     /** folder：利用者の施設名（40 字まで）。作業画面の施設名の欄が空のときだけ置く。demo の施設名は Skillパックの demo/demo.json */
     facilityName: z.string().min(1).refine(intakeFacilityNameOk, { message: FACILITY_NAME_MESSAGE }).optional(),
+    /** folder：名前の一部（空白で区切った語がどれも入る資料だけを入れる。intake_survey の part: files の match と同じ比べ方。mushitaro/moyai#57・#67） */
+    match: z.string().min(1).max(100).optional(),
+    /** folder：入れずに、直下の資料の名前だけを left に返す（見渡す） */
+    list: z.boolean().optional(),
   })
   .superRefine((a, ctx) => {
+    if (a.source !== "folder" && (a.match !== undefined || a.list !== undefined)) ctx.addIssue({ code: "custom", path: ["match"], message: "match と list は folder だけ" });
     if (a.source === "folder" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "folder には path が要る" });
     if (a.source === "template" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "template には path（様式の .xlsx）が要る" });
     if (a.source === "template" && (a.pack !== undefined || a.facilityName !== undefined)) ctx.addIssue({ code: "custom", path: ["pack"], message: "template では pack と facilityName を渡さない" });
@@ -341,6 +346,11 @@ export type IntakeAddFilesFromTab = z.infer<typeof intakeAddFilesFromTabSchema>;
 /** 結果に添える次の手（Claude Desktop では instructions が効かないので、結果にも書く） */
 export const INTAKE_ADD_NOTE =
   "sheets と rows が null の資料は、まだ読込の途中（intake_survey の注記に進み）。次は intake_survey で要約と質問を読み、質問は利用者に聞く。画像と文字の無い PDF の頁は写真の欄に並び、人が 1 枚ずつ許すまで AI には渡らない。確定は人が画面でする。";
+
+/** folder の list：入れずに名前だけを返したとき */
+export const INTAKE_LIST_NOTE = "入れていない。left が直下の資料の名前。年度・様式ごとに分けて利用者に見立てを 1 行で言い、入れるものを match で渡す。";
+/** folder の match に当たる資料が無かったとき */
+export const INTAKE_NO_MATCH_NOTE = "match に当たる資料が無いので入れていない。left が直下の資料の名前。語を変えて呼び直す。";
 
 /** source: demo を断ったとき（refused の理由が mixed）の次の手。作業画面から資料を外すボタンは無いので、空の作業画面で始め直す道だけを書く */
 export const DEMO_MIXED_NOTE =
@@ -751,6 +761,8 @@ export const TOOLS = {
         .optional()
         .describe("質問を分けて返したとき。nextCursor を cursor に渡して part: questions で続きを読む（null なら終わり）"),
       unresolvedCells: z.number().int(),
+      /** 読み方の規則（決まった答え）で決まった質問の数 */
+      ruleAnswered: z.number().int().optional().describe("ルール（決まった答え）で決まり、聞かずに済んだ質問の数。残りの資料を足したときに、利用者に減った数を言う"),
       /** 詰まっている所：資料ごとの未解決のセルの数と、その行の見本。questionId はその行を決める質問が分かるときだけ（null でも質問が残っていることがある） */
       stuck: z
         .array(
@@ -829,7 +841,8 @@ export const TOOLS = {
       "利用者の資料（人が落とした・フォルダから入れた資料。【架空】とあっても）か架空でない資料が入っている作業画面には、デモの資料を入れず、どれも refused（理由 mixed）で返す。そのときは note のとおりにする。" +
       "デモは、利用者が作業画面で動きを見るためにある。先に作業画面を開いて利用者が見ているかを確かめ、1 回の返事でツールを 1 つだけ呼び、画面の何が変わったかを 2 行までで言って、利用者の「次」を待つ。資料がもう入っていても同じ。最後まで続けて呼んで結果だけを話さない。" +
       "source: folder は、利用者がチャットで言ったフォルダ（path に絶対の道）の直下の .xlsx・.xls・.csv・.pdf・.jpg・.png だけを、200 個まで、1 つ 64 MB まで読む。下のフォルダは読まない。状態フォルダとリポジトリの中・`..`・シンボリックリンクは断る。" +
-      "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
+      "folder で入れる前に、どの施設か（施設名）と業種（Skillパック）を利用者にチャットで聞き、facilityName（40 字まで）と pack（Skillパックの ID）に添える。合う Skillパックが無ければ pack を省く（Skillパックなしで読む）。作業画面のその欄が空のときだけ置き、人が画面で選んだ・打ったものは変えない。無い Skillパックは断り、選べる ID と名前を返す。" +
+      "folder の一部だけを入れるときは match（名前の一部。空白で区切った語がどれも入る資料だけ。全角・半角・大文字小文字を問わない）。入れずに名前だけを見るときは list: true。どちらも、入れなかった資料の名前を left と leftTotal に返す。残りは同じフォルダを match なしで渡せば、入っていないものだけが入る（入っている名前は same_name）。" +
       "結果は、入れた資料の名前・大きさ・件数（シートと行の数）と、断った資料の名前と理由、ほかの種類のファイルと下のフォルダの数だけで、中身は返さない。次は intake_survey で要約と質問を読む。作業画面が開いていないと入れられない。資料が多くて時間内に答えが来なければ「結果不明」と返るので、送り直さずに intake_survey（part: files）の files と filesTotal で入った資料を確かめる。" +
       "source: template は、利用者が「この様式で Excel を出して」と言った様式（path に .xlsx の絶対の道。8 MB まで）を、作業画面の出力のシートの様式の欄に入れる（保存はしない）。結果の template は様式の形だけ：シートの名前、字のあるセルの位置と字（見出し・ラベル・注記）、結合、式のあるセルの位置（年度の参照の式は参照先と足す数）。値の入ったデータの行は字を返さず、範囲と数だけ。planLevels は作業中の計画の階層の名前。" +
       "「この様式で Excel を出して」の順：1. この source: template で様式を入れる 2. 形を読んで写し方の案を screen_set の templateLayout で置く 3. 出力のシートの見本（案のとおりに書いた最初の 20 行ほど）を利用者に見てもらう 4. 出力と保存は利用者が出力のシートの主ボタン「署名して出力」を押す（ツールではしない。確定した版が要る）。",
@@ -844,6 +857,9 @@ export const TOOLS = {
       refusedTotal: z.number().int().min(0),
       /** 資料の種類でないもの（ほかの種類のファイル・下のフォルダ）の数。名前は返さない */
       others: z.number().int().min(0),
+      /** folder の match・list：入れなかった直下の資料の名前（200 まで）と数。同じフォルダをあとで match なしで渡すと、入っていないものだけが入る */
+      left: z.array(fileName).max(INTAKE_ADD_MAX_REFUSED).optional(),
+      leftTotal: z.number().int().min(0).optional(),
       /** template：様式の形（値は返さない） */
       template: templateShapeSchema.optional(),
       /** template：作業中の計画の階層の名前（写し方の案の level の順。計画が無ければ null） */

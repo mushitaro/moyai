@@ -10,6 +10,8 @@ import {
   DEMO_MIXED_NOTE,
   INTAKE_ADD_MAX_REFUSED,
   INTAKE_ADD_NOTE,
+  INTAKE_LIST_NOTE,
+  INTAKE_NO_MATCH_NOTE,
   SCREEN_NOT_CONNECTED_NOTE,
   SCREEN_ITEMS,
   SCREEN_REFUSAL_TEXT,
@@ -450,6 +452,12 @@ export class ToolRelay {
     const c = await h(args);
     if (typeof c === "string") return errorBody(c);
     if ("error" in c) return c;
+    // 名前だけを見る（list）・名前の一部に当たる資料が無い（match）：作業画面に渡さずに、名前と数だけを返す
+    if (c.source === "folder" && c.left !== undefined && (c.listOnly || c.files.length === 0)) {
+      const data = { source: c.source, pack: c.pack, added: [], refused: c.refused, refusedTotal: c.refusedTotal, others: c.others, left: c.left, leftTotal: c.leftTotal ?? c.left.length, note: c.listOnly ? INTAKE_LIST_NOTE : INTAKE_NO_MATCH_NOTE };
+      const p = def.output.safeParse(data);
+      return p.success ? { ok: true, data: p.data as Record<string, unknown> } : errorBody("tab_bad_result");
+    }
     const ms = this.timeouts[def.kind] ?? TOOL_TIMEOUTS[def.kind].ms;
     const until = Date.now() + ms + STAGED_MARGIN_MS;
     const ids = c.files.map((f) => {
@@ -486,6 +494,7 @@ export class ToolRelay {
         refused: refused.slice(0, INTAKE_ADD_MAX_REFUSED),
         refusedTotal: c.refusedTotal + tab.data.refused.length,
         others: c.others,
+        ...(c.left !== undefined ? { left: c.left, leftTotal: c.leftTotal ?? c.left.length } : {}),
         ...template,
         note: c.source === "template" ? TEMPLATE_ADD_NOTE : mixed ? DEMO_MIXED_NOTE : INTAKE_ADD_NOTE,
       };

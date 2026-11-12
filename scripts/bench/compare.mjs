@@ -25,6 +25,8 @@ export function metricsOf(row) {
     // 分母（正解の側の数）。同じ資料なら変わらない。変わったら、物差しか資料が変わっている（--strict が拾う）
     recoveryTotal: row.recovery?.total ?? 0,
     accuracyTotal: row.accuracy?.total ?? 0,
+    // 初めて読む測り（--first-read）だけ：1 年目の問い・残りを足した問い・規則で決まった問い・規則の数
+    ...(row.firstRead ? { firstAsked: row.firstRead.firstAsked, restAsked: row.firstRead.restAsked, ruleAnswered: row.firstRead.ruleAnswered, rules: row.firstRead.rules } : {}),
   };
 }
 
@@ -32,12 +34,15 @@ export function metricsOf(row) {
 // asked（質問の数）と分母は記録するだけで、退行の判定には使わない（違えば changed になり、--strict が拾う）
 const UP = ["planMade", "recovery", "accuracy", "manDays", "days"];
 const DOWN = ["extra", "unresolved", "open"];
-const NOTE = ["asked", "recoveryTotal", "accuracyTotal"];
-const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", extra: "③ の読みすぎ", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問", recoveryTotal: "⑥ の分母", accuracyTotal: "③ の分母" };
+const NOTE = ["asked", "recoveryTotal", "accuracyTotal", "firstAsked", "restAsked", "ruleAnswered", "rules"];
+// 分母でなく、記録するだけの数（違えば changed になるが、分母が変わった所には書かない）
+const COUNT_ONLY = ["asked", "firstAsked", "restAsked", "ruleAnswered", "rules"];
+const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", extra: "③ の読みすぎ", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問", recoveryTotal: "⑥ の分母", accuracyTotal: "③ の分母", firstAsked: "1 年目の問い", restAsked: "残りを足した問い", ruleAnswered: "規則で決まった問い", rules: "1 年目の規則" };
 
 export function compare(base, head) {
   if (base.schema !== "moyai.pack-bench.result/0" || head.schema !== "moyai.pack-bench.result/0") throw new Error("moyai.pack-bench.result/0 でない");
   if (base.pack !== head.pack) throw new Error(`パックが違う（${base.pack}・${head.pack}）`);
+  if ((base.mode ?? null) !== (head.mode ?? null)) throw new Error(`測り方が違う（${base.mode ?? "既定"}・${head.mode ?? "既定"}）`);
   const bm = new Map(base.facilities.map((f) => [f.facility, f]));
   const hm = new Map(head.facilities.map((f) => [f.facility, f]));
   const rows = [];
@@ -61,7 +66,7 @@ export function compare(base, head) {
       changed = true;
       diff[k] = [mb[k], mh[k]];
       if (NOTE.includes(k)) {
-        if (k !== "asked") notes.push(`${id}：${LABEL[k]} ${mb[k]} → ${mh[k]}`);
+        if (!COUNT_ONLY.includes(k)) notes.push(`${id}：${LABEL[k]} ${mb[k]} → ${mh[k]}`);
         continue;
       }
       const good = UP.includes(k) ? mh[k] > mb[k] : mh[k] < mb[k];

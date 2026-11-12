@@ -7,6 +7,13 @@ import { AUTHOR_KINDS, WORK_ATTRIBUTES } from "./fields";
 export { WORK_ATTRIBUTES } from "./fields";
 
 const code = z.string().min(1);
+/** Skillパックの印の形（packs/<印>/。英小文字で始まり、英小文字・数字・ハイフンで 64 字まで） */
+export const PACK_ID_FORMAT = /^[a-z][a-z0-9-]{0,63}$/;
+/**
+ * 計画のSkillパック：印の形か、空（パックなし。初めて読む資料。共通の項目・照査・類似施設・台帳は使わない。mushitaro/moyai#67）。
+ * 道の区切り・`..`・長すぎる字は断る（橋渡しや保存先の道に流れないように）
+ */
+const PACK_ID_OR_NONE = z.string().regex(PACK_ID_FORMAT).or(z.literal(""));
 const author = z.enum(AUTHOR_KINDS);
 // 出どころ：どの資料のどこか（写真なら画像の位置）
 export const SourceRef = z.object({
@@ -134,7 +141,7 @@ export const Plan = z.object({
   schema: z.literal("moyai.plan/0"),
   planId: code,
   displayName: z.string(),
-  packId: code,
+  packId: PACK_ID_OR_NONE,
   version: z.number().int().min(0),
   levelNames: z.array(z.string()), // 段の名前（計画が持つ。パックの段の名前は既定値）
   facility: Facility,
