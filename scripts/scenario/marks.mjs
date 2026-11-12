@@ -24,7 +24,7 @@ export const MARKS = [
   { id: "C4", title: "Skill の文の採点（#23 の判断のとおり）", auto: true },
   { id: "D1", title: "確定した計画で、出力・共有の選び・入力 0、主ボタン 1", auto: true },
   { id: "D2", title: "e2e が全部通る（walkthrough・mcp・claude-code を含む。ubuntu・windows）", auto: true },
-  { id: "D3", title: "開いている area:ux の Issue が 0", auto: true },
+  { id: "D3", title: "開いている area:ux の Issue が 0（柱を束ねる epic は数えない）", auto: true },
   { id: "D4", title: "S-0 の 4〜6 が M-PC3 で通り、運営者が迷わなかった", auto: false },
   { id: "E1", title: "毎日の回しが 3 日続けて運営者の手なしで回る", auto: false },
   { id: "E2", title: "CI（ubuntu・windows・pack-bench・scenario）が main で緑", auto: true },
@@ -322,11 +322,17 @@ export function judgeD2FromCi(ciE2e, skippedKnown) {
   return r(UNKNOWN, `CI の e2e の仕事（ubuntu・windows）は通った。CI で飛ばす台本：${skippedKnown.join("、")}`);
 }
 
-/** D3：開いている area:ux の Issue の数（GitHub が答えたときだけ） */
+/**
+ * D3：開いている area:ux の Issue の数（GitHub が答えたときだけ）。柱を束ねる Issue（ラベル epic）は、柱が終わったときに閉じるので数えない（docs/scenarios.md、#98）
+ * @param {Array<{ number: number, labels?: string[] }> | null} issues
+ */
 export function judgeD3(issues) {
   if (!issues) return r(UNKNOWN, "GitHub の Issue を読めない（この走らせ方ではトークンが無いか、GitHub に断られた。CI の scenario の仕事は github.token で読む）");
-  if (issues.length === 0) return r(PASS, "開いている area:ux の Issue 0");
-  return r(FAIL, `開いている area:ux の Issue ${issues.length}：${issues.map((i) => `#${i.number}`).join("・")}`);
+  const epics = issues.filter((i) => (i.labels ?? []).includes("epic"));
+  const open = issues.filter((i) => !(i.labels ?? []).includes("epic"));
+  const tail = epics.length ? `（数えない柱の束ね：${epics.map((i) => `#${i.number}`).join("・")}）` : "";
+  if (open.length === 0) return r(PASS, `開いている area:ux の Issue 0${tail}`);
+  return r(FAIL, `開いている area:ux の Issue ${open.length}：${open.map((i) => `#${i.number}`).join("・")}${tail}`);
 }
 
 /** E2 が名指す CI の仕事（ci.yml の名前の頭） */
