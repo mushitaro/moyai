@@ -1027,6 +1027,14 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   type LP = { j: Job; m: MarkRec | null; pattern: string; options: MarkRec[] };
   const lps: LP[] = [];
   const links: WorkLink[] = [];
+  // 同じ機器・同じ年度の作業のうち、名前が星取（1 つ）の作業の名前と合うものがある組：その星取は、その作業のもの
+  const markNamed = new Set<string>();
+  for (const j of jobs) {
+    if (j.pending) continue;
+    const ms = markIndex.get(`${j.cluster.id}|${j.fiscalYear}`) ?? [];
+    const m = ms.length === 1 ? ms[0] : undefined;
+    if (m?.workName && nameMatch(m.workName, j.units.map((u) => u.workName))) markNamed.add(`${j.cluster.id}|${j.fiscalYear}`);
+  }
   for (const j of jobs) {
     if (j.pending) {
       links.push({ job: j, cluster: j.cluster, mode: "pending", mark: null, decidedBy: new Set(), ...(j.waitingOn ? { waitingOn: j.waitingOn } : {}) });
@@ -1040,6 +1048,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       const match = m?.workName ? nameMatch(m.workName, j.units.map((u) => u.workName)) : null;
       if (m && match) lps.push({ j, m, pattern: match, options: ms });
       else if (m && !m.workName && !multi) lps.push({ j, m, pattern: "plain", options: ms });
+      // 星取に作業の名前があり、名前の合う別の作業がその星取を持つ：この作業は星取の作業と別（日報・報告書だけの記録）
+      else if (m?.workName && markNamed.has(`${j.cluster.id}|${j.fiscalYear}`)) lps.push({ j, m: null, pattern: "otherWork", options: [] });
       else lps.push({ j, m, pattern: "ambiguous", options: ms });
     } else lps.push({ j, m: null, pattern: "ambiguous", options: ms });
   }
@@ -1093,9 +1103,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       namedPart: "同じ機器・同じ年度で、星取の凡例の意味が作業の名前に含まれる（または作業の名前が凡例の意味に含まれる）",
       plain: "同じ機器・同じ年度に、実績の星取が 1 つと作業が 1 つ",
       noMark: "同じ機器・同じ年度の実績の星取が無い",
+      otherWork: "同じ機器・同じ年度の星取は、作業の名前の合う別の作業のもの（この作業の名前は星取の作業の名前と違う）",
     };
     const gkey = `workLink|${tablesKey}|${pattern}`;
-    const isNoMark = pattern === "noMark";
+    const isNoMark = pattern === "noMark" || pattern === "otherWork";
     const a = ask.ask(gkey, {
       kind: "workLink",
       text: isNoMark
