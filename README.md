@@ -24,10 +24,10 @@ MOYAI のアカウントもログインも要りません。
 | Node.js | 22 以上（無ければ Claude が、聞いてから公式のもの〔nodejs.org か winget の OpenJS.NodeJS.LTS〕を入れる） |
 | AI クライアント | Claude Desktop（Code のタブか Chat）か Claude Code |
 
-1. チャットに、このリポジトリの URL（<https://github.com/mushitaro/moyai>）を渡し、「MOYAI をインストールして」と頼む。Claude が Node を確かめ、clone → `npm ci` → `npm run build` → `setup` をします。`setup` は、送信者の名前を聞き、何をどこに書くかをチャットで見せ、「はい」をもらってから書きます。Claude Desktop が開いていれば、閉じるのを待ってから設定に足すので、Desktop を 1 回開き直します。Claude Desktop には、clone の今の版を版ごとのフォルダ（`setup` が道を出す）に別に入れ、設定は版のフォルダの外の起動の台本（`launch.cjs`）を指します。clone はそのままです（MOYAI を直す人は `setup --dev` で clone を直に指します）。
+1. チャットに、このリポジトリの URL（<https://github.com/mushitaro/moyai>）を渡し、「MOYAI をインストールして」と頼む。Claude が Node を確かめ、clone → `npm ci` → `npm run build` → `setup` をします。`setup` は、送信者の名前を聞き、何をどこに書くかをチャットで見せ、「はい」をもらってから書きます。Claude Desktop が開いていれば、閉じるのを待ってから設定に足すので、Desktop を 1 回開き直します。Claude Desktop には、clone の今の版（コミットした中身。作業中の変更は入らない。clone の今のコミットが main に無ければ mushitaro/moyai の main の最新）を版ごとのフォルダ（`setup` が道を出す）に別に入れ、設定は版のフォルダの外の起動の台本（`launch.cjs`）を指します。clone はそのままです（MOYAI を直す人は `setup --dev` で clone を直に指します）。
 2. 「デモして」と頼む。Claude が、ごみ焼却の Skillパックの【架空】の資料（`packs/waste-incineration/demo/`：施設台帳・星取表・作業日報）を画面に入れ、確認を 1 つずつ聞き、星取表を作ります。1 回の返事で進めるのは 1 段だけで、画面の変化を見ながら進みます。確定は人が HOSHITORI の確定のシートでします。
 3. 「MOYAI を最新にして」と頼むと、Claude が `moyai_update` で mushitaro/moyai の main に新しい版があるかを読み、聞いてから別のフォルダで用意します（取得 → `npm ci` → build → 自己点検。失敗したら捨てて今の版のまま。前の版を 1 つ残す）。動いている MOYAI は止めず、切り替えは次の起動です。用意できると、作業画面の右下のビルドの版の字が朱になります。手元の変更がある・早送りで進めないときは断ります。
-4. 「MOYAI をアンインストールして」と頼む。Claude が、保存先（計画の版・施設の署名鍵・資料）も消すかを聞き（既定は残す）、`uninstall` の中身を見せてから消し、最後にリポジトリのフォルダを、消す道を見せて聞いてから消します。
+4. 「MOYAI をアンインストールして」と頼む。Claude が、保存先（計画の版・施設の署名鍵・資料）も消すかを聞き（既定は残す）、`uninstall` の中身（`setup` が入れた版のフォルダも消す）を見せてから消し、最後にリポジトリのフォルダを、消す道を見せて聞いてから消します。
 
 人がするのは、チャットで答えることと、画面での確定・署名・送信・承認だけです（例外の 2 つは「仕組み」の 5）。端末・ダウンロード・ドラッグは頼みません。署名鍵は最初の確定で作られ、パスワードはありません。手順の正本は `skills/moyai/SKILL.md`（「チャットで入れる・デモ・消す」）と `packs/waste-incineration/demo/README.md` です。
 

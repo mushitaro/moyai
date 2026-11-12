@@ -30,15 +30,15 @@ const SETTINGS_FILE = "settings.json";
 export const SETUP_TEXT = {
   usage: "使い方：moyai setup [--target desktop|code] [--dev] [--name <送信者の名前>] [--yes]",
   installWill: (root: string) =>
-    `MOYAI を ${root} の版ごとのフォルダに入れます（この clone の今のコミットを別のフォルダで取得 → npm ci → build → 自己点検。数分かかります。clone は変えません）。Claude Desktop は、版のフォルダの外の起動の台本（launch.cjs）を指します。`,
+    `MOYAI を ${root} の版ごとのフォルダに入れます（この clone の今のコミットを別のフォルダで取得 → npm ci → build → 自己点検。数分かかります。コミットしていない手元の変更は入りません。clone は変えません）。Claude Desktop は、版のフォルダの外の起動の台本（launch.cjs）を指します。`,
   installSame: (commit: string) => `版 ${commit.slice(0, 7)} は、もう入っています。`,
   installed: (commit: string) => `版 ${commit.slice(0, 7)} を入れました。`,
+  installedMain: (commit: string) =>
+    `この clone の今のコミットは main にないので、mushitaro/moyai の main の最新（版 ${commit.slice(0, 7)}）を入れました。clone は変えていません。`,
   installFailed: (step: string) =>
     step === "not_on_main"
-      ? "この clone の今のコミットが main にないので、入れませんでした（入れた版は main から最新にします）。main に戻すか、clone を直に指すなら --dev を付けてください。Claude Desktop の設定は変えていません。"
-      : step === "local_changes"
-        ? "この clone に手元の変更があるので、入れませんでした。Claude Desktop の設定は変えていません。"
-        : `入れられませんでした（${step} で止まりました）。Claude Desktop の設定は変えていません。`,
+      ? "この clone の今のコミットが main になく、mushitaro/moyai の main も取れなかったので、入れませんでした。つながる所でもう一度走らせるか、clone を直に指すなら --dev を付けてください。Claude Desktop の設定は変えていません。"
+      : `入れられませんでした（${step} で止まりました）。Claude Desktop の設定は変えていません。`,
   desktopOpen:
     "Claude Desktop が開いています。開いているあいだは Desktop が設定を書き直すので、この 1 行は消えます。Desktop が閉じたら、もう一度足します（見張りを後ろで起こしました。1 時間待ちます）。利用者には、Claude Desktop を 1 回閉じて開き直してもらってください。",
   waitGaveUp: "Claude Desktop が 1 時間閉じなかったので、書かずに終えました。",
@@ -174,7 +174,7 @@ export async function setupCli(
      * 版ごとのフォルダに入れる手（--dev でない desktop。試験で差し替える）。既定は、この clone を <appRoot> に入れて起動の台本を置く。
      * line を渡したとき（試験）は、install も渡さなければ入れない
      */
-    install?: { root: string; run: () => Promise<{ ok: true; commit: string; same?: boolean } | { ok: false; step: string }> };
+    install?: { root: string; run: () => Promise<{ ok: true; commit: string; same?: boolean; fromMain?: true } | { ok: false; step: string }> };
     /** 見張りが待つ間（ミリ秒。試験で差し替える） */
     waitMs?: { poll: number; settle: number; limit: number };
   } = {},
@@ -287,7 +287,7 @@ export async function setupCli(
       say(SETUP_TEXT.installFailed(r.step));
       return 1;
     }
-    say(r.same ? SETUP_TEXT.installSame(r.commit) : SETUP_TEXT.installed(r.commit));
+    say(r.same ? SETUP_TEXT.installSame(r.commit) : r.fromMain ? SETUP_TEXT.installedMain(r.commit) : SETUP_TEXT.installed(r.commit));
   }
   for (const w of writes) say(w());
   if (a.target === "desktop" && !a.waitDesktop && running()) {
