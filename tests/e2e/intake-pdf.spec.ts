@@ -2,7 +2,7 @@
 // 格子に文字が出て、全セルに行き先が付くこと。pdf.js の worker・cMap・標準の書体は、ビルドに入れたファイルから読み、外のサーバーへは行かないこと。
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { chooseSource, packName, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { chooseSource, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 import { pdfOf } from "../unit/import/pdf-helpers";
 
 let bridge: StartedBridge;
@@ -30,8 +30,7 @@ test("文字のある PDF を落とすと、格子に文字が出て行き先が
 
   await page.goto(`${bridge.base}/#/intake`);
   await expect(page.getByTestId("intake-page")).toBeVisible();
-  await page.getByTestId("pack").click();
-  await page.getByRole("option", { name: packName("waste-incineration"), exact: true }).click();
+  // Skillパックは画面で選ばない（Claude が会話で置く。ここではパックなしで読む。mushitaro/moyai#67）
   await page.getByTestId("facility-name").fill("【架空】第一清掃工場");
 
   const font = "【架空】定期整備の報告書（第１号炉）";
