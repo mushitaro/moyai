@@ -9,6 +9,7 @@ import {
   UNKNOWN,
   WAIT,
   judgeA1,
+  judgeA3,
   judgeB1,
   judgeB2,
   judgeD1,
@@ -35,6 +36,22 @@ describe("A1：物差し", () => {
     assert.equal(judgeA1(all, { same: null, detail: "" }).status, UNKNOWN);
     assert.equal(judgeA1({ facilities: [] }, { same: true, detail: "" }).status, FAIL);
     assert.match(judgeA1({ facilities: [fac(true, 0), fac(false, 3)] }, { same: true, detail: "d" }).evidence, /計画 1\/2 施設・開いたままの問い 3/);
+  });
+});
+
+describe("A3：初めて読む物差し", () => {
+  const f = (planMade, firstAsked, restAsked, restYears) => ({ facility: "x", planMade, error: null, firstRead: { firstAsked, restAsked, restYears } });
+  it("測った施設すべてで計画ができ、残りの 1 年あたりの問いが 1 年目の 1 割以下のときだけ合格", () => {
+    const ok = { same: true, detail: "" };
+    assert.equal(judgeA3({ facilities: [f(true, 100, 30, 3)] }, ok).status, PASS);
+    assert.equal(judgeA3({ facilities: [f(true, 100, 31, 3)] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f(false, 100, 3, 3)] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f(true, 100, 0, 0)] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f(true, 100, 30, 3)] }, { same: false, detail: "" }).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f(true, 100, 30, 3)] }, { same: null, detail: "" }).status, UNKNOWN);
+    // 年度ごとの資料の無い施設（firstRead が無い）は数えない。測った施設が 0 なら不合格
+    assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }, f(true, 100, 3, 3)] }, ok).status, PASS);
   });
 });
 

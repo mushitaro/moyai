@@ -22,6 +22,7 @@ import {
   MARKS,
   UNKNOWN,
   judgeA1,
+  judgeA3,
   judgeB1,
   judgeB2,
   judgeD1,
@@ -162,35 +163,37 @@ const issueOf = async (n) => {
 
 const results = {};
 
-// ---- A1：物差し ----
-{
-  const base = JSON.parse(readFileSync(join("eval", "bench", "waste-incineration", "result.json"), "utf8"));
+// ---- A1・A3：物差し（Skillパックあり・初めて読む） ----
+/** 測って記録と比べる。CI では pack-bench の仕事が両方を --strict で比べているので、その結果と記録した表を使う */
+function bench(label, recorded, extra) {
+  const base = JSON.parse(readFileSync(recorded, "utf8"));
   if (ci) {
-    // CI：pack-bench の仕事が、記録した表と今のコードの測った値を --strict で比べている
     const v = process.env.MOYAI_CI_PACK_BENCH ?? "";
     const same = v === "success" ? true : v === "failure" ? false : null;
-    results.A1 = judgeA1(base, { same, detail: same === true ? "pack-bench の仕事で数の差なし（--strict）" : `pack-bench の仕事：${v || "不明"}` });
-  } else {
-    say("物差しを測る（waste-incineration）");
-    const out = join(work, "bench");
-    node(["scripts/bench/pack-bench.mjs", "waste-incineration", "--out", out]);
-    let head = null;
-    try {
-      head = JSON.parse(readFileSync(join(out, "result.json"), "utf8"));
-    } catch {
-      /* 測れなかった */
-    }
-    if (!head) results.A1 = { status: FAIL, evidence: "物差しを測れなかった" };
-    else {
-      const c = compare(base, head);
-      const detail = c.changed ? `数の差あり（${c.verdict}：${[...c.worse, ...c.better].slice(0, 3).join("、")}）` : "数の差なし（--strict）";
-      results.A1 = judgeA1(head, { same: !c.changed, detail });
-    }
+    return { result: base, strict: { same, detail: same === true ? "pack-bench の仕事で数の差なし（--strict）" : `pack-bench の仕事：${v || "不明"}` } };
   }
+  say(`物差しを測る（${label}）`);
+  const out = join(work, `bench-${label}`);
+  node(["scripts/bench/pack-bench.mjs", "waste-incineration", ...extra, "--out", out]);
+  let head = null;
+  try {
+    head = JSON.parse(readFileSync(join(out, "result.json"), "utf8"));
+  } catch {
+    /* 測れなかった */
+  }
+  if (!head) return null;
+  const c = compare(base, head);
+  const detail = c.changed ? `数の差あり（${c.verdict}：${[...c.worse, ...c.better].slice(0, 3).join("、")}）` : "数の差なし（--strict）";
+  return { result: head, strict: { same: !c.changed, detail } };
+}
+{
+  const a1 = bench("waste-incineration", join("eval", "bench", "waste-incineration", "result.json"), []);
+  results.A1 = a1 ? judgeA1(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" };
+  const a3 = bench("first-read", join("eval", "bench", "waste-incineration", "first-read", "result.json"), ["--first-read"]);
+  results.A3 = a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" };
 }
 
-// ---- A3・C1・C3・C4：まだ作られていない ----
-results.A3 = judgeWaiting("#67：初めて読む物差し（first-read/）がまだ無い", await issueOf(67));
+// ---- C1・C3・C4：まだ作られていない ----
 results.C1 = judgeWaiting("#22：フィードバック → ルールの案 → 物差し → PR の道がまだ無い", await issueOf(22));
 results.C3 = judgeWaiting("#23：運営者の判断（アプリから書き出す欄）", await issueOf(23));
 results.C4 = judgeWaiting("#23：運営者の判断（Skill の文の採点を走らせるか）", await issueOf(23));

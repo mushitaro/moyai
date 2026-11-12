@@ -1,5 +1,6 @@
 // シナリオテスト D1（docs/scenarios.md）：確定した計画で、出力も共有も、選ぶ・入れることなしに主ボタン 1 つで終わる。
 // 出力のシートと共有のシートの「押せるもの」を数える：選び・入力の欄が 0、主ボタンが 1。ほかの押せるもの（副）は下の一覧のものだけ（増えれば落ちる。引き算の見張り）。
+// Skillパックあり・なし（初めて読む施設。mushitaro/moyai#67）の両方で数える。パックなしの計画には共有のシートが無い（輪も台帳もパックごと）。
 // 共有は、初めての人の通し（S-0 の 6）と同じ「共有フォルダ」だけがある形。見え方の答えは Claude が会話で聞いて share_preview の answers で置く（画面では選ばない）。
 // 人の操作（保存先・呼び名・共有フォルダを作る・受ける・署名する）は、試験の台本が人の代わりに画面で押す。数えるのは確定したあとの出力・共有のシートだけ。
 // 先に npm run build を走らせておく。置き場所・共有フォルダは一時のフォルダ。
@@ -69,68 +70,87 @@ async function count(page: Page, root: Locator, name: string, primary: string, s
   expect(others.map((p) => p.testid).sort(), `${name}：副 ${JSON.stringify(others)}`).toEqual([...secondary].sort());
 }
 
-let bridge: StartedBridge;
-let work = "";
-test.beforeAll(async () => {
-  bridge = await startBuiltBridge("moyai-e2e-one-button-");
-  work = mkdtempSync(join(tmpdir(), "moyai-e2e-one-button-"));
-});
-test.afterAll(() => {
-  bridge?.stop();
-  if (work) rmSync(work, { recursive: true, force: true });
-});
+const PACKS = [
+  { name: "Skillパックあり", packId: "waste-incineration" },
+  { name: "Skillパックなし（初めて読む施設。mushitaro/moyai#67）", packId: "" },
+] as const;
 
-test("確定した計画で、出力も共有も、選び・入力の欄が 0、主ボタンが 1。押すと終わる", async ({ page }) => {
-  test.setTimeout(240_000);
-  const root = join(work, "置き場所");
-  const ringRoot = join(work, "共有", "共有フォルダ");
+for (const pk of PACKS) {
+  test.describe(pk.name, () => {
+    let bridge: StartedBridge;
+    let work = "";
+    test.beforeAll(async () => {
+      bridge = await startBuiltBridge("moyai-e2e-one-button-");
+      work = mkdtempSync(join(tmpdir(), "moyai-e2e-one-button-"));
+    });
+    test.afterAll(() => {
+      bridge?.stop();
+      if (work) rmSync(work, { recursive: true, force: true });
+    });
 
-  await test.step("人：保存先・呼び名・共有フォルダ（設定の画面）。見本の計画を受けて第 1 版に署名する", async () => {
-    await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
-    const body = JSON.stringify(DEV_PLANS["fictional-1"]());
-    await page.route("**/assets/dev-plans/*.json", (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
-    await page.goto(`${bridge.base}/?plan=fictional-1#/merge/chart`);
-    await expect(page.locator(".ag-row").first()).toBeVisible();
-    await acceptDecisions(page, "試験の台本が押した（見本の計画の決定を受けた）");
-    await page.getByTestId("confirm-open").click();
-    await page.getByTestId("confirm-reason").fill("主ボタン 1 つの試験の第 1 版（e2e）");
-    await signInDialog(page);
-    await page.getByTestId("confirm-submit").click();
-    await expect(page.getByTestId("confirm-done")).toContainText(/第 1 版）を確定しました。/);
-    await page.keyboard.press("Escape");
+    test(`確定した計画で、出力も共有も、選び・入力の欄が 0、主ボタンが 1。押すと終わる（${pk.packId || "パックなし"}）`, async ({ page }) => {
+      test.setTimeout(240_000);
+      const tag = pk.packId || "no-pack";
+      const root = join(work, "置き場所");
+      const ringRoot = join(work, "共有", "共有フォルダ");
+
+      await test.step("人：保存先・呼び名・共有フォルダ（設定の画面）。見本の計画を受けて第 1 版に署名する", async () => {
+        await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
+        const body = JSON.stringify({ ...DEV_PLANS["fictional-1"](), packId: pk.packId });
+        await page.route("**/assets/dev-plans/*.json", (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
+        await page.goto(`${bridge.base}/?plan=fictional-1#/merge/chart`);
+        await expect(page.locator(".ag-row").first()).toBeVisible();
+        await acceptDecisions(page, "試験の台本が押した（見本の計画の決定を受けた）");
+        await page.getByTestId("confirm-open").click();
+        await page.getByTestId("confirm-reason").fill("主ボタン 1 つの試験の第 1 版（e2e）");
+        await signInDialog(page);
+        await page.getByTestId("confirm-submit").click();
+        await expect(page.getByTestId("confirm-done")).toContainText(/第 1 版）を確定しました。/);
+        await page.keyboard.press("Escape");
+      });
+
+      await test.step("出力：選び・入力の欄 0、主ボタン「Excel を出力」1。押すと落ちる", async () => {
+        await page.getByTestId("sheet-export").click();
+        await expect(page).toHaveURL(/#\/merge\/export$/);
+        const sheet = page.getByTestId("export-page");
+        await expect(page.getByTestId("export-excel")).toBeEnabled();
+        await expect(page.getByTestId("export-sample")).toBeVisible();
+        // 副：様式を足す（押さなくても終わる。Claude が会話で入れることもできる）
+        await count(page, sheet, `export-${tag}`, "export-excel", ["template-pick"]);
+        const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("export-excel").click()]);
+        expect(download).toBeTruthy();
+        await expect(page.getByTestId("export-saved")).toHaveText(/^✓ 出力　.+_第1版_星取表\.xlsx$/);
+        await count(page, sheet, `export-after-${tag}`, "export-excel", ["template-pick"]);
+      });
+
+      if (!pk.packId) {
+        // パックなし：共有のシートは並ばない（輪も台帳もパックごとなので、共有するものが無い。PR #68、mushitaro/moyai#67）
+        await test.step("共有：パックなしの計画には、共有のシートが無い", async () => {
+          await expect(page.getByTestId("sheet-export")).toBeVisible();
+          await expect(page.getByTestId("sheet-share")).toHaveCount(0);
+        });
+        return;
+      }
+
+      await test.step("共有：Claude が見え方の答えを置く → 選び・入力の欄 0、主ボタン「署名して共有フォルダへ送信」1。押すと送る", async () => {
+        const c = await mcpClient(bridge.stateDir, ["share_preview"]);
+        try {
+          await page.getByTestId("sheet-share").click();
+          await expect(page).toHaveURL(/#\/merge\/share$/);
+          await expect(page.getByTestId("checkpoint-page")).toBeVisible();
+          expect((await callTool(c, "share_preview", { answers: ANSWERS })).blocked).toEqual([]);
+          await expect(page.getByTestId("send")).toBeEnabled();
+          await expect(page.getByTestId("dest-name")).toHaveText("共有フォルダ");
+          const sheet = page.getByTestId("checkpoint-page");
+          // 副：受信した共有ファイルの 1 行（押すと表を開く）と、共有ファイルの中身（たたんだ証拠を開く）。docs/screens.md 3.6
+          await count(page, sheet, `share-${tag}`, "send", ["received-summary", "share-contents"]);
+          await page.getByTestId("send").click();
+          await expect(page.getByTestId("sent")).toHaveText(/^✓ 送信　共有ファイル 1　/);
+          await expect(page.getByTestId("send-reason")).toHaveText("理由：送信済み");
+        } finally {
+          await c.close();
+        }
+      });
+    });
   });
-
-  await test.step("出力：選び・入力の欄 0、主ボタン「Excel を出力」1。押すと落ちる", async () => {
-    await page.getByTestId("sheet-export").click();
-    await expect(page).toHaveURL(/#\/merge\/export$/);
-    const sheet = page.getByTestId("export-page");
-    await expect(page.getByTestId("export-excel")).toBeEnabled();
-    await expect(page.getByTestId("export-sample")).toBeVisible();
-    // 副：様式を足す（押さなくても終わる。Claude が会話で入れることもできる）
-    await count(page, sheet, "export", "export-excel", ["template-pick"]);
-    const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("export-excel").click()]);
-    expect(download).toBeTruthy();
-    await expect(page.getByTestId("export-saved")).toHaveText(/^✓ 出力　.+_第1版_星取表\.xlsx$/);
-    await count(page, sheet, "export-after", "export-excel", ["template-pick"]);
-  });
-
-  await test.step("共有：Claude が見え方の答えを置く → 選び・入力の欄 0、主ボタン「署名して共有フォルダへ送信」1。押すと送る", async () => {
-    const c = await mcpClient(bridge.stateDir, ["share_preview"]);
-    try {
-      await page.getByTestId("sheet-share").click();
-      await expect(page).toHaveURL(/#\/merge\/share$/);
-      await expect(page.getByTestId("checkpoint-page")).toBeVisible();
-      expect((await callTool(c, "share_preview", { answers: ANSWERS })).blocked).toEqual([]);
-      await expect(page.getByTestId("send")).toBeEnabled();
-      await expect(page.getByTestId("dest-name")).toHaveText("共有フォルダ");
-      const sheet = page.getByTestId("checkpoint-page");
-      // 副：受信した共有ファイルの 1 行（押すと表を開く）と、共有ファイルの中身（たたんだ証拠を開く）。docs/screens.md 3.6
-      await count(page, sheet, "share", "send", ["received-summary", "share-contents"]);
-      await page.getByTestId("send").click();
-      await expect(page.getByTestId("sent")).toHaveText(/^✓ 送信　共有ファイル 1　/);
-      await expect(page.getByTestId("send-reason")).toHaveText("理由：送信済み");
-    } finally {
-      await c.close();
-    }
-  });
-});
+}

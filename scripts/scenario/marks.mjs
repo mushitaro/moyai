@@ -50,6 +50,26 @@ export function judgeA1(result, strict) {
   return r(PASS, ev);
 }
 
+/**
+ * A3：初めて読む物差し（pack-bench --first-read の結果）。測った施設（年度ごとの資料のある施設）すべてで計画ができ、
+ * 残りの年度の 1 年あたりの問い（restAsked ÷ restYears）が 1 年目の問い（firstAsked）の 1 割以下。記録との比べは A1 と同じ
+ * @param {{ facilities: Array<{facility:string, planMade:boolean, error?:string|null, firstRead?: {firstAsked:number, restAsked:number, restYears:number}}> } | null} result
+ */
+export function judgeA3(result, strict) {
+  if (!result) return r(UNKNOWN, "初めて読む物差しの結果を読めない");
+  const fs = (result.facilities ?? []).filter((f) => f.firstRead);
+  if (fs.length === 0) return r(FAIL, "初めて読む物差しで測った施設が 0");
+  const made = fs.filter((f) => f.planMade && !f.error).length;
+  const over = fs.filter((f) => {
+    const x = f.firstRead;
+    return !(x.restYears > 0) || x.restAsked / x.restYears > x.firstAsked * 0.1;
+  });
+  const ev = `計画 ${made}/${fs.length} 施設・残りの 1 年あたりの問いが 1 年目の 1 割を越える施設 ${over.length}${over.length ? `（${over.map((f) => `${f.facility} ${(f.firstRead.restAsked / Math.max(1, f.firstRead.restYears)).toFixed(1)}／${f.firstRead.firstAsked}`).join("、")}）` : ""}・記録との比べ：${strict.detail}`;
+  if (strict.same === false || made !== fs.length || over.length > 0) return r(FAIL, ev);
+  if (strict.same === null) return r(UNKNOWN, ev);
+  return r(PASS, ev);
+}
+
 /** まだ作られていない印：Issue が開いていれば「待ち」。閉じたのにランナーに道が無ければ「未確認」（道を足す合図） */
 export function judgeWaiting(what, issue) {
   if (issue && issue.state === "closed") return r(UNKNOWN, `#${issue.number} が閉じた。ランナーに確かめの道がまだ無い（scripts/scenario/ に足す）`);
