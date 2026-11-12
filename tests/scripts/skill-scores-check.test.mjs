@@ -2,7 +2,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { checkPack, joinSkills, suiteSha } from "../../scripts/skill-scores/check.mjs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { checkPack, joinSkills, packsToCheck, suiteSha } from "../../scripts/skill-scores/check.mjs";
 
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 const files = (skill1, skill2, extra = {}) => ({ "skills/moyai/SKILL.md": skill1, "packs/p/SKILL.md": skill2, "eval/p/suite.json": "{}", "eval/p/cases/train.jsonl": "a", "eval/p/cases/test.jsonl": "b", ...extra });
@@ -12,9 +15,15 @@ const recFor = (m, pass, over = {}) => {
   return [`eval/skill-scores/p/${s.slice(0, 16)}.json`, JSON.stringify({ skillSha: s, suite: "p", suiteSha: suiteSha(reader(m), "p"), pass, cases: 100, runs: [{ solver: "a", pass, failing: [] }, { solver: "b", pass, failing: [] }], ...over })];
 };
 
-test("文が base と同じなら通る（記録が無くても）", () => {
+test("文と問題の組が base と同じでも、今の文の記録が無ければ落ちる（一度も採点していない文を通さない）。記録があれば比べずに通る", () => {
   const m = files("一", "二");
-  assert.equal(checkPack("p", reader(m), reader(m)).ok, true);
+  assert.match(checkPack("p", reader(m), reader(m)).note, /記録が無い/);
+  assert.equal(checkPack("p", reader(m), reader(m)).ok, false);
+  const [k, v] = recFor(m, 70);
+  const withRec = { ...m, [k]: v };
+  const r = checkPack("p", reader(withRec), reader(withRec));
+  assert.equal(r.ok, true);
+  assert.match(r.note, /変わっていない/);
 });
 
 test("文を変えて記録が無い・古い（指紋が違う）・問題の組が変わった → 落ちる", () => {
@@ -79,4 +88,24 @@ test("文が同じで問題の組だけが変わったら、作り直した記�
   const r = checkPack("p", reader({ ...now, [k]: v }), reader({ ...base, [bk]: bv }));
   assert.equal(r.ok, true);
   assert.match(r.note, /作り直した/);
+});
+
+test("確かめるパックは、問題の組（eval/<組>/suite.json の pack）と記録のフォルダの両方。問題の組の無いフォルダ（bench など）は数えない", () => {
+  const root = mkdtempSync(join(tmpdir(), "moyai-skill-scores-"));
+  try {
+    for (const [d, pack] of [["a", "pack-a"], ["b", "pack-b"]]) {
+      mkdirSync(join(root, "eval", d), { recursive: true });
+      writeFileSync(join(root, "eval", d, "suite.json"), JSON.stringify({ pack }));
+    }
+    mkdirSync(join(root, "eval", "bench", "x"), { recursive: true });
+    mkdirSync(join(root, "eval", "skill-scores", "pack-c"), { recursive: true });
+    assert.deepEqual(packsToCheck(root), ["pack-a", "pack-b", "pack-c"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("リポジトリの今：問題の組のあるパックはどれも確かめる（ごみ焼却・し尿処理）", () => {
+  const packs = packsToCheck(".");
+  for (const p of ["waste-incineration", "night-soil"]) assert.ok(packs.includes(p), p);
 });

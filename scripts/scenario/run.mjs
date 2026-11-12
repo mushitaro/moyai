@@ -6,6 +6,7 @@
 //   npm run scenario -- --part e2e --out-json <f>   e2e と walkthrough だけを走らせ、ファイルごとの数を <f> に書く（CI の e2e の仕事）。落ちた試験があれば終了コード 1
 //   npm run scenario -- --ci --e2e-dir <d>   CI の scenario の仕事：同じ回の仕事の結果（環境変数 MOYAI_CI_*）と、e2e の仕事が書いた <d>/*.json を読む
 //   --out <md>    書く先（既定は eval/scenario/result.md）
+//   --prev <md>   実機の列を残す前の表（既定は書く先。CI はリポジトリの eval/scenario/result.md を渡す）
 //   --strict      不合格が 1 つでもあれば終了コード 1（既定は、ランナーが走りきれば 0。表の字が合否）
 //
 // 判定はコードがする（AI に決めさせない）。試験は一時のフォルダで走る（e2e の helpers・物差しの --out）。
@@ -67,6 +68,8 @@ const part = take("--part");
 const outJson = take("--out-json");
 const e2eDir = take("--e2e-dir");
 const outMd = resolve(take("--out") ?? join("eval", "scenario", "result.md"));
+// 実機の列（統括が書く）を読む前の表。既定は書く先。CI は書く先が一時のフォルダなので、リポジトリの表を渡す
+const prevMd = resolve(take("--prev") ?? outMd);
 const ci = flag("--ci");
 const strict = flag("--strict");
 if (args.length) {
@@ -384,8 +387,10 @@ if (ci) {
 }
 
 // ---- 書く ----
-const prev = existsSync(outMd) ? readFileSync(outMd, "utf8") : null;
-const md = renderResult(results, { commit, dirty, at, os: OS, ci }, prev);
+const prev = existsSync(prevMd) ? readFileSync(prevMd, "utf8") : null;
+// CI の回なら、その回の道を表に書く（main の CI の回の表は、仕事のアーティファクト scenario-result からそのまま入れられる）
+const runUrl = ci && process.env.GITHUB_RUN_ID ? `${process.env.GITHUB_SERVER_URL ?? "https://github.com"}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}` : null;
+const md = renderResult(results, { commit, dirty, at, os: OS, ci, runUrl, ref: process.env.GITHUB_REF ?? null }, prev);
 mkdirSync(dirname(outMd), { recursive: true });
 writeFileSync(outMd, md, "utf8");
 if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, md, { flag: "a" });

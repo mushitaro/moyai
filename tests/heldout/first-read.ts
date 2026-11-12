@@ -28,7 +28,7 @@ export function yearSplit(files: readonly string[]): { year: string; first: stri
  * 名前ごとの規則だけを作る（種類ごとに広げない。広げると、正解の候補が問いごとに違う問いに同じ答えが当たった。mushitaro/moyai#67 の道 D）。
  * 資料を丸ごと外す答え（参考・読めない）は資料を指す規則なので作らない
  */
-export function rulesFromAnswers(questions: readonly { questionId: string; kind: string; text: string }[], answered: readonly { questionId: string; answer: string }[], files: readonly string[]): ReadingRule[] {
+export function rulesFromAnswers(questions: readonly { questionId: string; kind: string; text: string; options?: readonly { label: string }[] }[], answered: readonly { questionId: string; answer: string }[], files: readonly string[]): ReadingRule[] {
   const ans = new Map(answered.map((d) => [d.questionId, d.answer] as const));
   const out: ReadingRule[] = [];
   const seen = new Set<string>();
@@ -46,12 +46,20 @@ export function rulesFromAnswers(questions: readonly { questionId: string; kind:
     if (a === undefined || WHOLE_FILE_ANSWERS.includes(a) || a.length > 60 || q.kind.length > 40) continue;
     const { match, key: k } = keyOf(q);
     if (match.length < 4 || (answersOf.get(k)?.size ?? 0) > 1) continue;
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push({ id: `y1-${out.length + 1}`, kind: "answer", question: q.kind, match, answer: a, text: `1 年目の答えと同じに読む（${q.kind}）`, author: "ai", reason: "1 年目の答え（物差しの台本）" });
+    // 同じ鍵でも選択肢の違う問いは、選択肢ごとに規則にする（選択肢が同じ問いにだけ広く当たる）
+    const sk = `${k}|${JSON.stringify(choicesOf(q).choices ?? null)}`;
+    if (seen.has(sk)) continue;
+    seen.add(sk);
+    out.push({ id: `y1-${out.length + 1}`, kind: "answer", question: q.kind, match, answer: a, ...choicesOf(q), text: `1 年目の答えと同じに読む（${q.kind}）`, author: "ai", reason: "1 年目の答え（物差しの台本）" });
     if (out.length >= 500) break;
   }
   return out;
+}
+
+/** 1 年目に人が見た選択肢の文（規則の choices。選択肢が同じ問いにだけ、年度と数えも伏せて当たる）。20 個・200 字を超えるときは付けない（そのままの字だけで当てる） */
+function choicesOf(q: { options?: readonly { label: string }[] }): { choices?: string[] } {
+  const labels = (q.options ?? []).map((o) => o.label);
+  return labels.length >= 1 && labels.length <= 20 && labels.every((l) => l.length >= 1 && l.length <= 200) ? { choices: labels } : {};
 }
 
 /**
@@ -76,7 +84,8 @@ export function answerShape(text: string): string {
  * 物差しが、残りの年度の問いを「1 年目にもあった問い」と「新しい問い」に分けるのにも使う（同じ鍵なら同じもの。mushitaro/moyai#67）
  */
 export function questionKey(q: { kind: string; text: string }, files: readonly string[]): { match: string; key: string } {
-  let t = q.text;
+  // まとめた問いの「（n 問をまとめた：…）」は、まとめ方の説明で問いの中身ではない。資料の名前を外す前に除く（その中の資料の名前の後ろを match にしない）
+  let t = q.text.replace(/[（(]\d+\s?問をまとめた[:：][\s\S]*$/u, "").trim();
   for (const f of files) t = t.split(f).join("\u0000");
   let at = -1;
   for (let i = t.indexOf("「"); i >= 0; i = t.indexOf("「", i + 1)) {
@@ -87,7 +96,6 @@ export function questionKey(q: { kind: string; text: string }, files: readonly s
   }
   const head = t.split("\u0000")[0]?.trim() ?? "";
   const m = (at >= 0 ? t.slice(at).split("\u0000")[0] : [...head].length >= 8 ? head : t.slice(t.lastIndexOf("\u0000") + 1))?.trim() ?? "";
-  // まとめた問いの「（n 問をまとめた：…）」は、まとめ方の説明で問いの中身ではない（まとめる前の問いの文にも当たるように外す）
-  const match = [...m.replace(/[（(]\d+\s?問をまとめた[:：].*$/u, "").trim()].slice(0, 120).join("");
+  const match = [...m].slice(0, 120).join("");
   return { match, key: `${q.kind}|${answerShape(match)}` };
 }

@@ -78,7 +78,8 @@ export async function startBuiltBridge(prefix: string, env: Record<string, strin
     stop: () => {
       stateDirOf.delete(base);
       child.kill();
-      rmSync(stateDir, { recursive: true, force: true });
+      // 止まる途中の橋渡しが書いていると ENOTEMPTY になるので、少し待って消し直す
+      rmSync(stateDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     },
   };
 }

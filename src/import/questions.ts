@@ -2,7 +2,7 @@
 // 決定は同じ種類の行すべてに効き、取り消せる（決定を外して読み直す。同じ入力と決定からはいつも同じ出力）。
 // 決定の作者は src/shared/fields.ts の AUTHOR_KINDS。推測で埋めない：答えが無ければ、そのセルは未解決。
 import { AUTHOR_KINDS, type AuthorKind } from "../shared/fields";
-import { answerAppliesTo, answerMatches, countShape, ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
+import { answerAppliesTo, answerMatches, answerMatchesWide, countShape, ruleReason, sameChoices, wholeAnswer, wideShape, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
 
 export type QuestionKind =
   | "encoding"
@@ -275,12 +275,15 @@ export class Asker {
     // （伏せて広げると、年度ごとに正解の変わる問いに同じ答えが当たる。違う答えより聞く側に倒す。mushitaro/moyai#67）
     let shapedText: string | undefined;
     const shaped = () => (shapedText ??= countShape(q.text));
+    // 選択肢を持つ規則は、選択肢が同じ問いにだけ、年度と数えも伏せて当たる（reading.ts の answerMatchesWide）
+    let wideText: string | undefined;
+    const wide = () => (wideText ??= wideShape(q.text));
     return (
       this.answerRules.find(
         (x) =>
           x.rule.kind === "answer" &&
           x.rule.question === q.kind &&
-          answerMatches(q.text, x.rule.match, shaped) &&
+          (answerMatches(q.text, x.rule.match, shaped) || (sameChoices(x.rule.choices, q.options) && answerMatchesWide(q.text, x.rule.match, wide, wholeAnswer(q.options)))) &&
           (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer)) &&
           answerAppliesTo(x.rule, files),
       ) ?? null
