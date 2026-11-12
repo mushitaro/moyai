@@ -69,14 +69,14 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  // 橋渡しが止まり切る前に消すと、まだ状態フォルダに書いていて ENOTEMPTY で落ちることがある（CI の ubuntu）。止まるのを待ってから消す
+  // 橋渡しが止まるまで待ってから消す（止まる前に消すと、橋渡しがまだ状態フォルダに書いていて ENOTEMPTY になる。CI の ubuntu）
   if (child && child.exitCode === null && child.signalCode === null) {
-    const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+    const exited = new Promise<void>((r) => child!.once("exit", () => r()));
     child.kill();
-    await Promise.race([exited, new Promise<void>((resolve) => setTimeout(resolve, 10_000))]);
+    await exited;
   }
   rmSync(work, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
-  for (const r of rings) rmSync(r, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  for (const r of rings) rmSync(r, { recursive: true, force: true });
 });
 
 async function openPlan(page: Page, name: "fictional-1") {

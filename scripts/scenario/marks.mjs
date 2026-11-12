@@ -386,7 +386,7 @@ export function readManual(md) {
 /**
  * 結果の表（eval/scenario/result.md）
  * @param {Record<string, {status:string, evidence:string}>} results
- * @param {{ commit: string, dirty: boolean, at: string, os: string, ci: boolean }} meta
+ * @param {{ commit: string, dirty: boolean, at: string, os: string, ci: boolean, runUrl?: string | null, ref?: string | null }} meta
  * @param {string | null} prevMd  前の表（実機の列を残す）
  */
 export function renderResult(results, meta, prevMd) {
@@ -400,7 +400,8 @@ export function renderResult(results, meta, prevMd) {
     "",
     `- 版：${meta.commit}${meta.dirty ? "（作業ツリーに変更あり）" : ""}`,
     `- 日時：${meta.at}`,
-    `- 走らせた所：${meta.os}${meta.ci ? "（CI）" : ""}`,
+    `- 走らせた所：${meta.os}${meta.ci ? `（CI${meta.ref ? `、${meta.ref}` : ""}${meta.runUrl ? `、${meta.runUrl}` : ""}）` : "（手元）"}`,
+    "- いちばん新しい結果は main の CI の scenario の仕事（仕事の要約と、アーティファクト scenario-result の result.md）。この表は上の版・日時の 1 回の結果",
     `- 自動の印 ${autoMarks.length}：合格 ${count(PASS)}・不合格 ${count(FAIL)}・未確認 ${count(UNKNOWN)}・待ち ${count(WAIT)}`,
     "",
     "| 印 | 合格の条件 | 自動 | 根拠 | 実機 |",
