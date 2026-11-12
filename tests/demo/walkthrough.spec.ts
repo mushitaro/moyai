@@ -29,6 +29,7 @@ let one: StartedBridge;
 let two: StartedBridge;
 let work = "";
 let ledger = "";
+let ringBase = "";
 test.beforeAll(async () => {
   work = mkdtempSync(join(tmpdir(), "moyai-demo-"));
   ledger = join(work, "台帳の clone");
@@ -44,6 +45,7 @@ test.afterAll(() => {
   one?.stop();
   two?.stop();
   if (work) rmSync(work, { recursive: true, force: true });
+  if (ringBase) rmSync(ringBase, { recursive: true, force: true });
 });
 
 async function settings(page: Page, base: string, root: string, name: string, ledgerRepo?: string) {
@@ -76,7 +78,9 @@ async function record(page: Page, who: string) {
 test("デモの通し：トップ → MERGE（取り込み・当てはめ・台帳の案・検査）→ 承認 → EXPORT → SHARE", async ({ browser }) => {
   test.setTimeout(15 * 60_000);
   const root = join(work, "共有の保管先");
-  const ringRoot = join(work, "輪のフォルダ");
+  // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする（checkpoint.spec・one-button.spec と同じ）
+  ringBase = join(tmpdir(), `moyai-demo-ring-${Date.now()}`);
+  const ringRoot = join(ringBase, "輪のフォルダ");
   const pa = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })).newPage();
   await record(pa, "a");
   const c = await mcpClient(one.stateDir, ["intake_add_files", "intake_survey", "intake_settle", "intake_compose", "crosswalk_propose", "peer_reference", "chart_propose"]);
