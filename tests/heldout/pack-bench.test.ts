@@ -14,7 +14,7 @@ import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
 import { ReadingSkill, type LoadedReading } from "../../src/import/reading";
 import { rulesFromAnswers, yearSplit } from "./first-read";
-import { answer, runSet, truthKnows, type SetResult } from "./harness";
+import { DEFAULT_REASON, answer, runSet, truthKnows, type SetResult } from "./harness";
 import { loadV2Facility } from "./v2";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -136,7 +136,8 @@ async function measureFirstRead(n: string, v: ReturnType<typeof loadV2Facility>,
   const opt = { facilityKey: v.set.world.facility.id, ...RUN, packId: "" };
   try {
     const y1 = await runSet(v.set, { ...opt, read: split.first });
-    const rules = rulesFromAnswers(y1.analysis.questions, y1.answered, v.set.truth.files.map((f) => f.file));
+    // 既定の答えを受けた問い（台本が正解から答えられず、推された答えを押したもの）はルールにしない（人が決めた答えではない）
+    const rules = rulesFromAnswers(y1.analysis.questions, y1.answered.filter((d) => d.reason !== DEFAULT_REASON), v.set.truth.files.map((f) => f.file));
     const skill = ReadingSkill.parse({ schema: "moyai.reading/0", name: "1 年目の読み方", scope: "facility", rules });
     const readings: LoadedReading[] = [{ skill, version: "", path: null, approved: false, draft: true }];
     const all = [...split.first, ...split.rest];
