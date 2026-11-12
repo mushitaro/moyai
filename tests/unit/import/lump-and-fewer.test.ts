@@ -56,6 +56,10 @@ describe("作業の記録の列と、まとめた工事の行", () => {
     ]);
     const q = s.analyze().open.find((x) => x.text.includes("一式だけ"));
     s.settle([{ questionId: q?.questionId ?? "", answer: "split", author: "human", reason: "試験の台本が押した" }]);
+    // 名前の同じ機器が無い名前の 1 問（新しい機器にするか）に、1 件ずつ選ぶと答える
+    const none = s.analyze().open.find((x) => x.kind === "eventAsset" && x.items.some((it) => it.note === "1号定期工事"));
+    expect(none?.options.map((o) => o.id)).toEqual(["new", "split", "exclude"]);
+    s.settle([{ questionId: none?.questionId ?? "", answer: "split", author: "human", reason: "試験の台本が押した" }]);
     expect(s.analyze().open.some((x) => x.kind === "eventAssetOne" && x.text.includes("1号定期工事"))).toBe(true);
   });
 });

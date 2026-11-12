@@ -175,16 +175,16 @@ function setTerms(groups: readonly { forms: readonly string[] }[]): void {
   const alts = [...to.keys()].sort((a, b) => b.length - a.length).map((k) => (/^[A-Za-z]+$/.test(k) ? `(?<![A-Za-z])${escapeRe(k)}(?![A-Za-z])` : escapeRe(k)));
   TERMS = { re: new RegExp(alts.join("|"), "gu"), to };
 }
-/** 名前の鍵に、呼び名の辞書を当てた形 */
-const termKey = (s: string): string => {
-  const k = nameKey(s);
-  return TERMS ? k.replace(TERMS.re, (m) => TERMS?.to.get(m) ?? m) : k;
-};
 export const nk = (s: string): string => {
-  let k = termKey(s);
+  let k = nameKey(s);
   // 規則どうしがつながる（A→B と B→C）ときは、たどった先にそろえる（輪になっても止まる）
   for (let i = 0; i < 20 && ALIAS.has(k); i++) k = ALIAS.get(k) as string;
   return k;
+};
+/** 作業の記録の名前から機器を引くときの鍵：名前の鍵に、Skillパックの呼び名の辞書を当てた形（台帳と星取表の機器どうしの結びには使わない） */
+const ek = (s: string): string => {
+  const k = nk(s);
+  return TERMS ? k.replace(TERMS.re, (m) => TERMS?.to.get(m) ?? m) : k;
 };
 
 export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = [], hits: RuleHits | null = null, names: readonly { forms: readonly string[] }[] = []): Linked {
@@ -193,15 +193,15 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   // 同じ機器の呼び名の並び：どの名前も、並びの最後の名前と同じ機器として読む
   for (const a of rules) {
     if (a.rule.kind !== "sameAsset") continue;
-    const to = termKey(a.rule.names[a.rule.names.length - 1] ?? "");
-    for (const n of a.rule.names.slice(0, -1)) if (termKey(n) !== to) ALIAS.set(termKey(n), to);
+    const to = nameKey(a.rule.names[a.rule.names.length - 1] ?? "");
+    for (const n of a.rule.names.slice(0, -1)) if (nameKey(n) !== to) ALIAS.set(nameKey(n), to);
   }
   // 規則が効いた資産と行を数える（「読み方」のタブの効いたセル）：並びの最後でない名前を書いた所
   for (const a of rules) {
     if (a.rule.kind !== "sameAsset") continue;
-    const ks = new Set(a.rule.names.slice(0, -1).map((n) => termKey(n)));
-    for (const x of rec.assets) if (ks.has(termKey(x.name))) hits?.add(a.rule, x.file, x.nameRef);
-    for (const e of rec.events) if (e.assetNames.some((n) => ks.has(termKey(n)))) hits?.add(a.rule, e.file, e.refs[0] ?? "");
+    const ks = new Set(a.rule.names.slice(0, -1).map((n) => nameKey(n)));
+    for (const x of rec.assets) if (ks.has(nameKey(x.name))) hits?.add(a.rule, x.file, x.nameRef);
+    for (const e of rec.events) if (e.assetNames.some((n) => ks.has(nameKey(n)))) hits?.add(a.rule, e.file, e.refs[0] ?? "");
   }
   // ─── 機器 ───
   const parentOf = new Map<string, string | null>();
@@ -530,6 +530,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const eventExcluded = new Map<string, string>();
   const eventExcludedBy = new Map<string, string[]>();
   const byName = new Map<string, Cluster[]>();
+  // 呼び名の辞書を当てた鍵でも引く（名前の鍵で当たらないときだけ）
+  const byTerm = new Map<string, Cluster[]>();
+  const lookName = (s: string): Cluster[] | undefined => byName.get(nk(s)) ?? byTerm.get(ek(s));
   // 機器番号（同一性の鍵）でも引く：日報や報告書が「名前（機器番号）」と書く機器
   const byTag = new Map<string, Cluster[]>();
   // 決まっていない機器（読みの決まらない機器と、結ぶかの決まらない機器）は引く先にしない。その鍵に当たる行は、決まるまで待つ
@@ -548,6 +551,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     if (c.excluded || c.pending || c.held) continue;
     // 資料をまたいで結んだ機器は、どの資料の名前でも引く（台帳の「1号炉ストーカ」と星取表の「ストーカ」）
     for (const k of new Set([c.name, ...c.recs.map((r) => r.name)].map(nk))) byName.set(k, [...(byName.get(k) ?? []), c]);
+    for (const k of new Set([c.name, ...c.recs.map((r) => r.name)].map(ek))) byTerm.set(k, [...(byTerm.get(k) ?? []), c]);
     if (c.tag) byTag.set(nk(c.tag), [...(byTag.get(nk(c.tag)) ?? []), c]);
   }
   // 機器番号の列から引いた名前（「名前（番号）」の形にしたもの）→ その番号。番号の書き方（「1-STK」のように数で始まるもの）が
@@ -593,10 +597,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const no = nos.find((x) => x !== null) ?? null;
     if (!rest.length || (rest.length === toks.length && rest.length < 2)) return [];
     const unitOk = (c: Cluster) => unitN === null || numberOf(c) === unitN || numberOf(c) === null;
-    let heads = (byName.get(nk(rest.join(" "))) ?? byName.get(nk(rest.join(""))) ?? []).filter(unitOk);
+    let heads = (lookName(rest.join(" ")) ?? lookName(rest.join("")) ?? []).filter(unitOk);
     let part: string | null = null;
     if (!heads.length && rest.length >= 2) {
-      heads = (byName.get(nk(rest[0] ?? "")) ?? []).filter(unitOk);
+      heads = (lookName(rest[0] ?? "") ?? []).filter(unitOk);
       part = rest.slice(1).join(" ");
     }
     if (!heads.length) return [];
@@ -606,8 +610,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       else if (part === null) return [];
     }
     if (part === null) return heads;
-    const pk = nk(part);
-    return [...new Set(heads.flatMap(below).filter((x) => nk(x.name) === pk))];
+    const pk = ek(part);
+    return [...new Set(heads.flatMap(below).filter((x) => ek(x.name) === pk))];
   };
   type Case = { key: string; tableId: string; name: string; unitKey: string; cands: Cluster[]; events: EventRec[]; pattern: string };
   const cases = new Map<string, Case>();
@@ -680,11 +684,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           const c0 = cands[0];
           pattern = cands.length === 1 && c0 ? (nk(c0.name) === nk(sp.name) ? "tagName" : "tagOnly") : "ambiguous";
         } else {
-          cands = byName.get(nk(nm)) ?? [];
+          cands = lookName(nm) ?? [];
           if (unitKey.startsWith("n")) cands = cands.filter((c) => numberOf(c) === Number(unitKey.slice(1)));
           else if (unitKey === "common") cands = cands.filter((c) => c.series?.kind === "common" || numberOf(c) === null);
           pattern = cands.length === 1 ? (unitKey === "-" ? "nameOnly" : "nameUnit") : "ambiguous";
-          if (!cands.length && !(byName.get(nk(nm)) ?? []).length) {
+          if (!cands.length && !(lookName(nm) ?? []).length) {
             const p = byParts(nm, unitKey.startsWith("n") ? Number(unitKey.slice(1)) : null);
             if (p.length) {
               cands = p;
