@@ -1048,8 +1048,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       const match = m?.workName ? nameMatch(m.workName, j.units.map((u) => u.workName)) : null;
       if (m && match) lps.push({ j, m, pattern: match, options: ms });
       else if (m && !m.workName && !multi) lps.push({ j, m, pattern: "plain", options: ms });
-      // 星取に作業の名前があり、名前の合う別の作業がその星取を持つ：この作業は星取の作業と別（日報・報告書だけの記録）
-      else if (m?.workName && markNamed.has(`${j.cluster.id}|${j.fiscalYear}`)) lps.push({ j, m: null, pattern: "otherWork", options: [] });
+      // 星取に作業の名前があり、名前の合う別の作業がその星取を持つ：この作業は星取の作業と別（日報・報告書だけの記録）。
+      // 何台もの機器をまとめた一式の作業は、名前が違っても星取の作業のことがあるので、これまでどおり 1 件ずつ聞く
+      else if (m?.workName && markNamed.has(`${j.cluster.id}|${j.fiscalYear}`) && !j.units.some((u) => u.bundle)) lps.push({ j, m: null, pattern: "otherWork", options: [] });
       else lps.push({ j, m, pattern: "ambiguous", options: ms });
     } else lps.push({ j, m: null, pattern: "ambiguous", options: ms });
   }
