@@ -186,6 +186,11 @@ describe("D3・E2：GitHub", () => {
     assert.equal(judgeD3([]).status, PASS);
     assert.equal(judgeD3([{ number: 1 }]).status, FAIL);
     assert.equal(judgeD3(null).status, UNKNOWN);
+    // 柱を束ねる Issue（epic）は数えない（#98）。中身の Issue が 1 つでも開いていれば不合格のまま
+    assert.equal(judgeD3([{ number: 12, labels: ["epic", "area:ux"] }]).status, PASS);
+    assert.match(judgeD3([{ number: 12, labels: ["epic", "area:ux"] }]).evidence, /#12/);
+    assert.equal(judgeD3([{ number: 12, labels: ["epic", "area:ux"] }, { number: 63, labels: ["area:ux", "P2"] }]).status, FAIL);
+    assert.equal(judgeD3([{ number: 63 }]).status, FAIL);
   });
   it("E2：名指しの仕事が全部 success のときだけ合格。scenario の仕事が無ければ不合格", () => {
     const jobs = ["test (ubuntu-latest)", "test (windows-latest)", "pack-bench（Skillパックの物差し）", "scenario", "e2e (ubuntu-latest)"].map((name) => ({ name, conclusion: "success" }));
