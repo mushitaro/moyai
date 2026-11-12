@@ -1345,3 +1345,43 @@ div.moyai-template-choice {
   color: var(--text-2);
   white-space: pre-wrap;
 }
+
+/* 設定の道の値（#83）：1 行に収め、途中を省いて末尾（フォルダの名前）を残す。押すと全部を折り返して出す。字は要素の中に全部ある */
+.moyai-path {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-family: var(--mantine-font-family-monospace);
+  font-size: var(--mantine-font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.moyai-path[data-open="true"] {
+  display: inline;
+  overflow-wrap: anywhere;
+  cursor: default;
+}
+.moyai-path[aria-expanded] {
+  cursor: pointer;
+}
+.moyai-path[data-open="false"] .moyai-path-head {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.moyai-path[data-open="false"] .moyai-path-tail {
+  flex: none;
+  white-space: nowrap;
+}
+/* 道の右の小さな字（既定・同期フォルダ）と「| 変更」は縮めない（道のほうを省く） */
+.moyai-settings .moyai-inline-act,
+.moyai-settings .moyai-path ~ * {
+  flex-shrink: 0;
+  white-space: nowrap;
+}

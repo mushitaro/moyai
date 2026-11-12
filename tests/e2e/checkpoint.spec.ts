@@ -99,6 +99,12 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await expect(page.getByTestId("root-input")).toHaveCount(0);
     await expect(page.getByTestId("settings-save")).toBeDisabled();
     await expect(page.getByTestId("settings-save-reason")).toHaveText("理由：変更なし");
+    // 行の見出しは、説明なしで意味が分かる言葉（#83）。内部の言葉（clone・ring・鍵 ID）は見出しにも小さな見出しにも出さない
+    const heads = (await page.locator(".moyai-settings-name").allTextContents()).map((t) => t.trim());
+    for (const h of ["計画と資料のフォルダ", "署名に入る名前", "署名の鍵（あなたと相手）", "他施設との共有フォルダ", "類似施設を見る公開台帳", "画面の明るさ", "星取表の見せ方", "業種の Skillパック", "Claude に見せるもの", "Skill の採点の結果"]) expect(heads, h).toContain(h);
+    const labels = [...heads, ...(await page.locator(".moyai-settings-label").allTextContents()).map((t) => t.trim())];
+    expect(labels).toContain("手元の複製");
+    for (const w of [/clone/i, /\bring\b/i, /鍵 ?ID/]) expect(labels.filter((l) => w.test(l)), String(w)).toEqual([]);
     await page.screenshot({ path: shot(`settings-${tag}`), fullPage: true });
     // 下の節（Skillパック・AI への提供範囲・Skill の採点・開発の道具）も写しに入れる
     await page.getByTestId("dev-setting").scrollIntoViewIfNeeded();
