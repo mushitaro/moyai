@@ -1,0 +1,102 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "waste-incineration",
+  "suite": "waste-incineration",
+  "suiteSha": "4f0b8bfc20b562d2a25c2ef5d28d61f0a67dd85ee562c3ecd287635030cb350b",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "c1be08191e5af7d1c61f8c533a7f26087c1d5da5673cfc531af9b640cf59ca5c"
+    },
+    {
+      "path": "packs/waste-incineration/SKILL.md",
+      "sha256": "762a46c5c83e7a0c9a02d16647df141778e0c0abc6826d8d2d263222ecbbdd8e"
+    }
+  ],
+  "skillSha": "e950e881e9b08269f030a3666d759be41f1111d587393be9ed3a1a5399110004",
+  "label": "PR #88（道 D。1 段目の 5 の match の文を戻した＋ごみ焼却）",
+  "at": "2026-11-12T11:03:55.553Z",
+  "cases": 100,
+  "answered": 100,
+  "pass": 90,
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 0,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 100,
+      "total": 100
+    },
+    "no_guess": {
+      "pass": 170,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 180,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 120,
+      "total": 120
+    }
+  },
+  "failing": [
+    "R05-01",
+    "R05-02",
+    "R05-03",
+    "R05-04",
+    "R05-05",
+    "R05-06",
+    "R05-07",
+    "R05-08",
+    "R05-09",
+    "R05-10"
+  ]
+}
