@@ -69,9 +69,14 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  child?.kill();
-  rmSync(work, { recursive: true, force: true });
-  for (const r of rings) rmSync(r, { recursive: true, force: true });
+  // 橋渡しが止まり切る前に消すと、まだ状態フォルダに書いていて ENOTEMPTY で落ちることがある（CI の ubuntu）。止まるのを待ってから消す
+  if (child && child.exitCode === null && child.signalCode === null) {
+    const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+    child.kill();
+    await Promise.race([exited, new Promise<void>((resolve) => setTimeout(resolve, 10_000))]);
+  }
+  rmSync(work, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  for (const r of rings) rmSync(r, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 });
 
 async function openPlan(page: Page, name: "fictional-1") {
