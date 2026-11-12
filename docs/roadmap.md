@@ -47,7 +47,7 @@
 - C-2 評価：`node scripts/bench/pack-candidate.mjs <パック> <案.json>` が、今の値と案の値を比べて、退行あり・良くなった・差なしを数だけで出す。PR に packs/ か src/import/ の変更があれば CI が同じ比べをする。
 - C-3 案：自律のセッションが、退行のない案を PR にする（packs/ の変更は案。マージ＝昇格を決めるのは人）。
 - C-4 アプリからの書き出し（GitHub のアカウントが無い人のフィードバック）：何を PC の外へ出すかを広げるので、運営者に聞いてから。
-- C-5 Skill の文（SKILL.md）の採点：`moyai eval` は API の費用が要る。配分を運営者に聞いてから。
+- C-5 Skill の文（SKILL.md）の採点：運営者の判断（#23 の 2、2026-11-12）で、API のキーを使わず、作業役のセッションが解いてコードで採点する（`moyai eval prompts`・`moyai eval score`。手順は `docs/autonomy.md`「Skill の文を変える PR」）。CI は記録だけを見る。
 
 ### D. EXPORT と SHARE
 

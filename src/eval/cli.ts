@@ -11,6 +11,7 @@ import { generateSuite } from "./gen";
 import { countEvalProperNouns, leakedTestCases, sha256, systemText, userText } from "./prompt";
 import { buildReport, compareReports, pct, renderHtml, type Report } from "./report";
 import { callOnce, planTasks, runTasks, type CallConfig, type Price } from "./run";
+import { joinSkills, scoreAnswers, scoreFileOf, skillPathsOf, suiteShaOf, writePrompts } from "./score";
 import { MANIFEST_SCHEMA, type EvalCase, type Manifest, type ResultRow, type Split, type Suite } from "./types";
 import { WorldFormatError, contentPackIds, loadPack, loadWorld, properNounTerms } from "./world";
 
@@ -27,7 +28,13 @@ export const EVAL_HELP = `使い方：
         [--per-call-usd <測った 1 回の費用>] [--base <前の版の回>] [--dry-run]
         送る文の全文を書き出し、固有名詞と試験用の問題の混入を数え、費用の見込みを出してから走らせる
   moyai eval report --run <回> [--base <前の版の回>]
-        results.jsonl から report.json と表（report.html）を作り直す`;
+        results.jsonl から report.json と表（report.html）を作り直す
+  moyai eval prompts --suite <名前> --out <フォルダ> [--skill <SKILL.md,SKILL.md>]
+        API を使わない採点（S-C4）の 1：解く人に渡す文だけ（system.txt・cases/<id>.txt）を書き出す。正解は書かない
+        --skill を省くと、1 段目（skills/moyai/SKILL.md）とその業種の packs/<パック>/SKILL.md をつないだ文
+  moyai eval score --suite <名前> --answers <フォルダ> [--skill <SKILL.md,SKILL.md>] [--label <版の名前>] [--record <書く道>]
+        API を使わない採点（S-C4）の 2：answers/<id>.txt をコードの採点 6 種で採点し、
+        eval/skill-scores/<パック>/<文の指紋の頭 16 字>.json に記録を書く（API を呼ばない・キーを読まない）`;
 
 function flags(argv: string[]): Map<string, string> | null {
   const m = new Map<string, string>();
@@ -321,6 +328,53 @@ function writeReport(p: Paths, runId: string, base: string | null): number {
   return 0;
 }
 
+/** --skill（カンマ区切り）か、既定の並び（1 段目＋業種） */
+function skillSet(f: Map<string, string>, p: Paths, pack: string): { text: string; skills: { path: string; sha256: string }[]; sha: string } {
+  const paths = f.get("skill")?.split(",").filter(Boolean) ?? skillPathsOf(pack);
+  const texts = paths.map((x) => readFileSync(resolve(p.root, x), "utf8"));
+  const text = joinSkills(texts);
+  return { text, skills: paths.map((x, i) => ({ path: x.replace(/\\/g, "/"), sha256: sha256(joinSkills([texts[i] as string])) })), sha: sha256(text) };
+}
+
+function cmdPrompts(f: Map<string, string>, p: Paths): number {
+  const name = f.get("suite");
+  const out = f.get("out");
+  if (!name || !out) return usage();
+  const loaded = loadSuite(p, name);
+  if (!loaded) {
+    say(`eval prompts：問題の組 ${name} がありません`);
+    return 1;
+  }
+  const set = skillSet(f, p, loaded.suite.pack);
+  const terms = properNounTerms(loadWorld(resolve(p.root, loaded.suite.world), { fiscalYearStartMonth: loaded.suite.fiscalYearStartMonth }));
+  const r = writePrompts({ cases: [...loaded.train, ...loaded.test], test: loaded.test, skill: set.text, terms, outDir: resolve(out), suite: name, skillSha: set.sha });
+  if (!r.ok) {
+    say(r.reason === "leaked" ? `eval prompts：試験用の問題 ${r.ids.length} 件の記録が Skill の文に入っています。書き出さずに止めます` : `eval prompts：文に固有名詞が ${r.hits} 回出ます。書き出さずに止めます`);
+    return 1;
+  }
+  say(`eval prompts：${name} の ${r.files} 問を ${out} に書いた（文の指紋 ${set.sha.slice(0, 16)}。正解は書いていない）`);
+  return 0;
+}
+
+function cmdScore(f: Map<string, string>, p: Paths): number {
+  const name = f.get("suite");
+  const answers = f.get("answers");
+  if (!name || !answers) return usage();
+  const loaded = loadSuite(p, name);
+  if (!loaded) {
+    say(`eval score：問題の組 ${name} がありません`);
+    return 1;
+  }
+  const set = skillSet(f, p, loaded.suite.pack);
+  const rec = scoreAnswers({ suite: loaded.suite, suiteSha: suiteShaOf(p.evalDir, name), cases: [...loaded.train, ...loaded.test], answersDir: resolve(answers), skills: set.skills, skillSha: set.sha, label: f.get("label") ?? null, now: new Date() });
+  const file = f.get("record") ? resolve(f.get("record") as string) : scoreFileOf(p.evalDir, loaded.suite.pack, set.sha);
+  mkdirSync(join(file, ".."), { recursive: true });
+  writeJson(file, rec);
+  say(`eval score：${name} — 合格 ${rec.pass}/${rec.cases}（答えのあった問題 ${rec.answered}）。記録 ${relative(p.root, file)}`);
+  for (const [k, v] of Object.entries(rec.perRule)) say(`  ${k}：${v.pass}/${v.total}`);
+  return 0;
+}
+
 function usage(): number {
   say(EVAL_HELP);
   return 2;
@@ -334,6 +388,8 @@ export async function evalCli(argv: string[], root = process.cwd()): Promise<num
   const p = pathsOf(resolve(root));
   if (sub === "gen") return cmdGen(f, p);
   if (sub === "run") return cmdRun(f, p);
+  if (sub === "prompts") return cmdPrompts(f, p);
+  if (sub === "score") return cmdScore(f, p);
   if (sub === "report") {
     const run = f.get("run");
     return run ? writeReport(p, run, f.get("base") ?? null) : usage();

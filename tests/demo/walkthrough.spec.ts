@@ -78,7 +78,7 @@ async function record(page: Page, who: string) {
 test("デモの通し：トップ → MERGE（取り込み・当てはめ・台帳の案・検査）→ 承認 → EXPORT → SHARE", async ({ browser }) => {
   test.setTimeout(15 * 60_000);
   const root = join(work, "共有の保管先");
-  // 共有フォルダの道も固有名詞の照らす相手なので、乱数の文字（mkdtemp の名前。計画の語と偶然重なる）を入れない名前にする（checkpoint.spec・one-button.spec と同じ）
+  // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする（checkpoint.spec・one-button.spec と同じ）
   ringBase = join(tmpdir(), `moyai-demo-ring-${Date.now()}`);
   const ringRoot = join(ringBase, "輪のフォルダ");
   const pa = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })).newPage();
