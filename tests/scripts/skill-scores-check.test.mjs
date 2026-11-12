@@ -9,7 +9,7 @@ const files = (skill1, skill2, extra = {}) => ({ "skills/moyai/SKILL.md": skill1
 const reader = (m) => (p) => (p in m ? m[p] : null);
 const recFor = (m, pass, over = {}) => {
   const s = sha(joinSkills([m["skills/moyai/SKILL.md"], m["packs/p/SKILL.md"]]));
-  return [`eval/skill-scores/p/${s.slice(0, 16)}.json`, JSON.stringify({ skillSha: s, suite: "p", suiteSha: suiteSha(reader(m), "p"), pass, cases: 100, ...over })];
+  return [`eval/skill-scores/p/${s.slice(0, 16)}.json`, JSON.stringify({ skillSha: s, suite: "p", suiteSha: suiteSha(reader(m), "p"), pass, cases: 100, runs: [{ solver: "a", pass, failing: [] }, { solver: "b", pass, failing: [] }], ...over })];
 };
 
 test("文が base と同じなら通る（記録が無くても）", () => {
@@ -45,4 +45,27 @@ test("base の記録より合格の数が下がれば落ち、同じか上がれ
 test("1 段目の文だけを変えても、指紋が変わって記録を求める", () => {
   const base = files("一", "二");
   assert.equal(checkPack("p", reader(files("一を直した", "二")), reader(base)).ok, false);
+});
+
+test("記録の形：別々の解く役 2 つ以上の採点が無い・呼び名が重なる・点が割れている → 落ちる", () => {
+  const base = files("一", "二");
+  const now = files("一", "二を直した");
+  const runs = (xs) => xs.map(([solver, pass]) => ({ solver, pass, failing: [] }));
+  for (const [over, re] of [
+    [{ runs: runs([["a", 80]]) }, /2 つ以上/],
+    [{ runs: undefined }, /2 つ以上/],
+    [{ runs: runs([["a", 80], ["a", 80]]) }, /重なって/],
+    [{ runs: runs([["a", 80], ["b", 90]]) }, /違う/],
+  ]) {
+    const [k, v] = recFor(now, 80, over);
+    const r = checkPack("p", reader({ ...now, [k]: v }), reader(base));
+    assert.equal(r.ok, false);
+    assert.match(r.note, re);
+  }
+});
+
+test("文が同じでも、問題の組が変われば記録を求める", () => {
+  const base = files("一", "二");
+  const now = files("一", "二", { "eval/p/cases/test.jsonl": "c" });
+  assert.match(checkPack("p", reader(now), reader(base)).note, /記録が無い/);
 });
