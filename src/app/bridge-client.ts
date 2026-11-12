@@ -226,6 +226,43 @@ export class BridgeClient {
    * AI が intake_add_files で入れる資料の中身を、橋渡しが渡した資料の印で取りに来る（タブの秘密が要る。印は 1 回きり）。
    * 取れなければ null（見つからない・読む間に変わった・切れた）。
    */
+  /**
+   * 施設ごとの作業中（#82）の道：作業画面だけの経路にタブの秘密を添えて送る（人だけの経路ではない。1 回きりの印は要らない）。
+   * JSON の答えを返す。届かない・形が違えば null
+   */
+  async workCall(path: (typeof ROUTES)["tabWorkSource" | "tabWorkSave" | "tabWorkList" | "tabWorkRead"]["path"], body: unknown): Promise<Record<string, unknown> | null> {
+    try {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { ...(body === undefined ? {} : { "content-type": "application/json" }), [HEADER_TAB_SECRET]: this.secret },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        credentials: "omit",
+        cache: "no-store",
+      });
+      const j: unknown = await res.json().catch(() => null);
+      return res.ok && j && typeof j === "object" ? (j as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** 作業中の資料を 1 つ、バイト列で読む（#82） */
+  async workSource(planId: string, sha256: string): Promise<Uint8Array | null> {
+    try {
+      const res = await fetch(ROUTES.tabWorkRead.path, {
+        method: "POST",
+        headers: { "content-type": "application/json", [HEADER_TAB_SECRET]: this.secret },
+        body: JSON.stringify({ planId, sha256 }),
+        credentials: "omit",
+        cache: "no-store",
+      });
+      if (!res.ok || !(res.headers.get("content-type") ?? "").startsWith("application/octet-stream")) return null;
+      return new Uint8Array(await res.arrayBuffer());
+    } catch {
+      return null;
+    }
+  }
+
   async fetchIntakeFile(fileId: string): Promise<Uint8Array | null> {
     try {
       const res = await fetch(ROUTES.tabIntakeFile.path, {

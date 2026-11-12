@@ -738,6 +738,15 @@ button.moyai-stop-notice {
   letter-spacing: 0.1em;
   color: var(--shu-text);
 }
+/* 施設の作業中（#82）：状態と同じ朱の字。押すと続きから開く・消すのメニュー */
+.moyai-top-work {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-left: 8px;
+  font-family: inherit;
+  cursor: pointer;
+}
 .moyai-top-months {
   display: flex;
   margin-left: var(--sp-3);
