@@ -637,6 +637,14 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
     const colCue = cue.column(headerParts[0] ?? "") ?? (headerParts.length >= 2 ? cue.column(headerParts[headerParts.length - 1] ?? "") : null);
     cols.push({ c, role: "unknown", header, headerParts, cue: colCue, hidden: !!ctx.grid.cols[c]?.hidden });
   }
+  // 作業の名前の手がかりの列が 2 つあり、片方の見出しは語そのもの（「作業内容」）：ほかは頭の語で当たっただけ（「作業区分」）。終わりの語（複合語の頭）で読み直す
+  const workCues = cols.filter((col) => col.cue === "workName");
+  if (workCues.length >= 2 && workCues.some((col) => cueWordIs(norm(col.headerParts[0] ?? ""), "workName")))
+    for (const col of workCues) {
+      if (cueWordIs(norm(col.headerParts[0] ?? ""), "workName")) continue;
+      const k = cue.columnTail(col.headerParts[0] ?? "");
+      if (k && k !== "workName") col.cue = k;
+    }
   for (const col of cols) ruleForColumn(ctx, col, dataRows);
   // 数の並びだけの日付の列は、規則が無くても、その書き方で読む（規則で決めた書き方が先）
   for (const col of cols) if (!col.dateFormat && compactDateColumn(col, dataCellsOf(ctx, dataRows, col.c))) col.dateFormat = "yyyymmdd";
