@@ -14,7 +14,7 @@ import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
 import { ReadingSkill, type LoadedReading } from "../../src/import/reading";
 import { rulesFromAnswers, yearSplit } from "./first-read";
-import { answer, runSet, truthKnows, type SetResult } from "./harness";
+import { DEFAULT_REASON, answer, runSet, truthKnows, type SetResult } from "./harness";
 import { loadV2Facility } from "./v2";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -136,7 +136,8 @@ async function measureFirstRead(n: string, v: ReturnType<typeof loadV2Facility>,
   const opt = { facilityKey: v.set.world.facility.id, ...RUN, packId: "" };
   try {
     const y1 = await runSet(v.set, { ...opt, read: split.first });
-    const rules = rulesFromAnswers(y1.analysis.questions, y1.answered, v.set.truth.files.map((f) => f.file));
+    // 既定の答えを受けた問い（台本が正解から答えられず、推された答えを押したもの）はルールにしない（人が決めた答えではない）
+    const rules = rulesFromAnswers(y1.analysis.questions, y1.answered.filter((d) => d.reason !== DEFAULT_REASON), v.set.truth.files.map((f) => f.file));
     const skill = ReadingSkill.parse({ schema: "moyai.reading/0", name: "1 年目の読み方", scope: "facility", rules });
     const readings: LoadedReading[] = [{ skill, version: "", path: null, approved: false, draft: true }];
     const all = [...split.first, ...split.rest];
@@ -248,9 +249,9 @@ describe("Skillパックの物差し", () => {
             "| 施設 | 1 年目（年度・資料） | 1 年目の問い N | 規則 | 残り（年度・資料） | 残りを足した問い K | 残りの 1 年あたり K÷年度 | 規則で決まった問い | うち正解と違う答え | 規則なしの問い M0 |",
             "|---|---|---:|---:|---|---:|---:|---:|---:|---:|",
             ...rows.map((x) => (x.firstRead ? `| ${x.facility} | ${x.firstRead.year}・${x.firstRead.firstFiles} | ${x.firstRead.firstAsked} | ${x.firstRead.rules} | ${x.firstRead.restYears}・${x.firstRead.restFiles} | ${x.firstRead.restAsked} | ${(x.firstRead.restAsked / x.firstRead.restYears).toFixed(1)} | ${x.firstRead.ruleAnswered} | ${x.firstRead.ruleWrong} | ${x.firstRead.restAskedNoRules} |` : `| ${x.facility} | 測れなかった | — | — | — | — | — | — | — | — |`)),
-            "- K は、全部の資料を 1 年目の規則で読み直したときに、規則で決まらずに残った問い。年度・日付・行や件の数は伏せて比べる（src/import/reading.ts の answerShape）。人に聞く数はこれ。",
+            "- K は、全部の資料を 1 年目の規則で読み直したときに、規則で決まらずに残った問い。規則は、そのままの字で同じ問いにだけ当たる（年度や数を伏せて広げない）。人に聞く数はこれ。",
             "- 残りの 1 年あたりは K を残りの年度の数で割った値。1 年目の問い N より小さければ、2 年目からが速い。",
-            "- 規則は 2 つ：1 年目の問いごとの答え（名前ごと）と、1 年目に 5 問以上答え、候補を指さない同じ答えが 9 割以上だった種類の問いの答え（種類ごと。名前ごとの規則のあとに当たる）。",
+            "- 規則は、1 年目の問いごとの答え（名前ごと）だけ。既定の答えを受けた問い（人が決めた答えではない）と、年度や数だけが違って答えの分かれた問いは、規則にしない。",
             "- 正解と違う答えは、規則で決まった問いのうち、正解の台本が答えられて、その答えと規則の答えが違う数。台本が正解から答えられない問いは数えていない。",
             ...(total.firstRead.skipped.length ? ["", `- 年度ごとの資料が無いので測っていない施設：${total.firstRead.skipped.join("・")}`] : []),
             "",
