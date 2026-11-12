@@ -311,6 +311,29 @@ describe("送り手と受け手：中継 → 橋渡し → 作業画面", () => 
     }
   });
 
+  it("folder の match：名前の一部に当たる資料だけを作業画面に渡し、残りは名前を left に返す。list は渡さずに名前だけ。当たりが無ければ渡さない（#67）", async () => {
+    const d = temp();
+    for (const n of ["日報_R6.csv", "日報_R7.csv", "台帳_H28-R7.csv"]) writeFileSync(join(d, n), "x,y\n1,2\n");
+    const { client, calls } = await chain(async (call) => ({ ok: true, data: { added: call.args.files.map((f: { name: string }) => ({ name: f.name, sheets: 1, rows: 2 })), refused: [] } }));
+    // R7 の分：「R7」の語は 2 本に当たる（日報_R7・台帳_H28-R7）。全角でも同じ
+    const r: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, match: "Ｒ７" } });
+    expect(r.isError).toBeFalsy();
+    expect(calls[0]!.args.files.map((f: { name: string }) => f.name)).toEqual(["台帳_H28-R7.csv", "日報_R7.csv"]);
+    expect(r.structuredContent).toMatchObject({ left: ["日報_R6.csv"], leftTotal: 1 });
+    expect(TOOLS.intake_add_files.output.safeParse(r.structuredContent).success).toBe(true);
+    // list：作業画面に渡さず、直下の名前だけ
+    const l: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, list: true } });
+    expect(l.structuredContent).toMatchObject({ added: [], left: ["台帳_H28-R7.csv", "日報_R6.csv", "日報_R7.csv"], leftTotal: 3 });
+    // 当たりが無い：渡さない
+    const none: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, match: "R9" } });
+    expect(none.structuredContent).toMatchObject({ added: [], leftTotal: 3 });
+    expect(calls).toHaveLength(1);
+    // 型：match と list は folder だけ
+    for (const args of [{ source: "demo", match: "R7" }, { source: "template", path: d, list: true }]) {
+      expect(TOOLS.intake_add_files.input.safeParse(args).success, JSON.stringify(args)).toBe(false);
+    }
+  });
+
   it("作業画面が、渡していない名前・重なった名前・中身らしい欄を返したら、AI に渡さない", async () => {
     for (const bad of [
       { added: [{ name: "other.xlsx", sheets: 1, rows: 1 }], refused: [] },

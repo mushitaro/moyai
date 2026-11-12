@@ -104,7 +104,6 @@ export const TEXT = {
     amountAria: (k: string, kind: "plan" | "actual") => `、金額 ${k} 千円（${kind === "actual" ? "実績" : "予算"}）`,
     amountLine: (k: string, kind: "plan" | "actual") => `金額　${k} 千円（${kind === "actual" ? "実績" : "予算"}）`,
     adjustedSame: "調整はまだありません。調整後は当初計画と同じです。",
-    noCatalog: "この計画のSkillパックの項目が見つからないので、共通の設備項目の行は出せません。",
     confirm: "確定する",
     confirmDisabled: "確定の経路はまだありません（未実装）",
     levelFallback: (n: number) => `第 ${n} 階層`,
@@ -485,7 +484,6 @@ export const TEXT = {
     composing: "計画を作っています",
     reasonsPrefix: "理由：",
     needFiles: "資料がまだ無い",
-    needPack: "Skillパックを選んでいない",
     needName: "施設名が空",
     /** 取り込みの worker を起こせず、画面と同じスレッドで読むとき（読込の間は画面が止まる） */
     workerFallback: "取り込みの別の処理を起動できませんでした。資料の読込中は画面が止まります",
@@ -494,8 +492,6 @@ export const TEXT = {
     composeFailed: "計画を作れませんでした",
     settings: {
       title: "施設",
-      pack: "Skillパック",
-      packPlaceholder: "選んでください",
       name: "施設名",
       startMonth: "年度の始まり（月）",
       fictional: "架空の資料",

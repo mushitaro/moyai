@@ -21,7 +21,7 @@ import { DecisionsSheet, cycleConflicts, usePending } from "../components/Decisi
 import { CostSheet } from "../components/CostSheet";
 import { ReadingsSheet, ruleHash, unapprovedReadings, type OldReadings } from "../components/ReadingsSheet";
 import { placeOf, ruleVersionNo, signaturesVersion, type Lineage, type RecordedReading } from "../state/rule-lineage";
-import { packChoices } from "../chart/catalog";
+import { catalogFor, packChoices } from "../chart/catalog";
 import { versionName } from "../version-name";
 import { MatchSheet } from "../components/MatchSheet";
 import { FictionMark } from "../components/FictionMark";
@@ -452,8 +452,18 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 費用のシートは星取表のすぐ右（docs/screens.md 3.8）。白紙のシートのタブは「資料」の札と資料の選び・シートの選びと「＋ 資料を足す」だけ
   // 出力と共有は、確定した版があるときだけ（確定のすぐ右。mushitaro/moyai#30）
   const confirmedVersion = st?.latest && plan && st.latest.plan.planId === plan.planId ? st.latest.version : null;
+  // パックなし（初めて読む資料。mushitaro/moyai#67）：照査と共有は、要るもの（パックの基準・輪と台帳）が無いので出さない
+  const packed = !!plan?.packId;
   const tabs: MergeSheet[] = plan
-    ? ["chart", "cost", ...(fileNames.length >= 2 ? (["match"] as const) : []), "readings", "check", "decisions", ...(confirmedVersion !== null ? CONFIRMED_SHEETS : [])]
+    ? [
+        "chart",
+        "cost",
+        ...(fileNames.length >= 2 ? (["match"] as const) : []),
+        "readings",
+        ...(packed ? (["check"] as const) : []),
+        "decisions",
+        ...(confirmedVersion !== null ? CONFIRMED_SHEETS.filter((x) => packed || x !== "share") : []),
+      ]
     : [];
   // 資料の一覧の行（読めた資料・読込中・読込不可。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）
   const skipped = ws.skippedFiles;
@@ -627,7 +637,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         )}
         {fictional && <FictionMark />}
         <div className="moyai-merge-head-end">
-          {current === "chart" && plan && (
+          {current === "chart" && plan && catalogFor(plan.packId) !== null && (
             <Group gap={8} wrap="nowrap" align="center">
               <span className="moyai-merge-head-label">{T.peersLabel}</span>
               <Switch<"on" | "off">
@@ -649,7 +659,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             </span>
           )}
           {/* 白紙で資料が入ったあとは、施設の欄は資料のシートに無いので、ダイアログで開く */}
-          {plan || ws.fileCount > 0 ? (
+          {/* 版ができたあとの施設設定（似た施設の見え方と全国の表）は、パックなしでは使わないので出さない（mushitaro/moyai#67） */}
+          {plan && !packed ? null : plan || ws.fileCount > 0 ? (
             <button type="button" className="moyai-merge-link" onClick={() => setFacilityDialog(true)} data-testid="facility-settings">
               {T.facilitySettings}
             </button>
@@ -709,7 +720,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
 
       {/* 出力と共有のシート：中身と下の帯はそのシートが持つ（11-10 の引き算のまま。横の板は出さない。mushitaro/moyai#30） */}
       {outSheet ? (
-        <Suspense fallback={null}>{current === "export" ? <Export embedded /> : <Checkpoint embedded />}</Suspense>
+        <Suspense fallback={null}>{current === "export" ? <Export embedded /> : packed ? <Checkpoint embedded /> : null}</Suspense>
       ) : (
       <>
       <MergePeersContext.Provider value={peersOn}>
@@ -720,7 +731,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           <Suspense fallback={null}>
             {current === "chart" && <StarTable embedded />}
             {current === "cost" && plan && <CostSheet plan={plan} />}
-            {current === "check" && <Review embedded />}
+            {current === "check" && packed && <Review embedded />}
             {current === "match" && <MatchSheet ws={ws} />}
             {current === "readings" && <ReadingsSheet ws={ws} old={oldReadings} lineage={lineage} />}
             {current === "decisions" && plan && <DecisionsSheet client={client} plan={plan} />}
