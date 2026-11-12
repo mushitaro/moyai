@@ -199,3 +199,14 @@ test("アプリから書き出したファイル（moyai.reading-feedback/0）�
     r.done();
   }
 });
+
+test("S-C2 の見本の Issue の本文（docs/skill-loop/s-c2-issue.md）：選り分けを通り、行の値の数えは 0。issue_read の形（ほかの欄つき）でも読める", () => {
+  const body = readFileSync(join("docs", "skill-loop", "s-c2-issue.md"), "utf8");
+  const issue = { number: 1, title: "【架空】機器台帳の「排水処理設備」を毎回聞かれる（S-C2 の見本）", body, labels: ["area:skill-loop", "feedback"], state: "open", user: { login: "x" }, html_url: "https://example.invalid/1" };
+  const s = screen(issue);
+  assert.equal(s.ok, true);
+  assert.equal(s.pack, "waste-incineration");
+  assert.equal(s.rules.length, 1);
+  assert.ok(Object.values(countValues([issue.title, body])).every((n) => n === 0));
+  assert.match(body, /【架空】/);
+});
