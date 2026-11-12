@@ -1417,3 +1417,34 @@ div.moyai-template-choice {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* 横の板の署名の「版の履歴」の行（押すとその版を比較版にする。Wire の TimeMap5）。選んだ行は左の細い線と太字（様式の行と同じ形） */
+.moyai-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 6px 0 6px 12px;
+  margin-left: -12px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--text-2);
+  text-align: left;
+}
+button.moyai-hist {
+  cursor: pointer;
+}
+button.moyai-hist:hover {
+  color: var(--text);
+}
+.moyai-hist[data-active="true"] {
+  border-left-color: var(--text);
+  color: var(--text);
+  font-weight: 700;
+}
+.moyai-hist-reason {
+  font-weight: 400;
+}

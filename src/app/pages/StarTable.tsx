@@ -135,6 +135,8 @@ export interface Index {
   assetName: (nodeKey: string) => string;
   /** 機器とその上の節（共通の設備項目の決定は上の節に付くことがある。判断の履歴に使う） */
   assetChain: (nodeKey: string) => string[];
+  /** 明細の鍵 → その明細を決めた問い（取り込みの質問への答え）。答えで決まっていない明細は無い */
+  decidedBy: ReadonlyMap<string, NonNullable<Plan["readingDecisions"]>[number]>;
   workLabels: Record<NonNullable<WorkT["attribute"]>, string>;
 }
 
@@ -151,11 +153,11 @@ export function DecisionHistory({ d, work, planId, ix }: { d: WorkDetailT; work:
   const past = acceptHistoryFor(planId, ids);
   // 版に入った決定は「第 n 版」だけに出す（同じ決定を今の作業にも重ねて出さない）
   const signed = new Set(past.map((h) => `${h.id}\u0000${h.hash}`));
-  const now = [...accepted.values()].filter((a) => ids.includes(a.id) && !signed.has(`${a.id}\u0000${a.hash}`));
+  const now = [...accepted.values()].filter((a) => ids.includes(a.id) && !a.id.startsWith("reading:") && !signed.has(`${a.id}\u0000${a.hash}`));
   if (past.length === 0 && now.length === 0) return null;
   return (
     <Stack gap={0} data-testid="source-history">
-      <Text size="xs" c="dimmed">
+      <Text size="xs" c="var(--text-3)">
         {T.source.history}
       </Text>
       {past.map((h, i) => (
@@ -194,6 +196,23 @@ function DetailCard({ d, ix, planId }: { d: WorkDetailT; ix: Index; planId?: str
         {T.source.by}：{TEXT.author[d.author]} · {T.source.basis}：{d.basis}
         {d.needsReview ? ` · ${T.source.review}` : ""}
       </Text>
+      {/* 答えた問いと現れた星を結ぶ（時間の地図 5、#29）：この印を決めた問いと答え、答えた人 */}
+      {ix.decidedBy.get(d.detailKey) && (
+        <Stack gap={0} data-testid="source-decided-by" data-question={ix.decidedBy.get(d.detailKey)!.questionId}>
+          <Text size="xs" c="var(--text-3)">
+            {T.source.decidedBy}
+          </Text>
+          <Text size="xs">{ix.decidedBy.get(d.detailKey)!.question}</Text>
+          <Text size="xs">
+            → {ix.decidedBy.get(d.detailKey)!.answer}　
+            <Text span size="xs" c="var(--text-3)">
+              {TEXT.author[ix.decidedBy.get(d.detailKey)!.author]}
+            </Text>
+          </Text>
+        </Stack>
+      )}
+      {/* 判断の履歴（#29）：確定のシートで人が受けた決定の理由。決めた問い（取り込みの答え）は上の 1 つだけで、ここには重ねない */}
+      {planId && <DecisionHistory d={d} work={work} planId={planId} ix={ix} />}
       {/* 金額と出どころ（#48）。当施設の画面の中だけ（共有ファイル・公開台帳・AI には渡らない） */}
       {d.cost !== null && (
         <Text size="xs" data-testid="source-amount">
@@ -213,7 +232,6 @@ function DetailCard({ d, ix, planId }: { d: WorkDetailT; ix: Index; planId?: str
           </Text>
         ))}
       </Stack>
-      {planId && <DecisionHistory d={d} work={work} planId={planId} ix={ix} />}
     </Stack>
   );
 }
@@ -754,6 +772,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         return out;
       },
       workLabels: (catalog ?? emptyCatalog()).workLabels,
+      decidedBy: new Map((plan.readingDecisions ?? []).flatMap((r) => (r.details ?? []).map((k) => [k, r] as const))),
     };
   }, [plan, catalog]);
   const selRow = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;

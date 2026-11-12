@@ -16,6 +16,7 @@ const ix: Index = {
   works: new Map(),
   assetName: (k) => k,
   assetChain: (k) => (k === "E24" ? ["E24", "G20"] : [k]),
+  decidedBy: new Map(),
   workLabels: {} as Index["workLabels"],
 };
 const d = { detailKey: "d1", workKey: "w1" } as never;

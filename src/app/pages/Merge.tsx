@@ -590,7 +590,22 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         ? { state: "editing", text: T.turnLine("editing", true, "") }
         : null;
   // 比べる版：承認を頼まれた人も頼んだ人も、頼んだ版のひとつ前（無ければ出さない）。ほかは保管先のいちばん新しい版（同じ計画のときだけ）
-  const compareWith = viewingOld ? null : awaitingMe || askedApprove || toReceive ? (st?.previous ?? null) : (st?.latest ?? null);
+  const compareDefault = viewingOld ? null : awaitingMe || askedApprove || toReceive ? (st?.previous ?? null) : (st?.latest ?? null);
+  // 比べる版を選ぶ（#29、Wire の TimeMap5）：横の板の署名の「版の履歴」の行を押すと、その版を比較版にする（選びの欄は足さない）。
+  // 既定の比較版の行を押すと既定に戻す。計画か保管先のいちばん新しい版が替われば、選びは外す
+  const [picked, setPicked] = useState<{ planId: string; latest: number; version: number; plan: Plan } | null>(null);
+  const pickedNow = picked && plan && picked.planId === plan.planId && picked.latest === (st?.latest?.version ?? null) && !viewingOld ? picked : null;
+  const compareWith = pickedNow ?? compareDefault;
+  const pickCompare = (version: number) => {
+    if (!plan || !st?.latest) return;
+    if (compareDefault && version === compareDefault.version) return setPicked(null);
+    const planId = plan.planId;
+    const latest = st.latest.version;
+    void (async () => {
+      const r = readHuman<{ ok: boolean; plan: Plan }>(await client.callHuman("plan_version_read", ROUTES.planVersionRead.path, { planId, version }));
+      if (r.ok && r.body.plan.planId === planId) setPicked({ planId, latest, version, plan: r.body.plan });
+    })();
+  };
   const compare = useMemo<MergeCompare | null>(
     () => (plan && compareWith && compareWith.plan.planId === plan.planId ? { version: compareWith.version, plan: compareWith.plan } : null),
     [plan, compareWith],
@@ -853,6 +868,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
                 request={req && !req.done && req.version === panelInfo.version ? req : null}
                 ignored={oldOpen ? [] : ignored}
                 old={panelOld}
+                history={
+                  !oldOpen && plan && st?.versions
+                    ? { rows: st.versions.map((v) => ({ version: v.version, at: v.at, reason: v.reason, problem: v.problem, signatures: v.signatures })), compare: compare?.version ?? null, onCompare: pickCompare }
+                    : null
+                }
               />
             )}
             {sideNow === "comments" && plan && (
