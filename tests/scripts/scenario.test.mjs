@@ -18,6 +18,7 @@ import {
   judgeB2,
   judgeC1,
   judgeC3,
+  judgeC4,
   C1_REQUIRED,
   judgeD1,
   judgeD2,
@@ -122,6 +123,21 @@ describe("C1・C3：Skill の進化", () => {
     assert.equal(judgeC3(unit, loop, { ...slice, unexpected: 1 }).status, FAIL);
     assert.equal(judgeC3(unit, loop, { ...slice, expected: 0, skipped: 1 }).status, FAIL);
     assert.equal(judgeC3(unit, loop, null).status, UNKNOWN);
+  });
+});
+
+describe("C4：Skill の文の採点の記録", () => {
+  const cur = { "skills/moyai/SKILL.md": "a", "packs/x/SKILL.md": "b" };
+  const rec = (score, texts = cur, problems = "p") => ({ texts, problems, score });
+  it("記録が今の文の指紋と合い、点が前の記録より下がっていなければ合格。無ければ待ち、古い・下がったら不合格", () => {
+    assert.equal(judgeC4(null, cur).status, WAIT);
+    assert.equal(judgeC4([rec(10), rec(9)], cur).status, PASS);
+    assert.equal(judgeC4([rec(10), rec(10)], cur).status, PASS);
+    assert.equal(judgeC4([rec(9), rec(10)], cur).status, FAIL);
+    assert.equal(judgeC4([rec(10, { ...cur, "packs/x/SKILL.md": "old" })], cur).status, FAIL);
+    assert.equal(judgeC4([rec(10, { "skills/moyai/SKILL.md": "a" })], cur).status, FAIL);
+    // 問題の組が違えば、点は比べない（前の記録と同じ物差しでない）
+    assert.equal(judgeC4([rec(5, cur, "q"), rec(10)], cur).status, PASS);
   });
 });
 
