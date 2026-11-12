@@ -141,6 +141,11 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.screenshot({ path: shot(`ring-created-${tag}`) });
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("rings-table")).toBeVisible();
+    // 共有フォルダの 1 列目は、選んだフォルダの最後の名前（内部の ID の 16 字は出さない）
+    await page.getByTestId("rings-table").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: shot(`settings-rings-${tag}`) });
+    await expect(page.getByTestId("ring-name")).toHaveText(["輪のフォルダ"]);
+    await expect(page.getByTestId("rings-table")).not.toContainText(/\b[0-9a-f]{16}\b/);
   });
 
   await test.step("確定：差分の要約、人が受けていない決定を理由つきで受け、一言の理由で確定する", async () => {
