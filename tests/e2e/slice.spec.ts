@@ -284,6 +284,23 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
         await expect(page.getByTestId("merge-page")).toHaveAttribute("data-sheet", "readings", { timeout: 2000 });
       }).toPass({ timeout: 30_000 });
       await page.screenshot({ path: shot(`slice-readings-${tag}`), fullPage: true });
+      // 読み方の書き出し（S-C3・Wire の ReadingOut）：押すと全文 → 「保存する」で保管先の feedback/ に 1 つ。保存は人だけの経路で、AI のツールに無い
+      expect((await c.listTools()).tools.map((t) => t.name).filter((n) => n.includes("feedback"))).toEqual([]);
+      await expect(page.getByTestId("reading-out")).toHaveText("ルールを書き出す");
+      await page.getByTestId("reading-out").click();
+      await expect(page.getByTestId("reading-out-text")).toContainText('"schema": "moyai.reading-feedback/0"');
+      await expect(page.getByTestId("reading-out-text")).toContainText('"names": [');
+      await expect(page.getByTestId("reading-out-text")).not.toContainText("利用者が会話で決めた");
+      await expect(page.getByTestId("reading-out")).toHaveText("保存する");
+      await page.screenshot({ path: shot(`slice-reading-out-preview-${tag}`), fullPage: true });
+      await page.getByTestId("reading-out").click();
+      await expect(page.getByTestId("reading-out-saved")).toContainText(/保存済み　ルール_\d{4}-\d{2}-\d{2}_[0-9a-f]{8}\.json/);
+      await page.screenshot({ path: shot(`slice-reading-out-saved-${tag}`), fullPage: true });
+      const saved = readdirSync(join(root, "feedback"));
+      expect(saved).toHaveLength(1);
+      const out = JSON.parse(readFileSync(join(root, "feedback", saved[0]!), "utf8"));
+      expect(out.schema).toBe("moyai.reading-feedback/0");
+      expect(JSON.stringify(out)).not.toContain("利用者が会話で決めた");
       await expect(async () => {
         // 資料の選びの一覧を開き（開いていれば開いたまま）、名前順の最初の資料を選ぶ
         if (!(await page.getByTestId("source-list").isVisible())) await page.getByTestId("source-picker").click();

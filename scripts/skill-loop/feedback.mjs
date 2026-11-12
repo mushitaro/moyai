@@ -39,7 +39,7 @@ export function readForm(body) {
   return out;
 }
 
-/** アプリから書き出したルールの形（src/share/reading-feedback.ts。文・理由・人・資料の名前を持たない） */
+/** アプリから書き出したルールの形（src/share/reading-feedback.ts。文・理由・人・資料の名前を持たない。規則ごとに効いたセルの数 cells） */
 export const FEEDBACK_FILE_SCHEMA = "moyai.reading-feedback/0";
 const SHAPE_TEXT = {
   headerRow: (r) => `${r.row} 行目を見出しとして読む`,
@@ -56,7 +56,9 @@ const SHAPE_TEXT = {
 /** 形だけの規則を、moyai.reading/0 の規則にする（文は形から作る。id は書き出しの並び） */
 function fromAppShape(r, i) {
   if (!r || typeof r !== "object" || !SHAPE_TEXT[r.kind]) return r;
-  return { ...r, id: `app${i + 1}`, text: SHAPE_TEXT[r.kind](r).slice(0, 200), author: "ai", reason: "アプリから書き出したルールの形" };
+  // cells（効いたセルの数）は書き出しの数で、規則の欄ではない
+  const { cells: _cells, ...shape } = r;
+  return { ...shape, id: `app${i + 1}`, text: SHAPE_TEXT[r.kind](shape).slice(0, 200), author: "ai", reason: "アプリから書き出したルールの形" };
 }
 
 /** 貼られたルール（```json の中か、そのままの JSON）を、規則の並びにする。読めなければ null */
