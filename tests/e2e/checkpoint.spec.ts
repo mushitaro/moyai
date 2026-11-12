@@ -69,8 +69,13 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  child?.kill();
-  rmSync(work, { recursive: true, force: true });
+  // 橋渡しが止まるまで待ってから消す（止まる前に消すと、橋渡しがまだ状態フォルダに書いていて ENOTEMPTY になる。CI の ubuntu）
+  if (child && child.exitCode === null && child.signalCode === null) {
+    const exited = new Promise<void>((r) => child!.once("exit", () => r()));
+    child.kill();
+    await exited;
+  }
+  rmSync(work, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   for (const r of rings) rmSync(r, { recursive: true, force: true });
 });
 
