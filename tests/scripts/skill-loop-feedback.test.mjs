@@ -138,3 +138,19 @@ test("--only は --dry-run のときだけ・--dry-run か --apply のどちら�
     }
   }
 });
+
+test("アプリから書き出したファイル（moyai.reading-feedback/0）を貼った Issue も、同じ道で案 → 比べ → PR の本文になる（S-C3）", () => {
+  const before = snapshot();
+  const r = run("app-export", ["--dry-run", "--only", ONLY]);
+  try {
+    assert.equal(r.status, 0);
+    assert.equal(r.decision.action, "pr");
+    assert.equal(r.decision.verdict, "良くなった");
+    const c = JSON.parse(r.read("candidate.json"));
+    assert.equal(c.rules[0].id, "fb9008-app1");
+    assert.equal("cells" in c, false);
+    assert.deepEqual(snapshot(), before);
+  } finally {
+    r.done();
+  }
+});

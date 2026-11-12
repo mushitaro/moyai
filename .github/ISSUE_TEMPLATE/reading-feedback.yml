@@ -43,7 +43,7 @@ body:
     id: rule
     attributes:
       label: 会話で作ったルール（あれば）
-      description: 施設の Skill の rules.json から、当てはまるルールを貼ってください（名前や値が入っていないか見てから）。
+      description: 施設の Skill の rules.json から当てはまるルールか、アプリから書き出したファイル（moyai.reading-feedback/0）を貼ってください（名前や値が入っていないか見てから）。
       render: json
   - type: checkboxes
     id: check
