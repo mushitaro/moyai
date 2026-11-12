@@ -288,6 +288,15 @@ export function intakeFacilityNameOk(s: string): boolean {
 }
 const FACILITY_NAME_MESSAGE = `facilityName は 1〜${INTAKE_FACILITY_NAME_MAX} 字（前後の空白と制御の文字は使えない）`;
 
+/** 加工したファイルの出どころ（#47）：元の資料の名前と、どのルールで作ったか（人の言葉の 1 文）。資料の詳細に 1 行で出すだけ（行の値は書かない） */
+export const derivedFromSchema = z
+  .object({
+    files: z.array(z.string().min(1).max(255)).min(1).max(20),
+    how: z.string().min(1).max(200),
+  })
+  .strict();
+export type DerivedFrom = z.infer<typeof derivedFromSchema>;
+
 const intakeAddFilesInput = z
   .object({
     source: z.enum(INTAKE_SOURCES),
@@ -304,8 +313,11 @@ const intakeAddFilesInput = z
     match: z.string().min(1).max(100).optional(),
     /** folder：入れずに、直下の資料の名前だけを left に返す（見渡す） */
     list: z.boolean().optional(),
+    /** folder：会話で加工したファイルを入れるとき、元の資料の名前と作り方（#47。資料の詳細の「出どころ」に 1 行で出す） */
+    derivedFrom: derivedFromSchema.optional(),
   })
   .superRefine((a, ctx) => {
+    if (a.source !== "folder" && a.derivedFrom !== undefined) ctx.addIssue({ code: "custom", path: ["derivedFrom"], message: "derivedFrom は folder だけ" });
     if (a.source !== "folder" && (a.match !== undefined || a.list !== undefined)) ctx.addIssue({ code: "custom", path: ["match"], message: "match と list は folder だけ" });
     if (a.source === "folder" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "folder には path が要る" });
     if (a.source === "template" && a.path === undefined) ctx.addIssue({ code: "custom", path: ["path"], message: "template には path（様式の .xlsx）が要る" });
@@ -325,6 +337,8 @@ export const intakeAddFilesToTabSchema = z
     files: z
       .array(z.object({ fileId: z.string().regex(/^[A-Za-z0-9_-]{22}$/), name: fileName, size: z.number().int().min(0).max(INTAKE_ADD_MAX_BYTES) }))
       .max(INTAKE_ADD_MAX_FILES),
+    /** 加工したファイルの出どころ（#47。AI が添えたときだけ） */
+    derivedFrom: derivedFromSchema.optional(),
   })
   .superRefine((a, ctx) => {
     if (a.source === "folder" && a.facilityName !== null && !intakeFacilityNameOk(a.facilityName))
@@ -928,7 +942,7 @@ export const TOOLS = {
     "chart_propose",
     "propose",
     "星取表の変更の案を置く",
-    "ルールで、星取表に周期の案を置く（足すだけ。今ある星取は消さない）。ルールの set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実績からその年数ごとに、計画のいちばん遅い年度まで計画の星取（○）を置く。計画の星取がもうある年度は飛ばす。実績が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（Skillパックの基準。check_results の照査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置ける（Claude の判断では置かない。bases の record・pack・rule は実績の根拠にならない。同じ機器の同じ年度にほかの作業の実績があれば、MOYAI が参考の行として添える）。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。facilityName：施設の名前の案（利用者が会話で頼んだときだけ。確定のシートで人が受けて署名した版から効く。今と同じ名前なら案を消す。架空の施設は【架空】を外せない）。",
+    "ルールで、星取表に周期の案を置く（足すだけ。今ある星取は消さない）。ルールの set は { field: \"work.trigger\", value: 年数（1〜30） } で、当たった作業ごとに、最後の実績からその年数ごとに、計画のいちばん遅い年度まで計画の星取（○）を置く。計画の星取がもうある年度は飛ばす。実績が無い作業と、終わりの年度が足りない作業は置かずに数えて返す。basis には根拠を人の言葉の 1 文で書く（数と費用は書かない。台帳・実績・基準・ルールの数は MOYAI が照らして根拠の行に書く）。台帳を根拠にするときは ledger に、peer_reference（place: ledger）が返した ledgerVersion と、その集計の commonItem・work を添える（橋渡しが、今の台帳の版と同じか、この会話で読んだ集計で類似施設が 5 以上〔中央値が出る〕かを照らし、合わなければ案を置かない。作業画面は、その項目と作業分類の作業にだけ、年数が四分位の中のときだけ置く）。台帳を根拠にしない案（利用者が会話で言った周期なら author: ai_relayed_human）は、出どころを会話にして置く。ほかの根拠は bases で指すだけにする（中身は MOYAI が引き、照らしたものだけ出どころに足す。数を basis に書かない）：record: true（自施設の実績の間隔。当たった作業の実績から数える）、pack: { checkId }（Skillパックの基準。check_results の照査の ID。無ければ案を置かない）、rule: { name, ruleId }（計画ルール。作業画面が当てているルール。無ければ案を置かない）。basedOnVersion は intake_survey（part: crosswalk）の version。案は人が HOSHITORI の確定のシートで受けて署名するまで決まらない。星取の案（stars）：利用者がチャットで言った作業 × 年度の星取（計画 ○・実績 ●）を、追加（op: add）・削除（op: remove）・計画の移動（op: move。延期・前倒し。fromFiscalYear の計画の星取を fiscalYear へ）で置く。1 回の呼び出しの同じ作業の同じ種類は 1 つの案（確定のシートの 1 行）になるので、1 つの頼みは 1 回で置く。作業は chart_rows（rowRef に機器の行の id）が返す作業の行の id（w:…）で指し、value は plan か actual、年度は計画の範囲（星取表の最初と最後の年度）の中だけ。範囲の外・無い作業・無い星取の削除は、どれも置かずに誤りで返す。同じ星取がもうある追加は置かない。実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置ける（Claude の判断では置かない。bases の record・pack・rule は実績の根拠にならない。同じ機器の同じ年度にほかの作業の実績があれば、MOYAI が参考の行として添える）。基準日の年度より後の実績は置けない。実績の削除は利用者の言葉（author: ai_relayed_human）だけ。stars に ledger は使えない。rules と stars は片方だけでもよい。facilityName：施設の名前の案（利用者が会話で頼んだときだけ。確定のシートで人が受けて署名した版から効く。今と同じ名前なら案を消す。架空の施設は【架空】を外せない）。trialReasons：利用者が星取表で自分で動かした未来の ○（人の試し）の理由を、会話で聞いたときだけ、その理由の字を置く（rowRef・fromFiscalYear・fiscalYear で試しを指す。星取は動かさず、確定もしない。試しを作る・動かす・取り消す道は無い。当たる試しが無ければ placed: false）。",
     z.object({
       rules: z.array(ruleSchema).max(50).default([]),
       basedOnVersion: z.number().int().min(0),
@@ -983,6 +997,23 @@ export const TOOLS = {
         )
         .max(50)
         .optional(),
+      /**
+       * 人の試しの理由（#29）：人が星取表で動かした未来の ○（作業の行の id・元の年度・先の年度）に、利用者が会話で言った理由の字だけを置く。
+       * 星取は動かさない・確定しない。当たる人の試しが無ければ置かない
+       */
+      trialReasons: z
+        .array(
+          z
+            .object({
+              rowRef: z.string().regex(/^w:.{1,190}$/),
+              fromFiscalYear: z.number().int().min(1900).max(2200),
+              fiscalYear: z.number().int().min(1900).max(2200),
+              reason: z.string().min(1).max(300),
+            })
+            .strict(),
+        )
+        .max(20)
+        .optional(),
     }),
     z.object({
       /** 置いた計画の星取の数 */
@@ -996,6 +1027,8 @@ export const TOOLS = {
         .array(z.object({ id: z.string(), index: z.number().int(), op: z.enum(["add", "remove", "move"]), placed: z.boolean(), details: z.number().int(), bases: z.array(z.string()).optional() }))
         .max(50)
         .optional(),
+      /** 人の試しの理由ごと（引数の順）：置いたか（当たる人の試しが無ければ false） */
+      trialReasons: z.array(z.object({ index: z.number().int(), placed: z.boolean() })).max(20).optional(),
       version: z.number().int(),
       /** 施設の名前の案：置いた（proposed）か、今と同じなので案を消した（same）か（facilityName を渡したときだけ） */
       facilityName: z.enum(["proposed", "same"]).optional(),

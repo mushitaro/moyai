@@ -35,6 +35,7 @@ import { Switch } from "../components/Switch";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { setCrosswalkBase } from "../state/crosswalk";
 import { workKeeper } from "../state/work";
+import { setAcceptHistory } from "../state/history";
 import type { Decision } from "../../import/questions";
 import { CONFIRMED_SHEETS, STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -215,6 +216,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 版の履歴で人が確定した星取の削除：資料から計画を作り直しても外したままにする（下の版を開く処理より先に置く。Architect の 70）
   useEffect(() => {
     if (st?.latest) setRemovedInHistory(st.latest.plan.planId, st.latest.version, st.accepted ?? []);
+    // 判断の履歴（星の詳細に並べる。#29）
+    if (st?.latest) setAcceptHistory(st.latest.plan.planId, st.accepted ?? []);
   }, [st]);
   useEffect(() => {
     if (!pendingOpen || !st || !openKey || !openId) return;
@@ -865,6 +868,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             {/* 詳しくは、星取表・検査のシートがここへ描く。見ていないあいだも場所は残す。何も選んでいなければ 1 行 */}
             {sideSource && (
               <div style={{ display: sideNow === "source" ? undefined : "none" }}>
+                {/* 加工したファイルの出どころ（#47。Claude が intake_add_files の derivedFrom で添えた。1 行だけ） */}
+                {shownFile && ws.derivedOf(shownFile) && (
+                  <dl className="moyai-derived" data-testid="source-derived">
+                    <dt>{T.derived.label}</dt>
+                    <dd>{T.derived.line(ws.derivedOf(shownFile)!.files, ws.derivedOf(shownFile)!.how)}</dd>
+                  </dl>
+                )}
                 {/* 止まった知らせ・読込不可の資料を押したあいだは、その記録だけ（シートが描いた詳細は隠して残す） */}
                 {sideNote}
                 <div ref={setSourceEl} className="moyai-side-detail" style={sideNote ? { display: "none" } : undefined} />

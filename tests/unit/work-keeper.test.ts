@@ -56,6 +56,7 @@ function fakes(names: string[] = ["日報.xlsx", "台帳.xlsx"]) {
     },
     subscribe: (fn) => (listeners.add(fn), () => listeners.delete(fn)),
     pinPlanId: () => {},
+    derivedOf: () => null,
     key: FICTIONAL_1.planId,
     facilityKey() {
       return this.key;

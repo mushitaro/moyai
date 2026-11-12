@@ -5,6 +5,7 @@
 // 画面が同期で読む所（質問の一覧・数・要約）は、受け手から返った最新の写し（view）を読み、写しが変わったら知らせる。
 // worker の無い所（vitest の node）では、受け手を同じスレッドに置き、今までと同じ同期の形（analysis・settle・survey など）でも読める。
 // React を持たない純粋な TS にして、試験（vitest）から工場の資料で動かせるようにする。
+import type { DerivedFrom } from "../../shared/tools";
 import type { Analysis, IntakeOptions, Survey } from "../../import";
 import { PhotoBook, photoMimeOf, type PhotoCellRead, type PhotoInput, type ReviewOutcome, type PlaceOutcome } from "../../import/photo";
 import { CellIndex, type SheetGrid } from "../../import/grid";
@@ -431,6 +432,21 @@ export class IntakeWorkspace {
   }
 
   /** AI がデモで入れた資料に印を付ける（取り込みが受けた名前だけ） */
+  /** 加工したファイルの出どころ（#47。資料の名前 → 元の資料と作り方）。資料の詳細に 1 行で出す */
+  private readonly derived = new Map<string, DerivedFrom>();
+  markDerived(names: Iterable<string>, d: DerivedFrom): void {
+    let any = false;
+    for (const n of names)
+      if (this.inputs.includes(n)) {
+        this.derived.set(n, { files: [...d.files], how: d.how });
+        any = true;
+      }
+    if (any) this.emit();
+  }
+  derivedOf(name: string): DerivedFrom | null {
+    return this.derived.get(name) ?? null;
+  }
+
   markDemoFiles(names: Iterable<string>): void {
     for (const n of names) if (this.inputs.includes(n)) this.demoInputs.add(n);
   }
@@ -697,8 +713,9 @@ export class IntakeWorkspace {
     this.opts = opts;
     this.inputs = r.accepted;
     this.filesVersion++;
-    // 版から戻した資料は利用者の資料（デモで入れた印は消す）
+    // 版から戻した資料は利用者の資料（デモで入れた印は消す）。出どころも、作業中から戻すとき（restoreWork）だけ付け直す
     this.demoInputs.clear();
+    this.derived.clear();
     this.tooLarge = [];
     // 決定は版の記録のものに置き換わった（答えた時刻は版の記録に無いので、分からないものとして持たない）
     this.answered.clear();
@@ -714,10 +731,18 @@ export class IntakeWorkspace {
   /**
    * 施設の作業中（#82）を戻す：資料と決定を置き換え、デモで入れた資料の印を付け直す。もとにした版が無ければ「第 n 版の資料」とは出さない
    */
-  async restoreWork(base: number | null, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[], demo: readonly string[], hasPlan = true): Promise<void> {
+  async restoreWork(
+    base: number | null,
+    files: readonly { name: string; bytes: Uint8Array }[],
+    decisions: readonly Decision[],
+    demo: readonly string[],
+    hasPlan = true,
+    derived: readonly { name: string; derivedFrom: DerivedFrom }[] = [],
+  ): Promise<void> {
     await this.restoreVersion(base ?? 0, files, decisions);
     if (base === null) this.restoredFrom = null;
     this.markDemoFiles(demo);
+    for (const d of derived) this.markDerived([d.name], d.derivedFrom);
     // 計画をまだ作っていない作業中なら、作ったことにしない（「作る」を出す）
     if (!hasPlan) this.composedAt = null;
     this.changed(false, false);

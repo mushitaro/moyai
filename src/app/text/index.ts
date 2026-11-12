@@ -238,6 +238,11 @@ export const TEXT = {
       sameWork: (n: number) => `資料 ${n} つが同じ整備を指す`,
       /** 人の試し（星取表で人が動かした ○。時間の地図 2）の出どころと、理由の欄（入力欄は置かない） */
       trial: "人の試し　理由 未記入",
+      // 判断の履歴（#29）：確定のシートで人が受けた決定の理由（保管先の版の記録・今の作業）
+      history: "判断の履歴",
+      historyPast: (v: number, reason: string) => `第 ${v} 版　${reason}`,
+      historyNow: (reason: string) => `今の作業　${reason}`,
+      trialRelayed: (reason: string) => `人の試し　理由 ${reason}（会話から写した）`,
       /** 周期の根拠の出どころ（資料ではない出どころの、画面の言葉） */
       basisOf: { record: "周期の根拠　自施設の実績", pack: "周期の根拠　Skillパックの基準", ledger: "周期の根拠　公開台帳", rule: "周期の根拠　計画ルール", conversation: "周期の根拠　Claude との会話" } as Record<string, string>,
       /** 星取の案の詳しく（docs/screens.md 3.2）：xs「計画の追加（未確定）」、題「2028 年度　分解整備」、出どころ・理由、「| 確定のシートで見る」 */
@@ -463,6 +468,8 @@ export const TEXT = {
             : `編集者 ${mine ? "あなた" : who}`,
     /** 承認・差し戻しの結果の 1 文。承認は版の呼び名（name：「令和 8 年度版（第 1 版）」）で、差し戻しは版にならないので「第 n 版」のまま（docs/screens.md §3.4 の末尾） */
     signed: (role: "approve" | "return", n: number, name: string) => (role === "approve" ? `${name}を承認しました。` : `第 ${n} 版を差戻しました。`),
+    // 加工したファイルの出どころ（#47）
+    derived: { label: "出どころ", line: (files: readonly string[], how: string) => `${files.join("・")}　${how}（会話から写した）` },
     workFailed: (what: string) => `作業中を開けませんでした（保管先の${what}が読めません）。`,
     openFailed: (what: string) => `リンクの版を開けませんでした。保存先の版と、リンクの${what}が合いません。`,
     openWhat: { missing: "計画", version: "版の番号", hash: "ハッシュ", broken: "署名と鎖", work: "作業中", workSource: "作業中の資料" } as Record<string, string>,
@@ -582,6 +589,7 @@ export const TEXT = {
       skillsRead: "AI が今効いている Skill の本文を読みました",
       sharePreviewRead: "AI が共有ファイルの形と数を読みました（署名して送るのは HOSHITORI の共有のシートの主ボタン）",
       cyclesProposed: (n: number, marks: number) => `AI が周期の案を ${n} 置きました（計画の星取 ${marks}。確定のシートで確定するまで未確定）`,
+      trialReasonsPlaced: (n: number) => `AI が人の試しに、会話から写した理由を ${n} 置きました`,
       starsProposed: (n: number) => `AI が星取の案を ${n} 置きました（確定のシートで確定するまで未確定）`,
       nameProposed: "AI が施設の名前の案を置きました（確定のシートで確定するまで未確定）",
       screenSet: (changed: number, refused: number) =>

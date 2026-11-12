@@ -1394,3 +1394,22 @@ div.moyai-template-choice {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* 加工したファイルの出どころ（#47）：横の板の上に 1 行。名前は text-3、中身はふつうの字 */
+.moyai-derived {
+  display: flex;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 22px;
+}
+.moyai-derived dt {
+  flex: none;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.moyai-derived dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
