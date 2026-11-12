@@ -16,7 +16,8 @@
     "e2e": "playwright test",
     "check-publish": "node scripts/check-publish.mjs",
     "acceptance": "node scripts/acceptance.mjs",
-    "demo-ring": "node scripts/demo-ring/build.mjs"
+    "demo-ring": "node scripts/demo-ring/build.mjs",
+    "scenario:b2": "vitest run tests/unit/scenario-b2-intake.test.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "5.3.0",

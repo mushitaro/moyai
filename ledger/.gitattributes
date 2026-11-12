@@ -1,6 +1,0 @@
-# 既定は LF。Windows の autocrlf で台帳の決まりや束のバイト列が変わると、署名とハッシュが ✗ になる。
-* text=auto eol=lf
-
-# 署名したバイト列をそのまま持つもの（改行の変換をしない）
-ledger/ledger.json -text
-ledger/bundles/** -text

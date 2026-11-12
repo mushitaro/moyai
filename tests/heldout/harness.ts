@@ -216,6 +216,9 @@ export function answer(q: QuestionState, ix: Index): string | null {
       if (q.options.some((o) => o.id === "title")) return q.items.every((it) => it.cells.some((c) => (ix.eventAt(it.file, it.sheet, c)?.equipment_ids.length ?? 0) > 0)) ? "title" : "exclude";
       // 号炉・機器・作業の区切りの無いセルの問い（選べるのは「外す」だけ）：人もそれを選ぶしかない
       if (q.options.length === 1 && q.options[0]?.id === "exclude") return "exclude";
+      // まとめた工事の行（作業の欄が一式だけ）の「作業にせず記録に残すか」：正解でその行に作業が無ければ外す（あれば 1 件ずつ選ぶ）
+      if (!q.options.some((o) => o.id === "yes") && q.options.some((o) => o.id === "exclude") && q.options.some((o) => o.id === "split"))
+        return q.items.every((it) => !ix.eventAt(it.file, it.sheet, it.cells[0] ?? "")) ? "exclude" : "split";
       const ok = q.items.every((it) => {
         const ids = eqIdsAt(it);
         const e = eqOfKey(targetEnt(it));
@@ -735,6 +738,11 @@ export interface RunOptions {
    * ⑥ の作業の場所は、実績として書いてある印と行だけ。読みすぎは、正解の印・行に 1 つも結ばない明細を数える（作業の名前のセルを読みすぎに数えない）
    */
   asWritten?: boolean;
+  /**
+   * 読んでいない写真を、人が「読まずに外す」を押したものとして外してから答える（pack-bench だけ）。写真を読んだことにはしない：
+   * 写真の行は計画に入らず、⑥ の分母にはそのまま残る。読み手が写真なしで計画を作れるかを見る
+   */
+  excludeUnreadPhotos?: boolean;
   /** Skillパック（既定 waste-incineration）。空の文字は「パックなし」（pack-bench の初めて読む測りだけ） */
   packId?: string;
 }
@@ -752,6 +760,7 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
   // 資料の道は資料の置き場所からの相対。ドライブの違う置き場所（Windows の一時のフォルダと作業場所）は相対にできないので、絶対の道のまま
   const bytes = (f: string) => new Uint8Array(readFileSync(isAbsolute(f) ? f : join(set.filesDir ?? join(set.dir, "files"), f)));
   const rejected = await s.add(read.map((n) => ({ name: n, bytes: bytes(n) })));
+  if (opt.excludeUnreadPhotos) for (const e of s.photos.unread()) s.photos.exclude(e.input.name, "2000-01-01T00:00:00.000Z");
   const before = s.analyze();
   const unresolvedBefore = [...before.composition.status.values()].filter((x) => x.s === "unresolved").length;
   const script = runScript(s, (an) => new Index(truth, world, an.sources), { acceptDefaults: opt.acceptDefaults, deferWholeFile: opt.deferWholeFile });

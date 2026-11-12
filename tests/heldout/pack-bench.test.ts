@@ -113,7 +113,7 @@ function rowOf(n: string, v: ReturnType<typeof loadV2Facility>, t0: number, got:
   };
 }
 
-const RUN = { acceptDefaults: true, deferWholeFile: true, asWritten: true } as const;
+const RUN = { acceptDefaults: true, deferWholeFile: true, asWritten: true, excludeUnreadPhotos: true } as const;
 
 /** 今の Skillパックで、施設の資料をすべて読む */
 async function measure(n: string, v: ReturnType<typeof loadV2Facility>, readings: LoadedReading[]): Promise<BenchRow> {
@@ -259,6 +259,7 @@ describe("Skillパックの物差し", () => {
       `測った読み手：${reader.commit.slice(0, 7)}（src ${reader.src.slice(0, 7)}・packs ${reader.packs.slice(0, 7)}${reader.dirty ? "、commit していない変更あり" : ""}）。測った日時：${measuredAt}（UTC）。${only.length ? `施設を絞った（${only.join("・")}）。` : ""}`,
       candidate ? `ルールの案を当てた：「${candidate.name}」（${candidate.rules} 件・SHA-256 ${candidate.sha256.slice(0, 16)}…）。Skillパックに入れる前の試しで、この値は案の値。` : "会話で作った読み方（3 段目）は当てていない。",
       "質問には、正解だけを見る台本が人の代わりに答えた。台本が正解から答えられない問いは、既定の答えがあればそれを受けた（人が推された答えを押すのと同じ。数は下の注）。AI も API も使っていない。",
+      "写真は読んでいない：読んでいない写真は、人が「読まずに外す」を押したものとして外した（写真の行は計画に入らず、⑥ の分母には残る）。",
       "",
       `合計：計画を作れた ${total.planMade}/${total.facilities} 施設・⑤ 質問 ${total.asked}（開いたまま ${total.open}）・② 未解決 ${total.unresolvedAfter}・③ ${pct(total.accuracy)}・⑥ ${pct(total.recovery)}・工数 ${pct(total.manDays)}・日数 ${pct(total.days)}${total.errors ? `・測れなかった ${total.errors}` : ""}`,
       "",

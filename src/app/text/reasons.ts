@@ -62,7 +62,7 @@ const EXACT: Record<string, string> = {
   "ledger.kind": "台帳のルールの形でない",
   ledger: "台帳のルール（ledger.json）が ✓ でないので確かめられない",
   "ledger.exists": "同じ共有ファイルが台帳にもうある",
-  // 公開台帳の取り下げの印（ledger/ledger/bundles/<鍵ID>/retired.json。Architect の 72）
+  // 公開台帳の取り下げの印（<台帳の根>/ledger/bundles/<鍵ID>/retired.json。Architect の 72）
   "ledger.keyRetired": "取り下げ済みの鍵（集計対象外）",
   "ledger.retiredExists": "この鍵の失効記録が台帳にもうある",
   "file.notRetired": "失効記録の形でない",
