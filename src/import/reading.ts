@@ -52,7 +52,8 @@ export const ReadingRule = z.discriminatedUnion("kind", [
   // 同じ機器の呼び名の並び（2〜20。どれも最後の名前と同じ機器として読む。比べるのは NFKC にそろえた文字なので、全角と半角だけの違いは書かなくてよい）
   z.object({ ...base, kind: z.literal("sameAsset"), names: z.array(z.string().min(1).max(80)).min(2).max(20) }).strict(),
   z.object({ ...base, kind: z.literal("markMeaning"), symbol: z.string().min(1).max(8), planOrActual: z.enum(["plan", "actual"]), meaning: z.string().max(40).optional() }).strict(),
-  z.object({ ...base, kind: z.literal("answer"), question: z.string().min(1).max(40), match: z.string().min(1).max(120), answer: z.string().min(1).max(60) }).strict(),
+  // choices：その答えを選んだときの問いの選択肢の文（順のまま）。あれば、選択肢が同じ問いにだけ、年度と数えも伏せて当たる（reading.ts の answerMatchesWide。mushitaro/moyai#67）
+  z.object({ ...base, kind: z.literal("answer"), question: z.string().min(1).max(40), match: z.string().min(1).max(120), answer: z.string().min(1).max(60), choices: z.array(z.string().min(1).max(200)).min(1).max(20).optional() }).strict(),
   // 職種の語（作業日報の人数の欄の「築炉工2 鳶工1」）：標準の職種の語（packs/_cues の effort.trades）に足す。業種の語は Skillパックの読み方に置く
   z.object({ ...base, kind: z.literal("effortTrade"), words: z.array(z.string().min(1).max(12)).min(1).max(40) }).strict(),
   // 計画ルール（計画を作るルール。案 C、2026-11-06）：共通の設備項目 × 作業の属性 → 周期（年）。資料の読み方には効かず、
@@ -235,6 +236,46 @@ export function answerMatches(text: string, match: string, shaped: () => string 
     countMemo.set(match, m);
   }
   return m !== "" && shaped().includes(m);
+}
+
+/**
+ * 選択肢の同じ問いに当てるときの形：年度・日付と、くり返しの数（行・問・か所）を「#」に伏せる。
+ * 中身の数（名前の何通り・作業の何件）は伏せない（まとめた問いの中身が変わると、答え〔まとめて当てるか、1 件ずつか〕も変わる）。
+ * 号・No.・番号の数も伏せない（別の機器の問いに同じ答えが当たる）
+ */
+export function wideShape(text: string): string {
+  return text
+    .normalize("NFKC")
+    .replace(/(?:19|20)\d{2}[/.-]\d{1,2}[/.-]\d{1,2}/g, "#")
+    .replace(/\d{1,2}月\d{1,2}日/g, "#")
+    .replace(/(?:令和|平成|[RH])\s?(?:元|\d{1,2})\s?年度/g, "#")
+    .replace(/(?<!\d)(?:19|20)\d{2}(?!\d)(?:\s?年度)?/g, "#")
+    .replace(/\d[\d,]*\s?(?:行|問|か所)/g, "#");
+}
+
+/** 規則の choices と、問いの選択肢の文が同じか（数も順も同じ。NFKC にそろえて比べる） */
+export function sameChoices(choices: readonly string[] | undefined, options: readonly { label: string }[]): boolean {
+  return !!choices && choices.length === options.length && choices.every((c, i) => c.normalize("NFKC") === options[i]!.label.normalize("NFKC"));
+}
+
+/**
+ * 選択肢が 1 年目と同じ問いには、年度と数えも伏せて当てる（1 年目に人が見て答えた問いと、同じ選び方の同じ問い。mushitaro/moyai#67）。
+ * 年度ごとに正解の変わる問いは、選択肢（当たる星取の作業の名前など）が変わるので当たらない。選択肢を持たない規則は answerMatches だけ
+ */
+export function answerMatchesWide(text: string, match: string, wide: () => string = () => wideShape(text), whole = false): boolean {
+  const shape = whole ? (t: string) => contentShape(wideShape(t)) : wideShape;
+  const m = shape(match);
+  return m !== "" && (whole ? contentShape(wide()) : wide()).includes(m);
+}
+
+/** 中身の数（何件・何通り）も伏せた形。1 件ずつ選ぶ選択肢（split）の無い、まとめた問いだけに使う（答えが、まとめた中身の全部に同じに効く） */
+function contentShape(text: string): string {
+  return text.replace(/\d[\d,]*\s?(?:件|通り)/g, "#");
+}
+
+/** 選択肢に「1 件ずつ聞く」（split）が無いか。あれば、まとめた中身によって答えが変わる（まとめて当てるか、1 件ずつか） */
+export function wholeAnswer(options: readonly { id: string }[]): boolean {
+  return !options.some((o) => o.id === "split");
 }
 
 /** 年月日の書き方で日付を読む（yyyymmdd・yymmdd は数の並び。md は呼ぶ側が年度から年を付ける）。読めなければ null */
