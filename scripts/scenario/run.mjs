@@ -136,7 +136,8 @@ if (part === "e2e") {
 // ---- 版と日時 ----
 const git = (a) => spawnSync("git", a, { encoding: "utf8" }).stdout?.trim() ?? "";
 const commit = git(["rev-parse", "--short=7", "HEAD"]) || "不明";
-const dirty = git(["status", "--porcelain", "--untracked-files=no"]).length > 0;
+// 書き出す表そのもの（eval/scenario/）の違いは数えない（ランナーの出力で、試した中身ではない）
+const dirty = git(["status", "--porcelain", "--untracked-files=no", "--", ".", ":!eval/scenario"]).length > 0;
 const at = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo", dateStyle: "short", timeStyle: "short" }).format(new Date()) + " JST";
 
 // ---- GitHub（読むだけ。トークンがあるときだけ）----
