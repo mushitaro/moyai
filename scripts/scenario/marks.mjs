@@ -96,13 +96,16 @@ export function judgeA3(result, strict) {
     if (v === null || v < A1B.recovery) out.push(`⑥${pct(v)}`);
     if (f.firstRead.ruleWrong === undefined) out.push("答えの間違いを測っていない");
     else if (f.firstRead.ruleWrong !== 0) out.push(`答えの間違い ${f.firstRead.ruleWrong}`);
+    // 残りの年度で、1 年目に見た問い（同じ問いで正しい答えも同じ）を二度聞かない（物差しの (a)。#67）
+    if (f.firstRead.askedAgain === undefined) out.push("1 年目に見た問いを測っていない");
+    else if (f.firstRead.askedAgain !== 0) out.push(`1 年目に見た問い ${f.firstRead.askedAgain}`);
     return out;
   };
   const bad = fs.map((f) => ({ f, w: why(f) })).filter((x) => x.w.length);
   const ev = `下限を満たす施設 ${fs.length - bad.length}/${fs.length}${bad.length ? `（外れ：${bad.slice(0, 5).map((x) => `${x.f.facility} ${x.w.join("・")}`).join("、")}${bad.length > 5 ? ` ほか ${bad.length - 5}` : ""}）` : ""}・記録との比べ：${strict.detail}`;
   if (strict.same === false || bad.length > 0) return r(FAIL, ev);
   if (strict.same === null) return r(UNKNOWN, ev);
-  return r(WAIT, `${ev}・残りの年度の問いの条件は決め直し中（#67）`);
+  return r(PASS, ev);
 }
 
 /** C1 の台本の試験のうち、合格に要るもの（題の頭で名指す。消えれば不合格） */
