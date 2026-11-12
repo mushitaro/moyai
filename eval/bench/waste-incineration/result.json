@@ -4,28 +4,28 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "9532624e2adf6f6749254e7eb4b7bbf2c6a10ea4",
-  "src": "828cafef864df611cd5a35ca53eb5bf82a1e13ad",
+  "commit": "673977702e9cd5cb6015a182fdc1ccc7ab722fda",
+  "src": "376bf43f8099531e3987aa1b7ed3644e5807d6bb",
   "packs": "d162fa4ffe65199c7ebf8f7caf5a273fdae84ce7",
   "dirty": false
  },
- "measuredAt": "2026-11-11T18:54:54.558Z",
+ "measuredAt": "2026-11-12T07:10:50.940Z",
  "total": {
   "facilities": 11,
-  "planMade": 4,
-  "asked": 10743,
-  "open": 92,
-  "unresolvedAfter": 1778,
+  "planMade": 11,
+  "asked": 10646,
+  "open": 0,
+  "unresolvedAfter": 0,
   "accuracy": {
-   "correct": 5523,
-   "total": 7295
+   "correct": 11820,
+   "total": 32421
   },
   "recovery": {
-   "correct": 4949,
+   "correct": 11241,
    "total": 25026
   },
   "manDays": {
-   "correct": 1618,
+   "correct": 1689,
    "total": 13806
   },
   "days": {
@@ -39,7 +39,7 @@
    "facility": "hinatano",
    "name": "ひなた野クリーンプラザ",
    "files": 2,
-   "seconds": 1.9,
+   "seconds": 2.9,
    "asked": 15,
    "answered": 15,
    "open": 0,
@@ -91,136 +91,37 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 8.2,
-   "asked": 1986,
-   "answered": 1975,
-   "open": 11,
-   "openKinds": {
-    "eventAssetOne": 11
-   },
+   "seconds": 13.2,
+   "asked": 1968,
+   "answered": 1968,
+   "open": 0,
+   "openKinds": {},
    "defaulted": {
     "costKind": 1,
     "costTax": 1
    },
-   "unresolvedBy": {
-    "eventAssetOne": 77
-   },
-   "openSamples": [
-    {
-     "kind": "eventAssetOne",
-     "rows": 1,
-     "text": "【架空】ほしの丘RC_作業実績_2022.csv・【架空】ほしの丘RC_作業実績_2023.csv ほか 2 冊 の機器「1号炉定期補修工事」（1 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
-     "options": [
-      "c0=0.炉全体・施設全体",
-      "c1=炉全体",
-      "c2=炉全体・1 号",
-      "c3=共通設備",
-      "c4=施設全体",
-      "c5=１．受入・供給設備",
-      "c6=トラックスケール",
-      "c7=ゴミクレーン",
-      "c8=ゴミクレーン・1 号",
-      "c9=巻上装置",
-      "c10=走行装置",
-      "c11=横行装置",
-      "c12=バケット",
-      "c13=巻上装置",
-      "c14=走行装置",
-      "c15=横行装置",
-      "c16=バケット",
-      "c17=投入ホッパ",
-      "c18=2．燃焼設備",
-      "c19=キルン",
-      "c20=キルン・1 号",
-      "c21=シール装置",
-      "c22=駆動装置",
-      "c23=シール装置",
-      "c24=駆動装置",
-      "c25=旋回溶融炉",
-      "c26=旋回溶融炉・1 号",
-      "c27=耐火物",
-      "c28=耐火物",
-      "c29=３．燃焼ガス冷却設備",
-      "c30=廃熱ボイラ",
-      "c31=過熱器",
-      "c32=蒸発管",
-      "c33=節炭器",
-      "c34=安全弁",
-      "c35=過熱器",
-      "c36=蒸発管",
-      "c37=節炭器",
-      "c38=安全弁",
-      "c39=ボイラー給水ポンプ",
-      "exclude=外す"
-     ],
-     "defaultAnswer": null
-    },
-    {
-     "kind": "eventAssetOne",
-     "rows": 1,
-     "text": "【架空】ほしの丘RC_作業実績_2022.csv・【架空】ほしの丘RC_作業実績_2023.csv ほか 2 冊 の機器「2号炉定期補修工事」（2 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
-     "options": [
-      "c0=0.炉全体・施設全体",
-      "c1=炉全体",
-      "c2=炉全体・2 号",
-      "c3=共通設備",
-      "c4=施設全体",
-      "c5=１．受入・供給設備",
-      "c6=トラックスケール",
-      "c7=ゴミクレーン",
-      "c8=巻上装置",
-      "c9=走行装置",
-      "c10=横行装置",
-      "c11=バケット",
-      "c12=巻上装置",
-      "c13=走行装置",
-      "c14=横行装置",
-      "c15=バケット",
-      "c16=投入ホッパ",
-      "c17=2．燃焼設備",
-      "c18=キルン",
-      "c19=シール装置",
-      "c20=駆動装置",
-      "c21=キルン・2 号",
-      "c22=シール装置",
-      "c23=駆動装置",
-      "c24=旋回溶融炉",
-      "c25=耐火物",
-      "c26=旋回溶融炉・2 号",
-      "c27=耐火物",
-      "c28=３．燃焼ガス冷却設備",
-      "c29=廃熱ボイラ",
-      "c30=過熱器",
-      "c31=蒸発管",
-      "c32=節炭器",
-      "c33=安全弁",
-      "c34=過熱器",
-      "c35=蒸発管",
-      "c36=節炭器",
-      "c37=安全弁",
-      "c38=ボイラー給水ポンプ",
-      "c39=1号機",
-      "exclude=外す"
-     ],
-     "defaultAnswer": null
-    }
-   ],
+   "unresolvedBy": {},
+   "openSamples": [],
    "unresolvedBefore": 24972,
-   "unresolvedAfter": 77,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 77",
-    "答えの無い質問 11"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 104,
+    "works": 126,
+    "details": 1533
+   },
+   "accuracy": {
+    "correct": 620,
+    "total": 4317
+   },
+   "extra": 0,
    "recovery": {
-    "correct": 0,
+    "correct": 591,
     "total": 2808
    },
    "manDays": {
-    "correct": 0,
+    "correct": 14,
     "total": 2275
    },
    "days": {
@@ -239,7 +140,7 @@
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 17.8,
+   "seconds": 22.7,
    "asked": 6,
    "answered": 6,
    "open": 0,
@@ -286,56 +187,35 @@
    "facility": "kaedehara",
    "name": "かえで原清掃工場",
    "files": 2,
-   "seconds": 0.5,
-   "asked": 9,
-   "answered": 7,
-   "open": 2,
-   "openKinds": {
-    "assetLinkOne": 2
-   },
+   "seconds": 0.9,
+   "asked": 8,
+   "answered": 8,
+   "open": 0,
+   "openKinds": {},
    "defaulted": {
     "costKind": 1,
     "yearUnknown": 1,
-    "assetLink": 1,
+    "assetLink": 2,
     "costTax": 1
    },
-   "unresolvedBy": {
-    "assetLinkOne": 16
-   },
-   "openSamples": [
-    {
-     "kind": "assetLinkOne",
-     "rows": 1,
-     "text": "「排水処理設備」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
-     "options": [
-      "c0=排水処理設備：8・【架空】かえで原_機器台帳.xlsx 機器台帳 B62",
-      "none=どれとも違う（別の機器）"
-     ],
-     "defaultAnswer": null
-    },
-    {
-     "kind": "assetLinkOne",
-     "rows": 1,
-     "text": "「排水処理設備」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
-     "options": [
-      "c0=排水処理設備：8・【架空】かえで原_機器台帳.xlsx 機器台帳 B62",
-      "none=どれとも違う（別の機器）"
-     ],
-     "defaultAnswer": null
-    }
-   ],
+   "unresolvedBy": {},
+   "openSamples": [],
    "unresolvedBefore": 441,
-   "unresolvedAfter": 16,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 16",
-    "答えの無い質問 2"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 234,
+    "works": 121,
+    "details": 991
+   },
+   "accuracy": {
+    "correct": 831,
+    "total": 917
+   },
+   "extra": 0,
    "recovery": {
-    "correct": 0,
+    "correct": 825,
     "total": 825
    },
    "manDays": {
@@ -405,56 +285,35 @@
    "facility": "momijidai",
    "name": "もみじ台清掃センター",
    "files": 2,
-   "seconds": 0.5,
-   "asked": 37,
-   "answered": 25,
-   "open": 12,
-   "openKinds": {
-    "assetLinkOne": 12
-   },
+   "seconds": 1,
+   "asked": 26,
+   "answered": 26,
+   "open": 0,
+   "openKinds": {},
    "defaulted": {
     "costKind": 2,
     "yearUnknown": 1,
-    "assetLink": 3,
+    "assetLink": 4,
     "costTax": 2
    },
-   "unresolvedBy": {
-    "assetLinkOne": 458
-   },
-   "openSamples": [
-    {
-     "kind": "assetLinkOne",
-     "rows": 1,
-     "text": "「巻上装置」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
-     "options": [
-      "c0=巻上装置：1-2-1・【架空】もみじ台SC_機器台帳_号炉別.xlsx 機器台帳 B8",
-      "none=どれとも違う（別の機器）"
-     ],
-     "defaultAnswer": null
-    },
-    {
-     "kind": "assetLinkOne",
-     "rows": 1,
-     "text": "「走行装置」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
-     "options": [
-      "c0=走行装置：1-2-2・【架空】もみじ台SC_機器台帳_号炉別.xlsx 機器台帳 B9",
-      "none=どれとも違う（別の機器）"
-     ],
-     "defaultAnswer": null
-    }
-   ],
+   "unresolvedBy": {},
+   "openSamples": [],
    "unresolvedBefore": 2357,
-   "unresolvedAfter": 458,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 458",
-    "答えの無い質問 12"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 271,
+    "works": 146,
+    "details": 1286
+   },
+   "accuracy": {
+    "correct": 594,
+    "total": 1199
+   },
+   "extra": 47,
    "recovery": {
-    "correct": 0,
+    "correct": 1199,
     "total": 1199
    },
    "manDays": {
@@ -476,7 +335,7 @@
    "facility": "nagarebashi",
    "name": "ながれ橋清掃工場",
    "files": 2,
-   "seconds": 1.5,
+   "seconds": 1.9,
    "asked": 9,
    "answered": 9,
    "open": 0,
@@ -526,138 +385,39 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 9.4,
-   "asked": 2518,
-   "answered": 2503,
-   "open": 15,
-   "openKinds": {
-    "eventAssetOne": 15
-   },
+   "seconds": 16.2,
+   "asked": 2508,
+   "answered": 2508,
+   "open": 0,
+   "openKinds": {},
    "defaulted": {
     "costKind": 1,
     "yearUnknown": 1,
     "assetLink": 1,
     "costTax": 1
    },
-   "unresolvedBy": {
-    "eventAssetOne": 105
-   },
-   "openSamples": [
-    {
-     "kind": "eventAssetOne",
-     "rows": 1,
-     "text": "【架空】さくら坂_作業実績_2021.csv・【架空】さくら坂_作業実績_2022.csv ほか 3 冊 の機器「1号炉定期補修工事」（1 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
-     "options": [
-      "c0=受入・供給設備",
-      "c1=計量機(WS-001～002)",
-      "c2=ごみクレーン",
-      "c3=巻上装置",
-      "c4=走行装置",
-      "c5=横行装置",
-      "c6=バケット",
-      "c7=ごみクレーン制御盤(CRC-001)",
-      "c8=ごみ投入扉",
-      "c9=プラットホーム出入口扉(PD-001～002)",
-      "c10=可燃性粗大ごみ切断機",
-      "c11=脱臭装置",
-      "c12=投入ホッパ",
-      "c13=燃焼設備",
-      "c14=給じん装置(FD-101～201)",
-      "c15=火格子(G-101～201)",
-      "c16=乾燥段",
-      "c17=燃焼段",
-      "c18=後燃焼段",
-      "c19=火格子駆動用油圧装置(HU-001)",
-      "c20=焼却炉本体",
-      "c21=耐火物",
-      "c22=助燃装置",
-      "c23=落じんコンベヤ",
-      "c24=炉内監視カメラ(TV-101～201)",
-      "c25=燃焼ガス冷却設備",
-      "c26=廃熱ボイラ(B-101～201)",
-      "c27=過熱器",
-      "c28=蒸発管",
-      "c29=節炭器",
-      "c30=安全弁",
-      "c31=スートブロワ",
-      "c32=ボイラー給水ポンプ",
-      "c33=脱気器",
-      "c34=脱気器給水ポンプ",
-      "c35=空冷式蒸気復水器(AC-001)",
-      "c36=ファン",
-      "c37=復水ポンプ",
-      "c38=純水装置",
-      "c39=減温塔(T-101～201)",
-      "exclude=外す"
-     ],
-     "defaultAnswer": null
-    },
-    {
-     "kind": "eventAssetOne",
-     "rows": 1,
-     "text": "【架空】さくら坂_作業実績_2021.csv・【架空】さくら坂_作業実績_2022.csv ほか 3 冊 の機器「全休炉時共通設備補修工事」（共通）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
-     "options": [
-      "c0=受入・供給設備",
-      "c1=計量機(WS-001～002)",
-      "c2=ごみクレーン",
-      "c3=巻上装置",
-      "c4=走行装置",
-      "c5=横行装置",
-      "c6=バケット",
-      "c7=ごみクレーン制御盤(CRC-001)",
-      "c8=ごみ投入扉",
-      "c9=プラットホーム出入口扉(PD-001～002)",
-      "c10=可燃性粗大ごみ切断機",
-      "c11=脱臭装置",
-      "c12=投入ホッパ",
-      "c13=燃焼設備",
-      "c14=給じん装置(FD-101～201)",
-      "c15=火格子(G-101～201)",
-      "c16=乾燥段",
-      "c17=燃焼段",
-      "c18=後燃焼段",
-      "c19=火格子駆動用油圧装置(HU-001)",
-      "c20=焼却炉本体",
-      "c21=耐火物",
-      "c22=助燃装置",
-      "c23=落じんコンベヤ",
-      "c24=炉内監視カメラ(TV-101～201)",
-      "c25=燃焼ガス冷却設備",
-      "c26=廃熱ボイラ(B-101～201)",
-      "c27=過熱器",
-      "c28=蒸発管",
-      "c29=節炭器",
-      "c30=安全弁",
-      "c31=スートブロワ",
-      "c32=ボイラー給水ポンプ",
-      "c33=脱気器",
-      "c34=脱気器給水ポンプ",
-      "c35=空冷式蒸気復水器(AC-001)",
-      "c36=ファン",
-      "c37=復水ポンプ",
-      "c38=純水装置",
-      "c39=減温塔(T-101～201)",
-      "exclude=外す"
-     ],
-     "defaultAnswer": null
-    }
-   ],
+   "unresolvedBy": {},
+   "openSamples": [],
    "unresolvedBefore": 32882,
-   "unresolvedAfter": 105,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 105",
-    "答えの無い質問 15"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 320,
+    "works": 181,
+    "details": 1363
+   },
+   "accuracy": {
+    "correct": 1195,
+    "total": 5258
+   },
+   "extra": 0,
    "recovery": {
-    "correct": 0,
+    "correct": 941,
     "total": 3884
    },
    "manDays": {
-    "correct": 0,
+    "correct": 13,
     "total": 2967
    },
    "days": {
@@ -676,7 +436,7 @@
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 16.5,
+   "seconds": 22.7,
    "asked": 3285,
    "answered": 3285,
    "open": 0,
@@ -690,19 +450,24 @@
    "openSamples": [],
    "unresolvedBefore": 27275,
    "unresolvedAfter": 0,
-   "planMade": false,
-   "blockers": [
-    "読んでいない写真 3（【架空】しらかば野CC_日常点検表_ボイラ・タービン_20250602.jpg・【架空】しらかば野CC_日常点検表_ボイラ・タービン_20250908.jpg・【架空】しらかば野CC_日常点検表_ボイラ・タービン_20251117.jpg）"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 233,
+    "works": 169,
+    "details": 1769
+   },
+   "accuracy": {
+    "correct": 738,
+    "total": 5951
+   },
+   "extra": 225,
    "recovery": {
-    "correct": 0,
+    "correct": 991,
     "total": 4336
    },
    "manDays": {
-    "correct": 0,
+    "correct": 7,
     "total": 2847
    },
    "days": {
@@ -725,56 +490,35 @@
    "facility": "tsubasadai",
    "name": "つばさ台環境エネルギーセンター",
    "files": 3,
-   "seconds": 1.1,
-   "asked": 50,
-   "answered": 18,
-   "open": 32,
-   "openKinds": {
-    "assetLinkOne": 32
-   },
+   "seconds": 1.9,
+   "asked": 19,
+   "answered": 19,
+   "open": 0,
+   "openKinds": {},
    "defaulted": {
     "costKind": 1,
     "yearUnknown": 1,
     "costTax": 1,
-    "assetLink": 1
+    "assetLink": 2
    },
-   "unresolvedBy": {
-    "assetLinkOne": 982
-   },
-   "openSamples": [
-    {
-     "kind": "assetLinkOne",
-     "rows": 1,
-     "text": "「巻上装置」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
-     "options": [
-      "c0=巻上装置：1-2-1・【架空】つばさ台EC_機器台帳.xlsx 機器台帳 B8",
-      "none=どれとも違う（別の機器）"
-     ],
-     "defaultAnswer": null
-    },
-    {
-     "kind": "assetLinkOne",
-     "rows": 1,
-     "text": "「走行装置」に当たる機器が先の資料に 1 つある。どれと同じ機器か",
-     "options": [
-      "c0=走行装置：1-2-2・【架空】つばさ台EC_機器台帳.xlsx 機器台帳 B9",
-      "none=どれとも違う（別の機器）"
-     ],
-     "defaultAnswer": null
-    }
-   ],
+   "unresolvedBy": {},
+   "openSamples": [],
    "unresolvedBefore": 2333,
-   "unresolvedAfter": 982,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 982",
-    "答えの無い質問 32"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 214,
+    "works": 131,
+    "details": 1343
+   },
+   "accuracy": {
+    "correct": 491,
+    "total": 1512
+   },
+   "extra": 32,
    "recovery": {
-    "correct": 0,
+    "correct": 1062,
     "total": 1502
    },
    "manDays": {
@@ -798,136 +542,37 @@
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 12.4,
-   "asked": 2818,
-   "answered": 2798,
-   "open": 20,
-   "openKinds": {
-    "eventAssetOne": 20
-   },
+   "seconds": 15.3,
+   "asked": 2792,
+   "answered": 2792,
+   "open": 0,
+   "openKinds": {},
    "defaulted": {
     "costKind": 1,
     "costTax": 1
    },
-   "unresolvedBy": {
-    "eventAssetOne": 140
-   },
-   "openSamples": [
-    {
-     "kind": "eventAssetOne",
-     "rows": 1,
-     "text": "【架空】うみかぜEP_作業実績_2021.csv・【架空】うみかぜEP_作業実績_2022.csv ほか 3 冊 の機器「1号炉定期補修工事」（1 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
-     "options": [
-      "c0=(0) 炉全体・施設全体",
-      "c1=炉全体",
-      "c2=1号炉",
-      "c3=2号炉",
-      "c4=3号炉",
-      "c5=共通設備",
-      "c6=施設全体",
-      "c7=(1) 受入・供給設備",
-      "c8=トラックスケール",
-      "c9=ゴミクレーン",
-      "c10=No.1",
-      "c11=巻上装置",
-      "c12=走行装置",
-      "c13=横行装置",
-      "c14=バケット",
-      "c15=No.2",
-      "c16=巻上装置",
-      "c17=走行装置",
-      "c18=横行装置",
-      "c19=バケット",
-      "c20=ごみクレーン制御盤",
-      "c21=投入扉",
-      "c22=出入口シャッター",
-      "c23=可燃性粗大ごみ切断機",
-      "c24=全休炉時脱臭装置",
-      "c25=投入ホッパ",
-      "c26=1号炉",
-      "c27=2号炉",
-      "c28=3号炉",
-      "c29=(2) 燃焼設備",
-      "c30=給塵装置",
-      "c31=1号炉",
-      "c32=2号炉",
-      "c33=3号炉",
-      "c34=ストーカ",
-      "c35=1号炉",
-      "c36=乾燥段",
-      "c37=燃焼段",
-      "c38=後燃焼段",
-      "c39=2号炉",
-      "exclude=外す"
-     ],
-     "defaultAnswer": null
-    },
-    {
-     "kind": "eventAssetOne",
-     "rows": 1,
-     "text": "【架空】うみかぜEP_作業実績_2021.csv・【架空】うみかぜEP_作業実績_2022.csv ほか 3 冊 の機器「全休炉時共通設備補修工事」（共通）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
-     "options": [
-      "c0=(0) 炉全体・施設全体",
-      "c1=炉全体",
-      "c2=1号炉",
-      "c3=2号炉",
-      "c4=3号炉",
-      "c5=共通設備",
-      "c6=施設全体",
-      "c7=(1) 受入・供給設備",
-      "c8=トラックスケール",
-      "c9=ゴミクレーン",
-      "c10=No.1",
-      "c11=巻上装置",
-      "c12=走行装置",
-      "c13=横行装置",
-      "c14=バケット",
-      "c15=No.2",
-      "c16=巻上装置",
-      "c17=走行装置",
-      "c18=横行装置",
-      "c19=バケット",
-      "c20=ごみクレーン制御盤",
-      "c21=投入扉",
-      "c22=出入口シャッター",
-      "c23=可燃性粗大ごみ切断機",
-      "c24=全休炉時脱臭装置",
-      "c25=投入ホッパ",
-      "c26=1号炉",
-      "c27=2号炉",
-      "c28=3号炉",
-      "c29=(2) 燃焼設備",
-      "c30=給塵装置",
-      "c31=1号炉",
-      "c32=2号炉",
-      "c33=3号炉",
-      "c34=ストーカ",
-      "c35=1号炉",
-      "c36=乾燥段",
-      "c37=燃焼段",
-      "c38=後燃焼段",
-      "c39=2号炉",
-      "exclude=外す"
-     ],
-     "defaultAnswer": null
-    }
-   ],
+   "unresolvedBy": {},
+   "openSamples": [],
    "unresolvedBefore": 35858,
-   "unresolvedAfter": 140,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 140",
-    "答えの無い質問 20"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 253,
+    "works": 242,
+    "details": 1842
+   },
+   "accuracy": {
+    "correct": 1828,
+    "total": 5972
+   },
+   "extra": 0,
    "recovery": {
-    "correct": 0,
+    "correct": 683,
     "total": 3728
    },
    "manDays": {
-    "correct": 0,
+    "correct": 37,
     "total": 3222
    },
    "days": {
