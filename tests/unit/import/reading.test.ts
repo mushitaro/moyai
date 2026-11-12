@@ -139,10 +139,12 @@ describe("規則の種類ごとに、読み手が当てる", () => {
       { name: "台帳.csv", bytes: ledger },
       { name: "日報.csv", bytes: d2 },
     ]);
-    expect(s.analyze().open.some((q) => q.kind === "eventAssetOne" && q.text.includes("ブロワー"))).toBe(true);
+    // 名前の同じ機器が無い名前を聞く問い（1 件ずつの問いか、様式ごとの「新しい機器にするか」の 1 問。見本に名前がある）
+    const asksAbout = (an: ReturnType<typeof s.analyze>) => an.open.some((q) => (q.kind === "eventAssetOne" && q.text.includes("ブロワー")) || (q.kind === "eventAsset" && q.options.some((o) => o.id === "new") && q.items.some((it) => it.note === "ブロワー")));
+    expect(asksAbout(s.analyze())).toBe(true);
     s.setReadings([reading([{ ...base, id: "a", text: "「ブロワー」と「ブロワ」は同じ機器", kind: "sameAsset", names: ["ブロワー", "ブロワ"] }])]);
     const an = s.analyze();
-    expect(an.open.some((q) => q.kind === "eventAssetOne" && q.text.includes("ブロワー"))).toBe(false);
+    expect(asksAbout(an)).toBe(false);
     expect(an.ruleHits.count("a")).toBe(1);
   });
 

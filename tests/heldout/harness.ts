@@ -224,7 +224,8 @@ export function answer(q: QuestionState, ix: Index): string | null {
         const e = eqOfKey(targetEnt(it));
         return !!ids && !!e && ids.includes(e);
       });
-      return ok ? "yes" : "split";
+      // 名前が多いまとめの問いは「1 件ずつ」を置かない（選べるのは「はい」だけ）。正解と合わない名前があっても、選択肢に無い答えは出さない（答えられない問いに数える）
+      return ok ? "yes" : q.options.some((o) => o.id === "split") ? "split" : null;
     }
     case "eventAssetOne": {
       const it = q.items[0];
