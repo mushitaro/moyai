@@ -15,6 +15,7 @@ import { takeRootOffer, useRootOffer } from "../state/screen";
 import { ThemeChoice } from "../components/ThemeChoice";
 import { Switch } from "../components/Switch";
 import { useWorkingPlan } from "../state/plan-store";
+import { ringLabels } from "../state/share-route";
 import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
 
@@ -373,8 +374,9 @@ export function Settings() {
                   </Table.Thead>
                   <Table.Tbody>
                     {s.rings.map((r) => (
-                      <Table.Tr key={r.ringId}>
-                        <Table.Td ff="monospace">{r.ringId}</Table.Td>
+                      <Table.Tr key={r.ringId} data-testid="ring-row">
+                        {/* 共有フォルダは、選んだフォルダの最後の名前で出す（SHARE の共有先と同じ。内部の ID は出さない。#83 の続き） */}
+                        <Table.Td data-testid="ring-name">{ringLabels(s.rings).get(r.ringId)}</Table.Td>
                         <Table.Td>
                           <PathVal value={r.root} />
                           <SyncedNotice synced={r.synced} kind="ring" />

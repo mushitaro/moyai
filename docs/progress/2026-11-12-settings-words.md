@@ -41,3 +41,11 @@
 ## 次の一手
 1. 統括と運営者が、見出しの言葉を絵（Wire Frame の右の板）と写しで確かめる。直す言葉があれば絵から直す。
 2. 共有フォルダの表の 1 列目は、今は内部の ID（ringId）を出している。見出しではなく値の問題なので、この PR では触っていない（別の Issue にするかは統括）。
+
+## 続き：共有フォルダの表の 1 列目（枝 `ring-folder-name`）
+
+- 設定の「他施設との共有フォルダ」の表の 1 列目は、内部の ID（16 字）を出していた。SHARE の共有先と同じ `ringLabels`（選んだフォルダの最後の名前。同じ名前が 2 つなら ID の頭 4 字を括弧で添える）にした。絵（Wire Frame の設定）はもとから名前を描いていたので、コードを絵に合わせた形。行・列は増やしていない。
+- 試験：`checkpoint.spec` で、1 列目が「輪のフォルダ」で、表に 16 字の ID が無いことを確かめる。main のコードではこの試験が落ち、この枝では通る（Linux の Chrome）。
+- 写し：`docs/progress/shots/2026-11-12/ring-name/`（before は main のコード、after はこの枝。同じ試験の台本で撮った）。
+- 試験とビルド：`npm run typecheck`・`npm test`・`npm run check-publish`。e2e は `checkpoint`・`share-preview` が Linux の Chrome で通る。画面で動いた：写しで見た。Claude Code・Windows の実機・Excel：未確認。
+- moyai-ledger の守りの PR：まだ出せていない（この作業役のセッションは moyai-ledger に書き込めない。統括のセッションへの送信も、信頼できる端末の確かめで届かない）。中身と出し方は mushitaro/moyai#20 のコメント。
