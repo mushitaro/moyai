@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { E2E_NAME, acceptDecisions, callTool as call, mcpClient, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, acceptDecisions, sideTab, callTool as call, mcpClient, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 
 let bridge: StartedBridge;
@@ -102,6 +102,30 @@ test("第 1 版と比べて、変わった印を朱で描き、第 2 版に署�
       await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "2");
       await expect(page.getByTestId("legend-changed-from")).toHaveAttribute("data-count", "0");
       await expect(grid.locator(".moyai-mark-vchg")).toHaveCount(0);
+    });
+
+    await test.step("横の板の署名の「版の履歴」：変えた人・理由が新しい順に並び、行を押すとその版を比較版にする（#29、Wire の TimeMap5）", async () => {
+      await sideTab(page, "signatures");
+      const rows = page.getByTestId("history-row");
+      await expect(rows).toHaveCount(2);
+      await expect(rows.nth(0)).toHaveAttribute("data-version", "2");
+      await expect(rows.nth(0).getByTestId("history-reason")).toHaveText("周期の案を入れて第 2 版にする（e2e）");
+      await expect(rows.nth(1).getByTestId("history-reason")).toHaveText("見本の計画を第 1 版にする（e2e）");
+      await expect(rows.nth(0)).toContainText(E2E_NAME);
+      await expect(rows.nth(0)).toContainText("確定");
+      // 既定の比較版（いちばん新しい版）の行が選ばれている
+      await expect(rows.nth(0)).toHaveAttribute("aria-pressed", "true");
+      // 第 1 版の行を押すと、比較版が第 1 版になり、第 1 版から変わった印が朱で出る（選びの欄は無い）
+      await rows.nth(1).click();
+      await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "1");
+      await expect(rows.nth(1)).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByTestId("legend-changed-from")).toContainText("第 1 版から変更");
+      expect(Number(await page.getByTestId("legend-changed-from").getAttribute("data-count"))).toBeGreaterThan(0);
+      await page.screenshot({ path: shot(`version-diff-history-${tag}`) });
+      // 既定の版の行を押すと、既定に戻る
+      await rows.nth(0).click();
+      await expect(page.getByTestId("merge-compare")).toHaveAttribute("data-version", "2");
+      await expect(page.getByTestId("legend-changed-from")).toHaveAttribute("data-count", "0");
     });
 
     await test.step("トップの版の印のメニュー：第 1 版を「開く」と見るだけ（確定できない）", async () => {

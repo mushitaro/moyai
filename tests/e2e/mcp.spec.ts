@@ -164,6 +164,26 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
       await page.screenshot({ path: shot(`mcp-chart-${tag}`) });
     });
 
+    await test.step("答えた問いと現れた星を結ぶ（#29、Wire の TimeMap5）：答えで決まった星を選ぶと、詳細に「決めた問い」と答えと答えた人", async () => {
+      // 答えで作者が決まった明細の星を探す（会話の回答で答えた問いの、どれかの星）。決めた問いの無い星には出さない
+      const marks = page.locator('[role="gridcell"][aria-label*="年度"]:not([aria-label*="星取なし"])');
+      await expect(marks.first()).toBeVisible();
+      const n = Math.min(await marks.count(), 80);
+      let found = false;
+      for (let i = 0; i < n && !found; i++) {
+        await marks.nth(i).click();
+        await expect(page.getByTestId("source-detail").first()).toBeVisible();
+        found = (await page.getByTestId("source-decided-by").count()) > 0;
+      }
+      expect(found, "答えで決まった星が、見えている星の中にある").toBe(true);
+      const by = page.getByTestId("source-decided-by").first();
+      await expect(by).toContainText("決めた問い");
+      await expect(by).toContainText("→ ");
+      await expect(by).toContainText("会話の回答");
+      expect(await by.getAttribute("data-question")).toBeTruthy();
+      await page.screenshot({ path: shot(`mcp-star-decided-by-${tag}`) });
+    });
+
     await test.step("screen_set の答えに、見せ方を覚えた施設の名前と作業中の計画の版（chart_rows の version と同じ。仕事 chat-prompts-v1）", async () => {
       const rows = await call(c, "chart_rows", { limit: 1 });
       const set = await call(c, "screen_set", { levelOrder: "asset-first" });

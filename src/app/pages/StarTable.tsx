@@ -128,6 +128,8 @@ function documentCount(d: WorkDetailT): number {
 interface Index {
   works: Map<string, WorkT>;
   assetName: (nodeKey: string) => string;
+  /** 明細の鍵 → その明細を決めた問い（取り込みの質問への答え）。答えで決まっていない明細は無い */
+  decidedBy: ReadonlyMap<string, NonNullable<Plan["readingDecisions"]>[number]>;
   workLabels: Record<NonNullable<WorkT["attribute"]>, string>;
 }
 
@@ -153,6 +155,21 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
         {T.source.by}：{TEXT.author[d.author]} · {T.source.basis}：{d.basis}
         {d.needsReview ? ` · ${T.source.review}` : ""}
       </Text>
+      {/* 答えた問いと現れた星を結ぶ（時間の地図 5、#29）：この印を決めた問いと答え、答えた人 */}
+      {ix.decidedBy.get(d.detailKey) && (
+        <Stack gap={0} data-testid="source-decided-by" data-question={ix.decidedBy.get(d.detailKey)!.questionId}>
+          <Text size="xs" c="var(--text-3)">
+            {T.source.decidedBy}
+          </Text>
+          <Text size="xs">{ix.decidedBy.get(d.detailKey)!.question}</Text>
+          <Text size="xs">
+            → {ix.decidedBy.get(d.detailKey)!.answer}　
+            <Text span size="xs" c="var(--text-3)">
+              {TEXT.author[ix.decidedBy.get(d.detailKey)!.author]}
+            </Text>
+          </Text>
+        </Stack>
+      )}
       {/* 金額と出どころ（#48）。当施設の画面の中だけ（共有ファイル・公開台帳・AI には渡らない） */}
       {d.cost !== null && (
         <Text size="xs" data-testid="source-amount">
@@ -706,6 +723,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       works: new Map(plan.works.map((w) => [w.workKey, w])),
       assetName: (k) => names.get(k) ?? k,
       workLabels: (catalog ?? emptyCatalog()).workLabels,
+      decidedBy: new Map((plan.readingDecisions ?? []).flatMap((r) => (r.details ?? []).map((k) => [k, r] as const))),
     };
   }, [plan, catalog]);
   const selRow = selected ? model.rows.find((r) => r.id === selected.rowId) : undefined;
