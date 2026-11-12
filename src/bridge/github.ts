@@ -21,7 +21,7 @@ export const GITHUB_CLIENT_ID: string | null = "Ov23litNaRa8MtHyXFGc";
 
 export const GITHUB_HOSTS: GitHubHosts = { web: "https://github.com", api: "https://api.github.com" };
 export const GITHUB_SCOPE = "public_repo";
-/** 台帳の PR の必須のチェックの名前（MOYAI のリポジトリの .github/workflows/ledger-validate.yml と同じ） */
+/** 台帳の PR の必須のチェックの名前（台帳のリポジトリの .github/workflows/ledger-validate.yml と同じ） */
 export const LEDGER_CHECK = "ledger-validate";
 const TIMEOUT_MS = 20_000;
 const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|localhost):\d{1,5}$/;
@@ -160,7 +160,7 @@ const repoPath = (r: Repo) => `${encodeURIComponent(r.owner)}/${encodeURICompone
 
 export interface LedgerPrInput {
   upstream: Repo;
-  /** 台帳の中の束の道（MOYAI のリポジトリの根から ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json） */
+  /** 台帳の中の束の道（台帳のリポジトリの根から <台帳の根>/ledger/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json） */
   path: string;
   bytes: Uint8Array;
   branch: string;
@@ -174,7 +174,7 @@ export type LedgerPrResult =
   | { ok: false; reason: "network" | "unauthorized" | "noRepo" | "forkFailed" | "branchFailed" | "fileFailed" | "prFailed" };
 
 /**
- * 台帳に PR を出す。台帳は MOYAI のリポジトリの ledger/（2026-11-07 に移した）なので、フォークするのは MOYAI のリポジトリ（mushitaro/moyai）。
+ * 台帳に PR を出す。フォークするのは台帳のリポジトリ（台帳の clone の origin。config/ledger.json の repo と同じはず）。
  * 利用者のアカウントで台帳のリポジトリをフォークし（もうあればそれを使う）、台帳の既定のブランチの先から枝を作り、
  * 束のファイル 1 つを足して、台帳の既定のブランチへ PR を出す。台帳のファイルはほかに変えない。
  */

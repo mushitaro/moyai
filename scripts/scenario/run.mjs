@@ -197,6 +197,7 @@ function bench(label, recorded, extra) {
   results.A3 = a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" };
 }
 
+let c1Tests = null;
 // ---- C1・C3：Skill の進化の台本と書き出しの芯の試験。C4 は運営者の判断待ち ----
 function nodeTests(files) {
   const json = join(work, `node-${Date.now()}.json`);
@@ -208,8 +209,8 @@ function nodeTests(files) {
   }
 }
 {
-  const c1 = existsSync("tests/scripts/skill-loop-feedback.test.mjs") ? nodeTests(["tests/scripts/skill-loop-feedback.test.mjs"]) : null;
-  results.C1 = c1 ? judgeC1(c1) : judgeWaiting("#22：フィードバック → ルールの案 → 物差し → PR の台本の試験が無い", await issueOf(22));
+  c1Tests = existsSync("tests/scripts/skill-loop-feedback.test.mjs") ? nodeTests(["tests/scripts/skill-loop-feedback.test.mjs"]) : null;
+  results.C1 = c1Tests ? judgeC1(c1Tests) : judgeWaiting("#22：フィードバック → ルールの案 → 物差し → PR の台本の試験が無い", await issueOf(22));
 }
 results.C4 = judgeWaiting("#23 の 2：運営者の判断（Skill の文の採点を、どの段で誰が走らせるか）", await issueOf(23));
 
@@ -287,21 +288,21 @@ const otherResult = (() => {
   results.B1 = judgeB1(config, tests);
 }
 
-// B2：受け口の e2e と単体の試験
+// B2：手元の受け口と偽の GitHub のシナリオ試験（npm run scenario:b2 と同じ試験）と、画面から送る e2e
 {
   const row = hereMap ? fileRow(hereMap, "ledger-intake.spec.ts") : null;
   const e2e = row ? { ok: row.unexpected + row.flaky + row.skipped === 0 && row.expected > 0, total: row.expected + row.unexpected + row.flaky + row.skipped } : null;
-  const u = unit ? unit.filter((t) => /ledger-intake\.test\.ts$/.test(t.file.replace(/\\/g, "/"))) : null;
+  const f = "tests/unit/scenario-b2-intake.test.ts";
+  const u = existsSync(f) ? vitest([f]) : null;
   results.B2 = judgeB2(e2e, u);
 }
 
-// C3：書き出しの芯（vitest）と、アプリから使う経路
+// C3：書き出しの芯と保存の経路・C1 の台本で貼った Issue・画面で押して書き出す e2e（slice.spec）
 {
-  const files = ["tests/unit/share/reading-feedback.test.ts"].filter((f) => existsSync(f));
-  const t = files.length ? vitest(files) : null;
-  const tests = t ? { total: t.filter((x) => x.status !== "skipped").length, passed: t.filter((x) => x.status === "passed").length } : null;
-  const wired = [...walk("src/app", /\.tsx?$/), ...walk("src/bridge", /\.ts$/)].some((f) => /reading-feedback/.test(readFileSync(f, "utf8")));
-  results.C3 = files.length ? judgeC3(tests, wired) : judgeWaiting("#23 の 1：アプリからの書き出しがまだ無い", await issueOf(23));
+  const f = "tests/unit/share/reading-feedback.test.ts";
+  const u = existsSync(f) ? vitest([f]) : null;
+  const sliceRow = hereMap ? fileRow(hereMap, "slice.spec.ts") : null;
+  results.C3 = judgeC3(u ? u.map((t) => ({ name: t.title, status: t.status })) : null, c1Tests, sliceRow);
 }
 
 // D1・D2

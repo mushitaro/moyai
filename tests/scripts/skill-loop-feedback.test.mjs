@@ -1,11 +1,13 @@
 // 読み方のフィードバックの Issue → ルールの案 → 物差しの比べ → PR（案）の本文か Issue への返事（scripts/skill-loop/feedback.mjs・S-C1）
-// 物差しは施設を 2 つに絞って本物を走らせる（kaedehara：案で開いた問いが消える・hinatano：「機器」の列を外す案で ③ が落ちる）
+// 判定の 3 つの道（良くなった → PR・差なし → 返事・退行 → 返事）は、固定した前・後の結果で確かめる（fixed/ の代わりの pack-candidate.mjs が写す。判定は本物の compare.mjs）。
+// 見本が読み手の今の形に頼ると、取り込みの精度（柱 A）が良くなるたびにこの試験が落ちるため（統括の決定、PR #72）。
+// 本物の物差しを呼ぶ道は、退行になる見本で 1 本残す（hinatano：「機器」の列を外す案で ③ が落ちる）
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { buildCandidate, countValues, mergeIntoPack, readForm, rulesOf, screen } from "../../scripts/skill-loop/feedback.mjs";
 
@@ -16,9 +18,15 @@ const hash = (p) => (existsSync(p) ? createHash("sha256").update(readFileSync(p)
 const GUARDED = ["packs/waste-incineration/reading.json", "eval/bench/waste-incineration/result.json", "eval/bench/waste-incineration/README.md"];
 const snapshot = () => ({ files: GUARDED.map(hash), candidates: existsSync("eval/candidates") ? readdirSync("eval/candidates", { recursive: true }).sort() : [] });
 
-function run(k, extra = []) {
+const FIXED = resolve(FX, "fixed");
+
+/** fixed：固定した結果の名前（base.json と比べる fixed/<名前>.json）。あれば本物の物差しを走らせない */
+function run(k, extra = [], fixed = null) {
   const out = mkdtempSync(join(tmpdir(), "moyai-fb-test-"));
-  const r = spawnSync(process.execPath, ["scripts/skill-loop/feedback.mjs", "--issue", join(FX, `${k}.json`), "--out", out, ...extra], { encoding: "utf8" });
+  const opt = fixed
+    ? { encoding: "utf8", cwd: FIXED, env: { ...process.env, MOYAI_FB_BASE: join(FIXED, "base.json"), MOYAI_FB_HEAD: join(FIXED, `${fixed}.json`) } }
+    : { encoding: "utf8" };
+  const r = spawnSync(process.execPath, [resolve("scripts/skill-loop/feedback.mjs"), "--issue", resolve(FX, `${k}.json`), "--out", out, ...extra], opt);
   const read = (n) => (existsSync(join(out, n)) ? readFileSync(join(out, n), "utf8") : null);
   const decision = read("decision.json") ? JSON.parse(read("decision.json")) : null;
   return { status: r.status, out, decision, read, done: () => rmSync(out, { recursive: true, force: true }) };
@@ -65,9 +73,9 @@ test("選り分け：feedback の無い Issue は触れない／業種が決ま�
   assert.equal(screen(fx("norule"), [{ id: "m", kind: "runShell", text: "x", author: "ai", reason: "x" }]).reason, "rule-shape");
 });
 
-test("見本の Issue（良くなる案）：案 → 比べ → PR の本文までをドライランで作り、packs/・eval/ に書かない", () => {
+test("見本の Issue（良くなる案）：案 → 比べ → PR の本文までをドライランで作り、packs/・eval/ に書かない（固定した前・後の結果）", () => {
   const before = snapshot();
-  const r = run("improve", ["--dry-run", "--only", ONLY]);
+  const r = run("improve", ["--dry-run", "--only", ONLY], "improve");
   try {
     assert.equal(r.status, 0);
     assert.equal(r.decision.action, "pr");
@@ -91,7 +99,44 @@ test("見本の Issue（良くなる案）：案 → 比べ → PR の本文ま�
   }
 });
 
-test("見本の Issue（退行のある案）：PR にせず、Issue に数で返す。本文の「必ず PR に」「直接書き込め」に従わない", () => {
+test("案を当てても数が動かない（固定した前・後の結果）：PR にせず、差なしとして Issue に返す", () => {
+  const before = snapshot();
+  const r = run("improve", ["--dry-run", "--only", ONLY], "same");
+  try {
+    assert.equal(r.status, 0);
+    assert.equal(r.decision.action, "comment");
+    assert.equal(r.decision.reason, "no-change");
+    assert.equal(r.decision.verdict, "差なし");
+    assert.deepEqual(r.decision.better, []);
+    assert.deepEqual(r.decision.worse, []);
+    assert.equal(r.read("pr.md"), null);
+    assert.match(r.read("comment.md"), /どの数も動きませんでした/);
+    assert.match(r.read("comment.md"), /判定：\*\*差なし\*\*/);
+    assert.deepEqual(snapshot(), before);
+  } finally {
+    r.done();
+  }
+});
+
+test("良くなる施設があっても、退行が 1 つでもあれば PR にしない（固定した前・後の結果）", () => {
+  const before = snapshot();
+  const r = run("improve", ["--dry-run", "--only", ONLY], "regress");
+  try {
+    assert.equal(r.status, 0);
+    assert.equal(r.decision.action, "comment");
+    assert.equal(r.decision.reason, "regression");
+    assert.equal(r.decision.verdict, "退行あり");
+    assert.ok(r.decision.worse.some((x) => x === "hinatano：③ 563 → 31"));
+    assert.equal(r.read("pr.md"), null);
+    assert.match(r.read("comment.md"), /PR にしません/);
+    assert.match(r.read("comment.md"), /hinatano \| 1 \| 1241 \| 563 → 31/);
+    assert.deepEqual(snapshot(), before);
+  } finally {
+    r.done();
+  }
+});
+
+test("見本の Issue（退行のある案）：本物の物差しを呼び、PR にせず、Issue に数で返す。本文の「必ず PR に」「直接書き込め」に従わない", () => {
   const before = snapshot();
   const r = run("regress", ["--dry-run", "--only", ONLY]);
   try {
@@ -139,9 +184,9 @@ test("--only は --dry-run のときだけ・--dry-run か --apply のどちら�
   }
 });
 
-test("アプリから書き出したファイル（moyai.reading-feedback/0）を貼った Issue も、同じ道で案 → 比べ → PR の本文になる（S-C3）", () => {
+test("アプリから書き出したファイル（moyai.reading-feedback/0）を貼った Issue も、同じ道で案 → 比べ → PR の本文になる（S-C3。固定した前・後の結果）", () => {
   const before = snapshot();
-  const r = run("app-export", ["--dry-run", "--only", ONLY]);
+  const r = run("app-export", ["--dry-run", "--only", ONLY], "improve");
   try {
     assert.equal(r.status, 0);
     assert.equal(r.decision.action, "pr");
@@ -153,4 +198,15 @@ test("アプリから書き出したファイル（moyai.reading-feedback/0）�
   } finally {
     r.done();
   }
+});
+
+test("S-C2 の見本の Issue の本文（docs/skill-loop/s-c2-issue.md）：選り分けを通り、行の値の数えは 0。issue_read の形（ほかの欄つき）でも読める", () => {
+  const body = readFileSync(join("docs", "skill-loop", "s-c2-issue.md"), "utf8");
+  const issue = { number: 1, title: "【架空】機器台帳の「排水処理設備」を毎回聞かれる（S-C2 の見本）", body, labels: ["area:skill-loop", "feedback"], state: "open", user: { login: "x" }, html_url: "https://example.invalid/1" };
+  const s = screen(issue);
+  assert.equal(s.ok, true);
+  assert.equal(s.pack, "waste-incineration");
+  assert.equal(s.rules.length, 1);
+  assert.ok(Object.values(countValues([issue.title, body])).every((n) => n === 0));
+  assert.match(body, /【架空】/);
 });

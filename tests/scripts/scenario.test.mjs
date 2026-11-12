@@ -2,7 +2,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  B2_FLOW,
   B2_REFUSALS,
+  C3_LOOP,
+  C3_UNIT,
   FAIL,
   MARKS,
   PASS,
@@ -88,13 +91,15 @@ describe("待ち・B1・B2", () => {
     assert.equal(judgeB1({ repo: "o/moyai-ledger" }, { total: 0, passed: 0, failed: 0 }).status, FAIL);
     assert.equal(judgeB1({ repo: "o/moyai-ledger" }, null).status, UNKNOWN);
   });
-  it("B2：断る試験（数の上限・転送・鍵の取り違え）が無くなれば不合格", () => {
-    const unit = B2_REFUSALS.map((x) => ({ title: `…${x.title}…`, status: "passed" }));
+  it("B2：通しの試験（受け口 → PR → ledger-validate ✓）と断る試験（数の上限・転送・鍵の取り違え）が無くなれば不合格", () => {
+    const unit = [{ title: `${B2_FLOW}…`, status: "passed" }, ...B2_REFUSALS.map((x) => ({ title: `${x.title}…`, status: "passed" }))];
+    assert.equal(judgeB2(null, unit).status, PASS);
     assert.equal(judgeB2({ ok: true, total: 1 }, unit).status, PASS);
-    assert.equal(judgeB2({ ok: true, total: 1 }, unit.slice(1)).status, FAIL);
-    assert.equal(judgeB2({ ok: true, total: 1 }, [...unit.slice(1), { ...unit[0], status: "failed" }]).status, FAIL);
+    assert.equal(judgeB2(null, unit.slice(1)).status, FAIL);
+    assert.equal(judgeB2(null, unit.slice(0, -1)).status, FAIL);
+    assert.equal(judgeB2(null, [...unit.slice(1), { ...unit[0], status: "failed" }]).status, FAIL);
     assert.equal(judgeB2({ ok: false, total: 1 }, unit).status, FAIL);
-    assert.equal(judgeB2(null, unit).status, UNKNOWN);
+    assert.equal(judgeB2({ ok: true, total: 1 }, null).status, UNKNOWN);
   });
 });
 
@@ -107,10 +112,16 @@ describe("C1・C3：Skill の進化", () => {
     assert.equal(judgeC1([]).status, FAIL);
     assert.equal(judgeC1(null).status, UNKNOWN);
   });
-  it("C3：芯の試験が通っても、アプリの経路が無ければ待ち。経路があっても、ランナーに通しの試験が無いうちは未確認（合格にしない）", () => {
-    assert.equal(judgeC3({ passed: 4, total: 4 }, false).status, WAIT);
-    assert.equal(judgeC3({ passed: 3, total: 4 }, false).status, FAIL);
-    assert.equal(judgeC3({ passed: 4, total: 4 }, true).status, UNKNOWN);
+  it("C3：書き出しの芯と保存の経路・C1 の台本の貼った Issue・画面の e2e がそろって通ったときだけ合格", () => {
+    const unit = C3_UNIT.map((h) => ({ name: `${h}…`, status: "passed" }));
+    const loop = C3_LOOP.map((h) => ({ name: `${h}…`, status: "passed" }));
+    const slice = { expected: 1, unexpected: 0, flaky: 0, skipped: 0 };
+    assert.equal(judgeC3(unit, loop, slice).status, PASS);
+    assert.equal(judgeC3(unit.slice(1), loop, slice).status, FAIL);
+    assert.equal(judgeC3(unit, [], slice).status, FAIL);
+    assert.equal(judgeC3(unit, loop, { ...slice, unexpected: 1 }).status, FAIL);
+    assert.equal(judgeC3(unit, loop, { ...slice, expected: 0, skipped: 1 }).status, FAIL);
+    assert.equal(judgeC3(unit, loop, null).status, UNKNOWN);
   });
 });
 

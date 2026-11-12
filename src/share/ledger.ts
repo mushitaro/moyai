@@ -1,6 +1,6 @@
 // 公開の台帳（場 2。docs/plan.md §2.8）：台帳のリポジトリの、台帳の根の下を、輪の受け手と同じ関数（数え直し・鎖）で確かめる。
 // 台帳の置き場所（リポジトリの名前と、その中の台帳の根）は config/ledger.json の 1 か所（src/share/ledger-place.ts。mushitaro/moyai#20）。
-// 下の <dir> は、台帳の根の下の ledger/（今は MOYAI のリポジトリの ledger/ledger/。2026-11-07 に別のリポジトリから移した）。
+// 下の <dir> は、台帳の根の下の ledger/（2026-11-12 から台帳だけのリポジトリ mushitaro/moyai-ledger の ledger/。config/ledger.json）。
 //   <dir>/ledger.json                                   台帳の決まり（管理者が署名。circle.json と同じ形で、厳しくする向きだけ）
 //   <dir>/TERMS.md                                      利用条件（検証では読まない）
 //   <dir>/bundles/<鍵ID>/<連番>-<ハッシュ先頭16>.json     束（足すだけ）
@@ -43,7 +43,7 @@ export const LEDGER_BUNDLE_PATH = LEDGER_PLACE.bundlePath;
 /** 取り下げの印の道：<dir>/bundles/<鍵ID 16 桁>/retired.json */
 export const LEDGER_RETIRED_PATH = LEDGER_PLACE.retiredPath;
 
-/** 鍵のフォルダの道（ledger/ledger/bundles/<鍵ID>） */
+/** 鍵のフォルダの道（<dir>/bundles/<鍵ID>） */
 export function ledgerKeyFolder(key: string): string {
   return `${LEDGER_BUNDLES_PATH}/${key}`;
 }

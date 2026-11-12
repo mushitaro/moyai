@@ -286,6 +286,23 @@ describe("タブとの WebSocket", () => {
     b.ws.close();
   });
 
+  it("確かめの ping そのものに答えないタブは、確かめの前の ping への遅れた pong を返しても引き継がれる（混んだ機械の取り違え・#46）", async () => {
+    tb = await startTestBridge({ probeMs: 200 });
+    const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await a.opened;
+    a.send("tab.hello", { secret: SECRET_A, build: "t", work: true });
+    await a.next("bridge.welcome");
+    a.autoPong = false;
+    const b = new FakeTab(`ws://${tb.host}/ws`, tb.origin);
+    await b.opened;
+    b.send("tab.hello", { secret: SECRET_B, build: "t" });
+    // 確かめの ping が a に届いてから、確かめの前の ping（at が違う）への答えを返す
+    const probe = await a.next("bridge.ping");
+    a.send("tab.pong", { at: Math.floor(probe.at) - 1000 });
+    await b.next("bridge.welcome", 10_000);
+    expect((await a.next("bridge.refused")).code).toBe("tab_taken_over");
+  });
+
   it("握手に添えた作業でも守る：作業のあるタブは、確かめの ping に答えれば残る（#46）", async () => {
     tb = await startTestBridge({ probeMs: 200 });
     const a = new FakeTab(`ws://${tb.host}/ws`, tb.origin);

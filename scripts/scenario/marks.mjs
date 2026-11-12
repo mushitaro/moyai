@@ -115,18 +115,43 @@ export function judgeC1(tests) {
   return r(PASS, ev);
 }
 
+/** C3 に要る試験（題の頭で名指す。消えれば不合格）。書き出しの芯（reading-feedback.test.ts）と C1 の台本（skill-loop-feedback.test.mjs） */
+export const C3_UNIT = ["保存は人だけの経路", "書き出したファイルを Issue に貼ると"];
+export const C3_LOOP = ["アプリから書き出したファイル"];
+
 /**
- * C3：アプリからの書き出し（#23 の 1：人が押したときだけ、形と数だけ）が C1 の道に乗る。
- * 芯（src/share/reading-feedback.ts）の試験と、アプリ（src/app・src/bridge）から使う経路の有無
- * @param {{ passed: number, total: number } | null} tests
- * @param {boolean} wired  アプリか橋渡しが書き出しを使っているか
+ * C3：アプリからの書き出し（#23 の 1：人が押したときだけ・全文を見せてから・形と数だけ）が C1 の道に乗る。
+ * 書き出しの芯と保存の経路の試験・C1 の台本で書き出したファイルを貼った Issue の試験・画面で押して書き出す e2e（slice.spec）
+ * @param {Array<{ name: string, status: string }> | null} unit  tests/unit/share/reading-feedback.test.ts
+ * @param {Array<{ name: string, status: string }> | null} loop  tests/scripts/skill-loop-feedback.test.mjs
+ * @param {{ expected: number, unexpected: number, flaky: number, skipped: number } | null} slice  slice.spec の e2e の数
  */
-export function judgeC3(tests, wired) {
-  const t = tests ? `書き出しの芯の試験 ${tests.passed}/${tests.total}` : "書き出しの芯の試験を走らせていない";
-  if (tests && (tests.total === 0 || tests.passed !== tests.total)) return r(FAIL, t);
-  if (!wired) return r(WAIT, `アプリの書き出し（人が押したときだけ・出す前に全文を見せる。#23 の 1）の画面と人だけの経路がまだ無い。${t}`);
-  if (!tests) return r(UNKNOWN, t);
-  return r(UNKNOWN, `アプリから使う経路はある。人が押して書き出し、Issue に貼るまでの試験はランナーにまだ無い。${t}`);
+export function judgeC3(unit, loop, slice) {
+  const parts = [];
+  let fail = false;
+  let unknown = false;
+  const named = (tests, heads, label) => {
+    if (!tests) {
+      unknown = true;
+      parts.push(`${label}を走らせていない`);
+      return;
+    }
+    const passed = tests.filter((t) => t.status === "passed").length;
+    const missing = heads.filter((h) => !tests.some((t) => t.name.startsWith(h) && t.status === "passed"));
+    if (tests.length === 0 || passed !== tests.length || missing.length) fail = true;
+    parts.push(`${label} ${passed}/${tests.length}${missing.length ? `（通っていない名指しの試験：${missing.join("、")}）` : ""}`);
+  };
+  named(unit, C3_UNIT, "書き出しの芯と保存の経路の試験");
+  named(loop, C3_LOOP, "C1 の台本の試験");
+  if (!slice) {
+    unknown = true;
+    parts.push("画面で書き出す e2e（slice.spec）を走らせていない");
+  } else {
+    const ok = slice.expected > 0 && slice.unexpected + slice.flaky + slice.skipped === 0;
+    if (!ok) fail = true;
+    parts.push(`画面で押して全文を見せ保存する e2e（slice.spec）${ok ? "✓" : "×"}`);
+  }
+  return r(fail ? FAIL : unknown ? UNKNOWN : PASS, parts.join("・"));
 }
 
 /** まだ作られていない印：Issue が開いていれば「待ち」。閉じたのにランナーに道が無ければ「未確認」（道を足す合図） */
@@ -149,44 +174,41 @@ export function judgeB1(config, tests) {
   return r(PASS, `台帳は ${config.repo}。${t}`);
 }
 
-/** B2 の断る試験：この題を含む試験が、それぞれ 1 件以上あって全部通ること（題が変われば外れにする。試験を消して通さない） */
+/** B2 に要る試験（tests/unit/scenario-b2-intake.test.ts の題の頭。消えれば不合格。`npm run scenario:b2` と同じ試験） */
+export const B2_FLOW = "アプリの送りで受け口に出すと";
 export const B2_REFUSALS = [
-  { what: "数の上限", title: "件数：同じ IP から 1 時間に" },
-  { what: "転送", title: "転送（低 6）" },
-  { what: "鍵の取り違え", title: "ほかの鍵で署名した束" },
+  { what: "数の上限", title: "数の上限：" },
+  { what: "転送", title: "転送：" },
+  { what: "鍵の取り違え", title: "鍵の取り違え：" },
 ];
 
 /**
- * B2：受け口の e2e（ledger-intake.spec）と、受け口の単体の試験（断る試験を含む）
- * @param {{ ok: boolean, total: number } | null} e2e  ledger-intake.spec の結果
- * @param {Array<{ title: string, status: string }> | null} unit  tests/unit/ledger-intake.test.ts の試験ごとの結果
+ * B2：手元の受け口と偽の GitHub のシナリオ試験（scenario-b2-intake.test.ts：共有ファイル → 受け口 → PR → ledger-validate ✓ と、断る 3 つ）。
+ * 画面から送る e2e（ledger-intake.spec）も、走らせたときは通ること
+ * @param {{ ok: boolean, total: number } | null} e2e  ledger-intake.spec の結果（走らせていなければ null。B2 の合否には要らない）
+ * @param {Array<{ title: string, status: string }> | null} unit  scenario-b2-intake.test.ts の試験ごとの結果
  */
 export function judgeB2(e2e, unit) {
   const parts = [];
   let fail = false;
-  let unknown = false;
-  if (!e2e) {
-    unknown = true;
-    parts.push("ledger-intake.spec を走らせていない");
-  } else {
+  if (!unit) return r(UNKNOWN, "B2 のシナリオ試験（scenario-b2-intake.test.ts）を走らせていない");
+  const passed = unit.filter((t) => t.status === "passed").length;
+  if (passed !== unit.length || unit.length === 0) fail = true;
+  parts.push(`B2 のシナリオ試験 ${passed}/${unit.length}`);
+  const flow = unit.some((t) => t.title.startsWith(B2_FLOW) && t.status === "passed");
+  if (!flow) fail = true;
+  parts.push(`共有ファイル → 受け口 → PR → ledger-validate ${flow ? "✓" : "×"}`);
+  for (const x of B2_REFUSALS) {
+    const hit = unit.filter((t) => t.title.startsWith(x.title));
+    const ok = hit.length > 0 && hit.every((t) => t.status === "passed");
+    if (!ok) fail = true;
+    parts.push(`断る：${x.what} ${ok ? "✓" : hit.length === 0 ? "× 試験が無い" : "×"}`);
+  }
+  if (e2e) {
     if (!e2e.ok || e2e.total === 0) fail = true;
-    parts.push(`ledger-intake.spec ${e2e.ok && e2e.total > 0 ? "✓" : "×"}（${e2e.total} 件）`);
+    parts.push(`画面から送る e2e（ledger-intake.spec）${e2e.ok && e2e.total > 0 ? "✓" : "×"}`);
   }
-  if (!unit) {
-    unknown = true;
-    parts.push("受け口の単体の試験を走らせていない");
-  } else {
-    const passed = unit.filter((t) => t.status === "passed").length;
-    if (passed !== unit.length || unit.length === 0) fail = true;
-    parts.push(`受け口の試験 ${passed}/${unit.length}`);
-    for (const x of B2_REFUSALS) {
-      const hit = unit.filter((t) => t.title.includes(x.title));
-      const ok = hit.length > 0 && hit.every((t) => t.status === "passed");
-      if (!ok) fail = true;
-      parts.push(`断る：${x.what} ${ok ? "✓" : hit.length === 0 ? "× 試験が無い" : "×"}`);
-    }
-  }
-  return r(fail ? FAIL : unknown ? UNKNOWN : PASS, parts.join("・"));
+  return r(fail ? FAIL : PASS, parts.join("・"));
 }
 
 /**

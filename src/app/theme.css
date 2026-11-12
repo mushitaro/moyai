@@ -1334,3 +1334,14 @@ tr.moyai-pick-row[aria-selected="true"] > .moyai-decisions-act {
 div.moyai-template-choice {
   cursor: default;
 }
+
+/* 読み方の書き出しの全文（Wire の ReadingOut） */
+.moyai-reading-out {
+  margin: 0;
+  padding: 16px;
+  background: var(--layer-1);
+  border: 1px solid var(--line);
+  font: 400 12px/20px var(--font-num);
+  color: var(--text-2);
+  white-space: pre-wrap;
+}

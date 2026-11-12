@@ -21,6 +21,7 @@ import { appliedTo, placeFor, ruleVersionNo, ruleVersions, type Lineage, type Re
 import { tokyoYmd, versionName } from "../version-name";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { Switch } from "./Switch";
+import { ReadingOutBody, type ReadingOut } from "./ReadingOut";
 
 const T = HUMAN_TEXT.readings;
 const fmt = (n: number) => n.toLocaleString("ja-JP");
@@ -43,8 +44,25 @@ export function unapprovedReadings(ws: IntakeWorkspace): number {
   return readingTab(ws.currentReadings(), readingHitsOf(ws.view)).unapproved;
 }
 
-export function ReadingsSheet({ ws, old = null, lineage = null }: { ws: IntakeWorkspace; old?: OldReadings | null; lineage?: Lineage | null }) {
-  return old ? <AppliedReadingsSheet old={old} lineage={lineage} /> : <CurrentReadingsSheet ws={ws} lineage={lineage} />;
+export function ReadingsSheet({ ws, old = null, lineage = null, out = null }: { ws: IntakeWorkspace; old?: OldReadings | null; lineage?: Lineage | null; out?: ReadingOut | null }) {
+  if (old) return <AppliedReadingsSheet old={old} lineage={lineage} />;
+  // 読み方の書き出し：押したあいだは、シートの本体を書き出す全文に替える（Wire の ReadingOut）
+  if (out?.state.kind === "preview")
+    return (
+      <div style={{ padding: "8px 32px 32px" }} data-testid="readings-sheet">
+        <ReadingOutBody out={out} />
+      </div>
+    );
+  return (
+    <>
+      <CurrentReadingsSheet ws={ws} lineage={lineage} />
+      {out && out.state.kind !== "list" && (
+        <div style={{ padding: "0 32px 32px" }}>
+          <ReadingOutBody out={out} />
+        </div>
+      )}
+    </>
+  );
 }
 
 /** 選んだもの：ルールの見出しの行（来歴）か、決まりの行 */

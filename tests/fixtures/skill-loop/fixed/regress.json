@@ -1,0 +1,84 @@
+{
+ "schema": "moyai.pack-bench.result/0",
+ "pack": "waste-incineration",
+ "only": [
+  "hinatano",
+  "kaedehara"
+ ],
+ "candidate": null,
+ "reader": {
+  "commit": "1111111",
+  "src": "1111111",
+  "packs": "1111111",
+  "dirty": false
+ },
+ "measuredAt": "2000-01-01T00:00:00.000Z",
+ "total": {},
+ "facilities": [
+  {
+   "facility": "hinatano",
+   "name": "ひなた野",
+   "files": 2,
+   "seconds": 0,
+   "asked": 15,
+   "answered": 15,
+   "open": 0,
+   "openKinds": {},
+   "defaulted": {},
+   "unresolvedBy": {},
+   "openSamples": [],
+   "unresolvedBefore": 0,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 102,
+    "works": 124,
+    "details": 1343
+   },
+   "accuracy": {
+    "correct": 31,
+    "total": 1548
+   },
+   "extra": 0,
+   "recovery": {
+    "correct": 1241,
+    "total": 1712
+   },
+   "manDays": null,
+   "days": null,
+   "unplaced": 0,
+   "dropped": {},
+   "error": null
+  },
+  {
+   "facility": "kaedehara",
+   "name": "かえで原",
+   "files": 2,
+   "seconds": 0,
+   "asked": 9,
+   "answered": 7,
+   "open": 2,
+   "openKinds": {},
+   "defaulted": {},
+   "unresolvedBy": {},
+   "openSamples": [],
+   "unresolvedBefore": 441,
+   "unresolvedAfter": 16,
+   "planMade": false,
+   "blockers": [],
+   "plan": null,
+   "accuracy": null,
+   "extra": null,
+   "recovery": {
+    "correct": 0,
+    "total": 825
+   },
+   "manDays": null,
+   "days": null,
+   "unplaced": 0,
+   "dropped": {},
+   "error": null
+  }
+ ]
+}

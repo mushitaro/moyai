@@ -1,7 +1,7 @@
 # 台帳を別のリポジトリに分ける（設計）
 
 mushitaro/moyai#20。運営者の決定（2026-11-10）：公開の台帳を `mushitaro/moyai` の `ledger/` から、別のリポジトリ `mushitaro/moyai-ledger` に戻す。
-この文書は、切り替えの設計と順を書く。切り替えそのものは、まだしていない（今の台帳は `mushitaro/moyai` の `ledger/` のまま）。
+この文書は、切り替えの設計と順を書く。2026-11-12 に MOYAI の側を切り替えた（§4 の 1。`config/ledger.json` は `mushitaro/moyai-ledger`・根は空。`ledger/` と台帳のワークフローを MOYAI から外した）。台帳の側（§4 の 2）と受け口の配置（§4 の 4）の手順は `docs/ledger-deploy.md`。
 
 ## 1. なぜ
 
@@ -15,7 +15,7 @@ mushitaro/moyai#20。運営者の決定（2026-11-10）：公開の台帳を `mu
 
 | 欄 | 今 | 切り替えたあと |
 |---|---|---|
-| `repo`（台帳を持つリポジトリ） | `mushitaro/moyai` | `mushitaro/moyai-ledger` |
+| `repo`（台帳を持つリポジトリ） | `mushitaro/moyai`（11-12 まで） | `mushitaro/moyai-ledger`（11-12 から） |
 | `root`（その中の台帳の根。リポジトリの根そのものなら空） | `ledger` | 空 |
 
 - `src/share/ledger-place.ts` が設定を読み、道の定数（`LEDGER_ROOT`・`LEDGER_DIR`）、束と失効記録の道の正規表現、PR の道の段の上限を導く。形の違う設定は、動かす前に投げる。
@@ -47,7 +47,7 @@ e2e（`ledger-pr.spec`・`ledger-intake.spec`）と、本物の GitHub・Cloudfl
 2. **台帳の側（`mushitaro/moyai-ledger` への PR）**
    - 検証のワークフローが使う MOYAI の commit を、1 の PR を入れたあとの commit に固定し直す。`README.md` を今の約款と決まりに合わせる。
    - 必須のチェックと枝の守りを確かめる（運営者）。
-3. **開いた PR #8**（MOYAI の `ledger/ledger/bundles/` に束を足す PR）：束の中身は置き場所を持たない（行き先は台帳 ID）ので、同じファイルを台帳のリポジトリの `ledger/bundles/` に出し直せる。出し直すか・閉じるかは運営者。
+3. **開いた PR #8**（MOYAI の `ledger/ledger/bundles/` に束を足す PR）：束の中身は置き場所を持たない（行き先は台帳 ID）ので、同じファイルを台帳のリポジトリの `ledger/bundles/` に出し直せる。運営者の判断（11-12）：出し直す。受け口の配置のあと、受け口に送って B3 と兼ねる（`docs/ledger-deploy.md` §4）。
 4. **受け口の配置**（運営者）：Cloudflare のアカウント、鍵の発行、配置。そのあと本物で 1 本通す（mushitaro/moyai#21）。
 
 1 と 2 のあいだは、MOYAI の `ledger/` に束を足す PR を入れない（検証のワークフローが無い時間ができるため）。
@@ -58,7 +58,13 @@ e2e（`ledger-pr.spec`・`ledger-intake.spec`）と、本物の GitHub・Cloudfl
 - `verify ledger` に渡す道：台帳の clone の根か、その下の `ledger/`。
 - 守りは弱めない：台帳 ID・決まりの署名・鎖・数え直しは置き場所を見ない。道の形だけが設定から決まる。
 
-## 6. 運営者に聞くこと
+### 切り替えたときに測ったこと（2026-11-12、Linux）
+
+- 台帳に関わる単体の試験（`tests/unit/share`・`tests/unit/cli`・`ledger-intake`・`ledger-reference`・`human-routes`・`human-trial-paths`・`screen-set`）：680 件のうち 678 件が通り、2 件は走らない（台帳の根の外を変える PR の 2 件。台帳だけのリポジトリでは起きない）。
+- 試験は MOYAI の `ledger/` を読んでいなかった（e2e も単体も、一時のフォルダにデモの台帳を作る）。だから `tests/fixtures/` に写すものは無かった。
+- MOYAI の旧 `ledger/` に PR #8 の共有ファイルを足した木は `verify ledger` で ✓ 11 件。moyai-ledger の clone に足した commit も、切り替えの枝の `ledger validate-pr` で ✓（`docs/ledger-deploy.md` §5）。
+
+## 6. 運営者に聞くこと（2026-11-12 に答えが出た）
 
 - 台帳のリポジトリのワークフローと README を直す PR（上の 2）を、だれが入れるか。推す道：統括が PR を出し、運営者が入れる（公開の台帳の守りそのものなので）。
 - PR #8 を、台帳のリポジトリに出し直すか、閉じるか。推す道：切り替えのあとに出し直す（【架空】のデモの束で、受け口の前の道の確かめになる）。

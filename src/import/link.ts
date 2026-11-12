@@ -299,7 +299,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         } else if (byMachine.length === 1) {
           cand = byMachine[0] ?? null;
           pattern = `${scope}byMachine`;
-        } else pattern = "ambiguous";
+        } else if (cands.length < sibs.length) pattern = `${scope}fewer`;
+        else pattern = "ambiguous";
       }
       // 名前と親で 1 つに決まらないとき：機器番号が同じ機器がただ 1 つあれば、それを案にする（段や親の書き方が資料で違っても、番号は同じ機器を指す）
       let options = cands;
@@ -329,8 +330,43 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         unmatched.push(...ps);
         continue;
       }
-      if (pattern === "ambiguous") {
-        for (const p of ps) {
+      // この資料には同じ親の下に同じ名前の機器がいくつもあり、先の資料には、それより少ない数しか無い（先の資料の 1 行が何台かをまとめた行のとき）。
+      // 1 つに結ぶと、この資料で別の行の機器が 1 つになる。別の機器として入れるのを推す（様式ごとに 1 問。決めるのは人。「1 件ずつ決める」なら下の問い）
+      let one = ps;
+      if (pattern.replace(/^global:/, "") === "fewer") {
+        const fkey = `assetLink|${tid}|${pattern}`;
+        const fewerText = (where: string, n: number) =>
+          `${where} の機器 ${n} 件は、同じ親の下に同じ名前の機器がいくつもあり、先の資料の同じ名前の機器はそれより少ない（先の資料の行は、何台かをまとめた行かもしれない）。結ばずに、別の機器として入れるか`;
+        const a = ask.ask(
+          fkey,
+          {
+            kind: "assetLink",
+            text: fewerText(tableFile, ps.length),
+            options: [
+              { id: "none", label: "結ばずに、別の機器として入れる" },
+              { id: "split", label: "1 件ずつ決める" },
+            ],
+            valueKind: "option",
+            defaultAnswer: "none",
+            sameShapeRows: ps.length,
+            items: ps.map((p) => itemOfRec(p.r, p.options[0])),
+          },
+          form ? { key: `assetLink|${form.key}|${pattern}`, text: (n) => fewerText(filesLabel(form.files), n), always: true } : undefined,
+        );
+        if (a === "none") {
+          unmatched.push(...ps.map((p) => ({ ...p, cand: null })));
+          continue;
+        }
+        if (a !== "split") {
+          for (const p of ps) {
+            held.add(p.r.id);
+            assetWaitingOn.set(p.r.id, questionIdOf(fkey));
+          }
+          continue;
+        }
+      } else if (pattern !== "ambiguous") one = [];
+      if (one.length) {
+        for (const p of one) {
           const key = `assetLinkOne|${tid}|${p.r.id}`;
           const a = ask.ask(key, {
             kind: "assetLinkOne",
@@ -580,7 +616,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     }
   }
   /** wait：答えの無いとき、その名前の行が待つ質問の ID（未解決のセルに付ける） */
-  const resolved = new Map<string, { c: Cluster | null; qid: string | null; excluded: boolean; wait?: string }>();
+  const resolved = new Map<string, { c: Cluster | null; qid: string | null; excluded: boolean; wait?: string; why?: string }>();
   // 同じ様式の表（同じ様式の帳票を何冊も入れたとき）は、同じ形の問いをまとめて聞く
   const formKey = (tableId: string) => rec.formOf.get(tableId)?.key ?? tableId;
   // 機器の名前も機器番号も無い作業の行：機器に当てられない。推し量らず、同じ資料・同じ様式の表をまとめて 1 回聞く（答えるまで、その行はこの問いを待つ未解決）
@@ -629,6 +665,33 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const rows = css.reduce((a, c) => a + c.events.length, 0);
     // 当てる先の機器が無い：資料の名前のまま、名前と号ごとに新しい機器にするか（推し量らず人が決める。1 つずつ決めるなら下の問い）
     let one = pattern === "ambiguous";
+    // まとめた工事の行：作業の欄が一式の印だけ（括弧の書き添えを除く。「一式（内訳は各行）」）で、名前の同じ機器も無い行。
+    // 内訳はほかの行にあるので、作業にせず記録に残すのを推す（様式ごとに 1 問。決めるのは人。「1 件ずつ選ぶ」なら下の問い）
+    let rest = css;
+    if (one) {
+      const lumps = css.filter((cs) => cs.cands.length === 0 && cs.events.every((e) => lumpWork(e.workName)));
+      if (lumps.length) {
+        const lkey = `eventLump|${tableId}`;
+        const lrows = lumps.reduce((a, c) => a + c.events.length, 0);
+        const a = ask.ask(lkey, {
+          kind: "eventAsset",
+          text: `${fileName} の機器の名前 ${lumps.length} 通り（${lrows} 行）は、作業の欄が一式だけで、名前の同じ機器が無い（まとめた工事の行。内訳はほかの行）。作業にせず、記録に残すか`,
+          options: [
+            { id: "exclude", label: "作業にしない（記録に残す）" },
+            { id: "split", label: "1 件ずつ機器を選ぶ" },
+          ],
+          valueKind: "option",
+          defaultAnswer: "exclude",
+          sameShapeRows: lrows,
+          items: lumps.slice(0, 20).map((cs) => ({ file: cs.events[0]?.file ?? "", sheet: cs.events[0]?.sheet ?? null, cells: cs.events.slice(0, 1).map((e) => e.refs[0] ?? ""), note: cs.name })),
+        });
+        if (a !== "split") {
+          for (const cs of lumps)
+            resolved.set(cs.key, a === "exclude" ? { c: null, qid: questionIdOf(lkey), excluded: true, why: "まとめた工事の行（作業の欄が一式だけ。決定で外した）" } : { c: null, qid: null, excluded: false, wait: questionIdOf(lkey) });
+          rest = css.filter((cs) => !lumps.includes(cs));
+        }
+      }
+    }
     if (pattern === "none") {
       const nkey = `eventAssetNew|${tableId}`;
       const a = ask.ask(nkey, {
@@ -667,7 +730,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       else for (const cs of css) resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(nkey) });
     }
     if (one) {
-      for (const cs of css) {
+      for (const cs of rest) {
         const key = `eventAssetOne|${cs.key}`;
         // 名前で当たる機器が無いときは、同じ号の機器と、号の無い・共通の機器を選択肢に出す（推し量らない。決めるのは人）
         const none = cs.cands.length === 0;
@@ -758,6 +821,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const qids = new Set<string>();
     let pend = false;
     let excl = false;
+    let why: string | undefined;
     if (own) {
       const assetId = e.assetId ?? "";
       if (own.excluded) {
@@ -780,7 +844,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         pend = true;
         if (r?.wait && !eventWaitingOn.has(e.id)) eventWaitingOn.set(e.id, r.wait);
       }
-      else if (r.excluded) excl = true;
+      else if (r.excluded) {
+        excl = true;
+        why ??= r.why;
+      }
       else if (r.c) targets.push(r.c);
       if (r?.qid) qids.add(r.qid);
     }
@@ -789,7 +856,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       continue;
     }
     if (excl && targets.length === 0) {
-      eventExcluded.set(e.id, "機器が当たらない行（決定で外した）");
+      eventExcluded.set(e.id, why ?? "機器が当たらない行（決定で外した）");
       eventExcludedBy.set(e.id, [...qids]);
       continue;
     }
@@ -1170,4 +1237,11 @@ export function seriesLabel(s: Series | null): string {
   if (s.kind === "number") return `・${s.n} 号`;
   const m = cue.commonMeanings.find((x) => x.id === s.meaning);
   return `・共通${m ? `（${m.label}）` : ""}`;
+}
+
+/** 作業の欄が一式の印だけ（括弧の書き添えを除く。「一式（内訳は各行）」）：まとめた工事の行の印 */
+function lumpWork(w: string): boolean {
+  const t = nfkc(w).replace(/[(（][^()（）]*[)）]/gu, "").trim();
+  const s = cue.stripSet(t);
+  return s.set && s.text.replace(/\s+/gu, "") === "";
 }
