@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { evalCli } from "../../../src/eval/cli";
-import { joinSkills, scoreAnswers, skillPathsOf, suiteShaOf, writePrompts } from "../../../src/eval/score";
+import { SOLVER_BRIEF, joinSkills, scoreAgreed, scoreAnswers, skillPathsOf, suiteShaOf, writePrompts } from "../../../src/eval/score";
 import type { EvalCase, Suite } from "../../../src/eval/types";
 
 const REPO = fileURLToPath(new URL("../../../", import.meta.url));
@@ -65,6 +65,28 @@ describe("API を使わない Skill の文の採点", () => {
     expect(some.failing).toEqual([cases[0]!.id, cases[1]!.id]);
   });
 
+  it("記録は、別々の解く役 2 つ以上の合格の数がどれも同じときだけ。割れたら作らず、それぞれの数を返す", () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-eval-agree-"));
+    for (const who of ["a", "b", "c"]) {
+      mkdirSync(join(dir, who));
+      for (const c of cases) writeFileSync(join(dir, who, `${c.id}.txt`), perfect(c));
+    }
+    writeFileSync(join(dir, "c", `${cases[0]!.id}.txt`), "{}");
+    const base = { suite, suiteSha: "s", cases, skills: [], skillSha: "k", label: null, now: new Date("2026-11-12T00:00:00Z") };
+    const ok = scoreAgreed({ ...base, answers: [{ solver: "a", dir: join(dir, "a") }, { solver: "b", dir: join(dir, "b") }] });
+    expect(ok.ok && ok.record.pass).toBe(cases.length);
+    const split = scoreAgreed({ ...base, answers: [{ solver: "a", dir: join(dir, "a") }, { solver: "c", dir: join(dir, "c") }] });
+    expect(split).toMatchObject({ ok: false, reason: "disagree" });
+    expect(!split.ok && split.runs.map((r) => r.pass)).toEqual([cases.length, cases.length - 1]);
+    expect(scoreAgreed({ ...base, answers: [{ solver: "a", dir: join(dir, "a") }] })).toMatchObject({ ok: false, reason: "tooFew" });
+    expect(scoreAgreed({ ...base, answers: [{ solver: "a", dir: join(dir, "a") }, { solver: "a", dir: join(dir, "b") }] })).toMatchObject({ ok: false, reason: "sameSolver" });
+  });
+
+  it("解く役への頼みの文（決まった文）に、規則の名前・採点の種類・何を測るかを書かない", () => {
+    for (const r of suite.rules) expect(SOLVER_BRIEF).not.toContain(r.name);
+    for (const w of ["推測", "記録に無", "no_guess", "not_in_record", "identity", "番号の違う", "出典", "年度"]) expect(SOLVER_BRIEF).not.toContain(w);
+  });
+
   it("文の指紋は 1 段目＋業種の文をつないだもの。改行の違い（CRLF）では変わらない", () => {
     expect(skillPathsOf("p")).toEqual(["skills/moyai/SKILL.md", "packs/p/SKILL.md"]);
     expect(joinSkills(["a\r\nb\r\n", "c"])).toBe(joinSkills(["a\nb", "c\n"]));
@@ -77,20 +99,27 @@ describe("API を使わない Skill の文の採点", () => {
     expect(code.filter((l) => l.startsWith("import")).join("\n")).not.toMatch(/anthropic|\.\/run|api-spend|node:https?/);
     for (const w of ["ANTHROPIC_API_KEY", "fetch(", "process.env"]) expect(code.join("\n")).not.toContain(w);
     dir = mkdtempSync(join(tmpdir(), "moyai-eval-cli-"));
-    mkdirSync(join(dir, "answers"));
-    for (const c of cases) writeFileSync(join(dir, "answers", `${c.id}.txt`), perfect(c));
+    for (const who of ["a", "b"]) {
+      mkdirSync(join(dir, who));
+      for (const c of cases) writeFileSync(join(dir, who, `${c.id}.txt`), perfect(c));
+    }
     const fetchSpy = vi.fn(() => {
       throw new Error("通信してはいけない");
     });
     vi.stubGlobal("fetch", fetchSpy);
     vi.stubEnv("ANTHROPIC_API_KEY", "これは使われないはずの値");
     const record = join(dir, "record.json");
-    const exit = await evalCli(["score", "--suite", SUITE, "--answers", join(dir, "answers"), "--label", "試し", "--record", record], REPO);
+    const exit = await evalCli(["score", "--suite", SUITE, "--answers", `${join(dir, "a")},${join(dir, "b")}`, "--solvers", "解く役 a,解く役 b", "--label", "試し", "--record", record], REPO);
     expect(exit).toBe(0);
     expect(fetchSpy).not.toHaveBeenCalled();
     const rec = JSON.parse(readFileSync(record, "utf8"));
     expect(rec).toMatchObject({ schema: "moyai.eval.skill-score/0", pack: "waste-incineration", pass: cases.length, cases: cases.length });
     expect(rec.skills.map((s: { path: string }) => s.path)).toEqual(skillPathsOf("waste-incineration"));
+    expect(rec.runs.map((r: { solver: string; pass: number }) => [r.solver, r.pass])).toEqual([["解く役 a", cases.length], ["解く役 b", cases.length]]);
+    // 解く役が 1 つだけなら記録を作らない
+    const one = join(dir, "one.json");
+    expect(await evalCli(["score", "--suite", SUITE, "--answers", join(dir, "a"), "--solvers", "解く役 a", "--record", one], REPO)).toBe(1);
+    expect(existsSync(one)).toBe(false);
     expect(JSON.stringify(rec)).not.toContain("これは使われないはずの値");
     expect(existsSync(join(REPO, "eval", "skill-scores", "waste-incineration", "x.json"))).toBe(false);
   });
