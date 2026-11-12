@@ -366,7 +366,8 @@ describe("見直しで直したこと", () => {
     writeFileSync(join(w.dev, "動画.txt"), "作業中\n");
     const r = await installFromClone({ root: w.root, run: runner().run, sourceForTest: w.origin }, w.dev);
     expect(r).toEqual({ ok: true, commit: w.c1 });
-    expect(readFileSync(join(versionDir(w.root, w.c1), "a.txt"), "utf8")).toBe("1\n");
+    // Windows の git は取り出すときに改行を CRLF にすることがある（core.autocrlf）。中身だけを比べる
+    expect(readFileSync(join(versionDir(w.root, w.c1), "a.txt"), "utf8").replace(/\r\n/g, "\n")).toBe("1\n");
     expect(existsSync(join(versionDir(w.root, w.c1), "動画.txt"))).toBe(false);
     expect(readFileSync(join(w.dev, "a.txt"), "utf8")).toBe("作業中\n");
   });
