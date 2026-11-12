@@ -11,7 +11,7 @@ import { generateSuite } from "./gen";
 import { countEvalProperNouns, leakedTestCases, sha256, systemText, userText } from "./prompt";
 import { buildReport, compareReports, pct, renderHtml, type Report } from "./report";
 import { callOnce, planTasks, runTasks, type CallConfig, type Price } from "./run";
-import { joinSkills, scoreAnswers, scoreFileOf, skillPathsOf, suiteShaOf, writePrompts } from "./score";
+import { MIN_SOLVERS, joinSkills, scoreAgreed, scoreFileOf, skillPathsOf, suiteShaOf, writePrompts } from "./score";
 import { MANIFEST_SCHEMA, type EvalCase, type Manifest, type ResultRow, type Split, type Suite } from "./types";
 import { WorldFormatError, contentPackIds, loadPack, loadWorld, properNounTerms } from "./world";
 
@@ -32,9 +32,9 @@ export const EVAL_HELP = `使い方：
   moyai eval prompts --suite <名前> --out <フォルダ> [--skill <SKILL.md,SKILL.md>]
         API を使わない採点（S-C4）の 1：解く人に渡す文だけ（system.txt・cases/<id>.txt）を書き出す。正解は書かない
         --skill を省くと、1 段目（skills/moyai/SKILL.md）とその業種の packs/<パック>/SKILL.md をつないだ文
-  moyai eval score --suite <名前> --answers <フォルダ> [--skill <SKILL.md,SKILL.md>] [--label <版の名前>] [--record <書く道>]
-        API を使わない採点（S-C4）の 2：answers/<id>.txt をコードの採点 6 種で採点し、
-        eval/skill-scores/<パック>/<文の指紋の頭 16 字>.json に記録を書く（API を呼ばない・キーを読まない）`;
+  moyai eval score --suite <名前> --answers <フォルダ,フォルダ> --solvers <役の呼び名,役の呼び名> [--skill <SKILL.md,SKILL.md>] [--label <版の名前>] [--record <書く道>]
+        API を使わない採点（S-C4）の 2：正解を見ていない別々の解く役 2 つ以上の answers/<id>.txt を、それぞれコードの採点 6 種で採点し、
+        合格の数がどれも同じときだけ eval/skill-scores/<パック>/<文の指紋の頭 16 字>.json に記録を書く（API を呼ばない・キーを読まない）`;
 
 function flags(argv: string[]): Map<string, string> | null {
   const m = new Map<string, string>();
@@ -358,19 +358,41 @@ function cmdPrompts(f: Map<string, string>, p: Paths): number {
 
 function cmdScore(f: Map<string, string>, p: Paths): number {
   const name = f.get("suite");
-  const answers = f.get("answers");
-  if (!name || !answers) return usage();
+  const dirs = f.get("answers")?.split(",").filter(Boolean) ?? [];
+  const solvers = f.get("solvers")?.split(",").map((x) => x.trim()) ?? [];
+  if (!name || !dirs.length || solvers.length !== dirs.length) return usage();
   const loaded = loadSuite(p, name);
   if (!loaded) {
     say(`eval score：問題の組 ${name} がありません`);
     return 1;
   }
   const set = skillSet(f, p, loaded.suite.pack);
-  const rec = scoreAnswers({ suite: loaded.suite, suiteSha: suiteShaOf(p.evalDir, name), cases: [...loaded.train, ...loaded.test], answersDir: resolve(answers), skills: set.skills, skillSha: set.sha, label: f.get("label") ?? null, now: new Date() });
+  const r = scoreAgreed({
+    suite: loaded.suite,
+    suiteSha: suiteShaOf(p.evalDir, name),
+    cases: [...loaded.train, ...loaded.test],
+    answers: dirs.map((d, k) => ({ solver: solvers[k] as string, dir: resolve(d) })),
+    skills: set.skills,
+    skillSha: set.sha,
+    label: f.get("label") ?? null,
+    now: new Date(),
+  });
+  for (const x of r.ok ? r.record.runs : r.runs) say(`  解く役「${x.solver}」：合格 ${x.pass}/${loaded.train.length + loaded.test.length}`);
+  if (!r.ok) {
+    say(
+      r.reason === "tooFew"
+        ? `eval score：解く役が ${r.runs.length}。記録には、正解を見ていない別々の解く役 ${MIN_SOLVERS} つ以上の答えが要る（--answers と --solvers にカンマで並べる）`
+        : r.reason === "sameSolver"
+          ? "eval score：解く役の呼び名が空か重なっている（別々の役を並べる）"
+          : "eval score：解く役によって合格の数が違うので、記録を作らない（解き方か問いの組に揺れがある。落ちた問題を比べて、原因を確かめる）",
+    );
+    return 1;
+  }
+  const rec = r.record;
   const file = f.get("record") ? resolve(f.get("record") as string) : scoreFileOf(p.evalDir, loaded.suite.pack, set.sha);
   mkdirSync(join(file, ".."), { recursive: true });
   writeJson(file, rec);
-  say(`eval score：${name} — 合格 ${rec.pass}/${rec.cases}（答えのあった問題 ${rec.answered}）。記録 ${relative(p.root, file)}`);
+  say(`eval score：${name} — 合格 ${rec.pass}/${rec.cases}（解く役 ${rec.runs.length} つで同じ）。記録 ${relative(p.root, file)}`);
   for (const [k, v] of Object.entries(rec.perRule)) say(`  ${k}：${v.pass}/${v.total}`);
   return 0;
 }
