@@ -11,6 +11,7 @@
 import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, parse, resolve } from "node:path";
+import { appRoot } from "../bridge/app-update";
 import { defaultRoot, detectDocuments, normPath, readSettings } from "../bridge/places";
 import { readKeyFile, resolveStateDir, type KeyFile } from "../bridge/state";
 import { stopBridgeAt, type StopOutcome } from "./relay";
@@ -35,6 +36,9 @@ export const UNINSTALL_TEXT = {
   rootUnknown: "5. 保存先の場所が分かりません。保存先には触れません。",
   rootNone: (path: string) => `5. 保存先（${path}）はありません。`,
   rootUnsafe: (path: string) => `5. 保存先（${path}）は、ホームのフォルダかドライブの根と重なるので消しません。`,
+  app: (path: string) => `6. 入れた MOYAI の版のフォルダ（${path}）を消します（moyai setup が入れたアプリの写しと起動の台本。計画・資料・鍵は入っていません）。`,
+  appNone: (path: string) => `6. 入れた MOYAI の版のフォルダ（${path}）はありません。`,
+  appDone: "入れた MOYAI の版のフォルダを消しました。",
   repo: (path: string) => `最後に、リポジトリのフォルダ（${path}）を消すと、MOYAI は残りません（このコマンドは消しません）。`,
   ask: "消してよければ「はい」と打って Enter：",
   yes: "--yes なので、確かめずに消します（利用者がチャットで確かめた前提）。",
@@ -116,6 +120,8 @@ export async function uninstallCli(
     root?: (stateDir: string) => Promise<string | null>;
     stop?: (stateDir: string, key: KeyFile) => Promise<StopOutcome>;
     repoDir?: string;
+    /** 入れた版のフォルダの親（既定：moyai setup が入れる場所） */
+    appDir?: string;
     platform?: NodeJS.Platform;
     home?: string;
     ask?: (prompt: string) => Promise<string | null>;
@@ -157,6 +163,9 @@ export async function uninstallCli(
   else if (!rootExists) say(UNINSTALL_TEXT.rootNone(root));
   else if (!a.removeRoot) say(UNINSTALL_TEXT.rootKeep(root));
   else say(removable ? UNINSTALL_TEXT.rootRemove(root) : UNINSTALL_TEXT.rootUnsafe(root));
+  const appDir = o.appDir ?? appRoot();
+  const appExists = existsSync(appDir);
+  say(appExists ? UNINSTALL_TEXT.app(appDir) : UNINSTALL_TEXT.appNone(appDir));
   say(UNINSTALL_TEXT.repo(repoDir));
 
   if (a.yes) say(UNINSTALL_TEXT.yes);
@@ -199,6 +208,16 @@ export async function uninstallCli(
     } catch {
       failed = true;
       say(UNINSTALL_TEXT.failed("保存先"));
+    }
+  }
+  // 版のフォルダは、橋渡しを止めたあとに消す（Windows では動いている版のファイルを消せない）
+  if (appExists) {
+    try {
+      rmSync(appDir, { recursive: true, force: true, maxRetries: 3 });
+      say(UNINSTALL_TEXT.appDone);
+    } catch {
+      failed = true;
+      say(UNINSTALL_TEXT.failed("入れた MOYAI の版のフォルダ"));
     }
   }
   say(UNINSTALL_TEXT.after);
