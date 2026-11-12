@@ -752,6 +752,16 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const g = `${formKey(cs.tableId)}|${cs.cands.length === 0 ? "none" : cs.pattern}`;
     caseGroups.set(g, [...(caseGroups.get(g) ?? []), cs]);
   }
+  // 同じ名前・同じ号・同じ候補の機器の名前の組（表をまたいで。名前ごとの問いを 1 つにする）
+  const clusterNo = new Map(clusters.map((c, i) => [c, i]));
+  const sameAsk = (css: Case[], candsOf: (cs: Case) => Cluster[]): Case[][] => {
+    const m = new Map<string, Case[]>();
+    for (const cs of css) {
+      const k = `${nk(cs.name)}|${cs.unitKey}|${candsOf(cs).map((c) => clusterNo.get(c) ?? -1).join(",")}`;
+      m.set(k, [...(m.get(k) ?? []), cs]);
+    }
+    return [...m.values()];
+  };
   /** 1 件ずつ聞く質問にしてよい名前の数の上限（越えれば「1 件ずつ聞く」を出さない。Architect の 64） */
   const SPLIT_MAX = 30;
   const unitLabel = (u: string) => (u === "-" ? "号の欄が空" : u === "common" ? "共通" : `${u.slice(1)} 号`);
@@ -835,7 +845,10 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       else for (const cs of rest) resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(nkey) });
     }
     if (one) {
-      for (const cs of rest) {
+      // 同じ様式の表（日報の頁・月ごとのシート）の、同じ名前・同じ号・同じ候補の名前は 1 問（答えはその名前のどの行にも当てる）
+      for (const grp of sameAsk(rest, (cs) => (cs.cands.length === 0 ? [] : cs.cands))) {
+        const cs = grp[0]!;
+        const evs = grp.flatMap((x) => x.events);
         const key = `eventAssetOne|${cs.key}`;
         // 名前で当たる機器が無いときは、同じ号の機器と、号の無い・共通の機器を選択肢に出す（推し量らない。決めるのは人）
         const none = cs.cands.length === 0;
@@ -843,23 +856,23 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         const choices = none
           ? clusters.filter((c) => !c.excluded && !c.pending && !c.held && c.recs.some((r) => r.level > 0) && (unitN === null || numberOf(c) === unitN || numberOf(c) === null)).slice(0, 40)
           : cs.cands;
-        const ev0 = cs.events[0];
+        const ev0 = evs[0];
         const a = ask.ask(key, {
           kind: "eventAssetOne",
           text: none
-            ? `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}）に、名前の同じ機器が無い（${cs.events.length} 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）`
-            : `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}）に当たる機器が ${cs.cands.length} つある（${cs.events.length} 行）。どの機器か`,
+            ? `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}）に、名前の同じ機器が無い（${evs.length} 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）`
+            : `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}）に当たる機器が ${cs.cands.length} つある（${evs.length} 行）。どの機器か`,
           options: [...choices.map((c, i) => ({ id: `c${i}`, label: `${c.name}${c.tag ? `（${c.tag}）` : ""}${seriesLabel(c.series)}` })), { id: "exclude", label: "外す" }],
           valueKind: "option",
           defaultAnswer: null,
-          sameShapeRows: cs.events.length,
+          sameShapeRows: evs.length,
           // 選択肢ごとに、その行と、候補の機器の出どころ（items の i 番目が選択肢 c{i}）。候補が無ければ行だけ
           items: choices.length
             ? choices.map((c) => ({ file: ev0?.file ?? "", sheet: ev0?.sheet ?? null, cells: ev0?.refs.slice(0, 1) ?? [], target: c.recs.slice(0, 3).map((r) => ({ file: r.file, sheet: r.sheet, cells: [r.nameRef] })), note: cs.name }))
-            : cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), note: cs.name })),
+            : evs.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), note: cs.name })),
         });
         const pick = a?.startsWith("c") ? (choices[Number(a.slice(1))] ?? null) : null;
-        resolved.set(cs.key, { c: pick, qid: a ? questionIdOf(key) : null, excluded: a === "exclude", ...(a ? {} : { wait: questionIdOf(key) }) });
+        for (const x of grp) resolved.set(x.key, { c: pick, qid: a ? questionIdOf(key) : null, excluded: a === "exclude", ...(a ? {} : { wait: questionIdOf(key) }) });
       }
       continue;
     }
@@ -889,28 +902,31 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         note: cs.name,
       })),
     });
-    for (const cs of css) {
-      if (a === "yes") resolved.set(cs.key, { c: cs.cands[0] ?? null, qid: questionIdOf(gkey), excluded: false });
-      // 名前が多いときの前の「1 件ずつ聞く」の決定は、答えていないものとして扱う（選択肢から外した）
-      else if (a === "split" && !many) {
+    if (a === "yes") for (const cs of css) resolved.set(cs.key, { c: cs.cands[0] ?? null, qid: questionIdOf(gkey), excluded: false });
+    // 名前が多いときの前の「1 件ずつ聞く」の決定は、答えていないものとして扱う（選択肢から外した）
+    else if (a === "split" && !many) {
+      // 同じ様式の表の、同じ名前・同じ号・同じ候補の名前は 1 問
+      for (const grp of sameAsk(css, (cs) => cs.cands.slice(0, 1))) {
+        const cs = grp[0]!;
+        const evs = grp.flatMap((x) => x.events);
         const k1 = `eventAssetOne|${cs.key}`;
         const c0 = cs.cands[0];
         const b = ask.ask(k1, {
           kind: "eventAssetOne",
-          text: `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}、${cs.events.length} 行）は「${c0?.name ?? ""}${c0?.tag ? `（${c0.tag}）` : ""}${seriesLabel(c0?.series ?? null)}」か`,
+          text: `${fileName} の機器「${cs.name}」（${unitLabel(cs.unitKey)}、${evs.length} 行）は「${c0?.name ?? ""}${c0?.tag ? `（${c0.tag}）` : ""}${seriesLabel(c0?.series ?? null)}」か`,
           options: [
             { id: "c0", label: "はい" },
             { id: "exclude", label: "いいえ（外す）" },
           ],
           valueKind: "option",
           defaultAnswer: null,
-          sameShapeRows: cs.events.length,
+          sameShapeRows: evs.length,
           // 行ごとに、比べる相手（候補の機器の出どころ）を添える（人が台帳を開かずに見比べられるように）
-          items: cs.events.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), target: (c0?.recs ?? []).slice(0, 3).map((r) => ({ file: r.file, sheet: r.sheet, cells: [r.nameRef] })), note: cs.name })),
+          items: evs.slice(0, 10).map((e) => ({ file: e.file, sheet: e.sheet, cells: e.refs.slice(0, 1), target: (c0?.recs ?? []).slice(0, 3).map((r) => ({ file: r.file, sheet: r.sheet, cells: [r.nameRef] })), note: cs.name })),
         });
-        resolved.set(cs.key, { c: b === "c0" ? (c0 ?? null) : null, qid: b ? questionIdOf(k1) : null, excluded: b === "exclude", ...(b ? {} : { wait: questionIdOf(k1) }) });
-      } else resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(gkey) });
-    }
+        for (const x of grp) resolved.set(x.key, { c: b === "c0" ? (c0 ?? null) : null, qid: b ? questionIdOf(k1) : null, excluded: b === "exclude", ...(b ? {} : { wait: questionIdOf(k1) }) });
+      }
+    } else for (const cs of css) resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(gkey) });
   }
   // ─── 日報の行 → 作業のまとまり ───
   const occMap = new Map<string, Occurrence>();
