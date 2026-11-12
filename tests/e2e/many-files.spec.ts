@@ -8,7 +8,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { FICTIONAL_1, packName, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { FICTIONAL_1, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const MONTHS = ["4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", "1月", "2月", "3月"];
 const REPORTS = [2019, 2020, 2021, 2022, 2023, 2024].map((y) => `report-f1-fy${y}.xlsx`);
@@ -40,8 +40,7 @@ function dailyBook(): Buffer {
 async function dropNine(page: Page, base: string): Promise<string[]> {
   await page.goto(`${base}/#/intake`);
   await expect(page.getByTestId("intake-page")).toBeVisible();
-  await page.getByTestId("pack").click();
-  await page.getByRole("option", { name: packName("waste-incineration"), exact: true }).click();
+  // Skillパックは画面で選ばない（Claude が会話で置く。ここではパックなしで読む。mushitaro/moyai#67）
   await page.getByTestId("facility-name").fill("【架空】資料 9 つの工場");
   const files = [
     { name: "daily-report.xlsx", b64: dailyBook().toString("base64") },

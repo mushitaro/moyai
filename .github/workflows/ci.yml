@@ -72,6 +72,15 @@ jobs:
           code=$?
           cat "$RUNNER_TEMP/bench/compare.md" >> "$GITHUB_STEP_SUMMARY"
           exit $code
+      - name: 初めて読む物差しを測る（パックなし・1 年目 → 規則 → 残りの年度。mushitaro/moyai#67）
+        run: node scripts/bench/pack-bench.mjs waste-incineration --first-read --out "$RUNNER_TEMP/bench-first-read"
+      - name: 記録した表（eval/bench/waste-incineration/first-read/）と比べる（数が違えば落ちる）
+        run: |
+          set +e
+          node scripts/bench/compare.mjs eval/bench/waste-incineration/first-read/result.json "$RUNNER_TEMP/bench-first-read/result.json" --strict --md "$RUNNER_TEMP/bench-first-read/compare.md"
+          code=$?
+          cat "$RUNNER_TEMP/bench-first-read/compare.md" >> "$GITHUB_STEP_SUMMARY"
+          exit $code
 
   # シナリオテスト D1・D2（docs/scenarios.md）：e2e（tests/e2e）と walkthrough（tests/demo）を、ubuntu と windows の Chrome で。
   # 落ちた試験があれば落ちる。ファイルごとの数を scenario の仕事に渡す

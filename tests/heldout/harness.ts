@@ -735,15 +735,17 @@ export interface RunOptions {
    * ⑥ の作業の場所は、実績として書いてある印と行だけ。読みすぎは、正解の印・行に 1 つも結ばない明細を数える（作業の名前のセルを読みすぎに数えない）
    */
   asWritten?: boolean;
+  /** Skillパック（既定 waste-incineration）。空の文字は「パックなし」（pack-bench の初めて読む測りだけ） */
+  packId?: string;
 }
 
-export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ result: SetResult; plan: Plan | null; analysis: Analysis; index: Index; survey: Survey }> {
+export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ result: SetResult; plan: Plan | null; analysis: Analysis; index: Index; survey: Survey; answered: Decision[] }> {
   const { truth, world } = set;
   const read = opt.read ?? truth.files.filter((f) => f.kind !== "photo").map((f) => f.file);
   const s = new IntakeSession({
     planId: `heldout-${truth.set}`,
     displayName: world.facility.name,
-    packId: "waste-incineration",
+    packId: opt.packId ?? "waste-incineration",
     facility: { facilityKey: opt.facilityKey ?? world.facility.id, name: world.facility.name, fiscalYearStartMonth: 4, scale: null, scaleUnit: null, legalFlags: [], fictional: true, inNationalTable: null },
   });
   if (opt.readings) s.setReadings(opt.readings);
@@ -816,5 +818,5 @@ export async function runSet(set: LoadedSet, opt: RunOptions = {}): Promise<{ re
     recovery: { ...rc, misses: rc.misses.slice(0, 50) },
     unplaced: unplaced.slice(0, 50),
   };
-  return { result, plan: plan ? Plan.parse(plan) : null, analysis: an, index: ix, survey: s.survey() };
+  return { result, plan: plan ? Plan.parse(plan) : null, analysis: an, index: ix, survey: s.survey(), answered: script.answered };
 }

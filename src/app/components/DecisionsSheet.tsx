@@ -1025,19 +1025,24 @@ export function DecisionsView({ plan, pending, ready, problem = null }: { plan: 
         </details>
       )}
 
-      <Group gap="lg" className="moyai-num">
-        <Text size="xs" c="dimmed" data-testid="crosswalk-unmapped" data-nodes={s.nodes.none} data-works={s.works.none} data-records={s.unmappedRecords}>
-          {W.unmapped(s.nodes.none, s.works.none, s.unmappedRecords)}
-        </Text>
-        <Text size="xs" c="dimmed" data-testid="crosswalk-accepted" data-nodes={s.nodes.accepted} data-works={s.works.accepted}>
-          {W.accepted(s.nodes.accepted, s.nodes.targeted, s.works.accepted, s.works.total)}
-        </Text>
-      </Group>
+      {/* 紐付けの数と直す欄は、共通の項目のあるパックのときだけ（パックなしは紐付ける先が無い。mushitaro/moyai#67） */}
+      {catalog && (
+        <>
+        <Group gap="lg" className="moyai-num">
+          <Text size="xs" c="dimmed" data-testid="crosswalk-unmapped" data-nodes={s.nodes.none} data-works={s.works.none} data-records={s.unmappedRecords}>
+            {W.unmapped(s.nodes.none, s.works.none, s.unmappedRecords)}
+          </Text>
+          <Text size="xs" c="dimmed" data-testid="crosswalk-accepted" data-nodes={s.nodes.accepted} data-works={s.works.accepted}>
+            {W.accepted(s.nodes.accepted, s.nodes.targeted, s.works.accepted, s.works.total)}
+          </Text>
+        </Group>
 
-      <details data-testid="crosswalk-direct-open">
-        <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>{W.direct.title}</summary>
-        <DirectSet plan={plan} onDone={setMsg} />
-      </details>
+        <details data-testid="crosswalk-direct-open">
+          <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--text-3)" }}>{W.direct.title}</summary>
+          <DirectSet plan={plan} onDone={setMsg} />
+        </details>
+        </>
+      )}
 
       <Modal opened={!!rejecting} onClose={() => setRejecting(null)} title={T.rejectTitle} centered data-testid="crosswalk-reject-dialog">
         {rejecting && (

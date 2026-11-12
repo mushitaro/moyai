@@ -16,7 +16,7 @@ import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { packName, FICTIONAL_1, callTool as call, fillDecisionReason, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { FICTIONAL_1, callTool as call, fillDecisionReason, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】みどり台クリーンセンター";
 const A = { name: "【架空】山田" };
@@ -79,7 +79,7 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
   const ringRoot = join(work, "輪のフォルダ");
   const pa = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })).newPage();
   await record(pa, "a");
-  const c = await mcpClient(one.stateDir, ["intake_survey", "intake_settle", "intake_compose", "crosswalk_propose", "peer_reference", "chart_propose"]);
+  const c = await mcpClient(one.stateDir, ["intake_add_files", "intake_survey", "intake_settle", "intake_compose", "crosswalk_propose", "peer_reference", "chart_propose"]);
   let link = "";
   try {
     await test.step("山田：設定で保管先・呼び名・台帳の clone。輪を作って鍵を作る", async () => {
@@ -102,17 +102,13 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await expect(pa.getByTestId("drop")).toBeVisible();
     });
 
-    await test.step("1 MERGE の資料のシート：パックと施設の名前を選び、資料を 3 つ落とす", async () => {
-      await pa.getByTestId("pack").click();
-      await pa.getByRole("option", { name: packName("waste-incineration"), exact: true }).click();
-      await pa.getByTestId("facility-name").fill(FACILITY);
-      const files = FICTIONAL_1.files.map((n) => ({ name: basename(n), b64: readFileSync(join(FICTIONAL_1.dir, n)).toString("base64") }));
-      const dt = await pa.evaluateHandle((fs) => {
-        const d = new DataTransfer();
-        for (const f of fs) d.items.add(new File([Uint8Array.from(atob(f.b64), (x) => x.charCodeAt(0))], f.name));
-        return d;
-      }, files);
-      await pa.getByTestId("drop").dispatchEvent("drop", { dataTransfer: dt });
+    await test.step("1 Claude：利用者がチャットで言ったフォルダの資料 3 つを、Skillパックと施設の名前を添えて入れる（パックは画面で選ばない。mushitaro/moyai#67）", async () => {
+      const folder = join(work, "資料");
+      mkdirSync(folder, { recursive: true });
+      const files = FICTIONAL_1.files.map((n) => ({ name: basename(n) }));
+      for (const n of FICTIONAL_1.files) writeFileSync(join(folder, basename(n)), readFileSync(join(FICTIONAL_1.dir, n)));
+      const added = await call(c, "intake_add_files", { source: "folder", path: folder, pack: "waste-incineration", facilityName: FACILITY });
+      expect(added.added).toHaveLength(files.length);
       // 資料の選び（白紙でも同じ。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）。未確定のいちばん多い資料が開いている
       await expect(pa.getByTestId("source-picker")).toHaveAttribute("data-count", String(files.length), { timeout: 20_000 });
       await expect(pa.getByTestId("source-picker")).not.toHaveAttribute("data-file", "");

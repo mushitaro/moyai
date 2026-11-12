@@ -1,0 +1,9 @@
+{
+ "number": 9004,
+ "title": "工程表の記号",
+ "labels": [
+  "area:skill-loop",
+  "feedback"
+ ],
+ "body": "### 業種（Skillパック）\n\nごみ焼却（waste-incineration）\n\n### 資料の種類\n\n工程表\n\n### どう読まれて、どう読まれるべきだったか\n\n工程表の「▲」が読めないと聞かれた。点検の予定の印として書いている。\n\n### 会話で作ったルール（あれば）\n\n_No response_\n\n### 確かめ\n\n- [X] 資料の中身（行の値・金額・固有名詞）を書いていない\n"
+}
