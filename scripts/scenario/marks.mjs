@@ -11,8 +11,9 @@ export const WAIT = "待ち";
 export const MARKS = [
   { id: "S-0", title: "初めての人の通し（M-PC3 の Claude Desktop）", auto: false, note: "自動の代わりは walkthrough.spec（D2 に含む）" },
   { id: "A1", title: "物差しで全施設の計画・開いた問い 0・記録より下がらない", auto: true },
+  { id: "A1b", title: "同じ物差しで施設ごとに ⑤ 50 以下・③ 80% 以上・⑥ 70% 以上", auto: true },
   { id: "A2", title: "見ていない様式で計画ができる（1 回だけ測る）", auto: false, note: "1 回だけ（docs/plan.md §2.6、#18）。npm run scenario では走らせない" },
-  { id: "A3", title: "初めて読む物差しで計画・残りの年度の問いが 1 年目の 1 割以下", auto: true },
+  { id: "A3", title: "初めて読む物差しで計画・残りの年度の問いが 1 年目の 1 割以下・1 年目の問い 50 以下", auto: true },
   { id: "A4", title: "S-0 の 3 が M-PC3 で通る", auto: false },
   { id: "B1", title: "台帳は moyai-ledger、切り替えが main、台帳の試験が全部通る", auto: true },
   { id: "B2", title: "手元の受け口と偽の GitHub で 1 本通り、断る試験も通る", auto: true },
@@ -50,9 +51,34 @@ export function judgeA1(result, strict) {
   return r(PASS, ev);
 }
 
+/** A1b の下限（docs/scenarios.md） */
+export const A1B = { asked: 50, accuracy: 0.8, recovery: 0.7 };
+const ratio = (x) => (x && x.total > 0 ? x.correct / x.total : null);
+const pct = (v) => (v === null ? "—" : `${(v * 100).toFixed(1)}%`);
+
+/**
+ * A1b：同じ物差しで、施設ごとに ⑤ 質問（asked）50 以下・③（accuracy）80% 以上・⑥（recovery）70% 以上。測れない（—）は外れ
+ * @param {{ facilities: Array<{facility:string, asked:number, accuracy:{correct:number,total:number}|null, recovery:{correct:number,total:number}|null}> } | null} result
+ */
+export function judgeA1b(result, strict) {
+  if (!result) return r(UNKNOWN, "物差しの結果を読めない");
+  const fs = result.facilities ?? [];
+  if (fs.length === 0) return r(FAIL, "物差しの施設が 0");
+  const bad = fs.filter((f) => {
+    const a = ratio(f.accuracy);
+    const v = ratio(f.recovery);
+    return !(Number(f.asked) <= A1B.asked) || a === null || a < A1B.accuracy || v === null || v < A1B.recovery;
+  });
+  const ok = fs.length - bad.length;
+  const ev = `下限を満たす施設 ${ok}/${fs.length}${bad.length ? `（外れ：${bad.slice(0, 6).map((f) => `${f.facility} ⑤${f.asked}・③${pct(ratio(f.accuracy))}・⑥${pct(ratio(f.recovery))}`).join("、")}${bad.length > 6 ? ` ほか ${bad.length - 6}` : ""}）` : ""}・記録との比べ：${strict.detail}`;
+  if (strict.same === false || bad.length > 0) return r(FAIL, ev);
+  if (strict.same === null) return r(UNKNOWN, ev);
+  return r(PASS, ev);
+}
+
 /**
  * A3：初めて読む物差し（pack-bench --first-read の結果）。測った施設（年度ごとの資料のある施設）すべてで計画ができ、
- * 残りの年度の 1 年あたりの問い（restAsked ÷ restYears）が 1 年目の問い（firstAsked）の 1 割以下。記録との比べは A1 と同じ
+ * 残りの年度の 1 年あたりの問い（restAsked ÷ restYears）が 1 年目の問い（firstAsked）の 1 割以下、1 年目の問いが 50 以下。記録との比べは A1 と同じ
  * @param {{ facilities: Array<{facility:string, planMade:boolean, error?:string|null, firstRead?: {firstAsked:number, restAsked:number, restYears:number}}> } | null} result
  */
 export function judgeA3(result, strict) {
@@ -64,8 +90,10 @@ export function judgeA3(result, strict) {
     const x = f.firstRead;
     return !(x.restYears > 0) || x.restAsked / x.restYears > x.firstAsked * 0.1;
   });
-  const ev = `計画 ${made}/${fs.length} 施設・残りの 1 年あたりの問いが 1 年目の 1 割を越える施設 ${over.length}${over.length ? `（${over.map((f) => `${f.facility} ${(f.firstRead.restAsked / Math.max(1, f.firstRead.restYears)).toFixed(1)}／${f.firstRead.firstAsked}`).join("、")}）` : ""}・記録との比べ：${strict.detail}`;
-  if (strict.same === false || made !== fs.length || over.length > 0) return r(FAIL, ev);
+  // 1 年目の問いも A1b と同じく 50 以下
+  const firstOver = fs.filter((f) => !(f.firstRead.firstAsked <= A1B.asked));
+  const ev = `計画 ${made}/${fs.length} 施設・残りの 1 年あたりの問いが 1 年目の 1 割を越える施設 ${over.length}${over.length ? `（${over.map((f) => `${f.facility} ${(f.firstRead.restAsked / Math.max(1, f.firstRead.restYears)).toFixed(1)}／${f.firstRead.firstAsked}`).join("、")}）` : ""}・1 年目の問いが ${A1B.asked} を越える施設 ${firstOver.length}・記録との比べ：${strict.detail}`;
+  if (strict.same === false || made !== fs.length || over.length > 0 || firstOver.length > 0) return r(FAIL, ev);
   if (strict.same === null) return r(UNKNOWN, ev);
   return r(PASS, ev);
 }

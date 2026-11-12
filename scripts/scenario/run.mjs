@@ -22,6 +22,7 @@ import {
   MARKS,
   UNKNOWN,
   judgeA1,
+  judgeA1b,
   judgeA3,
   judgeB1,
   judgeB2,
@@ -191,6 +192,7 @@ function bench(label, recorded, extra) {
 {
   const a1 = bench("waste-incineration", join("eval", "bench", "waste-incineration", "result.json"), []);
   results.A1 = a1 ? judgeA1(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" };
+  results.A1b = a1 ? judgeA1b(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" };
   const a3 = bench("first-read", join("eval", "bench", "waste-incineration", "first-read", "result.json"), ["--first-read"]);
   results.A3 = a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" };
 }
