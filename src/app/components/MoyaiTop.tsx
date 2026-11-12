@@ -14,6 +14,7 @@ import type { BridgeClient } from "../bridge-client";
 import { useConnection } from "../state/bridge";
 import { setPendingDerive } from "../state/derive";
 import { setWorkingPlan } from "../state/plan-store";
+import { workKeeper } from "../state/work";
 import { STAGE_HASH, sheetHash } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { versionName } from "../version-name";
@@ -179,6 +180,8 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
   const discardWork = async (planId: string) => {
     const r = readHuman<{ ok: boolean }>(await client.callHuman("work_discard", ROUTES.workDiscard.path, { planId }));
     if (!r.ok) return setError(r.message);
+    // このタブにまだ同じ作業中が残っていても、人が戻すまで書き直さない
+    workKeeper()?.forget(planId);
     setWorks((ws) => ws.filter((w) => w.planId !== planId));
   };
   const anyProblem = rows.some(({ p }) => p.versions.some((v) => v.problem));

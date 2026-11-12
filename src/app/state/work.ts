@@ -9,7 +9,7 @@ import { aiDecisions } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
 import type { Decision } from "../../import/questions";
 import { acceptedList, isAccepted, restoreAccepted, subscribeAccepted } from "./decisions";
-import { getWorkingPlan, restoreWorkingPlan, subscribeWorkingPlan } from "./plan-store";
+import { clearWorkingPlan, getWorkingPlan, restoreWorkingPlan, subscribeWorkingPlan } from "./plan-store";
 import type { CrosswalkProposal } from "../../plan/crosswalk";
 
 export const WORK_SCHEMA = "moyai.work/1";
@@ -59,10 +59,13 @@ export interface WorkSource {
   decisions(): Decision[];
   /** 今の施設の計画 ID（作業中の計画がまだ無いときの、作業中の置き場所） */
   facilityKey(): string;
-  sourcesForCommit(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[] } | null>;
+  /** 写真のほかの資料のバイト列と、写さなかった写真の数 */
+  sourcesForWork(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; skipped: number }>;
+  /** 資料の並びが変わるたびに進む数 */
+  readonly filesVersion: number;
   subscribe(fn: () => void): () => void;
   pinPlanId(id: string): void;
-  restoreWork(base: number | null, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[], demo: readonly string[]): Promise<void>;
+  restoreWork(base: number | null, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[], demo: readonly string[], hasPlan?: boolean): Promise<void>;
 }
 
 /** 確定のシートで、まだ受けていない決定の数（トップの「未確定 n」） */
@@ -75,8 +78,19 @@ export class WorkKeeper {
   private writing: Promise<void> = Promise.resolve();
   /** 戻している間は書かない（戻す途中の半端なものを書かない） */
   private paused = 0;
-  /** 計画 ID と資料の名前の並び → 送った資料の写し（同じ資料は送り直さない） */
+  /** 計画 ID と資料の並びの版 → 送った資料の写し（同じ資料は送り直さない） */
   private sent: { key: string; files: WorkFile[]; skipped: number } | null = null;
+  /** 置いた資料の SHA-256（計画 ID ごと。失敗のあとも、送れたものは送り直さない） */
+  private uploaded = new Set<string>();
+  /** 戻すたびに進む（戻す前に始まった書き込みは、書かずに捨てる） */
+  private generation = 0;
+  /**
+   * このタブで書いてよい作業中（計画 ID）。このタブで作り始めた作業中か、戻した作業中だけ。
+   * 保管先にほかの作業中（確定していない変更か未確定がある）が残っていれば、人が戻すか消すまで上書きしない（#82 の見直し）
+   */
+  private owned = new Set<string>();
+  /** 人が消した作業中（このタブにまだ残っていても、戻すまで書き直さない） */
+  private discarded = new Set<string>();
   private stops: (() => void)[] = [];
 
   constructor(
@@ -124,6 +138,7 @@ export class WorkKeeper {
 
   private async write(): Promise<void> {
     if (this.paused > 0) return;
+    const gen = this.generation;
     const w = getWorkingPlan();
     if (w && w.origin !== "intake") return;
     const ws = this.o.ws;
@@ -131,19 +146,32 @@ export class WorkKeeper {
     // Skillパックは無くてよい（パックなしで読む。#67）。施設の名前が無ければ、置き場所が決まらないので書かない
     if (!w && (ws.fileNames.length === 0 || !ws.settings.facilityName.trim())) return;
     const planId = w ? w.plan.planId : ws.facilityKey();
+    // 計画と資料が別の施設のもの（版を開いている途中など）なら書かない。混ぜた作業中で、よい作業中を上書きしない
+    if (w && w.plan.planId !== ws.facilityKey()) return;
+    if (this.discarded.has(planId)) return;
+    if (!this.owned.has(planId)) {
+      const there = await this.o.port.read(planId);
+      if (there && (there.changed || there.open > 0)) return;
+      this.owned.add(planId);
+    }
     const names = ws.fileNames;
-    const key = `${planId}\u0000${names.join("\u0000")}`;
+    const key = `${planId}\u0000${ws.filesVersion}\u0000${names.join("\u0000")}`;
     if (this.sent?.key !== key) {
-      const src = names.length > 0 ? await ws.sourcesForCommit() : { files: [] };
+      const src = names.length > 0 ? await ws.sourcesForWork() : { files: [], skipped: 0 };
       const demo = new Set(names.filter((n) => !ws.userFileNames.includes(n)));
       const files: WorkFile[] = [];
-      for (const f of src?.files ?? []) {
-        const r = await this.o.port.putSource(planId, f.bytes);
-        if (!r.ok) return;
-        files.push({ name: f.name, sha256: r.sha256, size: r.size, ...(demo.has(f.name) ? { demo: true } : {}) });
+      for (const f of src.files) {
+        const id = `${planId}\u0000${f.sha256}`;
+        if (!this.uploaded.has(id)) {
+          const r = await this.o.port.putSource(planId, f.bytes);
+          if (!r.ok) return;
+          this.uploaded.add(`${planId}\u0000${r.sha256}`);
+        }
+        files.push({ name: f.name, sha256: f.sha256, size: f.bytes.length, ...(demo.has(f.name) ? { demo: true } : {}) });
       }
-      this.sent = { key, files, skipped: src ? 0 : names.length };
+      this.sent = { key, files, skipped: src.skipped };
     }
+    if (gen !== this.generation || this.paused > 0) return;
     const accepted = acceptedList();
     const state: WorkState = {
       schema: WORK_SCHEMA,
@@ -166,6 +194,12 @@ export class WorkKeeper {
     await this.o.port.save(state);
   }
 
+  /** 人が作業中を消した（トップの「作業中を消す」）。このタブに残っていても、戻すまで書き直さない */
+  forget(planId: string): void {
+    this.discarded.add(planId);
+    this.owned.delete(planId);
+  }
+
   /**
    * 作業中を資料ごと戻す（トップの「作業中」→「続きから開く」）。資料が 1 つでも読めなければ戻さない（理由を返す）。
    * 戻したものは、次の変更からまた書く
@@ -180,6 +214,7 @@ export class WorkKeeper {
       files.push({ name: f.name, bytes: b });
     }
     this.paused++;
+    this.generation++;
     try {
       const ws = this.o.ws;
       ws.settings = { ...s.settings };
@@ -189,10 +224,15 @@ export class WorkKeeper {
         files,
         s.decisions,
         s.files.filter((f) => f.demo).map((f) => f.name),
+        s.plan !== null,
       );
       if (s.plan) restoreWorkingPlan(s.plan, "intake", s.proposals, s.base);
+      else clearWorkingPlan();
       restoreAccepted(s.accepted);
-      this.sent = { key: `${planId}\u0000${ws.fileNames.join("\u0000")}`, files: s.files, skipped: s.skipped };
+      this.sent = { key: `${planId}\u0000${ws.filesVersion}\u0000${ws.fileNames.join("\u0000")}`, files: s.files, skipped: s.skipped };
+      for (const f of s.files) this.uploaded.add(`${planId}\u0000${f.sha256}`);
+      this.owned.add(planId);
+      this.discarded.delete(planId);
     } finally {
       this.paused--;
     }

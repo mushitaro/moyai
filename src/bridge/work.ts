@@ -6,6 +6,7 @@
 // - 行の値・鍵は記録（ログ）に書かない。ここが書くのは保管先のファイルだけ。
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { PLAN_ID, planDir } from "../plan/paths";
 
@@ -83,7 +84,7 @@ export async function writeWork(root: string, raw: unknown): Promise<WorkWrite> 
   if (Buffer.byteLength(text) > WORK_STATE_MAX_BYTES) return { ok: false, reason: "workTooLarge" };
   const dir = workDir(root, s.planId);
   await mkdir(dir, { recursive: true });
-  const tmp = join(dir, `state.json.tmp-${process.pid}-${Date.now()}`);
+  const tmp = join(dir, `state.json.tmp-${randomUUID()}`);
   await writeFile(tmp, text);
   await rename(tmp, statePath(root, s.planId));
   return { ok: true };
@@ -129,9 +130,36 @@ export async function readWorkSource(root: string, planId: string, sha: string):
   }
 }
 
-/** 作業中を消す（人だけ。署名した版と、版が持つ資料は消さない） */
+/** 署名した版の記録が持つ資料の SHA-256（plans/<計画ID>/versions/*.json の sources） */
+async function versionSources(root: string, planId: string): Promise<Set<string>> {
+  const out = new Set<string>();
+  const dir = join(planDir(root, planId), "versions");
+  let names: string[] = [];
+  try {
+    names = (await readdir(dir)).filter((n) => n.endsWith(".json"));
+  } catch {
+    return out;
+  }
+  for (const n of names) {
+    try {
+      const v = JSON.parse(await readFile(join(dir, n), "utf8")) as { sources?: { sha256?: unknown }[]; record?: { sources?: { sha256?: unknown }[] } };
+      for (const x of [...(v.sources ?? []), ...(v.record?.sources ?? [])]) if (typeof x?.sha256 === "string") out.add(x.sha256);
+    } catch {
+      // 読めない版の記録があれば、資料は消さない（消しすぎない）
+      out.add("*");
+    }
+  }
+  return out;
+}
+
+/** 作業中を消す（人だけ）。作業中だけが持っていた資料の写しも消す。署名した版と、版が持つ資料は消さない */
 export async function discardWork(root: string, planId: string): Promise<boolean> {
   if (!PLAN_ID.test(planId)) return false;
+  const w = await readWork(root, planId);
   await rm(workDir(root, planId), { recursive: true, force: true });
+  if (w && w.files.length > 0) {
+    const keep = await versionSources(root, planId);
+    if (!keep.has("*")) for (const f of w.files) if (!keep.has(f.sha256)) await rm(sourcePath(root, planId, f.sha256), { force: true });
+  }
   return true;
 }

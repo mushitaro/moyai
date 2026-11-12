@@ -278,7 +278,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       setOldView(null);
       setOldRecord(null);
       if (r.state.base !== null) setWorkBase({ planId: workId, base: r.state.base });
-    });
+    }).catch(() => setNotice(T.workFailed(T.openWhat.workSource ?? "")));
   }, [workId, conn.kind]);
   useEffect(() => {
     if (!workBase || !st?.latest || st.latest.plan.planId !== workBase.planId || st.latest.version !== workBase.base) return;

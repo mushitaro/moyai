@@ -7,7 +7,9 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { writeSettings } from "../../src/bridge/places";
 import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
-import { WORK_SCHEMA, listWork, readWork, writeWork } from "../../src/bridge/work";
+import { WORK_SCHEMA, discardWork, listWork, readWork, writeWork } from "../../src/bridge/work";
+import { putSource } from "../../src/bridge/sources";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { HEADER_TAB_SECRET, ROUTES } from "../../src/shared/routes";
 import { TOOL_NAMES } from "../../src/shared/tools";
 import { FakeTab, SECRET_A, http, startTestBridge, type TestBridge } from "../helpers/bridge";
@@ -141,5 +143,20 @@ describe("保管先のファイル", () => {
     expect((await readWork(root, PLAN))?.open).toBe(3);
     expect(await readWork(root, "../etc")).toBeNull();
     expect((await listWork(root)).map((w) => w.planId)).toEqual([PLAN]);
+  });
+
+  it("消すと、作業中と、作業中だけが持っていた資料の写しが消える。署名した版の資料は残す", async () => {
+    const root = mkdtempSync(join(tmpdir(), "moyai-work-discard-"));
+    cleanups.push(() => rmSync(root, { recursive: true, force: true }));
+    const a = await putSource(root, PLAN, new Uint8Array(Buffer.from("版にもある資料")));
+    const b = await putSource(root, PLAN, new Uint8Array(Buffer.from("作業中だけの資料")));
+    if (!a.ok || !b.ok) throw new Error("put");
+    mkdirSync(join(root, "plans", PLAN, "versions"), { recursive: true });
+    writeFileSync(join(root, "plans", PLAN, "versions", "000001.json"), JSON.stringify({ sources: [{ name: "x", sha256: a.sha256, size: a.size }] }));
+    expect(await writeWork(root, state({ files: [{ name: "x", sha256: a.sha256, size: a.size }, { name: "y", sha256: b.sha256, size: b.size }] }))).toEqual({ ok: true });
+    expect(await discardWork(root, PLAN)).toBe(true);
+    expect(await readWork(root, PLAN)).toBeNull();
+    expect(existsSync(join(root, "plans", PLAN, "sources", a.sha256))).toBe(true);
+    expect(existsSync(join(root, "plans", PLAN, "sources", b.sha256))).toBe(false);
   });
 });

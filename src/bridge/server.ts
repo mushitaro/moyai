@@ -434,7 +434,9 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (typeof b?.planId !== "string" || !PLAN_ID.test(b.planId) || typeof b.base64 !== "string") return sendJson(res, 200, { ok: false, reason: "workInvalid" });
       const root = await human.root();
       if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
-      const r = await putSource(root, b.planId, new Uint8Array(Buffer.from(b.base64, "base64")));
+      // 書けない（権限・空き）ときも、値を記録に書かずに断る
+      const r = await putSource(root, b.planId, new Uint8Array(Buffer.from(b.base64, "base64"))).catch(() => null);
+      if (!r) return sendJson(res, 200, { ok: false, reason: "workWriteFailed" });
       sendJson(res, 200, r.ok ? { ok: true, sha256: r.sha256, size: r.size } : { ok: false, reason: r.reason });
     },
     tabWorkSave: async ({ req, res, route }) => {
@@ -442,7 +444,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (typeof g === "string") return reject(res, g);
       const root = await human.root();
       if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
-      sendJson(res, 200, await writeWork(root, (g.body as { state?: unknown } | null)?.state));
+      sendJson(res, 200, await writeWork(root, (g.body as { state?: unknown } | null)?.state).catch(() => ({ ok: false, reason: "workWriteFailed" })));
     },
     tabWorkList: async ({ req, res, route }) => {
       const g = await guardTab(req, route);

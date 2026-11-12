@@ -477,7 +477,10 @@ export class IntakeWorkspace {
         const r = await this.engine.request({ op: "read", name: f.name, bytes }, this.dataVersion + 1, this.engine.local ? [] : [bytes.buffer]);
         this.dataVersion++;
         // 取り込みが外したもの（同じ名前・読めない形式）は持たない
-        if (r.accepted) this.inputs.push(f.name);
+        if (r.accepted) {
+          this.inputs.push(f.name);
+          this.filesVersion++;
+        }
         await this.listPhotos(r.listed);
       } catch {
         this.tooLarge.push({ file: f.name, reason: TEXT.intake.drop.failed });
@@ -658,6 +661,19 @@ export class IntakeWorkspace {
     return this.composedAt === null || this.composedFor !== planId || this.composedAt !== this.dataVersion;
   }
 
+  /** 資料の並びが変わるたびに進む（作業中の写しが、資料を送り直すかを決める。#82） */
+  filesVersion = 0;
+
+  /**
+   * 作業中に残す資料（#82）：写真のほかの資料のバイト列と SHA-256 と、写さなかった写真の数。写真があっても、ほかの資料は残す
+   */
+  async sourcesForWork(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; skipped: number }> {
+    const photos = this.inputs.filter((n) => photoMimeOf(n) !== null);
+    if (this.inputs.length === photos.length) return { files: [], skipped: photos.length + this.photoBook.entries().length };
+    const r = await this.engine.request({ op: "commit" }, this.dataVersion);
+    return { files: r.files.filter((f) => photoMimeOf(f.name) === null), skipped: photos.length + this.photoBook.entries().length };
+  }
+
   /** 戻した版（次の版に重ねるとき、その版を組んだ資料と決定を戻した。資料のタブで「第 n 版の資料」と出す） */
   restoredFrom: { version: number; files: ReadonlySet<string> } | null = null;
 
@@ -680,6 +696,7 @@ export class IntakeWorkspace {
     );
     this.opts = opts;
     this.inputs = r.accepted;
+    this.filesVersion++;
     // 版から戻した資料は利用者の資料（デモで入れた印は消す）
     this.demoInputs.clear();
     this.tooLarge = [];
@@ -697,10 +714,12 @@ export class IntakeWorkspace {
   /**
    * 施設の作業中（#82）を戻す：資料と決定を置き換え、デモで入れた資料の印を付け直す。もとにした版が無ければ「第 n 版の資料」とは出さない
    */
-  async restoreWork(base: number | null, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[], demo: readonly string[]): Promise<void> {
+  async restoreWork(base: number | null, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[], demo: readonly string[], hasPlan = true): Promise<void> {
     await this.restoreVersion(base ?? 0, files, decisions);
     if (base === null) this.restoredFrom = null;
     this.markDemoFiles(demo);
+    // 計画をまだ作っていない作業中なら、作ったことにしない（「作る」を出す）
+    if (!hasPlan) this.composedAt = null;
     this.changed(false, false);
   }
 

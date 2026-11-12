@@ -8,6 +8,8 @@ import { truthToPlan } from "../fixtures/chart/truth-to-plan.mjs";
 import type { Plan } from "../../src/shared/plan";
 
 const FICTIONAL_1 = truthToPlan("fictional-1") as Plan;
+/** 試験の指紋（中身ごとに違う 64 字の数字） */
+const shaOf = (b: Uint8Array) => [...b].join("").slice(-64).padStart(64, "0");
 
 afterEach(() => {
   clearWorkingPlan();
@@ -21,7 +23,7 @@ function fakes(names: string[] = ["日報.xlsx", "台帳.xlsx"]) {
   let saved: WorkState | null = null;
   const port: WorkPort = {
     putSource: async (_p, bytes) => {
-      const sha = String(bytes.length).padStart(64, "0");
+      const sha = shaOf(bytes);
       puts.push(sha);
       store.set(sha, bytes);
       return { ok: true, sha256: sha, size: bytes.length };
@@ -36,7 +38,7 @@ function fakes(names: string[] = ["日報.xlsx", "台帳.xlsx"]) {
   };
   const listeners = new Set<() => void>();
   const restored: unknown[] = [];
-  const ws: WorkSource & { names: string[]; photos: boolean } = {
+  const ws: WorkSource & { names: string[]; photos: boolean; key: string } = {
     names,
     photos: false,
     settings: { packId: "waste-incineration", facilityName: "【架空】", fiscalYearStartMonth: 4, fictional: true },
@@ -47,19 +49,25 @@ function fakes(names: string[] = ["日報.xlsx", "台帳.xlsx"]) {
       return this.names.filter((n) => n !== "デモ.xlsx");
     },
     decisions: () => [{ questionId: "q1", answer: "a", author: "human", reason: "" }] as never,
-    sourcesForCommit: async function () {
-      return this.photos ? null : { files: this.names.map((n, i) => ({ name: n, bytes: new Uint8Array(i + 1), sha256: "" })) };
+    filesVersion: 0,
+    sourcesForWork: async function () {
+      const keep = this.names.filter((n) => !(this.photos && n.endsWith(".jpg")));
+      return { files: keep.map((n) => ({ name: n, bytes: new TextEncoder().encode(n), sha256: shaOf(new TextEncoder().encode(n)) })), skipped: this.names.length - keep.length };
     },
     subscribe: (fn) => (listeners.add(fn), () => listeners.delete(fn)),
     pinPlanId: () => {},
-    facilityKey: () => "intake-waste-incineration-test",
+    key: FICTIONAL_1.planId,
+    facilityKey() {
+      return this.key;
+    },
     restoreWork: async (...a) => {
       restored.push(a);
     },
   };
   let timer: (() => void) | null = null;
   const k = new WorkKeeper({ port, ws, build: "t", setTimer: (fn) => ((timer = fn), 1 as never), clearTimer: () => (timer = null) });
-  return { k, ws, puts, saves, restored, fire: () => timer?.(), pending: () => timer !== null, poke: () => listeners.forEach((l) => l()) };
+  const seed = (st: WorkState) => (saved = st);
+  return { k, ws, puts, saves, restored, seed, fire: () => timer?.(), pending: () => timer !== null, poke: () => listeners.forEach((l) => l()) };
 }
 
 describe("作業中の写し", () => {
@@ -99,14 +107,15 @@ describe("作業中の写し", () => {
     expect(none.saves).toHaveLength(0);
     const before = fakes();
     await before.k.flush();
-    expect(before.saves[0]).toMatchObject({ planId: "intake-waste-incineration-test", plan: null, open: 0, changed: true });
+    expect(before.saves[0]).toMatchObject({ planId: FICTIONAL_1.planId, plan: null, open: 0, changed: true });
     expect(before.saves[0]!.files).toHaveLength(2);
     expect(before.saves[0]!.decisions).toHaveLength(1);
-    const f = fakes();
+    // 写真があっても、ほかの資料は残す（写真の数だけ skipped）
+    const f = fakes(["日報.xlsx", "台帳.xlsx", "写真.jpg"]);
     f.ws.photos = true;
-    setWorkingPlan(FICTIONAL_1, "intake");
     await f.k.flush();
-    expect(f.saves[0]).toMatchObject({ files: [], skipped: 2 });
+    expect(f.saves[0]!.files.map((x) => x.name)).toEqual(["日報.xlsx", "台帳.xlsx"]);
+    expect(f.saves[0]!.skipped).toBe(1);
   });
 
   it("資料ごと戻す：資料・答え・計画・確定を戻し、戻す途中は書かない", async () => {
@@ -128,5 +137,28 @@ describe("作業中の写し", () => {
     expect(acceptedList()).toEqual([]);
     expect(f.saves).toHaveLength(1);
     f.k.stop();
+  });
+
+  it("計画と資料が別の施設のもの（版を開く途中）なら書かない。ほかのタブの作業中（未確定あり）は、戻すか消すまで上書きしない。消したら書き直さない", async () => {
+    const f = fakes();
+    // 計画は FICTIONAL_1、資料の施設は別
+    f.ws.key = "intake-other";
+    setWorkingPlan(FICTIONAL_1, "intake");
+    await f.k.flush();
+    expect(f.saves).toHaveLength(0);
+    // 同じ施設になった：保管先に、ほかで作った未確定の作業中がある → 書かない
+    f.ws.key = FICTIONAL_1.planId;
+    f.seed({ planId: FICTIONAL_1.planId, changed: true, open: 5, files: [], skipped: 0, plan: null, proposals: [], accepted: [], decisions: [], base: null, settings: f.ws.settings } as unknown as WorkState);
+    await f.k.flush();
+    expect(f.saves).toHaveLength(0);
+    // 戻したら、このタブの作業中として書く
+    await f.k.restore(FICTIONAL_1.planId);
+    setWorkingPlan(FICTIONAL_1, "intake");
+    await f.k.flush();
+    expect(f.saves).toHaveLength(1);
+    // 人が消したら、このタブに残っていても書き直さない
+    f.k.forget(FICTIONAL_1.planId);
+    await f.k.flush();
+    expect(f.saves).toHaveLength(1);
   });
 });
