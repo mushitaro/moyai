@@ -434,20 +434,33 @@ export class IntakeWorkspace {
   /** AI がデモで入れた資料に印を付ける（取り込みが受けた名前だけ） */
   /** 加工したファイルの出どころ（#47。資料の名前 → 元の資料と作り方）。資料の詳細に 1 行で出す */
   private readonly derived = new Map<string, DerivedFrom>();
+  /** 資料の印（デモ・出どころ）が変わるたびに進む（作業中の写しが、印を書き直すかを決める。#82） */
+  marksVersion = 0;
+  /** 資料を置き換えた（版・作業中から戻した）回（遅れて届いた印を、置き換えたあとの資料に付けない） */
+  resets = 0;
   markDerived(names: Iterable<string>, d: DerivedFrom): void {
+    // 元の資料の名前は、作業場にある資料のものだけ（無い名前は出さない）
+    const known = d.files.filter((f, i) => this.inputs.includes(f) && d.files.indexOf(f) === i);
+    if (known.length === 0) return;
     let any = false;
-    for (const n of names)
-      if (this.inputs.includes(n)) {
-        this.derived.set(n, { files: [...d.files], how: d.how });
+    for (const n of names) {
+      const from = known.filter((f) => f !== n);
+      if (this.inputs.includes(n) && from.length > 0) {
+        this.derived.set(n, { files: from, how: d.how });
         any = true;
       }
-    if (any) this.emit();
+    }
+    if (any) {
+      this.marksVersion++;
+      this.emit();
+    }
   }
   derivedOf(name: string): DerivedFrom | null {
     return this.derived.get(name) ?? null;
   }
 
   markDemoFiles(names: Iterable<string>): void {
+    this.marksVersion++;
     for (const n of names) if (this.inputs.includes(n)) this.demoInputs.add(n);
   }
 
@@ -716,6 +729,8 @@ export class IntakeWorkspace {
     // 版から戻した資料は利用者の資料（デモで入れた印は消す）。出どころも、作業中から戻すとき（restoreWork）だけ付け直す
     this.demoInputs.clear();
     this.derived.clear();
+    this.marksVersion++;
+    this.resets++;
     this.tooLarge = [];
     // 決定は版の記録のものに置き換わった（答えた時刻は版の記録に無いので、分からないものとして持たない）
     this.answered.clear();

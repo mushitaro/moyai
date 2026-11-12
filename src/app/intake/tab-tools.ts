@@ -658,12 +658,14 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
   }
   // 読み終わるまで待つのは 20 秒まで。資料が多い・大きいとき（北部CC の日報 5 冊など）は、入れたことだけを返し、
   // 読込の進みは intake_survey が返す（ツールの待ちの上限を越えて「結果不明」にしない。11-07）
+  const resets = ws.resets;
   const reading = got.length ? ws.addFiles(got) : Promise.resolve();
   const late = await Promise.race([reading.then(() => false), new Promise<boolean>((r) => setTimeout(() => r(true), ADD_WAIT_MS))]);
   if (late) {
     void reading.then(() => {
       if (demo) ws.markDemoFiles(got.map((f) => f.name));
-      if (a.derivedFrom) ws.markDerived(got.map((f) => f.name), a.derivedFrom);
+      // 待つあいだに資料を置き換えた（版・作業中から戻した）なら、出どころは付けない
+      if (a.derivedFrom && ws.resets === resets) ws.markDerived(got.map((f) => f.name), a.derivedFrom);
       if (!ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });
     });
     ws.note("ai", T.filesAdded(demo, got.length, refused.length));

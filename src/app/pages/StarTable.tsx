@@ -149,7 +149,9 @@ export function DecisionHistory({ d, work, planId, ix }: { d: WorkDetailT; work:
   const accepted = useAccepted();
   const ids = decisionIds(d, work, ix);
   const past = acceptHistoryFor(planId, ids);
-  const now = [...accepted.values()].filter((a) => ids.includes(a.id));
+  // 版に入った決定は「第 n 版」だけに出す（同じ決定を今の作業にも重ねて出さない）
+  const signed = new Set(past.map((h) => `${h.id}\u0000${h.hash}`));
+  const now = [...accepted.values()].filter((a) => ids.includes(a.id) && !signed.has(`${a.id}\u0000${a.hash}`));
   if (past.length === 0 && now.length === 0) return null;
   return (
     <Stack gap={0} data-testid="source-history">

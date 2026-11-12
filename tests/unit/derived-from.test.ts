@@ -29,16 +29,38 @@ describe("intake_add_files の derivedFrom", () => {
   });
 
   it("作業画面は、読めた資料に出どころを持つ。添えなければ持たない。版から戻すと消え、作業中から戻すと付け直す", async () => {
+    const DERIVED = { files: ["b.csv"], how: "列「機器名」を 1 列にまとめた" };
     const ws = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
-    const r = await addFilesFromBridge(ws, args("加工_a.csv", DERIVED), async () => CSV);
-    if (!r.ok) throw new Error(r.code);
-    expect(ws.derivedOf("加工_a.csv")).toEqual(DERIVED);
     const plain = await addFilesFromBridge(ws, args("b.csv"), async () => CSV);
     if (!plain.ok) throw new Error(plain.code);
     expect(ws.derivedOf("b.csv")).toBeNull();
-    await ws.restoreVersion(1, [{ name: "加工_a.csv", bytes: CSV }], []);
-    expect(ws.derivedOf("加工_a.csv")).toBeNull();
-    await ws.restoreWork(null, [{ name: "加工_a.csv", bytes: CSV }], [], [], false, [{ name: "加工_a.csv", derivedFrom: DERIVED }]);
+    const r = await addFilesFromBridge(ws, args("加工_a.csv", DERIVED), async () => CSV);
+    if (!r.ok) throw new Error(r.code);
     expect(ws.derivedOf("加工_a.csv")).toEqual(DERIVED);
+    await ws.restoreVersion(1, [{ name: "加工_a.csv", bytes: CSV }, { name: "b.csv", bytes: CSV }], []);
+    expect(ws.derivedOf("加工_a.csv")).toBeNull();
+    await ws.restoreWork(null, [{ name: "加工_a.csv", bytes: CSV }, { name: "b.csv", bytes: CSV }], [], [], false, [{ name: "加工_a.csv", derivedFrom: DERIVED }]);
+    expect(ws.derivedOf("加工_a.csv")).toEqual(DERIVED);
+  });
+});
+
+describe("出どころの見直し", () => {
+  it("元の資料の名前は、作業場にある資料のものだけ（無い名前は出さない。自分自身は外す）。どれも無ければ付けない", async () => {
+    const ws = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
+    await addFilesFromBridge(ws, args("元.csv"), async () => CSV);
+    const r = await addFilesFromBridge(ws, args("元_加工.csv", { files: ["元.csv", "無い.xlsx", "元.csv", "元_加工.csv"], how: "x" }), async () => CSV);
+    if (!r.ok) throw new Error(r.code);
+    expect(ws.derivedOf("元_加工.csv")).toEqual({ files: ["元.csv"], how: "x" });
+    await addFilesFromBridge(ws, args("ほか.csv", { files: ["無い.xlsx"], how: "x" }), async () => CSV);
+    expect(ws.derivedOf("ほか.csv")).toBeNull();
+  });
+
+  it("印が変わると marksVersion が進む（作業中の写しが、出どころを書き直す）", async () => {
+    const ws = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
+    await addFilesFromBridge(ws, args("元.csv"), async () => CSV);
+    await addFilesFromBridge(ws, args("元_加工.csv"), async () => CSV);
+    const v = ws.marksVersion;
+    ws.markDerived(["元_加工.csv"], { files: ["元.csv"], how: "x" });
+    expect(ws.marksVersion).toBe(v + 1);
   });
 });

@@ -68,6 +68,8 @@ export interface WorkSource {
   sourcesForWork(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; skipped: number }>;
   /** 資料の並びが変わるたびに進む数 */
   readonly filesVersion: number;
+  /** 資料の印（デモ・出どころ）が変わるたびに進む数 */
+  readonly marksVersion: number;
   subscribe(fn: () => void): () => void;
   pinPlanId(id: string): void;
   restoreWork(
@@ -167,7 +169,7 @@ export class WorkKeeper {
       this.owned.add(planId);
     }
     const names = ws.fileNames;
-    const key = `${planId}\u0000${ws.filesVersion}\u0000${names.join("\u0000")}`;
+    const key = `${planId}\u0000${ws.filesVersion}\u0000${ws.marksVersion}\u0000${names.join("\u0000")}`;
     if (this.sent?.key !== key) {
       const src = names.length > 0 ? await ws.sourcesForWork() : { files: [], skipped: 0 };
       const demo = new Set(names.filter((n) => !ws.userFileNames.includes(n)));
@@ -243,7 +245,7 @@ export class WorkKeeper {
       if (s.plan) restoreWorkingPlan(s.plan, "intake", s.proposals, s.base);
       else clearWorkingPlan();
       restoreAccepted(s.accepted);
-      this.sent = { key: `${planId}\u0000${ws.filesVersion}\u0000${ws.fileNames.join("\u0000")}`, files: s.files, skipped: s.skipped };
+      this.sent = { key: `${planId}\u0000${ws.filesVersion}\u0000${ws.marksVersion}\u0000${ws.fileNames.join("\u0000")}`, files: s.files, skipped: s.skipped };
       for (const f of s.files) this.uploaded.add(`${planId}\u0000${f.sha256}`);
       this.owned.add(planId);
       this.discarded.delete(planId);

@@ -1412,4 +1412,8 @@ div.moyai-template-choice {
 .moyai-derived dd {
   margin: 0;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

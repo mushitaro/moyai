@@ -10,19 +10,18 @@ const listeners = new Set<() => void>();
 
 /** 計画の版の記録にある、受けた決定（plan_status の accepted） */
 export function setAcceptHistory(id: string, accepted: readonly Acceptance[]): void {
-  if (planId === id && list === accepted) return;
   planId = id;
   list = accepted;
   for (const l of listeners) l();
 }
 
 /** その計画の、決定の ID に当たる過去の判断（版の古い順） */
-export function acceptHistoryFor(id: string, ids: readonly string[]): { version: number; reason: string; id: string }[] {
+export function acceptHistoryFor(id: string, ids: readonly string[]): { version: number; reason: string; id: string; hash: string }[] {
   if (planId !== id) return [];
   const want = new Set(ids);
   return list
     .filter((a) => want.has(a.id) && typeof a.version === "number")
-    .map((a) => ({ version: a.version!, reason: a.reason, id: a.id }))
+    .map((a) => ({ version: a.version!, reason: a.reason, id: a.id, hash: a.hash }))
     .sort((a, b) => a.version - b.version);
 }
 

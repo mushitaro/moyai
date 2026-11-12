@@ -625,8 +625,8 @@ describe("人の試しの理由を会話から置く（#29 の残り。chart_pro
     expect(trial.starGroups().map((g) => ({ id: g.id, state: g.state, pairs: g.pairs }))).toEqual(groupsBefore);
     const g = trial.starGroups().find((x) => x.author === "human")!;
     expect(g.relayedReason).toBe("炉の停止を改修に合わせる");
-    // 署名の内側の理由には、会話から写したことを添える
-    expect(removalAcceptances()).toEqual([expect.objectContaining({ id: removalId("d3"), reason: trial.RELAYED_TRIAL_REASON("炉の停止を改修に合わせる") })]);
+    // 署名の内側の理由は変えない（AI の字を人の署名に入れない。画面に「会話から写した・未確認」で出すだけ）
+    expect(removalAcceptances()).toEqual([expect.objectContaining({ id: removalId("d3"), reason: trial.TRIAL_REASON })]);
   });
 
   it("当たる人の試しが無ければ置かない（試しを作らない・動かさない）。AI の星取の移動の案は人の試しにならない", () => {

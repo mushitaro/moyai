@@ -242,7 +242,7 @@ export const TEXT = {
       history: "判断の履歴",
       historyPast: (v: number, reason: string) => `第 ${v} 版　${reason}`,
       historyNow: (reason: string) => `今の作業　${reason}`,
-      trialRelayed: (reason: string) => `人の試し　理由 ${reason}（会話から写した）`,
+      trialRelayed: (reason: string) => `人の試し　理由 ${reason}（会話から写した・未確認）`,
       /** 周期の根拠の出どころ（資料ではない出どころの、画面の言葉） */
       basisOf: { record: "周期の根拠　自施設の実績", pack: "周期の根拠　Skillパックの基準", ledger: "周期の根拠　公開台帳", rule: "周期の根拠　計画ルール", conversation: "周期の根拠　Claude との会話" } as Record<string, string>,
       /** 星取の案の詳しく（docs/screens.md 3.2）：xs「計画の追加（未確定）」、題「2028 年度　分解整備」、出どころ・理由、「| 確定のシートで見る」 */

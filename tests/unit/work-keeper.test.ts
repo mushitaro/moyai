@@ -50,6 +50,7 @@ function fakes(names: string[] = ["日報.xlsx", "台帳.xlsx"]) {
     },
     decisions: () => [{ questionId: "q1", answer: "a", author: "human", reason: "" }] as never,
     filesVersion: 0,
+    marksVersion: 0,
     sourcesForWork: async function () {
       const keep = this.names;
       return { files: keep.map((n) => ({ name: n, bytes: new TextEncoder().encode(n), sha256: shaOf(new TextEncoder().encode(n)) })), skipped: this.names.length - keep.length };
