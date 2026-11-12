@@ -17,7 +17,6 @@ import {
   NumberInput,
   Paper,
   Radio,
-  Select,
   Stack,
   Table,
   Text,
@@ -31,7 +30,6 @@ import { setFacilityDialog, useFacilityDialog } from "../state/facility-dialog";
 import { Switch } from "../components/Switch";
 import type { CellStatus } from "../../import/compose";
 import type { QuestionKind } from "../../import/questions";
-import { packChoices, packFiscalStart } from "../chart/catalog";
 import { PhotoPanel } from "../components/PhotoPanel";
 import "../intake/intake.css";
 import { answerOffered, type IntakeView, type IntakeWorkspace, type Notice, type QuestionView, type SettleOutcome, type SheetData } from "../intake/workspace";
@@ -612,23 +610,9 @@ export function StopNoticeDetail({ notices, kind }: { notices: readonly Notice[]
 function FacilityFields({ ws }: { ws: IntakeWorkspace }) {
   const [month, setMonth] = useState<number>(ws.settings.fiscalYearStartMonth);
   const [reading, setReading] = useState(false);
-  const packs = useMemo(() => packChoices(), []);
+  // Skillパックは選ばせない（Claude が会話で聞いて intake_add_files の pack で置く。無ければパックなしで読む。mushitaro/moyai#67）
   return (
     <Group align="flex-end" gap="sm">
-      <Select
-        label={T.settings.pack}
-        placeholder={T.settings.packPlaceholder}
-        data={packs.map((p) => ({ value: p.id, label: p.name }))}
-        value={ws.settings.packId || null}
-        onChange={(v) => {
-          ws.setFacility({ packId: v ?? "" });
-          // パックの年度の始まり（pack.json）を案として出す。効かせるのは人が［読み直す］を押したとき
-          const m = v ? packFiscalStart(v) : null;
-          if (m !== null) setMonth(m);
-        }}
-        w={360}
-        data-testid="pack"
-      />
       <TextInput
         label={T.settings.name}
         value={ws.settings.facilityName}

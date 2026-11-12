@@ -1,0 +1,673 @@
+{
+ "schema": "moyai.pack-bench.result/0",
+ "pack": "waste-incineration",
+ "mode": "first-read",
+ "only": null,
+ "candidate": null,
+ "reader": {
+  "commit": "e642e9262eea7ef37831b7331bc4bdd70afe6889",
+  "src": "a05636c0ddfec6845ce92dbfa5696db131e204e0",
+  "packs": "d162fa4ffe65199c7ebf8f7caf5a273fdae84ce7",
+  "dirty": false
+ },
+ "measuredAt": "2026-11-12T00:48:39.232Z",
+ "total": {
+  "facilities": 5,
+  "planMade": 1,
+  "asked": 5347,
+  "open": 49,
+  "unresolvedAfter": 7621,
+  "accuracy": {
+   "correct": 2942,
+   "total": 3418
+  },
+  "recovery": {
+   "correct": 2330,
+   "total": 17920
+  },
+  "manDays": {
+   "correct": 1618,
+   "total": 13806
+  },
+  "days": {
+   "correct": 0,
+   "total": 0
+  },
+  "errors": 0,
+  "firstRead": {
+   "firstAsked": 1914,
+   "restAsked": 5347,
+   "restAskedNoRules": 10108,
+   "rules": 1757,
+   "ruleAnswered": 4749,
+   "skipped": [
+    "hinatano",
+    "kaedehara",
+    "kodamadani",
+    "momijidai",
+    "nagarebashi",
+    "tsubasadai"
+   ]
+  }
+ },
+ "facilities": [
+  {
+   "facility": "hoshinooka",
+   "name": "ほしの丘リサイクルセンター",
+   "files": 5,
+   "seconds": 23.3,
+   "asked": 971,
+   "answered": 959,
+   "open": 12,
+   "openKinds": {
+    "unitMissing": 1,
+    "eventAssetOne": 11
+   },
+   "defaulted": {},
+   "unresolvedBy": {
+    "unitMissing": 2224,
+    "eventAssetOne": 77
+   },
+   "openSamples": [
+    {
+     "kind": "unitMissing",
+     "rows": 278,
+     "text": "「号炉」の列の「共」（278 行）は、号・系列として読めない（4 問をまとめた：【架空】ほしの丘RC_作業実績_2025.csv・【架空】ほしの丘RC_作業実績_2022.csv ほか 2 か所）",
+     "options": [
+      "none=号・系列なしとして読む",
+      "exclude=この行を外す"
+     ],
+     "defaultAnswer": null
+    },
+    {
+     "kind": "eventAssetOne",
+     "rows": 1,
+     "text": "【架空】ほしの丘RC_作業実績_2022.csv・【架空】ほしの丘RC_作業実績_2023.csv ほか 2 冊 の機器「1号炉定期補修工事」（1 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
+     "options": [
+      "c0=0.炉全体・施設全体",
+      "c1=炉全体",
+      "c2=炉全体・1 号",
+      "c3=共通設備",
+      "c4=施設全体",
+      "c5=１．受入・供給設備",
+      "c6=トラックスケール",
+      "c7=ゴミクレーン",
+      "c8=ゴミクレーン・1 号",
+      "c9=巻上装置",
+      "c10=走行装置",
+      "c11=横行装置",
+      "c12=バケット",
+      "c13=巻上装置",
+      "c14=走行装置",
+      "c15=横行装置",
+      "c16=バケット",
+      "c17=投入ホッパ",
+      "c18=2．燃焼設備",
+      "c19=キルン",
+      "c20=キルン・1 号",
+      "c21=シール装置",
+      "c22=駆動装置",
+      "c23=シール装置",
+      "c24=駆動装置",
+      "c25=旋回溶融炉",
+      "c26=旋回溶融炉・1 号",
+      "c27=耐火物",
+      "c28=耐火物",
+      "c29=３．燃焼ガス冷却設備",
+      "c30=廃熱ボイラ",
+      "c31=過熱器",
+      "c32=蒸発管",
+      "c33=節炭器",
+      "c34=安全弁",
+      "c35=過熱器",
+      "c36=蒸発管",
+      "c37=節炭器",
+      "c38=安全弁",
+      "c39=ボイラー給水ポンプ",
+      "exclude=外す"
+     ],
+     "defaultAnswer": null
+    },
+    {
+     "kind": "eventAssetOne",
+     "rows": 1,
+     "text": "【架空】ほしの丘RC_作業実績_2022.csv・【架空】ほしの丘RC_作業実績_2023.csv ほか 2 冊 の機器「全休炉時共通設備補修工事」（共通）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
+     "options": [
+      "c0=0.炉全体・施設全体",
+      "c1=炉全体",
+      "c2=炉全体・1 号",
+      "c3=炉全体・2 号",
+      "c4=共通設備",
+      "c5=施設全体",
+      "c6=１．受入・供給設備",
+      "c7=トラックスケール",
+      "c8=ゴミクレーン",
+      "c9=ゴミクレーン・1 号",
+      "c10=巻上装置",
+      "c11=走行装置",
+      "c12=横行装置",
+      "c13=バケット",
+      "c14=巻上装置",
+      "c15=走行装置",
+      "c16=横行装置",
+      "c17=バケット",
+      "c18=投入ホッパ",
+      "c19=2．燃焼設備",
+      "c20=キルン",
+      "c21=キルン・1 号",
+      "c22=シール装置",
+      "c23=駆動装置",
+      "c24=キルン・2 号",
+      "c25=シール装置",
+      "c26=駆動装置",
+      "c27=旋回溶融炉",
+      "c28=旋回溶融炉・1 号",
+      "c29=耐火物",
+      "c30=旋回溶融炉・2 号",
+      "c31=耐火物",
+      "c32=３．燃焼ガス冷却設備",
+      "c33=廃熱ボイラ",
+      "c34=過熱器",
+      "c35=蒸発管",
+      "c36=節炭器",
+      "c37=安全弁",
+      "c38=過熱器",
+      "c39=蒸発管",
+      "exclude=外す"
+     ],
+     "defaultAnswer": null
+    }
+   ],
+   "unresolvedBefore": 11251,
+   "unresolvedAfter": 2301,
+   "planMade": false,
+   "blockers": [
+    "未解決のセル 2301",
+    "答えの無い質問 12"
+   ],
+   "plan": null,
+   "accuracy": null,
+   "extra": null,
+   "recovery": {
+    "correct": 0,
+    "total": 2808
+   },
+   "manDays": {
+    "correct": 0,
+    "total": 2275
+   },
+   "days": {
+    "correct": 0,
+    "total": 0
+   },
+   "unplaced": 0,
+   "dropped": {
+    "契約の行の結び（bundle）": 400,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 2,
+    "星取表：何台もの機器をまとめた行の印": 287
+   },
+   "error": null,
+   "firstRead": {
+    "year": "2025",
+    "firstFiles": 2,
+    "restFiles": 3,
+    "restYears": 3,
+    "firstAsked": 433,
+    "rules": 427,
+    "ruleAnswered": 862,
+    "restAsked": 971,
+    "restAskedNoRules": 1833
+   }
+  },
+  {
+   "facility": "hotarugawa",
+   "name": "ほたる川クリーンセンター",
+   "files": 6,
+   "seconds": 44,
+   "asked": 3,
+   "answered": 3,
+   "open": 0,
+   "openKinds": {},
+   "defaulted": {},
+   "unresolvedBy": {},
+   "openSamples": [],
+   "unresolvedBefore": 56,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 1313,
+    "works": 1894,
+    "details": 2511
+   },
+   "accuracy": {
+    "correct": 2942,
+    "total": 3418
+   },
+   "extra": 0,
+   "recovery": {
+    "correct": 2330,
+    "total": 3164
+   },
+   "manDays": {
+    "correct": 1618,
+    "total": 2495
+   },
+   "days": {
+    "correct": 0,
+    "total": 0
+   },
+   "unplaced": 0,
+   "dropped": {
+    "契約の行の結び（annual）": 2434,
+    "契約の行の結び（bundle）": 1082
+   },
+   "error": null,
+   "firstRead": {
+    "year": "R7",
+    "firstFiles": 2,
+    "restFiles": 4,
+    "restYears": 4,
+    "firstAsked": 6,
+    "rules": 5,
+    "ruleAnswered": 3,
+    "restAsked": 3,
+    "restAskedNoRules": 6
+   }
+  },
+  {
+   "facility": "sakurazaka",
+   "name": "さくら坂環境センター",
+   "files": 7,
+   "seconds": 25.9,
+   "asked": 1282,
+   "answered": 1266,
+   "open": 16,
+   "openKinds": {
+    "unitMissing": 1,
+    "eventAssetOne": 15
+   },
+   "defaulted": {},
+   "unresolvedBy": {
+    "unitMissing": 2593,
+    "eventAssetOne": 105
+   },
+   "openSamples": [
+    {
+     "kind": "unitMissing",
+     "rows": 324,
+     "text": "「号炉」の列の「共」（324 行）は、号・系列として読めない（5 問をまとめた：【架空】さくら坂_作業実績_2025.csv・【架空】さくら坂_作業実績_2021.csv ほか 3 か所）",
+     "options": [
+      "none=号・系列なしとして読む",
+      "exclude=この行を外す"
+     ],
+     "defaultAnswer": null
+    },
+    {
+     "kind": "eventAssetOne",
+     "rows": 1,
+     "text": "【架空】さくら坂_作業実績_2021.csv・【架空】さくら坂_作業実績_2022.csv ほか 3 冊 の機器「1号炉定期補修工事」（1 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
+     "options": [
+      "c0=受入・供給設備",
+      "c1=計量機(WS-001～002)",
+      "c2=ごみクレーン",
+      "c3=巻上装置",
+      "c4=走行装置",
+      "c5=横行装置",
+      "c6=バケット",
+      "c7=ごみクレーン制御盤(CRC-001)",
+      "c8=ごみ投入扉",
+      "c9=プラットホーム出入口扉(PD-001～002)",
+      "c10=可燃性粗大ごみ切断機",
+      "c11=脱臭装置",
+      "c12=投入ホッパ",
+      "c13=燃焼設備",
+      "c14=給じん装置(FD-101～201)",
+      "c15=火格子(G-101～201)",
+      "c16=乾燥段",
+      "c17=燃焼段",
+      "c18=後燃焼段",
+      "c19=火格子駆動用油圧装置(HU-001)",
+      "c20=焼却炉本体",
+      "c21=耐火物",
+      "c22=助燃装置",
+      "c23=落じんコンベヤ",
+      "c24=炉内監視カメラ(TV-101～201)",
+      "c25=燃焼ガス冷却設備",
+      "c26=廃熱ボイラ(B-101～201)",
+      "c27=過熱器",
+      "c28=蒸発管",
+      "c29=節炭器",
+      "c30=安全弁",
+      "c31=スートブロワ",
+      "c32=ボイラー給水ポンプ",
+      "c33=脱気器",
+      "c34=脱気器給水ポンプ",
+      "c35=空冷式蒸気復水器(AC-001)",
+      "c36=ファン",
+      "c37=復水ポンプ",
+      "c38=純水装置",
+      "c39=減温塔(T-101～201)",
+      "exclude=外す"
+     ],
+     "defaultAnswer": null
+    },
+    {
+     "kind": "eventAssetOne",
+     "rows": 1,
+     "text": "【架空】さくら坂_作業実績_2021.csv・【架空】さくら坂_作業実績_2022.csv ほか 3 冊 の機器「全休炉時共通設備補修工事」（共通）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
+     "options": [
+      "c0=受入・供給設備",
+      "c1=計量機(WS-001～002)",
+      "c2=ごみクレーン",
+      "c3=巻上装置",
+      "c4=走行装置",
+      "c5=横行装置",
+      "c6=バケット",
+      "c7=ごみクレーン制御盤(CRC-001)",
+      "c8=ごみ投入扉",
+      "c9=プラットホーム出入口扉(PD-001～002)",
+      "c10=可燃性粗大ごみ切断機",
+      "c11=脱臭装置",
+      "c12=投入ホッパ",
+      "c13=燃焼設備",
+      "c14=給じん装置(FD-101～201)",
+      "c15=火格子(G-101～201)",
+      "c16=乾燥段",
+      "c17=燃焼段",
+      "c18=後燃焼段",
+      "c19=火格子駆動用油圧装置(HU-001)",
+      "c20=焼却炉本体",
+      "c21=耐火物",
+      "c22=助燃装置",
+      "c23=落じんコンベヤ",
+      "c24=炉内監視カメラ(TV-101～201)",
+      "c25=燃焼ガス冷却設備",
+      "c26=廃熱ボイラ(B-101～201)",
+      "c27=過熱器",
+      "c28=蒸発管",
+      "c29=節炭器",
+      "c30=安全弁",
+      "c31=スートブロワ",
+      "c32=ボイラー給水ポンプ",
+      "c33=脱気器",
+      "c34=脱気器給水ポンプ",
+      "c35=空冷式蒸気復水器(AC-001)",
+      "c36=ファン",
+      "c37=復水ポンプ",
+      "c38=純水装置",
+      "c39=減温塔(T-101～201)",
+      "exclude=外す"
+     ],
+     "defaultAnswer": null
+    }
+   ],
+   "unresolvedBefore": 14850,
+   "unresolvedAfter": 2698,
+   "planMade": false,
+   "blockers": [
+    "未解決のセル 2698",
+    "答えの無い質問 16"
+   ],
+   "plan": null,
+   "accuracy": null,
+   "extra": null,
+   "recovery": {
+    "correct": 0,
+    "total": 3884
+   },
+   "manDays": {
+    "correct": 0,
+    "total": 2967
+   },
+   "days": {
+    "correct": 0,
+    "total": 0
+   },
+   "unplaced": 0,
+   "dropped": {
+    "契約の行の結び（bundle）": 553,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 3,
+    "星取表：何台もの機器をまとめた行の印": 234
+   },
+   "error": null,
+   "firstRead": {
+    "year": "2025",
+    "firstFiles": 3,
+    "restFiles": 4,
+    "restYears": 4,
+    "firstAsked": 462,
+    "rules": 457,
+    "ruleAnswered": 1063,
+    "restAsked": 1282,
+    "restAskedNoRules": 2351
+   }
+  },
+  {
+   "facility": "shirakabano",
+   "name": "しらかば野クリーンセンター",
+   "files": 12,
+   "seconds": 46.9,
+   "asked": 1674,
+   "answered": 1674,
+   "open": 0,
+   "openKinds": {},
+   "defaulted": {
+    "flatSplit": 1
+   },
+   "unresolvedBy": {},
+   "openSamples": [],
+   "unresolvedBefore": 19172,
+   "unresolvedAfter": 0,
+   "planMade": false,
+   "blockers": [
+    "読んでいない写真 3（【架空】しらかば野CC_日常点検表_ボイラ・タービン_20250602.jpg・【架空】しらかば野CC_日常点検表_ボイラ・タービン_20250908.jpg・【架空】しらかば野CC_日常点検表_ボイラ・タービン_20251117.jpg）"
+   ],
+   "plan": null,
+   "accuracy": null,
+   "extra": null,
+   "recovery": {
+    "correct": 0,
+    "total": 4336
+   },
+   "manDays": {
+    "correct": 0,
+    "total": 2847
+   },
+   "days": {
+    "correct": 0,
+    "total": 0
+   },
+   "unplaced": 0,
+   "dropped": {
+    "契約の行の結び（rollup）": 15,
+    "契約の行の結び（annual）": 2599,
+    "契約の行の結び（bundle）": 1403,
+    "契約の行の結び（upgrade）": 28,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 2,
+    "星取表：記号でない文字の印（年度をまたいで結合したセルなど）": 3,
+    "星取表：何台もの機器をまとめた行の印": 269
+   },
+   "error": null,
+   "firstRead": {
+    "year": "R7",
+    "firstFiles": 8,
+    "restFiles": 4,
+    "restYears": 4,
+    "firstAsked": 528,
+    "rules": 388,
+    "ruleAnswered": 1611,
+    "restAsked": 1674,
+    "restAskedNoRules": 3285
+   }
+  },
+  {
+   "facility": "umikaze",
+   "name": "うみかぜエコプラント",
+   "files": 6,
+   "seconds": 32.2,
+   "asked": 1417,
+   "answered": 1396,
+   "open": 21,
+   "openKinds": {
+    "unitMissing": 1,
+    "eventAssetOne": 20
+   },
+   "defaulted": {},
+   "unresolvedBy": {
+    "unitMissing": 2482,
+    "eventAssetOne": 140
+   },
+   "openSamples": [
+    {
+     "kind": "unitMissing",
+     "rows": 310,
+     "text": "「号炉」の列の「共」（310 行）は、号・系列として読めない（5 問をまとめた：【架空】うみかぜEP_作業実績_2025.csv・【架空】うみかぜEP_作業実績_2021.csv ほか 3 か所）",
+     "options": [
+      "none=号・系列なしとして読む",
+      "exclude=この行を外す"
+     ],
+     "defaultAnswer": null
+    },
+    {
+     "kind": "eventAssetOne",
+     "rows": 1,
+     "text": "【架空】うみかぜEP_作業実績_2021.csv・【架空】うみかぜEP_作業実績_2022.csv ほか 3 冊 の機器「1号炉定期補修工事」（1 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
+     "options": [
+      "c0=(0) 炉全体・施設全体",
+      "c1=炉全体",
+      "c2=1号炉",
+      "c3=2号炉",
+      "c4=3号炉",
+      "c5=共通設備",
+      "c6=施設全体",
+      "c7=(1) 受入・供給設備",
+      "c8=トラックスケール",
+      "c9=ゴミクレーン",
+      "c10=No.1",
+      "c11=巻上装置",
+      "c12=走行装置",
+      "c13=横行装置",
+      "c14=バケット",
+      "c15=No.2",
+      "c16=巻上装置",
+      "c17=走行装置",
+      "c18=横行装置",
+      "c19=バケット",
+      "c20=ごみクレーン制御盤",
+      "c21=投入扉",
+      "c22=出入口シャッター",
+      "c23=可燃性粗大ごみ切断機",
+      "c24=全休炉時脱臭装置",
+      "c25=投入ホッパ",
+      "c26=1号炉",
+      "c27=2号炉",
+      "c28=3号炉",
+      "c29=(2) 燃焼設備",
+      "c30=給塵装置",
+      "c31=1号炉",
+      "c32=2号炉",
+      "c33=3号炉",
+      "c34=ストーカ",
+      "c35=1号炉",
+      "c36=乾燥段",
+      "c37=燃焼段",
+      "c38=後燃焼段",
+      "c39=2号炉",
+      "exclude=外す"
+     ],
+     "defaultAnswer": null
+    },
+    {
+     "kind": "eventAssetOne",
+     "rows": 1,
+     "text": "【架空】うみかぜEP_作業実績_2021.csv・【架空】うみかぜEP_作業実績_2022.csv ほか 3 冊 の機器「2号炉定期補修工事」（2 号）に、名前の同じ機器が無い（1 行）。どの機器か（同じ号の機器と、号の無い機器から選ぶ）",
+     "options": [
+      "c0=(0) 炉全体・施設全体",
+      "c1=炉全体",
+      "c2=1号炉",
+      "c3=2号炉",
+      "c4=3号炉",
+      "c5=共通設備",
+      "c6=施設全体",
+      "c7=(1) 受入・供給設備",
+      "c8=トラックスケール",
+      "c9=ゴミクレーン",
+      "c10=No.1",
+      "c11=巻上装置",
+      "c12=走行装置",
+      "c13=横行装置",
+      "c14=バケット",
+      "c15=No.2",
+      "c16=巻上装置",
+      "c17=走行装置",
+      "c18=横行装置",
+      "c19=バケット",
+      "c20=ごみクレーン制御盤",
+      "c21=投入扉",
+      "c22=出入口シャッター",
+      "c23=可燃性粗大ごみ切断機",
+      "c24=全休炉時脱臭装置",
+      "c25=投入ホッパ",
+      "c26=1号炉",
+      "c27=2号炉",
+      "c28=3号炉",
+      "c29=(2) 燃焼設備",
+      "c30=給塵装置",
+      "c31=1号炉",
+      "c32=2号炉",
+      "c33=3号炉",
+      "c34=ストーカ",
+      "c35=1号炉",
+      "c36=乾燥段",
+      "c37=燃焼段",
+      "c38=後燃焼段",
+      "c39=2号炉",
+      "exclude=外す"
+     ],
+     "defaultAnswer": null
+    }
+   ],
+   "unresolvedBefore": 16052,
+   "unresolvedAfter": 2622,
+   "planMade": false,
+   "blockers": [
+    "未解決のセル 2622",
+    "答えの無い質問 21"
+   ],
+   "plan": null,
+   "accuracy": null,
+   "extra": null,
+   "recovery": {
+    "correct": 0,
+    "total": 3728
+   },
+   "manDays": {
+    "correct": 0,
+    "total": 3222
+   },
+   "days": {
+    "correct": 0,
+    "total": 0
+   },
+   "unplaced": 0,
+   "dropped": {
+    "契約の行の結び（bundle）": 784,
+    "星取表：年度の無い結び（備考の欄に書いた作業など。印ではない）": 2,
+    "星取表：何台もの機器をまとめた行の印": 279
+   },
+   "error": null,
+   "firstRead": {
+    "year": "2025",
+    "firstFiles": 2,
+    "restFiles": 4,
+    "restYears": 4,
+    "firstAsked": 485,
+    "rules": 480,
+    "ruleAnswered": 1210,
+    "restAsked": 1417,
+    "restAskedNoRules": 2633
+   }
+  }
+ ]
+}
