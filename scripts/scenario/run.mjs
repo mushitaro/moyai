@@ -11,6 +11,7 @@
 // 判定はコードがする（AI に決めさせない）。試験は一時のフォルダで走る（e2e の helpers・物差しの --out）。
 // 行の値・鍵・施設の名前は表に書かない（数と台本の名前だけ）。127.0.0.1 へはランナー自身は何も送らない（e2e の台本が自分で起こした橋渡しに送るだけ）。
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -28,6 +29,7 @@ import {
   judgeB2,
   judgeC1,
   judgeC3,
+  judgeC4,
   judgeD1,
   judgeD2,
   judgeD3,
@@ -112,7 +114,8 @@ function runE2e() {
     Object.assign(files, summarizePlaywright(report));
     if (res.status !== 0) ok = false;
   }
-  return { os: OS, ok, files };
+  // claude-code.spec が本物の Claude Code で走ったか（MOYAI_CLAUDE_E2E=1）。ほかは代わりの台本（tests/helpers/claude-standin.mjs）
+  return { os: OS, ok, files, claudeReal: process.env.MOYAI_CLAUDE_E2E === "1" };
 }
 
 const toMap = (files) => new Map(Object.entries(files ?? {}));
@@ -151,7 +154,7 @@ async function gh(path) {
       redirect: "error",
     });
     if (!res.ok) {
-      say(`GitHub ${path.split("?")[0]}：${res.status}`);
+      say(`GitHub ${path.split("?")[0]}：${res.status}（トークンが GitHub に断られた。この PC の GH_TOKEN・GITHUB_TOKEN を見る。CI では github.token を使う）`);
       return null;
     }
     return await res.json();
@@ -213,7 +216,25 @@ function nodeTests(files) {
   c1Tests = existsSync("tests/scripts/skill-loop-feedback.test.mjs") ? nodeTests(["tests/scripts/skill-loop-feedback.test.mjs"]) : null;
   results.C1 = c1Tests ? judgeC1(c1Tests) : judgeWaiting("#22：フィードバック → ルールの案 → 物差し → PR の台本の試験が無い", await issueOf(22));
 }
-results.C4 = judgeWaiting("#23 の 2：運営者の判断（Skill の文の採点を、どの段で誰が走らせるか）", await issueOf(23));
+// C4：Skill の文の採点の記録（eval/skill-score/*.json。新しい順）と、今の Skill の文の指紋
+{
+  const dir = join("eval", "skill-score");
+  let records = null;
+  if (existsSync(dir)) {
+    records = walk(dir, /\.json$/)
+      .flatMap((f) => {
+        try {
+          return [JSON.parse(readFileSync(f, "utf8"))];
+        } catch {
+          return [];
+        }
+      })
+      .sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")));
+  }
+  const texts = ["skills/moyai/SKILL.md", ...readdirSync("packs", { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `packs/${d.name}/SKILL.md`)].filter((p) => existsSync(p));
+  const current = Object.fromEntries(texts.map((p) => [p, createHash("sha256").update(readFileSync(p)).digest("hex")]));
+  results.C4 = judgeC4(records, current);
+}
 
 // ---- 台帳と受け口の単体の試験（vitest。B1・B2）----
 function vitest(files) {
@@ -319,6 +340,12 @@ const otherResult = (() => {
       d2.evidence += `。windows で飛ばしたもの：${sk.join("、")}`;
       d2.status = UNKNOWN;
     }
+  }
+  // claude-code.spec を代わりの台本で通したなら、そう書く（本物の Claude Code での通しは MOYAI_CLAUDE_E2E=1。実機の列で見る）
+  const runs = [e2eHere, e2eOther].filter(Boolean);
+  if (runs.some((e) => fileRow(toMap(e.files), "claude-code.spec.ts")?.expected)) {
+    const modes = runs.map((e) => `${e.os} ${e.claudeReal ? "本物の Claude Code" : "代わりの台本"}`);
+    d2.evidence += `。claude-code.spec の Claude の役：${modes.join("・")}`;
   }
   results.D2 = d2;
   if (e2eOther && results.D1.status !== FAIL) {

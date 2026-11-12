@@ -1,4 +1,5 @@
-// 縦の 1 本を、Claude Code を AI クライアントにして通す（docs/plan.md §5.2 の 1）。走らせるときだけ：MOYAI_CLAUDE_E2E=1。
+// 縦の 1 本を、Claude Code を AI クライアントにして通す（docs/plan.md §5.2 の 1）。本物の Claude Code は MOYAI_CLAUDE_E2E=1 のときだけ（使用量を使う）。
+// ふだん（CI）は、同じ引数・同じ .mcp.json・本物の中継で、判断だけを台本が決める代わり（tests/helpers/claude-standin.mjs）が claude の役をする。
 // AI の仕事（要約を読む・決定を置く・計画を作る・当てはめの規則を自分で書いて置く）は、`claude -p` がリポジトリの .mcp.json の
 // moyai だけをつないで行う。人の操作（資料を落とす・当てはめを受ける・確定・送る）は、試験の台本が画面のボタンで押す。
 // Claude Code は利用者の契約の中で動く（API のキーは使わない）。先に npm run build を走らせておく。
@@ -7,9 +8,12 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import { f1Rules } from "../fixtures/crosswalk/rules";
 import { acceptDecisions, acceptRules, callTool, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（Claude Code）";
+/** 本物の Claude Code で走らせるか（MOYAI_CLAUDE_E2E=1。使用量を使う）。ほかは代わりの台本 */
+const REAL = process.env.MOYAI_CLAUDE_E2E === "1";
 const HUMAN = "試験の台本が押した（Claude Code の案を画面で受けた）";
 const TOOLS = ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose"];
 
@@ -39,12 +43,21 @@ test.afterAll(() => {
 function runClaude(stateDir: string, log: string): Promise<{ status: number | null; calls: string[]; result: string }> {
   return new Promise((resolve) => {
     const allowed = TOOLS.map((t) => `mcp__moyai__${t}`).join(",");
-    const child = spawn(
-      "claude",
-      ["-p", PROMPT, "--mcp-config", ".mcp.json", "--strict-mcp-config", "--allowedTools", allowed, "--output-format", "stream-json", "--verbose"],
-      // シェルを通さない（改行や引用符を含む指示がそのまま渡るように）
-      { env: { ...process.env, MOYAI_STATE_DIR: stateDir } },
-    );
+    const argv = ["-p", PROMPT, "--mcp-config", ".mcp.json", "--strict-mcp-config", "--allowedTools", allowed, "--output-format", "stream-json", "--verbose"];
+    // 本物の Claude Code は MOYAI_CLAUDE_E2E=1 のときだけ（使用量を使う）。ほかは同じ引数・同じ .mcp.json・本物の中継で、判断だけを台本が決める代わり（tests/helpers/claude-standin.mjs）
+    let env: NodeJS.ProcessEnv = { ...process.env, MOYAI_STATE_DIR: stateDir };
+    let cmd = "claude";
+    let cmdArgs = argv;
+    if (!REAL) {
+      const rulesFile = join(work, "standin-rules.json");
+      const { nodes, works } = f1Rules();
+      writeFileSync(rulesFile, JSON.stringify([...nodes, ...works]));
+      env = { ...env, MOYAI_STANDIN_RULES: rulesFile };
+      cmd = process.execPath;
+      cmdArgs = ["tests/helpers/claude-standin.mjs", ...argv];
+    }
+    // シェルを通さない（改行や引用符を含む指示がそのまま渡るように）
+    const child = spawn(cmd, cmdArgs, { env });
     let out = "";
     child.stdout.on("data", (b) => (out += b.toString("utf8")));
     child.stderr.on("data", () => {});
@@ -69,7 +82,6 @@ function runClaude(stateDir: string, log: string): Promise<{ status: number | nu
 }
 
 test("Claude Code が取り込みと当てはめの案を置き、人が受けて確定し、輪で ✓", async ({ page }, info) => {
-  test.skip(process.env.MOYAI_CLAUDE_E2E !== "1", "MOYAI_CLAUDE_E2E=1 のときだけ走らせる（Claude Code の使用量を使うため）");
   test.skip(info.project.name !== "chrome", "Chrome の 1 回だけ");
   test.setTimeout(1_200_000);
   const tag = info.project.name;
@@ -81,7 +93,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   await openIntakeAndDrop(page, bridge.base, FACILITY);
 
   const cc = await test.step("AI（Claude Code）：取り込み → 計画 → 当てはめの規則", () => runClaude(bridge.stateDir, join(work, "claude.jsonl")));
-  console.log(`Claude Code の報告：\n${cc.result}`);
+  console.log(`${REAL ? "Claude Code" : "代わりの台本"}の報告：\n${cc.result}`);
   expect(cc.status).toBe(0);
   for (const t of ["intake_settle", "intake_compose", "crosswalk_propose"]) expect(cc.calls).toContain(`mcp__moyai__${t}`);
   await expect(page.getByTestId("intake-page")).toHaveAttribute("data-compose", "done");

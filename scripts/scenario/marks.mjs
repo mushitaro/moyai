@@ -154,6 +154,25 @@ export function judgeC3(unit, loop, slice) {
   return r(fail ? FAIL : unknown ? UNKNOWN : PASS, parts.join("・"));
 }
 
+/**
+ * C4：Skill の文の採点（#23 の 2 の運営者の判断：作業役のセッションが解き、コードで採点する。API なし）。
+ * CI は Claude を動かせないので、記録が今の文の指紋と合い、点が前の記録より下がっていないかを確かめる（記録が無い・古い・下がったら外れ）。
+ * 記録の形（柱 C の作業役が作る道に合わせて直す）：{ texts: { "<道>": "<SHA-256>" }, problems: "<問題の組の指紋>", score: 数, at: 日時 }。新しい順に並べて渡す
+ * @param {Array<{ texts: Record<string,string>, problems: string, score: number }> | null} records  新しい順。無ければ null
+ * @param {Record<string,string>} current  今の Skill の文（skills/moyai/SKILL.md・packs/<業種>/SKILL.md）の道 → SHA-256
+ */
+export function judgeC4(records, current) {
+  if (!records || records.length === 0) return r(WAIT, "採点の記録がまだ無い（#23 の 2 は決まった：作業役が解いてコードで採点・API なし。記録の道は柱 C の作業役が作っている）");
+  const [last, prev] = records;
+  const paths = Object.keys(current);
+  const stale = paths.filter((p) => last.texts?.[p] !== current[p]);
+  const extra = Object.keys(last.texts ?? {}).filter((p) => !(p in current));
+  const dropped = prev && prev.problems === last.problems && !(Number(last.score) >= Number(prev.score));
+  const ev = `記録の点 ${last.score}${prev ? `（前の記録 ${prev.score}${prev.problems === last.problems ? "" : "・問題の組が違う"}）` : "（前の記録なし）"}・今の文と指紋の合わない文 ${stale.length}${stale.length ? `（${stale.join("、")}）` : ""}${extra.length ? `・記録にだけある文 ${extra.length}` : ""}`;
+  if (stale.length || extra.length || dropped || !Number.isFinite(Number(last.score))) return r(FAIL, ev);
+  return r(PASS, ev);
+}
+
 /** まだ作られていない印：Issue が開いていれば「待ち」。閉じたのにランナーに道が無ければ「未確認」（道を足す合図） */
 export function judgeWaiting(what, issue) {
   if (issue && issue.state === "closed") return r(UNKNOWN, `#${issue.number} が閉じた。ランナーに確かめの道がまだ無い（scripts/scenario/ に足す）`);
@@ -301,7 +320,7 @@ export function judgeD2FromCi(ciE2e, skippedKnown) {
 
 /** D3：開いている area:ux の Issue の数（GitHub が答えたときだけ） */
 export function judgeD3(issues) {
-  if (!issues) return r(UNKNOWN, "GitHub の Issue を読めない（トークンが無いか、GitHub に断られた）");
+  if (!issues) return r(UNKNOWN, "GitHub の Issue を読めない（この走らせ方ではトークンが無いか、GitHub に断られた。CI の scenario の仕事は github.token で読む）");
   if (issues.length === 0) return r(PASS, "開いている area:ux の Issue 0");
   return r(FAIL, `開いている area:ux の Issue ${issues.length}：${issues.map((i) => `#${i.number}`).join("・")}`);
 }
@@ -314,7 +333,7 @@ export const E2_JOBS = ["test (ubuntu-latest)", "test (windows-latest)", "pack-b
  * @param {{ sha: string, conclusion: string | null, jobs: Array<{ name: string, conclusion: string | null }> } | null} run
  */
 export function judgeE2(run) {
-  if (!run) return r(UNKNOWN, "main の CI の回を読めない（トークンが無いか、GitHub に断られた）");
+  if (!run) return r(UNKNOWN, "main の CI の回を読めない（この走らせ方ではトークンが無いか、GitHub に断られた。CI では同じ回の仕事の結果で決める）");
   const short = run.sha.slice(0, 7);
   const parts = E2_JOBS.map((n) => {
     const js = run.jobs.filter((j) => j.name === n || j.name.startsWith(`${n}（`) || j.name.startsWith(`${n} (`) || j.name.startsWith(`${n}(`));
