@@ -2,14 +2,22 @@
 // 本物の中継（dist/cli.js mcp。標準入出力の MCP）を、MCP のクライアントでつなぐ。
 // 人が資料を画面に落とし、AI が intake_survey → intake_settle → intake_compose → intake_survey → chart_rows を呼ぶ。
 // 先に npm run build を走らせておく。
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { callTool as call, mcpClient as connect, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { callTool as call, chooseRoot, mcpClient as connect, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 let bridge: StartedBridge;
+let root = "";
 test.beforeAll(async () => {
   bridge = await startBuiltBridge("moyai-e2e-mcp-");
+  root = mkdtempSync(join(tmpdir(), "moyai-e2e-mcp-root-"));
 });
-test.afterAll(() => bridge?.stop());
+test.afterAll(() => {
+  bridge?.stop();
+  if (root) rmSync(root, { recursive: true, force: true });
+});
 
 const mcpClient = (stateDir: string) => connect(stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "screen_set", "intake_add_files"]);
 
@@ -24,7 +32,9 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
       expect(JSON.stringify(r.content)).toContain("作業画面が開いていません");
     });
 
-    await test.step("人が資料を画面に落とす", async () => {
+    await test.step("人が保存先を選び、資料を画面に落とす", async () => {
+      // 確定のシートは、保存先の版の履歴（受けた決定）を読んでから決定を並べる。Documents に頼らず一時のフォルダを選ぶ
+      await chooseRoot(page, bridge.base, root);
       await openIntakeAndDrop(page, bridge.base, "【架空】第一清掃工場（AI）");
     });
 

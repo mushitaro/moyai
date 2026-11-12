@@ -142,8 +142,11 @@ export function TemplateExport({
     if (!f) return;
     setError(await onDrop(f));
   };
-  const row = (key: string, active: boolean, onClick: () => void, name: string, state: string, tag: boolean, testid: string) => (
-    <button type="button" key={key} className="moyai-template-choice" data-active={active ? "true" : undefined} aria-pressed={active} onClick={onClick} data-testid={testid}>
+  // 選べる行が標準の 1 つだけのときは、選びにしない（押せない行。見た目は選んだ行のまま）。選ぶものが無いので、押せるものを置かない（シナリオ D1、docs/screens.md §0 の引き算）
+  const only = !diff && templates.length === 0 && pending.length === 0;
+  const row = (key: string, active: boolean, onClick: () => void, name: string, state: string, tag: boolean, testid: string) => {
+    const inner = (
+      <>
       <span className="moyai-template-choice-name">{name}</span>
       <span className="moyai-template-choice-state">
         {state && (
@@ -157,8 +160,20 @@ export function TemplateExport({
           </span>
         )}
       </span>
-    </button>
-  );
+      </>
+    );
+    if (only)
+      return (
+        <div key={key} className="moyai-template-choice" data-active="true" data-testid={testid}>
+          {inner}
+        </div>
+      );
+    return (
+      <button type="button" key={key} className="moyai-template-choice" data-active={active ? "true" : undefined} aria-pressed={active} onClick={onClick} data-testid={testid}>
+        {inner}
+      </button>
+    );
+  };
   const columns = selected?.columns ?? null;
 
   return (
