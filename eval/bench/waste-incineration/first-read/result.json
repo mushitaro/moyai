@@ -5,12 +5,12 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "618c503643c253761ee53106bba78a176ed1c4a4",
-  "src": "a5844a987fc8f9d08a731a396657da2f89094239",
+  "commit": "db2748b7beebcc06479de07560abb82438bdbe35",
+  "src": "470d960afdd6b9e48ff6cafa8221ea6798207625",
   "packs": "876267422ef1994eedf0a2c0a1c24623985b9794",
   "dirty": false
  },
- "measuredAt": "2026-11-12T18:26:17.725Z",
+ "measuredAt": "2026-11-12T20:06:45.346Z",
  "total": {
   "facilities": 5,
   "planMade": 5,
@@ -35,11 +35,11 @@
   },
   "errors": 0,
   "firstRead": {
-   "firstAsked": 204,
+   "firstAsked": 205,
    "restAsked": 200,
-   "restAskedNoRules": 509,
-   "rules": 175,
-   "ruleAnswered": 259,
+   "restAskedNoRules": 510,
+   "rules": 176,
+   "ruleAnswered": 260,
    "ruleWrong": 0,
    "askedAgain": 5,
    "askedNew": 192,
@@ -61,7 +61,7 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 35.5,
+   "seconds": 42,
    "asked": 33,
    "answered": 33,
    "open": 0,
@@ -127,7 +127,7 @@
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 33.1,
+   "seconds": 38.8,
    "asked": 0,
    "answered": 0,
    "open": 0,
@@ -190,7 +190,7 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 53.4,
+   "seconds": 57.6,
    "asked": 43,
    "answered": 43,
    "open": 0,
@@ -254,7 +254,7 @@
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 62.7,
+   "seconds": 69.3,
    "asked": 78,
    "answered": 78,
    "open": 0,
@@ -271,14 +271,14 @@
    "blockers": [],
    "plan": {
     "assets": 1643,
-    "works": 2113,
-    "details": 4343
+    "works": 2081,
+    "details": 4118
    },
    "accuracy": {
     "correct": 4446,
     "total": 5951
    },
-   "extra": 225,
+   "extra": 0,
    "recovery": {
     "correct": 2910,
     "total": 4336
@@ -317,19 +317,19 @@
     "firstFiles": 8,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 91,
-    "rules": 62,
-    "ruleAnswered": 117,
+    "firstAsked": 92,
+    "rules": 63,
+    "ruleAnswered": 118,
     "ruleWrong": 0,
     "restAsked": 78,
-    "restAskedNoRules": 245
+    "restAskedNoRules": 246
    }
   },
   {
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 55.4,
+   "seconds": 64.6,
    "asked": 46,
    "answered": 46,
    "open": 0,
