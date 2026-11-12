@@ -73,4 +73,6 @@ M-PC3 の Claude Desktop の Chat で、次を会話だけで進め、人が押�
 - ランナーは `scripts/scenario/`（判定は `marks.mjs`、走らせるのは `run.mjs`）。新しい試験は作らず、物差し・e2e・vitest を呼ぶだけ。実機の列は、書き直しても前の字を残す。
 - この PC で全部：`npm run build` のあと `npm run scenario`（物差し・台帳の試験・e2e と walkthrough を Chrome で。D3・E2 は `GH_TOKEN` か `GITHUB_TOKEN` があるときだけ読む）。
 - CI：`e2e`（ubuntu・windows）が e2e と walkthrough を走らせて数を渡し、`scenario` が表を仕事の要約に書く。`scenario` の仕事はランナーが走りきれば緑で、合否は表の字（不合格の印があっても main を赤にしない）。
-- D2 の `claude-code.spec`（Claude Code の使用量）と `template-mcp.spec`（運営者の資料）は CI では飛ぶので、D2 は CI だけでは「未確認」。M-PC3 で `MOYAI_CLAUDE_E2E=1` を付けて走らせたときだけ合格になりうる。
+- D2 の `claude-code.spec` は、ふだん（CI）は代わりの台本（`tests/helpers/claude-standin.mjs`：本物と同じ引数・同じ `.mcp.json`・本物の中継で、判断だけを台本が決める）が Claude の役をする。本物の Claude Code での通しは `MOYAI_CLAUDE_E2E=1`（使用量を使う。M-PC3 で、実機の列に書く）。表の D2 の根拠に、どちらで走ったかを書く。
+- `template-mcp.spec` は、運営者の資料がその PC にあればそれで、無ければ同じ形の架空の資料（入れ子の縦の結合と末尾の集計のある様式・fictional-1 の 9 本。計画ができたことも確かめる）で走る。
+- CI の `scenario` の仕事は github.token で Issue を読む（D3）。E2 は、main への push の回だけ、同じ回の仕事の結果で決める（PR の回は未確認）。手元では GH_TOKEN か GITHUB_TOKEN が GitHub に通るときだけ読む。
