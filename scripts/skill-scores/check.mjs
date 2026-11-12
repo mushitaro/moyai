@@ -3,8 +3,10 @@
 // 使い方：node scripts/skill-scores/check.mjs [--base <git の ref>]
 //   eval/skill-scores/<パック>/ のあるパック（記録を置いたパック）ごとに、今の文（1 段目 skills/moyai/SKILL.md ＋ packs/<パック>/SKILL.md。
 //   src/eval/score.ts と同じつなぎ方）の指紋を出し、次を確かめる：
-//   1. 文と問題の組（eval/<パック>/）が --base と同じなら、確かめることは無い（通る）
-//   2. どちらかが変わったら、今の文の指紋の記録（<指紋の頭 16 字>.json）があり、指紋と問題の組の指紋（suiteSha）が今と合う（無い・古い → 落ちる）
+//   確かめるパックは、問題の組（eval/<組>/suite.json の pack）のあるパックと、記録を置いたパック（eval/skill-scores/<パック>/）の両方（2026-11-12。
+//   前は記録のフォルダの無いパックを黙って飛ばしていて、し尿処理の文が一度も採点されていなかった）。
+//   1. どのパックも、今の文の指紋の記録（<指紋の頭 16 字>.json）が要る（文と問題の組が --base と同じでも。無ければ落ちる）
+//   2. 記録は今の文の指紋の記録（<指紋の頭 16 字>.json）があり、指紋と問題の組の指紋（suiteSha）が今と合う（無い・古い → 落ちる）
 //   3. 記録の形：正解を見ていない別々の解く役 2 つ以上の採点（runs）があり、合格の数がどれも記録の合格の数と同じ（違う・足りない → 落ちる）
 //   4. --base の文の記録が --base にあれば、合格の数が下がっていない（下がった → 落ちる）。--base に記録が無ければ、比べずに通す（最初の記録）
 // 判定はコードがする（AI に判定させない）。API を呼ばない。
@@ -40,11 +42,12 @@ export function checkPack(pack, read, readBase) {
   const texts = skillPathsOf(pack).map(read);
   if (texts.some((t) => t === null)) return { ok: false, note: `${pack}：Skill の文が無い` };
   const now = sha(joinSkills(texts));
-  if (readBase) {
+  // 文も問題の組も base と同じか（同じなら、記録があることだけを見て、前の記録とは比べない）
+  const unchanged = (() => {
+    if (!readBase) return false;
     const bt = skillPathsOf(pack).map(readBase);
-    // 文も問題の組も base と同じなら、確かめることは無い（問題の組だけが変わっても、記録は作り直す）
-    if (bt.every((t) => t !== null) && sha(joinSkills(bt)) === now && suiteSha(readBase, pack) === suiteSha(read, pack)) return { ok: true, note: `${pack}：文も問題の組も変わっていない` };
-  }
+    return bt.every((t) => t !== null) && sha(joinSkills(bt)) === now && suiteSha(readBase, pack) === suiteSha(read, pack);
+  })();
   const recText = read(`eval/skill-scores/${pack}/${now.slice(0, 16)}.json`);
   if (recText === null) return { ok: false, note: `${pack}：今の文（指紋 ${now.slice(0, 16)}）の採点の記録が無い。docs/autonomy.md の「Skill の文を変える PR」の手順で採点して記録を置く` };
   const rec = JSON.parse(recText);
@@ -54,6 +57,7 @@ export function checkPack(pack, read, readBase) {
   const suite = rec.suite;
   if (rec.suiteSha !== suiteSha(read, suite)) return { ok: false, note: `${pack}：記録の問題の組（${suite}）の指紋が今と合わない（問題の組が変わった。採点し直す）` };
   if (!readBase) return { ok: true, note: `${pack}：記録あり（${rec.pass}/${rec.cases}）。比べる相手を指していない` };
+  if (unchanged) return { ok: true, note: `${pack}：文も問題の組も変わっていない。記録あり（${rec.pass}/${rec.cases}）` };
   const bt = skillPathsOf(pack).map(readBase);
   const baseSha = bt.every((t) => t !== null) ? sha(joinSkills(bt)) : null;
   const baseRecText = baseSha ? readBase(`eval/skill-scores/${pack}/${baseSha.slice(0, 16)}.json`) : null;
@@ -64,6 +68,23 @@ export function checkPack(pack, read, readBase) {
   if (base.suiteSha !== rec.suiteSha) return { ok: false, note: `${pack}：前の記録と問題の組が違うので比べられない（前の文も今の問題の組で採点し直す）` };
   if (rec.pass < base.pass) return { ok: false, note: `${pack}：合格の数が下がった（${base.pass}/${base.cases} → ${rec.pass}/${rec.cases}）` };
   return { ok: true, note: `${pack}：${base.pass}/${base.cases} → ${rec.pass}/${rec.cases}（下がっていない）` };
+}
+
+/** 確かめるパック：問題の組（eval/<組>/suite.json の pack）と、記録を置いたパック（eval/skill-scores/<パック>/）の両方 */
+export function packsToCheck(root) {
+  const out = new Set();
+  const evalDir = join(root, "eval");
+  if (existsSync(evalDir))
+    for (const d of readdirSync(evalDir, { withFileTypes: true })) {
+      if (!d.isDirectory()) continue;
+      const f = join(evalDir, d.name, "suite.json");
+      if (!existsSync(f)) continue;
+      const pack = JSON.parse(readFileSync(f, "utf8")).pack;
+      if (typeof pack === "string" && /^[a-z0-9-]+$/.test(pack)) out.add(pack);
+    }
+  const scores = join(evalDir, "skill-scores");
+  if (existsSync(scores)) for (const d of readdirSync(scores, { withFileTypes: true })) if (d.isDirectory()) out.add(d.name);
+  return [...out].sort();
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
@@ -80,10 +101,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
         }
       }
     : null;
-  const dir = join("eval", "skill-scores");
-  const packs = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort() : [];
+  const packs = packsToCheck(".");
   if (!packs.length) {
-    console.error("skill-scores: 記録を置いたパックが無い（確かめることは無い）");
+    console.error("skill-scores: 問題の組も記録も無い（確かめることは無い）");
     process.exit(0);
   }
   let bad = false;
