@@ -6,7 +6,8 @@ import { CASE_SCHEMA, SUITE_SCHEMA, type Check, type EvalCase, type GraderId, ty
 import { fiscalYearOf, properNounTerms, type PackCheck, type PackData, type WorldData, type WorldEquipment, type WorldWork } from "./world";
 
 // 版 2（2026-11-05）：R10 の記録に、人工と延べ人数の数え方（施設の決まり）を書く。版 1 では書いておらず、正解が記録から決まらなかった
-export const GENERATOR_VERSION = 2;
+// 版 3（2026-11-12）：R05 の記録に「この期間の実績の全部」と書かない（行の無い年度の工数を 0 とも読めて、正解の null と割れていた）
+export const GENERATOR_VERSION = 3;
 export const DEFAULT_SEED = 20261105;
 export const CASES_PER_RULE = 10;
 
@@ -254,6 +255,7 @@ const genWareki: Gen = (ctx, split, rng) => {
 };
 
 // R05 記録に無いことは「記録に無い」と言う
+// 記録が「この期間の実績の全部」だとは書かない（書くと「行の無い年度は作業していない → 工数 0」とも読めて、正解の null と割れる。生成器の版 3、2026-11-12）
 const genNotInRecord: Gen = (ctx, split, rng) => {
   const works = actualIn(ctx, split);
   const years = uniq(works.map((w) => w.fiscal_year)).sort((a, b) => a - b);
@@ -281,7 +283,7 @@ const genNotInRecord: Gen = (ctx, split, rng) => {
     .sort((a, b) => a.fiscal_year - b.fiscal_year)
     .map((w) => [w.fiscal_year, num(ctx, w.equipment_id), eqName(ctx, w.equipment_id), w.label, w.man_days]);
   return {
-    record: `記録の期間：${years[0]} 年度から ${years[years.length - 1]} 年度（この期間の、次の機器の実績の全部）\n\n${table(["年度", "台帳の番号", "機器", "作業", "工数（人・日）"], rows)}`,
+    record: `記録の期間：${years[0]} 年度から ${years[years.length - 1]} 年度\n\n${table(["年度", "台帳の番号", "機器", "作業", "工数（人・日）"], rows)}`,
     question: `次のキーごとに、作業の工数（人・日、数）を答えてください。\n${qs.map((q, j) => `- ${keys[j]}：台帳の番号 ${num(ctx, q.id)} の ${q.fy} 年度の「${q.label}」の工数`).join("\n")}`,
     keys,
     checks: [ck("json"), ...qs.flatMap((q, j) => [ck("no_guess", keys[j], q.expect), ck("not_in_record", keys[j], q.expect === null)])],

@@ -2,7 +2,7 @@
   "schema": "moyai.eval.skill-score/0",
   "pack": "waste-incineration",
   "suite": "waste-incineration",
-  "suiteSha": "4f0b8bfc20b562d2a25c2ef5d28d61f0a67dd85ee562c3ecd287635030cb350b",
+  "suiteSha": "431f45dcb13555163399f75947189e716a3c13c4dba119c14151697dbccb333c",
   "skills": [
     {
       "path": "skills/moyai/SKILL.md",
@@ -14,11 +14,23 @@
     }
   ],
   "skillSha": "34f1d553a14125fa4c018deece9c1e89acb8c6745928a7b87bf33da95bb87e87",
-  "label": "main 2026-11-12（#76 まで。1 段目＋ごみ焼却）",
-  "at": "2026-11-12T10:17:02.688Z",
+  "label": "main 2026-11-12（#85 まで。生成器の版 3）",
+  "at": "2026-11-12T12:14:58.993Z",
   "cases": 100,
   "answered": 100,
   "pass": 100,
+  "runs": [
+    {
+      "solver": "解く役 1（子のエージェント・決まった頼みの文）",
+      "pass": 100,
+      "failing": []
+    },
+    {
+      "solver": "解く役 2（子のエージェント・決まった頼みの文）",
+      "pass": 100,
+      "failing": []
+    }
+  ],
   "perRule": {
     "R01": {
       "pass": 10,
