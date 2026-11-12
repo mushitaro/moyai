@@ -17,6 +17,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compare } from "../bench/compare.mjs";
+import { checkPack, skillPathsOf } from "../skill-scores/check.mjs";
 import {
   D1_SPEC,
   FAIL,
@@ -216,24 +217,28 @@ function nodeTests(files) {
   c1Tests = existsSync("tests/scripts/skill-loop-feedback.test.mjs") ? nodeTests(["tests/scripts/skill-loop-feedback.test.mjs"]) : null;
   results.C1 = c1Tests ? judgeC1(c1Tests) : judgeWaiting("#22：フィードバック → ルールの案 → 物差し → PR の台本の試験が無い", await issueOf(22));
 }
-// C4：Skill の文の採点の記録（eval/skill-score/*.json。新しい順）と、今の Skill の文の指紋
+// C4：Skill の文の採点の記録（scripts/skill-scores/check.mjs の checkPack をそのまま使う）。前の文は、Skill の文を最後に変えたコミットの親で読む
 {
-  const dir = join("eval", "skill-score");
-  let records = null;
-  if (existsSync(dir)) {
-    records = walk(dir, /\.json$/)
-      .flatMap((f) => {
-        try {
-          return [JSON.parse(readFileSync(f, "utf8"))];
-        } catch {
-          return [];
+  const suites = existsSync("eval") ? readdirSync("eval", { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join("eval", d.name, "suite.json"))).map((d) => d.name) : [];
+  const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
+  const packs = suites.sort().map((pack) => {
+    const paths = skillPathsOf(pack);
+    const last = git(["log", "-1", "--format=%H", "--", ...paths]);
+    const readBase = last
+      ? (p) => {
+          const out = spawnSync("git", ["show", `${last}^:${p}`], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+          return out.status === 0 ? out.stdout : null;
         }
-      })
-      .sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")));
-  }
-  const texts = ["skills/moyai/SKILL.md", ...readdirSync("packs", { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `packs/${d.name}/SKILL.md`)].filter((p) => existsSync(p));
-  const current = Object.fromEntries(texts.map((p) => [p, createHash("sha256").update(readFileSync(p)).digest("hex")]));
-  results.C4 = judgeC4(records, current);
+      : null;
+    const hasRecords = existsSync(join("eval", "skill-scores", pack));
+    try {
+      const r = checkPack(pack, read, readBase);
+      return { pack, ok: r.ok, note: r.note, hasRecords };
+    } catch (e) {
+      return { pack, ok: false, note: `${pack}：記録が読めない（${e instanceof Error ? e.message : String(e)}）`, hasRecords };
+    }
+  });
+  results.C4 = judgeC4(packs);
 }
 
 // ---- 台帳と受け口の単体の試験（vitest。B1・B2）----

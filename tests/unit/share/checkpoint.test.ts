@@ -15,6 +15,7 @@ import { BUNDLES_DIR } from "../../../src/share/ring";
 import { knownMaxSeq } from "../../../src/share/ring-seen";
 import { formatReport, keysCli, ringsAt, sendCli, verifyRingCli } from "../../../src/cli/human";
 import { FACILITY_COMMON, SPEC, detail, plan, smallPlan, table, vocab } from "./fixtures";
+import { ringBaseDir } from "../../helpers/ring-dir";
 
 const PACK: SharePack = {
   id: "waste-incineration",
@@ -30,6 +31,7 @@ const MONTH = "2026-11";
 const ANSWERS: Answers = { facility: FACILITY_COMMON, inNationalTable: true };
 
 let dir = "";
+let ringBase = "";
 const pending = new Map<string, KeyPair>();
 /** 保管先（計画のフォルダの share/ に施設の鍵と持ち出し簿を置く） */
 const storageOf = (stateDir: string) => join(stateDir, "..", "保管先");
@@ -43,13 +45,17 @@ function senderFor(stateDir: string, ringId: string, planId = smallPlan().planId
 }
 afterEach(() => {
   if (dir) rmSync(dir, { recursive: true, force: true });
+  if (ringBase) rmSync(ringBase, { recursive: true, force: true });
   dir = "";
+  ringBase = "";
 });
 
 async function setup() {
   dir = mkdtempSync(join(tmpdir(), "moyai-checkpoint-"));
   const stateDir = join(dir, "state");
-  const root = join(dir, "輪のフォルダ");
+  // 輪のフォルダの道は固有名詞の数えの照らす相手なので、乱数の文字を入れない（tests/helpers/ring-dir.ts）
+  ringBase = ringBaseDir("checkpoint");
+  const root = join(ringBase, "輪のフォルダ");
   const c = await createRing({ stateDir, root, pack: PACK, now: NOW });
   if (!c.ok) throw new Error(c.reason);
   const ring = await loadRing(stateDir, c.ringId, PACK);
