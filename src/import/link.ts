@@ -745,11 +745,14 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       }
   }
   const caseGroups = new Map<string, Case[]>();
+  /** 行の年度の組（年度の分からない行は「?」） */
+  const yearsOf = (evs: EventRec[]) => [...new Set(evs.map((e) => (e.fiscalYear === null ? "?" : String(e.fiscalYear))))].sort().join("+");
   // 台帳も星取表も無い（機器の記録が 1 つも無い）組：日報・報告書の機器の名前は、どれも当てる先が無い。様式ごとにまとめて聞く
   const noAssets = !clusters.some((c) => !c.excluded);
   for (const cs of cases.values()) {
     // 当てる先の名前が 1 つも無い名前（台帳にも星取表にも無い機器）は、様式ごとに 1 問にまとめる（機器の記録があれば「1 件ずつ選ぶ」も選べる）
-    const g = `${formKey(cs.tableId)}|${cs.cands.length === 0 ? "none" : cs.pattern}`;
+    // 年度ごとに聞く（年度の資料を足しても、前の年度の問いの中身と答え・結びは変わらない。足した資料は足した分だけを聞く）
+    const g = `${formKey(cs.tableId)}@${yearsOf(cs.events)}|${cs.cands.length === 0 ? "none" : cs.pattern}`;
     caseGroups.set(g, [...(caseGroups.get(g) ?? []), cs]);
   }
   // 同じ名前・同じ号・同じ候補の機器の名前の組（表をまたいで。名前ごとの問いを 1 つにする）
@@ -1082,7 +1085,11 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     } else lps.push({ j, m: null, pattern: "ambiguous", options: ms });
   }
   const lgroups = new Map<string, LP[]>();
-  for (const lp of lps) lgroups.set(`${groupKey(lp.j.units)}|${lp.pattern}`, [...(lgroups.get(`${groupKey(lp.j.units)}|${lp.pattern}`) ?? []), lp]);
+  // 年度ごとに聞く（年度の資料を足しても、前の年度の作業と星取の結びの問いは変わらない）
+  for (const lp of lps) {
+    const k = `${groupKey(lp.j.units)}@${lp.j.fiscalYear}|${lp.pattern}`;
+    lgroups.set(k, [...(lgroups.get(k) ?? []), lp]);
+  }
   const primary = (j: Job) => j.units[0] as Occurrence;
   const lpItem = (lp: LP): QuestionItem => ({
     file: primary(lp.j).file,
