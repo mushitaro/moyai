@@ -38,6 +38,8 @@ export const HUMAN_ACTIONS = [
   // 様式で書き出す（3C：様式と写し方は保存先、書き出した Excel に人が署名する）
   // 次の版に重ねる資料（1C・重-2）：先に置き、版の資料を読む
   "plan_source_put",
+  // 施設の作業中を消す（#82。消すのは人だけ。署名した版は消さない）
+  "work_discard",
   "plan_source_read",
   "templates_read",
   "template_save",
@@ -143,6 +145,40 @@ export const ROUTES = {
     maxBody: 0,
     note: "ヘッダの「Claude と並べる」：Windows で、Claude Desktop の窓を左、MOYAI の窓（押した直後の前面の窓）を右に並べる（体は無し。PowerShell の決まった台本だけを走らせ、利用者の値を渡さない）",
   },
+  // 施設ごとの作業中（#82。src/bridge/work.ts）：作業画面が、作業中のもの（資料の写し・答え・計画・確定のシートの確定）を保管先に自動で残し、トップと戻すときに読む。
+  // 作業画面の作業の写しの道（人だけの経路ではない。タブの秘密だけ）。AI のツールと中継には、この道が無い。消すのは人だけ（work_discard）
+  tabWorkSource: {
+    method: "POST",
+    path: "/tab/work-source",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 90 * 1024 * 1024,
+    note: "作業中の資料を 1 つ、保管先の計画のフォルダに中身のアドレス（SHA-256）で置く（版の資料と同じ所。同じ中身は 1 つ）",
+  },
+  tabWorkSave: {
+    method: "POST",
+    path: "/tab/work-save",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 32 * 1024 * 1024,
+    note: "施設の作業中（資料の印・取り込みの答え・作業中の計画・確定のシートの確定）を、保管先の plans/<計画ID>/work/state.json に書く（変わるたびに間を置いてまとめて。資料の写しがそろっているときだけ）",
+  },
+  tabWorkList: {
+    method: "POST",
+    path: "/tab/work-list",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 0,
+    note: "保管先の作業中の一覧（トップの行の「作業中　未確定 n」。名前・未確定の数・時刻だけ）",
+  },
+  tabWorkRead: {
+    method: "POST",
+    path: "/tab/work-read",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 1024,
+    note: "施設の作業中を読む（トップの「作業中」を押したとき、資料ごと続きから開く）。資料は sha256 を添えると 1 つずつバイト列で返す",
+  },
   commitTrial: {
     method: "POST",
     path: "/human/commit-trial",
@@ -164,6 +200,7 @@ export const ROUTES = {
   requestReceive: human("/human/request-receive", "request_receive", 16 * 1024, "人が「受け取る」を押したときだけ、メールのリンクの使い捨ての合言葉を頼みと照らし、自分の鍵で受け取りに署名して置く（最初の 1 つだけ。鍵は作らない。頼んだ鍵では受け取らない）"),
   requestRenew: human("/human/request-renew", "request_renew", 16 * 1024, "頼み直す：新しい頼みに署名して置き、前のリンクを使えなくする。渡すメールの文を用意する"),
   planFileRead: human("/human/plan-file-read", "plan_file_read", 16 * 1024, "確定した版の Excel（人が見る様式の星取表か差分レポート）を読んで、画面がブラウザに落とす"),
+  workDiscard: human("/human/work-discard", "work_discard", 1024, "施設の作業中を消す（保管先の plans/<計画ID>/work/。署名した版と版の資料は消さない）"),
   planSourcePut: human("/human/plan-source-put", "plan_source_put", 90 * 1024 * 1024, "次の版に重ねるため、版を組んだ資料を 1 つ、保存先の計画のフォルダに中身のアドレス（SHA-256）で置く（確定では SHA-256 だけを送る）"),
   planSourceRead: human("/human/plan-source-read", "plan_source_read", 16 * 1024, "確かめで合う版を組んだ資料を 1 つ読む（版の記録の SHA-256 と照らす。次の版に重ねるため、画面に戻す）"),
   templatesRead: human("/human/templates-read", "templates_read", 16 * 1024, "保存先の様式と写し方（列の役目）の一覧と、承認済みか下書きか、その版で書き出したか"),

@@ -6,7 +6,6 @@ import { Alert, Anchor, Button, Group, Modal, Radio, Stack, Table, Text, TextInp
 import { mailtoOf, setHandoffMail, type HandoffMail } from "../state/handoff";
 import { droppedPlanRules, readingsForCommit, readingsSigned } from "../state/readings";
 import { acceptancesFor, clearAccepted } from "../state/decisions";
-import { settleDraft } from "../state/draft";
 import { pendingDeriveFor, setPendingDerive } from "../state/derive";
 import { getWorkingPlan } from "../state/plan-store";
 import { displayPrefs } from "../state/screen";
@@ -287,7 +286,6 @@ export function ConfirmDialog({
     // 送った削除を履歴に足す（橋渡しの状態を読み直す前に作り直しても、消した星取が戻らないように。Architect の 70 の残り）
     noteCommittedRemovals(plan.planId, r.body.version, sentRemovals);
     // 確定したら、前の作業の写しを消す（pwa-v0）
-    settleDraft(plan.planId);
     onConfirmed(r.body.plan);
   };
 
@@ -501,7 +499,6 @@ export function HistoryDialog({
     if (!r.ok) return setMsg({ color: "red", text: r.message });
     setMsg({ color: "teal", text: H.reverted(r.body.version) });
     // 前の版に戻した（署名した）ので、前の作業の写しを消す（pwa-v0）
-    settleDraft(planId);
     setTarget(null);
     setReason("");
     onReverted(r.body.plan);

@@ -7,6 +7,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
+import { discardWork } from "./work";
 import { pendingDecisions } from "../plan/diff";
 import { commitPlan, planDir, readHistory, readPlanVersion, revertPlan, signLatest, CREATION_ROLES, PLAN_ID, type ExportCatalogs, type Signer } from "../plan/store";
 import { COMMENT_MAX, addComment, readComments } from "../plan/comments";
@@ -171,6 +172,7 @@ const SCHEMAS = {
   readings_read: z.object({}),
   readings_lineage: z.object({}),
   reading_feedback_save: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
+  work_discard: z.object({ planId: planIdSchema }),
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
   plan_source_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
   templates_read: z.object({ planId: planIdSchema.nullable() }),
@@ -843,6 +845,15 @@ export class HumanService {
         const want = pv.record.files ? (p.kind === "export" ? pv.record.files.export : pv.record.files.report) : undefined;
         if (want !== undefined && want !== sha256Hex(bytes)) return no("fileChanged");
         return { ok: true, version: p.version, kind: p.kind, base64: bytes.toString("base64") };
+      }
+      // 施設の作業中を消す（#82。人だけ。署名した版と版の資料は消さない）
+      case "work_discard": {
+        const p = parsePayload("work_discard", call.payload);
+        if (!p) return no("payloadInvalid");
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        await discardWork(root, p.planId);
+        return { ok: true };
       }
       case "plan_source_put": {
         const p = parsePayload("plan_source_put", call.payload);

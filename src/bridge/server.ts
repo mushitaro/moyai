@@ -22,6 +22,9 @@ import { approvedReadingVersions, listReadings, readingTextShown, registerReadin
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
+import { listWork, readWork, readWorkSource, writeWork } from "./work";
+import { putSource } from "./sources";
+import { PLAN_ID } from "../plan/paths";
 import { beginPrepare, checkUpdate, isReady, startAutoCheck, lastPrepare, preparing, readPointer, type UpdateEnv } from "./app-update";
 import { checkFetchSite, checkHost, checkOrigin } from "./guard";
 import { collectIntake, readIntakeFile, skillPacksText } from "./intake-files";
@@ -423,6 +426,49 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": "application/octet-stream", "Cache-Control": "no-store", "Content-Length": String(bytes.length) });
       res.end(bytes);
     },
+    // 施設ごとの作業中（#82）：作業画面だけの道（タブの秘密）。保管先が無ければ noRoot。行の値は記録に書かない
+    tabWorkSource: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const b = g.body as { planId?: unknown; base64?: unknown } | null;
+      if (typeof b?.planId !== "string" || !PLAN_ID.test(b.planId) || typeof b.base64 !== "string") return sendJson(res, 200, { ok: false, reason: "workInvalid" });
+      const root = await human.root();
+      if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
+      // 書けない（権限・空き）ときも、値を記録に書かずに断る
+      const r = await putSource(root, b.planId, new Uint8Array(Buffer.from(b.base64, "base64"))).catch(() => null);
+      if (!r) return sendJson(res, 200, { ok: false, reason: "workWriteFailed" });
+      sendJson(res, 200, r.ok ? { ok: true, sha256: r.sha256, size: r.size } : { ok: false, reason: r.reason });
+    },
+    tabWorkSave: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const root = await human.root();
+      if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
+      sendJson(res, 200, await writeWork(root, (g.body as { state?: unknown } | null)?.state).catch(() => ({ ok: false, reason: "workWriteFailed" })));
+    },
+    tabWorkList: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const root = await human.root();
+      sendJson(res, 200, { ok: true, root, works: root ? await listWork(root) : [] });
+    },
+    tabWorkRead: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const b = g.body as { planId?: unknown; sha256?: unknown } | null;
+      if (typeof b?.planId !== "string") return sendJson(res, 200, { ok: false, reason: "workInvalid" });
+      const root = await human.root();
+      if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
+      if (typeof b.sha256 === "string") {
+        const bytes = await readWorkSource(root, b.planId, b.sha256);
+        if (!bytes) return sendJson(res, 200, { ok: false, reason: "workSourceMissing" });
+        res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": "application/octet-stream", "Cache-Control": "no-store", "Content-Length": String(bytes.length) });
+        res.end(bytes);
+        return;
+      }
+      const w = await readWork(root, b.planId);
+      sendJson(res, 200, w ? { ok: true, state: w } : { ok: false, reason: "workMissing" });
+    },
     // ヘッダの「Claude と並べる」：守りを通ったら、決まった台本を走らせて答えを返す（体は無し。タブから受けた値は台本に渡さない）
     tabWindowArrange: async ({ req, res, route }) => {
       const g = await guardTab(req, route);
@@ -435,6 +481,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
   // 確定・設定・輪と鍵・検問所の処理は src/bridge/human.ts（同じ守りを通ったあとで呼ぶ）
   const delegate = async (res: ServerResponse, h: HumanCtx) => sendJson(res, 200, await human.handle(h));
   const humanHandlers: { [K in HumanRouteId]: (res: ServerResponse, h: HumanCtx) => void | Promise<void> } = {
+    workDiscard: delegate,
     commitTrial: (res, h) => {
       // 確定の試し：中身は何もしない。守りの形を試験するための経路
       log("確定の試しの経路を通りました（何も変えていません）");

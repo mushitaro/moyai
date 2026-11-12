@@ -1,5 +1,5 @@
 // 作業中の計画の正本（このタブのメモリ）。取り込みの画面が置き、星取表・確定・検問所が読む。
-// 閉じたときに戻せるよう、写しを state/draft.ts がブラウザの保存領域（IndexedDB）に書く。正本はここのまま。
+// 閉じたときに戻せるよう、写しを state/work.ts（施設ごとの作業中。#82）が保管先に書く。正本はここのまま。
 // 置けるのは取り込み（intake）と、開発用の見本（dev）だけ。確定した計画はファイルにあり、ここは作業中の 1 つだけを持つ。
 // 当てはめ（state/crosswalk.ts）は、置いた計画の中身を書き換える（AI の案と、人が受けた・断ったもの）。
 import { useSyncExternalStore } from "react";
@@ -24,7 +24,7 @@ export interface WorkingPlan {
   base: number | null;
   /**
    * 中身が保管先の版のままか（その版を開いた・確定した直後）。書き換えると false。
-   * 閉じる前の知らせ（state/leave.ts）と、戻すための写し（state/draft.ts）は、false のときだけ「未確定の計画」と数える。
+   * 閉じる前の知らせ（state/leave.ts）と、戻すための写し（state/work.ts（施設ごとの作業中。#82））は、false のときだけ「未確定の計画」と数える。
    */
   stored: boolean;
 }
@@ -50,7 +50,7 @@ export function setWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: Crossw
   return current;
 }
 
-/** 前の作業の写し（state/draft.ts）を戻す。戻したものは未確定の計画として扱う（保管先の版のままとは見なさない） */
+/** 前の作業の写し（state/work.ts（施設ごとの作業中。#82））を戻す。戻したものは未確定の計画として扱う（保管先の版のままとは見なさない） */
 export function restoreWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: CrosswalkProposal[], base: number | null): WorkingPlan {
   current = { plan, origin, revision: ++revision, generation: ++generation, proposals, base, stored: false };
   notify();

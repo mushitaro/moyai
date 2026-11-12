@@ -47,18 +47,6 @@ export const TEXT = {
     /** 下の帯：資料の読込の進み（読んでいる間だけ） */
     reading: (done: number, total: number) => `読込 ${done}/${total}`,
   },
-  /**
-   * 前の作業を戻す（下の帯。pwa-v0）：開いたときに、閉じる前の作業中の計画と確定のシートの確定が残っていれば出し、人が選ぶ。
-   * 施設か版が今の作業と違えば戻さない（押せない理由を出す）。資料は戻さない。
-   */
-  draft: {
-    label: "前の作業",
-    /** 施設名と、書いた時刻（この PC の時刻） */
-    what: (name: string, at: string) => `${name}　${at}`,
-    restore: "前の作業を戻す",
-    discard: "捨てる",
-    blocked: { facility: "理由：別の施設を作業中", version: "理由：別の版を作業中" },
-  },
   /** 【業種】（設定からのリンク）：設備の地図の群ごとの設備の種類。名前・群の名前・作らない理由はパックから読む */
   industries: {
     link: "業種",
@@ -303,6 +291,9 @@ export const TEXT = {
     markTitle: (n: number, by: string | null) => (by ? `第 ${n} 版（${by}）` : `第 ${n} 版`),
     menuHead: (n: number, ym: string, sigs: number) => `第 ${n} 版　${ym}　署名 ${sigs}`,
     menu: { open: "開く", next: "次の版を作る", derive: "新しい施設を作る" },
+    // 施設の作業中（#82）：保管先に自動で残した作業中のもの。押すと「続きから開く」「作業中を消す」（消すのは人だけ）
+    work: (open: number) => (open > 0 ? `作業中　未確定 ${open}` : "作業中"),
+    workMenu: { resume: "続きから開く", discard: "作業中を消す" },
     deriveTitle: (name: string, n: number) => `${name} の第 ${n} 版から作る`,
     deriveName: "新しい施設名",
     deriveNamePlaceholder: "例：E 村 清掃センター",
@@ -472,8 +463,9 @@ export const TEXT = {
             : `編集者 ${mine ? "あなた" : who}`,
     /** 承認・差し戻しの結果の 1 文。承認は版の呼び名（name：「令和 8 年度版（第 1 版）」）で、差し戻しは版にならないので「第 n 版」のまま（docs/screens.md §3.4 の末尾） */
     signed: (role: "approve" | "return", n: number, name: string) => (role === "approve" ? `${name}を承認しました。` : `第 ${n} 版を差戻しました。`),
+    workFailed: (what: string) => `作業中を開けませんでした（保管先の${what}が読めません）。`,
     openFailed: (what: string) => `リンクの版を開けませんでした。保存先の版と、リンクの${what}が合いません。`,
-    openWhat: { missing: "計画", version: "版の番号", hash: "ハッシュ", broken: "署名と鎖" } as Record<string, string>,
+    openWhat: { missing: "計画", version: "版の番号", hash: "ハッシュ", broken: "署名と鎖", work: "作業中", workSource: "作業中の資料" } as Record<string, string>,
     // 1C・重-2：開いた版を組んだ資料（言葉は Wire に確かめる）
     noSources: (n: number) => `第 ${n} 版は、どの資料から作ったかの記録がありません。資料を追加すると、追加した資料だけで作り直すので、第 ${n} 版の星取は消えた行として出ます。`,
     opening: (n: number) => `第 ${n} 版の資料を読んでいます`,

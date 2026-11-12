@@ -16,8 +16,7 @@ import { startIntakeWorker } from "./intake/start-worker";
 import { SelfTest } from "./pages/SelfTest";
 import { APP_PAGES, ROUTES } from "../shared/routes";
 import { moyaiCssVariables, moyaiTheme } from "../ui/mantine-theme";
-import { DraftBand } from "./components/DraftBand";
-import { DraftKeeper, indexedDbPort, installDraftKeeper } from "./state/draft";
+import { WorkKeeper, installWorkKeeper, type WorkState } from "./state/work";
 import { guardLeave, planStateOf, type LeaveState } from "./state/leave";
 import { getWorkingPlan, subscribeWorkingPlan } from "./state/plan-store";
 import { acceptedList } from "./state/decisions";
@@ -33,9 +32,34 @@ const Industries = lazy(() => import("./pages/Industries").then((m) => ({ defaul
 const workspace = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false }, startIntakeWorker());
 const client = bridgeClient((c) => connectTabTools(c, workspace));
 
-// 前の作業の写し（作業中の計画と確定のシートの確定。IndexedDB。資料は書かない）。IndexedDB が無ければ置かない
-const draftPort = indexedDbPort();
-if (draftPort) installDraftKeeper(new DraftKeeper({ port: draftPort, build: `${__MOYAI_BUILD__.time} ${__MOYAI_BUILD__.commit}` }));
+// 施設ごとの作業中（#82）：資料の写し・答え・作業中の計画・確定のシートの確定を、変わるたびに保管先へ残す（作業画面だけの道。src/bridge/work.ts）。
+// 前の作業を戻す帯（IndexedDB の写し・資料なし）は引いた。戻すのはトップの「作業中」から
+const b64 = (bytes: Uint8Array): string => {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+installWorkKeeper(
+  new WorkKeeper({
+    ws: workspace,
+    build: `${__MOYAI_BUILD__.time} ${__MOYAI_BUILD__.commit}`,
+    port: {
+      putSource: async (planId, bytes) => {
+        const r = await client.workCall(ROUTES.tabWorkSource.path, { planId, base64: b64(bytes) });
+        return r?.ok === true && typeof r.sha256 === "string" && typeof r.size === "number" ? { ok: true, sha256: r.sha256, size: r.size } : { ok: false, reason: String(r?.reason ?? "network") };
+      },
+      save: async (state) => {
+        const r = await client.workCall(ROUTES.tabWorkSave.path, { state });
+        return { ok: r?.ok === true, ...(typeof r?.reason === "string" ? { reason: r.reason } : {}) };
+      },
+      read: async (planId) => {
+        const r = await client.workCall(ROUTES.tabWorkRead.path, { planId });
+        return r?.ok === true ? (r.state as WorkState) : null;
+      },
+      source: (planId, sha256) => client.workSource(planId, sha256),
+    },
+  }),
+);
 
 /** 閉じる前の知らせに使う、今の作業（資料・答え・作業中の計画・確定のシートの確定） */
 function leaveState(): LeaveState {
@@ -55,12 +79,6 @@ const reportWork = () => client.setWork(workspace.fileCount > 0 || getWorkingPla
 workspace.subscribe(reportWork);
 subscribeWorkingPlan(reportWork);
 reportWork();
-
-/** 前の作業を戻したら、計画の ID を取り込みの作業場に固定し（版を開いたときと同じ）、HOSHITORI を開く */
-function onDraftRestored(planId: string) {
-  workspace.pinPlanId(planId);
-  location.hash = STAGE_HASH.merge;
-}
 
 /** 前の段の道（#/export・#/share・#/checkpoint）は、HOSHITORI のシートの道に置き換える（履歴は増やさない） */
 function currentHash(): string {
@@ -122,7 +140,7 @@ export function App() {
     <MantineProvider theme={moyaiTheme} cssVariablesResolver={moyaiCssVariables} defaultColorScheme="auto">
       <ThemeSync />
       <ReadingsSync />
-      <Shell client={client} hash={hash} workspace={workspace} status={<DraftBand onRestored={onDraftRestored} />}>
+      <Shell client={client} hash={hash} workspace={workspace}>
       {route.stage === "selftest" ? (
         <SelfTest />
       ) : route.stage === "settings" ? (
