@@ -303,7 +303,16 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
         scope = "global:";
       }
       // 号炉・系列の数がどちらにも書いてあって違う機器（「1号炉 給水ポンプ」と「2号炉 給水ポンプ」）は、名前が同じでも別の機器。候補にしない
-      const cands = pool.filter((c) => nk(c.name) === key && !seriesDiffer(r, c));
+      let cands = pool.filter((c) => nk(c.name) === key && !seriesDiffer(r, c));
+      // 号の書いてある機器で、同じ段に同じ名前が無い：どの段でも、名前も号の数も同じ機器がただ 1 つなら候補にする
+      // （平たい一覧の「誘引送風機（1号炉）」と、星取表の設備の下の「誘引送風機」の #1 の行。親の段の書き方が資料で違う）
+      if (!cands.length && numberOf(r) !== null) {
+        const wide = clusters.filter((c) => c.recs.some((x) => done.has(x.tableId)) && nk(c.name) === key && numberOf(c) === numberOf(r));
+        if (wide.length === 1) {
+          cands = wide;
+          scope = "global:";
+        }
+      }
       const sibs = recs.filter((x) => x.parentId === r.parentId && nk(x.name) === key && !x.pending && !x.excluded);
       const n = numberOf(r);
       let cand: Cluster | null = null;
