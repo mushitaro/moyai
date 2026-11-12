@@ -60,21 +60,27 @@ describe("A1b：施設ごとの下限", () => {
   });
 });
 
-describe("A3：初めて読む物差し", () => {
-  const f = (planMade, firstAsked, restAsked, restYears) => ({ facility: "x", planMade, error: null, firstRead: { firstAsked, restAsked, restYears } });
-  it("測った施設すべてで計画ができ、残りの 1 年あたりの問いが 1 年目の 1 割以下のときだけ合格", () => {
-    const ok = { same: true, detail: "" };
-    assert.equal(judgeA3({ facilities: [f(true, 50, 15, 3)] }, ok).status, PASS);
-    assert.equal(judgeA3({ facilities: [f(true, 50, 16, 3)] }, ok).status, FAIL);
-    assert.equal(judgeA3({ facilities: [f(false, 100, 3, 3)] }, ok).status, FAIL);
-    assert.equal(judgeA3({ facilities: [f(true, 100, 0, 0)] }, ok).status, FAIL);
-    assert.equal(judgeA3({ facilities: [f(true, 50, 15, 3)] }, { same: false, detail: "" }).status, FAIL);
-    assert.equal(judgeA3({ facilities: [f(true, 50, 15, 3)] }, { same: null, detail: "" }).status, UNKNOWN);
-    // 年度ごとの資料の無い施設（firstRead が無い）は数えない。測った施設が 0 なら不合格
+describe("A3：初めて読む物差し（#93）", () => {
+  const f = (o = {}) => ({ facility: "x", planMade: true, error: null, accuracy: { correct: 80, total: 100 }, recovery: { correct: 70, total: 100 }, firstRead: { firstAsked: 50, ruleWrong: 0 }, ...o });
+  const ok = { same: true, detail: "" };
+  it("下限を全施設で満たしても、残りの年度の条件が決め直し中なので待ち（合格にしない）", () => {
+    assert.equal(judgeA3({ facilities: [f()] }, ok).status, WAIT);
+    assert.match(judgeA3({ facilities: [f()] }, ok).evidence, /#67/);
+  });
+  it("計画なし・1 年目の問い 51・③ 79%・⑥ 69%・答えの間違い 1・間違いを測っていない、のどれでも不合格", () => {
+    assert.equal(judgeA3({ facilities: [f({ planMade: false })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 51, ruleWrong: 0 } })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ accuracy: { correct: 79, total: 100 } })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ accuracy: null })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ recovery: { correct: 69, total: 100 } })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10, ruleWrong: 1 } })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10 } })] }, ok).status, FAIL);
+  });
+  it("記録と数が違えば不合格、比べていなければ未確認。年度ごとの資料の無い施設は数えない。測った施設 0 は不合格", () => {
+    assert.equal(judgeA3({ facilities: [f()] }, { same: false, detail: "" }).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f()] }, { same: null, detail: "" }).status, UNKNOWN);
+    assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }, f()] }, ok).status, WAIT);
     assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }] }, ok).status, FAIL);
-    assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }, f(true, 50, 3, 3)] }, ok).status, PASS);
-    // 1 年目の問いも 50 以下
-    assert.equal(judgeA3({ facilities: [f(true, 51, 3, 3)] }, ok).status, FAIL);
   });
 });
 
@@ -127,17 +133,13 @@ describe("C1・C3：Skill の進化", () => {
 });
 
 describe("C4：Skill の文の採点の記録", () => {
-  const cur = { "skills/moyai/SKILL.md": "a", "packs/x/SKILL.md": "b" };
-  const rec = (score, texts = cur, problems = "p") => ({ texts, problems, score });
-  it("記録が今の文の指紋と合い、点が前の記録より下がっていなければ合格。無ければ待ち、古い・下がったら不合格", () => {
-    assert.equal(judgeC4(null, cur).status, WAIT);
-    assert.equal(judgeC4([rec(10), rec(9)], cur).status, PASS);
-    assert.equal(judgeC4([rec(10), rec(10)], cur).status, PASS);
-    assert.equal(judgeC4([rec(9), rec(10)], cur).status, FAIL);
-    assert.equal(judgeC4([rec(10, { ...cur, "packs/x/SKILL.md": "old" })], cur).status, FAIL);
-    assert.equal(judgeC4([rec(10, { "skills/moyai/SKILL.md": "a" })], cur).status, FAIL);
-    // 問題の組が違えば、点は比べない（前の記録と同じ物差しでない）
-    assert.equal(judgeC4([rec(5, cur, "q"), rec(10)], cur).status, PASS);
+  it("問題の組のあるパックが全部 checkPack で通れば合格。1 つでも外れれば不合格。記録が 1 つも無ければ待ち", () => {
+    const p = (pack, ok, hasRecords = true) => ({ pack, ok, note: `${pack}：…`, hasRecords });
+    assert.equal(judgeC4([p("a", true), p("b", true)]).status, PASS);
+    assert.equal(judgeC4([p("a", true), p("b", false, false)]).status, FAIL);
+    assert.equal(judgeC4([p("a", false)]).status, FAIL);
+    assert.equal(judgeC4([p("a", false, false)]).status, WAIT);
+    assert.equal(judgeC4([]).status, UNKNOWN);
   });
 });
 

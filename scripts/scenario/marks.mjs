@@ -13,7 +13,7 @@ export const MARKS = [
   { id: "A1", title: "物差しで全施設の計画・開いた問い 0・記録より下がらない", auto: true },
   { id: "A1b", title: "同じ物差しで施設ごとに ⑤ 50 以下・③ 80% 以上・⑥ 70% 以上", auto: true },
   { id: "A2", title: "見ていない様式で計画ができる（1 回だけ測る）", auto: false, note: "1 回だけ（docs/plan.md §2.6、#18）。npm run scenario では走らせない" },
-  { id: "A3", title: "初めて読む物差しで計画・残りの年度の問いが 1 年目の 1 割以下・1 年目の問い 50 以下", auto: true },
+  { id: "A3", title: "初めて読む物差しで施設ごとに計画・1 年目の問い 50 以下・③ 80% 以上・⑥ 70% 以上・答えの間違い 0（残りの年度の条件は #67）", auto: true },
   { id: "A4", title: "S-0 の 3 が M-PC3 で通る", auto: false },
   { id: "B1", title: "台帳は moyai-ledger、切り替えが main、台帳の試験が全部通る", auto: true },
   { id: "B2", title: "手元の受け口と偽の GitHub で 1 本通り、断る試験も通る", auto: true },
@@ -77,25 +77,32 @@ export function judgeA1b(result, strict) {
 }
 
 /**
- * A3：初めて読む物差し（pack-bench --first-read の結果）。測った施設（年度ごとの資料のある施設）すべてで計画ができ、
- * 残りの年度の 1 年あたりの問い（restAsked ÷ restYears）が 1 年目の問い（firstAsked）の 1 割以下、1 年目の問いが 50 以下。記録との比べは A1 と同じ
- * @param {{ facilities: Array<{facility:string, planMade:boolean, error?:string|null, firstRead?: {firstAsked:number, restAsked:number, restYears:number}}> } | null} result
+ * A3：初めて読む物差し（pack-bench --first-read の結果。docs/scenarios.md、#93）。測った施設（年度ごとの資料のある施設）すべてで、
+ * 計画ができ、1 年目の問い（firstAsked）50 以下・③ 80% 以上・⑥ 70% 以上（A1b と同じ下限）・人に聞かずに決めた答えの間違い（ruleWrong）0。記録との比べは A1 と同じ。
+ * 残りの年度の問いの条件は決め直し中（#67）なので判定に入れない：ほかが全部そろっても「待ち」
+ * @param {{ facilities: Array<{facility:string, planMade:boolean, error?:string|null, accuracy:{correct:number,total:number}|null, recovery:{correct:number,total:number}|null, firstRead?: {firstAsked:number, ruleWrong?:number}}> } | null} result
  */
 export function judgeA3(result, strict) {
   if (!result) return r(UNKNOWN, "初めて読む物差しの結果を読めない");
   const fs = (result.facilities ?? []).filter((f) => f.firstRead);
   if (fs.length === 0) return r(FAIL, "初めて読む物差しで測った施設が 0");
-  const made = fs.filter((f) => f.planMade && !f.error).length;
-  const over = fs.filter((f) => {
-    const x = f.firstRead;
-    return !(x.restYears > 0) || x.restAsked / x.restYears > x.firstAsked * 0.1;
-  });
-  // 1 年目の問いも A1b と同じく 50 以下
-  const firstOver = fs.filter((f) => !(f.firstRead.firstAsked <= A1B.asked));
-  const ev = `計画 ${made}/${fs.length} 施設・残りの 1 年あたりの問いが 1 年目の 1 割を越える施設 ${over.length}${over.length ? `（${over.map((f) => `${f.facility} ${(f.firstRead.restAsked / Math.max(1, f.firstRead.restYears)).toFixed(1)}／${f.firstRead.firstAsked}`).join("、")}）` : ""}・1 年目の問いが ${A1B.asked} を越える施設 ${firstOver.length}・記録との比べ：${strict.detail}`;
-  if (strict.same === false || made !== fs.length || over.length > 0 || firstOver.length > 0) return r(FAIL, ev);
+  const why = (f) => {
+    const out = [];
+    if (!f.planMade || f.error) out.push("計画なし");
+    if (!(f.firstRead.firstAsked <= A1B.asked)) out.push(`1 年目の問い ${f.firstRead.firstAsked}`);
+    const a = ratio(f.accuracy);
+    const v = ratio(f.recovery);
+    if (a === null || a < A1B.accuracy) out.push(`③${pct(a)}`);
+    if (v === null || v < A1B.recovery) out.push(`⑥${pct(v)}`);
+    if (f.firstRead.ruleWrong === undefined) out.push("答えの間違いを測っていない");
+    else if (f.firstRead.ruleWrong !== 0) out.push(`答えの間違い ${f.firstRead.ruleWrong}`);
+    return out;
+  };
+  const bad = fs.map((f) => ({ f, w: why(f) })).filter((x) => x.w.length);
+  const ev = `下限を満たす施設 ${fs.length - bad.length}/${fs.length}${bad.length ? `（外れ：${bad.slice(0, 5).map((x) => `${x.f.facility} ${x.w.join("・")}`).join("、")}${bad.length > 5 ? ` ほか ${bad.length - 5}` : ""}）` : ""}・記録との比べ：${strict.detail}`;
+  if (strict.same === false || bad.length > 0) return r(FAIL, ev);
   if (strict.same === null) return r(UNKNOWN, ev);
-  return r(PASS, ev);
+  return r(WAIT, `${ev}・残りの年度の問いの条件は決め直し中（#67）`);
 }
 
 /** C1 の台本の試験のうち、合格に要るもの（題の頭で名指す。消えれば不合格） */
@@ -155,22 +162,16 @@ export function judgeC3(unit, loop, slice) {
 }
 
 /**
- * C4：Skill の文の採点（#23 の 2 の運営者の判断：作業役のセッションが解き、コードで採点する。API なし）。
- * CI は Claude を動かせないので、記録が今の文の指紋と合い、点が前の記録より下がっていないかを確かめる（記録が無い・古い・下がったら外れ）。
- * 記録の形（柱 C の作業役が作る道に合わせて直す）：{ texts: { "<道>": "<SHA-256>" }, problems: "<問題の組の指紋>", score: 数, at: 日時 }。新しい順に並べて渡す
- * @param {Array<{ texts: Record<string,string>, problems: string, score: number }> | null} records  新しい順。無ければ null
- * @param {Record<string,string>} current  今の Skill の文（skills/moyai/SKILL.md・packs/<業種>/SKILL.md）の道 → SHA-256
+ * C4：Skill の文の採点（#23 の 2：作業役のセッションが解き、コードで採点する。API なし）。CI は Claude を動かせないので記録を見る。
+ * 問題の組（eval/<パック>/suite.json）のあるパックごとに、scripts/skill-scores/check.mjs の checkPack の結果（今の文の記録があり、別々の解く役 2 つ以上でそろい、
+ * 前の文の記録より合格の数が下がっていない）。記録が 1 つも無ければ待ち
+ * @param {Array<{ pack: string, ok: boolean, note: string, hasRecords: boolean }>} packs
  */
-export function judgeC4(records, current) {
-  if (!records || records.length === 0) return r(WAIT, "採点の記録がまだ無い（#23 の 2 は決まった：作業役が解いてコードで採点・API なし。記録の道は柱 C の作業役が作っている）");
-  const [last, prev] = records;
-  const paths = Object.keys(current);
-  const stale = paths.filter((p) => last.texts?.[p] !== current[p]);
-  const extra = Object.keys(last.texts ?? {}).filter((p) => !(p in current));
-  const dropped = prev && prev.problems === last.problems && !(Number(last.score) >= Number(prev.score));
-  const ev = `記録の点 ${last.score}${prev ? `（前の記録 ${prev.score}${prev.problems === last.problems ? "" : "・問題の組が違う"}）` : "（前の記録なし）"}・今の文と指紋の合わない文 ${stale.length}${stale.length ? `（${stale.join("、")}）` : ""}${extra.length ? `・記録にだけある文 ${extra.length}` : ""}`;
-  if (stale.length || extra.length || dropped || !Number.isFinite(Number(last.score))) return r(FAIL, ev);
-  return r(PASS, ev);
+export function judgeC4(packs) {
+  if (!packs.length) return r(UNKNOWN, "問題の組（eval/<パック>/suite.json）のあるパックが無い");
+  if (!packs.some((p) => p.hasRecords)) return r(WAIT, "採点の記録（eval/skill-scores/）がまだ無い");
+  const ev = packs.map((p) => `${p.ok ? "✓" : "✗"} ${p.note}`).join("・");
+  return r(packs.every((p) => p.ok) ? PASS : FAIL, ev);
 }
 
 /** まだ作られていない印：Issue が開いていれば「待ち」。閉じたのにランナーに道が無ければ「未確認」（道を足す合図） */
