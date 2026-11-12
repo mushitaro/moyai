@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
 import { ReadingSkill, type LoadedReading } from "../../src/import/reading";
+import { rulesFromAnswers, yearSplit } from "./first-read";
 import { runSet, type SetResult } from "./harness";
 import { loadV2Facility } from "./v2";
 
@@ -55,17 +56,106 @@ export interface BenchRow {
   dropped: Record<string, number>;
   /** 測れなかった理由（道具が投げた） */
   error: string | null;
+  /**
+   * 初めて読む測り（--first-read）だけ：1 年目の年度と資料の数、1 年目の問い（N）、1 年目の答えから作った規則の数、
+   * 全部の資料を規則ありで読んだときの問い（K）と規則で決まった問い、規則なしで全部を読んだときの問い（M0）
+   */
+  firstRead?: { year: string; firstFiles: number; restFiles: number; restYears: number; firstAsked: number; rules: number; ruleAnswered: number; restAsked: number; restAskedNoRules: number };
 }
 
 const sum = (xs: Ratio[]): Ratio => xs.reduce((a, b) => ({ correct: a.correct + b.correct, total: a.total + b.total }), { correct: 0, total: 0 });
 const pct = (a: Ratio | null) => (a && a.total ? `${a.correct}/${a.total}（${((a.correct / a.total) * 100).toFixed(1)}%）` : "—");
 const ratio = (a: { correct: number; total: number } | null | undefined): Ratio | null => (a ? { correct: a.correct, total: a.total } : null);
 
+const emptyRow = (n: string): BenchRow => ({ facility: n, name: n, files: 0, seconds: 0, asked: 0, answered: 0, open: 0, openKinds: {}, defaulted: {}, unresolvedBy: {}, openSamples: [], unresolvedBefore: 0, unresolvedAfter: 0, planMade: false, blockers: [], plan: null, accuracy: null, extra: null, recovery: { correct: 0, total: 0 }, manDays: null, days: null, unplaced: 0, dropped: {}, error: null });
+const secondsSince = (t0: number) => Math.round((performance.now() - t0) / 100) / 10;
+
+/** 1 回の読み（runSet）を、表の 1 行にする */
+function rowOf(n: string, v: ReturnType<typeof loadV2Facility>, t0: number, got: Awaited<ReturnType<typeof runSet>>): BenchRow {
+  const { result: r, analysis } = got;
+  const openKinds: Record<string, number> = {};
+  const openSamples: BenchRow["openSamples"] = [];
+  for (const q of r.openAtEnd) {
+    openKinds[q.kind] = (openKinds[q.kind] ?? 0) + 1;
+    if (openKinds[q.kind]! <= 2) openSamples.push({ kind: q.kind, rows: q.rows, text: q.text, options: q.options ?? [], defaultAnswer: q.defaultAnswer ?? null });
+  }
+  const kindOf = new Map(analysis.questions.map((q) => [q.questionId, q.kind] as const));
+  const unresolvedBy: Record<string, number> = {};
+  for (const st of analysis.composition.status.values()) {
+    if (st.s !== "unresolved") continue;
+    const k = st.questionId ? (kindOf.get(st.questionId) ?? "問いが見つからない") : "問いなし";
+    unresolvedBy[k] = (unresolvedBy[k] ?? 0) + 1;
+  }
+  return {
+    ...emptyRow(n),
+    name: v.set.world.facility.name,
+    files: r.files.length,
+    seconds: secondsSince(t0),
+    asked: r.asked,
+    answered: r.answered,
+    open: r.openAtEnd.length,
+    openKinds,
+    defaulted: r.defaulted ?? {},
+    unresolvedBy,
+    openSamples,
+    unresolvedBefore: r.unresolvedBefore,
+    unresolvedAfter: r.unresolvedAfter,
+    planMade: r.planMade,
+    blockers: r.blockers,
+    plan: r.plan,
+    accuracy: r.planMade ? sum(r.files.flatMap((f) => (f.accuracy ? [{ correct: f.accuracy.correct, total: f.accuracy.total }] : []))) : null,
+    extra: r.planMade ? r.files.reduce((a, f) => a + (f.accuracy?.extra ?? 0), 0) : null,
+    recovery: { correct: r.recovery.together, total: r.recovery.denominator },
+    manDays: ratio(r.recovery.manDays),
+    days: ratio(r.recovery.days),
+    unplaced: r.unplaced.length,
+    dropped: v.dropped,
+  };
+}
+
+const RUN = { acceptDefaults: true, deferWholeFile: true, asWritten: true } as const;
+
+/** 今の Skillパックで、施設の資料をすべて読む */
+async function measure(n: string, v: ReturnType<typeof loadV2Facility>, readings: LoadedReading[]): Promise<BenchRow> {
+  const t0 = performance.now();
+  try {
+    return rowOf(n, v, t0, await runSet(v.set, { facilityKey: v.set.world.facility.id, ...RUN, ...(readings.length ? { readings } : {}) }));
+  } catch (e) {
+    return { ...emptyRow(n), seconds: secondsSince(t0), error: e instanceof Error ? e.message.slice(0, 300) : "道具が投げた" };
+  }
+}
+
+// ─── 初めて読む（パックなし・1 年 → ルール → 残り。mushitaro/moyai#67）───────────────
+
+/**
+ * パックなしで、1 年目だけを読み（問い N）、答えを規則にして、全部の資料（1 年目＋残りの年度）を読み直す（問い K）。
+ * 行の数は最後の読み（全部の資料・規則あり）。比べに、規則なしで全部を読んだときの問い（M0）も測る
+ */
+async function measureFirstRead(n: string, v: ReturnType<typeof loadV2Facility>, split: { year: string; first: string[]; rest: string[]; restYears: number }): Promise<BenchRow> {
+  const t0 = performance.now();
+  const opt = { facilityKey: v.set.world.facility.id, ...RUN, packId: "" };
+  try {
+    const y1 = await runSet(v.set, { ...opt, read: split.first });
+    const rules = rulesFromAnswers(y1.analysis.questions, y1.answered, v.set.truth.files.map((f) => f.file));
+    const skill = ReadingSkill.parse({ schema: "moyai.reading/0", name: "1 年目の読み方", scope: "facility", rules });
+    const readings: LoadedReading[] = [{ skill, version: "", path: null, approved: false, draft: true }];
+    const all = [...split.first, ...split.rest];
+    const noRules = await runSet(v.set, { ...opt, read: all });
+    const got = await runSet(v.set, { ...opt, read: all, readings });
+    const row = rowOf(n, v, t0, got);
+    return { ...row, firstRead: { year: split.year, firstFiles: split.first.length, restFiles: split.rest.length, restYears: split.restYears, firstAsked: y1.result.asked, rules: rules.length, ruleAnswered: got.analysis.ruleAnswers.size, restAsked: got.result.asked, restAskedNoRules: noRules.result.asked } };
+  } catch (e) {
+    return { ...emptyRow(n), seconds: secondsSince(t0), error: e instanceof Error ? e.message.slice(0, 300) : "道具が投げた" };
+  }
+}
+
 describe("Skillパックの物差し", () => {
   const out = process.env.MOYAI_BENCH_OUT;
   const pack = process.env.MOYAI_BENCH_PACK ?? "waste-incineration";
   const only = (process.env.MOYAI_BENCH_ONLY ?? "").split(",").map((x) => x.trim()).filter(Boolean);
   const rulesPath = process.env.MOYAI_BENCH_RULES;
+  /** 初めて読む測り：パックなしで 1 年目 → 規則 → 残りの年度（MOYAI_BENCH_FIRST_READ=1） */
+  const firstRead = process.env.MOYAI_BENCH_FIRST_READ === "1";
   it.runIf(!!out)("工場 v2 の施設をすべて測り、表を書く", async () => {
     // ルールの案：範囲（scope）は書いていなければ会社にする（Skillパックの読み方は範囲を持たない。効き方は同じで、下書きとして先に当たる）
     let candidate: { name: string; rules: number; sha256: string } | null = null;
@@ -85,55 +175,27 @@ describe("Skillパックの物差し", () => {
     const names = only.length ? all.filter((n) => only.includes(n)) : all;
     expect(names.length, "測る施設が 0 件").toBeGreaterThan(0);
     const rows: BenchRow[] = [];
+    const skipped: string[] = [];
     for (const n of names) {
-      const t0 = performance.now();
-      const base = { facility: n, name: n, files: 0, seconds: 0, asked: 0, answered: 0, open: 0, openKinds: {}, defaulted: {}, unresolvedBy: {}, openSamples: [], unresolvedBefore: 0, unresolvedAfter: 0, planMade: false, blockers: [], plan: null, accuracy: null, extra: null, recovery: { correct: 0, total: 0 }, manDays: null, days: null, unplaced: 0, dropped: {}, error: null } satisfies BenchRow;
+      let v: ReturnType<typeof loadV2Facility>;
       try {
-        const v = loadV2Facility(join(root, n), n);
-        const { result: r, analysis } = await runSet(v.set, { facilityKey: v.set.world.facility.id, acceptDefaults: true, deferWholeFile: true, asWritten: true, ...(readings.length ? { readings } : {}) });
-        const openKinds: Record<string, number> = {};
-        const openSamples: BenchRow["openSamples"] = [];
-        for (const q of r.openAtEnd) {
-          openKinds[q.kind] = (openKinds[q.kind] ?? 0) + 1;
-          if (openKinds[q.kind]! <= 2) openSamples.push({ kind: q.kind, rows: q.rows, text: q.text, options: q.options ?? [], defaultAnswer: q.defaultAnswer ?? null });
-        }
-        const kindOf = new Map(analysis.questions.map((q) => [q.questionId, q.kind] as const));
-        const unresolvedBy: Record<string, number> = {};
-        for (const st of analysis.composition.status.values()) {
-          if (st.s !== "unresolved") continue;
-          const k = st.questionId ? (kindOf.get(st.questionId) ?? "問いが見つからない") : "問いなし";
-          unresolvedBy[k] = (unresolvedBy[k] ?? 0) + 1;
-        }
-        rows.push({
-          ...base,
-          name: v.set.world.facility.name,
-          files: r.files.length,
-          seconds: Math.round((performance.now() - t0) / 100) / 10,
-          asked: r.asked,
-          answered: r.answered,
-          open: r.openAtEnd.length,
-          openKinds,
-          defaulted: r.defaulted ?? {},
-          unresolvedBy,
-          openSamples,
-          unresolvedBefore: r.unresolvedBefore,
-          unresolvedAfter: r.unresolvedAfter,
-          planMade: r.planMade,
-          blockers: r.blockers,
-          plan: r.plan,
-          accuracy: r.planMade ? sum(r.files.flatMap((f) => (f.accuracy ? [{ correct: f.accuracy.correct, total: f.accuracy.total }] : []))) : null,
-          extra: r.planMade ? r.files.reduce((a, f) => a + (f.accuracy?.extra ?? 0), 0) : null,
-          recovery: { correct: r.recovery.together, total: r.recovery.denominator },
-          manDays: ratio(r.recovery.manDays),
-          days: ratio(r.recovery.days),
-          unplaced: r.unplaced.length,
-          dropped: v.dropped,
-        });
+        v = loadV2Facility(join(root, n), n);
       } catch (e) {
-        rows.push({ ...base, seconds: Math.round((performance.now() - t0) / 100) / 10, error: e instanceof Error ? e.message.slice(0, 300) : "道具が投げた" });
+        rows.push({ ...emptyRow(n), error: e instanceof Error ? e.message.slice(0, 300) : "道具が投げた" });
+        continue;
+      }
+      if (!firstRead) {
+        rows.push(await measure(n, v, readings));
+      } else {
+        const split = yearSplit(v.set.truth.files.filter((f) => f.kind !== "photo").map((f) => f.file));
+        if (!split) {
+          skipped.push(n);
+          continue;
+        }
+        rows.push(await measureFirstRead(n, v, split));
       }
       const x = rows[rows.length - 1]!;
-      console.log(`物差し ${pack}/${n}：⑤ ${x.asked}（開いたまま ${x.open}）・② ${x.unresolvedAfter}・計画 ${x.planMade ? "作った" : "作らなかった"}・⑥ ${x.recovery.correct}/${x.recovery.total}・${x.seconds} 秒${x.error ? "・測れなかった" : ""}`);
+      console.log(`物差し ${pack}/${n}：⑤ ${x.asked}（開いたまま ${x.open}）・② ${x.unresolvedAfter}・計画 ${x.planMade ? "作った" : "作らなかった"}・⑥ ${x.recovery.correct}/${x.recovery.total}・${x.seconds} 秒${x.firstRead ? `・1 年目 ${x.firstRead.firstAsked} → 残り ${x.firstRead.restAsked}（ルールなし ${x.firstRead.restAskedNoRules}）` : ""}${x.error ? "・測れなかった" : ""}`);
     }
     const reader = { commit: git("rev-parse", "HEAD"), src: git("rev-parse", "HEAD:src"), packs: git("rev-parse", "HEAD:packs"), dirty: git("status", "--porcelain", "--", "src", "packs", "tests/heldout") !== "" };
     const measuredAt = new Date().toISOString();
@@ -148,14 +210,42 @@ describe("Skillパックの物差し", () => {
       manDays: sum(rows.flatMap((x) => (x.manDays ? [x.manDays] : []))),
       days: sum(rows.flatMap((x) => (x.days ? [x.days] : []))),
       errors: rows.filter((x) => x.error).length,
+      ...(firstRead
+        ? {
+            firstRead: {
+              firstAsked: rows.reduce((a, x) => a + (x.firstRead?.firstAsked ?? 0), 0),
+              restAsked: rows.reduce((a, x) => a + (x.firstRead?.restAsked ?? 0), 0),
+              restAskedNoRules: rows.reduce((a, x) => a + (x.firstRead?.restAskedNoRules ?? 0), 0),
+              rules: rows.reduce((a, x) => a + (x.firstRead?.rules ?? 0), 0),
+              ruleAnswered: rows.reduce((a, x) => a + (x.firstRead?.ruleAnswered ?? 0), 0),
+              skipped,
+            },
+          }
+        : {}),
     };
     mkdirSync(out!, { recursive: true });
-    writeFileSync(join(out!, "result.json"), `${JSON.stringify({ schema: "moyai.pack-bench.result/0", pack, only: only.length ? only : null, candidate, reader, measuredAt, total, facilities: rows }, null, 1)}\n`, "utf8");
+    writeFileSync(join(out!, "result.json"), `${JSON.stringify({ schema: "moyai.pack-bench.result/0", pack, ...(firstRead ? { mode: "first-read" } : {}), only: only.length ? only : null, candidate, reader, measuredAt, total, facilities: rows }, null, 1)}\n`, "utf8");
     const L = [
-      `# Skillパックの物差し：${pack}（開発用の資料。見ていない様式の結果ではない）`,
+      firstRead ? `# 初めて読む物差し：${pack} の資料をパックなしで（開発用の資料。見ていない様式の結果ではない）` : `# Skillパックの物差し：${pack}（開発用の資料。見ていない様式の結果ではない）`,
       "",
-      "`node scripts/bench/pack-bench.mjs` が作る（手で書かない）。",
+      firstRead ? "`node scripts/bench/pack-bench.mjs --first-read` が作る（手で書かない）。" : "`node scripts/bench/pack-bench.mjs` が作る（手で書かない）。",
       "",
+      ...(firstRead && total.firstRead
+        ? [
+            "Skillパックを選ばずに（パックなし）、1 年目の資料だけを読み、台本の答えを決まった答えの規則（1 年目の読み方）にして、残りの年度を足した全部の資料を読み直した。下の表の行の数は、その最後の読み。",
+            "1 年目は、名前に年度が 1 つだけある資料のいちばん多い年度（同じ数なら新しい年度）と、年度に分けられない資料（範囲の資料・台帳）。年度ごとの資料の無い施設は測らない。",
+            "",
+            `合計：1 年目の問い ${total.firstRead.firstAsked} → 残りの年度を足したときの問い ${total.firstRead.restAsked}（1 年目の規則 ${total.firstRead.rules} 件で決まった問い ${total.firstRead.ruleAnswered}。規則なしで全部を読むと ${total.firstRead.restAskedNoRules}）`,
+            "",
+            "| 施設 | 1 年目（年度・資料） | 1 年目の問い N | 規則 | 残り（年度・資料） | 残りを足した問い K | 残りの 1 年あたり K÷年度 | 規則で決まった問い | 規則なしの問い M0 |",
+            "|---|---|---:|---:|---|---:|---:|---:|---:|",
+            ...rows.map((x) => (x.firstRead ? `| ${x.facility} | ${x.firstRead.year}・${x.firstRead.firstFiles} | ${x.firstRead.firstAsked} | ${x.firstRead.rules} | ${x.firstRead.restYears}・${x.firstRead.restFiles} | ${x.firstRead.restAsked} | ${(x.firstRead.restAsked / x.firstRead.restYears).toFixed(1)} | ${x.firstRead.ruleAnswered} | ${x.firstRead.restAskedNoRules} |` : `| ${x.facility} | 測れなかった | — | — | — | — | — | — | — |`)),
+            "- K は、全部の資料を 1 年目の規則で読み直したときに、規則で決まらずに残った問い（1 年目の問いのうち、年度や行の数を文に含んで規則に当たらないものも入る）。人に聞く数はこれ。",
+            "- 残りの 1 年あたりは K を残りの年度の数で割った値。1 年目の問い N より小さければ、2 年目からが速い。",
+            ...(total.firstRead.skipped.length ? ["", `- 年度ごとの資料が無いので測っていない施設：${total.firstRead.skipped.join("・")}`] : []),
+            "",
+          ]
+        : []),
       `測った読み手：${reader.commit.slice(0, 7)}（src ${reader.src.slice(0, 7)}・packs ${reader.packs.slice(0, 7)}${reader.dirty ? "、commit していない変更あり" : ""}）。測った日時：${measuredAt}（UTC）。${only.length ? `施設を絞った（${only.join("・")}）。` : ""}`,
       candidate ? `ルールの案を当てた：「${candidate.name}」（${candidate.rules} 件・SHA-256 ${candidate.sha256.slice(0, 16)}…）。Skillパックに入れる前の試しで、この値は案の値。` : "会話で作った読み方（3 段目）は当てていない。",
       "質問には、正解だけを見る台本が人の代わりに答えた。台本が正解から答えられない問いは、既定の答えがあればそれを受けた（人が推された答えを押すのと同じ。数は下の注）。AI も API も使っていない。",

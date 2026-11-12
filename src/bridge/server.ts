@@ -205,7 +205,7 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       return { opened: true };
     },
     intake_add_files: async (args) => {
-      const c = collectIntake(args as { source: "demo" | "folder" | "template"; path?: string; pack?: string; facilityName?: string }, {
+      const c = collectIntake(args as { source: "demo" | "folder" | "template"; path?: string; pack?: string; facilityName?: string; match?: string; list?: boolean }, {
         packsDir,
         stateDir: opts.stateDir,
         repoRoot: opts.repoRoot ?? dirname(packsDir),

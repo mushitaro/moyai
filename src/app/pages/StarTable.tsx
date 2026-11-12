@@ -844,16 +844,19 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
 
       {/* 表示の切り替えと凡例を 1 行に。説明の行は置かず、行の数だけを右端に小さく（docs/screens.md 3.2、Wire 2026-11-04） */}
       <Group px={embedded ? 32 : "md"} py={8} gap="md" wrap="wrap" align="center">
-        <Switch
-          aria-label={T.rowsLabel}
-          data-testid="rows-mode"
-          value={mode}
-          onChange={switchMode}
-          data={[
-            { value: "ledger", label: T.rows.ledger },
-            { value: "common", label: T.rows.common, disabled: !catalog },
-          ]}
-        />
+        {/* 共通の項目の行は、パックがあるときだけ（パックなしは資料にある設備の区分の行だけ。mushitaro/moyai#67） */}
+        {catalog && (
+          <Switch
+            aria-label={T.rowsLabel}
+            data-testid="rows-mode"
+            value={mode}
+            onChange={switchMode}
+            data={[
+              { value: "ledger", label: T.rows.ledger },
+              { value: "common", label: T.rows.common },
+            ]}
+          />
+        )}
         <Switch
           aria-label={T.periodLabel}
           data-testid="period-mode"
@@ -911,11 +914,6 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         {model.unknownPeerClasses.length > 0 && (
           <Text size="xs" c="orange" data-testid="peers-unknown">
             {P.unknownClasses(model.unknownPeerClasses.length)}
-          </Text>
-        )}
-        {!catalog && (
-          <Text size="xs" c="orange">
-            {T.noCatalog}
           </Text>
         )}
         {model.orphanDetails.length > 0 && (

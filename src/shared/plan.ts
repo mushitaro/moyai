@@ -134,7 +134,7 @@ export const Plan = z.object({
   schema: z.literal("moyai.plan/0"),
   planId: code,
   displayName: z.string(),
-  packId: code,
+  packId: z.string(), // 空はパックなし（初めて読む資料。共通の項目・照査・類似施設・台帳は使わない。mushitaro/moyai#67）
   version: z.number().int().min(0),
   levelNames: z.array(z.string()), // 段の名前（計画が持つ。パックの段の名前は既定値）
   facility: Facility,

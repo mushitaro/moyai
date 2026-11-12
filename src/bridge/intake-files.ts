@@ -8,6 +8,7 @@ import { lstatSync, readdirSync, readFileSync, realpathSync, statSync, type Stat
 import { open } from "node:fs/promises";
 import { basename, dirname, extname, isAbsolute, join, resolve } from "node:path";
 import type { ErrorCode } from "../shared/errors";
+import { matchFiles } from "../shared/file-match";
 import { INTAKE_ADD_EXTENSIONS, INTAKE_ADD_MAX_BYTES, INTAKE_ADD_MAX_FILES, INTAKE_ADD_MAX_REFUSED, intakeFacilityNameOk, type IntakeRefusal } from "../shared/tools";
 import type { TemplateShape } from "../shared/template-layout";
 import { normPath } from "./places";
@@ -37,6 +38,11 @@ export interface IntakeCollection {
   others: number;
   /** template：様式の形（橋渡しが読んで作る。AI に返すのはこれと名前・大きさだけ） */
   template?: TemplateShape;
+  /** folder の match・list：入れなかった資料の名前（並べるのは上限まで）と数 */
+  left?: string[];
+  leftTotal?: number;
+  /** folder の list：入れずに名前だけを返す（作業画面に渡さない） */
+  listOnly?: boolean;
 }
 
 export interface IntakeEnv {
@@ -234,14 +240,15 @@ export function checkTemplateFile(raw: string, env: IntakeEnv): IntakeFile | Err
 }
 
 /** intake_add_files の引数から、読む資料を選ぶ */
-export function collectIntake(args: { source: "demo" | "folder" | "template"; path?: string; pack?: string; facilityName?: string }, env: IntakeEnv): IntakeCollection | ErrorCode {
+export function collectIntake(args: { source: "demo" | "folder" | "template"; path?: string; pack?: string; facilityName?: string; match?: string; list?: boolean }, env: IntakeEnv): IntakeCollection | ErrorCode {
   if (args.source === "template") {
-    if (args.pack !== undefined || args.facilityName !== undefined) return "invalid_input";
+    if (args.pack !== undefined || args.facilityName !== undefined || args.match !== undefined || args.list !== undefined) return "invalid_input";
     const f = checkTemplateFile(args.path ?? "", env);
     if (typeof f === "string") return f;
     return { source: "template", pack: null, facilityName: null, files: [f], refused: [], refusedTotal: 0, others: 0 };
   }
   if (args.source === "demo") {
+    if (args.match !== undefined || args.list !== undefined) return "invalid_input";
     const packs = demoPacks(env.packsDir);
     const pack = args.pack ?? (packs.length === 1 ? packs[0]! : null);
     if (!pack || !packs.includes(pack)) return "intake_demo_missing";
@@ -259,7 +266,13 @@ export function collectIntake(args: { source: "demo" | "folder" | "template"; pa
   if (typeof c === "string") return c;
   const r = pickFiles(c.path);
   if (typeof r === "string") return r;
-  return { source: "folder", pack: args.pack ?? null, facilityName: args.facilityName ?? null, ...r };
+  const base = { source: "folder" as const, pack: args.pack ?? null, facilityName: args.facilityName ?? null };
+  if (args.list !== true && args.match === undefined) return { ...base, ...r };
+  // 一部だけ入れる（match）か、名前だけを見る（list）。入れなかった資料は名前を left に返す（名前の比べは intake_survey の match と同じ。#57）
+  const hit = args.list === true ? new Set<string>() : new Set(matchFiles(args.match ?? "", r.files.map((f) => f.name)));
+  const take = r.files.filter((f) => hit.has(f.name));
+  const left = r.files.filter((f) => !hit.has(f.name)).map((f) => f.name);
+  return { ...base, ...r, files: take, left: left.slice(0, INTAKE_ADD_MAX_REFUSED), leftTotal: left.length, ...(args.list === true ? { listOnly: true } : {}) };
 }
 
 /**

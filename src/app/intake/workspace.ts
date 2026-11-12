@@ -525,7 +525,6 @@ export class IntakeWorkspace {
     const out: string[] = [];
     if (this.restoreFailed) out.push(this.restoreFailed);
     if (this.inputs.length === 0) out.push(TEXT.intake.needFiles);
-    if (!this.settings.packId) out.push(TEXT.intake.needPack);
     if (!this.settings.facilityName.trim()) out.push(TEXT.intake.needName);
     if (this.inputs.length) out.push(...this.view.blockers);
     return out;

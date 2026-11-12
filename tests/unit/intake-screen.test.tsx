@@ -11,6 +11,8 @@ import { BridgeClient } from "../../src/app/bridge-client";
 import { IntakeWorkspace } from "../../src/app/intake/workspace";
 import { Questions, composeReasons, loadSheets } from "../../src/app/pages/Intake";
 import { Merge } from "../../src/app/pages/Merge";
+import { StarTable } from "../../src/app/pages/StarTable";
+import { DecisionsSheet } from "../../src/app/components/DecisionsSheet";
 import { clearWorkingPlan, getWorkingPlan } from "../../src/app/state/plan-store";
 import type { MergeSheet } from "../../src/app/stages";
 import { TEXT } from "../../src/app/text";
@@ -38,8 +40,8 @@ afterAll(() => {
   clearWorkingPlan();
 });
 
-async function dropTwo(): Promise<IntakeWorkspace> {
-  const ws = new IntakeWorkspace({ packId: "waste-incineration", facilityName: "【架空】資料の画面の試験", fiscalYearStartMonth: 4, fictional: true });
+async function dropTwo(packId = "waste-incineration"): Promise<IntakeWorkspace> {
+  const ws = new IntakeWorkspace({ packId, facilityName: "【架空】資料の画面の試験", fiscalYearStartMonth: 4, fictional: true });
   await ws.addFiles(
     FILES.map((name) => {
       const bytes = new Uint8Array(readFileSync(`${DIR}/${name}`));
@@ -215,6 +217,49 @@ describe("第 1 版をつくったあと", () => {
     at(`#/merge/files?f=${encodeURIComponent(FILES[1]!)}`);
     const second = page(ws, "files");
     expect(tags(second, "source-picker").map((t) => attr(t, "data-file"))).toEqual([FILES[1]]);
+    at("#/merge");
+  });
+});
+
+describe("Skillパックなし（初めて読む資料。mushitaro/moyai#67）", () => {
+  test("選びの欄を出さずに計画を作れる。照査・似た施設・共通の項目の行・施設設定は出さない（0 件とも言わない）", async () => {
+    clearWorkingPlan();
+    const ws = await dropTwo("");
+    // 白紙の画面：Skillパックの選びの欄が無く、止める理由に「選んでいない」が無い
+    expect(tags(page(ws, "files"), "pack")).toEqual([]);
+    for (let i = 0; i < 20 && ws.view.open.length > 0; i++) {
+      const byId = new Map(ws.view.questions.map((q) => [q.questionId, q]));
+      for (const id of ws.view.open) {
+        const q = byId.get(id)!;
+        await ws.answerAsHumanAsync(id, q.defaultAnswer ?? (q.valueKind === "option" ? q.options[0]!.id : "0"), "試験の台本が押した");
+      }
+      await ws.fresh();
+    }
+    expect(composeReasons(ws)).toEqual([]);
+    expect(ws.startCompose("human").started).toBe(true);
+    await ws.whenComposed();
+    expect(ws.compose.state).toBe("done");
+    expect(getWorkingPlan()!.plan.packId).toBe("");
+    at("#/merge/chart");
+    const html = page(ws, "chart");
+    expect(tags(html, "sheet-chart")).toHaveLength(1);
+    expect(tags(html, "sheet-decisions")).toHaveLength(1);
+    for (const id of ["sheet-check", "sheet-share", "merge-peers", "facility-settings"]) expect(tags(html, id), id).toEqual([]);
+    // 星取表（遅れて読む部品なので、直に描く）：期間の切り替えはあり、共通の項目の行の切り替えは無い
+    const chart = renderToStaticMarkup(
+      <MantineProvider>
+        <StarTable embedded />
+      </MantineProvider>,
+    );
+    expect(tags(chart, "period-mode").length).toBeGreaterThan(0);
+    expect(tags(chart, "rows-mode")).toEqual([]);
+    const decisions = renderToStaticMarkup(
+      <MantineProvider>
+        <DecisionsSheet client={new BridgeClient("ws://unused")} plan={getWorkingPlan()!.plan} />
+      </MantineProvider>,
+    );
+    expect(tags(decisions, "crosswalk-none")).toHaveLength(1);
+    for (const id of ["crosswalk-unmapped", "crosswalk-accepted", "crosswalk-direct-open"]) expect(tags(decisions, id), id).toEqual([]);
     at("#/merge");
   });
 });

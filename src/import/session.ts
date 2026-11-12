@@ -71,6 +71,8 @@ export interface Survey {
    */
   questionGroups?: { kind: string; shape: string; count: number; rows: number; example: { questionId: string; text: string } }[];
   unresolvedCells: number;
+  /** 読み方の規則（決まった答え）で決まった質問の数（施設の Skill が効いて、聞かずに済んだ数。mushitaro/moyai#67） */
+  ruleAnswered: number;
   /** 詰まっている所：未解決のセルのある資料ごとの数と、その行の見本（5 行まで）。questionId はその行を決める質問が分かるときだけ */
   stuck: { fileRef: string; cells: number; header: { row: number; cells: string[] }[]; rows: { sheet: string | null; row: number; cells: string[]; unresolved: string[]; questionId: string | null }[] }[];
   /**
@@ -572,6 +574,7 @@ export class IntakeSession {
       questions,
       questionGroups,
       unresolvedCells: unresolved,
+      ruleAnswered: an.ruleAnswers.size,
       stuck: [...stuck.values()].sort((a, b) => b.cells - a.cells).slice(0, STUCK_FILES),
       compose: { state, message: this.composed ? (this.composed.plan ? null : this.composed.blockers.join("・")) : null },
       crosswalk: null,
