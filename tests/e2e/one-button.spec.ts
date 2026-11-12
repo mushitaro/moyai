@@ -70,6 +70,11 @@ async function count(page: Page, root: Locator, name: string, primary: string, s
   expect(others.map((p) => p.testid).sort(), `${name}：副 ${JSON.stringify(others)}`).toEqual([...secondary].sort());
 }
 
+const rings: string[] = [];
+test.afterAll(() => {
+  for (const r of rings) rmSync(r, { recursive: true, force: true });
+});
+
 const PACKS = [
   { name: "Skillパックあり", packId: "waste-incineration" },
   { name: "Skillパックなし（初めて読む施設。mushitaro/moyai#67）", packId: "" },
@@ -92,7 +97,10 @@ for (const pk of PACKS) {
       test.setTimeout(240_000);
       const tag = pk.packId || "no-pack";
       const root = join(work, "置き場所");
-      const ringRoot = join(work, "共有", "共有フォルダ");
+      // 共有フォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする（checkpoint.spec と同じ）
+      const ringBase = join(tmpdir(), `moyai-e2e-one-button-ring-${tag}-${Date.now()}`);
+      rings.push(ringBase);
+      const ringRoot = join(ringBase, "共有フォルダ");
 
       await test.step("人：保存先・呼び名・共有フォルダ（設定の画面）。見本の計画を受けて第 1 版に署名する", async () => {
         await chooseRootAndCreateRing(page, bridge.base, root, ringRoot);
