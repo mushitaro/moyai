@@ -216,6 +216,27 @@ export function answerAppliesTo(rule: ReadingRule, files: readonly string[]): bo
   return !!pattern && files.length > 0 && files.every((f) => fileMatches(pattern, f));
 }
 
+/**
+ * 決まった答えの規則の match を比べる形：同じ問いのくり返しの数（行・問・か所）だけを「#」に伏せる（同じ問いでも、資料を足すと行の数が変わるため。mushitaro/moyai#67）。
+ * 年度・日付・号・No. の数と、中身の数（名前の何通り・契約の何件など）は伏せない（年度ごとに正解の変わる問い、別の機器・別の中身の問いに、同じ答えが当たらないように）
+ */
+export function countShape(text: string): string {
+  return text.normalize("NFKC").replace(/\d[\d,]*\s?(?:行|問|か所)/g, "#");
+}
+
+const countMemo = new Map<string, string>();
+/** 決まった答えの規則が、質問の文に当たるか：そのままの字で含むか、数えを伏せた形で含むか（shaped は質問の文を伏せた形。問いごとに 1 回だけ作る） */
+export function answerMatches(text: string, match: string, shaped: () => string = () => countShape(text)): boolean {
+  if (text.includes(match)) return true;
+  let m = countMemo.get(match);
+  if (m === undefined) {
+    m = countShape(match);
+    if (countMemo.size > 5000) countMemo.clear();
+    countMemo.set(match, m);
+  }
+  return m !== "" && shaped().includes(m);
+}
+
 /** 年月日の書き方で日付を読む（yyyymmdd・yymmdd は数の並び。md は呼ぶ側が年度から年を付ける）。読めなければ null */
 export function parseWithFormat(text: string, format: DateFormat): { y: number | null; m: number; d: number } | null {
   const s = norm(text);
