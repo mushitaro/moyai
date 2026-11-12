@@ -51,7 +51,7 @@ function fakes(names: string[] = ["日報.xlsx", "台帳.xlsx"]) {
     decisions: () => [{ questionId: "q1", answer: "a", author: "human", reason: "" }] as never,
     filesVersion: 0,
     sourcesForWork: async function () {
-      const keep = this.names.filter((n) => !(this.photos && n.endsWith(".jpg")));
+      const keep = this.names;
       return { files: keep.map((n) => ({ name: n, bytes: new TextEncoder().encode(n), sha256: shaOf(new TextEncoder().encode(n)) })), skipped: this.names.length - keep.length };
     },
     subscribe: (fn) => (listeners.add(fn), () => listeners.delete(fn)),
@@ -101,7 +101,7 @@ describe("作業中の写し", () => {
     f.k.stop();
   });
 
-  it("写真のある資料は写さず、写さなかった数を書く。計画を作る前でも資料と答えを残す。資料も計画も無ければ書かない", async () => {
+  it("写真も写す。計画を作る前でも資料と答えを残す。資料も計画も無ければ書かない", async () => {
     const none = fakes([]);
     await none.k.flush();
     expect(none.saves).toHaveLength(0);
@@ -110,12 +110,12 @@ describe("作業中の写し", () => {
     expect(before.saves[0]).toMatchObject({ planId: FICTIONAL_1.planId, plan: null, open: 0, changed: true });
     expect(before.saves[0]!.files).toHaveLength(2);
     expect(before.saves[0]!.decisions).toHaveLength(1);
-    // 写真があっても、ほかの資料は残す（写真の数だけ skipped）
+    // 写真も資料として写す（資料の紐づきを切らない）
     const f = fakes(["日報.xlsx", "台帳.xlsx", "写真.jpg"]);
     f.ws.photos = true;
     await f.k.flush();
-    expect(f.saves[0]!.files.map((x) => x.name)).toEqual(["日報.xlsx", "台帳.xlsx"]);
-    expect(f.saves[0]!.skipped).toBe(1);
+    expect(f.saves[0]!.files.map((x) => x.name)).toEqual(["日報.xlsx", "台帳.xlsx", "写真.jpg"]);
+    expect(f.saves[0]!.skipped).toBe(0);
   });
 
   it("資料ごと戻す：資料・答え・計画・確定を戻し、戻す途中は書かない", async () => {

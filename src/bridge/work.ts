@@ -39,7 +39,7 @@ export const workStateSchema = z.object({
   base: z.number().int().min(1).nullable(),
   settings: z.object({ packId: z.string().max(80), facilityName: z.string().max(200), fiscalYearStartMonth: z.number().int().min(1).max(12), fictional: z.boolean() }),
   files: z.array(workFileSchema).max(500),
-  /** 写真の資料は写さない（写真の読み取りの格子はタブにしか無い）。写さなかった資料の数 */
+  /** 写さなかった資料の数（写真も写すので今は 0。前の形の作業中を読むため残す） */
   skipped: z.number().int().min(0),
   decisions: z.array(z.unknown()).max(100_000),
   /** 作業中の計画（まだ作っていなければ null） */

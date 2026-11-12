@@ -665,13 +665,13 @@ export class IntakeWorkspace {
   filesVersion = 0;
 
   /**
-   * 作業中に残す資料（#82）：写真のほかの資料のバイト列と SHA-256 と、写さなかった写真の数。写真があっても、ほかの資料は残す
+   * 作業中に残す資料（#82）：落とした資料のバイト列と SHA-256。写真も残す（資料の紐づきを切らない）。
+   * 写真の読み取りの格子はタブにしか無いので残さない。戻した写真は、今の未読の写真と同じく読み直しが要る状態で並ぶ
    */
   async sourcesForWork(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; skipped: number }> {
-    const photos = this.inputs.filter((n) => photoMimeOf(n) !== null);
-    if (this.inputs.length === photos.length) return { files: [], skipped: photos.length + this.photoBook.entries().length };
+    if (this.inputs.length === 0) return { files: [], skipped: 0 };
     const r = await this.engine.request({ op: "commit" }, this.dataVersion);
-    return { files: r.files.filter((f) => photoMimeOf(f.name) === null), skipped: photos.length + this.photoBook.entries().length };
+    return { files: r.files, skipped: 0 };
   }
 
   /** 戻した版（次の版に重ねるとき、その版を組んだ資料と決定を戻した。資料のタブで「第 n 版の資料」と出す） */

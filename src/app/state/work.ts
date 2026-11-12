@@ -3,7 +3,7 @@
 // - 保存のボタンと「保存しました」の文は置かない（人が保存の時を気にしなくてよい）。前の作業を戻す帯（IndexedDB の写し）は引いた。
 // - 作業中は版ではない（署名も鎖も無い）。確定したあとは、次の版の作業中として続く（消さない。changed が false になる）。
 // - 道は作業画面だけの経路（タブの秘密）。AI のツールの道には無い（ツールで作業画面が変わった結果が、ここから書かれるだけ）。
-// - 写真の資料は写さない（写真の読み取りの格子はタブにしか無い。写さなかった数を skipped に書く）。
+// - 写真も写す（資料の紐づきを切らない）。写真の読み取りの格子は写さない（タブにしか無い）。戻した写真は読み直しが要る状態で並ぶ。
 // - 行の値・鍵は記録（console）に書かない。
 import { aiDecisions } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
@@ -59,7 +59,7 @@ export interface WorkSource {
   decisions(): Decision[];
   /** 今の施設の計画 ID（作業中の計画がまだ無いときの、作業中の置き場所） */
   facilityKey(): string;
-  /** 写真のほかの資料のバイト列と、写さなかった写真の数 */
+  /** 落とした資料（写真も）のバイト列と SHA-256。skipped は写さなかった資料の数（今は 0） */
   sourcesForWork(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; skipped: number }>;
   /** 資料の並びが変わるたびに進む数 */
   readonly filesVersion: number;

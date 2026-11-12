@@ -23,6 +23,9 @@ async function dropFiles(page: Page, base: string, facilityName: string): Promis
   await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", String(FICTIONAL_1.files.length), { timeout: 20_000 });
 }
 
+/** 【架空】の写真（日常点検表） */
+const PHOTO = "samples/waste-incineration/shirakabano/files/【架空】しらかば野CC_日常点検表_ボイラ・タービン_20250602.jpg";
+
 let bridge: StartedBridge;
 let work = "";
 test.beforeAll(async () => {
@@ -87,6 +90,18 @@ test("作業中のまま閉じても、トップの「作業中　未確定 n」
     await expect.poll(() => (savedWork(root)?.plan ? savedWork(root)!.open : -1), { timeout: 60_000 }).toBeGreaterThan(0);
   });
 
+  await test.step("写真も入れる（作業中に写す。読み取りの格子は写さない）", async () => {
+    const dt = await page.evaluateHandle((f) => {
+      const d = new DataTransfer();
+      d.items.add(new File([Uint8Array.from(atob(f.b64), (c) => c.charCodeAt(0))], f.name, { type: "image/jpeg" }));
+      return d;
+    }, { name: basename(PHOTO), b64: readFileSync(PHOTO).toString("base64") });
+    // 星取表を作ったあとは HOSHITORI（画面に落とす）
+    await expect(page.getByTestId("merge-page")).toBeVisible();
+    await page.getByTestId("merge-page").dispatchEvent("drop", { dataTransfer: dt });
+    await expect.poll(() => savedWork(root)?.files.length ?? 0, { timeout: 20_000 }).toBe(FICTIONAL_1.files.length + 1);
+  });
+
   const open = savedWork(root)!.open;
   await test.step("タブを閉じ、開き直すと、トップに「作業中　未確定 n」", async () => {
     await page.close();
@@ -103,6 +118,11 @@ test("作業中のまま閉じても、トップの「作業中　未確定 n」
     await expect(again.getByTestId("source-picker")).toHaveAttribute("data-count", String(FICTIONAL_1.files.length), { timeout: 30_000 });
     await expect(again.getByTestId("plan-name")).toContainText("第一清掃工場（作業中）");
     await again.screenshot({ path: shot(`work-resumed-${tag}`) });
+    // 写真も資料として戻る。読み取りの格子は戻らないので、今の未読の写真と同じ状態
+    await again.goto(`${bridge.base}/#/intake`);
+    await expect(again.getByTestId("photo-item")).toHaveCount(1, { timeout: 20_000 });
+    await expect(again.getByTestId("photo-item")).toHaveAttribute("data-state", "unread");
+    await expect(again.getByTestId("photo-item")).toHaveAttribute("data-photo", basename(PHOTO));
 
     // 消すのは人だけ：トップの「作業中」→「作業中を消す」。保管先の作業中が無くなり、行も消える（署名した版は無いので）
     await again.goto(`${bridge.base}/#/`);
