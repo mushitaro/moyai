@@ -5,16 +5,16 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "3caf75a49ce5aca22581d72921f85145a8194e95",
-  "src": "d6b167de7f818b565361dced87eb71b6b2973c3b",
+  "commit": "fb00c6b709109834f80d014c6f824ec23cdc7993",
+  "src": "d779965a0129fabf4da83836f0ad98738e7e9463",
   "packs": "876267422ef1994eedf0a2c0a1c24623985b9794",
   "dirty": false
  },
- "measuredAt": "2026-11-12T15:01:21.098Z",
+ "measuredAt": "2026-11-12T15:41:17.558Z",
  "total": {
   "facilities": 5,
   "planMade": 5,
-  "asked": 244,
+  "asked": 215,
   "open": 0,
   "unresolvedAfter": 0,
   "accuracy": {
@@ -35,17 +35,17 @@
   },
   "errors": 0,
   "firstRead": {
-   "firstAsked": 207,
-   "restAsked": 244,
-   "restAskedNoRules": 567,
-   "rules": 178,
-   "ruleAnswered": 276,
+   "firstAsked": 203,
+   "restAsked": 215,
+   "restAskedNoRules": 532,
+   "rules": 174,
+   "ruleAnswered": 270,
    "ruleWrong": 0,
-   "askedAgain": 19,
-   "askedNew": 224,
+   "askedAgain": 17,
+   "askedNew": 195,
    "askedAgainUnanswered": 0,
    "askedAgainUnknown": 0,
-   "askedChangedAnswer": 7,
+   "askedChangedAnswer": 4,
    "skipped": [
     "hinatano",
     "kaedehara",
@@ -61,9 +61,9 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 50.3,
-   "asked": 46,
-   "answered": 46,
+   "seconds": 41.1,
+   "asked": 36,
+   "answered": 36,
    "open": 0,
    "openKinds": {},
    "defaulted": {
@@ -109,7 +109,7 @@
     "askedAgainUnanswered": 0,
     "askedAgainUnknown": 0,
     "askedChangedAnswer": 1,
-    "askedNew": 43,
+    "askedNew": 33,
     "askedAgainKinds": {
      "workLinkOne": 2,
      "workLink": 1
@@ -122,15 +122,15 @@
     "rules": 45,
     "ruleAnswered": 40,
     "ruleWrong": 0,
-    "restAsked": 46,
-    "restAskedNoRules": 86
+    "restAsked": 36,
+    "restAskedNoRules": 76
    }
   },
   {
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 49,
+   "seconds": 42.2,
    "asked": 2,
    "answered": 2,
    "open": 0,
@@ -193,9 +193,9 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 69.4,
-   "asked": 42,
-   "answered": 42,
+   "seconds": 64,
+   "asked": 44,
+   "answered": 44,
    "open": 0,
    "openKinds": {},
    "defaulted": {},
@@ -238,7 +238,7 @@
     "askedAgain": 1,
     "askedAgainUnanswered": 0,
     "askedAgainUnknown": 0,
-    "askedChangedAnswer": 3,
+    "askedChangedAnswer": 0,
     "askedNew": 41,
     "askedAgainKinds": {
      "workLink": 1
@@ -247,21 +247,21 @@
     "firstFiles": 3,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 28,
-    "rules": 28,
-    "ruleAnswered": 23,
+    "firstAsked": 27,
+    "rules": 27,
+    "ruleAnswered": 22,
     "ruleWrong": 0,
-    "restAsked": 42,
-    "restAskedNoRules": 65
+    "restAsked": 44,
+    "restAskedNoRules": 66
    }
   },
   {
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 79.7,
-   "asked": 97,
-   "answered": 97,
+   "seconds": 72.2,
+   "asked": 86,
+   "answered": 86,
    "open": 0,
    "openKinds": {},
    "defaulted": {
@@ -312,35 +312,35 @@
     "askedAgainUnanswered": 0,
     "askedAgainUnknown": 0,
     "askedChangedAnswer": 3,
-    "askedNew": 83,
+    "askedNew": 72,
     "askedAgainKinds": {
      "dateUnknown": 1,
      "eventAsset": 3,
      "stray": 1,
      "assetUnmatched": 2,
-     "workLink": 2,
-     "workLinkOne": 3,
+     "workLink": 4,
+     "workLinkOne": 1,
      "workJoin": 1
     },
     "year": "R7",
     "firstFiles": 8,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 92,
-    "rules": 63,
-    "ruleAnswered": 138,
+    "firstAsked": 90,
+    "rules": 61,
+    "ruleAnswered": 135,
     "ruleWrong": 0,
-    "restAsked": 97,
-    "restAskedNoRules": 282
+    "restAsked": 86,
+    "restAskedNoRules": 268
    }
   },
   {
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 74.5,
-   "asked": 57,
-   "answered": 57,
+   "seconds": 65,
+   "asked": 47,
+   "answered": 47,
    "open": 0,
    "openKinds": {},
    "defaulted": {},
@@ -380,24 +380,22 @@
    },
    "error": null,
    "firstRead": {
-    "askedAgain": 2,
+    "askedAgain": 0,
     "askedAgainUnanswered": 0,
     "askedAgainUnknown": 0,
     "askedChangedAnswer": 0,
-    "askedNew": 55,
-    "askedAgainKinds": {
-     "workLinkOne": 2
-    },
+    "askedNew": 47,
+    "askedAgainKinds": {},
     "year": "2025",
     "firstFiles": 2,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 36,
-    "rules": 36,
-    "ruleAnswered": 71,
+    "firstAsked": 35,
+    "rules": 35,
+    "ruleAnswered": 69,
     "ruleWrong": 0,
-    "restAsked": 57,
-    "restAskedNoRules": 128
+    "restAsked": 47,
+    "restAskedNoRules": 116
    }
   }
  ]

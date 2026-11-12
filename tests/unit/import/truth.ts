@@ -297,6 +297,17 @@ export function answer(q: QuestionState, t: Truth, ents: Entities, reps: ReportR
         const cellWorks: string[] = mk ? (t.star?.cells?.[mk]?.work_ids ?? []) : [];
         return lines.length > 0 && lines.every((l) => (l.work_ids as string[]).some((w) => cellWorks.includes(w)));
       });
+      // 名前の違う作業の問い（「1 件ずつ」がある）：印の作業が混ざれば 1 件ずつ
+      if (isNoMark && q.options.some((o) => o.id === "split")) {
+        // 見るのは、その機器・その年度の星取（items の相手のセル）が、その行の作業か
+        const other = q.items.every((it) => {
+          const lines = it.cells.map((c) => ev(it.file, c)).filter(Boolean) as J[];
+          const mk = it.target?.[0]?.cells[0];
+          const cellWorks: string[] = mk ? (t.star?.cells?.[mk]?.work_ids ?? []) : [];
+          return lines.every((l) => !(l.work_ids as string[]).some((w) => cellWorks.includes(w)));
+        });
+        return other ? "yes" : "split";
+      }
       return ok ? (isNoMark ? "yes" : "yes") : isNoMark ? null : "split";
     }
     case "workLinkOne": {
