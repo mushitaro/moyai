@@ -41,6 +41,7 @@ export const HUMAN_TEXT = {
     rules: "共有フォルダのルール変更。受入まで送れません（受入の画面は未実装）。",
     content: "数え直しで 0 でない数があるので送りませんでした。",
     properNoun: "固有名詞が見つかったので送りませんでした。",
+    feedbackShape: "書き出す中身が、ルールの形と数だけの形になっていないので、保存しませんでした。",
     oldKey: "この PC の鍵は前の形（パスワードで包んだもの）です。端末で moyai keys unwrap を走らせ、前のパスワードで 1 度だけ移してください。",
     keyMismatch: "鍵が共有フォルダの自分の鍵と合いません。",
     keysForked: "当施設のこの場への署名鍵が、計画のフォルダに 2 つあります（同期の衝突の写しか、持ち出し簿にほかの鍵の記録）。同じ施設を 2 施設に数えないため、送りませんでした。片方を残す直し方は未実装です。",
@@ -338,6 +339,14 @@ export const HUMAN_TEXT = {
     approved: (n: number | null) => (n === null ? "承認済み" : `承認済み（第 ${n} 版で）`),
     /** ルールの見出しの行の状態（承認済みは淡い字。Wire、MERGE r2） */
     approvedShort: (n: number | null) => (n === null ? "承認済み" : `第 ${n} 版で承認`),
+    /** 読み方の書き出し（Wire の ReadingOut。説明の文は置かない） */
+    out: {
+      start: "ルールを書き出す",
+      save: "保存する",
+      fullText: "書き出す中身（全文）",
+      saved: (file: string) => `保存済み　${file}`,
+      properNoun: "理由：施設の名前に当たる字がある",
+    },
     filterLabel: "ルールの表示",
     filterDraft: "下書き",
     filterAll: "全件",

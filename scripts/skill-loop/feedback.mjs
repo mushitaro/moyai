@@ -39,6 +39,28 @@ export function readForm(body) {
   return out;
 }
 
+/** アプリから書き出したルールの形（src/share/reading-feedback.ts。文・理由・人・資料の名前を持たない。規則ごとに効いたセルの数 cells） */
+export const FEEDBACK_FILE_SCHEMA = "moyai.reading-feedback/0";
+const SHAPE_TEXT = {
+  headerRow: (r) => `${r.row} 行目を見出しとして読む`,
+  columnRole: (r) => `「${r.column}」の列を役目 ${r.role} として読む`,
+  dateFormat: (r) => `「${r.column}」の列の日付を ${r.format} の形として読む`,
+  effortUnit: (r) => `「${r.column}」の列の工数を ${r.unit} として読む`,
+  rowRole: (r) => `「${r.match}」の行を ${r.role} の行として読む`,
+  sameAsset: (r) => `「${(r.names ?? []).join("」「")}」を同じ機器として読む`,
+  markMeaning: (r) => `「${r.symbol}」を ${r.planOrActual} の印として読む`,
+  answer: (r) => `問い ${r.question} の「${r.match}」に ${r.answer} と答える`,
+  effortTrade: (r) => `「${(r.words ?? []).join("」「")}」を職種の語として読む`,
+  planCycle: (r) => `${r.commonItem} の ${r.attribute} を ${r.years} 年ごととする`,
+};
+/** 形だけの規則を、moyai.reading/0 の規則にする（文は形から作る。id は書き出しの並び） */
+function fromAppShape(r, i) {
+  if (!r || typeof r !== "object" || !SHAPE_TEXT[r.kind]) return r;
+  // cells（効いたセルの数）は書き出しの数で、規則の欄ではない
+  const { cells: _cells, ...shape } = r;
+  return { ...shape, id: `app${i + 1}`, text: SHAPE_TEXT[r.kind](shape).slice(0, 200), author: "ai", reason: "アプリから書き出したルールの形" };
+}
+
 /** 貼られたルール（```json の中か、そのままの JSON）を、規則の並びにする。読めなければ null */
 export function rulesOf(text) {
   if (!text) return [];
@@ -50,6 +72,7 @@ export function rulesOf(text) {
     return null;
   }
   if (Array.isArray(v)) return v;
+  if (v && typeof v === "object" && v.schema === FEEDBACK_FILE_SCHEMA) return Array.isArray(v.rules) ? v.rules.map(fromAppShape) : null;
   if (v && typeof v === "object" && Array.isArray(v.rules)) return v.rules;
   if (v && typeof v === "object" && typeof v.kind === "string") return [v];
   return null;

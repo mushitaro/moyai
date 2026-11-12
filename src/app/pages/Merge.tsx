@@ -20,6 +20,7 @@ import { SignaturesPanel, type PanelVersion } from "../components/SignaturesPane
 import { DecisionsSheet, cycleConflicts, usePending } from "../components/DecisionsSheet";
 import { CostSheet } from "../components/CostSheet";
 import { ReadingsSheet, ruleHash, unapprovedReadings, type OldReadings } from "../components/ReadingsSheet";
+import { ReadingOutButton, useReadingOut } from "../components/ReadingOut";
 import { placeOf, ruleVersionNo, signaturesVersion, type Lineage, type RecordedReading } from "../state/rule-lineage";
 import { catalogFor, packChoices } from "../chart/catalog";
 import { versionName } from "../version-name";
@@ -582,6 +583,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       live = false;
     };
   }, [wantLineage, st]);
+  const readingOut = useReadingOut(ws, client, plan);
   const oldReadings = useMemo<OldReadings | null>(() => (oldOpen ? { version: oldOpen.version, skills: oldOpen.skills, plan: oldOpen.plan } : null), [oldOpen]);
   // 古い版の署名の見せ方：版の名前、Skillパックの名前、適用 Skill（版の記録の読み方。ルールの版は来歴から v n）
   const panelOld = oldOpen && panelInfo
@@ -733,7 +735,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
             {current === "cost" && plan && <CostSheet plan={plan} />}
             {current === "check" && packed && <Review embedded />}
             {current === "match" && <MatchSheet ws={ws} />}
-            {current === "readings" && <ReadingsSheet ws={ws} old={oldReadings} lineage={lineage} />}
+            {current === "readings" && <ReadingsSheet ws={ws} old={oldReadings} lineage={lineage} out={readingOut} />}
             {current === "decisions" && plan && <DecisionsSheet client={client} plan={plan} />}
           </Suspense>
           {/* 資料のシートは、見ていないあいだも取り込みの状態を持つので、隠すだけにする */}
@@ -927,6 +929,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           </Group>
         ) : (
         <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
+          {/* ルールのシートだけ：読み方を書き出す（Wire の ReadingOut。古い版を見ているあいだは出さない） */}
+          {current === "readings" && !oldReadings && <ReadingOutButton out={readingOut} disabled={conn.kind !== "open"} />}
           {!viewOnly && blocks.length > 0 && (
             <Text size="xs" c="dimmed" data-testid="confirm-disabled-reason">
               {T.blockPrefix}
