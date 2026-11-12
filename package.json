@@ -16,6 +16,7 @@
     "e2e": "playwright test",
     "check-publish": "node scripts/check-publish.mjs",
     "acceptance": "node scripts/acceptance.mjs",
+    "scenario": "node scripts/scenario/run.mjs",
     "demo-ring": "node scripts/demo-ring/build.mjs",
     "scenario:b2": "vitest run tests/unit/scenario-b2-intake.test.ts"
   },

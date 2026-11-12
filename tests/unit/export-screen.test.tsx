@@ -37,6 +37,17 @@ describe("様式の行", () => {
     expect(without).not.toContain('data-testid="export-report"');
   });
 
+  it("選べる行が標準の 1 つだけ（差分・様式なし）なら、標準の行は押せない行（選びにしない）。2 つ以上なら押せる選び", () => {
+    const only = html(<TemplateExport {...props} templates={[]} selected={null} />);
+    expect(only).toMatch(/<div[^>]*data-active="true"[^>]*data-testid="template-standard"/);
+    expect(only).not.toMatch(/<button[^>]*data-testid="template-standard"/);
+    expect(only).not.toContain("aria-pressed");
+    const two = html(<TemplateExport {...props} templates={[tpl()]} selected={null} />);
+    expect(two).toMatch(/<button[^>]*aria-pressed="true"[^>]*data-testid="template-standard"/);
+    const diff = html(<TemplateExport {...props} templates={[]} selected={null} diff={{ from: 1, active: false, exported: false }} />);
+    expect(diff).toMatch(/<button[^>]*data-testid="template-standard"/);
+  });
+
   it("差分を選ぶと差分の行だけが選ばれ、出力したら「✓ 出力済み」", () => {
     const out = html(<TemplateExport {...props} templates={[]} selected={null} diff={{ from: 1, active: true, exported: true }} />);
     expect(out).toMatch(/data-active="true"[^>]*data-testid="export-report"/);

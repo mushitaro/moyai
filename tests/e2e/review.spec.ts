@@ -3,19 +3,27 @@
 // → 作業画面から【検査】を開く → 基準日を選ぶ → 検査ごとの結果・根拠の数字・例・出典・水準・閾値の出どころ・確かめた度合いと、
 // 「自己点検であって、審査の判断ではない」が出る。主ボタンは無い。AI が check_results で読んだ数は画面と同じ。
 // AI は本物の中継（dist/cli.js mcp）を MCP の SDK のクライアントでつなぐ。先に npm run build を走らせておく。
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { acceptRules, callTool as call, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptRules, callTool as call, chooseRoot, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const FACILITY = "【架空】検査の画面";
 const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
 const REFERENCE = "2026-10-01";
 
 let bridge: StartedBridge;
+let root = "";
 test.beforeAll(async () => {
   bridge = await startBuiltBridge("moyai-e2e-review-");
+  root = mkdtempSync(join(tmpdir(), "moyai-e2e-review-root-"));
 });
-test.afterAll(() => bridge?.stop());
+test.afterAll(() => {
+  bridge?.stop();
+  if (root) rmSync(root, { recursive: true, force: true });
+});
 
 test("取り込み → 当てはめ → 検査の画面と check_results", async ({ page }, info) => {
   test.setTimeout(240_000);
@@ -32,6 +40,8 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
     });
 
     await test.step("人が資料を落とし、AI が計画を作り、当てはめの案を置き、試験の台本が人の代わりに受ける", async () => {
+      // 決定のシートは、保存先の版の履歴（受けた決定）を読んでから決定を並べる。Documents に頼らず一時のフォルダを選ぶ
+      await chooseRoot(page, bridge.base, root);
       await openIntakeAndDrop(page, bridge.base, FACILITY);
       for (let round = 0; ; round++) {
         expect(round).toBeLessThan(15);

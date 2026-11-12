@@ -24,7 +24,6 @@ export const EXPORT_TEXT = {
   subtotal: (name: string) => `小計（${name}）`,
   subtotalNote: "小計は、その年度に星取のある行の数",
   unmapped: (n: number) => `未紐付け（${n} 件）`,
-  noCatalog: "このパックの名前の表が無いので、共通の設備項目のシートは作れません。",
   labels: {
     levelFallback: (n: number) => `第 ${n} 階層`,
     commonLevels: ["共通の設備", "共通の設備項目", "作業分類"] as [string, string, string],
@@ -193,14 +192,12 @@ export async function planWorkbook(input: ExportInput): Promise<Buffer> {
   writeSheet(ws1, ledger, input, true, due);
   setupPrint(ws1, ledger.levelNames.length);
 
-  const ws2 = wb.addWorksheet(T.sheetCommon);
+  // 共通の設備項目のシートは、名前の表（Skillパックの共通の項目）があるときだけ。パックなし（初めて読む資料）では作らない（引き算。mushitaro/moyai#67）
   if (input.catalog) {
+    const ws2 = wb.addWorksheet(T.sheetCommon);
     const common = buildChart(input.plan, input.catalog, T.labels, { ...opts, mode: "common" });
     writeSheet(ws2, common, input, false, due);
     setupPrint(ws2, common.levelNames.length);
-  } else {
-    ws2.getCell(1, 1).value = `${T.title}${input.plan.facility.fictional ? `　${T.fiction}` : ""}`;
-    ws2.getCell(2, 1).value = T.noCatalog;
   }
   return fixWorkbook(Buffer.from(await wb.xlsx.writeBuffer()));
 }

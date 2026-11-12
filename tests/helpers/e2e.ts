@@ -3,7 +3,7 @@
 // MCP のクライアント（本物の中継 dist/cli.js mcp を標準入出力でつなぐ）と、設定の画面で置き場所と輪を作る人の操作も置く。
 // スクリーンショットは一時のフォルダの moyai-shots/<走らせた日（日本時間）>/（日誌に残すときは MOYAI_SHOTS_DIR=docs/progress/shots/<日付> を渡す）。前の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { appendFileSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
@@ -42,6 +42,9 @@ export interface StartedBridge {
   stop(): void;
 }
 
+/** 起こした橋渡しの道 → 状態フォルダ（一時のフォルダ。openIntakeAndDrop が Claude の役の中継をつなぐのに使う） */
+const stateDirOf = new Map<string, string>();
+
 export async function startBuiltBridge(prefix: string, env: Record<string, string> = {}): Promise<StartedBridge> {
   const stateDir = mkdtempSync(join(tmpdir(), prefix));
   const port = await freePort();
@@ -68,10 +71,12 @@ export async function startBuiltBridge(prefix: string, env: Record<string, strin
     appendFileSync(logTo, out);
     child.stderr?.on("data", (d: Buffer) => appendFileSync(logTo, `${new Date().toISOString()} ${d.toString("utf8")}`));
   }
+  stateDirOf.set(base, stateDir);
   return {
     base,
     stateDir,
     stop: () => {
+      stateDirOf.delete(base);
       child.kill();
       rmSync(stateDir, { recursive: true, force: true });
     },
@@ -95,12 +100,15 @@ export function packName(packId: string): string {
   return (JSON.parse(readFileSync(join("packs", packId, "pack.json"), "utf8")) as { name: string }).name;
 }
 
+/**
+ * 人が施設名を打ち、資料を画面に落とす。packId があれば、Claude の役（本物の中継 dist/cli.js mcp）が intake_add_files（folder）の pack で Skillパックを置く。
+ * Skillパックは画面で選ばない（Claude が会話で聞いて置く。mushitaro/moyai#67・PR #68）。同じフォルダの資料は名前が同じなので入れ直さず、パックだけが置かれる。
+ * packId を "" にするとパックなしで読む
+ */
 export async function openIntakeAndDrop(page: Page, base: string, facilityName: string, set = FICTIONAL_1, packId = "waste-incineration"): Promise<void> {
   await page.goto(`${base}/#/intake`);
   await expect(page.getByTestId("intake-page")).toBeVisible();
   await expect(page.getByTestId("compose")).toBeDisabled();
-  await page.getByTestId("pack").click();
-  await page.getByRole("option", { name: packName(packId), exact: true }).click();
   await page.getByTestId("facility-name").fill(facilityName);
   const photos = set.files.filter((n) => PHOTO_EXT.test(n)).length;
   const files = set.files.map((name) => ({ name: basename(name), b64: readFileSync(join(set.dir, name)).toString("base64") }));
@@ -113,6 +121,23 @@ export async function openIntakeAndDrop(page: Page, base: string, facilityName: 
   // 資料の選び（白紙でも同じ。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」・3.3）。写真は読むまで資料の数に入らない
   await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", String(set.files.length - photos), { timeout: 20_000 });
   if (photos) await expect(page.getByTestId("photo-item")).toHaveCount(photos);
+  if (!packId) return;
+  const stateDir = stateDirOf.get(base);
+  if (!stateDir) throw new Error("openIntakeAndDrop：startBuiltBridge で起こした橋渡しではない");
+  // 橋渡しはリポジトリの中のフォルダを読まない。利用者のフォルダの代わりに、同じ資料を一時のフォルダに写して渡す
+  const folder = mkdtempSync(join(tmpdir(), "moyai-e2e-folder-"));
+  const c = await mcpClient(stateDir, ["intake_add_files"]);
+  try {
+    for (const name of set.files) copyFileSync(join(set.dir, name), join(folder, basename(name)));
+    const r = await callTool(c, "intake_add_files", { source: "folder", path: folder, pack: packId });
+    expect(r.pack, JSON.stringify(r).slice(0, 300)).toBe(packId);
+    expect(r.added).toEqual([]);
+  } finally {
+    await c.close();
+    rmSync(folder, { recursive: true, force: true });
+  }
+  // パックを置くと読み直す。資料の数は変わらない
+  await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", String(set.files.length - photos), { timeout: 20_000 });
 }
 
 /**
@@ -183,7 +208,12 @@ export async function signInDialog(page: Page): Promise<void> {
   await expect(page.getByTestId("sign-as")).toBeVisible();
 }
 
-export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string): Promise<void> {
+/**
+ * 設定の画面で保存先と呼び名を選んで保存する（試験の台本が人の代わりに押す）。
+ * 既定の保存先は Documents の下なので、Documents の無い入れ物（Linux の CI など）では保存先が無く、確定のシートが受けた決定を読めない（mushitaro/moyai#36）。
+ * 保存先に関わる段のある台本は、Documents の有る無しに頼らず、一時のフォルダをここで選ぶ
+ */
+export async function chooseRoot(page: Page, base: string, root: string): Promise<void> {
   await page.goto(`${base}/#/settings`);
   await expect(page.getByTestId("settings-page")).toBeVisible();
   await page.getByTestId("root-change").click();
@@ -193,6 +223,10 @@ export async function chooseRootAndCreateRing(page: Page, base: string, root: st
   await page.getByTestId("settings-save").click();
   await expect(page.getByTestId("settings-save")).toBeDisabled();
   await expect(page.getByTestId("current-root")).toHaveText(root);
+}
+
+export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string): Promise<void> {
+  await chooseRoot(page, base, root);
   await page.getByTestId("ring-create-open").click();
   await page.getByTestId("ring-folder").fill(ringRoot);
   await page.getByTestId("ring-pack").selectOption("waste-incineration");

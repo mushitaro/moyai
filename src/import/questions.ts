@@ -2,7 +2,7 @@
 // 決定は同じ種類の行すべてに効き、取り消せる（決定を外して読み直す。同じ入力と決定からはいつも同じ出力）。
 // 決定の作者は src/shared/fields.ts の AUTHOR_KINDS。推測で埋めない：答えが無ければ、そのセルは未解決。
 import { AUTHOR_KINDS, type AuthorKind } from "../shared/fields";
-import { answerAppliesTo, ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
+import { answerAppliesTo, answerMatches, answerShape, ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
 
 export type QuestionKind =
   | "encoding"
@@ -270,12 +270,15 @@ export class Asker {
    */
   private ruleFor(q: Pick<Question, "kind" | "text" | "options" | "valueKind" | "items">): ActiveRule | null {
     const files = [...new Set(q.items.map((i) => i.file))];
+    // 文の比べは、そのままの字か、年度・日付・数えを伏せた形（reading.ts の answerMatches。伏せた形は問いごとに 1 回だけ作る）
+    let shapedText: string | undefined;
+    const shaped = () => (shapedText ??= answerShape(q.text));
     return (
       this.answerRules.find(
         (x) =>
           x.rule.kind === "answer" &&
           x.rule.question === q.kind &&
-          q.text.includes(x.rule.match) &&
+          answerMatches(q.text, x.rule.match, shaped) &&
           (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer)) &&
           answerAppliesTo(x.rule, files),
       ) ?? null

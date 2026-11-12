@@ -267,7 +267,7 @@ export function Settings() {
               {editRoot && (
                 <>
                   <Text size="xs" c="var(--text-3)">
-                    {T.documents} {s.documents ? <Val testid="documents-path">{s.documents}</Val> : T.documentsUnknown}
+                    {T.documents} {s.documents ? <Val testid="documents-path">{s.documents}</Val> : <span data-testid="documents-unknown">{T.documentsUnknown}</span>}
                   </Text>
                   <SyncedNotice synced={s.documentsSynced} kind="root" />
                   {s.chosenRoot && <SyncedNotice synced={s.rootSynced} kind="root" />}
