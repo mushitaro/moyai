@@ -5,7 +5,7 @@ import { nfkc } from "./era";
 import { cue } from "./cues";
 import { Asker, questionIdOf, type QuestionItem, YES_SPLIT } from "./questions";
 import { filesLabel, type AssetRec, type EventRec, type MarkRec, type Records, type Series } from "./records";
-import { nameKey, splitTag } from "./text";
+import { nameKey, parseUnit, splitTag } from "./text";
 import type { ActiveRule, RuleHits } from "./reading";
 
 export interface Cluster {
@@ -155,15 +155,41 @@ function ymd(d: { y: number; m: number; d: number }): string {
 
 /** 読み方の規則の同じ機器（辞書）：名前の鍵 → そろえる先の名前の鍵。link を呼ぶたびに入れ直す */
 let ALIAS = new Map<string, string>();
+/** Skillパックの呼び名の辞書：書き方 → そろえる先（名前の鍵の中の語を置き換える）。link を呼ぶたびに入れ直す */
+let TERMS: { re: RegExp; to: Map<string, string> } | null = null;
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function setTerms(groups: readonly { forms: readonly string[] }[]): void {
+  const to = new Map<string, string>();
+  for (const g of groups) {
+    const head = nameKey(g.forms[0] ?? "");
+    for (const f of g.forms.slice(1)) {
+      const k = nameKey(f);
+      if (k && k !== head && !to.has(k)) to.set(k, head);
+    }
+  }
+  if (!to.size) {
+    TERMS = null;
+    return;
+  }
+  // 長い書き方から先に当てる。英字だけの書き方（略）は、前後が英字でないときだけ
+  const alts = [...to.keys()].sort((a, b) => b.length - a.length).map((k) => (/^[A-Za-z]+$/.test(k) ? `(?<![A-Za-z])${escapeRe(k)}(?![A-Za-z])` : escapeRe(k)));
+  TERMS = { re: new RegExp(alts.join("|"), "gu"), to };
+}
 export const nk = (s: string): string => {
   let k = nameKey(s);
   // 規則どうしがつながる（A→B と B→C）ときは、たどった先にそろえる（輪になっても止まる）
   for (let i = 0; i < 20 && ALIAS.has(k); i++) k = ALIAS.get(k) as string;
   return k;
 };
+/** 作業の記録の名前から機器を引くときの鍵：名前の鍵に、Skillパックの呼び名の辞書を当てた形（台帳と星取表の機器どうしの結びには使わない） */
+const ek = (s: string): string => {
+  const k = nk(s);
+  return TERMS ? k.replace(TERMS.re, (m) => TERMS?.to.get(m) ?? m) : k;
+};
 
-export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = [], hits: RuleHits | null = null): Linked {
+export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = [], hits: RuleHits | null = null, names: readonly { forms: readonly string[] }[] = []): Linked {
   ALIAS = new Map();
+  setTerms(names);
   // 同じ機器の呼び名の並び：どの名前も、並びの最後の名前と同じ機器として読む
   for (const a of rules) {
     if (a.rule.kind !== "sameAsset") continue;
@@ -504,6 +530,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   const eventExcluded = new Map<string, string>();
   const eventExcludedBy = new Map<string, string[]>();
   const byName = new Map<string, Cluster[]>();
+  // 呼び名の辞書を当てた鍵でも引く（名前の鍵で当たらないときだけ）
+  const byTerm = new Map<string, Cluster[]>();
+  const lookName = (s: string): Cluster[] | undefined => byName.get(nk(s)) ?? byTerm.get(ek(s));
   // 機器番号（同一性の鍵）でも引く：日報や報告書が「名前（機器番号）」と書く機器
   const byTag = new Map<string, Cluster[]>();
   // 決まっていない機器（読みの決まらない機器と、結ぶかの決まらない機器）は引く先にしない。その鍵に当たる行は、決まるまで待つ
@@ -522,6 +551,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     if (c.excluded || c.pending || c.held) continue;
     // 資料をまたいで結んだ機器は、どの資料の名前でも引く（台帳の「1号炉ストーカ」と星取表の「ストーカ」）
     for (const k of new Set([c.name, ...c.recs.map((r) => r.name)].map(nk))) byName.set(k, [...(byName.get(k) ?? []), c]);
+    for (const k of new Set([c.name, ...c.recs.map((r) => r.name)].map(ek))) byTerm.set(k, [...(byTerm.get(k) ?? []), c]);
     if (c.tag) byTag.set(nk(c.tag), [...(byTag.get(nk(c.tag)) ?? []), c]);
   }
   // 機器番号の列から引いた名前（「名前（番号）」の形にしたもの）→ その番号。番号の書き方（「1-STK」のように数で始まるもの）が
@@ -532,6 +562,56 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     if (col) return col;
     const sp = splitTag(nm);
     return sp && byTag.has(nk(sp.tag)) ? sp : null;
+  };
+  // 名前の同じ機器が無い作業の行の名前を、号機と機器と部位に分けて引く（どの業種にも当たる書き方だけ。業種の語は読み方の規則・Skillパックの辞書）
+  const kids = new Map<Cluster, Cluster[]>();
+  for (const c of clusters) if (c.parent && !c.excluded && !c.pending && !c.held) kids.set(c.parent, [...(kids.get(c.parent) ?? []), c]);
+  const below = (c: Cluster): Cluster[] => {
+    const out: Cluster[] = [];
+    const walk = (x: Cluster, depth: number) => {
+      if (depth > 12) return;
+      for (const k of kids.get(x) ?? []) {
+        out.push(k);
+        walk(k, depth + 1);
+      }
+    };
+    walk(c, 0);
+    return out;
+  };
+  /** 号機の書き方（No.1・#1・1号機・(1)）の数。号機でなければ null */
+  const machineNo = (t: string): number | null => {
+    const paren = /^[(（]\s*(\d+)\s*[)）]$/u.exec(nfkc(t).trim());
+    if (paren) return Number(paren[1]);
+    const u = parseUnit(t);
+    return u?.kind === "number" ? u.n : null;
+  };
+  const machineOf = (c: Cluster): number | null => machineNo(c.name) ?? numberOf(c);
+  /**
+   * 名前を空白で区切り、号機の書き方を外して、「機器」か「機器 … 部位」として引く。号機の数があれば、機器の下の同じ数の機器（号の数か号機の名前）に絞る。
+   * 号炉の欄の号（unitN）は頭の機器に当てる。当たらなければ空（推し量らない。いつもの問いになる）
+   */
+  const byParts = (nm: string, unitN: number | null): Cluster[] => {
+    const toks = nfkc(nm).trim().split(/\s+/u).filter(Boolean);
+    const nos = toks.map(machineNo);
+    const rest = toks.filter((_, i) => nos[i] === null);
+    const no = nos.find((x) => x !== null) ?? null;
+    if (!rest.length || (rest.length === toks.length && rest.length < 2)) return [];
+    const unitOk = (c: Cluster) => unitN === null || numberOf(c) === unitN || numberOf(c) === null;
+    let heads = (lookName(rest.join(" ")) ?? lookName(rest.join("")) ?? []).filter(unitOk);
+    let part: string | null = null;
+    if (!heads.length && rest.length >= 2) {
+      heads = (lookName(rest[0] ?? "") ?? []).filter(unitOk);
+      part = rest.slice(1).join(" ");
+    }
+    if (!heads.length) return [];
+    if (no !== null) {
+      const m = [...new Set(heads.flatMap((h) => [h, ...below(h)]).filter((x) => machineOf(x) === no))];
+      if (m.length) heads = m;
+      else if (part === null) return [];
+    }
+    if (part === null) return heads;
+    const pk = ek(part);
+    return [...new Set(heads.flatMap(below).filter((x) => ek(x.name) === pk))];
   };
   type Case = { key: string; tableId: string; name: string; unitKey: string; cands: Cluster[]; events: EventRec[]; pattern: string };
   const cases = new Map<string, Case>();
@@ -604,10 +684,17 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           const c0 = cands[0];
           pattern = cands.length === 1 && c0 ? (nk(c0.name) === nk(sp.name) ? "tagName" : "tagOnly") : "ambiguous";
         } else {
-          cands = byName.get(nk(nm)) ?? [];
+          cands = lookName(nm) ?? [];
           if (unitKey.startsWith("n")) cands = cands.filter((c) => numberOf(c) === Number(unitKey.slice(1)));
           else if (unitKey === "common") cands = cands.filter((c) => c.series?.kind === "common" || numberOf(c) === null);
           pattern = cands.length === 1 ? (unitKey === "-" ? "nameOnly" : "nameUnit") : "ambiguous";
+          if (!cands.length && !(lookName(nm) ?? []).length) {
+            const p = byParts(nm, unitKey.startsWith("n") ? Number(unitKey.slice(1)) : null);
+            if (p.length) {
+              cands = p;
+              pattern = p.length === 1 ? "nameParts" : "ambiguous";
+            }
+          }
         }
         cs = { key: k, tableId: e.tableId, name: nm, unitKey, cands, events: [], pattern };
         cases.set(k, cs);
@@ -650,7 +737,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   // 台帳も星取表も無い（機器の記録が 1 つも無い）組：日報・報告書の機器の名前は、どれも当てる先が無い。様式ごとにまとめて聞く
   const noAssets = !clusters.some((c) => !c.excluded);
   for (const cs of cases.values()) {
-    const g = `${formKey(cs.tableId)}|${noAssets && cs.cands.length === 0 ? "none" : cs.pattern}`;
+    // 当てる先の名前が 1 つも無い名前（台帳にも星取表にも無い機器）は、様式ごとに 1 問にまとめる（機器の記録があれば「1 件ずつ選ぶ」も選べる）
+    const g = `${formKey(cs.tableId)}|${cs.cands.length === 0 ? "none" : cs.pattern}`;
     caseGroups.set(g, [...(caseGroups.get(g) ?? []), cs]);
   }
   /** 1 件ずつ聞く質問にしてよい名前の数の上限（越えれば「1 件ずつ聞く」を出さない。Architect の 64） */
@@ -668,7 +756,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     // まとめた工事の行：作業の欄が一式の印だけ（括弧の書き添えを除く。「一式（内訳は各行）」）で、名前の同じ機器も無い行。
     // 内訳はほかの行にあるので、作業にせず記録に残すのを推す（様式ごとに 1 問。決めるのは人。「1 件ずつ選ぶ」なら下の問い）
     let rest = css;
-    if (one) {
+    if (one || pattern === "none") {
       const lumps = css.filter((cs) => cs.cands.length === 0 && cs.events.every((e) => lumpWork(e.workName)));
       if (lumps.length) {
         const lkey = `eventLump|${tableId}`;
@@ -694,22 +782,28 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     }
     if (pattern === "none") {
       const nkey = `eventAssetNew|${tableId}`;
-      const a = ask.ask(nkey, {
+      const nrows = rest.reduce((a, c) => a + c.events.length, 0);
+      const a = !rest.length ? null : ask.ask(nkey, {
         kind: "eventAsset",
-        text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）は、台帳にも星取表にも無い（機器の記録の資料が無い）。この資料の名前のまま、名前と号ごとに新しい機器として入れるか`,
+        text: noAssets
+          ? `${fileName} の機器の名前 ${rest.length} 通り（${nrows} 行）は、台帳にも星取表にも無い（機器の記録の資料が無い）。この資料の名前のまま、名前と号ごとに新しい機器として入れるか`
+          : `${fileName} の機器の名前 ${rest.length} 通り（${nrows} 行）は、台帳にも星取表にも同じ名前の機器が無い（呼び名の辞書と、号機と部位に分けて引いても無い）。この資料の名前のまま、名前と号ごとに新しい機器として入れるか`,
         // 「名前ごとに決める」は置かない：当てる先の機器が 1 つも無いので、名前ごとの質問はどれも「外す」しか選べず、
         // 名前の数だけ質問が増えて作業画面が固まる（撮影で 3,478 件。Video の報告、11-06）
+        // 機器の記録があるときは「1 件ずつ選ぶ」も置く（名前ごとに、同じ号の機器と号の無い機器から選ぶ）
         options: [
           { id: "new", label: "この資料の名前のまま、新しい機器として入れる" },
+          ...(noAssets ? [] : [{ id: "split", label: "1 件ずつ機器を選ぶ" }]),
           { id: "exclude", label: "外す" },
         ],
         valueKind: "option",
         defaultAnswer: null,
-        sameShapeRows: rows,
-        items: css.slice(0, 20).map((cs) => ({ file: cs.events[0]?.file ?? "", sheet: cs.events[0]?.sheet ?? null, cells: cs.events.slice(0, 1).map((e) => e.refs[0] ?? ""), note: cs.name })),
+        sameShapeRows: nrows,
+        items: rest.slice(0, 20).map((cs) => ({ file: cs.events[0]?.file ?? "", sheet: cs.events[0]?.sheet ?? null, cells: cs.events.slice(0, 1).map((e) => e.refs[0] ?? ""), note: cs.name })),
       });
-      if (a === "new")
-        for (const cs of css) {
+      if (a === "split" && !noAssets) one = true;
+      else if (a === "new")
+        for (const cs of rest) {
           const e0 = cs.events[0];
           if (!e0) continue;
           const same = made.get(`${nk(cs.name)}|${cs.unitKey}`);
@@ -725,9 +819,9 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
           made.set(`${nk(cs.name)}|${cs.unitKey}`, c);
           resolved.set(cs.key, { c, qid: questionIdOf(nkey), excluded: false });
         }
-      else if (a === "exclude") for (const cs of css) resolved.set(cs.key, { c: null, qid: questionIdOf(nkey), excluded: true });
+      else if (a === "exclude") for (const cs of rest) resolved.set(cs.key, { c: null, qid: questionIdOf(nkey), excluded: true });
       // 前の版で「名前ごとに決める」と答えた決定は、答えていないものとして扱う（選択肢から外した）
-      else for (const cs of css) resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(nkey) });
+      else for (const cs of rest) resolved.set(cs.key, { c: null, qid: null, excluded: false, wait: questionIdOf(nkey) });
     }
     if (one) {
       for (const cs of rest) {
@@ -765,6 +859,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       nameOnly: "号の欄は空で、名前が同じ",
       tagName: "名前の中の機器番号と名前が同じ",
       tagOnly: "名前の中の機器番号が同じ（名前の書き方は違う）",
+      nameParts: "名前を号機と機器と部位に分けて引いた（「機器 号機 部位」の書き方）",
     };
     // 名前が多いときは「1 件ずつ聞く」を置かない（名前の数だけ質問が増え、作業画面が固まる。Architect の 64）。違う名前は同じ機器のルール（呼び名の並び）で直す
     const many = css.length > SPLIT_MAX;

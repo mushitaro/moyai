@@ -10,7 +10,7 @@ import { extensionOf, READABLE, readSource, type InputFile, type ReadOutcome } f
 import { layoutFile, type SheetLayout, type Table } from "./structure";
 import { buildRecords, cellKey, type Records } from "./records";
 import { activeRules, RuleHits, type LoadedReading, type ReadingRule } from "./reading";
-import { packReadingRules } from "./pack-reading";
+import { packNameGroups, packReadingRules } from "./pack-reading";
 import { link, type Linked } from "./link";
 import { compose, type Composition } from "./compose";
 import { renderPdfPage, type PageImage } from "./pdf";
@@ -363,7 +363,7 @@ export class IntakeSession {
     const reference = referenceFiles(sources, ask);
     const used = reference.size ? layouts.filter((l) => !reference.has(l.file)) : layouts;
     const records = buildRecords(used, ask, { fiscalYearStartMonth: this.options.facility.fiscalYearStartMonth }, (f) => date1904.get(f) ?? false);
-    const linked = link(records, ask, rules, hits);
+    const linked = link(records, ask, rules, hits, packNameGroups(this.options.packId));
     const composition = compose(sources, layouts, records, linked, ask, this.decisions, this.options, reference);
     if (unreadable.length) {
       composition.blockers.push(`読めなかった資料 ${unreadable.length}（${unreadable.join("・")}）`);

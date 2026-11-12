@@ -137,12 +137,17 @@ describe("作業の記録の表", () => {
     const an = s.analyze();
     const bundle = an.records.events.find((e) => e.row === 2);
     expect(bundle?.bundle).toBe(true);
-    const one = an.open.find((q) => q.kind === "eventAssetOne" && q.text.includes("ポンプ類"));
+    // 名前の同じ機器が無い名前は、まず様式ごとに 1 問（新しい機器にするか・1 件ずつ選ぶか）。1 件ずつ選ぶと答えると、名前ごとの問いになる
+    const none = an.open.find((q) => q.kind === "eventAsset" && q.options.some((o) => o.id === "split") && q.options.some((o) => o.id === "new"));
+    expect(none?.items.map((it) => it.note)).toContain("ポンプ類");
+    s.settle([human(none?.questionId ?? "", "split")]);
+    const an2 = s.analyze();
+    const one = an2.open.find((q) => q.kind === "eventAssetOne" && q.text.includes("ポンプ類"));
     expect(one?.text).toContain("名前の同じ機器が無い");
     expect(one?.options.map((o) => o.label)).toEqual(expect.arrayContaining([expect.stringContaining("ポンプ"), expect.stringContaining("ブロワ"), expect.stringContaining("計量器")]));
     // 選択肢の i 番目の候補の出どころが、items の i 番目にある
     expect(one?.items.length).toBe(one!.options.length - 1);
-    expect(an.open.some((q) => q.kind === "eventAssetOne" && (q.text.includes("「ポンプ」") || q.text.includes("「ブロワ」")))).toBe(false);
+    expect(an2.open.some((q) => q.kind === "eventAssetOne" && (q.text.includes("「ポンプ」") || q.text.includes("「ブロワ」")))).toBe(false);
   });
 });
 

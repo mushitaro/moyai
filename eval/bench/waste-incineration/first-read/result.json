@@ -5,28 +5,28 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "5ad9dedc57da6f800363cbabe55ed719d4d11550",
-  "src": "42c596735d34b1ae6ba9f3738d971cd3a43ed14e",
-  "packs": "d162fa4ffe65199c7ebf8f7caf5a273fdae84ce7",
-  "dirty": false
+  "commit": "80c96527b78e9a61fb68ddb669fba06a5a467ed0",
+  "src": "1b6f7316f816834334e408be7ff2bdb2abd3be11",
+  "packs": "876267422ef1994eedf0a2c0a1c24623985b9794",
+  "dirty": true
  },
- "measuredAt": "2026-11-12T10:30:05.990Z",
+ "measuredAt": "2026-11-12T11:47:36.680Z",
  "total": {
   "facilities": 5,
   "planMade": 2,
-  "asked": 6326,
+  "asked": 217,
   "open": 3,
   "unresolvedAfter": 7299,
   "accuracy": {
-   "correct": 3680,
+   "correct": 6694,
    "total": 9369
   },
   "recovery": {
-   "correct": 3311,
+   "correct": 5205,
    "total": 17920
   },
   "manDays": {
-   "correct": 1625,
+   "correct": 3059,
    "total": 13806
   },
   "days": {
@@ -35,12 +35,12 @@
   },
   "errors": 0,
   "firstRead": {
-   "firstAsked": 1907,
-   "restAsked": 6326,
-   "restAskedNoRules": 10044,
-   "rules": 1753,
-   "ruleAnswered": 3718,
-   "ruleWrong": 0,
+   "firstAsked": 181,
+   "restAsked": 217,
+   "restAskedNoRules": 596,
+   "rules": 152,
+   "ruleAnswered": 373,
+   "ruleWrong": 8,
    "skipped": [
     "hinatano",
     "kaedehara",
@@ -56,17 +56,14 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 27.4,
-   "asked": 1197,
-   "answered": 1196,
+   "seconds": 21.2,
+   "asked": 27,
+   "answered": 26,
    "open": 1,
    "openKinds": {
     "unitMissing": 1
    },
-   "defaulted": {
-    "costKind": 1,
-    "costTax": 1
-   },
+   "defaulted": {},
    "unresolvedBy": {
     "unitMissing": 2224
    },
@@ -82,7 +79,7 @@
      "defaultAnswer": null
     }
    ],
-   "unresolvedBefore": 23072,
+   "unresolvedBefore": 22834,
    "unresolvedAfter": 2224,
    "planMade": false,
    "blockers": [
@@ -116,29 +113,27 @@
     "firstFiles": 2,
     "restFiles": 3,
     "restYears": 3,
-    "firstAsked": 430,
-    "rules": 427,
-    "ruleAnswered": 615,
-    "ruleWrong": 0,
-    "restAsked": 1197,
-    "restAskedNoRules": 1812
+    "firstAsked": 33,
+    "rules": 32,
+    "ruleAnswered": 50,
+    "ruleWrong": 1,
+    "restAsked": 27,
+    "restAskedNoRules": 77
    }
   },
   {
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 50.7,
-   "asked": 5,
-   "answered": 5,
+   "seconds": 41,
+   "asked": 2,
+   "answered": 2,
    "open": 0,
    "openKinds": {},
-   "defaulted": {
-    "flatSplit": 1
-   },
+   "defaulted": {},
    "unresolvedBy": {},
    "openSamples": [],
-   "unresolvedBefore": 20604,
+   "unresolvedBefore": 56,
    "unresolvedAfter": 0,
    "planMade": true,
    "blockers": [],
@@ -176,10 +171,10 @@
     "restFiles": 4,
     "restYears": 4,
     "firstAsked": 6,
-    "rules": 5,
-    "ruleAnswered": 1,
+    "rules": 6,
+    "ruleAnswered": 4,
     "ruleWrong": 0,
-    "restAsked": 5,
+    "restAsked": 2,
     "restAskedNoRules": 6
    }
   },
@@ -187,19 +182,14 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 36.6,
-   "asked": 1616,
-   "answered": 1615,
+   "seconds": 28.1,
+   "asked": 25,
+   "answered": 24,
    "open": 1,
    "openKinds": {
     "unitMissing": 1
    },
-   "defaulted": {
-    "costKind": 1,
-    "yearUnknown": 1,
-    "assetLink": 1,
-    "costTax": 1
-   },
+   "defaulted": {},
    "unresolvedBy": {
     "unitMissing": 2593
    },
@@ -215,7 +205,7 @@
      "defaultAnswer": null
     }
    ],
-   "unresolvedBefore": 31201,
+   "unresolvedBefore": 30824,
    "unresolvedAfter": 2593,
    "planMade": false,
    "blockers": [
@@ -249,50 +239,48 @@
     "firstFiles": 3,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 462,
-    "rules": 457,
-    "ruleAnswered": 724,
-    "ruleWrong": 0,
-    "restAsked": 1616,
-    "restAskedNoRules": 2340
+    "firstAsked": 26,
+    "rules": 25,
+    "ruleAnswered": 27,
+    "ruleWrong": 4,
+    "restAsked": 25,
+    "restAskedNoRules": 58
    }
   },
   {
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 64.1,
-   "asked": 1714,
-   "answered": 1714,
+   "seconds": 69.8,
+   "asked": 119,
+   "answered": 119,
    "open": 0,
    "openKinds": {},
    "defaulted": {
-    "costKind": 2,
-    "flatSplit": 2,
-    "costTax": 2
+    "flatSplit": 1
    },
    "unresolvedBy": {},
    "openSamples": [],
-   "unresolvedBefore": 26530,
+   "unresolvedBefore": 17683,
    "unresolvedAfter": 0,
    "planMade": true,
    "blockers": [],
    "plan": {
-    "assets": 233,
-    "works": 169,
-    "details": 1774
+    "assets": 1587,
+    "works": 2082,
+    "details": 4344
    },
    "accuracy": {
-    "correct": 738,
+    "correct": 3752,
     "total": 5951
    },
    "extra": 225,
    "recovery": {
-    "correct": 981,
+    "correct": 2875,
     "total": 4336
    },
    "manDays": {
-    "correct": 7,
+    "correct": 1441,
     "total": 2847
    },
    "days": {
@@ -315,29 +303,26 @@
     "firstFiles": 8,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 528,
-    "rules": 386,
-    "ruleAnswered": 1571,
-    "ruleWrong": 0,
-    "restAsked": 1714,
-    "restAskedNoRules": 3285
+    "firstAsked": 80,
+    "rules": 54,
+    "ruleAnswered": 214,
+    "ruleWrong": 3,
+    "restAsked": 119,
+    "restAskedNoRules": 333
    }
   },
   {
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 33.3,
-   "asked": 1794,
-   "answered": 1793,
+   "seconds": 23.2,
+   "asked": 44,
+   "answered": 43,
    "open": 1,
    "openKinds": {
     "unitMissing": 1
    },
-   "defaulted": {
-    "costKind": 1,
-    "costTax": 1
-   },
+   "defaulted": {},
    "unresolvedBy": {
     "unitMissing": 2482
    },
@@ -353,7 +338,7 @@
      "defaultAnswer": null
     }
    ],
-   "unresolvedBefore": 33858,
+   "unresolvedBefore": 33504,
    "unresolvedAfter": 2482,
    "planMade": false,
    "blockers": [
@@ -387,12 +372,12 @@
     "firstFiles": 2,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 481,
-    "rules": 478,
-    "ruleAnswered": 807,
+    "firstAsked": 36,
+    "rules": 35,
+    "ruleAnswered": 78,
     "ruleWrong": 0,
-    "restAsked": 1794,
-    "restAskedNoRules": 2601
+    "restAsked": 44,
+    "restAskedNoRules": 122
    }
   }
  ]
