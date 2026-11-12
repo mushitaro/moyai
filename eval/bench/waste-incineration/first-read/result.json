@@ -5,28 +5,28 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "1989e314e2c77f38f6bb31ee0ff5674b8de8d380",
-  "src": "38e9f38a6a698b3a3b4e1cc94da9d3282a62c6da",
+  "commit": "e1e6753fd8938fe9661dd6eb3e4622adfd50ace5",
+  "src": "f98a83fa98dfa28451820cebbb6b30c2382df4f0",
   "packs": "876267422ef1994eedf0a2c0a1c24623985b9794",
   "dirty": false
  },
- "measuredAt": "2026-11-12T12:35:05.286Z",
+ "measuredAt": "2026-11-12T12:29:55.794Z",
  "total": {
   "facilities": 5,
   "planMade": 2,
-  "asked": 175,
+  "asked": 332,
   "open": 3,
   "unresolvedAfter": 7299,
   "accuracy": {
-   "correct": 7363,
+   "correct": 6694,
    "total": 9369
   },
   "recovery": {
-   "correct": 5238,
+   "correct": 5196,
    "total": 17920
   },
   "manDays": {
-   "correct": 3062,
+   "correct": 3060,
    "total": 13806
   },
   "days": {
@@ -35,12 +35,12 @@
   },
   "errors": 0,
   "firstRead": {
-   "firstAsked": 203,
-   "restAsked": 175,
-   "restAskedNoRules": 549,
-   "rules": 171,
-   "ruleAnswered": 305,
-   "ruleWrong": 10,
+   "firstAsked": 181,
+   "restAsked": 332,
+   "restAskedNoRules": 596,
+   "rules": 140,
+   "ruleAnswered": 264,
+   "ruleWrong": 0,
    "skipped": [
     "hinatano",
     "kaedehara",
@@ -56,15 +56,16 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 21.1,
-   "asked": 35,
-   "answered": 34,
+   "seconds": 26.6,
+   "asked": 47,
+   "answered": 46,
    "open": 1,
    "openKinds": {
     "unitMissing": 1
    },
    "defaulted": {
-    "eventAsset": 1
+    "costKind": 1,
+    "costTax": 1
    },
    "unresolvedBy": {
     "unitMissing": 2224
@@ -81,7 +82,7 @@
      "defaultAnswer": null
     }
    ],
-   "unresolvedBefore": 22834,
+   "unresolvedBefore": 23072,
    "unresolvedAfter": 2224,
    "planMade": false,
    "blockers": [
@@ -115,27 +116,29 @@
     "firstFiles": 2,
     "restFiles": 3,
     "restYears": 3,
-    "firstAsked": 43,
-    "rules": 42,
-    "ruleAnswered": 46,
-    "ruleWrong": 1,
-    "restAsked": 35,
-    "restAskedNoRules": 81
+    "firstAsked": 33,
+    "rules": 30,
+    "ruleAnswered": 30,
+    "ruleWrong": 0,
+    "restAsked": 47,
+    "restAskedNoRules": 77
    }
   },
   {
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 40.8,
-   "asked": 2,
-   "answered": 2,
+   "seconds": 56.6,
+   "asked": 5,
+   "answered": 5,
    "open": 0,
    "openKinds": {},
-   "defaulted": {},
+   "defaulted": {
+    "flatSplit": 1
+   },
    "unresolvedBy": {},
    "openSamples": [],
-   "unresolvedBefore": 56,
+   "unresolvedBefore": 20604,
    "unresolvedAfter": 0,
    "planMade": true,
    "blockers": [],
@@ -173,10 +176,10 @@
     "restFiles": 4,
     "restYears": 4,
     "firstAsked": 6,
-    "rules": 6,
-    "ruleAnswered": 4,
+    "rules": 5,
+    "ruleAnswered": 1,
     "ruleWrong": 0,
-    "restAsked": 2,
+    "restAsked": 5,
     "restAskedNoRules": 6
    }
   },
@@ -184,14 +187,19 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 26.7,
-   "asked": 25,
-   "answered": 24,
+   "seconds": 36.2,
+   "asked": 45,
+   "answered": 44,
    "open": 1,
    "openKinds": {
     "unitMissing": 1
    },
-   "defaulted": {},
+   "defaulted": {
+    "costKind": 1,
+    "yearUnknown": 1,
+    "assetLink": 1,
+    "costTax": 1
+   },
    "unresolvedBy": {
     "unitMissing": 2593
    },
@@ -207,7 +215,7 @@
      "defaultAnswer": null
     }
    ],
-   "unresolvedBefore": 30824,
+   "unresolvedBefore": 31201,
    "unresolvedAfter": 2593,
    "planMade": false,
    "blockers": [
@@ -242,10 +250,10 @@
     "restFiles": 4,
     "restYears": 4,
     "firstAsked": 26,
-    "rules": 25,
-    "ruleAnswered": 27,
-    "ruleWrong": 4,
-    "restAsked": 25,
+    "rules": 21,
+    "ruleAnswered": 13,
+    "ruleWrong": 0,
+    "restAsked": 45,
     "restAskedNoRules": 58
    }
   },
@@ -253,37 +261,38 @@
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 67.7,
-   "asked": 69,
-   "answered": 69,
+   "seconds": 89.4,
+   "asked": 145,
+   "answered": 145,
    "open": 0,
    "openKinds": {},
    "defaulted": {
-    "flatSplit": 1,
-    "eventAsset": 3
+    "costKind": 2,
+    "flatSplit": 2,
+    "costTax": 2
    },
    "unresolvedBy": {},
    "openSamples": [],
-   "unresolvedBefore": 17996,
+   "unresolvedBefore": 26530,
    "unresolvedAfter": 0,
    "planMade": true,
    "blockers": [],
    "plan": {
-    "assets": 1645,
-    "works": 2104,
-    "details": 4327
+    "assets": 1587,
+    "works": 2082,
+    "details": 4348
    },
    "accuracy": {
-    "correct": 4421,
+    "correct": 3752,
     "total": 5951
    },
    "extra": 225,
    "recovery": {
-    "correct": 2908,
+    "correct": 2866,
     "total": 4336
    },
    "manDays": {
-    "correct": 1444,
+    "correct": 1442,
     "total": 2847
    },
    "days": {
@@ -306,26 +315,29 @@
     "firstFiles": 8,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 92,
-    "rules": 63,
-    "ruleAnswered": 150,
-    "ruleWrong": 5,
-    "restAsked": 69,
-    "restAskedNoRules": 282
+    "firstAsked": 80,
+    "rules": 51,
+    "ruleAnswered": 188,
+    "ruleWrong": 0,
+    "restAsked": 145,
+    "restAskedNoRules": 333
    }
   },
   {
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 23.7,
-   "asked": 44,
-   "answered": 43,
+   "seconds": 33.3,
+   "asked": 90,
+   "answered": 89,
    "open": 1,
    "openKinds": {
     "unitMissing": 1
    },
-   "defaulted": {},
+   "defaulted": {
+    "costKind": 1,
+    "costTax": 1
+   },
    "unresolvedBy": {
     "unitMissing": 2482
    },
@@ -341,7 +353,7 @@
      "defaultAnswer": null
     }
    ],
-   "unresolvedBefore": 33504,
+   "unresolvedBefore": 33858,
    "unresolvedAfter": 2482,
    "planMade": false,
    "blockers": [
@@ -376,10 +388,10 @@
     "restFiles": 4,
     "restYears": 4,
     "firstAsked": 36,
-    "rules": 35,
-    "ruleAnswered": 78,
+    "rules": 33,
+    "ruleAnswered": 32,
     "ruleWrong": 0,
-    "restAsked": 44,
+    "restAsked": 90,
     "restAskedNoRules": 122
    }
   }
