@@ -29,6 +29,8 @@ interface ActiveTab {
   work: boolean;
   /** 最後にこのタブから何かが届いた時刻（lastSeen と違い、呼び出しの時間切れでは進めない） */
   heard: number;
+  /** 確かめの ping の at → その ping そのものへの pong（同じ at）が届いたか（あとから開いたタブを入れるかを確かめている間だけ） */
+  probes?: Map<number, boolean>;
 }
 
 export interface TabHubOptions {
@@ -75,7 +77,7 @@ interface PendingCall {
 /** タブ → 橋渡しのイベントの受け手。tests/contract/ が、送り手のあるどのイベントにも受け手があることを数える。 */
 export const TAB_EVENT_HANDLERS: { [K in TabToBridge]: Handler<K> } = {
   "tab.hello": (hub, conn, data) => hub.onHello(conn, data),
-  "tab.pong": (hub, conn) => hub.onPong(conn),
+  "tab.pong": (hub, conn, data) => hub.onPong(conn, data),
   "tab.work": (hub, conn, data) => hub.onWork(conn, data),
   "tab.token_request": (hub, conn, data) => hub.onTokenRequest(conn, data),
   "tab.tool_result": (hub, conn, data) => hub.onToolResult(conn, data),
@@ -173,12 +175,18 @@ export class TabHub {
     // 確かめの ping に PROBE_MS の間に何も返さない（読み込み直した・固まった・閉じかけのタブ）とき
     if (prev && this.keepsPrevious(prev, data)) {
       conn.probing = true;
-      const asked = this.o.now();
+      // 答えたと数えるのは、この確かめの ping そのものへの pong（同じ at）だけ。確かめの前の ping への遅れた pong や、
+      // 確かめの前に送られた別の知らせは数えない（混んだ機械で、固まったタブを「答えた」と取り違えないように）。
+      // at に 0.5 を足して、整数の時刻で送る見張りの ping の at と重ならないようにする
+      const asked = this.o.now() + 0.5;
+      (prev.probes ??= new Map()).set(asked, false);
       this.send(prev.ws, "bridge.ping", { at: asked });
       const t = setTimeout(() => {
         conn.probing = false;
+        const answered = prev.probes?.get(asked) === true;
+        prev.probes?.delete(asked);
         if (conn.ws.readyState !== conn.ws.OPEN) return;
-        if (this.active === prev && prev.heard >= asked && prev.ws.readyState === prev.ws.OPEN) {
+        if (this.active === prev && answered && prev.ws.readyState === prev.ws.OPEN) {
           this.o.log("作業のあるタブが開いているので、あとから開いたタブを断りました");
           return this.refuse(conn, "tab_elsewhere");
         }
@@ -235,7 +243,8 @@ export class TabHub {
     if (conn.active) conn.active.work = data.work;
   }
 
-  onPong(_conn: Conn): void {
+  onPong(conn: Conn, data: EventData<"tab.pong">): void {
+    if (conn.active?.probes?.has(data.at)) conn.active.probes.set(data.at, true);
     // lastSeen は受けたときに更新してある
   }
 
