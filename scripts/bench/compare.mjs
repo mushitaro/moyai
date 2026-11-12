@@ -39,7 +39,7 @@ const DOWN = ["extra", "unresolved", "open", "ruleWrong", "askedAgain"];
 const NOTE = ["asked", "recoveryTotal", "accuracyTotal", "firstAsked", "restAsked", "ruleAnswered", "rules"];
 // 分母でなく、記録するだけの数（違えば changed になるが、分母が変わった所には書かない）
 const COUNT_ONLY = ["asked", "firstAsked", "restAsked", "ruleAnswered", "rules"];
-const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", extra: "③ の読みすぎ", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問", recoveryTotal: "⑥ の分母", accuracyTotal: "③ の分母", firstAsked: "1 年目の問い", restAsked: "残りを足した問い", ruleAnswered: "規則で決まった問い", rules: "1 年目の規則", ruleWrong: "ルールの答えが正解と違う問い", askedAgain: "1 年目にもあったのにまた聞いた問い" };
+const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", extra: "③ の読みすぎ", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問", recoveryTotal: "⑥ の分母", accuracyTotal: "③ の分母", firstAsked: "1 年目の問い", restAsked: "残りを足した問い", ruleAnswered: "規則で決まった問い", rules: "1 年目の規則", ruleWrong: "ルールの答えが正解と違う問い", askedAgain: "1 年目に見たのにまた聞いた問い" };
 
 export function compare(base, head) {
   if (base.schema !== "moyai.pack-bench.result/0" || head.schema !== "moyai.pack-bench.result/0") throw new Error("moyai.pack-bench.result/0 でない");

@@ -5,28 +5,28 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "8ac07b30bfce77b625320c0038ecc8d36ea4826a",
-  "src": "57d6a53093a940cb9bc57b164c640dbf737b0a01",
+  "commit": "f8df260e9d8c85b5bcdb47653864f7df15934bd1",
+  "src": "d6b167de7f818b565361dced87eb71b6b2973c3b",
   "packs": "876267422ef1994eedf0a2c0a1c24623985b9794",
   "dirty": false
  },
- "measuredAt": "2026-11-12T13:36:35.314Z",
+ "measuredAt": "2026-11-12T14:55:44.073Z",
  "total": {
   "facilities": 5,
-  "planMade": 2,
-  "asked": 311,
-  "open": 3,
-  "unresolvedAfter": 7299,
+  "planMade": 5,
+  "asked": 244,
+  "open": 0,
+  "unresolvedAfter": 0,
   "accuracy": {
-   "correct": 7363,
-   "total": 9369
+   "correct": 17797,
+   "total": 24916
   },
   "recovery": {
-   "correct": 5224,
+   "correct": 12732,
    "total": 17920
   },
   "manDays": {
-   "correct": 3063,
+   "correct": 5831,
    "total": 13806
   },
   "days": {
@@ -35,12 +35,17 @@
   },
   "errors": 0,
   "firstRead": {
-   "firstAsked": 203,
-   "restAsked": 311,
-   "restAskedNoRules": 549,
-   "rules": 159,
-   "ruleAnswered": 191,
+   "firstAsked": 207,
+   "restAsked": 244,
+   "restAskedNoRules": 567,
+   "rules": 178,
+   "ruleAnswered": 276,
    "ruleWrong": 0,
+   "askedAgain": 19,
+   "askedNew": 224,
+   "askedAgainUnanswered": 0,
+   "askedAgainUnknown": 0,
+   "askedChangedAnswer": 7,
    "skipped": [
     "hinatano",
     "kaedehara",
@@ -56,49 +61,36 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 22.6,
-   "asked": 60,
-   "answered": 59,
-   "open": 1,
-   "openKinds": {
-    "unitMissing": 1
-   },
+   "seconds": 53.5,
+   "asked": 46,
+   "answered": 46,
+   "open": 0,
+   "openKinds": {},
    "defaulted": {
-    "costKind": 1,
-    "costTax": 1,
     "eventAsset": 1
    },
-   "unresolvedBy": {
-    "unitMissing": 2224
+   "unresolvedBy": {},
+   "openSamples": [],
+   "unresolvedBefore": 22911,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 1359,
+    "works": 2032,
+    "details": 3835
    },
-   "openSamples": [
-    {
-     "kind": "unitMissing",
-     "rows": 278,
-     "text": "「号炉」の列の「共」（278 行）は、号・系列として読めない（4 問をまとめた：【架空】ほしの丘RC_作業実績_2025.csv・【架空】ほしの丘RC_作業実績_2022.csv ほか 2 か所）",
-     "options": [
-      "none=号・系列なしとして読む",
-      "exclude=この行を外す"
-     ],
-     "defaultAnswer": null
-    }
-   ],
-   "unresolvedBefore": 23072,
-   "unresolvedAfter": 2224,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 2224",
-    "答えの無い質問 1"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "accuracy": {
+    "correct": 2951,
+    "total": 4317
+   },
+   "extra": 0,
    "recovery": {
-    "correct": 0,
+    "correct": 2038,
     "total": 2808
    },
    "manDays": {
-    "correct": 0,
+    "correct": 743,
     "total": 2275
    },
    "days": {
@@ -113,33 +105,40 @@
    },
    "error": null,
    "firstRead": {
+    "askedAgain": 3,
+    "askedAgainUnanswered": 0,
+    "askedAgainUnknown": 0,
+    "askedChangedAnswer": 1,
+    "askedNew": 43,
+    "askedAgainKinds": {
+     "workLinkOne": 2,
+     "workLink": 1
+    },
     "year": "2025",
     "firstFiles": 2,
     "restFiles": 3,
     "restYears": 3,
-    "firstAsked": 43,
-    "rules": 40,
-    "ruleAnswered": 21,
+    "firstAsked": 45,
+    "rules": 45,
+    "ruleAnswered": 40,
     "ruleWrong": 0,
-    "restAsked": 60,
-    "restAskedNoRules": 81
+    "restAsked": 46,
+    "restAskedNoRules": 86
    }
   },
   {
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 46.7,
-   "asked": 5,
-   "answered": 5,
+   "seconds": 56.2,
+   "asked": 2,
+   "answered": 2,
    "open": 0,
    "openKinds": {},
-   "defaulted": {
-    "flatSplit": 1
-   },
+   "defaulted": {},
    "unresolvedBy": {},
    "openSamples": [],
-   "unresolvedBefore": 20604,
+   "unresolvedBefore": 20548,
    "unresolvedAfter": 0,
    "planMade": true,
    "blockers": [],
@@ -172,15 +171,21 @@
    },
    "error": null,
    "firstRead": {
+    "askedAgain": 0,
+    "askedAgainUnanswered": 0,
+    "askedAgainUnknown": 0,
+    "askedChangedAnswer": 0,
+    "askedNew": 2,
+    "askedAgainKinds": {},
     "year": "R7",
     "firstFiles": 2,
     "restFiles": 4,
     "restYears": 4,
     "firstAsked": 6,
-    "rules": 5,
-    "ruleAnswered": 1,
+    "rules": 6,
+    "ruleAnswered": 4,
     "ruleWrong": 0,
-    "restAsked": 5,
+    "restAsked": 2,
     "restAskedNoRules": 6
    }
   },
@@ -188,50 +193,34 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 31,
-   "asked": 45,
-   "answered": 44,
-   "open": 1,
-   "openKinds": {
-    "unitMissing": 1
+   "seconds": 68.1,
+   "asked": 42,
+   "answered": 42,
+   "open": 0,
+   "openKinds": {},
+   "defaulted": {},
+   "unresolvedBy": {},
+   "openSamples": [],
+   "unresolvedBefore": 30925,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 1678,
+    "works": 2546,
+    "details": 4517
    },
-   "defaulted": {
-    "costKind": 1,
-    "yearUnknown": 1,
-    "assetLink": 1,
-    "costTax": 1
+   "accuracy": {
+    "correct": 3385,
+    "total": 5258
    },
-   "unresolvedBy": {
-    "unitMissing": 2593
-   },
-   "openSamples": [
-    {
-     "kind": "unitMissing",
-     "rows": 324,
-     "text": "「号炉」の列の「共」（324 行）は、号・系列として読めない（5 問をまとめた：【架空】さくら坂_作業実績_2025.csv・【架空】さくら坂_作業実績_2021.csv ほか 3 か所）",
-     "options": [
-      "none=号・系列なしとして読む",
-      "exclude=この行を外す"
-     ],
-     "defaultAnswer": null
-    }
-   ],
-   "unresolvedBefore": 31201,
-   "unresolvedAfter": 2593,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 2593",
-    "答えの無い質問 1"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "extra": 0,
    "recovery": {
-    "correct": 0,
+    "correct": 2937,
     "total": 3884
    },
    "manDays": {
-    "correct": 0,
+    "correct": 1014,
     "total": 2967
    },
    "days": {
@@ -246,36 +235,42 @@
    },
    "error": null,
    "firstRead": {
+    "askedAgain": 1,
+    "askedAgainUnanswered": 0,
+    "askedAgainUnknown": 0,
+    "askedChangedAnswer": 3,
+    "askedNew": 41,
+    "askedAgainKinds": {
+     "workLink": 1
+    },
     "year": "2025",
     "firstFiles": 3,
     "restFiles": 4,
     "restYears": 4,
-    "firstAsked": 26,
-    "rules": 21,
-    "ruleAnswered": 13,
+    "firstAsked": 28,
+    "rules": 28,
+    "ruleAnswered": 23,
     "ruleWrong": 0,
-    "restAsked": 45,
-    "restAskedNoRules": 58
+    "restAsked": 42,
+    "restAskedNoRules": 65
    }
   },
   {
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 72.6,
-   "asked": 111,
-   "answered": 111,
+   "seconds": 80.7,
+   "asked": 97,
+   "answered": 97,
    "open": 0,
    "openKinds": {},
    "defaulted": {
-    "costKind": 2,
-    "flatSplit": 2,
-    "costTax": 2,
+    "flatSplit": 1,
     "eventAsset": 3
    },
    "unresolvedBy": {},
    "openSamples": [],
-   "unresolvedBefore": 26528,
+   "unresolvedBefore": 24268,
    "unresolvedAfter": 0,
    "planMade": true,
    "blockers": [],
@@ -313,15 +308,29 @@
    },
    "error": null,
    "firstRead": {
+    "askedAgain": 13,
+    "askedAgainUnanswered": 0,
+    "askedAgainUnknown": 0,
+    "askedChangedAnswer": 3,
+    "askedNew": 83,
+    "askedAgainKinds": {
+     "dateUnknown": 1,
+     "eventAsset": 3,
+     "stray": 1,
+     "assetUnmatched": 2,
+     "workLink": 2,
+     "workLinkOne": 3,
+     "workJoin": 1
+    },
     "year": "R7",
     "firstFiles": 8,
     "restFiles": 4,
     "restYears": 4,
     "firstAsked": 92,
-    "rules": 60,
-    "ruleAnswered": 124,
+    "rules": 63,
+    "ruleAnswered": 138,
     "ruleWrong": 0,
-    "restAsked": 111,
+    "restAsked": 97,
     "restAskedNoRules": 282
    }
   },
@@ -329,48 +338,34 @@
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 27.8,
-   "asked": 90,
-   "answered": 89,
-   "open": 1,
-   "openKinds": {
-    "unitMissing": 1
+   "seconds": 75.4,
+   "asked": 57,
+   "answered": 57,
+   "open": 0,
+   "openKinds": {},
+   "defaulted": {},
+   "unresolvedBy": {},
+   "openSamples": [],
+   "unresolvedBefore": 33640,
+   "unresolvedAfter": 0,
+   "planMade": true,
+   "blockers": [],
+   "plan": {
+    "assets": 1718,
+    "works": 2708,
+    "details": 5120
    },
-   "defaulted": {
-    "costKind": 1,
-    "costTax": 1
+   "accuracy": {
+    "correct": 4098,
+    "total": 5972
    },
-   "unresolvedBy": {
-    "unitMissing": 2482
-   },
-   "openSamples": [
-    {
-     "kind": "unitMissing",
-     "rows": 310,
-     "text": "「号炉」の列の「共」（310 行）は、号・系列として読めない（5 問をまとめた：【架空】うみかぜEP_作業実績_2025.csv・【架空】うみかぜEP_作業実績_2021.csv ほか 3 か所）",
-     "options": [
-      "none=号・系列なしとして読む",
-      "exclude=この行を外す"
-     ],
-     "defaultAnswer": null
-    }
-   ],
-   "unresolvedBefore": 33858,
-   "unresolvedAfter": 2482,
-   "planMade": false,
-   "blockers": [
-    "未解決のセル 2482",
-    "答えの無い質問 1"
-   ],
-   "plan": null,
-   "accuracy": null,
-   "extra": null,
+   "extra": 0,
    "recovery": {
-    "correct": 0,
+    "correct": 2533,
     "total": 3728
    },
    "manDays": {
-    "correct": 0,
+    "correct": 1011,
     "total": 3222
    },
    "days": {
@@ -385,16 +380,24 @@
    },
    "error": null,
    "firstRead": {
+    "askedAgain": 2,
+    "askedAgainUnanswered": 0,
+    "askedAgainUnknown": 0,
+    "askedChangedAnswer": 0,
+    "askedNew": 55,
+    "askedAgainKinds": {
+     "workLinkOne": 2
+    },
     "year": "2025",
     "firstFiles": 2,
     "restFiles": 4,
     "restYears": 4,
     "firstAsked": 36,
-    "rules": 33,
-    "ruleAnswered": 32,
+    "rules": 36,
+    "ruleAnswered": 71,
     "ruleWrong": 0,
-    "restAsked": 90,
-    "restAskedNoRules": 122
+    "restAsked": 57,
+    "restAskedNoRules": 128
    }
   }
  ]

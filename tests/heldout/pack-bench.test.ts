@@ -285,7 +285,7 @@ describe("Skillパックの物差し", () => {
             "Skillパックを選ばずに（パックなし）、1 年目の資料だけを読み、台本の答えを決まった答えの規則（1 年目の読み方）にして、残りの年度を足した全部の資料を読み直した。下の表の行の数は、その最後の読み。",
             "1 年目は、名前に年度が 1 つだけある資料のいちばん多い年度（同じ数なら新しい年度）と、年度に分けられない資料（範囲の資料・台帳）。年度ごとの資料の無い施設は測らない。",
             "",
-            `合計：1 年目の問い ${total.firstRead.firstAsked} → 残りの年度を足したときの問い ${total.firstRead.restAsked}（1 年目の規則 ${total.firstRead.rules} 件で決まった問い ${total.firstRead.ruleAnswered}、そのうち正解の台本と違う答え ${total.firstRead.ruleWrong}。規則なしで全部を読むと ${total.firstRead.restAskedNoRules}）。残りを足した問いのうち (a) 1 年目にもあった問い ${total.firstRead.askedAgain}（うち 1 年目に答えの無かった問い ${total.firstRead.askedAgainUnanswered}・正しい答えが分からない問い ${total.firstRead.askedAgainUnknown}）・(b) 聞くのが正しい問い ${total.firstRead.askedNew}（うち 1 年目と同じ問いで正しい答えが変わった問い ${total.firstRead.askedChangedAnswer}）`,
+            `合計：1 年目の問い ${total.firstRead.firstAsked} → 残りの年度を足したときの問い ${total.firstRead.restAsked}（1 年目の規則 ${total.firstRead.rules} 件で決まった問い ${total.firstRead.ruleAnswered}、そのうち正解の台本と違う答え ${total.firstRead.ruleWrong}。規則なしで全部を読むと ${total.firstRead.restAskedNoRules}）。残りを足した問いのうち (a) 1 年目に見た問い ${total.firstRead.askedAgain}（うち 1 年目に答えの無かった問い ${total.firstRead.askedAgainUnanswered}・正しい答えが分からない問い ${total.firstRead.askedAgainUnknown}）・(b) 聞くのが正しい問い ${total.firstRead.askedNew}（うち 1 年目と同じ問いで正しい答えが変わった問い ${total.firstRead.askedChangedAnswer}）`,
             "",
             "| 施設 | 1 年目（年度・資料） | 1 年目の問い N | 規則 | 残り（年度・資料） | 残りを足した問い K | 残りの 1 年あたり K÷年度 | (a) 1 年目に見た問い | (b) 聞くのが正しい問い | 規則で決まった問い | うち正解と違う答え | 規則なしの問い M0 |",
             "|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|",
