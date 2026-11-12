@@ -92,3 +92,11 @@
   - 確かめていないこと：#67 の作業役の解く役が、版 3 の問いの組で 100 になるか。
 - 試験：vitest の eval 49 件（2 つの役がそろうときだけ記録・割れたら作らない・決まった頼みの文に手がかりが無い、を足した）、node:test の check.mjs 6 件（記録の形・問題の組だけが変わったときも記録を求める、を足した）。
 - 使用量：子のエージェント 2 本（解く役）。API のキーは使っていない。
+
+## 7 つ目の区切り：mkdtemp の乱数の名前が固有名詞に数えられて落ちる試験（統括から。S-E2）
+
+- #90 のコメントで 10 本と挙げたものを、一つずつ読んだ。送るときの固有名詞の数え（`countProperNouns`）が照らすのは、束・ファイル名・輪のフォルダの道（`ringDir(root, ringId)`）。輪のフォルダが `mkdtemp` の乱数の下にあり、そのまま送るか見せる段まで行くものだけが当たる。
+  - 直した 3 本：`tests/unit/share/checkpoint.test.ts`・`receive-load.test.ts`・`rotate-route.test.ts`。#90 で直した `rotate.test.ts` も同じ置き方にそろえた。
+  - 直さなかった 6 本と理由：e2e の `checkpoint`・`claude-code`・`slice`・`shots-export-share` は、もう tmpdir の下の決まった名前と時刻（前の PR で直っていた。挙げたのは私の数え違い）。`demo-ring.test` の束は決まった相対の道（`demo-ring/<輪の ID>/…`）で封をするので、置き場所の乱数を照らさない。`places.test` は送らない。
+- 共通の置き方：`tests/helpers/ring-dir.ts` の `ringBaseDir(tag)`（tmpdir の下の `moyai-<tag>-ring-<プロセスの番号>-<時刻>-<連番>`）。試験のあとに消す。確かめ（expect）は 1 つも変えていない。
+- 5 つの分け方：試験とビルド＝型の検査・直した 4 本の 22 件。全部の試験は push の前に 1 回。画面・Claude Code・Windows・Excel＝関わらない。

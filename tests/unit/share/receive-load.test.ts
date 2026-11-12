@@ -12,17 +12,22 @@ import { compare } from "../../../src/share/receive";
 import { loadLedgerPlace, loadPlaces, loadRingPlaces } from "../../../src/share/receive-load";
 import { FACILITY_COMMON, SPEC, smallPlan, table, vocab } from "./fixtures";
 import { forge, makeLedger, makeSigner, sealLedger, writeRepo } from "./ledger-fixtures";
+import { ringBaseDir } from "../../helpers/ring-dir";
 
 const PACK: SharePack = { id: "waste-incineration", name: "架空のパック", spec: SPEC, vocab, table, classNames: {}, axes: [] };
 const ANSWERS: Answers = { facility: FACILITY_COMMON, inNationalTable: true };
 const NOW = new Date(2026, 10, 4, 12, 0, 0);
 
 let tmp = "";
+let ringBase = "";
 beforeAll(() => {
   tmp = mkdtempSync(join(tmpdir(), "moyai-receive-"));
+  // 輪のフォルダの道は固有名詞の数えの照らす相手なので、乱数の文字を入れない（tests/helpers/ring-dir.ts）
+  ringBase = ringBaseDir("receive");
 });
 afterAll(() => {
   if (tmp) rmSync(tmp, { recursive: true, force: true });
+  if (ringBase) rmSync(ringBase, { recursive: true, force: true });
 });
 
 describe("公開の台帳の clone を読む", () => {
@@ -60,7 +65,7 @@ describe("公開の台帳の clone を読む", () => {
 describe("自分の輪を読む", () => {
   it("✓ の最新の束の body を渡し、保管先の施設の鍵を self にする（集計では自分を数えない）", async () => {
     const stateDir = join(tmp, "state");
-    const root = join(tmp, "輪のフォルダ");
+    const root = join(ringBase, "輪のフォルダ");
     const storage = join(tmp, "保管先");
     const c = await createRing({ stateDir, root, pack: PACK, now: NOW });
     if (!c.ok) throw new Error(c.reason);
