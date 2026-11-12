@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { PLAN_ID, planDir } from "../plan/paths";
+import { derivedFromSchema } from "../shared/tools";
 
 export const WORK_SCHEMA = "moyai.work/1";
 /** 1 つの作業中の state.json の上限（計画と答えと確定。資料のバイト列は入らない） */
@@ -22,6 +23,8 @@ export const workFileSchema = z.object({
   size: z.number().int().min(0),
   /** デモで入れた資料（【架空】の資料と、利用者の資料を混ぜない印） */
   demo: z.boolean().optional(),
+  /** 加工したファイルの出どころ（#47。元の資料の名前と作り方） */
+  derivedFrom: derivedFromSchema.optional(),
 });
 
 export const workStateSchema = z.object({

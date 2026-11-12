@@ -8,6 +8,7 @@
 import { aiDecisions } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
 import type { Decision } from "../../import/questions";
+import type { DerivedFrom } from "../../shared/tools";
 import { acceptedList, isAccepted, restoreAccepted, subscribeAccepted } from "./decisions";
 import { clearWorkingPlan, getWorkingPlan, restoreWorkingPlan, subscribeWorkingPlan } from "./plan-store";
 import type { CrosswalkProposal } from "../../plan/crosswalk";
@@ -29,6 +30,8 @@ export interface WorkFile {
   sha256: string;
   size: number;
   demo?: boolean;
+  /** 加工したファイルの出どころ（#47） */
+  derivedFrom?: DerivedFrom;
 }
 
 export interface WorkState {
@@ -57,15 +60,26 @@ export interface WorkSource {
   readonly fileNames: string[];
   readonly userFileNames: string[];
   decisions(): Decision[];
+  /** 加工したファイルの出どころ（#47） */
+  derivedOf(name: string): DerivedFrom | null;
   /** 今の施設の計画 ID（作業中の計画がまだ無いときの、作業中の置き場所） */
   facilityKey(): string;
   /** 落とした資料（写真も）のバイト列と SHA-256。skipped は写さなかった資料の数（今は 0） */
   sourcesForWork(): Promise<{ files: { name: string; bytes: Uint8Array; sha256: string }[]; skipped: number }>;
   /** 資料の並びが変わるたびに進む数 */
   readonly filesVersion: number;
+  /** 資料の印（デモ・出どころ）が変わるたびに進む数 */
+  readonly marksVersion: number;
   subscribe(fn: () => void): () => void;
   pinPlanId(id: string): void;
-  restoreWork(base: number | null, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[], demo: readonly string[], hasPlan?: boolean): Promise<void>;
+  restoreWork(
+    base: number | null,
+    files: readonly { name: string; bytes: Uint8Array }[],
+    decisions: readonly Decision[],
+    demo: readonly string[],
+    hasPlan?: boolean,
+    derived?: readonly { name: string; derivedFrom: DerivedFrom }[],
+  ): Promise<void>;
 }
 
 /** 確定のシートで、まだ受けていない決定の数（トップの「未確定 n」） */
@@ -155,7 +169,7 @@ export class WorkKeeper {
       this.owned.add(planId);
     }
     const names = ws.fileNames;
-    const key = `${planId}\u0000${ws.filesVersion}\u0000${names.join("\u0000")}`;
+    const key = `${planId}\u0000${ws.filesVersion}\u0000${ws.marksVersion}\u0000${names.join("\u0000")}`;
     if (this.sent?.key !== key) {
       const src = names.length > 0 ? await ws.sourcesForWork() : { files: [], skipped: 0 };
       const demo = new Set(names.filter((n) => !ws.userFileNames.includes(n)));
@@ -167,7 +181,8 @@ export class WorkKeeper {
           if (!r.ok) return;
           this.uploaded.add(`${planId}\u0000${r.sha256}`);
         }
-        files.push({ name: f.name, sha256: f.sha256, size: f.bytes.length, ...(demo.has(f.name) ? { demo: true } : {}) });
+        const from = ws.derivedOf(f.name);
+        files.push({ name: f.name, sha256: f.sha256, size: f.bytes.length, ...(demo.has(f.name) ? { demo: true } : {}), ...(from ? { derivedFrom: from } : {}) });
       }
       this.sent = { key, files, skipped: src.skipped };
     }
@@ -225,11 +240,12 @@ export class WorkKeeper {
         s.decisions,
         s.files.filter((f) => f.demo).map((f) => f.name),
         s.plan !== null,
+        s.files.flatMap((f) => (f.derivedFrom ? [{ name: f.name, derivedFrom: f.derivedFrom }] : [])),
       );
       if (s.plan) restoreWorkingPlan(s.plan, "intake", s.proposals, s.base);
       else clearWorkingPlan();
       restoreAccepted(s.accepted);
-      this.sent = { key: `${planId}\u0000${ws.filesVersion}\u0000${ws.fileNames.join("\u0000")}`, files: s.files, skipped: s.skipped };
+      this.sent = { key: `${planId}\u0000${ws.filesVersion}\u0000${ws.marksVersion}\u0000${ws.fileNames.join("\u0000")}`, files: s.files, skipped: s.skipped };
       for (const f of s.files) this.uploaded.add(`${planId}\u0000${f.sha256}`);
       this.owned.add(planId);
       this.discarded.delete(planId);

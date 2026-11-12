@@ -363,7 +363,7 @@ const otherResult = (() => {
 // D3：開いている area:ux の Issue（PR は数えない）
 {
   const j = await gh(`/issues?state=open&labels=${encodeURIComponent("area:ux")}&per_page=100`);
-  results.D3 = judgeD3(j ? j.filter((i) => !i.pull_request).map((i) => ({ number: i.number })) : null);
+  results.D3 = judgeD3(j ? j.filter((i) => !i.pull_request).map((i) => ({ number: i.number, labels: (i.labels ?? []).map((l) => (typeof l === "string" ? l : l.name)) })) : null);
 }
 
 // E2：main の CI

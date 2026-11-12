@@ -27,7 +27,7 @@ import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
 import { checkNameFromAi, proposeNameFromAi, type NameFromAi } from "../state/facility-name";
 import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
-import { checkStarsFromAi, proposeStarsFromAi } from "../state/stars";
+import { checkStarsFromAi, noteTrialReasonFromAi, proposeStarsFromAi } from "../state/stars";
 import { assetKeyOf, fiscalYearOf } from "../../plan/chart";
 import { assetLabels } from "../../plan/asset-names";
 import { workRowRef, type StarIn } from "../../plan/star";
@@ -252,6 +252,10 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
     nameState = named.state;
     ws.note("ai", T.nameProposed);
   }
+  // 人の試しの理由（#29）：理由の字だけを、人がもう動かした試しに置く（星取は動かさない・確定しない）
+  const trialIn = (args.trialReasons ?? []) as { rowRef: string; fromFiscalYear: number; fiscalYear: number; reason: string }[];
+  const trialRows = trialIn.map((t, index) => ({ index, placed: noteTrialReasonFromAi(t.rowRef.slice(2), t.fromFiscalYear, t.fiscalYear, t.reason) }));
+  if (trialRows.some((x) => x.placed)) ws.note("ai", T.trialReasonsPlaced(trialRows.filter((x) => x.placed).length));
   const plan = getWorkingPlan()?.plan ?? r.plan;
   const starRows = s && s.ok ? starResults(s, plan) : [];
   if (s && s.ok) ws.note("ai", T.starsProposed(new Set(starRows.filter((x) => x.placed).map((x) => x.id)).size));
@@ -279,6 +283,7 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
       examples: [...examples, ...starExamples].slice(0, 10),
       proposals: r.proposals.map((p) => ({ id: p.id, years: p.years, works: p.works, marks: p.detailKeys.length, skipped: p.skipped, bases: basesOf(r.plan, p.detailKeys[0]) })),
       ...(stars.length > 0 ? { stars: starRows } : {}),
+      ...(trialIn.length > 0 ? { trialReasons: trialRows } : {}),
       version: getWorkingPlan()?.revision ?? r.version,
       ...(nameState ? { facilityName: nameState } : {}),
     },
@@ -653,11 +658,14 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
   }
   // 読み終わるまで待つのは 20 秒まで。資料が多い・大きいとき（北部CC の日報 5 冊など）は、入れたことだけを返し、
   // 読込の進みは intake_survey が返す（ツールの待ちの上限を越えて「結果不明」にしない。11-07）
+  const resets = ws.resets;
   const reading = got.length ? ws.addFiles(got) : Promise.resolve();
   const late = await Promise.race([reading.then(() => false), new Promise<boolean>((r) => setTimeout(() => r(true), ADD_WAIT_MS))]);
   if (late) {
     void reading.then(() => {
       if (demo) ws.markDemoFiles(got.map((f) => f.name));
+      // 待つあいだに資料を置き換えた（版・作業中から戻した）なら、出どころは付けない
+      if (a.derivedFrom && ws.resets === resets) ws.markDerived(got.map((f) => f.name), a.derivedFrom);
       if (!ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });
     });
     ws.note("ai", T.filesAdded(demo, got.length, refused.length));
@@ -667,6 +675,8 @@ export async function addFilesFromBridge(ws: IntakeWorkspace, rawArgs: Record<st
   }
   // デモで入れた資料に印を付ける（ほかの資料は利用者の資料。次のデモを混ぜないため）
   if (demo) ws.markDemoFiles(got.map((f) => f.name));
+  // 加工したファイルの出どころ（#47）：資料の詳細に 1 行で出す（読めた資料だけ）
+  if (a.derivedFrom) ws.markDerived(got.map((f) => f.name), a.derivedFrom);
   // 要約を待ってから見る（worker のときは、読み終わった写しが届いてから【架空】の印が分かる）
   const after = await namesIn(ws);
   if (got.length && !ws.settings.fictional && (demo || ws.sourcesMarkedFictional())) ws.setFacility({ fictional: true });
