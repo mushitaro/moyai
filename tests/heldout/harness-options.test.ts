@@ -81,7 +81,8 @@ describe("物差しの数え方：選んだときだけ効くもの", () => {
   it("数えない印（measure: false）：③ の分母に入れず、読んだ明細を読みすぎにも数えない", () => {
     const m = measureMarks(plan, ix, { extraByDetail: true })[FILE]!;
     expect([m.correct, m.total, m.extra]).toEqual([2, 2, 0]);
-    expect(measureMarkWorkCount(plan, ix).total).toBe(2);
+    const n = measureMarkWorkCount(plan, ix);
+    expect([n.correct, n.total]).toEqual([2, 2]);
   });
 
   it("読みすぎ：選ばなければセルごと（作業の名前のセルも数える。前からの数え方）、選べば正解の印に 1 つも結ばない明細だけ", () => {
@@ -90,9 +91,15 @@ describe("物差しの数え方：選んだときだけ効くもの", () => {
     // 正解に無いセル（E5）だけを出どころに持つ明細を足すと、明細ごとの数え方で 1
     const over = { ...plan, details: [...plan.details, { workKey: "k1", planOrActual: "plan", fiscalYear: 2026, manDays: null, days: null, sources: [src("E5"), src("B5")] }] } as unknown as Plan;
     expect(measureMarks(over, ix, { extraByDetail: true })[FILE]!.extra).toBe(1);
+    // 同じ計画を前からの数え方で数えると、セルごとに B5・B6・E5 の 3
+    expect(measureMarks(over, ix)[FILE]!.extra).toBe(3);
+    // 明細ごと：出どころの組が違えば別に数える（作業の名前のセル B5 が同じでも）。同じ組の明細は 1 つ
+    const more = (cells: string[]) => ({ workKey: "k1", planOrActual: "plan", fiscalYear: 2026, manDays: null, days: null, sources: cells.map(src) });
+    const two = { ...plan, details: [...plan.details, more(["E5", "B5"]), more(["F5", "B5"]), more(["B5", "E5"])] } as unknown as Plan;
+    expect(measureMarks(two, ix, { extraByDetail: true })[FILE]!.extra).toBe(2);
   });
 
-  it("⑥ の場所：選べば、実績として書いた印だけ。予定のまま残した印しか無い済んだ作業（w2）は、どの資料にも書いていないに数える", () => {
+  it("⑥ の場所：選べば、実績として書いた印だけ（数えない印も場所には使う）。予定のまま残した印しか無い済んだ作業（w2）は、どの資料にも書いていないに数える", () => {
     const read = new Set([FILE]);
     const asWritten = measureRecovery(plan, ix, read, { actualMarksOnly: true });
     expect([asWritten.denominator, asWritten.together]).toEqual([2, 2]);
@@ -100,6 +107,7 @@ describe("物差しの数え方：選んだときだけ効くもの", () => {
     // 選ばなければ（前からの数え方）：予定の印も場所に数え、実績の明細がそのセルを持たないので取り戻せない
     const before = measureRecovery(plan, ix, read);
     expect([before.denominator, before.together]).toEqual([3, 2]);
+    expect(before.notCounted).toEqual({});
   });
 
   it("名前：飾りを除いた名前の正解（name_cleaned）は、セルに書いた字そのものの名前も正しい。印が無ければ、前からの数え方で名前の違い", () => {
@@ -118,6 +126,10 @@ describe("物差しの数え方：選んだときだけ効くもの", () => {
     expect(truthKnows(q("assetLink", [item("A5", "A6")]), ix)).toBe(false);
     expect(truthKnows(q("assetLinkOne", [item("A6", "A5")]), ix)).toBe(false);
     expect(truthKnows(q("assetLinkOne", []), ix)).toBe(false);
+    // 相手の無い行は、問いの行の機器を知っていればよい。いくつもの行は、どれも知っているときだけ
+    expect(truthKnows(q("assetLink", [item("A5")]), ix)).toBe(true);
+    expect(truthKnows(q("assetLink", [item("A5", "A5"), item("A6", "A5")]), ix)).toBe(false);
+    expect(truthKnows(q("assetLink", [item("A5", "A5"), item("A5")]), ix)).toBe(true);
     expect(truthKnows(q("commonMeaning", [item("A5")]), ix)).toBe(false);
     expect(truthKnows(q("commonMeaning", [item("A5")]), new Index(truthOf({ cleaned: false }), world, [source]))).toBe(true);
     expect(truthKnows(q("tagSplit", [item("A6")]), ix)).toBe(true);
