@@ -69,3 +69,14 @@ test("文が同じでも、問題の組が変われば記録を求める", () =>
   const now = files("一", "二", { "eval/p/cases/test.jsonl": "c" });
   assert.match(checkPack("p", reader(now), reader(base)).note, /記録が無い/);
 });
+
+test("文が同じで問題の組だけが変わったら、作り直した記録があれば通る（前の記録とは比べない）", () => {
+  const base = files("一", "二");
+  const [bk, bv] = recFor(base, 100);
+  const now = files("一", "二", { "eval/p/cases/test.jsonl": "c" });
+  const [k, v] = recFor(now, 90);
+  assert.equal(k, bk);
+  const r = checkPack("p", reader({ ...now, [k]: v }), reader({ ...base, [bk]: bv }));
+  assert.equal(r.ok, true);
+  assert.match(r.note, /作り直した/);
+});

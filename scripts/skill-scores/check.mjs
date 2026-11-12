@@ -58,6 +58,8 @@ export function checkPack(pack, read, readBase) {
   const baseSha = bt.every((t) => t !== null) ? sha(joinSkills(bt)) : null;
   const baseRecText = baseSha ? readBase(`eval/skill-scores/${pack}/${baseSha.slice(0, 16)}.json`) : null;
   if (baseRecText === null) return { ok: true, note: `${pack}：記録あり（${rec.pass}/${rec.cases}）。比べる前の記録が無い（最初の記録）` };
+  // 文が同じで問題の組だけが変わった：前の記録は同じ道の古い記録で、今の記録が置き換える（比べる相手にしない）
+  if (baseSha === now) return { ok: true, note: `${pack}：文は同じ。問題の組が変わったので記録を作り直した（${rec.pass}/${rec.cases}）` };
   const base = JSON.parse(baseRecText);
   if (base.suiteSha !== rec.suiteSha) return { ok: false, note: `${pack}：前の記録と問題の組が違うので比べられない（前の文も今の問題の組で採点し直す）` };
   if (rec.pass < base.pass) return { ok: false, note: `${pack}：合格の数が下がった（${base.pass}/${base.cases} → ${rec.pass}/${rec.cases}）` };
