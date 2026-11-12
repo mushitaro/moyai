@@ -1316,19 +1316,23 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       return !!c && c.text !== "" && !off(c.ref) && !content?.has(c.ref);
     });
   {
-    // 行の段：名前を書いた、いちばん左の段の列（名前の無い行は下の段）
-    const levelOf = (r: number) => {
-      const i = hier.findIndex((col) => {
+    const named = (r: number) =>
+      hier.map((col) => {
         const c = lay.index.at(r, col.c);
         return !!c && c.text.trim() !== "" && !off(c.ref);
       });
+    // 行の段：名前を書いた、いちばん左の段の列（名前の無い行は下の段）
+    const levelOf = (r: number) => {
+      const i = named(r).indexOf(true);
       return i < 0 ? hier.length : i;
     };
+    // 親の行：名前を書いたいちばん深い段が、葉の段より上（葉の名前も書いた行は、機器そのものの行）
+    const deepest = (r: number) => named(r).lastIndexOf(true);
     for (let i = 0; i < data.length; i++) {
       const r = data[i]!.r;
       const node = rowNode.get(r);
       const level = levelOf(r);
-      if (!node || node.pending || level >= hier.length - 1 || rowWork(r) || costOf.has(r)) continue;
+      if (!node || node.pending || level >= hier.length - 1 || deepest(r) >= hier.length - 1 || rowWork(r) || costOf.has(r)) continue;
       const own = marked(r);
       if (!own.length) continue;
       const below = new Set<number>();
