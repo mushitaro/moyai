@@ -92,9 +92,10 @@ describe("書き出し：人が見る様式の星取表", () => {
     expect(subtotal).toBe(marks);
   });
 
-  it("共通の設備項目のシート：パックの名前の表が無ければ作れないと書く（黙って空にしない）", async () => {
+  it("共通の設備項目のシート：パックの名前の表が無ければ（パックなし）作らない。施設台帳のシートだけ（空のシートも、作れないという文も置かない）", async () => {
     const wb = await read(await planWorkbook({ plan, version: 1, at: "2026-11-03T10:00:00.000Z", catalog: null, emptyCatalog: empty }));
-    expect(String(wb.getWorksheet(EXPORT_TEXT.sheetCommon)!.getCell(2, 1).value)).toBe(EXPORT_TEXT.noCatalog);
+    expect(wb.worksheets.map((w) => w.name)).toEqual([EXPORT_TEXT.sheetLedger]);
+    expect(wb.getWorksheet(EXPORT_TEXT.sheetLedger)!.rowCount).toBeGreaterThan(2);
   });
 
   it("確定すると、版ごとに exports/<版>-plan.xlsx を足す", async () => {
