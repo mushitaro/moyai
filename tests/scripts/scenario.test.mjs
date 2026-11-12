@@ -12,6 +12,9 @@ import {
   judgeA3,
   judgeB1,
   judgeB2,
+  judgeC1,
+  judgeC3,
+  C1_REQUIRED,
   judgeD1,
   judgeD2,
   judgeD3,
@@ -76,6 +79,22 @@ describe("待ち・B1・B2", () => {
     assert.equal(judgeB2({ ok: true, total: 1 }, [...unit.slice(1), { ...unit[0], status: "failed" }]).status, FAIL);
     assert.equal(judgeB2({ ok: false, total: 1 }, unit).status, FAIL);
     assert.equal(judgeB2(null, unit).status, UNKNOWN);
+  });
+});
+
+describe("C1・C3：Skill の進化", () => {
+  it("C1：名指しの試験（良くなる案・退行のある案・行の値）が全部通ったときだけ合格", () => {
+    const all = [...C1_REQUIRED.map((h) => ({ name: `${h}：…`, status: "passed" })), { name: "ほか", status: "passed" }];
+    assert.equal(judgeC1(all).status, PASS);
+    assert.equal(judgeC1(all.slice(1)).status, FAIL);
+    assert.equal(judgeC1([...all, { name: "x", status: "failed" }]).status, FAIL);
+    assert.equal(judgeC1([]).status, FAIL);
+    assert.equal(judgeC1(null).status, UNKNOWN);
+  });
+  it("C3：芯の試験が通っても、アプリの経路が無ければ待ち。経路があっても、ランナーに通しの試験が無いうちは未確認（合格にしない）", () => {
+    assert.equal(judgeC3({ passed: 4, total: 4 }, false).status, WAIT);
+    assert.equal(judgeC3({ passed: 3, total: 4 }, false).status, FAIL);
+    assert.equal(judgeC3({ passed: 4, total: 4 }, true).status, UNKNOWN);
   });
 });
 

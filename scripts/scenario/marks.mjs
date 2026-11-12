@@ -70,6 +70,37 @@ export function judgeA3(result, strict) {
   return r(PASS, ev);
 }
 
+/** C1 の台本の試験のうち、合格に要るもの（題の頭で名指す。消えれば不合格） */
+export const C1_REQUIRED = ["見本の Issue（良くなる案）", "見本の Issue（退行のある案）", "行の値のある Issue"];
+
+/**
+ * C1：読み方のフィードバックの Issue（見本）→ ルールの案 → 物差しの比べ → PR の本文（ドライラン）の台本の試験（tests/scripts/skill-loop-feedback.test.mjs）。
+ * 本物の GitHub に draft PR を開くのは毎日の回し（C2 で確かめる）
+ * @param {Array<{ name: string, status: string }> | null} tests
+ */
+export function judgeC1(tests) {
+  if (!tests) return r(UNKNOWN, "C1 の台本の試験を走らせていない");
+  const passed = tests.filter((t) => t.status === "passed").length;
+  const missing = C1_REQUIRED.filter((h) => !tests.some((t) => t.name.startsWith(h) && t.status === "passed"));
+  const ev = `skill-loop-feedback の試験 ${passed}/${tests.length}${missing.length ? `・通っていない名指しの試験：${missing.join("、")}` : ""}（見本の Issue から PR の本文まで。draft PR を開くのは C2）`;
+  if (tests.length === 0 || passed !== tests.length || missing.length) return r(FAIL, ev);
+  return r(PASS, ev);
+}
+
+/**
+ * C3：アプリからの書き出し（#23 の 1：人が押したときだけ、形と数だけ）が C1 の道に乗る。
+ * 芯（src/share/reading-feedback.ts）の試験と、アプリ（src/app・src/bridge）から使う経路の有無
+ * @param {{ passed: number, total: number } | null} tests
+ * @param {boolean} wired  アプリか橋渡しが書き出しを使っているか
+ */
+export function judgeC3(tests, wired) {
+  const t = tests ? `書き出しの芯の試験 ${tests.passed}/${tests.total}` : "書き出しの芯の試験を走らせていない";
+  if (tests && (tests.total === 0 || tests.passed !== tests.total)) return r(FAIL, t);
+  if (!wired) return r(WAIT, `アプリの書き出し（人が押したときだけ・出す前に全文を見せる。#23 の 1）の画面と人だけの経路がまだ無い。${t}`);
+  if (!tests) return r(UNKNOWN, t);
+  return r(UNKNOWN, `アプリから使う経路はある。人が押して書き出し、Issue に貼るまでの試験はランナーにまだ無い。${t}`);
+}
+
 /** まだ作られていない印：Issue が開いていれば「待ち」。閉じたのにランナーに道が無ければ「未確認」（道を足す合図） */
 export function judgeWaiting(what, issue) {
   if (issue && issue.state === "closed") return r(UNKNOWN, `#${issue.number} が閉じた。ランナーに確かめの道がまだ無い（scripts/scenario/ に足す）`);

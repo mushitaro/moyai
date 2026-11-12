@@ -25,6 +25,8 @@ import {
   judgeA3,
   judgeB1,
   judgeB2,
+  judgeC1,
+  judgeC3,
   judgeD1,
   judgeD2,
   judgeD3,
@@ -193,10 +195,21 @@ function bench(label, recorded, extra) {
   results.A3 = a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" };
 }
 
-// ---- C1・C3・C4：まだ作られていない ----
-results.C1 = judgeWaiting("#22：フィードバック → ルールの案 → 物差し → PR の道がまだ無い", await issueOf(22));
-results.C3 = judgeWaiting("#23：運営者の判断（アプリから書き出す欄）", await issueOf(23));
-results.C4 = judgeWaiting("#23：運営者の判断（Skill の文の採点を走らせるか）", await issueOf(23));
+// ---- C1・C3：Skill の進化の台本と書き出しの芯の試験。C4 は運営者の判断待ち ----
+function nodeTests(files) {
+  const json = join(work, `node-${Date.now()}.json`);
+  node(["--test", "--test-reporter=spec", "--test-reporter-destination=stderr", "--test-reporter=./scripts/node-test-json-reporter.mjs", `--test-reporter-destination=${json}`, ...files]);
+  try {
+    return JSON.parse(readFileSync(json, "utf8")).tests;
+  } catch {
+    return null;
+  }
+}
+{
+  const c1 = existsSync("tests/scripts/skill-loop-feedback.test.mjs") ? nodeTests(["tests/scripts/skill-loop-feedback.test.mjs"]) : null;
+  results.C1 = c1 ? judgeC1(c1) : judgeWaiting("#22：フィードバック → ルールの案 → 物差し → PR の台本の試験が無い", await issueOf(22));
+}
+results.C4 = judgeWaiting("#23 の 2：運営者の判断（Skill の文の採点を、どの段で誰が走らせるか）", await issueOf(23));
 
 // ---- 台帳と受け口の単体の試験（vitest。B1・B2）----
 function vitest(files) {
@@ -278,6 +291,15 @@ const otherResult = (() => {
   const e2e = row ? { ok: row.unexpected + row.flaky + row.skipped === 0 && row.expected > 0, total: row.expected + row.unexpected + row.flaky + row.skipped } : null;
   const u = unit ? unit.filter((t) => /ledger-intake\.test\.ts$/.test(t.file.replace(/\\/g, "/"))) : null;
   results.B2 = judgeB2(e2e, u);
+}
+
+// C3：書き出しの芯（vitest）と、アプリから使う経路
+{
+  const files = ["tests/unit/share/reading-feedback.test.ts"].filter((f) => existsSync(f));
+  const t = files.length ? vitest(files) : null;
+  const tests = t ? { total: t.filter((x) => x.status !== "skipped").length, passed: t.filter((x) => x.status === "passed").length } : null;
+  const wired = [...walk("src/app", /\.tsx?$/), ...walk("src/bridge", /\.ts$/)].some((f) => /reading-feedback/.test(readFileSync(f, "utf8")));
+  results.C3 = files.length ? judgeC3(tests, wired) : judgeWaiting("#23 の 1：アプリからの書き出しがまだ無い", await issueOf(23));
 }
 
 // D1・D2
