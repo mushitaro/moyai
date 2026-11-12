@@ -286,7 +286,7 @@ export const RETIRED_BODY_TYPE: T = {
 };
 
 /**
- * 公開台帳の取り下げの印（ledger/ledger/bundles/<鍵ID>/retired.json。Architect の 72）：輪と同じ moyai.retired/0 で、ring の代わりに ledger（台帳 ID）を持つ。
+ * 公開台帳の取り下げの印（<台帳の根>/ledger/bundles/<鍵ID>/retired.json。Architect の 72）：輪と同じ moyai.retired/0 で、ring の代わりに ledger（台帳 ID）を持つ。
  * その鍵自身の署名。次の鍵は書かない
  */
 export const LEDGER_RETIRED_BODY_TYPE: T = {

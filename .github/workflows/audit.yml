@@ -11,8 +11,9 @@ on:
       - "ops/api-spend.jsonl"
       - "ops/trend.jsonl"
       - "docs/trend.md"
-      # 公開台帳の束（外の人の書いたもの）は監査の LLM に渡さない（Security の点検 11-08 の低 5）
-      - "ledger/ledger/bundles/**"
+      # 公開台帳の束（外の人の書いたもの）は監査の LLM に渡さない（Security の点検 11-08 の低 5）。
+      # 台帳は別のリポジトリ（config/ledger.json。2026-11-12 に切り替えた）なので、MOYAI に ledger/ は無い。前の置き場所に束が戻っても渡さない
+      - "ledger/**"
   workflow_dispatch:
     inputs:
       base:
