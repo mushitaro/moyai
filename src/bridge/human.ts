@@ -16,6 +16,8 @@ import { confirmKey, countsForApproval, createOwnKey, openOwnKey, ownKeys, previ
 import { checkSeen } from "./seen";
 import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
+import { countProperNouns } from "../share/recount";
+import { feedbackFileName, parseReadingFeedback } from "../share/reading-feedback";
 import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readingLineage, recordReadingVersion, recordedReadings, registerReading } from "./readings";
 import { ReadingSkill, isPlanRule } from "../import/reading";
 import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
@@ -168,6 +170,7 @@ const SCHEMAS = {
   }),
   readings_read: z.object({}),
   readings_lineage: z.object({}),
+  reading_feedback_save: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
   plan_source_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
   templates_read: z.object({ planId: planIdSchema.nullable() }),
@@ -1329,6 +1332,22 @@ export class HumanService {
         const root = await this.root();
         if (!root) return { ok: true, root: null, places: [], applied: [] };
         return { ok: true, root, ...(await readingLineage(root)) };
+      }
+      case "reading_feedback_save": {
+        // 読み方のフィードバック（src/share/reading-feedback.ts）：画面が見せた全文を、形と固有名詞の網 2 で確かめ直してから置くだけ。送らない
+        const p = parsePayload("reading_feedback_save", call.payload);
+        if (!p) return no("payloadInvalid");
+        if (!parseReadingFeedback(p.text)) return no("feedbackShape");
+        const pn = countProperNouns({ bundleText: p.text, fileName: "", folderPath: "", localWords: p.words, cells: [], publicWords: new Set() });
+        if (pn.total > 0) return no("properNoun", { hits: pn.total });
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+        const name = feedbackFileName(ymd, sha256Hex(Buffer.from(p.text, "utf8")));
+        const dir = join(root, "feedback");
+        await mkdir(dir, { recursive: true });
+        await writeFile(join(dir, name), p.text, "utf8");
+        return { ok: true, file: name };
       }
       case "peers_compare": {
         const p = parsePayload("peers_compare", call.payload);
