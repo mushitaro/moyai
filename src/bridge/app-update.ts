@@ -512,26 +512,42 @@ export function writeLauncher(root: string): string {
   return f;
 }
 
-/** 開発の clone から最初の版を入れる（setup が使う）。clone の HEAD を版にする。手元に変更があれば入れない */
-export async function installFromClone(e: Omit<UpdateEnv, "running">, clone: string): Promise<{ ok: true; commit: string } | { ok: false; step: string }> {
+/**
+ * 開発の clone から最初の版を入れる（setup が使う）。clone の HEAD（コミットした中身）を版にする。
+ * 手元の作業中の変更（コミットしていないもの）は版に入らないので、あっても止めない（clone には触れない）。
+ * HEAD が main に無いとき（手元だけのコミット）は、mushitaro/moyai の main の最新を入れる（入れた版は main から fast-forward で進めるため）。
+ * main を取れなければ not_on_main で断る（--dev を使う）
+ */
+export async function installFromClone(e: Omit<UpdateEnv, "running">, clone: string): Promise<{ ok: true; commit: string; fromMain?: true } | { ok: false; step: string }> {
   const run = e.run ?? defaultRun;
   let commit: string;
+  let from = clone;
+  let fromMain = false;
   try {
     commit = (await run("git", ["rev-parse", "HEAD"], clone)).trim();
-    if ((await run("git", ["status", "--porcelain", "--untracked-files=no"], clone)).trim() !== "") return { ok: false, step: "local_changes" };
-    // 入れた版は、あとで mushitaro/moyai の main から fast-forward で進める。main に無いコミットは入れない（--dev を使う）
-    await run("git", ["merge-base", "--is-ancestor", "HEAD", `refs/remotes/origin/${UPDATE_BRANCH}`], clone).catch(() => {
-      throw new Error("not_on_main");
-    });
-  } catch (err) {
-    return { ok: false, step: (err as Error).message === "not_on_main" ? "not_on_main" : "not_repo" };
+  } catch {
+    return { ok: false, step: "not_repo" };
+  }
+  const onMain = await run("git", ["merge-base", "--is-ancestor", "HEAD", `refs/remotes/origin/${UPDATE_BRANCH}`], clone).then(
+    () => true,
+    () => false,
+  );
+  if (!onMain) {
+    try {
+      from = await fetchCache({ ...e, running: null });
+      commit = (await run("git", ["rev-parse", `refs/heads/${UPDATE_BRANCH}`], from)).trim();
+      if (!COMMIT.test(commit)) throw new Error("bad");
+      fromMain = true;
+    } catch {
+      return { ok: false, step: "not_on_main" };
+    }
   }
   if (!isReady(e.root, commit)) {
-    const b = await buildVersion({ ...e, running: null }, clone, commit);
+    const b = await buildVersion({ ...e, running: null }, from, commit);
     if (!b.ok) return b;
   }
   const p = readPointer(e.root);
   writePointer(e.root, { current: commit, previous: p.current && p.current !== commit ? p.current : p.previous, next: null });
   writeLauncher(e.root);
-  return { ok: true, commit };
+  return fromMain ? { ok: true, commit, fromMain: true } : { ok: true, commit };
 }

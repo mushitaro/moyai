@@ -32,7 +32,11 @@ function world() {
   mkdirSync(stateDir, { recursive: true });
   writeFileSync(join(stateDir, "settings.json"), JSON.stringify({ v: 1, root, ledger: null, name: "【架空】山田" }));
   writeFileSync(join(stateDir, "person.key"), "鍵のかわり");
-  return { d, config, before, stateDir, root };
+  // moyai setup が入れた版のフォルダ（試験は必ず一時のフォルダ。既定の置き場所に触れない）
+  const app = join(d, "app");
+  mkdirSync(join(app, "versions", "0".repeat(40), "dist"), { recursive: true });
+  writeFileSync(join(app, "launch.cjs"), "// 起動の台本\n");
+  return { d, config, before, stateDir, root, app };
 }
 
 async function run(w: ReturnType<typeof world>, argv: string[], o: { stdin?: { isTTY?: boolean }; answer?: string; stop?: (stateDir: string, key: KeyFile) => Promise<StopOutcome> } = {}) {
@@ -43,6 +47,7 @@ async function run(w: ReturnType<typeof world>, argv: string[], o: { stdin?: { i
     stateDir: w.stateDir,
     configPath: w.config,
     repoDir: join(w.d, "repo"),
+    appDir: w.app,
     home: join(w.d, "home"),
     ...(o.stop ? { stop: o.stop } : {}),
     ask: async () => o.answer ?? "いいえ",
@@ -52,6 +57,20 @@ async function run(w: ReturnType<typeof world>, argv: string[], o: { stdin?: { i
 }
 
 describe("moyai uninstall", () => {
+  it("入れた版のフォルダ：--yes が無ければ消さず、--yes で消す（保存先は残したまま）", async () => {
+    const w = world();
+    const dry = await run(w, []);
+    expect(dry.text).toContain(UNINSTALL_TEXT.app(w.app));
+    expect(existsSync(w.app)).toBe(true);
+    const r = await run(w, ["--yes"]);
+    expect(r.code).toBe(0);
+    expect(r.text).toContain(UNINSTALL_TEXT.appDone);
+    expect(existsSync(w.app)).toBe(false);
+    expect(existsSync(join(w.root, "plans", "p1", "v1.json"))).toBe(true);
+    const again = await run(w, ["--yes"]);
+    expect(again.text).toContain(UNINSTALL_TEXT.appNone(w.app));
+  });
+
   it("--yes が無く端末でもなければ、消す中身（場所・.bak・保存先は残す・claude mcp remove）を出して、何も消さない", async () => {
     const w = world();
     const r = await run(w, []);
