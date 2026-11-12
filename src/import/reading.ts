@@ -216,6 +216,34 @@ export function answerAppliesTo(rule: ReadingRule, files: readonly string[]): bo
   return !!pattern && files.length > 0 && files.every((f) => fileMatches(pattern, f));
 }
 
+/**
+ * 決まった答えの規則の match を比べる形：年度・日付・行や件の数を「#」に伏せる（年をまたいで同じ問いに当たるように。mushitaro/moyai#67）。
+ * 伏せるのは、年度（2021・2021 年度・R7 年度・令和 7 年度など）、日付、数え（3 行・12 件・2 冊・444 通り・5 問・7 枚・2 頁・10 セル）だけ。
+ * 号・No.・番号などの数は伏せない（伏せると、別の機器の問いに同じ答えが当たる）
+ */
+export function answerShape(text: string): string {
+  return text
+    .normalize("NFKC")
+    .replace(/(?:19|20)\d{2}[/.-]\d{1,2}[/.-]\d{1,2}/g, "#")
+    .replace(/\d{1,2}月\d{1,2}日/g, "#")
+    .replace(/(?:令和|平成|[RH])\s?(?:元|\d{1,2})\s?年度/g, "#")
+    .replace(/(?<!\d)(?:19|20)\d{2}(?!\d)(?:\s?年度)?/g, "#")
+    .replace(/\d[\d,]*\s?(?:行|件|冊|通り|問|枚|頁|セル)/g, "#");
+}
+
+const shapeMemo = new Map<string, string>();
+/** 決まった答えの規則が、質問の文に当たるか：そのままの字で含むか、年度・日付・数えを伏せた形で含むか */
+export function answerMatches(text: string, match: string, shaped: () => string = () => answerShape(text)): boolean {
+  if (text.includes(match)) return true;
+  let m = shapeMemo.get(match);
+  if (m === undefined) {
+    m = answerShape(match);
+    if (shapeMemo.size > 5000) shapeMemo.clear();
+    shapeMemo.set(match, m);
+  }
+  return m !== "" && shaped().includes(m);
+}
+
 /** 年月日の書き方で日付を読む（yyyymmdd・yymmdd は数の並び。md は呼ぶ側が年度から年を付ける）。読めなければ null */
 export function parseWithFormat(text: string, format: DateFormat): { y: number | null; m: number; d: number } | null {
   const s = norm(text);

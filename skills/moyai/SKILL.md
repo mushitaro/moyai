@@ -117,7 +117,7 @@ MOYAI は、保全の計画（星取表）を利用者の PC の作業画面で�
 2. 1 年分だけ入れる：いちばん揃っている年度を match（名前の一部）で入れる。
 3. 聞く：intake_survey の質問を、選択肢と見本（samples・stuck の行）を添えて、何のための問いかを 1 行付けて聞く。
 4. 見せて直す：計画を作り、星取表を見せ、読み違いは「詰めきれないとき」の手順で直す。
-5. Skill にする：答えをルール（決まった答えは question に質問の kind、match に年度と資料の名前を除いた文の一部）にして reading_rules_propose → 利用者が良いと言えば reading_skill_register（facility。未承認）。
+5. Skill にする：答えをルール（決まった答えは question に質問の kind、match に資料の名前を除いた文の一部。年度と数は伏せて比べる。同じ種類にいつも同じ答えなら、種類で 1 つ）にして reading_rules_propose → 利用者が良いと言えば reading_skill_register（facility。未承認）。
 6. 残りを入れる：同じフォルダを match なしで渡す（入っている資料は same_name）→ intake_survey。ruleAnswered と残った質問の数で「1 年目の質問 N → 残り M 年で K」と言う。
 
 ## データの名前

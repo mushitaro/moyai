@@ -327,7 +327,7 @@ export interface Script {
  *   さくら坂で未解決が 105 → 27,598 になった（2026-11-12 に測った）。機器台帳の行を正解に写すまでの扱い（mushitaro/moyai#14 の残り）
  * - 「共」の意味の問い（commonMeaning）：工場 v2 の正解は、共通の種類（施設全体・系列の合流・共有の部品）を写していないので、答えない
  */
-function truthKnows(q: QuestionState, ix: Index): boolean {
+export function truthKnows(q: QuestionState, ix: Index): boolean {
   if (q.kind === "commonMeaning") return !ix.truth.assets.some((a) => a.name_cleaned);
   if (q.kind !== "assetLink" && q.kind !== "assetLinkOne") return true;
   const known = (it: { file: string; sheet: string | null; cells: string[] } | undefined) => !!it && ix.entityOf(it.file, it.sheet, it.cells[0] ?? "") !== null;

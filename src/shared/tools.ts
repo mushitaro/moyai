@@ -539,7 +539,7 @@ export const READING_RULE_EXAMPLES: Record<ReadingRule["kind"], Record<string, u
   rowRole: { match: "合計", role: "total" },
   sameAsset: { names: ["1号ポンプ", "ポンプ No.1"] },
   markMeaning: { symbol: "◎", planOrActual: "actual", meaning: "交換" },
-  answer: { question: "(質問の kind)", match: "(質問の文に含む字)", answer: "(質問の options の id)" },
+  answer: { question: "(質問の kind)", match: "(質問の文に含む字。年度・日付・行や件の数は伏せて比べる)", answer: "(質問の options の id)" },
   effortTrade: { words: ["築炉工"] },
   planCycle: { commonItem: "(crosswalk.items のコード)", attribute: "OVERHAUL", years: 4 },
 };
