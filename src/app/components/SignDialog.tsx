@@ -6,7 +6,6 @@ import { Alert, Button, Group, Modal, Stack, Text, TextInput } from "@mantine/co
 import { useEffect, useState } from "react";
 import { ROUTES } from "../../shared/routes";
 import type { BridgeClient } from "../bridge-client";
-import { settleDraft } from "../state/draft";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { versionName } from "../version-name";
 import { readHuman } from "./ConfirmDialog";
@@ -72,7 +71,6 @@ export function SignDialog({
     setBusy(false);
     if (!r.ok) return setError(r.message);
     // 署名したら、前の作業の写しを消す（pwa-v0）
-    settleDraft(planId);
     onSigned(r.body.at ?? null);
     onClose();
   };

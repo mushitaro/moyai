@@ -34,6 +34,7 @@ import { CommentsPanel, commentNumber, type ListedComment } from "../components/
 import { Switch } from "../components/Switch";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { setCrosswalkBase } from "../state/crosswalk";
+import { workKeeper } from "../state/work";
 import type { Decision } from "../../import/questions";
 import { CONFIRMED_SHEETS, STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
@@ -261,6 +262,30 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       setDoneKey(openKey);
     })();
   }, [pendingOpen, st]);
+  // 施設の作業中を資料ごと続きから開く（#82。トップの「作業中」→「続きから開く」= #/merge?work=<計画ID>）。
+  // 戻したら、もとにした版の当てはめの規則と、版の履歴で確定した削除を置く（版を開いたときと同じ）
+  const workId = open.get("work");
+  const [workDone, setWorkDone] = useState<string | null>(null);
+  const [workBase, setWorkBase] = useState<{ planId: string; base: number } | null>(null);
+  useEffect(() => {
+    if (!workId || workDone === workId || conn.kind !== "open") return;
+    const k = workKeeper();
+    if (!k) return;
+    setWorkDone(workId);
+    void k.restore(workId).then((r) => {
+      if (!r.ok) return setNotice(T.workFailed(T.openWhat[r.reason === "source" ? "workSource" : "work"] ?? ""));
+      setNotice(null);
+      setOldView(null);
+      setOldRecord(null);
+      if (r.state.base !== null) setWorkBase({ planId: workId, base: r.state.base });
+    });
+  }, [workId, conn.kind]);
+  useEffect(() => {
+    if (!workBase || !st?.latest || st.latest.plan.planId !== workBase.planId || st.latest.version !== workBase.base) return;
+    setRemovedInHistory(workBase.planId, st.latest.version, st.accepted ?? []);
+    setCrosswalkBase({ version: st.latest.version, plan: st.latest.plan, crosswalk: st.latest.crosswalk ?? [] });
+    setWorkBase(null);
+  }, [workBase, st]);
   // 開いた版を組んだ資料と決定を画面に戻し、その版をもとにした版にする（1C・重-2）。資料が 1 つでも読めなければ戻さず、作り直しを止める
   const restoreFrom = async (planId: string, latest: NonNullable<NonNullable<typeof st>["latest"]>) => {
     // 作り直しより先に、版の履歴の確定した削除を置く（下の useEffect を待たない。Architect の 70 の残り）

@@ -695,6 +695,16 @@ export class IntakeWorkspace {
   }
 
   /**
+   * 施設の作業中（#82）を戻す：資料と決定を置き換え、デモで入れた資料の印を付け直す。もとにした版が無ければ「第 n 版の資料」とは出さない
+   */
+  async restoreWork(base: number | null, files: readonly { name: string; bytes: Uint8Array }[], decisions: readonly Decision[], demo: readonly string[]): Promise<void> {
+    await this.restoreVersion(base ?? 0, files, decisions);
+    if (base === null) this.restoredFrom = null;
+    this.markDemoFiles(demo);
+    this.changed(false, false);
+  }
+
+  /**
    * 確定のときに版の記録に残す資料と決定（1C・重-2）。資料の SHA-256 と、決定ごとに掛かった資料の SHA-256。
    * 写真のある版は残さない（写真の読み取りの格子はこのタブにしか無いので、次の版はこのタブの資料だけで組み直す）。資料が無ければ null
    */

@@ -93,6 +93,20 @@ function treeOrder(plans: ListedPlan[]): { p: ListedPlan; depth: number }[] {
   return out;
 }
 
+/** 施設の作業中の要約（橋渡しの /tab/work-list。src/bridge/work.ts の WorkSummary と同じ形） */
+interface WorkSummary {
+  planId: string;
+  displayName: string;
+  fictional: boolean;
+  open: number;
+  changed: boolean;
+  base: number | null;
+  savedAt: string;
+}
+
+/** 作業中を資料ごと続きから開くリンク（#82） */
+export const workLink = (planId: string): string => `${STAGE_HASH.merge}?work=${encodeURIComponent(planId)}`;
+
 /** いちばん新しい版が、渡して編集中・承認待ち・差し戻しのままか */
 function openLatest(p: ListedPlan): boolean {
   const latest = p.versions.at(-1);
@@ -115,6 +129,8 @@ const openLink = (planId: string, v: ListedVersion, next = false) => `${STAGE_HA
 export function MoyaiTop({ client }: { client: BridgeClient }) {
   const { state } = useConnection();
   const [plans, setPlans] = useState<ListedPlan[] | null>(null);
+  // 施設ごとの作業中（#82。保管先の plans/<計画ID>/work/。作業画面だけの道で読む）
+  const [works, setWorks] = useState<WorkSummary[]>([]);
   const [me, setMe] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [derive, setDerive] = useState<{ p: ListedPlan; v: ListedVersion } | null>(null);
@@ -141,6 +157,8 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
       setError(null);
       setPlans(r.body.plans);
       setMe(r.body.name ?? null);
+      const w = await client.workCall(ROUTES.tabWorkList.path, undefined);
+      setWorks(Array.isArray(w?.works) ? (w.works as WorkSummary[]) : []);
     };
     const onVisible = () => document.visibilityState === "visible" && void load();
     void load();
@@ -148,7 +166,21 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [state.kind, client]);
   const months = useMemo(() => monthsUpTo(new Date(), monthCount), [monthCount]);
-  const rows = useMemo(() => treeOrder(plans ?? []), [plans]);
+  // 署名した版が無い施設も、作業中があれば行に出す（版の印は無い）
+  const rows = useMemo(() => {
+    const listed = plans ?? [];
+    const have = new Set(listed.map((p) => p.planId));
+    const workOnly: ListedPlan[] = works
+      .filter((w) => !have.has(w.planId))
+      .map((w) => ({ planId: w.planId, displayName: w.displayName, fictional: w.fictional, versions: [], turn: null, derivedFrom: null }));
+    return treeOrder([...listed, ...workOnly]);
+  }, [plans, works]);
+  const workOf = useMemo(() => new Map(works.filter((w) => w.changed || w.open > 0).map((w) => [w.planId, w])), [works]);
+  const discardWork = async (planId: string) => {
+    const r = readHuman<{ ok: boolean }>(await client.callHuman("work_discard", ROUTES.workDiscard.path, { planId }));
+    if (!r.ok) return setError(r.message);
+    setWorks((ws) => ws.filter((w) => w.planId !== planId));
+  };
   const anyProblem = rows.some(({ p }) => p.versions.some((v) => v.problem));
   const anyOther = rows.some(({ p }) => p.versions.some((v) => v.by && me && v.by !== me));
   const anyDerived = rows.some(({ depth }) => depth > 0);
@@ -224,6 +256,23 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
                     <span className="moyai-top-state" data-testid="moyai-state">
                       {T.state[p.turn.state]}
                     </span>
+                  )}
+                  {workOf.has(p.planId) && (
+                    <Menu position="bottom-start" withinPortal>
+                      <Menu.Target>
+                        <button type="button" className="moyai-top-state moyai-top-work" data-testid="moyai-work" data-open={workOf.get(p.planId)!.open}>
+                          {T.work(workOf.get(p.planId)!.open)}
+                        </button>
+                      </Menu.Target>
+                      <Menu.Dropdown data-testid="moyai-work-menu">
+                        <Menu.Item component="a" href={workLink(p.planId)} data-testid="work-resume">
+                          {T.workMenu.resume}
+                        </Menu.Item>
+                        <Menu.Item onClick={() => void discardWork(p.planId)} data-testid="work-discard">
+                          {T.workMenu.discard}
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
                   )}
                 </span>
                 <span className="moyai-top-months">

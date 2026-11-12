@@ -1,6 +1,6 @@
 // MERGE の決定のシートで人が受けた決定（docs/screens.md 3.2「決定」・docs/plan.md §2.9）。署名のダイアログは、ここから受けた決定を読んで送る。
 // 受けたのは、決定の ID と中身の指紋（hash）の組と、一言の理由。受けたあとに中身が変われば指紋が変わり、また受けていない決定になる。
-// 正本はこのタブのメモリ（確定すると版の記録に入り、ここは空にする）。閉じたときに戻せるよう、写しを state/draft.ts が書く。
+// 正本はこのタブのメモリ（確定すると版の記録に入り、ここは空にする）。閉じたときに戻せるよう、写しを state/work.ts（施設ごとの作業中。#82） が書く。
 import { useSyncExternalStore } from "react";
 import type { Acceptance } from "../../plan/diff";
 
@@ -35,7 +35,7 @@ export function isAccepted(id: string, hash: string): boolean {
   return accepted.has(key(id, hash));
 }
 
-/** 受けた決定の一覧（state/draft.ts が写しに書く） */
+/** 受けた決定の一覧（state/work.ts（施設ごとの作業中。#82） が写しに書く） */
 export function acceptedList(): Acceptance[] {
   return [...accepted.values()];
 }
@@ -47,7 +47,7 @@ export function restoreAccepted(list: readonly Acceptance[]): void {
   notify();
 }
 
-/** 受けた決定が変わるたびに呼ぶ（state/draft.ts） */
+/** 受けた決定が変わるたびに呼ぶ（state/work.ts（施設ごとの作業中。#82）） */
 export function subscribeAccepted(l: () => void): () => void {
   listeners.add(l);
   return () => {
