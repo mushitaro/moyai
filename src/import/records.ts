@@ -1066,6 +1066,9 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   const rowNode = new Map<number, AssetRec | null>();
   const pathPrev: (string | null)[] = hier.map(() => null);
   const pathPrevRef: (string | null)[] = hier.map(() => null);
+  // 上の行のその段の号炉・系統と号機（名前を上の行から引き継ぐ行で、号の欄も空のときに引き継ぐ）
+  const pathPrevSeries: (Series | null | undefined)[] = hier.map(() => null);
+  const pathPrevMachine: (string | null)[] = hier.map(() => null);
   const leafCol = hier[hier.length - 1];
   let prevLeaf: { r: number; node: AssetRec } | null = null;
   // 直前の行の機器（作業だけを書いた行が、上の行の機器の別の作業として使う）
@@ -1119,7 +1122,9 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
     let node = null as AssetRec | null;
     let undecided = false;
     // 作業だけを書いた行（機器の名前の欄が空で、結合でもなく、作業の欄がある）：上の行と同じ機器か（答えに従う）
-    const workOnly = !!workCol && !!leafCol && (!leafCell || leafCell.text === "") && !leafMerged && !!rowWork(r.r) && !!lastLeaf;
+    // 上の段の名前の欄（設備・機器）か号の欄に字がある行は、新しい機器の行（上の行の続きではない）
+    const upperNamed = hier.slice(0, -1).some((col) => !!col && !!lay.index.at(r.r, col.c)?.text && !off(lay.index.at(r.r, col.c)?.ref ?? "")) || (!!unitCol && !!lay.index.at(r.r, unitCol.c)?.text);
+    const workOnly = !!workCol && !!leafCol && (!leafCell || leafCell.text === "") && !leafMerged && !!rowWork(r.r) && !!lastLeaf && !upperNamed;
     const workOnlyAnswer = workOnly && leafCol ? blankDecision.get(leafCol.c) : undefined;
     // 節の行（名前だけの行。上の段の設備の名前）のすぐ下の、作業だけを書いた行（まだ葉の行が無い）：その節の機器の作業として読む
     // （前は機器が決まらず、問いの無い未解決になった。星取表の「電気・計装」のシートの書き方）
@@ -1142,6 +1147,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       let text: string | null = null;
       let ref: string | null = null;
       let dittoRef: string | null = null;
+      let inherited = false;
       const isLeafCol = i === hier.length - 1;
       if (own && cue.isDitto(own.text)) {
         // 〃：上の行と同じ名前。上の段の節は同じ節（〃 のセルも出どころに足す）、葉は名前だけ同じの別の行
@@ -1164,6 +1170,7 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
         if (d === "same") {
           text = pathPrev[i] ?? null;
           ref = pathPrevRef[i] ?? null;
+          inherited = true;
         } else if (d === undefined || d === null) undecided = true;
       }
       if (text === null || ref === null) {
@@ -1180,8 +1187,13 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       pathPrevRef[i] = ref;
       const isLeaf = i === hier.length - 1;
       const isSeriesCol = i === seriesIdx;
-      const series = isSeriesCol ? (unitCol ? unitOf.get(r.r) : null) : null;
-      const machine = isSeriesCol && !isLeaf ? (machineOf.get(r.r) ?? null) : null;
+      // 名前を上の行から引き継いだ行（空欄は上と同じ）で、号の欄も空：号炉・系統と号機も上の行と同じ（同じ機器の別の作業の行）
+      const unitBlank = !!unitCol && !lay.index.resolved(r.r, unitCol.c)?.text;
+      const carry = isSeriesCol && !isLeaf && inherited && unitBlank;
+      const series = isSeriesCol ? (carry ? pathPrevSeries[i] : unitCol ? unitOf.get(r.r) : null) : null;
+      const machine = isSeriesCol && !isLeaf ? (carry ? (pathPrevMachine[i] ?? null) : (machineOf.get(r.r) ?? null)) : null;
+      pathPrevSeries[i] = series ?? null;
+      pathPrevMachine[i] = machine;
       // 機器の階層（号炉・系統の列のすぐ左）の節は、同じ親の下の同じ名前・号炉・号機で 1 つ（頁ごとに書き直した結合も同じ機器）。
       // それより上の階層（設備）の節も、同じ親の下の同じ名前で 1 つ。号炉・系統の列の無い表は、これまでどおり結合ごと
       const key = isLeaf
