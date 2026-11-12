@@ -2,7 +2,7 @@
 // アプリが PR の行方を読む呼び出し（src/bridge/github.ts の prStatus）だけを受ける：
 // 台帳のリポジトリ・既定のブランチの先・木・blob・枝の PR の一覧・枝・ファイル・PR・PR の行方。
 // 取り下げ（Architect の 72）のために、開いた PR の一覧・PR のファイル・PR への書き込み・PR を閉じる、も受ける。
-// 台帳は MOYAI のリポジトリの ledger/（2026-11-07 に移した）。名前の既定は mushitaro/moyai の形（架空の owner）。
+// 名前の既定は架空の ledger-owner/moyai（試験が置き場所を渡すときは config/ledger.json の台帳の名前）。
 // 本物の GitHub では確かめていない（報告では「GitHub の本物では未確認」と分けて書く）。届いた束のファイルは試験が受け手の関数で確かめる。
 import { createHash } from "node:crypto";
 

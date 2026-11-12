@@ -89,7 +89,7 @@ MOYAI のアカウントもログインも要りません。
 | 星取表の「時間の地図」（mushitaro/moyai#37〜#40） | 星か行を選ぶと、同じ行の星を細い線で結び「n 年」と周期を出す（良否は判定しない）。計画だけの未来の ○ をドラッグか Alt+← / → でほかの年度へ動かして試せる（Ctrl+Z で戻す。版は変えず、確定と署名は今までどおり人）。似た施設のまとめた行は統計を横の板に出す。答えて計画が作り直されたら、新しく増えた星だけが静かに現れる | 試験と、Linux の Chrome の画面の写し。Windows の実機は未確認 |
 | 出力と共有を HOSHITORI のシートに（mushitaro/moyai#28・#35） | 別の画面だった EXPORT と SHARE を、HOSHITORI のシート「出力」「共有」に入れた（確定した版があるときだけ出る）。選びと説明の文を引き、結果を見せて主ボタンを 1 つ押すだけにした。様式の出力は確定した版だけ | 同上 |
 | 確定のボタンを止める条件（mushitaro/moyai#41） | 受けた決定を読めないあいだ（読込中・保存先が無い・読めない）は「署名して確定する」を止め、理由を下の帯に出す | 同上。もとから確定そのものは橋渡しが拒んでいた |
-| 公開台帳の置き場所を 1 か所の設定に（mushitaro/moyai#41） | `config/ledger.json` に台帳のリポジトリと根を置き、道はそこから導く。台帳を別のリポジトリに分ける設計は `docs/ledger-split.md` | 切り替えそのものは、まだしていない |
+| 公開台帳の置き場所を 1 か所の設定に（mushitaro/moyai#41） | `config/ledger.json` に台帳のリポジトリと根を置き、道はそこから導く。台帳を別のリポジトリに分ける設計は `docs/ledger-split.md`。11-12 に MOYAI の側を mushitaro/moyai-ledger へ切り替えた（mushitaro/moyai#20） | 台帳の側（moyai-ledger の検証のワークフローの直し）と受け口の配置は運営者の操作を待つ |
 | Skillパックの物差し（`scripts/bench/pack-bench.mjs`） | `samples/<パック>/` の【架空】の施設をすべて、見ていない様式と同じ道具で測る。AI も API も使わない。CI で、記録した数と違えば落ちる | 下の「数」 |
 | ごみ焼却の Skillパックのルール | 作業日報の号炉の欄の「共」を、号・系列なしとして読む（2 段目） | 3 施設で 7,299 セルの未解決が消えた |
 | 台帳の受け口の点検 | PR の数の上限（全部で 20・同じ鍵で 1）など、点検で見つけた所を直した | 受け口は、まだ配置していない |
@@ -113,9 +113,9 @@ MOYAI のアカウントもログインも要りません。
 
 | 見るもの | 場所 |
 |---|---|
-| 公開台帳（【架空】10 施設の共有ファイル） | このリポジトリの [ledger/](ledger/)。元は mushitaro/moyai-ledger で、11-07 に履歴ごと移した（`bca1ddb`）。移す前の旧台帳 mushitaro/moyai-ledger での PR の検証（Actions の `ledger-validate`）：10 施設の PR [#1](https://github.com/mushitaro/moyai-ledger/pull/1) は ✓、わざと外した PR [#2](https://github.com/mushitaro/moyai-ledger/pull/2)（同区分の施設が 5 未満）・[#3](https://github.com/mushitaro/moyai-ledger/pull/3)（費用の欄）・[#4](https://github.com/mushitaro/moyai-ledger/pull/4)（施設名）は ✗ |
+| 公開台帳（【架空】10 施設の共有ファイル） | [mushitaro/moyai-ledger](https://github.com/mushitaro/moyai-ledger)（台帳だけのリポジトリ）。11-07〜11-12 はこのリポジトリの `ledger/` に置いた（`bca1ddb` で移し、11-12 に戻した。中身はバイト単位で同じ）。11-07 より前の mushitaro/moyai-ledger での PR の検証（Actions の `ledger-validate`）：10 施設の PR [#1](https://github.com/mushitaro/moyai-ledger/pull/1) は ✓、わざと外した PR [#2](https://github.com/mushitaro/moyai-ledger/pull/2)（同区分の施設が 5 未満）・[#3](https://github.com/mushitaro/moyai-ledger/pull/3)（費用の欄）・[#4](https://github.com/mushitaro/moyai-ledger/pull/4)（施設名）は ✗ |
 | 公開台帳への PR（アプリから） | 11-08 19:44 に、僕が SHARE の「署名して公開台帳へ送信」を押し、MOYAI が GitHub に PR を出した：[mushitaro/moyai#8](https://github.com/mushitaro/moyai/pull/8)（【架空】デモ工場の共有ファイル 1 つ。台帳の検証 `ledger-validate` が走る）。GitHub の OAuth App は 11-08 に登録した（`f01c57b`） |
-| 公開台帳のサイト（類似施設の星取表と、統計の行の中央値・四分位・範囲） | moyai には Pages を置いていない。旧台帳 mushitaro/moyai-ledger のサイト（<https://mushitaro.github.io/moyai-ledger/>）は、11-07 に移したときの中身のまま残っている。今の台帳は `ledger/` で、サイトは手元で作る：`node dist/cli.js ledger site ledger <出すフォルダ>` → `index.html` |
+| 公開台帳のサイト（類似施設の星取表と、統計の行の中央値・四分位・範囲） | moyai には Pages を置いていない。旧台帳 mushitaro/moyai-ledger のサイト（<https://mushitaro.github.io/moyai-ledger/>）は、11-07 に移したときの中身のまま残っている。台帳の clone から手元でも作れる：`node dist/cli.js ledger site <moyai-ledger の clone> <出すフォルダ>` → `index.html` |
 | 読みの地図（295 本の、書き方の形ごとの読めたセル・未解決・計画まで） | [docs/reading-map/index.html](docs/reading-map/index.html)（clone して開く） |
 | 受け入れの試験の表（試験の実行から生成） | [docs/acceptance.md](docs/acceptance.md)（11-08 18:56、`4ca6d0d`：通った 18・一部 5・落ちた 0・試験が無い 4・測っていない 2、全 29） |
 | 試験の数と取り込みの物差しの推移、見ていない様式の結果 | [docs/trend.md](docs/trend.md) |
@@ -168,12 +168,13 @@ node dist/cli.js verify demo-ring
 【架空】の 7 拠点の共有フォルダ（`demo-ring/`）を、受信側と同じ関数で照合します。全員 ✓、わざと入れた ✗ の共有ファイルは理由つきで ✗ のとき、終了コード 0。秘密鍵はリポジトリにありません（`demo-ring/README.md`）。
 
 ```bash
-node dist/cli.js verify ledger ledger
+git clone https://github.com/mushitaro/moyai-ledger.git ../moyai-ledger
+node dist/cli.js verify ledger ../moyai-ledger
 ```
 
-公開台帳（`ledger/`）の決まりと共有ファイルを、PR の検証（Actions）と同じ関数で照合します。すべて ✓ なら終了コード 0。
+公開台帳（mushitaro/moyai-ledger の `ledger/`）の決まりと共有ファイルを、PR の検証（Actions）と同じ関数で照合します。すべて ✓ なら終了コード 0。
 
-2026-11-08 15:04 JST に、`1acbd6a`（`d483e36` に README の直しを足したもの）をこの PC（Windows 11）でビルドして走らせた結果：`verify demo-ring` は終了コード 0、`verify ledger ledger` は共有ファイル 10 件がすべて ✓（終了コード 0）、`ledger site` は ✓ 10 件・✗ 0 件で `index.html` を書いた。
+2026-11-08 15:04 JST に、`1acbd6a`（`d483e36` に README の直しを足したもの）をこの PC（Windows 11）でビルドして走らせた結果：`verify demo-ring` は終了コード 0、`verify ledger ledger`（そのころの台帳の置き場所）は共有ファイル 10 件がすべて ✓（終了コード 0）、`ledger site` は ✓ 10 件・✗ 0 件で `index.html` を書いた。
 
 ```bash
 npm test
@@ -265,7 +266,7 @@ npm test
 11. 同じ PC の同じ利用者のプロセスは止めきれない。
 12. 共有してよいか（契約・独禁法・営業秘密）は、アプリが決められない。
 13. 公開台帳の共有ファイルは誰でも開け、PR の GitHub アカウント名は公開される。
-14. 台帳を moyai に移したあと、PR の検証（`ledger-validate`）は必須のチェックにしていない。載せるかは、管理者（僕）が検証の結果と共有ファイルを見て、マージで決める。
+14. 台帳のリポジトリの PR の検証（`ledger-validate`）を必須のチェックにしているかは未確認（11-12）。載せるかは、管理者（僕）が検証の結果と共有ファイルを見て、マージで決める。
 
 ### AI への提供範囲と PC の中（`docs/security.md`）
 
@@ -294,7 +295,7 @@ npm test
 - 見ていない様式：11-05 の読み手では 5 組とも計画を作れなかった（⑥ 0%）。Skillパックの物差しでは、【架空】11 施設のうち計画まで作れたのは 4（11-10）。
 - 受け入れの試験の表（`docs/acceptance.md`）は 11-08 のまま。
 - 時間の地図の残り：確定のシートの判断の履歴を詳細に並べること、Claude が会話で聞いた理由を試しに置く道、変えた人と理由の履歴を横の板に出すこと、比べる版を選ぶ道。
-- 公開台帳を別のリポジトリに分ける切り替え（`docs/ledger-split.md`）。
+- 公開台帳を別のリポジトリに分ける切り替えの残り：台帳のリポジトリの検証のワークフローの直しと、受け口の配置（`docs/ledger-split.md`・`docs/ledger-deploy.md`）。
 - 「今は比べにくい」ことを示す、自治体への聞き取りや既存の資料の調べ（`docs/impact.md` §4）。
 - MCP のツール `note_for_human` は名前と型だけ（呼ぶと「未実装」）。`skill_eval` は Skill の採点の画面ができるまで Claude に見せない。Skill の採点は CLI（`moyai eval`）だけ。
 - 手元のモデル（F4）は構想だけ。

@@ -11,6 +11,6 @@
   "workers_dev": true,
   "observability": { "enabled": false },
   "vars": {
-    "LEDGER_REPO": "mushitaro/moyai"
+    "LEDGER_REPO": "mushitaro/moyai-ledger"
   }
 }

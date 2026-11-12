@@ -1,4 +1,4 @@
-// MOYAI のリポジトリの PR の照らし（docs/plan.md §2.8 台帳の守り方。台帳は 2026-11-07 に mushitaro/moyai の ledger/ へ移した）。純粋な関数：入力は
+// 台帳のリポジトリの PR の照らし（docs/plan.md §2.8 台帳の守り方。置き場所は config/ledger.json。下の ledger/ledger/ の例は台帳の根が ledger のときの形。根が空なら台帳だけのリポジトリで、どの変更も台帳の PR として照らす）。純粋な関数：入力は
 // `git diff --raw -z --no-renames --no-abbrev <base>...<head>` の出力のバイト列と、base の木の ledger/ledger/ の下の項目、追加の blob を読む関数。
 // head を checkout せず、head の側のコードも走らせない（読むのは blob のバイト列だけ）。
 // PR の分け方：ledger/ の中だけを変える PR が台帳の PR。ledger/ に触れない PR と、ledger/ledger/ に触れずに ledger/ の外も変える PR は

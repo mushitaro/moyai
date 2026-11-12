@@ -3,7 +3,7 @@
 // - 前の PR：枝 intake/<ハッシュの頭 16 字> の PR（閉じたものも）。
 // - 出す：台帳のリポジトリに枝を作り、束のファイル 1 つを置き、PR を出す。途中で止まった前の試みが残っていても、同じ枝・同じファイルなら続きから出す。
 // - 取り下げ（Architect の 72）：その鍵の束の開いた PR を探し、「本人が取り下げた」と書いて閉じる。
-// 台帳は MOYAI のリポジトリの ledger/（2026-11-07 に移した）。木の道はリポジトリの根から（ledger/ledger/…）。
+// 台帳の置き場所は config/ledger.json（2026-11-12 から mushitaro/moyai-ledger、根は空）。木の道はリポジトリの根から（ledger/…）。
 // トークンは authorization の見出しにだけ入れる。答え・ログには出さない。fetch は差し替えられる（試験のため）。
 // 転送（3xx）はたどらない（トークンを api.github.com の外へ運ばない。たどらずに誤りにする）。
 import { LEDGER_BUNDLE_PATH, LEDGER_JSON_PATH, LEDGER_LIMITS, ledgerKeyFolder, type LedgerFile } from "../../../src/share/ledger";
@@ -94,7 +94,7 @@ export async function ledgerBase(gh: Gh): Promise<{ base: string; sha: string } 
 }
 
 /**
- * 台帳の木から、ledger.json と、その鍵のフォルダ（ledger/ledger/bundles/<鍵ID>/）の下の項目を読む。
+ * 台帳の木から、ledger.json と、その鍵のフォルダ（ledger/bundles/<鍵ID>/）の下の項目を読む。
  * 100644 の blob だけ中身を読み（上限を越えるものは読まない）、symlink・submodule・ほかの形は中身を読まずに形だけ返す。読めなければ null
  */
 export async function readLedgerFiles(gh: Gh, sha: string, key: string): Promise<LedgerFile[] | null> {
@@ -206,7 +206,7 @@ export const OPEN_PR_PAGES = 5;
 
 /**
  * その鍵の束の、開いた PR（受け口の PR も、利用者のフォークの PR も）。題か枝の名前に鍵 ID がある PR だけを候補にし、
- * PR のファイルがすべてその鍵のフォルダの束（ledger/ledger/bundles/<鍵ID>/<連番>-<ハッシュ>.json）のときだけ、その鍵の束の PR とする。
+ * PR のファイルがすべてその鍵のフォルダの束（ledger/bundles/<鍵ID>/<連番>-<ハッシュ>.json）のときだけ、その鍵の束の PR とする。
  * 読めなければ "error"
  */
 export async function openPrsOfKey(gh: Gh, key: string): Promise<PrRef[] | "error"> {

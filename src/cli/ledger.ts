@@ -1,4 +1,4 @@
-// 公開の台帳の CLI（docs/plan.md §2.8 場 2・docs/sharing.md）。台帳は MOYAI のリポジトリの ledger/（2026-11-07 に mushitaro/moyai-ledger から移した）。
+// 公開の台帳の CLI（docs/plan.md §2.8 場 2・docs/sharing.md）。台帳の置き場所は config/ledger.json（2026-11-12 から別のリポジトリ mushitaro/moyai-ledger。mushitaro/moyai#20）。
 // 台帳の根を指すときは、MOYAI のリポジトリ（の clone）の根を指す（その下の ledger/ と ledger/ledger/ も受ける）。
 // - `moyai verify ledger <台帳の clone>`：輪の受け手と同じ関数で、決まり（ledger.json）と束ごとに ✓ か理由つきの ✗ を出す。
 // - `moyai ledger validate-pr --base <SHA> --head <SHA>`：MOYAI のリポジトリの pull_request_target の検証。head を checkout せず、

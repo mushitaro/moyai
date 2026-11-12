@@ -1,0 +1,54 @@
+diff --git a/.github/workflows/ledger-validate.yml b/.github/workflows/ledger-validate.yml
+index 947e1b0..6281b56 100644
+--- a/.github/workflows/ledger-validate.yml
++++ b/.github/workflows/ledger-validate.yml
+@@ -19,7 +19,7 @@ concurrency:
+ 
+ env:
+   MOYAI_REPO: mushitaro/moyai
+-  MOYAI_SHA: 179a0be2192942ab4c37d147f66e15c98a7217a9 # MOYAI の検証の版（タグではなく commit）
++  MOYAI_SHA: __MOYAI_SHA__ # MOYAI の検証の版（タグではなく commit。台帳を moyai-ledger に戻した切り替え mushitaro/moyai#20 が入った main の commit）
+ 
+ jobs:
+   validate:
+diff --git a/.github/workflows/pages.yml b/.github/workflows/pages.yml
+index f302882..f26d4d9 100644
+--- a/.github/workflows/pages.yml
++++ b/.github/workflows/pages.yml
+@@ -19,7 +19,7 @@ concurrency:
+ 
+ env:
+   MOYAI_REPO: mushitaro/moyai
+-  MOYAI_SHA: 179a0be2192942ab4c37d147f66e15c98a7217a9 # ledger-validate.yml と同じ版にする
++  MOYAI_SHA: __MOYAI_SHA__ # ledger-validate.yml と同じ版にする
+ 
+ jobs:
+   build:
+diff --git a/README.md b/README.md
+index 98bf5c1..920adc5 100644
+--- a/README.md
++++ b/README.md
+@@ -48,13 +48,22 @@ node dist/cli.js ledger submit --bundle <束のファイル> --repo <この台
+ 
+ PR を出した GitHub アカウントは誰にでも見えます。台帳専用のアカウントを勧めます。
+ 
++### GitHub のアカウントが無い人（受け口）
++
++MOYAI の SHARE で送信経路「MOYAI 経由」を選ぶと、束は運営者の受け口（Cloudflare Workers。コードは MOYAI の `services/ledger-intake/`）に届き、受け口が運営者の GitHub のアカウントでこの台帳に PR を出します。
++
++- 受け口の PR は、このリポジトリの枝 `intake/<束のハッシュの頭 16 字>` から出て、本文の頭は「受け口から（GitHub のアカウントなし）」です。検証はほかの PR と同じ `ledger-validate` です。
++- 受け口のトークンは、このリポジトリだけの Contents と Pull requests（読み書き）に絞った fine-grained のもので、期限があります。Workflows の権限は持ちません。MOYAI のコードには書けません。
++- 受け口は束を受ける前に、台帳の検証と同じ関数で確かめます。送り手の IP は件数の上限（1 時間）に使うだけで、残しません。
++
+ ## 検証の守り（`ledger-validate.yml`）
+ 
+ - `pull_request_target` で、既定のブランチにある定義だけを走らせます。PR の head のコードは走らせず、checkout もしません（オブジェクトだけを取り、`git cat-file` で中身を読みます）。
+ - 許すのは、`ledger/bundles/<鍵ID>/` の下に**新しく足す**ファイル（mode 100644）だけです。消す・変える・改名・symlink・submodule・`.github/` に触れるもの・大文字小文字や Unicode の正規化だけが違う道は ✗ です。
+ - 鍵 ID と出した人の結びつきは、束の署名で決め、GitHub のログイン名には頼りません。
+ - 検証のジョブの権限は `contents: read` だけで、secrets もトークンも使いません。PR に結果を書くジョブは別で、`pull-requests: write` だけです。
+-- MOYAI は commit の SHA で固定し、Action もフルの SHA で固定しています。
++- MOYAI は commit の SHA で固定し、Action もフルの SHA で固定しています。MOYAI の検証の直しを入れるときは、この SHA を、それを含む MOYAI の main の commit に直す PR を出します。
++- 台帳は 2026-11-07〜11-12 のあいだ MOYAI のリポジトリの `ledger/` に置き、2026-11-12 にこのリポジトリへ戻しました（mushitaro/moyai#20。束・決まり・利用条件はバイト単位で同じ）。そのあいだの束の PR は、このリポジトリに出し直します。
+ 
+ ## 保証できないこと
+ 
