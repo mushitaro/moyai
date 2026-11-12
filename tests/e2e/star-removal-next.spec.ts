@@ -2,7 +2,7 @@
 // 人が資料を落とし、AI が取り込んで第 1 版に署名 → AI が利用者の言葉で、資料から読んだ実績の削除の案を置く → 人が確定のシートで確定し、第 2 版に署名
 // → 版の記録の署名の内側に remove:<明細の鍵>・理由・作者 → トップの「＋ 次の版」で資料と決定が戻り、作り直しても、その実績は戻らない。
 // 先に npm run build を走らせておく。置き場所は一時のフォルダに作る。
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
@@ -119,8 +119,10 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
       await page.getByTestId("confirm-close").click();
-      const plans = readdirSync(join(root, "plans"));
-      const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000002.json"), "utf8"));
+      // plans/ には、この計画のほかのフォルダ（作業中の写しなど）が並ぶことがあり、並びは OS で違う。第 2 版のあるフォルダを探す（書き終わるまで待つ）
+      const v2 = () => readdirSync(join(root, "plans")).map((d) => join(root, "plans", d, "versions", "000002.json")).find((f) => existsSync(f)) ?? null;
+      await expect.poll(v2, { timeout: 15_000 }).not.toBeNull();
+      const rec = JSON.parse(readFileSync(v2()!, "utf8"));
       const removed = rec.acceptances.filter((a: any) => String(a.id).startsWith("remove:"));
       expect(removed.length).toBeGreaterThan(0);
       // 理由は削除の案の理由（Claude が置いた basis に、MOYAI が案の ID と年度を添えたもの。確定のシートの「理由」と同じ字）
