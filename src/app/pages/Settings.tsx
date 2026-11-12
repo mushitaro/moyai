@@ -126,6 +126,26 @@ function CreateRingDialog({ opened, onClose, packs, onCreated }: { opened: boole
 
 
 /** 道・名前の値（地なしの等幅。値を地の色の箱に入れない。Wire、11-06） */
+/** 道の末尾に残す字の数（途中を省くとき。フォルダの名前が見えるように） */
+const PATH_TAIL = 24;
+
+/**
+ * 道の値：長い道は 1 行に収め、途中を省いて末尾（フォルダの名前）を残す。押すと全部を出す（もう一度押すと戻す）。
+ * 説明の文・ツールチップは置かない（#83、docs/screens.md §0）。字は省いても要素の中に全部ある（読み上げ・写しで道が欠けない）
+ */
+function PathVal({ value, testid }: { value: string; testid?: string }) {
+  const [open, setOpen] = useState(false);
+  const cut = value.length > PATH_TAIL * 2;
+  const head = cut ? value.slice(0, value.length - PATH_TAIL) : value;
+  const tail = cut ? value.slice(value.length - PATH_TAIL) : "";
+  return (
+    <button type="button" className="moyai-path" data-open={open || !cut ? "true" : "false"} aria-expanded={cut ? open : undefined} onClick={() => cut && setOpen(!open)} data-testid={testid}>
+      <span className="moyai-path-head">{head}</span>
+      {tail && <span className="moyai-path-tail">{tail}</span>}
+    </button>
+  );
+}
+
 function Val({ children, testid, mono = true }: { children: React.ReactNode; testid?: string; mono?: boolean }) {
   return (
     <Text component="span" size="sm" ff={mono ? "monospace" : undefined} data-testid={testid} style={{ overflowWrap: "anywhere" }}>
@@ -256,7 +276,7 @@ export function Settings() {
             T.rootTitle,
             <Stack gap={6}>
               <Group gap="sm" wrap="nowrap" align="baseline">
-                <Val testid="current-root">{s.root ?? <NoneMark />}</Val>
+                {s.root ? <PathVal value={s.root} testid="current-root" /> : <Val testid="current-root"><NoneMark /></Val>}
                 {rootMarks && (
                   <Text size="xs" c="var(--text-3)" style={{ whiteSpace: "nowrap" }}>
                     {rootMarks}
@@ -356,7 +376,7 @@ export function Settings() {
                       <Table.Tr key={r.ringId}>
                         <Table.Td ff="monospace">{r.ringId}</Table.Td>
                         <Table.Td>
-                          <Val>{r.root}</Val>
+                          <PathVal value={r.root} />
                           <SyncedNotice synced={r.synced} kind="ring" />
                         </Table.Td>
                         <Table.Td>{s.packs.find((p) => p.id === r.pack)?.name ?? r.pack}</Table.Td>
@@ -379,14 +399,18 @@ export function Settings() {
                 <Text size="xs" c="var(--text-3)" className="moyai-settings-label">
                   {T.clone}
                 </Text>
-                <Val testid="current-ledger" mono={!!s.ledger}>
-                  {s.ledger ?? T.ledgerNone}
-                </Val>
+                {s.ledger ? (
+                  <PathVal value={s.ledger} testid="current-ledger" />
+                ) : (
+                  <Val testid="current-ledger" mono={false}>
+                    {T.ledgerNone}
+                  </Val>
+                )}
                 {change(editLedger, setEditLedger, "ledger-change")}
               </Group>
               {editLedger && <TextInput label={T.ledgerInput} value={ledger} onChange={(e) => setLedger(e.currentTarget.value)} data-testid="ledger-input" />}
               <Group gap="sm" wrap="nowrap" align="baseline" data-testid="github-setting">
-                {/* 「clone」と「GitHub」は text-3 の小さな字で同じ幅（Wire、11-06） */}
+                {/* 「手元の複製」と「GitHub」は text-3 の小さな字で同じ幅（Wire、11-06） */}
                 <Text size="xs" c="var(--text-3)" className="moyai-settings-label">
                   {T.github}
                 </Text>
