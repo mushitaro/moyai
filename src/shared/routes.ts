@@ -76,6 +76,8 @@ export const HUMAN_ACTIONS = [
   "readings_read",
   // ルールの詳細の適用先（docs/screens.md 3.2）：保存先の版の記録から、ルールを載せた版を読む
   "readings_lineage",
+  // 読み方のフィードバックの書き出し（運営者の判断 #23 の 1、2026-11-12）：人が「保存する」を押したときだけ、ルールの形と数のファイルを保管先に置く
+  "reading_feedback_save",
   // 写真を AI クライアントに渡す許し（§2.3・§2.12。1 枚ごと、その画像のハッシュに結ぶ）
   "photo_allow",
 ] as const;
@@ -211,6 +213,12 @@ export const ROUTES = {
   githubDisconnect: human("/human/github-disconnect", "github_disconnect", 16 * 1024, "GitHub との接続を切る（状態フォルダのトークンのファイルを消す）"),
   readingsRead: human("/human/readings-read", "readings_read", 16 * 1024, "保管先の承認済みの読み方（3 段目の Skill）を、作業画面に読み込む"),
   readingsLineage: human("/human/readings-lineage", "readings_lineage", 16 * 1024, "ルールの詳細の適用先：保管先の版の記録から、ルールの版を載せた版（施設・版・時刻・編集の番）とルールの置き場所を読む（読むだけ）"),
+  readingFeedbackSave: human(
+    "/human/reading-feedback-save",
+    "reading_feedback_save",
+    512 * 1024,
+    "読み方のフィードバックを書き出す：画面が全文を見せたルールの形と数（moyai.reading-feedback/0）を、形と固有名詞の網 2 で確かめ直してから、保管先の feedback/ に置く（送らない。送るのは人）",
+  ),
   peersCompare: human("/human/peers-compare", "peers_compare", 64 * 1024, "受け手：立場ごとに、台帳の clone と自分の共有フォルダの ✓ の共有ファイルから、類似施設の行と統計の行を作る"),
   // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）
   photoAllow: human("/human/photo-allow", "photo_allow", 64 * 1024, "写真を 1 枚、AI クライアントに渡すことを許す（渡す画像のハッシュに結ぶ。1 回渡すと使い終わる）"),
