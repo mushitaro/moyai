@@ -466,7 +466,14 @@ export class ToolRelay {
       return id;
     });
     try {
-      const toTab = { source: c.source, pack: c.pack, facilityName: c.facilityName, files: c.files.map((f, i) => ({ fileId: ids[i]!, name: f.name, size: f.size })) };
+      const toTab = {
+      source: c.source,
+      pack: c.pack,
+      facilityName: c.facilityName,
+      files: c.files.map((f, i) => ({ fileId: ids[i]!, name: f.name, size: f.size })),
+      // 加工したファイルの出どころ（#47。AI の引数の形は確かめ済み）。作業画面が資料の詳細に 1 行で出すだけ
+      ...(args.derivedFrom ? { derivedFrom: args.derivedFrom } : {}),
+    };
       const remaining = Math.max(0, ROWS_PER_CONVERSATION - this.rowsReadIn(conversation));
       const out = await this.tabs.callTool(name, toTab, conversation, remaining, ms, true);
       if (out.kind === "no_tab") return errorBody("work_screen_not_open");

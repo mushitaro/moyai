@@ -39,6 +39,8 @@ export interface StarGroup {
   /** 削除の人の判断（追加だけの案は proposed のまま。却下は追加の案にも付く） */
   state: "proposed" | "accepted" | "rejected";
   humanReason?: string;
+  /** 人の試しに、Claude が会話で聞いて置いた理由（#29。字だけ。動かす・確定する道ではない） */
+  relayedReason?: string;
   /** 確定して外した明細（取り消すと戻す） */
   removed?: WorkDetailT[];
   /** 却下したときの追加の年度（却下済みの行に出す。明細は計画から外れているため） */
@@ -329,6 +331,25 @@ export function redoTrialByHuman(range: { min: number; max: number }): boolean {
   const r = applyTrial(t, range);
   redoStack = redoStack.slice(0, -1);
   return r.ok;
+}
+
+/**
+ * Claude が会話で聞いた理由を、人がもう動かした試し（作業 × 元の年度 → 先の年度）に置く（#29 の残り。chart_propose の trialReasons）。
+ * 置けるのは理由の字だけ：星取は動かさない・試しを作らない・確定も取り消しもしない。署名の内側の理由は書き換えない（画面に出すだけ）。
+ * 当たる試しが無ければ false
+ */
+export function noteTrialReasonFromAi(workKey: string, from: number, to: number, reason: string): boolean {
+  const text = reason.trim();
+  if (!text) return false;
+  // 今の回の試しだけ（画面に出ている試し。starGroups と同じ見え方）。1 つの移動の試しだけを指す
+  const g = starGroups().find((x) => x.author === "human" && x.state === "accepted" && x.workKey === workKey && x.pairs.length === 1 && x.pairs[0]!.from === from && x.pairs[0]!.to === to);
+  if (!g) return false;
+  // 署名の内側の理由（humanReason）は書き換えない（AI の字を人の署名に入れない）。画面に「会話から写した・未確認」で出すだけ
+  const target = groups.find((x) => x.id === g.id);
+  if (!target) return false;
+  target.relayedReason = text;
+  notify();
+  return true;
 }
 
 /** 人の試しの、動かす前の位置（星取表に薄い ○ を残す）：作業の鍵 → 元の年度 */

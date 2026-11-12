@@ -610,3 +610,43 @@ describe("人の試し（時間の地図 2、mushitaro/moyai#32）：星取表�
     for (const f of ["moveStarByHuman", "undoTrialByHuman", "redoTrialByHuman", "acceptRemovalsByHuman", "undoRemovalsByHuman"]) expect(src).not.toContain(f);
   });
 });
+
+describe("人の試しの理由を会話から置く（#29 の残り。chart_propose の trialReasons）：置けるのは理由の字だけ", () => {
+  const range = { min: 2019, max: 2028 };
+  beforeEach(() => setWorkingPlan(base(), "intake"));
+
+  it("人が動かした試しに、Claude が会話で聞いた理由の字を置く。星取は動かず、確定の状態も変わらない", () => {
+    expect(trial.moveStarByHuman("w1", 2025, 2027, range).ok).toBe(true);
+    const before = keys(getWorkingPlan()!.plan);
+    const groupsBefore = trial.starGroups().map((g) => ({ id: g.id, state: g.state, pairs: g.pairs }));
+    const r = ok(propose(ws(), { author: "ai_relayed_human", trialReasons: [{ rowRef: "w:w1", fromFiscalYear: 2025, fiscalYear: 2027, reason: "炉の停止を改修に合わせる" }] }));
+    expect(r.trialReasons).toEqual([{ index: 0, placed: true }]);
+    expect(keys(getWorkingPlan()!.plan)).toEqual(before);
+    expect(trial.starGroups().map((g) => ({ id: g.id, state: g.state, pairs: g.pairs }))).toEqual(groupsBefore);
+    const g = trial.starGroups().find((x) => x.author === "human")!;
+    expect(g.relayedReason).toBe("炉の停止を改修に合わせる");
+    // 署名の内側の理由は変えない（AI の字を人の署名に入れない。画面に「会話から写した・未確認」で出すだけ）
+    expect(removalAcceptances()).toEqual([expect.objectContaining({ id: removalId("d3"), reason: trial.TRIAL_REASON })]);
+  });
+
+  it("当たる人の試しが無ければ置かない（試しを作らない・動かさない）。AI の星取の移動の案は人の試しにならない", () => {
+    const before = keys(getWorkingPlan()!.plan);
+    const r = ok(propose(ws(), { trialReasons: [{ rowRef: "w:w1", fromFiscalYear: 2025, fiscalYear: 2027, reason: "理由" }] }));
+    expect(r.trialReasons).toEqual([{ index: 0, placed: false }]);
+    expect(keys(getWorkingPlan()!.plan)).toEqual(before);
+    expect(trial.starGroups()).toEqual([]);
+    // AI の移動の案（stars の move）は作者 AI の案で、理由を置く相手にならない
+    ok(propose(ws(), { stars: [{ op: "move", rowRef: "w:w1", fromFiscalYear: 2025, fiscalYear: 2027 }] }));
+    const again = ok(propose(ws(), { trialReasons: [{ rowRef: "w:w1", fromFiscalYear: 2025, fiscalYear: 2027, reason: "理由" }] }));
+    expect(again.trialReasons).toEqual([{ index: 0, placed: false }]);
+    expect(trial.starGroups().every((g) => g.author !== "human")).toBe(true);
+  });
+
+  it("引数は理由の字だけ（年度・作業で試しを指す）。動かす・確定する欄は無い", () => {
+    const input = toolDef("chart_propose").input;
+    const okArgs = { basedOnVersion: 0, basis: "b", trialReasons: [{ rowRef: "w:w1", fromFiscalYear: 2025, fiscalYear: 2027, reason: "r" }] };
+    expect(input.safeParse(okArgs).success).toBe(true);
+    expect(input.safeParse({ ...okArgs, trialReasons: [{ ...okArgs.trialReasons[0], state: "accepted" }] }).success).toBe(false);
+    expect(input.safeParse({ ...okArgs, trialReasons: [{ ...okArgs.trialReasons[0], reason: "" }] }).success).toBe(false);
+  });
+});

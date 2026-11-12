@@ -25,10 +25,11 @@ import { ConfirmDialog, HistoryDialog } from "../components/ConfirmDialog";
 import { usePending } from "../components/DecisionsSheet";
 import { cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import { STAR_KIND_TEXT, basisWithoutReference, isStarProposal, proposalIdOf, starIdOf, starValueOfKey, type StarKind } from "../../plan/star";
-import { moveStarByHuman, openRemovals, redoTrialByHuman, requestStarPick, starGroups, trialOrigins, undoTrialByHuman, useStarGroups } from "../state/stars";
+import { moveStarByHuman, openRemovals, redoTrialByHuman, requestStarPick, starGroup, starGroups, trialOrigins, undoTrialByHuman, useStarGroups } from "../state/stars";
 import { sheetHash } from "../stages";
 import { StarReference } from "../components/StarReference";
 import { useAccepted } from "../state/decisions";
+import { acceptHistoryFor, useAcceptHistory } from "../state/history";
 import { MergeCompareContext, MergePeersContext, MergeSideContext, commentMarkKey } from "../state/merge-side";
 import { compareCounts, marksOf } from "../../plan/chart-compare";
 import { useConnection } from "../state/bridge";
@@ -114,9 +115,13 @@ function measureAfterPaint(name: string, start: string) {
 }
 
 /** 資料ではない出どころ（record:・pack:・ledger:・rule:・conversation:）は、周期の根拠として言葉で出す */
-function sourceText(s: Plan["details"][number]["sources"][number]): string {
+function sourceText(s: Plan["details"][number]["sources"][number], detailKey?: string): string {
   const kind = /^([a-z]+):/.exec(s.file)?.[1];
-  if (kind === "trial") return T.source.trial;
+  if (kind === "trial") {
+    // 会話から写した理由が置かれていれば、それを出す（#29。字だけ）
+    const g = detailKey ? starGroup(proposalIdOf(detailKey) ?? "") : undefined;
+    return g?.relayedReason ? T.source.trialRelayed(g.relayedReason) : T.source.trial;
+  }
   const head = kind && T.source.basisOf[kind] ? T.source.basisOf[kind]! : s.file;
   return [head, s.sheet, s.cell, s.page !== null ? T.source.page(s.page) : null].filter((x) => x !== null && x !== "").join(" · ");
 }
@@ -125,15 +130,51 @@ function documentCount(d: WorkDetailT): number {
   return new Set(d.sources.filter((s) => !/^[a-z]+:/.test(s.file)).map((s) => s.file)).size;
 }
 
-interface Index {
+export interface Index {
   works: Map<string, WorkT>;
   assetName: (nodeKey: string) => string;
+  /** 機器とその上の節（共通の設備項目の決定は上の節に付くことがある。判断の履歴に使う） */
+  assetChain: (nodeKey: string) => string[];
   /** 明細の鍵 → その明細を決めた問い（取り込みの質問への答え）。答えで決まっていない明細は無い */
   decidedBy: ReadonlyMap<string, NonNullable<Plan["readingDecisions"]>[number]>;
   workLabels: Record<NonNullable<WorkT["attribute"]>, string>;
 }
 
-function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
+/** 星の判断の履歴（#29）：その明細・作業・機器の、確定のシートで人が受けた決定（保管先の版の記録と、今の作業で受けたもの） */
+function decisionIds(d: WorkDetailT, work: WorkT | undefined, ix: Index): string[] {
+  const nodes = new Set((work?.targets ?? []).flatMap((t) => ix.assetChain(t)));
+  return [`detail:${d.detailKey}`, `remove:${d.detailKey}`, `attr:${d.workKey}`, ...[...nodes].map((t) => `item:${t}`)];
+}
+
+export function DecisionHistory({ d, work, planId, ix }: { d: WorkDetailT; work: WorkT | undefined; planId: string; ix: Index }) {
+  useAcceptHistory();
+  const accepted = useAccepted();
+  const ids = decisionIds(d, work, ix);
+  const past = acceptHistoryFor(planId, ids);
+  // 版に入った決定は「第 n 版」だけに出す（同じ決定を今の作業にも重ねて出さない）
+  const signed = new Set(past.map((h) => `${h.id}\u0000${h.hash}`));
+  const now = [...accepted.values()].filter((a) => ids.includes(a.id) && !a.id.startsWith("reading:") && !signed.has(`${a.id}\u0000${a.hash}`));
+  if (past.length === 0 && now.length === 0) return null;
+  return (
+    <Stack gap={0} data-testid="source-history">
+      <Text size="xs" c="var(--text-3)">
+        {T.source.history}
+      </Text>
+      {past.map((h, i) => (
+        <Text key={`p${i}`} size="xs" data-testid="source-history-row" data-version={h.version}>
+          {T.source.historyPast(h.version, h.reason)}
+        </Text>
+      ))}
+      {now.map((a, i) => (
+        <Text key={`n${i}`} size="xs" data-testid="source-history-row" data-version="now">
+          {T.source.historyNow(a.reason)}
+        </Text>
+      ))}
+    </Stack>
+  );
+}
+
+function DetailCard({ d, ix, planId }: { d: WorkDetailT; ix: Index; planId?: string }) {
   const work = ix.works.get(d.workKey);
   const targets = (work?.targets ?? []).map(ix.assetName).join("、");
   return (
@@ -170,6 +211,8 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
           </Text>
         </Stack>
       )}
+      {/* 判断の履歴（#29）：確定のシートで人が受けた決定の理由。決めた問い（取り込みの答え）は上の 1 つだけで、ここには重ねない */}
+      {planId && <DecisionHistory d={d} work={work} planId={planId} ix={ix} />}
       {/* 金額と出どころ（#48）。当施設の画面の中だけ（共有ファイル・公開台帳・AI には渡らない） */}
       {d.cost !== null && (
         <Text size="xs" data-testid="source-amount">
@@ -185,7 +228,7 @@ function DetailCard({ d, ix }: { d: WorkDetailT; ix: Index }) {
       <Stack gap={0}>
         {d.sources.map((s, i) => (
           <Text key={i} size="xs" data-testid="source-ref">
-            - {sourceText(s)}
+            - {sourceText(s, d.detailKey)}
           </Text>
         ))}
       </Stack>
@@ -719,9 +762,15 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const ix = useMemo<Index>(() => {
     // 機器の名前は星取表の階層と同じ見せる名前（号機で分かれる同じ名前の機器は「名前 号機」）
     const names = assetLabels(plan.assets);
+    const parent = new Map(plan.assets.map((a) => [a.nodeKey, a.parentKey]));
     return {
       works: new Map(plan.works.map((w) => [w.workKey, w])),
       assetName: (k) => names.get(k) ?? k,
+      assetChain: (k) => {
+        const out: string[] = [];
+        for (let x: string | null | undefined = k; x && !out.includes(x); x = parent.get(x)) out.push(x);
+        return out;
+      },
       workLabels: (catalog ?? emptyCatalog()).workLabels,
       decidedBy: new Map((plan.readingDecisions ?? []).flatMap((r) => (r.details ?? []).map((k) => [k, r] as const))),
     };
@@ -818,7 +867,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
               {model.mode === "common" && selRow.kind === "node" && selRow.works && <DueSide row={selRow} due={due} ix={ix} onOpen={setDetailWork} />}
               {(selCell?.detailKeys ?? []).slice(0, DETAILS_MAX).map((k) => {
                 const d = detailsByKey.get(k);
-                return d ? <DetailCard key={k} d={d} ix={ix} /> : null;
+                return d ? <DetailCard key={k} d={d} ix={ix} planId={plan.planId} /> : null;
               })}
               {(selCell?.detailKeys.length ?? 0) > DETAILS_MAX && <Text size="xs">{T.details.more((selCell?.detailKeys.length ?? 0) - DETAILS_MAX)}</Text>}
             </Stack>

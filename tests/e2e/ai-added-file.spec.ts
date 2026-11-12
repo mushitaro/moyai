@@ -48,7 +48,8 @@ test("115 個の資料のあとに、加工したファイルを足しても、�
     })();
     // 同じフォルダに加工したファイルを置き、フォルダごと入れ直す（Claude がこうすることがある）
     writeFileSync(join(many, "daily-001_加工.csv"), csv(1));
-    const second = await call(c, "intake_add_files", { source: "folder", path: many });
+    // 出どころ（#47）：元の資料と、どのルールで作ったか（会話から写した 1 文）
+    const second = await call(c, "intake_add_files", { source: "folder", path: many, derivedFrom: { files: ["daily-001.csv"], how: "日付の列を 1 列にまとめた" } });
     await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", "116", { timeout: 60_000 });
     watching = false;
     await watch;
@@ -58,6 +59,11 @@ test("115 個の資料のあとに、加工したファイルを足しても、�
     expect(second.added.map((a: { name: string }) => a.name)).toEqual(["daily-001_加工.csv"]);
     expect(second.refused.filter((r: { reason: string }) => r.reason === "same_name")).toHaveLength(115);
     await expect(page.getByTestId("source-picker")).toHaveAttribute("data-file", "daily-001_加工.csv");
+    // 資料の詳細の上に、出どころの 1 行（板・ボタン・説明の文は足さない）
+    await page.getByTestId("side-source").click();
+    await expect(page.getByTestId("source-derived")).toBeVisible();
+    await expect(page.getByTestId("source-derived")).toContainText("daily-001.csv");
+    await expect(page.getByTestId("source-derived")).toContainText("日付の列を 1 列にまとめた（会話から写した）");
     await page.screenshot({ path: shot(`ai-added-after-${info.project.name}`) });
   } finally {
     await c.close();
