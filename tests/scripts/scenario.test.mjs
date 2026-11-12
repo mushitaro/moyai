@@ -61,25 +61,29 @@ describe("A1b：施設ごとの下限", () => {
 });
 
 describe("A3：初めて読む物差し（#93）", () => {
-  const f = (o = {}) => ({ facility: "x", planMade: true, error: null, accuracy: { correct: 80, total: 100 }, recovery: { correct: 70, total: 100 }, firstRead: { firstAsked: 50, ruleWrong: 0 }, ...o });
+  const f = (o = {}) => ({ facility: "x", planMade: true, error: null, accuracy: { correct: 80, total: 100 }, recovery: { correct: 70, total: 100 }, firstRead: { firstAsked: 50, ruleWrong: 0, askedAgain: 0 }, ...o });
   const ok = { same: true, detail: "" };
-  it("下限を全施設で満たしても、残りの年度の条件が決め直し中なので待ち（合格にしない）", () => {
-    assert.equal(judgeA3({ facilities: [f()] }, ok).status, WAIT);
-    assert.match(judgeA3({ facilities: [f()] }, ok).evidence, /#67/);
+  it("下限を全施設で満たし、残りの年度で 1 年目に見た問い（(a)）が 0 なら合格（#67）", () => {
+    assert.equal(judgeA3({ facilities: [f()] }, ok).status, PASS);
+  });
+  it("残りの年度で 1 年目に見た問いが 1 つでも残る・測っていないなら不合格", () => {
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10, ruleWrong: 0, askedAgain: 1 } })] }, ok).status, FAIL);
+    assert.match(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10, ruleWrong: 0, askedAgain: 1 } })] }, ok).evidence, /1 年目に見た問い 1/);
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10, ruleWrong: 0 } })] }, ok).status, FAIL);
   });
   it("計画なし・1 年目の問い 51・③ 79%・⑥ 69%・答えの間違い 1・間違いを測っていない、のどれでも不合格", () => {
     assert.equal(judgeA3({ facilities: [f({ planMade: false })] }, ok).status, FAIL);
-    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 51, ruleWrong: 0 } })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 51, ruleWrong: 0, askedAgain: 0 } })] }, ok).status, FAIL);
     assert.equal(judgeA3({ facilities: [f({ accuracy: { correct: 79, total: 100 } })] }, ok).status, FAIL);
     assert.equal(judgeA3({ facilities: [f({ accuracy: null })] }, ok).status, FAIL);
     assert.equal(judgeA3({ facilities: [f({ recovery: { correct: 69, total: 100 } })] }, ok).status, FAIL);
-    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10, ruleWrong: 1 } })] }, ok).status, FAIL);
-    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10 } })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10, ruleWrong: 1, askedAgain: 0 } })] }, ok).status, FAIL);
+    assert.equal(judgeA3({ facilities: [f({ firstRead: { firstAsked: 10, askedAgain: 0 } })] }, ok).status, FAIL);
   });
   it("記録と数が違えば不合格、比べていなければ未確認。年度ごとの資料の無い施設は数えない。測った施設 0 は不合格", () => {
     assert.equal(judgeA3({ facilities: [f()] }, { same: false, detail: "" }).status, FAIL);
     assert.equal(judgeA3({ facilities: [f()] }, { same: null, detail: "" }).status, UNKNOWN);
-    assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }, f()] }, ok).status, WAIT);
+    assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }, f()] }, ok).status, PASS);
     assert.equal(judgeA3({ facilities: [{ facility: "y", planMade: false }] }, ok).status, FAIL);
   });
 });

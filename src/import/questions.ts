@@ -2,7 +2,7 @@
 // 決定は同じ種類の行すべてに効き、取り消せる（決定を外して読み直す。同じ入力と決定からはいつも同じ出力）。
 // 決定の作者は src/shared/fields.ts の AUTHOR_KINDS。推測で埋めない：答えが無ければ、そのセルは未解決。
 import { AUTHOR_KINDS, type AuthorKind } from "../shared/fields";
-import { answerAppliesTo, ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
+import { answerAppliesTo, answerMatches, countShape, ruleReason, tradeWordsOf, type ActiveRule, type ReadingRule, type RuleHits } from "./reading";
 
 export type QuestionKind =
   | "encoding"
@@ -228,7 +228,8 @@ export class Asker {
       let g = this.groups.get(gid);
       if (!g) {
         const stored = this.decisions.get(gid) ?? null;
-        const rule = stored ? null : this.ruleFor(q);
+        // まとめた問いは、まとめた文（人と Claude に見せる文）でも規則を当てる（1 年目の答えの規則は、まとめた文から作る）
+        const rule = stored ? null : (this.ruleFor(q) ?? (merge.text ? this.ruleFor({ ...q, text: merge.text(q.sameShapeRows) }) : null));
         const decision: Decision | null = stored ?? (rule && rule.rule.kind === "answer" ? { questionId: gid, answer: rule.rule.answer, author: "rule_code", reason: ruleReason(rule) } : null);
         g = { id: gid, first: { ...q, items: [] }, text: merge.text, members: new Map(), decision, stored: !!stored, rule, invalid: decision ? invalidOf(decision, q) : null, always: merge.always === true };
         this.groups.set(gid, g);
@@ -270,13 +271,16 @@ export class Asker {
    */
   private ruleFor(q: Pick<Question, "kind" | "text" | "options" | "valueKind" | "items">): ActiveRule | null {
     const files = [...new Set(q.items.map((i) => i.file))];
-    // 文の比べは、そのままの字だけ（年度・数を伏せて広げると、年度ごとに正解の変わる問いに同じ答えが当たる。違う答えより聞く側に倒す。mushitaro/moyai#67）
+    // 文の比べは、そのままの字か、行・件などの数えだけを伏せた形（reading.ts の answerMatches）。年度・日付・番号は伏せない
+    // （伏せて広げると、年度ごとに正解の変わる問いに同じ答えが当たる。違う答えより聞く側に倒す。mushitaro/moyai#67）
+    let shapedText: string | undefined;
+    const shaped = () => (shapedText ??= countShape(q.text));
     return (
       this.answerRules.find(
         (x) =>
           x.rule.kind === "answer" &&
           x.rule.question === q.kind &&
-          q.text.includes(x.rule.match) &&
+          answerMatches(q.text, x.rule.match, shaped) &&
           (q.valueKind === "number" || q.options.some((o) => o.id === (x.rule as { answer: string }).answer)) &&
           answerAppliesTo(x.rule, files),
       ) ?? null

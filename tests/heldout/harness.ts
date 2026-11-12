@@ -338,6 +338,25 @@ export function truthKnows(q: QuestionState, ix: Index): boolean {
   return q.items.length > 0 && q.items.every((it) => known(it) && (!it.target?.length || known(it.target[0])));
 }
 
+/**
+ * 号・系列として読めない号炉の欄の値（「共」など）の問いに、正解から答える（pack-bench だけ。acceptDefaults のとき。見ていない様式の測り方は変えない）。
+ * その行の作業の機器が、どれも号炉の無い機器（正解の furnace が null）なら「号・系列なしとして読む」。ほかは前の答え方（answer。選択肢が 1 つならそれ）に回す。
+ * パックの読み方のルール（「共」は共通）が無い初めて読む資料では、人がこう答える問い（mushitaro/moyai#67）
+ */
+function unitMissingAnswer(q: QuestionState, ix: Index): string | null {
+  if (!q.options.some((o) => o.id === "none")) return null;
+  let seen = 0;
+  for (const it of q.items) {
+    for (const c of it.cells) {
+      const e = ix.eventAt(it.file, it.sheet, c);
+      if (!e) continue;
+      if (!e.equipment_ids.length || !e.equipment_ids.every((id) => ix.eq.has(id) && ix.eq.get(id)!.furnace === null)) return null;
+      seen++;
+    }
+  }
+  return seen > 0 ? "none" : null;
+}
+
 export const DEFAULT_REASON = "既定の答えを受けた（台本は正解から答えられない）";
 
 /** 台本の選び。どれも Skillパックの物差し（pack-bench）だけが使う。見ていない様式の測り（heldout）・calibrate・demo は渡さない（測り方を変えない） */
@@ -366,7 +385,7 @@ export function runScript(session: { analyze(): Analysis; settle(ds: Decision[])
     const ds: Decision[] = [];
     for (const q of an.open) {
       if (answered.has(q.questionId)) continue;
-      const a = opt.acceptDefaults && !truthKnows(q, ix) ? null : answer(q, ix);
+      const a = opt.acceptDefaults && !truthKnows(q, ix) ? null : opt.acceptDefaults && q.kind === "unitMissing" ? (unitMissingAnswer(q, ix) ?? answer(q, ix)) : answer(q, ix);
       if (a !== null) ds.push({ questionId: q.questionId, answer: a, author: "human", reason: AUTHOR_REASON });
       else if (opt.acceptDefaults && q.defaultAnswer !== null && q.options.some((o) => o.id === q.defaultAnswer)) {
         ds.push({ questionId: q.questionId, answer: q.defaultAnswer, author: "human", reason: DEFAULT_REASON });
