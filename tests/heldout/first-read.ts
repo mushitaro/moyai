@@ -1,6 +1,6 @@
 // 初めて読む物差し（pack-bench の --first-read。mushitaro/moyai#67）の道具：資料を年度に分ける・1 年目の答えを決まった答えの規則にする。
 // 純粋な関数。試験は tests/unit/first-read.test.ts
-import { WHOLE_FILE_ANSWERS, answerShape, type ReadingRule } from "../../src/import/reading";
+import { WHOLE_FILE_ANSWERS, type ReadingRule } from "../../src/import/reading";
 
 /** 資料の名前の年度の印（R7・H28・R元・2022）。範囲（H28-R7・2016-2031）は 2 つ出る */
 const YEAR_MARK = /(?:^|[^A-Za-z0-9])((?:R|H)(?:元|\d{1,2})|20\d{2})(?![0-9])/gu;
@@ -24,7 +24,8 @@ export function yearSplit(files: readonly string[]): { year: string; first: stri
 
 /**
  * 1 年目の答えを、決まった答えの規則（answer）にする：Claude が「答えをルールにして」保管先に置くのと同じ形。
- * match は問いの文の、資料の名前によらない所（下の keyOf）、120 字まで。年度・日付・数えは、読み手が伏せて比べる（src/import/reading.ts の answerShape）。
+ * match は問いの文の、資料の名前によらない所（下の keyOf）、120 字まで。読み手はそのままの字で当てるので、年度や数を含む問いには、その年度の問いにだけ当たる。
+ * 名前ごとの規則だけを作る（種類ごとに広げない。広げると、正解の候補が問いごとに違う問いに同じ答えが当たった。mushitaro/moyai#67 の道 D）。
  * 資料を丸ごと外す答え（参考・読めない）は資料を指す規則なので作らない
  */
 export function rulesFromAnswers(questions: readonly { questionId: string; kind: string; text: string }[], answered: readonly { questionId: string; answer: string }[], files: readonly string[]): ReadingRule[] {
@@ -66,56 +67,20 @@ export function rulesFromAnswers(questions: readonly { questionId: string; kind:
     out.push({ id: `y1-${out.length + 1}`, kind: "answer", question: q.kind, match, answer: a, text: `1 年目の答えと同じに読む（${q.kind}）`, author: "ai", reason: "1 年目の答え（物差しの台本）" });
     if (out.length >= 500) break;
   }
-  // 種類ごとの規則（名前ごとの規則のあとに置く。先に当たったものが効く）：1 年目に、その種類の問いに 5 問以上答え、
-  // 候補を指さない同じ答え（外す・新しい機器として入れるなど）が 9 割以上なら、その種類の問いに共通の文で、その答えを置く（人が「台帳に無い機器の作業は外す」と決めるのと同じ形）。
-  // 候補を指す答え（c0・m0・v0 など）は、問いごとに候補が違うので広げない
-  const byKind = new Map<string, { texts: string[]; answers: Map<string, number>; n: number }>();
-  for (const q of questions) {
-    const a = ans.get(q.questionId);
-    if (a === undefined || WHOLE_FILE_ANSWERS.includes(a)) continue;
-    const b = byKind.get(q.kind) ?? { texts: [] as string[], answers: new Map<string, number>(), n: 0 };
-    b.n++;
-    b.texts.push(answerShape(keyOf(q).match));
-    if (!CANDIDATE.test(a)) b.answers.set(a, (b.answers.get(a) ?? 0) + 1);
-    byKind.set(q.kind, b);
-  }
-  for (const [kind, b] of byKind) {
-    if (b.n < 5 || kind.length > 40 || out.length >= 500) continue;
-    const [top, count] = [...b.answers.entries()].sort((x, y) => y[1] - x[1])[0] ?? ["", 0];
-    if (!top || top.length > 60 || count < b.n * 0.9) continue;
-    const common = commonPiece(b.texts);
-    if (!common) continue;
-    out.push({ id: `y1-${out.length + 1}`, kind: "answer", question: kind, match: common, answer: top, text: `1 年目にいつも同じに答えた問いは、同じに読む（${kind}）`, author: "ai", reason: `1 年目の答え（物差しの台本。${count}/${b.n} 問が同じ答え）` });
-  }
   return out;
 }
 
-/** 候補を指す答え（候補の機器・印・値の番号） */
-const CANDIDATE = /^[cmv]\d+$/;
-
 /**
- * 文の 9 割以上（share）に入っている、伏せた所（#）を含まない最も長い切れ端（8〜120 字）。無ければ null。
- * 切れ端の元は、はじめの 3 つの文（形の違う文が 1 つ混じっていても、ほかの文から取れるように）
+ * 問いの文の、年度・日付・行や件の数を「#」に伏せた形。ルールを作る前に、年度や数だけが違って答えの分かれた問いを見つけるのに使う（その問いはルールにしない）。読み手は伏せずに、そのままの字で当てる（違う答えより聞く側に倒す。mushitaro/moyai#67）。
+ * 伏せるのは、年度（2021・2021 年度・R7 年度・令和 7 年度など）、日付、数え（3 行・12 件・2 冊・444 通り・5 問・7 枚・2 頁・10 セル）だけ。
+ * 号・No.・番号などの数は伏せない（伏せると、別の機器の問いに同じ答えが当たる）
  */
-export function commonPiece(texts: readonly string[], share = 0.9): string | null {
-  if (!texts.length) return null;
-  const need = Math.ceil(texts.length * share);
-  let best: string | null = null;
-  for (const base of [...new Set(texts)].slice(0, 3)) {
-    for (const piece of base.split("#")) {
-      const cs = [...piece];
-      for (let len = Math.min(cs.length, 120); len >= 8 && (!best || len > [...best].length); len--) {
-        let found: string | null = null;
-        for (let i = 0; i + len <= cs.length && !found; i++) {
-          const sub = cs.slice(i, i + len).join("").trim();
-          if ([...sub].length >= 8 && texts.filter((t) => t.includes(sub)).length >= need) found = sub;
-        }
-        if (found) {
-          best = found;
-          break;
-        }
-      }
-    }
-  }
-  return best;
+export function answerShape(text: string): string {
+  return text
+    .normalize("NFKC")
+    .replace(/(?:19|20)\d{2}[/.-]\d{1,2}[/.-]\d{1,2}/g, "#")
+    .replace(/\d{1,2}月\d{1,2}日/g, "#")
+    .replace(/(?:令和|平成|[RH])\s?(?:元|\d{1,2})\s?年度/g, "#")
+    .replace(/(?<!\d)(?:19|20)\d{2}(?!\d)(?:\s?年度)?/g, "#")
+    .replace(/\d[\d,]*\s?(?:行|件|冊|通り|問|枚|頁|セル)/g, "#");
 }
