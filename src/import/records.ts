@@ -1306,6 +1306,58 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
   }
   // 2 段の書き方（年の欄に整備の内容、その下の行に金額）：内容のセルを星取として読む。金額はその費用
   const content = amountRows.size ? contentMarks(t, lay, ask, rec, data, rowNode, marks, amountRows, exclude, pend, off) : null;
+  // まとめの行：下の段の機器の行を持つ親の行で、作業の欄も費用も無く、印のある年のどれにも下の行の印がある（下の行の印を年ごとにまとめて写した行）。
+  // 親の行の印を作業にすると、下の行と同じ年の作業がもう 1 つできる。表ごとに 1 問（推すのは外す。決めるのは人）
+  const rollupKey = `rollupRow|${t.id}`;
+  const rollups = new Set<number>();
+  const marked = (r: number) =>
+    marks.filter((col) => {
+      const c = lay.index.at(r, col.c);
+      return !!c && c.text !== "" && !off(c.ref) && !content?.has(c.ref);
+    });
+  {
+    // 行の段：名前を書いた、いちばん左の段の列（名前の無い行は下の段）
+    const levelOf = (r: number) => {
+      const i = hier.findIndex((col) => {
+        const c = lay.index.at(r, col.c);
+        return !!c && c.text.trim() !== "" && !off(c.ref);
+      });
+      return i < 0 ? hier.length : i;
+    };
+    for (let i = 0; i < data.length; i++) {
+      const r = data[i]!.r;
+      const node = rowNode.get(r);
+      const level = levelOf(r);
+      if (!node || node.pending || level >= hier.length - 1 || rowWork(r) || costOf.has(r)) continue;
+      const own = marked(r);
+      if (!own.length) continue;
+      const below = new Set<number>();
+      for (let j = i + 1; j < data.length; j++) {
+        const rj = data[j]!.r;
+        if (!rowNode.get(rj) || levelOf(rj) <= level) break;
+        for (const col of marked(rj)) below.add(col.c);
+      }
+      if (below.size && own.every((col) => below.has(col.c))) rollups.add(r);
+    }
+  }
+  const rollupAnswer = rollups.size
+    ? ask.ask(
+        rollupKey,
+        {
+          kind: "stray",
+          text: `下の段の機器の行の印を、年ごとにまとめて写したように見える親の行がある（${lay.file}${lay.sheet ? `「${lay.sheet}」` : ""}の ${[...rollups].slice(0, NO_NAME_ROWS_SHOWN).join("・")}${rollups.size > NO_NAME_ROWS_SHOWN ? ` ほか ${rollups.size - NO_NAME_ROWS_SHOWN}` : ""} 行目。作業の欄も費用も無い）。その行の印をどう読むか`,
+          options: [
+            { id: "exclude", label: "まとめの印として外す（下の行の印だけを作業にする）" },
+            { id: "keep", label: "その機器の作業の印として読む" },
+          ],
+          valueKind: "option",
+          defaultAnswer: "exclude",
+          sameShapeRows: rollups.size,
+          items: [...rollups].map((r) => itemOf(lay, marked(r).map((col) => lay.index.at(r, col.c)!.ref))),
+        },
+        sameForm("rollupRow", formKeyOf(rec, t), "-", (rows) => `下の段の機器の行の印を、年ごとにまとめて写したように見える親の行がある（${rows} 行）。その行の印をどう読むか`),
+      )
+    : null;
   // 印
   const legend = t.legend;
   for (const r of data) {
@@ -1313,6 +1365,11 @@ function gridRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, order
       const cell = lay.index.at(r.r, col.c);
       if (!cell || cell.text === "" || off(cell.ref)) continue;
       if (content?.has(cell.ref)) continue;
+      if (rollups.has(r.r) && rollupAnswer !== "keep") {
+        if (rollupAnswer === "exclude") exclude(cell.ref, "まとめの行の印（下の行の印を年ごとにまとめた行。決定で外した）");
+        else pend(cell.ref, questionIdOf(rollupKey));
+        continue;
+      }
       const sym = nfkc(cell.text);
       const node = rowNode.get(r.r) ?? null;
       const m: MarkRec = {
