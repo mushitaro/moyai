@@ -335,13 +335,40 @@ describe("見直しで直したこと", () => {
     expect(/[\uD800-\uDBFF]…$/.test(c)).toBe(false);
   });
 
-  it("main にないコミットの clone は入れない（あとで fast-forward で進められないので）", async () => {
+  it("main にないコミットの clone からは、取ってくる先の main の最新を入れる（あとで fast-forward で進めるため。clone は変えない）", async () => {
+    const w = world();
+    const c2 = w.push("2\n");
+    git(w.dev, "reset", "--quiet", "--hard", w.c1);
+    writeFileSync(join(w.dev, "b.txt"), "x\n");
+    git(w.dev, "add", "b.txt");
+    git(w.dev, "commit", "--quiet", "-m", "手元だけ");
+    const mine = git(w.dev, "rev-parse", "HEAD");
+    const r = await installFromClone({ root: w.root, run: runner().run, sourceForTest: w.origin }, w.dev);
+    expect(r).toEqual({ ok: true, commit: c2, fromMain: true });
+    expect(isReady(w.root, c2)).toBe(true);
+    expect(existsSync(versionDir(w.root, mine))).toBe(false);
+    expect(git(w.dev, "rev-parse", "HEAD")).toBe(mine);
+  });
+
+  it("main にないコミットの clone で、main も取れなければ入れない", async () => {
     const w = world();
     writeFileSync(join(w.dev, "b.txt"), "x\n");
     git(w.dev, "add", "b.txt");
     git(w.dev, "commit", "--quiet", "-m", "手元だけ");
-    expect(await installFromClone({ root: w.root, run: runner().run }, w.dev)).toEqual({ ok: false, step: "not_on_main" });
+    const r = await installFromClone({ root: w.root, run: runner().run, sourceForTest: join(w.d, "無い.git") }, w.dev);
+    expect(r).toEqual({ ok: false, step: "not_on_main" });
     expect(existsSync(join(w.root, "versions"))).toBe(false);
+  });
+
+  it("コミットしていない手元の変更があっても入れる。入るのはコミットした中身で、clone の変更はそのまま", async () => {
+    const w = world();
+    writeFileSync(join(w.dev, "a.txt"), "作業中\n");
+    writeFileSync(join(w.dev, "動画.txt"), "作業中\n");
+    const r = await installFromClone({ root: w.root, run: runner().run, sourceForTest: w.origin }, w.dev);
+    expect(r).toEqual({ ok: true, commit: w.c1 });
+    expect(readFileSync(join(versionDir(w.root, w.c1), "a.txt"), "utf8")).toBe("1\n");
+    expect(existsSync(join(versionDir(w.root, w.c1), "動画.txt"))).toBe(false);
+    expect(readFileSync(join(w.dev, "a.txt"), "utf8")).toBe("作業中\n");
   });
 
   it("起動の台本は、動いている版（running/ の印）と、用意が走っている間は消さない", () => {
