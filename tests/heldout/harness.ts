@@ -269,6 +269,17 @@ export function answer(q: QuestionState, ix: Index): string | null {
         const cellWorks = tg ? (ix.markAt(tg.file, tg.sheet, tg.cells[0] ?? "")?.work_ids ?? []) : [];
         return lines.length > 0 && lines.every((l) => l.work_ids.some((w) => cellWorks.includes(w)));
       });
+      // 名前の違う作業を「日報・報告書だけの記録」として入れるかの問い（「1 件ずつ」がある）：正解でどの行も印の作業でなければ入れる。印の作業が混ざれば 1 件ずつ
+      if (isNoMark && q.options.some((o) => o.id === "split")) {
+        // 見るのは、その機器・その年度の星取（items の相手のセル）が、その行の作業か
+        const other = q.items.every((it) => {
+          const lines = it.cells.map((c) => ix.eventAt(it.file, it.sheet, c)).filter((x): x is Event => !!x);
+          const tg = it.target?.[0];
+          const cellWorks = tg ? (ix.markAt(tg.file, tg.sheet, tg.cells[0] ?? "")?.work_ids ?? []) : [];
+          return lines.every((l) => !l.work_ids.some((w) => cellWorks.includes(w)));
+        });
+        return other ? "yes" : "split";
+      }
       // 印の無い作業を「日報・報告書だけの記録」として入れるかの問いは、正解で印があっても「入れる」（人は記録を捨てない。結べなかった分は ⑥ が数える）
       return ok ? "yes" : isNoMark ? "yes" : "split";
     }
