@@ -26,18 +26,19 @@ export function metricsOf(row) {
     recoveryTotal: row.recovery?.total ?? 0,
     accuracyTotal: row.accuracy?.total ?? 0,
     // 初めて読む測り（--first-read）だけ：1 年目の問い・残りを足した問い・規則で決まった問い・規則の数
-    ...(row.firstRead ? { firstAsked: row.firstRead.firstAsked, restAsked: row.firstRead.restAsked, ruleAnswered: row.firstRead.ruleAnswered, rules: row.firstRead.rules } : {}),
+    ...(row.firstRead ? { firstAsked: row.firstRead.firstAsked, restAsked: row.firstRead.restAsked, ruleAnswered: row.firstRead.ruleAnswered, rules: row.firstRead.rules, ruleWrong: row.firstRead.ruleWrong ?? 0 } : {}),
   };
 }
 
 // 大きいほど良い数と、小さいほど良い数。extra は ③ の読みすぎ（正解に無いのに計画に読んだ数。合った数が増えても、読みすぎが増えれば退行）。
 // asked（質問の数）と分母は記録するだけで、退行の判定には使わない（違えば changed になり、--strict が拾う）
 const UP = ["planMade", "recovery", "accuracy", "manDays", "days"];
-const DOWN = ["extra", "unresolved", "open"];
+// ruleWrong は初めて読む測りだけ：ルールで決まった問いのうち、正解の台本と違う答えの数（増えれば退行）
+const DOWN = ["extra", "unresolved", "open", "ruleWrong"];
 const NOTE = ["asked", "recoveryTotal", "accuracyTotal", "firstAsked", "restAsked", "ruleAnswered", "rules"];
 // 分母でなく、記録するだけの数（違えば changed になるが、分母が変わった所には書かない）
 const COUNT_ONLY = ["asked", "firstAsked", "restAsked", "ruleAnswered", "rules"];
-const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", extra: "③ の読みすぎ", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問", recoveryTotal: "⑥ の分母", accuracyTotal: "③ の分母", firstAsked: "1 年目の問い", restAsked: "残りを足した問い", ruleAnswered: "規則で決まった問い", rules: "1 年目の規則" };
+const LABEL = { planMade: "計画", recovery: "⑥", accuracy: "③", manDays: "工数", days: "日数", extra: "③ の読みすぎ", unresolved: "② 未解決", open: "開いたままの問い", asked: "⑤ 質問", recoveryTotal: "⑥ の分母", accuracyTotal: "③ の分母", firstAsked: "1 年目の問い", restAsked: "残りを足した問い", ruleAnswered: "規則で決まった問い", rules: "1 年目の規則", ruleWrong: "ルールの答えが正解と違う問い" };
 
 export function compare(base, head) {
   if (base.schema !== "moyai.pack-bench.result/0" || head.schema !== "moyai.pack-bench.result/0") throw new Error("moyai.pack-bench.result/0 でない");

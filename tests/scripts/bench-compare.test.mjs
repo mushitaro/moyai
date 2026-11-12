@@ -58,3 +58,11 @@ test("分母が変われば changed（--strict が拾う）。判定には使わ
   assert.equal(c.changed, true);
   assert.ok(c.notes.some((x) => x.includes("⑥ の分母")));
 });
+
+test("初めて読む測り：ルールの答えが正解と違う問いが増えれば退行。測り方の違う結果は比べない", () => {
+  const fr = (ruleWrong) => ({ ...res([row("a", { firstRead: { firstAsked: 10, restAsked: 2, ruleAnswered: 30, rules: 8, ruleWrong } })]), mode: "first-read" });
+  assert.equal(compare(fr(1), fr(1)).verdict, "差なし");
+  assert.equal(compare(fr(1), fr(3)).verdict, "退行あり");
+  assert.equal(compare(fr(3), fr(1)).verdict, "良くなった");
+  assert.throws(() => compare(res([row("a")]), fr(1)));
+});
