@@ -187,12 +187,12 @@ function shortWhy(basis: string): string {
 }
 
 export function DecisionsSheet({ client, plan }: { client: BridgeClient; plan: Plan }) {
-  const { pending, ready } = usePending(client, plan);
-  return <DecisionsView plan={plan} pending={pending} ready={ready} />;
+  const { pending, ready, problem } = usePending(client, plan);
+  return <DecisionsView plan={plan} pending={pending} ready={ready} problem={problem} />;
 }
 
 /** 確定のシートの中身。受けていない決定（版の履歴で受けたものを除いたもの）を受け取って描く（試験は react-dom/server でここを描く） */
-export function DecisionsView({ plan, pending, ready }: { plan: Plan; pending: readonly Decision[]; ready: boolean }) {
+export function DecisionsView({ plan, pending, ready, problem = null }: { plan: Plan; pending: readonly Decision[]; ready: boolean; problem?: string | null }) {
   const accepted = useAccepted();
   const working = useWorkingPlan();
   const proposals = working?.proposals ?? [];
@@ -937,10 +937,16 @@ export function DecisionsView({ plan, pending, ready }: { plan: Plan; pending: r
       )}
 
       {!ready ? (
-        // 版の履歴（これまでに受けた決定）を読み終えるまでは、受けていない決定を数えない
-        <Text size="sm" c="dimmed" data-testid="decisions-loading">
-          {T.loading}
-        </Text>
+        // 版の履歴（これまでに受けた決定）を読み終えるまでは、受けていない決定を数えない。読めないとき（保存先が無いなど）は「読んでいます」と言わず、読めない理由を出す
+        problem ? (
+          <Text size="sm" c="dimmed" data-testid="decisions-problem">
+            {problem}
+          </Text>
+        ) : (
+          <Text size="sm" c="dimmed" data-testid="decisions-loading">
+            {T.loading}
+          </Text>
+        )
       ) : leftCount === 0 ? (
         <Text size="sm" c="dimmed" data-testid="decisions-none">
           {T.none}

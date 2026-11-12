@@ -72,3 +72,74 @@ jobs:
           code=$?
           cat "$RUNNER_TEMP/bench/compare.md" >> "$GITHUB_STEP_SUMMARY"
           exit $code
+
+  # シナリオテスト D1・D2（docs/scenarios.md）：e2e（tests/e2e）と walkthrough（tests/demo）を、ubuntu と windows の Chrome で。
+  # 落ちた試験があれば落ちる。ファイルごとの数を scenario の仕事に渡す
+  e2e:
+    name: e2e (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.19.0
+      - name: 依存を入れる（npm 11、スクリプトは走らせない）
+        run: npx -y npm@11.21.1 ci --ignore-scripts
+      - name: ビルド（e2e は dist/cli.js を起こす）
+        run: npm run build
+      - name: e2e と walkthrough（入っている Chrome。ブラウザは落とさない）
+        run: node scripts/scenario/run.mjs --part e2e --out-json "${{ runner.temp }}/scenario/e2e-${{ matrix.os }}.json"
+      - name: 数を scenario の仕事に渡す
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scenario-e2e-${{ matrix.os }}
+          path: ${{ runner.temp }}/scenario/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # シナリオテスト（docs/scenarios.md）の自動の印を判定し、表を仕事の要約に書く。
+  # 判定はランナーのコード（scripts/scenario/marks.mjs）。この仕事は、ランナーが走りきれば緑（合否は表の字。不合格の印があっても、ここでは落とさない）
+  scenario:
+    name: scenario
+    needs: [test, pack-bench, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.19.0
+      - name: 依存を入れる（npm 11、スクリプトは走らせない）
+        run: npx -y npm@11.21.1 ci --ignore-scripts
+      - name: e2e の仕事の数を受ける
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          pattern: scenario-e2e-*
+          path: ${{ runner.temp }}/scenario-e2e
+          merge-multiple: true
+      - name: 印を判定して表を書く（npm run scenario -- --ci）
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MOYAI_CI_TEST: ${{ needs.test.result }}
+          MOYAI_CI_PACK_BENCH: ${{ needs.pack-bench.result }}
+          MOYAI_CI_E2E: ${{ needs.e2e.result }}
+        run: node scripts/scenario/run.mjs --ci --e2e-dir "${{ runner.temp }}/scenario-e2e" --out "${{ runner.temp }}/scenario/result.md"

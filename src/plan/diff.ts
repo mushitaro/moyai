@@ -250,7 +250,9 @@ function sourceKeys(sources: readonly { file: string; sheet: string | null; cell
 
 /** 人が受けていない決定：AI の決定のうち、前の版までに同じ中身で受けていないもの。 */
 export function pendingDecisions(plan: Plan, accepted: readonly { id: string; hash: string }[]): Decision[] {
-  const ok = new Set(accepted.map((a) => `${a.id}\u0000${a.hash}`));
+  // 施設の名前の案（name:）は、版の履歴の受けた決定と照らさない。受けた案は署名の前に名前に効いて計画から消える（applyNameAcceptance）ので、
+  // 計画に案があれば、それはまだ受けていない。前に受けたのと同じ「前 → 後」の案を置き直しても、確定のシートに出て人の受けを待つ（mushitaro/moyai#63）
+  const ok = new Set(accepted.filter((a) => a.id !== "name:").map((a) => `${a.id}\u0000${a.hash}`));
   return aiDecisions(plan).filter((d) => !ok.has(`${d.id}\u0000${d.hash}`));
 }
 

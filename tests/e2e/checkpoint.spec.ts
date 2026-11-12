@@ -5,7 +5,7 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
@@ -104,10 +104,17 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     await page.getByTestId("dev-setting").scrollIntoViewIfNeeded();
     await page.screenshot({ path: shot(`settings-bottom-${tag}`) });
     await page.getByTestId("root-change").click();
-    await expect(page.getByTestId("documents-path")).toBeVisible();
-    // この PC の Documents は OneDrive の下にある（docs/plan.md §2.9）。そうでない PC では知らせが出ない
-    const docs = (await page.getByTestId("documents-path").textContent()) ?? "";
-    if (/onedrive/i.test(docs)) await expect(page.getByTestId("root-synced").first()).toBeVisible();
+    // 橋渡しと同じ見方（src/bridge/places.ts）：Windows は PowerShell で調べる。ほかは ~/Documents があるときだけ。
+    // Documents の無い入れ物（Linux の CI など）では、道の代わりに「調べられませんでした」の 1 行が出る
+    if (process.platform !== "win32" && !existsSync(join(homedir(), "Documents"))) {
+      await expect(page.getByTestId("documents-unknown")).toHaveText("Documents の場所を調べられませんでした。");
+      await expect(page.getByTestId("documents-path")).toHaveCount(0);
+    } else {
+      await expect(page.getByTestId("documents-path")).toBeVisible();
+      // この PC の Documents は OneDrive の下にある（docs/plan.md §2.9）。そうでない PC では知らせが出ない
+      const docs = (await page.getByTestId("documents-path").textContent()) ?? "";
+      if (/onedrive/i.test(docs)) await expect(page.getByTestId("root-synced").first()).toBeVisible();
+    }
     await page.getByTestId("root-input").fill(root);
     // 版の署名に出す呼び名（架空）
     await page.getByTestId("name-change").click();

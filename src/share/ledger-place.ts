@@ -4,7 +4,7 @@
 // 決まり・利用条件・束は、台帳の根の下の ledger/ に置く：
 //   <root>/ledger/ledger.json・<root>/ledger/TERMS.md・<root>/ledger/bundles/<鍵ID>/…
 // 道の定数と正規表現は、ここから導く。コード・試験・画面の文に、リポジトリの名前と道を直に書かない。
-import config from "../../config/ledger.json";
+import config from "../../config/ledger.json" with { type: "json" };
 
 export interface LedgerPlaceConfig {
   repo: string;

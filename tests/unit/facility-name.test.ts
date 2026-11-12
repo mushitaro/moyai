@@ -5,9 +5,9 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { aiDecisions } from "../../src/plan/diff";
+import { aiDecisions, pendingDecisions } from "../../src/plan/diff";
 import { applyNameAcceptance, proposeName, renameByHuman } from "../../src/plan/facility-name";
-import { commitPlan, readPlanVersion } from "../../src/plan/store";
+import { commitPlan, readHistory, readPlanVersion } from "../../src/plan/store";
 import type { Plan } from "../../src/shared/plan";
 import { IntakeWorkspace } from "../../src/app/intake/workspace";
 import { runTabTool } from "../../src/app/intake/tab-tools";
@@ -69,6 +69,40 @@ describe("施設の名前（署名した版）", () => {
     const old = await readPlanVersion(rt, v1.record.plan.planId, v1.record.version);
     if (!old.ok) throw new Error("前の版が読めない");
     expect(old.record.plan.displayName).toBe("第一清掃工場");
+  });
+});
+
+describe("施設の名前（同じ案を置き直す。mushitaro/moyai#63）", () => {
+  it("A → B を受けて署名し、人が A に戻して署名したあと、同じ根拠で A → B を置き直すと、確定のシートに出て受けるまで署名できない", async () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-rename-again-"));
+    const rt = join(dir, "MOYAI");
+    const sign = async (p: Plan, basedOn: number | null, acceptances: { id: string; hash: string; reason: string }[] = []) =>
+      commitPlan({ root: rt, plan: p, reason: "版", acceptances, basedOn, signer: SIGNER, client: "t" });
+    const v1 = await sign(base(), null);
+    if (!v1.ok) throw new Error(v1.reason);
+    const basis = "利用者が会話で頼んだ";
+    const r1 = proposeName(v1.record.plan, "北部清掃工場", "ai_relayed_human", basis);
+    if (!r1.ok) throw new Error(r1.code);
+    const d1 = aiDecisions(r1.plan).find((x) => x.kind === "facilityName")!;
+    const v2 = await sign(r1.plan, 1, [{ id: d1.id, hash: d1.hash, reason: "名前を変える" }]);
+    if (!v2.ok) throw new Error(v2.reason);
+    // 人が見出しで A に戻して署名する
+    const back = renameByHuman(v2.record.plan, "第一清掃工場")!;
+    const v3 = await sign(back, 2);
+    if (!v3.ok) throw new Error(v3.reason);
+    expect(v3.record.plan.displayName).toBe("第一清掃工場");
+    // Claude が同じ根拠で A → B を置き直す：前に受けた決定と同じ指紋でも、受けていない決定に数える
+    const r2 = proposeName(v3.record.plan, "北部清掃工場", "ai_relayed_human", basis);
+    if (!r2.ok) throw new Error(r2.code);
+    const d2 = aiDecisions(r2.plan).find((x) => x.kind === "facilityName")!;
+    expect(d2.hash).toBe(d1.hash);
+    const hist = await readHistory(rt, v1.record.plan.planId);
+    expect(hist.accepted.some((a) => a.id === "name:" && a.hash === d1.hash)).toBe(true);
+    expect(pendingDecisions(r2.plan, hist.accepted).map((d) => d.id)).toContain("name:");
+    expect(await sign(r2.plan, 3)).toMatchObject({ ok: false, reason: "pendingDecisions", pending: 1 });
+    const v4 = await sign(r2.plan, 3, [{ id: d2.id, hash: d2.hash, reason: "もう一度変える" }]);
+    if (!v4.ok) throw new Error(v4.reason);
+    expect([v4.record.plan.displayName, v4.record.plan.nameProposal]).toEqual(["北部清掃工場", undefined]);
   });
 });
 

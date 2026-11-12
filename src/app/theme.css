@@ -1329,3 +1329,8 @@ tr.moyai-pick-row[aria-selected="true"] > .moyai-decisions-act {
   outline: 0;
   min-width: 8em;
 }
+
+/* 選べる行が標準の 1 つだけのとき（押せない行。TemplateExport） */
+div.moyai-template-choice {
+  cursor: default;
+}

@@ -3,9 +3,11 @@
 // 人が資料を落とし、AI は本物の中継（dist/cli.js mcp）で要約を読み、既定の答えを置き、当てはめの規則を置く。
 // 規則は、星取表の段の道にある名前が、パックの 1 段目の項目の名前と同じものだけ（AI の代わりにこの試験が書く）。
 // 人の受けるは、試験の台本が画面で押す。先に npm run build を走らせておく。
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { acceptRules, callTool as call, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptRules, callTool as call, chooseRoot, mcpClient, openIntakeAndDrop, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
 const PACK = "night-soil";
 const FACILITY = "【架空】し尿処理の一施設";
@@ -30,10 +32,15 @@ function packItems(): { code: string; name: string }[] {
 }
 
 let bridge: StartedBridge;
+let root = "";
 test.beforeAll(async () => {
   bridge = await startBuiltBridge("moyai-e2e-night-soil-");
+  root = mkdtempSync(join(tmpdir(), "moyai-e2e-night-soil-root-"));
 });
-test.afterAll(() => bridge?.stop());
+test.afterAll(() => {
+  bridge?.stop();
+  if (root) rmSync(root, { recursive: true, force: true });
+});
 
 test("し尿処理のパックで、同じ画面のまま取り込み → 計画 → 当てはめ → 星取表", async ({ page }, info) => {
   test.setTimeout(300_000);
@@ -41,6 +48,8 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
   const c = await mcpClient(bridge.stateDir, ["intake_survey", "intake_settle", "intake_compose", "chart_rows", "crosswalk_propose"]);
   try {
     await test.step("人：し尿処理のパックを選び、資料を取り込みの画面に落とす", async () => {
+      // 決定のシートは、保存先の版の履歴（受けた決定）を読んでから決定を並べる。Documents に頼らず一時のフォルダを選ぶ
+      await chooseRoot(page, bridge.base, root);
       await openIntakeAndDrop(page, bridge.base, FACILITY, SET, PACK);
       await page.screenshot({ path: shot(`night-soil-dropped-${tag}`), fullPage: true });
     });

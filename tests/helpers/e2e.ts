@@ -183,7 +183,12 @@ export async function signInDialog(page: Page): Promise<void> {
   await expect(page.getByTestId("sign-as")).toBeVisible();
 }
 
-export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string): Promise<void> {
+/**
+ * 設定の画面で保存先と呼び名を選んで保存する（試験の台本が人の代わりに押す）。
+ * 既定の保存先は Documents の下なので、Documents の無い入れ物（Linux の CI など）では保存先が無く、確定のシートが受けた決定を読めない（mushitaro/moyai#36）。
+ * 保存先に関わる段のある台本は、Documents の有る無しに頼らず、一時のフォルダをここで選ぶ
+ */
+export async function chooseRoot(page: Page, base: string, root: string): Promise<void> {
   await page.goto(`${base}/#/settings`);
   await expect(page.getByTestId("settings-page")).toBeVisible();
   await page.getByTestId("root-change").click();
@@ -193,6 +198,10 @@ export async function chooseRootAndCreateRing(page: Page, base: string, root: st
   await page.getByTestId("settings-save").click();
   await expect(page.getByTestId("settings-save")).toBeDisabled();
   await expect(page.getByTestId("current-root")).toHaveText(root);
+}
+
+export async function chooseRootAndCreateRing(page: Page, base: string, root: string, ringRoot: string): Promise<void> {
+  await chooseRoot(page, base, root);
   await page.getByTestId("ring-create-open").click();
   await page.getByTestId("ring-folder").fill(ringRoot);
   await page.getByTestId("ring-pack").selectOption("waste-incineration");

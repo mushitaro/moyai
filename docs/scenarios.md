@@ -68,3 +68,8 @@ M-PC3 の Claude Desktop の Chat で、次を会話だけで進め、人が押�
 ## 結果の表
 
 `eval/scenario/result.md` に、印ごとに「合格・不合格・未確認・待ち（誰の何を待つか）」と、版（コミット）と日時を書く。`npm run scenario` が自動の列を書き、統括が実機の列を書く。
+
+- ランナーは `scripts/scenario/`（判定は `marks.mjs`、走らせるのは `run.mjs`）。新しい試験は作らず、物差し・e2e・vitest を呼ぶだけ。実機の列は、書き直しても前の字を残す。
+- この PC で全部：`npm run build` のあと `npm run scenario`（物差し・台帳の試験・e2e と walkthrough を Chrome で。D3・E2 は `GH_TOKEN` か `GITHUB_TOKEN` があるときだけ読む）。
+- CI：`e2e`（ubuntu・windows）が e2e と walkthrough を走らせて数を渡し、`scenario` が表を仕事の要約に書く。`scenario` の仕事はランナーが走りきれば緑で、合否は表の字（不合格の印があっても main を赤にしない）。
+- D2 の `claude-code.spec`（Claude Code の使用量）と `template-mcp.spec`（運営者の資料）は CI では飛ぶので、D2 は CI だけでは「未確認」。M-PC3 で `MOYAI_CLAUDE_E2E=1` を付けて走らせたときだけ合格になりうる。

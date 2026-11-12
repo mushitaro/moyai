@@ -488,7 +488,8 @@ test("デモの通し：トップ → MERGE（取り込み・当てはめ・台�
       await pa.goto(`${one.base}/#/export`);
       const chooser = pa.waitForEvent("filechooser");
       await pa.getByTestId("template-pick").click();
-      await (await chooser).setFiles(tpl);
+      // 道で渡すと、Linux の Chrome では選んだファイルが画面に届かないので、中身で渡す（tests/e2e/shots-export-share.spec.ts と同じ）
+      await (await chooser).setFiles({ name: basename(tpl), mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: readFileSync(tpl) });
       await expect(pa.getByTestId("template-role")).toHaveCount(6);
       await pa.screenshot({ path: shot("demo-26-template") });
       // 様式で出すときは、主ボタン「署名して出力」の 1 回で、列対応を承認する署名をして落とす（docs/screens.md 3.5。e2e の template.spec と同じ流れ）
