@@ -265,3 +265,27 @@ describe("古い版のルールのシート（見るだけ）", () => {
     expect(text(html)).toContain("【架空】消えたルール第 5 版で適用保存先に中身なし");
   });
 });
+
+describe("署名の板の版の履歴（#29、Wire の TimeMap5）", () => {
+  const v: PanelVersion = { version: 3, problem: null, legacy: false, signatures: [] };
+  const rows = [
+    { version: 1, at: "2026-07-15T01:00:00Z", reason: "令和 8 年度版のはじめ", problem: null, signatures: [{ role: "confirm", by: "【架空】山田" }] },
+    { version: 3, at: "2026-11-10T01:00:00Z", reason: "周期を台帳に合わせた", problem: null, signatures: [{ role: "confirm", by: "【架空】山田" }, { role: "approve", by: "【架空】課長" }] },
+    { version: 2, at: "2026-10-02T01:00:00Z", reason: "壊れた版", problem: "hashMismatch", signatures: [{ role: "confirm", by: "【架空】山田" }] },
+  ];
+  it("新しい順に、版・日付・版をつくった人（承認があれば承認）・理由を出し、比べている版の行は押した形。確かめで合わない版は押せない", () => {
+    const html = render(<SignaturesPanel v={v} readings={[]} history={{ rows, compare: 1, onCompare: () => undefined }} />);
+    const order = [...html.matchAll(/data-testid="history-row" data-version="(\d)"/g)].map((m) => m[1]);
+    expect(order).toEqual(["3", "2", "1"]);
+    expect(html).toContain("【架空】課長　承認");
+    expect(html).toContain("周期を台帳に合わせた");
+    expect(html).toMatch(/<button[^>]*aria-pressed="true"[^>]*data-testid="history-row" data-version="1"/);
+    expect(html).toMatch(/<button[^>]*aria-pressed="false"[^>]*data-testid="history-row" data-version="3"/);
+    // 確かめで合わない版は、押せない行（比べられない）
+    expect(html).toMatch(/<div[^>]*data-testid="history-row" data-version="2" data-problem="true"/);
+    expect(html).not.toMatch(/<button[^>]*data-version="2"/);
+  });
+  it("履歴を渡さないとき（古い版を見ているとき）は、版の履歴を出さない", () => {
+    expect(render(<SignaturesPanel v={v} readings={[]} />)).not.toContain('data-testid="history-row"');
+  });
+});

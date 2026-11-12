@@ -207,6 +207,9 @@ export const HUMAN_TEXT = {
     noReadings: "使用ルールはありません。",
     draft: "- 下書き",
     chain: "結び目の鎖",
+    /** 版の履歴（変えた人・理由。行を押すと、その版を比較版にする。#29、Wire の TimeMap5） */
+    history: "版の履歴",
+    historyDay: (iso: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo", dateStyle: "short" }).format(new Date(iso)),
     role: { confirm: "確定", edit: "渡す", approve: "承認", return: "差戻し", revert: "戻す", export: "出力" } as Record<string, string>,
     /** 古い版を開いたとき（docs/screens.md 3.2、Wire、11-07 夜。動画 C14）：その版の署名と、その版をつくったときの Skill */
     applied: "適用 Skill",
@@ -469,6 +472,7 @@ export const HUMAN_TEXT = {
   },
   history: {
     title: "版履歴",
+    versionNo: (n: number) => `第 ${n} 版`,
     none: "まだ確定した版がありません。",
     head: ["版", "種類", "時刻", "理由", "差", "署名"],
     kind: { confirm: "確定", revert: (n: number) => `第 ${n} 版に戻した` },
