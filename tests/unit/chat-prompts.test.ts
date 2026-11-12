@@ -342,6 +342,10 @@ describe("入っているかの確かめ：1 段目の Skill", () => {
     expect(sec).toContain("`node dist/cli.js update` を `--yes` なしで走らせる");
     expect(sec).toContain("「開き直してください」と出たときだけ");
     expect(sec).not.toContain("SKILL.md");
+    // 入っている MOYAI（#65）：moyai_update の check を先に読み、prepare は利用者の「はい」のあと。切り替えは次の起動
+    expect(sec).toContain("moyai_update（action: check）を呼ぶ");
+    expect(sec).toContain("「はい」をもらったら moyai_update（action: prepare）");
+    expect(sec).toContain("切り替えは次の起動");
   });
 
   it("「本文がリポジトリの skills/moyai/SKILL.md と同じなら新しい版」は本当：part: skills の 1 段目の本文はそのファイルと同じで、版は本文から決まる", () => {

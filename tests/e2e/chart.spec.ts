@@ -220,6 +220,16 @@ test("台帳の段・出どころ・畳む・覚える・明細・編集欄・�
     await page.screenshot({ path: shot(`settings-theme-${tag}`) });
     await choice.getByRole("button", { name: "自動", exact: true }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    // 最新の確かめ（#65 の 5）：既定は「する」。「しない」を押すとすぐ保存し、読み直しても「しない」。戻して終える
+    const upd = page.getByTestId("update-choice");
+    await expect(upd.getByRole("button", { name: "する", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await upd.getByRole("button", { name: "しない", exact: true }).click();
+    await expect(upd.getByRole("button", { name: "しない", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page.reload();
+    await expect(page.getByTestId("update-choice").getByRole("button", { name: "しない", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page.screenshot({ path: shot(`settings-update-${tag}`) });
+    await page.getByTestId("update-choice").getByRole("button", { name: "する", exact: true }).click();
+    await expect(page.getByTestId("update-choice").getByRole("button", { name: "する", exact: true })).toHaveAttribute("aria-pressed", "true");
     await page.goto(chartUrl);
   });
 });

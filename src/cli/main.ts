@@ -7,6 +7,16 @@ import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { BridgeStartError, DEFAULT_PORT, startBridge } from "../bridge/server";
 import { resolveStateDir } from "../bridge/state";
+import { appRoot, installedCommitOf, markRunning } from "../bridge/app-update";
+
+/** 入っている版から動いていれば、その版に印を置く（起動の台本が、動いている版のフォルダを消さない。#65） */
+function markIfInstalled(): () => void {
+  const c = installedCommitOf(appRoot(), process.argv[1] ?? fileURLToPath(import.meta.url));
+  if (!c) return () => {};
+  const unmark = markRunning(appRoot(), c);
+  process.once("exit", unmark);
+  return unmark;
+}
 import { errorBody, type ErrorCode } from "../shared/errors";
 import { parseStartArgs } from "./args";
 import { keysCli, sendCli, verifyDemoRingCli, verifyRingCli } from "./human";
@@ -77,10 +87,13 @@ async function start(argv: string[]): Promise<void> {
       log: say,
       onStopRequest: () => void stopNow(),
       build: __MOYAI_BUILD__.commit,
+      // 入っている MOYAI の更新（moyai_update。#65）：この cli.js が版のフォルダの中なら、その版。開発の clone なら null
+      appUpdate: { root: appRoot(), running: installedCommitOf(appRoot(), process.argv[1] ?? fileURLToPath(import.meta.url)) },
       // 作業画面を開く手（work_screen_open と、作業画面が開いていないときに橋渡しが開く）
       // MOYAI_NO_AUTO_OPEN=1（試験）では開かない。試験の橋渡しが本物のブラウザを開かないように
       ...(process.env.MOYAI_NO_AUTO_OPEN === "1" ? {} : { openUrl: openBrowser }),
     });
+    markIfInstalled();
     say(`${BUILD}`);
     say(`橋渡しを起こしました：${bridge.url}  （止めるには Ctrl+C）`);
     if (args.open) openBrowser(bridge.url);
@@ -123,6 +136,7 @@ async function mcp(): Promise<void> {
     version: __MOYAI_BUILD__.commit,
     ...(launch ? { launch, launchPort: DEFAULT_PORT } : {}),
   });
+  markIfInstalled();
   await server.connect(new StdioServerTransport());
   // AI クライアントが受けたツールの定義の指紋を残す（moyai update が開き直しの要る・要らないを決める。#43）
   writeRelayDigest(resolveStateDir());

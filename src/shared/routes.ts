@@ -172,7 +172,7 @@ export const ROUTES = {
   personKeyCreate: human("/human/person-key-create", "person_key_create", 16 * 1024, "自分の鍵（版に署名する）を作り、状態フォルダに置く"),
   personKeyConfirm: human("/human/person-key-confirm", "person_key_confirm", 16 * 1024, "ほかの人の鍵を、鍵番号を照合して確認済みにする（それまでの署名では読み方を承認しない）"),
   settingsRead: human("/human/settings-read", "settings_read", 64 * 1024, "置き場所・Documents の場所・共有フォルダの一覧を読む"),
-  settingsSave: human("/human/settings-save", "settings_save", 64 * 1024, "置き場所・公開の台帳の clone の場所・自分の呼び名を保存する"),
+  settingsSave: human("/human/settings-save", "settings_save", 64 * 1024, "置き場所・公開の台帳の clone の場所・自分の呼び名・最新の確かめを保存する"),
   ringCreate: human("/human/ring-create", "ring_create", 64 * 1024, "共有フォルダを作り、その鍵の対を状態フォルダに置く"),
   checkpointPreview: human("/human/checkpoint-preview", "checkpoint_preview", 64 * 1024, "検問所：出ていく共有ファイルのバイト列とハッシュと数（送る処理と同じ関数）"),
   checkpointOpenText: human("/human/checkpoint-open-text", "checkpoint_open_text", 64 * 1024, "検問所：出ていく共有ファイルを同期されない一時フォルダに写し、OS のテキストエディタで開く"),

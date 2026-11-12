@@ -136,8 +136,8 @@ describe("moyai setup をチャットから走らせる", () => {
     expect(parseSetupArgs(["--target", "web"])).toEqual({ error: "bad_args" });
     expect(parseSetupArgs(["--name"])).toEqual({ error: "bad_args" });
     expect(parseSetupArgs(["--force"])).toEqual({ error: "bad_args" });
-    expect(parseSetupArgs([])).toEqual({ target: "desktop", yes: false, name: null, waitDesktop: false });
-    expect(parseSetupArgs(["-y", "--target=code", "--name=甲"])).toEqual({ target: "code", yes: true, name: "甲", waitDesktop: false });
+    expect(parseSetupArgs([])).toEqual({ target: "desktop", yes: false, name: null, waitDesktop: false, dev: false });
+    expect(parseSetupArgs(["-y", "--target=code", "--name=甲"])).toEqual({ target: "code", yes: true, name: "甲", waitDesktop: false, dev: false });
   });
 });
 
@@ -193,5 +193,41 @@ describe("moyai setup：Claude Desktop が開いているとき", () => {
     let spawned = 0;
     expect(await setupCli({ argv, path, line: LINE, say: () => {}, spawnWatcher: () => spawned++ })).toBe(0);
     expect(spawned).toBe(0);
+  });
+});
+
+describe("moyai setup：版ごとのフォルダに入れる（mushitaro/moyai#65）", () => {
+  it("--dev でない Claude Desktop は、入れ終わってから、版のフォルダの外の起動の台本を指す 1 行を書く。入れられなければ設定は変えない", async () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-setup-"));
+    const path = join(dir, "claude_desktop_config.json");
+    writeFileSync(path, JSON.stringify({ mcpServers: {} }));
+    const root = join(dir, "app");
+    const said: string[] = [];
+    const ok = await setupCli({ argv: ["--yes"], path, say: (m) => said.push(m), desktopRunning: () => false, install: { root, run: async () => ({ ok: true, commit: "a".repeat(40) }) } });
+    expect(ok).toBe(0);
+    const line = JSON.parse(readFileSync(path, "utf8")).mcpServers.moyai;
+    expect(line.args).toEqual([join(root, "launch.cjs"), "mcp"]);
+    expect(said).toContain(SETUP_TEXT.installed("a".repeat(40)));
+    writeFileSync(path, JSON.stringify({ mcpServers: {} }));
+    const bad = await setupCli({ argv: ["--yes"], path, say: (m) => said.push(m), desktopRunning: () => false, install: { root, run: async () => ({ ok: false, step: "npm ci" }) } });
+    expect(bad).toBe(1);
+    expect(said).toContain(SETUP_TEXT.installFailed("npm ci"));
+    expect(JSON.parse(readFileSync(path, "utf8"))).toEqual({ mcpServers: {} });
+  });
+
+  it("--yes が無ければ入れない。--dev は入れず、clone の dist/cli.js を指す（前のとおり）", async () => {
+    dir = mkdtempSync(join(tmpdir(), "moyai-setup-"));
+    const path = join(dir, "claude_desktop_config.json");
+    let installs = 0;
+    const install = { root: join(dir, "app"), run: async () => (installs++, { ok: true as const, commit: "b".repeat(40) }) };
+    expect(await setupCli({ argv: [], stdin: { isTTY: false }, path, say: () => {}, install })).toBe(3);
+    expect(installs).toBe(0);
+    expect(existsSync(path)).toBe(false);
+    expect(parseSetupArgs(["--dev"])).toMatchObject({ dev: true });
+    expect(await setupCli({ argv: ["--dev", "--yes"], path, say: () => {}, desktopRunning: () => false, install })).toBe(0);
+    expect(installs).toBe(0);
+    const line = JSON.parse(readFileSync(path, "utf8")).mcpServers.moyai;
+    expect(line.args[0]).not.toContain("launch.cjs");
+    expect(line.args[1]).toBe("mcp");
   });
 });

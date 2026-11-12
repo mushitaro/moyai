@@ -24,9 +24,10 @@ MOYAI のアカウントもログインも要りません。
 | Node.js | 22 以上（無ければ Claude が、聞いてから公式のもの〔nodejs.org か winget の OpenJS.NodeJS.LTS〕を入れる） |
 | AI クライアント | Claude Desktop（Code のタブか Chat）か Claude Code |
 
-1. チャットに、このリポジトリの URL（<https://github.com/mushitaro/moyai>）を渡し、「MOYAI をインストールして」と頼む。Claude が Node を確かめ、clone → `npm ci` → `npm run build` → `setup` をします。`setup` は、送信者の名前を聞き、何をどこに書くかをチャットで見せ、「はい」をもらってから書きます。Claude Desktop が開いていれば、閉じるのを待ってから設定に足すので、Desktop を 1 回開き直します。
+1. チャットに、このリポジトリの URL（<https://github.com/mushitaro/moyai>）を渡し、「MOYAI をインストールして」と頼む。Claude が Node を確かめ、clone → `npm ci` → `npm run build` → `setup` をします。`setup` は、送信者の名前を聞き、何をどこに書くかをチャットで見せ、「はい」をもらってから書きます。Claude Desktop が開いていれば、閉じるのを待ってから設定に足すので、Desktop を 1 回開き直します。Claude Desktop には、clone の今の版を版ごとのフォルダ（`setup` が道を出す）に別に入れ、設定は版のフォルダの外の起動の台本（`launch.cjs`）を指します。clone はそのままです（MOYAI を直す人は `setup --dev` で clone を直に指します）。
 2. 「デモして」と頼む。Claude が、ごみ焼却の Skillパックの【架空】の資料（`packs/waste-incineration/demo/`：施設台帳・星取表・作業日報）を画面に入れ、確認を 1 つずつ聞き、星取表を作ります。1 回の返事で進めるのは 1 段だけで、画面の変化を見ながら進みます。確定は人が HOSHITORI の確定のシートでします。
-3. 「MOYAI をアンインストールして」と頼む。Claude が、保存先（計画の版・施設の署名鍵・資料）も消すかを聞き（既定は残す）、`uninstall` の中身を見せてから消し、最後にリポジトリのフォルダを、消す道を見せて聞いてから消します。
+3. 「MOYAI を最新にして」と頼むと、Claude が `moyai_update` で mushitaro/moyai の main に新しい版があるかを読み、聞いてから別のフォルダで用意します（取得 → `npm ci` → build → 自己点検。失敗したら捨てて今の版のまま。前の版を 1 つ残す）。動いている MOYAI は止めず、切り替えは次の起動です。用意できると、作業画面の右下のビルドの版の字が朱になります。手元の変更がある・早送りで進めないときは断ります。
+4. 「MOYAI をアンインストールして」と頼む。Claude が、保存先（計画の版・施設の署名鍵・資料）も消すかを聞き（既定は残す）、`uninstall` の中身を見せてから消し、最後にリポジトリのフォルダを、消す道を見せて聞いてから消します。
 
 人がするのは、チャットで答えることと、画面での確定・署名・送信・承認だけです（例外の 2 つは「仕組み」の 5）。端末・ダウンロード・ドラッグは頼みません。署名鍵は最初の確定で作られ、パスワードはありません。手順の正本は `skills/moyai/SKILL.md`（「チャットで入れる・デモ・消す」）と `packs/waste-incineration/demo/README.md` です。
 
@@ -158,7 +159,7 @@ npm run build
 node dist/cli.js start
 ```
 
-Claude Code は、リポジトリの `.mcp.json` が `moyai`（`node dist/cli.js mcp`）を登録しています。見張りのフックと deny（`.claude/settings.json`）も同じフォルダで効きます。フックは、Claude Code の道具の呼び出しのたびに走ります。Claude Code は、最初にこのフォルダを信頼するかを聞きます。Claude Desktop は `node dist/cli.js setup --target desktop --name "<名前>"` で設定に足します。
+Claude Code は、リポジトリの `.mcp.json` が `moyai`（`node dist/cli.js mcp`）を登録しています。見張りのフックと deny（`.claude/settings.json`）も同じフォルダで効きます。フックは、Claude Code の道具の呼び出しのたびに走ります。Claude Code は、最初にこのフォルダを信頼するかを聞きます。Claude Desktop は `node dist/cli.js setup --target desktop --name "<名前>"` で版ごとのフォルダに入れて設定に足し、開発の clone を直に指すときは `--dev` を付けます。
 
 ```bash
 node dist/cli.js verify demo-ring
@@ -272,7 +273,7 @@ npm test
 2. チャットに Excel を添付すれば、ファイル全体が AI の提供者に渡る。
 3. ファイルを読める AI は、確定した計画のファイルを直接読める。
 4. Documents が同期フォルダ（OneDrive など）の下なら、確定した計画は会社のクラウドに上がる（起動のたびに調べて知らせる）。
-5. 「外へは送らない」はアプリの通信の話で、データの行き先の保証ではない。
+5. 「外へは送らない」はアプリの通信の話で、データの行き先の保証ではない。例外として、入っている MOYAI は起動のときと 6 時間ごとに github.com の mushitaro/moyai の main に新しい版があるかを git で問い合わせる（送るのは問い合わせだけで、施設・行・鍵・設定の中身は送らない。設定の「最新の確かめ」を「しない」にすると一切問い合わせない）。
 6. 写真の読取では、人が許したその画像が AI の提供者に渡る。
 7. 画面を操作できる AI の道具（ブラウザやデスクトップの操作）は、人だけのボタンを押せる。
 8. 計画のフォルダを読める人と AI は、施設の署名鍵を写せる（写した人は、その施設として送信できる）。保存先が同期フォルダなら、施設の署名鍵も会社のクラウドに上がる。

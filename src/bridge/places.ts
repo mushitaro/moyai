@@ -167,12 +167,20 @@ export interface Settings {
   ledger: string | null;
   /** 自分の呼び名（版の署名と、画面の「編集の番」に出す）。null はまだ決めていない */
   name: string | null;
+  /** 最新の確かめ（入っている MOYAI が起動のときと 6 時間ごとに main を問い合わせる。#65）。切ったときだけ false を置く。無ければ入 */
+  autoUpdate?: false;
 }
 
 export function readSettings(stateDir: string): Settings {
   const s = readJson<Partial<Settings>>(join(stateDir, "settings.json"));
   const abs = (x: unknown) => (typeof x === "string" && isAbsolute(x) ? x : null);
-  return { v: 1, root: abs(s?.root), ledger: abs(s?.ledger), name: typeof s?.name === "string" && validName(s.name) ? s.name : null };
+  return {
+    v: 1,
+    root: abs(s?.root),
+    ledger: abs(s?.ledger),
+    name: typeof s?.name === "string" && validName(s.name) ? s.name : null,
+    ...(s?.autoUpdate === false ? { autoUpdate: false as const } : {}),
+  };
 }
 
 export function writeSettings(stateDir: string, s: Settings): void {

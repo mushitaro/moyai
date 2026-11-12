@@ -116,7 +116,8 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("- 橋渡しは 127.0.0.1 の 1 つのポートだけで待ち受け、Host・Origin・Sec-Fetch-Site を確かめます。これは Web ページからの呼び出しへの守りで、同じ PC の同じ利用者のプロセスは止めきれません（curl も Node も Origin を偽れます）。");
   L.push("- 中継と橋渡しの間は、状態フォルダの鍵ファイル（利用者だけが読める既定の権限）で確かめます。同じ利用者のプロセスには読めます。");
   L.push("- シェルを持つ AI（Claude Code）には、リポジトリの `.claude/settings.json` の deny と PreToolUse のフック（`scripts/guard-hook.mjs`）の二重で、127.0.0.1 への HTTP・状態フォルダの読み取り・保管先の計画のフォルダの施設の署名鍵（share/keys/）の読み書き・輪のフォルダへの書き込み・人だけのコマンド・見張りのフックと `.claude/settings.json`・`.claude/settings.local.json` の書き換えを止めます。悪意のある同じ利用者のプロセスは止めきれません。");
-  L.push("- 通信の例外は公開の台帳だけです。GitHub の道は、行き先が github.com と api.github.com だけです。");
+  L.push("- 通信の例外は公開の台帳と、最新の確かめです。GitHub の道は、行き先が github.com と api.github.com だけです。");
+  L.push("- 最新の確かめ（運営者の決定 2026-11-11。mushitaro/moyai#65）：入っている MOYAI（`moyai setup` が版ごとのフォルダに入れたもの）の橋渡しは、起動のときと動いている間 6 時間ごとに、github.com の mushitaro/moyai の main を git で取得して新しい版があるかを確かめ、あれば別のフォルダで用意します（切り替えは次の起動）。送るのは git の問い合わせだけで、施設・行・鍵・設定の中身は送りません。取ってくる先は固定で、ツールの引数では変えられません。設定の「最新の確かめ」を「しない」にすると、一切問い合わせません。開発の clone（`setup --dev`）では動きません。");
   L.push("- 公開の台帳は、MOYAI のリポジトリ（mushitaro/moyai）の `ledger/` です（2026-11-07 に別のリポジトリ mushitaro/moyai-ledger から移した。運営者の決定）。GitHub の道は mushitaro/moyai をフォークして PR を出します。台帳の PR の検証（`.github/workflows/ledger-validate.yml`）は、`ledger/` が変わった PR だけで走り、`ledger/` の外も変える PR に台帳のファイルが混ざっていれば ✗ にします。");
   L.push("- MOYAI 経由の道（運営者の決定 2026-11-07）は、行き先が公開の台帳の受け口の 1 つだけです。送るのは、公開の台帳に載せるのと同じ共有ファイル（と、その鍵自身の署名の失効記録）だけです。受け口は送り手の IP を数えるのに使い、残しません。受け口が運営者（tsunagi）の GitHub のアカウントで PR を出します。受け口のトークンは mushitaro/moyai の Contents と Pull requests に書けるので、MOYAI のコードの枝にも書けます（main は ruleset で守る）。");
   L.push("- 鍵と GitHub のトークンは合言葉で包みません（運営者の決定 2026-11-04）。人の鍵とトークンは同期されない状態フォルダに、束に署名する施設の鍵は保管先の計画のフォルダ（share/keys/）に置きます。MCP のどのツールの結果にも、鍵とトークンの中身は入れません。");
@@ -130,7 +131,7 @@ export function securityMarkdown(i: SecurityDocInput): string {
   L.push("2. チャットに Excel を添付すれば、ファイル全体が AI の提供者に渡ります。");
   L.push("3. ファイルを読める AI は、確定した計画のファイルを直接読めます。");
   L.push("4. Documents が同期フォルダ（OneDrive など）の下なら、確定した計画は会社のクラウドに上がります（だから最初に調べて知らせます）。");
-  L.push("5. 「外へは送らない」はアプリの通信の話で、データの行き先の保証ではありません。");
+  L.push("5. 「外へは送らない」はアプリの通信の話で、データの行き先の保証ではありません（例外は、上の公開の台帳と最新の確かめ）。");
   L.push("6. 写真とスキャンの読み取りでは、人が許したその画像が AI の提供者に渡ります。");
   L.push("7. 画面を操作できる AI の道具（ブラウザやデスクトップの操作）は、人だけのボタンを押せます。作業のある作業画面が開いているとき、あとから開いたタブは橋渡しに断られますが、AI の道具が前のタブそのものを操作するのは止めきれません。");
   L.push("8. 計画のフォルダを読める人と AI は、施設の署名鍵を写せます（写した人は、その施設として束を出せます）。保管先が同期フォルダなら、施設の署名鍵も会社のクラウドに上がります。");
