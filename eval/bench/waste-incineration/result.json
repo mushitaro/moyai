@@ -4,16 +4,16 @@
  "only": null,
  "candidate": null,
  "reader": {
-  "commit": "618c503643c253761ee53106bba78a176ed1c4a4",
-  "src": "a5844a987fc8f9d08a731a396657da2f89094239",
+  "commit": "db2748b7beebcc06479de07560abb82438bdbe35",
+  "src": "470d960afdd6b9e48ff6cafa8221ea6798207625",
   "packs": "876267422ef1994eedf0a2c0a1c24623985b9794",
   "dirty": false
  },
- "measuredAt": "2026-11-12T18:22:15.497Z",
+ "measuredAt": "2026-11-12T20:02:10.439Z",
  "total": {
   "facilities": 11,
   "planMade": 11,
-  "asked": 685,
+  "asked": 688,
   "open": 0,
   "unresolvedAfter": 0,
   "accuracy": {
@@ -39,7 +39,7 @@
    "facility": "hinatano",
    "name": "ひなた野クリーンプラザ",
    "files": 2,
-   "seconds": 1.8,
+   "seconds": 2.1,
    "asked": 14,
    "answered": 14,
    "open": 0,
@@ -91,7 +91,7 @@
    "facility": "hoshinooka",
    "name": "ほしの丘リサイクルセンター",
    "files": 5,
-   "seconds": 16,
+   "seconds": 17.1,
    "asked": 86,
    "answered": 86,
    "open": 0,
@@ -141,7 +141,7 @@
    "facility": "hotarugawa",
    "name": "ほたる川クリーンセンター",
    "files": 6,
-   "seconds": 19.6,
+   "seconds": 20.4,
    "asked": 6,
    "answered": 6,
    "open": 0,
@@ -188,7 +188,7 @@
    "facility": "kaedehara",
    "name": "かえで原清掃工場",
    "files": 2,
-   "seconds": 0.6,
+   "seconds": 0.8,
    "asked": 8,
    "answered": 8,
    "open": 0,
@@ -287,15 +287,16 @@
    "name": "もみじ台清掃センター",
    "files": 2,
    "seconds": 0.9,
-   "asked": 27,
-   "answered": 27,
+   "asked": 28,
+   "answered": 28,
    "open": 0,
    "openKinds": {},
    "defaulted": {
     "costKind": 2,
     "yearUnknown": 1,
     "assetLink": 5,
-    "costTax": 2
+    "costTax": 2,
+    "stray": 1
    },
    "unresolvedBy": {},
    "openSamples": [],
@@ -305,14 +306,14 @@
    "blockers": [],
    "plan": {
     "assets": 306,
-    "works": 173,
-    "details": 1286
+    "works": 169,
+    "details": 1239
    },
    "accuracy": {
     "correct": 1136,
     "total": 1199
    },
-   "extra": 47,
+   "extra": 0,
    "recovery": {
     "correct": 1199,
     "total": 1199
@@ -336,7 +337,7 @@
    "facility": "nagarebashi",
    "name": "ながれ橋清掃工場",
    "files": 2,
-   "seconds": 1.7,
+   "seconds": 1.5,
    "asked": 9,
    "answered": 9,
    "open": 0,
@@ -386,7 +387,7 @@
    "facility": "sakurazaka",
    "name": "さくら坂環境センター",
    "files": 7,
-   "seconds": 26,
+   "seconds": 30.4,
    "asked": 89,
    "answered": 89,
    "open": 0,
@@ -437,15 +438,16 @@
    "facility": "shirakabano",
    "name": "しらかば野クリーンセンター",
    "files": 12,
-   "seconds": 28.2,
-   "asked": 281,
-   "answered": 281,
+   "seconds": 30.1,
+   "asked": 282,
+   "answered": 282,
    "open": 0,
    "openKinds": {},
    "defaulted": {
     "costKind": 2,
     "flatSplit": 2,
     "costTax": 2,
+    "stray": 1,
     "assetLink": 1,
     "eventAsset": 4
    },
@@ -457,14 +459,14 @@
    "blockers": [],
    "plan": {
     "assets": 1596,
-    "works": 2017,
-    "details": 4254
+    "works": 1985,
+    "details": 4029
    },
    "accuracy": {
     "correct": 4427,
     "total": 5951
    },
-   "extra": 225,
+   "extra": 0,
    "recovery": {
     "correct": 2905,
     "total": 4336
@@ -493,15 +495,16 @@
    "facility": "tsubasadai",
    "name": "つばさ台環境エネルギーセンター",
    "files": 3,
-   "seconds": 1.3,
-   "asked": 18,
-   "answered": 18,
+   "seconds": 1.6,
+   "asked": 19,
+   "answered": 19,
    "open": 0,
    "openKinds": {},
    "defaulted": {
     "costKind": 1,
     "yearUnknown": 1,
     "costTax": 1,
+    "stray": 1,
     "assetLink": 2
    },
    "unresolvedBy": {},
@@ -512,14 +515,14 @@
    "blockers": [],
    "plan": {
     "assets": 273,
-    "works": 154,
-    "details": 1343
+    "works": 150,
+    "details": 1311
    },
    "accuracy": {
     "correct": 1133,
     "total": 1512
    },
-   "extra": 32,
+   "extra": 0,
    "recovery": {
     "correct": 1062,
     "total": 1502
@@ -545,7 +548,7 @@
    "facility": "umikaze",
    "name": "うみかぜエコプラント",
    "files": 6,
-   "seconds": 28,
+   "seconds": 28.8,
    "asked": 137,
    "answered": 137,
    "open": 0,
