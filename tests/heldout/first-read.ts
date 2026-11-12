@@ -34,23 +34,7 @@ export function rulesFromAnswers(questions: readonly { questionId: string; kind:
   const seen = new Set<string>();
   // 伏せた形が同じで答えの違う問い（年度や数えだけが違い、答えが分かれた問い）は、どちらの答えも規則にしない（推し量って片方を選ばない）
   const answersOf = new Map<string, Set<string>>();
-  // match の切り出し：資料の名前を区切り（\u0000）にして、資料の名前のすぐ後ろでない最初の「名前」（資料の名前の後ろの「」はシートの名前）から、次の資料の名前の前まで。
-  // そういう「」が無ければ、文の頭から最初の資料の名前の前まで（8 字に満たなければ、最後の資料の名前の後ろから）
-  const keyOf = (q: { kind: string; text: string }) => {
-    let t = q.text;
-    for (const f of files) t = t.split(f).join("\u0000");
-    let at = -1;
-    for (let i = t.indexOf("「"); i >= 0; i = t.indexOf("「", i + 1)) {
-      if (t[i - 1] !== "\u0000") {
-        at = i;
-        break;
-      }
-    }
-    const head = t.split("\u0000")[0]?.trim() ?? "";
-    const m = (at >= 0 ? t.slice(at).split("\u0000")[0] : [...head].length >= 8 ? head : t.slice(t.lastIndexOf("\u0000") + 1))?.trim() ?? "";
-    const match = [...m].slice(0, 120).join("");
-    return { match, key: `${q.kind}|${answerShape(match)}` };
-  };
+  const keyOf = (q: { kind: string; text: string }) => questionKey(q, files);
   for (const q of questions) {
     const a = ans.get(q.questionId);
     if (a === undefined) continue;
@@ -83,4 +67,27 @@ export function answerShape(text: string): string {
     .replace(/(?:令和|平成|[RH])\s?(?:元|\d{1,2})\s?年度/g, "#")
     .replace(/(?<!\d)(?:19|20)\d{2}(?!\d)(?:\s?年度)?/g, "#")
     .replace(/\d[\d,]*\s?(?:行|件|冊|通り|問|枚|頁|セル)/g, "#");
+}
+
+/**
+ * 問いの鍵：問いの種類と、問いの文の、資料の名前によらない所（match）。年度・日付・数えは伏せる（answerShape）。
+ * match の切り出し：資料の名前を区切り（\u0000）にして、資料の名前のすぐ後ろでない最初の「名前」（資料の名前の後ろの「」はシートの名前）から、次の資料の名前の前まで。
+ * そういう「」が無ければ、文の頭から最初の資料の名前の前まで（8 字に満たなければ、最後の資料の名前の後ろから）。
+ * 物差しが、残りの年度の問いを「1 年目にもあった問い」と「新しい問い」に分けるのにも使う（同じ鍵なら同じもの。mushitaro/moyai#67）
+ */
+export function questionKey(q: { kind: string; text: string }, files: readonly string[]): { match: string; key: string } {
+  let t = q.text;
+  for (const f of files) t = t.split(f).join("\u0000");
+  let at = -1;
+  for (let i = t.indexOf("「"); i >= 0; i = t.indexOf("「", i + 1)) {
+    if (t[i - 1] !== "\u0000") {
+      at = i;
+      break;
+    }
+  }
+  const head = t.split("\u0000")[0]?.trim() ?? "";
+  const m = (at >= 0 ? t.slice(at).split("\u0000")[0] : [...head].length >= 8 ? head : t.slice(t.lastIndexOf("\u0000") + 1))?.trim() ?? "";
+  // まとめた問いの「（n 問をまとめた：…）」は、まとめ方の説明で問いの中身ではない（まとめる前の問いの文にも当たるように外す）
+  const match = [...m.replace(/[（(]\d+\s?問をまとめた[:：].*$/u, "").trim()].slice(0, 120).join("");
+  return { match, key: `${q.kind}|${answerShape(match)}` };
 }

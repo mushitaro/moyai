@@ -231,6 +231,8 @@ export const TEXT = {
       days: (n: number) => `日数 ${n} 日`,
       by: "作者",
       basis: "根拠",
+      /** この印を決めた問い（取り込みの質問への答え。時間の地図 5、#29） */
+      decidedBy: "決めた問い",
       review: "要確認",
       changed: "変更",
       proposal: "（案。未確定）",

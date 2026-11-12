@@ -38,6 +38,28 @@ export interface PanelOld {
   onRule: (path: string) => void;
 }
 
+/** 版の履歴の 1 行（plan_status の版の一覧から。理由と署名した人は版の記録にある） */
+export interface PanelHistoryRow {
+  version: number;
+  at: string;
+  reason: string;
+  problem: string | null;
+  signatures: { role: string; by: string }[];
+}
+
+/** 版の履歴（新しい順）。行を押すと、その版を比較版にする（選びの欄は足さない。#29、Wire の TimeMap5） */
+export interface PanelHistory {
+  rows: readonly PanelHistoryRow[];
+  /** いま比べている版 */
+  compare: number | null;
+  onCompare: (version: number) => void;
+}
+
+/** 版をつくった署名（承認があれば承認、無ければ確定・戻す・渡す） */
+function makerOf(r: PanelHistoryRow): { role: string; by: string } | null {
+  return r.signatures.find((x) => x.role === "approve") ?? r.signatures.find((x) => x.role === "confirm" || x.role === "revert" || x.role === "edit") ?? null;
+}
+
 /** 頼み（まだ済んでいないもの）：鎖の行に「承認　宛先　まだ開かれていません」か「承認　受け取った人　信じ方」（Wire の B1） */
 export interface PanelRequest {
   kind: "approve" | "edit";
@@ -52,6 +74,7 @@ export function SignaturesPanel({
   request = null,
   ignored = [],
   old = null,
+  history = null,
 }: {
   v: PanelVersion;
   readings: readonly LoadedReading[];
@@ -61,6 +84,8 @@ export function SignaturesPanel({
   ignored?: readonly IgnoredRequest[];
   /** 古い版を見るだけで開いているとき（その版の署名と適用 Skill を出す） */
   old?: PanelOld | null;
+  /** 版の履歴（いちばん新しい版を見ているときだけ） */
+  history?: PanelHistory | null;
 }) {
   const [check, setCheck] = useState<TrustSig | null>(null);
   if (old)
@@ -248,6 +273,48 @@ export function SignaturesPanel({
           </div>
         );
       })}
+      {history && history.rows.length > 0 && (
+        <>
+          <Text size="xs" fw={700} mt="xs">
+            {T.history}
+          </Text>
+          {[...history.rows]
+            .sort((a, b) => b.version - a.version)
+            .map((r) => {
+              const m = makerOf(r);
+              const line = `${T.historyDay(r.at)}　${m ? `${m.by}　${T.role[m.role] ?? m.role}` : ""}`;
+              // 確かめで合わない版は読めないので、押せない行にする（比べられない）
+              if (r.problem)
+                return (
+                  <div key={r.version} className="moyai-hist" data-testid="history-row" data-version={r.version} data-problem="true">
+                    <span className="moyai-num">{H.versionNo(r.version)}</span>　{line}
+                    <Text span size="xs" c="var(--shu)" display="block">
+                      {H.problem[r.problem]}
+                    </Text>
+                  </div>
+                );
+              return (
+                <button
+                  type="button"
+                  key={r.version}
+                  className="moyai-hist"
+                  aria-pressed={history.compare === r.version}
+                  data-active={history.compare === r.version ? "true" : undefined}
+                  onClick={() => history.onCompare(r.version)}
+                  data-testid="history-row"
+                  data-version={r.version}
+                >
+                  <span>
+                    <span className="moyai-num">{H.versionNo(r.version)}</span>　{line}
+                  </span>
+                  <span className="moyai-hist-reason" data-testid="history-reason">
+                    {r.reason}
+                  </span>
+                </button>
+              );
+            })}
+        </>
+      )}
       <KeyCheckDialog signer={check} onClose={() => setCheck(null)} onConfirmed={() => onKeyConfirmed?.()} />
     </Stack>
   );

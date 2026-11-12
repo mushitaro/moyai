@@ -1,7 +1,7 @@
 // 初めて読む物差しの道具（tests/heldout/first-read.ts）：年度の分け方と、1 年目の答えから作る決まった答えの規則
 import { describe, expect, it } from "vitest";
 import { Asker } from "../../src/import/questions";
-import { ReadingRule, type ActiveRule } from "../../src/import/reading";
+import { ReadingRule, countShape, type ActiveRule } from "../../src/import/reading";
 import { answerShape, rulesFromAnswers, yearSplit } from "../heldout/first-read";
 
 describe("初めて読む物差しの道具", () => {
@@ -29,7 +29,7 @@ describe("初めて読む物差しの道具", () => {
     ], files);
     expect(rules.map((r) => (r.kind === "answer" ? [r.question, r.match, r.answer] : null))).toEqual([
       ["eventAssetOne", "「ごみクレーン A号機」（号の欄が空）に、名前の同じ機器が無い（1 行）。どの機器か", "c10"],
-      ["subtotalMismatch", "小計の行のうち、表の中身から数えた値と合わない列がある行（7 行）（7 問をまとめた：", "exclude"],
+      ["subtotalMismatch", "小計の行のうち、表の中身から数えた値と合わない列がある行（7 行）", "exclude"],
     ]);
     for (const r of rules) expect(ReadingRule.safeParse(r).success).toBe(true);
   });
@@ -53,9 +53,18 @@ describe("初めて読む物差しの道具", () => {
 describe("決まった答えの規則の当て方（読み手の側。src/import/questions.ts の ruleFor）", () => {
   const q = (text: string) => ({ kind: "workLinkOne" as const, text, sameShapeRows: 1, defaultAnswer: null, valueKind: "option" as const, options: [{ id: "eventOnly", label: "外す" }, { id: "m0", label: "結ぶ" }], items: [] });
   const rule: ActiveRule = { rule: { id: "y1-1", kind: "answer", question: "workLinkOne", match: "「点検」（No.1、2021 年度、5 行）", answer: "eventOnly", text: "1 年目の答え", author: "ai", reason: "試験" }, from: { name: "y1", version: "", scope: "facility", approved: false, draft: true } };
-  it("そのままの字で含む問いにだけ当たる。年度や行の数だけが違う問いには当てず、聞く（違う答えより聞く側に倒す）", () => {
+  it("そのままの字か、くり返しの数（行・問・か所）だけが違う問いに当たる。年度・番号・中身の数（何通り・何件）が違う問いには当てず、聞く（違う答えより聞く側に倒す）", () => {
     const qs = new Asker(new Map(), [rule]);
     expect(qs.ask("a", q("作業「点検」（No.1、2021 年度、5 行）に当たる星取が"))).toBe("eventOnly");
+    expect(qs.ask("c", q("作業「点検」（No.1、2021 年度、12 行）に当たる星取が"))).toBe("eventOnly");
     expect(qs.ask("b", q("作業「点検」（No.1、2022 年度、3 行）に当たる星取が"))).toBeNull();
+    expect(qs.ask("d", q("作業「点検」（No.2、2021 年度、5 行）に当たる星取が"))).toBeNull();
+    expect(countShape("機器の名前 6 通り（8 行）・契約 9 件・2 問をまとめた・ほか 3 か所")).toBe("機器の名前 6 通り(#)・契約 9 件・#をまとめた・ほか #");
+  });
+  it("まとめた問いは、まとめた文でも規則を当てる（1 年目の答えの規則は、人と Claude に見せたまとめた文から作る）", () => {
+    const merged: ActiveRule = { rule: { id: "y1-2", kind: "answer", question: "workLinkOne", match: "まとめた文の「点検」", answer: "eventOnly", text: "1 年目の答え", author: "ai", reason: "試験" }, from: { name: "y1", version: "", scope: "facility", approved: false, draft: true } };
+    const qs = new Asker(new Map(), [merged]);
+    expect(qs.ask("m1", q("ばらの文"), { key: "k", text: (rows) => `まとめた文の「点検」（${rows} 行）` })).toBe("eventOnly");
+    expect(new Asker(new Map(), [merged]).ask("m2", q("ばらの文"), { key: "k" })).toBeNull();
   });
 });

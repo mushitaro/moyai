@@ -13,8 +13,8 @@ import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
 import { ReadingSkill, type LoadedReading } from "../../src/import/reading";
-import { rulesFromAnswers, yearSplit } from "./first-read";
-import { DEFAULT_REASON, answer, runSet, truthKnows, type SetResult } from "./harness";
+import { questionKey, rulesFromAnswers, yearSplit } from "./first-read";
+import { answer, runSet, truthKnows, type SetResult } from "./harness";
 import { loadV2Facility } from "./v2";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -60,7 +60,7 @@ export interface BenchRow {
    * 初めて読む測り（--first-read）だけ：1 年目の年度と資料の数、1 年目の問い（N）、1 年目の答えから作った規則の数、
    * 全部の資料を規則ありで読んだときの問い（K）と規則で決まった問い、規則なしで全部を読んだときの問い（M0）
    */
-  firstRead?: { year: string; firstFiles: number; restFiles: number; restYears: number; firstAsked: number; rules: number; ruleAnswered: number; ruleWrong: number; restAsked: number; restAskedNoRules: number };
+  firstRead?: { askedAgain: number; askedAgainUnanswered: number; askedAgainUnknown: number; askedChangedAnswer: number; askedNew: number; askedAgainKinds: Record<string, number>; year: string; firstFiles: number; restFiles: number; restYears: number; firstAsked: number; rules: number; ruleAnswered: number; ruleWrong: number; restAsked: number; restAskedNoRules: number };
 }
 
 const sum = (xs: Ratio[]): Ratio => xs.reduce((a, b) => ({ correct: a.correct + b.correct, total: a.total + b.total }), { correct: 0, total: 0 });
@@ -136,8 +136,8 @@ async function measureFirstRead(n: string, v: ReturnType<typeof loadV2Facility>,
   const opt = { facilityKey: v.set.world.facility.id, ...RUN, packId: "" };
   try {
     const y1 = await runSet(v.set, { ...opt, read: split.first });
-    // 既定の答えを受けた問い（台本が正解から答えられず、推された答えを押したもの）はルールにしない（人が決めた答えではない）
-    const rules = rulesFromAnswers(y1.analysis.questions, y1.answered.filter((d) => d.reason !== DEFAULT_REASON), v.set.truth.files.map((f) => f.file));
+    // 1 年目の答えは、既定の答えを受けた問い（人が推された答えを押したもの）も含めてルールにする（1 年目に見て答えたものは二度聞かない。mushitaro/moyai#67）
+    const rules = rulesFromAnswers(y1.analysis.questions, y1.answered, v.set.truth.files.map((f) => f.file));
     const skill = ReadingSkill.parse({ schema: "moyai.reading/0", name: "1 年目の読み方", scope: "facility", rules });
     const readings: LoadedReading[] = [{ skill, version: "", path: null, approved: false, draft: true }];
     const all = [...split.first, ...split.rest];
@@ -151,7 +151,43 @@ async function measureFirstRead(n: string, v: ReturnType<typeof loadV2Facility>,
       const want = truthKnows(q, got.index) ? answer(q, got.index) : null;
       if (want !== null && want !== q.decision.answer) ruleWrong++;
     }
-    return { ...row, firstRead: { year: split.year, firstFiles: split.first.length, restFiles: split.rest.length, restYears: split.restYears, firstAsked: y1.result.asked, rules: rules.length, ruleAnswered: got.analysis.ruleAnswers.size, ruleWrong, restAsked: got.result.asked, restAskedNoRules: noRules.result.asked } };
+    // 残りの年度を足した読みで、規則で決まらずに聞いた問いを 2 つに分ける（統括の判断、mushitaro/moyai#67）：
+    // (a) 1 年目にもあった同じ問い（同じ鍵）で、正しい答えも 1 年目と同じもの → 1 年目に見たものを二度聞いている（0 にする）
+    // (b) そのほか：1 年目に無かった問い、または同じ鍵でも正しい答えが 1 年目と違う問い（年度ごとに正解が変わる）→ 聞くのが正しい
+    // 正しい答えが分からない問い（正解の台本が答えられない）は、厳しい側に倒して (a) に数え、内訳に出す
+    const files = v.set.truth.files.map((f) => f.file);
+    const firstAnswers = new Map<string, Set<string>>();
+    const firstAns = new Map(y1.answered.map((d) => [d.questionId, d.answer] as const));
+    for (const q of y1.analysis.questions) {
+      const k = questionKey(q, files).key;
+      const set = firstAnswers.get(k) ?? new Set<string>();
+      const a = firstAns.get(q.questionId);
+      if (a !== undefined) set.add(a);
+      firstAnswers.set(k, set);
+    }
+    const askedQs = got.analysis.questions.filter((q) => !got.analysis.ruleAnswers.has(q.questionId));
+    const again: typeof askedQs = [];
+    let againUnanswered = 0;
+    let againUnknown = 0;
+    let changedAnswer = 0;
+    for (const q of askedQs) {
+      const prev = firstAnswers.get(questionKey(q, files).key);
+      if (!prev) continue;
+      if (prev.size === 0) {
+        again.push(q);
+        againUnanswered++;
+        continue;
+      }
+      const want = truthKnows(q, got.index) ? answer(q, got.index) : null;
+      if (want === null) {
+        again.push(q);
+        againUnknown++;
+      } else if (prev.has(want)) again.push(q);
+      else changedAnswer++;
+    }
+    const againKinds: Record<string, number> = {};
+    for (const q of again) againKinds[q.kind] = (againKinds[q.kind] ?? 0) + 1;
+    return { ...row, firstRead: { askedAgain: again.length, askedAgainUnanswered: againUnanswered, askedAgainUnknown: againUnknown, askedChangedAnswer: changedAnswer, askedNew: askedQs.length - again.length, askedAgainKinds: againKinds, year: split.year, firstFiles: split.first.length, restFiles: split.rest.length, restYears: split.restYears, firstAsked: y1.result.asked, rules: rules.length, ruleAnswered: got.analysis.ruleAnswers.size, ruleWrong, restAsked: got.result.asked, restAskedNoRules: noRules.result.asked } };
   } catch (e) {
     return { ...emptyRow(n), seconds: secondsSince(t0), error: e instanceof Error ? e.message.slice(0, 300) : "道具が投げた" };
   }
@@ -227,6 +263,11 @@ describe("Skillパックの物差し", () => {
               rules: rows.reduce((a, x) => a + (x.firstRead?.rules ?? 0), 0),
               ruleAnswered: rows.reduce((a, x) => a + (x.firstRead?.ruleAnswered ?? 0), 0),
               ruleWrong: rows.reduce((a, x) => a + (x.firstRead?.ruleWrong ?? 0), 0),
+              askedAgain: rows.reduce((a, x) => a + (x.firstRead?.askedAgain ?? 0), 0),
+              askedNew: rows.reduce((a, x) => a + (x.firstRead?.askedNew ?? 0), 0),
+              askedAgainUnanswered: rows.reduce((a, x) => a + (x.firstRead?.askedAgainUnanswered ?? 0), 0),
+              askedAgainUnknown: rows.reduce((a, x) => a + (x.firstRead?.askedAgainUnknown ?? 0), 0),
+              askedChangedAnswer: rows.reduce((a, x) => a + (x.firstRead?.askedChangedAnswer ?? 0), 0),
               skipped,
             },
           }
@@ -244,14 +285,17 @@ describe("Skillパックの物差し", () => {
             "Skillパックを選ばずに（パックなし）、1 年目の資料だけを読み、台本の答えを決まった答えの規則（1 年目の読み方）にして、残りの年度を足した全部の資料を読み直した。下の表の行の数は、その最後の読み。",
             "1 年目は、名前に年度が 1 つだけある資料のいちばん多い年度（同じ数なら新しい年度）と、年度に分けられない資料（範囲の資料・台帳）。年度ごとの資料の無い施設は測らない。",
             "",
-            `合計：1 年目の問い ${total.firstRead.firstAsked} → 残りの年度を足したときの問い ${total.firstRead.restAsked}（1 年目の規則 ${total.firstRead.rules} 件で決まった問い ${total.firstRead.ruleAnswered}、そのうち正解の台本と違う答え ${total.firstRead.ruleWrong}。規則なしで全部を読むと ${total.firstRead.restAskedNoRules}）`,
+            `合計：1 年目の問い ${total.firstRead.firstAsked} → 残りの年度を足したときの問い ${total.firstRead.restAsked}（1 年目の規則 ${total.firstRead.rules} 件で決まった問い ${total.firstRead.ruleAnswered}、そのうち正解の台本と違う答え ${total.firstRead.ruleWrong}。規則なしで全部を読むと ${total.firstRead.restAskedNoRules}）。残りを足した問いのうち (a) 1 年目に見た問い ${total.firstRead.askedAgain}（うち 1 年目に答えの無かった問い ${total.firstRead.askedAgainUnanswered}・正しい答えが分からない問い ${total.firstRead.askedAgainUnknown}）・(b) 聞くのが正しい問い ${total.firstRead.askedNew}（うち 1 年目と同じ問いで正しい答えが変わった問い ${total.firstRead.askedChangedAnswer}）`,
             "",
-            "| 施設 | 1 年目（年度・資料） | 1 年目の問い N | 規則 | 残り（年度・資料） | 残りを足した問い K | 残りの 1 年あたり K÷年度 | 規則で決まった問い | うち正解と違う答え | 規則なしの問い M0 |",
-            "|---|---|---:|---:|---|---:|---:|---:|---:|---:|",
-            ...rows.map((x) => (x.firstRead ? `| ${x.facility} | ${x.firstRead.year}・${x.firstRead.firstFiles} | ${x.firstRead.firstAsked} | ${x.firstRead.rules} | ${x.firstRead.restYears}・${x.firstRead.restFiles} | ${x.firstRead.restAsked} | ${(x.firstRead.restAsked / x.firstRead.restYears).toFixed(1)} | ${x.firstRead.ruleAnswered} | ${x.firstRead.ruleWrong} | ${x.firstRead.restAskedNoRules} |` : `| ${x.facility} | 測れなかった | — | — | — | — | — | — | — | — |`)),
-            "- K は、全部の資料を 1 年目の規則で読み直したときに、規則で決まらずに残った問い。規則は、そのままの字で同じ問いにだけ当たる（年度や数を伏せて広げない）。人に聞く数はこれ。",
+            "| 施設 | 1 年目（年度・資料） | 1 年目の問い N | 規則 | 残り（年度・資料） | 残りを足した問い K | 残りの 1 年あたり K÷年度 | (a) 1 年目に見た問い | (b) 聞くのが正しい問い | 規則で決まった問い | うち正解と違う答え | 規則なしの問い M0 |",
+            "|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|",
+            ...rows.map((x) => (x.firstRead ? `| ${x.facility} | ${x.firstRead.year}・${x.firstRead.firstFiles} | ${x.firstRead.firstAsked} | ${x.firstRead.rules} | ${x.firstRead.restYears}・${x.firstRead.restFiles} | ${x.firstRead.restAsked} | ${(x.firstRead.restAsked / x.firstRead.restYears).toFixed(1)} | ${x.firstRead.askedAgain} | ${x.firstRead.askedNew} | ${x.firstRead.ruleAnswered} | ${x.firstRead.ruleWrong} | ${x.firstRead.restAskedNoRules} |` : `| ${x.facility} | 測れなかった | — | — | — | — | — | — | — | — | — | — |`)),
+            "- K は、全部の資料を 1 年目の規則で読み直したときに、規則で決まらずに残った問い。規則は、そのままの字か、くり返しの数（行・問・か所）だけが違う同じ問いに当たる（年度・番号・中身の数は伏せて広げない。src/import/reading.ts の countShape）。人に聞く数はこれ。",
             "- 残りの 1 年あたりは K を残りの年度の数で割った値。1 年目の問い N より小さければ、2 年目からが速い。",
-            "- 規則は、1 年目の問いごとの答え（名前ごと）だけ。既定の答えを受けた問い（人が決めた答えではない）と、年度や数だけが違って答えの分かれた問いは、規則にしない。",
+            "- 規則は、1 年目の問いごとの答え（名前ごと）だけ。既定の答えを受けた問い（人が推された答えを押したもの）も規則にする。年度や数だけが違って答えの分かれた問いは、規則にしない。",
+            "- (a)(b) は、K を 2 つに分けたもの。(a) は、1 年目にもあった同じ問い（同じ鍵：問いの種類と、資料の名前を除いた文。年度と数は伏せる。tests/heldout/first-read.ts の questionKey）で、正しい答えも 1 年目と同じなのに、また聞いた問い（1 年目に見たものを二度聞いている。0 にする）。(b) はそのほか（1 年目に無かった問いと、同じ問いでも正しい答えが年度ごとに変わる問い。聞くのが正しい）。",
+            "- (a) の内訳：1 年目に答えの無かった問い（1 年目に開いたまま。規則を作れない）、正しい答えが分からない問い（正解の台本が答えられない。厳しい側に倒して (a) に数える）。",
+            ...rows.filter((x) => x.firstRead?.askedAgain).map((x) => `- ${x.facility} の (a) の問いの種類：${Object.entries(x.firstRead!.askedAgainKinds).sort((p, q) => q[1] - p[1]).map(([k, n]) => `${k} ${n}`).join("、")}`),
             "- 正解と違う答えは、規則で決まった問いのうち、正解の台本が答えられて、その答えと規則の答えが違う数。台本が正解から答えられない問いは数えていない。",
             ...(total.firstRead.skipped.length ? ["", `- 年度ごとの資料が無いので測っていない施設：${total.firstRead.skipped.join("・")}`] : []),
             "",
