@@ -216,5 +216,11 @@ describe("結果の表", () => {
     const second = renderResult(results, { commit: "def5678", dirty: true, at: "x", os: "ubuntu", ci: false }, withManual);
     assert.match(second, /^\| A4 \|.*\| 合格（2026-11-13・abc1234） \|$/m);
     assert.match(second, /作業ツリーに変更あり/);
+    // 走らせた所：手元か CI か。CI ならその回の道。いちばん新しい結果がどこにあるかを書く（手で書いた表と取り違えない）
+    assert.match(second, /走らせた所：ubuntu（手元）/);
+    const ci = renderResult(results, { commit: "abc1234", dirty: false, at: "x", os: "ubuntu", ci: true, runUrl: "https://github.com/o/r/actions/runs/1", ref: "refs/heads/main" }, withManual);
+    assert.match(ci, /走らせた所：ubuntu（CI、refs\/heads\/main、https:\/\/github\.com\/o\/r\/actions\/runs\/1）/);
+    assert.match(ci, /いちばん新しい結果は main の CI の scenario の仕事/);
+    assert.match(ci, /^\| A4 \|.*\| 合格（2026-11-13・abc1234） \|$/m);
   });
 });
