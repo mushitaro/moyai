@@ -9,7 +9,7 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { describe, expect, it } from "vitest";
 import { ReadingSkill, type LoadedReading } from "../../src/import/reading";
@@ -200,6 +200,8 @@ describe("Skillパックの物差し", () => {
   const rulesPath = process.env.MOYAI_BENCH_RULES;
   /** 初めて読む測り：パックなしで 1 年目 → 規則 → 残りの年度（MOYAI_BENCH_FIRST_READ=1） */
   const firstRead = process.env.MOYAI_BENCH_FIRST_READ === "1";
+  /** サンプルの置き場所（MOYAI_BENCH_SAMPLES。既定は samples/<パック>。mushitaro/moyai#111 の新しいサンプルは samples/<パック>-v3） */
+  const samplesDir = process.env.MOYAI_BENCH_SAMPLES;
   it.runIf(!!out)("工場 v2 の施設をすべて測り、表を書く", async () => {
     // ルールの案：範囲（scope）は書いていなければ会社にする（Skillパックの読み方は範囲を持たない。効き方は同じで、下書きとして先に当たる）
     let candidate: { name: string; rules: number; sha256: string } | null = null;
@@ -211,7 +213,7 @@ describe("Skillパックの物差し", () => {
       candidate = { name: skill.name, rules: skill.rules.length, sha256: createHash("sha256").update(bytes).digest("hex") };
       readings.push({ skill, version: `candidate-${candidate.sha256.slice(0, 8)}`, path: null, approved: false, draft: true });
     }
-    const root = join("samples", pack);
+    const root = samplesDir ?? join("samples", pack);
     const all = readdirSync(root, { withFileTypes: true })
       .filter((e) => e.isDirectory() && existsSync(join(root, e.name, "answer", "world.json")))
       .map((e) => e.name)
@@ -274,9 +276,9 @@ describe("Skillパックの物差し", () => {
         : {}),
     };
     mkdirSync(out!, { recursive: true });
-    writeFileSync(join(out!, "result.json"), `${JSON.stringify({ schema: "moyai.pack-bench.result/0", pack, ...(firstRead ? { mode: "first-read" } : {}), only: only.length ? only : null, candidate, reader, measuredAt, total, facilities: rows }, null, 1)}\n`, "utf8");
+    writeFileSync(join(out!, "result.json"), `${JSON.stringify({ schema: "moyai.pack-bench.result/0", pack, ...(samplesDir ? { samples: basename(samplesDir) } : {}), ...(firstRead ? { mode: "first-read" } : {}), only: only.length ? only : null, candidate, reader, measuredAt, total, facilities: rows }, null, 1)}\n`, "utf8");
     const L = [
-      firstRead ? `# 初めて読む物差し：${pack} の資料をパックなしで（開発用の資料。見ていない様式の結果ではない）` : `# Skillパックの物差し：${pack}（開発用の資料。見ていない様式の結果ではない）`,
+      firstRead ? `# 初めて読む物差し：${samplesDir ? basename(samplesDir) : pack} の資料をパックなしで（開発用の資料。見ていない様式の結果ではない）` : `# Skillパックの物差し：${samplesDir ? `${basename(samplesDir)}（パック ${pack}）` : pack}（開発用の資料。見ていない様式の結果ではない）`,
       "",
       firstRead ? "`node scripts/bench/pack-bench.mjs --first-read` が作る（手で書かない）。" : "`node scripts/bench/pack-bench.mjs` が作る（手で書かない）。",
       "",

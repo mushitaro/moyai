@@ -38,6 +38,8 @@ import {
   judgeE2,
   judgeE2FromCi,
   judgeWaiting,
+  judgeOldSamples,
+  V3_BENCH,
   fileRow,
   renderResult,
   summarizePlaywright,
@@ -179,7 +181,8 @@ const results = {};
 function bench(label, recorded, extra) {
   const base = JSON.parse(readFileSync(recorded, "utf8"));
   if (ci) {
-    const v = process.env.MOYAI_CI_PACK_BENCH ?? "";
+    // 新しいサンプル（--samples）は、その段の結果だけを見る（旧サンプルの差で決めない）
+    const v = (extra.includes("--samples") ? process.env.MOYAI_CI_PACK_BENCH_V3 : process.env.MOYAI_CI_PACK_BENCH) ?? "";
     const same = v === "success" ? true : v === "failure" ? false : null;
     return { result: base, strict: { same, detail: same === true ? "pack-bench の仕事で数の差なし（--strict）" : `pack-bench の仕事：${v || "不明"}` } };
   }
@@ -198,11 +201,20 @@ function bench(label, recorded, extra) {
   return { result: head, strict: { same: !c.changed, detail } };
 }
 {
-  const a1 = bench("waste-incineration", join("eval", "bench", "waste-incineration", "result.json"), []);
-  results.A1 = a1 ? judgeA1(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" };
-  results.A1b = a1 ? judgeA1b(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" };
-  const a3 = bench("first-read", join("eval", "bench", "waste-incineration", "first-read", "result.json"), ["--first-read"]);
-  results.A3 = a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" };
+  // A1・A1b・A3 は、運営者が承認した新しいサンプル（samples/waste-incineration-v3）を凍結した読み手で測った記録があるときだけ判定する（#111・docs/scenarios.md の S-A の注）。
+  // 無いときは「待ち（#111）」。旧サンプル（samples/waste-incineration）の値は「旧」として根拠の字に添えるが、判定に使わない
+  const v3 = V3_BENCH;
+  const hasV3 = existsSync(join("samples", v3)) && existsSync(join("eval", "bench", v3, "frozen", "freeze.json"));
+  const set = hasV3 ? { name: v3, extra: ["--samples", join("samples", v3)] } : { name: "waste-incineration", extra: [] };
+  const a1 = bench(set.name, join("eval", "bench", set.name, "result.json"), set.extra);
+  const a3 = bench(`${set.name}-first-read`, join("eval", "bench", set.name, "first-read", "result.json"), [...set.extra, "--first-read"]);
+  const measured = {
+    A1: a1 ? judgeA1(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" },
+    A1b: a1 ? judgeA1b(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" },
+    A3: a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" },
+  };
+  const v3Samples = existsSync(join("samples", v3));
+  for (const k of ["A1", "A1b", "A3"]) results[k] = hasV3 ? measured[k] : judgeOldSamples(measured[k], v3Samples);
 }
 
 let c1Tests = null;

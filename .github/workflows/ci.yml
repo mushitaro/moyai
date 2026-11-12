@@ -60,6 +60,9 @@ jobs:
     name: pack-bench（Skillパックの物差し）
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      # 新しいサンプルの物差しの結果（success・failure・absent）。scenario の仕事が A1・A1b・A3 に使う（旧サンプルの結果は使わない）
+      v3: ${{ steps.v3.outputs.v3 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -86,6 +89,27 @@ jobs:
           node scripts/bench/compare.mjs eval/bench/waste-incineration/first-read/result.json "$RUNNER_TEMP/bench-first-read/result.json" --strict --md "$RUNNER_TEMP/bench-first-read/compare.md"
           code=$?
           cat "$RUNNER_TEMP/bench-first-read/compare.md" >> "$GITHUB_STEP_SUMMARY"
+          exit $code
+      # 新しいサンプル（mushitaro/moyai#111）：凍結の測り（scripts/bench/freeze.mjs が書く eval/bench/waste-incineration-v3/frozen/）が入ってから測る。
+      # A1・A1b・A3 はこちらの記録だけで決める。上の旧サンプルの 2 つは「旧」として数の差だけを見る（docs/scenarios.md の S-A の注）
+      - name: 新しいサンプル（waste-incineration-v3）を測る（凍結の測りが入っていれば。Skillパックあり・初めて読む）
+        id: v3
+        if: ${{ !cancelled() }}
+        run: |
+          if [ ! -d samples/waste-incineration-v3 ] || [ ! -f eval/bench/waste-incineration-v3/frozen/freeze.json ]; then
+            echo "新しいサンプルの凍結の測りがまだ（#111）。A1・A1b・A3 は待ち" >> "$GITHUB_STEP_SUMMARY"
+            echo "v3=absent" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          code=0
+          node scripts/bench/pack-bench.mjs waste-incineration --samples samples/waste-incineration-v3 --out "$RUNNER_TEMP/bench-v3" || code=1
+          node scripts/bench/compare.mjs eval/bench/waste-incineration-v3/result.json "$RUNNER_TEMP/bench-v3/result.json" --strict --md "$RUNNER_TEMP/bench-v3/compare.md" || code=1
+          cat "$RUNNER_TEMP/bench-v3/compare.md" >> "$GITHUB_STEP_SUMMARY"
+          node scripts/bench/pack-bench.mjs waste-incineration --samples samples/waste-incineration-v3 --first-read --out "$RUNNER_TEMP/bench-v3-first-read" || code=1
+          node scripts/bench/compare.mjs eval/bench/waste-incineration-v3/first-read/result.json "$RUNNER_TEMP/bench-v3-first-read/result.json" --strict --md "$RUNNER_TEMP/bench-v3-first-read/compare.md" || code=1
+          cat "$RUNNER_TEMP/bench-v3-first-read/compare.md" >> "$GITHUB_STEP_SUMMARY"
+          if [ $code -eq 0 ]; then echo "v3=success" >> "$GITHUB_OUTPUT"; else echo "v3=failure" >> "$GITHUB_OUTPUT"; fi
           exit $code
 
   # シナリオテスト D1・D2（docs/scenarios.md）：e2e（tests/e2e）と walkthrough（tests/demo）を、ubuntu と windows の Chrome で。
@@ -156,6 +180,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           MOYAI_CI_TEST: ${{ needs.test.result }}
           MOYAI_CI_PACK_BENCH: ${{ needs.pack-bench.result }}
+          MOYAI_CI_PACK_BENCH_V3: ${{ needs.pack-bench.outputs.v3 }}
           MOYAI_CI_E2E: ${{ needs.e2e.result }}
         run: node scripts/scenario/run.mjs --ci --e2e-dir "${{ runner.temp }}/scenario-e2e" --out "${{ runner.temp }}/scenario/result.md" --prev eval/scenario/result.md
       # この回の表（実機の列はリポジトリの表から写す）。main の回のものを、そのまま eval/scenario/result.md に入れられる

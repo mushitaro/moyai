@@ -177,6 +177,19 @@ export function judgeC4(packs) {
   return r(packs.every((p) => p.ok) ? PASS : FAIL, ev);
 }
 
+/** A1・A1b・A3 を測る新しいサンプルの置き場所（samples/<これ>、記録は eval/bench/<これ>/。mushitaro/moyai#111） */
+export const V3_BENCH = "waste-incineration-v3";
+
+/**
+ * A1・A1b・A3：新しいサンプルの凍結の測りがまだ無いとき。旧サンプルで判定した字は「旧」として添えるが、合否に使わない（docs/scenarios.md の S-A の注）
+ * @param {{ status: string, evidence: string }} old 旧サンプルの記録で判定した結果
+ * @param {boolean} samplesPresent 新しいサンプルはもう入っているか
+ */
+export function judgeOldSamples(old, samplesPresent) {
+  const why = samplesPresent ? "待ち（#111）：新しいサンプルはある。凍結の測りがまだ（scripts/bench/freeze.mjs）" : "待ち（#111）：運営者が承認した新しいサンプルがまだ無い";
+  return r(WAIT, `${why}。旧サンプルの値（判定に使わない）：${old.status}・${old.evidence}`);
+}
+
 /** まだ作られていない印：Issue が開いていれば「待ち」。閉じたのにランナーに道が無ければ「未確認」（道を足す合図） */
 export function judgeWaiting(what, issue) {
   if (issue && issue.state === "closed") return r(UNKNOWN, `#${issue.number} が閉じた。ランナーに確かめの道がまだ無い（scripts/scenario/ に足す）`);

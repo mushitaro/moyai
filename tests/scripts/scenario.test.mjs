@@ -26,6 +26,7 @@ import {
   judgeE2,
   judgeE2FromCi,
   judgeWaiting,
+  judgeOldSamples,
   readManual,
   renderResult,
   summarizePlaywright,
@@ -93,6 +94,15 @@ describe("待ち・B1・B2", () => {
     assert.equal(judgeWaiting("x", null).status, WAIT);
     assert.equal(judgeWaiting("x", { number: 22, state: "open" }).status, WAIT);
     assert.equal(judgeWaiting("x", { number: 22, state: "closed" }).status, UNKNOWN);
+  });
+  it("A1・A1b・A3：新しいサンプルの凍結の測りが無ければ、旧サンプルで合格でも待ち（#111）。旧の値は字に残す", () => {
+    const old = { status: PASS, evidence: "計画 11/11" };
+    const a = judgeOldSamples(old, false);
+    assert.equal(a.status, WAIT);
+    assert.match(a.evidence, /#111/);
+    assert.match(a.evidence, /旧サンプルの値（判定に使わない）：合格・計画 11\/11/);
+    assert.equal(judgeOldSamples(old, true).status, WAIT);
+    assert.match(judgeOldSamples(old, true).evidence, /凍結の測りがまだ/);
   });
   it("B1：台帳が moyai-ledger でなければ待ち。試験が落ちれば不合格。両方そろって合格", () => {
     const ok = { total: 3, passed: 3, failed: 0 };
