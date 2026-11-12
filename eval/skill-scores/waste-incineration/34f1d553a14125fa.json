@@ -6,16 +6,16 @@
   "skills": [
     {
       "path": "skills/moyai/SKILL.md",
-      "sha256": "2255ff667556f0d5c8e9c3748fc6148828ec7cf7a5b4a697fcfca0015c17d51e"
+      "sha256": "a4702172ff5efbdf4c13607bc31a557d99e1d16549a52c3d82feca43a3ae9e07"
     },
     {
       "path": "packs/waste-incineration/SKILL.md",
       "sha256": "762a46c5c83e7a0c9a02d16647df141778e0c0abc6826d8d2d263222ecbbdd8e"
     }
   ],
-  "skillSha": "0ff5c4090072624e0882a370a27cb5b5a45903e5b178896ca2a5cb89ad7d9d3d",
-  "label": "main 2026-11-12（1 段目＋ごみ焼却）",
-  "at": "2026-11-12T09:12:51.003Z",
+  "skillSha": "34f1d553a14125fa4c018deece9c1e89acb8c6745928a7b87bf33da95bb87e87",
+  "label": "main 2026-11-12（#76 まで。1 段目＋ごみ焼却）",
+  "at": "2026-11-12T10:17:02.688Z",
   "cases": 100,
   "answered": 100,
   "pass": 100,
