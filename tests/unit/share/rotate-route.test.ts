@@ -11,12 +11,16 @@ import { loadRing, rotateKeysOf, unmarkedRetired } from "../../../src/share/chec
 import { retireFacilityKeys, storeFacilityKey } from "../../../src/share/facility";
 import { loadSharePack } from "../../../src/share/pack";
 import { generateKeyPair, keyIdOf } from "../../../src/share/sign";
+import { ringBaseDir } from "../../helpers/ring-dir";
 
 const REPO = fileURLToPath(new URL("../../../", import.meta.url));
 let dir = "";
+let ringBase = "";
 afterEach(() => {
   if (dir) rmSync(dir, { recursive: true, force: true });
+  if (ringBase) rmSync(ringBase, { recursive: true, force: true });
   dir = "";
+  ringBase = "";
 });
 
 describe("facility_key_rotate（橋渡しの経路）", () => {
@@ -29,7 +33,9 @@ describe("facility_key_rotate（橋渡しの経路）", () => {
     const human = new HumanService({ stateDir: sd, packsDir: join(REPO, "packs"), now: () => Date.parse("2026-11-06T00:00:00Z") });
     const call = async (action: string, payload: unknown) => human.handle({ action: action as never, payload: JSON.stringify(payload), session: "s" });
 
-    const made = await call("ring_create", { root: join(dir, "輪のフォルダ"), packId: "waste-incineration" });
+    // 輪のフォルダの道は固有名詞の数えの照らす相手なので、乱数の文字を入れない（tests/helpers/ring-dir.ts）
+    ringBase = ringBaseDir("rotate-route");
+    const made = await call("ring_create", { root: join(ringBase, "輪のフォルダ"), packId: "waste-incineration" });
     expect(made.ok).toBe(true);
     const ringId = made.ringId as string;
     const facility = { root: storage, planId: "fixture-fictional-1" };

@@ -15,6 +15,7 @@ import { MEMBERS_DIR, RETIRED_SUFFIX, ringDir, writeBundle } from "../../../src/
 import { knownMaxSeq } from "../../../src/share/ring-seen";
 import { generateKeyPair, keyIdOf, signBody, type KeyPair } from "../../../src/share/sign";
 import { FACILITY_COMMON, SPEC, detail, plan, smallPlan, table, vocab } from "./fixtures";
+import { ringBaseDir } from "../../helpers/ring-dir";
 
 const PACK: SharePack = { id: "waste-incineration", name: "架空のパック", spec: SPEC, vocab, table, classNames: { "T.FEED.LIFT": "架空の昇降機" }, axes: [] };
 const NOW = new Date(2026, 10, 3, 12, 0, 0);
@@ -23,7 +24,6 @@ const ANSWERS: Answers = { facility: FACILITY_COMMON, inNationalTable: true };
 
 let dir = "";
 let ringBase = "";
-let ringSeq = 0;
 const pending = new Map<string, KeyPair>();
 afterEach(() => {
   if (dir) rmSync(dir, { recursive: true, force: true });
@@ -36,8 +36,8 @@ afterEach(() => {
 async function setup() {
   dir = mkdtempSync(join(tmpdir(), "moyai-rotate-"));
   const stateDir = join(dir, "state");
-  // 輪のフォルダの道も固有名詞の照らす相手なので、乱数の文字（計画の語と偶然重なる）を入れない名前にする（e2e の checkpoint・one-button・walkthrough と同じ）
-  ringBase = join(tmpdir(), `moyai-rotate-ring-${process.pid}-${Date.now()}-${++ringSeq}`);
+  // 輪のフォルダの道は固有名詞の数えの照らす相手なので、乱数の文字を入れない（tests/helpers/ring-dir.ts）
+  ringBase = ringBaseDir("rotate");
   const root = join(ringBase, "輪のフォルダ");
   const c = await createRing({ stateDir, root, pack: PACK, now: NOW });
   if (!c.ok) throw new Error(c.reason);
