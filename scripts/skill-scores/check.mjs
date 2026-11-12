@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+// Skill の文の採点の記録を確かめる（柱 C・S-C4。運営者の判断 #23 の 2、2026-11-12）。CI は Claude を動かせないので、記録だけを見る。
+// 使い方：node scripts/skill-scores/check.mjs [--base <git の ref>]
+//   eval/skill-scores/<パック>/ のあるパック（記録を置いたパック）ごとに、今の文（1 段目 skills/moyai/SKILL.md ＋ packs/<パック>/SKILL.md。
+//   src/eval/score.ts と同じつなぎ方）の指紋を出し、次を確かめる：
+//   1. 文が --base と同じなら、確かめることは無い（通る）
+//   2. 文が変わったら、今の文の指紋の記録（<指紋の頭 16 字>.json）があり、指紋と問題の組の指紋（suiteSha）が今と合う（無い・古い → 落ちる）
+//   3. --base の文の記録が --base にあれば、合格の数が下がっていない（下がった → 落ちる）。--base に記録が無ければ、比べずに通す（最初の記録）
+// 判定はコードがする（AI に判定させない）。API を呼ばない。
+// 終了コード：通る 0・落ちる 1・道具の失敗 2
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const sha = (s) => createHash("sha256").update(s).digest("hex");
+const lf = (s) => s.replace(/\r\n/g, "\n");
+export const skillPathsOf = (pack) => ["skills/moyai/SKILL.md", `packs/${pack}/SKILL.md`];
+export const joinSkills = (texts) => texts.map((t) => lf(t).trim()).join("\n\n");
+export const suiteSha = (read, name) => sha([read(`eval/${name}/suite.json`), read(`eval/${name}/cases/train.jsonl`), read(`eval/${name}/cases/test.jsonl`)].map((x) => lf(x ?? "")).join("\n\u0000\n"));
+
+/**
+ * 1 つのパックを確かめる（純な関数。read は今の木、readBase は --base の木の読み方。無いファイルは null）
+ * @returns {{ ok: boolean, note: string }}
+ */
+export function checkPack(pack, read, readBase) {
+  const texts = skillPathsOf(pack).map(read);
+  if (texts.some((t) => t === null)) return { ok: false, note: `${pack}：Skill の文が無い` };
+  const now = sha(joinSkills(texts));
+  if (readBase) {
+    const bt = skillPathsOf(pack).map(readBase);
+    if (bt.every((t) => t !== null) && sha(joinSkills(bt)) === now) return { ok: true, note: `${pack}：文は変わっていない` };
+  }
+  const recText = read(`eval/skill-scores/${pack}/${now.slice(0, 16)}.json`);
+  if (recText === null) return { ok: false, note: `${pack}：今の文（指紋 ${now.slice(0, 16)}）の採点の記録が無い。docs/autonomy.md の「Skill の文を変える PR」の手順で採点して記録を置く` };
+  const rec = JSON.parse(recText);
+  if (rec.skillSha !== now) return { ok: false, note: `${pack}：記録の文の指紋が今の文と合わない（古い記録）` };
+  const suite = rec.suite;
+  if (rec.suiteSha !== suiteSha(read, suite)) return { ok: false, note: `${pack}：記録の問題の組（${suite}）の指紋が今と合わない（問題の組が変わった。採点し直す）` };
+  if (!readBase) return { ok: true, note: `${pack}：記録あり（${rec.pass}/${rec.cases}）。比べる相手を指していない` };
+  const bt = skillPathsOf(pack).map(readBase);
+  const baseSha = bt.every((t) => t !== null) ? sha(joinSkills(bt)) : null;
+  const baseRecText = baseSha ? readBase(`eval/skill-scores/${pack}/${baseSha.slice(0, 16)}.json`) : null;
+  if (baseRecText === null) return { ok: true, note: `${pack}：記録あり（${rec.pass}/${rec.cases}）。比べる前の記録が無い（最初の記録）` };
+  const base = JSON.parse(baseRecText);
+  if (base.suiteSha !== rec.suiteSha) return { ok: false, note: `${pack}：前の記録と問題の組が違うので比べられない（前の文も今の問題の組で採点し直す）` };
+  if (rec.pass < base.pass) return { ok: false, note: `${pack}：合格の数が下がった（${base.pass}/${base.cases} → ${rec.pass}/${rec.cases}）` };
+  return { ok: true, note: `${pack}：${base.pass}/${base.cases} → ${rec.pass}/${rec.cases}（下がっていない）` };
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  const args = process.argv.slice(2);
+  const bi = args.indexOf("--base");
+  const base = bi >= 0 ? args[bi + 1] : null;
+  const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
+  const readBase = base
+    ? (p) => {
+        try {
+          return execFileSync("git", ["show", `${base}:${p}`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 });
+        } catch {
+          return null;
+        }
+      }
+    : null;
+  const dir = join("eval", "skill-scores");
+  const packs = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort() : [];
+  if (!packs.length) {
+    console.error("skill-scores: 記録を置いたパックが無い（確かめることは無い）");
+    process.exit(0);
+  }
+  let bad = false;
+  for (const pack of packs) {
+    let r;
+    try {
+      r = checkPack(pack, read, readBase);
+    } catch (e) {
+      console.error(`skill-scores: ${pack}：記録が読めない（${e instanceof Error ? e.message : String(e)}）`);
+      process.exit(2);
+    }
+    console.error(`skill-scores: ${r.ok ? "✓" : "✗"} ${r.note}`);
+    if (!r.ok) bad = true;
+  }
+  process.exit(bad ? 1 : 0);
+}

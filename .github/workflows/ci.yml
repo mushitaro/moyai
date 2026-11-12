@@ -49,6 +49,12 @@ jobs:
         run: node scripts/run-tests.mjs
       - name: 公開の前の検査
         run: node scripts/check-publish.mjs
+      - name: Skill の文の採点の記録（文を変えたら、記録が今の文に合い、点が main より下がっていないか。docs/autonomy.md）
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BASE_REF" ]; then node scripts/skill-scores/check.mjs --base "origin/$BASE_REF"; else node scripts/skill-scores/check.mjs; fi
 
   pack-bench:
     name: pack-bench（Skillパックの物差し）
