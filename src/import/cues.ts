@@ -132,6 +132,13 @@ export const cue = {
     COLUMN_MEMO.set(header, v);
     return v;
   },
+  /** 見出しの終わりの語（複合語の頭：「作業区分」の「区分」）だけで当たる役目（語そのものの見出しは除く。長い語を優先）。無ければ null */
+  columnTail(header: string): ColumnCue | null {
+    const h = stripParen(norm(header));
+    let best: { k: ColumnCue; len: number } | null = null;
+    for (const [k, words] of columnLists) for (const w of words) if (h !== w && h.endsWith(w) && (!best || w.length > best.len)) best = { k, len: w.length };
+    return best?.k ?? null;
+  },
   /** その役目の見出しの語（そろえた文字） */
   words: (k: ColumnCue): string[] => normList(CUES.column[k]),
   /** 見出しに書いた工数の単位（「工数(人日)」→ 人・日、「延工数(h)」「時間」→ 時間）。書いていなければ null */
