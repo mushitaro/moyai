@@ -886,10 +886,7 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
       nameParts: "名前を号機と機器と部位に分けて引いた（「機器 号機 部位」の書き方）",
     };
     // 名前が多いときは「1 件ずつ聞く」を置かない（名前の数だけ質問が増え、作業画面が固まる。Architect の 64）。違う名前は同じ機器のルール（呼び名の並び）で直す
-    // 名前の数は年度ごとに数える（年度の資料を足して名前が増えても、前の年度と同じ選択肢で聞く。足した年度で選び方が変わり、前の年度の結びが変わらないように）
-    const perYear = new Map<string, number>();
-    for (const cs of css) for (const y of new Set(cs.events.map((e) => String(e.fiscalYear ?? "?")))) perYear.set(y, (perYear.get(y) ?? 0) + 1);
-    const many = Math.max(0, ...perYear.values()) > SPLIT_MAX;
+    const many = css.length > SPLIT_MAX;
     const a = ask.ask(gkey, {
       kind: "eventAsset",
       text: `${fileName} の機器の名前 ${css.length} 通り（${rows} 行）を、${how[pattern] ?? pattern}機器 1 つに当てるか${many ? "（1 件ずつは聞かない。違いは「同じ機器」のルールで直す）" : ""}`,
