@@ -25,9 +25,12 @@ test("浅くない・分からないときは何も言わない。浅いとき�
 test("作業場所が浅い clone かを git に聞く：全部の clone は false、深さ 1 の clone は true、リポジトリでなければ null", () => {
   const tmp = mkdtempSync(join(tmpdir(), "moyai-shallow-"));
   try {
-    const git = (cwd, ...a) => execFileSync("git", a, { cwd, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@example.invalid", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@example.invalid" } });
+    // 走らせた人の git の設定に頼らない：署名なし、フックの中から走っても一時のリポジトリを見る（GIT_DIR・GIT_WORK_TREE を外す）
+    const { GIT_DIR: _d, GIT_WORK_TREE: _w, ...env } = process.env;
+    const git = (cwd, ...a) =>
+      execFileSync("git", ["-c", "commit.gpgsign=false", ...a], { cwd, stdio: ["ignore", "pipe", "pipe"], env: { ...env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@example.invalid", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@example.invalid" } });
     const full = join(tmp, "full");
-    git(tmp, "init", "-q", "-b", "main", full);
+    git(tmp, "init", "-q", full);
     for (const n of ["a", "b"]) {
       writeFileSync(join(full, n), n);
       git(full, "add", "-A");
