@@ -221,8 +221,12 @@ test("頼んだ人の帯・後から開いた人・頼み直す・取り下げ�
   });
 
   await test.step("佐藤：古いリンクで「受け取る」を押すと「この頼みは取り下げられました」。見るだけ", async () => {
-    await pc.goto(`${three.base}/#/`);
-    await pc.goto(at(link, three.base));
+    // トップへ出て、古いリンクを開き直す。hash だけの 2 つの移動を描き直しの前に続けて起こす（goto を 2 回でも、間の描き直しが
+    // 間に合わないと同じになる。前の段の「ほかの鍵が受け取っています」が残り、「受け取る」が出なかった。CI の e2e の赤、11-13）
+    await pc.evaluate((u) => {
+      location.hash = "#/";
+      location.hash = new URL(u).hash;
+    }, at(link, three.base));
     await pc.getByTestId("request-receive").click();
     const other = pc.getByTestId("request-other");
     await expect(other).toHaveAttribute("data-state", "withdrawn");
