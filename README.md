@@ -180,7 +180,7 @@ node dist/cli.js verify ledger ../moyai-ledger
 npm test
 ```
 
-`npm test` は node:test と vitest を走らせ、最後に件数を出します。`npm run acceptance` は試験を走らせて `docs/acceptance.md` を作り直します。
+`npm test` は node:test と vitest を走らせ、最後に件数を出します。履歴の浅い clone（`git clone --depth` や、入れ物の既定の clone）では、凍結のタグと履歴を見る試験が落ちます。先に `git fetch --unshallow origin && git fetch origin --tags` で履歴とタグを取ってください（`npm test` も、浅い clone のときはそう知らせます。試験は飛ばしません）。`npm run acceptance` は試験を走らせて `docs/acceptance.md` を作り直します。
 
 ## 使い続ける人と場面
 

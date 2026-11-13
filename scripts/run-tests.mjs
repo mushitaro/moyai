@@ -6,6 +6,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { isShallow, shallowNote } from "./shallow-note.mjs";
 
 function* walk(dir, re) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -16,6 +17,9 @@ function* walk(dir, re) {
 }
 
 let failed = false;
+// 履歴の浅い clone では、凍結のタグと履歴を見る試験が落ちる。走らせる前と、落ちたあとに知らせる（飛ばさない。mushitaro/moyai#26）
+const shallow = isShallow();
+if (shallowNote(shallow)) console.error(shallowNote(shallow));
 const reportOut = process.env.MOYAI_REPORT_DIR || null;
 if (reportOut) mkdirSync(reportOut, { recursive: true });
 
@@ -81,4 +85,5 @@ if (vitestCount === 0) {
 if (v.status !== 0) failed = true;
 
 console.log(`run-tests: node:test ${nodeCount} 件、vitest ${vitestCount} 件`);
+if (failed && shallowNote(shallow, true)) console.error(shallowNote(shallow, true));
 process.exit(failed ? 1 : 0);
