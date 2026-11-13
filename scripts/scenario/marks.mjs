@@ -190,6 +190,16 @@ export function judgeOldSamples(old, samplesPresent) {
   return r(WAIT, `${why}。旧サンプルの値（判定に使わない）：${old.status}・${old.evidence}`);
 }
 
+/**
+ * A1・A1b・A3：新しいサンプルの今の記録で決めた結果に、凍結の回（最初の 1 回。eval/bench/<サンプル>/frozen/）の値を添える。合否は今の記録のまま
+ * @param {{ status: string, evidence: string }} current 今の記録で判定した結果
+ * @param {{ status: string, evidence: string } | null} frozen 凍結の回の記録で判定した結果（読めなければ null）
+ * @param {string} tag 凍結のタグ
+ */
+export function withFrozen(current, frozen, tag) {
+  return r(current.status, `${current.evidence}。凍結の回（${tag}、最初の 1 回）：${frozen ? `${frozen.status}・${frozen.evidence}` : "記録を読めない"}`);
+}
+
 /** まだ作られていない印：Issue が開いていれば「待ち」。閉じたのにランナーに道が無ければ「未確認」（道を足す合図） */
 export function judgeWaiting(what, issue) {
   if (issue && issue.state === "closed") return r(UNKNOWN, `#${issue.number} が閉じた。ランナーに確かめの道がまだ無い（scripts/scenario/ に足す）`);

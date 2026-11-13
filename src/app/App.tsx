@@ -89,14 +89,24 @@ function currentHash(): string {
   return to;
 }
 
-function useHash(): string {
-  const [hash, setHash] = useState(currentHash);
+/**
+ * 今の hash と、版の画面（merge）の外へ出た回数。外へ出て戻ったら、版の画面は前の状態を持ち越さず開き直す（key に使う）。
+ * 外へ出る移動と戻る移動が描き直しの前に続いても（hash だけの移動が 2 つ続くと、描き直しは 1 回にまとまる）、外へ出たことは数える。
+ * 数えないと、前に開いたリンクの状態（受け取った・ほかの鍵が受け取っていた）が残り、同じリンクを開き直しても「受け取る」が出ない
+ */
+function useHash(): { hash: string; left: number } {
+  const [state, setState] = useState(() => ({ hash: currentHash(), left: 0 }));
   useEffect(() => {
-    const on = () => setHash(currentHash());
+    const on = (e: HashChangeEvent) => {
+      const hash = currentHash();
+      // 外へ出たかは、その移動の行き先（newURL）で見る。今の location.hash は、続いた移動の最後の行き先になっている
+      const out = routeOf(new URL(e.newURL).hash || "#/").stage !== "merge";
+      setState((s) => ({ hash, left: out ? s.left + 1 : s.left }));
+    };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
-  return hash;
+  return state;
 }
 
 // 役割のトークン（src/ui/tokens.css）は暗が既定で、明は html の data-theme="light" で入れ替える
@@ -122,7 +132,7 @@ function ReadingsSync() {
 }
 
 export function App() {
-  const hash = useHash();
+  const { hash, left } = useHash();
   const route = routeOf(hash);
   const { state } = useConnection();
   // 作業のあるタブがほかに開いている（#46）：このタブは 1 行だけにする（中身を出さない。操作できるものを置かない）
@@ -152,7 +162,7 @@ export function App() {
           <Industries />
         </Suspense>
       ) : route.stage === "merge" ? (
-        <Merge ws={workspace} client={client} sheet={route.sheet} />
+        <Merge key={left} ws={workspace} client={client} sheet={route.sheet} />
       ) : (
         <Home client={client} />
       )}

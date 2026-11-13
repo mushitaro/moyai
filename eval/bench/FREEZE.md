@@ -27,7 +27,7 @@ A1・A1b・A3（`docs/scenarios.md` の S-A）は、運営者が承認した新�
 ## そのあと
 
 - CI の `pack-bench` の仕事は、`frozen/freeze.json` があるときだけ新しいサンプルを測ります。今の記録と `--strict` で比べます。
-- `scenario` の仕事は、A1・A1b・A3 をこの結果だけで決めます。
+- `scenario` の仕事は、A1・A1b・A3 をこの結果だけで決めます。合否は今の記録で決め、根拠の字に凍結の回（最初の 1 回）の値を添えます。
 - 凍結の記録が無いあいだは、A1・A1b・A3 は「待ち（#111）」です。根拠の字に旧サンプルの値を添えます。
 - 読み手を直して数が変わったら、今の記録だけを測り直します：`node scripts/bench/pack-bench.mjs waste-incineration --samples samples/waste-incineration-v3`（`--first-read` も）。`frozen/` は最初の測りとして残ります。
 - 毎回確かめること（`tests/heldout/bench-freeze.test.ts`）：

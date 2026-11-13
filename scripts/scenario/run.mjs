@@ -39,6 +39,7 @@ import {
   judgeE2FromCi,
   judgeWaiting,
   judgeOldSamples,
+  withFrozen,
   V3_BENCH,
   fileRow,
   renderResult,
@@ -214,7 +215,28 @@ function bench(label, recorded, extra) {
     A3: a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" },
   };
   const v3Samples = existsSync(join("samples", v3));
-  for (const k of ["A1", "A1b", "A3"]) results[k] = hasV3 ? measured[k] : judgeOldSamples(measured[k], v3Samples);
+  // 凍結の回（最初の 1 回）の値も根拠の字に添える。合否は今の記録で決める
+  const frozenOf = (sub) => {
+    try {
+      return JSON.parse(readFileSync(join("eval", "bench", v3, "frozen", sub), "utf8"));
+    } catch {
+      return null;
+    }
+  };
+  let frozen = null;
+  if (hasV3) {
+    const f = frozenOf("freeze.json");
+    const fp = frozenOf("result.json");
+    const ff = frozenOf(join("first-read", "result.json"));
+    const self = { same: true, detail: "凍結の記録そのもの" };
+    frozen = {
+      tag: f?.tag ?? "タグ不明",
+      A1: fp ? judgeA1(fp, self) : null,
+      A1b: fp ? judgeA1b(fp, self) : null,
+      A3: ff ? judgeA3(ff, self) : null,
+    };
+  }
+  for (const k of ["A1", "A1b", "A3"]) results[k] = hasV3 ? withFrozen(measured[k], frozen[k], frozen.tag) : judgeOldSamples(measured[k], v3Samples);
 }
 
 let c1Tests = null;
