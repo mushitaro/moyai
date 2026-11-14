@@ -105,6 +105,53 @@ describe("作業中の道（作業画面だけ。タブの秘密）", () => {
     expect(existsSync(join(root, "plans"))).toBe(false);
   });
 
+  it("計画 ID が替わったら、同じタブが書いた計画なしの仮の写しだけを、新しい写しに資料がそろっているのを確かめてから片づける", async () => {
+    const { t, root } = await bridgeWithTab();
+    const W = "tab-writer-aaaaaaaaaaaa";
+    const OLD = "intake--test";
+    const NEW = "intake-waste-incineration-test";
+    const bytes = Buffer.from("資料の中身\n");
+    const putTo = async (id: string) => (await post(t, ROUTES.tabWorkSource.path, { planId: id, base64: bytes.toString("base64") })).body as { sha256: string };
+    const { sha256 } = await putTo(OLD);
+    const file = { name: "日報.xlsx", sha256, size: bytes.length };
+    const decisions = [{ questionId: "q1", answer: "a", author: "human", reason: "" }];
+    await post(t, ROUTES.tabWorkSave.path, { state: state({ planId: OLD, plan: null, writer: W, files: [file], decisions }) });
+    const move = (body: Record<string, unknown>) => post(t, ROUTES.tabWorkMove.path, { from: OLD, to: NEW, writer: W, ...body });
+    // 新しい写しがまだ無い・資料がそろっていないなら、片づけない
+    expect((await move({})).body).toEqual({ ok: false, reason: "workMissing" });
+    await post(t, ROUTES.tabWorkSave.path, { state: state({ planId: NEW, plan: null, writer: W, files: [], decisions }) });
+    expect((await move({})).body).toEqual({ ok: false, reason: "workSourceMissing" });
+    await putTo(NEW);
+    await post(t, ROUTES.tabWorkSave.path, { state: state({ planId: NEW, plan: null, writer: W, files: [file], decisions }) });
+    // ほかのタブの印では片づけない
+    expect((await move({ writer: "tab-writer-bbbbbbbbbbbb" })).body).toEqual({ ok: false, reason: "workNotMine" });
+    expect(existsSync(join(root, "plans", OLD, "work", "state.json"))).toBe(true);
+    expect((await move({})).body).toEqual({ ok: true });
+    // 前の ID は残らず、資料と答えは新しい写しにある（資料の紐づきを切らない）
+    expect(readdirSync(join(root, "plans"))).toEqual([NEW]);
+    expect((await post(t, ROUTES.tabWorkRead.path, { planId: NEW })).body).toMatchObject({ ok: true, state: { files: [file], decisions } });
+    expect((await post(t, ROUTES.tabWorkRead.path, { planId: NEW, sha256 })).body).toBe("資料の中身\n");
+  });
+
+  it("計画のある写し・署名した版のある ID・書き手の印の無い前の形の写しは、移す道では片づけない", async () => {
+    const { t, root } = await bridgeWithTab();
+    const W = "tab-writer-aaaaaaaaaaaa";
+    const NEW = "intake-waste-incineration-test";
+    await post(t, ROUTES.tabWorkSave.path, { state: state({ planId: NEW, plan: null, writer: W }) });
+    // 計画あり
+    await post(t, ROUTES.tabWorkSave.path, { state: state({ planId: "intake--a", plan: { planId: "intake--a" }, writer: W }) });
+    expect((await post(t, ROUTES.tabWorkMove.path, { from: "intake--a", to: NEW, writer: W })).body).toEqual({ ok: false, reason: "workHasPlan" });
+    // 書き手の印が無い（前の形・人が残した作業中）
+    await post(t, ROUTES.tabWorkSave.path, { state: state({ planId: "intake--b", plan: null }) });
+    expect((await post(t, ROUTES.tabWorkMove.path, { from: "intake--b", to: NEW, writer: W })).body).toEqual({ ok: false, reason: "workNotMine" });
+    // 署名した版がある
+    await post(t, ROUTES.tabWorkSave.path, { state: state({ planId: "intake--c", plan: null, writer: W }) });
+    mkdirSync(join(root, "plans", "intake--c", "versions"), { recursive: true });
+    writeFileSync(join(root, "plans", "intake--c", "versions", "000001.json"), "{}");
+    expect((await post(t, ROUTES.tabWorkMove.path, { from: "intake--c", to: NEW, writer: W })).body).toEqual({ ok: false, reason: "workHasVersions" });
+    expect(readdirSync(join(root, "plans")).sort()).toEqual(["intake--a", "intake--b", "intake--c", NEW].sort());
+  });
+
   it("中継の鍵では通らない（AI の道からは書けない）", async () => {
     const { t, root } = await bridgeWithTab();
     const relay = { origin: t.origin, "content-type": "application/json", authorization: `Bearer ${t.bridge.relayKey}` };

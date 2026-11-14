@@ -3,7 +3,7 @@
 // MCP のクライアント（本物の中継 dist/cli.js mcp を標準入出力でつなぐ）と、設定の画面で置き場所と輪を作る人の操作も置く。
 // スクリーンショットは一時のフォルダの moyai-shots/<走らせた日（日本時間）>/（日誌に残すときは MOYAI_SHOTS_DIR=docs/progress/shots/<日付> を渡す）。前の画像は上書きしない。
 import { spawn, type ChildProcess } from "node:child_process";
-import { appendFileSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { appendFileSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
@@ -106,7 +106,15 @@ export function packName(packId: string): string {
  * Skillパックは画面で選ばない（Claude が会話で聞いて置く。mushitaro/moyai#67・PR #68）。同じフォルダの資料は名前が同じなので入れ直さず、パックだけが置かれる。
  * packId を "" にするとパックなしで読む
  */
-export async function openIntakeAndDrop(page: Page, base: string, facilityName: string, set = FICTIONAL_1, packId = "waste-incineration"): Promise<void> {
+export async function openIntakeAndDrop(
+  page: Page,
+  base: string,
+  facilityName: string,
+  set = FICTIONAL_1,
+  packId = "waste-incineration",
+  /** 保管先を渡すと、パックを置く前に、パックなしの ID の作業中の写しが書かれるのを待つ（資料を入れてからパックが決まるまでが長い場合。#120） */
+  waitWorkIn?: string,
+): Promise<void> {
   await page.goto(`${base}/#/intake`);
   await expect(page.getByTestId("intake-page")).toBeVisible();
   await expect(page.getByTestId("compose")).toBeDisabled();
@@ -123,6 +131,11 @@ export async function openIntakeAndDrop(page: Page, base: string, facilityName: 
   await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", String(set.files.length - photos), { timeout: 20_000 });
   if (photos) await expect(page.getByTestId("photo-item")).toHaveCount(photos);
   if (!packId) return;
+  if (waitWorkIn) {
+    await expect
+      .poll(() => (existsSync(join(waitWorkIn, "plans")) ? readdirSync(join(waitWorkIn, "plans")).filter((d) => d.startsWith("intake--") && existsSync(join(waitWorkIn, "plans", d, "work", "state.json"))).length : 0), { timeout: 20_000 })
+      .toBe(1);
+  }
   const stateDir = stateDirOf.get(base);
   if (!stateDir) throw new Error("openIntakeAndDrop：startBuiltBridge で起こした橋渡しではない");
   // 橋渡しはリポジトリの中のフォルダを読まない。利用者のフォルダの代わりに、同じ資料を一時のフォルダに写して渡す
