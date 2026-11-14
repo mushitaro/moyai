@@ -67,9 +67,10 @@ function fakes(names: string[] = ["日報.xlsx", "台帳.xlsx"]) {
     },
   };
   let timer: (() => void) | null = null;
-  const k = new WorkKeeper({ port, ws, build: "t", setTimer: (fn) => ((timer = fn), 1 as never), clearTimer: () => (timer = null) });
+  const delays: number[] = [];
+  const k = new WorkKeeper({ port, ws, build: "t", setTimer: (fn, ms) => ((timer = fn), delays.push(ms), 1 as never), clearTimer: () => (timer = null) });
   const seed = (st: WorkState) => (saved = st);
-  return { k, ws, puts, saves, restored, seed, fire: () => timer?.(), pending: () => timer !== null, poke: () => listeners.forEach((l) => l()) };
+  return { k, ws, puts, saves, restored, seed, delays, fire: () => timer?.(), pending: () => timer !== null, poke: () => listeners.forEach((l) => l()) };
 }
 
 describe("作業中の写し", () => {
@@ -201,6 +202,32 @@ describe("計画を作る前に計画 ID が替わったとき（資料を入れ
     expect(w.files.map((x) => x.name)).toEqual(["日報.xlsx", "台帳.xlsx"]);
     expect(w.decisions).toHaveLength(1);
     expect(w.writer).toBe(f.k.writer);
+  });
+
+  it("仮の写しのあとで計画 ID が替わったら、間を置かずに書いて移す（続けて変わっても延ばさない）。替わらなければいつもの間", async () => {
+    const f = store();
+    f.k.start();
+    f.ws.key = "intake--abc";
+    f.poke();
+    expect(f.delays.at(-1)).toBe(1500);
+    f.fire();
+    await f.k.idle();
+    expect([...f.works.keys()]).toEqual(["intake--abc"]);
+    // 同じ ID のまま変わる：いつもの間
+    f.poke();
+    expect(f.delays.at(-1)).toBe(1500);
+    // パックが決まって ID が替わる：すぐ書く。続けて変わっても、すぐのまま
+    f.ws.key = "intake-waste-incineration-abc";
+    f.poke();
+    f.poke();
+    expect(f.delays.slice(-2)).toEqual([0, 0]);
+    f.fire();
+    await f.k.idle();
+    expect([...f.works.keys()]).toEqual(["intake-waste-incineration-abc"]);
+    // 移し終えたら、いつもの間に戻る
+    f.poke();
+    expect(f.delays.at(-1)).toBe(1500);
+    f.k.stop();
   });
 
   it("ほかのタブ・前の作業の作業中（このタブが書き始めたのでない）には触れない。計画を作ったあとの写しも移さない", async () => {
