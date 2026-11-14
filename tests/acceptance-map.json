@@ -32,7 +32,11 @@
     },
     {
       "name": "counts",
-      "sources": []
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/import/layer2-4.test.ts", "title": "層 4" },
+        { "runner": "vitest", "file": "tests/unit/import/dev.test.ts" }
+      ],
+      "scope": "入れた行＝取り込んだ数＋外した数（理由ごと）＋未解決を、数え直しの関数（layer2-4）と開発用の資料の全ファイル（dev）で見る。保存したあとの数（版のファイルに数は残していない）は見ていない"
     },
     {
       "name": "pack.second",
@@ -48,7 +52,11 @@
     },
     {
       "name": "pack.map",
-      "sources": []
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/packs/pack-map.test.tsx" },
+        { "runner": "playwright", "file": "tests/e2e/industries.spec.ts" }
+      ],
+      "scope": "全部の空のパックのスキーマと、画面に全行が並ぶことは見る。選んだときの「中身が無い」1 行と出どころの候補は、最初の空のパック 1 つで見る（ほかは、候補があることを形で見る）"
     },
     {
       "name": "kinds",
