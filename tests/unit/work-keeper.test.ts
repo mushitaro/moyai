@@ -164,3 +164,62 @@ describe("作業中の写し", () => {
     expect(f.saves).toHaveLength(1);
   });
 });
+
+describe("計画を作る前に計画 ID が替わったとき（資料を入れたあとにパックが決まった）", () => {
+  /** 計画 ID ごとに作業中を持つ保管先の代わり（move は橋渡しと同じ条件を見る） */
+  function store() {
+    const works = new Map<string, WorkState>();
+    const moves: [string, string][] = [];
+    const f = fakes();
+    const port = (f.k as unknown as { o: { port: WorkPort } }).o.port;
+    port.save = async (s) => (works.set(s.planId, s), { ok: true });
+    port.read = async (id) => works.get(id) ?? null;
+    port.move = async (from, to, writer) => {
+      const a = works.get(from);
+      const b = works.get(to);
+      if (!a || !b || a.writer !== writer || b.writer !== writer || a.plan !== null) return { ok: false };
+      moves.push([from, to]);
+      works.delete(from);
+      return { ok: true };
+    };
+    return { ...f, works, moves };
+  }
+
+  it("このタブが書いた仮の写しは、新しい ID に資料と答えごと書いて読み直してから、前の ID を片づける", async () => {
+    const f = store();
+    f.ws.key = "intake--abc";
+    f.ws.settings = { ...f.ws.settings, packId: "" };
+    await f.k.flush();
+    expect([...f.works.keys()]).toEqual(["intake--abc"]);
+    f.ws.key = "intake-waste-incineration-abc";
+    f.ws.settings = { ...f.ws.settings, packId: "waste-incineration" };
+    await f.k.flush();
+    expect(f.moves).toEqual([["intake--abc", "intake-waste-incineration-abc"]]);
+    const w = f.works.get("intake-waste-incineration-abc")!;
+    expect([...f.works.keys()]).toEqual(["intake-waste-incineration-abc"]);
+    // 資料の紐づきを切らない：資料と答えは新しい写しにある
+    expect(w.files.map((x) => x.name)).toEqual(["日報.xlsx", "台帳.xlsx"]);
+    expect(w.decisions).toHaveLength(1);
+    expect(w.writer).toBe(f.k.writer);
+  });
+
+  it("ほかのタブ・前の作業の作業中（このタブが書き始めたのでない）には触れない。計画を作ったあとの写しも移さない", async () => {
+    const f = store();
+    // ほかのタブが前に書いた、変更の無い作業中（このタブは上書きしてよいが、書き始めたのではない）
+    f.works.set("intake--abc", { schema: "moyai.work/1", writer: "other-tab-writer-0001", savedAt: "", build: "", planId: "intake--abc", displayName: "", fictional: true, open: 0, changed: false, base: null, settings: f.ws.settings, files: [], skipped: 0, decisions: [], plan: null, proposals: [], accepted: [] });
+    f.ws.key = "intake--abc";
+    await f.k.flush();
+    f.ws.key = "intake-waste-incineration-abc";
+    await f.k.flush();
+    expect(f.moves).toEqual([]);
+    expect([...f.works.keys()].sort()).toEqual(["intake--abc", "intake-waste-incineration-abc"]);
+    // 計画を作ったあと（版の ID）で書いた写しは、仮の写しではない
+    const g = store();
+    setWorkingPlan(FICTIONAL_1, "intake");
+    await g.k.flush();
+    clearWorkingPlan();
+    g.ws.key = "intake-waste-incineration-other";
+    await g.k.flush();
+    expect(g.moves).toEqual([]);
+  });
+});

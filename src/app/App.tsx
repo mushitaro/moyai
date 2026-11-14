@@ -57,6 +57,10 @@ installWorkKeeper(
         return r?.ok === true ? (r.state as WorkState) : null;
       },
       source: (planId, sha256) => client.workSource(planId, sha256),
+      move: async (from, to, writer) => {
+        const r = await client.workCall(ROUTES.tabWorkMove.path, { from, to, writer });
+        return { ok: r?.ok === true, ...(typeof r?.reason === "string" ? { reason: r.reason } : {}) };
+      },
     },
   }),
 );

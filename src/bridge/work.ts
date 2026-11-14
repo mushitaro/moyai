@@ -49,6 +49,8 @@ export const workStateSchema = z.object({
   plan: z.unknown().nullable(),
   proposals: z.array(z.unknown()).max(100_000),
   accepted: z.array(z.object({ id: z.string().max(200), hash: z.string().regex(/^[0-9a-f]{16}$/), reason: z.string().max(500) })).max(100_000),
+  /** 書いたタブの印（タブごとの乱数。前の形の作業中には無い）。計画 ID が替わったとき、同じタブが書いた仮の写しだけを移すために使う */
+  writer: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/).optional(),
 });
 export type WorkState = z.infer<typeof workStateSchema>;
 
@@ -153,6 +155,50 @@ async function versionSources(root: string, planId: string): Promise<Set<string>
     }
   }
   return out;
+}
+
+export type WorkMove = { ok: true } | { ok: false; reason: "workInvalid" | "workMissing" | "workNotMine" | "workHasPlan" | "workHasVersions" | "workSourceMissing" };
+
+/**
+ * 計画を作る前に計画 ID が替わったとき（資料を入れたあとにパックが決まったなど）、前の ID の仮の作業中を片づける（移すの後半）。
+ * 作業画面は、先に新しい ID に資料ごと書いて読み直してから呼ぶ。ここでは、移し終えたことを確かめてから前の ID を片づける：
+ * 前の写しも新しい写しも同じ書き手（タブ）・前の写しに計画が無い・前の ID に署名した版が無い・前の写しの資料がすべて新しい写しにあり、中身がそろっている。
+ * ほかのタブの作業中・前の作業・人が残した作業中（書き手が違う・無い）には触れない。人の work_discard とは別の道
+ */
+export async function moveWork(root: string, from: string, to: string, writer: string): Promise<WorkMove> {
+  if (!PLAN_ID.test(from) || !PLAN_ID.test(to) || from === to || !/^[A-Za-z0-9_-]{16,64}$/.test(writer)) return { ok: false, reason: "workInvalid" };
+  const a = await readWork(root, from);
+  const b = await readWork(root, to);
+  if (!a || !b) return { ok: false, reason: "workMissing" };
+  if (a.writer !== writer || b.writer !== writer) return { ok: false, reason: "workNotMine" };
+  if (a.plan !== null) return { ok: false, reason: "workHasPlan" };
+  let versions: string[] = [];
+  try {
+    versions = await readdir(join(planDir(root, from), "versions"));
+  } catch {
+    versions = [];
+  }
+  if (versions.length > 0) return { ok: false, reason: "workHasVersions" };
+  const moved = new Set(b.files.map((f) => f.sha256));
+  for (const f of a.files) {
+    if (!moved.has(f.sha256)) return { ok: false, reason: "workSourceMissing" };
+    try {
+      if ((await stat(sourcePath(root, to, f.sha256))).size !== f.size) return { ok: false, reason: "workSourceMissing" };
+    } catch {
+      return { ok: false, reason: "workSourceMissing" };
+    }
+  }
+  await rm(workDir(root, from), { recursive: true, force: true });
+  for (const f of a.files) await rm(sourcePath(root, from, f.sha256), { force: true });
+  // 前の ID のフォルダに、もう何も残っていなければ片づける（ほかの物があれば残す）
+  for (const d of [join(planDir(root, from), "sources"), planDir(root, from)]) {
+    try {
+      if ((await readdir(d)).length === 0) await rm(d, { recursive: true, force: true });
+    } catch {
+      // 無い・読めない：残す
+    }
+  }
+  return { ok: true };
 }
 
 /** 作業中を消す（人だけ）。作業中だけが持っていた資料の写しも消す。署名した版と、版が持つ資料は消さない */
