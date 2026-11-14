@@ -19,7 +19,7 @@
 | A4 | S-0 の 3 が M-PC3 で通る | — | 実機（統括が書く） |  |
 | B1 | 台帳は moyai-ledger、切り替えが main、台帳の試験が全部通る | 合格 | 台帳は mushitaro/moyai-ledger。台帳の試験 99/99 件が通った |  |
 | B2 | 手元の受け口と偽の GitHub で 1 本通り、断る試験も通る | 合格 | B2 のシナリオ試験 6/6・共有ファイル → 受け口 → PR → ledger-validate ✓・断る：数の上限 ✓・断る：転送 ✓・断る：鍵の取り違え ✓・画面から送る e2e（ledger-intake.spec）✓ |  |
-| B3 | 本物の受け口で【架空】の共有ファイルが PR になり ✓ | — | 実機（統括が書く） |  |
+| B3 | 本物の受け口で【架空】の共有ファイルが PR になり ✓ | — | 実機（統括が書く） | 合格（2026-11-14 11:30 JST。運営者が配置した本物の受け口に、PR mushitaro/moyai#8 の【架空】の共有ファイル 1 本を送り、mushitaro/moyai-ledger#7 ができた。ファイルは ledger/bundles/5c8bb9398d84ffe4/000001-6e72d5682b12f1c8.json の 1 つだけ。ledger-validate ✓。同じファイルの 2 回目は同じ #7、形の違う体は 400 shape.syntax。送る前に手元で verify ledger ✓ 12 件・終わりの値 0） |
 | C1 | フィードバックの Issue → ルールの案 → 物差し → draft PR | 合格 | skill-loop-feedback の試験 12/12（見本の Issue から PR の本文まで。draft PR を開くのは C2） |  |
 | C2 | 本物の GitHub で C1 が毎日の回しの中で 1 本通る | — | 実機（統括が書く） | 合格（2026-11-13 03:19 JST、main 7ab6deb。毎日の回しが見本の Issue #80 を feedback.mjs で処理し、判定「差なし」で Issue に返事。運営者の手なし） |
 | C3 | アプリからのフィードバックの書き出しが C1 の道に乗る | 合格 | 書き出しの芯と保存の経路の試験 6/6・C1 の台本の試験 12/12・画面で押して全文を見せ保存する e2e（slice.spec）✓ |  |
