@@ -1,7 +1,7 @@
 // 施設ごとの作業中（mushitaro/moyai#82）：保管先の plans/<計画ID>/work/ に、作業画面だけの道（タブの秘密）で書く・読む。
 // - 資料の写しがそろっていなければ書かない。形が違えば書かない。資料はその作業中が持つものだけを返す。
 // - AI のツールと中継には、作業中を読む・書く・消す道が無い。消すのは人だけの経路（work_discard）。
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -135,6 +135,19 @@ describe("AI のツールからは、作業中を消せない・書き換えら�
 });
 
 describe("保管先のファイル", () => {
+  it("同じ資料を同時に置いても、どれも落ちない（作業中の写しと確定の前の置きが重なる。一時の名前を分ける）", async () => {
+    const root = mkdtempSync(join(tmpdir(), "moyai-work-race-"));
+    cleanups.push(() => rmSync(root, { recursive: true, force: true }));
+    const bytes = new Uint8Array(2_000_000).fill(7);
+    const rs = await Promise.allSettled(Array.from({ length: 8 }, () => putSource(root, PLAN, bytes)));
+    expect(rs.filter((r) => r.status === "rejected").map((r) => String((r as PromiseRejectedResult).reason))).toEqual([]);
+    const sha = (rs[0] as PromiseFulfilledResult<{ ok: true; sha256: string }>).value.sha256;
+    const dir = join(root, "plans", PLAN, "sources");
+    expect(readFileSync(join(dir, sha)).length).toBe(bytes.length);
+    // 一時のファイルを残さない
+    expect(readdirSync(dir)).toEqual([sha]);
+  });
+
   it("書いたものだけを一覧に出し、壊れたものは出さない", async () => {
     const root = mkdtempSync(join(tmpdir(), "moyai-work-fs-"));
     cleanups.push(() => rmSync(root, { recursive: true, force: true }));
