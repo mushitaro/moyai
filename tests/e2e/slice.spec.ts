@@ -44,7 +44,9 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
     });
 
     await test.step("人：資料を取り込みの画面に落とす", async () => {
-      await openIntakeAndDrop(page, bridge.base, FACILITY);
+      // パックが決まる前に、パックなしの ID の作業中の写しが書かれる流れにする（人の操作でも、Claude がパックを置くまでは長い）。
+      // 前は、この写しが残って plans/ が 2 つになっていた（windows の e2e の赤。#120）。パックが決まったら、写しは資料ごと新しい ID に移る
+      await openIntakeAndDrop(page, bridge.base, FACILITY, undefined, undefined, root);
     });
 
     await test.step("AI：要約を読み、利用者がチャットで答えた既定の答えを置き、計画を作る", async () => {

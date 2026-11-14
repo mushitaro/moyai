@@ -230,7 +230,7 @@ export class BridgeClient {
    * 施設ごとの作業中（#82）の道：作業画面だけの経路にタブの秘密を添えて送る（人だけの経路ではない。1 回きりの印は要らない）。
    * JSON の答えを返す。届かない・形が違えば null
    */
-  async workCall(path: (typeof ROUTES)["tabWorkSource" | "tabWorkSave" | "tabWorkList" | "tabWorkRead"]["path"], body: unknown): Promise<Record<string, unknown> | null> {
+  async workCall(path: (typeof ROUTES)["tabWorkSource" | "tabWorkSave" | "tabWorkList" | "tabWorkRead" | "tabWorkMove"]["path"], body: unknown): Promise<Record<string, unknown> | null> {
     try {
       const res = await fetch(path, {
         method: "POST",

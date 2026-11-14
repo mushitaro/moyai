@@ -171,6 +171,14 @@ export const ROUTES = {
     maxBody: 0,
     note: "保管先の作業中の一覧（トップの行の「作業中　未確定 n」。名前・未確定の数・時刻だけ）",
   },
+  tabWorkMove: {
+    method: "POST",
+    path: "/tab/work-move",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 1024,
+    note: "計画を作る前に計画 ID が替わったとき（資料を入れたあとにパックが決まったなど）：同じタブが今の作業で書いた仮の作業中を、新しい ID の作業中に移し終えたあとで、前の ID を片づける（同じ書き手・計画なし・署名した版なし・資料がすべて新しい写しにあるときだけ。人の work_discard とは別の、タブが自分の写しにだけ使う道）",
+  },
   tabWorkRead: {
     method: "POST",
     path: "/tab/work-read",

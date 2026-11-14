@@ -22,7 +22,7 @@ import { approvedReadingVersions, listReadings, readingTextShown, registerReadin
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
 import { ToolRelay } from "./tools";
-import { listWork, readWork, readWorkSource, writeWork } from "./work";
+import { listWork, moveWork, readWork, readWorkSource, writeWork } from "./work";
 import { putSource } from "./sources";
 import { PLAN_ID } from "../plan/paths";
 import { beginPrepare, checkUpdate, isReady, startAutoCheck, lastPrepare, preparing, readPointer, type UpdateEnv } from "./app-update";
@@ -445,6 +445,15 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       const root = await human.root();
       if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
       sendJson(res, 200, await writeWork(root, (g.body as { state?: unknown } | null)?.state).catch(() => ({ ok: false, reason: "workWriteFailed" })));
+    },
+    tabWorkMove: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const b = g.body as { from?: unknown; to?: unknown; writer?: unknown } | null;
+      if (typeof b?.from !== "string" || typeof b.to !== "string" || typeof b.writer !== "string") return sendJson(res, 200, { ok: false, reason: "workInvalid" });
+      const root = await human.root();
+      if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
+      sendJson(res, 200, await moveWork(root, b.from, b.to, b.writer).catch(() => ({ ok: false, reason: "workWriteFailed" })));
     },
     tabWorkList: async ({ req, res, route }) => {
       const g = await guardTab(req, route);

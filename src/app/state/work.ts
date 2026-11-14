@@ -23,6 +23,8 @@ export interface WorkPort {
   save(state: WorkState): Promise<{ ok: boolean; reason?: string }>;
   read(planId: string): Promise<WorkState | null>;
   source(planId: string, sha256: string): Promise<Uint8Array | null>;
+  /** 同じタブが今の作業で書いた仮の作業中（計画なし）を、新しい ID に移し終えたあとで、前の ID を片づける（橋渡しが確かめる） */
+  move?(from: string, to: string, writer: string): Promise<{ ok: boolean; reason?: string }>;
 }
 
 export interface WorkFile {
@@ -36,6 +38,8 @@ export interface WorkFile {
 
 export interface WorkState {
   schema: typeof WORK_SCHEMA;
+  /** 書いたタブの印（タブごとの乱数。前の形の作業中には無い） */
+  writer?: string;
   savedAt: string;
   build: string;
   planId: string;
@@ -105,6 +109,15 @@ export class WorkKeeper {
   private owned = new Set<string>();
   /** 人が消した作業中（このタブにまだ残っていても、戻すまで書き直さない） */
   private discarded = new Set<string>();
+  /** このタブが、保管先に無かったところから書き始めた作業中（戻した作業中・ほかのタブの作業中は入らない） */
+  private created = new Set<string>();
+  /**
+   * 計画を作る前にこのタブが書いた仮の作業中（資料を入れたあとにパックが決まると、計画 ID が替わる）。
+   * 次に別の ID へ書けたら、読み直して資料がそろっているのを確かめてから、前の ID を片づける（移す。資料の紐づきを切らない）
+   */
+  private provisional: { planId: string; generation: number; files: string[] } | null = null;
+  /** このタブの印（作業中に書く。同じタブが書いた写しだけを移すため） */
+  readonly writer = tabWriterId();
   private stops: (() => void)[] = [];
 
   constructor(
@@ -167,6 +180,7 @@ export class WorkKeeper {
       const there = await this.o.port.read(planId);
       if (there && (there.changed || there.open > 0)) return;
       this.owned.add(planId);
+      if (!there) this.created.add(planId);
     }
     const names = ws.fileNames;
     const key = `${planId}\u0000${ws.filesVersion}\u0000${ws.marksVersion}\u0000${names.join("\u0000")}`;
@@ -190,6 +204,7 @@ export class WorkKeeper {
     const accepted = acceptedList();
     const state: WorkState = {
       schema: WORK_SCHEMA,
+      writer: this.writer,
       savedAt: (this.o.now ?? (() => new Date()))().toISOString(),
       build: this.o.build,
       planId,
@@ -206,7 +221,30 @@ export class WorkKeeper {
       proposals: w ? w.proposals : [],
       accepted,
     };
-    await this.o.port.save(state);
+    const r = await this.o.port.save(state);
+    if (!r.ok) return;
+    await this.moveProvisional(planId, gen);
+    // 計画を作る前に、このタブが書き始めた作業中は仮の写し（あとでパックが決まって ID が替われば移す）
+    this.provisional = !w && this.created.has(planId) ? { planId, generation: gen, files: state.files.map((f) => f.sha256) } : this.provisional?.planId === planId ? null : this.provisional;
+  }
+
+  /** 仮の写しを、今書いた ID に移し終えていれば、前の ID を片づける（読み直して、前の資料がすべて新しい写しにあるときだけ） */
+  private async moveProvisional(planId: string, gen: number): Promise<void> {
+    const p = this.provisional;
+    if (!p || p.planId === planId || !this.o.port.move) return;
+    if (p.generation !== gen) {
+      this.provisional = null;
+      return;
+    }
+    const back = await this.o.port.read(planId);
+    if (!back || back.writer !== this.writer) return;
+    const have = new Set(back.files.map((f) => f.sha256));
+    if (!p.files.every((x) => have.has(x))) return;
+    const m = await this.o.port.move(p.planId, planId, this.writer);
+    if (!m.ok) return;
+    this.owned.delete(p.planId);
+    this.created.delete(p.planId);
+    this.provisional = null;
   }
 
   /** 人が作業中を消した（トップの「作業中を消す」）。このタブに残っていても、戻すまで書き直さない */
@@ -230,6 +268,7 @@ export class WorkKeeper {
     }
     this.paused++;
     this.generation++;
+    this.provisional = null;
     try {
       const ws = this.o.ws;
       ws.settings = { ...s.settings };
@@ -254,6 +293,13 @@ export class WorkKeeper {
     }
     return { ok: true, state: s };
   }
+}
+
+/** タブごとの印（乱数 16 バイトを base64url で） */
+function tabWriterId(): string {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 let keeper: WorkKeeper | null = null;
