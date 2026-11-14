@@ -8,6 +8,7 @@ import { droppedPlanRules, readingsForCommit, readingsSigned } from "../state/re
 import { acceptancesFor, clearAccepted } from "../state/decisions";
 import { pendingDeriveFor, setPendingDerive } from "../state/derive";
 import { getWorkingPlan } from "../state/plan-store";
+import { workKeeper } from "../state/work";
 import { displayPrefs } from "../state/screen";
 import { sheetHash } from "../stages";
 import { useEffect, useMemo, useState } from "react";
@@ -239,6 +240,9 @@ export function ConfirmDialog({
       }
       setKeyMade(k.body.fingerprint);
     }
+    // 作業中の写しを書き終えてから署名する（計画を作る前に計画 ID が替わっていれば、仮の写しをここで新しい ID に移し終える。
+    // 書くのが延びたまま署名すると、前の ID の写しが署名のあとまで残っていた。windows の e2e の赤）
+    await workKeeper()?.flush();
     // 次の版に重ねるための資料を、1 つずつ先に保存先に置く（確定では SHA-256 だけを送る。Architect の縛り 2）
     const src = sources ? await sources() : null;
     if (src) {
