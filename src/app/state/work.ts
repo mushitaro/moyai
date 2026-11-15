@@ -146,10 +146,14 @@ export class WorkKeeper {
   private schedule(): void {
     if (this.paused > 0) return;
     if (this.timer) (this.o.clearTimer ?? clearTimeout)(this.timer);
+    // 仮の写しのあとで計画 ID が替わったら（パックが決まったなど）、間を置かずに書いて移す。
+    // 間を置くと、続けて変わるあいだ書くのが延び、前の ID の写しが署名のあとまで残っていた（windows の e2e の赤）
+    const p = this.provisional;
+    const moveNow = p !== null && p.generation === this.generation && this.o.ws.facilityKey() !== p.planId;
     this.timer = (this.o.setTimer ?? setTimeout)(() => {
       this.timer = null;
       void this.flush();
-    }, this.o.delayMs ?? WORK_DELAY_MS);
+    }, moveNow ? 0 : (this.o.delayMs ?? WORK_DELAY_MS));
   }
 
   /** 走っている書き込みが終わるのを待つ（試験と、閉じる前） */
