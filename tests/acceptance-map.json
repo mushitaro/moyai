@@ -157,7 +157,11 @@
     },
     {
       "name": "eval",
-      "sources": []
+      "sources": [
+        { "runner": "command", "file": "scripts/skill-scores/check.mjs" },
+        { "runner": "node", "file": "tests/scripts/skill-scores-check.test.mjs" }
+      ],
+      "scope": "運営者の判断（mushitaro/moyai#23 の 2、2026-11-12）で、API で 1 問 3 回解いて点と費用を比べる形をやめ、正解を見ない別々の解く役 2 つが解いてコードで採点する形にした。見るのは、今の文の採点の記録があり、文と問題の組の指紋が今と合い、2 つ以上の役の合格の数がそろうこと（main より下がっていないかは CI の --base で見る。この表の実行では比べない）"
     },
     {
       "name": "publish",
