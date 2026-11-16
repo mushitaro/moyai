@@ -96,14 +96,13 @@ describe("待ち・B1・B2", () => {
     assert.equal(judgeWaiting("x", { number: 22, state: "open" }).status, WAIT);
     assert.equal(judgeWaiting("x", { number: 22, state: "closed" }).status, UNKNOWN);
   });
-  it("A1・A1b・A3：新しいサンプルの凍結の測りが無ければ、旧サンプルで合格でも待ち（#111）。旧の値は字に残す", () => {
+  it("A1・A1b・A3：新しいサンプル（v4）の凍結の測りが無ければ、旧サンプルで合格でも待ち（#111）。旧の値は字に残す", () => {
     const old = { status: PASS, evidence: "計画 11/11" };
-    const a = judgeOldSamples(old, false);
+    const a = judgeOldSamples(old);
     assert.equal(a.status, WAIT);
     assert.match(a.evidence, /#111/);
+    assert.match(a.evidence, /v4、mushitaro\/moyai-samples/);
     assert.match(a.evidence, /旧サンプルの値（判定に使わない）：合格・計画 11\/11/);
-    assert.equal(judgeOldSamples(old, true).status, WAIT);
-    assert.match(judgeOldSamples(old, true).evidence, /凍結の測りがまだ/);
   });
   it("A1・A1b・A3：新しいサンプルでは、合否は今の記録のまま、凍結の回の値を根拠の字に添える", () => {
     const cur = { status: FAIL, evidence: "計画 9/11" };
