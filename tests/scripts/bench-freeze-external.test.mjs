@@ -54,8 +54,11 @@ describe("凍結の測り：サンプルが別のリポジトリにあるとき"
     if (work) rmSync(work, { recursive: true, force: true, maxRetries: 3 });
   });
 
-  it("check：サンプルのリポジトリが commit 済みなら通り、何も書かない。出どころに鍵を出さない", () => {
-    const r = run(clone, [FREEZE, "check", "--samples", dir, "--tag", TAG]);
+  it("check：サンプルのリポジトリが commit 済みなら通り、何も書かない。出どころに鍵を出さない。別の書き方の道でも同じ", () => {
+    // 別の書き方の道（symlink 越し。Windows の短い名前〔RUNNER~1〕と長い名前が混ざるのと同じく、git の道と字が違う）
+    const via = join(work, "via");
+    symlinkSync(samples, via, "junction");
+    const r = run(clone, [FREEZE, "check", "--samples", join(via, NAME), "--tag", TAG]);
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stderr, /mushitaro\/moyai-samples\.git@[0-9a-f]{12}:waste-incineration-v4：確かめた/);
     assert.doesNotMatch(r.stderr, /not-a-real-token/);

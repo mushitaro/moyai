@@ -65,16 +65,17 @@ try {
 } catch {
   sampleTop = null;
 }
-const same = (a, b) => resolve(a).toLowerCase() === resolve(b).toLowerCase();
+// リポジトリの中の道は git に聞く（Windows の短い名前〔RUNNER~1〕と長い名前が混ざると、道の比べと relative が狂うため）
+const prefixOf = (dir) => gitIn(dir, "rev-parse", "--show-prefix").replace(/\/$/, "");
 /** 別のリポジトリのサンプル：その commit・中の道・出どころ（このリポジトリの中なら null） */
 let source = null;
-if (sampleTop && same(sampleTop, repo)) {
-  const rel = relative(repo, samples).replace(/\\/g, "/");
+if (sampleTop && sampleTop === repo) {
+  const rel = prefixOf(samples);
   if (git("ls-tree", "-r", "--name-only", tag, "--", rel) !== "") fail(`タグ ${tag} の木にサンプル（${rel}）がある。凍結はサンプルを入れる前に打つ`);
 } else {
   if (!sampleTop) fail("サンプルが git のリポジトリの中に無い（サンプルのリポジトリを clone して、その中のフォルダを指す）");
-  const path = relative(sampleTop, samples).replace(/\\/g, "/");
-  if (gitIn(sampleTop, "status", "--porcelain", "--", path) !== "") fail("サンプルの側に commit していない変更がある（記録する commit と測る中身を同じにする）");
+  const path = prefixOf(samples);
+  if (gitIn(samples, "status", "--porcelain", "--", ".") !== "") fail("サンプルの側に commit していない変更がある（記録する commit と測る中身を同じにする）");
   const commit = gitIn(sampleTop, "rev-parse", "HEAD");
   let url = null;
   try {
@@ -86,7 +87,7 @@ if (sampleTop && same(sampleTop, repo)) {
   if (url) url = url.replace(/\/\/[^/@]+@/, "//");
   source = { repo: url, commit, path };
 }
-const rel = source ? `${source.repo ?? "（出どころ不明）"}@${source.commit.slice(0, 12)}:${source.path}` : relative(repo, samples).replace(/\\/g, "/");
+const rel = source ? `${source.repo ?? "（出どころ不明）"}@${source.commit.slice(0, 12)}:${source.path}` : prefixOf(samples);
 if (!gitOk("cat-file", "-e", `${tag}:scripts/bench/pack-bench.mjs`) || !git("show", `${tag}:scripts/bench/pack-bench.mjs`).includes("--samples"))
   fail(`タグ ${tag} の pack-bench が --samples を持たない（--samples の入った main にタグを打つ）`);
 if (existsSync(join(frozen, "freeze.json"))) fail(`凍結の測りはもうある（${relative(repo, frozen)}）。1 回だけ`);
