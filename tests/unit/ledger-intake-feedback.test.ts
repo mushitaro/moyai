@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { handleRequest, type IntakeDeps, type IntakeEnv } from "../../services/ledger-intake/src/handler";
-import { FEEDBACK_LABELS, FEEDBACK_LIMITS, feedbackBody, feedbackOf, feedbackTitle } from "../../services/ledger-intake/src/feedback";
+import { FEEDBACK_LABELS, FEEDBACK_LIMITS, FEEDBACK_TITLE_HEAD, feedbackBody, feedbackOf, feedbackTitle } from "../../services/ledger-intake/src/feedback";
 import { packOf } from "../../services/ledger-intake/src/packs";
 import { readForm, screen } from "../../scripts/skill-loop/feedback.mjs";
 import { HEAD, PACK_OF } from "../../scripts/skill-loop/form.mjs";
@@ -27,7 +27,7 @@ const GOOD = file([
 ]);
 
 function setup(envPatch: Partial<IntakeEnv> = {}) {
-  const gh = fakeIssuesGitHub({ token: envPatch.FEEDBACK_TOKEN ?? TOKEN });
+  const gh = fakeIssuesGitHub({ token: envPatch.FEEDBACK_TOKEN || TOKEN });
   const kv = memoryKv();
   let now = Date.UTC(2026, 10, 16, 3, 0, 0);
   const env: IntakeEnv = { GITHUB_TOKEN: TOKEN, LEDGER_REPO: "ledger-owner/moyai-ledger", FEEDBACK_REPO: `${gh.owner}/${gh.name}`, INTAKE_KV: kv, ...envPatch };
@@ -50,6 +50,8 @@ describe("受け口の POST /feedback：Issue を出す", () => {
     expect(r.body).toEqual({ ok: true, issue: { number: 1, url: `https://github.com/${s.gh.owner}/${s.gh.name}/issues/1` } });
     expect(s.gh.issues).toHaveLength(1);
     const i = s.gh.issues[0]!;
+    // 受け口が出した印（ルールの欄の字の SHA-256）。毎日の回しが数えない「確かめ」の欄の中
+    expect(i.body).toMatch(/\n<!-- moyai-intake-feedback sha256=[0-9a-f]{64} -->\n$/);
     expect(i.labels).toEqual([...FEEDBACK_LABELS]);
     expect(i.title).toBe("読み方のフィードバック（受け口から・waste-incineration・ルール 2 件）");
     const f = readForm(i.body);
@@ -91,6 +93,13 @@ describe("受け口の POST /feedback：Issue を出す", () => {
     const s = setup({ FEEDBACK_TOKEN: FB_TOKEN });
     expect((await s.send(GOOD)).status).toBe(200);
     expect(s.gh.calls.every((c) => c.auth === `Bearer ${FB_TOKEN}`)).toBe(true);
+  });
+
+  it("FEEDBACK_TOKEN が空なら GITHUB_TOKEN を使う", async () => {
+    const s = setup({ FEEDBACK_TOKEN: "" });
+    s.gh.calls.length = 0;
+    expect((await s.send(GOOD)).status).toBe(200);
+    expect(s.gh.calls.every((c) => c.auth === `Bearer ${TOKEN}`)).toBe(true);
   });
 
   it("出すときにラベルが黙って落ちても、付け直す", async () => {
@@ -203,11 +212,37 @@ describe("受け口の POST /feedback：上限と設定", () => {
     expect((await s.send(null, { method: "GET" })).status).toBe(405);
   });
 
-  it("受け口が出した開いた Issue が 20 あれば、運営者が読むまで出さない", async () => {
+  it("受け口が出した開いた Issue（印のあるもの）が 20 あれば、運営者が読むまで出さない。手で立てた Issue は数えない", async () => {
     const s = setup();
-    for (let i = 0; i < FEEDBACK_LIMITS.openIssues; i++) {
-      s.gh.issues.push({ number: i + 1, title: `読み方のフィードバック（受け口から・waste-incineration・ルール ${i + 1} 件）`, body: "", labels: ["feedback"], state: "open" });
-    }
+    // 手で立てた（印の無い）Issue は、題が同じでも数えない
+    for (let i = 0; i < FEEDBACK_LIMITS.openIssues; i++) s.gh.issues.push({ number: s.gh.issues.length + 1, title: `${FEEDBACK_TITLE_HEAD}・waste-incineration・ルール 1 件）`, body: "", labels: ["feedback"], state: "open" });
+    expect((await s.send(GOOD)).status).toBe(200);
+    // 受け口が出した開いた Issue が 20 になったら断る
+    // 送り手を替えて（1 つの IP の 1 時間 10 件の上限に当てない）
+    for (let i = 1; i < FEEDBACK_LIMITS.openIssues; i++) expect((await s.send(file([{ kind: "headerRow", row: i, cells: 1 }]), { ip: `198.51.100.${i}` })).status).toBe(200);
+    const r = await s.send(file([{ kind: "headerRow", row: 99, cells: 1 }]), { ip: "192.0.2.1" });
+    expect(r.status).toBe(503);
+    expect(r.body.reasons).toEqual(["intake.busy"]);
+    // 運営者が読んで閉じれば、また受ける
+    s.gh.issues.forEach((i) => (i.state = "closed"));
+    expect((await s.send(file([{ kind: "headerRow", row: 99, cells: 1 }]), { ip: "192.0.2.2" })).status).toBe(200);
+  });
+
+  it("同じ中身でも、手で立てた Issue（印が無い）や閉じた Issue は返さない", async () => {
+    const s = setup();
+    const f = parseReadingFeedback(GOOD)!;
+    // 誰かが同じルールの欄を手で貼った Issue
+    s.gh.issues.push({ number: 1, title: "手で立てた", body: feedbackBody(f).replace(/<!-- moyai-intake-feedback [^>]*-->/, ""), labels: ["feedback"], state: "open" });
+    const a = await s.send(GOOD);
+    expect(a.body.issue?.number).toBe(2);
+    s.gh.issues[1]!.state = "closed";
+    const b = await s.send(GOOD);
+    expect(b.body.issue?.number).toBe(3);
+  });
+
+  it("開いたフィードバックの Issue が読み切れないほど多ければ（500 を越える）断る", async () => {
+    const s = setup();
+    for (let i = 0; i < 500; i++) s.gh.issues.push({ number: i + 1, title: "手で立てた", body: "", labels: ["feedback"], state: "open" });
     const r = await s.send(GOOD);
     expect(r.status).toBe(503);
     expect(r.body.reasons).toEqual(["intake.busy"]);
@@ -231,6 +266,10 @@ describe("受け口の POST /feedback：上限と設定", () => {
     const r = await s.send(GOOD);
     expect(r.status).toBe(503);
     expect(r.body.reasons).toEqual(["intake.feedbackLabel"]);
+    // ラベルの無い Issue は閉じる（送り直すたびに、ラベルの無い公開の Issue が増えない）
+    expect(s.gh.issues.map((i) => i.state)).toEqual(["closed"]);
+    expect((await s.send(GOOD)).body.reasons).toEqual(["intake.feedbackLabel"]);
+    expect(s.gh.issues.filter((i) => i.state === "open")).toHaveLength(0);
   });
 
   it("GitHub の転送（3xx）をたどらない", async () => {

@@ -907,6 +907,14 @@ describe("読み方のフィードバックを受け口に送る（人だけの�
     expect(sentBodies).toEqual([text]);
     for (const w of words) expect(sentBodies.join("")).not.toContain(w);
     expect(gh.issues.map((i) => i.labels)).toEqual([["feedback", "area:skill-loop"]]);
+    // 行の値らしきものがあれば、PC の外に出す前に止める（受け口に届かない）
+    const valued = text.replace('"ブロワ"', '"P-1023"');
+    await call("readingFeedbackSave", { text: valued, words });
+    const rv = await call("readingFeedbackSend", { text: valued, words });
+    expect(rv).toMatchObject({ ok: false, reason: "feedbackIntake.rowValues" });
+    expect(rv.counts.code).toBeGreaterThan(0);
+    expect(JSON.stringify(rv)).not.toContain("P-1023");
+    expect(sentBodies).toHaveLength(1);
     // 当たる語があれば送らない（網 2。画面と同じ照らし）
     expect((await call("readingFeedbackSend", { text, words: ["ブロワー"] })).reason).toBe("properNoun");
     expect(sentBodies).toHaveLength(1);
@@ -927,6 +935,8 @@ describe("読み方のフィードバックを受け口に送る（人だけの�
     const { LEDGER_INTAKE_URL, ledgerIntakeUrlOf } = await import("../../src/bridge/ledger-intake");
     expect(ledgerIntakeUrlOf(LEDGER_INTAKE_URL, {})).toBe("https://moyai-ledger-intake.white-violet-b87a.workers.dev");
     expect(ledgerIntakeUrlOf(LEDGER_INTAKE_URL, { MOYAI_LEDGER_INTAKE_URL: "off" })).toBeNull();
+    // 試験の止めは閉じる側に倒す：空・打ち間違い・手元でない道は、本物に落ちずに道を出さない
+    for (const v of ["", "of", "https://example.com", "http://example.com:8787"]) expect(ledgerIntakeUrlOf(LEDGER_INTAKE_URL, { MOYAI_LEDGER_INTAKE_URL: v })).toBeNull();
     expect(process.env.MOYAI_LEDGER_INTAKE_URL).toBe("off");
   });
 });

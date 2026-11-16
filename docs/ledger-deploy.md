@@ -63,7 +63,7 @@ npx wrangler@4.152.0 deploy
 ```
 
 - 受け口は `FEEDBACK_TOKEN` があればそれを、無ければ `GITHUB_TOKEN` を使う。`GITHUB_TOKEN` は mushitaro/moyai を持たないので、`FEEDBACK_TOKEN` を入れるまで `/feedback` は **`503 intake.feedbackNoPermission`**（GitHub が 403 か 404 を返す）で断る。アプリの画面には「受け口の設定が未完了です（Issue を出す権限が無い）」と出る。台帳の `/submit` は今のまま動く。
-- ラベル `feedback` と `area:skill-loop` は mushitaro/moyai にもうある（Issue の型が使う）。権限によっては、Issue を出すときのラベルが黙って落ちることがある（GitHub の文書）。受け口は付け直し、それも断られたら `503 intake.feedbackLabel` で返す（Issue はできているので、運営者が手でラベルを付ける）。Issues の書き込みで付けられるかは本物では未確認。
+- ラベル `feedback` と `area:skill-loop` は mushitaro/moyai にある（2026-11-16 に GitHub で確かめた）。権限によっては、Issue を出すときのラベルが黙って落ちることがある（GitHub の文書）。受け口は付け直し、それも断られたら、その Issue を閉じて（送り直すたびにラベルの無い公開の Issue が増えないように）`503 intake.feedbackLabel` で返す。アプリは「送り直さずに、運営者に知らせてください」と出す。Issues の書き込みで付けられるかは本物では未確認。
 - 確かめ（配置のあと 1 回。統括）：アプリの HOSHITORI のルールのシートで【架空】の読み方を「ルールを書き出す」→「保存する」→「送る」。「✓ 送信　Issue #n」が出て、mushitaro/moyai にラベル `feedback` の Issue ができ、毎日の回し（`scripts/skill-loop/feedback.mjs --dry-run`）がその Issue を読めれば合格。
 - 止める：GitHub でこのトークンを Revoke（`/feedback` だけが 503 で断るようになる。`/submit` は止まらない）。
 

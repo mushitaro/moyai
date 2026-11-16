@@ -19,6 +19,7 @@ import { activeRequest, createRequest, readRequests, receiveRequest } from "../p
 import { checkRules, diffRuleRows } from "../share/rules";
 import { countProperNouns } from "../share/recount";
 import { feedbackFileName, parseReadingFeedback } from "../share/reading-feedback";
+import { countValues, countableRuleBlock, ruleTexts } from "../../scripts/skill-loop/values.mjs";
 import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readingLineage, recordReadingVersion, recordedReadings, registerReading } from "./readings";
 import { ReadingSkill, isPlanRule } from "../import/reading";
 import { checkSources, putSource, readSource, SOURCE_MAX_BYTES } from "./sources";
@@ -360,7 +361,9 @@ export class HumanService {
   /** 公開の台帳の受け口（GitHub のアカウントなしの道）。URL が決まっていなければ null（道を出さない） */
   private intakeIo(): IntakeIo | null {
     if (this.e.ledgerIntake !== undefined) return this.e.ledgerIntake;
-    const url = ledgerIntakeUrlOf(LEDGER_INTAKE_URL, this.e.env ?? process.env);
+    // 試験の止め（MOYAI_LEDGER_INTAKE_URL）は、橋渡しに渡した env に無くても、走っているプロセスの env から効かせる
+    const env = this.e.env ?? process.env;
+    const url = ledgerIntakeUrlOf(LEDGER_INTAKE_URL, env.MOYAI_LEDGER_INTAKE_URL === undefined && process.env.MOYAI_LEDGER_INTAKE_URL !== undefined ? { ...env, MOYAI_LEDGER_INTAKE_URL: process.env.MOYAI_LEDGER_INTAKE_URL } : env);
     return url ? { url, fetch: (u, i) => fetch(u, i) } : null;
   }
 
@@ -1373,6 +1376,11 @@ export class HumanService {
         if (!parseReadingFeedback(p.text)) return no("feedbackShape");
         const pn = countProperNouns({ bundleText: p.text, fileName: "", folderPath: "", localWords: p.words, cells: [], publicWords: new Set() });
         if (pn.total > 0) return no("properNoun", { hits: pn.total });
+        // 行の値らしきもの（受け口・毎日の回しと同じ数え方）があれば、PC の外に出す前に止める（種類ごとの数だけを返す）
+        const fb = parseReadingFeedback(p.text)!;
+        const counts = countValues([countableRuleBlock(p.text), ...fb.rules.flatMap((r) => ruleTexts(r))]);
+        const found = Object.fromEntries(Object.entries(counts).filter(([, n]) => n > 0));
+        if (Object.keys(found).length) return no("feedbackIntake.rowValues", { counts: found });
         const root = await this.root();
         if (!root) return no("noRoot");
         // 保存したものだけを送る（画面で全文を見て保存した、の印。名前は中身のハッシュの頭を持つので、同じ中身のファイルを探す）
@@ -1383,7 +1391,14 @@ export class HumanService {
         if (!saved) return no("feedbackNotSaved");
         const r = await sendFeedbackToIntake(io, p.text);
         if (!r.ok) {
-          const why = r.reason === "refused" && r.reasons.includes("feedback.rowValues") ? "rowValues" : r.reason === "unavailable" && r.reasons.includes("intake.feedbackNoPermission") ? "noPermission" : r.reason;
+          const special: [string, string][] = [
+            ["feedback.rowValues", "rowValues"],
+            ["feedback.packUnknown", "packUnknown"],
+            ["intake.feedbackNoPermission", "noPermission"],
+            ["intake.feedbackLabel", "label"],
+            ["intake.busy", "busy"],
+          ];
+          const why = special.find(([code]) => r.reasons.includes(code))?.[1] ?? r.reason;
           return no(`feedbackIntake.${why}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
         }
         return { ok: true, issue: r.number, url: r.url };

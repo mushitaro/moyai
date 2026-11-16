@@ -16,6 +16,7 @@
 // トークンと IP は、ログにも答えにも出さない（console に何も書かない）。
 import { CHECK_LABEL, HEAD, PACK_OF } from "../../../scripts/skill-loop/form.mjs";
 import { countValues, countableRuleBlock, ruleTexts } from "../../../scripts/skill-loop/values.mjs";
+import { createHash } from "node:crypto";
 import { parseJsonStrict } from "../../../src/share/jcs";
 import { LEDGER_LIMITS, jsonDepth } from "../../../src/share/ledger";
 import { parseReadingFeedback, type ReadingFeedbackFile } from "../../../src/share/reading-feedback";
@@ -60,6 +61,7 @@ export const FEEDBACK_WHAT = "アプリの「ルール」のシートから、�
 
 /** Issue の本文（.github/ISSUE_TEMPLATE/reading-feedback.yml の見出し。scripts/skill-loop/feedback.mjs の readForm で読める形） */
 export function feedbackBody(f: ReadingFeedbackFile): string {
+  const block = feedbackRuleText(f);
   return [
     `### ${HEAD.pack}`,
     "",
@@ -76,7 +78,7 @@ export function feedbackBody(f: ReadingFeedbackFile): string {
     `### ${HEAD.rule}`,
     "",
     "```json",
-    feedbackRuleText(f),
+    block,
     "```",
     "",
     `### ${HEAD.check}`,
@@ -84,14 +86,22 @@ export function feedbackBody(f: ReadingFeedbackFile): string {
     // 人が全文を見てから「送る」を押した（アプリ）。行の値らしきものと業種は、この受け口が機械で確かめた
     `- [X] ${CHECK_LABEL}`,
     "",
+    // 受け口が出した印（同じ中身を探す・開いた数を数える）。確かめの欄は毎日の回しが行の値を数えない所なので、ハッシュの数字を数えさせない
+    feedbackMarker(block),
+    "",
   ].join("\n");
 }
 
-/** 本文から、ルールの欄の字だけを取り出す（同じ中身の Issue を探すため） */
-function ruleBlockOf(body: string): string | null {
-  const m = /```json\n([\s\S]*?)\n```/.exec(body.replace(/\r\n/g, "\n"));
-  return m ? m[1]! : null;
+/** ルールの欄の字の SHA-256 */
+const blockHash = (block: string): string => createHash("sha256").update(block, "utf8").digest("hex");
+
+/** 受け口が出した Issue の印 */
+export function feedbackMarker(block: string): string {
+  return `<!-- moyai-intake-feedback sha256=${blockHash(block)} -->`;
 }
+
+/** 受け口が出した Issue か（印がある）。手で立てた Issue は、同じ中身でも返さず、開いた数にも数えない */
+const markerOf = (body: string): string | null => /<!-- moyai-intake-feedback sha256=([0-9a-f]{64}) -->/.exec(body)?.[1] ?? null;
 
 /**
  * 体を確かめる（GitHub を呼ぶ前）。通れば読んだ形、通らなければ理由のコード。
@@ -129,7 +139,7 @@ export async function handleFeedback(req: Request, env: IntakeEnv, deps: IntakeD
   // 1. 方法・設定
   if (req.method !== "POST") return refuseWith(405, ["intake.method"], { allow: "POST" });
   const repo = repoOf(env.FEEDBACK_REPO);
-  const token = env.FEEDBACK_TOKEN ?? env.GITHUB_TOKEN ?? "";
+  const token = env.FEEDBACK_TOKEN || env.GITHUB_TOKEN || "";
   const kv = env.INTAKE_KV;
   if (!repo || !TOKEN_SHAPE.test(token) || !kv) return refuseWith(503, ["intake.notConfigured"]);
 
@@ -168,15 +178,17 @@ export async function handleFeedback(req: Request, env: IntakeEnv, deps: IntakeD
   }
   const gh: Gh = { fetch: deps.fetch, token, repo };
 
-  // 6. 同じ中身の Issue があれば、それを返す。受け口の開いた Issue が多ければ断る
-  const block = feedbackRuleText(f.file);
+  // 6. 受け口が出した開いた Issue（印のあるもの）に同じ中身があれば、それを返す。開いた数が上限なら断る。
+  //    閉じた Issue は見ない（運営者が読んで閉じたあとに同じ中身が来れば、新しいフィードバックとして出す）
+  const mark = blockHash(feedbackRuleText(f.file));
   const list = await feedbackIssues(gh, FEEDBACK_LABELS[0]);
   if (list === "noPermission") return refuseWith(503, ["intake.feedbackNoPermission"]);
   if (list === "error") return refuseWith(502, ["intake.github"]);
   if (list === "tooMany") return refuseWith(503, ["intake.busy"]);
-  const same = list.find((i) => ruleBlockOf(i.body) === block);
+  const ours = list.filter((i) => markerOf(i.body) !== null);
+  const same = ours.find((i) => markerOf(i.body) === mark);
   if (same) return accepted(same.ref);
-  if (list.filter((i) => i.open && i.title.startsWith(FEEDBACK_TITLE_HEAD)).length >= FEEDBACK_LIMITS.openIssues) return refuseWith(503, ["intake.busy"]);
+  if (ours.length >= FEEDBACK_LIMITS.openIssues) return refuseWith(503, ["intake.busy"]);
 
   // 7. Issue を出す
   const r = await openIssue(gh, { title: feedbackTitle(f.file), body: feedbackBody(f.file), labels: FEEDBACK_LABELS });

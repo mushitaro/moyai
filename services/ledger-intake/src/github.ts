@@ -277,11 +277,11 @@ function issueOf(gh: Gh, j: unknown): IssueRef | null {
   return number !== null && url && url.toLowerCase() === `${want}${number}` ? { number, url } : null;
 }
 
-/** ラベル feedback の Issue（開いたものも閉じたものも。PR は除く）の、番号・題・本文・開いているか。数える上限を越えれば "tooMany" */
+/** ラベル feedback の開いた Issue（PR は除く）の、番号・題・本文・開いているか。数える上限を越えれば "tooMany" */
 export async function feedbackIssues(gh: Gh, label: string): Promise<{ ref: IssueRef; title: string; body: string; open: boolean }[] | "tooMany" | IssueFail> {
   const out: { ref: IssueRef; title: string; body: string; open: boolean }[] = [];
   for (let page = 1; page <= OPEN_PR_PAGES; page++) {
-    const r = await call(gh, "GET", `/issues?state=all&labels=${encodeURIComponent(label)}&per_page=100&page=${page}`);
+    const r = await call(gh, "GET", `/issues?state=open&labels=${encodeURIComponent(label)}&per_page=100&page=${page}`);
     if (!r || r.status !== 200 || !Array.isArray(r.json)) return failOf(r);
     for (const j of r.json.map(obj)) {
       if (j.pull_request !== undefined) continue;
@@ -308,5 +308,7 @@ export async function openIssue(gh: Gh, i: { title: string; body: string; labels
   // 権限によっては、出すときのラベルが黙って落ちる（GitHub の文書）。付け直す
   const l = await call(gh, "POST", `/issues/${ref.number}/labels`, { labels: [...i.labels] });
   if (l && l.status === 200 && Array.isArray(l.json) && has({ labels: l.json })) return { ok: true, ...ref };
+  // ラベルの無い Issue は、同じ中身を探す一覧にも開いた数にも入らず、送り直すたびに増えるので閉じる（閉じられなくても unlabeled を返す）
+  await call(gh, "PATCH", `/issues/${ref.number}`, { state: "closed", state_reason: "not_planned" });
   return { ok: false, why: "unlabeled" };
 }

@@ -19,11 +19,14 @@ const TIMEOUT_MS = 60_000;
 const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|localhost):\d{1,5}$/;
 
 /** 受け口の URL を確かめる：https で、利用者名・問い合わせ・断片の無いものだけ。試験のときだけ、環境変数で 127.0.0.1 の試験の台に向けられる */
-// 環境変数が "off" なら道を出さない（試験が本物の受け口に送らないため。vitest の設定と e2e の橋渡しの既定で付ける）
+// 環境変数 MOYAI_LEDGER_INTAKE_URL があれば本物の受け口は使わない（試験は "off"。vitest の設定と e2e の橋渡しの既定で付ける）
 export function ledgerIntakeUrlOf(configured: string, env: NodeJS.ProcessEnv): string | null {
-  const test = env.MOYAI_LEDGER_INTAKE_URL?.replace(/\/+$/, "");
-  if (test === "off") return null;
-  if (test && LOOPBACK.test(test)) return test;
+  // 環境変数があるときは、手元の試験の台の道のときだけ使い、ほか（off・空・打ち間違い）は道を出さない（本物に落ちない）
+  const raw = env.MOYAI_LEDGER_INTAKE_URL;
+  if (raw !== undefined) {
+    const test = raw.replace(/\/+$/, "");
+    return LOOPBACK.test(test) ? test : null;
+  }
   const c = configured.trim().replace(/\/+$/, "");
   if (!c) return null;
   try {

@@ -1,5 +1,5 @@
 // 試験の中だけで動く GitHub の Issues の代わり（メモリの中。網は使わない）。受け口の POST /feedback が使う呼び出しだけを受ける：
-// ラベルで Issue の一覧・Issue を出す・ラベルを付ける。権限の無いトークン（403・404）・ラベルが黙って落ちる・転送（3xx）を作れる。
+// ラベルで Issue の一覧・Issue を出す・ラベルを付ける・閉じる。権限の無いトークン（403・404）・ラベルが黙って落ちる・転送（3xx）を作れる。
 // 本物の GitHub では確かめていない（報告では「GitHub の本物では未確認」と分けて書く）。
 export interface FakeIssue {
   number: number;
@@ -59,6 +59,13 @@ export function fakeIssuesGitHub(o: { token: string; owner?: string; name?: stri
         const i: FakeIssue = { number: gh.issues.length + 1, title: String(body.title), body: String(body.body), labels: gh.dropLabels ? [] : ((body.labels as string[]) ?? []), state: "open" };
         gh.issues.push(i);
         return json(201, view(i));
+      }
+      const one = /^\/issues\/(\d+)$/.exec(rest);
+      if (init.method === "PATCH" && one) {
+        const i = gh.issues.find((x) => x.number === Number(one[1]));
+        if (!i) return json(404, {});
+        if (body.state === "closed") i.state = "closed";
+        return json(200, view(i));
       }
       const lab = /^\/issues\/(\d+)\/labels$/.exec(rest);
       if (init.method === "POST" && lab) {
