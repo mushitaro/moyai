@@ -80,6 +80,8 @@ export const HUMAN_ACTIONS = [
   "readings_lineage",
   // 読み方のフィードバックの書き出し（運営者の判断 #23 の 1、2026-11-12）：人が「保存する」を押したときだけ、ルールの形と数のファイルを保管先に置く
   "reading_feedback_save",
+  // 読み方のフィードバックを送る（運営者 2026-11-16）：人が保存のあと「送る」を押したときだけ、保存した全文を公開の台帳の受け口に送る。受け口が MOYAI のリポジトリに Issue を出す。通信は §2.12 の例外
+  "reading_feedback_send",
   // 写真を AI クライアントに渡す許し（§2.3・§2.12。1 枚ごと、その画像のハッシュに結ぶ）
   "photo_allow",
 ] as const;
@@ -263,6 +265,12 @@ export const ROUTES = {
     "reading_feedback_save",
     512 * 1024,
     "読み方のフィードバックを書き出す：画面が全文を見せたルールの形と数（moyai.reading-feedback/0）を、形と固有名詞の網 2 で確かめ直してから、保管先の feedback/ に置く（送らない。送るのは人）",
+  ),
+  readingFeedbackSend: human(
+    "/human/reading-feedback-send",
+    "reading_feedback_send",
+    512 * 1024,
+    "読み方のフィードバックを送る：保管先の feedback/ に保存したのと同じ全文（moyai.reading-feedback/0）を、形と固有名詞の網 2 で確かめ直してから、公開の台帳の受け口に送る。受け口が MOYAI のリポジトリにラベル feedback の公開の Issue を出す（通信の例外。行き先は受け口の 1 つだけ。その PC の語は送らない）",
   ),
   peersCompare: human("/human/peers-compare", "peers_compare", 64 * 1024, "受け手：立場ごとに、台帳の clone と自分の共有フォルダの ✓ の共有ファイルから、類似施設の行と統計の行を作る"),
   // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）

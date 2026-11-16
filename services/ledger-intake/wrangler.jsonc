@@ -11,6 +11,8 @@
   "workers_dev": true,
   "observability": { "enabled": false },
   "vars": {
-    "LEDGER_REPO": "mushitaro/moyai-ledger"
+    "LEDGER_REPO": "mushitaro/moyai-ledger",
+    // 読み方のフィードバックの Issue を出すリポジトリ（POST /feedback。固定）。トークンは FEEDBACK_TOKEN（docs/ledger-deploy.md §2.1）
+    "FEEDBACK_REPO": "mushitaro/moyai"
   }
 }

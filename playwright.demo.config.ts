@@ -5,6 +5,8 @@ import { defineConfig } from "@playwright/test";
 
 // 試験の橋渡しは、作業画面が開いていなくても本物のブラウザを開かない（src/cli/main.ts）
 process.env.MOYAI_NO_AUTO_OPEN = "1";
+// 本物の受け口に送らない（playwright.config.ts と同じ）
+process.env.MOYAI_LEDGER_INTAKE_URL ??= "off";
 
 const slowMo = Number(process.env.MOYAI_DEMO_SLOWMO ?? 350);
 

@@ -256,3 +256,59 @@ export async function closePrWithComment(gh: Gh, number: number, comment: string
   const p = await call(gh, "PATCH", `/pulls/${number}`, { state: "closed" });
   return !!p && p.status === 200;
 }
+
+// ─── 読み方のフィードバックの Issue（POST /feedback。行き先は変数 FEEDBACK_REPO の 1 つだけ） ─────────
+
+export interface IssueRef {
+  number: number;
+  url: string;
+}
+
+/** 読めない・権限が無い（トークンにそのリポジトリの Issues の権限が無いと、GitHub は 403 か 404 を返す） */
+export type IssueFail = "error" | "noPermission";
+
+const failOf = (r: { status: number } | null): IssueFail => (r && (r.status === 403 || r.status === 404) ? "noPermission" : "error");
+
+function issueOf(gh: Gh, j: unknown): IssueRef | null {
+  const o = obj(j);
+  const number = typeof o.number === "number" && Number.isInteger(o.number) && o.number > 0 ? o.number : null;
+  const url = str(o.html_url);
+  const want = `https://github.com/${gh.repo.owner}/${gh.repo.name}/issues/`.toLowerCase();
+  return number !== null && url && url.toLowerCase() === `${want}${number}` ? { number, url } : null;
+}
+
+/** ラベル feedback の開いた Issue（PR は除く）の、番号・題・本文・開いているか。数える上限を越えれば "tooMany" */
+export async function feedbackIssues(gh: Gh, label: string): Promise<{ ref: IssueRef; title: string; body: string; open: boolean }[] | "tooMany" | IssueFail> {
+  const out: { ref: IssueRef; title: string; body: string; open: boolean }[] = [];
+  for (let page = 1; page <= OPEN_PR_PAGES; page++) {
+    const r = await call(gh, "GET", `/issues?state=open&labels=${encodeURIComponent(label)}&per_page=100&page=${page}`);
+    if (!r || r.status !== 200 || !Array.isArray(r.json)) return failOf(r);
+    for (const j of r.json.map(obj)) {
+      if (j.pull_request !== undefined) continue;
+      const ref = issueOf(gh, j);
+      if (ref) out.push({ ref, title: str(j.title) ?? "", body: typeof j.body === "string" ? j.body : "", open: j.state === "open" });
+    }
+    if (r.json.length < 100) return out;
+  }
+  return "tooMany";
+}
+
+/** Issue を出す（ラベルつき）。返ったラベルに足りないものがあれば、もう一度付ける。付かなければ "unlabeled" */
+export async function openIssue(gh: Gh, i: { title: string; body: string; labels: readonly string[] }): Promise<({ ok: true } & IssueRef) | { ok: false; why: IssueFail | "unlabeled" }> {
+  const r = await call(gh, "POST", "/issues", { title: i.title, body: i.body, labels: [...i.labels] });
+  if (!r || r.status !== 201) return { ok: false, why: failOf(r) };
+  const ref = issueOf(gh, r.json);
+  if (!ref) return { ok: false, why: "error" };
+  const has = (j: unknown) => {
+    const ls = obj(j).labels;
+    const names = Array.isArray(ls) ? ls.map((l) => (typeof l === "string" ? l : str(obj(l).name))) : [];
+    return i.labels.every((l) => names.includes(l));
+  };
+  if (has(r.json)) return { ok: true, ...ref };
+  // 権限によっては、出すときのラベルが黙って落ちる（GitHub の文書）。付け直す
+  const l = await call(gh, "POST", `/issues/${ref.number}/labels`, { labels: [...i.labels] });
+  if (l && l.status === 200 && Array.isArray(l.json) && has({ labels: l.json })) return { ok: true, ...ref };
+  // ラベルの無い Issue は、同じ中身を探す一覧にも開いた数にも入らず、送り直すたびに増えるので閉じる（閉じられなくても unlabeled を返す）
+  await call(gh, "PATCH", `/issues/${ref.number}`, { state: "closed", state_reason: "not_planned" });
+  return { ok: false, why: "unlabeled" };
+}
