@@ -1,5 +1,5 @@
 // 公開の台帳の受け口（運営者の決定 2026-11-07）：GitHub のアカウントを持たない人の束を受け、運営者の GitHub のアカウントで台帳に PR を出す。
-// 道は POST /submit だけ。体は束のファイル 1 つか、取り下げの印 1 つ（JSON、256 KB まで）。確かめの順：
+// 道は POST /submit と POST /feedback（読み方のフィードバック。feedback.ts）。/submit の体は束のファイル 1 つか、取り下げの印 1 つ（JSON、256 KB まで）。確かめの順：
 //   1. 道と方法・設定（GITHUB_TOKEN・LEDGER_REPO・KV）
 //   2. 濫用の防ぎ：同じ IP から 1 時間に 10 件まで、まわりの網（/24・/48）から 30 件まで（limit.ts。IP は鍵つきのハッシュにして数え、残さない）
 //   3. Content-Type（application/json）と大きさ（256 KB まで）
@@ -37,6 +37,8 @@ import { HEX128, HEX16, HEX64, keyIdOf, sha256Hex, verifyBody } from "../../../s
 import { closePrWithComment, findPr, ledgerBase, openIntakePrs, openPr, openPrsOfKey, readLedgerFiles, repoOf, type FetchLike, type Gh, type PrRef } from "./github";
 import { RATE_LIMIT, bucketKey, clientBucket, networkBucket, takeSlot, type KvLike } from "./limit";
 import { INTAKE_PR_TEXT } from "./text";
+import { FEEDBACK_PATH, handleFeedback } from "./feedback";
+import { TOKEN_SHAPE, jsonReply, readLimited, refuseWith } from "./http";
 
 /** 受け口の上限（コードの定数） */
 export const INTAKE_LIMITS = {
@@ -64,6 +66,10 @@ export interface IntakeEnv {
   LEDGER_REPO?: string;
   /** KV：送り手ごとの件数（1 時間で消える） */
   INTAKE_KV?: KvLike;
+  /** 変数：読み方のフィードバックの Issue を出すリポジトリ（owner/name。固定。POST /feedback） */
+  FEEDBACK_REPO?: string;
+  /** 秘密（任意）：フィードバックの Issue を出すトークン（FEEDBACK_REPO だけ、Issues の書き込み）。無ければ GITHUB_TOKEN を使う */
+  FEEDBACK_TOKEN?: string;
 }
 
 /** 台帳の検証に使うパックの部品（全国の表と公開語彙） */
@@ -100,45 +106,13 @@ export interface IntakeNg {
   retryAfter?: number;
 }
 
-const HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" };
-
 function reply(status: number, body: IntakeOk | IntakeRetiredOk | IntakeNg, extra: Record<string, string> = {}): Response {
-  return new Response(JSON.stringify(body), { status, headers: { ...HEADERS, ...extra } });
+  return jsonReply(status, body, extra);
 }
 
-function refuse(status: number, reasons: readonly string[], extra: Record<string, string> = {}): Response {
-  const rs = [...new Set(reasons)];
-  return reply(status, { ok: false, reasons: rs, reasonsText: [...new Set(rs.map(reasonText))] }, extra);
-}
+const refuse = refuseWith;
 
 const accepted = (pr: PrRef): Response => reply(200, { ok: true, pr: { number: pr.number, url: pr.url } });
-
-/** 体を上限まで読む。上限を越えれば null（その先は読まない） */
-async function readLimited(req: Request, limit: number): Promise<Uint8Array | null> {
-  const len = req.headers.get("content-length");
-  if (len !== null && (!/^\d{1,12}$/.test(len) || Number(len) > limit)) return null;
-  if (!req.body) return new Uint8Array(0);
-  const reader = req.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let n = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    n += value.byteLength;
-    if (n > limit) {
-      await reader.cancel().catch(() => undefined);
-      return null;
-    }
-    chunks.push(value);
-  }
-  const out = new Uint8Array(n);
-  let at = 0;
-  for (const c of chunks) {
-    out.set(c, at);
-    at += c.byteLength;
-  }
-  return out;
-}
 
 export interface BundleHead {
   key: string;
@@ -245,8 +219,6 @@ export function intakeBranch(hash: string): string {
   return `intake/${hash.slice(0, 16)}`;
 }
 
-/** fine-grained のトークンの形（中身は見ない。空や改行入りを断るだけ） */
-const TOKEN_SHAPE = /^[A-Za-z0-9_]{20,255}$/;
 
 /** 受け口の入口。どの道でも、トークンと IP は答えに入れない */
 export async function handleRequest(req: Request, env: IntakeEnv, deps: IntakeDeps): Promise<Response> {
@@ -261,6 +233,8 @@ export async function handleRequest(req: Request, env: IntakeEnv, deps: IntakeDe
 async function handle(req: Request, env: IntakeEnv, deps: IntakeDeps): Promise<Response> {
   // 1. 道と方法・設定
   const url = new URL(req.url);
+  // 読み方のフィードバック（11-16）：別の道。台帳の設定（LEDGER_REPO）が無くても受ける
+  if (url.pathname === FEEDBACK_PATH) return handleFeedback(req, env, deps);
   if (url.pathname !== INTAKE_PATH) return refuse(404, ["intake.notFound"]);
   if (req.method !== "POST") return refuse(405, ["intake.method"], { allow: "POST" });
   const repo = repoOf(env.LEDGER_REPO);

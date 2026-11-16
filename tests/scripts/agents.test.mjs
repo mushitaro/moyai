@@ -181,7 +181,8 @@ test("出力の置き場所は仕事のフォルダの中だけ", () => {
 
 test("止まった道具の呼び出しは、前の製品に触れるものだけ拒む", () => {
   assert.equal(decideToolUse({ name: "bash", input: { command: "ls" } }).allow, true);
-  assert.equal(decideToolUse({ name: "bash", input: { command: `git clone https://github.com/${PREV_ORG}/x` } }).allow, false);
+  // MX Stage は運営者の判断（2026-11-16）で外した。HOSHUTARO は今のまま拒む
+  assert.equal(decideToolUse({ name: "bash", input: { command: `git clone https://github.com/${PREV_ORG}/x` } }).allow, true);
   assert.equal(decideToolUse({ name: "web_fetch", input: { url: `https://github.com/${PREV_REPO}` } }).allow, false);
 });
 

@@ -210,3 +210,29 @@ test("S-C2 の見本の Issue の本文（docs/skill-loop/s-c2-issue.md）：選
   assert.ok(Object.values(countValues([issue.title, body])).every((n) => n === 0));
   assert.match(body, /【架空】/);
 });
+
+// 受け口の POST /feedback（services/ledger-intake/src/feedback.ts）が本文を作るときに使う見出しと選択肢が、Issue の型と同じか（2026-11-16）
+test("form.mjs の見出し・業種の選択肢・確かめの文が、.github/ISSUE_TEMPLATE/reading-feedback.yml と同じ", async () => {
+  const { CHECK_LABEL, HEAD, PACK_OF } = await import("../../scripts/skill-loop/form.mjs");
+  const yml = readFileSync(".github/ISSUE_TEMPLATE/reading-feedback.yml", "utf8");
+  const labels = [...yml.matchAll(/^\s+label: (.+)$/gm)].map((m) => m[1].trim());
+  for (const h of Object.values(HEAD)) assert.ok(labels.includes(h), h);
+  for (const p of Object.keys(PACK_OF)) assert.ok(yml.includes(`- ${p}\n`), p);
+  assert.ok(yml.includes(`- label: ${CHECK_LABEL}\n`));
+  assert.ok(/labels: \["area:skill-loop", "feedback"\]/.test(yml));
+});
+
+test("アプリの書き出しの cells（効いたセルの数）は、1,000 以上でも行の値と数えない。ほかの 4 桁の数は数える", () => {
+  const body = (cells, extra = "") =>
+    [
+      "### 業種（Skillパック）\n\nごみ焼却（waste-incineration）",
+      "### 資料の種類\n\nそのほか",
+      `### どう読まれて、どう読まれるべきだったか\n\nアプリから${extra}`,
+      `### 会話で作ったルール（あれば）\n\n\`\`\`json\n${JSON.stringify({ schema: "moyai.reading-feedback/0", pack: "waste-incineration", rules: [{ kind: "markMeaning", symbol: "▲", planOrActual: "actual", cells }] }, null, 2)}\n\`\`\``,
+      "### 確かめ\n\n- [X] 資料の中身（行の値・金額・固有名詞）を書いていない",
+    ].join("\n\n");
+  assert.equal(screen({ number: 1, title: "t", body: body(4321), labels: ["feedback"] }).ok, true);
+  const d = screen({ number: 1, title: "t", body: body(4321, "（2026 年）"), labels: ["feedback"] });
+  assert.equal(d.reason, "row-values");
+  assert.equal(d.counts.longNumber, 1);
+});

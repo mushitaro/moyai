@@ -80,6 +80,12 @@ const EXACT = defineMessages(EN_EXACT, {
   "intake.failed": "受け口の処理の誤り",
   "intake.keyPending": "同じ鍵の共有ファイルの PR が審査中",
   "intake.busy": "受け口の PR が審査待ちでたまっている",
+  "intake.feedbackNoPermission": "受け口のトークンに、フィードバックの Issue を出す権限が無い（運営者の設定待ち）",
+  "intake.feedbackLabel": "フィードバックの Issue にラベルを付けられない（運営者の設定待ち）",
+  // 読み方のフィードバック（受け口の POST /feedback）
+  "feedback.shape": "ルールのフィードバックの形ではない（moyai.reading-feedback/0）",
+  "feedback.packUnknown": "業種（Skillパック）が、フィードバックの Issue の型の選択肢に無い",
+  "feedback.rowValues": "行の値らしきもの（金額・日付・番号・会社や施設の名前など）がある",
   "file.symlink": "symlink（たどらない）",
   "file.submodule": "submodule",
   "file.notRegular": "ふつうのファイルでない",
@@ -127,6 +133,7 @@ const PREFIX = defineMessages(EN_PREFIX, {
   "path.": "道（ファイル名）",
   "diff.": "PR の変更",
   "intake.": "受け口",
+  "feedback.": "ルールのフィードバック",
 });
 
 const REASON_TEXT = defineMessages(EN_REASON_TEXT, {

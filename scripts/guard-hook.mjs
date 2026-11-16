@@ -12,7 +12,7 @@ const LOOPBACK =
   /(\b127(?:\.\d{1,3}){1,3}\b|\blocalhost\b|\[::1\]|(?<![\w:])::1(?![\w:])|\b0\.0\.0\.0\b|\b0x7f[0-9a-f]{6}\b|\b21307064\d\d\b|::ffff:127\.)/i;
 const HTTP_CLIENT =
   /(\bcurl\b|\bwget\b|\bInvoke-WebRequest\b|\bInvoke-RestMethod\b|\biwr\b|\birm\b|\bhttpie\b|\bhttp\s+(?:get|post|put)\b|\bfetch\s*\(|\bNet\.WebClient\b|\bHttpClient\b|\bXMLHttpRequest\b|\baxios\b|\bundici\b|\bhttp\.request\b|\bhttp\.get\b|\bnc\b|\bncat\b|\btelnet\b|\bwebsocat\b|\bWebSocket\s*\(|\burllib\b|\brequests\.|\bhttp\.client\b|\bhttpx\b|\baiohttp\b|\bNet\.Sockets\b|\bTcpClient\b|\bsocket\.(?:create_connection|socket)\b|\bnet\.connect\b|\bTest-NetConnection\b)/i;
-const PREVIOUS_PRODUCT = /(mxstage|hoshutaro)/i;
+const PREVIOUS_PRODUCT = /(hoshutaro)/i;
 const FETCH_VERB =
   /(\bclone\b|\bfetch\b|\bpull\b|\bsubmodule\b|\binstall\b|\bnpm\s+i\b|\bnpm\s+view\b|\bnpx\b|\bpnpm\b|\byarn\b|\bcurl\b|\bwget\b|\biwr\b|\birm\b|\bInvoke-WebRequest\b|\bInvoke-RestMethod\b|\bgh\s+(?:api|repo|release)\b|\bdownload\b|\bls-remote\b|\barchive\b|\bsvn\b)/i;
 // MOYAI の CLI を「実行する位置」にあるときだけ見る：node（や npx tsx など）の直後の …cli(.js|.mjs|.ts) のパス、
@@ -29,14 +29,12 @@ const WRITE_VERB =
 const GUARD_FILES = /(?:^|[\\/\s"'`=])(?:scripts[\\/]+guard-hook\.mjs|\.claude[\\/]+settings(?:\.local)?\.json)(?=$|[\s"'`;&|)])/i;
 const SHELL_WRITE = new RegExp(WRITE_VERB.source + String.raw`|\bsed\s+(?:-\w*\s+)*-i|\bperl\s+-\w*i|\bdd\b|\bchmod\b|\bgit\s+(?:checkout|restore|apply|am|stash\s+pop)\b|\bln\b`, "i");
 const PREVIOUS_PRODUCT_URL = [
-  /^https?:\/\/(?:www\.)?github\.com\/mxstage(?:\/|$)/i,
   /^https?:\/\/(?:www\.)?github\.com\/woodygaragelab\/hoshutaro(?:\/|$|\.git)/i,
-  /^https?:\/\/raw\.githubusercontent\.com\/(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
-  /^https?:\/\/(?:[\w-]+\.)*mxstage\.tsunagi\.app(?:\/|$)/i,
-  /^https?:\/\/api\.github\.com\/(?:repos\/)?(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
-  /^https?:\/\/codeload\.github\.com\/(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
-  /^https?:\/\/(?:www\.)?npmjs\.(?:com|org)\/package\/\S*(?:mxstage|hoshutaro)/i,
-  /^https?:\/\/registry\.npmjs\.org\/\S*(?:mxstage|hoshutaro)/i,
+  /^https?:\/\/raw\.githubusercontent\.com\/woodygaragelab\/hoshutaro(?:\/|$)/i,
+  /^https?:\/\/api\.github\.com\/(?:repos\/)?woodygaragelab\/hoshutaro(?:\/|$)/i,
+  /^https?:\/\/codeload\.github\.com\/woodygaragelab\/hoshutaro(?:\/|$)/i,
+  /^https?:\/\/(?:www\.)?npmjs\.(?:com|org)\/package\/\S*hoshutaro/i,
+  /^https?:\/\/registry\.npmjs\.org\/\S*hoshutaro/i,
 ];
 
 /** ホストの名前が自分の PC（127.0.0.0/8・::1・IPv4 の写しの ::ffff:7f..・localhost・0.0.0.0）か。 */

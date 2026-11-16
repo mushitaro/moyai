@@ -77,6 +77,12 @@ export const EN_EXACT: Record<string, string> = {
   "intake.failed": "Intake processing error",
   "intake.keyPending": "PR with a shared file from the same key under review",
   "intake.busy": "Too many intake PRs awaiting review",
+  "intake.feedbackNoPermission": "The intake token has no permission to open feedback issues (waiting for the operator's setup)",
+  "intake.feedbackLabel": "Cannot label the feedback issue (waiting for the operator's setup)",
+  // Reading feedback (intake POST /feedback)
+  "feedback.shape": "Not a rule feedback shape (moyai.reading-feedback/0)",
+  "feedback.packUnknown": "The industry (Skill pack) is not among the feedback issue template's options",
+  "feedback.rowValues": "Contains what look like row values (amounts, dates, numbers, company or facility names)",
   "file.symlink": "Symlink (not followed)",
   "file.submodule": "Submodule",
   "file.notRegular": "Not a regular file",
@@ -124,6 +130,7 @@ export const EN_PREFIX: Record<string, string> = {
   "path.": "Path (file name)",
   "diff.": "PR change",
   "intake.": "Intake",
+  "feedback.": "Rule feedback",
 };
 
 export const EN_REASON_TEXT = {

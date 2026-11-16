@@ -62,11 +62,13 @@ jobs:
     timeout-minutes: 20
     outputs:
       # 新しいサンプルの物差しの結果（success・failure・absent）。scenario の仕事が A1・A1b・A3 に使う（旧サンプルの結果は使わない）
-      v3: ${{ steps.v3.outputs.v3 }}
+      v4: ${{ steps.v4.outputs.v4 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # 凍結のタグと、タグ → 凍結の記録の順を照らすため、履歴とタグを全部取る
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22.19.0
@@ -90,26 +92,47 @@ jobs:
           code=$?
           cat "$RUNNER_TEMP/bench-first-read/compare.md" >> "$GITHUB_STEP_SUMMARY"
           exit $code
-      # 新しいサンプル（mushitaro/moyai#111）：凍結の測り（scripts/bench/freeze.mjs が書く eval/bench/waste-incineration-v3/frozen/）が入ってから測る。
-      # A1・A1b・A3 はこちらの記録だけで決める。上の旧サンプルの 2 つは「旧」として数の差だけを見る（docs/scenarios.md の S-A の注）
-      - name: 新しいサンプル（waste-incineration-v3）を測る（凍結の測りが入っていれば。Skillパックあり・初めて読む）
-        id: v3
+      # 新しいサンプル v4（mushitaro/moyai#111）は、別の公開リポジトリ mushitaro/moyai-samples にある（MOYAI 本体に入れない。運営者の判断、11-14）。
+      # 凍結の測り（scripts/bench/freeze.mjs が書く eval/bench/waste-incineration-v4/frozen/）が入ってから、記録した commit でそのリポジトリを取る。
+      # 2,565 ファイルの全部は 20 分に収まらないので、ここでは (a) 凍結の記録の照らし（読み手の木がタグと同じ・サンプルの commit とハッシュが記録どおり）と、
+      # (b) 資料の少ない 3 施設を今のコードで測り、今の記録の同じ施設の行と --strict で比べる、だけにする。全部の測りは手元で（eval/bench/FREEZE.md）。
+      # A1・A1b・A3 は、こちらの結果と記録だけで決める。上の旧サンプルの 2 つは「旧」として数の差だけを見る（docs/scenarios.md の S-A の注）
+      - name: 凍結の測りの通し（偽の小さなサンプルのリポジトリ。一時の git と一時の clone で。本当の記録は書き換えない）
+        run: MOYAI_FREEZE_FULL=1 node --test tests/scripts/bench-freeze-external.test.mjs
+      - name: 新しいサンプル（v4）の凍結の記録を読む
+        id: v4rec
         if: ${{ !cancelled() }}
         run: |
-          if [ ! -d samples/waste-incineration-v3 ] || [ ! -f eval/bench/waste-incineration-v3/frozen/freeze.json ]; then
-            echo "新しいサンプルの凍結の測りがまだ（#111）。A1・A1b・A3 は待ち" >> "$GITHUB_STEP_SUMMARY"
-            echo "v3=absent" >> "$GITHUB_OUTPUT"
+          f=eval/bench/waste-incineration-v4/frozen/freeze.json
+          if [ ! -f "$f" ]; then
+            echo "新しいサンプル（v4、mushitaro/moyai-samples）の凍結の測りがまだ（#111）。A1・A1b・A3 は待ち" >> "$GITHUB_STEP_SUMMARY"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node -e 'const f=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const c=f.source&&f.source.commit;if(!/^[0-9a-f]{40}$/.test(c||""))process.exit(1);console.log("commit="+c)' "$f" >> "$GITHUB_OUTPUT"
+          echo "present=true" >> "$GITHUB_OUTPUT"
+      - name: サンプルのリポジトリ（mushitaro/moyai-samples）を、記録した commit で取る
+        if: ${{ !cancelled() && steps.v4rec.outputs.present == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mushitaro/moyai-samples
+          ref: ${{ steps.v4rec.outputs.commit }}
+          path: .moyai-samples
+          persist-credentials: false
+      - name: 新しいサンプル（v4）：凍結の記録を照らし、資料の少ない 3 施設を測って今の記録と比べる
+        id: v4
+        if: ${{ !cancelled() }}
+        run: |
+          if [ "${{ steps.v4rec.outputs.present }}" != "true" ]; then
+            echo "v4=absent" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           set +e
           code=0
-          node scripts/bench/pack-bench.mjs waste-incineration --samples samples/waste-incineration-v3 --out "$RUNNER_TEMP/bench-v3" || code=1
-          node scripts/bench/compare.mjs eval/bench/waste-incineration-v3/result.json "$RUNNER_TEMP/bench-v3/result.json" --strict --md "$RUNNER_TEMP/bench-v3/compare.md" || code=1
-          cat "$RUNNER_TEMP/bench-v3/compare.md" >> "$GITHUB_STEP_SUMMARY"
-          node scripts/bench/pack-bench.mjs waste-incineration --samples samples/waste-incineration-v3 --first-read --out "$RUNNER_TEMP/bench-v3-first-read" || code=1
-          node scripts/bench/compare.mjs eval/bench/waste-incineration-v3/first-read/result.json "$RUNNER_TEMP/bench-v3-first-read/result.json" --strict --md "$RUNNER_TEMP/bench-v3-first-read/compare.md" || code=1
-          cat "$RUNNER_TEMP/bench-v3-first-read/compare.md" >> "$GITHUB_STEP_SUMMARY"
-          if [ $code -eq 0 ]; then echo "v3=success" >> "$GITHUB_OUTPUT"; else echo "v3=failure" >> "$GITHUB_OUTPUT"; fi
+          root="$GITHUB_WORKSPACE/.moyai-samples"
+          MOYAI_SAMPLES_ROOT="$root" MOYAI_SAMPLES_REQUIRED=1 node node_modules/vitest/vitest.mjs run tests/heldout/bench-freeze.test.ts || code=1
+          node scripts/bench/v4-ci.mjs --samples-root "$root" --md "$GITHUB_STEP_SUMMARY" || code=1
+          if [ $code -eq 0 ]; then echo "v4=success" >> "$GITHUB_OUTPUT"; else echo "v4=failure" >> "$GITHUB_OUTPUT"; fi
           exit $code
 
   # シナリオテスト D1・D2（docs/scenarios.md）：e2e（tests/e2e）と walkthrough（tests/demo）を、ubuntu と windows の Chrome で。
@@ -180,7 +203,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           MOYAI_CI_TEST: ${{ needs.test.result }}
           MOYAI_CI_PACK_BENCH: ${{ needs.pack-bench.result }}
-          MOYAI_CI_PACK_BENCH_V3: ${{ needs.pack-bench.outputs.v3 }}
+          MOYAI_CI_PACK_BENCH_V4: ${{ needs.pack-bench.outputs.v4 }}
           MOYAI_CI_E2E: ${{ needs.e2e.result }}
         run: node scripts/scenario/run.mjs --ci --e2e-dir "${{ runner.temp }}/scenario-e2e" --out "${{ runner.temp }}/scenario/result.md" --prev eval/scenario/result.md
       # この回の表（実機の列はリポジトリの表から写す）。main の回のものを、そのまま eval/scenario/result.md に入れられる
