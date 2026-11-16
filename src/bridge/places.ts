@@ -169,6 +169,8 @@ export interface Settings {
   name: string | null;
   /** 最新の確かめ（入っている MOYAI が起動のときと 6 時間ごとに main を問い合わせる。#65）。切ったときだけ false を置く。無ければ入 */
   autoUpdate?: false;
+  /** 業務システムとの連携（運営者の判断 2026-11-16）。入れたときだけ true を置く。無ければ切（HOSHITORI の「連携」シートも AI の連携の道具も出さない） */
+  connect?: true;
   /** 作業画面の言語（設定で選んだときだけ置く。無ければ画面は PC の言語に従う。Excel の出力もこの言語） */
   lang?: "en" | "ja";
 }
@@ -182,6 +184,7 @@ export function readSettings(stateDir: string): Settings {
     ledger: abs(s?.ledger),
     name: typeof s?.name === "string" && validName(s.name) ? s.name : null,
     ...(s?.autoUpdate === false ? { autoUpdate: false as const } : {}),
+    ...(s?.connect === true ? { connect: true as const } : {}),
     ...(s?.lang === "en" || s?.lang === "ja" ? { lang: s.lang } : {}),
   };
 }

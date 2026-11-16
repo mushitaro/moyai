@@ -16,5 +16,7 @@
   "reading_skill_register",
   "reading_skills_list",
   "screen_set",
-  "moyai_update"
+  "moyai_update",
+  "connect_read",
+  "connect_plan"
 ]

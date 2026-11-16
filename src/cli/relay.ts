@@ -19,8 +19,19 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ERRORS, errorBody, errorBodySchema, type ErrorBody } from "../shared/errors";
 import { MCP_INSTRUCTIONS } from "../shared/instructions";
 import { HEADER_RELAY_KEY, ROUTES } from "../shared/routes";
-import { EXPOSED_TOOL_NAMES, RELAY_MARGIN_MS, TOOL_TIMEOUTS, photoImageSchema, toolDef, type PhotoImage, type ToolKind, type ToolName } from "../shared/tools";
+import { CONNECT_TOOL_NAMES, EXPOSED_TOOL_NAMES, RELAY_MARGIN_MS, TOOL_TIMEOUTS, photoImageSchema, toolDef, type PhotoImage, type ToolKind, type ToolName } from "../shared/tools";
 import { readKeyFile, type KeyFile } from "../bridge/state";
+import { readSettings } from "../bridge/places";
+import type { RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
+
+/** 設定の「連携」がオンか（状態フォルダの settings.json を読むだけ。読めなければオフ） */
+export function connectOn(stateDir: string): boolean {
+  try {
+    return readSettings(stateDir).connect === true;
+  } catch {
+    return false;
+  }
+}
 
 /** 起こした橋渡しの手がかり。exited は子プロセスが終わったら解ける（起きずに終わったら、待つのをやめる） */
 export interface LaunchHandle {
@@ -383,9 +394,15 @@ export function createRelayServer(opts: RelayOptions): McpServer {
     { name: "moyai", version: opts.version ?? "0.0.0" },
     { instructions: MCP_INSTRUCTIONS, capabilities: { tools: {} } },
   );
+  // 業務システムとの連携の道具は、設定の「連携」がオンのときだけ一覧に出す（オフなら出さない。呼ぶたびに設定を読み直し、変われば一覧の変わりを知らせる）
+  const connectTools: RegisteredTool[] = [];
+  const syncConnect = () => {
+    const on = connectOn(opts.stateDir);
+    for (const t of connectTools) if (t.enabled !== on) (on ? t.enable() : t.disable());
+  };
   for (const name of EXPOSED_TOOL_NAMES) {
     const d = toolDef(name);
-    server.registerTool(
+    const registered = server.registerTool(
       name,
       {
         title: d.title,
@@ -416,9 +433,12 @@ export function createRelayServer(opts: RelayOptions): McpServer {
         const url = current ? workScreenUrl(current) : null;
         const notice = k && reload ? RELAY_TEXT.replaced(workScreenUrl(k)) : null;
         if (notice) reload = false;
+        syncConnect();
         return toToolResult(answer, url, notice);
       },
     );
+    if ((CONNECT_TOOL_NAMES as readonly string[]).includes(name)) connectTools.push(registered);
   }
+  syncConnect();
   return server;
 }

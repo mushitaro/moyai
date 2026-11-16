@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "waste-incineration",
+  "suite": "waste-incineration",
+  "suiteSha": "431f45dcb13555163399f75947189e716a3c13c4dba119c14151697dbccb333c",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "04c7a984eb1000f2ab06e3f0c422385ed338dcf67013813eb082861b26cbe7e4"
+    },
+    {
+      "path": "packs/waste-incineration/SKILL.md",
+      "sha256": "c9dd80b3dc626c5bfd93131fde815a2187b3ff9b2deeebb2b33509c3ceb0d4d1"
+    }
+  ],
+  "skillSha": "0dc44125a7089d68945a9919f3c3965a066c409b26483d0132c89d03bc735af3",
+  "label": "PR #129 の文（main の段 1b を取り込んだ 1 段目＋連携の節）",
+  "at": "2026-11-16T11:23:34.790Z",
+  "cases": 100,
+  "answered": 100,
+  "pass": 100,
+  "runs": [
+    {
+      "solver": "解く役 1（子のエージェント・決まった頼みの文）",
+      "pass": 100,
+      "failing": []
+    },
+    {
+      "solver": "解く役 2（子のエージェント・決まった頼みの文）",
+      "pass": 100,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 100,
+      "total": 100
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 120,
+      "total": 120
+    }
+  },
+  "failing": []
+}

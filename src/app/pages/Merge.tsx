@@ -25,6 +25,8 @@ import { placeOf, ruleVersionNo, signaturesVersion, type Lineage, type RecordedR
 import { catalogFor, packChoices } from "../chart/catalog";
 import { versionName } from "../version-name";
 import { MatchSheet } from "../components/MatchSheet";
+import { ConnectSheet } from "../components/ConnectSheet";
+import { connectShown, loadConnect, useConnectView } from "../state/connect";
 import { FictionMark } from "../components/FictionMark";
 import type { IntakeWorkspace } from "../intake/workspace";
 import { useConnection } from "../state/bridge";
@@ -392,9 +394,16 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
 
   // 版の下書きが無いあいだは白紙（資料のシートだけ）。開発と試験の見本（?plan=）は、星取表のシートが読んで作業中の計画に置く
   const devSample = new URLSearchParams(location.search).has("plan");
-  const current: MergeSheet = !plan ? (devSample && (sheet ?? "chart") === "chart" ? "chart" : "files") : (sheet ?? "chart");
-  // 出力と共有のシートは、確定した版を見る（見出しの版はその版。資料を落とす場所ではない）
-  const outSheet = current === "export" || current === "share";
+  // 連携のシート（業務システムとの読み書き。設定の「連携」がオンで、つなぎ先があるときだけ。白紙でも開ける。読んだものが資料になる）
+  const connectView = useConnectView();
+  const connectOn = connectShown(connectView);
+  useEffect(() => {
+    if (conn.kind === "open") void loadConnect(client);
+  }, [conn.kind, client]);
+  const wanted = sheet === "connect" && !connectOn ? null : sheet;
+  const current: MergeSheet = !plan ? (devSample && (wanted ?? "chart") === "chart" ? "chart" : wanted === "connect" ? "connect" : "files") : (wanted ?? "chart");
+  // 出力と共有と連携のシートは、中身と下の帯をそのシートが持つ（見出しの版はその版。資料を落とす場所ではない）
+  const outSheet = current === "export" || current === "share" || current === "connect";
   // 見出しの版：承認を頼まれた人には、頼まれた版（いちばん新しい版）を、ほかは次につくる版を出す
   const latestNo = st?.latest && plan && st.latest.plan.planId === plan.planId ? st.latest.version : null;
   // 2 人が同時に書こうとしたとき（docs/screens.md 4 の 6）：この編集がもとにした版より新しい版が保管先にあれば、知らせて署名を止める
@@ -493,8 +502,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         ...(packed ? (["check"] as const) : []),
         "decisions",
         ...(confirmedVersion !== null ? CONFIRMED_SHEETS.filter((x) => packed || x !== "share") : []),
+        ...(connectOn ? (["connect"] as const) : []),
       ]
-    : [];
+    : connectOn
+      ? ["connect"]
+      : [];
   // 資料の一覧の行（読めた資料・読込中・読込不可。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）
   const skipped = ws.skippedFiles;
   const rows = useMemo(
@@ -551,7 +563,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 白紙で資料が入ったら、道を資料のシートにしておく（第 1 版をつくったあとも、資料のタブを選んだ形で開く。Wire、11-07）。
   // 版を開くリンク（?open=）と開発の見本（?plan=）のときは替えない
   useEffect(() => {
-    if (!plan && !openId && !devSample && fileNames.length > 0 && sheet !== "files") location.hash = sheetHash("files");
+    if (!plan && !openId && !devSample && fileNames.length > 0 && sheet !== "files" && sheet !== "connect") location.hash = sheetHash("files");
   }, [plan, openId, devSample, fileNames.length, sheet]);
   // 横の板：選んだ切り替えが出せればそれ。無ければ、決まっていない所 → 署名 → 出どころ の順
   const sideOpen = !!view && openQuestions > 0;
@@ -766,7 +778,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
 
       {/* 出力と共有のシート：中身と下の帯はそのシートが持つ（11-10 の引き算のまま。横の板は出さない。mushitaro/moyai#30） */}
       {outSheet ? (
-        <Suspense fallback={null}>{current === "export" ? <Export embedded /> : packed ? <Checkpoint embedded /> : null}</Suspense>
+        current === "connect" ? (
+          <ConnectSheet client={client} ws={ws} planId={plan?.planId ?? null} signedVersion={confirmedVersion} connected={conn.kind === "open"} />
+        ) : (
+          <Suspense fallback={null}>{current === "export" ? <Export embedded /> : packed ? <Checkpoint embedded /> : null}</Suspense>
+        )
       ) : (
       <>
       <MergePeersContext.Provider value={peersOn}>

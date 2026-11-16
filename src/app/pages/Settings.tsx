@@ -20,6 +20,7 @@ import { useWorkingPlan } from "../state/plan-store";
 import { ringLabels } from "../state/share-route";
 import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
+import { loadConnect, type ConnectTargetView } from "../state/connect";
 import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.settings;
@@ -45,6 +46,8 @@ interface SettingsBody {
   name: string | null;
   /** 最新の確かめ（#65 の 5）。古い橋渡しは送らない */
   autoUpdate?: boolean;
+  /** 業務システムとの連携（裏があるときだけ行を出す。キーは来ない） */
+  connect?: { available: boolean; enabled: boolean; fake: boolean; targets: ConnectTargetView[] };
   /** 設定に保存した言語（無ければ null＝PC の言語。古い橋渡しは送らない） */
   lang?: "en" | "ja" | null;
   people: { by: string; key: string; pub: string; fingerprint: string; confirmed: boolean; own: boolean; changed: boolean; firstSeen: string; previous?: { fingerprint: string; at: string } | null }[];
@@ -233,6 +236,14 @@ export function Settings() {
     setEditName(false);
     setEditLedger(false);
     await load();
+  };
+  // 連携のオンとオフ（押すとすぐ保存する。人だけの経路）。HOSHITORI の「連携」シートと AI の連携の道具は、オンのときだけ出る
+  const saveConnect = async (on: boolean) => {
+    if (!s) return;
+    const r = readHuman<{ ok: boolean }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: s.chosenRoot, connect: on }));
+    if (!r.ok) return setError(r.message);
+    await load();
+    await loadConnect(client);
   };
   // 言語（押すとすぐ描き直し、保存する。Excel の出力もこの言語）
   const saveLang = async (lang: Lang) => {
@@ -469,6 +480,42 @@ export function Settings() {
                 ]}
               />,
               "update-setting",
+            )}
+          {/* 連携（Wire Frame の ConnectSettings）：オンとオフ・つなぎ先の一覧（名前・host・テストか本番・書き込み）。キーは出さない。説明の文は置かない */}
+          {s.connect?.available &&
+            row(
+              T.connectTitle,
+              <Stack gap={8}>
+                <Switch
+                  aria-label={T.connectTitle}
+                  data-testid="connect-choice"
+                  value={s.connect.enabled ? "on" : "off"}
+                  onChange={(v) => void saveConnect(v === "on")}
+                  data={[
+                    { value: "on", label: T.connectOn },
+                    { value: "off", label: T.connectOff },
+                  ]}
+                />
+                {s.connect.enabled && (
+                  <Table verticalSpacing={4} data-testid="connect-targets" style={{ width: "auto" }}>
+                    <Table.Tbody>
+                      {s.connect.targets.map((t) => (
+                        <Table.Tr key={t.id} data-testid="connect-target-row" data-target={t.id} data-env={t.env}>
+                          <Table.Td>{t.label}</Table.Td>
+                          <Table.Td ff="monospace" c="var(--text-2)">
+                            {t.host}
+                          </Table.Td>
+                          <Table.Td c="var(--text-3)">{HUMAN_TEXT.connect.envs[t.env]}</Table.Td>
+                          <Table.Td c="var(--text-3)" data-testid="connect-target-write">
+                            {T.connectWrite[!t.write.needed ? "free" : t.write.ok ? "licensed" : "noKey"]}
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                )}
+              </Stack>,
+              "connect-setting",
             )}
           {row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
           {row(

@@ -441,6 +441,8 @@ export const SCREEN_GO = [
   "hoshitori.export",
   "hoshitori.share",
   "hoshitori.files",
+  // 業務システムとの連携のシート（設定の「連携」がオンのときだけ並ぶ）
+  "hoshitori.connect",
   // 前の値：hoshitori.export・hoshitori.share と同じシートを開く（再起動まで前のツールの定義を持つ Claude Desktop のため）
   "export",
   "share",
@@ -1214,7 +1216,7 @@ export const TOOLS = {
     "Change how the work screen looks",
     "Changes the work screen's view at the user's request in the chat. Pass one or more arguments; several can go in one call. " +
       "\"Use light mode\" is theme: light, \"use dark mode\" is dark, \"follow the PC setting\" is auto. " +
-      "\"Switch to the star chart\" is go: hoshitori.chart (also top = the top screen, hoshitori.cost = Cost, hoshitori.match = Match, hoshitori.rules = Rules, hoshitori.review = Review, hoshitori.decisions = Decisions, hoshitori.export = Export, hoshitori.share = Share, hoshitori.files = Files, settings = Settings; the older export and share open the same sheets). " +
+      "\"Switch to the star chart\" is go: hoshitori.chart (also top = the top screen, hoshitori.cost = Cost, hoshitori.match = Match, hoshitori.rules = Rules, hoshitori.review = Review, hoshitori.decisions = Decisions, hoshitori.export = Export, hoshitori.share = Share, hoshitori.files = Files, hoshitori.connect = Integration [business-system integration; only when it is on in Settings], settings = Settings; the older export and share open the same sheets). " +
       "\"Change where files are stored\": ask the user for the path and write the absolute path in storageRoot. Only a person changes the storage location, so MOYAI only puts the path, after the same check as Settings, into the storage field of the Settings screen and opens it. Ask the user to press Save. " +
       "\"Swap the equipment levels\" reverses levelOrder (asset-first is the default facility > equipment > unit/line > part; series-first is facility > unit/line > equipment > part). " +
       "\"Swap the order of A and B\": read the two row ids with chart_rows and pass rowOrder: { node: B's id, before: A's id } (when A is just above B; rows under the same parent only; if they are apart, split into two calls). " +
@@ -1251,6 +1253,48 @@ export const TOOLS = {
         .optional(),
     }),
   ),
+  connect_read: def(
+    "connect_read",
+    "propose",
+    "Read from the business system",
+    "Integration with the user's business system (e.g. Maximo). Only works when the user has turned Integration on in MOYAI's Settings; otherwise this tool is not listed. " +
+      "Reads the asset tree, maintenance plans and work results from a connection target the user set up, and adds the work results to the work screen as one source file (資料), the same as a dropped file. " +
+      "After that the usual path applies: intake_survey / intake_settle / intake_compose, the chart, then confirm and sign (the user does those on screen). " +
+      "Returns counts only (no row values). target is a target id from targets; omit it to use the one chosen on the Integration sheet (or the only one). " +
+      "Reading is free for test and production targets. Nothing is written to the business system. Reply to the user in the user's language.",
+    z.object({ target: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/).optional().describe("Connection target id (from targets). Omit to use the target chosen on the Integration sheet") }).strict(),
+    z.object({
+      target: z.object({ id: z.string(), label: z.string(), env: z.enum(["test", "production"]) }).strict().nullable(),
+      targets: z.array(z.object({ id: z.string(), label: z.string(), env: z.enum(["test", "production"]) }).strict()).max(50),
+      /** 資料の名前（入れたとき） */
+      file: z.string().nullable(),
+      counts: z.object({ assets: z.number().int(), plans: z.number().int(), results: z.number().int() }).strict().nullable(),
+      /** 入れなかった理由（つなぎ先を選べない・読めない・同じ名前の資料がある） */
+      refused: z.enum(["no_target", "read_failed", "same_name"]).nullable(),
+      note: z.string(),
+    }),
+  ),
+  connect_plan: def(
+    "connect_plan",
+    "read",
+    "Show the write diff for the business system",
+    "Proposes a write to the user's business system: compares the maintenance plan of the latest confirmed and signed version (kept by MOYAI) with the target's current maintenance plans, and shows the match and the diff (add / change; nothing is deleted) on the Integration sheet of the work screen. " +
+      "Returns counts only. This tool never writes. Sending is a human-only action: the user reviews the diff on screen and presses the main button Send. " +
+      "Writing to a production target needs a valid license key for that host; if it is missing, the sheet shows the reason and the button cannot be pressed. Test targets need no key. " +
+      "If there is no confirmed version yet, say so and ask the user to confirm and sign first. Reply to the user in the user's language.",
+    z.object({ target: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/).optional().describe("Connection target id (from connect_read's targets). Omit to use the target chosen on the Integration sheet") }).strict(),
+    z.object({
+      target: z.object({ id: z.string(), label: z.string(), env: z.enum(["test", "production"]) }).strict().nullable(),
+      /** もとにした版（確定・署名した最新の版。無ければ null） */
+      version: z.number().int().nullable(),
+      counts: z.object({ ok: z.number().int(), one: z.number().int(), diff: z.number().int(), add: z.number().int(), change: z.number().int() }).strict().nullable(),
+      /** 書き込みの許し：needed（本番か）・ok（鍵があるか。要らなければ true） */
+      write: z.object({ needed: z.boolean(), ok: z.boolean() }).strict().nullable(),
+      /** 案を出せなかった理由 */
+      refused: z.enum(["no_target", "no_signed_version", "read_failed"]).nullable(),
+      note: z.string(),
+    }),
+  ),
   skill_eval: def(
     "skill_eval",
     "start",
@@ -1267,6 +1311,8 @@ export const TOOLS = {
 } as const;
 
 export type ToolName = keyof typeof TOOLS;
+/** 業務システムとの連携の道具（設定の「連携」がオンのときだけ、中継が一覧に出し、橋渡しが受ける） */
+export const CONNECT_TOOL_NAMES = ["connect_read", "connect_plan"] as const satisfies readonly ToolName[];
 /** 名前の一覧は tool-names.json（使わない名前の試験が node:test から読む）。TOOLS と同じであることを試験する。 */
 export const TOOL_NAMES = toolNames as ToolName[];
 

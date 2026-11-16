@@ -387,7 +387,7 @@ export const TEXT = defineMessages(EN_TEXT, {
     renameLabel: "施設の名前（押して直す。Enter で決める）",
     version: (n: number) => `第 ${n} 版`,
     facilitySettings: "施設設定",
-    sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", export: "出力", share: "共有", files: "資料" } as Record<string, string>,
+    sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", export: "出力", share: "共有", connect: "連携", files: "資料" } as Record<string, string>,
     filesLabel: "資料",
     addFiles: "＋ 資料を追加",
     /**
@@ -610,6 +610,8 @@ export const TEXT = defineMessages(EN_TEXT, {
       crosswalkPlaced: (rules: number, placed: number, conflicts: number) =>
         `AI が紐付けのルールを ${rules} 個置きました（案 ${placed} 件・ぶつかり ${conflicts} 件。人が受けるまで決まりません）`,
       crosswalkRefused: (rules: number) => `AI の紐付けのルール ${rules} 個を断りました（置けない値か、もとにした版が古いので、どれも置いていません）`,
+      connectRead: (file: string) => `AI が連携のつなぎ先から読んで資料を追加「${file}」`,
+      connectPlan: (add: number, change: number) => `AI が連携の書き込みの差分を表示（足す ${add}・変える ${change}）`,
       filesAdded: (demo: boolean, added: number, refused: number) => `AI が${demo ? "デモの" : "フォルダの"}資料を追加 ${added} 件${refused ? `・未追加 ${refused} 件` : ""}`,
       demoMixed: "AI のデモの資料は未追加（デモでない資料か、ほかの Skillパックの資料があるため）",
       /** 様式（intake_add_files の source: template）と列対応の案（screen_set の templateLayout）。言葉は Wire に確かめる */

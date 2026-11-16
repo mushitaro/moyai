@@ -50,6 +50,7 @@ import { offerTemplate } from "../state/template-draft";
 import { getShareChoice, placeClaudeShare } from "../state/share";
 import { sharePreviewNeeds } from "../../share/share-preview";
 import { fileKinds, matchFiles, shortName } from "../../shared/file-match";
+import { getConnect, loadConnect, planNow, readNow } from "../state/connect";
 
 /** image は photo_transcribe の receive だけ（人が許した写真 1 枚。橋渡しが許しと照らす） */
 export type TabToolResult = { ok: true; data: Record<string, unknown>; image?: PhotoImage } | { ok: false; code: TabSentCode };
@@ -704,6 +705,50 @@ export const TAB_ASYNC_TOOL_RECEIVERS: Partial<Record<ToolName, (ws: IntakeWorks
   intake_add_files: addFilesFromBridge,
 };
 
+/**
+ * 業務システムとの連携の道具（運営者の判断 2026-11-16）の、作業画面の側の受け手。人の「読む」と同じ関数（src/app/state/connect.ts）を通す。
+ * できるのは、読み込みの頼み（読んだ作業の実績を資料として入れる）と、書き込みの案（差分を連携のシートに出す）まで。送る道は無い（送るのは人だけ）。
+ * 返すのは数だけ（行の値を返さない）
+ */
+const CONNECT_READ_NOTE =
+  "Added the work results as one source file. Next: intake_survey (questions), intake_settle and intake_compose as usual; the user confirms and signs on screen. After a signed version exists, connect_plan shows the write diff. Reply in the user's language.";
+const CONNECT_PLAN_NOTE = "The match and the write diff are on the Integration sheet. Only the user can send: ask them to review the diff and press Send. Reply in the user's language.";
+const CONNECT_PLAN_NO_KEY = " This is a production target without a valid license key for its host, so the user cannot send yet (the reason is shown next to the button).";
+const brief = (t: { id: string; label: string; env: "test" | "production" } | null) => (t ? { id: t.id, label: t.label, env: t.env } : null);
+
+export const TAB_CONNECT_TOOL_RECEIVERS: Partial<Record<ToolName, (ws: IntakeWorkspace, args: Record<string, unknown>, client: BridgeClient) => Promise<TabToolResult>>> = {
+  connect_read: async (ws, args, client) => {
+    if (!getConnect().loaded) await loadConnect(client);
+    goTo("hoshitori.connect");
+    const r = await readNow(client, ws, typeof args.target === "string" ? args.target : undefined);
+    const targets = getConnect().targets.map(brief).filter((x) => x !== null);
+    if (r.ok) ws.note("ai", T.connectRead(r.file));
+    const data = r.ok
+      ? { target: brief(r.target), targets, file: r.file, counts: r.counts, refused: null, note: CONNECT_READ_NOTE }
+      : { target: brief(r.target), targets, file: r.file ?? null, counts: null, refused: r.why, note: r.why === "no_target" ? "Pass a target id from targets." : "Nothing was added. Tell the user; the reason is shown on the Integration sheet." };
+    return toolDef("connect_read").output.safeParse(data).success ? { ok: true, data } : { ok: false, code: "connect_failed" };
+  },
+  connect_plan: async (ws, args, client) => {
+    if (!getConnect().loaded) await loadConnect(client);
+    const planId = getWorkingPlan()?.plan.planId ?? null;
+    goTo("hoshitori.connect");
+    const target = typeof args.target === "string" ? args.target : undefined;
+    const r = planId ? await planNow(client, planId, target) : ({ ok: false, why: "no_signed_version", target: null } as const);
+    const data = r.ok
+      ? {
+          target: brief(r.target),
+          version: r.plan.version,
+          counts: r.plan.counts,
+          write: { needed: r.plan.write.needed, ok: !r.plan.write.needed || r.plan.write.ok },
+          refused: null,
+          note: CONNECT_PLAN_NOTE + (r.plan.write.needed && !r.plan.write.ok ? CONNECT_PLAN_NO_KEY : ""),
+        }
+      : { target: brief(r.target), version: null, counts: null, write: null, refused: r.why, note: r.why === "no_signed_version" ? "There is no confirmed and signed version yet. Ask the user to confirm and sign first." : "Could not read the target. Tell the user; the reason is shown on the Integration sheet." };
+    if (r.ok) ws.note("ai", T.connectPlan(r.plan.counts.add, r.plan.counts.change));
+    return toolDef("connect_plan").output.safeParse(data).success ? { ok: true, data } : { ok: false, code: "connect_failed" };
+  },
+};
+
 /** AI のツールを 1 つ動かし、取り込みの答えを待って答える（橋渡しからの呼び出しはこれ。時間の上限は橋渡しが持つ） */
 export async function runTabToolAsync(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): Promise<TabToolResult> {
   return runTabToolWith(ws, name, rawArgs, ctx);
@@ -715,6 +760,8 @@ export function connectTabTools(client: BridgeClient, ws: IntakeWorkspace): void
   watchPlanRules();
   client.setToolHandlers({
     call: async (name, args, ctx) => {
+      const connect = TAB_CONNECT_TOOL_RECEIVERS[name];
+      if (connect) return connect(ws, args, client);
       const later = TAB_ASYNC_TOOL_RECEIVERS[name];
       return later ? later(ws, args, (id) => client.fetchIntakeFile(id)) : runTabToolAsync(ws, name, args, ctx);
     },

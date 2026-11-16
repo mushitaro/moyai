@@ -7,12 +7,17 @@ import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { ToolListChangedNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, describe, expect, it } from "vitest";
 import { writeKeyFile } from "../../src/bridge/state";
 import { createRelayServer, type RelayOptions } from "../../src/cli/relay";
 import { ERRORS, type ErrorCode } from "../../src/shared/errors";
 import { MCP_INSTRUCTIONS } from "../../src/shared/instructions";
-import { EXPOSED_TOOL_NAMES, TOOL_NAMES } from "../../src/shared/tools";
+import { CONNECT_TOOL_NAMES, EXPOSED_TOOL_NAMES, TOOL_NAMES } from "../../src/shared/tools";
+import { writeSettings } from "../../src/bridge/places";
+
+/** 設定で連携がオフ（既定）のとき中継が出すツール */
+const SHOWN_OFF = EXPOSED_TOOL_NAMES.filter((n) => !(CONNECT_TOOL_NAMES as readonly string[]).includes(n));
 import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
 import { startTestBridge, type TestBridge } from "../helpers/bridge";
 
@@ -47,12 +52,13 @@ async function connect(opts: RelayOptions): Promise<Client> {
 }
 
 describe("中継の MCP", () => {
-  it("今見せるツール（18 のうち、F3 の画面を待つ skill_eval を除く 17）を、説明と入力・出力の型つきで出す", async () => {
+  it("今見せるツール（20 のうち、F3 の画面を待つ skill_eval と、設定で連携がオフのときの連携の 2 つを除く 17）を、説明と入力・出力の型つきで出す", async () => {
     const c = await connect({ stateDir: tempState() });
     const { tools } = await c.listTools();
-    expect(TOOL_NAMES).toHaveLength(18);
-    expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
+    expect(TOOL_NAMES).toHaveLength(20);
+    expect(tools.map((t) => t.name).sort()).toEqual(SHOWN_OFF.sort());
     expect(tools.map((t) => t.name)).not.toContain("skill_eval");
+    for (const n of CONNECT_TOOL_NAMES) expect(tools.map((t) => t.name)).not.toContain(n);
     expect(tools).toHaveLength(17);
     for (const t of tools) {
       expect(t.description, t.name).toMatch(/only by a person/);
@@ -61,6 +67,25 @@ describe("中継の MCP", () => {
     }
     expect(c.getInstructions()).toBe(MCP_INSTRUCTIONS);
     expect(MCP_INSTRUCTIONS.length).toBeLessThanOrEqual(4096);
+  });
+
+  it("設定で連携がオンなら連携の 2 つも出し、オフに戻すと、次の呼び出しのあとに一覧から外す（一覧の変わりを知らせる）", async () => {
+    const stateDir = tempState();
+    writeSettings(stateDir, { v: 1, root: null, ledger: null, name: null, connect: true });
+    const c = await connect({ stateDir });
+    const on = (await c.listTools()).tools.map((t) => t.name);
+    for (const n of CONNECT_TOOL_NAMES) expect(on).toContain(n);
+    expect(on).toHaveLength(19);
+    let changed = 0;
+    c.setNotificationHandler(ToolListChangedNotificationSchema, () => void changed++);
+    writeSettings(stateDir, { v: 1, root: null, ledger: null, name: null });
+    await c.callTool({ name: "check_results", arguments: {} });
+    await expect.poll(() => changed).toBeGreaterThan(0);
+    const off = (await c.listTools()).tools.map((t) => t.name);
+    for (const n of CONNECT_TOOL_NAMES) expect(off).not.toContain(n);
+    // 一覧から外した道具は、呼んでも中継が断る（橋渡しに送らない）
+    const r = await c.callTool({ name: "connect_read", arguments: {} }).catch((e: Error) => ({ isError: true, content: [{ type: "text", text: String(e.message) }] }));
+    expect(r.isError).toBe(true);
   });
 
   it("橋渡しが起きていなければ「先に moyai start を」と返す", async () => {
@@ -106,7 +131,7 @@ describe("中継の MCP", () => {
       intake_add_files: { source: "demo" },
       screen_set: { theme: "light" },
     };
-    for (const name of EXPOSED_TOOL_NAMES) {
+    for (const name of SHOWN_OFF) {
       const r = await c.callTool({ name, arguments: args[name] ?? {} });
       // 保管先を読むだけのツールは、橋渡しが答える（作業画面は要らない）
       if (BRIDGE_TOOL_RECEIVERS[name] === "bridge") {
@@ -229,7 +254,7 @@ describe.skipIf(!existsSync(dist) && !needDist)("dist/cli.js mcp（標準入出�
     await client.connect(transport);
     cleanups.push(() => client.close());
     const { tools } = await client.listTools();
-    expect(tools.map((t) => t.name).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
+    expect(tools.map((t) => t.name).sort()).toEqual(SHOWN_OFF.sort());
     const r = await client.callTool({ name: "share_preview", arguments: {} });
     expectError(r, "bridge_not_running");
     // 起動中の印も残さない（起こしていない）

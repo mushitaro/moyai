@@ -56,6 +56,12 @@ export const ERRORS = {
     text: "The arguments do not fit the schema. Do not patch them; reread the schema and call again.",
   },
   unknown_tool: { from: "bridge", to: "ai", http: 404, text: "There is no such tool." },
+  connect_off: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "Business-system integration (Integration) is turned off in MOYAI's settings, so this tool does nothing. Only the user can turn it on (Settings > Integration). Tell the user in their own language; do not try other ways.",
+  },
   relay_key_mismatch: {
     from: "bridge",
     to: "ai",
@@ -101,6 +107,12 @@ export const ERRORS = {
     text: "The image the work screen tried to pass does not match the image a person allowed on the screen, so it is not passed. Ask the user to press the button that passes the photo to the AI client again, in the photo area of the intake screen.",
   },
   // 作業画面 → AI（橋渡しと中継を通る。作業画面は誤りの名前だけを返し、文はここから作る）
+  connect_failed: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "The work screen could not read from or plan against the connected business system (the reason is shown on the Integration sheet). Nothing was written. Tell the user in their own language and ask them to look at the Integration sheet.",
+  },
   reading_when_ignored: {
     from: "tab",
     to: "ai",

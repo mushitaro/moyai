@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, test } from "vitest";
 import { IntakeWorkspace } from "../../../src/app/intake/workspace";
-import { connectTabTools, runTabTool, TAB_TOOL_RECEIVERS } from "../../../src/app/intake/tab-tools";
+import { connectTabTools, runTabTool, TAB_CONNECT_TOOL_RECEIVERS, TAB_TOOL_RECEIVERS } from "../../../src/app/intake/tab-tools";
 import { BridgeClient } from "../../../src/app/bridge-client";
 import { encodeEvent } from "../../../src/shared/events";
 import { clearWorkingPlan, getWorkingPlan, setWorkingPlan } from "../../../src/app/state/plan-store";
@@ -39,7 +39,9 @@ function ok(r: ReturnType<typeof runTabTool>): any {
 }
 
 test("受け手が tab のツール（と、タブの中身を橋渡しが書くツール）には、どれもタブの側の受け手がある", () => {
-  for (const n of TOOL_NAMES) expect(Boolean(TAB_TOOL_RECEIVERS[n]), n).toBe(BRIDGE_TOOL_RECEIVERS[n] === "tab" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge");
+  // 連携の道具は、作業画面の道を呼ぶので橋渡しとの接続を持つ受け手（TAB_CONNECT_TOOL_RECEIVERS）
+  for (const n of TOOL_NAMES) expect(Boolean(TAB_TOOL_RECEIVERS[n] ?? TAB_CONNECT_TOOL_RECEIVERS[n]), n).toBe(BRIDGE_TOOL_RECEIVERS[n] === "tab" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge");
+  for (const n of Object.keys(TAB_CONNECT_TOOL_RECEIVERS)) expect(TAB_TOOL_RECEIVERS[n as keyof typeof TAB_TOOL_RECEIVERS], n).toBeUndefined();
 });
 
 describe("工場の資料で、要約 → 決定 → 計画 → 星取表の行", () => {

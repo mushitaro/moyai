@@ -95,6 +95,9 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   screen_set: "tab",
   // 入っている MOYAI の更新（#65）：橋渡しが版のフォルダを読み、別のフォルダで次の版を用意する。取ってくる先は固定
   moyai_update: "bridge",
+  // 業務システムとの連携（運営者の判断 2026-11-16）：作業画面が、作業画面の道（読む・書き込みの案）を通して答える。送る道具は無い
+  connect_read: "tab",
+  connect_plan: "tab",
 };
 
 /** image は photo_transcribe の receive だけ（中継が MCP の画像の中身として添える） */

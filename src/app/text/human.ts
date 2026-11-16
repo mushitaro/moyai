@@ -14,6 +14,20 @@ export const HUMAN_TEXT = defineMessages(EN_HUMAN_TEXT, {
   /** ブリッジが { ok: false, reason } で断ったときの言葉 */
   refused: {
     payloadInvalid: "送った中身の形が違うので、ブリッジが断りました。",
+    // 業務システムとの連携（運営者の判断 2026-11-16。Wire Frame の ConnectSheet）
+    connectOff: "連携がオフです。設定で連携をオンにしてください。",
+    connectUnavailable: "連携のつなぎ先がありません。",
+    connectTargetUnknown: "そのつなぎ先がありません。設定のつなぎ先を確かめてください。",
+    connectKindUnknown: "このつなぎ先の種類の読み書きは、まだありません（未実装）。",
+    connectReadFailed: "つなぎ先から読めませんでした。",
+    connectNoSigned: "確定・署名した版がありません。先に確定のシートで署名してください。",
+    connectStale: "差分を見たあとに、つなぎ先か版が変わりました。差分を読み直してください。",
+    connectNothing: "書き込む差分がありません。",
+    connectWriteFailed: "つなぎ先に書けませんでした。",
+    connectCanaryFailed: "1 件目を送って読み直したら、届いていませんでした。残りは送っていません。",
+    "connectLicense.noKey": "本番への書き込みには、この host の鍵が要る",
+    "connectLicense.expired": "この host の鍵の期限が切れている",
+    "connectLicense.otherHost": "鍵が、この host のものではない",
     noStateDir: "状態フォルダが無いので、この操作はできません。",
     noRoot: "保存先が未確定です。設定で保存先を選んでください。",
     reasonEmpty: "理由が空です。理由を書いてください。",
@@ -512,7 +526,41 @@ export const HUMAN_TEXT = defineMessages(EN_HUMAN_TEXT, {
     close: "閉じる",
   },
 
+  /** 業務システムとの連携のシート（Wire Frame の ConnectSheet。主ボタンは 1 つ：読む → 送る） */
+  connect: {
+    target: "つなぎ先",
+    targetOption: (label: string, host: string, env: string) => `${label}・${host}（${env}）`,
+    envs: { test: "テスト", production: "本番" } as Record<string, string>,
+    read: "読む",
+    send: "送る",
+    readDone: (assets: number, plans: number, results: number, file: string) => `読込　資産 ${assets}・保全計画 ${plans}・作業の実績 ${results}　→ 資料「${file}」`,
+    sameName: (file: string) => `同じ名前の資料「${file}」がもう入っています。`,
+    head: "機器 › 作業",
+    version: (n: number) => `第 ${n} 版`,
+    targetCol: "つなぎ先",
+    diffLine: (add: number, change: number) => `書き込みの差分　足す ${add}・変える ${change}`,
+    noSigned: "確定・署名した版ができたら、ここに突合と書き込みの差分が出ます。",
+    none: "—",
+    onlyMoyai: (n: number) => `! 第 ${n} 版だけ`,
+    onlyTarget: "! つなぎ先だけ",
+    ok: "✓ 一致",
+    diff: "× 差異",
+    sendNote: "つなぎ先の保全計画が書き換わる。",
+    sent: (n: number) => `✓ 送信　${n} 件（1 件目を読み直して確かめてから残りを送った）`,
+    sentReason: "理由：送信済み",
+    nothingReason: "理由：書き込む差分なし",
+    reasonPrefix: "理由：",
+    noTargets: "つなぎ先なし",
+    loading: "つなぎ先を読んでいます",
+    loadingDiff: "理由：差分を読んでいます",
+  },
+
   settings: {
+    /** 業務システムとの連携（押すとすぐ保存。人だけの経路。Wire Frame の ConnectSettings。説明の文は置かない） */
+    connectTitle: "連携",
+    connectOn: "オン",
+    connectOff: "オフ",
+    connectWrite: { free: "読み書き", licensed: "読み書き", noKey: "読むだけ（書き込みの鍵なし）" } as Record<string, string>,
     /** 設定の 1 列の形（docs/screens.md 3.7、Wire、11-06）。行の見出しは、説明なしで「何が・どこに・何のために」が分かる言葉（#83、Wire の「設定 ― 見出しの言葉」）。内部の言葉（clone・鍵 ID・ring）を出さない */
     change: "変更",
     defaultMark: "既定",

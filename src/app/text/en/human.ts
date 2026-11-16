@@ -11,6 +11,20 @@ export const EN_HUMAN_TEXT = {
   /** Words for when the Bridge refuses with { ok: false, reason } */
   refused: {
     payloadInvalid: "The Bridge refused: the data sent has the wrong format.",
+    // Business-system integration (operator decision 2026-11-16. Wire Frame ConnectSheet)
+    connectOff: "Integration is off. Turn it on in Settings.",
+    connectUnavailable: "No integration targets.",
+    connectTargetUnknown: "That target does not exist. Check the targets in Settings.",
+    connectKindUnknown: "Reading and writing for this kind of target is not available yet (not implemented).",
+    connectReadFailed: "Could not read from the target.",
+    connectNoSigned: "No confirmed and signed version. Sign on the Confirm sheet first.",
+    connectStale: "The target or the version changed after you viewed the diff. Read the diff again.",
+    connectNothing: "Nothing to write.",
+    connectWriteFailed: "Could not write to the target.",
+    connectCanaryFailed: "After sending the first item and reading it back, it was not there. The rest was not sent.",
+    "connectLicense.noKey": "Writing to production needs a key for this host",
+    "connectLicense.expired": "The key for this host has expired",
+    "connectLicense.otherHost": "The key is not for this host",
     noStateDir: "No state folder. This action is not available.",
     noRoot: "Storage folder not set. Choose a storage folder in Settings.",
     reasonEmpty: "Reason is empty. Enter a reason.",
@@ -509,8 +523,42 @@ export const EN_HUMAN_TEXT = {
     close: "Close",
   },
 
+  /** Integration sheet (Wire Frame ConnectSheet. One main button: Read -> Send) */
+  connect: {
+    target: "Target",
+    targetOption: (label: string, host: string, env: string) => `${label} · ${host} (${env})`,
+    envs: { test: "Test", production: "Production" } as Record<string, string>,
+    read: "Read",
+    send: "Send",
+    readDone: (assets: number, plans: number, results: number, file: string) => `Read: assets ${fmt(assets)} · maintenance plans ${fmt(plans)} · work results ${fmt(results)} → file "${file}"`,
+    sameName: (file: string) => `A file named "${file}" is already in.`,
+    head: "Equipment › Work",
+    version: (n: number) => `v${n}`,
+    targetCol: "Target",
+    diffLine: (add: number, change: number) => `Write diff: add ${fmt(add)} · change ${fmt(change)}`,
+    noSigned: "When a confirmed and signed version exists, the match and the write diff appear here.",
+    none: "—",
+    onlyMoyai: (n: number) => `! v${n} only`,
+    onlyTarget: "! Target only",
+    ok: "✓ Match",
+    diff: "× Differs",
+    sendNote: "The target's maintenance plans will be overwritten.",
+    sent: (n: number) => `✓ Sent ${fmt(n)} (read back the first item before sending the rest)`,
+    sentReason: "Reason: Sent",
+    nothingReason: "Reason: Nothing to write",
+    reasonPrefix: "Reason: ",
+    noTargets: "No targets",
+    loading: "Reading targets",
+    loadingDiff: "Reason: Reading the diff",
+  },
+
   settings: {
     /** Row headings say what, where and what for without explanation. Internal words (clone, key ID, ring) are not shown */
+    /** Business-system integration (saves at once; human-only route. Wire Frame ConnectSettings) */
+    connectTitle: "Integration",
+    connectOn: "On",
+    connectOff: "Off",
+    connectWrite: { free: "Read and write", licensed: "Read and write", noKey: "Read only (no write key)" } as Record<string, string>,
     change: "Change",
     defaultMark: "Default",
     syncedMark: "Synced folder (OneDrive)",
