@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "night-soil",
+  "suite": "night-soil",
+  "suiteSha": "a6b5224742b58837d53797cb801d3757c78da5ed904f9bd68e153e56a2da0de9",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "04c7a984eb1000f2ab06e3f0c422385ed338dcf67013813eb082861b26cbe7e4"
+    },
+    {
+      "path": "packs/night-soil/SKILL.md",
+      "sha256": "a487ba26d38ca6614d7e55a66024168a3e0e35ea2bb132b1b890d53f25a7028e"
+    }
+  ],
+  "skillSha": "73f0ee23f7c69f76c90558eef8ca041b1d6f0463e9b6c3c6e5cf51fed202b5f4",
+  "label": "PR #129 の文（main の段 1b を取り込んだ 1 段目＋連携の節）。前の組は 94/95・95/95 で割れた（R02-09 の数え違い）ので、新しい 2 つの役で解き直した",
+  "at": "2026-11-16T11:26:13.183Z",
+  "cases": 95,
+  "answered": 95,
+  "pass": 95,
+  "runs": [
+    {
+      "solver": "解く役 3（子のエージェント・決まった頼みの文）",
+      "pass": 95,
+      "failing": []
+    },
+    {
+      "solver": "解く役 4（子のエージェント・決まった頼みの文）",
+      "pass": 95,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 5,
+      "total": 5
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 95,
+      "total": 95
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 90,
+      "total": 90
+    }
+  },
+  "failing": []
+}
