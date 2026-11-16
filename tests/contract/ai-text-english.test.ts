@@ -13,7 +13,7 @@ import { RELAY_TEXT } from "../../src/cli/relay";
 import { ERRORS } from "../../src/shared/errors";
 
 /** Skill files the AI reads (tier 1 and the pack Skills). Add a path here to check it. */
-export const SKILL_FILES = ["skills/moyai/SKILL.md"];
+export const SKILL_FILES = ["skills/moyai/SKILL.md", "packs/waste-incineration/SKILL.md", "packs/night-soil/SKILL.md"];
 
 const ALLOW_PATH = "tests/fixtures/ai-text-ja-allow.json";
 /** A run: a maximal run of Japanese characters (kanji, kana, CJK punctuation, full-width forms) */
