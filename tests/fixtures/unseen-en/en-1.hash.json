@@ -1,0 +1,8 @@
+{
+ "schema": "moyai.heldout.hash/0",
+ "set": "en-1",
+ "bundle": "3a47420ed641e4ce97dbc898ad25da5adb3d39db3281a18d3a81e9d76665084d",
+ "files": 10,
+ "reader_commit": "a44b0d6",
+ "note": "English unseen format (global support stage 1b). The hash is committed before the reader reads the set; the reader is the commit above."
+}
