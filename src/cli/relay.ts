@@ -65,7 +65,7 @@ export interface RelayOptions {
 /** 替えた直後の答えに添える字（Claude が読む） */
 export const RELAY_TEXT = {
   replaced: (url: string) =>
-    `前の版の MOYAI の橋渡しを止め、この版の橋渡しを起こしました。開いている作業画面のタブは前の版のままなので、作業画面を読み込み直してください：${url} を開き直す（シェルがあれば自分で開き、無ければ利用者にこのリンクを開いてもらう）。`,
+    `Stopped the previous version's MOYAI bridge and started this version's bridge. The open work screen tab is still the previous version, so reload the work screen: open ${url} again (open it yourself if you have a shell; otherwise ask the user to open this link).`,
 };
 
 /** ビルドの commit として比べられる形か（"unknown" や試験の名前は分からないものとする） */

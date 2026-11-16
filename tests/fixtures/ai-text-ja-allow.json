@@ -1,0 +1,12 @@
+{
+  "schema": "moyai.ai-text-ja-allow/0",
+  "note": "Japanese that may stay in the text the AI reads (tests/contract/ai-text-english.test.ts). Each entry is an exact run of Japanese characters with the reason it must stay Japanese. An entry no text uses fails the test. Global support stage 1b, 2026-11-16.",
+  "entries": [
+    { "text": "原典照合済", "reason": "A value of the verification level enum (VERIFICATION_LEVELS) in check_results output. Returned values stay as they are; changing it would change the return shape." },
+    { "text": "要約のみ", "reason": "A value of the verification level enum (VERIFICATION_LEVELS) in check_results output. Returned values stay as they are." },
+    { "text": "未確認", "reason": "A value of the verification level enum (VERIFICATION_LEVELS) in check_results output. Returned values stay as they are." },
+    { "text": "プレビュー", "reason": "A value of the verification level enum (VERIFICATION_LEVELS) in check_results output. Returned values stay as they are." },
+    { "text": "【架空】", "reason": "The literal mark that fictional facility names must keep; the work screen checks for these exact characters, so the AI must see them as written." },
+    { "text": "加工", "reason": "The literal file name suffix _加工 the work screen and the user's folder use for files reshaped in the conversation; the AI must write it exactly." }
+  ]
+}

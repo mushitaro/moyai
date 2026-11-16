@@ -148,7 +148,7 @@ describe("1. 行の役割のルール：prefix は行のいちばん左のセル
 
   test("ツールの説明に rowRole の当たり方（丸ごとはどのセルでも、prefix は行の頭のセル）がある", () => {
     const d = TOOLS.reading_rules_propose.description;
-    expect(d).toContain("prefix なしなら行のどのセルでも字が丸ごと同じなら当たり、prefix: true なら行のいちばん左の字のあるセルの頭だけと比べる");
+    expect(d).toContain("without prefix matches when any cell of the row equals the text exactly; with prefix: true only the start of the leftmost cell with text is compared");
   });
 });
 
@@ -209,7 +209,7 @@ describe("2. 資料を丸ごと外す決まった答え", () => {
   });
 
   test("ツールの説明に、資料を丸ごと外す答えは when.file で指すことがある", () => {
-    expect(TOOLS.reading_rules_propose.description).toContain("資料を丸ごと外す決まった答え（answer が reference・reject）だけは when.file で資料を指したときだけ効き");
+    expect(TOOLS.reading_rules_propose.description).toContain("Only fixed answers that drop a whole file (answer reference or reject) work when when.file points at the file");
   });
 });
 
