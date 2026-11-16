@@ -9,6 +9,7 @@ import { rowVersionLabel, type ListedPlan, type ListedVersion } from "../../src/
 import { signResultLine } from "../../src/app/components/SignDialog";
 import { HUMAN_TEXT, TEXT } from "../../src/app/text";
 import { signedFiscalYear, tokyoYmd, versionName } from "../../src/app/version-name";
+import { withLang } from "../../src/app/text/i18n";
 
 /** 日本時間の時刻（ISO） */
 const jst = (s: string) => `${s}+09:00`;
@@ -63,8 +64,8 @@ describe("署名した日の年度（施設の年度の始まりで数える、�
     expect(signedFiscalYear(jst("2019-04-15T10:00:00"), 4)).toEqual({ era: "平成", year: 31 });
     expect(signedFiscalYear(jst("2019-06-01T10:00:00"), 4)).toEqual({ era: "令和", year: 1 });
     expect(signedFiscalYear(jst("1989-02-01T10:00:00"), 4)).toEqual({ era: "昭和", year: 63 });
-    expect(HUMAN_TEXT.versionName.fiscalYear("令和", 1)).toBe("令和元年度");
-    expect(HUMAN_TEXT.versionName.fiscalYear("令和", 8)).toBe("令和 8 年度");
+    expect(HUMAN_TEXT.versionName.fiscalYear("令和", 1, 2019)).toBe("令和元年度");
+    expect(HUMAN_TEXT.versionName.fiscalYear("令和", 8, 2026)).toBe("令和 8 年度");
   });
 
   it("読めない時刻・1〜12 でない始まりの月は null（推測で埋めない）", () => {
@@ -80,6 +81,10 @@ describe("版の呼び名「令和 n 年度版（第 m 版）」", () => {
     expect(versionName(1, jst("2026-11-07T13:00:00"), 4)).toBe("令和 8 年度版（第 1 版）");
     expect(versionName(1, null, 4)).toBe("第 1 版");
     expect(versionName(1, jst("2026-11-07T13:00:00"), undefined)).toBe("第 1 版");
+    // 英語の画面は和暦を出さず、西暦の年度（同じ日・同じ数え方）
+    expect(withLang("en", () => versionName(1, jst("2026-11-07T13:00:00"), 4))).toBe("FY2026 edition (v1)");
+    expect(withLang("en", () => versionName(2, jst("2026-03-31T12:00:00"), 4))).toBe("FY2025 edition (v2)");
+    expect(withLang("en", () => versionName(1, null, 4))).toBe("v1");
     expect(versionName(1, "きのう", 4)).toBe("第 1 版");
   });
 

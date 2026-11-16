@@ -46,6 +46,7 @@ import { FacilityDialog } from "../components/FacilityDialog";
 import { setFacilityDialog } from "../state/facility-dialog";
 import { Intake, IntakeFacilityDialog, Questions, StopNoticeDetail, StopNotices, composeReasons, stopNotices, useSheets, useWorkspace, type StopKind } from "./Intake";
 import { RejectedDetail, SheetPicker, SourcePicker, defaultSource, sourceRows, type SheetRow, type SourceOrder, type SourceRow } from "../components/SourcePicker";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = TEXT.merge;
 /** 横の板の幅：320px に固定し、本体は残りの幅（docs/screens.md 3.2「資料の選び」の幅、Wire、11-07） */
@@ -711,7 +712,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           )}
           {compare && (
             <span data-testid="merge-compare" data-version={compare.version}>
-              <span className="moyai-merge-head-label">{T.compareLabel}　</span>
+              <span className="moyai-merge-head-label">{T.compareLabel}{INLINE_TEXT.gap}</span>
               {T.version(compare.version)}
             </span>
           )}
@@ -984,9 +985,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
         {!plan ? (
           <Group gap="sm" wrap="nowrap" style={{ flex: "none" }}>
             {composeBlocks.length > 0 && ws.compose.state !== "running" && (
-              <Text size="xs" c="dimmed" maw={560} lineClamp={2} title={composeBlocks.join("・")} data-testid="compose-disabled-reason">
+              <Text size="xs" c="dimmed" maw={560} lineClamp={2} title={composeBlocks.join(INLINE_TEXT.list)} data-testid="compose-disabled-reason">
                 {TEXT.intake.reasonsPrefix}
-                {composeBlocks.join("・")}
+                {composeBlocks.join(INLINE_TEXT.list)}
               </Text>
             )}
             <Button
@@ -1005,7 +1006,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           {!viewOnly && blocks.length > 0 && (
             <Text size="xs" c="dimmed" data-testid="confirm-disabled-reason">
               {T.blockPrefix}
-              {blocks.join("・")}
+              {blocks.join(INLINE_TEXT.list)}
             </Text>
           )}
           {askedByMe && req && !viewOnly && (

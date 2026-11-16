@@ -19,6 +19,8 @@ import { STAGE_HASH, sheetHash } from "../stages";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { versionName } from "../version-name";
 import { readHuman } from "./ConfirmDialog";
+import { INLINE_TEXT } from "../text/inline";
+import { FICTION_MARK } from "../../plan/facility-name";
 
 const T = TEXT.top;
 /** 月の列の数：広い画面で 20 か月、狭い画面では幅に合わせて減らす（「＋ 次の版」がいつも見えるように。最小幅 1024px で 11 か月） */
@@ -283,7 +285,7 @@ export function MoyaiTop({ client }: { client: BridgeClient }) {
                     const here = p.versions.filter((v) => monthOf(v.at) === m);
                     const other = here.find((v) => v.by && me && v.by !== me);
                     return (
-                      <span key={m} className="moyai-top-cell" data-other={other ? "true" : undefined} data-testid={other ? "moyai-other" : undefined} title={here.map((v) => T.markTitle(v.version, v.by)).join("・")}>
+                      <span key={m} className="moyai-top-cell" data-other={other ? "true" : undefined} data-testid={other ? "moyai-other" : undefined} title={here.map((v) => T.markTitle(v.version, v.by)).join(INLINE_TEXT.list)}>
                         {here.map((v) => {
                           const signed = v.roles.includes("confirm") || v.roles.includes("approve");
                           const kind = v.problem ? "problem" : (open && v.version === latest?.version) || !signed ? "open" : "signed";
@@ -376,7 +378,8 @@ function DeriveDialog({ client, from, onClose }: { client: BridgeClient; from: {
     setBusy(false);
     if (!r.ok) return setError(r.message);
     // 架空の施設から作った施設も架空（名前に【架空】を付ける）
-    const mark = `【${TEXT.fictionMark}】`;
+    // 架空の印はデータの字（名前に入り署名される。画面の言語によらない。plan/facility-name.ts）
+    const mark = FICTION_MARK;
     const display = fictional && !name.includes(mark) ? `${mark}${name.trim()}` : name.trim();
     // 計画の ID は英数字とハイフンだけ（保管先のフォルダの名前になる。施設の名前は入れない）
     const id = `plan-${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;

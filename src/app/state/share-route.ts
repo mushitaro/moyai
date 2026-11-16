@@ -2,6 +2,7 @@
 // - MOYAI 経由は、受け口の URL が決まっているときだけ選べる。
 // - 既定は、GitHub につないでいれば GitHub［名］、いなければ MOYAI 経由。人が選んだ経路は施設（計画）ごとに覚え、つないでいるあいだはそれを使う。
 // - MOYAI 経由では、GitHub に未接続（noKey）を押せない理由にしない。
+import { INLINE_TEXT } from "../text/inline";
 
 export type ShareRoute = "github" | "intake";
 
@@ -38,5 +39,5 @@ export function lastSegment(path: string): string {
 export function ringLabels(rings: readonly { ringId: string; root: string }[]): Map<string, string> {
   const count = new Map<string, number>();
   for (const r of rings) count.set(lastSegment(r.root), (count.get(lastSegment(r.root)) ?? 0) + 1);
-  return new Map(rings.map((r) => [r.ringId, (count.get(lastSegment(r.root)) ?? 0) > 1 ? `${lastSegment(r.root)}（${r.ringId.slice(0, 4)}）` : lastSegment(r.root)]));
+  return new Map(rings.map((r) => [r.ringId, (count.get(lastSegment(r.root)) ?? 0) > 1 ? INLINE_TEXT.paren(lastSegment(r.root), r.ringId.slice(0, 4)) : lastSegment(r.root)]));
 }

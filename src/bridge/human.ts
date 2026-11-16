@@ -127,6 +127,12 @@ export interface HumanCall {
 }
 
 type Out = Record<string, unknown> & { ok: boolean };
+/** 設定で選んだ言語（書き出しの Excel の言語。無ければ渡さない＝日本語） */
+function langOf(sd: string | null): { lang?: "en" | "ja" } {
+  const l = sd ? readSettings(sd).lang : undefined;
+  return l ? { lang: l } : {};
+}
+
 const no = (reason: string, extra: Record<string, unknown> = {}): Out => ({ ok: false, reason, ...extra });
 
 const answersSchema = z.object({
@@ -213,6 +219,8 @@ const SCHEMAS = {
     autoUpdate: z.boolean().optional(),
     /** 業務システムとの連携のオンとオフ（送られたときだけ変える） */
     connect: z.boolean().optional(),
+    // 作業画面の言語（送られたときだけ変える。null は選びを消して PC の言語に従う）
+    lang: z.enum(["en", "ja"]).nullable().optional(),
   }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID) }),
   checkpoint_preview: z.object({ planId: planIdSchema, ringId: ringIdSchema.nullable(), answers: answersSchema }),
@@ -652,6 +660,8 @@ export class HumanService {
           ...(p.sources ? { sources: p.sources, decisions: p.decisions ?? [], crosswalk: p.crosswalk ?? [] } : {}),
           ...(p.intake ? { intake: p.intake } : {}),
           ...(p.rowOrder ? { rowOrder: p.rowOrder } : {}),
+          // 書き出しの Excel は、設定の言語で書く（無ければ日本語）
+          ...langOf(sd),
         });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         const at = now.toISOString();
@@ -681,7 +691,7 @@ export class HumanService {
         if (checkSeen(sd, root, p.planId, hr)) return no("historyVanished");
         // 戻すのも、次の版を作ること。確定と同じく、番の人だけ（台帳の新-1）
         if (!(await this.mayBuildOn(root, p.planId, hr, signer.signer.pair.pub))) return no("notYourTurn");
-        const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
+        const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id), ...langOf(sd) });
         if (!r.ok) return no(r.reason);
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
       }
@@ -710,6 +720,7 @@ export class HumanService {
           packs: this.packs(),
           name: s.name,
           autoUpdate: s.autoUpdate !== false,
+          lang: s.lang ?? null,
           people: trustList(sd),
           connect: { available: connect.available, enabled: connect.enabled, fake: connect.fake, targets: connect.targets },
         };
@@ -730,7 +741,9 @@ export class HumanService {
         const autoUpdate = p.autoUpdate === undefined ? prev.autoUpdate !== false : p.autoUpdate;
         // 連携も、送られたときだけ変える。入れたときだけ true を置く
         const connect = p.connect === undefined ? prev.connect === true : p.connect;
-        writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }), ...(connect ? { connect: true as const } : {}) });
+        // 言語も、送られたときだけ変える（null は選びを消す）
+        const lang = p.lang === undefined ? prev.lang : p.lang ?? undefined;
+        writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }), ...(lang ? { lang } : {}), ...(connect ? { connect: true as const } : {}) });
         return { ok: true, root, ledger, name };
       }
       case "comment_add": {

@@ -12,6 +12,8 @@ import { siteCli } from "../../../src/cli/ledger";
 import type { Plan } from "../../../src/shared/plan";
 import { SPEC, TABLE_TEXT, VOCAB_TEXT, asset, detail, plan, table, vocab, work } from "./fixtures";
 import { forge, makeLedger, makeSigner, sealLedger, sealRetired, writeRepo, type Sealed, type Signer } from "./ledger-fixtures";
+import { getLang, withLang } from "../../../src/app/text/i18n";
+import { SITE_TEXT } from "../../../src/app/text/site";
 
 const pack = { table, vocab, classNames: { "T.FEED.LIFT": "架空の昇降機", "T.RESIDUE": "架空の残さ", "T.FEED": "架空の供給" }, axes: [] as never[] };
 const L = makeLedger();
@@ -233,5 +235,18 @@ describe("CLI：ledger site", () => {
     const html = render(r);
     expect(html).not.toContain("みどり台");
     expect(html).toContain("自由記述");
+  });
+});
+
+describe("サイトの言語（2026-11-16）", () => {
+  it("lang: en は html の lang と見出しが英語。無ければ日本語（今までのページのまま）。画面の言語は変えない", () => {
+    const en = renderLedgerSite({ read, pack, workNames: { INSPECT: "点検", OVERHAUL: "分解整備" }, build: "MOYAI · build 試験", lang: "en" });
+    expect(en).toContain('<html lang="en">');
+    expect(en).toContain(withLang("en", () => SITE_TEXT.title));
+    expect(en).not.toContain(withLang("ja", () => SITE_TEXT.rulesHead));
+    const ja = render();
+    expect(ja).toContain('<html lang="ja">');
+    expect(ja).toContain(withLang("ja", () => SITE_TEXT.rulesHead));
+    expect(getLang()).toBe("ja");
   });
 });

@@ -85,7 +85,7 @@ const OS = process.platform === "win32" ? "windows" : process.platform === "linu
 const node = (argv, env = {}) => spawnSync(process.execPath, argv, { stdio: ["ignore", "inherit", "inherit"], env: { ...process.env, ...env } });
 const work = mkdtempSync(join(tmpdir(), "moyai-scenario-"));
 
-// ---- e2e（tests/e2e を Chrome で 1 回、tests/demo/walkthrough.spec.ts を demo の設定で画面を出さずに 1 回）----
+// ---- e2e（tests/e2e を Chrome で 1 回、tests/demo/walkthrough.spec.ts〔日本語〕と walkthrough-en.spec.ts〔英語〕を demo の設定で画面を出さずに 1 回）----
 
 function runE2e() {
   const pw = join("node_modules", "@playwright", "test", "cli.js");
@@ -99,7 +99,7 @@ function runE2e() {
     { name: "e2e", argv: [pw, "test", "--project=chrome", "--trace", "off", "--reporter=list,json"], env: {} },
     {
       name: "walkthrough",
-      argv: [pw, "test", "-c", "playwright.demo.config.ts", "tests/demo/walkthrough.spec.ts", "--trace", "off", "--reporter=list,json"],
+      argv: [pw, "test", "-c", "playwright.demo.config.ts", "tests/demo/walkthrough.spec.ts", "tests/demo/walkthrough-en.spec.ts", "--trace", "off", "--reporter=list,json"],
       env: { MOYAI_DEMO_HEADLESS: "1", MOYAI_DEMO_SLOWMO: "0" },
     },
   ];

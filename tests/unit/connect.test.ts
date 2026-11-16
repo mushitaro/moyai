@@ -244,6 +244,13 @@ describe("人だけの経路 connect_send と設定（橋渡しの HumanService�
     expect(readSettings(sd).connect).toBe(true);
     expect((await call(h, "settings_save", { root, connect: false })).ok).toBe(true);
     expect(readSettings(sd).connect).toBeUndefined();
+    // 言語（段 1a）と連携は、どちらを保存しても、もう片方を消さない
+    expect((await call(h, "settings_save", { root, connect: true })).ok).toBe(true);
+    expect((await call(h, "settings_save", { root, lang: "en" })).ok).toBe(true);
+    expect(readSettings(sd)).toMatchObject({ connect: true, lang: "en" });
+    expect((await call(h, "settings_save", { root, connect: false })).ok).toBe(true);
+    expect(readSettings(sd).lang).toBe("en");
+    expect(((await call(h, "settings_read", {})) as any).lang).toBe("en");
   });
 
   it("確定・署名した版が無ければ送らない。版があれば、その版から作り直して送る（本番は鍵が要る）", async () => {

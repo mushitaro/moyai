@@ -1,5 +1,6 @@
 // EXPORT の下の帯の押せない理由（docs/screens.md 3.5・§4 の 5）。押せないボタンには、いつも「理由：」の 1 行をボタンのすぐ左に出す。
 // 画面の決め方を純粋な関数にする（試験で縛るため）。順は、ブリッジ → 計画 → 版の読込 → 確定版 → 署名と鎖。
+import { INLINE_TEXT } from "../text/inline";
 
 export type ExportBlock =
   | { kind: "notConnected" }
@@ -31,7 +32,8 @@ export function exportBlockOf(i: ExportBlockInput): ExportBlock | null {
 
 /** 理由の字（頭に「理由：」を付ける。すでに付いていれば重ねない） */
 export function withReasonHead(text: string): string {
-  return text.startsWith("理由：") ? text : `理由：${text}`;
+  // 頭はどちらの言語のものでも二重にしない
+  return text.startsWith("理由：") || text.startsWith("Reason: ") ? text : `${INLINE_TEXT.reasonHead}${text}`;
 }
 
 // ─── 様式の行と、主ボタン 1 つ（docs/screens.md 3.5、運営者 2026-11-10「引き算」）───────────────

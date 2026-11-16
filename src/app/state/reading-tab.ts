@@ -5,6 +5,7 @@
 import type { LoadedReading, PlanCycleRule, ReadingRule, ReadingScope, ReadingSkill } from "../../import/reading";
 import { activeRules, isPlanRule, shortVersion } from "../../import/reading";
 import type { IntakeView } from "../intake/worker-protocol";
+import { INLINE_TEXT } from "../text/inline";
 
 /** 規則ごとの効いたセルと、見本のセルの字（取り込みの読み取りのすべて、または作業場の写しから作ったもの） */
 export interface ReadingHits {
@@ -72,9 +73,9 @@ const sameRule = (a: ReadingRule, b: ReadingRule) => JSON.stringify(a) === JSON.
 
 function appliesTo(r: ReadingRule): string | null {
   // 計画ルールは資料でなく計画に効く（元の資料の欄は「計画」）
-  if (isPlanRule(r)) return "計画";
-  const parts = [r.when?.file ? `資料「${r.when.file}」` : null, r.when?.headers?.length ? `見出しに「${r.when.headers.join("」「")}」` : null].filter((x): x is string => !!x);
-  return parts.length ? parts.join("・") : null;
+  if (isPlanRule(r)) return INLINE_TEXT.ruleTarget.plan;
+  const parts = [r.when?.file ? INLINE_TEXT.ruleTarget.file(r.when.file) : null, r.when?.headers?.length ? INLINE_TEXT.ruleTarget.headers(r.when.headers) : null].filter((x): x is string => !!x);
+  return parts.length ? parts.join(INLINE_TEXT.list) : null;
 }
 
 /** タブのデータ。readings：作業画面が当てている読み方。an：その読み方で読んだ結果。planInfo：計画ルールが作業中の計画に出した周期の案の印の数と、紐付けの確定を待つ作業の数 */

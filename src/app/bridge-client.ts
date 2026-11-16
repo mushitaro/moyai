@@ -1,5 +1,6 @@
 // タブの側の橋渡しとの往復。タブの秘密はここで作り、メモリだけに持つ（HTML にも URL にも入れない）。
 // React を持たない純粋な TS にして、受け手の一覧（BRIDGE_EVENT_HANDLERS）を契約の試験から読めるようにする。
+import { setLang } from "./text/i18n";
 import { ERRORS, errorBodySchema, type TabErrorCode } from "../shared/errors";
 import { decodeEvent, encodeEvent, type BridgeToTab, type EventData, type TabToBridge } from "../shared/events";
 import { HEADER_TAB_SECRET, ROUTES, type HumanAction } from "../shared/routes";
@@ -137,6 +138,8 @@ export class BridgeClient {
   onWelcome(d: EventData<"bridge.welcome">): void {
     this.retries = 0;
     this.droppedAt = null;
+    // 設定で選んだ言語があれば、それで描く（選んでいなければ PC の言語のまま）
+    if (d.lang) setLang(d.lang);
     this.setState({ kind: "open", tokenTtlMs: d.tokenTtlMs, ...(d.build ? { build: d.build } : {}) });
     this.send("tab.work", { work: this.work });
   }

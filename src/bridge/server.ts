@@ -150,6 +150,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     ...(opts.probeMs !== undefined ? { probeMs: opts.probeMs } : {}),
     tokenTtlMs,
     ...(opts.build ? { build: opts.build } : {}),
+    // 設定で選んだ作業画面の言語（握手のたびに読む。無ければ画面は PC の言語に従う）
+    ...(opts.stateDir ? { lang: () => readSettings(opts.stateDir as string).lang } : {}),
     now,
     log,
   });

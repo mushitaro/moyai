@@ -44,5 +44,8 @@ export function signedFiscalYear(iso: string, startMonth: number): { era: string
  */
 export function versionName(version: number, signedAt: string | null | undefined, startMonth: number | null | undefined): string {
   const fy = signedAt && typeof startMonth === "number" ? signedFiscalYear(signedAt, startMonth) : null;
-  return fy ? V.signed(V.fiscalYear(fy.era, fy.year), version) : V.plain(version);
+  if (!fy || !signedAt || typeof startMonth !== "number") return V.plain(version);
+  // 西暦の年度（英語の画面の呼び名。和暦の年度と同じ日・同じ数え方）
+  const ymd = tokyoYmd(signedAt);
+  return V.signed(V.fiscalYear(fy.era, fy.year, ymd ? fiscalYearOf(ymd, startMonth) : 0), version);
 }

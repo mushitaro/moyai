@@ -73,7 +73,7 @@ export function ConnectSheet({ client, ws, planId, signedVersion, connected }: {
             >
               {v.targets.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {`${t.label}・${t.host}（${T.envs[t.env]}）`}
+                  {T.targetOption(t.label, t.host, T.envs[t.env] ?? t.env)}
                 </option>
               ))}
             </select>

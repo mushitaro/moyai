@@ -36,6 +36,7 @@ import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
 import { useDisplayPrefs } from "../state/screen";
 import { HUMAN_TEXT, TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = TEXT.chart;
 const P = T.peers;
@@ -184,8 +185,8 @@ function DetailCard({ d, ix, planId }: { d: WorkDetailT; ix: Index; planId?: str
       </Text>
       <Text size="xs">
         {T.source.planOrActual[d.planOrActual]} · {T.fiscalYear(d.fiscalYear)}
-        {d.startDate ? ` · ${d.startDate}${d.endDate && d.endDate !== d.startDate ? `〜${d.endDate}` : ""}` : ""}
-        {work?.attribute ? ` · ${T.commonLevels[2]}：${ix.workLabels[work.attribute]}${work.attributeAccepted ? "" : T.source.proposal}` : ""}
+        {d.startDate ? ` · ${d.startDate}${d.endDate && d.endDate !== d.startDate ? `${INLINE_TEXT.range("", d.endDate)}` : ""}` : ""}
+        {work?.attribute ? ` · ${INLINE_TEXT.colon(T.commonLevels[2], `${ix.workLabels[work.attribute]}${work.attributeAccepted ? "" : T.source.proposal}`)}` : ""}
       </Text>
       {(d.manDays !== null || d.days !== null) && (
         <Text size="xs">

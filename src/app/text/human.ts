@@ -1,10 +1,13 @@
 // 人だけの画面の言葉：確定のダイアログ・履歴・設定・検問所（docs/plan.md §2.8・§2.9・§2.14）。
 // 内部の言葉（型の名前・理由のコード）は利用者に見せず、ここの言葉に置き換える。
+// 英語の表は ./en/human.ts（形は英語が元。日本語の表は同じ形を型で強いる）。bandText は HUMAN_TEXT.bands を読むので、今の言語の字になる。
 import { LEDGER_PLACE } from "../../share/ledger-place";
+import { defineMessages } from "./i18n";
+import { EN_HUMAN_TEXT } from "./en/human";
 
 const fmt = (n: number) => n.toLocaleString("ja-JP");
 
-export const HUMAN_TEXT = {
+export const HUMAN_TEXT = defineMessages(EN_HUMAN_TEXT, {
   notConnected: "理由：ブリッジ未接続",
   network: "ブリッジに届きませんでした。端末で moyai start が動いているかを確かめてください。",
   working: "ブリッジが処理しています",
@@ -225,7 +228,8 @@ export const HUMAN_TEXT = {
    * 出すのは署名の結果の 1 文とトップの版の履歴の行だけ。編集中の版（見出し・下の帯・題）は plain のまま
    */
   versionName: {
-    fiscalYear: (era: string, year: number) => (year === 1 ? `${era}元年度` : `${era} ${year} 年度`),
+    // 和暦で（fy は西暦の年度。英語で使う）
+    fiscalYear: (era: string, year: number, _fy: number) => (year === 1 ? `${era}元年度` : `${era} ${year} 年度`),
     signed: (fiscalYear: string, n: number) => `${fiscalYear}版（第 ${n} 版）`,
     plain: (n: number) => `第 ${n} 版`,
   },
@@ -525,6 +529,7 @@ export const HUMAN_TEXT = {
   /** 業務システムとの連携のシート（Wire Frame の ConnectSheet。主ボタンは 1 つ：読む → 送る） */
   connect: {
     target: "つなぎ先",
+    targetOption: (label: string, host: string, env: string) => `${label}・${host}（${env}）`,
     envs: { test: "テスト", production: "本番" } as Record<string, string>,
     read: "読む",
     send: "送る",
@@ -570,6 +575,7 @@ export const HUMAN_TEXT = {
     evalNone: "未実行",
     /** 表示（星取表の見せ方。施設ごとにブラウザに覚える。docs/screens.md 3.7、Wire、11-07。言葉は docs/words.md） */
     displayTitle: "星取表の見せ方",
+    langTitle: "言語",
     themeTitle: "画面の明るさ",
     // 最新の確かめ（#65 の 5。入っている MOYAI が mushitaro/moyai の main を問い合わせる。切ったら一切問い合わせない。説明の文は足さない）
     updateTitle: "新しい版を自動で入れる",
@@ -876,9 +882,9 @@ export const HUMAN_TEXT = {
     names: "名前",
     installed: "設置の年",
   } as Record<string, string>,
-};
+});
 
-/** 帯のコードを日本語にする（I6_7 → 間隔 6〜7 年 など）。知らない形はコードのまま。 */
+/** 帯のコードを今の言語の字にする（I6_7 → 間隔 6〜7 年 など）。知らない形はコードのまま。 */
 export function bandText(code: string): string {
   const B = HUMAN_TEXT.bands;
   if (B.observed[code]) return B.observed[code] as string;

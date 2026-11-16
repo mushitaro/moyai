@@ -7,6 +7,7 @@ import { nodePath, runChecks, type CheckRun, type NumberKey } from "../../review
 import { loadPackChecks, type ChecksLoadProblem } from "../../review/spec";
 import type { Plan } from "../../shared/plan";
 import { REVIEW_TEXT, exampleText, numberLabel, numberValue } from "../text/review";
+import { INLINE_TEXT } from "../text/inline";
 
 const checksJsons = import.meta.glob<unknown>("../../../packs/*/checks.json", { eager: true, import: "default" });
 const sourcesJsons = import.meta.glob<unknown>("../../../packs/*/sources.json", { eager: true, import: "default" });
@@ -78,7 +79,7 @@ export function checkResultsOf(plan: Plan, planVersion: number, referenceDate: s
     return {
       ...base,
       packChecks: r.kind === "noChecks" ? "none" : "invalid",
-      packChecksProblem: r.kind === "invalid" ? `${REVIEW_TEXT.loadProblem[r.reason]}（${r.detail}）` : null,
+      packChecksProblem: r.kind === "invalid" ? INLINE_TEXT.paren(REVIEW_TEXT.loadProblem[r.reason] ?? "", r.detail) : null,
       checksVersion: null,
       referenceFiscalYear: null,
       checks: [],
