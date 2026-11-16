@@ -91,7 +91,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
         arguments: { rules: [{ when: [{ field: "assetNode.name", op: "equals", values: ["計量機"] }], set: { field: "assetNode.commonItem", value: "WI.RECV.NOPE" }, reason: "パックに無い" }], basedOnVersion: version },
       });
       expect(bad.isError).toBe(true);
-      expect(JSON.stringify(bad.content)).toContain("パックの一覧にありません");
+      expect(JSON.stringify(bad.content)).toContain("not in this plan's Skill pack list");
       const notAttr: any = await c.callTool({
         name: "crosswalk_propose",
         arguments: { rules: [{ when: [{ field: "work.kind", op: "equals", values: ["x"] }], set: { field: "work.attribute", value: "REPAIR" }, reason: "4 つの外" }], basedOnVersion: version },

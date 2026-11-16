@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "final-disposal",
   "name": "最終処分場",
+  "en": {
+    "name": "Final disposal sites (landfills)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "A",
   "content": "empty",

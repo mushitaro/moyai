@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "waste-incineration",
   "name": "ごみ焼却施設",
+  "en": {
+    "name": "Waste incineration plants",
+    "description": "Common equipment items from the Ministry of the Environment guide for extending the life of waste incineration plants (Table II-4), with work attributes, checks and the national table, so records line up with similar plants in the star chart."
+  },
   "version": 1,
   "group": "A",
   "verification": {

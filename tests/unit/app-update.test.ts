@@ -228,7 +228,7 @@ describe("prepare：断る", () => {
     expect(input.safeParse({ action: "pull" }).success).toBe(false);
     expect(input.safeParse({}).success).toBe(false);
     expect(BRIDGE_TOOL_RECEIVERS.moyai_update).toBe("bridge");
-    expect(MCP_INSTRUCTIONS.split("\n").find((l) => l.startsWith("今動くのは"))).toContain("・moyai_update");
+    expect(MCP_INSTRUCTIONS.split("\n").find((l) => l.startsWith("Working tools:"))).toContain(", moyai_update");
     expect(MCP_INSTRUCTIONS.length).toBeLessThanOrEqual(4096);
   });
 });

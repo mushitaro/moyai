@@ -182,7 +182,7 @@ describe("デモの混ざり：中継 → 橋渡し → 作業画面", () => {
     expect(r.isError).toBeFalsy();
     expect(r.structuredContent).toMatchObject({ source: "demo", pack: "waste-incineration", added: [], refusedTotal: 3, others: 0, note: DEMO_MIXED_NOTE });
     expect(r.structuredContent.refused).toEqual(DEMO_FILES.map((name) => ({ name, reason: "mixed" })));
-    expect(DEMO_MIXED_NOTE).toContain("利用者の資料と架空の資料を混ぜない");
+    expect(DEMO_MIXED_NOTE).toContain("the user's files and fictional files are never mixed");
     expect(TOOLS.intake_add_files.output.safeParse(r.structuredContent).success).toBe(true);
     expect(tb.bridge.tools.stagedCount()).toBe(0);
   });
@@ -273,7 +273,7 @@ describe("開いた印：intake_survey（show: true）", () => {
     expect(r.isError, JSON.stringify(r.content)).toBeFalsy();
     expect(r.structuredContent.screen).toEqual({ opened: true, connected: false });
     expect(r.structuredContent.note).toBe(SCREEN_NOT_CONNECTED_NOTE);
-    expect(SCREEN_NOT_CONNECTED_NOTE).toBe("作業画面がまだつながっていません。開いたタブを見てください。");
+    expect(SCREEN_NOT_CONNECTED_NOTE).toBe("The work screen is not connected yet. Please look at the tab that was opened.");
     expect(r.structuredContent.notes).toEqual(["old"]);
     expect(opened).toHaveLength(1);
   });
@@ -309,24 +309,24 @@ describe("開いた印：intake_survey（show: true）", () => {
   it("ツールの説明に、screen の読み方と、つながっていなければ note を利用者に言うことを書く", () => {
     const d = TOOLS.intake_survey.description;
     expect(d).toContain("screen");
-    expect(d).toContain("connected が false なら、note の 1 文を利用者に言う");
+    expect(d).toContain("If connected is false, tell the user the one sentence in note");
   });
 });
 
 // ─── 3. 入っているかの確かめ ──────────────────────────────────────
 
 describe("入っているかの確かめ：1 段目の Skill", () => {
-  const CHECK = "もう入っているか：moyai のツールが呼べれば、入れ直さず、下の「最新にする」の手順で進める";
+  const CHECK = "Already installed?: if moyai tools can be called, do not reinstall; follow \"Update\" below";
 
   it("「インストール」の手順の頭（手順 1 の前）に、もう入っているかの確かめがある。題は「MOYAI をインストールして」にも当たる", () => {
     const s = CHAT_INSTALL_SECTION;
-    const head = s.indexOf("### インストール");
+    const head = s.indexOf("### Install");
     const check = s.indexOf(CHECK, head);
-    const step1 = s.indexOf("1. `node --version`", head);
+    const step1 = s.indexOf("1. Check with `node --version`", head);
     expect(head).toBeGreaterThanOrEqual(0);
     expect(check).toBeGreaterThan(head);
     expect(check).toBeLessThan(step1);
-    expect(s.slice(head, s.indexOf("\n", head))).toContain("「MOYAI をインストールして」");
+    expect(s.slice(head, s.indexOf("\n", head))).toContain("\"install MOYAI\"");
     // Skill のファイル（MOYAI_WRITE_DOCS=1 で作り直したもの）にも同じ文がある
     const file = readFileSync("skills/moyai/SKILL.md", "utf8").replace(/\r\n/g, "\n");
     expect(file).toContain(CHECK);
@@ -337,15 +337,15 @@ describe("入っているかの確かめ：1 段目の Skill", () => {
 
   it("「最新にする」の節（#43）：版はビルドの版で見て、moyai update を --yes なしで先に走らせ、開き直しは出たときだけ頼む", () => {
     const s = CHAT_INSTALL_SECTION;
-    const sec = s.slice(s.indexOf("### 最新にする"), s.indexOf("### デモ"));
-    expect(sec).toContain("「MOYAI を最新にして」");
-    expect(sec).toContain("`node dist/cli.js update` を `--yes` なしで走らせる");
-    expect(sec).toContain("「開き直してください」と出たときだけ");
+    const sec = s.slice(s.indexOf("### Update"), s.indexOf("### Demo"));
+    expect(sec).toContain("\"update MOYAI\"");
+    expect(sec).toContain("run `node dist/cli.js update` without `--yes`");
+    expect(sec).toContain("only when it says to reopen");
     expect(sec).not.toContain("SKILL.md");
     // 入っている MOYAI（#65）：moyai_update の check を先に読み、prepare は利用者の「はい」のあと。切り替えは次の起動
-    expect(sec).toContain("moyai_update（action: check）を呼ぶ");
-    expect(sec).toContain("「はい」をもらったら moyai_update（action: prepare）");
-    expect(sec).toContain("切り替えは次の起動");
+    expect(sec).toContain("Call moyai_update (action: check)");
+    expect(sec).toContain("after a \"yes\" call moyai_update (action: prepare)");
+    expect(sec).toContain("the switch happens at the next start");
   });
 
   it("「本文がリポジトリの skills/moyai/SKILL.md と同じなら新しい版」は本当：part: skills の 1 段目の本文はそのファイルと同じで、版は本文から決まる", () => {
@@ -357,10 +357,10 @@ describe("入っているかの確かめ：1 段目の Skill", () => {
   });
 
   it("デモの節に、利用者の資料とは混ぜない（refused の mixed と note）ことを書く", () => {
-    const demo = CHAT_INSTALL_SECTION.slice(CHAT_INSTALL_SECTION.indexOf("### デモ"), CHAT_INSTALL_SECTION.indexOf("### 利用者の資料"));
-    expect(demo).toContain("架空でない資料とは混ぜない");
+    const demo = CHAT_INSTALL_SECTION.slice(CHAT_INSTALL_SECTION.indexOf("### Demo"), CHAT_INSTALL_SECTION.indexOf("### The user's files"));
+    expect(demo).toContain("Never mix with non-fictional files");
     expect(demo).toContain("mixed");
-    expect(TOOLS.intake_add_files.description).toContain("refused（理由 mixed）");
+    expect(TOOLS.intake_add_files.description).toContain("refused (reason mixed)");
   });
 });
 
@@ -380,7 +380,7 @@ describe("reading_rules_propose の説明：kind ごとのルールの形の見�
     expect(Object.keys(READING_RULE_EXAMPLES).sort()).toEqual([...kinds].sort());
     kinds.forEach((k, i) => expect(ReadingRule.safeParse(filled(k, i)).success, k).toBe(true));
     const text = readingRuleExamplesText();
-    const full = /全部の欄の例 (\{.*\})。kind ごと/.exec(text)?.[1];
+    const full = /Example with every field: (\{.*\})\. Fields per kind/.exec(text)?.[1];
     expect(ReadingRule.safeParse(JSON.parse(full!)).success).toBe(true);
   });
 

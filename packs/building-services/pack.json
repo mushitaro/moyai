@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "building-services",
   "name": "公共建築の建築設備（庁舎・学校・公営住宅・病院・体育館とプールの空調・受変電・給排水・昇降機・消防）",
+  "en": {
+    "name": "Building services of public buildings (offices, schools, public housing, hospitals, gyms and pools: HVAC, power receiving, plumbing, elevators, fire protection)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "E",
   "content": "empty",

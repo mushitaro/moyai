@@ -28,6 +28,28 @@ test("packs/night-soil/ に触れたコミットは、どれも src/ に触れ�
     }
     const files = git("show", "--name-only", "--format=", c).split("\n").filter(Boolean);
     const src = files.filter((f) => f.startsWith("src/"));
+    // 言葉だけの変更（グローバル対応の段 1b、2026-11-16）：night-soil で変えたのが SKILL.md の文と、pack.json に英語の名前（en）を足しただけなら、
+    // パックを足すためのコードではない。pack.json は en を除くと前と同じことを確かめる（名指しの例外と同じく、変えたファイルを確かめる）
+    if (src.length > 0 && wordsOnly(c, files.filter((f) => f.startsWith("packs/night-soil/")))) continue;
     assert.deepEqual(src, [], `${c.slice(0, 7)} が src/ にも触れている`);
   }
 });
+
+/** night-soil の変更が SKILL.md と、pack.json に en を足しただけか */
+function wordsOnly(c, nsFiles) {
+  if (nsFiles.length === 0 || nsFiles.some((f) => f !== "packs/night-soil/SKILL.md" && f !== "packs/night-soil/pack.json")) return false;
+  if (!nsFiles.includes("packs/night-soil/pack.json")) return true;
+  const at = (rev) => {
+    try {
+      return JSON.parse(git("show", `${rev}:packs/night-soil/pack.json`));
+    } catch {
+      return null;
+    }
+  };
+  const before = at(`${c}^`);
+  const after = at(c);
+  if (!before || !after || typeof after.en?.name !== "string") return false;
+  const { en: _a, ...restAfter } = after;
+  const { en: _b, ...restBefore } = before;
+  return JSON.stringify(restAfter) === JSON.stringify(restBefore);
+}

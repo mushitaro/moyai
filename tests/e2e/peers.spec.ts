@@ -140,7 +140,7 @@ test("台帳の clone から似た施設を並べ、AI は人が開いた比べ�
       await expect(page.locator(".ag-row.moyai-row-stat")).toHaveCount(0);
       const r: any = await c.callTool({ name: "peer_reference", arguments: {} });
       expect(r.isError).toBe(true);
-      expect(JSON.stringify(r.content)).toContain("類似施設との比べを、利用者がまだ星取表の画面で開いていません");
+      expect(JSON.stringify(r.content)).toContain("The user has not opened the comparison with similar facilities on the star chart screen yet");
     });
   } finally {
     await c.close();

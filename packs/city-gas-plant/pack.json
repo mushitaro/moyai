@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "city-gas-plant",
   "name": "都市ガスの製造所",
+  "en": {
+    "name": "City gas production plants",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "F",
   "content": "empty",

@@ -1,95 +1,97 @@
 ---
 name: moyai-pack-waste-incineration
-description: ごみ焼却施設のSkillパック（MOYAI の 2 段目の Skill。標準で、利用者は編集できない）。ごみ焼却施設の保全の計画（星取表）を MOYAI で読み、共通の設備項目に当て、照査し、類似施設と比べるときに読む。
+description: The waste incineration Skill pack (MOYAI's tier-2 Skill; standard, users cannot edit it). Read it when reading waste incineration plants' maintenance plans (star charts) in MOYAI, mapping them to the common equipment items, reviewing them and comparing with similar plants.
 ---
 
-# ごみ焼却施設のSkillパック（2 段目の Skill）
+# Waste incineration Skill pack (tier-2 Skill)
 
-MOYAI の業界の標準Skillパックの 1 つ。中身は `packs/waste-incineration/` のデータ（`common.json`・`checks.json`・`vocab.json`・`national/`・`sources.json`）で、この文はその使い方を書いたもの。数と名前は、どれもSkillパックのデータから取った。1 段目の基本操作の決まり（MCP の instructions）を上書きしない。施設・会社・担当者のルール（3 段目）があれば、そちらが先に効く。
+One of MOYAI's standard industry Skill packs. Its content is the data in `packs/waste-incineration/` (`common.json`, `checks.json`, `vocab.json`, `national/`, `sources.json`); this text explains how to use it. All numbers and names were taken from the Skill pack's data. It does not override the tier-1 basic operating rules (the MCP instructions). If there are facility, company or person rules (tier 3), they take effect first.
 
-## 確かめた度合い
+Reply to the user in the user's language (Japanese if they write in Japanese). The documents are usually in Japanese, so document words and item names below are kept in Japanese exactly as documents and `common.json` write them; English glosses are in parentheses.
 
-- 共通の設備項目（`common.json`）：原典照合済。環境省『廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）』（令和 3 年 3 月改訂）の表Ⅱ-4「主要設備・機器リスト例」を原本で照らした。
-- 全国の表（`national/`）：原典照合済。一般廃棄物処理実態調査結果（令和 6 年度）の焼却施設の表から、数だけを取り出した（施設名は持たない）。
-- 照査（`checks.json`）：原典照合済（出典のあるもの）。
-- 共有の公開語彙（`vocab.json` の universal と implies の当て方）：未確認（作る側が決めた。運営者の確認はまだ）。
-- 下の「補機の当て方」「炉の型」「よくある呼び名」「作業の名前の読み替え」：未確認（作る側が業界の一般の呼び名から決めた。表Ⅱ-4 には無い）。
+## Verification level
 
-確かめた度合いは、利用者に数字や基準を伝えるときに必ず添える。
+- Common equipment items (`common.json`): checked against the original. Table II-4 "Example list of main equipment and devices" of the Ministry of the Environment's "Guide for Preparing Comprehensive Life-Extension Plans for Waste Treatment Facilities (Waste Incineration Edition)" (revised March 2021) was checked against the original.
+- National table (`national/`): checked against the original. Only numbers were extracted from the incineration plant table of the General Waste Treatment Survey (FY2024) (no plant names are kept).
+- Review (`checks.json`): checked against the original (those with sources).
+- Public sharing vocabulary (how `vocab.json`'s universal and implies are applied): unchecked (decided by the authors; not yet confirmed by the operator).
+- "Mapping auxiliary equipment", "Furnace types", "Common names" and "Reading work names" below: unchecked (the authors decided them from common industry names; they are not in Table II-4).
 
-## 階層と、共通の設備項目
+Always add the verification level when telling the user numbers or criteria.
 
-- 階層の名前の既定は「設備 › 機器 › 部位」。施設台帳の階層の数と名前は計画が持つ（Skillパックの名前は既定値）。号炉・系統は、機器と部位のあいだの階層「号炉・系統」として必ず分ける（星取表・chart_rows の階層・Excel。データは機器の系列 series として持つ）。
-- 共通の設備項目の第 1 階層は、表Ⅱ-4 の 9 つの設備：受入れ供給設備・燃焼・溶融設備・燃焼ガス冷却設備・排ガス処理設備・余熱利用設備・通風設備・灰出し設備・電気設備・計装設備。その下に表Ⅱ-4 の機器（例：計量機・ごみクレーン・ボイラ・集じん装置・押込送風機・誘引通風機・DCS）。燃焼・溶融設備と灰出し設備の機器は、炉の型と溶融の有無で分かれる（表のとおり）。
-- 紐付け（節 → 項目のコード）は、`intake_survey`（part: crosswalk）の `items` のコードからだけ選ぶ。Skillパックに無いコードは置けない。名前が似ているだけでは当てない。機器番号・上の節（設備）・作業の名前を合わせて見て、決まらない節は利用者に聞く。
-- 紐付けは案で、人が HOSHITORI の確定のシートで受けるまで決まらない。
+## Hierarchy and common equipment items
 
-### 補機の当て方
+- The default level names are 設備 (system) › 機器 (equipment) › 部位 (part). The plan holds the number and names of the facility register's levels (the Skill pack's names are defaults). Furnaces and lines are always kept as the separate level 号炉・系統 (furnace / line) between equipment and part (in the star chart, the levels of chart_rows and Excel; the data holds it as the equipment's series).
+- The first level of the common equipment items is the 9 systems of Table II-4: 受入れ供給設備 (receiving and feeding), 燃焼・溶融設備 (combustion and melting), 燃焼ガス冷却設備 (flue gas cooling), 排ガス処理設備 (flue gas treatment), 余熱利用設備 (waste heat use), 通風設備 (draught), 灰出し設備 (ash discharge), 電気設備 (electrical), 計装設備 (instrumentation). Below them are Table II-4's equipment (for example 計量機 (weighbridge), ごみクレーン (refuse crane), ボイラ (boiler), 集じん装置 (dust collector), 押込送風機 (forced draft fan), 誘引通風機 (induced draft fan), DCS). The equipment of 燃焼・溶融設備 and 灰出し設備 differs by furnace type and whether there is melting (as in the table).
+- For linking (node → item code), choose only from the codes in `items` of `intake_survey` (part: crosswalk). Codes not in the Skill pack cannot be placed. Do not map because names look alike. Look at the equipment number, the node above (system) and the work names together, and ask the user about nodes that cannot be decided.
+- Linking is a proposal and is not decided until a person accepts it on the Decisions sheet of HOSHITORI.
 
-- 表Ⅱ-4 は主要な機器だけを挙げる。施設台帳の機器の階層には、主要な機器のほかに補機（ポンプ・ファン・コンベヤ・ダンパ・弁・貯槽・サイロ・盤・計器など）が並ぶ。補機は、項目が無いから空けるのではなく、その補機が仕える主要な機器の項目に当てる。
-- 決め方：
-  1. 上の設備の階層の名前で、表Ⅱ-4 の設備を決める。
-  2. その設備の下に項目が 1 つしかなければ（余熱利用設備・計装設備など）、その階層の補機はその項目。
-  3. 2 つ以上あれば、補機の名前の働きで決める（下の表）。
-  4. 働きで 1 つに決まらない補機だけを、利用者に聞く。
-- 当てるのは機器の階層だけ。設備の階層と部位の階層（電動機・軸受・耐火物など）には当てない。
+### Mapping auxiliary equipment
 
-| 補機の働き | 当てる項目 |
+- Table II-4 lists only the main equipment. The equipment level of a facility register also lists auxiliaries (pumps, fans, conveyors, dampers, valves, tanks, silos, panels, instruments, etc.) besides the main equipment. Do not leave an auxiliary unmapped because it has no item of its own; map it to the item of the main equipment it serves.
+- How to decide:
+  1. Decide the Table II-4 system from the name at the system level above.
+  2. If that system has only one item below it (余熱利用設備, 計装設備, etc.), the auxiliaries at that level go to that item.
+  3. If it has two or more, decide by the auxiliary's function (table below).
+  4. Ask the user only about auxiliaries whose function does not decide a single item.
+- Map only the equipment level. Do not map the system level or the part level (電動機 (motor), 軸受 (bearing), 耐火物 (refractory), etc.).
+
+| Function of the auxiliary | Item to map to |
 |---|---|
-| ごみを量る・計量の記録 | 計量機 |
-| ごみピット・投入扉・ごみをつかむ・ピットの臭い | ごみクレーン |
-| 粗大ごみを切る・運ぶ | 可燃性粗大ごみ切断機 |
-| ごみを炉へ送り込む・火格子を動かす・火格子から落ちたものを運ぶ（ストーカ式） | 燃焼装置 |
-| 炉に火を入れる・炉の中を見る・炉から灰を押し出す | 焼却炉（その炉の型の） |
-| ボイラの水と蒸気（給水・脱気・薬注・すす吹き・過熱・節炭・蒸気だめ・純水） | ボイラ |
-| 蒸気を水に戻す（復水・復水器のファン・復水タンク） | 蒸気復水器 |
-| 水を噴いてガスを冷やす | 水噴射式燃焼ガス冷却設備 |
-| 集じん器の払い落とし・集めたダストの排出 | 集じん装置 |
-| 消石灰などの薬剤（貯める・送る） | HCL、SOx 除去設備 |
-| 活性炭（貯める・送る） | ダイオキシン類除去設備 |
-| 尿素水・アンモニア水・脱硝の触媒 | NOx 除去設備 |
-| 燃焼用の空気を送る・温める | 押込送風機 |
-| 排ガスを引く・戻す・ダンパ・煙道・煙突 | 誘引通風機 |
-| タービンの油・弁・グランド蒸気・余熱の熱交換 | 蒸気タービン発電設備 |
-| 主灰を運ぶ・灰をつかむ | 灰クレーン（溶融設備の無い施設） |
-| 飛灰を運ぶ・貯める・練る・薬剤で固める | 飛灰処理設備（溶融設備の無い施設） |
-| 受電・変圧・配電・動力盤・直流電源・無停電電源 | 受変電配電設備 |
-| 非常用の発電・遮断器・励磁 | 発電機 |
-| 中央の操作・分析計・温度計・流量計・監視カメラ・計装用の空気 | DCS |
+| Weighing refuse, weighing records | 計量機 |
+| Refuse pit, charging doors, grabbing refuse, pit odour | ごみクレーン |
+| Cutting and carrying bulky waste | 可燃性粗大ごみ切断機 |
+| Feeding refuse into the furnace, moving the grate, carrying what falls through the grate (stoker type) | 燃焼装置 |
+| Lighting the furnace, viewing inside the furnace, pushing ash out of the furnace | 焼却炉 (of that furnace type) |
+| Boiler water and steam (feed water, deaeration, chemical dosing, soot blowing, superheating, economiser, steam header, pure water) | ボイラ |
+| Turning steam back into water (condensate, condenser fans, condensate tank) | 蒸気復水器 |
+| Cooling gas by spraying water | 水噴射式燃焼ガス冷却設備 |
+| Dust collector cleaning, discharging collected dust | 集じん装置 |
+| Chemicals such as slaked lime (storing, feeding) | HCL、SOx 除去設備 |
+| Activated carbon (storing, feeding) | ダイオキシン類除去設備 |
+| Urea solution, ammonia water, denitration catalyst | NOx 除去設備 |
+| Supplying and heating combustion air | 押込送風機 |
+| Drawing and recirculating flue gas, dampers, flues, stack | 誘引通風機 |
+| Turbine oil, valves, gland steam, waste-heat exchangers | 蒸気タービン発電設備 |
+| Carrying bottom ash, grabbing ash | 灰クレーン (plants without melting) |
+| Carrying, storing, kneading and chemically fixing fly ash | 飛灰処理設備 (plants without melting) |
+| Power receiving, transformers, distribution, power panels, DC supply, UPS | 受変電配電設備 |
+| Emergency generation, circuit breakers, excitation | 発電機 |
+| Central operation, analysers, thermometers, flow meters, monitoring cameras, instrument air | DCS |
 
-### 炉の型
+### Furnace types
 
-- 燃焼・溶融設備と灰出し設備の項目は、炉の型と溶融の有無で分かれる。`intake_survey` の `items` には型の名前が出ず、同じ名前（「焼却炉」「前処理装置」「溶融炉」など）が型ごとに並ぶ。型はコードの頭で見分ける。
+- The items of 燃焼・溶融設備 and 灰出し設備 differ by furnace type and whether there is melting. `items` of `intake_survey` does not show the type names, and the same names (「焼却炉」 (incinerator), 「前処理装置」 (pre-treatment device), 「溶融炉」 (melting furnace), etc.) appear once per type. Tell the types apart by the start of the code.
 
-| コードの頭 | 型 |
+| Code prefix | Type |
 |---|---|
-| WI.COMB.STK_ | ストーカ式 |
-| WI.COMB.FBI_ | 流動床式焼却炉 |
-| WI.COMB.SHF_ | シャフト式ガス化炉 |
-| WI.COMB.KLN_ | キルン式ガス化炉 |
-| WI.COMB.FBG_ | 流動床式ガス化炉 |
-| WI.ASHOUT.ASH_CRANE・FLYASH_TREAT | 溶融設備の無い施設 |
-| WI.ASHOUT.MELT・MELT_FLUE・POST・MELT_FLYASH | 溶融設備の有る施設 |
+| WI.COMB.STK_ | Stoker |
+| WI.COMB.FBI_ | Fluidised-bed incinerator |
+| WI.COMB.SHF_ | Shaft gasification furnace |
+| WI.COMB.KLN_ | Kiln gasification furnace |
+| WI.COMB.FBG_ | Fluidised-bed gasification furnace |
+| WI.ASHOUT.ASH_CRANE・FLYASH_TREAT | Plants without melting |
+| WI.ASHOUT.MELT・MELT_FLUE・POST・MELT_FLYASH | Plants with melting |
 
-- 施設の炉の型は、資料の設備と機器の名前から読む（「ストーカ」「火格子」があればストーカ式、「流動床」「流動砂」があれば流動床式など）。読めなければ、紐付けの前に 1 回だけ利用者に聞き、その答えで型の違う項目を選ばない。1 つの施設に型の違う炉が並ぶこともあるので、炉の系列ごとに違えば、それも聞く。
+- Read the plant's furnace type from the names of systems and equipment in the documents (「ストーカ」 (stoker) or 「火格子」 (grate) means stoker type, 「流動床」 (fluidised bed) or 「流動砂」 (fluidising sand) means fluidised-bed type, etc.). If it cannot be read, ask the user once before linking, and do not choose items of a different type than that answer. One plant can have furnaces of different types, so if it differs by furnace line, ask about that too.
 
-### よくある呼び名
+### Common names
 
-- 資料の呼び名が下の表にあれば、その項目に当てる（名前が似ているかで決めるのではなく、この表に書いたものだけを同じとみなす）。表に無い呼び名は、上の補機の当て方で決めるか、利用者に聞く。
-- 型のある項目は、上の炉の型で選んだ型のものだけ。
+- If a document's name is in the table below, map it to that item (do not decide by whether names look alike; only what is in this table is treated as the same). Names not in the table are decided by the auxiliary mapping above, or asked to the user.
+- For items that have a type, use only the type chosen under "Furnace types" above.
 
-| 資料の呼び名の例 | 当てる項目 |
+| Example names in documents | Item to map to |
 |---|---|
 | トラックスケール・計量器 | 計量機 |
 | ごみピットクレーン・ごみ投入クレーン | ごみクレーン |
-| 粗大ごみ切断機・粗大ごみ破砕機（可燃性の粗大ごみを切るもの） | 可燃性粗大ごみ切断機 |
-| ストーカ・火格子・焼却ストーカ | 燃焼装置（ストーカ式） |
-| 炉本体・焼却炉本体 | 焼却炉（その炉の型の） |
+| 粗大ごみ切断機・粗大ごみ破砕機 (ones that cut combustible bulky waste) | 可燃性粗大ごみ切断機 |
+| ストーカ・火格子・焼却ストーカ | 燃焼装置 (stoker type) |
+| 炉本体・焼却炉本体 | 焼却炉 (of that furnace type) |
 | 廃熱ボイラ・排熱ボイラ | ボイラ |
 | 空冷式復水器・復水器 | 蒸気復水器 |
 | 減温塔・ガス冷却室 | 水噴射式燃焼ガス冷却設備 |
 | バグフィルタ・ろ過式集じん器・電気集じん器 | 集じん装置 |
-| 脱塩装置・有害ガス除去装置（塩化水素・硫黄酸化物を除くもの） | HCL、SOx 除去設備 |
+| 脱塩装置・有害ガス除去装置 (ones that remove hydrogen chloride and sulphur oxides) | HCL、SOx 除去設備 |
 | 脱硝装置・触媒脱硝装置・無触媒脱硝装置 | NOx 除去設備 |
 | 活性炭吹込装置 | ダイオキシン類除去設備 |
 | 押込ファン・押込送風機・FDF | 押込送風機 |
@@ -101,129 +103,129 @@ MOYAI の業界の標準Skillパックの 1 つ。中身は `packs/waste-inciner
 | 非常用発電機・非常用発電装置 | 発電機 |
 | 分散制御システム・分散型制御装置・中央制御装置 | DCS |
 
-## 作業分類
+## Work categories
 
-- コードは 4 つ：INSPECT（点検）・OVERHAUL（分解整備）・REPLACE（更新）・UPGRADE（基幹改良）。名前は `packs/_kinds/work.json` の既定。
-- 資料の作業の名前（「定期整備」「開放点検」「取替」など）から当てるが、1 つの名前に分解整備と取替が混ざる施設もある。混ざるときは、まとめて 1 つの属性にせず、利用者に聞く。
-- 事後の修理（故障の直し）は属性に入れない（記録には残る）。
+- There are 4 codes: INSPECT (inspection), OVERHAUL (overhaul), REPLACE (replacement), UPGRADE (major upgrade). The names are the defaults in `packs/_kinds/work.json`.
+- Map from the documents' work names (「定期整備」 (periodic maintenance), 「開放点検」 (open inspection), 「取替」 (replacement), etc.), but at some plants one name mixes overhaul and replacement. When they mix, do not lump them into one attribute; ask the user.
+- After-the-fact repairs (fixing breakdowns) are not given an attribute (they stay in the records).
 
-### 作業の名前の読み替え
+### Reading work names
 
-| 作業の名前に含む言葉 | 属性 |
+| Words contained in the work name | Attribute |
 |---|---|
-| 点検・検査・定期検査・精密機能検査・校正・試験・測定 | INSPECT |
-| 分解・分解整備・分解点検・オーバーホール | OVERHAUL |
-| 取替・更新・交換 | REPLACE |
-| 基幹改良・延命化 | UPGRADE |
+| 点検・検査・定期検査・精密機能検査・校正・試験・測定 (inspection, examination, periodic inspection, precision function inspection, calibration, test, measurement) | INSPECT |
+| 分解・分解整備・分解点検・オーバーホール (disassembly, overhaul, disassembly inspection) | OVERHAUL |
+| 取替・更新・交換 (replacement, renewal, exchange) | REPLACE |
+| 基幹改良・延命化 (major upgrade, life extension) | UPGRADE |
 
-- 「分解点検」は分解を伴うので OVERHAUL とする。「開放点検」は、開けて見るだけか整備までするかが施設で違うので、当てずに聞く。言葉を含むかで書くルール（contains）だと「点検」のルールとぶつかるので、こうした名前は名前の一覧（in）のルールで書くか、「点検」のルールから外す。
-- 「定期整備」「整備」「補修」だけの名前は、中身が施設ごとに違うので当てずに聞く（「補修」は事後の修理のこともある）。ただし「定期整備（分解）」「定期整備（取替）」のように、名前の中に上の表の言葉があれば、その属性にする。
-- 名前の無い作業（星取だけで、作業の名前が無いもの）は、名前からは決まらない。機器の群（同じ設備の下の機器など）ごとに「この n 機器の星取は点検か、分解整備か、取替か」を、まとめて 1 回で利用者に聞く。機器ごとに 1 問ずつ聞かない。答えは、その群の機器の名前の一覧（assetNode.name が in）と名前の無い作業（work.kind が空の文字と equals）を条件にしたルールにする（ルールの値の組は 20 個まで。多ければ分ける）。
+- 「分解点検」 (disassembly inspection) involves taking apart, so it is OVERHAUL. For 「開放点検」 (open inspection), whether it is only opening and looking or goes as far as maintenance differs by plant, so do not map it; ask. A rule written as "contains the word" (contains) would collide with the 「点検」 (inspection) rule, so write such names as a rule with a list of names (in), or exclude them from the 「点検」 rule.
+- Names that are only 「定期整備」 (periodic maintenance), 「整備」 (maintenance) or 「補修」 (repair) differ in content from plant to plant, so do not map them; ask (「補修」 can also be an after-the-fact repair). But if a name contains a word from the table above, as in 「定期整備（分解）」 or 「定期整備（取替）」, give it that attribute.
+- Works without a name (star marks only, no work name) cannot be decided from the name. For each group of equipment (equipment under the same system, etc.), ask the user once, all together: "Are the marks of these n pieces of equipment inspection, overhaul or replacement?" Do not ask one question per piece of equipment. Make the answer into a rule whose conditions are the list of that group's equipment names (assetNode.name in) and works without a name (work.kind equals the empty string) (up to 20 values per rule; split if there are more).
 
-## 照査（自己点検）
+## Review (self-check)
 
-`check_results` が返す照査は 7 件。結果は丸めず言い換えず、出典と水準を添えて伝える。自己点検であって、審査の判断ではない。
+`check_results` returns 7 review checks. Report results without rounding or rephrasing, with the source and the level. It is a self-check, not a judgement by an authority.
 
-| 照査 | 水準 | 出典 |
+| Check | Level | Source |
 |---|---|---|
-| 精密機能検査の間隔 | recommendation | 課長通知（昭和 46 年 環整第 45 号）第三の 11「規則第五条の精密機能検査は三年に一回以上」。施行規則 第 5 条は年数を書いていない |
-| 機器別管理基準の列 | recommendation | 手引き 表Ⅱ-7 と作成手順の ②③ |
-| 健全度の値 | recommendation | 手引き 表Ⅱ-9 |
-| 健全度の悪い判定のあとの措置 | recommendation | 手引き 表Ⅱ-9（措置の列） |
-| 計画の年数 | app（アプリの目安） | 手引き 表Ⅱ-12 は例（イメージ）なので、年数はアプリの目安 |
-| 過ぎた予定の実績 | app | 出典なし |
-| 計画の期間の予定 | app | 出典なし |
+| Interval of the precision function inspection | recommendation | Director's notice (Showa 46, Kansei No. 45), part 3, item 11: "the precision function inspection under Article 5 of the Regulations at least once every three years". Article 5 of the Enforcement Regulations itself does not state a number of years |
+| Columns of the equipment management criteria | recommendation | Guide Table II-7 and steps ② ③ of the preparation procedure |
+| Soundness values | recommendation | Guide Table II-9 |
+| Measures after a poor soundness rating | recommendation | Guide Table II-9 (measures column) |
+| Number of plan years | app (the app's guideline) | Guide Table II-12 is an example (image), so the number of years is the app's guideline |
+| Actuals of past plans | app | No source |
+| Plans within the plan period | app | No source |
 
-水準 requirement は、原本で照らした法令・補助の要件だけに使う。このSkillパックの照査には requirement は無い。
+The level requirement is used only for legal and subsidy requirements checked against the original. This Skill pack's review has no requirement.
 
-## 履歴から計画をつくる
+## Building a plan from the history
 
-- 計画の星取（○）は、記録から決まるもの（実績 ●）と分ける。記録に無い周期を推測で埋めない。
-- 周期の案は `chart_propose`（set: work.trigger に年数）で置く。起点はその作業の最後の実績で、計画のいちばん遅い年度まで置く。足すだけで、今ある星取は消さない。
-- 周期の根拠は 4 つ。どれも無ければ、案を置かずに利用者に聞く。
-  1. 自施設の実績：その作業の実施の間隔。`chart_propose` の bases に record: true を添えると、MOYAI が当たった作業の実績の年度から間隔を数えて根拠に書く（数は自分で書かない）。実施が 1 回の作業は数えられない。
-  2. Skillパックの基準：上の照査（checks.json）。bases に pack: { checkId }（例 WI-PRECISION-INTERVAL）を添えると、MOYAI が照査の名前と出典を根拠に書く。精密機能検査は、照査の出典どおり 3 年に 1 回以上を目安として示せる（水準は recommendation）。
-  3. 公開の台帳の類似施設（下）。ledger を添える。
-  4. 計画ルール（3 段目の Skill）：利用者が計画を見て直した周期を、会社・施設・担当のルールとして残したもの。bases に rule: { name, ruleId } を添える。
-- 利用者が会話で周期を直したら（「この施設の灰クレーンの整備は 4 年ごと」）、計画ルールにして `reading_rules_propose` で下書きに置く：kind: planCycle、commonItem（共通の設備項目のコード）、attribute（INSPECT・OVERHAUL・REPLACE・UPGRADE）、years、text は人の言葉の 1 文（「灰クレーンの整備は 4 年ごと」）、reason に利用者の言葉。範囲は、その施設だけなら facility、会社で同じなら company。
-- 計画ルールは計画を直に変えない。共通の設備項目と作業分類を人が受けた作業に、周期の案（ID の頭 R）を出すだけで、人が確定のシートで受けるまで決まらない。版の署名で承認されるのは、その版で受けた案のもとになったルールだけ。
-- 利用者が会話で作業 × 年度の星取（計画 ○・実績 ●）を言ったら（「2 号炉の耐火物の補修を 2027 年度の計画に」「灰クレーンの整備は 2027 年度から 2028 年度へ延期」「2024 年度の灰クレーンの整備は実績」）、`chart_propose` の stars で星取の案を置く。
-  1. `chart_rows` の rowRef に機器の行の id（n:…）を渡し、その機器の作業の行（id は w:…、欄は作業の名前と年度の星取）を読む。どの作業かが決まらなければ、作業の名前を並べて利用者に聞く。
-  2. stars に置く：追加 { op: add, rowRef, value: plan か actual, fiscalYear }、削除 { op: remove, rowRef, value, fiscalYear }、計画の移動（延期・前倒し）{ op: move, rowRef, fromFiscalYear, fiscalYear }。年度は星取表の最初と最後の年度の中だけ。行の値は写さない。
-  3. 1 つの頼みは 1 回の呼び出しで置く。同じ作業の同じ種類（計画の追加・計画の削除・計画の移動・実績の追加・実績の削除）は 1 つの案になり、確定のシートの 1 行になる。
-  4. 実績の追加は、利用者の言葉（author: ai_relayed_human）のときだけ置く。記録や基準から実績を推し量って置かない（bases の record・pack・rule は実績の根拠にならない）。同じ機器の同じ年度に、ほかの作業の実績があれば、MOYAI が参考の行として添える。基準日の年度より後の実績は置けない。
-  5. 実績の削除は、利用者の言葉（author: ai_relayed_human）だけ。計画の削除と移動は Claude の判断でも置けるが、理由を basis に書く。
-  6. 案は、星取表では追加が朱の破線の円、削除が今の星取に朱の斜線で出る。人が HOSHITORI の確定のシートで確定するまで決まらない。
+- Keep plan marks (○) separate from what is decided by records (actual ●). Do not fill in cycles that are not in the records by guessing.
+- Place cycle proposals with `chart_propose` (set: work.trigger to a number of years). The starting point is the work's last actual, and marks go up to the plan's latest fiscal year. It only adds; existing marks are not removed.
+- There are 4 bases for a cycle. If there is none, do not place a proposal; ask the user.
+  1. The plant's own actuals: the interval between the work's executions. Add record: true to `chart_propose`'s bases and MOYAI counts the interval from the fiscal years of the matched work's actuals and writes it in the basis (do not write numbers yourself). Works executed only once cannot be counted.
+  2. The Skill pack's criteria: the review above (checks.json). Add pack: { checkId } (for example WI-PRECISION-INTERVAL) to bases and MOYAI writes the check's name and source in the basis. For the precision function inspection, at least once every 3 years can be shown as a guideline, as in the check's source (level recommendation).
+  3. Similar plants on the public ledger (below). Add ledger.
+  4. Plan rules (tier-3 Skill): cycles the user corrected after looking at the plan, kept as company, facility or person rules. Add rule: { name, ruleId } to bases.
+- When the user corrects a cycle in conversation ("ash crane maintenance at this plant is every 4 years"), make it a plan rule and place it as a draft with `reading_rules_propose`: kind: planCycle, commonItem (the common equipment item's code), attribute (INSPECT, OVERHAUL, REPLACE, UPGRADE), years, text as one sentence in the person's words ("ash crane maintenance every 4 years"), and the user's words in reason. Scope is facility for that plant only, company if the same across the company.
+- Plan rules do not change the plan directly. They only put out cycle proposals (IDs starting with R) for works whose common equipment item and work category a person accepted, and nothing is decided until a person accepts it on the Decisions sheet. A version's signature approves only the rules behind the proposals accepted in that version.
+- When the user names a work × fiscal year mark in conversation (plan ○ or actual ●) ("put the furnace 2 refractory repair in the FY2027 plan", "postpone the ash crane maintenance from FY2027 to FY2028", "the FY2024 ash crane maintenance is an actual"), place a mark proposal with `chart_propose`'s stars.
+  1. Pass the equipment row's id (n:…) as `chart_rows`' rowRef and read that equipment's work rows (id w:…, fields are the work name and the fiscal-year marks). If which work is not decided, list the work names and ask the user.
+  2. Place in stars: add { op: add, rowRef, value: plan or actual, fiscalYear }, remove { op: remove, rowRef, value, fiscalYear }, move a plan (postpone or bring forward) { op: move, rowRef, fromFiscalYear, fiscalYear }. Fiscal years only within the star chart's first and last years. Do not copy row values.
+  3. Place one request in one call. The same kind for the same work (add plan, remove plan, move plan, add actual, remove actual) becomes one proposal and one row on the Decisions sheet.
+  4. Add an actual only on the user's words (author: ai_relayed_human). Do not infer actuals from records or criteria (bases record, pack and rule are not a basis for actuals). If the same equipment has an actual of another work in the same fiscal year, MOYAI adds it as a reference row. Actuals after the reference date's fiscal year cannot be placed.
+  5. Remove an actual only on the user's words (author: ai_relayed_human). Removing and moving plans can also be placed on Claude's judgement, with the reason written in basis.
+  6. In the star chart, proposals show as a vermilion dashed circle for an addition and a vermilion slash over the current mark for a removal. Nothing is decided until a person confirms on the Decisions sheet of HOSHITORI.
 
-## 公開の台帳と、類似施設
+## The public ledger and similar plants
 
-- `peer_reference`（place: ledger）で、公開の台帳だけを、計画の見え方（立場は市町村）で読む。見え方の軸は、全国の表に列のある炉の型・処理能力の階級・発電の有無・灰の処理・運営の形。答えが無い軸は needs として返るので、利用者に聞く。
-- 根拠にするのは、類似施設が 5 以上で間隔の中央値が出た塊だけ。中央値は階級（幅）で、1 つの年数ではない。どの年数を案にするかは、四分位の中から理由を添えて選び、利用者に確かめる。
-- 費用は、台帳にも根拠の文にも書かない。施設を当てようとしない。共有フォルダ（非公開）の数字を、公開の根拠の文に写さない。
+- With `peer_reference` (place: ledger), read only the public ledger, in the plan's view (as a municipality). The view's axes are those with columns in the national table: furnace type, capacity class, whether it generates power, ash treatment, and operating form. Axes without an answer come back as needs; ask the user.
+- Use as a basis only groups of 5 or more similar plants where an interval median is given. The median is a class (a range), not a single number of years. Choose which number of years to propose from within the quartiles, with a reason, and confirm with the user.
+- Costs are not written in the ledger or in the basis text. Do not try to identify plants. Do not copy numbers from a (private) shared folder into public basis text.
 
-## デモ
+## Demo
 
-- 利用者が「デモして」と言ったら、`intake_add_files`（source: demo）で、この Skillパックの `demo/` の架空の資料（施設台帳・星取表・作業日報の 3 つ）を作業画面に入れる。
-- 進め方は `demo/README.md`。先に作業画面を開き、1 回の返事で 1 段だけ進め、画面の何が変わったかを短く言って、利用者の「次」を待つ。Claude だけで最後まで進めない。確定は人が画面でする。
-- デモの資料は架空。実在の施設として話さない。架空でない資料とは混ぜない。
+- When the user says "run the demo", use `intake_add_files` (source: demo) to put this Skill pack's fictional documents in `demo/` (the facility register, star chart and daily work report: 3 files) into the work screen.
+- How to proceed is in `demo/README.md`. Open the work screen first, advance one step per reply, say briefly what changed on the screen, and wait for the user's "next". Do not go to the end with Claude alone. People confirm on the screen.
+- The demo documents are fictional. Do not talk about them as a real plant. Do not mix them with non-fictional documents.
 
 <!-- moyai:data-names:begin（src/shared/data-names.ts と packs/waste-incineration/data-names.json から作る。手で直さない） -->
 
-## 資料とデータの名前
+## Files and data names
 
-資料のどこが、どのデータの名前になるか。名前の定義と、業種によらない当ててはいけない例は、1 段目の Skill の「データの名前」にある。
+Which part of a file becomes which data name. The definitions, and what not to map independent of industry, are in "Data names" of the tier-1 Skill. Examples are quoted as the files write them.
 
-手本の資料：星取表（年度の整備計画表）・作業日報（1 日 1 枚の帳票）・工程表（定期整備の週のガント）・発注台帳（年度の契約の一覧）・完成図書 第3編 機器仕様一覧表（PDF）・日常点検表（写真）。
+Example files: 星取表（年度の整備計画表）, 作業日報（1 日 1 枚の帳票）, 工程表（定期整備の週のガント）, 発注台帳（年度の契約の一覧）, 完成図書 第3編 機器仕様一覧表（PDF）, 日常点検表（写真）.
 
-| 名前 | 資料の手本 | 当ててはいけない例（この業種） |
+| Name | Examples in files | Do not map (this industry) |
 |---|---|---|
-| 施設 | 星取表の題・発注台帳の件名の施設名 → 施設名。公共の施設は 4 月始まり | ― |
-| 機器（資産の節） | 星取表の階層の名前の行 → 1 つの節。完成図書の機器仕様一覧表の行 → 同じ節の名前と仕様。日報の明細「1号 No.2 BFP 分解整備」の「BFP」→ ボイラ給水ポンプの節（呼び名の揺れ） | 完成図書の名前と星取表の呼び名が違うだけで別の機器にしない（「空冷式蒸気復水器」と「復水器」） |
-| 仕様 | 完成図書の機器仕様一覧表の列（型式・容量・数量）→ 仕様 | ― |
-| 階層 | 星取表の列のずれ・全角の空白の字下げ・「・」・番号 1 / 1-1 → 階層（既定「設備 › 機器 › 部位」） | ― |
-| 系列・号炉 | 「#1・1号・1号炉・1炉・１号炉」→ 系列 1。日報の「共通・—」→ 共通 | 星取表で 2 炉を 1 行に書いた行を、炉ごとに割らない |
-| 共通の設備項目 | 資料には書いていない。機器の名前と上の設備の階層から、このSkillパックの「よくある呼び名」「補機の当て方」で選ぶ（「バグフィルタ」→ 集じん装置） | 炉の型の違う項目を選ばない。表Ⅱ-4 に無い補機を空けたままにしない（仕える主要な機器の項目に当てる） |
-| 作業 | 星取表の作業の行（「1号炉 定期整備」「ボイラ給水ポンプ 分解整備」）→ 作業。日報の明細の作業の語（「分解整備」「本体点検」）→ 同じ作業 | 発注台帳の定期補修工事の一式・継続費の基幹改良の行を作業にしない（作業と結ぶだけ）。事後の補修（「補修（事後）」の行・臨時）を計画の作業にしない（記録には残す） |
-| 作業分類 | 作業の名前の語から（このSkillパックの「作業の名前の読み替え」）：「分解点検」→ 分解整備、「取替」→ 更新 | 「開放点検」「定期整備」「整備」「補修」だけの名前は当てずに聞く |
-| 保全方式 | 機器別管理基準の保全方式の列 → 保全方式 | 機器別管理基準に保全方式の列が無いことを、照査の外れのほかで埋めない |
-| 周期（きっかけ） | 星取表の「周期」「周期(年)」の列（数の行と「2年」の文字の行）→ 暦の枝。「6Y」「130M」はSkillパックの語彙で読み替え。号炉ごとの運転時間 → 稼働の枝（暦と早い方） | 備考の「R18に更新の予定」の年度を周期にしない |
-| 次回 | ― | 備考の「R18に更新の予定」を次回にしない |
-| 起点 | 日報・工程表の実績の日付 → 起点。年度だけの星取 → 年度の始まりの日（年度単位）。完成図書の竣工 → 設置の日（使用開始） | 星取表の ○→（延期）・△（一部）を起点にしない |
-| 年度 | 星取表の 2 段の見出し（上 H25・R元、下 西暦）→ 年度。1 つのセルの「R2」改行「(2020)」→ 2020 年度 | ― |
-| 星取（計画・実績） | 星取表の凡例の例：○ 計画・◎ 計画どおり実施・● 計画外の実施・△ 一部・○→ 延期 | 網掛けの未来の年度の列の星取を実績にしない。△ と ○→ を答え無しに実績にしない |
-| 作業の年度の値（計画・実績） | 星取表の ● 1 つ → 実績の年度の値。日報の同じ作業の行を集めて → その年度の実績（工数は和）。発注台帳の支払額 → その実績の費用 | ― |
-| 区分 | 星取表の ● のうち計画の無い年度 → 実績（計画外） | ― |
-| 作業明細 | 作業日報の明細の 1 行（「1号 No.2 BFP 分解整備」とその日の人員）→ 1 つの作業明細。続紙（「作業日報（続紙）」）の行も同じ | 工程表の週のセル・発注台帳の行を作業明細にしない（案） |
-| 期間 | 工程表の着手・完了 → 期間。日報の作業した日の最初と最後 → 期間 | 発注台帳の工期（契約の期間）を作業の期間にしない |
-| 日数 | 工程表の「6日間」→ 日数。工程表の週のセル（その週に作業した日数）→ 日数 | 発注台帳の工期の日数を作業の日数にしない |
-| 工数 | 日報の人員（「3名」）・人工計（R6 からの帳票）→ その日の工数。工程表の延べ人工（「45人工」）→ 年度の工数 | 日報の人員の和と工程表の延べ人工が違うとき、片方で決めない（「資料で違う工数・日数」で聞く） |
-| 費用（予算・実績） | 発注台帳の支払額 → 実績の費用。星取表の費用の列（計画の行）→ 予算。単位（千円）・税込か税抜は見出しから | 単価契約の予定総額を実績の費用にしない（支払額を使う）。変更契約の行（「〃（第1回変更）」）を別の作業の費用として足さない（案：聞く）。設備ごとの小計・年度ごとの合計を費用にしない |
-| 判定・測定値・前回値 | 日常点検表の写真のチェック・×・数 → 判定・測定値（人が画像と並べて確かめるまで要確認）。機器別管理基準の健全度 → 判定（案） | 健全度の段（1〜4）の外の値（「5」）を直して入れない（照査が出す） |
-| 外注先 | 発注台帳の契約の相手 → その作業の外注先（案） | ― |
-| 実施者 | 日報の作業者の名前 → 実施者（案） | ― |
-| 稼働 | 日常点検表の積算の運転時間の欄 → 稼働（未確認：手本の写真に有るか） | ― |
-| 紐付け | 資料には無い。機器の名前・上の設備の階層・作業の名前を条件にしたルール | ― |
-| 確認と答え（取り込みの質問） | 取り込みの質問（年度の読み方・列の役目・費用の単位・星取の意味）への答え | ― |
-| ルール | 会話で決めたルール：「「延工数(h)」の列は時間として読む」「「ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ」と「BFP」は同じ機器」 | ― |
-| 計画ルール | 資料には無い。利用者が会話で直した周期（「灰クレーンの整備は 4 年ごと」） | ― |
-| 周期の案（台帳案・ルール案・会話の回答） | 資料には無い。公開台帳の類似施設 5 以上の間隔の中央値・Skillパックの基準（精密機能検査の 3 年に 1 回以上）・自施設の実績の間隔・計画ルールから | ― |
-| 突合 | 工程表の着手・完了と日報の作業した日（同じ作業）。星取表の周期と機器台帳の周期 | ― |
-| 元の資料（出どころ） | 資料・シート・セル。完成図書の PDF は頁と位置、日常点検表の写真は画像の位置 | ― |
+| Facility | 星取表の題・発注台帳の件名の施設名 → 施設名。公共の施設は 4 月始まり | - |
+| Equipment (asset node) | 星取表の階層の名前の行 → 1 つの節。完成図書の機器仕様一覧表の行 → 同じ節の名前と仕様。日報の明細「1号 No.2 BFP 分解整備」の「BFP」→ ボイラ給水ポンプの節（呼び名の揺れ） | 完成図書の名前と星取表の呼び名が違うだけで別の機器にしない（「空冷式蒸気復水器」と「復水器」） |
+| Specification | 完成図書の機器仕様一覧表の列（型式・容量・数量）→ 仕様 | - |
+| Level | 星取表の列のずれ・全角の空白の字下げ・「・」・番号 1 / 1-1 → 階層（既定「設備 › 機器 › 部位」） | - |
+| Line / unit | 「#1・1号・1号炉・1炉・１号炉」→ 系列 1。日報の「共通・—」→ 共通 | 星取表で 2 炉を 1 行に書いた行を、炉ごとに割らない |
+| Common equipment item | 資料には書いていない。機器の名前と上の設備の階層から、このSkillパックの「よくある呼び名」「補機の当て方」で選ぶ（「バグフィルタ」→ 集じん装置） | 炉の型の違う項目を選ばない。表Ⅱ-4 に無い補機を空けたままにしない（仕える主要な機器の項目に当てる） |
+| Work | 星取表の作業の行（「1号炉 定期整備」「ボイラ給水ポンプ 分解整備」）→ 作業。日報の明細の作業の語（「分解整備」「本体点検」）→ 同じ作業 | 発注台帳の定期補修工事の一式・継続費の基幹改良の行を作業にしない（作業と結ぶだけ）。事後の補修（「補修（事後）」の行・臨時）を計画の作業にしない（記録には残す） |
+| Work attribute | 作業の名前の語から（このSkillパックの「作業の名前の読み替え」）：「分解点検」→ 分解整備、「取替」→ 更新 | 「開放点検」「定期整備」「整備」「補修」だけの名前は当てずに聞く |
+| Maintenance strategy | 機器別管理基準の保全方式の列 → 保全方式 | 機器別管理基準に保全方式の列が無いことを、照査の外れのほかで埋めない |
+| Cycle (trigger) | 星取表の「周期」「周期(年)」の列（数の行と「2年」の文字の行）→ 暦の枝。「6Y」「130M」はSkillパックの語彙で読み替え。号炉ごとの運転時間 → 稼働の枝（暦と早い方） | 備考の「R18に更新の予定」の年度を周期にしない |
+| Next due | - | 備考の「R18に更新の予定」を次回にしない |
+| Origin | 日報・工程表の実績の日付 → 起点。年度だけの星取 → 年度の始まりの日（年度単位）。完成図書の竣工 → 設置の日（使用開始） | 星取表の ○→（延期）・△（一部）を起点にしない |
+| Fiscal year | 星取表の 2 段の見出し（上 H25・R元、下 西暦）→ 年度。1 つのセルの「R2」改行「(2020)」→ 2020 年度 | - |
+| Star (plan / actual) | 星取表の凡例の例：○ 計画・◎ 計画どおり実施・● 計画外の実施・△ 一部・○→ 延期 | 網掛けの未来の年度の列の星取を実績にしない。△ と ○→ を答え無しに実績にしない |
+| Work fiscal-year value (plan / actual) | 星取表の ● 1 つ → 実績の年度の値。日報の同じ作業の行を集めて → その年度の実績（工数は和）。発注台帳の支払額 → その実績の費用 | - |
+| Kind | 星取表の ● のうち計画の無い年度 → 実績（計画外） | - |
+| Work detail | 作業日報の明細の 1 行（「1号 No.2 BFP 分解整備」とその日の人員）→ 1 つの作業明細。続紙（「作業日報（続紙）」）の行も同じ | 工程表の週のセル・発注台帳の行を作業明細にしない（案） |
+| Period | 工程表の着手・完了 → 期間。日報の作業した日の最初と最後 → 期間 | 発注台帳の工期（契約の期間）を作業の期間にしない |
+| Days | 工程表の「6日間」→ 日数。工程表の週のセル（その週に作業した日数）→ 日数 | 発注台帳の工期の日数を作業の日数にしない |
+| Man-days | 日報の人員（「3名」）・人工計（R6 からの帳票）→ その日の工数。工程表の延べ人工（「45人工」）→ 年度の工数 | 日報の人員の和と工程表の延べ人工が違うとき、片方で決めない（「資料で違う工数・日数」で聞く） |
+| Cost (budget / actual) | 発注台帳の支払額 → 実績の費用。星取表の費用の列（計画の行）→ 予算。単位（千円）・税込か税抜は見出しから | 単価契約の予定総額を実績の費用にしない（支払額を使う）。変更契約の行（「〃（第1回変更）」）を別の作業の費用として足さない（案：聞く）。設備ごとの小計・年度ごとの合計を費用にしない |
+| Result / measurement / previous value | 日常点検表の写真のチェック・×・数 → 判定・測定値（人が画像と並べて確かめるまで要確認）。機器別管理基準の健全度 → 判定（案） | 健全度の段（1〜4）の外の値（「5」）を直して入れない（照査が出す） |
+| Contractor | 発注台帳の契約の相手 → その作業の外注先（案） | - |
+| Performer | 日報の作業者の名前 → 実施者（案） | - |
+| Usage | 日常点検表の積算の運転時間の欄 → 稼働（未確認：手本の写真に有るか） | - |
+| Mapping | 資料には無い。機器の名前・上の設備の階層・作業の名前を条件にしたルール | - |
+| Check and answer (intake question) | 取り込みの質問（年度の読み方・列の役目・費用の単位・星取の意味）への答え | - |
+| Rule | 会話で決めたルール：「「延工数(h)」の列は時間として読む」「「ﾎﾞｲﾗ給水ﾎﾟﾝﾌﾟ」と「BFP」は同じ機器」 | - |
+| Plan rule | 資料には無い。利用者が会話で直した周期（「灰クレーンの整備は 4 年ごと」） | - |
+| Cycle proposal (ledger, rule, conversation answer) | 資料には無い。公開台帳の類似施設 5 以上の間隔の中央値・Skillパックの基準（精密機能検査の 3 年に 1 回以上）・自施設の実績の間隔・計画ルールから | - |
+| Matching | 工程表の着手・完了と日報の作業した日（同じ作業）。星取表の周期と機器台帳の周期 | - |
+| Source file | 資料・シート・セル。完成図書の PDF は頁と位置、日常点検表の写真は画像の位置 | - |
 
 <!-- moyai:data-names:end -->
 
-## ルール（2 段目）
+## Rules (tier 2)
 
-この Skillパックのルールは `reading.json` にある（形は 3 段目のルールと同じ moyai.reading/0）。取り込みは、3 段目（施設・担当・会社）のルールのあとに当てる。
+This Skill pack's rules are in `reading.json` (the same shape moyai.reading/0 as tier-3 rules). Intake applies them after the tier-3 rules (facility, person, company).
 
-- 職種の語：「築炉工」（焼却炉の耐火物の補修）。作業日報の人数の欄で、職種の語として読む。
-- 号炉の書き方（「1号炉」「1炉」「#1」）を読むのは、いまは標準の読み手が持っている。審査のあとに、この Skillパックの語へ移す。
-- 施設ごとの細かいルール（列の言い方・見出しの行・記号の意味・決まった答え）は、ここに足さない。会話で 3 段目のルールにする。
+- Trade word: 「築炉工」 (furnace builder; repairs incinerator refractories). Read as a trade word in the headcount column of daily work reports.
+- Reading how furnaces are written (「1号炉」, 「1炉」, 「#1」) is currently held by the standard reader. After judging, it will move to this Skill pack's words.
+- Do not add fine-grained per-plant rules here (column wording, heading rows, meanings of symbols, fixed answers). Make them into tier-3 rules in conversation.
 
-## 出典
+## Sources
 
-- 環境省『廃棄物処理施設長寿命化総合計画作成の手引き（ごみ焼却施設編）』令和 3 年 3 月改訂（https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf ）
-- 廃棄物の処理及び清掃に関する法律の運用に伴う留意事項について（昭和 46 年 10 月 25 日 環整第 45 号 厚生省環境衛生局環境整備課長通知）（https://www.env.go.jp/hourei/11/000510.html ）
-- 廃棄物の処理及び清掃に関する法律施行規則（昭和四十六年厚生省令第三十五号）（https://laws.e-gov.go.jp/law/346M50000100035 ）
-- 一般廃棄物処理実態調査結果（令和 6 年度）施設の表（焼却施設）（https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/ ）
-- 総務省の勧告の抜粋（精密機能検査の実施の状況を示す二次資料）（https://www.soumu.go.jp/main_content/000401742.pdf ）
+- Ministry of the Environment, "Guide for Preparing Comprehensive Life-Extension Plans for Waste Treatment Facilities (Waste Incineration Edition)", revised March 2021 (https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf )
+- Notice on points to note in applying the Waste Management and Public Cleansing Act (25 October 1971 (Showa 46), Kansei No. 45, notice of the Director of the Environmental Sanitation Division, Environmental Health Bureau, Ministry of Health and Welfare) (https://www.env.go.jp/hourei/11/000510.html )
+- Enforcement Regulations of the Waste Management and Public Cleansing Act (Ordinance of the Ministry of Health and Welfare No. 35 of 1971) (https://laws.e-gov.go.jp/law/346M50000100035 )
+- General Waste Treatment Survey (FY2024), facility tables (incineration plants) (https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/ )
+- Excerpt of a recommendation by the Ministry of Internal Affairs and Communications (a secondary source on how precision function inspections are carried out) (https://www.soumu.go.jp/main_content/000401742.pdf )

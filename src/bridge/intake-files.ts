@@ -195,7 +195,7 @@ export function skillPacks(packsDir: string): { id: string; name: string }[] {
 /** 誤りの文に並べる、選べる Skillパックの ID と名前（intake_pack_unknown の {packs}） */
 export function skillPacksText(packsDir: string): string {
   const list = skillPacks(packsDir);
-  return list.length ? list.map((p) => `${p.id}：${p.name}`).join("・") : "選べる Skillパックが 1 つもありません";
+  return list.length ? list.map((p) => `${p.id}: ${p.name}`).join(", ") : "there is no selectable Skill pack";
 }
 
 function isFile(p: string): boolean {

@@ -34,7 +34,7 @@ test("写真：人が許した 1 枚だけを AI が受け取り、読んだ格�
       expect(r.isError).toBe(true);
       expect(r.content).toHaveLength(1);
       expect(r.content[0].type).toBe("text");
-      expect(r.content[0].text).toContain("許していません");
+      expect(r.content[0].text).toContain("has not yet allowed");
     });
 
     let size = { width: 0, height: 0 };
@@ -67,7 +67,7 @@ test("写真：人が許した 1 枚だけを AI が受け取り、読んだ格�
       await expect(photo).toHaveAttribute("data-state", "sent");
       const again: any = await c.callTool({ name: "photo_transcribe", arguments: { mode: "receive" } });
       expect(again.isError).toBe(true);
-      expect(again.content[0].text).toContain("許していません");
+      expect(again.content[0].text).toContain("has not yet allowed");
     });
 
     await test.step("型から外れた格子・画像の外の位置は、直さずに断られ、何も置かれない", async () => {
@@ -81,7 +81,7 @@ test("写真：人が許した 1 枚だけを AI が受け取り、読んだ格�
         arguments: { mode: "place", grid: { imageRef: PHOTO_NAME, cells: [{ row: 0, col: 0, text: "x", box: { x: size.width - 1, y: 0, w: 10, h: 10 }, confidence: 1 }] } },
       });
       expect(outside.isError).toBe(true);
-      expect(outside.content[0].text).toContain("画像の外");
+      expect(outside.content[0].text).toContain("outside the image");
       await expect(photo).toHaveAttribute("data-state", "sent");
     });
 

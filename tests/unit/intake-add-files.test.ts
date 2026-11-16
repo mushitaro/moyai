@@ -491,7 +491,7 @@ describe("folder の Skillパックと施設名", () => {
       { id: "alpha", name: "【架空】甲の業種" },
       { id: "gamma", name: "gamma" },
     ]);
-    expect(skillPacksText(packs)).toBe("alpha：【架空】甲の業種・gamma：gamma");
+    expect(skillPacksText(packs)).toBe("alpha: 【架空】甲の業種, gamma: gamma");
     const e = { packsDir: packs, stateDir: temp("moyai-state-"), repoRoot: REPO };
     const d = folder();
     const r = collectIntake({ source: "folder", path: d, pack: "alpha", facilityName: "【架空】乙" }, e) as IntakeCollection;
@@ -545,7 +545,7 @@ describe("folder の Skillパックと施設名", () => {
     const text = errorBody("intake_pack_unknown", { packs: skillPacksText(PACKS) }).error.message;
     expect(r.content[0]).toEqual({ type: "text", text });
     expect(text).not.toContain("{packs}");
-    for (const p of packChoices()) expect(text).toContain(`${p.id}：${p.name}`);
+    for (const p of packChoices()) expect(text).toContain(`${p.id}: ${p.name}`);
     for (const facilityName of ["あ".repeat(41), " 【架空】乙", ""]) {
       const e: any = await client.callTool({ name: "intake_add_files", arguments: { source: "folder", path: d, facilityName } });
       expect(e.isError, JSON.stringify(facilityName)).toBe(true);

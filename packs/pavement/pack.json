@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "pavement",
   "name": "舗装",
+  "en": {
+    "name": "Pavement",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "D",
   "content": "empty",

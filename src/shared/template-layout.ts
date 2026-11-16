@@ -30,35 +30,35 @@ export type FacilityField = (typeof FACILITY_FIELDS)[number];
 
 export const layoutPlanSheetSchema = z
   .object({
-    sheet: sheetName.describe("計画の表のシートの名前"),
-    headerRows: z.array(row).min(1).max(5).describe("見出しの行（1 から。2 段なら [7, 8]）"),
+    sheet: sheetName.describe("Name of the plan table sheet"),
+    headerRows: z.array(row).min(1).max(5).describe("Heading rows (from 1; [7, 8] for two tiers)"),
     years: z
       .object({
-        row: row.describe("年度の見出しの行（字か式で年度が決まる行）"),
-        from: col.describe("年度の列の左端"),
-        to: col.describe("年度の列の右端"),
-        startCell: cell.nullable().describe("開始年度のセル（ここに版の最初の年度を書き、年度の式が続く）。年度が見出しの字で決まるなら null"),
+        row: row.describe("The fiscal-year heading row (the row whose text or formulas give the fiscal years)"),
+        from: col.describe("Leftmost fiscal-year column"),
+        to: col.describe("Rightmost fiscal-year column"),
+        startCell: cell.nullable().describe("The start-year cell (the version's first fiscal year is written here and the year formulas follow). null if the heading text fixes the years"),
       })
       .strict(),
     levels: z
       .object({
-        mode: z.enum(["nested", "flat"]).describe("nested は入れ子の縦の書き方（親の行の次の行に子を 1 つずつ）、flat は 1 行に横に並べる"),
+        mode: z.enum(["nested", "flat"]).describe("nested writes levels vertically (each child on the row after its parent); flat puts them across one row"),
         columns: z
-          .array(z.object({ level: z.number().int().min(1).max(10).describe("計画の階層（1 から。intake_add_files の planLevels の順）"), col }).strict())
+          .array(z.object({ level: z.number().int().min(1).max(10).describe("Plan level (from 1, in the order of planLevels from intake_add_files)"), col }).strict())
           .min(1)
           .max(10),
       })
       .strict(),
     group: z
       .object({
-        labelCol: col.nullable().describe("組の行のラベルを書く列（記入区分など）。書かなければ null"),
+        labelCol: col.nullable().describe("Column for the group row labels (such as an entry-type column). null if none"),
         rows: z
           .array(
             z
               .object({
-                label: z.string().max(40).describe("ラベルの列に書く字（「予定内容」など）"),
+                label: z.string().max(40).describe("Text written in the label column (as the template's own label, such as planned content)"),
                 content: z.enum(GROUP_CONTENTS),
-                col: col.nullable().describe("cycle と next を書く列。年度の列に書く中身では null"),
+                col: col.nullable().describe("Column for cycle and next. null for content written in the fiscal-year columns"),
               })
               .strict(),
           )
@@ -66,20 +66,20 @@ export const layoutPlanSheetSchema = z
           .max(8),
       })
       .strict(),
-    insertBefore: row.describe("明細を足す位置：合計の行（この行の前の空行に書き、足りなければ行を足して合計の行を下へずらす）"),
-    continues: sheetName.nullable().describe("年度で分かれる続きのシートなら、前のシートの名前（行の並びは前のシートと同じ）。最初のシートは null"),
+    insertBefore: row.describe("Where details go: the total row (written in the empty rows above it; if short, rows are inserted and the total row moves down)"),
+    continues: sheetName.nullable().describe("For a continuation sheet split by fiscal year, the previous sheet's name (same row order as the previous sheet). null for the first sheet"),
   })
   .strict();
 
 export const templateLayoutSchema = z
   .object({
     schema: z.literal(LAYOUT_SCHEMA),
-    levelOrder: z.enum(["asset-first", "series-first"]).describe("階層の並び（asset-first 設備 › 機器 › 号炉・系統 › 部位、series-first 設備 › 号炉・系統 › 機器 › 部位）"),
-    startYear: z.number().int().min(1900).max(2200).nullable().describe("開始年度のセルに書く年度。null は版の最初の年度"),
+    levelOrder: z.enum(["asset-first", "series-first"]).describe("Level order (asset-first: facility > equipment > unit/line > part; series-first: facility > unit/line > equipment > part)"),
+    startYear: z.number().int().min(1900).max(2200).nullable().describe("Fiscal year written in the start-year cell. null is the version's first fiscal year"),
     amount: z
       .object({
-        unit: z.enum(["yen", "thousand_yen"]).describe("金額の単位（円か千円。千円は円 ÷ 1000 で丸めない）"),
-        tax: z.enum(["incl", "excl", "unknown"]).describe("様式の金額の税（税込・税抜・書いていない）。違う税の明細は換算せずに数える"),
+        unit: z.enum(["yen", "thousand_yen"]).describe("Amount unit (yen or thousand yen; thousand yen is yen / 1000, not rounded)"),
+        tax: z.enum(["incl", "excl", "unknown"]).describe("Tax of the template amounts (included, excluded, not stated). Details with a different tax are counted, not converted"),
       })
       .strict(),
     sheets: z.array(layoutPlanSheetSchema).min(1).max(10),
@@ -90,7 +90,7 @@ export const templateLayoutSchema = z
       })
       .strict()
       .nullable()
-      .describe("基本情報のシートの欄（施設の項目 → セル）。無ければ null"),
+      .describe("Fields of the basic-information sheet (facility item -> cell). null if none"),
   })
   .strict();
 
@@ -98,7 +98,7 @@ export type TemplateLayout = z.infer<typeof templateLayoutSchema>;
 export type LayoutPlanSheet = z.infer<typeof layoutPlanSheetSchema>;
 
 /** screen_set の templateLayout：どの様式（intake_add_files の template.name）に置く案か ＋ 写し方 */
-export const templateLayoutInputSchema = templateLayoutSchema.extend({ template: z.string().min(1).max(80).describe("intake_add_files（source: template）が返した様式の名前") }).strict();
+export const templateLayoutInputSchema = templateLayoutSchema.extend({ template: z.string().min(1).max(80).describe("The template name returned by intake_add_files (source: template)") }).strict();
 export type TemplateLayoutInput = z.infer<typeof templateLayoutInputSchema>;
 
 // ─── Claude に返す様式の形（intake_add_files の source: template）────────────────

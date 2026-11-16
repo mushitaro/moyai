@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "solar-wind",
   "name": "太陽光・風力",
+  "en": {
+    "name": "Solar and wind power",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "F",
   "content": "empty",

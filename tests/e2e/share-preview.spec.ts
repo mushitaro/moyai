@@ -53,7 +53,7 @@ test("確定した版で、share_preview の数が SHARE の画面の数と同�
     await test.step("確定の前：share_preview は needs を返し、SHARE を開く（画面も確定していないと出す）", async () => {
       await openPlan(page);
       const out = await callTool(c, "share_preview");
-      expect(out.needs).toEqual({ reason: "not_confirmed", text: "確定した版がありません。HOSHITORI の確定のシートで確定してから" });
+      expect(out.needs).toEqual({ reason: "not_confirmed", text: "There is no confirmed version. Confirm on the HOSHITORI Decisions sheet first" });
       expect(out.screen).toBe(true);
       expect(out.version).toBeNull();
       expect(out.counts).toBeNull();

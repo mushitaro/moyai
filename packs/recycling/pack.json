@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "recycling",
   "name": "リサイクル施設（粗大ごみ・資源化）",
+  "en": {
+    "name": "Recycling facilities (bulky waste, resource recovery)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "A",
   "content": "empty",

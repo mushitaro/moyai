@@ -41,7 +41,7 @@ const SHRINK: ((d: Record<string, unknown>) => string | null)[] = [
   (d) => {
     if (d.crosswalk === null || d.crosswalk === undefined) return null;
     d.crosswalk = null;
-    return "紐付けの要約（part: crosswalk で読む）";
+    return "mapping summary (read with part: crosswalk)";
   },
   (d) => cutList(d, "files", 40),
   (d) => cutList(d, "notes", 10),
@@ -67,8 +67,8 @@ function cutList(d: Record<string, unknown>, key: string, max: number, dedupeKey
   if (ys.length > max) ys = ys.slice(0, max);
   if (ys.length === xs.length) return null;
   d[key] = ys;
-  const label: Record<string, string> = { legends: "凡例", notes: "注記", files: "資料の一覧" };
-  return `${label[key] ?? key}（${xs.length} のうち ${ys.length}）`;
+  const label: Record<string, string> = { legends: "legends", notes: "notes", files: "file list" };
+  return `${label[key] ?? key} (${ys.length} of ${xs.length})`;
 }
 
 function cutSamples(d: Record<string, unknown>, lim: { rows: number; cells: number }): string | null {
@@ -77,7 +77,7 @@ function cutSamples(d: Record<string, unknown>, lim: { rows: number; cells: numb
   const ys = xs.slice(0, lim.rows).map((s) => (s.cells.length > lim.cells ? { ...s, cells: s.cells.slice(0, lim.cells) } : s));
   if (ys.length === xs.length && ys.every((s, i) => s === xs[i])) return null;
   d.samples = ys;
-  return `見本の行（${xs.length} 行のうち ${ys.length} 行、1 行 ${lim.cells} セルまで）`;
+  return `sample rows (${ys.length} of ${xs.length} rows, up to ${lim.cells} cells per row)`;
 }
 
 function cutStuck(d: Record<string, unknown>, lim: { files: number; header: number; rows: number; cells: number; unresolved: number }): string | null {
@@ -92,7 +92,7 @@ function cutStuck(d: Record<string, unknown>, lim: { files: number; header: numb
   });
   if (!changed) return null;
   d.stuck = ys;
-  return `詰まっている所（${xs.length} 資料のうち ${ys.length}、見本の行は資料ごとに ${lim.rows} 行まで）`;
+  return `stuck (${ys.length} of ${xs.length} files, up to ${lim.rows} sample rows per file)`;
 }
 
 /** sameOptionsAs で指した選択肢の並びを、その質問に書き戻す（指す先が無ければ空のまま） */
@@ -167,10 +167,10 @@ export function pageSurvey(input: Record<string, unknown>, opts: SurveyPageOptio
     const split = paged || next !== null;
     const head = [
       split
-        ? `質問は ${all.length} 件。ここに載せたのは ${k ? `${cursor + 1}〜${cursor + k}` : "0"} 件目（1 回の答えの大きさの上限 ${Math.round(max / 1000)} KB のため分けて返す）。` +
-          (next !== null ? `続きは intake_survey（part: questions、cursor: ${next}）で読む。questionGroups は同じ形の質問の件数と代表の 1 問。` : "")
+        ? `There are ${all.length} questions. This answer holds ${k ? `${cursor + 1} to ${cursor + k}` : "none"} (split because of the ${Math.round(max / 1000)} KB limit per answer). ` +
+          (next !== null ? `Read on with intake_survey (part: questions, cursor: ${next}). questionGroups gives the count and one example per question shape. ` : "")
         : "",
-      cut.length ? `大きさの上限のため短くした欄：${cut.join("・")}。` : "",
+      cut.length ? `Fields shortened for the size limit: ${cut.join(", ")}.` : "",
     ].join("");
     const out: Record<string, unknown> = { ...base, questions: shareOptions(wanted.slice(0, k)), notes: head ? [head, ...notes] : notes };
     if (split) out.questionsPage = { total: all.length, cursor, returned: k, nextCursor: next };
@@ -201,14 +201,14 @@ function fitBase(d: Record<string, unknown>, max: number, cut: string[]): Record
     const what = step(d);
     if (what) cut.push(what);
   }
-  if (cut.length) d.notes = [`1 回の答えの大きさの上限 ${Math.round(max / 1000)} KB のため短くした欄：${cut.join("・")}。`, ...(Array.isArray(d.notes) ? (d.notes as string[]) : [])];
+  if (cut.length) d.notes = [`Fields shortened for the ${Math.round(max / 1000)} KB limit per answer: ${cut.join(", ")}.`, ...(Array.isArray(d.notes) ? (d.notes as string[]) : [])];
   return jsonBytes(d) > max ? lastResort(d, max) : d;
 }
 
 /** どう短くしても収まらないとき（資料の名前が長く多いなど）：一覧を空にし、そのことを注記に書く */
 function lastResort(d: Record<string, unknown>, max: number): Record<string, unknown> {
   const out: Record<string, unknown> = { ...d, samples: [], stuck: [], legends: [], files: [], notes: [] };
-  out.notes = [`1 回の答えの大きさの上限 ${Math.round(max / 1000)} KB に収まらないので、資料の一覧・見本・詰まっている所・凡例・注記を載せていない。part: questions か part: compose で分けて読む。`];
+  out.notes = [`The answer does not fit the ${Math.round(max / 1000)} KB limit, so the file list, samples, stuck, legends and notes are left out. Read them separately with part: questions or part: compose.`];
   if (jsonBytes(out) > max) out.crosswalk = null;
   if (jsonBytes(out) > max) {
     out.questions = [];

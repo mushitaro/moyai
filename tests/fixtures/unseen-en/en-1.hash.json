@@ -1,0 +1,9 @@
+{
+ "schema": "moyai.heldout.hash/0",
+ "set": "en-1",
+ "bundle": "1b40a7d4d5098c403276fc204f763527c6ce8880432789f1ccff92cd08727d93",
+ "files": 10,
+ "reader_commit": "a44b0d6",
+ "note": "English unseen format (global support stage 1b). The hash is committed before the reader reads the set; the reader is reader_commit. previous_bundle: the first hash; the measuring tool rejected that set's answer files (answer schema), so the writer fixed only answer/ and gen/ (files/ bytes unchanged) and this hash was committed before the one measurement.",
+ "previous_bundle": "3a47420ed641e4ce97dbc898ad25da5adb3d39db3281a18d3a81e9d76665084d"
+}

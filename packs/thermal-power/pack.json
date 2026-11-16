@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "thermal-power",
   "name": "火力発電（汽力・ガスタービン）",
+  "en": {
+    "name": "Thermal power (steam and gas turbine)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "F",
   "content": "empty",
