@@ -30,6 +30,11 @@ const GUARD_FILES = /(?:^|[\\/\s"'`=])(?:scripts[\\/]+guard-hook\.mjs|\.claude[\
 const SHELL_WRITE = new RegExp(WRITE_VERB.source + String.raw`|\bsed\s+(?:-\w*\s+)*-i|\bperl\s+-\w*i|\bdd\b|\bchmod\b|\bgit\s+(?:checkout|restore|apply|am|stash\s+pop)\b|\bln\b`, "i");
 const PREVIOUS_PRODUCT_URL = [
   /^https?:\/\/(?:www\.)?github\.com\/woodygaragelab\/hoshutaro(?:\/|$|\.git)/i,
+  /^https?:\/\/raw\.githubusercontent\.com\/woodygaragelab\/hoshutaro(?:\/|$)/i,
+  /^https?:\/\/api\.github\.com\/(?:repos\/)?woodygaragelab\/hoshutaro(?:\/|$)/i,
+  /^https?:\/\/codeload\.github\.com\/woodygaragelab\/hoshutaro(?:\/|$)/i,
+  /^https?:\/\/(?:www\.)?npmjs\.(?:com|org)\/package\/\S*hoshutaro/i,
+  /^https?:\/\/registry\.npmjs\.org\/\S*hoshutaro/i,
 ];
 
 /** ホストの名前が自分の PC（127.0.0.0/8・::1・IPv4 の写しの ::ffff:7f..・localhost・0.0.0.0）か。 */
