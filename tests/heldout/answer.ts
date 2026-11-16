@@ -47,8 +47,7 @@ export const AnswerWorld = z
         .object({
           id: z.string().min(1),
           name: z.string(),
-          // 資料での呼び名。1 つの資料で呼び名が揺れる書き手（en-1）は並びで書く。並びのときは、名前が 1 つに決まるときだけ使う
-          names: z.record(z.string(), z.union([z.string(), z.array(z.string()).min(1)])).optional(),
+          names: z.record(z.string(), z.string()).optional(),
           furnace: z.number().int().nullable().optional(),
           install_year: z.number().int().nullable().optional(),
           code: z.string().nullable().optional(),
@@ -296,7 +295,7 @@ function loadFacility(setDir: string, key: string, setName: string, filesDirOver
         ...(tree ? { parent } : path.length > 1 ? { parent: "exists" as const } : {}),
         equipment_id: e.id,
         name_text: nameText,
-        ...(nameIn(e.names?.[a.file]) ? { name: nameIn(e.names?.[a.file])! } : {}),
+        ...(e.names?.[a.file] ? { name: e.names[a.file] } : {}),
         ...(typeof rec.fields.code === "string" ? { tag: rec.fields.code } : {}),
         ...(typeof rec.fields.install_year === "number" ? { install_year: rec.fields.install_year } : {}),
         ...(Array.isArray(rec.fields.specs) ? { spec_texts: (rec.fields.specs as unknown[]).map(String) } : {}),
@@ -447,10 +446,4 @@ export function mergeResults(set: string, per: { key: string; result: SetResult;
     },
     unplaced: [...per.flatMap((p) => p.result.unplaced.map((u) => `${p.key}：${u}`)), ...per.flatMap((p) => (p.unmapped ?? []).map((u) => `${p.key}：写せない正解：${u}`))].slice(0, 80),
   };
-}
-
-/** 資料での呼び名：文字ならそれ、並びなら 1 つだけのときのそれ（揺れていれば決めない） */
-function nameIn(v: string | string[] | undefined): string | null {
-  if (typeof v === "string") return v;
-  return v && v.length === 1 ? v[0]! : null;
 }
