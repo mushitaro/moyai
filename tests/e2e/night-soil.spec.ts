@@ -89,7 +89,7 @@ test("し尿処理のパックで、同じ画面のまま取り込み → 計画
       expect(byHuman).not.toBeNull();
       const over: any = await c.callTool({ name: "intake_settle", arguments: { decisions: [{ ...byHuman!, author: "ai", reason: "人の答えの上に置けないことを確かめる（試験の台本）" }] } });
       expect(over.isError).toBe(true);
-      expect(JSON.stringify(over.content)).toContain("人が画面で答えています");
+      expect(JSON.stringify(over.content)).toContain("A person answered that question on the screen");
     });
 
     await test.step("AI：計画を作る", async () => {

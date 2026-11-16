@@ -36,7 +36,7 @@ test("取り込み → 当てはめ → 検査の画面と check_results", async
       await expect(page.getByTestId("sheet-check")).toHaveCount(0);
       const r: any = await c.callTool({ name: "check_results", arguments: {} });
       expect(r.isError).toBe(true);
-      expect(JSON.stringify(r.content)).toContain("作業中の計画");
+      expect(JSON.stringify(r.content)).toContain("no working plan");
     });
 
     await test.step("人が資料を落とし、AI が計画を作り、当てはめの案を置き、試験の台本が人の代わりに受ける", async () => {

@@ -29,7 +29,7 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
     await test.step("作業画面が開く前は「作業画面が開いていません」", async () => {
       const r: any = await c.callTool({ name: "intake_survey", arguments: {} });
       expect(r.isError).toBe(true);
-      expect(JSON.stringify(r.content)).toContain("作業画面が開いていません");
+      expect(JSON.stringify(r.content)).toContain("The work screen is not open");
     });
 
     await test.step("人が保存先を選び、資料を画面に落とす", async () => {
@@ -56,7 +56,7 @@ test("AI が MCP で取り込みを最後まで動かし、星取表の行を読
         arguments: { decisions: [{ questionId: q.questionId, answer: "above", author: "ai", reason: "見本" }] },
       });
       expect(r.isError).toBe(true);
-      expect(JSON.stringify(r.content)).toContain("選択肢");
+      expect(JSON.stringify(r.content)).toContain("options");
     });
 
     await test.step("intake_settle：利用者がチャットで既定の答えでよいと言ったものを置く（質問が無くなるまで）", async () => {
@@ -220,7 +220,7 @@ test("「画面を出して」の開いた印・screen_set の施設の名前・
       const d = await call(c, "intake_add_files", { source: "demo" });
       expect(d.added).toEqual([]);
       expect(d.refused.map((x: { reason: string }) => x.reason)).toEqual(["mixed", "mixed", "mixed"]);
-      expect(d.note).toContain("利用者の資料と架空の資料を混ぜない");
+      expect(d.note).toContain("the user's files and fictional files are never mixed");
       // 資料の選びの数は、人が落とした 3 つのまま
       await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", "3");
     });
