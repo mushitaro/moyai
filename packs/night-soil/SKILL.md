@@ -1,67 +1,69 @@
 ---
 name: moyai-pack-night-soil
-description: し尿処理施設のSkillパック（MOYAI の 2 段目の Skill。標準で、利用者は編集できない）。し尿処理施設・汚泥再生処理センターの保全の計画（星取表）を MOYAI で読み、共通の設備項目に当てるときに読む。
+description: The night-soil treatment Skill pack (MOYAI's tier-2 Skill; standard, users cannot edit it). Read it when reading maintenance plans (star charts) of night-soil treatment plants and sludge recycling centres in MOYAI and mapping them to the common equipment items.
 ---
 
-# し尿処理施設のSkillパック（2 段目の Skill）
+# Night-soil treatment Skill pack (tier-2 Skill)
 
-MOYAI の業界の標準Skillパックの 1 つ。中身は `packs/night-soil/` のデータ（`common.json`・`sources.json`）で、この文はその使い方を書いたもの。「Skillパックを足しただけ」のSkillパックで、ごみ焼却のSkillパックと同じ厚さではない。1 段目の基本操作の決まりを上書きしない。
+One of MOYAI's standard industry Skill packs. Its content is the data in `packs/night-soil/` (`common.json`, `sources.json`); this text explains how to use it. It is a Skill pack that was "only added", and is not as thick as the waste incineration Skill pack. It does not override the tier-1 basic operating rules.
 
-## 確かめた度合い
+Reply to the user in the user's language (Japanese if they write in Japanese). The documents are usually in Japanese, so the document words below are kept in Japanese exactly as they are written in documents and in `common.json`; English glosses are in parentheses.
 
-- 共通の設備項目（`common.json`）：原典照合済。環境省『廃棄物処理施設長寿命化総合計画作成の手引き（し尿処理施設・汚泥再生処理センター編）』（令和 3 年 3 月改訂）の表Ⅱ-4「主要設備・機器リスト例」（印刷頁 27、PDF の 35 枚目）を原本で照らした。
-- 下の「補機の当て方」「よくある呼び名」「作業の名前の読み替え」：未確認（作る側が業界の一般の呼び名から決めた。表Ⅱ-4 には無い）。
-- 全国の表・共有の公開語彙・照査：未実装。だから共有（共有フォルダ・公開の台帳）は切ってあり、`check_results` の照査も無い。類似施設と比べられないことを、利用者に隠さず伝える。
+## Verification level
 
-## 階層と、共通の設備項目
+- Common equipment items (`common.json`): checked against the original. Table II-4 "Example list of main equipment and devices" (printed page 27, PDF page 35) of the Ministry of the Environment's "Guide for Preparing Comprehensive Life-Extension Plans for Waste Treatment Facilities (Night-Soil Treatment Facilities and Sludge Recycling Centres Edition)" (revised March 2021) was checked against the original.
+- "Mapping auxiliary equipment", "Common names" and "Reading work names" below: unchecked (the authors decided them from common industry names; they are not in Table II-4).
+- National table, public sharing vocabulary and review: not implemented. So sharing (shared folders, the public ledger) is turned off and `check_results` has no review. Tell the user plainly that comparison with similar plants is not available.
 
-- 階層の名前の既定は「設備 › 機器 › 部位」。
-- 共通の設備項目の第 1 階層は、表Ⅱ-4 の 8 つの設備：受入貯留設備・主処理設備・高度処理設備・脱臭設備・給水設備・配管設備・ダクト設備・電気計装設備。その下に表Ⅱ-4 の装置名（例：投入槽・沈砂槽・受入槽・破砕機）。
-- 表Ⅱ-4 の帯で隠れて読めない行は、項目にしていない（`common.json` の notes）。読めない名前を推測で項目にしない。
-- 同じ名前の槽（脱窒素槽・硝化槽・沈殿槽など）が 2 系統にあることが多い。どちらの系統の機器かは、台帳の機器番号と並びで決め、決まらなければ利用者に聞く。
-- 紐付け（節 → 項目のコード）は `intake_survey`（part: crosswalk）の `items` のコードからだけ選ぶ。案は人が HOSHITORI の確定のシートで受けるまで決まらない。
+## Hierarchy and common equipment items
 
-### 補機の当て方
+- The default level names are 設備 (system) › 機器 (equipment) › 部位 (part).
+- The first level of the common equipment items is the 8 systems of Table II-4: 受入貯留設備 (receiving and storage), 主処理設備 (main treatment), 高度処理設備 (advanced treatment), 脱臭設備 (deodorising), 給水設備 (water supply), 配管設備 (piping), ダクト設備 (ducts), 電気計装設備 (electrical and instrumentation). Below them are Table II-4's device names (for example 投入槽 (input tank), 沈砂槽 (grit tank), 受入槽 (receiving tank), 破砕機 (crusher)).
+- Rows of Table II-4 hidden behind a band and unreadable are not made into items (`common.json` notes). Do not make an unreadable name into an item by guessing.
+- Tanks with the same name (脱窒素槽 (denitrification tank), 硝化槽 (nitrification tank), 沈殿槽 (settling tank), etc.) are often in two trains. Decide which train a piece of equipment belongs to from the register's equipment number and order; if undecided, ask the user.
+- For linking (node → item code), choose only from the codes in `items` of `intake_survey` (part: crosswalk). A proposal is not decided until a person accepts it on the Decisions sheet of HOSHITORI.
 
-- 表Ⅱ-4 の項目は装置の単位で細かいが、台帳にはそれに付く補機（ポンプ・弁・計器・小さな槽・盤など）も並ぶ。補機は、項目が無いから空けるのではなく、その補機が仕える装置の項目に当てる。
-- 決め方：
-  1. 上の設備の階層の名前で、表Ⅱ-4 の設備を決める。
-  2. その設備の下に項目が 1 つしかなければ（配管設備・ダクト設備）、その階層の補機はその項目。
-  3. 2 つ以上あれば、補機の名前に出てくる装置（「〇〇槽の撹拌機」なら〇〇槽）で決める。
-  4. 1 つに決まらない補機だけを、利用者に聞く。
-- 当てるのは機器の階層だけ。設備の階層と部位の階層（電動機・軸受など）には当てない。
+### Mapping auxiliary equipment
 
-### よくある呼び名
+- Table II-4's items are fine-grained by device, but registers also list the auxiliaries attached to them (pumps, valves, instruments, small tanks, panels, etc.). Do not leave an auxiliary unmapped because it has no item of its own; map it to the item of the device it serves.
+- How to decide:
+  1. Decide the Table II-4 system from the name at the system level above.
+  2. If that system has only one item below it (配管設備 (piping), ダクト設備 (ducts)), the auxiliaries at that level go to that item.
+  3. If it has two or more, decide by the device that appears in the auxiliary's name (for "〇〇槽の撹拌機" (agitator of tank X), tank X).
+  4. Ask the user only about auxiliaries that cannot be decided as one.
+- Map only the equipment level. Do not map the system level or the part level (電動機 (motor), 軸受 (bearing), etc.).
 
-- 資料の書き方が下の表にあれば、その項目の書き方とみなす（名前が似ているかで決めるのではなく、この表に書いたものだけを同じとみなす）。
+### Common names
 
-| 資料の書き方の例 | 項目の書き方 |
+- If a document's wording is in the table below, treat it as that item's wording (do not decide by whether names look alike; only what is in this table is treated as the same).
+
+| Wording in documents | Item wording |
 |---|---|
-| ブロア | ブロワ（曝気ブロワ・ガス撹拌ブロワ） |
-| ばっ気・エアレーション | 曝気（曝気ブロワ・再曝気槽） |
-| 沈砂池 | 沈砂槽 |
-| スクリーン・し渣除去装置 | 夾雑物除去装置 |
-| し渣脱水機・スクリュープレス | 夾雑物脱水装置 |
-| 汚泥掻き寄せ機・掻寄せ機 | 沈殿槽汚泥掻寄機 |
-| 非常用発電装置 | 非常用発電機 |
+| ブロア | ブロワ（曝気ブロワ・ガス撹拌ブロワ） (blower: aeration blower, gas agitation blower) |
+| ばっ気・エアレーション | 曝気（曝気ブロワ・再曝気槽） (aeration: aeration blower, re-aeration tank) |
+| 沈砂池 | 沈砂槽 (grit tank) |
+| スクリーン・し渣除去装置 | 夾雑物除去装置 (screenings removal device) |
+| し渣脱水機・スクリュープレス | 夾雑物脱水装置 (screenings dewatering device) |
+| 汚泥掻き寄せ機・掻寄せ機 | 沈殿槽汚泥掻寄機 (settling tank sludge scraper) |
+| 非常用発電装置 | 非常用発電機 (emergency generator) |
 
-## 作業分類
+## Work categories
 
-- コードは 4 つ：INSPECT（点検）・OVERHAUL（分解整備）・REPLACE（更新）・UPGRADE（基幹改良）。事後の修理は属性に入れない。
+- There are 4 codes: INSPECT (inspection), OVERHAUL (overhaul), REPLACE (replacement), UPGRADE (major upgrade). After-the-fact repairs are not given an attribute.
 
-### 作業の名前の読み替え
+### Reading work names
 
-| 作業の名前に含む言葉 | 属性 |
+| Words contained in the work name | Attribute |
 |---|---|
-| 点検・検査・定期検査・精密機能検査・校正・試験・測定 | INSPECT |
-| 分解・分解整備・分解点検・オーバーホール | OVERHAUL |
-| 取替・更新・交換 | REPLACE |
-| 基幹改良・延命化 | UPGRADE |
+| 点検・検査・定期検査・精密機能検査・校正・試験・測定 (inspection, examination, periodic inspection, precision function inspection, calibration, test, measurement) | INSPECT |
+| 分解・分解整備・分解点検・オーバーホール (disassembly, overhaul, disassembly inspection) | OVERHAUL |
+| 取替・更新・交換 (replacement, renewal, exchange) | REPLACE |
+| 基幹改良・延命化 (major upgrade, life extension) | UPGRADE |
 
-- 「分解点検」は OVERHAUL とする。「開放点検」「定期整備」「整備」「補修」だけの名前は、中身が施設ごとに違うので当てずに聞く。ただし「定期整備（分解）」のように、名前の中に上の表の言葉があれば、その属性にする。言葉を含むかで書くルール（contains）だと「点検」のルールとぶつかる名前は、名前の一覧（in）のルールで書くか、「点検」のルールから外す。
-- 名前の無い作業（星取だけのもの）は、機器の群ごとに「この n 機器の星取は点検か、分解整備か、取替か」をまとめて 1 回で聞く。答えは、その群の機器の名前の一覧（assetNode.name が in）と名前の無い作業（work.kind が空の文字と equals）を条件にしたルールにする（ルールの値の組は 20 個まで）。
+- 「分解点検」 (disassembly inspection) is OVERHAUL. Names that are only 「開放点検」 (open inspection), 「定期整備」 (periodic maintenance), 「整備」 (maintenance) or 「補修」 (repair) differ in content from plant to plant, so do not map them; ask. But if a name contains a word from the table above, as in 「定期整備（分解）」 (periodic maintenance (disassembly)), give it that attribute. A name that would collide with the 「点検」 (inspection) rule under a rule written as "contains the word" (contains) should be written as a rule with a list of names (in), or be excluded from the 「点検」 rule.
+- For works without a name (star marks only), ask once per group of equipment: "Are the marks of these n pieces of equipment inspection, overhaul or replacement?" Make the answer into a rule whose conditions are the list of that group's equipment names (assetNode.name in) and works without a name (work.kind equals the empty string) (up to 20 values per rule).
 
-## 出典
+## Sources
 
-- 環境省『廃棄物処理施設長寿命化総合計画作成の手引き（し尿処理施設・汚泥再生処理センター編）』令和 3 年 3 月改訂（https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_hw.pdf ）
-- 一般廃棄物処理実態調査結果 令和 6 年度調査結果 施設整備状況（し尿処理施設）（https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/08.xlsx 。まだ使っていない）
+- Ministry of the Environment, "Guide for Preparing Comprehensive Life-Extension Plans for Waste Treatment Facilities (Night-Soil Treatment Facilities and Sludge Recycling Centres Edition)", revised March 2021 (https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_hw.pdf )
+- General Waste Treatment Survey, FY2024 results, facility status (night-soil treatment facilities) (https://www.env.go.jp/recycle/waste_tech/ippan/r6/data/seibi/facility/08.xlsx ; not used yet)
