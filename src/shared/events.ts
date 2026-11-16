@@ -25,7 +25,8 @@ export const EVENTS = {
     from: "bridge",
     to: "tab",
     // build は橋渡しのビルドの commit（前の版の橋渡しは送らない）。画面は自分のビルドと違えば、状態の帯のビルドの印を朱にする（#43）
-    data: z.object({ heartbeatMs: z.number().int(), deadMs: z.number().int(), tokenTtlMs: z.number().int(), build: z.string().max(80).optional() }),
+    // lang は設定で選んだ作業画面の言語（選んでいなければ送らない。画面は PC の言語に従う）
+    data: z.object({ heartbeatMs: z.number().int(), deadMs: z.number().int(), tokenTtlMs: z.number().int(), build: z.string().max(80).optional(), lang: z.enum(["en", "ja"]).optional() }),
   },
   // 入っている MOYAI の次の版が用意できた（moyai_update の prepare。#65）。切り替えは次の起動。画面はビルドの印を朱にするだけ
   "bridge.next": { from: "bridge", to: "tab", data: z.object({ next: z.string().regex(/^[0-9a-f]{7,40}$/) }) },

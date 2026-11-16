@@ -5,6 +5,7 @@
 // - 書体は端末に入っている BIZ UDPゴシック から（書体のファイルを読まない）。数と年度の列は tabular-nums。
 import { createHash } from "node:crypto";
 import { SITE_TEXT as T } from "../app/text/site";
+import { withLang, type Lang } from "../app/text/i18n";
 import { reasonText } from "../app/text/reasons";
 import { BANDS_VERSION, BAND_DEFS, STAT_FIELDS, bandCodes, type StatField } from "./bands";
 import { aggregate, latestPerKey, sectionsOf, type Aggregate, type StatCell } from "./aggregate";
@@ -104,6 +105,8 @@ export interface SiteInput {
   workNames: Record<string, string>;
   /** ビルドの印 */
   build: string;
+  /** ページの言語（無ければ日本語） */
+  lang?: Lang;
 }
 
 export interface SiteModel {
@@ -207,11 +210,16 @@ function sectionBlock(i: SiteInput, s: SiteModel["sections"][number], n: number)
 
 /** ページ全体（1 枚の HTML） */
 export function renderLedgerSite(i: SiteInput): string {
+  const lang = i.lang ?? "ja";
+  return withLang(lang, () => renderIn(i, lang));
+}
+
+function renderIn(i: SiteInput, lang: Lang): string {
   const m = siteModel(i);
   const sections = m.sections.length ? m.sections.map((s, k) => sectionBlock(i, s, k + 1)).join("") : `<p>${h(T.noBundles)}</p>`;
   return [
     "<!doctype html>",
-    '<html lang="ja"><head><meta charset="utf-8">',
+    `<html lang="${lang}"><head><meta charset="utf-8">`,
     `<meta http-equiv="Content-Security-Policy" content="${h(siteCsp())}">`,
     '<meta name="referrer" content="no-referrer">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',

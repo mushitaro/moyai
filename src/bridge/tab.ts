@@ -43,6 +43,8 @@ export interface TabHubOptions {
   tokenTtlMs: number;
   /** 橋渡しのビルドの commit。bridge.welcome で画面に渡す。前のビルドのままのタブは、あとから開いたタブに渡す */
   build?: string;
+  /** 設定で選んだ作業画面の言語。bridge.welcome で画面に渡す（無ければ送らない） */
+  lang?: () => "en" | "ja" | undefined;
   now: () => number;
   log: (msg: string) => void;
 }
@@ -218,12 +220,23 @@ export class TabHub {
       deadMs: this.o.deadMs,
       tokenTtlMs: this.o.tokenTtlMs,
       ...(this.o.build ? { build: this.o.build } : {}),
+      ...this.langOf(),
     });
     if (this.nextBuild) this.send(conn.ws, "bridge.next", { next: this.nextBuild });
     this.o.log("作業画面のタブがつながりました");
   }
 
   /** 前のタブを残して、あとから開いたタブを断るか */
+  /** 握手で渡す言語（読めなければ送らない。設定の読み違いで握手を止めない） */
+  private langOf(): { lang?: "en" | "ja" } {
+    try {
+      const l = this.o.lang?.();
+      return l ? { lang: l } : {};
+    } catch {
+      return {};
+    }
+  }
+
   private keepsPrevious(prev: ActiveTab, hello: EventData<"tab.hello">): boolean {
     if (!prev.work) return false;
     if (this.o.now() - prev.lastSeen > this.o.deadMs) return false;

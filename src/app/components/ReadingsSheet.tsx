@@ -22,6 +22,7 @@ import { tokyoYmd, versionName } from "../version-name";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { Switch } from "./Switch";
 import { ReadingOutBody, type ReadingOut } from "./ReadingOut";
+import { FICTION_MARK } from "../../plan/facility-name";
 
 const T = HUMAN_TEXT.readings;
 const fmt = (n: number) => n.toLocaleString("ja-JP");
@@ -387,7 +388,8 @@ export function RuleLineageDetail({
   const inStore = stored || (!!place && !!lineage?.places.some((p) => p.path === place));
   const rows = lineage && place ? appliedTo(lineage, place) : null;
   const versions = lineage && place ? ruleVersions(lineage, place) : [];
-  const mark = `【${TEXT.fictionMark}】`;
+  // 架空の印はデータの字（名前に入る。画面の言語によらない。plan/facility-name.ts）
+  const mark = FICTION_MARK;
   return (
     <Stack gap="xs" data-testid="rule-lineage" data-place={place ?? ""}>
       <Text size="sm" fw={700} data-testid="rule-lineage-name">

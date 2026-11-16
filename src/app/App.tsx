@@ -5,6 +5,7 @@ import { MantineProvider, useComputedColorScheme } from "@mantine/core";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Shell } from "./components/Shell";
 import { ERROR_TEXT } from "./text";
+import { useLang } from "./text/use-lang";
 import { bridgeClient, useConnection } from "./state/bridge";
 import type { LoadedReading } from "../import/reading";
 import { Home } from "./pages/Home";
@@ -136,6 +137,8 @@ function ReadingsSync() {
 }
 
 export function App() {
+  // 言語を変えると、ここから下が全部描き直る（部品は memo を使っていない。読み込み直しは要らない）
+  useLang();
   const { hash, left } = useHash();
   const route = routeOf(hash);
   const { state } = useConnection();

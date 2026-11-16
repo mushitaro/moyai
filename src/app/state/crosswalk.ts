@@ -27,6 +27,7 @@ import { AMBIGUOUS_KEY_PREFIX } from "../../import/compose";
 import { isPlanRuleCycle } from "../../plan/cycle";
 import { dropRemovedInHistory, historyReady, waitForHistory } from "./stars";
 import { proposalIdOf } from "../../plan/star";
+import { INLINE_TEXT } from "../text/inline";
 
 /** もとにした版（1C）：MERGE で版を開いたときに置く。作り直すと、その版の当てはめを「第 n 版と同じ」の案として並べる */
 let base: { version: number; plan: Plan; crosswalk: readonly { rule: Rule; basis: string }[] } | null = null;
@@ -51,7 +52,7 @@ const quote = (v: string | number) => (v === "" ? T.empty : `「${v}」`);
 function fieldLabel(ref: string): string {
   const [e, k] = ref.split(".") as [EntityId, string];
   const ent = ENTITIES[e] as { label: string; fields: Record<string, { label: string }> } | undefined;
-  return ent ? `${ent.label}の${ent.fields[k]?.label ?? k}` : ref;
+  return ent ? INLINE_TEXT.fieldOf(ent.label, ent.fields[k]?.label ?? k) : ref;
 }
 
 function condText(c: Rule["when"][number]): string {
@@ -61,7 +62,7 @@ function condText(c: Rule["when"][number]): string {
     case "equals":
       return T.cond.equals(f, quote(a));
     case "in":
-      return T.cond.in(f, c.values.map(quote).join("・"));
+      return T.cond.in(f, c.values.map(quote).join(INLINE_TEXT.list));
     case "contains":
       return T.cond.contains(f, quote(a));
     case "prefix":

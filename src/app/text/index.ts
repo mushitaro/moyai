@@ -1,8 +1,12 @@
 // 画面の言葉はここだけに置く。内部の言葉（型の名前など）を利用者に見せない。
 import type { TabErrorCode } from "../../shared/errors";
 import { LEDGER_PLACE } from "../../share/ledger-place";
+import { defineMessages } from "./i18n";
+import { EN_ERROR_TEXT, EN_TEXT } from "./en";
+import { CROSSWALK_BASIS_TEXT } from "./crosswalk-basis";
+import { INTAKE_TOOL_TEXT } from "./intake-tool";
 
-export const TEXT = {
+export const TEXT = defineMessages(EN_TEXT, {
   appName: "MOYAI",
   buildStamp: (time: string, commit: string) => `MOYAI · build ${time} JST · ${commit}`,
   fictionMark: "架空",
@@ -619,8 +623,8 @@ export const TEXT = {
       facilitySet: (items: string[]) => `AI が施設設定を入力（${items.join("・")}）`,
       facilityKept: (items: string[]) => `AI の施設設定は未反映（${items.join("・")}。入力済みのため）`,
       packNotOnScreen: (id: string) => `AI の資料は未追加（Skillパック「${id}」が、この画面の Skillパックの一覧に無いため）`,
-      /** 要約の注記（AI に渡す）：資料の読込の途中に要約を読んだとき */
-      readingNote: (done: number, total: number) => `資料の読込の途中（${done}/${total}）。まだ読んでいない資料は、この要約に入っていない`,
+      /** 要約の注記（AI に渡す）：資料の読込の途中に要約を読んだとき。訳さない（intake-tool.ts） */
+      readingNote: INTAKE_TOOL_TEXT.readingNote,
     },
     questionKind: {
       encoding: "文字コード",
@@ -711,24 +715,16 @@ export const TEXT = {
     noName: "（名前の無い作業）",
     current: (v: string) => `今：${v}`,
     currentNone: "今：無し",
-    // 規則の文（案の根拠として計画に残る）
-    ruleId: (n: number) => `案 ${n}`,
-    empty: "（空）",
-    cond: {
-      equals: (f: string, v: string) => `${f}が${v}`,
-      in: (f: string, vs: string) => `${f}が${vs}のどれか`,
-      contains: (f: string, v: string) => `${f}に${v}を含む`,
-      prefix: (f: string, v: string) => `${f}が${v}で始まる`,
-      range: (f: string, a: string, b: string) => `${f}が ${a}〜${b}`,
-      and: "、かつ ",
-    },
-    toItem: (name: string, code: string) => `共通の設備項目「${name}」（${code}）`,
-    toAttr: (label: string, code: string) => `作業の属性「${label}」（${code}）`,
-    ruleBasis: (id: string, cond: string, to: string, reason: string) => `${id}：${cond} → ${to}。AI の理由：${reason}`,
-    acceptedBasis: (basis: string, reason: string) => `${basis}。人が受けた理由：${reason}`,
-    /** 1C：もとにした版で人が受けた当てはめと同じ案の理由（決定のシートの「第 n 版と同じ」の受ける理由の既定にもする。Wire） */
-    sameAs: (n: number) => `第 ${n} 版で受けた当てはめと同じ`,
-    humanBasis: (reason: string) => `人が画面で当てた。理由：${reason}`,
+    // 規則の文（案の根拠として計画に残る）。訳さない（crosswalk-basis.ts）
+    ruleId: CROSSWALK_BASIS_TEXT.ruleId,
+    empty: CROSSWALK_BASIS_TEXT.empty,
+    cond: CROSSWALK_BASIS_TEXT.cond,
+    toItem: CROSSWALK_BASIS_TEXT.toItem,
+    toAttr: CROSSWALK_BASIS_TEXT.toAttr,
+    ruleBasis: CROSSWALK_BASIS_TEXT.ruleBasis,
+    acceptedBasis: CROSSWALK_BASIS_TEXT.acceptedBasis,
+    sameAs: CROSSWALK_BASIS_TEXT.sameAs,
+    humanBasis: CROSSWALK_BASIS_TEXT.humanBasis,
     carried: (r: { rules: number; acceptedBefore: number; acceptedAfter: number; humanLost: number }) =>
       `計画を作り直したので、前の紐付けを引き継ぎました：ルール ${r.rules}、人が確定した紐付け ${r.acceptedBefore} → ${r.acceptedAfter}` +
       (r.humanLost ? `、人が直に当てた行のうち ${r.humanLost} 行は新しい計画に無く、引き継げませんでした` : "") +
@@ -757,10 +753,10 @@ export const TEXT = {
     fail: "不合格：期待どおりになりませんでした",
     error: (name: string) => `検証できませんでした（${name}）`,
   },
-} as const;
+});
 
 /** ブリッジから受ける誤りの文。src/shared/errors.ts で受け手が tab のものは、すべてここにある。 */
-export const ERROR_TEXT: Record<TabErrorCode, string> = {
+export const ERROR_TEXT = defineMessages<Record<TabErrorCode, string>>(EN_ERROR_TEXT, {
   tab_taken_over: "作業画面は、あとから開いたタブに移りました。",
   tab_elsewhere: "作業画面は別のタブで開いています。",
   hello_invalid: "ブリッジとの最初の握手の形が違いました。",
@@ -783,7 +779,7 @@ export const ERROR_TEXT: Record<TabErrorCode, string> = {
   token_unknown: "ワンタイムトークンが無効です（使い終えたか、出していないもの）。",
   token_expired: "ワンタイムトークンが切れました。もう一度開き直してください。",
   token_mismatch: "ワンタイムトークンが、この操作か中身と結ばれていません。",
-};
+});
 
 // 人だけの画面（確定・版・設定・検問所）の言葉と、共有フォルダを確かめた理由の言葉
 export { HUMAN_TEXT, bandText } from "./human";

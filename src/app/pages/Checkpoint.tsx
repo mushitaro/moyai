@@ -28,6 +28,7 @@ import { bandShort } from "../../share/stat-text";
 import { defaultRingId, defaultShareDest, shareAnswersOf } from "../../share/share-preview";
 import { setShareChoice, useClaudeShare } from "../state/share";
 import { sheetHash } from "../stages";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.checkpoint;
 
@@ -419,7 +420,7 @@ function VerifyTable({
                   <Text span c="var(--shu-text)">
                     {T.rulesCounts(rulesChange.loosened, rulesChange.tightened).loosened}
                   </Text>
-                  {`・${T.rulesCounts(rulesChange.loosened, rulesChange.tightened).tightened}`}
+                  {`${INLINE_TEXT.list}${T.rulesCounts(rulesChange.loosened, rulesChange.tightened).tightened}`}
                   <button type="button" className="moyai-inline-act" onClick={() => onViewRules?.()} data-testid="rules-view">
                     {T.rulesView}
                   </button>
@@ -505,7 +506,7 @@ export function YouProfile({
     <Text size="sm" c="var(--text-2)" className="moyai-num">
       {undetermined ? (
         <Text span c="var(--shu-text)" data-testid="you-profile" data-state="undetermined">
-          {T.profileUndetermined(undetermined.length, undetermined.join("・"))}
+          {T.profileUndetermined(undetermined.length, undetermined.join(INLINE_TEXT.list))}
         </Text>
       ) : profile && k ? (
         <>
@@ -970,7 +971,7 @@ export function Checkpoint({ embedded = false }: { embedded?: boolean } = {}) {
                 <Text span c="var(--shu-text)">
                   {T.rulesCounts(res.rulesChange.loosened, res.rulesChange.tightened).loosened}
                 </Text>
-                {`・${T.rulesCounts(res.rulesChange.loosened, res.rulesChange.tightened).tightened}`}
+                {`${INLINE_TEXT.list}${T.rulesCounts(res.rulesChange.loosened, res.rulesChange.tightened).tightened}`}
                 <button type="button" className="moyai-inline-act" onClick={() => setLedgerRulesOpen(true)} data-testid="ledger-rules-view">
                   {T.rulesView}
                 </button>

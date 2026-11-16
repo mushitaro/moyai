@@ -25,6 +25,7 @@ import { DUE_TEXT, rowDue, type DueView } from "../../plan/due-view";
 import type { StatField } from "../../share/bands";
 import { bandShort, statText } from "../../share/stat-text";
 import { TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -121,7 +122,7 @@ export function bandCellText(row: ChartRow | undefined, f: StatField): string {
 function levelText(row: ChartRow, i: number): string {
   const name = row.levelCells[i] ?? "";
   if (i !== row.level - 1 || row.count === null) return name;
-  return row.kind === "unmapped" ? `${name}（${T.records(row.count)}）` : `${name}（${T.units(row.count)}）`;
+  return row.kind === "unmapped" ? INLINE_TEXT.paren(name, T.records(row.count)) : INLINE_TEXT.paren(name, T.units(row.count));
 }
 
 /** 表に渡す、行の外の状態：Claude が台帳から置き、人がまだ受けていない案の明細の鍵と、比べる版の印（docs/screens.md 3.2） */
@@ -404,7 +405,7 @@ export function commonRowText(row: ChartRow): string {
   if (row.level === 2) return levelText(row, 1);
   const [, item, attr] = row.path;
   const text = `${item ?? ""}${T.commonSep}${attr ?? ""}`;
-  return row.count === null ? text : `${text}（${T.units(row.count)}）`;
+  return row.count === null ? text : INLINE_TEXT.paren(text, T.units(row.count));
 }
 
 /** 1 列のときに表へ渡す行：項目の行は、その下に作業の行があれば出さない（作業の行が「項目 › 作業」を言う） */

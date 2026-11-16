@@ -10,6 +10,7 @@ import { prepareForAi, type PreparedImage, type Transfer } from "../intake/photo
 import type { IntakeView, IntakeWorkspace } from "../intake/workspace";
 import { useConnection } from "../state/bridge";
 import { ERROR_TEXT, HUMAN_TEXT, PHOTO_TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = PHOTO_TEXT;
 
@@ -177,7 +178,7 @@ function Review({ ws, entry, image, records }: { ws: IntakeWorkspace; entry: Pho
                   type="button"
                   className="moyai-photo-box"
                   {...flags(c)}
-                  aria-label={`${T.review.cell(c.row, c.col)}：${c.text}`}
+                  aria-label={INLINE_TEXT.colon(T.review.cell(c.row, c.col), c.text)}
                   style={{
                     left: `${(c.box.x / reading.width) * 100}%`,
                     top: `${(c.box.y / reading.height) * 100}%`,
@@ -203,7 +204,7 @@ function Review({ ws, entry, image, records }: { ws: IntakeWorkspace; entry: Pho
                         <Table.Td
                           key={k}
                           {...(c ? flags(c) : {})}
-                          title={c ? `${c.text}（${T.review.confidence(c.confidence)}）` : ""}
+                          title={c ? INLINE_TEXT.paren(c.text, T.review.confidence(c.confidence)) : ""}
                           onClick={() => c && pick(c)}
                           data-testid={c ? "photo-cell" : undefined}
                         >

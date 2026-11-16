@@ -10,7 +10,6 @@ import { matchRows } from "../../import/match";
 import { readSource, type InputFile, type ReadOutcome } from "../../import/read";
 import { PhotoBook, photoMimeOf, type PhotoInput } from "../../import/photo";
 import type { Decision, QuestionState } from "../../import/questions";
-import { TEXT } from "../text";
 import type {
   CellPos,
   CommitReply,
@@ -26,6 +25,8 @@ import type {
   SheetWire,
   ToHost,
 } from "./worker-protocol";
+// 資料の中の架空の印（データの字。画面の言語によらない）
+const FICTION_WORD = "架空";
 
 /** 答えがその質問の今出している選択肢に入っているか（valueKind が number なら正の数か） */
 export function answerOffered(q: Pick<QuestionState, "valueKind" | "options">, answer: string): boolean {
@@ -448,7 +449,7 @@ export function viewOf(an: Analysis, decisions: Decision[]): Omit<IntakeView, "a
     decisions,
     unusedDecisions: an.unusedDecisions,
     unresolvedCells: unresolved,
-    fictionalMark: an.sources.some((s) => s.sheets.some((g) => g.cells.some((c) => c.text.includes(TEXT.fictionMark)))),
+    fictionalMark: an.sources.some((s) => s.sheets.some((g) => g.cells.some((c) => c.text.includes(FICTION_WORD)))),
     ruleHits,
     photoReview: an.composition.photoReview,
     sheets: an.layouts.map((l) => ({ file: l.file, sheetIndex: l.sheetIndex, sheet: l.sheet })),

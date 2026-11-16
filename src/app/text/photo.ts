@@ -1,5 +1,9 @@
 // 写真の欄（取り込みの画面）と、写真のツールの結果の文の言葉。内部の言葉（型の名前など）を利用者に見せない。
-export const PHOTO_TEXT = {
+import { defineMessages } from "./i18n";
+import { EN_PHOTO_TEXT } from "./en/photo";
+import { PHOTO_TOOL_TEXT } from "./photo-tool";
+
+export const PHOTO_TEXT = defineMessages(EN_PHOTO_TEXT, {
   title: "写真（AI クライアントに渡して読む）",
   lead:
     "写真（JPEG・PNG）は読まずに並べます。読むのは、人が 1 枚ずつ［AI クライアントに渡して読む］を押した写真だけです。" +
@@ -79,14 +83,6 @@ export const PHOTO_TEXT = {
     placeRefused: (name: string) => `AI が写真「${name}」に置こうとした格子を断りました（どのセルも置いていません）`,
     allowed: (name: string) => `人が写真「${name}」を AI クライアントに渡すことを許しました`,
   },
-  // ツールの結果の文（AI に渡る。Claude Desktop では instructions が効かないので、次にすることを書く）
-  tool: {
-    received: (w: number, h: number) =>
-      `画像（${w} × ${h} 画素の JPEG）をこの結果に添えました。画像を自分で読み、表の格子を photo_transcribe（mode: place）で置いてください。` +
-      "行と列は 0 から、box は この画像の画素（左上が原点）で書きます。見えたとおりに書き、読めない所は推測で埋めず、置かないか確からしさを低くします。" +
-      "置いたものは、人が画面で画像と並べて確かめるまで要確認で、計画は作れません。",
-    placed: (cells: number) =>
-      `${cells} セルを置きました。どれも要確認です。人が取り込みの画面で画像と並べて確かめるまで、計画は作れません（確かめるツールはありません）。` +
-      "intake_survey で、この写真から増えた質問を読んでください。",
-  },
-} as const;
+  // ツールの結果の文（AI に渡る。AI が読む文は訳さない：英語の画面でも同じ字）
+  tool: PHOTO_TOOL_TEXT,
+});

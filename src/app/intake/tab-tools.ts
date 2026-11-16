@@ -39,6 +39,7 @@ import { RECEIVE_MIN_K } from "../../share/k";
 import { peerAggregates } from "../../share/peer-reference";
 import { checkResultsOf, getReferenceDate, packCheckOf } from "../state/review";
 import { REVIEW_TEXT, TEXT } from "../text";
+import { withLang } from "../text/i18n";
 import type { BridgeClient } from "../bridge-client";
 import { sheetHash } from "../stages";
 import { andThen, type DroppedFile, type IntakeWorkspace, type Maybe, type ProposeOutcome } from "./workspace";
@@ -264,14 +265,15 @@ function chartPropose(ws: IntakeWorkspace, args: Record<string, unknown>): TabTo
     .slice(0, 10)
     .map((k) => {
       const d = r.plan.details.find((x) => x.detailKey === k)!;
-      return { rowRef: `d:${k}`, before: null, after: TEXT.chart.cycleMark(d.fiscalYear) };
+      return { rowRef: `d:${k}`, before: null, after: withLang("ja", () => TEXT.chart.cycleMark(d.fiscalYear)) };
     });
   // 星取の案の例：作業の行の id と、前後の星取（追加は前が無く後が案、削除は前が今の星取で後が無い、移動は前が元の年度で後が先の年度）
   const starExamples = starRows
     .filter((x) => x.placed)
     .map((x) => {
       const st = stars[x.index]!;
-      const text = (fy: number, v: "plan" | "actual") => `${TEXT.chart.fiscalYear(fy)} ${TEXT.chart.mark[v]}`;
+      // AI に返す字（画面の言語によらず日本語）
+      const text = (fy: number, v: "plan" | "actual") => withLang("ja", () => `${TEXT.chart.fiscalYear(fy)} ${TEXT.chart.mark[v]}`);
       if (st.op === "move") return { rowRef: st.rowRef, before: text(st.fromFiscalYear, "plan"), after: text(st.fiscalYear, "plan") };
       return { rowRef: st.rowRef, before: st.op === "add" ? null : text(st.fiscalYear, st.value), after: st.op === "add" ? text(st.fiscalYear, st.value) : null };
     });
@@ -443,10 +445,12 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     return { ok: true, data: r };
   },
   chart_rows: (ws, args, ctx) => {
-    const r =
+    // AI に返す行の字は、画面の言語によらず日本語（AI が読む文は訳さない。2026-11-16）
+    const r = withLang("ja", () =>
       typeof args.rowRef === "string"
         ? workRows(args.rowRef, Number(args.offset), Number(args.limit), ctx.rowsRemaining)
-        : chartRows(args.view as "base" | "adjusted", Number(args.offset), Number(args.limit), ctx.rowsRemaining);
+        : chartRows(args.view as "base" | "adjusted", Number(args.offset), Number(args.limit), ctx.rowsRemaining),
+    );
     if (r.ok) ws.note("ai", T.rowsRead((r.data.rows as unknown[]).length, Number(r.data.remainingInConversation)));
     return r;
   },
@@ -471,7 +475,8 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
     const working = getWorkingPlan();
     if (!working) return { ok: false, code: "no_working_plan" };
     const date = getReferenceDate();
-    const data = checkResultsOf(working.plan, working.revision, date, args.checkId as string | undefined);
+    // AI に返す照査の結果の字は、画面の言語によらず日本語
+    const data = withLang("ja", () => checkResultsOf(working.plan, working.revision, date, args.checkId as string | undefined));
     ws.note("ai", REVIEW_TEXT.aiRead((data.checks as unknown[]).length, date));
     return { ok: true, data };
   },
@@ -601,7 +606,7 @@ async function addTemplateFromBridge(ws: IntakeWorkspace, files: { fileId: strin
     }
   }
   if (added.length) goTo("hoshitori.export");
-  const levels = added.length ? planLevelNames() : undefined;
+  const levels = added.length ? withLang("ja", planLevelNames) : undefined;
   const data = { added, refused, ...(levels ? { levels } : {}) };
   return intakeAddFilesFromTabSchema.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
 }

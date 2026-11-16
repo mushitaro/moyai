@@ -36,6 +36,7 @@ import { answerOffered, type IntakeView, type IntakeWorkspace, type Notice, type
 import { sheetHash } from "../stages";
 import { PHOTO_TEXT, TEXT } from "../text";
 import { TOOL_NAMES } from "../../shared/tools";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = TEXT.intake;
 const KIND_LABEL: Record<QuestionKind, string> = T.questionKind;
@@ -727,9 +728,9 @@ export function Intake({
   const composeEnd = !composeInBar && composeOffered && (
     <Group gap="sm" wrap="nowrap" data-testid="compose-next">
       {reasons.length > 0 && compose.state !== "running" && (
-        <Text size="xs" c="dimmed" maw={420} lineClamp={2} title={reasons.join("・")} data-testid="compose-disabled-reason">
+        <Text size="xs" c="dimmed" maw={420} lineClamp={2} title={reasons.join(INLINE_TEXT.list)} data-testid="compose-disabled-reason">
           {T.reasonsPrefix}
-          {reasons.join("・")}
+          {reasons.join(INLINE_TEXT.list)}
         </Text>
       )}
       <button
@@ -759,7 +760,7 @@ export function Intake({
       <Stack gap="md">
         {compose.state === "failed" && (
           <Alert color="orange" title={T.composeFailed} data-testid="compose-failed">
-            {compose.blockers.join("・")}
+            {compose.blockers.join(INLINE_TEXT.list)}
           </Alert>
         )}
 

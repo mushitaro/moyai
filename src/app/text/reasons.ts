@@ -1,9 +1,10 @@
 // 共有フォルダを確かめたときの ✗ の理由の言葉（画面の受け取り・検問所と、CLI の verify ring が同じものを使う）。
 // 理由のコードは src/share/recount.ts と src/share/ring.ts が出す。知らないコードは、頭の分け方で言う（黙って捨てない）。
 import { LEDGER_PLACE } from "../../share/ledger-place";
+import { defineMessages } from "./i18n";
+import { EN_EXACT, EN_PREFIX, EN_REASON_TEXT } from "./en/reasons";
 
-
-const EXACT: Record<string, string> = {
+const EXACT = defineMessages(EN_EXACT, {
   freeText: "自由記述（公開語彙に無い文字列）",
   money: "金額の形",
   exactDate: "正確な日付",
@@ -117,26 +118,31 @@ const EXACT: Record<string, string> = {
   "path.tooDeep": "階層が深すぎる",
   "path.collides": "大文字小文字か Unicode の正規化だけが違う道が、ほかにある",
   "path.exists": "同じ道のファイルがすでにある",
-};
+});
 
-const PREFIX: [string, string][] = [
-  ["shape.", "形の外れ"],
-  ["rules.", "ルールの緩和"],
-  ["chain.", "署名と鎖"],
-  ["k.", "同区分の施設数"],
-  ["member.", "メンバーのファイル"],
-  ["file.", "ファイル"],
-  ["grain.", "粒度の外れ"],
-  ["ledger.", "公開台帳のルール"],
-  ["path.", "道（ファイル名）"],
-  ["diff.", "PR の変更"],
-  ["intake.", "受け口"],
-  ["feedback.", "ルールのフィードバック"],
-];
+/** 知らないコードの頭の分け方（この順に見る） */
+const PREFIX = defineMessages(EN_PREFIX, {
+  "shape.": "形の外れ",
+  "rules.": "ルールの緩和",
+  "chain.": "署名と鎖",
+  "k.": "同区分の施設数",
+  "member.": "メンバーのファイル",
+  "file.": "ファイル",
+  "grain.": "粒度の外れ",
+  "ledger.": "公開台帳のルール",
+  "path.": "道（ファイル名）",
+  "diff.": "PR の変更",
+  "intake.": "受け口",
+  "feedback.": "ルールのフィードバック",
+});
+
+const REASON_TEXT = defineMessages(EN_REASON_TEXT, {
+  withCode: (category: string, rest: string) => `${category}（${rest}）`,
+});
 
 export function reasonText(code: string): string {
   const e = EXACT[code];
   if (e) return e;
-  for (const [p, t] of PREFIX) if (code.startsWith(p)) return `${t}（${code.slice(p.length)}）`;
+  for (const [p, t] of Object.entries(PREFIX)) if (code.startsWith(p)) return REASON_TEXT.withCode(t, code.slice(p.length));
   return code;
 }

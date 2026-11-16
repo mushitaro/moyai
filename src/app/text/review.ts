@@ -3,6 +3,8 @@
 import type { CheckExample, CheckOutcome, CheckResult, NotApplicableWhy, NumberKey } from "../../review/checks";
 import type { CheckKind, CheckLevel, ChecksLoadProblem, ThresholdOrigin } from "../../review/spec";
 import { fieldDef, type FieldRef } from "../../shared/fields";
+import { defineMessages } from "./i18n";
+import { EN_REVIEW_TEXT } from "./en/review";
 
 const fy = (n: number) => `${n} 年度`;
 const fieldLabel = (ref: string) => {
@@ -13,7 +15,7 @@ const fieldLabel = (ref: string) => {
   }
 };
 
-export const REVIEW_TEXT = {
+export const REVIEW_TEXT = defineMessages(EN_REVIEW_TEXT, {
   title: "照査",
   back: "画面へ",
   /** AI のツールの結果（check_results）に添える。画面には出さない（運営者、2026-11-04） */
@@ -30,7 +32,7 @@ export const REVIEW_TEXT = {
     sourceMissing: "照査の出典が、出典の一覧に無い",
     sourceNotVerified: "要件か推奨の照査の出典が、原典で照らされていない",
     duplicateId: "照査の ID が重なる",
-  } satisfies Record<ChecksLoadProblem, string>,
+  },
   plan: "計画",
   referenceDate: "基準日",
   referenceDateHelp: "この日で走らせます（AI が読む結果も同じ日）。年度だけの星取は、その年度が終わってから「過ぎた」とします",
@@ -39,7 +41,7 @@ export const REVIEW_TEXT = {
   checksVersion: (n: number) => `Skillパックの照査の版：${n}`,
   // MERGE の検査のシート（Wire、2026-11-05）
   kindSwitch: "照査の結果",
-  kinds: { notMet: "基準外", met: "基準内", notApplicable: "非該当" } satisfies Record<CheckOutcome, string>,
+  kinds: { notMet: "基準外", met: "基準内", notApplicable: "非該当" },
   changeDate: "変更",
   cols: ["", "照査", "機器", "当施設", "基準", "出典"],
   withinYears: (n: number) => `${n} 年以内`,
@@ -51,15 +53,15 @@ export const REVIEW_TEXT = {
   toChart: "星取表を表示",
   openSource: "出典を表示",
   summary: (met: number, notMet: number, na: number) => `基準内 ${met} ／ 基準外 ${notMet} ／ 非該当 ${na}`,
-  result: { met: "基準内", notMet: "基準外", notApplicable: "非該当" } satisfies Record<CheckOutcome, string>,
+  result: { met: "基準内", notMet: "基準外", notApplicable: "非該当" },
   level: {
     requirement: "要件（法令・補助の要件）",
     recommendation: "推奨（要領・ガイドラインの例）",
     app: "アプリの目安",
-  } satisfies Record<CheckLevel, string>,
+  },
   levelLabel: "水準",
   thresholdLabel: "閾値の出どころ",
-  threshold: { source: "出典", app: "アプリの目安" } satisfies Record<ThresholdOrigin, string>,
+  threshold: { source: "出典", app: "アプリの目安" },
   verificationLabel: "照査状態",
   noSource: "出典なし（アプリの目安）",
   sourceLabel: "出典",
@@ -75,7 +77,7 @@ export const REVIEW_TEXT = {
     noFuturePlans: "これからの予定が計画に無い（期間が決まらない）",
     noDetails: "記録が無い",
     noValues: "判定の値のある記録が無い",
-  } satisfies Record<NotApplicableWhy, string>,
+  },
   unimplementedLabel: "未実装",
   noteLabel: "補足",
   whatLabel: "考え方",
@@ -88,66 +90,88 @@ export const REVIEW_TEXT = {
   granularity: "年度だけの星取は、年度の差で数えています（年度の粒度）",
   pathSep: " › ",
   aiRead: (n: number, date: string) => `AI が照査の結果を読みました（${n} 件、基準日 ${date}）`,
-} as const;
+  numbers: {
+    missing: (field: string) => `${field}が空の数`,
+    examined: {
+      interval_max: "見た機器の数",
+      next_due: "見た過ぎた予定の数（機器ごと）",
+      coverage: "見た機器の数",
+      record_fields: "見た記録の数",
+      followup: "見た悪い判定の数（機器ごと）",
+      plan_fields: "見た作業の数",
+      plan_horizon: "見た計画の数",
+      scale_valid: "見た判定の値の数",
+    },
+    labels: {
+      referenceFiscalYear: "基準日の年度",
+      thresholdYears: "閾値の年数",
+      extensionCapYears: "延長の上限の年数",
+      notMet: "基準外の数",
+      intervals: "見た間の数",
+      longestYears: "いちばん長い間（年度の差）",
+      approvedExtensions: "承認のある延長の数",
+      fromFiscalYear: "期間の始まりの年度",
+      toFiscalYear: "期間の終わりの年度",
+      horizonYears: "計画の年数（年度）",
+      dateless: "年度だけの星取の数",
+    },
+    noCap: "定め無し（延長しない）",
+    none: "無し",
+  },
+  example: {
+    gap: (from: number, to: number, years: number | null, threshold: number | null | undefined) => `${fy(from)} → ${fy(to)}：間が ${years} 年度（閾値 ${threshold} 年）`,
+    gapToEnd: (from: number, until: number, years: number | null, threshold: number | null | undefined) =>
+      `${fy(from)} のあと、${fy(until)} まで ${years} 年度、実績も予定も無い（閾値 ${threshold} 年）`,
+    never: "実績も、これからの予定も無い",
+    extensionNotApproved: (fiscalYears: number[], years: number | null) => `${fiscalYears.map(fy).join(" → ")}：間が ${years} 年度。延長の上限の内だが、承認の記録が無い`,
+    noActual: (y: number, value: string | null) => `${fy(y)} の予定${value ? `（${value}）` : ""}に、実績が無い`,
+    noFuturePlan: "これからの予定が無い（0 年度）",
+    horizon: (from: number, to: number, years: number | null, threshold: number | null | undefined) => `${fy(from)}〜${fy(to)}：${years} 年度（閾値 ${threshold} 年度）`,
+    noPlanIn: (from: number, to: number) => `${fy(from)}〜${fy(to)} に予定が無い`,
+    missingFields: (fields: string[], from: number | undefined) => `空の欄：${fields.join("・")}${from !== undefined ? `（${fy(from)} からの作業）` : ""}`,
+    outOfScale: (y: number, value: string | null) => `${fy(y)} の判定の値「${value}」が、尺度に無い`,
+    noFollowup: (y: number, value: string | null) => `${fy(y)} の判定「${value}」のあとに、要る作業（計画か実績）が無い`,
+  },
+});
 
 /** 根拠の数字の名前。見た数は種類ごとに、何を数えたかを言う */
 export function numberLabel(key: NumberKey, kind: CheckKind): string {
-  if (key.startsWith("missing.")) return `${fieldLabel(key.slice("missing.".length))}が空の数`;
-  const examined: Record<CheckKind, string> = {
-    interval_max: "見た機器の数",
-    next_due: "見た過ぎた予定の数（機器ごと）",
-    coverage: "見た機器の数",
-    record_fields: "見た記録の数",
-    followup: "見た悪い判定の数（機器ごと）",
-    plan_fields: "見た作業の数",
-    plan_horizon: "見た計画の数",
-    scale_valid: "見た判定の値の数",
-  };
-  const labels: Record<Exclude<NumberKey, `missing.${string}`>, string> = {
-    referenceFiscalYear: "基準日の年度",
-    thresholdYears: "閾値の年数",
-    extensionCapYears: "延長の上限の年数",
-    examined: examined[kind],
-    notMet: "基準外の数",
-    intervals: "見た間の数",
-    longestYears: "いちばん長い間（年度の差）",
-    approvedExtensions: "承認のある延長の数",
-    fromFiscalYear: "期間の始まりの年度",
-    toFiscalYear: "期間の終わりの年度",
-    horizonYears: "計画の年数（年度）",
-    dateless: "年度だけの星取の数",
-  };
-  return labels[key as Exclude<NumberKey, `missing.${string}`>] ?? key;
+  const N = REVIEW_TEXT.numbers;
+  if (key.startsWith("missing.")) return N.missing(fieldLabel(key.slice("missing.".length)));
+  if (key === "examined") return N.examined[kind];
+  return N.labels[key as keyof typeof N.labels] ?? key;
 }
 
 /** 根拠の数字の値（null は「定め無し」か「無し」） */
 export function numberValue(key: NumberKey, v: number | null | undefined): string {
-  if (v === null || v === undefined) return key === "extensionCapYears" ? "定め無し（延長しない）" : "無し";
+  if (v === null || v === undefined) return key === "extensionCapYears" ? REVIEW_TEXT.numbers.noCap : REVIEW_TEXT.numbers.none;
   return String(v);
 }
 
 /** 例の中身の文（数と年度だけ。名前は階層の欄に出す） */
 export function exampleText(e: CheckExample, r: Pick<CheckResult, "kind" | "numbers">): string {
+  const X = REVIEW_TEXT.example;
   const [a, b] = e.fiscalYears;
+  const t = r.numbers.thresholdYears;
   switch (e.why) {
     case "gap":
-      return `${fy(a!)} → ${fy(b!)}：間が ${e.years} 年度（閾値 ${r.numbers.thresholdYears} 年）`;
+      return X.gap(a!, b!, e.years, t);
     case "gapToEnd":
-      return `${fy(a!)} のあと、${fy(a! + e.years!)} まで ${e.years} 年度、実績も予定も無い（閾値 ${r.numbers.thresholdYears} 年）`;
+      return X.gapToEnd(a!, a! + e.years!, e.years, t);
     case "never":
-      return "実績も、これからの予定も無い";
+      return X.never;
     case "extensionNotApproved":
-      return `${e.fiscalYears.map(fy).join(" → ")}：間が ${e.years} 年度。延長の上限の内だが、承認の記録が無い`;
+      return X.extensionNotApproved(e.fiscalYears, e.years);
     case "noActual":
-      return `${fy(a!)} の予定${e.value ? `（${e.value}）` : ""}に、実績が無い`;
+      return X.noActual(a!, e.value);
     case "noPlanInHorizon":
-      if (r.kind === "plan_horizon") return a === undefined ? "これからの予定が無い（0 年度）" : `${fy(a)}〜${fy(b!)}：${e.years} 年度（閾値 ${r.numbers.thresholdYears} 年度）`;
-      return `${fy(a!)}〜${fy(b!)} に予定が無い`;
+      if (r.kind === "plan_horizon") return a === undefined ? X.noFuturePlan : X.horizon(a, b!, e.years, t);
+      return X.noPlanIn(a!, b!);
     case "missingFields":
-      return `空の欄：${e.fields.map(fieldLabel).join("・")}${a !== undefined ? `（${fy(a)} からの作業）` : ""}`;
+      return X.missingFields(e.fields.map(fieldLabel), a);
     case "outOfScale":
-      return `${fy(a!)} の判定の値「${e.value}」が、尺度に無い`;
+      return X.outOfScale(a!, e.value);
     case "noFollowup":
-      return `${fy(a!)} の判定「${e.value}」のあとに、要る作業（計画か実績）が無い`;
+      return X.noFollowup(a!, e.value);
   }
 }

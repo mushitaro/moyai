@@ -50,6 +50,7 @@ import { DirectSet } from "./CrosswalkPanel";
 import { usePlanStatus } from "./ConfirmDialog";
 import { Switch } from "./Switch";
 import { StarReference } from "./StarReference";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.decisions;
 const KINDS = ["same", "crosswalk", "ledger", "rule", "relayed", "ai"] as const;
@@ -163,7 +164,7 @@ function whenShort(p: CrosswalkProposal, names: ReadonlyMap<string, string>): st
 /** 全部：「焼却炉本体・1 号炉」かつ … */
 function whenText(p: CrosswalkProposal, names: ReadonlyMap<string, string>): string {
   return whenValues(p, names)
-    .map((vs) => `「${vs.join("・") || T.blank}」`)
+    .map((vs) => INLINE_TEXT.quote(vs.join(INLINE_TEXT.list) || T.blank))
     .join(T.and);
 }
 
@@ -312,10 +313,10 @@ export function DecisionsView({ plan, pending, ready, problem = null }: { plan: 
   };
   /** 詳しくに並べる星取：「2027 年度　計画の削除」「2028 年度　計画の追加」 */
   const starItems = (r: StarRow) => {
-    const v = r.kind.startsWith("actual") ? "実績" : "計画";
+    const v = r.kind.startsWith("actual") ? INLINE_TEXT.star.actual : INLINE_TEXT.star.plan;
     return [
-      ...(r.group?.removes ?? []).map((x) => ({ fy: x.fiscalYear, text: T.starItem(x.fiscalYear, `${v}の削除`) })),
-      ...addYears(r).map((fy) => ({ fy, text: T.starItem(fy, `${v}の追加`) })),
+      ...(r.group?.removes ?? []).map((x) => ({ fy: x.fiscalYear, text: T.starItem(x.fiscalYear, INLINE_TEXT.star.removed(v)) })),
+      ...addYears(r).map((fy) => ({ fy, text: T.starItem(fy, INLINE_TEXT.star.added(v)) })),
     ].sort((a, b) => a.fy - b.fy);
   };
   const acceptStar = (r: StarRow) => {
