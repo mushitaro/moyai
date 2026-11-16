@@ -5,6 +5,9 @@
     {
       "id": "A",
       "name": "市町村の環境",
+      "en": {
+        "name": "Municipal environment"
+      },
       "order": [
         "waste-incineration",
         "night-soil",
@@ -17,6 +20,9 @@
     {
       "id": "B",
       "name": "水",
+      "en": {
+        "name": "Water"
+      },
       "order": [
         "sewerage",
         "rural-sewerage",
@@ -27,6 +33,9 @@
     {
       "id": "C",
       "name": "河川・国土",
+      "en": {
+        "name": "Rivers and land"
+      },
       "order": [
         "river-pump-gate",
         "dam-facility",
@@ -36,6 +45,9 @@
     {
       "id": "D",
       "name": "道路",
+      "en": {
+        "name": "Roads"
+      },
       "order": [
         "road-bridge",
         "road-tunnel",
@@ -47,6 +59,9 @@
     {
       "id": "E",
       "name": "公共建築・公共施設",
+      "en": {
+        "name": "Public buildings and facilities"
+      },
       "order": [
         "building-services",
         "playground"
@@ -55,6 +70,9 @@
     {
       "id": "F",
       "name": "エネルギー",
+      "en": {
+        "name": "Energy"
+      },
       "order": [
         "thermal-power",
         "biomass-waste-power",
@@ -67,6 +85,9 @@
     {
       "id": "G",
       "name": "産業プラント",
+      "en": {
+        "name": "Industrial plants"
+      },
       "order": [
         "chemical-petroleum",
         "steel",
@@ -78,6 +99,9 @@
     {
       "id": "H",
       "name": "交通・移動",
+      "en": {
+        "name": "Transport and mobility"
+      },
       "order": [
         "railway",
         "bus-truck",

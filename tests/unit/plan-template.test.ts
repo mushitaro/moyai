@@ -24,6 +24,17 @@ describe("様式に写す", () => {
     ]);
   });
 
+  it("英語の見出しも同じ役目に読む（語ごとに比べる）。決まらない列は未定", () => {
+    expect(["Equipment", "Work category", "Cycle (years)", "FY2026", "Remarks", "Itemized"].map((h) => roleOfHeader(h))).toEqual([
+      { kind: "item" },
+      { kind: "work" },
+      { kind: "cycle" },
+      { kind: "year", fiscalYear: 2026 },
+      { kind: "none" },
+      { kind: "none" },
+    ]);
+  });
+
   it("見出しの行は、2 つ以上の欄に字がある最初の行", () => {
     expect(findHeaderRow([["長寿命化計画 様式 3"], [], ["設備名", "作業区分", "R8"]])).toBe(2);
     expect(findHeaderRow([["だけ"]])).toBe(0);

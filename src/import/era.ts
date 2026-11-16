@@ -114,7 +114,37 @@ function parseFullDate(s: string): Ymd | null {
     if (y === null || !validYmd(y, mo, d)) return null;
     return { y, m: mo, d };
   }
-  return null;
+  return parseEnglishDate(s);
+}
+
+/** 英語の月の名前（頭の 3 字で引く。全部の名前か、その頭だけを書いたものだけ） */
+const EN_MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+function enMonth(word: string): number | null {
+  const w = word.toLowerCase();
+  if (w.length < 3) return null;
+  const i = EN_MONTHS.findIndex((m) => m.startsWith(w) || (w === "sept" && m === "september"));
+  return i < 0 ? null : i + 1;
+}
+/**
+ * 月の名前で書いた英語の日付（空白を除いた形）：「6Apr2022」「6-Apr-2022」「Apr6,2022」「April6th,2022」（グローバル対応の段 1b）。
+ * 月を数で書いた日・月の並び（05/10/2022）は、日と月のどちらが先か決まらないので読まない（推測で埋めない）
+ */
+function parseEnglishDate(s: string): Ymd | null {
+  let m = /^(\d{1,2})(?:st|nd|rd|th)?[-/.]?([A-Za-z]{3,9})\.?[-/.,]?(\d{4})$/.exec(s);
+  let d: number, mo: number | null, y: number;
+  if (m) {
+    d = Number(m[1]);
+    mo = enMonth(m[2] ?? "");
+    y = Number(m[3]);
+  } else {
+    m = /^([A-Za-z]{3,9})\.?[-/]?(\d{1,2})(?:st|nd|rd|th)?[,.\-/]?(\d{4})$/.exec(s);
+    if (!m) return null;
+    mo = enMonth(m[1] ?? "");
+    d = Number(m[2]);
+    y = Number(m[3]);
+  }
+  if (mo === null || !validYmd(y, mo, d)) return null;
+  return { y, m: mo, d };
 }
 
 /**

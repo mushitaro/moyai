@@ -11,10 +11,18 @@ export const PACK_GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 const id = z.string().regex(/^[a-z][a-z0-9-]{0,63}$/);
 const text = z.string().trim().min(1);
 
+/**
+ * 英語の名前と説明（グローバル対応の段 1b、2026-11-16）。無くてよい（前のパックと、前の読み手のどちらとも合う）。
+ * name（日本語）は今のまま正本で、en は足すだけ。画面がどちらを出すかは画面の言葉の仕組み（段 1a）が決める。
+ */
+export const PackEn = z.strictObject({ name: text, description: text.optional() });
+export type PackEnT = z.infer<typeof PackEn>;
+
 const base = {
   schema: z.literal(PACK_SCHEMA),
   id,
   name: text,
+  en: PackEn.optional(),
   version: z.number().int().min(1),
 };
 
@@ -98,7 +106,7 @@ export function parsePack(json: unknown, folder?: string): PackParse {
 /** 設備の地図の群（packs/_kinds/groups.json）：群の名前と、群の中の並び */
 export const GroupsDoc = z.object({
   schema: z.literal("moyai.groups/0"),
-  groups: z.array(z.object({ id: z.enum(PACK_GROUPS), name: text, order: z.array(id) })).length(PACK_GROUPS.length),
+  groups: z.array(z.object({ id: z.enum(PACK_GROUPS), name: text, en: z.strictObject({ name: text }).optional(), order: z.array(id) })).length(PACK_GROUPS.length),
   notBuilt: z.array(id),
 });
 export type GroupsDoc = z.infer<typeof GroupsDoc>;

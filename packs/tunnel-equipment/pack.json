@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "tunnel-equipment",
   "name": "トンネルの機械設備（換気・排水など）",
+  "en": {
+    "name": "Tunnel mechanical equipment (ventilation, drainage, etc.)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "D",
   "content": "empty",
