@@ -12,6 +12,7 @@ import { showContentHash } from "../../plan/signature";
 import type { LoadedReading } from "../../import/reading";
 import { shortVersion } from "../../import/reading";
 import { HUMAN_TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.signatures;
 const H = HUMAN_TEXT.history;
@@ -200,7 +201,7 @@ export function SignaturesPanel({
       ) : (
         readings.map((r) => (
           <Text size="xs" key={`${r.skill.name}|${r.version}`}>
-            {r.skill.name}　{r.draft ? <Text span c="var(--shu)">{T.draft}</Text> : `版 ${shortVersion(r.version)}`}
+            {r.skill.name}　{r.draft ? <Text span c="var(--shu)">{T.draft}</Text> : INLINE_TEXT.ruleVersion(shortVersion(r.version))}
           </Text>
         ))
       )}

@@ -13,11 +13,14 @@ import { packVersion } from "../chart/catalog";
 import { useConnection } from "../state/bridge";
 import { takeRootOffer, useRootOffer } from "../state/screen";
 import { ThemeChoice } from "../components/ThemeChoice";
+import { LangChoice } from "../components/LangChoice";
+import type { Lang } from "../text/i18n";
 import { Switch } from "../components/Switch";
 import { useWorkingPlan } from "../state/plan-store";
 import { ringLabels } from "../state/share-route";
 import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.settings;
 
@@ -228,6 +231,12 @@ export function Settings() {
     setEditName(false);
     setEditLedger(false);
     await load();
+  };
+  // 言語（押すとすぐ描き直し、保存する。Excel の出力もこの言語）
+  const saveLang = async (lang: Lang) => {
+    if (!s) return;
+    const r = readHuman<{ ok: boolean }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: s.chosenRoot, lang }));
+    if (!r.ok) setError(r.message);
   };
   const saveAutoUpdate = async (on: boolean) => {
     if (!s) return;
@@ -440,6 +449,8 @@ export function Settings() {
           {/* 表示：星取表の見せ方（施設ごとにブラウザに覚える。押すとすぐ効き、上の行の「保存」とは別。Skillパックの上。docs/screens.md 3.7） */}
           {/* 明暗：既定は自動（PC の設定に従う）。暗・明に固定できる（#61。ヘッダには置かない） */}
           {row(T.themeTitle, <ThemeChoice />, "theme-setting")}
+          {/* 言語：English | 日本語。押すとすぐ描き直して保存する（設定が無ければ PC の言語） */}
+          {row(T.langTitle, <LangChoice label={T.langTitle} onSave={(l) => void saveLang(l)} />, "lang-setting")}
           {/* 最新の確かめ（#65 の 5）：押すとすぐ保存する（人だけの経路）。切ったら一切問い合わせない。説明の文は置かない */}
           {s.autoUpdate !== undefined &&
             row(
@@ -469,7 +480,7 @@ export function Settings() {
                       const v = packVersion(p.id);
                       return (
                         <span key={p.id} data-testid="pack-version" data-pack={p.id}>
-                          {i > 0 && "・"}
+                          {i > 0 && INLINE_TEXT.list}
                           {p.name}
                           {v !== null && (
                             <Text span size="sm" ff="monospace" c="var(--text-3)" ml={6}>
@@ -494,6 +505,7 @@ export function Settings() {
       <div className="moyai-settings">
         {/* 設定を読めないあいだ（橋渡しが無い）も、表示は変えられるので出す（読めたら Skillパックの上に置く） */}
         {!s && row(T.themeTitle, <ThemeChoice />, "theme-setting")}
+        {!s && row(T.langTitle, <LangChoice label={T.langTitle} />, "lang-setting")}
         {!s && row(T.displayTitle, <DisplaySettings plan={working?.plan ?? null} />, "display-setting")}
         {row(
           T.devTitle,

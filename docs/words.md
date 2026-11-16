@@ -459,3 +459,78 @@
 ## 3. 前に決めたもの（11-05 昼）
 
 差戻し・編集者・ブリッジ・画面・Skillパック・保存先・理由・標準・様式・未定・差分・メール・資料・マージします・共有フォルダ・記録・確定版・送信者・編集期間・共有ファイル・メンバー。様式を置く所は「保存先」（共有フォルダは SHARE だけ）。
+
+## 4. 英語（2026-11-16、運営者「グローバル対応」）
+
+作業画面は英語と日本語の 2 つ（`src/app/text/i18n.ts`）。英語の表が元で、日本語の表は同じ形を型で強いる。英語の字も §1 の好みに合わせる：保全の現場の英語で短く、状態は名詞と数（`Unconfirmed 1`）、説明の文を置かない、比喩を使わない。英語の文の頭だけ大文字（Sentence case）。帳票の名前（HOSHITORI・KOUTEI など）と MOYAI は英語の画面でもそのまま。
+
+- 星取表は、初めて出る所（設定・トップの凡例・Excel の題）で「Maintenance schedule (Hoshitori)」と説明し、ほかでは「Hoshitori」。
+- 字の区切り：日本語の「・」は英語では「, 」、「（…）」は「 (…)」、「：」は「: 」。
+- 数の書き方：英語も日本語も 1,234（3 桁ごとのカンマ）。年度は「FY2026」。
+
+| 日本語 | 英語 | |
+|---|---|---|
+| 星取表 | Maintenance schedule (Hoshitori)／Hoshitori | 初出で説明。シート名は Hoshitori |
+| 星取（○・●・◎） | mark | 計画 ○ planned・実績 ● done・◎ planned and done |
+| 計画・実績 | Plan・Actual | 星取の区分 |
+| 当初計画・調整後 | Original plan・Adjusted | |
+| 年度 | Fiscal year（FY2026） | |
+| 号炉 | Unit | 1 号炉 → Unit 1 |
+| 系統 | Line | |
+| 設備・機器 | Facility system・Equipment | 設備の地図の群 |
+| 施設・施設名・施設設定 | Facility・Facility name・Facility settings | |
+| 施設台帳・共通台帳 | Facility register・Common register | |
+| 共通の機器台帳・共通の設備項目 | Common equipment register・Common equipment item | |
+| 作業分類 | Work type | 点検 Inspection・分解整備 Overhaul・更新 Replacement・基幹改良 Major upgrade |
+| 保全方式 | Maintenance strategy | 時間基準 Time-based・状態基準 Condition-based・事後 Corrective |
+| 周期・周期の案 | Interval・Proposed interval | |
+| 次回・期限・根拠・備考 | Next・Due・Basis・Notes | Excel の右の 4 列も同じ |
+| 版・第 n 版・版履歴 | Version・v{n}・Version history | |
+| 確定・確定版・未確定 n | Confirm・Confirmed version・Unconfirmed n | 「署名して確定する」は Sign and confirm |
+| 確定／却下 | Accept／Reject | 決定の行 |
+| 判断の理由 | Reason | |
+| 承認・承認者・未承認 | Approve・Approver・Not approved | |
+| 照査 | Check | |
+| 詳細 | Details | 「整備の詳細」は Work details |
+| 差異・差分 | Variance・Diff | |
+| 反映 | Apply | |
+| 紐付け・紐付け案・未紐付け | Mapping・Proposed mapping・Unmapped | |
+| ルール | Rule | 読み方のルール |
+| 資料・資料を追加・資料をドロップ | Source file・Add source files・Drop source files | |
+| 読取・除外 | Read・Excluded | |
+| 未確定行・全行 | Unconfirmed rows・All rows | |
+| 確認（聞いていること） | Questions | |
+| 元の版・類似施設 | Base version・Similar facilities | |
+| 派生元 | Derived from | |
+| 次の版を作る・新しい施設を作る | New version・New facility | |
+| 編集中・承認待ち | Editing・Awaiting approval | |
+| 保存先 | Storage folder | |
+| 送信者 | Sender | |
+| 署名鍵・鍵番号・照合・未照合・照合済み・鍵が変更 | Signing key・Key ID・Verify・Unverified・Verified・Key changed | |
+| 失効・再発行 | Revoke・Reissue | |
+| 共有フォルダ・共有ファイル・共有先 | Shared folder・Shared file・Share to | |
+| 公開台帳 | Public ledger | |
+| 受入・未受入 | Accept・Not accepted | 共有フォルダのルール |
+| 出力・出力済み | Export・Exported | 署名して出力 Sign and export |
+| 様式・列対応 | Template・Column mapping | |
+| 業種 | Industry | |
+| Skillパック | Skill pack | |
+| ブリッジ・ブリッジ接続中・ブリッジ未接続 | Bridge・Bridge connected・Bridge not connected | |
+| 架空 | Fictional | 【架空】は [Fictional] |
+| 理由：… | Reason: … | 押せない理由 |
+| 明暗（自動・暗・明） | Theme（Auto・Dark・Light） | |
+| 言語 | Language | 選びの字は English・日本語（どちらの画面でも、その言語の字で書く） |
+| 予算・予算計・実績計 | Budget・Budget total・Actual total | |
+| 費用（千円） | Cost (¥ thousand) | |
+| 作業明細・作業日報 | Work log entries・Daily work log | |
+| 外注先 | Contractor | |
+| 出どころ | Source | |
+| 見え方 | Profile | 共有の軸（炉の形式など） |
+| 集約度 | Aggregation level | |
+| 同区分の施設・同区分の施設数 | Facilities in same class | |
+| 台帳案 | Proposed register | 決定の種類 |
+| 受け口 | Intake | |
+| 工数（人日） | Man-days | |
+| 版の呼び名（令和 8 年度版（第 1 版）） | FY2026 edition (v1) | 英語は和暦を出さず西暦の年度 |
+
+- 英語にしない字：資料・計画の中の字（施設名・機器名・作業の名前・【架空】の印）、署名される根拠の字（紐付けの basis・台帳の根拠の行。`src/app/text/crosswalk-basis.ts`・`src/plan/cycle.ts`）、AI が読む文（ツールの結果。`chart_rows`・`check_results`・`share_preview` などは画面の言語によらず日本語で返す）。

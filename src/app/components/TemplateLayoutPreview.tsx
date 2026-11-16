@@ -11,6 +11,7 @@ import { colLetter, colNum, fillLayout, previewGrid, writtenCellsOf, type Layout
 import type { Plan } from "../../shared/plan";
 import type { TemplateLayout } from "../../shared/template-layout";
 import { TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 const L = TEXT.export.template.layout;
 const R = TEXT.export.template.role;
@@ -39,7 +40,7 @@ export async function buildPreview(bytes: Uint8Array, layout: TemplateLayout, in
     }
     return { kind: "ready", grids, summary };
   } catch (e) {
-    return { kind: "error", message: e instanceof Error ? e.message.split("\n").slice(0, 3).join("／") : String(e) };
+    return { kind: "error", message: e instanceof Error ? e.message.split("\n").slice(0, 3).join(INLINE_TEXT.alt) : String(e) };
   }
 }
 

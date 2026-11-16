@@ -11,6 +11,7 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { acceptByHuman, rejectByHuman, setByHuman, valueLabel } from "../state/crosswalk";
 import { useWorkingPlan } from "../state/plan-store";
 import { TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 const C = TEXT.crosswalk;
 const EXAMPLES_SHOWN = 3;
@@ -69,7 +70,7 @@ function ProposalRow({ p, plan, nameOf, onReject, onDone }: {
       </Table.Td>
       <Table.Td style={{ minWidth: 160 }}>
         <Text size="xs">
-          {p.examples.slice(0, EXAMPLES_SHOWN).map(nameOf).join("／")}
+          {p.examples.slice(0, EXAMPLES_SHOWN).map(nameOf).join(INLINE_TEXT.alt)}
           {p.examples.length > EXAMPLES_SHOWN ? `　${C.more(p.matched - EXAMPLES_SHOWN)}` : ""}
         </Text>
       </Table.Td>
@@ -141,9 +142,9 @@ export function DirectSet({ plan, onDone }: { plan: Plan; onDone: (msg: { color:
     const list =
       target === "assetNode"
         ? catalog
-          ? [...catalog.items.values()].sort((a, b) => a.order - b.order).map((i) => ({ value: i.code, label: `${i.name}（${i.code}）` }))
+          ? [...catalog.items.values()].sort((a, b) => a.order - b.order).map((i) => ({ value: i.code, label: INLINE_TEXT.paren(i.name, i.code) }))
           : []
-        : WORK_ATTRIBUTES.map((a) => ({ value: a, label: `${labels[a]}（${a}）` }));
+        : WORK_ATTRIBUTES.map((a) => ({ value: a, label: INLINE_TEXT.paren(labels[a], a) }));
     return [...list, { value: CLEAR, label: D.clear }];
   }, [catalog, target, D.clear]);
   const can = row !== null && value !== null && reason.trim().length > 0;

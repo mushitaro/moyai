@@ -10,9 +10,32 @@ import type { Plan } from "../shared/plan";
 import { fixWorkbook } from "./xlsx-fix";
 import { buildChart, type ChartCatalog, type ChartLabels, type ChartModel, type ChartRow } from "./chart";
 import { DUE_TEXT, dueBaseDate, planDueViews, rowDue, type DueView } from "./due-view";
+import { defineMessages, withLang, type Lang } from "../app/text/i18n";
 
-/** 書き出しの言葉（Excel に書く言葉。画面の言葉は src/app/text/） */
-export const EXPORT_TEXT = {
+/** 書き出しの言葉の英語（形の元。src/app/text/i18n.ts）。星取表は Excel の題で説明する（docs/words.md §4） */
+const EN_EXPORT_TEXT = {
+  sheetLedger: "Hoshitori",
+  sheetCommon: "Common equipment items",
+  title: "Maintenance plan (Maintenance schedule — Hoshitori)",
+  fiction: "[Fictional]",
+  plan: "Plan",
+  version: (n: number, at: string) => `v${n} (confirmed ${at})`,
+  legend: "Legend: ○ Plan   ● Actual   ◎ Plan and actual in the same fiscal year   ? Mark read from a photo, not yet checked by a person",
+  fy: (y: number) => `FY${y}`,
+  subtotal: (name: string) => `Subtotal (${name})`,
+  subtotalNote: "Subtotal: the number of rows with a mark in that fiscal year",
+  unmapped: (n: number) => `Unmapped (${n})`,
+  labels: {
+    levelFallback: (n: number) => `Level ${n}`,
+    commonLevels: ["Common facility system", "Common equipment item", "Work type"] as [string, string, string],
+    unmapped: "Unmapped",
+    series: (s: string) => (s.startsWith("common.") ? s.slice("common.".length) || "Common" : `Series ${s}`),
+  } satisfies ChartLabels,
+  mark: { plan: "○", actual: "●", both: "◎" } as Record<string, string>,
+};
+
+/** 書き出しの言葉（Excel に書く言葉。画面の言葉は src/app/text/）。出力のときの言語で読む（planWorkbook の lang） */
+export const EXPORT_TEXT = defineMessages(EN_EXPORT_TEXT, {
   sheetLedger: "星取表",
   sheetCommon: "共通の設備項目",
   title: "保全の計画（星取表）",
@@ -31,7 +54,7 @@ export const EXPORT_TEXT = {
     series: (s: string) => (s.startsWith("common.") ? s.slice("common.".length) || "共通" : `系列 ${s}`),
   } satisfies ChartLabels,
   mark: { plan: "○", actual: "●", both: "◎" } as Record<string, string>,
-};
+});
 
 const HEADER_ROW = 6;
 const OUTLINE_MAX = 7;
@@ -61,6 +84,8 @@ export interface ExportInput {
   emptyCatalog: ChartCatalog;
   /** 星取表のシートの行の並び（画面の星取表で人か AI が入れ替えた見せ方。chart.ts の rowOrder）。無ければ計画の順 */
   rowOrder?: Readonly<Record<string, readonly string[]>>;
+  /** 出力の言語（設定の言語。無ければ日本語＝今までの出力のまま） */
+  lang?: Lang;
 }
 
 /** 1 つのシートを書く。返すのは書いたデータの行の数 */
@@ -180,6 +205,12 @@ function setupPrint(ws: ExcelJS.Worksheet, nLevels: number): void {
 
 /** 確定した計画の、人が見る様式の Excel（xlsx のバイト列） */
 export async function planWorkbook(input: ExportInput): Promise<Buffer> {
+  // 字はセルに書くときに決まる（同期）。書き終えてから、バイト列にする（非同期）
+  const wb = withLang(input.lang ?? "ja", () => buildWorkbook(input));
+  return fixWorkbook(Buffer.from(await wb.xlsx.writeBuffer()));
+}
+
+function buildWorkbook(input: ExportInput): ExcelJS.Workbook {
   const T = EXPORT_TEXT;
   const wb = new ExcelJS.Workbook();
   wb.created = new Date(input.at);
@@ -199,5 +230,5 @@ export async function planWorkbook(input: ExportInput): Promise<Buffer> {
     writeSheet(ws2, common, input, false, due);
     setupPrint(ws2, common.levelNames.length);
   }
-  return fixWorkbook(Buffer.from(await wb.xlsx.writeBuffer()));
+  return wb;
 }

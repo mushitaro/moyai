@@ -5,6 +5,7 @@
 import type { Plan } from "../shared/plan";
 import { SHARE_FILE_COLUMNS, SHARE_NEEDS_TEXT, SHARE_PREVIEW_NOTE, type ShareNeeds, type SharePreviewOut } from "../shared/tools";
 import { HUMAN_TEXT } from "../app/text/human";
+import { withLang } from "../app/text/i18n";
 import { tokyoYmd, versionName } from "../app/version-name";
 import { fiscalYearOf } from "../import/era";
 import type { PreviewView } from "./checkpoint";
@@ -140,8 +141,12 @@ function labelOf(axes: SharePack["axes"], profile: Record<string, string>): stri
   return `${T.profileLine(names.join("、"))}（${T.redacted}）`;
 }
 
-/** SHARE の画面と同じ数を、形と数だけにする */
+/** SHARE の画面と同じ数を、形と数だけにする。AI が読む結果なので、画面の言語によらず日本語の字で作る（訳さない） */
 export function sharePreviewOf(i: SharePreviewInput): SharePreviewOut {
+  return withLang("ja", () => sharePreviewJa(i));
+}
+
+function sharePreviewJa(i: SharePreviewInput): SharePreviewOut {
   const { plan, view } = i;
   const copy = view.copy;
   const startMonth = plan.facility.fiscalYearStartMonth;

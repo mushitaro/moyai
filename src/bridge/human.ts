@@ -123,6 +123,12 @@ export interface HumanCall {
 }
 
 type Out = Record<string, unknown> & { ok: boolean };
+/** 設定で選んだ言語（書き出しの Excel の言語。無ければ渡さない＝日本語） */
+function langOf(sd: string | null): { lang?: "en" | "ja" } {
+  const l = sd ? readSettings(sd).lang : undefined;
+  return l ? { lang: l } : {};
+}
+
 const no = (reason: string, extra: Record<string, unknown> = {}): Out => ({ ok: false, reason, ...extra });
 
 const answersSchema = z.object({
@@ -203,6 +209,8 @@ const SCHEMAS = {
     ledger: z.string().max(1000).nullable().optional(),
     name: z.string().max(40).nullable().optional(),
     autoUpdate: z.boolean().optional(),
+    // 作業画面の言語（送られたときだけ変える。null は選びを消して PC の言語に従う）
+    lang: z.enum(["en", "ja"]).nullable().optional(),
   }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID) }),
   checkpoint_preview: z.object({ planId: planIdSchema, ringId: ringIdSchema.nullable(), answers: answersSchema }),
@@ -614,6 +622,8 @@ export class HumanService {
           ...(p.sources ? { sources: p.sources, decisions: p.decisions ?? [], crosswalk: p.crosswalk ?? [] } : {}),
           ...(p.intake ? { intake: p.intake } : {}),
           ...(p.rowOrder ? { rowOrder: p.rowOrder } : {}),
+          // 書き出しの Excel は、設定の言語で書く（無ければ日本語）
+          ...langOf(sd),
         });
         if (!r.ok) return no(r.reason, r.pending !== undefined ? { pending: r.pending } : {});
         const at = now.toISOString();
@@ -643,7 +653,7 @@ export class HumanService {
         if (checkSeen(sd, root, p.planId, hr)) return no("historyVanished");
         // 戻すのも、次の版を作ること。確定と同じく、番の人だけ（台帳の新-1）
         if (!(await this.mayBuildOn(root, p.planId, hr, signer.signer.pair.pub))) return no("notYourTurn");
-        const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id) });
+        const r = await revertPlan({ root, signer: signer.signer, planId: p.planId, to: p.to, reason: p.reason, basedOn: p.basedOn, client: call.session, now, catalogs: (id) => this.catalogsFor(id), ...langOf(sd) });
         if (!r.ok) return no(r.reason);
         return { ok: true, version: r.version, plan: r.record.plan, summary: r.record.summary, files: r.files };
       }
@@ -656,7 +666,7 @@ export class HumanService {
           const w = readKeyFile(sd, r.ringId);
           return { ringId: r.ringId, root: r.root, pack: r.pack, key: r.key, fingerprint: w ? fingerprint(w.pub) : null, synced: syncedOf(r.root, docs.syncRoots) };
         });
-        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, github: readGitHub(sd)?.login ?? null, rings, packs: this.packs(), name: s.name, autoUpdate: s.autoUpdate !== false, people: trustList(sd) };
+        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, github: readGitHub(sd)?.login ?? null, rings, packs: this.packs(), name: s.name, autoUpdate: s.autoUpdate !== false, lang: s.lang ?? null, people: trustList(sd) };
       }
       case "settings_save": {
         const p = parsePayload("settings_save", call.payload);
@@ -672,7 +682,9 @@ export class HumanService {
         if (name === undefined) return no("nameInvalid");
         // 最新の確かめ（#65）も、送られたときだけ変える。切ったときだけ false を置く
         const autoUpdate = p.autoUpdate === undefined ? prev.autoUpdate !== false : p.autoUpdate;
-        writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }) });
+        // 言語も、送られたときだけ変える（null は選びを消す）
+        const lang = p.lang === undefined ? prev.lang : p.lang ?? undefined;
+        writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }), ...(lang ? { lang } : {}) });
         return { ok: true, root, ledger, name };
       }
       case "comment_add": {

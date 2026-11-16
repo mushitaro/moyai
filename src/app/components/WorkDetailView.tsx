@@ -11,6 +11,7 @@ import { sheetHash } from "../stages";
 import { NoneMark } from "./NoneMark";
 import { MergeSideContext } from "../state/merge-side";
 import { HUMAN_TEXT } from "../text";
+import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.workDetail;
 const fmt = (n: number, digits = 0) => n.toLocaleString("ja-JP", { maximumFractionDigits: digits });
@@ -130,7 +131,7 @@ export function WorkDetailView({ plan, workKey, asOf, path, attributeLabel, onBa
             const span = rows.filter((x) => x.fiscalYear === r.fiscalYear).length;
             const cost = sum(r.details.map((d) => d.cost));
             const diff = r.kind !== "plan" && cost !== null && r.budget !== null ? cost - r.budget : null;
-            const verdict = r.details.map((d) => d.resultValue).filter(Boolean).join("・") || null;
+            const verdict = r.details.map((d) => d.resultValue).filter(Boolean).join(INLINE_TEXT.list) || null;
             return (
               <Table.Tr
                 key={r.key}
@@ -219,8 +220,8 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
   const ds = row.details;
   const cost = sum(ds.map((d) => d.cost));
   const diff = row.kind !== "plan" && cost !== null && row.budget !== null ? cost - row.budget : null;
-  const verdict = ds.map((d) => d.resultValue).filter(Boolean).join("・");
-  const measured = ds.map((d) => d.measuredValue).filter(Boolean).join("・");
+  const verdict = ds.map((d) => d.resultValue).filter(Boolean).join(INLINE_TEXT.list);
+  const measured = ds.map((d) => d.measuredValue).filter(Boolean).join(INLINE_TEXT.list);
   const fields: [string, string | null][] = [
     [T.period, period(ds)],
     [T.manDays, sum(ds.map((d) => d.manDays)) !== null ? T.manDaysValue(fmtOr(sum(ds.map((d) => d.manDays)), 1)) : null],
@@ -228,7 +229,7 @@ function RowDetail({ row, name, contractor, strategy }: { row: Row; name: string
     [T.diff, diff !== null && row.budget !== null ? T.diffValue(signed(diff), kyen(row.budget)) : null],
     // 判定は「B　火格子の摩耗 3.2 mm」の形（判定の値と測った値を全角の空白で）
     [T.verdict, verdict ? (measured ? `${verdict}　${measured}` : verdict) : null],
-    [T.previous, ds.map((d) => d.previousValue).filter(Boolean).join("・") || null],
+    [T.previous, ds.map((d) => d.previousValue).filter(Boolean).join(INLINE_TEXT.list) || null],
     [T.strategy, strategy ? (T.strategies[strategy] ?? strategy) : null],
     [T.contractor, contractor],
   ];

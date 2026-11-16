@@ -457,7 +457,7 @@ export async function validatePrCli(argv: string[], o: { packsDir?: string; git?
 // ─── site ──────────────────────────────────────────────────
 
 export const SITE_CLI_TEXT = {
-  usage: "使い方：moyai ledger site <台帳のリポジトリの根> <出すフォルダ>",
+  usage: "使い方：moyai ledger site <台帳のリポジトリの根> <出すフォルダ> [--lang ja|en]（ページの言語。既定は ja）",
   outSymlink: "出すフォルダか index.html が symlink です。たどらずに止めました。",
   outNotDir: "出す先がフォルダではありません。",
   written: (p: string, ok: number, ng: number) => `書きました：${p}（✓ ${ok} 件・✗ ${ng} 件）`,
@@ -479,8 +479,12 @@ function workNamesOf(packsDir: string): Record<string, string> {
  * 出すフォルダ・index.html が symlink なら書かない。終わりの値：すべて ✓ なら 0、✗ があれば 1（✗ の束は集計に入れずに書く）、書けなければ 2。
  */
 export async function siteCli(argv: string[], o: { packsDir?: string; build?: string } = {}): Promise<number> {
-  const [rootArg, outArg, ...rest] = argv;
-  if (!rootArg || !outArg || rest.length > 0) {
+  // --lang ja|en（ページの言語。既定は日本語）
+  const li = argv.indexOf("--lang");
+  const langArg = li >= 0 ? argv[li + 1] : "ja";
+  const args = li >= 0 ? [...argv.slice(0, li), ...argv.slice(li + 2)] : argv;
+  const [rootArg, outArg, ...rest] = args;
+  if (!rootArg || !outArg || rest.length > 0 || (langArg !== "ja" && langArg !== "en")) {
     say(SITE_CLI_TEXT.usage);
     return 2;
   }
@@ -512,7 +516,7 @@ export async function siteCli(argv: string[], o: { packsDir?: string; build?: st
     say(SITE_CLI_TEXT.outSymlink);
     return 2;
   }
-  const html = renderLedgerSite({ read: l.read, pack: l.pack, workNames: workNamesOf(packsDir), build: o.build ?? "MOYAI" });
+  const html = renderLedgerSite({ read: l.read, pack: l.pack, workNames: workNamesOf(packsDir), build: o.build ?? "MOYAI", lang: langArg });
   const tmp = join(out, `.index-${process.pid}-${Date.now()}.tmp`);
   try {
     writeFileSync(tmp, html, { encoding: "utf8", flag: "wx" });

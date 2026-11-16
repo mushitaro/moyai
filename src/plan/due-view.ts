@@ -6,8 +6,43 @@ import type { Plan } from "../shared/plan";
 import { fiscalYearOf } from "./chart";
 import { planDue, type WorkDue } from "./next";
 import type { DueNote, MeterWhy } from "./trigger";
+import { defineMessages } from "../app/text/i18n";
 
-export const DUE_TEXT = {
+// 英語の表が元（形の型）。日本語の表は同じ形（src/app/text/i18n.ts）。Excel の出力のときは、出力の言語で読む（export.ts）
+const EN_DUE_TEXT = {
+  col: "Next",
+  none: "―",
+  fy: (y: number) => `FY${y}`,
+  side: { due: "Next", latest: "Due", window: "Tolerance", basis: "Basis", origin: "Origin", notes: "Notes" },
+  exportCols: ["Next", "Due", "Basis", "Notes"] as const,
+  calendar: "Calendar",
+  projected: (meter: string) => `${meter.trim() || "Operation"} (projected)`,
+  originGrain: { fiscalYear: "by fiscal year", start: "start of use" },
+  /** 起点に粒度を添える（「2026 年度（年度単位）」） */
+  withGrain: (origin: string, grain: string) => `${origin} (${grain})`,
+  windowRange: (from: string, to: string) => `${from}–${to}`,
+  notes: {
+    calendarOnly: "Calendar only (no operating records)",
+    firstCycle: "First cycle",
+    pauseCapped: "Pause added up to the cap",
+    extended: "Extended",
+    extensionCapped: "Extension cap",
+    extensionUnapproved: "Extension not approved",
+  } satisfies Record<DueNote, string>,
+  undecided: {
+    noTrigger: "No interval",
+    triggerInvalid: "Invalid interval",
+    noOrigin: "No origin",
+    meterNone: "No operating records",
+    meterInsufficient: "Not enough operating records",
+    meterDecreasing: "Operating records decrease",
+    meterNotGrowing: "Operating records unchanged",
+  } satisfies Record<"noTrigger" | "triggerInvalid" | "noOrigin" | MeterWhy, string>,
+  sep: ", ",
+  undecidedInRow: (n: number) => `Unconfirmed ${n}`,
+};
+
+export const DUE_TEXT = defineMessages(EN_DUE_TEXT, {
   col: "次回",
   none: "―",
   fy: (y: number) => `${y} 年度`,
@@ -17,6 +52,7 @@ export const DUE_TEXT = {
   /** 根拠の見込み：稼働の種類の名前（「運転時間（見込み）」）。種類が分からないときは「稼働（見込み）」 */
   projected: (meter: string) => `${meter.trim() || "稼働"}（見込み）`,
   originGrain: { fiscalYear: "年度単位", start: "使用開始" },
+  withGrain: (origin: string, grain: string) => `${origin}（${grain}）`,
   windowRange: (from: string, to: string) => `${from}〜${to}`,
   notes: {
     calendarOnly: "暦のみ（稼働記録なし）",
@@ -38,7 +74,7 @@ export const DUE_TEXT = {
   sep: "・",
   /** 同じ行に、次回の決まらない作業が残っているとき（台帳の重-8b-b。言葉は Wire に確かめる） */
   undecidedInRow: (n: number) => `未確定 ${n}`,
-};
+});
 
 /** 版の時刻（ISO）から、次回の基準日（日本時間の日付。PC の時間帯に頼らない。同じ版ならどの PC でも同じ字にするため。台帳の重-8b-a） */
 export function dueBaseDate(at: string): string {
@@ -75,7 +111,7 @@ export function dueView(w: WorkDue, fiscalYearStartMonth: number): DueView {
   const byYear = grain === "fiscalYear" || grain === "start";
   const show = (d: string) => (byYear ? T.fy(fiscalYearOf(d, fiscalYearStartMonth)) : d);
   const origin =
-    w.origin === null ? null : grain === "fiscalYear" ? `${T.fy(fiscalYearOf(w.origin, fiscalYearStartMonth))}（${T.originGrain.fiscalYear}）` : grain === "start" ? `${w.origin}（${T.originGrain.start}）` : w.origin;
+    w.origin === null ? null : grain === "fiscalYear" ? T.withGrain(T.fy(fiscalYearOf(w.origin, fiscalYearStartMonth)), T.originGrain.fiscalYear) : grain === "start" ? T.withGrain(w.origin, T.originGrain.start) : w.origin;
   const b = w.by !== null ? w.branches[w.by] : undefined;
   const basis = !b ? null : b.kind === "calendar" ? T.calendar : b.due !== null ? T.projected(b.meter) : b.meter;
   const notes = w.notes.map((n) => T.notes[n]);

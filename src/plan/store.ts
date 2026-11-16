@@ -16,6 +16,7 @@ import type { ChartCatalog } from "./chart";
 import { applyAcceptedCycles, type CycleTriggerChange } from "./cycle";
 import { REMOVAL_PREFIX, applyAcceptances, diffPlans, isRemovalId, pendingDecisions, removalHash, type Acceptance, type DiffMark, type PlanDiff } from "./diff";
 import { planWorkbook } from "./export";
+import type { Lang } from "../app/text/i18n";
 import { fixWorkbook } from "./xlsx-fix";
 import { EXPORT_SIGNATURE_FILE, checkExports, type ExportInfo } from "./exports";
 import { contentHash, personFile, signStatement, signatureFileName, SIGNATURE_FILE, validName, verifySignatureFile, type SignRole } from "./signature";
@@ -373,6 +374,8 @@ export interface CommitInput {
   derivedFrom?: { planId: string; version: number; contentHash: string } | null;
   /** 書き出しの星取表のシートの行の並び（画面の見せ方。計画と版の記録の計画には入れない。仕事 chat-ops-v1） */
   rowOrder?: Readonly<Record<string, readonly string[]>>;
+  /** 書き出しの Excel の言語（設定の言語。無ければ日本語） */
+  lang?: Lang;
 }
 
 /** 計画を確定する：人が受けていない決定が残っていれば止める。版の記録と差分レポートを足す。 */
@@ -436,6 +439,7 @@ export async function commitPlan(i: CommitInput): Promise<CommitResult> {
     decisions: i.decisions,
     crosswalk: i.crosswalk,
     ...(i.rowOrder ? { rowOrder: i.rowOrder } : {}),
+    ...(i.lang ? { lang: i.lang } : {}),
     intake: i.intake,
     signer: i.signer,
     role: i.role ?? "confirm",
@@ -456,6 +460,8 @@ export async function revertPlan(i: {
   client: string;
   now?: Date;
   catalogs?: CatalogsFor;
+  /** 書き出しの Excel の言語（設定の言語。無ければ日本語） */
+  lang?: Lang;
 }): Promise<CommitResult> {
   if (i.reason.trim().length === 0) return { ok: false, reason: "reasonEmpty" };
   if (!PLAN_ID.test(i.planId)) return { ok: false, reason: "planIdInvalid" };
@@ -479,6 +485,7 @@ export async function revertPlan(i: {
     decisions: record.decisions,
     crosswalk: record.crosswalk,
     signer: i.signer,
+    ...(i.lang ? { lang: i.lang } : {}),
   });
 }
 
@@ -509,6 +516,7 @@ async function writeVersion(
     role?: "confirm" | "edit";
     derivedFrom?: VersionRecord["derivedFrom"];
     rowOrder?: Readonly<Record<string, readonly string[]>>;
+    lang?: Lang;
   },
 ): Promise<CommitResult> {
   const dir = planDir(root, v.plan.planId);
@@ -549,7 +557,7 @@ async function writeVersion(
   }
   const reportBytes = await diffReport(base, diff, v.signer.by, removedReasons);
   const c = v.catalogs ? v.catalogs(plan.packId) : null;
-  const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty, ...(v.rowOrder ? { rowOrder: v.rowOrder } : {}) }) : null;
+  const exportBytes = c ? await planWorkbook({ plan, version, at: base.at, catalog: c.catalog, emptyCatalog: c.empty, ...(v.rowOrder ? { rowOrder: v.rowOrder } : {}), ...(v.lang ? { lang: v.lang } : {}) }) : null;
   const { plan: _plan, ...head } = base;
   const record: VersionRecord = { ...head, files: { report: sha(reportBytes), export: exportBytes ? sha(exportBytes) : null }, plan };
   // 版の記録の大きさの上限（作業明細の日報の行で厚くなる。Architect の 43 の 1）。越えたら黙って切らずに、署名の前に理由つきで止める

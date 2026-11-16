@@ -1,7 +1,9 @@
 // 公開の台帳のサイト（GitHub Pages の静的なページ）の言葉。ページは src/share/site.ts が描く。
 // 会期中の台帳は架空の施設だけなので、どのページにも【架空】を出す。
+import { defineMessages } from "./i18n";
+import { EN_SITE_TEXT } from "./en/site";
 
-export const SITE_TEXT = {
+export const SITE_TEXT = defineMessages(EN_SITE_TEXT, {
   title: "【架空】MOYAI 公開台帳",
   fiction: "【架空】このページの施設と数は、すべて架空です（会期中の公開台帳は架空の施設だけです）。",
   lead:
@@ -34,7 +36,7 @@ export const SITE_TEXT = {
   ngHead: "✗ の共有ファイルと理由（集計に入れていません）",
   noBundles: "確かめて ✓ になった共有ファイルはまだありません。",
   profileHead: (n: number) => `見え方 ${n}`,
-  group: { NATIONAL: "全国の表に載る施設", OUTSIDE: "全国の表に載らない施設" } as Record<string, string>,
+  group: { NATIONAL: "全国の表に載る施設", OUTSIDE: "全国の表に載らない施設" },
   stage: (s: number) => `集約度 ${s}`,
   similar: (n: number) => `類似施設 ${n}`,
   belowFive: "この条件では 5 施設に届きません。",
@@ -56,10 +58,10 @@ export const SITE_TEXT = {
     "統計の行の n は、その欄のある施設の数です。n が 0〜2 なら x、3〜4 なら範囲と n、5 以上なら中央値・四分位・n を出します（階級の順の最近順位法）。集団を混ぜて数えません。",
   labelNote: "札は鍵番号の頭から作ります。同じ鍵なら、共有ファイルが増えても同じ札です。",
   footer: (build: string) => `このページは MOYAI の ledger site が、台帳の共有ファイルを受け手と同じ関数で再照合して作りました（生のファイルは写していません）。${build}`,
-  bandUnit: { I: "年", W: "人・日", D: "日" } as Record<string, string>,
+  bandUnit: { I: "年", W: "人・日", D: "日" },
   bandAtLeast: (a: string, unit: string) => `${a} ${unit}以上`,
   bandRange: (a: string, b: string, unit: string) => (a === b ? `${a} ${unit}` : `${a}〜${b} ${unit}`),
   axisBelow: (a: string, unit: string) => `${a} ${unit}未満`,
   axisRange: (a: string, b: string, unit: string) => `${a} ${unit}以上 ${b} ${unit}未満`,
   axisAtLeast: (a: string, unit: string) => `${a} ${unit}以上`,
-};
+});
