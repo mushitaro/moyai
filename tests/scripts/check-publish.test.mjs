@@ -45,9 +45,15 @@ function withTree(files, fn) {
   }
 }
 
-test("前の製品の名前が src に出たら当たる", () => {
-  withTree({ "src/a.ts": "// from Maximo\n" }, (root) => {
+test("前の製品（HOSHUTARO）の名前が src に出たら当たる", () => {
+  withTree({ "src/a.ts": "// from HOSHUTARO\n" }, (root) => {
     assert.equal(checkPublish(root).hits.length, 1);
+  });
+});
+
+test("MX Stage と Maximo は連携のために名指ししてよい（運営者の判断 2026-11-16）", () => {
+  withTree({ "src/a.ts": "// Maximo connector shared with MX Stage (mxstage/eam-connectors)\n" }, (root) => {
+    assert.equal(checkPublish(root).hits.length, 0);
   });
 });
 

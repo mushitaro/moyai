@@ -11,7 +11,8 @@ export const MAX_SESSION_BUDGET_USD = 50;
 /** Managed Agents の走らせた時間の値段（公開の値段、1 時間あたりの米ドル）。 */
 export const RUNTIME_USD_PER_HOUR = 0.08;
 /** 道具の呼び出しで止める名前。前の製品の名前と置き場所。 */
-export const FORBIDDEN_IN_TOOL_INPUT = /hoshutaro|mxstage|woodygaragelab|mx stage/i;
+// MX Stage は運営者の判断（2026-11-16）で外した。HOSHUTARO（とその置き場所）は今のまま拒む
+export const FORBIDDEN_IN_TOOL_INPUT = /hoshutaro|woodygaragelab/i;
 /** モデルの識別子らしい文字列。台帳とファイルに書かない。 */
 export const MODEL_ID_LIKE = /claude-[a-z0-9-]+|opus|sonnet|haiku|fable|mythos/i;
 

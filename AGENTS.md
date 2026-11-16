@@ -10,8 +10,9 @@
 
 ## 新しいコードだけ
 
-- 前の製品（MX Stage・HOSHUTARO）のリポジトリと配布物を、読まない・clone しない・fetch しない・依存にしない・道具に使わない。その名前・数値・文言・API の形を使わない。この PC に入っている前の製品の MCP と Skill を呼ばない。
-- `src/`・`packs/`・`skills/`・`samples/` に前の製品の名前を書かない（`scripts/check-publish` が落とす）。
+- HOSHUTARO（前の製品）のリポジトリと配布物を、読まない・clone しない・fetch しない・依存にしない・道具に使わない。その名前・数値・文言・API の形を使わない。この PC に入っている HOSHUTARO の MCP と Skill を呼ばない。
+- MX Stage（TSUNAGI の製品）は、運営者の判断（2026-11-16、会期のあと）で、業務システムとの連携の部品（`mxstage/eam-connectors`）とライセンスの鍵を共有してよい。MX Stage の MCP をこのリポジトリの作業の道具として呼ばない。提出の版（タグ `submission`・枝 `hackathon-release`）は会期中の決まりのまま。
+- `src/`・`packs/`・`skills/`・`samples/` に HOSHUTARO の名前を書かない（`scripts/check-publish` が落とす）。
 - MCP のツール名は `tests/fixtures/reserved-names.txt` の名前と一致させない。
 - 第三者のソースを `src/` に写さない。依存は版を固定し、THIRD_PARTY_NOTICES に書く。
 

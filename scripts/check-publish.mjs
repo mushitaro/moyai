@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 公開の前の検査。src/・packs/・skills/・samples/・services/ に前の製品の名前が出たら落とす（README と docs/ は名指しのために除く）。
+// 公開の前の検査。src/・packs/・skills/・samples/・services/ に前の製品（HOSHUTARO）の名前が出たら落とす（README と docs/ は名指しのために除く）。
 // テキストと、xlsx などの zip の中の XML を見る。
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, extname } from "node:path";
@@ -7,7 +7,8 @@ import { inflateRawSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 
 export const SCANNED_DIRS = ["src", "packs", "skills", "samples", "services"];
-export const FORBIDDEN = /mxstage|hoshutaro|mx stage|maximo/i;
+// MX Stage と Maximo は、運営者の判断（2026-11-16）で連携のために名指ししてよい。HOSHUTARO は今のまま落とす
+export const FORBIDDEN = /hoshutaro/i;
 const ZIP_EXT = new Set([".xlsx", ".xlsm", ".docx", ".pptx"]);
 const BINARY_EXT = new Set([".png", ".jpg", ".jpeg", ".pdf", ".woff", ".woff2", ".ico", ".gif", ".webp", ".xls"]);
 
