@@ -45,6 +45,8 @@ interface SettingsBody {
   name: string | null;
   /** 最新の確かめ（#65 の 5）。古い橋渡しは送らない */
   autoUpdate?: boolean;
+  /** 設定に保存した言語（無ければ null＝PC の言語。古い橋渡しは送らない） */
+  lang?: "en" | "ja" | null;
   people: { by: string; key: string; pub: string; fingerprint: string; confirmed: boolean; own: boolean; changed: boolean; firstSeen: string; previous?: { fingerprint: string; at: string } | null }[];
 }
 
@@ -236,7 +238,8 @@ export function Settings() {
   const saveLang = async (lang: Lang) => {
     if (!s) return;
     const r = readHuman<{ ok: boolean }>(await client.callHuman("settings_save", ROUTES.settingsSave.path, { root: s.chosenRoot, lang }));
-    if (!r.ok) setError(r.message);
+    if (!r.ok) return setError(r.message);
+    await load();
   };
   const saveAutoUpdate = async (on: boolean) => {
     if (!s) return;
@@ -252,8 +255,8 @@ export function Settings() {
       {T.change}
     </button>
   );
-  const row = (title: string, body: React.ReactNode, testid?: string) => (
-    <div className="moyai-settings-row" data-testid={testid}>
+  const row = (title: string, body: React.ReactNode, testid?: string, attrs: Record<string, string> = {}) => (
+    <div className="moyai-settings-row" data-testid={testid} {...attrs}>
       <Text size="sm" c="var(--text-3)" className="moyai-settings-name">
         {title}
       </Text>
@@ -450,7 +453,7 @@ export function Settings() {
           {/* 明暗：既定は自動（PC の設定に従う）。暗・明に固定できる（#61。ヘッダには置かない） */}
           {row(T.themeTitle, <ThemeChoice />, "theme-setting")}
           {/* 言語：English | 日本語。押すとすぐ描き直して保存する（設定が無ければ PC の言語） */}
-          {row(T.langTitle, <LangChoice label={T.langTitle} onSave={(l) => void saveLang(l)} />, "lang-setting")}
+          {row(T.langTitle, <LangChoice label={T.langTitle} onSave={(l) => void saveLang(l)} />, "lang-setting", { "data-saved": s.lang ?? "" })}
           {/* 最新の確かめ（#65 の 5）：押すとすぐ保存する（人だけの経路）。切ったら一切問い合わせない。説明の文は置かない */}
           {s.autoUpdate !== undefined &&
             row(

@@ -37,6 +37,8 @@ test("設定が無ければ PC の言語。English を押すと読み込み直�
   await expect(page.getByTestId("theme-setting")).toContainText(themeTitle("en"));
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   expect(await page.evaluate(() => (window as unknown as { __mark?: number }).__mark)).toBe(1);
+  // 保存が終わるのを待つ（描き直しは保存より先。保存は人だけの経路で往復する）
+  await expect(row).toHaveAttribute("data-saved", "en");
   await ja.close();
 
   // 設定に保存された：日本語の PC のブラウザ（覚えた写しの無い新しい窓）で開いても英語
@@ -48,6 +50,7 @@ test("設定が無ければ PC の言語。English を押すと読み込み直�
   // 日本語に戻すと、すぐ日本語
   await p2.getByTestId("lang-choice").getByRole("button", { name: "日本語" }).click();
   await expect(p2.getByTestId("lang-setting")).toContainText(title("ja"));
+  await expect(p2.getByTestId("lang-setting")).toHaveAttribute("data-saved", "ja");
   await fresh.close();
 });
 
