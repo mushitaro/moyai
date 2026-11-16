@@ -18,6 +18,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compare } from "../bench/compare.mjs";
+import { V4_BENCH, V4_REPO, readFreeze } from "../bench/v4.mjs";
 import { checkPack, skillPathsOf } from "../skill-scores/check.mjs";
 import {
   D1_SPEC,
@@ -40,7 +41,6 @@ import {
   judgeWaiting,
   judgeOldSamples,
   withFrozen,
-  V3_BENCH,
   fileRow,
   renderResult,
   summarizePlaywright,
@@ -202,41 +202,56 @@ function bench(label, recorded, extra) {
   return { result: head, strict: { same: !c.changed, detail } };
 }
 {
-  // A1・A1b・A3 は、運営者が承認した新しいサンプル（samples/waste-incineration-v3）を凍結した読み手で測った記録があるときだけ判定する（#111・docs/scenarios.md の S-A の注）。
-  // 無いときは「待ち（#111）」。旧サンプル（samples/waste-incineration）の値は「旧」として根拠の字に添えるが、判定に使わない
-  const v3 = V3_BENCH;
-  const hasV3 = existsSync(join("samples", v3)) && existsSync(join("eval", "bench", v3, "frozen", "freeze.json"));
-  const set = hasV3 ? { name: v3, extra: ["--samples", join("samples", v3)] } : { name: "waste-incineration", extra: [] };
-  const a1 = bench(set.name, join("eval", "bench", set.name, "result.json"), set.extra);
-  const a3 = bench(`${set.name}-first-read`, join("eval", "bench", set.name, "first-read", "result.json"), [...set.extra, "--first-read"]);
-  const measured = {
-    A1: a1 ? judgeA1(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" },
-    A1b: a1 ? judgeA1b(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" },
-    A3: a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" },
-  };
-  const v3Samples = existsSync(join("samples", v3));
-  // 凍結の回（最初の 1 回）の値も根拠の字に添える。合否は今の記録で決める
-  const frozenOf = (sub) => {
+  // A1・A1b・A3 は、運営者が承認した新しいサンプル v4（別の公開リポジトリ mushitaro/moyai-samples）を凍結した読み手で測った記録があるときだけ判定する
+  // （#111・docs/scenarios.md の S-A の注）。合否は今の記録（eval/bench/waste-incineration-v4/）で決め、凍結の回の値を字に添える。
+  // 今のコードで記録と同じ数が出るかは、資料の少ない数施設だけで見る（全部は CI の時間に収まらない。scripts/bench/v4-ci.mjs）。
+  // 凍結の記録が無いときは「待ち（#111）」。旧サンプル（samples/waste-incineration）の値は「旧」として根拠の字に添えるが、判定に使わない
+  const v4 = V4_BENCH;
+  const freeze = readFreeze(v4);
+  const read = (p) => {
     try {
-      return JSON.parse(readFileSync(join("eval", "bench", v3, "frozen", sub), "utf8"));
+      return JSON.parse(readFileSync(p, "utf8"));
     } catch {
       return null;
     }
   };
-  let frozen = null;
-  if (hasV3) {
-    const f = frozenOf("freeze.json");
-    const fp = frozenOf("result.json");
-    const ff = frozenOf(join("first-read", "result.json"));
+  if (freeze) {
+    const cur = read(join("eval", "bench", v4, "result.json"));
+    const curFr = read(join("eval", "bench", v4, "first-read", "result.json"));
+    let strict;
+    if (ci) {
+      const v = process.env.MOYAI_CI_PACK_BENCH_V4 ?? "";
+      const same = v === "success" ? true : v === "failure" ? false : null;
+      strict = { same, detail: same === true ? "pack-bench の仕事で、資料の少ない施設の数が記録と同じ（--strict）" : `pack-bench の仕事（v4）：${v || "不明"}` };
+    } else {
+      const root = process.env.MOYAI_SAMPLES_ROOT;
+      if (!root || !existsSync(root)) strict = { same: null, detail: `サンプルのリポジトリ（${V4_REPO}）の clone が無い（MOYAI_SAMPLES_ROOT）` };
+      else {
+        say("物差しを測る（v4 の資料の少ない施設）");
+        const p = spawnSync(process.execPath, ["scripts/bench/v4-ci.mjs", "--samples-root", root], { stdio: "inherit" });
+        strict = p.status === 0 ? { same: true, detail: "資料の少ない施設の数が記録と同じ（--strict）" } : { same: false, detail: "資料の少ない施設の数が記録と違う" };
+      }
+    }
+    const fp = read(join("eval", "bench", v4, "frozen", "result.json"));
+    const ff = read(join("eval", "bench", v4, "frozen", "first-read", "result.json"));
     const self = { same: true, detail: "凍結の記録そのもの" };
-    frozen = {
-      tag: f?.tag ?? "タグ不明",
-      A1: fp ? judgeA1(fp, self) : null,
-      A1b: fp ? judgeA1b(fp, self) : null,
-      A3: ff ? judgeA3(ff, self) : null,
+    const measured = {
+      A1: cur ? judgeA1(cur, strict) : { status: FAIL, evidence: "v4 の今の記録を読めない" },
+      A1b: cur ? judgeA1b(cur, strict) : { status: FAIL, evidence: "v4 の今の記録を読めない" },
+      A3: curFr ? judgeA3(curFr, strict) : { status: FAIL, evidence: "v4 の初めて読む今の記録を読めない" },
     };
+    const frozen = { A1: fp ? judgeA1(fp, self) : null, A1b: fp ? judgeA1b(fp, self) : null, A3: ff ? judgeA3(ff, self) : null };
+    for (const k of ["A1", "A1b", "A3"]) results[k] = withFrozen(measured[k], frozen[k], freeze.tag ?? "タグ不明");
+  } else {
+    const a1 = bench("waste-incineration", join("eval", "bench", "waste-incineration", "result.json"), []);
+    const a3 = bench("waste-incineration-first-read", join("eval", "bench", "waste-incineration", "first-read", "result.json"), ["--first-read"]);
+    const old = {
+      A1: a1 ? judgeA1(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" },
+      A1b: a1 ? judgeA1b(a1.result, a1.strict) : { status: FAIL, evidence: "物差しを測れなかった" },
+      A3: a3 ? judgeA3(a3.result, a3.strict) : { status: FAIL, evidence: "初めて読む物差しを測れなかった" },
+    };
+    for (const k of ["A1", "A1b", "A3"]) results[k] = judgeOldSamples(old[k]);
   }
-  for (const k of ["A1", "A1b", "A3"]) results[k] = hasV3 ? withFrozen(measured[k], frozen[k], frozen.tag) : judgeOldSamples(measured[k], v3Samples);
 }
 
 let c1Tests = null;
