@@ -1,33 +1,33 @@
 {
   "schema": "moyai.eval.skill-score/0",
-  "pack": "night-soil",
-  "suite": "night-soil",
-  "suiteSha": "a6b5224742b58837d53797cb801d3757c78da5ed904f9bd68e153e56a2da0de9",
+  "pack": "waste-incineration",
+  "suite": "waste-incineration",
+  "suiteSha": "431f45dcb13555163399f75947189e716a3c13c4dba119c14151697dbccb333c",
   "skills": [
     {
       "path": "skills/moyai/SKILL.md",
-      "sha256": "1b45448d39aee39cfb9e64472bf2b2ed2afbbcdf87b51926d2e353ad2131aaa5"
+      "sha256": "04c7a984eb1000f2ab06e3f0c422385ed338dcf67013813eb082861b26cbe7e4"
     },
     {
-      "path": "packs/night-soil/SKILL.md",
-      "sha256": "3e47b730ab86bacb130df865115a0acf8f34c446ee8b9d340e73b3c150d1b6c4"
+      "path": "packs/waste-incineration/SKILL.md",
+      "sha256": "c9dd80b3dc626c5bfd93131fde815a2187b3ff9b2deeebb2b33509c3ceb0d4d1"
     }
   ],
-  "skillSha": "4098d469e86e713a85f41c0daaa8baf169855953f28504f021d6db75d16995dd",
-  "label": "PR #129 の文（1 段目に連携の節＋し尿処理）",
-  "at": "2026-11-16T10:47:28.201Z",
-  "cases": 95,
-  "answered": 95,
-  "pass": 95,
+  "skillSha": "0dc44125a7089d68945a9919f3c3965a066c409b26483d0132c89d03bc735af3",
+  "label": "PR #129 の文（main の段 1b を取り込んだ 1 段目＋連携の節）",
+  "at": "2026-11-16T11:23:34.790Z",
+  "cases": 100,
+  "answered": 100,
+  "pass": 100,
   "runs": [
     {
       "solver": "解く役 1（子のエージェント・決まった頼みの文）",
-      "pass": 95,
+      "pass": 100,
       "failing": []
     },
     {
       "solver": "解く役 2（子のエージェント・決まった頼みの文）",
-      "pass": 95,
+      "pass": 100,
       "failing": []
     }
   ],
@@ -41,6 +41,10 @@
       "total": 10
     },
     "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
       "pass": 10,
       "total": 10
     },
@@ -67,16 +71,12 @@
     "R10": {
       "pass": 10,
       "total": 10
-    },
-    "R04": {
-      "pass": 5,
-      "total": 5
     }
   },
   "perGrader": {
     "json": {
-      "pass": 95,
-      "total": 95
+      "pass": 100,
+      "total": 100
     },
     "no_guess": {
       "pass": 190,
@@ -95,8 +95,8 @@
       "total": 30
     },
     "fiscal_year": {
-      "pass": 90,
-      "total": 90
+      "pass": 120,
+      "total": 120
     }
   },
   "failing": []
