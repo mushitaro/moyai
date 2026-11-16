@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "night-soil",
+  "suite": "night-soil",
+  "suiteSha": "a6b5224742b58837d53797cb801d3757c78da5ed904f9bd68e153e56a2da0de9",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "1b45448d39aee39cfb9e64472bf2b2ed2afbbcdf87b51926d2e353ad2131aaa5"
+    },
+    {
+      "path": "packs/night-soil/SKILL.md",
+      "sha256": "3e47b730ab86bacb130df865115a0acf8f34c446ee8b9d340e73b3c150d1b6c4"
+    }
+  ],
+  "skillSha": "4098d469e86e713a85f41c0daaa8baf169855953f28504f021d6db75d16995dd",
+  "label": "PR #129 の文（1 段目に連携の節＋し尿処理）",
+  "at": "2026-11-16T10:47:28.201Z",
+  "cases": 95,
+  "answered": 95,
+  "pass": 95,
+  "runs": [
+    {
+      "solver": "解く役 1（子のエージェント・決まった頼みの文）",
+      "pass": 95,
+      "failing": []
+    },
+    {
+      "solver": "解く役 2（子のエージェント・決まった頼みの文）",
+      "pass": 95,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 5,
+      "total": 5
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 95,
+      "total": 95
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 90,
+      "total": 90
+    }
+  },
+  "failing": []
+}
