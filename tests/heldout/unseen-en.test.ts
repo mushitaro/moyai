@@ -12,9 +12,13 @@ const ROOT = join(__dirname, "../..");
 const SET = join(ROOT, "tests/fixtures/unseen-en/en-1");
 const HASH = "tests/fixtures/unseen-en/en-1.hash.json";
 const git = (...args: string[]) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
-/** その道を最初に足した commit の時刻の順の番号（古いほど小さい。無ければ null） */
+/**
+ * その道を最初に足した commit（無ければ null）。
+ * --full-history：PR を squash でマージすると、ハッシュと中身が 1 つの commit に入る。元の commit を merge で main の歴史に戻した（#127 のあと）ので、
+ * 横の枝もたどって、いちばん古く足した commit を取る
+ */
 function firstAdded(path: string): string | null {
-  const xs = git("log", "--diff-filter=A", "--format=%H", "--", path).split("\n").filter(Boolean);
+  const xs = git("log", "--full-history", "--diff-filter=A", "--format=%H", "--", path).split("\n").filter(Boolean);
   return xs.length ? xs[xs.length - 1]! : null;
 }
 const isAncestor = (a: string, b: string) => {
