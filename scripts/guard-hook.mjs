@@ -29,14 +29,7 @@ const WRITE_VERB =
 const GUARD_FILES = /(?:^|[\\/\s"'`=])(?:scripts[\\/]+guard-hook\.mjs|\.claude[\\/]+settings(?:\.local)?\.json)(?=$|[\s"'`;&|)])/i;
 const SHELL_WRITE = new RegExp(WRITE_VERB.source + String.raw`|\bsed\s+(?:-\w*\s+)*-i|\bperl\s+-\w*i|\bdd\b|\bchmod\b|\bgit\s+(?:checkout|restore|apply|am|stash\s+pop)\b|\bln\b`, "i");
 const PREVIOUS_PRODUCT_URL = [
-  /^https?:\/\/(?:www\.)?github\.com\/mxstage(?:\/|$)/i,
   /^https?:\/\/(?:www\.)?github\.com\/woodygaragelab\/hoshutaro(?:\/|$|\.git)/i,
-  /^https?:\/\/raw\.githubusercontent\.com\/(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
-  /^https?:\/\/(?:[\w-]+\.)*mxstage\.tsunagi\.app(?:\/|$)/i,
-  /^https?:\/\/api\.github\.com\/(?:repos\/)?(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
-  /^https?:\/\/codeload\.github\.com\/(?:mxstage|woodygaragelab\/hoshutaro)(?:\/|$)/i,
-  /^https?:\/\/(?:www\.)?npmjs\.(?:com|org)\/package\/\S*(?:mxstage|hoshutaro)/i,
-  /^https?:\/\/registry\.npmjs\.org\/\S*(?:mxstage|hoshutaro)/i,
 ];
 
 /** ホストの名前が自分の PC（127.0.0.0/8・::1・IPv4 の写しの ::ffff:7f..・localhost・0.0.0.0）か。 */
