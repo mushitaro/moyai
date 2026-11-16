@@ -441,6 +441,8 @@ export const SCREEN_GO = [
   "hoshitori.export",
   "hoshitori.share",
   "hoshitori.files",
+  // 業務システムとの連携のシート（設定の「連携」がオンのときだけ並ぶ）
+  "hoshitori.connect",
   // 前の値：hoshitori.export・hoshitori.share と同じシートを開く（再起動まで前のツールの定義を持つ Claude Desktop のため）
   "export",
   "share",
@@ -1214,7 +1216,7 @@ export const TOOLS = {
     "作業画面の見せ方を変える",
     "チャットの頼みで作業画面の見せ方を変える。引数はどれか 1 つ以上で、1 回に並べて渡してよい。" +
       "「ライトモードにして」は theme: light、「ダークモードにして」は dark、「PC の設定に合わせて」は auto。" +
-      "「星取表画面に切り替えて」は go: hoshitori.chart（ほかに top＝トップ、hoshitori.cost＝費用、hoshitori.match＝突合、hoshitori.rules＝ルール、hoshitori.review＝照査、hoshitori.decisions＝確定、hoshitori.export＝出力、hoshitori.share＝共有、hoshitori.files＝資料、settings＝設定。前の export・share も同じシート）。" +
+      "「星取表画面に切り替えて」は go: hoshitori.chart（ほかに top＝トップ、hoshitori.cost＝費用、hoshitori.match＝突合、hoshitori.rules＝ルール、hoshitori.review＝照査、hoshitori.decisions＝確定、hoshitori.export＝出力、hoshitori.share＝共有、hoshitori.files＝資料、hoshitori.connect＝連携〔設定で連携がオンのときだけ〕、settings＝設定。前の export・share も同じシート）。" +
       "「ファイルの保管場所を変更して」は、利用者に道を聞いて storageRoot に絶対の道を書く。保存先は人だけが変えるので、MOYAI は設定と同じ確かめを通した道を設定の画面の保存先の欄に入れて開くだけ。利用者に「保存」を押してもらう。" +
       "「機器階層を入れ替えて表示して」は levelOrder を今と逆にする（asset-first は既定の 設備 › 機器 › 号炉・系統 › 部位、series-first は 設備 › 号炉・系統 › 機器 › 部位）。" +
       "「A と B の並び順を入れ替えて」は、chart_rows で 2 つの行の id を読み、rowOrder: { node: B の id, before: A の id }（A が上で隣り合うとき。同じ親の下の行だけ。離れているときは 2 回に分ける）。" +
@@ -1251,6 +1253,48 @@ export const TOOLS = {
         .optional(),
     }),
   ),
+  connect_read: def(
+    "connect_read",
+    "propose",
+    "Read from the business system",
+    "Integration with the user's business system (e.g. Maximo). Only works when the user has turned 連携 on in MOYAI's settings; otherwise this tool is not listed. " +
+      "Reads the asset tree, maintenance plans and work results from a connection target the user set up, and adds the work results to the work screen as one source file (資料), the same as a dropped file. " +
+      "After that the usual path applies: intake_survey / intake_settle / intake_compose, the chart, then confirm and sign (the user does those on screen). " +
+      "Returns counts only (no row values). target is a target id from targets; omit it to use the one chosen on the 連携 sheet (or the only one). " +
+      "Reading is free for test and production targets. Nothing is written to the business system. Reply to the user in the user's language.",
+    z.object({ target: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/).optional().describe("Connection target id (from targets). Omit to use the target chosen on the 連携 sheet") }).strict(),
+    z.object({
+      target: z.object({ id: z.string(), label: z.string(), env: z.enum(["test", "production"]) }).strict().nullable(),
+      targets: z.array(z.object({ id: z.string(), label: z.string(), env: z.enum(["test", "production"]) }).strict()).max(50),
+      /** 資料の名前（入れたとき） */
+      file: z.string().nullable(),
+      counts: z.object({ assets: z.number().int(), plans: z.number().int(), results: z.number().int() }).strict().nullable(),
+      /** 入れなかった理由（つなぎ先を選べない・読めない・同じ名前の資料がある） */
+      refused: z.enum(["no_target", "read_failed", "same_name"]).nullable(),
+      note: z.string(),
+    }),
+  ),
+  connect_plan: def(
+    "connect_plan",
+    "read",
+    "Show the write diff for the business system",
+    "Proposes a write to the user's business system: compares the maintenance plan of the latest confirmed and signed version (kept by MOYAI) with the target's current maintenance plans, and shows the match and the diff (add / change; nothing is deleted) on the 連携 sheet of the work screen. " +
+      "Returns counts only. This tool never writes. Sending is a human-only action: the user reviews the diff on screen and presses the main button 送る. " +
+      "Writing to a production target needs a valid license key for that host; if it is missing, the sheet shows the reason and the button cannot be pressed. Test targets need no key. " +
+      "If there is no confirmed version yet, say so and ask the user to confirm and sign first. Reply to the user in the user's language.",
+    z.object({ target: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/).optional().describe("Connection target id (from connect_read's targets). Omit to use the target chosen on the 連携 sheet") }).strict(),
+    z.object({
+      target: z.object({ id: z.string(), label: z.string(), env: z.enum(["test", "production"]) }).strict().nullable(),
+      /** もとにした版（確定・署名した最新の版。無ければ null） */
+      version: z.number().int().nullable(),
+      counts: z.object({ ok: z.number().int(), one: z.number().int(), diff: z.number().int(), add: z.number().int(), change: z.number().int() }).strict().nullable(),
+      /** 書き込みの許し：needed（本番か）・ok（鍵があるか。要らなければ true） */
+      write: z.object({ needed: z.boolean(), ok: z.boolean() }).strict().nullable(),
+      /** 案を出せなかった理由 */
+      refused: z.enum(["no_target", "no_signed_version", "read_failed"]).nullable(),
+      note: z.string(),
+    }),
+  ),
   skill_eval: def(
     "skill_eval",
     "start",
@@ -1267,6 +1311,8 @@ export const TOOLS = {
 } as const;
 
 export type ToolName = keyof typeof TOOLS;
+/** 業務システムとの連携の道具（設定の「連携」がオンのときだけ、中継が一覧に出し、橋渡しが受ける） */
+export const CONNECT_TOOL_NAMES = ["connect_read", "connect_plan"] as const satisfies readonly ToolName[];
 /** 名前の一覧は tool-names.json（使わない名前の試験が node:test から読む）。TOOLS と同じであることを試験する。 */
 export const TOOL_NAMES = toolNames as ToolName[];
 

@@ -38,6 +38,7 @@ import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, led
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
 import { LEDGER_INTAKE_URL, ledgerIntakeUrlOf, sendFeedbackToIntake, sendToIntake, type IntakeIo } from "./ledger-intake";
 import { parseJsonStrict } from "../share/jcs";
+import { ConnectService, type ConnectBackend, type LatestSigned } from "./connect";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
 import { parsePack } from "../shared/pack";
 import { POSITIONS, PROFILE_FROM, compare, defaultAxes, receiverProfile } from "../share/receive";
@@ -105,6 +106,8 @@ export interface HumanEnv {
   githubClientId?: string | null;
   /** 公開の台帳の受け口（既定は ledger-intake.ts の LEDGER_INTAKE_URL。null か空なら、GitHub のアカウントなしの道を出さない）。試験は差し替える */
   ledgerIntake?: IntakeIo | null;
+  /** 業務システムとの連携の裏（試験は偽の連携に差し替える。null なら裏なし。無ければ環境変数と部品から決める。src/bridge/connect/） */
+  connect?: ConnectBackend | null;
 }
 
 /** GitHub につなぐ途中（デバイスフロー）。デバイスのコードはつながるか終わるまでこのメモリだけに置き、どこにも書かない */
@@ -175,6 +178,8 @@ const SCHEMAS = {
   reading_feedback_save: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
   // 受け口の上限（64 KB）より大きいものは、受け口が 413 で断る
   reading_feedback_send: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
+  // 業務システムに送る：人が見た差分のハッシュと、もとにした版（送る直前に作り直して照らす）
+  connect_send: z.object({ targetId: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/), planId: planIdSchema, version: z.number().int().min(1), hash: z.string().regex(HEX64) }),
   work_discard: z.object({ planId: planIdSchema }),
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
   plan_source_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
@@ -206,6 +211,8 @@ const SCHEMAS = {
     ledger: z.string().max(1000).nullable().optional(),
     name: z.string().max(40).nullable().optional(),
     autoUpdate: z.boolean().optional(),
+    /** 業務システムとの連携のオンとオフ（送られたときだけ変える） */
+    connect: z.boolean().optional(),
   }),
   ring_create: z.object({ root: z.string().max(1000), packId: z.string().regex(PACK_ID) }),
   checkpoint_preview: z.object({ planId: planIdSchema, ringId: ringIdSchema.nullable(), answers: answersSchema }),
@@ -352,7 +359,33 @@ export class HumanService {
   /** 施設の鍵のうち、まだ保管先に書いていないもの（人が送ったときに書く。docs/plan.md §2.19） */
   private readonly pendingKeys = new Map<string, KeyPair>();
 
+  private connectSvc: ConnectService | null = null;
+
   constructor(private readonly e: HumanEnv) {}
+
+  /** 業務システムとの連携（状態フォルダが無ければ null） */
+  connect(): ConnectService | null {
+    if (!this.e.stateDir) return null;
+    this.connectSvc ??= new ConnectService({ stateDir: this.e.stateDir, now: this.e.now, ...(this.e.env ? { env: this.e.env } : {}), ...(this.e.connect !== undefined ? { backend: this.e.connect } : {}) });
+    return this.connectSvc;
+  }
+
+  /**
+   * 保管先の、確定・署名した最新の版（連携の書き込みの元。確かめで合う版だけ。この PC が前に見た版が消えていれば使わない）。
+   * 無ければ理由
+   */
+  async latestSigned(planId: string): Promise<LatestSigned | { reason: string }> {
+    const sd = this.e.stateDir;
+    if (!sd) return { reason: "noStateDir" };
+    if (!PLAN_ID.test(planId)) return { reason: "payloadInvalid" };
+    const root = await this.root();
+    if (!root) return { reason: "noRoot" };
+    const h = await readHistory(root, planId);
+    if (checkSeen(sd, root, planId, h)) return { reason: "historyVanished" };
+    const top = h.versions.at(-1);
+    if (!h.latest || !top || top.version !== h.latest.version || top.problem !== null || top.signatures.length === 0) return { reason: "connectNoSigned" };
+    return { version: h.latest.version, plan: h.latest.plan };
+  }
 
   private githubIo(): GitHubIo {
     return this.e.github ?? githubIo(githubHostsOf(this.e.env ?? process.env));
@@ -661,7 +694,25 @@ export class HumanService {
           const w = readKeyFile(sd, r.ringId);
           return { ringId: r.ringId, root: r.root, pack: r.pack, key: r.key, fingerprint: w ? fingerprint(w.pub) : null, synced: syncedOf(r.root, docs.syncRoots) };
         });
-        return { ok: true, documents: docs.documents, documentsSynced: docs.synced, defaultRoot: defaultRoot(docs), chosenRoot: s.root, root, rootSynced: root ? syncedOf(root, docs.syncRoots) : null, ledger: s.ledger, github: readGitHub(sd)?.login ?? null, rings, packs: this.packs(), name: s.name, autoUpdate: s.autoUpdate !== false, people: trustList(sd) };
+        // 連携：裏があるときだけ、オンとオフ・つなぎ先の一覧（キーは返さない）
+        const connect = await this.connect()!.state();
+        return {
+          ok: true,
+          documents: docs.documents,
+          documentsSynced: docs.synced,
+          defaultRoot: defaultRoot(docs),
+          chosenRoot: s.root,
+          root,
+          rootSynced: root ? syncedOf(root, docs.syncRoots) : null,
+          ledger: s.ledger,
+          github: readGitHub(sd)?.login ?? null,
+          rings,
+          packs: this.packs(),
+          name: s.name,
+          autoUpdate: s.autoUpdate !== false,
+          people: trustList(sd),
+          connect: { available: connect.available, enabled: connect.enabled, fake: connect.fake, targets: connect.targets },
+        };
       }
       case "settings_save": {
         const p = parsePayload("settings_save", call.payload);
@@ -677,7 +728,9 @@ export class HumanService {
         if (name === undefined) return no("nameInvalid");
         // 最新の確かめ（#65）も、送られたときだけ変える。切ったときだけ false を置く
         const autoUpdate = p.autoUpdate === undefined ? prev.autoUpdate !== false : p.autoUpdate;
-        writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }) });
+        // 連携も、送られたときだけ変える。入れたときだけ true を置く
+        const connect = p.connect === undefined ? prev.connect === true : p.connect;
+        writeSettings(sd, { v: 1, root, ledger, name, ...(autoUpdate ? {} : { autoUpdate: false as const }), ...(connect ? { connect: true as const } : {}) });
         return { ok: true, root, ledger, name };
       }
       case "comment_add": {
@@ -1402,6 +1455,17 @@ export class HumanService {
           return no(`feedbackIntake.${why}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
         }
         return { ok: true, issue: r.number, url: r.url };
+      }
+      case "connect_send": {
+        // 業務システムに送る（運営者の判断 2026-11-16）：確定・署名した最新の版だけを元にし、本番の鍵とカナリアは src/bridge/connect/ が送る直前に確かめる
+        const p = parsePayload("connect_send", call.payload);
+        if (!p) return no("payloadInvalid");
+        const latest = await this.latestSigned(p.planId);
+        if ("reason" in latest) return no(latest.reason);
+        if (latest.version !== p.version) return no("connectStale");
+        const r = await this.connect()!.send(p.targetId, latest, p.hash);
+        if (!r.ok) return no(r.reason, r.applied !== undefined ? { applied: r.applied } : {});
+        return { ok: true, applied: r.applied, version: latest.version };
       }
       case "peers_compare": {
         const p = parsePayload("peers_compare", call.payload);

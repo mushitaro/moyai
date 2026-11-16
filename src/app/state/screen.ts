@@ -65,6 +65,7 @@ export const GO_HASH: Record<ScreenGo, string> = {
   "hoshitori.export": sheetHash("export"),
   "hoshitori.share": sheetHash("share"),
   "hoshitori.files": sheetHash("files"),
+  "hoshitori.connect": sheetHash("connect"),
   // 前の値（Claude Desktop は再起動までツールの定義を持ち続けるので断らない）。同じシートを開く
   export: sheetHash("export"),
   share: sheetHash("share"),

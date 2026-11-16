@@ -9,7 +9,7 @@ import { TAB_EVENT_HANDLERS } from "../../src/bridge/tab";
 import { ERRORS, ERROR_CODES, type ErrorSide } from "../../src/shared/errors";
 import { EVENTS, EVENT_TYPES, type EventSide } from "../../src/shared/events";
 import { ROUTES, ROUTE_IDS, type RouteDef } from "../../src/shared/routes";
-import { EXPOSED_TOOL_NAMES, TOOLS, TOOL_NAMES } from "../../src/shared/tools";
+import { CONNECT_TOOL_NAMES, EXPOSED_TOOL_NAMES, TOOLS, TOOL_NAMES } from "../../src/shared/tools";
 import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
 import { createRelayServer } from "../../src/cli/relay";
 import { TAB_ASYNC_TOOL_RECEIVERS } from "../../src/app/intake/tab-tools";
@@ -67,16 +67,21 @@ describe("誤りの送り手と受け手", () => {
 });
 
 describe("ツールの送り手と受け手", () => {
-  it("tool-names.json と TOOLS が同じ 18。中継が出すのは今見せるものだけ", () => {
+  it("tool-names.json と TOOLS が同じ 20。中継が出すのは今見せるものだけ（連携の道具は、設定の連携がオンのときだけ）", () => {
     // 17 個目は作業画面の見せ方を変える screen_set（運営者の決定 11-07：利用者の想定のプロンプトで、アプリがチャットだけで動く）
     // 18 個目は入っている MOYAI を最新にする moyai_update（mushitaro/moyai#65）
-    expect(toolNames).toHaveLength(18);
+    // 19・20 個目は業務システムとの連携の connect_read・connect_plan（運営者の判断 2026-11-16。送る道具は無い）
+    expect(toolNames).toHaveLength(20);
     expect(Object.keys(TOOLS).sort()).toEqual([...toolNames].sort());
     expect(TOOL_NAMES).toEqual(toolNames);
     for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
     const server = createRelayServer({ stateDir: "unused" });
-    const registered = Object.keys((server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools);
-    expect(registered.sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
+    const all = (server as unknown as { _registeredTools: Record<string, { enabled: boolean }> })._registeredTools;
+    expect(Object.keys(all).sort()).toEqual([...EXPOSED_TOOL_NAMES].sort());
+    // 設定の無い状態フォルダ（連携はオフ）では、連携の道具は一覧に出ない（disabled）。ほかは出る
+    const shown = Object.keys(all).filter((n) => all[n]!.enabled);
+    expect(shown.sort()).toEqual(EXPOSED_TOOL_NAMES.filter((n) => !(CONNECT_TOOL_NAMES as readonly string[]).includes(n)).sort());
+    expect([...CONNECT_TOOL_NAMES].sort()).toEqual(["connect_plan", "connect_read"]);
     // 見せないものは、待っている画面の名前を持つ
     for (const n of TOOL_NAMES.filter((x) => !EXPOSED_TOOL_NAMES.includes(x))) expect(TOOLS[n].waitsFor, n).not.toBeNull();
   });
@@ -90,6 +95,9 @@ describe("ツールの送り手と受け手", () => {
       "chart_propose",
       "chart_rows",
       "check_results",
+      // 業務システムとの連携：作業画面が、人の「読む」と同じ作業画面の道で読み、書き込みの案を連携のシートに出す
+      "connect_plan",
+      "connect_read",
       "crosswalk_propose",
       "intake_compose",
       "intake_settle",

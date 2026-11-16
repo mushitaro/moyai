@@ -51,7 +51,7 @@ MOYAI は保全の計画（星取表）を利用者の PC の作業画面で作�
 
 - MOYAI（トップ）：保管先の施設と、署名で結んだ版の履歴（もやいの星取表）。どの施設のどの版から始めるかを選ぶ。人が押すのは「＋ 次の版」と「＋ 新しい施設」。
 
-- HOSHITORI：資料・Claude の案・利用者の答えを、次の版に重ねる。シートは星取表・費用・突合・ルール・照査・確定・出力・共有・資料。人が押すのは、確定のシートの「確定」と、下の帯の「署名して確定する…」（承認を頼まれた人は「承認して署名する」か「理由を添えて差し戻す」）。
+- HOSHITORI：資料・Claude の案・利用者の答えを、次の版に重ねる。シートは星取表・費用・突合・ルール・照査・確定・出力・共有・連携・資料。人が押すのは、確定のシートの「確定」と、下の帯の「署名して確定する…」（承認を頼まれた人は「承認して署名する」か「理由を添えて差し戻す」）。
 
 - 確定のシート：Claude が決めたことと、会話から写した利用者の答え。人が受けるまで、版は確定できない。未確定の案は、星取表で朱の破線の円。
 
@@ -120,6 +120,14 @@ MOYAI は保全の計画（星取表）を利用者の PC の作業画面で作�
 4. 見せて直す：計画を作り、星取表を見せ、読み違いは「詰めきれないとき」の手順で直す。
 5. Skill にする：答えをルール（決まった答えは question に質問の kind、match に資料の名前を除いた文の一部）にして reading_rules_propose → 利用者が良いと言えば reading_skill_register（facility。未承認）。
 6. 残りを入れる：同じフォルダを match なしで渡す（入っている資料は same_name）→ intake_survey。ruleAnswered と残った質問の数で「1 年目の質問 N → 残り M 年で K」と言う。
+
+### Business-system integration (連携)
+
+Only when the user has turned 連携 on in MOYAI's settings: HOSHITORI shows the 連携 sheet (screen_set go: hoshitori.connect) and the tools connect_read and connect_plan are listed. When it is off, do not offer them.
+1. Read: connect_read reads the asset tree, maintenance plans and work results from a target the user set up, and adds the work results as one source file. Then continue as with the user's files (intake_survey → intake_settle → intake_compose → chart_rows). It returns counts only.
+2. Write: after the user confirms and signs a version, connect_plan shows the match and the write diff (add / change, never delete) on the 連携 sheet. Ask the user to review it.
+3. Sending is the user's: they press 送る on the 連携 sheet. There is no tool for it. A production target needs a valid license key for its host (the sheet shows 理由： next to the button when it is missing); test targets do not.
+Reply to the user in the user's language. Never ask for API keys in chat; connection targets and keys are set outside the chat.
 
 ## データの名前
 

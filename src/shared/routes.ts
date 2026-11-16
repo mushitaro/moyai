@@ -82,6 +82,8 @@ export const HUMAN_ACTIONS = [
   "reading_feedback_save",
   // 読み方のフィードバックを送る（運営者 2026-11-16）：人が保存のあと「送る」を押したときだけ、保存した全文を公開の台帳の受け口に送る。受け口が MOYAI のリポジトリに Issue を出す。通信は §2.12 の例外
   "reading_feedback_send",
+  // 業務システムとの連携（運営者の判断 2026-11-16）：確定・署名した版の保全計画を、つなぎ先に送る。本番は鍵を、送る直前に橋渡しが確かめる
+  "connect_send",
   // 写真を AI クライアントに渡す許し（§2.3・§2.12。1 枚ごと、その画像のハッシュに結ぶ）
   "photo_allow",
 ] as const;
@@ -189,6 +191,32 @@ export const ROUTES = {
     maxBody: 1024,
     note: "施設の作業中を読む（トップの「作業中」を押したとき、資料ごと続きから開く）。資料は sha256 を添えると 1 つずつバイト列で返す",
   },
+  // 業務システムとの連携（運営者の判断 2026-11-16。処理は src/bridge/connect/）。読む・書き込みの案は作業画面の道（タブの秘密だけ）。
+  // AI の連携の道具（connect_read・connect_plan）も作業画面を通ってこの道を使う。送るのは人だけの経路 connectSend だけ。設定の「連携」がオフなら断る
+  tabConnectState: {
+    method: "POST",
+    path: "/tab/connect-state",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 1024,
+    note: "連携のオンとオフ、つなぎ先の一覧（名前・host・テストか本番・本番の書き込みの鍵の有無。API キーは返さない）",
+  },
+  tabConnectRead: {
+    method: "POST",
+    path: "/tab/connect-read",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 1024,
+    note: "つなぎ先から資産の木・保全計画・作業の実績を読み、作業の実績を取り込みの資料（CSV）にして返す（通信の例外。行き先は人が設定したつなぎ先の host だけ。テストも本番も無償）",
+  },
+  tabConnectPlan: {
+    method: "POST",
+    path: "/tab/connect-plan",
+    kind: "tab",
+    requires: { tabSecret: true },
+    maxBody: 1024,
+    note: "書き込みの案：保管先の確定・署名した最新の版の保全計画と、今のつなぎ先を突き合わせ、突合の行と足す・変えるの差分とハッシュを返す（書かない）",
+  },
   commitTrial: {
     method: "POST",
     path: "/human/commit-trial",
@@ -271,6 +299,12 @@ export const ROUTES = {
     "reading_feedback_send",
     512 * 1024,
     "読み方のフィードバックを送る：保管先の feedback/ に保存したのと同じ全文（moyai.reading-feedback/0）を、形と固有名詞の網 2 で確かめ直してから、公開の台帳の受け口に送る。受け口が MOYAI のリポジトリにラベル feedback の公開の Issue を出す（通信の例外。行き先は受け口の 1 つだけ。その PC の語は送らない）",
+  ),
+  connectSend: human(
+    "/human/connect-send",
+    "connect_send",
+    16 * 1024,
+    "業務システムに送る：保管先の確定・署名した最新の版から書き込みの案を作り直し、人が見た差分（ハッシュ）と同じときだけ、本番ならその host の有効な鍵を確かめてから、1 件目を送って読み直し、届いたのを確かめて残りを送る（通信の例外。行き先は人が設定したつなぎ先の host だけ）",
   ),
   peersCompare: human("/human/peers-compare", "peers_compare", 64 * 1024, "受け手：立場ごとに、台帳の clone と自分の共有フォルダの ✓ の共有ファイルから、類似施設の行と統計の行を作る"),
   // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）

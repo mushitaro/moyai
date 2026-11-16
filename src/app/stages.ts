@@ -5,9 +5,12 @@ import { APP_PAGES } from "../shared/routes";
 import { CHART_HASH } from "./chart/route";
 
 export type Stage = "top" | "merge" | "settings" | "industries" | "selftest";
-/** HOSHITORI のシート：星取表・費用・突合・ルール・照査・確定・出力・共有・資料（取り込み。開く資料は ?f=<資料の名前>。資料の選びで選ぶ） */
-export type MergeSheet = "chart" | "cost" | "match" | "readings" | "check" | "decisions" | "export" | "share" | "files";
-export const MERGE_SHEETS: readonly MergeSheet[] = ["chart", "cost", "match", "readings", "check", "decisions", "export", "share", "files"];
+/**
+ * HOSHITORI のシート：星取表・費用・突合・ルール・照査・確定・出力・共有・連携・資料（取り込み。開く資料は ?f=<資料の名前>。資料の選びで選ぶ）。
+ * 連携（業務システムとの読み書き。運営者の判断 2026-11-16）は、設定の「連携」がオンで、つなぎ先があるときだけ並ぶ（白紙でも並ぶ。読んだものが最初の資料になる）
+ */
+export type MergeSheet = "chart" | "cost" | "match" | "readings" | "check" | "decisions" | "export" | "share" | "connect" | "files";
+export const MERGE_SHEETS: readonly MergeSheet[] = ["chart", "cost", "match", "readings", "check", "decisions", "export", "share", "connect", "files"];
 /** 確定した版があるときだけ並ぶシート（無いときに開いても「確定版なし」しか出せないので、並べない） */
 export const CONFIRMED_SHEETS: readonly MergeSheet[] = ["export", "share"];
 

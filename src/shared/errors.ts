@@ -56,6 +56,12 @@ export const ERRORS = {
     text: "引数が型に合いません。直さずに、型を読み直してから呼び直してください。",
   },
   unknown_tool: { from: "bridge", to: "ai", http: 404, text: "そのツールはありません。" },
+  connect_off: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "Business-system integration (連携) is turned off in MOYAI's settings, so this tool does nothing. Only the user can turn it on (Settings › 連携). Tell the user in their own language; do not try other ways.",
+  },
   relay_key_mismatch: {
     from: "bridge",
     to: "ai",
@@ -101,6 +107,12 @@ export const ERRORS = {
     text: "作業画面が渡そうとした画像が、人が画面で許した画像と合わないので、渡しません。利用者に、取り込みの画面の写真の欄で、もう一度［AI クライアントに渡して読む］を押してもらってください。",
   },
   // 作業画面 → AI（橋渡しと中継を通る。作業画面は誤りの名前だけを返し、文はここから作る）
+  connect_failed: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "The work screen could not read from or plan against the connected business system (the reason is shown on the 連携 sheet). Nothing was written. Tell the user in their own language and ask them to look at the 連携 sheet.",
+  },
   reading_when_ignored: {
     from: "tab",
     to: "ai",

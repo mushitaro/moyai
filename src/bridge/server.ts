@@ -17,7 +17,7 @@ import {
   type RouteDef,
   type RouteId,
 } from "../shared/routes";
-import { EXPOSED_TOOL_NAMES, isToolName, sharePreviewFromTabSchema, toolDef, type ToolKind } from "../shared/tools";
+import { CONNECT_TOOL_NAMES, EXPOSED_TOOL_NAMES, isToolName, sharePreviewFromTabSchema, toolDef, type ToolKind } from "../shared/tools";
 import { approvedReadingVersions, listReadings, readingTextShown, registerReading } from "./readings";
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
@@ -62,7 +62,7 @@ export interface BridgeOptions {
   /** パックのフォルダ（共有の公開語彙・見え方・全国の表）。無ければリポジトリの packs/ */
   packsDir?: string;
   /** 人だけの経路の、外とつながる部品（Documents の調べ方・テキストエディタ）。試験は差し替える */
-  human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId" | "ledgerIntake">;
+  human?: Pick<HumanEnv, "shell" | "platform" | "env" | "openText" | "github" | "githubClientId" | "ledgerIntake" | "connect">;
   /** リポジトリの根（intake_add_files はこの中のフォルダを読まない）。無ければパックのフォルダの上 */
   repoRoot?: string;
   /** 作業画面を既定のブラウザで開く手（moyai start が渡す。無ければ work_screen_open は opened: false、自動で開くこともしない） */
@@ -396,6 +396,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       if (typeof name !== "string" || !isToolName(name) || !(EXPOSED_TOOL_NAMES as string[]).includes(name)) {
         return reject(res, "unknown_tool");
       }
+      // 業務システムとの連携の道具は、設定の「連携」がオンのときだけ（中継もオフなら一覧に出さない）
+      if ((CONNECT_TOOL_NAMES as readonly string[]).includes(name) && !human.connect()?.enabled()) return reject(res, "connect_off");
       const parsed = toolDef(name).input.safeParse(args ?? {});
       if (!parsed.success) return reject(res, "invalid_input");
       // 会話は中継の 1 つの接続。中継が付けない呼び出しは 1 つの会話にまとめて数える
@@ -454,6 +456,36 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       const root = await human.root();
       if (!root) return sendJson(res, 200, { ok: false, reason: "noRoot" });
       sendJson(res, 200, await moveWork(root, b.from, b.to, b.writer).catch(() => ({ ok: false, reason: "workWriteFailed" })));
+    },
+    // 業務システムとの連携（src/bridge/connect/）：オンとオフ・つなぎ先・読む・書き込みの案。送るのは人だけの経路 connectSend
+    tabConnectState: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const c = human.connect();
+      sendJson(res, 200, c ? await c.state() : { ok: true, enabled: false, available: false, fake: false, targets: [] });
+    },
+    tabConnectRead: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const b = g.body as { targetId?: unknown } | null;
+      const c = human.connect();
+      if (!c) return sendJson(res, 200, { ok: false, reason: "noStateDir" });
+      if (typeof b?.targetId !== "string") return sendJson(res, 200, { ok: false, reason: "payloadInvalid" });
+      sendJson(res, 200, await c.read(b.targetId));
+    },
+    tabConnectPlan: async ({ req, res, route }) => {
+      const g = await guardTab(req, route);
+      if (typeof g === "string") return reject(res, g);
+      const b = g.body as { targetId?: unknown; planId?: unknown } | null;
+      const c = human.connect();
+      if (!c) return sendJson(res, 200, { ok: false, reason: "noStateDir" });
+      if (typeof b?.targetId !== "string" || typeof b.planId !== "string") return sendJson(res, 200, { ok: false, reason: "payloadInvalid" });
+      if (!c.enabled()) return sendJson(res, 200, { ok: false, reason: "connectOff" });
+      const latest = await human.latestSigned(b.planId);
+      if ("reason" in latest) return sendJson(res, 200, { ok: false, reason: latest.reason });
+      const r = await c.plan(b.targetId, latest);
+      // 書く中身（changes）は画面に返さない（突合の行と数とハッシュだけ。送るときは橋渡しが作り直す）
+      sendJson(res, 200, r.ok ? { ok: true, target: r.target, version: r.version, rows: r.rows, counts: r.counts, hash: r.hash, write: r.write } : r);
     },
     tabWorkList: async ({ req, res, route }) => {
       const g = await guardTab(req, route);
@@ -541,6 +573,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     readingsLineage: delegate,
     readingFeedbackSave: delegate,
     readingFeedbackSend: delegate,
+    // 業務システムに送る（通信の例外：人が設定したつなぎ先の host だけ。送るのは人がボタンを押したときだけ）
+    connectSend: delegate,
     // 写真を AI クライアントに渡す許し：タブの回と、渡す画像のハッシュに結んでメモリに置く（中身の画像は受けない）
     photoAllow: (res, h) => sendJson(res, 200, tools.allowPhoto(h.session, h.payload)),
   };
