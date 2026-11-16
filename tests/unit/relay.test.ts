@@ -55,7 +55,7 @@ describe("中継の MCP", () => {
     expect(tools.map((t) => t.name)).not.toContain("skill_eval");
     expect(tools).toHaveLength(17);
     for (const t of tools) {
-      expect(t.description, t.name).toMatch(/人だけ/);
+      expect(t.description, t.name).toMatch(/only by a person/);
       expect(t.inputSchema.type).toBe("object");
       expect(t.outputSchema?.type, t.name).toBe("object");
     }
@@ -110,16 +110,16 @@ describe("中継の MCP", () => {
       const r = await c.callTool({ name, arguments: args[name] ?? {} });
       // 保管先を読むだけのツールは、橋渡しが答える（作業画面は要らない）
       if (BRIDGE_TOOL_RECEIVERS[name] === "bridge") {
-        expect(JSON.stringify(r.content), name).not.toContain("未実装");
+        expect(JSON.stringify(r.content), name).not.toContain("not implemented");
         continue;
       }
       expect(r.isError, name).toBe(true);
       if (BRIDGE_TOOL_RECEIVERS[name] === "tab" || BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge" || BRIDGE_TOOL_RECEIVERS[name] === "bridge_then_tab") {
         expectError(r, "work_screen_not_open", name);
-        expect(JSON.stringify(r.content), name).toContain("作業画面が開いていません");
+        expect(JSON.stringify(r.content), name).toContain("The work screen is not open");
       } else {
         expectError(r, "not_implemented", name);
-        expect(JSON.stringify(r.content), name).toContain("未実装");
+        expect(JSON.stringify(r.content), name).toContain("not implemented");
       }
     }
   });

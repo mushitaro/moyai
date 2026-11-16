@@ -164,7 +164,7 @@ describe("古い版の橋渡しを中継が替える", () => {
     const r: any = await c.callTool({ name: "check_results", arguments: {} });
     expect(r.isError).toBe(true);
     expect(texts(r)).toEqual([errorBody("bridge_port_taken", { port: running.port }).error.message]);
-    expect(texts(r)[0]).toContain(`ポート ${running.port} をほかの道具が使っています`);
+    expect(texts(r)[0]).toContain(`Another tool is using port ${running.port}`);
     // 止めていない・起こしていない・鍵ファイルを変えていない
     expect(await portInUse(running.port)).toBe(true);
     expect(l.state.count).toBe(0);

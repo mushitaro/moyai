@@ -554,7 +554,7 @@ export const READING_RULE_EXAMPLES: Record<ReadingRule["kind"], Record<string, u
   sameAsset: { names: ["Pump 1", "Pump No.1"] },
   markMeaning: { symbol: "◎", planOrActual: "actual", meaning: "Replaced" },
   answer: { question: "(the question kind)", match: "(text contained in the question)", answer: "(an id from the question options)" },
-  effortTrade: { words: ["Furnace mason"] },
+  effortTrade: { words: ["Mason"] },
   planCycle: { commonItem: "(a code from crosswalk.items)", attribute: "OVERHAUL", years: 4 },
 };
 /** kind ごとの欄の言い添え（選べる値） */

@@ -34,7 +34,7 @@ describe("Skill を AI に渡す", () => {
     expect(new Set(s.map((x) => x.version)).size).toBe(3);
     expect(activeSkills("waste-incineration", [reading])[1]!.version).toBe(s[1]!.version);
     // どのパックにも SKILL.md がある。パックを選んでいなければ 2 段は無い
-    expect(packSkill("night-soil")).toContain("し尿処理施設のSkillパック");
+    expect(packSkill("night-soil")).toContain("Night-soil treatment Skill pack");
     expect(activeSkills(null, []).map((x) => x.tier)).toEqual([1]);
   });
 

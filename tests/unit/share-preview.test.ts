@@ -71,17 +71,17 @@ describe("形：ツールの型と受け手と instructions", () => {
     expect(TOOLS.share_preview.kind).toBe("read");
     expect(TOOLS.share_preview.waitsFor).toBeNull();
     expect(BRIDGE_TOOL_RECEIVERS.share_preview).toBe("tab_then_bridge");
-    const now = MCP_INSTRUCTIONS.split("\n").find((l) => l.startsWith("今動くのは"))!;
-    expect(now).toContain("・share_preview");
+    const now = MCP_INSTRUCTIONS.split("\n").find((l) => l.startsWith("Working tools:"))!;
+    expect(now).toContain(", share_preview");
     expect(MCP_INSTRUCTIONS.length).toBeLessThanOrEqual(4096);
     // 引数は、Claude が会話で聞いた共有先と見え方の答え（どちらも省ける。peer_reference の answers と同じ形）だけ。送る・署名する欄は無い
     expect(TOOLS.share_preview.input.safeParse({}).success).toBe(true);
     expect(Object.keys(TOOLS.share_preview.input.shape)).toEqual(["dest", "answers"]);
     expect(TOOLS.share_preview.input.safeParse({ dest: "ledger", answers: ANSWERS }).success).toBe(true);
     expect(TOOLS.share_preview.input.safeParse({ dest: "send" }).success).toBe(false);
-    expect(TOOLS.share_preview.description).toContain("推測で埋めず、利用者に聞いて");
-    expect(TOOLS.share_preview.description).toContain("このツールは読むだけで、送らない");
-    expect(TOOLS.share_preview.description).toContain("「社内で共有して」");
+    expect(TOOLS.share_preview.description).toContain("Do not guess missing axes (missingAxes): ask the user");
+    expect(TOOLS.share_preview.description).toContain("this tool only reads and never sends");
+    expect(TOOLS.share_preview.description).toContain("\"share it within the company\"");
   });
 
   it("確定した版が無ければ needs だけを返し、ほかの欄は空", async () => {
@@ -89,8 +89,8 @@ describe("形：ツールの型と受け手と instructions", () => {
     expect(await s.call("settings_save", { root: s.root, name: "【架空】試験の人" })).toMatchObject({ ok: true });
     const out = await s.human.sharePreview(req("fixture-fictional-1"));
     expect(sharePreviewOutputSchema.parse(out)).toEqual(out);
-    expect(out.needs).toEqual({ reason: "not_confirmed", text: "確定した版がありません。HOSHITORI の確定のシートで確定してから" });
-    expect(SHARE_NEEDS_TEXT.not_confirmed).toBe("確定した版がありません。HOSHITORI の確定のシートで確定してから");
+    expect(out.needs).toEqual({ reason: "not_confirmed", text: SHARE_NEEDS_TEXT.not_confirmed });
+    expect(SHARE_NEEDS_TEXT.not_confirmed).toBe("There is no confirmed version. Confirm on the HOSHITORI Decisions sheet first");
     expect(out).toMatchObject({ destination: null, version: null, counts: null, copy: null, hidden: [], you: null, file: null, checks: null, blocked: [] });
     // 計画の ID の形でないものは数えない（保存先の外を読まない）
     expect((await s.human.sharePreview(req("../外"))).needs?.reason).toBe("other");
