@@ -128,10 +128,10 @@ describe("ツールの型と説明", () => {
 
   it("説明に「この様式で Excel を出して」の順（入れる → 案を置く → 見本を見てもらう → 出力と保存は人）がある", () => {
     for (const d of [TOOLS.intake_add_files.description, TOOLS.screen_set.description]) {
-      expect(d).toContain("「この様式で Excel を出して」");
+      expect(d).toMatch(/"[Ee]xport Excel in this format"/);
       expect(d).toContain("templateLayout");
-      expect(d).toContain("見本");
-      expect(d).toContain("「署名して出力」");
+      expect(d).toContain("preview");
+      expect(d).toContain("main button (sign and export");
     }
     expect(TOOLS.intake_add_files.description).toContain("source: template");
   });

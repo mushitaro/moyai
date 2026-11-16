@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "water-supply",
   "name": "上水道（浄水場・配水池・管路）",
+  "en": {
+    "name": "Water supply (purification plants, distribution reservoirs, pipes)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "B",
   "content": "empty",

@@ -1,0 +1,477 @@
+{
+ "schema": "moyai.heldout.result/0",
+ "set": "en1-measure",
+ "bundle": "1b40a7d4d5098c403276fc204f763527c6ce8880432789f1ccff92cd08727d93",
+ "reader": {
+  "tag": null,
+  "commit": "a44b0d6311aacacc367c85e08c94e27999f66d80",
+  "src": "c9fb08ad1843da122073981340974f8e65892764",
+  "packs": "3d41c932c9072afb0c9604018d5081fbf377f0d4"
+ },
+ "measuredAt": "2026-11-16T08:30:42.107Z",
+ "result": {
+  "set": "en1-measure",
+  "files": [
+   {
+    "file": "f-hollinmere/【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+    "format": "xlsx",
+    "kind": "star",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 0,
+    "rows": {
+     "input": 34,
+     "imported": 0,
+     "excluded": 34,
+     "excludedBy": {
+      "参考の資料": 34
+     },
+     "unresolved": 0,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   },
+   {
+    "file": "f-hollinmere/【架空】Hollinmere ERF - Work Order History.csv",
+    "format": "csv",
+    "kind": "star",
+    "leak": 0,
+    "leakAgainst": "事実",
+    "leakDetail": [],
+    "unresolved": 80,
+    "rows": {
+     "input": 20,
+     "imported": 0,
+     "excluded": 4,
+     "excludedBy": {
+      "題": 1,
+      "注記": 2,
+      "見出し（読み方に使った）": 1
+     },
+     "unresolved": 16,
+     "holds": true
+    },
+    "accuracy": null,
+    "rejected": null
+   }
+  ],
+  "asked": 11,
+  "answered": 6,
+  "openAtEnd": [
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-hollinmere：列 B（見出し「Date Start」・中身の見本 「06/06/2022」「03/10/2022」「07/11/2022」・表の 5〜22 行目）の役目が決まらない",
+    "options": [
+     "remark=備考として根拠の文に添える",
+     "workName=作業内容（作業の名前）",
+     "workTitle=件名（工事の名前）",
+     "assetRef=機器の名前",
+     "tag=機器番号",
+     "unit=号炉・系統",
+     "number=行の番号",
+     "date=日付（始まり）",
+     "end=日付（終わり）",
+     "days=日数",
+     "effort=工数",
+     "quantity=作業量",
+     "cycle=周期",
+     "planActual=計画・実績（行ごと）",
+     "cost=費用",
+     "exclude=外す"
+    ],
+    "defaultAnswer": "remark"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-hollinmere：列 C（見出し「Date Finish」・中身の見本 「09/06/2022」「21/10/2022」「18/11/2022」・表の 5〜22 行目）の役目が決まらない",
+    "options": [
+     "remark=備考として根拠の文に添える",
+     "workName=作業内容（作業の名前）",
+     "workTitle=件名（工事の名前）",
+     "assetRef=機器の名前",
+     "tag=機器番号",
+     "unit=号炉・系統",
+     "number=行の番号",
+     "date=日付（始まり）",
+     "end=日付（終わり）",
+     "days=日数",
+     "effort=工数",
+     "quantity=作業量",
+     "cycle=周期",
+     "planActual=計画・実績（行ごと）",
+     "cost=費用",
+     "exclude=外す"
+    ],
+    "defaultAnswer": "remark"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-hollinmere：列 E（見出し「Line」・中身の見本 「Common」「1」「2」・表の 5〜22 行目）の役目が決まらない",
+    "options": [
+     "remark=備考として根拠の文に添える",
+     "workName=作業内容（作業の名前）",
+     "workTitle=件名（工事の名前）",
+     "assetRef=機器の名前",
+     "tag=機器番号",
+     "unit=号炉・系統",
+     "number=行の番号",
+     "date=日付（始まり）",
+     "end=日付（終わり）",
+     "days=日数",
+     "effort=工数",
+     "quantity=作業量",
+     "cycle=周期",
+     "planActual=計画・実績（行ごと）",
+     "cost=費用",
+     "exclude=外す"
+    ],
+    "defaultAnswer": "remark"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-hollinmere：列 G（見出し「Contractor」・中身の見本 「Marrowby Lifting Ltd」「Brackwell Thermal Se」「Kestrow Pump Enginee」・表の 5〜22 行目）の役目が決まらない",
+    "options": [
+     "remark=備考として根拠の文に添える",
+     "workName=作業内容（作業の名前）",
+     "workTitle=件名（工事の名前）",
+     "assetRef=機器の名前",
+     "tag=機器番号",
+     "unit=号炉・系統",
+     "number=行の番号",
+     "date=日付（始まり）",
+     "end=日付（終わり）",
+     "days=日数",
+     "effort=工数",
+     "quantity=作業量",
+     "cycle=周期",
+     "planActual=計画・実績（行ごと）",
+     "cost=費用",
+     "exclude=外す"
+    ],
+    "defaultAnswer": "remark"
+   },
+   {
+    "kind": "columnRole",
+    "rows": 1,
+    "text": "f-hollinmere：列 J（見出し「Status」・中身の見本 「Closed」・表の 5〜22 行目）の役目が決まらない",
+    "options": [
+     "remark=備考として根拠の文に添える",
+     "workName=作業内容（作業の名前）",
+     "workTitle=件名（工事の名前）",
+     "assetRef=機器の名前",
+     "tag=機器番号",
+     "unit=号炉・系統",
+     "number=行の番号",
+     "date=日付（始まり）",
+     "end=日付（終わり）",
+     "days=日数",
+     "effort=工数",
+     "quantity=作業量",
+     "cycle=周期",
+     "planActual=計画・実績（行ごと）",
+     "cost=費用",
+     "exclude=外す"
+    ],
+    "defaultAnswer": "remark"
+   }
+  ],
+  "unresolvedBefore": 318,
+  "unresolvedAfter": 80,
+  "planMade": false,
+  "blockers": [
+   "f-hollinmere：未解決のセル 80",
+   "f-hollinmere：答えの無い質問 5"
+  ],
+  "plan": null,
+  "markWorkCount": null,
+  "recovery": {
+   "denominator": 27,
+   "together": 0,
+   "inPlan": 0,
+   "manDays": {
+    "correct": 0,
+    "total": 0
+   },
+   "days": {
+    "correct": 0,
+    "total": 0
+   },
+   "marksOnly": 27,
+   "notCounted": {
+    "f-hollinmere：この組のどの資料にも書いていない": 2
+   },
+   "misses": [
+    "f-hollinmere：作業 W0001（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0002（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0003（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0004（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0005（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0007（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0008（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0009（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0011（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0012（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0013（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0014（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0017（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0018（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0020（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0021（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0023（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0024（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0026（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0028（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0029（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0031（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0032（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0033（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0035（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0038（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+    "f-hollinmere：作業 W0039（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない"
+   ]
+  },
+  "unplaced": []
+ },
+ "facilities": [
+  {
+   "key": "f-hollinmere",
+   "industry": "waste-incineration",
+   "result": {
+    "set": "en1-measure/f-hollinmere",
+    "files": [
+     {
+      "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+      "format": "xlsx",
+      "kind": "star",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 0,
+      "rows": {
+       "input": 34,
+       "imported": 0,
+       "excluded": 34,
+       "excludedBy": {
+        "参考の資料": 34
+       },
+       "unresolved": 0,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     },
+     {
+      "file": "【架空】Hollinmere ERF - Work Order History.csv",
+      "format": "csv",
+      "kind": "star",
+      "leak": 0,
+      "leakAgainst": "事実",
+      "leakDetail": [],
+      "unresolved": 80,
+      "rows": {
+       "input": 20,
+       "imported": 0,
+       "excluded": 4,
+       "excludedBy": {
+        "題": 1,
+        "注記": 2,
+        "見出し（読み方に使った）": 1
+       },
+       "unresolved": 16,
+       "holds": true
+      },
+      "accuracy": null,
+      "rejected": null
+     }
+    ],
+    "asked": 11,
+    "answered": 6,
+    "openAtEnd": [
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 B（見出し「Date Start」・中身の見本 「06/06/2022」「03/10/2022」「07/11/2022」・表の 5〜22 行目）の役目が決まらない",
+      "options": [
+       "remark=備考として根拠の文に添える",
+       "workName=作業内容（作業の名前）",
+       "workTitle=件名（工事の名前）",
+       "assetRef=機器の名前",
+       "tag=機器番号",
+       "unit=号炉・系統",
+       "number=行の番号",
+       "date=日付（始まり）",
+       "end=日付（終わり）",
+       "days=日数",
+       "effort=工数",
+       "quantity=作業量",
+       "cycle=周期",
+       "planActual=計画・実績（行ごと）",
+       "cost=費用",
+       "exclude=外す"
+      ],
+      "defaultAnswer": "remark"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 C（見出し「Date Finish」・中身の見本 「09/06/2022」「21/10/2022」「18/11/2022」・表の 5〜22 行目）の役目が決まらない",
+      "options": [
+       "remark=備考として根拠の文に添える",
+       "workName=作業内容（作業の名前）",
+       "workTitle=件名（工事の名前）",
+       "assetRef=機器の名前",
+       "tag=機器番号",
+       "unit=号炉・系統",
+       "number=行の番号",
+       "date=日付（始まり）",
+       "end=日付（終わり）",
+       "days=日数",
+       "effort=工数",
+       "quantity=作業量",
+       "cycle=周期",
+       "planActual=計画・実績（行ごと）",
+       "cost=費用",
+       "exclude=外す"
+      ],
+      "defaultAnswer": "remark"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 E（見出し「Line」・中身の見本 「Common」「1」「2」・表の 5〜22 行目）の役目が決まらない",
+      "options": [
+       "remark=備考として根拠の文に添える",
+       "workName=作業内容（作業の名前）",
+       "workTitle=件名（工事の名前）",
+       "assetRef=機器の名前",
+       "tag=機器番号",
+       "unit=号炉・系統",
+       "number=行の番号",
+       "date=日付（始まり）",
+       "end=日付（終わり）",
+       "days=日数",
+       "effort=工数",
+       "quantity=作業量",
+       "cycle=周期",
+       "planActual=計画・実績（行ごと）",
+       "cost=費用",
+       "exclude=外す"
+      ],
+      "defaultAnswer": "remark"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 G（見出し「Contractor」・中身の見本 「Marrowby Lifting Ltd」「Brackwell Thermal Se」「Kestrow Pump Enginee」・表の 5〜22 行目）の役目が決まらない",
+      "options": [
+       "remark=備考として根拠の文に添える",
+       "workName=作業内容（作業の名前）",
+       "workTitle=件名（工事の名前）",
+       "assetRef=機器の名前",
+       "tag=機器番号",
+       "unit=号炉・系統",
+       "number=行の番号",
+       "date=日付（始まり）",
+       "end=日付（終わり）",
+       "days=日数",
+       "effort=工数",
+       "quantity=作業量",
+       "cycle=周期",
+       "planActual=計画・実績（行ごと）",
+       "cost=費用",
+       "exclude=外す"
+      ],
+      "defaultAnswer": "remark"
+     },
+     {
+      "kind": "columnRole",
+      "rows": 1,
+      "text": "列 J（見出し「Status」・中身の見本 「Closed」・表の 5〜22 行目）の役目が決まらない",
+      "options": [
+       "remark=備考として根拠の文に添える",
+       "workName=作業内容（作業の名前）",
+       "workTitle=件名（工事の名前）",
+       "assetRef=機器の名前",
+       "tag=機器番号",
+       "unit=号炉・系統",
+       "number=行の番号",
+       "date=日付（始まり）",
+       "end=日付（終わり）",
+       "days=日数",
+       "effort=工数",
+       "quantity=作業量",
+       "cycle=周期",
+       "planActual=計画・実績（行ごと）",
+       "cost=費用",
+       "exclude=外す"
+      ],
+      "defaultAnswer": "remark"
+     }
+    ],
+    "unresolvedBefore": 318,
+    "unresolvedAfter": 80,
+    "planMade": false,
+    "blockers": [
+     "未解決のセル 80",
+     "答えの無い質問 5"
+    ],
+    "plan": null,
+    "markWorkCount": null,
+    "recovery": {
+     "denominator": 27,
+     "together": 0,
+     "inPlan": 0,
+     "manDays": {
+      "correct": 0,
+      "total": 0
+     },
+     "days": {
+      "correct": 0,
+      "total": 0
+     },
+     "marksOnly": 27,
+     "notCounted": {
+      "この組のどの資料にも書いていない": 2
+     },
+     "misses": [
+      "作業 W0001（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0002（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0003（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0004（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0005（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0007（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0008（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0009（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0011（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0012（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0013（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0014（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0017（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0018（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0020（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0021（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0023（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0024（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0026（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0028（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0029（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0031（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0032（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0033（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0035（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0038（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない",
+      "作業 W0039（【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx）：1 つの明細にそろっていない"
+     ]
+    },
+    "unplaced": []
+   },
+   "unmapped": []
+  }
+ ]
+}

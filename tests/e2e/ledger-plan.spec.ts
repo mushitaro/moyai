@@ -96,7 +96,7 @@ test("AI が台帳を読んで周期の案を置き、人が決定のシート�
       // 違う版を添えると、案を置かずに断る
       const wrong: any = await c.callTool({ name: "chart_propose", arguments: { rules, basedOnVersion: version, basis, ledger: { ledgerVersion: "000000000000", commonItem: iv.commonItem, work: iv.work } } });
       expect(wrong.isError).toBe(true);
-      expect(JSON.stringify(wrong.content)).toContain("照らせません");
+      expect(JSON.stringify(wrong.content)).toContain("could not check");
       const ledger = ledgerVersion ? { ledgerVersion, commonItem: iv.commonItem, work: iv.work } : undefined;
       const r = await call(c, "chart_propose", { rules, basedOnVersion: version, basis, ...(ledger ? { ledger } : {}) });
       expect(r.proposals).toHaveLength(1);

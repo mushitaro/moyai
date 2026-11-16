@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "night-soil",
   "name": "し尿処理施設",
+  "en": {
+    "name": "Night-soil treatment plants",
+    "description": "Common equipment items for night-soil (human waste) treatment plants, with work attributes, so records line up with other facilities in the star chart."
+  },
   "version": 1,
   "group": "A",
   "verification": {
@@ -14,10 +18,16 @@
   "sharing": "off",
   "sharingNote": "全国の表の数と公開語彙が無いので、紛れる数 k を数えられない。数えられないものは送らない（docs/plan.md §2.8）。パックを足しただけの業種",
   "fiscalYearStartMonth": 4,
-  "levelNames": ["設備", "機器", "部位"],
+  "levelNames": [
+    "設備",
+    "機器",
+    "部位"
+  ],
   "identityKey": null,
   "scale": null,
-  "units": { "capacity_kl_per_day": "kL/日" },
+  "units": {
+    "capacity_kl_per_day": "kL/日"
+  },
   "undecided": "identityKey（同一性の鍵の宣言）と scale（判定の尺度）は未実装",
   "common": "common.json"
 }

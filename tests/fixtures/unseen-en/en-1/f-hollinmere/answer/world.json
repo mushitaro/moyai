@@ -1,0 +1,1487 @@
+{
+ "schema": "moyai.answer.world/0",
+ "facility": {
+  "id": "f-hollinmere",
+  "name": "【架空】Hollinmere Energy Recovery Facility",
+  "industry": "waste-incineration",
+  "profile": {
+   "furnace": "stoker",
+   "capacity_t_per_day": 300,
+   "lines": 2,
+   "turbine": true,
+   "dust": "bag filter",
+   "ash": "landfill (bottom ash to off-site recycler)",
+   "contract": "DBO"
+  }
+ },
+ "fiscal_year_start_month": 4,
+ "man_day_hours": 8,
+ "today": "2026-10-01",
+ "equipment": [
+  {
+   "id": "E01",
+   "name": "Refuse crane No.1",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Refuse crane No.1",
+    "【架空】Hollinmere ERF - Work Order History.csv": "Refuse Crane 1"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "CR-01",
+   "path": [
+    "WASTE RECEPTION & FEEDING",
+    "Refuse crane No.1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 7
+    }
+   ],
+   "name_variants": {
+    "【架空】Hollinmere ERF - Work Order History.csv": [
+     "Crane 1",
+     "Crane No1"
+    ]
+   }
+  },
+  {
+   "id": "E02",
+   "name": "Refuse crane No.2",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Refuse crane No.2",
+    "【架空】Hollinmere ERF - Work Order History.csv": "Refuse Crane #2"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "CR-02",
+   "path": [
+    "WASTE RECEPTION & FEEDING",
+    "Refuse crane No.2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "E03",
+   "name": "Stoker grate - Line 1",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Stoker grate - Line 1",
+    "【架空】Hollinmere ERF - Work Order History.csv": "Stoker Grate L1"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "GR-101",
+   "path": [
+    "COMBUSTION",
+    "Stoker grate - Line 1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 10
+    }
+   ],
+   "name_variants": {
+    "【架空】Hollinmere ERF - Work Order History.csv": [
+     "Stoker Line 1 - hydraulics"
+    ]
+   }
+  },
+  {
+   "id": "E04",
+   "name": "Stoker grate - Line 2",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Stoker grate - Line 2",
+    "【架空】Hollinmere ERF - Work Order History.csv": "Grate Line 2"
+   },
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "GR-201",
+   "path": [
+    "COMBUSTION",
+    "Stoker grate - Line 2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "E05",
+   "name": "Boiler - Line 1",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Boiler - Line 1"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "BL-101",
+   "path": [
+    "BOILER & POWER GENERATION",
+    "Boiler - Line 1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 14
+    }
+   ]
+  },
+  {
+   "id": "E06",
+   "name": "Boiler - Line 2",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Boiler - Line 2",
+    "【架空】Hollinmere ERF - Work Order History.csv": "Boiler 2 - Superheater"
+   },
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "BL-201",
+   "path": [
+    "BOILER & POWER GENERATION",
+    "Boiler - Line 2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 15
+    }
+   ]
+  },
+  {
+   "id": "E07",
+   "name": "Boiler feed water pump A",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Boiler feed water pump A",
+    "【架空】Hollinmere ERF - Work Order History.csv": "BFW Pump A"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "BFP-A",
+   "path": [
+    "BOILER & POWER GENERATION",
+    "Boiler feed water pump A"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 16
+    }
+   ]
+  },
+  {
+   "id": "E08",
+   "name": "Boiler feed water pump B",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Boiler feed water pump B",
+    "【架空】Hollinmere ERF - Work Order History.csv": "BFP B"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "BFP-B",
+   "path": [
+    "BOILER & POWER GENERATION",
+    "Boiler feed water pump B"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "E09",
+   "name": "Steam turbine generator",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Steam turbine generator"
+   },
+   "furnace": null,
+   "install_year": 2003,
+   "code": "TG-01",
+   "path": [
+    "BOILER & POWER GENERATION",
+    "Steam turbine generator"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "Bag filter - Line 1",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Bag filter - Line 1",
+    "【架空】Hollinmere ERF - Work Order History.csv": "Bag House 1"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "BF-101",
+   "path": [
+    "FLUE GAS TREATMENT",
+    "Bag filter - Line 1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "Bag filter - Line 2",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Bag filter - Line 2"
+   },
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "BF-201",
+   "path": [
+    "FLUE GAS TREATMENT",
+    "Bag filter - Line 2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 21
+    }
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "Induced draft fan - Line 1",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Induced draft fan - Line 1",
+    "【架空】Hollinmere ERF - Work Order History.csv": "ID Fan No.1"
+   },
+   "furnace": 1,
+   "install_year": 2003,
+   "code": "IDF-101",
+   "path": [
+    "FLUE GAS TREATMENT",
+    "Induced draft fan - Line 1"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 22
+    }
+   ],
+   "name_variants": {
+    "【架空】Hollinmere ERF - Work Order History.csv": [
+     "ID Fan 1"
+    ]
+   }
+  },
+  {
+   "id": "E13",
+   "name": "Induced draft fan - Line 2",
+   "names": {
+    "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx": "Induced draft fan - Line 2"
+   },
+   "furnace": 2,
+   "install_year": 2003,
+   "code": "IDF-201",
+   "path": [
+    "FLUE GAS TREATMENT",
+    "Induced draft fan - Line 2"
+   ],
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 23
+    }
+   ]
+  }
+ ],
+ "works": [
+  {
+   "id": "W0001",
+   "label": "Hoist rope renewal & grab overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E01"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 7,
+     "year": 2019
+    }
+   ]
+  },
+  {
+   "id": "W0002",
+   "label": "Hoist rope renewal & grab overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2022-06-06",
+   "end": "2022-06-09",
+   "man_days": 16,
+   "days": 4,
+   "vendor": "Marrowby Lifting Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 7,
+     "year": 2022
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 5
+    }
+   ]
+  },
+  {
+   "id": "W0003",
+   "label": "Hoist rope renewal & grab overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2025-05-19",
+   "end": "2025-05-22",
+   "man_days": 16,
+   "days": 4,
+   "vendor": "Marrowby Lifting Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 7,
+     "year": 2025
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 18
+    }
+   ]
+  },
+  {
+   "id": "W0004",
+   "label": "Hoist rope renewal & grab overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E02"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 8,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0005",
+   "label": "Hoist rope renewal & grab overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E02"
+   ],
+   "start": "2023-05-15",
+   "end": "2023-05-17",
+   "man_days": 9,
+   "days": 3,
+   "vendor": "Marrowby Lifting Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 8,
+     "year": 2023
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 9
+    }
+   ]
+  },
+  {
+   "id": "W0006",
+   "label": "Hoist rope renewal & grab overhaul",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E02"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 8,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0007",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E03"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 10,
+     "year": 2019
+    }
+   ]
+  },
+  {
+   "id": "W0008",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2022-10-03",
+   "end": "2022-10-21",
+   "man_days": 90,
+   "days": 19,
+   "vendor": "Brackwell Thermal Services Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 10,
+     "year": 2022
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 6
+    }
+   ]
+  },
+  {
+   "id": "W0009",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2025-10-06",
+   "end": "2025-10-24",
+   "man_days": 93,
+   "days": 19,
+   "vendor": "Brackwell Thermal Services Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 10,
+     "year": 2025
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 19
+    }
+   ]
+  },
+  {
+   "id": "W0010",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E03"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 10,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0011",
+   "label": "Hydraulic drive unit overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E03"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 11,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0012",
+   "label": "Hydraulic drive unit overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E03"
+   ],
+   "start": "2026-05-11",
+   "end": "2026-05-22",
+   "man_days": 48,
+   "days": 12,
+   "vendor": "Brackwell Thermal Services Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 11,
+     "year": 2026,
+     "symbol": "P"
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 21
+    },
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 11,
+     "year": 2026,
+     "symbol": "X"
+    }
+   ]
+  },
+  {
+   "id": "W0013",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E04"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 12,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0014",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E04"
+   ],
+   "start": "2023-10-02",
+   "end": "2023-10-20",
+   "man_days": 85.5,
+   "days": 19,
+   "vendor": "Brackwell Thermal Services Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 12,
+     "year": 2023
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 11
+    }
+   ]
+  },
+  {
+   "id": "W0015",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E04"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 12,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0016",
+   "label": "Grate bar replacement (partial)",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E04"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 12,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0017",
+   "label": "Superheater tube bank replacement",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E05"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 14,
+     "year": 2021
+    }
+   ]
+  },
+  {
+   "id": "W0018",
+   "label": "Superheater tube bank replacement",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2022,
+   "equipment": [
+    "E06"
+   ],
+   "start": "2022-11-07",
+   "end": "2022-12-02",
+   "man_days": 200,
+   "days": 26,
+   "vendor": "Brackwell Thermal Services Ltd",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 15,
+     "year": 2022
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 7
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 8
+    }
+   ]
+  },
+  {
+   "id": "W0019",
+   "label": "Superheater tube bank replacement",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2029,
+   "equipment": [
+    "E06"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 15,
+     "year": 2029
+    }
+   ]
+  },
+  {
+   "id": "W0020",
+   "label": "Pump overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E07"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 16,
+     "year": 2019
+    }
+   ]
+  },
+  {
+   "id": "W0021",
+   "label": "Pump overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E07"
+   ],
+   "start": "2023-06-12",
+   "end": "2023-06-16",
+   "man_days": 15,
+   "days": 5,
+   "vendor": "Kestrow Pump Engineering",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 16,
+     "year": 2023
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 10
+    }
+   ]
+  },
+  {
+   "id": "W0022",
+   "label": "Pump overhaul",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E07"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 16,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0023",
+   "label": "Pump overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E08"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 17,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0024",
+   "label": "Pump overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E08"
+   ],
+   "start": "2025-04-08",
+   "end": "2025-04-17",
+   "man_days": 22,
+   "days": 10,
+   "vendor": "Kestrow Pump Engineering",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 17,
+     "year": 2024
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 17
+    }
+   ]
+  },
+  {
+   "id": "W0025",
+   "label": "Pump overhaul",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E08"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 17,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0026",
+   "label": "Major overhaul (casing open)",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E09"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 18,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0027",
+   "label": "Major overhaul (casing open)",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E09"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 18,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0028",
+   "label": "Filter bag & cage replacement (full set)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E10"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 20,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0029",
+   "label": "Filter bag & cage replacement (full set)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2025,
+   "equipment": [
+    "E10"
+   ],
+   "start": "2025-10-06",
+   "end": "2025-10-17",
+   "man_days": 120,
+   "days": 12,
+   "vendor": "Tensfield Filtration",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 20,
+     "year": 2025
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 20
+    }
+   ]
+  },
+  {
+   "id": "W0030",
+   "label": "Filter bag & cage replacement (full set)",
+   "attribute": "REPLACE",
+   "status": "planned",
+   "fiscal_year": 2030,
+   "equipment": [
+    "E10"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 20,
+     "year": 2030
+    }
+   ]
+  },
+  {
+   "id": "W0031",
+   "label": "Filter bag & cage replacement (full set)",
+   "attribute": "REPLACE",
+   "status": "actual",
+   "fiscal_year": 2021,
+   "equipment": [
+    "E11"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 21,
+     "year": 2021
+    }
+   ]
+  },
+  {
+   "id": "W0032",
+   "label": "Impeller & bearing overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2019,
+   "equipment": [
+    "E12"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 22,
+     "year": 2019
+    }
+   ]
+  },
+  {
+   "id": "W0033",
+   "label": "Impeller & bearing overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2023-10-09",
+   "end": "2023-10-13",
+   "man_days": 20,
+   "days": 5,
+   "vendor": "Corvane Fans & Blowers",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 22,
+     "year": 2023
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 12
+    }
+   ]
+  },
+  {
+   "id": "W0034",
+   "label": "Impeller & bearing overhaul",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2027,
+   "equipment": [
+    "E12"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 22,
+     "year": 2027
+    }
+   ]
+  },
+  {
+   "id": "W0035",
+   "label": "Impeller & bearing overhaul",
+   "attribute": "OVERHAUL",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E13"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 23,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0036",
+   "label": "Impeller & bearing overhaul",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E13"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 23,
+     "year": 2024
+    }
+   ]
+  },
+  {
+   "id": "W0037",
+   "label": "Impeller & bearing overhaul",
+   "attribute": "OVERHAUL",
+   "status": "planned",
+   "fiscal_year": 2028,
+   "equipment": [
+    "E13"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 23,
+     "year": 2028
+    }
+   ]
+  },
+  {
+   "id": "W0038",
+   "label": "Detailed functional inspection by accredited body (3-yearly)",
+   "attribute": "INSPECTION",
+   "status": "actual",
+   "fiscal_year": 2020,
+   "equipment": [
+    "E01",
+    "E02",
+    "E03",
+    "E04",
+    "E05",
+    "E06",
+    "E07",
+    "E08",
+    "E09",
+    "E10",
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 25,
+     "year": 2020
+    }
+   ]
+  },
+  {
+   "id": "W0039",
+   "label": "Detailed functional inspection by accredited body (3-yearly)",
+   "attribute": "INSPECTION",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E01",
+    "E02",
+    "E03",
+    "E04",
+    "E05",
+    "E06",
+    "E07",
+    "E08",
+    "E09",
+    "E10",
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "start": "2023-10-23",
+   "end": "2023-10-27",
+   "man_days": 15,
+   "days": 5,
+   "vendor": "Ardleigh Inspection Services",
+   "contract": null,
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 25,
+     "year": 2023
+    },
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 13
+    }
+   ]
+  },
+  {
+   "id": "W0040",
+   "label": "Detailed functional inspection by accredited body (3-yearly)",
+   "attribute": "INSPECTION",
+   "status": "planned",
+   "fiscal_year": 2026,
+   "equipment": [
+    "E01",
+    "E02",
+    "E03",
+    "E04",
+    "E05",
+    "E06",
+    "E07",
+    "E08",
+    "E09",
+    "E10",
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "start": null,
+   "end": null,
+   "man_days": null,
+   "days": null,
+   "vendor": null,
+   "contract": null,
+   "precision": true,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+     "sheet": "10yr Plan",
+     "r": 25,
+     "year": 2026
+    }
+   ]
+  },
+  {
+   "id": "W0041",
+   "label": "High vibration trip - replace DE bearing (breakdown)",
+   "attribute": "REPAIR",
+   "status": "actual",
+   "fiscal_year": 2023,
+   "equipment": [
+    "E12"
+   ],
+   "start": "2024-01-22",
+   "end": "2024-01-22",
+   "man_days": 3,
+   "days": 1,
+   "vendor": "In-house (Maint. Team B)",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 14
+    }
+   ],
+   "date": "2024-01-22"
+  },
+  {
+   "id": "W0042",
+   "label": "Broken wire strand found on hoist rope - emergency rope change\n(rope taken from site spares)",
+   "attribute": "REPAIR",
+   "status": "actual",
+   "fiscal_year": 2024,
+   "equipment": [
+    "E01"
+   ],
+   "start": "2024-08-14",
+   "end": "2024-08-15",
+   "man_days": 6,
+   "days": 2,
+   "vendor": "In-house (Maint. Team B)",
+   "contract": null,
+   "precision": false,
+   "rows": [
+    {
+     "file": "【架空】Hollinmere ERF - Work Order History.csv",
+     "r": 15
+    }
+   ]
+  }
+ ],
+ "unrecorded": [],
+ "defects": [
+  {
+   "kind": "overdue-planned",
+   "where": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx / 10yr Plan / row 23 (Induced draft fan - Line 2), 2024/25 = P",
+   "check": "A planned mark in a past year was never turned into X and there is no work order; the overhaul is overdue and not re-planned in 2025/26 or 2026/27."
+  },
+  {
+   "kind": "missing-next",
+   "where": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx / 10yr Plan / row 21 (Bag filter - Line 2)",
+   "check": "Interval 5 yrs, last X in 2021/22, but no P anywhere up to 2030/31 (next due 2026/27)."
+  },
+  {
+   "kind": "missing-next",
+   "where": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx / 10yr Plan / row 7 (Refuse crane No.1)",
+   "check": "Interval 3 yrs, last X in 2025/26, but no P in 2028/29 (sister crane No.2 is planned)."
+  }
+ ]
+}

@@ -91,7 +91,7 @@ describe("作業画面へ渡す", () => {
     const tb = await bridge();
     const c = await client(tb);
     expectError(await c.callTool({ name: "intake_survey", arguments: {} }), "work_screen_not_open");
-    expect(ERRORS.work_screen_not_open.text).toContain("作業画面が開いていません");
+    expect(ERRORS.work_screen_not_open.text).toContain("The work screen is not open");
   });
 
   it("タブの答えを型で確かめて渡す。既定の引数は橋渡しで埋まる", async () => {

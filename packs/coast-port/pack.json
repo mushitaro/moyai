@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "coast-port",
   "name": "海岸・港湾・漁港の施設",
+  "en": {
+    "name": "Coast, port and fishing-port facilities",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "C",
   "content": "empty",

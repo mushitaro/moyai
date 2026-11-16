@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "biomass-waste-power",
   "name": "バイオマス・ごみ発電",
+  "en": {
+    "name": "Biomass and waste-to-energy power",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "F",
   "content": "empty",

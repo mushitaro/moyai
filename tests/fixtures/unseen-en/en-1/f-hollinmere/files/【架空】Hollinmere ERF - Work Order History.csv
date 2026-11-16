@@ -1,0 +1,22 @@
+"[FICTIONAL] Hollinmere ERF - CMMS export: closed work orders, major works only (records from 01/04/2022)"
+Exported 01/10/2026 by Maintenance Planning
+
+WO No.,Date Start,Date Finish,Asset,Line,Work Description,Contractor,Crew Size,Man-hours,Status,Comments
+WO-22-0412,06/06/2022,09/06/2022,Refuse Crane 1,Common,Replace hoist ropes (both drums) and overhaul grab hydraulic unit,Marrowby Lifting Ltd,4,128,Closed,
+WO-22-0977,03/10/2022,21/10/2022,Stoker Grate L1,1,Replace worn grate bars - rows 3-7 (approx 40%),Brackwell Thermal Services Ltd,6,720,Closed,Autumn outage L1
+WO-22-1030,07/11/2022,18/11/2022,Boiler 2 - Superheater,2,"SH2 tube bank replacement - phase 1 (cut out, new tube supply)",Brackwell Thermal Services Ltd,8,768,Closed,
+WO-22-1031,21/11/2022,02/12/2022,Boiler 2 - Superheater,2,"SH2 tube bank replacement - phase 2 (welding, NDT, hydrotest)",Brackwell Thermal Services Ltd,8,832,Closed,
+WO-23-0388,15/05/2023,17/05/2023,Refuse Crane #2,Common,"Hoist rope renewal, grab cylinder seals replaced",Marrowby Lifting Ltd,3,3 men x 3 days,Closed,
+WO-23-0455,12/06/2023,16/06/2023,BFW Pump A,Common,"Full strip-down overhaul, new mechanical seal & bearings",Kestrow Pump Engineering,3,120,Closed,
+WO-23-0861,02/10/2023,20/10/2023,Grate Line 2,2,Grate bar replacement approx 35%,Brackwell Thermal Services Ltd,6,684,Closed,Autumn outage L2
+WO-23-0874,09/10/2023,13/10/2023,ID Fan No.1,1,"Impeller rebalanced, both bearings replaced, coupling re-aligned",Corvane Fans & Blowers,4,160,Closed,
+WO-23-0902,23/10/2023,27/10/2023,Plant (all),All,3-yearly detailed functional inspection by accredited body,Ardleigh Inspection Services,3,120,Closed,Report ref. HV-PFI-2023
+WO-23-1544,22/01/2024,22/01/2024,ID Fan 1,1,High vibration trip - replace DE bearing (breakdown),In-house (Maint. Team B),3,24,Closed,Line 1 off 14 h
+WO-24-0610,14/08/2024,15/08/2024,Crane 1,Common,"Broken wire strand found on hoist rope - emergency rope change
+(rope taken from site spares)",In-house (Maint. Team B),4,,Closed,approx. 6 man-days
+WO-25-0031,08/04/2025,17/04/2025,BFP B,Common,Overhaul - rotating element exchanged with refurbished spare,Kestrow Pump Engineering,3,176,Closed,
+WO-25-0402,19/05/2025,22/05/2025,Crane No1,Common,Hoist rope renewal & grab overhaul,Marrowby Lifting Ltd,4,128,Closed,
+WO-25-0915,06/10/2025,24/10/2025,Stoker Grate L1,1,Grate bars replaced rows 1-6,Brackwell Thermal Services Ltd,6,744,Closed,Autumn outage L1
+WO-25-0921,06/10/2025,17/10/2025,Bag House 1,1,"Full set of filter bags & cages replaced (1,344 bags)",Tensfield Filtration,10,960,Closed,
+WO-26-0377,11/05/2026,22/05/2026,Stoker Line 1 - hydraulics,1,"Hydraulic power unit overhaul, 4 drive cylinders resealed",Brackwell Thermal Services Ltd,4,384,Closed,Spring outage L1
+16 record(s)

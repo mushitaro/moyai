@@ -112,7 +112,7 @@ describe("古い版の橋渡しを中継が替える", () => {
     // 新しい版が答え（作業画面はまだ無い）、URL と読み込み直しの字が添わる
     expect(r.isError).toBe(true);
     expect(texts(r)).toEqual([ERRORS.work_screen_not_open.text, JSON.stringify({ workScreenUrl: urlOf(b) }), RELAY_TEXT.replaced(urlOf(b))]);
-    expect(RELAY_TEXT.replaced(urlOf(b))).toContain("作業画面を読み込み直してください");
+    expect(RELAY_TEXT.replaced(urlOf(b))).toContain("reload the work screen");
 
     // 次の答えには添えない。もう替えない・起こさない
     const r2: any = await c.callTool({ name: "check_results", arguments: {} });
@@ -164,7 +164,7 @@ describe("古い版の橋渡しを中継が替える", () => {
     const r: any = await c.callTool({ name: "check_results", arguments: {} });
     expect(r.isError).toBe(true);
     expect(texts(r)).toEqual([errorBody("bridge_port_taken", { port: running.port }).error.message]);
-    expect(texts(r)[0]).toContain(`ポート ${running.port} をほかの道具が使っています`);
+    expect(texts(r)[0]).toContain(`Another tool is using port ${running.port}`);
     // 止めていない・起こしていない・鍵ファイルを変えていない
     expect(await portInUse(running.port)).toBe(true);
     expect(l.state.count).toBe(0);

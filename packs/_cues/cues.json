@@ -110,5 +110,47 @@
   "headerUnit": {
     "manDays": ["人日", "人・日", "人工", "延人員", "延べ人員", "延人数", "延べ人数"],
     "hours": ["h", "hr", "時間"]
+  },
+  "en": {
+    "note": "English cue words (stage 1b of global support, 2026-11-16). Compared word by word, case-insensitive, after NFKC: a header matches a phrase when its words equal the phrase's words or start or end with them. These are consulted only where the Japanese cues above find nothing, so Japanese documents read the same as before.",
+    "column": {
+      "name": ["name", "equipment name", "item name", "asset name", "description of equipment", "equipment description"],
+      "number": ["no", "no.", "#", "item no", "item no.", "seq", "seq.", "s/n"],
+      "spec": ["spec", "specs", "specification", "specifications", "model", "type", "rating"],
+      "installed": ["installed", "installation", "year installed", "installation year", "install year", "commissioned", "year of installation"],
+      "remark": ["remarks", "remark", "notes", "note", "comments", "comment"],
+      "date": ["date", "work date", "start date", "date started", "started", "start", "date of work", "date performed"],
+      "effort": ["man-days", "man days", "mandays", "man-hours", "man hours", "manhours", "labor hours", "labour hours", "hours", "hrs", "person-days", "person days", "person-hours", "effort", "labor", "labour"],
+      "days": ["days", "duration", "no. of days", "number of days", "duration days"],
+      "workName": ["work", "work description", "description of work", "work performed", "task", "activity", "maintenance", "maintenance work", "job", "job description", "work done", "work type", "work item", "action"],
+      "workTitle": ["project", "project name", "contract", "contract name", "job title", "work order title"],
+      "assetRef": ["equipment", "asset", "machine", "unit name", "target equipment", "item"],
+      "end": ["end", "end date", "finish", "finish date", "completed date", "completion date", "date completed", "finished"],
+      "tag": ["tag", "tag no", "tag no.", "equipment no", "equipment no.", "equipment id", "asset id", "asset no", "asset no.", "equipment code", "asset code", "code", "id"],
+      "category": ["category", "class", "classification", "kind", "work category"],
+      "persons": ["crew", "crew size", "persons", "workers", "number of workers", "no. of workers", "headcount"],
+      "fiscal": ["fiscal year", "fy", "year"],
+      "series": ["furnace", "line", "train", "unit", "furnace no", "furnace no.", "line no", "line no."],
+      "planActual": ["status", "plan/actual", "planned/actual", "state"],
+      "quantity": ["qty", "quantity"],
+      "cycle": ["cycle", "interval", "frequency", "cycle years", "interval years", "cycle (years)", "interval (years)"],
+      "cost": ["cost", "amount", "price", "cost usd", "amount usd"]
+    },
+    "rowRole": {
+      "subtotal": ["subtotal", "sub-total", "sub total"],
+      "total": ["total", "grand total", "totals"],
+      "legend": ["legend", "key to symbols"],
+      "notePrefix": ["note:", "notes:", "note)", "*note"],
+      "continued": ["continued", "cont'd", "contd"]
+    },
+    "planActual": {
+      "actual": ["done", "completed", "complete", "actual", "actuals", "executed", "performed", "carried out", "result", "results", "finished"],
+      "plan": ["planned", "plan", "plans", "scheduled", "schedule", "forecast"]
+    },
+    "ditto": ["ditto", "do.", "\""],
+    "headerUnit": {
+      "manDays": ["man-days", "man days", "mandays", "person-days", "person days", "md"],
+      "hours": ["h", "hr", "hrs", "hours", "man-hours", "man hours", "manhours", "person-hours", "labor hours", "labour hours"]
+    }
   }
 }

@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "industrial-water",
   "name": "工業用水道",
+  "en": {
+    "name": "Industrial water supply",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "B",
   "content": "empty",

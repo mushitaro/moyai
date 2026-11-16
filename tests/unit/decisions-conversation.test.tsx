@@ -236,12 +236,12 @@ describe("4 理由の列と、却下・確定の列", () => {
 describe("5 シートに説明の 1 行を置かず、1 段目の Skill で会話から確定を頼む", () => {
   test("取り込みの手順（利用者の資料）の最後の 1 行：会話で「確定のシートで会話の回答 n 件を確定してください」と伝える。確定は人が画面でする", () => {
     const md = skillMoyaiMarkdown();
-    const section = md.slice(md.indexOf("### 利用者の資料"), md.indexOf("### アンインストール"));
+    const section = md.slice(md.indexOf("### The user's files"), md.indexOf("### Uninstall"));
     const steps = section.split("\n").filter((l) => /^\d+\. /.test(l));
     const last = steps.at(-1)!;
     expect(last.startsWith(`${steps.length}. `)).toBe(true);
-    expect(last).toContain("「確定のシートで会話の回答 n 件を確定してください」");
-    expect(last).toContain("確定は人が画面でする。Claude は押さない。");
+    expect(last).toContain("to confirm the n conversation answers on the Decisions sheet");
+    expect(last).toContain("A person confirms on the screen. Claude does not press it.");
     expect(readFileSync("skills/moyai/SKILL.md", "utf8").replace(/\r\n/g, "\n")).toContain(last);
     // シートには説明の文を置かない
     const html = sheet(planOf("ai_relayed_human"));

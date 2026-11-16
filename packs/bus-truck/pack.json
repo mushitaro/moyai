@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "bus-truck",
   "name": "バス・トラック",
+  "en": {
+    "name": "Buses and trucks",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "H",
   "content": "empty",

@@ -1,0 +1,428 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】Hollinmere ERF - 10yr Maintenance Plan.xlsx",
+ "plan": true,
+ "records": [
+  {
+   "sheet": "10yr Plan",
+   "r": 6,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "WASTE RECEPTION & FEEDING"
+    ],
+    "code": "1",
+    "row_type": "group"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 7,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "WASTE RECEPTION & FEEDING",
+     "Refuse crane No.1"
+    ],
+    "code": "CR-01",
+    "install_year": 2003,
+    "line": "Common",
+    "task": "Hoist rope renewal & grab overhaul",
+    "interval_years": 3,
+    "marks": {
+     "2019": "X",
+     "2022": "X",
+     "2025": "X"
+    },
+    "specs": [
+     "8 m³ hydraulic grab, 12 t SWL"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "WASTE RECEPTION & FEEDING",
+     "Refuse crane No.2"
+    ],
+    "code": "CR-02",
+    "install_year": 2003,
+    "line": "Common",
+    "task": "Hoist rope renewal & grab overhaul",
+    "interval_years": 3,
+    "marks": {
+     "2020": "X",
+     "2023": "X",
+     "2026": "P"
+    },
+    "specs": [
+     "8 m³ hydraulic grab, 12 t SWL"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 9,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "COMBUSTION"
+    ],
+    "code": "2",
+    "row_type": "group"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 10,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "COMBUSTION",
+     "Stoker grate - Line 1"
+    ],
+    "code": "GR-101",
+    "install_year": 2003,
+    "line": 1,
+    "task": "Grate bar replacement (partial)",
+    "interval_years": 3,
+    "marks": {
+     "2019": "X",
+     "2022": "X",
+     "2025": "X",
+     "2028": "P"
+    },
+    "specs": [
+     "Reciprocating grate, 5 zones"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 11,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "COMBUSTION",
+     "Stoker grate - Line 1"
+    ],
+    "task": "Hydraulic drive unit overhaul",
+    "interval_years": 6,
+    "marks": {
+     "2020": "X",
+     "2026": [
+      "P",
+      "X"
+     ]
+    },
+    "row_type": "task"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 12,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "COMBUSTION",
+     "Stoker grate - Line 2"
+    ],
+    "code": "GR-201",
+    "install_year": 2003,
+    "line": 2,
+    "task": "Grate bar replacement (partial)",
+    "interval_years": 3,
+    "marks": {
+     "2020": "X",
+     "2023": "X",
+     "2026": "P",
+     "2029": "P"
+    },
+    "specs": [
+     "Reciprocating grate, 5 zones"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 13,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "BOILER & POWER GENERATION"
+    ],
+    "code": "3",
+    "row_type": "group"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 14,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "BOILER & POWER GENERATION",
+     "Boiler - Line 1"
+    ],
+    "code": "BL-101",
+    "install_year": 2003,
+    "line": 1,
+    "task": "Superheater tube bank replacement",
+    "marks": {
+     "2021": "X"
+    },
+    "specs": [
+     "Next renewal subject to UT thickness survey"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 15,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "BOILER & POWER GENERATION",
+     "Boiler - Line 2"
+    ],
+    "code": "BL-201",
+    "install_year": 2003,
+    "line": 2,
+    "task": "Superheater tube bank replacement",
+    "interval_years": 7,
+    "marks": {
+     "2022": "X",
+     "2029": "P"
+    },
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 16,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "BOILER & POWER GENERATION",
+     "Boiler feed water pump A"
+    ],
+    "code": "BFP-A",
+    "install_year": 2003,
+    "line": "Common",
+    "task": "Pump overhaul",
+    "interval_years": 4,
+    "marks": {
+     "2019": "X",
+     "2023": "X",
+     "2027": "P"
+    },
+    "specs": [
+     "Multistage centrifugal, 75 kW"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 17,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "BOILER & POWER GENERATION",
+     "Boiler feed water pump B"
+    ],
+    "code": "BFP-B",
+    "install_year": 2003,
+    "line": "Common",
+    "task": "Pump overhaul",
+    "interval_years": 4,
+    "marks": {
+     "2020": "X",
+     "2024": "X",
+     "2028": "P"
+    },
+    "specs": [
+     "Multistage centrifugal, 75 kW"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 18,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "BOILER & POWER GENERATION",
+     "Steam turbine generator"
+    ],
+    "code": "TG-01",
+    "install_year": 2003,
+    "line": "Common",
+    "task": "Major overhaul (casing open)",
+    "interval_years": 6,
+    "marks": {
+     "2020": "X",
+     "2026": "P"
+    },
+    "specs": [
+     "Condensing turbine, 7.5 MWe"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 19,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "FLUE GAS TREATMENT"
+    ],
+    "code": "4",
+    "row_type": "group"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 20,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "FLUE GAS TREATMENT",
+     "Bag filter - Line 1"
+    ],
+    "code": "BF-101",
+    "install_year": 2003,
+    "line": 1,
+    "task": "Filter bag & cage replacement (full set)",
+    "interval_years": 5,
+    "marks": {
+     "2020": "X",
+     "2025": "X",
+     "2030": "P"
+    },
+    "specs": [
+     "PTFE membrane bags"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 21,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "FLUE GAS TREATMENT",
+     "Bag filter - Line 2"
+    ],
+    "code": "BF-201",
+    "install_year": 2003,
+    "line": 2,
+    "task": "Filter bag & cage replacement (full set)",
+    "interval_years": 5,
+    "marks": {
+     "2021": "X"
+    },
+    "specs": [
+     "PTFE membrane bags"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 22,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "FLUE GAS TREATMENT",
+     "Induced draft fan - Line 1"
+    ],
+    "code": "IDF-101",
+    "install_year": 2003,
+    "line": 1,
+    "task": "Impeller & bearing overhaul",
+    "interval_years": 4,
+    "marks": {
+     "2019": "X",
+     "2023": "X",
+     "2027": "P"
+    },
+    "specs": [
+     "VSD driven, 400 kW"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 23,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "FLUE GAS TREATMENT",
+     "Induced draft fan - Line 2"
+    ],
+    "code": "IDF-201",
+    "install_year": 2003,
+    "line": 2,
+    "task": "Impeller & bearing overhaul",
+    "interval_years": 4,
+    "marks": {
+     "2020": "X",
+     "2024": "P",
+     "2028": "P"
+    },
+    "specs": [
+     "VSD driven, 400 kW"
+    ],
+    "row_type": "item"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 24,
+   "kind": "parent",
+   "fields": {
+    "path": [
+     "WHOLE PLANT"
+    ],
+    "code": "5",
+    "row_type": "group"
+   }
+  },
+  {
+   "sheet": "10yr Plan",
+   "r": 25,
+   "kind": "item",
+   "fields": {
+    "path": [
+     "WHOLE PLANT",
+     "Whole plant (both lines)"
+    ],
+    "line": "All",
+    "task": "Detailed functional inspection by accredited body (3-yearly)",
+    "interval_years": 3,
+    "marks": {
+     "2020": "X",
+     "2023": "X",
+     "2026": "P"
+    },
+    "specs": [
+     "Statutory; report kept in QA file"
+    ],
+    "row_type": "plant-wide"
+   }
+  }
+ ]
+}

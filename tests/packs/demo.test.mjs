@@ -45,10 +45,10 @@ test("README.md に、チャットでのデモの進め方（ツールの順と�
   for (const old of ["決定のシート", "印", "束", "輪"]) assert.ok(!md.includes(old), `README.md に使わない言葉「${old}」がある`);
 });
 
-test("Skillパックの SKILL.md に「デモ」の節があり、demo/README.md を指す", () => {
+test("Skillパックの SKILL.md に「デモ」（Demo）の節があり、demo/README.md を指す", () => {
   const md = readFileSync(join(PACK, "SKILL.md"), "utf8");
-  const at = md.indexOf("\n## デモ\n");
-  assert.ok(at > 0, "SKILL.md に「## デモ」の節が無い");
+  const at = md.indexOf("\n## Demo\n");
+  assert.ok(at > 0, "SKILL.md に「## Demo」の節が無い");
   const section = md.slice(at, md.indexOf("\n## ", at + 1) > 0 ? md.indexOf("\n## ", at + 1) : undefined);
   assert.ok(section.includes("demo/README.md"));
   assert.ok(section.includes("intake_add_files"));

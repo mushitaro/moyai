@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "nuclear",
   "name": "原子力",
+  "en": {
+    "name": "Nuclear power",
+    "description": "Map row marked not to be built: listed by name only."
+  },
   "version": 1,
   "group": null,
   "content": "empty",
