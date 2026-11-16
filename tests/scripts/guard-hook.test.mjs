@@ -27,11 +27,7 @@ const blocked = [
   ["Edit", { file_path: "d:/share/moyai-ring/c_ab/circle.json", old_string: "a", new_string: "b" }],
   ["Bash", { command: "cp bundle.json 'D:\\share\\moyai-ring\\c_ab\\bundles\\k1\\'" }],
   ["Bash", { command: "git clone https://github.com/woodygaragelab/hoshutaro" }],
-  ["Bash", { command: "npm install mxstage" }],
-  ["Bash", { command: "gh repo clone mxstage/mxstage" }],
-  ["WebFetch", { url: "https://github.com/mxstage/mxstage/blob/main/README.md", prompt: "x" }],
   ["WebFetch", { url: "https://github.com/woodygaragelab/hoshutaro", prompt: "x" }],
-  ["WebFetch", { url: "https://mxstage.tsunagi.app/docs", prompt: "x" }],
   ["Bash", { command: "node dist/cli.js ledger submit ./bundle.json" }],
   ["Bash", { command: "node dist/cli.js keys create --circle c_ab" }],
   ["Bash", { command: "node dist/cli.js ledger init --root C:/x --pack waste-incineration" }],
@@ -42,8 +38,6 @@ const blocked = [
   ["Bash", { command: "curl http://0x7f000001:43110/" }],
   ["Bash", { command: `python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:43110')"` }],
   ["Bash", { command: `python -c "import requests; requests.post('http://localhost:43110/api/send')"` }],
-  ["Bash", { command: "git ls-remote https://github.com/mxstage/mxstage" }],
-  ["WebFetch", { url: "https://api.github.com/repos/mxstage/mxstage/contents", prompt: "x" }],
   ["WebFetch", { url: "https://codeload.github.com/woodygaragelab/hoshutaro/zip/main", prompt: "x" }],
   ["Bash", { command: "node dist/cli.js --port 1 ledger submit ./b.json" }],
   ["Bash", { command: "npm run cli -- ledger submit ./b.json" }],
@@ -70,6 +64,13 @@ const blocked = [
 ];
 
 const allowed = [
+  // MX Stage は運営者の判断（2026-11-16、会期のあと）で外した。HOSHUTARO は上の denied に残す
+  ["Bash", { command: "npm install mxstage" }],
+  ["Bash", { command: "gh repo clone mxstage/mxstage" }],
+  ["WebFetch", { url: "https://github.com/mxstage/mxstage/blob/main/README.md", prompt: "x" }],
+  ["WebFetch", { url: "https://mxstage.tsunagi.app/docs", prompt: "x" }],
+  ["Bash", { command: "git ls-remote https://github.com/mxstage/mxstage" }],
+  ["WebFetch", { url: "https://api.github.com/repos/mxstage/mxstage/contents", prompt: "x" }],
   ["Bash", { command: "npm test" }],
   ["Bash", { command: "git push origin main" }],
   ["Bash", { command: "curl -sL https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_prov.pdf -o .cache/a.pdf" }],

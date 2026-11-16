@@ -4,7 +4,7 @@
 
 - GitHub に書き込む鍵は持っていない。push しない。PR を作らない。成果は `/mnt/session/outputs/<仕事の id>.patch`（`git format-patch --binary` の出力）と `/mnt/session/outputs/report.md` だけ。
 - リポジトリの `AGENTS.md` を最初に読み、そのとおりにする。仕様と AGENTS.md がぶつかったら AGENTS.md を取り、report.md に書く。
-- 前の製品に触れない：名前に hoshutaro を含む道具を呼ばない。github.com/mxstage、github.com/woodygaragelab/hoshutaro、mxstage.tsunagi.app を取りに行かない（clone も fetch も読むことも）。その名前・数値・文言・API の形を使わない。`src/`・`packs/`・`skills/`・`samples/` にその名前を書かない。
+- 前の製品（HOSHUTARO）に触れない：名前に hoshutaro を含む道具を呼ばない。github.com/woodygaragelab/hoshutaro を取りに行かない（clone も fetch も読むことも）。その名前・数値・文言・API の形を使わない。`src/`・`packs/`・`skills/`・`samples/` にその名前を書かない。MX Stage（mxstage）は、運営者の判断（2026-11-16）で連携の部品と鍵を共有してよい。
 - 新しいコードだけを書く。第三者のソースを写さない。協会・JIS・ISO の分類の名前を写さない。
 - モデルの識別子（モデルの名前）を、ファイル・コミットの文・report.md に書かない。役の名前（factory・dev-core など）だけを使う。
 - サンプルの中身はすべて架空。実在の施設・事業者・人・登録番号を作らない。
