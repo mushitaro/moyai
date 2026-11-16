@@ -11,6 +11,11 @@ GitHub のアカウントを持たない人の束を受け、運営者の GitHub
 - 断るときは `{ "ok": false, "reasons": [...], "reasonsText": [...] }`。理由のコードと言葉は台帳の検証（Actions の `ledger-validate`）と同じ。受け口だけの理由は `intake.*`。
 - 400 形・署名・台帳の検証で ✗、同じ鍵の受け口の PR が審査中（`intake.keyPending`）。413 大きすぎる。415 JSON でない。429 送信が多すぎる。502 GitHub に届かない。503 設定が未完了か、台帳の決まりが ✓ でないか、受け口の PR が審査待ちでたまっている（`intake.busy`）。
 
+- `POST /feedback`（読み方のフィードバック。2026-11-16）：体は HOSHITORI のルールのシートで保存した `moyai.reading-feedback/0` の 1 つ（JSON、64 KB まで）。受けると、変数 `FEEDBACK_REPO`（固定。`mushitaro/moyai`）にラベル `feedback`・`area:skill-loop` の Issue を出し、`{ "ok": true, "issue": { "number": n, "url": "https://github.com/…/issues/n" } }`。本文は `.github/ISSUE_TEMPLATE/reading-feedback.yml` の見出し（`scripts/skill-loop/form.mjs`）で、毎日の回し（`scripts/skill-loop/feedback.mjs`）がそのまま拾う。題は「読み方のフィードバック（受け口から・<パック>・ルール <n> 件）」。
+  - 確かめ：方法・設定（`FEEDBACK_REPO`・トークン・KV）→ `/submit` と同じ数え方の件数（数える名前は別）→ Content-Type と大きさ → JSON の形（UTF-8・入れ子 8 段・キーの重複なし）と `parseReadingFeedback`（文・理由・人・資料の名前・id の欄があれば `feedback.shape`）と業種（型の選択肢のパックだけ。外れは `feedback.packUnknown`）→ 行の値らしきもの（`scripts/skill-loop/values.mjs` の `countValues`。毎日の回しと同じ字で数える。あれば `feedback.rowValues` と種類ごとの数だけ。値は返さない）。ここまでは GitHub を呼ばない → 同じ中身の Issue があればそれを返す → 受け口が出した開いた Issue が 20 あれば `intake.busy` → Issue を出す。
+  - その PC の語（固有名詞の網 2）は受け口に来ない（語そのものが固有名詞なので）。アプリが送る前に照らす。
+  - トークンは秘密 `FEEDBACK_TOKEN`（mushitaro/moyai だけ・Issues の書き込み。`docs/ledger-deploy.md` §2.1）。無ければ `GITHUB_TOKEN`。権限が無ければ `503 intake.feedbackNoPermission`。
+
 ## 確かめの順
 
 1. 道と方法（`POST /submit` だけ）・設定（`GITHUB_TOKEN`・`LEDGER_REPO`・KV）。

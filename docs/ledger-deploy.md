@@ -39,6 +39,34 @@ GitHub に運営者のアカウントで入り、**Settings → Developer settin
 - 受け口は形が `github_pat_…` のトークンだけを受ける（ほかの形なら `503 intake.notConfigured`）。classic のトークンは使わない。
 - トークンの値は、§3 の 4 で wrangler が聞いてきた端末にだけ貼る。チャット・Issue・ファイル・統括のセッションに貼らない。
 
+## 2.1 読み方のフィードバックの Issue を出すトークン（運営者。2026-11-16 に足した。値はどこにも貼らない）
+
+受け口の `POST /feedback`（読み方のフィードバック。`services/ledger-intake/src/feedback.ts`）は、`mushitaro/moyai` にラベル `feedback` の Issue を出す。そのため、受け口のトークンに **mushitaro/moyai の Issues の書き込み**が要る。
+
+**§2 のトークンに mushitaro/moyai を足さない**。fine-grained のトークンの権限は、選んだリポジトリのどれにも同じに付く（GitHub の文書）。足すと、§2 の Contents と Pull requests の書き込みが mushitaro/moyai にも付き、受け口のトークンで MOYAI のコードに書けるようになる。代わりに、フィードバックだけのトークンを 1 つ作る：
+
+| 欄 | 入れるもの |
+|---|---|
+| Token name | `moyai-ledger-intake-feedback` |
+| Expiration | 期限を付ける（例：90 日） |
+| Resource owner | `mushitaro` |
+| Repository access | **Only select repositories** → `mushitaro/moyai` の 1 つだけ |
+| Repository permissions | **Issues：Read and write** だけ（Metadata：Read-only は自動で付く） |
+| ほかの権限 | 付けない（Contents・Pull requests・Workflows・Administration・Secrets のどれも No access のまま） |
+
+入れ方（運営者の PC の `services/ledger-intake` で。端末が聞いてくるので、このトークンを貼る。画面には出ない）：
+
+```bash
+npx wrangler@4.152.0 secret put FEEDBACK_TOKEN
+# FEEDBACK_REPO（mushitaro/moyai）は wrangler.jsonc の vars にある。/feedback の道を足した版を配置し直す：
+npx wrangler@4.152.0 deploy
+```
+
+- 受け口は `FEEDBACK_TOKEN` があればそれを、無ければ `GITHUB_TOKEN` を使う。`GITHUB_TOKEN` は mushitaro/moyai を持たないので、`FEEDBACK_TOKEN` を入れるまで `/feedback` は **`503 intake.feedbackNoPermission`**（GitHub が 403 か 404 を返す）で断る。アプリの画面には「受け口の設定が未完了です（Issue を出す権限が無い）」と出る。台帳の `/submit` は今のまま動く。
+- ラベル `feedback` と `area:skill-loop` は mushitaro/moyai にもうある（Issue の型が使う）。権限によっては、Issue を出すときのラベルが黙って落ちることがある（GitHub の文書）。受け口は付け直し、それも断られたら `503 intake.feedbackLabel` で返す（Issue はできているので、運営者が手でラベルを付ける）。Issues の書き込みで付けられるかは本物では未確認。
+- 確かめ（配置のあと 1 回。統括）：アプリの HOSHITORI のルールのシートで【架空】の読み方を「ルールを書き出す」→「保存する」→「送る」。「✓ 送信　Issue #n」が出て、mushitaro/moyai にラベル `feedback` の Issue ができ、毎日の回し（`scripts/skill-loop/feedback.mjs --dry-run`）がその Issue を読めれば合格。
+- 止める：GitHub でこのトークンを Revoke（`/feedback` だけが 503 で断るようになる。`/submit` は止まらない）。
+
 ## 3. 配置する（運営者の PC で 1 回。Node 22 と git があること）
 
 そのまま写せる形。`#` の行は説明。
@@ -116,7 +144,7 @@ curl -sS -X POST -H 'content-type: application/json' --data-binary @../pr8-$F "<
 
 - moyai-ledger の PR をマージするかは**運営者**（公開の台帳に載る）。
 - 統括は mushitaro/moyai#8 に「moyai-ledger の PR #<n> に出し直した」と書いて閉じる（mushitaro/moyai の `ledger/` はもう無いので、#8 は入れられない）。
-- アプリの `src/bridge/ledger-intake.ts` の `LEDGER_INTAKE_URL` に URL を入れ、SHARE の「MOYAI 経由」を画面で通す PR は、別に出す（#21 の 2 つ目）。
+- アプリの `src/bridge/ledger-intake.ts` の `LEDGER_INTAKE_URL` に URL を入れた（2026-11-16。#21 の 2 つ目）。SHARE の「MOYAI 経由」は、試験の台の受け口で e2e（`tests/e2e/ledger-intake.spec.ts`）が通す。本物の受け口にアプリの画面から送るのは未確認。試験は `MOYAI_LEDGER_INTAKE_URL=off`（vitest の設定・Playwright の設定・e2e の橋渡しの既定）で本物に送らない。
 
 ### 新しい【架空】の共有ファイルで通すとき（PR #8 を使わないとき）
 

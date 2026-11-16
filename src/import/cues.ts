@@ -1,5 +1,6 @@
 // 書類の一般の手がかりの語（packs/_cues/cues.json）を読み、比べる道具にする。語はコードに置かない。
-import cuesJson from "../../packs/_cues/cues.json";
+// import attribute：受け口（services/ledger-intake）の feedback.ts が読み方の形を確かめるので、e2e の台本（Playwright）が直に読み込む（src/share/ledger-place.ts と同じ）
+import cuesJson from "../../packs/_cues/cues.json" with { type: "json" };
 import { nfkc, parseDateText, parseYearLabel } from "./era";
 
 export const CUES = cuesJson;

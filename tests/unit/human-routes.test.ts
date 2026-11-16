@@ -28,6 +28,7 @@ import { readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
 import { handleRequest } from "../../services/ledger-intake/src/handler";
 import { packOf } from "../../services/ledger-intake/src/packs";
 import { fakeLedgerGitHub, memoryKv } from "../helpers/intake-github";
+import { fakeIssuesGitHub } from "../helpers/feedback-github";
 import { SHEET_FIRST, layoutFor, templateBytes } from "../helpers/template-layout";
 
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
@@ -67,7 +68,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "readingsLineage", "readingFeedbackSave", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "templateFileRead", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerIntakeSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect", "workDiscard"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "readingsLineage", "readingFeedbackSave", "readingFeedbackSend", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "templateFileRead", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerIntakeSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect", "workDiscard"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -857,4 +858,75 @@ describe("公開の台帳へ GitHub のアカウントなしで出す（受け�
     // 行方を読むのはトークン無し
     expect(gh.calls.filter((c) => /\/pulls\/1$/.test(new URL(c.url).pathname)).every((c) => c.auth === null)).toBe(true);
   }, 300_000); // 上限は CI で測った値に合わせる（11-05。windows-latest で 61〜75 秒、並ぶと 3 倍）
+});
+
+describe("読み方のフィードバックを受け口に送る（人だけの経路 reading_feedback_send。受け口はハンドラそのもの、GitHub の Issues はメモリの台。本物では未確認）", () => {
+  const text =
+    JSON.stringify({ schema: "moyai.reading-feedback/0", pack: "waste-incineration", rules: [{ kind: "sameAsset", names: ["ブロワー", "ブロワ"], cells: 3 }] }, null, 2) + "\n";
+
+  async function bridgeWith(ledgerIntake: IntakeIo | null) {
+    extra = join(tmpdir(), `moyai-feedback-send-${process.pid}-${Date.now()}`);
+    mkdirSync(extra, { recursive: true });
+    tb = await startTestBridge({ human: { shell: async () => ({ documents: join(extra, "Documents"), mounts: [] }), ledgerIntake } });
+    const t = await tab(tb);
+    const call = async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+      const p = JSON.stringify(payload);
+      const tok = await t.token(R(id).action, p);
+      const r = await post(tb!, R(id).path, good(tb!), { token: tok, payload: p });
+      expect(r.status, id).toBe(200);
+      return r.body;
+    };
+    await call("settingsSave", { root: join(extra, "置き場所") });
+    return call;
+  }
+
+  it("保存したものだけを送る。受け口が MOYAI のリポジトリにラベル feedback の Issue を出す。その PC の語は送らない", async () => {
+    const token = `github_pat_${"Fb5end".repeat(4)}_${"z".repeat(40)}`;
+    const gh = fakeIssuesGitHub({ token });
+    const env = { GITHUB_TOKEN: token, FEEDBACK_REPO: `${gh.owner}/${gh.name}`, INTAKE_KV: memoryKv() };
+    const sentBodies: string[] = [];
+    const ledgerIntake: IntakeIo = {
+      url: "https://intake.example",
+      fetch: async (u, i) => {
+        sentBodies.push(i.body ?? "");
+        return handleRequest(new Request(u, { method: i.method, headers: { ...i.headers, "cf-connecting-ip": "203.0.113.9" }, ...(i.body !== undefined ? { body: i.body } : {}) }), env, { fetch: gh.fetch, now: () => Date.now(), packOf });
+      },
+    };
+    const call = await bridgeWith(ledgerIntake);
+    const words = ["【架空】みなと台清掃工場", "【架空】ほげ設備"];
+    // 保存の前は送らない（画面で全文を見て保存した、の印が無い）
+    expect((await call("readingFeedbackSend", { text, words })).reason).toBe("feedbackNotSaved");
+    expect(sentBodies).toHaveLength(0);
+    // 保存すると、受け口があるので画面は主ボタンを「送る」に替える
+    expect(await call("readingFeedbackSave", { text, words })).toMatchObject({ ok: true, canSend: true });
+    // 保存したものと違う中身は送らない
+    expect((await call("readingFeedbackSend", { text: text.replace("ブロワ\"", "ブロア\""), words })).reason).toBe("feedbackNotSaved");
+    // 送る
+    const sent = await call("readingFeedbackSend", { text, words });
+    expect(sent).toEqual({ ok: true, issue: 1, url: `https://github.com/${gh.owner}/${gh.name}/issues/1` });
+    expect(sentBodies).toEqual([text]);
+    for (const w of words) expect(sentBodies.join("")).not.toContain(w);
+    expect(gh.issues.map((i) => i.labels)).toEqual([["feedback", "area:skill-loop"]]);
+    // 当たる語があれば送らない（網 2。画面と同じ照らし）
+    expect((await call("readingFeedbackSend", { text, words: ["ブロワー"] })).reason).toBe("properNoun");
+    expect(sentBodies).toHaveLength(1);
+    // 受け口の権限が無ければ、理由を分けて返す
+    gh.mode = "forbidden";
+    const other = text.replace('"cells": 3', '"cells": 4');
+    await call("readingFeedbackSave", { text: other, words });
+    expect((await call("readingFeedbackSend", { text: other, words })).reason).toBe("feedbackIntake.noPermission");
+  });
+
+  it("受け口が無い版では、保存のあとも「送る」を出さず、送る経路は断る", async () => {
+    const call = await bridgeWith(null);
+    expect(await call("readingFeedbackSave", { text, words: [] })).toMatchObject({ ok: true, canSend: false });
+    expect((await call("readingFeedbackSend", { text, words: [] })).reason).toBe("intakeNotReady");
+  });
+
+  it("本物の受け口の URL が入っていて、試験では MOYAI_LEDGER_INTAKE_URL=off で道を出さない", async () => {
+    const { LEDGER_INTAKE_URL, ledgerIntakeUrlOf } = await import("../../src/bridge/ledger-intake");
+    expect(ledgerIntakeUrlOf(LEDGER_INTAKE_URL, {})).toBe("https://moyai-ledger-intake.white-violet-b87a.workers.dev");
+    expect(ledgerIntakeUrlOf(LEDGER_INTAKE_URL, { MOYAI_LEDGER_INTAKE_URL: "off" })).toBeNull();
+    expect(process.env.MOYAI_LEDGER_INTAKE_URL).toBe("off");
+  });
 });

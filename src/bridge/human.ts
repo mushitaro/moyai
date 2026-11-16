@@ -35,7 +35,7 @@ import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, rotateKeysOf, rotateRingKey, unmarkedRetired, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
 import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, ledgerBranch, ledgerBundlePath, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
-import { LEDGER_INTAKE_URL, ledgerIntakeUrlOf, sendToIntake, type IntakeIo } from "./ledger-intake";
+import { LEDGER_INTAKE_URL, ledgerIntakeUrlOf, sendFeedbackToIntake, sendToIntake, type IntakeIo } from "./ledger-intake";
 import { parseJsonStrict } from "../share/jcs";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
 import { parsePack } from "../shared/pack";
@@ -172,6 +172,8 @@ const SCHEMAS = {
   readings_read: z.object({}),
   readings_lineage: z.object({}),
   reading_feedback_save: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
+  // 受け口の上限（64 KB）より大きいものは、受け口が 413 で断る
+  reading_feedback_send: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
   work_discard: z.object({ planId: planIdSchema }),
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
   plan_source_read: z.object({ planId: planIdSchema, version: z.number().int().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
@@ -1358,7 +1360,33 @@ export class HumanService {
         const dir = join(root, "feedback");
         await mkdir(dir, { recursive: true });
         await writeFile(join(dir, name), p.text, "utf8");
-        return { ok: true, file: name };
+        // 受け口があれば、画面は主ボタンを「送る」に替える（送るのは reading_feedback_send。人が押したときだけ）
+        return { ok: true, file: name, canSend: this.intakeIo() !== null };
+      }
+      case "reading_feedback_send": {
+        // 読み方のフィードバックを受け口に送る（運営者 2026-11-16「早く利用者が使える状態に」）：送るのは、保存の経路が保管先の feedback/ に置いたのと同じ全文だけ。
+        // 形と固有名詞の網 2 で確かめ直す（語は送らない）。受け口が MOYAI のリポジトリにラベル feedback の公開の Issue を出す。通信は §2.12 の例外（受け口の 1 つだけ）
+        const p = parsePayload("reading_feedback_send", call.payload);
+        if (!p) return no("payloadInvalid");
+        const io = this.intakeIo();
+        if (!io) return no("intakeNotReady");
+        if (!parseReadingFeedback(p.text)) return no("feedbackShape");
+        const pn = countProperNouns({ bundleText: p.text, fileName: "", folderPath: "", localWords: p.words, cells: [], publicWords: new Set() });
+        if (pn.total > 0) return no("properNoun", { hits: pn.total });
+        const root = await this.root();
+        if (!root) return no("noRoot");
+        // 保存したものだけを送る（画面で全文を見て保存した、の印。名前は中身のハッシュの頭を持つので、同じ中身のファイルを探す）
+        const hash8 = sha256Hex(Buffer.from(p.text, "utf8")).slice(0, 8);
+        const dir = join(root, "feedback");
+        const names = existsSync(dir) ? readdirSync(dir).filter((n) => n.endsWith(`_${hash8}.json`)) : [];
+        const saved = (await Promise.all(names.map(async (n) => (await readFile(join(dir, n), "utf8").catch(() => null)) === p.text))).some(Boolean);
+        if (!saved) return no("feedbackNotSaved");
+        const r = await sendFeedbackToIntake(io, p.text);
+        if (!r.ok) {
+          const why = r.reason === "refused" && r.reasons.includes("feedback.rowValues") ? "rowValues" : r.reason === "unavailable" && r.reasons.includes("intake.feedbackNoPermission") ? "noPermission" : r.reason;
+          return no(`feedbackIntake.${why}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
+        }
+        return { ok: true, issue: r.number, url: r.url };
       }
       case "peers_compare": {
         const p = parsePayload("peers_compare", call.payload);

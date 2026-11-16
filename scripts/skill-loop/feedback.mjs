@@ -18,12 +18,13 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { compare, toMarkdown } from "../bench/compare.mjs";
+import { HEAD, PACK_OF } from "./form.mjs";
+import { VALUE_KINDS, countValues, countableRuleBlock, ruleTexts } from "./values.mjs";
+
+export { VALUE_KINDS, countValues };
 
 export const DECISION_SCHEMA = "moyai.skill-loop.decision/0";
 
-/** Issue の型の「業種」の選択肢 → パックの id（.github/ISSUE_TEMPLATE/reading-feedback.yml と同じ） */
-const PACK_OF = { "ごみ焼却（waste-incineration）": "waste-incineration", "し尿処理（night-soil）": "night-soil" };
-const HEAD = { pack: "業種（Skillパック）", source: "資料の種類", what: "どう読まれて、どう読まれるべきだったか", rule: "会話で作ったルール（あれば）", check: "確かめ" };
 const KINDS = ["headerRow", "columnRole", "dateFormat", "effortUnit", "rowRole", "sameAsset", "markMeaning", "answer", "effortTrade", "planCycle"];
 
 /** Issue の型（issue forms）の本文を、見出しごとの文に分ける */
@@ -78,57 +79,7 @@ export function rulesOf(text) {
   return null;
 }
 
-// ─── 行の値らしきものの数え ──────────────────────────────
-// 公開のリポジトリに行の値（金額・日付・番号・会社や施設の名前）を書かない決まり。迷えば数える（返して人に消してもらう）
-const GENERIC_PREFIX = /^(ごみ|し尿|汚泥|下水|廃棄物|一般廃棄物|資源化|リサイクル)$/u;
-const FACILITY = /([\p{sc=Han}\p{sc=Hiragana}\p{sc=Katakana}A-Za-zー]{2,})(清掃工場|クリーンセンター|クリーンプラザ|環境センター|衛生センター|処理センター|浄化センター|処理場|焼却場)/gu;
-export const VALUE_KINDS = {
-  money: "金額",
-  groupedNumber: "桁区切りの数",
-  exactDate: "日付",
-  code: "番号（契約・機器の番号の形）",
-  longNumber: "4 桁以上の数",
-  decimal: "小数",
-  company: "会社の名前",
-  facility: "施設の名前",
-  contact: "連絡先",
-};
-const PATTERNS = {
-  money: [/[¥￥]\s*\d/g, /\d\s*(?:円|万円|千円|百万円)/g],
-  groupedNumber: [/\d{1,3}(?:,\d{3})+/g],
-  exactDate: [/\d{2,4}\s*[/.\-年]\s*\d{1,2}\s*[/.\-月]\s*\d{1,2}/g, /(?:令和|平成|昭和|[RHS])\s*(?:\d{1,2}|元)\s*[.年]\s*\d{1,2}/g],
-  code: [/[A-Za-z]{1,4}\d{0,4}-\d{2,}/g],
-  longNumber: [/\d{4,}/g],
-  decimal: [/\d+\.\d+/g],
-  company: [/株式会社|有限会社|合同会社|合資会社|\(株\)|\(有\)|㈱|㈲/g],
-  contact: [/[\w.+-]+@[\w-]+\.[\w.]+/g, /\d{2,4}-\d{2,4}-\d{4}/g],
-};
-
-/** 文の中の行の値らしきものを、種類ごとに数える（値そのものは返さない） */
-export function countValues(texts) {
-  const counts = Object.fromEntries(Object.keys(VALUE_KINDS).map((k) => [k, 0]));
-  for (const raw of texts) {
-    const t = String(raw ?? "").normalize("NFKC");
-    for (const [k, res] of Object.entries(PATTERNS)) for (const re of res) counts[k] += (t.match(re) ?? []).length;
-    for (const m of t.matchAll(FACILITY)) if (!GENERIC_PREFIX.test(m[1])) counts.facility++;
-  }
-  return counts;
-}
-
-/** 規則の中の、人の字の入る欄（数えるもの）。kind・id・author・役目などの決まった語と、公の分類の番号は数えない */
-function ruleTexts(rule) {
-  const out = [];
-  const add = (v) => {
-    if (typeof v === "string") out.push(v);
-    else if (Array.isArray(v)) v.forEach(add);
-  };
-  for (const k of ["text", "reason", "by", "match", "column", "names", "words", "symbol", "meaning"]) add(rule?.[k]);
-  if (rule?.when) {
-    add(rule.when.headers);
-    add(rule.when.file);
-  }
-  return out;
-}
+// 行の値らしきものの数え（countValues・ruleTexts）は values.mjs（受け口の POST /feedback も同じものを使う）
 
 /** 規則の形のあらまし（細かい形は物差しの側で moyai.reading/0 の定義が確かめる） */
 function shapeProblems(rules) {
@@ -155,7 +106,7 @@ export function screen(issue, candidate = null) {
   const pasted = rulesOf(f[HEAD.rule]);
   if (pasted === null) return { ok: false, reason: "rule-unreadable" };
   const rules = candidate ? candidate : pasted;
-  const counts = countValues([issue.title, f[HEAD.what], f[HEAD.rule], ...rules.flatMap(ruleTexts)]);
+  const counts = countValues([issue.title, f[HEAD.what], countableRuleBlock(f[HEAD.rule]), ...rules.flatMap(ruleTexts)]);
   if (Object.values(counts).some((n) => n > 0)) return { ok: false, reason: "row-values", counts };
   if (!rules.length) return { ok: "draft", pack };
   const problems = shapeProblems(rules);
