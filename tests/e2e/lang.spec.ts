@@ -23,9 +23,9 @@ test("設定が無ければ PC の言語。English を押すと読み込み直�
   const ja = await browser.newContext({ locale: "ja-JP" });
   const page = await ja.newPage();
   await page.goto(`${bridge.base}/#/settings`);
-  // 設定を読めた（ブリッジ接続中）ほうの行が出るまで待つ
-  await expect(page.getByTestId("settings-save")).toBeVisible();
+  // 設定を読めた（ブリッジ接続中）ほうの行が出るまで待つ（読めるまでの行は描き直すだけで保存しない。保存した言語 data-saved は読めた行だけにある）
   const row = page.getByTestId("lang-setting");
+  await expect(row).toHaveAttribute("data-saved", "");
   await expect(row).toContainText(title("ja"));
   await expect(page.locator("html")).toHaveAttribute("lang", "ja");
   await expect(page.getByTestId("lang-choice").getByRole("button", { name: "日本語" })).toHaveAttribute("aria-pressed", "true");
@@ -45,6 +45,7 @@ test("設定が無ければ PC の言語。English を押すと読み込み直�
   const fresh = await browser.newContext({ locale: "ja-JP" });
   const p2 = await fresh.newPage();
   await p2.goto(`${bridge.base}/#/settings`);
+  await expect(p2.getByTestId("lang-setting")).toHaveAttribute("data-saved", "en");
   await expect(p2.getByTestId("lang-setting")).toContainText(title("en"));
   await expect(p2.locator("html")).toHaveAttribute("lang", "en");
   // 日本語に戻すと、すぐ日本語
@@ -59,7 +60,7 @@ test("英語の PC のブラウザは、設定が日本語ならそのまま日�
   const en = await browser.newContext({ locale: "en-US" });
   const page = await en.newPage();
   await page.goto(`${bridge.base}/#/settings`);
-  await expect(page.getByTestId("settings-save")).toBeVisible();
+  await expect(page.getByTestId("lang-setting")).toHaveAttribute("data-saved", "ja");
   await expect(page.getByTestId("lang-setting")).toContainText(title("ja"));
   await en.close();
 });
