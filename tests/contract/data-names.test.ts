@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 import { activeSkills } from "../../src/app/skills";
 import {
   DATA_NAMES,
+  DATA_NAMES_EN,
   dataNamesDocTables,
   dataNamesSkillSection,
   GENERATED_END,
@@ -54,6 +55,17 @@ describe("データの名前の正本", () => {
     expect(DATA_NAMES.find((n) => n.id === "yearValue")!.avoid).toContain("年度の値を作業明細と呼ばない");
   });
 
+  test("英語（AI が読む節）は正本と同じ鍵で、どれにも名前・定義があり、当ててはいけない例の数が同じ。名前は重ならない", () => {
+    expect(Object.keys(DATA_NAMES_EN).sort()).toEqual(DATA_NAMES.map((n) => n.id).sort());
+    expect(new Set(Object.values(DATA_NAMES_EN).map((e) => e.name)).size).toBe(DATA_NAMES.length);
+    for (const n of DATA_NAMES) {
+      const e = DATA_NAMES_EN[n.id]!;
+      expect(e.name.length && e.definition.length, n.id).toBeGreaterThan(0);
+      expect(e.avoid.length, n.id).toBe(n.avoid.length);
+    }
+    expect(DATA_NAMES_EN.line!.definition).toContain("One line of a daily work report");
+  });
+
   test("パックの data-names.json は正本の鍵だけを使い、形どおり", () => {
     expect(pack.schema).toBe("moyai.data-names/0");
     expect(pack.pack).toBe(PACK);
@@ -95,18 +107,18 @@ describe("正本から作るもの", () => {
   test("1 段目の Skill は instructions の後ろに「データの名前」の節を持ち、instructions には参照の 1 文だけ", () => {
     const section = dataNamesSkillSection();
     expect(skillMoyaiMarkdown()).toContain(`\n${section}\n`);
-    expect(section).toContain("| 名前 | 定義 | 欄 | 当ててはいけない例 |");
-    for (const n of DATA_NAMES) expect(section).toContain(`| ${n.name} |`);
-    expect(MCP_INSTRUCTIONS).toContain("「データの名前」");
-    expect(MCP_INSTRUCTIONS).not.toContain("| 名前 |");
+    expect(section).toContain("| Name | Definition | Fields | Do not map |");
+    for (const n of DATA_NAMES) expect(section).toContain(`| ${DATA_NAMES_EN[n.id]!.name} |`);
+    expect(MCP_INSTRUCTIONS).toContain("\"Data names\"");
+    expect(MCP_INSTRUCTIONS).not.toContain("| Name |");
     expect(MCP_INSTRUCTIONS.length).toBeLessThanOrEqual(4096);
   });
 
   test(`${PACK} の SKILL.md の「資料とデータの名前」は data-names.json から作ったものと同じ（印の外は変えない）`, () => {
     const { now, want } = regenerated(`packs/${PACK}/SKILL.md`, packDataNamesSection(pack));
     expect(now).toBe(want);
-    expect(now).toContain("## 資料とデータの名前");
-    expect(now.indexOf(GENERATED_END)).toBeGreaterThan(now.indexOf("## 資料とデータの名前"));
+    expect(now).toContain("## Files and data names");
+    expect(now.indexOf(GENERATED_END)).toBeGreaterThan(now.indexOf("## Files and data names"));
   });
 
   test("docs/data-names.md の 1〜4 章の表は正本とパックのデータから作ったものと同じ。手で書く 5 章・6 章は残る", () => {
@@ -120,9 +132,9 @@ describe("正本から作るもの", () => {
 
   test("Claude に届く：intake_survey（part: skills）の 1 段目と 2 段目の本文に、それぞれの節が入る", () => {
     const s = activeSkills(PACK, []);
-    expect(s[0]!.text).toContain("## データの名前");
-    expect(s[0]!.text).toContain("作業日報の 1 行");
-    expect(s[1]!.text).toContain("## 資料とデータの名前");
-    for (const n of DATA_NAMES.filter((x) => pack.names[x.id])) expect(s[1]!.text).toContain(`| ${n.name} |`);
+    expect(s[0]!.text).toContain("## Data names");
+    expect(s[0]!.text).toContain("One line of a daily work report");
+    expect(s[1]!.text).toContain("## Files and data names");
+    for (const n of DATA_NAMES.filter((x) => pack.names[x.id])) expect(s[1]!.text).toContain(`| ${DATA_NAMES_EN[n.id]!.name} |`);
   });
 });

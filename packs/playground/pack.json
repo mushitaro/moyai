@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "playground",
   "name": "公園の遊具",
+  "en": {
+    "name": "Park playground equipment",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "E",
   "content": "empty",

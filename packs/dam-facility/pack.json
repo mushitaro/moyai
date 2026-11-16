@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "dam-facility",
   "name": "ダムの管理設備",
+  "en": {
+    "name": "Dam management equipment",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "C",
   "content": "empty",

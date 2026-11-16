@@ -2,9 +2,33 @@
   "schema": "moyai.work/0",
   "note": "作業の属性の既定の名前。コードは 4 つのコードだけを持ち、画面に出す名前はここから読む。業種のパックは common.json の work で言い換えられる",
   "work": {
-    "INSPECT": { "label": "点検" },
-    "OVERHAUL": { "label": "分解整備" },
-    "REPLACE": { "label": "更新" },
-    "UPGRADE": { "label": "基幹改良" }
+    "INSPECT": {
+      "label": "点検",
+      "en": {
+        "label": "Inspection",
+        "description": "Checking condition without taking the equipment apart."
+      }
+    },
+    "OVERHAUL": {
+      "label": "分解整備",
+      "en": {
+        "label": "Overhaul",
+        "description": "Taking apart, repairing and reassembling."
+      }
+    },
+    "REPLACE": {
+      "label": "更新",
+      "en": {
+        "label": "Replacement",
+        "description": "Replacing the equipment or part with a new one."
+      }
+    },
+    "UPGRADE": {
+      "label": "基幹改良",
+      "en": {
+        "label": "Major upgrade",
+        "description": "Core renovation that extends life or improves performance."
+      }
+    }
   }
 }

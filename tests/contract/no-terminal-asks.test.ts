@@ -11,13 +11,14 @@ import { ERRORS } from "../../src/shared/errors";
 import { MCP_INSTRUCTIONS } from "../../src/shared/instructions";
 import { CHAT_INSTALL_SECTION, skillMoyaiMarkdown } from "../../src/shared/skill-moyai";
 
-const ASKS = ["Ctrl+C", "ダブルクリック", "端末で", "start-moyai", ".cmd を", ".bat を"];
-const DENY = /頼まない|頼みません|要らない|要りません|させない|させません|もらわない/;
+// AI が読む文は英語（グローバル対応 1b、2026-11-16）。setup・uninstall の端末の字は日本語のままなので、両方の語で見る
+const ASKS = ["Ctrl+C", "ダブルクリック", "端末で", "start-moyai", ".cmd を", ".bat を", "double-click", "in a terminal", ".cmd", ".bat"];
+const DENY = /頼まない|頼みません|要らない|要りません|させない|させません|もらわない|Do not ask|do not ask|is needed\b.*\bno\b|no \"yes\" in a terminal is needed/;
 
-/** 字の一覧を文に分ける（。と改行で） */
+/** 字の一覧を文に分ける（。・英語の文の終わりと改行で） */
 const sentences = (text: string): string[] =>
   text
-    .split(/。|\n/)
+    .split(/。|\n|(?<=[a-z)"])\. (?=[A-Z])/)
     .map((s) => s.trim())
     .filter(Boolean);
 
@@ -48,13 +49,13 @@ describe("Claude に渡す字に、端末の操作の頼みが無い", () => {
 
   it("1 段目の Skill は、端末の操作を頼まないこと・setup は Claude が --yes で走らせること・Desktop の開き直しの 1 行・古い橋渡しは中継が替えることを書く", () => {
     const s = sentences(CHAT_INSTALL_SECTION);
-    const deny = s.find((x) => x.includes("Ctrl+C") && x.includes("ダブルクリック") && x.includes(".cmd や .bat") && x.includes("端末を開く"));
-    expect(deny).toMatch(/頼まない/);
-    expect(CHAT_INSTALL_SECTION).toContain("Claude が `--yes` を付けて走らせる");
-    expect(CHAT_INSTALL_SECTION).toContain("端末の「はい」は要らない");
-    expect(CHAT_INSTALL_SECTION).toContain("Desktop の開き直しが 1 回だけ要る");
-    expect(CHAT_INSTALL_SECTION).toContain("中継が前の版を止め、この版の橋渡しを起こす");
-    expect(CHAT_INSTALL_SECTION).toContain("作業画面を読み込み直す");
+    const deny = s.find((x) => x.includes("Ctrl+C") && x.includes("double-click") && x.includes(".cmd or .bat") && x.includes("open a terminal"));
+    expect(deny).toMatch(/^Do not ask/);
+    expect(CHAT_INSTALL_SECTION).toContain("Claude runs it with `--yes`");
+    expect(CHAT_INSTALL_SECTION).toContain("no \"yes\" in a terminal is needed");
+    expect(CHAT_INSTALL_SECTION).toContain("Desktop must be reopened once");
+    expect(CHAT_INSTALL_SECTION).toContain("the relay stops the previous version and starts this version's bridge");
+    expect(CHAT_INSTALL_SECTION).toContain("reload the work screen");
   });
 
   it("setup・uninstall の --yes の無いときの字は、チャットで見せて --yes で Claude が走らせると書き、端末が要るとは書かない", () => {
@@ -68,7 +69,7 @@ describe("Claude に渡す字に、端末の操作の頼みが無い", () => {
 
   it("ポートが使われているときの字は「ほかの道具が使っています」の形で、Ctrl+C・端末を頼まない", () => {
     const t = ERRORS.bridge_port_taken.text;
-    expect(t).toContain("ポート {port} をほかの道具が使っています");
-    for (const w of ["Ctrl+C", "端末", "コマンド", "ダブルクリック"]) expect(t).not.toContain(w);
+    expect(t).toContain("Another tool is using port {port}");
+    for (const w of ["Ctrl+C", "terminal", "command", "double-click"]) expect(t).not.toContain(w);
   });
 });

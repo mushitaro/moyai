@@ -101,7 +101,7 @@ describe("人が許した画像だけを、MCP の画像の中身で 1 回渡す
     const s = await setup(() => ({ ok: false, code: "photo_not_allowed" }));
     const r: any = await s.client.callTool({ name: "photo_transcribe", arguments: { mode: "receive" } });
     expectError(r, "photo_not_allowed");
-    expect(r.content[0].text).toContain("許していません");
+    expect(r.content[0].text).toContain("has not yet allowed");
   });
 
   it("人だけの経路で許したあとは、JSON の横に画像（type: image・base64・mimeType）を添えて渡す。許しは 1 回で使い終わる", async () => {

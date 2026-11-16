@@ -1,7 +1,7 @@
 // 様式に写す（docs/screens.md 3.5、P2 の 7、絵は Export.dc.html）：利用者が落とした様式（Excel）の見出しの行を読み、列ごとに写すものを決めて、
 // 確定した版の作業を 1 行ずつ写す。純粋な関数（Excel を読み書きするのは画面の側）。
 // - 列の役目：項目（機器の名前）・作業・周期（年）・年度の印（○ 計画・● 実施・◎ 両方）・次回・未定（何も写さない。人が見て決める）。
-// - 見出しの言葉から役目を決める（「設備名」「作業区分」「周期（年）」「R8」「2026 年度」など）。決まらない列は未定にする（推測で埋めない）。
+// - 見出しの言葉から役目を決める（「設備名」「作業区分」「周期（年）」「R8」「2026 年度」、英語の「Equipment」「Work」「Cycle (years)」「FY2026」など）。決まらない列は未定にする（推測で埋めない）。
 // - 周期は、行の作業のきっかけ（取り込みが周期の列から置いたもの）の暦の枝の年数。行に合わさった作業のきっかけが違えば空。
 //   どの作業にもきっかけが無いときだけ、印の年度の差でいちばん多いもの（印が 2 つに満たなければ空）。台帳の新-11
 // - 次回は、画面と Excel の標準の様式と同じ字（due-view.ts）。見出しの言葉からは決めず、人が「← 次回」を当てた列にだけ写す（docs/screens.md 3.5）
@@ -30,6 +30,14 @@ export function fiscalYearOfHeader(text: string): number | null {
   return null;
 }
 
+/** 英語の見出しの語（小文字）。周期・作業・項目の順に見る */
+const EN_HEADER = {
+  cycle: ["cycle", "interval", "frequency", "period"],
+  work: ["work", "task", "activity", "maintenance", "category", "action", "job"],
+  item: ["equipment", "item", "asset", "name", "device", "system", "component", "unit"],
+};
+const enWords = (s: string) => s.normalize("NFKC").toLowerCase().split(/[^a-z]+/).filter(Boolean);
+
 /** 見出しの言葉から、列の役目を決める */
 export function roleOfHeader(text: string): ColumnRole {
   const t = z2h(text);
@@ -39,6 +47,11 @@ export function roleOfHeader(text: string): ColumnRole {
   if (/周期|間隔|サイクル/.test(t)) return { kind: "cycle" };
   if (/作業|区分|内容|保全/.test(t)) return { kind: "work" };
   if (/設備|機器|項目|名称|装置/.test(t)) return { kind: "item" };
+  // 英語の見出し（グローバル対応の段 1b）：語ごとに比べる（「Itemized」を項目にしない）。日本語と同じ順（周期 → 作業 → 項目）
+  const en = enWords(text);
+  if (en.some((w) => EN_HEADER.cycle.includes(w))) return { kind: "cycle" };
+  if (en.some((w) => EN_HEADER.work.includes(w))) return { kind: "work" };
+  if (en.some((w) => EN_HEADER.item.includes(w))) return { kind: "item" };
   return { kind: "none" };
 }
 

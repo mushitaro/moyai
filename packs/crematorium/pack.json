@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "crematorium",
   "name": "火葬場（火葬炉）",
+  "en": {
+    "name": "Crematoria (cremation furnaces)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "A",
   "content": "empty",

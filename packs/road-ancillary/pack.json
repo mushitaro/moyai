@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "road-ancillary",
   "name": "道路附属物（照明・標識）",
+  "en": {
+    "name": "Road ancillary structures (lighting, signs)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "D",
   "content": "empty",

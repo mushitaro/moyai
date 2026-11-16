@@ -1,0 +1,285 @@
+{
+ "schema": "moyai.answer.file/0",
+ "file": "【架空】Hollinmere ERF - Work Order History.csv",
+ "plan": true,
+ "records": [
+  {
+   "r": 5,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-22-0412",
+    "equipment": "Refuse Crane 1",
+    "line": "Common",
+    "description": "Replace hoist ropes (both drums) and overhaul grab hydraulic unit",
+    "contractor": "Marrowby Lifting Ltd",
+    "crew": 4,
+    "start": "2022-06-06",
+    "end": "2022-06-09",
+    "manDays": 16,
+    "manDaysText": "128",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 6,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-22-0977",
+    "equipment": "Stoker Grate L1",
+    "line": "1",
+    "description": "Replace worn grate bars - rows 3-7 (approx 40%)",
+    "contractor": "Brackwell Thermal Services Ltd",
+    "crew": 6,
+    "start": "2022-10-03",
+    "end": "2022-10-21",
+    "manDays": 90,
+    "manDaysText": "720",
+    "comments": "Autumn outage L1",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 7,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-22-1030",
+    "equipment": "Boiler 2 - Superheater",
+    "line": "2",
+    "description": "SH2 tube bank replacement - phase 1 (cut out, new tube supply)",
+    "contractor": "Brackwell Thermal Services Ltd",
+    "crew": 8,
+    "start": "2022-11-07",
+    "end": "2022-11-18",
+    "manDays": 96,
+    "manDaysText": "768",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 8,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-22-1031",
+    "equipment": "Boiler 2 - Superheater",
+    "line": "2",
+    "description": "SH2 tube bank replacement - phase 2 (welding, NDT, hydrotest)",
+    "contractor": "Brackwell Thermal Services Ltd",
+    "crew": 8,
+    "start": "2022-11-21",
+    "end": "2022-12-02",
+    "manDays": 104,
+    "manDaysText": "832",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 9,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-23-0388",
+    "equipment": "Refuse Crane #2",
+    "line": "Common",
+    "description": "Hoist rope renewal, grab cylinder seals replaced",
+    "contractor": "Marrowby Lifting Ltd",
+    "crew": 3,
+    "start": "2023-05-15",
+    "end": "2023-05-17",
+    "manDays": 9,
+    "manDaysText": "3 men x 3 days",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 10,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-23-0455",
+    "equipment": "BFW Pump A",
+    "line": "Common",
+    "description": "Full strip-down overhaul, new mechanical seal & bearings",
+    "contractor": "Kestrow Pump Engineering",
+    "crew": 3,
+    "start": "2023-06-12",
+    "end": "2023-06-16",
+    "manDays": 15,
+    "manDaysText": "120",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 11,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-23-0861",
+    "equipment": "Grate Line 2",
+    "line": "2",
+    "description": "Grate bar replacement approx 35%",
+    "contractor": "Brackwell Thermal Services Ltd",
+    "crew": 6,
+    "start": "2023-10-02",
+    "end": "2023-10-20",
+    "manDays": 85.5,
+    "manDaysText": "684",
+    "comments": "Autumn outage L2",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 12,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-23-0874",
+    "equipment": "ID Fan No.1",
+    "line": "1",
+    "description": "Impeller rebalanced, both bearings replaced, coupling re-aligned",
+    "contractor": "Corvane Fans & Blowers",
+    "crew": 4,
+    "start": "2023-10-09",
+    "end": "2023-10-13",
+    "manDays": 20,
+    "manDaysText": "160",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 13,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-23-0902",
+    "equipment": "Plant (all)",
+    "line": "All",
+    "description": "3-yearly detailed functional inspection by accredited body",
+    "contractor": "Ardleigh Inspection Services",
+    "crew": 3,
+    "start": "2023-10-23",
+    "end": "2023-10-27",
+    "manDays": 15,
+    "manDaysText": "120",
+    "comments": "Report ref. HV-PFI-2023",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 14,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-23-1544",
+    "equipment": "ID Fan 1",
+    "line": "1",
+    "description": "High vibration trip - replace DE bearing (breakdown)",
+    "contractor": "In-house (Maint. Team B)",
+    "crew": 3,
+    "date": "2024-01-22",
+    "manDays": 3,
+    "manDaysText": "24",
+    "comments": "Line 1 off 14 h",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 15,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-24-0610",
+    "equipment": "Crane 1",
+    "line": "Common",
+    "description": "Broken wire strand found on hoist rope - emergency rope change\n(rope taken from site spares)",
+    "contractor": "In-house (Maint. Team B)",
+    "crew": 4,
+    "start": "2024-08-14",
+    "end": "2024-08-15",
+    "manDays": 6,
+    "manDaysText": "approx. 6 man-days",
+    "comments": "approx. 6 man-days",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 17,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-25-0031",
+    "equipment": "BFP B",
+    "line": "Common",
+    "description": "Overhaul - rotating element exchanged with refurbished spare",
+    "contractor": "Kestrow Pump Engineering",
+    "crew": 3,
+    "start": "2025-04-08",
+    "end": "2025-04-17",
+    "manDays": 22,
+    "manDaysText": "176",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 18,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-25-0402",
+    "equipment": "Crane No1",
+    "line": "Common",
+    "description": "Hoist rope renewal & grab overhaul",
+    "contractor": "Marrowby Lifting Ltd",
+    "crew": 4,
+    "start": "2025-05-19",
+    "end": "2025-05-22",
+    "manDays": 16,
+    "manDaysText": "128",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 19,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-25-0915",
+    "equipment": "Stoker Grate L1",
+    "line": "1",
+    "description": "Grate bars replaced rows 1-6",
+    "contractor": "Brackwell Thermal Services Ltd",
+    "crew": 6,
+    "start": "2025-10-06",
+    "end": "2025-10-24",
+    "manDays": 93,
+    "manDaysText": "744",
+    "comments": "Autumn outage L1",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 20,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-25-0921",
+    "equipment": "Bag House 1",
+    "line": "1",
+    "description": "Full set of filter bags & cages replaced (1,344 bags)",
+    "contractor": "Tensfield Filtration",
+    "crew": 10,
+    "start": "2025-10-06",
+    "end": "2025-10-17",
+    "manDays": 120,
+    "manDaysText": "960",
+    "row_type": "work"
+   }
+  },
+  {
+   "r": 21,
+   "kind": "item",
+   "fields": {
+    "wo": "WO-26-0377",
+    "equipment": "Stoker Line 1 - hydraulics",
+    "line": "1",
+    "description": "Hydraulic power unit overhaul, 4 drive cylinders resealed",
+    "contractor": "Brackwell Thermal Services Ltd",
+    "crew": 4,
+    "start": "2026-05-11",
+    "end": "2026-05-22",
+    "manDays": 48,
+    "manDaysText": "384",
+    "comments": "Spring outage L1",
+    "row_type": "work"
+   }
+  }
+ ]
+}

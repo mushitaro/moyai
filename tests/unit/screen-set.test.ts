@@ -111,9 +111,9 @@ describe("ツールの定義", () => {
 
   it("説明に、想定のプロンプトとその引数があり、人だけの操作はしないと書いてある", () => {
     const d = TOOLS.screen_set.description;
-    for (const s of ["「ライトモードにして」", "「ファイルの保管場所を変更して」", "「星取表画面に切り替えて」", "「機器階層を入れ替えて表示して」", "並び順を入れ替えて」", "「計画の最大年度は 2040 年までにして」"]) expect(d).toContain(s);
+    for (const s of ["\"Use light mode\"", "\"Change where files are stored\"", "\"Switch to the star chart\"", "\"Swap the equipment levels\"", "\"Swap the order of A and B\"", "\"Make the plan run to 2040\""]) expect(d).toContain(s);
     for (const s of ["theme: light", "go: hoshitori.chart", "storageRoot", "levelOrder", "rowOrder", "lastFiscalYear: 2040"]) expect(d).toContain(s);
-    expect(d).toContain("確定・署名・送る・承認・昇格は、このツールではしない");
+    expect(d).toContain("This tool never confirms, signs, sends, approves or promotes");
   });
 
   it("引数は 1 つ以上。知らない引数・形の外れた値は断る", () => {
@@ -169,7 +169,7 @@ describe("6 つの引数がそれぞれ作業画面の状態を変える", () =>
     const r = call({ storageRoot: "/tmp/架空の保存先" });
     expect(r.changed).toEqual([]);
     expect(r.refused).toEqual([expect.objectContaining({ item: "storageRoot", reason: "root_human_save" })]);
-    expect(r.refused[0].text).toContain("「保存」");
+    expect(r.refused[0].text).toContain("ask the user to press Save");
     expect(fakeLocation.hash).toBe("#/settings");
     expect(r.current.go).toBe("settings");
     expect(takeRootOffer()).toBe("/tmp/架空の保存先");

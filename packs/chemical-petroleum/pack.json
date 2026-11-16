@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "chemical-petroleum",
   "name": "化学・石油精製・石油化学（高圧ガス）",
+  "en": {
+    "name": "Chemical, oil refining and petrochemical (high-pressure gas)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "G",
   "content": "empty",

@@ -2,6 +2,10 @@
   "schema": "moyai.pack/0",
   "id": "railway",
   "name": "鉄道（車両・軌道・電気設備）",
+  "en": {
+    "name": "Railways (rolling stock, track, electrical equipment)",
+    "description": "Map row: name and candidate sources only; no content yet."
+  },
   "version": 1,
   "group": "H",
   "content": "empty",
