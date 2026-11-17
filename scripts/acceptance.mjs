@@ -207,9 +207,10 @@ export function readReports(dir, playwright = null) {
 }
 
 /** 対応表の command を走らせて、終了コードを集める */
-export function runCommands(map) {
+export function runCommands(map, platform = process.platform) {
   const out = {};
-  for (const r of map.rows)
+  // 違う OS を名指しした行の道具は走らせない（どうせ数えない）
+  for (const r of map.rows.filter((r) => !r.platform || r.platform === platform))
     for (const s of r.sources ?? [])
       if (s.runner === "command" && out[s.file] === undefined) {
         const x = spawnSync(process.execPath, [s.file], { cwd: REPO, encoding: "utf8" });
