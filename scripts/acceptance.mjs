@@ -100,8 +100,10 @@ function sameFile(source, reported, runner) {
 /**
  * 名前ごとに結果を決める。
  * reports：{ vitest, node, playwright } それぞれ試験の一覧か null（報告が無い）。commands：{ <道>: 終了コード } か無し。
+ * platform：この実行の OS（process.platform）。行に platform があり、違う OS の実行なら、試験が通っていても「測っていない」
+ * （例：windows の行を Linux の実行で「通った」と書かない）。
  */
-export function judge(names, map, reports, commands = {}) {
+export function judge(names, map, reports, commands = {}, platform = process.platform) {
   const byName = new Map(map.rows.map((r) => [r.name, r]));
   const rows = [];
   for (const name of names) {
@@ -109,6 +111,11 @@ export function judge(names, map, reports, commands = {}) {
     const sources = row?.sources ?? [];
     if (sources.length === 0) {
       rows.push({ name, status: STATUS.none, passed: 0, failed: 0, skipped: 0, sources: [], scope: row?.scope ?? (row ? null : "対応表に名前が無い") });
+      continue;
+    }
+    if (row.platform && row.platform !== platform) {
+      const mark = `この実行の OS（${platform}）では数えない（${row.platform} で測る）`;
+      rows.push({ name, status: STATUS.unmeasured, passed: 0, failed: 0, skipped: 0, sources: sources.map((s) => ({ ...s, mark })), scope: row.scope ?? null });
       continue;
     }
     let passed = 0;
@@ -166,7 +173,7 @@ export function render(rows, meta) {
   L.push("");
   L.push("結果は 5 つです：通った（対応する試験が §5.1 の合格の条件まで確かめ、すべて通った）／一部（範囲の注を見る。対応する試験は通ったが、合格の条件の一部しか確かめていない）／落ちた（1 つでも落ちた）／試験が無い（対応する試験を作っていない）／測っていない（試験はあるが、この実行で走っていない）。");
   L.push("");
-  L.push(`- 作った時刻：${meta.date} ${meta.time} JST・コミット \`${meta.commit}\`${meta.dirty ? "（コミットしていない変更あり）" : ""}`);
+  L.push(`- 作った時刻：${meta.date} ${meta.time} JST・コミット \`${meta.commit}\`${meta.dirty ? "（コミットしていない変更あり）" : ""}${meta.platform ? `・OS ${meta.platform}` : ""}`);
   L.push(`- 報告：node:test ${meta.counts.node ?? "無し"}・vitest ${meta.counts.vitest ?? "無し"}・Playwright ${meta.counts.playwright ?? "渡していない（測っていない）"}`);
   L.push(`- ${tally(rows)}（全 ${rows.length}）`);
   L.push("");
@@ -220,11 +227,11 @@ function jst(d) {
 export function writeAcceptance({ reports, out = OUT, now = new Date() }) {
   const map = loadMap(readFileSync(join(REPO, MAP), "utf8"));
   const names = planNames(readFileSync(join(REPO, "docs", "plan.md"), "utf8"));
-  const rows = judge(names, map, reports, runCommands(map));
+  const rows = judge(names, map, reports, runCommands(map), process.platform);
   const commit = execFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: REPO, encoding: "utf8" }).trim();
   const dirty = execFileSync("git", ["status", "--porcelain", "--", "src", "tests", "packs", "samples", "scripts", "demo-ring"], { cwd: REPO, encoding: "utf8" }).trim() !== "";
   const counts = { node: reports.node?.length ?? null, vitest: reports.vitest?.length ?? null, playwright: reports.playwright?.length ?? null };
-  writeFileSync(resolve(REPO, out), render(rows, { ...jst(now), commit, dirty, counts }));
+  writeFileSync(resolve(REPO, out), render(rows, { ...jst(now), commit, dirty, counts, platform: process.platform }));
   return rows;
 }
 

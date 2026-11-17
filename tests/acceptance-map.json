@@ -152,8 +152,14 @@
     },
     {
       "name": "windows",
-      "sources": [],
-      "scope": "CI（.github/workflows/ci.yml）は windows-latest でも試験の全体を走らせるが、§5.1 の起動・ツール 1 つ・確定・書き出し・日本語の道・OneDrive の Documents・使われているポートを通す試験は無い"
+      "platform": "win32",
+      "sources": [
+        { "runner": "playwright", "file": "tests/e2e/slice.spec.ts" },
+        { "runner": "playwright", "file": "tests/e2e/template.spec.ts" },
+        { "runner": "vitest", "file": "tests/unit/places.test.ts" },
+        { "runner": "vitest", "file": "tests/unit/human-only.test.ts", "title": "使われているポート" }
+      ],
+      "scope": "Windows の実行（win32）でだけ数える。ほかの OS の実行では測っていない。起動・ツール・確定は slice、書き出しは template、OneDrive に移された日本語の Documents は places（PowerShell の出力を差し替える）、使われているポートは human-only。日本語のフォルダの道で e2e は走らせていない。「毎日通る」は 1 回の実行では言えない。CI の windows-latest は同じ試験を毎回走らせるが、この表には渡していない"
     },
     {
       "name": "eval",
