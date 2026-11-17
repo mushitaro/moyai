@@ -50,6 +50,7 @@ export interface FakeConnect {
  * failAfter：試験で、その件数を書いたあとの書き込みを失敗させる（カナリアの確かめの試験）
  */
 export function createFakeConnect(o: { licensedHosts?: readonly string[]; license?: LicenseCheck; failAfter?: number } = {}): FakeConnect {
+  const targets: ConnectTarget[] = [...FAKE_TARGETS];
   const data = new Map(FAKE_TARGETS.map((t) => [t.id, fakeSeed()]));
   const writes = new Map<string, number>();
   const hosts = new Set(o.licensedHosts ?? []);
@@ -79,13 +80,44 @@ export function createFakeConnect(o: { licensedHosts?: readonly string[]; licens
   return {
     backend: {
       fake: true,
-      store: { list: () => [...FAKE_TARGETS], open: (id) => (FAKE_TARGETS.find((t) => t.id === id) ? { target: FAKE_TARGETS.find((t) => t.id === id)!, secret } : null) },
+      store: {
+        list: () => [...targets],
+        open: (id) => {
+          const t = targets.find((x) => x.id === id);
+          return t ? { target: t, secret } : null;
+        },
+        // 人が設定で足す（試験の台）：どこにも通信しない。キーは持たない（形だけ確かめて捨てる）
+        add: async (input) => {
+          const label = input.label.trim();
+          if (!label || label.length > 80) return { ok: false, problem: "name" };
+          const host = httpsOrigin(input.url);
+          if (!host) return { ok: false, problem: "url" };
+          if (!/^[\x21-\x7e]{1,4096}$/.test(input.apiKey)) return { ok: false, problem: "key" };
+          if (targets.length >= 50) return { ok: false, problem: "tooMany" };
+          const t: ConnectTarget = { id: `fake-added-${targets.length + 1}`, label: label.includes("【架空】") ? label : `【架空】${label}`, kind: "fake", host, env: input.env };
+          targets.push(t);
+          data.set(t.id, fakeSeed());
+          return { ok: true, target: t };
+        },
+      },
       connectors: { fake: connector },
       license,
     },
     records: (id) => clone(data.get(id) ?? { assets: [], plans: [], results: [] }),
     writes: (id) => writes.get(id) ?? 0,
   };
+}
+
+/** https://host[:port] だけを受け、host を返す（パス・問い合わせ・利用者名つきは受けない） */
+function httpsOrigin(raw: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(raw.trim());
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "https:" || u.username || u.password || u.search || u.hash || (u.pathname !== "/" && u.pathname !== "")) return null;
+  return u.host;
 }
 
 /** 1 件を書く：資産の道をたどって（無い節は足して）、同じ作業の保全計画の年度を置き換えるか足す */

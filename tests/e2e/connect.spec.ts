@@ -150,3 +150,44 @@ test("偽の連携で、読む → 星取表 → 確定・署名 → 突合と�
     await c.close();
   }
 });
+
+test("人：設定でつなぎ先を足す（テストか本番かを必ず選ぶ。API キーは画面に二度と出ない。絵は Wire Frame の ConnectAdd）", async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const tag = info.project.name;
+  const KEY = "e2e-key-never-shown-0123456789";
+  await page.goto(`${bridge.base}/#/settings`);
+  await expect(page.getByTestId("connect-choice")).toBeVisible();
+  // この試験だけを走らせたときも、連携をオンにしてから
+  if ((await page.getByTestId("connect-targets").count()) === 0) await page.getByTestId("connect-choice").getByText("オン").click();
+  await expect(page.getByTestId("connect-targets")).toBeVisible();
+  const before = await page.getByTestId("connect-target-row").count();
+  await page.getByTestId("connect-add-open").click();
+  // 主ボタンは「足す」の 1 つ。欄が埋まるまで押せず、左に理由の 1 行
+  await expect(page.getByTestId("connect-add-submit")).toBeDisabled();
+  await page.getByTestId("connect-add-name").fill("保全システム（本番 2）");
+  await page.getByTestId("connect-add-url").fill("https://maximo2.example");
+  await page.getByTestId("connect-add-key").fill(KEY);
+  // テストか本番かは既定を置かない：選ぶまで押せない
+  await expect(page.getByTestId("connect-add-stop")).toHaveText("理由：テストか本番かを選んでください");
+  await expect(page.getByTestId("connect-add-submit")).toBeDisabled();
+  await page.getByTestId("connect-add-env").getByText("本番").click();
+  await expect(page.getByTestId("connect-add-stop")).toHaveCount(0);
+  await page.screenshot({ path: shot(`connect-add-filled-${tag}`), fullPage: true });
+  await page.getByTestId("connect-add-submit").click();
+  await expect(page.getByTestId("connect-target-row")).toHaveCount(before + 1);
+  await expect(page.locator('[data-testid="connect-target-row"]').last()).toContainText("maximo2.example");
+  await expect(page.getByTestId("connect-add")).toHaveCount(0);
+  // キーは画面のどこにも残らない（欄を閉じ、一覧にも出ない）
+  expect(await page.content()).not.toContain(KEY);
+  // URL の形が違えば、理由を出して足さない
+  await page.getByTestId("connect-add-open").click();
+  await page.getByTestId("connect-add-name").fill("x");
+  await page.getByTestId("connect-add-url").fill("https://maximo3.example/maximo");
+  await page.getByTestId("connect-add-env").getByText("テスト").click();
+  await page.getByTestId("connect-add-key").fill(KEY);
+  await page.getByTestId("connect-add-submit").click();
+  await expect(page.getByTestId("connect-add-stop")).toContainText("https://");
+  await expect(page.getByTestId("connect-add-key")).toHaveValue("");
+  await expect(page.getByTestId("connect-target-row")).toHaveCount(before + 1);
+  await page.screenshot({ path: shot(`connect-add-${tag}`), fullPage: true });
+});

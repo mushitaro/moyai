@@ -84,6 +84,8 @@ export const HUMAN_ACTIONS = [
   "reading_feedback_send",
   // 業務システムとの連携（運営者の判断 2026-11-16）：確定・署名した版の保全計画を、つなぎ先に送る。本番は鍵を、送る直前に橋渡しが確かめる
   "connect_send",
+  // 業務システムとの連携：設定でつなぎ先を足す（名前・URL・テストか本番・API キー。キーは人の入力だけで、保存したら返さない）
+  "connect_add",
   // 写真を AI クライアントに渡す許し（§2.3・§2.12。1 枚ごと、その画像のハッシュに結ぶ）
   "photo_allow",
 ] as const;
@@ -305,6 +307,12 @@ export const ROUTES = {
     "connect_send",
     16 * 1024,
     "業務システムに送る：保管先の確定・署名した最新の版から書き込みの案を作り直し、人が見た差分（ハッシュ）と同じときだけ、本番ならその host の有効な鍵を確かめてから、1 件目を送って読み直し、届いたのを確かめて残りを送る（通信の例外。行き先は人が設定したつなぎ先の host だけ）",
+  ),
+  connectAdd: human(
+    "/human/connect-add",
+    "connect_add",
+    16 * 1024,
+    "業務システムのつなぎ先を足す：名前・URL（https://host）・テストか本番（人が必ず選ぶ）・API キーを、部品の接続の保存（~/.config/mxstage/。キーは OS の守りで暗号化）に置く。キーは返さない・記録しない",
   ),
   peersCompare: human("/human/peers-compare", "peers_compare", 64 * 1024, "受け手：立場ごとに、台帳の clone と自分の共有フォルダの ✓ の共有ファイルから、類似施設の行と統計の行を作る"),
   // 写真（処理は src/bridge/tools.ts の ToolRelay。許しはタブの回のメモリだけに置き、AI に渡すときに画像のハッシュと照らす）

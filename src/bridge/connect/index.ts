@@ -10,7 +10,7 @@ import { connectFileName, countsOf, planLinesOfPlan, planLinesOfRecords, planWri
 import type { Plan } from "../../shared/plan";
 import { createFakeConnect } from "./fake";
 import { loadPackageBackend } from "./package";
-import type { ConnectBackend, LicenseAnswer } from "./types";
+import type { ConnectAddInput, ConnectBackend, LicenseAnswer } from "./types";
 
 export type { ConnectBackend } from "./types";
 
@@ -45,6 +45,8 @@ export interface ConnectServiceEnv {
 /** 偽の連携を出す環境変数（試験の台だけ）。MOYAI_CONNECT_FAKE_LICENSE は、本番への書き込みの試験用の鍵がある host（, で区切る） */
 export const CONNECT_FAKE_ENV = "MOYAI_CONNECT_FAKE";
 export const CONNECT_FAKE_LICENSE_ENV = "MOYAI_CONNECT_FAKE_LICENSE";
+/** "off" なら部品を読まない（試験が、利用者の ~/.config/mxstage を読まないように。vitest と e2e が置く。受け口の MOYAI_LEDGER_INTAKE_URL=off と同じ形） */
+export const CONNECT_PACKAGE_ENV = "MOYAI_CONNECT_PACKAGE";
 
 export class ConnectService {
   private loaded: Promise<ConnectBackend | null> | null = null;
@@ -60,6 +62,7 @@ export class ConnectService {
         const hosts = (env[CONNECT_FAKE_LICENSE_ENV] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
         return createFakeConnect({ licensedHosts: hosts }).backend;
       }
+      if (env[CONNECT_PACKAGE_ENV] === "off") return null;
       // 接続とライセンスの置き場所は部品の既定（~/.config/mxstage。MX Stage と共有）。MOYAI の状態フォルダは使わない
       return loadPackageBackend({ env }).catch(() => null);
     })();
@@ -127,6 +130,16 @@ export class ConnectService {
     const changes = pc.changes;
     const hash = sha256Hex(writePlanText(o.target.id, latest.plan.planId, latest.version, changes));
     return { ok: true, target: o.target, version: latest.version, rows: view.rows, changes, counts: view.counts, hash, write: await this.gate(o.b, o.target) };
+  }
+
+  /** つなぎ先を足す（人だけの経路 connect_add からだけ呼ぶ）。API キーは裏に渡して捨てる（返さない・ログに出さない） */
+  async add(input: ConnectAddInput): Promise<{ ok: true; target: ConnectTarget } | No> {
+    if (!this.enabled()) return no("connectOff");
+    const b = await this.backend();
+    if (!b) return no("connectUnavailable");
+    if (!b.store.add) return no("connectAdd.unsupported");
+    const r = await b.store.add(input).catch(() => ({ ok: false as const, problem: "unavailable" as const }));
+    return r.ok ? { ok: true, target: r.target } : no(`connectAdd.${r.problem}`);
   }
 
   /**

@@ -229,6 +229,26 @@ describe.skipIf(!ready)("本物の部品の道（偽の Maximo）", () => {
     expect(w.fakes[TEST_BASE]!.writeCount()).toBe(0);
   });
 
+  it("設定で足す：部品の ConnectionStore に保存し、キーは暗号化して置く（答え・保存のファイルに平文で出ない）。部品の problem を理由の名前に写す", async () => {
+    const dir = temp();
+    const sd = temp();
+    writeSettings(sd, { v: 1, root: null, ledger: null, name: null, connect: true });
+    const svc = new ConnectService({ stateDir: sd, now: () => NOW, backend: await loadPackageBackend({ pkg, dir }) });
+    const key = "added-key-never-shown-9876543210";
+    const r = await svc.add({ label: "【架空】Maximo（本番 2）", url: "https://maximo2.example", env: "production", apiKey: key });
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.target).toMatchObject({ kind: "maximo", host: "maximo2.example", env: "production" });
+    expect(JSON.stringify(r)).not.toContain(key);
+    expect((await svc.state()).targets.map((t) => t.id)).toEqual([r.target.id]);
+    const { readFileSync } = await import("node:fs");
+    expect(readFileSync(join(dir, "connections.json"), "utf8")).not.toContain(key);
+    // 同じ置き場所を部品の ConnectionStore で開くと、同じキーが戻る（MX Stage と共有できる形）
+    expect(await new nodeMod.ConnectionStore({ dir }).resolve(r.target.id)).toMatchObject({ ok: true, apiKey: key, origin: "https://maximo2.example" });
+    expect(await svc.add({ label: "x", url: "https://maximo2.example/maximo", env: "test", apiKey: key })).toEqual({ ok: false, reason: "connectAdd.url" });
+    expect(await svc.add({ label: "x", url: "https://maximo3.example", env: "test", apiKey: "with space" })).toEqual({ ok: false, reason: "connectAdd.key" });
+    expect(await svc.add({ label: "   ", url: "https://maximo3.example", env: "test", apiKey: key })).toEqual({ ok: false, reason: "connectAdd.name" });
+  });
+
   it("API キーは Maximo への要求のヘッダだけに載り、URL には載らない", async () => {
     const w = await world();
     await w.svc.read(w.testId);

@@ -8,6 +8,7 @@ import { defineConfig } from "@playwright/test";
 process.env.MOYAI_NO_AUTO_OPEN = "1";
 // 試験の橋渡しは本物の受け口（src/bridge/ledger-intake.ts の LEDGER_INTAKE_URL）に送らない。受け口を使う試験は、試験の台の道を渡して上書きする
 process.env.MOYAI_LEDGER_INTAKE_URL ??= "off";
+process.env.MOYAI_CONNECT_PACKAGE ??= "off";
 
 export default defineConfig({
   testDir: "tests/e2e",
