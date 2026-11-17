@@ -60,7 +60,8 @@ export class ConnectService {
         const hosts = (env[CONNECT_FAKE_LICENSE_ENV] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
         return createFakeConnect({ licensedHosts: hosts }).backend;
       }
-      return loadPackageBackend(this.e.stateDir).catch(() => null);
+      // 接続とライセンスの置き場所は部品の既定（~/.config/mxstage。MX Stage と共有）。MOYAI の状態フォルダは使わない
+      return loadPackageBackend({ env }).catch(() => null);
     })();
     return this.loaded;
   }
@@ -120,8 +121,10 @@ export class ConnectService {
     if (!current) return no("connectReadFailed");
     const desired = planLinesOfPlan(latest.plan);
     const view = planWrite(desired, planLinesOfRecords(current));
-    // 書く中身は部品の planCommit の答え（偽の連携と芯は planWrite と同じ）
-    const changes = o.c.planCommit(o.target, current, desired).changes;
+    // 書く中身は部品の planCommit の答え（偽の連携と芯は planWrite と同じ）。書けない変更が 1 つでもあれば、差分ごと止めて人に返す
+    const pc = o.c.planCommit(o.target, current, desired);
+    if ((pc.unwritable ?? 0) > 0) return no("connectUnwritable");
+    const changes = pc.changes;
     const hash = sha256Hex(writePlanText(o.target.id, latest.plan.planId, latest.version, changes));
     return { ok: true, target: o.target, version: latest.version, rows: view.rows, changes, counts: view.counts, hash, write: await this.gate(o.b, o.target) };
   }
@@ -139,6 +142,11 @@ export class ConnectService {
     if (p.changes.length === 0) return no("connectNothing");
     const o = await this.open(targetId);
     if (!o.ok) return o;
+    // 本番なら、書く直前にもう一度その host の鍵を確かめる（部品の LicenseStore.authorize。部品の /mx の writeGuard には頼らない）
+    if (o.target.env === "production") {
+      const a = await o.b.license.authorize(o.target.host).catch((): LicenseAnswer => ({ ok: false, reason: "noKey" }));
+      if (!a.ok) return no(`connectLicense.${a.reason}`);
+    }
     const [canary, ...rest] = p.changes;
     const first = await o.c.executeCommit(o.target, o.secret, [canary!]).catch(() => null);
     if (!first || first.applied !== 1) return { ...no("connectWriteFailed"), applied: 0 };

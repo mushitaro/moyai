@@ -22,8 +22,11 @@ export interface LicenseCheck {
 export interface EamConnector {
   /** 資産の木・保全計画・作業の実績を読む */
   loadRecords(target: ConnectTarget, secret: ConnectSecret): Promise<EamRecords>;
-  /** 書き込みの案（足す・変える）を作る。芯の planWrite と同じ答えを返す（部品の planCommit が入ったら、ここで差し替える） */
-  planCommit(target: ConnectTarget, current: EamRecords, desired: readonly PlanLine[]): { changes: EamWriteChange[] };
+  /**
+   * 書き込みの案（足す・変える）を作る。changes は芯の planWrite と同じ答え。unwritable は、そのつなぎ先には書けない変更の数
+   * （資産の木に無い資産など。1 つでもあれば、橋渡しは差分ごと止めて人に返す。黙って一部だけを送らない）
+   */
+  planCommit(target: ConnectTarget, current: EamRecords, desired: readonly PlanLine[]): { changes: EamWriteChange[]; unwritable?: number };
   /** 書き込む。applied は書いた件数 */
   executeCommit(target: ConnectTarget, secret: ConnectSecret, changes: readonly EamWriteChange[]): Promise<{ applied: number }>;
 }

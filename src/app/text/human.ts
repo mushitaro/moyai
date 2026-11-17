@@ -24,6 +24,7 @@ export const HUMAN_TEXT = defineMessages(EN_HUMAN_TEXT, {
     connectStale: "差分を見たあとに、つなぎ先か版が変わりました。差分を読み直してください。",
     connectNothing: "書き込む差分がありません。",
     connectWriteFailed: "つなぎ先に書けませんでした。",
+    connectUnwritable: "つなぎ先に書けない差分があります（つなぎ先の資産の木に無い資産・つなぎ先の計画を消さないと合わない年度など）。つなぎ先を直してから、差分を読み直してください。送っていません。",
     connectCanaryFailed: "1 件目を送って読み直したら、届いていませんでした。残りは送っていません。",
     "connectLicense.noKey": "本番への書き込みには、この host の鍵が要る",
     "connectLicense.expired": "この host の鍵の期限が切れている",

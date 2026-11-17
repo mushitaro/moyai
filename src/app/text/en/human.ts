@@ -21,6 +21,7 @@ export const EN_HUMAN_TEXT = {
     connectStale: "The target or the version changed after you viewed the diff. Read the diff again.",
     connectNothing: "Nothing to write.",
     connectWriteFailed: "Could not write to the target.",
+    connectUnwritable: "Some changes cannot be written to this target (an asset that is not in its asset tree, or years that only match if its plans are deleted). Fix the target, then read the differences again. Nothing was sent.",
     connectCanaryFailed: "After sending the first item and reading it back, it was not there. The rest was not sent.",
     "connectLicense.noKey": "Writing to production needs a key for this host",
     "connectLicense.expired": "The key for this host has expired",
