@@ -21,6 +21,7 @@ import { ringLabels } from "../state/share-route";
 import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { loadConnect, type ConnectTargetView } from "../state/connect";
+import { ConnectAdd } from "../components/ConnectAdd";
 import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.settings;
@@ -513,6 +514,16 @@ export function Settings() {
                       ))}
                     </Table.Tbody>
                   </Table>
+                )}
+                {/* つなぎ先を足す（Wire Frame の ConnectAdd）：人だけの経路 connect_add。API キーは人の入力だけ */}
+                {s.connect.enabled && (
+                  <ConnectAdd
+                    client={client}
+                    onAdded={async () => {
+                      await load();
+                      await loadConnect(client);
+                    }}
+                  />
                 )}
               </Stack>,
               "connect-setting",

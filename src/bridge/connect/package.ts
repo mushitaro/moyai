@@ -19,7 +19,7 @@
 // - API キーは、この中の closure だけが持つ（ConnectionStore.resolve で開き、MaximoClient に関数で渡す）。返り・ログ・誤りの文に出さない。
 import { createHash } from "node:crypto";
 import { CONNECT_PATH_SEP, planLinesOfRecords, planWrite, type ConnectTarget, type EamAsset, type EamPlanItem, type EamRecords, type EamWorkResult, type EamWriteChange, type PlanLine } from "../../shared/connect";
-import type { ConnectBackend, ConnectSecret, EamConnector, LicenseAnswer, LicenseCheck } from "./types";
+import type { ConnectAddProblem, ConnectBackend, ConnectSecret, EamConnector, LicenseAnswer, LicenseCheck } from "./types";
 
 /** 部品の名前（package.json の optionalDependencies） */
 export const EAM_PACKAGE = "@mxstage/eam-connectors";
@@ -113,6 +113,7 @@ export interface EamPackage {
   node: {
     ConnectionStore: new (o: { dir?: string }) => {
       list(): { connections: ConnectionEntry[] };
+      save(input: { name: string; baseUrl: string; environment: "production" | "test" | null; apiKey?: string }): Promise<{ ok: true; connection: ConnectionEntry } | { ok: false; problem: string }>;
       resolve(id: string): Promise<{ ok: true; origin: string; apiKey: string } | { ok: false }>;
     };
     LicenseStore: new (o: { dir?: string; allowTestKeys?: boolean }) => { authorize(baseUrl: string): AuthorizeResult };
@@ -307,6 +308,15 @@ function licenseAnswer(a: AuthorizeResult): LicenseAnswer {
   return { ok: false, reason: "noKey" };
 }
 
+/** 部品の ConnectionStore の problem → MOYAI の理由の名前 */
+function addProblem(p: string): ConnectAddProblem {
+  if (p === "invalid_name") return "name";
+  if (p === "invalid_url") return "url";
+  if (p === "invalid_key" || p === "key_required") return "key";
+  if (p === "too_many") return "tooMany";
+  return "unavailable";
+}
+
 function targetOf(c: ConnectionEntry): ConnectTarget | null {
   let host: string;
   try {
@@ -370,6 +380,12 @@ export async function loadPackageBackend(o: PackageBackendOptions = {}): Promise
     fake: false,
     store: {
       list: () => entries().map((x) => x.t),
+      add: async (input) => {
+        const r = await connections.save({ name: input.label, baseUrl: input.url, environment: input.env, apiKey: input.apiKey });
+        if (!r.ok) return { ok: false, problem: addProblem(r.problem) };
+        const t = targetOf(r.connection);
+        return t ? { ok: true, target: t } : { ok: false, problem: "url" };
+      },
       open: (id) => {
         const x = entries().find((e) => e.t.id === id);
         return x ? { target: x.t, secret: { opaque: { connectionId: x.c.id } } } : null;

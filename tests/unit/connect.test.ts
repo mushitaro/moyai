@@ -108,10 +108,10 @@ describe("設定の連携がオフなら、何もしない", () => {
     expect(await svc.read("fake-test")).toEqual({ ok: false, reason: "connectUnavailable" });
   });
 
-  it("部品が無く、偽の連携の環境変数も無ければ、裏は無い（部品へのつなぎは未実装）", async () => {
+  it("部品を読まない（MOYAI_CONNECT_PACKAGE=off。試験が利用者の ~/.config/mxstage を読まない）で、偽の連携の環境変数も無ければ、裏は無い", async () => {
     const sd = temp();
     writeSettings(sd, { v: 1, root: null, ledger: null, name: null, connect: true });
-    const svc = new ConnectService({ stateDir: sd, now: Date.now, env: {} });
+    const svc = new ConnectService({ stateDir: sd, now: Date.now, env: { MOYAI_CONNECT_PACKAGE: "off" } });
     expect((await svc.state()).available).toBe(false);
     const fake = new ConnectService({ stateDir: sd, now: Date.now, env: { MOYAI_CONNECT_FAKE: "1", MOYAI_CONNECT_FAKE_LICENSE: "maximo.fake.invalid" } });
     const s = await fake.state();
@@ -230,7 +230,7 @@ describe("人だけの経路 connect_send と設定（橋渡しの HumanService�
     const h = new HumanService({ stateDir: sd, packsDir: "packs", now: () => Date.parse("2026-11-16T03:00:00Z"), connect: fake.backend });
     return { h, root, sd, fake };
   }
-  const call = (h: HumanService, action: "settings_read" | "settings_save" | "connect_send", payload: unknown) => h.handle({ action, payload: JSON.stringify(payload), session: "s" });
+  const call = (h: HumanService, action: "settings_read" | "settings_save" | "connect_send" | "connect_add", payload: unknown) => h.handle({ action, payload: JSON.stringify(payload), session: "s" });
 
   it("設定の連携は、人が保存したときだけ変わり、ほかの保存では消えない。読むときはつなぎ先（キーなし）を返す", async () => {
     const { h, sd, root } = await human();
@@ -273,6 +273,49 @@ describe("人だけの経路 connect_send と設定（橋渡しの HumanService�
     expect(await call(h, "connect_send", { targetId: "fake-test", planId: "plan-connect", version: latest.version + 1, hash: test.hash })).toEqual({ ok: false, reason: "connectStale" });
     expect(await call(h, "connect_send", { targetId: "fake-test", planId: "plan-connect", version: latest.version, hash: test.hash })).toMatchObject({ ok: true, applied: 2 });
     expect(fake.writes("fake-test")).toBe(2);
+  });
+});
+
+describe("人だけの経路 connect_add：つなぎ先を足す", () => {
+  async function human(on = true) {
+    const dir = temp();
+    const sd = join(dir, "状態");
+    writeSettings(sd, { v: 1, root: join(dir, "保管先"), ledger: null, name: null, ...(on ? { connect: true as const } : {}) });
+    const fake = createFakeConnect();
+    return new HumanService({ stateDir: sd, packsDir: "packs", now: () => Date.parse("2026-11-17T03:00:00Z"), connect: fake.backend });
+  }
+  const call = (h: HumanService, payload: unknown) => h.handle({ action: "connect_add", payload: JSON.stringify(payload), session: "s" });
+  const KEY = "secret-key-never-returned-0123";
+  const good = { label: "保全システム（本番 2）", url: "https://maximo2.example", env: "production", apiKey: KEY };
+
+  it("足すと、一覧に出る。答えにも一覧にも API キーは出ない", async () => {
+    const h = await human();
+    const r = await call(h, good);
+    expect(r).toMatchObject({ ok: true, target: { kind: "fake", host: "maximo2.example", env: "production" } });
+    expect(JSON.stringify(r)).not.toContain(KEY);
+    const st = (await call(h, good).then(() => h.connect()!.state())) as any;
+    expect(st.targets.filter((t: any) => t.host === "maximo2.example")).toHaveLength(2);
+    expect(JSON.stringify(st)).not.toContain(KEY);
+    expect(JSON.stringify(await h.handle({ action: "settings_read", payload: "{}", session: "s" }))).not.toContain(KEY);
+  });
+
+  it("テストか本番かの宣言が無い・違う・欄が多いものは、形で断る（既定を置かない）", async () => {
+    const h = await human();
+    const { env: _env, ...noEnv } = good;
+    expect(await call(h, noEnv)).toEqual({ ok: false, reason: "payloadInvalid" });
+    expect(await call(h, { ...good, env: null })).toEqual({ ok: false, reason: "payloadInvalid" });
+    expect(await call(h, { ...good, env: "staging" })).toEqual({ ok: false, reason: "payloadInvalid" });
+    expect(await call(h, { ...good, apiKey: "" })).toEqual({ ok: false, reason: "payloadInvalid" });
+    expect(await call(h, { ...good, extra: 1 })).toEqual({ ok: false, reason: "payloadInvalid" });
+    expect((await h.connect()!.state()).targets).toHaveLength(2);
+  });
+
+  it("URL は https://host だけ。オフなら足さない", async () => {
+    const h = await human();
+    for (const url of ["http://maximo2.example", "https://maximo2.example/maximo", "https://u:p@maximo2.example", "maximo2.example"]) {
+      expect(await call(h, { ...good, url }), url).toEqual({ ok: false, reason: "connectAdd.url" });
+    }
+    expect(await call(await human(false), good)).toEqual({ ok: false, reason: "connectOff" });
   });
 });
 

@@ -50,7 +50,7 @@ export async function startBuiltBridge(prefix: string, env: Record<string, strin
   const port = await freePort();
   const child: ChildProcess = spawn(process.execPath, ["dist/cli.js", "start", "--port", String(port), "--no-open"], {
     // 本物の受け口に送らない（受け口を使う試験は MOYAI_LEDGER_INTAKE_URL に試験の台の道を渡す）
-    env: { ...process.env, MOYAI_LEDGER_INTAKE_URL: "off", ...env, MOYAI_STATE_DIR: stateDir },
+    env: { ...process.env, MOYAI_LEDGER_INTAKE_URL: "off", MOYAI_CONNECT_PACKAGE: "off", ...env, MOYAI_STATE_DIR: stateDir },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";

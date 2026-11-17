@@ -185,6 +185,9 @@ const SCHEMAS = {
   // 受け口の上限（64 KB）より大きいものは、受け口が 413 で断る
   reading_feedback_send: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
   // 業務システムに送る：人が見た差分のハッシュと、もとにした版（送る直前に作り直して照らす）
+  connect_add: z
+    .object({ label: z.string().trim().min(1).max(80), url: z.string().min(1).max(300), env: z.enum(["test", "production"]), apiKey: z.string().min(1).max(4096) })
+    .strict(),
   connect_send: z.object({ targetId: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/), planId: planIdSchema, version: z.number().int().min(1), hash: z.string().regex(HEX64) }),
   work_discard: z.object({ planId: planIdSchema }),
   plan_source_put: z.object({ planId: planIdSchema, base64: z.string().min(1).max(Math.ceil((SOURCE_MAX_BYTES * 4) / 3) + 8) }),
@@ -1468,6 +1471,14 @@ export class HumanService {
           return no(`feedbackIntake.${why}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
         }
         return { ok: true, issue: r.number, url: r.url };
+      }
+      case "connect_add": {
+        // つなぎ先を足す：API キーは部品の接続の保存に渡して捨てる。返すのはつなぎ先（キーの欄は無い）だけ
+        const p = parsePayload("connect_add", call.payload);
+        if (!p) return no("payloadInvalid");
+        const r = await this.connect()!.add(p);
+        if (!r.ok) return no(r.reason);
+        return { ok: true, target: r.target };
       }
       case "connect_send": {
         // 業務システムに送る（運営者の判断 2026-11-16）：確定・署名した最新の版だけを元にし、本番の鍵とカナリアは src/bridge/connect/ が送る直前に確かめる

@@ -53,7 +53,7 @@
     "vitest": "4.1.12"
   },
   "optionalDependencies": {
-    "@mxstage/eam-connectors": "github:mxstage/eam-connectors#7d7c9be"
+    "@mxstage/eam-connectors": "github:mxstage/eam-connectors#a4a55c44a4833e7a4f1d4fb793378a4244916721"
   },
   "bin": {
     "moyai": "dist/cli.js"

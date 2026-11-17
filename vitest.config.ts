@@ -8,8 +8,9 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     environment: "node",
+    // 連携の部品（@mxstage/eam-connectors）を既定の置き場所（~/.config/mxstage。MX Stage と共有）で読まない。部品の道の試験は、一時のフォルダで部品を差し込む
     // 本物の受け口（src/bridge/ledger-intake.ts の LEDGER_INTAKE_URL）に試験から送らない。受け口を使う試験は IntakeIo を差し替える
-    env: { MOYAI_LEDGER_INTAKE_URL: "off" },
+    env: { MOYAI_LEDGER_INTAKE_URL: "off", MOYAI_CONNECT_PACKAGE: "off" },
     // 工場の資料を計画 §2.5 の厚さ（機器 217・作業 2,120）にしたので、取り込みを端まで動かす試験は、並べて走らせると 20 秒を越える。
     // windows-latest の CI では fictional-1 を端まで読む試験（tab-tools・crosswalk・photo・photo-measure）が 61〜75 秒かかる（11-05 に測った）ので、上限は測った値に合わせる
     testTimeout: 180_000,
