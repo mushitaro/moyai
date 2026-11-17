@@ -96,6 +96,18 @@ test("Playwright の報告：ブラウザの組ごとに数え、やり直して
   assert.equal(ok.status, STATUS.pass);
 });
 
+test("OS を名指しした行は、その OS の実行でだけ数える（ほかの OS では通っていても「測っていない」）", () => {
+  const W = { rows: [{ name: "w", platform: "win32", sources: [{ runner: "vitest", file: "tests/a.test.ts" }] }] };
+  const v = fromVitest({ testResults: [{ name: join(REPO, "tests", "a.test.ts"), assertionResults: [{ fullName: "a", status: "passed" }] }] }, REPO);
+  const linux = judge(["w"], W, { vitest: v, node: null, playwright: null }, {}, "linux")[0];
+  assert.equal(linux.status, STATUS.unmeasured);
+  assert.equal(linux.passed, 0);
+  assert.match(linux.sources[0].mark, /linux.*win32/);
+  assert.equal(judge(["w"], W, { vitest: v, node: null, playwright: null }, {}, "win32")[0].status, STATUS.pass);
+  const failing = fromVitest({ testResults: [{ name: join(REPO, "tests", "a.test.ts"), assertionResults: [{ fullName: "a", status: "failed" }] }] }, REPO);
+  assert.equal(judge(["w"], W, { vitest: failing, node: null, playwright: null }, {}, "win32")[0].status, STATUS.fail);
+});
+
 test("表には 5 つの結果の数と、試験が無い名前の一覧が出る", () => {
   const rows = judge(["a", "c", "d", "h"], M, { vitest, node, playwright: null });
   const md = render(rows, { date: "2026-11-05", time: "12:00", commit: "abc1234", dirty: false, counts: { node: 1, vitest: 5, playwright: null } });
