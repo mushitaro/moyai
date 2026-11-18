@@ -17,7 +17,7 @@
 
 ## 5 つの分け方の報告
 
-- 試験とビルドが通った：（PR の CI の結果を下に書く）
+- 試験とビルドが通った：PR #140 の CI（`0b85fa8`）で test（ubuntu・windows）・e2e（ubuntu・windows）・pack-bench・scenario がどれも緑。手元（Linux）では vitest 2195 通過・5 落ち（`tests/heldout/heldout.test.ts`。この clone にタグ `reader-freeze-*` が無いため。CI では緑）・typecheck・build・check-publish（当たり 0）。
 - 画面で動いた：e2e（Linux の Chrome）で、設定の「困りごと」から試験の台の受け口と偽の GitHub まで。本物の受け口・本物の GitHub では未確認（受け口の配置し直しは運営者）。
 - Claude Code で端から端まで通った：未確認（e2e の MCP の中継で `screen_set` の `feedbackDraft` は通した）。
 - Windows の実機で動いた：未確認。
