@@ -193,7 +193,8 @@ test("起動の台本から起こした橋渡しで、設定の「連携」が�
   // 「連携」の欄は、橋渡しの settings の答えの connect.available が true のときだけ出る（部品が無ければ出ない。src/app/pages/Settings.tsx）
   await expect(page.getByTestId("connect-choice")).toBeVisible();
   await page.getByTestId("connect-choice").getByText("オン").click();
-  await expect(page.getByTestId("connect-targets")).toBeVisible();
+  // つなぎ先が 0 のあいだ、一覧の表は行が無く高さ 0（見えない扱い）なので、あること・行が 0・「足す」が見えることを見る
+  await expect(page.getByTestId("connect-targets")).toHaveCount(1);
   await expect(page.getByTestId("connect-target-row")).toHaveCount(0);
   await expect(page.getByTestId("connect-add-open")).toBeVisible();
 

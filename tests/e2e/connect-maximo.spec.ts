@@ -81,8 +81,10 @@ test("本物の部品と偽の Maximo で、つなぎ先を足す → 読む →
     await chooseRoot(page, b.base, root);
     await expect(page.getByTestId("connect-choice")).toBeVisible();
     await page.getByTestId("connect-choice").getByText("オン").click();
-    await expect(page.getByTestId("connect-targets")).toBeVisible();
+    // つなぎ先が 0 のあいだ、一覧の表は行が無く高さ 0（見えない扱い）なので、あること・行が 0・「足す」が見えることを見る
+    await expect(page.getByTestId("connect-targets")).toHaveCount(1);
     await expect(page.getByTestId("connect-target-row")).toHaveCount(0);
+    await expect(page.getByTestId("connect-add-open")).toBeVisible();
   });
 
   await test.step("人：「足す」で偽の Maximo（テスト環境）を足す。キーは部品の保存に暗号化して置かれ、画面にも保存のファイルにも出ない", async () => {
