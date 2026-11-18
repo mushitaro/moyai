@@ -36,19 +36,25 @@
 ## 5 つの分け方の報告
 
 - 試験とビルドが通った：手元（Linux）で、ビルド・型の検査・公開の前の検査（当たり 0）・`node scripts/run-tests.mjs`（vitest 2,226 通過。落ちた 5 と node:test の落ちた 2 は、浅い clone で履歴とタグを見る試験。履歴を全部取ってから走らせ直して、vitest の heldout 6 通過・node:test 237 通過 0 落ち）。足した vitest：app-update-switch 3・connect-https 2・human-guide 5。CI は PR で見る。
-- 画面で動いた：未確認。e2e（connect-maximo.spec）と受け入れの 2 つ目（橋渡しの設定の画面）は、橋渡しを 127.0.0.1 に起こすので手元で走らせていない。CI の ubuntu・windows で見る。
+- 画面で動いた：CI の ubuntu・windows の Chrome で、connect-maximo.spec（設定 → つなぎ先を足す → 読む → 確定 → 差分 → 送る）と、受け入れの 2 つ目（入れた版の橋渡しの設定の画面）が通った。手元では走らせていない（橋渡しを 127.0.0.1 に起こすため）。
 - Claude Code で端から端まで通った：未確認。
-- Windows の実機で動いた：未確認（CI の windows の仕事で見る。実機ではない）。
+- Windows の実機で動いた：未確認（CI の windows の仕事では通った。実機ではない）。
 - Excel で開いて見やすかった：関係なし。
 
 受け入れの 1 つ目（setup で入れる）は手元の Linux で走らせた：版のフォルダ・印・Claude Desktop の設定・送信者の名前までは通り、最後の「連携の部品が版のフォルダに入っている」で落ちた。
 このセッションの網は部品の取り先（codeload.github.com）を 403 で止めるので、版のフォルダの `npm ci` が任意の依存を**黙って飛ばした**。運営者の PC で起きたのと同じ形を、この試験が止めることを確かめた（CI は取り先に届くので通る見込み。未確認）。
 
-## CI に足した時間
+## CI に足した時間（cfa3908 で測った）
 
-- 新しい仕事 `install`（windows・ubuntu）：依存とビルド（今の e2e の仕事と同じ）に加えて、setup の版のフォルダでの `npm ci` と `npm run build`。ほかの仕事と並んで走る。時間は CI で測って PR に書く。
-- e2e の仕事：connect-maximo.spec 1 本（計画を作って確定し、PM を 400 件ほど書く。connect.spec と同じくらいの見込み）。
-- test の仕事：connect-https の 2 件（数秒）。
+- 新しい仕事 `install`：windows 5 分 49 秒・ubuntu 1 分 8 秒（ほかの仕事と並んで走るので、全体の時間はほぼ伸びない。いちばん長いのは e2e と test の windows）。
+- e2e の仕事：connect-maximo.spec 1 本が windows 23.1 秒（e2e の 55 件は 10.4 分）。仕事の全体は windows 13 分 18 秒・ubuntu 12 分 48 秒。
+- test の仕事：connect-https の 3 件（数秒）。
+
+## CI の結果（cfa3908）
+
+- 緑：install（windows・ubuntu）・e2e（windows・ubuntu。55 件すべて。connect-maximo も通った）・test（windows）・pack-bench・scenario。
+- 赤：test（ubuntu）の「Skill の文の採点の記録」の段だけ（試験はすべて通った）。main（a61f032）でも同じ 2 つの指紋で落ちる。この PR は skills/・packs/・eval/ を変えていない。直すには今の文の採点の記録（2 つのパック × 解く役 2 つ）が要る。どこで置くかは統括に任せる（PR にも書いた）。
+- 途中で CI が見つけて直したもの：つなぎ先 0 の一覧の表は高さ 0（見えない扱い）・Playwright の読み込みが src/plan/store の JSON の import を読めず e2e が全部走らなかった・偽の Maximo から読んだ資料で既定の答えの無い質問・偽の Maximo の HTTPS の包みが本体を Buffer で渡して書き込みが断られた（connect-https に、包みを通して送るまでの試験を足した）。
 
 ## 見直し（別の役が差分だけを読んだ）
 
@@ -73,7 +79,7 @@ CI を落とす誤りは無し。e2e の数（足す・変える・送った数�
 
 ## 次の一手
 
-1. CI（test・e2e ubuntu/windows・install ubuntu/windows・pack-bench・scenario）を緑にする。e2e と受け入れは手元で走らせていないので、CI で初めて走る。
+1. test（ubuntu）の採点の記録の段を緑にする（main と同じ原因。統括が置き場所を決める）。
 2. 困りごとの PR が入ったら、`PENDING` の `app_feedback_send` を GUIDE に移す（その PR で）。
 3. #146：9 つの案内を 1 段目の Skill に書き、採点の記録と一緒に入れる。
 4. PR #143（確定のあと MOYAI のトップに戻る）が先に入ると、connect-maximo.spec の「確定 → 連携のシート」の段も、connect.spec と同じ直しが要る。
