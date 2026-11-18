@@ -39,7 +39,7 @@ describe("資料", () => {
     for (const n of ["equipment-ledger.xlsx", "plan-hoshitori.xlsx", "daily-report.csv", "world.truth.json"]) {
       expect(statSync(join(REPO, "video/world/hotarugawa", n)).size, n).toBeGreaterThan(1000);
     }
-    expect(existsSync(join(REPO, "packs/waste-incineration/demo/equipment-ledger.xlsx"))).toBe(true);
+    expect(existsSync(join(REPO, "packs/waste-incineration/demo/demo.json"))).toBe(true);
     const w = JSON.parse(readFileSync(join(REPO, "video/world/hotarugawa/world.truth.json"), "utf8"));
     expect(w.facility.name).toBe("【架空】ほたる川クリーンセンター");
     expect(w.fiscal_years).toEqual([2024, 2025, 2026]);

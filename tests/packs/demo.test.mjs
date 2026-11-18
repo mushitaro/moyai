@@ -1,25 +1,54 @@
 // Skillパックの demo/（運営者の決定 11-06「チャットだけで入れる・デモする・消す」）：
-// packs/waste-incineration/demo/ に、サンプルの fictional-1 の 3 つの資料（どれも【架空】）を写してあること、
-// README.md にチャットでのデモの進め方があること、Skillパックの SKILL.md の「デモ」の節が README を指すこと。
+// packs/waste-incineration/demo/ に、サンプルのリポジトリ mushitaro/moyai-samples の v4 の 1 施設の資料（どれも【架空】）を写してあること、
+// README.md に写した元（commit・道・git の blob・SHA-256）と、チャットでのデモの進め方があること、Skillパックの SKILL.md の「デモ」の節が README を指すこと。
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { zipTextEntries } from "../../scripts/check-publish.mjs";
 
 const PACK = "packs/waste-incineration";
 const DEMO = join(PACK, "demo");
-const SAMPLE = "samples/out/waste-incineration/fictional-1";
-const FILES = ["daily-report.csv", "equipment-ledger.xlsx", "plan-hoshitori.xlsx"];
+const FILES = [
+  "【架空】さくら坂焼却場_中長期整備計画_廃止までの整備計画R5改訂R8実績追記_l2様式.xlsx",
+  "【架空】さくら坂焼却場_作業日報_令和7年度定期整備業務委託_清書様式.xlsx",
+  "【架空】さくら坂焼却場_発注台帳_令和7年度_財務会計CSV.csv",
+];
+/** 写した元のサンプルのリポジトリの commit（README.md に書いたもの） */
+const SAMPLES_COMMIT = "336455bd00604a366981463ecd3fce09f48b44ab";
+/** MOYAI に同梱して配るので、資料は合わせて 3 MB まで */
+const MAX_BYTES = 3 * 1024 * 1024;
 
-test("demo/ に 3 つの資料があり、サンプルの fictional-1 と同じバイト列", () => {
+const readme = () => readFileSync(join(DEMO, "README.md"), "utf8");
+
+test("demo/ に 3 つの資料があり、README.md の表の SHA-256 と git の blob がバイト列と合う（中身を書き換えていない）", () => {
   assert.deepEqual(readdirSync(DEMO).sort(), [...FILES, "README.md", "demo.json"].sort());
-  for (const f of FILES) assert.ok(readFileSync(join(DEMO, f)).equals(readFileSync(join(SAMPLE, f))), `${f} がサンプルと違う`);
+  const md = readme();
+  assert.ok(md.includes(SAMPLES_COMMIT), "README.md に写した元の commit が無い");
+  assert.ok(md.includes("mushitaro/moyai-samples"));
+  for (const f of FILES) {
+    const bytes = readFileSync(join(DEMO, f));
+    const row = md.split("\n").find((l) => l.startsWith(`| \`${f}\``));
+    assert.ok(row, `README.md の表に ${f} の行が無い`);
+    const sha = createHash("sha256").update(bytes).digest("hex");
+    const blob = createHash("sha1").update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes])).digest("hex");
+    assert.ok(row.includes(sha), `${f} の SHA-256 が README.md と違う`);
+    assert.ok(row.includes(blob), `${f} の git の blob が README.md と違う`);
+  }
+});
+
+test("資料は合わせて 3 MB まで（MOYAI に同梱して配る）", () => {
+  const total = FILES.reduce((a, f) => a + statSync(join(DEMO, f)).size, 0);
+  assert.ok(total <= MAX_BYTES, `資料が ${total} バイトある`);
 });
 
 test("どの資料にも【架空】と書いてある（実在の施設として読ませない）", () => {
-  const csv = new TextDecoder("shift_jis").decode(readFileSync(join(DEMO, "daily-report.csv")));
-  assert.ok(csv.includes("【架空】"), "daily-report.csv に【架空】が無い");
+  for (const f of FILES) assert.ok(f.startsWith("【架空】"), `${f} の名前に【架空】が無い`);
+  for (const f of FILES.filter((x) => x.endsWith(".csv"))) {
+    const csv = new TextDecoder("shift_jis").decode(readFileSync(join(DEMO, f)));
+    assert.ok(csv.includes("【架空】"), `${f} に【架空】が無い`);
+  }
   for (const f of FILES.filter((x) => x.endsWith(".xlsx"))) {
     const text = zipTextEntries(readFileSync(join(DEMO, f)))
       .map((e) => e.text)
@@ -27,7 +56,7 @@ test("どの資料にも【架空】と書いてある（実在の施設とし�
     assert.ok(text.includes("【架空】"), `${f} に【架空】が無い`);
   }
   const manifest = JSON.parse(readFileSync(join(DEMO, "demo.json"), "utf8"));
-  assert.match(manifest.facilityName, /^【架空】/);
+  assert.equal(manifest.facilityName, "【架空】さくら坂焼却場");
   assert.ok(manifest.facilityName.length <= 80);
 });
 
