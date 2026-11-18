@@ -13,7 +13,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { planLinesOfPlan } from "../../src/shared/connect";
-import { readHistory } from "../../src/plan/store";
 import { acceptDecisions, callTool as call, chooseFirstSource, chooseRoot, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 import { assetTreeOf, eamTesting, maximoSeed, startFakeMaximo, type FakeMaximoServer } from "../helpers/fake-maximo";
 
@@ -154,8 +153,10 @@ test("本物の部品と偽の Maximo で、つなぎ先を足す → 読む →
     // 確定した版の保全計画の行（送る中身）。試験の一時の置き場所から読む
     const plans = readdirSync(join(root, "plans")).filter((d) => !d.startsWith("intake--"));
     expect(plans).toHaveLength(1);
-    const h = await readHistory(root, plans[0]!);
-    const lines = planLinesOfPlan(h.latest!.plan);
+    // 版のファイル（plans/<計画ID>/versions/<番号>.json）のいちばん新しいもの。src/plan/store は Playwright の読み込みで JSON の import を読めないので使わない
+    const vdir = join(root, "plans", plans[0]!, "versions");
+    const newest = readdirSync(vdir).filter((n) => /^\d+\.json$/.test(n)).sort().at(-1)!;
+    const lines = planLinesOfPlan(JSON.parse(readFileSync(join(vdir, newest), "utf8")).plan);
     expect(lines.length).toBeGreaterThan(2);
 
     await test.step("偽の Maximo に、確定した版と同じ資産の木を入れる。1 行は年度が食い違う PM、1 行は同じ年度の PM", async () => {
