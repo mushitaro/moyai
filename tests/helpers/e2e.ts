@@ -219,9 +219,16 @@ export function PROFILE_ANSWERED<P extends { facility: Record<string, unknown> }
  * 署名して確定し、確定のダイアログを閉じる。閉じると MOYAI のトップへ戻る（運営者の判断 2026-11-18）。
  * 続けて HOSHITORI（出力・共有のシートなど）を使う台本は、トップの行の「＋ 次の版」で、いちばん新しい版を開き直す（人と同じ道）
  */
-export async function closeConfirmAndReopen(page: Page, planId: string | null = null): Promise<void> {
-  await page.getByTestId("confirm-close").click();
+export async function closeConfirmToTop(page: Page, how: "button" | "escape" = "button"): Promise<void> {
+  const loaded = page.waitForEvent("load");
+  if (how === "button") await page.getByTestId("confirm-close").click();
+  else await page.keyboard.press("Escape");
+  await loaded;
   await expect(page.getByTestId("moyai-top")).toBeVisible();
+}
+
+export async function closeConfirmAndReopen(page: Page, planId: string | null = null, how: "button" | "escape" = "button"): Promise<void> {
+  await closeConfirmToTop(page, how);
   const row = planId ? page.locator(`[data-testid="moyai-row"][data-plan="${planId}"]`) : page.getByTestId("moyai-row").first();
   await row.getByTestId("moyai-next").click();
   await expect(page.getByTestId("merge-version")).toBeVisible({ timeout: 30_000 });

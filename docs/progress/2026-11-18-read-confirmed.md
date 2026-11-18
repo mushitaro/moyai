@@ -82,9 +82,10 @@
 ### バグ 2：署名して確定したあと、次の版の編集の画面のままになる
 - 先に Wire Frame に絵を足した：artboard `AfterConfirm.dc.html`（state：dialog・top・header）と付箋 `afterConfirm1118`。前の絵（Main・Handoff・Decisions・HoshitoriOut）は消していない。
 - 直し：確定のダイアログを閉じると、作業中の写しを書く手を止め、その施設の作業中の写しを消し（確定した版が中身をすべて持つ）、MOYAI のトップを読み込み直す（`src/app/state/after-confirm.ts`。Merge と星取表の両方）。トップには確定した版の行が見え、「作業中」の印は出ない。次の版は、人が「＋ 次の版」を押したときだけ開く。
+  - 戻るのは「渡さずに自分で確定する」で署名したときだけ。編集・承認を頼んで渡したときは、今のとおり頼んだ版のまま、下の帯に「まだ開かれていません」と「頼み直す」を出す（Handoff の絵の約束。運営者の言葉は自分で確定したあとのこと）。
   - 署名の直後（受けた決定を消すところ）で写しが書き直されて、トップに「作業中　未確定 n」が残っていたので、署名した時点で写しを書く手を止める。
 - 画面の約束の変わる所：11-10 の HoshitoriOut（確定 → 出力 → 共有を HOSHITORI の中で）は、確定のあと一度トップに戻り、「＋ 次の版」（いちばん新しい版を開く）から出力・共有のシートへ行く形になる。運営者の言葉（「MOYAI に戻るでしょふつう」）に合わせた。
-- 試験：e2e で、確定のあとトップに戻る・行に新しい名前・「作業中」が無い・AI の chart_rows が source: confirmed（作業中の計画が勝手に開かれない）・「＋ 次の版」で見出しが新しい名前のまま。確定のあと HOSHITORI を続けて使う e2e（checkpoint・claude-code・connect・ledger-intake・ledger-pr・share-preview・slice・star-removal-next）は、`closeConfirmAndReopen`（閉じる → トップ → 「＋ 次の版」）で人と同じ道をたどる形に直した。walkthrough（`tests/demo/walkthrough-flow.ts`）は、閉じたあとトップが出ることを足した。
+- 試験：e2e で、確定のあとトップに戻る・行に新しい名前・「作業中」が無い・AI の chart_rows が source: confirmed（作業中の計画が勝手に開かれない）・「＋ 次の版」で見出しが新しい名前のまま。確定のあと HOSHITORI を続けて使う e2e（checkpoint・claude-code・connect・ledger-intake・ledger-pr・share-preview・slice・star-removal-next）は、`closeConfirmAndReopen`（閉じる → トップ → 「＋ 次の版」）で人と同じ道をたどる形に直した。derive・one-button・stale・template・version-diff も同じ（Esc で閉じる台本は `closeConfirmToTop` / `closeConfirmAndReopen` の escape）。walkthrough（`tests/demo/walkthrough-flow.ts`）は、閉じたあとトップが出ることを足した。
 
 
 ### バグ 3：未確定の数が HOSHITORI とトップで食い違う

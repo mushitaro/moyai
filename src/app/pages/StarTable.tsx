@@ -916,7 +916,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         </Group>
       </Group>
       )}
-      {!embedded && <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => { confirmedNow.current = p.planId; stopWorkAfterConfirm(); nextPlan.current = p; }} />}
+      {!embedded && <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p, handedOff) => { if (!handedOff) { confirmedNow.current = p.planId; stopWorkAfterConfirm(); } nextPlan.current = p; }} />}
       {!embedded && <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />}
 
       {/* 表示の切り替えと凡例を 1 行に。説明の行は置かず、行の数だけを右端に小さく（docs/screens.md 3.2、Wire 2026-11-04） */}

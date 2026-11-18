@@ -329,9 +329,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     );
   };
   // 確定したら、その版をもとにした版に置き直し、計画 ID を固定する（同じタブで次の版を作ると「第 n+1 版と同じ」になる。台帳の新-9）
-  const onConfirmed = (p: Plan) => {
-    confirmedNow.current = p.planId;
-    stopWorkAfterConfirm();
+  const onConfirmed = (p: Plan, handedOff: boolean) => {
+    // 自分で確定したときだけ、閉じるとトップへ戻る（渡したときは、頼んだ版のまま下の帯に「まだ開かれていません」と頼み直しを出す。Handoff の絵）
+    if (!handedOff) {
+      confirmedNow.current = p.planId;
+      stopWorkAfterConfirm();
+    }
     nextPlan.current = p;
     const crosswalk = (getWorkingPlan()?.proposals ?? []).filter((x) => x.state === "accepted").map((x) => ({ rule: x.rule, basis: x.basis }));
     setCrosswalkBase({ version: p.version, plan: p, crosswalk });
