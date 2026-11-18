@@ -165,7 +165,7 @@ The level requirement is used only for legal and subsidy requirements checked ag
 
 ## Demo
 
-- When the user says "run the demo", use `intake_add_files` (source: demo) to put this Skill pack's fictional documents in `demo/` (a long-term maintenance plan star chart with actuals, a daily work report and an expenditure CSV from the finance system: 3 files of the fictional Sakurazaka incineration plant) into the work screen.
+- When the user says "run the demo", use `intake_add_files` (source: demo) to put this Skill pack's fictional documents in `demo/` (the facility register, star chart and daily work report: 3 files) into the work screen.
 - How to proceed is in `demo/README.md`. Open the work screen first, advance one step per reply, say briefly what changed on the screen, and wait for the user's "next". Do not go to the end with Claude alone. People confirm on the screen.
 - The demo documents are fictional. Do not talk about them as a real plant. Do not mix them with non-fictional documents.
 
