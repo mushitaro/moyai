@@ -637,6 +637,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const viewingLatest = viewingOld !== null && viewingOld === latestNo && !receive;
   const topVersion = st?.versions?.at(-1) as { version?: number; contentHash?: string } | undefined;
   const nextLink = viewingLatest && plan && topVersion?.contentHash ? `${STAGE_HASH.merge}?open=${encodeURIComponent(plan.planId)}&v=${topVersion.version}&h=${topVersion.contentHash.slice(0, 16)}` : null;
+  // 確定した版を見るだけで開いているあいだは、シートを替えても開いたリンク（see=1）を残す（読み込み直しても見るだけの版のまま。勝手に次の版にならない）
+  const keepOpen = openSee && viewingLatest ? `?${location.hash.split("?")[1] ?? ""}` : "";
   const stateLabel = viewingOld ? (receive ? T.viewOnlyLabel : viewingLatest ? T.confirmedViewLabel : T.oldVersionLabel) : toReceive ? T.viewOnlyLabel : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
   const turnLine: { state: string; text: string } | null = viewingOld
     ? { state: "confirmed", text: T.confirmedLine }
@@ -809,7 +811,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       <div className="moyai-sheet-tabs moyai-merge-tabs" data-testid="merge-tabs">
         <div className="moyai-merge-tablist" role="tablist">
           {tabs.map((s) => (
-            <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s)} aria-selected={current === s} data-testid={`sheet-${s}`}>
+            <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s) + keepOpen} aria-selected={current === s} data-testid={`sheet-${s}`}>
               {T.sheets[s]}
               {s === "readings" && unapproved > 0 && <span className="moyai-sheet-n moyai-num">{unapproved}</span>}
               {s === "decisions" && leftDecisions > 0 && <span className="moyai-sheet-n moyai-num">{leftDecisions}</span>}
