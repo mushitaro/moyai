@@ -361,9 +361,8 @@ export function walkthrough(lang: Lang): void {
         link = /http:\/\/[^\s]+#\/merge\?open=[^\s]+/.exec(mail)?.[0] ?? "";
         expect(link).toContain("&v=1&h=");
         await pa.screenshot({ path: shot("demo-11-mail") });
+        // 承認を頼んで渡したときは、閉じても頼んだ版のまま（トップへ戻るのは自分で確定したときだけ。11-18）
         await pa.keyboard.press("Escape");
-        // 署名したら、閉じると MOYAI のトップへ戻る（運営者の判断 11-18）
-        await expect(pa.getByTestId("moyai-top")).toBeVisible();
         await pa.goto(`${one.base}/#/`);
         await expect(pa.getByTestId("moyai-state")).toHaveText(W.awaiting);
         await pa.screenshot({ path: shot("demo-12-top-awaiting") });
