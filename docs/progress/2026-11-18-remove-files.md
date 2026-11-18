@@ -26,13 +26,15 @@
    - 今の試験は弱めていない（数を 20 → 21 にしただけ。断る試験・名前の検査はそのまま）。
 5. 触っていないもの：`packs/waste-incineration/demo/` とデモの試験（別の作業役が v4 に差し替え中）、変換の精度、タグ `submission`・枝 `hackathon-release`。
 
+6. **Skill の文の採点**（1 段目の文を変えたので。`docs/autonomy.md` の「Skill の文を変える PR」）：正解を見ていない別々の解く役（子のエージェント、決まった頼みの文のまま）2 つずつで解き、コードで採点した。ごみ焼却 100/100 → 100/100（2 役とも同じ）、し尿 95/95 → 95/95（2 役とも同じ）。記録 `eval/skill-scores/waste-incineration/993f224ff92de56c.json`・`eval/skill-scores/night-soil/93af071b726ff190.json`。
+
 ## 消したあとに問いが増えることがある
 
 工場の資料（fictional-1）で `daily-report.csv` を消すと、外れた問いのほかに、残りの資料の問いが新しく出ることがあった（資料をまたぐ問いの形が変わるため）。そのときは作り直しが止まり、署名も止まる（今の「作り直していません」）。試験は、止まったら答えて作り直し、消した資料の行が無いことを確かめる形にした。
 
 ## 5 つの分け方の報告
 
-- 試験とビルドが通った：手元（Linux）で typecheck・build・check-publish・vitest の全体・新しい e2e（chrome）が通った（数は下の「次の一手」の前に追記）。e2e の全体と windows は PR の CI で見る。
+- 試験とビルドが通った：手元（Linux）で typecheck・build・check-publish・新しい e2e（chrome）・Skill の採点の検査が通った。vitest の全体は手元で 2147 通過・落ちた 6 のうち 5 は浅い clone の heldout（CI の ubuntu では通った）、1 は写真の試験の一覧（直した）。CI の test（ubuntu）では vitest 2153・node:test 237 が通った。e2e の全体と windows は PR の CI の結果で見る。
 - 画面で動いた：e2e の中の Chrome で、一覧の「消す」→「消す？」→ 消える を確かめた（写しは e2e の写しの所。目で見た）。
 - Claude Code で端から端まで通った：未確認（MCP の道具は e2e の中継で呼んだ。本物の Claude Code では呼んでいない）。
 - Windows の実機で動いた：未確認。
