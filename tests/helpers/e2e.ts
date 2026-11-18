@@ -215,6 +215,24 @@ export function PROFILE_ANSWERED<P extends { facility: Record<string, unknown> }
   };
 }
 
+/**
+ * 署名して確定し、確定のダイアログを閉じる。閉じると HOSHITORI のまま、確定した版を見るだけで開き直す（運営者の判断 2026-11-18 夜）。
+ * 続けて次の版を編集する台本は、見出しの「＋ 次の版」で開き直す（人と同じ道）
+ */
+export async function closeConfirmToView(page: Page, how: "button" | "escape" = "button"): Promise<void> {
+  const loaded = page.waitForEvent("load");
+  if (how === "button") await page.getByTestId("confirm-close").click();
+  else await page.keyboard.press("Escape");
+  await loaded;
+  await expect(page.getByTestId("merge-state")).toHaveAttribute("data-view-only", "true", { timeout: 30_000 });
+}
+
+export async function closeConfirmAndReopen(page: Page, _planId: string | null = null, how: "button" | "escape" = "button"): Promise<void> {
+  await closeConfirmToView(page, how);
+  await page.getByTestId("merge-next").click();
+  await expect(page.getByTestId("merge-state")).toHaveAttribute("data-view-only", "false", { timeout: 30_000 });
+}
+
 /** 試験の台本が版に署名するときの呼び名（架空） */
 export const E2E_NAME = "【架空】試験の台本";
 

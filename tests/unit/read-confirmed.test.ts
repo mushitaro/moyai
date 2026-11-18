@@ -209,3 +209,18 @@ describe("確定版は読むだけ：AI の道具と文", () => {
     expect(readFileSync("skills/moyai/SKILL.md", "utf8")).toContain('"+ Next version"');
   });
 });
+
+describe("Chat：施設の名前を直す道（運営者が M-PC3 で見つけた、2026-11-18）", () => {
+  it("名前は案を置くだけで、人が確定のシートで受けて署名した版から効く。【架空】の印は外せない。確定版しか無ければ、人に「＋ 次の版」を頼む", () => {
+    const d = TOOLS.chart_propose.description;
+    expect(d).toContain("facilityName: a proposed facility name");
+    expect(d).toContain("it takes effect from the version a person accepts and signs on the Decisions sheet");
+    expect(d).toContain("cannot drop its 【架空】 mark");
+    // AI に、案を受ける・署名する道具は無い（人だけ）
+    for (const n of EXPOSED_TOOL_NAMES) expect(n).not.toMatch(/accept|sign|confirm/);
+    const skill = skillMoyaiMarkdown();
+    expect(skill).toContain("To change anything (the facility name too), ask the user to press");
+    expect(skill).toContain("Then place proposals as usual (chart_propose facilityName, stars, rules)");
+  });
+});
+

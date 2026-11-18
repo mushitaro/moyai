@@ -35,6 +35,7 @@ import { compareCounts, marksOf } from "../../plan/chart-compare";
 import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
 import { useDisplayPrefs } from "../state/screen";
+import { showConfirmed, stopWorkAfterConfirm } from "../state/after-confirm";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { INLINE_TEXT } from "../text/inline";
 
@@ -393,8 +394,16 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   const canConfirm = conn.kind === "open";
   // 確定・戻したあとの計画は、ダイアログを閉じてから置く（置くと表を描き直し、ダイアログの結果が消えるため）
   const nextPlan = useRef<Plan | null>(null);
+  // 署名して確定した（閉じたら MOYAI のトップへ戻る。運営者の判断 11-18。Merge と同じ）
+  const confirmedNow = useRef<string | null>(null);
   const closeAnd = (close: () => void) => () => {
     close();
+    if (confirmedNow.current !== null) {
+      const id = confirmedNow.current;
+      confirmedNow.current = null;
+      nextPlan.current = null;
+      return void showConfirmed(client, id);
+    }
     if (nextPlan.current) setWorkingPlan(nextPlan.current, origin);
     nextPlan.current = null;
   };
@@ -589,6 +598,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   };
   /** そのセルの、動かせる計画の作業（計画だけの 1 作業のとき。今の年度より前は動かさない） */
   const movableWork = (rowId: string, periodKey: string): { workKey: string; fy: number } | null => {
+    // 見るだけで開いた版（確定した直後・古い版）は動かせない
+    if (getWorkingPlan()?.readOnly) return null;
     const fy = fyOf(periodKey);
     const row = model.rows.find((r) => r.id === rowId);
     const cell = row?.cells[periodKey];
@@ -907,7 +918,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
         </Group>
       </Group>
       )}
-      {!embedded && <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p) => (nextPlan.current = p)} />}
+      {!embedded && <ConfirmDialog client={client} plan={plan} opened={confirmOpen} onClose={closeAnd(() => setConfirmOpen(false))} onConfirmed={(p, handedOff) => { if (!handedOff) { confirmedNow.current = p.planId; stopWorkAfterConfirm(); } nextPlan.current = p; }} />}
       {!embedded && <HistoryDialog client={client} planId={plan.planId} opened={historyOpen} onClose={closeAnd(() => setHistoryOpen(false))} onReverted={(p) => (nextPlan.current = p)} />}
 
       {/* 表示の切り替えと凡例を 1 行に。説明の行は置かず、行の数だけを右端に小さく（docs/screens.md 3.2、Wire 2026-11-04） */}

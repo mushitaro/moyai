@@ -385,6 +385,8 @@ export const TEXT = defineMessages(EN_TEXT, {
   merge: {
     newFacility: "新しい施設",
     renameLabel: "施設の名前（押して直す。Enter で決める）",
+    /** 名前の案を確定のシートで受けたあと、署名の前（Wire の AfterConfirm、11-18） */
+    nameAccepted: (name: string) => `→ ${name}　確定前`,
     version: (n: number) => `第 ${n} 版`,
     facilitySettings: "施設設定",
     sheets: { chart: "星取表", cost: "費用", match: "突合", readings: "ルール", check: "照査", decisions: "確定", export: "出力", share: "共有", connect: "連携", files: "資料" } as Record<string, string>,
@@ -441,6 +443,8 @@ export const TEXT = defineMessages(EN_TEXT, {
     peersOn: "比較",
     peersOff: "戻す",
     oldVersionLabel: "古い版（見るだけ）",
+    /** 署名して確定した直後の、いちばん新しい版を見るだけで出しているとき（運営者の判断 11-18 夜） */
+    confirmedViewLabel: "確定（見るだけ）",
     /** 頼みをほかの鍵が受け取っていた・頼みが取り下げられていたリンクで開いたとき（古い版ではない。Wire の B1） */
     viewOnlyLabel: "見るだけ",
     confirmedLine: "確定済み",

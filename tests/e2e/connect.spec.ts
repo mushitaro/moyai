@@ -8,7 +8,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { acceptDecisions, callTool as call, chooseFirstSource, chooseRoot, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, callTool as call, chooseFirstSource, chooseRoot, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 
 const FACILITY = "【架空】連携の試験";
 
@@ -102,7 +102,7 @@ test("偽の連携で、読む → 星取表 → 確定・署名 → 突合と�
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/（第 1 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click();
+      await closeConfirmAndReopen(page);
     });
 
     await test.step("連携のシート：突合（突合のシートと同じ形）と書き込みの差分。主ボタンは「送る」の 1 つ", async () => {

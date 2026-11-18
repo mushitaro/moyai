@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { acceptDecisions, callTool, chooseRootAndCreateRing, mcpClient, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, callTool, chooseRootAndCreateRing, mcpClient, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 
 /** Claude が会話で聞いた見え方の答え（架空の施設） */
 const ANSWERS = { facility: { furnace: "STOKER", capacity_t_per_day: "C100_200", turbine: "YES", ash: "OUT", contract: "SINGLE" }, inNationalTable: true };
@@ -114,7 +114,7 @@ for (const pk of PACKS) {
         await signInDialog(page);
         await page.getByTestId("confirm-submit").click();
         await expect(page.getByTestId("confirm-done")).toContainText(/第 1 版）を確定しました。/);
-        await page.keyboard.press("Escape");
+        await closeConfirmAndReopen(page, null, "escape");
       });
 
       await test.step("出力：選び・入力の欄 0、主ボタン「Excel を出力」1。押すと落ちる", async () => {

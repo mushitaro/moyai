@@ -479,9 +479,18 @@ const INTERMEDIATE: Partial<Record<ToolName, (d: Record<string, unknown>) => boo
   share_preview: (d) => d.mode === "share" && typeof d.planId === "string",
 };
 
+/** 見るだけで開いた版（確定した直後・古い版）のときに断るツール（案・決定・作り直し・資料を入れる）。読むツールは通す */
+const READ_ONLY_REFUSED: readonly ToolName[] = ["intake_settle", "intake_compose", "intake_add_files", "crosswalk_propose", "chart_propose", "photo_transcribe", "reading_rules_propose"];
+
 function runTabToolWith(ws: IntakeWorkspace, name: ToolName, rawArgs: Record<string, unknown>, ctx: TabToolContext): Maybe<TabToolResult> {
   const receiver = TAB_TOOL_RECEIVERS[name];
   if (!receiver) return { ok: false, code: "tool_failed" };
+  const wp = getWorkingPlan();
+  if (wp?.readOnly) {
+    if (READ_ONLY_REFUSED.includes(name)) return { ok: false, code: "plan_read_only" };
+    // 星取表の行は、橋渡しが保管先の確定した版から読む（作業中の計画は無いものとして答える。source: confirmed）
+    if (name === "chart_rows") return { ok: false, code: "no_working_plan" };
+  }
   const def = toolDef(name);
   const args = def.input.safeParse(rawArgs);
   if (!args.success) return { ok: false, code: "tool_failed" };

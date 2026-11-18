@@ -37,6 +37,8 @@ import { Switch } from "../components/Switch";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { setCrosswalkBase } from "../state/crosswalk";
 import { workKeeper } from "../state/work";
+import { showConfirmed, stopWorkAfterConfirm } from "../state/after-confirm";
+import { aiDecisions } from "../../plan/diff";
 import { setAcceptHistory } from "../state/history";
 import type { Decision } from "../../import/questions";
 import { CONFIRMED_SHEETS, STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
@@ -97,6 +99,11 @@ function SourceReading({ ws }: { ws: IntakeWorkspace }) {
   );
 }
 
+/** 開いた版の施設の設定（パック・名前・年度の始まり・架空の印） */
+function settingsOfVersion(s: IntakeWorkspace["settings"], plan: Plan): IntakeWorkspace["settings"] {
+  return { ...s, packId: plan.packId, facilityName: plan.displayName, fiscalYearStartMonth: plan.facility.fiscalYearStartMonth, fictional: plan.facility.fictional };
+}
+
 export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: BridgeClient; sheet: MergeSheet | null }) {
   useWorkspace(ws);
   const working = useWorkingPlan();
@@ -108,6 +115,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [historyOpen, setHistoryOpen] = useState(false);
   const [over, setOver] = useState(false);
   const nextPlan = useRef<Plan | null>(null);
+  // 署名して確定した（確定のダイアログを閉じたら、MOYAI のトップへ戻る。次の版は人が「＋ 次の版」を押したときだけ。運営者の判断 11-18）
+  const confirmedNow = useRef<string | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
   const [side, setSide] = useState<"open" | "signatures" | "source" | "comments">("open");
   // 横の板の開け閉め（この PC に 1 つだけ覚える。シートごとではない）。既定はたたむ。幅は 320px に固定（Wire、11-07）。
@@ -200,12 +209,14 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const openId = open.get("open");
   const openV = Number(open.get("v"));
   const openNext = open.get("next") === "1";
-  const openKey = openId ? `${openId}|${openV}|${open.get("h") ?? ""}|${openNext ? 1 : 0}` : null;
+  // 見るだけで開く（see=1）：いちばん新しい版でも、書ける計画にせず見るだけで出す（署名して確定した直後。運営者の判断 11-18 夜）
+  const openSee = open.get("see") === "1" && !openNext;
+  const openKey = openId ? `${openId}|${openV}|${open.get("h") ?? ""}|${openNext ? 1 : 0}|${openSee ? 1 : 0}` : null;
   const [doneKey, setDoneKey] = useState<string | null>(null);
   const pendingOpen = !!openKey && doneKey !== openKey;
   // 版を開いて、その版の資料と決定を戻し終えるまでは作り直させない（前の版の資料なしで組み直して、明細を消さない）
   useEffect(() => {
-    if (pendingOpen) ws.blockRestore(T.opening(openV));
+    if (pendingOpen) ws.beginRestore(T.opening(openV));
     // 開き終える前にほかのシートへ移ったら、開くのはやめる（止め札だけを残さない）
     else ws.clearBlock(T.opening(openV));
   }, [pendingOpen]);
@@ -238,7 +249,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     const h = open.get("h") ?? "";
     if (h.length < 16 || !info.contentHash?.startsWith(h)) return fail("hash");
     if (info.problem) return fail("broken");
-    if (openV === latest.version) {
+    if (openV === latest.version && !openSee) {
       setWorkingPlan(latest.plan, "intake");
       setOldRecord(null);
       void restoreFrom(openId, latest).catch((e: unknown) => ws.blockRestore(T.sourcesFailed(latest.version, e instanceof Error ? e.message : String(e))));
@@ -258,8 +269,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       );
       if (!r.ok) return fail("version");
       setOldRecord(openNext ? null : { planId: openId, version: openV, plan: r.body.plan, skills: r.body.readingSkills ?? null });
-      // この版から次の版：もとにした版は、保管先のいちばん新しい版（古い版の中身を、その上に重ねる）
-      setWorkingPlan(r.body.plan, "intake", [], openNext ? latest.version : openV);
+      // この版から次の版：もとにした版は、保管先のいちばん新しい版（古い版の中身を、その上に重ねる）。
+      // 見るだけで開いた版（古い版・確定した直後の版）は書き換えない計画として置く（星・案を動かせない。作業中の写しを書かない）
+      setWorkingPlan(r.body.plan, "intake", [], openNext ? latest.version : openV, !openNext);
       setOldView(openNext ? null : { planId: openId, version: openV });
       // 古い版から次の版を作るときは、その版の資料をまだ戻さない（このタブの資料だけで組み直す）。計画 ID は固定する（台帳の新-9）
       ws.pinPlanId(openId);
@@ -297,8 +309,10 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     // 作り直しより先に、版の履歴の確定した削除を置く（下の useEffect を待たない。Architect の 70 の残り）
     setRemovedInHistory(planId, latest.version, st?.accepted ?? []);
     setCrosswalkBase({ version: latest.version, plan: latest.plan, crosswalk: latest.crosswalk ?? [] });
+    // 施設の設定（パック・名前・年度の始まり・架空の印）は開いた版のもの（新しいタブでも、確定した名前で組み直す。前の名前に戻さない。11-18）
+    ws.settings = settingsOfVersion(ws.settings, latest.plan);
     ws.pinPlanId(planId);
-    ws.blockRestore(T.opening(latest.version));
+    ws.beginRestore(T.opening(latest.version));
     setNoSources(null);
     if (!latest.sources) {
       ws.blockRestore(null);
@@ -318,7 +332,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     );
   };
   // 確定したら、その版をもとにした版に置き直し、計画 ID を固定する（同じタブで次の版を作ると「第 n+1 版と同じ」になる。台帳の新-9）
-  const onConfirmed = (p: Plan) => {
+  const onConfirmed = (p: Plan, handedOff: boolean) => {
+    // 自分で確定したときだけ、閉じるとトップへ戻る（渡したときは、頼んだ版のまま下の帯に「まだ開かれていません」と頼み直しを出す。Handoff の絵）
+    if (!handedOff) {
+      confirmedNow.current = p.planId;
+      stopWorkAfterConfirm();
+    }
     nextPlan.current = p;
     const crosswalk = (getWorkingPlan()?.proposals ?? []).filter((x) => x.state === "accepted").map((x) => ({ rule: x.rule, basis: x.basis }));
     setCrosswalkBase({ version: p.version, plan: p, crosswalk });
@@ -429,6 +448,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   }, [questionsKey, openQuestions]);
   // 受けていない決定と、案のままの当てはめの規則（規則が当てている行は決定に二重に数えない。台帳の新-4）
   // 星取の削除の案（計画に無い案。state/stars.ts）も、案のままなら確定を止める
+  // トップの「未確定 n」と同じ数（src/app/state/open-count.ts の openDecisionCount と同じ足し方）
   const leftDecisions = pending.filter((d) => !accepted.has(`${d.id}\u0000${d.hash}`)).length + openRules + openRemovals;
   // 同じ作業に年数の違う周期の案を受けている（確定を止める。Architect の 44、Wire、11-06）
   const cycleDup = useMemo(() => cycleConflicts(plan, accepted).length, [plan, accepted]);
@@ -447,6 +467,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     conn.kind !== "open" ? T.block.notConnected : null,
   ].filter((x): x is string => x !== null);
   const name = plan?.displayName || ws.settings.facilityName || T.newFacility;
+  // 名前の案を確定のシートで受けた（署名の前）：見出しに新しい名前と「確定前」（署名した版から名前が替わる。Wire の AfterConfirm、11-18）
+  const nameDecision = plan?.nameProposal ? aiDecisions(plan).find((d) => d.id === "name:") : undefined;
+  const acceptedName = nameDecision && accepted.has(`${nameDecision.id}\u0000${nameDecision.hash}`) ? plan!.nameProposal!.name : null;
   const fictional = plan ? plan.facility.fictional : ws.settings.fictional;
 
   // 読込中の資料の名前（この画面から入れたもので、読み終わるまで。資料の一覧の「読込中」の行）
@@ -482,6 +505,14 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   };
   const closeAnd = (close: () => void) => () => {
     close();
+    // 署名して確定したあとは、作業中の計画にせず、トップへ戻る（確定した版の行が見える。作業中の写しを書かない）
+    if (confirmedNow.current !== null) {
+      const id = confirmedNow.current;
+      confirmedNow.current = null;
+      nextPlan.current = null;
+      void showConfirmed(client, id);
+      return;
+    }
     if (nextPlan.current && working) setWorkingPlan(nextPlan.current, working.origin);
     nextPlan.current = null;
     reloadStatus();
@@ -602,7 +633,13 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   // 編集の番が人に渡っている（編集を頼んだ・承認待ち・差し戻し）ならその番。番が空いている（確定・承認のあと）なら、次の版を編集中。
   // 「確定済み」は、古い版を見るだけで開いたときだけ
   const turnHeld = !!turn && (turn.state === "editing" || turn.state === "awaitingApproval" || turn.state === "returned");
-  const stateLabel = viewingOld ? (receive ? T.viewOnlyLabel : T.oldVersionLabel) : toReceive ? T.viewOnlyLabel : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
+  // 見ているのが、いちばん新しい確定した版か（署名して確定した直後など）。見出しに「確定（見るだけ）」と「＋ 次の版」
+  const viewingLatest = viewingOld !== null && viewingOld === latestNo && !receive;
+  const topVersion = st?.versions?.at(-1) as { version?: number; contentHash?: string } | undefined;
+  const nextLink = viewingLatest && plan && topVersion?.contentHash ? `${STAGE_HASH.merge}?open=${encodeURIComponent(plan.planId)}&v=${topVersion.version}&h=${topVersion.contentHash.slice(0, 16)}` : null;
+  // 確定した版を見るだけで開いているあいだは、シートを替えても開いたリンク（see=1）を残す（読み込み直しても見るだけの版のまま。勝手に次の版にならない）
+  const keepOpen = openSee && viewingLatest ? `?${location.hash.split("?")[1] ?? ""}` : "";
+  const stateLabel = viewingOld ? (receive ? T.viewOnlyLabel : viewingLatest ? T.confirmedViewLabel : T.oldVersionLabel) : toReceive ? T.viewOnlyLabel : turnHeld && turn ? TEXT.top.state[turn.state] : plan ? TEXT.top.state.editing : null;
   const turnLine: { state: string; text: string } | null = viewingOld
     ? { state: "confirmed", text: T.confirmedLine }
     : turnHeld && turn
@@ -692,6 +729,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       <div className="moyai-merge-head">
         {/* 施設の名前：作業中の計画があり、見るだけでないときは、押してその場で直せる（#56。次に署名した版から効く） */}
         <InlineName name={name} editable={!!plan && viewingOld === null && !awaitingMe && toReceive === null} label={T.renameLabel} />
+        {acceptedName !== null && (
+          <span className="moyai-merge-name-next" data-testid="plan-name-accepted" style={{ color: "var(--shu-text)", fontSize: 13 }}>
+            {T.nameAccepted(acceptedName)}
+          </span>
+        )}
         {/* 第 1 版をつくる前は施設の名前だけ（まだ版が無い。つくる版の番号は下の帯の「第 1 版をつくる」にある。docs/screens.md 3.3 の末尾「写しの照らし」） */}
         {/* 出力・共有のシートは確定した版の番号（確定した版が無ければ版を出さない） */}
         {plan && !(outSheet && confirmedVersion === null) && (
@@ -703,6 +745,12 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           <span className="moyai-merge-state" data-view-only={viewOnly ? "true" : "false"} data-testid="merge-state">
             {stateLabel}
           </span>
+        )}
+        {/* 確定した版を見ているときだけ：次の版は人がこれ（かトップの「＋ 次の版」）を押したときだけ開く（Wire の AfterConfirm の view） */}
+        {nextLink && (
+          <a className="moyai-top-add" href={nextLink} data-testid="merge-next" style={{ marginLeft: 16 }}>
+            {TEXT.top.next}
+          </a>
         )}
         {fictional && <FictionMark />}
         <div className="moyai-merge-head-end">
@@ -763,7 +811,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       <div className="moyai-sheet-tabs moyai-merge-tabs" data-testid="merge-tabs">
         <div className="moyai-merge-tablist" role="tablist">
           {tabs.map((s) => (
-            <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s)} aria-selected={current === s} data-testid={`sheet-${s}`}>
+            <a key={s} role="tab" className="moyai-sheet-tab" href={sheetHash(s) + keepOpen} aria-selected={current === s} data-testid={`sheet-${s}`}>
               {T.sheets[s]}
               {s === "readings" && unapproved > 0 && <span className="moyai-sheet-n moyai-num">{unapproved}</span>}
               {s === "decisions" && leftDecisions > 0 && <span className="moyai-sheet-n moyai-num">{leftDecisions}</span>}
