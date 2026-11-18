@@ -172,3 +172,48 @@ export function f2Rules(): { nodes: Rule[]; works: Rule[] } {
     ],
   };
 }
+
+/**
+ * デモの資料（packs/waste-incineration/demo/、moyai-samples の v4 の f11【架空】さくら坂焼却場）。
+ * 計画の機器は「機器名称 › 整備の考え方 台帳No」の段で読まれ、作業は台帳No の付いた段の節に付く。AI は intake_survey の crosswalk（assetNode.tag の多い値）と
+ * chart_rows の段の道で台帳No と機器の名前を読み、パックの項目に当てる規則を、項目ごとに台帳No の一覧で書く（号炉の 1・2 と、共通の 0 が頭の数字）
+ */
+const both = (...ns: string[]): string[] => ns.flatMap((n) => [`1${n}`, `2${n}`]);
+export const DEMO_TAGS: [string[], string][] = [
+  [["0A-01"], "WI.RECV.SCALE"],
+  [[...both("A-02", "A-03", "A-04"), "0A-04", "0A-05", "0A-07", "0A-08"], "WI.RECV.CRANE"],
+  [both("B-02", "B-03", "B-04", "B-05", "B-06", "B-08"), "WI.COMB.STK_GRATE"],
+  [[...both("B-01", "B-09", "B-10"), "0B-02"], "WI.COMB.STK_FURNACE"],
+  [[...both("C-01", "C-02", "C-03", "C-04", "C-05", "C-06", "C-07", "C-10"), "0C-02"], "WI.COOL.BOILER"],
+  [["0C-08", "0C-09"], "WI.COOL.CONDENSER"],
+  [both("C-12", "C-13", "C-14"), "WI.COOL.WATER_SPRAY"],
+  [both("D-05", "D-06", "D-07", "D-08", "D-09"), "WI.FLUE.DUST"],
+  [[...both("D-01"), "0D-02"], "WI.FLUE.HCL_SOX"],
+  [[...both("D-03"), "0D-04"], "WI.FLUE.DIOXIN"],
+  [both("F-01", "F-02", "F-03"), "WI.DRAFT.FDF"],
+  [both("F-07", "F-08", "F-09", "F-12", "F-14"), "WI.DRAFT.IDF"],
+  [[...both("G-01", "G-02", "G-03"), "0G-01", "0G-02", "0G-04"], "WI.ASHOUT.ASH_CRANE"],
+  [["0G-06", "0G-07", "0G-08", "0G-10", "0G-12", "0G-13"], "WI.ASHOUT.FLYASH_TREAT"],
+  [["0K-06", "0K-07"], "WI.ELEC.SUBSTATION"],
+  [["0K-04"], "WI.ELEC.GENERATOR"],
+  [["0L-01", "0L-02", "0L-03"], "WI.INST.DCS"],
+];
+
+export function demoRules(): { nodes: Rule[]; works: Rule[] } {
+  return {
+    nodes: [
+      ...DEMO_TAGS.flatMap(([tags, c]) => by20(tags).map((part) => node([{ field: "assetNode.tag", op: "in", values: part }], c, `台帳No と機器の名前から、この機器は ${c} の項目の機器`))),
+      // 財務会計の CSV の件名だけにある機器（台帳No が無い）：件名の「火格子補修工事」から、火格子（燃焼装置）の機器
+      node([{ field: "work.kind", op: "contains", values: ["火格子補修工事"] }], "WI.COMB.STK_GRATE", "CSV の件名が火格子の補修工事なので、この機器は燃焼装置（火格子）"),
+    ],
+    works: [
+      attr([{ field: "work.kind", op: "in", values: ["点検", "法定検査"] }], "INSPECT", "作業の名前が点検・法定検査"),
+      attr([{ field: "work.kind", op: "contains", values: ["火格子補修工事"] }], "OVERHAUL", "CSV の件名が火格子の補修工事（摩耗した火格子片の取替を含む整備）"),
+      // 灯油移送ポンプ（0B-02、整備の考え方は「個別」）の印は R5 の「◎済」（分解整備）だけ
+      attr([unnamed, { field: "assetNode.tag", op: "in", values: ["0B-02"] }], "OVERHAUL", "利用者がチャットで、灯油移送ポンプの印は分解整備と答えた"),
+      // 星取表の印だけで名前の無い作業：利用者がチャットで、整備の考え方が「毎年点検」「隔年点検」の機器の印は点検、「分解 1 回」は分解整備と答えた（「個別」は混ざるので置かない）
+      attr([unnamed, namesIn(["毎年点検", "隔年点検"])], "INSPECT", "利用者がチャットで、毎年点検・隔年点検の機器の印は点検と答えた"),
+      attr([unnamed, namesIn(["分解 1 回"])], "OVERHAUL", "利用者がチャットで、分解 1 回の機器の印は分解整備と答えた"),
+    ],
+  };
+}
