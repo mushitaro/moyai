@@ -35,8 +35,8 @@
 
 ## 5 つの分け方の報告
 
-- 試験とビルドが通った：手元（Linux）で typecheck・build・check-publish（当たり 0）・`tests/contract`（10 ファイル）・`tests/unit/screen-set.test.ts`（22）・skill-scores の確かめが通った。全部の試験は PR #145 の CI で見る（手元の `heldout` の 5 つは、この clone にタグ `reader-freeze-*` が無いための落ちで、#140 と同じ）。
-- 画面で動いた：e2e（Linux の Chrome）で、MCP の `screen_set` → 設定の「困りごと」に案と送る全文 → 人が「送る」→ 試験の台の受け口 → 偽の GitHub の Issue まで。Edge（windows の CI）は CI で見る。
+- 試験とビルドが通った：手元（Linux）で typecheck・build・check-publish（当たり 0）・`tests/contract`（10 ファイル）・`tests/unit/screen-set.test.ts`（22）・skill-scores の確かめが通った。PR #145 の CI（`5446944`）で test（ubuntu・windows）・e2e（ubuntu・windows）・pack-bench・scenario がどれも緑。手元の全部の試験は 2216 通過・5 落ち（手元の `heldout` の 5 つは、この clone にタグ `reader-freeze-*` が無いための落ちで、#140 と同じ）。
+- 画面で動いた：e2e（Linux の Chrome）で、MCP の `screen_set` → 設定の「困りごと」に案と送る全文 → 人が「送る」→ 試験の台の受け口 → 偽の GitHub の Issue まで。CI の e2e（windows）も緑。
 - Claude Code で端から端まで通った：未確認（本物の会話で、GitHub を使わずに案を置くかは確かめていない）。
 - Windows の実機で動いた：未確認。
 - Excel で開いて見やすかった：関係なし。
