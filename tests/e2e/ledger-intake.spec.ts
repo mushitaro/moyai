@@ -14,7 +14,7 @@ import { handleRequest } from "../../services/ledger-intake/src/handler";
 import { packOf } from "../../services/ledger-intake/src/packs";
 import { LEDGER_BUNDLE_PATH, readLedgerDir, verifyLedgerFiles, type LedgerFile } from "../../src/share/ledger";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { E2E_NAME, PROFILE_ANSWERED, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, PROFILE_ANSWERED, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 import { fakeLedgerGitHub, memoryKv, type FakeLedgerGitHub } from "../helpers/intake-github";
 
 /** 試験だけのトークン（本物ではない） */
@@ -109,7 +109,7 @@ test("SHARE で GitHub につながずに、署名して、受け口から公開
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
-    await page.getByTestId("confirm-close").click();
+    await closeConfirmAndReopen(page);
     await page.getByTestId("sheet-share").click();
     await expect(page.getByTestId("checkpoint-page")).toBeVisible();
   });

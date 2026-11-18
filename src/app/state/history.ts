@@ -29,6 +29,14 @@ const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
+/** その計画の受けた決定（まだ読んでいない・ほかの計画なら null） */
+export function acceptHistoryOf(id: string): readonly Acceptance[] | null {
+  return planId === id ? list : null;
+}
+
+/** 履歴が変わったら知らせる（作業中の写しの未確定の数を書き直す） */
+export const subscribeAcceptHistory = subscribe;
+
 /** 履歴が変わったら描き直す */
 export function useAcceptHistory(): readonly Acceptance[] {
   return useSyncExternalStore(subscribe, () => list, () => list);

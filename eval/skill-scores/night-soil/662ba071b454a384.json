@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "night-soil",
+  "suite": "night-soil",
+  "suiteSha": "a6b5224742b58837d53797cb801d3757c78da5ed904f9bd68e153e56a2da0de9",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "dac56b580ddf0b02a2a1ee201dd2f479bfb1d6f936e5ae4bfbb293b337d193b4"
+    },
+    {
+      "path": "packs/night-soil/SKILL.md",
+      "sha256": "a487ba26d38ca6614d7e55a66024168a3e0e35ea2bb132b1b890d53f25a7028e"
+    }
+  ],
+  "skillSha": "662ba071b454a384dc3bb2a9856a2e0a861eed321fd8239b097b7de267a002f6",
+  "label": "PR #143 の文（main の #139〜#141 の 1 段目の文と #138 の文を合わせたもの）",
+  "at": "2026-11-18T08:55:39.292Z",
+  "cases": 95,
+  "answered": 95,
+  "pass": 95,
+  "runs": [
+    {
+      "solver": "solver-a",
+      "pass": 95,
+      "failing": []
+    },
+    {
+      "solver": "solver-b",
+      "pass": 95,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 5,
+      "total": 5
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 95,
+      "total": 95
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 90,
+      "total": 90
+    }
+  },
+  "failing": []
+}

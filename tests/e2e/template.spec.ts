@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 
 let bridge: StartedBridge;
 let work = "";
@@ -73,7 +73,7 @@ test("利用者の様式の見出しから列対応を読み、決まってい�
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
-    await page.keyboard.press("Escape");
+    await closeConfirmAndReopen(page, null, "escape");
   });
 
   await test.step("EXPORT：未定の列がある様式は、列対応が読むだけの字で出る。未定の列は様式のまま残すので、主ボタンは止まらない", async () => {

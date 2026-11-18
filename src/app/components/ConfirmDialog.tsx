@@ -176,7 +176,8 @@ export function ConfirmDialog({
   plan: Plan;
   opened: boolean;
   onClose: () => void;
-  onConfirmed: (plan: Plan) => void;
+  /** handedOff：渡した（編集・承認を頼んだ）とき true。自分で確定したときだけ、閉じるとトップへ戻る（運営者の判断 11-18） */
+  onConfirmed: (plan: Plan, handedOff: boolean) => void;
   /** 次の版に重ねるための資料と決定（1C・重-2）。写真のある版や資料の無い版は null */
   /** 聞いた数（2A） */
   intake?: () => { questions: number; decisions: { human: number; ai: number; ai_relayed_human: number; rule_code: number } } | null;
@@ -290,7 +291,7 @@ export function ConfirmDialog({
     // 送った削除を履歴に足す（橋渡しの状態を読み直す前に作り直しても、消した星取が戻らないように。Architect の 70 の残り）
     noteCommittedRemovals(plan.planId, r.body.version, sentRemovals);
     // 確定したら、前の作業の写しを消す（pwa-v0）
-    onConfirmed(r.body.plan);
+    onConfirmed(r.body.plan, ask !== "self");
   };
 
   return (
