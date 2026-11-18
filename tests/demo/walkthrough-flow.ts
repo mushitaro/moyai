@@ -495,7 +495,8 @@ export function walkthrough(lang: Lang): void {
         await pa.getByTestId("confirm-submit").click();
         await expect(pa.getByTestId("confirm-done")).toContainText(W.doneSelf(2));
         await pa.keyboard.press("Escape");
-        await expect(pa.getByTestId("moyai-top")).toBeVisible();
+        // 閉じると HOSHITORI のまま、確定した版を見るだけで出す（運営者の判断 11-18 夜）
+        await expect(pa.getByTestId("merge-state")).toHaveAttribute("data-view-only", "true", { timeout: 30_000 });
       });
 
       await test.step("6 古い版から次の版：トップで第 1 版の印のメニュー →「この版から次の版」。第 2 版から変わった所が朱になる", async () => {
@@ -562,7 +563,8 @@ export function walkthrough(lang: Lang): void {
         await pa.getByTestId("confirm-submit").click();
         await expect(pa.getByTestId("confirm-done")).toContainText(W.doneSelf(1));
         await pa.keyboard.press("Escape");
-        await expect(pa.getByTestId("moyai-top")).toBeVisible();
+        // 閉じると HOSHITORI のまま、確定した版を見るだけで出す（運営者の判断 11-18 夜）
+        await expect(pa.getByTestId("merge-state")).toHaveAttribute("data-view-only", "true", { timeout: 30_000 });
         await pa.goto(`${one.base}/#/`);
         await expect(pa.getByTestId("moyai-row")).toHaveCount(2);
         await expect(pa.getByTestId("moyai-branch")).toHaveCount(1);

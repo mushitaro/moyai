@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmToTop } from "../helpers/e2e";
+import { E2E_NAME, acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmToView } from "../helpers/e2e";
 
 
 let bridge: StartedBridge;
@@ -44,7 +44,7 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
-    await closeConfirmToTop(page, "escape");
+    await closeConfirmToView(page, "escape");
   });
 
   const source = readdirSync(join(root, "plans"))[0]!;
@@ -71,7 +71,7 @@ test("トップの版の印から別の施設をつくり、第 1 版に元を�
     await page.getByTestId("confirm-reason").fill("元の施設の第 1 版から作った（e2e）");
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
-    await closeConfirmToTop(page, "escape");
+    await closeConfirmToView(page, "escape");
     const plans = readdirSync(join(root, "plans")).sort();
     expect(plans).toHaveLength(2);
     const derived = plans.find((p) => p !== source)!;

@@ -273,6 +273,13 @@ export const ERRORS = {
     http: 200,
     text: "The user has not opened the comparison with similar facilities on the star chart screen yet. Ask the user to open the comparison with similar facilities on a common equipment item row of the star chart (a person chooses on the screen which place and profile to compare).",
   },
+  // 作業画面が、保管先の版を見るだけで出している（確定した直後の版・古い版）。案・決定・作り直しは置かない
+  plan_read_only: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "The work screen is showing a confirmed version read only (just after confirming, or an older version). Nothing was placed or changed. To change it, ask the user to press \"+ Next version\" (in the HOSHITORI header or on the MOYAI top screen) to open a working plan; the AI cannot open it. Reply in the user's language.",
+  },
   no_working_plan: {
     from: "tab",
     to: "ai",

@@ -443,6 +443,8 @@ export const TEXT = defineMessages(EN_TEXT, {
     peersOn: "比較",
     peersOff: "戻す",
     oldVersionLabel: "古い版（見るだけ）",
+    /** 署名して確定した直後の、いちばん新しい版を見るだけで出しているとき（運営者の判断 11-18 夜） */
+    confirmedViewLabel: "確定（見るだけ）",
     /** 頼みをほかの鍵が受け取っていた・頼みが取り下げられていたリンクで開いたとき（古い版ではない。Wire の B1） */
     viewOnlyLabel: "見るだけ",
     confirmedLine: "確定済み",

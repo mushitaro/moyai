@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { attr, f1Rules } from "../fixtures/crosswalk/rules";
-import { acceptDecisions, acceptRules, callTool as call, chooseFirstSource, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
+import { acceptDecisions, acceptRules, callTool as call, chooseFirstSource, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen, closeConfirmToView } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（AI と人）";
 const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
@@ -360,7 +360,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 3 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click(); await expect(page.getByTestId("moyai-top")).toBeVisible();
+      await closeConfirmToView(page);
       // トップの版の印のメニューで第 2 版を「開く」（見るだけ）
       await page.goto(`${bridge.base}/#/`);
       await page.locator('[data-testid="moyai-mark"][data-version="2"]').click();

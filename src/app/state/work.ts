@@ -178,6 +178,8 @@ export class WorkKeeper {
     const gen = this.generation;
     const w = getWorkingPlan();
     if (w && w.origin !== "intake") return;
+    // 見るだけで開いた版（確定した直後・古い版）は、作業中の写しを書かない（保管先に版がある。トップに「作業中」を出さない）
+    if (w?.readOnly) return;
     const ws = this.o.ws;
     // 計画をまだ作っていなくても、資料が入っていれば資料と答えを残す（資料の紐づきを切らない）
     // Skillパックは無くてよい（パックなしで読む。#67）。施設の名前が無ければ、置き場所が決まらないので書かない

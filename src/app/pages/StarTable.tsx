@@ -35,7 +35,7 @@ import { compareCounts, marksOf } from "../../plan/chart-compare";
 import { useConnection } from "../state/bridge";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan, type PlanOrigin } from "../state/plan-store";
 import { useDisplayPrefs } from "../state/screen";
-import { leaveToTop, stopWorkAfterConfirm } from "../state/after-confirm";
+import { showConfirmed, stopWorkAfterConfirm } from "../state/after-confirm";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { INLINE_TEXT } from "../text/inline";
 
@@ -402,7 +402,7 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
       const id = confirmedNow.current;
       confirmedNow.current = null;
       nextPlan.current = null;
-      return void leaveToTop(client, id);
+      return void showConfirmed(client, id);
     }
     if (nextPlan.current) setWorkingPlan(nextPlan.current, origin);
     nextPlan.current = null;
@@ -598,6 +598,8 @@ function Chart({ plan, origin, embedded }: { plan: Plan; origin: PlanOrigin; emb
   };
   /** そのセルの、動かせる計画の作業（計画だけの 1 作業のとき。今の年度より前は動かさない） */
   const movableWork = (rowId: string, periodKey: string): { workKey: string; fy: number } | null => {
+    // 見るだけで開いた版（確定した直後・古い版）は動かせない
+    if (getWorkingPlan()?.readOnly) return null;
     const fy = fyOf(periodKey);
     const row = model.rows.find((r) => r.id === rowId);
     const cell = row?.cells[periodKey];

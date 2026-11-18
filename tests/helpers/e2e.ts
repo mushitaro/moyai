@@ -216,22 +216,21 @@ export function PROFILE_ANSWERED<P extends { facility: Record<string, unknown> }
 }
 
 /**
- * 署名して確定し、確定のダイアログを閉じる。閉じると MOYAI のトップへ戻る（運営者の判断 2026-11-18）。
- * 続けて HOSHITORI（出力・共有のシートなど）を使う台本は、トップの行の「＋ 次の版」で、いちばん新しい版を開き直す（人と同じ道）
+ * 署名して確定し、確定のダイアログを閉じる。閉じると HOSHITORI のまま、確定した版を見るだけで開き直す（運営者の判断 2026-11-18 夜）。
+ * 続けて次の版を編集する台本は、見出しの「＋ 次の版」で開き直す（人と同じ道）
  */
-export async function closeConfirmToTop(page: Page, how: "button" | "escape" = "button"): Promise<void> {
+export async function closeConfirmToView(page: Page, how: "button" | "escape" = "button"): Promise<void> {
   const loaded = page.waitForEvent("load");
   if (how === "button") await page.getByTestId("confirm-close").click();
   else await page.keyboard.press("Escape");
   await loaded;
-  await expect(page.getByTestId("moyai-top")).toBeVisible();
+  await expect(page.getByTestId("merge-state")).toHaveAttribute("data-view-only", "true", { timeout: 30_000 });
 }
 
-export async function closeConfirmAndReopen(page: Page, planId: string | null = null, how: "button" | "escape" = "button"): Promise<void> {
-  await closeConfirmToTop(page, how);
-  const row = planId ? page.locator(`[data-testid="moyai-row"][data-plan="${planId}"]`) : page.getByTestId("moyai-row").first();
-  await row.getByTestId("moyai-next").click();
-  await expect(page.getByTestId("merge-version")).toBeVisible({ timeout: 30_000 });
+export async function closeConfirmAndReopen(page: Page, _planId: string | null = null, how: "button" | "escape" = "button"): Promise<void> {
+  await closeConfirmToView(page, how);
+  await page.getByTestId("merge-next").click();
+  await expect(page.getByTestId("merge-state")).toHaveAttribute("data-view-only", "false", { timeout: 30_000 });
 }
 
 /** 試験の台本が版に署名するときの呼び名（架空） */
