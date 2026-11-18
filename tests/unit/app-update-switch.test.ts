@@ -83,7 +83,11 @@ async function autoUpdate(root: string, running: string, run: Run, origin: strin
   const before = JSON.stringify(lastPrepare(root));
   const state = await autoCheckOnce({ root, running, run, sourceForTest: origin }, () => true, (latest) => (told = latest));
   // 用意が終わる（last-prepare.json が書き替わる）まで待つ
-  if (state === "started") for (let i = 0; i < 500 && JSON.stringify(lastPrepare(root)) === before; i++) await new Promise((r) => setTimeout(r, 20));
+  if (state === "started") {
+    // 混んだ Windows の CI でも待てるように長めに。終わらなければ、その旨で落とす（あとの確かめで紛らわしく落ちない）
+    for (let i = 0; i < 3000 && JSON.stringify(lastPrepare(root)) === before; i++) await new Promise((r) => setTimeout(r, 20));
+    expect(JSON.stringify(lastPrepare(root)), "用意が 60 秒で終わらない").not.toBe(before);
+  }
   await new Promise((r) => setTimeout(r, 0));
   return { state, told };
 }

@@ -35,7 +35,7 @@
 
 ## 5 つの分け方の報告
 
-- 試験とビルドが通った：手元（Linux）で、ビルド・型の検査・公開の前の検査（当たり 0）・`node scripts/run-tests.mjs`（vitest 2,226 通過。落ちた 5 と node:test の落ちた 2 は、浅い clone で履歴とタグを見る試験。履歴を全部取ってから走らせ直して、vitest の heldout 6 通過・node:test 237 通過 0 落ち）。足した vitest：app-update-switch 3・connect-https 2・human-guide 4。CI は PR で見る。
+- 試験とビルドが通った：手元（Linux）で、ビルド・型の検査・公開の前の検査（当たり 0）・`node scripts/run-tests.mjs`（vitest 2,226 通過。落ちた 5 と node:test の落ちた 2 は、浅い clone で履歴とタグを見る試験。履歴を全部取ってから走らせ直して、vitest の heldout 6 通過・node:test 237 通過 0 落ち）。足した vitest：app-update-switch 3・connect-https 2・human-guide 5。CI は PR で見る。
 - 画面で動いた：未確認。e2e（connect-maximo.spec）と受け入れの 2 つ目（橋渡しの設定の画面）は、橋渡しを 127.0.0.1 に起こすので手元で走らせていない。CI の ubuntu・windows で見る。
 - Claude Code で端から端まで通った：未確認。
 - Windows の実機で動いた：未確認（CI の windows の仕事で見る。実機ではない）。
@@ -49,6 +49,17 @@
 - 新しい仕事 `install`（windows・ubuntu）：依存とビルド（今の e2e の仕事と同じ）に加えて、setup の版のフォルダでの `npm ci` と `npm run build`。ほかの仕事と並んで走る。時間は CI で測って PR に書く。
 - e2e の仕事：connect-maximo.spec 1 本（計画を作って確定し、PM を 400 件ほど書く。connect.spec と同じくらいの見込み）。
 - test の仕事：connect-https の 2 件（数秒）。
+
+## 見直し（別の役が差分だけを読んだ）
+
+CI を落とす誤りは無し。e2e の数（足す・変える・送った数）は src の数え方と合う、とのこと。直したもの：
+- macOS では、部品の SecretBox が利用者のキーチェーンの項目（"MX Stage"）に鍵を置き、一時の HOME では分けられない → connect-https と connect-maximo.spec は macOS で走らせない（CI に macOS は無い）。
+- connect-https は、CI で部品の /testing が無ければ落とす（黙って飛ばさない）。
+- 受け入れの 2 つ目：入れた橋渡しの自動の確かめ（起動の 60 秒あと）が本物の mushitaro/moyai を取りに行かないよう、一時の設定で「最新の確かめ」を切る。
+- app-update-switch：用意の待ちを 60 秒にし、終わらなければその旨で落とす。
+- connect-https の 2 つ目：落ちた理由が通信の誤り（MaximoNetworkError）で、偽の Maximo に HTTP の要求が 1 つも届いていない（TLS の握手で断った）ことを見る。
+- human-guide：一時の抜けは 10 から増やせない。
+- 直さなかったもの：一時の抜けの「書いたら移す」は、決めた語に合う文にしか効かない（語は困りごとの PR と #146 で文に合わせる）。
 
 ## 守ったこと
 

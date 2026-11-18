@@ -110,6 +110,10 @@ describe("人だけの操作の案内（AI 向けの文）", () => {
     expect(hasLine([/Only a person confirms, sends, promotes and saves, on the screen/, /there are no tools for these/])).toBe(true);
   });
 
+  it("一時の抜け（PENDING）は増やさない（今の 10 から減るだけ）。新しい経路は GUIDE か NO_GUIDE に入れる", () => {
+    expect(Object.keys(PENDING).length, "新しい人だけの経路は、案内を書いて GUIDE に入れる（PENDING に足さない）").toBeLessThanOrEqual(10);
+  });
+
   it("一時の抜け（PENDING）は、まだ案内が無いものだけ。書いたら GUIDE に移す", () => {
     const written = Object.entries(PENDING)
       .filter(([, g]) => g!.lines.every(hasLine))

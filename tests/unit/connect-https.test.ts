@@ -11,6 +11,10 @@ import { afterEach, describe, expect, it } from "vitest";
 import { eamTesting, maximoSeed, startFakeMaximo, type FakeMaximoServer } from "../helpers/fake-maximo";
 
 const testing = await eamTesting();
+// CI では部品が入っている前提（test の仕事が先に確かめる）。/testing が無ければ、黙って飛ばさずに落とす
+if (!testing && process.env.CI) throw new Error("連携の部品の /testing が読めない");
+// macOS は、部品の SecretBox が利用者のキーチェーンの項目（"MX Stage"）に鍵を置く。一時のフォルダでは分けられないので走らせない（利用者の本物の鍵に触れない）
+const onMac = process.platform === "darwin";
 const cleanups: (() => unknown)[] = [];
 afterEach(async () => {
   for (const c of cleanups.splice(0).reverse()) await c();
@@ -33,15 +37,15 @@ const assets = await loadRecords(client, maximoLoadOptions("asset", { maxRows: 1
 console.log(JSON.stringify({ protection: store.list().protection, keyBack: key === apiKey, assets: assets.records.length, names: assets.records.map((x) => x.attrs.DESCRIPTION) }));
 `;
 
-function child(cwd: string, env: NodeJS.ProcessEnv, args: string[]): Promise<{ code: number; out: string }> {
+function child(cwd: string, env: NodeJS.ProcessEnv, args: string[]): Promise<{ code: number; out: string; err: string }> {
   return new Promise((done) => {
-    execFile(process.execPath, ["--input-type=module", "-e", CHILD, ...args], { cwd, env, encoding: "utf8", timeout: 90_000, windowsHide: true }, (err, stdout) =>
-      done({ code: err ? ((err as { code?: number }).code ?? 1) : 0, out: String(stdout) }),
+    execFile(process.execPath, ["--input-type=module", "-e", CHILD, ...args], { cwd, env, encoding: "utf8", timeout: 90_000, windowsHide: true }, (err, stdout, stderr) =>
+      done({ code: err ? ((err as { code?: number }).code ?? 1) : 0, out: String(stdout), err: String(stderr) }),
     );
   });
 }
 
-describe.skipIf(!testing)("本物の部品で、HTTPS の偽の Maximo を読む（別のプロセス・OS の鍵の守り）", () => {
+describe.skipIf(!testing || onMac)("本物の部品で、HTTPS の偽の Maximo を読む（別のプロセス・OS の鍵の守り）", () => {
   it("保存したつなぎ先のキーを開き、自分で署名した証明書の偽の Maximo を読む。キーは保存のファイルに平文で出ない", async () => {
     const home = mkdtempSync(join(tmpdir(), "moyai-connect-https-"));
     cleanups.push(() => rmSync(home, { recursive: true, force: true }));
@@ -81,5 +85,8 @@ describe.skipIf(!testing)("本物の部品で、HTTPS の偽の Maximo を読む
     const r = await child(process.cwd(), { ...base, HOME: home, USERPROFILE: home }, [join(home, ".config", "mxstage"), srv.origin, srv.apiKey]);
     expect(r.code).not.toBe(0);
     expect(r.out).not.toContain('"assets"');
+    // 落ちた理由は通信（部品は TLS の誤りを MaximoNetworkError に包む。読み込みの誤りではない）で、偽の Maximo には HTTP の要求が 1 つも届いていない（TLS の握手で断った）
+    expect(r.err).toContain("MaximoNetworkError");
+    expect(srv.requests).toEqual([]);
   });
 });

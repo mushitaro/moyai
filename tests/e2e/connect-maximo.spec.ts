@@ -50,6 +50,8 @@ let home = "";
 let work = "";
 
 test.beforeAll(async () => {
+  // macOS は、部品の SecretBox が利用者のキーチェーンの項目（"MX Stage"）に鍵を置く。一時の HOME では分けられないので走らせない（CI に macOS は無い）
+  if (process.platform === "darwin") return;
   testing = await eamTesting();
   // CI では部品が無ければ落とす（黙って飛ばさない）。手元で部品が入っていなければ飛ばす
   if (!testing) {
@@ -69,6 +71,7 @@ test.afterAll(async () => {
 });
 
 test("本物の部品と偽の Maximo で、つなぎ先を足す → 読む → 確定・署名 → 突合と差分 → 人が送る（テスト環境）", async ({ page }, info) => {
+  test.skip(process.platform === "darwin", "macOS は利用者のキーチェーンに触れるので走らせない");
   test.skip(!testing, "連携の部品が入っていない（手元だけ。CI では落ちる）");
   test.setTimeout(600_000);
   const b = bridge!;

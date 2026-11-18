@@ -12,7 +12,7 @@
 // 127.0.0.1 への HTTP は、今の e2e の道具と同じく、自分で起こした橋渡しの画面を開くことと中継だけ。
 // 走らせ方：npm run build のあと npx playwright test -c playwright.acceptance.config.ts（CI の install の仕事）
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -169,6 +169,9 @@ test("moyai setup --yes：CI のコミットを版のフォルダに入れ（本
 test("起動の台本から起こした橋渡しで、設定の「連携」が出る（部品を読めた）。起動の台本の中継から MOYAI のツールが出る", async ({ page }) => {
   test.setTimeout(5 * 60_000);
   expect(existsSync(join(app, "launch.cjs")), "前の試験で入れた版が要る").toBe(true);
+  // 自動の確かめ（起動の 60 秒あと）が本物の mushitaro/moyai を取りに行かないよう、設定の「最新の確かめ」を切る（外の main は取らない）
+  const settingsFile = join(env.MOYAI_STATE_DIR!, "settings.json");
+  writeFileSync(settingsFile, `${JSON.stringify({ ...JSON.parse(readFileSync(settingsFile, "utf8")), autoUpdate: false }, null, 2)}\n`);
   const port = await freePort();
   // Claude Desktop と同じく node <appRoot>/launch.cjs で起こす（版を選び、その版の dist/cli.js に同じ引数を渡す）
   bridge = spawn(process.execPath, [join(app, "launch.cjs"), "start", "--port", String(port), "--no-open"], { cwd: tmp, env, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
