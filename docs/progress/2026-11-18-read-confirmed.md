@@ -32,6 +32,14 @@
 - 直した：`tests/unit/tool-forwarding.test.ts`・`tests/unit/tool-relay-ledger.test.ts` のふりのタブの答えに `source: "working"` を足した（型が source を求めるため）。断る試験（上限を越えた行は tab_bad_result）はそのまま。
 - 手元（Linux）：`npm run typecheck`・`npm run build`・`scripts/check-publish.mjs`（当たり 0）・`scripts/run-tests.mjs`（vitest 2152 通過・9 飛ばし・落ちた 0。node:test も通過）。
 
+## Skill の文の採点（docs/autonomy.md「Skill の文を変える PR」）
+
+1 段目の文（instructions と流れ）を変えたので、CI の `scripts/skill-scores/check.mjs` が、2 つのパックの今の文の記録が無いとして落ちた（統括が知らせた）。手順どおりに、正解を見ていない別々の解く役（子のエージェント）が、書き出したフォルダだけを読んで解き、コードで採点した。
+
+- し尿処理：95/95・95/95 → 記録 `eval/skill-scores/night-soil/49c45a7044df2eaf.json`（main 95/95 → 95/95）
+- ごみ焼却：最初の組は 100/100・97/100 で割れた（記録を作らない）。違いは 3 問とも R03 の「計画の年数」の検査の出典（パックの文が「表Ⅱ-12 を挙げつつ、年数は app の目安」と書くので、URL と null の 2 通りに読める。解く役 2 つとも迷いとして知らせた。この PR で変えていない 2 段目の文）。新しい 2 つの役で解き直して 100/100・100/100 → 記録 `eval/skill-scores/waste-incineration/173da9c1d8ddbc60.json`（main 100/100 → 100/100）
+- 手元で `node scripts/skill-scores/check.mjs --base origin/main` が通った。
+
 ## 5 つの分け方の報告
 
 - 試験とビルドが通った：手元（Linux）で上のとおり。e2e（ubuntu・windows）・pack-bench・scenario は PR の CI で見る。
@@ -47,4 +55,5 @@
 ## 次の一手
 
 - 運営者の M-PC3 で、確定版だけがある状態で「データを見て工場の名前を正しくして」を通す（intake_survey が確定版を知らせ、chart_rows で読み、"+ Next version" を押すよう頼む流れ）。
+- ごみ焼却の 2 段目の文の「計画の年数」の出典の書き方が 2 通りに読める（採点が割れた）。直すなら別の PR で（2 段目の文の変更なので採点し直す）。
 - 確定版の行に施設の見せ方（行の並べ替え）を効かせるかは未定（見せ方は作業画面のブラウザにある。要るなら作業画面が見せ方を渡す形にする）。
