@@ -126,3 +126,58 @@ test("設定の「困りごと」：全文を見せ、人が「送る」を押�
     await c.close();
   }
 });
+
+test("Chat で開発の要件を頼まれたとき：Claude は screen_set の feedbackDraft で案を置き（GitHub に書く道具は無い）、設定の「困りごと」に出る → 人が「送る」（2026-11-18 の困りごと）", async ({ page }, info) => {
+  test.setTimeout(180_000);
+  const tag = info.project.name;
+  const root = join(work, tag, "置き場所-chat");
+  received.length = 0;
+  gh.issues.length = 0;
+  const c = await mcpClient(bridge.stateDir, ["screen_set"]);
+  const DRAFT = "開発の要件：Chat から MOYAI への要望を送れるようにしたい";
+  try {
+    await chooseRoot(page, bridge.base, root);
+    await test.step("Claude の道具に、送るもの・GitHub に書くものは無い。説明に GitHub に直接書かない決まりがある", async () => {
+      const { tools } = await c.listTools();
+      expect(tools.map((t) => t.name).filter((n) => /send|feedback|github|issue|pull|comment/i.test(n))).toEqual([]);
+      const d = tools.find((t) => t.name === "screen_set")?.description ?? "";
+      expect(d).toContain("never write them to GitHub (issues, pull requests, comments) yourself");
+    });
+
+    await test.step("星取表などほかの画面から：行の値や道を含む案は置かれず、画面も欄も変わらない", async () => {
+      const top = await call(c, "screen_set", { go: "top" });
+      expect(top.changed).toEqual(["go"]);
+      const r = await call(c, "screen_set", { feedbackDraft: "C:\\計画\\台帳.xlsx の 120,000 円が出ない" });
+      expect(r.refused).toEqual([expect.objectContaining({ item: "feedbackDraft", reason: "feedback_values" })]);
+      expect(JSON.stringify(r)).not.toContain("台帳.xlsx");
+      await expect(page.getByTestId("app-feedback")).toHaveCount(0);
+      expect(received).toHaveLength(0);
+    });
+
+    await test.step("案を置くと設定が開き、「困りごと」の欄に案と送る全文が出る。答えは利用者に言う文を返す。送られていない", async () => {
+      const r = await call(c, "screen_set", { feedbackDraft: DRAFT });
+      expect(r.refused).toEqual([expect.objectContaining({ item: "feedbackDraft", reason: "feedback_human_send" })]);
+      expect(r.refused[0].text).toContain("I put a draft in the Feedback field of Settings. Read the full text and press Send");
+      expect(r.current.go).toBe("settings");
+      await expect(page.getByTestId("app-feedback-note")).toHaveValue(DRAFT);
+      await expect(page.getByTestId("app-feedback-claude")).toHaveText("- Claude の入力");
+      const full = JSON.parse((await page.getByTestId("app-feedback-text").textContent()) ?? "");
+      expect(full).toMatchObject({ schema: "moyai.app-feedback/0", note: DRAFT, screen: "top" });
+      await expect(page.getByTestId("app-feedback-send")).toBeEnabled();
+      expect(received).toHaveLength(0);
+      expect(gh.issues).toHaveLength(0);
+      await page.screenshot({ path: shot(`app-feedback-chat-${tag}`), fullPage: true });
+    });
+
+    await test.step("人が「送る」を押したときだけ、受け口が Issue（feedback:app）を 1 つ出す", async () => {
+      const shown = (await page.getByTestId("app-feedback-text").textContent()) ?? "";
+      await page.getByTestId("app-feedback-send").click();
+      await expect(page.getByTestId("app-feedback-sent")).toHaveText("✓ 送信　Issue #1");
+      expect(received).toEqual([`/app-feedback ${shown}`]);
+      expect(gh.issues).toHaveLength(1);
+      expect(gh.issues[0]!.labels).toEqual(["feedback:app"]);
+    });
+  } finally {
+    await c.close();
+  }
+});
