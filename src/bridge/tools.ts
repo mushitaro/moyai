@@ -7,6 +7,10 @@
 import { createHash, randomBytes } from "node:crypto";
 import { errorBody, type ErrorBody, type ErrorCode } from "../shared/errors";
 import {
+  CHART_ROWS_CONFIRMED_NOTE,
+  CONFIRMED_REFUSED_TEXT,
+  CONFIRMED_SURVEY_MAX,
+  CONFIRMED_SURVEY_NOTE,
   DEMO_MIXED_NOTE,
   INTAKE_ADD_MAX_REFUSED,
   INTAKE_ADD_NOTE,
@@ -28,6 +32,11 @@ import {
   type ToolName,
 } from "../shared/tools";
 import type { IntakeCollection } from "./intake-files";
+import type { ConfirmedLatest } from "./human";
+import { aiChartRows, aiWorkRows } from "../plan/ai-rows";
+import { fiscalYearOf } from "../import/era";
+import { withLang } from "../app/text/i18n";
+import { tokyoYmd, versionName } from "../app/version-name";
 import { pageSurvey } from "./survey-page";
 import { HEARTBEAT_MS, type TabHub } from "./tab";
 
@@ -62,6 +71,11 @@ export interface BridgeTools {
   storage_root?: (path: string) => Promise<{ valid: string | null; current: string | null }>;
   /** 入っている MOYAI の更新（check・prepare。src/bridge/app-update.ts。#65） */
   moyai_update?: (args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+  /**
+   * 保管先の確定・署名した最新の版（AI が読むだけ。署名と鎖を確かめて合う版だけ。human.ts の confirmedLatest）。
+   * 作業中の計画が無いときの chart_rows と、intake_survey の confirmed に使う。保管先が無ければ null
+   */
+  confirmed_latest?: () => Promise<{ ok: ConfirmedLatest[]; refused: { planId: string; reason: "historyBroken" | "historyVanished" }[] } | null>;
 }
 
 /** intake_survey（show: true）で、橋渡しが開いた新しいタブが引き継ぐのを待つ上限 */
@@ -352,6 +366,16 @@ export class ToolRelay {
     // show: true で開いたのにタブがつながらなかったときは、利用者に開いたタブを見てもらう（もう 1 つ開かせない）
     if (out.kind === "no_tab") return fail(shown?.opened ? "work_screen_not_connected" : "work_screen_not_open");
     if (out.kind === "no_answer") return fail("tab_no_answer");
+    // 作業中の計画が無い：星取表の行は、保管先の確定・署名した最新の版から読む（読むだけ。署名と鎖が合わなければ理由を返す）
+    if (out.kind === "error" && out.code === "no_working_plan" && name === "chart_rows") {
+      const c = await this.confirmedRows(sendArgs, remaining);
+      if (c === null) return fail(out.code);
+      if (typeof c === "string") return fail(c);
+      const p = def.output.safeParse(c);
+      if (!p.success) return fail("tab_bad_result");
+      setRows((p.data.rows as unknown[]).length);
+      return { ok: true, data: p.data as Record<string, unknown> };
+    }
     if (out.kind === "error") return fail(out.code);
     if (BRIDGE_TOOL_RECEIVERS[name] === "tab_then_bridge") {
       const h =
@@ -384,6 +408,13 @@ export class ToolRelay {
     }
     // 取り込みの見本の行（見本・詰まっている所の行と見出し）も、会話の行の上限に数える（台帳の中-11）。残りを越える分は渡さない
     if (name === "intake_survey") {
+      // 要約（part: all）には、保管先の確定した版の一覧の要約を足す（作業中の計画が無くても、確定した版があると分かるように）。
+      // 確定した版も読まなかった施設も無ければ載せない。大きさの上限に数えるので、収める前に足す
+      delete data.confirmed;
+      if ((typeof args.part === "string" ? args.part : "all") === "all") {
+        const confirmed = await this.confirmedSurvey();
+        if (confirmed) data.confirmed = confirmed;
+      }
       // 先に答えの大きさを上限の内に収める（質問を分け、同じ形の要約と続きを読む道を添える）。行は、収めたあとに残ったものを数える
       data = pageSurvey(data, {
         part: typeof args.part === "string" ? args.part : "all",
@@ -438,6 +469,65 @@ export class ToolRelay {
     // 1 回渡すと使い終わる（もう一度渡すには、人がもう一度許す）
     mine?.delete(data.imageRef);
     return { ok: true, data, image: image.data };
+  }
+
+  /**
+   * 作業中の計画が無いときの chart_rows：保管先の確定・署名した最新の版の行（作業画面と同じ関数 src/plan/ai-rows.ts で作る。並びは計画の順）。
+   * planId を渡せばその施設、省けばいちばん新しく署名した版。確定した版が無ければ null（作業中の計画が無い、のまま返す）。
+   * 合わない版は読まない（history_broken・history_vanished）
+   */
+  private async confirmedRows(args: Record<string, unknown>, remaining: number): Promise<Record<string, unknown> | ErrorCode | null> {
+    const list = this.bridgeTools.confirmed_latest ? await this.bridgeTools.confirmed_latest() : null;
+    if (!list) return null;
+    const want = typeof args.planId === "string" ? args.planId : null;
+    const refusedCode = (r: { reason: "historyBroken" | "historyVanished" }): ErrorCode => (r.reason === "historyVanished" ? "history_vanished" : "history_broken");
+    const hit = want === null ? list.ok[0] : list.ok.find((p) => p.planId === want);
+    if (!hit) {
+      const r = want === null ? list.refused[0] : list.refused.find((x) => x.planId === want);
+      return r ? refusedCode(r) : null;
+    }
+    const offset = Number(args.offset ?? 0);
+    const limit = Number(args.limit);
+    const r =
+      typeof args.rowRef === "string"
+        ? aiWorkRows(hit.plan, args.rowRef, offset, limit, remaining)
+        : aiChartRows(hit.plan, hit.catalog.catalog ?? hit.catalog.empty, args.view === "base" ? "base" : "adjusted", {}, offset, limit, remaining);
+    return {
+      rows: r.rows,
+      total: r.total,
+      remainingInConversation: remaining - r.rows.length,
+      version: hit.version,
+      source: "confirmed",
+      confirmed: { planId: hit.planId, facilityName: hit.plan.displayName, version: hit.version, versionName: confirmedName(hit) },
+      note: CHART_ROWS_CONFIRMED_NOTE,
+    };
+  }
+
+  /** intake_survey の confirmed：保管先の確定・署名した最新の版の一覧の要約（施設の名前・年度・第 n 版・機器と作業の数）。保管先が無ければ null */
+  private async confirmedSurvey(): Promise<Record<string, unknown> | null> {
+    const list = this.bridgeTools.confirmed_latest ? await this.bridgeTools.confirmed_latest() : null;
+    if (!list || (list.ok.length === 0 && list.refused.length === 0)) return null;
+    return {
+      plans: list.ok.slice(0, CONFIRMED_SURVEY_MAX).map((p) => {
+        const ymd = p.signedAt ? tokyoYmd(p.signedAt) : null;
+        const start = p.plan.facility.fiscalYearStartMonth;
+        return {
+          planId: p.planId,
+          facilityName: p.plan.displayName,
+          version: p.version,
+          fiscalYear: ymd && typeof start === "number" ? fiscalYearOf(ymd, start) : null,
+          versionName: confirmedName(p),
+          equipment: p.plan.assets.length,
+          works: p.plan.works.length,
+        };
+      }),
+      total: list.ok.length,
+      refused: list.refused.slice(0, CONFIRMED_SURVEY_MAX).map((r) => {
+        const reason = r.reason === "historyVanished" ? ("history_vanished" as const) : ("history_broken" as const);
+        return { planId: r.planId, reason, text: CONFIRMED_REFUSED_TEXT[reason] };
+      }),
+      note: CONFIRMED_SURVEY_NOTE,
+    };
   }
 
   /**
@@ -514,6 +604,11 @@ export class ToolRelay {
       for (const id of ids) this.staged.delete(id);
     }
   }
+}
+
+/** 確定した版の呼び名（トップの版の履歴と同じ「令和 8 年度版（第 1 版）」。AI に返す字は日本語） */
+function confirmedName(p: ConfirmedLatest): string {
+  return withLang("ja", () => versionName(p.version, p.signedAt, p.plan.facility.fiscalYearStartMonth));
 }
 
 /** base64 の文字から、元のバイト数を数える */

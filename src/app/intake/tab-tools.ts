@@ -22,15 +22,15 @@ import {
 import { activeSkills, skillCatalog } from "../skills";
 import { getHandoffMail } from "../state/handoff";
 import { buildChart } from "../../plan/chart";
+import { aiChartRows, aiWorkRows } from "../../plan/ai-rows";
 import { catalogFor, emptyCatalog, packChoices } from "../chart/catalog";
 import { crosswalkSurvey, proposeFromAi } from "../state/crosswalk";
 import { getWorkingPlan } from "../state/plan-store";
 import { checkNameFromAi, proposeNameFromAi, type NameFromAi } from "../state/facility-name";
 import { applyPlanRules, planRuleMarks, proposeCyclesFromAi, watchPlanRules } from "../state/cycles";
 import { checkStarsFromAi, noteTrialReasonFromAi, proposeStarsFromAi } from "../state/stars";
-import { assetKeyOf, fiscalYearOf } from "../../plan/chart";
-import { assetLabels } from "../../plan/asset-names";
-import { workRowRef, type StarIn } from "../../plan/star";
+import { fiscalYearOf } from "../../plan/chart";
+import type { StarIn } from "../../plan/star";
 import { getPeerView } from "../state/peers";
 import { activeRules, dropsWholeFile, isPlanRule, wholeFileUnaimed, type ReadingRule, type ReadingScope } from "../../import/reading";
 import { planRuleStatus, type VerifiedBases } from "../../plan/cycle";
@@ -63,68 +63,22 @@ type Receiver = (ws: IntakeWorkspace, args: Record<string, unknown>, ctx: TabToo
 
 const T = TEXT.intake.ai;
 
-/**
- * 機器の行（n:…）の作業を 1 行ずつ（chart_propose の stars で指すため）：行の id は w:<作業>、欄は機器の段の道・作業の名前・星取のある年度。
- * 機器の行でない id（m:・c:）や無い機器は 0 行
- */
+/** 機器の行（n:…）の作業を 1 行ずつ（作業中の計画。作り方は src/plan/ai-rows.ts で、橋渡しが確定した版を読むときと同じ） */
 function workRows(rowRef: string, offset: number, limit: number, rowsRemaining: number): TabToolResult {
   const working = getWorkingPlan();
   if (!working) return { ok: false, code: "no_working_plan" };
-  const { plan } = working;
-  const nodeKey = assetKeyOf(rowRef);
-  const byKey = new Map(plan.assets.map((a) => [a.nodeKey, a]));
-  // 機器の名前は星取表の階層と同じ見せる名前（号機で分かれる同じ名前の機器は「名前 号機」）
-  const shown = assetLabels(plan.assets);
-  const path: string[] = [];
-  for (let a = nodeKey !== null ? byKey.get(nodeKey) : undefined; a; a = a.parentKey !== null ? byKey.get(a.parentKey) : undefined) path.unshift(shown.get(a.nodeKey) ?? a.name);
-  const works = nodeKey !== null && byKey.has(nodeKey) ? plan.works.filter((w) => w.targets.includes(nodeKey)) : [];
-  const take = Math.max(0, Math.min(limit, rowsRemaining));
-  const rows = works.slice(offset, offset + take).map((w) => {
-    const cells: Record<string, string> = { [T.rowPath]: path.join(TEXT.chart.pathSep), [T.rowWork]: w.kind || w.workKey };
-    const by = new Map<number, { plan: boolean; actual: boolean; review: boolean }>();
-    for (const d of plan.details) {
-      if (d.workKey !== w.workKey) continue;
-      const c = by.get(d.fiscalYear) ?? { plan: false, actual: false, review: false };
-      if (d.planOrActual === "plan") c.plan = true;
-      else c.actual = true;
-      if (d.needsReview) c.review = true;
-      by.set(d.fiscalYear, c);
-    }
-    for (const fy of [...by.keys()].sort((a, b) => a - b)) {
-      const c = by.get(fy)!;
-      const mark = c.plan && c.actual ? "both" : c.actual ? "actual" : "plan";
-      cells[TEXT.chart.fiscalYear(fy)] = `${c.review ? TEXT.chart.reviewPrefix : ""}${TEXT.chart.mark[mark]}`;
-    }
-    return { rowRef: workRowRef(w.workKey), cells };
-  });
-  return { ok: true, data: { rows, total: works.length, remainingInConversation: rowsRemaining - rows.length, version: working.revision } };
+  const r = aiWorkRows(working.plan, rowRef, offset, limit, rowsRemaining);
+  return { ok: true, data: { rows: r.rows, total: r.total, remainingInConversation: rowsRemaining - r.rows.length, version: working.revision, source: "working" } };
 }
 
-/** 星取表の行を AI に渡す形：段の道と、印のある年度だけ（印は画面と同じ記号）。階層と行の並びは、画面の星取表と同じ施設の見せ方 */
+/** 星取表の行を AI に渡す形（作業中の計画）。階層と行の並びは、画面の星取表と同じ施設の見せ方 */
 function chartRows(view: "base" | "adjusted", offset: number, limit: number, rowsRemaining: number): TabToolResult {
   const working = getWorkingPlan();
   if (!working) return { ok: false, code: "no_working_plan" };
   const { plan } = working;
   const prefs = displayPrefs(plan.facility.facilityKey);
-  const model = buildChart(
-    plan,
-    catalogFor(plan.packId) ?? emptyCatalog(),
-    { levelFallback: TEXT.chart.levelFallback, commonLevels: TEXT.chart.commonLevels, unmapped: TEXT.chart.unmapped, series: TEXT.chart.series },
-    { mode: "ledger", period: "year", layer: view === "base" ? "original" : "adjusted", foldLevel: null, levelOrder: prefs.levelOrder, rowOrder: prefs.rowOrder },
-  );
-  const take = Math.max(0, Math.min(limit, rowsRemaining));
-  const rows = model.rows.slice(offset, offset + take).map((r) => {
-    const cells: Record<string, string> = { [T.rowPath]: r.path.filter((x): x is string => !!x).join(TEXT.chart.pathSep) };
-    for (const p of model.periods) {
-      const c = r.cells[p.key];
-      if (c?.mark) cells[TEXT.chart.fiscalYear(p.fiscalYear)] = `${c.review ? TEXT.chart.reviewPrefix : ""}${TEXT.chart.mark[c.mark]}`;
-    }
-    return { rowRef: r.id, cells };
-  });
-  return {
-    ok: true,
-    data: { rows, total: model.rows.length, remainingInConversation: rowsRemaining - rows.length, version: working.revision },
-  };
+  const r = aiChartRows(plan, catalogFor(plan.packId) ?? emptyCatalog(), view, { levelOrder: prefs.levelOrder, rowOrder: prefs.rowOrder }, offset, limit, rowsRemaining);
+  return { ok: true, data: { rows: r.rows, total: r.total, remainingInConversation: rowsRemaining - r.rows.length, version: working.revision, source: "working" } };
 }
 
 /** 人が星取表で開いた比べから、下限を守った集計と匿名の札だけを返す（鍵・見え方の値・年度・施設ごとの帯は返さない） */

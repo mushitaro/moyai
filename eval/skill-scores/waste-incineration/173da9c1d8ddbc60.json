@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "waste-incineration",
+  "suite": "waste-incineration",
+  "suiteSha": "431f45dcb13555163399f75947189e716a3c13c4dba119c14151697dbccb333c",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "91b969f33b65d5d309ca031b90c5cfb4674d912f40d9a289a0c3aa08bc458840"
+    },
+    {
+      "path": "packs/waste-incineration/SKILL.md",
+      "sha256": "c9dd80b3dc626c5bfd93131fde815a2187b3ff9b2deeebb2b33509c3ceb0d4d1"
+    }
+  ],
+  "skillSha": "173da9c1d8ddbc60940feefeeaad18530c8226b101895556a679a0cf9b525586",
+  "label": "PR #138 の文（確定版を読むだけ：1 段目の流れと instructions）。前の組は 100/100・97/100 で割れた（R03 の「計画の年数」の出典の読み）ので、新しい 2 つの役で解き直した",
+  "at": "2026-11-18T06:33:33.700Z",
+  "cases": 100,
+  "answered": 100,
+  "pass": 100,
+  "runs": [
+    {
+      "solver": "solver-c",
+      "pass": 100,
+      "failing": []
+    },
+    {
+      "solver": "solver-d",
+      "pass": 100,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 100,
+      "total": 100
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 120,
+      "total": 120
+    }
+  },
+  "failing": []
+}

@@ -202,6 +202,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
       return human.sharePreview(p.data);
     },
     ledger_version: async () => human.ledgerHead(),
+    // 保管先の確定・署名した最新の版（AI が読むだけ。作業中の計画が無いときの chart_rows と intake_survey の confirmed。確かめは latestSigned と同じ）
+    confirmed_latest: async () => human.confirmedLatest(),
     // 入っている MOYAI の更新（#65）。取ってくる先は固定（引数は action だけ）。動いているものは止めない。用意できたら画面のビルドの印を朱にするだけ
     moyai_update: async (args) => {
       const action = args.action === "prepare" ? "prepare" : "check";
