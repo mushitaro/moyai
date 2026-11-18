@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { planLinesOfPlan } from "../../src/shared/connect";
-import { acceptDecisions, callTool as call, chooseFirstSource, chooseRoot, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, callTool as call, chooseFirstSource, chooseRoot, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 import { assetTreeOf, eamTesting, maximoSeed, startFakeMaximo, type FakeMaximoServer } from "../helpers/fake-maximo";
 
 const FACILITY = "【架空】連携の試験（偽の Maximo）";
@@ -155,7 +155,7 @@ test("本物の部品と偽の Maximo で、つなぎ先を足す → 読む →
       await signInDialog(page);
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/（第 1 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click();
+      await closeConfirmAndReopen(page);
     });
 
     // 確定した版の保全計画の行（送る中身）。試験の一時の置き場所から読む
