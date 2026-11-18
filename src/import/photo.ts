@@ -117,6 +117,18 @@ export class PhotoBook {
     return [...this.items.values()];
   }
 
+  /** 一覧から外す（資料を消したとき）：その名前の写真と、その PDF の文字の無い頁（「名前#p頁」）。外した数を返す */
+  forget(name: string): number {
+    let n = 0;
+    for (const k of [...this.items.keys()]) {
+      if (k === name || k.startsWith(`${name}#p`)) {
+        this.items.delete(k);
+        n++;
+      }
+    }
+    return n;
+  }
+
   get(name: string): PhotoEntry | undefined {
     return this.items.get(name);
   }

@@ -366,9 +366,34 @@ export const INTAKE_LIST_NOTE = "Nothing was added. left holds the names of the 
 /** folder の match に当たる資料が無かったとき */
 export const INTAKE_NO_MATCH_NOTE = "No file matches match, so nothing was added. left holds the names of the files directly in the folder. Call again with other words.";
 
-/** source: demo を断ったとき（refused の理由が mixed）の次の手。作業画面から資料を外すボタンは無いので、空の作業画面で始め直す道だけを書く */
+// ─── 資料を作業画面から消す（intake_remove_files）─────────────────────────
+// 作業画面の資料の一覧から、作業中の資料だけを消す（人の「消す」と同じ道。確定した版・保管先の版・署名・鍵には触れない）。
+// 2 段：apply なしで、消す資料と、かかる問いと答えの数だけを返す（消さない）→ 利用者が会話でよいと言ったら apply: true で消す。
+// 人が画面で答えた問いにかかる資料は、AI からは消さない（人が画面で消す）。中身（セルの値）は返さない。
+
+/** 消したあとの作業中の計画：recomposing 今の道で作り直し始めた／cleared 資料が残らず、版をもとにしていない作業中の計画も消えた／kept そのまま */
+export const INTAKE_REMOVE_PLAN = ["recomposing", "cleared", "kept"] as const;
+/** 消さなかった理由：unknown 作業画面に無い名前／busy 読込・計画づくり・決定の途中／human_decided 人が画面で答えた問いにかかる */
+export const INTAKE_REMOVE_REFUSALS = ["unknown", "busy", "human_decided"] as const;
+const authorCountsSchema = z.object({ human: z.number().int().min(0), ai: z.number().int().min(0), ai_relayed_human: z.number().int().min(0), rule_code: z.number().int().min(0) });
+
+/** 結果に添える次の手（Claude Desktop では instructions が効かないので、結果にも書く） */
+export const INTAKE_REMOVE_NOTES = {
+  preview:
+    "Nothing was removed yet. Tell the user which files would be removed (files) and how many questions and answers on them would go (touching), and ask. Only when the user says yes in the chat, call again with the same files and apply: true. Confirmed versions and the files on disk are not changed.",
+  recomposing:
+    "Removed from the work screen. The questions and answers that concerned only these files are gone (dropped). The working plan is being made again from the remaining files; read the result with intake_survey (part: compose). Confirmed versions in the version history and the files on disk are not changed.",
+  cleared: "Removed from the work screen. No files are left, so the working plan is gone too. Confirmed versions in the version history and the files on disk are not changed. Add files with intake_add_files.",
+  kept: "Removed from the work screen. The questions and answers that concerned only these files are gone (dropped). Confirmed versions in the version history and the files on disk are not changed. Next, read the summary and questions with intake_survey.",
+  unknown: "Nothing was removed: the names in unknown are not on the work screen. Read the names with intake_survey (part: files) and call again with the exact names.",
+  busy: "Nothing was removed: the work screen is reading files, making the plan or placing decisions. Wait until it finishes (intake_survey), then call again.",
+  human_decided:
+    "Nothing was removed: a person answered questions on these files on the screen, and only a person can drop those answers. Ask the user to remove the file themselves with the remove button on the file's row in the file list of the work screen.",
+} as const;
+
+/** source: demo を断ったとき（refused の理由が mixed）の次の手。資料を消す道（intake_remove_files・資料の一覧の「消す」。11-18）で空の作業画面にしてから入れ直す */
 export const DEMO_MIXED_NOTE =
-  "The demo files were not added, because the user's files and fictional files are never mixed. A demo starts on an empty work screen: ask the user whether to keep the current work; if not, have them reload the work screen tab, then call again (the added files and facility settings are cleared; an unconfirmed working plan appears under previous work in the bottom bar). There is no button to remove files from the work screen.";
+  "The demo files were not added, because the user's files and fictional files are never mixed. A demo starts on an empty work screen: ask the user whether to keep the current work; if not, remove the files on the work screen with intake_remove_files (first without apply to show the user what goes, then apply: true after the user says yes), or have the user press remove on each file's row in the file list of the work screen, then call again. Confirmed versions are not changed.";
 
 /** source: template の結果に添える次の手（「この様式で Excel を出して」の順） */
 export const TEMPLATE_ADD_NOTE =
@@ -924,6 +949,40 @@ export const TOOLS = {
       template: templateShapeSchema.optional(),
       /** template：作業中の計画の階層の名前（写し方の案の level の順。計画が無ければ null） */
       planLevels: z.array(z.string()).nullable().optional(),
+      note: z.string(),
+    }),
+  ),
+  intake_remove_files: def(
+    "intake_remove_files",
+    "propose",
+    "Remove files from the work screen",
+    "Removes files from the work screen's file list (the same as a person pressing remove on a file's row). Only working files are removed; confirmed versions, the version history, signatures, keys and the files on disk are not touched. " +
+      "files are the exact names on the work screen (fileRef in intake_survey part: files), up to 200. " +
+      "Without apply, nothing is removed: the result lists the files and how many questions and answers on them would go (touching). Tell the user, and only when the user says yes in the chat, call again with the same files and apply: true. " +
+      "When removed, the rows, questions and answers that came only from those files drop out, and if there is a working plan it is made again from the remaining files in the usual way (read it with intake_survey part: compose). If no file is left and the working plan is not based on a confirmed version, the working plan goes too. " +
+      "If any name is not on the work screen, nothing is removed (refused: unknown). Files with questions a person answered on the screen are not removed by this tool (refused: human_decided); ask the user to remove them on the screen. " +
+      "To swap the demo files for other files: remove them with this tool, then add the others with intake_add_files.",
+    z.object({
+      files: z.array(fileName).min(1).max(INTAKE_ADD_MAX_FILES),
+      /** true で消す。無ければ消さずに、消す資料とかかる問いと答えの数だけを返す */
+      apply: z.boolean().optional(),
+    }),
+    z.object({
+      applied: z.boolean(),
+      /** 消した資料の名前（消していなければ空） */
+      removed: z.array(fileName).max(INTAKE_ADD_MAX_FILES),
+      /** 消す（消した）資料の名前 */
+      files: z.array(fileName).max(INTAKE_ADD_MAX_FILES),
+      /** 作業画面に無い名前（あれば、どれも消していない） */
+      unknown: z.array(fileName).max(INTAKE_ADD_MAX_FILES),
+      /** 消す資料にかかる問いの数と、その答えの作者ごとの数（消す前） */
+      touching: z.object({ questions: z.number().int().min(0), decisions: authorCountsSchema }),
+      /** 消したあとに無くなった問いの数と、外れた答えの作者ごとの数（消していなければ null） */
+      dropped: z.object({ questions: z.number().int().min(0), decisions: authorCountsSchema }).nullable(),
+      /** 作業画面に残った資料の数 */
+      filesLeft: z.number().int().min(0),
+      plan: z.enum(INTAKE_REMOVE_PLAN),
+      refused: z.enum(INTAKE_REMOVE_REFUSALS).nullable(),
       note: z.string(),
     }),
   ),

@@ -38,6 +38,11 @@ export type IntakeRequest =
    * decisions があればその決定を、無ければ今の決定を置き直す
    */
   | { op: "reset"; options: IntakeOptions; readings: LoadedReading[]; files?: { name: string; bytes: Uint8Array }[]; decisions?: Decision[] }
+  /**
+   * 資料を消す（names。どれか 1 つでも持っていなければ、どれも消さない）。残りの資料で取り込みを作り直し、
+   * 残った質問にかかる決定だけを置き直す。dryRun なら消さずに、かかる質問と決定だけを返す
+   */
+  | { op: "remove"; names: string[]; options: IntakeOptions; readings: LoadedReading[]; dryRun: boolean }
   /** 決定を置く（どれか 1 つでも当てはまらなければ、どれも置かない） */
   | { op: "settle"; decisions: Decision[] }
   /** 決定を取り消す */
@@ -88,6 +93,23 @@ export interface ResetReply {
   /** 資料として持ったものの名前 */
   accepted: string[];
   listed: PhotoInput[];
+}
+
+/** 資料を消した答え（dryRun なら removed は空） */
+export interface RemoveReply {
+  /** 消した資料の名前 */
+  removed: string[];
+  /** 持っていない名前（1 つでもあれば、どれも消していない） */
+  unknown: string[];
+  /** 消す資料にかかる質問の数（消す前の読み取りで） */
+  touchingQuestions: number;
+  /** 消す資料にかかる質問の決定（消す前） */
+  touchingDecisions: Decision[];
+  /** 消したあとに無くなった質問の数と、外した決定（dryRun なら 0 と空） */
+  droppedQuestions: number;
+  droppedDecisions: Decision[];
+  /** 資料として持ったものの名前（消したあと） */
+  accepted: string[];
 }
 
 export type SettleReply =
@@ -160,6 +182,7 @@ export interface IntakeReplies {
   readings: null;
   read: ReadReply;
   reset: ResetReply;
+  remove: RemoveReply;
   settle: SettleReply;
   undo: { cellsAffected: number; rowsAffected: number; unresolved: number };
   photo: null;

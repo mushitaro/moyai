@@ -18,6 +18,7 @@ import { PhotoDesk } from "./photos";
 import type { TabSentCode } from "../../shared/errors";
 import type { Plan } from "../../shared/plan";
 import { placeComposedPlan } from "../state/crosswalk";
+import { clearWorkingPlan, getWorkingPlan } from "../state/plan-store";
 import { newNodesOf, sameNameNote } from "../../plan/new-nodes";
 import { packLevelNames } from "../chart/catalog";
 import { TEXT } from "../text";
@@ -69,6 +70,35 @@ export interface ProposeOutcome {
 export type SettleOutcome =
   | { ok: true; cellsAffected: number; rowsAffected: number; unresolved: number }
   | { ok: false; code: Extract<TabSentCode, "unknown_question" | "answer_not_offered" | "human_decided">; questionId: string };
+
+/** 決定の作者ごとの数 */
+export type AuthorCounts = { human: number; ai: number; ai_relayed_human: number; rule_code: number };
+
+/**
+ * 資料を消した答え（人の「消す」と AI の intake_remove_files）。
+ * ok：消した（dryRun なら消していない）資料・かかる質問と決定の数・消したあとに外れた質問と決定の数・作業中の計画をどうしたか。
+ * unknown：持っていない名前があったので、どれも消していない。busy：読込・計画づくり・決定の途中なので、消していない
+ */
+export type RemoveOutcome =
+  | {
+      ok: true;
+      removed: string[];
+      touchingQuestions: number;
+      touchingDecisions: AuthorCounts;
+      droppedQuestions: number;
+      droppedDecisions: AuthorCounts;
+      filesLeft: number;
+      /** recomposing：今の道で作り直し始めた／cleared：資料が残らず、版をもとにしていない作業中の計画を消した／kept：作業中の計画はそのまま（作っていないか、作り直せない） */
+      plan: "recomposing" | "cleared" | "kept";
+    }
+  | { ok: false; reason: "unknown"; unknown: string[] }
+  | { ok: false; reason: "busy" };
+
+export function authorCounts(ds: readonly Decision[]): AuthorCounts {
+  const c: AuthorCounts = { human: 0, ai: 0, ai_relayed_human: 0, rule_code: 0 };
+  for (const d of ds) if (d.author in c) c[d.author as keyof AuthorCounts]++;
+  return c;
+}
 
 /** 画面が開いた 1 つのシート（セルを位置で引く表と、セルの位置ごとの行き先） */
 export interface SheetData {
@@ -520,6 +550,52 @@ export class IntakeWorkspace {
     this.changed(true, true);
     // 読み終わったあとの写しを待つ（画面は、資料に「架空」の印があるかなどを写しで見る）
     if (!this.readProgress) await this.fresh(this.dataVersion, false).catch(() => undefined);
+  }
+
+  /**
+   * 資料を消す（人が資料の一覧の「消す」を押す・AI の intake_remove_files）。持っていない名前が 1 つでもあれば、どれも消さない。
+   * 残りの資料で取り込みを作り直し、残った質問にかかる決定だけを残す（消した資料にだけかかる問いと答えは外れる）。
+   * 作業中の計画があれば、今の道（startCompose）で作り直す（行・当てはめ・下書きは、作り直した計画に残るものだけが残る）。
+   * 資料が 1 つも残らず、作業中の計画が確定した版をもとにしていなければ、作業中の計画も消す。確定した版（保管先の版の履歴）には触れない。
+   * dryRun なら消さずに、かかる質問と決定の数だけを返す
+   */
+  async removeFiles(names: readonly string[], by: "human" | "ai", dryRun = false): Promise<RemoveOutcome> {
+    if (this.readProgress !== null || this.compose.state === "running" || this.asking > 0) return { ok: false, reason: "busy" };
+    const unknown = names.filter((n) => !this.inputs.includes(n));
+    if (unknown.length > 0 || names.length === 0) return { ok: false, reason: "unknown", unknown };
+    // 今の設定のまま作り直す（開いた版の計画の ID に固定していれば、その ID のまま）
+    const req = { op: "remove" as const, names: [...names], options: { ...this.opts, facility: { ...this.opts.facility } }, readings: forFacility(this.readings, this.facilityKey()), dryRun };
+    const r = await this.engine.request(req, dryRun ? this.dataVersion : this.dataVersion + 1);
+    if (r.unknown.length > 0) return { ok: false, reason: "unknown", unknown: r.unknown };
+    const common = { touchingQuestions: r.touchingQuestions, touchingDecisions: authorCounts(r.touchingDecisions) };
+    if (dryRun) return { ok: true, removed: [], ...common, droppedQuestions: 0, droppedDecisions: authorCounts([]), filesLeft: this.inputs.length, plan: "kept" };
+    const gone = new Set(r.removed);
+    this.inputs = r.accepted;
+    this.filesVersion++;
+    for (const n of gone) {
+      this.demoInputs.delete(n);
+      this.derived.delete(n);
+      // 主のスレッドの写真の一覧からも外す（同じスレッドの受け手は一覧を共にするので、もう外れている）
+      if (!this.engine.local) this.photoBook.forget(n);
+    }
+    this.marksVersion++;
+    this.tooLarge = this.tooLarge.filter((t) => !gone.has(t.file));
+    for (const d of r.droppedDecisions) this.answered.delete(d.questionId);
+    if (this.restoredFrom) this.restoredFrom = { version: this.restoredFrom.version, files: new Set([...this.restoredFrom.files].filter((f) => !gone.has(f))) };
+    this.changed(true, true);
+    const working = getWorkingPlan();
+    let plan: "recomposing" | "cleared" | "kept" = "kept";
+    if (this.inputs.length === 0) {
+      if (working && working.origin === "intake" && working.base === null) {
+        clearWorkingPlan();
+        this.composedAt = null;
+        this.composedFor = null;
+        plan = "cleared";
+      }
+    } else if (this.composedAt !== null || working?.origin === "intake") {
+      plan = this.startCompose(by).started ? "recomposing" : "kept";
+    }
+    return { ok: true, removed: r.removed, ...common, droppedQuestions: r.droppedQuestions, droppedDecisions: authorCounts(r.droppedDecisions), filesLeft: this.inputs.length, plan };
   }
 
   /** worker の中の写真の一覧に新しく並んだものを、主のスレッドの一覧にも並べる（同じスレッドの受け手は一覧を共にする） */

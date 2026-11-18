@@ -5,6 +5,8 @@
 // 行「名前｜シート n｜未確定 n｜状態」。未確定は 1 以上なら朱、0 は text-3。状態は「読込中」（text-3）と「読込不可」（朱、理由は詳細）だけ。↑↓・Enter・Esc。
 // シートの選びは、シートが 2 つ以上のときだけ「4月 ▾　1 / 12」。一覧は「シート名｜未確定 n」で、絞る欄なし。
 // 選ぶ・並べる・キーの決まりは、下の関数（画面の外でも試せる形）に置く。
+// 資料を消す（11-18、Wire の SourceRemove）：読めた資料の行の右端に小さな「消す」を 1 つ。押すと同じ所が朱の「消す？」になり、もう一度押すと消す（窓は出さない）。
+// 一覧を閉じるか、ほかの行の「消す」を押すとやめる。onRemove が無ければ出さない（古い版を見ているときなど）。
 import { Popover } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { TEXT } from "../text";
@@ -142,6 +144,7 @@ export function SourceList({
   onOrder,
   onChoose,
   onClose,
+  onRemove,
   initial,
 }: {
   rows: readonly SourceRow[];
@@ -150,10 +153,14 @@ export function SourceList({
   onOrder: (o: SourceOrder) => void;
   onChoose: (row: SourceRow) => void;
   onClose: () => void;
+  /** 読めた資料を消す（「消す」→「消す？」でもう一度押したとき）。無ければ「消す」を出さない */
+  onRemove?: (row: SourceRow) => void;
   /** 試験：一覧の状態を外から与える */
   initial?: PickState;
 }) {
   const [st, setSt] = useState<PickState>(() => initial ?? pickStart(rows, current));
+  /** 「消す？」にしている資料の名前（もう一度押すと消す） */
+  const [asking, setAsking] = useState<string | null>(null);
   const shown = filterRows(rows, st.query);
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -206,7 +213,7 @@ export function SourceList({
           ]}
         />
       </div>
-      <div ref={list} className="moyai-srcpick-rows" role="listbox" aria-label={P.source} data-testid="source-rows">
+      <div ref={list} className="moyai-srcpick-rows" role="listbox" aria-label={P.source} data-testid="source-rows" data-removable={onRemove ? "true" : undefined}>
         {shown.map((r, i) => (
           <div
             key={`${r.state}\u0000${r.name}\u0000${i}`}
@@ -231,6 +238,26 @@ export function SourceList({
             <span className="moyai-srcpick-state" data-state={r.state}>
               {r.state === "ready" ? "" : P.state[r.state]}
             </span>
+            {onRemove && r.state === "ready" ? (
+              <button
+                type="button"
+                className="moyai-srcpick-remove"
+                data-asking={asking === r.name ? "true" : undefined}
+                aria-label={asking === r.name ? P.removeAskLabel(r.name) : P.removeLabel(r.name)}
+                data-testid="source-remove"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (asking === r.name) {
+                    setAsking(null);
+                    onRemove(r);
+                  } else setAsking(r.name);
+                }}
+              >
+                {asking === r.name ? P.removeAsk : P.remove}
+              </button>
+            ) : (
+              onRemove && <span />
+            )}
           </div>
         ))}
       </div>
@@ -250,6 +277,7 @@ export function SourcePicker({
   order,
   onOrder,
   onChoose,
+  onRemove,
   defaultOpened = false,
 }: {
   rows: readonly SourceRow[];
@@ -258,6 +286,8 @@ export function SourcePicker({
   order: SourceOrder;
   onOrder: (o: SourceOrder) => void;
   onChoose: (row: SourceRow) => void;
+  /** 読めた資料を消す（一覧の行の「消す」）。無ければ出さない */
+  onRemove?: (row: SourceRow) => void;
   defaultOpened?: boolean;
 }) {
   const [opened, setOpened] = useState(defaultOpened);
@@ -309,6 +339,7 @@ export function SourcePicker({
             order={order}
             onOrder={onOrder}
             onClose={close}
+            onRemove={onRemove}
             onChoose={(r) => {
               setOpened(false);
               onChoose(r);

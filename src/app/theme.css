@@ -466,6 +466,32 @@ button.moyai-merge-link {
 .moyai-srcpick-sheets .moyai-srcpick-row {
   grid-template-columns: minmax(0, 1fr) 88px;
 }
+/* 資料を消せる一覧は、行の右端に「消す」の列（11-18） */
+.moyai-srcpick-rows[data-removable="true"] .moyai-srcpick-row {
+  grid-template-columns: minmax(0, 1fr) 72px 88px 64px 48px;
+}
+.moyai-srcpick-remove {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  justify-self: end;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.moyai-srcpick-remove:hover {
+  color: var(--text);
+}
+.moyai-srcpick-remove[data-asking="true"] {
+  color: var(--shu-text);
+}
+.moyai-srcpick-remove:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
 .moyai-srcpick-row[aria-selected="true"] {
   background: var(--layer-1);
   box-shadow: inset 2px 0 0 var(--text);
