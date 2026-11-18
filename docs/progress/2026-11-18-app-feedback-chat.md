@@ -33,6 +33,8 @@
 
 `node scripts/skill-scores/check.mjs --base origin/main` は手元で両方 ✓。
 
+統括の頼みで main（#143 まで。#143 もごみ焼却の文を変えた）を merge したあと、合わせた文で採り直した：ごみ焼却（指紋 `c099f81fc4869c3d`）は新しい 2 つの解く役で 100/100・100/100。し尿処理は合わせても文の指紋が同じ（`e2f1f6c6eb7ccab2`）なので記録はそのまま。check は両方 ✓（下がっていない）。
+
 ## 5 つの分け方の報告
 
 - 試験とビルドが通った：手元（Linux）で typecheck・build・check-publish（当たり 0）・`tests/contract`（10 ファイル）・`tests/unit/screen-set.test.ts`（22）・skill-scores の確かめが通った。PR #145 の CI（`5446944`）で test（ubuntu・windows）・e2e（ubuntu・windows）・pack-bench・scenario がどれも緑。手元の全部の試験は 2216 通過・5 落ち（手元の `heldout` の 5 つは、この clone にタグ `reader-freeze-*` が無いための落ちで、#140 と同じ）。
@@ -43,7 +45,7 @@
 
 ## 使用量の残り
 
-このセッションから読む道具が無いので未確認。API のキーは使っていない。子のエージェントは、Skill の採点の解く役だけ（6 つ。し尿処理の解き直しの 2 つを含む）。
+このセッションから読む道具が無いので未確認。API のキーは使っていない。子のエージェントは、Skill の採点の解く役だけ（8 つ。し尿処理の解き直しの 2 つと、merge のあとのごみ焼却の 2 つを含む）。
 
 ## 次の一手
 

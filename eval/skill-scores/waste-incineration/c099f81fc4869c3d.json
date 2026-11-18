@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "waste-incineration",
+  "suite": "waste-incineration",
+  "suiteSha": "431f45dcb13555163399f75947189e716a3c13c4dba119c14151697dbccb333c",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "1ba174c14695290fa9430b75795473f0e8ec2f664455dc1f01cb1ff797520eed"
+    },
+    {
+      "path": "packs/waste-incineration/SKILL.md",
+      "sha256": "d8b156c4b4c82f012c43fde7a71e783b1ae20da346607829d6fab6d384fd0ec2"
+    }
+  ],
+  "skillSha": "c099f81fc4869c3d09a0ea149f25fc52675930ada82c75786864b023b0eff73c",
+  "label": "PR #145 の文に main（#143 まで）を合わせた文（困りごと・要望・開発の要件は設定の「困りごと」に案を置く＋計画の年数の出典）",
+  "at": "2026-11-18T11:30:39.302Z",
+  "cases": 100,
+  "answered": 100,
+  "pass": 100,
+  "runs": [
+    {
+      "solver": "solver-a",
+      "pass": 100,
+      "failing": []
+    },
+    {
+      "solver": "solver-b",
+      "pass": 100,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 100,
+      "total": 100
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 120,
+      "total": 120
+    }
+  },
+  "failing": []
+}
