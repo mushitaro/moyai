@@ -144,7 +144,8 @@ describe("許すのは人だけ：許すまで receive は断り、許した 1 �
   it("AI のツールに、許す・確かめる・外す道が無い（写真のツールの引数は mode・imageRef・grid だけ）", () => {
     const shape = (toolDef("photo_transcribe").input as unknown as { shape: Record<string, unknown> }).shape;
     expect(Object.keys(shape).sort()).toEqual(["grid", "imageRef", "mode"]);
-    expect(Object.keys(TAB_TOOL_RECEIVERS).sort()).toEqual(["chart_propose", "chart_rows", "check_results", "crosswalk_propose", "intake_compose", "intake_settle", "intake_survey", "peer_reference", "photo_transcribe", "reading_rules_propose", "reading_skill_register", "reading_skills_list", "screen_set", "share_preview"]);
+    // intake_remove_files（11-18）は作業画面から資料ごと消すだけで、写真を許す・確かめる・読まずに外す（exclude）道ではない（写真を AI に渡さない）
+    expect(Object.keys(TAB_TOOL_RECEIVERS).sort()).toEqual(["chart_propose", "chart_rows", "check_results", "crosswalk_propose", "intake_compose", "intake_remove_files", "intake_settle", "intake_survey", "peer_reference", "photo_transcribe", "reading_rules_propose", "reading_skill_register", "reading_skills_list", "screen_set", "share_preview"]);
     expect(HUMAN_ACTIONS).toContain("photo_allow");
     for (const n of TOOL_NAMES) expect(n).not.toMatch(/allow|confirm|exclude|accept/);
     expect(TOOLS.photo_transcribe.description).toContain("There is no tool to allow or to check");
