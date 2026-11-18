@@ -67,6 +67,30 @@ npx wrangler@4.152.0 deploy
 - 確かめ（配置のあと 1 回。統括）：アプリの HOSHITORI のルールのシートで【架空】の読み方を「ルールを書き出す」→「保存する」→「送る」。「✓ 送信　Issue #n」が出て、mushitaro/moyai にラベル `feedback` の Issue ができ、毎日の回し（`scripts/skill-loop/feedback.mjs --dry-run`）がその Issue を読めれば合格。
 - 止める：GitHub でこのトークンを Revoke（`/feedback` だけが 503 で断るようになる。`/submit` は止まらない）。
 
+## 2.2 アプリの困りごとの道 `/app-feedback` を足す（運営者。2026-11-18 に足した）
+
+受け口の `POST /app-feedback`（アプリの困りごと・要望。`services/ledger-intake/src/app-feedback.ts`）は、利用者が MOYAI の設定の「困りごと」に書いた一言と、決まった付き物（MOYAI の版・画面の名前・OS の種類・言語）だけを受け、`mushitaro/moyai` にラベル **`feedback:app`** の Issue を出す。毎日の回しが拾って直す（`docs/autonomy.md` §3「アプリの困りごとの Issue」）。
+
+- **トークンは §2.1 の `FEEDBACK_TOKEN` のまま**（mushitaro/moyai の Issues の書き込みだけ）。新しいトークンも権限も要らない。数える枠は `/submit`・`/feedback` と別（同じ IP から 1 時間に 10 件・まわりの網から 30 件）。
+- **ラベル `feedback:app` を先に作る**（2026-11-18 に確かめたとき、mushitaro/moyai に無かった）。無いまま配置しても受け口は動くが、出した Issue にラベルが付かなければ、受け口はその Issue を閉じて `503 intake.feedbackLabel` で返す（アプリは「送り直さずに、運営者に知らせてください」と出す）。作り方は次のどちらか：
+  - GitHub の画面：mushitaro/moyai → Issues → Labels → **New label**。Label name に `feedback:app`、Description に「アプリの困りごと・要望（受け口から）」、色は何でもよい → **Create label**。
+  - PowerShell（gh が入っていて、mushitaro/moyai に書ける人）：`gh label create "feedback:app" --repo mushitaro/moyai --description "アプリの困りごと・要望（受け口から）"`
+
+配置し直す（運営者の PC の PowerShell。KV の id は `wrangler.jsonc` に入っているので、main を取ってそのまま配置する。秘密は入れ直さない）：
+
+```powershell
+cd <MOYAI の clone>
+git checkout main
+git pull
+npm.cmd ci
+cd services\ledger-intake
+npx.cmd wrangler@4.152.0 deploy
+```
+
+- 配置の前の受け口は、`/app-feedback` を `404 intake.notFound` で返す。アプリの画面には「受け口が、まだこの送り方を受けていません（配置し直す前）」と出る（送ったものは届いていない）。
+- 確かめ（配置のあと 1 回。統括か運営者）：MOYAI の設定の「困りごと」に【架空】の一言（例：「【架空】試しの困りごと」）を書き、下に出た送る全文を見て「送る」。「✓ 送信　Issue #n」が出て、mushitaro/moyai にラベル `feedback:app` の Issue ができ、`node scripts/skill-loop/app-feedback.mjs --issue <その Issue の JSON>` の `decision.json` が `fix` になれば合格。試しの Issue は、確かめたあと閉じる。
+- 止める：`/feedback` と同じ（`FEEDBACK_TOKEN` を Revoke すると、`/feedback` と `/app-feedback` が 503 で断る。`/submit` は止まらない）。
+
 ## 3. 配置する（運営者の PC で 1 回。Node 22 と git があること）
 
 そのまま写せる形。`#` の行は説明。

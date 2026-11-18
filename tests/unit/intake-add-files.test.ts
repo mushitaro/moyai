@@ -32,9 +32,9 @@ afterEach(async () => {
 const PACKS = resolvePacksDir();
 const REPO = dirname(PACKS);
 const DEMO = join(PACKS, "waste-incineration", "demo");
-const DEMO_FILES = ["daily-report.csv", "equipment-ledger.xlsx", "plan-hoshitori.xlsx"];
-/** 資料の中のセルの値（AI の結果に入ってはいけない） */
-const CELL_VALUES = ["【架空】", "通風補機", "日報システム"];
+const DEMO_FILES = ["【架空】さくら坂焼却場_中長期整備計画_廃止までの整備計画R5改訂R8実績追記_l2様式.xlsx", "【架空】さくら坂焼却場_作業日報_令和7年度定期整備業務委託_清書様式.xlsx", "【架空】さくら坂焼却場_発注台帳_令和7年度_財務会計CSV.csv"];
+/** 資料の中のセルの値（AI の結果に入ってはいけない）。デモの資料の名前には【架空】があるので、名前に無い字を選ぶ */
+const CELL_VALUES = ["さくら坂機工", "支出負担行為", "施設管理課"];
 
 function temp(prefix = "moyai-add-"): string {
   const d = mkdtempSync(join(tmpdir(), prefix));
@@ -174,7 +174,8 @@ describe("橋渡し：道を確かめて資料を選ぶ", () => {
     expect(String(await readIntakeFile({ path: p, size: 3 }))).toBe("abc");
     expect(await readIntakeFile({ path: p, size: 4 })).toBeNull();
     rmSync(p);
-    if (link(join(DEMO, "daily-report.csv"), p)) expect(await readIntakeFile({ path: p, size: readFileSync(join(DEMO, "daily-report.csv")).length })).toBeNull();
+    const csv = DEMO_FILES.find((n) => n.endsWith(".csv"))!;
+    if (link(join(DEMO, csv), p)) expect(await readIntakeFile({ path: p, size: readFileSync(join(DEMO, csv)).length })).toBeNull();
     expect(await readIntakeFile({ path: join(d, "none.csv"), size: 0 })).toBeNull();
   });
 
@@ -337,8 +338,8 @@ describe("送り手と受け手：中継 → 橋渡し → 作業画面", () => 
   it("作業画面が、渡していない名前・重なった名前・中身らしい欄を返したら、AI に渡さない", async () => {
     for (const bad of [
       { added: [{ name: "other.xlsx", sheets: 1, rows: 1 }], refused: [] },
-      { added: [{ name: "daily-report.csv", sheets: 1, rows: 1 }], refused: [{ name: "daily-report.csv", reason: "unreadable" }] },
-      { added: [{ name: "daily-report.csv", sheets: 1, rows: 1, cells: ["【架空】"] }], refused: [] },
+      { added: [{ name: DEMO_FILES[2]!, sheets: 1, rows: 1 }], refused: [{ name: DEMO_FILES[2]!, reason: "unreadable" }] },
+      { added: [{ name: DEMO_FILES[2]!, sheets: 1, rows: 1, cells: ["【架空】"] }], refused: [] },
     ]) {
       const { client } = await chain(async () => ({ ok: true, data: bad }));
       const r: any = await client.callTool({ name: "intake_add_files", arguments: { source: "demo" } });

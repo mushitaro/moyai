@@ -16,12 +16,36 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
-import { f1Rules } from "../fixtures/crosswalk/rules";
+import { demoRules } from "../fixtures/crosswalk/rules";
 import { withLang, type Lang } from "../../src/app/text/i18n";
 import { HUMAN_TEXT, TEXT } from "../../src/app/text";
 import { INLINE_TEXT } from "../../src/app/text/inline";
-import { FICTIONAL_1, callTool as call, fillDecisionReason, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { callTool as call, fillDecisionReason, mcpClient, shot, sideTab, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 
+
+/**
+ * 利用者がチャットで答えたことにする、デモの資料の質問への答え。既定の答えがあれば既定の答え。
+ * 既定の無いものは、施設の担当の話（moyai-samples の f11 の user.md）のとおりに答える：計画の「○済」のような「済」の付いた記号は実績、
+ * 凡例の記号は計画、財務会計の CSV の金額は円（税込）、台帳に無い機器の名前はそのまま新しい機器、意味の決まらないセルは外す（選べるのが 1 つだけの問い）。
+ * 同じ選択肢の問い（sameOptionsAs）は、元の問いの選択肢から選ぶ
+ */
+/** 資料を参考として外すかの問い（選べるのは「参考として外す」だけ。src/import/reference.ts） */
+const isReferenceOnly = (q: any): boolean => q.options?.length === 1 && q.options[0].id === "reference";
+
+function demoDecision(q: any, _i: number, all: any[]): { questionId: string; answer: string; author: "ai_relayed_human"; reason: string } {
+  const say = (answer: string, reason: string) => ({ questionId: q.questionId, answer, author: "ai_relayed_human" as const, reason });
+  if (q.defaultAnswer) return say(q.defaultAnswer, "利用者がチャットで、既定の答えでよいと答えた");
+  const options: { id: string }[] = q.options?.length ? q.options : (all.find((x) => x.questionId === q.sameOptionsAs)?.options ?? []);
+  const has = (id: string) => options.some((o) => o.id === id);
+  if (q.kind === "unknownSymbol" || q.kind === "planActualConflict") {
+    const a = /済/.test(q.text) ? "actual" : "plan";
+    if (has(a)) return say(a, a === "actual" ? "利用者がチャットで、「済」の付いた記号は済んだもの（実績）と答えた" : "利用者がチャットで、凡例の記号は計画と答えた");
+  }
+  if (q.kind === "costUnit" && has("1")) return say("1", "利用者がチャットで、財務会計の CSV の金額は円（税込）と答えた");
+  if (q.kind === "eventAsset" && has("new")) return say("new", "利用者がチャットで、この資料の名前のまま新しい機器にしてよいと答えた");
+  if (options.length === 1) return say(options[0]!.id, "利用者がチャットで、そのとおりにしてよいと答えた");
+  throw new Error(`デモの資料に、答えを決めていない問いがある：${q.kind} ${q.text}`);
+}
 
 export function walkthrough(lang: Lang): void {
   // 画面に出る字は、画面と同じ表から、この通しの言語で読む（日本語の通しは今までと同じ字）。資料・署名される根拠・AI の結果の字はデータなので、どちらの言語でも同じ
@@ -63,12 +87,19 @@ export function walkthrough(lang: Lang): void {
       ledgerNote: C.ledgerNote,
     };
   });
-  const FACILITY = "【架空】みどり台クリーンセンター";
+  // デモの資料（Skillパックの demo/。moyai-samples の v4 の f11【架空】さくら坂焼却場から写したもの）と、その施設の名前（demo.json）
+  const DEMO = join("packs", "waste-incineration", "demo");
+  const DEMO_FILES = readdirSync(DEMO).filter((n) => /\.(xlsx|csv)$/i.test(n));
+  const FACILITY: string = JSON.parse(readFileSync(join(DEMO, "demo.json"), "utf8")).facilityName;
   const A = { name: "【架空】山田" };
   const B = { name: "【架空】課長" };
   const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
-  // 見え方（利用者がチャットで答えたことにする。架空の施設）
-  const PROFILE = { furnace: "STOKER", capacity_t_per_day: "C200_400", turbine: "YES", ash: "OUT", contract: "SINGLE" } as const;
+  // 見え方（利用者がチャットで答えたことにする。架空の施設：ストーカの炉で、飛灰は薬剤処理して搬出、定期整備は毎年の委託。f11 の user.md）。
+  // 規模（60t の炉が 2 つ）と発電（しない）は、似た施設と比べるまで答えない：デモの台帳（scripts/ledger/demo-core）の施設はどれも 200〜400t か発電ありで、
+  // 答えると似た施設が 5 に届かない。答えない軸は、似た施設を絞らない（src/share/aggregate.ts の isSimilar）
+  const PROFILE = { furnace: "STOKER", ash: "OUT", contract: "SINGLE" } as const;
+  // 残りの見え方（台帳の案を受けたあとで答える。共有の束には見え方のすべての軸が要る）
+  const PROFILE_REST = { capacity_t_per_day: "C100_200", turbine: "NO" } as const;
 
   let one: StartedBridge;
   let two: StartedBridge;
@@ -151,11 +182,12 @@ export function walkthrough(lang: Lang): void {
         await expect(pa.getByTestId("drop")).toBeVisible();
       });
 
-      await test.step("1 Claude：利用者がチャットで言ったフォルダの資料 3 つを、Skillパックと施設の名前を添えて入れる（パックは画面で選ばない。mushitaro/moyai#67）", async () => {
+      await test.step("1 Claude：利用者がチャットで言ったフォルダの資料 3 つ（デモの資料の写し）を、Skillパックと施設の名前を添えて入れる（パックは画面で選ばない。mushitaro/moyai#67）", async () => {
         const folder = join(work, "資料");
         mkdirSync(folder, { recursive: true });
-        const files = FICTIONAL_1.files.map((n) => ({ name: basename(n) }));
-        for (const n of FICTIONAL_1.files) writeFileSync(join(folder, basename(n)), readFileSync(join(FICTIONAL_1.dir, n)));
+        const files = DEMO_FILES.map((n) => ({ name: n }));
+        expect(files).toHaveLength(3);
+        for (const n of DEMO_FILES) writeFileSync(join(folder, n), readFileSync(join(DEMO, n)));
         const added = await call(c, "intake_add_files", { source: "folder", path: folder, pack: "waste-incineration", facilityName: FACILITY });
         expect(added.added).toHaveLength(files.length);
         // 資料の選び（白紙でも同じ。資料ごとのタブは並べない。docs/screens.md 3.2「資料の選び」）。未確定のいちばん多い資料が開いている
@@ -168,10 +200,10 @@ export function walkthrough(lang: Lang): void {
         for (let round = 0; ; round++) {
           expect(round).toBeLessThan(15);
           const s = await call(c, "intake_survey", { part: "questions" });
-          if (!s.questions.length) break;
-          await call(c, "intake_settle", {
-            decisions: s.questions.map((q: any) => ({ questionId: q.questionId, answer: q.defaultAnswer, author: "ai_relayed_human", reason: "利用者がチャットで、既定の答えでよいと答えた" })),
-          });
+          // 「今回は参考として計画に使わないか」には答えない（利用者はどの資料も計画に使う。答えなければ、その資料も計画に使う）
+          const open = s.questions.filter((q: any) => !isReferenceOnly(q));
+          if (!open.length) break;
+          await call(c, "intake_settle", { decisions: open.slice(0, 50).map(demoDecision) });
         }
         expect((await call(c, "intake_compose")).started).toBe(true);
         let state = "running";
@@ -188,7 +220,7 @@ export function walkthrough(lang: Lang): void {
 
       await test.step("2 Claude：当てはめの規則の案を置く → 人が決定のシートで規則ごとに理由を書いて受ける", async () => {
         const version = (await call(c, "intake_survey", { part: "crosswalk" })).crosswalk.version;
-        const { nodes, works } = f1Rules();
+        const { nodes, works } = demoRules();
         const r = await call(c, "crosswalk_propose", { rules: [...nodes, ...works], basedOnVersion: version });
         expect(r.conflicts).toBe(0);
         await pa.getByTestId("sheet-decisions").click();
@@ -223,11 +255,7 @@ export function walkthrough(lang: Lang): void {
         // 見え方の答えは施設の設定で（星取表の上では答えない）
         await pa.getByTestId("peer-fix").click();
         await pa.getByTestId("facility-national").selectOption("yes");
-        await pa.getByTestId("facility-furnace").selectOption(PROFILE.furnace);
-        await pa.getByTestId("facility-capacity_t_per_day").selectOption(PROFILE.capacity_t_per_day);
-        await pa.getByTestId("facility-turbine").selectOption(PROFILE.turbine);
-        await pa.getByTestId("facility-ash").selectOption(PROFILE.ash);
-        await pa.getByTestId("facility-contract").selectOption(PROFILE.contract);
+        for (const [axis, code] of Object.entries(PROFILE)) await pa.getByTestId(`facility-${axis}`).selectOption(code);
         await pa.getByTestId("facility-save").click();
         await expect(pa.locator(".ag-row.moyai-row-stat").first()).toBeVisible();
         await pa.screenshot({ path: shot("demo-22-peers") });
@@ -339,6 +367,13 @@ export function walkthrough(lang: Lang): void {
         await expect(pa.getByTestId("legend-proposal")).toHaveCount(0);
       });
 
+      await test.step("3 施設設定：残りの見え方（規模 120t/日・発電なし）を答える（共有は見え方がそろうまで送れない）", async () => {
+        await pa.getByTestId("facility-settings").click();
+        for (const [axis, code] of Object.entries(PROFILE_REST)) await pa.getByTestId(`facility-${axis}`).selectOption(code);
+        await pa.getByTestId("facility-save").click();
+        await expect(pa.getByTestId("facility-save")).toBeHidden();
+      });
+
       await test.step("4 検査のシート：自己点検。外れは朱の ×、満たすは ✓", async () => {
         await pa.getByTestId("sheet-check").click();
         // 「自己点検であって…」は画面に出さない（AI のツールの結果にだけ添える）
@@ -438,6 +473,11 @@ export function walkthrough(lang: Lang): void {
           await pa.locator(".ag-body-horizontal-scroll-viewport").evaluate((el) => (el.scrollLeft = el.scrollWidth));
           await pa.waitForTimeout(300);
         }
+        // 施設台帳は行が多い（デモの資料の計画は機器の節 500 余り）。変わった印の行が下の方なら、人がスクロールして探すように下へ送る
+        for (let i = 0; i < 120 && (await changed.count()) === 0; i++) {
+          await pa.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop += el.clientHeight * 0.8), undefined, { timeout: 5000 });
+          await pa.waitForTimeout(120);
+        }
         await expect(changed.first()).toBeVisible();
         await pa.screenshot({ path: shot("demo-19-version-diff") });
         // 人：まとめて受けて、第 2 版に自分で署名して確定する
@@ -467,8 +507,7 @@ export function walkthrough(lang: Lang): void {
         await pa.getByTestId("mark-next").click();
         await expect(pa.getByTestId("merge-version")).toHaveText(W.version(3));
         await expect(pa.getByTestId("merge-compare")).toContainText(W.compare(2));
-        // 第 2 版で足した計画の印が、第 1 版の中身では無くなる。この工場の資料は最後の年度まで実施があるので、
-        // 案の印は実施と同じセル（◎）に入り、第 1 版の中身では ● に戻る（＝第 2 版から変わった、朱）。
+        // 第 2 版で足した計画の印が、第 1 版の中身では無くなる。案の印が実施と同じセル（◎）に入っていれば、第 1 版の中身では ● に戻る（＝第 2 版から変わった、朱）。
         // 印がまるごと無くなるセルなら、淡い破線の「第 2 版の印」で残る（tests/e2e/version-diff.spec.ts で確かめている）
         await pa.getByTestId("rows-mode").getByText(W.ledger).click();
         await expect(pa.getByTestId("legend-changed-from")).toContainText(W.changedFrom(2));
@@ -478,8 +517,14 @@ export function walkthrough(lang: Lang): void {
       await test.step("8 コメント：星取表の行を選んで書くと、その行に ① が付き、横の板に並ぶ", async () => {
         await pa.getByTestId("rows-mode").getByText(W.ledger).click();
         // 版を開いた直後は、資料を戻し終えると表を作り直す。選んだ行が消えたら選び直す
+        // デモの資料の施設台帳は、上の方に日報の見出しから読んだ 1 段だけの行が並ぶ。2 段目のある機器の行まで、人がスクロールして探すように下へ送る
+        const lv2 = pa.locator('.ag-row [col-id="lv2"]').filter({ hasText: /\S/ });
+        for (let i = 0; i < 120 && (await lv2.count()) === 0; i++) {
+          await pa.locator(".ag-grid-viewport").evaluate((el) => (el.scrollTop += el.clientHeight * 0.8), undefined, { timeout: 5000 });
+          await pa.waitForTimeout(120);
+        }
         await expect(async () => {
-          await pa.locator('.ag-row [col-id="lv2"]').filter({ hasText: /\S/ }).first().click({ timeout: 5_000 });
+          await lv2.first().click({ timeout: 5_000 });
           await sideTab(pa, "comments");
           await expect(pa.getByTestId("comment-to")).toBeVisible({ timeout: 2_000 });
         }).toPass({ timeout: 60_000 });
@@ -513,7 +558,7 @@ export function walkthrough(lang: Lang): void {
         }
         await pa.getByTestId("confirm-open").click();
         await pa.getByTestId("ask-self").check();
-        await pa.getByTestId("confirm-reason").fill("みどり台の第 2 版から作った、東山の第 1 版");
+        await pa.getByTestId("confirm-reason").fill("さくら坂の第 2 版から作った、東山の第 1 版");
         await pa.getByTestId("confirm-submit").click();
         await expect(pa.getByTestId("confirm-done")).toContainText(W.doneSelf(1));
         await pa.keyboard.press("Escape");

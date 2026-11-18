@@ -18,7 +18,8 @@ import { checkSeen } from "./seen";
 import { activeRequest, createRequest, readRequests, receiveRequest } from "../plan/request";
 import { checkRules, diffRuleRows } from "../share/rules";
 import { countProperNouns } from "../share/recount";
-import { feedbackFileName, parseReadingFeedback } from "../share/reading-feedback";
+import { feedbackFileName, localWordsOf, parseReadingFeedback } from "../share/reading-feedback";
+import { appFeedbackCounts, parseAppFeedback } from "../share/app-feedback";
 import { countValues, countableRuleBlock, ruleTexts } from "../../scripts/skill-loop/values.mjs";
 import { approvedReadingVersions, listReadings, loadedOf, planRulesBacked, readingLineage, recordReadingVersion, recordedReadings, registerReading } from "./readings";
 import { ReadingSkill, isPlanRule } from "../import/reading";
@@ -36,7 +37,7 @@ import type { HumanAction } from "../shared/routes";
 import { createRing, loadRing, monthOf, previewCheckpoint, previewPlace, questionsOf, rotateKeysOf, rotateRingKey, unmarkedRetired, sealPlace, sendCheckpoint, verifyRing, withSentInfo, type Answers, type PreviewView } from "../share/checkpoint";
 import { acceptLedger, checkAgainstLedger, LEDGER_PR_TEXT, ledgerAcceptance, ledgerBranch, ledgerBundlePath, ledgerPlace, ledgerProfileText, loadLedgerForSend, pendingSent } from "../share/ledger-send";
 import { GITHUB_CLIENT_ID, githubClientIdOf, githubHostsOf, githubIo, openLedgerPr, pollDevice, prStatus, repoOfRemote, startDevice, whoAmI, type GitHubIo, type Repo } from "./github";
-import { LEDGER_INTAKE_URL, ledgerIntakeUrlOf, sendFeedbackToIntake, sendToIntake, type IntakeIo } from "./ledger-intake";
+import { LEDGER_INTAKE_URL, ledgerIntakeUrlOf, sendAppFeedbackToIntake, sendFeedbackToIntake, sendToIntake, type IntakeIo } from "./ledger-intake";
 import { parseJsonStrict } from "../share/jcs";
 import { ConnectService, type ConnectBackend, type LatestSigned } from "./connect";
 import { loadSharePack, PACK_ID, type SharePack } from "../share/pack";
@@ -184,6 +185,8 @@ const SCHEMAS = {
   reading_feedback_save: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
   // 受け口の上限（64 KB）より大きいものは、受け口が 413 で断る
   reading_feedback_send: z.object({ text: z.string().min(1).max(400 * 1024), words: z.array(z.string().max(200)).max(5000) }),
+  // アプリの困りごと：画面が見せた全文（src/share/app-feedback.ts の形。受け口の上限は 8 KB）と、画面が知っているその PC の語（橋渡しは保管先の語を足して照らす）
+  app_feedback_send: z.object({ text: z.string().min(1).max(8 * 1024), words: z.array(z.string().max(200)).max(5000) }),
   // 業務システムに送る：人が見た差分のハッシュと、もとにした版（送る直前に作り直して照らす）
   connect_add: z
     .object({ label: z.string().trim().min(1).max(80), url: z.string().min(1).max(300), env: z.enum(["test", "production"]), apiKey: z.string().min(1).max(4096) })
@@ -468,6 +471,35 @@ export class HumanService {
   }
 
   /** 公開の台帳の受け口（GitHub のアカウントなしの道）。URL が決まっていなければ null（道を出さない） */
+  /**
+   * その PC の語（固有名詞の網 2）：保管先の計画の、いちばん新しい版の施設名・表示名・業者・実施者と、設定の呼び名。
+   * 画面が送る語（作業中の計画の語）に足して、困りごとを送る前に照らす。読めない計画は飛ばす（語は返さない・記録しない）
+   */
+  private async localWords(): Promise<string[]> {
+    const out = new Set<string>();
+    const name = this.e.stateDir ? readSettings(this.e.stateDir).name : null;
+    if (name) out.add(name);
+    const root = await this.root();
+    if (!root) return [...out];
+    let ids: string[] = [];
+    try {
+      ids = readdirSync(join(root, "plans"), { withFileTypes: true })
+        .filter((e) => e.isDirectory() && PLAN_ID.test(e.name))
+        .map((e) => e.name);
+    } catch {
+      ids = [];
+    }
+    for (const id of ids) {
+      try {
+        const h = await readHistory(root, id);
+        if (h.latest) for (const w of localWordsOf(h.latest.plan)) out.add(w);
+      } catch {
+        // 読めない計画は飛ばす
+      }
+    }
+    return [...out];
+  }
+
   private intakeIo(): IntakeIo | null {
     if (this.e.ledgerIntake !== undefined) return this.e.ledgerIntake;
     // 試験の止め（MOYAI_LEDGER_INTAKE_URL）は、橋渡しに渡した env に無くても、走っているプロセスの env から効かせる
@@ -791,6 +823,8 @@ export class HumanService {
           lang: s.lang ?? null,
           people: trustList(sd),
           connect: { available: connect.available, enabled: connect.enabled, fake: connect.fake, targets: connect.targets },
+          // アプリの困りごとを送る道（受け口の URL が決まっているときだけ、設定に「困りごと」を出す）
+          appFeedback: this.intakeIo() !== null,
         };
       }
       case "settings_save": {
@@ -1534,6 +1568,34 @@ export class HumanService {
           ];
           const why = special.find(([code]) => r.reasons.includes(code))?.[1] ?? r.reason;
           return no(`feedbackIntake.${why}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
+        }
+        return { ok: true, issue: r.number, url: r.url };
+      }
+      case "app_feedback_send": {
+        // アプリの困りごと・要望を受け口に送る（運営者 2026-11-18）：送るのは、設定の画面が見せた全文（人の一言と、版・画面・OS・言語）だけ。
+        // 形は見せた字のまま（canonical）でなければ送らない。固有名詞の網 2（画面の語と、保管先の計画の施設名・表示名・業者・実施者・呼び名）と、
+        // 行の値・ファイルの道・鍵・URL の数えで照らし、当たれば PC の外に出さない（当たった語・値は返さない）。通信は §2.12 の例外（受け口の 1 つだけ）
+        const p = parsePayload("app_feedback_send", call.payload);
+        if (!p) return no("payloadInvalid");
+        const io = this.intakeIo();
+        if (!io) return no("intakeNotReady");
+        const f = parseAppFeedback(p.text, { canonical: true });
+        if (!f) return no("appFeedbackShape");
+        const words = [...new Set([...p.words, ...(await this.localWords())])];
+        const pn = countProperNouns({ bundleText: f.note, fileName: "", folderPath: "", localWords: words, cells: [], publicWords: new Set() });
+        if (pn.total > 0) return no("properNoun", { hits: pn.total });
+        const counts = appFeedbackCounts(f.note);
+        if (Object.keys(counts).length) return no("appFeedbackIntake.values", { counts });
+        const r = await sendAppFeedbackToIntake(io, p.text);
+        if (!r.ok) {
+          const special: [string, string][] = [
+            ["appFeedback.values", "values"],
+            ["intake.feedbackNoPermission", "noPermission"],
+            ["intake.feedbackLabel", "label"],
+            ["intake.busy", "busy"],
+          ];
+          const why = special.find(([code]) => r.reasons.includes(code))?.[1] ?? r.reason;
+          return no(`appFeedbackIntake.${why}`, { reasons: r.reasons, ...(r.retryAfter !== undefined ? { retryAt: new Date(now.getTime() + r.retryAfter * 1000).toISOString() } : {}) });
         }
         return { ok: true, issue: r.number, url: r.url };
       }

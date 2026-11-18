@@ -583,6 +583,17 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     setRejectedShown(r);
     showSide("source");
   };
+  // 資料を消す（一覧の行の「消す」→「消す？」。11-18）：人の操作。作業中の計画があれば今の道で作り直す（workspace の removeFiles）
+  const removeSource = (r: SourceRow) => {
+    void ws.removeFiles([r.name], "human").then((out) => {
+      if (out.ok) {
+        const answers = Object.values(out.droppedDecisions).reduce((a, b) => a + b, 0);
+        ws.note("info", T.picker.removed(r.name, answers));
+        if (pinnedFile === r.name) setPinnedFile(null);
+        if (fileParam === r.name) location.hash = sheetHash("files");
+      } else if (out.reason === "busy") ws.note("info", T.picker.removeBusy);
+    });
+  };
   const chooseSheet = (i: number) => {
     if (!pickedFile) return;
     setSheetOf((m) => ({ ...m, [pickedFile]: i }));
@@ -794,7 +805,7 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
           {rows.length > 0 && (
             <>
               <span className="moyai-sheet-label">{T.filesLabel}</span>
-              <SourcePicker rows={rows} current={pickedFile} selected={current === "files"} order={order} onOrder={setOrder} onChoose={chooseSource} />
+              <SourcePicker rows={rows} current={pickedFile} selected={current === "files"} order={order} onOrder={setOrder} onChoose={chooseSource} onRemove={viewOnly ? undefined : removeSource} />
               {sheetRows.length >= 2 && <SheetPicker key={pickedFile ?? ""} rows={sheetRows} current={sheetIndex} onChoose={chooseSheet} />}
             </>
           )}

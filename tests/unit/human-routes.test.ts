@@ -13,8 +13,8 @@ import { truthToPlan } from "../fixtures/chart/truth-to-plan.mjs";
 import { fileURLToPath } from "node:url";
 import ExcelJS from "exceljs";
 import { exportExcelName, exportSignatureName, signExport } from "../../src/plan/exports";
-import { signLatest } from "../../src/plan/store";
-import { otherSigner } from "../helpers/signer";
+import { commitPlan, signLatest } from "../../src/plan/store";
+import { SIGNER, otherSigner } from "../helpers/signer";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { FakeTab, SECRET_A, http, startTestBridge, type TestBridge } from "../helpers/bridge";
 import { STUB_TOKEN, startGitHubStub } from "../helpers/github-stub";
@@ -22,6 +22,7 @@ import type { GitHubIo } from "../../src/bridge/github";
 import { CIRCLE_V, envelopeText, makeMemberBody, makeRulesDocBody } from "../../src/share/bundle";
 import { generateKeyPair, keyIdOf, openPlainKey, signBody, type PlainKey } from "../../src/share/sign";
 import type { IntakeIo } from "../../src/bridge/ledger-intake";
+import { APP_FEEDBACK_SCHEMA, appFeedbackText, type AppFeedbackFile } from "../../src/share/app-feedback";
 import { readLedgers } from "../../src/bridge/places";
 import { ownKeys } from "../../src/bridge/people";
 import { readLedgerDir, verifyLedgerFiles } from "../../src/share/ledger";
@@ -68,7 +69,7 @@ const post = (t: TestBridge, path: string, headers: Record<string, string>, body
 
 describe("新しい人だけの経路は、どれも守りを越えさせない", () => {
   it("人だけの経路が増えた（確定・版・設定・輪・検問所）。どれも MCP のツールに無い", () => {
-    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "readingsLineage", "readingFeedbackSave", "readingFeedbackSend", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "templateFileRead", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerIntakeSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect", "workDiscard", "connectSend", "connectAdd"].sort());
+    expect(NEW_ROUTES.sort()).toEqual(["planCommit", "planFileRead", "planRevert", "planSign", "requestReceive", "requestRenew", "planStatus", "plansList", "planVersionRead", "commentAdd", "commentsList", "personKeyCreate", "personKeyConfirm", "ringCreate", "ringVerify", "ringMemberConfirm", "ringRulesAccept", "facilityKeyRotate", "settingsRead", "settingsSave", "checkpointOpenText", "checkpointPreview", "checkpointSend", "photoAllow", "peersCompare", "readingsRead", "readingsLineage", "readingFeedbackSave", "readingFeedbackSend", "planSourcePut", "planSourceRead", "templatesRead", "templateSave", "templateFileRead", "exportSign", "exportFileRead", "ledgerPreview", "ledgerSend", "ledgerIntakeSend", "ledgerRulesAccept", "ledgerPrs", "githubConnectStart", "githubConnectState", "githubDisconnect", "workDiscard", "connectSend", "connectAdd", "appFeedbackSend"].sort());
     for (const id of NEW_ROUTES) {
       const r: RouteDef = ROUTES[id];
       expect(r.requires).toEqual({ tabSecret: true, oneTimeToken: true });
@@ -938,5 +939,109 @@ describe("読み方のフィードバックを受け口に送る（人だけの�
     // 試験の止めは閉じる側に倒す：空・打ち間違い・手元でない道は、本物に落ちずに道を出さない
     for (const v of ["", "of", "https://example.com", "http://example.com:8787"]) expect(ledgerIntakeUrlOf(LEDGER_INTAKE_URL, { MOYAI_LEDGER_INTAKE_URL: v })).toBeNull();
     expect(process.env.MOYAI_LEDGER_INTAKE_URL).toBe("off");
+  });
+});
+
+describe("アプリの困りごとを受け口に送る（人だけの経路 app_feedback_send。受け口はハンドラそのもの、GitHub の Issues はメモリの台。本物では未確認）", () => {
+  const fileOf = (note: string, patch: Partial<AppFeedbackFile> = {}): AppFeedbackFile => ({ schema: APP_FEEDBACK_SCHEMA, note, version: "d247938", screen: "settings", os: "linux", lang: "ja", ...patch });
+  const textOf = (note: string, patch: Partial<AppFeedbackFile> = {}) => appFeedbackText(fileOf(note, patch));
+
+  async function bridgeWith(ledgerIntake: IntakeIo | null) {
+    extra = join(tmpdir(), `moyai-app-feedback-send-${process.pid}-${Date.now()}`);
+    mkdirSync(extra, { recursive: true });
+    tb = await startTestBridge({ human: { shell: async () => ({ documents: join(extra, "Documents"), mounts: [] }), ledgerIntake } });
+    const t = await tab(tb);
+    const call = async (id: (typeof NEW_ROUTES)[number], payload: unknown) => {
+      const p = JSON.stringify(payload);
+      const tok = await t.token(R(id).action, p);
+      const r = await post(tb!, R(id).path, good(tb!), { token: tok, payload: p });
+      expect(r.status, id).toBe(200);
+      return r.body;
+    };
+    await call("settingsSave", { root: join(extra, "置き場所"), name: "【架空】送る試験の人" });
+    return call;
+  }
+
+  function intake() {
+    const token = `github_pat_${"AppSnd".repeat(4)}_${"z".repeat(40)}`;
+    const gh = fakeIssuesGitHub({ token });
+    const env = { GITHUB_TOKEN: token, FEEDBACK_REPO: `${gh.owner}/${gh.name}`, INTAKE_KV: memoryKv() };
+    const sent: { url: string; body: string }[] = [];
+    const io: IntakeIo = {
+      url: "https://intake.example",
+      fetch: async (u, i) => {
+        sent.push({ url: u, body: i.body ?? "" });
+        return handleRequest(new Request(u, { method: i.method, headers: { ...i.headers, "cf-connecting-ip": "203.0.113.9" }, ...(i.body !== undefined ? { body: i.body } : {}) }), env, { fetch: gh.fetch, now: () => Date.now(), packOf });
+      },
+    };
+    return { gh, io, sent };
+  }
+
+  it("見せた全文だけを送る。受け口が MOYAI のリポジトリにラベル feedback:app の Issue を出す。その PC の語は送らない", async () => {
+    const { gh, io, sent } = intake();
+    const call = await bridgeWith(io);
+    // 受け口があるので、設定に「困りごと」を出す
+    expect((await call("settingsRead", {})).appFeedback).toBe(true);
+    const words = ["【架空】みなと台清掃工場"];
+    const text = textOf("取り込んだ資料を消せない");
+    const r = await call("appFeedbackSend", { text, words });
+    expect(r).toEqual({ ok: true, issue: 1, url: `https://github.com/${gh.owner}/${gh.name}/issues/1` });
+    expect(sent).toEqual([{ url: "https://intake.example/app-feedback", body: text }]);
+    expect(gh.issues.map((i) => i.labels)).toEqual([["feedback:app"]]);
+    for (const w of [...words, "【架空】送る試験の人"]) expect(JSON.stringify(sent)).not.toContain(w);
+  });
+
+  it("見せた字と違う形（余計な欄・並びの違い・形の外れ）は送らない", async () => {
+    const { io, sent } = intake();
+    const call = await bridgeWith(io);
+    const o = JSON.parse(textOf("消せない")) as Record<string, unknown>;
+    for (const text of [JSON.stringify(o), JSON.stringify({ ...o, facility: "x" }, null, 2) + "\n", textOf("消せない").replace('"linux"', '"Linux 6.1"'), "x"]) {
+      expect((await call("appFeedbackSend", { text, words: [] })).reason).toBe("appFeedbackShape");
+    }
+    expect(sent).toHaveLength(0);
+  });
+
+  it("網 2（画面の語・呼び名・保管先の計画の施設名）か、行の値・道・鍵・URL に当たれば、PC の外に出さない（当たった字は返さない）", async () => {
+    const { io, sent } = intake();
+    const call = await bridgeWith(io);
+    // 画面が送った語
+    expect(await call("appFeedbackSend", { text: textOf("【架空】ほげ設備の資料を消せない"), words: ["【架空】ほげ設備"] })).toMatchObject({ ok: false, reason: "properNoun", hits: 1 });
+    // 画面が語を送らなくても、橋渡しが設定の呼び名を照らす
+    expect((await call("appFeedbackSend", { text: textOf("【架空】送る試験の人として署名できない"), words: [] })).reason).toBe("properNoun");
+    // 保管先の計画の施設名（画面が知らない計画でも）
+    const plan = truthToPlan("fictional-1");
+    const c = await commitPlan({ root: join(extra, "置き場所"), plan, reason: "第 1 版", acceptances: aiDecisions(plan).map((d) => ({ id: d.id, hash: d.hash, reason: "試験" })), basedOn: null, signer: SIGNER, client: "t" });
+    expect(c.ok).toBe(true);
+    expect((await call("appFeedbackSend", { text: textOf(`${plan.facility.name}の星取表が開かない`), words: [] })).reason).toBe("properNoun");
+    // 行の値・道・URL
+    const rv = await call("appFeedbackSend", { text: textOf("P-1023 が C:\\Users\\taro で https://x.example"), words: [] });
+    expect(rv).toMatchObject({ ok: false, reason: "appFeedbackIntake.values" });
+    expect(rv.counts.code).toBeGreaterThan(0);
+    expect(rv.counts.path).toBeGreaterThan(0);
+    expect(rv.counts.url).toBeGreaterThan(0);
+    expect(JSON.stringify(rv)).not.toMatch(/P-1023|taro|x\.example/);
+    expect(sent).toHaveLength(0);
+  });
+
+  it("受け口の断りは理由を分けて返す（権限なし・配置し直す前）", async () => {
+    const { gh, io } = intake();
+    const call = await bridgeWith(io);
+    gh.mode = "forbidden";
+    expect((await call("appFeedbackSend", { text: textOf("消せない"), words: [] })).reason).toBe("appFeedbackIntake.noPermission");
+    const old: IntakeIo = { url: "https://intake.example", fetch: async () => ({ status: 404, json: async () => ({ ok: false, reasons: ["intake.notFound"] }) }) };
+    await tb!.close();
+    tb = null;
+    const call2 = await bridgeWith(old);
+    expect((await call2("appFeedbackSend", { text: textOf("消せない"), words: [] })).reason).toBe("appFeedbackIntake.notDeployed");
+  });
+
+  it("受け口が無い版では、設定に「困りごと」を出さず、送る経路は断る", async () => {
+    const call = await bridgeWith(null);
+    expect((await call("settingsRead", {})).appFeedback).toBe(false);
+    expect((await call("appFeedbackSend", { text: textOf("消せない"), words: [] })).reason).toBe("intakeNotReady");
+  });
+
+  it("送る経路は AI のツールに無い（screen_set は文の案を置くだけ）", () => {
+    for (const n of [...TOOL_NAMES, ...EXPOSED_TOOL_NAMES]) expect(n).not.toMatch(/feedback/i);
   });
 });

@@ -40,7 +40,7 @@ afterEach(async () => {
 });
 
 const PACKS = resolvePacksDir();
-const DEMO_FILES = ["daily-report.csv", "equipment-ledger.xlsx", "plan-hoshitori.xlsx"];
+const DEMO_FILES = ["【架空】さくら坂焼却場_中長期整備計画_廃止までの整備計画R5改訂R8実績追記_l2様式.xlsx", "【架空】さくら坂焼却場_作業日報_令和7年度定期整備業務委託_清書様式.xlsx", "【架空】さくら坂焼却場_発注台帳_令和7年度_財務会計CSV.csv"];
 const SHORT = { read: 2000, propose: 2000, start: 2000 };
 
 /** 中継（本物）を MCP のクライアントでつなぐ */
@@ -126,20 +126,21 @@ describe("デモの混ざり：作業画面の側", () => {
     expect(ws.fileNames).toEqual(["north-daily.csv"]);
   });
 
-  it("資料の名前がデモの資料と同じでも、人が落とした資料は利用者の資料（ほかの架空の施設の資料と名前が重なる。fictional-2 の equipment-ledger.xlsx）", async () => {
+  it("資料の名前がデモの資料と同じでも、人が落とした資料は利用者の資料（ほかの架空の施設の資料を、デモの計画と同じ名前で落とした）", async () => {
     const ws = new IntakeWorkspace({ packId: "", facilityName: "", fiscalYearStartMonth: 4, fictional: false });
+    const same = DEMO_FILES[0]!;
     const other = new Uint8Array(readFileSync("samples/out/waste-incineration/fictional-2/equipment-ledger.xlsx"));
-    await ws.addFiles([{ name: "equipment-ledger.xlsx", size: other.length, bytes: async () => other }]);
+    await ws.addFiles([{ name: same, size: other.length, bytes: async () => other }]);
     // 画面が人の落とした資料に【架空】とあるのを見て架空にするのと同じ（pages/Merge.tsx）
     await ws.fresh();
     expect(ws.sourcesMarkedFictional()).toBe(true);
     ws.setFacility({ fictional: true });
     const { args, fetch } = demoArgs();
-    expect(args.files.map((f) => f.name)).toContain("equipment-ledger.xlsx");
-    // 名前で見ると、デモの資料の 2 つ（日報と星取表）がこの施設の台帳の横に入ってしまう。入れたのが人なので、どれも断る
+    expect(args.files.map((f) => f.name)).toContain(same);
+    // 名前で見ると、デモの資料の残りの 2 つ（日報と CSV）がこの施設の資料の横に入ってしまう。入れたのが人なので、どれも断る
     expect(await addFilesFromBridge(ws, args, fetch)).toEqual(allMixed(DEMO_FILES));
-    expect(ws.fileNames).toEqual(["equipment-ledger.xlsx"]);
-    expect(ws.userFileNames).toEqual(["equipment-ledger.xlsx"]);
+    expect(ws.fileNames).toEqual([same]);
+    expect(ws.userFileNames).toEqual([same]);
   });
 
   it("デモのあとにデモの資料を入れても mixed にはならない（同じ名前の断り）。ほかの Skillパックは今どおり誤りで返す", async () => {

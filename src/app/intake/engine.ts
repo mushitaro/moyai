@@ -24,7 +24,7 @@ export class SameThreadEngine implements IntakeEngine {
   constructor(readonly local: IntakeHost) {}
 
   post(req: IntakeRequest, v: number): void {
-    if (req.op === "read" || req.op === "reset" || req.op === "commit") throw new Error(`答えを待たずに送れない要求：${req.op}`);
+    if (req.op === "read" || req.op === "reset" || req.op === "remove" || req.op === "commit") throw new Error(`答えを待たずに送れない要求：${req.op}`);
     this.local.applySync(req, v);
   }
 

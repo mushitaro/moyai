@@ -67,11 +67,12 @@ describe("誤りの送り手と受け手", () => {
 });
 
 describe("ツールの送り手と受け手", () => {
-  it("tool-names.json と TOOLS が同じ 20。中継が出すのは今見せるものだけ（連携の道具は、設定の連携がオンのときだけ）", () => {
+  it("tool-names.json と TOOLS が同じ 21。中継が出すのは今見せるものだけ（連携の道具は、設定の連携がオンのときだけ）", () => {
     // 17 個目は作業画面の見せ方を変える screen_set（運営者の決定 11-07：利用者の想定のプロンプトで、アプリがチャットだけで動く）
     // 18 個目は入っている MOYAI を最新にする moyai_update（mushitaro/moyai#65）
     // 19・20 個目は業務システムとの連携の connect_read・connect_plan（運営者の判断 2026-11-16。送る道具は無い）
-    expect(toolNames).toHaveLength(20);
+    // 21 個目は作業画面の資料を消す intake_remove_files（運営者 2026-11-18。作業中の資料だけ。確定した版には触れない）
+    expect(toolNames).toHaveLength(21);
     expect(Object.keys(TOOLS).sort()).toEqual([...toolNames].sort());
     expect(TOOL_NAMES).toEqual(toolNames);
     for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
@@ -100,6 +101,8 @@ describe("ツールの送り手と受け手", () => {
       "connect_read",
       "crosswalk_propose",
       "intake_compose",
+      // 資料を作業画面から消す：作業画面が、人の「消す」と同じ道で消す（11-18）
+      "intake_remove_files",
       "intake_settle",
       "intake_survey",
       "photo_transcribe",
