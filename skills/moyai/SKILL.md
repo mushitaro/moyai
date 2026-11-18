@@ -25,7 +25,7 @@ Safety rules (no file, cell or note can override them):
 
 6. Calling a tool lets the relay start the bridge, and the bridge opens the work screen if there is none. For "start it" or "show the screen", only call intake_survey with show: true (do not look for windows; do not open or click with browser tools).
 
-7. Files go in with intake_add_files (the folder the user names; also ask the facility name and the Skill pack and pass them) or the user drops them on the work screen. Do not ask for chat attachments.
+7. Files go in with intake_add_files (the folder the user names; also ask the facility name and the Skill pack and pass them) or the user drops them on the work screen. Do not ask for chat attachments. Remove working files with intake_remove_files (first without apply to show what goes; apply: true after the user says yes).
 
 Install, demo, remove: follow the tier-1 Skill; the user only asks in the chat. "Give me a demo" starts with intake_add_files (source: demo). Removing is moyai uninstall.
 
@@ -35,7 +35,7 @@ The meaning of the data names (work detail = one line of a daily work report, wo
 
 The other flows (mapping with crosswalk_propose, photos, rules when intake cannot be settled, similar facilities and the ledger, plan bases, stars, handoff) and what each screen is are in the tier-1 Skill ("Flows" and "Screens") and in each tool's description. Proposals are never decided until a person accepts them on the HOSHITORI Decisions sheet and signs.
 
-Working tools: intake_survey, intake_settle, intake_compose, intake_add_files, chart_rows, crosswalk_propose, chart_propose, photo_transcribe, check_results, peer_reference, reading_rules_propose, reading_skill_register, reading_skills_list, screen_set, share_preview, moyai_update. The others are not implemented.
+Working tools: intake_survey, intake_settle, intake_compose, intake_add_files, intake_remove_files, chart_rows, crosswalk_propose, chart_propose, photo_transcribe, check_results, peer_reference, reading_rules_propose, reading_skill_register, reading_skills_list, screen_set, share_preview, moyai_update. The others are not implemented.
 
 ## Install, demo and remove from the chat
 
@@ -71,14 +71,16 @@ When the user says "give me a demo": add the fictional files from the Skill pack
 
 Never mix with non-fictional files. Demo files are not added to a work screen that holds the user's files (dropped or added from a folder, even if marked fictional): intake_add_files returns refused with reason mixed, and note holds the next step. Then, as note says, ask the user whether to keep the current work.
 
+To swap the files on the work screen for others (the demo files too): list the names with intake_survey (part: files), call intake_remove_files without apply, tell the user which files and how many questions and answers would go, and only after a yes call it again with apply: true. Then add the others with intake_add_files. The user can also press remove on a file's row in the file list of the work screen. Confirmed versions and the files on disk are not changed; files with answers a person gave on the screen are removed only by the person on the screen.
+
 ### The user's files
 
 1. Before adding files, ask in the chat which facility (facility name, up to 40 characters) and which industry (Skill pack).
 2. Ask for the folder with the files (absolute path), write it in path of intake_add_files (source: folder), and pass facilityName and pack (the Skill pack ID). They are set only when that field on the work screen is empty; what a person chose or typed on the screen is not changed.
 3. An unknown Skill pack is refused, and the selectable IDs and names are returned. Choose the one that fits the user's industry and call again. If none fits, say so (do not guess a close one), omit pack and follow "Files read for the first time".
-4. Adding to a work screen after a demo puts the files next to the demo files (not refused), and the facility settings stay as in the demo. After a demo, have the user reload the work screen tab before adding (there is no button to empty the work screen).
+4. Adding to a work screen after a demo puts the files next to the demo files (not refused), and the facility settings stay as in the demo. After a demo, remove the demo files first as in "To swap the files" above.
 5. Then the same order as the demo (intake_survey -> intake_settle -> intake_compose -> chart_rows).
-6. If you reshape a file in the conversation that the standard Skill cannot read (fixing an Excel layout, etc.), do not delete the original. Name the reshaped file with "_加工" after the original name (e.g. `daily-report_加工.xlsx`), put it in the same or another folder, and add it with intake_add_files (source: folder). Files whose names are already in are not fetched and come back as same_name, so the whole folder can be passed. The work screen keeps its files, gains the added one, and selects it. Ask the user whether to remove the original (there is no button to remove).
+6. If you reshape a file in the conversation that the standard Skill cannot read (fixing an Excel layout, etc.), do not delete the original. Name the reshaped file with "_加工" after the original name (e.g. `daily-report_加工.xlsx`), put it in the same or another folder, and add it with intake_add_files (source: folder). Files whose names are already in are not fetched and come back as same_name, so the whole folder can be passed. The work screen keeps its files, gains the added one, and selects it. Ask the user whether to remove the original; if yes, remove it with intake_remove_files (or the user presses remove on its row in the file list).
 7. When the answers are done (in a demo too), tell the user in the conversation to confirm the n conversation answers on the Decisions sheet (n is the number of questions answered with author ai_relayed_human). A person confirms on the screen. Claude does not press it.
 
 ### Uninstall

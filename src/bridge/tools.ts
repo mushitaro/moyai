@@ -78,6 +78,8 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   intake_settle: "tab",
   intake_compose: "tab",
   intake_add_files: "bridge_then_tab",
+  // 資料を作業画面から消す：作業画面が、人の「消す」と同じ道で消す（作業中の資料だけ。確定した版には触れない）
+  intake_remove_files: "tab",
   photo_transcribe: "tab",
   crosswalk_propose: "tab",
   chart_rows: "tab",

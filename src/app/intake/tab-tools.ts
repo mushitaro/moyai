@@ -10,6 +10,7 @@ import {
   READING_DROP_NOTE_MIN,
   SKILL_CATALOG_TOOLS,
   SURVEY_FILES_DEFAULT,
+  INTAKE_REMOVE_NOTES,
   intakeAddFilesFromTabSchema,
   intakeAddFilesToTabSchema,
   toolDef,
@@ -347,7 +348,36 @@ function proposeNote(placed: readonly ReadingRule[], out: ProposeOutcome): strin
   return parts.length ? `${parts.join("。")}。` : null;
 }
 
+/**
+ * intake_remove_files：作業画面の資料を消す（人の「消す」と同じ workspace の removeFiles）。apply が無ければ消さずに、かかる問いと答えの数だけを返す。
+ * 人が画面で答えた問いにかかる資料は、AI からは消さない（人が画面で消す）。返すのは名前と数だけ（セルの値は返さない）
+ */
+async function removeFiles(ws: IntakeWorkspace, args: Record<string, unknown>): Promise<TabToolResult> {
+  const files = [...new Set(args.files as string[])];
+  const apply = args.apply === true;
+  const zero = { human: 0, ai: 0, ai_relayed_human: 0, rule_code: 0 };
+  const answer = (x: { applied: boolean; removed: string[]; unknown: string[]; touching: { questions: number; decisions: typeof zero }; dropped: { questions: number; decisions: typeof zero } | null; plan: "recomposing" | "cleared" | "kept"; refused: "unknown" | "busy" | "human_decided" | null; note: string }): TabToolResult => {
+    const data = { ...x, files, filesLeft: ws.fileCount };
+    return toolDef("intake_remove_files").output.safeParse(data).success ? { ok: true, data } : { ok: false, code: "tool_failed" };
+  };
+  const refuse = (refused: "unknown" | "busy" | "human_decided", unknown: string[] = [], touching = { questions: 0, decisions: zero }) => {
+    ws.note("ai", T.removeRefused(files.length));
+    return answer({ applied: false, removed: [], unknown, touching, dropped: null, plan: "kept", refused, note: INTAKE_REMOVE_NOTES[refused] });
+  };
+  const preview = await ws.removeFiles(files, "ai", true);
+  if (!preview.ok) return preview.reason === "unknown" ? refuse("unknown", preview.unknown) : refuse("busy");
+  const touching = { questions: preview.touchingQuestions, decisions: preview.touchingDecisions };
+  if (preview.touchingDecisions.human > 0) return refuse("human_decided", [], touching);
+  if (!apply) return answer({ applied: false, removed: [], unknown: [], touching, dropped: null, plan: "kept", refused: null, note: INTAKE_REMOVE_NOTES.preview });
+  const r = await ws.removeFiles(files, "ai");
+  if (!r.ok) return r.reason === "unknown" ? refuse("unknown", r.unknown) : refuse("busy");
+  const dropped = Object.values(r.droppedDecisions).reduce((a, b) => a + b, 0);
+  ws.note("ai", T.filesRemoved(r.removed.length, dropped));
+  return answer({ applied: true, removed: r.removed, unknown: [], touching, dropped: { questions: r.droppedQuestions, decisions: r.droppedDecisions }, plan: r.plan, refused: null, note: INTAKE_REMOVE_NOTES[r.plan] });
+}
+
 export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
+  intake_remove_files: (ws, args) => removeFiles(ws, args),
   chart_propose: (ws, args) => chartPropose(ws, args),
   // 作業画面の見せ方（chat-ops-v1）：人の操作と同じ関数を通す。保存先は設定の画面の欄に入れるだけ（保存は人）
   screen_set: (ws, args) => screenSet(ws, args as ScreenSetArgs),

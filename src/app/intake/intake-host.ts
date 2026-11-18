@@ -19,6 +19,7 @@ import type {
   IntakeView,
   PhotoCall,
   ReadReply,
+  RemoveReply,
   ResetReply,
   RuleEffect,
   SettleReply,
@@ -38,7 +39,7 @@ export function answerOffered(q: Pick<QuestionState, "valueKind" | "options">, a
 }
 
 /** 同期で処理できない要求（資料のバイト列を読む・ハッシュを取る） */
-type AsyncOp = "read" | "reset" | "commit";
+type AsyncOp = "read" | "reset" | "remove" | "commit";
 export type SyncRequest = Exclude<IntakeRequest, { op: AsyncOp }>;
 
 interface Waiting {
@@ -149,7 +150,7 @@ export class IntakeHost {
             later.waiters.unshift(...item.waiters);
             continue;
           }
-          if (this.queue.some((x) => x.msg.req.op === "read" || x.msg.req.op === "reset")) {
+          if (this.queue.some((x) => x.msg.req.op === "read" || x.msg.req.op === "reset" || x.msg.req.op === "remove")) {
             this.queue.push(item);
             continue;
           }
@@ -177,6 +178,8 @@ export class IntakeHost {
         return this.read(req.name, req.bytes);
       case "reset":
         return this.reset(req);
+      case "remove":
+        return this.remove(req);
       case "commit":
         return this.commit();
       default:
@@ -285,9 +288,9 @@ export class IntakeHost {
     return { accepted: this.inputs.map((f) => f.name), listed: this.listedSince(before) };
   }
 
-  private async commit(): Promise<CommitReply> {
-    const files = await Promise.all(this.inputs.map(async (f) => ({ name: f.name, bytes: f.bytes, sha256: await sha256Hex(f.bytes) })));
-    const questionFiles: CommitReply["questionFiles"] = this.analysis().questions.map((q) => {
+  /** 質問の ID → その質問のかかる資料の名前（commit と remove が使う） */
+  private questionFiles(an: Analysis): CommitReply["questionFiles"] {
+    return an.questions.map((q) => {
       const set = new Set<string>();
       for (const it of q.items) {
         set.add(it.file);
@@ -295,6 +298,58 @@ export class IntakeHost {
       }
       return [q.questionId, [...set]];
     });
+  }
+
+  /**
+   * 資料を消す：残りの資料で取り込みを作り直し（写真は同じ一覧から外すだけ）、残った質問にかかる決定だけを置き直す。
+   * 持っていない名前が 1 つでもあれば、どれも消さない。dryRun なら消さずに、かかる質問と決定だけを返す
+   */
+  private async remove(req: Extract<IntakeRequest, { op: "remove" }>): Promise<RemoveReply> {
+    const names = [...new Set(req.names)];
+    const held = new Set(this.inputs.map((f) => f.name));
+    const unknown = names.filter((n) => !held.has(n));
+    const gone = new Set(names);
+    const an = this.analysis();
+    const touching = new Set(
+      this.questionFiles(an)
+        .filter(([, fs]) => fs.some((f) => gone.has(f) || [...gone].some((g) => f.startsWith(`${g}#p`))))
+        .map(([id]) => id),
+    );
+    const decisions = this.s.decisionList();
+    const base = {
+      unknown,
+      touchingQuestions: touching.size,
+      touchingDecisions: decisions.filter((d) => touching.has(d.questionId)),
+      droppedQuestions: 0,
+      droppedDecisions: [] as Decision[],
+    };
+    if (unknown.length > 0 || names.length === 0 || req.dryRun) return { ...base, removed: [], accepted: this.inputs.map((f) => f.name) };
+    for (const n of names) this.photos.forget(n);
+    const rest = this.inputs.filter((f) => !gone.has(f.name));
+    const s = this.newSession(req.options);
+    await s.add(rest.filter((f) => photoMimeOf(f.name) === null));
+    s.setReadings(req.readings);
+    // 残った質問にかかる決定だけを置き直す（消した資料にだけかかっていた質問の決定は外す）
+    const after = new Set(s.analyze().questions.map((q) => q.questionId));
+    const kept = decisions.filter((d) => after.has(d.questionId));
+    if (kept.length > 0) s.settle(kept);
+    const beforeIds = new Set(an.questions.map((q) => q.questionId));
+    this.session = s;
+    this.inputs = rest;
+    this.dataBefore = null;
+    this.bump(s.takeAfter());
+    return {
+      ...base,
+      removed: names,
+      droppedQuestions: [...beforeIds].filter((id) => !after.has(id)).length,
+      droppedDecisions: decisions.filter((d) => !after.has(d.questionId)),
+      accepted: rest.map((f) => f.name),
+    };
+  }
+
+  private async commit(): Promise<CommitReply> {
+    const files = await Promise.all(this.inputs.map(async (f) => ({ name: f.name, bytes: f.bytes, sha256: await sha256Hex(f.bytes) })));
+    const questionFiles = this.questionFiles(this.analysis());
     return { files, questionFiles, decisions: this.s.decisionList() };
   }
 
