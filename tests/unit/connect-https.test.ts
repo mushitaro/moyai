@@ -4,11 +4,17 @@
 // 偽の Maximo は試験の中だけ（tests/helpers/fake-maximo.ts）。保存の置き場所・HOME は一時のフォルダ（利用者の ~/.config/mxstage は読まない・書かない）。
 // 部品の中身が無い環境では飛ばす（CI の test の仕事は、部品が入っていなければ前の段で落ちる）。
 import { execFile } from "node:child_process";
+import { request as httpsRequest } from "node:https";
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { eamTesting, maximoSeed, startFakeMaximo, type FakeMaximoServer } from "../helpers/fake-maximo";
+import { ConnectService } from "../../src/bridge/connect";
+import { importEamPackage, loadPackageBackend } from "../../src/bridge/connect/package";
+import { writeSettings } from "../../src/bridge/places";
+import { planLinesOfPlan } from "../../src/shared/connect";
+import { assetTreeOf, eamTesting, maximoSeed, startFakeMaximo, type FakeMaximoServer } from "../helpers/fake-maximo";
+import { asset, detail, plan, work } from "./share/fixtures";
 
 const testing = await eamTesting();
 // CI では部品が入っている前提（test の仕事が先に確かめる）。/testing が無ければ、黙って飛ばさずに落とす
@@ -88,5 +94,57 @@ describe.skipIf(!testing || onMac)("本物の部品で、HTTPS の偽の Maximo 
     // 落ちた理由は通信（部品は TLS の誤りを MaximoNetworkError に包む。読み込みの誤りではない）で、偽の Maximo には HTTP の要求が 1 つも届いていない（TLS の握手で断った）
     expect(r.err).toContain("MaximoNetworkError");
     expect(srv.requests).toEqual([]);
+  });
+
+  it("HTTPS の偽の Maximo の包みを通して、突合 → 差分 → 送る（書き込み）まで通る（e2e の connect-maximo と同じ道。本体は字で渡す）", async () => {
+    const srv = await startFakeMaximo(testing, maximoSeed({}));
+    cleanups.push(() => srv.stop());
+    const ca = readFileSync(srv.caFile);
+    // 本物の fetch の代わりに、その証明書だけを信じる https で送る（このプロセスの TLS の確かめは緩めない）
+    const fetchImpl = (url: string, init: RequestInit): Promise<Response> =>
+      new Promise((done, fail) => {
+        const h: Record<string, string> = {};
+        new Headers(init.headers).forEach((v, k) => (h[k] = v));
+        const req = httpsRequest(url, { method: init.method ?? "GET", headers: h, ca }, (res) => {
+          const chunks: Buffer[] = [];
+          res.on("data", (c: Buffer) => chunks.push(c));
+          res.on("end", () => {
+            const rh = new Headers();
+            for (const [k, v] of Object.entries(res.headers)) if (typeof v === "string") rh.set(k, v);
+            done(new Response(res.statusCode === 204 ? null : Buffer.concat(chunks), { status: res.statusCode ?? 0, headers: rh }));
+          });
+        });
+        req.on("error", fail);
+        if (typeof init.body === "string") req.write(init.body);
+        req.end();
+      });
+    const pkg = await importEamPackage();
+    const nodeMod: any = await import(/* @vite-ignore */ "@mxstage/eam-connectors/node" as string); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const N = 12;
+    const assets = [asset("g", null, { name: "【架空】灰出し設備", level: 1, parentKey: null }), ...Array.from({ length: N }, (_, i) => asset(`a${i}`, null, { name: `機器 ${i}`, level: 2, parentKey: "g" }))];
+    const works = Array.from({ length: N }, (_, i) => work(`w${i}`, "INSPECT", [`a${i}`], { kind: "点検" }));
+    const details = Array.from({ length: N }, (_, i) => [detail(`d${i}a`, `w${i}`, 2027, { planOrActual: "plan" }), detail(`d${i}b`, `w${i}`, 2028, { planOrActual: "plan" })]).flat();
+    const p = { ...plan({ assets, works, details }), planId: "plan-connect-https" };
+    const lines = planLinesOfPlan(p);
+    const { assets: tree, numOf } = assetTreeOf(lines.map((l) => l.assetPath), "E2E");
+    const d0 = lines[0]!;
+    srv.use(maximoSeed({ assets: tree, pms: [{ pmnum: "PMD1", siteid: "E2E", description: d0.work, assetnum: numOf.get(d0.assetPath), nextdate: "2030-04-01T00:00:00+09:00" }] }));
+    const dir = mkdtempSync(join(tmpdir(), "moyai-connect-https-"));
+    const sd = mkdtempSync(join(tmpdir(), "moyai-connect-https-"));
+    cleanups.push(() => rmSync(dir, { recursive: true, force: true }), () => rmSync(sd, { recursive: true, force: true }));
+    writeSettings(sd, { v: 1, root: null, ledger: null, name: null, connect: true });
+    const saved = await new nodeMod.ConnectionStore({ dir }).save({ name: "【架空】Maximo（テスト）", baseUrl: srv.origin, environment: "test", apiKey: srv.apiKey });
+    const svc = new ConnectService({ stateDir: sd, now: () => Date.now(), backend: await loadPackageBackend({ pkg, dir, fetchImpl }) });
+    const latest = { version: 1, plan: p };
+    const pl = await svc.plan(saved.connection.id, latest);
+    if (!pl.ok) throw new Error(pl.reason);
+    expect(pl.counts).toMatchObject({ ok: 0, diff: 1, add: N - 1, change: 1 });
+    const sent = await svc.send(saved.connection.id, latest, pl.hash);
+    expect(sent).toMatchObject({ ok: true, applied: N });
+    expect(srv.fake().writeCount()).toBeGreaterThan(0);
+    const after = await svc.plan(saved.connection.id, latest);
+    if (!after.ok) throw new Error(after.reason);
+    expect(after.counts).toMatchObject({ ok: N, add: 0, change: 0 });
+    expect(srv.requests.some((q) => q.path.includes(srv.apiKey))).toBe(false);
   });
 });

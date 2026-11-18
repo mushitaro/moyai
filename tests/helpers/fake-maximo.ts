@@ -93,8 +93,9 @@ export async function startFakeMaximo(testing: Any, seed: Any, apiKey = "e2e-max
         try {
           requests.push({ method: req.method ?? "", path: req.url ?? "" });
           const headers = new Headers();
-          for (const [k, v] of Object.entries(req.headers)) if (typeof v === "string") headers.set(k, v);
-          const body = chunks.length ? Buffer.concat(chunks) : undefined;
+          for (const [k, v] of Object.entries(req.headers)) if (typeof v === "string" && k !== "content-length" && k !== "transfer-encoding") headers.set(k, v);
+          // 部品の偽の Maximo は、本体を字（string）でしか読まない（Buffer だと書き込みを 400 で断る）
+          const body = chunks.length ? Buffer.concat(chunks).toString("utf8") : undefined;
           const r: Response = await fake.fetch(`${origin}${req.url ?? "/"}`, { method: req.method, headers, ...(body && req.method !== "GET" ? { body } : {}) });
           const out = Buffer.from(await r.arrayBuffer());
           const h: Record<string, string> = {};
