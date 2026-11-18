@@ -1,5 +1,5 @@
 // 公開の台帳の受け口（運営者の決定 2026-11-07）：GitHub のアカウントを持たない人の束を受け、運営者の GitHub のアカウントで台帳に PR を出す。
-// 道は POST /submit と POST /feedback（読み方のフィードバック。feedback.ts）。/submit の体は束のファイル 1 つか、取り下げの印 1 つ（JSON、256 KB まで）。確かめの順：
+// 道は POST /submit と POST /feedback（読み方のフィードバック。feedback.ts）と POST /app-feedback（アプリの困りごと。app-feedback.ts）。/submit の体は束のファイル 1 つか、取り下げの印 1 つ（JSON、256 KB まで）。確かめの順：
 //   1. 道と方法・設定（GITHUB_TOKEN・LEDGER_REPO・KV）
 //   2. 濫用の防ぎ：同じ IP から 1 時間に 10 件まで、まわりの網（/24・/48）から 30 件まで（limit.ts。IP は鍵つきのハッシュにして数え、残さない）
 //   3. Content-Type（application/json）と大きさ（256 KB まで）
@@ -38,6 +38,7 @@ import { closePrWithComment, findPr, ledgerBase, openIntakePrs, openPr, openPrsO
 import { RATE_LIMIT, bucketKey, clientBucket, networkBucket, takeSlot, type KvLike } from "./limit";
 import { INTAKE_PR_TEXT } from "./text";
 import { FEEDBACK_PATH, handleFeedback } from "./feedback";
+import { APP_FEEDBACK_PATH, handleAppFeedback } from "./app-feedback";
 import { TOKEN_SHAPE, jsonReply, readLimited, refuseWith } from "./http";
 
 /** 受け口の上限（コードの定数） */
@@ -66,7 +67,7 @@ export interface IntakeEnv {
   LEDGER_REPO?: string;
   /** KV：送り手ごとの件数（1 時間で消える） */
   INTAKE_KV?: KvLike;
-  /** 変数：読み方のフィードバックの Issue を出すリポジトリ（owner/name。固定。POST /feedback） */
+  /** 変数：読み方のフィードバックとアプリの困りごとの Issue を出すリポジトリ（owner/name。固定。POST /feedback・POST /app-feedback） */
   FEEDBACK_REPO?: string;
   /** 秘密（任意）：フィードバックの Issue を出すトークン（FEEDBACK_REPO だけ、Issues の書き込み）。無ければ GITHUB_TOKEN を使う */
   FEEDBACK_TOKEN?: string;
@@ -235,6 +236,8 @@ async function handle(req: Request, env: IntakeEnv, deps: IntakeDeps): Promise<R
   const url = new URL(req.url);
   // 読み方のフィードバック（11-16）：別の道。台帳の設定（LEDGER_REPO）が無くても受ける
   if (url.pathname === FEEDBACK_PATH) return handleFeedback(req, env, deps);
+  // アプリの困りごと・要望（11-18）：別の道。同じ守り、ラベル feedback:app
+  if (url.pathname === APP_FEEDBACK_PATH) return handleAppFeedback(req, env, deps);
   if (url.pathname !== INTAKE_PATH) return refuse(404, ["intake.notFound"]);
   if (req.method !== "POST") return refuse(405, ["intake.method"], { allow: "POST" });
   const repo = repoOf(env.LEDGER_REPO);

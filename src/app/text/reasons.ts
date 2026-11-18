@@ -86,6 +86,9 @@ const EXACT = defineMessages(EN_EXACT, {
   "feedback.shape": "ルールのフィードバックの形ではない（moyai.reading-feedback/0）",
   "feedback.packUnknown": "業種（Skillパック）が、フィードバックの Issue の型の選択肢に無い",
   "feedback.rowValues": "行の値らしきもの（金額・日付・番号・会社や施設の名前など）がある",
+  // アプリの困りごと（受け口の POST /app-feedback）
+  "appFeedback.shape": "アプリの困りごとの形ではない（moyai.app-feedback/0）",
+  "appFeedback.values": "送らないものらしき字（金額・日付・番号・会社や施設の名前・連絡先・ファイルの道・鍵・URL）がある",
   "file.symlink": "symlink（たどらない）",
   "file.submodule": "submodule",
   "file.notRegular": "ふつうのファイルでない",
@@ -134,6 +137,7 @@ const PREFIX = defineMessages(EN_PREFIX, {
   "diff.": "PR の変更",
   "intake.": "受け口",
   "feedback.": "ルールのフィードバック",
+  "appFeedback.": "アプリの困りごと",
 });
 
 const REASON_TEXT = defineMessages(EN_REASON_TEXT, {

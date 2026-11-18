@@ -82,6 +82,8 @@ export const HUMAN_ACTIONS = [
   "reading_feedback_save",
   // 読み方のフィードバックを送る（運営者 2026-11-16）：人が保存のあと「送る」を押したときだけ、保存した全文を公開の台帳の受け口に送る。受け口が MOYAI のリポジトリに Issue を出す。通信は §2.12 の例外
   "reading_feedback_send",
+  // アプリの困りごとを送る（運営者 2026-11-18）：人が設定の「困りごと」で全文を見て「送る」を押したときだけ、一言と決まった付き物を公開の台帳の受け口に送る。受け口が MOYAI のリポジトリに Issue（feedback:app）を出す。通信は §2.12 の例外
+  "app_feedback_send",
   // 業務システムとの連携（運営者の判断 2026-11-16）：確定・署名した版の保全計画を、つなぎ先に送る。本番は鍵を、送る直前に橋渡しが確かめる
   "connect_send",
   // 業務システムとの連携：設定でつなぎ先を足す（名前・URL・テストか本番・API キー。キーは人の入力だけで、保存したら返さない）
@@ -301,6 +303,12 @@ export const ROUTES = {
     "reading_feedback_send",
     512 * 1024,
     "読み方のフィードバックを送る：保管先の feedback/ に保存したのと同じ全文（moyai.reading-feedback/0）を、形と固有名詞の網 2 で確かめ直してから、公開の台帳の受け口に送る。受け口が MOYAI のリポジトリにラベル feedback の公開の Issue を出す（通信の例外。行き先は受け口の 1 つだけ。その PC の語は送らない）",
+  ),
+  appFeedbackSend: human(
+    "/human/app-feedback-send",
+    "app_feedback_send",
+    16 * 1024,
+    "アプリの困りごとを送る：設定の画面が全文を見せた moyai.app-feedback/0（人の一言と、版・画面・OS・言語だけ）を、形・固有名詞の網 2（その PC の語）・行の値の数えで確かめ直してから、公開の台帳の受け口に送る。受け口が MOYAI のリポジトリにラベル feedback:app の公開の Issue を出す（通信の例外。行き先は受け口の 1 つだけ。その PC の語は送らない）",
   ),
   connectSend: human(
     "/human/connect-send",

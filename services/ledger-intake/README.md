@@ -15,6 +15,8 @@ GitHub のアカウントを持たない人の束を受け、運営者の GitHub
   - 確かめ：方法・設定（`FEEDBACK_REPO`・トークン・KV）→ `/submit` と同じ数え方の件数（数える名前は別）→ Content-Type と大きさ → JSON の形（UTF-8・入れ子 8 段・キーの重複なし）と `parseReadingFeedback`（文・理由・人・資料の名前・id の欄があれば `feedback.shape`）と業種（型の選択肢のパックだけ。外れは `feedback.packUnknown`）→ 行の値らしきもの（`scripts/skill-loop/values.mjs` の `countValues`。毎日の回しと同じ字で数える。あれば `feedback.rowValues` と種類ごとの数だけ。値は返さない）。ここまでは GitHub を呼ばない → 受け口が出した開いた Issue（本文の末尾の印 `<!-- moyai-intake-feedback sha256=… -->` のあるもの。手で立てた Issue は数えない・返さない）に同じ中身があればそれを返す → それが 20 あれば `intake.busy` → Issue を出す（ラベルが付かなければ閉じて `intake.feedbackLabel`）。閉じた Issue は見ないので、運営者が閉じたあとに同じ中身が来れば新しく出す。
   - その PC の語（固有名詞の網 2）は受け口に来ない（語そのものが固有名詞なので）。アプリが送る前に照らす。
   - トークンは秘密 `FEEDBACK_TOKEN`（mushitaro/moyai だけ・Issues の書き込み。`docs/ledger-deploy.md` §2.1）。無ければ `GITHUB_TOKEN`。権限が無ければ `503 intake.feedbackNoPermission`。
+- `POST /app-feedback`（アプリの困りごと・要望。2026-11-18）：体は MOYAI の設定の「困りごと」で人が全文を見て「送る」を押した `moyai.app-feedback/0` の 1 つ（JSON、8 KB まで。人の一言 400 字までと、MOYAI の版・画面の名前・OS の種類・言語だけ。`src/share/app-feedback.ts`）。受けると、`FEEDBACK_REPO` にラベル `feedback:app` の Issue を出し、`/feedback` と同じ形で返す。題は「アプリの困りごと（受け口から・<画面>・<OS>）」。本文は決まった見出しと、一言の引用（囲みの中。メンション・リンク・HTML は効かない）と付き物と印 `<!-- moyai-intake-app-feedback sha256=… -->` だけで、毎日の回し（`scripts/skill-loop/app-feedback.mjs`）がそのまま読む。
+  - 確かめ：`/feedback` と同じ順（方法・設定 → 件数〔数える名前は `/submit`・`/feedback` と別〕→ Content-Type と大きさ → 厳しい読みと `parseAppFeedback`〔余計な欄・欠けた欄・決まっていない語は `appFeedback.shape`〕→ 一言の中の行の値・ファイルの道・鍵・URL らしき字〔`scripts/skill-loop/values.mjs` の `countNote`。あれば `appFeedback.values` と種類ごとの数だけ〕→ ここまで GitHub を呼ばない → 同じ中身の開いた Issue があればそれを返す → 受け口が出した開いた Issue が 20 あれば `intake.busy` → Issue を出す）。トークンは `/feedback` と同じ。ラベル `feedback:app` は先に作っておく（`docs/ledger-deploy.md` §2.2）。
 
 ## 確かめの順
 

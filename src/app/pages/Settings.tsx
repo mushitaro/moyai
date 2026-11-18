@@ -3,7 +3,7 @@
 // 主ボタンは「保存」（変えたときだけ）で、見出しの行の右端。1 列で、左に節の名前（168px）、右に中身。見出しの下の説明の文は置かない（docs/screens.md 3.7）。
 // 値の欄は「| 変更」を押したときだけ入力を開く（Wire、11-06）。共有フォルダを作るのは、その節の「| ＋ 共有フォルダを作成」から開くダイアログ。
 import { Alert, Button, Container, Group, Modal, NativeSelect, Stack, Table, Text, TextInput, Title } from "@mantine/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { APP_PAGES, ROUTES } from "../../shared/routes";
 import { SyncedNotice, readHuman } from "../components/ConfirmDialog";
 import { DevTools } from "../components/DevTools";
@@ -22,6 +22,8 @@ import { DisplaySettings } from "../components/DisplaySettings";
 import { HUMAN_TEXT, TEXT } from "../text";
 import { loadConnect, type ConnectTargetView } from "../state/connect";
 import { ConnectAdd } from "../components/ConnectAdd";
+import { AppFeedback } from "../components/AppFeedback";
+import { localWordsOf } from "../../share/reading-feedback";
 import { INLINE_TEXT } from "../text/inline";
 
 const T = HUMAN_TEXT.settings;
@@ -51,6 +53,8 @@ interface SettingsBody {
   connect?: { available: boolean; enabled: boolean; fake: boolean; targets: ConnectTargetView[] };
   /** 設定に保存した言語（無ければ null＝PC の言語。古い橋渡しは送らない） */
   lang?: "en" | "ja" | null;
+  /** 困りごとを送る道があるか（受け口の URL が決まっているときだけ。古い橋渡しは送らない） */
+  appFeedback?: boolean;
   people: { by: string; key: string; pub: string; fingerprint: string; confirmed: boolean; own: boolean; changed: boolean; firstSeen: string; previous?: { fingerprint: string; at: string } | null }[];
 }
 
@@ -222,6 +226,8 @@ export function Settings() {
     setRootOffered(path);
   }, [s, offered]);
   const working = useWorkingPlan();
+  // その PC の語（固有名詞の網 2）：作業中の計画の施設名・表示名・業者・実施者と、呼び名（橋渡しは保管先の計画の語を足して照らし直す）
+  const words = useMemo(() => [...localWordsOf(working?.plan ?? null), ...(s?.name ? [s.name] : [])], [working, s?.name]);
 
   const orNull = (v: string) => (v.trim() === "" ? null : v.trim());
   const changed = s !== null && (orNull(root) !== s.chosenRoot || orNull(ledger) !== s.ledger || orNull(name) !== s.name);
@@ -560,6 +566,8 @@ export function Settings() {
           {/* AI への提供範囲・Skill の採点の画面はまだ無いので、「| 提供範囲を表示」「| 採点を表示」は置かない（動かない部品は置かない） */}
           {row(T.aiTitle, <Text size="sm">{T.aiScope}</Text>, "ai-setting")}
           {row(T.evalTitle, <Text size="sm" c="var(--text-3)">{T.evalNone}</Text>, "eval-setting")}
+          {/* 困りごと（Wire Frame の AppFeedback。11-18）：文の欄 1 つと「送る」1 つ。受け口の無い版では出さない */}
+          {s.appFeedback && row(T.troubleTitle, <AppFeedback client={client} words={words} />, "app-feedback-setting")}
         </div>
       )}
       {/* 開発の道具は、設定を読めないとき（2 つ目のタブ・ブリッジ未接続）にも出す（押せない理由を出すため） */}

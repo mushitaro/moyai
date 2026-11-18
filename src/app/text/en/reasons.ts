@@ -83,6 +83,9 @@ export const EN_EXACT: Record<string, string> = {
   "feedback.shape": "Not a rule feedback shape (moyai.reading-feedback/0)",
   "feedback.packUnknown": "The industry (Skill pack) is not among the feedback issue template's options",
   "feedback.rowValues": "Contains what look like row values (amounts, dates, numbers, company or facility names)",
+  // App feedback (intake POST /app-feedback)
+  "appFeedback.shape": "Not an app feedback shape (moyai.app-feedback/0)",
+  "appFeedback.values": "Contains what look like things not to send (amounts, dates, numbers, company or facility names, contacts, file paths, keys, URLs)",
   "file.symlink": "Symlink (not followed)",
   "file.submodule": "Submodule",
   "file.notRegular": "Not a regular file",
@@ -131,6 +134,7 @@ export const EN_PREFIX: Record<string, string> = {
   "diff.": "PR change",
   "intake.": "Intake",
   "feedback.": "Rule feedback",
+  "appFeedback.": "App feedback",
 };
 
 export const EN_REASON_TEXT = {

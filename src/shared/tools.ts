@@ -477,18 +477,19 @@ export type ScreenGo = (typeof SCREEN_GO)[number];
 /** 星取表の階層の並び：asset-first（既定）設備 › 機器 › 号炉・系統 › 部位、series-first 設備 › 号炉・系統 › 機器 › 部位 */
 export const LEVEL_ORDERS = ["asset-first", "series-first"] as const;
 export type LevelOrder = (typeof LEVEL_ORDERS)[number];
-export const SCREEN_ITEMS = ["theme", "go", "storageRoot", "levelOrder", "rowOrder", "lastFiscalYear", "templateLayout"] as const;
+export const SCREEN_ITEMS = ["theme", "go", "storageRoot", "levelOrder", "rowOrder", "lastFiscalYear", "templateLayout", "feedbackDraft"] as const;
 export type ScreenItem = (typeof SCREEN_ITEMS)[number];
 /** 変えなかった項目の理由（AI に返す文。内部の名前を出さない） */
 export const SCREEN_REFUSAL_TEXT = {
   root_invalid: "Write the storage location as an absolute path (refused by the same check as the storage setting). Ask the user for the path again",
   root_human_save: "Only a person changes the storage location. The path was put in the storage field of the Settings screen, which is now open; ask the user to press Save",
+  feedback_human_send: "Only a person sends feedback. The draft was put in the Feedback field of the Settings screen, which is now open, with the full text to send shown under it; ask the user to read it and press Send (it becomes a public issue). Nothing was sent",
   not_on_screen: "The work screen cannot take this yet (still loading). Wait a little and call again",
   no_working_plan: "There is no working plan. Make the plan first, then point with chart_rows row ids",
   row_unknown: "node or before is not a row of the star chart. Point with the row ids read with chart_rows",
   row_not_sibling: "node and before are not under the same parent. Only rows under the same parent can be reordered",
   year_before_stars: "There are planned stars after that fiscal year. The columns never hide stars, so the last year cannot be before the latest star",
-  go_replaced: "The Settings screen was opened to show the storage field",
+  go_replaced: "The Settings screen was opened to show the storage or feedback field",
   template_unknown: "No template with that name is on the Export sheet. Add it with intake_add_files (source: template) and place the layout with the returned template.name",
   layout_invalid: "The layout proposal does not fit the template, so it was not placed. Read the template shape again (template from intake_add_files) and place it again",
 } as const;
@@ -512,6 +513,12 @@ const screenSetInput = z
       .optional()
       .describe("Order of rows under the same parent: put the node row before the before row (both are chart_rows row ids)"),
     lastFiscalYear: z.number().int().min(1900).max(2200).optional().describe("The last fiscal year of the star chart columns (e.g. 2040)"),
+    feedbackDraft: z
+      .string()
+      .min(1)
+      .max(400)
+      .optional()
+      .describe("Draft of an app trouble or request, written with the user (one short text, up to 400 characters; no file contents, row values, facility or company names, keys or paths). Put in the Feedback field of Settings; the user reads the full text and presses Send"),
     templateLayout: templateLayoutInputSchema.optional().describe("Layout proposal for a template (for the template added with intake_add_files source: template). A draft: not used until the user checks the preview on the Export sheet and exports"),
   })
   .strict()
@@ -1340,6 +1347,7 @@ export const TOOLS = {
       "\"Make the plan run to 2040\" is lastFiscalYear: 2040 (the star chart shows fiscal-year columns up to that year, and cycle and star proposals can be placed up to it; current stars are not changed; it cannot be before the latest star). " +
       "levelOrder, rowOrder and lastFiscalYear are a view remembered per facility; they do not change the working plan, the version records or the signed text. The equipment order also appears in the Excel written at confirmation. After reordering, read the rows again with chart_rows. " +
       "\"Export Excel in this format\": after adding the template with intake_add_files (source: template), place a layout proposal in templateLayout: template (the template name), sheets (per plan sheet: heading rows, fiscal-year columns and the start-year cell, level columns [nested is nested vertically, flat is across one row], group rows [the label column and per-row content plan_content, plan_amount, actual_content, actual_amount, marks, cycle, next], where to insert details [the total row], continues [the previous sheet if this is a continuation split by fiscal year]), amount (amount unit and tax), facility (basic-information sheet fields -> facility items). If it does not fit the template, nothing is placed and the reason is returned. The placed proposal is a draft and the Export sheet shows a preview. Have the user look at the preview; exporting and saving happen when the user presses the Export sheet's main button (sign and export; a confirmed version is needed). " +
+      "\"Tell the MOYAI team that ... does not work\" or \"I want MOYAI to ...\": write one short draft with the user (what troubles them or what they want; no file contents, row values, facility or company names, keys or paths) in feedbackDraft. MOYAI puts it in the Feedback field of the Settings screen and opens it, with the full text to send (the draft plus the MOYAI version, the screen, the OS kind and the language). Only the user sends it, by pressing Send; it becomes a public issue on the MOYAI repository. " +
       "The answer holds the changed items (changed), unchanged items with reasons (refused) and the current values (current; facility is the facility whose view was remembered, planVersion is the working plan version, null if there is no plan). This tool never confirms, signs, sends, approves or promotes.",
     screenSetInput,
     screenSetOutput,

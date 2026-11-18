@@ -2,6 +2,7 @@
 // 通信の例外（docs/plan.md §2.12）：行き先は受け口の 1 つ（LEDGER_INTAKE_URL）だけ。送るのは、公開の台帳に載せるのと同じ束のファイル 1 つだけ。
 // 受け口は運営者の GitHub のアカウントで台帳に PR を出し、PR の番号と URL を返す。行方は今と同じく、公開の PR をトークン無しで読む（github.ts の prStatus）。
 // 読み方のフィードバック（2026-11-16）も同じ受け口の /feedback に出す（sendFeedbackToIntake）。人が HOSHITORI のルールのシートで保存し、「送る」を押したときだけ。
+// アプリの困りごと（2026-11-18）は /app-feedback に出す（sendAppFeedbackToIntake）。人が設定の「困りごと」で全文を見て「送る」を押したときだけ。
 // 出すのは、人が SHARE で送信経路「MOYAI 経由」を選び、主ボタン「署名して公開台帳へ送信」を押して束に署名したときだけ（AI のツールにしない）。
 // 束の中身をログに出さない。fetch は差し替えられる（試験のため）。
 // 転送（3xx）はたどらない：たどると、束が LEDGER_INTAKE_URL の外へ送られうる（行き先は 1 つだけ、の約束が崩れる）。
@@ -15,6 +16,8 @@ export const LEDGER_INTAKE_URL: string = "https://moyai-ledger-intake.white-viol
 export const INTAKE_SUBMIT_PATH = "/submit";
 /** 読み方のフィードバック（moyai.reading-feedback/0）を送る道。受け口が MOYAI のリポジトリにラベル feedback の Issue を出す */
 export const INTAKE_FEEDBACK_PATH = "/feedback";
+/** アプリの困りごと（moyai.app-feedback/0）を送る道。受け口が MOYAI のリポジトリにラベル feedback:app の Issue を出す（2026-11-18） */
+export const INTAKE_APP_FEEDBACK_PATH = "/app-feedback";
 const TIMEOUT_MS = 60_000;
 const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|localhost):\d{1,5}$/;
 
@@ -118,12 +121,25 @@ const ISSUE_URL = /^https:\/\/github\.com\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,
  * 送るのはその全文だけ（その PC の語〔固有名詞の網 2〕は送らない）。転送はたどらない
  */
 export async function sendFeedbackToIntake(io: IntakeIo, text: string): Promise<FeedbackSend> {
+  return sendIssueToIntake(io, INTAKE_FEEDBACK_PATH, text);
+}
+
+/**
+ * アプリの困りごとの全文（人が設定の画面で見て「送る」を押したもの。src/share/app-feedback.ts）を受け口に出す。答えの形は読み方のフィードバックと同じ。
+ * 送るのはその全文だけ（その PC の語は送らない）。転送はたどらない
+ */
+export async function sendAppFeedbackToIntake(io: IntakeIo, text: string): Promise<FeedbackSend> {
+  return sendIssueToIntake(io, INTAKE_APP_FEEDBACK_PATH, text);
+}
+
+/** 受け口の Issue を出す道（/feedback・/app-feedback）に全文を出し、出た Issue の番号と URL を返す */
+async function sendIssueToIntake(io: IntakeIo, path: typeof INTAKE_FEEDBACK_PATH | typeof INTAKE_APP_FEEDBACK_PATH, text: string): Promise<FeedbackSend> {
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   let status: number;
   let json: unknown = null;
   try {
-    const r = await io.fetch(`${io.url}${INTAKE_FEEDBACK_PATH}`, {
+    const r = await io.fetch(`${io.url}${path}`, {
       method: "POST",
       headers: { "content-type": "application/json", accept: "application/json", "user-agent": "moyai" },
       body: text,
@@ -157,7 +173,7 @@ export async function sendFeedbackToIntake(io: IntakeIo, text: string): Promise<
     return { ok: false, reason: "rateLimited", reasons, ...(typeof ra === "number" && Number.isInteger(ra) && ra >= 1 && ra <= 3600 ? { retryAfter: ra } : {}) };
   }
   if (status >= 500) return { ok: false, reason: "unavailable", reasons };
-  // /feedback の無い前の版の受け口（配置し直す前）は、道を知らないと答える
+  // /feedback・/app-feedback の無い前の版の受け口（配置し直す前）は、道を知らないと答える
   if (status === 404 && reasons.includes("intake.notFound")) return { ok: false, reason: "notDeployed", reasons };
   return { ok: false, reason: "badAnswer", reasons };
 }
