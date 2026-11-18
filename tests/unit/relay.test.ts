@@ -75,7 +75,7 @@ describe("中継の MCP", () => {
     const c = await connect({ stateDir });
     const on = (await c.listTools()).tools.map((t) => t.name);
     for (const n of CONNECT_TOOL_NAMES) expect(on).toContain(n);
-    expect(on).toHaveLength(19);
+    expect(on).toHaveLength(20);
     let changed = 0;
     c.setNotificationHandler(ToolListChangedNotificationSchema, () => void changed++);
     writeSettings(stateDir, { v: 1, root: null, ledger: null, name: null });
@@ -129,6 +129,7 @@ describe("中継の MCP", () => {
       reading_rules_propose: { name: "【架空】甲", scope: "facility", rules: [{ id: "r1", text: "1 行目を見出しとして読む", kind: "headerRow", row: 1, author: "ai", reason: "r" }] },
       reading_skill_register: { name: "【架空】甲" },
       intake_add_files: { source: "demo" },
+      intake_remove_files: { files: ["a.csv"] },
       screen_set: { theme: "light" },
     };
     for (const name of SHOWN_OFF) {
