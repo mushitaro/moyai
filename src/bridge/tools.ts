@@ -408,6 +408,13 @@ export class ToolRelay {
     }
     // 取り込みの見本の行（見本・詰まっている所の行と見出し）も、会話の行の上限に数える（台帳の中-11）。残りを越える分は渡さない
     if (name === "intake_survey") {
+      // 要約（part: all）には、保管先の確定した版の一覧の要約を足す（作業中の計画が無くても、確定した版があると分かるように）。
+      // 確定した版も読まなかった施設も無ければ載せない。大きさの上限に数えるので、収める前に足す
+      delete data.confirmed;
+      if ((typeof args.part === "string" ? args.part : "all") === "all") {
+        const confirmed = await this.confirmedSurvey();
+        if (confirmed) data.confirmed = confirmed;
+      }
       // 先に答えの大きさを上限の内に収める（質問を分け、同じ形の要約と続きを読む道を添える）。行は、収めたあとに残ったものを数える
       data = pageSurvey(data, {
         part: typeof args.part === "string" ? args.part : "all",
@@ -437,12 +444,6 @@ export class ToolRelay {
         data.screen = { opened: shown.opened, connected };
         if (!connected) data.note = SCREEN_NOT_CONNECTED_NOTE;
       }
-      // 要約（part: all）には、保管先の確定した版の一覧の要約を足す（作業中の計画が無くても、確定した版があると分かるように）
-      if ((typeof args.part === "string" ? args.part : "all") === "all") {
-        const confirmed = await this.confirmedSurvey();
-        if (confirmed) data.confirmed = confirmed;
-        else delete data.confirmed;
-      } else delete data.confirmed;
     }
     if (name === "chart_rows") {
       const n = (data.rows as unknown[]).length;
@@ -505,7 +506,7 @@ export class ToolRelay {
   /** intake_survey の confirmed：保管先の確定・署名した最新の版の一覧の要約（施設の名前・年度・第 n 版・機器と作業の数）。保管先が無ければ null */
   private async confirmedSurvey(): Promise<Record<string, unknown> | null> {
     const list = this.bridgeTools.confirmed_latest ? await this.bridgeTools.confirmed_latest() : null;
-    if (!list) return null;
+    if (!list || (list.ok.length === 0 && list.refused.length === 0)) return null;
     return {
       plans: list.ok.slice(0, CONFIRMED_SURVEY_MAX).map((p) => {
         const ymd = p.signedAt ? tokyoYmd(p.signedAt) : null;

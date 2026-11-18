@@ -129,13 +129,14 @@ describe("作業中の計画が無く、確定した版だけがある", () => {
     for (const part of ["questions", "files", "compose", "crosswalk"]) expect(okData(await relay.run("intake_survey", { part }, "c1")).confirmed).toBeUndefined();
   });
 
-  it("確定した版が無ければ、chart_rows は今のとおり no_working_plan、intake_survey の confirmed は空の一覧", async () => {
+  it("確定した版が無ければ、chart_rows は今のとおり no_working_plan、intake_survey に confirmed は載らない", async () => {
     const s = service();
     expect(await s.call("settings_save", { root: s.root, name: "【架空】試験の人" })).toMatchObject({ ok: true });
     const relay = relayOf(s, realTab().hub);
     const r = await relay.run("chart_rows", { offset: 0, limit: 5, view: "adjusted" }, "c1");
     expect("error" in r && r.error.code).toBe("no_working_plan");
-    expect(okData(await relay.run("intake_survey", { part: "all" }, "c1")).confirmed).toMatchObject({ plans: [], total: 0, refused: [] });
+    // 確定した版も読まなかった施設も無ければ載せない
+    expect(okData(await relay.run("intake_survey", { part: "all" }, "c1")).confirmed).toBeUndefined();
   });
 });
 
