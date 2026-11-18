@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { buildLedgerDemo } from "../../scripts/ledger/demo-core";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { E2E_NAME, acceptDecisions, callTool, mcpClient, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, acceptDecisions, callTool, closeConfirmAndReopen, mcpClient, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
 import { startGitHubStub, type GitHubStub } from "../helpers/github-stub";
 
 const DIR = process.env.MOYAI_SHOTS_DIR ?? "";
@@ -113,7 +113,8 @@ test("EXPORT と SHARE の写し", async ({ page }) => {
     await signInDialog(page);
     await page.getByTestId("confirm-submit").click();
     await expect(page.getByTestId("confirm-done")).toContainText(/第 1 版）を確定しました。/);
-    await page.keyboard.press("Escape");
+    // 閉じるとトップへ戻る（運営者の判断 11-18）。トップの「＋ 次の版」で開き直す
+    await closeConfirmAndReopen(page, null, "escape");
     // 確定すると、確定のすぐ右に出力・共有のシートが現れる。ヘッダの段は MOYAI › HOSHITORI だけ
     await expect(page.getByTestId("tab-export")).toHaveCount(0);
     await expect(page.locator(".moyai-merge-tablist [role=tab]")).toHaveText(["星取表", "費用", "ルール", "照査", "確定", "出力", "共有"]);

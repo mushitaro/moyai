@@ -6,7 +6,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { E2E_NAME, acceptDecisions, callTool as call, chooseFirstSource, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { E2E_NAME, acceptDecisions, callTool as call, chooseFirstSource, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen, closeConfirmToView } from "../helpers/e2e";
 
 const FACILITY = "【架空】星取の削除を残す";
 // 会話の回答は判断の理由なしで受ける。版の記録に入る理由は、Claude が置いた理由（chart_propose の basis）のまま（docs/screens.md 3.2「会話の回答の受け方」）
@@ -70,7 +70,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await signInDialog(page);
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click();
+      await closeConfirmAndReopen(page);
     });
 
     // 実績（●）のある作業の行を 1 つ選ぶ（資料から読んだもの）
@@ -118,7 +118,7 @@ test("資料から読んだ実績を消して確定し、「＋ 次の版」で�
       await page.getByTestId("confirm-reason").fill("実績の誤りを消す（e2e）");
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click();
+      await closeConfirmToView(page);
       // plans/ には、この計画のほかのフォルダ（作業中の写しなど）が並ぶことがあり、並びは OS で違う。第 2 版のあるフォルダを探す（書き終わるまで待つ）
       const v2 = () => readdirSync(join(root, "plans")).map((d) => join(root, "plans", d, "versions", "000002.json")).find((f) => existsSync(f)) ?? null;
       await expect.poll(v2, { timeout: 15_000 }).not.toBeNull();

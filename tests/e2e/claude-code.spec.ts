@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { f1Rules } from "../fixtures/crosswalk/rules";
-import { acceptDecisions, acceptRules, callTool, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, acceptRules, callTool, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（Claude Code）";
 /** 本物の Claude Code で走らせるか（MOYAI_CLAUDE_E2E=1。使用量を使う）。ほかは代わりの台本 */
@@ -122,7 +122,7 @@ test("Claude Code が取り込みと当てはめの案を置き、人が受け�
   const plans = readdirSync(join(root, "plans"));
   const rec = JSON.parse(readFileSync(join(root, "plans", plans[0]!, "versions", "000001.json"), "utf8"));
   expect(rec.plan.assets.filter((a: any) => a.commonItemAccepted).length).toBe(accepted);
-  await page.getByTestId("confirm-close").click();
+  await closeConfirmAndReopen(page);
   await page.getByTestId("sheet-share").click();
 
   // SHARE → 署名 → 輪。見え方の答えは、会話で聞いた答えとして試験の台本が share_preview の answers で置く（画面に選びは無い）

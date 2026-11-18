@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { acceptDecisions, callTool, chooseRootAndCreateRing, mcpClient, shot, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, callTool, chooseRootAndCreateRing, mcpClient, shot, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 
 const fmt = (n: number) => n.toLocaleString("ja-JP");
 
@@ -69,7 +69,7 @@ test("確定した版で、share_preview の数が SHARE の画面の数と同�
       await page.getByTestId("confirm-reason").fill("試しの計画を確定する（e2e）");
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click();
+      await closeConfirmAndReopen(page);
     });
 
     await test.step("SHARE を開くと、見え方が決まらない（全国の表に載るかを答えていない）：朱の 1 行と押せない理由だけで、選びは無い", async () => {

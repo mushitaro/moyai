@@ -276,12 +276,42 @@ export class IntakeWorkspace {
   /** 開いた版の資料を戻せなかった（理由を出し、計画を作らせない。黙って残りの資料だけで組み直さない。Architect の縛り 5） */
   blockRestore(reason: string | null): void {
     this.restoreFailed = reason;
+    // 開くのをやめた・読めなかった：待っている計画づくりを通す（止め札があれば、その理由で止まる）
+    this.endRestore();
     this.changed(true);
+  }
+
+  /**
+   * 版を開き始める（資料と決定を戻し終えるまで作り直させない）。前に戻した版の印（restoredFrom）は外す
+   * （同じ版をもう一度開いたとき、戻し終える前に「戻した」と見えて作り直しを始め、止め札で失敗していた。2026-11-18）。
+   * 戻し終えるまでに頼まれた計画づくりは、断らずに戻し終えるのを待つ
+   */
+  beginRestore(reason: string): void {
+    this.restoreFailed = reason;
+    this.restoredFrom = null;
+    if (!this.restoreWait) {
+      let done = () => {};
+      const p = new Promise<void>((r) => (done = r));
+      this.restoreWait = { promise: p, done };
+    }
+    this.changed(true);
+  }
+
+  /** 開いている途中の版の、戻し終えるのを待つもの（無ければ null） */
+  private restoreWait: { promise: Promise<void>; done: () => void } | null = null;
+
+  private endRestore(): void {
+    const w = this.restoreWait;
+    this.restoreWait = null;
+    w?.done();
   }
 
   /** その理由で止めているときだけ外す（版を開くのをやめたとき） */
   clearBlock(reason: string): void {
-    if (this.restoreFailed === reason) this.blockRestore(null);
+    // 止め札だけを外す。版を開いている途中なら、戻し終える（か読めずに止める）までは計画づくりを待たせる
+    if (this.restoreFailed !== reason) return;
+    this.restoreFailed = null;
+    this.changed(true);
   }
 
   private optionsOf(s: WorkspaceSettings): IntakeOptions {
@@ -812,6 +842,7 @@ export class IntakeWorkspace {
     this.answered.clear();
     this.restoredFrom = { version, files: new Set(this.inputs) };
     this.restoreFailed = null;
+    this.endRestore();
     await this.listPhotos(r.listed);
     this.changed(true, true);
     // 戻した資料と決定は、開いた版の計画と同じ（作り直していないことにしない）
@@ -959,10 +990,16 @@ export class IntakeWorkspace {
     const startedAt = now();
     this.compose = { state: "running", startedAt, by };
     // 作り始めたときの資料・決定・読み方・写真の版（このあと変われば、作り直すまで署名を止める。台帳の中-6）
-    const at = this.dataVersion;
+    let at = this.dataVersion;
     this.changed(false);
     this.composeRun = (async () => {
       await new Promise((r) => setTimeout(r, 0));
+      // 版を開いている途中なら、資料と決定を戻し終えるのを待ってから作る（戻した資料で作る）
+      const waiting = this.restoreWait;
+      if (waiting) {
+        await waiting.promise;
+        at = this.dataVersion;
+      }
       try {
         // 止める決まりは、作り始めたときまでの変わりを含む写しで見る
         await this.fresh(at);

@@ -215,6 +215,24 @@ export function PROFILE_ANSWERED<P extends { facility: Record<string, unknown> }
   };
 }
 
+/**
+ * 署名して確定し、確定のダイアログを閉じる。閉じると HOSHITORI のまま、確定した版を見るだけで開き直す（運営者の判断 2026-11-18 夜）。
+ * 続けて次の版を編集する台本は、見出しの「＋ 次の版」で開き直す（人と同じ道）
+ */
+export async function closeConfirmToView(page: Page, how: "button" | "escape" = "button"): Promise<void> {
+  const loaded = page.waitForEvent("load");
+  if (how === "button") await page.getByTestId("confirm-close").click();
+  else await page.keyboard.press("Escape");
+  await loaded;
+  await expect(page.getByTestId("merge-state")).toHaveAttribute("data-view-only", "true", { timeout: 30_000 });
+}
+
+export async function closeConfirmAndReopen(page: Page, _planId: string | null = null, how: "button" | "escape" = "button"): Promise<void> {
+  await closeConfirmToView(page, how);
+  await page.getByTestId("merge-next").click();
+  await expect(page.getByTestId("merge-state")).toHaveAttribute("data-view-only", "false", { timeout: 30_000 });
+}
+
 /** 試験の台本が版に署名するときの呼び名（架空） */
 export const E2E_NAME = "【架空】試験の台本";
 
@@ -299,10 +317,16 @@ export async function acceptDecisions(page: Page, reason: string): Promise<numbe
     // 受けると計画が描き直され、理由の欄が空に戻ることがあるので、種類ごとに書き直す（会話の回答は欄が無く、理由なしで受ける）
     await fillDecisionReason(page, reason);
     const kindText = () => page.getByTestId("decisions-kind").textContent({ timeout: 500 }).catch(() => "");
-    const before = await kindText();
+    // 受ける前の様子：種類の切り替えの字（種類ごとの数）と、まだ受けていない行の数。
+    // 切り替えは、種類を選び終える前の一瞬は描かれていない（字が空）ことがある。字だけを見ると、最後の種類を受けて切り替えごと消えたとき
+    // 「空 → 空」で変わりが見えず、待ちが時間切れになった（windows の CI、2026-11-18）。行の数も見て、どちらかが変われば受けた印とする
+    const state = async () => `${await kindText()}\u0000${await rows.count()}`;
+    // 受けていない行があれば、種類の切り替えは描かれる。描き終えてから受ける前の様子を読む（先に読むと、押す前に変わったと見誤る）
+    await expect(page.getByTestId("decisions-kind")).toBeVisible();
+    const before = await state();
     await page.getByTestId("decisions-bulk-accept").click();
-    // 受けた種類は切り替えから消え、次の種類が見える（最後の種類なら切り替えごと消える）
-    await expect.poll(kindText).not.toBe(before);
+    // 受けた種類は切り替えから消え、次の種類が見える（最後の種類なら切り替えごと消え、受けていない行が 0 になる）
+    await expect.poll(state).not.toBe(before);
   }
   return n;
 }
