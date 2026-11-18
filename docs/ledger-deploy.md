@@ -95,7 +95,7 @@ npx wrangler@4.152.0 secret put GITHUB_TOKEN
 - 4 と 5 のあいだ、受け口はトークンが無いので `503 intake.notConfigured` で断る（何も受けない）。5 のあとは配置し直さなくてよい。
 - `wrangler.jsonc` の `vars.LEDGER_REPO` は `mushitaro/moyai-ledger`（`config/ledger.json` と同じ。食い違えば MOYAI の試験が落ちる）。直さない。
 - 記録（observability）は `wrangler.jsonc` で切ってある。Cloudflare の画面で Logs・Logpush を付けない（受け口は送り手の IP を数えるのに使い、残さない約束）。
-- 3 で変わった `wrangler.jsonc` は、そのままでよい（コミットしない）。KV の id を MOYAI に写すときは統括が PR にする。
+- KV の id は `wrangler.jsonc` に入れてコミットしてある（`0c48fbbddf89457fb3b1e14a475da141`、2026-11-17）。入れずに配置し直すと、受け口は `503 intake.notConfigured` で `/submit` も `/feedback` も断る（11-17 に起きた）。配置し直すときは、main を取ってそのまま `deploy` する。
 
 ### 統括に知らせるもの
 

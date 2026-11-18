@@ -1,6 +1,6 @@
 // 公開の台帳の受け口（Cloudflare Workers）。デプロイは運営者がする（手順は README.md）。
 // - 秘密 GITHUB_TOKEN は `wrangler secret put GITHUB_TOKEN` で入れる（このファイルに書かない）。
-// - KV INTAKE_KV は `wrangler kv namespace create moyai-ledger-intake --binding INTAKE_KV --update-config` で作ると、ここに足される。
+// - KV INTAKE_KV（件数を数える）の id は下の kv_namespaces に置く（秘密ではない）。置かずに配置し直すと、受け口は 503 intake.notConfigured で全部を断る（2026-11-17 に起きた）。
 // - 記録（observability）は切る。受け口は IP を数えるのに使い、残さない。
 // - LEDGER_REPO は config/ledger.json の repo と同じにする（食い違えば tests/unit/share/ledger-place.test.ts が落ちる。切り替えの設計は docs/ledger-split.md）。
 {
@@ -14,5 +14,6 @@
     "LEDGER_REPO": "mushitaro/moyai-ledger",
     // 読み方のフィードバックの Issue を出すリポジトリ（POST /feedback。固定）。トークンは FEEDBACK_TOKEN（docs/ledger-deploy.md §2.1）
     "FEEDBACK_REPO": "mushitaro/moyai"
-  }
+  },
+  "kv_namespaces": [{ "binding": "INTAKE_KV", "id": "0c48fbbddf89457fb3b1e14a475da141" }]
 }
