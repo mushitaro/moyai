@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { IntakeWorkspace } from "../../src/app/intake/workspace";
 import { runTabTool, type TabToolResult } from "../../src/app/intake/tab-tools";
 import { clearWorkingPlan, getWorkingPlan, setWorkingPlan } from "../../src/app/state/plan-store";
-import { GO_HASH, bindTheme, currentGo, displayPrefs, resetScreenForTest, setDisplayPrefs, takeRootOffer } from "../../src/app/state/screen";
+import { GO_HASH, bindTheme, currentGo, displayPrefs, resetScreenForTest, setDisplayPrefs, takeFeedbackDraft, takeRootOffer } from "../../src/app/state/screen";
 import { DisplaySettings, displayModel, reorderParents } from "../../src/app/components/DisplaySettings";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -178,6 +178,22 @@ describe("6 つの引数がそれぞれ作業画面の状態を変える", () =>
     const both = call({ storageRoot: "/tmp/架空の保存先", go: "export" });
     expect(both.refused.map((x: { reason: string }) => x.reason).sort()).toEqual(["go_replaced", "root_human_save"]);
     expect(fakeLocation.hash).toBe("#/settings");
+  });
+
+  it("feedbackDraft：設定の画面の「困りごと」の欄に文の案を入れて開くだけ（送るのは人）。変えなかった項目に数え、理由を添える", () => {
+    const r = call({ feedbackDraft: "取り込んだ資料を消せない" });
+    expect(r.changed).toEqual([]);
+    expect(r.refused).toEqual([expect.objectContaining({ item: "feedbackDraft", reason: "feedback_human_send" })]);
+    expect(r.refused[0].text).toContain("press Send");
+    expect(r.refused[0].text).toContain("Nothing was sent");
+    expect(fakeLocation.hash).toBe("#/settings");
+    expect(takeFeedbackDraft()).toBe("取り込んだ資料を消せない");
+    expect(takeFeedbackDraft()).toBeNull();
+    const both = call({ feedbackDraft: "消せない", go: "hoshitori.chart" });
+    expect(both.refused.map((x: { reason: string }) => x.reason).sort()).toEqual(["feedback_human_send", "go_replaced"]);
+    expect(fakeLocation.hash).toBe("#/settings");
+    // 送る道具は無い（screen_set の答えにも送った印は無い）
+    expect(TOOL_NAMES.some((n) => /send|feedback/i.test(n) && n !== "screen_set")).toBe(false);
   });
 
   it("levelOrder：施設ごとに覚え、星取表と chart_rows の行が 設備 › 号炉 › 機器 になる", () => {

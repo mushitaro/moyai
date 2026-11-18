@@ -60,3 +60,26 @@ export function countableRuleBlock(text) {
   const t = String(text ?? "");
   return t.includes('"moyai.reading-feedback/0"') ? t.replace(/"cells"\s*:\s*\d+/g, '"cells": 0') : t;
 }
+
+/** 人の一言（アプリの困りごと。src/share/app-feedback.ts）に入れないもの（行の値のほかに）：ファイルの道・鍵やトークンらしき字・URL */
+export const NOTE_KINDS = {
+  path: "ファイルの道",
+  secret: "鍵やトークンらしき字",
+  url: "URL",
+};
+const NOTE_PATTERNS = {
+  path: [/[A-Za-z]:[\\/]/g, /\\\\[^\\\s]+\\/g, /(?:^|[^\w.])(?:~|\/(?:Users|home|mnt|Volumes|var|etc|tmp|opt|private))\/[^\s]*/g, /\.\.\//g],
+  secret: [/(?:github_pat_|gh[pousr]_|sk-|xox[abp]-|AKIA)[A-Za-z0-9_-]{8,}/g, /[A-Za-z0-9+/_=-]{32,}/g],
+  url: [/\b[a-z][a-z0-9+.-]*:\/\//gi, /\bwww\.[\w-]+/gi],
+};
+
+/**
+ * 人の一言の中の、送らないものらしき字を種類ごとに数える（行の値〔countValues〕とファイルの道・鍵・URL）。0 の種類は返さない。値そのものは返さない。
+ * 画面・橋渡し・受け口の POST /app-feedback・毎日の回し（app-feedback.mjs）が同じものを使う
+ */
+export function countNote(text) {
+  const t = String(text ?? "").normalize("NFKC");
+  const counts = { ...countValues([t]) };
+  for (const [k, res] of Object.entries(NOTE_PATTERNS)) counts[k] = res.reduce((n, re) => n + (t.match(re) ?? []).length, 0);
+  return Object.fromEntries(Object.entries(counts).filter(([, n]) => n > 0));
+}

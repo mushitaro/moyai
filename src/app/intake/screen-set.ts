@@ -1,5 +1,6 @@
 // AI のツール screen_set の作業画面の側（仕事 chat-ops-v1）：チャットの頼みで、作業画面の今の状態を変える。
 // どれも人の操作と同じ関数（state/screen.ts）を通す。確定・署名・送る・承認・昇格はしない（そのための道はここに無い）。
+// 困りごとの文の案（feedbackDraft。2026-11-18）も同じ：設定の画面の「困りごと」の欄に入れて開くだけで、送るのは人（送る道具は無い）。
 // 保存先（storageRoot）は人だけが変える（設定は人だけの経路。AGENTS.md）：橋渡しが設定と同じ確かめを通した道を、
 // 設定の画面の保存先の欄に入れて開くだけで、保存は人が押す。答えでは変えなかった項目に数え、理由を添える。
 // 星取表の見せ方（階層の並び・機器の並び・最大年度）は施設ごとに覚える見せ方で、作業中の計画は変えない。
@@ -11,7 +12,7 @@ import { knownTemplate, proposeLayout } from "../state/template-draft";
 import { getReferenceDate } from "../state/review";
 import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { getWorkingPlan } from "../state/plan-store";
-import { applyTheme, currentGo, currentTheme, displayPrefs, goTo, offerRoot, setDisplayPrefs, type ThemeChoice } from "../state/screen";
+import { applyTheme, currentGo, currentTheme, displayPrefs, goTo, offerFeedbackDraft, offerRoot, setDisplayPrefs, type ThemeChoice } from "../state/screen";
 import { TEXT } from "../text";
 import type { IntakeWorkspace } from "./workspace";
 
@@ -23,6 +24,7 @@ export interface ScreenSetArgs {
   rowOrder?: { node: string; before: string };
   lastFiscalYear?: number;
   templateLayout?: TemplateLayoutInput;
+  feedbackDraft?: string;
 }
 
 type Result = { ok: true; data: Record<string, unknown> };
@@ -130,7 +132,7 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
     else {
       changed.push("templateLayout");
       layoutPlaced = { template: a.templateLayout.template, draft: true, summary: r.summary };
-      if (a.go === undefined && a.storageRoot === undefined) goTo("hoshitori.export");
+      if (a.go === undefined && a.storageRoot === undefined && a.feedbackDraft === undefined) goTo("hoshitori.export");
     }
   }
   // 保存先：設定の画面の保存先の欄に入れて開く（保存は人。答えでは変えなかった項目に数える）
@@ -139,8 +141,14 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
     goTo("settings");
     refuse("storageRoot", "root_human_save");
   }
+  // 困りごとの文の案：設定の画面の「困りごと」の欄に入れて開く（送るのは人。答えでは変えなかった項目に数える）
+  if (a.feedbackDraft !== undefined) {
+    offerFeedbackDraft(a.feedbackDraft);
+    goTo("settings");
+    refuse("feedbackDraft", "feedback_human_send");
+  }
   if (a.go !== undefined) {
-    if (a.storageRoot !== undefined && a.go !== "settings") refuse("go", "go_replaced");
+    if ((a.storageRoot !== undefined || a.feedbackDraft !== undefined) && a.go !== "settings") refuse("go", "go_replaced");
     else if (goTo(a.go)) changed.push("go");
     else refuse("go", "not_on_screen");
   }

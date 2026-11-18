@@ -575,6 +575,8 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
     readingsLineage: delegate,
     readingFeedbackSave: delegate,
     readingFeedbackSend: delegate,
+    // アプリの困りごと（通信の例外：受け口の 1 つだけ。送るのは人が設定で「送る」を押したときだけ）
+    appFeedbackSend: delegate,
     // 業務システムに送る（通信の例外：人が設定したつなぎ先の host だけ。送るのは人がボタンを押したときだけ）
     connectSend: delegate,
     connectAdd: delegate,

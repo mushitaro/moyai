@@ -110,6 +110,27 @@ export function useRootOffer(): string | null {
   return useSyncExternalStore(subscribe, () => rootOffer, () => rootOffer);
 }
 
+// ─── 困りごとの文の案（人が「送る」を押すまで送らない。2026-11-18） ─────────────
+
+let feedbackOffer: string | null = null;
+
+/** 困りごとの文の案を、設定の画面の「困りごと」の欄に入れる（AI の screen_set の feedbackDraft。送るのは人） */
+export function offerFeedbackDraft(text: string): void {
+  feedbackOffer = text;
+  emit();
+}
+
+/** 設定の画面が、入れる案を受け取る（1 回だけ） */
+export function takeFeedbackDraft(): string | null {
+  const r = feedbackOffer;
+  feedbackOffer = null;
+  return r;
+}
+
+export function useFeedbackDraftOffer(): string | null {
+  return useSyncExternalStore(subscribe, () => feedbackOffer, () => feedbackOffer);
+}
+
 // ─── 星取表の見せ方（施設ごと） ──────────────────────────────────
 
 /** 機器の並び：親の行の id（いちばん上は ""）→ 子の行の id の並び */
@@ -202,4 +223,5 @@ export function resetScreenForTest(): void {
   themeSetter = null;
   theme = null;
   rootOffer = null;
+  feedbackOffer = null;
 }
