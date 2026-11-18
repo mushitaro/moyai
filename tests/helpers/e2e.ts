@@ -215,6 +215,18 @@ export function PROFILE_ANSWERED<P extends { facility: Record<string, unknown> }
   };
 }
 
+/**
+ * 署名して確定し、確定のダイアログを閉じる。閉じると MOYAI のトップへ戻る（運営者の判断 2026-11-18）。
+ * 続けて HOSHITORI（出力・共有のシートなど）を使う台本は、トップの行の「＋ 次の版」で、いちばん新しい版を開き直す（人と同じ道）
+ */
+export async function closeConfirmAndReopen(page: Page, planId: string | null = null): Promise<void> {
+  await page.getByTestId("confirm-close").click();
+  await expect(page.getByTestId("moyai-top")).toBeVisible();
+  const row = planId ? page.locator(`[data-testid="moyai-row"][data-plan="${planId}"]`) : page.getByTestId("moyai-row").first();
+  await row.getByTestId("moyai-next").click();
+  await expect(page.getByTestId("merge-version")).toBeVisible({ timeout: 30_000 });
+}
+
 /** 試験の台本が版に署名するときの呼び名（架空） */
 export const E2E_NAME = "【架空】試験の台本";
 

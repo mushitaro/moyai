@@ -37,6 +37,8 @@ import { Switch } from "../components/Switch";
 import { getWorkingPlan, setWorkingPlan, useWorkingPlan } from "../state/plan-store";
 import { setCrosswalkBase } from "../state/crosswalk";
 import { workKeeper } from "../state/work";
+import { leaveToTop, stopWorkAfterConfirm } from "../state/after-confirm";
+import { aiDecisions } from "../../plan/diff";
 import { setAcceptHistory } from "../state/history";
 import type { Decision } from "../../import/questions";
 import { CONFIRMED_SHEETS, STAGE_HASH, sheetHash, type MergeSheet } from "../stages";
@@ -97,6 +99,11 @@ function SourceReading({ ws }: { ws: IntakeWorkspace }) {
   );
 }
 
+/** 開いた版の施設の設定（パック・名前・年度の始まり・架空の印） */
+function settingsOfVersion(s: IntakeWorkspace["settings"], plan: Plan): IntakeWorkspace["settings"] {
+  return { ...s, packId: plan.packId, facilityName: plan.displayName, fiscalYearStartMonth: plan.facility.fiscalYearStartMonth, fictional: plan.facility.fictional };
+}
+
 export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: BridgeClient; sheet: MergeSheet | null }) {
   useWorkspace(ws);
   const working = useWorkingPlan();
@@ -108,6 +115,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   const [historyOpen, setHistoryOpen] = useState(false);
   const [over, setOver] = useState(false);
   const nextPlan = useRef<Plan | null>(null);
+  // 署名して確定した（確定のダイアログを閉じたら、MOYAI のトップへ戻る。次の版は人が「＋ 次の版」を押したときだけ。運営者の判断 11-18）
+  const confirmedNow = useRef<string | null>(null);
   const [signRole, setSignRole] = useState<"approve" | "return" | null>(null);
   const [side, setSide] = useState<"open" | "signatures" | "source" | "comments">("open");
   // 横の板の開け閉め（この PC に 1 つだけ覚える。シートごとではない）。既定はたたむ。幅は 320px に固定（Wire、11-07）。
@@ -297,6 +306,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     // 作り直しより先に、版の履歴の確定した削除を置く（下の useEffect を待たない。Architect の 70 の残り）
     setRemovedInHistory(planId, latest.version, st?.accepted ?? []);
     setCrosswalkBase({ version: latest.version, plan: latest.plan, crosswalk: latest.crosswalk ?? [] });
+    // 施設の設定（パック・名前・年度の始まり・架空の印）は開いた版のもの（新しいタブでも、確定した名前で組み直す。前の名前に戻さない。11-18）
+    ws.settings = settingsOfVersion(ws.settings, latest.plan);
     ws.pinPlanId(planId);
     ws.blockRestore(T.opening(latest.version));
     setNoSources(null);
@@ -319,6 +330,8 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   };
   // 確定したら、その版をもとにした版に置き直し、計画 ID を固定する（同じタブで次の版を作ると「第 n+1 版と同じ」になる。台帳の新-9）
   const onConfirmed = (p: Plan) => {
+    confirmedNow.current = p.planId;
+    stopWorkAfterConfirm();
     nextPlan.current = p;
     const crosswalk = (getWorkingPlan()?.proposals ?? []).filter((x) => x.state === "accepted").map((x) => ({ rule: x.rule, basis: x.basis }));
     setCrosswalkBase({ version: p.version, plan: p, crosswalk });
@@ -447,6 +460,9 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
     conn.kind !== "open" ? T.block.notConnected : null,
   ].filter((x): x is string => x !== null);
   const name = plan?.displayName || ws.settings.facilityName || T.newFacility;
+  // 名前の案を確定のシートで受けた（署名の前）：見出しに新しい名前と「確定前」（署名した版から名前が替わる。Wire の AfterConfirm、11-18）
+  const nameDecision = plan?.nameProposal ? aiDecisions(plan).find((d) => d.id === "name:") : undefined;
+  const acceptedName = nameDecision && accepted.has(`${nameDecision.id}\u0000${nameDecision.hash}`) ? plan!.nameProposal!.name : null;
   const fictional = plan ? plan.facility.fictional : ws.settings.fictional;
 
   // 読込中の資料の名前（この画面から入れたもので、読み終わるまで。資料の一覧の「読込中」の行）
@@ -482,6 +498,14 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
   };
   const closeAnd = (close: () => void) => () => {
     close();
+    // 署名して確定したあとは、作業中の計画にせず、トップへ戻る（確定した版の行が見える。作業中の写しを書かない）
+    if (confirmedNow.current !== null) {
+      const id = confirmedNow.current;
+      confirmedNow.current = null;
+      nextPlan.current = null;
+      void leaveToTop(client, id);
+      return;
+    }
     if (nextPlan.current && working) setWorkingPlan(nextPlan.current, working.origin);
     nextPlan.current = null;
     reloadStatus();
@@ -681,6 +705,11 @@ export function Merge({ ws, client, sheet }: { ws: IntakeWorkspace; client: Brid
       <div className="moyai-merge-head">
         {/* 施設の名前：作業中の計画があり、見るだけでないときは、押してその場で直せる（#56。次に署名した版から効く） */}
         <InlineName name={name} editable={!!plan && viewingOld === null && !awaitingMe && toReceive === null} label={T.renameLabel} />
+        {acceptedName !== null && (
+          <span className="moyai-merge-name-next" data-testid="plan-name-accepted" style={{ color: "var(--shu-text)", fontSize: 13 }}>
+            {T.nameAccepted(acceptedName)}
+          </span>
+        )}
         {/* 第 1 版をつくる前は施設の名前だけ（まだ版が無い。つくる版の番号は下の帯の「第 1 版をつくる」にある。docs/screens.md 3.3 の末尾「写しの照らし」） */}
         {/* 出力・共有のシートは確定した版の番号（確定した版が無ければ版を出さない） */}
         {plan && !(outSheet && confirmedVersion === null) && (

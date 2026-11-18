@@ -390,6 +390,7 @@ Before → after: ${before} → ${after}`,
   merge: {
     newFacility: "New facility",
     renameLabel: "Facility name (click to edit, Enter to set)",
+    nameAccepted: (name: string) => `→ ${name}  before confirming`,
     version: (n: number) => `v${n}`,
     facilitySettings: "Facility settings",
     sheets: {

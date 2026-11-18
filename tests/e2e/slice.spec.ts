@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { attr, f1Rules } from "../fixtures/crosswalk/rules";
-import { acceptDecisions, acceptRules, callTool as call, chooseFirstSource, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, acceptRules, callTool as call, chooseFirstSource, chooseRootAndCreateRing, mcpClient, openIntakeAndDrop, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 
 const FACILITY = "【架空】縦の一本（AI と人）";
 const HUMAN = "試験の台本が押した（台帳の名前とパックの項目を見て合っている）";
@@ -208,7 +208,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       copyFileSync(join(planDir, "exports", "000001-plan.xlsx"), shot(`slice-export-${tag}`).replace(/\.png$/, ".xlsx"));
       copyFileSync(join(planDir, "reports", "000001-diff.xlsx"), shot(`slice-diff-${tag}`).replace(/\.png$/, ".xlsx"));
       await page.screenshot({ path: shot(`slice-confirmed-${tag}`) });
-      await page.getByTestId("confirm-close").click();
+      await closeConfirmAndReopen(page);
       await page.getByTestId("sheet-share").click();
     });
 
@@ -253,8 +253,8 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       expect(rec.sources.map((x: { name: string }) => x.name).sort()).toEqual(["daily-report.csv", "equipment-ledger.xlsx", "plan-hoshitori.xlsx"]);
       expect(readdirSync(join(root, "plans", plans[0]!, "sources")).sort()).toEqual(rec.sources.map((x: { sha256: string }) => x.sha256).sort());
       expect(rec.crosswalk.length).toBeGreaterThan(0);
-      await page.evaluate(() => (location.hash = "#/"));
-      await page.getByTestId("moyai-next").first().click();
+      // 確定のあと、トップの「＋ 次の版」で開き直してある（closeConfirmAndReopen）。資料のシートへ
+      await chooseFirstSource(page);
       // 第 1 版の資料と決定が戻るのを待つ。質問は戻した決定で残らない
       await expect(page.getByTestId("intake-page")).toHaveAttribute("data-restored-from", "1", { timeout: 60_000 });
       await expect(page.getByTestId("source-picker")).toHaveAttribute("data-count", "3");
@@ -336,7 +336,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 2 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click();
+      await closeConfirmAndReopen(page);
       await chooseFirstSource(page);
       await expect(page.getByTestId("source-tab")).toBeVisible();
       // 確定した直後は第 2 版に入っていない変更が無いので、人のボタンは出さない。作り直しは AI の intake_compose で
@@ -360,7 +360,7 @@ test("取り込み → 当てはめ → 星取表 → 確定 → 検問所 → �
       await expect(page.getByTestId("confirm-submit")).toBeEnabled();
       await page.getByTestId("confirm-submit").click();
       await expect(page.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 3 版）を確定しました。/);
-      await page.getByTestId("confirm-close").click();
+      await page.getByTestId("confirm-close").click(); await expect(page.getByTestId("moyai-top")).toBeVisible();
       // トップの版の印のメニューで第 2 版を「開く」（見るだけ）
       await page.goto(`${bridge.base}/#/`);
       await page.locator('[data-testid="moyai-mark"][data-version="2"]').click();
