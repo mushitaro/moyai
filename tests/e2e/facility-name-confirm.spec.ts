@@ -102,6 +102,22 @@ test("Claude の名前の案を人が受けて署名すると、版・トップ�
       await page.waitForTimeout(1500);
       await expect(page.getByTestId("plan-name")).toHaveText(NEW);
     });
+
+    await test.step("未確定の数：次の版で案を 1 つ置くと HOSHITORI は 1。受けると、HOSHITORI もトップも 0（前の版で受けた決定は数えない）", async () => {
+      const NEXT = "【架空】みなと第二清掃工場";
+      const cw = await call(c, "intake_survey", { part: "crosswalk" });
+      await call(c, "chart_propose", { basedOnVersion: cw.crosswalk.version, basis: "利用者がもう一度名前を直してと言った", author: "ai_relayed_human", facilityName: NEXT });
+      await expect(page.getByTestId("sheet-decisions").locator(".moyai-sheet-n")).toHaveText("1");
+      expect(await acceptDecisions(page, "名前は利用者に確かめた")).toBe(1);
+      await expect(page.getByTestId("sheet-decisions").locator(".moyai-sheet-n")).toHaveCount(0);
+      // 作業中の写しを書き終えてからトップを見る：「作業中」で、未確定は 0（前は前の版で受けた決定まで数えていた）
+      await page.waitForTimeout(2500);
+      await page.evaluate(() => (location.hash = "#/"));
+      const work = page.locator(`[data-testid="moyai-row"][data-plan="${planId}"]`).getByTestId("moyai-work");
+      await expect(work).toHaveAttribute("data-open", "0");
+      await expect(work).toHaveText("作業中");
+      await page.screenshot({ path: shot(`name-top-open-${tag}`) });
+    });
   } finally {
     await c.close();
   }

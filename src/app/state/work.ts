@@ -5,11 +5,13 @@
 // - 道は作業画面だけの経路（タブの秘密）。AI のツールの道には無い（ツールで作業画面が変わった結果が、ここから書かれるだけ）。
 // - 写真も写す（資料の紐づきを切らない）。写真の読み取りの格子は写さない（タブにしか無い）。戻した写真は読み直しが要る状態で並ぶ。
 // - 行の値・鍵は記録（console）に書かない。
-import { aiDecisions } from "../../plan/diff";
 import type { Plan } from "../../shared/plan";
 import type { Decision } from "../../import/questions";
 import type { DerivedFrom } from "../../shared/tools";
 import { acceptedList, isAccepted, restoreAccepted, subscribeAccepted } from "./decisions";
+import { acceptHistoryOf, subscribeAcceptHistory } from "./history";
+import { openDecisionCount } from "./open-count";
+import { openRemovalCount } from "./stars";
 import { clearWorkingPlan, getWorkingPlan, restoreWorkingPlan, subscribeWorkingPlan } from "./plan-store";
 import type { CrosswalkProposal } from "../../plan/crosswalk";
 
@@ -87,8 +89,12 @@ export interface WorkSource {
 }
 
 /** 確定のシートで、まだ受けていない決定の数（トップの「未確定 n」） */
-export function openCount(plan: Plan): number {
-  return aiDecisions(plan).filter((d) => !isAccepted(d.id, d.hash)).length;
+/**
+ * トップの「作業中　未確定 n」：HOSHITORI の確定のシートと同じ数え方（前の版までに受けた決定は数えない。案のままの規則・削除も数える）。
+ * 版の履歴をまだ読んでいなければ（作り始めの施設など）、前の版の受けた決定は無いものとして数える
+ */
+export function openCount(plan: Plan, proposals: readonly CrosswalkProposal[] = []): number {
+  return openDecisionCount(plan, acceptHistoryOf(plan.planId) ?? [], proposals, isAccepted, openRemovalCount());
 }
 
 export class WorkKeeper {
@@ -134,7 +140,7 @@ export class WorkKeeper {
 
   start(): void {
     const changed = () => this.schedule();
-    this.stops.push(subscribeWorkingPlan(changed), subscribeAccepted(changed), this.o.ws.subscribe(changed));
+    this.stops.push(subscribeWorkingPlan(changed), subscribeAccepted(changed), subscribeAcceptHistory(changed), this.o.ws.subscribe(changed));
   }
 
   stop(): void {
@@ -214,7 +220,7 @@ export class WorkKeeper {
       planId,
       displayName: w ? w.plan.displayName : ws.settings.facilityName.trim(),
       fictional: w ? !!w.plan.facility.fictional : ws.settings.fictional,
-      open: w ? openCount(w.plan) : 0,
+      open: w ? openCount(w.plan, w.proposals) : 0,
       changed: !w || !w.stored || accepted.length > 0,
       base: w ? w.base : null,
       settings: { ...ws.settings },
