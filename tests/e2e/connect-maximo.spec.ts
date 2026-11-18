@@ -133,8 +133,16 @@ test("本物の部品と偽の Maximo で、つなぎ先を足す → 読む →
         expect(round).toBeLessThan(15);
         const s = await call(c, "intake_survey", { part: "questions" });
         if (!s.questions.length) break;
+        // 偽の Maximo から読んだ資料には、既定の答えの無い質問が出る（工数の単位など）。利用者がチャットで答えた体で、選択肢の 1 つ目（数なら 1 人・日 8 時間）を置き、種類を報告に残す
+        const byId = new Map(s.questions.map((q: any) => [q.questionId, q]));
+        for (const q of s.questions.filter((x: any) => x.defaultAnswer === null)) info.annotations.push({ type: "既定の答えの無い質問", description: `${q.kind}（${q.valueKind}）` });
         await call(c, "intake_settle", {
-          decisions: s.questions.map((q: any) => ({ questionId: q.questionId, answer: q.defaultAnswer, author: "ai_relayed_human", reason: "利用者がチャットで、既定の答えでよいと答えた" })),
+          decisions: s.questions.map((q: any) => ({
+            questionId: q.questionId,
+            answer: q.defaultAnswer ?? (q.valueKind === "number" ? "8" : ((q.options.length ? q.options : (byId.get(q.sameOptionsAs) as any)?.options ?? [])[0]?.id ?? null)),
+            author: "ai_relayed_human",
+            reason: "利用者がチャットで答えた（既定の答えか、既定の無い質問は利用者が選んだ答え）",
+          })),
         });
       }
       expect((await call(c, "intake_compose")).started).toBe(true);
