@@ -390,6 +390,7 @@ Before → after: ${before} → ${after}`,
   merge: {
     newFacility: "New facility",
     renameLabel: "Facility name (click to edit, Enter to set)",
+    nameAccepted: (name: string) => `→ ${name}  before confirming`,
     version: (n: number) => `v${n}`,
     facilitySettings: "Facility settings",
     sheets: {
@@ -457,6 +458,7 @@ Before → after: ${before} → ${after}`,
     peersOn: "Compare",
     peersOff: "Restore",
     oldVersionLabel: "Old version (view only)",
+    confirmedViewLabel: "Confirmed (view only)",
     /** 頼みをほかの鍵が受け取っていた・頼みが取り下げられていたリンクで開いたとき（古い版ではない。Wire の B1） */
     viewOnlyLabel: "View only",
     confirmedLine: "Confirmed",

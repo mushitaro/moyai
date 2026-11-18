@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge } from "../helpers/e2e";
+import { acceptDecisions, shot, signInDialog, startBuiltBridge, type StartedBridge, closeConfirmAndReopen } from "../helpers/e2e";
 
 const A = { name: "【架空】山田" };
 const B = { name: "【架空】課長" };
@@ -55,7 +55,7 @@ test("ほかの人が新しい版を足したら知らせて署名を止め、�
     await signInDialog(pa);
     await pa.getByTestId("confirm-submit").click();
     await expect(pa.getByTestId("confirm-done")).toContainText(/令和 \d+ 年度版（第 1 版）を確定しました。/);
-    await pa.keyboard.press("Escape");
+    await closeConfirmAndReopen(pa, null, "escape");
     await expect(pa.getByTestId("merge-version")).toHaveText("第 2 版");
     await expect(pa.getByTestId("merge-stale")).toHaveCount(0);
   });

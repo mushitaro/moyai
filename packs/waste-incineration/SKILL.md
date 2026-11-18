@@ -132,7 +132,7 @@ Always add the verification level when telling the user numbers or criteria.
 | Columns of the equipment management criteria | recommendation | Guide Table II-7 and steps ② ③ of the preparation procedure |
 | Soundness values | recommendation | Guide Table II-9 |
 | Measures after a poor soundness rating | recommendation | Guide Table II-9 (measures column) |
-| Number of plan years | app (the app's guideline) | Guide Table II-12 is an example (image), so the number of years is the app's guideline |
+| Number of plan years | app (the app's guideline) | Guide Table II-12 (the source is the Guide; the table is an example image, and the Guide sets no number of years, so the number of years itself is the app's guideline) |
 | Actuals of past plans | app | No source |
 | Plans within the plan period | app | No source |
 

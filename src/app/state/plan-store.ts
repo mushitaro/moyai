@@ -27,6 +27,11 @@ export interface WorkingPlan {
    * 閉じる前の知らせ（state/leave.ts）と、戻すための写し（state/work.ts（施設ごとの作業中。#82））は、false のときだけ「未確定の計画」と数える。
    */
   stored: boolean;
+  /**
+   * 保管先の版を見るだけで開いた（確定した直後の版・古い版。運営者の判断 2026-11-18 夜）。書き換え（updateWorkingPlan）は効かず、
+   * 作業中の写しも書かない。直すには、人が「＋ 次の版」を押して、書ける計画として開き直す
+   */
+  readOnly?: boolean;
 }
 
 let current: WorkingPlan | null = null;
@@ -42,10 +47,10 @@ function notify() {
  * 作業中の計画を置く。もとにした版（base）は、渡さなければ、保管先の版の中身ならその版の番号、
  * 同じ計画を取り込みで作り直したならそのままの値、新しい計画なら null。
  */
-export function setWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: CrosswalkProposal[] = [], base?: number | null): WorkingPlan {
+export function setWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: CrosswalkProposal[] = [], base?: number | null, readOnly = false): WorkingPlan {
   const kept = current && current.plan.planId === plan.planId ? current.base : null;
   const b = base !== undefined ? base : plan.version > 0 ? plan.version : kept;
-  current = { plan, origin, revision: ++revision, generation: ++generation, proposals, base: b, stored: plan.version > 0 && b === plan.version };
+  current = { plan, origin, revision: ++revision, generation: ++generation, proposals, base: b, stored: plan.version > 0 && b === plan.version, ...(readOnly ? { readOnly: true } : {}) };
   notify();
   return current;
 }
@@ -59,7 +64,8 @@ export function restoreWorkingPlan(plan: Plan, origin: PlanOrigin, proposals: Cr
 
 /** 置いた計画の中身を書き換える（同じ回のまま、版だけを増やす）。作業中の計画が無ければ何もしない */
 export function updateWorkingPlan(plan: Plan, proposals: CrosswalkProposal[]): WorkingPlan | null {
-  if (!current) return null;
+  // 見るだけで開いた版は書き換えない（星・案・名前を動かせない）
+  if (!current || current.readOnly) return null;
   current = { ...current, plan, proposals, revision: ++revision, stored: false };
   notify();
   return current;

@@ -9,7 +9,7 @@ import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { DEV_PLANS } from "../fixtures/chart/truth-to-plan.mjs";
-import { PROFILE_ANSWERED, acceptDecisions } from "../helpers/e2e";
+import { PROFILE_ANSWERED, acceptDecisions, closeConfirmAndReopen } from "../helpers/e2e";
 import { envelopeText, makeMemberBody } from "../../src/share/bundle";
 import { generateKeyPair, keyIdOf, signBody, toPlainKey } from "../../src/share/sign";
 
@@ -180,7 +180,7 @@ test("確定 → 検問所 → 署名して輪に置く → 受け手と同じ�
     const versions = join(root, "plans", "fixture-fictional-1", "versions");
     expect(readdirSync(versions)).toEqual(["000001.json"]);
     expect(readdirSync(join(root, "plans", "fixture-fictional-1", "reports"))).toEqual(["000001-diff.xlsx"]);
-    await page.getByTestId("confirm-close").click();
+    await closeConfirmAndReopen(page);
     await page.getByTestId("sheet-share").click();
   });
 

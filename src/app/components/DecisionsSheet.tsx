@@ -20,9 +20,10 @@ import { MergeSideContext } from "../state/merge-side";
 import { requestChartJump, type ChartJump } from "../state/chart-jump";
 import { sheetHash } from "../stages";
 import { commonRowId, periodKeyOf } from "../../plan/chart";
-import { crosswalkSummary, heldRows, type CrosswalkProposal } from "../../plan/crosswalk";
+import { crosswalkSummary, type CrosswalkProposal } from "../../plan/crosswalk";
 import { useConnection } from "../state/bridge";
-import { pendingDecisions, type Decision } from "../../plan/diff";
+import type { Decision } from "../../plan/diff";
+import { pendingFor } from "../state/open-count";
 import { applyAcceptedCycles, cycleIdOf, isLedgerCycle, isPlanRuleCycle } from "../../plan/cycle";
 import { STAR_KIND_TEXT, basisWithoutReference, isStarProposal, proposalIdOf, starValueOfKey, type StarKind } from "../../plan/star";
 import { rejectCycleByHuman, rejectedCycles } from "../state/cycles";
@@ -101,9 +102,8 @@ export function usePending(client: BridgeClient, plan: Plan | null): { pending: 
   const openRemovals = openRemovalCount();
   const pending = useMemo(() => {
     if (!plan || !status) return [];
-    const held = new Set<string>();
-    for (const p of proposals) if (p.state === "proposed") for (const ref of heldRows(plan, p)) held.add(ref.startsWith("n:") ? `item:${ref.slice(2)}` : `attr:${ref.slice(2)}`);
-    return pendingDecisions(plan, status.accepted ?? []).filter((d) => !held.has(d.id));
+    // トップの「未確定 n」と同じ数え方（src/app/state/open-count.ts）
+    return pendingFor(plan, status.accepted ?? [], proposals);
   }, [plan, status, proposals]);
   // 受けた決定を読めないあいだ（読込中・保存先が無い・読めない）は、受けていない決定を 0 と数えない。ready が false のうちは確定を止める（mushitaro/moyai#36）
   return { pending, openRules: proposals.filter((p) => p.state === "proposed").length, openRemovals, ready: !!status, problem: load.kind === "error" ? load.message : null };
