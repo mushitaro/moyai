@@ -40,7 +40,8 @@ jobs:
       - name: 使わない依存（AG Grid の Enterprise）が無いか
         run: node scripts/check-deps.mjs
       - name: 連携の部品（任意の依存）が入って読めるか（入らなくても npm は黙って飛ばすので、ここで落とす。Windows でも。2026-11-18）
-        run: node -e "Promise.all([import('@mxstage/eam-connectors'), import('@mxstage/eam-connectors/node'), import('@mxstage/eam-connectors/license')]).then(() => console.log('eam-connectors: 読めた')).catch((e) => { console.error('eam-connectors: 読めない', e.message); process.exit(1); })"
+        run: |
+          node -e "Promise.all([import('@mxstage/eam-connectors'), import('@mxstage/eam-connectors/node'), import('@mxstage/eam-connectors/license')]).then(() => console.log('eam-connectors ok')).catch((e) => { console.error('eam-connectors missing', e.message); process.exit(1); })"
       - name: ビルド（画面は Vite、dist/cli.js は Vite の SSR のビルド）
         run: npm run build
       - name: 型の検査（TypeScript 7 の tsc --noEmit）
