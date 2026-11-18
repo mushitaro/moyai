@@ -185,6 +185,19 @@ export const ERRORS = {
     http: 200,
     text: "The location of the public ledger clone is not in the settings. Ask the user to choose the ledger clone location in Settings (the user runs clone and git pull in a terminal).",
   },
+  // chart_rows：作業中の計画が無く、保管先の確定した版を読もうとしたが、署名か鎖が合わない・この PC が前に見た版が消えた（読まない）
+  history_broken: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "There is no working plan, and the latest confirmed version in the storage location was not read: a signature or the chain of the stored versions does not match. Have the user check the version history on the MOYAI top screen first. No rows were returned.",
+  },
+  history_vanished: {
+    from: "bridge",
+    to: "ai",
+    http: 200,
+    text: "There is no working plan, and the latest confirmed version in the storage location was not read: a version or signature this PC saw before is missing from the storage location. Have the user check the storage location first. No rows were returned.",
+  },
   ledger_basis_unchecked: {
     from: "bridge",
     to: "ai",

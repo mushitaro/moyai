@@ -82,7 +82,7 @@ function rowsTab(total: number) {
     if (c.name !== "chart_rows") return null;
     const n = Math.max(0, Math.min(c.args.limit, c.rowsRemaining, total - c.args.offset));
     const rows = Array.from({ length: n }, (_, i) => ({ rowRef: `r${c.args.offset + i}`, cells: { 段の道: "x" } }));
-    return { ok: true, data: { rows, total, remainingInConversation: c.rowsRemaining - n, version: 1 } };
+    return { ok: true, data: { rows, total, remainingInConversation: c.rowsRemaining - n, version: 1, source: "working" } };
   };
 }
 
@@ -231,7 +231,7 @@ describe("星取表の行の上限", () => {
     const tb = await bridge();
     await tab(tb, (c) => ({
       ok: true,
-      data: { rows: Array.from({ length: c.args.limit + 1 }, (_, i) => ({ rowRef: `r${i}`, cells: {} })), total: 999, remainingInConversation: 0, version: 1 },
+      data: { rows: Array.from({ length: c.args.limit + 1 }, (_, i) => ({ rowRef: `r${i}`, cells: {} })), total: 999, remainingInConversation: 0, version: 1, source: "working" },
     }));
     const c = await client(tb);
     expectError(await c.callTool({ name: "chart_rows", arguments: { limit: 5 } }), "tab_bad_result");

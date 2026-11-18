@@ -364,6 +364,42 @@ function rulesChangeOf(ring: Extract<Awaited<ReturnType<typeof loadRing>>, { ok:
   };
 }
 
+/** 保管先の確定・署名した最新の版 1 つ（AI が読むだけ。計画の中身は橋渡しのメモリだけで、AI には行の形で返す） */
+export interface ConfirmedLatest {
+  planId: string;
+  version: number;
+  plan: LatestSigned["plan"];
+  /** 版を確定した署名の時刻（承認があれば承認、無ければ自分で確定した署名）。渡しただけの版は null */
+  signedAt: string | null;
+  /** 版の記録の時刻 */
+  at: string;
+  catalog: ExportCatalogs;
+}
+
+/**
+ * 確定・署名した最新の版を、署名と鎖とこの PC が前に見た版で確かめて読む（連携の書き込みの元と、AI の読むだけの道が同じ確かめを使う）。
+ * 読めない版がある・署名か鎖が合わない → historyBroken。この PC が前に見た版か署名が消えた → historyVanished。版が無い・署名が無い → noSigned
+ */
+async function verifiedLatest(
+  sd: string,
+  root: string,
+  planId: string,
+): Promise<{ ok: true; version: number; plan: LatestSigned["plan"]; signedAt: string | null; at: string } | { ok: false; reason: "historyBroken" | "historyVanished" | "noSigned" }> {
+  let h: Awaited<ReturnType<typeof readHistory>>;
+  try {
+    h = await readHistory(root, planId);
+  } catch {
+    return { ok: false, reason: "historyBroken" };
+  }
+  if (checkSeen(sd, root, planId, h)) return { ok: false, reason: "historyVanished" };
+  const top = h.versions.at(-1);
+  if (!h.latest || !top) return { ok: false, reason: "noSigned" };
+  if (top.version !== h.latest.version || top.problem !== null) return { ok: false, reason: "historyBroken" };
+  if (top.signatures.length === 0) return { ok: false, reason: "noSigned" };
+  const signedAt = (top.signatures.find((x) => x.role === "approve") ?? top.signatures.find((x) => x.role === "confirm"))?.at ?? null;
+  return { ok: true, version: h.latest.version, plan: h.latest.plan, signedAt, at: h.latest.at };
+}
+
 export class HumanService {
   private docs: DocumentsInfo | null = null;
   private connecting: GitHubConnecting | null = null;
@@ -391,11 +427,40 @@ export class HumanService {
     if (!PLAN_ID.test(planId)) return { reason: "payloadInvalid" };
     const root = await this.root();
     if (!root) return { reason: "noRoot" };
-    const h = await readHistory(root, planId);
-    if (checkSeen(sd, root, planId, h)) return { reason: "historyVanished" };
-    const top = h.versions.at(-1);
-    if (!h.latest || !top || top.version !== h.latest.version || top.problem !== null || top.signatures.length === 0) return { reason: "connectNoSigned" };
-    return { version: h.latest.version, plan: h.latest.plan };
+    const v = await verifiedLatest(sd, root, planId);
+    if (!v.ok) return { reason: v.reason === "historyVanished" ? "historyVanished" : "connectNoSigned" };
+    return { version: v.version, plan: v.plan };
+  }
+
+  /**
+   * AI が読むだけの、保管先の確定・署名した最新の版（作業中の計画が無いときの chart_rows と、intake_survey の confirmed）。
+   * 確かめは latestSigned と同じ（verifiedLatest）。合わない施設は理由だけ（中身は読まない）。署名の無い施設・版の無い施設は載せない。
+   * 並びは署名した時刻の新しいものから。状態フォルダか保管先が無ければ null
+   */
+  async confirmedLatest(): Promise<{ ok: ConfirmedLatest[]; refused: { planId: string; reason: "historyBroken" | "historyVanished" }[] } | null> {
+    const sd = this.e.stateDir;
+    if (!sd) return null;
+    const root = await this.root();
+    if (!root) return null;
+    let ids: string[] = [];
+    try {
+      ids = readdirSync(join(root, "plans"), { withFileTypes: true })
+        .filter((e) => e.isDirectory() && PLAN_ID.test(e.name))
+        .map((e) => e.name)
+        .sort();
+    } catch {
+      ids = [];
+    }
+    const ok: ConfirmedLatest[] = [];
+    const refused: { planId: string; reason: "historyBroken" | "historyVanished" }[] = [];
+    for (const planId of ids) {
+      const v = await verifiedLatest(sd, root, planId);
+      if (v.ok) ok.push({ planId, version: v.version, plan: v.plan, signedAt: v.signedAt, at: v.at, catalog: this.catalogsFor(v.plan.packId) });
+      else if (v.reason !== "noSigned") refused.push({ planId, reason: v.reason });
+    }
+    const key = (x: ConfirmedLatest) => x.signedAt ?? x.at;
+    ok.sort((a, b) => (key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : a.planId.localeCompare(b.planId)));
+    return { ok, refused };
   }
 
   private githubIo(): GitHubIo {

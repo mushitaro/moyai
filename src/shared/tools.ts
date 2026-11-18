@@ -699,6 +699,47 @@ export const sharePreviewOutputSchema = z.object({
 });
 export type SharePreviewOut = z.infer<typeof sharePreviewOutputSchema>;
 
+/** 保管先の確定した版の一覧に載せる数の上限（全部の数は total） */
+export const CONFIRMED_SURVEY_MAX = 10;
+
+/** intake_survey の confirmed の注記（AI が読む。確定版は読むだけ。変えるのは人が画面で「＋ 次の版」を押してから） */
+export const CONFIRMED_SURVEY_NOTE =
+  "Confirmed versions are read only. Read their star chart rows with chart_rows (when there is no working plan, chart_rows reads the latest confirmed version; pass planId to choose the facility). To change one, a person presses \"+ Next version\" on that row of the MOYAI top screen to open a working plan; the AI cannot open it. Ask the user to do that, in the user's language.";
+
+/** chart_rows が確定した版を読んだときの注記 */
+export const CHART_ROWS_CONFIRMED_NOTE =
+  "There is no working plan, so these rows are from the latest confirmed version in the storage location (read only; proposals need a working plan). To change it, ask the user to press \"+ Next version\" on that facility's row of the MOYAI top screen; the AI cannot open a working plan. Reply in the user's language.";
+
+/** 保管先の確定した版を読めなかった理由と、AI に返す文 */
+export const CONFIRMED_REFUSED_TEXT = {
+  history_broken: "A signature or the chain of the stored versions does not match, so this facility's confirmed versions are not read. Have the user check the version history on the MOYAI top screen first",
+  history_vanished: "A version or signature this PC saw before is missing from the storage location, so this facility's confirmed versions are not read. Have the user check the storage location first",
+} as const;
+export type ConfirmedRefused = keyof typeof CONFIRMED_REFUSED_TEXT;
+
+/** 確定した版の 1 つ（施設の名前・年度・第 n 版・機器と作業の数。行の値は入れない） */
+const confirmedVersionSchema = z.object({
+  planId: z.string(),
+  facilityName: z.string(),
+  version: z.number().int().describe("The confirmed version number"),
+  /** 署名した日の年度（施設の年度の始まりで数える。西暦）。分からなければ null */
+  fiscalYear: z.number().int().nullable(),
+  /** 版の呼び名（「令和 8 年度版（第 1 版）」。トップの版の履歴と同じ） */
+  versionName: z.string(),
+  equipment: z.number().int(),
+  works: z.number().int(),
+});
+
+/** intake_survey の confirmed：保管先の確定・署名した最新の版（署名と鎖が合うものだけ）と、読まなかった施設の理由 */
+export const confirmedSurveySchema = z
+  .object({
+    plans: z.array(confirmedVersionSchema).max(CONFIRMED_SURVEY_MAX),
+    total: z.number().int(),
+    refused: z.array(z.object({ planId: z.string(), reason: z.enum(["history_broken", "history_vanished"]), text: z.string() })).max(CONFIRMED_SURVEY_MAX),
+    note: z.string(),
+  })
+  .describe("Latest confirmed and signed version of each facility in the storage location (only versions whose signatures and chain check out; newest signed first). Read only. Shown even when there is no working plan");
+
 // ─── 12 のツール ─────────────────────────────────────────────────
 
 export const TOOLS = {
@@ -707,6 +748,7 @@ export const TOOLS = {
     "read",
     "Intake summary",
     "workScreenUrl in the result is the URL of the work screen. When the user says \"start it\" or \"show the screen\", call with show: true instead of looking for a window (the bridge opens the default browser and the new tab takes over the work screen). screen in a show: true answer says whether the bridge opened the browser (opened) and whether the work screen tab connected (connected). If connected is false, tell the user the one sentence in note. In a demo (fictional files), call only one tool per reply, describe what changed on the screen in at most 2 lines, and wait for the user to say \"next\" (as intake_add_files describes). Reads the summary of the files on the work screen, samples with row numbers, legends, notes, question candidates, where reading is stuck (stuck: unresolved cells per file with sample rows; answer the questions first, and have rows that still remain read with reading_rules_propose rules), and the result of making the plan. Do not copy row contents; to answer questions, place decisions with intake_settle. Once a plan exists, crosswalk (part: crosswalk or all) holds the mapping summary (the Skill pack's tier-1 items and work attributes, frequent values per field, unmapped counts, working plan version). Read the rest of the node names from the chart_rows levels. " +
+      "The summary (part: all) also holds confirmed: the latest confirmed and signed version of each facility in the storage location (facility name, fiscal year, version number, equipment and work counts), even when there is no working plan. Confirmed versions are read only (rows via chart_rows); to change one, a person presses \"+ Next version\" on the MOYAI top screen (the AI cannot open a working plan). " +
       "With part, only that field is filled (the file list files only for part: all or files, up to limit [default 20]; the full count is filesTotal, the rest via part: files and cursor). " +
       "When the plan is made, compose holds the number of new equipment nodes per file (newNodesByFile, top 10 files). If a file produced 20 or more equipment nodes with the same name, note holds the file, name and count: show it to the user and check that no fragments got in without a question.",
     z.object({
@@ -818,6 +860,8 @@ export const TOOLS = {
         .describe("Only with show: true. opened: whether the bridge opened the browser; connected: whether the work screen tab connected (when opened, whether the new tab took over)"),
       /** show: true でつながっていないとき：Claude が利用者に言う 1 文 */
       note: z.string().optional().describe("With show: true and the work screen not connected: one sentence to tell the user"),
+      /** part: all のとき：保管先の確定・署名した最新の版の一覧の要約（橋渡しが署名と鎖を確かめて合う版だけ。読むだけ） */
+      confirmed: confirmedSurveySchema.optional(),
     }),
   ),
   intake_settle: def(
@@ -925,19 +969,33 @@ export const TOOLS = {
     "chart_rows",
     "read",
     "Read star chart rows",
-    "Reads part of the star chart rows: 200 rows per call, 2,000 per conversation. To change things, do not copy rows; place rules with chart_propose. Passing an equipment row id (n:...) as rowRef returns the works targeting that equipment, one per row (row id w:<work>; stars are per work; chart_propose stars point with this id). When equipment with the same name under the same parent is split by unit number, the level name has the unit number added (\"Pump No.1\"). The data name is unchanged (the unit number is assetNode.tag), so write name and unit number separately in rule conditions. Row levels and order are the same as the star chart on the screen (the facility's view; changed by screen_set).",
+    "Reads part of the star chart rows: 200 rows per call, 2,000 per conversation. To change things, do not copy rows; place rules with chart_propose. Passing an equipment row id (n:...) as rowRef returns the works targeting that equipment, one per row (row id w:<work>; stars are per work; chart_propose stars point with this id). When equipment with the same name under the same parent is split by unit number, the level name has the unit number added (\"Pump No.1\"). The data name is unchanged (the unit number is assetNode.tag), so write name and unit number separately in rule conditions. Row levels and order are the same as the star chart on the screen (the facility's view; changed by screen_set). " +
+      "When the work screen has no working plan, it reads the latest confirmed and signed version in the storage location instead (source: confirmed; only a version whose signatures and chain check out; planId chooses the facility from intake_survey confirmed; rows are in the plan's own order). A confirmed version is read only: to change it, a person presses \"+ Next version\" on the MOYAI top screen to open a working plan (the AI cannot open it). Reply to the user in the user's language.",
     z.object({
       offset: z.number().int().min(0).default(0),
       limit: z.number().int().min(1).max(ROWS_PER_CALL).default(50),
       view: z.enum(["base", "adjusted"]).default("adjusted"),
       /** 機器の行の id（n:…）。渡すと、その機器の作業の行（w:<作業>）を返す（chart_propose の stars で指すため） */
       rowRef: z.string().min(3).max(200).optional(),
+      /** 作業中の計画が無いときだけ：どの施設の確定した版を読むか（intake_survey の confirmed の planId）。省けば、いちばん新しく署名した版 */
+      planId: z
+        .string()
+        .min(1)
+        .max(200)
+        .optional()
+        .describe("Only when there is no working plan: which facility's latest confirmed version to read (a planId from intake_survey confirmed). Omitted: the most recently signed one. Ignored when a working plan exists"),
     }),
     z.object({
       rows: z.array(z.object({ rowRef: z.string(), cells: z.record(z.string(), z.string()) })),
       total: z.number().int(),
       remainingInConversation: z.number().int(),
-      version: z.number().int(),
+      version: z.number().int().describe("source: working: the working plan version (basedOnVersion of proposals). source: confirmed: the confirmed version number"),
+      /** どちらを読んだか：作業中の計画（working）か、保管先の確定した版（confirmed。作業中の計画が無いときだけ） */
+      source: z.enum(["working", "confirmed"]).describe("working: the working plan on the work screen. confirmed: there is no working plan, so the latest confirmed and signed version in the storage location was read (read only)"),
+      /** source: confirmed のとき：読んだ版（施設の名前・第 n 版・呼び名） */
+      confirmed: z.object({ planId: z.string(), facilityName: z.string(), version: z.number().int(), versionName: z.string() }).optional(),
+      /** source: confirmed のとき：確定版は読むだけ、という 1 文 */
+      note: z.string().optional(),
     }),
   ),
   chart_propose: def(

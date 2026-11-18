@@ -12,7 +12,7 @@ function slowRowsTab(): TabHub {
       await new Promise((r) => setTimeout(r, 5));
       const n = Math.min(args.limit, remaining);
       const rows = Array.from({ length: n }, (_, i) => ({ rowRef: `r${i}`, cells: { 段の道: "x" } }));
-      return { kind: "ok", data: { rows, total: 99999, remainingInConversation: remaining - n, version: 1 } };
+      return { kind: "ok", data: { rows, total: 99999, remainingInConversation: remaining - n, version: 1, source: "working" } };
     },
   } as unknown as TabHub;
 }
