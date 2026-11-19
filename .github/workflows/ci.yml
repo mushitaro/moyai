@@ -191,6 +191,35 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # 受け入れ：利用者と同じ入れ方を一時のフォルダで通す（tests/acceptance/install.spec.ts。運営者の指摘 2026-11-18）。
+  # test の仕事は npm ci --ignore-scripts の node_modules で走るので、利用者の PC の moyai setup（版のフォルダで取得 → npm ci〔スクリプトあり〕→ build → 自己点検）は通らない。
+  # ここでは、この仕事が checkout したコミットを一時の git に写して setup --yes で入れ、連携の部品が版のフォルダから読め、
+  # 起動の台本から起こした橋渡しの設定に「連携」が出る（connect.available）ところまで見る。外の main は取らない。HOME・APPDATA なども一時のフォルダ
+  install:
+    name: install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.19.0
+      - name: 依存を入れる（npm 11、スクリプトは走らせない。setup を走らせる clone のための依存）
+        run: npx -y npm@11.21.1 ci --ignore-scripts
+      - name: ビルド（setup を走らせる dist/cli.js）
+        run: npm run build
+      - name: 受け入れ：setup --yes で版のフォルダに入れ（本物の npm ci と build）、連携の部品が読め、入れた版の橋渡しの設定に「連携」が出る
+        run: node node_modules/@playwright/test/cli.js test -c playwright.acceptance.config.ts --trace off
+
   # シナリオテスト（docs/scenarios.md）の自動の印を判定し、表を仕事の要約に書く。
   # 判定はランナーのコード（scripts/scenario/marks.mjs）。この仕事は、ランナーが走りきれば緑（合否は表の字。不合格の印があっても、ここでは落とさない）
   scenario:
