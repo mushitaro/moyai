@@ -163,7 +163,18 @@ jobs:
       - name: ビルド（e2e は dist/cli.js を起こす）
         run: npm run build
       - name: e2e と walkthrough（入っている Chrome。ブラウザは落とさない）
+        env:
+          MOYAI_PLAYWRIGHT_OUT: ${{ runner.temp }}/playwright-out
         run: node scripts/scenario/run.mjs --part e2e --out-json "${{ runner.temp }}/scenario/e2e-${{ matrix.os }}.json"
+      # 落ちた試験の記録（error-context.md：落ちたときのページの様子）を残す（#152）。資料は試験の【架空】のものだけ
+      - name: 落ちた試験の記録を渡す（アーティファクト e2e-failures）
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-failures-${{ matrix.os }}
+          path: ${{ runner.temp }}/playwright-out/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: 数を scenario の仕事に渡す
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
