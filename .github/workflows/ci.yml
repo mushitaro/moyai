@@ -166,7 +166,14 @@ jobs:
         env:
           MOYAI_PLAYWRIGHT_OUT: ${{ runner.temp }}/playwright-out
         run: node scripts/scenario/run.mjs --part e2e --out-json "${{ runner.temp }}/scenario/e2e-${{ matrix.os }}.json"
-      # 落ちた試験の記録（error-context.md：落ちたときのページの様子）を残す（#152）。資料は試験の【架空】のものだけ
+      # 落ちた試験の記録（error-context.md：落ちたときのページの様子）をログにも出す（成果物を落とせない所からも読める。#152）
+      - name: 落ちた試験の様子をログに出す
+        if: failure()
+        run: |
+          find "${{ runner.temp }}/playwright-out" -name error-context.md -print 2>/dev/null | while read -r f; do
+            echo "::group::$f"; head -c 20000 "$f"; echo; echo "::endgroup::"
+          done
+      # 落ちた試験の記録を成果物にも残す（#152）。資料は試験の【架空】のものだけ
       - name: 落ちた試験の記録を渡す（アーティファクト e2e-failures）
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
