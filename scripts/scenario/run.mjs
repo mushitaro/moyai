@@ -95,12 +95,16 @@ function runE2e() {
   }
   const shots = join(work, "shots");
   mkdirSync(shots, { recursive: true });
+  // 落ちた試験の記録の置き場（MOYAI_PLAYWRIGHT_OUT。CI が渡す）は、e2e と walkthrough で分ける。
+  // Playwright は始めに置き場を空にするので、同じ所だと、あとの walkthrough が e2e の記録を消す（#152）
+  const outBase = process.env.MOYAI_PLAYWRIGHT_OUT;
+  const outOf = (name) => (outBase ? { MOYAI_PLAYWRIGHT_OUT: join(outBase, name) } : {});
   const runs = [
-    { name: "e2e", argv: [pw, "test", "--project=chrome", "--trace", "off", "--reporter=list,json"], env: {} },
+    { name: "e2e", argv: [pw, "test", "--project=chrome", "--trace", "off", "--reporter=list,json"], env: outOf("e2e") },
     {
       name: "walkthrough",
       argv: [pw, "test", "-c", "playwright.demo.config.ts", "tests/demo/walkthrough.spec.ts", "tests/demo/walkthrough-en.spec.ts", "--trace", "off", "--reporter=list,json"],
-      env: { MOYAI_DEMO_HEADLESS: "1", MOYAI_DEMO_SLOWMO: "0" },
+      env: { MOYAI_DEMO_HEADLESS: "1", MOYAI_DEMO_SLOWMO: "0", ...outOf("walkthrough") },
     },
   ];
   const files = {};
