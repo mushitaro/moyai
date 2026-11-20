@@ -63,6 +63,10 @@ Reply to the user in the user's language (Japanese if they write in Japanese). T
 - 「分解点検」 (disassembly inspection) is OVERHAUL. Names that are only 「開放点検」 (open inspection), 「定期整備」 (periodic maintenance), 「整備」 (maintenance) or 「補修」 (repair) differ in content from plant to plant, so do not map them; ask. But if a name contains a word from the table above, as in 「定期整備（分解）」 (periodic maintenance (disassembly)), give it that attribute. A name that would collide with the 「点検」 (inspection) rule under a rule written as "contains the word" (contains) should be written as a rule with a list of names (in), or be excluded from the 「点検」 rule.
 - For works without a name (star marks only), ask once per group of equipment: "Are the marks of these n pieces of equipment inspection, overhaul or replacement?" Make the answer into a rule whose conditions are the list of that group's equipment names (assetNode.name in) and works without a name (work.kind equals the empty string) (up to 20 values per rule).
 
+## Fiscal year
+
+- A public facility's fiscal year starts in April. A date in January to March belongs to the previous fiscal year.
+
 ## Sources
 
 - Ministry of the Environment, "Guide for Preparing Comprehensive Life-Extension Plans for Waste Treatment Facilities (Night-Soil Treatment Facilities and Sludge Recycling Centres Edition)", revised March 2021 (https://www.env.go.jp/recycle/waste/3r_network/7_misc/gl-ple_hw.pdf )
