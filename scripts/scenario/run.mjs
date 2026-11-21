@@ -13,7 +13,7 @@
 // 行の値・鍵・施設の名前は表に書かない（数と台本の名前だけ）。127.0.0.1 へはランナー自身は何も送らない（e2e の台本が自分で起こした橋渡しに送るだけ）。
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -123,6 +123,11 @@ function runE2e() {
       continue;
     }
     Object.assign(files, summarizePlaywright(report));
+    // MOYAI_PLAYWRIGHT_REPORTS：Playwright の JSON の報告の写しを置くフォルダ（CI が受け入れの表を作るのに使う。#26）
+    if (process.env.MOYAI_PLAYWRIGHT_REPORTS) {
+      mkdirSync(process.env.MOYAI_PLAYWRIGHT_REPORTS, { recursive: true });
+      copyFileSync(json, join(process.env.MOYAI_PLAYWRIGHT_REPORTS, `${x.name}.json`));
+    }
     if (res.status !== 0) ok = false;
   }
   // claude-code.spec が本物の Claude Code で走ったか（MOYAI_CLAUDE_E2E=1）。ほかは代わりの台本（tests/helpers/claude-standin.mjs）
