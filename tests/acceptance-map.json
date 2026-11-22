@@ -159,7 +159,7 @@
         { "runner": "vitest", "file": "tests/unit/places.test.ts", "title": "Documents と同期フォルダ" },
         { "runner": "vitest", "file": "tests/unit/human-only.test.ts", "title": "使われているポート" }
       ],
-      "scope": "Windows の実行（win32）でだけ数える。ほかの OS の実行では測っていない。起動・ツール・確定は slice、書き出しは template、OneDrive に移された日本語の Documents は places（PowerShell の出力を差し替える）、使われているポートは human-only。日本語のフォルダの道で e2e は走らせていない。「毎日通る」は 1 回の実行では言えない。CI の windows-latest は同じ試験を毎回走らせるが、この表には渡していない"
+      "scope": "Windows の実行（win32）でだけ数える。ほかの OS の実行では測っていない。起動・ツール・確定は slice、書き出しは template、OneDrive に移された日本語の Documents は places（PowerShell の出力を差し替える）、使われているポートは human-only。日本語のフォルダの道で e2e は走らせていない。「毎日通る」は 1 回の実行では言えない。CI の acceptance（windows-latest）の仕事が、Windows の報告からこの表を作る（仕事の要約と成果物 acceptance-windows。リポジトリのこの表は手元の実行）"
     },
     {
       "name": "eval",
