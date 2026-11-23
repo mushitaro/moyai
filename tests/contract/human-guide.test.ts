@@ -35,6 +35,16 @@ const GUIDE: Partial<Record<HumanAction, { what: string; lines: readonly Line[] 
   },
   ring_create: { what: "共有フォルダを作る", lines: [[/Settings:/, /shared folder/]] },
   person_key_create: { what: "署名の鍵を作る", lines: [[/signing key is created at the first confirmation/]] },
+  connect_add: { what: "設定の「連携」でつなぎ先を足す", lines: [[/Settings/, /Integration/, /\bAdd\b/]] },
+  plan_revert: { what: "前の版に戻す", lines: [[/(revert|back to (a|the) previous version)/i, /(top screen|HOSHITORI)/]] },
+  work_discard: { what: "施設の作業中を消す", lines: [[/(discard|delete) (the |a )?working (plan|copy)/i, /top screen/]] },
+  request_renew: { what: "頼み直す", lines: [[/(ask again|re-?send the request|renew)/i, /HOSHITORI/]] },
+  export_sign: { what: "保存先の様式で書き出して署名する", lines: [[/(template|form)/i, /on Export/i, /sign/]] },
+  template_save: { what: "様式を保存先に置く", lines: [[/(template|form)/i, /on Export/i, /(save|drop)/i]] },
+  reading_feedback_save: { what: "ルールを書き出す（保存）", lines: [[/Rules sheet/, /(write out|export) the rules/i]] },
+  reading_feedback_send: { what: "書き出したルールを送る", lines: [[/Rules sheet/, /(write out|export) the rules/i, /Send/i]] },
+  comment_add: { what: "コメントを足す", lines: [[/comment/i, /HOSHITORI/]] },
+  app_feedback_send: { what: "設定の「困りごと」から送る", lines: [[/Feedback field of (the )?Settings/, /press Send/, /Only a person sends/]] },
 };
 
 /** 案内の要らない経路と理由 */
@@ -69,21 +79,9 @@ const NO_GUIDE: Partial<Record<HumanAction, string>> = {
 
 /**
  * 案内が要るのに、まだ AI 向けの文に無い経路（一時）。書いたら、ここから GUIDE に移す。
- * - app_feedback_send（困りごと）：別の作業の PR が AI 向けの文に書いている（docs/progress/2026-11-18-acceptance.md）。その PR で外す
- * - ほか：mushitaro/moyai#146。Skill の文を変えるには採点の記録が要るので、まとめて書く
+ * 今は 0（困りごと app_feedback_send は #145 の文で GUIDE に移した）。増やさない。
  */
-const PENDING: Partial<Record<HumanAction, { what: string; lines: readonly Line[] }>> = {
-  app_feedback_send: { what: "設定の「困りごと」から送る", lines: [[/Settings/, /(feedback|trouble|problem)/i, /Send/i]] },
-  connect_add: { what: "設定の「連携」でつなぎ先を足す", lines: [[/Settings/, /Integration/, /\bAdd\b/]] },
-  plan_revert: { what: "前の版に戻す", lines: [[/(revert|back to (a|the) previous version)/i, /(top screen|HOSHITORI)/]] },
-  work_discard: { what: "施設の作業中を消す", lines: [[/(discard|delete) (the |a )?working (plan|copy)/i, /top screen/]] },
-  request_renew: { what: "頼み直す", lines: [[/(ask again|re-?send the request|renew)/i, /HOSHITORI/]] },
-  export_sign: { what: "保存先の様式で書き出して署名する", lines: [[/(template|form)/i, /on Export/i, /sign/]] },
-  template_save: { what: "様式を保存先に置く", lines: [[/(template|form)/i, /on Export/i, /(save|drop)/i]] },
-  reading_feedback_save: { what: "ルールを書き出す（保存）", lines: [[/Rules sheet/, /(write out|export) the rules/i]] },
-  reading_feedback_send: { what: "書き出したルールを送る", lines: [[/Rules sheet/, /(write out|export) the rules/i, /Send/i]] },
-  comment_add: { what: "コメントを足す", lines: [[/comment/i, /HOSHITORI/]] },
-};
+const PENDING: Partial<Record<HumanAction, { what: string; lines: readonly Line[] }>> = {};
 
 /** AI 向けの文の行：instructions の 1 文ずつと、1 段目の Skill の 1 行ずつ */
 const aiLines = [...MCP_INSTRUCTIONS.split("\n"), ...readFileSync("skills/moyai/SKILL.md", "utf8").replace(/\r\n/g, "\n").split("\n")].filter((l) => l.trim() !== "");
@@ -110,8 +108,8 @@ describe("人だけの操作の案内（AI 向けの文）", () => {
     expect(hasLine([/Only a person confirms, sends, promotes and saves, on the screen/, /there are no tools for these/])).toBe(true);
   });
 
-  it("一時の抜け（PENDING）は増やさない（今の 10 から減るだけ）。新しい経路は GUIDE か NO_GUIDE に入れる", () => {
-    expect(Object.keys(PENDING).length, "新しい人だけの経路は、案内を書いて GUIDE に入れる（PENDING に足さない）").toBeLessThanOrEqual(10);
+  it("一時の抜け（PENDING）は増やさない（今は 0）。新しい経路は GUIDE か NO_GUIDE に入れる", () => {
+    expect(Object.keys(PENDING).length, "新しい人だけの経路は、案内を書いて GUIDE に入れる（PENDING に足さない）").toBe(0);
   });
 
   it("一時の抜け（PENDING）は、まだ案内が無いものだけ。書いたら GUIDE に移す", () => {
