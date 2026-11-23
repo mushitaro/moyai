@@ -49,7 +49,17 @@ jobs:
       - name: 試験（node:test と vitest。どちらかが 0 件なら失敗）
         env:
           MOYAI_REQUIRE_DIST: "1"
+          MOYAI_REPORT_DIR: ${{ runner.temp }}/test-reports
         run: node scripts/run-tests.mjs
+      # Windows の試験の報告（node.json・vitest.json）を、受け入れの表（acceptance-windows の仕事）に渡す（#26）
+      - name: 試験の報告を渡す（Windows）
+        if: always() && matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-reports-windows-latest
+          path: ${{ runner.temp }}/test-reports/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: 公開の前の検査
         run: node scripts/check-publish.mjs
       - name: Skill の文の採点の記録（文を変えたら、記録が今の文に合い、点が main より下がっていないか。docs/autonomy.md）
@@ -163,7 +173,35 @@ jobs:
       - name: ビルド（e2e は dist/cli.js を起こす）
         run: npm run build
       - name: e2e と walkthrough（入っている Chrome。ブラウザは落とさない）
+        env:
+          MOYAI_PLAYWRIGHT_OUT: ${{ runner.temp }}/playwright-out
+          MOYAI_PLAYWRIGHT_REPORTS: ${{ runner.temp }}/e2e-reports
         run: node scripts/scenario/run.mjs --part e2e --out-json "${{ runner.temp }}/scenario/e2e-${{ matrix.os }}.json"
+      # 落ちた試験の記録（error-context.md：落ちたときのページの様子）をログにも出す（成果物を落とせない所からも読める。#152）
+      - name: 落ちた試験の様子をログに出す
+        if: failure()
+        run: |
+          find "${{ runner.temp }}/playwright-out" -name error-context.md -print 2>/dev/null | while read -r f; do
+            echo "::group::$f"; head -c 20000 "$f"; echo; echo "::endgroup::"
+          done
+      # 落ちた試験の記録を成果物にも残す（#152）。資料は試験の【架空】のものだけ
+      - name: 落ちた試験の記録を渡す（アーティファクト e2e-failures）
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-failures-${{ matrix.os }}
+          path: ${{ runner.temp }}/playwright-out/
+          if-no-files-found: ignore
+          retention-days: 7
+      # Windows の e2e の JSON の報告を、受け入れの表（acceptance-windows の仕事）に渡す（#26）
+      - name: e2e の報告を渡す（Windows）
+        if: always() && matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-reports-windows-latest
+          path: ${{ runner.temp }}/e2e-reports/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: 数を scenario の仕事に渡す
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -201,6 +239,53 @@ jobs:
         run: npm run build
       - name: 受け入れ：setup --yes で版のフォルダに入れ（本物の npm ci と build）、連携の部品が読め、入れた版の橋渡しの設定に「連携」が出る
         run: node node_modules/@playwright/test/cli.js test -c playwright.acceptance.config.ts --trace off
+
+  # 受け入れの表（docs/plan.md §5.1）を、Windows の試験と e2e の報告から作り、仕事の要約と成果物に出す（#26）。
+  # 同じ Windows のランナーで作るので、windows の行（tests/acceptance-map.json の platform: win32）が数えられる。
+  # 表はリポジトリに書かない（docs/acceptance.md は手元の実行の表のまま）。合否で CI を止めない（acceptance.mjs は表を作るだけ）
+  acceptance-windows:
+    name: acceptance (windows-latest)
+    needs: [test, e2e]
+    if: always()
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.19.0
+      - name: 依存を入れる（npm 11、スクリプトは走らせない）
+        run: npx -y npm@11.21.1 ci --ignore-scripts
+      - name: 試験の報告を受ける
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          name: test-reports-windows-latest
+          path: ${{ runner.temp }}/test-reports
+      - name: e2e の報告を受ける
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          name: e2e-reports-windows-latest
+          path: ${{ runner.temp }}/e2e-reports
+      - name: 受け入れの表を作る（報告が無い行は「測っていない」）
+        run: |
+          node scripts/acceptance.mjs --reports "${{ runner.temp }}/test-reports" --playwright "${{ runner.temp }}/e2e-reports/e2e.json" --out "${{ runner.temp }}/acceptance-windows.md"
+          cat "${{ runner.temp }}/acceptance-windows.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: 表を渡す（アーティファクト acceptance-windows）
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: acceptance-windows
+          path: ${{ runner.temp }}/acceptance-windows.md
+          if-no-files-found: ignore
+          retention-days: 30
 
   # シナリオテスト（docs/scenarios.md）の自動の印を判定し、表を仕事の要約に書く。
   # 判定はランナーのコード（scripts/scenario/marks.mjs）。この仕事は、ランナーが走りきれば緑（合否は表の字。不合格の印があっても、ここでは落とさない）

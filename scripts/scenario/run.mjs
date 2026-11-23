@@ -13,7 +13,7 @@
 // 行の値・鍵・施設の名前は表に書かない（数と台本の名前だけ）。127.0.0.1 へはランナー自身は何も送らない（e2e の台本が自分で起こした橋渡しに送るだけ）。
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -95,12 +95,16 @@ function runE2e() {
   }
   const shots = join(work, "shots");
   mkdirSync(shots, { recursive: true });
+  // 落ちた試験の記録の置き場（MOYAI_PLAYWRIGHT_OUT。CI が渡す）は、e2e と walkthrough で分ける。
+  // Playwright は始めに置き場を空にするので、同じ所だと、あとの walkthrough が e2e の記録を消す（#152）
+  const outBase = process.env.MOYAI_PLAYWRIGHT_OUT;
+  const outOf = (name) => (outBase ? { MOYAI_PLAYWRIGHT_OUT: join(outBase, name) } : {});
   const runs = [
-    { name: "e2e", argv: [pw, "test", "--project=chrome", "--trace", "off", "--reporter=list,json"], env: {} },
+    { name: "e2e", argv: [pw, "test", "--project=chrome", "--trace", "off", "--reporter=list,json"], env: outOf("e2e") },
     {
       name: "walkthrough",
       argv: [pw, "test", "-c", "playwright.demo.config.ts", "tests/demo/walkthrough.spec.ts", "tests/demo/walkthrough-en.spec.ts", "--trace", "off", "--reporter=list,json"],
-      env: { MOYAI_DEMO_HEADLESS: "1", MOYAI_DEMO_SLOWMO: "0" },
+      env: { MOYAI_DEMO_HEADLESS: "1", MOYAI_DEMO_SLOWMO: "0", ...outOf("walkthrough") },
     },
   ];
   const files = {};
@@ -119,6 +123,11 @@ function runE2e() {
       continue;
     }
     Object.assign(files, summarizePlaywright(report));
+    // MOYAI_PLAYWRIGHT_REPORTS：Playwright の JSON の報告の写しを置くフォルダ（CI が受け入れの表を作るのに使う。#26）
+    if (process.env.MOYAI_PLAYWRIGHT_REPORTS) {
+      mkdirSync(process.env.MOYAI_PLAYWRIGHT_REPORTS, { recursive: true });
+      copyFileSync(json, join(process.env.MOYAI_PLAYWRIGHT_REPORTS, `${x.name}.json`));
+    }
     if (res.status !== 0) ok = false;
   }
   // claude-code.spec が本物の Claude Code で走ったか（MOYAI_CLAUDE_E2E=1）。ほかは代わりの台本（tests/helpers/claude-standin.mjs）

@@ -17,7 +17,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   workers: 1,
   reporter: "list",
-  outputDir: join(tmpdir(), "moyai-playwright"),
+  // 落ちた試験の記録（error-context.md）の置き場。CI は MOYAI_PLAYWRIGHT_OUT で仕事の一時のフォルダに向け、落ちたときだけ成果物に上げる（#152）
+  outputDir: process.env.MOYAI_PLAYWRIGHT_OUT || join(tmpdir(), "moyai-playwright"),
   use: { viewport: { width: 1280, height: 800 }, locale: "ja-JP", timezoneId: "Asia/Tokyo" },
   projects: [
     { name: "chrome", use: { channel: "chrome" } },
