@@ -4,8 +4,8 @@
 
 結果は 5 つです：通った（対応する試験が §5.1 の合格の条件まで確かめ、すべて通った）／一部（範囲の注を見る。対応する試験は通ったが、合格の条件の一部しか確かめていない）／落ちた（1 つでも落ちた）／試験が無い（対応する試験を作っていない）／測っていない（試験はあるが、この実行で走っていない）。
 
-- 作った時刻：2026-11-23 03:37 JST・コミット `e6ee5d7`・OS linux
-- 報告：node:test 238・vitest 2239・Playwright 56
+- 作った時刻：2026-11-24 03:39 JST・コミット `ce5882e`・OS linux
+- 報告：node:test 238・vitest 2243・Playwright 56
 - 通った 18・一部 10・落ちた 0・試験が無い 0・測っていない 1（全 29）
 
 | 試験の名前 | 結果 | 通った・落ちた | 対応する試験 | 範囲の注 |
@@ -17,7 +17,7 @@
 | `cross-layer` | 一部（範囲の注を見る） | 2・0 | `tests/unit/cross/next-due.test.ts`：通った 2・落ちた 0 | 取り込み（周期の列と ●）→ 計画 → 星取表の行の次回 → Excel の次回の列。暦のきっかけだけ（取り込みは計量値の欄をまだ読まない。運転時間との早い方は tests/unit/plan-next.test.ts と plan-due-view.test.ts の計画の側だけ） |
 | `counts` | 一部（範囲の注を見る） | 3・0 | `tests/unit/import/layer2-4.test.ts`（「層 4」）：通った 1・落ちた 0<br>`tests/unit/import/dev.test.ts`：通った 2・落ちた 0 | 入れた行＝取り込んだ数＋外した数（理由ごと）＋未解決を、数え直しの関数（layer2-4）と開発用の資料の全ファイル（dev）で見る。保存したあとの数（版のファイルに数は残していない）は見ていない |
 | `pack.second` | 通った | 3・0 | `tests/packs/pack-second.test.mjs`：通った 2・落ちた 0<br>`tests/unit/packs/night-soil-slice.test.ts`：通った 1・落ちた 0 |  |
-| `pack.words` | 一部（範囲の注を見る） | 1・0 | `tests/unit/review/tool.test.ts`（「業種の語」）：通った 1・落ちた 0 | 見ているのは検査のコードと画面の言葉だけで、src/ 全体ではない |
+| `pack.words` | 一部（範囲の注を見る） | 5・0 | `tests/unit/review/tool.test.ts`（「業種の語」）：通った 1・落ちた 0<br>`tests/unit/packs/pack-words-src.test.ts`：通った 4・落ちた 0 | src/ の全部のファイルを、common.json のあるパック（今はごみ焼却・し尿処理。ほかの空のパックには語が無い）の語で見る。ただし、コメントの中の語（例の字）と、試験の台だけで使う偽の連携（src/bridge/connect/fake.ts、【架空】の中身）は数えない |
 | `pack.map` | 一部（範囲の注を見る） | 10・0 | `tests/unit/packs/pack-map.test.tsx`：通った 9・落ちた 0<br>`tests/e2e/industries.spec.ts`：通った 1・落ちた 0 | 全部の空のパックのスキーマと、画面に全行が並ぶことは見る。選んだときの「中身が無い」1 行と出どころの候補は、最初の空のパック 1 つで見る（ほかは、候補があることを形で見る） |
 | `kinds` | 通った | 14・0 | `tests/packs/kinds.test.mjs`：通った 6・落ちた 0<br>`tests/packs/night-soil.test.mjs`：通った 8・落ちた 0 |  |
 | `checks` | 通った | 38・0 | `tests/unit/review/checks.test.ts`：通った 35・落ちた 0<br>`tests/unit/review/measure.test.ts`：通った 3・落ちた 0 |  |

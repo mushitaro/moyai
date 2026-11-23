@@ -47,8 +47,11 @@
     },
     {
       "name": "pack.words",
-      "sources": [{ "runner": "vitest", "file": "tests/unit/review/tool.test.ts", "title": "業種の語" }],
-      "scope": "見ているのは検査のコードと画面の言葉だけで、src/ 全体ではない"
+      "sources": [
+        { "runner": "vitest", "file": "tests/unit/review/tool.test.ts", "title": "業種の語" },
+        { "runner": "vitest", "file": "tests/unit/packs/pack-words-src.test.ts" }
+      ],
+      "scope": "src/ の全部のファイルを、common.json のあるパック（今はごみ焼却・し尿処理。ほかの空のパックには語が無い）の語で見る。ただし、コメントの中の語（例の字）と、試験の台だけで使う偽の連携（src/bridge/connect/fake.ts、【架空】の中身）は数えない"
     },
     {
       "name": "pack.map",
