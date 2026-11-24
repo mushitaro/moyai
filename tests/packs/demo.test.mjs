@@ -23,7 +23,8 @@ const MAX_BYTES = 3 * 1024 * 1024;
 const readme = () => readFileSync(join(DEMO, "README.md"), "utf8");
 
 test("demo/ に 3 つの資料があり、README.md の表の SHA-256 と git の blob がバイト列と合う（中身を書き換えていない）", () => {
-  assert.deepEqual(readdirSync(DEMO).sort(), [...FILES, "README.md", "demo.json"].sort());
+  // maximo.json は連携のデモの架空の Maximo の中身（資料ではない。2026-11-24）
+  assert.deepEqual(readdirSync(DEMO).sort(), [...FILES, "README.md", "demo.json", "maximo.json"].sort());
   const md = readme();
   assert.ok(md.includes(SAMPLES_COMMIT), "README.md に写した元の commit が無い");
   assert.ok(md.includes("mushitaro/moyai-samples"));
@@ -55,6 +56,8 @@ test("どの資料にも【架空】と書いてある（実在の施設とし�
       .join("\n");
     assert.ok(text.includes("【架空】"), `${f} に【架空】が無い`);
   }
+  const maximo = JSON.parse(readFileSync(join(DEMO, "maximo.json"), "utf8"));
+  assert.ok(maximo.label.includes("【架空】"), "maximo.json の名前に【架空】が無い");
   const manifest = JSON.parse(readFileSync(join(DEMO, "demo.json"), "utf8"));
   assert.equal(manifest.facilityName, "【架空】さくら坂焼却場");
   assert.ok(manifest.facilityName.length <= 80);

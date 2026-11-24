@@ -17,7 +17,7 @@ import {
   type RouteDef,
   type RouteId,
 } from "../shared/routes";
-import { CONNECT_TOOL_NAMES, EXPOSED_TOOL_NAMES, isToolName, sharePreviewFromTabSchema, toolDef, type ToolKind } from "../shared/tools";
+import { CONNECT_DEMO_TEXT, CONNECT_TOOL_NAMES, EXPOSED_TOOL_NAMES, isToolName, sharePreviewFromTabSchema, toolDef, type ToolKind } from "../shared/tools";
 import { approvedReadingVersions, listReadings, readingTextShown, registerReading } from "./readings";
 import { countsForApproval, trustOf } from "./people";
 import type { SignatureInfo } from "../plan/store";
@@ -227,6 +227,16 @@ export async function startBridge(opts: BridgeOptions): Promise<Bridge> {
         if (r.state === "ready") tabs.announceNext(r.latest);
       });
       return { action, state: "started", ...b.started };
+    },
+    // デモの架空の Maximo（src/bridge/connect/demo.ts）：橋渡しのメモリだけ。通信しない・鍵なし。連携のオンは人だけ（オフなら断って、人に頼む文を返す）
+    connect_demo: async (args) => {
+      const c = human.connect();
+      const brief = (t: { id: string; label: string; env: "test" | "production" }) => ({ id: t.id, label: t.label, env: t.env });
+      const refused = (why: "connect_off" | "no_demo" | "unavailable", note: string) => ({ target: null, added: false, counts: null, refused: why, note });
+      if (!c) return refused("unavailable", CONNECT_DEMO_TEXT.unavailable);
+      const r = await c.addDemo({ ...(typeof args.pack === "string" ? { pack: args.pack } : {}), ...(args.reset === true ? { reset: true } : {}) });
+      if (!r.ok) return r.reason === "connectOff" ? refused("connect_off", CONNECT_DEMO_TEXT.off) : refused("no_demo", CONNECT_DEMO_TEXT.noDemo);
+      return { target: brief(r.target), added: r.added, counts: r.counts, refused: null, note: CONNECT_DEMO_TEXT.added(r.target.id) };
     },
     // 作業画面の見せ方（screen_set）の保存先：設定の保存と同じ確かめ（validRoot）だけを通す。保存はしない（人が設定の画面で押す）
     storage_root: async (path) => ({ valid: validRoot(path), current: await human.root() }),

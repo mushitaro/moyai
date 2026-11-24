@@ -67,12 +67,13 @@ describe("誤りの送り手と受け手", () => {
 });
 
 describe("ツールの送り手と受け手", () => {
-  it("tool-names.json と TOOLS が同じ 21。中継が出すのは今見せるものだけ（連携の道具は、設定の連携がオンのときだけ）", () => {
+  it("tool-names.json と TOOLS が同じ 22。中継が出すのは今見せるものだけ（連携の道具は、設定の連携がオンのときだけ）", () => {
     // 17 個目は作業画面の見せ方を変える screen_set（運営者の決定 11-07：利用者の想定のプロンプトで、アプリがチャットだけで動く）
     // 18 個目は入っている MOYAI を最新にする moyai_update（mushitaro/moyai#65）
     // 19・20 個目は業務システムとの連携の connect_read・connect_plan（運営者の判断 2026-11-16。送る道具は無い）
     // 21 個目は作業画面の資料を消す intake_remove_files（運営者 2026-11-18。作業中の資料だけ。確定した版には触れない）
-    expect(toolNames).toHaveLength(21);
+    // 22 個目はデモの架空の Maximo を足す connect_demo（運営者の困りごと 2026-11-24。通信しない・鍵なし。連携がオフでも一覧に出て、オフなら人にオンを頼む）
+    expect(toolNames).toHaveLength(22);
     expect(Object.keys(TOOLS).sort()).toEqual([...toolNames].sort());
     expect(TOOL_NAMES).toEqual(toolNames);
     for (const n of TOOL_NAMES) expect(TOOLS[n].name).toBe(n);
@@ -83,6 +84,7 @@ describe("ツールの送り手と受け手", () => {
     const shown = Object.keys(all).filter((n) => all[n]!.enabled);
     expect(shown.sort()).toEqual(EXPOSED_TOOL_NAMES.filter((n) => !(CONNECT_TOOL_NAMES as readonly string[]).includes(n)).sort());
     expect([...CONNECT_TOOL_NAMES].sort()).toEqual(["connect_plan", "connect_read"]);
+    expect(shown).toContain("connect_demo");
     // 見せないものは、待っている画面の名前を持つ
     for (const n of TOOL_NAMES.filter((x) => !EXPOSED_TOOL_NAMES.includes(x))) expect(TOOLS[n].waitsFor, n).not.toBeNull();
   });
@@ -113,7 +115,9 @@ describe("ツールの送り手と受け手", () => {
     // 似た施設：人が開いた比べは作業画面が、公開の台帳だけを読むのは橋渡しが答える（§2.18.4）。
     // 共有ファイルの形と数：作業画面が計画と SHARE の選びを渡し、橋渡しが SHARE の画面と同じ関数で数える（share-preview-v1）
     // 入っている MOYAI の更新は橋渡しが答える（版のフォルダを読み、別のフォルダで次の版を用意する。#65）
+    // デモの架空の Maximo を足すのは橋渡し（橋渡しのメモリだけ。通信しない・鍵なし。2026-11-24）
     expect(TOOL_NAMES.filter((n) => BRIDGE_TOOL_RECEIVERS[n] === "bridge" || BRIDGE_TOOL_RECEIVERS[n] === "tab_then_bridge").sort()).toEqual([
+      "connect_demo",
       "moyai_update",
       "peer_reference",
       "reading_skill_register",

@@ -52,14 +52,15 @@ async function connect(opts: RelayOptions): Promise<Client> {
 }
 
 describe("中継の MCP", () => {
-  it("今見せるツール（21 のうち、F3 の画面を待つ skill_eval と、設定で連携がオフのときの連携の 2 つを除く 18）を、説明と入力・出力の型つきで出す", async () => {
+  it("今見せるツール（22 のうち、F3 の画面を待つ skill_eval と、設定で連携がオフのときの連携の 2 つを除く 19。デモの架空の Maximo を足す connect_demo はオフでも出る）を、説明と入力・出力の型つきで出す", async () => {
     const c = await connect({ stateDir: tempState() });
     const { tools } = await c.listTools();
-    expect(TOOL_NAMES).toHaveLength(21);
+    expect(TOOL_NAMES).toHaveLength(22);
     expect(tools.map((t) => t.name).sort()).toEqual(SHOWN_OFF.sort());
+    expect(tools.map((t) => t.name)).toContain("connect_demo");
     expect(tools.map((t) => t.name)).not.toContain("skill_eval");
     for (const n of CONNECT_TOOL_NAMES) expect(tools.map((t) => t.name)).not.toContain(n);
-    expect(tools).toHaveLength(18);
+    expect(tools).toHaveLength(19);
     for (const t of tools) {
       expect(t.description, t.name).toMatch(/only by a person/);
       expect(t.inputSchema.type).toBe("object");
@@ -75,7 +76,7 @@ describe("中継の MCP", () => {
     const c = await connect({ stateDir });
     const on = (await c.listTools()).tools.map((t) => t.name);
     for (const n of CONNECT_TOOL_NAMES) expect(on).toContain(n);
-    expect(on).toHaveLength(20);
+    expect(on).toHaveLength(21);
     let changed = 0;
     c.setNotificationHandler(ToolListChangedNotificationSchema, () => void changed++);
     writeSettings(stateDir, { v: 1, root: null, ledger: null, name: null });

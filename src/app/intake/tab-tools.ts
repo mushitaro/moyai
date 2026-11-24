@@ -705,24 +705,27 @@ export const TAB_ASYNC_TOOL_RECEIVERS: Partial<Record<ToolName, (ws: IntakeWorks
  */
 const CONNECT_READ_NOTE =
   "Added the work results as one source file. Next: intake_survey (questions), intake_settle and intake_compose as usual; the user confirms and signs on screen. After a signed version exists, connect_plan shows the write diff. Reply in the user's language.";
+const CONNECT_READ_MIXED_NOTE =
+  "Nothing was added: the fictional Maximo is never read into a work screen that holds the user's files. A demo starts on an empty work screen: add the demo files with intake_add_files (source: demo) first, then connect_read. Ask the user whether to keep the current work. Reply in the user's language.";
 const CONNECT_PLAN_NOTE = "The match and the write diff are on the Integration sheet. Only the user can send: ask them to review the diff and press Send. Reply in the user's language.";
 const CONNECT_PLAN_NO_KEY = " This is a production target without a valid license key for its host, so the user cannot send yet (the reason is shown next to the button).";
 const brief = (t: { id: string; label: string; env: "test" | "production" } | null) => (t ? { id: t.id, label: t.label, env: t.env } : null);
 
 export const TAB_CONNECT_TOOL_RECEIVERS: Partial<Record<ToolName, (ws: IntakeWorkspace, args: Record<string, unknown>, client: BridgeClient) => Promise<TabToolResult>>> = {
   connect_read: async (ws, args, client) => {
-    if (!getConnect().loaded) await loadConnect(client);
+    // つなぎ先は毎回読み直す（AI が connect_demo で足したデモの架空の Maximo も出るように）
+    await loadConnect(client);
     goTo("hoshitori.connect");
     const r = await readNow(client, ws, typeof args.target === "string" ? args.target : undefined);
     const targets = getConnect().targets.map(brief).filter((x) => x !== null);
     if (r.ok) ws.note("ai", T.connectRead(r.file));
     const data = r.ok
       ? { target: brief(r.target), targets, file: r.file, counts: r.counts, refused: null, note: CONNECT_READ_NOTE }
-      : { target: brief(r.target), targets, file: r.file ?? null, counts: null, refused: r.why, note: r.why === "no_target" ? "Pass a target id from targets." : "Nothing was added. Tell the user; the reason is shown on the Integration sheet." };
+      : { target: brief(r.target), targets, file: r.file ?? null, counts: null, refused: r.why, note: r.why === "no_target" ? "Pass a target id from targets." : r.why === "mixed" ? CONNECT_READ_MIXED_NOTE : "Nothing was added. Tell the user; the reason is shown on the Integration sheet." };
     return toolDef("connect_read").output.safeParse(data).success ? { ok: true, data } : { ok: false, code: "connect_failed" };
   },
   connect_plan: async (ws, args, client) => {
-    if (!getConnect().loaded) await loadConnect(client);
+    await loadConnect(client);
     const planId = getWorkingPlan()?.plan.planId ?? null;
     goTo("hoshitori.connect");
     const target = typeof args.target === "string" ? args.target : undefined;

@@ -27,6 +27,7 @@ test("MOYAI のツール名が使わない名前と 1 つも一致しない", (t
   // 運営者の決定 11-07「利用者の想定のプロンプトで、アプリがチャットだけで動く」の作業画面の見せ方を変える 1（screen_set）と、
   // mushitaro/moyai#65「入っている MOYAI を最新にする」の 1（moyai_update）と、
   // 運営者の判断 2026-11-16「業務システムとの連携」の 2（connect_read・connect_plan。送る道具は無い）と、
-  // 運営者 2026-11-18「チャットと画面から資料を消せるように」の 1（intake_remove_files。作業中の資料だけ）
-  assert.ok(names.length <= 21, `ツールは 21 以下: ${names.length}`);
+  // 運営者 2026-11-18「チャットと画面から資料を消せるように」の 1（intake_remove_files。作業中の資料だけ）と、
+  // 運営者の困りごと 2026-11-24「Maximo との連携のデモ」の 1（connect_demo。架空の Maximo・通信しない・鍵なし）
+  assert.ok(names.length <= 22, `ツールは 22 以下: ${names.length}`);
 });

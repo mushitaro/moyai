@@ -84,7 +84,7 @@ function targetOf(id: string | undefined): ConnectTargetView | null {
   return t ?? null;
 }
 
-export type ReadOutcome = { ok: true; target: ConnectTargetView; file: string; counts: EamCounts } | { ok: false; why: "no_target" | "read_failed" | "same_name"; target: ConnectTargetView | null; file?: string };
+export type ReadOutcome = { ok: true; target: ConnectTargetView; file: string; counts: EamCounts } | { ok: false; why: "no_target" | "read_failed" | "same_name" | "mixed"; target: ConnectTargetView | null; file?: string };
 
 /** 読む（人の「読む」と、AI の connect_read）：読んだ作業の実績を資料として入れる */
 export async function readNow(client: BridgeClient, ws: IntakeWorkspace, targetId?: string): Promise<ReadOutcome> {
@@ -103,8 +103,15 @@ export async function readNow(client: BridgeClient, ws: IntakeWorkspace, targetI
       set({ error: HUMAN_TEXT.connect.sameName(name) });
       return { ok: false, why: "same_name", target: t, file: name };
     }
+    // デモの架空の Maximo（demo）の資料は、デモの資料と同じく、利用者の資料・架空でない資料のある作業画面に入れない（混ぜない）
+    const fictional = r.demo === true;
+    if (fictional && (ws.userFileNames.length > 0 || ws.readProgress !== null || (ws.fileCount > 0 && !ws.settings.fictional))) {
+      set({ error: HUMAN_TEXT.connect.demoMixed });
+      return { ok: false, why: "mixed", target: t, file: name };
+    }
     const bytes = Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0));
     await ws.addFiles([{ name, size: bytes.length, bytes: async () => bytes }]);
+    if (fictional) ws.markDemoFiles([name]);
     const counts = r.counts as EamCounts;
     set({ read: { targetId: t.id, file: name, counts } });
     return { ok: true, target: t, file: name, counts };
