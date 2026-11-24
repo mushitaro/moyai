@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "night-soil",
+  "suite": "night-soil",
+  "suiteSha": "a6b5224742b58837d53797cb801d3757c78da5ed904f9bd68e153e56a2da0de9",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "1ba174c14695290fa9430b75795473f0e8ec2f664455dc1f01cb1ff797520eed"
+    },
+    {
+      "path": "packs/night-soil/SKILL.md",
+      "sha256": "a487ba26d38ca6614d7e55a66024168a3e0e35ea2bb132b1b890d53f25a7028e"
+    }
+  ],
+  "skillSha": "e2f1f6c6eb7ccab2c366432bfe8f1d7ac262137df1e2684cf1f5f4b82f436215",
+  "label": "PR の文（困りごと・要望・開発の要件は設定の「困りごと」に案を置く。GitHub に直接書かない）。前の組は 94/95・95/95 で割れた（R02-09 の数え違い）ので、新しい 2 つの役で解き直した",
+  "at": "2026-11-18T09:11:41.665Z",
+  "cases": 95,
+  "answered": 95,
+  "pass": 95,
+  "runs": [
+    {
+      "solver": "solver-c",
+      "pass": 95,
+      "failing": []
+    },
+    {
+      "solver": "solver-d",
+      "pass": 95,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 5,
+      "total": 5
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 95,
+      "total": 95
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 90,
+      "total": 90
+    }
+  },
+  "failing": []
+}

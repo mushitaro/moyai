@@ -1,6 +1,7 @@
 // AI のツール screen_set の作業画面の側（仕事 chat-ops-v1）：チャットの頼みで、作業画面の今の状態を変える。
 // どれも人の操作と同じ関数（state/screen.ts）を通す。確定・署名・送る・承認・昇格はしない（そのための道はここに無い）。
 // 困りごとの文の案（feedbackDraft。2026-11-18）も同じ：設定の画面の「困りごと」の欄に入れて開くだけで、送るのは人（送る道具は無い）。
+// MOYAI への困りごと・要望・開発の要件は、この道だけ（AI は GitHub に直接書かない。instructions の 8。2026-11-18 の困りごと）。
 // 保存先（storageRoot）は人だけが変える（設定は人だけの経路。AGENTS.md）：橋渡しが設定と同じ確かめを通した道を、
 // 設定の画面の保存先の欄に入れて開くだけで、保存は人が押す。答えでは変えなかった項目に数え、理由を添える。
 // 星取表の見せ方（階層の並び・機器の並び・最大年度）は施設ごとに覚える見せ方で、作業中の計画は変えない。
@@ -14,6 +15,7 @@ import { catalogFor, emptyCatalog } from "../chart/catalog";
 import { getWorkingPlan } from "../state/plan-store";
 import { applyTheme, currentGo, currentTheme, displayPrefs, goTo, offerFeedbackDraft, offerRoot, setDisplayPrefs, type ThemeChoice } from "../state/screen";
 import { TEXT } from "../text";
+import { appFeedbackCounts, normalizeNote, noteProblem } from "../../share/app-feedback";
 import type { IntakeWorkspace } from "./workspace";
 
 export interface ScreenSetArgs {
@@ -142,13 +144,21 @@ export function screenSet(ws: IntakeWorkspace, a: ScreenSetArgs): Result {
     refuse("storageRoot", "root_human_save");
   }
   // 困りごとの文の案：設定の画面の「困りごと」の欄に入れて開く（送るのは人。答えでは変えなかった項目に数える）
+  // 案は送る全文（moyai.app-feedback/0）の一言と同じ形でそろえ、形に合わないか、送らないものらしき字（行の値・道・鍵・URL）があれば置かない（送る前の画面の照らしは今のまま）
+  let feedbackPlaced = false;
   if (a.feedbackDraft !== undefined) {
-    offerFeedbackDraft(a.feedbackDraft);
-    goTo("settings");
-    refuse("feedbackDraft", "feedback_human_send");
+    const note = normalizeNote(a.feedbackDraft);
+    if (noteProblem(note) !== null) refuse("feedbackDraft", "feedback_invalid");
+    else if (Object.keys(appFeedbackCounts(note)).length > 0) refuse("feedbackDraft", "feedback_values", `: ${Object.keys(appFeedbackCounts(note)).join(", ")}`);
+    else {
+      offerFeedbackDraft(note);
+      goTo("settings");
+      feedbackPlaced = true;
+      refuse("feedbackDraft", "feedback_human_send");
+    }
   }
   if (a.go !== undefined) {
-    if ((a.storageRoot !== undefined || a.feedbackDraft !== undefined) && a.go !== "settings") refuse("go", "go_replaced");
+    if ((a.storageRoot !== undefined || feedbackPlaced) && a.go !== "settings") refuse("go", "go_replaced");
     else if (goTo(a.go)) changed.push("go");
     else refuse("go", "not_on_screen");
   }

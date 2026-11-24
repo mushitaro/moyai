@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "night-soil",
+  "suite": "night-soil",
+  "suiteSha": "a6b5224742b58837d53797cb801d3757c78da5ed904f9bd68e153e56a2da0de9",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "8359c50c3275e1dc91888bb5a72fcce5b542fa32da8179c1ab10e925fae7fa51"
+    },
+    {
+      "path": "packs/night-soil/SKILL.md",
+      "sha256": "a487ba26d38ca6614d7e55a66024168a3e0e35ea2bb132b1b890d53f25a7028e"
+    }
+  ],
+  "skillSha": "515c974f31d8ce59da4c1974edac0787c15b1b3ec5c48558f8f7f6877ef7483b",
+  "label": "human-guide-146",
+  "at": "2026-11-18T18:32:59.018Z",
+  "cases": 95,
+  "answered": 95,
+  "pass": 95,
+  "runs": [
+    {
+      "solver": "solver-p5",
+      "pass": 95,
+      "failing": []
+    },
+    {
+      "solver": "solver-p6",
+      "pass": 95,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 5,
+      "total": 5
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 95,
+      "total": 95
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 90,
+      "total": 90
+    }
+  },
+  "failing": []
+}

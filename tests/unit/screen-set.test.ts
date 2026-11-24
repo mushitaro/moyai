@@ -23,6 +23,7 @@ import { EXPORT_TEXT, planWorkbook } from "../../src/plan/export";
 import { commitPlan } from "../../src/plan/store";
 import { BRIDGE_TOOL_RECEIVERS } from "../../src/bridge/tools";
 import { MCP_INSTRUCTIONS } from "../../src/shared/instructions";
+import { APP_FEEDBACK_NOTE_LINES, APP_FEEDBACK_NOTE_MAX, buildAppFeedback, parseAppFeedback } from "../../src/share/app-feedback";
 import { SCREEN_GO, TOOLS, TOOL_NAMES } from "../../src/shared/tools";
 import toolNames from "../../src/shared/tool-names.json";
 import type { Plan } from "../../src/shared/plan";
@@ -194,6 +195,60 @@ describe("6 つの引数がそれぞれ作業画面の状態を変える", () =>
     expect(fakeLocation.hash).toBe("#/settings");
     // 送る道具は無い（screen_set の答えにも送った印は無い）
     expect(TOOL_NAMES.some((n) => /send|feedback/i.test(n) && n !== "screen_set")).toBe(false);
+  });
+
+  it("feedbackDraft：送る全文（moyai.app-feedback/0）の一言の形にそろえて置く。上限・行・制御文字に外れれば置かない", () => {
+    // そろえる（前後の空白・改行の形）。置いた案は、設定の欄が受ける形のまま
+    const r = call({ feedbackDraft: "  開発の要件：星取表から直接 Excel に書きたい\r\n（今は EXPORT を開く）  " });
+    expect(r.refused.map((x: { reason: string }) => x.reason)).toEqual(["feedback_human_send"]);
+    const placed = takeFeedbackDraft()!;
+    expect(placed).toBe("開発の要件：星取表から直接 Excel に書きたい\n（今は EXPORT を開く）");
+    const built = buildAppFeedback({ note: placed, version: "unknown", screen: "settings", os: "linux", lang: "ja" });
+    expect(built.ok).toBe(true);
+    if (built.ok) expect(parseAppFeedback(built.text, { canonical: true })?.note).toBe(placed);
+    // 上限ちょうどは置ける。行が多い・制御文字は置かない（設定の欄にも入らない）
+    call({ feedbackDraft: "あ".repeat(APP_FEEDBACK_NOTE_MAX) });
+    expect(takeFeedbackDraft()).toBe("あ".repeat(APP_FEEDBACK_NOTE_MAX));
+    fakeLocation.hash = "#/";
+    for (const bad of [Array.from({ length: APP_FEEDBACK_NOTE_LINES + 1 }, () => "行").join("\n"), "見えない\u200b字", "   "]) {
+      const x = call({ feedbackDraft: bad });
+      expect(x.refused, bad).toEqual([expect.objectContaining({ item: "feedbackDraft", reason: "feedback_invalid" })]);
+      expect(takeFeedbackDraft()).toBeNull();
+      expect(fakeLocation.hash).toBe("#/");
+    }
+    // 上限を超える案は道具の入力の形で断る
+    expect(TOOLS.screen_set.input.safeParse({ feedbackDraft: "あ".repeat(APP_FEEDBACK_NOTE_MAX + 1) }).success).toBe(false);
+  });
+
+  it("feedbackDraft：行の値・ファイルの道・鍵・URL らしき字があれば置かず、種類の名前だけを返す（値は返さない）", () => {
+    fakeLocation.hash = "#/";
+    for (const [bad, kind] of [
+      ["C:\\Users\\a\\計画.xlsx が開けない", "path"],
+      ["https://example.com を開けない", "url"],
+      ["点検 12.5 万円 が出ない", "money"],
+    ] as const) {
+      const x = call({ feedbackDraft: bad });
+      expect(x.changed).toEqual([]);
+      expect(x.refused, bad).toEqual([expect.objectContaining({ item: "feedbackDraft", reason: "feedback_values" })]);
+      expect(x.refused[0].text).toContain(kind);
+      expect(x.refused[0].text).not.toContain(bad);
+      expect(JSON.stringify(x)).not.toContain("example.com");
+      expect(takeFeedbackDraft()).toBeNull();
+      expect(fakeLocation.hash).toBe("#/");
+    }
+    // 置けなかったときは go を差し替えない
+    const g = call({ feedbackDraft: "https://example.com", go: "hoshitori.chart" });
+    expect(g.changed).toEqual(["go"]);
+    expect(fakeLocation.hash).toBe(GO_HASH["hoshitori.chart"]);
+  });
+
+  it("feedbackDraft を置いた答えは、利用者に言う文（設定の「困りごと」に置いた・全文を見て「送る」）と、GitHub に書かないことを返す。送った印は無い", () => {
+    const r = call({ feedbackDraft: "Chat から開発の要件を送りたい" });
+    const t = r.refused[0].text as string;
+    expect(t).toContain("I put a draft in the Feedback field of Settings. Read the full text and press Send");
+    expect(t).toContain("Nothing was sent");
+    expect(t).toContain("Do not write it to GitHub yourself");
+    expect(JSON.stringify(r)).not.toMatch(/"(sent|issue|url)"/);
   });
 
   it("levelOrder：施設ごとに覚え、星取表と chart_rows の行が 設備 › 号炉 › 機器 になる", () => {

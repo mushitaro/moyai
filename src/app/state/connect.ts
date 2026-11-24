@@ -73,6 +73,8 @@ export async function loadConnect(client: BridgeClient): Promise<void> {
 }
 
 export function chooseTarget(id: string): void {
+  // 同じつなぎ先を選び直しても、読んだ差分を消さない（消すと、選びが変わらないので読み直しが走らず「差分を読んでいます」のまま止まる）
+  if (id === view.chosen) return;
   if (view.targets.some((t) => t.id === id)) set({ chosen: id, plan: null, planBlocked: null, sent: null, error: null });
 }
 
