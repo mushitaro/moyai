@@ -395,6 +395,15 @@ export const INTAKE_REMOVE_NOTES = {
 export const DEMO_MIXED_NOTE =
   "The demo files were not added, because the user's files and fictional files are never mixed. A demo starts on an empty work screen: ask the user whether to keep the current work; if not, remove the files on the work screen with intake_remove_files (first without apply to show the user what goes, then apply: true after the user says yes), or have the user press remove on each file's row in the file list of the work screen, then call again. Confirmed versions are not changed.";
 
+/** connect_demo の答えに添える次の手（デモの架空の Maximo。AI が読む文は英語） */
+export const CONNECT_DEMO_TEXT = {
+  off: "Integration is off in MOYAI's Settings, and only the user turns it on. Ask the user in one line to turn Integration on in Settings (screen_set go: settings opens it), then call connect_demo again. Reply to the user in the user's language.",
+  noDemo: "This MOYAI has no fictional Maximo for that Skill pack. Omit pack to use the default demo. Reply to the user in the user's language.",
+  unavailable: "MOYAI has no state folder, so the fictional Maximo cannot be added. Tell the user. Reply to the user in the user's language.",
+  added: (id: string) =>
+    `The fictional Maximo is a test-environment target with id ${id} (no network, no API key; it holds fictional data only). Next, one step per reply: on an empty work screen, intake_add_files (source: demo) -> connect_read (target: ${id}) -> questions with intake_survey / intake_settle -> intake_compose -> the user confirms and signs on screen -> connect_plan (target: ${id}) -> the user presses Send on the Integration sheet. Reply to the user in the user's language.`,
+} as const;
+
 /** source: template の結果に添える次の手（「この様式で Excel を出して」の順） */
 export const TEMPLATE_ADD_NOTE =
   "The template was put on the Export sheet of the work screen (not saved yet). Read the template shape (heading text, merges, fiscal-year formulas) and planLevels (the names of the plan's levels, in asset-first order; series-first swaps equipment and unit/line), then place a layout proposal with screen_set templateLayout. The proposal is a draft, and the Export sheet shows a preview written by it. Have the user look at the preview; exporting and saving happen when the user presses the Export sheet's main button (sign and export; a confirmed version is needed).";
@@ -781,7 +790,7 @@ export const TOOLS = {
     "intake_survey",
     "read",
     "Intake summary",
-    "workScreenUrl in the result is the URL of the work screen. When the user says \"start it\" or \"show the screen\", call with show: true instead of looking for a window (the bridge opens the default browser and the new tab takes over the work screen). screen in a show: true answer says whether the bridge opened the browser (opened) and whether the work screen tab connected (connected). If connected is false, tell the user the one sentence in note. In a demo (fictional files), call only one tool per reply, describe what changed on the screen in at most 2 lines, and wait for the user to say \"next\" (as intake_add_files describes). Reads the summary of the files on the work screen, samples with row numbers, legends, notes, question candidates, where reading is stuck (stuck: unresolved cells per file with sample rows; answer the questions first, and have rows that still remain read with reading_rules_propose rules), and the result of making the plan. Do not copy row contents; to answer questions, place decisions with intake_settle. Once a plan exists, crosswalk (part: crosswalk or all) holds the mapping summary (the Skill pack's tier-1 items and work attributes, frequent values per field, unmapped counts, working plan version). Read the rest of the node names from the chart_rows levels. " +
+    "workScreenUrl in the result is the URL of the work screen. When the user says \"start it\" or \"show the screen\", call with show: true instead of looking for a window (the bridge opens the default browser and the new tab takes over the work screen). Read and show the work screen only with MOYAI tools; never open, click or read it with browser or computer-use tools (Claude in Chrome, computer use). If MOYAI tools seem missing (e.g. after a restart), do not switch to the browser: list the tools again or ask the user to reopen Claude. screen in a show: true answer says whether the bridge opened the browser (opened) and whether the work screen tab connected (connected). If connected is false, tell the user the one sentence in note. In a demo (fictional files), call only one tool per reply, describe what changed on the screen in at most 2 lines, and wait for the user to say \"next\" (as intake_add_files describes). Reads the summary of the files on the work screen, samples with row numbers, legends, notes, question candidates, where reading is stuck (stuck: unresolved cells per file with sample rows; answer the questions first, and have rows that still remain read with reading_rules_propose rules), and the result of making the plan. Do not copy row contents; to answer questions, place decisions with intake_settle. Once a plan exists, crosswalk (part: crosswalk or all) holds the mapping summary (the Skill pack's tier-1 items and work attributes, frequent values per field, unmapped counts, working plan version). Read the rest of the node names from the chart_rows levels. " +
       "The summary (part: all) also holds confirmed: the latest confirmed and signed version of each facility in the storage location (facility name, fiscal year, version number, equipment and work counts), even when there is no working plan. Confirmed versions are read only (rows via chart_rows); to change one, a person presses \"+ Next version\" on the MOYAI top screen (the AI cannot open a working plan). " +
       "With part, only that field is filled (the file list files only for part: all or files, up to limit [default 20]; the full count is filesTotal, the rest via part: files and cursor). " +
       "When the plan is made, compose holds the number of new equipment nodes per file (newNodesByFile, top 10 files). If a file produced 20 or more equipment nodes with the same name, note holds the file, name and count: show it to the user and check that no fragments got in without a question.",
@@ -1397,7 +1406,7 @@ export const TOOLS = {
       file: z.string().nullable(),
       counts: z.object({ assets: z.number().int(), plans: z.number().int(), results: z.number().int() }).strict().nullable(),
       /** 入れなかった理由（つなぎ先を選べない・読めない・同じ名前の資料がある） */
-      refused: z.enum(["no_target", "read_failed", "same_name"]).nullable(),
+      refused: z.enum(["no_target", "read_failed", "same_name", "mixed"]).nullable(),
       note: z.string(),
     }),
   ),
@@ -1419,6 +1428,29 @@ export const TOOLS = {
       write: z.object({ needed: z.boolean(), ok: z.boolean() }).strict().nullable(),
       /** 案を出せなかった理由 */
       refused: z.enum(["no_target", "no_signed_version", "read_failed"]).nullable(),
+      note: z.string(),
+    }),
+  ),
+  connect_demo: def(
+    "connect_demo",
+    "propose",
+    "Add the fictional Maximo for an integration demo",
+    "For \"demo the Maximo integration\" or \"set up a Maximo integration demo\": adds a fictional Maximo as one test-environment connection target. It lives inside MOYAI only (no network: its address is a reserved .invalid host; no API key), holds fictional assets, PMs and work results that match the Skill pack's demo facility, and goes away when MOYAI restarts (call again). " +
+      "The AI may add this fictional target; real targets and API keys are added only by the user in Settings. Integration must be on in Settings, and only the user turns it on: if refused is connect_off, ask the user in one line to turn Integration on in Settings (screen_set go: settings opens it), then call again. " +
+      "Demo order (one step per reply, as in a demo): intake_add_files (source: demo) on an empty work screen -> connect_read (target: the id returned here) adds the fictional Maximo's work results as one more source file -> intake_survey / intake_settle / intake_compose -> the star chart -> the user confirms and signs on screen -> connect_plan shows the match and the write diff -> the user presses Send on the Integration sheet (no key is needed for a test target) -> the fictional Maximo is written; connect_plan again shows no diff. reset: true starts the fictional Maximo over. Reply to the user in the user's language.",
+    z
+      .object({
+        pack: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/).optional().describe("Skill pack whose demo holds the fictional Maximo. Omit for the default demo"),
+        reset: z.boolean().optional().describe("true: start the fictional Maximo over from its first content"),
+      })
+      .strict(),
+    z.object({
+      target: z.object({ id: z.string(), label: z.string(), env: z.enum(["test", "production"]) }).strict().nullable(),
+      /** もうあった（false）か、足した（true） */
+      added: z.boolean(),
+      counts: z.object({ assets: z.number().int(), plans: z.number().int(), results: z.number().int() }).strict().nullable(),
+      /** 足さなかった理由（連携がオフ・デモの中身が無い・状態フォルダが無い） */
+      refused: z.enum(["connect_off", "no_demo", "unavailable"]).nullable(),
       note: z.string(),
     }),
   ),

@@ -1,0 +1,103 @@
+{
+  "schema": "moyai.eval.skill-score/0",
+  "pack": "waste-incineration",
+  "suite": "waste-incineration",
+  "suiteSha": "431f45dcb13555163399f75947189e716a3c13c4dba119c14151697dbccb333c",
+  "skills": [
+    {
+      "path": "skills/moyai/SKILL.md",
+      "sha256": "1db5282761e1fa1dc3b885c6a34aa8cc5e76aba4d0dfaabcda64fe7792b1fa27"
+    },
+    {
+      "path": "packs/waste-incineration/SKILL.md",
+      "sha256": "d8b156c4b4c82f012c43fde7a71e783b1ae20da346607829d6fab6d384fd0ec2"
+    }
+  ],
+  "skillSha": "540c00e93bd3c41e8625018200acc9e325cd12bcff04d45a7eb525fd374e3b77",
+  "label": "connect-demo",
+  "at": "2026-11-24T10:34:13.552Z",
+  "cases": 100,
+  "answered": 100,
+  "pass": 100,
+  "runs": [
+    {
+      "solver": "solver-wi-a",
+      "pass": 100,
+      "failing": []
+    },
+    {
+      "solver": "solver-wi-b",
+      "pass": 100,
+      "failing": []
+    }
+  ],
+  "perRule": {
+    "R01": {
+      "pass": 10,
+      "total": 10
+    },
+    "R02": {
+      "pass": 10,
+      "total": 10
+    },
+    "R03": {
+      "pass": 10,
+      "total": 10
+    },
+    "R04": {
+      "pass": 10,
+      "total": 10
+    },
+    "R05": {
+      "pass": 10,
+      "total": 10
+    },
+    "R06": {
+      "pass": 10,
+      "total": 10
+    },
+    "R07": {
+      "pass": 10,
+      "total": 10
+    },
+    "R08": {
+      "pass": 10,
+      "total": 10
+    },
+    "R09": {
+      "pass": 10,
+      "total": 10
+    },
+    "R10": {
+      "pass": 10,
+      "total": 10
+    }
+  },
+  "perGrader": {
+    "json": {
+      "pass": 100,
+      "total": 100
+    },
+    "no_guess": {
+      "pass": 190,
+      "total": 190
+    },
+    "not_in_record": {
+      "pass": 200,
+      "total": 200
+    },
+    "identity": {
+      "pass": 60,
+      "total": 60
+    },
+    "source": {
+      "pass": 30,
+      "total": 30
+    },
+    "fiscal_year": {
+      "pass": 120,
+      "total": 120
+    }
+  },
+  "failing": []
+}

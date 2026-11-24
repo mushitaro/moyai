@@ -552,6 +552,7 @@ export const EN_HUMAN_TEXT = {
     send: "Send",
     readDone: (assets: number, plans: number, results: number, file: string) => `Read: assets ${fmt(assets)} · maintenance plans ${fmt(plans)} · work results ${fmt(results)} → file "${file}"`,
     sameName: (file: string) => `A file named "${file}" is already in.`,
+    demoMixed: "The fictional Maximo is for the demo. It is not read into a work screen that holds your files.",
     head: "Equipment › Work",
     version: (n: number) => `v${n}`,
     targetCol: "Target",

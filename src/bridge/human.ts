@@ -416,7 +416,7 @@ export class HumanService {
   /** 業務システムとの連携（状態フォルダが無ければ null） */
   connect(): ConnectService | null {
     if (!this.e.stateDir) return null;
-    this.connectSvc ??= new ConnectService({ stateDir: this.e.stateDir, now: this.e.now, ...(this.e.env ? { env: this.e.env } : {}), ...(this.e.connect !== undefined ? { backend: this.e.connect } : {}) });
+    this.connectSvc ??= new ConnectService({ stateDir: this.e.stateDir, now: this.e.now, packsDir: this.e.packsDir, ...(this.e.env ? { env: this.e.env } : {}), ...(this.e.connect !== undefined ? { backend: this.e.connect } : {}) });
     return this.connectSvc;
   }
 

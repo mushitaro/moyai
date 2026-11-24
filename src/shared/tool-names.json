@@ -19,5 +19,6 @@
   "screen_set",
   "moyai_update",
   "connect_read",
-  "connect_plan"
+  "connect_plan",
+  "connect_demo"
 ]

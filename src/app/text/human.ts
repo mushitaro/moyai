@@ -555,6 +555,7 @@ export const HUMAN_TEXT = defineMessages(EN_HUMAN_TEXT, {
     send: "送る",
     readDone: (assets: number, plans: number, results: number, file: string) => `読込　資産 ${assets}・保全計画 ${plans}・作業の実績 ${results}　→ 資料「${file}」`,
     sameName: (file: string) => `同じ名前の資料「${file}」がもう入っています。`,
+    demoMixed: "架空の Maximo はデモ用です。あなたの資料のある作業画面には読み込みません。",
     head: "機器 › 作業",
     version: (n: number) => `第 ${n} 版`,
     targetCol: "つなぎ先",

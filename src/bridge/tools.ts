@@ -71,6 +71,8 @@ export interface BridgeTools {
   storage_root?: (path: string) => Promise<{ valid: string | null; current: string | null }>;
   /** 入っている MOYAI の更新（check・prepare。src/bridge/app-update.ts。#65） */
   moyai_update?: (args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
+  /** デモの架空の Maximo を、テスト環境のつなぎ先として足す（src/bridge/connect/demo.ts。通信しない・鍵なし） */
+  connect_demo?: (args: Record<string, unknown>) => Promise<Record<string, unknown> | ErrorCode>;
   /**
    * 保管先の確定・署名した最新の版（AI が読むだけ。署名と鎖を確かめて合う版だけ。human.ts の confirmedLatest）。
    * 作業中の計画が無いときの chart_rows と、intake_survey の confirmed に使う。保管先が無ければ null
@@ -114,6 +116,8 @@ export const BRIDGE_TOOL_RECEIVERS: Record<ToolName, ToolReceiver> = {
   // 業務システムとの連携（運営者の判断 2026-11-16）：作業画面が、作業画面の道（読む・書き込みの案）を通して答える。送る道具は無い
   connect_read: "tab",
   connect_plan: "tab",
+  // デモの架空の Maximo を足す（橋渡しのメモリだけ。通信しない・鍵なし）。連携の道具と違い、オフでも一覧に出て、オフなら人にオンを頼む答えを返す
+  connect_demo: "bridge",
 };
 
 /** image は photo_transcribe の receive だけ（中継が MCP の画像の中身として添える） */

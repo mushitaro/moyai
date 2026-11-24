@@ -121,7 +121,7 @@ function httpsOrigin(raw: string): string | null {
 }
 
 /** 1 件を書く：資産の道をたどって（無い節は足して）、同じ作業の保全計画の年度を置き換えるか足す */
-function applyChange(r: EamRecords, c: EamWriteChange): void {
+export function applyChange(r: EamRecords, c: EamWriteChange): void {
   const names = c.assetPath.split(" › ");
   let parent: string | null = null;
   for (const name of names) {

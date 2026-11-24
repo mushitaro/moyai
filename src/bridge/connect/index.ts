@@ -8,8 +8,9 @@ import { readSettings } from "../places";
 import { sha256Hex } from "../../share/sign";
 import { connectFileName, countsOf, planLinesOfPlan, planLinesOfRecords, planWrite, resultsCsv, writePlanText, type ConnectMatchRow, type ConnectTarget, type EamCounts, type EamWriteChange } from "../../shared/connect";
 import type { Plan } from "../../shared/plan";
+import { createDemoMaximo, demoSeedPacks, readDemoSeed, DEMO_TARGET_ID, type DemoMaximo } from "./demo";
 import { createFakeConnect } from "./fake";
-import { loadPackageBackend } from "./package";
+import { importEamPackage, loadPackageBackend, type EamPackage } from "./package";
 import type { ConnectAddInput, ConnectBackend, LicenseAnswer } from "./types";
 
 export type { ConnectBackend } from "./types";
@@ -40,7 +41,14 @@ export interface ConnectServiceEnv {
   now: () => number;
   /** 試験が連携の裏を差し替える（null なら連携の裏なし）。無ければ環境変数と部品から決める */
   backend?: ConnectBackend | null;
+  /** Skillパックの置き場（デモの架空の Maximo の中身 demo/maximo.json を読む） */
+  packsDir?: string;
+  /** デモの架空の Maximo に使う部品と /testing（試験が差し替える。null なら芯のメモリの架空の Maximo）。無ければ部品から読む */
+  demoPackage?: { pkg: EamPackage; testing: unknown } | null;
 }
+
+/** デモの架空の Maximo を足した答え */
+export type DemoOut = { ok: true; target: ConnectTarget; added: boolean; counts: EamCounts; viaPackage: boolean };
 
 /** 偽の連携を出す環境変数（試験の台だけ）。MOYAI_CONNECT_FAKE_LICENSE は、本番への書き込みの試験用の鍵がある host（, で区切る） */
 export const CONNECT_FAKE_ENV = "MOYAI_CONNECT_FAKE";
@@ -50,6 +58,8 @@ export const CONNECT_PACKAGE_ENV = "MOYAI_CONNECT_PACKAGE";
 
 export class ConnectService {
   private loaded: Promise<ConnectBackend | null> | null = null;
+  /** デモの架空の Maximo（橋渡しのメモリだけ。AI の道具 connect_demo が足す） */
+  private demo: DemoMaximo | null = null;
 
   constructor(private readonly e: ConnectServiceEnv) {}
 
@@ -84,24 +94,61 @@ export class ConnectService {
   async state(): Promise<ConnectStateOut> {
     const b = await this.backend();
     const enabled = this.enabled();
-    if (!b) return { ok: true, enabled, available: false, fake: false, targets: [] };
+    // デモの架空の Maximo はテスト環境（書き込みの鍵は要らない）
+    const demo = this.demo ? [{ ...this.demo.target, write: { needed: false } as const }] : [];
+    // 部品が無くても、デモの架空の Maximo を足せるなら連携の欄は出す（人がオンにしてから AI が connect_demo で足す）
+    if (!b) return { ok: true, enabled, available: demo.length > 0 || this.demoPossible(), fake: false, targets: demo };
     const targets = await Promise.all(b.store.list().map(async (t) => ({ ...t, write: await this.gate(b, t) })));
-    return { ok: true, enabled, available: true, fake: b.fake, targets };
+    return { ok: true, enabled, available: true, fake: b.fake, targets: [...targets, ...demo] };
   }
 
   private async open(targetId: string) {
     if (!this.enabled()) return no("connectOff");
+    // デモの架空の Maximo（通信しない。本物のつなぎ先の保存には無い）
+    if (targetId === DEMO_TARGET_ID) {
+      const d = this.demo;
+      if (!d) return no("connectTargetUnknown");
+      const b: ConnectBackend = { fake: true, store: { list: () => [d.target], open: () => ({ target: d.target, secret: d.secret }) }, connectors: { maximo: d.connector }, license: { authorize: async () => ({ ok: false, reason: "noKey" }) } };
+      return { ok: true as const, b, c: d.connector, demo: d, target: d.target, secret: d.secret };
+    }
     const b = await this.backend();
     if (!b) return no("connectUnavailable");
     const o = b.store.open(targetId);
     if (!o) return no("connectTargetUnknown");
     const c = b.connectors[o.target.kind];
     if (!c) return no("connectKindUnknown");
-    return { ok: true as const, b, c, ...o };
+    return { ok: true as const, b, c, demo: null, ...o };
+  }
+
+  /**
+   * デモの架空の Maximo を、テスト環境のつなぎ先として足す（AI の道具 connect_demo）。架空・通信なし・鍵なし。
+   * 連携がオフなら断る（オンにするのは人だけ）。もうあれば、そのまま返す（reset なら中身を初めに戻す）
+   */
+  async addDemo(o: { pack?: string; reset?: boolean } = {}): Promise<DemoOut | No> {
+    if (!this.enabled()) return no("connectOff");
+    if (this.demo && !o.reset) return { ok: true, target: this.demo.target, added: false, counts: countsOf(await this.demo.connector.loadRecords(this.demo.target, this.demo.secret)), viaPackage: this.demo.viaPackage };
+    const packsDir = this.e.packsDir;
+    const pack = o.pack ?? (packsDir ? demoSeedPacks(packsDir)[0] : undefined);
+    const seed = packsDir && pack ? readDemoSeed(packsDir, pack) : null;
+    if (!seed) return no("connectDemoMissing");
+    const p = this.e.demoPackage !== undefined ? this.e.demoPackage : await demoPackage();
+    const d = createDemoMaximo(seed, p ? { pkg: p.pkg, testing: p.testing } : {});
+    this.demo = d;
+    return { ok: true, target: d.target, added: true, counts: countsOf(await d.connector.loadRecords(d.target, d.secret)), viaPackage: d.viaPackage };
+  }
+
+  /** デモの架空の Maximo の中身のある Skillパックがあるか */
+  private demoPossible(): boolean {
+    return !!this.e.packsDir && demoSeedPacks(this.e.packsDir).length > 0;
+  }
+
+  /** デモの架空の Maximo（試験が、届いた要求と書いた回数を見る） */
+  demoMaximo(): DemoMaximo | null {
+    return this.demo;
   }
 
   /** 読む：中間形を読み、作業の実績を取り込みの資料（CSV）にして返す。数だけを添える（値はログに出さない） */
-  async read(targetId: string): Promise<{ ok: true; name: string; base64: string; counts: EamCounts; target: ConnectTarget; fake: boolean } | No> {
+  async read(targetId: string): Promise<{ ok: true; name: string; base64: string; counts: EamCounts; target: ConnectTarget; fake: boolean; demo: boolean } | No> {
     const o = await this.open(targetId);
     if (!o.ok) return o;
     const r = await o.c.loadRecords(o.target, o.secret).catch(() => null);
@@ -110,7 +157,7 @@ export class ConnectService {
     // 偽の連携の資料は【架空】（取り込みが架空の施設として扱う）
     const title = `${o.b.fake && !o.target.label.includes("【架空】") ? "【架空】" : ""}${o.target.label} 作業の実績（連携で読込）`;
     const csv = resultsCsv(r, title);
-    return { ok: true, name: connectFileName(o.target.label, ymd), base64: Buffer.from(csv, "utf8").toString("base64"), counts: countsOf(r), target: o.target, fake: o.b.fake };
+    return { ok: true, name: connectFileName(o.target.label, ymd), base64: Buffer.from(csv, "utf8").toString("base64"), counts: countsOf(r), target: o.target, fake: o.b.fake, demo: o.demo !== null };
   }
 
   /** 書き込みの案：確定・署名した版の保全計画と、今のつなぎ先を突き合わせる。ハッシュは送るときに照らす */
@@ -120,9 +167,11 @@ export class ConnectService {
   ): Promise<{ ok: true; target: ConnectTarget; version: number; rows: ConnectMatchRow[]; changes: EamWriteChange[]; counts: ReturnType<typeof planWrite>["counts"]; hash: string; write: WriteGate } | No> {
     const o = await this.open(targetId);
     if (!o.ok) return o;
+    const desired = planLinesOfPlan(latest.plan);
+    // デモの架空の Maximo は、現場の Maximo にもうある施設の資産の木の代わりに、確定した版の資産の道を資産の木に持つ
+    if (o.demo) o.demo.align(desired.map((l) => l.assetPath));
     const current = await o.c.loadRecords(o.target, o.secret).catch(() => null);
     if (!current) return no("connectReadFailed");
-    const desired = planLinesOfPlan(latest.plan);
     const view = planWrite(desired, planLinesOfRecords(current));
     // 書く中身は部品の planCommit の答え（偽の連携と芯は planWrite と同じ）。書けない変更が 1 つでもあれば、差分ごと止めて人に返す
     const pc = o.c.planCommit(o.target, current, desired);
@@ -171,4 +220,13 @@ export class ConnectService {
     if (!done) return { ...no("connectWriteFailed"), applied: 1 };
     return { ok: true, applied: 1 + done.applied, target: o.target };
   }
+}
+
+/** デモの架空の Maximo に使う部品と、その /testing（偽の Maximo）。どちらかが無ければ null（芯のメモリの架空の Maximo を使う） */
+async function demoPackage(): Promise<{ pkg: EamPackage; testing: unknown } | null> {
+  const pkg = await importEamPackage();
+  if (!pkg) return null;
+  const name = "@mxstage/eam-connectors/testing";
+  const testing: unknown = await import(/* @vite-ignore */ name).catch(() => null);
+  return testing ? { pkg, testing } : null;
 }

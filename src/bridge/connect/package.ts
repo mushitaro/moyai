@@ -63,10 +63,10 @@ interface CommitRowOutcome {
   rowKey: string;
   status: string;
 }
-interface MaximoClientLike {
+export interface MaximoClientLike {
   readonly baseUrl: string;
 }
-type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
+export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 interface EamNode {
   id: string;
   kind: "asset" | "location";
@@ -328,6 +328,33 @@ function targetOf(c: ConnectionEntry): ConnectTarget | null {
   return { id: c.id, label: c.name.slice(0, 80) || host, kind: "maximo", host, env: c.environment === "test" ? "test" : "production" };
 }
 
+/**
+ * Maximo の読み書き（部品の MaximoClient・loadRecords・planCommit・executeCommit）。clientOf がつなぎ先の秘密から MaximoClient を作る
+ * （本物のつなぎ先は部品の ConnectionStore、デモの架空の Maximo は橋渡しの中の偽の Maximo。src/bridge/connect/demo.ts）
+ */
+export function maximoConnector(pkg: EamPackage, clientOf: (secret: ConnectSecret) => Promise<MaximoClientLike>): EamConnector {
+  return {
+    loadRecords: async (_target, secret) => (await loadAll(pkg, await clientOf(secret))).records,
+    planCommit: (_target, current, desired: readonly PlanLine[]) => {
+      const all = planWrite(desired, planLinesOfRecords(current)).changes;
+      const paths = nodeByPath(current);
+      return { changes: all, unwritable: all.filter((c) => !writable(c, paths, current)).length };
+    },
+    executeCommit: async (target, secret, changes) => {
+      const client = await clientOf(secret);
+      const loaded = await loadAll(pkg, client);
+      const { changes: cc, parentKeysOf } = commitChangesOf(pkg, target, loaded, changes);
+      const plans = pkg.main.planCommit(PM_META, loaded.pms.map((p) => p.rec), cc);
+      // 1 件目の確かめ（カナリア）は橋渡しの send が持つ（変更 1 件を送って読み直す）。ここでは渡された分を続けて送る
+      const results = await pkg.main.executeCommit(client, plans, { waitForCanaryContinue: async () => true, meta: PM_META, os: PM_OS, maxParents: Number.POSITIVE_INFINITY });
+      const done = new Set(results.filter((r) => r.status === "verified").map((r) => r.rowKey));
+      // 変更 1 件は、その PM がすべて書けて確かめられたときだけ数える
+      const applied = changes.filter((c) => (parentKeysOf.get(c.key) ?? []).every((k) => done.has(k))).length;
+      return { applied };
+    },
+  };
+}
+
 export interface PackageBackendOptions {
   /** 部品（試験が差し替える。省けば import する） */
   pkg?: EamPackage | null;
@@ -354,26 +381,7 @@ export async function loadPackageBackend(o: PackageBackendOptions = {}): Promise
     const apiKey = r.apiKey;
     return new pkg.main.MaximoClient({ baseUrl: r.origin, apiKey: () => apiKey, via: "direct", ...(o.fetchImpl ? { fetchImpl: o.fetchImpl } : {}) });
   };
-  const connector: EamConnector = {
-    loadRecords: async (_target, secret) => (await loadAll(pkg, await clientOf(secret))).records,
-    planCommit: (_target, current, desired: readonly PlanLine[]) => {
-      const all = planWrite(desired, planLinesOfRecords(current)).changes;
-      const paths = nodeByPath(current);
-      return { changes: all, unwritable: all.filter((c) => !writable(c, paths, current)).length };
-    },
-    executeCommit: async (target, secret, changes) => {
-      const client = await clientOf(secret);
-      const loaded = await loadAll(pkg, client);
-      const { changes: cc, parentKeysOf } = commitChangesOf(pkg, target, loaded, changes);
-      const plans = pkg.main.planCommit(PM_META, loaded.pms.map((p) => p.rec), cc);
-      // 1 件目の確かめ（カナリア）は橋渡しの send が持つ（変更 1 件を送って読み直す）。ここでは渡された分を続けて送る
-      const results = await pkg.main.executeCommit(client, plans, { waitForCanaryContinue: async () => true, meta: PM_META, os: PM_OS, maxParents: Number.POSITIVE_INFINITY });
-      const done = new Set(results.filter((r) => r.status === "verified").map((r) => r.rowKey));
-      // 変更 1 件は、その PM がすべて書けて確かめられたときだけ数える
-      const applied = changes.filter((c) => (parentKeysOf.get(c.key) ?? []).every((k) => done.has(k))).length;
-      return { applied };
-    },
-  };
+  const connector = maximoConnector(pkg, clientOf);
   const license: LicenseCheck = { authorize: async (host) => licenseAnswer(licenses.authorize(`https://${host}`)) };
   const entries = () => connections.list().connections.map((c) => ({ c, t: targetOf(c) })).filter((x): x is { c: ConnectionEntry; t: ConnectTarget } => x.t !== null);
   return {

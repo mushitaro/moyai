@@ -16,6 +16,8 @@ import { TEMPLATE_MAX_BYTES } from "./templates";
 
 export const DEMO_DIR = "demo";
 export const DEMO_MANIFEST = "demo.json";
+/** デモの架空の Maximo の中身（連携のデモ。資料ではないので取り込みに入れない。src/bridge/connect/demo.ts） */
+export const DEMO_MAXIMO = "maximo.json";
 const PACK_ID = /^[a-z][a-z0-9-]{0,63}$/;
 
 export interface IntakeFile {
@@ -254,7 +256,7 @@ export function collectIntake(args: { source: "demo" | "folder" | "template"; pa
     if (!pack || !packs.includes(pack)) return "intake_demo_missing";
     const dir = join(env.packsDir, pack, DEMO_DIR);
     // README.md と demo.json はデモの説明で、資料ではない
-    const r = pickFiles(dir, { skipNames: new Set(["README.md", DEMO_MANIFEST]) });
+    const r = pickFiles(dir, { skipNames: new Set(["README.md", DEMO_MANIFEST, DEMO_MAXIMO]) });
     if (typeof r === "string") return "intake_demo_missing";
     if (r.files.length === 0) return "intake_demo_missing";
     return { source: "demo", pack, facilityName: demoFacilityName(dir), ...r };
