@@ -4,7 +4,8 @@
 import { z } from "zod";
 import toolNames from "./tool-names.json";
 import { CLASS_CODE, FIELD_REFS, WORK_ATTRIBUTES, type FieldRef } from "./fields";
-import { COLUMN_ROLES, DATE_FORMATS, PLAN_CYCLE_YEARS, READING_SCOPES, ReadingRule, RULE_ID } from "../import/reading";
+import { COLUMN_ROLES, DATE_FORMATS, FORM_FIELD_ROLES, PLAN_CYCLE_YEARS, READING_SCOPES, ReadingRule, RULE_ID } from "../import/reading";
+import { CONTRACT_FIELDS } from "../import/cues";
 import { templateLayoutInputSchema, templateShapeSchema } from "./template-layout";
 
 // ─── 規則の形（1 か所だけ）─────────────────────────────────────────
@@ -600,6 +601,16 @@ export const READING_RULE_EXAMPLES: Record<ReadingRule["kind"], Record<string, u
   markMeaning: { symbol: "◎", planOrActual: "actual", meaning: "Replaced" },
   answer: { question: "(the question kind)", match: "(text contained in the question)", answer: "(an id from the question options)" },
   effortTrade: { words: ["Mason"] },
+  form: {
+    title: "Daily work report",
+    fields: [
+      { label: "Date", role: "date" },
+      { label: "Location", role: "unit" },
+      { label: "Total", role: "effort", column: "Man-days" },
+    ],
+    lines: { label: "Work done", split: "assetWork" },
+  },
+  contractColumn: { column: "Payee", field: "vendor" },
   planCycle: { commonItem: "(a code from crosswalk.items)", attribute: "OVERHAUL", years: 4 },
 };
 /** kind ごとの欄の言い添え（選べる値） */
@@ -612,6 +623,8 @@ const READING_RULE_HINTS: Partial<Record<ReadingRule["kind"], string>> = {
   sameAsset: "reads 2 to 20 names as the same equipment as the last name",
   markMeaning: "planOrActual is plan or actual. meaning can be omitted",
   answer: "a fixed answer to the same question. For a question whose valueKind is number, answer is the number as text. An answer that drops a whole file (reference, reject) works only when when: { file: \"file name pattern\" } points at the file",
+  form: `reads a sheet that is a form, not a table (one sheet per day or per job), when the sheet has a cell whose text is title. fields: label is the item text on the form, the value is the first cell to its right (or, with column, the cell in that row under the heading text column); role is one of ${FORM_FIELD_ROLES.join(", ")} (unit takes the unit only when every item in the cell has the same one; effort is used only when the form has one work line). lines: the rows under the item label, up to the next item row, are one work each; split is work (the line is the work name) or assetWork (the first word after the line number is the equipment, the rest is the work). Other cells are counted as form cells this rule does not use`,
+  contractColumn: `reads the column whose heading is column as that field of a contract record; a table with such a column is read as a contract list (not works). field is one of ${CONTRACT_FIELDS.join(", ")}`,
   planCycle: `attribute is one of ${WORK_ATTRIBUTES.join(", ")}, years is ${PLAN_CYCLE_YEARS.min} to ${PLAN_CYCLE_YEARS.max}`,
 };
 /** reading_rules_propose の説明に足す、ルールの形の見本の文 */

@@ -162,6 +162,63 @@ export function splitFlatWork(text: string): FlatWork | null {
   return asset ? { unit, asset, work: (paren[3] ?? "").trim() } : null;
 }
 
+/** 帳票の作業の行の頭の番号（「1.」「２．」「3)」「(4)」「⑤」） */
+const RE_LINE_NO = /^\s*(?:[(（]?\d{1,3}\s*[.．、)）]|[①-⑳])\s*/u;
+
+/**
+ * 帳票の型（読み方の規則 kind: form）の作業の行を読む。頭の番号を除き、assetWork なら、頭の号（「1号炉」「共通」）を号にし、
+ * 括弧の外の最初の空白の前を機器の名前、後を作業の名前にする（「2. 給じん装置 シリンダ・摺動部の摩耗確認」→ 給じん装置・シリンダ・摺動部の摩耗確認）。
+ * 規則で人が決めた読み方なので、区切りを推し量る問いは出さない。分けられなければ null（呼ぶ側が聞く）
+ */
+export function splitFormLine(text: string, split: "work" | "assetWork"): FlatWork | null {
+  let s = nfkc(text).replace(/\s+/g, " ").replace(RE_LINE_NO, "").trim();
+  if (!s) return null;
+  if (split === "work") return { unit: null, asset: "", work: s };
+  let unit: UnitValue | null = null;
+  const lead = leadingUnit(s);
+  if (lead && lead.rest) {
+    unit = lead.unit;
+    s = lead.rest;
+  }
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i] ?? "";
+    if (ch === "(" || ch === "（") depth++;
+    else if ((ch === ")" || ch === "）") && depth > 0) {
+      depth--;
+      // 括弧のすぐ後に空白なしで作業の字が続く行（「ごみクレーン（常用・予備）年次点検」）：括弧までを機器の名前にする
+      const next = s[i + 1] ?? "";
+      if (depth === 0 && next !== "" && next !== " ") {
+        const asset = s.slice(0, i + 1).trim();
+        const work = s.slice(i + 1).trim();
+        if (asset && work) return { unit, asset, work };
+      }
+    } else if (ch === " " && depth === 0) {
+      const asset = s.slice(0, i).trim();
+      const work = s.slice(i + 1).trim();
+      return asset && work ? { unit, asset, work } : null;
+    }
+  }
+  return null;
+}
+
+/**
+ * 帳票の号炉の欄（「1号炉 炉内清掃、1号炉 受入供給」）の号：「、」で区切ったどの項目も同じ号で始まるときだけ、その号。
+ * 号の違う項目（「2号炉 …、共通 …」）がまじれば null（推し量らない）
+ */
+const unitKey = (u: UnitValue) => (u.kind === "number" ? `n${u.n}` : u.kind);
+export function formUnit(text: string): UnitValue | null {
+  const parts = nfkc(text).split(/[、,，;；]/u).map((x) => x.trim()).filter(Boolean);
+  let out: UnitValue | null = null;
+  for (const p of parts) {
+    const u = leadingUnit(p)?.unit ?? parseUnit(p);
+    if (!u) return null;
+    if (out && unitKey(out) !== unitKey(u)) return null;
+    out = u;
+  }
+  return out;
+}
+
 // ─── 発注明細の品名・仕様の中の号炉・機器・作業 ─────────────────────────
 
 export interface OrderItem {

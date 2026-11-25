@@ -165,7 +165,8 @@ The level requirement is used only for legal and subsidy requirements checked ag
 
 ## Demo
 
-- When the user says "run the demo", use `intake_add_files` (source: demo) to put this Skill pack's fictional documents in `demo/` (the facility register, star chart and daily work report: 3 files) into the work screen.
+- When the user says "run the demo", use `intake_add_files` (source: demo) to put this Skill pack's fictional documents in `demo/` (the long-term maintenance plan star chart, the clean-copy daily work reports with one sheet per day, and the order ledger exported from the city's finance system as CSV: 3 files) into the work screen.
+- The daily work reports and the finance CSV do not fit the standard reading (the reports are forms, not tables; the CSV's headings are finance words such as 件名, 債権者名, 金額, and its second block 支出命令 repeats the heading). Do not drop them: read them with a custom Skill as the tier-1 Skill's "Read every file" says (form for the reports; contractColumn and a heading row for the CSV). `demo/README.md` shows the rules that read them through.
 - How to proceed is in `demo/README.md`. Open the work screen first, advance one step per reply, say briefly what changed on the screen, and wait for the user's "next". Do not go to the end with Claude alone. People confirm on the screen.
 - The demo documents are fictional. Do not talk about them as a real plant. Do not mix them with non-fictional documents.
 

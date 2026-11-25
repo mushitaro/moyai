@@ -1317,6 +1317,30 @@
     {
       "text": "沈殿槽汚泥掻寄機",
       "reason": "A document word or item name written in Japanese in the tier-2 Skill (packs/night-soil/SKILL.md, first seen there): documents and the pack's common.json, vocab.json and data-names.json write it this way, and the reader and the linking compare these exact characters, so the AI must see it as written. The English text around it glosses it."
+    },
+    {
+      "text": "作業内容",
+      "reason": "The item label written on Japanese daily work report forms; the tier-1 Skill names it as the example lines label of a form rule, and the AI must match it as the document writes it."
+    },
+    {
+      "text": "件名",
+      "reason": "A heading written in Japanese contract and finance exports (the subject of a contract); the AI writes it exactly in the column of a contractColumn rule."
+    },
+    {
+      "text": "債権者名",
+      "reason": "A heading written in Japanese municipal finance exports (the payee); the AI writes it exactly in the column of a contractColumn rule."
+    },
+    {
+      "text": "金額",
+      "reason": "A heading written in Japanese finance exports (the amount); the AI writes it exactly in the column of a contractColumn rule."
+    },
+    {
+      "text": "起票日",
+      "reason": "A heading written in Japanese municipal finance exports (the voucher date); the AI writes it exactly in the column of a contractColumn rule."
+    },
+    {
+      "text": "支出命令",
+      "reason": "The block title of payment orders in the demo's Japanese finance export; the Skill pack names it so the AI can find the repeated heading of that block."
     }
   ]
 }

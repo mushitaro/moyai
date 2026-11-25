@@ -9,7 +9,7 @@ import { isAssignableRole } from "./roles";
 import { GANTT_REASON, addDays, datesOfTimes, unitHeading, type GanttCol, type GanttRow, type GanttTable } from "./gantt";
 import { blockPeriod, joinWrap, parseBlockName, parseEffortLine, type BlockTable, type RecordBlock } from "./blocks";
 import { UNIT_LABEL, assignParents, cellPeriod, isTypedDate, type ColInfo, type SheetLayout, type Table } from "./structure";
-import { assetFromTitle, costHeaderTax, costHeaderUnit, cycleHeaderUnit, lunchOverlap, parseCost, parseCycle, parseEffort, parsePersons, parseTimeSpan, parseUnit, personsHeaderUnit, splitFlatWork, splitNameUnits, splitOrderItem, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type OrderItem, type TagSplit, type TimeSpan, type UnitValue } from "./text";
+import { assetFromTitle, formUnit, splitFormLine, costHeaderTax, costHeaderUnit, cycleHeaderUnit, lunchOverlap, parseCost, parseCycle, parseEffort, parsePersons, parseTimeSpan, parseUnit, personsHeaderUnit, splitFlatWork, splitNameUnits, splitOrderItem, splitSeriesCell, splitTag, tagTrailingNumber, type CycleSpan, type OrderItem, type TagSplit, type TimeSpan, type UnitValue } from "./text";
 
 export type Series = { kind: "number"; n: number } | { kind: "common"; meaning: string };
 
@@ -1914,9 +1914,21 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   const headAsset = assetCol ? null : (headCell("name", "assetRef")?.text.replace(/\s*\n\s*/g, " ").trim() ?? null);
   const headTag = tagCol ? null : (headCell("tag")?.text.trim() || null);
   const headUnitCell = unitCol ? null : headCell("series");
-  const headUnit = headUnitCell && !isNone(headUnitCell.text) ? parseUnit(headUnitCell.text) : null;
+  // 帳票の型の規則の号炉の欄は、どの項目も同じ号のときだけ号にする（「1号炉 炉内清掃、1号炉 受入供給」）
+  const headUnit = headUnitCell && !isNone(headUnitCell.text) ? (t.head?.some((f) => f.rule && f.cell === headUnitCell) ? formUnit(headUnitCell.text) : parseUnit(headUnitCell.text)) : null;
+  // 帳票の型の規則（kind: form）の作業の行の列：規則の読み方で分ける（規則で人が決めたので、区切りを問わない）。帳票の欄の値のセルは、どの作業の行の出どころにも入れる
+  const formCol = workCol?.formLines ? workCol : null;
+  const formRefs = formCol ? (t.head ?? []).filter((f) => f.rule).map((f) => f.cell.ref) : [];
+  // 帳票の型のその日の工数（工数の列が無いとき）：作業の行が 1 つのときだけ、その行の工数にする。2 つ以上なら行に割らない（推し量らない。理由を付けて外す）
+  const headEffortCell = formCol && !effortCol ? headCell("effort") : null;
+  const headEffortRaw = headEffortCell ? parseEffort(typeof headEffortCell.value === "number" ? headEffortCell.value : nfkc(headEffortCell.text).replace(/,/g, "")) : null;
+  // 数だけの工数は、値を取った列の見出しの単位で読む（「工数（人日）」）
+  const headEffortUnit = t.head?.find((f) => f.cell === headEffortCell)?.column;
+  const headEffort = headEffortRaw?.unit === "bare" && headEffortUnit ? (cue.headerUnit(headEffortUnit) === "manDays" ? { ...headEffortRaw, unit: "manDays" as const } : headEffortRaw) : headEffortRaw;
+  const formLineRows = formCol ? data.filter((r) => text(r.r, formCol).trim() !== "").length : 0;
+  if (headEffortCell && formLineRows !== 1 && !off(headEffortCell.ref)) exclude(headEffortCell.ref, `帳票のその日の工数（作業の行が ${formLineRows} あり、行に割らない）`);
   // 号炉・機器・作業を 1 つのセルに書いた列（「号炉・系統・機器・作業内容」）：機器の列が無いときだけ、見出しの順に分けて読む
-  const flatCol = !assetCol && workCol?.compound ? workCol : null;
+  const flatCol = !assetCol && (workCol?.compound || workCol?.formLines?.split === "assetWork") ? workCol : null;
   const unsplit: { id: string; ref: string }[] = [];
   const flatSplit: { id: string; ref: string; sep: string }[] = [];
   // 機器の欄も機器番号も無い台帳（発注台帳など）：件名の中の機器の名前の案（あとでまとめて聞く。推し量って決めない）
@@ -2005,10 +2017,10 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     if (unit?.kind === "number") spellings.set(unit.spelling, [...(spellings.get(unit.spelling) ?? []), uc?.ref ?? ""]);
     // 号炉・機器・作業を 1 つのセルに書いた列：見出しの順に分ける（区切りが無ければ、あとでまとめて聞く）
     const flatText = flatCol ? text(r.r, flatCol) : "";
-    const flat = flatText ? splitFlatWork(flatText) : null;
+    const flat = flatText ? (flatCol?.formLines ? splitFormLine(flatText, flatCol.formLines.split) : splitFlatWork(flatText)) : null;
     if (flatText && !flat) unsplit.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, flatCol?.c ?? 0)?.ref ?? "" });
-    // 読み手が区切り（空白か括弧）で分けた行：分けたのは取り込みの判断なので、人が受けるまで決めない（Architect の 64(b)・Wire）
-    if (flatText && flat) flatSplit.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, flatCol?.c ?? 0)?.ref ?? "", sep: /\s/u.test(nfkc(flatText).trim().replace(/[(（][^()（）]*[)）]/gu, "")) ? "空白" : "括弧" });
+    // 読み手が区切り（空白か括弧）で分けた行：分けたのは取り込みの判断なので、人が受けるまで決めない（Architect の 64(b)・Wire）。帳票の型の規則で分けた行は問わない
+    if (flatText && flat && !flatCol?.formLines) flatSplit.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, flatCol?.c ?? 0)?.ref ?? "", sep: /\s/u.test(nfkc(flatText).trim().replace(/[(（][^()（）]*[)）]/gu, "")) ? "空白" : "括弧" });
     const titleText = titleOnly ? text(r.r, titleOnly).trim() : "";
     if (titleText) titleRows.push({ id: `${t.id}:e${r.r}`, ref: lay.index.at(r.r, titleOnly?.c ?? 0)?.ref ?? "", title: titleText, guess: assetFromTitle(titleText) });
     const assetText0 = text(r.r, assetCol) || flat?.asset || (headAsset ?? "");
@@ -2018,7 +2030,8 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     // 号の欄も名前の前の号も無ければ、同じ行の工事の件名・作業の名前の頭の号（「1号炉 定期整備工事」）。ほかの号を並べた件名（「1号炉・2号炉 …」）は使わない
     const titleLead = !lead && !flat && (!uc || uc.text === "") ? [text(r.r, titleCol), text(r.r, workCol)].map(splitUnitPrefix).find((x) => !!x && !/\d\s*(?:号|系)/u.test(x.name)) ?? null : null;
     const stripped = cue.stripSet(assetText);
-    const workName = flat ? flat.work : (workCol ? text(r.r, workCol) : text(r.r, titleCol)).trim();
+    const workName = flat ? flat.work : formCol ? (splitFormLine(text(r.r, formCol), "work")?.work ?? "") : (workCol ? text(r.r, workCol) : text(r.r, titleCol)).trim();
+    if (formCol && !rowEffortCol && headEffort?.unit === "manDays" && formLineRows === 1 && headEffortCell && !off(headEffortCell.ref)) manDays = headEffort.amount;
     const fy = date ? fiscalYearOf(date, opts.fiscalYearStartMonth) : null;
     evs.push({
       id: `${t.id}:e${r.r}`,
@@ -2052,7 +2065,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       remark: remarkCols.map((c) => text(r.r, c)).filter(Boolean).join(" / ") || null,
       ...((q) => (q ? { quantity: q } : {}))(quantityCols.map((c) => text(r.r, c).trim()).filter(Boolean).join(" / ")),
       ...((x) => (x ? { lineRemark: x } : {}))(remarkCols.filter((c) => c.cue !== "quantity").map((c) => text(r.r, c).trim()).filter(Boolean).join(" / ")),
-      refs,
+      refs: formRefs.length ? [...refs, ...formRefs.filter((x) => !refs.includes(x) && !(x === headEffortCell?.ref && formLineRows !== 1))] : refs,
       excluded: null,
       pending: !date || !workName,
       _hours: hours,

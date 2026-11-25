@@ -48,6 +48,8 @@ const contractLists = (Object.entries(CUES.contract) as [string, unknown][])
   .filter((e): e is [ContractField, string[]] => e[0] !== "note" && e[0] !== "unitPrice" && Array.isArray(e[1]))
   .map(([k, ws]) => [k, normList(ws)] as const);
 const unitPriceWords = normList(CUES.contract.unitPrice);
+/** 契約の一覧の欄の名前の並び（読み方の規則 contractColumn の field に書ける値） */
+export const CONTRACT_FIELDS = contractLists.map(([k]) => k) as [ContractField, ...ContractField[]];
 /** 発注明細の欄（packs/_cues/cues.json の orderLine。説明を除く） */
 export type OrderLineField = Exclude<keyof typeof CUES.orderLine, "note">;
 const orderLineLists = (Object.entries(CUES.orderLine) as [string, unknown][])

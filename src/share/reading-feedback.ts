@@ -26,6 +26,8 @@ const SHAPE_KEYS: Record<ReadingRule["kind"], readonly string[]> = {
   markMeaning: ["symbol", "planOrActual", "meaning"],
   answer: ["question", "match", "answer"],
   effortTrade: ["words"],
+  form: ["title", "fields", "lines"],
+  contractColumn: ["column", "field"],
   planCycle: ["commonItem", "attribute", "years"],
 };
 
