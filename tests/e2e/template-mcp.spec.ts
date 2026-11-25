@@ -91,7 +91,8 @@ test("北部CC の 9 本で計画を作ったあとでも、様式が時間切�
       if (odd.length) console.log("odd", JSON.stringify(odd.slice(0, 2)).slice(0, 500));
       const byId = new Map(s.questions.map((q: any) => [q.questionId, q]));
       const opts = (q: any): any[] => (q.options?.length ? q.options : q.sameOptionsAs ? opts(byId.get(q.sameOptionsAs) ?? {}) : []);
-      const decisions = s.questions.map((q: any) => ({ questionId: q.questionId, answer: q.defaultAnswer ?? opts(q)[0]?.id ?? "8", author: "ai", reason: "試験" }));
+      // 外す答え（exclude・reference・reject）は利用者の言葉からしか置けない（drop_needs_user）。この試験は利用者が既定の答えを全部受けた台本なので、人の答えとして置く
+      const decisions = s.questions.map((q: any) => ({ questionId: q.questionId, answer: q.defaultAnswer ?? opts(q)[0]?.id ?? "8", author: "ai_relayed_human", reason: "試験：利用者が既定の答えを全部受けた" }));
       for (let i = 0; i < decisions.length; i += 50) await call(c, "intake_settle", { decisions: decisions.slice(i, i + 50) });
     }
     const started = await call(c, "intake_compose");

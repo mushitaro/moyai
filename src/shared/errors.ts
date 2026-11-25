@@ -113,6 +113,12 @@ export const ERRORS = {
     http: 200,
     text: "The work screen could not read from or plan against the connected business system (the reason is shown on the Integration sheet). Nothing was written. Tell the user in their own language and ask them to look at the Integration sheet.",
   },
+  drop_needs_user: {
+    from: "tab",
+    to: "ai",
+    http: 200,
+    text: "An answer that drops cells, rows, columns or a whole file (exclude, reference, reject) can be placed only from the user's words (author: ai_relayed_human), not on Claude's own judgment. No decision was placed. Before asking, read the file's structure (intake_survey stuck, samples and notes) and try to read it with reading rules (reading_rules_propose: heading row, column role, row role, form for a one-sheet form such as a daily report, contractColumn for a contract or payment list). Ask the user only about what rules cannot read, saying what would be lost (counts).",
+  },
   reading_when_ignored: {
     from: "tab",
     to: "ai",

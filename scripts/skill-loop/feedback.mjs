@@ -25,7 +25,7 @@ export { VALUE_KINDS, countValues };
 
 export const DECISION_SCHEMA = "moyai.skill-loop.decision/0";
 
-const KINDS = ["headerRow", "columnRole", "dateFormat", "effortUnit", "rowRole", "sameAsset", "markMeaning", "answer", "effortTrade", "planCycle"];
+const KINDS = ["headerRow", "columnRole", "dateFormat", "effortUnit", "rowRole", "sameAsset", "markMeaning", "answer", "effortTrade", "form", "contractColumn", "planCycle"];
 
 /** Issue の型（issue forms）の本文を、見出しごとの文に分ける */
 export function readForm(body) {
@@ -52,6 +52,8 @@ const SHAPE_TEXT = {
   markMeaning: (r) => `「${r.symbol}」を ${r.planOrActual} の印として読む`,
   answer: (r) => `問い ${r.question} の「${r.match}」に ${r.answer} と答える`,
   effortTrade: (r) => `「${(r.words ?? []).join("」「")}」を職種の語として読む`,
+  form: (r) => `「${r.title}」の帳票を、「${r.lines?.label ?? ""}」の下の行を作業として読む`,
+  contractColumn: (r) => `「${r.column}」の列を契約の ${r.field} として読む`,
   planCycle: (r) => `${r.commonItem} の ${r.attribute} を ${r.years} 年ごととする`,
 };
 /** 形だけの規則を、moyai.reading/0 の規則にする（文は形から作る。id は書き出しの並び） */

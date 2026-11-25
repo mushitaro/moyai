@@ -3,7 +3,7 @@
 // どの資料に効くかは、見出しの文字の並び（様式）と、資料の名前の型で決める。純粋な関数。
 import { z } from "zod";
 import { CLASS_CODE, WORK_ATTRIBUTES } from "../shared/fields";
-import { norm } from "./cues";
+import { CONTRACT_FIELDS, norm } from "./cues";
 
 export const READING_SCHEMA = "moyai.reading/0";
 
@@ -15,6 +15,14 @@ export { COLUMN_ROLES } from "./roles";
 import { COLUMN_ROLES } from "./roles";
 export const DATE_FORMATS = ["yyyymmdd", "yymmdd", "md"] as const;
 export type DateFormat = (typeof DATE_FORMATS)[number];
+/**
+ * 帳票の型（kind: form）の欄の役目：項目の字のすぐ右（column があれば、その見出しの列）の値を、帳票の下の作業の行のどれにも付ける。
+ * date 日付・end 日付（終わり）・assetRef 機器の名前・unit 号炉・系統・tag 機器番号・workTitle 件名・effort その日の工数（作業の行が 1 つのときだけ）
+ */
+export const FORM_FIELD_ROLES = ["date", "end", "assetRef", "unit", "tag", "workTitle", "effort"] as const;
+export type FormFieldRole = (typeof FORM_FIELD_ROLES)[number];
+/** 帳票の型の作業の行の読み方：work は行の字をそのまま作業の名前、assetWork は行の頭の番号を除いた最初の語を機器の名前・残りを作業の名前 */
+export const FORM_LINE_SPLITS = ["work", "assetWork"] as const;
 /** 計画ルールの周期（年）。周期の案（src/plan/cycle.ts）と同じ幅 */
 export const PLAN_CYCLE_YEARS = { min: 1, max: 30 } as const;
 
@@ -56,6 +64,23 @@ export const ReadingRule = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("answer"), question: z.string().min(1).max(40), match: z.string().min(1).max(120), answer: z.string().min(1).max(60), choices: z.array(z.string().min(1).max(200)).min(1).max(20).optional() }).strict(),
   // 職種の語（作業日報の人数の欄の「築炉工2 鳶工1」）：標準の職種の語（packs/_cues の effort.trades）に足す。業種の語は Skillパックの読み方に置く
   z.object({ ...base, kind: z.literal("effortTrade"), words: z.array(z.string().min(1).max(12)).min(1).max(40) }).strict(),
+  // 帳票の型（1 日 1 枚の日報・1 件 1 枚の報告書のように、項目と値の欄と、文の行の欄でできたシート）：title の字（NFKC・空白を除いて比べる）の
+  // セルのあるシートを、表としてでなく、この型で読む。fields の項目のすぐ右の値を作業の行に付け、lines の項目の下の行（次の項目の行まで）を 1 行 1 作業にする。
+  // ほかの欄は理由（帳票の欄で、このルールで使わない）を付けて外す。標準の読み手が表と読めない帳票を、会話で決めた型で読み切るための規則
+  z
+    .object({
+      ...base,
+      kind: z.literal("form"),
+      title: z.string().min(1).max(40),
+      fields: z
+        .array(z.object({ label: z.string().min(1).max(20), role: z.enum(FORM_FIELD_ROLES), column: z.string().min(1).max(40).optional() }).strict())
+        .max(10),
+      lines: z.object({ label: z.string().min(1).max(20), split: z.enum(FORM_LINE_SPLITS) }).strict(),
+    })
+    .strict(),
+  // 契約の欄（財務会計の書き出し・発注台帳のように、標準の契約の語と見出しが違う一覧）：見出しの字の列を、契約の記録のその欄として読む。
+  // このルールの当たる列のある表は、作業の表でなく契約の一覧として読む（作業にはしない。件名の語と期間の合う作業と結ぶ案になる）
+  z.object({ ...base, kind: z.literal("contractColumn"), column, field: z.enum(CONTRACT_FIELDS) }).strict(),
   // 計画ルール（計画を作るルール。案 C、2026-11-06）：共通の設備項目 × 作業の属性 → 周期（年）。資料の読み方には効かず、
   // 当たる作業（項目と属性を人が受けたもの）に周期の案（R）を出すだけ。案は人が確定のシートで受けるまで決まらない。when は使わない
   z

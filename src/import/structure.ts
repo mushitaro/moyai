@@ -7,7 +7,7 @@ import { cue, norm, type ColumnCue, type ContractField, type OrderLineField } fr
 import { fiscalYearInText, nfkc as nfkcText, parseDateRange, parseDateText, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, serialToYmd, validYmd, type Ymd } from "./era";
 import { isDateFormat } from "./numfmt";
 import { isSymbolLike, numberDepth, parseEffort, parseUnit, splitSeriesCell } from "./text";
-import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type ReadingRule, type RuleHits } from "./reading";
+import { parseWithFormat, ruleApplies, sameColumn, type ActiveRule, type DateFormat, type FormFieldRole, type ReadingRule, type RuleHits } from "./reading";
 import { COLUMN_ROLE_OPTIONS, type ColRole } from "./roles";
 import { readRecordBlocks, type BlockTable } from "./blocks";
 import { readGantt, type GanttTable } from "./gantt";
@@ -69,6 +69,8 @@ export interface ColInfo {
   compound?: ColumnCue[];
   /** 読み方の規則がこの列に効かなかった・読み手の読み方を止めたこと（要約の注記に出す） */
   ruleNotes?: string[];
+  /** 帳票の型の規則（kind: form）の作業の行の列：行の読み方（work はそのまま作業の名前、assetWork は頭の語が機器の名前）と、その規則の id */
+  formLines?: { split: "work" | "assetWork"; rule: string };
   /** 契約の一覧・発注明細の表の列：記録のどの欄か（発注明細の欄の語・契約の欄の語・列の見出しの語から）。記録の形に無い列は "other" */
   contract?: ContractField | OrderLineField | "rowNo" | "remark" | "fiscal" | "amount" | "other";
 }
@@ -153,6 +155,9 @@ export interface HeadField {
   cue: ColumnCue;
   label: string;
   cell: GridCell;
+  /** 帳票の型の規則（kind: form）で読んだ欄なら、その規則の id と、値を取った列の見出しの字（column を書いた欄だけ） */
+  rule?: string;
+  column?: string;
 }
 
 export interface SheetLayout {
@@ -656,9 +661,11 @@ function buildTable(ctx: BuildCtx, block: number[], top: number, roles: Map<numb
   if (yb.issue) issues.push({ ...yb.issue, tableId: id });
   const marks = cols.filter((c) => c.role === "mark");
   // 発注明細（品名・数量・単価・金額と、明細の番号か検収の欄。1 行が 1 品目・1 作業の明細）：作業の表にせず、発注明細の記録として読む
-  const lineCols = marks.length ? null : orderLineFields(cols);
+  // 読み方の規則の契約の欄（contractColumn）の当たる列のある表は、契約の一覧として読む（発注明細・作業の表の見分けより先）
+  const ruleContract = marks.length ? null : ruleContractFields(ctx, cols, dataRows);
+  const lineCols = marks.length || ruleContract ? null : orderLineFields(cols);
   // 契約・発注の一覧（件名の列と、契約の欄の語が 2 種類以上。1 行が 1 契約）：作業の表にせず、契約の記録として読む
-  const contractCols = marks.length || lineCols ? null : contractFields(cols);
+  const contractCols = ruleContract ?? (marks.length || lineCols ? null : contractFields(cols));
   let shape: Shape;
   if (marks.length) shape = "grid";
   else if (lineCols) {
@@ -953,6 +960,32 @@ const BY_COLUMN_CUE: Partial<Record<ColumnCue, NonNullable<ColInfo["contract"]>>
  * 契約・発注の一覧の表か（見出しの語だけで見分ける）。件名の列があり、契約の欄の種類が CONTRACT_KINDS_MIN 以上で、
  * 作業そのものの列（WORK_ROW_CUES）が無い表なら、列ごとの契約の記録の欄を返す（契約の欄の語が無い列は、列の見出しの語から）。ほかは null
  */
+/**
+ * 読み方の規則の契約の欄（contractColumn）：見出しの字の合う列を、その契約の欄にする。1 つでも当たれば、ほかの列は契約の語・列の見出しの語から決め、
+ * 機器・作業の内容の語の列も契約の一覧の欄の外（other）にする（規則で人が契約の一覧と決めたので、作業の表にしない）。当たらなければ null
+ */
+function ruleContractFields(ctx: BuildCtx, cols: readonly ColInfo[], dataRows: number[]): Map<number, NonNullable<ColInfo["contract"]>> | null {
+  const out = new Map<number, NonNullable<ColInfo["contract"]>>();
+  for (const col of cols) {
+    if (!col.header) continue;
+    const a = ctx.rules.find((x) => x.rule.kind === "contractColumn" && sameColumn(col.header, x.rule.column));
+    if (!a || a.rule.kind !== "contractColumn") continue;
+    out.set(col.c, a.rule.field);
+    for (const r of dataRows) {
+      const x = ctx.idx.at(r, col.c);
+      if (x && x.text !== "") ctx.hits?.add(a.rule, ctx.file, x.ref, ctx.sheetIndex);
+    }
+  }
+  if (!out.size) return null;
+  for (const col of cols) {
+    if (!col.header || out.has(col.c)) continue;
+    const f = cue.contract(col.headerParts);
+    if (f) out.set(col.c, f);
+    else if (col.cue && !WORK_ROW_CUES.has(col.cue) && BY_COLUMN_CUE[col.cue]) out.set(col.c, BY_COLUMN_CUE[col.cue] as NonNullable<ColInfo["contract"]>);
+  }
+  return out;
+}
+
 function contractFields(cols: readonly ColInfo[]): Map<number, NonNullable<ColInfo["contract"]>> | null {
   const out = new Map<number, NonNullable<ColInfo["contract"]>>();
   const kinds = new Set<string>();
@@ -1611,6 +1644,115 @@ function formPages(idx: CellIndex, rows: number[], g: SheetGrid): number[][] | n
   return formLike(pages) ? pages : null;
 }
 
+// ─── 帳票の型（読み方の規則 kind: form） ─────────────────────────
+
+/** 帳票の型の欄の役目 → 頭書きの手がかり（records.ts が頭書きの欄として、作業の行に付ける） */
+const FORM_CUE: Record<FormFieldRole, ColumnCue> = { date: "date", end: "end", assetRef: "assetRef", unit: "series", tag: "tag", workTitle: "workTitle", effort: "effort" };
+/** 帳票の型で読まない欄の理由（行き先の字） */
+export const formUnusedReason = (id: string) => `帳票の欄（読み方のルール「${id}」で、作業の行に使わない欄）`;
+/** 帳票の型の項目と値の行の理由（値は作業の行に付けた） */
+export const formFieldReason = (id: string) => `帳票の項目（読み方のルール「${id}」で、値を作業の行に付けた）`;
+
+/**
+ * 帳票の型でシートを読む：lines の項目の行を見出しにした 1 列の作業の表（次の項目の行の前まで。1 行 1 作業）と、
+ * fields の項目のすぐ右（column があればその見出しの列）の値を、その表の頭書きにする。ほかの行は理由を付けた注記（黙って捨てない）
+ */
+function formSheetLayout(src: SourceFile, ctx: BuildCtx, all: number[], a: ActiveRule): SheetLayout {
+  const rule = a.rule as Extract<ReadingRule, { kind: "form" }>;
+  const { idx, grid } = ctx;
+  const roles = new Map<number, RowRole>();
+  const rowReasons = new Map<number, string>();
+  const notes: SheetLayout["notes"] = [];
+  const titles: SheetLayout["titles"] = [];
+  const tables: Table[] = [];
+  const labelOf = (c: GridCell | undefined) => (c && typeof c.value === "string" ? stripLabel(c.text) : "");
+  const fieldLabels = new Set(rule.fields.map((f) => stripLabel(f.label)));
+  const lineLabel = stripLabel(rule.lines.label);
+  // 作業の行：lines の項目の行の下から、次の項目の行（fields の項目・lines の項目・短い項目と値の行）の前まで
+  const start = all.findIndex((r) => rowTexts(idx, r).some((c) => labelOf(c) === lineLabel));
+  const labelRow = start >= 0 ? (all[start] ?? null) : null;
+  const labelCell = labelRow !== null ? rowTexts(idx, labelRow).find((c) => labelOf(c) === lineLabel) : undefined;
+  const lineRows: number[] = [];
+  if (start >= 0)
+    for (const r of all.slice(start + 1)) {
+      const cs = rowTexts(idx, r);
+      const l = labelOf(cs[0]);
+      if (fieldLabels.has(l) || l === lineLabel) break;
+      if (cs.length >= 2 && l.length > 0 && l.length <= 8 && !/^\d/u.test(l)) break;
+      lineRows.push(r);
+    }
+  // 項目と値：項目の字のセルの、すぐ右の中身のあるセル（column があれば、上の行のその見出しの字の列の、同じ行のセル）
+  const head: HeadField[] = [];
+  const fieldRows = new Set<number>();
+  for (const f of rule.fields) {
+    const want = stripLabel(f.label);
+    for (const r of all) {
+      if (lineRows.includes(r) || r === labelRow) continue;
+      const cs = rowTexts(idx, r);
+      const i = cs.findIndex((c) => labelOf(c) === want);
+      if (i < 0) continue;
+      let value: GridCell | undefined;
+      if (f.column) {
+        const col = norm(f.column);
+        const above = all.filter((x) => x < r).reverse().map((x) => rowTexts(idx, x).find((c) => stripLabel(c.text) === stripLabel(col))).find((c) => !!c);
+        value = above ? idx.at(r, above.c) ?? undefined : undefined;
+      } else value = cs.slice(i + 1).find((c) => c.text.trim() !== "");
+      if (!value || value.text.trim() === "") continue;
+      head.push({ cue: FORM_CUE[f.role], label: want, cell: value, rule: rule.id, ...(f.column ? { column: f.column } : {}) });
+      fieldRows.add(r);
+      ctx.hits?.add(rule, ctx.file, value.ref, ctx.sheetIndex);
+      break;
+    }
+  }
+  if (labelRow !== null && labelCell) {
+    roles.set(labelRow, "header");
+    const c = labelCell.c;
+    const header = labelCell.text.trim();
+    const col: ColInfo = { c, role: "workName", header, headerParts: [header], cue: "workName", hidden: false, formLines: { split: rule.lines.split, rule: rule.id } };
+    const rows: RowInfo[] = lineRows.map((r) => ({ r, role: "data", level: null, votes: [], suspect: false, parentRow: null, bold: false }));
+    for (const r of lineRows) {
+      roles.set(r, "data");
+      for (const x of rowTexts(idx, r)) ctx.hits?.add(rule, ctx.file, x.ref, ctx.sheetIndex);
+    }
+    tables.push({
+      id: `${ctx.file}#${ctx.sheetIndex}#${labelRow}`,
+      file: ctx.file,
+      sheet: ctx.sheet,
+      sheetIndex: ctx.sheetIndex,
+      shape: "events",
+      top: labelRow,
+      bottom: lineRows[lineRows.length - 1] ?? labelRow,
+      headerRows: [labelRow],
+      cols: [col],
+      rows,
+      legend: [],
+      legendRows: [],
+      yearKind: null,
+      issues: [],
+      form: `form|${rule.id}|${formSig(rowTexts(idx, labelRow))}`,
+      ...(head.length ? { head } : {}),
+    });
+  }
+  // ほかの行：項目と値の行・題・使わない欄（理由を付けた注記）
+  let titled = false;
+  for (const r of all) {
+    if (r === labelRow || lineRows.includes(r)) continue;
+    const cells = rowTexts(idx, r);
+    const text = cells.map((c) => c.text).join(" ");
+    const ref = cells[0]?.ref ?? cellRef(r, 1);
+    if (!titled && cells.some((c) => norm(c.text) === norm(rule.title))) {
+      titled = true;
+      roles.set(r, "title");
+      titles.push({ r, text, ref });
+      continue;
+    }
+    roles.set(r, "note");
+    notes.push({ r, text, ref });
+    rowReasons.set(r, fieldRows.has(r) ? formFieldReason(rule.id) : formUnusedReason(rule.id));
+  }
+  return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends: [], rowReasons, contextFiscalYear: ctx.contextFiscalYear, contextPeriod: null };
+}
+
 // ─── シートの入口 ────────────────────────────────────────────
 
 /**
@@ -1650,6 +1792,9 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
     });
     return { file: src.file, sheet: grid.name, sheetIndex: grid.index, grid, index: idx, rowRoles: roles, tables, notes, titles, looseLegends: [], rowReasons, contextFiscalYear, contextPeriod: null };
   }
+  // 帳票の型の規則（kind: form。会話で決めた 3 段目の読み方）：型の題の字のあるシートは、表としてでなく、その型で読む
+  const formRule = rules.find((a) => a.rule.kind === "form" && sheetTexts.has(norm(a.rule.title)));
+  if (formRule) return formSheetLayout(src, ctx, all, formRule);
   // PDF の表の、何行にも折り返した記録の塊（PDF の格子のときだけ）：塊の表と、表の外の頁の頭書き・節の題・文の段落・項目と内容の表の行き先を先に決め、
   // 残りの行を今までどおりに読む
   const blockRead = readRecordBlocks(src, grid, idx, all);
@@ -1683,6 +1828,8 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
   });
   pages.forEach((page, pi) => {
     const repeats = findRepeats(idx, page);
+    // 読み方の規則の見出しの行（「23 行目を見出しとして読む」）は、前の表と同じ字でも、くり返しの見出しにしない（同じ見出しの別の表の始まり。財務会計の書き出しの「＜支出命令＞」の塊）
+    for (const a of rules) if (a.rule.kind === "headerRow" && repeats.get(a.rule.row)?.kind === "header") repeats.delete(a.rule.row);
     for (const [r, rp] of repeats) {
       roles.set(r, "header");
       rowReasons.set(r, rp.kind === "continued" ? "続きの表記（前の表の続き）" : "くり返す見出し（表の始めの見出しと同じ。頁ごとにくり返したもの）");

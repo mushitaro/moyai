@@ -284,6 +284,9 @@ function resolveRuleFiles(rules: ReadingRule[], names: readonly string[]): { rul
   return { rules: out, note: notes.length ? notes.join(" ") : null };
 }
 
+/** 外す答えの選択肢の id（意味の決まらないセル・行・列を外す、資料を参考として外す、読めない資料を外す） */
+export const DROP_ANSWERS: ReadonlySet<string> = new Set(["exclude", "reference", "reject"]);
+
 /** 規則の when が効かない種類（資料を丸ごと外す決まった答えの when.file だけは効く） */
 const WHEN_IGNORED: ReadonlySet<string> = new Set(["sameAsset", "answer", "planCycle"]);
 
@@ -415,6 +418,11 @@ export const TAB_TOOL_RECEIVERS: Partial<Record<ToolName, Receiver>> = {
   },
   intake_settle: (ws, args) => {
     const decisions = args.decisions as { questionId: string; answer: string; author: "ai" | "ai_relayed_human"; reason: string }[];
+    // 外す答え（セル・行・列・資料を外す）は、人の言葉を受けたとき（ai_relayed_human）だけ。AI の判断だけで資料を落とさない（黙って捨てない。2026-11-25 運営者の困りごと）
+    if (decisions.some((d) => d.author === "ai" && DROP_ANSWERS.has(d.answer))) {
+      ws.note("ai", T.settleRefused(decisions.length));
+      return { ok: false, code: "drop_needs_user" };
+    }
     return andThen(ws.settleWith(decisions), (r): TabToolResult => {
       if (!r.ok) {
         ws.note("ai", T.settleRefused(decisions.length));
