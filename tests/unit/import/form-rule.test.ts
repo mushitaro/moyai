@@ -6,7 +6,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { IntakeSession } from "../../../src/import";
-import { ReadingRule, type ReadingSkill } from "../../../src/import/reading";
+import { parseWithFormat, ReadingRule, type ReadingSkill } from "../../../src/import/reading";
 import { formUnit, splitFormLine } from "../../../src/import/text";
 
 const DIR = "packs/waste-incineration/demo";
@@ -85,11 +85,40 @@ describe("デモの作業日報（清書。日ごとに 1 シート）", () => {
     expect(evs.filter((e) => e.manDays !== null).every((e) => evs.filter((x) => x.sheet === e.sheet).length === 1)).toBe(true);
     // 曜日が日付と合わない 1 枚（6.19「令和7年6月19日（水）」）だけは日付が読めず、問いに残る（推し量らない）
     expect(evs.filter((e) => !e.date).map((e) => e.sheet)).toEqual(["6.19"]);
+    // その問いは「書いていない」でなく、読めない欄の見本と理由を書く
+    const q = an.open.find((x) => x.kind === "dateUnknown" && x.text.includes("令和7年6月19日"));
+    expect(q?.text).toContain("帳票の日付の欄が読めない");
+    expect(q?.text).toContain("曜日が年月日と合わない");
     // 使わない欄は、どれも理由つきで外す（黙って捨てない）
     const status = an.composition.status;
     const reasons = new Set([...status.values()].flatMap((v) => (v.s === "excluded" ? [v.reason] : [])));
     expect([...reasons].some((x) => x.includes("帳票の欄（読み方のルール「daily-form」"))).toBe(true);
     expect([...status.values()].filter((v) => v.s === "unresolved").length).toBeLessThanOrEqual(4);
+  });
+});
+
+describe("曜日が年月日と合わない日付を、規則で年月日を正にして読む（#162）", () => {
+  const WEEKDAY = { ...base, id: "date-wins", kind: "dateFormat" as const, text: "「日付」の欄は、曜日が合わなくても年月日で読む", column: "日付", format: "ymdIgnoreWeekday" as const };
+  test("規則の形と、読み方：曜日を外して年月日を読む。曜日の無い日付もそのまま読む", () => {
+    expect(ReadingRule.safeParse(WEEKDAY).success).toBe(true);
+    expect(parseWithFormat("令和7年6月19日（水）", "ymdIgnoreWeekday")).toEqual({ y: 2025, m: 6, d: 19 });
+    expect(parseWithFormat("2025/6/19(木曜日)", "ymdIgnoreWeekday")).toEqual({ y: 2025, m: 6, d: 19 });
+    expect(parseWithFormat("令和7年6月19日", "ymdIgnoreWeekday")).toEqual({ y: 2025, m: 6, d: 19 });
+    expect(parseWithFormat("6月19日（水）", "ymdIgnoreWeekday")).toBeNull();
+    expect(parseWithFormat("令和7年2月30日（水）", "ymdIgnoreWeekday")).toBeNull();
+  });
+  test("帳票の日付の欄に規則が効く：6.19 の 1 枚も日付が付き、日付の読めない作業が無くなる。効いたセルに数える", async () => {
+    const s = session([FORM, WEEKDAY]);
+    await add(s, REPORT);
+    for (const q of s.analyze().open.filter((x) => x.kind === "eventAsset" && x.options.some((o) => o.id === "new"))) s.settle([{ questionId: q.questionId, answer: "new", author: "human", reason: "試験：新しい機器" }]);
+    const an = s.analyze();
+    const evs = an.records.events;
+    expect(evs.length).toBe(76);
+    expect(evs.filter((e) => !e.date)).toEqual([]);
+    expect(evs.filter((e) => e.sheet === "6.19").every((e) => e.date?.y === 2025 && e.date.m === 6 && e.date.d === 19)).toBe(true);
+    expect(an.open.some((x) => x.kind === "dateUnknown")).toBe(false);
+    // 効いたセルは、どの日の帳票の日付の欄も 1 つずつ
+    expect(an.ruleHits.located("date-wins").size).toBe(new Set(evs.map((e) => e.sheet)).size);
   });
 });
 

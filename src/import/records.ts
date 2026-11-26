@@ -2,8 +2,8 @@
 // どのセルを何に使ったかを数えるため、記録はセルの位置を持つ。
 import { cellRef, colLetter, type GridCell, type SheetGrid } from "./grid";
 import { CUES, containsAny, cue, norm, type ColumnCue } from "./cues";
-import { fiscalYearInText, fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, validYmd, withFiscalYear, ymdString, type Ymd } from "./era";
-import { parseWithFormat } from "./reading";
+import { fiscalYearInText, fiscalYearOf, nfkc, parseDayCount, parseMonthDay, parseYearLabel, parseYearOnly, validYmd, weekdayMismatch, withFiscalYear, ymdString, type Ymd } from "./era";
+import { parseWithFormat, type DateFormat } from "./reading";
 import { Asker, type MergeSpec, type QuestionItem, YES_NO, questionIdOf } from "./questions";
 import { isAssignableRole } from "./roles";
 import { GANTT_REASON, addDays, datesOfTimes, unitHeading, type GanttCol, type GanttRow, type GanttTable } from "./gantt";
@@ -1899,17 +1899,25 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     return { period: p, cell, bad: !p, blank: false };
   };
   // 帳票の頭書き（同じ頁の、表の上の「日付｜…」「設備名｜…」「機器番号｜…」「号炉｜…」）：表に無い欄を、表の行に付ける
-  const headCell = (...ks: ColumnCue[]) => ks.map((k) => t.head?.find((f) => f.cue === k)?.cell).find((c) => !!c) ?? null;
-  const headPeriod = (c: GridCell | null) => {
-    if (!c) return null;
+  const headField = (...ks: ColumnCue[]) => ks.map((k) => t.head?.find((f) => f.cue === k)).find((f) => !!f) ?? null;
+  const headCell = (...ks: ColumnCue[]) => headField(...ks)?.cell ?? null;
+  const headPeriod = (f: { cell: GridCell; dateFormat?: DateFormat } | null) => {
+    if (!f) return null;
+    const c = f.cell;
+    if (f.dateFormat && !isTypedDate(c)) {
+      // 読み方の規則で決めた書き方（列の日付と同じ読み方）
+      const g = parseWithFormat(String(c.value ?? c.text), f.dateFormat);
+      const ymd = !g ? null : g.y !== null ? { y: g.y, m: g.m, d: g.d } : lay.contextFiscalYear !== null ? withFiscalYear({ m: g.m, d: g.d }, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
+      return ymd ? { start: ymd, end: ymd, range: false } : null;
+    }
     const p = cellPeriod(c, date1904);
     if (p) return p;
     const md = lay.contextFiscalYear !== null && typeof c.value === "string" ? parseMonthDay(c.value) : null;
     const ymd = md && lay.contextFiscalYear !== null ? withFiscalYear(md, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
     return ymd ? { start: ymd, end: ymd, range: false } : null;
   };
-  const headStart = dateCol ? null : headPeriod(headCell("date"));
-  const headEnd = dateCol || endCol ? null : headPeriod(headCell("end"));
+  const headStart = dateCol ? null : headPeriod(headField("date"));
+  const headEnd = dateCol || endCol ? null : headPeriod(headField("end"));
   const headDate = headStart && headEnd ? { start: headStart.start, end: headEnd.end, range: true } : headStart;
   const headAsset = assetCol ? null : (headCell("name", "assetRef")?.text.replace(/\s*\n\s*/g, " ").trim() ?? null);
   const headTag = tagCol ? null : (headCell("tag")?.text.trim() || null);
@@ -2078,18 +2086,19 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   // 日付の欄の無い作業の表（工程表など）：表の外に書いた期間を使うか、まとめて 1 回聞く（推し量らない）
   if (!dateCol && !headDate && evs.length) {
     const cp = lay.contextPeriod;
+    // 帳票の日付の欄はあるのに読めない（曜日が年月日と合わない「令和7年6月19日（水）」など）：書いていないとは言わず、見本と理由を書く
+    const hd = headCell("date");
+    const unread = hd
+      ? `帳票の日付の欄が読めない（見本「${hd.text.slice(0, 24)}」：${weekdayMismatch(hd.text) ? "曜日が年月日と合わない" : "日付の書き方として読めない"}）`
+      : null;
     // 同じ様式の表（シートごと・日ごとの塊）は 1 問。表の外の期間の答えは、表ごとに自分の表の外の期間を使う
     const dateText = (rows: number) =>
-      cp
-        ? `作業の行に日付が書いていない（${rows} 行）。表の外に書いた期間（見本「${cp.text.slice(0, 60)}」）をその行の期間にするか`
-        : `作業の行に日付が書いていない（${rows} 行）`;
+      `${unread ?? "作業の行に日付が書いていない"}（${rows} 行）${cp ? `。表の外に書いた期間（見本「${cp.text.slice(0, 60)}」）をその行の期間にするか` : ""}`;
     const a = ask.ask(
       `dateMissing|${t.id}`,
       {
         kind: "dateUnknown",
-        text: cp
-          ? `作業の行に日付が書いていない（${evs.length} 行）。表の外に書いた期間（「${cp.text.slice(0, 60)}」）をその行の期間にするか`
-          : `作業の行に日付が書いていない（${evs.length} 行）`,
+        text: `${unread ?? "作業の行に日付が書いていない"}（${evs.length} 行）${cp ? `。表の外に書いた期間（「${cp.text.slice(0, 60)}」）をその行の期間にするか` : ""}`,
         options: [...(cp ? [{ id: "heading", label: "表の外に書いた期間にする" }] : []), { id: "exclude", label: "その行を外す" }],
         valueKind: "option",
         defaultAnswer: null,
@@ -2357,7 +2366,9 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
     const ruleFormat = [dateCol, endCol].find((c) => c?.dateFormat)?.dateFormat;
     const why = ruleFormat
       ? `ルールの書き方（${ruleFormat}）に合わない`
-      : parseMonthDay(sample)
+      : weekdayMismatch(sample)
+        ? "曜日が年月日と合わない"
+        : parseMonthDay(sample)
         ? "年が書いていない（シートの文に年度がただ 1 つ書いてあれば、その年度で読む）"
         : "日付の書き方として読めない";
     // 同じ様式の表の日付の列の、同じ理由で読めない書き方は 1 問（理由が違えば別の問い）

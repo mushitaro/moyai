@@ -4,6 +4,7 @@
 import { z } from "zod";
 import { CLASS_CODE, WORK_ATTRIBUTES } from "../shared/fields";
 import { CONTRACT_FIELDS, norm } from "./cues";
+import { parseDateIgnoringWeekday } from "./era";
 
 export const READING_SCHEMA = "moyai.reading/0";
 
@@ -13,7 +14,8 @@ const column = z.string().min(1).max(60);
 /** ルールで当てられる列の役目：読み手の一覧（roles.ts）と同じ。人の答えの選択肢も同じ一覧を引く（Architect の 46） */
 export { COLUMN_ROLES } from "./roles";
 import { COLUMN_ROLES } from "./roles";
-export const DATE_FORMATS = ["yyyymmdd", "yymmdd", "md"] as const;
+/** ymdIgnoreWeekday：年月日のそろった日付の後ろの括弧の曜日が合わなくても、年月日を正にする（「令和7年6月19日（水）」。曜日は読まない） */
+export const DATE_FORMATS = ["yyyymmdd", "yymmdd", "md", "ymdIgnoreWeekday"] as const;
 export type DateFormat = (typeof DATE_FORMATS)[number];
 /**
  * 帳票の型（kind: form）の欄の役目：項目の字のすぐ右（column があれば、その見出しの列）の値を、帳票の下の作業の行のどれにも付ける。
@@ -314,6 +316,10 @@ export function parseWithFormat(text: string, format: DateFormat): { y: number |
   if (format === "yymmdd") {
     const m = /^(\d{2})(\d{2})(\d{2})$/.exec(s);
     return m ? valid(2000 + Number(m[1]), Number(m[2]), Number(m[3])) : null;
+  }
+  if (format === "ymdIgnoreWeekday") {
+    const d = parseDateIgnoringWeekday(text);
+    return d ? { y: d.y, m: d.m, d: d.d } : null;
   }
   const m = /^(\d{1,2})[/.月](\d{1,2})日?/.exec(s);
   return m ? valid(null, Number(m[1]), Number(m[2])) : null;
