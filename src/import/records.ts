@@ -1908,7 +1908,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
       // 読み方の規則で決めた書き方（列の日付と同じ読み方）
       const g = parseWithFormat(String(c.value ?? c.text), f.dateFormat);
       const ymd = !g ? null : g.y !== null ? { y: g.y, m: g.m, d: g.d } : lay.contextFiscalYear !== null ? withFiscalYear({ m: g.m, d: g.d }, lay.contextFiscalYear, opts.fiscalYearStartMonth) : null;
-      return ymd ? { start: ymd, end: ymd, range: false } : null;
+      if (ymd) return { start: ymd, end: ymd, range: false };
     }
     const p = cellPeriod(c, date1904);
     if (p) return p;
@@ -2087,10 +2087,10 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
   if (!dateCol && !headDate && evs.length) {
     const cp = lay.contextPeriod;
     // 帳票の日付の欄はあるのに読めない（曜日が年月日と合わない「令和7年6月19日（水）」など）：書いていないとは言わず、見本と理由を書く
-    const hd = headCell("date");
-    const unread = hd
-      ? `帳票の日付の欄が読めない（見本「${hd.text.slice(0, 24)}」：${weekdayMismatch(hd.text) ? "曜日が年月日と合わない" : "日付の書き方として読めない"}）`
-      : null;
+    const hf = headField("date");
+    const hd = hf?.cell ?? null;
+    const unreadWhy = !hd ? null : weekdayMismatch(hd.text) ? "曜日が年月日と合わない" : hf?.dateFormat ? `ルールの書き方（${hf.dateFormat}）に合わない` : "日付の書き方として読めない";
+    const unread = hd ? `帳票の日付の欄が読めない（見本「${hd.text.slice(0, 24)}」：${unreadWhy}）` : null;
     // 同じ様式の表（シートごと・日ごとの塊）は 1 問。表の外の期間の答えは、表ごとに自分の表の外の期間を使う
     const dateText = (rows: number) =>
       `${unread ?? "作業の行に日付が書いていない"}（${rows} 行）${cp ? `。表の外に書いた期間（見本「${cp.text.slice(0, 60)}」）をその行の期間にするか` : ""}`;
@@ -2105,7 +2105,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
         sameShapeRows: evs.length,
         items: [itemOf(lay, evs.slice(0, 10).map((e) => e.refs[0] ?? ""))],
       },
-      sameForm("dateMissing", formKeyOf(rec, t), unread ? "unread" : "-", dateText),
+      sameForm("dateMissing", formKeyOf(rec, t), unreadWhy ?? "-", dateText),
     );
     for (const e of evs) {
       if (a === "heading" && cp) {

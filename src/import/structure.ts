@@ -352,8 +352,10 @@ interface BuildCtx {
 function headDateFormats(ctx: BuildCtx, fields: HeadField[]): HeadField[] {
   return fields.map((f) => {
     if (f.cue !== "date" && f.cue !== "end") return f;
-    const a = ctx.rules.find((x) => x.rule.kind === "dateFormat" && sameColumn(f.label, x.rule.column));
+    const a = ctx.rules.find((x) => x.rule.kind === "dateFormat" && (sameColumn(f.label, x.rule.column) || (!!f.column && sameColumn(f.column, x.rule.column))));
     if (!a || a.rule.kind !== "dateFormat") return f;
+    // 効いたセルに数えるのは、その書き方で読めたセルだけ（読めない書き方の規則は、欄の読み方を変えない。records.ts の headPeriod は元の読み方に戻る）
+    if (isTypedDate(f.cell) || !parseWithFormat(String(f.cell.value ?? f.cell.text), a.rule.format)) return f;
     ctx.hits?.add(a.rule, ctx.file, f.cell.ref, ctx.sheetIndex);
     return { ...f, dateFormat: a.rule.format };
   });

@@ -122,6 +122,17 @@ describe("曜日が年月日と合わない日付を、規則で年月日を正�
   });
 });
 
+describe("表の列のための日付の書き方の規則は、帳票の読めていた日付を読めなくしない（見直しの指摘）", () => {
+  test.each(["md", "yyyymmdd"] as const)("「日付」の %s の規則があっても、帳票の日付は今までどおり読み、効いたセルに数えない", async (format) => {
+    const s = session([FORM, { ...base, id: "col-date", kind: "dateFormat", text: "「日付」の列の書き方", column: "日付", format }]);
+    await add(s, REPORT);
+    for (const q of s.analyze().open.filter((x) => x.kind === "eventAsset" && x.options.some((o) => o.id === "new"))) s.settle([{ questionId: q.questionId, answer: "new", author: "human", reason: "試験：新しい機器" }]);
+    const an = s.analyze();
+    expect(an.records.events.filter((e) => !e.date).map((e) => e.sheet)).toEqual(["6.19"]);
+    expect(an.ruleHits.located("col-date").size).toBe(0);
+  });
+});
+
 describe("デモの発注台帳（財務会計の CSV）", () => {
   test("規則が無いと：「節名称」（委託料など）が機器の名前になる", async () => {
     const s = session([]);
