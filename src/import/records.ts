@@ -2105,7 +2105,7 @@ function eventRecords(t: Table, lay: SheetLayout, ask: Asker, rec: Records, opts
         sameShapeRows: evs.length,
         items: [itemOf(lay, evs.slice(0, 10).map((e) => e.refs[0] ?? ""))],
       },
-      sameForm("dateMissing", formKeyOf(rec, t), "-", dateText),
+      sameForm("dateMissing", formKeyOf(rec, t), unread ? "unread" : "-", dateText),
     );
     for (const e of evs) {
       if (a === "heading" && cp) {
