@@ -96,6 +96,18 @@ export function parseDateText(text: string): Ymd | null {
 
 const WEEKDAYS = "日月火水木金土";
 
+/** 括弧の曜日を外して年月日を読む（読み方の規則 dateFormat の ymdIgnoreWeekday。曜日が合わなくても、人が年月日を正と決めたとき） */
+export function parseDateIgnoringWeekday(text: string): Ymd | null {
+  const raw = nfkc(text).replace(/\s+/g, "");
+  const wd = /^(.+?)[(（]([日月火水木金土])(?:曜日?)?[)）]$/u.exec(raw);
+  return parseFullDate(wd ? (wd[1] ?? "") : raw);
+}
+
+/** 曜日の括弧があり、年月日としては読めるのに曜日が合わないか（読めない理由を問いに書くため） */
+export function weekdayMismatch(text: string): boolean {
+  return parseDateText(text) === null && parseDateIgnoringWeekday(text) !== null && /[(（][日月火水木金土](?:曜日?)?[)）]$/u.test(nfkc(text).replace(/\s+/g, ""));
+}
+
 function parseFullDate(s: string): Ymd | null {
   let m = /^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/.exec(s) ?? /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(s);
   if (m) {

@@ -158,6 +158,8 @@ export interface HeadField {
   /** 帳票の型の規則（kind: form）で読んだ欄なら、その規則の id と、値を取った列の見出しの字（column を書いた欄だけ） */
   rule?: string;
   column?: string;
+  /** 読み方の規則 dateFormat（column が欄の項目の字）で決めた日付の書き方（日付の欄だけ） */
+  dateFormat?: DateFormat;
 }
 
 export interface SheetLayout {
@@ -344,6 +346,19 @@ interface BuildCtx {
   /** このシートに効く読み方の規則 */
   rules: ActiveRule[];
   hits: RuleHits | null;
+}
+
+/** 頭書きの日付の欄に、読み方の規則 dateFormat（column が欄の項目の字）を付ける。効いたセルに数える */
+function headDateFormats(ctx: BuildCtx, fields: HeadField[]): HeadField[] {
+  return fields.map((f) => {
+    if (f.cue !== "date" && f.cue !== "end") return f;
+    const a = ctx.rules.find((x) => x.rule.kind === "dateFormat" && (sameColumn(f.label, x.rule.column) || (!!f.column && sameColumn(f.column, x.rule.column))));
+    if (!a || a.rule.kind !== "dateFormat") return f;
+    // 効いたセルに数えるのは、その書き方で読めたセルだけ（読めない書き方の規則は、欄の読み方を変えない。records.ts の headPeriod は元の読み方に戻る）
+    if (isTypedDate(f.cell) || !parseWithFormat(String(f.cell.value ?? f.cell.text), a.rule.format)) return f;
+    ctx.hits?.add(a.rule, ctx.file, f.cell.ref, ctx.sheetIndex);
+    return { ...f, dateFormat: a.rule.format };
+  });
 }
 
 /** 日付として読めるセルか。年の無い日付（「4/6(月)」）は、シートに年度が 1 つだけ書いてあるときだけ日付にする */
@@ -1730,7 +1745,7 @@ function formSheetLayout(src: SourceFile, ctx: BuildCtx, all: number[], a: Activ
       yearKind: null,
       issues: [],
       form: `form|${rule.id}|${formSig(rowTexts(idx, labelRow))}`,
-      ...(head.length ? { head } : {}),
+      ...(head.length ? { head: headDateFormats(ctx, head) } : {}),
     });
   }
   // ほかの行：項目と値の行・題・使わない欄（理由を付けた注記）
@@ -1979,7 +1994,7 @@ export function layoutSheet(src: SourceFile, grid: SheetGrid, allRules: readonly
       .filter((n) => n.r < t.top && n.r > prevBottom && pageOf.get(n.r) === p)
       .sort((a, b) => a.r - b.r)
       .flatMap((n) => headFields(idx, n.r));
-    if (fields.length) t.head = fields;
+    if (fields.length) t.head = headDateFormats(ctx, fields);
     // 作業の表の、行の番号だけの行（帳票の記入欄の空き「3｜｜｜」）と、番号の欄に項目の名前を書いた 2 セルまでの行
     // （表の下の記入欄「安全・特記事項｜KY 活動実施。」）：記録にしない
     if (t.shape === "events" || t.shape === "contracts" || t.shape === "orderLines")

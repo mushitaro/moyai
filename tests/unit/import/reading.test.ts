@@ -54,6 +54,23 @@ describe("規則の種類ごとに、読み手が当てる", () => {
     expect(an.ruleHits.count("d1")).toBe(2);
   });
 
+  test("曜日が年月日と合わない日付（#162）：規則が無ければ理由を書いて聞き、ymdIgnoreWeekday で年月日を正にして読む", async () => {
+    const s = session();
+    const wd = csv(["作業日,炉,機器,作業,時間(h)", "2024/4/6(土),1,ポンプ,点検,16", "2024/4/7(日),1,ブロワ,点検,8", "2024/4/8(火),1,ポンプ,点検,8"]);
+    await s.add([
+      { name: "台帳.csv", bytes: ledger },
+      { name: "日報.csv", bytes: wd },
+    ]);
+    const before = s.analyze();
+    expect(before.records.events.filter((e) => e.file === "日報.csv" && e.date === null).length).toBe(1);
+    expect(before.open.find((q) => q.kind === "dateUnknown")?.text).toContain("曜日が年月日と合わない");
+    s.setReadings([reading([{ ...base, id: "w1", text: "「作業日」の列は、曜日が合わなくても年月日で読む", kind: "dateFormat", column: "作業日", format: "ymdIgnoreWeekday" }])]);
+    const an = s.analyze();
+    expect(an.records.events.filter((e) => e.file === "日報.csv").map((e) => `${e.date?.y}-${e.date?.m}-${e.date?.d}`)).toEqual(["2024-4-6", "2024-4-7", "2024-4-8"]);
+    expect(an.open.some((q) => q.kind === "dateUnknown")).toBe(false);
+    expect(an.ruleHits.count("w1")).toBe(3);
+  });
+
   test("どの資料に効くか：見出しの文字がシートに無い資料には効かない", async () => {
     const s = session();
     await s.add([{ name: "日報.csv", bytes: daily }]);

@@ -617,7 +617,7 @@ export const READING_RULE_EXAMPLES: Record<ReadingRule["kind"], Record<string, u
 const READING_RULE_HINTS: Partial<Record<ReadingRule["kind"], string>> = {
   headerRow: "row starts at 1",
   columnRole: `column is the heading text (as written in the file, any language), role is one of ${COLUMN_ROLES.join(", ")}`,
-  dateFormat: `format is one of ${DATE_FORMATS.join(", ")}`,
+  dateFormat: `format is one of ${DATE_FORMATS.join(", ")} (ymdIgnoreWeekday: a full date followed by a bracketed weekday that does not match it; the date is used and the weekday is not read). column is the heading text, or the item text of a date field on a form`,
   effortUnit: "unit is manDays or hours",
   rowRole: "role is total, subtotal or note. Without prefix: rows where some cell's text equals match exactly. prefix: true: rows whose leftmost cell with text starts with match (other columns are not compared). Text is compared after NFKC with spaces removed",
   sameAsset: "reads 2 to 20 names as the same equipment as the last name",
