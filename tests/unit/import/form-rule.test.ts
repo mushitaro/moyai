@@ -119,6 +119,8 @@ describe("曜日が年月日と合わない日付を、規則で年月日を正�
     expect(an.open.some((x) => x.kind === "dateUnknown")).toBe(false);
     // 効いたセルは、どの日の帳票の日付の欄も 1 つずつ
     expect(an.ruleHits.located("date-wins").size).toBe(new Set(evs.map((e) => e.sheet)).size);
+    // 効いたセルの数も、シートごとに数える（同じ位置「B3」のセルが 35 枚にあっても 1 つにしない）
+    expect(an.ruleHits.count("date-wins")).toBe(new Set(evs.map((e) => e.sheet)).size);
   });
 });
 
