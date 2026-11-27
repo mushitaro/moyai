@@ -335,7 +335,8 @@ export class RuleHits {
   /** sheetIndex はセルのシートの番号（分かるときだけ。分からないセルは、資料と行の番号だけで行を数える） */
   add(rule: ReadingRule, file: string, ref: string, sheetIndex?: number) {
     const k = rule.id;
-    put(this.cells, k, `${file}\u0000${ref}`);
+    // シートの番号も鍵に入れる（日ごとに 1 シートの帳票の、同じ位置のセルを 1 つに数えない）
+    put(this.cells, k, `${file}\u0000${sheetIndex ?? "?"}\u0000${ref}`);
     put(this.fileSet, k, file);
     const row = /(\d+)$/.exec(ref)?.[1];
     if (row) put(this.rowSet, k, `${file}\u0000${sheetIndex ?? "?"}\u0000${row}`);
@@ -360,7 +361,7 @@ export class RuleHits {
   sample(id: string): { file: string; ref: string } | null {
     const v = this.cells.get(id)?.values().next().value as string | undefined;
     if (!v) return null;
-    const [file, ref] = v.split("\u0000") as [string, string];
+    const [file, , ref] = v.split("\u0000") as [string, string, string];
     return { file, ref };
   }
 }
