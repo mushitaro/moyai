@@ -200,8 +200,8 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
   for (const a of rules) {
     if (a.rule.kind !== "sameAsset") continue;
     const ks = new Set(a.rule.names.slice(0, -1).map((n) => nameKey(n)));
-    for (const x of rec.assets) if (ks.has(nameKey(x.name))) hits?.add(a.rule, x.file, x.nameRef);
-    for (const e of rec.events) if (e.assetNames.some((n) => ks.has(nameKey(n)))) hits?.add(a.rule, e.file, e.refs[0] ?? "");
+    for (const x of rec.assets) if (ks.has(nameKey(x.name))) hits?.add(a.rule, x.file, x.nameRef, x.sheetIndex);
+    for (const e of rec.events) if (e.assetNames.some((n) => ks.has(nameKey(n)))) hits?.add(a.rule, e.file, e.refs[0] ?? "", e.sheetIndex);
   }
   // ─── 機器 ───
   const parentOf = new Map<string, string | null>();

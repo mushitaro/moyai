@@ -243,7 +243,7 @@ export class Asker {
       if (a && a.rule.kind === "answer") {
         d = { questionId, answer: a.rule.answer, author: "rule_code", reason: ruleReason(a) };
         this.singleRule.set(questionId, a);
-        for (const it of q.items) for (const c of it.cells) this.hits?.add(a.rule, it.file, c);
+        for (const it of q.items) for (const c of it.cells) this.hits?.add(a.rule, it.file, c, it.sheet);
       }
     }
     const invalid = d ? invalidOf(d, q) : null;
@@ -261,7 +261,7 @@ export class Asker {
       g.members.set(questionId, { id: questionId, rows: q.sameShapeRows, items: [...q.items] });
       this.memberOf.set(questionId, g);
     }
-    if (g.rule) for (const it of q.items) for (const c of it.cells) this.hits?.add(g.rule.rule, it.file, c);
+    if (g.rule) for (const it of q.items) for (const c of it.cells) this.hits?.add(g.rule.rule, it.file, c, it.sheet);
     return g.decision && !g.invalid ? g.decision.answer : null;
   }
 

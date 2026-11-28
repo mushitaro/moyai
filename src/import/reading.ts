@@ -332,15 +332,19 @@ export class RuleHits {
   private readonly at = new Map<string, Set<string>>();
   private readonly rowSet = new Map<string, Set<string>>();
   private readonly fileSet = new Map<string, Set<string>>();
-  /** sheetIndex はセルのシートの番号（分かるときだけ。分からないセルは、資料と行の番号だけで行を数える） */
-  add(rule: ReadingRule, file: string, ref: string, sheetIndex?: number) {
+  /**
+   * sheet はセルのシート：番号（分かるとき）か、シートの名前（問いの見本のように、名前だけ分かるとき。CSV は null）。
+   * どちらも分からないセルは、資料と位置だけで数える。位置（located）に入れるのは、番号の分かるセルだけ
+   */
+  add(rule: ReadingRule, file: string, ref: string, sheet?: number | string | null) {
     const k = rule.id;
-    // シートの番号も鍵に入れる（日ごとに 1 シートの帳票の、同じ位置のセルを 1 つに数えない）
-    put(this.cells, k, `${file}\u0000${sheetIndex ?? "?"}\u0000${ref}`);
+    // シートも鍵に入れる（日ごとに 1 シートの帳票の、同じ位置のセルを 1 つに数えない）
+    const sk = typeof sheet === "number" ? String(sheet) : typeof sheet === "string" ? `n:${sheet}` : "?";
+    put(this.cells, k, `${file}\u0000${sk}\u0000${ref}`);
     put(this.fileSet, k, file);
     const row = /(\d+)$/.exec(ref)?.[1];
-    if (row) put(this.rowSet, k, `${file}\u0000${sheetIndex ?? "?"}\u0000${row}`);
-    if (sheetIndex !== undefined) put(this.at, k, `${file}\u0000${sheetIndex}\u0000${ref}`);
+    if (row) put(this.rowSet, k, `${file}\u0000${sk}\u0000${row}`);
+    if (typeof sheet === "number") put(this.at, k, `${file}\u0000${sheet}\u0000${ref}`);
   }
   count(id: string): number {
     return this.cells.get(id)?.size ?? 0;
