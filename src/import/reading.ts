@@ -334,7 +334,8 @@ export class RuleHits {
   private readonly fileSet = new Map<string, Set<string>>();
   /**
    * sheet はセルのシート：番号（分かるとき）か、シートの名前（問いの見本のように、名前だけ分かるとき。CSV は null）。
-   * どちらも分からないセルは、資料と位置だけで数える。位置（located）に入れるのは、番号の分かるセルだけ
+   * どちらも分からないセルは、資料と位置だけで数える。位置（located）に入れるのは、番号で渡したセルだけ。
+   * 1 つの規則には、どちらか 1 つの形で渡す（同じセルを番号と字で渡すと、2 つに数える）
    */
   add(rule: ReadingRule, file: string, ref: string, sheet?: number | string | null) {
     const k = rule.id;
