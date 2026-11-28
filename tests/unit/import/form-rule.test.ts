@@ -135,6 +135,25 @@ describe("表の列のための日付の書き方の規則は、帳票の読め�
   });
 });
 
+describe("決まった答えと同じ機器の規則の効いたセルも、シートごとに数える", () => {
+  test("日ごとの帳票の、同じ位置のセルを 1 つにしない", async () => {
+    const ANSWER = { ...base, id: "a-new", kind: "answer" as const, text: "台帳に無い機器は、新しい機器として入れる", question: "eventAsset" as const, match: "台帳にも星取表にも無い", answer: "new" };
+    const SAME = { ...base, id: "s-fire", kind: "sameAsset" as const, text: "「耐火物」と「炉の耐火物」は同じ機器", names: ["耐火物", "炉の耐火物"] };
+    const s = session([FORM, ANSWER, SAME]);
+    await add(s, REPORT);
+    const an = s.analyze();
+    const evs = an.records.events;
+    // 決まった答え：問いが見本に並べたセル（名前 20 通りまで、名前ごとに最初の作業の行の 1 セル）。
+    // 20 のセルは別々のシートにあり、同じ位置のものがある（シートを区別しないと 3 になった）
+    expect(evs.length).toBe(76);
+    expect(an.ruleHits.count("a-new")).toBe(20);
+    // 同じ機器：「耐火物」の作業の行（どのシートでも数える）
+    const fire = evs.filter((e) => e.assetNames.includes("耐火物")).length;
+    expect(fire).toBeGreaterThan(1);
+    expect(an.ruleHits.count("s-fire")).toBe(fire);
+  });
+});
+
 describe("デモの発注台帳（財務会計の CSV）", () => {
   test("規則が無いと：「節名称」（委託料など）が機器の名前になる", async () => {
     const s = session([]);

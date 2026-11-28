@@ -196,12 +196,13 @@ export function link(rec: Records, ask: Asker, rules: readonly ActiveRule[] = []
     const to = nameKey(a.rule.names[a.rule.names.length - 1] ?? "");
     for (const n of a.rule.names.slice(0, -1)) if (nameKey(n) !== to) ALIAS.set(nameKey(n), to);
   }
-  // 規則が効いた資産と行を数える（「読み方」のタブの効いたセル）：並びの最後でない名前を書いた所
+  // 規則が効いた資産と行を数える（「読み方」のタブの効いたセル）：並びの最後でない名前を書いた所。
+  // シートは字（「#番号」）で渡す：シートごとに数えるが、位置（located）には入れない。この規則は読めていたセルを外さないので、外したセルに数えない
   for (const a of rules) {
     if (a.rule.kind !== "sameAsset") continue;
     const ks = new Set(a.rule.names.slice(0, -1).map((n) => nameKey(n)));
-    for (const x of rec.assets) if (ks.has(nameKey(x.name))) hits?.add(a.rule, x.file, x.nameRef);
-    for (const e of rec.events) if (e.assetNames.some((n) => ks.has(nameKey(n)))) hits?.add(a.rule, e.file, e.refs[0] ?? "");
+    for (const x of rec.assets) if (ks.has(nameKey(x.name))) hits?.add(a.rule, x.file, x.nameRef, `#${x.sheetIndex}`);
+    for (const e of rec.events) if (e.assetNames.some((n) => ks.has(nameKey(n)))) hits?.add(a.rule, e.file, e.refs[0] ?? "", `#${e.sheetIndex}`);
   }
   // ─── 機器 ───
   const parentOf = new Map<string, string | null>();

@@ -607,16 +607,16 @@ function diff(before: Map<string, { s: string }>, after: Map<string, { s: string
 interface LayoutMemo {
   rules: string;
   layouts: SheetLayout[];
-  hits: [ReadingRule, string, string, number | undefined][];
+  hits: [ReadingRule, string, string, number | string | null | undefined][];
   snap: TableSnapshot[];
 }
 
 /** 規則が効いたセルを数えながら、あとで足し直せるように残す */
 class RecordingHits extends RuleHits {
-  readonly log: [ReadingRule, string, string, number | undefined][] = [];
-  override add(rule: ReadingRule, file: string, ref: string, sheetIndex?: number): void {
-    this.log.push([rule, file, ref, sheetIndex]);
-    super.add(rule, file, ref, sheetIndex);
+  readonly log: [ReadingRule, string, string, number | string | null | undefined][] = [];
+  override add(rule: ReadingRule, file: string, ref: string, sheet?: number | string | null): void {
+    this.log.push([rule, file, ref, sheet]);
+    super.add(rule, file, ref, sheet);
   }
 }
 
